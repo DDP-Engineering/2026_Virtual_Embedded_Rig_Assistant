@@ -1,12 +1,15 @@
+import { createPublicKey, generateKeyPairSync } from "node:crypto";
 import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { expect, it } from "vitest";
 
 // @ts-expect-error Native ESM build helpers.
-import { pluginCatalogFeed, updateFeed, updatePublish } from "../../../02_Tools/release/update-config.mjs";
+import * as updateConfig from "../../../02_Tools/release/update-config.mjs";
 // @ts-expect-error Native ESM feed server.
 import { startUpdateFeed } from "../../../02_Tools/release/update-feed.mjs";
+
+const { pluginCatalogFeed, pluginCatalogKey, updateFeed, updatePublish } = updateConfig;
 
 it("fixes HTTPS feed at build time and permits HTTP loopback only in test builds", () => {
   expect(updateFeed()).toBe("");
@@ -32,6 +35,30 @@ it("fixes the default plugin catalog at build time under the update feed rule", 
   expect(pluginCatalogFeed("http://127.0.0.1:8123/c", true)).toBe("http://127.0.0.1:8123/c/");
   for (const url of ["http://catalog.test/", "http://127.0.0.1/", "https://catalog.test/?t=1"])
     expect(() => pluginCatalogFeed(url)).toThrow("Invalid plugin catalog build setting");
+});
+// REQ-PLAT-dad138cf
+it("pins the catalog signing public key from the build input, else the committed key file", async () => {
+  const pinned = pluginCatalogKey();
+  expect(pinned).toContain("BEGIN PUBLIC KEY");
+  expect(createPublicKey(pinned).asymmetricKeyType).toBe("ed25519");
+  const root = await mkdtemp(join(tmpdir(), "vera-catalog-key-"));
+  try {
+    const ed25519 = generateKeyPairSync("ed25519");
+    const own = join(root, "own.pem");
+    await writeFile(own, ed25519.publicKey.export({ type: "spki", format: "pem" }));
+    expect(pluginCatalogKey(own)).toBe(ed25519.publicKey.export({ type: "spki", format: "pem" }));
+    const rsa = join(root, "rsa.pem");
+    await writeFile(
+      rsa,
+      generateKeyPairSync("rsa", { modulusLength: 2048 }).publicKey.export({ type: "spki", format: "pem" }),
+    );
+    const secret = join(root, "private.pem");
+    await writeFile(secret, ed25519.privateKey.export({ type: "pkcs8", format: "pem" }));
+    for (const path of [rsa, secret, join(root, "missing.pem")])
+      expect(() => pluginCatalogKey(path)).toThrow("Invalid plugin catalog key build setting");
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
 });
 it("serves only explicit local feed files and records metadata/artifact requests with range support", async () => {
   const root = await mkdtemp(join(tmpdir(), "vera-update-feed-"));

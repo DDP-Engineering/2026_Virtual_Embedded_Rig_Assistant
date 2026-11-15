@@ -102,16 +102,14 @@ test("native UI skill creation/edit/disable changes the NEXT turn system prompt"
     await page.reload();
     await page.locator('[data-action="edit-workbench-overview"]').click();
     await page.locator('[data-project-section="skills"]').click();
-    const trigger = page.locator('[data-action="skills-settings"]').first();
-    await trigger.focus();
-    await page.keyboard.press("Enter");
-    const dialog = page.locator(".skills-dialog");
-    await expect(dialog).toBeVisible();
-    await dialog.locator("[data-skill-name]").fill("ui-reader");
-    await dialog.locator('[data-action="create-skill"]').click();
-    await expect(dialog.locator(".skills-list li")).toHaveCount(2);
-    await expect(dialog.locator(".skills-list li").filter({ hasText: "create-plugin" })).toHaveCount(1);
-    const createdSkill = dialog.locator(".skills-list li").filter({ hasText: "ui-reader" });
+    // The Skills section shows the skills panel inline in the workbench editor.
+    const panel = page.locator(".workbench-editor [data-skills-panel]");
+    await expect(panel).toBeVisible();
+    await panel.locator("[data-skill-name]").fill("ui-reader");
+    await panel.locator('[data-action="create-skill"]').click();
+    await expect(panel.locator(".skills-list li")).toHaveCount(2);
+    await expect(panel.locator(".skills-list li").filter({ hasText: "create-plugin" })).toHaveCount(1);
+    const createdSkill = panel.locator(".skills-list li").filter({ hasText: "ui-reader" });
     await expect(createdSkill).toHaveCount(1);
     await createdSkill.locator('[data-action="open-skill"]').click();
     const content = page.locator("[data-skill-content]");
@@ -121,21 +119,15 @@ test("native UI skill creation/edit/disable changes the NEXT turn system prompt"
     );
     await page.locator('[data-action="save-skill"]').click();
     await expect(createdSkill.locator('[data-action="open-skill"]')).toBeFocused();
-    await page.keyboard.press("Escape");
-    await expect(dialog).toHaveCount(0);
-    await expect(trigger).toBeFocused();
     await turn("After creation");
     const prompt = requests[1]?.messages.find((m) => m.role === "system")?.content ?? "";
     expect(prompt).toContain("ui-reader: Use for UI-created board reviews.");
     expect(prompt).not.toContain("BODY NOT IN PROMPT");
     expect(requests[1]?.tools.some((tool) => tool.function.name === "load_skill")).toBe(true);
-    await trigger.click();
     await createdSkill.locator('input[type="checkbox"]').click();
     await expect(createdSkill.locator('input[type="checkbox"]')).not.toBeChecked();
-    await page.keyboard.press("Escape");
     await turn("After disabling");
     expect(requests[2]?.messages.find((m) => m.role === "system")?.content).not.toContain("ui-reader:");
-    await trigger.click();
     await createdSkill.locator('input[type="checkbox"]').click();
     await expect(createdSkill.locator('input[type="checkbox"]')).toBeChecked();
     await createdSkill.locator('[data-action="open-skill"]').click();
@@ -145,14 +137,11 @@ test("native UI skill creation/edit/disable changes the NEXT turn system prompt"
     );
     await page.locator('[data-action="save-skill"]').click();
     await expect(content).toHaveCount(0);
-    await page.keyboard.press("Escape");
     await turn("After edit");
     expect(requests[3]?.messages.find((m) => m.role === "system")?.content).toContain(
       "ui-reader: Updated metadata for next turn.",
     );
-    await trigger.click();
     await page.screenshot({ path: test.info().outputPath("skills-native.png") });
-    await page.keyboard.press("Escape");
     expect(await outboundAttempts(app)).toEqual([]);
     if (process.env.VERA_E2E_EVIDENCE_DIR) {
       const loaded = await app.evaluate(({ app, BrowserWindow }) => ({
@@ -234,7 +223,7 @@ test("browser skills editor fits en/ro/de, light/dark and every text scale with 
       await page.evaluate(() => localStorage.clear());
       await page.reload();
       await page.locator('[data-i18n="nav.settings"]').click();
-      await changeSetting(page, "language", () => page.locator("#language").selectOption(lang));
+      await changeSetting(page, "appearance", () => page.locator("#language").selectOption(lang));
       await expect(page.locator("html")).toHaveAttribute("lang", lang);
       if (await page.locator('[data-action="leave-settings"]').isVisible())
         await page.locator('[data-action="leave-settings"]').click();
@@ -242,15 +231,13 @@ test("browser skills editor fits en/ro/de, light/dark and every text scale with 
       await page.locator("[data-workbench-entry] .workbench-group-name").click();
       await page.locator('[data-action="edit-workbench-overview"]').click();
       await page.locator('[data-project-section="skills"]').click();
-      const trigger = page.locator('[data-action="skills-settings"]').first();
-      await trigger.click();
-      const dialog = page.locator(".skills-dialog");
-      await dialog.locator("[data-skill-name]").fill("browser-reader");
-      await dialog.locator('[data-action="create-skill"]').click();
-      await expect(dialog.locator(".skills-list li")).toHaveCount(2);
-      await expect(dialog.locator(".skills-list li").filter({ hasText: "create-plugin" })).toHaveCount(1);
-      await expect(dialog.locator(".skills-list li").filter({ hasText: "browser-reader" })).toHaveCount(1);
-      await page.keyboard.press("Escape");
+      // The Skills section shows the skills panel inline in the workbench editor.
+      const panel = page.locator(".workbench-editor [data-skills-panel]");
+      await panel.locator("[data-skill-name]").fill("browser-reader");
+      await panel.locator('[data-action="create-skill"]').click();
+      await expect(panel.locator(".skills-list li")).toHaveCount(2);
+      await expect(panel.locator(".skills-list li").filter({ hasText: "create-plugin" })).toHaveCount(1);
+      await expect(panel.locator(".skills-list li").filter({ hasText: "browser-reader" })).toHaveCount(1);
       for (const theme of ["light", "dark"])
         for (const scale of [0.875, 1, 1.125, 1.25, 1.5]) {
           await page.evaluate(
@@ -265,11 +252,9 @@ test("browser skills editor fits en/ro/de, light/dark and every text scale with 
           await expect
             .poll(() => page.locator("html").evaluate((el) => getComputedStyle(el).fontSize))
             .toBe(`${14 * scale}px`);
-          await trigger.focus();
-          await page.keyboard.press("Enter");
-          await expect(dialog).toBeVisible();
-          expect(await dialog.evaluate((el) => el.scrollWidth <= el.clientWidth)).toBe(true);
-          await dialog.locator('[data-action="open-skill"]').focus();
+          await expect(panel).toBeVisible();
+          expect(await panel.evaluate((el) => el.scrollWidth <= el.clientWidth)).toBe(true);
+          await panel.locator('[data-action="open-skill"]').focus();
           await page.keyboard.press("Enter");
           await expect(page.locator("[data-skill-content]")).toBeFocused();
           const editor = page.locator("dialog[open]").last();
@@ -278,10 +263,7 @@ test("browser skills editor fits en/ro/de, light/dark and every text scale with 
           if (scale === 1.5)
             await page.screenshot({ path: test.info().outputPath(`skills-${lang}-${theme}.png`) });
           await page.keyboard.press("Escape");
-          await expect(dialog.locator('[data-action="open-skill"]')).toBeFocused();
-          await page.keyboard.press("Escape");
-          await expect(dialog).toHaveCount(0);
-          await expect(trigger).toBeFocused();
+          await expect(panel.locator('[data-action="open-skill"]')).toBeFocused();
         }
     }
     expect(errors).toEqual([]);

@@ -250,6 +250,13 @@ reports a `requires` that names no catalog plugin, and catalog installs review r
 from a folder or zip ignore it. Platform behaviour such as risk
 policy, approvals, timeouts and the serial-port guard is not repeated in the packages.
 
+Each manifest's version records its evidence level (table and reasons in `00_Planning/plan/plugin-management.md`):
+1.0.0 only with every real-tool and real-hardware proof on each declared platform (today only the Windows-only
+ltspice), 0.3.0 when only native Ubuntu is open, 0.2.0 when the real tool ran on Windows but hardware or cloud proof
+is open, 0.1.0 with offline evidence only. Each bundled helper's `VERSION` (its `--version`, result and state records) equals its plugin's manifest version.
+Every manifest carries a one-line `summary` (at most 160 characters) for the catalog card, written from its
+description; the description keeps the details for the install review.
+
 Catalog discovery metadata for the twenty real packages lives in the maintainers' catalog.yaml map,
 not plugin manifests. It lists factual activity/keyword classifications. Publication dates remain
 absent without catalog release evidence; no commit/build/install timestamps are substituted.
@@ -258,7 +265,7 @@ that source metadata reaches the deterministic bundled index unchanged.
 
 ## Public interface
 
-- `electronics-calc` 1.0.0, ecosystem `electronics` (Electronics design pack, Calculations, default on;
+- `electronics-calc` 0.3.0, ecosystem `electronics` (Electronics design pack, Calculations, default on;
   catalog activity `design`), Windows x64/Linux x64: program `elec-calc` = `scripts/elec_calc.py`, a PEP 723
   script on the standard library only (no dependency), `--version` probe, timeout 120 s.
   `elec-calc <dc|divider|rc|losses|thermal|tolerance|report> (--json TEXT | --input FILE) [--run-id ID]`;
@@ -287,7 +294,7 @@ that source metadata reaches the deterministic bundled index unchanged.
   `uv run --offline --script` and the opt-in `VERA_ELEC_UV` run (provisioner with uv 0.11.25 on a freshly
   downloaded managed CPython 3.13, 2026-11-12); native Ubuntu has not been run.
 
-- `kicad` 1.0.0, ecosystem `electronics` (Electronics design pack, group Schematic and PCB (KiCad), default on;
+- `kicad` 0.3.0, ecosystem `electronics` (Electronics design pack, group Schematic and PCB (KiCad), default on;
   activity `design`), Windows x64/Linux x64. Program `kicad-cli`: find `%PATH%` then
   `%ProgramFiles%/KiCad/*/bin/kicad-cli.exe` (Windows), `$PATH` then `/usr/bin/kicad-cli` (Linux), probe
   `kicad-cli version` against `>=10.0,<11`, hint to https://www.kicad.org/download/; only
@@ -306,7 +313,7 @@ that source metadata reaches the deterministic bundled index unchanged.
   (exit 2) or run, source, output (exit 3). Verified with KiCad 10.0.8 on Windows 11 (2026-11-12), also through the
   opt-in `VERA_KICAD_UV` run (real uv 0.11.25, managed CPython 3.13, ProgramRunner); native Ubuntu has not been run.
 
-- `parts-search` 1.0.0, ecosystem `electronics` (Electronics design pack, group Component selection, default on;
+- `parts-search` 0.3.0, ecosystem `electronics` (Electronics design pack, group Component selection, default on;
   activity `design`), Windows x64/Linux x64. Program `parts-compare` = `scripts/parts_compare.py` (PEP 723, standard
   library only, no network module imported), timeout 120 s; `parts-compare {--version,--help,-h}` and
   `parts-compare compare *` are safe. `parts-compare compare (--json TEXT | --input FILE) [--run-id ID]
@@ -322,7 +329,7 @@ that source metadata reaches the deterministic bundled index unchanged.
   tool `parts_search` (see [parts search](parts-search.md)). Verified on Windows 11 with the toolchain Python and
   the opt-in `VERA_PARTS_UV` run (real uv, managed CPython 3.13, 2026-11-13); native Ubuntu has not been run.
 
-- `ngspice` 1.0.0, ecosystem `electronics` (Electronics design pack, group Simulation (ngspice), default on; activity
+- `ngspice` 0.3.0, ecosystem `electronics` (Electronics design pack, group Simulation (ngspice), default on; activity
   `design`), Windows x64/Linux x64. Program `ngspice`: find `C:/Spice64/bin/ngspice_con.exe`,
   `%ProgramFiles%/Spice64/...`, `%LOCALAPPDATA%/Programs/Spice64/...` (Windows), `$PATH`, `/usr/bin/ngspice`,
   `/usr/local/bin/ngspice` (Linux); download (windows-x64) the official ngspice-47 `.7z` (SHA-256 5922...8f5a,
@@ -374,7 +381,7 @@ that source metadata reaches the deterministic bundled index unchanged.
   run (`vera_point` with `table()` parameters; temperature ascending) and writes no absolute path into results
   (`<LTspice library>`, workbench-relative paths, file names). Verified with LTspice 26.1.1 on Windows 11
   (2026-11-13), including the same requests against ngspice-47.
-- `arduino-cli` 1.0.0, ecosystem `arduino` (Arduino pack, group "Sketches (Arduino CLI)", default on; activities
+- `arduino-cli` 0.2.0, ecosystem `arduino` (Arduino pack, group "Sketches (Arduino CLI)", default on; activities
   `build`, `flash`), Windows x64 and Linux x64, requires serial-monitor. Program `arduino-cli`: the official 1.6.0 zip
   (Windows) or tar.gz (Linux) by SHA-256, `preferDownload`, else PATH (`/usr/local/bin`, `/usr/bin` on Linux) in
   range `>=1.6,<2`; every `arduino-cli *` command blocked. Program `arduino-tool` = `scripts/arduino_tool.py` (PEP 723,
@@ -408,7 +415,7 @@ that source metadata reaches the deterministic bundled index unchanged.
   exit 0 pass, 2 blocked, 3 fail or error. Verified with arduino-cli 1.6.0, arduino:avr 1.8.8 and arduino:samd 1.8.14
   on Windows 11 (2026-11-13); real upload, serial readback, two boards and native Ubuntu are pending hardware.
 
-- `scpi-instruments` 1.0.0, ecosystem `lab` (pack Embedded lab, group Bench instruments (SCPI), default on; activity
+- `scpi-instruments` 0.2.0, ecosystem `lab` (pack Embedded lab, group Bench instruments (SCPI), default on; activity
   `measurement`), Windows x64/Linux x64. Program `scpi` = `scripts/scpi_tool.py` (PEP 723: PyVISA 1.16.2, pyvisa-py 0.8.1,
   pyserial 3.5, pyusb 1.3.1), env `SCPI_REGISTRY=${workbench}/lab/resources.json`, `resources {option: --instrument,
   kinds: [visa], grace: 10, cleanup: [close], cleanupTimeout: 60}`, timeout 120 s. Operations (first argument only, any
@@ -435,7 +442,7 @@ that source metadata reaches the deterministic bundled index unchanged.
   1.16.2 + pyvisa-py 0.8.1 through the provisioner, TCPIP SOCKET to local simulated servers, 2026-11-13); no real
   instrument or native Ubuntu run yet.
 
-- `lab-validation` 1.0.0, ecosystem `lab` (pack Embedded lab, group Measurement validation, default on; activity
+- `lab-validation` 0.2.0, ecosystem `lab` (pack Embedded lab, group Measurement validation, default on; activity
   `measurement`), Windows x64/Linux x64. Program `lab-validate` = `scripts/lab_validate.py` (PEP 723, standard library,
   Python >= 3.11), timeout 600 s; every operation is `safe`: `inspect --path|--request` (prints, writes nothing),
   `normalize`, `measure`, `align`, `compare --request FILE`, `report --run DIR (1-20)`. A format 1 request (at most
@@ -460,7 +467,7 @@ that source metadata reaches the deterministic bundled index unchanged.
   3 incomplete/error; printed documents at most 11 000 UTF-16 units. No network, process or language model. Verified
   on Windows 11 (toolchain CPython 3.12 and 3.11, VERA's real runner, real uv 0.11.25 provisioning, 2026-11-13); no
   real capture of a real circuit and no native Ubuntu run yet.
-- `hil-testing` 1.0.0, ecosystem `lab` (pack Embedded lab, group Hardware-in-the-loop tests, default on; activities
+- `hil-testing` 0.2.0, ecosystem `lab` (pack Embedded lab, group Hardware-in-the-loop tests, default on; activities
   `measurement`, `debug`, `flash`), Windows x64/Linux x64. Program `hil` = `scripts/hil_tool.py` (PEP 723, standard
   library) with `plan: hil`: `hil check <plan>` (safe, compiled by core, nothing started) and `hil run <plan>` (rule
   device-read, raised to the plan's highest operation risk and the firmware effect; one approval; core executes) never
@@ -471,7 +478,7 @@ that source metadata reaches the deterministic bundled index unchanged.
   lab-validate.compare, await. Results in `embedded-lab-results/<run-id>/` (plan.json, result.json kind
   `hil-test-result`, events.jsonl, steps/). Verified on Windows 11 offline and with real helper processes (2026-11-14);
   no real board, probe or native Ubuntu run yet.
-- `gdb-debug` 1.0.0, ecosystem `lab` (pack Embedded lab, group Debugging (GDB and OpenOCD), default on; activities
+- `gdb-debug` 0.2.0, ecosystem `lab` (pack Embedded lab, group Debugging (GDB and OpenOCD), default on; activities
   `debug`, `firmware-analysis`), Windows x64/Linux x64. `gdb-elf inspect <elf>` and `gdb-elf diagnose <run> [--elf]`
   (safe, standard library, no process): SHA-256, class, machine, ARM Tag_CPU_name/arch/profile, float ABI, entry,
   segments, symbol counts, GNU build id, DWARF 2-5 unit versions, producers, languages and the `-O` level when a
@@ -485,7 +492,7 @@ that source metadata reaches the deterministic bundled index unchanged.
   openocd.log). Exit 0 pass, 2 refused before any process, 3 incomplete/blocked/error. Verified on Windows 11 offline
   (fixture ELFs from zig cc 0.13.0, pyelftools 0.32 oracle, GDB/OpenOCD stand-ins, VERA's real runner, 2026-11-14); no
   real GDB, OpenOCD, probe, board or native Ubuntu run yet.
-- `power-profiler` 1.0.0, ecosystem `lab` (pack Embedded lab, group Power profiling (Joulescope), default on; activity
+- `power-profiler` 0.2.0, ecosystem `lab` (pack Embedded lab, group Power profiling (Joulescope), default on; activity
   `measurement`), Windows x64/Linux x64. `power-profile` (PEP 723, Python >= 3.12, `pyjoulescope_driver==2.5.5`):
   `tools` (safe; driver version, WinUSB DLL / Joulescope udev rule, nothing changed), `tools --list` (device-read;
   device paths), `identify --meter <alias>` (device-read), `capture --meter <alias> --duration <0.01-3500> --rate
@@ -498,7 +505,7 @@ that source metadata reaches the deterministic bundled index unchanged.
   blocked before any setting changed, 3 incomplete, 4 error. Verified on Windows 11 offline (closed-form fixtures, the
   driver stand-in, VERA's real runner, lab-validate on the written requests) and with the real pyjoulescope_driver 2.5.5
   from PyPI without a meter (2026-11-14); no JS220, board or native Ubuntu run yet.
-- `kicad-layout` 1.0.0, ecosystem `electronics` (Electronics design pack, group "PCB placement and local routing
+- `kicad-layout` 0.3.0, ecosystem `electronics` (Electronics design pack, group "PCB placement and local routing
   (KiCad)", default off; activity `design`), Windows x64 and Linux x64. Program `kicad-cli`: found as the kicad
   plugin finds it, range `>=10.0,<11`, every `kicad-cli {sch,pcb,fp,sym,jobset}` command blocked. Program
   `kicad-layout-tool` = `scripts/kicad_layout_tool.py` (PEP 723: kicad-python 0.8.0, protobuf 5.29.6, pynng 0.9.0),
@@ -524,7 +531,7 @@ that source metadata reaches the deterministic bundled index unchanged.
   with KiCad 10.0.8 on Windows 11 (2026-11-13); native Ubuntu has not been run. Requests hold at most 1024
   operations (a routed request from freerouting).
 
-- `renode` 1.0.0, ecosystem `lab` (pack Embedded lab, group Virtual boards (Renode), default on; activities
+- `renode` 0.3.0, ecosystem `lab` (pack Embedded lab, group Virtual boards (Renode), default on; activities
   testing/firmware-analysis), Windows x64/Linux x64.
   - Engine program `renode`: found (`==1.17.0`), or downloaded and SHA-256-checked from the 1.17.0 portable archives
     (`renode_1.17.0-portable/renode[.exe]`). Every direct call is blocked.
@@ -545,7 +552,7 @@ that source metadata reaches the deterministic bundled index unchanged.
     times out, the DAC write is unmodeled, the engine owns no TCP/UDP endpoint, and engine.log shows no download. The
     network was not disabled for that run. No native Ubuntu run yet.
 
-- `zephyr` 1.0.0, ecosystem `lab` (pack Embedded lab, group Zephyr builds and tests, default on; activities
+- `zephyr` 0.2.0, ecosystem `lab` (pack Embedded lab, group Zephyr builds and tests, default on; activities
   build/testing/flash), Windows x64/Linux x64. Supported: Zephyr >=4.4,<4.6, Zephyr SDK >=1.0.1 (toolchain variant
   `zephyr`, GNU toolchain in `<sdk>/gnu/`), verified board `stm32f4_disco`.
   - `zephyr` (PEP 723, pinned west 1.5.0, cmake 4.4.4, ninja 1.13.2, pytest 9.2.0 and Zephyr's build/Twister imports):
@@ -566,7 +573,7 @@ that source metadata reaches the deterministic bundled index unchanged.
     build-only, ztest pass/skip/fail on the real Renode 1.17.0 profile, west flash through the real STM32CubeProgrammer
     2.23.0 with no probe attached. No board flashed, no native Ubuntu run yet.
 
-- `platformio` 1.0.0, ecosystem `lab` (pack Embedded lab, group PlatformIO projects, default on; activities
+- `platformio` 0.2.0, ecosystem `lab` (pack Embedded lab, group PlatformIO projects, default on; activities
   build/testing/flash), Windows x64/Linux x64. PlatformIO Core 6.2.0 pinned with its dependency closure; verified:
   `platformio/ststm32@20.0.0` + board `disco_f407vg` + framework `cmsis` (upload `stlink`), `platformio/native@1.2.1`,
   Unity 2.6.1.
@@ -586,7 +593,7 @@ that source metadata reaches the deterministic bundled index unchanged.
   - Verified on Windows 11 offline (real PlatformIO parser, stand-in commands, VERA's real runner) and with the real
     tools (2026-11-14): ststm32 20.0.0/CMSIS builds of two environments offline, native Unity on WinLibs GCC 16.2.0,
     device suites and board-basics on the real Renode 1.17.0. No board uploaded, no native Ubuntu run yet.
-- `freerouting` 1.0.0, ecosystem `electronics` (group "PCB autorouting (Freerouting)", default off; activity
+- `freerouting` 0.3.0, ecosystem `electronics` (group "PCB autorouting (Freerouting)", default off; activity
   `design`), Windows x64 and Linux x64, requires kicad-layout.
   - Programs: `java` (Eclipse Temurin 25.0.5+8 JRE download, `java *` blocked); `freerouting` (the 2.5.0 jar, a
     `file` program: verified, never run, version from its file name, `freerouting *` blocked); `kicad-cli` (find);
@@ -600,7 +607,7 @@ that source metadata reaches the deterministic bundled index unchanged.
   - Verified with Freerouting 2.5.0, Temurin 25.0.5 and KiCad 10.0.8 on Windows 11 (2026-11-13): the fixture routes
     to 0 unconnected, objectives pass. Native Ubuntu has not been run.
 
-- `analysis-skills`1.0.0, general, Windows x64/Linux x64, is a format1 skills-only package with no
+- `analysis-skills` 0.3.0, general, Windows x64/Linux x64, is a format1 skills-only package with no
   programs or rules. Its firmware-comparator procedure and seven-section comparison template load
   through source plugin. It compares explicit captured runs with parse_log, documented conditions,
   release notes and criterion evidence, saves a session artifact and never operates hardware/tests.
@@ -608,10 +615,9 @@ that source metadata reaches the deterministic bundled index unchanged.
   control when available; missing target/setup/criteria blocks readiness. Plugin commands are
   optional future instructions with risk levels, and todo records preparation, not measurements.
   Folder and bundled-catalog zip installation are covered by analysis-skills.test.ts and
-  prepare-plugins.test.ts; actual SessionService/npm CLI replay lives in cli.test.ts. Separate
-  opt-in real-model rubric/hashes/results live beside each skill under verification/.
+  prepare-plugins.test.ts.
 
-- `esp32-efuse` 1.0.0, ESP32, Windows x64/Linux x64: the official Security (irreversible)
+- `esp32-efuse` 0.2.0, ESP32, Windows x64/Linux x64: the official Security (irreversible)
   group defaults off. Both espefuse and espsecure use pip esptool>=5,<6 and help-based version
   probes. summary/dump/check-error/get-custom-mac/adc-info are device-read; every burn-* plus
   write/read-protect-efuse and set-flash-voltage are irreversible with the OTP/brick note.
@@ -625,9 +631,9 @@ that source metadata reaches the deterministic bundled index unchanged.
   optionally provisions real v5 using VERA_EFUSE_UV and records raw process output/exit codes,
   replay events, durable approvals and persistent virtual-state effects. No hardware burn runs.
 
-- `git` 1.0.0 discovers user Git >=2.40 through PATH and standard Windows/Linux paths, without downloads. Fixed prefix/env plus the mandatory no-ext-diff execution guard neutralise fsmonitor, hooks, pager and external diff; an inert no-hooks/README.txt preserves the hooks directory in catalog zips. `optionSyntax: git` keeps option case/arity/boundaries for highest-risk rules, blocking executable aliases, configuration overrides and explicit helpers. Read inspections/listings are safe, mutations/remotes default to device-write, discard/force/delete paths irreversible. Skills git-inspect/git-commit/git-branches bound history, cite hashes, stage reviewed explicit paths, use messages and preserve conflicts. Git bypasses the write queue/Changes panel; run logs and the index watcher retain visibility. Local filters/textconv and other user Git configuration are not sandboxed. tests/integration/git.test.ts exercises actual catalog installation, native Git markers, replay Ask and controlled credential failure; Windows/Linux environment receipts name the actual platform.
+- `git` 0.3.0 discovers user Git >=2.40 through PATH and standard Windows/Linux paths, without downloads. Fixed prefix/env plus the mandatory no-ext-diff execution guard neutralise fsmonitor, hooks, pager and external diff; an inert no-hooks/README.txt preserves the hooks directory in catalog zips. `optionSyntax: git` keeps option case/arity/boundaries for highest-risk rules, blocking executable aliases, configuration overrides and explicit helpers. Read inspections/listings are safe, mutations/remotes default to device-write, discard/force/delete paths irreversible. Skills git-inspect/git-commit/git-branches bound history, cite hashes, stage reviewed explicit paths, use messages and preserve conflicts. Git bypasses the write queue/Changes panel; run logs and the index watcher retain visibility. Local filters/textconv and other user Git configuration are not sandboxed. tests/integration/git.test.ts exercises actual catalog installation, native Git markers, replay Ask and controlled credential failure; Windows/Linux environment receipts name the actual platform.
 
-- `stm32-cubeprog` 1.0.0, ecosystem `stm32` (STM32 pack, Programming (STM32CubeProgrammer), default on), Windows
+- `stm32-cubeprog` 0.2.0, ecosystem `stm32` (STM32 pack, Programming (STM32CubeProgrammer), default on), Windows
   x64/Linux x64: find-only program `stm32_programmer_cli` (program names are lower case; Windows matches the file
   case-insensitively): Windows `%PATH%`, `%ProgramFiles%/STMicroelectronics/STM32Cube/STM32CubeProgrammer/bin`,
   `%SystemDrive%/ST/STM32CubeCLT*` and `STM32CubeIDE_*` plugins; Linux `~/STMicroelectronics/...`,
@@ -645,7 +651,7 @@ that source metadata reaches the deterministic bundled index unchanged.
   authentication, HSM licenses and probe power irreversible (typed command); `-script` blocked. catalog.yaml reviews
   the `{-ob,-otp,-psrss} displ` rule for the `otp` token. Tests check every command of the recorded 2.23.0 help.
 
-- `microchip-pymcuprog` 1.0.0, ecosystem `microchip` (Microchip pack, Programming (pymcuprog), default on), Windows
+- `microchip-pymcuprog` 0.2.0, ecosystem `microchip` (Microchip pack, Programming (pymcuprog), default on), Windows
   x64/Linux x64: pip `pymcuprog>=3.19,<4` (probe `pymcuprog version (\d+(?:\.\d+)+)`, range `>=3.19,<4`), timeout
   300 s, `optionSyntax: pymcuprog`. The projection mimics pymcuprog 3.19.4.61's argparse (abbreviations, attached
   short values with one leading `=` dropped as argparse 3.12+ does, grouped short options, last-wins repeats, action anywhere, `-l` lists that run to the next option but take only an attached
@@ -657,7 +663,7 @@ that source metadata reaches the deterministic bundled index unchanged.
   single fuse changes. Opt-in VERA_MCU_UV provisions real pymcuprog, converts a hex file and fails a ping on a
   missing port; board acceptance is pending hardware.
 
-- `can-python` 1.0.0, ecosystem `can` (CAN pack, Bus capture and transmit, default on), Windows x64/Linux x64:
+- `can-python` 0.2.0, ecosystem `can` (CAN pack, Bus capture and transmit, default on), Windows x64/Linux x64:
   program `can` = `scripts/can_bus.py` on `python-can[serial,gs-usb,pcan,multicast]==4.6.1` (imports python-can
   lazily, so `--version` needs no dependency), timeout 300 s. `can list` prints `{configs, drivers}`:
   detected configs for pcan/vector/kvaser/slcan/gs_usb/socketcan and per-backend driver availability
@@ -672,7 +678,7 @@ that source metadata reaches the deterministic bundled index unchanged.
   canonical lengths and --brs needs --fd; replay stops right after --max-messages. Rules: list/help/version
   safe, capture device-read, capture `--active` device-write, send/replay irreversible (confirm word =
   subcommand), backstop `can * {send,replay} *` irreversible.
-- `can-dbc` 1.0.0, ecosystem `can` (DBC decoding, default on): pip `cantools>=45,<46` (version probe range
+- `can-dbc` 0.3.0, ecosystem `can` (DBC decoding, default on): pip `cantools>=45,<46` (version probe range
   `>=45,<46`; dump/list/convert/generate_c_source safe; decode/plot blocked because they read stdin, monitor
   blocked as an interactive view) and `can-decode` = `scripts/can_decode.py` on cantools 45.1.2 + python-can
   4.6.1: `--dbc --input [--id]... [--limit] [--no-choices] [--no-strict]`, one `time id message sig=value unit`
@@ -680,7 +686,7 @@ that source metadata reaches the deterministic bundled index unchanged.
   Opt-in VERA_CAN_UV acceptance captures, transmits after typed words and decodes on udp_multicast; real
   adapters and Linux vcan0 remain unverified. Optional can-utils is not shipped.
 
-- `wireshark-tshark` 1.0.0, ecosystem `wireshark` (own Wireshark pack, Capture analysis group, default
+- `wireshark-tshark` 0.3.0, ecosystem `wireshark` (own Wireshark pack, Capture analysis group, default
   on), Windows x64/Linux x64: find-only `tshark` (Windows `%PATH%` then `%ProgramFiles%/Wireshark/tshark.exe`;
   Linux `$PATH` then `/usr/bin/tshark`), never downloaded; missing shows the Wireshark/distribution hint with
   its download link. `--version` probe without a range (rules measured on 4.6.8), timeout 300 s.
@@ -693,7 +699,7 @@ that source metadata reaches the deterministic bundled index unchanged.
   generated sample; the opt-in VERA_TSHARK_LIVE_INTERFACE test captured self-sent loopback datagrams after
   approval on Windows/Npcap. Linux execution remains unverified. `-o extcap.*` credential values are not refused.
 
-- `sigrok` 1.0.0, general, Windows x64/Linux x64/Linux arm64: provision the
+- `sigrok` 0.2.0, general, Windows x64/Linux x64/Linux arm64: provision the
   SHA-256-pinned DDP PulseView 66540df asset or use a local sigrok-cli fallback.
   An installed pinned executable takes precedence. AppImage arguments apply
   to managed downloads only and force extraction before CLI launch. The LAN HTTPS
@@ -702,7 +708,7 @@ that source metadata reaches the deterministic bundled index unchanged.
   workflow. Skills cover bounded srzip capture, background streaming, offline
   decoding, instrument reads and approved changes, and the Hantek/ATK drivers.
 
-- `probe-rs` 1.0.0, general, Windows x64/Linux x64/Linux arm64: probe-rs exactly 0.32.0,
+- `probe-rs` 0.2.0, general, Windows x64/Linux x64/Linux arm64: probe-rs exactly 0.32.0,
   PATH then ~/.cargo/bin discovery, explicit user-triggered SHA-256-pinned portable fallback.
   A found unsupported version reports range/unavailable and takes precedence over the download.
   All three official archive hashes/member layouts and Linux host headers are inspected. Four
@@ -712,7 +718,7 @@ that source metadata reaches the deterministic bundled index unchanged.
   Hardware acceptance on Nucleo/ST-Link, RP2040/CMSIS-DAP and ESP32-C3/USB-JTAG on both systems and
   real RTT with closed stdin/down channels remains outstanding. Replay is explicitly simulated.
 
-- `binutils` 1.0.0, general, windows-x64/linux-x64/linux-arm64: ten `arm-none-eabi-` and
+- `binutils` 0.3.0, general, windows-x64/linux-x64/linux-arm64: ten `arm-none-eabi-` and
   `riscv-none-elf-` programs (`size`, `nm`, `readelf`, `objdump`, `addr2line`), all safe. Per-program
   `--version` probes, timeout 60 s. Ordered PATH/ST/PlatformIO/Arduino/Zephyr/xPack discovery;
   only a user action installs a missing tool from SHA-256-pinned xPack ARM 15.2.1-1.1 or RISC-V
@@ -723,7 +729,7 @@ that source metadata reaches the deterministic bundled index unchanged.
   Windows/native Ubuntu x64 acceptance uses real local archives via VERA_BINUTILS_ARCHIVES;
   linux-arm64 archive hashes/members/AArch64 host headers are inspected, not executed.
 
-- `serial-monitor` 1.0.0, ecosystem `general`, platforms `windows-x64`, `linux-x64`, program `serial` with
+- `serial-monitor` 0.2.0, ecosystem `general`, platforms `windows-x64`, `linux-x64`, program `serial` with
   `install: { script: scripts/serial_monitor.py }` (pyserial 3.5), probed with `--version`
   (`serial-monitor <version>`).
 - Commands (spec `.agentic/specs/REQ-FUNC-42818bb7.md`): `serial list` prints a JSON array of `{port, vid_pid,
@@ -733,13 +739,13 @@ that source metadata reaches the deterministic bundled index unchanged.
   [--eol crlf|lf|cr|none] [--duration 1] ...` writes one line, then reads like capture.
 - Exit codes: 0 done, 2 invalid arguments (no port opened), 3 port failure (EACCES adds the `dialout`/`uucp`
   instruction, others a list-again hint), 4 `--until` never matched.
-- `esp32-esptool` 1.0.0, ecosystem `esp32`, `requires: [serial-monitor]`, program `esptool` with
+- `esp32-esptool` 0.2.0, ecosystem `esp32`, `requires: [serial-monitor]`, program `esptool` with
   `install: { pip: "esptool>=5,<6" }`, resolved to `<runtime>/tools/esp32-esptool/bin/esptool[.exe]`, probed with
   `esptool version` (`v(\d+\.\d+\.\d+)`, range `>=5,<6`; any other version is unavailable with problem `range`),
   program timeout 120 s. Skill `esp32-flash`: port and chip first, offsets and images from `build/flasher_args.json`
   as explicit pairs, stop for encrypted or secure-boot builds, `Hash of data verified.` per file or `verify-flash`,
   boot log with `serial capture --port P --reset`.
-- `micropython` 1.0.0, ecosystem `micropython` (Arduino pack, group "MicroPython", default on; activities `flash`,
+- `micropython` 0.2.0, ecosystem `micropython` (Arduino pack, group "MicroPython", default on; activities `flash`,
   `testing`), Windows x64 and Linux x64. Program `micropython-tool` = `scripts/micropython_tool.py` (PEP 723,
   `mpremote==1.29.0`, `pyserial==3.5`, `platformdirs==4.14.0`), timeout 300 s. Risks: `ports`, `report` safe;
   `identify`, `files`, `read-file`, `capture-output`, `reset` device-read (notes: interrupts or restarts the running
@@ -761,7 +767,7 @@ that source metadata reaches the deterministic bundled index unchanged.
   `micropython-tool-result`, `report.md`, `files/`, `output.txt`); exit 0 pass, 1 fail, 2 blocked, 3 incomplete or
   error. Verified against the simulated board with the fake client and with the real mpremote 1.29.0 (opt-in); no real
   board yet.
-- `circuitpython` 1.0.0, ecosystem `circuitpython` (Arduino pack, group "CircuitPython", default on; activities `flash`,
+- `circuitpython` 0.2.0, ecosystem `circuitpython` (Arduino pack, group "CircuitPython", default on; activities `flash`,
   `testing`), Windows x64 and Linux x64. Program `circuitpython-tool` = `scripts/circuitpython_tool.py` (PEP 723,
   `circup==3.1.0`, `pyserial==3.5`), timeout 300 s. Risks: `devices`, `report` safe; `identify`, `inspect-code`,
   `inspect-libraries`, `capture-output` device-read (660 s); `capture-output * --reload *`, `prepare-libraries` (900 s,
@@ -794,7 +800,7 @@ that source metadata reaches the deterministic bundled index unchanged.
   only); the runner never passes them. Verified on simulated volumes and console with the fake and the real circup
   3.1.0 (opt-in); no real board or real bundle download yet.
 
-- `bus-tools` 1.0.0, ecosystem `lab` (Arduino pack, group "Bus transactions (I2C, SPI, UART)", default on; activities
+- `bus-tools` 0.1.0, ecosystem `lab` (Arduino pack, group "Bus transactions (I2C, SPI, UART)", default on; activities
   `testing`, `debug`, `communication`), Windows x64 and Linux x64. Program `bus-tool` = `scripts/bus_tool.py` (PEP 723,
   `flatbuffers==25.12.19`, `pyserial==3.5`), timeout 120 s, env `BUS_REGISTRY=${workbench}/lab/resources.json`,
   `resources {option: --adapter, kinds: [bus-adapter], grace: 5, cleanup: [release], cleanupTimeout: 30}`. Risks:
@@ -820,7 +826,7 @@ that source metadata reaches the deterministic bundled index unchanged.
   `arduino-iot-results/<run-id>/` (`bus-tool-result`, `report.md`, capture.bin and capture.csv); exit 0/1/2/3.
   Verified only against the simulated adapter; no real Bus Pirate yet (NACK text, UART async receive and per-mode limits
   unconfirmed).
-- `mqtt-tools` 1.0.0, ecosystem `iot` (Arduino pack, group "MQTT telemetry and commands", default on; activities
+- `mqtt-tools` 0.2.0, ecosystem `iot` (Arduino pack, group "MQTT telemetry and commands", default on; activities
   `testing`, `communication`), Windows x64 and Linux x64. Program `mqtt-tool` = `scripts/mqtt_tool.py` (PEP 723,
   `paho-mqtt==2.1.0`), timeout 120 s, `credentials {option: --credential, scope: mqtt}`, no env. Risks: `capabilities`,
   `check-profile` safe; `connect-test`, `subscribe` device-read (3600 s); `publish`, `request` device-write; `publish`
@@ -842,7 +848,7 @@ that source metadata reaches the deterministic bundled index unchanged.
   goes on; SIGTERM (Linux) unsubscribes and disconnects (`stopped`); a Windows Stop leaves the last written state.
   Results `arduino-iot-results/<run-id>/` (`mqtt-tool-result`, `report.md`, `messages.jsonl`); exit 0/1/2/3. Verified
   against the local test broker only; no product broker or device yet, native Ubuntu not run.
-- `ble-tools` 1.0.0, ecosystem `iot` (Arduino pack, group "BLE devices (GATT)", default on; activities `testing`,
+- `ble-tools` 0.2.0, ecosystem `iot` (Arduino pack, group "BLE devices (GATT)", default on; activities `testing`,
   `communication`), Windows x64 and Linux x64. Program `ble-tool` = `scripts/ble_tool.py` (PEP 723, `bleak==3.1.0` with
   `winrt-runtime==4.1.0`, eight `winrt-windows-*==4!10.0.28000.2957` projections and `typing-extensions==4.16.0` on win32,
   `dbus-fast==5.2.0` on linux), timeout 120 s, env `BLE_REGISTRY=${workbench}/lab/resources.json`,
@@ -877,7 +883,7 @@ that source metadata reaches the deterministic bundled index unchanged.
   unknown. Results `arduino-iot-results/<run-id>/` (`ble-tool-result`, `report.md`, notification files); exit 0/1/2/3.
   Verified against the fake Bleak and with one real passive scan on Windows 11; no real device read, notify, write or
   pairing yet, native Ubuntu/BlueZ not run.
-- `wokwi` 1.0.0, ecosystem `arduino` (Arduino pack, group "Cloud simulation (Wokwi)", default off; activity `testing`),
+- `wokwi` 0.2.0, ecosystem `arduino` (Arduino pack, group "Cloud simulation (Wokwi)", default off; activity `testing`),
   Windows x64 and Linux x64. Program `wokwi-cli` = the official wokwi-cli 0.29.1 (sha 0aa185144b92) downloaded by
   SHA-256 from its GitHub release (`wokwi-cli-win-x64.exe`, `wokwi-cli-linuxstatic-x64`), version probe
   `--short-version` in range >=0.29.1,<0.29.2, every direct command blocked. Program `wokwi-tool` = `scripts/wokwi_tool.py`
@@ -909,7 +915,7 @@ that source metadata reaches the deterministic bundled index unchanged.
   `serial.log`, optional `trace.vcd`/`screenshot.png`; report writes report.json/.md/.html and junit.xml; exit 0/1/2/3.
   Verified offline against the fake CLI and with the real wokwi-cli 0.29.1 (version, offline lint, argument
   acceptance up to its missing-token check); no cloud run (no token by the user's decision), native Ubuntu not run.
-- `raspberry-pi-linux` 1.0.0, ecosystem `linux` (Arduino pack, group "Raspberry Pi Linux projects", default off;
+- `raspberry-pi-linux` 0.2.0, ecosystem `linux` (Arduino pack, group "Raspberry Pi Linux projects", default off;
   activities `testing`, `debug`), Windows x64 and Linux x64; VERA stays on the host and reaches the board over SSH.
   Program `pi-tool` = `scripts/pi_tool.py` (PEP 723, `asyncssh==2.24.1`, `cryptography==49.0.0`,
   `typing-extensions==4.16.0`), env `PI_REGISTRY`, `resources {option: --board, kinds: [linux-board], grace: 10,

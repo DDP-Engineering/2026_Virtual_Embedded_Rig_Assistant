@@ -31,7 +31,6 @@
     "skipToContent": "Zum Hauptinhalt springen"
   },
   "welcome": {
-    "description": "Ein Arbeitsbereich enthält Dokumente, Notizen und Skills deiner Platine. Deine Arbeit beginnt hier.",
     "workbenches": "Arbeitsbereiche",
     "create": "Arbeitsbereich erstellen"
   },
@@ -39,8 +38,7 @@
     "title": "Anwendungseinstellungen",
     "providers": "Anbieter",
     "webAccess": "Webzugriff",
-    "appearance": "Darstellung",
-    "language": "Sprache",
+    "appearance": "Darstellung und Sprache",
     "updates": "Aktualisierungen",
     "data": "Daten & Datenschutz",
     "about": "Über",
@@ -49,8 +47,6 @@
     "retry": "Erneut versuchen",
     "notifications": "Benachrichtigungen",
     "shortcuts": "Tastenkombinationen",
-    "storage": "Speicher",
-    "configuration": "Konfiguration",
     "partsSearch": "Bauteilsuche",
     "mqttCredentials": "MQTT-Zugangsdaten",
     "wokwiTokens": "Wokwi-Tokens"
@@ -61,14 +57,11 @@
     "dark": "Dunkel",
     "system": "System",
     "textSize": "Textgröße der Oberfläche",
-    "description": "Skaliert Beschriftungen, Menüs und Bedienelemente. Wird automatisch gespeichert.",
     "codePreview": "Code-Vorschau: const board = 1;",
     "interfacePreview": "Vorschau der Oberfläche: Menüs, Beschriftungen und Schaltflächen.",
     "chatSize": "Textgröße der Unterhaltung",
-    "chatDescription": "Gilt für Nachrichten und das Eingabefeld, unabhängig von der Oberfläche.",
     "chatPreview": "So wird eine Nachricht in deiner Unterhaltung aussehen.",
     "codeSize": "Textgröße für Code und Ausgaben",
-    "codeDescription": "Gilt für Codeblöcke, Diffs und technische Textausgaben.",
     "resetSizes": "Standardtextgrößen wiederherstellen",
     "extraSmall": "Sehr klein",
     "small": "Klein",
@@ -82,8 +75,7 @@
     "system": "System",
     "en": "English",
     "ro": "Română",
-    "de": "Deutsch",
-    "description": "Ändert Menüs und Meldungen. Der Agent antwortet in der Sprache, in der du schreibst."
+    "de": "Deutsch"
   },
   "layout": {
     "toggleSidebar": "Seitenleiste ein- oder ausblenden",
@@ -109,7 +101,6 @@
     "close": "Arbeitsbereich schließen",
     "pinnedOversized": "Der Kontext überschreitet 16 KB. Der Agent verwendet die ersten 16 KB. Der vollständige Text wird gespeichert.",
     "readOnly": "Dieser Arbeitsbereich ist schreibgeschützt, da ein anderer Prozess oder eine Sperre ihn besitzt.",
-    "working": "Wird verarbeitet…",
     "save": "Speichern",
     "cancel": "Abbrechen",
     "unknownKey": "Unbekannter Konfigurationsschlüssel erhalten:",
@@ -118,7 +109,6 @@
     "lockGuard": "Die Sperrkoordination ist belegt. Dieser Arbeitsbereich ist schreibgeschützt."
   },
   "providers": {
-    "description": "Verwalte Abonnements sowie API- oder lokale Verbindungen. Mehrere Anbieter können gleichzeitig verwendet werden.",
     "openai": "OpenAI-API",
     "openaiKey": "OpenAI-API-Schlüssel",
     "openaiModel": "OpenAI-Modell (optional)",
@@ -165,8 +155,6 @@
     "testNamed": "{{name}} testen",
     "subscriptions": "Abonnements",
     "connections": "API- / lokale Verbindungen",
-    "multiple": "Diese Verbindungen können neben deinem Abonnement verwendet werden. Wähle Anbieter und Modell in jeder Unterhaltung.",
-    "savedConnections": "Deine Verbindungen",
     "emptyConnections": "Noch keine API- oder lokale Verbindung hinzugefügt.",
     "provider": "Anbieter",
     "other": "Anderer kompatibler Anbieter",
@@ -179,15 +167,10 @@
     "failure": "Anbieterfehler: {{message}}"
   },
   "chatDetail": {
-    "section": "Chat",
     "label": "Detailgrad",
     "verbose": "Ausführlich",
     "normal": "Normal",
     "minimal": "Minimal",
-    "info": "Gilt für alle Sitzungen dieser Werkbank. Alle Details bleiben unter Aktivität verfügbar. Antwortlänge und Befehlsberechtigungen bleiben unverändert.",
-    "verboseInfo": "Jeden Vorgang mit aufklappbaren Argumenten und Ergebnissen anzeigen.",
-    "normalInfo": "Übliche Vorgänge in aufklappbaren Aktivitätsübersichten gruppieren.",
-    "minimalInfo": "Übliche Vorgänge ausblenden und eine Arbeitsanzeige zeigen. Freigaben, Fehler und Downloads bleiben sichtbar.",
     "stopped": "Durchlauf gestoppt oder unterbrochen.",
     "operations": "Vorgänge: {{count}}"
   },
@@ -244,7 +227,6 @@
     "noPreview": "Keine Vorschau verfügbar.",
     "showFull": "Vollständige Ausgabe anzeigen ({{size}} KB)",
     "contextAdvice": "Eingabe kürzen oder das Kontextfenster des benutzerdefinierten Modells in den Anbietereinstellungen anpassen. Das vollständige Transkript bleibt erhalten.",
-    "tokens": "Eingabe- / Ausgabetoken",
     "estimated": "Geschätzte Kontexttoken",
     "counted": "Gezählte Kontexttoken",
     "inputBudget": "Eingabebudget",
@@ -283,12 +265,10 @@
     "contextWindow": "Kontextfenster",
     "contextUnknown": "Die Kontextnutzung ist noch nicht verfügbar",
     "contextPercent": "Kontextnutzung: {{percent}}%",
-    "contextInfo": "Die Nutzung entspricht der zuletzt gemeldeten Anfrage. Schätzungen sind gekennzeichnet; die Kapazität ist bis zur Modellmeldung unbekannt.",
-    "activity": "Agentenaktivität",
-    "activityInfo": "Prompts/Fragen, Antworten und Werkzeugaktionen dieser Sitzung. Öffne eine Zeile für Details.",
-    "activityEmpty": "Noch keine Aktivität. Sende eine Nachricht.",
-    "activityPrompt": "Prompt / Frage",
-    "activityReply": "Antwort",
+    "usageGroup": "Nutzung",
+    "limitsGroup": "Grenzen",
+    "turns": "Durchläufe",
+    "toolCalls": "Werkzeugaufrufe",
     "actionsNamed": "Sitzungsaktionen: {{title}}",
     "archive": "Archivieren",
     "moveUp": "Nach oben verschieben",
@@ -463,7 +443,6 @@
   },
   "skills": {
     "settings": "Skills-Einstellungen",
-    "enabled": "Aktiviert",
     "open": "Öffnen / bearbeiten",
     "name": "Skill-Name (Kleinbuchstaben, Ziffern, Bindestriche)",
     "source": "Speicherort",
@@ -490,7 +469,6 @@
     "channel": "Kanal",
     "latest": "Stabil",
     "beta": "Beta (einschließlich stabil)",
-    "schedule": "Wenn aktiviert, beim Start und alle 6 Stunden prüfen. Jetzt prüfen funktioniert auch bei ausgeschalteten Aktualisierungen.",
     "check": "Jetzt prüfen",
     "idle": "Aktualisierungen wurden noch nicht geprüft.",
     "checking": "Aktualisierungen werden geprüft…",
@@ -521,7 +499,6 @@
     "file": "Datei",
     "edit": "Bearbeiten",
     "view": "Ansicht",
-    "help": "Hilfe",
     "unavailable": "Das Anwendungsmenü konnte nicht geöffnet werden. Erneut versuchen."
   },
   "discovery": {
@@ -553,27 +530,21 @@
     "irreversible": "Diese Regeln aktivierter Plugins nehmen dauerhafte Änderungen vor oder wirken außerhalb des Geräts. Im Bypass laufen sie ohne Rückfrage:"
   },
   "webAccess": {
-    "description": "Internetzugriff getrennt von KI-Anbietern verwalten. Die Tool-Berechtigungen des Workbenchs gelten weiterhin.",
     "loading": "Webzugriff wird geladen…",
     "enabled": "Webzugriff aktivieren",
-    "globalHint": "Gilt für alle Workbenches. Deaktivieren bricht laufende Webanfragen ab und sperrt Webtools.",
     "provider": "Suchanbieter",
     "authentication": "Zugriffsmodus",
     "anonymous": "Anonym — kein Konto erforderlich",
     "apiKeyMode": "Meinen API-Schlüssel verwenden",
-    "anonymousHint": "{{provider}} kann ohne Konto oder Schlüssel innerhalb der kostenlosen Dienstgrenzen verwendet werden. Ein gespeicherter Schlüssel wird in diesem Modus nicht gesendet.",
-    "keyHint": "Ihr {{provider}}-Schlüssel verwendet das Kontokontingent und kann je nach Tarif Kosten verursachen.",
     "apiKey": "{{provider}}-API-Schlüssel",
     "keepKey": "Leer lassen, um den gespeicherten Schlüssel beizubehalten",
     "storedKey": "Gespeicherter Schlüssel verfügbar · {{storage}}",
-    "noKey": "Kein API-Schlüssel für {{provider}} gespeichert.",
     "keyRequired": "Dieser Zugriffsmodus erfordert einen API-Schlüssel.",
     "save": "Speichern",
     "test": "Verbindung testen",
     "removeKey": "Gespeicherten Schlüssel entfernen",
     "saving": "Wird gespeichert…",
     "saved": "Webzugriffseinstellungen gespeichert.",
-    "saveHint": "Globale Änderungen speichern. Der Verbindungstest prüft den gewählten Modus, ohne den eingegebenen Schlüssel zu speichern.",
     "testTitle": "Web-Verbindungstest",
     "testing": "Verbindung zu {{provider}} wird hergestellt…",
     "close": "Schließen",
@@ -588,9 +559,7 @@
       "disabled": "Webzugriff ist deaktiviert. Vor dem Test aktivieren und speichern.",
       "key-required": "Der gewählte Zugriffsmodus erfordert einen API-Schlüssel.",
       "cancelled": "Der Test wurde abgebrochen oder der Zugriff geändert."
-    },
-    "searchAndRead": "Websuche und Lesen von Webseiten.",
-    "searchOnly": "Nur Suche. Zum Lesen von Webseiten Exa oder Tavily wählen."
+    }
   },
   "partsSearch": {
     "description": "Lieferantenkataloge für das offizielle Plugin parts-search. VERA sendet an die aktivierten Lieferanten nur den Suchtext oder die Teilenummer; Zugangsdaten bleiben auf diesem Computer und werden dem Agenten nie gezeigt. Suchen erfordern außerdem Web access und das für die Workbench aktivierte Plugin. Ergebnisse sind Momentaufnahmen ohne Steuern oder Versand, und es wird nie etwas bestellt.",
@@ -646,7 +615,8 @@
     "username": "Benutzername (optional)",
     "password": "Passwort",
     "save": "Zugangsdaten speichern",
-    "saved": "Gespeichert."
+    "saved": "Gespeichert.",
+    "replace": "Ersetzen"
   },
   "wokwiTokens": {
     "description": "Wokwi-CI-Tokens für das offizielle wokwi-Plugin, das Firmware-Simulationen in der Wokwi-Cloud ausführt. Ein Simulationsjob nennt ein Token über seine Referenz; VERA übergibt das Token nur einem genehmigten wokwi-tool-Lauf des für diese Workbench aktivierten Plugins, über die Eingabe des Programms, nie in Argumenten, Logs oder Ergebnissen. Der Agent sieht es nie. Jeder Cloud-Lauf sendet Firmware und Diagramm des Jobs an Wokwi und wird auf deinen Wokwi-Plan angerechnet.",
@@ -659,7 +629,8 @@
     "referenceHint": "1-64 Kleinbuchstaben, Ziffern und Bindestriche, wie das Konto des Simulationsjobs sie nennt.",
     "token": "Token",
     "save": "Token speichern",
-    "saved": "Gespeichert."
+    "saved": "Gespeichert.",
+    "replace": "Ersetzen"
   },
   "web": {
     "openTitle": "Externe Website öffnen?",
@@ -669,7 +640,6 @@
     "openError": "Der Link konnte nicht geöffnet werden. Erneut versuchen."
   },
   "workbenchTools": {
-    "hint": "Markierte Werkzeuge sind für diese Workbench aktiviert. Änderungen gelten nach dem Speichern; die Sitzungsberechtigungen bleiben wirksam.",
     "read": "Textdateien oder ausgewählte Zeilenbereiche lesen.",
     "list": "Dateien und Unterordner eines Verzeichnisses auflisten.",
     "glob": "Dateien anhand von Namens- oder Pfadmustern wie **/*.cpp finden.",
@@ -692,9 +662,10 @@
     "plugin_install": "Prüfung anfordern und Entwurf als Test-Plugin installieren.",
     "apply_candidate": "Schreibt einen geprüften kicad-layout-Kandidaten über seine Quellplatine, wenn Sie das Anwenden verlangen. Erfordert das Plugin kicad-layout; braucht eine Freigabe wie ein Schreibvorgang.",
     "decode_register": "Erfasst einen aufgezeichneten Registerwert anhand einer lokalen JSON-Definition mit exakten Feldwerten und zitierbaren Quellen. Liest keine Geräte aus.",
-    "parts_search": "Durchsucht die aktivierten Lieferantenkataloge (Mouser, DigiKey, TME, Farnell, Rutronik) nach Stichwort oder Teilenummer. Erfordert Web access, das Plugin parts-search und einen in Einstellungen > Bauteilsuche eingerichteten Lieferanten."
+    "parts_search": "Durchsucht die aktivierten Lieferantenkataloge (Mouser, DigiKey, TME, Farnell, Rutronik) nach Stichwort oder Teilenummer. Erfordert Web access, das Plugin parts-search und einen in der Konfiguration des Plugins auf der Seite Plugins eingerichteten Lieferanten."
   },
   "projects": {
+    "embeddingsGroup": "Embeddings",
     "new": "Neue Workbench",
     "open": "Workbench öffnen",
     "plugins": "Plugins",
@@ -710,7 +681,7 @@
     "collapse": "Sitzungen ausblenden",
     "general": "Allgemein",
     "documents": "Dokumente & RAG",
-    "agent": "Agent",
+    "agent": "Agent und Chat",
     "instructions": "Anweisungen",
     "tools": "Werkzeuge",
     "name": "Name",
@@ -722,17 +693,13 @@
     "save": "Speichern",
     "cancel": "Abbrechen",
     "empty": "Keine Workbenches. Erstellen oder öffnen Sie eine Workbench.",
-    "embeddingInfo": "Embeddings laufen lokal. BGE Small EN v1.5 ist das derzeit installierte unterstützte Modell. Eingaben bleiben unter 512 Tokens.",
-    "sourceInfo": "Muster beziehen sich auf den Workbench-Ordner. Unabhängige externe Ordner werden noch nicht unterstützt. VERA speichert ihre Daten in .vera und behält Ihre Dokumentordner bei.",
     "changed": "Die aktive Workbench wurde geändert. Öffnen Sie den Editor erneut.",
     "saving": "Wird gespeichert…",
     "embeddingModel": "Embedding-Modell",
     "chunkSize": "Chunk-Größe (Zeichen)",
     "overlap": "Überlappung (Zeichen)",
-    "reindexNotice": "Geänderte Embedding-Einstellungen bauen den Dokumentindex dieser Workbench neu auf.",
     "partialSave": "Projekteinstellungen wurden gespeichert, Anweisungen jedoch nicht. Wiederholen Sie Speichern; beim Schließen bleiben gespeicherte Einstellungen erhalten.",
     "loadingInstructions": "Workbench-Anweisungen werden geladen…",
-    "skillsIndependent": "Skill-Änderungen werden im Skills-Manager unabhängig vom Projektformular gespeichert.",
     "back": "Zurück zu Workbenches",
     "skills": "Skills",
     "indexing": "Indizierung",
@@ -740,8 +707,9 @@
     "unsavedChanges": "Ungespeicherte Änderungen"
   },
   "overview": {
+    "agentGroup": "Agent",
+    "indexGroup": "Dokumente und Index",
     "title": "Workbench-Übersicht",
-    "folder": "Ordner",
     "model": "Gesprächsmodell",
     "appDefault": "App-Standard",
     "permissions": "Berechtigungen",
@@ -776,7 +744,6 @@
     "focusModelDesc": "Die Modellauswahl der Unterhaltung fokussieren.",
     "search": "Tastenkürzel suchen",
     "searchKeys": "Nach Tastenkombination suchen",
-    "intro": "Tastenkürzel gelten, wenn VERA aktiv ist. Jeder Befehl kann bis zu vier Kombinationen haben. Änderungen werden automatisch gespeichert.",
     "unassigned": "Nicht zugewiesen",
     "edit": "{{action}} bearbeiten: {{binding}}",
     "remove": "{{action}} entfernen: {{binding}}",
@@ -788,8 +755,7 @@
     "press": "Tasten drücken…",
     "recordHint": "Ctrl (oder Command), optional Alt/Shift, und einen Buchstaben, eine Ziffer, Komma oder Schrägstrich verwenden. Escape bricht ab. Ziffern, Komma und Schrägstrich verwenden auch mit Shift ihre physischen Tastenpositionen.",
     "invalid": "Diese Kombination wird nicht unterstützt oder ist für Textbearbeitung, Fenster oder Entwicklerwerkzeuge reserviert.",
-    "conflict": "Diese Kombination ist bereits zugewiesen. Zuerst die andere Zuweisung entfernen oder ändern.",
-    "local": "In der Nachrichteneingabe: Enter sendet, Shift+Enter fügt eine neue Zeile ein. Escape schließt die Suche oder fragt nach dem Stoppen einer aktiven Antwort. Diese kontextbezogenen Befehle bleiben unverändert."
+    "conflict": "Diese Kombination ist bereits zugewiesen. Zuerst die andere Zuweisung entfernen oder ändern."
   },
   "downloads": {
     "revealNamed": "Im Explorer anzeigen: {{name}}",
@@ -804,7 +770,8 @@
     "saved": "Lokal gespeichert"
   },
   "create": {
-    "folderHint": "Wählen Sie den Ordner mit den Dokumenten und Notizen der Platine. VERA speichert eigene Daten in .vera innerhalb dieses Ordners.",
+    "folder": "Ordner",
+    "noFolder": "Kein Ordner ausgewählt",
     "existing": "Dieser Ordner ist bereits eine Workbench.",
     "openExisting": "Diese Workbench öffnen",
     "instructionsKept": "Dieser Ordner enthält bereits .vera/WORKBENCH.md. Beim Erstellen der Workbench bleibt die Datei unverändert; bearbeiten Sie sie anschließend im Workbench-Editor.",
@@ -829,7 +796,6 @@
   },
   "retrieval": {
     "title": "Dokumentsuche",
-    "info": "Standardwerte für search_docs des Agenten; der Agent kann dennoch eine andere Anzahl oder einen anderen Modus anfordern.",
     "results": "Ergebnisse pro Suche (1–20)",
     "mode": "Suchmodus",
     "hybrid": "Hybrid (Schlüsselwörter und Bedeutung)",
@@ -843,9 +809,17 @@
     "broken": "Dieses Plugin hat Fehler und wird nicht geladen:",
     "programs": "Programme",
     "noPrograms": "Keine Programme: Dieses Plugin fügt nur Skills hinzu.",
-    "rules": "Regeln",
-    "noRules": "Keine Regeln.",
     "docs": "Dokumente",
+    "composition": {
+      "title": "Zusammensetzung",
+      "noPrograms": "Führt keine Programme aus.",
+      "skills": "Skills",
+      "files": "Profile und Datendateien"
+    },
+    "operations": {
+      "title": "Operationen",
+      "none": "Keine Operationen: Dieses Plugin deklariert keine Regeln."
+    },
     "range": "unterstützt {{range}}",
     "timeout": "Zeitlimit {{seconds}} s",
     "installingPrograms": "Programme werden installiert…",
@@ -862,6 +836,9 @@
     "platforms": "Plattformen",
     "requires": "Benötigt",
     "nothing": "Keine",
+    "maturity": {
+      "preRelease": "Vorabversion"
+    },
     "tier": {
       "official": "Offiziell",
       "community": "Community",
@@ -876,8 +853,8 @@
     "problem": {
       "notFound": "Auf diesem Computer nicht gefunden.",
       "install": "Die Installation ist fehlgeschlagen.",
-      "download": "Der Download ist fehlgeschlagen.",
-      "sha256": "Die Datei hat die falsche SHA-256.",
+      "download": "Der Download ist fehlgeschlagen. Prüfen Sie die Verbindung (offline?) und versuchen Sie es erneut.",
+      "sha256": "Die Datei entspricht nicht ihrer festgelegten SHA-256. Neu installieren lädt sie erneut herunter.",
       "archive": "Das Archiv konnte nicht entpackt werden.",
       "platform": "Für dieses System nicht verfügbar.",
       "uv": "Das mitgelieferte uv fehlt.",
@@ -909,6 +886,14 @@
       "none": "Es ist kein Katalog eingerichtet, und dieser Build enthält keine Plugins.",
       "problemUnreachable": "Der Katalog war nicht erreichbar.",
       "problemInvalid": "Der Index des Katalogs ist ungültig.",
+      "problemUnsigned": "Der Katalog unter dieser Adresse ist nicht signiert, daher verwendet VERA ihn nicht. Die mit VERA gelieferten Plugins werden angezeigt.",
+      "problemUntrusted": "Die Signatur des Katalogs passt nicht zum in VERA eingebauten Schlüssel: Der Index wurde geändert oder mit einem anderen Schlüssel signiert. VERA verwendet ihn nicht; die mit VERA gelieferten Plugins werden angezeigt.",
+      "channel": "Kanal",
+      "channels": {
+        "stable": "Stabil (Version 1.0.0 und höher)",
+        "pre-release": "Vorabversion (alle Plugins, auch 0.x-Versionen)"
+      },
+      "channelHint": "Stabil listet Plugins, die mit echten Werkzeugen und echter Hardware nachgewiesen sind. Vorabversion listet auch Plugins, deren Nachweis noch offen ist.",
       "check": "Nach Updates suchen",
       "checking": "Suche läuft…",
       "url": "Katalog-URL",
@@ -919,10 +904,16 @@
       "useDefault": "Standard verwenden",
       "installed": "Installiert: {{version}}",
       "installAction": "Installieren",
+      "platformWarning": "Für deine Plattform nicht verfügbar. Unterstützt: {{platforms}}.",
+      "riskWarning": {
+        "device-write": "Kann auf ein angeschlossenes Gerät schreiben (zum Beispiel flashen oder löschen).",
+        "irreversible": "Kann ein Gerät dauerhaft verändern (zum Beispiel eFuses brennen oder es sperren)."
+      },
       "update": "Auf {{version}} aktualisieren",
       "updateAvailable": "Update verfügbar: {{version}}",
       "reviewFrom": "Aus dem Katalog: {{tier}}, Version {{version}}.",
-      "reviewChanges": "Dieses Update ändert Programme, Installationsquellen oder Regeln; prüfen Sie sie vor der Installation."
+      "reviewChanges": "Dieses Update ändert Programme, Installationsquellen oder Regeln; prüfen Sie sie vor der Installation.",
+      "installWithDependencies": "Mit Abhängigkeiten installieren"
     },
     "catalogError": {
       "sha256": "Das heruntergeladene Plugin entspricht nicht der Größe und dem SHA-256 aus dem Katalog. Es wurde nichts installiert.",
@@ -940,7 +931,6 @@
     "trust": "Diesem Paket vertrauen",
     "scopedTrustIntro": "Diesem genauen Paket für diese Workbench auf diesem Computer vertrauen. Vertrauen aktiviert das Plugin nicht und installiert keine Programme. Jede Paketänderung erfordert eine neue Prüfung.",
     "refresh": "Liste aktualisieren",
-    "selectionHint": "Wählen Sie die installierten Plugins für diese Workbench aus. Neue Workbenches beginnen ohne Auswahl. Übernehmen Sie die Auswahl mit Speichern; Pakete installieren und prüfen Sie auf der Seite Plugins.",
     "expand": "Details für {{name}} anzeigen",
     "collapse": "Details für {{name}} ausblenden",
     "checkDependencies": "Abhängigkeiten prüfen",
@@ -949,7 +939,6 @@
     "checking": "Wird geprüft…",
     "notChecked": "Abhängigkeiten ungeprüft",
     "dependencySummary": "{{ready}}/{{total}} bereit",
-    "dependenciesNeedAttention": "Abhängigkeiten erfordern Aufmerksamkeit. Für Details aufklappen.",
     "installDependencies": "Abhängigkeiten installieren",
     "installed": "Installiert",
     "checkFirst": "Zuerst Abhängigkeiten prüfen.",
@@ -975,6 +964,9 @@
       "allActivities": "Alle Tätigkeiten",
       "provenance": "Herkunft",
       "allSources": "Alle Quellen",
+      "maturity": "Reife",
+      "allMaturities": "Alle Reifegrade",
+      "stable": "Stabil",
       "filterState": "Nach Status filtern",
       "all": "Alle",
       "notInstalled": "Nicht installiert",
@@ -1014,9 +1006,113 @@
     },
     "configure": "Abhängigkeiten konfigurieren",
     "enabledSelection": "Aktiviert",
-    "selectedCount": "Ausgewählte Plugins: {{count}}"
+    "selectedCount": "Ausgewählte Plugins: {{count}}",
+    "reinstall": "Neu installieren",
+    "reinstalling": "Wird neu installiert…",
+    "reinstallHint": "Lädt die Programmkopien von VERA erneut herunter, prüft ihre SHA-256 und ersetzt sie. Herstellerprogramme bleiben unverändert.",
+    "dependencies": {
+      "title": "Abhängigkeiten",
+      "pluginInstalled": "Installiert",
+      "pluginMissing": "Nicht installiert; Mit Abhängigkeiten installieren fügt es hinzu",
+      "automatic": "VERA installiert es automatisch in seinen Programmordner.",
+      "manual": "Installieren Sie es selbst; VERA installiert es nie.",
+      "sizeUnknown": "Größe nicht angegeben",
+      "noDownload": "Kein Download für diese Plattform.",
+      "foundAt": "Gefunden unter {{path}}",
+      "programFolder": "Im Programmordner von VERA",
+      "kind": {
+        "pip": "Python-Paket",
+        "script": "Python-Skript",
+        "download": "Festgelegter Download",
+        "find": "Herstellerprogramm"
+      }
+    },
+    "installResult": {
+      "title": "Mit Abhängigkeiten installieren",
+      "manual": "Nicht alles ist bereit: Installieren Sie Herstellerprogramme nach ihrer Anleitung und prüfen Sie erneut.",
+      "checkAgain": "Erneut prüfen",
+      "close": "Schließen"
+    },
+    "configuration": {
+      "title": "Konfiguration",
+      "stored": "Gespeichert",
+      "missing": "Fehlt",
+      "present": "Vorhanden und gültig",
+      "invalid": "Ungültig",
+      "unchecked": "Nicht geprüft",
+      "value": "Nur lesen",
+      "optional": "(optional)",
+      "check": "Erneut prüfen",
+      "noWorkbench": "Öffnen Sie eine Workbench, um ihre Dateien zu prüfen.",
+      "needs": "Konfiguration erforderlich: {{names}}",
+      "suppliers": "Schlüssel gespeichert für: {{names}}"
+    },
+    "status": {
+      "title": "Status",
+      "ready": "Bereit",
+      "notReady": "Nicht bereit: {{checks}}",
+      "dependencies": "Abhängigkeiten",
+      "configuration": "Konfiguration",
+      "use": "Verwendung",
+      "missingNames": "Fehlt: {{names}}",
+      "externalNames": "Beim Hersteller installieren: {{names}}",
+      "unavailableNames": "Nicht verfügbar: {{names}}",
+      "configured": "Konfiguriert",
+      "nothingToConfigure": "Nichts zu konfigurieren",
+      "configurationFailed": "Die Konfiguration konnte nicht geprüft werden.",
+      "configure": "Konfigurieren",
+      "enabledIn": "Aktiviert in {{name}}",
+      "notEnabledIn": "Nicht aktiviert in {{name}}",
+      "noWorkbench": "Keine Workbench ist geöffnet.",
+      "openWorkbench": "Workbench öffnen",
+      "state": {
+        "ready": "Bereit",
+        "missing": "Fehlt",
+        "unavailable": "Nicht verfügbar",
+        "external": "Extern",
+        "unchecked": "Nicht geprüft",
+        "off": "Nicht aktiviert"
+      }
+    },
+    "packs": {
+      "open": "Paket installieren",
+      "title": "Paket installieren",
+      "intro": "Ein Paket fasst die Plugins eines Ökosystems zusammen. Wähle die benötigten Gruppen; der nächste Schritt zeigt eine einzige Prüfung von allem, was installiert wird.",
+      "pack": "Paket",
+      "groups": "Gruppen",
+      "review": "Paket prüfen",
+      "reviewTitle": "Paket {{name}} prüfen",
+      "reviewIntro": "Jedes Plugin unten wird heruntergeladen, mit dem Katalog abgeglichen und mit seinen Programmen installiert.",
+      "requiredBy": "benötigt von {{name}}",
+      "nothing": "Alle Plugins dieser Gruppen sind installiert oder ausgelassen.",
+      "skipped": "Nicht installiert",
+      "skippedRequires": "Benötigt {{id}}, das ausgelassen wird.",
+      "skippedCatalog": "Nicht in diesem Katalog.",
+      "alreadyInstalled": "Bereits installiert: {{names}}",
+      "install": "Mit Abhängigkeiten installieren ({{count}})"
+    }
   },
   "runs": {
+    "session": "Sitzung: {{title}}",
+    "unknownSession": "Gelöschte Sitzung",
+    "filterSession": "Sitzung",
+    "currentSession": "Aktuelle Sitzung",
+    "allSessions": "Alle Sitzungen",
+    "filterPlugin": "Plugin",
+    "allPlugins": "Alle Plugins",
+    "filterState": "Status",
+    "allStates": "Alle Status",
+    "filterDate": "Datum",
+    "anyTime": "Jederzeit",
+    "today": "Heute",
+    "lastWeek": "Letzte 7 Tage",
+    "sort": "Sortierung",
+    "newest": "Neueste zuerst",
+    "oldest": "Älteste zuerst",
+    "byPlugin": "Plugin",
+    "bySession": "Sitzung",
+    "byState": "Status",
+    "noMatch": "Keine Läufe entsprechen den Filtern.",
     "none": "In dieser Workbench gab es noch keine Programmläufe.",
     "plugin": "Plugin {{plugin}}",
     "background": "im Hintergrund",
@@ -1033,5 +1129,23 @@
       "timedOut": "Zeitüberschreitung",
       "interrupted": "Unterbrochen"
     }
+  },
+  "about": {
+    "open": "Über VERA",
+    "fullName": "Virtual Embedded Rig Assistant",
+    "version": "Version {{version}}",
+    "application": "Anwendung",
+    "runtime": "Laufzeit",
+    "thirdParty": "Komponenten von Drittanbietern ({{count}})",
+    "component": "Komponente",
+    "componentVersion": "Version",
+    "license": "Lizenz"
+  },
+  "pager": {
+    "range": "{{first}}–{{last}} von {{count}} Ergebnissen",
+    "pageSize": "Pro Seite",
+    "previous": "Zurück",
+    "next": "Weiter",
+    "page": "{{page}} / {{pages}}"
   }
 }

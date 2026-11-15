@@ -15,5 +15,11 @@ export function getAppInfo(portable = isPortable(process.execPath)): AppInfo {
     locale: app.getLocale(),
     testBuild: __VERA_TEST__,
     signing: process.platform === "win32" ? (__VERA_SIGNED__ ? "signed" : "unsigned") : "not-applicable",
+    runtime: {
+      electron: process.versions.electron ?? "",
+      chrome: process.versions.chrome ?? "",
+      node: process.versions.node,
+      v8: process.versions.v8,
+    },
   };
 }

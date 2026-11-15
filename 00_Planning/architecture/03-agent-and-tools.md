@@ -52,9 +52,8 @@ The host (`RuntimeHost`) supplies the gateway, clock, IDs, `approve(call, signal
 `steering()`, a snapshot of queued, undelivered user messages. `ToolDef.class` is `read`, `write`
 or `session`.
 
-The WP-10 spike ran one replay matrix on this runtime and on `@earendil-works/pi-agent-core` 1.1.0;
-ADR-0014 kept the reference runtime. pi-agent-core stays an exact-pinned dev dependency for those
-tests only. The runtime provides seven behaviours:
+A replay matrix (`runtime-matrix.test-support.ts`) proves seven behaviours; ADR-0003 records why
+this loop was kept over `pi-agent-core`. The runtime provides:
 
 | Behaviour | Reference loop | Change for VERA |
 |---|---|---|

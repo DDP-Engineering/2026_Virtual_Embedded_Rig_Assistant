@@ -3,7 +3,7 @@ import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../api/index.js";
 import { ErrorMessage } from "./error-message.js";
-import { SkillSettings } from "./skills.js";
+import { SkillsPanel } from "./skills.js";
 import { WorkbenchConfigForm } from "./workbench-config-form.js";
 
 export function WorkbenchEditor({
@@ -151,6 +151,7 @@ export function WorkbenchEditor({
           <button
             type="button"
             data-project-save
+            className="primary"
             disabled={pending || workbench.readOnly || !loaded || !config.name.trim() || !dirty}
             onClick={() => void save()}
           >
@@ -185,12 +186,7 @@ export function WorkbenchEditor({
             {workbench.readOnly && <p role="status">{t("workbench.readOnly")}</p>}
           </>
         }
-        skills={
-          <>
-            <SkillSettings workbenchId={workbench.config.id} readOnly={workbench.readOnly} />
-            <p className="muted">{t("projects.skillsIndependent")}</p>
-          </>
-        }
+        skills={<SkillsPanel workbenchId={workbench.config.id} readOnly={workbench.readOnly} />}
       />
     </section>
   );

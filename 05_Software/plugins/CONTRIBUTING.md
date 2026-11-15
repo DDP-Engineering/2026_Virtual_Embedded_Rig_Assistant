@@ -7,10 +7,14 @@ the same layout under `plugins/`. Formats: plugin architecture §2 and §7; exac
 
 ## Adding or changing a plugin
 
-1. Create `<id>/plugin.yaml` (format 1); the folder name is the plugin id. Add skills under
+1. Create `<id>/plugin.yaml` (format 1); the folder name is the plugin id. `summary` (at most 160
+   characters) is the one line on the catalog card; `description` holds the details for the install review. Add skills under
    `<id>/skills/<name>/SKILL.md` and helper scripts under `<id>/scripts/`, and a short `<id>/README.md`.
 2. Declare every program with a reproducible install source: a pinned pip requirement range, a PEP 723
    script in the package, a download with its SHA-256 per platform, or a `find` search with a `hint`.
+   Give each published download its size in `bytes` (the catalog card shows it before any download; a longer
+   transfer is refused as a hash mismatch). `vera catalog check` reports a `find` program without a `hint`: the hint
+   is the vendor guide the card and the plugin page show, because VERA never installs a vendor program.
    Vendor activation uses `launcher: [eim, run]` and an explicit `launcherMode: string` or `argv`.
    Verify the actual transport on both platforms and document the evidence in README. With a launcher,
    `find` locates its first token; version probes and runs invoke the declared program through it.
@@ -21,8 +25,14 @@ the same layout under `plugins/`. Formats: plugin architecture §2 and §7; exac
 3. Give every program rules. Every command line the agent may run should match a rule with the right risk
    level: `safe` (no effect on hardware), `device-read`, `device-write`, `irreversible` or `blocked`. A
    command no rule matches runs as `device-write`, and the highest risk of all matching rules applies.
-4. Add the plugin to a group in `packs.yaml` when it belongs to an ecosystem pack.
-5. Run the check and fix every line it prints:
+4. Declare what the user must provide in `settings`, one entry per parameter with a `description`:
+   `kind: secret` with a `scope` (`mqtt`, `wokwi` or `parts`; the value stays in VERA's credential store),
+   `kind: workbench-file` with a workbench-relative `path` (a `*` segment matches one folder level), an optional
+   `format` (`lab-resources` validates it as `lab/resources.json`, `json` parses it) and `optional: true` when the
+   plugin works without it, or `kind: value` with a read-only `value`. The plugin page shows each parameter's state, and a
+   missing secret or a missing or invalid required file marks the plugin Needs configuration.
+5. Add the plugin to a group in `packs.yaml` when it belongs to an ecosystem pack.
+6. Run the check and fix every line it prints:
 
    ```bash
    vera catalog check --source plugins

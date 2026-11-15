@@ -193,7 +193,7 @@ it("publishes the official kicad-layout package, its pack and skill (REQ-PLAT-39
   expect(validatePluginManifest(m).issues).toEqual([]);
   expect(m).toMatchObject({
     id: "kicad-layout",
-    version: "1.0.0",
+    version: "0.3.0",
     ecosystem: "electronics",
     platforms: ["windows-x64", "linux-x64"],
   });
@@ -297,7 +297,7 @@ describe("kicad-layout-tool without KiCad", { timeout: 300_000 }, () => {
 
   it("prints its version and help (REQ-DATA-891d5b5d)", () => {
     const version = spawnSync(python, [tool, "--version"], { encoding: "utf8", env: baseEnv() });
-    expect(version.stdout.trim()).toMatch(/^kicad-layout-tool 1\.0\.0$/);
+    expect(version.stdout.trim()).toMatch(/^kicad-layout-tool 0\.3\.0$/);
     const help = spawnSync(python, [tool, "--help"], { encoding: "utf8", env: baseEnv() });
     for (const word of ["open", "edit", "close", "--board", "--run", "--json"])
       expect(help.stdout).toContain(word);
@@ -344,7 +344,7 @@ describe("kicad-layout-tool without KiCad", { timeout: 300_000 }, () => {
       kind: "kicad-layout-state",
       runId: "offline",
       tool: "kicad-layout-tool",
-      toolVersion: "1.0.0",
+      toolVersion: "0.3.0",
       kicad: "10.0.8",
       source: { path: "boards/layout.kicad_pcb", sha256: sha256(candidate), bytes: candidate.length },
       candidate: {

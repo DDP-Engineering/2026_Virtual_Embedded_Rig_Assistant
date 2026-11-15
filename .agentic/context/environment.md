@@ -1,19 +1,10 @@
 # Environment guide
 
-Captured firmware comparison uses tests/integration/analysis-skills.test.ts, the installed catalog zip
-in prepare-plugins.test.ts and the actual SessionService/npm CLI replay in cli.test.ts. The opt-in
-evaluators/eval-firmware-comparator-harness/firmware-comparator-rubric.mjs prepares seven fictional cases before any real model access;
-it uses existing VERA credentials through normal safeStorage and an explicit isolated model override,
-retains original prompts/events/artifacts/model and skill hashes, and never writes user settings.
+Analysis skills: tests/integration/analysis-skills.test.ts (folder install, skill bodies and templates)
+and the installed catalog zip in prepare-plugins.test.ts. Model semantics are not tested automatically.
 Public OAuth scopes stay out of secret-word registration; live Responses tools explicitly use
 strict:false to preserve optional arguments. Credentials/subscription/gateway regressions cover both.
-UbuntuWSL2 proof is distinct from native Ubuntu. CAP04 implementation chat owns the aggregate
-Analysis capabilities gate; coordinator reuses its original proof without routine repetition.
-Manual test planning extends analysis-skills.test.ts, prepare-plugins.test.ts and cli.test.ts;
-evaluators/eval-test-planner-harness/test-planner-rubric.mjs prepares seven fictional real-model cases, uses the same authorized
-normal credential host and isolated model override, and retains original sources/prompts/events/
-artifacts/hashes plus settings integrity. The repeated-name fixture seeds real artifacts at the save
-boundary to exercise three actual storage collisions and the complete chat fallback.
+UbuntuWSL2 proof is distinct from native Ubuntu.
 
 Per-prompt activity verification: shared/core prompt-usage tests and renderer activity-usage.test.ts; tests/e2e/prompt-usage.spec.ts uses isolated native replay counts, real file tools and restart with no external provider calls.
 
@@ -47,6 +38,9 @@ Use the repository setup script from the repository root; it downloads the verif
 
 The software root holds npm workspaces, Biome, TypeScript and Vitest configuration. [aegis.toml](../aegis.toml) supplies workflow commands and paths.
 
+Plugin catalog build inputs: `VERA_PLUGIN_CATALOG_URL`, the default remote catalog folder, is empty. `VERA_PLUGIN_CATALOG_KEY` is a PEM path that replaces the pinned public key `02_Tools/release/catalog-signing-key.pub.pem`. Test builds also read the env `VERA_TEST_CATALOG_KEY` (PEM text) at run time, so e2e can sign a loopback catalog with a throwaway key. The catalog signing private key lives outside the repository (`02_Tools/release/catalog-release.md`); tests never use it.
+Offline dependency kits: `npm run vera -- catalog kit --source plugins --platform <windows-x64|linux-x64> --out ../07_Delivery/kit-<platform>` needs network and the pinned uv (`npm run prepare:uv`). Build each kit on its own platform: a source-only package with compiled code (today `uptime`, can-python) is built during the kit build. `07_Delivery/kit-*` is git-ignored. On a bench, settings `plugins.kit` points provisioning at a kit (`02_Tools/release/catalog-release.md`).
+
 ## Readiness checks
 
 Run the documented setup --check before verification on a new machine. Ubuntu system packages require separate host installation; the setup checker prints missing packages.
@@ -79,7 +73,7 @@ Sidebar navigation proof uses workspace.test.ts, focused service creation cases 
 
 Session reasoning acceptance uses tests/e2e/session-reasoning.spec.ts: isolated native profile, loopback model transport, restart/isolation/default/reset and responsive layout. Gateway fixtures inject authenticated catalog responses and block external egress; no real model spend is required.
 
-Workbench entry acceptance uses shared/workbench-entry.test.ts, renderer workspace/mock scenarios and native workbench create/open/restart tests. Fictional corpus and inventory live under tests/fixtures/workbenches and are consumed by PDF, retrieval, CLI and smoke verification.
+Workbench entry acceptance uses renderer workspace/mock scenarios and native workbench create/open/restart tests. Fictional corpus and inventory live under tests/fixtures/workbenches and are consumed by PDF, retrieval, CLI and smoke verification.
 
 Release acceptance uses `smoke:package -- --artifact <already-built native release>`;
 see [release smoke](../knowledge/release-smoke.md) for native strace calibration,
@@ -117,8 +111,6 @@ Keyword proof uses core knowledge/keyword.test.ts, storage/keyword-schema.test.t
 and real processor/watcher/SQLite ingest.test.ts; immediate database/repository,
 workbench and import-boundary checks cover schema and lifecycle consumers.
 The configured strict run retains static checks under the verification policy.
-
-Retrieval comparison uses pinned Node evaluators/eval-embedding-comparison-harness/compare-embeddings.mjs with owned scratch, local models and output paths. Explicit --prepare downloads verified assets; default inference is local/offline. Focused retrieval/packaging/extraction/boundary tests and native Windows/Ubuntu measurements accompany ADR0015; see [retrieval evaluation](../knowledge/retrieval-evaluation.md).
 
 Extraction acceptance uses core knowledge/{extraction,processor}.test.ts, compiled
 CLI/desktop document-hosts.test.ts, deterministic demo-documents.test.ts and
@@ -162,7 +154,7 @@ Steering regression routes are agent/steering.test.ts, sessions/service.test.ts,
 
 Compaction regression routes are agent/compaction.test.ts, sessions/service.test.ts, shared/session-state.test.ts and renderer session/usage-meter.test.ts; they inspect bounded summary/normal requests and complete transcript/restart.
 
-Agent runtime tests use the common replay matrix and deterministic injected counters; pi-agent-core is measured through a stream-function adapter with the same context policy. No live model is needed for runtime acceptance. Session acceptance uses read-then-answer JSONL, real temporary SQLite and a new core instance plus native Electron restart; focused routes are documented in [sessions](../knowledge/sessions.md).
+Agent runtime tests use the common replay matrix and deterministic injected counters. No live model is needed for runtime acceptance. Session acceptance uses read-then-answer JSONL, real temporary SQLite and a new core instance plus native Electron restart; focused routes are documented in [sessions](../knowledge/sessions.md).
 
 Node Vitest projects install the non-loopback fetch/socket guard before application modules. tests/integration/bus-tools.test.ts
 runs bus-tool under the same Python, which must have flatbuffers 25.12.19 installed (its fake pyserial parses BPIO2 with it). tests/integration/mqtt-tools.test.ts runs mqtt-tool, the stdlib test broker tests/support/mqtt-test-broker.py (127.0.0.1 only) and the paho fixture device under the same Python, which must have paho-mqtt 2.1.0 (installed on this host with `pip install --user paho-mqtt==2.1.0` from PyPI on 2026-11-14) and cryptography (TLS fixture CA in the test's temp folder); about 50 s on Windows, and its graceful-Stop branch (SIGTERM) runs only on Linux. The integration test

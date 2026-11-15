@@ -1,7 +1,8 @@
 format: 1
 id: lab-validation
-version: 1.0.0
+version: 0.2.0
 name: Measurement validation
+summary: Compare bench captures and simulations with requirements offline - measurements, limits and a report.
 description: Compare bench captures and simulations with requirements, offline and reproducibly - import scpi-instruments captures, CSV and sigrok CSV files and ngspice/LTspice run folders; normalize units and signs; measure RMS, frequency, duty cycle, rise/fall, overshoot, settling, ripple and delay over declared windows; align by declared markers or bounded cross-correlation; decide each criterion by its declared rule and uncertainty (pass, fail or incomplete) and write a report with overlays, differences, conditions and links to the sources.
 ecosystem: lab
 platforms: [windows-x64, linux-x64]

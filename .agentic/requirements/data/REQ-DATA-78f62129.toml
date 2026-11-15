@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-DATA-78f62129"
+
+title = "Write a stable and a pre-release channel index into a catalog release"
+
+status = "active"
+
+requirement = """
+When `vera catalog build` writes a catalog release, it shall write `index-pre-release.json` listing every plugin of `index.json` and `index-stable.json` listing only the plugins whose version is `1.0.0` or higher without a pre-release tag, each naming its channel in a `channel` field, with each pack keeping only the plugins of its channel and dropping groups and packs left empty.
+"""
+
+verification = "Core catalog-source test: a source with a 1.0.0 plugin and a 0.2.0 plugin in one pack builds a release whose index-stable.json lists only the 1.0.0 plugin with the pack reduced to it, whose index-pre-release.json lists both, and a source with only 0.x plugins gives an empty stable index with no packs; the packaging test of prepare:plugins sees ltspice as the only stable plugin."
+
+affected_paths = ["05_Software/src/libraries/core/src/plugins/catalog-source.ts", "05_Software/src/libraries/shared/src/plugin-catalog.ts", "02_Tools/environment/prepare-plugins.mjs"]
+
+linked_tests = ["05_Software/src/libraries/core/src/plugins/catalog-source.test.ts", "05_Software/tests/packaging/prepare-plugins.test.ts"]
+
+
+spec = "specs/REQ-DATA-b40d3f9b.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

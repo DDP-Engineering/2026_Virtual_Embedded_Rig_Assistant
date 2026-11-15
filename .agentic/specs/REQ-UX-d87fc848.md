@@ -4,8 +4,8 @@
 
 One draggable title/menu row replaces separate native title/menu and renderer branding rows.
 Main exposes native Windows/Linux window controls through the native overlay, reserving
-its safe area. Menus are File/Edit/View/Help; native fixed role templates own commands.
-Header additionally holds sidebar and right-panel toggles. Native close semantics persist.
+its safe area. Menus are File/Edit/View; native fixed role templates own commands.
+Header additionally holds sidebar and right-panel toggles and an About (Info) button that opens Settings > About. Native close semantics persist.
 
 Expanded navigation has VERA branding, Home, existing project/session or settings-section
 navigation, and bottom Settings. Collapse retains an icon rail with Home, project navigation
@@ -27,7 +27,7 @@ navigation and layout behavior. Native popup labels/keyboard commands follow hos
 Native launch shows one compact row and native controls. Header controls fit outside native
 control area; body starts below it. Menu requests reject untrusted frames/roles/templates.
 Mouse/keyboard toggles preserve rail actions and independent right panel. Restart retains
-collapsed state. en/ro/de, light/dark and five supported scales fit1024x640 with scrollable
+collapsed state. en/ro/de, light/dark and six supported scales fit1024x640 with scrollable
 main content and reachable Settings. Geometry and close persistence/security remain intact.
 Home metadata is absent; About renders available metadata. No historical journal edits.
 

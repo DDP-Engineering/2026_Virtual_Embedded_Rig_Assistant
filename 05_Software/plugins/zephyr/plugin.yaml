@@ -1,11 +1,19 @@
 format: 1
 id: zephyr
-version: 1.0.0
+version: 0.2.0
 name: Zephyr builds, tests and flashing
+summary: Build Zephyr applications, run Twister tests and flash an exact board from a pinned west workspace.
 description: Build Zephyr applications for an exact board from an explicit request (west workspace at pinned revisions, Zephyr SDK folder, configuration and overlay files, an owned build folder), with hashed ELF/HEX/BIN, final configuration, devicetree, map and size; inspect the workspace offline, refuse unlisted projects, extension commands and build hooks unless approved by hash, build Twister test scenarios build-only, take test verdicts only from a real Renode or HIL run of the same ELF, prepare the workspace in a separate network step and flash through the verified STM32CubeProgrammer runner with a reserved probe.
 ecosystem: lab
 platforms: [windows-x64, linux-x64]
 docs: [README.md, "https://docs.zephyrproject.org/latest/develop/west/build-flash-debug.html", "https://docs.zephyrproject.org/latest/develop/twister/index.html", "https://docs.zephyrproject.org/latest/develop/west/extensions.html"]
+settings:
+  lab-resources:
+    kind: workbench-file
+    path: lab/resources.json
+    format: lab-resources
+    optional: true
+    description: The bench registry; declares the probe (probe) a flash names by alias. Not needed for builds, Twister and Renode.
 programs:
   zephyr:
     install: { script: scripts/zephyr_tool.py }

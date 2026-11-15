@@ -1,7 +1,8 @@
 format: 1
 id: can-dbc
-version: 1.0.0
+version: 0.3.0
 name: CAN databases (cantools)
+summary: Decode CAN logs into named signals with DBC, KCD, SYM or ARXML databases using cantools.
 description: Decode CAN log files (ASC, BLF, candump) with DBC, KCD, SYM or ARXML databases, and dump, list or convert those databases with cantools. Use to turn captured frames into named signals with units.
 ecosystem: can
 platforms: [windows-x64, linux-x64]

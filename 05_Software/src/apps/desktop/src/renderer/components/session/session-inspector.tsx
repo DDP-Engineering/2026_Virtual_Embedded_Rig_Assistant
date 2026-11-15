@@ -1,154 +1,11 @@
 import type { SessionState } from "@vera/shared";
-import { Bot, MessageSquare, Wrench, X } from "lucide-react";
-import { useEffect, useId, useMemo, useRef } from "react";
+import { X } from "lucide-react";
+import { useEffect, useId, useRef } from "react";
 import { useTranslation } from "react-i18next";
-import { ErrorMessage } from "../error-message.js";
-import { SkillSettings } from "../skills.js";
-import { ToolOutput } from "./bounded-text.js";
-import { ContextTab } from "./context-tab.js";
-import { Disclosure } from "./disclosure.js";
-import { Markdown } from "./markdown.js";
 import { UsageMeter } from "./usage-meter.js";
 
-function PromptUsage({
-  usage,
-}: {
-  usage: Extract<SessionState["items"][number], { kind: "user" }>["usage"];
-}) {
-  const { t, i18n } = useTranslation();
-  const language = i18n.resolvedLanguage ?? i18n.language;
-  const number = useMemo(() => new Intl.NumberFormat(language), [language]);
-  const percent = useMemo(
-    () =>
-      new Intl.NumberFormat(language, {
-        style: "percent",
-        maximumFractionDigits: 0,
-      }),
-    [language],
-  );
-  const value = (count: number | undefined) => (count === undefined ? "—" : number.format(count));
-  const context =
-    usage?.contextTokens === undefined
-      ? "—"
-      : `${usage.estimated ? "≈" : ""}${usage.contextWindow ? percent.format(usage.contextTokens / usage.contextWindow) : t("chat.promptContextTokens", { count: usage.contextTokens, value: number.format(usage.contextTokens) })}`;
-  return (
-    <p className="activity-prompt-usage" data-prompt-usage>
-      <span>
-        {t("chat.promptInput")}: {value(usage?.inputTokens)}
-      </span>
-      <span>
-        {t("chat.promptOutput")}: {value(usage?.outputTokens)}
-      </span>
-      <span>
-        {t("chat.promptInitialContext")}: {context}
-      </span>
-      {usage?.shared && <span title={t("chat.promptSharedInfo")}>{t("chat.promptShared")}</span>}
-    </p>
-  );
-}
-
-export function ActivityLog({
-  state,
-  reasoning,
-  updates,
-  sessionId,
-}: {
-  state: SessionState;
-  reasoning: Record<string, string>;
-  updates: Record<string, string>;
-  sessionId?: string | undefined;
-}) {
-  const { t } = useTranslation();
-  return (
-    <div className="agent-activity" data-agent-activity>
-      <p className="muted">{t("chat.activityInfo")}</p>
-      {!state.items.length && <p>{t("chat.activityEmpty")}</p>}
-      <ol>
-        {state.items.map((item) => (
-          <li key={`${item.kind}/${item.id}`} data-activity-kind={item.kind}>
-            {item.kind === "user" && (
-              <>
-                <Disclosure
-                  title={
-                    <>
-                      <MessageSquare aria-hidden="true" />
-                      {t("chat.activityPrompt")}
-                      <span className="activity-preview">{item.text.slice(0, 100)}</span>
-                    </>
-                  }
-                >
-                  {item.pending && <p role="status">{t("chat.pending")}</p>}
-                  <pre>{item.text}</pre>
-                </Disclosure>
-                <PromptUsage usage={item.usage} />
-              </>
-            )}
-            {item.kind === "assistant" && (
-              <Disclosure
-                title={
-                  <>
-                    <Bot aria-hidden="true" />
-                    {t("chat.activityReply")}
-                    <span className="activity-preview">{item.text.slice(0, 100)}</span>
-                    {item.streaming && <span>{t("chat.streaming")}</span>}
-                  </>
-                }
-              >
-                <Markdown text={item.text} />
-              </Disclosure>
-            )}
-            {item.kind === "tool" && (
-              <Disclosure
-                title={
-                  <>
-                    <Wrench aria-hidden="true" />
-                    {item.name}
-                    <span>
-                      {item.status === "running"
-                        ? t("chat.running")
-                        : item.status === "ok"
-                          ? t("chat.toolOk")
-                          : t("chat.error")}
-                    </span>
-                  </>
-                }
-              >
-                <ToolOutput item={item} update={updates[item.id]} sessionId={sessionId} />
-                {item.durationMs !== undefined && <p>{item.durationMs} ms</p>}
-              </Disclosure>
-            )}
-            {item.kind === "error" && (
-              <ErrorMessage error={{ code: item.code, messageKey: item.messageKey }} />
-            )}
-          </li>
-        ))}
-      </ol>
-      {Object.entries(reasoning).map(([id, text]) => (
-        <Disclosure key={id} title={t("chat.reasoning")}>
-          <pre>{text}</pre>
-        </Disclosure>
-      ))}
-    </div>
-  );
-}
-
-export function SessionInspector({
-  mode,
-  state,
-  workbenchId,
-  reasoning,
-  updates,
-  sessionId,
-  close,
-}: {
-  mode: "context" | "activity";
-  state: SessionState;
-  workbenchId: string;
-  sessionId?: string | undefined;
-  reasoning: Record<string, string>;
-  updates: Record<string, string>;
-  close: () => void;
-}) {
+/** The context window dialog: token usage, limits, model, turns and tool calls of the session. */
+export function SessionInspector({ state, close }: { state: SessionState; close: () => void }) {
   const { t } = useTranslation();
   const dialog = useRef<HTMLDialogElement>(null);
   const title = useId();
@@ -172,22 +29,13 @@ export function SessionInspector({
       }}
     >
       <header>
-        <h2 id={title}>{mode === "context" ? t("chat.contextWindow") : t("chat.activity")}</h2>
+        <h2 id={title}>{t("chat.contextWindow")}</h2>
         <button type="button" aria-label={t("panel.close")} onClick={close}>
           <X aria-hidden="true" />
         </button>
       </header>
       <div className="session-inspector-body">
-        {mode === "context" ? (
-          <>
-            <SkillSettings workbenchId={workbenchId} readOnly />
-            <p className="muted">{t("chat.contextInfo")}</p>
-            <UsageMeter state={state} />
-            <ContextTab workbenchId={workbenchId} readOnly showSkillSettings={false} />
-          </>
-        ) : (
-          <ActivityLog state={state} reasoning={reasoning} updates={updates} sessionId={sessionId} />
-        )}
+        <UsageMeter state={state} />
       </div>
       <footer>
         <button type="button" data-action="close-inspector" onClick={close}>

@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../api/index.js";
 import { ErrorMessage } from "./error-message.js";
+import { Pager, usePaged } from "./pager.js";
 
 export function Workbench({
   active,
@@ -44,6 +45,8 @@ export function Workbench({
       off();
     };
   }, [activeId, active, changed, closed]);
+  const number = new Intl.NumberFormat(i18n.resolvedLanguage ?? i18n.language);
+  const { rows: sessionRows, pager: sessionPager } = usePaged(sessions ?? []);
   const warningLabels = {
     UNKNOWN_KEY: t("workbench.unknownKey"),
     UNKNOWN_NAME: t("workbench.unknownName"),
@@ -53,44 +56,13 @@ export function Workbench({
   return (
     <>
       {active && (
-        <section className="surface" data-workbench="active">
-          <h3>{active.config.name}</h3>
-          {active.config.description && <p>{active.config.description}</p>}
-          {active.readOnly && <p role="status">{t("workbench.readOnly")}</p>}
-          {active.warnings.length > 0 && (
-            <ul className="workbench-warnings">
-              {active.warnings.map((warning, index) => (
-                <li key={`${warning.code}:${warning.path ?? index}`}>
-                  {warningLabels[warning.code]} {warning.path}
-                </li>
-              ))}
-            </ul>
-          )}
-          <dl className="workbench-config-summary" data-workbench-overview>
-            <dt>{t("overview.folder")}</dt>
-            <dd className="path-text">{active.folder}</dd>
-            <dt>{t("overview.model")}</dt>
-            <dd>{active.config.agent.model ?? t("overview.appDefault")}</dd>
-            <dt>{t("overview.permissions")}</dt>
-            <dd>
-              {active.config.agent.permission_mode === "ask"
-                ? t("approval.ask")
-                : active.config.agent.permission_mode === "read-only"
-                  ? t("approval.readOnly")
-                  : t("approval.autoEdit")}
-            </dd>
-            <dt>{t("overview.include")}</dt>
-            <dd>{active.config.docs.include.join(", ") || "—"}</dd>
-            <dt>{t("overview.exclude")}</dt>
-            <dd>{active.config.docs.exclude.join(", ") || "—"}</dd>
-            <dt>{t("projects.embeddingModel")}</dt>
-            <dd>{active.config.embeddings.model}</dd>
-            <dt>{t("projects.chunkSize")}</dt>
-            <dd>{active.config.embeddings.chunkSize}</dd>
-            <dt>{t("projects.overlap")}</dt>
-            <dd>{active.config.embeddings.overlap}</dd>
-          </dl>
-          <div className="workbench-actions">
+        <section className="surface workbench-overview" data-workbench="active">
+          <header className="overview-header">
+            <div className="overview-title">
+              <h3>{active.config.name}</h3>
+              <p className="path-text overview-folder">{active.folder}</p>
+              {active.config.description && <p>{active.config.description}</p>}
+            </div>
             {edit && (
               <button
                 type="button"
@@ -101,12 +73,68 @@ export function Workbench({
                 {t("projects.edit")}
               </button>
             )}
+          </header>
+          {active.readOnly && <p role="status">{t("workbench.readOnly")}</p>}
+          {active.warnings.length > 0 && (
+            <ul className="workbench-warnings">
+              {active.warnings.map((warning, index) => (
+                <li key={`${warning.code}:${warning.path ?? index}`}>
+                  {warningLabels[warning.code]} {warning.path}
+                </li>
+              ))}
+            </ul>
+          )}
+          <div className="overview-groups" data-workbench-overview>
+            <div className="overview-card">
+              <h4>{t("overview.agentGroup")}</h4>
+              <dl>
+                <div className="overview-row">
+                  <dt>{t("overview.model")}</dt>
+                  <dd>{active.config.agent.model ?? t("overview.appDefault")}</dd>
+                </div>
+                <div className="overview-row">
+                  <dt>{t("overview.permissions")}</dt>
+                  <dd>
+                    {active.config.agent.permission_mode === "ask"
+                      ? t("approval.ask")
+                      : active.config.agent.permission_mode === "read-only"
+                        ? t("approval.readOnly")
+                        : t("approval.autoEdit")}
+                  </dd>
+                </div>
+              </dl>
+            </div>
+            <div className="overview-card">
+              <h4>{t("overview.indexGroup")}</h4>
+              <dl>
+                <div className="overview-row">
+                  <dt>{t("overview.include")}</dt>
+                  <dd className="path-text">{active.config.docs.include.join(", ") || "—"}</dd>
+                </div>
+                <div className="overview-row">
+                  <dt>{t("overview.exclude")}</dt>
+                  <dd className="path-text">{active.config.docs.exclude.join(", ") || "—"}</dd>
+                </div>
+                <div className="overview-row">
+                  <dt>{t("projects.embeddingModel")}</dt>
+                  <dd>{active.config.embeddings.model}</dd>
+                </div>
+                <div className="overview-row">
+                  <dt>{t("projects.chunkSize")}</dt>
+                  <dd>{number.format(active.config.embeddings.chunkSize)}</dd>
+                </div>
+                <div className="overview-row">
+                  <dt>{t("projects.overlap")}</dt>
+                  <dd>{number.format(active.config.embeddings.overlap)}</dd>
+                </div>
+              </dl>
+            </div>
           </div>
-          <section className="workbench-session-summary">
-            <h3>
+          <section className="overview-card workbench-session-summary">
+            <h4>
               {t("overview.sessions")}
               {sessions ? ` (${sessions.length})` : ""}
-            </h3>
+            </h4>
             {!sessions && !sessionsError && <p role="status">{t("home.loading")}</p>}
             {sessionsError != null && (
               <>
@@ -118,7 +146,7 @@ export function Workbench({
             )}
             {sessions?.length === 0 && <p>{t("overview.noSessions")}</p>}
             {!!sessions?.length && (
-              <table>
+              <table className="overview-sessions">
                 <thead>
                   <tr>
                     <th>{t("overview.session")}</th>
@@ -127,10 +155,14 @@ export function Workbench({
                   </tr>
                 </thead>
                 <tbody>
-                  {sessions.map((session) => (
+                  {sessionRows.map((session) => (
                     <tr key={session.id} data-overview-session={session.id}>
                       <td>
-                        <button type="button" onClick={() => selectSession?.(session.id)}>
+                        <button
+                          type="button"
+                          className="overview-session-link"
+                          onClick={() => selectSession?.(session.id)}
+                        >
                           {session.title || t("chat.untitled")}
                         </button>
                       </td>
@@ -149,6 +181,7 @@ export function Workbench({
                 </tbody>
               </table>
             )}
+            <Pager {...sessionPager} />
           </section>
         </section>
       )}

@@ -21,7 +21,7 @@ import sys
 import time
 from typing import NoReturn
 
-VERSION = "1.0.0"
+VERSION = "0.2.0"
 # The first argument must name the command: VERA's rules classify it, and argparse would otherwise accept a
 # leading "--" before the subcommand.
 FIRST = {"list", "capture", "send", "replay", "--version", "--help", "-h"}

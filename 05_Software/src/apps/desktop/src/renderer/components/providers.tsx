@@ -106,14 +106,12 @@ export function Providers() {
   return (
     <section className="surface" id="section-providers" data-settings-section="providers">
       <h2 tabIndex={-1}>{t("settings.providers")}</h2>
-      <p className="muted">{t("providers.description")}</p>
       <section data-provider-group="subscriptions" className="provider-group">
         <h3>{t("providers.subscriptions")}</h3>
         <Chatgpt disabled={disabled} />
       </section>
       <section data-provider-group="api" className="provider-group">
         <h3>{t("providers.connections")}</h3>
-        <p className="muted">{t("providers.multiple")}</p>
         {list.isPending && <p role="status">{t("home.loading")}</p>}
         {(error !== undefined || list.isError) && <ErrorMessage error={error ?? list.error} />}
         {list.isError && (
@@ -124,7 +122,6 @@ export function Providers() {
         {pending && <p role="status">{t("providers.saving")}</p>}
         {list.data && (
           <>
-            <h4>{t("providers.savedConnections")}</h4>
             {!hasOpenai && list.data.custom.length === 0 && (
               <p className="muted">{t("providers.emptyConnections")}</p>
             )}

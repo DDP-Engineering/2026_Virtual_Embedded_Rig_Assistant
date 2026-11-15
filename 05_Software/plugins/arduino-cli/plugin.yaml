@@ -1,7 +1,8 @@
 format: 1
 id: arduino-cli
-version: 1.0.0
+version: 0.2.0
 name: Arduino CLI
+summary: Compile Arduino sketches with a pinned arduino-cli and upload the verified binary to an identified board.
 description: Native Arduino sketches with a pinned arduino-cli - inspect a sketch, list connected boards by identity, look up boards, cores and libraries, install cores and libraries in exact versions into VERA's own Arduino environment, compile a copy of the sketch into a traceable run folder (flash and RAM, libraries, core, hashes) and upload exactly that verified binary to an identified board. The Arduino IDE's own folders are never touched; no daemon, interactive monitor, bootloader, fuses or OTA.
 ecosystem: arduino
 platforms: [windows-x64, linux-x64]
@@ -18,10 +19,12 @@ programs:
         windows-x64:
           url: https://github.com/arduino/arduino-cli/releases/download/v1.6.0/arduino-cli_1.6.0_Windows_64bit.zip
           sha256: 2769b9b282ce597db9679d8ec14d726d57004ca4205ef4d7a795bf36b6cdc9d8
+          bytes: 20404890
           path: arduino-cli.exe
         linux-x64:
           url: https://github.com/arduino/arduino-cli/releases/download/v1.6.0/arduino-cli_1.6.0_Linux_64bit.tar.gz
           sha256: 321ee249f44c78053234fec0f36101092bc6021bf24939e15e0cc2449c5ed250
+          bytes: 20111675
           path: arduino-cli
       preferDownload: true
     version: { args: [version], match: 'Version: (\d+\.\d+\.\d+)', range: '>=1.6,<2' }

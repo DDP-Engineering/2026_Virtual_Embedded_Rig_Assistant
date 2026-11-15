@@ -42,7 +42,7 @@ the CLI gets BUSY:
 ## First steps
 
 1. `pi-tool check-host-key --board pi`, compare, pin.
-2. `pi-tool install-helper --board pi` writes the helper to `~/.local/share/vera-pi/1.0.0/` after checking its
+2. `pi-tool install-helper --board pi` writes the helper to `~/.local/share/vera-pi/0.2.0/` after checking its
    SHA-256. Every later call runs only a helper whose SHA-256 matches the one in this plugin (`helper-missing`,
    `helper-changed` otherwise).
 3. `pi-tool identify --board pi` reports model, serial, machine id, OS, architecture, kernel, Python, user and the

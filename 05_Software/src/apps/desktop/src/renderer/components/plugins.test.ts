@@ -53,6 +53,7 @@ const review: PluginReview = {
     id: "echo-tools",
     version: "1.0.0",
     name: "Echo tools",
+    summary: "Echo arguments.",
     description: "Echo arguments and print test output.",
     ecosystem: "general",
     platforms: ["windows-x64", "linux-x64"],
@@ -89,6 +90,7 @@ function stub(options: {
       { name: "echo", kind: "find", state: "missing", hint: "Install Node.js." },
     ],
     provisioned: false,
+    reinstalled: false,
   };
   vi.mocked(api.invoke).mockImplementation((async (channel: string, request: Record<string, unknown>) => {
     switch (channel) {
@@ -102,6 +104,9 @@ function stub(options: {
       case "plugins.provision":
         state.provisioned = true;
         return [{ name: "echo", kind: "find", state: "ready", version: "22.11.0" }];
+      case "plugins.reinstall":
+        state.reinstalled = true;
+        return state.programs.map((program) => ({ ...program, state: "ready", problem: undefined }));
       case "plugins.toggle":
         state.installed = state.installed.map((plugin) =>
           plugin.id === request.id ? { ...plugin, enabled: request.enabled as boolean } : plugin,
@@ -398,8 +403,9 @@ it("reviews a picked folder, then installs exactly the reviewed package", async 
   ])
     expect(screen.textContent).toContain(text);
   expect(screen.querySelectorAll("[data-rule]")).toHaveLength(5);
-  expect([...screen.querySelectorAll("[data-rule] .risk-badge")].map((badge) => badge.textContent)).toEqual([
-    i18n.t("approval.risk.safe"),
+  expect(
+    [...screen.querySelectorAll("[data-operations] > summary .risk-badge")].map((badge) => badge.textContent),
+  ).toEqual([
     i18n.t("approval.risk.safe"),
     i18n.t("approval.risk.deviceWrite"),
     i18n.t("approval.risk.irreversible"),
@@ -491,4 +497,437 @@ it("does nothing when the picker is cancelled", async () => {
   await click('[data-action="plugin-install-folder"]');
   expect(calls("plugins.review")).toEqual([]);
   expect($("[data-plugin-review]")).toBeNull();
+});
+
+const busManifest: NonNullable<PluginReview["manifest"]> = {
+  format: 1,
+  id: "bus-tools",
+  version: "0.1.0",
+  name: "Bus tools (I2C, SPI, UART)",
+  summary: "Run bounded I2C, SPI and UART transactions.",
+  description: "Active, bounded I2C, SPI and UART transactions through a Bus Pirate.",
+  ecosystem: "lab",
+  platforms: ["windows-x64", "linux-x64"],
+  requires: [],
+  programs: {
+    "bus-tool": {
+      install: { script: "scripts/bus_tool.py" },
+      version: { args: ["--version"], match: "^bus-tool (\\d+\\.\\d+\\.\\d+)" },
+    },
+  },
+  rules: [
+    { match: "bus-tool {--version,--help,-h}", risk: "safe" },
+    { match: "bus-tool {devices,capabilities,report} *", risk: "safe", note: "Lists serial ports." },
+    { match: "bus-tool identify *", risk: "device-read", note: "Sends one BPIO2 status request." },
+    {
+      match: "bus-tool {configure-bus,read-register,transfer} *",
+      risk: "device-write",
+      note: "Configures the bus.",
+    },
+    { match: "bus-tool capture *", risk: "device-write", note: "Records a UART.", timeout: 120 },
+    { match: "bus-tool release *", risk: "device-write", note: "Sets the adapter to HiZ." },
+    { match: "bus-tool * --power *", risk: "irreversible", note: "Switches the supply on." },
+  ],
+  docs: ["README.md", "https://docs.buspirate.com/docs/binmode-reference/protocol-bpio2/"],
+};
+const busComposition = {
+  skills: [
+    { name: "bus-profiles", description: "How to write a bus-tool profile." },
+    { name: "bus-transactions", description: "How to run bounded bus transactions." },
+  ],
+  files: ["profiles/bme280-i2c.json", "profiles/uart-console.json", "profiles/w25q-spi.json"],
+};
+function expectBusContents(scope: HTMLElement) {
+  const program = scope.querySelector('[data-program="bus-tool"]');
+  expect(program?.textContent).toContain("scripts/bus_tool.py");
+  expect([...scope.querySelectorAll("[data-skill]")].map((skill) => skill.textContent)).toEqual([
+    "bus-profiles How to write a bus-tool profile.",
+    "bus-transactions How to run bounded bus transactions.",
+  ]);
+  expect([...scope.querySelectorAll("[data-file]")].map((file) => file.textContent)).toEqual(
+    busComposition.files,
+  );
+  expect([...scope.querySelectorAll("[data-doc]")].map((doc) => doc.textContent)).toEqual(busManifest.docs);
+  const groups = [...scope.querySelectorAll<HTMLDetailsElement>("[data-operations]")];
+  expect(
+    groups.map((group) => [group.dataset.operations, group.querySelectorAll("[data-rule]").length]),
+  ).toEqual([
+    ["safe", 2],
+    ["device-read", 1],
+    ["device-write", 3],
+    ["irreversible", 1],
+  ]);
+  expect(groups.every((group) => !group.open)).toBe(true);
+  expect(groups[1]?.textContent).toContain("Sends one BPIO2 status request.");
+  expect(groups[2]?.textContent).toContain(i18n.t("plugins.timeout", { seconds: 120 }));
+}
+
+// REQ-UX-c49dc727, REQ-UX-b62eb1e0
+it("shows the composition and the operations by risk of a reviewed and an installed bus-tools", async () => {
+  await i18n.changeLanguage("en");
+  const busReview: PluginReview = {
+    path: "C:/plugins/bus-tools",
+    kind: "folder",
+    sha256: "c".repeat(64),
+    issues: [],
+    manifest: busManifest,
+    composition: busComposition,
+  };
+  const installed: PluginSummary = {
+    ...echo,
+    id: "bus-tools",
+    name: busManifest.name,
+    manifest: busManifest,
+    composition: busComposition,
+  };
+  stub({ installed: [installed], review: busReview });
+  await render();
+  await click('[data-plugin="bus-tools"] [data-action="plugin-expand"]');
+  expectBusContents($('[data-plugin="bus-tools"]'));
+  expect(calls("plugins.programs")).toEqual([]);
+  await click('[data-action="plugin-install-folder"]');
+  await vi.waitFor(() => expect($("[data-plugin-review]")).not.toBeNull());
+  expectBusContents($("[data-plugin-review]"));
+});
+
+// REQ-UX-c49dc727, REQ-UX-b62eb1e0
+it("says a skills-only plugin runs no programs and declares no operations, in en, ro and de", async () => {
+  const skillsOnly: PluginReview = {
+    path: "C:/plugins/analysis-skills",
+    kind: "folder",
+    sha256: "d".repeat(64),
+    issues: [],
+    manifest: {
+      ...busManifest,
+      id: "analysis-skills",
+      name: "Analysis skills",
+      programs: {},
+      rules: [],
+      docs: ["README.md"],
+    },
+    composition: {
+      skills: [
+        { name: "firmware-comparator", description: "Compare two firmware runs." },
+        { name: "test-planner", description: "Plan tests." },
+      ],
+      files: [],
+    },
+  };
+  for (const language of ["en", "ro", "de"]) {
+    await i18n.changeLanguage(language);
+    stub({ review: skillsOnly });
+    await render();
+    await click('[data-action="plugin-install-folder"]');
+    await vi.waitFor(() => expect($("[data-plugin-review]")).not.toBeNull());
+    const screen = $("[data-plugin-review]");
+    expect(screen.querySelectorAll("[data-skill]")).toHaveLength(2);
+    expect(screen.querySelector("[data-program]")).toBeNull();
+    expect(screen.querySelector("[data-no-programs]")?.textContent).toBe(
+      i18n.t("plugins.composition.noPrograms"),
+    );
+    expect(screen.querySelector("[data-operations]")).toBeNull();
+    expect(screen.textContent).toContain(i18n.t("plugins.operations.none"));
+    expect(screen.querySelector("[data-file]")).toBeNull();
+    await act(async () => root.unmount());
+    container.remove();
+  }
+  expect(
+    new Set(["en", "ro", "de"].map((lng) => i18n.t("plugins.composition.noPrograms", { lng }))).size,
+  ).toBe(3);
+});
+
+// REQ-UX-b3fb479b
+it("lists the required plugins and where each checked program is or goes on the installed card", async () => {
+  await i18n.changeLanguage("en");
+  const manifest = {
+    ...(review.manifest as NonNullable<PluginReview["manifest"]>),
+    requires: ["serial-monitor"],
+  };
+  stub({
+    installed: [{ ...echo, manifest }],
+    programs: [{ name: "echo", kind: "find", state: "ready", version: "22.11.0", path: "C:/node/node.exe" }],
+  });
+  await render();
+  await click('[data-plugin="echo-tools"] [data-action="plugin-expand"]');
+  await click('[data-action="plugin-check"]');
+  await vi.waitFor(() => expect($('[data-program="echo"]')).not.toBeNull());
+  const program = $('[data-program="echo"]');
+  expect(program.getAttribute("data-automatic")).toBe("false");
+  expect(program.textContent).toContain(i18n.t("plugins.dependencies.foundAt", { path: "C:/node/node.exe" }));
+  expect(program.textContent).toContain("22.11.0");
+  expect($('[data-required-plugin="serial-monitor"]').getAttribute("data-installed")).toBe("false");
+});
+
+// REQ-FUNC-751e430e, REQ-REL-4cef9c7b
+it("re-installs VERA's damaged program copy from the installed card", async () => {
+  await i18n.changeLanguage("en");
+  const state = stub({
+    installed: [echo],
+    programs: [{ name: "tool", kind: "download", state: "unavailable", problem: "sha256" }],
+  });
+  await render();
+  await click('[data-plugin="echo-tools"] [data-action="plugin-expand"]');
+  await click('[data-action="plugin-check"]');
+  await vi.waitFor(() => expect($('[data-program="tool"]')).not.toBeNull());
+  expect($('[data-program="tool"]').textContent).toContain(i18n.t("plugins.problem.sha256"));
+  expect($('[data-program="tool"]').textContent).toContain(i18n.t("plugins.dependencies.programFolder"));
+  expect(($('[data-action="plugin-reinstall"]') as HTMLButtonElement).disabled).toBe(false);
+  await click('[data-action="plugin-reinstall"]');
+  await vi.waitFor(() => expect($('[data-program="tool"]').getAttribute("data-state")).toBe("ready"));
+  expect(calls("plugins.reinstall").map(([, request]) => request)).toEqual([
+    { id: "echo-tools", workbenchId: workbench.id },
+  ]);
+  expect(state.reinstalled).toBe(true);
+});
+
+/** An installed plugin whose manifest declares parameters (PLG-05). */
+function declaring(
+  id: string,
+  settings: NonNullable<NonNullable<PluginSummary["manifest"]>["settings"]>,
+): PluginSummary {
+  return {
+    ...echo,
+    id,
+    name: id,
+    sha256: "c".repeat(64),
+    manifest: { ...(review.manifest as NonNullable<PluginSummary["manifest"]>), id, name: id, settings },
+  };
+}
+const mqtt = declaring("mqtt-tools", {
+  "broker-credential": {
+    kind: "secret",
+    scope: "mqtt",
+    description: "A broker login stored under a reference.",
+  },
+});
+const bus = declaring("bus-tools", {
+  "lab-resources": {
+    kind: "workbench-file",
+    path: "lab/resources.json",
+    format: "lab-resources",
+    description: "The bench registry.",
+  },
+});
+const pi = declaring("raspberry-pi-linux", {
+  "ssh-agent": { kind: "value", value: "System SSH agent", description: "The login key stays in the agent." },
+});
+/** plugins.configuration over an in-memory MQTT store; the bus-tools registry is invalid. */
+function configurationStub(installed: PluginSummary[]) {
+  const refs = new Set<string>();
+  vi.mocked(api.invoke).mockImplementation((async (channel: string, request: Record<string, unknown>) => {
+    switch (channel) {
+      case "plugins.list":
+        return installed;
+      case "plugins.catalog":
+        return { source: "none", plugins: [], packs: [] };
+      case "mqtt.credentials.list":
+        return { credentials: [...refs].map((ref) => ({ ref, storage: "encrypted" })), secureStorage: true };
+      case "mqtt.credentials.save":
+        refs.add(request.ref as string);
+        return { status: "saved" };
+      case "mqtt.credentials.remove":
+        refs.delete(request.ref as string);
+        return {};
+      case "plugins.configuration":
+        return {
+          plugins: (request.plugins as { key: string; settings: Record<string, unknown> }[]).map(
+            ({ key, settings }) => ({
+              key,
+              settings: Object.keys(settings).map((name) =>
+                name === "broker-credential"
+                  ? refs.size
+                    ? { name, kind: "secret", state: "stored", refs: [...refs] }
+                    : { name, kind: "secret", state: "missing" }
+                  : name === "lab-resources"
+                    ? {
+                        name,
+                        kind: "workbench-file",
+                        state: "invalid",
+                        paths: ["lab/resources.json"],
+                        problem: "lab/resources.json is not valid: format: Invalid input",
+                      }
+                    : { name, kind: "value", state: "value" },
+              ),
+            }),
+          ),
+        };
+      default:
+        throw new Error(`Unexpected ${channel}`);
+    }
+  }) as never);
+  return refs;
+}
+
+// REQ-UX-efe126c0, REQ-UX-05e0ed17, REQ-UX-4b90fed2
+it("configures mqtt-tools on its own page and names a missing secret as Needs configuration", async () => {
+  await i18n.changeLanguage("en");
+  configurationStub([mqtt, echo]);
+  await render();
+  const card = '[data-plugin="mqtt-tools"]';
+  await vi.waitFor(() =>
+    expect($(`${card} [data-readiness]`).textContent).toContain("Needs configuration: broker-credential"),
+  );
+  expect($(`${card} [data-readiness]`).getAttribute("data-readiness")).toBe("needs");
+  expect($('[data-plugin="echo-tools"] [data-readiness]').getAttribute("data-readiness")).toBe("unchecked");
+  expect(calls("plugins.configuration")[0]?.[1]).toEqual({
+    workbenchId: workbench.id,
+    plugins: [
+      { key: `folder/mqtt-tools/${"c".repeat(64)}/${echo.installedAt}`, settings: mqtt.manifest?.settings },
+    ],
+  });
+  await click(`${card} [data-action="plugin-expand"]`);
+  const setting = `${card} [data-setting="broker-credential"]`;
+  await vi.waitFor(() => expect($(setting).getAttribute("data-state")).toBe("missing"));
+  expect($(setting).textContent).toContain("A broker login stored under a reference.");
+  const user = userEvent.setup();
+  const input = (label: string) =>
+    [...$(setting).querySelectorAll("label")]
+      .find((element) => element.textContent?.startsWith(label))
+      ?.querySelector("input") as HTMLInputElement;
+  await vi.waitFor(() => expect(input("Reference")).toBeTruthy());
+  expect($(`${setting} [data-configuration-form="mqtt"]`)).not.toBeNull();
+  await act(async () => user.type(input("Reference"), "bench"));
+  await act(async () => user.type(input("Password"), "secret-password"));
+  await click(`${setting} fieldset .workbench-actions button`);
+  await vi.waitFor(() => expect($(setting).getAttribute("data-state")).toBe("stored"));
+  await vi.waitFor(() =>
+    expect($(`${card} [data-readiness]`).textContent).not.toContain("broker-credential"),
+  );
+  expect(container.textContent).not.toContain("secret-password");
+  await click(`${setting} [data-credential="bench"] [data-action="credential-replace"]`);
+  expect(input("Reference").value).toBe("bench");
+  expect(input("Password").value).toBe("");
+  // Removing the only reference makes the secret missing again; the Needs configuration filter lists the plugin.
+  await click(`${setting} [data-credential="bench"] button:not([data-action])`);
+  await vi.waitFor(() => expect($(setting).getAttribute("data-state")).toBe("missing"));
+  await click('[data-library-status="needs"]');
+  await vi.waitFor(() => expect($('[data-plugin="echo-tools"]')).toBeNull());
+  expect($(card)).not.toBeNull();
+});
+
+// REQ-UX-efe126c0, REQ-UX-05e0ed17
+it("shows an invalid workbench file with its problem, a read-only value and nothing for plugins without settings", async () => {
+  configurationStub([bus, pi, echo]);
+  for (const [language, invalid, readOnly] of [
+    ["en", "Invalid", "Read-only"],
+    ["ro", "Invalid", "Doar citire"],
+    ["de", "Ungültig", "Nur lesen"],
+  ] as const) {
+    await i18n.changeLanguage(language);
+    await render();
+    await click('[data-plugin="bus-tools"] [data-action="plugin-expand"]');
+    const file = '[data-setting="lab-resources"]';
+    await vi.waitFor(() => expect($(file).getAttribute("data-state")).toBe("invalid"));
+    expect($(file).textContent).toContain(invalid);
+    expect($(file).textContent).toContain("lab/resources.json is not valid: format: Invalid input");
+    expect($('[data-plugin="bus-tools"] [data-readiness]').getAttribute("data-readiness")).toBe("needs");
+    expect($('[data-plugin="bus-tools"] [data-readiness]').textContent).toContain("lab-resources");
+    await click('[data-plugin="raspberry-pi-linux"] [data-action="plugin-expand"]');
+    await vi.waitFor(() => expect($('[data-setting="ssh-agent"]').getAttribute("data-state")).toBe("value"));
+    expect($('[data-setting="ssh-agent"] [data-setting-value]').textContent).toBe("System SSH agent");
+    expect($('[data-setting="ssh-agent"]').textContent).toContain(readOnly);
+    expect($('[data-setting="ssh-agent"] input')).toBeNull();
+    expect($('[data-plugin="raspberry-pi-linux"] [data-readiness]').getAttribute("data-readiness")).toBe(
+      "unchecked",
+    );
+    await click('[data-plugin="echo-tools"] [data-action="plugin-expand"]');
+    expect($('[data-plugin="echo-tools"] [data-plugin-configuration]')).toBeNull();
+    await act(async () => root.unmount());
+    container.remove();
+  }
+});
+
+/** Adds program checks to another stub: every program of `id` reports `statuses`. */
+function withPrograms(statuses: PluginProgramStatus[]) {
+  const invoke = vi.mocked(api.invoke).getMockImplementation();
+  vi.mocked(api.invoke).mockImplementation(((channel: string, request: unknown) => {
+    if (channel === "plugins.check" || channel === "plugins.programs") return Promise.resolve(statuses);
+    return invoke?.(channel as never, request as never);
+  }) as never);
+}
+const check = (card: string, name: string) => $(`${card} [data-status-check="${name}"]`);
+
+// REQ-UX-492e89fb, REQ-UX-50e2dc6b, REQ-UX-05e0ed17
+it.each(["en", "ro", "de"])(
+  "shows Dependencies ready, Configuration missing by name and the workbench for mqtt-tools (%s)",
+  async (language) => {
+    await i18n.changeLanguage(language);
+    configurationStub([{ ...mqtt, enabled: true }]);
+    withPrograms([{ name: "mqtt", kind: "pip", state: "ready", version: "2.1.0" }]);
+    const openWorkbench = vi.fn();
+    await render({ workbench, openWorkbench });
+    const card = '[data-plugin="mqtt-tools"]';
+    await click(`${card} [data-action="plugin-check"]`);
+    await vi.waitFor(() => expect(check(card, "dependencies").getAttribute("data-state")).toBe("ready"));
+    await vi.waitFor(() => expect(check(card, "configuration").getAttribute("data-state")).toBe("missing"));
+    expect(check(card, "configuration").textContent).toContain("broker-credential");
+    expect(check(card, "use").getAttribute("data-state")).toBe("ready");
+    expect(check(card, "use").textContent).toContain(i18n.t("plugins.status.enabledIn", { name: "Board" }));
+    const block = $(`${card} [data-plugin-status]`);
+    expect(block.getAttribute("data-plugin-status")).toBe("attention");
+    expect(block.querySelector("[data-status-summary]")?.textContent).toBe(
+      i18n.t("plugins.status.notReady", { checks: i18n.t("plugins.status.configuration") }),
+    );
+    // Configure opens the card on its Configuration section.
+    await click(`${card} [data-action="status-configure"]`);
+    expect($(`${card} [data-plugin-configuration]`)).not.toBeNull();
+    await click(`${card} [data-action="status-open-workbench"]`);
+    expect(openWorkbench).toHaveBeenCalledTimes(1);
+    await act(async () => root.unmount());
+    container.remove();
+  },
+);
+
+// REQ-UX-492e89fb, REQ-UX-50e2dc6b
+it("is Ready only with ready programs, nothing to configure and use in the open workbench", async () => {
+  await i18n.changeLanguage("en");
+  stub({
+    installed: [{ ...echo, enabled: true }],
+    programs: [{ name: "echo", kind: "find", state: "ready" }],
+  });
+  await render();
+  const card = '[data-plugin="echo-tools"]';
+  expect($(`${card} [data-plugin-status]`).getAttribute("data-plugin-status")).toBe("attention");
+  expect(check(card, "dependencies").getAttribute("data-state")).toBe("unchecked");
+  expect(check(card, "configuration").getAttribute("data-state")).toBe("ready");
+  expect(check(card, "configuration").textContent).toContain(i18n.t("plugins.status.nothingToConfigure"));
+  expect($(`${card} [data-action="status-configure"]`)).toBeNull();
+  await click(`${card} [data-action="plugin-check"]`);
+  await vi.waitFor(() =>
+    expect($(`${card} [data-plugin-status]`).getAttribute("data-plugin-status")).toBe("ready"),
+  );
+  expect($(`${card} [data-status-summary]`).textContent).toBe(i18n.t("plugins.status.ready"));
+  await act(async () => root.unmount());
+  container.remove();
+  // Not enabled in the open workbench, then no workbench open at all.
+  stub({ installed: [echo], programs: [{ name: "echo", kind: "find", state: "ready" }] });
+  await render();
+  expect(check(card, "use").getAttribute("data-state")).toBe("missing");
+  expect(check(card, "use").textContent).toContain(i18n.t("plugins.status.notEnabledIn", { name: "Board" }));
+  await act(async () => root.unmount());
+  container.remove();
+  const openWorkbench = vi.fn();
+  await render({ workbench: undefined, openWorkbench });
+  expect(check(card, "use").textContent).toContain(i18n.t("plugins.status.noWorkbench"));
+  await click(`${card} [data-action="status-open-workbench"]`);
+  expect(openWorkbench).toHaveBeenCalledTimes(1);
+});
+
+// REQ-UX-157f139c
+it("names a missing vendor program as external and keeps its guide", async () => {
+  await i18n.changeLanguage("en");
+  stub({
+    installed: [echo],
+    programs: [{ name: "echo", kind: "find", state: "missing", hint: "Install Node.js." }],
+  });
+  await render();
+  const card = '[data-plugin="echo-tools"]';
+  await click(`${card} [data-action="plugin-check"]`);
+  await vi.waitFor(() => expect(check(card, "dependencies").getAttribute("data-state")).toBe("external"));
+  expect(check(card, "dependencies").textContent).toContain(
+    i18n.t("plugins.status.externalNames", { names: "echo" }),
+  );
+  expect(($(`${card} [data-action="plugin-provision"]`) as HTMLButtonElement).disabled).toBe(true);
+  await click(`${card} [data-action="plugin-expand"]`);
+  expect($(`${card} [data-program="echo"]`).textContent).toContain("Install Node.js.");
 });

@@ -32,7 +32,7 @@ it("lists with fresh integrity off main and keeps pending scopes and shutdown in
   await mkdir(source);
   await writeFile(
     join(source, "plugin.yaml"),
-    "format: 1\nid: tools\nversion: 1.0.0\nname: Tools\ndescription: Test tools\necosystem: general\nplatforms: [windows-x64, linux-x64]\nprograms: {}\n",
+    "format: 1\nid: tools\nversion: 1.0.0\nname: Tools\nsummary: Fixture summary.\ndescription: Test tools\necosystem: general\nplatforms: [windows-x64, linux-x64]\nprograms: {}\n",
   );
   const store = new PluginStore({ root: storeRoot });
   await store.install(source);

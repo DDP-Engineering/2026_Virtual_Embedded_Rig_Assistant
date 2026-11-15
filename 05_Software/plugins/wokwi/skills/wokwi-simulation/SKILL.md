@@ -15,7 +15,7 @@ not an electrical test or a test on the real board, and never reported as either
 2. `wokwi-tool validate-diagram --diagram <dir>/diagram.json`: fix every error first. Warnings are worth reading.
 3. `wokwi-tool prepare-job --project <dir> --account <ref> --virtual-timeout-ms 5000 --scenario <dir>/test.yaml`
    (or `--expect-text "ready"`; add `--fail-text "panic"`, `--vcd`, `--screenshot-part <id> --screenshot-ms <n>`).
-   The account is the reference of a token the user stored in Settings > Wokwi tokens.
+   The account is the reference of a token the user stored in the wokwi plugin's Configuration on the Plugins page.
 4. Show the user `job.md` (or `job.json`): the files that will be sent with their hashes, the account, the board, the
    virtual time limit and the real-time budget, and that the run counts against their Wokwi plan. Wait for them.
 5. `wokwi-tool run-scenario --job arduino-iot-results/<job>/job.json --credential <ref>`: irreversible, typed

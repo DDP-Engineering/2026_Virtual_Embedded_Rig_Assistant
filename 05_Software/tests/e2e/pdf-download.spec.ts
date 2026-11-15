@@ -190,7 +190,7 @@ test("native approved PDF download opens locally, persists offline and rejects f
       ["en", "Open PDF: reference.pdf"],
     ] as const) {
       await page.locator('[data-i18n="nav.settings"]').click();
-      await page.locator('[data-section="language"]').click();
+      await page.locator('[data-section="appearance"]').click();
       await page.locator("#language").selectOption(language);
       await page.locator('[data-action="leave-settings"]').click();
       await page.locator(`[data-session="${ids.sessionId}"]`).click();

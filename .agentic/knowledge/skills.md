@@ -47,7 +47,7 @@ Core skills/create-plugin.ts owns the body; plugins/authoring.test.ts proves loa
 - Skills settings provides diagnostics, enable/disable, open/edit, source selection,
   template creation, loading/retry/read-only states and isolated drafts. Context lists
   enabled valid metadata. en/ro/de labels use root-scaled rem/theme styles and modal
-  keyboard focus restoration. Workbench access is through Edit → Tools/skills;
+  keyboard focus restoration. Workbench access is through Edit → Skills (SkillsPanel inline: create left, paged list right) and the Context tab's Skills settings dialog;
   manager changes save independently, and project Save preserves their live choices.
   Nested Escape closes only the top dialog, returning focus to its launcher.
   Repeated Enabled/Open accessible names include each skill name. Browser mock supplies the same routes in memory.
@@ -91,8 +91,8 @@ The official analysis-skills plugin supplies firmware-comparator and test-planne
 loaded comparison/manual-plan templates. Test-planner selects one to five sourced manual cases,
 requires identified target and sourced setup/criterion for ready_for_review, keeps numeric gaps
 observation-only/blocked, names enabled plugin operations only as optional future steps, and saves
-unique bounded session artifacts with at most three attempts and no overwrite. Seven real-model
-rubrics cover semantic behavior separately from source/ZIP loading and SessionService/CLI replay.
+unique bounded session artifacts with at most three attempts and no overwrite. Model semantics
+are not tested automatically; source and ZIP loading are.
 REQ-FUNC-c0400001..7, REQ-SEC-c0400008..9 and REQ-DATA-c040000a..b govern that procedure.
 
 REQ-FUNC-e728c8bf metadata/discovery; REQ-FUNC-f06e9051 content admission;

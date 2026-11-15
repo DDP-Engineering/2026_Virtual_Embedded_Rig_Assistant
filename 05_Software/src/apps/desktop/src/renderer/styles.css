@@ -244,7 +244,7 @@ code {
   min-width: 0;
 }
 .sidebar {
-  width: min(var(--sidebar-width), 29vw);
+  width: min(var(--sidebar-width), 50vw);
   position: relative;
   display: flex;
   flex-direction: column;
@@ -622,6 +622,8 @@ main {
   flex-direction: column;
   gap: 1.4rem;
 }
+/* Primary actions (Save, Create): green when they can be used. */
+button.primary:not(:disabled),
 [data-action="create-workbench"]:not(:disabled) {
   color: var(--primary-foreground);
   background: var(--primary);
@@ -711,7 +713,7 @@ legend {
 }
 .right-panel {
   flex-shrink: 0;
-  width: min(var(--right-width), 35vw);
+  width: min(var(--right-width), 50vw);
   min-width: 0;
   position: relative;
   background: var(--card);
@@ -758,7 +760,7 @@ legend {
   .right-panel {
     position: absolute;
     inset: 0 0 0 auto;
-    width: min(var(--right-width), 45vw);
+    width: min(var(--right-width), 50vw);
     z-index: 2;
     box-shadow: -0.4rem 0 1rem #0003;
   }
@@ -1586,8 +1588,24 @@ legend {
 }
 
 .provider-group {
-  margin-block: 1.5rem;
+  margin-block: 1.25rem 0;
   min-width: 0;
+}
+/* Groups share one left edge; a thin line separates them instead of nested boxes. */
+.provider-group + .provider-group {
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--border);
+}
+.provider-group > h3 {
+  margin: 0 0 0.75rem;
+}
+.provider-group .provider-card {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.provider-group .provider-card > p {
+  margin-block: 0.25rem;
 }
 .provider-actions {
   align-items: center;
@@ -1702,7 +1720,8 @@ legend {
   padding: 0.5rem 0 0.5rem 1rem;
 }
 /* The editor is a page: it fills the remaining page height and scrolls its sections internally. */
-.workbench-editor {
+.workbench-editor,
+.workbench-create {
   flex: 1 1 0;
   min-height: 18rem;
   display: flex;
@@ -1712,7 +1731,8 @@ legend {
 .workbench-editor[hidden] {
   display: none;
 }
-.workbench-editor > header {
+.workbench-editor > header,
+.workbench-create > header {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -1720,7 +1740,8 @@ legend {
   flex-shrink: 0;
   flex-wrap: wrap;
 }
-.workbench-editor > header h3 {
+.workbench-editor > header h3,
+.workbench-create > header h3 {
   margin: 0;
   overflow-wrap: anywhere;
 }
@@ -1754,6 +1775,8 @@ legend {
   overflow: auto;
   min-width: 0;
   padding: 0.3rem;
+  /* Two-column sections (Documents, Skills, Plugins) stack when this area, not the window, is narrow. */
+  container-type: inline-size;
 }
 .workbench-editor-content fieldset {
   border: 0;
@@ -1777,16 +1800,39 @@ legend {
 .workbench-editor-content .project-instructions {
   min-height: 18rem;
 }
-.workbench-tools ul {
+/* Tools: two columns on a normal window (three when very wide), one when narrow. */
+.workbench-tools > ul {
   list-style: none;
   padding: 0;
-  margin: 1rem 0 0;
+  margin: 0;
   display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(22rem, 100%), 1fr));
   gap: 0.5rem;
 }
+/* Documents: actions and indexing summary on the left, the folder selection on the right. */
 .workbench-documents {
   display: grid;
+  grid-template-columns: minmax(min(14rem, 100%), 1fr) minmax(0, 2fr);
+  align-items: start;
+  gap: 1.25rem;
+}
+@media (width < 900px) {
+  .workbench-documents {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.workbench-documents-side,
+.workbench-documents-folders {
+  display: grid;
   gap: 0.8rem;
+  min-width: 0;
+}
+.workbench-documents-side > button {
+  justify-self: start;
+}
+.workbench-documents-preview {
+  margin: 0;
+  font-weight: 600;
 }
 .workbench-documents-list {
   list-style: none;
@@ -1794,9 +1840,8 @@ legend {
   margin: 0;
   display: grid;
   gap: 0.5rem;
-}
-.workbench-documents > button {
-  justify-self: start;
+  max-height: 60vh;
+  overflow: auto;
 }
 .workbench-documents-advanced > summary {
   cursor: pointer;
@@ -1900,13 +1945,9 @@ legend {
   }
 }
 
-.shortcut-settings {
-  max-width: 70rem;
-  padding: 0.6rem 0.2rem 2rem;
-}
+/* Keyboard shortcuts: a Settings page like the others (full width, page card, normal heading). */
 .shortcut-settings > h2 {
-  margin: 0 0 2rem;
-  font-size: 1.8rem;
+  margin: 0;
 }
 .shortcut-toolbar {
   display: flex;
@@ -1949,11 +1990,7 @@ legend {
   padding: 0.4rem;
 }
 .shortcut-list {
-  border: 1px solid var(--border);
-  border-radius: 1.4rem;
-  background: var(--card);
-  padding: 0 1.4rem;
-  margin: 1.8rem 0;
+  margin: 0;
 }
 .shortcut-list:empty::after {
   content: "—";
@@ -2245,7 +2282,8 @@ legend {
 }
 .transcript-item.user {
   border-radius: 1.25rem;
-  background: var(--muted);
+  background: var(--card);
+  border: 1px solid var(--border);
   padding: 0.8rem 1rem;
   max-width: 85%;
 }
@@ -2439,28 +2477,72 @@ legend {
 }
 .session-inspector .usage-meter {
   display: grid;
-  gap: 0.6rem;
-  padding: 1rem;
-  margin: 1rem 0;
+  gap: 1rem;
+  margin: 0.5rem 0;
+  font-size: 1rem;
+  color: var(--foreground);
+}
+.usage-bar {
+  display: grid;
+  gap: 0.35rem;
+  font-weight: 600;
+}
+.usage-bar meter {
+  width: 100%;
+  height: 0.75rem;
+}
+.usage-groups {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(16rem, 100%), 1fr));
+  gap: 1rem;
+}
+.usage-group,
+.usage-summary {
+  margin: 0;
+  padding: 0.85rem 1rem;
   border-radius: 0.75rem;
   background: var(--muted);
 }
-.agent-activity ol {
-  list-style: none;
-  padding: 0;
-  display: grid;
-  gap: 0.6rem;
+.usage-group dl {
+  margin: 0;
 }
-.agent-activity .disclosure-toggle {
+.usage-group h3 {
+  margin: 0 0 0.5rem;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted-foreground);
+}
+.usage-row {
   display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 0.5rem;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.3rem 0;
 }
-.agent-activity svg {
-  width: 1rem;
-  height: 1rem;
-  flex-shrink: 0;
+.usage-row + .usage-row {
+  border-top: 0.0714286rem solid var(--border);
+}
+.usage-row dt {
+  color: var(--muted-foreground);
+}
+.usage-row dd {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+.usage-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(12rem, 100%), 1fr));
+  column-gap: 1.5rem;
+}
+.usage-summary .usage-row + .usage-row {
+  border-top: 0;
+}
+.usage-status {
+  margin: 0;
+  color: var(--muted-foreground);
 }
 .activity-preview {
   color: var(--muted-foreground);
@@ -2480,13 +2562,6 @@ legend {
 }
 .activity-prompt-usage span {
   overflow-wrap: anywhere;
-}
-.agent-activity pre {
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-  padding: 0.75rem;
-  background: var(--muted);
-  font-size: var(--code-font-size);
 }
 .session-entry {
   position: relative;
@@ -2617,6 +2692,14 @@ legend {
 .plugin-card p {
   margin: 0;
 }
+.plugin-card [data-catalog-warning] {
+  font-weight: 600;
+  color: var(--primary);
+}
+.plugin-card [data-catalog-warning="platform"],
+.plugin-card [data-catalog-warning][data-risk="irreversible"] {
+  color: var(--destructive);
+}
 .plugin-heading {
   display: flex;
   flex-wrap: wrap;
@@ -2647,9 +2730,32 @@ legend {
   background: transparent;
   min-width: 0;
 }
-.plugin-dependency-summary {
+.plugin-status ul {
+  list-style: none;
+  margin: 0.25rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 0.25rem;
+}
+.plugin-status li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+.plugin-status li > strong {
+  min-width: 8rem;
+}
+.plugin-status li > .workbench-actions {
   margin-inline-start: auto;
-  color: var(--muted-foreground);
+}
+.plugin-status [data-status-summary] {
+  margin: 0;
+  font-weight: 600;
+}
+.plugin-pack-group {
+  display: block;
 }
 .plugin-actions {
   margin-top: 0.25rem;
@@ -2721,19 +2827,23 @@ legend {
   align-items: center;
   gap: 0.5rem;
 }
-/* Plugin catalog: source, URL setting, packs and catalog plugins (REQ-UX-72a349a1, REQ-UX-9207423e). */
+/* Plugin catalog: source, URL and channel settings, packs and catalog plugins (REQ-UX-72a349a1,
+   REQ-UX-9207423e, REQ-UX-84d8cad7). */
 .plugin-catalog,
-.catalog-url {
+.catalog-url,
+.catalog-channel {
   display: grid;
   gap: 0.5rem;
   min-width: 0;
 }
 .plugin-catalog h3,
 .plugin-catalog h4,
-.catalog-url p {
+.catalog-url p,
+.catalog-channel p {
   margin: 0;
 }
-.catalog-url input {
+.catalog-url input,
+.catalog-channel select {
   width: 100%;
   min-width: 0;
 }
@@ -2746,7 +2856,8 @@ legend {
   cursor: pointer;
   padding-block: 0.4rem;
 }
-.plugin-catalog-settings .catalog-url {
+.plugin-catalog-settings .catalog-url,
+.plugin-catalog-settings .catalog-channel {
   padding-top: 0.5rem;
 }
 .plugin-library-statuses button span {
@@ -2879,4 +2990,502 @@ legend {
 }
 [data-workbench-plugins] .risk-badge {
   flex: 0 0 auto;
+}
+
+/* Context tab: the workbench file is collapsible, wraps its text and scrolls when wider or longer. */
+.context-workbench > summary {
+  cursor: pointer;
+  display: list-item;
+}
+.context-workbench > summary h3 {
+  display: inline;
+}
+.context-workbench-body {
+  max-height: 60vh;
+  overflow: auto;
+  overflow-wrap: anywhere;
+  white-space: normal;
+  border: 0.0714286rem solid var(--border);
+  border-radius: 0.375rem;
+  padding: 0.5rem;
+  margin-top: 0.375rem;
+}
+.context-workbench-body pre {
+  overflow-x: auto;
+}
+
+/* Appearance and language: one 3-column grid shared by the theme cards and the text sizes. */
+#section-appearance fieldset {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+#section-appearance legend {
+  padding: 0;
+  margin-bottom: 0.5rem;
+}
+#section-appearance .language-field {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+#section-appearance .theme-options,
+.typography-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+@media (width < 900px) {
+  #section-appearance .theme-options,
+  .typography-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.typography-grid .typography-control {
+  display: grid;
+  align-content: start;
+  gap: 0.5rem;
+}
+.typography-grid .typography-control legend {
+  margin-bottom: 0;
+}
+.typography-grid .typography-control select {
+  justify-self: start;
+}
+.typography-grid .typography-control > p,
+.typography-grid .typography-control > pre {
+  margin: 0;
+}
+.typography-reset {
+  align-self: flex-start;
+}
+
+/* About page: brand header, then application, runtime and third-party blocks. */
+.about {
+  display: grid;
+  gap: 1.25rem;
+}
+/* A fixed dark brand band in both themes, so the pale DDP logo keeps its contrast. */
+.about-hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  padding: 1.25rem 1.5rem;
+  border-radius: var(--radius);
+  background: #12352f;
+  color: #e6f4f1;
+}
+.about-logo {
+  height: 6rem;
+  width: auto;
+  flex-shrink: 0;
+}
+.about-hero p {
+  margin: 0;
+}
+.about-name {
+  font-size: 1.75rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+.about-full-name {
+  opacity: 0.85;
+}
+.about-version {
+  margin-top: 0.25rem;
+  font-weight: 600;
+}
+.about-block h3 {
+  margin: 0 0 0.6rem;
+  font-size: 1rem;
+}
+.about-notices > summary {
+  cursor: pointer;
+  display: list-item;
+}
+.about-notices > summary h3 {
+  display: inline;
+}
+.about-notices table {
+  width: 100%;
+  margin-top: 0.6rem;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+.about-notices th,
+.about-notices td {
+  text-align: left;
+  padding: 0.35rem 0.5rem;
+  border-bottom: 1px solid var(--border);
+}
+.about-license {
+  margin-top: 0.25rem;
+}
+.about-notice {
+  font-size: 0.85rem;
+  opacity: 0.85;
+}
+.about-license-text {
+  max-height: 24rem;
+  overflow: auto;
+  margin: 0.6rem 0 0;
+  padding: 0.75rem;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  border: 1px solid var(--border);
+  border-radius: 0.4rem;
+  background: var(--background);
+  font-size: 0.85rem;
+}
+/* Sidebar footer: the maker's logo, theme-matched. */
+.sidebar-bottom {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+  min-width: 0;
+}
+.sidebar-bottom .sidebar-settings {
+  flex: 1;
+  min-width: 0;
+}
+.sidebar-maker {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  padding-right: 0.5rem;
+}
+.sidebar-maker[hidden] {
+  display: none;
+}
+.maker-logo {
+  height: 1.8rem;
+  width: auto;
+  max-width: 100%;
+  object-fit: contain;
+  opacity: 0.9;
+}
+.maker-logo-dark {
+  display: none;
+}
+:root[data-theme="dark"] .maker-logo-light {
+  display: none;
+}
+:root[data-theme="dark"] .maker-logo-dark {
+  display: block;
+}
+/* Workbench overview: header, two cards of label/value rows, and a sessions card. */
+.workbench-overview .overview-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.overview-title h3 {
+  margin: 0;
+  font-size: 1.35rem;
+}
+.overview-title p {
+  margin: 0.25rem 0 0;
+}
+.overview-folder {
+  color: var(--muted-foreground);
+}
+.overview-groups {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(20rem, 100%), 1fr));
+  gap: 1rem;
+}
+.overview-card {
+  min-width: 0;
+}
+.overview-card h4 {
+  margin: 0 0 0.5rem;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted-foreground);
+}
+.overview-card dl {
+  margin: 0;
+}
+.overview-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.35rem 0;
+}
+.overview-row + .overview-row {
+  border-top: 1px solid var(--border);
+}
+.overview-row dt {
+  color: var(--muted-foreground);
+}
+.overview-row dd {
+  margin: 0;
+  font-weight: 600;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+.overview-sessions {
+  width: 100%;
+  border-collapse: collapse;
+}
+.overview-sessions th {
+  text-align: left;
+  font-size: 0.85rem;
+  color: var(--muted-foreground);
+  font-weight: 600;
+  padding: 0.35rem 0.5rem;
+}
+.overview-sessions td {
+  padding: 0.45rem 0.5rem;
+  border-top: 1px solid var(--border);
+  color: var(--muted-foreground);
+  font-variant-numeric: tabular-nums;
+}
+.overview-sessions th:not(:first-child),
+.overview-sessions td:not(:first-child) {
+  text-align: right;
+  white-space: nowrap;
+}
+.overview-session-link {
+  border: 0;
+  background: none;
+  padding: 0;
+  color: var(--primary);
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+.overview-session-link:hover,
+.overview-session-link:focus-visible {
+  text-decoration: underline;
+}
+/* Per-question usage under each question in the chat. */
+.prompt-usage {
+  display: flex;
+  flex-wrap: wrap;
+  margin: 0.35rem 0 0;
+  font-size: 0.8rem;
+  color: var(--muted-foreground);
+  font-variant-numeric: tabular-nums;
+}
+.prompt-usage span + span::before {
+  content: "·";
+  margin: 0 0.5rem;
+}
+/* Runs tab: one wrapping row of filters above the list. */
+.runs-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.75rem;
+  margin-bottom: 0.75rem;
+}
+.runs-filters label {
+  display: grid;
+  gap: 0.2rem;
+  font-size: 0.8rem;
+  color: var(--muted-foreground);
+}
+.runs-filters select {
+  max-width: 12rem;
+}
+/* New workbench (editor layout): the folder row in General. */
+.create-label {
+  font-weight: 600;
+}
+.create-folder {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  min-width: 0;
+}
+.create-folder .path-text,
+.create-folder .muted {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.create-folder button {
+  flex-shrink: 0;
+}
+/* Indexing: Embeddings and Search side by side, one column when narrow. */
+.index-columns {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(18rem, 100%), 1fr));
+  gap: 1rem;
+  align-items: start;
+}
+.index-card {
+  display: grid;
+  gap: 0.75rem;
+}
+.index-card h4 {
+  margin: 0;
+}
+/* Workbench settings: fields in two columns, one when narrow. */
+.settings-columns {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(18rem, 100%), 1fr));
+  gap: 1rem 1.5rem;
+  align-items: start;
+}
+.settings-columns > :has(.bypass-warning),
+.settings-columns > [data-permission-picker] {
+  grid-column: 1 / -1;
+}
+.index-card h4 {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted-foreground);
+}
+/* Shared pager under lists and tables: range, rows per page, previous and next. */
+.pager {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+  margin-top: 0.5rem;
+}
+.pager label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.pager-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+/* Skills: create on the left, the list on the right in the Tools card style. */
+.skills-panel {
+  display: grid;
+  grid-template-columns: minmax(min(14rem, 100%), 1fr) minmax(0, 2fr);
+  gap: 1.25rem;
+  align-items: start;
+}
+@media (width < 900px) {
+  .skills-panel {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.skills-panel-side,
+.skills-panel-list {
+  display: grid;
+  gap: 0.75rem;
+  min-width: 0;
+}
+.skills-panel-side > button {
+  justify-self: start;
+}
+.skills-panel .skills-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 0.5rem;
+}
+.skills-panel .skills-list > li {
+  display: flex;
+  align-items: start;
+  gap: 0.75rem;
+  padding: 0.8rem;
+  border: 1px solid var(--border);
+  border-radius: 0.6rem;
+}
+.skill-text {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 0.2rem;
+}
+.skill-description {
+  overflow-wrap: anywhere;
+}
+/* Pager labels stay on one line. */
+.pager label,
+.pager span {
+  white-space: nowrap;
+}
+/* Plugin libraries (Plugins page, workbench Plugins section): filters left, list right. */
+.library-split {
+  display: grid;
+  grid-template-columns: minmax(min(15rem, 100%), 19rem) minmax(0, 1fr);
+  gap: 1.25rem;
+  align-items: start;
+}
+@media (width < 900px) {
+  .library-split {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.library-side,
+.library-main {
+  display: grid;
+  gap: 0.75rem;
+  min-width: 0;
+}
+.library-summary {
+  margin: 0;
+  font-weight: 600;
+}
+.library-side .plugin-library-search-row,
+.library-side .plugin-library-filter-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.6rem;
+}
+.library-side .plugin-library-controls label {
+  display: grid;
+  gap: 0.25rem;
+}
+.library-side .plugin-library-results {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+}
+.library-side .plugin-library-results label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  white-space: nowrap;
+}
+/* Workbench Plugins: one card per row, checkbox on the left, like Tools and Skills. */
+[data-workbench-plugins] .library-main .plugin-library-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.5rem;
+}
+/* Plugins page: the library stacks when the page is narrow. */
+.plugins-page {
+  container-type: inline-size;
+}
+/* Two-column layouts stack when their own area is too narrow, at any text size. */
+@container (width < 46rem) {
+  .workbench-documents,
+  .skills-panel,
+  .library-split {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+/* Library state buttons in the left column: one aligned list, never wrapping mid-row. */
+.library-side .plugin-library-statuses {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.4rem;
+}
+.library-side .plugin-library-statuses button {
+  justify-self: stretch;
+  text-align: left;
 }

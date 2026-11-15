@@ -39,6 +39,10 @@ extraResources:
     to: plugins
     filter:
       - '**/*'
+# VERA's license next to the executable (staged from the repository root LICENSE.txt).
+extraFiles:
+  - from: resources/LICENSE.txt
+    to: LICENSE.txt
 win:
   target:
     - target: nsis

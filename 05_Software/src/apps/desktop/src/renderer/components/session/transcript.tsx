@@ -19,6 +19,7 @@ import { ApprovalCard } from "./approval-card.js";
 import { argsText, ToolOutput } from "./bounded-text.js";
 import { Disclosure } from "./disclosure.js";
 import { Markdown } from "./markdown.js";
+import { PromptUsage } from "./prompt-usage.js";
 import { contentOffset, scrollTarget } from "./transcript-navigation.js";
 import { type NavigatorMessage, TranscriptNavigator } from "./transcript-navigator.js";
 import { searchMatch, streamingBlocks, type ToolItem, transcriptRows } from "./transcript-projection.js";
@@ -159,10 +160,12 @@ export function Transcript({
     return byCall;
   }, [state.approvals]);
   const needle = search.toLocaleLowerCase();
-  const stopped = new Set([
-    ...state.interrupted,
-    ...state.turns.filter((turn) => turn.stopReason === "aborted").map((turn) => turn.turnId),
-  ]);
+  // One label at most: only when the latest turn was stopped or interrupted.
+  const latestTurn = state.turns.at(-1);
+  const stopped =
+    !state.activeTurnId &&
+    latestTurn !== undefined &&
+    (latestTurn.stopReason === "aborted" || state.interrupted.includes(latestTurn.turnId));
   return (
     <div className="transcript-frame" data-chat-detail={detail}>
       <TranscriptScroll viewport={scroll} content={content} controls={transcriptId} />
@@ -252,14 +255,15 @@ export function Transcript({
                 }
                 sessionId={sessionId}
                 anchors={anchors}
+                detail={detail}
               />
             );
           })}
-          {Array.from(stopped).map((id) => (
-            <p key={id} className="muted" data-chat-stopped role="status">
+          {stopped && (
+            <p className="muted" data-chat-stopped role="status">
               {t("chatDetail.stopped")}
             </p>
-          ))}
+          )}
           {detail === "minimal" && state.activeTurnId && state.status === "running" && (
             <p className="muted" data-chat-working role="status">
               {t("chat.working")}
@@ -283,12 +287,14 @@ const MessageRow = memo(function MessageRow({
   highlighted,
   sessionId,
   anchors,
+  detail,
 }: {
   item: Extract<Item, { kind: "user" | "assistant" }>;
   match: boolean;
   highlighted: boolean;
   sessionId: string | undefined;
   anchors: Map<string, HTMLElement>;
+  detail: ChatDetail;
 }) {
   const { t } = useTranslation();
   const openDocument = useDocumentViewer();
@@ -328,6 +334,8 @@ const MessageRow = memo(function MessageRow({
             </span>
           )}
           <Markdown text={item.text} />
+          {/* Per-question statistics only at the Verbose detail level. */}
+          {detail === "verbose" && item.usage && <PromptUsage usage={item.usage} />}
         </>
       ) : (
         <>

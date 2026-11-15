@@ -24,9 +24,18 @@ it.each(["en", "ro", "de"])("presents translated status and request view tokens 
     await i18n.changeLanguage(language);
     await act(async () => root.render(createElement(UsageMeter, { state })));
     expect(element.querySelector('[role="status"]')?.textContent).toBe(i18n.t("chat.compaction.completed"));
-    expect(element.textContent).toContain(`${i18n.t("chat.requestView")}: 1200`);
-    expect(element.textContent).toContain(`${i18n.t("chat.estimated")}: 1200`);
-    expect(element.textContent).toContain("17 / 3");
+    // Each figure is a label/value row, with the number formatted for the language.
+    const rows = new Map(
+      [...element.querySelectorAll(".usage-row")].map((row) => [
+        row.querySelector("dt")?.textContent,
+        row.querySelector("dd")?.textContent,
+      ]),
+    );
+    const n = (value: number) => new Intl.NumberFormat(language).format(value);
+    expect(rows.get(i18n.t("chat.requestView"))).toBe(n(1200));
+    expect(rows.get(i18n.t("chat.estimated"))).toBe(n(1200));
+    expect(rows.get(i18n.t("chat.promptInput"))).toBe(n(17));
+    expect(rows.get(i18n.t("chat.promptOutput"))).toBe(n(3));
   } finally {
     await act(async () => root.unmount());
     await i18n.changeLanguage("en");

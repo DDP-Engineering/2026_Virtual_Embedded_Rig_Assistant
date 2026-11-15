@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-SEC-daf01d33"
+
+title = "Sign the channel indexes of a catalog release"
+
+status = "active"
+
+requirement = """
+When `vera catalog sign --release <dir> --key <private.pem>` runs, it shall write next to each channel index a `<index>.sig` file holding the base64 Ed25519 signature of the index bytes, and if `--public <public.pem>` is given and does not match the private key, it shall write nothing and exit 1.
+"""
+
+verification = "Core catalog-source test and CLI test: signing a built release with a throwaway key writes index-stable.json.sig and index-pre-release.json.sig that verify with Node crypto against the public key; signing with --public of another key pair exits 1 and writes no .sig file."
+
+affected_paths = ["05_Software/src/libraries/core/src/plugins/catalog-source.ts", "05_Software/src/apps/cli/src/args.ts", "05_Software/src/apps/cli/src/catalog.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/plugins/catalog-source.test.ts", "05_Software/tests/integration/cli.test.ts"]
+
+
+spec = "specs/REQ-DATA-b40d3f9b.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

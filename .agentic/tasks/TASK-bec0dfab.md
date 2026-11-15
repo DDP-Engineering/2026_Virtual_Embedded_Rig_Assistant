@@ -13,7 +13,7 @@ stage: done
 type: fix
 path: quick
 interaction: autopilot
-requirements: REQ-FUNC-66b6fda6
+requirements:
 parent:
 branch: master
 base: 891a699b934bd9b20af441f06a13834c69aec5c1

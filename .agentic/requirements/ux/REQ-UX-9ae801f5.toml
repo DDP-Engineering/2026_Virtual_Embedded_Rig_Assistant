@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-UX-9ae801f5"
+
+title = "Warn on the catalog card when the platform is not supported"
+
+status = "active"
+
+requirement = "When a catalog card is shown on a host whose plugin platform is known and not listed in the entry's platforms, the card shall show a localized warning naming the supported platforms; on a listed or unknown platform it shall show no platform warning."
+
+verification = "Renderer component test: an entry for [windows-x64] on linux-x64 shows the platform warning with windows-x64; the same entry on windows-x64 and with no known platform shows none; texts exist in en, ro and de (i18n check)."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/plugin-catalog.tsx", "05_Software/src/apps/desktop/src/renderer/components/plugins.tsx"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/plugin-catalog.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

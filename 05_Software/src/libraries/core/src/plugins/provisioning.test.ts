@@ -16,6 +16,7 @@ import {
 } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { pathToFileURL } from "node:url";
 import type { PluginSettings } from "@vera/shared";
 import { strToU8, zipSync } from "fflate";
 import { afterEach, expect, it, vi } from "vitest";
@@ -468,7 +469,15 @@ it("prefers a found tool and installs one shared fallback archive only after fin
   s.served.set("https://h.test/tools.zip", () => new Response(bytes));
   expect(await s.provisioner.statuses("tools")).toEqual([
     { name: "nm", kind: "download", state: "missing" },
-    { name: "size", kind: "download", state: "ready", version: "2.46", range: ">=2.40", external: true },
+    {
+      name: "size",
+      kind: "download",
+      state: "ready",
+      version: "2.46",
+      range: ">=2.40",
+      external: true,
+      path: join(base, "bin", name("size")),
+    },
   ]);
   expect(s.fetches).toEqual([]);
   const plugin = await s.store.load("tools");
@@ -584,6 +593,7 @@ async function setup(options: Setup) {
       id: "tools",
       version: "1.0.0",
       name: "Tools",
+      summary: "Fixture summary.",
       description: "Test tools.",
       ecosystem: "general",
       platforms: options.platforms ?? ["windows-x64", "linux-x64"],
@@ -876,6 +886,217 @@ it("refuses a download with another hash and keeps nothing", async () => {
   expect(s.host.programs).toEqual([]);
 });
 
+// REQ-DATA-dbeebbbe
+it("treats a transfer longer than the declared size as a hash mismatch and keeps nothing", async () => {
+  const url = "https://h.test/tool.AppImage";
+  const bytes = strToU8("expected");
+  const s = await setup({ programs: { tool: download(url, bytes, { bytes: 3 }) } });
+  s.served.set(url, () => new Response(bytes));
+  expect(await s.provisioner.install("tools")).toEqual([
+    { name: "tool", kind: "download", state: "missing", problem: "sha256" },
+  ]);
+  const downloads = join(s.root, "plugins", "runtime", "downloads");
+  expect(await readdir(downloads)).toEqual([".staging"]);
+  expect(await readdir(join(downloads, ".staging"))).toEqual([]);
+});
+
+/** A dependency kit folder holding `bytes` as the kit file of `url`'s pinned entry. */
+async function kitWith(root: string, url: string, bytes: Uint8Array, pinned = bytes) {
+  const kit = join(root, "kit");
+  const file = join(kit, "files", sha(pinned), url.split("/").at(-1) as string);
+  await mkdir(join(file, ".."), { recursive: true });
+  await writeFile(file, bytes);
+  return { kit, file };
+}
+
+// REQ-FUNC-b1afbd8c
+it("installs and re-installs a download program from the dependency kit without the network", async () => {
+  const image = strToU8("\x7fELF kit");
+  const url = "https://h.test/r/tool.AppImage";
+  const root = await mkdtemp(join(tmpdir(), "vera-kit-"));
+  roots.push(root);
+  const { kit } = await kitWith(root, url, image);
+  const s = await setup({ programs: { tool: download(url, image) }, settings: { kit } });
+  s.host.handle = (process) => {
+    process.print("tool 1.0\n");
+    process.finish(ok);
+  };
+  expect(await s.provisioner.install("tools")).toEqual([
+    { name: "tool", kind: "download", state: "ready", version: "1.0" },
+  ]);
+  const stored = join(s.root, "plugins", "runtime", "downloads", sha(image), "tool.AppImage");
+  await writeFile(stored, "damaged");
+  expect((await s.provisioner.reinstall("tools"))[0]).toMatchObject({ state: "ready" });
+  expect(await readFile(stored)).toEqual(Buffer.from(image));
+  expect(s.fetches).toEqual([]);
+});
+
+// REQ-FUNC-b1afbd8c
+it("fetches the pinned URL when the dependency kit has no file for the entry", async () => {
+  const image = strToU8("\x7fELF url");
+  const url = "https://h.test/r/tool.AppImage";
+  const root = await mkdtemp(join(tmpdir(), "vera-kit-"));
+  roots.push(root);
+  const s = await setup({ programs: { tool: download(url, image) }, settings: { kit: join(root, "kit") } });
+  s.served.set(url, () => new Response(image));
+  s.host.handle = (process) => {
+    process.print("tool 1.0\n");
+    process.finish(ok);
+  };
+  expect((await s.provisioner.install("tools"))[0]).toMatchObject({ state: "ready" });
+  expect(s.fetches).toEqual([url]);
+});
+
+// REQ-SEC-51f93776
+it("refuses a changed dependency kit file, names it and falls back to nothing", async () => {
+  const image = strToU8("\x7fELF good");
+  const url = "https://h.test/r/tool.AppImage";
+  const root = await mkdtemp(join(tmpdir(), "vera-kit-"));
+  roots.push(root);
+  const { kit, file } = await kitWith(root, url, strToU8("\x7fELF evil"), image);
+  const s = await setup({ programs: { tool: download(url, image) }, settings: { kit } });
+  s.served.set(url, () => new Response(image));
+  const [status] = await s.provisioner.install("tools");
+  expect(status).toMatchObject({ name: "tool", kind: "download", state: "missing", problem: "sha256" });
+  expect(status?.detail).toContain(file);
+  expect(s.fetches).toEqual([]);
+  expect(existsSync(join(s.root, "plugins", "runtime", "downloads", sha(image)))).toBe(false);
+  expect((await s.record()).programs).toEqual({});
+});
+
+// REQ-FUNC-41582b95
+it("points uv at the dependency kit's wheels and Python only", async () => {
+  const root = await mkdtemp(join(tmpdir(), "vera-kit-"));
+  roots.push(root);
+  const kit = join(root, "kit");
+  const s = await setup({
+    programs: { esptool: pip("esptool") },
+    settings: { kit, index: "https://mirror.example/simple" },
+  });
+  uvActs(s.host, s.uv, "esptool");
+  await s.provisioner.install("tools");
+  const env = s.host.programs[0]?.options.env;
+  expect(env).toMatchObject({
+    UV_OFFLINE: "1",
+    UV_FIND_LINKS: join(kit, "wheels"),
+    UV_PYTHON_INSTALL_MIRROR: pathToFileURL(join(kit, "python")).href,
+  });
+  expect(env).not.toHaveProperty("UV_DEFAULT_INDEX");
+  // Offline uv never downloads CPython on its own: the kit's archive is installed explicitly first.
+  expect(s.host.programs.map((p) => p.args.slice(0, 2))).toEqual([
+    ["python", "install"],
+    ["tool", "install"],
+    ["version"],
+  ]);
+  const plain = await setup({ programs: { esptool: pip("esptool") } });
+  uvActs(plain.host, plain.uv, "esptool");
+  await plain.provisioner.install("tools");
+  expect(plain.host.programs[0]?.args.slice(0, 2)).toEqual(["tool", "install"]);
+  for (const name of ["UV_OFFLINE", "UV_FIND_LINKS", "UV_PYTHON_INSTALL_MIRROR"])
+    expect(plain.host.programs[0]?.options.env).not.toHaveProperty(name);
+});
+
+// REQ-FUNC-41582b95
+it("reports a failed CPython install from the dependency kit and runs no uv install", async () => {
+  const root = await mkdtemp(join(tmpdir(), "vera-kit-"));
+  roots.push(root);
+  const s = await setup({ programs: { esptool: pip("esptool") }, settings: { kit: join(root, "kit") } });
+  s.host.handle = (process) => {
+    process.print("error: Failed to install cpython-3.13.18 (hash mismatch)\n");
+    process.finish({ code: 2, signal: null });
+  };
+  const [status] = await s.provisioner.install("tools");
+  expect(status).toMatchObject({ name: "esptool", state: "missing", problem: "install" });
+  expect(status?.detail).toContain("hash mismatch");
+  expect(s.host.programs.map((p) => p.args.slice(0, 2))).toEqual([["python", "install"]]);
+});
+
+// REQ-FUNC-751e430e, REQ-REL-4cef9c7b
+it("reports a damaged single-file download on check and re-install replaces only VERA's copy", async () => {
+  const image = strToU8("\x7fELF good");
+  const url = "https://h.test/r/tool.AppImage";
+  const s = await setup({ programs: { tool: download(url, image) } });
+  s.served.set(url, () => new Response(image));
+  s.host.handle = (process) => {
+    process.print("tool 1.0\n");
+    process.finish(ok);
+  };
+  expect((await s.provisioner.install("tools"))[0]).toMatchObject({ state: "ready", version: "1.0" });
+  const downloads = join(s.root, "plugins", "runtime", "downloads");
+  const file = join(downloads, sha(image), "tool.AppImage");
+  await writeFile(file, "damaged");
+  // A passive read never hashes; an explicit check does.
+  expect((await s.provisioner.statuses("tools"))[0]).toMatchObject({ state: "ready" });
+  expect(await s.provisioner.check("tools")).toEqual([
+    { name: "tool", kind: "download", state: "unavailable", problem: "sha256" },
+  ]);
+  const before = await s.record();
+  expect(await s.provisioner.reinstall("tools")).toEqual([
+    { name: "tool", kind: "download", state: "ready", version: "1.0" },
+  ]);
+  expect(await readFile(file)).toEqual(Buffer.from(image));
+  expect(s.fetches).toEqual([url, url]);
+  expect(await s.record()).toEqual(before);
+  expect(await readdir(downloads)).toEqual([".staging", sha(image)]);
+  expect(await readdir(join(downloads, ".staging"))).toEqual([]);
+  // Offline, a re-install reports the failure and keeps VERA's working copy in use.
+  s.served.set(url, () => Promise.reject(new TypeError("fetch failed")));
+  expect(await s.provisioner.reinstall("tools")).toEqual([
+    { name: "tool", kind: "download", state: "missing", problem: "download" },
+  ]);
+  expect(await readFile(file)).toEqual(Buffer.from(image));
+  expect((await s.provisioner.resolve(await s.store.load("tools"), "tool"))?.executable).toBe(file);
+});
+
+// REQ-FUNC-751e430e
+it("re-installs programs that share one pinned archive with a single download", async () => {
+  const zip = zipSync({ "bin/a": strToU8("a"), "bin/b": strToU8("b") });
+  const url = "https://h.test/tools.zip";
+  const s = await setup({
+    programs: { a: download(url, zip, { path: "bin/a" }), b: download(url, zip, { path: "bin/b" }) },
+  });
+  s.served.set(url, () => new Response(zip));
+  s.host.handle = (process) => {
+    process.print("tool 2.0\n");
+    process.finish(ok);
+  };
+  expect((await s.provisioner.install("tools")).map((status) => status.state)).toEqual(["ready", "ready"]);
+  expect(s.fetches).toEqual([url]);
+  expect((await s.provisioner.reinstall("tools")).map((status) => status.state)).toEqual(["ready", "ready"]);
+  expect(s.fetches).toEqual([url, url]);
+});
+
+// REQ-FUNC-751e430e
+it("re-installs pip programs with uv --reinstall and never installs a find program", async () => {
+  const hint = "Install Wireshark from https://www.wireshark.org/download.html.";
+  const s = await setup({
+    programs: {
+      esptool: pip("esptool>=5,<6"),
+      tshark: find({ linux: ["/nonexistent/wireshark/tshark"] }, { hint }),
+    },
+  });
+  uvActs(s.host, s.uv, "esptool");
+  await s.provisioner.install("tools");
+  const before = s.host.programs.length;
+  expect(await s.provisioner.reinstall("tools")).toEqual([
+    { name: "esptool", kind: "pip", state: "ready", version: "5.6.0" },
+    {
+      name: "tshark",
+      kind: "find",
+      state: "missing",
+      problem: "notFound",
+      hint,
+      link: "https://www.wireshark.org/download.html",
+    },
+  ]);
+  expect(
+    s.host.programs
+      .slice(before)
+      .filter((process) => process.executable === s.uv)
+      .map((process) => process.args),
+  ).toEqual([["tool", "install", "--reinstall", "esptool>=5,<6"]]);
+});
+
 // REQ-SEC-e51bc0d8
 it("refuses a zip that writes outside its folder and keeps nothing", async () => {
   const zip = zipSync({ "bin/tool": strToU8("x"), "../escape": strToU8("evil") });
@@ -997,8 +1218,15 @@ it("expands %NAME% and accepts only .exe files on Windows", async () => {
     process.print("git version 2.47.1.windows.1\n");
     process.finish(ok);
   };
+  // REQ-UX-b3fb479b: a program found on this computer reports where it was found.
   expect(await s.provisioner.statuses("tools")).toEqual([
-    { name: "git", kind: "find", state: "ready", version: "2.47.1" },
+    {
+      name: "git",
+      kind: "find",
+      state: "ready",
+      version: "2.47.1",
+      path: join(base, "local", "Programs", "Git2", "cmd", "git.exe"),
+    },
   ]);
   expect(s.host.programs[0]?.executable).toBe(join(base, "local", "Programs", "Git2", "cmd", "git.exe"));
 });
@@ -1044,8 +1272,15 @@ it("checks the probed version against the supported range", async () => {
     process.finish({ code, signal: null });
   };
   expect(await s.provisioner.statuses("tools")).toEqual([
-    { name: "plain", kind: "find", state: "ready", version: "2.44.0" },
-    { name: "ranged", kind: "find", state: "ready", version: "2.44.0", range: ">=2.40" },
+    { name: "plain", kind: "find", state: "ready", version: "2.44.0", path: join(base, "git") },
+    {
+      name: "ranged",
+      kind: "find",
+      state: "ready",
+      version: "2.44.0",
+      range: ">=2.40",
+      path: join(base, "git"),
+    },
   ]);
   await touch(join(base, "git"));
   s.provisioner.invalidate();
@@ -1109,7 +1344,7 @@ it("resolves and lists programs without installing anything", async () => {
   expect(s.fetches).toEqual([]);
 });
 
-// REQ-FUNC-5491d410, REQ-FUNC-06eaa9a5
+// REQ-FUNC-5491d410
 it("reports programs this platform cannot run and missing launchers", async () => {
   const s = await setup({
     programs: {
@@ -1165,7 +1400,7 @@ it.each(["linux", "win32"] as const)(
       p.finish(ok);
     };
     expect(await s.provisioner.statuses("tools")).toEqual([
-      { name: "idf.py", kind: "find", state: "ready", version: "5.4.2", range: ">=5.4" },
+      { name: "idf.py", kind: "find", state: "ready", version: "5.4.2", range: ">=5.4", path: eim },
     ]);
     expect(s.host.programs[0]?.executable).toBe(eim);
     expect(s.host.programs[0]?.args).toEqual([
@@ -1287,7 +1522,9 @@ it("keeps a shared resolution for other callers when one caller aborts", async (
   controller.abort();
   await expect(first).rejects.toMatchObject({ name: "AbortError" });
   release?.();
-  expect(await second).toEqual([{ name: "git", kind: "find", state: "ready", version: "2.44.0" }]);
+  expect(await second).toEqual([
+    { name: "git", kind: "find", state: "ready", version: "2.44.0", path: join(base, "git") },
+  ]);
 });
 
 // REQ-FUNC-c9dde429: execute bits exist only where the file system keeps POSIX modes.
@@ -1519,6 +1756,7 @@ it("invalidates only the named plugin's resolutions", async () => {
       id: "other",
       version: "1.0.0",
       name: "Other",
+      summary: "Other tools.",
       description: "Other tools.",
       ecosystem: "general",
       platforms: ["windows-x64", "linux-x64"],

@@ -139,8 +139,11 @@ export function createMockApi(
     ecosystem: "esp32",
     platforms: ["windows-x64", "linux-x64"],
     name,
+    summary: `${name} from the mock catalog.`,
     description: `${name}: a plugin of the mock catalog.`,
+    risk: "device-write",
     requires: [],
+    dependencies: [],
     activities: [],
     keywords: [id],
     url: `${id}-1.0.0.zip`,
@@ -149,7 +152,11 @@ export function createMockApi(
     ...more,
   });
   const catalogEntries: CatalogEntry[] = [
-    catalogEntry("esp32-efuse", "ESP32 eFuse", { requires: ["esp32-esptool"], activities: ["security"] }),
+    catalogEntry("esp32-efuse", "ESP32 eFuse", {
+      requires: ["esp32-esptool"],
+      activities: ["security"],
+      risk: "irreversible",
+    }),
     catalogEntry("esp32-esptool", "ESP32 esptool", { requires: ["serial-monitor"], activities: ["flash"] }),
     catalogEntry("can-logger", "CAN logger", {
       tier: "community",
@@ -280,6 +287,7 @@ export function createMockApi(
             id,
             version: "1.0.0",
             name: "Echo tools",
+            summary: "Echo arguments and print test output.",
             description: "Echo arguments and print test output. Use to exercise plugin program runs.",
             ecosystem: "general",
             platforms: ["windows-x64", "linux-x64"],
@@ -308,6 +316,7 @@ export function createMockApi(
             id,
             version: "1.0.0",
             name: id,
+            summary: `Mock plugin ${id}.`,
             description: `Mock plugin installed from ${path}.`,
             ecosystem: "general",
             platforms: ["windows-x64", "linux-x64"],
@@ -728,15 +737,41 @@ export function createMockApi(
       }
       case "plugins.programs":
       case "plugins.check":
-      case "plugins.provision": {
+      case "plugins.provision":
+      case "plugins.reinstall": {
         const { id } = channels["plugins.programs"].request.parse(input.data);
         if (!installedPlugins.has(id)) throw veraError("NOT_FOUND");
-        if (channel === "plugins.provision") provisionedPlugins.add(id);
+        if (channel !== "plugins.check" && channel !== "plugins.programs") provisionedPlugins.add(id);
         value = (pluginPrograms.get(id) ?? []).map((program) =>
           program.kind === "find" || provisionedPlugins.has(id)
             ? { ...program, state: "ready", version: "1.0.0" }
             : { ...program, state: "missing" },
         );
+        break;
+      }
+      case "plugins.configuration": {
+        // Secrets from the mock stores; workbench files are present in a mock workbench, unchecked without one.
+        const request = channels["plugins.configuration"].request.parse(input.data);
+        const refs = (scope: string) =>
+          scope === "mqtt"
+            ? [...mqttCredentialRefs].sort()
+            : scope === "wokwi"
+              ? [...wokwiCredentialRefs].sort()
+              : partsSupplierIds.filter((id) => partsKeyConfigured[id]);
+        value = {
+          plugins: request.plugins.map(({ key, settings }) => ({
+            key,
+            settings: Object.entries(settings).map(([name, setting]) => {
+              if (setting.kind === "value") return { name, kind: "value", state: "value" };
+              if (setting.kind === "workbench-file")
+                return { name, kind: "workbench-file", state: request.workbenchId ? "present" : "unchecked" };
+              const stored = refs(setting.scope);
+              return stored.length
+                ? { name, kind: "secret", state: "stored", refs: stored }
+                : { name, kind: "secret", state: "missing" };
+            }),
+          })),
+        };
         break;
       }
       case "plugins.installArchive": {

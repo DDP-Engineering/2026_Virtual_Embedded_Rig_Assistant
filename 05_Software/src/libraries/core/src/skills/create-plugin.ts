@@ -15,6 +15,7 @@ format: 1
 id: fixture-cli
 version: 1.0.0
 name: Fixture CLI
+summary: One line, at most 160 characters, for the catalog card.
 description: Describe the documented operations and when to use them.
 ecosystem: general
 platforms: [windows-x64, linux-x64]

@@ -31,7 +31,6 @@
     "skipToContent": "Skip to main content"
   },
   "welcome": {
-    "description": "A workbench holds your board’s documents, notes and skills. Your workspace starts here.",
     "workbenches": "Workbenches",
     "create": "Create a workbench"
   },
@@ -39,8 +38,7 @@
     "title": "App settings",
     "providers": "Providers",
     "webAccess": "Web access",
-    "appearance": "Appearance",
-    "language": "Language",
+    "appearance": "Appearance and language",
     "updates": "Updates",
     "data": "Data & privacy",
     "about": "About",
@@ -49,8 +47,6 @@
     "retry": "Retry",
     "notifications": "Notifications",
     "shortcuts": "Keyboard shortcuts",
-    "storage": "Storage",
-    "configuration": "Configuration",
     "partsSearch": "Parts search",
     "mqttCredentials": "MQTT credentials",
     "wokwiTokens": "Wokwi tokens"
@@ -61,14 +57,11 @@
     "dark": "Dark",
     "system": "System",
     "textSize": "Interface text size",
-    "description": "Scale interface labels, menus and controls. Saved automatically.",
     "codePreview": "Code preview: const board = 1;",
     "interfacePreview": "Interface preview: menus, labels and buttons.",
     "chatSize": "Conversation text size",
-    "chatDescription": "Applies to messages and the message composer, independently of interface size.",
     "chatPreview": "This is how a message in your conversation will look.",
     "codeSize": "Code and output text size",
-    "codeDescription": "Applies to code blocks, diffs and technical text output.",
     "resetSizes": "Restore default text sizes",
     "extraSmall": "Extra small",
     "small": "Small",
@@ -82,8 +75,7 @@
     "system": "System",
     "en": "English",
     "ro": "Română",
-    "de": "Deutsch",
-    "description": "Changes menus and messages. The agent answers in the language you write in."
+    "de": "Deutsch"
   },
   "layout": {
     "toggleSidebar": "Toggle sidebar",
@@ -109,7 +101,6 @@
     "close": "Close workbench",
     "pinnedOversized": "Context exceeds 16 KB. The agent will use the first 16 KB. Your full text is saved.",
     "readOnly": "This workbench is open read-only because another process or lock owns it.",
-    "working": "Working…",
     "save": "Save",
     "cancel": "Cancel",
     "unknownKey": "Unknown configuration key preserved:",
@@ -118,7 +109,6 @@
     "lockGuard": "Lock coordination is busy. This workbench is read-only."
   },
   "providers": {
-    "description": "Manage subscriptions and API or local connections. You can use several providers at the same time.",
     "openai": "OpenAI API",
     "openaiKey": "OpenAI API key",
     "openaiModel": "OpenAI model (optional)",
@@ -165,8 +155,6 @@
     "testNamed": "Test {{name}}",
     "subscriptions": "Subscriptions",
     "connections": "API / local connections",
-    "multiple": "These connections can be used alongside your subscription. Select the provider and model in each conversation.",
-    "savedConnections": "Your connections",
     "emptyConnections": "No API or local connections added yet.",
     "provider": "Provider",
     "other": "Other compatible provider",
@@ -179,15 +167,10 @@
     "failure": "Provider error: {{message}}"
   },
   "chatDetail": {
-    "section": "Chat",
     "label": "Detail level",
     "verbose": "Verbose",
     "normal": "Normal",
     "minimal": "Minimal",
-    "info": "Applies to all sessions in this workbench. Full details remain in Activity. This does not change answer length or command permissions.",
-    "verboseInfo": "Show each operation with expandable arguments and results.",
-    "normalInfo": "Group routine operations into expandable activity summaries.",
-    "minimalInfo": "Hide routine operations and show a working indicator. Approvals, errors and downloads remain visible.",
     "stopped": "Stopped or interrupted turn.",
     "operations": "Operations: {{count}}"
   },
@@ -244,7 +227,6 @@
     "noPreview": "No preview available.",
     "showFull": "Show full output ({{size}} KB)",
     "contextAdvice": "Reduce the input or adjust the custom model context window in Providers settings. The full transcript is retained.",
-    "tokens": "Input / output tokens",
     "estimated": "Estimated context tokens",
     "counted": "Counted context tokens",
     "inputBudget": "Input budget",
@@ -283,12 +265,10 @@
     "contextWindow": "Context window",
     "contextUnknown": "Context usage is not available yet",
     "contextPercent": "Context used: {{percent}}%",
-    "contextInfo": "Usage reflects the latest reported request. Estimates are labeled; capacity is unknown until reported by the model.",
-    "activity": "Agent activity",
-    "activityInfo": "Prompts/questions, replies and tool operations recorded for this session. Expand a row to inspect its details.",
-    "activityEmpty": "No activity yet. Send a message to begin.",
-    "activityPrompt": "Prompt / question",
-    "activityReply": "Reply",
+    "usageGroup": "Usage",
+    "limitsGroup": "Limits",
+    "turns": "Turns",
+    "toolCalls": "Tool calls",
     "actionsNamed": "Session actions: {{title}}",
     "archive": "Archive",
     "moveUp": "Move up",
@@ -463,7 +443,6 @@
   },
   "skills": {
     "settings": "Skills settings",
-    "enabled": "Enabled",
     "open": "Open / edit",
     "name": "Skill name (lowercase letters, digits, hyphens)",
     "source": "Location",
@@ -490,7 +469,6 @@
     "channel": "Channel",
     "latest": "Stable",
     "beta": "Beta (includes stable)",
-    "schedule": "When enabled, check at startup and every 6 hours. Check now also works when updates are Off.",
     "check": "Check now",
     "idle": "Updates have not been checked.",
     "checking": "Checking for updates…",
@@ -521,7 +499,6 @@
     "file": "File",
     "edit": "Edit",
     "view": "View",
-    "help": "Help",
     "unavailable": "The application menu could not be opened. Try again."
   },
   "discovery": {
@@ -553,27 +530,21 @@
     "irreversible": "These rules of enabled plugins make permanent changes or act outside the device. In Bypass they run without asking:"
   },
   "webAccess": {
-    "description": "Manage Internet access separately from your AI providers. Workbench tool permissions still apply.",
     "loading": "Loading web access settings…",
     "enabled": "Enable web access",
-    "globalHint": "Applies to all workbenches. Disabling cancels active web requests and blocks web tools.",
     "provider": "Search provider",
     "authentication": "Access mode",
     "anonymous": "Anonymous — no account required",
     "apiKeyMode": "Use my API key",
-    "anonymousHint": "{{provider}} can be used without an account or key, subject to its free service limits. A saved key is not sent in this mode.",
-    "keyHint": "Your {{provider}} key uses that account’s quota and may incur costs according to your plan.",
     "apiKey": "{{provider}} API key",
     "keepKey": "Leave blank to keep the saved key",
     "storedKey": "Saved key available · {{storage}}",
-    "noKey": "No API key saved for {{provider}}.",
     "keyRequired": "An API key is required in this access mode.",
     "save": "Save",
     "test": "Test connection",
     "removeKey": "Remove saved key",
     "saving": "Saving…",
     "saved": "Web access settings saved.",
-    "saveHint": "Save to apply global access changes. Test connection checks the selected access mode without saving the draft key.",
     "testTitle": "Web connection test",
     "testing": "Connecting to {{provider}}…",
     "close": "Close",
@@ -588,9 +559,7 @@
       "disabled": "Web access is disabled. Enable and save it before testing.",
       "key-required": "An API key is required for the selected access mode.",
       "cancelled": "The connection test was cancelled or access changed."
-    },
-    "searchAndRead": "Web search and page reading.",
-    "searchOnly": "Search only. For reading web pages, select Exa or Tavily."
+    }
   },
   "partsSearch": {
     "description": "Supplier catalogs for the official parts-search plugin. VERA sends only the search text or part number to the suppliers you enable; credentials stay on this computer and are never shown to the agent. Searches also need Web access and the plugin enabled for the workbench. Results are snapshots without taxes or shipping, and nothing is ever ordered.",
@@ -646,7 +615,8 @@
     "username": "Username (optional)",
     "password": "Password",
     "save": "Save credential",
-    "saved": "Saved."
+    "saved": "Saved.",
+    "replace": "Replace"
   },
   "wokwiTokens": {
     "description": "Wokwi CI tokens for the official wokwi plugin, which runs firmware simulations in Wokwi's cloud. A simulation job names a token by its reference; VERA hands the token only to an approved wokwi-tool run of the plugin enabled for that workbench, on the program's input, never in its arguments, logs or results. The agent never sees it. Each cloud run sends the job's firmware and diagram to Wokwi and counts against your Wokwi plan.",
@@ -659,7 +629,8 @@
     "referenceHint": "1-64 lowercase letters, digits and dashes, as the simulation job's account names it.",
     "token": "Token",
     "save": "Save token",
-    "saved": "Saved."
+    "saved": "Saved.",
+    "replace": "Replace"
   },
   "web": {
     "openTitle": "Open external website?",
@@ -669,7 +640,6 @@
     "openError": "Could not open the link. Try again."
   },
   "workbenchTools": {
-    "hint": "Checked tools are enabled for this workbench. Changes take effect after you save; session permissions still apply.",
     "read": "Read text files or selected line ranges.",
     "list": "List files and subfolders in a directory.",
     "glob": "Find files by name or path patterns, such as **/*.cpp.",
@@ -692,9 +662,10 @@
     "plugin_install": "Request review and install a draft as a trial plugin.",
     "apply_candidate": "Write a checked kicad-layout candidate over its source board after you ask to apply it. Needs the kicad-layout plugin; asks for approval like a write.",
     "decode_register": "Decode a captured register value using a local JSON definition, with exact field values and cited sources. Reads no device.",
-    "parts_search": "Search the enabled supplier catalogs (Mouser, DigiKey, TME, Farnell, Rutronik) by keyword or part number. Needs Web access, the parts-search plugin and a supplier set up in Settings > Parts search."
+    "parts_search": "Search the enabled supplier catalogs (Mouser, DigiKey, TME, Farnell, Rutronik) by keyword or part number. Needs Web access, the parts-search plugin and a supplier set up in the plugin's Configuration on the Plugins page."
   },
   "projects": {
+    "embeddingsGroup": "Embeddings",
     "new": "New Workbench",
     "open": "Open Workbench",
     "plugins": "Plugins",
@@ -710,7 +681,7 @@
     "collapse": "Hide sessions",
     "general": "General",
     "documents": "Documents & RAG",
-    "agent": "Agent",
+    "agent": "Agent and chat",
     "instructions": "Instructions",
     "tools": "Tools",
     "name": "Name",
@@ -722,17 +693,13 @@
     "save": "Save",
     "cancel": "Cancel",
     "empty": "No workbenches yet. Create or open one to begin.",
-    "embeddingInfo": "Embeddings run locally. BGE Small EN v1.5 is the currently installed supported model. Inputs remain below 512 tokens.",
-    "sourceInfo": "Patterns are relative to this workbench folder. External independent folders are not supported yet. VERA stores its data in .vera and preserves your document folders.",
     "changed": "The active workbench changed. Reopen this editor.",
     "saving": "Saving…",
     "embeddingModel": "Embedding model",
     "chunkSize": "Chunk size (characters)",
     "overlap": "Overlap (characters)",
-    "reindexNotice": "Saving changed embedding settings rebuilds this workbench’s document index.",
     "partialSave": "Project settings were saved, but instructions could not be saved. Retry Save to finish; closing keeps the saved settings.",
     "loadingInstructions": "Loading workbench instructions…",
-    "skillsIndependent": "Skill changes are saved in the Skills manager independently of the project form.",
     "back": "Back to workbenches",
     "skills": "Skills",
     "indexing": "Indexing",
@@ -740,8 +707,9 @@
     "unsavedChanges": "Unsaved changes"
   },
   "overview": {
+    "agentGroup": "Agent",
+    "indexGroup": "Documents and index",
     "title": "Workbench overview",
-    "folder": "Folder",
     "model": "Conversation model",
     "appDefault": "Application default",
     "permissions": "Permissions",
@@ -776,7 +744,6 @@
     "focusModelDesc": "Select the model control in the conversation.",
     "search": "Search shortcuts",
     "searchKeys": "Search by key combination",
-    "intro": "Customize shortcuts while VERA is focused. Each command can have up to four combinations. Changes are saved automatically.",
     "unassigned": "Unassigned",
     "edit": "Edit {{action}}: {{binding}}",
     "remove": "Remove {{action}}: {{binding}}",
@@ -788,8 +755,7 @@
     "press": "Press keys…",
     "recordHint": "Use Ctrl (or Command), optionally Alt/Shift, with a letter, digit, comma or slash. Escape cancels. Shifted digits, comma and slash use their physical key positions.",
     "invalid": "This combination is unsupported or reserved for text editing, the window or developer tools.",
-    "conflict": "This combination is already assigned. Remove or change the other assignment first.",
-    "local": "In the message input: Enter sends, Shift+Enter starts a new line. Escape closes search or asks to stop an active response. These contextual controls remain unchanged."
+    "conflict": "This combination is already assigned. Remove or change the other assignment first."
   },
   "downloads": {
     "revealNamed": "Show in Explorer: {{name}}",
@@ -804,7 +770,8 @@
     "saved": "Saved locally"
   },
   "create": {
-    "folderHint": "Choose the folder that holds the board's documents and notes. VERA keeps its own data in .vera inside it.",
+    "folder": "Folder",
+    "noFolder": "No folder selected",
     "existing": "This folder is already a workbench.",
     "openExisting": "Open this workbench",
     "instructionsKept": "This folder already has .vera/WORKBENCH.md. Creating the workbench keeps it unchanged; edit it afterwards from the workbench editor.",
@@ -829,7 +796,6 @@
   },
   "retrieval": {
     "title": "Document search",
-    "info": "Defaults for the agent's search_docs; the agent may still ask for a different number or mode.",
     "results": "Results per search (1–20)",
     "mode": "Search mode",
     "hybrid": "Hybrid (keywords and meaning)",
@@ -843,9 +809,17 @@
     "broken": "This plugin has errors and does not load:",
     "programs": "Programs",
     "noPrograms": "No programs: this plugin only adds skills.",
-    "rules": "Rules",
-    "noRules": "No rules.",
     "docs": "Documents",
+    "composition": {
+      "title": "Composition",
+      "noPrograms": "Runs no programs.",
+      "skills": "Skills",
+      "files": "Profiles and data files"
+    },
+    "operations": {
+      "title": "Operations",
+      "none": "No operations: this plugin declares no rules."
+    },
     "range": "supported {{range}}",
     "timeout": "timeout {{seconds}} s",
     "installingPrograms": "Installing programs…",
@@ -862,6 +836,9 @@
     "platforms": "Platforms",
     "requires": "Requires",
     "nothing": "None",
+    "maturity": {
+      "preRelease": "Pre-release"
+    },
     "tier": {
       "official": "Official",
       "community": "Community",
@@ -876,8 +853,8 @@
     "problem": {
       "notFound": "Not found on this computer.",
       "install": "The install failed.",
-      "download": "The download failed.",
-      "sha256": "The file has the wrong SHA-256.",
+      "download": "The download failed. Check the connection (offline?) and try again.",
+      "sha256": "The file does not match its pinned SHA-256. Re-install downloads it again.",
       "archive": "The archive could not be extracted.",
       "platform": "Not available for this system.",
       "uv": "The bundled uv is missing.",
@@ -909,6 +886,14 @@
       "none": "No catalog is configured, and this build bundles no plugins.",
       "problemUnreachable": "The catalog could not be reached.",
       "problemInvalid": "The catalog's index is not valid.",
+      "problemUnsigned": "The catalog at this address is not signed, so VERA does not use it. The plugins bundled with VERA are shown.",
+      "problemUntrusted": "The catalog's signature does not match the key built into VERA: the index was changed or signed with another key. VERA does not use it; the plugins bundled with VERA are shown.",
+      "channel": "Channel",
+      "channels": {
+        "stable": "Stable (version 1.0.0 and higher)",
+        "pre-release": "Pre-release (every plugin, including 0.x versions)"
+      },
+      "channelHint": "Stable lists plugins proven on real tools and hardware. Pre-release also lists plugins whose proof is still open.",
       "check": "Check for updates",
       "checking": "Checking…",
       "url": "Catalog URL",
@@ -919,10 +904,16 @@
       "useDefault": "Use default",
       "installed": "Installed: {{version}}",
       "installAction": "Install",
+      "platformWarning": "Not available for your platform. Supported: {{platforms}}.",
+      "riskWarning": {
+        "device-write": "Can write to a connected device (for example flash or erase it).",
+        "irreversible": "Can change a device permanently (for example burn eFuses or lock it)."
+      },
       "update": "Update to {{version}}",
       "updateAvailable": "Update available: {{version}}",
       "reviewFrom": "From the catalog: {{tier}}, version {{version}}.",
-      "reviewChanges": "This update changes programs, install sources or rules; review them before installing."
+      "reviewChanges": "This update changes programs, install sources or rules; review them before installing.",
+      "installWithDependencies": "Install with dependencies"
     },
     "catalogError": {
       "sha256": "The downloaded plugin does not match the size and SHA-256 the catalog lists. Nothing was installed.",
@@ -940,7 +931,6 @@
     "trust": "Trust this package",
     "scopedTrustIntro": "Trust this exact package for this workbench on this machine. Trust does not enable the plugin or install its programs. Any package change requires another review.",
     "refresh": "Refresh list",
-    "selectionHint": "Select the installed plugins this workbench can use. New workbenches start with none selected. Save to apply your selection; install and review packages on the Plugins page.",
     "expand": "Show details for {{name}}",
     "collapse": "Hide details for {{name}}",
     "checkDependencies": "Check dependencies",
@@ -949,7 +939,6 @@
     "checking": "Checking…",
     "notChecked": "Dependencies not checked",
     "dependencySummary": "{{ready}}/{{total}} ready",
-    "dependenciesNeedAttention": "Dependencies need attention. Expand for details.",
     "installDependencies": "Install dependencies",
     "installed": "Installed",
     "checkFirst": "Check dependencies first.",
@@ -975,6 +964,9 @@
       "allActivities": "All activities",
       "provenance": "Provenance",
       "allSources": "All sources",
+      "maturity": "Maturity",
+      "allMaturities": "All maturities",
+      "stable": "Stable",
       "filterState": "Filter by state",
       "all": "All",
       "notInstalled": "Not installed",
@@ -1014,9 +1006,113 @@
     },
     "configure": "Configure dependencies",
     "enabledSelection": "Enabled",
-    "selectedCount": "Selected plugins: {{count}}"
+    "selectedCount": "Selected plugins: {{count}}",
+    "reinstall": "Re-install",
+    "reinstalling": "Re-installing…",
+    "reinstallHint": "Downloads VERA's program copies again, checks their SHA-256 and replaces them. Vendor programs stay as they are.",
+    "dependencies": {
+      "title": "Dependencies",
+      "pluginInstalled": "Installed",
+      "pluginMissing": "Not installed; Install with dependencies adds it",
+      "automatic": "VERA installs it automatically into its program folder.",
+      "manual": "Install it yourself; VERA never installs it.",
+      "sizeUnknown": "size not declared",
+      "noDownload": "No download for this platform.",
+      "foundAt": "Found at {{path}}",
+      "programFolder": "In VERA's program folder",
+      "kind": {
+        "pip": "Python package",
+        "script": "Python script",
+        "download": "Pinned download",
+        "find": "Vendor program"
+      }
+    },
+    "installResult": {
+      "title": "Install with dependencies",
+      "manual": "Not everything is ready: install vendor programs with their guide, then check again.",
+      "checkAgain": "Check again",
+      "close": "Close"
+    },
+    "configuration": {
+      "title": "Configuration",
+      "stored": "Stored",
+      "missing": "Missing",
+      "present": "Present and valid",
+      "invalid": "Invalid",
+      "unchecked": "Not checked",
+      "value": "Read-only",
+      "optional": "(optional)",
+      "check": "Check again",
+      "noWorkbench": "Open a workbench to check its files.",
+      "needs": "Needs configuration: {{names}}",
+      "suppliers": "Keys stored for: {{names}}"
+    },
+    "status": {
+      "title": "Status",
+      "ready": "Ready",
+      "notReady": "Not ready: {{checks}}",
+      "dependencies": "Dependencies",
+      "configuration": "Configuration",
+      "use": "Use",
+      "missingNames": "Missing: {{names}}",
+      "externalNames": "Install from the vendor: {{names}}",
+      "unavailableNames": "Unavailable: {{names}}",
+      "configured": "Configured",
+      "nothingToConfigure": "Nothing to configure",
+      "configurationFailed": "The configuration could not be checked.",
+      "configure": "Configure",
+      "enabledIn": "Enabled in {{name}}",
+      "notEnabledIn": "Not enabled in {{name}}",
+      "noWorkbench": "No workbench is open.",
+      "openWorkbench": "Open workbench",
+      "state": {
+        "ready": "Ready",
+        "missing": "Missing",
+        "unavailable": "Unavailable",
+        "external": "External",
+        "unchecked": "Not checked",
+        "off": "Not enabled"
+      }
+    },
+    "packs": {
+      "open": "Install a pack",
+      "title": "Install a pack",
+      "intro": "A pack groups the plugins of one ecosystem. Choose the groups you need; the next step shows one review of everything it installs.",
+      "pack": "Pack",
+      "groups": "Groups",
+      "review": "Review pack",
+      "reviewTitle": "Review the {{name}} pack",
+      "reviewIntro": "Each plugin below is downloaded, checked against the catalog and installed with its programs.",
+      "requiredBy": "required by {{name}}",
+      "nothing": "Every plugin of these groups is installed or left out.",
+      "skipped": "Not installed",
+      "skippedRequires": "Requires {{id}}, which is left out.",
+      "skippedCatalog": "Not in this catalog.",
+      "alreadyInstalled": "Already installed: {{names}}",
+      "install": "Install with dependencies ({{count}})"
+    }
   },
   "runs": {
+    "session": "Session: {{title}}",
+    "unknownSession": "Deleted session",
+    "filterSession": "Session",
+    "currentSession": "Current session",
+    "allSessions": "All sessions",
+    "filterPlugin": "Plugin",
+    "allPlugins": "All plugins",
+    "filterState": "State",
+    "allStates": "All states",
+    "filterDate": "Date",
+    "anyTime": "Any time",
+    "today": "Today",
+    "lastWeek": "Last 7 days",
+    "sort": "Sort",
+    "newest": "Newest first",
+    "oldest": "Oldest first",
+    "byPlugin": "Plugin",
+    "bySession": "Session",
+    "byState": "State",
+    "noMatch": "No runs match the filters.",
     "none": "No program runs in this workbench yet.",
     "plugin": "plugin {{plugin}}",
     "background": "background",
@@ -1033,5 +1129,23 @@
       "timedOut": "Timed out",
       "interrupted": "Interrupted"
     }
+  },
+  "about": {
+    "open": "About VERA",
+    "fullName": "Virtual Embedded Rig Assistant",
+    "version": "Version {{version}}",
+    "application": "Application",
+    "runtime": "Runtime",
+    "thirdParty": "Third-party components ({{count}})",
+    "component": "Component",
+    "componentVersion": "Version",
+    "license": "License"
+  },
+  "pager": {
+    "range": "{{first}}–{{last}} of {{count}} results",
+    "pageSize": "Per page",
+    "previous": "Previous",
+    "next": "Next",
+    "page": "{{page}} / {{pages}}"
   }
 }

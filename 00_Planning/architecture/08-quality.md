@@ -8,8 +8,8 @@ tests follow.
 
 PERF-01 (2026-11-12): the current authorized phase is descriptive Windows measurement only;
 [results and raw data](../../06_SoftwareDocu/eval-performance-outputs/session-loading-2026-11-12-windows.md).
-The [plan](../plan/performance-regression.md) and [experimental command guide](../../06_SoftwareDocu/session-performance.md)
-retain the deferred calibration/comparison design. No mandatory performance gate is established.
+The [command guide](../../06_SoftwareDocu/session-performance.md) retains the deferred
+calibration/comparison design. No mandatory performance gate is established.
 DONE-WHEN: per ticket, lint, typecheck and `check:i18n` pass together with the smallest sufficient
 focused tests. At each milestone gate (M2/WP-21, M3/WP-29, M4/WP-33, M5/WP-38) `npm run verify`, the
 complete Electron and browser E2E suite and the applicable CLI regressions pass on Windows and native

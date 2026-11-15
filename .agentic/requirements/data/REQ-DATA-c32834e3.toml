@@ -12,7 +12,7 @@ When the agent runs `kicad-tool` with one of the operations `inspect`, `erc`, `d
 
 verification = "Each operation on the fixture project prints a document with exactly these fields and status `completed`; `result.json` in the named run folder holds the same header and the complete lists; `--version` prints `kicad-tool 1.0.0`; an unknown operation, an abbreviated option, a repeated option and a repeated `--refill-zones` are `usage` refusals with exit 2."
 
-affected_paths = ["05_Software/plugins/kicad/scripts/kicad_support/cli.py", "05_Software/plugins/kicad/scripts/kicad_support/document.py", "05_Software/plugins/kicad/scripts/kicad_support/review.py", "05_Software/plugins/kicad/scripts/kicad_tool.py"]
+affected_paths = ["05_Software/plugins/kicad/scripts/kicad_support/cli.py", "05_Software/plugins/kicad/scripts/kicad_support/document.py", "05_Software/plugins/kicad/scripts/kicad_support/review.py", "05_Software/plugins/kicad/scripts/kicad_tool.py", "05_Software/plugins/kicad/scripts/kicad_support/__init__.py"]
 
 linked_tests = ["05_Software/tests/integration/kicad.test.ts"]
 
@@ -23,4 +23,4 @@ priority = "high"   # low | normal | high
 rationale = ""        # why this behavior exists, if not obvious
 
 created = 2026-11-12
-updated = 2026-11-12
+updated = 2026-11-15

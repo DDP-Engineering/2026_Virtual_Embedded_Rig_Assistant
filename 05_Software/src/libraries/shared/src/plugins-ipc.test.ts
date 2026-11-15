@@ -1,5 +1,7 @@
 import { expect, it } from "vitest";
 import { channels } from "./ipc.js";
+import { catalogChannelIndex } from "./plugin-catalog.js";
+import { pluginSettingsSchema } from "./settings.js";
 
 const workbenchId = "wb_01JB8Z6Q4M7N2K5R9T3V8X1Y0C";
 // REQ-FUNC-9dd7413b
@@ -74,6 +76,7 @@ it("validates the plugin picker and review", () => {
       id: "echo-tools",
       version: "1.0.0",
       name: "Echo tools",
+      summary: "Fixture summary.",
       description: "Echo arguments.",
       ecosystem: "general",
       platforms: ["windows-x64"],
@@ -150,8 +153,11 @@ it("validates the catalog view, review and install channels and the catalog app 
         ecosystem: "general",
         platforms: ["windows-x64", "linux-x64"],
         name: "Serial monitor",
+        summary: "Serial ports.",
         description: "Lists ports.",
+        risk: "device-read",
         requires: [],
+        dependencies: [],
         url: "serial-monitor-1.0.1.zip",
         sha256,
         bytes: 900,
@@ -168,6 +174,16 @@ it("validates the catalog view, review and install channels and the catalog app 
   };
   expect(channels["plugins.catalog"].response.parse(view)).toEqual(view);
   expect(channels["plugins.catalog"].response.safeParse({ ...view, source: "mirror" }).success).toBe(false);
+  // REQ-SEC-3e11ffe4 REQ-SEC-d96c5192
+  for (const problem of ["unsigned", "untrusted"])
+    expect(channels["plugins.catalog"].response.parse({ ...view, source: "bundled", problem }).problem).toBe(
+      problem,
+    );
+  expect(channels["plugins.catalog"].response.safeParse({ ...view, problem: "forged" }).success).toBe(false);
+  // REQ-FUNC-b7ff35bf
+  expect(pluginSettingsSchema.parse({ channel: "pre-release" })).toEqual({ channel: "pre-release" });
+  expect(pluginSettingsSchema.safeParse({ channel: "beta" }).success).toBe(false);
+  expect(catalogChannelIndex("stable")).toBe("index-stable.json");
   expect(channels["plugins.catalog"].response.parse({ source: "none", plugins: [], packs: [] }).source).toBe(
     "none",
   );
@@ -209,4 +225,20 @@ it("binds scoped review and trust to a workbench id and exact hash", () => {
   expect(trust.request.safeParse({ workbenchId, id: "../escape", sha256: "a".repeat(64) }).success).toBe(
     false,
   );
+});
+
+// REQ-DATA-6cd3e1ec
+it("accepts the dependency kit setting only as an absolute local folder", () => {
+  for (const kit of ["D:\\vera-kit", "C:/kits/windows-x64", "/opt/vera-kit"])
+    expect(pluginSettingsSchema.parse({ kit })).toEqual({ kit });
+  const refused = [
+    "kit",
+    "..\\kit",
+    "\\\\server\\share",
+    "//server/share",
+    "D:",
+    "/opt/a\0b",
+    `/${"a".repeat(1024)}`,
+  ];
+  for (const kit of refused) expect(pluginSettingsSchema.safeParse({ kit }).success).toBe(false);
 });

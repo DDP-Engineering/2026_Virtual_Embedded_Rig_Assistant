@@ -31,7 +31,6 @@
     "skipToContent": "Treci la conținutul principal"
   },
   "welcome": {
-    "description": "Un spațiu de lucru conține documentele, notițele și skill-urile plăcii tale. Lucrul începe aici.",
     "workbenches": "Spații de lucru",
     "create": "Creează un spațiu de lucru"
   },
@@ -39,8 +38,7 @@
     "title": "Setările aplicației",
     "providers": "Furnizori",
     "webAccess": "Acces web",
-    "appearance": "Aspect",
-    "language": "Limbă",
+    "appearance": "Aspect și limbă",
     "updates": "Actualizări",
     "data": "Date și confidențialitate",
     "about": "Despre",
@@ -49,8 +47,6 @@
     "retry": "Reîncearcă",
     "notifications": "Notificări",
     "shortcuts": "Comenzi rapide",
-    "storage": "Stocare",
-    "configuration": "Configurare",
     "partsSearch": "Căutare componente",
     "mqttCredentials": "Credențiale MQTT",
     "wokwiTokens": "Tokenuri Wokwi"
@@ -61,14 +57,11 @@
     "dark": "Întunecată",
     "system": "Sistem",
     "textSize": "Dimensiunea textului interfeței",
-    "description": "Redimensionează etichetele, meniurile și controalele. Salvare automată.",
     "codePreview": "Previzualizare cod: const board = 1;",
     "interfacePreview": "Previzualizare interfață: meniuri, etichete și butoane.",
     "chatSize": "Dimensiunea textului conversației",
-    "chatDescription": "Se aplică mesajelor și casetei de compunere, independent de interfață.",
     "chatPreview": "Așa va arăta un mesaj din conversația ta.",
     "codeSize": "Dimensiunea codului și a rezultatelor",
-    "codeDescription": "Se aplică blocurilor de cod, diferențelor și rezultatelor tehnice text.",
     "resetSizes": "Restabilește dimensiunile implicite",
     "extraSmall": "Foarte mic",
     "small": "Mic",
@@ -82,8 +75,7 @@
     "system": "Sistem",
     "en": "English",
     "ro": "Română",
-    "de": "Deutsch",
-    "description": "Schimbă meniurile și mesajele. Agentul răspunde în limba în care scrii."
+    "de": "Deutsch"
   },
   "layout": {
     "toggleSidebar": "Arată sau ascunde bara laterală",
@@ -109,7 +101,6 @@
     "close": "Închide spațiul de lucru",
     "pinnedOversized": "Contextul depășește 16 KB. Agentul va folosi primii 16 KB. Textul complet este salvat.",
     "readOnly": "Acest spațiu de lucru este deschis doar pentru citire deoarece alt proces sau o blocare îl deține.",
-    "working": "Se procesează…",
     "save": "Salvează",
     "cancel": "Anulează",
     "unknownKey": "Cheie de configurare necunoscută păstrată:",
@@ -118,7 +109,6 @@
     "lockGuard": "Coordonarea blocării este ocupată. Acest spațiu de lucru este deschis doar pentru citire."
   },
   "providers": {
-    "description": "Gestionează abonamentele și conexiunile API sau locale. Poți folosi mai mulți provideri simultan.",
     "openai": "API OpenAI",
     "openaiKey": "Cheie API OpenAI",
     "openaiModel": "Model OpenAI (opțional)",
@@ -165,8 +155,6 @@
     "testNamed": "Testează {{name}}",
     "subscriptions": "Abonamente",
     "connections": "Conexiuni API / locale",
-    "multiple": "Aceste conexiuni pot fi folosite alături de abonament. Selectează providerul și modelul în fiecare conversație.",
-    "savedConnections": "Conexiunile tale",
     "emptyConnections": "Nu ai adăugat încă o conexiune API sau locală.",
     "provider": "Provider",
     "other": "Alt provider compatibil",
@@ -179,15 +167,10 @@
     "failure": "Eroare furnizor: {{message}}"
   },
   "chatDetail": {
-    "section": "Chat",
     "label": "Nivel de detaliu",
     "verbose": "Verbose",
     "normal": "Normal",
     "minimal": "Minimal",
-    "info": "Se aplică tuturor sesiunilor din acest workbench. Detaliile complete rămân în Activitate. Nu schimbă lungimea răspunsurilor sau permisiunile comenzilor.",
-    "verboseInfo": "Afișează fiecare operație, cu argumente și rezultate extensibile.",
-    "normalInfo": "Grupează operațiile obișnuite în rezumate de activitate extensibile.",
-    "minimalInfo": "Ascunde operațiile obișnuite și afișează un indicator de lucru. Aprobările, erorile și descărcările rămân vizibile.",
     "stopped": "Execuție oprită sau întreruptă.",
     "operations": "Operații: {{count}}"
   },
@@ -244,7 +227,6 @@
     "noPreview": "Previzualizare indisponibilă.",
     "showFull": "Afișează tot rezultatul ({{size}} KB)",
     "contextAdvice": "Redu textul sau ajustează fereastra de context a modelului personalizat în setările Furnizori. Transcriptul integral este păstrat.",
-    "tokens": "Tokenuri intrare / ieșire",
     "estimated": "Tokenuri de context estimate",
     "counted": "Tokenuri de context numărate",
     "inputBudget": "Buget de intrare",
@@ -283,12 +265,10 @@
     "contextWindow": "Fereastra de context",
     "contextUnknown": "Utilizarea contextului nu este încă disponibilă",
     "contextPercent": "Context utilizat: {{percent}}%",
-    "contextInfo": "Utilizarea reflectă ultima cerere raportată. Estimările sunt indicate; capacitatea rămâne necunoscută până este raportată de model.",
-    "activity": "Activitatea agentului",
-    "activityInfo": "Prompturi/întrebări, răspunsuri și operații cu tool-uri din această sesiune. Extinde un rând pentru detalii.",
-    "activityEmpty": "Încă nu există activitate. Trimite un mesaj pentru a începe.",
-    "activityPrompt": "Prompt / întrebare",
-    "activityReply": "Răspuns",
+    "usageGroup": "Utilizare",
+    "limitsGroup": "Limite",
+    "turns": "Ture",
+    "toolCalls": "Apeluri de unelte",
     "actionsNamed": "Acțiuni sesiune: {{title}}",
     "archive": "Arhivează",
     "moveUp": "Mută mai sus",
@@ -463,7 +443,6 @@
   },
   "skills": {
     "settings": "Setări pentru skill-uri",
-    "enabled": "Activ",
     "open": "Deschide / editează",
     "name": "Nume skill (litere mici, cifre, cratime)",
     "source": "Locație",
@@ -490,7 +469,6 @@
     "channel": "Canal",
     "latest": "Stabil",
     "beta": "Beta (include stabil)",
-    "schedule": "Când actualizările sunt activate, verificarea are loc la pornire și la fiecare 6 ore. Verifică acum funcționează și când actualizările sunt oprite.",
     "check": "Verifică acum",
     "idle": "Actualizările nu au fost verificate.",
     "checking": "Se verifică actualizările…",
@@ -521,7 +499,6 @@
     "file": "Fișier",
     "edit": "Editare",
     "view": "Vizualizare",
-    "help": "Ajutor",
     "unavailable": "Meniul aplicației nu a putut fi deschis. Încearcă din nou."
   },
   "discovery": {
@@ -553,27 +530,21 @@
     "irreversible": "Aceste reguli ale pluginurilor activate fac modificări permanente sau acționează în afara dispozitivului. În Bypass rulează fără să întrebe:"
   },
   "webAccess": {
-    "description": "Gestionează accesul la internet separat de providerii AI. Se aplică în continuare permisiunile tool-urilor din workbench.",
     "loading": "Se încarcă setările de acces web…",
     "enabled": "Activează accesul web",
-    "globalHint": "Se aplică tuturor workbenchurilor. Dezactivarea anulează cererile web în curs și blochează tool-urile web.",
     "provider": "Provider de căutare",
     "authentication": "Mod de acces",
     "anonymous": "Anonim — fără cont",
     "apiKeyMode": "Folosește cheia mea API",
-    "anonymousHint": "{{provider}} poate fi folosit fără cont sau cheie, în limitele serviciului gratuit. Cheia salvată nu este trimisă în acest mod.",
-    "keyHint": "Cheia {{provider}} folosește cota contului respectiv și poate genera costuri conform planului tău.",
     "apiKey": "Cheie API {{provider}}",
     "keepKey": "Lasă gol pentru a păstra cheia salvată",
     "storedKey": "Cheie salvată disponibilă · {{storage}}",
-    "noKey": "Nu există o cheie API salvată pentru {{provider}}.",
     "keyRequired": "Acest mod de acces necesită o cheie API.",
     "save": "Salvează",
     "test": "Testează conexiunea",
     "removeKey": "Șterge cheia salvată",
     "saving": "Se salvează…",
     "saved": "Setările de acces web au fost salvate.",
-    "saveHint": "Salvează pentru a aplica modificările globale. Testul verifică modul selectat fără a salva cheia introdusă.",
     "testTitle": "Test conexiune web",
     "testing": "Se conectează la {{provider}}…",
     "close": "Închide",
@@ -588,9 +559,7 @@
       "disabled": "Accesul web este dezactivat. Activează-l și salvează înainte de testare.",
       "key-required": "Modul de acces selectat necesită o cheie API.",
       "cancelled": "Testul a fost anulat sau accesul s-a modificat."
-    },
-    "searchAndRead": "Căutare web și citirea paginilor.",
-    "searchOnly": "Doar căutare. Pentru citirea paginilor web, selectează Exa sau Tavily."
+    }
   },
   "partsSearch": {
     "description": "Cataloagele furnizorilor pentru pluginul oficial parts-search. VERA trimite furnizorilor activați doar textul căutării sau codul piesei; datele de acces rămân pe acest calculator și nu sunt arătate agentului. Căutările cer și Web access și pluginul activat pentru workbench. Rezultatele sunt instantanee fără taxe sau transport și nu se plasează nicio comandă.",
@@ -646,7 +615,8 @@
     "username": "Nume de utilizator (opțional)",
     "password": "Parolă",
     "save": "Salvează credențiala",
-    "saved": "Salvat."
+    "saved": "Salvat.",
+    "replace": "Înlocuiește"
   },
   "wokwiTokens": {
     "description": "Tokenuri Wokwi CI pentru pluginul oficial wokwi, care rulează simulări de firmware în cloudul Wokwi. Un job de simulare numește un token prin referința lui; VERA dă tokenul numai unei rulări aprobate a wokwi-tool din pluginul activat pentru acel workbench, pe intrarea programului, niciodată în argumente, loguri sau rezultate. Agentul nu îl vede niciodată. Fiecare rulare în cloud trimite firmware-ul și diagrama jobului la Wokwi și se contorizează în planul tău Wokwi.",
@@ -659,7 +629,8 @@
     "referenceHint": "1-64 litere mici, cifre și cratime, așa cum o numește contul jobului de simulare.",
     "token": "Token",
     "save": "Salvează tokenul",
-    "saved": "Salvat."
+    "saved": "Salvat.",
+    "replace": "Înlocuiește"
   },
   "web": {
     "openTitle": "Deschizi un site extern?",
@@ -669,7 +640,6 @@
     "openError": "Linkul nu a putut fi deschis. Încearcă din nou."
   },
   "workbenchTools": {
-    "hint": "Tool-urile bifate sunt active pentru acest workbench. Modificările se aplică după salvare; permisiunile sesiunii se păstrează.",
     "read": "Citește fișiere text sau intervale de linii.",
     "list": "Listează fișierele și subfolderele unui director.",
     "glob": "Găsește fișiere după tipare de nume sau cale, precum **/*.cpp.",
@@ -692,9 +662,10 @@
     "plugin_install": "Cere verificarea și instalează un draft ca plugin de probă.",
     "apply_candidate": "Scrie un candidat kicad-layout verificat peste placa sursă după ce ceri aplicarea lui. Necesită pluginul kicad-layout; cere aprobare ca o scriere.",
     "decode_register": "Decodează o valoare de registru capturată folosind o definiție JSON locală, cu valori exacte ale câmpurilor și surse citabile. Nu citește dispozitive.",
-    "parts_search": "Caută în cataloagele furnizorilor activați (Mouser, DigiKey, TME, Farnell, Rutronik) după cuvinte cheie sau cod de piesă. Necesită Web access, pluginul parts-search și un furnizor configurat în Setări > Căutare componente."
+    "parts_search": "Caută în cataloagele furnizorilor activați (Mouser, DigiKey, TME, Farnell, Rutronik) după cuvinte cheie sau cod de piesă. Necesită Web access, pluginul parts-search și un furnizor configurat în secțiunea Configurare a pluginului, pe pagina Pluginuri."
   },
   "projects": {
+    "embeddingsGroup": "Embeddings",
     "new": "Workbench nou",
     "open": "Deschide workbench",
     "plugins": "Pluginuri",
@@ -710,7 +681,7 @@
     "collapse": "Ascunde sesiunile",
     "general": "General",
     "documents": "Documente și RAG",
-    "agent": "Agent",
+    "agent": "Agent și chat",
     "instructions": "Instrucțiuni",
     "tools": "Instrumente",
     "name": "Nume",
@@ -722,17 +693,13 @@
     "save": "Salvează",
     "cancel": "Anulează",
     "empty": "Niciun workbench. Creează sau deschide unul pentru a începe.",
-    "embeddingInfo": "Embeddings rulează local. BGE Small EN v1.5 este modelul instalat și suportat în prezent. Intrările rămân sub 512 tokenuri.",
-    "sourceInfo": "Regulile sunt relative la folderul workbenchului. Folderele externe independente nu sunt încă suportate. VERA își păstrează datele în .vera și păstrează folderele tale de documente.",
     "changed": "Workbenchul activ s-a schimbat. Redeschide editorul.",
     "saving": "Se salvează…",
     "embeddingModel": "Model embeddings",
     "chunkSize": "Dimensiune fragment (caractere)",
     "overlap": "Suprapunere (caractere)",
-    "reindexNotice": "Schimbarea acestor setări reconstruiește indexul documentelor workbenchului.",
     "partialSave": "Setările proiectului au fost salvate, dar instrucțiunile nu au putut fi salvate. Reîncearcă salvarea; închiderea păstrează setările deja salvate.",
     "loadingInstructions": "Se încarcă instrucțiunile workbenchului…",
-    "skillsIndependent": "Modificările Skills sunt salvate în managerul Skills, separat de formularul proiectului.",
     "back": "Înapoi la workbenchuri",
     "skills": "Skills",
     "indexing": "Indexare",
@@ -740,8 +707,9 @@
     "unsavedChanges": "Modificări nesalvate"
   },
   "overview": {
+    "agentGroup": "Agent",
+    "indexGroup": "Documente și index",
     "title": "Prezentare workbench",
-    "folder": "Folder",
     "model": "Model conversație",
     "appDefault": "Setarea aplicației",
     "permissions": "Permisiuni",
@@ -776,7 +744,6 @@
     "focusModelDesc": "Mută focalizarea pe modelul conversației.",
     "search": "Caută scurtături",
     "searchKeys": "Caută după combinația de taste",
-    "intro": "Personalizează scurtăturile folosite când VERA este activă. Fiecare comandă poate avea până la patru combinații. Modificările se salvează automat.",
     "unassigned": "Neatribuită",
     "edit": "Modifică {{action}}: {{binding}}",
     "remove": "Șterge {{action}}: {{binding}}",
@@ -788,8 +755,7 @@
     "press": "Apasă tastele…",
     "recordHint": "Folosește Ctrl (sau Command), opțional Alt/Shift, și o literă, cifră, virgulă sau bară oblică. Escape anulează. Cifrele, virgula și bara oblică folosesc poziția fizică a tastei, inclusiv cu Shift.",
     "invalid": "Combinația nu este acceptată sau este rezervată editării textului, ferestrei ori instrumentelor de dezvoltare.",
-    "conflict": "Combinația este deja atribuită. Șterge sau modifică mai întâi cealaltă atribuire.",
-    "local": "În câmpul mesajului: Enter trimite, Shift+Enter adaugă un rând. Escape închide căutarea sau cere oprirea unui răspuns activ. Aceste comenzi contextuale rămân neschimbate."
+    "conflict": "Combinația este deja atribuită. Șterge sau modifică mai întâi cealaltă atribuire."
   },
   "downloads": {
     "revealNamed": "Arată în Explorer: {{name}}",
@@ -804,7 +770,8 @@
     "saved": "Salvat local"
   },
   "create": {
-    "folderHint": "Alege folderul care conține documentele și notițele plăcii. VERA își păstrează datele proprii în .vera, în acest folder.",
+    "folder": "Folder",
+    "noFolder": "Niciun folder selectat",
     "existing": "Acest folder este deja un workbench.",
     "openExisting": "Deschide acest workbench",
     "instructionsKept": "Acest folder are deja .vera/WORKBENCH.md. Crearea workbench-ului îl păstrează neschimbat; îl poți edita apoi din editorul de workbench.",
@@ -829,7 +796,6 @@
   },
   "retrieval": {
     "title": "Căutare în documente",
-    "info": "Valori implicite pentru search_docs al agentului; agentul poate cere totuși alt număr sau alt mod.",
     "results": "Rezultate per căutare (1–20)",
     "mode": "Mod de căutare",
     "hybrid": "Hibrid (cuvinte cheie și sens)",
@@ -843,9 +809,17 @@
     "broken": "Acest plugin are erori și nu se încarcă:",
     "programs": "Programe",
     "noPrograms": "Fără programe: acest plugin adaugă doar abilități.",
-    "rules": "Reguli",
-    "noRules": "Nicio regulă.",
     "docs": "Documente",
+    "composition": {
+      "title": "Componență",
+      "noPrograms": "Nu rulează niciun program.",
+      "skills": "Abilități",
+      "files": "Profiluri și fișiere de date"
+    },
+    "operations": {
+      "title": "Operații",
+      "none": "Nicio operație: acest plugin nu declară reguli."
+    },
     "range": "suportat {{range}}",
     "timeout": "limită {{seconds}} s",
     "installingPrograms": "Se instalează programele…",
@@ -862,6 +836,9 @@
     "platforms": "Platforme",
     "requires": "Necesită",
     "nothing": "Nimic",
+    "maturity": {
+      "preRelease": "Pre-lansare"
+    },
     "tier": {
       "official": "Oficial",
       "community": "Comunitate",
@@ -876,8 +853,8 @@
     "problem": {
       "notFound": "Nu a fost găsit pe acest computer.",
       "install": "Instalarea a eșuat.",
-      "download": "Descărcarea a eșuat.",
-      "sha256": "Fișierul are un SHA-256 greșit.",
+      "download": "Descărcarea a eșuat. Verificați conexiunea (offline?) și încercați din nou.",
+      "sha256": "Fișierul nu corespunde SHA-256 fixat. Reinstalarea îl descarcă din nou.",
       "archive": "Arhiva nu a putut fi extrasă.",
       "platform": "Nu este disponibil pentru acest sistem.",
       "uv": "uv inclus lipsește.",
@@ -909,6 +886,14 @@
       "none": "Nu este configurat niciun catalog, iar această versiune nu include pluginuri.",
       "problemUnreachable": "Catalogul nu a putut fi accesat.",
       "problemInvalid": "Indexul catalogului nu este valid.",
+      "problemUnsigned": "Catalogul de la această adresă nu este semnat, așa că VERA nu îl folosește. Sunt afișate pluginurile incluse în VERA.",
+      "problemUntrusted": "Semnătura catalogului nu se potrivește cu cheia din VERA: indexul a fost modificat sau semnat cu altă cheie. VERA nu îl folosește; sunt afișate pluginurile incluse în VERA.",
+      "channel": "Canal",
+      "channels": {
+        "stable": "Stabil (versiunea 1.0.0 și mai mare)",
+        "pre-release": "Pre-lansare (toate pluginurile, inclusiv versiunile 0.x)"
+      },
+      "channelHint": "Stabil listează pluginurile dovedite pe unelte și hardware reale. Pre-lansare listează și pluginurile a căror dovadă este încă deschisă.",
       "check": "Caută actualizări",
       "checking": "Se caută…",
       "url": "URL-ul catalogului",
@@ -919,10 +904,16 @@
       "useDefault": "Folosește implicitul",
       "installed": "Instalat: {{version}}",
       "installAction": "Instalează",
+      "platformWarning": "Nu este disponibil pentru platforma ta. Platforme acceptate: {{platforms}}.",
+      "riskWarning": {
+        "device-write": "Poate scrie pe un dispozitiv conectat (de exemplu îl programează sau îl șterge).",
+        "irreversible": "Poate modifica permanent un dispozitiv (de exemplu arde eFuse-uri sau îl blochează)."
+      },
       "update": "Actualizează la {{version}}",
       "updateAvailable": "Actualizare disponibilă: {{version}}",
       "reviewFrom": "Din catalog: {{tier}}, versiunea {{version}}.",
-      "reviewChanges": "Această actualizare schimbă programe, surse de instalare sau reguli; verifică-le înainte de instalare."
+      "reviewChanges": "Această actualizare schimbă programe, surse de instalare sau reguli; verifică-le înainte de instalare.",
+      "installWithDependencies": "Instalează cu dependențe"
     },
     "catalogError": {
       "sha256": "Pluginul descărcat nu corespunde dimensiunii și SHA-256 din catalog. Nu s-a instalat nimic.",
@@ -940,7 +931,6 @@
     "trust": "Acordă încredere pachetului",
     "scopedTrustIntro": "Acordă încredere acestui pachet exact pentru acest workbench pe această mașină. Încrederea nu activează pluginul și nu instalează programele. Orice modificare cere o nouă revizuire.",
     "refresh": "Actualizează lista",
-    "selectionHint": "Selectează pluginurile instalate pe care le poate folosi acest workbench. Workbench-urile noi pornesc fără pluginuri selectate. Salvează pentru a aplica selecția; instalează și revizuiește pachetele pe pagina Pluginuri.",
     "expand": "Arată detaliile pentru {{name}}",
     "collapse": "Ascunde detaliile pentru {{name}}",
     "checkDependencies": "Verifică dependențele",
@@ -949,7 +939,6 @@
     "checking": "Se verifică…",
     "notChecked": "Dependențe neverificate",
     "dependencySummary": "{{ready}}/{{total}} pregătite",
-    "dependenciesNeedAttention": "Dependențele necesită atenție. Extinde pentru detalii.",
     "installDependencies": "Instalează dependențele",
     "installed": "Instalat",
     "checkFirst": "Verifică mai întâi dependențele.",
@@ -975,6 +964,9 @@
       "allActivities": "Toate activitățile",
       "provenance": "Proveniență",
       "allSources": "Toate sursele",
+      "maturity": "Maturitate",
+      "allMaturities": "Toate nivelurile",
+      "stable": "Stabil",
       "filterState": "Filtrează după stare",
       "all": "Toate",
       "notInstalled": "Neinstalate",
@@ -1014,9 +1006,113 @@
     },
     "configure": "Configurează dependențele",
     "enabledSelection": "Activate",
-    "selectedCount": "Plugin-uri selectate: {{count}}"
+    "selectedCount": "Plugin-uri selectate: {{count}}",
+    "reinstall": "Reinstalează",
+    "reinstalling": "Se reinstalează…",
+    "reinstallHint": "Descarcă din nou copiile programelor VERA, le verifică SHA-256 și le înlocuiește. Programele furnizorilor rămân neschimbate.",
+    "dependencies": {
+      "title": "Dependențe",
+      "pluginInstalled": "Instalat",
+      "pluginMissing": "Neinstalat; Instalează cu dependențe îl adaugă",
+      "automatic": "VERA îl instalează automat în folderul său de programe.",
+      "manual": "Instalați-l singur; VERA nu îl instalează niciodată.",
+      "sizeUnknown": "dimensiune nedeclarată",
+      "noDownload": "Nicio descărcare pentru această platformă.",
+      "foundAt": "Găsit la {{path}}",
+      "programFolder": "În folderul de programe al VERA",
+      "kind": {
+        "pip": "Pachet Python",
+        "script": "Script Python",
+        "download": "Descărcare fixată",
+        "find": "Program al furnizorului"
+      }
+    },
+    "installResult": {
+      "title": "Instalare cu dependențe",
+      "manual": "Nu totul este gata: instalați programele furnizorilor după ghidul lor, apoi verificați din nou.",
+      "checkAgain": "Verifică din nou",
+      "close": "Închide"
+    },
+    "configuration": {
+      "title": "Configurare",
+      "stored": "Stocat",
+      "missing": "Lipsește",
+      "present": "Prezent și valid",
+      "invalid": "Invalid",
+      "unchecked": "Neverificat",
+      "value": "Doar citire",
+      "optional": "(opțional)",
+      "check": "Verifică din nou",
+      "noWorkbench": "Deschide un workbench pentru a-i verifica fișierele.",
+      "needs": "Necesită configurare: {{names}}",
+      "suppliers": "Chei stocate pentru: {{names}}"
+    },
+    "status": {
+      "title": "Stare",
+      "ready": "Gata",
+      "notReady": "Nu este gata: {{checks}}",
+      "dependencies": "Dependențe",
+      "configuration": "Configurare",
+      "use": "Utilizare",
+      "missingNames": "Lipsesc: {{names}}",
+      "externalNames": "Instalează de la producător: {{names}}",
+      "unavailableNames": "Indisponibile: {{names}}",
+      "configured": "Configurat",
+      "nothingToConfigure": "Nimic de configurat",
+      "configurationFailed": "Configurarea nu a putut fi verificată.",
+      "configure": "Configurează",
+      "enabledIn": "Activat în {{name}}",
+      "notEnabledIn": "Neactivat în {{name}}",
+      "noWorkbench": "Niciun workbench nu este deschis.",
+      "openWorkbench": "Deschide workbench-ul",
+      "state": {
+        "ready": "Gata",
+        "missing": "Lipsește",
+        "unavailable": "Indisponibil",
+        "external": "Extern",
+        "unchecked": "Neverificat",
+        "off": "Neactivat"
+      }
+    },
+    "packs": {
+      "open": "Instalează un pachet",
+      "title": "Instalează un pachet",
+      "intro": "Un pachet grupează pluginurile unui ecosistem. Alege grupurile de care ai nevoie; pasul următor arată o singură revizuire a tot ce instalează.",
+      "pack": "Pachet",
+      "groups": "Grupuri",
+      "review": "Revizuiește pachetul",
+      "reviewTitle": "Revizuiește pachetul {{name}}",
+      "reviewIntro": "Fiecare plugin de mai jos este descărcat, verificat față de catalog și instalat împreună cu programele sale.",
+      "requiredBy": "necesar pentru {{name}}",
+      "nothing": "Toate pluginurile acestor grupuri sunt instalate sau lăsate deoparte.",
+      "skipped": "Nu se instalează",
+      "skippedRequires": "Necesită {{id}}, care este lăsat deoparte.",
+      "skippedCatalog": "Nu există în acest catalog.",
+      "alreadyInstalled": "Deja instalate: {{names}}",
+      "install": "Instalează cu dependențele ({{count}})"
+    }
   },
   "runs": {
+    "session": "Sesiune: {{title}}",
+    "unknownSession": "Sesiune ștearsă",
+    "filterSession": "Sesiune",
+    "currentSession": "Sesiunea curentă",
+    "allSessions": "Toate sesiunile",
+    "filterPlugin": "Plugin",
+    "allPlugins": "Toate pluginurile",
+    "filterState": "Stare",
+    "allStates": "Toate stările",
+    "filterDate": "Dată",
+    "anyTime": "Oricând",
+    "today": "Astăzi",
+    "lastWeek": "Ultimele 7 zile",
+    "sort": "Sortare",
+    "newest": "Cele mai noi",
+    "oldest": "Cele mai vechi",
+    "byPlugin": "Plugin",
+    "bySession": "Sesiune",
+    "byState": "Stare",
+    "noMatch": "Nicio rulare nu corespunde filtrelor.",
     "none": "Nicio rulare de program în acest workbench încă.",
     "plugin": "plugin {{plugin}}",
     "background": "în fundal",
@@ -1033,5 +1129,23 @@
       "timedOut": "Timp expirat",
       "interrupted": "Întrerupt"
     }
+  },
+  "about": {
+    "open": "Despre VERA",
+    "fullName": "Virtual Embedded Rig Assistant",
+    "version": "Versiunea {{version}}",
+    "application": "Aplicație",
+    "runtime": "Mediu de rulare",
+    "thirdParty": "Componente terțe ({{count}})",
+    "component": "Componentă",
+    "componentVersion": "Versiune",
+    "license": "Licență"
+  },
+  "pager": {
+    "range": "{{first}}–{{last}} din {{count}} rezultate",
+    "pageSize": "Pe pagină",
+    "previous": "Înapoi",
+    "next": "Înainte",
+    "page": "{{page}} / {{pages}}"
   }
 }

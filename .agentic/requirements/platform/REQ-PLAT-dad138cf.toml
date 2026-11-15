@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-PLAT-dad138cf"
+
+title = "Pin the catalog signing public key in the build"
+
+status = "active"
+
+requirement = """
+The desktop build shall pin the catalog signing public key from the build input `VERA_PLUGIN_CATALOG_KEY` (a PEM file path), else `02_Tools/release/catalog-signing-key.pub.pem`, and if that file is not an Ed25519 public key, the build shall fail.
+"""
+
+verification = "Packaging updates test: the default key file reads as an Ed25519 SPKI PEM; a path to a file holding an RSA public key or a private key fails with the invalid catalog key build setting error."
+
+affected_paths = ["02_Tools/release/update-config.mjs", "05_Software/src/apps/desktop/electron.vite.config.ts", "02_Tools/release/catalog-signing-key.pub.pem"]
+
+linked_tests = ["05_Software/tests/packaging/updates.test.ts"]
+
+
+spec = "specs/REQ-DATA-b40d3f9b.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

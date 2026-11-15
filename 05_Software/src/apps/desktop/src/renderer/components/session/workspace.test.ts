@@ -13,7 +13,6 @@ import i18n from "../../i18n.js";
 import { WorkbenchNavigation } from "../workbench-navigation.js";
 import { Composer } from "./composer.js";
 import { Markdown } from "./markdown.js";
-import { ActivityLog } from "./session-inspector.js";
 import { SessionList } from "./session-list.js";
 import { Transcript } from "./transcript.js";
 import { SessionWorkspace } from "./workspace.js";
@@ -361,14 +360,12 @@ test("removing the only selected session leaves New session usable without a sta
   ).not.toBe(session.id);
   expect(document.activeElement?.id).toBe("chat-message");
 });
-test("Welcome offers user workbenches without a bundled demo or guided sessions", async () => {
+test("Welcome offers workbench creation without starting a session", async () => {
   const observed = vi.spyOn(api, "invoke");
   await mount();
   expect(container.querySelector(".metadata")).toBeNull();
   expect(container.querySelector('[data-action="choose-create"]')).toBeTruthy();
   expect(container.querySelector('[data-action="create-workbench"]')).toBeTruthy();
-  expect(container.querySelector("[data-demo-offer], [data-demo-guide], [data-demo-prompt]")).toBeNull();
-  expect(container.querySelector('[data-action="open-demo"]')).toBeNull();
   expect(
     observed.mock.calls.some(([channel]) => channel === "session.create" || channel === "session.send"),
   ).toBe(false);
@@ -391,17 +388,6 @@ test("an ordinary composer starts empty and accepts user text without sending au
   await typeText(input, "My project question");
   expect(input.value).toBe("My project question");
   expect(send).not.toHaveBeenCalled();
-});
-
-test("an existing workbench with the former example name opens as an ordinary user project", async () => {
-  await api.invoke("workbench.create", { folder: "/mock/former-example", name: "VERA-DEMO-01" });
-  const observed = vi.spyOn(api, "invoke");
-  await mount();
-  expect(container.querySelector('[data-workbench="active"]')?.textContent).toContain("VERA-DEMO-01");
-  expect(container.querySelector("[data-demo-guide], [data-demo-prompt]")).toBeNull();
-  expect(
-    observed.mock.calls.some(([channel]) => channel === "session.create" || channel === "session.send"),
-  ).toBe(false);
 });
 
 // REQ-UX-8b320385 REQ-UX-3001bd00: authored; execution deferred.
@@ -505,23 +491,18 @@ test("New Workbench creates only and submits the configured draft with prefilled
   const page = container.querySelector<HTMLElement>("[data-workbench-create]");
   if (!page) throw Error("Missing creation page");
   expect(container.querySelector('[data-action="open-workbench"], [data-action="open-recent"]')).toBeNull();
-  expect(page.querySelector("[data-project-section]")).toBeNull();
+  // Before a folder is chosen only General is available.
+  expect(
+    [...page.querySelectorAll<HTMLButtonElement>("[data-project-section]:not(:disabled)")].map(
+      (b) => b.dataset.projectSection,
+    ),
+  ).toEqual(["general"]);
   await act(async () => page.querySelector<HTMLButtonElement>('[data-action="choose-create"]')?.click());
   await settle();
   expect(page.querySelector<HTMLInputElement>("#workbench-name")?.value).toBe("new-board");
   expect(
     [...page.querySelectorAll("[data-project-section]")].map((b) => b.getAttribute("data-project-section")),
-  ).toEqual([
-    "general",
-    "documents",
-    "instructions",
-    "agent",
-    "chat",
-    "tools",
-    "skills",
-    "embeddings",
-    "plugins",
-  ]);
+  ).toEqual(["general", "instructions", "documents", "embeddings", "agent", "skills", "tools", "plugins"]);
   await act(async () => page.querySelector<HTMLButtonElement>('[data-project-section="tools"]')?.click());
   await act(async () => page.querySelector<HTMLInputElement>('[data-tool-toggle="web_search"]')?.click());
   await act(async () =>
@@ -573,7 +554,9 @@ test("New Workbench keeps a typed name and offers Open for an existing workbench
   await settle();
   expect(name.value).toBe("Typed");
   expect(container.querySelector("[data-existing-workbench]")).toBeTruthy();
-  expect(container.querySelector("[data-workbench-create] [data-project-section]")).toBeNull();
+  expect(
+    container.querySelectorAll("[data-workbench-create] [data-project-section]:not(:disabled)"),
+  ).toHaveLength(1);
   expect(container.querySelector<HTMLButtonElement>('[data-action="create-workbench"]')?.disabled).toBe(true);
   await act(async () => container.querySelector<HTMLButtonElement>('[data-action="open-existing"]')?.click());
   await settle();
@@ -615,7 +598,8 @@ test("New Workbench drafts skills, keeps existing instructions, ignores Enter an
   await act(async () => button("New Workbench").click());
   const fresh = container.querySelector<HTMLElement>("[data-workbench-create]");
   expect(fresh?.querySelector<HTMLInputElement>("#workbench-name")?.value).toBe("");
-  expect(fresh?.querySelector("[data-project-section], [data-selected-folder]")).toBeNull();
+  expect(fresh?.querySelector("[data-selected-folder]")).toBeNull();
+  expect(fresh?.querySelectorAll("[data-project-section]:not(:disabled)")).toHaveLength(1);
 });
 /** Makes the mock folder picker return the given folders in order; returns the requests it got. */
 function pickFolders(...folders: string[]) {
@@ -799,17 +783,7 @@ test("workbench editor shows the creation page's sections and the open workbench
   if (!editor) throw Error("Missing editor");
   expect(
     [...editor.querySelectorAll("[data-project-section]")].map((b) => b.getAttribute("data-project-section")),
-  ).toEqual([
-    "general",
-    "documents",
-    "instructions",
-    "agent",
-    "chat",
-    "tools",
-    "skills",
-    "embeddings",
-    "plugins",
-  ]);
+  ).toEqual(["general", "instructions", "documents", "embeddings", "agent", "skills", "tools", "plugins"]);
   await openDocuments(editor);
   expect(docsFolder(editor, "datasheets")?.checked).toBe(true);
   expect(docsFolder(editor, "notes")?.checked).toBe(false);
@@ -1134,8 +1108,8 @@ test("chat fixtures render tool arguments, invalid citations, provider Retry and
   await settle();
   await act(async () => container.querySelector<HTMLButtonElement>('[data-action="show-context"]')?.click());
   expect(container.textContent).toContain("Estimated");
-  expect(container.textContent).toContain("27033");
-  expect(container.textContent).toContain("4096");
+  expect(container.textContent).toContain("27,033");
+  expect(container.textContent).toContain("4,096");
   expect(container.textContent).toContain("FULL HISTORY");
   expect(container.querySelector<HTMLTextAreaElement>('textarea[aria-label="Message"]')?.disabled).toBe(
     false,
@@ -1469,19 +1443,13 @@ test("Settings selects one page with vertical tabs, including placeholders and k
   await settle();
   expect(container.querySelector("#sidebar")?.getAttribute("data-collapsed")).toBe("false");
   const tabs = [...container.querySelectorAll<HTMLButtonElement>('[role="tablist"] [role="tab"]')];
-  // Web access, parts search and the plugin credential pages joined the pages with the web providers.
+  // Parts search, MQTT and Wokwi are configured on their plugins (PLG-05 #266), not in Settings.
   expect(tabs.map((tab) => tab.dataset.section)).toEqual([
     "providers",
     "web",
-    "parts",
-    "mqtt",
-    "wokwi",
     "appearance",
-    "language",
     "notifications",
     "shortcuts",
-    "storage",
-    "configuration",
     "updates",
     "data",
     "about",
@@ -1526,7 +1494,7 @@ test("session context details stay closed until requested and editor grows and s
   );
   expect(container.querySelector("[data-usage]")).toBeNull();
   expect(container.querySelector('[data-action="show-context"]')).toBeTruthy();
-  expect(container.querySelector('[data-action="show-activity"]')).toBeTruthy();
+  expect(container.querySelector('[data-action="show-activity"]')).toBeNull();
   expect(container.textContent).not.toContain("Export Markdown");
   const input = container.querySelector<HTMLTextAreaElement>("textarea") as HTMLTextAreaElement;
   Object.defineProperty(input, "scrollHeight", { configurable: true, get: () => (input.value ? 160 : 40) });
@@ -1540,43 +1508,6 @@ test("session context details stay closed until requested and editor grows and s
     container.querySelector<HTMLButtonElement>('[data-action="close-inspector"]')?.click(),
   );
   expect(container.querySelector("[data-usage]")).toBeNull();
-});
-
-test("agent activity projects real prompt/reply and tool arguments, updates and results", async () => {
-  let state = emptySessionState();
-  for (const event of [
-    { type: "message.user", messageId: "u", text: "Inspect board" },
-    { type: "tool.started", callId: "call", name: "read", args: { path: "board.txt" } },
-    { type: "message.done", messageId: "a", text: "Reply from VERA", citations: [] },
-  ] as import("@vera/shared").SessionEvent[])
-    state = applySessionEvent(state, event);
-  await mount(
-    createElement(ActivityLog, {
-      state,
-      reasoning: { a: "Visible provider reasoning" },
-      updates: { call: "Live result" },
-    }),
-  );
-  expect(container.querySelectorAll("[data-activity-kind]")).toHaveLength(3);
-  expect(container.textContent).not.toContain('"path": "board.txt"');
-  await expandAll();
-  expect(container.textContent).toContain("Inspect board");
-  expect(container.textContent).toContain('"path": "board.txt"');
-  expect(container.textContent).toContain("Live result");
-  expect(container.textContent).toContain("Reply from VERA");
-  expect(container.textContent).toContain("Visible provider reasoning");
-  state = applySessionEvent(state, {
-    type: "tool.done",
-    callId: "call",
-    ok: true,
-    preview: "Completed result",
-    summary: "Read completed",
-    durationMs: 5,
-  });
-  await act(async () => root.render(createElement(ActivityLog, { state, reasoning: {}, updates: {} })));
-  await expandAll();
-  expect(container.textContent).toContain("Completed result");
-  expect(container.textContent).not.toContain("Visible provider reasoning");
 });
 
 test("session ellipsis exports its own row and archives/restores without duplicate workspace actions", async () => {

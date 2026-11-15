@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-DATA-af8807e1"
+
+title = "Plugin manifest settings block"
+
+status = "active"
+
+requirement = """
+When plugin.yaml format 1 declares the optional settings block, each parameter shall be a name of 1-64 lowercase letters, digits and dashes with a description and one kind - secret with a credential scope (mqtt, wokwi or parts), workbench-file with a workbench-relative path whose segments may be * for one folder level, an optional format (lab-resources or json) and an optional flag, or value with a one-line value - and any other entry shall make the manifest invalid with a field issue naming it.
+"""
+
+verification = "Shared test: a manifest without settings parses with no settings field and no issue; one secret, one workbench-file and one value parse in manifest order; an unknown kind, a secret without scope, a path with .. or a leading slash or a backslash, an unknown format, a value with a newline, a missing description, an unknown key, an invalid name and more than 32 parameters each fail with a field issue; core store test: a reviewed package whose settings entry is invalid lists field issues settings.registry.path and settings.registry.description."
+
+affected_paths = ["05_Software/src/libraries/shared/src/plugin-settings.ts", "05_Software/src/libraries/shared/src/plugins.ts", "05_Software/src/libraries/core/src/plugins/store.ts"]
+
+linked_tests = ["05_Software/src/libraries/shared/src/plugin-settings.test.ts", "05_Software/src/libraries/core/src/plugins/store.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

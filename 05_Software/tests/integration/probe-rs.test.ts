@@ -75,6 +75,7 @@ it("declares pinned official archives, find precedence and exact supported versi
     expect(p.install.download[key as keyof typeof p.install.download]).toEqual({
       url: `https://github.com/probe-rs/probe-rs/releases/download/v0.32.0/${file}`,
       sha256,
+      bytes: expect.any(Number),
       path,
     });
 });

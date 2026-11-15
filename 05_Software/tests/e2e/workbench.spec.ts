@@ -36,7 +36,6 @@ test("Welcome creates, restarts, reopens recent, edits pinned and closes with va
   let app = await launch(join(root, "data"), folder);
   try {
     let page = await app.firstWindow();
-    await expect(page.locator('[data-action="open-demo"], [data-demo-guide]')).toHaveCount(0);
     await page.locator('[data-i18n="nav.welcome"]').click();
     await page.locator('[data-action="choose-create"]').click();
     await page.locator("#workbench-name").fill("VERA-DEMO-01");

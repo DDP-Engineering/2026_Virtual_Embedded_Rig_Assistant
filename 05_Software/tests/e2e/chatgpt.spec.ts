@@ -224,7 +224,7 @@ test("browser subscription controls support manual/cancel/signout and en/ro/de a
       ],
       ["de", "ChatGPT-Abonnement", "Mit ChatGPT anmelden", "Abmelden", "Anmeldung abschließen", "Abbrechen"],
     ] as const) {
-      await changeSetting(page, "language", () => page.locator("#language").selectOption(lang ?? "en"));
+      await changeSetting(page, "appearance", () => page.locator("#language").selectOption(lang ?? "en"));
       await expect(card.getByRole("heading")).toHaveText(title ?? "");
       await card.getByRole("button", { name: signIn, exact: true }).click();
       await card.getByRole("button", { name: cancel, exact: true }).click();

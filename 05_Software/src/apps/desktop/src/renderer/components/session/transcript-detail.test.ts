@@ -9,7 +9,6 @@ import { createRoot, type Root } from "react-dom/client";
 import { afterEach, expect, it, vi } from "vitest";
 import { api } from "../../api/index.js";
 import i18n from "../../i18n.js";
-import { ActivityLog } from "./session-inspector.js";
 import { Transcript } from "./transcript.js";
 
 vi.mock("../../api/index.js", () => ({ api: { invoke: vi.fn().mockResolvedValue({}) } }));
@@ -103,7 +102,79 @@ it("normal groups consecutive same-turn tools without moving conversation, keybo
   expect(container.querySelector("[data-search-match=true]")).not.toBeNull();
   expect(container.querySelector(".reasoning")).toBeNull();
 });
-it("switches levels reversibly without mutating history and keeps complete Activity", async () => {
+it("treats calls the mode approved automatically as routine, but keeps user decisions visible", async () => {
+  const state = fixture();
+  const approval = (callId: string, by: "mode" | "user") => ({
+    approvalId: `grant-${callId}`,
+    callId,
+    requestSha256: "a".repeat(64),
+    tool: "run_program" as const,
+    path: "",
+    diff: "",
+    bytes: 0,
+    decision: "approved" as const,
+    by,
+  });
+  state.approvals.push(approval("one", "mode"), approval("two", "user"));
+  await render(state, "minimal");
+  // "one" was approved by auto mode: routine, hidden; "two" was approved by the user: still shown.
+  expect(container.querySelectorAll('[data-message-kind="tool"]')).toHaveLength(1);
+  expect(container.querySelectorAll("[data-approval-card]")).toHaveLength(1);
+  await render(state, "normal");
+  // The auto-approved call joins the routine group; the user-approved one stays on its own.
+  expect(container.querySelectorAll("[data-tool-group]").length).toBeGreaterThan(0);
+  expect(container.querySelectorAll('[data-message-kind="tool"]')).toHaveLength(1);
+  await render(state, "verbose");
+  expect(container.querySelectorAll('[data-message-kind="tool"]')).toHaveLength(3);
+});
+it("keeps an irreversible program approved by the mode visible at every detail level", async () => {
+  const state = fixture();
+  state.approvals.push({
+    approvalId: "grant-one",
+    callId: "one",
+    requestSha256: "a".repeat(64),
+    tool: "run_program",
+    path: "scpi",
+    diff: "",
+    bytes: 0,
+    decision: "approved",
+    by: "mode",
+    program: {
+      pluginId: "scpi-instruments",
+      trial: false,
+      program: "scpi",
+      programVersion: "0.2.0",
+      executable: "/opt/uv",
+      args: ["output", "--hold", "60"],
+      cwd: ".",
+      risk: "irreversible",
+      confirm: "output",
+      notes: ["Turns on a physical output."],
+      files: [],
+    },
+  } as unknown as SessionState["approvals"][number]);
+  for (const detail of ["minimal", "normal"] as const) {
+    await render(state, detail);
+    expect(container.querySelectorAll('[data-approval-card][data-risk="irreversible"]')).toHaveLength(1);
+  }
+});
+it("shows per-question usage only at the verbose detail level", async () => {
+  const state = fixture();
+  state.items[0] = {
+    kind: "user",
+    id: "u",
+    text: "Question",
+    usage: { inputTokens: 7077, outputTokens: 435, contextTokens: 20, contextWindow: 1000, estimated: true },
+  };
+  for (const detail of ["minimal", "normal"] as const) {
+    await render(state, detail);
+    expect(container.querySelector("[data-prompt-usage]")).toBeNull();
+  }
+  await render(state, "verbose");
+  expect(container.querySelectorAll("[data-prompt-usage]")).toHaveLength(1);
+  expect(container.querySelector("[data-prompt-usage]")?.textContent).toContain("7,077");
+});
+it("switches levels reversibly without mutating history", async () => {
   const state = fixture(),
     before = JSON.stringify(state);
   await render(state, "minimal");
@@ -115,14 +186,6 @@ it("switches levels reversibly without mutating history and keeps complete Activ
   expect(container.querySelector(".reasoning")).not.toBeNull();
   await render(state, "normal");
   expect(container.querySelectorAll("[data-tool-group]")).toHaveLength(2);
-  await act(async () =>
-    root.render(createElement(ActivityLog, { state, reasoning: { turn1: "Live reasoning" }, updates: {} })),
-  );
-  expect(container.querySelectorAll('[data-activity-kind="tool"]')).toHaveLength(3);
-  // Disclosure content mounts only when opened (PERF-03).
-  for (const toggle of container.querySelectorAll<HTMLButtonElement>(".disclosure-toggle"))
-    await act(async () => toggle.click());
-  expect(container.textContent).toContain("Live reasoning");
   expect(JSON.stringify(state)).toBe(before);
 });
 it.each(["minimal", "normal", "verbose"] as const)(

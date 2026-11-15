@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-DATA-b065d2a4"
+
+title = "Review and installed views carry the package composition"
+
+status = "active"
+
+requirement = """
+When the plugin store reviews a package whose manifest parses, or lists an installed plugin without issues, the view shall carry a composition of the package - each `skills/<name>/SKILL.md` as its folder name with the front-matter description (omitted when the front matter does not parse), and every other file outside `plugin.yaml`, `skills/`, `scripts/` and the package-relative documents as a data file, in path order - and the installed view shall also carry the manifest.
+"""
+
+verification = "Core store test: review and list of a package with skills/a/SKILL.md (front matter name a, description D), skills/b/SKILL.md without front matter, scripts/tool.py, profiles/p.json, data/x.csv and README.md as a document give skills [a with D, b without description] and files [data/x.csv, profiles/p.json]; the listed plugin carries its manifest; a listed plugin with an issue (changed) carries neither manifest nor composition."
+
+affected_paths = ["05_Software/src/libraries/shared/src/plugins.ts", "05_Software/src/libraries/core/src/plugins/store.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/plugins/store.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

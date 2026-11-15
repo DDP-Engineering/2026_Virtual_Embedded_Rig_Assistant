@@ -1,11 +1,18 @@
 import { expect, it } from "vitest";
-import { validatePluginManifest } from "./plugins.js";
+import {
+  pluginDependencies,
+  pluginHighestRisk,
+  pluginMaturity,
+  pluginOperations,
+  validatePluginManifest,
+} from "./plugins.js";
 
 const canonical = {
   format: 1,
   id: "esp32-esptool",
   version: "1.2.0",
   name: "ESP32 esptool",
+  summary: "Identify and flash Espressif chips over a serial port.",
   description: "Identify, flash, erase and read Espressif chips over a serial port.",
   ecosystem: "esp32",
   platforms: ["windows-x64", "linux-x64"],
@@ -47,6 +54,7 @@ it("accepts the canonical manifest, a skills-only plugin and every install kind"
     id: "analysis-skills",
     version: "0.1.0-rc.1+build.5",
     name: "Analysis skills",
+    summary: "Firmware comparison and test planning skills.",
     description: "Compare firmware images and plan tests.",
     ecosystem: "general",
     platforms: ["windows-x64", "linux-x64", "linux-arm64"],
@@ -194,4 +202,107 @@ it("accepts a credentials declaration with the mqtt or wokwi scope only", () => 
   expect(paths(withCredentials({ option: "--credential", scope: "mqtt", key: "x" }))).toEqual([
     "programs.esptool.credentials.key",
   ]);
+});
+
+// REQ-DATA-2b59c9cc
+it("derives pre-release maturity from a 0.x version or a pre-release tag, never stable for an invalid version", () => {
+  for (const version of ["0.4.0", "0.0.1", "1.0.0-beta.1", "2.0.0-rc.1+build.7"])
+    expect(pluginMaturity(version), version).toBe("pre-release");
+  for (const version of ["1.0.0", "2.3.1", "1.0.0+build.5"])
+    expect(pluginMaturity(version), version).toBe("stable");
+  for (const version of ["1.0", "x", "", "01.0.0", "1.0.0-", undefined])
+    expect(pluginMaturity(version), String(version)).toBe("pre-release");
+});
+
+// REQ-DATA-c4afc07b
+it("requires a summary of 1 to 160 characters", () => {
+  expect(paths({ ...canonical, summary: "s".repeat(160) })).toEqual([]);
+  const { summary: _summary, ...withoutSummary } = canonical;
+  expect(paths(withoutSummary)).toEqual(["summary"]);
+  expect(paths({ ...canonical, summary: "   " })).toEqual(["summary"]);
+  expect(paths({ ...canonical, summary: "s".repeat(161) })).toEqual(["summary"]);
+});
+
+// REQ-DATA-9cdaa766
+it("takes the highest rule risk below blocked, safe without rules", () => {
+  const rules = (...risks: string[]) => risks.map((risk) => ({ match: "x", risk }) as never);
+  expect(pluginHighestRisk(canonical.rules as never)).toBe("device-write");
+  expect(pluginHighestRisk(rules("safe", "irreversible", "blocked", "device-read"))).toBe("irreversible");
+  expect(pluginHighestRisk(rules("blocked"))).toBe("safe");
+  expect(pluginHighestRisk([])).toBe("safe");
+});
+
+// REQ-FUNC-8af265ac
+it("groups the rules by risk in risk order, keeping manifest order and every rule field", () => {
+  const rules = [
+    { match: "t write *", risk: "device-write", note: "Writes." },
+    { match: "t version", risk: "safe" },
+    { match: "t burn *", risk: "irreversible", timeout: 30 },
+    { match: "t erase *", risk: "device-write" },
+    { match: "t shell *", risk: "blocked" },
+  ] as const;
+  expect(pluginOperations(rules)).toEqual([
+    { risk: "safe", rules: [rules[1]] },
+    { risk: "device-write", rules: [rules[0], rules[3]] },
+    { risk: "irreversible", rules: [rules[2]] },
+    { risk: "blocked", rules: [rules[4]] },
+  ]);
+  expect(pluginOperations([])).toEqual([]);
+});
+
+// REQ-DATA-defb1bf4, REQ-DATA-dbeebbbe
+it("summarises each program's dependency in name order and accepts a declared download size", () => {
+  const sha = "a".repeat(64);
+  const version = { args: ["--version"], match: "(\\d+\\.\\d+)", range: ">=1,<2" };
+  const guide = "Install the vendor tool from https://vendor.example/download.";
+  const { manifest, issues } = validatePluginManifest({
+    ...canonical,
+    programs: {
+      tool: { install: { pip: "tool>=1" }, version: program.version },
+      helper: { install: { script: "scripts/helper.py" }, version: program.version },
+      cli: {
+        install: {
+          find: { windows: ["%PATH%"], linux: ["$PATH"] },
+          hint: guide,
+          download: {
+            "linux-x64": { url: "https://h.test/cli.tar.gz", sha256: sha, path: "cli", bytes: 20 },
+            "windows-x64": { url: "https://h.test/cli.zip", sha256: sha, path: "cli.exe" },
+          },
+          preferDownload: true,
+        },
+        version,
+      },
+      vendor: { install: { find: { windows: ["%PATH%"] }, hint: guide }, version },
+    },
+  });
+  expect(issues).toEqual([]);
+  expect(pluginDependencies(manifest as never)).toEqual([
+    {
+      name: "cli",
+      kind: "download",
+      automatic: true,
+      downloads: [
+        { platform: "windows-x64", sha256: sha },
+        { platform: "linux-x64", sha256: sha, bytes: 20 },
+      ],
+      find: ["windows", "linux"],
+      range: ">=1,<2",
+      guide,
+    },
+    { name: "helper", kind: "script", automatic: true, script: "scripts/helper.py" },
+    { name: "tool", kind: "pip", automatic: true, pip: "tool>=1" },
+    { name: "vendor", kind: "find", automatic: false, find: ["windows"], range: ">=1,<2", guide },
+  ]);
+  const sized = (bytes: unknown) => ({
+    ...canonical,
+    programs: {
+      cli: {
+        install: { download: { "linux-x64": { url: "https://h.test/cli", sha256: sha, bytes } } },
+        version,
+      },
+    },
+  });
+  for (const bad of [0, 1.5, "7"])
+    expect(paths(sized(bad))[0], String(bad)).toMatch(/^programs\.cli\.install/);
+  expect(paths(sized(7))).toEqual([]);
 });

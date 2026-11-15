@@ -12,7 +12,7 @@ The kicad-layout-tool helper shall write each candidate's run folder, state.json
 
 verification = "After open and edits of the fixture board the run folder holds candidate/ with the board and its project files, state.json (kind kicad-layout-state: source path and SHA-256, candidate SHA-256 and memorySha256, editor pid, edits, objectives), board.json (footprints with reference, uuid, at, orientation, side and locked; nets; copper layers; outline), result.json (kind kicad-layout-result with inputs and artifacts whose SHA-256 equal the files, the request input's equal to requests/002.json, warnings), created.json, report.md, drc-before.json, drc-after.json, before and after previews and requests/NNN.json; no absolute path, test folder path or API token appears in state.json, result.json, board.json or report.md; a request with format 2 is refused with exit 2; a request read with --request from a file in the workbench is checked like --json and one outside it is refused; a 20 000-character --run is echoed as a run id of at most 64 characters."
 
-affected_paths = ["05_Software/plugins/kicad-layout/scripts/kicad_layout_support/cli.py", "05_Software/plugins/kicad-layout/scripts/kicad_layout_support/state.py", "05_Software/plugins/kicad-layout/scripts/kicad_layout_support/report.py", "05_Software/plugins/kicad-layout/scripts/kicad_layout_support/request.py", "05_Software/plugins/kicad-layout/scripts/kicad_layout_support/candidate.py"]
+affected_paths = ["05_Software/plugins/kicad-layout/scripts/kicad_layout_support/cli.py", "05_Software/plugins/kicad-layout/scripts/kicad_layout_support/state.py", "05_Software/plugins/kicad-layout/scripts/kicad_layout_support/report.py", "05_Software/plugins/kicad-layout/scripts/kicad_layout_support/request.py", "05_Software/plugins/kicad-layout/scripts/kicad_layout_support/candidate.py", "05_Software/plugins/kicad-layout/scripts/kicad_layout_support/__init__.py"]
 
 linked_tests = ["05_Software/tests/integration/kicad-layout.test.ts"]
 
@@ -23,4 +23,4 @@ priority = "high"   # low | normal | high
 rationale = ""        # why this behavior exists, if not obvious
 
 created = 2026-11-13
-updated = 2026-11-13
+updated = 2026-11-15

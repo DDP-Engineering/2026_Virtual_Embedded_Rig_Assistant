@@ -39,6 +39,7 @@ function loaded(
       id,
       version: "1.0.0",
       name: id,
+      summary: "Fixture summary.",
       description: `${id} tools.`,
       ecosystem: "general",
       platforms: ["windows-x64", "linux-x64"],

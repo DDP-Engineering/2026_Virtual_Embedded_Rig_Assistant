@@ -1,0 +1,25 @@
+schema = 1
+
+id = "REQ-FUNC-0817ec80"
+
+title = "Install a pack after one review"
+
+status = "active"
+
+requirement = """
+When the engineer reviews a pack, the Plugins page shall show one review listing every plugin of the checked groups that is not installed, together with the catalog plugins they require, each with its dependencies and risk, and Install shall download, verify and install exactly those plugins without a further review screen and then install their programs.
+"""
+
+verification = "Renderer page test: the Arduino pack with its default groups shows one review with arduino-cli, its required serial-monitor and the other default plugins; Install calls catalogReview and catalogInstall once for each of exactly those ids, never shows the single-plugin review screen, provisions each and shows the install result block; unit test of the pack plan's order and installed-plugin skipping."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/plugin-packs.tsx", "05_Software/src/apps/desktop/src/renderer/components/plugins.tsx", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/plugin-packs.test.ts"]
+
+spec = ""
+
+priority = "normal"
+rationale = ""
+
+created = 2026-11-15
+updated = 2026-11-15

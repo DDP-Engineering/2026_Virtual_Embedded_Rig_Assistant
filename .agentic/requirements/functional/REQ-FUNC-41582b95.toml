@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-41582b95"
+
+title = "Point uv at the dependency kit"
+
+status = "active"
+
+requirement = """
+While the plugin setting `kit` names a folder, every uv call of the provisioner shall carry `UV_OFFLINE=1`, `UV_FIND_LINKS=<kit>/wheels` and `UV_PYTHON_INSTALL_MIRROR` set to the file URL of `<kit>/python`, and no `UV_DEFAULT_INDEX`, and before each pip or script install it shall run `uv python install`, so pip and script programs and the managed CPython install only from the kit; if that CPython install fails, the program shall report missing with problem `install` and its output, and no uv install shall run.
+"""
+
+verification = "Core provisioning test: uvEnvironment with kit (and index) set has the three variables with the kit paths and no UV_DEFAULT_INDEX; without kit none of them is present; with kit the uv calls are python install, then tool install; a failing python install reports missing/install with its output and is the only uv call. Manual: an offline install of pip and script programs from a real kit with the pinned uv reports ready."
+
+affected_paths = ["05_Software/src/libraries/core/src/plugins/provisioning.ts", ".agentic/specs/REQ-FUNC-714e26bc.md"]
+
+linked_tests = ["05_Software/src/libraries/core/src/plugins/provisioning.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

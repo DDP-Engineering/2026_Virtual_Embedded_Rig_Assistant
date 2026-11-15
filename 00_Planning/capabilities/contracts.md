@@ -85,8 +85,6 @@ Tests work on copies of the fixture.
 
 - Replay-provider tests prove tool wiring, citations, artifacts and todo items; no test calls a real
   model.
-- A manual rubric run with a configured real model covers each skill's semantic cases and records
-  the model and version, prompt, artifact and each criterion's result.
 - Windows x64 and Linux x64. Each PLAN names focused commands; `npm run verify` closes each package.
 
 NOTES:

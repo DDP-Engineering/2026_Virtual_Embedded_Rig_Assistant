@@ -40,6 +40,7 @@ import {
   pluginCredentialSaveResultSchema,
   wokwiCredentialSaveSchema,
 } from "./plugin-credentials.js";
+import { pluginConfigurationRequestSchema, pluginConfigurationSchema } from "./plugin-settings.js";
 import {
   pluginArchiveRequestSchema,
   pluginIdSchema,
@@ -141,6 +142,10 @@ export const appInfoSchema = z.strictObject({
   locale: z.string().min(1),
   testBuild: z.boolean(),
   signing: z.enum(["signed", "unsigned", "not-applicable"]),
+  /** Electron, Chromium, Node.js and V8 versions of the running app (About page). */
+  runtime: z
+    .strictObject({ electron: z.string(), chrome: z.string(), node: z.string(), v8: z.string() })
+    .optional(),
 });
 export const channels = {
   "web.access.get": defineChannel("web.access.get", z.strictObject({}), webAccessSnapshotSchema),
@@ -290,6 +295,21 @@ export const channels = {
     "plugins.provision",
     pluginProgramsRequestSchema,
     z.array(pluginProgramStatusSchema).max(64),
+  ),
+  /** Installs again every program VERA manages for an installed plugin (a user action); find programs stay. */
+  "plugins.reinstall": defineChannel(
+    "plugins.reinstall",
+    pluginProgramsRequestSchema,
+    z.array(pluginProgramStatusSchema).max(64),
+  ),
+  /**
+   * The state of the declared parameters (manifest `settings`) of listed plugins, for the open workbench when one is
+   * named (REQ-FUNC-cbdb46ac); stored references and supplier ids only, never a secret.
+   */
+  "plugins.configuration": defineChannel(
+    "plugins.configuration",
+    pluginConfigurationRequestSchema,
+    pluginConfigurationSchema,
   ),
   /** The plugin catalog (spec REQ-DATA-b40d3f9b §5): the last read, or a new one with `refresh`. */
   "plugins.catalog": defineChannel("plugins.catalog", pluginCatalogRequestSchema, pluginCatalogViewSchema),

@@ -65,19 +65,22 @@ export async function readRegistry(
     throw Error(`${LAB_REGISTRY_PATH} cannot be read.`);
   }
   if (bytes.length > LAB_REGISTRY_BYTES) throw Error(`${LAB_REGISTRY_PATH} is larger than 256 KiB.`);
+  return { registry: parseRegistry(bytes), sha256: createHash("sha256").update(bytes).digest("hex") };
+}
+
+/** Validates registry bytes; an Error names `name` (the workbench path) and the first problem. */
+export function parseRegistry(bytes: Uint8Array, name: string = LAB_REGISTRY_PATH): LabRegistry {
   let parsed: ReturnType<typeof labRegistrySchema.safeParse>;
   try {
     parsed = labRegistrySchema.safeParse(JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(bytes)));
   } catch {
-    throw Error(`${LAB_REGISTRY_PATH} is not valid UTF-8 JSON.`);
+    throw Error(`${name} is not valid UTF-8 JSON.`);
   }
   if (!parsed.success) {
     const issue = parsed.error.issues[0];
-    throw Error(
-      `${LAB_REGISTRY_PATH} is not valid: ${issue?.path.join(".") || "document"}: ${issue?.message}`,
-    );
+    throw Error(`${name} is not valid: ${issue?.path.join(".") || "document"}: ${issue?.message}`);
   }
-  return { registry: parsed.data, sha256: createHash("sha256").update(bytes).digest("hex") };
+  return parsed.data;
 }
 
 /**

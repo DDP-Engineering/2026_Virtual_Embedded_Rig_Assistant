@@ -15,7 +15,7 @@ const chunk = (id: number, path: string, page: number) => ({
   text: "I2C1_CR1 defines peripheral enable PE",
   locator: { type: "page", page },
 });
-it("REQ-TEST-91b404ff counts exact locators in top5 and separates RO/EN denominators", async () => {
+it("counts exact locators in top5 and separates RO/EN denominators", async () => {
   const { summarize } = await evaluation();
   const chunks = [chunk(1, "docs/manual.pdf", 1), chunk(2, "docs/manual.pdf", 2), chunk(3, "other.pdf", 1)];
   const questions = [
@@ -38,7 +38,7 @@ it("REQ-TEST-91b404ff counts exact locators in top5 and separates RO/EN denomina
     summarize([{ ...q[0], expected: { path: "notes.md", heading: "other" } }], [notes], [[4]]).overall.hits,
   ).toBe(0);
 });
-it("REQ-TEST-91b404ff validates fixed questions and actual page/heading coverage", async () => {
+it("validates fixed questions and actual page/heading coverage", async () => {
   const { validateFixture } = await evaluation();
   const yaml = await readFile(`${root}tests/fixtures/retrieval/demo-board.yaml`, "utf8");
   const fixture = validateFixture(yaml);
@@ -54,7 +54,7 @@ it("REQ-TEST-91b404ff validates fixed questions and actual page/heading coverage
     /relative/i,
   );
 });
-it("REQ-TEST-91b404ff ranks real FTS identifiers and fuses one-based lists stably", async () => {
+it("ranks real FTS identifiers and fuses one-based lists stably", async () => {
   const { keywordIndex, fuse, semanticRank } = await evaluation();
   const chunks = [
     chunk(1, "a.pdf", 1),

@@ -3,7 +3,7 @@
 Date: 2026-11-11. Status: metadata validated at `a67012a`, global library validated at `bbc7a0f`, and workbench redesign implemented in candidate TASK-4f522ea5. The final ticket owns focused integrated acceptance; its local commit is coordinator-owned.
 The user requested that this proposal and its interactive HTML be saved and tracked in Gitea.
 
-Implementation plan: [PLG-23…PLG-25](../plan/plugins-ui-redesign.md).
+Implemented as PLG-23…PLG-25.
 Tracking: [umbrella #85](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/85),
 children #86 (metadata), #87 (global page), #88 (workbench settings/integration).
 Interactive reference: [plugins-redesign.html](../ui/plugins-redesign.html), a self-contained file

@@ -4,7 +4,7 @@ stage: done
 type: feature
 path: full
 interaction: autopilot
-requirements: REQ-UX-cb7b704e, REQ-UX-bdd845d0, REQ-UX-b0da5193, REQ-FUNC-f7ef5641, REQ-UX-9a0489f1
+requirements: REQ-UX-cb7b704e, REQ-UX-bdd845d0, REQ-FUNC-f7ef5641, REQ-UX-9a0489f1
 parent:
 branch: master
 base: a61caff27affddb10f47cb374a0e57ffe41bd858

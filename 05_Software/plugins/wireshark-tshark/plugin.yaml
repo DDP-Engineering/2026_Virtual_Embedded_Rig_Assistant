@@ -1,7 +1,8 @@
 format: 1
 id: wireshark-tshark
-version: 1.0.0
+version: 0.3.0
 name: Wireshark (TShark)
+summary: Analyse network capture files and capture live traffic with TShark.
 description: Analyse network capture files with TShark (filters, field export, protocol statistics, packet details) and capture live traffic from an interface. Use for questions about .pcap/.pcapng captures of a board's Ethernet, Wi-Fi or USB traffic.
 ecosystem: wireshark
 platforms: [windows-x64, linux-x64]

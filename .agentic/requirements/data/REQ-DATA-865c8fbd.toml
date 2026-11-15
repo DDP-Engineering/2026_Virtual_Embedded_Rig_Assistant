@@ -12,7 +12,7 @@ The platformio helpers shall accept and write exactly the request, result, inspe
 
 verification = "Offline tests run every operation against the stand-ins and check each written document against the spec's field lists; a request with an unknown field, another kind or format 2 is refused with code request and exit 2, nothing written."
 
-affected_paths = ["05_Software/plugins/platformio/scripts/pio_support/request.py", "05_Software/plugins/platformio/scripts/pio_support/result.py", "05_Software/plugins/platformio/scripts/pio_support/builddir.py"]
+affected_paths = ["05_Software/plugins/platformio/scripts/pio_support/request.py", "05_Software/plugins/platformio/scripts/pio_support/result.py", "05_Software/plugins/platformio/scripts/pio_support/builddir.py", "05_Software/plugins/platformio/scripts/pio_support/__init__.py", "05_Software/plugins/platformio/scripts/pio_support/cli.py", "05_Software/plugins/platformio/scripts/pio_support/elf.py", "05_Software/plugins/platformio/scripts/pio_support/errors.py", "05_Software/plugins/platformio/scripts/pio_support/lifecycle.py", "05_Software/plugins/platformio/scripts/pio_support/workspace.py", "05_Software/plugins/platformio/scripts/pio_tool.py", "05_Software/plugins/platformio/scripts/pio_upload.py"]
 
 linked_tests = ["05_Software/tests/integration/platformio.test.ts"]
 
@@ -23,4 +23,4 @@ priority = "normal"   # low | normal | high
 rationale = ""        # why this behavior exists, if not obvious
 
 created = 2026-11-14
-updated = 2026-11-14
+updated = 2026-11-15

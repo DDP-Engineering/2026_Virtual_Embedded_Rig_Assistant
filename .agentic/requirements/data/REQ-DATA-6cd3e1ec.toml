@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-DATA-6cd3e1ec"
+
+title = "Plugin setting kit folder"
+
+status = "active"
+
+requirement = """
+The settings schema shall accept `plugins.kit` as an absolute local folder path (a Windows drive path or a POSIX path, at most 1024 characters) and reject a relative path, a network share path or a path with control characters.
+"""
+
+verification = "Shared settings test: a drive path (D: then a separator) and /opt/vera-kit parse; a relative name, a UNC share path in both separator styles, a path with a NUL and a 1025-character path are rejected."
+
+affected_paths = ["05_Software/src/libraries/shared/src/settings.ts"]
+
+linked_tests = ["05_Software/src/libraries/shared/src/plugins-ipc.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

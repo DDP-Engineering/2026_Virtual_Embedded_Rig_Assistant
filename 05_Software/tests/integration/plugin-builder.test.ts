@@ -36,6 +36,7 @@ it("drafts from CLI help, reviews a trial, approves bypass runs and promotes onl
     id: "fixture-cli",
     version: "1.0.0",
     name: "Fixture CLI",
+    summary: "Fixture summary.",
     description: "Inspect a virtual device using the documented CLI.",
     ecosystem: "general",
     platforms: ["windows-x64", "linux-x64"],

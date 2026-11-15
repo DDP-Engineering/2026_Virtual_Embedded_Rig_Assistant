@@ -1,0 +1,25 @@
+schema = 1
+
+id = "REQ-REL-baf16878"
+
+title = "Stop a pack install at the first failure"
+
+status = "active"
+
+requirement = """
+If downloading or installing a plugin of a pack fails, then the Plugins page shall stop the pack install at that plugin, show its error, keep the plugins installed before it and install the programs of those plugins.
+"""
+
+verification = "Renderer page test: in the Arduino pack, catalogReview of arduino-cli (second in order) fails; its install result row shows the error, no later plugin is reviewed, and serial-monitor (first) is installed and provisioned."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/plugins.tsx"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/plugin-packs.test.ts"]
+
+spec = ""
+
+priority = "normal"
+rationale = ""
+
+created = 2026-11-15
+updated = 2026-11-15

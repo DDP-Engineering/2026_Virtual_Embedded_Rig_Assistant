@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-UX-4ef3aa51"
+
+title = "Show a pre-release badge beside the plugin version"
+
+status = "active"
+
+requirement = "When the Plugins page shows a plugin version on a catalog card, in the install review or on an installed plugin card, the page shall show a localized Pre-release badge beside that version if the version classifies as pre-release, and no maturity badge if it classifies as stable."
+
+verification = "Renderer component tests: a catalog card, a catalog review and an installed card for version 0.2.0 each show the Pre-release badge next to the version; the same views for 1.0.0 show none; the badge text exists in en, ro and de (i18n check)."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/plugin-catalog.tsx", "05_Software/src/apps/desktop/src/renderer/components/plugins.tsx", "05_Software/src/apps/desktop/src/renderer/components/plugin-library-controls.tsx"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/plugin-catalog.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-15

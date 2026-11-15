@@ -2,7 +2,7 @@
 
 Status: active. Requirements: REQ-UX-4bea0001, REQ-UX-4bea0002, REQ-UX-4bea0003, REQ-REL-4bea0004, REQ-UX-4bea0005, REQ-REL-4bea0006, REQ-UX-4bea0007, REQ-TEST-4bea0008.
 
-Accepted behavior: 00_Planning/plan/M1-read-only-agent.md WP14;06-ui sections1,3,6,7,8;03-agent-and-tools sections8,9;01-system section3.
+Accepted behavior: 06-ui sections1,3,6,7,8;03-agent-and-tools sections8,9;01-system section3.
 
 Navigation stays memory-only at the authorized production URL. Workbench Welcome remains mounted across Settings/session navigation. Active workbench config and optional folder/readOnly metadata are queried on renderer startup; opening a workbench notifies the workspace. Session selection is stored per workbench in renderer localStorage, validated against session.list; missing/stale selections fall back to the first session. This UI record contains IDs only.
 

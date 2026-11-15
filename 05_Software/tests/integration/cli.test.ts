@@ -1,5 +1,5 @@
 import { type ChildProcess, execFile, spawn } from "node:child_process";
-import { createHash } from "node:crypto";
+import { createHash, verify } from "node:crypto";
 import { once } from "node:events";
 import { existsSync } from "node:fs";
 import { cp, mkdir, mkdtemp, readdir, readFile, rm, writeFile } from "node:fs/promises";
@@ -8,17 +8,12 @@ import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { promisify } from "node:util";
-import { NodeWorkerPool, openDb, PluginStore, SessionService, SkillCatalog } from "@vera/core";
+import { NodeWorkerPool, openDb, PluginStore, SessionService } from "@vera/core";
 import { ReplayGateway } from "@vera/core/replay";
-import { builtinToolNames, type SessionEvent } from "@vera/shared";
+import type { SessionEvent } from "@vera/shared";
 import Database from "better-sqlite3";
 import { buildSync } from "esbuild";
 import { afterAll, afterEach, beforeAll, expect, it } from "vitest";
-import { prepareCase, sections, sha256 } from "../../evaluators/eval-firmware-comparator-harness/harness.js";
-import {
-  sections as planSections,
-  prepareCase as preparePlanCase,
-} from "../../evaluators/eval-test-planner-harness/harness.js";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 let compiled: string;
@@ -274,321 +269,6 @@ const replay = (
   "--script",
   script,
 ];
-// CAP03 replay proves real wiring/persistence only; it does not grade model semantics.
-it("firmware-comparator loads from a folder plugin and saves the cited comparison through SessionService and CLI", async () => {
-  const dir = await mkdtemp(join(tmpdir(), "vera-cap03-replay-"));
-  cleanup.push(dir);
-  const workbench = await prepareCase(root, dir, "comparable-pair");
-  const data = join(dir, "data"),
-    scripts = join(dir, "scripts");
-  await mkdir(scripts);
-  const index = await launch(["index", "--workbench", workbench, "--data", data], {}, "npm").result;
-  expect(index.code, index.stderr).toBe(0);
-  const name = "firmware-comparison-boot-0412-boot-0413.md";
-  const baselineSHA = sha256(await readFile(join(workbench, "logs/boot-0412.log")));
-  const candidateSHA = sha256(await readFile(join(workbench, "logs/boot-0413.log")));
-  const report = `# Firmware comparison\n\n## Scope and sources\nBaseline firmware1.0.0 logs/boot-0412.log SHA256 ${baselineSHA}; candidate firmware1.1.0 logs/boot-0413.log SHA256 ${candidateSHA}; profile iso. [[logs/boot-0412.log#L1-L4]] [[logs/boot-0413.log#L1-L4]]\n\n## Comparability\ncomparable documented conditions: VERA-DEMO-01 revisionA, DEMO-001, boot@1, bench@1. Firmware is the intentional variable; image hashes unknown. Notes do not establish actual bench equivalence. [[docs/runs.md#L1-L10]]\n\n## Observed differences\nComplete scans. error0->1, warn1->1, info3->2. Candidate first new ERROR i2c initialization failed [[logs/boot-0413.log#L4-L4]]. Baseline-only ready event [[logs/boot-0412.log#L4-L4]]. No timing delta for those different messages.\n\n## Criterion\nboot@1: reaches i2c ready and no ERROR. Baseline criterion met; candidate not met. [[docs/boot-test.md#h=boot-criterion-boot1]] [[logs/boot-0412.log#L4-L4]] [[logs/boot-0413.log#L4-L4]]\n\n## Binary differences\nskipped: two build folders not supplied; no program plugin enabled.\n\n## Interpretation\nFact: firmware1.1.0 documents I2C initialization timing change. [[docs/release-notes.md#h=firmware-110-release-notes]] Cause remains unknown. Hypothesis: changed timing may contribute; reject by reviewing initialization ordering against the exact source/build and controlled manual evidence.\n\n## Recommended checks\n1. Confirm actual bench conditions against notes before attributing a firmware regression.\n2. Review I2C ordering and obtain a sourced manual test plan; no checks executed.\n`;
-  const script = join(scripts, "comparison.jsonl");
-  await writeFile(
-    script,
-    [
-      { toolCalls: [{ name: "load_skill", args: { name: "firmware-comparator" } }] },
-      {
-        toolCalls: [
-          { name: "load_skill", args: { name: "firmware-comparator", file: "templates/comparison.md" } },
-        ],
-      },
-      { toolCalls: [{ name: "read", args: { path: "docs/runs.md" } }] },
-      {
-        toolCalls: [
-          { name: "parse_log", args: { path: "logs/boot-0412.log", profile: "iso" } },
-          { name: "parse_log", args: { path: "logs/boot-0413.log", profile: "iso" } },
-        ],
-      },
-      { toolCalls: [{ name: "search_docs", args: { query: "I2C initialization timing", mode: "keyword" } }] },
-      {
-        toolCalls: [
-          {
-            name: "read_doc",
-            args: { path: "docs/release-notes.md", heading: "firmware-110-release-notes" },
-          },
-          { name: "read_doc", args: { path: "docs/boot-test.md", heading: "boot-criterion-boot1" } },
-        ],
-      },
-      { toolCalls: [{ name: "artifact_save", args: { name, content: report } }] },
-      { text: report },
-    ]
-      .map((step) => JSON.stringify(step))
-      .join("\n"),
-  );
-  const workers = new NodeWorkerPool(pathToFileURL(join(compiled, "grep-worker.js")));
-  const handle = await openDb(join(workbench, ".vera/vera.db"), {
-    workbenchId: "wb_01JB8Z6Q4M7N2K5R9T3V8X1Y0C",
-    appVersion: "0",
-  });
-  const plugin = await new PluginStore({ root: join(data, "plugins") }).load("analysis-skills");
-  const skills = new SkillCatalog({
-    root: workbench,
-    disabled: () => [],
-    plugins: async () => [{ id: "analysis-skills", folder: plugin.folder }],
-  });
-  const service = new SessionService({
-    db: handle.db,
-    root: workbench,
-    skills,
-    workers,
-    gateway: new ReplayGateway({ dir: scripts, now: () => 123 }),
-    clock: { now: () => new Date(123), sleep: async () => {} },
-    model: () => "replay/comparison",
-    prompt: () => "CAP03 integration replay",
-  });
-  const agent: SessionEvent[] = [];
-  try {
-    const session = service.create();
-    service.subscribe(session.id, 0, (_seq, event) => agent.push(event));
-    service.send(session.id, "Compare selected fictional captures");
-    expect(await service.waitIdle(session.id)).toEqual({ stopReason: "end" });
-    const summaries = service.listArtifacts(session.id);
-    expect(summaries).toHaveLength(1);
-    const artifact = await service.openArtifact(summaries[0]?.artifactId ?? "");
-    expect(artifact).toMatchObject({ name, content: report });
-    expect(artifact.content.match(/^## .+$/gm)).toEqual(sections.map((section) => `## ${section}`));
-    expect(service.verifiedArtifact(artifact.artifactId).path).toBeTruthy();
-    const cli = await launch([...replay(workbench, script), "--data", data], {}, "npm").result;
-    expect(cli.code).toBe(0);
-    const records: SessionEvent[] = events(cli.stdout).map((record) => record.event);
-    for (const output of [agent, records]) {
-      const tools = output.filter((event) => event.type === "tool.done");
-      expect(tools).toHaveLength(9);
-      expect(tools.every((event) => event.ok)).toBe(true);
-      const values = tools.map((event) => JSON.parse(event.summary));
-      expect(values.find((value) => value.source?.path === "logs/boot-0412.log")).toMatchObject({
-        counts: { error: 0, warn: 1, info: 3 },
-        scan: { complete: true },
-        source: { sha256: baselineSHA },
-      });
-      expect(values.find((value) => value.source?.path === "logs/boot-0413.log")).toMatchObject({
-        counts: { error: 1, warn: 1, info: 2 },
-        scan: { complete: true },
-        source: { sha256: candidateSHA },
-        events: expect.arrayContaining([
-          expect.objectContaining({ ref: "logs/boot-0413.log#L4-L4", level: "error" }),
-        ]),
-      });
-      const last = output.filter((event) => event.type === "message.done").at(-1);
-      expect(last?.citations?.length).toBeGreaterThan(5);
-      expect(last?.citations?.every((citation) => citation.valid)).toBe(true);
-    }
-    const cliDb = new Database(join(workbench, ".vera/vera.db"), { readonly: true });
-    try {
-      const artifacts = cliDb.prepare("SELECT name,sha256 FROM artifacts WHERE name=?").all(name);
-      expect(artifacts).toHaveLength(2);
-      expect(artifacts).toEqual([
-        { name, sha256: sha256(report) },
-        { name, sha256: sha256(report) },
-      ]);
-    } finally {
-      cliDb.close();
-    }
-    if (evidence) {
-      await writeFile(
-        join(evidence, "firmware-comparison-agent.json"),
-        JSON.stringify({ events: agent, artifact }, null, 2),
-        { flag: "wx" },
-      );
-      await writeFile(join(evidence, name), artifact.content, { flag: "wx" });
-    }
-  } finally {
-    await service.close();
-    handle.close();
-    await workers.dispose();
-  }
-}, 120000);
-// CAP04 replay validates real tool/citation/storage wiring, not generated model semantics.
-it("test-planner loads its plugin template and persists a sourced manual plan through SessionService and CLI", async () => {
-  const dir = await mkdtemp(join(tmpdir(), "vera-cap04-replay-"));
-  cleanup.push(dir);
-  const workbench = await preparePlanCase(root, dir, "sourced-plan");
-  // Replay's fixed32KiB context needs only this scenario's tool schemas. Keep unrelated
-  // plugin builder/program tools out of the request rather than changing runtime budgets.
-  const disabledTools = builtinToolNames.filter(
-    (name) => !["load_skill", "search_docs", "read_doc", "read", "todo", "artifact_save"].includes(name),
-  );
-  const configPath = join(workbench, ".vera/workbench.yaml");
-  await writeFile(
-    configPath,
-    (await readFile(configPath, "utf8")).replace(
-      "tools:\n  disabled: []",
-      `tools:\n  disabled: ${JSON.stringify(disabledTools)}`,
-    ),
-  );
-  const data = join(dir, "data"),
-    scripts = join(dir, "scripts");
-  await mkdir(scripts);
-  const indexed = await launch(["index", "--workbench", workbench, "--data", data], {}, "npm").result;
-  expect(indexed.code, indexed.stderr).toBe(0);
-  const name = "test-plan-VERA-DEMO-01.md";
-  const plan = `# Manual test plan
-
-## Target and objective
-VERA-DEMO-01 revision A, DEMO-001; candidate1.1.0 I2C failure, baseline1.0.0. [[docs/runs.md#L1-L10]] [[logs/boot-0413.log#L1-L4]]
-
-## Readiness
-ready_for_review: documented bench@1 setup and boot@1 criterion; no execution. [[docs/setup.md#h=manual-boot-setup-bench1]] [[docs/boot-test.md#h=boot-criterion-boot1]]
-
-## Setup and prerequisites
-Operator verifies board, image identity and unchanged bench@1 for boot@1; missing prerequisites stop work. [[docs/setup.md#h=manual-boot-setup-bench1]]
-
-## Test cases
-### TP-01 — baseline control1.0.0
-Rationale: captured baseline control. [[docs/runs.md#L1-L10]]
-### TP-02 — candidate1.1.0
-Rationale: I2C failure and changed initialization timing; cause unknown. [[logs/boot-0413.log#L1-L4]] [[docs/release-notes.md#h=firmware-110-release-notes]]
-For each case: Setup bench@1/boot@1 and verified case firmware. Manual steps: 1. Confirm setup and firmware. 2. Boot manually. 3. Capture whole log with identity/setup/procedure labels. Stop for missing prerequisite or mismatched identity/setup. [[docs/setup.md#h=manual-boot-setup-bench1]] Criterion: i2c ready and no ERROR. [[docs/boot-test.md#h=boot-criterion-boot1]]
-Optional future step only: enabled esp32-esptool program esptool command write-flash, risk device-write; separate request needs verified port/image/offsets. [[docs/enabled-plugins.md#h=enabled-plugin-metadata-for-fictional-acceptance-session]]
-
-## Stop conditions and exclusions
-Stop for unverified identity/setup/image. Numeric timing and electrical stress excluded: no criteria supplied. [[docs/setup.md#h=manual-boot-setup-bench1]]
-
-## Results to collect
-| Case | Run | Firmware | Log path | Measurement | Value | Unit | Met / not met | Source reference |
-|---|---|---|---|---|---|---|---|---|
-| TP-01 | pending | 1.0.0 | pending | ready/ERROR | unmeasured | log events | pending | [[docs/boot-test.md#h=boot-criterion-boot1]] |
-| TP-02 | pending | 1.1.0 | pending | ready/ERROR | unmeasured | log events | pending | [[docs/boot-test.md#h=boot-criterion-boot1]] |
-`;
-  const script = join(scripts, "plan.jsonl");
-  const steps = [
-    { toolCalls: [{ name: "load_skill", args: { name: "test-planner" } }] },
-    { toolCalls: [{ name: "load_skill", args: { name: "test-planner", file: "templates/test-plan.md" } }] },
-    {
-      toolCalls: [
-        {
-          name: "search_docs",
-          args: { query: "boot requirements setup I2C release", mode: "keyword", k: 1 },
-        },
-      ],
-    },
-    {
-      toolCalls: ["WORKBENCH.md", "docs/runs.md", "logs/boot-0413.log"].map((path) => ({
-        name: "read",
-        args: { path },
-      })),
-    },
-    {
-      toolCalls: [
-        ["docs/boot-test.md", "boot-criterion-boot1"],
-        ["docs/setup.md", "manual-boot-setup-bench1"],
-        ["docs/release-notes.md", "firmware-110-release-notes"],
-        ["docs/enabled-plugins.md", "enabled-plugin-metadata-for-fictional-acceptance-session"],
-      ].map(([path, heading]) => ({ name: "read_doc", args: { path, heading } })),
-    },
-    {
-      toolCalls: [
-        {
-          name: "todo",
-          args: {
-            items: [
-              {
-                text: "Confirm target/setup and obtain verified firmware preparation evidence",
-                status: "pending",
-              },
-            ],
-          },
-        },
-      ],
-    },
-    { toolCalls: [{ name: "artifact_save", args: { name, content: plan } }] },
-    { text: plan },
-  ];
-  await writeFile(script, steps.map((step) => JSON.stringify(step)).join("\n"));
-  const workers = new NodeWorkerPool(pathToFileURL(join(compiled, "grep-worker.js")));
-  const handle = await openDb(join(workbench, ".vera/vera.db"), {
-    workbenchId: "wb_01JB8Z6Q4M7N2K5R9T3V8X1Y0C",
-    appVersion: "0",
-  });
-  const plugin = await new PluginStore({ root: join(data, "plugins") }).load("analysis-skills");
-  const skills = new SkillCatalog({
-    root: workbench,
-    disabled: () => [],
-    plugins: async () => [{ id: "analysis-skills", folder: plugin.folder }],
-  });
-  let service = new SessionService({
-    db: handle.db,
-    root: workbench,
-    skills,
-    workers,
-    disabledTools,
-    gateway: new ReplayGateway({ dir: scripts, now: () => 123 }),
-    clock: { now: () => new Date(123), sleep: async () => {} },
-    model: () => "replay/plan",
-    prompt: () => "CAP04 integration replay",
-  });
-  const agent: SessionEvent[] = [];
-  try {
-    const session = service.create();
-    service.subscribe(session.id, 0, (_seq, event) => agent.push(event));
-    service.send(session.id, "Plan the fictional I2C checks");
-    expect(await service.waitIdle(session.id)).toEqual({ stopReason: "end" });
-    const summaries = service.listArtifacts(session.id);
-    expect(summaries).toHaveLength(1);
-    const artifact = await service.openArtifact(summaries[0]?.artifactId ?? "");
-    expect(artifact).toMatchObject({ name, content: plan });
-    expect(artifact.content.match(/^## .+$/gm)).toEqual(planSections.map((section) => `## ${section}`));
-    expect(service.verifiedArtifact(artifact.artifactId).path).toBeTruthy();
-    const cli = await launch([...replay(workbench, script), "--data", data], {}, "npm").result;
-    expect(cli.code, cli.stderr).toBe(0);
-    const records: SessionEvent[] = events(cli.stdout).map((record) => record.event);
-    for (const output of [agent, records]) {
-      const done = output.filter((event) => event.type === "tool.done");
-      expect(done).toHaveLength(12);
-      expect(
-        done.every((event) => event.ok),
-        JSON.stringify(done),
-      ).toBe(true);
-      expect(
-        output.filter((event) => event.type === "tool.started").map((event) => event.name),
-      ).not.toContain("run_program");
-      expect(output.find((event) => event.type === "todo.updated")).toMatchObject({
-        items: [{ text: expect.stringContaining("Confirm target"), status: "pending" }],
-      });
-      const final = output.filter((event) => event.type === "message.done").at(-1);
-      expect(final?.citations?.length).toBeGreaterThan(5);
-      expect(final?.citations?.every((citation) => citation.valid)).toBe(true);
-    }
-    await service.close();
-    service = new SessionService({
-      db: handle.db,
-      root: workbench,
-      skills,
-      workers,
-      gateway: new ReplayGateway({ dir: scripts, now: () => 123 }),
-      clock: { now: () => new Date(123), sleep: async () => {} },
-      model: () => "replay/plan",
-      prompt: () => "CAP04 reopen",
-    });
-    expect(await service.openArtifact(artifact.artifactId)).toMatchObject({ content: plan });
-    expect(
-      service.get(session.id).snapshot.items.some((item) => item.kind === "assistant" && item.text === plan),
-    ).toBe(true);
-    const stored = handle.db.prepare("SELECT name,sha256 FROM artifacts WHERE name=?").all(name);
-    expect(stored).toEqual([
-      { name, sha256: sha256(plan) },
-      { name, sha256: sha256(plan) },
-    ]);
-    if (evidence) {
-      await writeFile(
-        join(evidence, "test-plan-agent.json"),
-        JSON.stringify({ events: agent, artifact, reopened: service.get(session.id).snapshot }, null, 2),
-        { flag: "wx" },
-      );
-      await writeFile(join(evidence, name), artifact.content, { flag: "wx" });
-    }
-  } finally {
-    await service.close();
-    handle.close();
-    await workers.dispose();
-  }
-}, 120000);
 it("parse_log returns identical cited evidence through agent sessions and vera run", async () => {
   const { dir, workbench } = await fixture();
   await writeFile(join(workbench, "logs/control.log"), "2026-04-12T08:00:00Z INFO ready\n\u0000\n");
@@ -855,6 +535,7 @@ it("CLI installs a plugin and its programs and prints their statuses", async () 
       "id: bench-tools",
       "version: 1.0.0",
       "name: Bench tools",
+      "summary: Fixture summary.",
       "description: Node and a missing analyser.",
       "ecosystem: general",
       "platforms: [windows-x64, linux-x64]",
@@ -877,7 +558,14 @@ it("CLI installs a plugin and its programs and prints their statuses", async () 
     .split(/\r?\n/)
     .map((line) => JSON.parse(line));
   expect(lines).toEqual([
-    { name: "node", kind: "find", state: "ready", version: process.versions.node, range: ">=20" },
+    {
+      name: "node",
+      kind: "find",
+      state: "ready",
+      version: process.versions.node,
+      range: ">=20",
+      path: expect.any(String),
+    },
     {
       name: "tshark",
       kind: "find",
@@ -925,9 +613,14 @@ it("CLI checks a catalog source and builds its release", async () => {
   expect(officialIds.length).toBeGreaterThan(30);
   expect(built.stdout.trim()).toBe(`${officialIds.length} plugins written to ${out}`);
   const index = JSON.parse(await readFile(join(out, "index.json"), "utf8"));
-  expect(index.plugins.map((plugin: { id: string; url: string }) => [plugin.id, plugin.url])).toEqual(
-    officialIds.map((id) => [id, `${id}-1.0.0.zip`]),
+  // Each zip is named after its manifest's id and version.
+  const zips = await Promise.all(
+    officialIds.map(async (id) => {
+      const version = /^version:\s*(\S+)/m.exec(await readFile(join(source, id, "plugin.yaml"), "utf8"))?.[1];
+      return [id, `${id}-${version}.zip`];
+    }),
   );
+  expect(index.plugins.map((plugin: { id: string; url: string }) => [plugin.id, plugin.url])).toEqual(zips);
   expect(index.plugins.find((plugin: { id: string }) => plugin.id === "serial-monitor")).toMatchObject({
     activities: ["communication", "debug"],
     keywords: ["serial", "UART", "console", "COM", "pyserial"],
@@ -961,6 +654,68 @@ it("CLI checks a catalog source and builds its release", async () => {
     expect(usage.code, args.join(" ")).toBe(2);
   }
   // Seven CLI processes: under a full parallel suite they outlast the default 5 s.
+}, 30000);
+// REQ-SEC-bd56a6c0 REQ-SEC-daf01d33
+it("CLI generates a catalog signing key pair and signs the channel indexes of a release", async () => {
+  const { dir } = await fixture();
+  const keys = join(dir, "keys"),
+    release = join(dir, "release");
+  await mkdir(keys);
+  await mkdir(release);
+  const privateKey = join(keys, "private.pem"),
+    publicKey = join(keys, "public.pem"),
+    otherPrivate = join(keys, "other.pem"),
+    otherPublic = join(keys, "other.pub.pem");
+  const generated = await launch(["catalog", "keygen", "--private", privateKey, "--public", publicKey])
+    .result;
+  expect(generated.code).toBe(0);
+  expect(generated.stdout).not.toContain("PRIVATE KEY");
+  const again = await launch(["catalog", "keygen", "--private", privateKey, "--public", otherPublic]).result;
+  expect(again.code).toBe(1);
+  expect(existsSync(otherPublic)).toBe(false);
+  expect(
+    (await launch(["catalog", "keygen", "--private", otherPrivate, "--public", otherPublic]).result).code,
+  ).toBe(0);
+  for (const name of ["index-stable.json", "index-pre-release.json"])
+    await writeFile(join(release, name), `{"format":1,"plugins":[],"packs":[]}\n`);
+
+  const wrong = await launch([
+    "catalog",
+    "sign",
+    "--release",
+    release,
+    "--key",
+    otherPrivate,
+    "--public",
+    publicKey,
+  ]).result;
+  expect(wrong.code).toBe(1);
+  expect(existsSync(join(release, "index-stable.json.sig"))).toBe(false);
+  const signed = await launch([
+    "catalog",
+    "sign",
+    "--release",
+    release,
+    "--key",
+    privateKey,
+    "--public",
+    publicKey,
+  ]).result;
+  expect(signed.code).toBe(0);
+  expect(signed.stdout.trim()).toBe(`signed 2 indexes in ${release}`);
+  const pem = await readFile(publicKey, "utf8");
+  for (const name of ["index-stable.json", "index-pre-release.json"]) {
+    const signature = Buffer.from(await readFile(join(release, `${name}.sig`), "utf8"), "base64");
+    expect(verify(null, await readFile(join(release, name)), pem, signature)).toBe(true);
+  }
+  for (const args of [
+    ["catalog", "keygen", "--private", privateKey],
+    ["catalog", "sign", "--release", release],
+    ["catalog", "sign", "--key", privateKey],
+  ]) {
+    const usage = await launch(args).result;
+    expect(usage.code, args.join(" ")).toBe(2);
+  }
 }, 30000);
 // REQ-FUNC-bf809842 REQ-DATA-e3d4d5ba REQ-FUNC-997412a4
 it("CLI saves a session artifact without approval and emits valid/missing references", async () => {

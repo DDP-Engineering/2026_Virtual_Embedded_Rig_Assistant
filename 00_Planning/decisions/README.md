@@ -1,27 +1,29 @@
-# Architecture decision records
+# Architecture decisions
 
-Status as of 2026-11-01. ADR-0001…0015 were checked against the code on that date; each ends with an
-`Implementation status (2026-11-01)` section that records deviations without rewriting the original
-decision. ADR-0016…0019 are accepted decisions for the plugin system, not implemented yet.
+Every decision below is implemented. What the code does is specified in `../architecture/` and
+`../plugins/architecture.md`; this table keeps only what was decided and why, under the ID that
+other documents cite. The full records are in Git history. A new decision gets the next ID and
+its own `ADR-NNNN-<slug>.md` file in this folder until it is implemented, then one row here.
 
-| ADR | Decision | Status |
+| ADR | Decision | Why |
 |---|---|---|
-| [ADR-0001](ADR-0001-desktop-stack.md) | TypeScript on Electron; electron-vite, React, npm workspaces, Vitest | Implemented; shadcn/ui only scaffolded, UI uses hand-written CSS |
-| [ADR-0002](ADR-0002-model-access-pi-ai.md) | Models through `@earendil-works/pi-ai`, two collections (API key, subscription) | Implemented with deviations: custom endpoints built per request, VERA's own replay gateway |
-| [ADR-0003](ADR-0003-agent-loop.md) | Agent loop: start from the reference loop behind `core/agent/runtime.ts` | Confirmed by ADR-0014; implemented, with steering and compaction |
-| [ADR-0004](ADR-0004-workbench-is-a-folder.md) | A workbench is a plain folder; runtime state in `.vera/` | Implemented with deviations: configuration and skills live in `.vera/`; a second process opens read-only |
-| [ADR-0005](ADR-0005-sqlite-per-workbench.md) | One SQLite database per workbench through better-sqlite3, FTS5 and trigram | Confirmed by ADR-0013; implemented; clean/offline Windows proof open |
-| [ADR-0006](ADR-0006-local-bundled-embeddings.md) | Embeddings computed locally with a bundled model; no remote model loading | Implemented; model chosen by ADR-0015; runs in the VERA Indexer process |
-| [ADR-0007](ADR-0007-no-shell-confined-tools.md) | No shell tool; file tools confined to the workbench; writes gated by permission mode | Implemented with deviations (`bypass` mode); process execution superseded by ADR-0016 |
-| [ADR-0008](ADR-0008-updates-generic-feed.md) | electron-builder and electron-updater with a generic HTTPS feed | Implemented; adds `latest`/`beta` channels; signing not configured |
-| [ADR-0009](ADR-0009-core-in-main-process.md) | Electron-agnostic core in the main process; CPU work in worker threads | Implemented with deviations: indexing runs in the VERA Indexer utility process |
-| [ADR-0010](ADR-0010-zod-single-schema-language.md) | zod is the only schema language; tool schemas converted to JSON Schema | Implemented; JSON Schema round-trip not tested |
-| [ADR-0011](ADR-0011-single-user-desktop.md) | Single-user desktop app: no accounts, roles or app login | Implemented |
-| [ADR-0012](ADR-0012-bounded-execution-and-release-proof.md) | M1 context budgets and terminable grep; exact one-use approvals, workbench-wide writes and restart reconciliation; proof on actual release artifacts | Implemented in code; release-artifact proof partly open |
-| [ADR-0013](ADR-0013-native-packaging-and-model-delivery.md) | N-API SQLite/ORT packages, verified immutable model delivery and compiled probe exclusion | Implemented; size check removed by ADR-0017; app-local VC++ runtime packaged; clean/offline Windows proof open |
-| [ADR-0014](ADR-0014-agent-runtime-spike.md) | Reference runtime with mandatory M1 context preflight; measured pi-agent-core comparison | Implemented |
-| [ADR-0015](ADR-0015-embedding-model-selection.md) | Bundled BGE q8 and demo hybrid recall gate | Implemented; the recall gate does not use the product's chunking |
-| [ADR-0016](ADR-0016-plugins-skills-and-guarded-programs.md) | Plugins are skills plus declared programs under risk rules; generic guarded execution, no shell; agent-authored plugins start as trial, approved in every mode | Accepted by the user; not implemented |
-| [ADR-0017](ADR-0017-plugin-provisioning-and-no-size-budget.md) | Bundled uv, on-demand plugin installs, no package size budget; supersedes L5 and 07 §1 budget | Accepted by the user; size budget removed, plugin provisioning not implemented |
-| [ADR-0018](ADR-0018-hardware-risk-levels.md) | Hardware risk levels; irreversible operations need a typed confirmation in `ask` and `auto-edit` and run in `bypass` | Accepted by the user; not implemented |
-| [ADR-0019](ADR-0019-plugin-catalog-tiers.md) | One plugin catalog with official and community tiers | Accepted by the user; mechanism proposed; not implemented |
+| ADR-0001 | TypeScript (strict, ESM) on Electron; electron-vite, React with hand-written CSS, npm workspaces, Vitest and Playwright; exact version pins | One Chromium on Windows and Linux; ChatGPT sign-in and local ONNX available in Node. Tauri/Wails differ per webview, Python/Qt packaging is fragile |
+| ADR-0002 | Every model through `@earendil-works/pi-ai`, wrapped in `core/src/llm/`; two collections, **api** and **subscription**; messages stored in pi-ai's shape | Only maintained library with ChatGPT-subscription sign-in; custom endpoints are built per request and VERA has its own replay gateway |
+| ADR-0003 | VERA owns the agent loop (`core/src/agent/runtime.ts`, `ReferenceRuntime` behind `AgentRuntime`) on top of pi-ai; steering and compaction are built on it | A measured spike against `pi-agent-core` 1.1.0: pi serialized mixed read/write batches and left calls without results after an abort in an approval batch. The loop is small and keeps approvals, context policy and replay in one process |
+| ADR-0004 | A workbench is a plain folder; runtime state, configuration and skills live in `<workbench>/.vera/`; a second process opens it read-only | Engineers copy it, keep it in Git and open its documents with other programs |
+| ADR-0005 | One SQLite database per workbench (better-sqlite3, WAL), FTS5 `unicode61` plus a `trigram` table; vectors as BLOBs searched by brute force | One storage engine is enough at workbench scale; sqlite-vec and vector stores add nothing |
+| ADR-0006 | Embeddings computed locally with a bundled model (transformers + onnxruntime-node), no remote model loading; hybrid search | Documents never leave the machine and subscription/local users need no embedding API; exact identifiers come from the keyword index |
+| ADR-0007 | File tools confined to the workbench root, never writing `.vera/` outside `bypass`; writes gated by the permission mode (`read-only`, `ask`, `auto-edit`, `bypass`); no shell tool | Approving arbitrary command lines puts the risk on the user; process execution goes through declared programs (ADR-0016) |
+| ADR-0008 | electron-builder (NSIS per-user, zip, AppImage, deb) and electron-updater on a generic HTTPS feed with `latest`/`beta` channels; never installs during a turn | Works without admin rights from any static host; an own updater would only add security surface |
+| ADR-0009 | Electron-agnostic `core` in the main process behind ports; CPU work in terminable workers; indexing in the VERA Indexer utility process; the CLI runs the same core | `safeStorage` is main-process only; a timer cannot stop a synchronous regex, a terminable worker can |
+| ADR-0010 | zod 4 is the only schema language; tool parameters reach pi-ai as JSON Schema wrapped by `Type.Unsafe`, then are parsed again with zod before execution | One idiom for parsing and refinement instead of zod and TypeBox side by side |
+| ADR-0011 | Single-user desktop app: no accounts, roles, app login or tokens; the OS account is the boundary | No threat a local login would stop that the OS account does not; approvals and encrypted credentials defend against the agent |
+| ADR-0012 | Budget every model request from the first turn; one write queue per workbench, approvals bound to the exact change and used once, restart recovery by hash; grep in a terminable worker; proof on the release artifact by SHA-256 | Prevents context overflow, stale or repeated approvals, a blocked main process, and instrumented builds hiding release defects |
+| ADR-0013 | better-sqlite3 N-API prebuilds and onnxruntime-node CPU in a worker; model files pinned by URL, SHA-256 and size, verified before use, never in Git; app-local VC++ runtime | Both native modules load in packaged Windows and Linux builds; the pinned manifest makes the model download reproducible |
+| ADR-0015 | Bundle `Xenova/bge-small-en-v1.5` q8 (384 dimensions) with its query prefix; `eval:retrieval` gate: hybrid recall@5 ≥ 0.85 overall, ≥ 0.95 English, ≥ 0.75 Romanian | Met the recall gate with the smallest package and CPU cost; the gate does not use the product's chunking |
+| ADR-0016 | A plugin is `plugin.yaml` + Agent Skills + optional scripts; programs run only through `run_program` (argument array, no shell, declared executables); approvals bind to the command line and file hashes; agent-drafted plugins install as `trial` and ask in every mode | A growing wrapper library must be cheap to add without a VERA release, while the agent can never run an undeclared command |
+| ADR-0017 | No package size budget; a pinned `uv` installs one managed CPython and the plugins' PyPI programs under `<userData>/plugins/runtime/`; portable binaries by SHA-256; vendor suites only detected; installs only on a user action | Plugins need Python tooling without touching the user's Python or elevating privileges |
+| ADR-0018 | Every program command gets a risk level from the plugin's rules: `safe`, `device-read`, `device-write`, `irreversible`, `blocked`; highest match wins, unmatched is `device-write`; `irreversible` needs a typed confirmation in `ask` and `auto-edit` | Wrong commands can damage hardware; the level, not the program, decides how much confirmation is needed |
+| ADR-0019 | One catalog repository with `official`, `community` and `local` tiers; a released `index.json` with SHA-256 per zip; a review screen before a first install and before updates that change programs, rules or sources; no automatic updates | Community plugins are allowed while every install stays reviewed and verifiable; index signing waits until maintainer review stops scaling |
+
+ADR-0014 (the agent runtime spike) is folded into ADR-0003.

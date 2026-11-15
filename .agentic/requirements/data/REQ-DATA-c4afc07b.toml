@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-DATA-c4afc07b"
+
+title = "Require a one-line plugin summary in the manifest"
+
+status = "active"
+
+requirement = "plugin.yaml format 1 shall require a field summary of 1 to 160 characters after trimming, and shall report a manifest without summary, with an empty summary or with a longer one as a field issue at path summary."
+
+verification = "Shared unit tests: a manifest with a 160-character summary validates; one without summary, with a blank summary and with 161 characters each returns a field issue at path summary. `vera catalog check --source plugins` exits 0, so every official manifest carries a valid summary."
+
+affected_paths = ["05_Software/src/libraries/shared/src/plugins.ts", "05_Software/plugins"]
+
+linked_tests = ["05_Software/src/libraries/shared/src/plugins.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

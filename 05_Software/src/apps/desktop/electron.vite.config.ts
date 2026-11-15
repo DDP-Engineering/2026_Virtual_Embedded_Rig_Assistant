@@ -7,17 +7,45 @@ import react from "@vitejs/plugin-react";
 import { defineConfig } from "electron-vite";
 import type { Plugin } from "vite";
 // @ts-expect-error build helper is a Node ESM module.
-import { pluginCatalogFeed, updateFeed } from "../../../../02_Tools/release/update-config.mjs";
+import * as updateConfig from "../../../../02_Tools/release/update-config.mjs";
 import { productionCsp } from "./src/main/content-policy.js";
 
 const root = dirname(fileURLToPath(import.meta.url));
 // Build-time isolation for verification; ordinary development and release output is unchanged.
 const buildRoot = process.env.VERA_BUILD_ROOT ? resolve(process.env.VERA_BUILD_ROOT) : resolve(root, "out");
 const shared = resolve(root, "../../libraries/shared/src/index.ts");
+/** VERA's own license text from the repository root, for the About page. */
+function licenseText(): string {
+  try {
+    return readFileSync(resolve(root, "../../../../LICENSE.txt"), "utf8").replace(/\r\n/g, "\n");
+  } catch {
+    return "";
+  }
+}
+/** The desktop app's third-party runtime libraries with version and license, for the About page. */
+function thirdPartyComponents(): { name: string; version: string; license: string }[] {
+  try {
+    const dependencies = Object.keys(
+      JSON.parse(readFileSync(resolve(root, "package.json"), "utf8")).dependencies ?? {},
+    );
+    const lock = JSON.parse(readFileSync(resolve(root, "../../../package-lock.json"), "utf8")).packages ?? {};
+    return dependencies
+      .filter((name) => !name.startsWith("@vera/"))
+      .sort()
+      .map((name) => {
+        const entry = lock[`node_modules/${name}`] ?? {};
+        return { name, version: String(entry.version ?? ""), license: String(entry.license ?? "") };
+      });
+  } catch {
+    return [];
+  }
+}
 const testBuild = process.env.VERA_TEST === "1";
 const sessionPerformance = testBuild && process.env.VERA_SESSION_PERF === "1";
+const { pluginCatalogFeed, pluginCatalogKey, updateFeed } = updateConfig;
 const updateUrl = updateFeed(process.env.VERA_UPDATE_URL, testBuild);
 const pluginCatalogUrl = pluginCatalogFeed(process.env.VERA_PLUGIN_CATALOG_URL, testBuild);
+const pluginCatalogPublicKey = pluginCatalogKey(process.env.VERA_PLUGIN_CATALOG_KEY);
 
 function developmentCsp(): Plugin {
   return {
@@ -97,6 +125,7 @@ export default defineConfig(({ command }) => ({
       __VERA_SIGNED__: JSON.stringify(process.env.VERA_SIGNED_BUILD === "1"),
       __VERA_UPDATE_URL__: JSON.stringify(updateUrl),
       __VERA_PLUGIN_CATALOG_URL__: JSON.stringify(pluginCatalogUrl),
+      __VERA_PLUGIN_CATALOG_KEY__: JSON.stringify(pluginCatalogPublicKey),
     },
     build: {
       outDir: resolve(buildRoot, "main"),
@@ -140,6 +169,8 @@ export default defineConfig(({ command }) => ({
       __VERA_VERSION__: JSON.stringify(
         JSON.parse(readFileSync(resolve(root, "package.json"), "utf8")).version,
       ),
+      __VERA_THIRD_PARTY__: JSON.stringify(thirdPartyComponents()),
+      __VERA_LICENSE__: JSON.stringify(licenseText()),
     },
     root: resolve(root, "src/renderer"),
     resolve: { alias: { "@": resolve(root, "src/renderer"), "@vera/shared": shared } },

@@ -1,9 +1,10 @@
-// REQ-UX-28a74094 REQ-UX-41da0f4f REQ-UX-85399085 REQ-UX-2697c05c
-import { CATALOG_ACTIVITIES, type CatalogActivity } from "@vera/shared";
+// REQ-UX-28a74094 REQ-UX-41da0f4f REQ-UX-85399085 REQ-UX-2697c05c REQ-UX-3cf252d5 REQ-UX-4ef3aa51
+import { CATALOG_ACTIVITIES, type CatalogActivity, type PluginMaturity, pluginMaturity } from "@vera/shared";
 import type { TFunction } from "i18next";
 import { useId } from "react";
 import { useTranslation } from "react-i18next";
 import {
+  clearedLibraryFilters,
   type LibraryItem,
   type LibraryState,
   type LibraryStatus,
@@ -23,6 +24,16 @@ export function pluginActivityLabels(t: TFunction): Record<CatalogActivity, stri
     testing: t("plugins.library.activities.testing"),
     design: t("plugins.library.activities.design"),
   };
+}
+/** The Pre-release badge beside a plugin version; nothing for a stable version. */
+export function MaturityBadge({ version }: { version: string | undefined }) {
+  const { t } = useTranslation();
+  if (pluginMaturity(version) === "stable") return null;
+  return (
+    <span className="risk-badge" data-maturity="pre-release">
+      {t("plugins.maturity.preRelease")}
+    </span>
+  );
 }
 export function PluginLibraryControls({
   state,
@@ -60,7 +71,13 @@ export function PluginLibraryControls({
     ["updates", t("plugins.library.updates")],
     ["needs", t("plugins.library.needsConfiguration")],
   ];
-  const active = state.search || state.ecosystem || state.activity || state.tier || state.status !== "all";
+  const active =
+    state.search ||
+    state.ecosystem ||
+    state.activity ||
+    state.tier ||
+    state.maturity ||
+    state.status !== "all";
   return (
     <div className="plugin-library-controls">
       <div className="plugin-library-search-row">
@@ -136,6 +153,19 @@ export function PluginLibraryControls({
             ))}
           </select>
         </label>
+        <label htmlFor={`${id}-maturity`}>
+          {t("plugins.library.maturity")}
+          <select
+            id={`${id}-maturity`}
+            data-library-maturity
+            value={state.maturity}
+            onChange={(event) => change({ maturity: event.target.value as "" | PluginMaturity })}
+          >
+            <option value="">{t("plugins.library.allMaturities")}</option>
+            <option value="pre-release">{t("plugins.maturity.preRelease")}</option>
+            <option value="stable">{t("plugins.library.stable")}</option>
+          </select>
+        </label>
       </div>
       <fieldset className="plugin-library-statuses">
         <legend className="sr-only">{t("plugins.library.filterState")}</legend>
@@ -156,11 +186,7 @@ export function PluginLibraryControls({
           {t("plugins.library.results", { count, total })}
         </p>
         {active && (
-          <button
-            type="button"
-            data-action="library-clear"
-            onClick={() => change({ search: "", ecosystem: "", activity: "", tier: "", status: "all" })}
-          >
+          <button type="button" data-action="library-clear" onClick={() => change(clearedLibraryFilters)}>
             {t("plugins.library.clear")}
           </button>
         )}

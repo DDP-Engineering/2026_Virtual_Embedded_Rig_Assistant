@@ -38,7 +38,7 @@ starts with ordinary user-selected workbenches and explicit session input.
 | Change | Source | Proof |
 |---|---|---|
 | Welcome and normal composition | renderer workbench/App/session components | workspace.test.ts; native workbench acceptance |
-| Runtime contract and payload | shared ipc/index; main index; builder and package.mjs | workbench-entry.test.ts; packaging.test.ts; real staging |
+| Runtime contract and payload | shared ipc/index; main index; builder and package.mjs | packaging.test.ts; real staging |
 | Fixture documents and PDF generation | tests/fixtures/workbenches; make-demo-pdfs.mjs | inventory/hash checks; demo-documents.test.ts |
 | Retrieval and CLI inputs | evaluators/retrieval-support; tests/packaging/smoke/smoke-runtime; tooling tests | focused retrieval/CLI/PDF consumers |
 

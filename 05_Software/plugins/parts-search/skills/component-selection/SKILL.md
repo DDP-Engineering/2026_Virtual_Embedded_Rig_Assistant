@@ -3,7 +3,7 @@ name: component-selection
 description: Select an electronic component on evidence - write the hard constraints and preferences, search suppliers with parts_search, confirm critical values in the manufacturer's datasheet with page and conditions, and compare with parts-compare. Use when asked to choose, compare, replace or source a MOSFET, regulator, op-amp, resistor, capacitor, diode, inductor or similar part.
 ---
 
-The host tool `parts_search` searches the supplier catalogs the user enabled in Settings > Parts search; the
+The host tool `parts_search` searches the supplier catalogs the user enabled in the parts-search plugin's Configuration on the Plugins page; the
 program `parts-compare` (through `run_program`) compares candidates offline. Neither orders anything, and neither
 changes a schematic or BOM. Load the skill `component-families` for the checks of each part family.
 
@@ -30,7 +30,7 @@ Only the query or part number leaves VERA. Each supplier reports a status: `key-
 `rate-limited`, `timeout`, `unavailable` or `failed` mean no offers from it - never fill the gap yourself. Offers
 are a snapshot at `retrievedAt` without taxes or shipping; supplier parameters are unconfirmed. Show a supplier's
 `notice` with its data (TME: "powered by TME.eu Data; no guarantee of data accuracy"). If the tool is not offered,
-the user must enable Web access, this plugin for the workbench and a supplier in Settings > Parts search.
+the user must enable Web access, this plugin for the workbench and a supplier in the parts-search plugin's Configuration on the Plugins page.
 
 ## 3. Confirm critical values in the datasheet
 

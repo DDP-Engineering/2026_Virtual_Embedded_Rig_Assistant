@@ -30,6 +30,7 @@ function mqttPlugin(
       id: "mqtt-tools",
       version: "1.0.0",
       name: "MQTT tools",
+      summary: "Fixture summary.",
       description: "Fixture.",
       ecosystem: "iot",
       platforms: ["windows-x64", "linux-x64"],
@@ -277,7 +278,7 @@ describe("the wokwi scope (REQ-SEC-3f57f781)", () => {
   it("names the Wokwi settings and CLI variable when the token is not stored", async () => {
     plugins = [mqttPlugin("official", "wokwi")];
     await expect(prepare(["run-scenario", "--credential", "bench-2"])).rejects.toThrow(
-      /Settings > Wokwi tokens.*VERA_WOKWI_TOKEN_BENCH_2/,
+      /the wokwi plugin's Configuration on the Plugins page.*VERA_WOKWI_TOKEN_BENCH_2/,
     );
   });
 });

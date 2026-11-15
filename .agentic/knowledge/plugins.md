@@ -4,7 +4,8 @@
 
 Select for plugin.yaml validation, the installed plugin store under `<userData>/plugins`,
 workbench-scoped packages under `.vera/plugins`, machine-local hash trust,
-install.json, the integrity hash ("changed since review"), install from a folder or zip, uninstall,
+install.json, the integrity hash ("changed since review"), install from a folder or zip, uninstall, declared
+parameters (`settings`), the plugin page's Configuration section and Needs configuration,
 plugin listing issues, `plugins.enabled` in workbench.yaml and the `plugins.*` IPC channels; also for
 running plugin programs: the `ProcessHost` port, `ProgramRunner`, run logs in `.vera/runs/`, timeouts,
 Stop and process-tree kills, background runs, the serial-port guard and launcher quoting; and for rule
@@ -18,7 +19,7 @@ desktop UI: the Plugins page (pickers, review screen, install bound to the revie
 program installs, uninstall), run records beside run logs and the right panel's Runs tab (`runs.*`); and for the
 plugin catalog client: index read with the bundled fallback, verified zip downloads, the review decision, installs
 with the catalog tier, update marks, `plugins.catalog*` IPC, the catalog URL setting, the 24 h checks and the
-Plugins page Available/Installed library (spec `.agentic/specs/REQ-DATA-b40d3f9b.md`). Start at
+Plugins page library (spec `.agentic/specs/REQ-DATA-b40d3f9b.md`). Start at
 `05_Software/src/libraries/shared/src/plugins.ts` (schema),
 `05_Software/src/libraries/core/src/plugins/store.ts` (store),
 `05_Software/src/libraries/core/src/plugins/runner.ts` (runner),
@@ -118,22 +119,34 @@ The desktop UI (spec `.agentic/specs/REQ-DATA-f563074f.md`): the sidebar's Plugi
 (`renderer/components/plugins.tsx`) installs in two steps, `plugins.choose` (native picker) and `plugins.review`
 (the store reads and validates the package, installs nothing), then `plugins.install {path, sha256}` with the
 reviewed hash. It lists installed plugins with their program statuses and issues, installs programs (`plugins.provision`) and uninstalls after a
-confirmation. The runner writes `.vera/runs/<run id>.json` beside each log; the right panel's Runs tab
-(`renderer/components/runs-tab.tsx`) lists them (`runs.list`, polled every second), shows a log (`runs.log`) and
+confirmation. The review screen and the expanded card of an issue-free installed plugin show the same `PluginContents`
+(`renderer/components/plugin-contents.tsx`): a Composition section (programs with install kind and script path or
+source, skills with their SKILL.md descriptions, profiles and data files, documents; "Runs no programs." without
+programs) and an Operations section, the manifest `rules` grouped by `pluginOperations` into one collapsed `<details>`
+per risk (safe, device-read, device-write, irreversible, blocked; label and count in the summary; pattern, note and
+timeout per rule). The risk labels are the approval prompt's `approval.risk.*`. The runner writes `.vera/runs/<run id>.json` beside each log; the right panel's Runs tab
+(`renderer/components/runs-tab.tsx`) lists them (`runs.list`, polled every second) with session, plugin, state and date filters and sorting, shows a log (`runs.log`) and
 stops a run (`runs.stop`). WorkbenchConfigForm's Plugins section embeds WorkbenchPlugins: installed packages are draft checkboxes saved through workbench.create or workbench.config.update with plugins.enabled. New workbenches default to none; existing choices are retained. Missing/invalid selected entries can be removed; invalid or untrusted packages cannot be newly selected. Read-only/pending forms disable controls; list failures show retry and do not clear the draft. Cancel performs no activation write. The global manager has no enable switches and points to Edit workbench → Plugins. Scoped package trust remains a separate action.
 
 The plugin catalog (spec `.agentic/specs/REQ-DATA-b40d3f9b.md`, ADR-0019): core `catalog-source.ts` checks a catalog
 source (plugin folders, `packs.yaml`, `catalog.yaml`) with the store's own package reader and builds its release
-(`<id>-<version>.zip` per plugin and `index.json` format 1); the CLI's `vera catalog check|build` are the catalog's CI
-and release steps. Core `PluginCatalog` (`catalog.ts`) is the client: it reads `index.json` from the catalog folder URL
-(settings `plugins.catalog`, else the build input `VERA_PLUGIN_CATALOG_URL`), else from the bundled release of the
-official plugins, verifies each zip's size and SHA-256 against the index, keeps it for the review, decides whether the
+(`<id>-<version>.zip` per plugin, `index.json` format 1 and the channel indexes `index-stable.json`, version 1.0.0
+and higher, and `index-pre-release.json`, every plugin), and signs a release's channel indexes with a detached Ed25519
+`<index>.sig`. The CLI's `vera catalog check|build|keygen|sign` are the catalog's CI and release steps
+(`02_Tools/release/catalog-release.md`). Core `PluginCatalog` (`catalog.ts`) is the client. It reads the channel
+index `index-<channel>.json` (settings `plugins.channel`, `stable` when unset) from the catalog folder URL (settings
+`plugins.catalog`, else the build input `VERA_PLUGIN_CATALOG_URL`). It uses that index only when its `.sig`
+verifies with the public key pinned in the build (`VERA_PLUGIN_CATALOG_KEY`, default
+`02_Tools/release/catalog-signing-key.pub.pem`) and its signed `channel` field is the requested channel. A
+404 on the `.sig` is `unsigned`, any other failed `.sig` read is `unreachable`, and a failed check is
+`untrusted`. An older signed index of the same channel is not detected (no expiry). Else it reads
+`index.json` from the bundled release of the official plugins, which needs no signature. It verifies each zip's size and SHA-256 against the index, keeps it for the review, decides whether the
 review must be shown, and installs it bound to the reviewed integrity hash with the entry's tier and source
 `catalog` (the zip URL, or the bundled zip's file path). Desktop main
 composes it with `net.fetch`, serves `plugins.catalog`, `plugins.catalogReview` and `plugins.catalogInstall`, and its
 `CatalogChecks` (`main/catalog-checks.ts`) reads the index after the window opens and every 24 h. The Plugins page
-presents source/URL settings and management controls above one Available/Installed library. The index is not
-signed (ADR-0019 defers it).
+presents source/URL and channel settings and management controls above one library (filters left, list right). Test
+builds take the pinned key from `VERA_TEST_CATALOG_KEY` when it is set.
 
 Discovery metadata is maintained by plugin id in `catalog.yaml.metadata`: stable activities,
 bounded unique keywords and optional real calendar-day addedAt/updatedAt publication facts.
@@ -148,16 +161,39 @@ are classified, with dates omitted until a publication record is established.
 
 The global library is projected by `renderer/components/plugin-library.ts` and rendered by
 `plugin-library-controls.tsx`, `plugin-catalog.tsx` and `plugins.tsx`. Source settings, separate
-folder/ZIP imports, check-all, refresh and updates precede Available/Installed tabs and one list.
-Case/diacritic-insensitive all-word search intersects ecosystem/activity/provenance/state. State
-counts respect other filters; tab counts remain totals. Recently added/updated sort known dates
+folder/ZIP imports, check-all, refresh and updates precede the library: filters and state buttons on the left, one list on the right.
+Case/diacritic-insensitive all-word search intersects ecosystem/activity/provenance/maturity/state. Maturity is
+shared `pluginMaturity(version)` (`plugins.ts`): `0.x.y` or a semver pre-release tag is `pre-release`, every other
+valid version `stable`, a missing or invalid version `pre-release`; there is no manifest field. `MaturityBadge`
+(`plugin-library-controls.tsx`) shows Pre-release beside the version on catalog cards, the review facts and installed
+cards, and nothing for stable; Clear resets the maturity filter with the others (`clearedLibraryFilters`). A catalog
+card (`CatalogItem`) shows name, version and badge, tier badge, id, ecosystem and the manifest `summary` (1-160
+characters, required); the full description, programs, sources and rules stay in the install review. It adds a
+`data-catalog-warning="platform"` note when the host's plugin platform (from `app.info` via shared `pluginPlatform`)
+is known and not in the entry's `platforms`, and a `data-catalog-warning="risk"` note when the index entry's `risk`
+(`pluginHighestRisk` of the rules below `blocked`, written by `vera catalog build`) is `device-write` or
+`irreversible`; an unknown or unsupported host shows no platform warning. Its details also list the index entry's
+`dependencies` (shared `pluginDependencies(manifest)`, written by `vera catalog build`, which reports a find program
+without `hint` as a `dependency` issue) with `requires` (`plugin-dependencies.tsx` `CatalogDependencies`): each required
+plugin with whether it is installed, each program as automatic (into VERA's program folder: pip requirement, script
+path, the host's download with its declared `bytes` and SHA-256) or manual (range and vendor guide), before any package
+download. Install with dependencies (`data-action="catalog-install-all"`) runs the same review queue as Install, then
+`plugins.provision` for each plugin it installed, one at a time, and shows a `data-install-results` block (the
+Programs list per plugin, the not-ready ones with problem and guide, Check again = `plugins.check`). The expanded
+installed card lists the manifest's required plugins and, per checked program, `data-automatic` and the found `path`
+(ready find/external programs) or "In VERA's program folder". Re-install (`plugins.reinstall`, `Provisioner.reinstall`)
+installs every managed program again (uv `--reinstall`; downloads fetched again, verified and swapped in through the
+staging folder), never a find program; a failed re-download keeps the ready copy resolvable and reports the problem.
+A fresh check hashes a single-file download and reports `unavailable/sha256` on a mismatch; Install dependencies also
+repairs `sha256`. A download transfer longer than its declared `bytes` is `sha256`. State
+counts respect other filters; the results line shows the total. Recently added/updated sort known dates
 before unknown, with stable name/id/source ties. New is UTC day age 0..29. Page sizes are 6/12/24;
 filter changes reset and loaded snapshot mutations clamp pages after catalog metadata settles
 (including failure, which retains offline Installed management). The UI key uses gcTime Infinity;
 QueryClient lifetime retains global filter/tab/page state after long navigation and result-cache expiry,
 independently from workbench draft state. Local/trial/scoped entries never borrow catalog tier or
 publication metadata from id matches. Global folder/ZIP/trial imports retain catalog update
-filter/action when the catalog installed version agrees; same-id scoped records never do. Pack data remains; pack checkboxes and global activation are absent.
+filter/action when the catalog installed version agrees; same-id scoped records never do. Packs are installed through Install a pack (below); global activation stays absent.
 Browsing/expansion uses disabled observers only, avoiding `plugins.programs` cache-miss probes.
 Explicit Check/provision observations and failures update row/readiness filters. A rejected check
 cannot show stale Ready; unknown, needs configuration and unavailable remain distinct. Check-all
@@ -195,14 +231,45 @@ or `wokwi`) receives the stored credential `<scope>:<ref>` a call names with `op
 nothing else does.
 Prepare refuses a plugin that is not official, a host without `ProgramHost.credentials`, a repeated option, an invalid
 reference or a credential that is not stored; apply loads the enabled plugins again (a disabled plugin is undeclared and
-nothing is read), reads the credential and passes it as `RunRequest.input`; a not-stored message names the scope's
-Settings section and CLI variable. Desktop main stores the credentials through one `PluginCredentialService(scope)`
-(`apps/desktop/src/main/plugin-credentials.ts`): Settings > MQTT credentials (`mqtt.credentials.*` IPC: reference,
-optional username, password) and Settings > Wokwi tokens (`wokwi.credentials.*`: reference and token, no username),
-both rendered by `renderer/components/plugin-credentials.tsx`; each list returns only its own scope's references and
-storage. The CLI (`apps/cli/src/plugin-credentials-env.ts`) takes `VERA_MQTT_PASSWORD_<REF>`/`VERA_MQTT_USERNAME_<REF>`
+nothing is read), reads the credential and passes it as `RunRequest.input`; a not-stored message names the plugin's
+Configuration on the Plugins page and the CLI variable. Desktop main stores the credentials through one
+`PluginCredentialService(scope)` (`apps/desktop/src/main/plugin-credentials.ts`): the MQTT credentials form
+(`mqtt.credentials.*` IPC: reference, optional username, password) and the Wokwi tokens form (`wokwi.credentials.*`:
+reference and token, no username), both rendered by `renderer/components/plugin-credentials.tsx` inside the
+Configuration section of mqtt-tools and wokwi (with Replace, which puts a stored reference into the form); each list
+returns only its own scope's references and storage. App settings has no MQTT, Wokwi or Parts search page. The CLI (`apps/cli/src/plugin-credentials-env.ts`) takes `VERA_MQTT_PASSWORD_<REF>`/`VERA_MQTT_USERNAME_<REF>`
 and `VERA_WOKWI_TOKEN_<REF>` into memory-only entries. Schemas live in `shared/src/plugin-credentials.ts`. Neither
 changes a program's environment; only the wokwi helper itself puts the token into the one wokwi-cli child it starts.
+
+Declared parameters (REQ-DATA-af8807e1, REQ-FUNC-cbdb46ac, REQ-UX-efe126c0, REQ-UX-05e0ed17): plugin.yaml `settings`
+(optional, at most 32; shared `plugin-settings.ts`) names each parameter with a description - `secret` + scope (mqtt,
+wokwi, parts), `workbench-file` + workbench-relative path (`*` = one folder level, dot folders skipped, 64 matches),
+optional `format` (`lab-resources` through core `parseRegistry`, `json` parsed) and `optional`, or a read-only `value`.
+An invalid entry is a `field` issue. The renderer sends the declarations of the listed issue-free plugins (key =
+`installedKey`) to `plugins.configuration`; core `settingStates` (`plugins/configuration.ts`) answers stored with
+references (supplier ids for parts) or missing, present/missing/invalid with the first problem through PathGuard
+(256 KiB, regular file, not ignored) in the open workbench or unchecked without one, and value. Main reads references
+from the two `PluginCredentialService`s and configured supplier keys from `PartsAccessService.get()`; a workbench id
+that is not the open one is CONFLICT. `configurationNeeds` (missing secret, missing non-optional file, invalid file)
+feeds `programReadiness` (Needs configuration unless a program is unavailable, also before programs are checked) and
+the status block's Configuration check "Needs configuration: <names>". `renderer/components/plugin-configuration.tsx` lists each parameter with
+its state and embeds `PluginCredentialsPanel` (mqtt, wokwi) or `PartsAccessPanel` (parts); both forms invalidate
+`["plugin-configuration"]` after a change, and Check again re-asks for workbench files.
+
+Status block and packs (REQ-UX-492e89fb, REQ-UX-157f139c, REQ-UX-50e2dc6b, REQ-UX-5d984350, REQ-FUNC-0817ec80,
+REQ-UX-21440e02, REQ-REL-baf16878): `renderer/components/plugin-status.tsx` renders one block per healthy installed
+card with Dependencies (`dependencyCheck`: unavailable, missing required plugins or VERA-installed programs, external
+vendor programs, not checked, ready; holds Check, Install and Re-install), Configuration (`configurationCheck`; Configure
+expands the card on its Configuration section) and Use (enabled in the open workbench only, since `plugins.list`
+reports `enabled` for it; Open workbench comes from App: the open workbench's editor, or the folder chooser). The block
+shows Ready only when all three are ready and otherwise names the others; it keeps `data-readiness` (`programReadiness`)
+for the library filter. `renderer/components/plugin-packs.tsx`: Install a pack lists the index packs with their default
+groups checked; `packPlan` orders the checked groups' plugins after their required catalog plugins (`installOrder`),
+leaves out plugins of another platform, missing from the catalog or requiring a left-out plugin, and lists installed
+ones. Its one review is built from the index entries (risk, dependencies) because core keeps only the latest reviewed
+zip; Install then runs `plugins.catalogReview` and `plugins.catalogInstall` per plugin without the single review
+screen and provisions each. A failure stops the run, shows that plugin's error in the install results and still
+provisions the plugins installed before it.
 
 SSH agent socket (REQ-SEC-adb91424): a program of an official plugin that declares `sshAgent: true` gets
 `RunRequest.inherit: ["SSH_AUTH_SOCK"]`, so the runner copies the host's SSH_AUTH_SOCK (when set) into that run's
@@ -234,6 +301,13 @@ renderer plugins.test.ts, tests/integration/plugin-builder.test.ts and tests/e2e
 
 - `plugins.check` explicitly refreshes all program probes without installing. Pending checks share package/runtime identity and serialize with provisioning; fresh per-program cache entries are populated together, so passive reads cannot replace a fresh check with a recorded version. A replaced package rejects the pending check. Scoped check observations, including negative states, propagate atomically into the singleton session resolver; concurrent runtime invalidation rejects the older pending check. Scoped passive status reads use the same resolver observations for the verified scoped package, so reopening the page cannot restore a rejected Ready state. Completed checked failures survive later unrelated invalidation, bound to runtime/plugin/program, package SHA, installation timestamp and per-program record. A fresh check or actual provisioning supersedes them. Ready observations clear prior failures and remain in the ordinary resolution cache so missing discovered files are detected after invalidation. Invalid archive selection preserves healthy runtime authority. Version probes of found programs allow 8 s, other version probes 30 s; declared activation launchers allow 120 s because observed EIM startup can exceed the ordinary boundary. A timed-out probe's detail names the timeout. At most four version probes run at once across all provisioners of a process (a module-level limiter); a plugin's programs are inspected concurrently and listed sorted by name, with `verify()` once before them.
 - `plugins.installArchive {id,program,sha256,workbenchId?}` uses a native archive picker. Current workbench/database, package hash, program/platform and trust are checked before and after selection. Selected regular bytes are streamed through SHA-256 before cache reuse; staging, extraction confinement and a second identity check precede publication. No URL or hash comes from the selected file. Verified blobs may remain when a later version probe fails.
+- Offline dependency kit (spec REQ-DATA-532b02f5): settings `plugins.kit` (an absolute local folder). Install and Re-install
+  take a download program's file from `<kit>/files/<sha256>/<name>` (`dependencyKitFile(entry)`) through the same
+  `download(..., localPath)` verification as `plugins.installArchive`. A mismatch is `missing/sha256` with a detail naming
+  the kit file, and there is no URL fallback. A kit without that file uses the pinned URL. uv gets `UV_OFFLINE=1`,
+  `UV_FIND_LINKS=<kit>/wheels` and `UV_PYTHON_INSTALL_MIRROR=<file URL of kit/python>`, never `UV_DEFAULT_INDEX`, and each
+  pip/script install first runs `uv python install` (offline uv never downloads CPython implicitly). The bench
+  never reads `kit.json`.
 - Desktop package listing runs the complete PluginStore integrity path in `plugin-list-worker`, with only identical pending scopes coalesced and shutdown termination. No completed integrity result is reused by this seam. Main rechecks current workbench/database before returning.
 - The global manager starts with compact accessible rows and unknown dependency state, grouped top catalog/folder/zip/refresh/check-all actions, explicit Check/Install controls, expandable descriptions/program diagnostics, and secondary export/uninstall actions. Find-only tools retain vendor guidance, including when ready, and never enable automatic installation. Ready managed fallbacks keep a correctly labeled Install action. Managed version/range failures permit repair (uv reinstall); discovered hybrid tools explicitly mark external:true and retain the no-replacement policy unless preferDownload permits it. Same-hash reinstallation clears old dependency UI observations. Redaction is followed by schema-length caps. Workbench selection stays draft-only and compact, with no implicit enablement.
 - Windows minimal program environments preserve PATHEXT case-insensitively. Managed Python uses pinned uv0.13.7; an exact known minor-link failure can retry once after unlinking only an independently validated runtime-owned alias, never its patch interpreter or an escaping nested Python directory.
@@ -243,7 +317,10 @@ renderer plugins.test.ts, tests/integration/plugin-builder.test.ts and tests/e2e
   `pluginIdSchema`, `pluginRiskSchema`, `pluginTierSchema`, `pluginPlatformSchema`,
   `pluginIssueSchema` (`manifest`, `yaml`, `field`, `id`, `record`, `changed`, `unavailable`, `untrusted`, `collision`),
   `pluginInstalledSchema`, `pluginSummarySchema` (adds `enabled`), `PLUGIN_LIMITS`,
-  `isPluginRelativePath`.
+  `isPluginRelativePath`, `pluginMaturity(version)`, `pluginPlatform(platform, arch)` (core re-exports it),
+  `pluginHighestRisk(rules)` -> `PluginRunRisk` (`safe` without a rule below `blocked`),
+  `pluginOperations(rules)` -> `{risk, rules}[]` (one group per risk with rules, in risk order, rules in manifest
+  order and unchanged), `pluginCompositionSchema` (`skills: {name, description?}[]`, `files: string[]`).
 - Core: `new PluginStore({ root, now?, uuid? })` with `review(path)` → `PluginReview`, `install(path, sha256?)`
   (CONFLICT when the package's hash differs from `sha256`), `list()`, `load(id)` →
   `{manifest, record, folder}`, `uninstall(id)`, `ids()`; `pluginIntegrity(files)`;
@@ -324,13 +401,18 @@ renderer plugins.test.ts, tests/integration/plugin-builder.test.ts and tests/e2e
   link?, problem?, detail?}`, `pluginProgramProblemSchema` (notFound, install, download, sha256, archive,
   platform, uv, version, range), `downloadForm(url)`, `downloadName(entry)`, `versionInRange(version,
   range)`, `urlParts(url)`; settings `pluginSettingsSchema {index?, proxy?}`.
-- IPC: `plugins.programs {id}` and `plugins.provision {id}` -> statuses (NOT_FOUND unknown id, INVALID plugin
-  with issues); the browser mock answers both. CLI: `vera plugin install --path <folder|zip> --data <dir>`.
+- IPC: `plugins.programs {id}`, `plugins.provision {id}` and `plugins.reinstall {id}` -> statuses (NOT_FOUND unknown
+  id, INVALID plugin with issues); the browser mock answers them. Shared `pluginDependencies(manifest)`,
+  `pluginDependencySchema`, `pluginProgramKind(program)`, `pluginHintLink(hint)`; status `path` (found programs).
+  Catalog entries require `dependencies`. CLI: `vera plugin install --path <folder|zip> --data <dir>`.
 - `ResolvedProgram` carries `env` (applied after the manifest env by run_program) and `version` (prompt).
 - WorkbenchService `loadPlugins(id)` -> the enabled plugins that load (installed, issue-free,
   unchanged), in plugins.enabled order.
 - Summaries: `pluginInstalledSchema.irreversible` lists `{match, note?}` of a plugin without issues;
-  `plugins.list` carries it.
+  `plugins.list` carries it. An issue-free summary (global or trusted scoped) also carries `manifest` and
+  `composition`; a review carries `composition` whenever its manifest parses. Composition: each
+  `skills/<name>/SKILL.md` with the front-matter description of core `parseSkill` (none when it does not parse), and
+  the data files outside `plugin.yaml`, `skills/`, `scripts/` and the package-relative docs, in path order.
 - Runs (shared): `programRunIdSchema` (ULID), `programRunRecordSchema` (format 1), `programRunSchema` (adds
   `state: running|exited|stopped|timedOut|interrupted` and `log`), `programRunLogSchema`. IPC `runs.list
   {workbenchId}` → `{runs}`, `runs.log {workbenchId, id}`, `runs.stop {workbenchId, id}`; another workbench id
@@ -340,13 +422,21 @@ renderer plugins.test.ts, tests/integration/plugin-builder.test.ts and tests/e2e
   `catalogEntrySchema`, `catalogPackSchema`, `catalogPacksSchema` (packs.yaml), `catalogMaintainersSchema`
   (catalog.yaml `{format, official, reviewed}`), `CATALOG_LIMITS`, `DANGEROUS_TOKENS`, `dangerousToken(match)`,
   `compareVersions(a, b)` (semantic version precedence), `catalogUrl(value)` (normalised folder URL or undefined),
-  `catalogUrlSchema`, `pluginCatalogViewSchema`, `pluginCatalogReviewSchema`; `ruleNamesProgram(match, program)` in
-  `program-rules.ts`; settings `plugins.catalog?`.
+  `catalogUrlSchema`, `pluginCatalogViewSchema`, `pluginCatalogReviewSchema`, `CATALOG_CHANNELS`,
+  `catalogChannelSchema`, `catalogChannelIndex(channel)`; `ruleNamesProgram(match, program)` in `program-rules.ts`;
+  settings `plugins.catalog?` and `plugins.channel?` (`stable` | `pre-release`).
 - Catalog (core): `checkCatalogSource(folder)` -> `CatalogIssue[] {where, code, detail}`;
-  `buildCatalogRelease(folder, out)` -> `{issues, index?}`; `new PluginCatalog({store, root, location, bundled?, fetch,
+  `buildCatalogRelease(folder, out)` -> `{issues, index?}`; `catalogChannel(index, channel)`;
+  `generateCatalogKeys(privatePath, publicPath)` (no overwrite); `signCatalogRelease(folder, privatePem, publicPem?)`
+  -> signed index names; `readCatalogSource(folder)` -> `{issues, packages, official}`;
+  `buildDependencyKit(source, platform, out, tools, {skip?})` -> `{issues, kit?}` (kit.json, `skipped`; an unknown
+  skipped id throws), throws `DependencyKitError` naming
+  the program or file and leaves no `out` or staging folder; tools `{fetch, wheels(platform, {requirement}|{script},
+  folder), python(platform)}` (CLI `cliKitTools(uv)` in `kit-tools.ts`); `DEPENDENCY_KIT_PLATFORMS` windows-x64 and linux-x64;
+  `new PluginCatalog({store, root, location, channel?, publicKey?, bundled?, fetch,
   now?, uuid?})` with `view({refresh?, signal?})`, `review(id, signal?)`, `install(id, sha256)`; store
   `readPluginPackage(path)` and `install(path, sha256?, origin?: {tier, url})` (source kind `catalog`).
-- IPC: `plugins.catalog {refresh}` -> view `{source: remote|bundled|none, url?, problem?: unreachable|invalid,
+- IPC: `plugins.catalog {refresh}` -> view `{source: remote|bundled|none, url?, problem?: unreachable|invalid|unsigned|untrusted,
   checkedAt?, plugins (entries + installed? + update), packs}`; `plugins.catalogReview {id}` -> `{review, id, version,
   tier, required}`; `plugins.catalogInstall {id, sha256}` -> installed summary; app event `plugins.catalog`. The
   browser mock serves an ESP32 pack and a community plugin.
@@ -601,15 +691,18 @@ renderer plugins.test.ts, tests/integration/plugin-builder.test.ts and tests/e2e
 | Install kinds, probes, ranges, statuses, uv environment | `core/src/plugins/provisioning.ts` | `provisioning.test.ts`, `tests/integration/provisioning.test.ts` |
 | Zip extraction, tree check, system tar | `core/src/plugins/archive.ts` | `archive.test.ts`, `tests/integration/provisioning.test.ts` |
 | Program status schema, range grammar, download form | shared `plugins.ts` | `shared/src/plugin-provisioning.test.ts` |
-| plugins.programs / plugins.provision, prompt-entry cache | desktop `main/index.ts`, `main/sessions.ts`, `mocks/mockApi.ts` | `main/sessions.test.ts`, `mocks/mockApi.test.ts` |
+| plugins.programs / plugins.provision / plugins.reinstall, prompt-entry cache | desktop `main/index.ts`, `main/sessions.ts`, `mocks/mockApi.ts` | `main/sessions.test.ts`, `mocks/mockApi.test.ts` |
+| Dependency summary, card dependencies, Install with dependencies, Re-install | shared `plugins.ts`, core `catalog-source.ts`, `provisioning.ts`, renderer `plugin-dependencies.tsx`, `plugin-catalog.tsx`, `plugins.tsx` | `shared/src/plugins.test.ts`, `catalog-source.test.ts`, `provisioning.test.ts`, `plugin-catalog.test.ts`, `plugins.test.ts` |
+| Declared parameters, Configuration section, Needs configuration | shared `plugin-settings.ts`, `ipc.ts`, core `plugins/configuration.ts`, `resource-registry.ts` (`parseRegistry`), desktop `main/index.ts` (`plugins.configuration`), renderer `plugin-configuration.tsx`, `plugin-credentials.tsx`, `parts-access.tsx`, `plugin-library.ts`, `plugins.tsx`, `mocks/mockApi.ts` | `shared/src/plugin-settings.test.ts`, `core/src/plugins/configuration.test.ts`, `store.test.ts`, `plugin-library.test.ts`, `plugins.test.ts`, `plugin-credentials.test.ts` |
 | `vera plugin install` | `cli/src/{args,plugin,provisioning}.ts` | `tests/integration/cli.test.ts` |
 | Review, picker, hash-bound install | `PluginStore.review`/`install` in `store.ts`, `plugins.choose`/`review`/`install` in `main/index.ts` | `store.test.ts`, `plugins-ipc.test.ts`, `mockApi.test.ts` |
 | Run records, list, log, stop | `ProgramRunner` in `runner.ts`, `runs.*` in `main/index.ts`, label in `program-tools.ts` | `runner.test.ts`, `program-tools.test.ts` |
 | Plugins page or Runs tab | renderer `plugins.tsx`, `runs-tab.tsx`, `shell.tsx`, `App.tsx`, locales | `plugins.test.ts`, `runs-tab.test.ts`, `tests/e2e/plugins-ui.spec.ts` (native), `plugins-mock.spec.ts` (languages, themes, sizes) |
 | Catalog formats, token lint, URL rule, version order | shared `plugin-catalog.ts` | `plugin-catalog.test.ts` |
-| Catalog check or release build, `vera catalog` | core `catalog-source.ts`, CLI `catalog.ts`, `args.ts` | `catalog-source.test.ts`, `tests/integration/cli.test.ts` |
-| Catalog client: sources, downloads, review decision, install | core `catalog.ts`, store `install` origin | `catalog.test.ts` (loopback server) |
-| Catalog IPC, checks, build-time URL | main `index.ts`, `catalog-checks.ts`, `electron.vite.config.ts`, `02_Tools/release/update-config.mjs` | `catalog-checks.test.ts`, `plugins-ipc.test.ts`, `tests/packaging/updates.test.ts` |
+| Catalog check, release build, channel indexes, keygen and sign, `vera catalog` | core `catalog-source.ts`, CLI `catalog.ts`, `args.ts`; procedure `02_Tools/release/catalog-release.md` | `catalog-source.test.ts`, `tests/integration/cli.test.ts`, `tests/packaging/prepare-plugins.test.ts` |
+| Offline dependency kit: build, layout, `vera catalog kit`, bench use (`plugins.kit`) | core `dependency-kit.ts`, `catalog-source.ts` (`readCatalogSource`), `provisioning.ts` (`installOne`, `uvEnvironment`), CLI `kit-tools.ts`, `catalog.ts`, `args.ts`, shared `settings.ts`; procedure `02_Tools/release/catalog-release.md` | `dependency-kit.test.ts`, `provisioning.test.ts` (dependency kit), `catalog-args.test.ts`, `plugins-ipc.test.ts` (kit setting) |
+| Catalog client: sources, channel, signature, downloads, review decision, install | core `catalog.ts`, store `install` origin | `catalog.test.ts` (loopback server, throwaway keys) |
+| Catalog IPC, checks, build-time URL and pinned key | main `index.ts`, `catalog-checks.ts`, `electron.vite.config.ts`, `02_Tools/release/update-config.mjs`, `catalog-signing-key.pub.pem` | `catalog-checks.test.ts`, `plugins-ipc.test.ts`, `tests/packaging/updates.test.ts` |
 | Catalog section, review queue, update buttons | renderer `plugin-catalog.tsx`, `plugins.tsx`, `mocks/mockApi.ts`, locales | `plugin-catalog.test.ts`, `mockApi.test.ts`, `tests/e2e/plugins-catalog.spec.ts`, `plugins-mock.spec.ts` |
 
 ## Key behaviors
@@ -669,6 +762,8 @@ Rule parsing canonicalizes adjacent sequence wildcards to one before whole-comma
 - `REQ-FUNC-43114b84` / `REQ-SEC-ce28991b` — bypass switch approvals; mode decisions revoked on mode change.
 - `REQ-UX-9744e270` / `REQ-UX-12185f60` — approval card; bypass warning lists irreversible rules.
 - `REQ-DATA-3f62c8c1` — irreversible rules in plugin summaries.
+- `REQ-DATA-b065d2a4` / `REQ-FUNC-8af265ac` — composition on review and summary; operations from the approval rules.
+- `REQ-UX-c49dc727` / `REQ-UX-b62eb1e0` — Composition and Operations sections on the plugin page.
 - `REQ-FUNC-7cf311ae` — CLI typed confirmation.
 - `REQ-FUNC-bce7d786` / `REQ-FUNC-9b38f5a8` / `REQ-FUNC-8e22989a` / `REQ-FUNC-90a95bef` — run_program
   foreground and background results, command line, timeout cap.
@@ -703,6 +798,14 @@ Rule parsing canonicalizes adjacent sequence wildcards to one before whole-comma
 - `REQ-FUNC-f244f8f6` / `REQ-FUNC-46079512` / `REQ-FUNC-ce542246` — install with tier, review decision, 24 h checks.
 - `REQ-UX-72a349a1` / `REQ-UX-c55a0fe1` / `REQ-UX-9207423e` — prerequisite-aware catalog review, catalog list and updates, catalog URL field.
 - `REQ-PLAT-720aa4f2` — official plugins shipped as a bundled catalog release.
+- `REQ-DATA-defb1bf4` / `REQ-DATA-dbeebbbe` / `REQ-FUNC-60329be6` — index dependency summary, declared download size,
+  vendor guide required by catalog check.
+- `REQ-UX-714c27e6` / `REQ-UX-b3fb479b` / `REQ-FUNC-34191c6f` — dependencies on the catalog card and the installed card,
+  Install with dependencies.
+- `REQ-FUNC-751e430e` / `REQ-REL-4cef9c7b` — Re-install of managed programs, hash mismatch of an installed download.
+- `REQ-DATA-532b02f5` / `REQ-REL-7d6dc443` — `vera catalog kit` builds a complete platform kit or none.
+  `REQ-FUNC-b1afbd8c` / `REQ-SEC-51f93776` / `REQ-FUNC-41582b95` / `REQ-DATA-6cd3e1ec` — the bench installs from it
+  with the manifest hashes, refuses a changed file, and points uv at it.
 
 ## Files
 
@@ -754,6 +857,7 @@ Rule parsing canonicalizes adjacent sequence wildcards to one before whole-comma
 - `05_Software/src/apps/cli/src/plugin.ts`, `provisioning.ts` — `vera plugin install` and the CLI provisioner.
 - `05_Software/src/uv/uv-manifest.json`, `02_Tools/environment/prepare-uv.mjs` — the pinned uv.
 - `05_Software/src/apps/desktop/src/renderer/components/plugins.tsx`, `plugins.test.ts` — library/action owner and tests.
+- `05_Software/src/apps/desktop/src/renderer/components/plugin-contents.tsx` — Composition and Operations sections (tested in `plugins.test.ts`).
 - `05_Software/src/apps/desktop/src/renderer/components/plugin-library.ts`, `plugin-library-controls.tsx`, `plugin-library.test.ts` — passive projection, filters/counts/sort/paging and session state.
 - `05_Software/src/apps/desktop/src/renderer/components/runs-tab.tsx`, `runs-tab.test.ts` — the Runs tab and its tests.
 - `05_Software/tests/e2e/plugins-ui.spec.ts` — native install through the review, enable, Runs log and Stop, broken plugin.
@@ -761,8 +865,11 @@ Rule parsing canonicalizes adjacent sequence wildcards to one before whole-comma
 - `05_Software/tests/fixtures/llm-scripts/program-serve.jsonl` — replay script starting `echo serve` in the background.
 - `05_Software/src/libraries/shared/src/plugin-catalog.ts`, `plugin-catalog.test.ts` — catalog formats and rules.
 - `05_Software/src/libraries/core/src/plugins/catalog-source.ts`, `catalog-source.test.ts` — catalog check and build.
+- `05_Software/src/libraries/core/src/plugins/dependency-kit.ts`, `dependency-kit.test.ts` — offline dependency kit plan and writer.
+- `05_Software/src/apps/cli/src/kit-tools.ts` — the kit build's uv/pip tools; `catalog-args.test.ts` — `catalog kit` arguments.
 - `05_Software/src/libraries/core/src/plugins/catalog.ts`, `catalog.test.ts` — catalog client.
-- `05_Software/src/apps/cli/src/catalog.ts` — `vera catalog check|build`.
+- `05_Software/src/apps/cli/src/catalog.ts` — `vera catalog check|build|keygen|sign`.
+- `02_Tools/release/catalog-signing-key.pub.pem` — the catalog signing public key the desktop build pins; `catalog-release.md` — the release procedure.
 - `05_Software/src/apps/desktop/src/main/catalog-checks.ts`, `catalog-checks.test.ts` — start and 24 h checks.
 - `05_Software/src/apps/desktop/src/renderer/components/plugin-catalog.tsx`, `plugin-catalog.test.ts` — catalog settings/rows.
 - `05_Software/tests/e2e/plugins-catalog.spec.ts` — native install and rule-changing update from a loopback catalog.

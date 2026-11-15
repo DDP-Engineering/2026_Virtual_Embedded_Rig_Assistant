@@ -3,7 +3,7 @@
 Evidence-based component selection for VERA.
 
 - **Supplier search** is VERA's own tool `parts_search`, not a plugin program: supplier credentials stay in VERA
-  (Settings > Parts search, or environment variables for the command-line interface) and never reach a plugin
+  (the parts-search plugin's Configuration on the Plugins page, or environment variables for the command-line interface) and never reach a plugin
   program, the model, the workbench configuration or a log. The tool is offered only when this plugin, installed
   from the official catalog, is enabled for the workbench, Web access is on and at least one supplier is enabled.
   Suppliers: Mouser (API key), DigiKey (client ID and secret), TME (API token and application secret), Farnell

@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-UX-84d8cad7"
+
+title = "Choose the plugin catalog channel on the Plugins page"
+
+status = "active"
+
+requirement = """
+The Plugins page catalog settings shall offer a channel choice of Stable (version 1.0.0 and higher) and Pre-release (every plugin) that saves `plugins.channel`, keeps the other plugin settings and reloads the catalog, and shall show a message for the problems `unsigned` and `untrusted`.
+"""
+
+verification = "Renderer plugin-catalog test: choosing Pre-release saves plugins.channel with the catalog URL kept and reloads the catalog view; a view with problem unsigned or untrusted shows its message in en, ro and de."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/plugin-catalog.tsx", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json", "05_Software/src/apps/desktop/src/renderer/styles.css"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/plugin-catalog.test.ts"]
+
+
+spec = "specs/REQ-DATA-b40d3f9b.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

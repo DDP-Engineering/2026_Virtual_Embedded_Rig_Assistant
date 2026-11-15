@@ -2,4 +2,4 @@
 
 FORMAT = 1
 TOOL = "ngspice-tool"
-VERSION = "1.0.0"
+VERSION = "0.3.0"

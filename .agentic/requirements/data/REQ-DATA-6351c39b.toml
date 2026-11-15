@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-DATA-6351c39b"
+
+title = "Set each official plugin version from its evidence"
+
+status = "active"
+
+requirement = "Each official plugin manifest shall declare version 1.0.0 only when its real-tool and, where it drives hardware or a cloud service, real-hardware proofs exist on every declared platform, and otherwise the 0.x.0 version of its recorded evidence level: 0.3.0 when only the native Ubuntu proof is open, 0.2.0 when the real tool ran on Windows but hardware or cloud proof is open, 0.1.0 when only offline evidence exists."
+
+verification = "Inspection: compare every `05_Software/plugins/*/plugin.yaml` version with the per-plugin evidence table in `00_Planning/plan/plugin-management.md`; `vera catalog check` on `05_Software/plugins` passes."
+
+affected_paths = ["05_Software/plugins", "00_Planning/plan/plugin-management.md"]
+
+linked_tests = ["05_Software/tests/packaging/prepare-plugins.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = "Users see which plugins are proven; stable stays reserved for complete evidence."        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-15

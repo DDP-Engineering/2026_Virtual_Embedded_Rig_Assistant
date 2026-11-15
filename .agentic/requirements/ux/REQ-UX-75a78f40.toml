@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-UX-75a78f40"
+title = "Size interface, conversation and code text independently"
+status = "active"
+requirement = "When an engineer changes the interface scale, the conversation text size or the code text size in Settings > Appearance, VERA shall apply each one without changing the other two, persist all three across restart, and restore the defaults with one reset action."
+verification = "Browser E2E: change each size, inspect computed sizes of the other two, reset to defaults. Native E2E: set every value through preload and main, restart and read them back."
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/settings.tsx", "05_Software/src/apps/desktop/src/renderer/hooks/use-preferences.ts", "05_Software/src/libraries/shared/src/settings.ts", "05_Software/src/apps/desktop/src/renderer/styles.css"]
+linked_tests = ["05_Software/tests/e2e/typography.spec.ts"]
+priority = "normal"
+rationale = "Complements REQ-UX-4a040004 (root text size) with the separate conversation and code sizes."
+created = 2026-11-15
+updated = 2026-11-15

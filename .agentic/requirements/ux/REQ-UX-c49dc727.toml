@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-UX-c49dc727"
+
+title = "Composition section on the plugin page"
+
+status = "active"
+
+requirement = """
+When the Plugins page shows a package review or the expanded card of an installed plugin without issues, it shall show a Composition section listing the programs with their install kind and script path or source, the skills with their descriptions, the profiles and data files and the documents, and, for a plugin without programs, a line saying that it runs no programs.
+"""
+
+verification = "Renderer component test: the bus-tools review and expanded installed card list program bus-tool with scripts/bus_tool.py, skills bus-profiles and bus-transactions with descriptions, three profiles/*.json files and the README.md document; an analysis-skills review lists its two skills and the runs-no-programs line; en/ro/de texts exist (check:i18n)."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/plugin-contents.tsx", "05_Software/src/apps/desktop/src/renderer/components/plugins.tsx", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/plugins.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

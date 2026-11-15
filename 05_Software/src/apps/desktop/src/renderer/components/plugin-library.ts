@@ -1,5 +1,12 @@
-// REQ-UX-41da0f4f REQ-UX-85399085 REQ-UX-2697c05c REQ-UX-b99b1695
-import type { CatalogActivity, CatalogPlugin, PluginProgramStatus, PluginSummary } from "@vera/shared";
+// REQ-UX-41da0f4f REQ-UX-85399085 REQ-UX-2697c05c REQ-UX-b99b1695 REQ-UX-3cf252d5
+import {
+  type CatalogActivity,
+  type CatalogPlugin,
+  type PluginMaturity,
+  type PluginProgramStatus,
+  type PluginSummary,
+  pluginMaturity,
+} from "@vera/shared";
 
 export type LibraryStatus = "all" | "missing" | "installed" | "new" | "updates" | "needs" | "enabled";
 export interface LibraryState {
@@ -7,6 +14,7 @@ export interface LibraryState {
   ecosystem: string;
   activity: string;
   tier: string;
+  maturity: "" | PluginMaturity;
   status: LibraryStatus;
   sort: "added" | "updated" | "name";
   page: number;
@@ -17,29 +25,46 @@ export const initialLibraryState: LibraryState = {
   ecosystem: "",
   activity: "",
   tier: "",
+  maturity: "",
   status: "all",
   sort: "added",
   page: 1,
   pageSize: 6,
 };
+/** The patch of the Clear filters buttons: every filter back to all, sort and page size kept. */
+export const clearedLibraryFilters = {
+  search: "",
+  ecosystem: "",
+  activity: "",
+  tier: "",
+  maturity: "",
+  status: "all",
+} as const satisfies Partial<LibraryState>;
 export const libraryStateKey = ["ui", "plugin-library"] as const;
 export const pluginProgramsKey = (workbenchId: string | undefined, plugin: PluginSummary) =>
   ["plugin-programs", workbenchId ?? null, plugin.id, plugin.sha256, plugin.installedAt] as const;
 export type ProgramReadiness = "unchecked" | "ready" | "needs" | "unavailable";
+/** One installed package: its source, id, integrity and installation time. */
+export const installedKey = (plugin: PluginSummary) =>
+  `${plugin.source ?? "unknown"}/${plugin.id}/${plugin.sha256 ?? ""}/${plugin.installedAt ?? ""}`;
 export function programReadiness(
   plugin: PluginSummary,
   observations?: readonly PluginProgramStatus[],
   failed = false,
+  /** The parameters that need configuration (REQ-UX-05e0ed17); they count even before the programs are checked. */
+  needs: readonly string[] = [],
 ): ProgramReadiness {
   if (failed || plugin.issues.length) return "unavailable";
+  if (observations?.some((program) => program.state === "unavailable")) return "unavailable";
+  if (needs.length) return "needs";
   if (!observations) return "unchecked";
-  if (observations.some((program) => program.state === "unavailable")) return "unavailable";
   return observations.every((program) => program.state === "ready") ? "ready" : "needs";
 }
 export interface LibraryItem {
   key: string;
   id: string;
   name: string;
+  version?: string | undefined;
   description: string;
   ecosystem: string;
   tier: string;
@@ -60,6 +85,7 @@ export function catalogLibraryItems(entries: readonly CatalogPlugin[]): LibraryI
     key: `catalog/${entry.id}`,
     id: entry.id,
     name: entry.name,
+    version: entry.version,
     description: entry.description,
     ecosystem: entry.ecosystem,
     tier: entry.tier,
@@ -79,6 +105,7 @@ export function installedLibraryItems(
   entries: readonly CatalogPlugin[],
   observations: (plugin: PluginSummary) => readonly PluginProgramStatus[] | undefined,
   failed: (plugin: PluginSummary) => boolean = () => false,
+  needs: (plugin: PluginSummary) => readonly string[] = () => [],
 ): LibraryItem[] {
   const catalog = new Map(entries.map((entry) => [entry.id, entry]));
   return plugins.map((plugin) => {
@@ -90,9 +117,10 @@ export function installedLibraryItems(
       plugin.source !== "workbench" &&
       Boolean(published?.update && published.installed && published.installed.version === plugin.version);
     return {
-      key: `${plugin.source ?? "unknown"}/${plugin.id}/${plugin.sha256 ?? ""}/${plugin.installedAt ?? ""}`,
+      key: installedKey(plugin),
       id: plugin.id,
       name: plugin.name ?? plugin.id,
+      version: plugin.version,
       description: plugin.description ?? "",
       ecosystem: plugin.ecosystem ?? "",
       tier: plugin.tier ?? "",
@@ -103,7 +131,7 @@ export function installedLibraryItems(
       updatedAt: entry?.updatedAt,
       installed: true,
       update,
-      readiness: programReadiness(plugin, observations(plugin), failed(plugin)),
+      readiness: programReadiness(plugin, observations(plugin), failed(plugin), needs(plugin)),
       plugin,
       catalog: entry,
     };
@@ -156,7 +184,8 @@ export function matchesLibraryFilters(
       .every((word) => text.includes(word)) &&
     (!state.ecosystem || item.ecosystem === state.ecosystem) &&
     (!state.activity || item.activities.includes(state.activity as CatalogActivity)) &&
-    (!state.tier || item.tier === state.tier)
+    (!state.tier || item.tier === state.tier) &&
+    (!state.maturity || pluginMaturity(item.version) === state.maturity)
   );
 }
 export function sortLibraryItems(

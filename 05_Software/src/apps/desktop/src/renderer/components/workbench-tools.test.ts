@@ -1,5 +1,7 @@
 // @vitest-environment jsdom
 // REQ-UX-0f1a32c4 REQ-FUNC-37261edc
+
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import userEvent from "@testing-library/user-event";
 import { builtinToolNames, workbenchSchema } from "@vera/shared";
 import { act, createElement } from "react";
@@ -33,17 +35,24 @@ it.each([false, true])("tool checkboxes retain configured state and honor readOn
     name: "Tool bench",
     tools: { disabled: ["grep"] },
   });
-  vi.mocked(api.invoke).mockResolvedValue({ content: "Instructions", oversized: false } as never);
+  vi.mocked(api.invoke).mockImplementation(
+    async (channel) =>
+      (channel === "skills.list" ? [] : { content: "Instructions", oversized: false }) as never,
+  );
   container = document.createElement("div");
   document.body.append(container);
   root = createRoot(container);
   await act(async () => {
     root.render(
-      createElement(WorkbenchEditor, {
-        workbench: { folder: "/bench", config, readOnly, warnings: [] },
-        close: vi.fn(),
-        saved: vi.fn(),
-      }),
+      createElement(
+        QueryClientProvider,
+        { client: new QueryClient({ defaultOptions: { queries: { retry: false } } }) },
+        createElement(WorkbenchEditor, {
+          workbench: { folder: "/bench", config, readOnly, warnings: [] },
+          close: vi.fn(),
+          saved: vi.fn(),
+        }),
+      ),
     );
   });
   const user = userEvent.setup();
@@ -76,12 +85,16 @@ it.each([false, true])("tool checkboxes retain configured state and honor readOn
     await user.click(container.querySelector('[data-project-section="skills"]') as HTMLElement);
   });
   expect(content.scrollTop).toBe(0);
-  expect(container.querySelector('[data-action="skills-settings"]')).not.toBeNull();
+  // Skills are listed in the section itself, like Tools.
+  expect(container.querySelector("[data-skills-panel]")).not.toBeNull();
   expect(container.querySelector("[data-tool-toggle]")).toBeNull();
   await act(async () => {
     await user.click(container.querySelector('[data-project-section="tools"]') as HTMLElement);
   });
   expect(container.querySelector<HTMLInputElement>('[data-tool-toggle="grep"]')?.checked).toBe(!readOnly);
   expect(config.tools.disabled).toEqual(["grep"]);
-  expect(api.invoke).toHaveBeenCalledTimes(1); // Draft changes do not save or invoke tools.
+  // Draft changes do not save: only reads (instructions, skills list) reach the API.
+  const channels = vi.mocked(api.invoke).mock.calls.map((call) => call[0]);
+  expect(channels).not.toContain("workbench.config.update");
+  expect(channels).not.toContain("workbench.pinned.update");
 });

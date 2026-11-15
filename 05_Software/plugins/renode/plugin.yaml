@@ -1,7 +1,8 @@
 format: 1
 id: renode
-version: 1.0.0
+version: 0.3.0
 name: Renode virtual boards
+summary: Run firmware on supported Renode virtual boards, capture the UART and run approved test sets.
 description: Run a firmware ELF on an explicitly supported virtual board with the pinned Renode 1.17.0 - list the supported profiles, check a firmware against a profile's architecture, memory map and boot address before anything runs, boot it headless and capture its UART, and run approved test sets (UART lines, timer ticks, declared button and UART stimuli, the modeled LED) with separate virtual and real time budgets. Only approved platform profiles run; the agent never reaches the Renode monitor, scripts, sockets or host devices, unmodeled peripherals make a result incomplete, and every run folder states what was simulated and what a simulation does not cover.
 ecosystem: lab
 platforms: [windows-x64, linux-x64]
@@ -17,10 +18,12 @@ programs:
         windows-x64:
           url: https://github.com/renode/renode/releases/download/v1.17.0/renode-1.17.0.windows-portable.zip
           sha256: 18bcf145422039e8702c3e5f9864c7787561bfd5deb7a3ee6e168ecf19e2b9db
+          bytes: 106735414
           path: renode_1.17.0-portable/renode.exe
         linux-x64:
           url: https://github.com/renode/renode/releases/download/v1.17.0/renode-1.17.0.linux-portable.tar.gz
           sha256: 4ba7c68b59e2447f188ef4b4b112fcccd2802582c460beedceb63b84e5605a5f
+          bytes: 63459129
           path: renode_1.17.0-portable/renode
     version: { args: [--version], match: 'Renode v?(\d+\.\d+\.\d+)', range: '==1.17.0' }
     timeout: 60

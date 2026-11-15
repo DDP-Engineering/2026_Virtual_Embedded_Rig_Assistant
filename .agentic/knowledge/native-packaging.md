@@ -16,7 +16,7 @@ The package pipeline emits host Windows/Linux x64 artifacts with the pinned runt
 verified model files and size/hash reports. Compiled instrumented shells exercise temporary
 SQLite and real local CPU embeddings; external host evidence binds results to artifact hashes
 and records actual connectivity or isolation.
-The package delivers the BGE q8 assets selected in [ADR0015](../../00_Planning/decisions/ADR-0015-embedding-model-selection.md). The model descriptor supplies dimensions, token limit, pooling, normalization and query/passage prefixes. [Retrieval evaluation](retrieval-evaluation.md) owns comparative evidence; production indexing consumes the selected descriptor.
+The package delivers the BGE q8 assets selected in [ADR-0015](../../00_Planning/decisions/README.md). The model descriptor supplies dimensions, token limit, pooling, normalization and query/passage prefixes. production indexing consumes the selected descriptor.
 
 
 ```mermaid

@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-UX-b3fb479b"
+
+title = "Dependencies on the installed plugin page"
+
+status = "active"
+
+requirement = """
+When the expanded card of an installed plugin without issues shows its checked programs, it shall list the required plugins with whether each is installed and, for each program, whether VERA installs it automatically into its program folder or it stays manual, and for a program found on this computer the path where it was found and its version.
+"""
+
+verification = "Renderer test: an installed card whose manifest requires serial-monitor lists it as not installed; a ready find program shows its found path and version and data-automatic=false; a download program shows In VERA's program folder (Re-install test). Core provisioning test: a found program's ready status carries its path."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/plugins.tsx", "05_Software/src/apps/desktop/src/renderer/components/plugin-dependencies.tsx", "05_Software/src/libraries/shared/src/plugins.ts", "05_Software/src/libraries/core/src/plugins/provisioning.ts", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/plugins.test.ts", "05_Software/src/libraries/core/src/plugins/provisioning.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

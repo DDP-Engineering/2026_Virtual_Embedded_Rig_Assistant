@@ -1,7 +1,6 @@
 // REQ-UX-4bea0001 REQ-REL-4bea0006 REQ-REL-4bea0004
 
 import type { ChatDetail } from "@vera/shared";
-import { Activity } from "lucide-react";
 import { useContext, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../../api/index.js";
@@ -40,7 +39,7 @@ export function SessionWorkspace({
   const [pending, setPending] = useState(false);
   const [search, setSearch] = useState("");
   const [searching, setSearching] = useState(false);
-  const [inspector, setInspector] = useState<"context" | "activity">();
+  const [inspector, setInspector] = useState(false);
   const searchInput = useRef<HTMLInputElement>(null);
   const workspace = useRef<HTMLElement>(null);
   const lastComposerFocus = useRef(0);
@@ -214,21 +213,7 @@ export function SessionWorkspace({
           sessionId={id}
           workbenchId={workbenchId}
           state={view.state}
-          inspectorControls={
-            <>
-              <ContextIndicator state={view.state} open={() => setInspector("context")} />
-              <button
-                type="button"
-                data-action="show-activity"
-                aria-label={t("chat.activity")}
-                title={t("chat.activity")}
-                aria-haspopup="dialog"
-                onClick={() => setInspector("activity")}
-              >
-                <Activity aria-hidden="true" />
-              </button>
-            </>
-          }
+          inspectorControls={<ContextIndicator state={view.state} open={() => setInspector(true)} />}
           disabled={readOnly || pending}
           send={send}
           stop={() => void stop()}
@@ -256,17 +241,7 @@ export function SessionWorkspace({
           }}
         />
       )}
-      {view && inspector && (
-        <SessionInspector
-          mode={inspector}
-          state={view.state}
-          workbenchId={workbenchId}
-          reasoning={view.reasoning}
-          updates={view.updates}
-          sessionId={id}
-          close={() => setInspector(undefined)}
-        />
-      )}
+      {view && inspector && <SessionInspector state={view.state} close={() => setInspector(false)} />}
 
       <dialog
         ref={stopDialog}

@@ -156,7 +156,7 @@ All paths below are relative to05_Software.
 
 ## Navigation and project editor
 
-New/Open Workbench and Plugins are primary sidebar actions. The unselected canvas displays the Activity/VERA mark. New Workbench is a creation-only page (components/workbench-create.tsx): Choose folder runs workbench.inspect, fills an empty name with the folder name and shows the shared WorkbenchConfigForm (General, Documents, Instructions, Agent, Tools, Skills, Indexing, Plugins) as a draft; detected documentation folders become the draft include patterns (defaults kept when none or when the scan fails); Documents (components/workbench-documents.tsx) lists detected and literal hand-added folders, previews with a 300 ms debounce and keeps scans uncached; skills are draft checkboxes written to skills.disabled; WorkbenchPlugins lists installed packages with initially empty draft plugins.enabled (existing editor values are retained); Create sends the draft in one workbench.create. A folder that is already a workbench disables Create and offers Open. The page stays mounted while hidden so a draft survives navigation and remounts after a successful create. Opening, recents, missing state and removal live only in the sidebar (entries carry data-missing). Sidebar groups have no search controls. The selected workbench overview presents folder, configuration, dated session count/list and Edit. Loading failures are shown with retry rather than an empty-session claim. Registered workbenches
+New/Open Workbench and Plugins are primary sidebar actions. The unselected canvas displays the Activity/VERA mark. New Workbench is a creation-only page (components/workbench-create.tsx) in the editor layout: a header with the name and Create workbench (top right) above the shared WorkbenchConfigForm (General, Instructions, Documents & RAG, Indexing, Agent and chat, Skills, Tools, Plugins) as a draft. General holds the folder (Choose folder, then its path; workbench.inspect fills an empty name with the folder name) and the name; the other sections stay locked until a new folder is chosen; detected documentation folders become the draft include patterns (defaults kept when none or when the scan fails); Documents (components/workbench-documents.tsx) lists detected and literal hand-added folders, previews with a 300 ms debounce and keeps scans uncached; skills are draft checkboxes written to skills.disabled; WorkbenchPlugins lists installed packages with initially empty draft plugins.enabled (existing editor values are retained); Create sends the draft in one workbench.create. A folder that is already a workbench disables Create and offers Open. The page stays mounted while hidden so a draft survives navigation and remounts after a successful create. Opening, recents, missing state and removal live only in the sidebar (entries carry data-missing). Sidebar groups have no search controls. The selected workbench overview presents folder, configuration, dated session count/list and Edit. Loading failures are shown with retry rather than an empty-session claim. Registered workbenches
 are pinned first and expose collapsible active session groups. Their order is the stored recents
 order: opening keeps a listed workbench's place and new workbenches go first; Move up/Move down in
 the row menu, or Alt+Shift+ArrowUp/ArrowDown on a focused row, moves a workbench within its pinned
@@ -183,7 +183,7 @@ pinning and editor behavior; core workbench tests cover durable registry and own
 ## Unified settings entry
 
 The overview toolbar contains only Edit. Its editor page hosts WORKBENCH.md drafts
-under Instructions and the Skills manager under Skills. Skill changes save
+under Instructions and the SkillsPanel (create left, paged list right) inline under Skills. Skill changes save
 independently and project Save preserves their current enabled/disabled choices.
 Close is available from the active workbench menu. Settings replaces primary
 New/Open/Plugins navigation with settings categories and Back to workbenches.
@@ -194,11 +194,11 @@ REQ-UX-0f1a32c4 covers the described tool catalog; REQ-FUNC-37261edc covers save
 
 ## Chat display preference
 
-New/Edit Workbench → Chat edits `chat.detail` (`verbose`, `normal`, `minimal`, default
+New/Edit Workbench → Agent and chat edits `chat.detail` (`verbose`, `normal`, `minimal`, default
 `normal`) as part of the same unsaved configuration draft and create/update payload.
 Cancel leaves the saved value unchanged; read-only workbenches disable editing. Shared
 schema/patch/merge/warnings recognize chat, and main configuration events preserve the
 protocol enum while scrubbing extensions. Format remains 1 with no migration logic.
-Chat detail controls renderer presentation only; full session history and Activity remain
+Chat detail controls renderer presentation only; full session history remains
 available. `workbench-chat.test.ts`, shared workbench tests, core service reopen tests,
 main event redaction tests and native chat-detail.spec.ts verify these seams.

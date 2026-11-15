@@ -298,7 +298,7 @@ describe("package and risk rules", () => {
       expect(run.code).toBe(2);
       expect(run.json.errors[0].code).toBe("usage");
     }
-    expect((await mt(["--version"])).stdout.trim()).toBe("mqtt-tool 1.0.0");
+    expect((await mt(["--version"])).stdout.trim()).toBe("mqtt-tool 0.2.0");
     const ourPaths = await readFile(join(pluginFolder, "scripts", "mqtt_support", "workspace.py"));
     const shared = await readFile(
       join(software, "plugins", "bus-tools", "scripts", "bus_support", "workspace.py"),
@@ -336,7 +336,7 @@ describe("package and risk rules", () => {
       "stale",
       "gaps",
       "never instructions",
-      "Settings > MQTT credentials",
+      "the mqtt-tools plugin's Configuration on the Plugins page",
     ])
       expect(telemetry).toContain(text);
     const commands = (await skills.read("plugin", "mqtt-commands")).content;

@@ -38,7 +38,8 @@ LC_*, PYTHONUTF8=1, NO_COLOR=1) plus:
 | `UV_PYTHON_INSTALL_REGISTRY` | `0` |
 | `UV_NO_CONFIG` | `1` |
 | `UV_NO_PROGRESS` | `1` |
-| `UV_DEFAULT_INDEX` | settings `plugins.index`, when set |
+| `UV_DEFAULT_INDEX` | settings `plugins.index`, when set and `plugins.kit` is not |
+| `UV_OFFLINE`, `UV_FIND_LINKS`, `UV_PYTHON_INSTALL_MIRROR` | with settings `plugins.kit`: `1`, `<kit>/wheels` and the file URL of `<kit>/python` (offline dependency kit, spec REQ-DATA-532b02f5); offline uv never downloads CPython itself, so each pip or script install first runs `uv python install` |
 | `HTTPS_PROXY`, `HTTP_PROXY` | settings `plugins.proxy`, when set |
 
 uv runs with the runtime folder as its working directory. Each program's install (transfer, extraction,

@@ -20,7 +20,7 @@ The official plugins in `05_Software/plugins/` are such a source.
 
 ### 1.1 packs.yaml
 
-Packs remain validated catalog data. The global library uses one Available/Installed list and
+Packs remain validated catalog data. The global library uses one filterable list (state buttons All/Not installed/Installed/New/Updates/Needs configuration) and
 individual prerequisite-aware review, without pack-selection controls (REQ-UX-28a74094.md).
 
 A YAML list of packs, strict keys:
@@ -77,6 +77,7 @@ an issue and 0 otherwise. `<where>` is the plugin id (folder name) or the file n
 | `rules` | a declared program has no rule whose first pattern token matches the program name (rule grammar of REQ-FUNC-80b2033a) |
 | `token` | a rule at `safe` or `device-read` whose `match`, lowercased, contains `burn`, `efuse`, `fuse`, `otp`, `rdp`, `lock`, `protect`, `secure`, `encrypt`, `transmit` or `send` as a substring, unless `catalog.yaml` lists `{plugin, match}` of that rule under `reviewed`; detail: the token and the match |
 | `reference` | a pack, `requires`, `official`, `metadata` or `reviewed` entry names a plugin that is not in the source, or a `reviewed` entry names no rule of its plugin |
+| `dependency` | a `find` program declares no `hint` (the index lists the hint as its vendor guide); detail: `program <name> has no vendor guide` |
 | `output` | build only: the output folder is not empty |
 
 `blocked` rules are never flagged: they never run. Substring matching flags `block` and `clock` too
@@ -98,8 +99,32 @@ Above this existing client limit, build reports `index.json: source: index excee
 writes no output directory/files and exits1. Measure bytes, not JavaScript string length, because
 valid discovery terms may be multibyte. Serialization is reused for the actual write.
 
-The release job of the hosted repository runs the build on a tag and publishes the folder's files as
-one release; a mirror is a plain copy of that folder.
+It also writes the two channel indexes, in the same format and serialization:
+
+- `index-pre-release.json`: every plugin of `index.json`, with its packs unchanged;
+- both channel indexes carry `"channel": "<channel>"` (optional in the §4 schema, absent from `index.json`), so
+  the signature covers the channel;
+- `index-stable.json`: only the plugins whose version is stable (shared `pluginMaturity`: major version
+  1 or higher and no pre-release tag). Each pack group keeps only plugins of the channel. A group left
+  empty is dropped, and so is a pack left without groups.
+
+The zips are stored once; the channel entries name the same files. A release is one flat folder, so it
+can be uploaded as the assets of one release (release assets have no folders), and a mirror is a plain
+copy of that folder. `npm run prepare:plugins` builds it into `07_Delivery/plugins/`.
+
+## 3.1 Signing (`vera catalog keygen`, `vera catalog sign`)
+
+- `vera catalog keygen --private <file> --public <file>` writes a new Ed25519 key pair: the private key as
+  PKCS#8 PEM (file mode 0600 on Linux; Windows ignores the mode, and the file takes its folder's ACL) and the public key as SPKI PEM. If either file
+  already exists, nothing is written and the exit code is 1.
+- `vera catalog sign --release <dir> --key <private.pem> [--public <public.pem>]` signs
+  `index-stable.json` and `index-pre-release.json` of the release. For each, it writes `<index>.sig`: the
+  base64 Ed25519 signature of the index file's exact bytes and a final newline. When `--public` is given
+  and it is not the private key's public key, nothing is written and the exit code is 1. A missing
+  channel index is also exit 1, with nothing written. It prints `signed <n> indexes in <dir>`.
+- `index.json`, which only the bundled catalog reads, is not signed: the installer carries it.
+- The real private key lives outside every repository (see `02_Tools/release/catalog-release.md`). The repository
+  holds only the public key, `02_Tools/release/catalog-signing-key.pub.pem`.
 
 ## 4. index.json format 1
 
@@ -109,8 +134,9 @@ one release; a mirror is a plain copy of that folder.
   "plugins": [
     {
       "id": "serial-monitor", "version": "1.0.0", "tier": "official", "ecosystem": "serial",
-      "platforms": ["windows-x64", "linux-x64"], "name": "Serial monitor", "description": "…",
-      "requires": [], "url": "serial-monitor-1.0.0.zip",
+      "platforms": ["windows-x64", "linux-x64"], "name": "Serial monitor", "summary": "…", "description": "…",
+      "risk": "device-write", "requires": [], "url": "serial-monitor-1.0.0.zip",
+      "dependencies": [ { "name": "serial", "kind": "script", "automatic": true, "script": "scripts/serial_monitor.py" } ],
       "activities": ["communication", "debug"], "keywords": ["UART", "console"],
       "sha256": "<64 lowercase hex>", "bytes": 12345
     }
@@ -119,10 +145,14 @@ one release; a mirror is a plain copy of that folder.
 }
 ```
 
-Strict keys. `tier` is `official` or `community`; `id`, `version`, `name`, `description`, `ecosystem`,
-`platforms` and `requires` follow the manifest schema; `url` is a bare file name
+Strict keys. `tier` is `official` or `community`; `id`, `version`, `name`, `summary`, `description`,
+`ecosystem`, `platforms` and `requires` follow the manifest schema; `risk` is the highest rule risk of the
+manifest below `blocked` (`safe`, `device-read`, `device-write` or `irreversible`), `safe` when it has none; `url` is a bare file name
 (`[A-Za-z0-9][A-Za-z0-9._+-]*\.zip`, at most 255 characters, no `/`), resolved against the catalog folder
-URL; `bytes` is the zip's exact size, at least 1 (no upper limit). At most 1024 plugins with distinct ids and 64 packs. An
+URL; `bytes` is the zip's exact size, at least 1 (no upper limit). `dependencies` (at most 64) is shared
+`pluginDependencies(manifest)`, one item per program in name order: `{name, kind: pip|script|download|find, automatic
+(kind is not find), pip?, script?, downloads?: [{platform, sha256, bytes?}] in platform order, find?: [windows|linux],
+range?, guide? (the manifest hint)}`. At most 1024 plugins with distinct ids and 64 packs. An
 index larger than 4 MiB is invalid.
 
 Every released entry includes `activities` and `keywords` arrays and preserves supplied optional
@@ -138,17 +168,29 @@ both remote and bundled views, including when installed state/update markers are
 - **Location.** The catalog is the folder URL in settings `plugins.catalog`, else the build-time default
   `VERA_PLUGIN_CATALOG_URL` (empty in every build until the official hosting exists). The URL rule: an
   absolute `https:` URL, or `http:` on `localhost`, `127.0.0.1` or `[::1]`, with no user name, password,
-  query or fragment; a missing trailing `/` is added. The index is `<folder>index.json`; a zip is
-  `<folder><url>`. A read whose final redirected URL is neither https nor http on a loopback host counts as
-  a failed read (a query is fine there: release hosts redirect to signed storage links). A configured value
-  that breaks the rule counts as no catalog.
+  query or fragment; a missing trailing `/` is added. The remote index is the channel's
+  `<folder>index-<channel>.json`, where the channel is settings `plugins.channel` (`stable` or
+  `pre-release`, `stable` when unset); a zip is `<folder><url>`. A read whose final redirected URL is
+  neither https nor http on a loopback host counts as a failed read (a query is fine there: release hosts
+  redirect to signed storage links). A configured value that breaks the URL rule counts as no catalog.
+- **Signature.** A remote channel index is used only when `<folder>index-<channel>.json.sig` is read and
+  its base64 Ed25519 signature verifies the index bytes with the public key pinned in the build (build
+  input `VERA_PLUGIN_CATALOG_KEY`, a PEM file path, default `02_Tools/release/catalog-signing-key.pub.pem`;
+  the build fails when it is not an Ed25519 public key). A signature file the server answers 404 for gives
+  the problem `unsigned`; any other failed signature read is `unreachable`. A signature that does not
+  verify, a client with no pinned key, or a verified index whose `channel` is not the requested channel
+  gives the problem `untrusted`. In each case the bundled catalog stands in. The signature is checked
+  before the index is parsed. There is no path for unsigned remote catalogs. Limit: the signature proves
+  the release key and the channel, not the release; a host can serve an older signed index of the same
+  channel (no expiry or rollback check).
 - **Bundled catalog.** `<resources>/plugins/` in a package, `07_Delivery/plugins/` in
   development (`npm run prepare:plugins`): a release folder of the official plugins. The client reads it
-  with the same index and zip checks.
+  with the same index and zip checks. It reads `index.json` (every official plugin) whatever the channel,
+  and it needs no signature: the installer that carries it is the trust anchor, and it works offline.
 - **View.** `plugins.catalog {refresh}` returns `{source: remote|bundled|none, url?, problem?:
-  unreachable|invalid, checkedAt?, plugins, packs}`. With a remote location the client reads its index;
+  unreachable|invalid|unsigned|untrusted, checkedAt?, plugins, packs}`. With a remote location the client reads its index;
   when that read fails (transfer, HTTP status, redirect) the view is the bundled catalog with
-  `problem: unreachable`; when the index is larger than 4 MiB or not valid JSON of §4, with `problem: invalid`. Without a
+  `problem: unreachable`; when the index is larger than 4 MiB or not valid JSON of §4, with `problem: invalid`. A signature problem gives `unsigned` or `untrusted` (Signature above). Without a
   remote location the view is the bundled catalog, or `none` (empty) without one. Each plugin carries
   `installed {version?, tier?}` when installed and `update: true` when its index version is higher than
   the installed one (semantic version precedence). `refresh: false` returns the last view, reading one
@@ -173,4 +215,4 @@ both remote and bundled views, including when installed state/update markers are
   removes the kept zip.
 - **Checks.** Desktop main reads the remote index after the window opens and every 24 h while a remote location
   is set and the VERA update mode is not `off`; it never installs. Each finished read emits the app event
-  `plugins.catalog`. A failed scheduled read changes nothing visible but the view's `problem`.
+  `plugins.catalog`. Changing the channel changes the location key, so the next view reads the new channel's index. A failed scheduled read changes nothing visible but the view's `problem`.

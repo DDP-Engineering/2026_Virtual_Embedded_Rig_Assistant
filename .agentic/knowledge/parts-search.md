@@ -2,7 +2,7 @@
 
 ## Routing
 
-Select for parts_search, supplier catalogs (Mouser, DigiKey, TME, Farnell, Rutronik), Settings > Parts search,
+Select for parts_search, supplier catalogs (Mouser, DigiKey, TME, Farnell, Rutronik), the parts search form in the parts-search plugin's Configuration,
 supplier credentials or the parts.access.* channels. Start at 05_Software/src/libraries/core/src/parts/
 (configured.ts, suppliers.ts, provider.ts, http.ts) and tools/parts.ts, with spec
 .agentic/specs/REQ-DATA-9fd50acb.md. Tests: core/src/parts/parts.test.ts, desktop main/parts-access.test.ts,
@@ -54,7 +54,7 @@ REQ-DATA-9fd50acb contract; REQ-FUNC-7b42ac37 search and normalization; REQ-FUNC
 REQ-SEC-1518625d gate; REQ-REL-d9f0b8da revocation; REQ-SEC-2ccecd75 secrets; REQ-SEC-597d9e43 endpoints;
 REQ-REL-ee71e2b0 auth; REQ-REL-94d8d0ca 429; REQ-REL-a953f579 timeout; REQ-REL-51a2423d partial;
 REQ-REL-375c4622 cancel; REQ-FUNC-244f9aef tokens; REQ-FUNC-e6ac90ad key-required; REQ-FUNC-cec25871 notices;
-REQ-UX-664afc86 Settings; REQ-SEC-ddb16bb1 consent; REQ-FUNC-fd5a2a7b test; REQ-FUNC-2ed99e46 CLI env;
+REQ-UX-664afc86 plugin Configuration form; REQ-SEC-ddb16bb1 consent; REQ-FUNC-fd5a2a7b test; REQ-FUNC-2ed99e46 CLI env;
 REQ-TEST-d3aeb7d8 live probes (open until the user enters keys).
 
 ## Change map
@@ -64,7 +64,7 @@ REQ-TEST-d3aeb7d8 live probes (open until the user enters keys).
 | A supplier's request or field mapping | core/src/parts/suppliers.ts | parts.test.ts fixtures; live probe (REQ-TEST-d3aeb7d8) |
 | Transport, limits, retry | core/src/parts/http.ts | parts.test.ts transport block |
 | Gate, tokens, revocation, redaction | core/src/parts/configured.ts; main/sessions.ts; cli/run.ts | parts.test.ts access block; parts-env.test.ts |
-| Settings, credentials, test | main/parts-access.ts; renderer/components/parts-access.tsx; locales | parts-access.test.ts (main and renderer); check:i18n |
+| Preferences, credentials, test (form in the parts-search plugin's Configuration) | main/parts-access.ts; renderer/components/parts-access.tsx, plugin-configuration.tsx; locales | parts-access.test.ts (main and renderer); check:i18n |
 | Contracts and IPC | shared/src/parts-search.ts, settings.ts, ipc.ts, tools.ts | ipc-router.test.ts; bridge.test.ts; typecheck |
 
 ## Files

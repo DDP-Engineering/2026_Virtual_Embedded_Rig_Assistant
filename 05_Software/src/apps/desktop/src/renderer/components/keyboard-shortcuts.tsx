@@ -76,7 +76,7 @@ export function KeyboardShortcuts({
     setRecord(undefined);
   }
   return (
-    <section data-settings-section="shortcuts" className="shortcut-settings">
+    <section data-settings-section="shortcuts" className="surface shortcut-settings">
       <h2>{t("settings.shortcuts")}</h2>
       <div className="shortcut-toolbar">
         <div className="shortcut-search">
@@ -127,7 +127,6 @@ export function KeyboardShortcuts({
           {t("keyboard.resetAll")}
         </button>
       </div>
-      <p className="muted">{t("keyboard.intro")}</p>
       <div className="shortcut-list">
         {shortcutCommands
           .filter((command) => {
@@ -213,7 +212,6 @@ export function KeyboardShortcuts({
             </article>
           ))}
       </div>
-      <p className="muted">{t("keyboard.local")}</p>
       {record && (
         <dialog
           ref={dialog}

@@ -1,6 +1,7 @@
 {
   "name": "@vera/core",
   "version": "0.0.0",
+  "license": "LicenseRef-PolyForm-Noncommercial-1.0.0",
   "private": true,
   "type": "module",
   "exports": {
@@ -49,7 +50,6 @@
     "zod": "4.6.5"
   },
   "devDependencies": {
-    "@earendil-works/pi-agent-core": "1.1.0",
     "@types/picomatch": "4.0.3"
   }
 }

@@ -76,9 +76,13 @@ test("browser mock displays the same metadata screen through dev:renderer", asyn
     expect(outbound).toEqual([]);
     await page.locator('[data-i18n="nav.settings"]').click({ timeout: 2000 });
     for (const language of ["ro", "de", "en"]) {
-      await changeSetting(page, "language", () => page.locator("#language").selectOption(language));
+      await changeSetting(page, "appearance", () => page.locator("#language").selectOption(language));
       await expect(page.locator('[data-i18n="settings.appearance"]')).toHaveText(
-        language === "ro" ? "Aspect" : language === "de" ? "Darstellung" : "Appearance",
+        language === "ro"
+          ? "Aspect și limbă"
+          : language === "de"
+            ? "Darstellung und Sprache"
+            : "Appearance and language",
       );
     }
     await page.emulateMedia({ colorScheme: "dark", reducedMotion: "reduce" });
@@ -94,7 +98,13 @@ test("browser mock displays the same metadata screen through dev:renderer", asyn
       await page.keyboard.press("Home");
       await expect(page.locator('[data-resize="right"]')).toHaveAttribute("aria-valuenow", "14");
       await page.keyboard.press("End");
-      await expect(page.locator('[data-resize="right"]')).toHaveAttribute("aria-valuenow", "28");
+      // The right panel can grow to half the window (in rem, rounded down).
+      const half = await page.evaluate(() =>
+        String(
+          Math.floor(innerWidth / 2 / Number.parseFloat(getComputedStyle(document.documentElement).fontSize)),
+        ),
+      );
+      await expect(page.locator('[data-resize="right"]')).toHaveAttribute("aria-valuenow", half);
       const centre = await page.locator("main").boundingBox();
       const panel = await page.locator('[data-panel="right"]').boundingBox();
       if (!centre || !panel) throw new Error("Missing panel bounds");
@@ -171,7 +181,7 @@ test("browser mock displays the same metadata screen through dev:renderer", asyn
       expect(contrastFailures, `AA text contrast in ${theme}`).toEqual([]);
     }
     for (const language of ["ro", "de"]) {
-      await changeSetting(page, "language", () => page.locator("#language").selectOption(language));
+      await changeSetting(page, "appearance", () => page.locator("#language").selectOption(language));
       for (const theme of ["light", "dark", "system"]) {
         await changeSetting(page, "appearance", () => page.locator(`[data-theme-option="${theme}"]`).click());
         for (const scale of [0.875, 1, 1.125, 1.25, 1.5]) {
@@ -197,7 +207,7 @@ test("browser mock displays the same metadata screen through dev:renderer", asyn
         }
       }
     }
-    await changeSetting(page, "language", () => page.locator("#language").selectOption("en"));
+    await changeSetting(page, "appearance", () => page.locator("#language").selectOption("en"));
     // Provider editors participate in the localized minimum-size and keyboard contracts.
     await page.locator('[data-section="providers"]').click();
     const providerSection = page.locator('[data-settings-section="providers"]');
@@ -216,7 +226,7 @@ test("browser mock displays the same metadata screen through dev:renderer", asyn
     await providerSection.getByLabel("Model", { exact: true }).fill("fake-browser-model");
     const localizedNames = { en: "Endpoint name", ro: "Numele endpoint-ului", de: "Name des Endpunkts" };
     for (const language of ["en", "ro", "de"] as const) {
-      await changeSetting(page, "language", () => page.locator("#language").selectOption(language));
+      await changeSetting(page, "appearance", () => page.locator("#language").selectOption(language));
       await expect(providerSection.getByLabel(localizedNames[language], { exact: true })).toHaveValue(
         "Browser fixture",
       );
@@ -233,7 +243,7 @@ test("browser mock displays the same metadata screen through dev:renderer", asyn
         ).toEqual([]);
       }
     }
-    await changeSetting(page, "language", () => page.locator("#language").selectOption("en"));
+    await changeSetting(page, "appearance", () => page.locator("#language").selectOption("en"));
     // Real keyboard traversal of every enabled control, including off-screen controls scrolled by focus.
     const controls = await page
       .locator(
@@ -276,7 +286,7 @@ test("browser mock displays the same metadata screen through dev:renderer", asyn
     );
     const testedProvider = providerSection.locator('[data-provider="custom:browser-fixture"]');
     for (const language of ["en", "ro", "de"] as const) {
-      await changeSetting(page, "language", () => page.locator("#language").selectOption(language));
+      await changeSetting(page, "appearance", () => page.locator("#language").selectOption(language));
       const control = testedProvider.locator('[data-provider-test="custom:browser-fixture"]');
       await expect(control).toHaveText(
         language === "ro" ? "Testează" : language === "de" ? "Testen" : "Test",
@@ -289,7 +299,7 @@ test("browser mock displays the same metadata screen through dev:renderer", asyn
       await page.keyboard.press("Escape");
       expect(await page.locator("body").innerText()).not.toContain("browser-only-private-middle");
     }
-    await changeSetting(page, "language", () => page.locator("#language").selectOption("en"));
+    await changeSetting(page, "appearance", () => page.locator("#language").selectOption("en"));
     await providerSection
       .locator('[data-provider="custom:browser-fixture"]')
       .getByRole("button", { name: "Remove Browser fixture", exact: true })
@@ -297,7 +307,7 @@ test("browser mock displays the same metadata screen through dev:renderer", asyn
     await expect(providerSection.locator('[data-provider="custom:browser-fixture"]')).toHaveCount(0);
     await page.screenshot({ path: test.info().outputPath("keyboard-focus.png") });
     // Every section is reachable, with future capabilities represented explicitly as placeholders.
-    for (const section of ["providers", "updates", "data", "about", "language", "appearance"]) {
+    for (const section of ["providers", "updates", "data", "about", "appearance"]) {
       await page.locator(`[data-section="${section}"]`).click();
       await expect(page.locator(`[data-settings-section="${section}"]`)).toBeInViewport();
     }
@@ -305,7 +315,7 @@ test("browser mock displays the same metadata screen through dev:renderer", asyn
       await page.locator('[data-action="leave-settings"]').click();
     await page.locator('[data-i18n="nav.welcome"]').click();
     await page.keyboard.press("Control+,");
-    await page.locator('[data-section="language"]').click();
+    await page.locator('[data-section="appearance"]').click();
     await expect(page.locator("#language")).toBeVisible();
     await changeSetting(page, "appearance", () => page.locator('[data-theme-option="light"]').click());
     await changeSetting(page, "appearance", () => page.locator("#interface-font-size").selectOption("1"));

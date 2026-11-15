@@ -28,7 +28,7 @@ export class PartsAccessBlocked extends Error {
   constructor(readonly reason: "disabled" | "cancelled") {
     super(
       reason === "disabled"
-        ? "Parts search is unavailable. Enable Web access and the official parts-search plugin for this workbench, and enable a supplier in Settings > Parts search."
+        ? "Parts search is unavailable. Enable Web access and the official parts-search plugin for this workbench, and enable a supplier in the parts-search plugin's Configuration on the Plugins page."
         : "Parts search request cancelled or its authorization changed.",
     );
   }
@@ -45,11 +45,12 @@ export interface PartsHost {
   now?: () => Date;
 }
 const statusMessages = {
-  "key-required": "No credential is stored for this supplier. Enter it in Settings > Parts search.",
+  "key-required":
+    "No credential is stored for this supplier. Enter it in the parts-search plugin's Configuration on the Plugins page.",
   partial:
     "Some results of this supplier are incomplete or could not be read, or it reported errors next to them.",
   failed: "The supplier reported errors and returned no readable result.",
-  auth: "The supplier refused the credential. Check it in Settings > Parts search.",
+  auth: "The supplier refused the credential. Check it in the parts-search plugin's Configuration on the Plugins page.",
   "rate-limited": "The supplier's request limit was reached. Retry later.",
   timeout: "The supplier did not answer in time. Retry or narrow the search.",
   unavailable: "The supplier could not be reached or answered with an error. Retry later.",
@@ -146,7 +147,9 @@ export class ConfiguredPartsProvider {
     caller.throwIfAborted();
     const suppliers = args.supplier === "all" ? enabled() : [args.supplier];
     if (args.supplier !== "all" && !enabled().includes(args.supplier))
-      throw Error(`The supplier ${args.supplier} is not enabled. Enable it in Settings > Parts search.`);
+      throw Error(
+        `The supplier ${args.supplier} is not enabled. Enable it in the parts-search plugin's Configuration on the Plugins page.`,
+      );
     const search =
       args.query === undefined
         ? { by: "mpn" as const, text: args.mpn ?? "", limit: args.limit }

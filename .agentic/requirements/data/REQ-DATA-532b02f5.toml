@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-DATA-532b02f5"
+
+title = "Build an offline dependency kit per platform"
+
+status = "active"
+
+requirement = """
+When the maintainer runs `vera catalog kit --source <catalog source> --platform <windows-x64|linux-x64> --out <folder> [--skip <id>[,<id>...]]`, the CLI shall write into that folder, for the official plugins that support the platform and are not skipped, every download file of that platform at `files/<sha256>/<file name>` with the manifest's SHA-256 and size, the wheels of their pip and script programs resolved for CPython 3.13 on that platform in `wheels/`, the CPython archive the pinned uv installs in `python/`, a `kit.json` index and a `README.md` that lists every vendor (find) program with its guide link and the kit size, list the skipped plugins in `kit.json` `skipped` and the README, refuse a skipped id that is not an official plugin of the source, and print the file count and total size.
+"""
+
+verification = "Core kit test over a fixture catalog source with a local fetch: an official plugin's windows-x64 download lands at files/<sha256>/<name>, a linux-only download and a community plugin are absent, a find program appears in README.md and kit.json vendor with its guide link, kit.json lists files, wheels and python with sizes and the total; boundary: a download shared by two programs is stored once; a skipped plugin is neither fetched nor resolved and appears in skipped and the README, and an unknown skipped id is refused before any fetch. CLI args test parses catalog kit and rejects an unknown platform."
+
+affected_paths = ["05_Software/src/libraries/core/src/plugins/dependency-kit.ts", "05_Software/src/libraries/core/src/plugins/catalog-source.ts", "05_Software/src/apps/cli/src/catalog.ts", "05_Software/src/apps/cli/src/args.ts", "05_Software/src/apps/cli/src/kit-tools.ts", "02_Tools/release/catalog-release.md"]
+
+linked_tests = ["05_Software/src/libraries/core/src/plugins/dependency-kit.test.ts", "05_Software/src/apps/cli/src/catalog-args.test.ts"]
+
+
+spec = "specs/REQ-DATA-532b02f5.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

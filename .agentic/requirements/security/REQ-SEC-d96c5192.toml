@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-SEC-d96c5192"
+
+title = "Refuse a wrongly signed remote catalog index"
+
+status = "active"
+
+requirement = """
+If the signature of the remote catalog's channel index does not verify with the Ed25519 public key pinned in the build, or the verified index names another channel, then the desktop app shall not use that index and shall show the bundled catalog with the problem `untrusted`.
+"""
+
+verification = "Core catalog test with a loopback HTTP server: an index changed after signing, an index signed with another key, and the signed pre-release index served as the stable index, each give source bundled with problem untrusted; the e2e catalog test serves a release signed with a test key pinned through the test build."
+
+affected_paths = ["05_Software/src/libraries/core/src/plugins/catalog.ts", "05_Software/src/libraries/shared/src/plugin-catalog.ts", "05_Software/src/apps/desktop/src/main/index.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/plugins/catalog.test.ts", "05_Software/tests/e2e/plugins-catalog.spec.ts"]
+
+
+spec = "specs/REQ-DATA-b40d3f9b.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

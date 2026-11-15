@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-UX-b62eb1e0"
+
+title = "Operations section grouped by risk on the plugin page"
+
+status = "active"
+
+requirement = """
+When the Plugins page shows a package review or the expanded card of an installed plugin without issues, it shall show an Operations section with one collapsed group per risk that has rules, in the order safe, device-read, device-write, irreversible, blocked, each group summarized by its risk label and rule count and listing each rule's pattern, note and timeout, and a no-operations line for a plugin without rules.
+"""
+
+verification = "Renderer component test: the bus-tools review shows groups safe (2), device-read (1), device-write (3), irreversible (1) in that order, closed by default, with the identify note in device-read; a plugin without rules shows the no-operations line; en/ro/de texts exist (check:i18n)."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/plugin-contents.tsx", "05_Software/src/apps/desktop/src/renderer/components/plugins.tsx"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/plugins.test.ts", "05_Software/tests/e2e/plugins-ui.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

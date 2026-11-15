@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { labResourceKindSchema } from "./lab-resources.js";
 import { pluginCredentialScopeSchema } from "./plugin-credentials.js";
+import { pluginParametersSchema } from "./plugin-settings.js";
 import { workbenchIdSchema } from "./workbench.js";
 
 /** Import limits of one plugin package (folder or zip); its size in bytes is not limited. */
@@ -20,6 +21,48 @@ export type PluginTier = z.infer<typeof pluginTierSchema>;
 
 const semver =
   /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/;
+export type PluginMaturity = "pre-release" | "stable";
+/**
+ * A plugin's maturity, derived from its version alone: `0.x.y` or a semver pre-release tag is `pre-release`,
+ * any other valid version `stable`. A missing or invalid version is never `stable`.
+ */
+export function pluginMaturity(version: string | undefined): PluginMaturity {
+  const match = version === undefined ? null : semver.exec(version);
+  return match && match[1] !== "0" && match[4] === undefined ? "stable" : "pre-release";
+}
+/** The plugin platform of a host (Node `platform` and `arch`), or undefined where VERA has no build. */
+export function pluginPlatform(platform: string, arch: string): PluginPlatform | undefined {
+  if (platform === "win32") return arch === "x64" ? "windows-x64" : undefined;
+  if (platform === "linux")
+    return arch === "x64" ? "linux-x64" : arch === "arm64" ? "linux-arm64" : undefined;
+  return undefined;
+}
+/** A risk a rule can let run: every risk except `blocked`, whose commands are refused. */
+export type PluginRunRisk = Exclude<PluginRisk, "blocked">;
+/** The highest risk among the rules below `blocked`, or `safe` without such a rule. */
+export function pluginHighestRisk(rules: readonly { risk: PluginRisk }[]): PluginRunRisk {
+  const order = pluginRiskSchema.options;
+  let highest: PluginRunRisk = "safe";
+  for (const { risk } of rules)
+    if (risk !== "blocked" && order.indexOf(risk) > order.indexOf(highest)) highest = risk;
+  return highest;
+}
+/** The rules of one risk, in manifest order, as the plugin page lists them as operations. */
+export interface PluginOperationGroup<Rule extends { risk: PluginRisk }> {
+  risk: PluginRisk;
+  rules: Rule[];
+}
+/**
+ * The manifest rules grouped by risk for the plugin page: one group per risk that has rules, in the order safe,
+ * device-read, device-write, irreversible, blocked. The rules are the same objects approvals classify with.
+ */
+export function pluginOperations<Rule extends { risk: PluginRisk }>(
+  rules: readonly Rule[],
+): PluginOperationGroup<Rule>[] {
+  return pluginRiskSchema.options
+    .map((risk) => ({ risk, rules: rules.filter((rule) => rule.risk === risk) }))
+    .filter((group) => group.rules.length > 0);
+}
 /** A package-relative path: `/` separated, no empty, `.` or `..` segment, no drive, device or trailing dot. */
 export function isPluginRelativePath(path: string): boolean {
   if (!path || path.length > 1024 || /[\p{Cc}\\:*?"<>|]/u.test(path) || path.startsWith("/")) return false;
@@ -149,6 +192,8 @@ const downloadSchema = z
         sha256: z.string().regex(/^[0-9a-f]{64}$/),
         path: relativePath.optional(),
         prefix: args.optional(),
+        /** The file's size in bytes, for the catalog card; a longer transfer is a hash mismatch. */
+        bytes: z.number().int().min(1).optional(),
       })
       .superRefine((entry, ctx) => {
         const named = downloadForm(entry.url) === "file" ? downloadName(entry) : entry.path;
@@ -303,6 +348,8 @@ export const pluginManifestSchema = z.strictObject({
   id: pluginIdSchema,
   version: z.string().max(128).regex(semver),
   name: z.string().trim().min(1).max(80),
+  /** One line for the catalog card; `description` holds the details for the review. */
+  summary: z.string().trim().min(1).max(160),
   description: z.string().trim().min(1).max(1024),
   ecosystem: z.string().regex(/^[a-z0-9-]{1,64}$/),
   platforms: z.array(pluginPlatformSchema).min(1).refine(unique, "List each platform once."),
@@ -351,6 +398,8 @@ export const pluginManifestSchema = z.strictObject({
     )
     .max(64)
     .default([]),
+  /** Declared parameters: secrets, workbench files and values the plugin needs (REQ-DATA-af8807e1). */
+  settings: pluginParametersSchema.optional(),
 });
 export type PluginManifest = z.infer<typeof pluginManifestSchema>;
 export type PluginProgram = z.infer<typeof programSchema>;
@@ -391,6 +440,23 @@ export function validatePluginManifest(data: unknown): { manifest?: PluginManife
   return { issues: issues.slice(0, PLUGIN_LIMITS.issues) };
 }
 
+/**
+ * What a package ships beside its programs, as the plugin page lists it: each `skills/<name>/SKILL.md` with its
+ * front-matter description (none when the front matter does not parse), and the data files (profiles and other
+ * files outside `plugin.yaml`, `skills/`, `scripts/` and the package-relative documents), in path order.
+ */
+export const pluginCompositionSchema = z.strictObject({
+  skills: z
+    .array(
+      z.strictObject({
+        name: z.string().min(1).max(255),
+        description: z.string().min(1).max(1024).optional(),
+      }),
+    )
+    .max(PLUGIN_LIMITS.files),
+  files: z.array(z.string().min(1).max(1024)).max(PLUGIN_LIMITS.files),
+});
+export type PluginComposition = z.infer<typeof pluginCompositionSchema>;
 /** An installed plugin as the store lists it: manifest and record metadata where they are valid. */
 export const pluginInstalledSchema = z.strictObject({
   id: z.string().min(1).max(255),
@@ -414,6 +480,9 @@ export const pluginInstalledSchema = z.strictObject({
     )
     .max(512)
     .optional(),
+  /** The manifest and composition of a plugin without issues, for its Composition and Operations sections. */
+  manifest: pluginManifestSchema.optional(),
+  composition: pluginCompositionSchema.optional(),
 });
 export type PluginInstalled = z.infer<typeof pluginInstalledSchema>;
 /**
@@ -426,6 +495,8 @@ export const pluginReviewSchema = z.strictObject({
   sha256: z.string().regex(/^[0-9a-f]{64}$/),
   issues: z.array(pluginIssueSchema).max(PLUGIN_LIMITS.issues),
   manifest: pluginManifestSchema.optional(),
+  /** Present whenever the manifest parses. */
+  composition: pluginCompositionSchema.optional(),
   installed: z.strictObject({ version: z.string().max(128).optional() }).optional(),
 });
 export type PluginReview = z.infer<typeof pluginReviewSchema>;
@@ -492,8 +563,89 @@ export const pluginProgramStatusSchema = z.strictObject({
   downloadAvailable: z.literal(true).optional(),
   /** A combined find/download declaration is currently using a discovered external executable. */
   external: z.literal(true).optional(),
+  /** Where a ready program was found on this computer; VERA's own copies carry none. */
+  path: z.string().min(1).max(4096).optional(),
 });
 export type PluginProgramStatus = z.infer<typeof pluginProgramStatusSchema>;
+export type PluginProgramKind = z.infer<typeof pluginProgramKindSchema>;
+
+/** How a program installs: a find declaration with a managed download counts as a download. */
+export function pluginProgramKind(program: PluginProgram): PluginProgramKind {
+  const { install } = program;
+  if ("pip" in install) return "pip";
+  if ("script" in install) return "script";
+  return install.download !== undefined ? "download" : "find";
+}
+/** The first http(s) link of a hint, without trailing sentence punctuation (the vendor guide). */
+export function pluginHintLink(hint: string): string | undefined {
+  return /https?:\/\/[^\s<>"'()[\]]+/.exec(hint)?.[0].replace(/[.,;:!?]+$/, "");
+}
+/**
+ * One program dependency as the catalog index and the plugin page list it, derived from the manifest alone:
+ * VERA installs pip, script and download programs into its program folder (`automatic`); a find program is the
+ * user's to install, with its supported range and vendor guide.
+ */
+export const pluginDependencySchema = z.strictObject({
+  name: pluginProgramNameSchema,
+  kind: pluginProgramKindSchema,
+  automatic: z.boolean(),
+  pip: z.string().min(1).max(256).optional(),
+  script: z.string().min(1).max(1024).optional(),
+  downloads: z
+    .array(
+      z.strictObject({
+        platform: pluginPlatformSchema,
+        sha256: z.string().regex(/^[0-9a-f]{64}$/),
+        bytes: z.number().int().min(1).optional(),
+      }),
+    )
+    .min(1)
+    .max(3)
+    .optional(),
+  /** The systems whose installation VERA searches for the program. */
+  find: z
+    .array(z.enum(["windows", "linux"]))
+    .min(1)
+    .max(2)
+    .optional(),
+  range: z.string().min(1).max(128).optional(),
+  /** The manifest's hint: how to install the program yourself. */
+  guide: z.string().min(1).max(1024).optional(),
+});
+export type PluginDependency = z.infer<typeof pluginDependencySchema>;
+/** The program dependencies of a manifest in name order (the catalog index's `dependencies`). */
+export function pluginDependencies(manifest: PluginManifest): PluginDependency[] {
+  return Object.keys(manifest.programs)
+    .sort()
+    .map((name) => {
+      const program = manifest.programs[name] as PluginProgram;
+      const kind = pluginProgramKind(program);
+      const { install } = program;
+      const { range } = program.version;
+      if ("pip" in install) return { name, kind, automatic: true, pip: install.pip };
+      if ("script" in install) return { name, kind, automatic: true, script: install.script };
+      const downloads = pluginPlatformSchema.options.flatMap((platform) => {
+        const entry = install.download?.[platform];
+        return entry
+          ? [{ platform, sha256: entry.sha256, ...(entry.bytes !== undefined ? { bytes: entry.bytes } : {}) }]
+          : [];
+      });
+      const find =
+        "find" in install
+          ? (["windows", "linux"] as const).filter((system) => install.find[system] !== undefined)
+          : [];
+      const hint = "hint" in install ? install.hint : undefined;
+      return {
+        name,
+        kind,
+        automatic: kind !== "find",
+        ...(downloads.length ? { downloads } : {}),
+        ...(find.length ? { find } : {}),
+        ...(range !== undefined ? { range } : {}),
+        ...(hint !== undefined ? { guide: hint } : {}),
+      };
+    });
+}
 
 /** Run ids are ULIDs, so their order is their start order. */
 export const programRunIdSchema = z.string().regex(/^[0-9A-HJKMNP-TV-Z]{26}$/);

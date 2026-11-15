@@ -47,6 +47,7 @@ format: 1
 id: esp32-esptool
 version: 1.0.0
 name: ESP32 esptool
+summary: Identify, flash, verify, erase and read Espressif chips over a serial port with esptool.
 description: Identify, flash, erase and read Espressif chips over a serial port with esptool v5. Use for any ESP32 programming task, such as confirming the chip type, writing the images of an ESP-IDF build, verifying them or erasing the flash.
 ecosystem: esp32
 platforms: [windows-x64, linux-x64]
@@ -91,7 +92,7 @@ esptool 5.6.0 lists, as ADR-0018 asks of plugin authors.
 | `format` | `1` |
 | `id` | `[a-z0-9-]{1,64}`; equals the folder name; unique in a catalog |
 | `version` | Semantic Versioning |
-| `name`, `description` | ≤ 80 and ≤ 1024 characters; the description says what and when, like a skill's |
+| `name`, `summary`, `description` | ≤ 80, 1–160 and ≤ 1024 characters; the summary is the catalog card's one line, the description says what and when, like a skill's |
 | `ecosystem` | grouping tag: `esp32`, `stm32`, `microchip`, `can`, `wireshark`, `general`, … |
 | `platforms` | subset of `windows-x64`, `linux-x64`, `linux-arm64`; elsewhere the plugin is hidden. `linux-arm64` (Raspberry Pi 4/5) takes effect only once VERA ships a linux-arm64 build, which is not planned yet |
 | `requires` | plugin IDs installed together with this one (at most 64): catalog installs review the required catalog plugins first and the catalog check rejects unknown ids; installs from a folder or zip and enabling do not check it |
@@ -108,6 +109,7 @@ esptool 5.6.0 lists, as ADR-0018 asks of plugin authors.
 | `programs.*.file` | `true` for a pinned download that is never run (a Java archive): its version comes from its file name through `version.match`, `run_program` refuses it, and programs that `use` it receive its path |
 | `rules[]` | `match`, `risk`, optional `note` (shown on approval cards and in the prompt), optional `timeout` |
 | `docs[]` | URLs or plugin-relative files (which must exist in the package) the UI offers to add to the workbench documents |
+| `settings` | optional parameters the user provides, at most 32, each with a `description`: `kind: secret` + `scope` (`mqtt`, `wokwi`, `parts`; stored in the CredentialStore, handed to programs only through the stdin hand-off of `programs.*.credentials`), `kind: workbench-file` + workbench-relative `path` (`*` = one folder level), optional `format` (`lab-resources`, `json`) and `optional`, or `kind: value` + read-only `value`. The plugin page's Configuration section shows each state (`plugins.configuration`: stored/missing, present/missing/invalid/unchecked for the open workbench, value); a missing secret or a missing required or invalid file marks Needs configuration. MQTT credentials, Wokwi tokens and parts search keys are configured there, not in App settings (PLG-05 #266) |
 
 Every object is strict: an unknown key is an error. Arguments (`version.args`, `launcher`, `prefix`) are at most
 64 strings of 1–4096 characters without NUL or line breaks; `rules` holds at most 512 entries, `programs` 64 and
@@ -518,8 +520,10 @@ vera-plugins/                    # one Git repository
 ```
 
 - `index.json` format 1 is `{format, plugins, packs}`; an entry is `{id, version, tier, ecosystem, platforms, name,
-  description, requires, activities, keywords, addedAt?, updatedAt?, url, sha256, bytes}` where `url` is the bare zip name `<id>-<version>.zip` beside the index,
-  so a mirror is a plain copy. Exact formats: `.agentic/specs/REQ-DATA-b40d3f9b.md`.
+  summary, description, risk, requires, dependencies, activities, keywords, addedAt?, updatedAt?, url, sha256, bytes}` where `url` is the bare zip name `<id>-<version>.zip` beside the index,
+  so a mirror is a plain copy, and `dependencies` is shared `pluginDependencies(manifest)` written by `vera catalog
+  build` (per program in name order: kind, automatic, pip requirement, script path, downloads `{platform, sha256,
+  bytes?}`, find systems, range, guide). Exact formats: `.agentic/specs/REQ-DATA-b40d3f9b.md`.
 - Tiers: `official` (VERA maintainers own it), `community` (merged by PR after CI and a
   maintainer's review of programs, install sources and rules). A plugin installed from a folder or
   zip is `local`.
@@ -534,7 +538,10 @@ vera-plugins/                    # one Git repository
   refuses a package that is not the entry's id and version and a downgrade, and shows a review
   screen before the first install and before any update that changes programs (install sources
   included) or rules. Update checks run after the window opens and every 24 h while the VERA update
-  mode is not Off; updates are never installed automatically. The index is not signed (ADR-0019).
+  mode is not Off; updates are never installed automatically. The remote index is the chosen channel's
+  (`index-stable.json` by default, or `index-pre-release.json`), used only when its detached Ed25519
+  signature verifies with the public key pinned in the build; the bundled release needs none
+  (`02_Tools/release/catalog-release.md`).
 - Official plugins also ship inside the VERA package as a catalog release (`<resources>/plugins/`,
   built by `npm run prepare:plugins`), which VERA uses when no catalog is set or it is unreachable,
   so a first install works offline. The catalog updates them later.
@@ -562,8 +569,7 @@ Pack definitions remain data, without a duplicate selection list. The publishing
   dates remain absent for real packages without release evidence). Enablement belongs to the existing
 Workbench settings → Plugins section, without a workbench selector or Add plugins button, with
 Save/Cancel at the beginning of the page and Save enabled on changes. Execution, trust, review and
-provisioning policy in this document still apply. Implementation: PLG-23…PLG-25 in
-[the follow-up plan](../plan/plugins-ui-redesign.md); interactive reference in
+provisioning policy in this document still apply. Implementation: PLG-23…PLG-25; interactive reference in
 [ui/plugins-redesign.html](../ui/plugins-redesign.html).
 
 ## 8. Authoring with the agent
@@ -607,7 +613,6 @@ an installed plugin.
 | MCP servers in a plugin (`mcpServers`, the standard `.mcp.json` shape; one rule per tool name). Candidate: Espressif's `idf.py mcp-server` (ESP-IDF ≥ 6.0: `set_target`, `build_project`, `flash_project`, `clean_project`) | a server offers something `run_program` cannot |
 | Workbench-scoped plugins in `.vera/plugins/`, trusted per machine by hash | phase 3 of the plan |
 | Structured bench description (`bench:` in `workbench.yaml`) | after user feedback; `WORKBENCH.md` covers it now |
-| Signed index (minisign) | when contributors outnumber the maintainers' review |
 | Offline bundles (plugin + uv cache) for air-gapped labs | on request |
 | macOS | with the app |
 

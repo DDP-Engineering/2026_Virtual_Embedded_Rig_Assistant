@@ -14,7 +14,7 @@ import { ConsentDialog } from "./consent-dialog.js";
 import { ErrorMessage } from "./error-message.js";
 import "./web-access.css";
 
-/** Settings > Parts search: supplier switches, credentials (never shown back) and region. */
+/** The parts-search plugin's Configuration: supplier switches, credentials (never shown back) and region. */
 export function PartsAccessPanel() {
   const { t } = useTranslation();
   const query = useQuery({
@@ -22,8 +22,8 @@ export function PartsAccessPanel() {
     queryFn: () => api.invoke("parts.access.get", {}),
   });
   return (
-    <section className="surface web-access parts-access" data-settings-section="parts">
-      <h2>{t("settings.partsSearch")}</h2>
+    <section className="web-access parts-access" data-configuration-form="parts">
+      <h3>{t("settings.partsSearch")}</h3>
       <p className="muted">{t("partsSearch.description")}</p>
       {query.isPending && <p role="status">{t("partsSearch.loading")}</p>}
       {query.error && <ErrorMessage error={query.error} />}
@@ -93,7 +93,12 @@ function PartsAccessForm({ snapshot }: { snapshot: PartsAccessSnapshot }) {
     },
     [],
   );
-  const refresh = () => client.invalidateQueries({ queryKey: ["parts.access.get"] });
+  // The plugin page's Configuration states follow every stored or removed key.
+  const refresh = () =>
+    Promise.all([
+      client.invalidateQueries({ queryKey: ["parts.access.get"] }),
+      client.invalidateQueries({ queryKey: ["plugin-configuration"] }),
+    ]);
   const run = async (action: () => Promise<unknown>) => {
     setBusy(true);
     setSaved(false);

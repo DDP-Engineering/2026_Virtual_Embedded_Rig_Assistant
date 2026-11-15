@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-DATA-7c79b1b5"
+
+title = "Official plugins declare their parameters"
+
+status = "active"
+
+requirement = """
+The official plugins shall declare their parameters in settings: mqtt-tools and wokwi a secret of their credential scope, parts-search a secret of scope parts, bus-tools, ble-tools, scpi-instruments, power-profiler and raspberry-pi-linux the required workbench file lab/resources.json, gdb-debug, platformio and zephyr it as optional, and raspberry-pi-linux also the optional */vera-pi.json and the SSH agent value.
+"""
+
+verification = "Core store test over the official plugin folders: each named plugin's loaded manifest has the listed settings with these kinds, scopes, paths and optional flags, and every official manifest still loads without issues."
+
+affected_paths = ["05_Software/plugins/mqtt-tools/plugin.yaml", "05_Software/plugins/wokwi/plugin.yaml", "05_Software/plugins/parts-search/plugin.yaml", "05_Software/plugins/bus-tools/plugin.yaml", "05_Software/plugins/ble-tools/plugin.yaml", "05_Software/plugins/scpi-instruments/plugin.yaml", "05_Software/plugins/power-profiler/plugin.yaml", "05_Software/plugins/raspberry-pi-linux/plugin.yaml", "05_Software/plugins/gdb-debug/plugin.yaml", "05_Software/plugins/platformio/plugin.yaml", "05_Software/plugins/zephyr/plugin.yaml"]
+
+linked_tests = ["05_Software/src/libraries/core/src/plugins/store.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

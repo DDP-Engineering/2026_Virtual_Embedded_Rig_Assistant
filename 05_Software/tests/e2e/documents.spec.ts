@@ -50,7 +50,7 @@ for (const lang of ["en", "ro", "de"])
         await page.evaluate(() => localStorage.clear());
         await page.reload();
         await page.locator('[data-i18n="nav.settings"]').click();
-        await changeSetting(page, "language", () => page.locator("#language").selectOption(lang));
+        await changeSetting(page, "appearance", () => page.locator("#language").selectOption(lang));
         await expect(page.locator("html")).toHaveAttribute("lang", lang);
         // Settings replaces the primary navigation; leave it to reach the workbenches.
         await page.locator('[data-action="leave-settings"]').click();
@@ -88,12 +88,12 @@ for (const lang of ["en", "ro", "de"])
         await expect(dialog.locator('[data-heading="power"]')).toBeFocused();
         await page.keyboard.press("Escape");
         await expect(dialog).toHaveCount(0);
-        // The right panel keeps its cap; documents no longer widen it.
+        // The right panel keeps its cap (half the window); documents no longer widen it.
         const right = page.locator("#right-panel");
         const viewport = await page.evaluate(() => innerWidth);
         await page.locator('[data-resize="right"]').focus();
         await page.keyboard.press("End");
-        expect((await right.boundingBox())?.width ?? 0).toBeLessThanOrEqual(viewport * 0.45 + 1);
+        expect((await right.boundingBox())?.width ?? 0).toBeLessThanOrEqual(viewport * 0.5 + 1);
         await docs.locator("[data-docs-search]").fill("");
         await expect(docs.locator("[data-document]")).toHaveCount(10);
         for (const scale of [0.875, 1, 1.125, 1.25, 1.5]) {

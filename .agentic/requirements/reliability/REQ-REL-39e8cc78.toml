@@ -2,12 +2,14 @@ schema = 1
 id = "REQ-REL-39e8cc78"
 title = "Reject invalid PDF payloads before publication"
 status = "active"
-requirement = "When downloaded bytes are not a parseable PDF document, VERA shall reject the payload before publishing it as a managed download."
+requirement = """
+When downloaded bytes are not a parseable PDF document, VERA shall reject the payload before publishing it as a managed download.
+"""
 verification = "Supply HTML with application/pdf, a fake PDF signature, empty/corrupt payloads and a real valid PDF; force the existing parser password-required rejection and assert that failures publish no record while the valid document opens."
-affected_paths = ["05_Software/src/libraries/core/src/web/pdf-downloads.ts", "05_Software/src/libraries/core/src/knowledge/worker-host.ts", "05_Software/src/libraries/core/src/web/pdf-downloads.test.ts", "05_Software/tests/e2e/pdf-download.spec.ts"]
-linked_tests = ["05_Software/src/libraries/core/src/web/pdf-downloads.test.ts", "05_Software/tests/e2e/pdf-download.spec.ts"]
+affected_paths = ["05_Software/src/libraries/core/src/web/downloads.ts", "05_Software/src/libraries/core/src/knowledge/worker-host.ts", "05_Software/src/libraries/core/src/web/downloads.test.ts", "05_Software/tests/e2e/pdf-download.spec.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/web/downloads.test.ts::validates real PDF pages before saving and rejects corrupt or fake PDF bodies", "05_Software/src/libraries/core/src/web/downloads.test.ts::publishes nothing when the PDF parser requests a password", "05_Software/tests/e2e/pdf-download.spec.ts"]
 spec = "specs/pdf-downloads.md"
 priority = "normal"
 rationale = "Accepted agent download and internal PDF viewer feature; managed .vera ownership."
 created = 2026-10-30
-updated = 2026-10-30
+updated = 2026-11-15

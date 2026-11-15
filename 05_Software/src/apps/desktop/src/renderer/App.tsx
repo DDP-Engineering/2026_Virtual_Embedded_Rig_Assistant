@@ -522,6 +522,10 @@ export function App() {
                 setChat(false);
               }}
               navigate={navigate}
+              showAbout={() => {
+                navigate(true);
+                setSection("about");
+              }}
               navigation={navigation}
               context={
                 benchId && chat && !settings ? (
@@ -548,7 +552,16 @@ export function App() {
                   <PlanTab workbenchId={benchId} sessionId={activeSession} />
                 ) : undefined
               }
-              runs={benchId && !settings ? <RunsTab key={benchId} workbenchId={benchId} /> : undefined}
+              runs={
+                benchId && !settings ? (
+                  <RunsTab
+                    key={benchId}
+                    workbenchId={benchId}
+                    sessions={sessions.data}
+                    currentSessionId={chat ? activeSession : undefined}
+                  />
+                ) : undefined
+              }
             >
               <UpdateBanner />
               <div className="page-content" hidden={(chat && !settings) || emptyCanvas}>
@@ -601,7 +614,6 @@ export function App() {
                 )}
                 {/* Stays mounted while hidden so an unsaved draft survives navigation. */}
                 <div hidden={settings || plugins || !newWorkbench}>
-                  <p className="muted">{t("welcome.description")}</p>
                   <WorkbenchCreate
                     key={createdCount}
                     shown={!settings && !plugins && newWorkbench}
@@ -651,6 +663,12 @@ export function App() {
                           }
                         : undefined
                     }
+                    openWorkbench={() => {
+                      // Plugins are enabled in the workbench editor; with no workbench open, open one first.
+                      if (!activeWorkbench) return openWorkbench();
+                      setPlugins(false);
+                      if (!editor) openEditor(activeWorkbench);
+                    }}
                   />
                 )}
               </div>

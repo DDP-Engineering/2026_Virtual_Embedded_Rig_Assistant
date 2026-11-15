@@ -93,7 +93,7 @@ it.each(["en", "ro", "de"])(
       faults = stub(wb),
       saved = vi.fn();
     await mount(createElement(WorkbenchEditor, { workbench: wb, saved, close: vi.fn() }));
-    await click('[data-project-section="chat"]');
+    await click('[data-project-section="agent"]');
     expect(selector()?.value).toBe("normal");
     await choose("minimal");
     expect(calls("workbench.config.update")).toHaveLength(0);
@@ -112,7 +112,7 @@ it("Cancel leaves chat unchanged and a read-only workbench cannot edit", async (
   stub(wb);
   const close = vi.fn();
   await mount(createElement(WorkbenchEditor, { workbench: wb, saved: vi.fn(), close }));
-  await click('[data-project-section="chat"]');
+  await click('[data-project-section="agent"]');
   expect(selector()?.matches(":disabled")).toBe(true);
   await click("[data-project-cancel]");
   expect(close).toHaveBeenCalledOnce();
@@ -122,7 +122,7 @@ it.each(["normal", "verbose"])("new workbench includes chosen/default detail %s"
   stub(snapshot());
   await mount(createElement(WorkbenchCreate, { created: vi.fn() }));
   await click('[data-action="choose-create"]');
-  await click('[data-project-section="chat"]');
+  await click('[data-project-section="agent"]');
   expect(selector()?.value).toBe("normal");
   if (detail !== "normal") await choose(detail);
   await click('[data-action="create-workbench"]');

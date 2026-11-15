@@ -10,7 +10,7 @@ requirement = """
 For each supplier whose credential the user enters, a live search probe shall be recorded with its redacted result, and each supplier without access shall be recorded as not verified live.
 """
 
-verification = "Manual: with the user's credentials entered in Settings > Parts search, run the Test and one keyword and one part-number search per supplier, and record status, item count and field presence with every credential, token and URL removed; list suppliers without a credential as not verified live."
+verification = "Manual: with the user's credentials entered in the parts-search plugin's Configuration section, run the Test and one keyword and one part-number search per supplier, and record status, item count and field presence with every credential, token and URL removed; list suppliers without a credential as not verified live."
 
 affected_paths = ["05_Software/src/libraries/core/src/parts/suppliers.ts"]
 
@@ -23,4 +23,4 @@ priority = "normal"   # low | normal | high
 rationale = ""        # why this behavior exists, if not obvious
 
 created = 2026-11-13
-updated = 2026-11-13
+updated = 2026-11-15

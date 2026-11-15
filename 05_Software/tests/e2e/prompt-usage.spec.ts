@@ -6,7 +6,7 @@ import { _electron, expect, test } from "@playwright/test";
 import type { VeraBridge } from "@vera/shared";
 import { installNetworkGuard, outboundAttempts } from "./network-guard.js";
 
-test("native activity retains per-prompt tokens and initial context through tools, later prompts and restart", async () => {
+test("native chat retains per-prompt tokens and initial context through tools, later prompts and restart", async () => {
   test.setTimeout(60000);
   const root = await mkdtemp(join(tmpdir(), "vera-prompt-usage-"));
   const folder = join(root, "bench"),
@@ -48,6 +48,13 @@ test("native activity retains per-prompt tokens and initial context through tool
     await page.locator("#workbench-name").fill("Usage bench");
     await page.locator('[data-action="choose-create"]').click();
     await page.locator('[data-action="create-workbench"]').click();
+    // The per-question usage line shows under each question only at the Verbose detail level.
+    await page.locator("[data-workbench-entry] .workbench-group-name").click();
+    await page.locator('[data-action="edit-workbench-overview"]').click();
+    await page.locator('[data-project-section="agent"]').click();
+    await page.locator("select[data-chat-detail]").selectOption("verbose");
+    await page.locator("[data-project-save]").click();
+    await expect(page.locator(".workbench-editor")).toHaveCount(0);
     await page.locator('[data-action="new-session"]').click();
     const id = await page.locator('[data-session][aria-current="page"]').getAttribute("data-session");
     if (!id) throw Error("Missing session");
@@ -96,30 +103,27 @@ test("native activity retains per-prompt tokens and initial context through tool
     expect(users[0]).toEqual(first.snapshot.items.find((i) => i.kind === "user"));
     expect(users[1]).toMatchObject({ usage: { inputTokens: 540, outputTokens: 37, estimated: true } });
     expect(users[1]?.usage?.contextTokens).toBeGreaterThan(users[0]?.usage?.contextTokens ?? 0);
-    await page.locator('[data-action="show-activity"]').click();
-    const lines = page.locator("[data-prompt-usage]");
+    await expect(page.locator(".transcript-frame")).toHaveAttribute("data-chat-detail", "verbose");
+    const lines = page.locator("[data-transcript] [data-prompt-usage]");
     await expect(lines).toHaveCount(2);
     await expect(lines.nth(0)).toContainText("320");
     await expect(lines.nth(1)).toContainText("540");
     await expect(lines.nth(0)).toContainText("≈");
-    await page.locator('[data-action="close-inspector"]').click();
     for (const [language, label] of [
       ["ro", "Context inițial"],
       ["de", "Anfangskontext"],
     ]) {
       await page.locator('[data-i18n="nav.settings"]').click();
-      await page.locator('[data-section="language"]').click();
+      await page.locator('[data-section="appearance"]').click();
       await page.locator("#language").selectOption(language as string);
       await page.locator('[data-action="leave-settings"]').click();
       await page.locator(`[data-session="${id}"]`).click();
-      await page.locator('[data-action="show-activity"]').click();
-      await expect(page.locator("[data-prompt-usage]").first()).toContainText(label as string);
+      await expect(lines.first()).toContainText(label as string);
       await page.setViewportSize({ width: 1024, height: 640 });
-      const bounds = await page.locator("[data-prompt-usage]").first().boundingBox();
+      const bounds = await lines.first().boundingBox();
       expect((bounds?.x ?? 0) + (bounds?.width ?? 0)).toBeLessThanOrEqual(1024);
       if (language === "ro" && process.env.VERA_USAGE_SCREENSHOT)
         await page.screenshot({ path: process.env.VERA_USAGE_SCREENSHOT });
-      await page.locator('[data-action="close-inspector"]').click();
     }
     expect(await outboundAttempts(app)).toEqual([]);
     await app.close();
@@ -129,9 +133,11 @@ test("native activity retains per-prompt tokens and initial context through tool
     await page.locator('[data-i18n="nav.welcome"]').click();
     await page.locator("[data-workbench-entry] .workbench-group-name").click();
     await page.locator(`[data-session="${id}"]`).click();
-    await page.locator('[data-action="show-activity"]').click();
-    await expect(page.locator("[data-prompt-usage]").nth(0)).toContainText("320");
-    await expect(page.locator("[data-prompt-usage]").nth(1)).toContainText("540");
+    // The Verbose detail level is kept in the workbench configuration across the restart.
+    await expect(page.locator(".transcript-frame")).toHaveAttribute("data-chat-detail", "verbose");
+    await expect(page.locator("[data-transcript] [data-prompt-usage]")).toHaveCount(2);
+    await expect(page.locator("[data-transcript] [data-prompt-usage]").nth(0)).toContainText("320");
+    await expect(page.locator("[data-transcript] [data-prompt-usage]").nth(1)).toContainText("540");
     const restarted = await page.evaluate(
       async (id) => (window as unknown as { vera: VeraBridge }).vera.invoke("session.get", { sessionId: id }),
       id,

@@ -1,7 +1,8 @@
 format: 1
 id: circuitpython
-version: 1.0.0
+version: 0.2.0
 name: CircuitPython
+summary: Deploy code and pinned libraries to a CircuitPython board and capture its console run.
 description: Code and compatible libraries on a board that already runs CircuitPython 9, 10 or 11 - list CIRCUITPY drives and serial ports by identity, identify the firmware, inspect the code and /lib, prepare a library set from a pinned Adafruit bundle tag for the board's major version, deploy approved files one verified file at a time and capture the console run that follows - through a pinned circup's bundle conventions. No REPL, no code given as an argument, no UF2 or firmware installation and no update of all libraries.
 ecosystem: circuitpython
 platforms: [windows-x64, linux-x64]

@@ -66,11 +66,12 @@ test("installs through the review screen, enables the plugin and stops a run, wi
     await page.locator("[data-workbench-entry] .workbench-group-name").first().click();
     await page.locator('[data-action="edit-workbench-overview"]').click();
     await page.locator('[data-project-section="plugins"]').click();
-    const statusTops = await page
+    // The state buttons form one aligned column in the library's left column.
+    const statusLefts = await page
       .locator("[data-workbench-plugins] [data-library-status]")
-      .evaluateAll((buttons) => buttons.map((button) => button.getBoundingClientRect().top));
-    expect(statusTops).toHaveLength(3);
-    expect(new Set(statusTops).size).toBe(1);
+      .evaluateAll((buttons) => buttons.map((button) => Math.round(button.getBoundingClientRect().left)));
+    expect(statusLefts).toHaveLength(3);
+    expect(new Set(statusLefts).size).toBe(1);
 
     await page.locator('[data-workbench-plugin="echo-tools"] input').check();
     await page.locator("[data-project-save]").click();
@@ -85,7 +86,7 @@ test("installs through the review screen, enables the plugin and stops a run, wi
     await page.setViewportSize({ width: 1024, height: 640 });
     for (const language of ["en", "ro", "de"]) {
       await page.locator('[data-i18n="nav.settings"]').click();
-      await changeSetting(page, "language", () => page.locator("#language").selectOption(language));
+      await changeSetting(page, "appearance", () => page.locator("#language").selectOption(language));
       for (const theme of ["light", "dark"]) {
         await changeSetting(page, "appearance", () => page.locator(`[data-theme-option="${theme}"]`).click());
         for (const scale of [0.75, 0.875, 1, 1.125, 1.25, 1.5]) {
@@ -149,7 +150,7 @@ test("installs through the review screen, enables the plugin and stops a run, wi
         }
       }
     }
-    await changeSetting(page, "language", () => page.locator("#language").selectOption("en"));
+    await changeSetting(page, "appearance", () => page.locator("#language").selectOption("en"));
     await page.locator('[data-action="leave-settings"]').click();
     await page.locator('[data-toggle="right"]').click();
     await page.locator("#tab-runs").click();

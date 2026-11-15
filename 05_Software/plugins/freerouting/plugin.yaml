@@ -1,7 +1,8 @@
 format: 1
 id: freerouting
-version: 1.0.0
+version: 0.3.0
 name: Freerouting autorouter (local)
+summary: Autoroute a KiCad board candidate locally with Freerouting and check the result with DRC.
 description: Autoroute a KiCad 10 board candidate locally with Freerouting 2.5.0 - export a Specctra DSN from the saved candidate of a kicad-layout run, route it offline with a finite budget (existing and locked copper is kept), and turn the new tracks and vias into a kicad-layout request that kicad-layout-tool edit checks, applies to the candidate and verifies with DRC. Nothing leaves the computer and the source board changes only through apply_candidate. Needs KiCad 10; VERA downloads Freerouting and a Java runtime (Eclipse Temurin 25) on Install.
 ecosystem: electronics
 platforms: [windows-x64, linux-x64]
@@ -14,10 +15,12 @@ programs:
         windows-x64:
           url: https://github.com/adoptium/temurin25-binaries/releases/download/jdk-25.0.5%2B8/OpenJDK25U-jre_x64_windows_hotspot_25.0.5_8.zip
           sha256: da78d54a2fcdbba1e92d5e3f07dd30236f96297891c4a21a781c3f38f5c0beae
+          bytes: 58589419
           path: jdk-25.0.5+8-jre/bin/java.exe
         linux-x64:
           url: https://github.com/adoptium/temurin25-binaries/releases/download/jdk-25.0.5%2B8/OpenJDK25U-jre_x64_linux_hotspot_25.0.5_8.tar.gz
           sha256: 6fac98f0c8202efc3135a9e9e42aa61963ec42d1c5cbb40caf231e7b14a24ef6
+          bytes: 61736206
           path: jdk-25.0.5+8-jre/bin/java
     version: { args: [-version], match: 'version "(\d+\.\d+\.\d+)', range: '>=25,<26' }
     timeout: 60
@@ -28,9 +31,11 @@ programs:
         windows-x64:
           url: https://github.com/freerouting/freerouting/releases/download/v2.5.0/freerouting-2.5.0.jar
           sha256: f6f51bb02245e8e717f9359bd260cc9c5c0b1bc0acc8b7cb2cd5b8ffeb5de3c7
+          bytes: 64599107
         linux-x64:
           url: https://github.com/freerouting/freerouting/releases/download/v2.5.0/freerouting-2.5.0.jar
           sha256: f6f51bb02245e8e717f9359bd260cc9c5c0b1bc0acc8b7cb2cd5b8ffeb5de3c7
+          bytes: 64599107
     version: { args: [], match: '^freerouting-(\d+\.\d+\.\d+)\.jar$', range: '>=2.5,<2.6' }
     file: true
   kicad-cli:

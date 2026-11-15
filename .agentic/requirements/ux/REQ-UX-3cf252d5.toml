@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-UX-3cf252d5"
+
+title = "Filter the plugin library by maturity"
+
+status = "active"
+
+requirement = "When the user selects Pre-release or Stable in the plugin library's maturity filter, the library shall list only the plugins whose version classifies as that maturity, combined with the other filters, and Clear shall reset the maturity filter to all."
+
+verification = "Renderer unit test of the library filter: with items at 0.2.0, 1.0.0-rc.1 and 1.0.0, Pre-release keeps the first two, Stable keeps only 1.0.0, the empty value keeps all three; a component test selects Stable and Clear restores all."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/plugin-library.ts", "05_Software/src/apps/desktop/src/renderer/components/plugin-library-controls.tsx", "05_Software/src/apps/desktop/src/renderer/components/plugins.tsx", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/plugin-library.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-15

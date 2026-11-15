@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-SEC-3e11ffe4"
+
+title = "Refuse an unsigned remote catalog index"
+
+status = "active"
+
+requirement = """
+If the server answers 404 for the signature file of the remote catalog's channel index, then the desktop app shall not use that index and shall show the bundled catalog with the problem `unsigned`.
+"""
+
+verification = "Core catalog test with a loopback HTTP server: a signed release lists as source remote; a 503 on the .sig gives problem unreachable; after the .sig file is removed (404), a refresh gives source bundled with problem unsigned and the bundled versions, and no URL gives the bundled catalog without a problem (offline)."
+
+affected_paths = ["05_Software/src/libraries/core/src/plugins/catalog.ts", "05_Software/src/libraries/shared/src/plugin-catalog.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/plugins/catalog.test.ts", "05_Software/src/libraries/shared/src/plugins-ipc.test.ts"]
+
+
+spec = "specs/REQ-DATA-b40d3f9b.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

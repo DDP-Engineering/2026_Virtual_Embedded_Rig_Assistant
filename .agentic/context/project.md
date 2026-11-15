@@ -36,7 +36,7 @@ Sidebar session/workbench action menus are exclusive. New session reuses an unus
 
 Agent activity presents localized historical per-prompt token consumption and frozen initial context estimates, with shared-batch/unavailable labels, through existing persisted usage events.
 
-[Verification fixtures](../knowledge/demo-onboarding.md) routes the fictional board corpus under tests/fixtures. New Workbench is a creation-only page that inspects the chosen single-root folder and creates it with a configured draft (instructions, agent, tools, skills, indexing); Open Workbench and the sidebar open, reopen and remove recents. The sidebar retains pinned workbenches and grouped sessions; the workbench editor page shares the creation form and manages supported configuration and local embedding chunk settings. The Plugins page discovers portable `.vera/plugins` packages, requires machine-local hash review and refreshes changed sources; it also installs plugins from a folder or zip through a review screen, lists them with program statuses and issues, installs their programs and uninstalls them; the right panel's Runs tab lists the workbench's plugin program runs, opens their logs and stops running ones. Sessions begin with user-composed input.
+[Verification fixtures](../knowledge/demo-onboarding.md) routes the fictional board corpus under tests/fixtures. New Workbench is a creation-only page that inspects the chosen single-root folder and creates it with a configured draft (instructions, agent, tools, skills, indexing); Open Workbench and the sidebar open, reopen and remove recents. The sidebar retains pinned workbenches and grouped sessions; the workbench editor page shares the creation form and manages supported configuration and local embedding chunk settings. The Plugins page discovers portable `.vera/plugins` packages, requires machine-local hash review and refreshes changed sources; it also installs plugins from a folder or zip through a review screen, lists them with program statuses and issues and a Configuration section for the parameters a manifest declares in `settings` (MQTT credentials, Wokwi tokens and parts search keys live there, not in App settings), installs their programs and uninstalls them; the right panel's Runs tab lists the workbench's plugin program runs, opens their logs and stops running ones. Sessions begin with user-composed input.
 
 The workbench Plugins editor selects installed packages per workbench as an unsaved draft; Save/Create persists plugins.enabled and Cancel leaves it unchanged. New workbenches default to no plugins selected. Global plugin installation/management remains separate.
 
@@ -67,7 +67,7 @@ validate a catalog source and build its release (index.json format 1 and one zip
 reads the catalog URL setting (else the build default, else the bundled official plugins), verifies each zip's size
 and SHA-256, shows the review screen before a first install and before updates that change programs or rules, installs
 with the catalog tier and checks for updates at start and every 24 h without installing them.
-Catalog source metadata supplies bounded activities/keywords and optional factual publication days, preserved in format1 indices and remote/bundled client views; unknown dates stay absent. The global Plugins library presents management controls before Available/Installed tabs, combined search/filters, publication sorts and pagination. In-session state survives navigation. Browsing consumes cached explicit dependency observations without probes; checks report individual failures. Workbench enablement uses its existing settings draft with top Save/Cancel, unsaved indication and enabled-set dirty comparison. The current-workbench Plugins section has private session filters/sort/paging, retains hidden selections and permits readonly browsing; cached readiness and explicit dependency configuration remain separate from activation. A global Plugins installation detour keeps the same hidden/inert editor owner, section and valid draft, restoring its private filters and fresh packages on return; other departures keep discard guards. No global Configure workbench shortcut or workbench selector/Add plugins link is exposed.
+Catalog source metadata supplies bounded activities/keywords and optional factual publication days, preserved in format1 indices and remote/bundled client views; unknown dates stay absent. The global Plugins library presents management controls before Available/Installed tabs, combined search/filters (maturity among them), publication sorts and pagination; a Pre-release badge, derived from the version alone (`0.x` or a pre-release tag), sits beside the version on cards and the review. In-session state survives navigation. Browsing consumes cached explicit dependency observations without probes; checks report individual failures. Workbench enablement uses its existing settings draft with top Save/Cancel, unsaved indication and enabled-set dirty comparison. The current-workbench Plugins section has private session filters/sort/paging, retains hidden selections and permits readonly browsing; cached readiness and explicit dependency configuration remain separate from activation. A global Plugins installation detour keeps the same hidden/inert editor owner, section and valid draft, restoring its private filters and fresh packages on return; other departures keep discard guards. No global Configure workbench shortcut or workbench selector/Add plugins link is exposed.
 
 [Official plugins](../knowledge/official-plugins.md) routes the plugin packages VERA ships in 05_Software/plugins/ (also a
 catalog source that the package bundles as <resources>/plugins), installed from the folder or the catalog: serial-monitor lists serial ports with their board family, captures consoles with an optional DTR/RTS
@@ -89,8 +89,8 @@ Its real vendor build/flash/panic acceptance remains pending toolchain and board
 [Skills](../knowledge/skills.md) routes workbench/user/plugin discovery, validated metadata
 prompt index, confined on-demand body/extra reads and localized Skills settings.
 The official skills-only analysis-skills package supplies firmware-comparator with its sourced
-seven-section comparison template and test-planner with its six-section manual-plan template;
-separate real-model rubric evidence lives beside each skill. Test-planner never executes programs
+seven-section comparison template and test-planner with its six-section manual-plan template.
+Test-planner never executes programs
 or tests and blocks readiness when target, setup or criteria lack evidence.
 
 [Knowledge ingest](../knowledge/knowledge-ingest.md) routes background document
@@ -98,7 +98,6 @@ selection/hash/limits/status events, reindex and derived-row invalidation throug
 the workbench-owned queue shared by desktop and CLI composition. In the desktop app the
 [indexer process](../knowledge/indexer-process.md) runs selection, hashing, extraction, chunking
 and embeddings in the VERA Indexer utility process; main keeps every SQLite write.
-[Retrieval evaluation](../knowledge/retrieval-evaluation.md) supplies the isolated native CPU comparison over frozen demo questions; ADR0015 selects the bundled BGE descriptor and hybrid recall gate.
 [Document extraction](../knowledge/document-extraction.md) supplies cached PDF/text/heading
 extraction, structured office extraction (docx/odt headings, pptx/odp slides, xlsx/ods sheets;
 legacy doc/ppt/xls and RTF not indexed), precise chunks/OCR and the dedicated document worker
@@ -141,7 +140,6 @@ required before final release; current-host import/loaded-path evidence suppleme
 - [Updates](../knowledge/updates.md) routes fixed generic feed, modes/channels and safe restart installation.
 
 - [System architecture](../../00_Planning/architecture/01-system.md)
-- [Foundation packages](../../00_Planning/plan/M0-foundation.md)
 - [Quality](../../00_Planning/architecture/08-quality.md)
 
 [File tools](../knowledge/file-tools.md) routes confinement, discovery, fingerprints, line refs, registry and bounded grep hosts.

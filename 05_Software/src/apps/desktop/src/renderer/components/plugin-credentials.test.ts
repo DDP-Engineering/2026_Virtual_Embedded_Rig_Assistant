@@ -105,6 +105,11 @@ it.each(["en", "ro", "de"])(
     expect(save[1]).toEqual({ ref: "ci", token: TOKEN });
     expect(container!.innerHTML).not.toContain(TOKEN);
     const entry = container!.querySelector('[data-credential="lab"]')!;
+    // Replace puts the stored reference into the form; saving under it replaces that token.
+    await act(async () => user.click(button(entry, t("wokwiTokens.replace"))));
+    expect(field(t("wokwiTokens.reference")).value).toBe("lab");
+    expect(field(t("wokwiTokens.token")).value).toBe("");
+    expect(document.activeElement).toBe(field(t("wokwiTokens.token")));
     await act(async () => user.click(button(entry, t("wokwiTokens.remove"))));
     await vi.waitFor(() => expect(container!.querySelector('[data-credential="lab"]')).toBeNull());
     expect(vi.mocked(api.invoke).mock.calls.some(([name]) => String(name).startsWith("mqtt."))).toBe(false);

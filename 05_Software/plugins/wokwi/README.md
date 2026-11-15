@@ -16,7 +16,7 @@ wokwi-cli for its version, offline linter and argument checks); no live cloud ru
 Get a CI token from your Wokwi dashboard. It never goes into the project, `workbench.yaml`, the prompt, arguments,
 logs or results.
 
-- Desktop: **Settings > Wokwi tokens** stores a reference (for example `ci`) and the token in VERA's credential store
+- Desktop: **Plugins > wokwi > Configuration** stores a reference (for example `ci`) and the token in VERA's credential store
   (encrypted by the operating system; unprotected only with your consent).
 - CLI: `VERA_WOKWI_TOKEN_CI` (the reference upper-cased, `-` as `_`), held in memory for that run.
 

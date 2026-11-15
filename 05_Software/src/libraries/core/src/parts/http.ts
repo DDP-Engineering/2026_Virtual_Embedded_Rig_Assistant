@@ -14,7 +14,7 @@ export const PARTS_BODY_LIMIT = 4 * 1024 * 1024;
 
 export type PartsHttpKind = "auth" | "rate-limited" | "timeout" | "cancelled" | "unavailable" | "invalid";
 const messages: Record<PartsHttpKind, string> = {
-  auth: "The supplier refused the credential. Check it in Settings > Parts search.",
+  auth: "The supplier refused the credential. Check it in the parts-search plugin's Configuration on the Plugins page.",
   "rate-limited": "The supplier's request limit was reached. Retry later.",
   timeout: "The supplier did not answer in time. Retry or narrow the search.",
   cancelled: "Parts search request cancelled.",

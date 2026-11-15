@@ -9,7 +9,7 @@ description: How to capture MQTT telemetry with mqtt-tool - check the broker pro
 1. The broker profile is a JSON file in the workbench (see the plugin README). Ask the user for the broker, its CA
    file, the topics and the credential reference; never invent a broker, and never use a public broker for a private
    project.
-2. The password is the user's: they store it in Settings > MQTT credentials (or `VERA_MQTT_PASSWORD_<REF>` for the
+2. The password is the user's: they store it in the mqtt-tools plugin's Configuration on the Plugins page (or `VERA_MQTT_PASSWORD_<REF>` for the
    CLI). Never ask them to paste it into the chat, a file or an argument.
 3. `mqtt-tool check-profile --profile mqtt/bench.json`: offline; fix every `profile-invalid` field it names.
 4. `mqtt-tool connect-test --profile mqtt/bench.json --credential bench`: TLS, login and CONNACK.

@@ -1,6 +1,7 @@
 import type { WorkbenchConfig } from "@vera/shared";
 import { type Dispatch, type ReactNode, type SetStateAction, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { ModelSelect } from "./model-select.js";
 import { PermissionPicker } from "./permission-picker.js";
 import { WorkbenchDocuments } from "./workbench-documents.js";
 import { WorkbenchPlugins } from "./workbench-plugins.js";
@@ -8,13 +9,12 @@ import { WorkbenchTools } from "./workbench-tools.js";
 
 export const configSections = [
   "general",
-  "documents",
   "instructions",
-  "agent",
-  "chat",
-  "tools",
-  "skills",
+  "documents",
   "embeddings",
+  "agent",
+  "skills",
+  "tools",
   "plugins",
 ] as const;
 export type ConfigSection = (typeof configSections)[number];
@@ -39,6 +39,8 @@ export function WorkbenchConfigForm({
   skills,
   workbenchId,
   shown = true,
+  general,
+  locked = false,
 }: {
   label: string;
   config: WorkbenchConfig;
@@ -55,23 +57,21 @@ export function WorkbenchConfigForm({
   skills: ReactNode;
   workbenchId?: string | undefined;
   shown?: boolean;
+  /** Fields shown first in General (New workbench: folder and name). */
+  general?: ReactNode;
+  /** Only General is available, e.g. until New workbench has a folder. */
+  locked?: boolean;
 }) {
   const { t } = useTranslation();
   const labels = {
     general: t("projects.general"),
     documents: t("projects.documents"),
     agent: t("projects.agent"),
-    chat: t("chatDetail.section"),
     instructions: t("projects.instructions"),
     tools: t("projects.tools"),
     skills: t("projects.skills"),
     embeddings: t("projects.indexing"),
     plugins: t("projects.plugins"),
-  };
-  const detailHelp = {
-    verbose: t("chatDetail.verboseInfo"),
-    normal: t("chatDetail.normalInfo"),
-    minimal: t("chatDetail.minimalInfo"),
   };
   const [section, setSection] = useState<ConfigSection>("general");
   const content = useRef<HTMLDivElement>(null);
@@ -88,6 +88,7 @@ export function WorkbenchConfigForm({
             type="button"
             aria-current={section === key ? "page" : undefined}
             data-project-section={key}
+            disabled={locked && key !== "general"}
             onClick={() => {
               setSection(key);
               if (content.current) content.current.scrollTop = 0;
@@ -102,6 +103,7 @@ export function WorkbenchConfigForm({
         <fieldset disabled={(readOnly && section !== "instructions" && section !== "plugins") || disabled}>
           {section === "general" && (
             <>
+              {general}
               {nameField && (
                 <label>
                   {t("projects.name")}
@@ -120,7 +122,7 @@ export function WorkbenchConfigForm({
                   onChange={(e) => setConfig({ ...config, description: e.target.value })}
                 />
               </label>
-              <p className="path-text">{folder}</p>
+              {!general && <p className="path-text">{folder}</p>}
             </>
           )}
           {section === "documents" && (
@@ -133,14 +135,14 @@ export function WorkbenchConfigForm({
             />
           )}
           {section === "agent" && (
-            <>
-              <label>
+            <div className="settings-columns">
+              <label htmlFor="project-model">
                 {t("projects.model")}
-                <input
-                  data-project-model
-                  value={config.agent.model ?? ""}
-                  onChange={(e) =>
-                    setConfig({ ...config, agent: { ...config.agent, model: e.target.value || null } })
+                <ModelSelect
+                  id="project-model"
+                  value={config.agent.model}
+                  change={(model) =>
+                    setConfig((current) => ({ ...current, agent: { ...current.agent, model } }))
                   }
                 />
               </label>
@@ -152,15 +154,10 @@ export function WorkbenchConfigForm({
                   setConfig((current) => ({ ...current, agent: { ...current.agent, permission_mode } }))
                 }
               />
-            </>
-          )}
-          {section === "chat" && (
-            <>
               <label>
                 {t("chatDetail.label")}
                 <select
                   data-chat-detail
-                  aria-describedby="chat-detail-help"
                   value={config.chat.detail}
                   onChange={(e) =>
                     setConfig((current) => ({
@@ -174,11 +171,7 @@ export function WorkbenchConfigForm({
                   <option value="minimal">{t("chatDetail.minimal")}</option>
                 </select>
               </label>
-              <p id="chat-detail-help" className="muted">
-                {t("chatDetail.info")}
-              </p>
-              <p>{detailHelp[config.chat.detail]}</p>
-            </>
+            </div>
           )}
           {section === "instructions" && (
             <>
@@ -214,86 +207,88 @@ export function WorkbenchConfigForm({
             />
           )}
           {section === "embeddings" && (
-            <>
-              <p>{t("projects.embeddingInfo")}</p>
-              <label>
-                {t("projects.embeddingModel")}
-                <select value={config.embeddings.model} disabled>
-                  <option value="Xenova/bge-small-en-v1.5">BGE Small EN v1.5 (local)</option>
-                </select>
-              </label>
-              <label>
-                {t("projects.chunkSize")}
-                <input
-                  type="number"
-                  min={200}
-                  max={1400}
-                  data-project-chunk
-                  value={config.embeddings.chunkSize}
-                  onChange={(e) =>
-                    setConfig({
-                      ...config,
-                      embeddings: { ...config.embeddings, chunkSize: Number(e.target.value) },
-                    })
-                  }
-                />
-              </label>
-              <label>
-                {t("projects.overlap")}
-                <input
-                  type="number"
-                  min={0}
-                  max={Math.min(600, config.embeddings.chunkSize - 1)}
-                  data-project-overlap
-                  value={config.embeddings.overlap}
-                  onChange={(e) =>
-                    setConfig({
-                      ...config,
-                      embeddings: { ...config.embeddings, overlap: Number(e.target.value) },
-                    })
-                  }
-                />
-              </label>
-              <p>{t("projects.reindexNotice")}</p>
-              <h4>{t("retrieval.title")}</h4>
-              <p className="muted">{t("retrieval.info")}</p>
-              <label>
-                {t("retrieval.results")}
-                <input
-                  type="number"
-                  min={1}
-                  max={20}
-                  data-retrieval-results
-                  value={config.retrieval.results}
-                  onChange={(e) =>
-                    setConfig((current) => ({
-                      ...current,
-                      retrieval: { ...current.retrieval, results: Number(e.target.value) },
-                    }))
-                  }
-                />
-              </label>
-              <label>
-                {t("retrieval.mode")}
-                <select
-                  data-retrieval-mode
-                  value={config.retrieval.mode}
-                  onChange={(e) =>
-                    setConfig((current) => ({
-                      ...current,
-                      retrieval: {
-                        ...current.retrieval,
-                        mode: e.target.value as WorkbenchConfig["retrieval"]["mode"],
-                      },
-                    }))
-                  }
-                >
-                  <option value="hybrid">{t("retrieval.hybrid")}</option>
-                  <option value="keyword">{t("retrieval.keyword")}</option>
-                  <option value="semantic">{t("retrieval.semantic")}</option>
-                </select>
-              </label>
-            </>
+            <div className="index-columns">
+              <div className="index-card">
+                <h4>{t("projects.embeddingsGroup")}</h4>
+                <label>
+                  {t("projects.embeddingModel")}
+                  <select value={config.embeddings.model} disabled>
+                    <option value="Xenova/bge-small-en-v1.5">BGE Small EN v1.5 (local)</option>
+                  </select>
+                </label>
+                <label>
+                  {t("projects.chunkSize")}
+                  <input
+                    type="number"
+                    min={200}
+                    max={1400}
+                    data-project-chunk
+                    value={config.embeddings.chunkSize}
+                    onChange={(e) =>
+                      setConfig({
+                        ...config,
+                        embeddings: { ...config.embeddings, chunkSize: Number(e.target.value) },
+                      })
+                    }
+                  />
+                </label>
+                <label>
+                  {t("projects.overlap")}
+                  <input
+                    type="number"
+                    min={0}
+                    max={Math.min(600, config.embeddings.chunkSize - 1)}
+                    data-project-overlap
+                    value={config.embeddings.overlap}
+                    onChange={(e) =>
+                      setConfig({
+                        ...config,
+                        embeddings: { ...config.embeddings, overlap: Number(e.target.value) },
+                      })
+                    }
+                  />
+                </label>
+              </div>
+              <div className="index-card">
+                <h4>{t("retrieval.title")}</h4>
+                <label>
+                  {t("retrieval.results")}
+                  <input
+                    type="number"
+                    min={1}
+                    max={20}
+                    data-retrieval-results
+                    value={config.retrieval.results}
+                    onChange={(e) =>
+                      setConfig((current) => ({
+                        ...current,
+                        retrieval: { ...current.retrieval, results: Number(e.target.value) },
+                      }))
+                    }
+                  />
+                </label>
+                <label>
+                  {t("retrieval.mode")}
+                  <select
+                    data-retrieval-mode
+                    value={config.retrieval.mode}
+                    onChange={(e) =>
+                      setConfig((current) => ({
+                        ...current,
+                        retrieval: {
+                          ...current.retrieval,
+                          mode: e.target.value as WorkbenchConfig["retrieval"]["mode"],
+                        },
+                      }))
+                    }
+                  >
+                    <option value="hybrid">{t("retrieval.hybrid")}</option>
+                    <option value="keyword">{t("retrieval.keyword")}</option>
+                    <option value="semantic">{t("retrieval.semantic")}</option>
+                  </select>
+                </label>
+              </div>
+            </div>
           )}
           {section === "plugins" && shown && (
             <WorkbenchPlugins

@@ -3,6 +3,7 @@ import {
   ArrowLeft,
   Folder,
   Home,
+  Info,
   PanelLeft,
   PanelRight,
   Plus,
@@ -20,6 +21,8 @@ import {
 } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../api/index.js";
+import ddpLogoDark from "../assets/ddp-logo-dark.png";
+import ddpLogoLight from "../assets/ddp-logo-light.png";
 import { defaultLayout, type Layout, readLayout, saveLayout } from "../lib/layout.js";
 import { ShortcutContext, shortcutCommand } from "../lib/shortcuts.js";
 
@@ -39,6 +42,7 @@ export function Shell({
   newWorkbench,
   openWorkbench,
   showPlugins,
+  showAbout,
   newSelected,
   pluginsSelected,
   context,
@@ -55,6 +59,7 @@ export function Shell({
   newWorkbench?: () => void;
   openWorkbench?: () => void;
   showPlugins?: () => void;
+  showAbout?: () => void;
   newSelected?: boolean;
   pluginsSelected?: boolean;
   context?: ReactNode;
@@ -82,12 +87,18 @@ export function Shell({
     return () => window.removeEventListener("keydown", listener);
   }, [bindings]);
   const [tab, setTab] = useState("context");
-  const ranges = { sidebar: [12, 24], right: [14, 28] } as const;
+  // Each panel can grow up to half the window (to the middle of the screen).
+  const halfWindow = () =>
+    window.innerWidth / 2 / Number.parseFloat(getComputedStyle(document.documentElement).fontSize);
+  const ranges = {
+    sidebar: [12, Math.max(12, Math.floor(halfWindow()))],
+    right: [14, Math.max(14, Math.floor(halfWindow()))],
+  } as const;
   useEffect(() => {
     if (settings) setLayout((value) => ({ ...value, sidebarCollapsed: false }));
   }, [settings]);
   const [menuUnavailable, setMenuUnavailable] = useState(false);
-  function openMenu(menu: "file" | "edit" | "view" | "help", button: HTMLButtonElement) {
+  function openMenu(menu: "file" | "edit" | "view", button: HTMLButtonElement) {
     const bounds = button.getBoundingClientRect();
     setMenuUnavailable(false);
     void api
@@ -258,7 +269,6 @@ export function Shell({
               ["file", t("windowMenu.file")],
               ["edit", t("windowMenu.edit")],
               ["view", t("windowMenu.view")],
-              ["help", t("windowMenu.help")],
             ] as const
           ).map(([menu, label]) => (
             <button
@@ -274,6 +284,17 @@ export function Shell({
           ))}
         </div>
         <div className="topbar-spacer" />
+        {showAbout && (
+          <button
+            type="button"
+            data-action="show-about"
+            aria-label={t("about.open")}
+            title={t("about.open")}
+            onClick={showAbout}
+          >
+            <Info aria-hidden="true" />
+          </button>
+        )}
         <button
           ref={panelToggle}
           type="button"
@@ -364,18 +385,25 @@ export function Shell({
           <div id="sidebar-details" className="sidebar-details" hidden={layout.sidebarCollapsed}>
             {navigation}
           </div>
-          <button
-            type="button"
-            className="sidebar-settings sidebar-action"
-            data-i18n="nav.settings"
-            aria-label={t("nav.settings")}
-            title={t("nav.settings")}
-            aria-current={settings ? "page" : undefined}
-            onClick={() => navigate(true)}
-          >
-            <SettingsIcon aria-hidden="true" />
-            <span className="nav-label">{t("nav.settings")}</span>
-          </button>
+          <div className="sidebar-bottom">
+            <button
+              type="button"
+              className="sidebar-settings sidebar-action"
+              data-i18n="nav.settings"
+              aria-label={t("nav.settings")}
+              title={t("nav.settings")}
+              aria-current={settings ? "page" : undefined}
+              onClick={() => navigate(true)}
+            >
+              <SettingsIcon aria-hidden="true" />
+              <span className="nav-label">{t("nav.settings")}</span>
+            </button>
+            {/* The maker's mark beside Settings: no extra row, so the workbench list keeps its height. */}
+            <div className="sidebar-maker" data-sidebar-maker hidden={layout.sidebarCollapsed}>
+              <img className="maker-logo maker-logo-light" src={ddpLogoLight} alt="DDP Engineering" />
+              <img className="maker-logo maker-logo-dark" src={ddpLogoDark} alt="" aria-hidden="true" />
+            </div>
+          </div>
           {!layout.sidebarCollapsed && separator("sidebar")}
         </aside>
         <main id="main-content" tabIndex={-1}>

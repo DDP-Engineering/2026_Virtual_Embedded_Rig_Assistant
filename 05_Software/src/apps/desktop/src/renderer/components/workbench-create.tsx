@@ -11,6 +11,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../api/index.js";
 import { ErrorMessage } from "./error-message.js";
+import { Pager, usePaged } from "./pager.js";
 import { WorkbenchConfigForm } from "./workbench-config-form.js";
 
 /** Defaults for the draft; the real identity is assigned when the workbench is created. */
@@ -36,6 +37,7 @@ export function WorkbenchCreate({
   const [skillsDisabled, setSkillsDisabled] = useState<string[]>([]);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<unknown>();
+  const skillsPage = usePaged(inspection?.skills ?? []);
   const disabled = pending || busy;
   async function perform(action: () => Promise<void>) {
     if (disabled) return;
@@ -77,13 +79,10 @@ export function WorkbenchCreate({
       await done(snapshot);
     });
   }
-  return (
-    <section className="surface workbench-create" data-workbench-create>
-      {error !== undefined && <ErrorMessage error={error} />}
-      {pending && <p role="status">{t("workbench.working")}</p>}
-      {/* Create submits only from its button: Enter in a draft field must not create the workbench. */}
-      <form className="workbench-form" onSubmit={(event) => event.preventDefault()}>
-        <p className="muted">{t("create.folderHint")}</p>
+  const generalFields = (
+    <>
+      <div className="create-folder">
+        <span className="create-label">{t("create.folder")}</span>
         <button
           type="button"
           data-action="choose-create"
@@ -121,12 +120,33 @@ export function WorkbenchCreate({
         >
           {t("workbench.chooseFolder")}
         </button>
-        {inspection && (
-          <p className="path-text" data-selected-folder>
+        {inspection ? (
+          <span className="path-text" data-selected-folder>
             {inspection.folder}
-          </p>
+          </span>
+        ) : (
+          <span className="muted">{t("create.noFolder")}</span>
         )}
-        <label htmlFor="workbench-name">{t("workbench.name")}</label>
+      </div>
+      {inspection?.existing && (
+        <div role="status" data-existing-workbench>
+          <p>{t("create.existing")}</p>
+          <button
+            type="button"
+            data-action="open-existing"
+            disabled={disabled}
+            onClick={() =>
+              void perform(async () => {
+                await done(await api.invoke("workbench.open", { folder: inspection.folder }));
+              })
+            }
+          >
+            {t("create.openExisting")}
+          </button>
+        </div>
+      )}
+      <label htmlFor="workbench-name">
+        {t("workbench.name")}
         <input
           id="workbench-name"
           maxLength={80}
@@ -135,40 +155,50 @@ export function WorkbenchCreate({
           onChange={(event) => setName(event.target.value)}
           disabled={disabled}
         />
-        {inspection?.existing && (
-          <div role="status" data-existing-workbench>
-            <p>{t("create.existing")}</p>
-            <button
-              type="button"
-              data-action="open-existing"
-              disabled={disabled}
-              onClick={() =>
-                void perform(async () => {
-                  await done(await api.invoke("workbench.open", { folder: inspection.folder }));
-                })
-              }
-            >
-              {t("create.openExisting")}
-            </button>
-          </div>
-        )}
-        {shown && inspection && !inspection.existing && (
+      </label>
+    </>
+  );
+  // Until a new folder is chosen only General (folder and name) is available.
+  const ready = !!inspection && !inspection.existing;
+  return (
+    <section className="surface workbench-create" data-workbench-create>
+      <header>
+        <h3>{name.trim() || t("projects.new")}</h3>
+        <div className="workbench-actions">
+          <button
+            type="button"
+            data-action="create-workbench"
+            className="primary"
+            disabled={disabled || !ready || !name.trim()}
+            onClick={() => void create()}
+          >
+            {t("welcome.create")}
+          </button>
+        </div>
+      </header>
+      {/* Create submits only from its button: Enter in a draft field must not create the workbench. */}
+      {/* No visible "working" line: it would push the buttons down. aria-busy tells assistive tech instead. */}
+      <form className="workbench-form" aria-busy={pending} onSubmit={(event) => event.preventDefault()}>
+        {shown && (
           <WorkbenchConfigForm
             label={t("projects.new")}
             config={config}
             setConfig={setConfig}
             instructions={shownInstructions}
             setInstructions={setInstructions}
-            folder={inspection.folder}
+            folder={inspection?.folder ?? ""}
             nameField={false}
             disabled={disabled}
+            locked={!ready}
             instructionsReadOnly={kept !== null}
             instructionsNotice={kept !== null && <p role="status">{t("create.instructionsKept")}</p>}
+            notices={<>{error !== undefined && <ErrorMessage error={error} />}</>}
+            general={generalFields}
             skills={
               <fieldset disabled={disabled} className="workbench-create-skills" data-create-skills>
                 <legend>{t("projects.skills")}</legend>
-                {inspection.skills.length === 0 && <p className="muted">{t("create.noSkills")}</p>}
-                {inspection.skills.map((skill) => (
+                {!inspection?.skills.length && <p className="muted">{t("create.noSkills")}</p>}
+                {skillsPage.rows.map((skill) => (
                   <label key={skill.name} className="workbench-tool-option" data-create-skill={skill.name}>
                     <input
                       type="checkbox"
@@ -188,18 +218,13 @@ export function WorkbenchCreate({
                     </span>
                   </label>
                 ))}
+                <Pager {...skillsPage.pager} />
               </fieldset>
             }
           />
         )}
-        <button
-          type="button"
-          data-action="create-workbench"
-          disabled={disabled || !inspection || inspection.existing || !name.trim()}
-          onClick={() => void create()}
-        >
-          {t("welcome.create")}
-        </button>
+        {/* Hidden: the draft's folder and name stay, without the form's ids. */}
+        {!shown && generalFields}
       </form>
     </section>
   );

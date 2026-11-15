@@ -3,8 +3,8 @@ import { z } from "zod";
 export const layoutKey = "vera.ui.layout";
 export const layoutSchema = z.strictObject({
   version: z.literal(1),
-  sidebar: z.number().min(12).max(24),
-  right: z.number().min(14).max(28),
+  sidebar: z.number().min(12).max(200),
+  right: z.number().min(14).max(200),
   sidebarCollapsed: z.boolean(),
   rightCollapsed: z.boolean(),
 });

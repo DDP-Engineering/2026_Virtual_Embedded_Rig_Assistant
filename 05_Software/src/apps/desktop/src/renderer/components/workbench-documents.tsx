@@ -5,12 +5,13 @@ import {
   documentPatternFolder,
   type WorkbenchConfig,
 } from "@vera/shared";
-import { useEffect, useId, useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../api/index.js";
 import { useBytes } from "../lib/bytes.js";
 import { VolumeWarning } from "./documents/volume-warning.js";
 import { ErrorMessage } from "./error-message.js";
+import { Pager, usePaged } from "./pager.js";
 
 type Docs = WorkbenchConfig["docs"];
 const clean = (values: readonly string[]) => values.map((s) => s.trim()).filter(Boolean);
@@ -44,7 +45,6 @@ export function WorkbenchDocuments({
 }) {
   const { t } = useTranslation();
   const bytes = useBytes();
-  const heading = useId();
   const [error, setError] = useState<unknown>();
   const kinds: Record<DocumentScanKind, string> = {
     pdf: t("documentsSetup.kindPdf"),
@@ -112,6 +112,11 @@ export function WorkbenchDocuments({
       ...kindOrder.filter((k) => entry.kinds[k]).map((k) => `${entry.kinds[k]} ${kinds[k]}`),
       bytes(entry.bytes),
     ].join(" · ");
+  // Detected folders, then the ones added by hand, one page at a time.
+  const { rows, pager } = usePaged([
+    ...detected.map((entry) => ({ path: entry.path, detail: summary(entry) })),
+    ...others.map((path) => ({ path, detail: t("documentsSetup.addedByHand") })),
+  ]);
   const row = (path: string, detail: string) => (
     <li key={path}>
       <label className="workbench-tool-option" data-docs-folder={path}>
@@ -130,58 +135,65 @@ export function WorkbenchDocuments({
   );
   return (
     <div className="workbench-documents" data-docs>
-      <p id={heading}>{t("projects.sourceInfo")}</p>
-      {error !== undefined && <ErrorMessage error={error} />}
-      {scan.isError && <ErrorMessage error={scan.error} />}
-      {scan.isPending && <p role="status">{t("documentsSetup.scanning")}</p>}
-      {scan.data && detected.length === 0 && (
-        <p className="muted" data-docs-none>
-          {t("documentsSetup.noneDetected")}
-        </p>
-      )}
-      <ul className="workbench-documents-list" aria-labelledby={heading}>
-        {detected.map((entry) => row(entry.path, summary(entry)))}
-        {others.map((path) => row(path, t("documentsSetup.addedByHand")))}
-      </ul>
-      {scan.data?.truncated && <p className="muted">{t("documentsSetup.truncated")}</p>}
-      <button
-        type="button"
-        data-action="add-docs-folder"
-        disabled={disabled}
-        onClick={() => void addFolder()}
-      >
-        {t("documentsSetup.addFolder")}
-      </button>
-      {preview.data && (
-        <p role="status" data-docs-preview>
-          {t("documentsSetup.preview", { count: preview.data.files, size: bytes(preview.data.bytes) })}
-          {preview.data.officePending > 0 &&
-            ` ${t("documentsSetup.officePending", { count: preview.data.officePending })}`}
-          {preview.data.truncated && ` ${t("documentsSetup.truncated")}`}
-        </p>
-      )}
-      {preview.data && <VolumeWarning volume={preview.data} preview />}
-      {preview.isError && <ErrorMessage error={preview.error} />}
-      <details className="workbench-documents-advanced" data-docs-advanced>
-        <summary>{t("documentsSetup.advanced")}</summary>
-        <label>
-          {t("projects.include")}
-          <textarea
-            data-project-include
-            disabled={disabled}
-            value={docs.include.join("\n")}
-            onChange={(e) => setDocs({ ...docs, include: e.target.value.split("\n") })}
-          />
-        </label>
-        <label>
-          {t("projects.exclude")}
-          <textarea
-            disabled={disabled}
-            value={docs.exclude.join("\n")}
-            onChange={(e) => setDocs({ ...docs, exclude: e.target.value.split("\n") })}
-          />
-        </label>
-      </details>
+      {/* Left: actions and what will be indexed; right: the folder selection, visible without scrolling. */}
+      <div className="workbench-documents-side">
+        <button
+          type="button"
+          data-action="add-docs-folder"
+          disabled={disabled}
+          onClick={() => void addFolder()}
+        >
+          {t("documentsSetup.addFolder")}
+        </button>
+        {error !== undefined && <ErrorMessage error={error} />}
+        {/* Said once: the indexing summary already ends with it when the preview was cut short. */}
+        {scan.data?.truncated && !preview.data?.truncated && (
+          <p className="muted">{t("documentsSetup.truncated")}</p>
+        )}
+        {preview.data && (
+          <p role="status" className="workbench-documents-preview" data-docs-preview>
+            {t("documentsSetup.preview", { count: preview.data.files, size: bytes(preview.data.bytes) })}
+            {preview.data.officePending > 0 &&
+              ` ${t("documentsSetup.officePending", { count: preview.data.officePending })}`}
+            {preview.data.truncated && ` ${t("documentsSetup.truncated")}`}
+          </p>
+        )}
+        {preview.data && <VolumeWarning volume={preview.data} preview />}
+        {preview.isError && <ErrorMessage error={preview.error} />}
+        <details className="workbench-documents-advanced" data-docs-advanced>
+          <summary>{t("documentsSetup.advanced")}</summary>
+          <label>
+            {t("projects.include")}
+            <textarea
+              data-project-include
+              disabled={disabled}
+              value={docs.include.join("\n")}
+              onChange={(e) => setDocs({ ...docs, include: e.target.value.split("\n") })}
+            />
+          </label>
+          <label>
+            {t("projects.exclude")}
+            <textarea
+              disabled={disabled}
+              value={docs.exclude.join("\n")}
+              onChange={(e) => setDocs({ ...docs, exclude: e.target.value.split("\n") })}
+            />
+          </label>
+        </details>
+      </div>
+      <div className="workbench-documents-folders">
+        {scan.isError && <ErrorMessage error={scan.error} />}
+        {scan.isPending && <p role="status">{t("documentsSetup.scanning")}</p>}
+        {scan.data && detected.length === 0 && (
+          <p className="muted" data-docs-none>
+            {t("documentsSetup.noneDetected")}
+          </p>
+        )}
+        <ul className="workbench-documents-list" aria-label={t("projects.documents")}>
+          {rows.map((entry) => row(entry.path, entry.detail))}
+        </ul>
+        <Pager {...pager} />
+      </div>
     </div>
   );
 }

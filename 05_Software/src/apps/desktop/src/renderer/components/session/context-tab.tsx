@@ -26,8 +26,17 @@ export function ContextTab({
   return (
     <div className="context-tab">
       {showSkillSettings && <SkillSettings workbenchId={workbenchId} readOnly={readOnly} />}
-      <h3>.vera/WORKBENCH.md</h3>
-      {pinned.data && <Markdown text={pinned.data.content} />}
+      {/* Collapsed by default: the file can be long. The summary is the expand/collapse control. */}
+      <details className="context-workbench" data-context-workbench>
+        <summary>
+          <h3>.vera/WORKBENCH.md</h3>
+        </summary>
+        {pinned.data && (
+          <div className="context-workbench-body">
+            <Markdown text={pinned.data.content} />
+          </div>
+        )}
+      </details>
       {pinned.isPending && <p role="status">{t("home.loading")}</p>}
       {pinned.isError && (
         <>

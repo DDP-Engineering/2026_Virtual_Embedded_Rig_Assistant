@@ -38,7 +38,13 @@ try {
   if (!options) process.stdout.write(`${logger.scrub(USAGE)}\n`);
   else if (options.kind === "index" || options.kind === "search")
     process.exitCode = await runDocuments(options, logger, controller.signal);
-  else if (options.kind === "catalog-check" || options.kind === "catalog-build")
+  else if (
+    options.kind === "catalog-check" ||
+    options.kind === "catalog-build" ||
+    options.kind === "catalog-keygen" ||
+    options.kind === "catalog-sign" ||
+    options.kind === "catalog-kit"
+  )
     process.exitCode = await runCatalog(options);
   else if (options.kind === "plugin-install")
     process.exitCode = await runPluginInstall(options, logger, controller.signal);

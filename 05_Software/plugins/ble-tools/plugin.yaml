@@ -1,11 +1,18 @@
 format: 1
 id: ble-tools
-version: 1.0.0
+version: 0.2.0
 name: BLE tools (discovery and GATT)
+summary: Scan for Bluetooth Low Energy devices and run controlled GATT reads, writes and notifications on known profiles.
 description: Bounded Bluetooth Low Energy discovery and controlled GATT operations on known device profiles through Bleak 3.1.0 (WinRT on Windows 11, BlueZ on Linux) - scan for a bounded time, identify a device declared in lab/resources.json by its address against a profile that declares its services, characteristics, payload types, byte order, units, limits, allowed operations and pairing, list its services, read or record notifications of declared characteristics and send a named, classified write once. A name or RSSI never identifies a device. No pairing, PIN entry, raw write, firmware update, advertising, Bluetooth Classic or Bluetooth setting change; pairing is the user's step in the operating system.
 ecosystem: iot
 platforms: [windows-x64, linux-x64]
 docs: [README.md, "https://bleak.readthedocs.io/en/latest/", "https://pypi.org/project/bleak/3.1.0/"]
+settings:
+  lab-resources:
+    kind: workbench-file
+    path: lab/resources.json
+    format: lab-resources
+    description: The bench registry; declares each Bluetooth LE device (ble-device) by address and profile that calls name by alias.
 programs:
   ble-tool:
     install: { script: scripts/ble_tool.py }

@@ -39,9 +39,10 @@ it resolves a credential:
 3. at least one supplier is enabled in `partsSearch`.
 
 A call refused by the gate fails with "Parts search is unavailable. Enable Web access and the official
-parts-search plugin for this workbench, and enable a supplier in Settings > Parts search." Saving the parts
+parts-search plugin for this workbench, and enable a supplier in the parts-search plugin's Configuration on the Plugins page." Saving the parts
 settings, removing a credential, changing Web access or closing the host aborts the calls in flight; they fail
-with "Parts search request cancelled or its authorization changed." Settings > Parts search "Test" runs one
+with "Parts search request cancelled or its authorization changed." The parts search form's "Test" (in the
+parts-search plugin's Configuration) runs one
 keyword search (`resistor`, limit 1) for one supplier with its stored credential and needs only gate rule 1.
 
 ## 3 Tool `parts_search` (class `read`)

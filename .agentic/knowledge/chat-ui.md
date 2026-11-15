@@ -25,7 +25,7 @@ the backend; reasoning and live tool-update presentation are transient renderer 
 
 - WorkbenchNavigation coordinates session/workbench action details through one sidebar scope. Opening a trigger closes others; outside pointer/focus dismisses and Escape restores trigger focus. Archived expansion is independent. New session/shortcut opts into server-side unused-session reuse, retains the synchronous operationBusy guard, deduplicates the cache and focuses the selected composer through a consumed session-scoped request; same-session unsent drafts remain intact. workspace.test.ts and native navigation-actions.spec.ts cover crossings, keyboard, clicks, errors and restart.
 
-- Agent activity displays a muted, wrapping statistics line per user prompt: reported input/output, frozen initial normal-request context (estimated when applicable), unavailable dashes and explicitly shared batch consumption. Locale-aware formatters are memoized per language. Source is the shared user-item usage projection, not the changing global meter; en/ro/de strings and activity-usage.test.ts plus native prompt-usage.spec.ts cover presentation and restart.
+- Each user message shows, only at the Verbose chat detail level, a muted, wrapping statistics line (`PromptUsage`, session/prompt-usage.tsx) per user prompt: reported input/output, frozen initial normal-request context (estimated when applicable), unavailable dashes and explicitly shared batch consumption. Locale-aware formatters are memoized per language. Source is the shared user-item usage projection, not the changing global meter; en/ro/de strings and activity-usage.test.ts plus native prompt-usage.spec.ts cover presentation and restart.
 
 - PermissionPicker offers read-only, Ask, Auto-edit and marked Bypass. Bypass persists as the session mode and enables full ordinary file tool access outside the workbench without confirmations; its red/bold warning-marked selection remains visible even when the localized Close/X/Escape warning is suppressed through application preferences. Mode changes remain available during active turns, with scoped execution revoked by the core on downgrade. Permission save failures surface at the picker.
 
@@ -39,7 +39,7 @@ the backend; reasoning and live tool-update presentation are transient renderer 
   shows; SessionWorkspace and the Changes/Artifacts/Plan tabs read it through `useSessionView`, so a window holds one
   snapshot, subscription and revision poll per session. Without a provider, or for another session id, `useSessionView`
   runs its own `useSessionEvents`.
-- Tool arguments/output (transcript ToolDetails and Activity inspector, both via `ToolOutput`) and approval diffs render through `BoundedText` (`session/bounded-text.tsx`): a field with a `truncated` size shows its excerpt and a localized "Show full output (N KB)" button that loads the text once through `session.item.detail`; fields that were not cut show no button. A full diff above 256 KiB renders as plain `<pre>` instead of per-line DiffViewer markup.
+- Tool arguments/output (transcript ToolDetails via `ToolOutput`) and approval diffs render through `BoundedText` (`session/bounded-text.tsx`): a field with a `truncated` size shows its excerpt and a localized "Show full output (N KB)" button that loads the text once through `session.item.detail`; fields that were not cut show no button. A full diff above 256 KiB renders as plain `<pre>` instead of per-line DiffViewer markup.
 - Composer sends Enter, adds Shift+Enter newline, selects configured catalog models and completes
   caret-local @ paths with arrows/Enter/Tab/Escape. Connected subscription status enables a separate ChatGPT catalog query; sign-out removes those choices. Failed sends retain draft.
 - Attached entries (TASK-2fef1397): App keeps per-session lists in `AttachmentsContext`
@@ -52,8 +52,8 @@ the backend; reasoning and live tool-update presentation are transient renderer 
   (REQ-UX-b5edf930, REQ-UX-f8ec3a43, REQ-FUNC-47287974).
 - ApprovalCard renders tool/path/bytes and coloured +/- patch lines inline beside the tool. Approve, Deny and Approve-and-switch invoke the exact stored digest. Focused A/D has no modifiers/repeat/composition; pending, decided and read-only cards lock actions and errors remain visible.
 - Composer exposes the confirmed session mode during active turns; text/Enter/Send remain available while running, alongside Stop; approval waits lock text/sending and active turns lock model selection. Approval events invalidate sidebar summaries; new sessions inherit workbench defaults.
-- ContextTab queries .vera/WORKBENCH.md and enabled validated [skills](skills.md) metadata with scoped Skills settings; ChangesTab shows ordered completed files/counts and the selected stored diff with replay/live refresh and confined reveal; ArtifactsTab lists saved sizes/times, opens safe Markdown/plain text and exports/reveals through shared IPC with revision-scoped live/replay queries; PlanTab displays the current ordered todo list through useSessionEvents with localized accessible status icons, empty/loading/retry states and keyed workbench/session isolation; Docs lists live index status/search/Open/Reindex/progress through the [document viewer](document-viewer.md). [Plan](plan.md) routes these contracts. [Artifacts](artifacts.md) routes these contracts. [Changes](changes.md) routes these contracts.
-- UsageMeter presents optional localized compaction status and whole request-view token count alongside labeled estimates, budgets and actual provider usage; old usage events remain valid. Complete durable history and Activity remain available after historical compaction; the main transcript follows workbench chat.detail.
+- ContextTab shows .vera/WORKBENCH.md in a collapsed, word-wrapped, scrollable block, the enabled validated [skills](skills.md) metadata and a Skills settings dialog; ChangesTab shows ordered completed files/counts and the selected stored diff with replay/live refresh and confined reveal; ArtifactsTab lists saved sizes/times, opens safe Markdown/plain text and exports/reveals through shared IPC with revision-scoped live/replay queries; PlanTab displays the current ordered todo list through useSessionEvents with localized accessible status icons, empty/loading/retry states and keyed workbench/session isolation; Docs lists live index status/search/Open/Reindex/progress through the [document viewer](document-viewer.md). [Plan](plan.md) routes these contracts. [Artifacts](artifacts.md) routes these contracts. [Changes](changes.md) routes these contracts.
+- UsageMeter presents optional localized compaction status and whole request-view token count alongside labeled estimates, budgets and actual provider usage; old usage events remain valid. Complete durable history remains available after historical compaction; the main transcript follows workbench chat.detail.
 - `?mock=chat` exposes empty/streaming/tools/invalid/provider-error/context-limit fixtures. Browser-test triggers in mocks/sessions.ts: a message `seed N messages` appends N seeded question/answer pairs; `stream slowly…` streams a 40-line reply over about 6 s.
 - CitationChip uses shared refs.ts parsing/compact labels and per-kind page, range,
   heading, line and artifact icons. Full refs remain in tooltip/accessible labels.
@@ -85,10 +85,9 @@ the backend; reasoning and live tool-update presentation are transient renderer 
   and suspension on a session change. The left padding reserves rail plus lane.
 - The context icon shows latest request-view/context tokens divided by reported
   context window; missing capacity is displayed as unknown. Estimated values are
-  labeled. Its modal renders UsageMeter and workbench instructions/available skills
-  on demand. Activity opens a separate modal over actual prompt/question, assistant,
-  tool argument/update/preview/status and supplied live reasoning projections.
-  These do not expose or fabricate a raw provider/system wire prompt.
+  labeled. Its modal (SessionInspector) renders only UsageMeter (usage and limits cards, model, turns, tool calls);
+  instructions and available skills are in the Context tab. There is no Agent activity dialog;
+  reasoning shows in the transcript at Verbose. No view exposes or fabricates a raw provider/system wire prompt.
 - Inspectors use native dialog modality, Escape/Close and opener focus restoration.
   App keys workspaces by workbench/session to isolate drafts and inspector state.
 - Workbench session disclosure uses a distinct 2rem button with Lucide right/down
@@ -102,19 +101,19 @@ the backend; reasoning and live tool-update presentation are transient renderer 
   rename, confirmed delete, archive/restore. Exports remain available in read-only
   workbenches. Mutations lock for read-only workbenches and active/approval turns.
   Archived sessions remain accessible in a collapsible section and can be restored.
-- REQ-UX-cb7b704e, REQ-UX-bdd845d0, REQ-UX-b0da5193 and REQ-FUNC-f7ef5641
+- REQ-UX-cb7b704e, REQ-UX-bdd845d0 and REQ-FUNC-f7ef5641
   attach to workspace/usage tests and tests/e2e/session-workspace.spec.ts.
 
 ## Invariants
 
 - Exact renderer origin, sandbox and shared IPC authority apply. Renderer imports no native modules.
-- Backend terminal text replaces transient deltas; complete durable history and Activity remain available after context limits.
+- Backend terminal text replaces transient deltas; complete durable history remains available after context limits.
 - Late snapshot/event results cannot replace another session. Main replay starts after snapshot seq.
 - Workbench readOnly and pending operations disable sends; approval waits lock text/sending, active turns lock model changes;
   active Stop uses the real session.stop channel and leaves a usable composer at completion.
 - Markdown skips HTML and renders links/images inert; verified message citations alone enable chips.
 - Tool disclosures expose full arguments and preview/update/summary; errors and estimates are labelled.
-- `Disclosure` mounts its content only while open (transcript, groups, reasoning and ActivityLog); its empty
+- `Disclosure` mounts its content only while open (transcript, groups and reasoning); its empty
   hidden container keeps `aria-controls` resolvable. Collapsed content is not in the DOM, so find-in-page
   and copy-all skip it.
 - Transcript rows (`MessageRow`, `ToolRow`, `ErrorRow`, `ToolDetails`) and `Markdown` are `React.memo` with
@@ -206,7 +205,7 @@ Paths relative to05_Software.
 ## Workbench chat detail
 
 `chat.detail` (format 1) defaults to `normal` and flows from App's confirmed workbench
-snapshot through SessionWorkspace into Transcript. New/Edit Workbench → Chat edits a
+snapshot through SessionWorkspace into Transcript. New/Edit Workbench → Agent and chat edits a
 saveable draft; Cancel/read-only use the existing form rules. It affects all sessions
 in that workbench without changing stored messages, model requests, exports or permissions.
 
@@ -215,12 +214,13 @@ uses expandable localized operation counts for consecutive same-turn routine too
 non-tool content and essential cards split groups. Null-turn calls remain separate.
 Minimal hides routine tools and shows a working indicator during active running turns.
 Normal/Minimal omit empty finalized assistant placeholders without citations, retaining
-all actual conversation text and streaming messages. Reasoning remains in Activity.
-Approvals, failed tool rows, errors/Retry, successful download cards and stopped/interrupted
-notices remain outside hidden groups. ActivityLog always receives the unfiltered state.
+all actual conversation text and streaming messages. Reasoning shows only at Verbose.
+Approvals (except those granted by the permission mode, `by: "mode"`, which are hidden at Minimal and
+grouped at Normal), failed tool rows, errors/Retry, successful download cards and the stopped/interrupted
+notice (shown once, for the latest turn only) remain outside hidden groups.
 
 Files: `session/transcript-projection.ts` owns pure grouping; `transcript.tsx` owns display
 and essential cards; `workbench-config-form.tsx` owns the localized selector.
 Change map: level semantics → projection/transcript tests; config route → App/Workspace;
-all-level essential interactions → transcript-detail.test.ts; native persistence, Ask/Stop,
-Activity and restart → tests/e2e/chat-detail.spec.ts. Existing scroll/focus rules are retained.
+all-level essential interactions → transcript-detail.test.ts; native persistence, Ask/Stop
+and restart → tests/e2e/chat-detail.spec.ts. Existing scroll/focus rules are retained.

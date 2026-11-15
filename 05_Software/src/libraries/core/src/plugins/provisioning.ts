@@ -1,5 +1,5 @@
 import { createHash, randomUUID } from "node:crypto";
-import { constants } from "node:fs";
+import { constants, createReadStream } from "node:fs";
 import {
   access,
   chmod,
@@ -17,6 +17,7 @@ import {
   writeFile,
 } from "node:fs/promises";
 import { basename, dirname, join, resolve } from "node:path";
+import { pathToFileURL } from "node:url";
 import { createContext, Script } from "node:vm";
 import {
   downloadForm,
@@ -26,11 +27,15 @@ import {
   type PluginProgramProblem,
   type PluginProgramStatus,
   type PluginSettings,
+  pluginHintLink,
+  pluginPlatform,
+  pluginProgramKind,
   veraError,
   versionInRange,
 } from "@vera/shared";
 import type { Clock, ProcessExit, ProcessHost } from "../ports.js";
 import { ArchiveError, bsdtarSkipsOnly, checkTree, extractZip, tarCommand } from "./archive.js";
+import { dependencyKitFile } from "./dependency-kit.js";
 import { programInvocation } from "./launcher.js";
 import { hostVariable, killProcessTree } from "./process-tree.js";
 import type { ProgramResolver, ResolvedProgram } from "./program-tools.js";
@@ -41,13 +46,8 @@ import type { LoadedPlugin } from "./store.js";
 // biome-ignore lint/suspicious/noTemplateCurlyInString: literal manifest placeholder.
 const PLUGIN_DIR = "${pluginDir}";
 
-/** The plugin platform of a host, or undefined where VERA has no build. */
-export function pluginPlatform(platform: string, arch: string): PluginPlatform | undefined {
-  if (platform === "win32") return arch === "x64" ? "windows-x64" : undefined;
-  if (platform === "linux")
-    return arch === "x64" ? "linux-x64" : arch === "arm64" ? "linux-arm64" : undefined;
-  return undefined;
-}
+/** Re-exported for the CLI, the desktop main process and tests that import it from core. */
+export { pluginPlatform };
 
 /** What provisioning needs of the plugin store. */
 export interface ProvisionerStore {
@@ -130,14 +130,7 @@ async function fileStamp(path: string): Promise<string | undefined> {
   const info = await stat(path, { bigint: true }).catch(() => undefined);
   return info?.isFile() ? [info.dev, info.ino, info.size, info.mtimeNs].join(":") : undefined;
 }
-const kindOf = (program: PluginProgram): Kind =>
-  "pip" in program.install
-    ? "pip"
-    : "script" in program.install
-      ? "script"
-      : "download" in program.install && program.install.download !== undefined
-        ? "download"
-        : "find";
+const kindOf: (program: PluginProgram) => Kind = pluginProgramKind;
 const isFile = async (path: string) => (await stat(path).catch(() => undefined))?.isFile() === true;
 /** The chunks of a body; a stream that stalls still ends when the signal aborts. */
 async function* chunks(body: ReadableStream<Uint8Array>, signal?: AbortSignal): AsyncGenerator<Uint8Array> {
@@ -173,8 +166,19 @@ function untilAborted<T>(promise: Promise<T>, signal?: AbortSignal): Promise<T> 
 }
 const exists = async (path: string) => (await stat(path).catch(() => undefined)) !== undefined;
 const aborted = (error: unknown) => (error as Error | undefined)?.name === "AbortError";
-/** The first http(s) link of a hint, without trailing sentence punctuation. */
-const linkOf = (hint: string) => /https?:\/\/[^\s<>"'()[\]]+/.exec(hint)?.[0].replace(/[.,;:!?]+$/, "");
+const linkOf = pluginHintLink;
+/** The SHA-256 of a file, read as a stream. */
+async function fileSha256(path: string): Promise<string> {
+  const hash = createHash("sha256");
+  for await (const chunk of createReadStream(path)) hash.update(chunk as Uint8Array);
+  return hash.digest("hex");
+}
+/** Whether a program is VERA's to install: not a vendor (find) program and not a found external one. */
+const managed = (status: PluginProgramStatus) =>
+  status.kind !== "find" &&
+  (!status.external || status.downloadAvailable === true) &&
+  status.problem !== "platform" &&
+  status.problem !== "uv";
 /** The capture of `source` in `text`; a pattern running longer than MATCH_MS matches nothing. */
 function boundedMatch(source: string, text: string): string | undefined {
   try {
@@ -259,7 +263,11 @@ export class Provisioner implements ProgramResolver {
       plugin.manifest.id,
     );
   }
-  /** The uv variables of every call (spec REQ-FUNC-714e26bc.md): nothing outside the runtime folder. */
+  /**
+   * The uv variables of every call (spec REQ-FUNC-714e26bc.md): nothing outside the runtime folder. With a
+   * dependency kit, uv resolves only from its wheels and installs CPython only from its mirror folder, whose
+   * archive uv checks against the SHA-256 built into it.
+   */
   uvEnvironment(plugin: LoadedPlugin): Record<string, string> {
     const { root } = this.options;
     const tools = this.tools(plugin);
@@ -276,7 +284,15 @@ export class Provisioner implements ProgramResolver {
       UV_PYTHON_INSTALL_REGISTRY: "0",
       UV_NO_CONFIG: "1",
       UV_NO_PROGRESS: "1",
-      ...(settings.index ? { UV_DEFAULT_INDEX: settings.index } : {}),
+      ...(settings.kit
+        ? {
+            UV_OFFLINE: "1",
+            UV_FIND_LINKS: join(settings.kit, "wheels"),
+            UV_PYTHON_INSTALL_MIRROR: pathToFileURL(join(settings.kit, "python")).href,
+          }
+        : settings.index
+          ? { UV_DEFAULT_INDEX: settings.index }
+          : {}),
       ...(settings.proxy ? { HTTPS_PROXY: settings.proxy, HTTP_PROXY: settings.proxy } : {}),
     };
   }
@@ -560,6 +576,24 @@ export class Provisioner implements ProgramResolver {
    * soon as it is probed, so a later failure or a stop keeps it.
    */
   install(id: string, signal?: AbortSignal, authority?: Provisioner): Promise<PluginProgramStatus[]> {
+    return this.provision(id, false, signal, authority);
+  }
+
+  /**
+   * Installs again every program VERA manages (a user action): pip and script programs with uv's reinstall,
+   * downloads fetched again, verified against their SHA-256 and swapped in for VERA's copy. Find programs are
+   * never touched, records keep their shape and a download that fails keeps the copy in use.
+   */
+  reinstall(id: string, signal?: AbortSignal, authority?: Provisioner): Promise<PluginProgramStatus[]> {
+    return this.provision(id, true, signal, authority);
+  }
+
+  private provision(
+    id: string,
+    again: boolean,
+    signal?: AbortSignal,
+    authority?: Provisioner,
+  ): Promise<PluginProgramStatus[]> {
     const outer = signal ? AbortSignal.any([signal, this.lifetime.signal]) : this.lifetime.signal;
     return this.serial(async () => {
       outer.throwIfAborted();
@@ -570,6 +604,8 @@ export class Provisioner implements ProgramResolver {
       const failures = new Map<string, PluginProgramStatus>();
       const observed = new Map<string, Inspection | undefined>();
       const installed = new Set<string>();
+      // Programs sharing one pinned archive fetch it once per run.
+      const fetched = new Set<string>();
       try {
         for (const name of Object.keys(plugin.manifest.programs).sort()) {
           await plugin.verify?.();
@@ -578,12 +614,12 @@ export class Provisioner implements ProgramResolver {
           observed.set(name, current);
           if (
             !current ||
-            current.status.kind === "find" ||
-            (current.status.external && !current.status.downloadAvailable) ||
-            (current.status.state !== "missing" &&
+            !managed(current.status) ||
+            (!again &&
+              current.status.state !== "missing" &&
               !(
                 current.status.state === "unavailable" &&
-                ["version", "range"].includes(current.status.problem ?? "")
+                ["version", "range", "sha256"].includes(current.status.problem ?? "")
               ) &&
               !current.status.downloadAvailable)
           )
@@ -595,7 +631,8 @@ export class Provisioner implements ProgramResolver {
               plugin,
               name,
               AbortSignal.any([outer, deadline]),
-              current.status.state === "unavailable",
+              again || current.status.state === "unavailable",
+              fetched,
             );
           } catch (error) {
             if (outer.aborted || !deadline.aborted) throw error;
@@ -607,7 +644,9 @@ export class Provisioner implements ProgramResolver {
             installed.add(name);
           } else {
             failures.set(name, outcome);
-            observed.set(name, { status: outcome });
+            // A failed re-download leaves VERA's ready copy in place, so runs keep resolving it.
+            if (!(again && outcome.kind === "download" && current.status.state === "ready"))
+              observed.set(name, { status: outcome });
           }
         }
       } finally {
@@ -733,6 +772,9 @@ export class Provisioner implements ProgramResolver {
       if (!entry || !file || recorded === undefined) return undefined;
       const executable = join(this.downloads, entry.sha256, ...file.split("/"));
       if (!(await isFile(executable))) return undefined;
+      // A single file is the pinned download itself: an explicit check verifies its bytes.
+      if (fresh && downloadForm(entry.url) === "file" && (await fileSha256(executable)) !== entry.sha256)
+        return not("unavailable", "sha256");
       const resolved = { executable, ...(entry.prefix ? { prefix: entry.prefix } : {}) };
       const measured = fresh
         ? await this.probe(resolved, program, signal, plugin.folder, plugin.verify)
@@ -779,6 +821,7 @@ export class Provisioner implements ProgramResolver {
           measured.version,
           measured.detail,
         );
+        if (foundProgram.status.state === "ready") foundProgram.status.path = found;
         if (install.hint) {
           foundProgram.status.hint = install.hint;
           const link = linkOf(install.hint);
@@ -1026,6 +1069,7 @@ export class Provisioner implements ProgramResolver {
     name: string,
     signal?: AbortSignal,
     repair = false,
+    fetched?: Set<string>,
   ): Promise<string | PluginProgramStatus> {
     await plugin.verify?.();
     const program = plugin.manifest.programs[name] as PluginProgram;
@@ -1054,6 +1098,19 @@ export class Provisioner implements ProgramResolver {
     const installMs = this.options.timeouts?.installMs ?? INSTALL_MS;
     if ("pip" in install || "script" in install) {
       const uv = this.options.uv as ResolvedProgram;
+      if (this.options.settings()?.kit) {
+        // Offline uv never downloads CPython on its own; this installs the kit's archive (once) after uv checks it.
+        const python = await this.execute(
+          uv.executable,
+          [...(uv.prefix ?? []), "python", "install"],
+          this.uvEnvironment(plugin),
+          installMs,
+          signal,
+          plugin.verify,
+        );
+        if (python.exit.error) return failed("install", python.exit.error);
+        if (python.timedOut || python.exit.code !== 0) return failed("install", python.tail);
+      }
       const args =
         "pip" in install
           ? ["tool", "install", ...(repair ? ["--reinstall"] : []), install.pip]
@@ -1094,9 +1151,20 @@ export class Provisioner implements ProgramResolver {
       const file = entry && downloadName(entry);
       if (!entry || !file) return failed("download");
       const folder = join(this.downloads, entry.sha256);
-      if (!(await exists(folder))) {
-        const problem = await this.download(entry, file, folder, signal);
-        if (problem) return failed(problem);
+      if ((repair && !fetched?.has(folder)) || !(await exists(folder))) {
+        // The dependency kit's file goes through the same verification as a selected dependency archive.
+        const kit = this.options.settings()?.kit;
+        const local = kit ? join(kit, ...dependencyKitFile(entry).split("/")) : undefined;
+        const fromKit = local !== undefined && (await exists(local)) ? local : undefined;
+        const problem = await this.download(entry, file, folder, signal, fromKit, undefined, repair);
+        if (problem)
+          return failed(
+            problem,
+            fromKit && problem === "sha256"
+              ? `The kit file ${fromKit} does not match the SHA-256 this plugin pins.`
+              : undefined,
+          );
+        fetched?.add(folder);
       }
       const executable = join(folder, ...file.split("/"));
       if (!(await isFile(executable))) return failed("archive");
@@ -1140,12 +1208,14 @@ export class Provisioner implements ProgramResolver {
    * removed; returns the problem when it fails, so nothing of a failed download remains.
    */
   private async download(
-    entry: { url: string; sha256: string },
+    entry: { url: string; sha256: string; bytes?: number | undefined },
     file: string,
     folder: string,
     signal?: AbortSignal,
     localPath?: string,
     verifyIdentity?: () => Promise<void>,
+    /** Swap the verified tree in for an existing folder (re-install) instead of reusing it. */
+    replace = false,
   ): Promise<PluginProgramProblem | undefined> {
     const staging = join(this.downloads, ".staging", randomUUID());
     await mkdir(staging, { recursive: true });
@@ -1158,6 +1228,8 @@ export class Provisioner implements ProgramResolver {
         const source = localPath ? this.localBytes(localPath, signal) : this.remoteBytes(entry.url, signal);
         for await (const chunk of source) {
           total += chunk.length;
+          // More bytes than declared can never hash to the pinned SHA-256.
+          if (entry.bytes !== undefined && total > entry.bytes) return "sha256";
           if (total > DOWNLOAD_LIMIT) return localPath ? "archive" : "download";
           hash.update(chunk);
           await handle.write(chunk);
@@ -1171,7 +1243,7 @@ export class Provisioner implements ProgramResolver {
       if (hash.digest("hex") !== entry.sha256) return "sha256";
       await verifyIdentity?.();
       // Local bytes are always verified first, including when a prior extraction already exists.
-      if (localPath && (await exists(folder))) return undefined;
+      if (localPath && !replace && (await exists(folder))) return undefined;
       const tree = join(staging, "tree");
       await mkdir(tree);
       const form = downloadForm(entry.url);
@@ -1208,6 +1280,23 @@ export class Provisioner implements ProgramResolver {
       if (!(await isFile(executable))) return "archive";
       if (!this.windows) await chmod(executable, 0o755);
       await verifyIdentity?.();
+      if (replace && (await exists(folder))) {
+        const previous = join(staging, "previous");
+        try {
+          await rename(folder, previous);
+        } catch {
+          // A copy in use (a running program on Windows) cannot be replaced now.
+          return "install";
+        }
+        try {
+          await rename(tree, folder);
+        } catch {
+          // Put VERA's copy back; when even that fails the program reports missing and installs again.
+          await rename(previous, folder).catch(() => {});
+          return "install";
+        }
+        return undefined;
+      }
       try {
         await rename(tree, folder);
       } catch (error) {

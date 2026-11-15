@@ -80,7 +80,7 @@ async function edit(page: Page) {
   const { config } = await invoke<{ config: { id: string } }>(page, "workbench.config.get", {});
   await page.locator(`[data-workbench-entry="${config.id}"] .workbench-group-name`).click();
   await page.locator('[data-action="edit-workbench-overview"]').click();
-  await page.locator('[data-project-section="chat"]').click();
+  await page.locator('[data-project-section="agent"]').click();
 }
 async function detail(page: Page, id: string, level: string) {
   await edit(page);
@@ -90,7 +90,7 @@ async function detail(page: Page, id: string, level: string) {
   await page.locator(`[data-session="${id}"]`).click();
   await expect(page.locator(".transcript-frame")).toHaveAttribute("data-chat-detail", level);
 }
-test("native chat detail save, cancel, ordered projection, full Activity and restart isolation", async () => {
+test("native chat detail save, cancel, ordered projection, full history and restart isolation", async () => {
   test.setTimeout(90000);
   const host = await rig();
   let app = await host.launch();
@@ -113,9 +113,8 @@ test("native chat detail save, cancel, ordered projection, full Activity and res
     await detail(page, id, "minimal");
     await expect(page.locator("[data-tool-row]")).toHaveCount(0);
     await expect(page.locator('[data-message-kind="assistant"]')).toContainText("3.3 V");
-    await page.locator('[data-action="show-activity"]').click();
-    await expect(page.locator('[data-agent-activity] [data-activity-kind="tool"]')).toHaveCount(2);
-    await page.keyboard.press("Escape");
+    // Minimal hides the tool rows only; the session still holds both tool calls.
+    expect((await snapshot(page, id)).items.filter((i) => i.kind === "tool")).toHaveLength(2);
     await edit(page);
     await page.locator("select[data-chat-detail]").selectOption("verbose");
     await page.locator("[data-project-cancel]").first().click();
@@ -206,13 +205,13 @@ test("browser Chat detail stays usable in en/ro/de at minimum size and enlarged 
     await page.locator('[data-action="create-workbench"]').click();
     for (const language of ["en", "ro", "de"]) {
       await page.locator('[data-i18n="nav.settings"]').click();
-      await page.locator('[data-section="language"]').click();
+      await page.locator('[data-section="appearance"]').click();
       await page.locator("#language").selectOption(language);
       await page.locator('[data-section="appearance"]').click();
       await page.locator("#interface-font-size").selectOption("1.5");
       await page.locator('[data-action="leave-settings"]').click();
       await page.locator('[data-action="edit-workbench-overview"]').click();
-      await page.locator('[data-project-section="chat"]').click();
+      await page.locator('[data-project-section="agent"]').click();
       const picker = page.locator("select[data-chat-detail]");
       await expect(picker).toHaveValue("normal");
       for (const theme of ["light", "dark"]) {

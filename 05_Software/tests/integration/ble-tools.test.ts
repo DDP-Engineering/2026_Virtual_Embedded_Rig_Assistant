@@ -236,7 +236,7 @@ describe("package", () => {
   it("publishes the official ble-tools package with one pinned helper, a supervised device, skills, catalog and pack", async () => {
     const m = manifest();
     expect(validatePluginManifest(m).issues).toEqual([]);
-    expect(m).toMatchObject({ id: "ble-tools", version: "1.0.0", platforms: ["windows-x64", "linux-x64"] });
+    expect(m).toMatchObject({ id: "ble-tools", version: "0.2.0", platforms: ["windows-x64", "linux-x64"] });
     expect(Object.keys(m.programs)).toEqual(["ble-tool"]);
     const program = m.programs["ble-tool"];
     expect(program?.install).toEqual({ script: "scripts/ble_tool.py" });
@@ -392,7 +392,7 @@ describe("package", () => {
       "advertis(e|ing)_start",
     ])
       expect(source).not.toContain(call);
-    expect(bt(["--version"]).stdout.trim()).toBe("ble-tool 1.0.0");
+    expect(bt(["--version"]).stdout.trim()).toBe("ble-tool 0.2.0");
     expect(events()).toEqual([]);
   });
 

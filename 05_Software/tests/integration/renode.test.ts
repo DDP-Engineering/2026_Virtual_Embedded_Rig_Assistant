@@ -165,7 +165,7 @@ describe("package", { timeout: 60_000 }, () => {
     expect(validatePluginManifest(m).issues).toEqual([]);
     expect(m).toMatchObject({
       id: "renode",
-      version: "1.0.0",
+      version: "0.3.0",
       ecosystem: "lab",
       platforms: ["windows-x64", "linux-x64"],
     });

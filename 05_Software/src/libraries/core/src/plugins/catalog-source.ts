@@ -1,15 +1,21 @@
-import { createHash } from "node:crypto";
-import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
+import { createHash, createPrivateKey, createPublicKey, generateKeyPairSync, sign } from "node:crypto";
+import { mkdir, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import {
+  CATALOG_CHANNELS,
   CATALOG_LIMITS,
+  type CatalogChannel,
   type CatalogIndex,
   type CatalogMaintainers,
   type CatalogPack,
+  catalogChannelIndex,
   catalogIndexSchema,
   catalogMaintainersSchema,
   catalogPacksSchema,
   dangerousToken,
+  pluginDependencies,
+  pluginHighestRisk,
+  pluginMaturity,
   ruleNamesProgram,
   type VeraError,
 } from "@vera/shared";
@@ -21,7 +27,7 @@ import { type PluginPackage, readPluginPackage } from "./store.js";
 /** One finding of the catalog check (spec REQ-DATA-b40d3f9b §2); `where` is a plugin id or file name. */
 export interface CatalogIssue {
   where: string;
-  code: "source" | "package" | "manifest" | "rules" | "token" | "reference" | "output";
+  code: "source" | "package" | "manifest" | "rules" | "token" | "reference" | "dependency" | "output";
   detail: string;
 }
 const PACKS = "packs.yaml";
@@ -106,9 +112,13 @@ async function examineSource(folder: string): Promise<Examined> {
       });
     if (!manifest || pkg.issues.length) continue;
     packages.set(name, pkg);
-    for (const program of Object.keys(manifest.programs))
+    for (const [program, declared] of Object.entries(manifest.programs)) {
       if (!manifest.rules.some((rule) => ruleNamesProgram(rule.match, program)))
         issues.push({ where: name, code: "rules", detail: `program ${program} has no rule` });
+      // The index lists a vendor program with this hint as its guide; VERA never installs it.
+      if ("find" in declared.install && !declared.install.hint)
+        issues.push({ where: name, code: "dependency", detail: `program ${program} has no vendor guide` });
+    }
     for (const rule of manifest.rules) {
       if (rule.risk !== "safe" && rule.risk !== "device-read") continue;
       const token = dangerousToken(rule.match);
@@ -152,6 +162,21 @@ async function examineSource(folder: string): Promise<Examined> {
     packages,
     ...(packs ? { packs } : {}),
     ...(maintainers ? { maintainers } : {}),
+  };
+}
+
+/**
+ * A catalog source as `vera catalog build` reads it: its issues, its valid packages by folder name (ascending) and
+ * the ids `catalog.yaml` marks official.
+ */
+export async function readCatalogSource(
+  folder: string,
+): Promise<{ issues: CatalogIssue[]; packages: Map<string, PluginPackage>; official: Set<string> }> {
+  const examined = await examineSource(folder);
+  return {
+    issues: examined.issues,
+    packages: examined.packages,
+    official: new Set(examined.maintainers?.official ?? []),
   };
 }
 
@@ -199,8 +224,11 @@ export async function buildCatalogRelease(
       ecosystem: manifest.ecosystem,
       platforms: manifest.platforms,
       name: manifest.name,
+      summary: manifest.summary,
       description: manifest.description,
+      risk: pluginHighestRisk(manifest.rules),
       requires: manifest.requires,
+      dependencies: pluginDependencies(manifest),
       url,
       sha256: createHash("sha256").update(zip).digest("hex"),
       bytes: zip.length,
@@ -223,5 +251,81 @@ export async function buildCatalogRelease(
   await mkdir(out, { recursive: true });
   for (const [name, zip] of zips) await writeFile(join(out, name), zip, { flag: "wx" });
   await writeFile(join(out, "index.json"), indexText, { flag: "wx" });
+  // A channel index is never larger than index.json, so the size check above covers it.
+  for (const channel of CATALOG_CHANNELS)
+    await writeFile(
+      join(out, catalogChannelIndex(channel)),
+      `${JSON.stringify(catalogChannel(parsed.data, channel), null, 2)}\n`,
+      { flag: "wx" },
+    );
   return { issues: [], index: parsed.data };
+}
+
+/**
+ * The index of one release channel, naming that channel so a signature covers it: `pre-release` lists the
+ * whole index; `stable` keeps the plugins of a stable version (`pluginMaturity`), and each pack only those of
+ * them, without groups or packs left empty.
+ */
+export function catalogChannel(index: CatalogIndex, channel: CatalogChannel): CatalogIndex {
+  if (channel === "pre-release")
+    return { format: index.format, channel, plugins: index.plugins, packs: index.packs };
+  const plugins = index.plugins.filter((entry) => pluginMaturity(entry.version) === "stable");
+  const kept = new Set(plugins.map((entry) => entry.id));
+  const packs = index.packs.flatMap((pack) => {
+    const groups = pack.groups.flatMap((group) => {
+      const ids = group.plugins.filter((id) => kept.has(id));
+      return ids.length ? [{ ...group, plugins: ids }] : [];
+    });
+    return groups.length ? [{ ...pack, groups }] : [];
+  });
+  return { format: index.format, channel, plugins, packs };
+}
+
+/**
+ * A new catalog signing key pair: the Ed25519 private key as PKCS#8 PEM (mode 0600 on Linux; on Windows the
+ * file keeps its folder's ACL) and its public key as SPKI PEM. Neither file may exist; when the public key
+ * cannot be written, the new private key goes.
+ */
+export async function generateCatalogKeys(privatePath: string, publicPath: string): Promise<void> {
+  const { privateKey, publicKey } = generateKeyPairSync("ed25519");
+  await writeFile(privatePath, privateKey.export({ type: "pkcs8", format: "pem" }), {
+    flag: "wx",
+    mode: 0o600,
+  });
+  try {
+    await writeFile(publicPath, publicKey.export({ type: "spki", format: "pem" }), { flag: "wx" });
+  } catch (error) {
+    await rm(privatePath, { force: true });
+    throw error;
+  }
+}
+
+/**
+ * Signs the channel indexes of a release folder: `<index>.sig` holds the base64 Ed25519 signature of the
+ * index file's bytes. With `publicPem`, a private key that does not belong to it signs nothing, nor does
+ * a release that misses a channel index. Returns the signed index names.
+ */
+export async function signCatalogRelease(
+  folder: string,
+  privatePem: string,
+  publicPem?: string,
+): Promise<string[]> {
+  const key = createPrivateKey(privatePem);
+  if (key.asymmetricKeyType !== "ed25519") throw new Error("The signing key is not an Ed25519 private key.");
+  const spki = (pem: string) => createPublicKey(pem).export({ type: "spki", format: "der" });
+  if (publicPem !== undefined && !spki(privatePem).equals(spki(publicPem)))
+    throw new Error("The signing key does not match the public key.");
+  const names = CATALOG_CHANNELS.map(catalogChannelIndex);
+  const signatures: [string, string][] = [];
+  for (const name of names) {
+    let bytes: Buffer;
+    try {
+      bytes = await readFile(join(folder, name));
+    } catch {
+      throw new Error(`The release has no ${name}.`);
+    }
+    signatures.push([`${name}.sig`, `${sign(null, bytes, key).toString("base64")}\n`]);
+  }
+  for (const [name, text] of signatures) await writeFile(join(folder, name), text);
+  return names;
 }

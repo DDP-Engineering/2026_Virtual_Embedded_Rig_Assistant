@@ -43,6 +43,7 @@ test("authors from help, reviews trial in bypass and promotes with the user butt
     id: "fixture-cli",
     version: "1.0.0",
     name: "Fixture CLI",
+    summary: "Fixture summary.",
     description: "Inspect a virtual device.",
     ecosystem: "general",
     platforms: ["windows-x64", "linux-x64"],
@@ -177,8 +178,9 @@ test("authors from help, reviews trial in bypass and promotes with the user butt
     await expect(card).toContainText("Local");
     await expect(card.locator('[data-action="plugin-promote"]')).toHaveCount(0);
     await page.locator(`[data-session="${sessionId}"]`).click();
-    const before = (await invoke<{ snapshot: { approvals: unknown[] } }>(page, "session.get", { sessionId }))
-      .snapshot.approvals.length;
+    // A promoted plugin runs without a new approval: the visible approval cards do not change.
+    await expect(page.locator("[data-approval-card]").first()).toBeVisible();
+    const before = await page.locator("[data-approval-card]").count();
     await send("inspect");
     await expect
       .poll(

@@ -16,6 +16,7 @@ import { basename, dirname, join, resolve } from "node:path";
 import {
   isPluginRelativePath,
   PLUGIN_LIMITS,
+  type PluginComposition,
   type PluginInstalled,
   type PluginIssue,
   type PluginManifest,
@@ -30,6 +31,7 @@ import {
 import { unzipSync, zipSync } from "fflate";
 import { LineCounter, parseDocument } from "yaml";
 import { z } from "zod";
+import { parseSkill } from "../skills/catalog.js";
 
 /** install.json format 1, written next to the package files of an installed plugin. */
 export const pluginRecordSchema = z.strictObject({
@@ -63,6 +65,8 @@ interface Package {
 /** A package read with the import checks and examined, as review, install and the catalog see it. */
 export interface PluginPackage extends Package {
   manifest?: PluginManifest;
+  /** Skills and data files, whenever the manifest parses. */
+  composition?: PluginComposition;
   issues: PluginIssue[];
   /** The integrity hash install.json would record. */
   sha256: string;
@@ -215,11 +219,34 @@ function readZip(data: Uint8Array): { files: Files; folder?: string } {
   return { files, ...(folder ? { folder } : {}) };
 }
 
-/** Manifest issues of a package; the manifest is returned whenever it parses, for listing. */
+const SKILL_FILE = /^skills\/([^/]+)\/SKILL\.md$/;
+/**
+ * The skills (each skills/<name>/SKILL.md with its front-matter description, none when it does not parse) and the
+ * data files (outside plugin.yaml, skills/, scripts/ and the package-relative documents) of a package, in path order.
+ */
+function compose(files: Files, manifest: PluginManifest): PluginComposition {
+  const composition: PluginComposition = { skills: [], files: [] };
+  const docs = new Set(manifest.docs);
+  for (const path of [...files.keys()].sort(order)) {
+    const skill = SKILL_FILE.exec(path)?.[1];
+    if (skill !== undefined) {
+      let description: string | undefined;
+      try {
+        const text = new TextDecoder("utf-8", { fatal: true }).decode(files.get(path));
+        description = parseSkill(text, skill).description;
+      } catch {}
+      composition.skills.push(description ? { name: skill, description } : { name: skill });
+    } else if (path !== MANIFEST && !/^(?:skills|scripts)\//.test(path) && !docs.has(path))
+      composition.files.push(path);
+  }
+  return composition;
+}
+
+/** Manifest issues of a package; the manifest and its composition are returned whenever it parses, for listing. */
 function examine(
   files: Files,
   folder: string | undefined,
-): { manifest?: PluginManifest; issues: PluginIssue[] } {
+): { manifest?: PluginManifest; composition?: PluginComposition; issues: PluginIssue[] } {
   const raw = files.get(MANIFEST);
   if (!raw || raw.length > PLUGIN_LIMITS.manifestBytes) return { issues: [{ code: "manifest" }] };
   let text: string;
@@ -248,7 +275,7 @@ function examine(
     if (!/^https?:\/\//.test(doc) && !files.has(doc))
       issues.push({ code: "field", path: `docs.${index}`, issue: "missing_file" });
   });
-  return { manifest, issues };
+  return { manifest, composition: compose(files, manifest), issues };
 }
 
 async function readRecord(path: string): Promise<PluginRecord | undefined> {
@@ -282,10 +309,11 @@ export async function readPluginPackage(path: string): Promise<PluginPackage> {
   else if (info.isFile() && /\.zip$/i.test(source)) {
     pkg = { source, ...readZip(await readFile(source)), kind: "zip" };
   } else throw fails("INVALID");
-  const { manifest, issues } = examine(pkg.files, pkg.folder);
+  const { manifest, composition, issues } = examine(pkg.files, pkg.folder);
   return {
     ...pkg,
     ...(manifest ? { manifest } : {}),
+    ...(composition ? { composition } : {}),
     issues: issues.slice(0, PLUGIN_LIMITS.issues),
     sha256: pluginIntegrity(pkg.files),
   };
@@ -421,7 +449,7 @@ export class PluginStore {
     } catch {
       return { id, source: "workbench", issues: [{ code: "unavailable" }] };
     }
-    const { manifest, sha256 } = review;
+    const { manifest, composition, sha256 } = review;
     const issues = [...review.issues];
     let trusted: LoadedPlugin | undefined;
     try {
@@ -456,6 +484,7 @@ export class PluginStore {
               manifest?.rules
                 .filter((rule) => rule.risk === "irreversible")
                 .map(({ match, note }) => ({ match, ...(note ? { note } : {}) })) ?? [],
+            ...(manifest && composition ? { manifest, composition } : {}),
           }
         : {}),
     };
@@ -493,21 +522,23 @@ export class PluginStore {
     const record = await readRecord(join(folder, RECORD));
     if (!record) issues.push({ code: "record" });
     let manifest: PluginManifest | undefined;
+    let composition: PluginComposition | undefined;
     try {
       const files = await readFolder(folder, true);
       if (record && pluginIntegrity(files) !== record.sha256) issues.push({ code: "changed" });
       const examined = examine(files, id);
       manifest = examined.manifest;
+      composition = examined.composition;
       issues.push(...examined.issues);
       if (record && manifest && (record.id !== id || record.version !== manifest.version))
         issues.push({ code: "record" });
     } catch (error) {
       issues.push({ code: (error as VeraError | undefined)?.code === "DENIED" ? "changed" : "unavailable" });
     }
-    return { folder, record, manifest, issues: issues.slice(0, PLUGIN_LIMITS.issues) };
+    return { folder, record, manifest, composition, issues: issues.slice(0, PLUGIN_LIMITS.issues) };
   }
   private async summary(id: string): Promise<PluginInstalled> {
-    const { record, manifest, issues } = await this.inspect(id);
+    const { record, manifest, composition, issues } = await this.inspect(id);
     return {
       id,
       issues,
@@ -525,6 +556,8 @@ export class PluginStore {
             irreversible: manifest.rules
               .filter((rule) => rule.risk === "irreversible")
               .map(({ match, note }) => (note === undefined ? { match } : { match, note })),
+            manifest,
+            ...(composition ? { composition } : {}),
           }
         : {}),
       ...(record
@@ -602,7 +635,7 @@ export class PluginStore {
    * installed plugin with the same id.
    */
   async review(path: string): Promise<PluginReview> {
-    const { manifest, issues, ...pkg } = await readPluginPackage(path);
+    const { manifest, composition, issues, ...pkg } = await readPluginPackage(path);
     const installed =
       manifest && (await this.ids()).includes(manifest.id) ? await this.summary(manifest.id) : undefined;
     return {
@@ -611,6 +644,7 @@ export class PluginStore {
       sha256: pkg.sha256,
       issues,
       ...(manifest ? { manifest } : {}),
+      ...(composition ? { composition } : {}),
       ...(installed
         ? { installed: installed.version === undefined ? {} : { version: installed.version } }
         : {}),

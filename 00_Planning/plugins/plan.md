@@ -2,9 +2,9 @@
 
 PURPOSE: the order in which the plugin system of [architecture.md](architecture.md) and the ESP32
 pack of [packs.md](packs.md) are built: work packages PLG-01…PLG-22, dependencies, verification and
-risks. Follow-up PLG-23…PLG-25 (2026-11-11) are planned in
-[../plan/plugins-ui-redesign.md](../plan/plugins-ui-redesign.md): scalable catalog discovery,
-Available/Installed management and activation in Workbench settings → Plugins with top Save/Cancel.
+risks. Follow-up PLG-23…PLG-25 (2026-11-11, implemented, specified in [ui-redesign.md](ui-redesign.md)):
+scalable catalog discovery, Available/Installed management and activation in Workbench settings →
+Plugins with top Save/Cancel.
 DONE-WHEN: steps 1 and 2 are complete. On Windows x64 and Linux x64 a user installs the ESP32 pack
 from the catalog and asks the agent to identify, build, flash and monitor a real ESP32 board; the
 release smoke covers the approval card, the typed confirmation and process-tree termination.
@@ -33,8 +33,7 @@ permission modes, tool registry. Implementation follows the repository's AEGIS w
 Gitea issue of each package: PLG-01…PLG-18 are #57…#74 in order (PLG-n is issue #(56 + n)); PLG-19…PLG-22 are #81…#84.
 Created 2026-11-01 without ADORE labels.
 
-The new [Plugins UI redesign plan](../plan/plugins-ui-redesign.md) supplies the umbrella and
-PLG-23…PLG-25 follow-up issues. Its accepted UI direction supersedes the checkable-packs presentation
+The Plugins UI redesign (umbrella #85, PLG-23…PLG-25) followed. Its accepted UI direction supersedes the checkable-packs presentation
 of PLG-06/07 without reopening those original tickets or changing package execution policy.
 
 ```mermaid
@@ -215,7 +214,7 @@ review screen; a zip with a wrong hash is refused.
   `<resources>/plugins/`); it verifies size and SHA-256, refuses entry mismatches and downgrades, reviews first installs
   and updates that change programs or rules, and checks at start and every 24 h while the update mode is not Off.
   Spec `.agentic/specs/REQ-DATA-b40d3f9b.md`. Open: the official catalog URL and hosting, the hosted repository's CI
-  platform and release upload, index signing (deferred by ADR-0019).
+  platform and release upload. Index signing and channels: PLG-07 #268 of epic #261 (`02_Tools/release/catalog-release.md`).
 
 ### PLG-08 `serial-monitor`
 **Goal:** list ports and capture consoles on both systems. **Depends on:** PLG-04, PLG-05.

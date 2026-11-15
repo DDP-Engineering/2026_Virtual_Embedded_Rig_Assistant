@@ -203,7 +203,7 @@ describe("package", { timeout: 60_000 }, () => {
     expect(validatePluginManifest(m).issues).toEqual([]);
     expect(m).toMatchObject({
       id: "platformio",
-      version: "1.0.0",
+      version: "0.2.0",
       ecosystem: "lab",
       platforms: ["windows-x64", "linux-x64"],
     });
@@ -327,7 +327,7 @@ describe.skipIf(!helperPython)("platformio helper against stand-ins (offline)", 
     expect(bare.json).toMatchObject({
       kind: "platformio-tools",
       status: "pass",
-      helper: "1.0.0",
+      helper: "0.2.0",
       platformio: "6.2.0",
     });
     const full = pio(["tools", "--request", request("tools")]);
@@ -660,7 +660,7 @@ describe.skipIf(!helperPython)("platformio helper against stand-ins (offline)", 
       ["package", "tool-scons", "4.41101.0"],
       ["library", "Unity", "2.6.1"],
     ]);
-    expect(a.tools).toMatchObject({ helper: "1.0.0", platformio: "6.2.0" });
+    expect(a.tools).toMatchObject({ helper: "0.2.0", platformio: "6.2.0" });
     expect(a.inputs.before).toEqual(a.inputs.after);
     expect(Object.keys(a.inputs.before)).toContain("src/main.c");
     expect(a.size.usage.flash).toMatchObject({ used: 1144, limit: 1048576 });

@@ -146,8 +146,8 @@ not be needed at all.
 
 ## 7. Electronics design
 
-Host-side design work; none of these plugins drives hardware. Order, state and shared rules:
-[../plan/electronics-plugins.md](../plan/electronics-plugins.md) (ELEC-01...ELEC-07, epic #92).
+Host-side design work; none of these plugins drives hardware. Delivered as ELEC-01...ELEC-07
+(epic #92); open proofs are in [../plan/README.md](../plan/README.md).
 
 | Plugin | Programs | Risk | State |
 |---|---|---|---|

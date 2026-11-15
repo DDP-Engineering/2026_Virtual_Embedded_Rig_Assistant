@@ -35,6 +35,7 @@ async function setup(programs: Record<string, unknown>, served: Map<string, Uint
       id: "tools",
       version: "1.0.0",
       name: "Tools",
+      summary: "Fixture summary.",
       description: "Integration tools.",
       ecosystem: "general",
       platforms: ["windows-x64", "linux-x64"],
@@ -160,7 +161,14 @@ it("finds and probes a real program and checks its range", async () => {
     new Map(),
   );
   expect(await s.provisioner.statuses("tools")).toEqual([
-    { name: "node", kind: "find", state: "ready", version: process.versions.node, range: ">=20" },
+    {
+      name: "node",
+      kind: "find",
+      state: "ready",
+      version: process.versions.node,
+      range: ">=20",
+      path: expect.any(String),
+    },
     {
       name: "old",
       kind: "find",

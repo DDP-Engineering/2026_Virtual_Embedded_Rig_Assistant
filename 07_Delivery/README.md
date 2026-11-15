@@ -2,6 +2,12 @@
 
 Installers, portable packages, update feed files and release notes.
 
-`plugins/` holds the official plugins as a catalog release (`<id>-<version>.zip` per plugin and
-`index.json`), built by `npm run prepare:plugins` from `05_Software`. It is git-ignored; development runs
-read it and `npm run package` ships it as `<resources>/plugins/`.
+`plugins/` holds the official plugins as a catalog release (`<id>-<version>.zip` per plugin, `index.json`
+and the channel indexes `index-stable.json` and `index-pre-release.json`), built by `npm run prepare:plugins`
+from `05_Software`. It is git-ignored; development runs read it and `npm run package` ships it as
+`<resources>/plugins/`. Signing and publishing it: [02_Tools/release/catalog-release.md](../02_Tools/release/catalog-release.md).
+
+`kit-windows-x64/` and `kit-linux-x64/` are the offline dependency kits of the official plugins, built by
+`npm run vera -- catalog kit` (same document, "Offline dependency kit"). Each one holds the pinned download
+files, the wheels of the pip and script programs, VERA's CPython archive, `kit.json` and a `README.md`. They are
+git-ignored and published next to the catalog release, never inside the installer.

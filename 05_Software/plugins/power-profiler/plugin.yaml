@@ -1,11 +1,18 @@
 format: 1
 id: power-profiler
-version: 1.0.0
+version: 0.2.0
 name: Power profiling
+summary: Measure a board's current, power and energy with a Joulescope JS220 and analyse the captures offline.
 description: Measure a board's current, voltage, power, energy and charge with a Joulescope JS220 through the official pyjoulescope_driver - captures on the meter's own sample clock with gaps and overflow kept explicit (never zero), firmware build identity, GPI markers for events - and analyse them offline - mean/min/max current, energy and charge integrals, time in states, energy per event, A/B firmware comparison that separates setup differences from firmware changes (judged by lab-validate), and a battery-life interval with its assumptions. The meter is reserved for the run, opened without its defaults, its current path never switched, and changed settings restored and read back.
 ecosystem: lab
 platforms: [windows-x64, linux-x64]
 docs: [README.md, "https://github.com/jetperch/joulescope_driver", "https://pypi.org/project/pyjoulescope-driver/2.5.5/"]
+settings:
+  lab-resources:
+    kind: workbench-file
+    path: lab/resources.json
+    format: lab-resources
+    description: The bench registry; declares the power monitor (power-monitor) that captures name by alias.
 programs:
   power-profile:
     install: { script: scripts/power_profile.py }

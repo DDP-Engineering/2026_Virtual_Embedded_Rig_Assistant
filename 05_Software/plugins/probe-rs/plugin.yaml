@@ -1,7 +1,8 @@
 format: 1
 id: probe-rs
-version: 1.0.0
+version: 0.2.0
 name: probe-rs
+summary: Flash, verify, reset, read memory and stream RTT on ARM, RISC-V and Xtensa targets through debug probes.
 description: Identify, flash, verify, reset, read memory and stream RTT on ARM, RISC-V and supported Xtensa targets through local debug probes.
 ecosystem: general
 platforms: [windows-x64, linux-x64, linux-arm64]
@@ -16,14 +17,17 @@ programs:
         windows-x64:
           url: https://github.com/probe-rs/probe-rs/releases/download/v0.32.0/probe-rs-tools-x86_64-pc-windows-msvc.zip
           sha256: 56fc0564cc23d604b27dc2d57606194159c49f951999f3e47bd2cbffcba64103
+          bytes: 11502414
           path: probe-rs.exe
         linux-x64:
           url: https://github.com/probe-rs/probe-rs/releases/download/v0.32.0/probe-rs-tools-x86_64-unknown-linux-gnu.tar.xz
           sha256: c2ccc46049e52a5d403ef212078cd637ecda55b662708327960558f83e851ff5
+          bytes: 22506272
           path: probe-rs-tools-x86_64-unknown-linux-gnu/probe-rs
         linux-arm64:
           url: https://github.com/probe-rs/probe-rs/releases/download/v0.32.0/probe-rs-tools-aarch64-unknown-linux-gnu.tar.xz
           sha256: 7c818cfd77808e806bf8f4d108c9137910b4fb28e0fe5c464d39782dbbc8af31
+          bytes: 21444944
           path: probe-rs-tools-aarch64-unknown-linux-gnu/probe-rs
     version: { args: [--version], match: 'probe-rs (\d+\.\d+\.\d+)', range: '==0.32.0' }
     timeout: 120

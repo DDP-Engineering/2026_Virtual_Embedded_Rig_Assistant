@@ -6,7 +6,9 @@ title = "New Workbench page offers creation only"
 
 status = "active"
 
-requirement = "When the engineer selects New Workbench, the desktop app shall show a creation page containing a folder chooser, a name field and a Create action, followed by the workbench configuration sections once a folder that is not already a workbench is chosen, without controls for opening an existing or recent workbench."
+requirement = """
+When the engineer selects New Workbench, the desktop app shall show a creation page in the editor layout with a header holding the workbench name and the Create action, a General section holding the folder chooser with the chosen path and a name field, and the other configuration sections locked until a folder that is not already a workbench is chosen, without controls for opening an existing or recent workbench.
+"""
 
 verification = "Native and mock e2e: click New Workbench; assert choose-create, #workbench-name and create-workbench are present and open-workbench/open-recent controls are absent; sidebar entries still open recents."
 
@@ -21,4 +23,4 @@ priority = "normal"   # low | normal | high
 rationale = ""        # why this behavior exists, if not obvious
 
 created = 2026-10-31
-updated = 2026-10-31
+updated = 2026-11-15

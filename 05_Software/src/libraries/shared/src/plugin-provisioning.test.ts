@@ -14,6 +14,7 @@ const manifest = (install: unknown, version: Record<string, unknown> = {}) => ({
   id: "tools",
   version: "1.0.0",
   name: "Tools",
+  summary: "Fixture summary.",
   description: "Test tools.",
   ecosystem: "general",
   platforms: ["windows-x64", "linux-x64"],
@@ -145,7 +146,8 @@ it("validates program statuses and the programs and provision channels", () => {
     { name: "x", kind: "pip", state: "missing", problem: "other" },
   ])
     expect(pluginProgramStatusSchema.safeParse(bad).success, JSON.stringify(bad)).toBe(false);
-  for (const name of ["plugins.programs", "plugins.provision"] as const) {
+  // REQ-FUNC-751e430e: plugins.reinstall shares the provision contract.
+  for (const name of ["plugins.programs", "plugins.provision", "plugins.reinstall"] as const) {
     const channel = channels[name];
     expect(channel.request.parse({ id: "esp32-esptool" })).toEqual({ id: "esp32-esptool" });
     expect(channel.request.safeParse({ id: "../x" }).success).toBe(false);

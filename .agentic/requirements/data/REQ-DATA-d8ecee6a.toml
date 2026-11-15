@@ -12,7 +12,7 @@ The zephyr plugin shall read requests and write run folders, results, test repor
 
 verification = "Run each operation on the fixtures and compare result.json, junit.xml and the build folder marker with the specification's fields and statuses; a request with format 2 or an unknown field is refused with exit 2 and nothing written."
 
-affected_paths = ["05_Software/plugins/zephyr/plugin.yaml", "05_Software/plugins/zephyr/scripts/zephyr_support/request.py", "05_Software/plugins/zephyr/scripts/zephyr_support/result.py", "05_Software/plugins/zephyr/scripts/zephyr_support/builddir.py", "05_Software/plugins/zephyr/scripts/zephyr_support/tests.py"]
+affected_paths = ["05_Software/plugins/zephyr/plugin.yaml", "05_Software/plugins/zephyr/scripts/zephyr_support/request.py", "05_Software/plugins/zephyr/scripts/zephyr_support/result.py", "05_Software/plugins/zephyr/scripts/zephyr_support/builddir.py", "05_Software/plugins/zephyr/scripts/zephyr_support/tests.py", "05_Software/plugins/zephyr/scripts/zephyr_support/__init__.py", "05_Software/plugins/zephyr/scripts/zephyr_support/errors.py", "05_Software/plugins/zephyr/scripts/zephyr_support/workspace.py"]
 
 linked_tests = ["05_Software/tests/integration/zephyr.test.ts"]
 
@@ -23,4 +23,4 @@ priority = "normal"   # low | normal | high
 rationale = ""        # why this behavior exists, if not obvious
 
 created = 2026-11-14
-updated = 2026-11-14
+updated = 2026-11-15

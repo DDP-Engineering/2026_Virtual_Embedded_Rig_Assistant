@@ -121,8 +121,7 @@ test("installs a plugin through the review screen, enables it, and stops its bac
     await expect(review.locator('[data-program="echo"]')).toContainText("%VERA_TEST_NODE%");
     await expect(review.locator('[data-program="echo"]')).toContainText("Install Node.js.");
     await expect(review.locator("[data-rule]")).toHaveCount(5);
-    await expect(review.locator("[data-rule] .risk-badge")).toHaveText([
-      "Safe",
+    await expect(review.locator("[data-operations] > summary .risk-badge")).toHaveText([
       "Safe",
       "Device write",
       "Irreversible",
@@ -346,6 +345,7 @@ test("scoped program status probes are cancelled when the app quits", async () =
       id: "probe-tools",
       name: "Probe tools",
       version: "1.0.0",
+      summary: "Fixture summary.",
       description: "Fixture probe lifetime.",
       ecosystem: "general",
       platforms: ["windows-x64", "linux-x64"],

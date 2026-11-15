@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-8af265ac"
+
+title = "Plugin page operations come from the rules approvals classify with"
+
+status = "active"
+
+requirement = """
+The shared plugin operations grouping shall be built from the manifest rules that the approval policy classifies with, so a command's approval risk and note are those of the operation group that lists its matching rule.
+"""
+
+verification = "Core test on the official bus-tools plugin installed into a store: the listed manifest rules equal load().manifest.rules; pluginOperations groups them by risk in manifest order; classifyCommand on those rules for `bus-tool identify --adapter bp` returns device-read with the identify note, the rule listed in the device-read group."
+
+affected_paths = ["05_Software/src/libraries/shared/src/plugins.ts"]
+
+linked_tests = ["05_Software/src/libraries/shared/src/plugins.test.ts", "05_Software/src/libraries/core/src/plugins/store.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

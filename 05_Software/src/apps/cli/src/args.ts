@@ -1,5 +1,6 @@
 import { resolve } from "node:path";
 import { parseArgs } from "node:util";
+import { DEPENDENCY_KIT_PLATFORMS, type DependencyKitPlatform } from "@vera/core";
 import { customConfigSchema, modelReferenceSchema, pluginIdSchema, sessionIdSchema } from "@vera/shared";
 
 export const USAGE = `Usage: vera run --workbench <dir> --prompt <text>
@@ -15,6 +16,9 @@ export const USAGE = `Usage: vera run --workbench <dir> --prompt <text>
   vera plugin provision --id <id> --workbench <dir> --data <dir>
   vera catalog check --source <dir>
   vera catalog build --source <dir> --out <dir>
+  vera catalog keygen --private <file> --public <file>
+  vera catalog sign --release <dir> --key <private-key-file> [--public <file>]
+  vera catalog kit --source <dir> --platform windows-x64|linux-x64 --out <dir> [--skip <id>,...]
   vera index --workbench <dir> [--data <dir>]
   vera search --workbench <dir> --query <text> [--mode hybrid|keyword|semantic]
     [--k 1..20] [--path-glob <glob>] [--data <dir>]
@@ -204,26 +208,36 @@ function pluginCommand(argv: string[]): PluginOptions | ScopedPluginOptions {
   }
 }
 /**
- * `vera catalog check --source <dir>` (the catalog's CI) and `vera catalog build --source <dir> --out
- * <dir>` (its release job).
+ * `vera catalog check --source <dir>` (the catalog's CI), `vera catalog build --source <dir> --out
+ * <dir>` (its release job), `vera catalog keygen --private <file> --public <file>`, `vera catalog sign
+ * --release <dir> --key <file> [--public <file>]` (index signing) and `vera catalog kit --source <dir>
+ * --platform <platform> --out <dir> [--skip <id>,...]` (the offline dependency kit of one platform).
  */
-export type CatalogOptions = { source: string; approve?: never } & (
-  | { kind: "catalog-check" }
-  | { kind: "catalog-build"; out: string }
+export type CatalogOptions = { approve?: never } & (
+  | { kind: "catalog-check"; source: string }
+  | { kind: "catalog-build"; source: string; out: string }
+  | { kind: "catalog-keygen"; privateKey: string; publicKey: string }
+  | { kind: "catalog-sign"; release: string; key: string; publicKey?: string }
+  | { kind: "catalog-kit"; source: string; platform: DependencyKitPlatform; out: string; skip?: string[] }
 );
+const CATALOG_ACTIONS = {
+  check: ["source"],
+  build: ["source", "out"],
+  keygen: ["private", "public"],
+  sign: ["release", "key", "public"],
+  kit: ["source", "platform", "out", "skip"],
+} as const;
 function catalogCommand(argv: string[]): CatalogOptions {
-  const action = argv[1];
-  if (action !== "check" && action !== "build") throw new UsageError("Expected catalog check or build.");
+  const action = argv[1] as keyof typeof CATALOG_ACTIONS;
+  if (!Object.hasOwn(CATALOG_ACTIONS, action ?? ""))
+    throw new UsageError("Expected catalog check, build, keygen, sign or kit.");
   try {
     const { values, tokens } = parseArgs({
       args: argv.slice(2),
       strict: true,
       allowPositionals: false,
       tokens: true,
-      options:
-        action === "check"
-          ? { source: { type: "string" } }
-          : { source: { type: "string" }, out: { type: "string" } },
+      options: Object.fromEntries(CATALOG_ACTIONS[action].map((name) => [name, { type: "string" as const }])),
     });
     const seen = new Set<string>();
     for (const token of tokens)
@@ -231,15 +245,39 @@ function catalogCommand(argv: string[]): CatalogOptions {
         if (seen.has(token.name)) throw new UsageError(`Repeated --${token.name}.`);
         seen.add(token.name);
       }
-    const source = values.source as string | undefined,
-      out = (values as { out?: string }).out;
-    for (const value of [source, out])
+    const { platform, skip, ...paths } = values as Record<string, string | undefined>;
+    for (const value of Object.values(paths))
       if (value !== undefined && (!value.trim() || value.includes("\0")))
         throw new UsageError("Invalid path.");
-    if (!source) throw new UsageError(`catalog ${action} requires --source.`);
-    if (action === "check") return { kind: "catalog-check", source: resolve(source) };
-    if (!out) throw new UsageError("catalog build requires --out.");
-    return { kind: "catalog-build", source: resolve(source), out: resolve(out) };
+    const path = (name: string) => {
+      const value = paths[name];
+      if (!value) throw new UsageError(`catalog ${action} requires --${name}.`);
+      return resolve(value);
+    };
+    if (action === "check") return { kind: "catalog-check", source: path("source") };
+    if (action === "build") return { kind: "catalog-build", source: path("source"), out: path("out") };
+    if (action === "kit") {
+      if (!DEPENDENCY_KIT_PLATFORMS.some((name) => name === platform))
+        throw new UsageError("catalog kit requires --platform windows-x64 or linux-x64.");
+      const skipped = skip === undefined ? undefined : skip.split(",").map((id) => id.trim());
+      if (skipped?.some((id) => !pluginIdSchema.safeParse(id).success))
+        throw new UsageError("catalog kit --skip takes plugin ids separated by commas.");
+      return {
+        kind: "catalog-kit",
+        source: path("source"),
+        platform: platform as DependencyKitPlatform,
+        out: path("out"),
+        ...(skipped ? { skip: skipped } : {}),
+      };
+    }
+    if (action === "keygen")
+      return { kind: "catalog-keygen", privateKey: path("private"), publicKey: path("public") };
+    return {
+      kind: "catalog-sign",
+      release: path("release"),
+      key: path("key"),
+      ...(paths.public ? { publicKey: path("public") } : {}),
+    };
   } catch (error) {
     if (error instanceof UsageError) throw error;
     throw new UsageError(error instanceof Error ? error.message : "Invalid arguments.");

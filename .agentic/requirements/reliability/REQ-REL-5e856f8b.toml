@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-REL-5e856f8b"
+title = "Recover a session view from missed terminal events"
+status = "active"
+requirement = "When the open session misses a completion, error or cancellation event, the desktop app shall detect it from the durable session cursor and reload the session snapshot, so the conversation shows the final state without the engineer navigating away."
+verification = "Native E2E with replayed turns that end, fail and are cancelled: drop the terminal event and check that the view reaches the final state on its own, with no outbound connection."
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/hooks/use-session-events.ts"]
+linked_tests = ["05_Software/tests/e2e/session-recovery.spec.ts"]
+priority = "normal"
+created = 2026-11-15
+updated = 2026-11-15

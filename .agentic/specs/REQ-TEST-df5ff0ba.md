@@ -1,6 +1,6 @@
 # Session performance protocol
 
-The canonical scope is00_Planning/plan/performance-regression.md.
+The canonical scope is 06_SoftwareDocu/session-performance.md.
 
 `npm run perf:sessions -- run --mode quick|full --output <new report.json> [--cases <csv>] [--scenarios <csv>] [--reference <reference.json>]` builds an isolated compiled instrumented app. Quick has5 measured samples/case; full30. Optional reference comparison requires a complete calibrated reference. `calibrate --runs <report1,report2> --budgets <budgets.json> --output <new reference.json>` requires at least two compatible full runs. `compare --report <report.json> --reference <reference.json>` compares stored evidence. Output files are exclusive-create. Exit0: complete measurement/comparison pass;1: failed measurement/budget/regression;2: invalid arguments/evidence/reference. A measurement without reference is diagnostic, not a regression pass.
 

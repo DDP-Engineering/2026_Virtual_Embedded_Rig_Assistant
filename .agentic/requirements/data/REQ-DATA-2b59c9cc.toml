@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-DATA-2b59c9cc"
+
+title = "Derive plugin maturity from the version"
+
+status = "active"
+
+requirement = "The shared plugin maturity helper shall classify a plugin version as `pre-release` when it is a valid semantic version with major version 0 or with a pre-release tag, and as `stable` for every other valid semantic version; a missing or invalid version shall classify as `pre-release`."
+
+verification = "Shared unit test: `0.4.0`, `0.0.1` and `1.0.0-beta.1` are pre-release; `1.0.0`, `2.3.1` and `1.0.0+build.5` are stable; `1.0`, `x`, an empty string and undefined are pre-release."
+
+affected_paths = ["05_Software/src/libraries/shared/src/plugins.ts"]
+
+linked_tests = ["05_Software/src/libraries/shared/src/plugins.test.ts"]
+
+
+spec = ""
+
+priority = "high"   # low | normal | high
+rationale = "Maturity has one source, the version: no manifest field can contradict it."        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-15

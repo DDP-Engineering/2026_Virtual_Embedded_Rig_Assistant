@@ -57,7 +57,7 @@ test("native compact chrome retains window controls and a persistent navigation 
     if (process.env.VERA_UI_CAPTURE_DIR)
       await page.screenshot({ path: join(process.env.VERA_UI_CAPTURE_DIR, "rail.png") });
     await page.locator('[data-i18n="nav.settings"]').click();
-    await expect(page.locator('[data-settings-section="about"] .metadata')).toHaveCount(1);
+    await expect(page.locator('[data-settings-section="about"] [data-about]')).toHaveCount(1);
     await expect(page.locator("#sidebar")).toHaveAttribute("data-collapsed", "false");
     await page.locator('[data-toggle="sidebar"]').click();
     await app.close();
@@ -66,7 +66,7 @@ test("native compact chrome retains window controls and a persistent navigation 
     page = await app.firstWindow();
     await expect(page.locator("#sidebar")).toHaveAttribute("data-collapsed", "true");
     await page.locator('[data-i18n="nav.settings"]').click();
-    await page.locator('[data-section="language"]').click();
+    await page.locator('[data-section="appearance"]').click();
     await expect(page.locator("#language")).toBeVisible();
     // Settings replaces the primary navigation with its Back action.
     await page.locator('[data-action="leave-settings"]').click();
@@ -131,7 +131,7 @@ test("compact navigation fits all languages, themes and text scales at minimum s
       for (const theme of ["light", "dark"]) {
         for (const scale of [0.875, 1, 1.125, 1.25, 1.5]) {
           await page.locator('[data-i18n="nav.settings"]').click();
-          await changeSetting(page, "language", () => page.locator("#language").selectOption(language));
+          await changeSetting(page, "appearance", () => page.locator("#language").selectOption(language));
           await changeSetting(page, "appearance", () =>
             page.locator(`[data-theme-option="${theme}"]`).click(),
           );

@@ -15,10 +15,7 @@ Datele comune de test, de exemplu demo-ul fictiv și întrebările de căutare, 
 |---|---|---|---|
 | [eval-performance-harness/](#performanță) | Încărcarea sesiunilor salvate | `npm run perf:sessions` | Măsurare curentă (PERF-01); calibrarea și gate-urile sunt amânate. |
 | [eval-retrieval-harness/](#căutare) | Căutarea reală a produsului | `npm run eval:retrieval` | Praguri hybrid documentate. |
-| [eval-embedding-comparison-harness/](#comparația-bgee5) | Compararea modelelor BGE și E5 | `node evaluators/eval-embedding-comparison-harness/compare-embeddings.mjs` | Experiment istoric din ADR-0015; nu este un gate. |
-| [eval-firmware-comparator-harness/](#rubricile-analysis-skills) | Rubrica skill-ului `firmware-comparator` | `node evaluators/eval-firmware-comparator-harness/firmware-comparator-rubric.mjs` | Opt-in, cu model real configurat. |
-| [eval-test-planner-harness/](#rubricile-analysis-skills) | Rubrica skill-ului `test-planner` | `node evaluators/eval-test-planner-harness/test-planner-rubric.mjs` | Opt-in, cu model real configurat. |
-| [retrieval-support/](retrieval-support/README.md) | Module comune căutării și comparației | — | Importate de cele două harness-uri. |
+| [retrieval-support/](retrieval-support/README.md) | Module ale evaluării căutării | — | Importate de harness-ul de căutare. |
 
 ## Scratch și outputs
 
@@ -31,8 +28,6 @@ Datele comune de test, de exemplu demo-ul fictiv și întrebările de căutare, 
   pentru că evaluatorii nu creează directoare părinte. Directorul este ignorat de Git; dovezile
   păstrate se selectează explicit.
 - Zona `node_modules/.cache/evaluators/` poate fi ștearsă oricând nu rulează niciun evaluator;
-  se recreează la nevoie. Scratch-ul păstrat al comparației și bundle-urile rubricilor nu conțin
-  legături către alte directoare.
 - Rapoartele istorice deja acceptate rămân în `06_SoftwareDocu/` cu hash-urile și proveniența
   lor originale; ele nu au fost mutate. Mutarea harness-ului de performanță a schimbat însă
   identitatea lui (`harnessHash`), iar `compare` și `calibrate` cer identități identice: rulările
@@ -42,8 +37,6 @@ Datele comune de test, de exemplu demo-ul fictiv și întrebările de căutare, 
 |---|---|---|
 | performance | director temporar `vera-session-performance-*`, șters la final | `--output <fișier nou>`, obligatoriu |
 | retrieval | `node_modules/.cache/evaluators/retrieval/` sau `--scratch <părinte>`; directorul rulării este șters în `finally` | `--output <fișier nou>`, opțional |
-| embedding-comparison | `--scratch` obligatoriu, subdirector al `node_modules/.cache/evaluators/embedding-comparison/`; păstrat pentru inspecție | `--output <json>`, obligatoriu |
-| firmware-comparator, test-planner | bundle-ul host-ului izolat în `node_modules/.cache/evaluators/<familie>/` | `ABS_OUTPUT` nou, păstrat complet |
 
 ## Performanță
 
@@ -75,33 +68,3 @@ python ../02_Tools/environment/npmw.py npm run eval:retrieval -- --output evalua
 
 `--scratch <părinte>` alege părintele directorului temporar; `--output <fișier nou>`
 salvează raportul complet și refuză un fișier existent.
-
-## Comparația BGE/E5
-
-[compare-embeddings.mjs](eval-embedding-comparison-harness/compare-embeddings.mjs) compară
-izolat cele două modele pe același corpus: rezultate, timpi CPU, dimensiuni și hash-uri.
-Fiecare model rulează în [embedding-worker.mjs](eval-embedding-comparison-harness/embedding-worker.mjs),
-un worker thread care folosește CPU și q8 și interzice rețeaua în timpul inferenței.
-Comparația nu înlocuiește evaluarea prin serviciul real; decizia de selecție este în
-[ADR-0015](../../00_Planning/decisions/ADR-0015-embedding-model-selection.md).
-
-```powershell
-python ../02_Tools/environment/npmw.py node evaluators/eval-embedding-comparison-harness/compare-embeddings.mjs --scratch node_modules/.cache/evaluators/embedding-comparison/<run> --models <models-directory> --output evaluation-outputs/embedding-comparison/<run>.json
-```
-
-Implicit cere cache-urile locale ale ambelor modele. `--prepare` permite descărcarea
-fișierelor fixate în manifestele BGE/E5 din `tests/fixtures/retrieval/`. Scratch-ul și
-raportul sunt păstrate; un raport existent cu același nume este suprascris.
-
-## Rubricile analysis-skills
-
-Cele două rubrici au aceeași formă. `--prepare ABS_OUTPUT` construiește offline host-ul
-izolat din [harness.ts](eval-firmware-comparator-harness/harness.ts) și
-[live.ts](eval-firmware-comparator-harness/live.ts) (respectiv
-[harness.ts](eval-test-planner-harness/harness.ts) și [live.ts](eval-test-planner-harness/live.ts)),
-pregătește cele șapte cazuri fictive și foaia de verdicte. `--run ABS_OUTPUT ABS_EXISTING_VERA_PROFILE
-[MODEL]` folosește un model real configurat, prin credențialele unui profil existent.
-Testele de integrare importă `harness.ts`: `tests/integration/cli.test.ts` pe ambele, iar
-`analysis-skills.test.ts` pe cel al `firmware-comparator`. `live.ts` este numai pentru Electron
-și nu este importat de testele automate. Procedurile complete sunt în README-urile `verification/` ale skill-urilor din
-`plugins/analysis-skills/skills/`.

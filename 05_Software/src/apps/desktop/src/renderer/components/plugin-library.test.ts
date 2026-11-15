@@ -10,7 +10,7 @@ import { afterEach, expect, it, vi } from "vitest";
 import { api } from "../api/index.js";
 import i18n from "../i18n.js";
 import { catalogKey } from "./plugin-catalog.js";
-import { isNewCatalogEntry, libraryStateKey, pluginProgramsKey } from "./plugin-library.js";
+import { isNewCatalogEntry, libraryStateKey, pluginProgramsKey, programReadiness } from "./plugin-library.js";
 import { Plugins } from "./plugins.js";
 
 vi.mock("../api/index.js", () => ({ api: { invoke: vi.fn(), subscribe: vi.fn(() => () => {}) } }));
@@ -31,13 +31,16 @@ const entries = (): CatalogPlugin[] =>
     id: `plugin-${String(index).padStart(2, "0")}`,
     version: "1.0.0",
     name: `Écran ${String(index).padStart(2, "0")}`,
+    summary: "Wireless diagnostic",
     description: "Wireless diagnostic",
+    risk: "safe",
     ecosystem: index < 16 ? "esp32" : "general",
     tier: index < 24 ? "official" : "community",
     platforms: ["windows-x64"],
     activities: index % 2 ? ["debug"] : ["build"],
     keywords: ["UART", "wireless"],
     requires: [],
+    dependencies: [],
     url: `plugin-${index}.zip`,
     sha256: "a".repeat(64),
     bytes: 10,
@@ -327,7 +330,9 @@ it("keeps unavailable program observations distinct from missing configuration",
       "unavailable",
     ),
   );
-  expect($('[data-plugin="plugin-00"]').textContent).toContain("Unavailable / error");
+  const dependencies = $('[data-plugin="plugin-00"] [data-status-check="dependencies"]');
+  expect(dependencies.getAttribute("data-state")).toBe("unavailable");
+  expect(dependencies.textContent).toContain(i18n.t("plugins.status.unavailableNames", { names: "tool" }));
   expect($('[data-plugin="plugin-01"] [data-readiness]').getAttribute("data-readiness")).toBe("needs");
   await click('[data-library-status="needs"]');
   expect(host.querySelectorAll("[data-plugin]")).toHaveLength(1);
@@ -344,4 +349,36 @@ it("keeps installed packages usable when catalog loading fails and provides empt
   expect(host.textContent).toContain("No plugins match");
   await click('[data-action="library-clear"]');
   expect(host.querySelectorAll("[data-plugin]")).toHaveLength(4);
+});
+
+// REQ-UX-3cf252d5
+it("filters by maturity derived from the version and clears it with the other filters", async () => {
+  const state = setup();
+  state.entries[5]!.version = "1.0.0-rc.1";
+  await mount();
+  await vi.waitFor(() => expect(text()).toContain("34"));
+  await select("[data-library-maturity]", "pre-release");
+  // plugin-00/01 and the local and trial packages are installed at 0.9.0; plugin-05 is a release candidate.
+  expect(text()).toContain("5 of 34");
+  expect(ids()).toEqual(expect.arrayContaining(["plugin-05"]));
+  for (const card of host.querySelectorAll("[data-catalog-plugin], [data-plugin]"))
+    expect(card.querySelector('[data-maturity="pre-release"]')).not.toBeNull();
+  await select("[data-library-maturity]", "stable");
+  expect(text()).toContain("29 of 34");
+  expect(host.querySelector('[data-maturity="pre-release"]')).toBeNull();
+  await click('[data-action="library-clear"]');
+  expect(text()).toContain("34 of 34");
+  expect(($("[data-library-maturity]") as HTMLSelectElement).value).toBe("");
+});
+
+// REQ-UX-05e0ed17
+it("counts a configuration need as Needs configuration unless the programs are unavailable", () => {
+  const plugin = { id: "mqtt-tools", issues: [], enabled: false } as unknown as PluginSummary;
+  const ready = [{ name: "mqtt-tool", kind: "script", state: "ready" }] as never[];
+  const unavailable = [{ name: "mqtt-tool", kind: "script", state: "unavailable" }] as never[];
+  expect(programReadiness(plugin, ready, false, [])).toBe("ready");
+  expect(programReadiness(plugin, ready, false, ["broker-credential"])).toBe("needs");
+  expect(programReadiness(plugin, undefined, false, ["broker-credential"])).toBe("needs");
+  expect(programReadiness(plugin, undefined, false, [])).toBe("unchecked");
+  expect(programReadiness(plugin, unavailable, false, ["broker-credential"])).toBe("unavailable");
 });

@@ -42,7 +42,7 @@ Versions are pinned exactly (`.npmrc` `save-exact=true`, `engine-strict=true`).
 | i18n | i18next 26.4.3, react-i18next 17.0.16 | 06 |
 | Schemas | zod 4.6.5, the only schema language; tool parameters reach pi-ai as their JSON Schema wrapped by typebox 1.3.27 | ADR-0010, ADR-0014 |
 | Model access | `@earendil-works/pi-ai` 1.1.0 | ADR-0002 |
-| Agent loop | the reference loop in `core/src/agent/runtime.ts`; `@earendil-works/pi-agent-core` 1.1.0 is a dev-only experiment | ADR-0003, confirmed by ADR-0014 (WP-10) |
+| Agent loop | the reference loop in `core/src/agent/runtime.ts` | ADR-0003 |
 | Storage | SQLite through better-sqlite3 13.0.3, WAL, FTS5 (unicode61 and trigram tables) | ADR-0005, ADR-0013 |
 | Document text | pdfjs-dist 6.4.299 (legacy Node build) for PDF; mammoth 1.13.0, fflate 0.8.3 and @xmldom/xmldom 0.8.15 for Office and OpenDocument; parse5 8.0.1 and mdast-util-from-markdown 2.1.0 for HTML and Markdown | 05 |
 | PDF viewer | pdfjs-dist 6.4.299 in the renderer, with bundled cmaps, standard fonts and wasm | 06 |
@@ -52,7 +52,7 @@ Versions are pinned exactly (`.npmrc` `save-exact=true`, `engine-strict=true`).
 | Other runtime libraries | yaml 2.9.1 (`workbench.yaml`, skill frontmatter, update metadata), ulid 3.0.2 (ids), semver 7.8.0 (updater) | — |
 | Lint and format | Biome 2.5.15 | 08 |
 | Tests | Vitest 5.0.3; Playwright 1.64.0 for Electron and the browser mock mode | 08 |
-| Starting code | `09_Others/benchpilot-reference/` (BenchPilot proof of concept, same stack) | `../plan/benchpilot-reuse.md` |
+| Starting code | `09_Others/benchpilot-reference/` (BenchPilot proof of concept, same stack) | — |
 
 ## 3. Processes and the IPC boundary
 

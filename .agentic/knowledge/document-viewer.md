@@ -28,7 +28,7 @@ progress travels through existing workbench events.
 
 - SessionService admits UTF8 control-byte logs only for successful parse_log line-ref provenance. The viewer uses guarded direct reads up to50MiB, fatal UTF8 and matching source hashes, independent of document indexing; ordinary document/file refs retain binary and index checks.
 
-Managed PDF downloads use downloads.list/open scoped IPC and a downloadId ViewerTarget; see [PDF downloads](pdf-downloads.md). Docs includes saved PDF history, and successful download tool cards open the existing viewer without indexing. Downloads open in a document tab of the chat area like every source, and uncited PDFs omit citation-only labels. Host publicPdfDownload scrubs metadata strings and drops invalid redacted records.
+Managed PDF downloads use downloads.list/open scoped IPC and a downloadId ViewerTarget; see [PDF downloads](pdf-downloads.md). Docs includes saved PDF history, and successful download tool cards open the existing viewer without indexing. Downloads open in a document tab of the chat area like every source, and uncited PDFs omit citation-only labels. Host publicWebDownload scrubs metadata strings and drops invalid redacted records.
 
 
 - docs.list({workbenchId}) returns scoped document statuses/reasons.
@@ -63,7 +63,6 @@ Managed PDF downloads use downloads.list/open scoped IPC and a downloadId Viewer
   opener when it is still shown, else the Chat tab. In the panel Ctrl+F asks a PDF or text body for its
   find field (or focuses an open one) and Ctrl+G asks a text body for its go-to-line field, by
   bumping `findRequest` / `gotoRequest` (REQ-UX-d64f086f, REQ-UX-58cf59b2).
-  The right panel has no Source tab or Source width (REQ-UX-aa068a49, REQ-UX-b3231a55 retired).
 - The document panel shows only the document (or its load error with Retry): no path line or
   buttons; the path is the tab's tooltip (REQ-UX-968b89b0). A tab menu action's error or notice
   shows in `[data-tab-notices]`, the row between the tab strip and the panels, also while Chat is

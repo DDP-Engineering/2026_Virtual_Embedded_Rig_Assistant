@@ -5,10 +5,9 @@ earlier proof of concept on the same stack (TypeScript, pi-ai 1.1.0, React 19, V
 shadcn/ui, TanStack Query, better-sqlite3, zod): an agent copilot for network-device testbenches
 with sessions, tools, skills, an approval gate, a replay provider and evidence citations.
 
-This folder is **reference material only**. It is not built, tested, linted or imported. The work
-packages in `00_Planning/plan/` name the files here that each VERA module starts from; the map is
-[`00_Planning/plan/benchpilot-reuse.md`](../../00_Planning/plan/benchpilot-reuse.md). Copy a file
-into `05_Software/`, then adapt it there; never import from this folder.
+This folder is **reference material only**. It is not built, tested, linted or imported. VERA's
+modules started from these files; the reuse is finished. Copy a file into `05_Software/`, then adapt
+it there; never import from this folder.
 
 The layout mirrors the original repository:
 
