@@ -14,6 +14,24 @@ const root = dirname(fileURLToPath(import.meta.url));
 // Build-time isolation for verification; ordinary development and release output is unchanged.
 const buildRoot = process.env.VERA_BUILD_ROOT ? resolve(process.env.VERA_BUILD_ROOT) : resolve(root, "out");
 const shared = resolve(root, "../../libraries/shared/src/index.ts");
+/** The desktop app's third-party runtime libraries with version and license, for the About page. */
+function thirdPartyComponents(): { name: string; version: string; license: string }[] {
+  try {
+    const dependencies = Object.keys(
+      JSON.parse(readFileSync(resolve(root, "package.json"), "utf8")).dependencies ?? {},
+    );
+    const lock = JSON.parse(readFileSync(resolve(root, "../../../package-lock.json"), "utf8")).packages ?? {};
+    return dependencies
+      .filter((name) => !name.startsWith("@vera/"))
+      .sort()
+      .map((name) => {
+        const entry = lock[`node_modules/${name}`] ?? {};
+        return { name, version: String(entry.version ?? ""), license: String(entry.license ?? "") };
+      });
+  } catch {
+    return [];
+  }
+}
 const testBuild = process.env.VERA_TEST === "1";
 const sessionPerformance = testBuild && process.env.VERA_SESSION_PERF === "1";
 const { pluginCatalogFeed, pluginCatalogKey, updateFeed } = updateConfig;
@@ -143,6 +161,7 @@ export default defineConfig(({ command }) => ({
       __VERA_VERSION__: JSON.stringify(
         JSON.parse(readFileSync(resolve(root, "package.json"), "utf8")).version,
       ),
+      __VERA_THIRD_PARTY__: JSON.stringify(thirdPartyComponents()),
     },
     root: resolve(root, "src/renderer"),
     resolve: { alias: { "@": resolve(root, "src/renderer"), "@vera/shared": shared } },

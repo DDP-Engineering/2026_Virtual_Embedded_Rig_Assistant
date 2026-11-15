@@ -146,7 +146,6 @@ export function UpdatesPanel({
         <option value="latest">{t("updates.latest")}</option>
         <option value="beta">{t("updates.beta")}</option>
       </select>
-      <p className="muted">{t("updates.schedule")}</p>
       {snapshot?.distribution === "portable" && <p>{t("updates.portable")}</p>}
       {snapshot?.distribution === "managed" && <p>{t("updates.managed")}</p>}
       <button

@@ -3015,3 +3015,108 @@ legend {
 .context-workbench-body pre {
   overflow-x: auto;
 }
+
+/* Appearance and language: one 3-column grid shared by the theme cards and the text sizes. */
+#section-appearance fieldset {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+#section-appearance legend {
+  padding: 0;
+  margin-bottom: 0.5rem;
+}
+#section-appearance .language-field {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+#section-appearance .theme-options,
+.typography-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+@media (width < 900px) {
+  #section-appearance .theme-options,
+  .typography-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.typography-grid .typography-control {
+  display: grid;
+  align-content: start;
+  gap: 0.5rem;
+}
+.typography-grid .typography-control legend {
+  margin-bottom: 0;
+}
+.typography-grid .typography-control select {
+  justify-self: start;
+}
+.typography-grid .typography-control > p,
+.typography-grid .typography-control > pre {
+  margin: 0;
+}
+.typography-reset {
+  align-self: flex-start;
+}
+
+/* About page: brand header, then application, runtime and third-party blocks. */
+.about {
+  display: grid;
+  gap: 1.25rem;
+}
+.about-hero {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.25rem 1.5rem;
+  border-radius: var(--radius);
+  background: var(--primary);
+  color: var(--primary-foreground);
+}
+.about-hero svg {
+  width: 3rem;
+  height: 3rem;
+  flex-shrink: 0;
+}
+.about-hero p {
+  margin: 0;
+}
+.about-name {
+  font-size: 1.75rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+.about-full-name {
+  opacity: 0.85;
+}
+.about-version {
+  margin-top: 0.25rem;
+  font-weight: 600;
+}
+.about-block h3 {
+  margin: 0 0 0.6rem;
+  font-size: 1rem;
+}
+.about-notices > summary {
+  cursor: pointer;
+  display: list-item;
+}
+.about-notices > summary h3 {
+  display: inline;
+}
+.about-notices table {
+  width: 100%;
+  margin-top: 0.6rem;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+.about-notices th,
+.about-notices td {
+  text-align: left;
+  padding: 0.35rem 0.5rem;
+  border-bottom: 1px solid var(--border);
+}

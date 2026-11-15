@@ -522,6 +522,10 @@ export function App() {
                 setChat(false);
               }}
               navigate={navigate}
+              showAbout={() => {
+                navigate(true);
+                setSection("about");
+              }}
               navigation={navigation}
               context={
                 benchId && chat && !settings ? (

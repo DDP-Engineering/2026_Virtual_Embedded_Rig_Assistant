@@ -60,14 +60,11 @@
     "dark": "Dark",
     "system": "System",
     "textSize": "Interface text size",
-    "description": "Scale interface labels, menus and controls. Saved automatically.",
     "codePreview": "Code preview: const board = 1;",
     "interfacePreview": "Interface preview: menus, labels and buttons.",
     "chatSize": "Conversation text size",
-    "chatDescription": "Applies to messages and the message composer, independently of interface size.",
     "chatPreview": "This is how a message in your conversation will look.",
     "codeSize": "Code and output text size",
-    "codeDescription": "Applies to code blocks, diffs and technical text output.",
     "resetSizes": "Restore default text sizes",
     "extraSmall": "Extra small",
     "small": "Small",
@@ -81,8 +78,7 @@
     "system": "System",
     "en": "English",
     "ro": "Română",
-    "de": "Deutsch",
-    "description": "Changes menus and messages. The agent answers in the language you write in."
+    "de": "Deutsch"
   },
   "layout": {
     "toggleSidebar": "Toggle sidebar",
@@ -488,7 +484,6 @@
     "channel": "Channel",
     "latest": "Stable",
     "beta": "Beta (includes stable)",
-    "schedule": "When enabled, check at startup and every 6 hours. Check now also works when updates are Off.",
     "check": "Check now",
     "idle": "Updates have not been checked.",
     "checking": "Checking for updates…",
@@ -519,7 +514,6 @@
     "file": "File",
     "edit": "Edit",
     "view": "View",
-    "help": "Help",
     "unavailable": "The application menu could not be opened. Try again."
   },
   "discovery": {
@@ -779,8 +773,7 @@
     "press": "Press keys…",
     "recordHint": "Use Ctrl (or Command), optionally Alt/Shift, with a letter, digit, comma or slash. Escape cancels. Shifted digits, comma and slash use their physical key positions.",
     "invalid": "This combination is unsupported or reserved for text editing, the window or developer tools.",
-    "conflict": "This combination is already assigned. Remove or change the other assignment first.",
-    "local": "In the message input: Enter sends, Shift+Enter starts a new line. Escape closes search or asks to stop an active response. These contextual controls remain unchanged."
+    "conflict": "This combination is already assigned. Remove or change the other assignment first."
   },
   "downloads": {
     "revealNamed": "Show in Explorer: {{name}}",
@@ -1135,5 +1128,16 @@
       "timedOut": "Timed out",
       "interrupted": "Interrupted"
     }
+  },
+  "about": {
+    "open": "About VERA",
+    "fullName": "Virtual Embedded Rig Assistant",
+    "version": "Version {{version}}",
+    "application": "Application",
+    "runtime": "Runtime",
+    "thirdParty": "Third-party components ({{count}})",
+    "component": "Component",
+    "componentVersion": "Version",
+    "license": "License"
   }
 }

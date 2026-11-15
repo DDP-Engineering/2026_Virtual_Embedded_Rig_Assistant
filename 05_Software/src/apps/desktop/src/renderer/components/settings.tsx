@@ -12,9 +12,9 @@ import {
   SlidersHorizontal,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { About } from "./about.js";
 import { ErrorMessage } from "./error-message.js";
 import { KeyboardShortcuts } from "./keyboard-shortcuts.js";
-import { Metadata } from "./metadata.js";
 import { Providers } from "./providers.js";
 import { UpdatesPanel } from "./updates.js";
 import { WebAccessPanel } from "./web-access.js";
@@ -113,7 +113,6 @@ export function Settings({
             <option value="de">{t("language.de")}</option>
           </select>
         </div>
-        <p className="muted">{t("language.description")}</p>
         <fieldset disabled={disabled}>
           <legend>{t("appearance.theme")}</legend>
           <div className="theme-options">
@@ -134,75 +133,75 @@ export function Settings({
             ))}
           </div>
         </fieldset>
-        <fieldset disabled={disabled} className="typography-control">
-          <legend>{t("appearance.textSize")}</legend>
-          <label className="sr-only" htmlFor="interface-font-size">
-            {t("appearance.textSize")}
-          </label>
-          <select
-            id="interface-font-size"
-            value={snapshot.settings.textScale}
-            onChange={(event) =>
-              update({ textScale: Number(event.target.value) as SettingsPatch["textScale"] })
-            }
-          >
-            {sizes.map(({ scale, label }) => (
-              <option key={scale} value={scale}>
-                {label}
-              </option>
-            ))}
-          </select>
-        </fieldset>
-        <p className="muted">{t("appearance.description")}</p>
-        <p className="typography-interface-preview">{t("appearance.interfacePreview")}</p>
-        <fieldset disabled={disabled} className="typography-control">
-          <legend>{t("appearance.chatSize")}</legend>
-          <label className="sr-only" htmlFor="chat-font-size">
-            {t("appearance.chatSize")}
-          </label>
-          <select
-            id="chat-font-size"
-            value={chatFontSize}
-            onChange={(event) =>
-              update({ chatFontSize: Number(event.target.value) as SettingsPatch["chatFontSize"] })
-            }
-          >
-            {sizes.map(({ size, label }) => (
-              <option key={size} value={size}>
-                {label}
-              </option>
-            ))}
-          </select>
-          <p className="muted">{t("appearance.chatDescription")}</p>
-          <p className="typography-chat-preview">{t("appearance.chatPreview")}</p>
-        </fieldset>
-        <fieldset disabled={disabled} className="typography-control">
-          <legend>{t("appearance.codeSize")}</legend>
-          <label className="sr-only" htmlFor="code-font-size">
-            {t("appearance.codeSize")}
-          </label>
-          <select
-            id="code-font-size"
-            value={codeFontSize}
-            onChange={(event) =>
-              update({ codeFontSize: Number(event.target.value) as SettingsPatch["codeFontSize"] })
-            }
-          >
-            {sizes.map(({ size, label }) => (
-              <option key={size} value={size}>
-                {label}
-              </option>
-            ))}
-          </select>
-          <p className="muted">{t("appearance.codeDescription")}</p>
-          <pre className="typography-code-preview">
-            <code>{t("appearance.codePreview")}</code>
-          </pre>
-        </fieldset>
+        <div className="typography-grid">
+          <fieldset disabled={disabled} className="typography-control">
+            <legend>{t("appearance.textSize")}</legend>
+            <label className="sr-only" htmlFor="interface-font-size">
+              {t("appearance.textSize")}
+            </label>
+            <select
+              id="interface-font-size"
+              value={snapshot.settings.textScale}
+              onChange={(event) =>
+                update({ textScale: Number(event.target.value) as SettingsPatch["textScale"] })
+              }
+            >
+              {sizes.map(({ scale, label }) => (
+                <option key={scale} value={scale}>
+                  {label}
+                </option>
+              ))}
+            </select>
+            <p className="typography-interface-preview">{t("appearance.interfacePreview")}</p>
+          </fieldset>
+          <fieldset disabled={disabled} className="typography-control">
+            <legend>{t("appearance.chatSize")}</legend>
+            <label className="sr-only" htmlFor="chat-font-size">
+              {t("appearance.chatSize")}
+            </label>
+            <select
+              id="chat-font-size"
+              value={chatFontSize}
+              onChange={(event) =>
+                update({ chatFontSize: Number(event.target.value) as SettingsPatch["chatFontSize"] })
+              }
+            >
+              {sizes.map(({ size, label }) => (
+                <option key={size} value={size}>
+                  {label}
+                </option>
+              ))}
+            </select>
+            <p className="typography-chat-preview">{t("appearance.chatPreview")}</p>
+          </fieldset>
+          <fieldset disabled={disabled} className="typography-control">
+            <legend>{t("appearance.codeSize")}</legend>
+            <label className="sr-only" htmlFor="code-font-size">
+              {t("appearance.codeSize")}
+            </label>
+            <select
+              id="code-font-size"
+              value={codeFontSize}
+              onChange={(event) =>
+                update({ codeFontSize: Number(event.target.value) as SettingsPatch["codeFontSize"] })
+              }
+            >
+              {sizes.map(({ size, label }) => (
+                <option key={size} value={size}>
+                  {label}
+                </option>
+              ))}
+            </select>
+            <pre className="typography-code-preview">
+              <code>{t("appearance.codePreview")}</code>
+            </pre>
+          </fieldset>
+        </div>
         <button
           type="button"
           disabled={disabled}
           data-action="reset-typography"
+          className="typography-reset"
           onClick={() => update({ textScale: 1, ...typographyDefaults })}
         >
           {t("appearance.resetSizes")}
@@ -230,7 +229,7 @@ export function Settings({
           >
             <h2 tabIndex={-1}>{label}</h2>
             {id !== "about" && <p className="muted">{t("settings.placeholder")}</p>}
-            {id === "about" && info && <Metadata info={info} />}
+            {id === "about" && info && <About info={info} />}
           </section>
         ))}
     </div>

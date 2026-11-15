@@ -142,6 +142,10 @@ export const appInfoSchema = z.strictObject({
   locale: z.string().min(1),
   testBuild: z.boolean(),
   signing: z.enum(["signed", "unsigned", "not-applicable"]),
+  /** Electron, Chromium, Node.js and V8 versions of the running app (About page). */
+  runtime: z
+    .strictObject({ electron: z.string(), chrome: z.string(), node: z.string(), v8: z.string() })
+    .optional(),
 });
 export const channels = {
   "web.access.get": defineChannel("web.access.get", z.strictObject({}), webAccessSnapshotSchema),

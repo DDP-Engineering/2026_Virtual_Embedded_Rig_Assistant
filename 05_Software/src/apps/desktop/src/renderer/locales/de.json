@@ -60,14 +60,11 @@
     "dark": "Dunkel",
     "system": "System",
     "textSize": "Textgröße der Oberfläche",
-    "description": "Skaliert Beschriftungen, Menüs und Bedienelemente. Wird automatisch gespeichert.",
     "codePreview": "Code-Vorschau: const board = 1;",
     "interfacePreview": "Vorschau der Oberfläche: Menüs, Beschriftungen und Schaltflächen.",
     "chatSize": "Textgröße der Unterhaltung",
-    "chatDescription": "Gilt für Nachrichten und das Eingabefeld, unabhängig von der Oberfläche.",
     "chatPreview": "So wird eine Nachricht in deiner Unterhaltung aussehen.",
     "codeSize": "Textgröße für Code und Ausgaben",
-    "codeDescription": "Gilt für Codeblöcke, Diffs und technische Textausgaben.",
     "resetSizes": "Standardtextgrößen wiederherstellen",
     "extraSmall": "Sehr klein",
     "small": "Klein",
@@ -81,8 +78,7 @@
     "system": "System",
     "en": "English",
     "ro": "Română",
-    "de": "Deutsch",
-    "description": "Ändert Menüs und Meldungen. Der Agent antwortet in der Sprache, in der du schreibst."
+    "de": "Deutsch"
   },
   "layout": {
     "toggleSidebar": "Seitenleiste ein- oder ausblenden",
@@ -488,7 +484,6 @@
     "channel": "Kanal",
     "latest": "Stabil",
     "beta": "Beta (einschließlich stabil)",
-    "schedule": "Wenn aktiviert, beim Start und alle 6 Stunden prüfen. Jetzt prüfen funktioniert auch bei ausgeschalteten Aktualisierungen.",
     "check": "Jetzt prüfen",
     "idle": "Aktualisierungen wurden noch nicht geprüft.",
     "checking": "Aktualisierungen werden geprüft…",
@@ -519,7 +514,6 @@
     "file": "Datei",
     "edit": "Bearbeiten",
     "view": "Ansicht",
-    "help": "Hilfe",
     "unavailable": "Das Anwendungsmenü konnte nicht geöffnet werden. Erneut versuchen."
   },
   "discovery": {
@@ -779,8 +773,7 @@
     "press": "Tasten drücken…",
     "recordHint": "Ctrl (oder Command), optional Alt/Shift, und einen Buchstaben, eine Ziffer, Komma oder Schrägstrich verwenden. Escape bricht ab. Ziffern, Komma und Schrägstrich verwenden auch mit Shift ihre physischen Tastenpositionen.",
     "invalid": "Diese Kombination wird nicht unterstützt oder ist für Textbearbeitung, Fenster oder Entwicklerwerkzeuge reserviert.",
-    "conflict": "Diese Kombination ist bereits zugewiesen. Zuerst die andere Zuweisung entfernen oder ändern.",
-    "local": "In der Nachrichteneingabe: Enter sendet, Shift+Enter fügt eine neue Zeile ein. Escape schließt die Suche oder fragt nach dem Stoppen einer aktiven Antwort. Diese kontextbezogenen Befehle bleiben unverändert."
+    "conflict": "Diese Kombination ist bereits zugewiesen. Zuerst die andere Zuweisung entfernen oder ändern."
   },
   "downloads": {
     "revealNamed": "Im Explorer anzeigen: {{name}}",
@@ -1135,5 +1128,16 @@
       "timedOut": "Zeitüberschreitung",
       "interrupted": "Unterbrochen"
     }
+  },
+  "about": {
+    "open": "Über VERA",
+    "fullName": "Virtual Embedded Rig Assistant",
+    "version": "Version {{version}}",
+    "application": "Anwendung",
+    "runtime": "Laufzeit",
+    "thirdParty": "Komponenten von Drittanbietern ({{count}})",
+    "component": "Komponente",
+    "componentVersion": "Version",
+    "license": "Lizenz"
   }
 }

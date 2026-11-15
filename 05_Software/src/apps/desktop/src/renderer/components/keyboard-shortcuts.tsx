@@ -212,7 +212,6 @@ export function KeyboardShortcuts({
             </article>
           ))}
       </div>
-      <p className="muted">{t("keyboard.local")}</p>
       {record && (
         <dialog
           ref={dialog}

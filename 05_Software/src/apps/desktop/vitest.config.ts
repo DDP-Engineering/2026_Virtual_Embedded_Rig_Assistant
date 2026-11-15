@@ -8,7 +8,7 @@ export default defineConfig({
       "@vera/core": fileURLToPath(new URL("../../libraries/core/src/index.ts", import.meta.url)),
     },
   },
-  define: { __VERA_VERSION__: JSON.stringify("0.0.0") },
+  define: { __VERA_VERSION__: JSON.stringify("0.0.0"), __VERA_THIRD_PARTY__: JSON.stringify([]) },
   test: {
     setupFiles: [fileURLToPath(new URL("../../../tests/support/network-setup.ts", import.meta.url))],
     name: "desktop",

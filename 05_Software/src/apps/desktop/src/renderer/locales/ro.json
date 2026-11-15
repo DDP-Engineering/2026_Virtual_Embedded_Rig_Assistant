@@ -60,14 +60,11 @@
     "dark": "Întunecată",
     "system": "Sistem",
     "textSize": "Dimensiunea textului interfeței",
-    "description": "Redimensionează etichetele, meniurile și controalele. Salvare automată.",
     "codePreview": "Previzualizare cod: const board = 1;",
     "interfacePreview": "Previzualizare interfață: meniuri, etichete și butoane.",
     "chatSize": "Dimensiunea textului conversației",
-    "chatDescription": "Se aplică mesajelor și casetei de compunere, independent de interfață.",
     "chatPreview": "Așa va arăta un mesaj din conversația ta.",
     "codeSize": "Dimensiunea codului și a rezultatelor",
-    "codeDescription": "Se aplică blocurilor de cod, diferențelor și rezultatelor tehnice text.",
     "resetSizes": "Restabilește dimensiunile implicite",
     "extraSmall": "Foarte mic",
     "small": "Mic",
@@ -81,8 +78,7 @@
     "system": "Sistem",
     "en": "English",
     "ro": "Română",
-    "de": "Deutsch",
-    "description": "Schimbă meniurile și mesajele. Agentul răspunde în limba în care scrii."
+    "de": "Deutsch"
   },
   "layout": {
     "toggleSidebar": "Arată sau ascunde bara laterală",
@@ -488,7 +484,6 @@
     "channel": "Canal",
     "latest": "Stabil",
     "beta": "Beta (include stabil)",
-    "schedule": "Când actualizările sunt activate, verificarea are loc la pornire și la fiecare 6 ore. Verifică acum funcționează și când actualizările sunt oprite.",
     "check": "Verifică acum",
     "idle": "Actualizările nu au fost verificate.",
     "checking": "Se verifică actualizările…",
@@ -519,7 +514,6 @@
     "file": "Fișier",
     "edit": "Editare",
     "view": "Vizualizare",
-    "help": "Ajutor",
     "unavailable": "Meniul aplicației nu a putut fi deschis. Încearcă din nou."
   },
   "discovery": {
@@ -779,8 +773,7 @@
     "press": "Apasă tastele…",
     "recordHint": "Folosește Ctrl (sau Command), opțional Alt/Shift, și o literă, cifră, virgulă sau bară oblică. Escape anulează. Cifrele, virgula și bara oblică folosesc poziția fizică a tastei, inclusiv cu Shift.",
     "invalid": "Combinația nu este acceptată sau este rezervată editării textului, ferestrei ori instrumentelor de dezvoltare.",
-    "conflict": "Combinația este deja atribuită. Șterge sau modifică mai întâi cealaltă atribuire.",
-    "local": "În câmpul mesajului: Enter trimite, Shift+Enter adaugă un rând. Escape închide căutarea sau cere oprirea unui răspuns activ. Aceste comenzi contextuale rămân neschimbate."
+    "conflict": "Combinația este deja atribuită. Șterge sau modifică mai întâi cealaltă atribuire."
   },
   "downloads": {
     "revealNamed": "Arată în Explorer: {{name}}",
@@ -1135,5 +1128,16 @@
       "timedOut": "Timp expirat",
       "interrupted": "Întrerupt"
     }
+  },
+  "about": {
+    "open": "Despre VERA",
+    "fullName": "Virtual Embedded Rig Assistant",
+    "version": "Versiunea {{version}}",
+    "application": "Aplicație",
+    "runtime": "Mediu de rulare",
+    "thirdParty": "Componente terțe ({{count}})",
+    "component": "Componentă",
+    "componentVersion": "Versiune",
+    "license": "Licență"
   }
 }

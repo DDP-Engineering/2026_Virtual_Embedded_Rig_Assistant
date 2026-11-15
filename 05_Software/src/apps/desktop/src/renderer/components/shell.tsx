@@ -3,6 +3,7 @@ import {
   ArrowLeft,
   Folder,
   Home,
+  Info,
   PanelLeft,
   PanelRight,
   Plus,
@@ -39,6 +40,7 @@ export function Shell({
   newWorkbench,
   openWorkbench,
   showPlugins,
+  showAbout,
   newSelected,
   pluginsSelected,
   context,
@@ -55,6 +57,7 @@ export function Shell({
   newWorkbench?: () => void;
   openWorkbench?: () => void;
   showPlugins?: () => void;
+  showAbout?: () => void;
   newSelected?: boolean;
   pluginsSelected?: boolean;
   context?: ReactNode;
@@ -93,7 +96,7 @@ export function Shell({
     if (settings) setLayout((value) => ({ ...value, sidebarCollapsed: false }));
   }, [settings]);
   const [menuUnavailable, setMenuUnavailable] = useState(false);
-  function openMenu(menu: "file" | "edit" | "view" | "help", button: HTMLButtonElement) {
+  function openMenu(menu: "file" | "edit" | "view", button: HTMLButtonElement) {
     const bounds = button.getBoundingClientRect();
     setMenuUnavailable(false);
     void api
@@ -264,7 +267,6 @@ export function Shell({
               ["file", t("windowMenu.file")],
               ["edit", t("windowMenu.edit")],
               ["view", t("windowMenu.view")],
-              ["help", t("windowMenu.help")],
             ] as const
           ).map(([menu, label]) => (
             <button
@@ -280,6 +282,17 @@ export function Shell({
           ))}
         </div>
         <div className="topbar-spacer" />
+        {showAbout && (
+          <button
+            type="button"
+            data-action="show-about"
+            aria-label={t("about.open")}
+            title={t("about.open")}
+            onClick={showAbout}
+          >
+            <Info aria-hidden="true" />
+          </button>
+        )}
         <button
           ref={panelToggle}
           type="button"
