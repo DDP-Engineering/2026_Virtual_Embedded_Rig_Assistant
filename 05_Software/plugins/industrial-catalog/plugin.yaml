@@ -1,6 +1,7 @@
 format: 1
 id: industrial-catalog
 version: 0.1.0
+license: LicenseRef-PolyForm-Noncommercial-1.0.0
 name: Industrial catalog and documented selection
 summary: Keep manufacturer data for LV switchgear, protection and drives with cited values, and select on firm requirements.
 description: Choose low-voltage equipment (contactors, motor circuit breakers, protection, drives, PLC and I/O modules, accessories) on manufacturer evidence. Catalogs are workbench files that keep the manufacturer order code, variant and accessories apart from distributor SKUs, with every parameter cited by source, revision and page or table under its conditions. VERA's industrial_catalog tool selects on firm requirements, explains each elimination, marks absent or unconfirmed values unknown and applies coordination tables only to the products and voltages they name. Nothing is scraped, ordered or replaced in a schematic.
