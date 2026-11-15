@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-3e094ff0"
+
+title = "Write QElectroTech files only through the prepared change with a base hash"
+
+status = "active"
+
+requirement = """
+VERA shall write a QElectroTech file only through the approved prepared change - a candidate only to a path inside the workbench that does not exist, an edit only when the file's sha256 equals the base sha256 of the request - and shall leave the file unchanged when it changed between preview and apply, when the approval is denied or when the session is read-only.
+"""
+
+verification = "Tool tests: a candidate to an existing path and an edit with a wrong base sha256 are refused; a file changed after prepare makes apply fail with a conflict and keeps the changed bytes; a prepared change that is never applied (a denied approval) leaves the folder empty; a session test: a read-only session does not offer qelectrotech_change or qelectrotech_check."
+
+affected_paths = ["05_Software/src/libraries/core/src/electrical/qet-tool.ts", "05_Software/src/libraries/core/src/electrical/tools.ts", "05_Software/src/libraries/core/src/tools/changes.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/electrical/qet-tool.test.ts", "05_Software/src/libraries/core/src/sessions/electrical-model.test.ts"]
+
+
+spec = "specs/REQ-DATA-963cbdf6.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-16

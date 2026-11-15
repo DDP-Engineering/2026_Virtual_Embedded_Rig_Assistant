@@ -78,6 +78,18 @@ it("converts every tool schema and validates samples while filtering disabled na
       report: "rep-office-a",
       catalog: "cat-lighting",
     },
+    qelectrotech: { view: "devices", path: "schematics/m1.qet" },
+    qelectrotech_change: {
+      action: "candidate",
+      motorDrivesRun: "20261115-110000-cccc",
+      motor: "mot-p2",
+      path: "schematics/m2.qet",
+    },
+    qelectrotech_check: {
+      path: "schematics/m2.qet",
+      motorDrivesRun: "20261115-110000-cccc",
+      motor: "mot-p2",
+    },
     help: { page: "permissions" },
   };
   for (const tool of registry.available()) {
@@ -119,6 +131,9 @@ it("converts every tool schema and validates samples while filtering disabled na
     "motor_drives",
     "power_quality",
     "lighting_design",
+    "qelectrotech",
+    "qelectrotech_change",
+    "qelectrotech_check",
     "help",
   ]);
   expect(registry.available(["read"]).map((tool) => tool.name)).not.toContain("read");

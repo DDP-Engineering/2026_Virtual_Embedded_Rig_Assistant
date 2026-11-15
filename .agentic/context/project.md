@@ -171,7 +171,13 @@ stores one new result after approval and switches nothing; the official plugin p
 lighting from a lighting project (`electrical-automation-lighting/<id>.json`, format 1) and IES/EULUMDAT photometry
 (lumen method with cited utilisation factors, direct component, scale/units/orientation diagnostics) and verifies it
 only against a mapped photometric engine report such as DIALux evo; it computes no uniformity or UGR, starts no engine
-and stores one new result after approval; the official plugin lighting-design brings its skill.
+and stores one new result after approval; the official plugin lighting-design brings its skill. `qelectrotech` reads
+QElectroTech .qet projects strictly (no DTD/entities: folios, devices with linked contacts, potentials, problems) and
+reconciles devices with the model as proposed operations; `qelectrotech_change` writes a DOL/reversing/star-delta
+candidate from a current motor_drives assembly (checked from its own XML: phases, interlocks as NC contacts on every coil
+path) as a new file, or splices element information into an existing project with its base sha256;
+`qelectrotech_check` stores numbering, cross-reference and device-list checks with the file's sha256; the official
+plugin qelectrotech brings its skill.
 Parts search: Settings > Parts search holds supplier switches, credentials (Mouser, DigiKey, TME, Farnell, Rutronik; `parts:<id>` slots with the same consent and rollback) and region; the host tool `parts_search` is offered only with Web access on, the official parts-search plugin enabled for the workbench and a supplier enabled, contacts fixed supplier endpoints only, stores no result and never orders. The CLI reads MOUSER_API_KEY, DIGIKEY_CLIENT_ID/SECRET, TME_API_TOKEN/SECRET, FARNELL_API_KEY and RUTRONIK_API_KEY into memory. Live supplier probes need the user's own keys; see [parts search](../knowledge/parts-search.md).
 
 PCB layout candidates: the kicad-layout plugin (Electronics design pack, default off) edits a candidate copy of a

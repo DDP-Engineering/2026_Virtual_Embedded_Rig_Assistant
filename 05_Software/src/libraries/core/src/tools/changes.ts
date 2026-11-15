@@ -50,7 +50,9 @@ export interface FileChangeRequest {
     | "protection_coordination"
     | "motor_drives"
     | "power_quality"
-    | "lighting_design";
+    | "lighting_design"
+    | "qelectrotech_change"
+    | "qelectrotech_check";
   readonly path: string;
   readonly args: Readonly<Record<string, unknown>>;
   readonly existed: boolean;

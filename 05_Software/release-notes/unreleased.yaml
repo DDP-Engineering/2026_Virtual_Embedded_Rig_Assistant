@@ -1,3 +1,10 @@
 version: Unreleased
 date: null
-entries: []
+entries:
+  - category: new
+    topic: { en: Plugins, ro: Pluginuri, de: Plugins, fr: Plugins }
+    text:
+      en: Read QElectroTech schematics and draft checked DOL, reversing and star-delta starter drawings.
+      ro: Citiți scheme QElectroTech și propuneți scheme verificate DOL, inversare și stea-triunghi.
+      de: QElectroTech-Pläne lesen und geprüfte Pläne für Direkt-, Wende- und Stern-Dreieck-Start entwerfen.
+      fr: Lisez des schémas QElectroTech et proposez des schémas vérifiés direct, inverseur, étoile-triangle.

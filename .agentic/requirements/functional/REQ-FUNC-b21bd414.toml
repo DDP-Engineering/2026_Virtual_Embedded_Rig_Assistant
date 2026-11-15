@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-b21bd414"
+
+title = "Store a QElectroTech check result stamped with the project's sha256"
+
+status = "active"
+
+requirement = """
+When asked to check a QElectroTech project, VERA shall prepare one new electrical result with numbering (unique device labels, one conductor number per potential, distinct numbers across potentials), cross-reference and device-list criteria against the model and, when a motor_drives run is named, the candidate checks, with the project file's path and sha256 in the result, the model entities it compared as inputs, and shall write nothing else.
+"""
+
+verification = "Tool tests: checking the DOL candidate gives pass on labels, cross-references and assembly checks and unknown on conductor numbering for an unnumbered project; sources hold qet:<path>@<sha256> equal to the file's sha256; the result goes stale when the motor changes; the .qet file and the model are unchanged."
+
+affected_paths = ["05_Software/src/libraries/core/src/electrical/qet-check.ts", "05_Software/src/libraries/core/src/electrical/qet-tool.ts", "05_Software/src/libraries/core/src/electrical/result-change.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/electrical/qet-tool.test.ts"]
+
+
+spec = "specs/REQ-DATA-963cbdf6.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-16

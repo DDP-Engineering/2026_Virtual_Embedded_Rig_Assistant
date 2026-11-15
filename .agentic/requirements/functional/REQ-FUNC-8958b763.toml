@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-8958b763"
+
+title = "Group QElectroTech devices and check their cross-references"
+
+status = "active"
+
+requirement = """
+When VERA lists the devices of a QElectroTech project, it shall group each master element with the slave elements it links to under one device with the master's label, give each member's folio and column/row position, and shall report a slave without a master, a non-reciprocal link, a slave whose label differs from its master's, a link between incompatible link types and two masters with the same label as cross-reference problems.
+"""
+
+verification = "Unit tests: the DOL candidate lists KM1 with its coil on folio 2 and its main contacts on folio 1 and 13-14 auxiliary with positions; removing one side of a link, relabelling a slave or duplicating a coil label each yields its named problem."
+
+affected_paths = ["05_Software/src/libraries/core/src/electrical/qet.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/electrical/qet.test.ts", "05_Software/src/libraries/core/src/electrical/qet-templates.test.ts"]
+
+
+spec = "specs/REQ-DATA-963cbdf6.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-16

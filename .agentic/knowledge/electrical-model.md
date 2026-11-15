@@ -23,7 +23,11 @@ electrical/measurements.ts, power-quality.ts, power-quality-tool.ts), the lighti
 lighting projects and report records `electrical-automation-lighting/<id>.json`, photometry files
 `electrical-automation-photometry/` (IES LM-63, EULUMDAT), lumen method, utilisation and maintenance factor, direct
 component, DIALux evo report mapping (spec .agentic/specs/REQ-DATA-affb2e6b.md, core electrical/photometry.ts,
-lighting-files.ts, lighting.ts, lighting-tool.ts), and the per-plugin tool gating (`electricalPluginTools`, `electricalToolOffered`). Start at 05_Software/src/libraries/core/src/electrical/ (model.ts, tools.ts) and
+lighting-files.ts, lighting.ts, lighting-tool.ts), QElectroTech projects: `qelectrotech`, `qelectrotech_change`,
+`qelectrotech_check`, strict .qet XML (no DTD/XXE), folios, conductors, potentials, master/slave cross-references,
+DOL/reversing/star-delta template candidates, interlock checks, byte-preserving edits, reconcile with the model
+(spec .agentic/specs/REQ-DATA-963cbdf6.md, core electrical/xml-strict.ts, qet.ts, qet-symbols.ts, qet-templates.ts,
+qet-check.ts, qet-tool.ts), and the per-plugin tool gating (`electricalPluginTools`, `electricalToolOffered`). Start at 05_Software/src/libraries/core/src/electrical/ (model.ts, tools.ts) and
 shared/src/electrical-model.ts, with spec .agentic/specs/REQ-DATA-06c0bd54.md. Tests: core/src/electrical/*.test.ts,
 core/src/sessions/electrical-model.test.ts, desktop main/sessions.test.ts. The write flow itself
 (commitChange, WriteQueue) belongs to [file tools](file-tools.md); plugin packages and their helpers belong to
@@ -32,7 +36,7 @@ core/src/sessions/electrical-model.test.ts, desktop main/sessions.test.ts. The w
 ## Purpose and boundaries
 
 First-party foundation of the electrical and automation plugins (PWR, CAD, PLC, IND): one project model per
-workbench, the industrial catalog files and their selection, its units, its relation graph, provenance and the result contract, the radial LV network engine with its cable tables, the LV protection engine, the motor drives engine and the power factor correction engine with its measurement files. The
+workbench, the industrial catalog files and their selection, its units, its relation graph, provenance and the result contract, the radial LV network engine with its cable tables, the LV protection engine, the motor drives engine, the power factor correction engine with its measurement files, the lighting engine and the QElectroTech schematic reader, templates and checks. The
 workbench owns the model file; VERA reads it strictly and writes it only through `electrical_model_change`, a
 prepared change on the shared write flow. Plugin helpers read the model and write results into their own run
 folders; VERA derives result freshness from the results' input snapshots and stores no second copy.
@@ -163,13 +167,37 @@ folders; VERA derives result freshness from the results' input snapshots and sto
   report record (refused when it belongs to another project; its evidence file hashed) and prepares one new result
   through `prepareResultChange`; inputs = the model project + the lighting loads the types name; the files' sha256
   are in `sources` (file freshness not tracked, a stated limit).
+- QElectroTech (spec REQ-DATA-963cbdf6): `parseStrictXml(source, label)` (span-keeping; refuses DOCTYPE, entities other
+  than the five predefined and character references, PIs other than the leading declaration, non-UTF-8, depth > 64,
+  > 500 000 elements, > 16 MiB; `Invalid QElectroTech project <label>: line <n>: <reason>.`), `decodeXmlBytes`;
+  `readQetProject(source, label)` -> {version, title, properties, folios, definitions (embed:// paths), elements (uuid,
+  info, label, links, position `<folio>-<row><col>`), conductors (ends by element+terminal UUID or legacy numeric id),
+  potentials (conductors + linked folio reports), potentialOf, devices (master + linked slaves), problems}. Problem codes:
+  uuid, uuid-duplicate, definition-missing, conductor-end, link-missing, link-type, link-not-reciprocal, slave-unlinked,
+  slave-label, label-duplicate (terminals of a strip and unlinked slaves exempt), report-unlinked.
+- Templates: `renderTemplate({assembly, motorRef, title, newUuid?})` for methods dol, reversing, star-delta (self-authored
+  symbols `embed://import/vera/*.elmt` in qet-symbols.ts, terminal UUIDs stable per symbol); folio 1 draws the assembly's
+  power connections per phase (`from` 2/4/6 -> `to` 1/3/5 or the listed terminals, `supply` = X0 L1..L3, star point on
+  KM3 1-3-5), folio 2 the method's control circuit (X1 L/N, F1 95-96, S0, S1/S2 with 13-14 seal-in, 21-22 interlock NCs,
+  coils; star-delta timer KT1 55-56 / 67-68).
+- Checks: `assemblyChecks(project, assembly, motorRef, mechanical)` -> `assembly-devices`, `connection:<from>/<to>`,
+  `star-point`, `coil-supply:<tag>`, `interlock:electrical:<F1>`, `interlock:electrical:<A>/<B>`, `interlock:sequence`,
+  `mechanical-interlock` (copied from the stored criterion), `contact-links`; `projectChecks(project, model, path)` ->
+  `project-read`, `labels`, `conductor-numbering`, `cross-references`, `device-list` plus `reconcile` {matched (identity
+  recorded|unrecorded|differs), qetOnly, modelOnly, problems, operations (update-object / add-object with attributes
+  qetUuid, qetProject)}.
+- Tool `qelectrotech` (read) {view project|devices|potentials|reconcile, path .qet, offset?}; `qelectrotech_change` (write)
+  {action candidate, motorDrivesRun, motor, path, title?} (new file only, CURRENT motor-drives result, checks must pass)
+  | {action edit, path, sha256, title?, elements [{uuid, info}]} (splices of the allowed information names and the title,
+  base sha256; elements and conductors must stay the same); `qelectrotech_check` (write) {path, motorDrivesRun?, motor?}
+  -> one result (producer qelectrotech/check, engine vera-qet-check 1.0.0) with sources `qet:<path>@sha256:<hex>`.
 - Result format 1 has an optional strict `assemblies` list (<= 16; per assembly motor, circuit, method, conditional,
   devices <= 16 {tag, role, item|null, orderCode|null, setting?}, connections <= 32 {from, to, kind power|control},
   interlocks <= 8 {kind mechanical|electrical|sequence, devices, note}); `renderResultReport` lists them.
 - Tool gating: `electricalModelToolNames` (`electrical_model`, `electrical_model_change`) are offered while any plugin
   of manifest ecosystem `electrical` or `automation` is loaded (`electricalModelPlugin`); each tool of
   `electricalPluginTools` (`industrial_catalog` -> industrial-catalog, `electrical_network` -> electrical-network,
-  `protection_coordination` -> protection-coordination, `motor_drives` -> motor-drives, `power_quality` -> power-quality-pfc, `lighting_design` -> lighting-design) only while its own plugin ID
+  `protection_coordination` -> protection-coordination, `motor_drives` -> motor-drives, `power_quality` -> power-quality-pfc, `lighting_design` -> lighting-design, `qelectrotech`, `qelectrotech_change`, `qelectrotech_check` -> qelectrotech) only while its own plugin ID
   is loaded (`electricalToolOffered(name, plugins)`). `SessionHost.electricalPlugins` holds the loaded plugin IDs; the
   desktop sets it from the loaded plugins of those ecosystems. The headless CLI does not set it.
 
@@ -249,6 +277,13 @@ folders; VERA derives result freshness from the results' input snapshots and sto
   sha256 VERA verified (REQ-FUNC-ca72aaff, REQ-FUNC-b78b7b15, REQ-FUNC-dafae3f1, REQ-FUNC-e087cb4d, REQ-FUNC-addd6a2f,
   REQ-FUNC-e86a35c5, REQ-FUNC-50fa2fc0). `lighting_design` refuses missing, invalid, lightless or foreign inputs and
   a non-lighting load, and writes only a new result file (REQ-REL-840d2785, REQ-FUNC-98dceeb1).
+- A .qet file is read only through the strict reader: nothing named by an entity is ever opened; an unresolved
+  reference is a problem, never dropped (REQ-DATA-963cbdf6, REQ-FUNC-778b9fc6, REQ-FUNC-8958b763). An electrical interlock
+  passes only when every control path to the coil passes the other device's NC contact; a mechanical interlock is the
+  motor_drives verdict, never the drawing; a candidate is prepared only when every check passes and only for a CURRENT
+  motor-drives assembly of dol, reversing or star-delta (REQ-FUNC-07c03695, REQ-FUNC-2e3af206). A candidate is a new file;
+  an edit needs the file's sha256, changes only information spans and the title and keeps every other byte and UUID
+  (REQ-REL-3e094ff0, REQ-DATA-6609a3b6). Reconcile never writes the model (REQ-FUNC-3f13f78d).
 - An import merges only through a mapping naming every imported ID as new or an existing entity of the same kind
   and type; anything else refuses the whole change (REQ-FUNC-784f108f).
 
@@ -274,6 +309,9 @@ folders; VERA derives result freshness from the results' input snapshots and sto
 | PFC engine, request, criteria | electrical/power-quality.ts, spec REQ-DATA-4dc5e2c7 | electrical/power-quality.test.ts |
 | PFC tool | electrical/power-quality-tool.ts, result-change.ts | electrical/power-quality-tool.test.ts |
 | Result assemblies | shared electrical-model.ts, results.ts, report.ts | electrical/motor-drives.test.ts |
+| .qet reading, strict XML | electrical/xml-strict.ts, qet.ts, spec REQ-DATA-963cbdf6 | electrical/qet.test.ts |
+| Templates, symbols, candidate checks | electrical/qet-templates.ts, qet-symbols.ts, qet-check.ts | electrical/qet-templates.test.ts (fixtures tests/fixtures/qelectrotech, VERA_QET_FIXTURES_UPDATE=1) |
+| QET tools, edits, check result | electrical/qet-tool.ts | electrical/qet-tool.test.ts |
 | Offering the tools | electrical/tools.ts (`electricalPluginTools`), sessions/service.ts filter, desktop main/sessions.ts | sessions/electrical-model.test.ts, desktop main/sessions.test.ts |
 
 ## Key behaviors
@@ -347,6 +385,16 @@ folders; VERA derives result freshness from the results' input snapshots and sto
 - REQ-REL-0f24c593 — a stale or foreign network result or another board's measurements is refused.
 - REQ-FUNC-7c320847 — PFC results stored through an approved prepared change, switching nothing.
 - REQ-TEST-37973c6e — guide references with preset tolerances, labelled fictional measurement set.
+- REQ-DATA-963cbdf6 — read a .qet project only from strict XML without DTD or entities.
+- REQ-FUNC-778b9fc6 — map folios, symbols, conductors and potentials, unresolved references as problems.
+- REQ-FUNC-8958b763 — group devices and check their cross-references.
+- REQ-FUNC-3f13f78d — reconcile devices with the model as proposed operations.
+- REQ-FUNC-2e3af206 — DOL, reversing and star-delta candidates from a current motor_drives assembly.
+- REQ-FUNC-07c03695 — validate a candidate's connections and interlocks from its written XML.
+- REQ-REL-3e094ff0 — write .qet files only through the prepared change with a base hash.
+- REQ-DATA-6609a3b6 — edits as splices keeping unaffected bytes and UUIDs.
+- REQ-FUNC-b21bd414 — store a QET check result stamped with the project's sha256.
+- REQ-TEST-7eb1927d — self-authored QET fixtures compared byte for byte.
 
 ## Files
 
@@ -406,3 +454,13 @@ folders; VERA derives result freshness from the results' input snapshots and sto
 - `05_Software/src/libraries/core/src/electrical/lighting.test.ts` — hand calculations, diagnostics, profiles, catalog, report mapping.
 - `05_Software/src/libraries/core/src/electrical/lighting-tool.test.ts` — prepared result, staleness, evidence hash, refusals, plugin.
 - `05_Software/tests/fixtures/lighting-design/` — fictional office, hand-written IES/LDT, fictional report record and catalog.
+- `05_Software/src/libraries/core/src/electrical/xml-strict.ts` — strict span-keeping XML reader (no DTD, no entities).
+- `05_Software/src/libraries/core/src/electrical/qet.ts` — QElectroTech project reader: folios, elements, conductors, potentials, devices.
+- `05_Software/src/libraries/core/src/electrical/qet-symbols.ts` — self-authored QET element definitions of the templates.
+- `05_Software/src/libraries/core/src/electrical/qet-templates.ts` — DOL, reversing and star-delta candidate rendering.
+- `05_Software/src/libraries/core/src/electrical/qet-check.ts` — candidate, numbering, cross-reference and device-list checks, reconcile.
+- `05_Software/src/libraries/core/src/electrical/qet-tool.ts` — the qelectrotech, qelectrotech_change and qelectrotech_check tools.
+- `05_Software/src/libraries/core/src/electrical/qet.test.ts` — strictness refusals, mapping, legacy ids, reports, xref problems.
+- `05_Software/src/libraries/core/src/electrical/qet-templates.test.ts` — templates against fixtures, mutation checks.
+- `05_Software/src/libraries/core/src/electrical/qet-tool.test.ts` — candidates, refusals, edits, conflicts, check result, reconcile, plugin.
+- `05_Software/tests/fixtures/qelectrotech/` — the three generated candidates (golden files).

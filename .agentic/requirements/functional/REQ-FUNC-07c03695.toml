@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-07c03695"
+
+title = "Validate a candidate's connections and interlocks from its written XML"
+
+status = "active"
+
+requirement = """
+When VERA validates a QElectroTech candidate, it shall read the generated XML back and check that every power connection of the assembly joins the right terminals phase by phase, that every electrical interlock of the assembly is an NC contact of the other device through which every path from the control supply to the coil passes, that the overload relay's NC contact lies on every coil path, and that each contact is linked to its coil, and shall refuse to prepare a candidate that fails any check; a mechanical interlock shall be copied from the motor_drives criterion, never from the drawing.
+"""
+
+verification = "Unit tests: the three generated templates pass every check; a candidate with one main conductor removed, with the KM2 NC contact bypassed by an extra conductor, or with the overload NC removed from a coil path fails the named check; the mechanical interlock verdict equals the stored criterion's."
+
+affected_paths = ["05_Software/src/libraries/core/src/electrical/qet-check.ts", "05_Software/src/libraries/core/src/electrical/qet-templates.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/electrical/qet-templates.test.ts", "05_Software/src/libraries/core/src/electrical/qet-tool.test.ts"]
+
+
+spec = "specs/REQ-DATA-963cbdf6.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-16

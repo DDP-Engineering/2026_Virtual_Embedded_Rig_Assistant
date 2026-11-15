@@ -36,6 +36,9 @@ export const electricalPluginTools: Readonly<Record<string, string>> = {
   motor_drives: "motor-drives",
   power_quality: "power-quality-pfc",
   lighting_design: "lighting-design",
+  qelectrotech: "qelectrotech",
+  qelectrotech_change: "qelectrotech",
+  qelectrotech_check: "qelectrotech",
 };
 /** Every tool a host offers only with electrical or automation plugins loaded. */
 export const electricalToolNames: readonly string[] = [

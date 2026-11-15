@@ -7,6 +7,7 @@ import { motorDrivesTool } from "../electrical/motor-drives-tool.js";
 import { electricalNetworkTool } from "../electrical/network-tool.js";
 import { powerQualityTool } from "../electrical/power-quality-tool.js";
 import { protectionCoordinationTool } from "../electrical/protection-tool.js";
+import { qelectrotechChangeTool, qelectrotechCheckTool, qelectrotechTool } from "../electrical/qet-tool.js";
 import { electricalModelChangeTool, electricalModelTool } from "../electrical/tools.js";
 import { pluginInstallTool, pluginValidateTool } from "../plugins/authoring.js";
 import { programOutputTool, programStopTool, runProgramTool } from "../plugins/program-tools.js";
@@ -62,6 +63,9 @@ const builtinDefinitions: Record<BuiltinToolName, ToolDefinition> = {
   motor_drives: motorDrivesTool,
   power_quality: powerQualityTool,
   lighting_design: lightingDesignTool,
+  qelectrotech: qelectrotechTool,
+  qelectrotech_change: qelectrotechChangeTool,
+  qelectrotech_check: qelectrotechCheckTool,
   help: helpTool,
 };
 /** Tools offered only when the host composes a program host. */

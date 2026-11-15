@@ -1127,7 +1127,8 @@ export function analyzeMotorDrives(input: MotorDrivesInput): ElectricalResult {
       } else {
         relay(inRated, multipleDirect);
         link("KM1", "F1");
-        if (proposed === "reversing") link("KM2", "F1");
+        // KM2 swaps L1 and L3 on its way to the relay: its outputs 2, 4, 6 feed F1's inputs 5, 3, 1.
+        if (proposed === "reversing") link("KM2", "F1:5,3,1");
         link("F1", "motor:U1,V1,W1");
         interlocks.push({
           kind: "electrical",

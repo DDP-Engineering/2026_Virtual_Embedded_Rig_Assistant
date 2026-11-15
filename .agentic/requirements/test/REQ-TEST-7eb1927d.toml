@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-TEST-7eb1927d"
+
+title = "Self-authored QElectroTech fixtures saved by the real application"
+
+status = "active"
+
+requirement = """
+The QElectroTech tests shall use self-authored projects and element definitions only - the three template candidates rendered with deterministic UUIDs as golden files, opened by QElectroTech 0.100 on Windows and 0.90 in WSL2 without a load error - and shall compare a fresh render with them byte for byte.
+"""
+
+verification = "Unit tests: qet-templates.test.ts renders each template and compares it with tests/fixtures/qelectrotech/<method>.generated.qet; qet.test.ts reads every fixture without problems. Inspection: the journal records the QET load probes (Windows 0.100.0 log, WSL2 0.90 offscreen) and that the visual check in the real application is open (screen access declined)."
+
+affected_paths = ["05_Software/tests/fixtures/qelectrotech/", "05_Software/tests/fixtures/README.md"]
+
+linked_tests = ["05_Software/src/libraries/core/src/electrical/qet.test.ts", "05_Software/src/libraries/core/src/electrical/qet-templates.test.ts"]
+
+
+spec = "specs/REQ-DATA-963cbdf6.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-16

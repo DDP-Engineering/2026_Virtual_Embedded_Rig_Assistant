@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-2e3af206"
+
+title = "Generate DOL, reversing and star-delta candidates from a current motor_drives assembly"
+
+status = "active"
+
+requirement = """
+When asked for a candidate for a motor, VERA shall build it from the verified DOL, reversing or star-delta template only from the assembly of a current motor_drives result for that motor whose method is one of those three, with the assembly's device tags, the motor's visible reference and the order codes as element information, and shall refuse a missing, invalid, foreign or stale result, a motor without an assembly and any other method.
+"""
+
+verification = "Tool tests: DOL, reversing and star-delta candidates from stored motor_drives results carry the assembly tags and the motor's ref; a vfd assembly, a stale result (motor changed), a result of another plugin and a motor not in the result are each refused with the reason and nothing is prepared."
+
+affected_paths = ["05_Software/src/libraries/core/src/electrical/qet-templates.ts", "05_Software/src/libraries/core/src/electrical/qet-symbols.ts", "05_Software/src/libraries/core/src/electrical/qet-tool.ts", "05_Software/src/libraries/core/src/electrical/motor-drives.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/electrical/qet-templates.test.ts", "05_Software/src/libraries/core/src/electrical/qet-tool.test.ts"]
+
+
+spec = "specs/REQ-DATA-963cbdf6.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-16

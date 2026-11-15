@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-778b9fc6"
+
+title = "Map the folios, symbols, conductors and potentials of a QElectroTech project"
+
+status = "active"
+
+requirement = """
+When VERA reads a well-formed QElectroTech project, it shall list every folio with its order and title, every element with its UUID, type, folio and information, every embedded element definition with its link type, kind and terminals, every conductor with both ends resolved by element and terminal UUID or by the legacy terminal id, and the electrical potentials joined by conductors and linked folio reports, and shall report each unresolved type, terminal or link as a problem instead of dropping it.
+"""
+
+verification = "Unit tests on the candidate fixtures and on inline projects: folio, element and conductor counts equal the file's; a conductor with element1/terminal1 UUIDs and one with a legacy numeric terminal id resolve to the same terminals; a report pair joins the potentials of two folios; a conductor naming an unknown terminal and an element of a non-embedded type appear as problems with their UUIDs."
+
+affected_paths = ["05_Software/src/libraries/core/src/electrical/qet.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/electrical/qet.test.ts"]
+
+
+spec = "specs/REQ-DATA-963cbdf6.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-16

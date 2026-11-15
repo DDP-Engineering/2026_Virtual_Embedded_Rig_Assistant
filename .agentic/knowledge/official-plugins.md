@@ -21,7 +21,9 @@ power-quality-pfc, start at plugins/power-quality-pfc/plugin.yaml (no program, e
 skills/power-factor-correction; the engine, the measurement format, the `power_quality` tool and their tests belong
 to [electrical model](electrical-model.md). For lighting-design, start at plugins/lighting-design/plugin.yaml (no
 program, ecosystem `electrical`) and skills/lighting-design; the photometry readers, the lighting formats, the engine,
-the `lighting_design` tool and their tests belong to [electrical model](electrical-model.md).
+the `lighting_design` tool and their tests belong to [electrical model](electrical-model.md). For qelectrotech, start at
+plugins/qelectrotech/plugin.yaml (no program, ecosystem `electrical`) and skills/qelectrotech-schematics; the .qet
+reader, templates, checks, the three QET tools and their tests belong to [electrical model](electrical-model.md).
 
 For kicad, start at plugins/kicad/plugin.yaml, scripts/kicad_tool.py and scripts/kicad_support/ with spec
 .agentic/specs/REQ-DATA-c32834e3.md; tests/plugins/kicad.test.ts and tests/fixtures/kicad/ (fictional KiCad 10
@@ -385,6 +387,12 @@ that source metadata reaches the deterministic bundled index unchanged.
   evo flow (same room and photometry built in DIALux by the engineer, report exported, record mapped and verified); no
   DIALux automation, no proprietary file written. Engine and tool: [electrical model](electrical-model.md), spec
   REQ-DATA-affb2e6b.
+- `qelectrotech` 0.1.0, ecosystem `electrical` (pack Electrical schematics and panels, group QElectroTech schematics,
+  default on; activity `design`), Windows x64/Linux x64, no program (QElectroTech 0.90/0.100 has no CLI export; the
+  engineer opens the files). Skill `qelectrotech-schematics`: read a project and its problems, draft a DOL, reversing or
+  star-delta candidate from a CURRENT motor_drives result with `qelectrotech_change`, relabel with the base sha256 after
+  edits in QElectroTech, store `qelectrotech_check` and apply the reconcile operations only with the user's agreement.
+  Reader, templates, checks and tools: [electrical model](electrical-model.md), spec REQ-DATA-963cbdf6.
 
 - `ngspice` 0.3.0, ecosystem `electronics` (Electronics design pack, group Simulation (ngspice), default on; activity
   `design`), Windows x64/Linux x64. Program `ngspice`: find `C:/Spice64/bin/ngspice_con.exe`,

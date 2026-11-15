@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-DATA-6609a3b6"
+
+title = "Edit a QElectroTech project by splices that keep unaffected bytes and UUIDs"
+
+status = "active"
+
+requirement = """
+When VERA edits an existing QElectroTech project, it shall change only the text spans of the named elements' information and the project title, by element UUID, and shall keep every other byte of the file and every element UUID unchanged.
+"""
+
+verification = "Tool tests: relabelling KM1 in a candidate fixture changes only the label spans (the bytes outside the edited spans equal the original), the re-read project has the same element UUIDs, conductors and folios; an unknown element UUID and an information name that is not allowed are refused."
+
+affected_paths = ["05_Software/src/libraries/core/src/electrical/qet-tool.ts", "05_Software/src/libraries/core/src/electrical/xml-strict.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/electrical/qet-tool.test.ts"]
+
+
+spec = "specs/REQ-DATA-963cbdf6.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-16

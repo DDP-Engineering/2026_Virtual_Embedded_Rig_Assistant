@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-3f13f78d"
+
+title = "Reconcile QElectroTech devices with the electrical model as proposed operations"
+
+status = "active"
+
+requirement = """
+When asked to reconcile a QElectroTech project with the electrical model, VERA shall match each device label to the model object with the same visible reference, report matched, QET-only and model-only references and a QET UUID that differs from the object's recorded one, and shall return electrical_model_change operations that record the UUIDs and add the QET-only devices without writing the model itself.
+"""
+
+verification = "Tool tests: reconcile on the DOL candidate with the fixture model returns the motor matched and KM1/F1/Q1 QET-only with add-object operations carrying attributes qetUuid and qetProject; applying those operations with electrical_model_change and reconciling again proposes no operation; a changed qetUuid is reported; the model file bytes are unchanged by reconcile."
+
+affected_paths = ["05_Software/src/libraries/core/src/electrical/qet-check.ts", "05_Software/src/libraries/core/src/electrical/qet-tool.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/electrical/qet-tool.test.ts"]
+
+
+spec = "specs/REQ-DATA-963cbdf6.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-16

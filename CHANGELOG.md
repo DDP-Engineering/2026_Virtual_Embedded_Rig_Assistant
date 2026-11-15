@@ -6,6 +6,14 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ## [Unreleased]
 
+### Added
+
+- qelectrotech 0.1.0: read QElectroTech projects, draft DOL, reversing and star-delta schematics, check cross-references.
+
+### Fixed
+
+- The motor_drives scheme of a reversing starter with an overload relay now records the phase swap at the relay.
+
 ## [0.1.0] - 2026-11-15
 
 ### Added

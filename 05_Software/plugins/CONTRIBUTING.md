@@ -121,8 +121,15 @@ for verification, a report record (kind `vera-lighting-report`) mapped from a ph
 DIALux evo. A luminaire catalog item has category `luminaire`, attribute `photometry` and cited `luminousFlux` and
 `activePower`. VERA computes no uniformity or UGR and starts no engine.
 
+QElectroTech schematics come from VERA's `qelectrotech`, `qelectrotech_change` and `qelectrotech_check` tools (plugin
+`qelectrotech`, spec `.agentic/specs/REQ-DATA-963cbdf6.md`): `.qet` files are read with a strict XML reader (no DTD, no
+entities); a device's label is matched to a model object's `ref` and its QET identity recorded in `attributes.qetUuid`
+and `attributes.qetProject` through `electrical_model_change`. Candidates are drawn from a motor_drives result's
+`assemblies`: a power connection `{from, to}` joins `from`'s outputs 2/4/6 to `to`'s inputs 1/3/5, or to the terminals
+listed after a colon in phase order (`motor:W1,V1,U1`, `F1:5,3,1`); `supply` is the incoming L1 L2 L3.
+
 Each plugin tool (`industrial_catalog`, `electrical_network`, `protection_coordination`, `motor_drives`,
-`power_quality`, `lighting_design`) is offered
+`power_quality`, `lighting_design`, `qelectrotech`, `qelectrotech_change`, `qelectrotech_check`) is offered
 only while its own plugin is loaded; a tool that needs another plugin's results reads the result files and refuses
 cleanly when they are missing or stale.
 

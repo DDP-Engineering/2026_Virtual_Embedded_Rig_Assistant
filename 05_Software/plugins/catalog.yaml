@@ -1,7 +1,7 @@
 # Maintainers' file of the catalog (spec REQ-DATA-b40d3f9b §1.2). Only maintainers change it.
 format: 1
 # Plugins maintained by the VERA maintainers; every other catalog plugin is community.
-official: [serial-monitor, esp32-esptool, esp32-idf, esp32-efuse, binutils, probe-rs, sigrok, git, analysis-skills, wireshark-tshark, can-python, can-dbc, microchip-pymcuprog, stm32-cubeprog, electronics-calc, kicad, parts-search, ngspice, ltspice, kicad-layout, freerouting, scpi-instruments, arduino-cli, micropython, circuitpython, bus-tools, mqtt-tools, ble-tools, wokwi, raspberry-pi-linux, lab-validation, hil-testing, gdb-debug, power-profiler, renode, zephyr, platformio, industrial-catalog, electrical-network, protection-coordination, motor-drives, power-quality-pfc, lighting-design]
+official: [serial-monitor, esp32-esptool, esp32-idf, esp32-efuse, binutils, probe-rs, sigrok, git, analysis-skills, wireshark-tshark, can-python, can-dbc, microchip-pymcuprog, stm32-cubeprog, electronics-calc, kicad, parts-search, ngspice, ltspice, kicad-layout, freerouting, scpi-instruments, arduino-cli, micropython, circuitpython, bus-tools, mqtt-tools, ble-tools, wokwi, raspberry-pi-linux, lab-validation, hil-testing, gdb-debug, power-profiler, renode, zephyr, platformio, industrial-catalog, electrical-network, protection-coordination, motor-drives, power-quality-pfc, lighting-design, qelectrotech]
 # Discovery facts are maintained separately from package manifests. Publication dates are genuinely
 # unknown until a catalog release record establishes them; do not infer them from commits/builds.
 metadata:
@@ -71,6 +71,9 @@ metadata:
   power-quality-pfc:
     activities: [design]
     keywords: [power factor correction, PFC, reactive power, kvar, capacitor bank, detuned reactor, displacement factor, total power factor, harmonics, THD, resonance, overcompensation, power quality measurement]
+  qelectrotech:
+    activities: [design]
+    keywords: [QElectroTech, schematic, .qet, wiring diagram, cross-reference, folio, conductor numbering, DOL, reversing, star-delta, starter, interlock, device list]
   motor-drives:
     activities: [design]
     keywords: [motor starting, DOL, reversing, star-delta, softstarter, VFD, variable speed drive, contactor, overload relay, utilisation category, acceleration time, duty class, interlock]

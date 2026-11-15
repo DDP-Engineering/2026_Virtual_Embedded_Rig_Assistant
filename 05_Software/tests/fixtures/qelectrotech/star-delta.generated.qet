@@ -1,0 +1,960 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project title="M1 star-delta" version="0.90">
+    <properties>
+        <property name="vera-template" show="1">star-delta 1</property>
+    </properties>
+    <diagram title="Power circuit" order="1" version="0.90" cols="17" rows="8" colsize="60" rowsize="80" height="660" displaycols="true" displayrows="true" folio="%id/%total" author="VERA" date="" filename="" plant="" locmach="" indexrev="" displayAt="bottom" freezeNewConductor="false" freezeNewElement="false">
+        <elements>
+            <element uuid="{61317bef-931b-5792-a2f2-3395234b1070}" type="embed://import/vera/supply3.elmt" x="120" y="70" z="10" orientation="0" prefix="" freezeLabel="false">
+                <terminals>
+                    <terminal id="0" x="0" y="10" orientation="2"/>
+                    <terminal id="1" x="20" y="10" orientation="2"/>
+                    <terminal id="2" x="40" y="10" orientation="2"/>
+                </terminals>
+                <inputs/>
+                <elementInformations>
+                    <elementInformation name="label" show="1">X0</elementInformation>
+                </elementInformations>
+                <dynamic_texts>
+                    <dynamic_elmt_text uuid="{c179bc3b-6c31-5f8e-a588-688f3e1d0b7d}" text_from="ElementInfo" x="52" y="-6" rotation="0" frame="false" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" keep_visual_rotation="true" font="Sans Serif,9,-1,5,50,0,0,0,0,0">
+                        <text></text>
+                        <info_name>label</info_name>
+                    </dynamic_elmt_text>
+                </dynamic_texts>
+                <texts_groups/>
+            </element>
+            <element uuid="{87b0f6ff-84c7-58c7-a626-36e8a048b48c}" type="embed://import/vera/breaker3.elmt" x="120" y="170" z="10" orientation="0" prefix="" freezeLabel="false">
+                <terminals>
+                    <terminal id="3" x="0" y="-20" orientation="0"/>
+                    <terminal id="4" x="0" y="20" orientation="2"/>
+                    <terminal id="5" x="20" y="-20" orientation="0"/>
+                    <terminal id="6" x="20" y="20" orientation="2"/>
+                    <terminal id="7" x="40" y="-20" orientation="0"/>
+                    <terminal id="8" x="40" y="20" orientation="2"/>
+                </terminals>
+                <inputs/>
+                <elementInformations>
+                    <elementInformation name="label" show="1">Q1</elementInformation>
+                    <elementInformation name="manufacturer_reference" show="1">GV2ME14</elementInformation>
+                </elementInformations>
+                <dynamic_texts>
+                    <dynamic_elmt_text uuid="{81cc89d1-c057-55f0-a8a0-64950caacdfa}" text_from="ElementInfo" x="50" y="-6" rotation="0" frame="false" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" keep_visual_rotation="true" font="Sans Serif,9,-1,5,50,0,0,0,0,0">
+                        <text></text>
+                        <info_name>label</info_name>
+                    </dynamic_elmt_text>
+                </dynamic_texts>
+                <texts_groups/>
+            </element>
+            <element uuid="{d6051d75-4603-5b5f-a7ea-499500c7ec89}" type="embed://import/vera/contacts3.elmt" x="120" y="270" z="10" orientation="0" prefix="" freezeLabel="false">
+                <terminals>
+                    <terminal id="9" x="0" y="-20" orientation="0"/>
+                    <terminal id="10" x="0" y="20" orientation="2"/>
+                    <terminal id="11" x="20" y="-20" orientation="0"/>
+                    <terminal id="12" x="20" y="20" orientation="2"/>
+                    <terminal id="13" x="40" y="-20" orientation="0"/>
+                    <terminal id="14" x="40" y="20" orientation="2"/>
+                </terminals>
+                <inputs/>
+                <elementInformations>
+                    <elementInformation name="label" show="1">KM1</elementInformation>
+                </elementInformations>
+                <links_uuids>
+                    <link_uuid uuid="{77dd0552-6254-5203-a132-36c34e1c0ee7}"/>
+                </links_uuids>
+                <dynamic_texts>
+                    <dynamic_elmt_text uuid="{dcb0bdca-212b-5db7-ae52-d8aa31f3334e}" text_from="ElementInfo" x="50" y="-6" rotation="0" frame="false" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" keep_visual_rotation="true" font="Sans Serif,9,-1,5,50,0,0,0,0,0">
+                        <text></text>
+                        <info_name>label</info_name>
+                    </dynamic_elmt_text>
+                </dynamic_texts>
+                <texts_groups/>
+            </element>
+            <element uuid="{9a086267-9905-5b0b-a8e6-7bc03469fc89}" type="embed://import/vera/contacts3.elmt" x="320" y="370" z="10" orientation="0" prefix="" freezeLabel="false">
+                <terminals>
+                    <terminal id="15" x="0" y="-20" orientation="0"/>
+                    <terminal id="16" x="0" y="20" orientation="2"/>
+                    <terminal id="17" x="20" y="-20" orientation="0"/>
+                    <terminal id="18" x="20" y="20" orientation="2"/>
+                    <terminal id="19" x="40" y="-20" orientation="0"/>
+                    <terminal id="20" x="40" y="20" orientation="2"/>
+                </terminals>
+                <inputs/>
+                <elementInformations>
+                    <elementInformation name="label" show="1">KM2</elementInformation>
+                </elementInformations>
+                <links_uuids>
+                    <link_uuid uuid="{5a5aaa5e-a1ed-521c-ae37-cfb5fe65db50}"/>
+                </links_uuids>
+                <dynamic_texts>
+                    <dynamic_elmt_text uuid="{d83e5fa3-09a7-5507-a74c-a8a8cc44b51f}" text_from="ElementInfo" x="50" y="-6" rotation="0" frame="false" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" keep_visual_rotation="true" font="Sans Serif,9,-1,5,50,0,0,0,0,0">
+                        <text></text>
+                        <info_name>label</info_name>
+                    </dynamic_elmt_text>
+                </dynamic_texts>
+                <texts_groups/>
+            </element>
+            <element uuid="{47b97da9-f1e7-575e-a58a-5f07d28bf5af}" type="embed://import/vera/contacts3.elmt" x="520" y="370" z="10" orientation="0" prefix="" freezeLabel="false">
+                <terminals>
+                    <terminal id="21" x="0" y="-20" orientation="0"/>
+                    <terminal id="22" x="0" y="20" orientation="2"/>
+                    <terminal id="23" x="20" y="-20" orientation="0"/>
+                    <terminal id="24" x="20" y="20" orientation="2"/>
+                    <terminal id="25" x="40" y="-20" orientation="0"/>
+                    <terminal id="26" x="40" y="20" orientation="2"/>
+                </terminals>
+                <inputs/>
+                <elementInformations>
+                    <elementInformation name="label" show="1">KM3</elementInformation>
+                </elementInformations>
+                <links_uuids>
+                    <link_uuid uuid="{28a0edc6-c432-52f6-a4c1-2f3668f69044}"/>
+                </links_uuids>
+                <dynamic_texts>
+                    <dynamic_elmt_text uuid="{4a8ebbb4-aabf-5136-a2d8-c60a03d511bf}" text_from="ElementInfo" x="50" y="-6" rotation="0" frame="false" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" keep_visual_rotation="true" font="Sans Serif,9,-1,5,50,0,0,0,0,0">
+                        <text></text>
+                        <info_name>label</info_name>
+                    </dynamic_elmt_text>
+                </dynamic_texts>
+                <texts_groups/>
+            </element>
+            <element uuid="{d4827f33-ef8e-5ace-ae3c-7d2d9b401c4b}" type="embed://import/vera/overload3.elmt" x="120" y="370" z="10" orientation="0" prefix="" freezeLabel="false">
+                <terminals>
+                    <terminal id="27" x="0" y="-20" orientation="0"/>
+                    <terminal id="28" x="0" y="20" orientation="2"/>
+                    <terminal id="29" x="20" y="-20" orientation="0"/>
+                    <terminal id="30" x="20" y="20" orientation="2"/>
+                    <terminal id="31" x="40" y="-20" orientation="0"/>
+                    <terminal id="32" x="40" y="20" orientation="2"/>
+                </terminals>
+                <inputs/>
+                <elementInformations>
+                    <elementInformation name="label" show="1">F1</elementInformation>
+                    <elementInformation name="manufacturer_reference" show="1">LRD21</elementInformation>
+                </elementInformations>
+                <links_uuids>
+                    <link_uuid uuid="{eacf4c94-e05c-5aad-a396-78ccfdf0a933}"/>
+                </links_uuids>
+                <dynamic_texts>
+                    <dynamic_elmt_text uuid="{709babde-904b-5747-a95f-17fdfca46ccd}" text_from="ElementInfo" x="58" y="-6" rotation="0" frame="false" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" keep_visual_rotation="true" font="Sans Serif,9,-1,5,50,0,0,0,0,0">
+                        <text></text>
+                        <info_name>label</info_name>
+                    </dynamic_elmt_text>
+                </dynamic_texts>
+                <texts_groups/>
+            </element>
+            <element uuid="{f0f635d2-5c07-5075-ae5a-e25e0cdd2deb}" type="embed://import/vera/motor6.elmt" x="120" y="480" z="10" orientation="0" prefix="" freezeLabel="false">
+                <terminals>
+                    <terminal id="33" x="0" y="-20" orientation="0"/>
+                    <terminal id="34" x="20" y="-20" orientation="0"/>
+                    <terminal id="35" x="40" y="-20" orientation="0"/>
+                    <terminal id="36" x="0" y="70" orientation="2"/>
+                    <terminal id="37" x="20" y="70" orientation="2"/>
+                    <terminal id="38" x="40" y="70" orientation="2"/>
+                </terminals>
+                <inputs/>
+                <elementInformations>
+                    <elementInformation name="label" show="1">M1</elementInformation>
+                </elementInformations>
+                <dynamic_texts>
+                    <dynamic_elmt_text uuid="{cc217213-3057-5109-a596-316db80b6004}" text_from="ElementInfo" x="44" y="10" rotation="0" frame="false" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" keep_visual_rotation="true" font="Sans Serif,9,-1,5,50,0,0,0,0,0">
+                        <text></text>
+                        <info_name>label</info_name>
+                    </dynamic_elmt_text>
+                </dynamic_texts>
+                <texts_groups/>
+            </element>
+        </elements>
+        <conductors>
+            <conductor element1="{61317bef-931b-5792-a2f2-3395234b1070}" terminal1="{7f831ff3-895a-5df9-adc2-bd579719ff74}" element2="{87b0f6ff-84c7-58c7-a626-36e8a048b48c}" terminal2="{8a1d19aa-fc90-52c5-a1b6-a8b188be621b}" num="" type="multi" x="0" y="0" freezeLabel="false" displaytext="1" numsize="7" condsize="1" onetextperfolio="0" horizrotatetext="0" vertirotatetext="270">
+                <sequentialNumbers/>
+            </conductor>
+            <conductor element1="{61317bef-931b-5792-a2f2-3395234b1070}" terminal1="{734add35-301c-5268-aa83-b85896f0b848}" element2="{87b0f6ff-84c7-58c7-a626-36e8a048b48c}" terminal2="{694cafe5-f796-507d-a707-26ee5c8aa8ce}" num="" type="multi" x="0" y="0" freezeLabel="false" displaytext="1" numsize="7" condsize="1" onetextperfolio="0" horizrotatetext="0" vertirotatetext="270">
+                <sequentialNumbers/>
+            </conductor>
+            <conductor element1="{61317bef-931b-5792-a2f2-3395234b1070}" terminal1="{294fc430-d0ac-50f7-af0d-a9737bd5147f}" element2="{87b0f6ff-84c7-58c7-a626-36e8a048b48c}" terminal2="{21ed8b8c-8dd0-5312-a349-ce6c038b4487}" num="" type="multi" x="0" y="0" freezeLabel="false" displaytext="1" numsize="7" condsize="1" onetextperfolio="0" horizrotatetext="0" vertirotatetext="270">
+                <sequentialNumbers/>
+            </conductor>
+            <conductor element1="{87b0f6ff-84c7-58c7-a626-36e8a048b48c}" terminal1="{8f4410e1-b253-54fc-a37f-87b0ca758eaa}" element2="{d6051d75-4603-5b5f-a7ea-499500c7ec89}" terminal2="{31e56660-fa0a-57de-a9c1-b3e6d2160e66}" num="" type="multi" x="0" y="0" freezeLabel="false" displaytext="1" numsize="7" condsize="1" onetextperfolio="0" horizrotatetext="0" vertirotatetext="270">
+                <sequentialNumbers/>
+            </conductor>
+            <conductor element1="{87b0f6ff-84c7-58c7-a626-36e8a048b48c}" terminal1="{2fec0aea-5c6d-5fc0-aeb8-a3c66054021f}" element2="{d6051d75-4603-5b5f-a7ea-499500c7ec89}" terminal2="{06b4c2e3-e5e8-5f39-a942-05c878231184}" num="" type="multi" x="0" y="0" freezeLabel="false" displaytext="1" numsize="7" condsize="1" onetextperfolio="0" horizrotatetext="0" vertirotatetext="270">
+                <sequentialNumbers/>
+            </conductor>
+            <conductor element1="{87b0f6ff-84c7-58c7-a626-36e8a048b48c}" terminal1="{5d770c84-fde2-59fb-afaa-67cecb151de0}" element2="{d6051d75-4603-5b5f-a7ea-499500c7ec89}" terminal2="{4810d166-8b84-50a3-ace1-029eb7f9a3e3}" num="" type="multi" x="0" y="0" freezeLabel="false" displaytext="1" numsize="7" condsize="1" onetextperfolio="0" horizrotatetext="0" vertirotatetext="270">
+                <sequentialNumbers/>
+            </conductor>
+            <conductor element1="{d6051d75-4603-5b5f-a7ea-499500c7ec89}" terminal1="{68e2d9f0-aa98-5143-a115-979255e67a3d}" element2="{d4827f33-ef8e-5ace-ae3c-7d2d9b401c4b}" terminal2="{5c26e21d-2e92-5a99-a531-e206e1a53f88}" num="" type="multi" x="0" y="0" freezeLabel="false" displaytext="1" numsize="7" condsize="1" onetextperfolio="0" horizrotatetext="0" vertirotatetext="270">
+                <sequentialNumbers/>
+            </conductor>
+            <conductor element1="{d6051d75-4603-5b5f-a7ea-499500c7ec89}" terminal1="{8f216c2b-276b-564a-a189-ccb21720d300}" element2="{d4827f33-ef8e-5ace-ae3c-7d2d9b401c4b}" terminal2="{1d093486-0163-5d29-a5ca-3b1c6386807d}" num="" type="multi" x="0" y="0" freezeLabel="false" displaytext="1" numsize="7" condsize="1" onetextperfolio="0" horizrotatetext="0" vertirotatetext="270">
+                <sequentialNumbers/>
+            </conductor>
+            <conductor element1="{d6051d75-4603-5b5f-a7ea-499500c7ec89}" terminal1="{63414afb-ae0f-5dad-ac57-67559deb35b0}" element2="{d4827f33-ef8e-5ace-ae3c-7d2d9b401c4b}" terminal2="{65b2b1bc-00dd-5a84-a556-fb4b132b5351}" num="" type="multi" x="0" y="0" freezeLabel="false" displaytext="1" numsize="7" condsize="1" onetextperfolio="0" horizrotatetext="0" vertirotatetext="270">
+                <sequentialNumbers/>
+            </conductor>
+            <conductor element1="{d4827f33-ef8e-5ace-ae3c-7d2d9b401c4b}" terminal1="{4a05ba19-bd28-547e-a19f-92d033cccca9}" element2="{f0f635d2-5c07-5075-ae5a-e25e0cdd2deb}" terminal2="{2b95fcc8-330a-5934-a591-573d49f63fa2}" num="" type="multi" x="0" y="0" freezeLabel="false" displaytext="1" numsize="7" condsize="1" onetextperfolio="0" horizrotatetext="0" vertirotatetext="270">
+                <sequentialNumbers/>
+            </conductor>
+            <conductor element1="{d4827f33-ef8e-5ace-ae3c-7d2d9b401c4b}" terminal1="{38e4cb7d-854e-55ef-af71-960009429fdc}" element2="{f0f635d2-5c07-5075-ae5a-e25e0cdd2deb}" terminal2="{0373e688-3413-537e-a3e3-2f25275d543e}" num="" type="multi" x="0" y="0" freezeLabel="false" displaytext="1" numsize="7" condsize="1" onetextperfolio="0" horizrotatetext="0" vertirotatetext="270">
+                <sequentialNumbers/>
+            </conductor>
+            <conductor element1="{d4827f33-ef8e-5ace-ae3c-7d2d9b401c4b}" terminal1="{30dbe142-7fd8-5c56-a7ac-bc9015914302}" element2="{f0f635d2-5c07-5075-ae5a-e25e0cdd2deb}" terminal2="{ff7e8c0a-0ee9-5edd-afde-38ed03f0eba1}" num="" type="multi" x="0" y="0" freezeLabel="false" displaytext="1" numsize="7" condsize="1" onetextperfolio="0" horizrotatetext="0" vertirotatetext="270">
+                <sequentialNumbers/>
+            </conductor>
+            <conductor element1="{d6051d75-4603-5b5f-a7ea-499500c7ec89}" terminal1="{68e2d9f0-aa98-5143-a115-979255e67a3d}" element2="{9a086267-9905-5b0b-a8e6-7bc03469fc89}" terminal2="{31e56660-fa0a-57de-a9c1-b3e6d2160e66}" num="" type="multi" x="0" y="0" freezeLabel="false" displaytext="1" numsize="7" condsize="1" onetextperfolio="0" horizrotatetext="0" vertirotatetext="270">
+                <sequentialNumbers/>
+            </conductor>
+            <conductor element1="{d6051d75-4603-5b5f-a7ea-499500c7ec89}" terminal1="{8f216c2b-276b-564a-a189-ccb21720d300}" element2="{9a086267-9905-5b0b-a8e6-7bc03469fc89}" terminal2="{06b4c2e3-e5e8-5f39-a942-05c878231184}" num="" type="multi" x="0" y="0" freezeLabel="false" displaytext="1" numsize="7" condsize="1" onetextperfolio="0" horizrotatetext="0" vertirotatetext="270">
+                <sequentialNumbers/>
+            </conductor>
+            <conductor element1="{d6051d75-4603-5b5f-a7ea-499500c7ec89}" terminal1="{63414afb-ae0f-5dad-ac57-67559deb35b0}" element2="{9a086267-9905-5b0b-a8e6-7bc03469fc89}" terminal2="{4810d166-8b84-50a3-ace1-029eb7f9a3e3}" num="" type="multi" x="0" y="0" freezeLabel="false" displaytext="1" numsize="7" condsize="1" onetextperfolio="0" horizrotatetext="0" vertirotatetext="270">
+                <sequentialNumbers/>
+            </conductor>
+            <conductor element1="{9a086267-9905-5b0b-a8e6-7bc03469fc89}" terminal1="{68e2d9f0-aa98-5143-a115-979255e67a3d}" element2="{f0f635d2-5c07-5075-ae5a-e25e0cdd2deb}" terminal2="{18e94958-5a5e-5284-a0e5-050b22d95d7e}" num="" type="multi" x="0" y="0" freezeLabel="false" displaytext="1" numsize="7" condsize="1" onetextperfolio="0" horizrotatetext="0" vertirotatetext="270">
+                <sequentialNumbers/>
+            </conductor>
+            <conductor element1="{9a086267-9905-5b0b-a8e6-7bc03469fc89}" terminal1="{8f216c2b-276b-564a-a189-ccb21720d300}" element2="{f0f635d2-5c07-5075-ae5a-e25e0cdd2deb}" terminal2="{e7471b93-4947-5816-a1a5-6efe042e1ba5}" num="" type="multi" x="0" y="0" freezeLabel="false" displaytext="1" numsize="7" condsize="1" onetextperfolio="0" horizrotatetext="0" vertirotatetext="270">
+                <sequentialNumbers/>
+            </conductor>
+            <conductor element1="{9a086267-9905-5b0b-a8e6-7bc03469fc89}" terminal1="{63414afb-ae0f-5dad-ac57-67559deb35b0}" element2="{f0f635d2-5c07-5075-ae5a-e25e0cdd2deb}" terminal2="{0fd1a8ac-2e55-506c-a6d7-89ec0109f74a}" num="" type="multi" x="0" y="0" freezeLabel="false" displaytext="1" numsize="7" condsize="1" onetextperfolio="0" horizrotatetext="0" vertirotatetext="270">
+                <sequentialNumbers/>
+            </conductor>
+            <conductor element1="{47b97da9-f1e7-575e-a58a-5f07d28bf5af}" terminal1="{68e2d9f0-aa98-5143-a115-979255e67a3d}" element2="{f0f635d2-5c07-5075-ae5a-e25e0cdd2deb}" terminal2="{e7471b93-4947-5816-a1a5-6efe042e1ba5}" num="" type="multi" x="0" y="0" freezeLabel="false" displaytext="1" numsize="7" condsize="1" onetextperfolio="0" horizrotatetext="0" vertirotatetext="270">
+                <sequentialNumbers/>
+            </conductor>
+            <conductor element1="{47b97da9-f1e7-575e-a58a-5f07d28bf5af}" terminal1="{8f216c2b-276b-564a-a189-ccb21720d300}" element2="{f0f635d2-5c07-5075-ae5a-e25e0cdd2deb}" terminal2="{0fd1a8ac-2e55-506c-a6d7-89ec0109f74a}" num="" type="multi" x="0" y="0" freezeLabel="false" displaytext="1" numsize="7" condsize="1" onetextperfolio="0" horizrotatetext="0" vertirotatetext="270">
+                <sequentialNumbers/>
+            </conductor>
+            <conductor element1="{47b97da9-f1e7-575e-a58a-5f07d28bf5af}" terminal1="{63414afb-ae0f-5dad-ac57-67559deb35b0}" element2="{f0f635d2-5c07-5075-ae5a-e25e0cdd2deb}" terminal2="{18e94958-5a5e-5284-a0e5-050b22d95d7e}" num="" type="multi" x="0" y="0" freezeLabel="false" displaytext="1" numsize="7" condsize="1" onetextperfolio="0" horizrotatetext="0" vertirotatetext="270">
+                <sequentialNumbers/>
+            </conductor>
+            <conductor element1="{47b97da9-f1e7-575e-a58a-5f07d28bf5af}" terminal1="{31e56660-fa0a-57de-a9c1-b3e6d2160e66}" element2="{47b97da9-f1e7-575e-a58a-5f07d28bf5af}" terminal2="{06b4c2e3-e5e8-5f39-a942-05c878231184}" num="" type="multi" x="0" y="0" freezeLabel="false" displaytext="1" numsize="7" condsize="1" onetextperfolio="0" horizrotatetext="0" vertirotatetext="270">
+                <sequentialNumbers/>
+            </conductor>
+            <conductor element1="{47b97da9-f1e7-575e-a58a-5f07d28bf5af}" terminal1="{06b4c2e3-e5e8-5f39-a942-05c878231184}" element2="{47b97da9-f1e7-575e-a58a-5f07d28bf5af}" terminal2="{4810d166-8b84-50a3-ace1-029eb7f9a3e3}" num="" type="multi" x="0" y="0" freezeLabel="false" displaytext="1" numsize="7" condsize="1" onetextperfolio="0" horizrotatetext="0" vertirotatetext="270">
+                <sequentialNumbers/>
+            </conductor>
+        </conductors>
+        <inputs/>
+        <shapes/>
+    </diagram>
+    <diagram title="Control circuit" order="2" version="0.90" cols="17" rows="8" colsize="60" rowsize="80" height="660" displaycols="true" displayrows="true" folio="%id/%total" author="VERA" date="" filename="" plant="" locmach="" indexrev="" displayAt="bottom" freezeNewConductor="false" freezeNewElement="false">
+        <elements>
+            <element uuid="{77dd0552-6254-5203-a132-36c34e1c0ee7}" type="embed://import/vera/coil.elmt" x="100" y="540" z="10" orientation="0" prefix="" freezeLabel="false">
+                <terminals>
+                    <terminal id="39" x="0" y="-20" orientation="0"/>
+                    <terminal id="40" x="0" y="20" orientation="2"/>
+                </terminals>
+                <inputs/>
+                <elementInformations>
+                    <elementInformation name="label" show="1">KM1</elementInformation>
+                    <elementInformation name="manufacturer_reference" show="1">LC1D18P7</elementInformation>
+                </elementInformations>
+                <links_uuids>
+                    <link_uuid uuid="{d6051d75-4603-5b5f-a7ea-499500c7ec89}"/>
+                    <link_uuid uuid="{68924083-d83f-5038-a8f7-25014c7f6e37}"/>
+                </links_uuids>
+                <dynamic_texts>
+                    <dynamic_elmt_text uuid="{e80c174f-8e9d-5891-a589-8f3f470fb428}" text_from="ElementInfo" x="16" y="-6" rotation="0" frame="false" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" keep_visual_rotation="true" font="Sans Serif,9,-1,5,50,0,0,0,0,0">
+                        <text></text>
+                        <info_name>label</info_name>
+                    </dynamic_elmt_text>
+                </dynamic_texts>
+                <texts_groups/>
+            </element>
+            <element uuid="{5a5aaa5e-a1ed-521c-ae37-cfb5fe65db50}" type="embed://import/vera/coil.elmt" x="720" y="540" z="10" orientation="0" prefix="" freezeLabel="false">
+                <terminals>
+                    <terminal id="41" x="0" y="-20" orientation="0"/>
+                    <terminal id="42" x="0" y="20" orientation="2"/>
+                </terminals>
+                <inputs/>
+                <elementInformations>
+                    <elementInformation name="label" show="1">KM2</elementInformation>
+                    <elementInformation name="manufacturer_reference" show="1">LC1D18P7</elementInformation>
+                </elementInformations>
+                <links_uuids>
+                    <link_uuid uuid="{9a086267-9905-5b0b-a8e6-7bc03469fc89}"/>
+                    <link_uuid uuid="{de9fbdc1-17eb-5add-a058-8bbe2079edb7}"/>
+                </links_uuids>
+                <dynamic_texts>
+                    <dynamic_elmt_text uuid="{61340043-ac6b-5724-afb8-a8cf4b77c39d}" text_from="ElementInfo" x="16" y="-6" rotation="0" frame="false" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" keep_visual_rotation="true" font="Sans Serif,9,-1,5,50,0,0,0,0,0">
+                        <text></text>
+                        <info_name>label</info_name>
+                    </dynamic_elmt_text>
+                </dynamic_texts>
+                <texts_groups/>
+            </element>
+            <element uuid="{28a0edc6-c432-52f6-a4c1-2f3668f69044}" type="embed://import/vera/coil.elmt" x="560" y="540" z="10" orientation="0" prefix="" freezeLabel="false">
+                <terminals>
+                    <terminal id="43" x="0" y="-20" orientation="0"/>
+                    <terminal id="44" x="0" y="20" orientation="2"/>
+                </terminals>
+                <inputs/>
+                <elementInformations>
+                    <elementInformation name="label" show="1">KM3</elementInformation>
+                    <elementInformation name="manufacturer_reference" show="1">LC1D09P7</elementInformation>
+                </elementInformations>
+                <links_uuids>
+                    <link_uuid uuid="{47b97da9-f1e7-575e-a58a-5f07d28bf5af}"/>
+                    <link_uuid uuid="{d84e957b-2e57-50a0-acdf-ba9be014a7bb}"/>
+                </links_uuids>
+                <dynamic_texts>
+                    <dynamic_elmt_text uuid="{2ac04920-a2a7-5ca4-aafc-c314f1b9a0b5}" text_from="ElementInfo" x="16" y="-6" rotation="0" frame="false" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" keep_visual_rotation="true" font="Sans Serif,9,-1,5,50,0,0,0,0,0">
+                        <text></text>
+                        <info_name>label</info_name>
+                    </dynamic_elmt_text>
+                </dynamic_texts>
+                <texts_groups/>
+            </element>
+            <element uuid="{a74872a8-8a48-5216-ab5e-3f516f1046df}" type="embed://import/vera/control-l.elmt" x="100" y="60" z="10" orientation="0" prefix="" freezeLabel="false">
+                <terminals>
+                    <terminal id="45" x="0" y="10" orientation="2"/>
+                </terminals>
+                <inputs/>
+                <elementInformations>
+                    <elementInformation name="label" show="1">X1</elementInformation>
+                </elementInformations>
+                <dynamic_texts>
+                    <dynamic_elmt_text uuid="{157be937-7ccf-50db-a295-b2504604c06c}" text_from="ElementInfo" x="12" y="-8" rotation="0" frame="false" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" keep_visual_rotation="true" font="Sans Serif,9,-1,5,50,0,0,0,0,0">
+                        <text></text>
+                        <info_name>label</info_name>
+                    </dynamic_elmt_text>
+                </dynamic_texts>
+                <texts_groups/>
+            </element>
+            <element uuid="{2c7429f5-18eb-5546-a384-cf0f45f7ff80}" type="embed://import/vera/control-n.elmt" x="100" y="620" z="10" orientation="0" prefix="" freezeLabel="false">
+                <terminals>
+                    <terminal id="46" x="0" y="-10" orientation="0"/>
+                </terminals>
+                <inputs/>
+                <elementInformations>
+                    <elementInformation name="label" show="1">X1</elementInformation>
+                </elementInformations>
+                <dynamic_texts>
+                    <dynamic_elmt_text uuid="{28acc77d-1b25-5b8d-ab96-6a246d61f405}" text_from="ElementInfo" x="12" y="2" rotation="0" frame="false" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" keep_visual_rotation="true" font="Sans Serif,9,-1,5,50,0,0,0,0,0">
+                        <text></text>
+                        <info_name>label</info_name>
+                    </dynamic_elmt_text>
+                </dynamic_texts>
+                <texts_groups/>
+            </element>
+            <element uuid="{eacf4c94-e05c-5aad-a396-78ccfdf0a933}" type="embed://import/vera/overload-nc-95-96.elmt" x="100" y="130" z="10" orientation="0" prefix="" freezeLabel="false">
+                <terminals>
+                    <terminal id="47" x="0" y="-20" orientation="0"/>
+                    <terminal id="48" x="0" y="20" orientation="2"/>
+                </terminals>
+                <inputs/>
+                <elementInformations>
+                    <elementInformation name="label" show="1">F1</elementInformation>
+                </elementInformations>
+                <links_uuids>
+                    <link_uuid uuid="{d4827f33-ef8e-5ace-ae3c-7d2d9b401c4b}"/>
+                </links_uuids>
+                <dynamic_texts>
+                    <dynamic_elmt_text uuid="{770704b2-018b-5b4d-a087-f00722e4a104}" text_from="ElementInfo" x="12" y="-6" rotation="0" frame="false" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" keep_visual_rotation="true" font="Sans Serif,9,-1,5,50,0,0,0,0,0">
+                        <text></text>
+                        <info_name>label</info_name>
+                    </dynamic_elmt_text>
+                </dynamic_texts>
+                <texts_groups/>
+            </element>
+            <element uuid="{ef573d09-affb-5065-aee2-cc9a23da1832}" type="embed://import/vera/button-nc.elmt" x="100" y="210" z="10" orientation="0" prefix="" freezeLabel="false">
+                <terminals>
+                    <terminal id="49" x="0" y="-20" orientation="0"/>
+                    <terminal id="50" x="0" y="20" orientation="2"/>
+                </terminals>
+                <inputs/>
+                <elementInformations>
+                    <elementInformation name="label" show="1">S0</elementInformation>
+                </elementInformations>
+                <dynamic_texts>
+                    <dynamic_elmt_text uuid="{adcfb084-6746-55ec-a8f7-f002ed800701}" text_from="ElementInfo" x="12" y="-6" rotation="0" frame="false" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" keep_visual_rotation="true" font="Sans Serif,9,-1,5,50,0,0,0,0,0">
+                        <text></text>
+                        <info_name>label</info_name>
+                    </dynamic_elmt_text>
+                </dynamic_texts>
+                <texts_groups/>
+            </element>
+            <element uuid="{f80f3010-e989-53ab-a05e-e7381444999c}" type="embed://import/vera/button-no.elmt" x="100" y="290" z="10" orientation="0" prefix="" freezeLabel="false">
+                <terminals>
+                    <terminal id="51" x="0" y="-20" orientation="0"/>
+                    <terminal id="52" x="0" y="20" orientation="2"/>
+                </terminals>
+                <inputs/>
+                <elementInformations>
+                    <elementInformation name="label" show="1">S1</elementInformation>
+                </elementInformations>
+                <dynamic_texts>
+                    <dynamic_elmt_text uuid="{2ef74e66-1600-5b97-addb-29aae03d34f7}" text_from="ElementInfo" x="8" y="-6" rotation="0" frame="false" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" keep_visual_rotation="true" font="Sans Serif,9,-1,5,50,0,0,0,0,0">
+                        <text></text>
+                        <info_name>label</info_name>
+                    </dynamic_elmt_text>
+                </dynamic_texts>
+                <texts_groups/>
+            </element>
+            <element uuid="{68924083-d83f-5038-a8f7-25014c7f6e37}" type="embed://import/vera/aux-no-13-14.elmt" x="160" y="290" z="10" orientation="0" prefix="" freezeLabel="false">
+                <terminals>
+                    <terminal id="53" x="0" y="-20" orientation="0"/>
+                    <terminal id="54" x="0" y="20" orientation="2"/>
+                </terminals>
+                <inputs/>
+                <elementInformations>
+                    <elementInformation name="label" show="1">KM1</elementInformation>
+                </elementInformations>
+                <links_uuids>
+                    <link_uuid uuid="{77dd0552-6254-5203-a132-36c34e1c0ee7}"/>
+                </links_uuids>
+                <dynamic_texts>
+                    <dynamic_elmt_text uuid="{aa22886a-8d51-5773-af4d-ff897ea2756b}" text_from="ElementInfo" x="8" y="-6" rotation="0" frame="false" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" keep_visual_rotation="true" font="Sans Serif,9,-1,5,50,0,0,0,0,0">
+                        <text></text>
+                        <info_name>label</info_name>
+                    </dynamic_elmt_text>
+                </dynamic_texts>
+                <texts_groups/>
+            </element>
+            <element uuid="{bd330d51-c9a2-5173-a37e-16c11dee8e68}" type="embed://import/vera/timer-coil.elmt" x="400" y="540" z="10" orientation="0" prefix="" freezeLabel="false">
+                <terminals>
+                    <terminal id="55" x="0" y="-20" orientation="0"/>
+                    <terminal id="56" x="0" y="20" orientation="2"/>
+                </terminals>
+                <inputs/>
+                <elementInformations>
+                    <elementInformation name="label" show="1">KT1</elementInformation>
+                </elementInformations>
+                <links_uuids>
+                    <link_uuid uuid="{c7d8d093-c901-574c-a532-b6525f4f9551}"/>
+                    <link_uuid uuid="{78f0fc1e-0ffa-5bd3-af9b-fd4620c0381a}"/>
+                </links_uuids>
+                <dynamic_texts>
+                    <dynamic_elmt_text uuid="{275b69d7-15cf-5c07-ad9f-7389e6f672df}" text_from="ElementInfo" x="16" y="-6" rotation="0" frame="false" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" keep_visual_rotation="true" font="Sans Serif,9,-1,5,50,0,0,0,0,0">
+                        <text></text>
+                        <info_name>label</info_name>
+                    </dynamic_elmt_text>
+                </dynamic_texts>
+                <texts_groups/>
+            </element>
+            <element uuid="{c7d8d093-c901-574c-a532-b6525f4f9551}" type="embed://import/vera/timer-nc-55-56.elmt" x="560" y="360" z="10" orientation="0" prefix="" freezeLabel="false">
+                <terminals>
+                    <terminal id="57" x="0" y="-20" orientation="0"/>
+                    <terminal id="58" x="0" y="20" orientation="2"/>
+                </terminals>
+                <inputs/>
+                <elementInformations>
+                    <elementInformation name="label" show="1">KT1</elementInformation>
+                </elementInformations>
+                <links_uuids>
+                    <link_uuid uuid="{bd330d51-c9a2-5173-a37e-16c11dee8e68}"/>
+                </links_uuids>
+                <dynamic_texts>
+                    <dynamic_elmt_text uuid="{ee8aabeb-0431-5c8c-a26e-e3637983a8bc}" text_from="ElementInfo" x="12" y="-6" rotation="0" frame="false" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" keep_visual_rotation="true" font="Sans Serif,9,-1,5,50,0,0,0,0,0">
+                        <text></text>
+                        <info_name>label</info_name>
+                    </dynamic_elmt_text>
+                </dynamic_texts>
+                <texts_groups/>
+            </element>
+            <element uuid="{de9fbdc1-17eb-5add-a058-8bbe2079edb7}" type="embed://import/vera/aux-nc-21-22.elmt" x="560" y="450" z="10" orientation="0" prefix="" freezeLabel="false">
+                <terminals>
+                    <terminal id="59" x="0" y="-20" orientation="0"/>
+                    <terminal id="60" x="0" y="20" orientation="2"/>
+                </terminals>
+                <inputs/>
+                <elementInformations>
+                    <elementInformation name="label" show="1">KM2</elementInformation>
+                </elementInformations>
+                <links_uuids>
+                    <link_uuid uuid="{5a5aaa5e-a1ed-521c-ae37-cfb5fe65db50}"/>
+                </links_uuids>
+                <dynamic_texts>
+                    <dynamic_elmt_text uuid="{688e2a8d-4d3d-5c86-ab7a-aa1edd9190e0}" text_from="ElementInfo" x="12" y="-6" rotation="0" frame="false" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" keep_visual_rotation="true" font="Sans Serif,9,-1,5,50,0,0,0,0,0">
+                        <text></text>
+                        <info_name>label</info_name>
+                    </dynamic_elmt_text>
+                </dynamic_texts>
+                <texts_groups/>
+            </element>
+            <element uuid="{78f0fc1e-0ffa-5bd3-af9b-fd4620c0381a}" type="embed://import/vera/timer-no-67-68.elmt" x="720" y="360" z="10" orientation="0" prefix="" freezeLabel="false">
+                <terminals>
+                    <terminal id="61" x="0" y="-20" orientation="0"/>
+                    <terminal id="62" x="0" y="20" orientation="2"/>
+                </terminals>
+                <inputs/>
+                <elementInformations>
+                    <elementInformation name="label" show="1">KT1</elementInformation>
+                </elementInformations>
+                <links_uuids>
+                    <link_uuid uuid="{bd330d51-c9a2-5173-a37e-16c11dee8e68}"/>
+                </links_uuids>
+                <dynamic_texts>
+                    <dynamic_elmt_text uuid="{6b134a8c-4fe8-5b41-a746-c9e032ee86f3}" text_from="ElementInfo" x="8" y="-6" rotation="0" frame="false" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" keep_visual_rotation="true" font="Sans Serif,9,-1,5,50,0,0,0,0,0">
+                        <text></text>
+                        <info_name>label</info_name>
+                    </dynamic_elmt_text>
+                </dynamic_texts>
+                <texts_groups/>
+            </element>
+            <element uuid="{d84e957b-2e57-50a0-acdf-ba9be014a7bb}" type="embed://import/vera/aux-nc-21-22.elmt" x="720" y="450" z="10" orientation="0" prefix="" freezeLabel="false">
+                <terminals>
+                    <terminal id="63" x="0" y="-20" orientation="0"/>
+                    <terminal id="64" x="0" y="20" orientation="2"/>
+                </terminals>
+                <inputs/>
+                <elementInformations>
+                    <elementInformation name="label" show="1">KM3</elementInformation>
+                </elementInformations>
+                <links_uuids>
+                    <link_uuid uuid="{28a0edc6-c432-52f6-a4c1-2f3668f69044}"/>
+                </links_uuids>
+                <dynamic_texts>
+                    <dynamic_elmt_text uuid="{3c09a2a3-429a-54d5-ae76-9645c1e543e2}" text_from="ElementInfo" x="12" y="-6" rotation="0" frame="false" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" keep_visual_rotation="true" font="Sans Serif,9,-1,5,50,0,0,0,0,0">
+                        <text></text>
+                        <info_name>label</info_name>
+                    </dynamic_elmt_text>
+                </dynamic_texts>
+                <texts_groups/>
+            </element>
+        </elements>
+        <conductors>
+            <conductor element1="{a74872a8-8a48-5216-ab5e-3f516f1046df}" terminal1="{20e39e93-b26c-5971-afb3-2577efcce724}" element2="{eacf4c94-e05c-5aad-a396-78ccfdf0a933}" terminal2="{cf106b69-dfdf-5fd3-a573-73aa0be66f36}" num="" type="multi" x="0" y="0" freezeLabel="false" displaytext="1" numsize="7" condsize="1" onetextperfolio="0" horizrotatetext="0" vertirotatetext="270">
+                <sequentialNumbers/>
+            </conductor>
+            <conductor element1="{eacf4c94-e05c-5aad-a396-78ccfdf0a933}" terminal1="{ced9e468-a448-5a44-a6da-5222ce54c2ee}" element2="{ef573d09-affb-5065-aee2-cc9a23da1832}" terminal2="{e234f737-cc34-56c7-a038-8442713122b7}" num="" type="multi" x="0" y="0" freezeLabel="false" displaytext="1" numsize="7" condsize="1" onetextperfolio="0" horizrotatetext="0" vertirotatetext="270">
+                <sequentialNumbers/>
+            </conductor>
+            <conductor element1="{ef573d09-affb-5065-aee2-cc9a23da1832}" terminal1="{c8229628-b259-5de4-a25e-2edf0202f000}" element2="{f80f3010-e989-53ab-a05e-e7381444999c}" terminal2="{f751968d-3788-54f3-aa45-32c254e01ab9}" num="" type="multi" x="0" y="0" freezeLabel="false" displaytext="1" numsize="7" condsize="1" onetextperfolio="0" horizrotatetext="0" vertirotatetext="270">
+                <sequentialNumbers/>
+            </conductor>
+            <conductor element1="{ef573d09-affb-5065-aee2-cc9a23da1832}" terminal1="{c8229628-b259-5de4-a25e-2edf0202f000}" element2="{68924083-d83f-5038-a8f7-25014c7f6e37}" terminal2="{7c938785-17c3-5372-aef4-8eead43cfd63}" num="" type="multi" x="0" y="0" freezeLabel="false" displaytext="1" numsize="7" condsize="1" onetextperfolio="0" horizrotatetext="0" vertirotatetext="270">
+                <sequentialNumbers/>
+            </conductor>
+            <conductor element1="{f80f3010-e989-53ab-a05e-e7381444999c}" terminal1="{ab92162d-cd88-5247-a7be-1a78fc6e06fd}" element2="{68924083-d83f-5038-a8f7-25014c7f6e37}" terminal2="{d2210105-7a44-5d9a-ada8-904e4e22946e}" num="" type="multi" x="0" y="0" freezeLabel="false" displaytext="1" numsize="7" condsize="1" onetextperfolio="0" horizrotatetext="0" vertirotatetext="270">
+                <sequentialNumbers/>
+            </conductor>
+            <conductor element1="{f80f3010-e989-53ab-a05e-e7381444999c}" terminal1="{ab92162d-cd88-5247-a7be-1a78fc6e06fd}" element2="{77dd0552-6254-5203-a132-36c34e1c0ee7}" terminal2="{4843c0a4-195e-525b-add8-f505d2d0beae}" num="" type="multi" x="0" y="0" freezeLabel="false" displaytext="1" numsize="7" condsize="1" onetextperfolio="0" horizrotatetext="0" vertirotatetext="270">
+                <sequentialNumbers/>
+            </conductor>
+            <conductor element1="{77dd0552-6254-5203-a132-36c34e1c0ee7}" terminal1="{21912703-245a-53d9-a0cb-c9c5f6270f9a}" element2="{2c7429f5-18eb-5546-a384-cf0f45f7ff80}" terminal2="{ecde1327-5760-5e23-a2fb-5321f742c91e}" num="" type="multi" x="0" y="0" freezeLabel="false" displaytext="1" numsize="7" condsize="1" onetextperfolio="0" horizrotatetext="0" vertirotatetext="270">
+                <sequentialNumbers/>
+            </conductor>
+            <conductor element1="{f80f3010-e989-53ab-a05e-e7381444999c}" terminal1="{ab92162d-cd88-5247-a7be-1a78fc6e06fd}" element2="{bd330d51-c9a2-5173-a37e-16c11dee8e68}" terminal2="{bbd26cce-bfdb-5e70-a2d2-9c3c01d26018}" num="" type="multi" x="0" y="0" freezeLabel="false" displaytext="1" numsize="7" condsize="1" onetextperfolio="0" horizrotatetext="0" vertirotatetext="270">
+                <sequentialNumbers/>
+            </conductor>
+            <conductor element1="{bd330d51-c9a2-5173-a37e-16c11dee8e68}" terminal1="{b3c82622-7df9-55ff-a01b-9df485cc71bf}" element2="{2c7429f5-18eb-5546-a384-cf0f45f7ff80}" terminal2="{ecde1327-5760-5e23-a2fb-5321f742c91e}" num="" type="multi" x="0" y="0" freezeLabel="false" displaytext="1" numsize="7" condsize="1" onetextperfolio="0" horizrotatetext="0" vertirotatetext="270">
+                <sequentialNumbers/>
+            </conductor>
+            <conductor element1="{f80f3010-e989-53ab-a05e-e7381444999c}" terminal1="{ab92162d-cd88-5247-a7be-1a78fc6e06fd}" element2="{c7d8d093-c901-574c-a532-b6525f4f9551}" terminal2="{fb8f0324-94a2-597a-afe4-86ee4fb4ef99}" num="" type="multi" x="0" y="0" freezeLabel="false" displaytext="1" numsize="7" condsize="1" onetextperfolio="0" horizrotatetext="0" vertirotatetext="270">
+                <sequentialNumbers/>
+            </conductor>
+            <conductor element1="{c7d8d093-c901-574c-a532-b6525f4f9551}" terminal1="{be1c5056-020e-5ed3-a8e6-f543a3a1c5a2}" element2="{de9fbdc1-17eb-5add-a058-8bbe2079edb7}" terminal2="{a9e02adb-a619-5020-ae61-547f746bfa38}" num="" type="multi" x="0" y="0" freezeLabel="false" displaytext="1" numsize="7" condsize="1" onetextperfolio="0" horizrotatetext="0" vertirotatetext="270">
+                <sequentialNumbers/>
+            </conductor>
+            <conductor element1="{de9fbdc1-17eb-5add-a058-8bbe2079edb7}" terminal1="{8774bbd7-04d9-595a-ae88-9b6e4385b80c}" element2="{28a0edc6-c432-52f6-a4c1-2f3668f69044}" terminal2="{4843c0a4-195e-525b-add8-f505d2d0beae}" num="" type="multi" x="0" y="0" freezeLabel="false" displaytext="1" numsize="7" condsize="1" onetextperfolio="0" horizrotatetext="0" vertirotatetext="270">
+                <sequentialNumbers/>
+            </conductor>
+            <conductor element1="{28a0edc6-c432-52f6-a4c1-2f3668f69044}" terminal1="{21912703-245a-53d9-a0cb-c9c5f6270f9a}" element2="{2c7429f5-18eb-5546-a384-cf0f45f7ff80}" terminal2="{ecde1327-5760-5e23-a2fb-5321f742c91e}" num="" type="multi" x="0" y="0" freezeLabel="false" displaytext="1" numsize="7" condsize="1" onetextperfolio="0" horizrotatetext="0" vertirotatetext="270">
+                <sequentialNumbers/>
+            </conductor>
+            <conductor element1="{f80f3010-e989-53ab-a05e-e7381444999c}" terminal1="{ab92162d-cd88-5247-a7be-1a78fc6e06fd}" element2="{78f0fc1e-0ffa-5bd3-af9b-fd4620c0381a}" terminal2="{663e2db8-6e8d-5e3f-a999-fae10b544c92}" num="" type="multi" x="0" y="0" freezeLabel="false" displaytext="1" numsize="7" condsize="1" onetextperfolio="0" horizrotatetext="0" vertirotatetext="270">
+                <sequentialNumbers/>
+            </conductor>
+            <conductor element1="{78f0fc1e-0ffa-5bd3-af9b-fd4620c0381a}" terminal1="{70cf2de9-a0c4-5a6b-ae81-845771298297}" element2="{d84e957b-2e57-50a0-acdf-ba9be014a7bb}" terminal2="{a9e02adb-a619-5020-ae61-547f746bfa38}" num="" type="multi" x="0" y="0" freezeLabel="false" displaytext="1" numsize="7" condsize="1" onetextperfolio="0" horizrotatetext="0" vertirotatetext="270">
+                <sequentialNumbers/>
+            </conductor>
+            <conductor element1="{d84e957b-2e57-50a0-acdf-ba9be014a7bb}" terminal1="{8774bbd7-04d9-595a-ae88-9b6e4385b80c}" element2="{5a5aaa5e-a1ed-521c-ae37-cfb5fe65db50}" terminal2="{4843c0a4-195e-525b-add8-f505d2d0beae}" num="" type="multi" x="0" y="0" freezeLabel="false" displaytext="1" numsize="7" condsize="1" onetextperfolio="0" horizrotatetext="0" vertirotatetext="270">
+                <sequentialNumbers/>
+            </conductor>
+            <conductor element1="{5a5aaa5e-a1ed-521c-ae37-cfb5fe65db50}" terminal1="{21912703-245a-53d9-a0cb-c9c5f6270f9a}" element2="{2c7429f5-18eb-5546-a384-cf0f45f7ff80}" terminal2="{ecde1327-5760-5e23-a2fb-5321f742c91e}" num="" type="multi" x="0" y="0" freezeLabel="false" displaytext="1" numsize="7" condsize="1" onetextperfolio="0" horizrotatetext="0" vertirotatetext="270">
+                <sequentialNumbers/>
+            </conductor>
+        </conductors>
+        <inputs/>
+        <shapes/>
+    </diagram>
+    <collection>
+        <category name="import">
+            <names><name lang="en">Imported elements</name></names>
+            <category name="vera">
+                <names><name lang="en">VERA templates</name></names>
+                <element name="breaker3.elmt">
+                    <definition type="element" link_type="simple" version="0.90" width="70" height="60" hotspot_x="20" hotspot_y="30">
+                        <uuid uuid="{230fce35-a6f6-549b-a649-2cc1006bb78e}"/>
+                        <names>
+                            <name lang="en">Three-pole motor circuit breaker</name>
+                        </names>
+                        <informations>Author: VERA qelectrotech plugin (self-authored template element)</informations>
+                        <description>
+                            <line x1="0" y1="-20" x2="0" y2="-8" end1="none" end2="none" length1="1.5" length2="1.5" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+                            <line x1="0" y1="8" x2="-9" y2="-7" end1="none" end2="none" length1="1.5" length2="1.5" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+                            <line x1="0" y1="8" x2="0" y2="20" end1="none" end2="none" length1="1.5" length2="1.5" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+                            <line x1="-3" y1="-11" x2="3" y2="-5" end1="none" end2="none" length1="1.5" length2="1.5" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+                            <line x1="-3" y1="-5" x2="3" y2="-11" end1="none" end2="none" length1="1.5" length2="1.5" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+                            <line x1="20" y1="-20" x2="20" y2="-8" end1="none" end2="none" length1="1.5" length2="1.5" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+                            <line x1="20" y1="8" x2="11" y2="-7" end1="none" end2="none" length1="1.5" length2="1.5" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+                            <line x1="20" y1="8" x2="20" y2="20" end1="none" end2="none" length1="1.5" length2="1.5" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+                            <line x1="17" y1="-11" x2="23" y2="-5" end1="none" end2="none" length1="1.5" length2="1.5" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+                            <line x1="17" y1="-5" x2="23" y2="-11" end1="none" end2="none" length1="1.5" length2="1.5" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+                            <line x1="40" y1="-20" x2="40" y2="-8" end1="none" end2="none" length1="1.5" length2="1.5" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+                            <line x1="40" y1="8" x2="31" y2="-7" end1="none" end2="none" length1="1.5" length2="1.5" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+                            <line x1="40" y1="8" x2="40" y2="20" end1="none" end2="none" length1="1.5" length2="1.5" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+                            <line x1="37" y1="-11" x2="43" y2="-5" end1="none" end2="none" length1="1.5" length2="1.5" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+                            <line x1="37" y1="-5" x2="43" y2="-11" end1="none" end2="none" length1="1.5" length2="1.5" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+                            <line x1="-5" y1="0" x2="37" y2="0" end1="none" end2="none" length1="1.5" length2="1.5" antialias="false" style="line-style:dashed;line-weight:thin;filling:none;color:black"/>
+                            <terminal uuid="{8a1d19aa-fc90-52c5-a1b6-a8b188be621b}" name="1" x="0" y="-20" orientation="n" type="Generic"/>
+                            <terminal uuid="{8f4410e1-b253-54fc-a37f-87b0ca758eaa}" name="2" x="0" y="20" orientation="s" type="Generic"/>
+                            <terminal uuid="{694cafe5-f796-507d-a707-26ee5c8aa8ce}" name="3" x="20" y="-20" orientation="n" type="Generic"/>
+                            <terminal uuid="{2fec0aea-5c6d-5fc0-aeb8-a3c66054021f}" name="4" x="20" y="20" orientation="s" type="Generic"/>
+                            <terminal uuid="{21ed8b8c-8dd0-5312-a349-ce6c038b4487}" name="5" x="40" y="-20" orientation="n" type="Generic"/>
+                            <terminal uuid="{5d770c84-fde2-59fb-afaa-67cecb151de0}" name="6" x="40" y="20" orientation="s" type="Generic"/>
+                        </description>
+                    </definition>
+                </element>
+                <element name="coil.elmt">
+                    <definition type="element" link_type="master" version="0.90" width="40" height="60" hotspot_x="20" hotspot_y="30">
+                        <uuid uuid="{f2749fa2-8ec5-50f9-afe3-3b87ecdb1d1e}"/>
+                        <names>
+                            <name lang="en">Contactor coil</name>
+                        </names>
+                        <kindInformations>
+                            <kindInformation name="type" show="1">coil</kindInformation>
+                        </kindInformations>
+                        <informations>Author: VERA qelectrotech plugin (self-authored template element)</informations>
+                        <description>
+                            <line x1="0" y1="-20" x2="0" y2="-8" end1="none" end2="none" length1="1.5" length2="1.5" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+                            <line x1="0" y1="8" x2="0" y2="20" end1="none" end2="none" length1="1.5" length2="1.5" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+                            <rect x="-12" y="-8" width="24" height="16" rx="0" ry="0" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+                            <terminal uuid="{4843c0a4-195e-525b-add8-f505d2d0beae}" name="A1" x="0" y="-20" orientation="n" type="Generic"/>
+                            <terminal uuid="{21912703-245a-53d9-a0cb-c9c5f6270f9a}" name="A2" x="0" y="20" orientation="s" type="Generic"/>
+                        </description>
+                    </definition>
+                </element>
+                <element name="contacts3.elmt">
+                    <definition type="element" link_type="slave" version="0.90" width="70" height="60" hotspot_x="20" hotspot_y="30">
+                        <uuid uuid="{0351c487-5cb0-53db-a69e-0b46fe5b1e4d}"/>
+                        <names>
+                            <name lang="en">Contactor main contacts (3 NO)</name>
+                        </names>
+                        <kindInformations>
+                            <kindInformation name="type" show="1">power</kindInformation>
+                            <kindInformation name="state" show="1">NO</kindInformation>
+                            <kindInformation name="number" show="1">3</kindInformation>
+                        </kindInformations>
+                        <informations>Author: VERA qelectrotech plugin (self-authored template element)</informations>
+                        <description>
+                            <line x1="0" y1="-20" x2="0" y2="-8" end1="none" end2="none" length1="1.5" length2="1.5" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+                            <line x1="0" y1="8" x2="-9" y2="-7" end1="none" end2="none" length1="1.5" length2="1.5" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+                            <line x1="0" y1="8" x2="0" y2="20" end1="none" end2="none" length1="1.5" length2="1.5" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+                            <line x1="20" y1="-20" x2="20" y2="-8" end1="none" end2="none" length1="1.5" length2="1.5" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+                            <line x1="20" y1="8" x2="11" y2="-7" end1="none" end2="none" length1="1.5" length2="1.5" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+                            <line x1="20" y1="8" x2="20" y2="20" end1="none" end2="none" length1="1.5" length2="1.5" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+                            <line x1="40" y1="-20" x2="40" y2="-8" end1="none" end2="none" length1="1.5" length2="1.5" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+                            <line x1="40" y1="8" x2="31" y2="-7" end1="none" end2="none" length1="1.5" length2="1.5" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+                            <line x1="40" y1="8" x2="40" y2="20" end1="none" end2="none" length1="1.5" length2="1.5" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+                            <line x1="-5" y1="0" x2="37" y2="0" end1="none" end2="none" length1="1.5" length2="1.5" antialias="false" style="line-style:dashed;line-weight:thin;filling:none;color:black"/>
+                            <circle x="-2" y="-12" diameter="4" antialias="true" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+                            <circle x="18" y="-12" diameter="4" antialias="true" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+                            <circle x="38" y="-12" diameter="4" antialias="true" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+                            <terminal uuid="{31e56660-fa0a-57de-a9c1-b3e6d2160e66}" name="1" x="0" y="-20" orientation="n" type="Generic"/>
+                            <terminal uuid="{68e2d9f0-aa98-5143-a115-979255e67a3d}" name="2" x="0" y="20" orientation="s" type="Generic"/>
+                            <terminal uuid="{06b4c2e3-e5e8-5f39-a942-05c878231184}" name="3" x="20" y="-20" orientation="n" type="Generic"/>
+                            <terminal uuid="{8f216c2b-276b-564a-a189-ccb21720d300}" name="4" x="20" y="20" orientation="s" type="Generic"/>
+                            <terminal uuid="{4810d166-8b84-50a3-ace1-029eb7f9a3e3}" name="5" x="40" y="-20" orientation="n" type="Generic"/>
+                            <terminal uuid="{63414afb-ae0f-5dad-ac57-67559deb35b0}" name="6" x="40" y="20" orientation="s" type="Generic"/>
+                        </description>
+                    </definition>
+                </element>
+                <element name="control-l.elmt">
+                    <definition type="element" link_type="terminal" version="0.90" width="20" height="40" hotspot_x="10" hotspot_y="20">
+                        <uuid uuid="{1520c526-a288-53c5-aaec-df596a4328d5}"/>
+                        <names>
+                            <name lang="en">Control supply terminal L</name>
+                        </names>
+                        <informations>Author: VERA qelectrotech plugin (self-authored template element)</informations>
+                        <description>
+                            <line x1="0" y1="0" x2="0" y2="10" end1="none" end2="none" length1="1.5" length2="1.5" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+                            <circle x="-3" y="-6" diameter="6" antialias="true" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+                            <text x="6" y="0" text="L" rotation="0" color="#000000" font="Sans Serif,9,-1,5,50,0,0,0,0,0"/>
+                            <terminal uuid="{20e39e93-b26c-5971-afb3-2577efcce724}" name="L" x="0" y="10" orientation="s" type="Generic"/>
+                        </description>
+                    </definition>
+                </element>
+                <element name="control-n.elmt">
+                    <definition type="element" link_type="terminal" version="0.90" width="20" height="40" hotspot_x="10" hotspot_y="20">
+                        <uuid uuid="{296d0ce4-8548-5681-acea-56e7998da036}"/>
+                        <names>
+                            <name lang="en">Control supply terminal N</name>
+                        </names>
+                        <informations>Author: VERA qelectrotech plugin (self-authored template element)</informations>
+                        <description>
+                            <line x1="0" y1="-10" x2="0" y2="0" end1="none" end2="none" length1="1.5" length2="1.5" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+                            <circle x="-3" y="0" diameter="6" antialias="true" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+                            <text x="6" y="8" text="N" rotation="0" color="#000000" font="Sans Serif,9,-1,5,50,0,0,0,0,0"/>
+                            <terminal uuid="{ecde1327-5760-5e23-a2fb-5321f742c91e}" name="N" x="0" y="-10" orientation="n" type="Generic"/>
+                        </description>
+                    </definition>
+                </element>
+                <element name="motor6.elmt">
+                    <definition type="element" link_type="simple" version="0.90" width="60" height="110" hotspot_x="10" hotspot_y="30">
+                        <uuid uuid="{f0319af1-0e50-51fe-afcc-0d83adc05066}"/>
+                        <names>
+                            <name lang="en">Three-phase motor U1 V1 W1 / U2 V2 W2</name>
+                        </names>
+                        <informations>Author: VERA qelectrotech plugin (self-authored template element)</informations>
+                        <description>
+                            <line x1="0" y1="-20" x2="0" y2="0" end1="none" end2="none" length1="1.5" length2="1.5" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+                            <line x1="0" y1="0" x2="8" y2="12" end1="none" end2="none" length1="1.5" length2="1.5" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+                            <line x1="20" y1="-20" x2="20" y2="7" end1="none" end2="none" length1="1.5" length2="1.5" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+                            <line x1="40" y1="-20" x2="40" y2="0" end1="none" end2="none" length1="1.5" length2="1.5" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+                            <line x1="40" y1="0" x2="32" y2="12" end1="none" end2="none" length1="1.5" length2="1.5" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+                            <line x1="0" y1="70" x2="0" y2="50" end1="none" end2="none" length1="1.5" length2="1.5" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+                            <line x1="0" y1="50" x2="8" y2="38" end1="none" end2="none" length1="1.5" length2="1.5" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+                            <line x1="20" y1="70" x2="20" y2="43" end1="none" end2="none" length1="1.5" length2="1.5" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+                            <line x1="40" y1="70" x2="40" y2="50" end1="none" end2="none" length1="1.5" length2="1.5" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+                            <line x1="40" y1="50" x2="32" y2="38" end1="none" end2="none" length1="1.5" length2="1.5" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+                            <circle x="2" y="7" diameter="36" antialias="true" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+                            <text x="15" y="27" text="M" rotation="0" color="#000000" font="Sans Serif,9,-1,5,50,0,0,0,0,0"/>
+                            <text x="13" y="38" text="3~" rotation="0" color="#000000" font="Sans Serif,9,-1,5,50,0,0,0,0,0"/>
+                            <terminal uuid="{2b95fcc8-330a-5934-a591-573d49f63fa2}" name="U1" x="0" y="-20" orientation="n" type="Generic"/>
+                            <terminal uuid="{0373e688-3413-537e-a3e3-2f25275d543e}" name="V1" x="20" y="-20" orientation="n" type="Generic"/>
+                            <terminal uuid="{ff7e8c0a-0ee9-5edd-afde-38ed03f0eba1}" name="W1" x="40" y="-20" orientation="n" type="Generic"/>
+                            <terminal uuid="{e7471b93-4947-5816-a1a5-6efe042e1ba5}" name="U2" x="0" y="70" orientation="s" type="Generic"/>
+                            <terminal uuid="{0fd1a8ac-2e55-506c-a6d7-89ec0109f74a}" name="V2" x="20" y="70" orientation="s" type="Generic"/>
+                            <terminal uuid="{18e94958-5a5e-5284-a0e5-050b22d95d7e}" name="W2" x="40" y="70" orientation="s" type="Generic"/>
+                        </description>
+                    </definition>
+                </element>
+                <element name="aux-nc-21-22.elmt">
+                    <definition type="element" link_type="slave" version="0.90" width="30" height="60" hotspot_x="10" hotspot_y="30">
+                        <uuid uuid="{bdf7c771-53f1-5013-ab0e-fba75bbf45d4}"/>
+                        <names>
+                            <name lang="en">Auxiliary contact NC 21-22</name>
+                        </names>
+                        <kindInformations>
+                            <kindInformation name="type" show="1">simple</kindInformation>
+                            <kindInformation name="state" show="1">NC</kindInformation>
+                            <kindInformation name="number" show="1">1</kindInformation>
+                        </kindInformations>
+                        <informations>Author: VERA qelectrotech plugin (self-authored template element)</informations>
+                        <description>
+                            <line x1="0" y1="-20" x2="0" y2="-8" end1="none" end2="none" length1="1.5" length2="1.5" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+                            <line x1="0" y1="-8" x2="7" y2="-8" end1="none" end2="none" length1="1.5" length2="1.5" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+                            <line x1="0" y1="8" x2="9" y2="-10" end1="none" end2="none" length1="1.5" length2="1.5" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+                            <line x1="0" y1="8" x2="0" y2="20" end1="none" end2="none" length1="1.5" length2="1.5" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+                            <terminal uuid="{a9e02adb-a619-5020-ae61-547f746bfa38}" name="21" x="0" y="-20" orientation="n" type="Generic"/>
+                            <terminal uuid="{8774bbd7-04d9-595a-ae88-9b6e4385b80c}" name="22" x="0" y="20" orientation="s" type="Generic"/>
+                        </description>
+                    </definition>
+                </element>
+                <element name="overload-nc-95-96.elmt">
+                    <definition type="element" link_type="slave" version="0.90" width="40" height="60" hotspot_x="20" hotspot_y="30">
+                        <uuid uuid="{48b15839-e364-59db-aa30-9225729c55e0}"/>
+                        <names>
+                            <name lang="en">Overload relay contact NC 95-96</name>
+                        </names>
+                        <kindInformations>
+                            <kindInformation name="type" show="1">simple</kindInformation>
+                            <kindInformation name="state" show="1">NC</kindInformation>
+                            <kindInformation name="number" show="1">1</kindInformation>
+                        </kindInformations>
+                        <informations>Author: VERA qelectrotech plugin (self-authored template element)</informations>
+                        <description>
+                            <line x1="0" y1="-20" x2="0" y2="-8" end1="none" end2="none" length1="1.5" length2="1.5" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+                            <line x1="0" y1="-8" x2="7" y2="-8" end1="none" end2="none" length1="1.5" length2="1.5" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+                            <line x1="0" y1="8" x2="9" y2="-10" end1="none" end2="none" length1="1.5" length2="1.5" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+                            <line x1="0" y1="8" x2="0" y2="20" end1="none" end2="none" length1="1.5" length2="1.5" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+                            <line x1="-4" y1="0" x2="-14" y2="0" end1="none" end2="none" length1="1.5" length2="1.5" antialias="false" style="line-style:dashed;line-weight:thin;filling:none;color:black"/>
+                            <terminal uuid="{cf106b69-dfdf-5fd3-a573-73aa0be66f36}" name="95" x="0" y="-20" orientation="n" type="Generic"/>
+                            <terminal uuid="{ced9e468-a448-5a44-a6da-5222ce54c2ee}" name="96" x="0" y="20" orientation="s" type="Generic"/>
+                        </description>
+                    </definition>
+                </element>
+                <element name="aux-no-13-14.elmt">
+                    <definition type="element" link_type="slave" version="0.90" width="30" height="60" hotspot_x="20" hotspot_y="30">
+                        <uuid uuid="{58df5542-dbcc-564d-a5a1-2901c2120df4}"/>
+                        <names>
+                            <name lang="en">Auxiliary contact NO 13-14</name>
+                        </names>
+                        <kindInformations>
+                            <kindInformation name="type" show="1">simple</kindInformation>
+                            <kindInformation name="state" show="1">NO</kindInformation>
+                            <kindInformation name="number" show="1">1</kindInformation>
+                        </kindInformations>
+                        <informations>Author: VERA qelectrotech plugin (self-authored template element)</informations>
+                        <description>
+                            <line x1="0" y1="-20" x2="0" y2="-8" end1="none" end2="none" length1="1.5" length2="1.5" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+                            <line x1="0" y1="8" x2="-9" y2="-7" end1="none" end2="none" length1="1.5" length2="1.5" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+                            <line x1="0" y1="8" x2="0" y2="20" end1="none" end2="none" length1="1.5" length2="1.5" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+                            <terminal uuid="{7c938785-17c3-5372-aef4-8eead43cfd63}" name="13" x="0" y="-20" orientation="n" type="Generic"/>
+                            <terminal uuid="{d2210105-7a44-5d9a-ada8-904e4e22946e}" name="14" x="0" y="20" orientation="s" type="Generic"/>
+                        </description>
+                    </definition>
+                </element>
+                <element name="overload3.elmt">
+                    <definition type="element" link_type="master" version="0.90" width="80" height="60" hotspot_x="20" hotspot_y="30">
+                        <uuid uuid="{75c7a524-23d4-5b6a-af8d-eb29aa2f381c}"/>
+                        <names>
+                            <name lang="en">Thermal overload relay, power part</name>
+                        </names>
+                        <kindInformations>
+                            <kindInformation name="type" show="1">protection</kindInformation>
+                        </kindInformations>
+                        <informations>Author: VERA qelectrotech plugin (self-authored template element)</informations>
+                        <description>
+                            <line x1="0" y1="-20" x2="0" y2="-6" end1="none" end2="none" length1="1.5" length2="1.5" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+                            <line x1="0" y1="-6" x2="6" y2="-6" end1="none" end2="none" length1="1.5" length2="1.5" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+                            <line x1="6" y1="-6" x2="6" y2="6" end1="none" end2="none" length1="1.5" length2="1.5" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+                            <line x1="6" y1="6" x2="0" y2="6" end1="none" end2="none" length1="1.5" length2="1.5" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+                            <line x1="0" y1="6" x2="0" y2="20" end1="none" end2="none" length1="1.5" length2="1.5" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+                            <line x1="20" y1="-20" x2="20" y2="-6" end1="none" end2="none" length1="1.5" length2="1.5" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+                            <line x1="20" y1="-6" x2="26" y2="-6" end1="none" end2="none" length1="1.5" length2="1.5" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+                            <line x1="26" y1="-6" x2="26" y2="6" end1="none" end2="none" length1="1.5" length2="1.5" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+                            <line x1="26" y1="6" x2="20" y2="6" end1="none" end2="none" length1="1.5" length2="1.5" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+                            <line x1="20" y1="6" x2="20" y2="20" end1="none" end2="none" length1="1.5" length2="1.5" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+                            <line x1="40" y1="-20" x2="40" y2="-6" end1="none" end2="none" length1="1.5" length2="1.5" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+                            <line x1="40" y1="-6" x2="46" y2="-6" end1="none" end2="none" length1="1.5" length2="1.5" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+                            <line x1="46" y1="-6" x2="46" y2="6" end1="none" end2="none" length1="1.5" length2="1.5" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+                            <line x1="46" y1="6" x2="40" y2="6" end1="none" end2="none" length1="1.5" length2="1.5" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+                            <line x1="40" y1="6" x2="40" y2="20" end1="none" end2="none" length1="1.5" length2="1.5" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+                            <rect x="-6" y="-10" width="58" height="20" rx="0" ry="0" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+                            <terminal uuid="{5c26e21d-2e92-5a99-a531-e206e1a53f88}" name="1" x="0" y="-20" orientation="n" type="Generic"/>
+                            <terminal uuid="{4a05ba19-bd28-547e-a19f-92d033cccca9}" name="2" x="0" y="20" orientation="s" type="Generic"/>
+                            <terminal uuid="{1d093486-0163-5d29-a5ca-3b1c6386807d}" name="3" x="20" y="-20" orientation="n" type="Generic"/>
+                            <terminal uuid="{38e4cb7d-854e-55ef-af71-960009429fdc}" name="4" x="20" y="20" orientation="s" type="Generic"/>
+                            <terminal uuid="{65b2b1bc-00dd-5a84-a556-fb4b132b5351}" name="5" x="40" y="-20" orientation="n" type="Generic"/>
+                            <terminal uuid="{30dbe142-7fd8-5c56-a7ac-bc9015914302}" name="6" x="40" y="20" orientation="s" type="Generic"/>
+                        </description>
+                    </definition>
+                </element>
+                <element name="button-no.elmt">
+                    <definition type="element" link_type="simple" version="0.90" width="40" height="60" hotspot_x="30" hotspot_y="30">
+                        <uuid uuid="{03c2b3f7-c165-5b6d-a095-c98bd2a6f91e}"/>
+                        <names>
+                            <name lang="en">Start push button NO</name>
+                        </names>
+                        <informations>Author: VERA qelectrotech plugin (self-authored template element)</informations>
+                        <description>
+                            <line x1="0" y1="-20" x2="0" y2="-8" end1="none" end2="none" length1="1.5" length2="1.5" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+                            <line x1="0" y1="8" x2="-9" y2="-7" end1="none" end2="none" length1="1.5" length2="1.5" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+                            <line x1="0" y1="8" x2="0" y2="20" end1="none" end2="none" length1="1.5" length2="1.5" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+                            <line x1="-4" y1="0" x2="-16" y2="0" end1="none" end2="none" length1="1.5" length2="1.5" antialias="false" style="line-style:dashed;line-weight:thin;filling:none;color:black"/>
+                            <line x1="-16" y1="-5" x2="-16" y2="5" end1="none" end2="none" length1="1.5" length2="1.5" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+                            <line x1="-16" y1="-5" x2="-19" y2="-5" end1="none" end2="none" length1="1.5" length2="1.5" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+                            <line x1="-16" y1="5" x2="-19" y2="5" end1="none" end2="none" length1="1.5" length2="1.5" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+                            <terminal uuid="{f751968d-3788-54f3-aa45-32c254e01ab9}" name="3" x="0" y="-20" orientation="n" type="Generic"/>
+                            <terminal uuid="{ab92162d-cd88-5247-a7be-1a78fc6e06fd}" name="4" x="0" y="20" orientation="s" type="Generic"/>
+                        </description>
+                    </definition>
+                </element>
+                <element name="button-nc.elmt">
+                    <definition type="element" link_type="simple" version="0.90" width="50" height="60" hotspot_x="30" hotspot_y="30">
+                        <uuid uuid="{3ba7625f-8ecb-512a-ab80-be70c52e746a}"/>
+                        <names>
+                            <name lang="en">Stop push button NC</name>
+                        </names>
+                        <informations>Author: VERA qelectrotech plugin (self-authored template element)</informations>
+                        <description>
+                            <line x1="0" y1="-20" x2="0" y2="-8" end1="none" end2="none" length1="1.5" length2="1.5" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+                            <line x1="0" y1="-8" x2="7" y2="-8" end1="none" end2="none" length1="1.5" length2="1.5" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+                            <line x1="0" y1="8" x2="9" y2="-10" end1="none" end2="none" length1="1.5" length2="1.5" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+                            <line x1="0" y1="8" x2="0" y2="20" end1="none" end2="none" length1="1.5" length2="1.5" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+                            <line x1="-4" y1="0" x2="-16" y2="0" end1="none" end2="none" length1="1.5" length2="1.5" antialias="false" style="line-style:dashed;line-weight:thin;filling:none;color:black"/>
+                            <line x1="-16" y1="-5" x2="-16" y2="5" end1="none" end2="none" length1="1.5" length2="1.5" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+                            <line x1="-16" y1="-5" x2="-19" y2="-5" end1="none" end2="none" length1="1.5" length2="1.5" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+                            <line x1="-16" y1="5" x2="-19" y2="5" end1="none" end2="none" length1="1.5" length2="1.5" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+                            <terminal uuid="{e234f737-cc34-56c7-a038-8442713122b7}" name="1" x="0" y="-20" orientation="n" type="Generic"/>
+                            <terminal uuid="{c8229628-b259-5de4-a25e-2edf0202f000}" name="2" x="0" y="20" orientation="s" type="Generic"/>
+                        </description>
+                    </definition>
+                </element>
+                <element name="supply3.elmt">
+                    <definition type="element" link_type="simple" version="0.90" width="80" height="30" hotspot_x="20" hotspot_y="10">
+                        <uuid uuid="{6f8d3d97-9508-5595-af2d-dbdcac13cdcc}"/>
+                        <names>
+                            <name lang="en">Three-phase supply L1 L2 L3</name>
+                        </names>
+                        <informations>Author: VERA qelectrotech plugin (self-authored template element)</informations>
+                        <description>
+                            <line x1="0" y1="0" x2="0" y2="10" end1="none" end2="none" length1="1.5" length2="1.5" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+                            <line x1="20" y1="0" x2="20" y2="10" end1="none" end2="none" length1="1.5" length2="1.5" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+                            <line x1="40" y1="0" x2="40" y2="10" end1="none" end2="none" length1="1.5" length2="1.5" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+                            <line x1="-6" y1="0" x2="46" y2="0" end1="none" end2="none" length1="1.5" length2="1.5" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+                            <text x="-5" y="-4" text="L1" rotation="0" color="#000000" font="Sans Serif,9,-1,5,50,0,0,0,0,0"/>
+                            <text x="15" y="-4" text="L2" rotation="0" color="#000000" font="Sans Serif,9,-1,5,50,0,0,0,0,0"/>
+                            <text x="35" y="-4" text="L3" rotation="0" color="#000000" font="Sans Serif,9,-1,5,50,0,0,0,0,0"/>
+                            <terminal uuid="{7f831ff3-895a-5df9-adc2-bd579719ff74}" name="L1" x="0" y="10" orientation="s" type="Generic"/>
+                            <terminal uuid="{734add35-301c-5268-aa83-b85896f0b848}" name="L2" x="20" y="10" orientation="s" type="Generic"/>
+                            <terminal uuid="{294fc430-d0ac-50f7-af0d-a9737bd5147f}" name="L3" x="40" y="10" orientation="s" type="Generic"/>
+                        </description>
+                    </definition>
+                </element>
+                <element name="timer-coil.elmt">
+                    <definition type="element" link_type="master" version="0.90" width="40" height="60" hotspot_x="20" hotspot_y="30">
+                        <uuid uuid="{ec756c06-b06c-54ad-a980-346cb584931d}"/>
+                        <names>
+                            <name lang="en">Timer coil, on-delay</name>
+                        </names>
+                        <kindInformations>
+                            <kindInformation name="type" show="1">coil</kindInformation>
+                        </kindInformations>
+                        <informations>Author: VERA qelectrotech plugin (self-authored template element)</informations>
+                        <description>
+                            <line x1="0" y1="-20" x2="0" y2="-8" end1="none" end2="none" length1="1.5" length2="1.5" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+                            <line x1="0" y1="8" x2="0" y2="20" end1="none" end2="none" length1="1.5" length2="1.5" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+                            <line x1="-12" y1="-8" x2="-4" y2="8" end1="none" end2="none" length1="1.5" length2="1.5" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+                            <line x1="-4" y1="-8" x2="-12" y2="8" end1="none" end2="none" length1="1.5" length2="1.5" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+                            <rect x="-12" y="-8" width="24" height="16" rx="0" ry="0" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+                            <terminal uuid="{bbd26cce-bfdb-5e70-a2d2-9c3c01d26018}" name="A1" x="0" y="-20" orientation="n" type="Generic"/>
+                            <terminal uuid="{b3c82622-7df9-55ff-a01b-9df485cc71bf}" name="A2" x="0" y="20" orientation="s" type="Generic"/>
+                        </description>
+                    </definition>
+                </element>
+                <element name="timer-nc-55-56.elmt">
+                    <definition type="element" link_type="slave" version="0.90" width="40" height="60" hotspot_x="20" hotspot_y="30">
+                        <uuid uuid="{433dc93a-0bc8-5645-a6cf-7c1422b3b2f4}"/>
+                        <names>
+                            <name lang="en">Timer contact NC 55-56, opening on-delay</name>
+                        </names>
+                        <kindInformations>
+                            <kindInformation name="type" show="1">delayOn</kindInformation>
+                            <kindInformation name="state" show="1">NC</kindInformation>
+                            <kindInformation name="number" show="1">1</kindInformation>
+                        </kindInformations>
+                        <informations>Author: VERA qelectrotech plugin (self-authored template element)</informations>
+                        <description>
+                            <line x1="0" y1="-20" x2="0" y2="-8" end1="none" end2="none" length1="1.5" length2="1.5" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+                            <line x1="0" y1="-8" x2="7" y2="-8" end1="none" end2="none" length1="1.5" length2="1.5" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+                            <line x1="0" y1="8" x2="9" y2="-10" end1="none" end2="none" length1="1.5" length2="1.5" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+                            <line x1="0" y1="8" x2="0" y2="20" end1="none" end2="none" length1="1.5" length2="1.5" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+                            <line x1="-4" y1="0" x2="-14" y2="0" end1="none" end2="none" length1="1.5" length2="1.5" antialias="false" style="line-style:dashed;line-weight:thin;filling:none;color:black"/>
+                            <line x1="-14" y1="-4" x2="-14" y2="4" end1="none" end2="none" length1="1.5" length2="1.5" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+                            <terminal uuid="{fb8f0324-94a2-597a-afe4-86ee4fb4ef99}" name="55" x="0" y="-20" orientation="n" type="Generic"/>
+                            <terminal uuid="{be1c5056-020e-5ed3-a8e6-f543a3a1c5a2}" name="56" x="0" y="20" orientation="s" type="Generic"/>
+                        </description>
+                    </definition>
+                </element>
+                <element name="timer-no-67-68.elmt">
+                    <definition type="element" link_type="slave" version="0.90" width="30" height="60" hotspot_x="20" hotspot_y="30">
+                        <uuid uuid="{b444508e-6ad9-5fbb-a27a-20a71db101b5}"/>
+                        <names>
+                            <name lang="en">Timer contact NO 67-68, closing on-delay</name>
+                        </names>
+                        <kindInformations>
+                            <kindInformation name="type" show="1">delayOn</kindInformation>
+                            <kindInformation name="state" show="1">NO</kindInformation>
+                            <kindInformation name="number" show="1">1</kindInformation>
+                        </kindInformations>
+                        <informations>Author: VERA qelectrotech plugin (self-authored template element)</informations>
+                        <description>
+                            <line x1="0" y1="-20" x2="0" y2="-8" end1="none" end2="none" length1="1.5" length2="1.5" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+                            <line x1="0" y1="8" x2="-9" y2="-7" end1="none" end2="none" length1="1.5" length2="1.5" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+                            <line x1="0" y1="8" x2="0" y2="20" end1="none" end2="none" length1="1.5" length2="1.5" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+                            <line x1="-4" y1="0" x2="-14" y2="0" end1="none" end2="none" length1="1.5" length2="1.5" antialias="false" style="line-style:dashed;line-weight:thin;filling:none;color:black"/>
+                            <line x1="-14" y1="-4" x2="-14" y2="4" end1="none" end2="none" length1="1.5" length2="1.5" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+                            <terminal uuid="{663e2db8-6e8d-5e3f-a999-fae10b544c92}" name="67" x="0" y="-20" orientation="n" type="Generic"/>
+                            <terminal uuid="{70cf2de9-a0c4-5a6b-ae81-845771298297}" name="68" x="0" y="20" orientation="s" type="Generic"/>
+                        </description>
+                    </definition>
+                </element>
+            </category>
+        </category>
+    </collection>
+</project>

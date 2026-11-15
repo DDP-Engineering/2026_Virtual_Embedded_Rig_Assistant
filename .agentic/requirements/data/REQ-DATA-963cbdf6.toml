@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-DATA-963cbdf6"
+
+title = "Read a QElectroTech project only from strict XML without DTD or entities"
+
+status = "active"
+
+requirement = """
+When VERA reads a QElectroTech project file, it shall accept only well-formed UTF-8 XML of at most 16 MiB with a project root, and shall refuse the whole file with the line and reason when it holds a document type declaration, an entity declaration, an entity reference other than the five predefined ones or a character reference, a processing instruction other than the leading XML declaration, mismatched or duplicate structure, or text outside the root.
+"""
+
+verification = "Unit tests: a project with an internal DTD, an external entity (file:// and http:// SYSTEM), a parameter entity, an undefined &name;, a <?php?> instruction, a duplicate attribute, an unclosed tag, a second root, a UTF-16 file and a file over the limit are each refused with the reason and line; no file named by an entity is opened; a well-formed fixture with comments and CDATA is read."
+
+affected_paths = ["05_Software/src/libraries/core/src/electrical/xml-strict.ts", "05_Software/src/libraries/core/src/electrical/qet.ts", "05_Software/src/libraries/core/src/electrical/qet-tool.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/electrical/qet.test.ts"]
+
+
+spec = "specs/REQ-DATA-963cbdf6.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-16

@@ -91,6 +91,8 @@ export const sessionStateSchema = z.strictObject({
           "motor_drives",
           "power_quality",
           "lighting_design",
+          "qelectrotech_change",
+          "qelectrotech_check",
         ]),
         path: z.string(),
         diff: z.string(),

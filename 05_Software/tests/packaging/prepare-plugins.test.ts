@@ -67,6 +67,7 @@ it("builds the official plugins into a bundled catalog release and checks it aga
     ["power-quality-pfc", "official"],
     ["probe-rs", "official"],
     ["protection-coordination", "official"],
+    ["qelectrotech", "official"],
     ["raspberry-pi-linux", "official"],
     ["renode", "official"],
     ["scpi-instruments", "official"],

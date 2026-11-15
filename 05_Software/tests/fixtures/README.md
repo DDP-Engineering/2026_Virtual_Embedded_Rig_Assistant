@@ -66,6 +66,12 @@ fictional UF table; `rep-office-a.json` is a fictional DIALux report record (`or
 `model-office-a.json` is a minimal electrical model with the lighting load; `cat-lighting.json` a fictional luminaire
 catalog item.
 
+`qelectrotech/` holds the three QElectroTech starter candidates (`dol`, `reversing`, `star-delta`.generated.qet) that
+VERA's templates render from the motor-drives assemblies of `qet-templates.test.ts` with deterministic UUIDs; the test
+compares a fresh render with them byte for byte (regenerate with `VERA_QET_FIXTURES_UPDATE=1`). Every element symbol in
+them is self-authored by VERA (category `embed://import/vera/`); no element of QElectroTech's collection is included.
+QElectroTech 0.100.0 (Windows portable) and 0.90 (Ubuntu 24.04 apt, WSL2) open them without a load error.
+
 The remaining folders contain document extraction samples, replay scripts,
 translation checker cases and retrieval questions/model manifests.
 Existing user workbenches and profiles are never part of this directory.

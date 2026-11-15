@@ -72,3 +72,7 @@
     - { name: "Motor starting and drives", plugins: [motor-drives], default: true }
     - { name: "Power quality and reactive compensation", plugins: [power-quality-pfc], default: true }
     - { name: "Lighting design", plugins: [lighting-design], default: true }
+- id: electrical-schematics
+  name: Electrical schematics and panels
+  groups:
+    - { name: QElectroTech schematics, plugins: [qelectrotech], default: true }
