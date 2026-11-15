@@ -228,6 +228,7 @@ describe("manifest", () => {
       url: "https://github.com/wokwi/wokwi-cli/releases/download/v0.29.1/wokwi-cli-win-x64.exe",
       sha256: "45292e3c4f32ba4cfbcc7a457a6df48aad95fdb3269a218cb83423da9dc483b2",
       path: "wokwi-cli.exe",
+      bytes: 46728248,
     });
     expect(cli.install.download["linux-x64"].sha256).toBe(
       "3c9d6da007d008a3822ab468318037285440055132c59fd659d7306e40f14258",
