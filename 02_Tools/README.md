@@ -9,6 +9,7 @@ harnesses in [05_Software/evaluators](../05_Software/evaluators/README.md).
   environment/            setup, pinned toolchain, resource preparation, development launchers
   build/                  compilation and static checks
   release/                packaging, update-feed tooling, release environment launchers
+  delivery/               versioned, checksummed deliveries in 07_Delivery
   runtime/                ignored, the locally installed Node.js
   cache/                  ignored, npm/Electron download caches and historical caches
   verification-policy.md  repository verification and handover policy
@@ -58,8 +59,8 @@ absolute `05_Software` path that tools use for their inputs and outputs. The dev
 `dev-renderer.mjs`, like its npm script, runs from `05_Software`.
 
 `npm run lint` and `npm run format` check these folders in a second Biome pass with the
-`05_Software` configuration, so `environment/`, `build/` and `release/` follow the same rules as the
-software. `runtime/` and `cache/` are never linted.
+`05_Software` configuration, so `environment/`, `build/`, `release/` and `delivery/` follow the same rules
+as the software. `runtime/` and `cache/` are never linted.
 
 ## Environment
 
@@ -102,15 +103,52 @@ software. `runtime/` and `cache/` are never linted.
 
 Packaging needs a native Windows or Linux x64 host. It rebuilds the staging and output folders of the
 chosen mode; they are not an archive for deliveries. Model preparation can need the network. Selected,
-validated deliveries belong to `07_Delivery`, as the [software README](../05_Software/README.md)
-describes. The package smoke and update probe that check built artifacts are tests, in
+validated deliveries belong to `07_Delivery`, collected by the [delivery scripts](#delivery). The
+package smoke and update probe that check built artifacts are tests, in
 [05_Software/tests/packaging](../05_Software/tests/README.md#packaging).
+
+## Delivery
+
+Three independent deliverables, collected with checksums in `07_Delivery/vera-<version>/`: VERA for
+Windows, VERA for Linux, and the plugins with their offline dependency kits. `<version>` is the desktop
+package version (`src/apps/desktop/package.json`); while it is `0.0.0` the folder is
+`vera-0.0.0-<short commit>`. Run from `05_Software`, each with
+`python ../02_Tools/environment/npmw.py npm run …`.
+
+| File | Purpose | Invocation and result |
+|---|---|---|
+| `delivery-common.mjs` | Version and folder name, host check, SHA-256, `SHA256SUMS`, `delivery.json`, part staging | Imported; tests in `05_Software/tests/tooling/delivery.test.ts`. |
+| `build-plugin-packages.mjs` | Runs `prepare:plugins`, signs the channel indexes when a key is given, adds one archive of the whole catalog | `npm run delivery:plugins [-- --signing-key <pem>]`; writes `plugins/`. Without a key `delivery.json` records `signed: false`. Any host. |
+| `build-vera-installers.mjs` | Runs `npm run package` (release mode only) and copies the installers that `package-report.json` names | `npm run delivery:vera -- --platform windows-x64\|linux-x64`; writes `vera-<platform>/`. Only on that platform's host. |
+| `build-plugin-deps-kit.mjs` | Runs `vera catalog kit` into a temporary folder and zips it | `npm run delivery:plugin-deps -- --platform windows-x64\|linux-x64 [--skip <ids>]` (default `--skip sigrok`); writes `plugin-deps/vera-plugin-deps-<version>-<platform>.zip`. Needs network (~1 GB) and the pinned uv; only on that platform's host. |
+| `verify-delivery.mjs` | Checks every `SHA256SUMS` and `delivery.json` entry, one version throughout, the expected files per part, the plugin zips against the indexes and the index signatures | `npm run delivery:verify [-- <folder>]`, default the folder of this checkout. Lists present and missing parts; exit 1 on a mismatch. Publishes nothing. |
+
+Every build script refuses an existing part; `--replace` rebuilds only that part. A part is built in
+`.staging-<part>` next to it and renamed at the end, so a failure leaves no half-written part. Each script
+prints the part folder, its files with sizes and the next step.
+
+```
+07_Delivery/
+  README.md
+  plugins/                   working catalog release (prepare:plugins), bundled into the installer
+  vera-<version>/
+    vera-windows-x64/        VERA-<v>-win-x64.exe (NSIS), VERA-<v>-win-x64.zip (portable), SHA256SUMS
+    vera-linux-x64/          VERA-<v>-linux-*.AppImage, VERA-<v>-linux-*.deb, SHA256SUMS
+    plugins/                 <id>-<version>.zip, index.json, index-stable.json, index-pre-release.json,
+                             (*.sig when signed), vera-plugins-<version>.zip, SHA256SUMS
+    plugin-deps/             vera-plugin-deps-<version>-windows-x64.zip, …-linux-x64.zip, SHA256SUMS
+    delivery.json            version, commit and host per part, files with SHA-256 and size
+```
+
+Everything below `07_Delivery/` except `README.md` is git-ignored. Installing from a delivery:
+[07_Delivery/README.md](../07_Delivery/README.md).
 
 ## Where generated files go
 
 - Desktop build: `05_Software/src/apps/desktop/out/`; CLI build: `05_Software/src/apps/cli/dist/`.
 - Prepared models, uv and DLLs: `05_Software/src/models/`, `src/uv/` and `src/windows_runtime/`.
 - Packaging: `05_Software/release_tmp/`, staging and output separated by mode.
+- Deliveries: `07_Delivery/vera-<version>/`.
 - Environment, build and release caches: `02_Tools/cache/`. Evaluator scratch never goes here; see
   [evaluators](../05_Software/evaluators/README.md#scratch-și-outputs).
 

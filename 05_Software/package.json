@@ -12,8 +12,8 @@
     "node": ">=24 <25"
   },
   "scripts": {
-    "lint": "biome check . && biome check --vcs-enabled=false ../02_Tools/environment ../02_Tools/build ../02_Tools/release",
-    "format": "biome check --write . && biome check --write --vcs-enabled=false ../02_Tools/environment ../02_Tools/build ../02_Tools/release",
+    "lint": "biome check . && biome check --vcs-enabled=false ../02_Tools/environment ../02_Tools/build ../02_Tools/release ../02_Tools/delivery",
+    "format": "biome check --write . && biome check --write --vcs-enabled=false ../02_Tools/environment ../02_Tools/build ../02_Tools/release ../02_Tools/delivery",
     "typecheck": "tsc -b",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
@@ -31,6 +31,10 @@
     "prepare:uv": "node ../02_Tools/environment/prepare-uv.mjs",
     "prepare:plugins": "node ../02_Tools/environment/prepare-plugins.mjs",
     "prepare:windows-runtime": "node ../02_Tools/environment/prepare-windows-runtime.mjs",
+    "delivery:vera": "node ../02_Tools/delivery/build-vera-installers.mjs",
+    "delivery:plugins": "node ../02_Tools/delivery/build-plugin-packages.mjs",
+    "delivery:plugin-deps": "node ../02_Tools/delivery/build-plugin-deps-kit.mjs",
+    "delivery:verify": "node ../02_Tools/delivery/verify-delivery.mjs",
     "smoke:live": "node ../02_Tools/release/smoke-live.mjs",
     "smoke:package": "node tests/packaging/smoke/smoke-package.mjs",
     "build:cli": "node ../02_Tools/build/build-cli.mjs",

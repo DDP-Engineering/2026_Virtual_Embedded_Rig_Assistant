@@ -21,6 +21,8 @@ __pycache__/
 /07_Delivery/plugins.staging/
 # Offline dependency kits per platform and their staging folders, built by vera catalog kit.
 /07_Delivery/kit-*
+# Versioned deliveries (installers, plugin packages, dependency kits), built by npm run delivery:*.
+/07_Delivery/vera-*/
 *.tsbuildinfo
 
 # Generated evaluator runs. Retained evidence is selected deliberately (git add -f).
