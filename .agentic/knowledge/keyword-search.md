@@ -6,7 +6,6 @@ Select for word/identifier fragment indexes, lexical rank and persisted chunk
 candidates. Start at core knowledge/keyword.ts and storage/schema.ts.
 [Storage](workbench-storage.md) owns schema initialization; [ingest](knowledge-ingest.md)
 owns publication; [extraction](document-extraction.md) owns text/locators.
-[Retrieval evaluation](retrieval-evaluation.md) owns the isolated benchmark.
 
 ## Purpose and boundaries
 

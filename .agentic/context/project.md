@@ -89,8 +89,8 @@ Its real vendor build/flash/panic acceptance remains pending toolchain and board
 [Skills](../knowledge/skills.md) routes workbench/user/plugin discovery, validated metadata
 prompt index, confined on-demand body/extra reads and localized Skills settings.
 The official skills-only analysis-skills package supplies firmware-comparator with its sourced
-seven-section comparison template and test-planner with its six-section manual-plan template;
-separate real-model rubric evidence lives beside each skill. Test-planner never executes programs
+seven-section comparison template and test-planner with its six-section manual-plan template.
+Test-planner never executes programs
 or tests and blocks readiness when target, setup or criteria lack evidence.
 
 [Knowledge ingest](../knowledge/knowledge-ingest.md) routes background document
@@ -98,7 +98,6 @@ selection/hash/limits/status events, reindex and derived-row invalidation throug
 the workbench-owned queue shared by desktop and CLI composition. In the desktop app the
 [indexer process](../knowledge/indexer-process.md) runs selection, hashing, extraction, chunking
 and embeddings in the VERA Indexer utility process; main keeps every SQLite write.
-[Retrieval evaluation](../knowledge/retrieval-evaluation.md) supplies the isolated native CPU comparison over frozen demo questions; ADR0015 selects the bundled BGE descriptor and hybrid recall gate.
 [Document extraction](../knowledge/document-extraction.md) supplies cached PDF/text/heading
 extraction, structured office extraction (docx/odt headings, pptx/odp slides, xlsx/ods sheets;
 legacy doc/ppt/xls and RTF not indexed), precise chunks/OCR and the dedicated document worker
@@ -141,7 +140,6 @@ required before final release; current-host import/loaded-path evidence suppleme
 - [Updates](../knowledge/updates.md) routes fixed generic feed, modes/channels and safe restart installation.
 
 - [System architecture](../../00_Planning/architecture/01-system.md)
-- [Foundation packages](../../00_Planning/plan/M0-foundation.md)
 - [Quality](../../00_Planning/architecture/08-quality.md)
 
 [File tools](../knowledge/file-tools.md) routes confinement, discovery, fingerprints, line refs, registry and bounded grep hosts.

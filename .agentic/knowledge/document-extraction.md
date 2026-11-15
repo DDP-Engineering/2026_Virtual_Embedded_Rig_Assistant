@@ -8,8 +8,7 @@ cache and demo PDFs. Start at core knowledge/processor.ts; pure extraction/chunk
 tests are extraction.test.ts and office.test.ts, real worker/cache/ingest tests
 processor.test.ts. Queue/discovery/ownership and extension-to-kind mapping route
 to [knowledge ingest](knowledge-ingest.md); SQLite to
-[workbench storage](workbench-storage.md). Model/retrieval comparison routes to
-[retrieval evaluation](retrieval-evaluation.md). ADR0015 selects the existing BGE
+[workbench storage](workbench-storage.md). ADR-0015 selects the existing BGE
 tokenizer, with an empty passage prefix; query instructions live in the model
 descriptor.
 

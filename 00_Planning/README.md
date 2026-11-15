@@ -6,10 +6,10 @@ project's documents and skills. The user chats with a model; the agent searches 
 reads and edits workbench files with the user's approval, searches the web on request and saves
 session artifacts.
 
-**Status (2026-11-01):** milestones M0–M5 are implemented (WP-01…WP-38 closed in Gitea). The
-architecture documents and ADR-0001…0015 were checked against the code in `05_Software` on
-2026-11-01 and describe the implementation; where they still disagree with the code, the code wins.
-Plugins (PLG-01…18) and analysis capabilities (CAP-01…04) are planned, not implemented.
+**Status:** milestones M0–M5, the plugin system and the ELEC, LAB and IOT plugin epics are
+implemented. The architecture documents describe the implementation; where they disagree with the
+code in `05_Software`, the code wins. Delivered plans and implemented ADRs were removed; their text is
+in Git history.
 
 | File | Read it for |
 |---|---|
@@ -21,14 +21,11 @@ Plugins (PLG-01…18) and analysis capabilities (CAP-01…04) are planned, not i
 | [architecture/05-knowledge-rag.md](architecture/05-knowledge-rag.md) | document selection and ingest in the VERA Indexer, extraction (PDF, Office, HTML, Markdown, text), chunking, keyword and vector index, hybrid search, references, viewer |
 | [architecture/06-ui.md](architecture/06-ui.md) | layout and window chrome, screens, session components, appearance, viewer, languages, accessibility and shortcuts |
 | [ui/README.md](ui/README.md) | historical layout A mockups and how the implemented UI differs |
-| [plugins/ui-redesign.md](plugins/ui-redesign.md) | implemented 2026-11-11 Plugins discovery/activation redesign (PLG-25 candidate TASK-4f522ea5); [interactive HTML](ui/plugins-redesign.html) and [PLG-23…PLG-25 implementation plan](plan/plugins-ui-redesign.md) |
+| [plugins/ui-redesign.md](plugins/ui-redesign.md) | Plugins discovery/activation redesign (PLG-23…PLG-25, implemented 2026-11-11); [interactive HTML](ui/plugins-redesign.html) |
 | [architecture/07-packaging-updates.md](architecture/07-packaging-updates.md) | package contents, targets, versions and channels, portable mode, updates, data format versions (migrations deferred until the first public release), signing |
 | [architecture/08-quality.md](architecture/08-quality.md) | commands, test layers, fixtures and replay, release-package smoke and egress check |
-| [plan/performance-regression.md](plan/performance-regression.md) | PERF-01: current-behavior measurement delivered 2026-11-12; [results](../06_SoftwareDocu/eval-performance-outputs/session-loading-2026-11-12-windows.md); regression calibration/gates deferred |
-| [plan/tooling-tests-evaluators-layout.md](plan/tooling-tests-evaluators-layout.md) | REPO-01 / [#110](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/110): agreed separation of environment/build/release tooling, tests/E2E, evaluators and generated outputs; implemented 2026-11-12, source-to-target map recorded |
-| [decisions/README.md](decisions/README.md) | architecture decision records and their implementation status |
-| [plan/README.md](plan/README.md) | the M0–M5 plan (implemented): milestones, work packages, dependencies, risks |
-| [plan/benchpilot-reuse.md](plan/benchpilot-reuse.md) | historical map of the BenchPilot reference files each module started from |
+| [decisions/README.md](decisions/README.md) | every architecture decision in one table: what was decided and why |
+| [plan/README.md](plan/README.md) | open plans, work deferred by the user and proofs still open (hardware, native Ubuntu, release) |
 | [plugins/README.md](plugins/README.md) | plugins for embedded tools (decisions accepted 2026-11-01): format, risk rules, provisioning, catalog, ESP32 pack, work packages PLG-01…18; supersedes the wrapper and serial seams and laws L3 (shell part) and L5 |
 | [capabilities/README.md](capabilities/README.md) | analysis capabilities CAP-01…04 (rewritten 2026-11-01): parse_log and decode_register tools, firmware-comparator and test-planner skills in the analysis-skills plugin; Gitea epic #75 |
 | [optional-companions.md](optional-companions.md) | optional desktop pets proposal (PET-01…08, not implemented) |

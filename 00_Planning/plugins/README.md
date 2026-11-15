@@ -1,9 +1,8 @@
 # Plugins
 
 **Status:** decisions D1–D7 accepted 2026-11-01; the plugin store, runner, catalog and management UI
-are implemented (see the per-package outcomes in plan.md). The scalable discovery/activation redesign
-of 2026-11-11 is planned in [ui-redesign.md](ui-redesign.md) and
-[PLG-23…PLG-25](../plan/plugins-ui-redesign.md), not implemented. This package replaces the post-1.0
+are implemented (see the per-package outcomes in plan.md), and so is the scalable discovery/activation
+redesign of 2026-11-11 ([ui-redesign.md](ui-redesign.md), PLG-23…PLG-25). This package replaces the post-1.0
 "wrapper tools" and "serial" seams of the earlier planning documents. Where those documents conflict
 with this package, ADR-0016…0019 decide.
 
@@ -18,13 +17,7 @@ releases. Users can draft their own plugins with the agent.
 | [packs.md](packs.md) | ecosystem packs: ESP32 in detail; CAN, Wireshark, Microchip and STM32 seeds; bench tools; Electronics design |
 | [probe-rs.md](probe-rs.md), [binutils.md](binutils.md), [sigrok.md](sigrok.md), [git.md](git.md) | the vendor-neutral bench-tool plugins: flashing and debug probes, firmware image analysis, signals and bench instruments (DDP sigrok fork), version control |
 | [plan.md](plan.md) | original work packages PLG-01…PLG-22, dependencies, verification, risks; follow-up routing |
-| [ui-redesign.md](ui-redesign.md) | planned Available/Installed discovery, search/filter/sort metadata and explicit activation in Workbench settings → Plugins, with top Save/Cancel |
-| [../plan/electronics-plugins.md](../plan/electronics-plugins.md) | electronics engineering plugins ELEC-01...ELEC-07 (epic #92): order, shared rules, what ELEC-01 built |
-| [../plan/plugins-ui-redesign.md](../plan/plugins-ui-redesign.md) | implementation work packages PLG-23…PLG-25 and their Gitea tracking |
-| [ADR-0016](../decisions/ADR-0016-plugins-skills-and-guarded-programs.md) | plugins = skills + declared programs + risk rules; no shell |
-| [ADR-0017](../decisions/ADR-0017-plugin-provisioning-and-no-size-budget.md) | bundled `uv`, on-demand installs, no package size budget |
-| [ADR-0018](../decisions/ADR-0018-hardware-risk-levels.md) | risk levels and the irreversible-operation policy |
-| [ADR-0019](../decisions/ADR-0019-plugin-catalog-tiers.md) | one catalog, official and community tiers |
+| [ui-redesign.md](ui-redesign.md) | Available/Installed discovery, search/filter/sort metadata and explicit activation in Workbench settings → Plugins, with top Save/Cancel |
+| [../decisions/README.md](../decisions/README.md) | ADR-0016…0019: plugins = skills + declared programs + risk rules, bundled `uv`, risk levels, catalog tiers |
 
-Reading order for an implementation agent: architecture.md, then the work package in plan.md, then
-the ADR it cites.
+Reading order for an implementation agent: architecture.md, then the work package in plan.md.

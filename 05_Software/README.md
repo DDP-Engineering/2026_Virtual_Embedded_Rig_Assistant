@@ -41,8 +41,7 @@ folder's `node_modules/`, so there is a single dependency tree.
 The bundled official `analysis-skills` plugin supplies captured `firmware-comparator` and sourced
 manual `test-planner` procedures with on-demand templates. Install from its folder or local catalog,
 then enable it per workbench. Test plans include readiness, one to five cases and future results to
-collect; they execute no programs or hardware operations. See [plugin instructions](plugins/analysis-skills/README.md)
-and the separate real-model verification beside each skill.
+collect; they execute no programs or hardware operations. See [plugin instructions](plugins/analysis-skills/README.md).
 
 The desktop uses one compact title/menu row with native window controls. The sidebar
 toggle switches between full project/session navigation and a compact icon rail; Home,
@@ -369,20 +368,6 @@ regenerate the three fictional VERA-DEMO-01 PDFs from
 PDF pages in a dedicated worker, caches extraction by SHA256 and persists
 page/heading/line chunks. Scanned PDFs report `needs_ocr`.
 
-## Embedding comparison
-
-A historical experiment behind ADR-0015, not a gate. From 05_Software, run the pinned local CPU
-comparison:
-
-```powershell
-python ../02_Tools/environment/npmw.py node evaluators/eval-embedding-comparison-harness/compare-embeddings.mjs --prepare --scratch node_modules/.cache/evaluators/embedding-comparison/windows --models node_modules/.cache/evaluators/embedding-comparison/models --output evaluation-outputs/embedding-comparison/<run>.json
-```
-
-Omit --prepare for verified-cache-only execution; inference always disables remote
-model loading. On Ubuntu use python3 and a `linux` scratch child. The report
-retains exact corpus/fixture/manifest hashes, timings and keyword/semantic/hybrid
-recall by EN/RO. See [retrieval evaluation](../.agentic/knowledge/retrieval-evaluation.md)
-and [ADR0015](../00_Planning/decisions/ADR-0015-embedding-model-selection.md).
 # Updates
 
 Set VERA_UPDATE_URL to the fixed generic HTTPS feed when building the app/packages.

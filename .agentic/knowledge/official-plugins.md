@@ -615,8 +615,7 @@ that source metadata reaches the deterministic bundled index unchanged.
   control when available; missing target/setup/criteria blocks readiness. Plugin commands are
   optional future instructions with risk levels, and todo records preparation, not measurements.
   Folder and bundled-catalog zip installation are covered by analysis-skills.test.ts and
-  prepare-plugins.test.ts; actual SessionService/npm CLI replay lives in cli.test.ts. Separate
-  opt-in real-model rubric/hashes/results live beside each skill under verification/.
+  prepare-plugins.test.ts.
 
 - `esp32-efuse` 0.2.0, ESP32, Windows x64/Linux x64: the official Security (irreversible)
   group defaults off. Both espefuse and espsecure use pip esptool>=5,<6 and help-based version

@@ -68,7 +68,7 @@ artefactele de release și dovada de rețea pe Windows (pktmon).
 | Decizie | De ce, și cum arată în cod |
 |---|---|
 | TypeScript + Electron | același stack ca BenchPilot (cod de referință în `09_Others/benchpilot-reference/`); abonament ChatGPT gata făcut prin `pi-ai`; embeddings locale fără server. Interfața folosește CSS scris de mână; shadcn/ui e doar configurat |
-| Pornim din codul de referință BenchPilot | etapa de preluare s-a încheiat; harta din `plan/benchpilot-reuse.md` e istorică |
+| Pornim din codul de referință BenchPilot | etapa de preluare s-a încheiat |
 | `pi-ai` pentru modele; bucla agentului din codul de referință | confirmată de spike-ul WP-10 (ADR-0014); steering-ul și compactarea sunt construite pe aceeași buclă |
 | Workbench = folder | se copiază, se versionează în Git; configurarea și skill-urile stau în `.vera/`, iar un al doilea proces deschide workbench-ul doar pentru citire |
 | Un singur fișier SQLite per workbench | index FTS5 și trigram, vectori, sesiuni, artefacte; schema e fixă (versiunea 3), fără migrații |
@@ -167,4 +167,4 @@ s-a făcut conform planului și ce diferă. Lucrul nou e planificat separat: `pl
 
 VERA a preluat cod din BenchPilot, un proof of concept anterior pe același stack. Copia fișierelor
 relevante e în `09_Others/benchpilot-reference/` (cu folderele `apps/` și `packages/`). Preluarea s-a
-încheiat; harta din `plan/benchpilot-reuse.md` arată de unde a pornit fiecare modul.
+încheiat.

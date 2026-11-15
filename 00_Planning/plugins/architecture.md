@@ -569,8 +569,7 @@ Pack definitions remain data, without a duplicate selection list. The publishing
   dates remain absent for real packages without release evidence). Enablement belongs to the existing
 Workbench settings → Plugins section, without a workbench selector or Add plugins button, with
 Save/Cancel at the beginning of the page and Save enabled on changes. Execution, trust, review and
-provisioning policy in this document still apply. Implementation: PLG-23…PLG-25 in
-[the follow-up plan](../plan/plugins-ui-redesign.md); interactive reference in
+provisioning policy in this document still apply. Implementation: PLG-23…PLG-25; interactive reference in
 [ui/plugins-redesign.html](../ui/plugins-redesign.html).
 
 ## 8. Authoring with the agent

@@ -2,11 +2,11 @@
 
 ## Routing
 
-Select for AgentRuntime, system prompt composition, turn orchestration, read/write batch ordering, approval-host waits, abort, transcript resume, context budgets, tool-schema conversion and runtime events. Start at core/src/agent/{runtime,prompt,context,compaction,types,tool}.ts under05_Software; focused tests are runtime.test.ts,prompt.test.ts,context.test.ts,compaction.test.ts,runtime-edge.test.ts,steering.test.ts,pi-spike.test.ts. [LLM gateway](llm-gateway.md) owns model metadata/transport/replay, [workbench storage](workbench-storage.md) owns durable rows and [sessions](sessions.md) owns their integration. [File tools](file-tools.md) owns the production read registry/context adapter and worker hosts; [Sessions](sessions.md) supplies prepared permission-host calls; [file tools](file-tools.md) owns immutable changes and workbench write admission.
+Select for AgentRuntime, system prompt composition, turn orchestration, read/write batch ordering, approval-host waits, abort, transcript resume, context budgets, tool-schema conversion and runtime events. Start at core/src/agent/{runtime,prompt,context,compaction,types,tool}.ts under05_Software; focused tests are runtime.test.ts,prompt.test.ts,context.test.ts,compaction.test.ts,runtime-edge.test.ts,steering.test.ts. [LLM gateway](llm-gateway.md) owns model metadata/transport/replay, [workbench storage](workbench-storage.md) owns durable rows and [sessions](sessions.md) owns their integration. [File tools](file-tools.md) owns the production read registry/context adapter and worker hosts; [Sessions](sessions.md) supplies prepared permission-host calls; [file tools](file-tools.md) owns immutable changes and workbench write admission.
 
 ## Purpose and boundaries
 
-Core ReferenceRuntime implements AgentRuntime over injected LlmGateway, Clock/IDs and approval host. ContextPolicy creates detached provider request views. The experiment adapter runs actual pi-agent-core but has no production export. [Runtime comparison](../../06_SoftwareDocu/agent-runtime-spike.md) gives event mapping and [ADR0014](../../00_Planning/decisions/ADR-0014-agent-runtime-spike.md) selects reference.
+Core ReferenceRuntime implements AgentRuntime over injected LlmGateway, Clock/IDs and approval host. ContextPolicy creates detached provider request views. [ADR-0003](../../00_Planning/decisions/README.md) records why this loop was kept over pi-agent-core.
 
 The synchronous prompt builder consumes workbench name, decoded pinned text, resolved available skill metadata and host environment. WorkbenchService owns the complete stored text; host/session callers supply Clock and environment. The builder exposes text and size without I/O or state.
 
@@ -50,7 +50,6 @@ The synchronous prompt builder consumes workbench name, decoded pinned text, res
 | Historical summaries/cache/failure/budget/refs | compaction.ts/runtime.ts | compaction.test.ts; sessions/service.test.ts |
 | zod conversion/validation | tool.ts/types.ts | schema and invalid-tool matrix cases |
 | Prompt rules/order/pinned/skills/environment/size | prompt.ts | prompt.test.ts and snapshots |
-| Candidate measurement | pi-spike.test-support.ts | pi-spike.test.ts/common matrix |
 
 ## Key behaviors
 
@@ -62,4 +61,4 @@ REQ-FUNC-63733e2c queued steering admission; REQ-FUNC-e5b6a1c9 bounded derived h
 
 ## Files
 
-Under05_Software/src/libraries/core: src/agent/{runtime,prompt,context,compaction,types,tool}.ts; src/agent/{runtime,prompt,context,compaction,steering,runtime-edge,pi-spike}.test.ts and agent/__snapshots__/prompt.test.ts.snap; runtime-matrix.test-support.ts and pi-spike.test-support.ts; package.json/src/index.ts. Root package-lock pins the experiment. core/src/llm/replay.ts emits argument deltas. Current runtime contract and mapping live in06_SoftwareDocu/agent-runtime-spike.md and ADR0014.
+Under05_Software/src/libraries/core: src/agent/{runtime,prompt,context,compaction,types,tool}.ts; src/agent/{runtime,prompt,context,compaction,steering,runtime-edge}.test.ts and agent/__snapshots__/prompt.test.ts.snap; runtime-matrix.test-support.ts; package.json/src/index.ts. core/src/llm/replay.ts emits argument deltas.

@@ -42,9 +42,8 @@ proof on every declared platform. Otherwise one value per evidence level:
 - `0.2.0` - the real third-party tool ran on Windows; real hardware or cloud and native Ubuntu x64 are open.
 - `0.1.0` - offline evidence only (simulated devices or tools); the real tool, hardware and native Ubuntu x64 are open.
 
-No plugin has a native-Ubuntu run (WSL2 evidence does not count). Sources: [arduino-iot-acceptance.md](arduino-iot-acceptance.md),
-[embedded-lab-acceptance.md](embedded-lab-acceptance.md), [electronics-plugins.md](electronics-plugins.md),
-[../plugins/plan.md](../plugins/plan.md) and `.agentic/knowledge/official-plugins.md` (2026-11-14). A plugin moves up
+No plugin has a native-Ubuntu run (WSL2 evidence does not count). Sources: the open proofs in
+[README.md](README.md), [../plugins/plan.md](../plugins/plan.md) and `.agentic/knowledge/official-plugins.md` (2026-11-14). A plugin moves up
 when its open proof is recorded there. A plugin's bundled helper programs print the same version
 (`--version`, result records). Installed copies at the old 1.0.0 meet the catalog's downgrade refusal: uninstall and reinstall.
 

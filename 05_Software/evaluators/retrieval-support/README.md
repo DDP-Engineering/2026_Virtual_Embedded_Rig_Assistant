@@ -1,8 +1,6 @@
 # Module comune pentru evaluarea căutării
 
-Module interne folosite de ambele harness-uri de căutare:
-[evaluarea produsului](../eval-retrieval-harness/eval-retrieval.mjs) și
-[comparația BGE/E5](../eval-embedding-comparison-harness/compare-embeddings.mjs).
+Module interne folosite de [evaluarea căutării](../eval-retrieval-harness/eval-retrieval.mjs).
 Nu sunt comenzi independente. Rularea, scratch-ul și outputs sunt descrise în
 [README-ul evaluatorilor](../README.md).
 
@@ -12,5 +10,4 @@ Nu sunt comenzi independente. Rularea, scratch-ul și outputs sunt descrise în
 | [evaluation.mjs](evaluation.mjs) | Validează întrebările și țintele; calculează clasamente keyword/semantic, fuziune RRF și metrici pe limbi. | Primește corpusul, întrebările și clasamentele. Folosește SQLite FTS pentru referința keyword; nu lansează singur o evaluare și nu descarcă modele. Testele lui sunt în `tests/integration/retrieval.test.ts`. |
 
 Datele de intrare rămân fixturi comune: demo-ul din `tests/fixtures/workbenches/demo-board/`,
-întrebările din `tests/fixtures/retrieval/demo-board.yaml` și manifestele BGE/E5 din
-`tests/fixtures/retrieval/`.
+întrebările din `tests/fixtures/retrieval/demo-board.yaml`.

@@ -22,5 +22,4 @@ Load `load_skill {"name":"test-planner"}` and
 `load_skill {"name":"test-planner","file":"templates/test-plan.md"}`.
 Its six-section plan is saved as a unique bounded `test-plan-<target>.md` session artifact.
 
-Verification instructions, prompts and real-model results live beside each skill under `verification/`.
-Replay verifies integration and saved evidence, not model semantics.
+`tests/integration/analysis-skills.test.ts` verifies installation and loading; model semantics are not tested.

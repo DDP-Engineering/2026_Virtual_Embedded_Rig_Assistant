@@ -2,9 +2,9 @@
 
 PURPOSE: the order in which the plugin system of [architecture.md](architecture.md) and the ESP32
 pack of [packs.md](packs.md) are built: work packages PLG-01…PLG-22, dependencies, verification and
-risks. Follow-up PLG-23…PLG-25 (2026-11-11) are planned in
-[../plan/plugins-ui-redesign.md](../plan/plugins-ui-redesign.md): scalable catalog discovery,
-Available/Installed management and activation in Workbench settings → Plugins with top Save/Cancel.
+risks. Follow-up PLG-23…PLG-25 (2026-11-11, implemented, specified in [ui-redesign.md](ui-redesign.md)):
+scalable catalog discovery, Available/Installed management and activation in Workbench settings →
+Plugins with top Save/Cancel.
 DONE-WHEN: steps 1 and 2 are complete. On Windows x64 and Linux x64 a user installs the ESP32 pack
 from the catalog and asks the agent to identify, build, flash and monitor a real ESP32 board; the
 release smoke covers the approval card, the typed confirmation and process-tree termination.
@@ -33,8 +33,7 @@ permission modes, tool registry. Implementation follows the repository's AEGIS w
 Gitea issue of each package: PLG-01…PLG-18 are #57…#74 in order (PLG-n is issue #(56 + n)); PLG-19…PLG-22 are #81…#84.
 Created 2026-11-01 without ADORE labels.
 
-The new [Plugins UI redesign plan](../plan/plugins-ui-redesign.md) supplies the umbrella and
-PLG-23…PLG-25 follow-up issues. Its accepted UI direction supersedes the checkable-packs presentation
+The Plugins UI redesign (umbrella #85, PLG-23…PLG-25) followed. Its accepted UI direction supersedes the checkable-packs presentation
 of PLG-06/07 without reopening those original tickets or changing package execution policy.
 
 ```mermaid
