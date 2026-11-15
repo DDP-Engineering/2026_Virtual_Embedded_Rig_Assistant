@@ -552,7 +552,16 @@ export function App() {
                   <PlanTab workbenchId={benchId} sessionId={activeSession} />
                 ) : undefined
               }
-              runs={benchId && !settings ? <RunsTab key={benchId} workbenchId={benchId} /> : undefined}
+              runs={
+                benchId && !settings ? (
+                  <RunsTab
+                    key={benchId}
+                    workbenchId={benchId}
+                    sessions={sessions.data}
+                    currentSessionId={chat ? activeSession : undefined}
+                  />
+                ) : undefined
+              }
             >
               <UpdateBanner />
               <div className="page-content" hidden={(chat && !settings) || emptyCanvas}>

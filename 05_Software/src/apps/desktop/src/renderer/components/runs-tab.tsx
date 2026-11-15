@@ -81,10 +81,12 @@ function LogDialog({
 function RunRow({
   workbenchId,
   run,
+  session,
   open,
 }: {
   workbenchId: string;
   run: ProgramRunInfo;
+  session: string;
   open: (run: ProgramRunInfo) => void;
 }) {
   const { t, i18n } = useTranslation();
@@ -108,6 +110,7 @@ function RunRow({
     <li data-run={run.id} data-state={run.state}>
       <code className="run-command">{commandLine(run)}</code>
       <p className="muted">
+        <span data-run-session>{t("runs.session", { title: session })} · </span>
         {run.plugin && <span>{t("runs.plugin", { plugin: run.plugin })} · </span>}
         <time dateTime={run.startedAt}>{new Date(run.startedAt).toLocaleString(i18n.language)}</time>
         {run.background && <span> · {t("runs.background")}</span>}
@@ -134,24 +137,149 @@ function RunRow({
   );
 }
 
-/** Plugin program runs of the open workbench: running and recent, with their logs and Stop. */
-export function RunsTab({ workbenchId }: { workbenchId: string }) {
+type SessionFilter = "current" | "all" | string;
+type DateFilter = "any" | "today" | "week";
+type SortOrder = "newest" | "oldest" | "plugin" | "session" | "state";
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * Plugin program runs of the open workbench: running and recent, with their logs and Stop.
+ * Filters by session (the current one by default), plugin, state and date, and sorts by any of them.
+ */
+export function RunsTab({
+  workbenchId,
+  sessions = [],
+  currentSessionId,
+}: {
+  workbenchId: string;
+  sessions?: { id: string; title?: string | undefined }[] | undefined;
+  currentSessionId?: string | undefined;
+}) {
   const { t } = useTranslation();
+  const states = useStateLabels();
   const [viewing, setViewing] = useState<ProgramRunInfo>();
+  const [sessionFilter, setSessionFilter] = useState<SessionFilter>("current");
+  const [pluginFilter, setPluginFilter] = useState("all");
+  const [stateFilter, setStateFilter] = useState("all");
+  const [dateFilter, setDateFilter] = useState<DateFilter>("any");
+  const [sort, setSort] = useState<SortOrder>("newest");
   const runs = useQuery({
     queryKey: ["runs", workbenchId],
     queryFn: () => api.invoke("runs.list", { workbenchId }),
     staleTime: 0,
     refetchInterval: REFRESH_MS,
   });
+  const titles = new Map(sessions.map((session) => [session.id, session.title || t("chat.untitled")]));
+  const titleOf = (id: string) => titles.get(id) ?? t("runs.unknownSession");
+  const all = runs.data?.runs ?? [];
+  const plugins = [...new Set(all.map((run) => run.plugin).filter((plugin) => plugin !== undefined))].sort();
+  // "Current session" falls back to all sessions when no conversation is open.
+  const session =
+    sessionFilter === "current" ? currentSessionId : sessionFilter === "all" ? undefined : sessionFilter;
+  const since =
+    dateFilter === "today"
+      ? new Date().setHours(0, 0, 0, 0)
+      : dateFilter === "week"
+        ? Date.now() - 7 * DAY_MS
+        : 0;
+  const shown = all
+    .filter((run) => session === undefined || run.sessionId === session)
+    .filter((run) => pluginFilter === "all" || run.plugin === pluginFilter)
+    .filter((run) => stateFilter === "all" || run.state === stateFilter)
+    .filter((run) => Date.parse(run.startedAt) >= since)
+    .sort((a, b) => {
+      const time = Date.parse(b.startedAt) - Date.parse(a.startedAt);
+      if (sort === "oldest") return -time;
+      if (sort === "plugin") return (a.plugin ?? "").localeCompare(b.plugin ?? "") || time;
+      if (sort === "session") return titleOf(a.sessionId).localeCompare(titleOf(b.sessionId)) || time;
+      if (sort === "state") return states[a.state].localeCompare(states[b.state]) || time;
+      return time;
+    });
   return (
     <section className="runs-tab" aria-label={t("panel.runs")}>
+      <div className="runs-filters" data-runs-filters>
+        <label>
+          {t("runs.filterSession")}
+          <select
+            data-runs-filter="session"
+            value={sessionFilter}
+            onChange={(event) => setSessionFilter(event.target.value)}
+          >
+            {currentSessionId && <option value="current">{t("runs.currentSession")}</option>}
+            <option value="all">{t("runs.allSessions")}</option>
+            {sessions.map((item) => (
+              <option key={item.id} value={item.id}>
+                {item.title || t("chat.untitled")}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          {t("runs.filterPlugin")}
+          <select
+            data-runs-filter="plugin"
+            value={pluginFilter}
+            onChange={(event) => setPluginFilter(event.target.value)}
+          >
+            <option value="all">{t("runs.allPlugins")}</option>
+            {plugins.map((plugin) => (
+              <option key={plugin} value={plugin}>
+                {plugin}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          {t("runs.filterState")}
+          <select
+            data-runs-filter="state"
+            value={stateFilter}
+            onChange={(event) => setStateFilter(event.target.value)}
+          >
+            <option value="all">{t("runs.allStates")}</option>
+            {Object.entries(states).map(([value, label]) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          {t("runs.filterDate")}
+          <select
+            data-runs-filter="date"
+            value={dateFilter}
+            onChange={(event) => setDateFilter(event.target.value as DateFilter)}
+          >
+            <option value="any">{t("runs.anyTime")}</option>
+            <option value="today">{t("runs.today")}</option>
+            <option value="week">{t("runs.lastWeek")}</option>
+          </select>
+        </label>
+        <label>
+          {t("runs.sort")}
+          <select data-runs-sort value={sort} onChange={(event) => setSort(event.target.value as SortOrder)}>
+            <option value="newest">{t("runs.newest")}</option>
+            <option value="oldest">{t("runs.oldest")}</option>
+            <option value="plugin">{t("runs.byPlugin")}</option>
+            <option value="session">{t("runs.bySession")}</option>
+            <option value="state">{t("runs.byState")}</option>
+          </select>
+        </label>
+      </div>
       {runs.isPending && <p role="status">{t("home.loading")}</p>}
       {runs.isError && <ErrorMessage error={runs.error} />}
       {runs.data?.runs.length === 0 && <p className="muted">{t("runs.none")}</p>}
+      {all.length > 0 && shown.length === 0 && <p className="muted">{t("runs.noMatch")}</p>}
       <ul className="runs-list">
-        {runs.data?.runs.map((run) => (
-          <RunRow key={run.id} workbenchId={workbenchId} run={run} open={setViewing} />
+        {shown.map((run) => (
+          <RunRow
+            key={run.id}
+            workbenchId={workbenchId}
+            run={run}
+            session={titleOf(run.sessionId)}
+            open={setViewing}
+          />
         ))}
       </ul>
       {viewing && <LogDialog workbenchId={workbenchId} run={viewing} close={() => setViewing(undefined)} />}

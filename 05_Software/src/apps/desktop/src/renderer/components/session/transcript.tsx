@@ -19,6 +19,7 @@ import { ApprovalCard } from "./approval-card.js";
 import { argsText, ToolOutput } from "./bounded-text.js";
 import { Disclosure } from "./disclosure.js";
 import { Markdown } from "./markdown.js";
+import { PromptUsage } from "./prompt-usage.js";
 import { contentOffset, scrollTarget } from "./transcript-navigation.js";
 import { type NavigatorMessage, TranscriptNavigator } from "./transcript-navigator.js";
 import { searchMatch, streamingBlocks, type ToolItem, transcriptRows } from "./transcript-projection.js";
@@ -254,6 +255,7 @@ export function Transcript({
                 }
                 sessionId={sessionId}
                 anchors={anchors}
+                detail={detail}
               />
             );
           })}
@@ -285,12 +287,14 @@ const MessageRow = memo(function MessageRow({
   highlighted,
   sessionId,
   anchors,
+  detail,
 }: {
   item: Extract<Item, { kind: "user" | "assistant" }>;
   match: boolean;
   highlighted: boolean;
   sessionId: string | undefined;
   anchors: Map<string, HTMLElement>;
+  detail: ChatDetail;
 }) {
   const { t } = useTranslation();
   const openDocument = useDocumentViewer();
@@ -330,6 +334,8 @@ const MessageRow = memo(function MessageRow({
             </span>
           )}
           <Markdown text={item.text} />
+          {/* Per-question statistics only at the Verbose detail level. */}
+          {detail === "verbose" && item.usage && <PromptUsage usage={item.usage} />}
         </>
       ) : (
         <>

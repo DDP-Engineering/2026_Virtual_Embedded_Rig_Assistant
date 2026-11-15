@@ -13,7 +13,6 @@ import i18n from "../../i18n.js";
 import { WorkbenchNavigation } from "../workbench-navigation.js";
 import { Composer } from "./composer.js";
 import { Markdown } from "./markdown.js";
-import { ActivityLog } from "./session-inspector.js";
 import { SessionList } from "./session-list.js";
 import { Transcript } from "./transcript.js";
 import { SessionWorkspace } from "./workspace.js";
@@ -1520,7 +1519,7 @@ test("session context details stay closed until requested and editor grows and s
   );
   expect(container.querySelector("[data-usage]")).toBeNull();
   expect(container.querySelector('[data-action="show-context"]')).toBeTruthy();
-  expect(container.querySelector('[data-action="show-activity"]')).toBeTruthy();
+  expect(container.querySelector('[data-action="show-activity"]')).toBeNull();
   expect(container.textContent).not.toContain("Export Markdown");
   const input = container.querySelector<HTMLTextAreaElement>("textarea") as HTMLTextAreaElement;
   Object.defineProperty(input, "scrollHeight", { configurable: true, get: () => (input.value ? 160 : 40) });
@@ -1534,43 +1533,6 @@ test("session context details stay closed until requested and editor grows and s
     container.querySelector<HTMLButtonElement>('[data-action="close-inspector"]')?.click(),
   );
   expect(container.querySelector("[data-usage]")).toBeNull();
-});
-
-test("agent activity projects real prompt/reply and tool arguments, updates and results", async () => {
-  let state = emptySessionState();
-  for (const event of [
-    { type: "message.user", messageId: "u", text: "Inspect board" },
-    { type: "tool.started", callId: "call", name: "read", args: { path: "board.txt" } },
-    { type: "message.done", messageId: "a", text: "Reply from VERA", citations: [] },
-  ] as import("@vera/shared").SessionEvent[])
-    state = applySessionEvent(state, event);
-  await mount(
-    createElement(ActivityLog, {
-      state,
-      reasoning: { a: "Visible provider reasoning" },
-      updates: { call: "Live result" },
-    }),
-  );
-  expect(container.querySelectorAll("[data-activity-kind]")).toHaveLength(3);
-  expect(container.textContent).not.toContain('"path": "board.txt"');
-  await expandAll();
-  expect(container.textContent).toContain("Inspect board");
-  expect(container.textContent).toContain('"path": "board.txt"');
-  expect(container.textContent).toContain("Live result");
-  expect(container.textContent).toContain("Reply from VERA");
-  expect(container.textContent).toContain("Visible provider reasoning");
-  state = applySessionEvent(state, {
-    type: "tool.done",
-    callId: "call",
-    ok: true,
-    preview: "Completed result",
-    summary: "Read completed",
-    durationMs: 5,
-  });
-  await act(async () => root.render(createElement(ActivityLog, { state, reasoning: {}, updates: {} })));
-  await expandAll();
-  expect(container.textContent).toContain("Completed result");
-  expect(container.textContent).not.toContain("Visible provider reasoning");
 });
 
 test("session ellipsis exports its own row and archives/restores without duplicate workspace actions", async () => {

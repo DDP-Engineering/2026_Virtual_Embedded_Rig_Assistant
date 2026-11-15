@@ -3258,3 +3258,32 @@ legend {
 .overview-session-link:focus-visible {
   text-decoration: underline;
 }
+/* Per-question usage under each question in the chat. */
+.prompt-usage {
+  display: flex;
+  flex-wrap: wrap;
+  margin: 0.35rem 0 0;
+  font-size: 0.8rem;
+  color: var(--muted-foreground);
+  font-variant-numeric: tabular-nums;
+}
+.prompt-usage span + span::before {
+  content: "·";
+  margin: 0 0.5rem;
+}
+/* Runs tab: one wrapping row of filters above the list. */
+.runs-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.75rem;
+  margin-bottom: 0.75rem;
+}
+.runs-filters label {
+  display: grid;
+  gap: 0.2rem;
+  font-size: 0.8rem;
+  color: var(--muted-foreground);
+}
+.runs-filters select {
+  max-width: 12rem;
+}

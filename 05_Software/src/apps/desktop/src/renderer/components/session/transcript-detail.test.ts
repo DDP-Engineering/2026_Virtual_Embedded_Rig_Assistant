@@ -9,7 +9,6 @@ import { createRoot, type Root } from "react-dom/client";
 import { afterEach, expect, it, vi } from "vitest";
 import { api } from "../../api/index.js";
 import i18n from "../../i18n.js";
-import { ActivityLog } from "./session-inspector.js";
 import { Transcript } from "./transcript.js";
 
 vi.mock("../../api/index.js", () => ({ api: { invoke: vi.fn().mockResolvedValue({}) } }));
@@ -103,7 +102,23 @@ it("normal groups consecutive same-turn tools without moving conversation, keybo
   expect(container.querySelector("[data-search-match=true]")).not.toBeNull();
   expect(container.querySelector(".reasoning")).toBeNull();
 });
-it("switches levels reversibly without mutating history and keeps complete Activity", async () => {
+it("shows per-question usage only at the verbose detail level", async () => {
+  const state = fixture();
+  state.items[0] = {
+    kind: "user",
+    id: "u",
+    text: "Question",
+    usage: { inputTokens: 7077, outputTokens: 435, contextTokens: 20, contextWindow: 1000, estimated: true },
+  };
+  for (const detail of ["minimal", "normal"] as const) {
+    await render(state, detail);
+    expect(container.querySelector("[data-prompt-usage]")).toBeNull();
+  }
+  await render(state, "verbose");
+  expect(container.querySelectorAll("[data-prompt-usage]")).toHaveLength(1);
+  expect(container.querySelector("[data-prompt-usage]")?.textContent).toContain("7,077");
+});
+it("switches levels reversibly without mutating history", async () => {
   const state = fixture(),
     before = JSON.stringify(state);
   await render(state, "minimal");
@@ -115,14 +130,6 @@ it("switches levels reversibly without mutating history and keeps complete Activ
   expect(container.querySelector(".reasoning")).not.toBeNull();
   await render(state, "normal");
   expect(container.querySelectorAll("[data-tool-group]")).toHaveLength(2);
-  await act(async () =>
-    root.render(createElement(ActivityLog, { state, reasoning: { turn1: "Live reasoning" }, updates: {} })),
-  );
-  expect(container.querySelectorAll('[data-activity-kind="tool"]')).toHaveLength(3);
-  // Disclosure content mounts only when opened (PERF-03).
-  for (const toggle of container.querySelectorAll<HTMLButtonElement>(".disclosure-toggle"))
-    await act(async () => toggle.click());
-  expect(container.textContent).toContain("Live reasoning");
   expect(JSON.stringify(state)).toBe(before);
 });
 it.each(["minimal", "normal", "verbose"] as const)(

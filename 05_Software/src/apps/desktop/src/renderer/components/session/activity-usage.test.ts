@@ -5,7 +5,7 @@ import { act, createElement } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, expect, it, vi } from "vitest";
 import i18n from "../../i18n.js";
-import { ActivityLog } from "./session-inspector.js";
+import { PromptUsage } from "./prompt-usage.js";
 
 vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
 let root: Root;
@@ -48,7 +48,17 @@ it.each([
     container = document.createElement("div");
     document.body.append(container);
     root = createRoot(container);
-    await act(async () => root.render(createElement(ActivityLog, { state, reasoning: {}, updates: {} })));
+    // Each question shows its own usage line in the chat (one PromptUsage per user item).
+    const users = state.items.filter((item) => item.kind === "user");
+    await act(async () =>
+      root.render(
+        createElement(
+          "div",
+          null,
+          users.map((item) => createElement(PromptUsage, { key: item.id, usage: item.usage })),
+        ),
+      ),
+    );
     const lines = [...container.querySelectorAll<HTMLElement>("[data-prompt-usage]")];
     expect(lines).toHaveLength(3);
     for (const label of [input, output, context]) expect(lines[0]?.textContent).toContain(label);
