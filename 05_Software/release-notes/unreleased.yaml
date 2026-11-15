@@ -2,6 +2,13 @@ version: Unreleased
 date: null
 entries:
   - category: new
+    topic: { en: Plugins, ro: Pluginuri, de: Plugins, fr: Plugins }
+    text:
+      en: Six electrical plugins for networks, cables, protection, motors, power quality and lighting.
+      ro: Șase pluginuri electrice pentru rețele, cabluri, protecții, motoare, calitatea energiei și iluminat.
+      de: Sechs Elektro-Plugins für Netze, Kabel, Schutz, Motoren, Netzqualität und Beleuchtung.
+      fr: Six plugins électriques pour réseaux, câbles, protections, moteurs, qualité d’énergie et éclairage.
+  - category: new
     topic: { en: Workbench, ro: Workbench, de: Workbench, fr: Workbench }
     text:
       en: The workbench overview shows how much space each session takes.

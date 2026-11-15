@@ -9,6 +9,13 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 ### Added
 
 - Session sizes in the workbench overview's sessions table.
+- Electrical project model with units, provenance and stale results, shared by the electrical plugins.
+- electrical-network 0.1.0: radial LV load balance, cable sizing, voltage drop and short circuit.
+- industrial-catalog 0.1.0: cited catalog items and documented component selection.
+- protection-coordination 0.1.0: breaking capacity, disconnection times and table-based selectivity.
+- motor-drives 0.1.0: motor starter and drive selection.
+- power-quality-pfc 0.1.0: measurement import, compensation need, bank steps and resonance check.
+- lighting-design 0.1.0: preliminary estimate, IES/LDT import and DIALux report check.
 
 ### Changed
 
