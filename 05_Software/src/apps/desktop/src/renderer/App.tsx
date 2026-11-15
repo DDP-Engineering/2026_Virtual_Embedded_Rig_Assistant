@@ -645,6 +645,12 @@ export function App() {
                         }
                       : undefined
                   }
+                  openWorkbench={() => {
+                    // Plugins are enabled in the workbench editor; with no workbench open, open one first.
+                    if (!activeWorkbench) return openWorkbench();
+                    setPlugins(false);
+                    if (!editor) openEditor(activeWorkbench);
+                  }}
                 />
               )}
             </div>

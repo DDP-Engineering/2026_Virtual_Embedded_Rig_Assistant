@@ -330,7 +330,9 @@ it("keeps unavailable program observations distinct from missing configuration",
       "unavailable",
     ),
   );
-  expect($('[data-plugin="plugin-00"]').textContent).toContain("Unavailable / error");
+  const dependencies = $('[data-plugin="plugin-00"] [data-status-check="dependencies"]');
+  expect(dependencies.getAttribute("data-state")).toBe("unavailable");
+  expect(dependencies.textContent).toContain(i18n.t("plugins.status.unavailableNames", { names: "tool" }));
   expect($('[data-plugin="plugin-01"] [data-readiness]').getAttribute("data-readiness")).toBe("needs");
   await click('[data-library-status="needs"]');
   expect(host.querySelectorAll("[data-plugin]")).toHaveLength(1);

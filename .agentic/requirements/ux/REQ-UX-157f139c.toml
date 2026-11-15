@@ -1,0 +1,25 @@
+schema = 1
+
+id = "REQ-UX-157f139c"
+
+title = "Dependencies check states on the status block"
+
+status = "active"
+
+requirement = """
+The Dependencies check shall be unavailable when the check failed or a program is unavailable, missing when a required plugin is not installed or a program VERA installs is missing (naming them), external when only vendor-managed programs are missing (naming them), not checked before the first check, and ready otherwise.
+"""
+
+verification = "Renderer unit test of dependencyCheck over failed, unavailable, missing required plugin, missing pip program, missing find program, no observation and all-ready inputs; page test: a missing find program shows external with its name and the vendor guide stays available."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/plugin-status.tsx"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/plugin-status.test.ts", "05_Software/src/apps/desktop/src/renderer/components/plugins.test.ts", "05_Software/src/apps/desktop/src/renderer/components/plugin-library.test.ts"]
+
+spec = ""
+
+priority = "normal"
+rationale = ""
+
+created = 2026-11-15
+updated = 2026-11-15

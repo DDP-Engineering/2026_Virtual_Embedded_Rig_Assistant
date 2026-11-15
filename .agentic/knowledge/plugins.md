@@ -186,7 +186,7 @@ filter changes reset and loaded snapshot mutations clamp pages after catalog met
 QueryClient lifetime retains global filter/tab/page state after long navigation and result-cache expiry,
 independently from workbench draft state. Local/trial/scoped entries never borrow catalog tier or
 publication metadata from id matches. Global folder/ZIP/trial imports retain catalog update
-filter/action when the catalog installed version agrees; same-id scoped records never do. Pack data remains; pack checkboxes and global activation are absent.
+filter/action when the catalog installed version agrees; same-id scoped records never do. Packs are installed through Install a pack (below); global activation stays absent.
 Browsing/expansion uses disabled observers only, avoiding `plugins.programs` cache-miss probes.
 Explicit Check/provision observations and failures update row/readiness filters. A rejected check
 cannot show stale Ready; unknown, needs configuration and unavailable remain distinct. Check-all
@@ -245,9 +245,24 @@ references (supplier ids for parts) or missing, present/missing/invalid with the
 from the two `PluginCredentialService`s and configured supplier keys from `PartsAccessService.get()`; a workbench id
 that is not the open one is CONFLICT. `configurationNeeds` (missing secret, missing non-optional file, invalid file)
 feeds `programReadiness` (Needs configuration unless a program is unavailable, also before programs are checked) and
-the card's "Needs configuration: <names>". `renderer/components/plugin-configuration.tsx` lists each parameter with
+the status block's Configuration check "Needs configuration: <names>". `renderer/components/plugin-configuration.tsx` lists each parameter with
 its state and embeds `PluginCredentialsPanel` (mqtt, wokwi) or `PartsAccessPanel` (parts); both forms invalidate
 `["plugin-configuration"]` after a change, and Check again re-asks for workbench files.
+
+Status block and packs (REQ-UX-492e89fb, REQ-UX-157f139c, REQ-UX-50e2dc6b, REQ-UX-5d984350, REQ-FUNC-0817ec80,
+REQ-UX-21440e02, REQ-REL-baf16878): `renderer/components/plugin-status.tsx` renders one block per healthy installed
+card with Dependencies (`dependencyCheck`: unavailable, missing required plugins or VERA-installed programs, external
+vendor programs, not checked, ready; holds Check, Install and Re-install), Configuration (`configurationCheck`; Configure
+expands the card on its Configuration section) and Use (enabled in the open workbench only, since `plugins.list`
+reports `enabled` for it; Open workbench comes from App: the open workbench's editor, or the folder chooser). The block
+shows Ready only when all three are ready and otherwise names the others; it keeps `data-readiness` (`programReadiness`)
+for the library filter. `renderer/components/plugin-packs.tsx`: Install a pack lists the index packs with their default
+groups checked; `packPlan` orders the checked groups' plugins after their required catalog plugins (`installOrder`),
+leaves out plugins of another platform, missing from the catalog or requiring a left-out plugin, and lists installed
+ones. Its one review is built from the index entries (risk, dependencies) because core keeps only the latest reviewed
+zip; Install then runs `plugins.catalogReview` and `plugins.catalogInstall` per plugin without the single review
+screen and provisions each. A failure stops the run, shows that plugin's error in the install results and still
+provisions the plugins installed before it.
 
 SSH agent socket (REQ-SEC-adb91424): a program of an official plugin that declares `sshAgent: true` gets
 `RunRequest.inherit: ["SSH_AUTH_SOCK"]`, so the runner copies the host's SSH_AUTH_SOCK (when set) into that run's

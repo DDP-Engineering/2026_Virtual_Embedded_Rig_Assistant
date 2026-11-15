@@ -967,7 +967,6 @@
     "checking": "Wird geprüft…",
     "notChecked": "Abhängigkeiten ungeprüft",
     "dependencySummary": "{{ready}}/{{total}} bereit",
-    "dependenciesNeedAttention": "Abhängigkeiten erfordern Aufmerksamkeit. Für Details aufklappen.",
     "installDependencies": "Abhängigkeiten installieren",
     "installed": "Installiert",
     "checkFirst": "Zuerst Abhängigkeiten prüfen.",
@@ -1075,6 +1074,50 @@
       "noWorkbench": "Öffnen Sie eine Workbench, um ihre Dateien zu prüfen.",
       "needs": "Konfiguration erforderlich: {{names}}",
       "suppliers": "Schlüssel gespeichert für: {{names}}"
+    },
+    "status": {
+      "title": "Status",
+      "ready": "Bereit",
+      "notReady": "Nicht bereit: {{checks}}",
+      "dependencies": "Abhängigkeiten",
+      "configuration": "Konfiguration",
+      "use": "Verwendung",
+      "missingNames": "Fehlt: {{names}}",
+      "externalNames": "Beim Hersteller installieren: {{names}}",
+      "unavailableNames": "Nicht verfügbar: {{names}}",
+      "configured": "Konfiguriert",
+      "nothingToConfigure": "Nichts zu konfigurieren",
+      "configurationFailed": "Die Konfiguration konnte nicht geprüft werden.",
+      "configure": "Konfigurieren",
+      "enabledIn": "Aktiviert in {{name}}",
+      "notEnabledIn": "Nicht aktiviert in {{name}}",
+      "noWorkbench": "Keine Workbench ist geöffnet.",
+      "openWorkbench": "Workbench öffnen",
+      "state": {
+        "ready": "Bereit",
+        "missing": "Fehlt",
+        "unavailable": "Nicht verfügbar",
+        "external": "Extern",
+        "unchecked": "Nicht geprüft",
+        "off": "Nicht aktiviert"
+      }
+    },
+    "packs": {
+      "open": "Paket installieren",
+      "title": "Paket installieren",
+      "intro": "Ein Paket fasst die Plugins eines Ökosystems zusammen. Wähle die benötigten Gruppen; der nächste Schritt zeigt eine einzige Prüfung von allem, was installiert wird.",
+      "pack": "Paket",
+      "groups": "Gruppen",
+      "review": "Paket prüfen",
+      "reviewTitle": "Paket {{name}} prüfen",
+      "reviewIntro": "Jedes Plugin unten wird heruntergeladen, mit dem Katalog abgeglichen und mit seinen Programmen installiert.",
+      "requiredBy": "benötigt von {{name}}",
+      "nothing": "Alle Plugins dieser Gruppen sind installiert oder ausgelassen.",
+      "skipped": "Nicht installiert",
+      "skippedRequires": "Benötigt {{id}}, das ausgelassen wird.",
+      "skippedCatalog": "Nicht in diesem Katalog.",
+      "alreadyInstalled": "Bereits installiert: {{names}}",
+      "install": "Mit Abhängigkeiten installieren ({{count}})"
     }
   },
   "runs": {

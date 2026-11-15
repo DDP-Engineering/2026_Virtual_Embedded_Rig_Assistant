@@ -967,7 +967,6 @@
     "checking": "Se verifică…",
     "notChecked": "Dependențe neverificate",
     "dependencySummary": "{{ready}}/{{total}} pregătite",
-    "dependenciesNeedAttention": "Dependențele necesită atenție. Extinde pentru detalii.",
     "installDependencies": "Instalează dependențele",
     "installed": "Instalat",
     "checkFirst": "Verifică mai întâi dependențele.",
@@ -1075,6 +1074,50 @@
       "noWorkbench": "Deschide un workbench pentru a-i verifica fișierele.",
       "needs": "Necesită configurare: {{names}}",
       "suppliers": "Chei stocate pentru: {{names}}"
+    },
+    "status": {
+      "title": "Stare",
+      "ready": "Gata",
+      "notReady": "Nu este gata: {{checks}}",
+      "dependencies": "Dependențe",
+      "configuration": "Configurare",
+      "use": "Utilizare",
+      "missingNames": "Lipsesc: {{names}}",
+      "externalNames": "Instalează de la producător: {{names}}",
+      "unavailableNames": "Indisponibile: {{names}}",
+      "configured": "Configurat",
+      "nothingToConfigure": "Nimic de configurat",
+      "configurationFailed": "Configurarea nu a putut fi verificată.",
+      "configure": "Configurează",
+      "enabledIn": "Activat în {{name}}",
+      "notEnabledIn": "Neactivat în {{name}}",
+      "noWorkbench": "Niciun workbench nu este deschis.",
+      "openWorkbench": "Deschide workbench-ul",
+      "state": {
+        "ready": "Gata",
+        "missing": "Lipsește",
+        "unavailable": "Indisponibil",
+        "external": "Extern",
+        "unchecked": "Neverificat",
+        "off": "Neactivat"
+      }
+    },
+    "packs": {
+      "open": "Instalează un pachet",
+      "title": "Instalează un pachet",
+      "intro": "Un pachet grupează pluginurile unui ecosistem. Alege grupurile de care ai nevoie; pasul următor arată o singură revizuire a tot ce instalează.",
+      "pack": "Pachet",
+      "groups": "Grupuri",
+      "review": "Revizuiește pachetul",
+      "reviewTitle": "Revizuiește pachetul {{name}}",
+      "reviewIntro": "Fiecare plugin de mai jos este descărcat, verificat față de catalog și instalat împreună cu programele sale.",
+      "requiredBy": "necesar pentru {{name}}",
+      "nothing": "Toate pluginurile acestor grupuri sunt instalate sau lăsate deoparte.",
+      "skipped": "Nu se instalează",
+      "skippedRequires": "Necesită {{id}}, care este lăsat deoparte.",
+      "skippedCatalog": "Nu există în acest catalog.",
+      "alreadyInstalled": "Deja instalate: {{names}}",
+      "install": "Instalează cu dependențele ({{count}})"
     }
   },
   "runs": {

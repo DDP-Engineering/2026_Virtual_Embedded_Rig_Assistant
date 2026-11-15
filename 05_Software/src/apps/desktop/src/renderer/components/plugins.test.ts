@@ -836,3 +836,98 @@ it("shows an invalid workbench file with its problem, a read-only value and noth
     container.remove();
   }
 });
+
+/** Adds program checks to another stub: every program of `id` reports `statuses`. */
+function withPrograms(statuses: PluginProgramStatus[]) {
+  const invoke = vi.mocked(api.invoke).getMockImplementation();
+  vi.mocked(api.invoke).mockImplementation(((channel: string, request: unknown) => {
+    if (channel === "plugins.check" || channel === "plugins.programs") return Promise.resolve(statuses);
+    return invoke?.(channel as never, request as never);
+  }) as never);
+}
+const check = (card: string, name: string) => $(`${card} [data-status-check="${name}"]`);
+
+// REQ-UX-492e89fb, REQ-UX-50e2dc6b, REQ-UX-05e0ed17
+it.each(["en", "ro", "de"])(
+  "shows Dependencies ready, Configuration missing by name and the workbench for mqtt-tools (%s)",
+  async (language) => {
+    await i18n.changeLanguage(language);
+    configurationStub([{ ...mqtt, enabled: true }]);
+    withPrograms([{ name: "mqtt", kind: "pip", state: "ready", version: "2.1.0" }]);
+    const openWorkbench = vi.fn();
+    await render({ workbench, openWorkbench });
+    const card = '[data-plugin="mqtt-tools"]';
+    await click(`${card} [data-action="plugin-check"]`);
+    await vi.waitFor(() => expect(check(card, "dependencies").getAttribute("data-state")).toBe("ready"));
+    await vi.waitFor(() => expect(check(card, "configuration").getAttribute("data-state")).toBe("missing"));
+    expect(check(card, "configuration").textContent).toContain("broker-credential");
+    expect(check(card, "use").getAttribute("data-state")).toBe("ready");
+    expect(check(card, "use").textContent).toContain(i18n.t("plugins.status.enabledIn", { name: "Board" }));
+    const block = $(`${card} [data-plugin-status]`);
+    expect(block.getAttribute("data-plugin-status")).toBe("attention");
+    expect(block.querySelector("[data-status-summary]")?.textContent).toBe(
+      i18n.t("plugins.status.notReady", { checks: i18n.t("plugins.status.configuration") }),
+    );
+    // Configure opens the card on its Configuration section.
+    await click(`${card} [data-action="status-configure"]`);
+    expect($(`${card} [data-plugin-configuration]`)).not.toBeNull();
+    await click(`${card} [data-action="status-open-workbench"]`);
+    expect(openWorkbench).toHaveBeenCalledTimes(1);
+    await act(async () => root.unmount());
+    container.remove();
+  },
+);
+
+// REQ-UX-492e89fb, REQ-UX-50e2dc6b
+it("is Ready only with ready programs, nothing to configure and use in the open workbench", async () => {
+  await i18n.changeLanguage("en");
+  stub({
+    installed: [{ ...echo, enabled: true }],
+    programs: [{ name: "echo", kind: "find", state: "ready" }],
+  });
+  await render();
+  const card = '[data-plugin="echo-tools"]';
+  expect($(`${card} [data-plugin-status]`).getAttribute("data-plugin-status")).toBe("attention");
+  expect(check(card, "dependencies").getAttribute("data-state")).toBe("unchecked");
+  expect(check(card, "configuration").getAttribute("data-state")).toBe("ready");
+  expect(check(card, "configuration").textContent).toContain(i18n.t("plugins.status.nothingToConfigure"));
+  expect($(`${card} [data-action="status-configure"]`)).toBeNull();
+  await click(`${card} [data-action="plugin-check"]`);
+  await vi.waitFor(() =>
+    expect($(`${card} [data-plugin-status]`).getAttribute("data-plugin-status")).toBe("ready"),
+  );
+  expect($(`${card} [data-status-summary]`).textContent).toBe(i18n.t("plugins.status.ready"));
+  await act(async () => root.unmount());
+  container.remove();
+  // Not enabled in the open workbench, then no workbench open at all.
+  stub({ installed: [echo], programs: [{ name: "echo", kind: "find", state: "ready" }] });
+  await render();
+  expect(check(card, "use").getAttribute("data-state")).toBe("missing");
+  expect(check(card, "use").textContent).toContain(i18n.t("plugins.status.notEnabledIn", { name: "Board" }));
+  await act(async () => root.unmount());
+  container.remove();
+  const openWorkbench = vi.fn();
+  await render({ workbench: undefined, openWorkbench });
+  expect(check(card, "use").textContent).toContain(i18n.t("plugins.status.noWorkbench"));
+  await click(`${card} [data-action="status-open-workbench"]`);
+  expect(openWorkbench).toHaveBeenCalledTimes(1);
+});
+
+// REQ-UX-157f139c
+it("names a missing vendor program as external and keeps its guide", async () => {
+  await i18n.changeLanguage("en");
+  stub({
+    installed: [echo],
+    programs: [{ name: "echo", kind: "find", state: "missing", hint: "Install Node.js." }],
+  });
+  await render();
+  const card = '[data-plugin="echo-tools"]';
+  await click(`${card} [data-action="plugin-check"]`);
+  await vi.waitFor(() => expect(check(card, "dependencies").getAttribute("data-state")).toBe("external"));
+  expect(check(card, "dependencies").textContent).toContain(
+    i18n.t("plugins.status.externalNames", { names: "echo" }),
+  );
+  expect(($(`${card} [data-action="plugin-provision"]`) as HTMLButtonElement).disabled).toBe(true);
+  await click(`${card} [data-action="plugin-expand"]`);
+  expect($(`${card} [data-program="echo"]`).textContent).toContain("Install Node.js.");
+});

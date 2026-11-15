@@ -2655,9 +2655,32 @@ legend {
   background: transparent;
   min-width: 0;
 }
-.plugin-dependency-summary {
+.plugin-status ul {
+  list-style: none;
+  margin: 0.25rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 0.25rem;
+}
+.plugin-status li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+.plugin-status li > strong {
+  min-width: 8rem;
+}
+.plugin-status li > .workbench-actions {
   margin-inline-start: auto;
-  color: var(--muted-foreground);
+}
+.plugin-status [data-status-summary] {
+  margin: 0;
+  font-weight: 600;
+}
+.plugin-pack-group {
+  display: block;
 }
 .plugin-actions {
   margin-top: 0.25rem;

@@ -15,7 +15,7 @@ branch `feature/261-plugin-management` cut from `master` at 920457e, in the sibl
 `F:\2026_Virtual_Embedded_Rig_Assistant_plg`. The implementer hands the candidate back without a commit;
 the coordinator checks the evidence and makes one local commit per ticket. Nothing is pushed. Each ticket
 runs only its focused tests; the complete suite runs once after PLG-08.
-STATE: PLG-01 implemented 2026-11-15 (AEGIS TASK-1cebbbdd); PLG-02 implemented 2026-11-15 (AEGIS TASK-e937e9e6); PLG-03 implemented 2026-11-15 (AEGIS TASK-f1dfd67e); PLG-04 implemented 2026-11-15 (AEGIS TASK-f84206e4); PLG-05 implemented 2026-11-15 (AEGIS TASK-41f54714); PLG-06...PLG-08 planned.
+STATE: PLG-01 implemented 2026-11-15 (AEGIS TASK-1cebbbdd); PLG-02 implemented 2026-11-15 (AEGIS TASK-e937e9e6); PLG-03 implemented 2026-11-15 (AEGIS TASK-f1dfd67e); PLG-04 implemented 2026-11-15 (AEGIS TASK-f84206e4); PLG-05 implemented 2026-11-15 (AEGIS TASK-41f54714); PLG-06 implemented 2026-11-15 (AEGIS TASK-d4d70d39); PLG-07...PLG-08 planned.
 
 ## Order
 
@@ -26,7 +26,7 @@ STATE: PLG-01 implemented 2026-11-15 (AEGIS TASK-1cebbbdd); PLG-02 implemented 2
 | 3 | PLG-03 | [#264](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/264) | composition (programs, scripts, skills, profiles, documents) and operations by risk on the plugin page | implemented |
 | 4 | PLG-04 | [#265](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/265) | dependency summary in the catalog index; install with dependencies (required plugins too); re-install | implemented |
 | 5 | PLG-05 | [#266](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/266) | manifest `settings`; Parts search, MQTT and Wokwi move from App settings to their plugins; configured state | implemented |
-| 6 | PLG-06 | [#267](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/267) | one status block (dependencies, configuration, use) and pack install from the catalog | planned |
+| 6 | PLG-06 | [#267](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/267) | one status block (dependencies, configuration, use) and pack install from the catalog | implemented |
 | 7 | PLG-07 | [#268](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/268) | catalog release from `07_Delivery/plugins/`, signed index, stable and pre-release channels | planned |
 | 8 | PLG-08 | [#269](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/269) | offline kit per platform of pinned pip and download dependencies | planned |
 
@@ -107,6 +107,16 @@ power-profiler and raspberry-pi-linux (required `lab/resources.json`), gdb-debug
 page's Configuration section shows each state for the open workbench and holds the MQTT credentials, Wokwi tokens and
 parts search forms; App settings has no such pages. A missing secret or a missing required or invalid file marks the
 plugin Needs configuration and names the parameter.
+
+## PLG-06 #267 - status block and pack install
+
+Each installed plugin card shows one status block: Dependencies (ready, missing, unavailable, external, not checked;
+Check, Install, Re-install), Configuration (Configure opens the Configuration section) and Use (enabled in the open
+workbench; Open workbench opens its editor, or the folder chooser when none is open). It says Ready only when all three
+are ready and otherwise names the rest; it replaces the header summary and the attention line. Install a pack picks a
+pack and its groups (defaults from the index), shows one review of every plugin with its dependencies and risk, lists
+what is left out (another platform, not in the catalog, requires a left-out plugin), then installs and provisions each
+plugin without a per-plugin review screen. Only the open workbench's enablement is shown.
 
 ## Shared rules
 

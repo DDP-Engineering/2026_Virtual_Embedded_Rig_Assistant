@@ -967,7 +967,6 @@
     "checking": "Checking…",
     "notChecked": "Dependencies not checked",
     "dependencySummary": "{{ready}}/{{total}} ready",
-    "dependenciesNeedAttention": "Dependencies need attention. Expand for details.",
     "installDependencies": "Install dependencies",
     "installed": "Installed",
     "checkFirst": "Check dependencies first.",
@@ -1075,6 +1074,50 @@
       "noWorkbench": "Open a workbench to check its files.",
       "needs": "Needs configuration: {{names}}",
       "suppliers": "Keys stored for: {{names}}"
+    },
+    "status": {
+      "title": "Status",
+      "ready": "Ready",
+      "notReady": "Not ready: {{checks}}",
+      "dependencies": "Dependencies",
+      "configuration": "Configuration",
+      "use": "Use",
+      "missingNames": "Missing: {{names}}",
+      "externalNames": "Install from the vendor: {{names}}",
+      "unavailableNames": "Unavailable: {{names}}",
+      "configured": "Configured",
+      "nothingToConfigure": "Nothing to configure",
+      "configurationFailed": "The configuration could not be checked.",
+      "configure": "Configure",
+      "enabledIn": "Enabled in {{name}}",
+      "notEnabledIn": "Not enabled in {{name}}",
+      "noWorkbench": "No workbench is open.",
+      "openWorkbench": "Open workbench",
+      "state": {
+        "ready": "Ready",
+        "missing": "Missing",
+        "unavailable": "Unavailable",
+        "external": "External",
+        "unchecked": "Not checked",
+        "off": "Not enabled"
+      }
+    },
+    "packs": {
+      "open": "Install a pack",
+      "title": "Install a pack",
+      "intro": "A pack groups the plugins of one ecosystem. Choose the groups you need; the next step shows one review of everything it installs.",
+      "pack": "Pack",
+      "groups": "Groups",
+      "review": "Review pack",
+      "reviewTitle": "Review the {{name}} pack",
+      "reviewIntro": "Each plugin below is downloaded, checked against the catalog and installed with its programs.",
+      "requiredBy": "required by {{name}}",
+      "nothing": "Every plugin of these groups is installed or left out.",
+      "skipped": "Not installed",
+      "skippedRequires": "Requires {{id}}, which is left out.",
+      "skippedCatalog": "Not in this catalog.",
+      "alreadyInstalled": "Already installed: {{names}}",
+      "install": "Install with dependencies ({{count}})"
     }
   },
   "runs": {

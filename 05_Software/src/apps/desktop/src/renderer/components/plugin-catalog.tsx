@@ -267,7 +267,7 @@ export function CatalogUpdateCheck() {
   );
 }
 
-/** Source settings stay above the library; pack definitions are not selection UI. */
+/** Source settings stay above the library; packs are installed through Install a pack (plugin-packs.tsx). */
 export function CatalogSettings({ catalog }: { catalog: UseQueryResult<PluginCatalogView> }) {
   const { t } = useTranslation();
   const client = useQueryClient();

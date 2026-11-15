@@ -1,5 +1,6 @@
 import { useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
 import type {
+  CatalogPack,
   CatalogPlugin,
   PluginCatalogReview,
   PluginIssue,
@@ -44,6 +45,8 @@ import {
   PluginLibraryPagination,
   pluginActivityLabels,
 } from "./plugin-library-controls.js";
+import { PackChooser, type PackPlan, PackReview, packPlan } from "./plugin-packs.js";
+import { configurationCheck, dependencyCheck, PluginStatus } from "./plugin-status.js";
 
 /** One plugin of Install with dependencies: its program statuses once installed, or the failure. */
 interface InstallResult {
@@ -306,8 +309,11 @@ function PluginCard({
   discovery,
   installedIds,
   configuration,
+  openWorkbench,
 }: {
   plugin: PluginSummary;
+  /** Opens the open workbench's editor, or the folder chooser when none is open. */
+  openWorkbench?: (() => void) | undefined;
   /** The declared parameters' states, when the manifest declares any. */
   configuration?: ConfigurationView | undefined;
   /** The ids of the installed plugins, for the plugins this one requires. */
@@ -323,6 +329,14 @@ function PluginCard({
   const labels = useLabels(),
     client = useQueryClient();
   const [expanded, setExpanded] = useState(false);
+  const [configure, setConfigure] = useState(false);
+  const configurationRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!configure || !expanded) return;
+    setConfigure(false);
+    configurationRef.current?.focus();
+    configurationRef.current?.scrollIntoView?.({ block: "nearest" });
+  }, [configure, expanded]);
   const [busy, setBusy] = useState<
     "check" | "provision" | "reinstall" | "archive" | "uninstall" | "promote" | "export"
   >();
@@ -448,20 +462,6 @@ function PluginCard({
             {labels.tier[plugin.tier]}
           </span>
         )}
-        {healthy && (
-          <span
-            className="plugin-dependency-summary"
-            role="status"
-            data-dependency-summary
-            data-ready={allReady}
-            data-readiness={readiness}
-          >
-            {readiness === "unavailable" && `${t("plugins.library.readinessUnavailable")} · `}
-            {readiness === "needs" &&
-              `${needs.length ? t("plugins.configuration.needs", { names: needs.join(", ") }) : t("plugins.library.needsConfiguration")} · `}
-            {summary}
-          </span>
-        )}
       </div>
       {plugin.description && <p className="plugin-row-description">{plugin.description}</p>}
       {!healthy && (
@@ -475,52 +475,69 @@ function PluginCard({
           {t("plugins.catalog.updateAvailable", { version: update.entry.version })}
         </p>
       )}
-      {healthy && programs.data?.some((status) => status.state !== "ready") && !expanded && (
-        <p className="plugin-problem">{t("plugins.dependenciesNeedAttention")}</p>
+      {healthy && (
+        <PluginStatus
+          readiness={readiness}
+          programs={summary}
+          dependencies={dependencyCheck(
+            programs.data,
+            programs.isError,
+            (plugin.manifest?.requires ?? []).filter((id) => !installedIds.has(id)),
+          )}
+          configuration={configurationCheck(settings, configuration)}
+          declared={Boolean(settings && Object.keys(settings).length)}
+          configure={() => {
+            setExpanded(true);
+            setConfigure(true);
+          }}
+          enabled={plugin.enabled}
+          workbench={workbench?.name}
+          openWorkbench={openWorkbench}
+          dependencyActions={
+            <>
+              <button
+                type="button"
+                data-action="plugin-check"
+                disabled={working}
+                onClick={() => void dependencyAction("check")}
+              >
+                {checking || busy === "check" ? t("plugins.checking") : t("plugins.checkDependencies")}
+              </button>
+              <button
+                type="button"
+                data-action="plugin-provision"
+                disabled={working || !installable}
+                title={
+                  !programs.data
+                    ? t("plugins.checkFirst")
+                    : !installable && !allReady
+                      ? t("plugins.externalManaged")
+                      : undefined
+                }
+                onClick={() => void dependencyAction("provision")}
+              >
+                {busy === "provision"
+                  ? t("plugins.installingPrograms")
+                  : allReady && !installable
+                    ? t("plugins.installed")
+                    : t("plugins.installDependencies")}
+              </button>
+              <button
+                type="button"
+                data-action="plugin-reinstall"
+                disabled={working || !reinstallable}
+                title={!programs.data ? t("plugins.checkFirst") : t("plugins.reinstallHint")}
+                onClick={() => void dependencyAction("reinstall")}
+              >
+                {busy === "reinstall" ? t("plugins.reinstalling") : t("plugins.reinstall")}
+              </button>
+            </>
+          }
+        />
       )}
       {programs.isError && <ErrorMessage error={programs.error} />}
       {error !== undefined && <ErrorMessage error={error} />}
       <div className="plugin-actions">
-        {healthy && (
-          <>
-            <button
-              type="button"
-              data-action="plugin-check"
-              disabled={working}
-              onClick={() => void dependencyAction("check")}
-            >
-              {checking || busy === "check" ? t("plugins.checking") : t("plugins.checkDependencies")}
-            </button>
-            <button
-              type="button"
-              data-action="plugin-provision"
-              disabled={working || !installable}
-              title={
-                !programs.data
-                  ? t("plugins.checkFirst")
-                  : !installable && !allReady
-                    ? t("plugins.externalManaged")
-                    : undefined
-              }
-              onClick={() => void dependencyAction("provision")}
-            >
-              {busy === "provision"
-                ? t("plugins.installingPrograms")
-                : allReady && !installable
-                  ? t("plugins.installed")
-                  : t("plugins.installDependencies")}
-            </button>
-            <button
-              type="button"
-              data-action="plugin-reinstall"
-              disabled={working || !reinstallable}
-              title={!programs.data ? t("plugins.checkFirst") : t("plugins.reinstallHint")}
-              onClick={() => void dependencyAction("reinstall")}
-            >
-              {busy === "reinstall" ? t("plugins.reinstalling") : t("plugins.reinstall")}
-            </button>
-          </>
-        )}
         {plugin.source === "workbench" && workbench && (
           <button type="button" data-action="plugin-scoped-review" disabled={working} onClick={reviewScoped}>
             {t("plugins.reviewScoped")}
@@ -612,11 +629,13 @@ function PluginCard({
           )}
           {checkedAt && <p className="muted">{t("plugins.lastChecked", { time: checkedAt })}</p>}
           {settings && configuration && Object.keys(settings).length > 0 && (
-            <PluginConfiguration
-              settings={settings}
-              view={configuration}
-              workbench={workbench !== undefined}
-            />
+            <div ref={configurationRef} tabIndex={-1}>
+              <PluginConfiguration
+                settings={settings}
+                view={configuration}
+                workbench={workbench !== undefined}
+              />
+            </div>
           )}
           {healthy && plugin.manifest && (
             <PluginContents manifest={plugin.manifest} composition={plugin.composition} />
@@ -631,7 +650,14 @@ function PluginCard({
  * Global discovery and package management, with explicit dependency setup and reviewed imports.
  * Workbench activation belongs to the separate workbench settings draft.
  */
-export function Plugins({ workbench }: { workbench?: PluginsWorkbench | undefined }) {
+export function Plugins({
+  workbench,
+  openWorkbench,
+}: {
+  workbench?: PluginsWorkbench | undefined;
+  /** The Use check's Open workbench: the open workbench's editor, or the folder chooser when none is open. */
+  openWorkbench?: (() => void) | undefined;
+}) {
   const { t, i18n } = useTranslation();
   const client = useQueryClient();
   const [library, setLibrary] = useState<LibraryState>(() => {
@@ -655,8 +681,18 @@ export function Plugins({ workbench }: { workbench?: PluginsWorkbench | undefine
   }>();
   /** Required catalog plugins still to review after the one on screen. */
   const [queue, setQueue] = useState<string[]>([]);
-  /** The catalog install in progress: the plugins it installed and whether their programs follow. */
-  const run = useRef<{ programs: boolean; installed: string[] }>(undefined);
+  /**
+   * The catalog install in progress: the plugins it installed, whether their programs follow, whether one pack review
+   * already covered every plugin (no review screen per plugin) and the plugin that failed.
+   */
+  const run = useRef<{
+    programs: boolean;
+    installed: string[];
+    reviewed: boolean;
+    failed?: { id: string; error: unknown };
+  }>(undefined);
+  /** Install a pack: choosing the pack and its groups, then its one review. */
+  const [pack, setPack] = useState<{ review?: { pack: CatalogPack; plan: PackPlan } }>();
   /** Install with dependencies: each installed plugin's program statuses, or why they are unknown. */
   const [installResults, setInstallResults] = useState<InstallResult[]>();
   const [busy, setBusy] = useState(false);
@@ -727,7 +763,8 @@ export function Plugins({ workbench }: { workbench?: PluginsWorkbench | undefine
   /**
    * Reviews catalog plugins one after another: a review that is required stops on the review screen
    * (Install continues the queue, Cancel drops it); an update that changes no program or rule installs
-   * at once. The first failure stops the queue and shows its error.
+   * at once, as does every plugin of a reviewed pack. The first failure stops the queue and shows its error; with
+   * Install with dependencies the plugins installed before it still get their programs.
    */
   async function reviewCatalog(ids: readonly string[]) {
     setError(undefined);
@@ -737,7 +774,7 @@ export function Plugins({ workbench }: { workbench?: PluginsWorkbench | undefine
       while (rest.length) {
         const [id = "", ...after] = rest;
         const reviewed = await api.invoke("plugins.catalogReview", { id });
-        if (reviewed.required) {
+        if (reviewed.required && !run.current?.reviewed) {
           setQueue(after);
           setReview({ review: reviewed.review, catalog: reviewed });
           return;
@@ -750,15 +787,21 @@ export function Plugins({ workbench }: { workbench?: PluginsWorkbench | undefine
       setQueue([]);
       await installPrograms();
     } catch (failure) {
-      setError(failure);
       setQueue([]);
-      run.current = undefined;
+      const current = run.current;
+      if (current?.programs) {
+        current.failed = { id: rest[0] ?? "", error: failure };
+        await installPrograms();
+      } else {
+        setError(failure);
+        run.current = undefined;
+      }
     } finally {
       setBusy(false);
     }
   }
-  function startCatalog(ids: readonly string[], programs: boolean) {
-    run.current = { programs, installed: [] };
+  function startCatalog(ids: readonly string[], programs: boolean, reviewed = false) {
+    run.current = { programs, installed: [], reviewed };
     void reviewCatalog(ids);
   }
   const programsRequest = (id: string) => ({ id, ...(workbench ? { workbenchId: workbench.id } : {}) });
@@ -766,7 +809,7 @@ export function Plugins({ workbench }: { workbench?: PluginsWorkbench | undefine
   async function installPrograms() {
     const current = run.current;
     run.current = undefined;
-    if (!current?.programs || !current.installed.length) return;
+    if (!current?.programs || (!current.installed.length && !current.failed)) return;
     // The page stays busy until every program install ends, so two runs never share the result block.
     setBusy(true);
     const names = new Map((catalog.data?.plugins ?? []).map((entry) => [entry.id, entry.name]));
@@ -775,6 +818,9 @@ export function Plugins({ workbench }: { workbench?: PluginsWorkbench | undefine
       name: names.get(id) ?? id,
       busy: true,
     }));
+    const { failed } = current;
+    if (failed)
+      rows.push({ id: failed.id, name: names.get(failed.id) ?? failed.id, busy: false, error: failed.error });
     setInstallResults(rows);
     for (const id of current.installed) {
       let row: InstallResult = { id, name: names.get(id) ?? id, busy: false };
@@ -879,7 +925,31 @@ export function Plugins({ workbench }: { workbench?: PluginsWorkbench | undefine
   }
   return (
     <section className="surface plugins-page" data-plugins>
-      {review ? (
+      {pack && catalog.data ? (
+        pack.review ? (
+          <PackReview
+            pack={pack.review.pack}
+            plan={pack.review.plan}
+            platform={platform}
+            installed={installedIds}
+            cancel={() => setPack(undefined)}
+            install={() => {
+              const ids = pack.review?.plan.install.map((item) => item.entry.id) ?? [];
+              setPack(undefined);
+              startCatalog(ids, true, true);
+            }}
+          />
+        ) : (
+          <PackChooser
+            packs={catalog.data.packs}
+            cancel={() => setPack(undefined)}
+            review={(chosen, groups) => {
+              if (catalog.data)
+                setPack({ review: { pack: chosen, plan: packPlan(catalog.data, chosen, groups, platform) } });
+            }}
+          />
+        )
+      ) : review ? (
         <Review
           review={review.review}
           catalog={review.catalog}
@@ -920,6 +990,11 @@ export function Plugins({ workbench }: { workbench?: PluginsWorkbench | undefine
               >
                 {t("plugins.installZip")}
               </button>
+              {(catalog.data?.packs.length ?? 0) > 0 && (
+                <button type="button" data-action="pack-open" disabled={busy} onClick={() => setPack({})}>
+                  {t("plugins.packs.open")}
+                </button>
+              )}
               <button
                 type="button"
                 data-action="plugin-check-all"
@@ -1061,6 +1136,7 @@ export function Plugins({ workbench }: { workbench?: PluginsWorkbench | undefine
                     installedIds={installedIds}
                     configuration={configured.get(plugin)}
                     workbench={workbench}
+                    openWorkbench={openWorkbench}
                     changed={changed}
                     reviewScoped={() => {
                       if (!workbench) return;

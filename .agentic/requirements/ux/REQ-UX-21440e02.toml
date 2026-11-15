@@ -1,0 +1,25 @@
+schema = 1
+
+id = "REQ-UX-21440e02"
+
+title = "Report pack plugins that cannot be installed"
+
+status = "active"
+
+requirement = """
+If a plugin of the checked pack groups is not available on this platform, is not in the catalog, or requires such a plugin, then the pack review shall list it as not installed with its reason, and Install shall leave it out.
+"""
+
+verification = "Renderer page test on linux-x64 with a checked pack group holding a windows-only plugin and a plugin requiring it: the review lists both as not installed with their reasons, the Install button counts only the others, and Install never reviews or installs the skipped plugins; unit test for a pack plugin missing from the catalog."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/plugin-packs.tsx", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/plugin-packs.test.ts"]
+
+spec = ""
+
+priority = "normal"
+rationale = ""
+
+created = 2026-11-15
+updated = 2026-11-15
