@@ -210,7 +210,6 @@ export function TranscriptNavigator({
   const popupGroup = openGroup ?? previewGroup;
   const line = (entry: Entry) =>
     [
-      t("chat.navigator.message", { ordinal: entry.ordinal }),
       ...(entry.message.pending ? [t("chat.pending")] : []),
       previewText(entry.message.text) || t("chat.navigator.empty"),
     ].join(" — ");

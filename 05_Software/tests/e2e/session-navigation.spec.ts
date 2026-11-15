@@ -256,7 +256,7 @@ test("markers map, preview and reach user messages while the rail keeps its cont
     await page.keyboard.press("Home");
     await expect(marker(page, 1)).toBeFocused();
     expect(await scrollTop(page)).toBe(reading);
-    await expect(page.getByRole("tooltip")).toHaveText("Message 1 — Short question");
+    await expect(page.getByRole("tooltip")).toHaveText("Short question");
     await shot(page, "keyboard");
     await page.keyboard.press("Escape");
     await expect(page.getByRole("tooltip")).toHaveCount(0);
@@ -269,7 +269,7 @@ test("markers map, preview and reach user messages while the rail keeps its cont
     // Pointer preview: plain text, inside the window, dismissible.
     await marker(page, 7).hover();
     const tooltip = page.getByRole("tooltip");
-    await expect(tooltip).toHaveText(/^Message 7 — Seeded question 5\./);
+    await expect(tooltip).toHaveText(/^Seeded question 5\./);
     const box = await tooltip.boundingBox();
     expect(box).toBeTruthy();
     expect((box?.x ?? 0) + (box?.width ?? 0)).toBeLessThanOrEqual(1280);
@@ -332,9 +332,7 @@ test("a streaming reply never pulls the reader back after a jump until an explic
     await send(page, "Queued while streaming", 13);
     await expect(users(page).nth(12).locator("[data-message-pending]")).toHaveCount(1);
     await marker(page, 13).hover();
-    await expect(page.getByRole("tooltip")).toHaveText(
-      "Message 13 — Pending delivery — Queued while streaming",
-    );
+    await expect(page.getByRole("tooltip")).toHaveText("Pending delivery — Queued while streaming");
     // A jump that lands within the 80 px follow threshold of the end still suspends following.
     const nearEnd = await page.evaluate(() => {
       const viewport = document.querySelector("[data-transcript]") as HTMLElement;
@@ -372,10 +370,10 @@ test("a streaming reply never pulls the reader back after a jump until an explic
     // The delivered message keeps its single marker or group entry, now without the pending label.
     if (await marker(page, 13).count()) {
       await marker(page, 13).hover();
-      await expect(page.getByRole("tooltip")).toHaveText("Message 13 — Queued while streaming");
+      await expect(page.getByRole("tooltip")).toHaveText("Queued while streaming");
     } else {
       await lane(page).locator("[data-nav-marker][aria-expanded]").last().click();
-      await expect(page.locator("[data-nav-selector]")).toContainText("Message 13 — Queued while streaming");
+      await expect(page.locator("[data-nav-selector]")).toContainText("Queued while streaming");
     }
   } finally {
     await server.close();
@@ -539,7 +537,8 @@ test("500 messages stay reachable through groups, scrolling reuses measured anch
     expect(await scrollTop(page)).toBe(resting);
     await group.click();
     const entry = selector.getByRole("button").nth(Math.floor(members / 2));
-    const ordinal = Number(/^Message (\d+)/.exec((await entry.textContent()) ?? "")?.[1]);
+    const first = Number(/^Messages (\d+)/.exec((await group.getAttribute("aria-label")) ?? "")?.[1]);
+    const ordinal = first + Math.floor(members / 2);
     await entry.click();
     await expect(selector).toHaveCount(0);
     await expectJump(page, ordinal - 1);

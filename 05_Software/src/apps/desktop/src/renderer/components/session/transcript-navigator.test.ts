@@ -177,22 +177,22 @@ it("previews plain normalized text on focus, labels empty and pending messages, 
   const { render } = await navigator([0, 1000, 2000, 3000], pending);
   await user.tab();
   const tooltip = () => container.querySelector('[role="tooltip"]');
-  expect(tooltip()?.textContent).toBe("Message 1 — <b>Hello</b> world");
+  expect(tooltip()?.textContent).toBe("<b>Hello</b> world");
   expect(tooltip()?.querySelector("b")).toBeNull();
   expect(markers()[0]?.getAttribute("aria-describedby")).toBe(tooltip()?.id);
   await user.keyboard("{Escape}");
   expect(tooltip()).toBeNull();
   await user.keyboard("{ArrowDown}");
-  expect(tooltip()?.textContent).toBe("Message 2 — Empty message");
+  expect(tooltip()?.textContent).toBe("Empty message");
   await user.keyboard("{ArrowDown}");
-  expect(tooltip()?.textContent).toBe("Message 3 — Pending delivery — Queued");
+  expect(tooltip()?.textContent).toBe("Pending delivery — Queued");
   await render(messages);
   expect(markers()).toHaveLength(4);
-  expect(tooltip()?.textContent).toBe("Message 3 — Queued");
+  expect(tooltip()?.textContent).toBe("Queued");
   await user.keyboard("{ArrowDown}");
-  expect(tooltip()?.textContent).toBe(`Message 4 — ${"x".repeat(140)}…`);
+  expect(tooltip()?.textContent).toBe(`${"x".repeat(140)}…`);
   await user.hover(markers()[1] as HTMLElement);
-  expect(tooltip()?.textContent).toContain("Message 2");
+  expect(tooltip()?.textContent).toBe("Empty message");
   await user.keyboard("{Escape}");
   expect(tooltip()).toBeNull();
 });
@@ -212,11 +212,7 @@ it("opens a group selector, navigates to the exact member and restores focus to 
   expect(group.getAttribute("aria-controls")).toBe(selector()?.id);
   expect(selector()?.tagName).toBe("FIELDSET");
   expect(selector()?.querySelector("legend")?.textContent).toBe("Messages 2–4 (3)");
-  expect(entries().map((entry) => entry.textContent)).toEqual([
-    "Message 2 — Question 2",
-    "Message 3 — Question 3",
-    "Message 4 — Question 4",
-  ]);
+  expect(entries().map((entry) => entry.textContent)).toEqual(["Question 2", "Question 3", "Question 4"]);
   expect(document.activeElement).toBe(entries()[0]);
   await user.keyboard("{ArrowDown}");
   expect(document.activeElement).toBe(entries()[1]);
