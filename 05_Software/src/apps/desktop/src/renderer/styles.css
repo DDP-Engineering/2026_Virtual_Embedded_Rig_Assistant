@@ -3109,6 +3109,18 @@ legend {
 .about-notices > summary h3 {
   display: inline;
 }
+.about-release h4 {
+  margin: 0.8rem 0 0.2rem;
+  font-weight: 600;
+}
+.about-release h5 {
+  margin: 0.4rem 0 0.1rem;
+  font-weight: 600;
+}
+.about-release ul {
+  margin: 0;
+  padding-left: 1.2rem;
+}
 .about-notices table {
   width: 100%;
   margin-top: 0.6rem;

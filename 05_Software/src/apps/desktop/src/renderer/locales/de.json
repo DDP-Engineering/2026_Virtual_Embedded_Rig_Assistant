@@ -1141,7 +1141,13 @@
     "thirdParty": "Komponenten von Drittanbietern ({{count}})",
     "component": "Komponente",
     "componentVersion": "Version",
-    "license": "Lizenz"
+    "license": "Lizenz",
+    "whatsNew": "Neuigkeiten",
+    "unreleased": "Unveröffentlicht",
+    "release": "Version {{version}} · {{date}}",
+    "categoryNew": "Neu",
+    "categoryImproved": "Verbessert",
+    "categoryFixed": "Behoben"
   },
   "pager": {
     "range": "{{first}}–{{last}} von {{count}} Ergebnissen",

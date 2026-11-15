@@ -46,6 +46,7 @@ esp32-esptool/
 format: 1
 id: esp32-esptool
 version: 1.0.0
+license: LicenseRef-PolyForm-Noncommercial-1.0.0   # SPDX id; optional, every official plugin sets it
 name: ESP32 esptool
 summary: Identify, flash, verify, erase and read Espressif chips over a serial port with esptool.
 description: Identify, flash, erase and read Espressif chips over a serial port with esptool v5. Use for any ESP32 programming task, such as confirming the chip type, writing the images of an ESP-IDF build, verifying them or erasing the flash.

@@ -1,6 +1,7 @@
 format: 1
 id: git
 version: 0.3.0
+license: LicenseRef-PolyForm-Noncommercial-1.0.0
 name: Git
 summary: Read the workbench Git history freely; commit, branch and contact remotes with approval.
 description: Inspect and change the workbench Git repository. Read history, diffs and blame freely; stage, commit, manage branches and contact remotes with approval. Use for version-control questions and tasks.

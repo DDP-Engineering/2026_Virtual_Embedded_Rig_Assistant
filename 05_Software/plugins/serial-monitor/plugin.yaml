@@ -1,6 +1,7 @@
 format: 1
 id: serial-monitor
 version: 0.2.0
+license: LicenseRef-PolyForm-Noncommercial-1.0.0
 name: Serial monitor
 summary: List serial ports by USB ID, capture a board's console and send it one line.
 description: List serial ports with their USB IDs and board family, capture a board's console (optionally after a DTR/RTS reset) and send it one line. Use to find a board's port and to read its boot log or console output.

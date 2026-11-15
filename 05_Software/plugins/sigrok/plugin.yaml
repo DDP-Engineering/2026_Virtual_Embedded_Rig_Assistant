@@ -1,6 +1,7 @@
 format: 1
 id: sigrok
 version: 0.2.0
+license: LicenseRef-PolyForm-Noncommercial-1.0.0
 name: sigrok (DDP fork)
 summary: Capture and decode digital and analog signals and control bench instruments with sigrok-cli.
 description: Capture and decode digital and analog signals and read or configure bench instruments through sigrok-cli.

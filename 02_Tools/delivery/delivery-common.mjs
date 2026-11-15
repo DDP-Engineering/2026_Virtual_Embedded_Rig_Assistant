@@ -13,6 +13,34 @@ export const catalogPublicKey = join(repository, "02_Tools/release/catalog-signi
 export const platforms = ["windows-x64", "linux-x64"];
 export const sumsName = "SHA256SUMS";
 export const manifestName = "delivery.json";
+export const releaseNotesName = "RELEASE-NOTES.md";
+export const licenseName = "LICENSE.txt";
+
+const categoryTitles = { new: "New", improved: "Improved", fixed: "Fixed" };
+
+/** English Markdown of one release-notes document (05_Software/release-notes/*.yaml). */
+export function formatReleaseNotes(document, version) {
+  const lines = [`# VERA ${version} release notes`, ""];
+  if (document.date) lines.push(String(document.date), "");
+  const entries = document.entries ?? [];
+  for (const [category, title] of Object.entries(categoryTitles)) {
+    const own = entries.filter((entry) => entry.category === category);
+    if (own.length)
+      lines.push(`## ${title}`, "", ...own.map((entry) => `- **${entry.topic.en}:** ${entry.text.en}`), "");
+  }
+  if (!entries.length) lines.push("No user-visible changes.", "");
+  lines.push("Settings > About > What's new shows these notes in the interface language.", "");
+  return lines.join("\n");
+}
+
+/** The release notes of `desktopVersion`, or the unreleased ones while that version has no file yet. */
+export async function releaseNotesFor(desktopVersion, version, root = software) {
+  const { parse } = await importSoftware("yaml");
+  const folder = join(root, "release-notes");
+  const own = join(folder, `${desktopVersion}.yaml`);
+  const file = existsSync(own) ? own : join(folder, "unreleased.yaml");
+  return formatReleaseNotes(parse(await readFile(file, "utf8")), version);
+}
 
 /** The delivery version: the desktop version, or `0.0.0-<short commit>` while it is still `0.0.0`. */
 export function deliveryVersion(desktopVersion, commit) {

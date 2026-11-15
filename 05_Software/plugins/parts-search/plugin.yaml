@@ -1,6 +1,7 @@
 format: 1
 id: parts-search
 version: 0.3.0
+license: LicenseRef-PolyForm-Noncommercial-1.0.0
 name: Parts search and component selection
 summary: Search supplier catalogs and choose components on datasheet evidence, with a comparison and BOM.
 description: Choose electronic components on evidence - search the supplier catalogs you enable (Mouser, DigiKey, TME, Farnell, Rutronik) through VERA's parts_search tool, then compare candidates against hard constraints first and preferences second, with every value traced to its datasheet page and conditions, and write a comparison and a proposed BOM. Supplier keys stay in VERA's credential store and are set on this plugin's page; nothing is ordered and no schematic or BOM is changed.

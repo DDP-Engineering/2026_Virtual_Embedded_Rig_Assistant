@@ -1,6 +1,7 @@
 format: 1
 id: kicad-layout
 version: 0.3.0
+license: LicenseRef-PolyForm-Noncommercial-1.0.0
 name: KiCad PCB placement and local routing
 summary: Place footprints and add local tracks on a candidate copy of a KiCad 10 board, checked by DRC.
 description: Move and rotate footprints, align them, add keepouts and explicit local tracks and vias on a candidate copy of a KiCad 10 board through KiCad's official IPC API, check every request (locked items, nets, layers, the outline), verify the candidate with DRC and unconnected items, and report the changes with before/after previews. The source board changes only when you ask to apply a passing candidate, through VERA's approval. Needs a user-installed KiCad 10 with its API enabled (Preferences > Plugins); the candidate opens in a KiCad PCB editor window.

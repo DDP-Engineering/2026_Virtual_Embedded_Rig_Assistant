@@ -10,10 +10,12 @@ import {
   currentDelivery,
   deliveryFolderName,
   formatBytes,
+  licenseName,
   listFiles,
   manifestName,
   platforms,
   readManifest,
+  releaseNotesName,
   sha256File,
   sumsName,
 } from "./delivery-common.mjs";
@@ -66,7 +68,9 @@ for (const platform of platforms) {
   const [first, second] = platform === "windows-x64" ? [/\.exe$/, /\.zip$/] : [/\.AppImage$/, /\.deb$/];
   expectOne(part, files, first, `${first.source} installer`);
   expectOne(part, files, second, `${second.source} package`);
+  if (!files.includes(releaseNotesName)) problem(part, `${releaseNotesName}: missing`);
   for (const name of files) {
+    if (name === releaseNotesName) continue;
     if (!first.test(name) && !second.test(name)) problem(part, `${name}: unexpected file`);
     else if (!name.startsWith(`VERA-${desktop}-`)) problem(part, `${name}: not desktop version ${desktop}`);
   }
@@ -110,7 +114,14 @@ if (pluginFiles) {
     if (!valid) problem("plugins", `${sig}: does not verify with ${basename(catalogPublicKey)}`);
   }
   if (!signed) notes.push("plugins: channel indexes unsigned");
-  const allowed = new Set([...indexes, ...indexes.slice(1).map((name) => `${name}.sig`), ...listed, archive]);
+  const allowed = new Set([
+    ...indexes,
+    ...indexes.slice(1).map((name) => `${name}.sig`),
+    ...listed,
+    archive,
+    licenseName,
+  ]);
+  if (!pluginFiles.includes(licenseName)) problem("plugins", `${licenseName}: missing`);
   for (const name of pluginFiles) if (!allowed.has(name)) problem("plugins", `${name}: unexpected file`);
   if (!pluginFiles.includes(archive)) problem("plugins", `${archive}: missing`);
   else {

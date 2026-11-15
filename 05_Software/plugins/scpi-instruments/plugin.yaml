@@ -1,6 +1,7 @@
 format: 1
 id: scpi-instruments
 version: 0.2.0
+license: LicenseRef-PolyForm-Noncommercial-1.0.0
 name: SCPI bench instruments
 summary: Read, capture and control declared bench instruments (multimeter, oscilloscope, supply) through PyVISA.
 description: Identify declared bench instruments (multimeter, oscilloscope, power supply) through PyVISA, read values, capture waveforms, change settings and power a DUT output for a bounded hold - only through the package's validated profiles, with each instrument reserved for the run and its outputs switched off after Stop, timeout or a crash, or the state reported unknown when that cannot be confirmed.

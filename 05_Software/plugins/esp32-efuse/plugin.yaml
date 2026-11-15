@@ -1,6 +1,7 @@
 format: 1
 id: esp32-efuse
 version: 0.2.0
+license: LicenseRef-PolyForm-Noncommercial-1.0.0
 name: ESP32 eFuses and image security
 summary: Review ESP32 eFuses and prepare secure-boot keys and encrypted images; burns are permanent.
 description: Review Espressif eFuses and explicitly requested permanent changes with esp32-efuse-review. Read summaries and raw eFuses with espefuse; prepare local keys, signatures and encrypted images with espsecure. Burns are irreversible and can brick a chip. Enable this Security plugin only when needed.

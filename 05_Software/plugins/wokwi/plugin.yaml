@@ -1,6 +1,7 @@
 format: 1
 id: wokwi
 version: 0.2.0
+license: LicenseRef-PolyForm-Noncommercial-1.0.0
 name: Wokwi cloud simulation
 summary: Run firmware simulations and scenarios in Wokwi's cloud with a pinned wokwi-cli after approval.
 description: Firmware simulation jobs and finite scenarios in Wokwi's cloud with the pinned wokwi-cli 0.29.1 - inspect a project, validate its diagram offline, prepare a job of exact copies (firmware, ELF, diagram, scenario) bound by hash with the send list, account, limits and time budget, run it once in the cloud after approval, then collect pass, fail, timeout and error outcomes with serial output, VCD and screenshots, and report. The Wokwi token stays in VERA's credential store and reaches only an approved run of this plugin on its input. A cloud simulation is not an electrical test or a test on the real board.

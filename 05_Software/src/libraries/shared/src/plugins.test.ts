@@ -341,3 +341,11 @@ it("picks the catalog texts of the interface language, else the English ones", (
     description: canonical.description,
   });
 });
+
+it("accepts an SPDX license identifier and refuses free text", () => {
+  expect(
+    validatePluginManifest({ ...canonical, license: "LicenseRef-PolyForm-Noncommercial-1.0.0" }).issues,
+  ).toEqual([]);
+  expect(validatePluginManifest({ ...canonical, license: "MIT" }).issues).toEqual([]);
+  expect(paths({ ...canonical, license: "All rights reserved" })).toContain("license");
+});

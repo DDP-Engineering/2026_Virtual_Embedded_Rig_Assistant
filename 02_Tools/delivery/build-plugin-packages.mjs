@@ -1,4 +1,4 @@
-import { cp, rm } from "node:fs/promises";
+import { copyFile, cp, rm } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { parseArgs } from "node:util";
 import {
@@ -12,9 +12,11 @@ import {
   commitPart,
   currentDelivery,
   describeFile,
+  licenseName,
   listFiles,
   printPart,
   recordPart,
+  repository,
   runVeraCli,
   startStaging,
   writeSums,
@@ -23,7 +25,7 @@ import {
 
 // Builds the official plugins' catalog release with `npm run prepare:plugins`, signs its channel indexes
 // when a key is given, and collects it in 07_Delivery/vera-<version>/plugins/ with one archive of the whole
-// catalog, vera-plugins-<version>.zip, and SHA256SUMS.
+// catalog, vera-plugins-<version>.zip, VERA's LICENSE.txt and SHA256SUMS.
 const { values } = parseArgs({
   options: { "signing-key": { type: "string" }, replace: { type: "boolean", default: false } },
 });
@@ -50,6 +52,7 @@ try {
       "--public",
       catalogPublicKey,
     ]);
+  await copyFile(join(repository, licenseName), join(staging, licenseName));
   const catalog = await listFiles(staging);
   const archive = `vera-plugins-${delivery.version}.zip`;
   await zipFiles(staging, catalog, join(staging, archive), `vera-plugins-${delivery.version}`);

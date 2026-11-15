@@ -53,6 +53,13 @@ test("built shell enforces the desktop security boundary", async () => {
     await page.locator('[data-i18n="nav.settings"]').click();
     await page.locator('[data-section="about"]').click();
     await expect(page.locator('[data-i18n="home.version"]')).toBeVisible({ timeout: 5000 });
+    // What's new lists the bundled release notes of this version.
+    const desktopPackage = join(
+      dirname(fileURLToPath(import.meta.url)),
+      "../../src/apps/desktop/package.json",
+    );
+    const version = JSON.parse(readFileSync(desktopPackage, "utf8")).version;
+    await expect(page.locator(`[data-about-whats-new] [data-release="${version}"] li`).first()).toBeVisible();
     const metadata = await page.evaluate(() =>
       (window as unknown as { vera: VeraBridge }).vera.invoke("app.info", {}),
     );

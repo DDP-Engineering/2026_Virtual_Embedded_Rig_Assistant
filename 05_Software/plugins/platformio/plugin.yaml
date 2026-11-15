@@ -1,6 +1,7 @@
 format: 1
 id: platformio
 version: 0.2.0
+license: LicenseRef-PolyForm-Noncommercial-1.0.0
 name: PlatformIO projects
 summary: Inspect, build and test existing PlatformIO projects with a pinned PlatformIO Core.
 description: Inspect, build and test existing PlatformIO projects from an explicit request (project folder, environment, core folder, owned build folder) with a pinned PlatformIO Core 6.2.0; read platformio.ini with PlatformIO's own parser, refuse extra scripts, library scripts, custom runners and upload commands unless approved by hash, keep ELF/BIN/HEX with hashes, versions and logs, install packages in a separate network step and build offline afterwards, run native Unity tests on the host, build device tests only and take their verdict from a real Renode or HIL run, and upload through the verified ST-Link protocol with a reserved probe.

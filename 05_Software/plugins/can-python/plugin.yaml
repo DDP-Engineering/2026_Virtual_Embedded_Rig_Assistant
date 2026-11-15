@@ -1,6 +1,7 @@
 format: 1
 id: can-python
 version: 0.2.0
+license: LicenseRef-PolyForm-Noncommercial-1.0.0
 name: CAN bus (python-can)
 summary: Capture CAN traffic listen-only and send or replay frames through python-can adapters.
 description: List CAN interfaces and driver availability, capture a bus listen-only to an ASC, BLF or candump log, and send or replay frames through python-can (PEAK, Vector, Kvaser, slcan, gs_usb, SocketCAN). Use to record or stimulate a board's CAN traffic.

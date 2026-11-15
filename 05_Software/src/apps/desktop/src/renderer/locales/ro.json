@@ -1141,7 +1141,13 @@
     "thirdParty": "Componente terțe ({{count}})",
     "component": "Componentă",
     "componentVersion": "Versiune",
-    "license": "Licență"
+    "license": "Licență",
+    "whatsNew": "Noutăți",
+    "unreleased": "Nelansat",
+    "release": "Versiunea {{version}} · {{date}}",
+    "categoryNew": "Nou",
+    "categoryImproved": "Îmbunătățit",
+    "categoryFixed": "Corectat"
   },
   "pager": {
     "range": "{{first}}–{{last}} din {{count}} rezultate",

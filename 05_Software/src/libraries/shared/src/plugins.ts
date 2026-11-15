@@ -359,6 +359,11 @@ export const pluginManifestSchema = z.strictObject({
   description: z.string().trim().min(1).max(1024),
   /** The catalog summary and description in other interface languages. */
   translations: z.partialRecord(z.enum(pluginTextLanguages), pluginTextsSchema).optional(),
+  /** The plugin's license as an SPDX identifier or `LicenseRef-…`. */
+  license: z
+    .string()
+    .regex(/^[A-Za-z0-9.+-]{1,128}$/)
+    .optional(),
   ecosystem: z.string().regex(/^[a-z0-9-]{1,64}$/),
   platforms: z.array(pluginPlatformSchema).min(1).refine(unique, "List each platform once."),
   requires: z.array(pluginIdSchema).max(64).refine(unique, "List each plugin once.").default([]),

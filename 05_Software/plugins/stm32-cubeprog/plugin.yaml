@@ -1,6 +1,7 @@
 format: 1
 id: stm32-cubeprog
 version: 0.2.0
+license: LicenseRef-PolyForm-Noncommercial-1.0.0
 name: STM32CubeProgrammer
 summary: Program, verify and erase STM32 parts and read or change option bytes with STM32CubeProgrammer.
 description: Connect to STM32 parts through an ST-LINK, UART, USB DFU, SPI, I2C or CAN bootloader with STM32_Programmer_CLI, read memories, flash and verify images, erase, reset, and read or change option bytes. Use to program an STM32 board or inspect its protection state.

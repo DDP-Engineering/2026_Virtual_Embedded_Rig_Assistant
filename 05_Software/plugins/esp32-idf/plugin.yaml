@@ -1,6 +1,7 @@
 format: 1
 id: esp32-idf
 version: 0.1.0
+license: LicenseRef-PolyForm-Noncommercial-1.0.0
 name: ESP32 ESP-IDF
 summary: Build ESP-IDF projects, flash firmware and decode ESP32 panics with a user-installed ESP-IDF.
 description: Build and repair ESP-IDF projects, flash firmware, and analyse ESP32 panic backtraces and core dumps with the matching toolchain and ELF. Requires a user-installed EIM and ESP-IDF toolchain.

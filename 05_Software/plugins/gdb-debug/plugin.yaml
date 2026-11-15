@@ -1,6 +1,7 @@
 format: 1
 id: gdb-debug
 version: 0.2.0
+license: LicenseRef-PolyForm-Noncommercial-1.0.0
 name: GDB debugging
 summary: Inspect firmware ELF files and debug a Cortex-M target through a probe in supervised GDB sessions.
 description: Inspect firmware ELF files offline (architecture, hash, symbols, DWARF) and debug a Cortex-M target through a declared probe with finite, supervised GDB sessions - snapshot of registers, backtrace, locals, permitted RAM and decoded fault state with symbols checked against the target's flash, a hardware breakpoint with a timeout, bounded stepping - with OpenOCD from verified profiles on 127.0.0.1 only, no GDB console, scripts or monitor commands, the probe reserved for the run and the declared halt/resume policy applied at every exit.

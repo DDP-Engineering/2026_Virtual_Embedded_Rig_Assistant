@@ -1,6 +1,7 @@
 format: 1
 id: arduino-cli
 version: 0.2.0
+license: LicenseRef-PolyForm-Noncommercial-1.0.0
 name: Arduino CLI
 summary: Compile Arduino sketches with a pinned arduino-cli and upload the verified binary to an identified board.
 description: Native Arduino sketches with a pinned arduino-cli - inspect a sketch, list connected boards by identity, look up boards, cores and libraries, install cores and libraries in exact versions into VERA's own Arduino environment, compile a copy of the sketch into a traceable run folder (flash and RAM, libraries, core, hashes) and upload exactly that verified binary to an identified board. The Arduino IDE's own folders are never touched; no daemon, interactive monitor, bootloader, fuses or OTA.
