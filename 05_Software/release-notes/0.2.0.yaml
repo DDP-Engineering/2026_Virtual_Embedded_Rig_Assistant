@@ -1,0 +1,24 @@
+version: 0.2.0
+date: 2026-11-15
+entries:
+  - category: new
+    topic: { en: Plugins, ro: Pluginuri, de: Plugins, fr: Plugins }
+    text:
+      en: Six electrical plugins for networks, cables, protection, motors, power quality and lighting.
+      ro: Șase pluginuri electrice pentru rețele, cabluri, protecții, motoare, calitatea energiei și iluminat.
+      de: Sechs Elektro-Plugins für Netze, Kabel, Schutz, Motoren, Netzqualität und Beleuchtung.
+      fr: Six plugins électriques pour réseaux, câbles, protections, moteurs, qualité d’énergie et éclairage.
+  - category: new
+    topic: { en: Workbench, ro: Workbench, de: Workbench, fr: Workbench }
+    text:
+      en: The workbench overview shows how much space each session takes.
+      ro: Prezentarea workbench-ului arată cât spațiu ocupă fiecare sesiune.
+      de: Die Workbench-Übersicht zeigt, wie viel Speicher jede Sitzung belegt.
+      fr: La vue d’ensemble du workbench indique la taille de chaque session.
+  - category: fixed
+    topic: { en: Skills, ro: Skill-uri, de: Skills, fr: Skills }
+    text:
+      en: Disabling plugin skills is fast again and no longer reports them as unresolved.
+      ro: Dezactivarea skill-urilor din pluginuri e din nou rapidă și nu le mai raportează ca nerezolvate.
+      de: Plugin-Skills lassen sich wieder schnell deaktivieren und gelten nicht mehr als unbekannt.
+      fr: La désactivation des skills de plugins est de nouveau rapide et ne les signale plus comme inconnus.
