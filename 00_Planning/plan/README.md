@@ -9,6 +9,18 @@ tickets in Gitea.
 
 - Delivery packages: [delivery.md](delivery.md), **DEL-01…DEL-06** — VERA for Windows and Linux and
   the plugins as separate deliverables in `07_Delivery`, built by scripts in `02_Tools/delivery/`.
+- File lister: [file-viewer.md](file-viewer.md), **VIEW-01…VIEW-06** — any workbench file in Text (word
+  wrap, encodings), Hex or Rendered mode, large files read in byte windows, image preview.
+- Secret masking: [secret-masking.md](secret-masking.md), **MASK-01…MASK-05** — masking of stored secrets
+  set per area (Display, Program runs, Agent and model, Artifacts and exports) as app defaults and per workbench.
+- Chat bookmarks: [chat-bookmarks.md](chat-bookmarks.md), **BKM-01…BKM-03** — bookmarks on user messages,
+  set from the message or the conversation rail's preview card, shown on the rail, next/previous shortcuts.
+- Images in the chat: [chat-images.md](chat-images.md), **IMG-01…IMG-05** — paste or attach images for models
+  that see images, an image capability per model, and a `view_image` tool for the agent.
+- Multilingual embeddings: [multilingual-embeddings.md](multilingual-embeddings.md), **EMB-01…EMB-04** — Multilingual
+  E5 Small as a second local embedding model chosen per workbench, BGE Small EN staying the default.
+- Indexing limits: [indexing-limits.md](indexing-limits.md), **IDX-01…IDX-04** — `.gitignore` honored by
+  default, maximum file size and indexed-file count per workbench, one selection for preview and indexing.
 - Help and French: [help.md](help.md), **HELP-01…HELP-08** — help pages for VERA and every plugin in
   en, ro, de and fr (`05_Software/help/`), a Help button in place of the top-bar About button, French
   in the interface, and a `help` tool for the agent.
