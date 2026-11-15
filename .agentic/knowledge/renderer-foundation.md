@@ -21,7 +21,8 @@ The shell presents one compact title/menu row, with native window controls suppl
 Expanded navigation has VERA branding, Home, project/session or settings-section content,
 and bottom Settings. A collapsed sidebar retains Home/project/Settings icons and accessible
 labels. Project navigation expands the sidebar; Home and Settings remain usable in rail mode.
-Application metadata is displayed in Settings About. F10 focuses the native-menu triggers;
+Application metadata is displayed in Settings About, which an Info button beside the right-panel toggle also opens;
+the title bar has File/Edit/View menus and no Help menu. F10 focuses the native-menu triggers;
 left/right/Home/End move focus and Down or Enter opens the selected native menu.
 
 ## Public interface
@@ -31,9 +32,9 @@ left/right/Home/End move focus and Down or Enter opens the selected native menu.
   read-only/warnings and the keyboard pinned dialog are owned by [workbench](workbench.md).
 - Shell supplies resizable/collapsible sidebar and right panel; session Context shows pinned context/skills, Changes presents completed session edits/counts/diffs and reveal through the [Changes](changes.md) component; Docs presents the live document index; documents open as tabs of the chat area beside the Chat tab ([document viewer](document-viewer.md)); Artifacts opens/reveals/exports session content; Plan displays current session todos; Runs lists the open workbench's plugin program runs with their logs and Stop ([Plugins](plugins.md)).
   Below1280px the right panel overlays the centre. Tabs expose stable linked panels and a single Tab stop with Left/Right/Home/End activation.
-- Settings edits Providers, Light/Dark/System, five scales and System/en/ro/de; Updates presents distribution-specific state/actions; Data retains its placeholder. [Providers](providers.md) owns masked credentials, endpoint forms and consent.
-- About renders application name, version, platform, architecture, portable state and system locale
-  from strict app.info. Home contains workbench actions and recents. Build/signing labels do not
+- Settings pages are Providers, Web access, Appearance and language (Light/Dark/System, six interface scales, chat and code text sizes, System/en/ro/de), Notifications, Keyboard shortcuts, Updates (distribution-specific state/actions), Data (placeholder) and About; there are no Parts search, MQTT, Wokwi, Storage or Configuration pages (plugin settings live in the plugin Configuration). [Providers](providers.md) owns masked credentials, endpoint forms and consent.
+- About renders a brand band (DDP logo, name, version, license name and Required Notice lines), the application name, version, platform, architecture, portable state and system locale
+  from strict app.info, optional runtime versions (Electron, Chromium, Node.js, V8 from AppInfo.runtime), the license text (repo-root LICENSE.txt) and a third-party components table. Home contains workbench actions and recents. Build/signing labels do not
   appear in the presentation; native packaging owns compiled identity and signature checks.
 - usePreferences loads {settings}, applies mutation responses, invalidates on settings.changed
   and cleans up its app subscription. Failure displays localized structured errors and retry.
@@ -53,7 +54,7 @@ left/right/Home/End move focus and Down or Enter opens the selected native menu.
   from confirmed snapshots; failed saves retain the preceding state.
 - Local geometry uses a strict separate version 1 record (sidebar and right widths, collapsed states). Invalid or
   other-version data uses defaults; there is no read-only layout mode. Failed storage stays transient.
-- Resizers support pointer drag, arrow keys and Home/End with accessible separator values.
+- Resizers support pointer drag, arrow keys and Home/End with accessible separator values; side panels resize up to half the window (lib/layout.ts max 200 rem, CSS 50vw).
 - Keyboard controls use visible focus-ring CSS and semantic labels; opaque theme-token text pairs meet calculated AA contrast. Actual visual/AT acceptance follows the renderer accessibility contract. Selected buttons expose semantic state and heavier type.
   Reduced-motion styles disable animation/transition. The shell is fixed to the viewport with no document scroll; long pages and panels own their internal scroll regions. Minimum viewport uses wrapping inside these bounded regions.
 - [Chat UI](chat-ui.md) owns session navigation, transcript, composer, usage and session Context.
@@ -74,7 +75,7 @@ left/right/Home/End move focus and Down or Enter opens the selected native menu.
 - REQ-UX-4a040001 — shell and memory routes.
 - REQ-UX-4a040002 — saved resize/collapse geometry and responsive overlay.
 - REQ-UX-4a040003 — saved/system appearance and native theme.
-- REQ-UX-4a040004 — five saved scales and rem components/code.
+- REQ-UX-4a040004 — six saved scales and rem components/code.
 - REQ-UX-4a040005 — UI language and structured error translations.
 - REQ-TEST-4a040006 — English usage and translation catalog completeness.
 - REQ-UX-4a040007 — keyboard/focus/contrast/reduced-motion/minimum-size accessibility.

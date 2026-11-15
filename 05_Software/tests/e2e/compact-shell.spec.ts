@@ -57,7 +57,7 @@ test("native compact chrome retains window controls and a persistent navigation 
     if (process.env.VERA_UI_CAPTURE_DIR)
       await page.screenshot({ path: join(process.env.VERA_UI_CAPTURE_DIR, "rail.png") });
     await page.locator('[data-i18n="nav.settings"]').click();
-    await expect(page.locator('[data-settings-section="about"] .metadata')).toHaveCount(1);
+    await expect(page.locator('[data-settings-section="about"] [data-about]')).toHaveCount(1);
     await expect(page.locator("#sidebar")).toHaveAttribute("data-collapsed", "false");
     await page.locator('[data-toggle="sidebar"]').click();
     await app.close();

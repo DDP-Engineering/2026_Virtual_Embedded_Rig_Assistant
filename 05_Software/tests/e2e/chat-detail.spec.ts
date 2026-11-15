@@ -90,7 +90,7 @@ async function detail(page: Page, id: string, level: string) {
   await page.locator(`[data-session="${id}"]`).click();
   await expect(page.locator(".transcript-frame")).toHaveAttribute("data-chat-detail", level);
 }
-test("native chat detail save, cancel, ordered projection, full Activity and restart isolation", async () => {
+test("native chat detail save, cancel, ordered projection, full history and restart isolation", async () => {
   test.setTimeout(90000);
   const host = await rig();
   let app = await host.launch();
@@ -113,9 +113,8 @@ test("native chat detail save, cancel, ordered projection, full Activity and res
     await detail(page, id, "minimal");
     await expect(page.locator("[data-tool-row]")).toHaveCount(0);
     await expect(page.locator('[data-message-kind="assistant"]')).toContainText("3.3 V");
-    await page.locator('[data-action="show-activity"]').click();
-    await expect(page.locator('[data-agent-activity] [data-activity-kind="tool"]')).toHaveCount(2);
-    await page.keyboard.press("Escape");
+    // Minimal hides the tool rows only; the session still holds both tool calls.
+    expect((await snapshot(page, id)).items.filter((i) => i.kind === "tool")).toHaveLength(2);
     await edit(page);
     await page.locator("select[data-chat-detail]").selectOption("verbose");
     await page.locator("[data-project-cancel]").first().click();

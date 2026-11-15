@@ -19,7 +19,7 @@ desktop UI: the Plugins page (pickers, review screen, install bound to the revie
 program installs, uninstall), run records beside run logs and the right panel's Runs tab (`runs.*`); and for the
 plugin catalog client: index read with the bundled fallback, verified zip downloads, the review decision, installs
 with the catalog tier, update marks, `plugins.catalog*` IPC, the catalog URL setting, the 24 h checks and the
-Plugins page Available/Installed library (spec `.agentic/specs/REQ-DATA-b40d3f9b.md`). Start at
+Plugins page library (spec `.agentic/specs/REQ-DATA-b40d3f9b.md`). Start at
 `05_Software/src/libraries/shared/src/plugins.ts` (schema),
 `05_Software/src/libraries/core/src/plugins/store.ts` (store),
 `05_Software/src/libraries/core/src/plugins/runner.ts` (runner),
@@ -125,7 +125,7 @@ source, skills with their SKILL.md descriptions, profiles and data files, docume
 programs) and an Operations section, the manifest `rules` grouped by `pluginOperations` into one collapsed `<details>`
 per risk (safe, device-read, device-write, irreversible, blocked; label and count in the summary; pattern, note and
 timeout per rule). The risk labels are the approval prompt's `approval.risk.*`. The runner writes `.vera/runs/<run id>.json` beside each log; the right panel's Runs tab
-(`renderer/components/runs-tab.tsx`) lists them (`runs.list`, polled every second), shows a log (`runs.log`) and
+(`renderer/components/runs-tab.tsx`) lists them (`runs.list`, polled every second) with session, plugin, state and date filters and sorting, shows a log (`runs.log`) and
 stops a run (`runs.stop`). WorkbenchConfigForm's Plugins section embeds WorkbenchPlugins: installed packages are draft checkboxes saved through workbench.create or workbench.config.update with plugins.enabled. New workbenches default to none; existing choices are retained. Missing/invalid selected entries can be removed; invalid or untrusted packages cannot be newly selected. Read-only/pending forms disable controls; list failures show retry and do not clear the draft. Cancel performs no activation write. The global manager has no enable switches and points to Edit workbench → Plugins. Scoped package trust remains a separate action.
 
 The plugin catalog (spec `.agentic/specs/REQ-DATA-b40d3f9b.md`, ADR-0019): core `catalog-source.ts` checks a catalog
@@ -145,7 +145,7 @@ review must be shown, and installs it bound to the reviewed integrity hash with 
 `catalog` (the zip URL, or the bundled zip's file path). Desktop main
 composes it with `net.fetch`, serves `plugins.catalog`, `plugins.catalogReview` and `plugins.catalogInstall`, and its
 `CatalogChecks` (`main/catalog-checks.ts`) reads the index after the window opens and every 24 h. The Plugins page
-presents source/URL and channel settings and management controls above one Available/Installed library. Test
+presents source/URL and channel settings and management controls above one library (filters left, list right). Test
 builds take the pinned key from `VERA_TEST_CATALOG_KEY` when it is set.
 
 Discovery metadata is maintained by plugin id in `catalog.yaml.metadata`: stable activities,
@@ -161,7 +161,7 @@ are classified, with dates omitted until a publication record is established.
 
 The global library is projected by `renderer/components/plugin-library.ts` and rendered by
 `plugin-library-controls.tsx`, `plugin-catalog.tsx` and `plugins.tsx`. Source settings, separate
-folder/ZIP imports, check-all, refresh and updates precede Available/Installed tabs and one list.
+folder/ZIP imports, check-all, refresh and updates precede the library: filters and state buttons on the left, one list on the right.
 Case/diacritic-insensitive all-word search intersects ecosystem/activity/provenance/maturity/state. Maturity is
 shared `pluginMaturity(version)` (`plugins.ts`): `0.x.y` or a semver pre-release tag is `pre-release`, every other
 valid version `stable`, a missing or invalid version `pre-release`; there is no manifest field. `MaturityBadge`
@@ -186,7 +186,7 @@ installs every managed program again (uv `--reinstall`; downloads fetched again,
 staging folder), never a find program; a failed re-download keeps the ready copy resolvable and reports the problem.
 A fresh check hashes a single-file download and reports `unavailable/sha256` on a mismatch; Install dependencies also
 repairs `sha256`. A download transfer longer than its declared `bytes` is `sha256`. State
-counts respect other filters; tab counts remain totals. Recently added/updated sort known dates
+counts respect other filters; the results line shows the total. Recently added/updated sort known dates
 before unknown, with stable name/id/source ties. New is UTC day age 0..29. Page sizes are 6/12/24;
 filter changes reset and loaded snapshot mutations clamp pages after catalog metadata settles
 (including failure, which retains offline Installed management). The UI key uses gcTime Infinity;

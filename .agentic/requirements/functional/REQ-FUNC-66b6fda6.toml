@@ -11,10 +11,10 @@ id = "REQ-FUNC-66b6fda6"
 
 title = "Deliver the fictional demo workbench"
 
-status = "active"
+status = "retired"
 
 requirement = """
-When a user opens the bundled demo, VERA shall open a private fictional demo workbench containing the generated fictional PDFs, notes, boot log, pinout and datasheet-reader, log-analyst and bringup-checklist skills, preserving an existing copy and refusing redirected or conflicting destination paths.
+When a user opens the bundled demo, VERA shall open a private fictional demo workbench containing the generated fictional PDFs, notes, boot log, pinout and datasheet-reader, log-analyst and bringup-checklist skills, preserving an existing copy and refusing redirected or conflicting destination paths. Retired 2026-11-15: The demo workbench opener is gone: shared/src/demo.ts, demo.json, main/demo-workbench.ts and their tests no longer exist and ipc.ts has no demo channel; only the test fixture folder remains.
 """
 
 verification = "Inspect the shipped file inventory and skills against the fictional sources; future focused demo-copy and strict IPC scenarios cover creation, reopen preservation, interrupted copy and redirected/conflicting destinations. Runtime execution deferred by direct user policy."
@@ -30,4 +30,4 @@ priority = "normal"   # low | normal | high
 rationale = ""        # why this behavior exists, if not obvious
 
 created = 2026-10-13
-updated = 2026-10-23
+updated = 2026-11-15

@@ -19,7 +19,7 @@ Core SessionService owns one workbench's durable sessions over injected AgentRun
 
 - Successful parse_log provenance permits verifying and opening valid UTF8 log line refs containing control bytes; ordinary file-tool refs keep binary refusal. openCitation derives this mode from preceding successful tool results, never renderer input.
 
-SessionHost may own a PdfDownloads instance, exposed as listDownloads/openDownload and ctx.downloads. Prepared web_download requests use the existing write approval gate; close cancels/drains downloads before releasing storage. Download files remain workbench-owned after deleting their session. Live read-only model filtering covers all bound write-class tools. See [PDF downloads](pdf-downloads.md).
+SessionHost may own a WebDownloads instance, exposed as listDownloads/openDownload and ctx.downloads. Prepared web_download requests use the existing write approval gate; close cancels/drains downloads before releasing storage. Download files remain workbench-owned after deleting their session. Live read-only model filtering covers all bound write-class tools. See [PDF downloads](pdf-downloads.md).
 
 
 - Optional SessionHost.web supplies the provider to session context; desktop/CLI compose anonymous Exa without startup requests. Web tools use existing read execution/permissions/activity. [Web search](web-search.md) owns the network boundary.

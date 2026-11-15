@@ -1,5 +1,7 @@
 # Demo delivery and onboarding
 
+> **Retired 2026-11-15.** The bundled demo workbench was removed from the code: there is no `workbench.demo.open` channel, no demo files in the installer and no demo offer or guide in Welcome (`demo.ts`, `demo.json`, `demo-workbench.ts` and `demo-guide.tsx` no longer exist). This spec is kept as the record of what the demo did; REQ-FUNC-66b6fda6 and REQ-UX-194ecc98 are retired.
+
 Requirements: REQ-FUNC-66b6fda6, REQ-UX-194ecc98.
 
 `workbench.demo.open {}` returns the existing WorkbenchSnapshot under the normal authorized

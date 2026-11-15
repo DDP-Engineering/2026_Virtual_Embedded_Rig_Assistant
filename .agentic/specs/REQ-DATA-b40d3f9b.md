@@ -20,7 +20,7 @@ The official plugins in `05_Software/plugins/` are such a source.
 
 ### 1.1 packs.yaml
 
-Packs remain validated catalog data. The global library uses one Available/Installed list and
+Packs remain validated catalog data. The global library uses one filterable list (state buttons All/Not installed/Installed/New/Updates/Needs configuration) and
 individual prerequisite-aware review, without pack-selection controls (REQ-UX-28a74094.md).
 
 A YAML list of packs, strict keys:

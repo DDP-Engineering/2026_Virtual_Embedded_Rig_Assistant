@@ -2,7 +2,7 @@
 
 ## Routing
 
-Select for web_download, PdfDownloads, public PDF transfer, .vera/downloads, download approvals or Open PDF cards/history. Start under 05_Software at core/src/web/{pdf-transfer,pdf-downloads}.ts and tools/web-download.ts. Focused proofs are web/pdf-{transfer,downloads}.test.ts, sessions/downloads.test.ts, shared/downloads.test.ts and tests/e2e/pdf-download.spec.ts. [Web access](web-search.md) owns global authorization/search credentials, [documents](document-viewer.md) owns the local PDF viewer, and [ingest](knowledge-ingest.md) owns RAG.
+Select for web_download, WebDownloads, public PDF transfer, .vera/downloads, download approvals or Open PDF cards/history. Start under 05_Software/src/libraries at core/src/web/{download-transfer,downloads}.ts and core/src/tools/web-download.ts. Focused proofs are web/{download-transfer,downloads}.test.ts, sessions/downloads.test.ts, shared/downloads.test.ts and tests/e2e/pdf-download.spec.ts. [Web access](web-search.md) owns global authorization/search credentials, [documents](document-viewer.md) owns the local PDF viewer, and [ingest](knowledge-ingest.md) owns RAG.
 
 ## Purpose and boundaries
 
@@ -11,7 +11,7 @@ Download a public PDF independently of search-provider credentials, preserve exa
 ## Public interface
 
 - web_download({url,filename?}) is a prepared write tool. It returns only {download: metadata}, never binary/base64 or extracted PDF text.
-- PdfDownloads.allocate makes a fresh UUID and portable PDF name (safe URL basename or document.pdf by default), with no network I/O. save transfers/validates then publishes through the host write queue; list/open are offline reads; close cancels and drains owned work.
+- WebDownloads.allocate makes a fresh UUID and portable PDF name (safe URL basename or document.pdf by default), with no network I/O. save transfers/validates then publishes through the host write queue; list/open are offline reads; close cancels and drains owned work.
 - Metadata contains downloadId, name/path, sourceUrl/finalUrl, sessionId/callId, application/pdf, bytes, SHA-256, createdAt and page count. Files live at .vera/downloads/<UUID>/<name>.pdf with strict manifest.json provenance.
 - ConfiguredWebProvider.withAccess leases global authorization without consulting search-provider keys/capabilities. Its live assertion and cancellation are checked around publication.
 - downloads.list({workbenchId}) returns validated records newest first. downloads.open({workbenchId,downloadId}) validates current workbench identity and exact bytes before returning existing PDF ViewerContent.
@@ -34,11 +34,11 @@ The successful transcript tool shows a compact localized saved status and an Ope
 ## Files
 
 - shared/src/{downloads,ipc,tools,events,session-state}.ts: metadata/IPC/catalog/approval contracts.
-- core/src/web/{pdf-transfer,pdf-downloads,configured-provider,provider}.ts: wire/storage/authorization/public URL checks.
+- core/src/web/{download-transfer,downloads,configured-provider,provider}.ts: wire/storage/authorization/public URL checks.
 - core/src/tools/{web-download,registry,context,changes}.ts, sessions/service.ts, agent/approvals.ts: prepared permission and session lifetime.
 - desktop main/{index,sessions,document-viewer}.ts and cli/{run,approval-prompt}.ts: host composition and disclosure.
 - renderer/components/documents/{downloads,docs-tab,viewer-context,pdf-viewer}, session/{transcript,approval-card}, workbench-tools and locales: UI.
 
 ## Change map
 
-Network/DNS/redirect/deadline changes attach to pdf-transfer.test.ts, including private/mixed answers, header/stream caps, noncooperative stalls and public redirects. Storage/provenance/cleanup/parser changes attach to pdf-downloads.test.ts (real PDF worker), permissions/lifetime to sessions/downloads.test.ts, IPC to shared/downloads.test.ts and existing preload/router checks. Native pdf-download.spec.ts checks approval, exact bytes, page rendering, centering, translations, no RAG, failure/revocation, restart/offline and stale scopes using a public-URL-to-owned-loopback fixture; its network guard rejects all other outbound calls. A separate manual public W3C sample smoke verifies the real pinned HTTPS connector without credentials or LLM spend.
+Network/DNS/redirect/deadline changes attach to download-transfer.test.ts, including private/mixed answers, header/stream caps, noncooperative stalls and public redirects. Storage/provenance/cleanup/parser changes attach to downloads.test.ts (real PDF worker), permissions/lifetime to sessions/downloads.test.ts, IPC to shared/downloads.test.ts and existing preload/router checks. Native pdf-download.spec.ts checks approval, exact bytes, page rendering, centering, translations, no RAG, failure/revocation, restart/offline and stale scopes using a public-URL-to-owned-loopback fixture; its network guard rejects all other outbound calls. A separate manual public W3C sample smoke verifies the real pinned HTTPS connector without credentials or LLM spend.

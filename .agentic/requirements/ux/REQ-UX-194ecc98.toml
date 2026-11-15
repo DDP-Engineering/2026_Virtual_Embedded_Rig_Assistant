@@ -11,10 +11,10 @@ id = "REQ-UX-194ecc98"
 
 title = "Offer the demo and three guided prompts"
 
-status = "active"
+status = "retired"
 
 requirement = """
-When Welcome has no active workbench, VERA shall offer the demo and, while that demo is open, provide a first-run guide with three localized suggested prompts that create editable drafts in ordinary sessions with explicit model selection and sending.
+When Welcome has no active workbench, VERA shall offer the demo and, while that demo is open, provide a first-run guide with three localized suggested prompts that create editable drafts in ordinary sessions with explicit model selection and sending. Retired 2026-11-15: The demo workbench and demo-guide.tsx are gone; Welcome no longer offers a demo or guided prompts.
 """
 
 verification = "Manual: on fresh isolated userData, open the offered demo, select each of the three prompts, configure/select a real model and send by hand; inspect grounded responses and source references. This acceptance is deferred and has no PASS under current user policy. Future renderer scenarios cover draft selection and readonly/loading errors."
@@ -30,4 +30,4 @@ priority = "normal"   # low | normal | high
 rationale = ""        # why this behavior exists, if not obvious
 
 created = 2026-10-13
-updated = 2026-10-13
+updated = 2026-11-15

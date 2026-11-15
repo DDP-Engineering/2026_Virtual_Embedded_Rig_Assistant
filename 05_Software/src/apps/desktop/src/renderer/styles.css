@@ -1775,6 +1775,8 @@ legend {
   overflow: auto;
   min-width: 0;
   padding: 0.3rem;
+  /* Two-column sections (Documents, Skills, Plugins) stack when this area, not the window, is narrow. */
+  container-type: inline-size;
 }
 .workbench-editor-content fieldset {
   border: 0;
@@ -1810,7 +1812,7 @@ legend {
 /* Documents: actions and indexing summary on the left, the folder selection on the right. */
 .workbench-documents {
   display: grid;
-  grid-template-columns: minmax(14rem, 1fr) minmax(0, 2fr);
+  grid-template-columns: minmax(min(14rem, 100%), 1fr) minmax(0, 2fr);
   align-items: start;
   gap: 1.25rem;
 }
@@ -3360,7 +3362,7 @@ legend {
 /* Skills: create on the left, the list on the right in the Tools card style. */
 .skills-panel {
   display: grid;
-  grid-template-columns: minmax(14rem, 1fr) minmax(0, 2fr);
+  grid-template-columns: minmax(min(14rem, 100%), 1fr) minmax(0, 2fr);
   gap: 1.25rem;
   align-items: start;
 }
@@ -3410,7 +3412,7 @@ legend {
 /* Plugin libraries (Plugins page, workbench Plugins section): filters left, list right. */
 .library-split {
   display: grid;
-  grid-template-columns: minmax(15rem, 19rem) minmax(0, 1fr);
+  grid-template-columns: minmax(min(15rem, 100%), 19rem) minmax(0, 1fr);
   gap: 1.25rem;
   align-items: start;
 }
@@ -3459,4 +3461,16 @@ legend {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: 0.5rem;
+}
+/* Plugins page: the library stacks when the page is narrow. */
+.plugins-page {
+  container-type: inline-size;
+}
+/* Two-column layouts stack when their own area is too narrow, at any text size. */
+@container (width < 46rem) {
+  .workbench-documents,
+  .skills-panel,
+  .library-split {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }

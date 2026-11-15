@@ -64,10 +64,18 @@ test("built shell enforces the desktop security boundary", async () => {
       locale: app.getLocale(),
       portable: false,
     }));
+    // About also shows the runtime versions, read from the main process.
+    const runtime = await app.evaluate(() => ({
+      electron: process.versions.electron,
+      chrome: process.versions.chrome,
+      node: process.versions.node,
+      v8: process.versions.v8,
+    }));
     expect(metadata).toEqual({
       ...nativeMetadata,
       testBuild: true,
       signing: process.platform === "win32" ? "unsigned" : "not-applicable",
+      runtime,
     });
     const labels = JSON.parse(readFileSync(join(desktop, "src/renderer/locales/en.json"), "utf8")).home;
     const displayedMetadata = {

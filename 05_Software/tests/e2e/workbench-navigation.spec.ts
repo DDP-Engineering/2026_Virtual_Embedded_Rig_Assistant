@@ -43,9 +43,11 @@ test("workbench tree, pinning, project editor and plugin section", async ({ page
     await expect(disclosure).toHaveAttribute("aria-expanded", "true");
 
     await expect(group).toBeVisible();
-    await expect(page.locator('[data-workbench="active"] > .workbench-actions > button')).toHaveCount(1);
+    await expect(
+      page.locator('[data-workbench="active"] [data-action="edit-workbench-overview"]'),
+    ).toHaveCount(1);
     await expect(page.locator("[data-workbench-overview]")).toBeVisible();
-    await expect(page.locator("[data-workbench-overview]")).toContainText("/mock/new-board");
+    await expect(page.locator('[data-workbench="active"] .overview-folder')).toHaveText("/mock/new-board");
     await page.locator('[data-action="edit-workbench-overview"]').click();
     await expect(page.locator(".workbench-editor")).toBeVisible();
     await page.locator(".workbench-editor").getByRole("button", { name: "Cancel", exact: true }).click();
@@ -82,20 +84,17 @@ test("workbench tree, pinning, project editor and plugin section", async ({ page
     await dialog.locator('[data-tool-toggle="read"]').uncheck();
     await dialog.locator('[data-tool-toggle="read"]').check();
     await dialog.locator('[data-project-section="skills"]').click();
-    await dialog.locator('[data-action="skills-settings"]').click();
-    const skillDialog = page.locator(".skills-dialog");
-    await skillDialog.locator("[data-skill-name]").fill("test-reader");
-    await skillDialog.locator('[data-action="create-skill"]').click();
-    await expect(skillDialog.locator(".skills-list li")).toHaveCount(2);
-    await expect(skillDialog.locator(".skills-list li").filter({ hasText: "create-plugin" })).toHaveCount(1);
-    const createdSkill = skillDialog.locator(".skills-list li").filter({ hasText: "test-reader" });
+    // The Skills section shows the skills panel inline in the workbench editor.
+    const skillPanel = dialog.locator("[data-skills-panel]");
+    await expect(skillPanel).toBeVisible();
+    await skillPanel.locator("[data-skill-name]").fill("test-reader");
+    await skillPanel.locator('[data-action="create-skill"]').click();
+    await expect(skillPanel.locator(".skills-list li")).toHaveCount(2);
+    await expect(skillPanel.locator(".skills-list li").filter({ hasText: "create-plugin" })).toHaveCount(1);
+    const createdSkill = skillPanel.locator(".skills-list li").filter({ hasText: "test-reader" });
     await expect(createdSkill).toHaveCount(1);
     await createdSkill.locator('input[type="checkbox"]').uncheck();
     await expect(createdSkill.locator('input[type="checkbox"]')).not.toBeChecked();
-    const skillBounds = await skillDialog.boundingBox();
-    expect(Math.abs((skillBounds?.x ?? 0) + (skillBounds?.width ?? 0) / 2 - 640)).toBeLessThan(2);
-    await page.keyboard.press("Escape");
-    await expect(skillDialog).not.toBeVisible();
     await expect(page.locator(".workbench-editor")).toBeVisible();
 
     await dialog.locator('[data-project-section="embeddings"]').click();
@@ -114,9 +113,7 @@ test("workbench tree, pinning, project editor and plugin section", async ({ page
     await expect(dialog.locator('[data-tool-toggle="grep"]')).not.toBeChecked();
     await expect(dialog.locator('[data-tool-toggle="read"]')).toBeChecked();
     await dialog.locator('[data-project-section="skills"]').click();
-    await dialog.locator('[data-action="skills-settings"]').click();
     await expect(createdSkill.locator('input[type="checkbox"]')).not.toBeChecked();
-    await page.keyboard.press("Escape");
 
     await dialog.getByRole("button", { name: "Cancel", exact: true }).click();
     await revised.locator('[data-action="new-session"]').click();
@@ -132,7 +129,7 @@ test("workbench tree, pinning, project editor and plugin section", async ({ page
     await expect(revised.locator(`[data-session="${firstSession}"]`)).toBeVisible();
     await expect(page.locator("[data-overview-session] time").first()).toHaveAttribute("datetime", /T/);
     const count = await page.locator("[data-overview-session]").count();
-    await expect(page.locator(".workbench-session-summary h3")).toHaveText(`Sessions (${count})`);
+    await expect(page.locator(".workbench-session-summary h4")).toHaveText(`Sessions (${count})`);
     await page.locator(`[data-overview-session="${firstSession}"] button`).click();
     await expect(page.locator(".session-workspace")).toBeVisible();
     await revised.locator(".workbench-group-name").click();

@@ -8,7 +8,7 @@ import { _electron, expect, test } from "@playwright/test";
 import type { VeraBridge } from "@vera/shared";
 import { installNetworkGuard, outboundAttempts } from "./network-guard.js";
 
-test("native agent searches and reads via Exa adapter, presents sources/activity and saves web tool exclusions", async () => {
+test("native agent searches and reads via Exa adapter, presents sources/tool calls and saves web tool exclusions", async () => {
   test.setTimeout(60000);
   const root = await mkdtemp(join(tmpdir(), "vera-web-search-"));
   const folder = join(root, "bench"),
@@ -110,7 +110,12 @@ test("native agent searches and reads via Exa adapter, presents sources/activity
     const page = await app.firstWindow();
     const ids = await page.evaluate(async (folder) => {
       const api = (window as unknown as { vera: VeraBridge }).vera;
-      const bench = await api.invoke("workbench.create", { folder, name: "Web research" });
+      // Verbose lists every tool call in the transcript.
+      const bench = await api.invoke("workbench.create", {
+        folder,
+        name: "Web research",
+        config: { chat: { detail: "verbose" } },
+      });
       const session = await api.invoke("session.create", { modelRef: "replay/web" });
       return { workbench: bench.config.id, session: session.id };
     }, folder);
@@ -138,11 +143,10 @@ test("native agent searches and reads via Exa adapter, presents sources/activity
     expect(await app.evaluate(() => Reflect.get(globalThis, "veraWebOpened"))).toEqual([
       "https://example.com/guide",
     ]);
-    await page.locator('[data-action="show-activity"]').click();
-    await expect(page.locator("dialog[open]")).toContainText("web_search");
-    await expect(page.locator("dialog[open]")).toContainText("web_read");
+    const transcript = page.locator("[data-transcript]");
+    await expect(transcript.locator('[data-tool-row="web_search"]')).toHaveCount(1);
+    await expect(transcript.locator('[data-tool-row="web_read"]')).toHaveCount(1);
     if (process.env.VERA_WEB_SCREENSHOT) await page.screenshot({ path: process.env.VERA_WEB_SCREENSHOT });
-    await page.locator('[data-action="close-inspector"]').click();
     for (const [language, label] of [
       ["ro", "Deschizi un site extern?"],
       ["de", "Externe Website öffnen?"],

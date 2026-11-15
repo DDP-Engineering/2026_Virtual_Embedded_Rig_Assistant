@@ -7,7 +7,7 @@ import { resolveConfig } from "electron-vite";
 import { createServer } from "vite";
 import { installNetworkGuard, outboundAttempts } from "./network-guard.js";
 
-test("compact composer grows, caps, shrinks and keeps context/activity on demand at desktop widths", async ({
+test("compact composer grows, caps, shrinks and keeps context on demand at desktop widths", async ({
   page,
 }) => {
   const config = (await resolveConfig({ root: "src/apps/desktop" }, "serve", "development")).config?.renderer;
@@ -57,9 +57,6 @@ test("compact composer grows, caps, shrinks and keeps context/activity on demand
     await page.keyboard.press("Escape");
     await expect(context).toBeFocused();
     await expect(page.locator("[data-usage]")).toHaveCount(0);
-    await page.locator('[data-action="show-activity"]').click();
-    await expect(page.getByRole("dialog")).toContainText("No activity yet");
-    await page.locator('[data-action="close-inspector"]').click();
     for (const width of [1280, 760]) {
       await page.setViewportSize({ width, height: 720 });
       await expect(input).toBeVisible();
@@ -108,12 +105,18 @@ test("native session exposes live tools/context and durable sidebar archive with
     await installNetworkGuard(app);
     const page = await app.firstWindow();
     await page.waitForFunction(() => !!(window as unknown as { vera?: VeraBridge }).vera);
+    // The renderer reads the active workbench once when it starts: let it start, create the
+    // workbench, then reload so it shows the created one.
+    await expect(page.locator('[data-i18n="nav.welcome"]')).toBeVisible();
     await page.evaluate(async (folder) => {
       await (window as unknown as { vera: VeraBridge }).vera.invoke("workbench.create", {
         folder,
         name: "Native layout",
+        // Verbose shows every tool call with its arguments and result in the transcript.
+        config: { chat: { detail: "verbose" } },
       });
     }, folder);
+    await page.reload();
     await page.locator('[data-action="new-session"]').click();
     const id = await page.locator('[data-session][aria-current="page"]').getAttribute("data-session");
     if (!id) throw Error("Missing session identity");
@@ -127,14 +130,9 @@ test("native session exposes live tools/context and durable sidebar archive with
     );
     await page.getByRole("textbox", { name: "Message", exact: true }).fill("Read the board");
     await page.getByRole("textbox", { name: "Message", exact: true }).press("Enter");
-    await page.locator('[data-action="show-activity"]').click();
-    const dialog = page.getByRole("dialog");
-    await expect(dialog.locator('[data-activity-kind="tool"]')).toHaveCount(2);
-    await dialog.locator('[data-activity-kind="tool"] button').last().click();
-    await expect(dialog).toContainText("board.txt");
-    await expect(dialog).toContainText("3.3 V");
-    await page.keyboard.press("Escape");
-    await expect(page.locator('[data-action="show-activity"]')).toBeFocused();
+    const transcript = page.locator("[data-transcript]");
+    await expect(page.locator(".transcript-frame")).toHaveAttribute("data-chat-detail", "verbose");
+    await expect(transcript.locator("[data-tool-row]")).toHaveCount(2);
     await expect
       .poll(async () =>
         page.evaluate(
@@ -145,7 +143,13 @@ test("native session exposes live tools/context and durable sidebar archive with
         ),
       )
       .toBeNull();
-    const history = await page.locator("[data-transcript]").textContent();
+    const history = await transcript.textContent();
+    // The read call shows its arguments and result once expanded; the answer cites the source line.
+    const read = transcript.locator('[data-tool-row="read"]');
+    await read.locator("button.disclosure-toggle").click();
+    await expect(read).toContainText("board.txt");
+    await expect(read).toContainText("3.3 V");
+    await expect(transcript.locator('[data-message-kind="assistant"]').last()).toContainText("3.3 V");
     await page.locator('[data-action="show-context"]').click();
     await expect(page.getByRole("dialog").locator("[data-usage]")).toBeVisible();
     await page.locator('[data-action="close-inspector"]').click();
