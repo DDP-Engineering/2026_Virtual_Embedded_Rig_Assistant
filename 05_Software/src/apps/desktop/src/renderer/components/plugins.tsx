@@ -1076,91 +1076,97 @@ export function Plugins({
               ))}
             </div>
           )}
-          <PluginLibraryControls
-            state={library}
-            change={changeLibrary}
-            items={scope}
-            basic={basic}
-            total={scope.length}
-            count={results.length}
-          />
-          {list.isPending && <p role="status">{t("home.loading")}</p>}
-          {list.isError && <ErrorMessage error={list.error} />}
-          {results.length === 0 && (
-            <div className="plugin-library-empty">
-              <p>
-                {library.status === "installed" && !installedItems.length
-                  ? t("plugins.none")
-                  : t("plugins.library.noMatches")}
-              </p>
-              <button
-                type="button"
-                data-action="library-clear"
-                onClick={() => changeLibrary(clearedLibraryFilters)}
-              >
-                {t("plugins.library.clear")}
-              </button>
-              {library.status === "installed" && !installedItems.length && (
-                <button type="button" onClick={() => changeLibrary({ status: "all" })}>
-                  {t("plugins.library.browse")}
-                </button>
-              )}
+          <div className="library-split">
+            <div className="library-side">
+              <PluginLibraryControls
+                state={library}
+                change={changeLibrary}
+                items={scope}
+                basic={basic}
+                total={scope.length}
+                count={results.length}
+              />
             </div>
-          )}
-          <div id="plugin-library-panel">
-            <ul className="plugin-list">
-              {results.slice((page - 1) * library.pageSize, page * library.pageSize).map((item) => {
-                const view = catalog.data;
-                if (item.catalog && view && !item.plugin)
-                  return (
-                    <CatalogItem
-                      key={item.key}
-                      plugin={item.catalog}
-                      platform={platform}
-                      installed={installedIds}
-                      busy={busy}
-                      install={(id, programs) =>
-                        startCatalog(item.catalog?.update ? [id] : installOrder(view, [id]), programs)
-                      }
-                    />
-                  );
-                const plugin = item.plugin;
-                if (!plugin) return null;
-                const entry = item.update ? updates.get(plugin.id) : undefined;
-                return (
-                  <PluginCard
-                    key={item.key}
-                    discovery={item.catalog}
-                    checking={checkingAll === plugin.id}
-                    plugin={plugin}
-                    installedIds={installedIds}
-                    configuration={configured.get(plugin)}
-                    workbench={workbench}
-                    openWorkbench={openWorkbench}
-                    changed={changed}
-                    reviewScoped={() => {
-                      if (!workbench) return;
-                      setBusy(true);
-                      setError(undefined);
-                      const scoped = { workbenchId: workbench.id, id: plugin.id };
-                      void api
-                        .invoke("plugins.scopedReview", scoped)
-                        .then((review) => setReview({ review, scoped }))
-                        .catch(setError)
-                        .finally(() => setBusy(false));
-                    }}
-                    update={entry && { entry, busy, start: () => startCatalog([plugin.id], false) }}
-                  />
-                );
-              })}
-            </ul>
+            <div className="library-main">
+              {list.isPending && <p role="status">{t("home.loading")}</p>}
+              {list.isError && <ErrorMessage error={list.error} />}
+              {results.length === 0 && (
+                <div className="plugin-library-empty">
+                  <p>
+                    {library.status === "installed" && !installedItems.length
+                      ? t("plugins.none")
+                      : t("plugins.library.noMatches")}
+                  </p>
+                  <button
+                    type="button"
+                    data-action="library-clear"
+                    onClick={() => changeLibrary(clearedLibraryFilters)}
+                  >
+                    {t("plugins.library.clear")}
+                  </button>
+                  {library.status === "installed" && !installedItems.length && (
+                    <button type="button" onClick={() => changeLibrary({ status: "all" })}>
+                      {t("plugins.library.browse")}
+                    </button>
+                  )}
+                </div>
+              )}
+              <div id="plugin-library-panel">
+                <ul className="plugin-list">
+                  {results.slice((page - 1) * library.pageSize, page * library.pageSize).map((item) => {
+                    const view = catalog.data;
+                    if (item.catalog && view && !item.plugin)
+                      return (
+                        <CatalogItem
+                          key={item.key}
+                          plugin={item.catalog}
+                          platform={platform}
+                          installed={installedIds}
+                          busy={busy}
+                          install={(id, programs) =>
+                            startCatalog(item.catalog?.update ? [id] : installOrder(view, [id]), programs)
+                          }
+                        />
+                      );
+                    const plugin = item.plugin;
+                    if (!plugin) return null;
+                    const entry = item.update ? updates.get(plugin.id) : undefined;
+                    return (
+                      <PluginCard
+                        key={item.key}
+                        discovery={item.catalog}
+                        checking={checkingAll === plugin.id}
+                        plugin={plugin}
+                        installedIds={installedIds}
+                        configuration={configured.get(plugin)}
+                        workbench={workbench}
+                        openWorkbench={openWorkbench}
+                        changed={changed}
+                        reviewScoped={() => {
+                          if (!workbench) return;
+                          setBusy(true);
+                          setError(undefined);
+                          const scoped = { workbenchId: workbench.id, id: plugin.id };
+                          void api
+                            .invoke("plugins.scopedReview", scoped)
+                            .then((review) => setReview({ review, scoped }))
+                            .catch(setError)
+                            .finally(() => setBusy(false));
+                        }}
+                        update={entry && { entry, busy, start: () => startCatalog([plugin.id], false) }}
+                      />
+                    );
+                  })}
+                </ul>
+              </div>
+              <PluginLibraryPagination
+                page={page}
+                pageSize={library.pageSize}
+                count={results.length}
+                change={changeLibrary}
+              />
+            </div>
           </div>
-          <PluginLibraryPagination
-            page={page}
-            pageSize={library.pageSize}
-            count={results.length}
-            change={changeLibrary}
-          />
         </>
       )}
     </section>

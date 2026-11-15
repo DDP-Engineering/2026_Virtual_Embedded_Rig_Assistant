@@ -1799,7 +1799,7 @@ legend {
   min-height: 18rem;
 }
 /* Tools: two columns on a normal window (three when very wide), one when narrow. */
-.workbench-tools ul {
+.workbench-tools > ul {
   list-style: none;
   padding: 0;
   margin: 0;
@@ -3435,4 +3435,57 @@ legend {
 .pager label,
 .pager span {
   white-space: nowrap;
+}
+/* Plugin libraries (Plugins page, workbench Plugins section): filters left, list right. */
+.library-split {
+  display: grid;
+  grid-template-columns: minmax(15rem, 19rem) minmax(0, 1fr);
+  gap: 1.25rem;
+  align-items: start;
+}
+@media (width < 900px) {
+  .library-split {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.library-side,
+.library-main {
+  display: grid;
+  gap: 0.75rem;
+  min-width: 0;
+}
+.library-summary {
+  margin: 0;
+  font-weight: 600;
+}
+.library-side .plugin-library-search-row,
+.library-side .plugin-library-filter-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.6rem;
+}
+.library-side .plugin-library-controls label {
+  display: grid;
+  gap: 0.25rem;
+}
+.library-side .plugin-library-results {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+}
+.library-side .plugin-library-results label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  white-space: nowrap;
+}
+/* Workbench Plugins: one card per row, checkbox on the left, like Tools and Skills. */
+[data-workbench-plugins] .library-main .plugin-library-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.5rem;
 }

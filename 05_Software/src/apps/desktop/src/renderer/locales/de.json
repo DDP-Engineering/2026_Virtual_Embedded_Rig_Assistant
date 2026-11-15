@@ -931,7 +931,6 @@
     "trust": "Diesem Paket vertrauen",
     "scopedTrustIntro": "Diesem genauen Paket für diese Workbench auf diesem Computer vertrauen. Vertrauen aktiviert das Plugin nicht und installiert keine Programme. Jede Paketänderung erfordert eine neue Prüfung.",
     "refresh": "Liste aktualisieren",
-    "selectionHint": "Wählen Sie die installierten Plugins für diese Workbench aus. Neue Workbenches beginnen ohne Auswahl. Übernehmen Sie die Auswahl mit Speichern; Pakete installieren und prüfen Sie auf der Seite Plugins.",
     "expand": "Details für {{name}} anzeigen",
     "collapse": "Details für {{name}} ausblenden",
     "checkDependencies": "Abhängigkeiten prüfen",

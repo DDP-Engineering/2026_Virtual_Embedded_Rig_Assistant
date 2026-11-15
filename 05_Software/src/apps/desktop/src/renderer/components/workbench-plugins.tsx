@@ -118,80 +118,90 @@ function WorkbenchPluginLibrary({
     trial: t("plugins.tier.trial"),
   };
   return (
-    <div className="workbench-tools" data-workbench-plugins>
-      <p className="muted">{t("plugins.selectionHint")}</p>
-      <p data-workbench-selection-count>{t("plugins.selectedCount", { count: enabled.length })}</p>
-      {query.isPending && <p role="status">{t("home.loading")}</p>}
-      {query.isError && (
-        <>
-          <ErrorMessage error={query.error} />
-          <button type="button" onClick={() => void query.refetch()}>
-            {t("settings.retry")}
-          </button>
-        </>
-      )}
-      {catalog.isError && <ErrorMessage error={catalog.error} />}
-      <PluginLibraryControls
-        state={state}
-        change={change}
-        items={items}
-        basic={basic}
-        total={items.length}
-        count={results.length}
-        statusOptions={[
-          ["all", t("plugins.library.all")],
-          ["enabled", t("plugins.enabledSelection")],
-          ["needs", t("plugins.library.needsConfiguration")],
-        ]}
-      />
-      {query.data && entries.length === 0 && <p>{t("plugins.none")}</p>}
-      {query.data && entries.length > 0 && !results.length && <p>{t("plugins.library.noMatches")}</p>}
-      <ul className="plugin-library-list">
-        {results.slice((page - 1) * state.pageSize, page * state.pageSize).map((item) => {
-          const plugin = item.plugin;
-          if (!plugin) return null;
-          const selected = enabled.includes(plugin.id);
-          return (
-            <li className="plugin-card" key={item.key} data-workbench-plugin={plugin.id}>
-              <label className="workbench-tool-option">
-                <input
-                  type="checkbox"
-                  checked={selected}
-                  disabled={readOnly || disabled || (!selected && plugin.issues.length > 0)}
-                  onChange={(event) => {
-                    if (!readOnly && !disabled) toggle(plugin.id, event.currentTarget.checked);
-                  }}
-                />
-                <span>
-                  <strong>{plugin.name ?? plugin.id}</strong>
-                  {plugin.version && <span className="muted"> {plugin.version}</span>}
-                  {plugin.tier && <span className="risk-badge">{tierLabels[plugin.tier]}</span>}
-                </span>
-              </label>
-              <p className="muted" data-readiness={item.readiness}>
-                {readiness[item.readiness]}
-              </p>
-              {plugin.source === "workbench" && <p className="muted">{t("plugins.workbenchSource")}</p>}
-              {plugin.description && (
-                <details className="workbench-plugin-description">
-                  <summary>{t("plugins.description")}</summary>
-                  <p>{plugin.description}</p>
-                </details>
-              )}
-              {plugin.issues.length ? (
-                <Issues issues={plugin.issues} />
-              ) : (
-                <WorkbenchPluginSetup
-                  plugin={plugin}
-                  workbenchId={workbenchId}
-                  locked={readOnly || disabled}
-                />
-              )}
-            </li>
-          );
-        })}
-      </ul>
-      <PluginLibraryPagination page={page} pageSize={state.pageSize} count={results.length} change={change} />
+    <div className="workbench-tools library-split" data-workbench-plugins>
+      <div className="library-side">
+        <p className="library-summary" data-workbench-selection-count>
+          {t("plugins.selectedCount", { count: enabled.length })}
+        </p>
+        {query.isPending && <p role="status">{t("home.loading")}</p>}
+        {query.isError && (
+          <>
+            <ErrorMessage error={query.error} />
+            <button type="button" onClick={() => void query.refetch()}>
+              {t("settings.retry")}
+            </button>
+          </>
+        )}
+        {catalog.isError && <ErrorMessage error={catalog.error} />}
+        <PluginLibraryControls
+          state={state}
+          change={change}
+          items={items}
+          basic={basic}
+          total={items.length}
+          count={results.length}
+          statusOptions={[
+            ["all", t("plugins.library.all")],
+            ["enabled", t("plugins.enabledSelection")],
+            ["needs", t("plugins.library.needsConfiguration")],
+          ]}
+        />
+      </div>
+      <div className="library-main">
+        {query.data && entries.length === 0 && <p>{t("plugins.none")}</p>}
+        {query.data && entries.length > 0 && !results.length && <p>{t("plugins.library.noMatches")}</p>}
+        <ul className="plugin-library-list">
+          {results.slice((page - 1) * state.pageSize, page * state.pageSize).map((item) => {
+            const plugin = item.plugin;
+            if (!plugin) return null;
+            const selected = enabled.includes(plugin.id);
+            return (
+              <li className="plugin-card" key={item.key} data-workbench-plugin={plugin.id}>
+                <label className="workbench-tool-option">
+                  <input
+                    type="checkbox"
+                    checked={selected}
+                    disabled={readOnly || disabled || (!selected && plugin.issues.length > 0)}
+                    onChange={(event) => {
+                      if (!readOnly && !disabled) toggle(plugin.id, event.currentTarget.checked);
+                    }}
+                  />
+                  <span>
+                    <strong>{plugin.name ?? plugin.id}</strong>
+                    {plugin.version && <span className="muted"> {plugin.version}</span>}
+                    {plugin.tier && <span className="risk-badge">{tierLabels[plugin.tier]}</span>}
+                  </span>
+                </label>
+                <p className="muted" data-readiness={item.readiness}>
+                  {readiness[item.readiness]}
+                </p>
+                {plugin.source === "workbench" && <p className="muted">{t("plugins.workbenchSource")}</p>}
+                {plugin.description && (
+                  <details className="workbench-plugin-description">
+                    <summary>{t("plugins.description")}</summary>
+                    <p>{plugin.description}</p>
+                  </details>
+                )}
+                {plugin.issues.length ? (
+                  <Issues issues={plugin.issues} />
+                ) : (
+                  <WorkbenchPluginSetup
+                    plugin={plugin}
+                    workbenchId={workbenchId}
+                    locked={readOnly || disabled}
+                  />
+                )}
+              </li>
+            );
+          })}
+        </ul>
+        <PluginLibraryPagination
+          page={page}
+          pageSize={state.pageSize}
+          count={results.length}
+          change={change}
+        />
+      </div>
     </div>
   );
 }

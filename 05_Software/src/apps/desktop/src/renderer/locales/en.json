@@ -931,7 +931,6 @@
     "trust": "Trust this package",
     "scopedTrustIntro": "Trust this exact package for this workbench on this machine. Trust does not enable the plugin or install its programs. Any package change requires another review.",
     "refresh": "Refresh list",
-    "selectionHint": "Select the installed plugins this workbench can use. New workbenches start with none selected. Save to apply your selection; install and review packages on the Plugins page.",
     "expand": "Show details for {{name}}",
     "collapse": "Hide details for {{name}}",
     "checkDependencies": "Check dependencies",

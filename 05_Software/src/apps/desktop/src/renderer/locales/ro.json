@@ -931,7 +931,6 @@
     "trust": "Acordă încredere pachetului",
     "scopedTrustIntro": "Acordă încredere acestui pachet exact pentru acest workbench pe această mașină. Încrederea nu activează pluginul și nu instalează programele. Orice modificare cere o nouă revizuire.",
     "refresh": "Actualizează lista",
-    "selectionHint": "Selectează pluginurile instalate pe care le poate folosi acest workbench. Workbench-urile noi pornesc fără pluginuri selectate. Salvează pentru a aplica selecția; instalează și revizuiește pachetele pe pagina Pluginuri.",
     "expand": "Arată detaliile pentru {{name}}",
     "collapse": "Ascunde detaliile pentru {{name}}",
     "checkDependencies": "Verifică dependențele",
