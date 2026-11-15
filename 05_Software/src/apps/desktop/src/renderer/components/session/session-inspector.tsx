@@ -3,9 +3,7 @@ import { Bot, MessageSquare, Wrench, X } from "lucide-react";
 import { useEffect, useId, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { ErrorMessage } from "../error-message.js";
-import { SkillSettings } from "../skills.js";
 import { ToolOutput } from "./bounded-text.js";
-import { ContextTab } from "./context-tab.js";
 import { Disclosure } from "./disclosure.js";
 import { Markdown } from "./markdown.js";
 import { UsageMeter } from "./usage-meter.js";
@@ -135,7 +133,6 @@ export function ActivityLog({
 export function SessionInspector({
   mode,
   state,
-  workbenchId,
   reasoning,
   updates,
   sessionId,
@@ -180,10 +177,13 @@ export function SessionInspector({
       <div className="session-inspector-body">
         {mode === "context" ? (
           <>
-            <SkillSettings workbenchId={workbenchId} readOnly />
-            <p className="muted">{t("chat.contextInfo")}</p>
             <UsageMeter state={state} />
-            <ContextTab workbenchId={workbenchId} readOnly showSkillSettings={false} />
+            <p className="usage-calls" data-usage-calls>
+              {t("chat.turnCount", { count: state.turns.length })} ·{" "}
+              {t("chat.toolCallCount", {
+                count: state.items.filter((item) => item.kind === "tool").length,
+              })}
+            </p>
           </>
         ) : (
           <ActivityLog state={state} reasoning={reasoning} updates={updates} sessionId={sessionId} />

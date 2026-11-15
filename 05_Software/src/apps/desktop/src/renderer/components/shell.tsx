@@ -82,7 +82,13 @@ export function Shell({
     return () => window.removeEventListener("keydown", listener);
   }, [bindings]);
   const [tab, setTab] = useState("context");
-  const ranges = { sidebar: [12, 24], right: [14, 28] } as const;
+  // Each panel can grow up to half the window (to the middle of the screen).
+  const halfWindow = () =>
+    window.innerWidth / 2 / Number.parseFloat(getComputedStyle(document.documentElement).fontSize);
+  const ranges = {
+    sidebar: [12, Math.max(12, Math.floor(halfWindow()))],
+    right: [14, Math.max(14, Math.floor(halfWindow()))],
+  } as const;
   useEffect(() => {
     if (settings) setLayout((value) => ({ ...value, sidebarCollapsed: false }));
   }, [settings]);

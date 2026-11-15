@@ -159,10 +159,12 @@ export function Transcript({
     return byCall;
   }, [state.approvals]);
   const needle = search.toLocaleLowerCase();
-  const stopped = new Set([
-    ...state.interrupted,
-    ...state.turns.filter((turn) => turn.stopReason === "aborted").map((turn) => turn.turnId),
-  ]);
+  // One label at most: only when the latest turn was stopped or interrupted.
+  const latestTurn = state.turns.at(-1);
+  const stopped =
+    !state.activeTurnId &&
+    latestTurn !== undefined &&
+    (latestTurn.stopReason === "aborted" || state.interrupted.includes(latestTurn.turnId));
   return (
     <div className="transcript-frame" data-chat-detail={detail}>
       <TranscriptScroll viewport={scroll} content={content} controls={transcriptId} />
@@ -255,11 +257,11 @@ export function Transcript({
               />
             );
           })}
-          {Array.from(stopped).map((id) => (
-            <p key={id} className="muted" data-chat-stopped role="status">
+          {stopped && (
+            <p className="muted" data-chat-stopped role="status">
               {t("chatDetail.stopped")}
             </p>
-          ))}
+          )}
           {detail === "minimal" && state.activeTurnId && state.status === "running" && (
             <p className="muted" data-chat-working role="status">
               {t("chat.working")}
