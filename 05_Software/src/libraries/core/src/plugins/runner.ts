@@ -464,7 +464,11 @@ class Run implements ActiveRun {
       return;
     }
     // A supervised program first gets a stop request and its grace period to clean up itself.
-    void writeFile(join(this.control, "stop"), reason).catch(() => {});
+    // Renamed into place, so a program that sees `stop` always reads the whole reason.
+    const stop = join(this.control, "stop");
+    void writeFile(`${stop}.tmp`, reason)
+      .then(() => rename(`${stop}.tmp`, stop))
+      .catch(() => {});
     this.graceTimer = setTimeout(treeKill, lease.graceMs);
   }
 
