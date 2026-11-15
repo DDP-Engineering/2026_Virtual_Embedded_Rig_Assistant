@@ -480,3 +480,47 @@ it("keeps following after a return to the end whose scroll event arrives after t
   await renderTranscript(conversation(4), "a");
   expect(viewport.scrollTop).toBe(4000);
 });
+it("throttles measuring while a turn streams and moves markers when the turn ends", async () => {
+  vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout", "performance"] });
+  const { viewport, content, anchors, reads } = geometry([0, 1000, 2000, 3000]);
+  const render = (live: boolean) =>
+    act(async () =>
+      root?.render(
+        createElement(TranscriptNavigator, {
+          viewport: { current: viewport },
+          content: { current: content },
+          anchors,
+          messages: texts(4),
+          live,
+          controls: "transcript",
+          onNavigate: vi.fn(() => true),
+        }),
+      ),
+    );
+  await render(true);
+  await flushFrames();
+  expect(reads.count).toBe(4);
+  const top = () => markers()[3]?.style.top;
+  expect(top()).toBe("282px");
+  // Streamed text above the last question moves it; every frame reports a resize.
+  const last = anchors.get("m3");
+  if (last) last.getBoundingClientRect = () => rect(3500 - viewport.scrollTop);
+  window.dispatchEvent(new Event("resize"));
+  expect(frames.size).toBe(0);
+  await act(async () => vi.advanceTimersByTime(100));
+  window.dispatchEvent(new Event("resize"));
+  expect(frames.size).toBe(0);
+  await act(async () => vi.advanceTimersByTime(150));
+  expect(frames.size).toBe(1);
+  await flushFrames();
+  expect(top()).toBe("329px");
+  if (last) last.getBoundingClientRect = () => rect(3750 - viewport.scrollTop);
+  window.dispatchEvent(new Event("resize"));
+  expect(frames.size).toBe(0);
+  await render(false);
+  expect(frames.size).toBe(1);
+  await flushFrames();
+  expect(top()).toBe("352.5px");
+  expect(vi.getTimerCount()).toBe(0);
+  expect(reads.count).toBeGreaterThan(4);
+});

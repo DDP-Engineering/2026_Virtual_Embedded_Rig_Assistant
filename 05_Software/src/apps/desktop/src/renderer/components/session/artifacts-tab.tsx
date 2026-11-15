@@ -4,17 +4,16 @@ import { veraError } from "@vera/shared";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../../api/index.js";
-import { useSessionEvents } from "../../hooks/use-session-events.js";
+import { useSessionView } from "../../hooks/session-view.js";
 import { ArtifactBody } from "../documents/viewer-context.js";
 import { ErrorMessage } from "../error-message.js";
 
-function unchanged() {}
 export function ArtifactsTab(props: { workbenchId: string; sessionId: string }) {
   return <ArtifactsView key={`${props.workbenchId}/${props.sessionId}`} {...props} />;
 }
 function ArtifactsView({ workbenchId, sessionId }: { workbenchId: string; sessionId: string }) {
   const { t, i18n } = useTranslation();
-  const { view, error, retry } = useSessionEvents(sessionId, unchanged);
+  const { view, error, retry } = useSessionView(sessionId);
   const [selected, setSelected] = useState<string>();
   const [action, setAction] = useState<string>();
   const [actionError, setActionError] = useState<unknown>();

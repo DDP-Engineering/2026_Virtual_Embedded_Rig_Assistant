@@ -485,10 +485,9 @@ describe("kicad-tool without KiCad", { timeout: 300_000 }, () => {
         withoutPath: string;
         relativeEntry: string;
       };
-      expect(found.relativeEntry).toBe(
-        join(root, "Program Files", "KiCad", "10.0", "bin", windows ? "kicad-cli.exe" : "kicad-cli"),
-      );
-      const exe = windows ? "kicad-cli.exe" : "kicad-cli";
+      // The seam checks the Windows find order on every host (Linux has no install folders after PATH).
+      const exe = "kicad-cli.exe";
+      expect(found.relativeEntry).toBe(join(root, "Program Files", "KiCad", "10.0", "bin", exe));
       expect(found.withPath).toBe(join(root, "path-entry", exe));
       expect(found.withoutPath).toBe(join(root, "Program Files", "KiCad", "10.0", "bin", exe));
     } finally {

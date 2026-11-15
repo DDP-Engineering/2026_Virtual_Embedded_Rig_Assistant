@@ -150,6 +150,8 @@ export default defineConfig(({ command }) => ({
     plugins: [react(), tailwindcss(), developmentCsp(), pdfResources()],
     build: {
       outDir: resolve(buildRoot, "renderer"),
+      // electron-vite leaves the renderer unminified by default; the window parses this bundle at startup.
+      minify: true,
       rollupOptions: { input: resolve(root, "src/renderer/index.html") },
     },
   },

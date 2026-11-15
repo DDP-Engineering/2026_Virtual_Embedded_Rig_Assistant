@@ -556,6 +556,16 @@ export const channels = {
       seq: z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER),
     }),
   ),
+  /** The full text of one bounded snapshot field (PERF-06), read from that item's stored event. */
+  "session.item.detail": defineChannel(
+    "session.item.detail",
+    z.strictObject({
+      sessionId: sessionIdSchema,
+      itemId: z.string().min(1).max(200),
+      field: z.enum(["preview", "args", "diff"]),
+    }),
+    z.strictObject({ text: z.string() }),
+  ),
   "session.rename": defineChannel(
     "session.rename",
     z.strictObject({ sessionId: sessionIdSchema, title: z.string().trim().min(1).max(60) }),

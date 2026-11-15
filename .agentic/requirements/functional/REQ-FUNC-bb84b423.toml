@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-bb84b423"
+title = "Warm plugin program statuses after a workbench opens"
+status = "active"
+requirement = "When a workbench has been created or opened, the desktop app shall read the program statuses of the workbench's enabled plugins in the background, so later status reads and program resolutions find a warm cache."
+verification = "Inspection: desktop main calls the scoped status read for each enabled plugin after workbench.create and workbench.open succeed, without awaiting it in the IPC reply, and ignores its errors."
+affected_paths = ["05_Software/src/apps/desktop/src/main/index.ts"]
+linked_tests = []
+spec = ""
+priority = "low"
+created = 2026-11-14
+updated = 2026-11-14

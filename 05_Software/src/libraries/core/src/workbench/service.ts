@@ -41,7 +41,7 @@ import { DocumentViewer } from "../knowledge/viewer.js";
 import { type LoadedPlugin, PluginStore } from "../plugins/store.js";
 import type { WorkbenchHost } from "../ports.js";
 import { SkillCatalog } from "../skills/catalog.js";
-import { inspectDatabase, openDb, type WorkbenchDatabase } from "../storage/db.js";
+import { openDb, type WorkbenchDatabase } from "../storage/db.js";
 import { DocumentsRepository } from "../storage/repos/documents.js";
 import { previewDocuments, relativeFolder, scanDocuments } from "./documents-scan.js";
 import { acquireGuard } from "./guard.js";
@@ -593,7 +593,7 @@ export class WorkbenchService {
     const same = this.state?.folder === folder;
     const databasePath = join(folder, ".vera/vera.db");
     const storageOptions = { workbenchId: config.id, appVersion: this.host.appVersion };
-    await inspectDatabase(databasePath, storageOptions);
+    // An owned database opens in place and is checked before writes; a read-only one is copied first.
     const acquired = await this.acquire(folder, warnings);
     const newlyOwned = acquired.owned !== undefined && acquired.owned !== this.owned;
     const next = { folder, config, warnings, readOnly: acquired.readOnly };

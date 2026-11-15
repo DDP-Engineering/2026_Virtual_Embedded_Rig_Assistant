@@ -50,7 +50,7 @@ session history through the shared API; application/edit approval persistence re
 | Stored list/detail/order/counts | SessionService.listChanges/getChange | core sessions/changes.test.ts |
 | Strict read channels | shared changes.ts/ipc.ts | shared changes-ipc.test.ts,preload/bridge.test.ts |
 | Reveal confinement | main reveal-path.ts/index.ts | reveal-path.test.ts,path-guard.test.ts |
-| Empty/history/diff/live/isolation | ChangesTab,useSessionEvents,DiffViewer | changes-tab.test.ts,workspace.test.ts |
+| Empty/history/diff/live/isolation | ChangesTab,useSessionView,DiffViewer | changes-tab.test.ts,workspace.test.ts |
 | Mock lifecycle/projections | mocks/sessions.ts,mockApi.ts | sessions.test.ts,mockApi.test.ts |
 | Native persistence | tests/e2e/changes.spec.ts | ask approval -> live counts/diff -> restart |
 
@@ -67,7 +67,7 @@ REQ-FUNC-18000007 strict IPC.
 flowchart LR
  App --> Shell
  Shell --> ChangesTab
- ChangesTab --> useSessionEvents
+ ChangesTab --> useSessionView --> useSessionEvents
  useSessionEvents --> API
  ChangesTab --> API
  ChangesTab --> DiffViewer

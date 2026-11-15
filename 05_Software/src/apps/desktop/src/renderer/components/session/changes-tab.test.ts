@@ -57,6 +57,35 @@ test("shows the Changes empty state for an empty selected session", async () => 
   await settle();
   expect(container.querySelector("#panel-changes")?.textContent).toContain("No changes in this session.");
 });
+// REQ-REL-4bea0006 (PERF-05: one session view per window)
+test("opening side tabs reuses the chat's session view instead of reading the session again", async () => {
+  await api.invoke("workbench.open", { folder: "/mock/demo-board" });
+  container = document.createElement("div");
+  document.body.append(container);
+  root = createRoot(container);
+  await act(async () =>
+    root.render(
+      createElement(
+        QueryClientProvider,
+        { client: new QueryClient({ defaultOptions: { queries: { retry: false } } }) },
+        createElement(App),
+      ),
+    ),
+  );
+  await settle();
+  await act(async () => button("Empty session").click());
+  await settle();
+  const invoke = vi.spyOn(api, "invoke");
+  const subscribe = vi.spyOn(api, "subscribe");
+  await act(async () => container.querySelector<HTMLButtonElement>("[data-toggle=right]")?.click());
+  for (const tab of ["Changes", "Artifacts", "Plan"]) {
+    await act(async () => button(tab).click());
+    await settle();
+  }
+  expect(container.querySelector("#panel-plan")).toBeTruthy();
+  expect(invoke.mock.calls.filter(([channel]) => channel === "session.get")).toEqual([]);
+  expect(subscribe).not.toHaveBeenCalled();
+});
 
 async function mountTab(sessionId: string) {
   container = document.createElement("div");

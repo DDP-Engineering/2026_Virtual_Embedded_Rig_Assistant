@@ -1,4 +1,5 @@
-import { existsSync, lstatSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { constants, lstatSync, rmSync } from "node:fs";
+import { copyFile, type FileHandle, mkdtemp, open, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { veraError } from "@vera/shared";
@@ -22,21 +23,54 @@ function safePaths(path: string): void {
   ordinary(dirname(path), true);
   for (const file of [path, `${path}-wal`, `${path}-shm`, `${path}-journal`]) ordinary(file);
 }
-/** SQLite reads a private copy so even WAL recovery/SHM creation cannot alter protected source data. */
-function snapshot(path: string): WorkbenchDatabase {
-  const temporary = mkdtempSync(join(tmpdir(), "vera-storage-"));
+function busy(error: unknown): unknown {
+  const code = (error as NodeJS.ErrnoException).code;
+  // Windows refuses to copy a file another process holds with EBUSY or EPERM.
+  return code === "EBUSY" || code === "EPERM" ? veraError("BUSY") : error;
+}
+/** File identity, size, mtime and the 32-byte header (WAL salts and checkpoint sequence). */
+async function stamp(path: string): Promise<string | undefined> {
+  let file: FileHandle;
+  try {
+    file = await open(path, "r");
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") return undefined;
+    throw error;
+  }
+  try {
+    const { dev, ino, size, mtimeNs } = await file.stat({ bigint: true });
+    const { buffer, bytesRead } = await file.read(Buffer.alloc(32), 0, 32, 0);
+    return `${dev}:${ino}:${size}:${mtimeNs}:${buffer.subarray(0, bytesRead).toString("hex")}`;
+  } finally {
+    await file.close();
+  }
+}
+/** Copies db and WAL; a changed stamp of either during the copy means a concurrent writer. */
+async function capture(path: string, file: string): Promise<boolean> {
+  await rm(`${file}-wal`, { force: true });
+  const before = [await stamp(path), await stamp(`${path}-wal`)];
+  await copyFile(path, file, constants.COPYFILE_FICLONE);
+  if (before[1] !== undefined) {
+    try {
+      await copyFile(`${path}-wal`, `${file}-wal`, constants.COPYFILE_FICLONE);
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === "ENOENT") return false;
+      throw error;
+    }
+  }
+  return before[0] === (await stamp(path)) && before[1] === (await stamp(`${path}-wal`));
+}
+/**
+ * SQLite reads a private copy so even WAL recovery/SHM creation cannot alter protected source data.
+ * The copy is asynchronous, so a large database does not block the main process.
+ */
+async function snapshot(path: string): Promise<WorkbenchDatabase> {
+  const temporary = await mkdtemp(join(tmpdir(), "vera-storage-"));
   let db: Database.Database | undefined;
   try {
     const file = join(temporary, "vera.db");
-    const data = readFileSync(path);
-    const wal = existsSync(`${path}-wal`) ? readFileSync(`${path}-wal`) : undefined;
-    // Concurrent foreign writers can checkpoint while copying. Refuse an unstable capture.
-    const after = readFileSync(path);
-    const afterWal = existsSync(`${path}-wal`) ? readFileSync(`${path}-wal`) : undefined;
-    if (!data.equals(after) || (wal ? !afterWal || !wal.equals(afterWal) : afterWal !== undefined))
-      throw veraError("BUSY");
-    writeFileSync(file, data, { mode: 0o600 });
-    if (wal) writeFileSync(`${file}-wal`, wal, { mode: 0o600 });
+    // A concurrent foreign writer can commit or checkpoint while copying: retry once, then refuse.
+    if (!(await capture(path, file)) && !(await capture(path, file))) throw veraError("BUSY");
     db = new Database(file, { readonly: true, fileMustExist: true, timeout: 5000 });
     db.pragma("foreign_keys=ON");
     db.pragma("busy_timeout=5000");
@@ -52,25 +86,19 @@ function snapshot(path: string): WorkbenchDatabase {
     };
   } catch (error) {
     db?.close();
-    rmSync(temporary, { recursive: true, force: true });
-    throw error;
+    await rm(temporary, { recursive: true, force: true });
+    throw busy(error);
   }
 }
-/** Current-schema validation precedes lock or writable SQLite activity, including for foreign live owners. */
-export async function inspectDatabase(path: string, options: StorageOptions): Promise<void> {
-  safePaths(path);
-  if (!existsSync(path)) return;
-  const handle = snapshot(path);
-  try {
-    checkDatabase(handle.db, options);
-  } finally {
-    handle.close();
-  }
-}
+/**
+ * Read-only opens query a private snapshot. A writable open is for a workbench whose lock the caller
+ * holds: the database is VERA's own and opens in place, with no copy. The current schema is checked
+ * with query_only=ON before any pragma or write, so a refused database is not written.
+ */
 export async function openDb(path: string, options: StorageOptions): Promise<WorkbenchDatabase> {
-  await inspectDatabase(path, options);
+  safePaths(path);
   if (options.readOnly) {
-    const handle = snapshot(path);
+    const handle = await snapshot(path);
     try {
       if (!checkDatabase(handle.db, options)) throw veraError("INVALID");
       return handle;
@@ -82,7 +110,9 @@ export async function openDb(path: string, options: StorageOptions): Promise<Wor
   const db = new Database(path, { timeout: 5000 });
   let keeper: Database.Database | undefined;
   try {
+    db.pragma("query_only=ON");
     const initialized = checkDatabase(db, options);
+    db.pragma("query_only=OFF");
     db.pragma("journal_mode=WAL");
     db.pragma("foreign_keys=ON");
     db.pragma("busy_timeout=5000");

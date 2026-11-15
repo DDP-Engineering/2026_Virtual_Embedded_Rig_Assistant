@@ -35,6 +35,11 @@ the backend; reasoning and live tool-update presentation are transient renderer 
 - SessionList offers workbench-scoped title/message search, localized empty/loading/error results, New/select/rename/confirmed delete/status; Ctrl+N creates when writable.
 - SessionList offers row-scoped native Markdown/JSON export with localized completion/cancel/errors in read-only or writable workbenches. SessionWorkspace composes transcript/composer/meter and Ctrl+F search with localized match count and per-message match text; closing search restores transcript focus. Plain Escape confirms Stop in a writable active turn; global actions yield to modal/handled/composing/repeated keys.
 - useSessionEvents gets snapshot/seq, then subscribes from seq; cancellation detaches obsolete views.
+- App mounts one `SessionViewProvider` (`renderer/hooks/session-view.tsx`) around Shell for the open session while the chat
+  shows; SessionWorkspace and the Changes/Artifacts/Plan tabs read it through `useSessionView`, so a window holds one
+  snapshot, subscription and revision poll per session. Without a provider, or for another session id, `useSessionView`
+  runs its own `useSessionEvents`.
+- Tool arguments/output (transcript ToolDetails and Activity inspector, both via `ToolOutput`) and approval diffs render through `BoundedText` (`session/bounded-text.tsx`): a field with a `truncated` size shows its excerpt and a localized "Show full output (N KB)" button that loads the text once through `session.item.detail`; fields that were not cut show no button. A full diff above 256 KiB renders as plain `<pre>` instead of per-line DiffViewer markup.
 - Composer sends Enter, adds Shift+Enter newline, selects configured catalog models and completes
   caret-local @ paths with arrows/Enter/Tab/Escape. Connected subscription status enables a separate ChatGPT catalog query; sign-out removes those choices. Failed sends retain draft.
 - Attached entries (TASK-2fef1397): App keeps per-session lists in `AttachmentsContext`
@@ -71,7 +76,9 @@ the backend; reasoning and live tool-update presentation are transient renderer 
   announces "Moved to message N" and keeps focus in the lane. One roving Tab stop with arrows,
   Home/End; aria-current marks the last message at or above scrollTop + min(80, V/4). A jump
   suspends auto-follow until the reader returns to the end away from the jump target. Anchors are
-  re-measured once per frame after resize, DOM/disclosure changes or new messages, and after
+  re-measured once per frame after resize, DOM/disclosure changes (child lists and `hidden`/`open`, not
+  text) or new messages; while a turn is active (`live`) at most every 250 ms, and on the next frame
+  when it ends; and after
   font or image load events (wiring covered by component tests; Markdown renders images inert and no
   web fonts are declared today); scrolling reuses them. Escape on a preview or selector is consumed so
   the workspace Stop shortcut yields; the wheel over the open selector scrolls only its list. The navigator is keyed by session; Transcript clears highlight
@@ -107,6 +114,30 @@ the backend; reasoning and live tool-update presentation are transient renderer 
   active Stop uses the real session.stop channel and leaves a usable composer at completion.
 - Markdown skips HTML and renders links/images inert; verified message citations alone enable chips.
 - Tool disclosures expose full arguments and preview/update/summary; errors and estimates are labelled.
+- `Disclosure` mounts its content only while open (transcript, groups, reasoning and ActivityLog); its empty
+  hidden container keeps `aria-controls` resolvable. Collapsed content is not in the DOM, so find-in-page
+  and copy-all skip it.
+- Transcript rows (`MessageRow`, `ToolRow`, `ErrorRow`, `ToolDetails`) and `Markdown` are `React.memo` with
+  shallow props; they rely on `applySessionEvent` keeping untouched items' identity, so a live event re-renders
+  only its row. Every value a row shows must arrive as a prop (or a stable callback); search text is lower-cased
+  once per item object (`searchMatch`).
+- `useSessionEvents` queues live events (`message.delta`, `reasoning.delta`, `tool.update`) and applies them
+  in arrival order once per animation frame; a durable event applies the queue and itself at once. A new
+  snapshot, session switch or unmount drops the queue and cancels the frame. The transcript autoscroll
+  layout effect runs only for commits that change `state`, `reasoning`, `updates` or `detail`.
+- A streaming assistant message renders as blocks (`streamingBlocks`: split at blank lines outside code
+  fences), each through memoized `Markdown`, so only the growing last block is parsed again per frame;
+  `message.done` renders the whole text once.
+- The transcript mounts the newest 40 rows in its first commit and prepends older rows in chunks of 100,
+  one per `requestIdleCallback` (250 ms timeout) inside `startTransition`, until all are mounted; the window
+  start is pinned once rows exist, so later rows never unmount older ones, and resets on session change.
+  A search mounts every row (matches are outlined in all of them). Scrolling within one screen of the oldest
+  mounted row (wheel, Home, the rail) mounts the rest at once; at scroll position 0 the view then shows the
+  first message. While following, prepended chunks keep the end in view; a reader who scrolled up keeps
+  the place through Chromium's native scroll anchoring. Navigator markers appear as their rows mount.
+  Rows do not use `content-visibility`: estimated heights resized rows as they scrolled into view, which
+  made the navigator re-measure every anchor while scrolling and moved the rail off its end (e2e
+  session-navigation and session-scroll).
 - Dialog closure restores connected opener focus with fallback after removed session actions; rename save/cancel restores its action. Named diff/artifact regions support keyboard scrolling; keyboard controls and wrapping rem layout use en/ro/de catalogs.
 
 ## Change map
@@ -121,6 +152,8 @@ the backend; reasoning and live tool-update presentation are transient renderer 
 | Plan task list | plan-tab;mock sessions | plan-tab.test.ts;tests/e2e/plan.spec.ts |
 | Usage/Context | usage-meter, context-tab | usage-meter.test.ts; workspace.test.ts |
 | Conversation scroll rail | transcript.tsx, transcript-scroll.tsx, styles.css | tests/e2e/session-scroll.spec.ts |
+| Transcript render cost (lazy disclosures, memoized rows/Markdown) | disclosure, transcript, markdown, transcript-projection | transcript-render.test.ts; `npm run perf:sessions` |
+| Progressive transcript mount (newest first, idle chunks) | transcript | transcript-progressive.test.ts; `npm run perf:sessions` (`firstScreenMs`) |
 | User-message navigator (lane, groups, preview, jump, follow suspension) | transcript-navigation.ts (pure geometry), transcript-navigator.tsx, transcript.tsx (anchors, navigate, follow), styles.css | transcript-navigation.test.ts; transcript-navigator.test.ts; tests/e2e/session-navigation.spec.ts (VERA_NAV_SCREENSHOT) |
 
 ## Key behaviors

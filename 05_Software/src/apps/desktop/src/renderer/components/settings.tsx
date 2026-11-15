@@ -20,6 +20,9 @@ import { Providers } from "./providers.js";
 import { UpdatesPanel } from "./updates.js";
 import { WebAccessPanel } from "./web-access.js";
 
+/** Settings pages with their own panel; every other page shows the generic section below. */
+const OWN_PANELS = new Set(["providers", "web", "appearance", "language", "updates", "shortcuts"]);
+
 export function useSettingsSections() {
   const { t } = useTranslation();
   return [
@@ -226,15 +229,7 @@ export function Settings({
         />
       )}
       {sections
-        .filter(
-          ({ id }) =>
-            id !== "providers" &&
-            id !== "web" &&
-            id !== "appearance" &&
-            id !== "language" &&
-            id !== "updates" &&
-            id !== "shortcuts",
-        )
+        .filter(({ id }) => !OWN_PANELS.has(id))
         .map(({ id, label }) => (
           <section
             hidden={section !== id}

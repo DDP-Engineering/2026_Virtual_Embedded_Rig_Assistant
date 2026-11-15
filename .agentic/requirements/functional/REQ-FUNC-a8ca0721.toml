@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-a8ca0721"
+
+title = "Bound large session fields sent to the renderer"
+
+status = "active"
+
+requirement = """
+When main sends a session snapshot (session.get) or a session event to the renderer, VERA shall replace each tool preview or approval diff longer than 8 KiB and each tool argument value whose compact JSON is longer than 4 KiB (UTF-8 bytes) with its prefix cut at a character boundary, after scrubbing, and record the full byte size in the item's truncated field, while stored events, export and the agent's context keep the full content.
+"""
+
+verification = "Shared bounded.test.ts cuts a 65,536-byte ASCII preview to 8,192 bytes with truncated.preview 65536, ends a cut before a 3-byte or 4-byte character that straddles the limit, leaves small fields unchanged, and folds bounded live events into the bounded snapshot; main events.test.ts bounds the renderer snapshot after scrubbing (no secret prefix survives) and sends a large tool.done bounded; the tooling test expects the payload fixture snapshot with the 8 KiB excerpt."
+
+affected_paths = ["05_Software/src/libraries/shared/src/bounded.ts", "05_Software/src/libraries/shared/src/session-state.ts", "05_Software/src/libraries/shared/src/events.ts", "05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/apps/desktop/src/main/events.ts", "05_Software/evaluators/eval-performance-harness/fixtures.mjs"]
+
+linked_tests = ["05_Software/src/libraries/shared/src/bounded.test.ts", "05_Software/src/apps/desktop/src/main/events.test.ts", "05_Software/tests/tooling/session-performance.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

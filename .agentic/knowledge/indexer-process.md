@@ -71,6 +71,8 @@ ingest queue, ownership checks and every SQLite write; it reaches the indexer on
 - `REQ-REL-08946818` — three crashes within a minute stop restarts.
 - `REQ-UX-f6c347b8` — Docs shows stopped indexing with Restart.
 - `REQ-REL-4761ac1e` — close/switch cancels pending work and releases embeddings without waiting.
+- `REQ-NFR-f3e0377c` — main warms a workbench's embedding worker with one `embed` on the first message when the
+  database holds vectors of the current model; the first rank then skips the model load.
 - `REQ-FUNC-5e627a51` — keyword fallback when the indexer cannot rank.
 - `REQ-REL-cb8c082d` — a document that crashed the indexer twice is failed until it changes.
 

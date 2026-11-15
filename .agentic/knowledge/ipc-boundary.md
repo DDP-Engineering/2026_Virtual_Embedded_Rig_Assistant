@@ -36,6 +36,8 @@ downloads.list/open are strict workbench-scoped channels; open takes only a UUID
 
 - session.create accepts optional boolean reuseEmpty for the New session command. Response remains SessionSummary; main validates current workbenchId before forwarding the opt-in flag. Core owns transactional reuse and mock mirrors it. Existing callers omitting the flag retain explicit creation.
 
+- session.item.detail takes sessionId, itemId (1-200 chars) and field preview/args/diff and returns `{ text }`: the full text of one field that session.get and live session events carry as an excerpt (`truncated` sizes). Main scrubs the text; core reads only that item's stored event and answers NOT_FOUND for an unknown item, a field the item lacks, or a session outside the open workbench.
+
 - session.reasoning.get takes sessionId; session.reasoning.set takes sessionId/modelRef/reasoning (nullable for Default). Both return strict modelRef/options/selected metadata. Main delegates to the owned session, scrubs returned strings, and rejects credential-bearing setters. Preload derives channel authorization from shared contracts; mock metadata/save behavior mirrors current provider profiles and session events.
 
 - session.archive.set requires an exact sessionId and boolean archived, rejects
@@ -113,6 +115,9 @@ AppEvents use shared updates.ts; [updates](updates.md) owns their lifecycle/capa
 - Only the current live own WebContents main frame at the configured exact renderer URL dispatches.
   Foreign, missing or detached frames return DENIED.
 - Unknown/prototype channel names return NOT_FOUND; invalid requests return INVALID before dispatch.
+- Authorized, valid invokes and session subscriptions wait for the settled credential load (`ready`) before
+  dispatch, so responses are redacted with every stored secret (REQ-SEC-613bf976). Unauthorized calls are denied
+  without waiting.
 - Invalid responses and unknown handler failures return logged INTERNAL; logs carry channel/category.
 - Shared's sole runtime dependency is zod; Vite resolves the source entrypoint and sandbox preload bundles the shared schemas as CommonJS.
 - Events validate topic/id/seq/payload and callbacks receive only event data.

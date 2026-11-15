@@ -4,17 +4,16 @@ import { veraError } from "@vera/shared";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../../api/index.js";
-import { useSessionEvents } from "../../hooks/use-session-events.js";
+import { useSessionView } from "../../hooks/session-view.js";
 import { ErrorMessage } from "../error-message.js";
 import { DiffViewer } from "./diff-viewer.js";
 
-function unchanged() {}
 export function ChangesTab({ workbenchId, sessionId }: { workbenchId: string; sessionId: string }) {
   return <ChangesView key={`${workbenchId}/${sessionId}`} workbenchId={workbenchId} sessionId={sessionId} />;
 }
 function ChangesView({ workbenchId, sessionId }: { workbenchId: string; sessionId: string }) {
   const { t } = useTranslation();
-  const { view, error, retry } = useSessionEvents(sessionId, unchanged);
+  const { view, error, retry } = useSessionView(sessionId);
   const [selected, setSelected] = useState<number>();
   const [revealError, setRevealError] = useState<unknown>();
   const [revealing, setRevealing] = useState(false);

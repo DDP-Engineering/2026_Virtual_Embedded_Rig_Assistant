@@ -486,7 +486,8 @@ it("database lifetime follows owned open, same-folder reopen, close and failed r
   await h.service.close();
   expect(first.open).toBe(false);
 });
-it("a database in another format is refused before lock/recents changes and failed storage switch retains previous", async () => {
+// REQ-REL-e939f88a
+it("a database in another format is refused before writes, releases the lock it took and retains previous", async () => {
   const h = await harness();
   await h.service.create(h.folder, "Board");
   const first = h.service.getDatabase();
@@ -507,11 +508,12 @@ it("a database in another format is refused before lock/recents changes and fail
     JSON.stringify({ pid: 999999, app: "newer", since: "now", token: "untouched" }),
   );
   const original = await readFile(file);
-  const lock = await readFile(join(second, ".vera/lock"));
   const settings = await readFile(h.paths.settings);
   await expect(h.service.open(second)).rejects.toMatchObject({ code: "INVALID" });
   expect(await readFile(file)).toEqual(original);
-  expect(await readFile(join(second, ".vera/lock"))).toEqual(lock);
+  // The dead owner's lock was taken over for the check, then released.
+  expect(existsSync(join(second, ".vera/lock"))).toBe(false);
+  expect(existsSync(`${file}-wal`)).toBe(false);
   expect(await readFile(h.paths.settings)).toEqual(settings);
   expect(h.service.getDatabase()).toBe(first);
   await h.service.close();

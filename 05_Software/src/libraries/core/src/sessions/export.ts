@@ -1,5 +1,5 @@
 // REQ-FUNC-70479d66
-import { applySessionEvent, type ChangeDetail, emptySessionState, type SessionExport } from "@vera/shared";
+import { type ChangeDetail, foldSessionEvents, type SessionExport } from "@vera/shared";
 
 /** Literal fences retain transcript bytes while containing links/HTML/fence injection. */
 function block(text: string, language = "text"): string {
@@ -18,7 +18,7 @@ const refText = (text: string) => {
 };
 
 export function buildSessionMarkdown(data: SessionExport, changes: ChangeDetail[]): string {
-  const state = data.events.map((r) => r.event).reduce(applySessionEvent, emptySessionState());
+  const state = foldSessionEvents(data.events.map((r) => r.event));
   const out = [
     `# ${heading(data.session.title || "Untitled session")}`,
     "",

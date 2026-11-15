@@ -1,5 +1,9 @@
 // REQ-UX-4bea0002
 import { type ReactNode, useId, useState } from "react";
+/**
+ * A toggle with collapsible content. Children are mounted only while open, so collapsed tool
+ * output costs nothing (PERF-03); the empty hidden container keeps `aria-controls` resolvable.
+ */
 export function Disclosure({
   title,
   children,
@@ -25,7 +29,7 @@ export function Disclosure({
         {title}
       </button>
       <div id={id} hidden={!open}>
-        {children}
+        {open && children}
       </div>
     </section>
   );

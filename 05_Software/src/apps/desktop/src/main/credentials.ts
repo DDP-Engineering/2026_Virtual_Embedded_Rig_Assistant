@@ -289,7 +289,8 @@ export class CredentialFile implements CredentialStore {
   }
   async close(): Promise<void> {
     this.closed = true;
-    await this.loading;
+    // A file that failed to load is reported by its operations; closing still lets shutdown go on.
+    await this.loading?.catch(() => {});
     await this.queue;
   }
 }

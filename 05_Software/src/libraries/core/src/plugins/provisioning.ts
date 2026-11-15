@@ -7,12 +7,14 @@ import {
   mkdir,
   open,
   readdir,
+  readFile,
   readlink,
   realpath,
   rename,
   rm,
   stat,
   unlink,
+  writeFile,
 } from "node:fs/promises";
 import { basename, dirname, join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
@@ -74,6 +76,12 @@ const DETAIL = 2000;
 const MATCH_MS = 100;
 const INSTALL_MS = 15 * 60_000;
 const PROBE_MS = 30_000;
+/** Found programs are probed only when their file changed; a hung one must not hold its plugin's status. */
+const FOUND_PROBE_MS = 8_000;
+/** Version probes running at once, across every provisioner of the process. */
+const PROBE_LIMIT = 4;
+/** Versions of found programs, by invocation, valid while the executable's file stamp is unchanged. */
+const PROBES_FILE = "probes.json";
 // Vendor activation launchers may start PowerShell and initialize an SDK before printing a version.
 const ACTIVATION_PROBE_MS = 120_000;
 
@@ -89,6 +97,38 @@ interface Executed {
   head: string;
   /** The last 2 000 characters of output. */
   tail: string;
+}
+interface StoredProbe {
+  stamp: string;
+  version: string;
+  probedAt: string;
+}
+/** Runs at most `size` tasks at once, the others in arrival order. */
+class Limiter {
+  private active = 0;
+  private readonly waiting: (() => void)[] = [];
+  constructor(private readonly size: number) {}
+  async run<T>(task: () => Promise<T>): Promise<T> {
+    if (this.active < this.size) this.active++;
+    else await new Promise<void>((resolve) => this.waiting.push(resolve));
+    try {
+      return await task();
+    } finally {
+      const next = this.waiting.shift();
+      if (next) next();
+      else this.active--;
+    }
+  }
+}
+const probeLimit = new Limiter(PROBE_LIMIT);
+/** Writes of the probes file, one at a time in this process. */
+let probeWrites: Promise<unknown> = Promise.resolve();
+/** The probes file's entries by file path, loaded once per process. */
+const storedByFile = new Map<string, Promise<Record<string, StoredProbe>>>();
+/** Device, file identity (inode, NTFS file index), size and modification time; stat follows links. */
+async function fileStamp(path: string): Promise<string | undefined> {
+  const info = await stat(path, { bigint: true }).catch(() => undefined);
+  return info?.isFile() ? [info.dev, info.ino, info.size, info.mtimeNs].join(":") : undefined;
 }
 const kindOf: (program: PluginProgram) => Kind = pluginProgramKind;
 const isFile = async (path: string) => (await stat(path).catch(() => undefined))?.isFile() === true;
@@ -262,11 +302,56 @@ export class Provisioner implements ProgramResolver {
     return run;
   }
 
-  /** Forgets every cached resolution, for example after a plugin is enabled or reinstalled. */
+  /**
+   * Forgets the cached resolutions of one plugin (all without an id), for example after it is enabled or
+   * reinstalled. Stored versions of found programs stay: they are checked against the file instead.
+   */
   private generation = 0;
-  invalidate(): void {
+  invalidate(pluginId?: string): void {
     this.generation++;
-    this.cache.clear();
+    if (pluginId === undefined) this.cache.clear();
+    else for (const key of this.cache.keys()) if (key.split("\0")[1] === pluginId) this.cache.delete(key);
+  }
+  private get probesFile() {
+    return join(this.options.root, PROBES_FILE);
+  }
+  /** One map per file for every provisioner of the process, so no instance writes back an older copy. */
+  private storedProbes(): Promise<Record<string, StoredProbe>> {
+    const file = this.probesFile;
+    let stored = storedByFile.get(file);
+    if (!stored) {
+      stored = readFile(file, "utf8")
+        .then((text) => {
+          const parsed = JSON.parse(text) as { format?: unknown; probes?: unknown };
+          return parsed.format === 1 && typeof parsed.probes === "object" && parsed.probes !== null
+            ? (parsed.probes as Record<string, StoredProbe>)
+            : {};
+        })
+        .catch(() => ({}));
+      storedByFile.set(file, stored);
+    }
+    return stored;
+  }
+  /** Stores or removes one probed version; the file is a cache, so a failed write only costs a probe. */
+  private async remember(key: string, entry: StoredProbe | undefined): Promise<void> {
+    const probes = await this.storedProbes();
+    if (entry) probes[key] = entry;
+    else if (Object.hasOwn(probes, key)) delete probes[key];
+    else return;
+    const file = this.probesFile;
+    const text = JSON.stringify({ format: 1, probes });
+    const write = probeWrites.then(async () => {
+      await mkdir(dirname(file), { recursive: true });
+      const temporary = `${file}.${randomUUID()}.tmp`;
+      try {
+        await writeFile(temporary, text);
+        await rename(temporary, file);
+      } finally {
+        await rm(temporary, { force: true });
+      }
+    });
+    probeWrites = write.catch(() => {});
+    await probeWrites;
   }
 
   async resolve(
@@ -320,7 +405,7 @@ export class Provisioner implements ProgramResolver {
         const plugin = await this.options.store.load(id);
         if (plugin.record.sha256 !== identity.record.sha256 || plugin.runtimeKey !== identity.runtimeKey)
           throw veraError("CONFLICT");
-        this.invalidate();
+        this.invalidate(id);
         // Populate every fresh cache entry before yielding, so a passive read cannot seed a later
         // recorded program with its old version while this check awaits an earlier probe.
         await Promise.all(
@@ -432,7 +517,7 @@ export class Provisioner implements ProgramResolver {
             });
         }
       } finally {
-        this.invalidate();
+        this.invalidate(id);
       }
       const current = await this.options.store.load(id);
       if (current.record.sha256 !== packageSha) throw veraError("CONFLICT");
@@ -514,7 +599,7 @@ export class Provisioner implements ProgramResolver {
       outer.throwIfAborted();
       const { store } = this.options;
       const plugin = await store.load(id);
-      this.invalidate();
+      this.invalidate(id);
       await this.sweepStaging();
       const failures = new Map<string, PluginProgramStatus>();
       const observed = new Map<string, Inspection | undefined>();
@@ -565,7 +650,7 @@ export class Provisioner implements ProgramResolver {
           }
         }
       } finally {
-        this.invalidate();
+        this.invalidate(id);
       }
       const current = await store.load(id);
       if (current.record.sha256 !== plugin.record.sha256 || current.runtimeKey !== plugin.runtimeKey)
@@ -583,13 +668,16 @@ export class Provisioner implements ProgramResolver {
     signal?: AbortSignal,
     fresh = false,
   ): Promise<PluginProgramStatus[]> {
-    const statuses: PluginProgramStatus[] = [];
-    for (const name of Object.keys(plugin.manifest.programs).sort()) {
-      await plugin.verify?.();
-      const status = overrides.get(name) ?? (await this.inspect(plugin, name, signal, fresh))?.status;
-      if (status) statuses.push(status);
-    }
-    return statuses;
+    await plugin.verify?.();
+    // Concurrent inspections; the shared limiter bounds the probes they start.
+    const statuses = await Promise.all(
+      Object.keys(plugin.manifest.programs)
+        .sort()
+        .map(
+          async (name) => overrides.get(name) ?? (await this.inspect(plugin, name, signal, fresh))?.status,
+        ),
+    );
+    return statuses.filter((status): status is PluginProgramStatus => status !== undefined);
   }
 
   private inspect(
@@ -648,7 +736,7 @@ export class Provisioner implements ProgramResolver {
     authority?: Provisioner,
   ): void {
     // A completed, actually probed install supersedes older pending runtime checks.
-    authority?.invalidate();
+    authority?.invalidate(plugin.manifest.id);
     for (const [name, inspection] of observed) {
       this.observe(plugin, name, inspection);
       authority?.observe(plugin, name, inspection);
@@ -721,7 +809,10 @@ export class Provisioner implements ProgramResolver {
               }
             : {}),
         };
-        const measured = await this.probe(resolved, program, signal, plugin.folder, plugin.verify);
+        const measured = await this.probe(resolved, program, signal, plugin.folder, plugin.verify, {
+          found: true,
+          fresh,
+        });
         const foundProgram = this.versionCheck(
           name,
           kind,
@@ -917,38 +1008,58 @@ export class Provisioner implements ProgramResolver {
     }
   }
 
-  /** The version a program prints for its version arguments; any exit code counts, a timeout does not. */
+  /**
+   * The version a program prints for its version arguments; any exit code counts, a timeout does not. A
+   * found program's version is stored and reused, unless `fresh`, while its file stamp is unchanged.
+   */
   private async probe(
     resolved: ResolvedProgram,
     program: PluginProgram,
     signal?: AbortSignal,
     pluginDir = "",
     verify?: () => Promise<void>,
+    { found = false, fresh = false } = {},
   ): Promise<{ version?: string; detail?: string }> {
     if (program.file) {
       // Never run: the version is in the downloaded file's name.
       const version = boundedMatch(program.version.match, basename(resolved.executable));
       return version ? { version } : { detail: "The file name does not show the version." };
     }
-    const result = await this.execute(
-      resolved.executable,
-      programInvocation(resolved, [
-        ...(resolved.launcher
-          ? (program.prefix ?? []).map((arg) => arg.replaceAll(PLUGIN_DIR, pluginDir))
-          : []),
-        ...program.version.args,
-      ]),
-      resolved.env ?? {},
-      this.options.timeouts?.probeMs ?? (resolved.launcher ? ACTIVATION_PROBE_MS : PROBE_MS),
-      signal,
-      verify,
+    const args = programInvocation(resolved, [
+      ...(resolved.launcher
+        ? (program.prefix ?? []).map((arg) => arg.replaceAll(PLUGIN_DIR, pluginDir))
+        : []),
+      ...program.version.args,
+    ]);
+    // A launcher's version follows the SDK it activates (for example `eim select`), not its own file: never stored.
+    const key =
+      found && !resolved.launcher
+        ? JSON.stringify([resolved.executable, args, program.version.match])
+        : undefined;
+    const stamp = key ? await fileStamp(resolved.executable) : undefined;
+    if (key && stamp && !fresh) {
+      const stored = (await this.storedProbes())[key];
+      if (stored?.stamp === stamp && typeof stored.version === "string") return { version: stored.version };
+    }
+    const timeoutMs =
+      this.options.timeouts?.probeMs ??
+      (resolved.launcher ? ACTIVATION_PROBE_MS : found ? FOUND_PROBE_MS : PROBE_MS);
+    const result = await probeLimit.run(() =>
+      this.execute(resolved.executable, args, resolved.env ?? {}, timeoutMs, signal, verify),
     );
     const version =
       result.exit.error || result.timedOut ? undefined : boundedMatch(program.version.match, result.head);
+    if (key)
+      await this.remember(
+        key,
+        version && stamp ? { stamp, version, probedAt: new Date().toISOString() } : undefined,
+      );
     if (version) return { version };
     const reason =
       result.exit.error ??
-      (result.timedOut ? "Version check timed out." : "No matching version was printed.");
+      (result.timedOut
+        ? `Version check timed out after ${Math.round(timeoutMs / 1000)} s.`
+        : "No matching version was printed.");
     return { detail: `${reason}\n${result.tail}`.slice(-DETAIL) };
   }
 

@@ -2,7 +2,14 @@ import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import type { Message } from "@earendil-works/pi-ai";
-import { applySessionEvent, emptySessionState, type SessionEvent } from "@vera/shared";
+import {
+  applySessionEvent,
+  emptySessionState,
+  foldSessionEvents,
+  type SessionEvent,
+  sessionEventSchema,
+  sessionStateSchema,
+} from "@vera/shared";
 import { afterEach, expect, it, vi } from "vitest";
 import { z } from "zod";
 import * as citations from "../agent/citations.js";
@@ -26,6 +33,73 @@ it("reports the durable cursor without projecting the transcript", async () => {
   expect(() => service.revision("ses_01JB8Z6Q4M7N2K5R9T3V8X1Y0C")).toThrow(
     expect.objectContaining({ code: "NOT_FOUND" }),
   );
+});
+// REQ-FUNC-5e2438d5 REQ-FUNC-2b462360 (PERF-05: stored events are trusted after write-time validation)
+it("reads a session without re-validating each stored event and leaves corrupt rows to the response check", async () => {
+  const { service, handle } = await setup();
+  const s = service.create();
+  const hub = new core.SessionHub(handle.db, () => "2026-01-01T00:00:00.000Z");
+  hub.emit(s.id, { type: "message.user", messageId: "u", text: "Read the board" });
+  hub.emit(s.id, { type: "turn.started", turnId: "t" });
+  hub.emit(s.id, { type: "tool.started", callId: "c", name: "read", args: { path: "board.txt" } });
+  hub.emit(s.id, {
+    type: "tool.done",
+    callId: "c",
+    ok: true,
+    summary: "2 lines",
+    preview: "Board uses 3.3 V.",
+    durationMs: 4,
+  });
+  hub.emit(s.id, { type: "todo.updated", items: [{ text: "Check rails", status: "done" }] });
+  hub.emit(s.id, { type: "message.done", messageId: "a", text: "3.3 V", citations: [] });
+  hub.emit(s.id, { type: "turn.done", turnId: "t", stopReason: "end" });
+  const rows = new core.EventsRepository(handle.db).list(s.id);
+  const validated = foldSessionEvents(rows.map((r) => sessionEventSchema.parse(JSON.parse(r.payload_json))));
+  const parse = vi.spyOn(sessionEventSchema, "parse");
+  const read = service.get(s.id);
+  expect(parse).not.toHaveBeenCalled();
+  parse.mockRestore();
+  expect(read).toEqual({ snapshot: validated, seq: rows.at(-1)?.seq });
+  expect(sessionStateSchema.safeParse(read.snapshot).success).toBe(true);
+  // A manual edit that breaks the state is caught by the router's response validation (INTERNAL).
+  const update = handle.db.prepare("UPDATE events SET payload_json=? WHERE session_id=? AND seq=?");
+  update.run(JSON.stringify({ type: "session.updated", title: 42 }), s.id, rows.at(-1)?.seq);
+  expect(sessionStateSchema.safeParse(service.get(s.id).snapshot).success).toBe(false);
+  // A row that is not JSON makes the handler throw, which the router also maps to INTERNAL.
+  update.run("{", s.id, rows.at(-1)?.seq);
+  expect(() => service.get(s.id)).toThrow(SyntaxError);
+});
+// REQ-FUNC-acaeb296 REQ-SEC-bde59b0b
+it("returns one item's full stored field and refuses items, fields and sessions it does not have", async () => {
+  const { service, handle } = await setup();
+  const s = service.create();
+  const hub = new core.SessionHub(handle.db, () => "2026-01-01T00:00:00.000Z");
+  const preview = "y".repeat(65536);
+  const args = { path: "board.txt", body: "x".repeat(5000) };
+  hub.emit(s.id, { type: "turn.started", turnId: "t" });
+  hub.emit(s.id, { type: "tool.started", callId: "big", name: "read", args });
+  hub.emit(s.id, { type: "tool.done", callId: "big", ok: true, summary: "s", preview, durationMs: 1 });
+  hub.emit(s.id, { type: "tool.started", callId: "bare", name: "list", args: {} });
+  hub.emit(s.id, { type: "tool.done", callId: "bare", ok: true, summary: "s", durationMs: 1 });
+  hub.emit(s.id, {
+    type: "approval.requested",
+    approvalId: "apv_01JB8Z6Q4M7N2K5R9T3V8X1Y0C",
+    callId: "big",
+    requestSha256: "0".repeat(64),
+    tool: "write",
+    path: "a.txt",
+    diff: "+".repeat(9000),
+    bytes: 9000,
+  });
+  expect(service.itemDetail(s.id, "big", "preview")).toBe(preview);
+  expect(service.itemDetail(s.id, "big", "args")).toBe(JSON.stringify(args, null, 2));
+  expect(service.itemDetail(s.id, "apv_01JB8Z6Q4M7N2K5R9T3V8X1Y0C", "diff")).toBe("+".repeat(9000));
+  const notFound = expect.objectContaining({ code: "NOT_FOUND" });
+  expect(() => service.itemDetail(s.id, "missing", "preview")).toThrow(notFound);
+  expect(() => service.itemDetail(s.id, "bare", "preview")).toThrow(notFound);
+  expect(() => service.itemDetail(s.id, "big", "diff")).toThrow(notFound);
+  const other = await setup();
+  expect(() => other.service.itemDetail(s.id, "big", "preview")).toThrow(notFound);
 });
 // REQ-FUNC-9a6da7bb
 it("reuses a renamed unused session without changing its configuration and serializes repeated reuse requests", async () => {

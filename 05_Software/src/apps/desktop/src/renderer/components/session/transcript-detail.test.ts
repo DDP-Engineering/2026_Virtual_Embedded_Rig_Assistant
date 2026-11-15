@@ -119,6 +119,9 @@ it("switches levels reversibly without mutating history and keeps complete Activ
     root.render(createElement(ActivityLog, { state, reasoning: { turn1: "Live reasoning" }, updates: {} })),
   );
   expect(container.querySelectorAll('[data-activity-kind="tool"]')).toHaveLength(3);
+  // Disclosure content mounts only when opened (PERF-03).
+  for (const toggle of container.querySelectorAll<HTMLButtonElement>(".disclosure-toggle"))
+    await act(async () => toggle.click());
   expect(container.textContent).toContain("Live reasoning");
   expect(JSON.stringify(state)).toBe(before);
 });
@@ -147,11 +150,14 @@ it.each(["minimal", "normal", "verbose"] as const)(
     state.turns.push({ turnId: "turn2", steps: 2, stopReason: "aborted" });
     await render(state, detail, retry);
     expect(container.querySelector("[data-approval-card]")?.closest("[hidden]")).toBeNull();
+    // Collapsed details are not mounted (PERF-03): the failed row is found by its title.
     const failed = [...container.querySelectorAll('[data-tool-row="read"]')].find((n) =>
-      n.textContent?.includes("output-failed"),
+      n.textContent?.includes("failed.txt"),
     );
     expect(failed).toBeDefined();
     expect(failed?.closest("[data-tool-group]")).toBeNull();
+    await act(async () => userEvent.setup().click(failed?.querySelector("button") as HTMLButtonElement));
+    expect(failed?.textContent).toContain("output-failed");
     expect(container.textContent).toContain("Stopped");
     const buttons = [...container.querySelectorAll<HTMLButtonElement>("button")];
     await act(async () =>
@@ -213,4 +219,27 @@ it("normal never groups unknown or distinct turns and separates errors", async (
   state.items.push(tool("one", null), tool("two", null), tool("three", "t1"), tool("four", "t2"));
   await render(state, "normal");
   expect(container.querySelectorAll("[data-tool-group]")).toHaveLength(4);
+});
+// REQ-UX-4f1c85d5
+it("shows a cut tool output as an excerpt and loads the full text on request", async () => {
+  const full = "y".repeat(65536);
+  vi.mocked(api.invoke).mockResolvedValue({ text: full });
+  const state = fixture();
+  state.items[1] = { ...tool("one"), preview: full.slice(0, 8192), truncated: { preview: 65536 } };
+  await render(state, "verbose");
+  for (const toggle of container.querySelectorAll<HTMLButtonElement>(".disclosure-toggle"))
+    await act(async () => toggle.click());
+  const buttons = () => [...container.querySelectorAll<HTMLButtonElement>("button[data-show-full]")];
+  // Only the cut field gets a button; small previews and arguments do not.
+  expect(buttons().map((b) => b.textContent)).toEqual(["Show full output (64 KB)"]);
+  expect(container.textContent).toContain(full.slice(0, 8192));
+  expect(container.textContent).not.toContain(full);
+  await act(async () => buttons()[0]?.click());
+  expect(api.invoke).toHaveBeenCalledExactlyOnceWith("session.item.detail", {
+    sessionId: "session",
+    itemId: "one",
+    field: "preview",
+  });
+  expect(container.textContent).toContain(full);
+  expect(buttons()).toHaveLength(0);
 });

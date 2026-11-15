@@ -45,7 +45,9 @@ coordinates clamp to content bounds. Browser mock acknowledges the native-only o
 
 - Identity and userData precede the instance lock; the losing process exits before creating a window.
 - Portable/explicit override directories are created before Electron setPath, readiness and the
-  instance lock; real creation failures propagate. Settings load before the renderer. Shutdown drains accepted
+  instance lock; real creation failures propagate. At ready, the credential load starts and settings and the
+  saved window state load concurrently; the window is created after settings and window state, without waiting
+  for credentials. A failed credential load logs `credentials.load.failed` and does not stop startup. Shutdown drains accepted
   workbench ownership and settings before window close, then flushes JSON logs after close.
 - Window creation keeps context isolation, Chromium sandbox and web security enabled,
   Node integration disabled, and a minimum size of 1024 by 640.
@@ -80,6 +82,13 @@ coordinates clamp to content bounds. Browser mock acknowledges the native-only o
 - `REQ-REL-9e5c0e0e` — a second process reuses the first instance.
 - `REQ-DATA-6c54a48f` — safe normal bounds survive restart.
 - `REQ-TEST-2308561a` — build-time test identity is fixed in emitted code.
+- `REQ-NFR-54822de2` — concurrent startup loads; the window does not wait for credentials.
+- `REQ-REL-ff1b5e56` — a credential file that fails to load still opens the window.
+- `REQ-UX-86acd705` — the window background is the theme's `--background` (#101316 / #f5f5f3) from creation
+  and on theme change (`window-chrome.ts` `windowBackground`).
+- `REQ-NFR-9b03e401` — the production renderer is minified (`build.minify: true`; electron-vite defaults it off).
+- `REQ-NFR-f3e0377c` — the first `session.send` of an open workbench with vectors of the current model embeds one
+  short text in the indexer to load the model (`embedding-warmup.ts`); workbench create/open/close cancels it.
 
 ## Architecture
 
@@ -121,6 +130,10 @@ Paths below are relative to `05_Software/src/apps/desktop/` unless qualified.
 - `src/main/index.ts` — lifecycle, lock, window creation and close ordering.
 - `src/main/security.ts`, `content-policy.ts` — confined asset responses and denial handlers.
 - `src/main/window-state.ts`, `window-state.test.ts` — storage and recovery semantics.
+- `src/main/window-chrome.ts` — title bar overlay, window background and native role menus.
+- `src/main/embedding-warmup.ts`, `embedding-warmup.test.ts` — first-message embedding warm-up.
+- `05_Software/tests/e2e/startup.spec.ts` — failed credential load, dark background and opt-in startup timing
+  (`VERA_STARTUP_TIMING=1`).
 - `src/main/build-mode.ts` — compile-time identity export.
 - `src/preload/index.ts`, `bridge.ts` — sandbox assertion and validated page-world bridge.
 - `src/renderer/index.html`, `main.tsx`, `App.tsx`, `styles.css` — document, React entry and foundation shell; [renderer foundation](renderer-foundation.md) routes view files.

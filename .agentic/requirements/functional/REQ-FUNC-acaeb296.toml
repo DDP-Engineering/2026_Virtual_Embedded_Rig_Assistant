@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-acaeb296"
+
+title = "Return one session item's full detail"
+
+status = "active"
+
+requirement = """
+When the renderer requests session.item.detail with a session id, an item id and a field (preview, args or diff), main shall return the scrubbed full text of that field read from that item's stored event only.
+"""
+
+verification = "Core service.test.ts: itemDetail returns the full 64 KiB preview, the pretty-printed args and the full approval diff from the stored events; shared bounded.test.ts validates the channel request and response shapes. Inspection: the main handler passes the text through credentials.scrub."
+
+affected_paths = ["05_Software/src/libraries/shared/src/ipc.ts", "05_Software/src/libraries/shared/src/bounded.ts", "05_Software/src/libraries/core/src/sessions/hub.ts", "05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/apps/desktop/src/renderer/mocks/sessions.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/sessions/service.test.ts", "05_Software/src/libraries/shared/src/bounded.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-14
+updated = 2026-11-14

@@ -23,6 +23,11 @@ export function titleBarOverlay(dark: boolean) {
   };
 }
 
+/** The renderer's `--background` token (styles/themes.css), painted before the first frame. */
+export function windowBackground(dark: boolean): string {
+  return dark ? "#101316" : "#f5f5f3";
+}
+
 /** Native role menus expose fixed host commands, never renderer-supplied templates. */
 export function popupWindowMenu(window: BrowserWindow | undefined, request: Request<"window.menu">) {
   if (!window || window.isDestroyed()) throw veraError("NOT_FOUND");

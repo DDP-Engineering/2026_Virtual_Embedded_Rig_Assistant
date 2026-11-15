@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-NFR-54822de2"
+
+title = "Load startup state concurrently and open the window without awaiting credentials"
+
+status = "active"
+
+requirement = """
+When the desktop app starts, VERA shall start loading the settings, the credential file and the saved window state at the same time, and shall create the window once the settings and window state are loaded, without waiting for the credential file.
+"""
+
+verification = "Inspection of the startup sequence in index.ts, plus the opt-in startup e2e: launching with a credential file that fails to load still shows the window, and the launch-to-visible time is recorded."
+
+affected_paths = ["05_Software/src/apps/desktop/src/main/index.ts"]
+
+linked_tests = ["05_Software/tests/e2e/startup.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"
+rationale = "PERF-11 (#259)."
+
+created = 2026-11-14
+updated = 2026-11-14

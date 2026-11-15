@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-REL-3691e000"
+title = "Time out a found program's version probe after a few seconds"
+status = "active"
+requirement = "If the version probe of a found program that is not a launcher runs longer than 8 seconds, then the provisioner shall stop the probe's process tree and report that program unavailable with a detail saying the version check timed out, while the other programs complete."
+verification = "Unit test with a fake process host: one found program never exits and another answers; the listing resolves with the hanging program unavailable (problem version, detail names the timeout) after the 8 s timeout, its process tree is killed, and the other program is ready."
+affected_paths = ["05_Software/src/libraries/core/src/plugins/provisioning.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/plugins/provisioning.test.ts"]
+spec = ""
+priority = "normal"
+created = 2026-11-14
+updated = 2026-11-14

@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-NFR-f3e0377c"
+
+title = "Warm the embedding model on the first message of an indexed workbench"
+
+status = "active"
+
+requirement = """
+When the first message of an open workbench is sent and its database holds vectors of the current embedding model, VERA shall embed one short text for that workbench in the background once, and shall cancel that warm-up when the workbench closes or another opens.
+"""
+
+verification = "Unit tests: the first message with vectors embeds once and a second message does not embed again; no vectors means no embed; closing aborts the warm-up signal and a reopen warms again; a failed warm-up is ignored. Opt-in timing compares the first and second embedding call."
+
+affected_paths = ["05_Software/src/apps/desktop/src/main/embedding-warmup.ts", "05_Software/src/apps/desktop/src/main/index.ts"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/main/embedding-warmup.test.ts"]
+
+
+spec = ""
+
+priority = "normal"
+rationale = "PERF-11 (#259)."
+
+created = 2026-11-14
+updated = 2026-11-14

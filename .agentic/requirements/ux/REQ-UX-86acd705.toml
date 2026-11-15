@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-UX-86acd705"
+
+title = "Paint the window background in the active theme colour"
+
+status = "active"
+
+requirement = """
+When the main window is created or the active theme changes, VERA shall set the window background to the app background colour of that theme, #101316 for dark and #f5f5f3 for light.
+"""
+
+verification = "Unit test of windowBackground for both themes; startup e2e reads the created window's background colour for the saved dark theme."
+
+affected_paths = ["05_Software/src/apps/desktop/src/main/window-chrome.ts", "05_Software/src/apps/desktop/src/main/index.ts"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/main/window-chrome.test.ts", "05_Software/tests/e2e/startup.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"
+rationale = "PERF-11 (#259)."
+
+created = 2026-11-14
+updated = 2026-11-14
