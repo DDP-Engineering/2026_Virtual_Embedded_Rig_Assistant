@@ -1,6 +1,6 @@
 import type { AppInfo } from "@vera/shared";
-import { Activity } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import ddpLogo from "../assets/ddp-logo-dark.png";
 import { Metadata } from "./metadata.js";
 
 /** Third-party runtime libraries of the desktop app, read from package-lock.json at build time. */
@@ -27,7 +27,7 @@ export function About({ info }: { info: AppInfo }) {
   return (
     <div className="about" data-about>
       <header className="about-hero">
-        <Activity aria-hidden="true" />
+        <img className="about-logo" src={ddpLogo} alt="DDP Engineering" />
         <div>
           <p className="about-name">{info.name}</p>
           <p className="about-full-name">{t("about.fullName")}</p>

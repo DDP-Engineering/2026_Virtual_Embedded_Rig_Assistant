@@ -21,6 +21,8 @@ import {
 } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../api/index.js";
+import ddpLogoDark from "../assets/ddp-logo-dark.png";
+import ddpLogoLight from "../assets/ddp-logo-light.png";
 import { defaultLayout, type Layout, readLayout, saveLayout } from "../lib/layout.js";
 import { ShortcutContext, shortcutCommand } from "../lib/shortcuts.js";
 
@@ -395,6 +397,11 @@ export function Shell({
             <SettingsIcon aria-hidden="true" />
             <span className="nav-label">{t("nav.settings")}</span>
           </button>
+          {/* The maker's mark: the color logo on the light theme, the pale one on the dark theme. */}
+          <div className="sidebar-maker" data-sidebar-maker hidden={layout.sidebarCollapsed}>
+            <img className="maker-logo maker-logo-light" src={ddpLogoLight} alt="DDP Engineering" />
+            <img className="maker-logo maker-logo-dark" src={ddpLogoDark} alt="" aria-hidden="true" />
+          </div>
           {!layout.sidebarCollapsed && separator("sidebar")}
         </aside>
         <main id="main-content" tabIndex={-1}>

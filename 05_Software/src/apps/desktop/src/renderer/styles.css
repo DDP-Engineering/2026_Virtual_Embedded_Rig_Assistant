@@ -3068,18 +3068,19 @@ legend {
   display: grid;
   gap: 1.25rem;
 }
+/* A fixed dark brand band in both themes, so the pale DDP logo keeps its contrast. */
 .about-hero {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 1.5rem;
   padding: 1.25rem 1.5rem;
   border-radius: var(--radius);
-  background: var(--primary);
-  color: var(--primary-foreground);
+  background: #12352f;
+  color: #e6f4f1;
 }
-.about-hero svg {
-  width: 3rem;
-  height: 3rem;
+.about-logo {
+  height: 5rem;
+  width: auto;
   flex-shrink: 0;
 }
 .about-hero p {
@@ -3138,4 +3139,28 @@ legend {
   border-radius: 0.4rem;
   background: var(--background);
   font-size: 0.85rem;
+}
+/* Sidebar footer: the maker's logo, theme-matched. */
+.sidebar-maker {
+  flex-shrink: 0;
+  display: flex;
+  justify-content: center;
+  padding: 0.5rem 0.75rem 0.25rem;
+  border-top: 1px solid var(--border);
+}
+.maker-logo {
+  height: 2.6rem;
+  width: auto;
+  max-width: 100%;
+  object-fit: contain;
+  opacity: 0.9;
+}
+.maker-logo-dark {
+  display: none;
+}
+:root[data-theme="dark"] .maker-logo-light {
+  display: none;
+}
+:root[data-theme="dark"] .maker-logo-dark {
+  display: block;
 }
