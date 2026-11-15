@@ -21,7 +21,11 @@ type Row = { kind: "item"; item: Item } | { kind: "group"; id: string; tools: To
 /** A presentation projection only. Essential interactions split groups and never disappear. */
 export function transcriptRows(state: SessionState, detail: ChatDetail): Row[] {
   const rows: Row[] = [];
-  const approvals = new Set(state.approvals.map((a) => a.callId));
+  // A call stays essential while its approval is pending, refused, aborted or answered by the user.
+  // One the session mode approved automatically (auto-edit, bypass) is routine like any other call.
+  const approvals = new Set(
+    state.approvals.filter((a) => !(a.by === "mode" && a.decision === "approved")).map((a) => a.callId),
+  );
   let group: Extract<Row, { kind: "group" }> | undefined;
   for (const item of state.items) {
     // Tool-only model steps can persist an empty final assistant message. It has no text to present.

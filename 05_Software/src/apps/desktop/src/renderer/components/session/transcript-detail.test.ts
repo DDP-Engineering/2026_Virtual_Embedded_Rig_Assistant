@@ -102,6 +102,31 @@ it("normal groups consecutive same-turn tools without moving conversation, keybo
   expect(container.querySelector("[data-search-match=true]")).not.toBeNull();
   expect(container.querySelector(".reasoning")).toBeNull();
 });
+it("treats calls the mode approved automatically as routine, but keeps user decisions visible", async () => {
+  const state = fixture();
+  const approval = (callId: string, by: "mode" | "user") => ({
+    approvalId: `grant-${callId}`,
+    callId,
+    requestSha256: "a".repeat(64),
+    tool: "run_program" as const,
+    path: "",
+    diff: "",
+    bytes: 0,
+    decision: "approved" as const,
+    by,
+  });
+  state.approvals.push(approval("one", "mode"), approval("two", "user"));
+  await render(state, "minimal");
+  // "one" was approved by auto mode: routine, hidden; "two" was approved by the user: still shown.
+  expect(container.querySelectorAll('[data-message-kind="tool"]')).toHaveLength(1);
+  expect(container.querySelectorAll("[data-approval-card]")).toHaveLength(1);
+  await render(state, "normal");
+  // The auto-approved call joins the routine group; the user-approved one stays on its own.
+  expect(container.querySelectorAll("[data-tool-group]").length).toBeGreaterThan(0);
+  expect(container.querySelectorAll('[data-message-kind="tool"]')).toHaveLength(1);
+  await render(state, "verbose");
+  expect(container.querySelectorAll('[data-message-kind="tool"]')).toHaveLength(3);
+});
 it("shows per-question usage only at the verbose detail level", async () => {
   const state = fixture();
   state.items[0] = {
