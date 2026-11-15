@@ -69,7 +69,7 @@ test("Appearance keeps interface, conversation and code sizes independent and re
         )
         .toBe("24px");
     }
-    await page.locator('[data-section="language"]').click();
+    await page.locator('[data-section="appearance"]').click();
     await page.locator("#language").selectOption("ro");
     await page.locator('[data-section="appearance"]').click();
     for (const id of ["interface-font-size", "chat-font-size", "code-font-size"]) {

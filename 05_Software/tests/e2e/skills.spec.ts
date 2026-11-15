@@ -234,7 +234,7 @@ test("browser skills editor fits en/ro/de, light/dark and every text scale with 
       await page.evaluate(() => localStorage.clear());
       await page.reload();
       await page.locator('[data-i18n="nav.settings"]').click();
-      await changeSetting(page, "language", () => page.locator("#language").selectOption(lang));
+      await changeSetting(page, "appearance", () => page.locator("#language").selectOption(lang));
       await expect(page.locator("html")).toHaveAttribute("lang", lang);
       if (await page.locator('[data-action="leave-settings"]').isVisible())
         await page.locator('[data-action="leave-settings"]').click();

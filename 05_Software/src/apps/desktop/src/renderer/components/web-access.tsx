@@ -20,7 +20,6 @@ export function WebAccessPanel() {
   return (
     <section className="surface web-access" data-settings-section="web">
       <h2>{t("settings.webAccess")}</h2>
-      <p className="muted">{t("webAccess.description")}</p>
       {query.isPending && <p role="status">{t("webAccess.loading")}</p>}
       {query.error && <ErrorMessage error={query.error} />}
       {query.data && <WebAccessForm snapshot={query.data} />}
@@ -180,7 +179,6 @@ function WebAccessForm({ snapshot }: { snapshot: WebAccessSnapshot }) {
             />
             {t("webAccess.enabled")}
           </label>
-          <p className="muted">{t("webAccess.globalHint")}</p>
           <label className="web-access-field" htmlFor="web-provider">
             {t("webAccess.provider")}
             <select
@@ -208,9 +206,6 @@ function WebAccessForm({ snapshot }: { snapshot: WebAccessSnapshot }) {
               ))}
             </select>
           </label>
-          <p className="muted" data-web-capabilities>
-            {webProviders[provider].read ? t("webAccess.searchAndRead") : t("webAccess.searchOnly")}
-          </p>
           <label className="web-access-field" htmlFor="web-authentication">
             {t("webAccess.authentication")}
             <select
@@ -227,11 +222,6 @@ function WebAccessForm({ snapshot }: { snapshot: WebAccessSnapshot }) {
               <option value="api-key">{t("webAccess.apiKeyMode")}</option>
             </select>
           </label>
-          <p className="muted">
-            {authentication === "anonymous"
-              ? t("webAccess.anonymousHint", { provider: providerName })
-              : t("webAccess.keyHint", { provider: providerName })}
-          </p>
           {authentication === "api-key" && (
             <label className="web-access-field" htmlFor="web-api-key">
               {t("webAccess.apiKey", { provider: providerName })}
@@ -249,11 +239,11 @@ function WebAccessForm({ snapshot }: { snapshot: WebAccessSnapshot }) {
               />
             </label>
           )}
-          <p data-web-key-status>
-            {keyMetadata.keyConfigured
-              ? t("webAccess.storedKey", { storage: storageDescriptions[keyMetadata.storage ?? "memory"] })
-              : t("webAccess.noKey", { provider: providerName })}
-          </p>
+          {keyMetadata.keyConfigured && (
+            <p data-web-key-status>
+              {t("webAccess.storedKey", { storage: storageDescriptions[keyMetadata.storage ?? "memory"] })}
+            </p>
+          )}
           {missingKey && <p className="muted">{t("webAccess.keyRequired")}</p>}
           <div className="workbench-actions">
             <button type="submit" data-web-save disabled={enabled && missingKey}>
@@ -276,7 +266,7 @@ function WebAccessForm({ snapshot }: { snapshot: WebAccessSnapshot }) {
           </div>
         </fieldset>
         <p role="status" className="muted">
-          {saving ? t("webAccess.saving") : saved ? t("webAccess.saved") : t("webAccess.saveHint")}
+          {saving ? t("webAccess.saving") : saved ? t("webAccess.saved") : ""}
         </p>
         {Boolean(error) && <ErrorMessage error={error} />}
       </form>

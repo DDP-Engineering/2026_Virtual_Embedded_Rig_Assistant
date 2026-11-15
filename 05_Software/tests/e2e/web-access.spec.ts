@@ -326,7 +326,7 @@ test("native Web access controls anonymous/key use, revokes calls, persists and 
       ["ro", "Acces web"],
       ["de", "Webzugriff"],
     ]) {
-      await page.locator('[data-section="language"]').click();
+      await page.locator('[data-section="appearance"]').click();
       await page.locator("#language").selectOption(language!);
       await page.locator('[data-section="web"]').click();
       await expect(page.locator(".web-access h2")).toHaveText(title!);

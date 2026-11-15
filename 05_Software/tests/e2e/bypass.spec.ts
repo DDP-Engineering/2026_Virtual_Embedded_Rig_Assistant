@@ -37,7 +37,7 @@ test("marked Bypass selectors display dismissible warning and remember its suppr
       ["en", "outside the workbench"],
     ]) {
       await page.locator('[data-i18n="nav.settings"]').click();
-      await page.locator('[data-section="language"]').click();
+      await page.locator('[data-section="appearance"]').click();
       await page.locator("#language").selectOption(language as string);
       if (language === "de") {
         await page.setViewportSize({ width: 1024, height: 640 });

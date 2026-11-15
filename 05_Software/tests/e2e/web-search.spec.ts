@@ -148,7 +148,7 @@ test("native agent searches and reads via Exa adapter, presents sources/activity
       ["de", "Externe Website öffnen?"],
     ]) {
       await page.locator('[data-i18n="nav.settings"]').click();
-      await page.locator('[data-section="language"]').click();
+      await page.locator('[data-section="appearance"]').click();
       await page.locator("#language").selectOption(language!);
       await page.locator('[data-action="leave-settings"]').click();
       await page.locator(`[data-session="${ids.session}"]`).click();

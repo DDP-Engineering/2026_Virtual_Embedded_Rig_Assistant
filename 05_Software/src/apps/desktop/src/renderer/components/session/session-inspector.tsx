@@ -178,12 +178,6 @@ export function SessionInspector({
         {mode === "context" ? (
           <>
             <UsageMeter state={state} />
-            <p className="usage-calls" data-usage-calls>
-              {t("chat.turnCount", { count: state.turns.length })} ·{" "}
-              {t("chat.toolCallCount", {
-                count: state.items.filter((item) => item.kind === "tool").length,
-              })}
-            </p>
           </>
         ) : (
           <ActivityLog state={state} reasoning={reasoning} updates={updates} sessionId={sessionId} />

@@ -108,7 +108,7 @@ test("native activity retains per-prompt tokens and initial context through tool
       ["de", "Anfangskontext"],
     ]) {
       await page.locator('[data-i18n="nav.settings"]').click();
-      await page.locator('[data-section="language"]').click();
+      await page.locator('[data-section="appearance"]').click();
       await page.locator("#language").selectOption(language as string);
       await page.locator('[data-action="leave-settings"]').click();
       await page.locator(`[data-session="${id}"]`).click();

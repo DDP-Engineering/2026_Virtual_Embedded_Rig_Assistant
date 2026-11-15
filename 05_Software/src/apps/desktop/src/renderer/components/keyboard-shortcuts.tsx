@@ -127,7 +127,6 @@ export function KeyboardShortcuts({
           {t("keyboard.resetAll")}
         </button>
       </div>
-      <p className="muted">{t("keyboard.intro")}</p>
       <div className="shortcut-list">
         {shortcutCommands
           .filter((command) => {

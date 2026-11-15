@@ -114,7 +114,7 @@ test("provider categories support concurrent connections, presets and aligned ac
     }
     await page.keyboard.press("Escape");
     for (const language of ["en", "ro", "de"]) {
-      await changeSetting(page, "language", () => page.locator("#language").selectOption(language));
+      await changeSetting(page, "appearance", () => page.locator("#language").selectOption(language));
       await row.locator("[data-provider-test]").click();
       await expect(dialog.getByRole("heading")).toHaveText(
         language === "ro"
@@ -142,7 +142,7 @@ test("provider categories support concurrent connections, presets and aligned ac
         expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
       }
     }
-    await changeSetting(page, "language", () => page.locator("#language").selectOption("en"));
+    await changeSetting(page, "appearance", () => page.locator("#language").selectOption("en"));
     await subscription.getByRole("button", { name: "Sign out", exact: true }).click();
     await expect(
       subscription.getByRole("button", { name: "Sign in with ChatGPT", exact: true }),

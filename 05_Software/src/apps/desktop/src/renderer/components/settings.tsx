@@ -5,7 +5,6 @@ import {
   Globe,
   Info,
   Keyboard,
-  Languages,
   Palette,
   RefreshCw,
   Server,
@@ -21,7 +20,7 @@ import { UpdatesPanel } from "./updates.js";
 import { WebAccessPanel } from "./web-access.js";
 
 /** Settings pages with their own panel; every other page shows the generic section below. */
-const OWN_PANELS = new Set(["providers", "web", "appearance", "language", "updates", "shortcuts"]);
+const OWN_PANELS = new Set(["providers", "web", "appearance", "updates", "shortcuts"]);
 
 export function useSettingsSections() {
   const { t } = useTranslation();
@@ -29,7 +28,6 @@ export function useSettingsSections() {
     { id: "providers", icon: Server, label: t("settings.providers") },
     { id: "web", icon: Globe, label: t("settings.webAccess") },
     { id: "appearance", icon: Palette, label: t("settings.appearance") },
-    { id: "language", icon: Languages, label: t("settings.language") },
     { id: "notifications", icon: Bell, label: t("settings.notifications") },
     { id: "shortcuts", icon: Keyboard, label: t("settings.shortcuts") },
     { id: "storage", icon: Database, label: t("settings.storage") },
@@ -101,6 +99,21 @@ export function Settings({
         <h2 data-i18n="settings.appearance" tabIndex={-1}>
           {t("settings.appearance")}
         </h2>
+        <div className="language-field">
+          <label htmlFor="language">{t("language.label")}</label>
+          <select
+            id="language"
+            disabled={disabled}
+            value={snapshot.settings.language}
+            onChange={(event) => update({ language: event.target.value as SettingsPatch["language"] })}
+          >
+            <option value="system">{t("language.system")}</option>
+            <option value="en">{t("language.en")}</option>
+            <option value="ro">{t("language.ro")}</option>
+            <option value="de">{t("language.de")}</option>
+          </select>
+        </div>
+        <p className="muted">{t("language.description")}</p>
         <fieldset disabled={disabled}>
           <legend>{t("appearance.theme")}</legend>
           <div className="theme-options">
@@ -194,29 +207,6 @@ export function Settings({
         >
           {t("appearance.resetSizes")}
         </button>
-      </section>
-      <section
-        hidden={section !== "language"}
-        className="surface"
-        id="section-language"
-        data-settings-section="language"
-      >
-        <h2 tabIndex={-1}>{t("settings.language")}</h2>
-        <div className="language-field">
-          <label htmlFor="language">{t("language.label")}</label>
-          <select
-            id="language"
-            disabled={disabled}
-            value={snapshot.settings.language}
-            onChange={(event) => update({ language: event.target.value as SettingsPatch["language"] })}
-          >
-            <option value="system">{t("language.system")}</option>
-            <option value="en">{t("language.en")}</option>
-            <option value="ro">{t("language.ro")}</option>
-            <option value="de">{t("language.de")}</option>
-          </select>
-        </div>
-        <p className="muted">{t("language.description")}</p>
       </section>
       <div hidden={section !== "updates"}>
         <UpdatesPanel preferences={snapshot.settings.updates} disabled={disabled} update={update} />

@@ -65,7 +65,7 @@ test("native tool checkbox configuration persists, cancels drafts and translates
       ["en", "Search file contents"],
     ]) {
       await page.locator('[data-i18n="nav.settings"]').click();
-      await page.locator('[data-section="language"]').click();
+      await page.locator('[data-section="appearance"]').click();
       await page.locator("#language").selectOption(language as string);
       await page.locator('[data-action="leave-settings"]').click();
       await openTools(page);

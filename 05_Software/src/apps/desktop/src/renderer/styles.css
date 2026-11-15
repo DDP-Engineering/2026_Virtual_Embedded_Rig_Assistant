@@ -1586,8 +1586,24 @@ legend {
 }
 
 .provider-group {
-  margin-block: 1.5rem;
+  margin-block: 1.25rem 0;
   min-width: 0;
+}
+/* Groups share one left edge; a thin line separates them instead of nested boxes. */
+.provider-group + .provider-group {
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--border);
+}
+.provider-group > h3 {
+  margin: 0 0 0.75rem;
+}
+.provider-group .provider-card {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.provider-group .provider-card > p {
+  margin-block: 0.25rem;
 }
 .provider-actions {
   align-items: center;
@@ -2439,11 +2455,72 @@ legend {
 }
 .session-inspector .usage-meter {
   display: grid;
-  gap: 0.6rem;
-  padding: 1rem;
-  margin: 1rem 0;
+  gap: 1rem;
+  margin: 0.5rem 0;
+  font-size: 1rem;
+  color: var(--foreground);
+}
+.usage-bar {
+  display: grid;
+  gap: 0.35rem;
+  font-weight: 600;
+}
+.usage-bar meter {
+  width: 100%;
+  height: 0.75rem;
+}
+.usage-groups {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(16rem, 100%), 1fr));
+  gap: 1rem;
+}
+.usage-group,
+.usage-summary {
+  margin: 0;
+  padding: 0.85rem 1rem;
   border-radius: 0.75rem;
   background: var(--muted);
+}
+.usage-group dl {
+  margin: 0;
+}
+.usage-group h3 {
+  margin: 0 0 0.5rem;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted-foreground);
+}
+.usage-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.3rem 0;
+}
+.usage-row + .usage-row {
+  border-top: 0.0714286rem solid var(--border);
+}
+.usage-row dt {
+  color: var(--muted-foreground);
+}
+.usage-row dd {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+.usage-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(12rem, 100%), 1fr));
+  column-gap: 1.5rem;
+}
+.usage-summary .usage-row + .usage-row {
+  border-top: 0;
+}
+.usage-status {
+  margin: 0;
+  color: var(--muted-foreground);
 }
 .agent-activity ol {
   list-style: none;
@@ -2937,7 +3014,4 @@ legend {
 }
 .context-workbench-body pre {
   overflow-x: auto;
-}
-.usage-calls {
-  margin: 0.5rem 0 0;
 }

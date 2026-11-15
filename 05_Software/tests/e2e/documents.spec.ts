@@ -50,7 +50,7 @@ for (const lang of ["en", "ro", "de"])
         await page.evaluate(() => localStorage.clear());
         await page.reload();
         await page.locator('[data-i18n="nav.settings"]').click();
-        await changeSetting(page, "language", () => page.locator("#language").selectOption(lang));
+        await changeSetting(page, "appearance", () => page.locator("#language").selectOption(lang));
         await expect(page.locator("html")).toHaveAttribute("lang", lang);
         // Settings replaces the primary navigation; leave it to reach the workbenches.
         await page.locator('[data-action="leave-settings"]').click();

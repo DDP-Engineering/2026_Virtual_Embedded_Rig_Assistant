@@ -1134,8 +1134,8 @@ test("chat fixtures render tool arguments, invalid citations, provider Retry and
   await settle();
   await act(async () => container.querySelector<HTMLButtonElement>('[data-action="show-context"]')?.click());
   expect(container.textContent).toContain("Estimated");
-  expect(container.textContent).toContain("27033");
-  expect(container.textContent).toContain("4096");
+  expect(container.textContent).toContain("27,033");
+  expect(container.textContent).toContain("4,096");
   expect(container.textContent).toContain("FULL HISTORY");
   expect(container.querySelector<HTMLTextAreaElement>('textarea[aria-label="Message"]')?.disabled).toBe(
     false,
@@ -1474,7 +1474,6 @@ test("Settings selects one page with vertical tabs, including placeholders and k
     "providers",
     "web",
     "appearance",
-    "language",
     "notifications",
     "shortcuts",
     "storage",

@@ -39,7 +39,7 @@ test("Updates controls/notes/banner are usable in en/ro/de at minimum size", asy
     await page.locator('[data-section="updates"]').click();
     const panel = page.locator("#section-updates");
     for (const language of ["en", "ro", "de"]) {
-      await changeSetting(page, "language", () => page.locator("#language").selectOption(language));
+      await changeSetting(page, "appearance", () => page.locator("#language").selectOption(language));
       for (const theme of ["light", "dark"]) {
         await changeSetting(page, "appearance", () => page.locator(`[data-theme-option="${theme}"]`).click());
         for (const scale of [0.875, 1, 1.125, 1.25, 1.5]) {

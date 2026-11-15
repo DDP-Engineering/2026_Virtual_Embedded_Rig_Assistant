@@ -206,7 +206,7 @@ test("browser Chat detail stays usable in en/ro/de at minimum size and enlarged 
     await page.locator('[data-action="create-workbench"]').click();
     for (const language of ["en", "ro", "de"]) {
       await page.locator('[data-i18n="nav.settings"]').click();
-      await page.locator('[data-section="language"]').click();
+      await page.locator('[data-section="appearance"]').click();
       await page.locator("#language").selectOption(language);
       await page.locator('[data-section="appearance"]').click();
       await page.locator("#interface-font-size").selectOption("1.5");
