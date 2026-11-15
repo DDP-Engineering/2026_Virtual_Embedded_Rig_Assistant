@@ -1945,13 +1945,9 @@ legend {
   }
 }
 
-.shortcut-settings {
-  max-width: 70rem;
-  padding: 0.6rem 0.2rem 2rem;
-}
+/* Keyboard shortcuts: a Settings page like the others (full width, page card, normal heading). */
 .shortcut-settings > h2 {
-  margin: 0 0 2rem;
-  font-size: 1.8rem;
+  margin: 0;
 }
 .shortcut-toolbar {
   display: flex;
@@ -1994,11 +1990,7 @@ legend {
   padding: 0.4rem;
 }
 .shortcut-list {
-  border: 1px solid var(--border);
-  border-radius: 1.4rem;
-  background: var(--card);
-  padding: 0 1.4rem;
-  margin: 1.8rem 0;
+  margin: 0;
 }
 .shortcut-list:empty::after {
   content: "—";

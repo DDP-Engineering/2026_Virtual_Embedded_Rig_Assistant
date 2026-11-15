@@ -76,7 +76,7 @@ export function KeyboardShortcuts({
     setRecord(undefined);
   }
   return (
-    <section data-settings-section="shortcuts" className="shortcut-settings">
+    <section data-settings-section="shortcuts" className="surface shortcut-settings">
       <h2>{t("settings.shortcuts")}</h2>
       <div className="shortcut-toolbar">
         <div className="shortcut-search">
