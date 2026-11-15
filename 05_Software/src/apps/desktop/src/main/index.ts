@@ -100,6 +100,8 @@ if (__VERA_SESSION_PERF__) installSessionPerformance();
 declare const __VERA_UPDATE_URL__: string;
 /** The default plugin catalog folder (build input VERA_PLUGIN_CATALOG_URL); empty when none. */
 declare const __VERA_PLUGIN_CATALOG_URL__: string;
+/** The catalog signing public key (build input VERA_PLUGIN_CATALOG_KEY); remote indexes must verify with it. */
+declare const __VERA_PLUGIN_CATALOG_KEY__: string;
 declare const __VERA_SIGNED__: boolean;
 app.setName(__VERA_TEST__ ? "VERA Test" : "VERA");
 // Datasheet CDNs can reject Chromium HTTP/2 streams. Keep its anonymous download transport on HTTP/1.1.
@@ -247,6 +249,12 @@ const catalog = new PluginCatalog({
   store: plugins,
   root: join(dataLocations.paths.userData, "plugins", "catalog"),
   location: catalogLocation,
+  channel: () => settings.get().settings.plugins?.channel,
+  // Test builds may pin a throwaway key, so end-to-end tests can sign a loopback catalog.
+  publicKey:
+    __VERA_TEST__ && process.env.VERA_TEST_CATALOG_KEY !== undefined
+      ? process.env.VERA_TEST_CATALOG_KEY
+      : __VERA_PLUGIN_CATALOG_KEY__,
   ...(bundledPlugins ? { bundled: bundledPlugins } : {}),
   fetch: (url, { signal }) => net.fetch(url, signal ? { signal } : {}),
 });

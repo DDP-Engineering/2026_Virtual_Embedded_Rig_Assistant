@@ -921,6 +921,14 @@
       "none": "Es ist kein Katalog eingerichtet, und dieser Build enthält keine Plugins.",
       "problemUnreachable": "Der Katalog war nicht erreichbar.",
       "problemInvalid": "Der Index des Katalogs ist ungültig.",
+      "problemUnsigned": "Der Katalog unter dieser Adresse ist nicht signiert, daher verwendet VERA ihn nicht. Die mit VERA gelieferten Plugins werden angezeigt.",
+      "problemUntrusted": "Die Signatur des Katalogs passt nicht zum in VERA eingebauten Schlüssel: Der Index wurde geändert oder mit einem anderen Schlüssel signiert. VERA verwendet ihn nicht; die mit VERA gelieferten Plugins werden angezeigt.",
+      "channel": "Kanal",
+      "channels": {
+        "stable": "Stabil (Version 1.0.0 und höher)",
+        "pre-release": "Vorabversion (alle Plugins, auch 0.x-Versionen)"
+      },
+      "channelHint": "Stabil listet Plugins, die mit echten Werkzeugen und echter Hardware nachgewiesen sind. Vorabversion listet auch Plugins, deren Nachweis noch offen ist.",
       "check": "Nach Updates suchen",
       "checking": "Suche läuft…",
       "url": "Katalog-URL",

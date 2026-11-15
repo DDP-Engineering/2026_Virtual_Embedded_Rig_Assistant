@@ -51,3 +51,5 @@ desktop.ini
 .agentic/tasks/*.anchor.json
 .agentic/tasks/*.evolution.json
 # AEGIS:END
+# The catalog signing private key lives outside every repository (02_Tools/release/catalog-release.md).
+catalog-signing-key.pem

@@ -921,6 +921,14 @@
       "none": "No catalog is configured, and this build bundles no plugins.",
       "problemUnreachable": "The catalog could not be reached.",
       "problemInvalid": "The catalog's index is not valid.",
+      "problemUnsigned": "The catalog at this address is not signed, so VERA does not use it. The plugins bundled with VERA are shown.",
+      "problemUntrusted": "The catalog's signature does not match the key built into VERA: the index was changed or signed with another key. VERA does not use it; the plugins bundled with VERA are shown.",
+      "channel": "Channel",
+      "channels": {
+        "stable": "Stable (version 1.0.0 and higher)",
+        "pre-release": "Pre-release (every plugin, including 0.x versions)"
+      },
+      "channelHint": "Stable lists plugins proven on real tools and hardware. Pre-release also lists plugins whose proof is still open.",
       "check": "Check for updates",
       "checking": "Checking…",
       "url": "Catalog URL",

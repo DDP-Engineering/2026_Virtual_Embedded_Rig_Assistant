@@ -15,7 +15,7 @@ branch `feature/261-plugin-management` cut from `master` at 920457e, in the sibl
 `F:\2026_Virtual_Embedded_Rig_Assistant_plg`. The implementer hands the candidate back without a commit;
 the coordinator checks the evidence and makes one local commit per ticket. Nothing is pushed. Each ticket
 runs only its focused tests; the complete suite runs once after PLG-08.
-STATE: PLG-01 implemented 2026-11-15 (AEGIS TASK-1cebbbdd); PLG-02 implemented 2026-11-15 (AEGIS TASK-e937e9e6); PLG-03 implemented 2026-11-15 (AEGIS TASK-f1dfd67e); PLG-04 implemented 2026-11-15 (AEGIS TASK-f84206e4); PLG-05 implemented 2026-11-15 (AEGIS TASK-41f54714); PLG-06 implemented 2026-11-15 (AEGIS TASK-d4d70d39); PLG-07...PLG-08 planned.
+STATE: PLG-01 implemented 2026-11-15 (AEGIS TASK-1cebbbdd); PLG-02 implemented 2026-11-15 (AEGIS TASK-e937e9e6); PLG-03 implemented 2026-11-15 (AEGIS TASK-f1dfd67e); PLG-04 implemented 2026-11-15 (AEGIS TASK-f84206e4); PLG-05 implemented 2026-11-15 (AEGIS TASK-41f54714); PLG-06 implemented 2026-11-15 (AEGIS TASK-d4d70d39); PLG-07 implemented 2026-11-15 (AEGIS TASK-2b84817f), publishing open; PLG-08 planned.
 
 ## Order
 
@@ -27,7 +27,7 @@ STATE: PLG-01 implemented 2026-11-15 (AEGIS TASK-1cebbbdd); PLG-02 implemented 2
 | 4 | PLG-04 | [#265](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/265) | dependency summary in the catalog index; install with dependencies (required plugins too); re-install | implemented |
 | 5 | PLG-05 | [#266](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/266) | manifest `settings`; Parts search, MQTT and Wokwi move from App settings to their plugins; configured state | implemented |
 | 6 | PLG-06 | [#267](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/267) | one status block (dependencies, configuration, use) and pack install from the catalog | implemented |
-| 7 | PLG-07 | [#268](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/268) | catalog release from `07_Delivery/plugins/`, signed index, stable and pre-release channels | planned |
+| 7 | PLG-07 | [#268](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/268) | catalog release from `07_Delivery/plugins/`, signed index, stable and pre-release channels | implemented (publishing open) |
 | 8 | PLG-08 | [#269](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/269) | offline kit per platform of pinned pip and download dependencies | planned |
 
 Each package builds on the page parts of the previous one. PLG-07 and PLG-08 touch delivery only.
@@ -117,6 +117,20 @@ are ready and otherwise names the rest; it replaces the header summary and the a
 pack and its groups (defaults from the index), shows one review of every plugin with its dependencies and risk, lists
 what is left out (another platform, not in the catalog, requires a left-out plugin), then installs and provisions each
 plugin without a per-plugin review screen. Only the open workbench's enablement is shown.
+
+## PLG-07 #268 - signed catalog release and channels
+
+`npm run prepare:plugins` writes the catalog release into `07_Delivery/plugins/` as one flat folder: one zip per
+plugin, `index.json` (bundled, every official plugin), `index-stable.json` (version `1.0.0` and higher; today only
+ltspice) and `index-pre-release.json` (every plugin). Release assets have no folders, so the two channels are two
+index files, not two folders. `vera catalog sign` writes a detached Ed25519 `<index>.sig` for each channel index, and
+`vera catalog keygen` creates a key pair. The desktop build pins the public key
+`02_Tools/release/catalog-signing-key.pub.pem` (build input `VERA_PLUGIN_CATALOG_KEY`). The private key stays
+outside the repository. A remote index without a signature is refused as `unsigned`, and one that does not verify
+is refused as `untrusted`; the bundled release stands in and needs no signature. The Plugins page catalog settings
+choose the channel (Stable by default). Update checks keep their 24 h rhythm. The procedure is
+`02_Tools/release/catalog-release.md`. Open: the hosted https release and the default `VERA_PLUGIN_CATALOG_URL`,
+waiting for the user's go-ahead.
 
 ## Shared rules
 

@@ -1,5 +1,7 @@
 import { expect, it } from "vitest";
 import { channels } from "./ipc.js";
+import { catalogChannelIndex } from "./plugin-catalog.js";
+import { pluginSettingsSchema } from "./settings.js";
 
 const workbenchId = "wb_01JB8Z6Q4M7N2K5R9T3V8X1Y0C";
 // REQ-FUNC-9dd7413b
@@ -172,6 +174,16 @@ it("validates the catalog view, review and install channels and the catalog app 
   };
   expect(channels["plugins.catalog"].response.parse(view)).toEqual(view);
   expect(channels["plugins.catalog"].response.safeParse({ ...view, source: "mirror" }).success).toBe(false);
+  // REQ-SEC-3e11ffe4 REQ-SEC-d96c5192
+  for (const problem of ["unsigned", "untrusted"])
+    expect(channels["plugins.catalog"].response.parse({ ...view, source: "bundled", problem }).problem).toBe(
+      problem,
+    );
+  expect(channels["plugins.catalog"].response.safeParse({ ...view, problem: "forged" }).success).toBe(false);
+  // REQ-FUNC-b7ff35bf
+  expect(pluginSettingsSchema.parse({ channel: "pre-release" })).toEqual({ channel: "pre-release" });
+  expect(pluginSettingsSchema.safeParse({ channel: "beta" }).success).toBe(false);
+  expect(catalogChannelIndex("stable")).toBe("index-stable.json");
   expect(channels["plugins.catalog"].response.parse({ source: "none", plugins: [], packs: [] }).source).toBe(
     "none",
   );

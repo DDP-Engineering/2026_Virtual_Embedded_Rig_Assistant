@@ -130,16 +130,23 @@ stops a run (`runs.stop`). WorkbenchConfigForm's Plugins section embeds Workbenc
 
 The plugin catalog (spec `.agentic/specs/REQ-DATA-b40d3f9b.md`, ADR-0019): core `catalog-source.ts` checks a catalog
 source (plugin folders, `packs.yaml`, `catalog.yaml`) with the store's own package reader and builds its release
-(`<id>-<version>.zip` per plugin and `index.json` format 1); the CLI's `vera catalog check|build` are the catalog's CI
-and release steps. Core `PluginCatalog` (`catalog.ts`) is the client: it reads `index.json` from the catalog folder URL
-(settings `plugins.catalog`, else the build input `VERA_PLUGIN_CATALOG_URL`), else from the bundled release of the
-official plugins, verifies each zip's size and SHA-256 against the index, keeps it for the review, decides whether the
+(`<id>-<version>.zip` per plugin, `index.json` format 1 and the channel indexes `index-stable.json`, version 1.0.0
+and higher, and `index-pre-release.json`, every plugin), and signs a release's channel indexes with a detached Ed25519
+`<index>.sig`. The CLI's `vera catalog check|build|keygen|sign` are the catalog's CI and release steps
+(`02_Tools/release/catalog-release.md`). Core `PluginCatalog` (`catalog.ts`) is the client. It reads the channel
+index `index-<channel>.json` (settings `plugins.channel`, `stable` when unset) from the catalog folder URL (settings
+`plugins.catalog`, else the build input `VERA_PLUGIN_CATALOG_URL`). It uses that index only when its `.sig`
+verifies with the public key pinned in the build (`VERA_PLUGIN_CATALOG_KEY`, default
+`02_Tools/release/catalog-signing-key.pub.pem`) and its signed `channel` field is the requested channel. A
+404 on the `.sig` is `unsigned`, any other failed `.sig` read is `unreachable`, and a failed check is
+`untrusted`. An older signed index of the same channel is not detected (no expiry). Else it reads
+`index.json` from the bundled release of the official plugins, which needs no signature. It verifies each zip's size and SHA-256 against the index, keeps it for the review, decides whether the
 review must be shown, and installs it bound to the reviewed integrity hash with the entry's tier and source
 `catalog` (the zip URL, or the bundled zip's file path). Desktop main
 composes it with `net.fetch`, serves `plugins.catalog`, `plugins.catalogReview` and `plugins.catalogInstall`, and its
 `CatalogChecks` (`main/catalog-checks.ts`) reads the index after the window opens and every 24 h. The Plugins page
-presents source/URL settings and management controls above one Available/Installed library. The index is not
-signed (ADR-0019 defers it).
+presents source/URL and channel settings and management controls above one Available/Installed library. Test
+builds take the pinned key from `VERA_TEST_CATALOG_KEY` when it is set.
 
 Discovery metadata is maintained by plugin id in `catalog.yaml.metadata`: stable activities,
 bounded unique keywords and optional real calendar-day addedAt/updatedAt publication facts.
@@ -408,13 +415,16 @@ renderer plugins.test.ts, tests/integration/plugin-builder.test.ts and tests/e2e
   `catalogEntrySchema`, `catalogPackSchema`, `catalogPacksSchema` (packs.yaml), `catalogMaintainersSchema`
   (catalog.yaml `{format, official, reviewed}`), `CATALOG_LIMITS`, `DANGEROUS_TOKENS`, `dangerousToken(match)`,
   `compareVersions(a, b)` (semantic version precedence), `catalogUrl(value)` (normalised folder URL or undefined),
-  `catalogUrlSchema`, `pluginCatalogViewSchema`, `pluginCatalogReviewSchema`; `ruleNamesProgram(match, program)` in
-  `program-rules.ts`; settings `plugins.catalog?`.
+  `catalogUrlSchema`, `pluginCatalogViewSchema`, `pluginCatalogReviewSchema`, `CATALOG_CHANNELS`,
+  `catalogChannelSchema`, `catalogChannelIndex(channel)`; `ruleNamesProgram(match, program)` in `program-rules.ts`;
+  settings `plugins.catalog?` and `plugins.channel?` (`stable` | `pre-release`).
 - Catalog (core): `checkCatalogSource(folder)` -> `CatalogIssue[] {where, code, detail}`;
-  `buildCatalogRelease(folder, out)` -> `{issues, index?}`; `new PluginCatalog({store, root, location, bundled?, fetch,
+  `buildCatalogRelease(folder, out)` -> `{issues, index?}`; `catalogChannel(index, channel)`;
+  `generateCatalogKeys(privatePath, publicPath)` (no overwrite); `signCatalogRelease(folder, privatePem, publicPem?)`
+  -> signed index names; `new PluginCatalog({store, root, location, channel?, publicKey?, bundled?, fetch,
   now?, uuid?})` with `view({refresh?, signal?})`, `review(id, signal?)`, `install(id, sha256)`; store
   `readPluginPackage(path)` and `install(path, sha256?, origin?: {tier, url})` (source kind `catalog`).
-- IPC: `plugins.catalog {refresh}` -> view `{source: remote|bundled|none, url?, problem?: unreachable|invalid,
+- IPC: `plugins.catalog {refresh}` -> view `{source: remote|bundled|none, url?, problem?: unreachable|invalid|unsigned|untrusted,
   checkedAt?, plugins (entries + installed? + update), packs}`; `plugins.catalogReview {id}` -> `{review, id, version,
   tier, required}`; `plugins.catalogInstall {id, sha256}` -> installed summary; app event `plugins.catalog`. The
   browser mock serves an ESP32 pack and a community plugin.
@@ -668,9 +678,9 @@ renderer plugins.test.ts, tests/integration/plugin-builder.test.ts and tests/e2e
 | Run records, list, log, stop | `ProgramRunner` in `runner.ts`, `runs.*` in `main/index.ts`, label in `program-tools.ts` | `runner.test.ts`, `program-tools.test.ts` |
 | Plugins page or Runs tab | renderer `plugins.tsx`, `runs-tab.tsx`, `shell.tsx`, `App.tsx`, locales | `plugins.test.ts`, `runs-tab.test.ts`, `tests/e2e/plugins-ui.spec.ts` (native), `plugins-mock.spec.ts` (languages, themes, sizes) |
 | Catalog formats, token lint, URL rule, version order | shared `plugin-catalog.ts` | `plugin-catalog.test.ts` |
-| Catalog check or release build, `vera catalog` | core `catalog-source.ts`, CLI `catalog.ts`, `args.ts` | `catalog-source.test.ts`, `tests/integration/cli.test.ts` |
-| Catalog client: sources, downloads, review decision, install | core `catalog.ts`, store `install` origin | `catalog.test.ts` (loopback server) |
-| Catalog IPC, checks, build-time URL | main `index.ts`, `catalog-checks.ts`, `electron.vite.config.ts`, `02_Tools/release/update-config.mjs` | `catalog-checks.test.ts`, `plugins-ipc.test.ts`, `tests/packaging/updates.test.ts` |
+| Catalog check, release build, channel indexes, keygen and sign, `vera catalog` | core `catalog-source.ts`, CLI `catalog.ts`, `args.ts`; procedure `02_Tools/release/catalog-release.md` | `catalog-source.test.ts`, `tests/integration/cli.test.ts`, `tests/packaging/prepare-plugins.test.ts` |
+| Catalog client: sources, channel, signature, downloads, review decision, install | core `catalog.ts`, store `install` origin | `catalog.test.ts` (loopback server, throwaway keys) |
+| Catalog IPC, checks, build-time URL and pinned key | main `index.ts`, `catalog-checks.ts`, `electron.vite.config.ts`, `02_Tools/release/update-config.mjs`, `catalog-signing-key.pub.pem` | `catalog-checks.test.ts`, `plugins-ipc.test.ts`, `tests/packaging/updates.test.ts` |
 | Catalog section, review queue, update buttons | renderer `plugin-catalog.tsx`, `plugins.tsx`, `mocks/mockApi.ts`, locales | `plugin-catalog.test.ts`, `mockApi.test.ts`, `tests/e2e/plugins-catalog.spec.ts`, `plugins-mock.spec.ts` |
 
 ## Key behaviors
@@ -831,7 +841,8 @@ Rule parsing canonicalizes adjacent sequence wildcards to one before whole-comma
 - `05_Software/src/libraries/shared/src/plugin-catalog.ts`, `plugin-catalog.test.ts` — catalog formats and rules.
 - `05_Software/src/libraries/core/src/plugins/catalog-source.ts`, `catalog-source.test.ts` — catalog check and build.
 - `05_Software/src/libraries/core/src/plugins/catalog.ts`, `catalog.test.ts` — catalog client.
-- `05_Software/src/apps/cli/src/catalog.ts` — `vera catalog check|build`.
+- `05_Software/src/apps/cli/src/catalog.ts` — `vera catalog check|build|keygen|sign`.
+- `02_Tools/release/catalog-signing-key.pub.pem` — the catalog signing public key the desktop build pins; `catalog-release.md` — the release procedure.
 - `05_Software/src/apps/desktop/src/main/catalog-checks.ts`, `catalog-checks.test.ts` — start and 24 h checks.
 - `05_Software/src/apps/desktop/src/renderer/components/plugin-catalog.tsx`, `plugin-catalog.test.ts` — catalog settings/rows.
 - `05_Software/tests/e2e/plugins-catalog.spec.ts` — native install and rule-changing update from a loopback catalog.

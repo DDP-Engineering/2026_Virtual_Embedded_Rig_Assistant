@@ -116,9 +116,16 @@ export const catalogEntrySchema = z.strictObject({
   bytes: z.number().int().min(1),
 });
 export type CatalogEntry = z.infer<typeof catalogEntrySchema>;
-/** index.json format 1 of a catalog release. */
+/** Release channels: `stable` lists plugins of version 1.0.0 and higher, `pre-release` every plugin. */
+export const CATALOG_CHANNELS = ["stable", "pre-release"] as const;
+export const catalogChannelSchema = z.enum(CATALOG_CHANNELS);
+export type CatalogChannel = z.infer<typeof catalogChannelSchema>;
+/** The channel index file of a catalog release; its detached signature is `<name>.sig`. */
+export const catalogChannelIndex = (channel: CatalogChannel) => `index-${channel}.json`;
+/** index.json format 1 of a catalog release; a channel index names its channel, inside the signed bytes. */
 export const catalogIndexSchema = z.strictObject({
   format: z.literal(1),
+  channel: catalogChannelSchema.optional(),
   plugins: z
     .array(catalogEntrySchema)
     .max(CATALOG_LIMITS.plugins)
@@ -209,7 +216,8 @@ export type CatalogPlugin = z.infer<typeof catalogPluginSchema>;
 export const pluginCatalogViewSchema = z.strictObject({
   source: z.enum(["remote", "bundled", "none"]),
   url: z.string().max(2048).optional(),
-  problem: z.enum(["unreachable", "invalid"]).optional(),
+  /** `unsigned`: the remote index has no signature; `untrusted`: its signature does not verify. */
+  problem: z.enum(["unreachable", "invalid", "unsigned", "untrusted"]).optional(),
   checkedAt: z.iso.datetime().optional(),
   plugins: z.array(catalogPluginSchema).max(CATALOG_LIMITS.plugins),
   packs: z.array(catalogPackSchema).max(CATALOG_LIMITS.packs),

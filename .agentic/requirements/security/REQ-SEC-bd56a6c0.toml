@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-SEC-bd56a6c0"
+
+title = "Generate a catalog signing key pair without overwriting"
+
+status = "active"
+
+requirement = """
+When `vera catalog keygen --private <file> --public <file>` runs, it shall write a new Ed25519 private key (PKCS#8 PEM) and its public key (SPKI PEM), and if either file already exists, it shall write nothing and exit 1.
+"""
+
+verification = "Core catalog-source test: keygen into a temporary folder writes two PEM files whose keys sign and verify each other; a second keygen to the same paths fails and leaves the first private key unchanged."
+
+affected_paths = ["05_Software/src/libraries/core/src/plugins/catalog-source.ts", "05_Software/src/apps/cli/src/args.ts", "05_Software/src/apps/cli/src/catalog.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/plugins/catalog-source.test.ts"]
+
+
+spec = "specs/REQ-DATA-b40d3f9b.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

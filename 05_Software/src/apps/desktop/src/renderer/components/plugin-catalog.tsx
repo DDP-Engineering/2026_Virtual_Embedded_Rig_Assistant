@@ -1,5 +1,6 @@
 import { type UseQueryResult, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  type CatalogChannel,
   type CatalogPlugin,
   catalogUrl,
   type PluginCatalogView,
@@ -112,6 +113,71 @@ function CatalogUrl({ changed }: { changed: () => void }) {
         </button>
       </div>
     </form>
+  );
+}
+
+/** The remote catalog's release channel; saving it keeps the other plugin settings and reloads the catalog. */
+function CatalogChannelSetting({ changed }: { changed: () => void }) {
+  const { t } = useTranslation();
+  const client = useQueryClient();
+  const field = useId();
+  const settings = useQuery({
+    queryKey: settingsKey,
+    queryFn: () => api.invoke("app.settings.get", {}),
+  });
+  const current = settings.data?.settings.plugins;
+  const [error, setError] = useState<unknown>();
+  const [busy, setBusy] = useState(false);
+  async function save(channel: CatalogChannel) {
+    if (!settings.isSuccess) return;
+    setError(undefined);
+    setBusy(true);
+    try {
+      const snapshot: SettingsSnapshot = await api.invoke("app.settings.update", {
+        plugins: { ...current, channel },
+      });
+      client.setQueryData(settingsKey, snapshot);
+      changed();
+    } catch (failure) {
+      setError(failure);
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <div className="catalog-channel">
+      <label htmlFor={field}>{t("plugins.catalog.channel")}</label>
+      <select
+        id={field}
+        data-catalog-channel
+        value={current?.channel ?? "stable"}
+        // The patch replaces the whole plugins object: it is built only from settings that have loaded.
+        disabled={busy || !settings.isSuccess}
+        onChange={(event) => void save(event.target.value as CatalogChannel)}
+      >
+        <option value="stable">{t("plugins.catalog.channels.stable")}</option>
+        <option value="pre-release">{t("plugins.catalog.channels.pre-release")}</option>
+      </select>
+      <p className="muted">{t("plugins.catalog.channelHint")}</p>
+      {error !== undefined && <ErrorMessage error={error} />}
+    </div>
+  );
+}
+/** Why the catalog section does not show the configured remote catalog. */
+function CatalogProblem({ problem }: { problem: NonNullable<PluginCatalogView["problem"]> }) {
+  const { t } = useTranslation();
+  const text =
+    problem === "invalid"
+      ? t("plugins.catalog.problemInvalid")
+      : problem === "unsigned"
+        ? t("plugins.catalog.problemUnsigned")
+        : problem === "untrusted"
+          ? t("plugins.catalog.problemUntrusted")
+          : t("plugins.catalog.problemUnreachable");
+  return (
+    <p role="status" data-catalog-problem={problem}>
+      {text}
+    </p>
   );
 }
 
@@ -283,16 +349,11 @@ export function CatalogSettings({ catalog }: { catalog: UseQueryResult<PluginCat
             : t("plugins.catalog.none")}
         </p>
       )}
-      {view?.problem && (
-        <p role="status" data-catalog-problem={view.problem}>
-          {view.problem === "invalid"
-            ? t("plugins.catalog.problemInvalid")
-            : t("plugins.catalog.problemUnreachable")}
-        </p>
-      )}
+      {view?.problem && <CatalogProblem problem={view.problem} />}
       <details className="plugin-catalog-settings">
         <summary>{t("plugins.library.catalogSettings")}</summary>
         <CatalogUrl changed={() => void client.invalidateQueries({ queryKey: catalogKey })} />
+        <CatalogChannelSetting changed={() => void client.invalidateQueries({ queryKey: catalogKey })} />
       </details>
     </section>
   );

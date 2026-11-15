@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-b7ff35bf"
+
+title = "Read the remote catalog of the selected channel"
+
+status = "active"
+
+requirement = """
+When the desktop app reads a remote plugin catalog, it shall read the index of the channel in settings `plugins.channel` (`stable` when unset), `<folder>index-<channel>.json`, and read the bundled catalog's `index.json` whatever the channel.
+"""
+
+verification = "Core catalog test with a loopback HTTP server: the stable channel lists only the 1.0.0 plugin, switching the channel to pre-release lists the 0.x plugin too without an explicit refresh, and the bundled fallback lists every plugin in both channels."
+
+affected_paths = ["05_Software/src/libraries/core/src/plugins/catalog.ts", "05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/libraries/shared/src/settings.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/plugins/catalog.test.ts", "05_Software/src/libraries/shared/src/plugins-ipc.test.ts"]
+
+
+spec = "specs/REQ-DATA-b40d3f9b.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-15
+updated = 2026-11-15

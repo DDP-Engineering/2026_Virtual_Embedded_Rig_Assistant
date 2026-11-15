@@ -538,7 +538,10 @@ vera-plugins/                    # one Git repository
   refuses a package that is not the entry's id and version and a downgrade, and shows a review
   screen before the first install and before any update that changes programs (install sources
   included) or rules. Update checks run after the window opens and every 24 h while the VERA update
-  mode is not Off; updates are never installed automatically. The index is not signed (ADR-0019).
+  mode is not Off; updates are never installed automatically. The remote index is the chosen channel's
+  (`index-stable.json` by default, or `index-pre-release.json`), used only when its detached Ed25519
+  signature verifies with the public key pinned in the build; the bundled release needs none
+  (`02_Tools/release/catalog-release.md`).
 - Official plugins also ship inside the VERA package as a catalog release (`<resources>/plugins/`,
   built by `npm run prepare:plugins`), which VERA uses when no catalog is set or it is unreachable,
   so a first install works offline. The catalog updates them later.
@@ -611,7 +614,6 @@ an installed plugin.
 | MCP servers in a plugin (`mcpServers`, the standard `.mcp.json` shape; one rule per tool name). Candidate: Espressif's `idf.py mcp-server` (ESP-IDF ≥ 6.0: `set_target`, `build_project`, `flash_project`, `clean_project`) | a server offers something `run_program` cannot |
 | Workbench-scoped plugins in `.vera/plugins/`, trusted per machine by hash | phase 3 of the plan |
 | Structured bench description (`bench:` in `workbench.yaml`) | after user feedback; `WORKBENCH.md` covers it now |
-| Signed index (minisign) | when contributors outnumber the maintainers' review |
 | Offline bundles (plugin + uv cache) for air-gapped labs | on request |
 | macOS | with the app |
 

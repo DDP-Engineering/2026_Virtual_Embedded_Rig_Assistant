@@ -1,5 +1,5 @@
 import { type ChildProcess, execFile, spawn } from "node:child_process";
-import { createHash } from "node:crypto";
+import { createHash, verify } from "node:crypto";
 import { once } from "node:events";
 import { existsSync } from "node:fs";
 import { cp, mkdir, mkdtemp, readdir, readFile, rm, writeFile } from "node:fs/promises";
@@ -975,6 +975,68 @@ it("CLI checks a catalog source and builds its release", async () => {
     expect(usage.code, args.join(" ")).toBe(2);
   }
   // Seven CLI processes: under a full parallel suite they outlast the default 5 s.
+}, 30000);
+// REQ-SEC-bd56a6c0 REQ-SEC-daf01d33
+it("CLI generates a catalog signing key pair and signs the channel indexes of a release", async () => {
+  const { dir } = await fixture();
+  const keys = join(dir, "keys"),
+    release = join(dir, "release");
+  await mkdir(keys);
+  await mkdir(release);
+  const privateKey = join(keys, "private.pem"),
+    publicKey = join(keys, "public.pem"),
+    otherPrivate = join(keys, "other.pem"),
+    otherPublic = join(keys, "other.pub.pem");
+  const generated = await launch(["catalog", "keygen", "--private", privateKey, "--public", publicKey])
+    .result;
+  expect(generated.code).toBe(0);
+  expect(generated.stdout).not.toContain("PRIVATE KEY");
+  const again = await launch(["catalog", "keygen", "--private", privateKey, "--public", otherPublic]).result;
+  expect(again.code).toBe(1);
+  expect(existsSync(otherPublic)).toBe(false);
+  expect(
+    (await launch(["catalog", "keygen", "--private", otherPrivate, "--public", otherPublic]).result).code,
+  ).toBe(0);
+  for (const name of ["index-stable.json", "index-pre-release.json"])
+    await writeFile(join(release, name), `{"format":1,"plugins":[],"packs":[]}\n`);
+
+  const wrong = await launch([
+    "catalog",
+    "sign",
+    "--release",
+    release,
+    "--key",
+    otherPrivate,
+    "--public",
+    publicKey,
+  ]).result;
+  expect(wrong.code).toBe(1);
+  expect(existsSync(join(release, "index-stable.json.sig"))).toBe(false);
+  const signed = await launch([
+    "catalog",
+    "sign",
+    "--release",
+    release,
+    "--key",
+    privateKey,
+    "--public",
+    publicKey,
+  ]).result;
+  expect(signed.code).toBe(0);
+  expect(signed.stdout.trim()).toBe(`signed 2 indexes in ${release}`);
+  const pem = await readFile(publicKey, "utf8");
+  for (const name of ["index-stable.json", "index-pre-release.json"]) {
+    const signature = Buffer.from(await readFile(join(release, `${name}.sig`), "utf8"), "base64");
+    expect(verify(null, await readFile(join(release, name)), pem, signature)).toBe(true);
+  }
+  for (const args of [
+    ["catalog", "keygen", "--private", privateKey],
+    ["catalog", "sign", "--release", release],
+    ["catalog", "sign", "--key", privateKey],
+  ]) {
+    const usage = await launch(args).result;
+    expect(usage.code, args.join(" ")).toBe(2);
+  }
 }, 30000);
 // REQ-FUNC-bf809842 REQ-DATA-e3d4d5ba REQ-FUNC-997412a4
 it("CLI saves a session artifact without approval and emits valid/missing references", async () => {

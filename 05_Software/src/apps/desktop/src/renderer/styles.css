@@ -2752,19 +2752,23 @@ legend {
   align-items: center;
   gap: 0.5rem;
 }
-/* Plugin catalog: source, URL setting, packs and catalog plugins (REQ-UX-72a349a1, REQ-UX-9207423e). */
+/* Plugin catalog: source, URL and channel settings, packs and catalog plugins (REQ-UX-72a349a1,
+   REQ-UX-9207423e, REQ-UX-84d8cad7). */
 .plugin-catalog,
-.catalog-url {
+.catalog-url,
+.catalog-channel {
   display: grid;
   gap: 0.5rem;
   min-width: 0;
 }
 .plugin-catalog h3,
 .plugin-catalog h4,
-.catalog-url p {
+.catalog-url p,
+.catalog-channel p {
   margin: 0;
 }
-.catalog-url input {
+.catalog-url input,
+.catalog-channel select {
   width: 100%;
   min-width: 0;
 }
@@ -2777,7 +2781,8 @@ legend {
   cursor: pointer;
   padding-block: 0.4rem;
 }
-.plugin-catalog-settings .catalog-url {
+.plugin-catalog-settings .catalog-url,
+.plugin-catalog-settings .catalog-channel {
   padding-top: 0.5rem;
 }
 .plugin-library-statuses button span {

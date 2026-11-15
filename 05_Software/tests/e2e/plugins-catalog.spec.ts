@@ -1,6 +1,6 @@
 // REQ-FUNC-f244f8f6 REQ-UX-c55a0fe1 REQ-UX-9207423e REQ-FUNC-46079512: installing and updating from a
 // tagged catalog release in native Electron, served by a loopback catalog host.
-import { createHash } from "node:crypto";
+import { createHash, generateKeyPairSync, sign } from "node:crypto";
 import { mkdir, mkdtemp, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import { createServer } from "node:http";
 import type { AddressInfo } from "node:net";
@@ -14,6 +14,8 @@ import { installNetworkGuard, outboundAttempts } from "./network-guard.js";
 const here = dirname(fileURLToPath(import.meta.url));
 const desktop = join(here, "../../src/apps/desktop");
 const official = join(here, "../../plugins/serial-monitor");
+/** A throwaway catalog signing key: the test build pins its public key through VERA_TEST_CATALOG_KEY. */
+const keys = generateKeyPairSync("ed25519");
 
 async function files(folder: string): Promise<Record<string, Uint8Array>> {
   const result: Record<string, Uint8Array> = {};
@@ -63,7 +65,16 @@ async function release(out: string, version: string, edit: (manifest: string) =>
       },
     ],
   };
+  // The bundled index and both signed channel indexes; serial-monitor 1.x is in the stable channel.
   await writeFile(join(out, "index.json"), JSON.stringify(index));
+  for (const channel of ["stable", "pre-release"]) {
+    const text = JSON.stringify({ ...index, channel });
+    await writeFile(join(out, `index-${channel}.json`), text);
+    await writeFile(
+      join(out, `index-${channel}.json.sig`),
+      sign(null, Buffer.from(text), keys.privateKey).toString("base64"),
+    );
+  }
 }
 
 test("installs a plugin from a tagged catalog release and reviews an update that changes a rule", async () => {
@@ -87,6 +98,7 @@ test("installs a plugin from a tagged catalog release and reviews an update that
   delete env.ELECTRON_RUN_AS_NODE;
   // No bundled catalog: the page shows only what the loopback catalog serves.
   env.VERA_TEST_BUNDLED_PLUGINS = "";
+  env.VERA_TEST_CATALOG_KEY = keys.publicKey.export({ type: "spki", format: "pem" }).toString();
   const app = await _electron.launch({
     executablePath: join(
       desktop,
@@ -148,6 +160,16 @@ test("installs a plugin from a tagged catalog release and reviews an update that
     await review.locator('[data-action="plugin-install"]').click();
     await expect(card).toContainText("1.0.1");
     await expect(card.locator("[data-plugin-update]")).toHaveCount(0);
+
+    // An index changed after signing is refused with an explicit state.
+    const served = join(state.folder, "index-stable.json");
+    await writeFile(
+      served,
+      (await readFile(served, "utf8")).replace('"Serial monitor"', '"Serial monitor!"'),
+    );
+    await page.locator('[data-action="catalog-check"]').click();
+    await expect(catalog.locator('[data-catalog-problem="untrusted"]')).toBeVisible();
+    await expect(page.locator('[data-catalog-plugin="serial-monitor"]')).toHaveCount(0);
     expect(errors).toEqual([]);
     expect(await outboundAttempts(app)).toEqual([]);
   } finally {

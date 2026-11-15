@@ -47,6 +47,8 @@ Use the repository setup script from the repository root; it downloads the verif
 
 The software root holds npm workspaces, Biome, TypeScript and Vitest configuration. [aegis.toml](../aegis.toml) supplies workflow commands and paths.
 
+Plugin catalog build inputs: `VERA_PLUGIN_CATALOG_URL`, the default remote catalog folder, is empty. `VERA_PLUGIN_CATALOG_KEY` is a PEM path that replaces the pinned public key `02_Tools/release/catalog-signing-key.pub.pem`. Test builds also read the env `VERA_TEST_CATALOG_KEY` (PEM text) at run time, so e2e can sign a loopback catalog with a throwaway key. The catalog signing private key lives outside the repository (`02_Tools/release/catalog-release.md`); tests never use it.
+
 ## Readiness checks
 
 Run the documented setup --check before verification on a new machine. Ubuntu system packages require separate host installation; the setup checker prints missing packages.

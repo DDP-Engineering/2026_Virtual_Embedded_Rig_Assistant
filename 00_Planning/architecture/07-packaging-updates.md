@@ -59,7 +59,9 @@ upgrade safety (L10, WP-32) are deferred until the first public release (§6).
 - The official plugins ship as a plugin catalog release in `<resources>/plugins/` (`npm run prepare:plugins`,
   run by `package`; each zip is checked against its index before and after packing). The default plugin
   catalog folder is the build input `VERA_PLUGIN_CATALOG_URL`, under the update feed's URL rule; it is empty
-  until the official catalog hosting exists (plugins architecture §7).
+  until the official catalog hosting exists (plugins architecture §7). Remote channel indexes must carry an
+  Ed25519 signature for the public key the build pins (`VERA_PLUGIN_CATALOG_KEY`, default
+  `02_Tools/release/catalog-signing-key.pub.pem`); release steps in `02_Tools/release/catalog-release.md`.
 - `npm run package` produces release artifacts with test switches compiled out (`VERA_TEST=0`).
   `package:test` (`VERA_TEST=1`) produces separately labelled instrumented artifacts for debugging;
   they are never delivered: app id `engineering.ddp.vera.test`, product "VERA Test", executable

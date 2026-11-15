@@ -921,6 +921,14 @@
       "none": "Nu este configurat niciun catalog, iar această versiune nu include pluginuri.",
       "problemUnreachable": "Catalogul nu a putut fi accesat.",
       "problemInvalid": "Indexul catalogului nu este valid.",
+      "problemUnsigned": "Catalogul de la această adresă nu este semnat, așa că VERA nu îl folosește. Sunt afișate pluginurile incluse în VERA.",
+      "problemUntrusted": "Semnătura catalogului nu se potrivește cu cheia din VERA: indexul a fost modificat sau semnat cu altă cheie. VERA nu îl folosește; sunt afișate pluginurile incluse în VERA.",
+      "channel": "Canal",
+      "channels": {
+        "stable": "Stabil (versiunea 1.0.0 și mai mare)",
+        "pre-release": "Pre-lansare (toate pluginurile, inclusiv versiunile 0.x)"
+      },
+      "channelHint": "Stabil listează pluginurile dovedite pe unelte și hardware reale. Pre-lansare listează și pluginurile a căror dovadă este încă deschisă.",
       "check": "Caută actualizări",
       "checking": "Se caută…",
       "url": "URL-ul catalogului",

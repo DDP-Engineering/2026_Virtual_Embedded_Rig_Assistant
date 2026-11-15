@@ -7,7 +7,7 @@ import react from "@vitejs/plugin-react";
 import { defineConfig } from "electron-vite";
 import type { Plugin } from "vite";
 // @ts-expect-error build helper is a Node ESM module.
-import { pluginCatalogFeed, updateFeed } from "../../../../02_Tools/release/update-config.mjs";
+import * as updateConfig from "../../../../02_Tools/release/update-config.mjs";
 import { productionCsp } from "./src/main/content-policy.js";
 
 const root = dirname(fileURLToPath(import.meta.url));
@@ -16,8 +16,10 @@ const buildRoot = process.env.VERA_BUILD_ROOT ? resolve(process.env.VERA_BUILD_R
 const shared = resolve(root, "../../libraries/shared/src/index.ts");
 const testBuild = process.env.VERA_TEST === "1";
 const sessionPerformance = testBuild && process.env.VERA_SESSION_PERF === "1";
+const { pluginCatalogFeed, pluginCatalogKey, updateFeed } = updateConfig;
 const updateUrl = updateFeed(process.env.VERA_UPDATE_URL, testBuild);
 const pluginCatalogUrl = pluginCatalogFeed(process.env.VERA_PLUGIN_CATALOG_URL, testBuild);
+const pluginCatalogPublicKey = pluginCatalogKey(process.env.VERA_PLUGIN_CATALOG_KEY);
 
 function developmentCsp(): Plugin {
   return {
@@ -97,6 +99,7 @@ export default defineConfig(({ command }) => ({
       __VERA_SIGNED__: JSON.stringify(process.env.VERA_SIGNED_BUILD === "1"),
       __VERA_UPDATE_URL__: JSON.stringify(updateUrl),
       __VERA_PLUGIN_CATALOG_URL__: JSON.stringify(pluginCatalogUrl),
+      __VERA_PLUGIN_CATALOG_KEY__: JSON.stringify(pluginCatalogPublicKey),
     },
     build: {
       outDir: resolve(buildRoot, "main"),

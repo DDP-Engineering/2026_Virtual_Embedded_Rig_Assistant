@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { shortcutOverridesSchema } from "./keyboard-shortcuts.js";
 import { partsSearchSettingsSchema } from "./parts-search.js";
-import { catalogUrlSchema } from "./plugin-catalog.js";
+import { catalogChannelSchema, catalogUrlSchema } from "./plugin-catalog.js";
 import { urlParts } from "./plugins.js";
 import { modelReferenceSchema, providerSettingsSchema } from "./providers.js";
 import { sessionIdSchema } from "./session.js";
@@ -30,6 +30,8 @@ export const pluginSettingsSchema = z.strictObject({
   index: plainUrl.optional(),
   proxy: plainUrl.optional(),
   catalog: catalogUrlSchema.optional(),
+  /** The remote catalog's release channel; readers use `stable` when unset. */
+  channel: catalogChannelSchema.optional(),
 });
 export type PluginSettings = z.infer<typeof pluginSettingsSchema>;
 

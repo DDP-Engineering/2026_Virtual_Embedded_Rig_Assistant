@@ -35,5 +35,9 @@ Signing the index is deferred until review by maintainers no longer scales.
   release steps; the maintainers' `catalog.yaml` lists official plugins and reviewed rules. The desktop
   client (core `catalog.ts`) verifies size and SHA-256 per zip, shows the tier and reviews first installs
   and changing updates. The official plugins ship bundled as `<resources>/plugins/`.
+- Index signing (2026-11-15, PLG-07 #268, AEGIS TASK-2b84817f): the release's channel indexes
+  (`index-stable.json`, `index-pre-release.json`) are signed with Ed25519 (`vera catalog sign`). The desktop build
+  pins the public key, and a remote index without a valid signature is refused. The bundled release is trusted
+  through its installer.
 - Open: the official catalog URL and hosting (build input `VERA_PLUGIN_CATALOG_URL` is empty), the hosted
-  repository and its CI platform, and index signing, still deferred.
+  repository and its CI platform.

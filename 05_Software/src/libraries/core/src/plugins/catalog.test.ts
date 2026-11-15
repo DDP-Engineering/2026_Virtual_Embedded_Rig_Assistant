@@ -1,16 +1,24 @@
+import { generateKeyPairSync } from "node:crypto";
 import { cp, mkdtemp, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import { createServer, type Server } from "node:http";
 import type { AddressInfo } from "node:net";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import type { CatalogChannel } from "@vera/shared";
 import { afterEach, expect, it } from "vitest";
 import { parse, stringify } from "yaml";
 import { PluginCatalog } from "./catalog.js";
-import { buildCatalogRelease } from "./catalog-source.js";
+import { buildCatalogRelease, signCatalogRelease } from "./catalog-source.js";
 import { PluginStore } from "./store.js";
 
 const official = resolve(dirname(fileURLToPath(import.meta.url)), "../../../../../plugins");
+/** A throwaway signing key pair: releases are signed with it and the client pins its public key. */
+const pair = (key = generateKeyPairSync("ed25519")) => ({
+  privatePem: key.privateKey.export({ type: "pkcs8", format: "pem" }).toString(),
+  publicPem: key.publicKey.export({ type: "spki", format: "pem" }).toString(),
+});
+const keys = pair();
 const roots: string[] = [];
 const servers: Server[] = [];
 afterEach(async () => {
@@ -68,20 +76,21 @@ async function release(edit: (manifest: Manifest) => void = () => {}) {
   const out = join(await temp("release"), "out");
   const built = await buildCatalogRelease(source, out);
   expect(built.issues).toEqual([]);
+  await signCatalogRelease(out, keys.privatePem);
   return out;
 }
 /** A loopback catalog host serving `state.folder`; `state.requests` records every path. */
 async function host() {
-  const state = { folder: "", requests: [] as string[], status: 200 };
+  const state = { folder: "", requests: [] as string[], status: 200, failing: "" };
   const server = createServer(async (request, response) => {
     const name = decodeURIComponent((request.url ?? "/").split("/").at(-1) ?? "");
     state.requests.push(name);
     try {
-      if (state.status !== 200) throw new Error("status");
+      if (state.status !== 200 || name === state.failing) throw new Error("status");
       const body = await readFile(join(state.folder, name));
       response.writeHead(200, { "content-length": body.length }).end(body);
     } catch {
-      response.writeHead(state.status === 200 ? 404 : state.status).end();
+      response.writeHead(name === state.failing ? 503 : state.status === 200 ? 404 : state.status).end();
     }
   });
   servers.push(server);
@@ -89,14 +98,27 @@ async function host() {
   const url = `http://127.0.0.1:${(server.address() as AddressInfo).port}/vera/catalog`;
   return { state, server, url };
 }
-async function fixture(options: { location?: string; bundled?: string; finalUrl?: string } = {}) {
+async function fixture(
+  options: {
+    location?: string;
+    bundled?: string;
+    finalUrl?: string;
+    channel?: CatalogChannel;
+    publicKey?: string | null;
+  } = {},
+) {
   const data = await temp("data");
   const store = new PluginStore({ root: join(data, "plugins") });
   let location = options.location;
+  // Most tests read the 0.x plugins, so the fixture defaults to the channel that lists them.
+  let channel = options.channel ?? "pre-release";
+  const publicKey = options.publicKey === undefined ? keys.publicPem : options.publicKey;
   const catalog = new PluginCatalog({
     store,
     root: join(data, "plugins", "catalog"),
     location: () => location,
+    channel: () => channel,
+    ...(publicKey !== null ? { publicKey } : {}),
     ...(options.bundled ? { bundled: options.bundled } : {}),
     now: () => new Date("2026-11-03T12:00:00.000Z"),
     fetch: async (url, init) => {
@@ -106,17 +128,28 @@ async function fixture(options: { location?: string; bundled?: string; finalUrl?
     },
   });
   const kept = async () => readdir(join(data, "plugins", "catalog")).catch(() => [] as string[]);
-  return { data, store, catalog, kept, setLocation: (value: string | undefined) => (location = value) };
+  return {
+    data,
+    store,
+    catalog,
+    kept,
+    setLocation: (value: string | undefined) => (location = value),
+    setChannel: (value: CatalogChannel) => (channel = value),
+  };
 }
 const sha = (folder: string) => async (name: string) => {
   const index = JSON.parse(await readFile(join(folder, "index.json"), "utf8"));
   return index.plugins.find((plugin: { id: string }) => plugin.id === name);
 };
+/** Edits the bundled and the pre-release index (the fixture's channel) and signs the release again. */
 async function rewriteIndex(folder: string, edit: (index: { plugins: Record<string, unknown>[] }) => void) {
-  const path = join(folder, "index.json");
-  const index = JSON.parse(await readFile(path, "utf8"));
-  edit(index);
-  await writeFile(path, JSON.stringify(index));
+  for (const name of ["index.json", "index-pre-release.json"]) {
+    const path = join(folder, name);
+    const index = JSON.parse(await readFile(path, "utf8"));
+    edit(index);
+    await writeFile(path, JSON.stringify(index));
+  }
+  await signCatalogRelease(folder, keys.privatePem);
 }
 
 // REQ-FUNC-98ded47a
@@ -155,7 +188,8 @@ it("reads the configured catalog and falls back to the bundled one when it is un
   expect(missing.plugins.find((plugin) => plugin.id === "serial-monitor")?.version).toBe("0.2.0");
 
   state.status = 200;
-  await writeFile(join(served, "index.json"), "{ not json");
+  await writeFile(join(served, "index-pre-release.json"), "{ not json");
+  await signCatalogRelease(served, keys.privatePem);
   expect(await catalog.view({ refresh: true })).toMatchObject({ source: "bundled", problem: "invalid" });
 
   setLocation("http://127.0.0.1:1/vera/");
@@ -417,4 +451,105 @@ it("installs from the bundled catalog without any network", async () => {
   ]);
   expect([first.id, second.id]).toEqual(["esp32-esptool", "serial-monitor"]);
   expect(await kept()).toEqual([`${(await sha(bundled)("serial-monitor")).sha256}.zip`]);
+});
+
+// REQ-FUNC-b7ff35bf
+it("reads the selected channel's index from a remote catalog and every plugin from the bundled one", async () => {
+  const bundled = await release();
+  const { state, url } = await host();
+  state.folder = await release((manifest) => {
+    manifest.version = "1.0.1";
+  });
+  const { catalog, setChannel, setLocation } = await fixture({ location: url, bundled, channel: "stable" });
+  const ids = async (refresh: boolean) =>
+    (await catalog.view({ refresh })).plugins.map((plugin) => [plugin.id, plugin.version]);
+
+  expect(await ids(true)).toEqual([["serial-monitor", "1.0.1"]]);
+  expect(state.requests).toEqual(["index-stable.json", "index-stable.json.sig"]);
+  setChannel("pre-release");
+  expect(await ids(false)).toEqual([
+    ["esp32-esptool", "0.2.0"],
+    ["serial-monitor", "1.0.1"],
+  ]);
+  expect(state.requests.slice(2)).toEqual(["index-pre-release.json", "index-pre-release.json.sig"]);
+
+  setChannel("stable");
+  setLocation(undefined);
+  expect(await ids(false)).toEqual([
+    ["esp32-esptool", "0.2.0"],
+    ["serial-monitor", "0.2.0"],
+  ]);
+});
+
+// REQ-SEC-3e11ffe4
+it("refuses a remote index without a signature and shows the bundled catalog", async () => {
+  const bundled = await release();
+  const { state, url } = await host();
+  state.folder = await release((manifest) => {
+    manifest.version = "1.0.1";
+  });
+  const { catalog, setLocation } = await fixture({ location: url, bundled });
+  expect(await catalog.view({ refresh: true })).toMatchObject({ source: "remote" });
+
+  // A signature the server fails to send is a transfer problem, not a missing signature.
+  state.failing = "index-pre-release.json.sig";
+  expect(await catalog.view({ refresh: true })).toMatchObject({ source: "bundled", problem: "unreachable" });
+  state.failing = "";
+  await rm(join(state.folder, "index-pre-release.json.sig"));
+  const unsigned = await catalog.view({ refresh: true });
+  expect(unsigned).toMatchObject({ source: "bundled", problem: "unsigned" });
+  expect(unsigned.plugins.find((plugin) => plugin.id === "serial-monitor")?.version).toBe("0.2.0");
+  await expect(catalog.review("serial-monitor")).resolves.toMatchObject({ version: "0.2.0" });
+
+  // Offline, without a remote catalog, the bundled release needs no signature.
+  setLocation(undefined);
+  const offline = await catalog.view({ refresh: true });
+  expect(offline.source).toBe("bundled");
+  expect(offline.problem).toBeUndefined();
+});
+
+// REQ-SEC-d96c5192
+it("refuses a remote index changed after signing or signed with another key", async () => {
+  const bundled = await release();
+  const { state, url } = await host();
+  state.folder = await release();
+  const changed = await fixture({ location: url, bundled });
+  expect(await changed.catalog.view({ refresh: true })).toMatchObject({ source: "remote" });
+
+  const path = join(state.folder, "index-pre-release.json");
+  const index = JSON.parse(await readFile(path, "utf8"));
+  index.plugins[0].sha256 = "0".repeat(64);
+  await writeFile(path, `${JSON.stringify(index, null, 2)}\n`);
+  expect(await changed.catalog.view({ refresh: true })).toMatchObject({
+    source: "bundled",
+    problem: "untrusted",
+  });
+
+  await signCatalogRelease(state.folder, pair().privatePem);
+  expect(await changed.catalog.view({ refresh: true })).toMatchObject({ problem: "untrusted" });
+
+  await signCatalogRelease(state.folder, keys.privatePem);
+  expect(await changed.catalog.view({ refresh: true })).toMatchObject({ source: "remote" });
+  await writeFile(join(state.folder, "index-pre-release.json.sig"), "not base64 at all\n");
+  expect(await changed.catalog.view({ refresh: true })).toMatchObject({ problem: "untrusted" });
+
+  // Another channel's signed index served under this channel's name: the signed channel field differs.
+  await signCatalogRelease(state.folder, keys.privatePem);
+  const stable = await fixture({ location: url, bundled, channel: "stable" });
+  expect(await stable.catalog.view({ refresh: true })).toMatchObject({ source: "remote" });
+  for (const suffix of ["", ".sig"])
+    await writeFile(
+      join(state.folder, `index-stable.json${suffix}`),
+      await readFile(join(state.folder, `index-pre-release.json${suffix}`)),
+    );
+  expect(await stable.catalog.view({ refresh: true })).toMatchObject({
+    source: "bundled",
+    problem: "untrusted",
+  });
+
+  const unpinned = await fixture({ location: url, publicKey: null });
+  expect(await unpinned.catalog.view({ refresh: true })).toMatchObject({
+    source: "none",
+    problem: "untrusted",
+  });
 });

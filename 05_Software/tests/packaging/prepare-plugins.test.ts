@@ -1,7 +1,10 @@
+import { generateKeyPairSync } from "node:crypto";
 import { readFile, rm, stat, writeFile } from "node:fs/promises";
+import { createServer } from "node:http";
+import type { AddressInfo } from "node:net";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { PluginStore, SkillCatalog } from "@vera/core";
+import { PluginCatalog, PluginStore, SkillCatalog, signCatalogRelease } from "@vera/core";
 import { afterAll, expect, it } from "vitest";
 
 // @ts-expect-error Native ESM build helper.
@@ -92,6 +95,52 @@ it("builds the official plugins into a bundled catalog release and checks it aga
     expect(plugin).not.toHaveProperty("updatedAt");
   }
   await expect(checkBundledPlugins(target)).resolves.toEqual(index);
+  // REQ-DATA-78f62129: the release carries both channel indexes; only ltspice is stable today.
+  const channel = async (name: string) => JSON.parse(await readFile(join(target, name), "utf8"));
+  expect(await channel("index-pre-release.json")).toEqual({ ...index, channel: "pre-release" });
+  const stable = await channel("index-stable.json");
+  expect(
+    stable.plugins.map((plugin: { id: string; version: string }) => [plugin.id, plugin.version]),
+  ).toEqual([["ltspice", "1.0.0"]]);
+  for (const pack of stable.packs)
+    for (const group of pack.groups) expect(group.plugins).toEqual(["ltspice"]);
+  // PLG-07-A: the signed release folder, served as a plain copy by a loopback mirror, installs.
+  const key = generateKeyPairSync("ed25519");
+  await signCatalogRelease(target, key.privateKey.export({ type: "pkcs8", format: "pem" }).toString());
+  const server = createServer(async (request, response) => {
+    try {
+      const body = await readFile(
+        join(target, decodeURIComponent((request.url ?? "/").split("/").at(-1) ?? "")),
+      );
+      response.writeHead(200, { "content-length": body.length }).end(body);
+    } catch {
+      response.writeHead(404).end();
+    }
+  });
+  await new Promise<void>((done) => server.listen(0, "127.0.0.1", done));
+  try {
+    const mirror = `http://127.0.0.1:${(server.address() as AddressInfo).port}/vera/`;
+    const store = new PluginStore({ root: join(target, "mirror-installed") });
+    const catalog = new PluginCatalog({
+      store,
+      root: join(target, "mirror-catalog"),
+      location: () => mirror,
+      publicKey: key.publicKey.export({ type: "spki", format: "pem" }).toString(),
+      fetch: (url, init) => fetch(url, init.signal ? { signal: init.signal } : {}),
+    });
+    const view = await catalog.view({ refresh: true });
+    expect(view).toMatchObject({ source: "remote", url: mirror });
+    expect(view.problem).toBeUndefined();
+    expect(view.plugins.map((plugin) => plugin.id)).toEqual(["ltspice"]);
+    const reviewed = await catalog.review("ltspice");
+    await catalog.install("ltspice", reviewed.review.sha256);
+    expect((await store.list()).map((plugin) => [plugin.id, plugin.version, plugin.tier])).toEqual([
+      ["ltspice", "1.0.0", "official"],
+    ]);
+  } finally {
+    server.closeAllConnections();
+    await new Promise<void>((done) => server.close(() => done()));
+  }
   const analysis = index.plugins.find((plugin: { id: string }) => plugin.id === "analysis-skills");
   expect(analysis).toBeDefined();
   const store = new PluginStore({ root: join(target, "installed") });

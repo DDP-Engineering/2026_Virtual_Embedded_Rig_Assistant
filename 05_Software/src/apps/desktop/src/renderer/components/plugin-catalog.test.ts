@@ -406,6 +406,57 @@ it("saves a catalog URL keeping the index and proxy, refuses a remote http URL a
   });
 });
 
+// REQ-UX-84d8cad7
+it("chooses the catalog channel keeping the other plugin settings and reloads the catalog", async () => {
+  await i18n.changeLanguage("en");
+  const state = stub({
+    catalog: view([]),
+    plugins: { index: "https://pypi.test/simple", catalog: "https://mirror.test/vera/" },
+  });
+  await render();
+  await vi.waitFor(() => expect($("[data-catalog-channel]")).not.toBeNull());
+  const select = $("[data-catalog-channel]") as HTMLSelectElement;
+  await vi.waitFor(() => expect(select.disabled).toBe(false));
+  expect(select.value).toBe("stable");
+  expect([...select.options].map((option) => option.textContent)).toEqual([
+    i18n.t("plugins.catalog.channels.stable"),
+    i18n.t("plugins.catalog.channels.pre-release"),
+  ]);
+  const before = calls("plugins.catalog").length;
+  await act(async () => {
+    await userEvent.setup().selectOptions(select, "pre-release");
+  });
+  await vi.waitFor(() => expect(calls("app.settings.update")).toHaveLength(1));
+  expect(calls("app.settings.update")[0]).toEqual({
+    plugins: {
+      index: "https://pypi.test/simple",
+      catalog: "https://mirror.test/vera/",
+      channel: "pre-release",
+    },
+  });
+  expect(state.settings.plugins.channel).toBe("pre-release");
+  await vi.waitFor(() => expect(calls("plugins.catalog").length).toBeGreaterThan(before));
+  expect(($("[data-catalog-channel]") as HTMLSelectElement).value).toBe("pre-release");
+});
+
+// REQ-UX-84d8cad7
+it.each(["en", "ro", "de"])("names an unsigned or untrusted remote catalog in %s", async (language) => {
+  await i18n.changeLanguage(language);
+  for (const problem of ["unsigned", "untrusted"] as const) {
+    stub({ catalog: view(esp32, { source: "bundled", problem }) });
+    await render();
+    await vi.waitFor(() => expect($(`[data-catalog-problem="${problem}"]`)).not.toBeNull());
+    const key = problem === "unsigned" ? "problemUnsigned" : "problemUntrusted";
+    const text = $(`[data-catalog-problem="${problem}"]`).textContent ?? "";
+    expect(text).toBe(i18n.t(`plugins.catalog.${key}`));
+    expect(text).not.toContain("plugins.catalog");
+    if (problem === "unsigned") {
+      await act(async () => root.unmount());
+      container.remove();
+    }
+  }
+});
+
 // REQ-UX-9207423e
 it("saves nothing before the settings have loaded, so the package index and proxy cannot be lost", async () => {
   await i18n.changeLanguage("en");

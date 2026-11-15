@@ -215,7 +215,7 @@ review screen; a zip with a wrong hash is refused.
   `<resources>/plugins/`); it verifies size and SHA-256, refuses entry mismatches and downgrades, reviews first installs
   and updates that change programs or rules, and checks at start and every 24 h while the update mode is not Off.
   Spec `.agentic/specs/REQ-DATA-b40d3f9b.md`. Open: the official catalog URL and hosting, the hosted repository's CI
-  platform and release upload, index signing (deferred by ADR-0019).
+  platform and release upload. Index signing and channels: PLG-07 #268 of epic #261 (`02_Tools/release/catalog-release.md`).
 
 ### PLG-08 `serial-monitor`
 **Goal:** list ports and capture consoles on both systems. **Depends on:** PLG-04, PLG-05.

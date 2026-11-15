@@ -1,10 +1,12 @@
-import { createHash, randomUUID } from "node:crypto";
+import { createHash, randomUUID, verify } from "node:crypto";
 import { lstat, mkdir, readFile, rename, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import {
   CATALOG_LIMITS,
+  type CatalogChannel,
   type CatalogEntry,
   type CatalogIndex,
+  catalogChannelIndex,
   catalogIndexSchema,
   catalogUrl,
   compareVersions,
@@ -24,22 +26,40 @@ export interface PluginCatalogOptions {
   root: string;
   /** The configured catalog folder URL (settings, else the build default); anything invalid counts as none. */
   location(): string | undefined;
+  /** The remote catalog's release channel (settings `plugins.channel`); `stable` when absent. */
+  channel?(): CatalogChannel | undefined;
+  /**
+   * The Ed25519 public key (SPKI PEM) pinned in the build. A remote index is used only when its
+   * signature verifies with it, so without a key every remote index is `untrusted`.
+   */
+  publicKey?: string;
   /** The bundled release folder of the official plugins, when the build has one. */
   bundled?: string;
   fetch(url: string, init: { signal?: AbortSignal | undefined }): Promise<Response>;
   now?: () => Date;
   uuid?: () => string;
 }
-type Origin = { kind: "remote"; url: string } | { kind: "bundled"; folder: string };
+type Origin = { kind: "remote"; url: string; channel: CatalogChannel } | { kind: "bundled"; folder: string };
+type Problem = NonNullable<PluginCatalogView["problem"]>;
 interface Snapshot {
+  /** The remote URL and channel the snapshot was read for; a change of either reads again. */
   location: string | undefined;
   origin?: Origin;
   index?: CatalogIndex;
-  problem?: "unreachable" | "invalid";
+  problem?: Problem;
   checkedAt: string;
 }
-/** A read that failed in transfer: network, HTTP status, a redirect off HTTPS, or a missing file. */
-class Unreachable extends Error {}
+/** An index signature file is 88 base64 characters; anything longer is not one. */
+const SIGNATURE_BYTES = 1024;
+/**
+ * A read that failed in transfer: network, HTTP status, a redirect off HTTPS, or a missing file. `missing`
+ * when the server answered 404 Not Found.
+ */
+class Unreachable extends Error {
+  constructor(readonly missing = false) {
+    super();
+  }
+}
 
 const failure = (code: VeraError["code"], key: string, params?: VeraError["params"]): VeraError => ({
   ...veraError(code),
@@ -111,12 +131,12 @@ export class PluginCatalog {
       response = await this.options.fetch(`${origin.url}${name}`, { signal });
     } catch (error) {
       signal?.throwIfAborted();
-      throw new Unreachable(String(error));
+      throw new Unreachable();
     }
     const body = response.body;
     if (!response.ok || !body || (response.url && !securelyServed(response.url))) {
       await body?.cancel().catch(() => {});
-      throw new Unreachable();
+      throw new Unreachable(response.status === 404);
     }
     if (Number(response.headers.get("content-length") ?? 0) > limit) {
       await body.cancel().catch(() => {});
@@ -136,47 +156,85 @@ export class PluginCatalog {
         }
         parts.push(value);
       }
-    } catch (error) {
+    } catch {
       signal?.throwIfAborted();
-      throw new Unreachable(String(error));
+      throw new Unreachable();
     }
     return { bytes: Buffer.concat(parts), over: false };
   }
 
-  private async readIndex(
-    origin: Origin,
-    signal?: AbortSignal,
-  ): Promise<CatalogIndex | "unreachable" | "invalid"> {
+  /**
+   * The bundled release's `index.json` (trusted through the installer), or a remote channel index whose
+   * detached signature verifies with the pinned key; the signature is checked before the index is parsed.
+   */
+  private async readIndex(origin: Origin, signal?: AbortSignal): Promise<CatalogIndex | Problem> {
+    const name = origin.kind === "remote" ? catalogChannelIndex(origin.channel) : "index.json";
     let read: { bytes: Uint8Array; over: boolean };
     try {
-      read = await this.read(origin, "index.json", CATALOG_LIMITS.indexBytes, signal);
+      read = await this.read(origin, name, CATALOG_LIMITS.indexBytes, signal);
     } catch (error) {
       if (error instanceof Unreachable) return "unreachable";
       throw error;
     }
     if (read.over) return "invalid";
+    if (origin.kind === "remote") {
+      let signature: { bytes: Uint8Array; over: boolean };
+      try {
+        signature = await this.read(origin, `${name}.sig`, SIGNATURE_BYTES, signal);
+      } catch (error) {
+        // Only a signature the server does not have is "unsigned"; any other failed read is a transfer problem.
+        if (error instanceof Unreachable) return error.missing ? "unsigned" : "unreachable";
+        throw error;
+      }
+      if (signature.over || !this.signed(read.bytes, signature.bytes)) return "untrusted";
+    }
     try {
       const parsed = catalogIndexSchema.safeParse(
         JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(read.bytes)),
       );
-      return parsed.success ? parsed.data : "invalid";
+      if (!parsed.success) return "invalid";
+      // The channel is inside the signed bytes: another channel's signed index served under this name is refused.
+      if (origin.kind === "remote" && parsed.data.channel !== origin.channel) return "untrusted";
+      return parsed.data;
     } catch {
       return "invalid";
     }
   }
 
-  /** The last catalog read for the current location, or a new read (`refresh`, or the location changed). */
+  /** The base64 Ed25519 signature (text, final newline allowed) verifies `bytes` with the pinned key. */
+  private signed(bytes: Uint8Array, signature: Uint8Array): boolean {
+    if (!this.options.publicKey) return false;
+    const text = new TextDecoder().decode(signature).trim();
+    if (!/^[A-Za-z0-9+/]+={0,2}$/.test(text)) return false;
+    try {
+      return verify(null, bytes, this.options.publicKey, Buffer.from(text, "base64"));
+    } catch {
+      return false;
+    }
+  }
+
+  /**
+   * The last catalog read for the current location and channel, or a new read (`refresh`, or either
+   * changed).
+   */
   private async snapshot(refresh: boolean, signal?: AbortSignal): Promise<Snapshot> {
-    const location = catalogUrl(this.options.location() ?? "");
+    const url = catalogUrl(this.options.location() ?? "");
+    const channel = this.options.channel?.() ?? "stable";
+    const location = url && `${url} ${channel}`;
     if (refresh || this.current?.location !== location || !this.current)
-      this.current = await this.readSnapshot(location, signal);
+      this.current = await this.readSnapshot(url, channel, signal);
     return this.current;
   }
-  private async readSnapshot(location: string | undefined, signal?: AbortSignal): Promise<Snapshot> {
+  private async readSnapshot(
+    url: string | undefined,
+    channel: CatalogChannel,
+    signal?: AbortSignal,
+  ): Promise<Snapshot> {
     const checkedAt = (this.options.now?.() ?? new Date()).toISOString();
+    const location = url && `${url} ${channel}`;
     let problem: Snapshot["problem"];
-    if (location) {
-      const origin: Origin = { kind: "remote", url: location };
+    if (url) {
+      const origin: Origin = { kind: "remote", url, channel };
       const index = await this.readIndex(origin, signal);
       if (typeof index !== "string") return { location, origin, index, checkedAt };
       problem = index;
