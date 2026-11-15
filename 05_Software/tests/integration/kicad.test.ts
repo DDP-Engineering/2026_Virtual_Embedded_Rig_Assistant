@@ -213,6 +213,7 @@ it("publishes the official kicad package, its pack and two installed skills", as
     const installed = await store.load("kicad");
     expect((await readdir(installed.folder)).sort()).toEqual([
       "README.md",
+      "help",
       "install.json",
       "plugin.yaml",
       "scripts",
