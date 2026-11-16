@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { commandPrefixListSchema } from "./command-prefix.js";
+import { workbenchPrivacySchema } from "./privacy.js";
 import { permissionModeSchema } from "./session.js";
 
 /** Portable stored folder syntax; host resolution additionally checks the local directory. */
@@ -90,6 +91,7 @@ const agent = z.looseObject({
     .default(null),
 });
 export const workbenchSchema = z.looseObject({
+  privacy: workbenchPrivacySchema.optional(),
   format: z.literal(1),
   additional_folders: additionalFoldersSchema.default([]),
   id: workbenchIdSchema,
@@ -114,6 +116,7 @@ export function workbenchTemplate(name: string): string {
   return `# ${name}\n\n## Device under test\nBoard, MCU, revision, key parts.\n\n## Bench setup\nPower, probes, programmers, interfaces and where they connect.\n\n## Conventions\nHow results, logs and notes are named and where they go.\n\n## Known issues\nLab or hardware quirks the agent should check first.\n`;
 }
 export const workbenchPatchSchema = z.strictObject({
+  privacy: workbenchPrivacySchema.optional(),
   additional_folders: additionalFoldersSchema.optional(),
   chat: z.strictObject({ detail: chatDetailSchema.optional() }).optional(),
   embeddings: workbenchEmbeddingsSchema.optional(),
@@ -244,5 +247,16 @@ export function mergeWorkbench(current: WorkbenchConfig, patch: WorkbenchPatch):
     plugins: { ...current.plugins, ...clean.plugins },
     chat: { ...current.chat, ...clean.chat },
     agent: { ...current.agent, ...clean.agent },
+    ...(current.privacy || clean.privacy
+      ? {
+          privacy: {
+            ...current.privacy,
+            ...clean.privacy,
+            ...(current.privacy?.mask || clean.privacy?.mask
+              ? { mask: { ...current.privacy?.mask, ...clean.privacy?.mask } }
+              : {}),
+          },
+        }
+      : {}),
   });
 }

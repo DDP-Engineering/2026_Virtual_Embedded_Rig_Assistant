@@ -70,6 +70,7 @@ export * from "./ports.js";
 export * from "./sessions/export.js";
 export * from "./sessions/hub.js";
 export * from "./sessions/service.js";
+export * from "./settings/masking.js";
 export * from "./settings/service.js";
 export * from "./skills/catalog.js";
 export * from "./storage/db.js";

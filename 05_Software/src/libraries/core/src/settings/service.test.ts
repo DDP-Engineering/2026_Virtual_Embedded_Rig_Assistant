@@ -30,6 +30,50 @@ function harness(stored?: string) {
 }
 
 describe("application settings persistence", () => {
+  it.each([undefined, {}, { mask: {} }, { mask: { display: true } }])(
+    "keeps omitted and empty privacy shapes unchanged for no-op patches: %j",
+    async (privacy) => {
+      const { defaultSettings } = await import("@vera/shared");
+      const stored = JSON.stringify({
+        ...defaultSettings("00000000-0000-4000-8000-000000000001"),
+        privacy,
+      });
+      const h = harness(stored);
+      await h.service.load();
+      const before = h.service.get();
+      await h.service.update({});
+      await h.service.update({ privacy: undefined, theme: "system" });
+      expect(h.service.get()).toEqual(before);
+      expect(h.files.get("/data/settings.json")).toBe(stored);
+      expect(h.fileAccess.writeAtomic).not.toHaveBeenCalled();
+      expect(h.changed).not.toHaveBeenCalled();
+    },
+  );
+  it("saves partial masking settings and reopens without dropping other preferences", async () => {
+    const h = harness();
+    await h.service.load();
+    await h.service.update({ shell: "/bin/bash", theme: "dark", plugins: { channel: "pre-release" } });
+    const before = h.service.get().settings;
+    await h.service.update({ privacy: { mask: { display: true, runs: true } } });
+    await h.service.update({ privacy: { mask: { agent: false } } });
+    await h.service.update({ language: "fr" });
+    const reload = harness(h.files.get("/data/settings.json"));
+    await reload.service.load();
+    expect(reload.service.get().settings).toEqual({
+      ...before,
+      language: "fr",
+      privacy: {
+        mask: { display: true, runs: true, agent: false, exports: true },
+      },
+    });
+    const stored = h.files.get("/data/settings.json");
+    await expect(h.service.update({ privacy: { mask: { typo: true } } } as never)).rejects.toMatchObject({
+      code: "INVALID",
+    });
+    expect(h.files.get("/data/settings.json")).toBe(stored);
+    const invalid = harness(JSON.stringify({ ...before, privacy: { mask: { display: "on" } } }));
+    await expect(invalid.service.load()).rejects.toMatchObject({ code: "INVALID" });
+  });
   it("persists and resets the shell selection at format version one", async () => {
     const h = harness();
     await h.service.load();
@@ -73,6 +117,7 @@ describe("application settings persistence", () => {
     const first = a.service.get();
     expect(first.settings).toEqual({
       schemaVersion: 1,
+      privacy: { mask: { display: false, runs: false, agent: true, exports: true } },
       installationId: expect.stringMatching(/^[0-9a-f-]{36}$/),
       webAccess: { enabled: true, provider: "exa", authentication: "anonymous" },
       language: "system",

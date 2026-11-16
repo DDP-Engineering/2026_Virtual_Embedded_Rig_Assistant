@@ -16,6 +16,12 @@ and drains accepted updates/log writes on quit. Shared owns persisted and patch 
 
 ## Public interface
 
+- Optional strict `privacy.mask` holds app booleans for display/runs/agent/exports. First-run settings
+  persist false/false/true/true; omitted app areas use these defaults. Partial patches merge per area.
+  Core `createMaskingResolver(() => settings.get().settings)` returns `maskingFor(workbench, area)`:
+  explicit workbench on/off wins; default/omission reads the live app settings. No globals or copied
+  defaults. MASK-01 supplies infrastructure only; consumers and pages remain in MASK-02–05.
+
 Optional `settings.shell` is a trimmed executable name/absolute path; empty or absent selects the
 platform default. Format remains 1. Shared persisted/update schemas reject controls and values over
 4096 characters. Settings → Commands edits a local draft and saves/cancels explicitly, in en/ro/de/fr.
@@ -85,6 +91,9 @@ Renderer preferences consume this snapshot through Query and i18next; [renderer 
 
 ## Key behaviors
 
+- REQ-DATA-13eeeac5 / REQ-DATA-9b9ac01e — partial privacy persistence and invalid privacy rejection.
+- REQ-FUNC-dd574280 — effective area choice with live app defaults.
+
 - REQ-DATA-4a030001 — first-run schemaVersion 1 defaults and stable unique identity.
 - REQ-DATA-dfbfac7c — ten typed recents; [workbench](workbench.md) owns lifecycle and missing state.
 - REQ-REL-4a030003 — interrupted saves preserve valid settings.
@@ -95,6 +104,9 @@ Renderer preferences consume this snapshot through Query and i18next; [renderer 
 - REQ-SEC-4a030009 — registered-secret content redaction.
 
 ## Files
+
+- src/libraries/shared/src/privacy.ts and privacy.test.ts — strict app/workbench privacy contracts.
+- src/libraries/core/src/settings/masking.ts and masking.test.ts — live effective-choice resolution.
 
 Paths below are relative to 05_Software.
 

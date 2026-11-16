@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-dd574280"
+
+title = "Resolve workbench masking from live app defaults"
+
+status = "active"
+
+requirement = """
+When effective masking is requested for display, runs, agent or exports, the core maskingFor resolver shall use the workbench on/off choice or otherwise the live app area default, with omitted app defaults false, false, true and true respectively.
+"""
+
+verification = "Run each app boolean x default/on/off for each area, omitted blocks/areas and live settings changes, checking explicit overrides and independent workbenches."
+
+affected_paths = ["05_Software/src/libraries/core/src/settings/masking.ts", "05_Software/src/libraries/core/src/settings/masking.test.ts", "05_Software/src/libraries/core/src/index.ts"]
+
+linked_tests = ["05_Software/src/libraries/shared/src/privacy.test.ts", "05_Software/src/libraries/core/src/settings/masking.test.ts", "05_Software/src/libraries/core/src/settings/service.test.ts", "05_Software/src/libraries/core/src/workbench/service.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-16
+updated = 2026-11-17

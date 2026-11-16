@@ -34,6 +34,11 @@ release_tmp/          Ignored packaging workspace
 node_modules/         Ignored installed dependencies
 ```
 
+Shared `src/libraries/shared/src/privacy.ts` validates optional masking preferences. Core
+`src/libraries/core/src/settings/masking.ts` binds `maskingFor(workbench, area)` to a live settings
+getter; its adjacent tests cover all area choices. This infrastructure does not yet change consumers
+or add Settings controls.
+
 Unit and component tests remain beside the implementation in `src/`. Environment, build and
 release tooling lives in [02_Tools](../02_Tools/README.md); it resolves packages from this
 folder's `node_modules/`, so there is a single dependency tree.

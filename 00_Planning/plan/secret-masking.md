@@ -2,12 +2,14 @@
 
 PURPOSE: let the user decide, for each area and each workbench, whether VERA replaces stored secrets with
 `[REDACTED]`, so the user sees all information by default and masking is a choice.
-STATE: planned 2026-11-15. Product code follows AEGIS, one work package per task.
+STATE: MASK-01 #280 infrastructure implemented in TASK-6170ebf2 (uncommitted candidate; proof: evaluation-outputs/mask01; final validation in its journal).
+MASK-02–05 remain planned. Product code follows AEGIS, one work package per task.
 
-## Today (2026-11-15)
+## Today (2026-11-17)
 
 Stored secrets (provider keys, plugin credentials such as MQTT, Wokwi or parts-supplier keys) are always masked by
-`credentials.scrub` (`core/src/llm/scrub.ts`), with no setting:
+`credentials.scrub` (`core/src/llm/scrub.ts`). MASK-01 stores optional strict app booleans and workbench
+choices and supplies a live-settings resolver; consumers still scrub unconditionally until MASK-02–04:
 
 | Area | Where | What is masked |
 |---|---|---|
@@ -38,15 +40,17 @@ stay always on.
 
 ## Work packages
 
-| WP | Title | Result |
+| WP / issue | Title | Result |
 |---|---|---|
-| MASK-01 | Settings and resolver | `privacy.mask` app defaults in `settings.json` (`display`, `runs`, `agent`, `exports`) with the defaults above; `privacy.mask` in the workbench config (`default`, `on`, `off` per area); `maskingFor` in core with unit tests for every combination |
-| MASK-02 | Display area | Files tab, Find, document lists and `docs.read` (and the viewer's `docs.readBytes` from VIEW-01) mask only when Display resolves on; entries are never dropped, names are masked instead |
-| MASK-03 | Program runs area | run arguments, errors, logs and program statuses mask only when Program runs resolves on |
-| MASK-04 | Agent and model, Artifacts and exports | the session engine passes the resolved Agent and model choice to tool results, the stream scrubber and session search; artifact saving and artifact and session exports follow Artifacts and exports |
-| MASK-05 | Settings pages | Settings > Data & privacy: four switches for the app defaults; Edit workbench > Data & privacy: four choices (Default, On, Off) showing the inherited value; the confirmation for Agent and model off; Save and Cancel at the top right; texts in en, ro, de, fr and the help pages updated |
+| MASK-01 #280 | Settings and resolver | `privacy.mask` app defaults in `settings.json` (`display`, `runs`, `agent`, `exports`) with the defaults above; `privacy.mask` in the workbench config (`default`, `on`, `off` per area); `maskingFor` in core with unit tests for every combination |
+| MASK-02 #281 | Display area | Files tab, Find, document lists and `docs.read` (and the viewer's `docs.readBytes` from VIEW-01) mask only when Display resolves on; entries are never dropped, names are masked instead |
+| MASK-03 #282 | Program runs area | run arguments, errors, logs and program statuses mask only when Program runs resolves on |
+| MASK-04 #283 | Agent and model, Artifacts and exports | the session engine passes the resolved Agent and model choice to tool results, the stream scrubber and session search; artifact saving and artifact and session exports follow Artifacts and exports |
+| MASK-05 #284 | Settings pages | Settings > Data & privacy: four switches for the app defaults; Edit workbench > Data & privacy: four choices (Default, On, Off) showing the inherited value; the confirmation for Agent and model off; Save and Cancel at the top right; texts in en, ro, de, fr and the help pages updated |
 
-Order: MASK-01 first; MASK-02, MASK-03 and MASK-04 after it, independent of each other; MASK-05 last. VIEW-01 of
+Epic: MASK #279. TERM #311 is complete through `f0ba3040bac0c76fbd2de72d836ce9d21ee2378c`; masking preserves its prefixes and additional folders.
+
+Order: MASK-01 #280 first; MASK-02, MASK-03 and MASK-04 after it, independent of each other; MASK-05 last. VIEW-01 of
 the [file viewer plan](file-viewer.md) reads its masking from MASK-02.
 
 ## Verification

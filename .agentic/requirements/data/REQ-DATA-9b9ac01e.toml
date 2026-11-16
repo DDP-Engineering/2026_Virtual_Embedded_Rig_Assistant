@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-DATA-9b9ac01e"
+
+title = "Invalid masking preferences are rejected"
+
+status = "active"
+
+requirement = """
+If masking configuration contains an unknown privacy key, area or invalid area value, VERA shall reject it as invalid configuration.
+"""
+
+verification = "Check stored and patch schemas for unknown keys and invalid values; open actual invalid workbench YAML and assert errors.CONFIG_INVALID path and unchanged bytes."
+
+affected_paths = ["05_Software/src/libraries/shared/src/privacy.ts", "05_Software/src/libraries/shared/src/privacy.test.ts", "05_Software/src/libraries/shared/src/settings.ts", "05_Software/src/libraries/shared/src/workbench.ts", "05_Software/src/libraries/shared/src/index.ts", "05_Software/src/libraries/core/src/settings/service.test.ts", "05_Software/src/libraries/core/src/workbench/service.test.ts"]
+
+linked_tests = ["05_Software/src/libraries/shared/src/privacy.test.ts", "05_Software/src/libraries/core/src/settings/masking.test.ts", "05_Software/src/libraries/core/src/settings/service.test.ts", "05_Software/src/libraries/core/src/workbench/service.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-16
+updated = 2026-11-17

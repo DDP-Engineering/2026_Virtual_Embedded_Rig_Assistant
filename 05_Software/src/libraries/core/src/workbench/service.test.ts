@@ -66,6 +66,66 @@ async function harness() {
   return { root, folder, host, events, settings, paths, service: new WorkbenchService(host) };
 }
 
+it("saves masking choices across reopen while retaining extensions and TERM grants", async () => {
+  const h = await harness();
+  try {
+    const { config } = await h.service.create(h.folder, "Privacy", {
+      config: { privacy: { mask: { display: "on" } } },
+    });
+    const sibling = join(h.root, "additional");
+    await mkdir(sibling);
+    const grant = await h.service.chooseAdditionalFolder(sibling, config.id);
+    await h.service.updateConfig({}, config.id, [], { add: [grant.id] });
+    await h.service.allowCommandPrefix("npm test", config.id);
+    await h.service.close();
+    const yaml = join(h.folder, ".vera/workbench.yaml");
+    await writeFile(yaml, `${await readFile(yaml, "utf8")}\nvendor:\n  retained: true\n`);
+    await h.service.open(h.folder);
+    await h.service.updateConfig({ privacy: { mask: { agent: "off", runs: "default" } } }, config.id);
+    await h.service.updateConfig({ name: "Renamed" }, config.id);
+    await h.service.close();
+    const reopened = (await h.service.open(h.folder)).config;
+    expect(reopened).toMatchObject({
+      format: 1,
+      name: "Renamed",
+      vendor: { retained: true },
+      additional_folders: [sibling],
+      agent: { allowed_commands: ["npm test"] },
+      privacy: { mask: { display: "on", agent: "off", runs: "default" } },
+    });
+    const before = await readFile(yaml, "utf8");
+    await expect(
+      h.service.updateConfig({ privacy: { mask: { display: "yes" } } } as never, config.id),
+    ).rejects.toMatchObject({ code: "INVALID" });
+    expect(await readFile(yaml, "utf8")).toBe(before);
+  } finally {
+    await h.service.close();
+  }
+});
+
+it.each(["display: yes", "typo: on"])(
+  "rejects invalid masking YAML %s through WorkbenchService",
+  async (area) => {
+    const h = await harness();
+    await h.service.create(h.folder, "Invalid privacy");
+    await h.service.close();
+    const yaml = join(h.folder, ".vera/workbench.yaml");
+    const raw = `${await readFile(yaml, "utf8")}\nprivacy:\n  mask:\n    ${area}\n`;
+    await writeFile(yaml, raw);
+    try {
+      await expect(h.service.open(h.folder)).rejects.toMatchObject({
+        code: "INVALID",
+        messageKey: "errors.CONFIG_INVALID",
+        params: { path: expect.stringContaining("privacy.mask") },
+      });
+      expect(await readFile(yaml, "utf8")).toBe(raw);
+      expect(existsSync(join(h.folder, ".vera/lock"))).toBe(false);
+    } finally {
+      await h.service.close();
+    }
+  },
+);
+
 // REQ-DATA-f0170301, REQ-SEC-f0170306
 it("stages explicit folder identities and preserves hidden grants across unrelated save and restart", async () => {
   const h = await harness();

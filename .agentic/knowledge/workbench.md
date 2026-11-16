@@ -25,6 +25,12 @@ mode offers empty, missing, read-only and warning fixtures.
 
 ## Public interface
 
+- Optional strict `privacy.mask` accepts display/runs/agent/exports choices default/on/off. Omitted
+  areas follow live app defaults through core settings/masking.ts. Unknown privacy keys, areas and
+  values reject INVALID with errors.CONFIG_INVALID and YAML path/line on open. Partial area saves
+  preserve other choices, extension fields, allowed command prefixes and additional folders at
+  format1. This configuration infrastructure does not yet change consumer scrubbing or add pages.
+
 - `additional_folders` is a bounded unique list of ordinary absolute paths in format1, default empty. General stages native chooser selections and removals until Save; Cancel discards them and read-only controls cannot mutate them. WorkbenchService retains selected canonical paths by opaque SHA256 identity and applies additions/removals atomically against the current host config, rejecting stale IDs and lists above64 with typed errors. Complete list identities carry scrubbed labels; masked paths are omitted from descriptive renderer config, while unrelated saves never echo or replace grants. The overview lists complete saved identities. Host live config grants only ordinary read/list/glob/grep/write/edit and run_command cwd; indexing, storage, artifacts and generated outputs keep the main root. Focused service/schema, core additional-folder tools and native `tests/e2e/additional-folders.spec.ts` prove persistence/revocation/masking.
 
 - `agent.allowed_commands` is a bounded unique list of conservative literal prefixes in format1. User approval IPC routes explicit prefix actions to async SessionService.allowCommandApproval (ordinary decideApproval stays synchronous), validates the pending exact command, persists a chosen matching eligible prefix through WorkbenchService.allowCommandPrefix, then rechecks the pending decision. Failed disk writes retain the pending approval. Edit workbench > Agent loads complete authoritative grant identities with masked labels and removes selected IDs with normal Save/Cancel. Config update applies removal IDs atomically against current exact grants, rejecting stale/mismatched IDs. Unrelated Save preserves all grants rather than echoing sanitized event strings. Shared command-prefix schemas reject unsupported/destructive grants; agent tools cannot add them. ApprovalGate uses the live workbench snapshot at consumption. Native acceptance is tests/e2e/command-prefixes.spec.ts; workbench/service.test.ts proves restart/removal.

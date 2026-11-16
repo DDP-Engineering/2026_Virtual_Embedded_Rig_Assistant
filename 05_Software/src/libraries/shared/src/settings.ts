@@ -3,6 +3,7 @@ import { shortcutOverridesSchema } from "./keyboard-shortcuts.js";
 import { partsSearchSettingsSchema } from "./parts-search.js";
 import { catalogChannelSchema, catalogUrlSchema } from "./plugin-catalog.js";
 import { urlParts } from "./plugins.js";
+import { appPrivacySchema, maskingDefaults } from "./privacy.js";
 import { modelReferenceSchema, providerSettingsSchema } from "./providers.js";
 import { sessionIdSchema } from "./session.js";
 import { updateChannelSchema, updateModeSchema } from "./updates.js";
@@ -56,6 +57,7 @@ const fontSizeSchema = z.union([
   z.literal(24),
 ]);
 const mutable = {
+  privacy: appPrivacySchema.optional(),
   /** Empty selects the platform default; an explicit name/path must resolve on this machine. */
   shell: z
     .string()
@@ -96,6 +98,7 @@ export const settingsSchema = z.strictObject({
   ...mutable,
 });
 export const settingsPatchSchema = z.strictObject({
+  privacy: mutable.privacy,
   shell: mutable.shell,
   keyboardShortcuts: mutable.keyboardShortcuts,
   language: mutable.language.optional(),
@@ -130,18 +133,30 @@ export type SettingsServicePatch = z.infer<typeof settingsServicePatchSchema>;
 export type SettingsSnapshot = z.infer<typeof settingsSnapshotSchema>;
 /** Patches contain only JSON settings values; undefined has omission semantics. */
 export function mergeSettings(current: Settings, patch: SettingsServicePatch): Settings {
-  const clean: SettingsServicePatch = JSON.parse(JSON.stringify(patch));
+  const clean: SettingsServicePatch = JSON.parse(JSON.stringify(settingsServicePatchSchema.parse(patch)));
   return settingsSchema.parse({
     ...current,
     ...clean,
     updates: { ...current.updates, ...clean.updates },
     limits: { ...current.limits, ...clean.limits },
+    ...(current.privacy || clean.privacy
+      ? {
+          privacy: {
+            ...current.privacy,
+            ...clean.privacy,
+            ...(current.privacy?.mask || clean.privacy?.mask
+              ? { mask: { ...current.privacy?.mask, ...clean.privacy?.mask } }
+              : {}),
+          },
+        }
+      : {}),
   });
 }
 export function defaultSettings(installationId: string): Settings {
   return {
     schemaVersion: 1,
     installationId,
+    privacy: { mask: { ...maskingDefaults } },
     webAccess: { ...webAccessDefaults },
     language: "system",
     theme: "system",

@@ -378,3 +378,8 @@ its optional independently bundled worker also proves canonical-root retarget re
 WSL2 is separate from unavailable native Ubuntu acceptance; unchanged shell/prefix proof is reused.
 
 TERM command-prefix acceptance uses the focused tests/e2e/command-prefixes.spec.ts with VERA_TEST=1 instrumented build. VERA_TERM02_EVIDENCE_DIR retains native receipt/screenshot; original focused/static logs live under evaluation-outputs/term02. TERM01 process/shell proofs are reused for unchanged runner behavior. Native Ubuntu is unavailable on this host.
+
+MASK-01 infrastructure proof uses shared privacy/workbench/IPC contracts, core settings/masking and
+settings/workbench persistence cases. No native shell/PTY behavior changes: reuse TERM proof.
+Original focused/static logs use evaluation-outputs/mask01. Full suites/deliveries remain deferred;
+native Ubuntu is unavailable on this Windows host.

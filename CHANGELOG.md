@@ -21,6 +21,8 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ### Added
 
+- Masking configuration contracts and a shared resolver prepare per-area app defaults and workbench choices.
+
 - User terminal tabs support interactive shells, resizing and explicit per-terminal consent for agent output reads.
 
 - Runs shows shell commands, folders, live output and durations, with Stop and complete logs in the viewer.

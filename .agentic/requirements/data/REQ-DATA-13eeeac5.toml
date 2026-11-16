@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-DATA-13eeeac5"
+
+title = "Masking preferences persist partial area updates"
+
+status = "active"
+
+requirement = """
+When app or workbench masking preferences are saved, VERA shall persist partial privacy.mask updates at format version 1 while retaining other area choices and unrelated settings and workbench extensions.
+"""
+
+verification = "Save disjoint area patches, then unrelated settings and TERM grants/folders/extensions; reopen and compare retained values. Omitted fields remain valid."
+
+affected_paths = ["05_Software/src/libraries/shared/src/settings.ts", "05_Software/src/libraries/shared/src/workbench.ts", "05_Software/src/libraries/core/src/settings/service.test.ts", "05_Software/src/libraries/core/src/workbench/service.test.ts", "05_Software/src/libraries/shared/src/privacy.test.ts"]
+
+linked_tests = ["05_Software/src/libraries/shared/src/privacy.test.ts", "05_Software/src/libraries/core/src/settings/masking.test.ts", "05_Software/src/libraries/core/src/settings/service.test.ts", "05_Software/src/libraries/core/src/workbench/service.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-16
+updated = 2026-11-17
