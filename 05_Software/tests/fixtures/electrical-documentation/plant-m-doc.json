@@ -1,0 +1,892 @@
+{
+  "kind": "vera-electrical-model",
+  "format": 1,
+  "project": {
+    "id": "prj-plant-m",
+    "name": "Plant M documentation reference (fictional)",
+    "profile": {
+      "jurisdiction": null,
+      "domain": null,
+      "standards": [],
+      "limits": [
+        "Fictional verification fixture for the motor-drives engine: motor, load and network values come from a made-up brief, not from a real installation or motor datasheet; no conformity is stated.",
+        "Fictional documentation reference: the document revision, PLC I/O, tags, terminals and cable ends come from a made-up brief, not from a real installation."
+      ]
+    }
+  },
+  "sources": [],
+  "objects": [
+    {
+      "id": "sup-t1",
+      "type": "source",
+      "ref": "T1",
+      "attributes": {
+        "kind": "transformer",
+        "system": "TN-S",
+        "vectorGroup": "Dyn11"
+      },
+      "properties": {
+        "apparentPower": {
+          "value": 630,
+          "unit": "kVA",
+          "basis": "input"
+        },
+        "impedanceVoltage": {
+          "value": 6,
+          "unit": "%",
+          "basis": "input"
+        },
+        "loadLosses": {
+          "value": 6.5,
+          "unit": "kW",
+          "basis": "input"
+        },
+        "networkShortCircuitPower": {
+          "value": 500,
+          "unit": "MVA",
+          "basis": "input"
+        },
+        "networkShortCircuitPowerMin": {
+          "value": 250,
+          "unit": "MVA",
+          "basis": "input"
+        },
+        "phases": {
+          "value": 3,
+          "unit": "1",
+          "basis": "input"
+        },
+        "primaryVoltage": {
+          "value": 20,
+          "unit": "kV",
+          "basis": "input"
+        },
+        "ratedVoltage": {
+          "value": 400,
+          "unit": "V",
+          "basis": "input"
+        }
+      }
+    },
+    {
+      "id": "brd-main",
+      "type": "board",
+      "ref": "MDB"
+    },
+    {
+      "id": "cir-m1",
+      "type": "circuit",
+      "ref": "C1"
+    },
+    {
+      "id": "cbl-m1",
+      "type": "cable",
+      "ref": "W1",
+      "attributes": {
+        "installationMethod": "air"
+      },
+      "properties": {
+        "ambientTemperature": {
+          "value": 30,
+          "unit": "°C",
+          "basis": "input"
+        },
+        "crossSection": {
+          "value": 2.5,
+          "unit": "mm²",
+          "basis": "input"
+        },
+        "groupedCircuits": {
+          "value": 1,
+          "unit": "1",
+          "basis": "input"
+        },
+        "length": {
+          "value": 20,
+          "unit": "m",
+          "basis": "input"
+        }
+      }
+    },
+    {
+      "id": "cir-m2",
+      "type": "circuit",
+      "ref": "C2"
+    },
+    {
+      "id": "cbl-m2",
+      "type": "cable",
+      "ref": "W2",
+      "attributes": {
+        "installationMethod": "air"
+      },
+      "properties": {
+        "ambientTemperature": {
+          "value": 30,
+          "unit": "°C",
+          "basis": "input"
+        },
+        "crossSection": {
+          "value": 6,
+          "unit": "mm²",
+          "basis": "input"
+        },
+        "groupedCircuits": {
+          "value": 1,
+          "unit": "1",
+          "basis": "input"
+        },
+        "length": {
+          "value": 30,
+          "unit": "m",
+          "basis": "input"
+        }
+      }
+    },
+    {
+      "id": "cir-m3",
+      "type": "circuit",
+      "ref": "C3"
+    },
+    {
+      "id": "cbl-m3",
+      "type": "cable",
+      "ref": "W3",
+      "attributes": {
+        "installationMethod": "air"
+      },
+      "properties": {
+        "ambientTemperature": {
+          "value": 30,
+          "unit": "°C",
+          "basis": "input"
+        },
+        "crossSection": {
+          "value": 2.5,
+          "unit": "mm²",
+          "basis": "input"
+        },
+        "groupedCircuits": {
+          "value": 1,
+          "unit": "1",
+          "basis": "input"
+        },
+        "length": {
+          "value": 50,
+          "unit": "m",
+          "basis": "input"
+        }
+      }
+    },
+    {
+      "id": "mot-f1",
+      "type": "motor",
+      "ref": "M1",
+      "name": "Exhaust fan",
+      "attributes": {
+        "connection": "star",
+        "loadCharacteristic": "quadratic",
+        "duty": "S1"
+      },
+      "properties": {
+        "phases": {
+          "value": 3,
+          "unit": "1",
+          "basis": "input"
+        },
+        "frequency": {
+          "value": 50,
+          "unit": "Hz",
+          "basis": "input"
+        },
+        "ratedPower": {
+          "value": 2.2,
+          "unit": "kW",
+          "basis": "input"
+        },
+        "ratedVoltage": {
+          "value": 400,
+          "unit": "V",
+          "basis": "input"
+        },
+        "ratedCurrent": {
+          "value": 4.6,
+          "unit": "A",
+          "basis": "input"
+        },
+        "powerFactor": {
+          "value": 0.81,
+          "unit": "1",
+          "basis": "input"
+        },
+        "efficiency": {
+          "value": 86,
+          "unit": "%",
+          "basis": "input"
+        },
+        "speed": {
+          "value": 1440,
+          "unit": "rpm",
+          "basis": "input"
+        },
+        "startingCurrentRatio": {
+          "value": 7,
+          "unit": "1",
+          "basis": "input"
+        },
+        "startingTorqueRatio": {
+          "value": 2.3,
+          "unit": "1",
+          "basis": "input"
+        },
+        "pullUpTorqueRatio": {
+          "value": 2.0,
+          "unit": "1",
+          "basis": "input"
+        },
+        "breakdownTorqueRatio": {
+          "value": 3.0,
+          "unit": "1",
+          "basis": "input"
+        },
+        "inertia": {
+          "value": 0.0062,
+          "unit": "kg·m²",
+          "basis": "input"
+        },
+        "loadInertia": {
+          "value": 0.05,
+          "unit": "kg·m²",
+          "basis": "input"
+        },
+        "loadTorque": {
+          "value": 13,
+          "unit": "Nm",
+          "basis": "input"
+        },
+        "breakawayTorque": {
+          "value": 1,
+          "unit": "Nm",
+          "basis": "input"
+        },
+        "lockedRotorTime": {
+          "value": 10,
+          "unit": "s",
+          "basis": "input"
+        },
+        "terminals": {
+          "value": 6,
+          "unit": "1",
+          "basis": "input"
+        }
+      }
+    },
+    {
+      "id": "mot-p2",
+      "type": "motor",
+      "ref": "M2",
+      "name": "Feed pump",
+      "attributes": {
+        "connection": "delta",
+        "loadCharacteristic": "quadratic",
+        "duty": "S1"
+      },
+      "properties": {
+        "phases": {
+          "value": 3,
+          "unit": "1",
+          "basis": "input"
+        },
+        "frequency": {
+          "value": 50,
+          "unit": "Hz",
+          "basis": "input"
+        },
+        "ratedPower": {
+          "value": 11,
+          "unit": "kW",
+          "basis": "input"
+        },
+        "ratedVoltage": {
+          "value": 400,
+          "unit": "V",
+          "basis": "input"
+        },
+        "ratedCurrent": {
+          "value": 21.5,
+          "unit": "A",
+          "basis": "input"
+        },
+        "powerFactor": {
+          "value": 0.84,
+          "unit": "1",
+          "basis": "input"
+        },
+        "efficiency": {
+          "value": 90,
+          "unit": "%",
+          "basis": "input"
+        },
+        "speed": {
+          "value": 1465,
+          "unit": "rpm",
+          "basis": "input"
+        },
+        "startingCurrentRatio": {
+          "value": 7.5,
+          "unit": "1",
+          "basis": "input"
+        },
+        "startingTorqueRatio": {
+          "value": 2.4,
+          "unit": "1",
+          "basis": "input"
+        },
+        "pullUpTorqueRatio": {
+          "value": 2.0,
+          "unit": "1",
+          "basis": "input"
+        },
+        "breakdownTorqueRatio": {
+          "value": 3.0,
+          "unit": "1",
+          "basis": "input"
+        },
+        "inertia": {
+          "value": 0.054,
+          "unit": "kg·m²",
+          "basis": "input"
+        },
+        "loadInertia": {
+          "value": 0.1,
+          "unit": "kg·m²",
+          "basis": "input"
+        },
+        "loadTorque": {
+          "value": 65,
+          "unit": "Nm",
+          "basis": "input"
+        },
+        "breakawayTorque": {
+          "value": 7,
+          "unit": "Nm",
+          "basis": "input"
+        },
+        "lockedRotorTime": {
+          "value": 12,
+          "unit": "s",
+          "basis": "input"
+        },
+        "terminals": {
+          "value": 6,
+          "unit": "1",
+          "basis": "input"
+        },
+        "startsPerHour": {
+          "value": 6,
+          "unit": "1/h",
+          "basis": "input"
+        },
+        "startsPerHourMax": {
+          "value": 15,
+          "unit": "1/h",
+          "basis": "input"
+        }
+      }
+    },
+    {
+      "id": "mot-c3",
+      "type": "motor",
+      "ref": "M3",
+      "name": "Belt conveyor",
+      "attributes": {
+        "connection": "star",
+        "loadCharacteristic": "constant",
+        "duty": "S1"
+      },
+      "properties": {
+        "phases": {
+          "value": 3,
+          "unit": "1",
+          "basis": "input"
+        },
+        "frequency": {
+          "value": 50,
+          "unit": "Hz",
+          "basis": "input"
+        },
+        "ratedPower": {
+          "value": 5.5,
+          "unit": "kW",
+          "basis": "input"
+        },
+        "ratedVoltage": {
+          "value": 400,
+          "unit": "V",
+          "basis": "input"
+        },
+        "ratedCurrent": {
+          "value": 11.2,
+          "unit": "A",
+          "basis": "input"
+        },
+        "powerFactor": {
+          "value": 0.82,
+          "unit": "1",
+          "basis": "input"
+        },
+        "efficiency": {
+          "value": 89,
+          "unit": "%",
+          "basis": "input"
+        },
+        "speed": {
+          "value": 1455,
+          "unit": "rpm",
+          "basis": "input"
+        },
+        "startingCurrentRatio": {
+          "value": 7,
+          "unit": "1",
+          "basis": "input"
+        },
+        "startingTorqueRatio": {
+          "value": 2.2,
+          "unit": "1",
+          "basis": "input"
+        },
+        "pullUpTorqueRatio": {
+          "value": 1.9,
+          "unit": "1",
+          "basis": "input"
+        },
+        "breakdownTorqueRatio": {
+          "value": 2.9,
+          "unit": "1",
+          "basis": "input"
+        },
+        "inertia": {
+          "value": 0.022,
+          "unit": "kg·m²",
+          "basis": "input"
+        },
+        "loadInertia": {
+          "value": 0.5,
+          "unit": "kg·m²",
+          "basis": "input"
+        },
+        "loadTorque": {
+          "value": 32.5,
+          "unit": "Nm",
+          "basis": "input"
+        },
+        "lockedRotorTime": {
+          "value": 12,
+          "unit": "s",
+          "basis": "input"
+        },
+        "terminals": {
+          "value": 6,
+          "unit": "1",
+          "basis": "input"
+        }
+      }
+    },
+    {
+      "id": "doc-mcp1",
+      "type": "document",
+      "ref": "MCP1-DOC",
+      "name": "Plant M motor control panel MCP1 documentation",
+      "attributes": {
+        "revision": "B",
+        "date": "2026-11-16"
+      }
+    },
+    {
+      "id": "dev-a1",
+      "type": "device",
+      "ref": "A1",
+      "name": "PLC Modicon M221 TM221CE16T",
+      "attributes": {
+        "category": "plc"
+      }
+    },
+    {
+      "id": "dev-km1-m1",
+      "type": "device",
+      "ref": "KM1-M1",
+      "name": "M1 line contactor",
+      "attributes": {
+        "category": "contactor"
+      }
+    },
+    {
+      "id": "dev-km1-m2",
+      "type": "device",
+      "ref": "KM1-M2",
+      "name": "M2 line contactor",
+      "attributes": {
+        "category": "contactor"
+      }
+    },
+    {
+      "id": "dev-f1-m2",
+      "type": "device",
+      "ref": "F1-M2",
+      "name": "M2 overload relay",
+      "attributes": {
+        "category": "overload-relay"
+      }
+    },
+    {
+      "id": "io-i00",
+      "type": "io",
+      "ref": "I0.0",
+      "name": "M1 running feedback",
+      "attributes": {
+        "signal": "DI"
+      }
+    },
+    {
+      "id": "trm-a1-i00",
+      "type": "terminal",
+      "ref": "A1:I0.0"
+    },
+    {
+      "id": "tag-m1-run",
+      "type": "tag",
+      "ref": "M1_Running"
+    },
+    {
+      "id": "io-i01",
+      "type": "io",
+      "ref": "I0.1",
+      "name": "M2 overload tripped",
+      "attributes": {
+        "signal": "DI"
+      }
+    },
+    {
+      "id": "trm-a1-i01",
+      "type": "terminal",
+      "ref": "A1:I0.1"
+    },
+    {
+      "id": "tag-m2-ovl",
+      "type": "tag",
+      "ref": "M2_Overload"
+    },
+    {
+      "id": "io-i02",
+      "type": "io",
+      "ref": "I0.2",
+      "name": "M2 running feedback",
+      "attributes": {
+        "signal": "DI"
+      }
+    },
+    {
+      "id": "trm-a1-i02",
+      "type": "terminal",
+      "ref": "A1:I0.2"
+    },
+    {
+      "id": "tag-m2-run",
+      "type": "tag",
+      "ref": "M2_Running"
+    },
+    {
+      "id": "trm-xm1-1",
+      "type": "terminal",
+      "ref": "XM1:1"
+    },
+    {
+      "id": "trm-xm1-2",
+      "type": "terminal",
+      "ref": "XM1:2"
+    },
+    {
+      "id": "trm-xm1-3",
+      "type": "terminal",
+      "ref": "XM1:3"
+    },
+    {
+      "id": "trm-xm2-1",
+      "type": "terminal",
+      "ref": "XM2:1"
+    },
+    {
+      "id": "trm-xm2-2",
+      "type": "terminal",
+      "ref": "XM2:2"
+    },
+    {
+      "id": "trm-xm2-3",
+      "type": "terminal",
+      "ref": "XM2:3"
+    },
+    {
+      "id": "trm-xm2-4",
+      "type": "terminal",
+      "ref": "XM2:4"
+    },
+    {
+      "id": "trm-xm2-5",
+      "type": "terminal",
+      "ref": "XM2:5"
+    },
+    {
+      "id": "trm-xm2-6",
+      "type": "terminal",
+      "ref": "XM2:6"
+    }
+  ],
+  "relations": [
+    {
+      "id": "rel-t1-mdb",
+      "type": "feeds",
+      "from": "sup-t1",
+      "to": "brd-main"
+    },
+    {
+      "id": "rel-mdb-m1",
+      "type": "feeds",
+      "from": "brd-main",
+      "to": "cir-m1"
+    },
+    {
+      "id": "rel-w-m1",
+      "type": "routes",
+      "from": "cbl-m1",
+      "to": "cir-m1"
+    },
+    {
+      "id": "rel-mdb-m2",
+      "type": "feeds",
+      "from": "brd-main",
+      "to": "cir-m2"
+    },
+    {
+      "id": "rel-w-m2",
+      "type": "routes",
+      "from": "cbl-m2",
+      "to": "cir-m2"
+    },
+    {
+      "id": "rel-mdb-m3",
+      "type": "feeds",
+      "from": "brd-main",
+      "to": "cir-m3"
+    },
+    {
+      "id": "rel-w-m3",
+      "type": "routes",
+      "from": "cbl-m3",
+      "to": "cir-m3"
+    },
+    {
+      "id": "rel-m1-f1",
+      "type": "feeds",
+      "from": "cir-m1",
+      "to": "mot-f1"
+    },
+    {
+      "id": "rel-m2-p2",
+      "type": "feeds",
+      "from": "cir-m2",
+      "to": "mot-p2"
+    },
+    {
+      "id": "rel-m3-c3",
+      "type": "feeds",
+      "from": "cir-m3",
+      "to": "mot-c3"
+    },
+    {
+      "id": "rel-doc-mdb",
+      "type": "documents",
+      "from": "doc-mcp1",
+      "to": "brd-main"
+    },
+    {
+      "id": "rel-mdb-a1",
+      "type": "contains",
+      "from": "brd-main",
+      "to": "dev-a1"
+    },
+    {
+      "id": "rel-mdb-km1-m1",
+      "type": "contains",
+      "from": "brd-main",
+      "to": "dev-km1-m1"
+    },
+    {
+      "id": "rel-mdb-km1-m2",
+      "type": "contains",
+      "from": "brd-main",
+      "to": "dev-km1-m2"
+    },
+    {
+      "id": "rel-mdb-f1-m2",
+      "type": "contains",
+      "from": "brd-main",
+      "to": "dev-f1-m2"
+    },
+    {
+      "id": "rel-a1-io-i00",
+      "type": "contains",
+      "from": "dev-a1",
+      "to": "io-i00"
+    },
+    {
+      "id": "rel-a1-trm-i00",
+      "type": "contains",
+      "from": "dev-a1",
+      "to": "trm-a1-i00"
+    },
+    {
+      "id": "rel-sig-i00",
+      "type": "signals",
+      "from": "dev-km1-m1",
+      "to": "io-i00"
+    },
+    {
+      "id": "rel-trm-i00",
+      "type": "connects",
+      "from": "trm-a1-i00",
+      "to": "io-i00"
+    },
+    {
+      "id": "rel-tag-i00",
+      "type": "tag-of",
+      "from": "tag-m1-run",
+      "to": "io-i00"
+    },
+    {
+      "id": "rel-a1-io-i01",
+      "type": "contains",
+      "from": "dev-a1",
+      "to": "io-i01"
+    },
+    {
+      "id": "rel-a1-trm-i01",
+      "type": "contains",
+      "from": "dev-a1",
+      "to": "trm-a1-i01"
+    },
+    {
+      "id": "rel-sig-i01",
+      "type": "signals",
+      "from": "dev-f1-m2",
+      "to": "io-i01"
+    },
+    {
+      "id": "rel-trm-i01",
+      "type": "connects",
+      "from": "trm-a1-i01",
+      "to": "io-i01"
+    },
+    {
+      "id": "rel-tag-i01",
+      "type": "tag-of",
+      "from": "tag-m2-ovl",
+      "to": "io-i01"
+    },
+    {
+      "id": "rel-a1-io-i02",
+      "type": "contains",
+      "from": "dev-a1",
+      "to": "io-i02"
+    },
+    {
+      "id": "rel-a1-trm-i02",
+      "type": "contains",
+      "from": "dev-a1",
+      "to": "trm-a1-i02"
+    },
+    {
+      "id": "rel-sig-i02",
+      "type": "signals",
+      "from": "dev-km1-m2",
+      "to": "io-i02"
+    },
+    {
+      "id": "rel-trm-i02",
+      "type": "connects",
+      "from": "trm-a1-i02",
+      "to": "io-i02"
+    },
+    {
+      "id": "rel-tag-i02",
+      "type": "tag-of",
+      "from": "tag-m2-run",
+      "to": "io-i02"
+    },
+    {
+      "id": "rel-m1-xm1-1",
+      "type": "connects",
+      "from": "cbl-m1",
+      "to": "trm-xm1-1"
+    },
+    {
+      "id": "rel-m1-xm1-2",
+      "type": "connects",
+      "from": "cbl-m1",
+      "to": "trm-xm1-2"
+    },
+    {
+      "id": "rel-m1-xm1-3",
+      "type": "connects",
+      "from": "cbl-m1",
+      "to": "trm-xm1-3"
+    },
+    {
+      "id": "rel-w1-end-m1",
+      "type": "connects",
+      "from": "cbl-m1",
+      "to": "mot-f1"
+    },
+    {
+      "id": "rel-m2-xm2-1",
+      "type": "connects",
+      "from": "cbl-m2",
+      "to": "trm-xm2-1"
+    },
+    {
+      "id": "rel-m2-xm2-2",
+      "type": "connects",
+      "from": "cbl-m2",
+      "to": "trm-xm2-2"
+    },
+    {
+      "id": "rel-m2-xm2-3",
+      "type": "connects",
+      "from": "cbl-m2",
+      "to": "trm-xm2-3"
+    },
+    {
+      "id": "rel-m2-xm2-4",
+      "type": "connects",
+      "from": "cbl-m2",
+      "to": "trm-xm2-4"
+    },
+    {
+      "id": "rel-m2-xm2-5",
+      "type": "connects",
+      "from": "cbl-m2",
+      "to": "trm-xm2-5"
+    },
+    {
+      "id": "rel-m2-xm2-6",
+      "type": "connects",
+      "from": "cbl-m2",
+      "to": "trm-xm2-6"
+    },
+    {
+      "id": "rel-w2-end-m2",
+      "type": "connects",
+      "from": "cbl-m2",
+      "to": "mot-p2"
+    }
+  ]
+}

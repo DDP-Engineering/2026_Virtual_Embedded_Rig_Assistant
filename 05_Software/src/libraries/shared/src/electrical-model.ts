@@ -300,6 +300,110 @@ export const panelResultSchema = z.strictObject({
 });
 export type PanelResult = z.infer<typeof panelResultSchema>;
 
+/** The lists of an electrical-documentation result, in this order (spec REQ-DATA-aa83ed5c). */
+export const documentationLists = [
+  "materials",
+  "connections",
+  "cables",
+  "terminals",
+  "labels",
+  "io",
+  "contents",
+] as const;
+export type DocumentationListName = (typeof documentationLists)[number];
+/** The fixed columns of each list. */
+export const documentationColumns: Readonly<Record<DocumentationListName, readonly string[]>> = {
+  materials: ["orderCode", "manufacturer", "name", "quantity", "tags", "catalog", "item"],
+  connections: ["wire", "from", "to", "potential", "folio", "section", "color", "cable", "schematic"],
+  cables: ["cable", "circuit", "from", "to", "crossSection", "length", "installation", "state"],
+  terminals: ["strip", "point", "wire", "inside", "outside", "cable", "io", "origin"],
+  labels: ["text", "kind", "at", "schematic"],
+  io: ["address", "signal", "module", "device", "terminal", "tag", "tagFile", "state"],
+  contents: ["list", "title", "rows", "sha256", "revision"],
+};
+export const documentationLimits = { rows: 2000, changes: 500, results: 100, sources: 200 } as const;
+const runIdText = z.string().regex(/^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/);
+const cell = z
+  .string()
+  .max(1000)
+  .refine((value) => !CONTROL.test(value), "must not contain control characters")
+  .nullable();
+const documentationListSchema = z
+  .strictObject({
+    list: z.enum(documentationLists),
+    title: short,
+    columns: z.array(z.string()).max(16),
+    rows: bounded(
+      z.strictObject({ key: text(300), cells: z.array(cell).max(16), source: long }),
+      documentationLimits.rows,
+    ),
+    sha256: sha,
+  })
+  .superRefine((value, ctx) => {
+    const wanted = documentationColumns[value.list];
+    if (value.columns.length !== wanted.length || value.columns.some((column, i) => column !== wanted[i]))
+      ctx.addIssue({ code: "custom", path: ["columns"], message: `must be ${wanted.join(", ")}` });
+    value.rows.forEach((row, i) => {
+      if (row.cells.length !== wanted.length)
+        ctx.addIssue({
+          code: "custom",
+          path: ["rows", i, "cells"],
+          message: `must hold ${wanted.length} cells`,
+        });
+    });
+  });
+/** The `documentation` section of an electrical-documentation result (REQ-DATA-aa83ed5c). */
+export const documentationResultSchema = z.strictObject({
+  project: z.strictObject({ id: electricalIdSchema, name: short }),
+  revision: z.strictObject({
+    value: short.nullable(),
+    document: electricalIdSchema.nullable(),
+    date: short.nullable(),
+    author: short.nullable(),
+  }),
+  panel: z.strictObject({ run: runIdText, path: short, sha256: sha }),
+  lists: z
+    .array(documentationListSchema)
+    .length(documentationLists.length)
+    .refine(
+      (lists) => lists.every((entry, i) => entry.list === documentationLists[i]),
+      `must be the lists ${documentationLists.join(", ")} in this order`,
+    ),
+  changes: z
+    .strictObject({
+      previousRun: runIdText,
+      previousRevision: short.nullable(),
+      rows: bounded(
+        z.strictObject({
+          list: z.enum(documentationLists),
+          key: text(300),
+          change: z.enum(["added", "removed", "changed"]),
+        }),
+        documentationLimits.changes,
+      ),
+      truncated: z.boolean(),
+      objects: z.strictObject({
+        changed: bounded(electricalIdSchema, electricalLimits.resultInputs),
+        removed: bounded(electricalIdSchema, electricalLimits.resultInputs),
+      }),
+      sources: bounded(
+        z.strictObject({ source: long, state: z.enum(["changed", "missing"]) }),
+        documentationLimits.sources,
+      ),
+      results: bounded(
+        z.strictObject({
+          runId: runIdText,
+          plugin: short.nullable(),
+          freshness: z.enum(["stale", "invalid"]),
+        }),
+        documentationLimits.results,
+      ),
+    })
+    .optional(),
+});
+export type DocumentationResult = z.infer<typeof documentationResultSchema>;
+export type DocumentationList = DocumentationResult["lists"][number];
+
 export const electricalResultSchema = z.strictObject({
   kind: z.literal("vera-electrical-result"),
   format: z.literal(1),
@@ -343,6 +447,7 @@ export const electricalResultSchema = z.strictObject({
   messages: bounded(long, electricalLimits.resultList),
   assemblies: bounded(electricalAssemblySchema, 16).optional(),
   panel: panelResultSchema.optional(),
+  documentation: documentationResultSchema.optional(),
 });
 export type ElectricalResult = z.infer<typeof electricalResultSchema>;
 export type ElectricalFreshness = "current" | "stale" | "invalid";

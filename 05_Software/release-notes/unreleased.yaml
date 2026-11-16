@@ -15,3 +15,10 @@ entries:
       ro: Verificați tablouri - aparataj, borne, sursa de 24 V, amplasare pe șine și temperatura carcasei.
       de: Schaltschränke prüfen - Geräte, Klemmen, 24-V-Versorgung, Schienenaufbau und Gehäusetemperatur.
       fr: Vérifiez des armoires - équipements, bornes, alimentation 24 V, rails et température.
+  - category: new
+    topic: { en: Plugins, ro: Pluginuri, de: Plugins, fr: Plugins }
+    text:
+      en: Cross-checked wire, cable, terminal, I/O and material lists with revision, as CSV, XLSX or PDF.
+      ro: Liste verificate de fire, cabluri, borne, I/O și materiale, cu revizie, ca CSV, XLSX sau PDF.
+      de: Geprüfte Draht-, Kabel-, Klemmen-, E/A- und Materiallisten mit Revision als CSV, XLSX, PDF.
+      fr: Listes vérifiées de fils, câbles, bornes, E/S et matériel, avec révision, en CSV, XLSX ou PDF.

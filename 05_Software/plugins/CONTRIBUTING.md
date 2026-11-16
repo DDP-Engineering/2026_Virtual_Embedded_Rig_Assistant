@@ -137,9 +137,17 @@ for a 24 V supply `outputVoltage`, `outputCurrent` (condition `ambientTemperatur
 `efficiency`, for a consumer `powerConsumption`, for a fan `airflow` (m³/h). A mounted accessory or a mounting plate
 counts as compatible only when the host item's `accessories` list names it.
 
+Electrical documentation comes from VERA's `electrical_documentation`, `electrical_documentation_check` and
+`electrical_documentation_export` tools (plugin `electrical-documentation`, spec `.agentic/specs/REQ-DATA-aa83ed5c.md`):
+the lists derive from the model, a stored panel result and named `.qet` schematics; PLC tags come only from the model's
+`tag` objects and a named tag file (CSV `name,address[,dataType,comment]`); the logical revision is the `revision`
+attribute of a model `document` object. Model terminals are referenced `<strip>:<point>` (a panel strip) or
+`<module>:<point>` (a terminal its module contains); I/O link to their device (`signals` / `controls`), terminal
+(`connects`), module (`contains`) and tag (`tag-of`).
+
 Each plugin tool (`industrial_catalog`, `electrical_network`, `protection_coordination`, `motor_drives`,
 `power_quality`, `lighting_design`, `qelectrotech`, `qelectrotech_change`, `qelectrotech_check`, `panel_engineering`,
-`panel_engineering_check`) is offered
+`panel_engineering_check`, `electrical_documentation`, `electrical_documentation_check`, `electrical_documentation_export`) is offered
 only while its own plugin is loaded; a tool that needs another plugin's results reads the result files and refuses
 cleanly when they are missing or stale.
 

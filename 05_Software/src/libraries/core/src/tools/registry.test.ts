@@ -92,6 +92,13 @@ it("converts every tool schema and validates samples while filtering disabled na
     },
     panel_engineering: { view: "export", runId: "20261116-120000-pppp", format: "bom-csv" },
     panel_engineering_check: { panel: "pnl-plant-m", motorDrivesRun: "20261115-110000-cccc" },
+    electrical_documentation: { view: "list", runId: "20261116-130000-dddd", list: "io" },
+    electrical_documentation_check: {
+      panelRun: "20261116-120000-pppp",
+      document: "doc-mcp1",
+      tags: "plc/tags.csv",
+    },
+    electrical_documentation_export: { runId: "20261116-130000-dddd", format: "pdf" },
     help: { page: "permissions" },
   };
   for (const tool of registry.available()) {
@@ -138,6 +145,9 @@ it("converts every tool schema and validates samples while filtering disabled na
     "qelectrotech_check",
     "panel_engineering",
     "panel_engineering_check",
+    "electrical_documentation",
+    "electrical_documentation_check",
+    "electrical_documentation_export",
     "help",
   ]);
   expect(registry.available(["read"]).map((tool) => tool.name)).not.toContain("read");

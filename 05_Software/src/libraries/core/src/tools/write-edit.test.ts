@@ -81,6 +81,8 @@ it("registers sequential write/edit and creates UTF8 files and parent folders", 
     "qelectrotech_change",
     "qelectrotech_check",
     "panel_engineering_check",
+    "electrical_documentation_check",
+    "electrical_documentation_export",
   ]);
   const result = await registry.execute(
     context(),

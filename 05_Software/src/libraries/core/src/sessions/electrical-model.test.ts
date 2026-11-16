@@ -92,6 +92,9 @@ it("asks for approval in ask mode and writes the model only when approved (REQ-F
       "qelectrotech_check",
       "panel_engineering",
       "panel_engineering_check",
+      "electrical_documentation",
+      "electrical_documentation_check",
+      "electrical_documentation_export",
     ])
       expect(catalogs[0]).not.toContain(other);
     expect(approval.diff).toContain('+      "name": "Duty pump"');
@@ -130,6 +133,7 @@ it("offers only the read tools in read-only mode and writes nothing (REQ-SEC-4df
     "lighting-design",
     "qelectrotech",
     "panel-engineering",
+    "electrical-documentation",
   ]);
   const session = service.create(null, "read-only");
   service.send(session.id, "rename the pump");
@@ -149,6 +153,9 @@ it("offers only the read tools in read-only mode and writes nothing (REQ-SEC-4df
     expect(catalog).not.toContain("qelectrotech_check");
     expect(catalog).toContain("panel_engineering");
     expect(catalog).not.toContain("panel_engineering_check");
+    expect(catalog).toContain("electrical_documentation");
+    expect(catalog).not.toContain("electrical_documentation_check");
+    expect(catalog).not.toContain("electrical_documentation_export");
   }
   expect(await model()).toBe(fixture);
   expect(handle.db.prepare("SELECT * FROM changes").all()).toEqual([]);
@@ -192,6 +199,7 @@ it("offers each plugin tool only while its own plugin is loaded (REQ-SEC-4dfa2a5
       "lighting-design",
       "qelectrotech",
       "panel-engineering",
+      "electrical-documentation",
     ]),
   ).toEqual(core.electricalToolNames);
   expect(core.electricalToolOffered("read", [])).toBe(true);

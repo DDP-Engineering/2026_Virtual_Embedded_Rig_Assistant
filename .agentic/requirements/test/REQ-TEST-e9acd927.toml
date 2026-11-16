@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-TEST-e9acd927"
+
+title = "Reference documentation fixture with planted defects and visual export check"
+
+status = "active"
+
+requirement = """
+The documentation tests shall use the plant M reference - the qelectrotech starter candidates numbered in the test (one number per potential), the panel-engineering panel and a model extended with a document, PLC I/O, tags, terminals and cable ends, with a declared tag file - and plant duplicates, missing connections and uncorrelated I/O as visible edits, all self-authored and fictional.
+"""
+
+verification = "Inspection: tests/fixtures/electrical-documentation holds the model and the tag file with their README entry; documentation-tool.test.ts numbers the candidates written by qelectrotech_change and plants each defect as a visible edit before the run."
+
+affected_paths = ["05_Software/tests/fixtures/electrical-documentation/plant-m-doc.json", "05_Software/tests/fixtures/electrical-documentation/tags-plant-m.csv", "05_Software/tests/fixtures/README.md"]
+
+linked_tests = ["05_Software/src/libraries/core/src/electrical/documentation-tool.test.ts"]
+
+
+spec = "specs/REQ-DATA-aa83ed5c.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-16
+updated = 2026-11-16

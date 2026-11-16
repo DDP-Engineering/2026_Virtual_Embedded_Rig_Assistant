@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-c0be3443"
+
+title = "Export a stored documentation run as CSV, XLSX or PDF new files"
+
+status = "active"
+
+requirement = """
+When asked to export a stored documentation run, VERA shall prepare one new file in the run's folder - one list as CSV, or every list as an XLSX workbook (one sheet per list) or a PDF document (contents page with the sources, one section per list, repeated column headers) - each starting with the controlled header project, document, revision (or not stated), run, generated time and model sha256 (CSV and XLSX also the sources), write it only after approval and refuse an existing export or a result of another producer.
+"""
+
+verification = "Unit tests: the CSV header block, a neutralised formula and a quoted field; the XLSX parts, escaped inline strings, frozen column row and filter range; the PDF cross-reference offsets, page count, headers and Run line on every page and WinAnsi mapping. Tool tests: the connection CSV starts with the header block and holds the X0:L1 row; the XLSX unzips into seven named sheets with the revision, a connection cell and the model sha256; the PDF has a contents page and the run on every page; a second export and a panel result are refused. Manual: the XLSX and PDF are rendered to images and inspected for legible layout and the revision."
+
+affected_paths = ["05_Software/src/libraries/core/src/electrical/documentation-export.ts", "05_Software/src/libraries/core/src/electrical/documentation-tool.ts", "05_Software/src/libraries/core/src/electrical/panel.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/electrical/documentation.test.ts", "05_Software/src/libraries/core/src/electrical/documentation-tool.test.ts"]
+
+
+spec = "specs/REQ-DATA-aa83ed5c.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-16
+updated = 2026-11-16

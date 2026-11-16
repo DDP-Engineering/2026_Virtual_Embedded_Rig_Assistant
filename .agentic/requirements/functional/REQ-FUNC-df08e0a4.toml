@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-df08e0a4"
+
+title = "Check the device, terminal, I/O address and tag chain of every I/O"
+
+status = "active"
+
+requirement = """
+When a documentation run is checked, VERA shall evaluate for every model I/O the chain field device -> physical terminal (a panel strip point within its count or a terminal of its module) -> I/O address (the io reference on a module that is in the panel) -> tag (exactly one tag-of tag from the model), compare each tag with the named tag file by name and normalized address, list tag-file entries that match no model tag and duplicate addresses, and fail the I/O criteria naming each broken link without correcting either side.
+"""
+
+verification = "Tool tests: the reference I/O chains pass and match the fixture tag file; a planted io without tag, a tag-file address %I0.5 for M1_Running, a tag-file entry Spare_1 with no model tag and two tag-file entries at %I0.2 each fail with the address and the link named; the tag file and model are unchanged."
+
+affected_paths = ["05_Software/src/libraries/core/src/electrical/documentation.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/electrical/documentation-tool.test.ts"]
+
+
+spec = "specs/REQ-DATA-aa83ed5c.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-16
+updated = 2026-11-16

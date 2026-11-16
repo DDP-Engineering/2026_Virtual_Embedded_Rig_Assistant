@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-359d4b0a"
+
+title = "Show the live changes since a stored documentation run"
+
+status = "active"
+
+requirement = """
+When asked for a list or the changes of a stored documentation run, VERA shall return, without writing anything, the list's rows from the given offset (100 per page) with their keys and sources, or the model objects changed or removed since the run, the source files whose sha256 changed or that are missing, the stored results that are stale now and whether the run is stale.
+"""
+
+verification = "Tool tests: right after a run the changes view reports nothing stale and the list view pages the connection list from an offset; after changing W1 and the M1 schematic the changes view lists cbl-m1, the changed m1.qet and the stale motor_drives and documentation results with stale true; no file is written."
+
+affected_paths = ["05_Software/src/libraries/core/src/electrical/documentation-tool.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/electrical/documentation-tool.test.ts"]
+
+
+spec = "specs/REQ-DATA-aa83ed5c.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-16
+updated = 2026-11-16

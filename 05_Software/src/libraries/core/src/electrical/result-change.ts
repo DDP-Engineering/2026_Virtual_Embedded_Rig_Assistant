@@ -1,6 +1,7 @@
 // Prepares ONE new electrical result file electrical-automation-results/<run-id>/result.json through the write flow
 // (approval, before hash = absent, write queue) for the engines that store results: electrical_network and
-// protection_coordination, motor_drives, power_quality, lighting_design and qelectrotech_check. The model is never written here.
+// protection_coordination, motor_drives, power_quality, lighting_design, qelectrotech_check, panel_engineering_check and
+// electrical_documentation_check. The model is never written here.
 import { createHash, randomBytes } from "node:crypto";
 import {
   type ElectricalModel,
@@ -37,7 +38,8 @@ export async function prepareResultChange(options: {
     | "power_quality"
     | "lighting_design"
     | "qelectrotech_check"
-    | "panel_engineering_check";
+    | "panel_engineering_check"
+    | "electrical_documentation_check";
   args: Record<string, unknown>;
   result: ElectricalResult;
   model: ElectricalModel;
@@ -60,7 +62,9 @@ export async function prepareResultChange(options: {
   const output = `${JSON.stringify(result, null, 2)}\n`;
   const after = Buffer.from(output, "utf8");
   if (after.length > electricalLimits.resultBytes)
-    throw Error(`The ${options.label} result is larger than 4 MiB: analyse a smaller network.`);
+    throw Error(
+      `The ${options.label} result is larger than 4 MiB: analyse a smaller part of the project at once.`,
+    );
   const afterSha256 = hash(after);
   const { diff, added, removed } = fileDiff(inside.relative, "", output);
   const criteria: Record<string, number> = {};

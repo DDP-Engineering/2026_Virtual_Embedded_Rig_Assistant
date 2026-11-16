@@ -85,6 +85,13 @@ compares a fresh render with them byte for byte (regenerate with `VERA_QET_FIXTU
 them is self-authored by VERA (category `embed://import/vera/`); no element of QElectroTech's collection is included.
 QElectroTech 0.100.0 (Windows portable) and 0.90 (Ubuntu 24.04 apt, WSL2) open them without a load error.
 
+`electrical-documentation/` holds only FICTIONAL data written for the documentation tests: `plant-m-doc.json` is the
+motor-drives plant M extended with a documentation object (revision B, no author), the PLC A1 with three inputs and
+their terminals, three tags, the contactors and overload relay that signal them and the terminals XM1/XM2 on which
+the cables W1 and W2 land; `tags-plant-m.csv` is a declared generic tag file (name, address, dataType, comment) for
+those inputs. The tests number the QElectroTech candidates of the CAD-01 templates in place (one number per potential)
+and plant duplicates, missing connections and uncorrelated I/O as visible edits.
+
 The remaining folders contain document extraction samples, replay scripts,
 translation checker cases and retrieval questions/model manifests.
 Existing user workbenches and profiles are never part of this directory.

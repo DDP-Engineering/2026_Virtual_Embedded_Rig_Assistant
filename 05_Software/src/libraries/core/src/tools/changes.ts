@@ -53,7 +53,9 @@ export interface FileChangeRequest {
     | "lighting_design"
     | "qelectrotech_change"
     | "qelectrotech_check"
-    | "panel_engineering_check";
+    | "panel_engineering_check"
+    | "electrical_documentation_check"
+    | "electrical_documentation_export";
   readonly path: string;
   readonly args: Readonly<Record<string, unknown>>;
   readonly existed: boolean;

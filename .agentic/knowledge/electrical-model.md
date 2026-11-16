@@ -31,7 +31,11 @@ qet-check.ts, qet-tool.ts), panel engineering: `panel_engineering`, `panel_engin
 `electrical-automation-panels/<id>.json`, BOM and reconciliation with assemblies/model/schematics, accessories listed
 by the host item, terminal strips, 24 V budget and derating, 2D rail placement, dissipation, enclosure heat balance,
 short-circuit/busbars not evaluated, verification report, impact of a changed device, BOM CSV and layout SVG (spec
-.agentic/specs/REQ-DATA-a8bf1713.md, core electrical/panel-file.ts, panel.ts, panel-tool.ts), and the per-plugin tool gating (`electricalPluginTools`, `electricalToolOffered`). Start at 05_Software/src/libraries/core/src/electrical/ (model.ts, tools.ts) and
+.agentic/specs/REQ-DATA-a8bf1713.md, core electrical/panel-file.ts, panel.ts, panel-tool.ts), electrical documentation:
+`electrical_documentation`, `electrical_documentation_check`, `electrical_documentation_export`, material, connection,
+cable, terminal, label and I/O lists, tag CSV import, wire numbering and wire ends, device-terminal-I/O-tag chain,
+logical revision, change report, CSV/XLSX/PDF exports (spec .agentic/specs/REQ-DATA-aa83ed5c.md, core
+electrical/documentation.ts, documentation-export.ts, documentation-tool.ts), and the per-plugin tool gating (`electricalPluginTools`, `electricalToolOffered`). Start at 05_Software/src/libraries/core/src/electrical/ (model.ts, tools.ts) and
 shared/src/electrical-model.ts, with spec .agentic/specs/REQ-DATA-06c0bd54.md. Tests: core/src/electrical/*.test.ts,
 core/src/sessions/electrical-model.test.ts, desktop main/sessions.test.ts. The write flow itself
 (commitChange, WriteQueue) belongs to [file tools](file-tools.md); plugin packages and their helpers belong to
@@ -40,7 +44,7 @@ core/src/sessions/electrical-model.test.ts, desktop main/sessions.test.ts. The w
 ## Purpose and boundaries
 
 First-party foundation of the electrical and automation plugins (PWR, CAD, PLC, IND): one project model per
-workbench, the industrial catalog files and their selection, its units, its relation graph, provenance and the result contract, the radial LV network engine with its cable tables, the LV protection engine, the motor drives engine, the power factor correction engine with its measurement files, the lighting engine, the QElectroTech schematic reader, templates and checks and the panel engineering engine. The
+workbench, the industrial catalog files and their selection, its units, its relation graph, provenance and the result contract, the radial LV network engine with its cable tables, the LV protection engine, the motor drives engine, the power factor correction engine with its measurement files, the lighting engine, the QElectroTech schematic reader, templates and checks, the panel engineering engine and the documentation lists and exports. The
 workbench owns the model file; VERA reads it strictly and writes it only through `electrical_model_change`, a
 prepared change on the shared write flow. Plugin helpers read the model and write results into their own run
 folders; VERA derives result freshness from the results' input snapshots and stores no second copy.
@@ -217,6 +221,25 @@ folders; VERA derives result freshness from the results' input snapshots and sto
   `prepareResultChange`; refuses a panel board that is not a board or a motor that is not a motor. Tool
   `panel_engineering` (read) {view draft {motorDrivesRun, motors?} | impact {runId} | export {runId, format bom-csv |
   layout-svg}} writes nothing.
+- Documentation (spec REQ-DATA-aa83ed5c): shared `documentationLists` (materials, connections, cables, terminals,
+  labels, io, contents), `documentationColumns`, `documentationLimits` (2000 rows per list), result section
+  `documentation` {project, revision {value, document, date, author}, panel {run, path, sha256}, lists [{list, title,
+  columns, rows [{key, cells, source}], sha256}], changes? {previousRun, previousRevision, rows, truncated, objects,
+  sources, results}}; core `parseTagFile`/`normalizeAddress` (tag CSV name,address[,dataType,comment], 5000 rows, 1 MiB,
+  `Invalid tag file <path>: line <n>: <reason>.`), pure `analyzeDocumentation(input)` (producer `electrical-documentation`
+  / `documentation`, engine `vera-documentation` 1.0.0), `changedSources`, `sourcePaths`; exports `documentationCsv`,
+  `documentationXlsx` (fflate), `documentationPdf` (own PDF 1.4 writer, Courier, WinAnsi); panel.ts `csvField` shared.
+  Criteria `source:panel-result|motor-drives|panel-file|tags`, `source:schematic:<path>`, per schematic
+  `labels|numbering|cross-references|wire-ends|duplicates|device-refs:<path>`, `assembly:<path>:assembly-devices|connection:*`
+  (CAD-01 `assemblyChecks`), `cable-ends`, `terminal-points`, `io-chain`, `tag-file`, `revision`, `limits:<list>`.
+- Tool `electrical_documentation_check` (write) {panelRun, schematics? <= 8 {path, motor?}, document?, tags?, previousRun?}:
+  reads the model, the panel result (refused when missing or not a panel result), its panel file and the motor_drives
+  run it names (stale or missing ones are failed `source:*` criteria, status incomplete), the .qet files, the tag file,
+  the previous documentation run and the stored results' freshness, and prepares one new result through
+  `prepareResultChange`. Tool `electrical_documentation` (read) {view list {runId, list, offset?} | changes {runId}}.
+  Tool `electrical_documentation_export` (write) {runId, format csv|xlsx|pdf, list?} prepares one new file
+  `electrical-automation-results/<run>/documentation-<list>.csv|documentation.xlsx|documentation.pdf` through
+  `commitChange` (existing file refused; binary preview = size and sha256).
 - Result format 1 has an optional strict `assemblies` list (<= 16; per assembly motor, circuit, method, conditional,
   devices <= 16 {tag, role, item|null, orderCode|null, setting?}, connections <= 32 {from, to, kind power|control},
   interlocks <= 8 {kind mechanical|electrical|sequence, devices, note}); `renderResultReport` lists them.
@@ -224,7 +247,8 @@ folders; VERA derives result freshness from the results' input snapshots and sto
   of manifest ecosystem `electrical` or `automation` is loaded (`electricalModelPlugin`); each tool of
   `electricalPluginTools` (`industrial_catalog` -> industrial-catalog, `electrical_network` -> electrical-network,
   `protection_coordination` -> protection-coordination, `motor_drives` -> motor-drives, `power_quality` -> power-quality-pfc, `lighting_design` -> lighting-design, `qelectrotech`, `qelectrotech_change`, `qelectrotech_check` -> qelectrotech, `panel_engineering`,
-  `panel_engineering_check` -> panel-engineering) only while its own plugin ID
+  `panel_engineering_check` -> panel-engineering, `electrical_documentation`, `electrical_documentation_check`,
+  `electrical_documentation_export` -> electrical-documentation) only while its own plugin ID
   is loaded (`electricalToolOffered(name, plugins)`). `SessionHost.electricalPlugins` holds the loaded plugin IDs; the
   desktop sets it from the loaded plugins of those ecosystems. The headless CLI does not set it.
 
@@ -319,6 +343,13 @@ folders; VERA derives result freshness from the results' input snapshots and sto
   at rating; short-circuit withstand only from a declared assembly rating, busbars never; no IEC 61439 conformity is
   claimed (REQ-FUNC-c3a96daf, REQ-FUNC-865665b6, REQ-FUNC-f761244d). `panel_engineering_check` refuses a missing,
   foreign or stale motor_drives result and writes only a new result file (REQ-REL-665727e6, REQ-FUNC-b0b55ff0).
+- Documentation lists derive only from the model, the named panel result and panel file, the named schematics and the
+  named tag file; every row names its source (file sha256); differences are failed criteria and no source file is
+  written; PLC tags never come from a PLC project; the revision, date and author come only from the named model document
+  and are null (not stated) otherwise; content changed under the same revision fails `revision`. Exports are new files
+  only and carry project, revision, run and model sha256; nothing is printed, ordered or sent (REQ-DATA-aa83ed5c,
+  REQ-FUNC-68911c98, REQ-FUNC-9a06c922, REQ-FUNC-e7ad9a1c, REQ-FUNC-df08e0a4, REQ-FUNC-59134b83, REQ-FUNC-3d4e6392,
+  REQ-FUNC-c0be3443).
 - An import merges only through a mapping naming every imported ID as new or an existing entity of the same kind
   and type; anything else refuses the whole change (REQ-FUNC-784f108f).
 
@@ -350,6 +381,9 @@ folders; VERA derives result freshness from the results' input snapshots and sto
 | Panel file format | shared panel.ts, electrical/panel-file.ts, spec REQ-DATA-a8bf1713 | electrical/panel.test.ts |
 | Panel engine: BOM, placement, budget, heat, report | electrical/panel.ts | electrical/panel.test.ts (tests/support/panel_thermal_check.py) |
 | Panel tools, impact, exports, draft | electrical/panel-tool.ts | electrical/panel-tool.test.ts |
+| Documentation lists, checks, revision, change report | electrical/documentation.ts, spec REQ-DATA-aa83ed5c | electrical/documentation-tool.test.ts |
+| Documentation exports, tag file | electrical/documentation-export.ts, documentation.ts | electrical/documentation.test.ts |
+| Documentation tools | electrical/documentation-tool.ts | electrical/documentation-tool.test.ts |
 | Offering the tools | electrical/tools.ts (`electricalPluginTools`), sessions/service.ts filter, desktop main/sessions.ts | sessions/electrical-model.test.ts, desktop main/sessions.test.ts |
 
 ## Key behaviors
@@ -449,6 +483,19 @@ folders; VERA derives result freshness from the results' input snapshots and sto
 - REQ-FUNC-dd7ad54a — BOM CSV and layout SVG exports of a stored result.
 - REQ-FUNC-7a0835ed — equipment draft from current assemblies.
 - REQ-TEST-265439fc — cited panel fixture and an independent thermal reference.
+- REQ-DATA-aa83ed5c — accept only a strictly valid documentation request and result section.
+- REQ-DATA-9ca17c7a — read a declared tag file strictly or refuse it.
+- REQ-FUNC-68911c98 — traceable lists from the model, the panel and the schematics.
+- REQ-FUNC-9a06c922 — numbering, wire ends and duplicate connections per schematic.
+- REQ-FUNC-e7ad9a1c — missing device references, assembly connections and cable ends.
+- REQ-FUNC-df08e0a4 — device, terminal, I/O address and tag chain, against the tag file.
+- REQ-FUNC-59134b83 — logical revision only from the model, revision conflicts.
+- REQ-FUNC-cc872eff — change report against a previous run.
+- REQ-FUNC-3d4e6392 — documentation result through an approved prepared change, sources untouched.
+- REQ-REL-500b461c — refuse a documentation run on missing, foreign or invalid inputs.
+- REQ-FUNC-c0be3443 — CSV, XLSX and PDF exports as new files with the controlled header.
+- REQ-FUNC-359d4b0a — live changes since a stored documentation run.
+- REQ-TEST-e9acd927 — plant M documentation reference with planted defects.
 
 ## Files
 
@@ -526,3 +573,9 @@ folders; VERA derives result freshness from the results' input snapshots and sto
 - `05_Software/src/libraries/core/src/electrical/panel-tool.test.ts` — upstream chain, reconcile, refusals, impact, exports, draft.
 - `05_Software/tests/fixtures/panel-engineering/` — cited panel catalog and the fictional plant M panel.
 - `05_Software/tests/support/panel_thermal_check.py` — independent dissipation and heat-balance reference.
+- `05_Software/src/libraries/core/src/electrical/documentation.ts` — tag file, list derivation, checks, revision, change report.
+- `05_Software/src/libraries/core/src/electrical/documentation-export.ts` — CSV, XLSX and PDF writers.
+- `05_Software/src/libraries/core/src/electrical/documentation-tool.ts` — the three documentation tools.
+- `05_Software/src/libraries/core/src/electrical/documentation.test.ts` — tag file, section schema, export writers.
+- `05_Software/src/libraries/core/src/electrical/documentation-tool.test.ts` — plant M lists, planted defects, revision, changes, refusals, exports.
+- `05_Software/tests/fixtures/electrical-documentation/` — fictional documentation model and tag file.

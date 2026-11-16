@@ -41,6 +41,9 @@ export const electricalPluginTools: Readonly<Record<string, string>> = {
   qelectrotech_check: "qelectrotech",
   panel_engineering: "panel-engineering",
   panel_engineering_check: "panel-engineering",
+  electrical_documentation: "electrical-documentation",
+  electrical_documentation_check: "electrical-documentation",
+  electrical_documentation_export: "electrical-documentation",
 };
 /** Every tool a host offers only with electrical or automation plugins loaded. */
 export const electricalToolNames: readonly string[] = [

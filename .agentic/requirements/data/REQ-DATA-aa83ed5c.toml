@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-DATA-aa83ed5c"
+
+title = "Accept only a strictly valid documentation request and result section"
+
+status = "active"
+
+requirement = """
+When an electrical_documentation_check request or a stored result's documentation section is read, VERA shall accept only the strict format-1 shape (request: panelRun, optional schematics <= 8 with path (<= 120 characters) and motor, document, tags, previousRun; section: project, revision, panel, the seven lists with their fixed columns, keys, sources and sha256, optional changes) and shall refuse an unknown key, another list or column set or a row whose cell count differs from its columns; derived cells, keys and sources longer than the section's limits are cut with a failed limits criterion instead of failing the run.
+"""
+
+verification = "Unit tests: a valid section round-trips through checkResult; an unknown key, a list with a renamed column and a row with one cell too few are each refused with the JSON path; the request schema refuses an unknown key and nine schematics."
+
+affected_paths = ["05_Software/src/libraries/shared/src/electrical-model.ts", "05_Software/src/libraries/core/src/electrical/documentation.ts", "05_Software/src/libraries/core/src/electrical/documentation-tool.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/electrical/documentation.test.ts"]
+
+
+spec = "specs/REQ-DATA-aa83ed5c.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-16
+updated = 2026-11-16

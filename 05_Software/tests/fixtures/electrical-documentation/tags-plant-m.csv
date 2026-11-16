@@ -1,0 +1,4 @@
+name,address,dataType,comment
+M1_Running,%I0.0,BOOL,KM1-M1 auxiliary contact 13-14
+M2_Overload,%I0.1,BOOL,F1-M2 contact 97-98
+M2_Running,%I0.2,BOOL,KM1-M2 auxiliary contact 13-14

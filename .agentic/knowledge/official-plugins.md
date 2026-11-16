@@ -26,7 +26,9 @@ plugins/qelectrotech/plugin.yaml (no program, ecosystem `electrical`) and skills
 reader, templates, checks, the three QET tools and their tests belong to [electrical model](electrical-model.md). For
 panel-engineering, start at plugins/panel-engineering/plugin.yaml (no program, ecosystem `electrical`) and
 skills/panel-engineering; the panel file format, the engine, the two panel tools and their tests belong to
-[electrical model](electrical-model.md).
+[electrical model](electrical-model.md). For electrical-documentation, start at
+plugins/electrical-documentation/plugin.yaml (no program, ecosystem `electrical`) and skills/electrical-documentation;
+the lists, checks, exports, the three documentation tools and their tests belong to [electrical model](electrical-model.md).
 
 For kicad, start at plugins/kicad/plugin.yaml, scripts/kicad_tool.py and scripts/kicad_support/ with spec
 .agentic/specs/REQ-DATA-c32834e3.md; tests/plugins/kicad.test.ts and tests/fixtures/kicad/ (fictional KiCad 10
@@ -402,6 +404,12 @@ that source metadata reaches the deterministic bundled index unchanged.
   the panel file with the engineer, store `panel_engineering_check` and report failed and unknown criteria first, never
   an IEC 61439 conformity; after a change read the impact view; export the BOM (CSV) or the layout (SVG). Engine and
   tools: [electrical model](electrical-model.md), spec REQ-DATA-a8bf1713.
+- `electrical-documentation` 0.1.0, ecosystem `electrical` (pack Electrical schematics and panels, group Electrical
+  documentation, default on; activity `design`), Windows x64/Linux x64, no program. Skill `electrical-documentation`:
+  from a stored panel check, the motors' .qet schematics, a model document with its revision and an engineer's tag CSV,
+  store `electrical_documentation_check`, report failed and unknown criteria first and let the engineer fix the sources
+  (never VERA), page lists and changes with `electrical_documentation`, export CSV/XLSX/PDF with
+  `electrical_documentation_export`. Engine and tools: [electrical model](electrical-model.md), spec REQ-DATA-aa83ed5c.
 
 - `ngspice` 0.3.0, ecosystem `electronics` (Electronics design pack, group Simulation (ngspice), default on; activity
   `design`), Windows x64/Linux x64. Program `ngspice`: find `C:/Spice64/bin/ngspice_con.exe`,

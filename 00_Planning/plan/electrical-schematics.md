@@ -20,6 +20,8 @@ Each ticket runs only its focused tests; the complete suite runs once after CAD-
 STATE: CAD-01 committed (5a4c7a77, #133 closed); the visual check of the candidates in QElectroTech (screen access
 declined), QElectroTech-saved fixtures and native Ubuntu are open. CAD-02 implemented 2026-11-16 (AEGIS TASK-00631c13),
 uncommitted hand-over; native Ubuntu and cited data for LAD9V2, fuse holders and a star-delta timer are open.
+CAD-03 implemented 2026-11-16 (AEGIS TASK-d2b9147b), uncommitted hand-over; a numbered project saved by QElectroTech,
+a real vendor tag export and native Ubuntu are open.
 
 ## Order
 
@@ -27,7 +29,7 @@ uncommitted hand-over; native Ubuntu and cited data for LAD9V2, fuse holders and
 |---|---|---|---|---|---|
 | 1 | CAD-01 | [#133](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/133) | `qelectrotech`: read native `.qet` XML into the model, DOL / reversing / star-delta schematic candidates, numbering and cross-references | PWR-00 | implemented |
 | 2 | CAD-02 | [#134](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/134) | `panel-engineering`: BOM, terminals, wiring, 24 V budget, 2D rail layout, dissipation and thermal check, assembly verification report | CAD-01, PWR-03, PWR-04 | implemented |
-| 3 | CAD-03 | [#135](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/135) | `electrical-documentation`: material, connection, cable, terminal, label and I/O lists, change report, CSV/XLSX/PDF exports | CAD-02 | planned |
+| 3 | CAD-03 | [#135](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/135) | `electrical-documentation`: material, connection, cable, terminal, label and I/O lists, change report, CSV/XLSX/PDF exports | CAD-02 | implemented |
 | 4 | CAD-04 | [#136](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/136) | `eplan`: Windows adapter through the official EPLAN API: inspect, export, map, import approved data, save candidate | CAD-01, CAD-03 | planned |
 
 ## Decisions for this epic (user, 2026-11-15)
@@ -101,3 +103,36 @@ uncommitted hand-over; native Ubuntu and cited data for LAD9V2, fuse holders and
   40.84 degC). Tested on Windows x64 and WSL2 (Ubuntu 24.04).
 - Open: native Ubuntu; cited dimensions/losses for LAD9V2, a C10G fuse holder and a star-delta timer (the fixture keeps
   them as visible unknowns); wiring and cable lists and document exports belong to CAD-03.
+
+## CAD-03 #135 - Electrical documentation
+
+- Product code in core next to the PWR, QET and panel engines (spec `.agentic/specs/REQ-DATA-aa83ed5c.md`): shared result
+  section `documentation` (format 1 changed in place: project, revision, panel, seven lists with fixed columns, key and
+  source per row and a sha256 per list, optional change report), pure engine `documentation.ts` (tag CSV reader, list
+  derivation, checks, revision, change report), writers `documentation-export.ts` (CSV; XLSX zipped with fflate, already
+  a core dependency; PDF 1.4 by an own writer with the standard Courier fonts), tools `documentation-tool.ts`. Plugin
+  `electrical-documentation` (ecosystem electrical, no program, skill `electrical-documentation`, help en/ro/de/fr) in the
+  pack Electrical schematics and panels. No npm dependency added.
+- Tools, gated on plugin `electrical-documentation`: `electrical_documentation_check` (write: one new result from the
+  model, a stored panel_engineering_check result with its panel file and motor_drives run, named .qet schematics, an
+  optional tag CSV, an optional model document for the revision and an optional previous run), `electrical_documentation`
+  (read: list pages, live changes since a run), `electrical_documentation_export` (write: one new CSV, XLSX or PDF file
+  next to the run, controlled header with project, revision, run, generated time and model sha256).
+- Lists: materials (panel BOM grouped by catalog item), connections (one row per conductor, ends as panel tag and
+  terminal), cables (circuit, panel-side and field-side ends, exclusions from the panel), terminals (model terminals and
+  drawn strip points merged), labels (devices, strips, two wire-end labels per numbered conductor, cable ends), I/O
+  (module, device, terminal, tag, tag-file address), contents. Every row names its source file with its sha256.
+- Checks (reported, never repaired): stale or changed upstream results and files (`source:*`), labels, numbering and
+  cross-references (CAD-01 project checks), wire ends, duplicate connections, labels in neither panel nor model, the
+  motor_drives assembly connections (CAD-01 `assemblyChecks`), cable ends, terminal points, the device - terminal - I/O
+  address - tag chain and the tag file; the revision only from the model document's attributes, failing when a folio
+  states another revision or the content changed under the same revision. PLC tags come only from the model and the
+  named tag file; nothing is printed, ordered or sent.
+- Change to CAD-02 code: `csvField` in panel.ts is exported and shared by the documentation CSV.
+- Fixtures: `tests/fixtures/electrical-documentation/plant-m-doc.json` (plant M with a document at revision B, PLC A1 with
+  three inputs, tags, terminals XM1/XM2 and cable ends) and `tags-plant-m.csv`; the test numbers the CAD-01 candidates
+  in place and plants duplicates, missing connections and references and uncorrelated I/O as visible edits. Exports were
+  rendered and inspected: the PDF with the repository's pdfjs-dist and @napi-rs/canvas, the XLSX opened by LibreOffice
+  Calc and openpyxl. Tested on Windows x64 only.
+- Open: a numbered project saved by QElectroTech itself and a real vendor tag export as read-back fixtures; native Ubuntu
+  and WSL2 runs; export texts are English and the PDF is limited to WinAnsi characters.

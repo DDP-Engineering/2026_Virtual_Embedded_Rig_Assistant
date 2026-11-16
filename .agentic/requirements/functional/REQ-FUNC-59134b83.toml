@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-59134b83"
+
+title = "Carry the stated logical revision and flag revision conflicts"
+
+status = "active"
+
+requirement = """
+When a documentation run is checked, VERA shall take the logical revision, date and author only from the attributes of the model document object the request names, mark the revision not stated when none is given, and fail the revision criterion when a schematic folio states another revision or when the previous run had the same revision and different list content.
+"""
+
+verification = "Tool tests: the reference carries revision B from doc-mcp1 and no author; without a document the revision is null and the criterion unknown; a folio with indexrev C fails; a second run with revision B after a changed list fails, and passes after the model document says C."
+
+affected_paths = ["05_Software/src/libraries/core/src/electrical/documentation.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/electrical/documentation-tool.test.ts"]
+
+
+spec = "specs/REQ-DATA-aa83ed5c.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-16
+updated = 2026-11-16

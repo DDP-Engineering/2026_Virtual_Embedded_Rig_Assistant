@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-3d4e6392"
+
+title = "Store the documentation result through an approved prepared change, sources untouched"
+
+status = "active"
+
+requirement = """
+When a documentation run is checked, VERA shall prepare one new result file electrical-automation-results/<run-id>/result.json through the prepared change with its diff, write it only after approval through the write queue and write, print, order or send nothing else.
+"""
+
+verification = "Tool tests: preparing writes nothing; applying writes only the result file; the model, panel file, catalogs, schematics and tag file keep their sha256; a read-only session is refused before preparing."
+
+affected_paths = ["05_Software/src/libraries/core/src/electrical/documentation-tool.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/electrical/documentation-tool.test.ts"]
+
+
+spec = "specs/REQ-DATA-aa83ed5c.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-16
+updated = 2026-11-16

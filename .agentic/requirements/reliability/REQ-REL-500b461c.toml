@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-500b461c"
+
+title = "Refuse a documentation run on missing, foreign or invalid inputs"
+
+status = "active"
+
+requirement = """
+If the named panel result is missing, invalid or not a panel_engineering_check result, the workbench has no model, a schematic cannot be read strictly or is named twice, the tag file cannot be read strictly, the named document is not a model document object, a schematic motor is not a model motor or the previous run is not a documentation result, then VERA shall refuse the documentation run before preparing any change and name the input to fix.
+"""
+
+verification = "Tool tests: a missing panel run, a motor_drives run named as panel run, a document id naming a cable, a schematic motor naming a circuit, a missing .qet, the same .qet named twice, a previous run of panel-engineering, an invalid, missing or outside tag file, a read-only session and a workbench without model are each refused with the reason and no file is written."
+
+affected_paths = ["05_Software/src/libraries/core/src/electrical/documentation-tool.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/electrical/documentation-tool.test.ts"]
+
+
+spec = "specs/REQ-DATA-aa83ed5c.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-16
+updated = 2026-11-16

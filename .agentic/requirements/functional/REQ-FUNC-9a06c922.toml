@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-9a06c922"
+
+title = "Check conductor numbering, wire ends and duplicate connections per schematic"
+
+status = "active"
+
+requirement = """
+When a documentation run reads a schematic, VERA shall report per schematic its device labels, its conductor numbering (one number per potential, distinct across potentials), its cross-references, each conductor without a number in a numbered project or with an unresolved end, and every two conductors joining the same two terminals as criteria, and shall change nothing in the schematic.
+"""
+
+verification = "Tool tests: the numbered M1 and M2 fixtures pass labels, numbering, wire ends and duplicates; a planted wire number used on two potentials fails numbering, a planted second conductor between the same terminals fails duplicates, a cleared number fails wire ends; the .qet bytes are unchanged."
+
+affected_paths = ["05_Software/src/libraries/core/src/electrical/documentation.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/electrical/documentation-tool.test.ts"]
+
+
+spec = "specs/REQ-DATA-aa83ed5c.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-16
+updated = 2026-11-16

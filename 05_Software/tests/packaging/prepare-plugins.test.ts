@@ -41,6 +41,7 @@ it("builds the official plugins into a bundled catalog release and checks it aga
     ["can-dbc", "official"],
     ["can-python", "official"],
     ["circuitpython", "official"],
+    ["electrical-documentation", "official"],
     ["electrical-network", "official"],
     ["electronics-calc", "official"],
     ["esp32-efuse", "official"],

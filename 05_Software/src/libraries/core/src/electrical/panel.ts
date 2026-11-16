@@ -1746,7 +1746,7 @@ export function panelImpact(
   };
 }
 
-const csvField = (value: string | number | null) => {
+export const csvField = (value: string | number | null) => {
   const raw = value === null ? "" : String(value);
   // A cell starting with = + - @ would run as a formula in a spreadsheet.
   const text = /^[=+\-@\t\r]/.test(raw) ? `'${raw}` : raw;

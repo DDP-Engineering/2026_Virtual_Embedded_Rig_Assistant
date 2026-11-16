@@ -183,7 +183,14 @@ accessories only when the host item lists them, terminals, 24 V budget, 2D rail 
 enclosure air temperature by a stated heat balance, short-circuit/busbars not evaluated without assembly data, a
 verification report claiming no IEC 61439 conformity; it stores one new result after approval. `panel_engineering`
 drafts equipment, shows the impact of a changed device and exports the BOM (CSV) and layout (SVG); the official plugin
-panel-engineering brings its skill.
+panel-engineering brings its skill. `electrical_documentation_check` derives material, connection, cable, terminal,
+label, I/O and contents lists from the model, a stored panel result and named .qet schematics (PLC tags only from the
+model and a named tag CSV), each row with its source file sha256, checks numbering, wire ends, duplicates, missing
+references and connections, cable ends, terminal points and the device-terminal-I/O-tag chain, takes the logical
+revision only from a model document object, adds a change report against a previous run and stores one new result;
+`electrical_documentation` pages a list or shows what changed since a run; `electrical_documentation_export` writes a
+new CSV, XLSX (fflate) or PDF (own writer, Courier) file next to the run; nothing is printed, ordered or sent; the
+official plugin electrical-documentation brings its skill.
 Parts search: Settings > Parts search holds supplier switches, credentials (Mouser, DigiKey, TME, Farnell, Rutronik; `parts:<id>` slots with the same consent and rollback) and region; the host tool `parts_search` is offered only with Web access on, the official parts-search plugin enabled for the workbench and a supplier enabled, contacts fixed supplier endpoints only, stores no result and never orders. The CLI reads MOUSER_API_KEY, DIGIKEY_CLIENT_ID/SECRET, TME_API_TOKEN/SECRET, FARNELL_API_KEY and RUTRONIK_API_KEY into memory. Live supplier probes need the user's own keys; see [parts search](../knowledge/parts-search.md).
 
 PCB layout candidates: the kicad-layout plugin (Electronics design pack, default off) edits a candidate copy of a

@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-e7ad9a1c"
+
+title = "Report missing device references, assembly connections and cable ends"
+
+status = "active"
+
+requirement = """
+When a documentation run is checked, VERA shall fail a criterion for each schematic label that matches neither a panel tag (by motor and schematic tag, or by tag) nor a model reference, for each assembly connection of the motor_drives result that the schematic of that motor does not draw, and for each cable without a routed circuit, a panel-side end on a strip or device of the panel, a field-side end at the fed motor or load, or whose strip belongs to another motor.
+"""
+
+verification = "Tool tests: the reference passes; a planted label KM9, a removed motor conductor (failed assembly connection criteria) and a cable W1 whose motor end was removed each fail their criterion, KM9 and W1 named; the model, panel and schematics are unchanged."
+
+affected_paths = ["05_Software/src/libraries/core/src/electrical/documentation.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/electrical/documentation-tool.test.ts"]
+
+
+spec = "specs/REQ-DATA-aa83ed5c.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-16
+updated = 2026-11-16

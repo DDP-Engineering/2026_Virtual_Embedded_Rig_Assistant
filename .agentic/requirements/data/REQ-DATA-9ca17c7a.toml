@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-DATA-9ca17c7a"
+
+title = "Read a declared tag import file strictly or refuse it"
+
+status = "active"
+
+requirement = """
+When a documentation run names a tag import file, VERA shall read it only as UTF-8 CSV inside the workbench with a header of distinct columns from name, address, dataType and comment (name and address required), at most 5000 rows and 1 MiB, and shall refuse the run with the file and line when the file is missing, larger, undecodable or has an unknown column, an empty name or address, a wrong field count or a malformed quoted field.
+"""
+
+verification = "Unit tests: quoted fields with commas and doubled quotes, a byte-order mark and blank lines are read with line numbers; a file with a column `plc`, a missing name or address column, a repeated column, an empty name or address, a wrong field count, an unterminated quote, text after a closing quote, a quote inside an unquoted field and more than 5000 rows are each refused naming the line. Tool tests: a tag path outside the workbench and a missing tag file are refused before any change."
+
+affected_paths = ["05_Software/src/libraries/core/src/electrical/documentation.ts", "05_Software/src/libraries/core/src/electrical/documentation-tool.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/electrical/documentation.test.ts", "05_Software/src/libraries/core/src/electrical/documentation-tool.test.ts"]
+
+
+spec = "specs/REQ-DATA-aa83ed5c.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-16
+updated = 2026-11-16
