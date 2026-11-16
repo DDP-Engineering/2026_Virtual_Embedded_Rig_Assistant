@@ -93,6 +93,9 @@ export interface SessionHost {
   writeQueue?: WriteQueue;
   /** Plugin programs of the workbench; without it the program tools are not offered. */
   programs?: ProgramHost;
+  /** Live workbench grants, supplied only by the host; model arguments never select them. */
+  commandPrefixes?: () => readonly string[];
+  saveCommandPrefix?: (prefix: string) => Promise<void>;
   pluginBuilder?: import("../plugins/store.js").PluginStore;
   managedRoots?: readonly string[];
 }
@@ -143,6 +146,7 @@ export class SessionService {
       assertWritable: () => this.writable(),
       active: (id, turn) => this.active.get(id)?.turnId === turn && !this.active.get(id)?.failed,
       mode: (id) => this.row(id).permission_mode,
+      commandPrefixes: () => host.commandPrefixes?.() ?? [],
       record: (id, event) => {
         const row = this.row(id);
         const status =
@@ -529,6 +533,15 @@ export class SessionService {
   }
   decideApproval(input: ApprovalDecision): void {
     this.approvals.decide(input);
+  }
+  /** Persist an explicit user prefix grant, then approve its still-pending exact command. */
+  async allowCommandApproval(input: ApprovalDecision): Promise<void> {
+    const prefix = this.approvals.commandPrefix(input);
+    if (!this.host.saveCommandPrefix) throw veraError("DENIED");
+    await this.host.saveCommandPrefix(prefix);
+    // Saving can yield to Stop, mode changes and workbench closure; decide rechecks ownership.
+    const { commandPrefix: _prefix, ...decision } = input;
+    this.approvals.decide(decision);
   }
   listArtifacts(id: string) {
     this.row(id);

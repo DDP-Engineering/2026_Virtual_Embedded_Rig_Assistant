@@ -34,7 +34,7 @@ it("validates format1, defaults and retains nested extensions with warning paths
     agent: { extension: 42 },
   });
   expect(config.docs).toEqual({ include: ["docs/**"], exclude: [], gitignore: true, maxFiles: 10000 });
-  expect(config.agent).toEqual({ permission_mode: "ask", model: null, extension: 42 });
+  expect(config.agent).toEqual({ permission_mode: "ask", model: null, allowed_commands: [], extension: 42 });
   expect(config.vendor).toEqual({ enabled: true });
   expect(warnings(config)).toEqual([
     { code: "UNKNOWN_KEY", path: "vendor" },

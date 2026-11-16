@@ -1,4 +1,10 @@
-import { type PluginRisk, type ProgramApproval, programCommandLine, type SessionState } from "@vera/shared";
+import {
+  commandPrefixes,
+  type PluginRisk,
+  type ProgramApproval,
+  programCommandLine,
+  type SessionState,
+} from "@vera/shared";
 import { useId, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../../api/index.js";
@@ -100,9 +106,12 @@ export function ApprovalCard({
   const field = useId();
   const locked = disabled || pending || !!approval.decision || !sessionId;
   const program = approval.program;
+  const prefixes = approval.tool === "run_command" ? commandPrefixes(program?.args[0] ?? "") : [];
+  const [chosenPrefix, setChosenPrefix] = useState<string>();
+  const prefix = prefixes.includes(chosenPrefix ?? "") ? chosenPrefix : prefixes.at(-1);
   // A pending irreversible program command always needs the typed word; core checks it.
   const word = program?.confirm ?? null;
-  async function decide(decision: "approved" | "denied", switchToAutoEdit = false) {
+  async function decide(decision: "approved" | "denied", switchToAutoEdit = false, commandPrefix?: string) {
     if (locked || !sessionId) return;
     setPending(true);
     setError(undefined);
@@ -113,6 +122,7 @@ export function ApprovalCard({
         requestSha256: approval.requestSha256,
         decision,
         ...(switchToAutoEdit ? { switchToAutoEdit } : {}),
+        ...(commandPrefix === undefined ? {} : { commandPrefix }),
         ...(word && decision === "approved" ? { confirmation: typed } : {}),
       });
     } catch (failure) {
@@ -271,6 +281,33 @@ export function ApprovalCard({
             <button type="button" disabled={locked} onClick={() => void decide("denied")}>
               {t("approval.deny")}
             </button>
+            {prefix !== undefined && (
+              <>
+                <label>
+                  {t("approval.commandPrefix")}
+                  <select
+                    data-command-prefix
+                    value={prefix}
+                    disabled={locked}
+                    onChange={(event) => setChosenPrefix(event.target.value)}
+                  >
+                    {prefixes.map((value) => (
+                      <option key={value} value={value}>
+                        {value}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <button
+                  type="button"
+                  data-command-always-allow
+                  disabled={locked}
+                  onClick={() => void decide("approved", false, prefix)}
+                >
+                  {t("approval.alwaysAllow")}
+                </button>
+              </>
+            )}
             {approval.tool !== "web_download" &&
               approval.tool !== "plugin_install" &&
               approval.tool !== "run_command" &&

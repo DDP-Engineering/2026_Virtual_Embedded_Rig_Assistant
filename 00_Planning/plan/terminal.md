@@ -10,8 +10,8 @@ one AEGIS implementation chat and one local commit per ticket, without pushing o
 
 | Order | Package | Issue | Result | State |
 |---|---|---|---|---|
-| 1 | TERM-01 | [#312](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/312) | Built-in shell commands, shell settings, clean environment and background monitoring | TASK-002d804f candidate validated; coordinator commit pending |
-| 2 | TERM-02 | [#313](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/313) | Command approvals, allowed prefixes and destructive-pattern refusal | planned |
+| 1 | TERM-01 | [#312](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/312) | Built-in shell commands, shell settings, clean environment and background monitoring | implemented: `8d2cd008e262eb213b42307fbf057c5af1ceb574`, TASK-002d804f |
+| 2 | TERM-02 | [#313](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/313) | Command approvals, allowed prefixes and destructive-pattern refusal | TASK-4fbe3463 candidate; focused native/browser proof passed; coordinator commit pending |
 | 3 | TERM-03 | [#314](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/314) | Additional workbench folders, file-tool access and immediate removal | planned |
 | 4 | TERM-04 | [#315](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/315) | Commands, live output, stop and full logs in Runs | planned |
 | 5 | TERM-05 | [#316](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/316) | Interactive terminal tabs, per-terminal read consent and packaged native runtime | planned |
@@ -60,6 +60,4 @@ TASK-002d804f, base `2e3da767bbbd60256f8f9da7d69ae609390890e3`: focused command/
 session/prompt/settings and localized components; immediate runner/transport/CLI consumers; real
 Windows and WSL2 pinned Node 24.21.0 process proof. Original logs and receipts are under
 `05_Software/evaluation-outputs/term01/platform/`. Native Ubuntu acceptance remains unavailable.
-Independent reviews and final strict/static results are recorded in the task journal. The coordinator
-owns the local commit and issue closure. Prefix grants, additional folders, Runs enhancements and the
-interactive terminal remain in subsequent TERM packages.
+Independent reviews and final strict/static results are recorded in the task journal. The coordinator committed TERM-01 as `8d2cd008e262eb213b42307fbf057c5af1ceb574` and closed #312. TERM-02 prefix grants are tracked in TASK-4fbe3463; additional folders, Runs enhancements and the interactive terminal remain in subsequent packages.

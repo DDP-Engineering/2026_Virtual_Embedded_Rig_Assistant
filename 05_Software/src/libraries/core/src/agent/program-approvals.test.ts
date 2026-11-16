@@ -65,12 +65,14 @@ async function setup(initial: PermissionMode = "ask") {
     .prepare("INSERT INTO sessions(id,title,permission_mode,status) VALUES ('ses_1','t','ask','idle')")
     .run();
   let mode = initial;
+  let prefixes: string[] = [];
   const events: SessionEvent[] = [];
   const gate = new ApprovalGate({
     db: handle.db,
     now: () => new Date().toISOString(),
     active: () => true,
     mode: () => mode,
+    commandPrefixes: () => prefixes,
     assertWritable: () => {},
     record: (_session, event) => {
       events.push(event);
@@ -107,6 +109,9 @@ async function setup(initial: PermissionMode = "ask") {
     rows,
     pending,
     prepare,
+    setPrefixes: (next: string[]) => {
+      prefixes = next;
+    },
     setMode: (next: PermissionMode) => {
       mode = next;
     },
@@ -133,6 +138,48 @@ const decide = (
 };
 
 describe("shell command approval baseline", () => {
+  it("honors live Auto-edit prefixes, Ask, destructive refusal and revocation", async () => {
+    const t = await setup("auto-edit");
+    t.setPrefixes(["npm test", "git", "nice", "time", "nohup"]);
+    const command = async (text: string): Promise<ProgramChangeRequest> => ({
+      ...(await t.prepare(["write", "build/app.bin"])),
+      tool: "run_command",
+      args: [text],
+    });
+    const request = await command("npm test -- --watch=false");
+    expect(await settled(t.gate.request(request, new AbortController().signal))).toEqual({
+      value: "approved",
+    });
+    t.setPrefixes([]);
+    expect(() => t.gate.consume(request)).toThrow();
+    t.setPrefixes(["npm test", "git", "nice", "time", "nohup"]);
+    t.setMode("ask");
+    expect(() => t.gate.consume(request)).toThrow();
+    const ask = await command("npm test");
+    const waiting = t.gate.request(ask, new AbortController().signal);
+    expect(await settled(waiting)).toBe("pending");
+    decide(t);
+    expect(await waiting).toBe("approved");
+    t.gate.consume(ask);
+    t.setMode("auto-edit");
+    for (const text of [
+      "git push --force",
+      "git reset --hard",
+      "git clean victim",
+      "git clean -dq",
+      "npm test; echo bad",
+      "nice /bin/rm -rv ./victim",
+      "time /bin/dd if=/dev/zero of=/dev/sda",
+      "nohup /bin/dd if=/dev/zero of=/dev/sda",
+    ]) {
+      const unsafe = await command(text);
+      const pending = t.gate.request(unsafe, new AbortController().signal);
+      expect(await settled(pending)).toBe("pending");
+      decide(t, { decision: "denied" });
+      expect(await pending).toBe("denied");
+      expect(() => t.gate.consume(unsafe)).toThrow();
+    }
+  });
   it.each(["ask", "auto-edit", "bypass", "read-only"] as const)(
     "enforces exact single-use decisions in %s",
     async (mode) => {

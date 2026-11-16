@@ -1613,11 +1613,38 @@ What this plugin does.
         };
         break;
       case "workbench.config.update": {
-        const { patch, workbenchId } = channels["workbench.config.update"].request.parse(input.data);
+        const {
+          patch,
+          workbenchId,
+          removeCommandPrefixes = [],
+        } = channels["workbench.config.update"].request.parse(input.data);
         const bench = current();
         if (bench.snapshot.readOnly) throw veraError("DENIED");
         if (workbenchId && bench.snapshot.config.id !== workbenchId) throw veraError("CONFLICT");
-        const config = mergeWorkbench(bench.snapshot.config, patch);
+        const grants = await Promise.all(
+          bench.snapshot.config.agent.allowed_commands.map(async (prefix) => ({
+            prefix,
+            id: await skillHash(prefix),
+          })),
+        );
+        if (removeCommandPrefixes.some((id) => !grants.some((grant) => grant.id === id)))
+          throw veraError("CONFLICT");
+        if (removeCommandPrefixes.length && patch.agent?.allowed_commands !== undefined)
+          throw veraError("INVALID");
+        const config = mergeWorkbench(
+          bench.snapshot.config,
+          removeCommandPrefixes.length
+            ? {
+                ...patch,
+                agent: {
+                  ...patch.agent,
+                  allowed_commands: grants
+                    .filter(({ id }) => !removeCommandPrefixes.includes(id))
+                    .map(({ prefix }) => prefix),
+                },
+              }
+            : patch,
+        );
         const warnings = configWarnings(config);
         if (JSON.stringify(config) !== JSON.stringify(bench.snapshot.config)) {
           bench.snapshot = { ...bench.snapshot, config, warnings };
@@ -1625,6 +1652,17 @@ What this plugin does.
           emit({ topic: "workbench", id: config.id, event: { type: "config.changed", config, warnings } });
         }
         value = { config, warnings };
+        break;
+      }
+      case "workbench.commandPrefixes.list": {
+        const { workbenchId } = channels["workbench.commandPrefixes.list"].request.parse(input.data);
+        if (current().snapshot.config.id !== workbenchId) throw veraError("CONFLICT");
+        value = await Promise.all(
+          current().snapshot.config.agent.allowed_commands.map(async (prefix) => ({
+            id: await skillHash(prefix),
+            label: prefix,
+          })),
+        );
         break;
       }
       case "workbench.pinned.get":

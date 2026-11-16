@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-SEC-f0170202"
+title = "Reject unsafe saved command prefixes"
+status = "active"
+requirement = "When a user attempts to save an unsupported or destructive command prefix, VERA shall reject the grant as invalid."
+verification = "Validate user prefix IPC and config inputs; accept npm test, reject empty, composed, destructive and overlong prefixes."
+affected_paths = ["05_Software/src/libraries/shared/src/command-prefix.ts", "05_Software/src/libraries/shared/src/workbench.ts", "05_Software/src/libraries/shared/src/ipc.ts"]
+linked_tests = ["05_Software/src/libraries/shared/src/command-prefix.test.ts"]
+priority = "normal"
+created = 2026-11-16
+updated = 2026-11-16

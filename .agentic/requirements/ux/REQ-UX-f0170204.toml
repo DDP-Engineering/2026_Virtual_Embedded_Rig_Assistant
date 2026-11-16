@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-UX-f0170204"
+title = "Remove saved command prefixes in Agent settings"
+status = "active"
+requirement = "When editing a workbench Agent configuration, VERA shall present every saved command prefix as a removable stable identity with a masked display label and English, Romanian, German and French interface text."
+verification = "Use actual editor to remove prefix and Save; restart and verify removal, then real Auto-edit command prompts again; mask a saved prefix with a credential and assert it stays visible/removable while unrelated Save preserves its exact grant."
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/workbench-command-prefixes.tsx", "05_Software/src/apps/desktop/src/renderer/components/workbench-editor.tsx", "05_Software/src/apps/desktop/src/renderer/components/workbench-config-form.tsx", "05_Software/src/libraries/core/src/workbench/service.ts", "05_Software/src/libraries/shared/src/ipc.ts", "05_Software/src/apps/desktop/src/main/index.ts"]
+linked_tests = ["05_Software/tests/e2e/command-prefixes.spec.ts"]
+priority = "normal"
+created = 2026-11-16
+updated = 2026-11-16

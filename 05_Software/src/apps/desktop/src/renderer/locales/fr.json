@@ -321,7 +321,12 @@
     "resources": "Ressources de banc réservées",
     "registry": "Déclaré dans",
     "typeToConfirm": "Cette modification est définitive. Tapez {{word}} pour confirmer.",
-    "confirmMismatch": "Le mot saisi ne correspond pas. Tapez le mot affiché sur la carte."
+    "confirmMismatch": "Le mot saisi ne correspond pas. Tapez le mot affiché sur la carte.",
+    "alwaysAllow": "Toujours autoriser",
+    "commandPrefix": "Préfixe de commande",
+    "allowedCommands": "Commandes autorisées",
+    "remove": "Supprimer",
+    "removePrefix": "Supprimer {{prefix}}"
   },
   "changes": {
     "empty": "Aucune modification dans cette session.",

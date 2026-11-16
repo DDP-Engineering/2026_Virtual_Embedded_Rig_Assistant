@@ -3,6 +3,7 @@ import { type Dispatch, type ReactNode, type SetStateAction, useEffect, useRef, 
 import { useTranslation } from "react-i18next";
 import { ModelSelect } from "./model-select.js";
 import { PermissionPicker } from "./permission-picker.js";
+import { WorkbenchCommandPrefixes } from "./workbench-command-prefixes.js";
 import { WorkbenchDocuments } from "./workbench-documents.js";
 import { WorkbenchPlugins } from "./workbench-plugins.js";
 import { WorkbenchTools } from "./workbench-tools.js";
@@ -42,6 +43,8 @@ export function WorkbenchConfigForm({
   general,
   locked = false,
   request,
+  removedCommandPrefixes = [],
+  removeCommandPrefix,
 }: {
   label: string;
   config: WorkbenchConfig;
@@ -64,6 +67,8 @@ export function WorkbenchConfigForm({
   locked?: boolean;
   /** Shows this section; a new request object switches to it again (Docs tab "Edit exclusions"). */
   request?: { section: ConfigSection } | undefined;
+  removedCommandPrefixes?: readonly string[];
+  removeCommandPrefix?: (id: string) => void;
 }) {
   const { t } = useTranslation();
   const labels = {
@@ -179,6 +184,14 @@ export function WorkbenchConfigForm({
                   <option value="minimal">{t("chatDetail.minimal")}</option>
                 </select>
               </label>
+              {workbenchId && removeCommandPrefix && (
+                <WorkbenchCommandPrefixes
+                  workbenchId={workbenchId}
+                  removed={removedCommandPrefixes}
+                  disabled={disabled || readOnly}
+                  remove={removeCommandPrefix}
+                />
+              )}
             </div>
           )}
           {section === "instructions" && (

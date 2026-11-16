@@ -11,7 +11,7 @@ CLI runs one durable SessionService turn over core/shared with Node-only host ad
 ## Public interface
 
 `run.ts` composes `createCommandShellHost` with the live settings.shell and logger scrubber, reusing
-its ProgramRunner/session cleanup. The durable approval path handles run_command; the TTY prompt
+its ProgramRunner/session cleanup. The durable approval path handles run_command and reads saved workbench prefixes for Auto-edit; the TTY prompt
 shows the literal command, cwd and shell. Existing approval flags apply. Command output passes through
 logger scrubbing and commands use closed stdin. `tests/integration/commands.test.ts` exercises the
 shared real shell path; `src/apps/cli/src/approval-prompt.test.ts` covers immediate prompt consumers.

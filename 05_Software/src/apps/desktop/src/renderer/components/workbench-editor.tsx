@@ -34,6 +34,7 @@ export function WorkbenchEditor({
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<unknown>();
   const [partial, setPartial] = useState(false);
+  const [removedCommandPrefixes, setRemovedCommandPrefixes] = useState<string[]>([]);
   const loadGeneration = useRef(0);
   const mounted = useRef(true);
   useEffect(() => {
@@ -68,11 +69,12 @@ export function WorkbenchEditor({
   }, [shown]);
   // Edits stay unsaved until a save completes, so a failed save is never left behind unseen. Skills
   // are saved by their own switches at once, so they are never part of this draft.
-  const comparable = ({ skills: _saved, ...value }: typeof config) => ({
-    ...value,
-    plugins: { ...value.plugins, enabled: [...value.plugins.enabled].sort() },
-  });
+  const comparable = ({ skills: _saved, ...value }: typeof config) => {
+    const { allowed_commands: _grants, ...agent } = value.agent;
+    return { ...value, agent, plugins: { ...value.plugins, enabled: [...value.plugins.enabled].sort() } };
+  };
   const dirty =
+    removedCommandPrefixes.length > 0 ||
     instructions !== original ||
     JSON.stringify(comparable(config)) !== JSON.stringify(comparable(workbench.config));
   // An invalid limit in Documents & RAG keeps Save off until it is corrected.
@@ -108,7 +110,10 @@ export function WorkbenchEditor({
         },
         embeddings: config.embeddings,
         retrieval: { results: config.retrieval.results, mode: config.retrieval.mode },
-        agent: { permission_mode: config.agent.permission_mode, model: config.agent.model },
+        agent: {
+          permission_mode: config.agent.permission_mode,
+          model: config.agent.model,
+        },
         tools: { disabled: config.tools.disabled },
         plugins: { enabled: config.plugins.enabled },
         chat: { detail: config.chat.detail },
@@ -116,6 +121,7 @@ export function WorkbenchEditor({
       const updated = await api.invoke("workbench.config.update", {
         patch,
         workbenchId: workbench.config.id,
+        ...(removedCommandPrefixes.length ? { removeCommandPrefixes: removedCommandPrefixes } : {}),
       });
       configSaved = true;
       if (instructions !== original)
@@ -178,6 +184,8 @@ export function WorkbenchEditor({
         setInstructions={setInstructions}
         folder={workbench.folder}
         workbenchId={workbench.config.id}
+        removedCommandPrefixes={removedCommandPrefixes}
+        removeCommandPrefix={(id) => setRemovedCommandPrefixes((current) => [...new Set([...current, id])])}
         readOnly={workbench.readOnly}
         disabled={pending || !loaded}
         notices={

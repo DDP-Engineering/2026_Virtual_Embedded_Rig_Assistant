@@ -1,5 +1,7 @@
 import { createHash } from "node:crypto";
 import {
+  commandPrefixMatches,
+  commandPrefixSchema,
   confirmationMatches,
   type PermissionMode,
   type ProgramPolicy,
@@ -38,18 +40,29 @@ export interface ApprovalDecision {
   switchToAutoEdit?: boolean | undefined;
   /** The typed confirmation of an irreversible program command. */
   confirmation?: string | undefined;
+  commandPrefix?: string | undefined;
 }
 /** The program policy of a run_program request in `mode`; undefined for file and download requests. */
-function policyOf(request: ChangeRequest, mode: PermissionMode): ProgramPolicy | undefined {
+function policyOf(
+  request: ChangeRequest,
+  mode: PermissionMode,
+  prefixes: readonly string[] = [],
+): ProgramPolicy | undefined {
   if (request.tool === "run_command")
-    return mode === "read-only" ? "refuse" : mode === "bypass" ? "mode" : "user";
+    return mode === "read-only"
+      ? "refuse"
+      : mode === "bypass" ||
+          (mode === "auto-edit" &&
+            prefixes.some((prefix) => commandPrefixMatches(request.args[0] ?? "", prefix)))
+        ? "mode"
+        : "user";
   return request.tool === "run_program" ? programPolicy(mode, request.risk, request.trial) : undefined;
 }
 /** Whether the current mode approves the request without asking the user. */
-function byMode(request: ChangeRequest, mode: PermissionMode): boolean {
+function byMode(request: ChangeRequest, mode: PermissionMode, prefixes: readonly string[] = []): boolean {
   if (request.tool === "plugin_install") return false;
   return request.tool === "run_program" || request.tool === "run_command"
-    ? policyOf(request, mode) === "mode"
+    ? policyOf(request, mode, prefixes) === "mode"
     : mode === "bypass" || (mode === "auto-edit" && !request.protected);
 }
 interface Pending {
@@ -65,6 +78,7 @@ export interface ApprovalHost {
   now(): string;
   active(sessionId: string, turnId: string): boolean;
   mode(sessionId: string): PermissionMode;
+  commandPrefixes?(): readonly string[];
   assertWritable(): void;
   /** Called inside the gate's transaction. Returns publication after commit. */
   record(sessionId: string, event: SessionEvent): () => void;
@@ -77,7 +91,7 @@ export class ApprovalGate {
     this.host.assertWritable();
     if (!this.host.active(request.sessionId, request.turnId)) throw veraError("CONFLICT");
     const mode = this.host.mode(request.sessionId);
-    const policy = policyOf(request, mode);
+    const policy = this.policy(request, mode);
     // Safe program commands run without a record; refused ones never reach the user.
     if (policy === "run") return "approved";
     if (policy === "refuse") return "aborted";
@@ -133,7 +147,11 @@ export class ApprovalGate {
       signal.addEventListener("abort", abort, { once: true });
       publish();
       if (signal.aborted) abort();
-      else if (byMode(request, mode) && this.pending.has(id)) this.finish(id, "approved", "mode");
+      else if (
+        byMode(request, this.host.mode(request.sessionId), this.host.commandPrefixes?.()) &&
+        this.pending.has(id)
+      )
+        this.finish(id, "approved", "mode");
       return await result;
     } catch (error) {
       entry.cleanup();
@@ -142,6 +160,27 @@ export class ApprovalGate {
     }
   }
   decide(input: ApprovalDecision): void {
+    if (input.commandPrefix !== undefined) throw veraError("INVALID");
+    this.validateDecision(input);
+    this.finish(input.approvalId, input.decision, "user", input.switchToAutoEdit);
+  }
+  /** Validate an explicit user grant against the still-pending exact command before persistence. */
+  commandPrefix(input: ApprovalDecision): string {
+    const entry = this.validateDecision(input);
+    if (
+      input.decision !== "approved" ||
+      input.switchToAutoEdit ||
+      entry.request.tool !== "run_command" ||
+      !commandPrefixSchema.safeParse(input.commandPrefix).success ||
+      !commandPrefixMatches(entry.request.args[0] ?? "", input.commandPrefix as string)
+    )
+      throw veraError("INVALID");
+    return input.commandPrefix as string;
+  }
+  private policy(request: ChangeRequest, mode: PermissionMode): ProgramPolicy | undefined {
+    return policyOf(request, mode, this.host.commandPrefixes?.());
+  }
+  private validateDecision(input: ApprovalDecision): Pending {
     const entry = this.pending.get(input.approvalId);
     this.host.assertWritable();
     if (
@@ -164,13 +203,13 @@ export class ApprovalGate {
     if (
       input.decision === "approved" &&
       entry.request.tool === "run_program" &&
-      policyOf(entry.request, mode) === "confirm"
+      this.policy(entry.request, mode) === "confirm"
     ) {
       if (input.switchToAutoEdit) throw veraError("INVALID");
       if (!confirmationMatches(entry.request.confirm, input.confirmation))
         throw { ...veraError("INVALID"), messageKey: "approval.confirmMismatch" };
     }
-    this.finish(input.approvalId, input.decision, "user", input.switchToAutoEdit);
+    return entry;
   }
   private finish(id: string, decision: Decision, by: "user" | "mode", switchMode = false): void {
     const entry = this.pending.get(id);
@@ -226,7 +265,7 @@ export class ApprovalGate {
   }
   consume(request: ChangeRequest): void {
     this.assertGranted(request);
-    if (policyOf(request, this.host.mode(request.sessionId)) === "run") return;
+    if (this.policy(request, this.host.mode(request.sessionId)) === "run") return;
     const changed = this.host.db
       .prepare(
         "UPDATE approvals SET consumed_at=? WHERE session_id=? AND turn_id=? AND tool_call_id=? AND request_sha256=? AND decision='approved' AND consumed_at IS NULL",
@@ -243,7 +282,7 @@ export class ApprovalGate {
   assertGranted(request: ChangeRequest): void {
     this.host.assertWritable();
     const mode = this.host.mode(request.sessionId);
-    const policy = policyOf(request, mode);
+    const policy = this.policy(request, mode);
     if (!this.host.active(request.sessionId, request.turnId)) throw veraError("CONFLICT");
     // A safe program command has no record to check; it runs in every mode.
     if (policy === "run") return;

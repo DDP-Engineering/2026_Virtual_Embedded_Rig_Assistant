@@ -321,7 +321,12 @@
     "resources": "Reserved bench resources",
     "registry": "Declared in",
     "typeToConfirm": "This change is permanent. Type {{word}} to confirm.",
-    "confirmMismatch": "The typed word does not match. Type the word shown on the card."
+    "confirmMismatch": "The typed word does not match. Type the word shown on the card.",
+    "alwaysAllow": "Always allow",
+    "commandPrefix": "Command prefix",
+    "allowedCommands": "Allowed commands",
+    "remove": "Remove",
+    "removePrefix": "Remove {{prefix}}"
   },
   "changes": {
     "empty": "No changes in this session.",

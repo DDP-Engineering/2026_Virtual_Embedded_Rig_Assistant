@@ -321,7 +321,12 @@
     "resources": "Resursele de laborator rezervate",
     "registry": "Declarate în",
     "typeToConfirm": "Această modificare este permanentă. Tastați {{word}} pentru a confirma.",
-    "confirmMismatch": "Cuvântul tastat nu se potrivește. Tastați cuvântul afișat pe card."
+    "confirmMismatch": "Cuvântul tastat nu se potrivește. Tastați cuvântul afișat pe card.",
+    "alwaysAllow": "Permite întotdeauna",
+    "commandPrefix": "Prefix de comandă",
+    "allowedCommands": "Comenzi permise",
+    "remove": "Elimină",
+    "removePrefix": "Elimină {{prefix}}"
   },
   "changes": {
     "empty": "Nu există modificări în această sesiune.",

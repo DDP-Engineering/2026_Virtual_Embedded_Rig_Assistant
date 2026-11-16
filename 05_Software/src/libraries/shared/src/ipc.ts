@@ -2,6 +2,7 @@ import { z } from "zod";
 import { artifactContentSchema, artifactIdSchema, artifactSummarySchema } from "./artifacts.js";
 import { changeDetailSchema, changeIdSchema, changeSummarySchema } from "./changes.js";
 import { chatgptLoginSchema, chatgptStatusSchema } from "./chatgpt.js";
+import { commandPrefixDisplaySchema, commandPrefixIdsSchema, commandPrefixSchema } from "./command-prefix.js";
 import {
   docsEntryPropertiesSchema,
   docsOpenerSchema,
@@ -539,10 +540,12 @@ export const channels = {
         requestSha256: z.string().regex(/^[0-9a-f]{64}$/),
         decision: z.enum(["approved", "denied"]),
         switchToAutoEdit: z.boolean().optional(),
+        commandPrefix: commandPrefixSchema.optional(),
         /** The typed confirmation of an irreversible program command; core compares it. */
         confirmation: z.string().max(4096).optional(),
       })
-      .refine((v) => !v.switchToAutoEdit || v.decision === "approved"),
+      .refine((v) => !v.switchToAutoEdit || v.decision === "approved")
+      .refine((v) => v.commandPrefix === undefined || (v.decision === "approved" && !v.switchToAutoEdit)),
     z.strictObject({}),
   ),
   "session.list": defineChannel(
@@ -751,8 +754,23 @@ export const channels = {
   ),
   "workbench.config.update": defineChannel(
     "workbench.config.update",
-    z.strictObject({ patch: workbenchPatchSchema, workbenchId: workbenchIdSchema.optional() }),
+    z
+      .strictObject({
+        patch: workbenchPatchSchema,
+        workbenchId: workbenchIdSchema.optional(),
+        removeCommandPrefixes: commandPrefixIdsSchema.optional(),
+      })
+      .refine(
+        (value) =>
+          !value.removeCommandPrefixes?.length ||
+          (value.workbenchId !== undefined && value.patch.agent?.allowed_commands === undefined),
+      ),
     configSnapshotSchema,
+  ),
+  "workbench.commandPrefixes.list": defineChannel(
+    "workbench.commandPrefixes.list",
+    z.strictObject({ workbenchId: workbenchIdSchema }),
+    z.array(commandPrefixDisplaySchema).max(100),
   ),
   "workbench.pinned.get": defineChannel("workbench.pinned.get", z.strictObject({}), pinnedSchema),
   "workbench.pinned.update": defineChannel(

@@ -359,3 +359,5 @@ Windows pinned Node 24.21.0 proves PowerShell 7, Windows PowerShell fallback, .c
 stdin EOF, clean environment, background readiness/tree stop and session/app cleanup. WSL2 Ubuntu
 uses /home/dpasare/vera-cap-01/node-v24.21.0-linux-x64/bin/node for the same acceptance with bash.
 WSL2 proof is distinct from native Ubuntu acceptance, which is unavailable on this host.
+
+TERM command-prefix acceptance uses the focused tests/e2e/command-prefixes.spec.ts with VERA_TEST=1 instrumented build. VERA_TERM02_EVIDENCE_DIR retains native receipt/screenshot; original focused/static logs live under evaluation-outputs/term02. TERM01 process/shell proofs are reused for unchanged runner behavior. Native Ubuntu is unavailable on this host.

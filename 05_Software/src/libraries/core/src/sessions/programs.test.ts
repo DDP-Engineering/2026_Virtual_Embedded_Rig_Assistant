@@ -34,6 +34,8 @@ async function setup(
     scrub?: string;
     disabled?: string[];
     permissions?: core.PermissionEngine;
+    prefixes?: string[];
+    savePrefix?: (prefix: string) => Promise<void>;
   } = {},
 ) {
   const base = await realpath(await mkdtemp(join(tmpdir(), "vera-programs-")));
@@ -106,6 +108,8 @@ async function setup(
     clock: { now: () => new Date(), sleep: async () => {} },
     model: () => `replay/${script}`,
     prompt: () => "Test",
+    commandPrefixes: () => options.prefixes ?? [],
+    ...(options.savePrefix ? { saveCommandPrefix: options.savePrefix } : {}),
     skills,
     ...(options.programs === false ? {} : { programs }),
     ...(options.disabled ? { disabledTools: options.disabled } : {}),
@@ -169,6 +173,78 @@ const approvals = (rig: Rig) =>
   }[];
 
 describe("built-in shell commands through sessions", () => {
+  it("saves only explicit exact user grants and applies live prefix removal", async () => {
+    const prefixes: string[] = [];
+    let failSave = true;
+    const rig = await setup({
+      mode: "auto-edit",
+      prefixes,
+      savePrefix: async (prefix) => {
+        if (failSave) throw Error("Disk unavailable");
+        prefixes.push(prefix);
+      },
+    });
+    rig.programs.shell = {
+      resolve: async () => ({ executable: "/bin/bash", kind: "bash" }),
+      environment: () => ({ PATH: "/bin" }),
+    };
+    let runs = 0;
+    const send = async (command: string, extra: Record<string, unknown> = {}) => {
+      await rig.scripts(`command${++runs}`, [
+        { toolCalls: [{ name: "run_command", args: { command, ...extra } }] },
+        { text: "Done" },
+      ]);
+      rig.service.send(rig.session.id, "run command");
+    };
+    const finish = async (count: number) => {
+      const child = await spawned(rig, count);
+      child.finish({ code: 0, signal: null });
+      await rig.service.waitIdle(rig.session.id);
+    };
+    await send("npm test");
+    const approval = await pending(rig);
+    const input = {
+      sessionId: rig.session.id,
+      ...approval,
+      decision: "approved" as const,
+      commandPrefix: "npm test",
+    };
+    await expect(rig.service.allowCommandApproval({ ...input, commandPrefix: "git" })).rejects.toMatchObject({
+      code: "INVALID",
+    });
+    await expect(
+      rig.service.allowCommandApproval({ ...input, requestSha256: "0".repeat(64) }),
+    ).rejects.toMatchObject({ code: "CONFLICT" });
+    await expect(rig.service.allowCommandApproval(input)).rejects.toThrow("Disk unavailable");
+    expect(rig.processes.programs).toHaveLength(0);
+    expect(prefixes).toEqual([]);
+    expect(await pending(rig)).toEqual(approval);
+    failSave = false;
+    await rig.service.allowCommandApproval(input);
+    expect(prefixes).toEqual(["npm test"]);
+    await finish(1);
+    await send("npm test -- --watch=false");
+    await finish(2);
+    expect(approvals(rig).at(-1)?.decided_by).toBe("mode");
+    rig.service.setMode(rig.session.id, "ask");
+    await send("npm test");
+    const ask = await pending(rig);
+    expect(rig.processes.programs).toHaveLength(2);
+    rig.service.decideApproval({ sessionId: rig.session.id, ...ask, decision: "approved" });
+    await finish(3);
+    rig.service.setMode(rig.session.id, "auto-edit");
+    prefixes.splice(0);
+    await send("npm test");
+    const removed = await pending(rig);
+    expect(rig.processes.programs).toHaveLength(3);
+    rig.service.decideApproval({ sessionId: rig.session.id, ...removed, decision: "denied" });
+    await rig.service.waitIdle(rig.session.id);
+    await send("npm test", { commandPrefix: "npm" });
+    await rig.service.waitIdle(rig.session.id);
+    expect(rig.toolResults().at(-1)?.ok).toBe(false);
+    expect(prefixes).toEqual([]);
+    expect(rig.processes.programs).toHaveLength(3);
+  });
   it.each(["ask", "auto-edit", "bypass"] as const)(
     "runs an approved command and scrubs output in %s",
     async (mode) => {

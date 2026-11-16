@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { commandPrefixListSchema } from "./command-prefix.js";
 import { permissionModeSchema } from "./session.js";
 
 export const workbenchIdSchema = z.string().regex(/^wb_[0-7][0-9A-HJKMNP-TV-Z]{25}$/);
@@ -41,6 +42,7 @@ export const workbenchRetrievalSchema = z.looseObject({
 });
 export type WorkbenchRetrieval = Pick<z.infer<typeof workbenchRetrievalSchema>, "results" | "mode">;
 const agent = z.looseObject({
+  allowed_commands: commandPrefixListSchema.default([]),
   permission_mode: permissionModeSchema.default("ask"),
   model: z
     .string()
@@ -64,7 +66,7 @@ export const workbenchSchema = z.looseObject({
   tools: disabled.default({ disabled: [] }),
   plugins: plugins.default({ enabled: [] }),
   chat: chat.default({ detail: "normal" }),
-  agent: agent.default({ permission_mode: "ask", model: null }),
+  agent: agent.default({ permission_mode: "ask", model: null, allowed_commands: [] }),
 });
 export type WorkbenchConfig = z.infer<typeof workbenchSchema>;
 /** The specified English user-editable starting context. */
@@ -97,6 +99,7 @@ export const workbenchPatchSchema = z.strictObject({
   plugins: z.strictObject({ enabled: z.array(z.string().min(1)).optional() }).optional(),
   agent: z
     .strictObject({
+      allowed_commands: commandPrefixListSchema.optional(),
       permission_mode: agent.shape.permission_mode.removeDefault().optional(),
       model: agent.shape.model.removeDefault().optional(),
     })

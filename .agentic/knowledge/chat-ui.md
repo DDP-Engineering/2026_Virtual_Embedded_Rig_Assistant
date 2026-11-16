@@ -21,6 +21,8 @@ the backend; reasoning and live tool-update presentation are transient renderer 
 
 ## Public interface
 
+- Shell approval cards show exact command/cwd/shell and, for eligible literal syntax, a chosen-prefix selector with Always allow. session.approval.decide carries the prefix only on that explicit user action. The Agent editor presents a complete paged list fetched through workbench.commandPrefixes.list, with scrubbed labels and stable IDs. Save sends only explicit removal IDs alongside ordinary config fields; Cancel discards. Four-locale card components and tests/e2e/command-prefixes.spec.ts cover controls and native restart/removal.
+
 - Markdown HTTP(S) source buttons use translated confirmation before system-browser IPC; cancel/Escape restore focus. A body portal preserves valid Markdown nesting; stable source components survive transcript refresh. [Web search](web-search.md) owns source handling.
 
 - WorkbenchNavigation coordinates session/workbench action details through one sidebar scope. Opening a trigger closes others; outside pointer/focus dismisses and Escape restores trigger focus. Archived expansion is independent. New session/shortcut opts into server-side unused-session reuse, retains the synchronous operationBusy guard, deduplicates the cache and focuses the selected composer through a consumed session-scoped request; same-session unsent drafts remain intact. workspace.test.ts and native navigation-actions.spec.ts cover crossings, keyboard, clicks, errors and restart.

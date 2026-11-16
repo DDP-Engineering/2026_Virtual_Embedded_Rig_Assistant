@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-SEC-f0170205"
+title = "Recheck live command authority at consumption"
+status = "active"
+requirement = "When a mode-approved shell command is consumed, VERA shall reject the exact grant if the current mode or saved prefixes no longer authorize it."
+verification = "Pause approved execution before consumption; remove prefix or switch to Ask and assert no spawn; retain single-use exact binding and Bypass revocation tests."
+affected_paths = ["05_Software/src/libraries/core/src/agent/approvals.ts", "05_Software/src/apps/desktop/src/main/sessions.ts", "05_Software/src/apps/cli/src/run.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/agent/program-approvals.test.ts", "05_Software/src/libraries/core/src/sessions/programs.test.ts"]
+priority = "normal"
+created = 2026-11-16
+updated = 2026-11-16

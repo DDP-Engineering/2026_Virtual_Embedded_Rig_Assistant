@@ -1,6 +1,7 @@
 import {
   boundSessionEvent,
   boundSessionState,
+  commandPrefixSchema,
   type DocumentGuard,
   type EventEnvelope,
   eventEnvelopeSchema,
@@ -149,7 +150,7 @@ export function sanitizeEvent(envelope: EventEnvelope, scrub: (text: string) => 
     const { disabled: disabledTools, ...toolExtensions } = tools;
     const { enabled: enabledPlugins, ...pluginExtensions } = plugins;
     const { detail, ...chatExtensions } = chat;
-    const { permission_mode, model, ...agentExtensions } = agent;
+    const { permission_mode, model, allowed_commands, ...agentExtensions } = agent;
     const scrubbedModel = model === null ? null : scrub(model);
     return {
       ...(extra(extensions) as Record<string, unknown>),
@@ -174,6 +175,9 @@ export function sanitizeEvent(envelope: EventEnvelope, scrub: (text: string) => 
       agent: {
         ...(extra(agentExtensions) as object),
         permission_mode,
+        allowed_commands: allowed_commands
+          .map(scrub)
+          .filter((prefix) => commandPrefixSchema.safeParse(prefix).success),
         model:
           scrubbedModel === null || /^[^/]+\/.+$/.test(scrubbedModel)
             ? scrubbedModel

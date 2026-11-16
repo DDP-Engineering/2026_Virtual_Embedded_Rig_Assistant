@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-SEC-f0170201"
+title = "Refuse composed command prefix authorization"
+status = "active"
+requirement = "When shell syntax is composed, unsupported or a destructive recursive delete, force push, hard reset, format or disk operation, VERA shall require explicit command approval in Ask and Auto-edit regardless of saved prefixes."
+verification = "Save git and npm prefixes; assert force push, hard reset, recursive deletes, disk tools, separators, substitutions, quotes, newlines and executable spelling tricks still wait for explicit approval."
+affected_paths = ["05_Software/src/libraries/shared/src/command-prefix.ts", "05_Software/src/libraries/core/src/agent/approvals.ts"]
+linked_tests = ["05_Software/src/libraries/shared/src/command-prefix.test.ts", "05_Software/src/libraries/core/src/agent/program-approvals.test.ts"]
+priority = "normal"
+created = 2026-11-16
+updated = 2026-11-16

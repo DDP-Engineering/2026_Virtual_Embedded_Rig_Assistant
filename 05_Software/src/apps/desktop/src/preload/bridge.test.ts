@@ -195,6 +195,7 @@ it("infers registry types and returns validated metadata", async () => {
     | "workbench.close"
     | "workbench.recent"
     | "workbench.config.get"
+    | "workbench.commandPrefixes.list"
     | "workbench.config.update"
     | "workbench.pinned.get"
     | "workbench.pinned.update"

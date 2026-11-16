@@ -229,7 +229,11 @@ it("scrubs event user text while short secrets preserve protocol fields and disc
     name: `Board ${privateKey}`,
     description: privateKey,
     docs: { include: [`docs/${privateKey}/**`] },
-    agent: { permission_mode: "ask", model: "provider/model" },
+    agent: {
+      permission_mode: "ask",
+      model: "provider/model",
+      allowed_commands: ["npm test", `npm ${privateKey}`],
+    },
     chat: { detail: "minimal", extension: privateKey },
     [privateKey]: { detail: privateKey },
   });

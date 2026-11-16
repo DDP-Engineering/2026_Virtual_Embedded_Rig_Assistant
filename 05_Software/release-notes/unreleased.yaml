@@ -78,3 +78,10 @@ entries:
       ro: Agentul poate executa comenzi shell, urmări lucrul în fundal și opri procesele la final.
       de: Der Agent führt Shell-Befehle aus, überwacht Hintergrundarbeit und beendet sie nach Abschluss.
       fr: L’agent exécute des commandes shell, surveille le travail en arrière-plan et l’arrête à la fin.
+  - category: improved
+    topic: { en: Permissions, ro: Permisiuni, de: Berechtigungen, fr: Permissions }
+    text:
+      en: Save command prefixes for Auto-edit; dangerous commands still ask outside Bypass.
+      ro: Salvează prefixe pentru Editare automată; comenzile periculoase cer acord în afara Bypass.
+      de: Befehlspräfixe für Automatisch bearbeiten speichern; gefährliche Befehle fragen außerhalb Bypass.
+      fr: Enregistrez des préfixes pour Modification auto ; les commandes dangereuses demandent hors Bypass.

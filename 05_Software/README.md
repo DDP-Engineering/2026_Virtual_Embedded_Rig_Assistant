@@ -440,3 +440,5 @@ timeouts and process-tree ownership. `command-settings.tsx` provides Settings â†
 foreground, UTF-8, stdin EOF, environment, background readiness/tree stop and lifecycle proof.
 The same probe bundles for the pinned Linux Node under WSL2. Original TERM-01 receipts and logs
 are retained under ignored `evaluation-outputs/term01/platform/`; WSL2 is not native Ubuntu proof.
+
+Command prefix policy lives in shared/src/command-prefix.ts with hostile-boundary tests. ApprovalGate consumes exact live grants; WorkbenchService persists user-selected agent.allowed_commands in format1. The approval card saves chosen prefixes and workbench-command-prefixes.tsx lists masked labels with stable removal identities in the Agent editor.

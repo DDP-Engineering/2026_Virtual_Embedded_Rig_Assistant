@@ -1008,8 +1008,9 @@ ipcMain.handle(
         return sessions.run((s) => ({ stopped: s.stop(sessionId) }));
       },
       "session.approval.decide": (request) =>
-        sessions.run((s) => {
-          s.decideApproval(request);
+        sessions.run(async (s) => {
+          if (request.commandPrefix !== undefined) await s.allowCommandApproval(request);
+          else s.decideApproval(request);
           return {};
         }),
       "session.reasoning.get": ({ sessionId }) =>
@@ -1129,8 +1130,13 @@ ipcMain.handle(
         readOnly: workbench.getSnapshot().readOnly,
         folder: workbench.getSnapshot().folder,
       }),
-      "workbench.config.update": ({ patch, workbenchId }) =>
-        workbench.updateConfig(workbenchPatchSchema.parse(patch), workbenchId),
+      "workbench.config.update": ({ patch, workbenchId, removeCommandPrefixes }) =>
+        workbench.updateConfig(workbenchPatchSchema.parse(patch), workbenchId, removeCommandPrefixes),
+      "workbench.commandPrefixes.list": async ({ workbenchId }) =>
+        (await workbench.listCommandPrefixes(workbenchId)).map(({ id, prefix }) => ({
+          id,
+          label: credentials.scrub(prefix),
+        })),
       "workbench.pinned.get": () => workbench.getPinned(),
       "workbench.pinned.update": ({ content, workbenchId }) => workbench.updatePinned(content, workbenchId),
       "workbench.files": ({ query }) => workbench.files(query),

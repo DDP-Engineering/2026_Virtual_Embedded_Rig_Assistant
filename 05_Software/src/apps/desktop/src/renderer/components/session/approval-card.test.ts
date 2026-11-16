@@ -4,6 +4,7 @@ import type { SessionState } from "@vera/shared";
 import { act, createElement } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, expect, it, vi } from "vitest";
+import { api } from "../../api/index.js";
 import i18n from "../../i18n.js";
 import { ApprovalCard } from "./approval-card.js";
 
@@ -14,6 +15,50 @@ let container: HTMLDivElement | undefined;
 afterEach(async () => {
   await act(async () => root?.unmount());
   container?.remove();
+});
+
+it.each(["en", "ro", "de", "fr"])("sends only an explicit chosen user prefix in %s", async (language) => {
+  await i18n.changeLanguage(language);
+  const approval = {
+    approvalId: "apv",
+    callId: "call",
+    requestSha256: "a".repeat(64),
+    tool: "run_command",
+    path: "shell",
+    diff: "",
+    bytes: 0,
+    decision: null,
+    program: {
+      pluginId: "vera",
+      trial: false,
+      program: "shell",
+      programVersion: null,
+      executable: "/bin/bash",
+      args: ["npm test"],
+      cwd: "/repo",
+      risk: "device-write",
+      confirm: null,
+      files: [],
+      notes: [],
+    },
+  } as SessionState["approvals"][number];
+  container = document.createElement("div");
+  document.body.append(container);
+  root = createRoot(container);
+  await act(async () =>
+    root?.render(createElement(ApprovalCard, { approval, sessionId: "s", disabled: false })),
+  );
+  const button = container.querySelector<HTMLButtonElement>("[data-command-always-allow]");
+  expect(button?.textContent).toBe(i18n.t("approval.alwaysAllow"));
+  expect(container.querySelector<HTMLSelectElement>("[data-command-prefix]")?.value).toBe("npm test");
+  await act(async () => button?.click());
+  expect(api.invoke).toHaveBeenLastCalledWith("session.approval.decide", {
+    sessionId: "s",
+    approvalId: "apv",
+    requestSha256: "a".repeat(64),
+    decision: "approved",
+    commandPrefix: "npm test",
+  });
 });
 
 it.each(["en", "ro", "de", "fr"])(

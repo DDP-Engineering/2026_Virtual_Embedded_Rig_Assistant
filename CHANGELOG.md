@@ -8,6 +8,8 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ### Changed
 
+- Auto-edit uses saved command prefixes; destructive shell commands always ask outside Bypass.
+
 - lab-validation 0.3.0: HIL validation reads host-approved outside inputs with workbench-owned output.
 
 - Bypass extends to analysis, plugin drafts, HIL plans, bench resources and electrical inputs.

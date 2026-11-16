@@ -302,7 +302,7 @@ renderer plugins.test.ts, tests/integration/plugin-builder.test.ts and tests/e2e
 Built-in shell commands use `plugins/command-tools.ts` and `shell.ts` with the existing runner and
 ProgramSession handles. `ProgramHost.shell` resolves current settings and supplies filtered user
 environment. `run_command {command,cwd?,timeout?,background?}` requires exact single-use user approval
-in Ask/Auto-edit, is absent/refused in Read-only and uses durable mode approval in Bypass. The shared
+in Ask and unmatched Auto-edit commands, is absent/refused in Read-only and uses durable mode approval in Bypass. Auto-edit uses current workbench agent.allowed_commands through shared command-prefix policy; complex syntax, executable spelling changes, destructive tool families and dangerous flags cannot inherit or save a prefix. Prefix removal and mode changes are rechecked at exact grant consumption. Explicitly approved shell syntax remains unsandboxed. The shared
 program approval payload adapts command display without a plugin risk claim. The request binds the
 literal command (at most 4096 characters, matching the run-record argument bound), resolved shell/argv, canonical cwd, original cwd, timeout and background flag.
 Original cwd is re-resolved before spawn with host data exclusions and captured Bypass epochs;

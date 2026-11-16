@@ -1,10 +1,13 @@
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { existsSync, lstatSync, readFileSync } from "node:fs";
 import { link, lstat, mkdir, open, readdir, realpath, rename, unlink } from "node:fs/promises";
 import { basename, dirname, isAbsolute, join } from "node:path";
 import {
   binaryDocumentKinds,
   builtinToolNames,
+  commandPrefixIdsSchema,
+  commandPrefixListSchema,
+  commandPrefixSchema,
   configWarnings,
   type DocumentGuard,
   type DocumentPreview,
@@ -65,6 +68,7 @@ function requireJson(value: unknown, ancestors = new Set<object>()): void {
   for (const item of Object.values(value)) requireJson(item, ancestors);
   ancestors.delete(value);
 }
+const commandPrefixId = (prefix: string) => createHash("sha256").update(prefix).digest("hex");
 
 export function parseConfig(text: string): WorkbenchConfig {
   const lines = new LineCounter();
@@ -750,16 +754,38 @@ export class WorkbenchService {
   updateConfig(
     patch: WorkbenchPatch,
     expectedId?: string,
+    removeCommandPrefixes: readonly string[] = [],
   ): Promise<{ config: WorkbenchConfig; warnings: WorkbenchWarning[] }> {
     return this.run(() =>
       this.writes.run(async () => {
         const parsed = workbenchPatchSchema.safeParse(patch);
-        if (!parsed.success) throw veraError("INVALID");
+        const removals = commandPrefixIdsSchema.safeParse(removeCommandPrefixes);
+        if (
+          !parsed.success ||
+          !removals.success ||
+          (removals.data.length && (!expectedId || parsed.data.agent?.allowed_commands !== undefined))
+        )
+          throw veraError("INVALID");
         const state = await this.writable();
         if (expectedId !== undefined && state.config.id !== expectedId) throw veraError("CONFLICT");
         const current = await this.config(state.folder);
         if (current.id !== state.config.id) throw veraError("CONFLICT");
-        const config = mergeWorkbench(current, parsed.data);
+        const currentIds = current.agent.allowed_commands.map(commandPrefixId);
+        if (removals.data.some((id) => !currentIds.includes(id))) throw veraError("CONFLICT");
+        const config = mergeWorkbench(
+          current,
+          removals.data.length
+            ? {
+                ...parsed.data,
+                agent: {
+                  ...parsed.data.agent,
+                  allowed_commands: current.agent.allowed_commands.filter(
+                    (prefix) => !removals.data.includes(commandPrefixId(prefix)),
+                  ),
+                },
+              }
+            : parsed.data,
+        );
         const warnings = await this.warnings(config, state.folder);
         if (JSON.stringify(config) !== JSON.stringify(current)) {
           await this.host.files.writeAtomic(join(state.folder, ".vera/workbench.yaml"), stringify(config));
@@ -774,6 +800,34 @@ export class WorkbenchService {
           ),
         });
         return { config: structuredClone(config), warnings };
+      }),
+    );
+  }
+  /** Complete authoritative grant identities; display masking belongs to the host boundary. */
+  async listCommandPrefixes(expectedId: string): Promise<{ id: string; prefix: string }[]> {
+    const { config } = await this.getConfig();
+    if (config.id !== expectedId) throw veraError("CONFLICT");
+    return config.agent.allowed_commands.map((prefix) => ({ id: commandPrefixId(prefix), prefix }));
+  }
+  /** Add a user-selected prefix without overwriting concurrent configuration changes. */
+  allowCommandPrefix(prefix: string, expectedId: string): Promise<void> {
+    return this.run(() =>
+      this.writes.run(async () => {
+        if (!commandPrefixSchema.safeParse(prefix).success) throw veraError("INVALID");
+        const state = await this.writable();
+        if (state.config.id !== expectedId) throw veraError("CONFLICT");
+        const current = await this.config(state.folder);
+        const prefixes = commandPrefixListSchema.safeParse([
+          ...new Set([...current.agent.allowed_commands, prefix]),
+        ]);
+        if (!prefixes.success) throw veraError("INVALID");
+        const config = mergeWorkbench(current, {
+          agent: { allowed_commands: prefixes.data },
+        });
+        const warnings = await this.warnings(config, state.folder);
+        await this.host.files.writeAtomic(join(state.folder, ".vera/workbench.yaml"), stringify(config));
+        this.state = { ...state, config, warnings };
+        this.emit(config.id, { type: "config.changed", config, warnings });
       }),
     );
   }

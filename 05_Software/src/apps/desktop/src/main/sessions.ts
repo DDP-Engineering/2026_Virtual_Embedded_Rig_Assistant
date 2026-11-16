@@ -164,6 +164,14 @@ export class SessionsHost {
           db,
           root: snapshot.folder,
           readOnly: snapshot.readOnly,
+          commandPrefixes: () => {
+            const current = options.workbench.getSnapshot();
+            if (current.config.id !== workbenchId) throw veraError("CONFLICT");
+            return current.config.agent.allowed_commands;
+          },
+          saveCommandPrefix: async (prefix) => {
+            await options.workbench.allowCommandPrefix(prefix, workbenchId);
+          },
           get mode() {
             return self.config?.agent.permission_mode ?? "ask";
           },

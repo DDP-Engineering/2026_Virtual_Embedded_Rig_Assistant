@@ -66,6 +66,56 @@ async function harness() {
   return { root, folder, host, events, settings, paths, service: new WorkbenchService(host) };
 }
 // REQ-DATA-4a830b9a
+it("persists eligible user command prefixes across restart and removal without losing other config", async () => {
+  const h = await harness();
+  try {
+    const { config } = await h.service.create(h.folder, "Commands");
+    await h.service.allowCommandPrefix("npm test", config.id);
+    await h.service.allowCommandPrefix("npm test", config.id);
+    const grants = await h.service.listCommandPrefixes(config.id);
+    expect(grants).toEqual([{ id: expect.stringMatching(/^[0-9a-f]{64}$/), prefix: "npm test" }]);
+    await expect(h.service.updateConfig({}, config.id, ["0".repeat(64)])).rejects.toMatchObject({
+      code: "CONFLICT",
+    });
+    await expect(h.service.updateConfig({}, undefined, [grants[0]?.id as string])).rejects.toMatchObject({
+      code: "INVALID",
+    });
+    await h.service.updateConfig({ description: "Kept" });
+    await h.service.close();
+    const reopened = await h.service.open(h.folder);
+    expect(reopened.config.agent.allowed_commands).toEqual(["npm test"]);
+    expect(reopened.config.format).toBe(1);
+    expect(reopened.config.description).toBe("Kept");
+    await expect(h.service.allowCommandPrefix("git push --force", config.id)).rejects.toMatchObject({
+      code: "INVALID",
+    });
+    await expect(h.service.allowCommandPrefix("git", "wb_other")).rejects.toMatchObject({ code: "CONFLICT" });
+    await h.service.updateConfig(
+      { agent: { model: null } },
+      config.id,
+      grants.map((grant) => grant.id),
+    );
+    await h.service.close();
+    expect((await h.service.open(h.folder)).config.agent.allowed_commands).toEqual([]);
+  } finally {
+    await h.service.close();
+  }
+});
+it("rejects a 101st user command grant with a typed error", async () => {
+  const h = await harness();
+  try {
+    const { config } = await h.service.create(h.folder, "Bounded grants");
+    await h.service.updateConfig({
+      agent: { allowed_commands: Array.from({ length: 100 }, (_, index) => `npm test${index}`) },
+    });
+    await expect(h.service.allowCommandPrefix("npm next", config.id)).rejects.toMatchObject({
+      code: "INVALID",
+    });
+    expect(await h.service.listCommandPrefixes(config.id)).toHaveLength(100);
+  } finally {
+    await h.service.close();
+  }
+});
 it("persists chat detail independently across workbench save and reopen", async () => {
   const h = await harness();
   try {

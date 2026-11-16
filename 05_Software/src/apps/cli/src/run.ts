@@ -237,6 +237,7 @@ export async function runTurn(
       workers,
       skills,
       programs: programHost,
+      commandPrefixes: () => workbench.getSnapshot().config.agent.allowed_commands,
       pluginBuilder: new PluginStore({ root: join(location.paths.userData, "plugins") }),
       managedRoots: [location.paths.userData],
       embeddings: documents.embeddings,

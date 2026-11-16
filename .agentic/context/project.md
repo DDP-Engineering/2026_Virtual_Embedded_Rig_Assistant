@@ -194,8 +194,8 @@ Ordinary declared program runs admit outside absolute working directories and bi
 
 Outside program metadata is persisted on tool completion independently of approval policy and capped result text; safe non-trial commands remain approval-free and retain canonical paths in JSON/Markdown exports.
 
-Built-in run_command executes shell syntax with exact Ask/Auto-edit approvals and Bypass authority,
+Built-in run_command executes shell syntax with exact Ask approvals, live eligible saved prefixes in Auto-edit and Bypass authority,
 using platform/default or user-configured shells, filtered user environment and the shared runner's
 logs, output handles, timeout and process-tree cleanup. Read-only omits commands. Settings → Commands,
 command approval presentation and help exist in en/ro/de/fr. Command side effects are OS-account
-execution without sandboxing; cwd admission retains application-data exclusions and Bypass epochs.
+execution without sandboxing; cwd admission retains application-data exclusions and Bypass epochs. Explicit user Always allow persists chosen eligible literal prefixes in workbench format1; Agent settings remove them. Destructive/composed/unsupported commands always require explicit approval outside Bypass.
