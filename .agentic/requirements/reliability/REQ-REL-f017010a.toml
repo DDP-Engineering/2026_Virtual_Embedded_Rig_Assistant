@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-REL-f017010a"
+title = "Close command input"
+status = "active"
+requirement = "When an agent command starts, VERA shall leave stdin closed."
+verification = "Run a real stdin EOF reader and assert prompt completion without timeout."
+affected_paths = ["05_Software/src/libraries/core/src/plugins/command-tools.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/plugins/command-tools.test.ts", "05_Software/tests/integration/commands.test.ts"]
+priority = "normal"
+created = 2026-11-16
+updated = 2026-11-16

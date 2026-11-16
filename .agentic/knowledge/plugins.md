@@ -299,6 +299,22 @@ renderer plugins.test.ts, tests/integration/plugin-builder.test.ts and tests/e2e
 
 ## Public interface
 
+Built-in shell commands use `plugins/command-tools.ts` and `shell.ts` with the existing runner and
+ProgramSession handles. `ProgramHost.shell` resolves current settings and supplies filtered user
+environment. `run_command {command,cwd?,timeout?,background?}` requires exact single-use user approval
+in Ask/Auto-edit, is absent/refused in Read-only and uses durable mode approval in Bypass. The shared
+program approval payload adapts command display without a plugin risk claim. The request binds the
+literal command (at most 4096 characters, matching the run-record argument bound), resolved shell/argv, canonical cwd, original cwd, timeout and background flag.
+Original cwd is re-resolved before spawn with host data exclusions and captured Bypass epochs;
+background lifetime excludes the completed turn signal. Commands are arbitrary shell syntax under
+OS-account permissions, not a filesystem sandbox. `RunRequest.commandEnvironment` is host-only and
+used by built-in commands; declared plugins retain the minimal environment policy. NodeProcessHost
+keeps stdin closed; logs remain local raw Program runs logs and output disclosure is scrubbed.
+Focused proof: `plugins/{command-tools,shell}.test.ts`, `agent/program-approvals.test.ts`,
+`sessions/programs.test.ts` and `tests/integration/commands.test.ts`. Real platform receipts:
+`evaluation-outputs/term01/platform/{windows,wsl}/receipt.json`; WSL2 is not native Ubuntu acceptance.
+
+
 ordinary `run_program` calls use `toolPathGuard`; only Bypass accepts outside cwd and binds existing outside file arguments. Read-only/Ask/Auto-edit refuse recognized existing outside files and directories, including aliases. File bindings/cwd are canonical absolute paths outside and workbench-relative inside; outside directory arguments have separate unhashed `directories` metadata while raw argv stays exact. Directory aliases are re-resolved at spawn and must retain the recorded path. Internal prefixes/executable loading keep host authority. `verifyProgramFiles` rechecks path scope and application-data exclusions for every original argument, including initially unbound paths, without hashing or binding HIL-generated files; it re-resolves each approved original argument (detecting alias target changes), rehashes bytes and refuses CONFLICT before spawn. ApplicationDataAccessError never becomes an ordinary argument. Runner record I/O precedes final checks, cwd identity/type and current authorization are checked again at spawn. Bypass epochs are captured before asynchronous preparation and apply admission, retained through background lifetime without the turn signal, and never replaced by re-entering Bypass. Registry rechecks retain the captured tool guard, canonical identity and host exclusions; outside access requires the original Bypass epoch. Logs/records remain `.vera/runs`. HIL plans/compiled calls and resource registries use the shared guard; generated request/result storage stays confined. This path admission is not a sandbox for arbitrary child-process behavior. Focused boundary tests: `program-bypass.test.ts`; session lifetime/export: `sessions/programs.test.ts`; native sibling Git repositories: `tests/e2e/program-bypass.spec.ts`.
 
 

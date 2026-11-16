@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-SEC-f0170104"
+title = "Hide commands in read-only mode"
+status = "active"
+requirement = "While Read-only is active, VERA shall omit run_command from model tools and refuse direct prepared calls."
+verification = "Inspect model tool list and attempt direct prepare in Read-only."
+affected_paths = ["05_Software/src/libraries/core/src/plugins/command-tools.ts", "05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/libraries/core/src/tools/registry.ts", "05_Software/src/libraries/shared/src/tools.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/plugins/command-tools.test.ts", "05_Software/src/libraries/core/src/sessions/programs.test.ts"]
+priority = "normal"
+created = 2026-11-16
+updated = 2026-11-16

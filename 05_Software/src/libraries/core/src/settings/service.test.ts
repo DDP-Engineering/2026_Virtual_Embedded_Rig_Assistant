@@ -30,6 +30,17 @@ function harness(stored?: string) {
 }
 
 describe("application settings persistence", () => {
+  it("persists and resets the shell selection at format version one", async () => {
+    const h = harness();
+    await h.service.load();
+    await h.service.update({ shell: "/bin/bash" });
+    const reload = harness(h.files.get("/data/settings.json"));
+    await reload.service.load();
+    expect(reload.service.get().settings).toMatchObject({ schemaVersion: 1, shell: "/bin/bash" });
+    await reload.service.update({ shell: "" });
+    expect(reload.service.get().settings.shell).toBe("");
+    await expect(reload.service.update({ shell: "bad\0shell" })).rejects.toMatchObject({ code: "INVALID" });
+  });
   it("conditionally updates the app model against the serialized current state", async () => {
     const h = harness();
     await h.service.load();

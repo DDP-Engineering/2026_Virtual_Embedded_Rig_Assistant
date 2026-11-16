@@ -265,7 +265,7 @@ export function validProgramApproval(value: {
   diff: string;
   program?: unknown;
 }): boolean {
-  return value.tool === "run_program"
+  return value.tool === "run_program" || value.tool === "run_command"
     ? !!value.program && value.bytes === 0 && value.diff === ""
     : value.program === undefined;
 }

@@ -56,6 +56,13 @@ const fontSizeSchema = z.union([
   z.literal(24),
 ]);
 const mutable = {
+  /** Empty selects the platform default; an explicit name/path must resolve on this machine. */
+  shell: z
+    .string()
+    .trim()
+    .max(4096)
+    .refine((value) => !/\p{Cc}/u.test(value), "Use a shell name or absolute path.")
+    .optional(),
   webAccess: webAccessSettingsSchema,
   /** Absent until the user first saves Settings > Parts search; readers apply partsSearchDefaults. */
   partsSearch: partsSearchSettingsSchema.optional(),
@@ -89,6 +96,7 @@ export const settingsSchema = z.strictObject({
   ...mutable,
 });
 export const settingsPatchSchema = z.strictObject({
+  shell: mutable.shell,
   keyboardShortcuts: mutable.keyboardShortcuts,
   language: mutable.language.optional(),
   theme: mutable.theme.optional(),

@@ -49,7 +49,10 @@
     "shortcuts": "Raccourcis clavier",
     "partsSearch": "Recherche de composants",
     "mqttCredentials": "Identifiants MQTT",
-    "wokwiTokens": "Jetons Wokwi"
+    "wokwiTokens": "Jetons Wokwi",
+    "commands": "Commandes",
+    "commandShell": "Shell de commandes",
+    "automaticShell": "Automatique (défaut de la plateforme)"
   },
   "appearance": {
     "theme": "Thème",
@@ -680,7 +683,8 @@
     "lighting_design": "Concevoir l’éclairage intérieur à partir d’un projet d’éclairage avec des photométries IES ou LDT : une estimation préliminaire par la méthode des flux avec des facteurs d’utilance cités et la composante directe sur la grille de calcul, des diagnostics d’échelle, d’unités, d’orientation et de photométrie, et la vérification de l’éclairement maintenu, de l’uniformité et de l’éblouissement uniquement à partir d’un rapport concordant d’un moteur photométrique comme DIALux evo ; enregistre le résultat après approbation comme une écriture et ne lance aucun moteur. Nécessite le plugin lighting-design. Les chemins externes exigent Bypass ; les données VERA sont interdites.",
     "decode_register": "Décoder une valeur de registre capturée à l’aide d’une définition JSON locale, avec les valeurs exactes des champs et les sources citées. Ne lit aucun appareil. Les chemins externes exigent Bypass ; les données VERA sont interdites.",
     "parts_search": "Rechercher dans les catalogues des distributeurs activés (Mouser, DigiKey, TME, Farnell, Rutronik) par mot-clé ou référence. Nécessite l’accès web, le plugin parts-search et un distributeur configuré dans la Configuration du plugin sur la page Plugins.",
-    "help": "Lire les pages d’aide de VERA et l’aide des plugins activés dans le banc de travail, pour répondre aux questions sur VERA. Lecture seule."
+    "help": "Lire les pages d’aide de VERA et l’aide des plugins activés dans le banc de travail, pour répondre aux questions sur VERA. Lecture seule.",
+    "run_command": "Exécuter des commandes shell après accord en Demander et Modification auto, directement en Bypass."
   },
   "projects": {
     "embeddingsGroup": "Embeddings",

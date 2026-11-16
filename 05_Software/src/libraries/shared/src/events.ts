@@ -141,6 +141,7 @@ export const sessionEventSchema = z.discriminatedUnion("type", [
         "edit",
         "web_download",
         "run_program",
+        "run_command",
         "plugin_install",
         "apply_candidate",
         "electrical_model_change",

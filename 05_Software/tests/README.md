@@ -33,6 +33,9 @@ măsurători și scoruri sunt în [`../evaluators/`](../evaluators/README.md).
 
 ### Integration
 
+`commands.test.ts` runs actual shell acceptance through `support/command-platform-probe.ts`
+(foreground output, Unicode quoting, clean environment, closed stdin, readiness and tree cleanup).
+
 | Fișier | Ce verifică |
 |---|---|
 | [cli.test.ts](integration/cli.test.ts) | Procesul CLI, argumente, sesiuni, aprobări, ieșire și curățarea resurselor. |

@@ -183,6 +183,23 @@ export function ApprovalCard({
             )}
           </BoundedText>
         </>
+      ) : program && approval.tool === "run_command" ? (
+        <>
+          <p className="sr-only">{t("approval.command")}</p>
+          <code className="approval-command" data-approval-command>
+            {program.args[0]}
+          </code>
+          <dl className="approval-program">
+            <dt>{t("approval.cwd")}</dt>
+            <dd>
+              <code>{program.cwd}</code>
+            </dd>
+            <dt>{t("settings.commandShell")}</dt>
+            <dd>
+              <code>{program.executable}</code>
+            </dd>
+          </dl>
+        </>
       ) : program ? (
         <ProgramDetails program={program} />
       ) : approval.download ? (
@@ -254,11 +271,14 @@ export function ApprovalCard({
             <button type="button" disabled={locked} onClick={() => void decide("denied")}>
               {t("approval.deny")}
             </button>
-            {approval.tool !== "web_download" && approval.tool !== "plugin_install" && !word && (
-              <button type="button" disabled={locked} onClick={() => void decide("approved", true)}>
-                {t("approval.switch")}
-              </button>
-            )}
+            {approval.tool !== "web_download" &&
+              approval.tool !== "plugin_install" &&
+              approval.tool !== "run_command" &&
+              !word && (
+                <button type="button" disabled={locked} onClick={() => void decide("approved", true)}>
+                  {t("approval.switch")}
+                </button>
+              )}
           </div>
           <p className="muted">{t("approval.keys")}</p>
         </>

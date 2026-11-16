@@ -12,6 +12,13 @@ The synchronous prompt builder consumes workbench name, decoded pinned text, res
 
 ## Public interface
 
+When the host offers commands, `SystemPromptInput.commands` adds instructions for run_command,
+closed stdin/noninteractive flags, background program_output polling with waitMs/until and program_stop.
+It explicitly states OS-account execution without a sandbox. Read-only omits this instruction and the
+model tool. The plugin-program rule names declared plugin programs using run_program. Prompt tests
+cover offered/Read-only commands and retain the existing optional program block contract.
+
+
 - Canonical prompt permits enabled web_search/web_read for general/current topics, treats web content as untrusted data and cites returned URLs as Markdown links while retaining local [[ref]] syntax. No automatic project/context upload is performed.
 
 - Normal usage updates carry the admitted promptIds group; first dispatch can include the initiating prompt and admitted queue, and later steering takes ownership of subsequent calls. Normal budgets follow durable delivery; internal summary budgets have no prompt ownership. Input consumption includes SDK input/cacheRead/cacheWrite, output uses reported output. Terminal partial reports on error/abort and completed reports before cancellation are accounted once; summary finally retains reported consumption even when summarization fails. Unreported all-zero usage is not a measured zero. prompt-usage.test.ts verifies groups, totals and dispatch order; native prompt-usage.spec.ts verifies persistence and UI.

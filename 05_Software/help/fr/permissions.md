@@ -54,3 +54,7 @@ Une commande qui ne correspond à aucune règle est traitée comme **Écriture a
 ## Examiner les modifications
 
 L’onglet **Modifications** du panneau droit liste les fichiers modifiés dans la session, dans l’ordre, avec le nombre de lignes ajoutées et supprimées. Sélectionnez une entrée pour voir son diff ; **Afficher dans le dossier** montre le fichier dans votre gestionnaire de fichiers. Consultez aussi [Discussion et sessions](chat-and-sessions.md).
+
+## Commandes shell
+
+L’agent peut exécuter des commandes shell avec `run_command`. Demander et Modification auto exigent un accord pour chaque commande ; la carte montre la commande exacte, le dossier de travail et le shell. Bypass exécute sans demander. Lecture seule ne propose aucune commande. Les commandes disposent des droits de votre compte système et ne sont pas isolées dans un bac à sable. Hors Bypass, le dossier de travail reste dans le banc ; les dossiers de données de VERA sont refusés dans tous les modes. La syntaxe shell peut accéder aux fichiers et programmes hors du dossier initial.

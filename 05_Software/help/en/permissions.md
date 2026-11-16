@@ -54,3 +54,7 @@ A command that matches no rule counts as **Device write**. When several rules ma
 ## Review changes
 
 The **Changes** tab of the right panel lists the files changed in the session, in order, with the number of added and removed lines. Select an entry to see its diff; **Reveal in folder** shows the file in your file manager. See also [Chat and sessions](chat-and-sessions.md).
+
+## Shell commands
+
+The agent can run shell commands with `run_command`. Ask and Auto-edit request approval for every command; the card shows the literal command, working directory and shell. Bypass runs without asking. Read-only does not offer commands. Commands run with your OS account permissions; they are not sandboxed. The working directory stays inside the workbench outside Bypass; VERA application-data working directories are refused in every mode. Shell syntax can access files and programs beyond its initial working directory.

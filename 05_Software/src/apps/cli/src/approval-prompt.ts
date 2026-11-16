@@ -29,6 +29,8 @@ export function flagDecision(
 }
 function describe(request: ApprovalRequest): string {
   const program = request.program;
+  if (program && request.tool === "run_command")
+    return `\nrun_command\nCommand: ${program.args[0]}\nWorking directory: ${program.cwd}\nShell: ${program.executable}\n`;
   if (program)
     return [
       "",

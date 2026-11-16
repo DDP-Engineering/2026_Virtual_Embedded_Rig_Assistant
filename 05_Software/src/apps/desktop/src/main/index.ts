@@ -6,6 +6,7 @@ import { dirname, isAbsolute, join, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { registerBunOAuthFlows } from "@earendil-works/pi-ai/bun-oauth";
 import {
+  createCommandShellHost,
   createDownloadPdfExtractor,
   embeddingModelId,
   HelpLibrary,
@@ -366,6 +367,11 @@ const sessions = new SessionsHost({
   // Instrumented builds may resolve fixture plugins from VERA_TEST_PROGRAMS for e2e; otherwise provisioning does.
   programs: {
     runner: programs,
+    shell: createCommandShellHost(
+      processHost,
+      () => settings.get().settings.shell,
+      (text) => credentials.scrub(text),
+    ),
     // Approved runs of official plugins (mqtt-tools, wokwi) read their stored credentials here (spec REQ-DATA-96d18686 §1).
     credentials: programCredentials(credentials),
     resolver:

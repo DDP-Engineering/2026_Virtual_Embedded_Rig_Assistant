@@ -49,7 +49,10 @@
     "shortcuts": "Comenzi rapide",
     "partsSearch": "Căutare componente",
     "mqttCredentials": "Credențiale MQTT",
-    "wokwiTokens": "Tokenuri Wokwi"
+    "wokwiTokens": "Tokenuri Wokwi",
+    "commands": "Comenzi",
+    "commandShell": "Shell pentru comenzi",
+    "automaticShell": "Automat (implicit pe platformă)"
   },
   "appearance": {
     "theme": "Temă",
@@ -680,7 +683,8 @@
     "lighting_design": "Proiectează iluminatul interior dintr-un proiect de iluminat cu fotometrii IES sau LDT: o estimare preliminară prin metoda fluxului cu factori de utilizare citați și componenta directă pe grila de calcul, diagnostic pentru scară, unități, orientare și fotometrie, iar verificarea iluminării menținute, a uniformității și a orbirii numai dintr-un raport potrivit al unui motor fotometric precum DIALux evo; salvează rezultatul după aprobare ca o scriere și nu rulează niciun motor. Necesită pluginul lighting-design. Căile externe cer Bypass; accesul la datele aplicației VERA este refuzat.",
     "decode_register": "Decodează o valoare de registru capturată folosind o definiție JSON locală, cu valori exacte ale câmpurilor și surse citabile. Nu citește dispozitive. Căile externe cer Bypass; accesul la datele aplicației VERA este refuzat.",
     "parts_search": "Caută în cataloagele furnizorilor activați (Mouser, DigiKey, TME, Farnell, Rutronik) după cuvinte cheie sau cod de piesă. Necesită Web access, pluginul parts-search și un furnizor configurat în secțiunea Configurare a pluginului, pe pagina Pluginuri.",
-    "help": "Citește paginile de ajutor ale VERA și ajutorul pluginurilor activate în workbench, pentru întrebări despre VERA. Doar citire."
+    "help": "Citește paginile de ajutor ale VERA și ajutorul pluginurilor activate în workbench, pentru întrebări despre VERA. Doar citire.",
+    "run_command": "Execută comenzi shell cu aprobare în Întreabă și Editare automată, sau direct în Bypass."
   },
   "projects": {
     "embeddingsGroup": "Embeddings",

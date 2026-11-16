@@ -28,6 +28,13 @@ left/right/Home/End move focus and Down or Enter opens the selected native menu.
 
 ## Public interface
 
+Settings → Commands uses `components/command-settings.tsx` and the shared shell setting. Save and
+Cancel control a local draft; clearing the field selects automatic resolution. Localized labels,
+placeholder and built-in tool description exist in en/ro/de/fr. Shell approvals show literal command,
+cwd and executable shell, with Approve/Deny; prefix grants are a separate work package. Focused
+component coverage is command-settings.test.ts and session/approval-card.test.ts in all four languages.
+
+
 - App switches Welcome, Settings and session memory routes; Ctrl+, opens Settings while the exact renderer URL stays intact. Global actions yield to modal/handled/repeated/composing keys; the skip-content control focuses main without URL changes.
 - Welcome remains mounted in Settings, retaining the active workbench. Create/open, recents,
   read-only/warnings and the keyboard pinned dialog are owned by [workbench](workbench.md).

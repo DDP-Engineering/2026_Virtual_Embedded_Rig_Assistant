@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-FUNC-f0170102"
+title = "Monitor background shell commands"
+status = "active"
+requirement = "When run_command starts with background true, VERA shall return a session-owned handle usable by program_output and program_stop."
+verification = "Start a server and child, wait until readiness, abort the tool turn, read output then stop and assert both processes ended."
+affected_paths = ["05_Software/src/libraries/core/src/plugins/command-tools.ts", "05_Software/src/libraries/core/src/plugins/program-tools.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/plugins/command-tools.test.ts", "05_Software/tests/integration/commands.test.ts"]
+priority = "normal"
+created = 2026-11-16
+updated = 2026-11-16

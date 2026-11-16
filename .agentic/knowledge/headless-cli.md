@@ -10,6 +10,13 @@ CLI runs one durable SessionService turn over core/shared with Node-only host ad
 
 ## Public interface
 
+`run.ts` composes `createCommandShellHost` with the live settings.shell and logger scrubber, reusing
+its ProgramRunner/session cleanup. The durable approval path handles run_command; the TTY prompt
+shows the literal command, cwd and shell. Existing approval flags apply. Command output passes through
+logger scrubbing and commands use closed stdin. `tests/integration/commands.test.ts` exercises the
+shared real shell path; `src/apps/cli/src/approval-prompt.test.ts` covers immediate prompt consumers.
+
+
 - decode_register shares the bounded main-process decoder with desktop sessions. Real npm-built vera run and SessionService replay produce identical complete0x81 register evidence, validate definition/manual citations and open them after restart; no worker or device host is required.
 
 - parse_log exposes the same read-tool contract, full scanned counts, source SHA and cited filtered events as desktop agents. tests/integration/cli.test.ts compares replay SessionService results against real npm-built vera run and validates baseline WARN and candidate ERROR citations. The common grep-worker entry dispatches kind parse_log to its isolated scanner.

@@ -30,8 +30,16 @@ export interface ProgramDirectory {
   readonly path: string;
 }
 /** The run_program approval request (architecture §4); its requestSha256 binds the approval. */
-export interface ProgramChangeRequest {
-  readonly tool: "run_program";
+export type ProgramChangeRequest =
+  | (ProgramRequestBase & { readonly tool: "run_program" })
+  | (ProgramRequestBase & { readonly tool: "run_command" });
+interface ProgramRequestBase {
+  /** Shell execution options bound into the exact command approval. */
+  readonly command?: {
+    readonly originalCwd: string;
+    readonly background: boolean;
+    readonly timeoutMs: number | null;
+  };
   readonly workbench: string;
   readonly sessionId: string;
   readonly turnId: string;

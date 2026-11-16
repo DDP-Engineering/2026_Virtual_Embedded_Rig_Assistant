@@ -54,3 +54,7 @@ Ein Befehl, auf den keine Regel passt, gilt als **Gerät schreiben**. Passen meh
 ## Änderungen prüfen
 
 Der Tab **Änderungen** im rechten Bereich listet die in der Sitzung geänderten Dateien der Reihe nach auf, mit der Anzahl hinzugefügter und entfernter Zeilen. Wählen Sie einen Eintrag, um seinen Diff zu sehen; **Im Ordner anzeigen** zeigt die Datei in Ihrem Dateimanager. Siehe auch [Chat und Sitzungen](chat-and-sessions.md).
+
+## Shell-Befehle
+
+Der Agent führt Shell-Befehle mit `run_command` aus. Fragen und Automatisch bearbeiten verlangen für jeden Befehl eine Freigabe; die Karte zeigt den genauen Befehl, Arbeitsordner und die Shell. Bypass führt ohne Nachfrage aus. Nur lesen bietet keine Befehle an. Befehle haben die Rechte deines Betriebssystemkontos und laufen ohne Sandbox. Außerhalb von Bypass bleibt der Arbeitsordner in der Workbench; VERA-Anwendungsdaten sind in jedem Modus als Arbeitsordner gesperrt. Shell-Syntax kann auf Dateien und Programme außerhalb des anfänglichen Arbeitsordners zugreifen.

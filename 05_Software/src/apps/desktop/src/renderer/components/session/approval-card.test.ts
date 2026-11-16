@@ -16,6 +16,50 @@ afterEach(async () => {
   container?.remove();
 });
 
+it.each(["en", "ro", "de", "fr"])(
+  "shows a literal shell command, cwd and shell with approve/deny in %s",
+  async (language) => {
+    await i18n.changeLanguage(language);
+    const approval: SessionState["approvals"][number] = {
+      approvalId: "command",
+      callId: "call",
+      requestSha256: "a".repeat(64),
+      tool: "run_command",
+      path: "shell",
+      bytes: 0,
+      diff: "",
+      decision: null,
+      program: {
+        pluginId: "vera",
+        trial: false,
+        program: "shell",
+        programVersion: null,
+        executable: "/bin/bash",
+        args: ["node -e \"console.log('hello')\""],
+        cwd: "/repo with spaces",
+        risk: "device-write",
+        confirm: null,
+        files: [],
+        notes: [],
+      },
+    };
+    container = document.createElement("div");
+    document.body.append(container);
+    root = createRoot(container);
+    await act(async () =>
+      root?.render(createElement(ApprovalCard, { approval, sessionId: "s", disabled: false })),
+    );
+    expect(container.querySelector("[data-approval-command]")?.textContent).toBe(approval.program?.args[0]);
+    expect(container.textContent).toContain("/repo with spaces");
+    expect(container.textContent).toContain("/bin/bash");
+    expect(container.textContent).toContain(i18n.t("settings.commandShell"));
+    expect([...container.querySelectorAll("button")].map((button) => button.textContent)).toEqual([
+      i18n.t("approval.approve"),
+      i18n.t("approval.deny"),
+    ]);
+  },
+);
+
 it("lists the reserved bench resources with the registry and its SHA-256", async () => {
   await i18n.changeLanguage("en");
   const approval = {

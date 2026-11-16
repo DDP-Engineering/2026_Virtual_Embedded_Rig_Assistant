@@ -55,3 +55,7 @@ Das Ausschalten des Webzugriffs stoppt auch laufende Suchen und Downloads. Einze
 ## Über
 
 **Über** zeigt die Anwendungsversion, Plattform, Architektur, ob VERA als portable Version läuft, das Gebietsschema des Systems, die Laufzeitversionen, die Lizenz und die Liste der Drittanbieterkomponenten mit ihren Lizenzen.
+
+## Shell-Befehle
+
+Unter Einstellungen → Befehle einen installierten Shell-Namen oder absoluten Pfad eingeben und Speichern wählen. Ein leeres Feld wählt automatisch. Windows nutzt PowerShell 7, sonst Windows PowerShell, ohne Profil, nicht interaktiv und mit UTF-8-Ausgabe. Linux nutzt `bash -lc`, sonst `sh -c`; Anmeldeprofile können die Umgebung ändern. Eine ausdrücklich gewählte, fehlende Shell meldet einen Fehler. Windows akzeptiert `pwsh.exe` oder `powershell.exe`; Linux nutzt `-lc` für bash und `-c` für andere Shells.

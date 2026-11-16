@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-SEC-f0170103"
+title = "Approve shell commands by permission mode"
+status = "active"
+requirement = "While Ask or Auto-edit is active, VERA shall require a single-use exact-request user approval for every shell command."
+verification = "Assert pending Ask and Auto-edit commands cannot spawn before approval, reject replay and changed shell/cwd/command; Bypass proceeds."
+affected_paths = ["05_Software/src/libraries/core/src/agent/approvals.ts", "05_Software/src/libraries/core/src/plugins/program-request.ts", "05_Software/src/libraries/shared/src/events.ts", "05_Software/src/libraries/shared/src/program-rules.ts", "05_Software/src/libraries/shared/src/session-state.ts", "05_Software/src/apps/desktop/src/renderer/components/session/approval-card.tsx", "05_Software/src/apps/cli/src/approval-prompt.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/agent/program-approvals.test.ts", "05_Software/src/libraries/shared/src/program-approval-schema.test.ts", "05_Software/src/apps/desktop/src/renderer/components/session/approval-card.test.ts", "05_Software/src/apps/cli/src/approval-prompt.test.ts"]
+priority = "normal"
+created = 2026-11-16
+updated = 2026-11-16

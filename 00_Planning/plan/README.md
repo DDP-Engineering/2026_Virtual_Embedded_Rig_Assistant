@@ -7,6 +7,8 @@ tickets in Gitea.
 
 ## Open plans
 
+- Shell commands and terminal: [terminal.md](terminal.md), **TERM-01…TERM-05 #312…#316 / epic #311** —
+  agent shell commands, approvals, additional folders, Runs integration and the user's terminal.
 - Bypass scope: [bypass.md](bypass.md), **BYP-03 #308, BYP-01 #309, BYP-02 #310 / epic #307** —
   all agent path tools outside the workbench in Bypass, with application data refused in every mode.
 - Delivery packages: [delivery.md](delivery.md), **DEL-01…DEL-06** — VERA for Windows and Linux and

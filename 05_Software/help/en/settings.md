@@ -55,3 +55,7 @@ Turning web access off also stops searches and downloads in progress. Individual
 ## About
 
 **About** shows the application version, platform, architecture, whether VERA runs as a portable version, the system locale, the runtime versions, the license and the list of third-party components with their licenses.
+
+## Shell commands
+
+In Settings → Commands, enter an installed shell name or absolute path and choose Save. Clear the field to use automatic selection. Windows selects PowerShell 7, otherwise Windows PowerShell, with no profile, noninteractive execution and UTF-8 output. Linux selects `bash -lc`, otherwise `sh -c`; login profiles may adjust the environment. An explicit unavailable shell reports an error. Windows overrides accept `pwsh.exe` or `powershell.exe`; a Linux override uses `-lc` for bash and `-c` for other shells.

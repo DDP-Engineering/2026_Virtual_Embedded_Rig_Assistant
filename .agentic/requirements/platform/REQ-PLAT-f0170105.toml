@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-PLAT-f0170105"
+title = "Resolve configured platform shells"
+status = "active"
+requirement = "When a shell command is prepared, VERA shall resolve the configured shell or select PowerShell 7 then Windows PowerShell on Windows and bash then sh on Linux."
+verification = "Test platform resolution, unavailable explicit shell refusal, exact command quoting and UTF-8 output with real platform runs."
+affected_paths = ["05_Software/src/libraries/core/src/plugins/shell.ts", "05_Software/src/libraries/core/src/index.ts", "05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/apps/desktop/src/main/sessions.ts", "05_Software/src/apps/cli/src/run.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/plugins/shell.test.ts", "05_Software/tests/integration/commands.test.ts"]
+priority = "normal"
+created = 2026-11-16
+updated = 2026-11-16

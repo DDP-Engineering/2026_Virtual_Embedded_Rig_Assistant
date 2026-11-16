@@ -55,3 +55,7 @@ Dezactivarea accesului web oprește și căutările și descărcările în curs.
 ## Despre
 
 **Despre** afișează versiunea aplicației, platforma, arhitectura, dacă VERA rulează ca versiune portabilă, setările regionale ale sistemului, versiunile runtime, licența și lista componentelor terțe cu licențele lor.
+
+## Comenzi shell
+
+În Setări → Comenzi, introdu numele unui shell instalat sau calea absolută și apasă Salvare. Golește câmpul pentru selectare automată. Windows alege PowerShell 7, apoi Windows PowerShell, fără profil, neinteractiv și cu ieșire UTF-8. Linux alege `bash -lc`, apoi `sh -c`; profilurile pot modifica mediul. Un shell explicit indisponibil produce o eroare. Windows acceptă `pwsh.exe` sau `powershell.exe`; Linux folosește `-lc` pentru bash și `-c` pentru celelalte shell-uri.

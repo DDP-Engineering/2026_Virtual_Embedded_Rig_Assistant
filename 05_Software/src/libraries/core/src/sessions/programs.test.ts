@@ -168,6 +168,57 @@ const approvals = (rig: Rig) =>
     consumed_at: string | null;
   }[];
 
+describe("built-in shell commands through sessions", () => {
+  it.each(["ask", "auto-edit", "bypass"] as const)(
+    "runs an approved command and scrubs output in %s",
+    async (mode) => {
+      const rig = await setup({ mode, scrub: "fixture-private-value" });
+      rig.programs.shell = {
+        resolve: async () => ({ executable: "/bin/bash", kind: "bash" }),
+        environment: () => ({ PATH: "/bin" }),
+      };
+      await rig.scripts("command", [
+        { toolCalls: [{ name: "run_command", args: { command: "echo hello" } }] },
+        { text: "Done" },
+      ]);
+      rig.service.send(rig.session.id, "run command");
+      if (mode !== "bypass") {
+        const approval = await pending(rig);
+        expect(rig.processes.programs).toHaveLength(0);
+        rig.service.decideApproval({ sessionId: rig.session.id, ...approval, decision: "approved" });
+      }
+      const child = await spawned(rig);
+      expect(child.args).toEqual(["-lc", "echo hello"]);
+      child.print("fixture-private-value\n");
+      child.finish({ code: 0, signal: null });
+      await rig.service.waitIdle(rig.session.id);
+      expect(rig.catalogs[0]).toContain("run_command");
+      expect(rig.toolResults()[0]).toMatchObject({
+        ok: true,
+        summary: expect.stringContaining("[REDACTED]"),
+      });
+      expect(approvals(rig)).toMatchObject([
+        {
+          decision: "approved",
+          decided_by: mode === "bypass" ? "mode" : "user",
+          consumed_at: expect.any(String),
+        },
+      ]);
+    },
+  );
+  it("omits shell commands from a Read-only model request even with a shell host", async () => {
+    const rig = await setup({ mode: "read-only" });
+    rig.programs.shell = {
+      resolve: async () => ({ executable: "/bin/bash", kind: "bash" }),
+      environment: () => ({}),
+    };
+    await rig.scripts("hello", [{ text: "Hello" }]);
+    rig.service.send(rig.session.id, "hello");
+    await rig.service.waitIdle(rig.session.id);
+    expect(rig.catalogs[0]).not.toContain("run_command");
+  });
+});
+
 describe("the echo-tools plugin in each permission mode", () => {
   it.each([
     ["read-only", "refused"],

@@ -16,6 +16,17 @@ and drains accepted updates/log writes on quit. Shared owns persisted and patch 
 
 ## Public interface
 
+Optional `settings.shell` is a trimmed executable name/absolute path; empty or absent selects the
+platform default. Format remains 1. Shared persisted/update schemas reject controls and values over
+4096 characters. Settings → Commands edits a local draft and saves/cancels explicitly, in en/ro/de/fr.
+Desktop and CLI resolve the setting for each command preparation, so a change while an approval waits
+invalidates its resolved-shell binding. Windows supports pwsh/PowerShell with no profile,
+noninteractive UTF-8 execution; Linux uses bash -lc, else sh -c. The shell host inherits user variables
+except VERA/Electron state, credential-bearing names and any value changed by the credential scrubber.
+Login profiles may modify the child's environment. Tests: core settings/service.test.ts,
+plugins/shell.test.ts and renderer components/command-settings.test.ts.
+
+
 - The shared permission picker confirms each Bypass change before applying it. Settings contains no warning-suppression preference. Desktop and CLI pass their selected userData root as host-owned managedRoots to SessionService; agent file guards exclude its lexical/canonical aliases in every mode. Settings, credentials and plugin loaders retain their internal storage authority.
 
 - SettingsService.load/get/update/close; get/update return detached {settings}. Settings are

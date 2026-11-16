@@ -55,3 +55,7 @@ La désactivation de l’accès web arrête aussi les recherches et télécharge
 ## À propos
 
 **À propos** affiche la version de l’application, la plateforme, l’architecture, si VERA s’exécute en version portable, les paramètres régionaux du système, les versions des environnements d’exécution, la licence et la liste des composants tiers avec leurs licences.
+
+## Commandes shell
+
+Dans Paramètres → Commandes, saisissez le nom d’un shell installé ou son chemin absolu et choisissez Enregistrer. Videz le champ pour la sélection automatique. Windows utilise PowerShell 7, sinon Windows PowerShell, sans profil, non interactif et avec sortie UTF-8. Linux utilise `bash -lc`, sinon `sh -c` ; les profils peuvent modifier l’environnement. Un shell explicitement choisi mais indisponible produit une erreur. Windows accepte `pwsh.exe` ou `powershell.exe` ; Linux utilise `-lc` pour bash et `-c` pour les autres shells.

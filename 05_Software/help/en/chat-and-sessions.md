@@ -61,3 +61,7 @@ Saved message bookmarks stay in JSON exports; Markdown marks bookmarked user mes
 Hover over one of your messages or use Tab to reach its bookmark icon. Select **Bookmark** to mark it; the filled icon uses **Remove bookmark** to clear it. The rail preview shows the first line of your message and the start of the agent reply, with the same bookmark action. Changes appear immediately; a failed save restores the previous state and shows an error. Archived sessions and read-only workbenches allow viewing only.
 
 Bookmarked rail markers are filled in the primary color and slightly longer. A grouped marker is marked when any message in it has a bookmark. Use **Next bookmark** (**Ctrl+Alt+N**) or **Previous bookmark** (**Ctrl+Alt+P**) to jump between marked messages; navigation stops at the first or last bookmark. Change these keys in **Settings → Keyboard shortcuts**.
+
+## Shell commands
+
+Use non-interactive flags: agent stdin is closed. Foreground commands return an exit code, the last 12,000 output characters and a full log in `.vera/runs`. Background commands return a handle; the agent polls `program_output`, using `until` for a readiness line, and ends them with `program_stop`. They survive a completed tool turn and stop with the session, app or the Bypass mode that started them. Output follows the Program runs secret-masking policy; local run logs keep the original output. The child inherits user environment variables without VERA provider keys or stored credential values. Commands are limited to 4,096 characters.

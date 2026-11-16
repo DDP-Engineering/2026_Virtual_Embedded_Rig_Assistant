@@ -30,6 +30,8 @@ import { hostVariable, killProcessTree } from "./process-tree.js";
 import { OutputDecoder, TailBuffer } from "./run-output.js";
 
 export interface RunRequest {
+  /** Host-filtered full user environment for built-in shell commands only. */
+  commandEnvironment?: () => Record<string, string>;
   sessionId: string;
   /** Absolute workbench root. */
   workbench: string;
@@ -421,13 +423,15 @@ class Run implements ActiveRun {
     this.started = performance.now();
     const child = host.spawn(this.request.executable, this.request.args, {
       cwd,
-      env: programEnvironment(
-        host,
-        this.settings.toolPaths,
-        { ...this.request.env, ...this.supervisionEnv() },
-        this.request.display === true,
-        this.request.inherit,
-      ),
+      env:
+        this.request.commandEnvironment?.() ??
+        programEnvironment(
+          host,
+          this.settings.toolPaths,
+          { ...this.request.env, ...this.supervisionEnv() },
+          this.request.display === true,
+          this.request.inherit,
+        ),
       group: host.platform !== "win32",
       output: (stream, chunk) => this.append(this.decoders[stream].write(chunk)),
       ...(this.request.input === undefined ? {} : { input: this.request.input }),

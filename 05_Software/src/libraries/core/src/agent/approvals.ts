@@ -41,12 +41,14 @@ export interface ApprovalDecision {
 }
 /** The program policy of a run_program request in `mode`; undefined for file and download requests. */
 function policyOf(request: ChangeRequest, mode: PermissionMode): ProgramPolicy | undefined {
+  if (request.tool === "run_command")
+    return mode === "read-only" ? "refuse" : mode === "bypass" ? "mode" : "user";
   return request.tool === "run_program" ? programPolicy(mode, request.risk, request.trial) : undefined;
 }
 /** Whether the current mode approves the request without asking the user. */
 function byMode(request: ChangeRequest, mode: PermissionMode): boolean {
   if (request.tool === "plugin_install") return false;
-  return request.tool === "run_program"
+  return request.tool === "run_program" || request.tool === "run_command"
     ? policyOf(request, mode) === "mode"
     : mode === "bypass" || (mode === "auto-edit" && !request.protected);
 }
@@ -81,6 +83,7 @@ export class ApprovalGate {
     if (policy === "refuse") return "aborted";
     if (
       request.tool !== "run_program" &&
+      request.tool !== "run_command" &&
       (mode === "read-only" || (request.scope === "filesystem" && mode !== "bypass"))
     )
       return "aborted";
@@ -117,7 +120,7 @@ export class ApprovalGate {
           callId: request.callId,
           requestSha256: digest,
           tool: request.tool,
-          ...(request.tool === "run_program"
+          ...(request.tool === "run_program" || request.tool === "run_command"
             ? { path: request.program, diff: "", bytes: 0, program: programApproval(request) }
             : {
                 path: request.path,
@@ -150,7 +153,10 @@ export class ApprovalGate {
     )
       throw veraError("CONFLICT");
     if (input.decision !== "approved" && input.decision !== "denied") throw veraError("INVALID");
-    if (input.switchToAutoEdit && (input.decision !== "approved" || entry.request.tool === "plugin_install"))
+    if (
+      input.switchToAutoEdit &&
+      (input.decision !== "approved" || ["plugin_install", "run_command"].includes(entry.request.tool))
+    )
       throw veraError("INVALID");
     const mode = this.host.mode(input.sessionId);
     if (mode === "read-only") throw veraError("CONFLICT");
@@ -253,7 +259,7 @@ export class ApprovalGate {
       if (row?.decided_by !== "user") throw veraError("CONFLICT");
       return;
     }
-    if (request.tool === "run_program") {
+    if (request.tool === "run_program" || request.tool === "run_command") {
       // A mode decision lasts only while the current mode would still decide it the same way.
       if (!row || (row.decided_by === "mode" && policy !== "mode")) throw veraError("CONFLICT");
       return;

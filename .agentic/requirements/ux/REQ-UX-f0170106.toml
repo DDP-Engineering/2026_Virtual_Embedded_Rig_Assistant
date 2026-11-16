@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-UX-f0170106"
+title = "Configure command shell"
+status = "active"
+requirement = "When the user saves the command shell setting, VERA shall persist the validated selection in format-1 settings and use it for subsequent commands."
+verification = "Test invalid/control-character settings, save/reset selection and fresh command resolution; inspect localized setting and help in four languages."
+affected_paths = ["05_Software/src/libraries/shared/src/settings.ts", "05_Software/src/apps/desktop/src/renderer/components/command-settings.tsx", "05_Software/src/apps/desktop/src/renderer/components/settings.tsx", "05_Software/src/apps/desktop/src/renderer/components/workbench-tools.tsx", "05_Software/src/libraries/core/src/agent/prompt.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/settings/service.test.ts", "05_Software/src/libraries/core/src/plugins/shell.test.ts", "05_Software/src/libraries/core/src/agent/prompt.test.ts", "05_Software/src/apps/desktop/src/renderer/components/command-settings.test.ts"]
+priority = "normal"
+created = 2026-11-16
+updated = 2026-11-16

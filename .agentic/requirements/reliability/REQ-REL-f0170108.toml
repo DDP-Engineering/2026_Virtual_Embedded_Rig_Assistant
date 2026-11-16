@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-REL-f0170108"
+title = "Stop command process trees"
+status = "active"
+requirement = "When a command times out or its session or app ends, VERA shall stop its process tree through the shared runner."
+verification = "Start real parent and child processes; test timeout, explicit stop, session stop and app stop; assert process termination."
+affected_paths = ["05_Software/src/libraries/core/src/plugins/command-tools.ts", "05_Software/src/libraries/core/src/plugins/runner.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/plugins/command-tools.test.ts", "05_Software/tests/integration/commands.test.ts"]
+priority = "normal"
+created = 2026-11-16
+updated = 2026-11-16

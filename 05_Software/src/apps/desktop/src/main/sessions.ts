@@ -80,7 +80,12 @@ export class SessionsHost {
       parts?: ConfiguredPartsProvider;
       downloads?: (root: string) => WebDownloads;
       /** Plugin program runs; each workbench supplies its enabled plugins. */
-      programs?: { runner: ProgramRunner; resolver: ProgramResolver; credentials?: ProgramCredentials };
+      programs?: {
+        runner: ProgramRunner;
+        resolver: ProgramResolver;
+        credentials?: ProgramCredentials;
+        shell?: ProgramHost["shell"];
+      };
       pluginBuilder?: PluginStore;
       managedRoots?: readonly string[];
       /** VERA's help for the agent's help tool: the app help and the interface language. */
@@ -229,6 +234,8 @@ export class SessionsHost {
               pinned: this.pinned,
               skills: this.skillMetadata,
               programs: this.programEntries,
+              commands:
+                !!this.programHost?.shell && !(this.config?.tools.disabled ?? []).includes("run_command"),
               // The rule names the tool only while the workbench offers it (REQ-FUNC-4fa3e396).
               help: !!options.help && !(this.config?.tools.disabled ?? []).includes("help"),
               env: {

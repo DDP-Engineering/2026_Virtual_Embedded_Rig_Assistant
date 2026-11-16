@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-SEC-f0170107"
+title = "Clean command environments"
+status = "active"
+requirement = "When a shell process starts, VERA shall inherit user environment variables excluding VERA variables, provider credential variables and values matching stored credentials."
+verification = "Use mixed-case Windows names and custom-valued secret aliases, assert ordinary user PATH survives and no secret reaches a real child."
+affected_paths = ["05_Software/src/libraries/core/src/plugins/shell.ts", "05_Software/src/libraries/core/src/plugins/runner.ts", "05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/apps/cli/src/run.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/plugins/shell.test.ts", "05_Software/tests/integration/commands.test.ts"]
+priority = "normal"
+created = 2026-11-16
+updated = 2026-11-16

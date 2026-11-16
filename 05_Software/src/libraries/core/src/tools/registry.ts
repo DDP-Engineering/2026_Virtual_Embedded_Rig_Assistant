@@ -9,6 +9,7 @@ import { powerQualityTool } from "../electrical/power-quality-tool.js";
 import { protectionCoordinationTool } from "../electrical/protection-tool.js";
 import { electricalModelChangeTool, electricalModelTool } from "../electrical/tools.js";
 import { pluginInstallTool, pluginValidateTool } from "../plugins/authoring.js";
+import { runCommandTool } from "../plugins/command-tools.js";
 import { programOutputTool, programStopTool, runProgramTool } from "../plugins/program-tools.js";
 import { applyCandidateTool } from "./apply-candidate.js";
 import { artifactSaveTool } from "./artifact-save.js";
@@ -49,6 +50,7 @@ const builtinDefinitions: Record<BuiltinToolName, ToolDefinition> = {
   web_download: webDownloadTool,
   parts_search: partsSearchTool,
   run_program: runProgramTool,
+  run_command: runCommandTool,
   program_output: programOutputTool,
   program_stop: programStopTool,
   plugin_validate: pluginValidateTool,
@@ -65,7 +67,12 @@ const builtinDefinitions: Record<BuiltinToolName, ToolDefinition> = {
   help: helpTool,
 };
 /** Tools offered only when the host composes a program host. */
-export const programToolNames: readonly string[] = ["run_program", "program_output", "program_stop"];
+export const programToolNames: readonly string[] = [
+  "run_program",
+  "run_command",
+  "program_output",
+  "program_stop",
+];
 
 export const TOOL_RESULT_CAP = 32000;
 export function capToolResult(value: Record<string, unknown>) {
@@ -222,7 +229,7 @@ export class ToolRegistry {
   }
   /** Existing WP10 runtime owns the error-result flag; its catch consumes this bounded JSON. */
   bind(ctx: ToolContext, disabled: readonly string[] = []): ToolDef[] {
-    const blocked = [...disabled];
+    const blocked = [...disabled, ...(ctx.permissionMode?.() === "read-only" ? ["run_command"] : [])];
     return this.available(blocked).map((tool) => ({
       name: tool.name,
       class: tool.class,

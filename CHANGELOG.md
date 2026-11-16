@@ -19,6 +19,8 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ### Added
 
+- The agent runs approved shell commands with configurable shells, full logs and monitored background runs.
+
 - Bookmarked rail markers stand out, with configurable next and previous bookmark shortcuts.
 
 - User messages and rail previews share bookmark controls; previews show the first prompt line and reply start.

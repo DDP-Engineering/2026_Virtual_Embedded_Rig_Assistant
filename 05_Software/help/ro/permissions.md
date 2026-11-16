@@ -54,3 +54,7 @@ O comandă care nu se potrivește cu nicio regulă este tratată ca **Scriere di
 ## Verifică modificările
 
 Fila **Modificări** din panoul din dreapta listează fișierele modificate în sesiune, în ordine, cu numărul de linii adăugate și eliminate. Selectează o intrare pentru a-i vedea diferențele; **Arată în folder** afișează fișierul în managerul de fișiere. Vezi și [Chat și sesiuni](chat-and-sessions.md).
+
+## Comenzi shell
+
+Agentul poate executa comenzi shell cu `run_command`. Întreabă și Editare automată cer aprobare pentru fiecare comandă; cardul arată comanda exactă, directorul de lucru și shell-ul. Bypass execută fără întrebare. Doar citire nu oferă comenzi. Comenzile au permisiunile contului tău din sistemul de operare; nu sunt izolate într-un sandbox. Directorul de lucru rămâne în workbench în afara Bypass; directoarele datelor aplicației VERA sunt refuzate în toate modurile. Sintaxa shell poate accesa fișiere și programe din afara directorului inițial.

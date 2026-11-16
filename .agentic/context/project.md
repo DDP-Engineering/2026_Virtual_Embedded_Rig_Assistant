@@ -193,3 +193,9 @@ Workbench Chat settings select Verbose, Normal (default) or Minimal transcript d
 Ordinary declared program runs admit outside absolute working directories and bind outside file arguments only in Bypass. Recognized outside directory arguments also require Bypass and receive path validation without content hashing. Outside cwd/file/directory paths remain absolute in approvals and JSON/Markdown exports; directory aliases have separate metadata without content hashes; logs remain workbench-owned. Session Bypass revocation stops background program runs after turn completion. Analysis, plugin draft/candidate inputs, HIL plan/firmware/resource and electrical inputs also use shared Bypass authority. Fixed models/results, generated HIL requests and indexed storage remain workbench-owned. Guards retain the original Bypass epoch; arbitrary child processes are not sandboxed.
 
 Outside program metadata is persisted on tool completion independently of approval policy and capped result text; safe non-trial commands remain approval-free and retain canonical paths in JSON/Markdown exports.
+
+Built-in run_command executes shell syntax with exact Ask/Auto-edit approvals and Bypass authority,
+using platform/default or user-configured shells, filtered user environment and the shared runner's
+logs, output handles, timeout and process-tree cleanup. Read-only omits commands. Settings → Commands,
+command approval presentation and help exist in en/ro/de/fr. Command side effects are OS-account
+execution without sandboxing; cwd admission retains application-data exclusions and Bypass epochs.

@@ -26,6 +26,33 @@ const requested = {
   program,
 } as const;
 
+it("validates and replays shell approvals with the same strict program payload", () => {
+  const event = {
+    ...requested,
+    tool: "run_command",
+    program: {
+      ...program,
+      pluginId: "vera",
+      program: "shell",
+      args: ['node -e "console.log(1)"'],
+      confirm: null,
+    },
+  };
+  const parsed = shared.sessionEventSchema.parse(event);
+  const state = shared.applySessionEvent(shared.emptySessionState(), parsed);
+  expect(shared.sessionStateSchema.parse(state).approvals[0]).toMatchObject({
+    tool: "run_command",
+    program: event.program,
+  });
+  for (const change of [
+    { program: undefined },
+    { bytes: 1 },
+    { diff: "not empty" },
+    { program: { ...event.program, extra: true } },
+  ])
+    expect(shared.sessionEventSchema.safeParse({ ...event, ...change }).success).toBe(false);
+});
+
 it("carries unhashed outside directory paths through strict approval events", () => {
   const directories = [{ arg: 1, path: "C:/outside/repository" }];
   const event = { ...requested, program: { ...program, directories } };

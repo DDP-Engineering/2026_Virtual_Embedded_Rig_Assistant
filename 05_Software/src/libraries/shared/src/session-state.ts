@@ -85,6 +85,7 @@ export const sessionStateSchema = z.strictObject({
           "edit",
           "web_download",
           "run_program",
+          "run_command",
           "plugin_install",
           "apply_candidate",
           "electrical_model_change",

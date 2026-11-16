@@ -132,6 +132,58 @@ const decide = (
   });
 };
 
+describe("shell command approval baseline", () => {
+  it.each(["ask", "auto-edit", "bypass", "read-only"] as const)(
+    "enforces exact single-use decisions in %s",
+    async (mode) => {
+      const t = await setup(mode);
+      const declared = await t.prepare(["write", "build/app.bin"]);
+      const request: ProgramChangeRequest = {
+        ...declared,
+        tool: "run_command",
+        args: ['node -e "console.log(1)"'],
+        command: { originalCwd: ".", background: false, timeoutMs: 600000 },
+      };
+      const result = t.gate.request(request, new AbortController().signal);
+      if (mode === "read-only") {
+        expect(await result).toBe("aborted");
+        expect(() => t.gate.consume(request)).toThrow();
+        return;
+      }
+      if (mode !== "bypass") {
+        expect(await settled(result)).toBe("pending");
+        expect(() => t.gate.consume(request)).toThrow();
+        expect(() => decide(t, { switchToAutoEdit: true })).toThrow();
+        decide(t);
+      }
+      expect(await result).toBe("approved");
+      for (const changed of [
+        { ...request, args: ["changed command"] },
+        { ...request, executable: "/other/shell" },
+        { ...request, cwd: "other" },
+        { ...request, command: { originalCwd: ".", timeoutMs: 600000, background: true } },
+      ])
+        expect(() => t.gate.consume(changed)).toThrow();
+      t.gate.consume(request);
+      expect(() => t.gate.consume(request)).toThrow();
+      expect(t.pending()).toMatchObject({
+        tool: "run_command",
+        program: { args: request.args, cwd: request.cwd, executable: request.executable },
+      });
+    },
+  );
+  it("revokes a mode-approved command when leaving Bypass", async () => {
+    const t = await setup("bypass");
+    const request: ProgramChangeRequest = {
+      ...(await t.prepare(["write", "build/app.bin"])),
+      tool: "run_command",
+    };
+    expect(await t.gate.request(request, new AbortController().signal)).toBe("approved");
+    t.setMode("auto-edit");
+    expect(() => t.gate.consume(request)).toThrow();
+  });
+});
+
 describe("mode matrix (REQ-FUNC-8d305364)", () => {
   const table: Record<PermissionMode, ProgramPolicy[]> = {
     "read-only": ["run", "refuse", "refuse", "refuse"],

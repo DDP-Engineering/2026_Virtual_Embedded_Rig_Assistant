@@ -199,9 +199,24 @@ it("explains that @path mentions name attached workbench entries to read with to
   expect(text).toContain("read it with your file or document tools before answering");
 });
 
+it("explains noninteractive commands and background polling only when offered", () => {
+  const text = prompt.buildSystemPrompt({ ...input(), commands: true }).text;
+  expect(text).toContain("run_command");
+  expect(text).toContain("stdin is closed");
+  expect(text).toContain("program_output with waitMs and until");
+  expect(text).toContain("not in a sandbox");
+  expect(
+    prompt.buildSystemPrompt({
+      ...input(),
+      commands: true,
+      env: { ...input().env, permissionMode: "read-only" },
+    }).text,
+  ).not.toContain("run_command");
+});
+
 describe("programs block (REQ-FUNC-48cc01a9)", () => {
   const rule =
-    "Run external programs only with run_program. Load the plugin's skill before its first use. Never guess serial ports, chip types or flash offsets: list the ports and read the build output.";
+    "Run declared plugin programs with run_program. Load the plugin's skill before its first use. Never guess serial ports, chip types or flash offsets: list the ports and read the build output.";
   it("snapshots enabled programs with versions, plugins, descriptions, skills and the run rule", () => {
     const result = prompt.buildSystemPrompt({
       ...input(),

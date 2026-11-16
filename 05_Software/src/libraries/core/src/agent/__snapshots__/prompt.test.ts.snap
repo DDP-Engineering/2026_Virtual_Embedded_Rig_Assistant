@@ -2,7 +2,7 @@
 
 exports[`programs block (REQ-FUNC-48cc01a9) > snapshots enabled programs with versions, plugins, descriptions, skills and the run rule 1`] = `
 {
-  "characters": 2076,
+  "characters": 2078,
   "text": "You are VERA, an engineering assistant for electronics and embedded work on the workbench "MC-200 motor controller".
 
 Rules:
@@ -15,7 +15,7 @@ Rules:
 - Load a skill with load_skill before doing work it covers.
 - When documents are in English, search in English even if the conversation is not.
 - Answer in the user's language.
-- Run external programs only with run_program. Load the plugin's skill before its first use. Never guess serial ports, chip types or flash offsets: list the ports and read the build output.
+- Run declared plugin programs with run_program. Load the plugin's skill before its first use. Never guess serial ports, chip types or flash offsets: list the ports and read the build output.
 
 <workbench>
 # MC-200

@@ -29,6 +29,7 @@ import {
 import { claimedResources } from "./resource-registry.js";
 import { TailBuffer } from "./run-output.js";
 import type { ProgramRun, ProgramRunner, RunRequest, RunResult } from "./runner.js";
+import type { CommandShellHost } from "./shell.js";
 import type { LoadedPlugin } from "./store.js";
 
 /** Where a declared program's executable lives, plus fixed leading arguments (for example a download prefix). */
@@ -64,6 +65,7 @@ export interface ProgramCredentials {
 }
 /** What a session needs to run plugin programs; desktop main and the CLI compose it per workbench. */
 export interface ProgramHost {
+  shell?: CommandShellHost | undefined;
   runner: ProgramRunner;
   clock: Pick<Clock, "sleep">;
   /** The enabled, issue-free plugins of the workbench, loaded now. */

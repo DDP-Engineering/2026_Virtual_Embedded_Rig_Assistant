@@ -750,6 +750,7 @@ export class SessionService {
         (tool) => !["plugin_install", "plugin_validate"].includes(tool.name) || !!this.host.pluginBuilder,
       )
       .filter((tool) => !programToolNames.includes(tool.name) || !!this.host.programs)
+      .filter((tool) => tool.name !== "run_command" || !!this.host.programs?.shell)
       .map((tool) => ({
         ...tool,
         execute: async (args: unknown, signal: AbortSignal) => {
@@ -829,7 +830,9 @@ export class SessionService {
             sessionId: id,
             reasoning: self.requestReasoning(id, request.model) ?? null,
             tools: request.tools.filter(
-              (tool) => self.row(id).permission_mode !== "read-only" || !writeToolNames.has(tool.name),
+              (tool) =>
+                self.row(id).permission_mode !== "read-only" ||
+                (!writeToolNames.has(tool.name) && tool.name !== "run_command"),
             ),
           });
         },

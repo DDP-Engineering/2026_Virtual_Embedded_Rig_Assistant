@@ -89,6 +89,40 @@ const burn = {
     files: [{ arg: 4, path: "my key.bin", sha256: "b".repeat(64) }],
   },
 };
+
+it("shows the literal shell command, cwd and shell in the CLI approval prompt", async () => {
+  const input = new PassThrough(),
+    output = new PassThrough();
+  let text = "";
+  output.on("data", (chunk) => {
+    text += chunk.toString();
+  });
+  const command = "node -e \"console.log('x')\"";
+  const wait = promptApproval(
+    {
+      ...burn,
+      tool: "run_command",
+      program: {
+        ...burn.program,
+        program: "shell",
+        pluginId: "vera",
+        args: [command],
+        cwd: "/repo with spaces",
+        executable: "/bin/bash",
+        confirm: null,
+        files: [],
+      },
+    },
+    new AbortController().signal,
+    input,
+    output,
+  );
+  input.write("A\n");
+  expect(await wait).toEqual({ decision: "approved" });
+  expect(text).toContain(`Command: ${command}`);
+  expect(text).toContain("Working directory: /repo with spaces");
+  expect(text).toContain("Shell: /bin/bash");
+});
 it("shows canonical outside directory paths while preserving the original command arguments", async () => {
   const input = new PassThrough(),
     output = new PassThrough();

@@ -49,7 +49,10 @@
     "shortcuts": "Tastenkombinationen",
     "partsSearch": "Bauteilsuche",
     "mqttCredentials": "MQTT-Zugangsdaten",
-    "wokwiTokens": "Wokwi-Tokens"
+    "wokwiTokens": "Wokwi-Tokens",
+    "commands": "Befehle",
+    "commandShell": "Befehls-Shell",
+    "automaticShell": "Automatisch (Plattformstandard)"
   },
   "appearance": {
     "theme": "Design",
@@ -680,7 +683,8 @@
     "lighting_design": "Plant die Innenbeleuchtung aus einem Beleuchtungsprojekt mit IES- oder LDT-Photometrie: eine vorläufige Schätzung nach dem Wirkungsgradverfahren mit belegten Raumwirkungsgraden und der Direktanteil auf dem Berechnungsraster, Diagnosen für Maßstab, Einheiten, Ausrichtung und Photometrie sowie die Prüfung von Wartungswert, Gleichmäßigkeit und Blendung nur aus einem passenden Bericht eines photometrischen Rechenprogramms wie DIALux evo; speichert das Ergebnis nach einer Freigabe wie ein Schreibvorgang und startet kein Rechenprogramm. Erfordert das Plugin lighting-design. Externe Eingabepfade erfordern Bypass; VERA-Anwendungsdaten sind gesperrt.",
     "decode_register": "Erfasst einen aufgezeichneten Registerwert anhand einer lokalen JSON-Definition mit exakten Feldwerten und zitierbaren Quellen. Liest keine Geräte aus. Externe Eingabepfade erfordern Bypass; VERA-Anwendungsdaten sind gesperrt.",
     "parts_search": "Durchsucht die aktivierten Lieferantenkataloge (Mouser, DigiKey, TME, Farnell, Rutronik) nach Stichwort oder Teilenummer. Erfordert Web access, das Plugin parts-search und einen in der Konfiguration des Plugins auf der Seite Plugins eingerichteten Lieferanten.",
-    "help": "Liest die Hilfeseiten von VERA und die Hilfe der in der Workbench aktivierten Plugins, um Fragen zu VERA zu beantworten. Nur lesend."
+    "help": "Liest die Hilfeseiten von VERA und die Hilfe der in der Workbench aktivierten Plugins, um Fragen zu VERA zu beantworten. Nur lesend.",
+    "run_command": "Shell-Befehle in Fragen und Automatisch bearbeiten nach Freigabe ausführen, in Bypass direkt."
   },
   "projects": {
     "embeddingsGroup": "Embeddings",

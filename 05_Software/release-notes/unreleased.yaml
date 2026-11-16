@@ -71,3 +71,10 @@ entries:
       ro: Bypass permite și intrări externe pentru analiză, ciorne de plugin, HIL și calcule electrice.
       de: Bypass erlaubt auch externe Eingaben für Analysen, Plugin-Entwürfe, HIL und Elektrik.
       fr: Bypass accepte aussi les entrées externes d’analyse, de plugins, HIL et d’électricité.
+  - category: new
+    topic: { en: Commands, ro: Comenzi, de: Befehle, fr: Commandes }
+    text:
+      en: Let the agent run shell commands, monitor background work and stop it when finished.
+      ro: Agentul poate executa comenzi shell, urmări lucrul în fundal și opri procesele la final.
+      de: Der Agent führt Shell-Befehle aus, überwacht Hintergrundarbeit und beendet sie nach Abschluss.
+      fr: L’agent exécute des commandes shell, surveille le travail en arrière-plan et l’arrête à la fin.

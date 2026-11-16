@@ -351,3 +351,11 @@ BYP-01 focused proof uses `plugins/program-bypass.test.ts`, immediate request/ru
 BYP-02 focused acceptance uses tools/input-bypass.test.ts for real isolated sibling log/definition reads, canonical null-ref provenance, Ask refusal, protected aliases, worker cancellation and all electrical input helper families; authoring.test.ts installs an outside reviewed trial draft; hil/hil.test.ts uses fake instruments for outside plan/firmware/registry paths, changed-byte refusal, fixed outputs and retained background revocation. Candidate/import regressions preserve fixed workbench storage. Targeted Windows CLI replay verifies built worker and durable sibling tool results without external accounts or hardware. Complete app/official-plugin suites are explicitly user-deferred; native Ubuntu is unavailable, and WSL2 Linux proof is labelled separately.
 
 BYP-02 review corrections add real Python HIL/lab-validation acceptance in tests/integration/hil-bypass.test.ts: sibling cwd/plan/firmware/CSV, canonical source consumption after raw alias retargeting at spawn, standalone confinement and host application-data exclusions. Core HIL fake-resource acceptance checks outside cwd resource lookup, canonical helper registry environment, retained epoch and workbench child/output ownership.
+
+TERM-01 focused platform acceptance is tests/integration/commands.test.ts, using the reusable
+support/command-platform-probe.ts (bundle with pinned esbuild for Linux standalone execution).
+Original logs and receipts live in ignored 05_Software/evaluation-outputs/term01/platform.
+Windows pinned Node 24.21.0 proves PowerShell 7, Windows PowerShell fallback, .cmd, UTF-8 quoting,
+stdin EOF, clean environment, background readiness/tree stop and session/app cleanup. WSL2 Ubuntu
+uses /home/dpasare/vera-cap-01/node-v24.21.0-linux-x64/bin/node for the same acceptance with bash.
+WSL2 proof is distinct from native Ubuntu acceptance, which is unavailable on this host.

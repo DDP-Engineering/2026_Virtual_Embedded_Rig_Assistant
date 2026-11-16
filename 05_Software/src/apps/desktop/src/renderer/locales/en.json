@@ -49,7 +49,10 @@
     "shortcuts": "Keyboard shortcuts",
     "partsSearch": "Parts search",
     "mqttCredentials": "MQTT credentials",
-    "wokwiTokens": "Wokwi tokens"
+    "wokwiTokens": "Wokwi tokens",
+    "commands": "Commands",
+    "commandShell": "Command shell",
+    "automaticShell": "Automatic (platform default)"
   },
   "appearance": {
     "theme": "Theme",
@@ -680,7 +683,8 @@
     "lighting_design": "Design interior lighting from a lighting project with IES or LDT photometry: a preliminary lumen-method estimate with cited utilisation factors and the direct component on the calculation grid, diagnostics for scale, units, orientation and photometry, and verification of maintained illuminance, uniformity and glare only from a matched photometric engine report such as DIALux evo; stores the result after approval like a write and runs no engine. Needs the lighting-design plugin. Outside input paths require Bypass; VERA application data is refused.",
     "decode_register": "Decode a captured register value using a local JSON definition, with exact field values and cited sources. Reads no device. Outside input paths require Bypass; VERA application data is refused.",
     "parts_search": "Search the enabled supplier catalogs (Mouser, DigiKey, TME, Farnell, Rutronik) by keyword or part number. Needs Web access, the parts-search plugin and a supplier set up in the plugin's Configuration on the Plugins page.",
-    "help": "Read VERA's own help pages and the help of the workbench's enabled plugins, to answer questions about VERA. Read-only."
+    "help": "Read VERA's own help pages and the help of the workbench's enabled plugins, to answer questions about VERA. Read-only.",
+    "run_command": "Run shell commands with approval in Ask and Auto-edit, or without asking in Bypass."
   },
   "projects": {
     "embeddingsGroup": "Embeddings",

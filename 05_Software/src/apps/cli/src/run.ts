@@ -5,6 +5,7 @@ import { join } from "node:path";
 import {
   buildSystemPrompt,
   ConfiguredWebProvider,
+  createCommandShellHost,
   createDownloadPdfExtractor,
   createPiAiGateway,
   type LlmGateway,
@@ -185,7 +186,8 @@ export async function runTurn(
       }),
       app: "cli",
     });
-    const programs = new ProgramRunner({ host: createCliProcessHost(), clock: nodeClock, leases });
+    const processHost = createCliProcessHost();
+    const programs = new ProgramRunner({ host: processHost, clock: nodeClock, leases });
     resources.push(() => programs.stopAll());
     const snapshot = await workbench.open(options.workbench);
     signal.throwIfAborted();
@@ -199,6 +201,11 @@ export async function runTurn(
     // Programs resolve through provisioning; a run never installs one (vera plugin install does).
     const programHost: ProgramHost = {
       runner: programs,
+      shell: createCommandShellHost(
+        processHost,
+        () => settings.get().settings.shell,
+        (text) => logger.scrub(text),
+      ),
       clock: nodeClock,
       resolver: createCliProvisioner(
         new PluginStore({ root: join(location.paths.userData, "plugins"), workbench: snapshot.folder }),
@@ -251,6 +258,7 @@ export async function runTurn(
           pinned,
           skills: skillMetadata,
           programs: programEntries,
+          commands: !(snapshot.config.tools.disabled ?? []).includes("run_command"),
           env: {
             clock: nodeClock,
             osFamily: process.platform === "win32" ? "windows" : "linux",

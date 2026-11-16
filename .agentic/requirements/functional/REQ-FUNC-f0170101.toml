@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-FUNC-f0170101"
+title = "Run foreground shell commands"
+status = "active"
+requirement = "When an approved run_command call with at most 4096 command characters executes, VERA shall return the shell exit status, the last 12000 output characters and the workbench-owned full log path."
+verification = "Run actual node output and failing exit commands; assert exit status, bounded tail and complete log, accepted command length boundary and over-limit refusal."
+affected_paths = ["05_Software/src/libraries/core/src/plugins/command-tools.ts", "05_Software/src/libraries/core/src/plugins/runner.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/plugins/command-tools.test.ts", "05_Software/tests/integration/commands.test.ts"]
+priority = "normal"
+created = 2026-11-16
+updated = 2026-11-16

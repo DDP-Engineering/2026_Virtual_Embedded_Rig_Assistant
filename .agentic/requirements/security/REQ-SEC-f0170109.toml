@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-SEC-f0170109"
+title = "Guard command working directories"
+status = "active"
+requirement = "When a command is admitted, VERA shall revalidate the original working-directory input under the current path policy before spawn."
+verification = "Test outside cwd refusal, Bypass outside success, protected data aliases, mode downgrade and redirected original cwd before spawn."
+affected_paths = ["05_Software/src/libraries/core/src/plugins/command-tools.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/plugins/command-tools.test.ts"]
+priority = "normal"
+created = 2026-11-16
+updated = 2026-11-16
