@@ -124,6 +124,11 @@ export class PathGuard {
       throw Error("Path is ignored by the workbench.");
   }
 
+  /** Rechecks host authority synchronously at the final side-effect boundary. */
+  assertAuthorized(): void {
+    this.authorize?.();
+  }
+
   async resolve(path: string): Promise<GuardedPath> {
     this.authorize?.();
     if (this.scope === "filesystem") {

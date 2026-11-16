@@ -24,6 +24,10 @@ export interface ProgramFile {
   readonly path: string;
   readonly sha256: string;
 }
+export interface ProgramDirectory {
+  readonly arg: number;
+  readonly path: string;
+}
 /** The run_program approval request (architecture §4); its requestSha256 binds the approval. */
 export interface ProgramChangeRequest {
   readonly tool: "run_program";
@@ -40,14 +44,16 @@ export interface ProgramChangeRequest {
   readonly executableArgs: readonly string[];
   readonly programVersion: string | null;
   readonly args: readonly string[];
-  /** Workbench-relative working directory, `.` for the root. */
+  /** Workbench-relative working directory, or canonical absolute outside path in Bypass. */
   readonly cwd: string;
   readonly risk: PluginRisk;
   /** The word an irreversible command's approval needs typed; null for other risks. */
   readonly confirm: string | null;
   readonly notes: readonly string[];
-  /** Arguments naming existing workbench files, with the bytes the approval covers. */
+  /** Arguments naming existing files in the host's scope, with the bytes the approval covers. */
   readonly files: readonly ProgramFile[];
+  /** Outside directory arguments use canonical absolute paths without content hashes. */
+  readonly directories?: readonly ProgramDirectory[];
   /** Bench resources the run reserves (absent without a claim), and the registry bytes they come from. */
   readonly resources?: readonly ProgramResource[];
   readonly registry?: { readonly path: string; readonly sha256: string };
@@ -60,6 +66,8 @@ export interface ProgramChangeRequest {
 export interface ProgramRequestInput {
   workbench: string;
   excludedRoots?: readonly string[];
+  /** Current host-owned tool policy; standalone callers remain workbench-confined. */
+  pathGuard?: PathGuard;
   plugin: LoadedPlugin;
   program: string;
   /** The resolved executable path; resolving it is the caller's job. */
@@ -183,15 +191,17 @@ function windowsPath(
   }
   return { path: parts.join("/") };
 }
-/** An argument naming an existing regular workbench file, relative to cwd or absolute inside it. */
-async function namedFile(
+/** An argument naming an existing regular file, relative to cwd or absolute in the host's scope. */
+async function namedPath(
   guard: PathGuard,
   cwd: string,
   value: string,
   index: number,
   platform: NodeJS.Platform,
   signal: AbortSignal | undefined,
+  bind = true,
 ) {
+  guard.assertAuthorized();
   if (!value) return undefined;
   let target: GuardedPath;
   let path = value;
@@ -204,37 +214,45 @@ async function namedFile(
       const base = resolve(cwd, read.stream);
       await guard.assertNotExcluded(base);
       // A stream holds other bytes than the file the approval could hash.
-      if (read.stream && inside(guard.root, base) && (await exists(base)))
-        throw denied({ reason: "stream", index });
+      if (read.stream && (await exists(base))) throw denied({ reason: "stream", index });
       return undefined;
     }
     path = read.path;
   }
   try {
     await guard.assertNotExcluded(isAbsolute(path) ? path : resolve(cwd, path));
-    if (isAbsolute(path)) path = await realpath(path);
-    else path = resolve(cwd, path);
-    if (!inside(guard.root, path)) return undefined;
-    path = relative(guard.root, path) || ".";
+    path = await realpath(isAbsolute(path) ? path : resolve(cwd, path));
+    if (!inside(guard.root, path) && guard.scope === "workbench") {
+      const info = await lstat(path);
+      if (info.isFile() || info.isDirectory()) throw denied({ reason: "outside", index });
+      return undefined;
+    }
+    path = inside(guard.root, path) ? relative(guard.root, path) || "." : path;
     target = await guard.resolve(path);
-    if (!(await lstat(target.absolute)).isFile()) return undefined;
+    const info = await lstat(target.absolute);
+    if (info.isDirectory() && !inside(guard.root, target.absolute)) return { path: target.relative };
+    if (!info.isFile()) return undefined;
   } catch (error) {
     if (error instanceof ApplicationDataAccessError) throw error;
-    // Missing, ignored or outside paths are ordinary arguments, not files.
+    if ((error as { params?: { reason?: string } })?.params?.reason === "outside") throw error;
+    // Missing or ignored paths are ordinary arguments; host exclusions and outside files fail closed.
     signal?.throwIfAborted();
-    if (await reservedFile(guard.root, path)) throw denied({ reason: "unbound", index });
+    guard.assertAuthorized();
+    if (await reservedFile(guard.root, path, guard.scope === "filesystem"))
+      throw denied({ reason: "unbound", index });
     return undefined;
   }
-  // A file the guard accepted must be hashed: a read error fails the request instead of unbinding it.
+  if (!bind) return undefined;
+  // A bound file must be hashed: a read error fails the request instead of unbinding it.
   return { path: target.relative, sha256: await sha256(target.absolute, signal) };
 }
 /**
- * A real workbench file whose name the guard reserves (a device name, a trailing dot or space) cannot be
+ * A real file in the host scope whose name the guard reserves (a device name, a trailing dot or space) cannot be
  * bound: Linux allows such names, and on Windows the `\\?\` namespace creates them.
  */
-async function reservedFile(root: string, path: string): Promise<boolean> {
+async function reservedFile(root: string, path: string, filesystem = false): Promise<boolean> {
   const absolute = isAbsolute(path) ? path : resolve(root, path);
-  if (!inside(root, absolute)) return false;
+  if (!filesystem && !inside(root, absolute)) return false;
   try {
     validateRelativePath(relative(root, absolute));
     return false;
@@ -251,26 +269,62 @@ export async function verifyProgramFiles(
   request: ProgramChangeRequest,
   signal?: AbortSignal,
   excludedRoots: readonly string[] = [],
+  pathGuard?: PathGuard,
 ): Promise<void> {
-  const guard = await PathGuard.create(
-    request.workbench,
-    request.workbench,
-    "workbench",
-    undefined,
-    excludedRoots,
-  );
-  for (const file of [...request.files, ...(request.registry ? [request.registry] : [])]) {
+  signal?.throwIfAborted();
+  const guard =
+    pathGuard ??
+    (await PathGuard.create(request.workbench, request.workbench, "workbench", undefined, excludedRoots));
+  try {
+    const directory = await guard.resolve(request.cwd);
+    if (directory.relative !== request.cwd) throw veraError("CONFLICT");
+    // New HIL files retain path policy without gaining a binding that the approval never covered.
+    for (const [arg, text] of request.args.entries()) {
+      const value = /^--[^=]+=(.*)$/s.exec(text)?.[1] ?? text;
+      const approved = request.files.find((file) => file.arg === arg);
+      const file = await namedPath(
+        guard,
+        directory.absolute,
+        value,
+        arg,
+        process.platform,
+        signal,
+        !!approved,
+      );
+      if (approved && (file?.path !== approved.path || file?.sha256 !== approved.sha256))
+        throw veraError("CONFLICT");
+      const approvedDirectory = request.directories?.find((directory) => directory.arg === arg);
+      const directoryPath = file && file.sha256 === undefined ? file.path : undefined;
+      if (directoryPath !== approvedDirectory?.path) throw veraError("CONFLICT");
+    }
+  } catch (error) {
+    if (error instanceof ApplicationDataAccessError) throw error;
+    signal?.throwIfAborted();
+    guard.assertAuthorized();
+    throw veraError("CONFLICT");
+  }
+  if (request.registry) {
+    const guard = await PathGuard.create(
+      request.workbench,
+      request.workbench,
+      "workbench",
+      undefined,
+      excludedRoots,
+    );
+    const file = request.registry;
     let digest: string | undefined;
     try {
       digest = await sha256((await guard.resolve(file.path)).absolute, signal);
-    } catch {
+    } catch (error) {
+      if (error instanceof ApplicationDataAccessError) throw error;
       signal?.throwIfAborted();
     }
     if (digest !== file.sha256) throw veraError("CONFLICT");
   }
+  signal?.throwIfAborted();
 }
 /**
- * Classifies a command of `plugin` and binds it to the workbench files its arguments name. Refusals
+ * Classifies a command of `plugin` and binds it to files in the host's scope. Refusals
  * (DENIED with `params.reason`) come before any rule or file is read.
  */
 export async function prepareProgramRequest(input: ProgramRequestInput): Promise<ProgramChangeRequest> {
@@ -285,23 +339,23 @@ export async function prepareProgramRequest(input: ProgramRequestInput): Promise
     input.args,
     manifest.programs[input.program]?.optionSyntax,
   );
-  const guard = await PathGuard.create(
-    input.workbench,
-    input.workbench,
-    "workbench",
-    undefined,
-    input.excludedRoots,
-  );
+  const guard =
+    input.pathGuard ??
+    (await PathGuard.create(input.workbench, input.workbench, "workbench", undefined, input.excludedRoots));
   const directory = await guard.resolve(input.cwd ?? ".");
+  if (!(await lstat(directory.absolute)).isDirectory()) throw denied({ cwd: input.cwd ?? "." });
   const cwd = directory.relative;
   const platform = input.platform ?? process.platform;
   const files: ProgramFile[] = [];
+  const directories: ProgramDirectory[] = [];
   for (const [arg, text] of input.args.entries()) {
     const value = /^--[^=]+=(.*)$/s.exec(text)?.[1] ?? text;
-    const file = await namedFile(guard, directory.absolute, value, arg, platform, input.signal);
-    if (file) files.push(Object.freeze({ arg, ...file }));
+    const file = await namedPath(guard, directory.absolute, value, arg, platform, input.signal);
+    if (file?.sha256) files.push(Object.freeze({ arg, path: file.path, sha256: file.sha256 }));
+    else if (file) directories.push(Object.freeze({ arg, path: file.path }));
   }
   input.signal?.throwIfAborted();
+  guard.assertAuthorized();
   return Object.freeze({
     tool: "run_program" as const,
     workbench: input.workbench,
@@ -323,6 +377,7 @@ export async function prepareProgramRequest(input: ProgramRequestInput): Promise
     confirm: classification.confirm,
     notes: Object.freeze(classification.notes),
     files: Object.freeze(files),
+    ...(directories.length ? { directories: Object.freeze(directories) } : {}),
     ...(input.claimed ? { resources: input.claimed.resources, registry: input.claimed.registry } : {}),
   });
 }
@@ -340,6 +395,9 @@ export function programApproval(request: ProgramChangeRequest): ProgramApproval 
     confirm: request.confirm,
     notes: [...request.notes],
     files: request.files.map((file) => ({ ...file })),
+    ...(request.directories
+      ? { directories: request.directories.map((directory) => ({ ...directory })) }
+      : {}),
     ...(request.resources && request.registry
       ? {
           resources: request.resources.map(({ alias, kind, resource }) => ({ alias, kind, resource })),

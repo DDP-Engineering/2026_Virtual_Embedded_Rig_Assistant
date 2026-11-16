@@ -1,3 +1,4 @@
+import { isAbsolute } from "node:path";
 import type { Message, ToolCall, ToolResultMessage } from "@earendil-works/pi-ai";
 import {
   type ChangeDetail,
@@ -5,6 +6,7 @@ import {
   changeIdSchema,
   isLiveSessionEvent,
   type PermissionMode,
+  type ProgramApproval,
   parseRef,
   permissionModeSchema,
   type SessionEvent,
@@ -36,6 +38,7 @@ import { DocumentKnowledge } from "../knowledge/search.js";
 import { DocumentViewer } from "../knowledge/viewer.js";
 import { type LlmGateway, resolveModelReference } from "../llm/gateway.js";
 import type { PartsSearcher } from "../parts/configured.js";
+import { programApproval } from "../plugins/program-request.js";
 import { type ProgramHost, ProgramSession } from "../plugins/program-tools.js";
 import type { Clock, WorkerPool } from "../ports.js";
 import type { SkillCatalog } from "../skills/catalog.js";
@@ -734,6 +737,7 @@ export class SessionService {
     const registry = this.host.registry ?? new ToolRegistry();
     const permissions = this.host.permissions;
     const prepared = new Map<string, PreparedChange>();
+    const programPaths = new Map<string, ProgramApproval>();
     const tools = registry
       .bind(ctx, this.host.disabledTools)
       .filter((tool) => tool.class !== "write" || row.permission_mode !== "read-only")
@@ -857,6 +861,12 @@ export class SessionService {
                         // A host permission engine allowed one exact request; a different one is not covered.
                         else if (!grantedRequest || requestSha256(request) !== requestSha256(grantedRequest))
                           throw veraError("CONFLICT");
+                        if (
+                          isAbsolute(request.cwd) ||
+                          request.directories?.length ||
+                          request.files.some((file) => isAbsolute(file.path))
+                        )
+                          programPaths.set(request.callId, programApproval(request));
                       },
                     },
                   }
@@ -953,10 +963,12 @@ export class SessionService {
       )
         delete turn.approvalWait;
       const transcript = runtime.messages();
+      const program = event.type === "tool.done" ? programPaths.get(event.callId) : undefined;
+      if (event.type === "tool.done") programPaths.delete(event.callId);
       const next =
         event.type === "message.user"
           ? this.process(id, event, transcript, turn)
-          : processing.then(() => this.process(id, event, transcript, turn));
+          : processing.then(() => this.process(id, event, transcript, turn, program));
       processing = next.catch(() => {
         failed = true;
         turn.failed = true;
@@ -982,6 +994,7 @@ export class SessionService {
     event: RuntimeEvent,
     transcript: Message[],
     turn: ActiveTurn,
+    program?: ProgramApproval,
   ): Promise<void> {
     this.writable();
     if (
@@ -1017,6 +1030,7 @@ export class SessionService {
         ok: event.ok,
         summary: event.summary,
         durationMs: event.durationMs,
+        ...(program ? { program } : {}),
       };
     } else publicEvent = event;
     if (isLiveSessionEvent(publicEvent)) {

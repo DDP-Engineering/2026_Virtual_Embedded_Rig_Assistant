@@ -350,7 +350,7 @@ describe("approval binding", () => {
     await expect(prepared.apply(signal())).rejects.toThrow(/changed after approval/);
     expect(consumed).toHaveLength(1);
     expect(host.programs).toHaveLength(0);
-    const [log] = await readdir(join(root, ".vera/runs"));
+    const log = (await readdir(join(root, ".vera/runs"))).find((name) => name.endsWith(".log"));
     expect(await readFile(join(root, ".vera/runs", log ?? ""), "utf8")).toContain(
       "[VERA] The program did not start",
     );

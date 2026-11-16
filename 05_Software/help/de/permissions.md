@@ -21,7 +21,7 @@ Jeder Wechsel zu Bypass verlangt zuerst Ihre Bestätigung, dass der Agent Dateie
 
 Der Anwendungsdatenordner von VERA mit Einstellungen, gespeicherten Zugangsdaten, installierten Plugins und Prüfprotokollen ist für Dateizugriffe des Agenten in jedem Modus gesperrt, sowohl zum Lesen als auch zum Schreiben, auch über Pfad-Aliase. VERA verwaltet seine eigenen Einstellungen und Plugins weiterhin normal. Nur aktivierte Werkzeuge sind verfügbar; Betriebssystemrechte, Werkzeuggrenzen und Freigaben für Test-Plugins gelten weiterhin. Der Agent kann `.vera/workbench.yaml` und `.vera/plugins` nicht ändern.
 
-Allgemeine Dateiwerkzeuge erreichen im Bypass Pfade außerhalb der Workbench. Programm-Arbeitsverzeichnisse, die Analyse erfasster Protokolle und Register sowie Plugin-Entwürfe bleiben derzeit auf die Workbench beschränkt. Dokumentindex, Artefakte, Ausführungsprotokolle und `.vera/` bleiben in der Workbench.
+Allgemeine Dateiwerkzeuge und deklarierte Programme erreichen im Bypass externe Pfade. Arbeitsverzeichnisse dürfen absolute externe Pfade sein; vorhandene externe Dateiargumente werden mit ihrem absoluten Pfad gebunden und vor dem Start erneut geprüft. Ask, Auto-edit und Read-only verweigern externe Arbeitsverzeichnisse und erkannte externe Datei- oder Verzeichnisargumente. Externe Verzeichnisargumente erscheinen als absolute Pfade, auch bei Aliasen; ihre Inhalte werden nicht gehasht. Beim Verlassen von Bypass enden seine Programmläufe, auch Hintergrundläufe nach dem Zugende. Deklarierte Kindprogramme laufen ohne Sandbox. Die Analyse erfasster Protokolle und Register, Plugin-Entwürfe, HIL-Pläne und Ressourcenregister bleiben auf die Workbench beschränkt. Dokumentindex, Artefakte, Ausführungsprotokolle und `.vera/` bleiben in der Workbench.
 
 ## Genehmigen oder ablehnen
 
@@ -29,7 +29,7 @@ Braucht der Agent Ihre Entscheidung, erscheint eine Freigabekarte in der Unterha
 
 - Bei einer Dateiänderung zeigt die Karte die Datei und einen **Unified Diff** der Änderung.
 - Bei einem Download zeigt sie die Quelladresse und die maximale Größe.
-- Bei einem Programm zeigt sie die Risikostufe, **Plugin**, **Befehlszeile**, **Arbeitsverzeichnis**, **Programmdatei**, **Hinweise der Regeln** und die Workbench-Dateien, die der Befehl verwendet, mit ihrem SHA-256.
+- Bei einem Programm zeigt sie die Risikostufe, **Plugin**, **Befehlszeile**, **Arbeitsverzeichnis**, **Programmdatei**, **Hinweise der Regeln** und die verwendeten Dateien, mit absoluten Pfaden für externe Dateien, mit ihrem SHA-256.
 
 Wählen Sie **Genehmigen** oder **Ablehnen**. **Genehmigen und zu Auto-Edit wechseln** genehmigt und stellt die Sitzung auf **Auto-Edit** um. Hat die Karte den Fokus, genehmigt A und D lehnt ab.
 

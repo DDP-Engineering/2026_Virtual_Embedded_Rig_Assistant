@@ -87,7 +87,7 @@ Shared `program-rules.ts` classifies a command line with the declaring plugin's 
 (permission mode, risk, trial) to a policy; the matcher, policy table and confirmation word are
 specified in `.agentic/specs/REQ-FUNC-80b2033a.md`. Core `program-request.ts` finds the one enabled
 plugin declaring a program and prepares the frozen `run_program` ChangeRequest with the hashes of the
-workbench files its arguments name. The ApprovalGate decides that request by policy: safe commands of
+files its arguments name through the current host tool policy. The ApprovalGate decides that request by policy: safe commands of
 non-trial plugins run without a record, refused ones return `aborted`, mode decisions are recorded as
 `decided_by: mode`, the rest wait for the user, irreversible ones with the typed word checked in
 core. Core `program-tools.ts` gives the agent run_program (class `program`), program_output and
@@ -299,7 +299,8 @@ renderer plugins.test.ts, tests/integration/plugin-builder.test.ts and tests/e2e
 
 ## Public interface
 
-Agent prepareCall passes host application-data exclusions to the confined program request/file guard, resource registry and RunRequest cwd guard. ProgramRunner checks cwd again after asynchronous pre-spawn work; verifyProgramFiles and HIL plan/firmware rechecks retain exclusions. Excluded program file arguments are refused rather than downgraded to unbound arguments, with exclusion-only preflight covering absolute external paths and canonical aliases before the existing outside fallback, including the base of Windows named streams. HIL and ordinary program cwd remain workbench-confined; internal executables, plugin loading, run logs and generated result storage retain their existing host authority and locations. Focused proof is program-tools/program-request/runner/program-resources, hil/hil.test.ts and tools/app-data-inputs.test.ts.
+ordinary `run_program` calls use `toolPathGuard`; only Bypass accepts outside cwd and binds existing outside file arguments. Read-only/Ask/Auto-edit refuse recognized existing outside files and directories, including aliases. File bindings/cwd are canonical absolute paths outside and workbench-relative inside; outside directory arguments have separate unhashed `directories` metadata while raw argv stays exact. Directory aliases are re-resolved at spawn and must retain the recorded path. Internal prefixes/executable loading keep host authority. `verifyProgramFiles` rechecks path scope and application-data exclusions for every original argument, including initially unbound paths, without hashing or binding HIL-generated files; it re-resolves each approved original argument (detecting alias target changes), rehashes bytes and refuses CONFLICT before spawn. ApplicationDataAccessError never becomes an ordinary argument. Runner record I/O precedes final checks, cwd identity/type and current authorization are checked again at spawn. Bypass epochs are captured before asynchronous preparation and apply admission, retained through background lifetime without the turn signal, and never replaced by re-entering Bypass. Registry rechecks use a separate confined guard with host exclusions, so matching-byte outside redirection fails. Logs/records remain `.vera/runs`. HIL plans/compiled calls and resource registries retain confinement. This path admission is not a sandbox for arbitrary child-process behavior. Focused boundary tests: `program-bypass.test.ts`; session lifetime/export: `sessions/programs.test.ts`; native sibling Git repositories: `tests/e2e/program-bypass.spec.ts`.
+
 
 - `plugins.check` explicitly refreshes all program probes without installing. Pending checks share package/runtime identity and serialize with provisioning; fresh per-program cache entries are populated together, so passive reads cannot replace a fresh check with a recorded version. A replaced package rejects the pending check. Scoped check observations, including negative states, propagate atomically into the singleton session resolver; concurrent runtime invalidation rejects the older pending check. Scoped passive status reads use the same resolver observations for the verified scoped package, so reopening the page cannot restore a rejected Ready state. Completed checked failures survive later unrelated invalidation, bound to runtime/plugin/program, package SHA, installation timestamp and per-program record. A fresh check or actual provisioning supersedes them. Ready observations clear prior failures and remain in the ordinary resolution cache so missing discovered files are detected after invalidation. Invalid archive selection preserves healthy runtime authority. Version probes of found programs allow 8 s, other version probes 30 s; declared activation launchers allow 120 s because observed EIM startup can exceed the ordinary boundary. A timed-out probe's detail names the timeout. At most four version probes run at once across all provisioners of a process (a module-level limiter); a plugin's programs are inspected concurrently and listed sorted by name, with `verify()` once before them.
 - `plugins.installArchive {id,program,sha256,workbenchId?}` uses a native archive picker. Current workbench/database, package hash, program/platform and trust are checked before and after selection. Selected regular bytes are streamed through SHA-256 before cache reuse; staging, extraction confinement and a second identity check precede publication. No URL or hash comes from the selected file. Verified blobs may remain when a later version probe fails.
@@ -533,15 +534,16 @@ Agent prepareCall passes host application-data exclusions to the confined progra
 - Before any rule or file: more than 64 arguments, an argument over 4096 characters, NUL/CR/LF or a
   leading `@` is DENIED with its reason; a program not declared by the plugin is DENIED undeclared.
 - `files` lists each argument (or `--name=value` value) that resolves, relative to cwd or absolute
-  inside the workbench, through the workbench PathGuard to an existing regular file, with its SHA-256;
-  everything else is an ordinary argument. On Windows `app.bin.`, `app.bin ` and `app.bin::$DATA` bind
+  in the host tool scope, through PathGuard to an existing regular file, with its SHA-256;
+  outside paths are canonical absolute in Bypass and recognized existing outside files and directories are DENIED in other modes.
+  Missing files and opaque values remain ordinary arguments; outside directories receive canonical argument-index/path metadata without content hashing; inside directories receive path validation. On Windows `app.bin.`, `app.bin ` and `app.bin::$DATA` bind
   `app.bin`, the file Windows opens. A guard-accepted file that cannot be read fails the request.
   On Windows each segment loses trailing dots and spaces, then one `::$DATA`, `::$INDEX_ALLOCATION` or
   `:$I30:$INDEX_ALLOCATION` suffix, so `app.bin::$DATA.` and `dir::$INDEX_ALLOCATION/app.bin` bind the
   file Windows opens; a drive-relative `X:rest` resolves from the working directory on its drive and
   from `X:\` elsewhere (programs start without `=X:` variables); `\\.\X:` binds like the plain path,
   `\\?\X:` names are taken literally (no trimming), and a rooted `\x` is on the working directory's
-  drive. A remaining `:` names a stream: when its base exists in the workbench the request is DENIED
+  drive. A remaining `:` names a stream: when its base exists the request is DENIED
   `{reason: stream, index}`. The NT prefix `\??\` reads like `\\?\`, and `//?/` like `\\.\`. Without any
   file-system access, a share path on this machine (`localhost`, loopback addresses such as `[::1]` and
   `0--1.ipv6-literal.net`, the host name with or without a domain, the addresses of its network

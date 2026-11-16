@@ -123,6 +123,8 @@ export const sessionEventSchema = z.discriminatedUnion("type", [
     callId: z.string(),
     ok: z.boolean(),
     summary: z.string(),
+    /** Canonical paths of an outside program call, independent of approval policy and output truncation. */
+    program: programApprovalSchema.optional(),
     preview: z.string().optional(),
     durationMs: count,
     /** Set only on events sent to the renderer (PERF-06): full UTF-8 size of the cut preview. */

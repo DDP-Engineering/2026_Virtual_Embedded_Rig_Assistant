@@ -22,6 +22,14 @@ function scrubProgram(program: ProgramApproval, scrub: (text: string) => string)
     cwd: scrub(program.cwd),
     notes: program.notes.map(scrub),
     files: program.files.map((file) => ({ ...file, path: scrub(file.path) })),
+    ...(program.directories
+      ? {
+          directories: program.directories.map((directory) => ({
+            ...directory,
+            path: scrub(directory.path),
+          })),
+        }
+      : {}),
   };
 }
 function scrubExtra(value: unknown, scrub: (text: string) => string): unknown {
@@ -185,7 +193,7 @@ export function sanitizeEvent(envelope: EventEnvelope, scrub: (text: string) => 
       if (event.modelRef !== undefined) Reflect.set(result, "modelRef", scrubModel(event.modelRef, scrub));
     }
     if (event.type === "tool.started") Reflect.set(result, "args", extra(event.args));
-    if (event.type === "approval.requested" && event.program)
+    if ((event.type === "approval.requested" || event.type === "tool.done") && event.program)
       Reflect.set(result, "program", scrubProgram(event.program, scrub));
     if (event.type === "message.done")
       Reflect.set(

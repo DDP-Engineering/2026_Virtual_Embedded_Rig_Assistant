@@ -21,7 +21,7 @@ Each change to Bypass first asks you to confirm that the agent can read and chan
 
 VERA's application data folder, including settings, stored credentials, installed plugins and review records, is refused by agent filesystem tools in every mode, for reading as well as writing, including through path aliases. VERA continues to manage its own settings and plugins normally. Only enabled tools are available; OS permissions, tool limits and trial-plugin approvals still apply. The agent cannot change `.vera/workbench.yaml` or `.vera/plugins`.
 
-Ordinary file tools can reach outside the workbench in Bypass. Program working directories, captured-log and register analysis and plugin drafts currently remain workbench-confined. The document index, artifacts, run logs and `.vera/` stay in the workbench.
+Ordinary file tools and declared program runs can reach outside the workbench in Bypass. Program working directories can be absolute outside paths; existing outside file arguments are bound by absolute path and checked again before launch. Ask, Auto-edit and Read-only refuse outside working directories and recognized outside file or directory arguments. Outside directory arguments are listed by their absolute paths, including aliases; their contents are not hashed. Leaving Bypass stops its program runs, including background runs after a turn ends. Declared child programs are not sandboxed. Captured-log and register analysis, plugin drafts, HIL plans and bench resource registries remain workbench-confined. The document index, artifacts, run logs and `.vera/` stay in the workbench.
 
 ## Approve or deny
 
@@ -29,7 +29,7 @@ When the agent needs your decision, an approval card appears in the conversation
 
 - For a file change, the card shows the file and a **Unified diff** of the change.
 - For a download, it shows the source address and the maximum size.
-- For a program, it shows the risk level, the **Plugin**, the **Command line**, the **Working directory**, the **Executable**, the **Rule notes** and the workbench files the command uses with their SHA-256.
+- For a program, it shows the risk level, the **Plugin**, the **Command line**, the **Working directory**, the **Executable**, the **Rule notes** and the files the command uses with their SHA-256. Outside files use absolute paths.
 
 Select **Approve** or **Deny**. **Approve and switch to auto-edit** approves and changes the session to **Auto-edit**. With the card focused, A approves and D denies.
 

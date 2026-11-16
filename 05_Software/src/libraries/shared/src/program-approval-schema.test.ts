@@ -26,6 +26,29 @@ const requested = {
   program,
 } as const;
 
+it("carries unhashed outside directory paths through strict approval events", () => {
+  const directories = [{ arg: 1, path: "C:/outside/repository" }];
+  const event = { ...requested, program: { ...program, directories } };
+  expect(shared.sessionEventSchema.parse(event)).toEqual(event);
+  const completed = {
+    type: "tool.done",
+    callId: "c",
+    ok: true,
+    summary: "done",
+    durationMs: 1,
+    program: event.program,
+  };
+  expect(shared.sessionEventSchema.parse(completed)).toEqual(completed);
+  for (const directory of [
+    { arg: -1, path: "x" },
+    { arg: 0, path: "" },
+    { ...directories[0], sha256: "a".repeat(64) },
+  ])
+    expect(shared.programApprovalSchema.safeParse({ ...program, directories: [directory] }).success).toBe(
+      false,
+    );
+});
+
 it("carries run_program approvals with their program payload into session state (REQ-DATA-b4e317de)", () => {
   expect(shared.sessionEventSchema.parse(requested)).toEqual(requested);
   const state = shared.applySessionEvent(

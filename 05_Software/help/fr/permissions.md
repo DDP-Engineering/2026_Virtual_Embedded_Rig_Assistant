@@ -21,7 +21,7 @@ Chaque passage à Bypass demande d’abord de confirmer que l’agent peut lire 
 
 Le dossier des données de l’application VERA, avec les paramètres, identifiants enregistrés, plugins installés et dossiers de vérification, est refusé aux outils de fichiers de l’agent dans tous les modes, en lecture comme en écriture, y compris par des alias de chemin. VERA continue à gérer normalement ses propres paramètres et plugins. Seuls les outils activés sont disponibles ; les droits du système, les limites des outils et les approbations des plugins à l’essai restent applicables. L’agent ne peut pas modifier `.vera/workbench.yaml` ou `.vera/plugins`.
 
-Les outils de fichiers ordinaires peuvent accéder hors du workbench en Bypass. Les répertoires de travail des programmes, l’analyse des journaux et registres capturés et les brouillons de plugins restent actuellement limités au workbench. L’index documentaire, les artefacts, journaux d’exécution et `.vera/` restent dans le workbench.
+Les outils de fichiers ordinaires et les programmes déclarés peuvent accéder hors du workbench en Bypass. Le répertoire de travail peut être un chemin absolu externe ; les fichiers externes existants dans les arguments sont liés par leur chemin absolu et revérifiés avant le lancement. Ask, Auto-edit et Read-only refusent les répertoires externes et les arguments reconnus comme fichiers ou dossiers externes. Les arguments de dossiers externes sont affichés par chemin absolu, même via un alias ; leur contenu n’est pas haché. Quitter Bypass arrête ses programmes, y compris ceux en arrière-plan après la fin du tour. Les programmes enfants déclarés ne sont pas isolés dans un bac à sable. L’analyse des journaux et registres capturés, les brouillons de plugins, les plans HIL et les registres de ressources restent limités au workbench. L’index documentaire, les artefacts, journaux d’exécution et `.vera/` restent dans le workbench.
 
 ## Approuver ou refuser
 
@@ -29,7 +29,7 @@ Lorsque l’agent a besoin de votre décision, une carte d’approbation appara�
 
 - Pour une modification de fichier, la carte affiche le fichier et un **Diff unifié** de la modification.
 - Pour un téléchargement, elle affiche l’adresse source et la taille maximale.
-- Pour un programme, elle affiche le niveau de risque, le **Plugin**, la **Ligne de commande**, le **Répertoire de travail**, l’**Exécutable**, les **Notes de la règle** et les fichiers du banc de travail utilisés par la commande, avec leur SHA-256.
+- Pour un programme, elle affiche le niveau de risque, le **Plugin**, la **Ligne de commande**, le **Répertoire de travail**, l’**Exécutable**, les **Notes de la règle** et les fichiers utilisés par la commande, avec des chemins absolus pour les fichiers externes, avec leur SHA-256.
 
 Sélectionnez **Approuver** ou **Refuser**. **Approuver et passer en Modification auto** approuve et fait passer la session en **Modification auto**. Lorsque la carte a le focus, A approuve et D refuse.
 

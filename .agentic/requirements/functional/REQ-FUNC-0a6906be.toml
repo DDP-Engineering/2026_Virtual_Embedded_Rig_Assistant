@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-FUNC-0a6906be"
+
+title = "Allow outside program working directories only in Bypass"
+
+status = "active"
+
+requirement = "When run_program names an absolute outside working directory, VERA shall accept it only through the host Bypass path policy and refuse it in Read-only, Ask and Auto-edit."
+
+verification = "Run the same outside cwd through every mode; only Bypass spawns there; file cwd and application data fail before spawn."
+
+affected_paths = ["05_Software/src/libraries/core/src/plugins/program-request.ts", "05_Software/src/libraries/core/src/plugins/program-tools.ts", "05_Software/src/libraries/core/src/plugins/runner.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/plugins/program-bypass.test.ts", "05_Software/tests/e2e/program-bypass.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-16
+updated = 2026-11-16

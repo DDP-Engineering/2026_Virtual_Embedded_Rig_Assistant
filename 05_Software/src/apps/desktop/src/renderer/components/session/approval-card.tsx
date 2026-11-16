@@ -71,6 +71,15 @@ function ProgramDetails({ program }: { program: ProgramApproval }) {
           </li>
         </ul>
       )}
+      {!!program.directories?.length && (
+        <ul className="approval-files" aria-label={t("approval.directories")} data-approval-directories>
+          {program.directories.map((directory) => (
+            <li key={directory.arg}>
+              <code>{directory.path}</code>
+            </li>
+          ))}
+        </ul>
+      )}
     </>
   );
 }

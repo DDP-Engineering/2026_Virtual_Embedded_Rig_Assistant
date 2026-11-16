@@ -44,7 +44,7 @@ The workbench Plugins editor selects installed packages per workbench as an unsa
 
 The workbench Tools editor presents the shared built-in catalog with localized descriptions and enabled checkboxes, persisting exclusions through the current tools.disabled configuration.
 
-Session/workbench permission modes include explicit Bypass for enabled ordinary file tools with full OS-account filesystem scope, including outside/ignored paths. It retains durable exact grants, integrity limits and revocation on downgrade. Host-configured application data is refused for reads and writes through the shared path policy in every mode, including canonical aliases. The shared marked permission picker requires one explicit en/ro/de/fr confirmation before each change to Bypass; Cancel/Escape retains the prior mode and focus.
+Session/workbench permission modes include explicit Bypass for enabled declared program runs and ordinary file tools with full OS-account filesystem scope, including outside/ignored paths. It retains durable exact grants, integrity limits and revocation on downgrade. Host-configured application data is refused for reads and writes through the shared path policy in every mode, including canonical aliases. The shared marked permission picker requires one explicit en/ro/de/fr confirmation before each change to Bypass; Cancel/Escape retains the prior mode and focus.
 
 [Release smoke](../knowledge/release-smoke.md) routes exact-artifact offline resources,
 normal loopback tools/approval/citation/restart and external process-tree egress.
@@ -189,3 +189,7 @@ Managed PDF downloads: web_download is a provider-neutral approved write tool sa
 Plugin authoring: the built-in official create-plugin skill researches CLI manuals and writes workbench drafts; plugin_validate reports schema/lint issues, and plugin_install always waits for user review then installs trial without enablement/provisioning. The Plugins page promotes a hash-bound trial to local and exports portable zips; agent file writes cannot mutate managed plugin/application data or workbench.yaml, including in bypass. See [Plugins](../knowledge/plugins.md).
 
 Workbench Chat settings select Verbose, Normal (default) or Minimal transcript detail per workbench. Full Activity/history and essential approval/error/download interactions remain available at every level.
+
+Ordinary declared program runs admit outside absolute working directories and bind outside file arguments only in Bypass. Recognized outside directory arguments also require Bypass and receive path validation without content hashing. Outside cwd/file/directory paths remain absolute in approvals and JSON/Markdown exports; directory aliases have separate metadata without content hashes; logs remain workbench-owned. Session Bypass revocation stops background program runs after turn completion. HIL/remaining scoped tools remain confined; arbitrary child processes are not sandboxed.
+
+Outside program metadata is persisted on tool completion independently of approval policy and capped result text; safe non-trial commands remain approval-free and retain canonical paths in JSON/Markdown exports.

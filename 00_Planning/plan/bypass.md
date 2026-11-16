@@ -11,8 +11,8 @@ on shared `master`, without pushing. The user defers the full suite; use focused
 
 | Order | Package | Issue | Result | State |
 |---|---|---|---|---|
-| 1 | BYP-03 | [#308](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/308) | Application data refusal in all modes; Bypass prompt, per-change confirmation and four-language Permissions help | implemented; TASK-a8bf8812, focused Windows proof; coordinator commit pending |
-| 2 | BYP-01 | [#309](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/309) | Outside working directories and file bindings for declared program runs; revocation of outside background runs | planned |
+| 1 | BYP-03 | [#308](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/308) | Application data refusal in all modes; Bypass prompt, per-change confirmation and four-language Permissions help | implemented; TASK-a8bf8812, local commit cc705851, focused Windows/WSL2 proof |
+| 2 | BYP-01 | [#309](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/309) | Outside working directories and file bindings for declared program runs; revocation of outside background runs | implemented; TASK-0698a3c3, focused Windows/native/WSL2 proof; coordinator commit pending |
 | 3 | BYP-02 | [#310](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/310) | Remaining path tools use the Bypass-aware guard, with current descriptions and help | planned |
 
 BYP-03 is the prerequisite for both other packages. BYP-01 and BYP-02 are implemented sequentially.

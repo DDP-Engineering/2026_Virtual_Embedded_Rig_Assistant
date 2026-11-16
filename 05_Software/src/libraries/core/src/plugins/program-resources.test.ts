@@ -1,5 +1,5 @@
 import { existsSync } from "node:fs";
-import { mkdir, mkdtemp, readFile, realpath, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, realpath, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { type PermissionMode, pluginManifestSchema, veraError } from "@vera/shared";
@@ -138,6 +138,28 @@ async function spawned(count: number): Promise<FakeProcess> {
 }
 
 describe("declared resources in run_program", () => {
+  it("keeps the registry confined when redirected outside with matching bytes after consumption in Bypass", async () => {
+    mode = "bypass";
+    const outside = await realpath(await mkdtemp(join(tmpdir(), "vera-program-registry-")));
+    try {
+      await writeFile(join(outside, "resources.json"), await readFile(join(root, "lab/resources.json")));
+      const prepared = await prepare({
+        program: "scpi",
+        args: ["identify", "--instrument", "psu"],
+        background: true,
+      });
+      scpi.verify = async () => {
+        await rm(join(root, "lab"), { recursive: true });
+        await symlink(outside, join(root, "lab"), process.platform === "win32" ? "junction" : "dir");
+      };
+      await expect(prepared.apply(signal())).rejects.toThrow(/changed after approval/);
+      expect(host.programs).toHaveLength(0);
+    } finally {
+      delete scpi.verify;
+      await rm(join(root, "lab"), { recursive: true, force: true });
+      await rm(outside, { recursive: true, force: true });
+    }
+  });
   it("binds the alias, its keys and the registry hash into the request and the approval", async () => {
     const prepared = await prepare({ program: "scpi", args: ["identify", "--instrument", "psu"] });
     const request = prepared.request as ProgramChangeRequest;

@@ -8,6 +8,8 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ### Changed
 
+- Bypass runs declared programs in outside folders, binds outside files and stops its runs when Bypass ends.
+
 - Bypass confirms each mode change; agent file access refuses VERA application data in every mode.
 - Delete settings.json from earlier pre-releases after removal of the Bypass warning suppression preference.
 

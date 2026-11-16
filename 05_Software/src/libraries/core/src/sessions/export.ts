@@ -47,6 +47,27 @@ export function buildSessionMarkdown(data: SessionExport, changes: ChangeDetail[
       out.push("", `### Tool: ${heading(item.name)} (${item.status})`, "", block(item.summary ?? ""));
     else out.push("", "### Error", "", block(`${item.code}: ${item.messageKey}`));
   }
+  const programs = state.approvals.filter((approval) => approval.program);
+  if (programs.length) {
+    out.push("", "## Program approvals");
+    for (const approval of programs)
+      out.push(
+        "",
+        block(JSON.stringify({ decision: approval.decision, ...approval.program }, null, 2), "json"),
+      );
+  }
+  const automatic = data.events.filter(
+    ({ event }) =>
+      event.type === "tool.done" &&
+      event.program &&
+      !state.approvals.some((approval) => approval.callId === event.callId),
+  );
+  if (automatic.length) {
+    out.push("", "## Program paths");
+    for (const { event } of automatic)
+      if (event.type === "tool.done" && event.program)
+        out.push("", block(JSON.stringify(event.program, null, 2), "json"));
+  }
   out.push("", "## Changes");
   for (const change of changes)
     out.push(

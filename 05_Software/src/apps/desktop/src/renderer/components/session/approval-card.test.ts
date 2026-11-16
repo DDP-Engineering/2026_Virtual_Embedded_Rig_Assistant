@@ -38,6 +38,7 @@ it("lists the reserved bench resources with the registry and its SHA-256", async
       confirm: "output",
       notes: ["Turns on a physical output."],
       files: [],
+      directories: [{ arg: 1, path: "/outside/repository" }],
       resources: [{ alias: "psu", kind: "visa", resource: "USB0::0x1AB1::0x0E11::DP8C1::INSTR" }],
       registry: { path: "lab/resources.json", sha256: "c".repeat(64) },
     },
@@ -54,4 +55,7 @@ it("lists the reserved bench resources with the registry and its SHA-256", async
   expect(list?.textContent).toContain("USB0::0x1AB1::0x0E11::DP8C1::INSTR");
   expect(list?.textContent).toContain(`lab/resources.json`);
   expect(list?.textContent).toContain("c".repeat(64));
+  const directories = container.querySelector("[data-approval-directories]");
+  expect(directories?.textContent).toContain("/outside/repository");
+  expect(directories?.textContent).not.toContain("SHA-256");
 });

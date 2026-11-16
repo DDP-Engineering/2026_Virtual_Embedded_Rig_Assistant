@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-SEC-c4553379"
+
+title = "Revoke outside background program access when leaving Bypass"
+
+status = "active"
+
+requirement = "When a session leaves Bypass, VERA shall stop its outside background program runs through a revocation signal that survives normal turn completion."
+
+verification = "Start an outside background run, complete its turn, switch to Ask and observe process-tree termination; all program runs admitted in Bypass retain the revoked epoch and stop, including background runs; leaving and re-entering Bypass cannot authorize an older call."
+
+affected_paths = ["05_Software/src/libraries/core/src/plugins/program-tools.ts", "05_Software/src/libraries/core/src/plugins/runner.ts", "05_Software/src/libraries/core/src/sessions/service.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/plugins/program-bypass.test.ts", "05_Software/src/libraries/core/src/sessions/programs.test.ts", "05_Software/tests/e2e/program-bypass.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-16
+updated = 2026-11-16

@@ -35,12 +35,14 @@ export interface RunRequest {
   workbench: string;
   /** Host-owned agent exclusions; internal program loading retains its own authority. */
   excludedRoots?: readonly string[];
+  /** Current host-owned tool policy; standalone callers remain workbench-confined. */
+  pathGuard?: PathGuard;
   /** Resolved executable path; the runner never looks a program up by name. */
   executable: string;
   args: readonly string[];
   /** Original program tokens for serial-port locking when args contains a launcher command string. */
   programArgs?: readonly string[];
-  /** Workbench-relative working directory; the workbench root when absent. */
+  /** Workbench-relative cwd, or an absolute outside cwd accepted by the host policy. */
   cwd?: string;
   /** The program's own variables, already resolved. */
   env?: Readonly<Record<string, string>>;
@@ -368,13 +370,15 @@ class Run implements ActiveRun {
   /** Guards the working directory, opens the log, prunes old logs and starts the program. */
   async begin(): Promise<void> {
     const { host } = this.settings;
-    const guard = await PathGuard.create(
-      this.request.workbench,
-      this.request.workbench,
-      "workbench",
-      undefined,
-      this.request.excludedRoots,
-    );
+    const guard =
+      this.request.pathGuard ??
+      (await PathGuard.create(
+        this.request.workbench,
+        this.request.workbench,
+        "workbench",
+        undefined,
+        this.request.excludedRoots,
+      ));
     let cwd: string;
     try {
       cwd = (await guard.resolve(this.request.cwd ?? ".")).absolute;
@@ -396,6 +400,7 @@ class Run implements ActiveRun {
       await this.finish({ code: null, signal: null });
       return;
     }
+    await this.record();
     try {
       await this.request.beforeSpawn?.();
     } catch (error) {
@@ -403,9 +408,10 @@ class Run implements ActiveRun {
       await this.writing;
       throw error;
     }
-    await this.record();
     if ((await guard.resolve(this.request.cwd ?? ".")).absolute !== cwd)
       throw thrown("DENIED", { cwd: this.request.cwd ?? "." });
+    if (!(await stat(cwd)).isDirectory()) throw thrown("DENIED", { cwd: this.request.cwd ?? "." });
+    guard.assertAuthorized();
     // The last stop check stays right before the spawn: a stop during any await above ends the run here.
     if (this.request.signal?.aborted) this.reason = "stopped";
     if (this.reason) {

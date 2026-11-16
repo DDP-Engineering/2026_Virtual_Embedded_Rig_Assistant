@@ -476,7 +476,7 @@ describe("beforeSpawn (REQ-SEC-370f2d9b)", () => {
         }),
       ),
     ).rejects.toMatchObject({ code: "CONFLICT" });
-    expect(logs[0]?.[0]).toMatch(/\.log$/);
+    expect(logs[0]?.some((name) => name.endsWith(".log"))).toBe(true);
     expect(host.programs).toHaveLength(0);
     const run = await runner.start(request({ beforeSpawn: async () => {} }));
     expect(host.programs).toHaveLength(1);

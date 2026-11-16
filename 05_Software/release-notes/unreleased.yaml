@@ -57,3 +57,10 @@ entries:
       ro: Fiecare trecere la Bypass cere confirmare; instrumentele de fișiere refuză datele VERA.
       de: Jeder Bypass-Wechsel fragt nach; Dateiwerkzeuge sperren die VERA-Anwendungsdaten.
       fr: Chaque passage à Bypass demande confirmation ; les outils de fichiers refusent les données VERA.
+  - category: improved
+    topic: { en: Permissions, ro: Permisiuni, de: Berechtigungen, fr: Permissions }
+    text:
+      en: Bypass runs declared programs in outside folders and stops them when you leave Bypass.
+      ro: Bypass rulează programe declarate în foldere externe și le oprește când ieși din Bypass.
+      de: Bypass führt deklarierte Programme in externen Ordnern aus und stoppt sie beim Verlassen.
+      fr: Bypass lance les programmes déclarés dans des dossiers externes et les arrête à sa sortie.

@@ -1,6 +1,6 @@
 // Replay-provider sessions that run the echo-tools fixture plugin end to end through the approval gate,
 // the program tools and the runner; a scripted ProcessHost stands in for real processes.
-import { mkdir, mkdtemp, realpath, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, realpath, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -250,6 +250,70 @@ describe("the echo-tools plugin in each permission mode", () => {
 });
 
 describe("background runs (REQ-FUNC-9b38f5a8, REQ-FUNC-da3adc80, REQ-FUNC-b70bb17e)", () => {
+  it.each(["write", "serve"] as const)(
+    "exports canonical outside directory arguments for %s while cwd and argv retain aliases",
+    async (command) => {
+      const rig = await setup({ mode: "bypass" });
+      const outside = join(rig.base, "second-repo");
+      await mkdir(outside);
+      await symlink(outside, join(rig.root, "alias"), process.platform === "win32" ? "junction" : "dir");
+      await rig.scripts("directory", [
+        run({ args: [command, "alias"], background: true }),
+        { text: "Started" },
+      ]);
+      rig.service.send(rig.session.id, "directory alias");
+      await spawned(rig);
+      await rig.service.waitIdle(rig.session.id);
+      const archive = rig.service.exportSession(rig.session.id);
+      const approval = archive.events.find(
+        (row) => row.event.type === (command === "write" ? "approval.requested" : "tool.done"),
+      )?.event;
+      expect(approval).toMatchObject({
+        program: {
+          cwd: ".",
+          args: [command, "alias"],
+          files: [],
+          directories: [{ arg: 1, path: outside.replaceAll("\\", "/") }],
+        },
+      });
+      expect(core.buildSessionMarkdown(archive, [])).toContain(outside.replaceAll("\\", "/"));
+      if (command === "serve") expect(approvals(rig)).toEqual([]);
+    },
+  );
+  it("revokes an outside Bypass background run after its turn completed and exports absolute paths", async () => {
+    const rig = await setup({ mode: "bypass" });
+    const outside = join(rig.base, "second-repo");
+    await mkdir(outside);
+    await writeFile(join(outside, "input.bin"), "image");
+    await rig.scripts("outside", [
+      run({ cwd: outside, args: ["write", "input.bin"], background: true }),
+      { text: "Started outside" },
+    ]);
+    rig.service.send(rig.session.id, "start outside");
+    const process = await spawned(rig);
+    await rig.service.waitIdle(rig.session.id);
+    expect(process.options.cwd).toBe(outside);
+    expect(process.exited).toBe(false);
+    const active = rig.runner.get(HANDLE);
+    const exported = rig.service.exportSession(rig.session.id);
+    const markdown = core.buildSessionMarkdown(exported, []);
+    expect(markdown).toContain(outside.replaceAll("\\", "/"));
+    expect(markdown).toContain(join(outside, "input.bin").replaceAll("\\", "/"));
+    const approval = exported.events.find((row) => row.event.type === "approval.requested")?.event;
+    expect(approval).toMatchObject({
+      program: {
+        cwd: outside.replaceAll("\\", "/"),
+        files: [{ arg: 1, path: join(outside, "input.bin").replaceAll("\\", "/") }],
+      },
+    });
+    rig.service.setMode(rig.session.id, "ask");
+    await vi.waitFor(() => expect(process.exited).toBe(true));
+    expect(await active?.done).toMatchObject({ stopped: true });
+    expect((await rig.runner.list(rig.root))[0]).toMatchObject({
+      state: "stopped",
+      log: `.vera/runs/${HANDLE}.log`,
+    });
+  });
   it("reads a background run with until and stops it", async () => {
     const rig = await setup();
     await rig.scripts("serve", [

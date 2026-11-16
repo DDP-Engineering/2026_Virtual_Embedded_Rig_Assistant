@@ -88,3 +88,5 @@ printable ASCII without spaces); a supplier is enabled for the run exactly when 
 Region inputs come from the CLI settings. parts_search is offered under the same gate as the desktop (Web access,
 official parts-search plugin loaded, a supplier enabled). See [parts search](parts-search.md); code in
 apps/cli/src/parts-env.ts.
+
+TTY program approvals include each canonical outside directory path as Directory, preserving the exact original command line. `approval-prompt.test.ts` checks aliased argv and absolute folder metadata.

@@ -171,3 +171,7 @@ Paths relative to 05_Software.
 Dedicated strict web.access.get/save/removeKey/test/cancel channels expose safe preferences and an exhaustive keys map of provider-specific key-presence/storage metadata. Only save accepts a credential write; test accepts an optional ephemeral draft and returns stable status/timing, never raw errors or a secret. Test/remove require provider id and results identify the tested provider. Cancel matches the caller UUID. Router/preload and mock implement the same surface. See [web access](web-search.md).
 
 Workbench configuration event sanitization preserves the chat.detail protocol enum and scrubs arbitrary chat extensions; main/events.test.ts covers short secrets matching chat/detail/minimal.
+
+Program approval schema carries optional directories [{arg,path}] separately from file SHA-256 bindings. Desktop event/snapshot sanitization redacts directory paths before display/export. Strict shared program-approval-schema.test.ts and main/events.test.ts cover validation/redaction; format versions remain 1.
+
+Optional `tool.done.program` carries structured canonical metadata for outside program calls, including safe commands with no approval record; it is redacted with the same program sanitizer independently of summary bounds.

@@ -332,6 +332,7 @@ it("redacts known credentials from program approval payloads in events and snaps
     confirm: "burn-key",
     notes: ["Uses s3cr."],
     files: [{ arg: 2, path: "s3cr/key.bin", sha256: "b".repeat(64) }],
+    directories: [{ arg: 1, path: "/outside/s3cr" }],
   };
   const requested = {
     type: "approval.requested" as const,
@@ -348,6 +349,16 @@ it("redacts known credentials from program approval payloads in events and snaps
     { topic: "session", id: `ses_${"0".repeat(26)}`, event: requested },
     redact,
   ).event as typeof requested;
+  const completed = sessionOutput.sanitizeEvent(
+    {
+      topic: "session",
+      id: `ses_${"0".repeat(26)}`,
+      event: { type: "tool.done", callId: "c", ok: true, summary: "done", durationMs: 1, program },
+    },
+    redact,
+  ).event;
+  expect(JSON.stringify(completed)).not.toContain("s3cr");
+  expect(completed).toMatchObject({ program: { directories: [{ arg: 1, path: "/outside/[REDACTED]" }] } });
   const state = sessionOutput.sanitizeSessionSnapshot(
     {
       ...emptySessionState(),

@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-DATA-96d008d8"
+
+title = "Keep outside program paths absolute in approvals and exports"
+
+status = "active"
+
+requirement = "When a program request uses outside file or directory arguments or a working directory in Bypass, VERA shall record their canonical absolute paths in approvals and session exports, with directory arguments separate from file hashes and raw argv preserved, while retaining run logs in the workbench .vera/runs directory."
+
+verification = "Native acceptance edits and runs in a second sibling Git repository, inspects absolute approval/export paths, including safe runs without approval records whose tool.done metadata carries canonical paths independently of truncated output and verifies logs only under the owning workbench."
+
+affected_paths = ["05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/libraries/shared/src/events.ts", "05_Software/src/libraries/core/src/plugins/program-request.ts", "05_Software/src/libraries/core/src/plugins/program-tools.ts", "05_Software/src/libraries/core/src/plugins/runner.ts", "05_Software/src/libraries/core/src/sessions/export.ts", "05_Software/src/libraries/shared/src/program-rules.ts", "05_Software/src/apps/desktop/src/main/events.ts", "05_Software/src/apps/desktop/src/renderer/components/session/approval-card.tsx", "05_Software/src/apps/cli/src/approval-prompt.ts"]
+
+linked_tests = ["05_Software/src/libraries/shared/src/program-approval-schema.test.ts", "05_Software/src/apps/desktop/src/main/events.test.ts", "05_Software/src/apps/desktop/src/renderer/components/session/approval-card.test.ts", "05_Software/src/apps/cli/src/approval-prompt.test.ts", "05_Software/src/libraries/core/src/plugins/program-bypass.test.ts", "05_Software/src/libraries/core/src/sessions/programs.test.ts", "05_Software/src/libraries/core/src/sessions/export.test.ts", "05_Software/tests/e2e/program-bypass.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-16
+updated = 2026-11-16

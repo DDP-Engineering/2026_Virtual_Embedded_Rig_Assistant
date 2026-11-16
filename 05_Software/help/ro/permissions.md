@@ -21,7 +21,7 @@ Fiecare trecere la Bypass îți cere mai întâi să confirmi că agentul poate 
 
 Dosarul de date al aplicației VERA, inclusiv setările, credențialele salvate, pluginurile instalate și înregistrările de verificare, este refuzat instrumentelor de fișiere ale agentului în orice mod, atât la citire, cât și la scriere, inclusiv prin aliasuri de cale. VERA continuă să își gestioneze normal setările și pluginurile. Sunt disponibile doar instrumentele activate; se aplică permisiunile sistemului, limitele instrumentelor și aprobările pluginurilor de probă. Agentul nu poate modifica `.vera/workbench.yaml` sau `.vera/plugins`.
 
-Instrumentele obișnuite de fișiere pot accesa căi din afara workbenchului în Bypass. Directoarele de lucru ale programelor, analiza jurnalelor și registrelor capturate și schițele de pluginuri rămân deocamdată în workbench. Indexul documentelor, artefactele, jurnalele execuțiilor și `.vera/` rămân în workbench.
+Instrumentele obișnuite de fișiere și programele declarate pot accesa căi externe în Bypass. Directorul de lucru poate fi o cale absolută externă; fișierele externe existente din argumente sunt legate prin calea absolută și verificate din nou înainte de pornire. Ask, Auto-edit și Read-only refuză directoarele externe și argumentele recunoscute ca fișiere sau directoare externe. Argumentele de directoare externe sunt afișate prin căi absolute, inclusiv aliasurile; conținutul lor nu primește hash-uri. Ieșirea din Bypass oprește rulările sale, inclusiv cele din fundal după încheierea turei. Programele copil declarate nu sunt izolate într-un sandbox. Analiza jurnalelor și registrelor capturate, schițele de pluginuri, planurile HIL și registrele resurselor rămân în workbench. Indexul documentelor, artefactele, jurnalele execuțiilor și `.vera/` rămân în workbench.
 
 ## Aprobă sau refuză
 
@@ -29,7 +29,7 @@ Când agentul are nevoie de decizia ta, în conversație apare un card de aproba
 
 - Pentru o modificare de fișier, cardul afișează fișierul și **Diferențe unificate** ale modificării.
 - Pentru o descărcare, afișează adresa sursei și dimensiunea maximă.
-- Pentru un program, afișează nivelul de risc, **Plugin**, **Linie de comandă**, **Director de lucru**, **Executabil**, **Note ale regulilor** și fișierele workbenchului folosite de comandă, cu SHA-256 al lor.
+- Pentru un program, afișează nivelul de risc, **Plugin**, **Linie de comandă**, **Director de lucru**, **Executabil**, **Note ale regulilor** și fișierele folosite de comandă, cu căi absolute pentru cele externe, cu SHA-256 al lor.
 
 Selectează **Aprobă** sau **Refuză**. **Aprobă și treci la editare automată** aprobă și trece sesiunea la **Editare automată**. Cu cardul în focus, A aprobă și D refuză.
 

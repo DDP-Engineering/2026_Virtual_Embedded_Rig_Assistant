@@ -226,6 +226,19 @@ export const programApprovalSchema = z
         }),
       )
       .max(PROGRAM_ARGUMENTS.count),
+    directories: z
+      .array(
+        z.strictObject({
+          arg: z
+            .number()
+            .int()
+            .min(0)
+            .max(PROGRAM_ARGUMENTS.count - 1),
+          path: z.string().min(1),
+        }),
+      )
+      .max(PROGRAM_ARGUMENTS.count)
+      .optional(),
     /** Bench resources the run reserves (spec REQ-DATA-f2cbfc23 §4), with the registry they come from. */
     resources: z
       .array(

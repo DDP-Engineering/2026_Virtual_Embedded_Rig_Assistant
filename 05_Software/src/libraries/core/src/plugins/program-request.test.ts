@@ -104,25 +104,15 @@ describe("prepareProgramRequest", () => {
       requestSha256(request),
     );
   });
-  it("resolves files relative to cwd, accepts absolute workbench paths and skips everything else", async () => {
+  it("resolves files relative to cwd, accepts absolute workbench paths and refuses outside files", async () => {
     const root = await bench();
     const outside = await mkdtemp(join(tmpdir(), "vera-outside-"));
     roots.push(outside);
     await writeFile(join(outside, "other.bin"), "x");
     const request = await prepareProgramRequest(
-      input(
-        root,
-        [
-          "app.bin",
-          join(root, "key.bin"),
-          join(outside, "other.bin"),
-          "../secret.bin",
-          "missing.bin",
-          "COM3:",
-          "",
-        ],
-        { cwd: "build" },
-      ),
+      input(root, ["app.bin", join(root, "key.bin"), "../secret.bin", "missing.bin", "COM3:", ""], {
+        cwd: "build",
+      }),
     );
     expect(request.cwd).toBe("build");
     expect(request.files).toEqual([
@@ -130,6 +120,10 @@ describe("prepareProgramRequest", () => {
       { arg: 1, path: "key.bin", sha256: sha("key") },
     ]);
     expect(request.programVersion).toBe("5.1.0");
+    await expect(prepareProgramRequest(input(root, [join(outside, "other.bin")]))).rejects.toMatchObject({
+      code: "DENIED",
+      params: { reason: "outside", index: 0 },
+    });
   });
   it.runIf(process.platform === "win32")("binds the file a Windows alias opens", async () => {
     const root = await bench();

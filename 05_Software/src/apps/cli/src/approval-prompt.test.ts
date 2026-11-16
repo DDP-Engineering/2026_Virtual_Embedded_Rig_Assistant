@@ -89,6 +89,33 @@ const burn = {
     files: [{ arg: 4, path: "my key.bin", sha256: "b".repeat(64) }],
   },
 };
+it("shows canonical outside directory paths while preserving the original command arguments", async () => {
+  const input = new PassThrough(),
+    output = new PassThrough();
+  let text = "";
+  output.on("data", (chunk) => {
+    text += chunk.toString();
+  });
+  const prompt = promptApproval(
+    {
+      ...burn,
+      program: {
+        ...burn.program,
+        args: ["-C", "alias", "status"],
+        confirm: null,
+        files: [],
+        directories: [{ arg: 1, path: "/outside/repository" }],
+      },
+    },
+    new AbortController().signal,
+    input,
+    output,
+  );
+  input.write("D\n");
+  expect(await prompt).toEqual({ decision: "denied" });
+  expect(text).toContain("-C alias status");
+  expect(text).toContain("Directory: /outside/repository");
+});
 it("never preapproves draft installations or trial commands through --approve all", () => {
   const install = { ...request, tool: "plugin_install" as const };
   const trial = { ...burn, program: { ...burn.program, trial: true, risk: "safe" as const, confirm: null } };
