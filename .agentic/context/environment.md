@@ -10,6 +10,8 @@ Per-prompt activity verification: shared/core prompt-usage tests and renderer ac
 
 User-message navigator verification: renderer transcript-navigation.test.ts and transcript-navigator.test.ts (jsdom, stubbed layout) plus browser-only tests/e2e/session-navigation.spec.ts against `?mock=chat` (mock triggers `seed N messages` and `stream slowly…`); set VERA_NAV_SCREENSHOT=<path prefix> for sparse, dense, group, keyboard and narrow screenshots. Run it with `npx playwright test` from 05_Software (no Electron build needed). The native Ubuntu run is recorded separately.
 
+Bookmark persistence acceptance: shared session-state.test.ts, core sessions/bookmarks.test.ts and desktop main/session-bookmarks.test.ts plus renderer mocks/sessions.test.ts cover unique set/clear/ignore, validated IPC role/session/read-only/archive refusals, publication after durable commit, failed-insert rollback, actual database reopen, JSON/Markdown export and agent request isolation. Pinned Windows and Ubuntu WSL2 runs pass; WSL2 is distinct from native Ubuntu acceptance. BKM-02/03 own later UI/E2E controls and navigation.
+
 ## Toolchain
 
 eFuse acceptance: tests/plugins/esp32-efuse.test.ts checks the official package/risk/skill

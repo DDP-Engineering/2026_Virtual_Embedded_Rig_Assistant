@@ -31,6 +31,8 @@ shortcut. Existing persisted event format remains 1.
 
 ## Public interface
 
+- `session.bookmark` requires a valid sessionId, 1-200-character messageId and explicit boolean bookmarked, rejects extra/missing fields and returns {}. Main uses SessionsHost.run without program preparation; core checks session/user ownership, archive and writable state. Preload derives permission from the shared channel map and mock sessions mirrors the mutation. Existing generic localized INVALID/DENIED errors cover refusals; controls are not yet exposed.
+
 downloads.list/open are strict workbench-scoped channels; open takes only a UUID identifier, never an arbitrary path or external-launch option. Download approval events require source/budget and reject invented text diffs/byte counts. See [PDF downloads](pdf-downloads.md).
 
 

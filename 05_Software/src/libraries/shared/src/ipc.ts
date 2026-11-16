@@ -599,6 +599,15 @@ export const channels = {
     }),
     z.strictObject({ text: z.string() }),
   ),
+  "session.bookmark": defineChannel(
+    "session.bookmark",
+    z.strictObject({
+      sessionId: sessionIdSchema,
+      messageId: z.string().min(1).max(200),
+      bookmarked: z.boolean(),
+    }),
+    z.strictObject({}),
+  ),
   "session.rename": defineChannel(
     "session.rename",
     z.strictObject({ sessionId: sessionIdSchema, title: z.string().trim().min(1).max(60) }),

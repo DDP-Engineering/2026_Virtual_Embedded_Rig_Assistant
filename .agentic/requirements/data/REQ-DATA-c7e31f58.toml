@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-DATA-c7e31f58"
+
+title = "Preserve bookmark state through restart and export"
+
+status = "active"
+
+requirement = """
+When a bookmarked session is reopened or exported, VERA shall preserve its bookmark state through the format-1 durable session events.
+"""
+
+verification = "Close service and database, reopen both, compare snapshot bookmarks, JSON archive event and archive-replayed snapshot; verify clear survives reopening."
+
+affected_paths = ["05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/libraries/core/src/sessions/export.ts", "05_Software/src/libraries/shared/src/events.ts", "05_Software/src/libraries/core/src/sessions/bookmarks.test.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/sessions/bookmarks.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-16
+updated = 2026-11-16

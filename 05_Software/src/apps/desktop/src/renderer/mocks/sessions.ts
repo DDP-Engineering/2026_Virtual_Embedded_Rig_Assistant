@@ -140,6 +140,8 @@ export class MockSessions {
       query: string;
       archived: boolean;
       reasoning: string | null;
+      messageId: string;
+      bookmarked: boolean;
     };
     if (channel === "session.sizes") {
       this.current();
@@ -236,6 +238,22 @@ export class MockSessions {
     }
     const id = request.sessionId;
     const row = this.row(id);
+    if (channel === "session.bookmark") {
+      this.writable();
+      if (row.summary.archived) throw veraError("DENIED");
+      if (
+        !foldSessionEvents(row.events).items.some(
+          (item) => item.kind === "user" && item.id === request.messageId,
+        )
+      )
+        throw veraError("INVALID");
+      this.emit(id, {
+        type: "message.bookmarked",
+        messageId: request.messageId,
+        bookmarked: request.bookmarked,
+      });
+      return {};
+    }
     if (channel === "session.reasoning.get" || channel === "session.reasoning.set") {
       const modelRef = row.summary.modelRef ?? this.current().model;
       if (!modelRef) throw veraError("INVALID");

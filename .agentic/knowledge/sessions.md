@@ -12,6 +12,9 @@ Core SessionService owns one workbench's durable sessions over injected AgentRun
 
 ## Public interface
 
+- SessionService.bookmark(id, messageId, bookmarked) records `message.bookmarked` through SessionHub and publishes only after commit. It accepts this session's durable user/queued messages, including during a turn, and never writes agent transcript rows. INVALID rejects unknown, assistant, tool or other-session targets; DENIED rejects archived sessions and read-only/lost-ownership workbenches; deleting sessions are BUSY and closed services CONFLICT. Reads, replay and export remain available in archived/read-only sessions.
+- `bookmarkedMessageIds` is a unique array of user IDs in the shared snapshot. The reducer sets/clears membership and ignores unknown/non-user targets; pure live updates detach only the bookmark collection. Format-1 events retain the state across real database reopen and JSON export. Markdown marks bookmarked user headings.
+
 - Desktop `SessionsHost.list` uses the recovered current database without rebuilding prompts, skills or program probes. First open still constructs SessionService and waits for durable recovery; subsequent polling can complete while program preparation is pending. Current database/workbench and shutdown guards, title redaction and main-process order remain authoritative. A lightweight first list on a new workbench binds its program host to that workbench.
 
 
@@ -84,6 +87,7 @@ SessionHost may own a WebDownloads instance, exposed as listDownloads/openDownlo
 | Modes/digest/decisions/abort | agent/approvals.ts,sessions/service.ts | sessions/approvals.test.ts; tests/e2e/approvals.spec.ts |
 | Full filesystem Bypass/revocation | sessions/service.ts,tools/context.ts,PathGuard | sessions/bypass.test.ts; tests/e2e/bypass.spec.ts |
 | Lifecycle/persistence/recovery/budgets/permission | core sessions/service.ts | service.test.ts |
+| User-message bookmarks | shared events/session-state/ipc, core sessions/service | shared session-state.test.ts; core sessions/bookmarks.test.ts; main session-bookmarks.test.ts; renderer mocks/sessions.test.ts |
 | Replay/live ordering | sessions/hub.ts | service.test.ts replay/reentrancy |
 | Terminal projection | shared session-state.ts/events.ts | session-state.test.ts |
 | Citation resolution | agent/citations.ts; knowledge/search.ts | citations.test.ts; search.test.ts; artifacts.test.ts; tests/e2e/citations.spec.ts |
@@ -91,6 +95,8 @@ SessionHost may own a WebDownloads instance, exposed as listDownloads/openDownlo
 | Main host/transport/bridge | desktop main sessions/session-events,index;preload bridge | sessions/session-events/bridge tests; tests/e2e/sessions.spec.ts |
 
 ## Key behaviors
+
+REQ-FUNC-f404af3a bookmark projection; FUNC-0cfb4e5a durable publication; SEC-65a6ec17 session user-only targets; SEC-2ca61d1b writable/unarchived mutation; DATA-c7e31f58 restart/export; SEC-d857f50f private agent-independent preference.
 
 REQ-FUNC-63733e2c durable queued steering; REQ-UX-3001bd00 pending/delivery replay; REQ-FUNC-5e2438d5 reducer; FUNC-c76b4c8f CRUD; DATA-24394d5f durable transcript/events; REL-384b6464 BUSY/stop; NFR-83ac0a94 limits; FUNC-2e1261c2 citations; FUNC-eca9b9a1 replay/coalescing; REL-2098b145 recovery; FUNC-2b462360 IPC; SEC-5a7ef5e4 permission seam.
 

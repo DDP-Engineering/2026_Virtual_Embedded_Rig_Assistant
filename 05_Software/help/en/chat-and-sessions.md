@@ -50,6 +50,8 @@ The context indicator shows **Context used** as a percentage of the model's cont
 - **Delete** removes the session and its artifacts after a confirmation. Files the agent downloaded stay in the workbench.
 - **Export Markdown** writes a readable transcript with tool summaries, citations and applied changes; **Export JSON** writes the complete event record. Both open a save dialog and also work in read-only workbenches.
 
+Saved message bookmarks stay in JSON exports; Markdown marks bookmarked user messages. Bookmarks are private to the session and are not sent to the agent.
+
 ## The right panel
 
 **Toggle right panel** shows tabs for the open session: **Context** (workbench instructions and available skills), **Files**, **Changes**, **Artifacts** (text results the agent saved, with **Export** and **Reveal in folder**), **Plan** (the agent's task list) and **Runs** (program runs of plugins).

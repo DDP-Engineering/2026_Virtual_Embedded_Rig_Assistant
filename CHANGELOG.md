@@ -8,6 +8,7 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ### Added
 
+- Per-session user-message bookmarks persist across restarts and remain in session exports.
 - The document selection, its preview and the Files tab honor the workbench's .gitignore files (switch on by default).
 - Per-workbench maximum file size (lowers the fixed limits) and maximum indexed files settings in Documents & RAG.
 - Count guard: a selection above the maximum indexed files is not indexed until Index anyway or narrower exclusions.

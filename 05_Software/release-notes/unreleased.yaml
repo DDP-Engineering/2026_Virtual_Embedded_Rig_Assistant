@@ -29,3 +29,10 @@ entries:
       ro: Numărul de documente dinainte de salvare corespunde indexării și avertizează la o selecție mare.
       de: Die Dokumentanzahl vor dem Speichern entspricht der Indizierung und warnt bei zu großer Auswahl.
       fr: Le nombre de documents avant enregistrement suit l’indexation et signale une sélection trop grande.
+  - category: improved
+    topic: { en: Sessions, ro: Sesiuni, de: Sitzungen, fr: Sessions }
+    text:
+      en: Session exports retain saved message bookmarks.
+      ro: Exporturile sesiunilor păstrează marcajele salvate ale mesajelor.
+      de: Sitzungsexporte behalten gespeicherte Nachrichtenlesezeichen bei.
+      fr: Les exports de session conservent les signets enregistrés des messages.

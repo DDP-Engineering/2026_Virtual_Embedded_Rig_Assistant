@@ -10,6 +10,8 @@ Core searches existing persisted message events and builds deterministic Markdow
 
 ## Public interface
 
+Format-1 JSON archives include `message.bookmarked` events unchanged. Folding them reconstructs `bookmarkedMessageIds`; Markdown appends `(bookmarked)` to user headings with an active bookmark, including pending users. Set/clear history stays in JSON, while Markdown reflects current membership. core sessions/bookmarks.test.ts verifies database restart, archive replay and Markdown annotations.
+
 SessionService.search(query) trims1..1000 characters and matches host-scrubbed title or user/queued/assistant text with Unicode lowercase literal includes, retaining existing list order. exportSession(id) validates current session and returns schemaVersion1, session metadata and increasing seq/createdAt/event records. Live-only deltas remain transient. buildSessionMarkdown(data,changes) renders English archival sections, literal fenced text, pending markers, tool summaries, persisted citation validity and applied stored diffs.
 
 session.search {query}->SessionSummary[] and session.export {sessionId,format:md|json}->{exported:boolean} use existing authorization/serial host. Export snapshots after picker confirmation, supports read-only reads, denies managed runtime destinations, cancellation writes nothing. JSON redaction runs on typed fields before serialization. Markdown scrubs diffs before formatting. Default filename uses safe session ID.
@@ -32,19 +34,6 @@ Full history and queued/delivered identities survive export independently of con
 ## Key behaviors
 
 REQ-FUNC-70479d66 complete archives; REQ-FUNC-1b882a4b title/message search; REQ-SEC-17075aa1 authorized confined scrubbed native export.
-
-## Architecture
-
-```mermaid
-flowchart LR
- React --> IPC[shared strict channels]
- IPC --> Main[authorized serial SessionsHost]
- Main --> Service[SessionService]
- Service --> Events[(durable events)]
- Main --> Scrub[existing session sanitizers]
- Scrub --> Format[core Markdown or JSON]
- Format --> Native[save dialog + destination guard + atomic port]
-```
 
 ## Files
 

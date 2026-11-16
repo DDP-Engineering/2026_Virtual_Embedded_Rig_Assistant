@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-SEC-65a6ec17"
+
+title = "Reject bookmarks outside session user messages"
+
+status = "active"
+
+requirement = """
+If a bookmark target is not a user message of the requested session, the session service shall reject it with INVALID without recording an event.
+"""
+
+verification = "Request assistant, tool, unknown and other-session message IDs; compare event cursor before and after rejection."
+
+affected_paths = ["05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/libraries/core/src/sessions/bookmarks.test.ts", "05_Software/src/apps/desktop/src/main/session-bookmarks.test.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/sessions/bookmarks.test.ts", "05_Software/src/apps/desktop/src/main/session-bookmarks.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-16
+updated = 2026-11-16

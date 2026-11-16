@@ -2,14 +2,15 @@
 
 PURPOSE: let the user mark the messages that matter in a long session and return to them in one step from the
 conversation's left rail.
-STATE: planned 2026-11-15. Product code follows AEGIS, one work package per task.
+STATE: BKM-01 implemented 2026-11-16 (TASK-d20f7557), coordinator commit pending.
+BKM-02 and BKM-03 remain planned. Product code follows AEGIS, one work package per task.
 
-## Today (2026-11-15)
+## Current state (2026-11-16)
 
 CHAT-NAV-01 draws one marker per user message on the rail beside the conversation
 (`renderer/components/session/transcript-navigator.tsx`). Hover or focus shows a tooltip with the start of the
-message only (`previewText`, at most 140 characters); a click or the keyboard jumps to it. There are no bookmarks and
-no action icons on messages.
+message only (`previewText`, at most 140 characters); a click or the keyboard jumps to it. Bookmark persistence is implemented by BKM-01; controls, rail markers and navigation remain planned in
+BKM-02/03. No action icons are exposed yet.
 
 ## Decisions (2026-11-15)
 

@@ -419,6 +419,25 @@ export class SessionService {
     if (event.reasoning !== undefined) this.reasonings.set(id, event.reasoning);
     this.hub.publish(id, value);
   }
+  /** Stores a user-only session preference; it never enters the agent transcript. */
+  bookmark(id: string, messageId: string, bookmarked: boolean): void {
+    const row = this.row(id);
+    this.writable();
+    if (row.archived) throw veraError("DENIED");
+    if (this.deleting.has(id)) throw veraError("BUSY");
+    const input = sessionEventSchema.safeParse({ type: "message.bookmarked", messageId, bookmarked });
+    if (!input.success) throw veraError("INVALID");
+    const value = this.host.db.transaction(() => {
+      const user = this.host.db
+        .prepare(
+          "SELECT 1 FROM events WHERE session_id=? AND type IN ('message.user','message.queued') AND json_extract(payload_json,'$.messageId')=? LIMIT 1",
+        )
+        .get(id, messageId);
+      if (!user) throw veraError("INVALID");
+      return this.hub.record(id, input.data);
+    })();
+    this.hub.publish(id, value);
+  }
   rename(id: string, title: string): SessionSummary {
     this.idle(id);
     if (!title.trim() || title.length > 60) throw veraError("INVALID");

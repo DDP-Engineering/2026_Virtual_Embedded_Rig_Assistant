@@ -972,6 +972,11 @@ ipcMain.handle(
         }),
       "session.item.detail": ({ sessionId, itemId, field }) =>
         sessions.run((s) => ({ text: credentials.scrub(s.itemDetail(sessionId, itemId, field)) })),
+      "session.bookmark": ({ sessionId, messageId, bookmarked }) =>
+        sessions.run((s) => {
+          s.bookmark(sessionId, messageId, bookmarked);
+          return {};
+        }, false),
       "session.rename": ({ sessionId, title }) =>
         sessions.run((s) => {
           if (credentials.containsSecret(title)) throw { code: "INVALID", messageKey: "errors.INVALID" };

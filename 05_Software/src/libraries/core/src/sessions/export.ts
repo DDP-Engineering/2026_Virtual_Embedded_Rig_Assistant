@@ -29,11 +29,12 @@ export function buildSessionMarkdown(data: SessionExport, changes: ChangeDetail[
     "",
     "## Transcript",
   ];
+  const bookmarks = new Set(state.bookmarkedMessageIds);
   for (const item of state.items) {
     if (item.kind === "user" || item.kind === "assistant") {
       out.push(
         "",
-        `### ${item.kind === "user" ? `User${item.pending ? " (pending)" : ""}` : "Assistant"}`,
+        `### ${item.kind === "user" ? `User${item.pending ? " (pending)" : ""}${bookmarks.has(item.id) ? " (bookmarked)" : ""}` : "Assistant"}`,
         "",
         block(item.text),
       );

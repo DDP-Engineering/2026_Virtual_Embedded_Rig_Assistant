@@ -39,6 +39,7 @@ export const sessionStateSchema = z.strictObject({
   mode: permissionModeSchema,
   activeTurnId: z.string().nullable(),
   interrupted: z.array(z.string()),
+  bookmarkedMessageIds: z.array(z.string()),
   items: z.array(
     z.discriminatedUnion("kind", [
       z.strictObject({
@@ -120,6 +121,7 @@ export function emptySessionState(): SessionState {
     mode: "ask",
     activeTurnId: null,
     interrupted: [],
+    bookmarkedMessageIds: [],
     items: [],
     turns: [],
     approvals: [],
@@ -130,7 +132,14 @@ export function emptySessionState(): SessionState {
   };
 }
 type SessionItem = SessionState["items"][number];
-type Collection = "interrupted" | "items" | "turns" | "approvals" | "changes" | "artifacts";
+type Collection =
+  | "interrupted"
+  | "bookmarkedMessageIds"
+  | "items"
+  | "turns"
+  | "approvals"
+  | "changes"
+  | "artifacts";
 type Records = "items" | "turns" | "approvals";
 
 /**
@@ -241,6 +250,13 @@ function reduce(d: Draft, event: SessionEvent): void {
     case "message.user":
       if (d.find(event.messageId) < 0) d.push({ kind: "user", id: event.messageId, text: event.text });
       break;
+    case "message.bookmarked": {
+      if (d.find(event.messageId, "user") < 0) break;
+      const index = s.bookmarkedMessageIds.indexOf(event.messageId);
+      if (event.bookmarked && index < 0) d.list("bookmarkedMessageIds").push(event.messageId);
+      else if (!event.bookmarked && index >= 0) d.list("bookmarkedMessageIds").splice(index, 1);
+      break;
+    }
     case "message.queued":
       if (d.find(event.messageId) < 0)
         d.push({

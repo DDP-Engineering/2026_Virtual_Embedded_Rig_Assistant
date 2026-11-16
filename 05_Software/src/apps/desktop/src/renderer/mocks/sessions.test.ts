@@ -2,6 +2,44 @@ import type { ChangeDetail, ChangeSummary, SessionState } from "@vera/shared";
 import { expect, it, vi } from "vitest";
 import { MockSessions } from "./sessions.js";
 
+it("mirrors user-only bookmark events and readonly/archive write gates", async () => {
+  let readOnly = false;
+  const sessions = new MockSessions(() => ({ id: "one", readOnly, model: null, mode: "ask" }));
+  const first = sessions.invoke("session.create", {}) as { id: string };
+  const sent = sessions.invoke("session.send", { sessionId: first.id, text: "Read" }) as {
+    messageId: string;
+  };
+  const input = { sessionId: first.id, messageId: sent.messageId, bookmarked: true };
+  expect(sessions.invoke("session.bookmark", input)).toEqual({});
+  await expect
+    .poll(() => sessions.invoke("session.get", { sessionId: first.id }))
+    .toMatchObject({ snapshot: { status: "idle", bookmarkedMessageIds: [sent.messageId] } });
+  const snapshot = (sessions.invoke("session.get", { sessionId: first.id }) as { snapshot: SessionState })
+    .snapshot;
+  const assistant = snapshot.items.find((item) => item.kind === "assistant");
+  const other = sessions.invoke("session.create", {}) as { id: string };
+  expect(() => sessions.invoke("session.bookmark", { ...input, sessionId: other.id })).toThrow(
+    expect.objectContaining({ code: "INVALID" }),
+  );
+  expect(() => sessions.invoke("session.bookmark", { ...input, messageId: assistant?.id })).toThrow(
+    expect.objectContaining({ code: "INVALID" }),
+  );
+  readOnly = true;
+  expect(() => sessions.invoke("session.bookmark", { ...input, bookmarked: false })).toThrow(
+    expect.objectContaining({ code: "DENIED" }),
+  );
+  readOnly = false;
+  sessions.invoke("session.archive.set", { sessionId: first.id, archived: true });
+  expect(() => sessions.invoke("session.bookmark", { ...input, bookmarked: false })).toThrow(
+    expect.objectContaining({ code: "DENIED" }),
+  );
+  sessions.invoke("session.archive.set", { sessionId: first.id, archived: false });
+  sessions.invoke("session.bookmark", { ...input, bookmarked: false });
+  expect(sessions.invoke("session.get", { sessionId: first.id })).toMatchObject({
+    snapshot: { bookmarkedMessageIds: [] },
+  });
+});
+
 it("records approved mock changes with strict list/get parity and workbench isolation", async () => {
   let workbench = "one";
   const sessions = new MockSessions(() => ({ id: workbench, readOnly: false, model: null, mode: "ask" }));

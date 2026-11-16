@@ -50,6 +50,8 @@ L’indicateur de contexte affiche **Contexte utilisé** en pourcentage de la fe
 - **Supprimer** supprime la session et ses artefacts après confirmation. Les fichiers téléchargés par l’agent restent dans le banc de travail.
 - **Exporter en Markdown** écrit une transcription lisible avec les résumés des outils, les citations et les modifications appliquées ; **Exporter en JSON** écrit l’enregistrement complet des événements. Les deux ouvrent une boîte de dialogue d’enregistrement et fonctionnent aussi dans les bancs de travail en lecture seule.
 
+Les signets enregistrés restent dans les exports JSON ; Markdown indique les messages utilisateur marqués. Les signets appartiennent à la session et ne sont pas envoyés à l’agent.
+
 ## Le panneau droit
 
 **Afficher/masquer le panneau droit** affiche des onglets pour la session ouverte : **Contexte** (instructions du banc de travail et compétences disponibles), **Fichiers**, **Modifications**, **Artefacts** (résultats texte enregistrés par l’agent, avec **Exporter** et **Afficher dans le dossier**), **Plan** (la liste de tâches de l’agent) et **Exécutions** (exécutions de programmes des plugins).

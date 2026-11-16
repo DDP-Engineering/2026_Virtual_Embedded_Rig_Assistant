@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-0cfb4e5a"
+
+title = "Persist and publish user-message bookmark changes"
+
+status = "active"
+
+requirement = """
+When session.bookmark accepts a user message belonging to a writable unarchived session, the session service shall durably record message.bookmarked before publishing it to session subscribers.
+"""
+
+verification = "Invoke through the validated router; observe sequence and durable event from inside subscriber, including clear and an active-session queued user."
+
+affected_paths = ["05_Software/src/libraries/shared/src/ipc.ts", "05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/apps/desktop/src/renderer/mocks/sessions.ts", "05_Software/src/libraries/core/src/sessions/bookmarks.test.ts", "05_Software/src/apps/desktop/src/main/session-bookmarks.test.ts", "05_Software/src/apps/desktop/src/main/ipc-router.test.ts", "05_Software/src/apps/desktop/src/preload/bridge.test.ts", "05_Software/src/apps/desktop/src/renderer/mocks/sessions.test.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/sessions/bookmarks.test.ts", "05_Software/src/apps/desktop/src/main/session-bookmarks.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-16
+updated = 2026-11-16

@@ -1,6 +1,50 @@
 import { describe, expect, it } from "vitest";
 import * as shared from "./index.js";
 
+it("projects bookmark membership for known users without mutating prior snapshots", () => {
+  const events: shared.SessionEvent[] = [
+    { type: "message.bookmarked", messageId: "unknown", bookmarked: true },
+    { type: "message.user", messageId: "u", text: "Remember" },
+    { type: "message.queued", messageId: "q", text: "Next", timestamp: 1 },
+    { type: "message.done", messageId: "a", text: "Answer", citations: [] },
+    { type: "message.bookmarked", messageId: "a", bookmarked: true },
+    { type: "message.bookmarked", messageId: "u", bookmarked: true },
+    { type: "message.bookmarked", messageId: "u", bookmarked: true },
+    { type: "message.bookmarked", messageId: "q", bookmarked: true },
+  ];
+  const state = shared.foldSessionEvents(events);
+  expect(state.bookmarkedMessageIds).toEqual(["u", "q"]);
+  expect(shared.sessionStateSchema.parse(state)).toEqual(state);
+  let live = shared.emptySessionState();
+  for (const event of events) live = shared.applySessionEvent(live, event);
+  expect(live).toEqual(state);
+  const cleared = shared.applySessionEvent(state, {
+    type: "message.bookmarked",
+    messageId: "u",
+    bookmarked: false,
+  });
+  expect(cleared.bookmarkedMessageIds).toEqual(["q"]);
+  expect(state.bookmarkedMessageIds).toEqual(["u", "q"]);
+  expect(cleared.items).toBe(state.items);
+  const ignored = shared.applySessionEvent(state, {
+    type: "message.bookmarked",
+    messageId: "missing",
+    bookmarked: false,
+  });
+  expect(ignored).toEqual(state);
+  expect(ignored.bookmarkedMessageIds).toBe(state.bookmarkedMessageIds);
+  expect(
+    shared.foldSessionEvents([
+      ...events,
+      {
+        type: "message.bookmarked",
+        messageId: "u",
+        bookmarked: false,
+      },
+    ]),
+  ).toEqual(cleared);
+});
+
 // REQ-UX-3001bd00: execution deferred by explicit user policy.
 it("replays queued and delivered markers without duplicating users or clearing undelivered messages", () => {
   let state = shared.emptySessionState();
@@ -313,6 +357,7 @@ const mixed: shared.SessionEvent[] = [
     modelRef: "openai/test",
     reasoning: "high",
   },
+  { type: "message.bookmarked", messageId: "unknown", bookmarked: true },
   { type: "message.user", messageId: "u1", text: "Read the board" },
   { type: "message.user", messageId: "u1", text: "duplicate" },
   { type: "turn.started", turnId: "t1" },
@@ -388,6 +433,7 @@ describe("PERF-02 reducer without full-state copies (REQ-FUNC-5e2438d5)", () => 
       "turn.started": true,
       "turn.done": true,
       "message.user": true,
+      "message.bookmarked": true,
       "message.queued": true,
       "message.delivered": true,
       "message.delta": true,

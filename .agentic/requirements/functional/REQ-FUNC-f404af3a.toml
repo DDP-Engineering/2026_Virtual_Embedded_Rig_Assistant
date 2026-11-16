@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-f404af3a"
+
+title = "Project user-message bookmark events into the session snapshot"
+
+status = "active"
+
+requirement = """
+When a message.bookmarked event targets a known user message, the session reducer shall represent the latest bookmarked boolean as membership in bookmarkedMessageIds, ignoring unknown or non-user targets.
+"""
+
+verification = "Fold and live-apply set, repeated set and clear events; assert unique membership, unknown/assistant no-op and prior-state immutability."
+
+affected_paths = ["05_Software/src/libraries/shared/src/events.ts", "05_Software/src/libraries/shared/src/session-state.ts", "05_Software/src/libraries/shared/src/session-state.test.ts"]
+
+linked_tests = ["05_Software/src/libraries/shared/src/session-state.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-16
+updated = 2026-11-16
