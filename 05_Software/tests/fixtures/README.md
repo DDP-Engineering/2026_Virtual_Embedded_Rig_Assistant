@@ -100,3 +100,12 @@ Existing user workbenches and profiles are never part of this directory.
 and `interrupted-sessions.json`, the crash-recovery fixture with interrupted sessions.
 Every stored format is version 1 during development, so there are no previous-version
 or newer-version fixtures.
+
+`eplan/` holds fictional EPLAN Electric P8 2025 exchange files of plant M for the eplan plugin, matching the documentation
+run the plant M bench derives (`electrical-documentation/plant-m-doc.json` with the CAD-01 candidates): the profile
+`epl-plant-m.json`, the device list `devices-plant-m.csv` (semicolon-separated as `devicelist /FORMAT:XDLCsvImporterExporter`
+writes it, after the EPLAN API 2025 pages devicelist and XDLCsvImporterExporter on eplan.help; the header names and the
+`=P+MCP1-` device tags in the documented `=AP+PT1-X4` form are self-chosen, an unmapped column "Mounting location" and a
+quoted cell included), and the terminal and connection tables `terminals-plant-m.txt`, `connections-plant-m.txt` as an
+external-editing scheme (XMActionDCCommonExport) could write them. No file was produced by EPLAN; the tests build the
+eplan-tool outcome files themselves. Stored with LF; the tests convert to CRLF where line endings matter.

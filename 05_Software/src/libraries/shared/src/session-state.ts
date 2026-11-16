@@ -96,6 +96,8 @@ export const sessionStateSchema = z.strictObject({
           "panel_engineering_check",
           "electrical_documentation_check",
           "electrical_documentation_export",
+          "eplan_change",
+          "eplan_check",
         ]),
         path: z.string(),
         diff: z.string(),

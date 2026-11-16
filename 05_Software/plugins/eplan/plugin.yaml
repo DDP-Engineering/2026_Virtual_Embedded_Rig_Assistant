@@ -1,0 +1,40 @@
+format: 1
+id: eplan
+version: 0.1.0
+license: LicenseRef-PolyForm-Noncommercial-1.0.0
+name: EPLAN exchange
+summary: "Compare EPLAN Electric P8 2025 device, terminal and connection exports with VERA's documentation and import approved part data into a project copy."
+description: "Exchange data with your own licensed EPLAN Electric P8 2025 on Windows through its documented command line. A profile names the project and the columns of your export schemes. eplan-tool exports the device list and the terminal and connection tables with the project opened read-only; VERA reads them strictly, keeps unmapped columns and compares them with a stored documentation run: devices, part numbers, terminal points, connection ends and wire numbers. An import candidate is a new device list file that keeps every untouched record byte for byte; eplan-tool imports it only into a new snapshot copy of the project, never the original, then exports the copy again. The check result accepts the import only when the re-export shows every value, every other cell is unchanged and the run completed. No script, no Remoting, no macros. Not yet verified with a real EPLAN installation."
+translations:
+  ro:
+    summary: "Compară exporturile de aparate, borne și conexiuni din EPLAN Electric P8 2025 cu documentația VERA și importă date de produs aprobate într-o copie de proiect."
+    description: "Schimbă date cu propriul EPLAN Electric P8 2025 licențiat, pe Windows, prin linia de comandă documentată. Un profil numește proiectul și coloanele schemelor de export. eplan-tool exportă lista de aparate și tabelele de borne și conexiuni cu proiectul deschis doar pentru citire; VERA le citește strict, păstrează coloanele nemapate și le compară cu o rulare de documentație salvată: aparate, coduri de produs, puncte de bornă, capete de conexiune și numere de fir. Un candidat de import este un fișier nou de listă de aparate care păstrează identic fiecare înregistrare neatinsă; eplan-tool îl importă doar într-o copie nouă a proiectului, niciodată în original, apoi exportă din nou copia. Rezultatul verificării acceptă importul doar când reexportul arată fiecare valoare, celelalte celule sunt neschimbate și rularea s-a încheiat. Fără scripturi, Remoting sau macro-uri. Încă neverificat cu o instalare EPLAN reală."
+  de:
+    summary: "Vergleicht Geräte-, Klemmen- und Verbindungsexporte aus EPLAN Electric P8 2025 mit VERAs Dokumentation und importiert freigegebene Artikeldaten in eine Kopie."
+    description: "Tauscht Daten mit Ihrem lizenzierten EPLAN Electric P8 2025 unter Windows über dessen dokumentierte Befehlszeile aus. Ein Profil nennt das Projekt und die Spalten Ihrer Exportschemata. eplan-tool exportiert die Geräteliste sowie die Klemmen- und Verbindungstabellen bei schreibgeschützt geöffnetem Projekt; VERA liest sie streng, behält nicht zugeordnete Spalten und vergleicht sie mit einem gespeicherten Dokumentationslauf: Geräte, Artikelnummern, Klemmenpunkte, Verbindungsenden und Drahtnummern. Ein Importkandidat ist eine neue Gerätelisten-Datei, die jeden unberührten Datensatz byteweise behält; eplan-tool importiert sie nur in eine neue Snapshot-Kopie des Projekts, nie ins Original, und exportiert die Kopie erneut. Das Prüfergebnis akzeptiert den Import nur, wenn der Reexport jeden Wert zeigt, alle anderen Zellen gleich sind und der Lauf abgeschlossen ist. Kein Skript, kein Remoting, keine Makros. Noch nicht mit einer echten EPLAN-Installation geprüft."
+  fr:
+    summary: "Compare les exports d'appareils, bornes et connexions d'EPLAN Electric P8 2025 à la documentation VERA et importe les références approuvées dans une copie."
+    description: "Échange des données avec votre EPLAN Electric P8 2025 sous licence, sous Windows, par sa ligne de commande documentée. Un profil nomme le projet et les colonnes de vos schémas d'export. eplan-tool exporte la liste d'appareils et les tables de bornes et de connexions, projet ouvert en lecture seule ; VERA les lit strictement, garde les colonnes non mappées et les compare à une exécution de documentation enregistrée : appareils, références, points de borne, extrémités de connexion et numéros de fil. Un candidat d'import est un nouveau fichier de liste d'appareils qui garde chaque enregistrement non touché octet par octet ; eplan-tool l'importe seulement dans une nouvelle copie instantanée du projet, jamais dans l'original, puis exporte la copie à nouveau. Le résultat de vérification n'accepte l'import que si le réexport montre chaque valeur, que les autres cellules sont inchangées et que l'exécution est terminée. Ni script, ni Remoting, ni macros. Pas encore vérifié avec une vraie installation EPLAN."
+ecosystem: electrical
+platforms: [windows-x64]
+docs: [README.md, "https://www.eplan.help/en-us/Infoportal/Content/api/2025/API%20Reference.html"]
+programs:
+  eplan-tool:
+    install: { script: scripts/eplan_tool.py }
+    version: { args: [--version], match: '^eplan-tool (\d+\.\d+\.\d+)' }
+    timeout: 3600
+# EPLAN.exe itself is not a declared program: it has no documented version option, so a probe would start EPLAN.
+# eplan-tool finds EPLAN 2025 in its default install folder and runs only the documented actions listed in README.
+rules:
+  - { match: "eplan-tool {--version,--help,-h}", risk: safe }
+  - match: "eplan-tool plan *"
+    risk: safe
+    note: Prints the EPLAN command lines an export or import would run, after checking the profile and paths; starts nothing.
+  - match: "eplan-tool export *"
+    risk: device-read
+    note: Starts your EPLAN Electric P8 2025 with the profile's project opened read-only (or the copy an earlier import created) and writes the device list and the scheme tables into a new folder in the workbench. The project is not changed.
+    timeout: 3600
+  - match: "eplan-tool import *"
+    risk: device-write
+    note: Creates a new snapshot copy of the profile's project, imports the approved candidate device list into that copy (opened exclusively), regenerates its reports and exports it again into a new workbench folder. The original project is never changed; the copy stays for you to review, keep or delete in EPLAN.
+    timeout: 3600

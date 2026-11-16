@@ -145,9 +145,18 @@ attribute of a model `document` object. Model terminals are referenced `<strip>:
 `<module>:<point>` (a terminal its module contains); I/O link to their device (`signals` / `controls`), terminal
 (`connects`), module (`contains`) and tag (`tag-of`).
 
+EPLAN exchange comes from VERA's `eplan`, `eplan_change` and `eplan_check` tools and the program `eplan-tool` (plugin
+`eplan`, spec `.agentic/specs/REQ-DATA-203d52e6.md`): a profile `electrical-automation-eplan/<id>.json` (kind
+`vera-eplan-profile`, format 1) names the declared target EPLAN Electric P8 2025, the project link file and the column
+headers of the exchange tables (semicolon text with a header row); model devices record their EPLAN device tag in
+`attributes.eplanTag`. eplan-tool runs only EPLAN's documented command-line actions, imports only into a new snapshot
+copy and writes `outcome.json` (kind `vera-eplan-outcome`); an import counts only when `eplan_check` finds every value
+in the re-export.
+
 Each plugin tool (`industrial_catalog`, `electrical_network`, `protection_coordination`, `motor_drives`,
 `power_quality`, `lighting_design`, `qelectrotech`, `qelectrotech_change`, `qelectrotech_check`, `panel_engineering`,
-`panel_engineering_check`, `electrical_documentation`, `electrical_documentation_check`, `electrical_documentation_export`) is offered
+`panel_engineering_check`, `electrical_documentation`, `electrical_documentation_check`, `electrical_documentation_export`,
+`eplan`, `eplan_change`, `eplan_check`) is offered
 only while its own plugin is loaded; a tool that needs another plugin's results reads the result files and refuses
 cleanly when they are missing or stale.
 

@@ -55,7 +55,9 @@ export interface FileChangeRequest {
     | "qelectrotech_check"
     | "panel_engineering_check"
     | "electrical_documentation_check"
-    | "electrical_documentation_export";
+    | "electrical_documentation_export"
+    | "eplan_change"
+    | "eplan_check";
   readonly path: string;
   readonly args: Readonly<Record<string, unknown>>;
   readonly existed: boolean;

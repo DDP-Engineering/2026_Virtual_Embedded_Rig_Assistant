@@ -66,13 +66,18 @@ export interface TagFile {
   entries: TagEntry[];
 }
 
-/** Splits CSV text into records of fields with the line each record starts on (RFC 4180 quoting, CRLF or LF). */
-function csvRecords(text: string, fail: (line: number, reason: string) => never) {
-  const records: { line: number; fields: string[] }[] = [];
+/**
+ * Splits CSV text into records of fields with the line each record starts on and its span [start, end) in the text,
+ * the line ending included (RFC 4180 quoting, CRLF or LF). The documentation tag file uses `,`, the EPLAN exchange
+ * tables `;`.
+ */
+export function csvRecords(text: string, fail: (line: number, reason: string) => never, delimiter = ",") {
+  const records: { line: number; fields: string[]; start: number; end: number }[] = [];
   let line = 1;
   let i = 0;
   while (i < text.length) {
     const start = line;
+    const offset = i;
     const fields: string[] = [];
     let field = "";
     let quoted = false;
@@ -103,7 +108,7 @@ function csvRecords(text: string, fail: (line: number, reason: string) => never)
         line += char === undefined ? 0 : 1;
         break;
       }
-      if (char === ",") {
+      if (char === delimiter) {
         fields.push(field);
         field = "";
         closed = false;
@@ -120,7 +125,7 @@ function csvRecords(text: string, fail: (line: number, reason: string) => never)
       field += char;
       i += 1;
     }
-    records.push({ line: start, fields });
+    records.push({ line: start, fields, start: offset, end: i });
   }
   return records;
 }

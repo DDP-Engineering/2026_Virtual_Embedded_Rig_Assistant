@@ -1,0 +1,35 @@
+{
+  "kind": "vera-eplan-profile",
+  "format": 1,
+  "id": "epl-plant-m",
+  "title": "Plant M motor control panel MCP1 in EPLAN (fictional)",
+  "target": { "product": "EPLAN Electric P8", "version": "2025", "platform": "windows-x64" },
+  "project": { "link": "C:\\EPLAN\\Projects\\PlantM-MCP1.elk" },
+  "tables": {
+    "devices": {
+      "columns": {
+        "tag": "Device tag",
+        "part": "Part number",
+        "description": "Function text",
+        "vera": "VERA ID"
+      },
+      "partPrefixes": { "Schneider Electric": "SE.", "Eaton": "ETN." }
+    },
+    "terminals": {
+      "scheme": "VERA-terminals",
+      "language": "en_US",
+      "columns": { "strip": "Terminal strip", "point": "Terminal" }
+    },
+    "connections": {
+      "scheme": "VERA-connections",
+      "language": "en_US",
+      "columns": {
+        "from": "Source",
+        "to": "Target",
+        "wire": "Connection designation",
+        "crossSection": "Cross-section",
+        "color": "Color"
+      }
+    }
+  }
+}

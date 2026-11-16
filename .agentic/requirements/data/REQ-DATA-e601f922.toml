@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-DATA-e601f922"
+
+title = "Read an EPLAN exchange table strictly or refuse it, keeping unmapped columns"
+
+status = "active"
+
+requirement = """
+When an EPLAN exchange table (device list exported with XDLCsvImporterExporter, or a terminal or connection table written by the declared export scheme) is read with a profile, VERA shall accept only UTF-8 text (an initial byte order mark allowed) of semicolon-separated records with RFC 4180 quoting whose first record is a header holding each mapped header exactly once and whose every record has the header's field count, within 20 000 records and 4 MiB, keeping every cell and each record's exact source text, and shall otherwise refuse the whole file with `Invalid EPLAN <table> table <path>: line <n>: <reason>.`
+"""
+
+verification = "Unit tests: the plant M device, terminal and connection tables parse with their unmapped columns and raw records; a comma file, a missing or repeated mapped header, a short record, text after a closing quote, a control character (a lone CR included), invalid UTF-8, more than 20 000 records and more than 4 MiB are each refused with the line; an empty trailing line is accepted."
+
+affected_paths = ["05_Software/src/libraries/core/src/electrical/eplan.ts", "05_Software/src/libraries/core/src/electrical/documentation.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/electrical/eplan.test.ts"]
+
+
+spec = "specs/REQ-DATA-203d52e6.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-16
+updated = 2026-11-16

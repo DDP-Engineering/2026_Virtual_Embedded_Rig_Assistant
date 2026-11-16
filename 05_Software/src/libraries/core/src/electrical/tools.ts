@@ -44,6 +44,9 @@ export const electricalPluginTools: Readonly<Record<string, string>> = {
   electrical_documentation: "electrical-documentation",
   electrical_documentation_check: "electrical-documentation",
   electrical_documentation_export: "electrical-documentation",
+  eplan: "eplan",
+  eplan_change: "eplan",
+  eplan_check: "eplan",
 };
 /** Every tool a host offers only with electrical or automation plugins loaded. */
 export const electricalToolNames: readonly string[] = [

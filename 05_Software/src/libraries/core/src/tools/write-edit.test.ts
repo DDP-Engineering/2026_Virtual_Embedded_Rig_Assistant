@@ -83,6 +83,8 @@ it("registers sequential write/edit and creates UTF8 files and parent folders", 
     "panel_engineering_check",
     "electrical_documentation_check",
     "electrical_documentation_export",
+    "eplan_change",
+    "eplan_check",
   ]);
   const result = await registry.execute(
     context(),

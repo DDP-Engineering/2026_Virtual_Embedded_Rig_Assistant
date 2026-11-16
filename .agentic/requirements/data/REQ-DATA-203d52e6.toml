@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-DATA-203d52e6"
+
+title = "Accept only a strictly valid EPLAN mapping profile"
+
+status = "active"
+
+requirement = """
+When an EPLAN mapping profile electrical-automation-eplan/<id>.json is read, VERA shall accept it only when it is kind vera-eplan-profile format 1 with the declared target EPLAN Electric P8 2025 on windows-x64, a project link that is an absolute Windows .elk path without spaces or quotes, a device table with a tag column and optional terminal and connection tables with their required columns, unique non-empty header names, scheme names and a language of the allowed characters, and an ID equal to the file name, and shall otherwise refuse the whole file with `Invalid EPLAN profile <id>: <path>: <message>` naming at most 20 problems.
+"""
+
+verification = "Unit tests on the plant M profile: it parses; an unknown key, format 2, another product or version, a relative or spaced link, a duplicate header, a missing tag column, a terminal table without strip or point and an ID other than the file name are each refused with the path."
+
+affected_paths = ["05_Software/src/libraries/core/src/electrical/eplan.ts", "05_Software/src/libraries/shared/src/eplan.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/electrical/eplan.test.ts"]
+
+
+spec = "specs/REQ-DATA-203d52e6.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-16
+updated = 2026-11-16

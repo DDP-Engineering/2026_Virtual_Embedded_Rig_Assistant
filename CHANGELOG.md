@@ -11,6 +11,7 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 - qelectrotech 0.1.0: read QElectroTech projects, draft DOL, reversing and star-delta schematics, check cross-references.
 - panel-engineering 0.1.0: check control panels - BOM, terminals, 24 V budget, rail layout, heat, verification report.
 - electrical-documentation 0.1.0: material, wire, cable, terminal, label and I/O lists, cross-checks, change report, CSV/XLSX/PDF.
+- eplan 0.1.0: compare EPLAN Electric P8 2025 exports with the documentation, import part data into a copy (not yet run on EPLAN).
 
 ### Fixed
 

@@ -14,6 +14,8 @@ export * from "./electrical/documentation.js";
 export * from "./electrical/documentation-export.js";
 export * from "./electrical/documentation-tool.js";
 export * from "./electrical/edit.js";
+export * from "./electrical/eplan.js";
+export * from "./electrical/eplan-tool.js";
 export * from "./electrical/lighting.js";
 export * from "./electrical/lighting-files.js";
 export * from "./electrical/lighting-tool.js";

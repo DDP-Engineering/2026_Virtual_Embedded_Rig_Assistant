@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-f415fdc8"
+
+title = "Reconcile EPLAN devices, part numbers, terminals and connections with the documentation lists"
+
+status = "active"
+
+requirement = """
+When the eplan read view reconcile is asked for with a profile, the exported tables and a stored electrical-documentation run, VERA shall match EPLAN devices to the documentation's device labels by the recorded VERA ID or by the device identifier after the structure prefixes (=plant +location -identifier), compare part numbers with the materials list after the declared part prefix, terminals with the terminals list and connections (unordered ends, wire number) with the connections list, report matched, differing, EPLAN-only and VERA-only entries and duplicate identifiers, and propose update-object operations recording attributes.eplanTag that it never applies.
+"""
+
+verification = "Tool tests on plant M with a real documentation run: matching tables give no differences; a planted part number, a missing device, an extra terminal and a swapped wire number are each reported in their list; duplicates are reported; the model, documentation result and tables keep their sha256; the proposed operations name existing objects only."
+
+affected_paths = ["05_Software/src/libraries/core/src/electrical/eplan.ts", "05_Software/src/libraries/core/src/electrical/eplan-tool.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/electrical/eplan-tool.test.ts"]
+
+
+spec = "specs/REQ-DATA-203d52e6.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-16
+updated = 2026-11-16

@@ -140,6 +140,8 @@ export const sessionEventSchema = z.discriminatedUnion("type", [
         "panel_engineering_check",
         "electrical_documentation_check",
         "electrical_documentation_export",
+        "eplan_change",
+        "eplan_check",
       ]),
       path: z.string(),
       diff: z.string(),

@@ -22,3 +22,10 @@ entries:
       ro: Liste verificate de fire, cabluri, borne, I/O și materiale, cu revizie, ca CSV, XLSX sau PDF.
       de: Geprüfte Draht-, Kabel-, Klemmen-, E/A- und Materiallisten mit Revision als CSV, XLSX, PDF.
       fr: Listes vérifiées de fils, câbles, bornes, E/S et matériel, avec révision, en CSV, XLSX ou PDF.
+  - category: new
+    topic: { en: Plugins, ro: Pluginuri, de: Plugins, fr: Plugins }
+    text:
+      en: Compare EPLAN Electric P8 exports with your documentation and import part numbers into a copy.
+      ro: Comparați exporturi EPLAN Electric P8 cu documentația și importați coduri de produs într-o copie.
+      de: EPLAN-P8-Exporte mit der Dokumentation vergleichen und Artikelnummern in eine Kopie importieren.
+      fr: Comparez les exports EPLAN Electric P8 à la documentation, importez des références dans une copie.

@@ -44,6 +44,7 @@ it("builds the official plugins into a bundled catalog release and checks it aga
     ["electrical-documentation", "official"],
     ["electrical-network", "official"],
     ["electronics-calc", "official"],
+    ["eplan", "official"],
     ["esp32-efuse", "official"],
     ["esp32-esptool", "official"],
     ["esp32-idf", "official"],

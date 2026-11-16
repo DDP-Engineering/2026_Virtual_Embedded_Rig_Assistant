@@ -99,6 +99,20 @@ it("converts every tool schema and validates samples while filtering disabled na
       tags: "plc/tags.csv",
     },
     electrical_documentation_export: { runId: "20261116-130000-dddd", format: "pdf" },
+    eplan: { view: "inspect", profile: "epl-plant-m", table: "devices", path: "eplan/devices.csv" },
+    eplan_change: {
+      action: "candidate",
+      profile: "epl-plant-m",
+      base: "eplan/devices.csv",
+      sha256: "0".repeat(64),
+      documentationRun: "20261116-130000-dddd",
+      path: "eplan/import.csv",
+    },
+    eplan_check: {
+      profile: "epl-plant-m",
+      documentationRun: "20261116-130000-dddd",
+      exports: { devices: "eplan/devices.csv" },
+    },
     help: { page: "permissions" },
   };
   for (const tool of registry.available()) {
@@ -148,6 +162,9 @@ it("converts every tool schema and validates samples while filtering disabled na
     "electrical_documentation",
     "electrical_documentation_check",
     "electrical_documentation_export",
+    "eplan",
+    "eplan_change",
+    "eplan_check",
     "help",
   ]);
   expect(registry.available(["read"]).map((tool) => tool.name)).not.toContain("read");

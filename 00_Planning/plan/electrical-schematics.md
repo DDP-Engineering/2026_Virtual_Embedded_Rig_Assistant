@@ -21,7 +21,9 @@ STATE: CAD-01 committed (5a4c7a77, #133 closed); the visual check of the candida
 declined), QElectroTech-saved fixtures and native Ubuntu are open. CAD-02 implemented 2026-11-16 (AEGIS TASK-00631c13),
 uncommitted hand-over; native Ubuntu and cited data for LAD9V2, fuse holders and a star-delta timer are open.
 CAD-03 implemented 2026-11-16 (AEGIS TASK-d2b9147b), uncommitted hand-over; a numbered project saved by QElectroTech,
-a real vendor tag export and native Ubuntu are open.
+a real vendor tag export and native Ubuntu are open. CAD-04 implemented 2026-11-16 (AEGIS TASK-b74c88bb), uncommitted
+hand-over, built from the public EPLAN API 2025 documentation without an EPLAN installation or licence: every
+real-application part (CAD-04-A, the EPLAN parts of B, C and D) is open and #136 stays open.
 
 ## Order
 
@@ -30,7 +32,7 @@ a real vendor tag export and native Ubuntu are open.
 | 1 | CAD-01 | [#133](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/133) | `qelectrotech`: read native `.qet` XML into the model, DOL / reversing / star-delta schematic candidates, numbering and cross-references | PWR-00 | implemented |
 | 2 | CAD-02 | [#134](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/134) | `panel-engineering`: BOM, terminals, wiring, 24 V budget, 2D rail layout, dissipation and thermal check, assembly verification report | CAD-01, PWR-03, PWR-04 | implemented |
 | 3 | CAD-03 | [#135](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/135) | `electrical-documentation`: material, connection, cable, terminal, label and I/O lists, change report, CSV/XLSX/PDF exports | CAD-02 | implemented |
-| 4 | CAD-04 | [#136](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/136) | `eplan`: Windows adapter through the official EPLAN API: inspect, export, map, import approved data, save candidate | CAD-01, CAD-03 | planned |
+| 4 | CAD-04 | [#136](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/136) | `eplan`: Windows adapter through the official EPLAN API: inspect, export, map, import approved data, save candidate | CAD-01, CAD-03 | implemented without EPLAN; real-application criteria open |
 
 ## Decisions for this epic (user, 2026-11-15)
 
@@ -136,3 +138,66 @@ a real vendor tag export and native Ubuntu are open.
   Calc and openpyxl. Tested on Windows x64 only.
 - Open: a numbered project saved by QElectroTech itself and a real vendor tag export as read-back fixtures; native Ubuntu
   and WSL2 runs; export texts are English and the PDF is limited to WinAnsi characters.
+
+## CAD-04 #136 - EPLAN exchange
+
+- API research first (2026-11-16, https://www.eplan.help/en-us/Infoportal/Content/api/2025/, pages dated 17.02.2025,
+  read in the browser, nothing downloaded; details in the TASK-b74c88bb journal and spec
+  `.agentic/specs/REQ-DATA-203d52e6.md`). Declared target: EPLAN Electric P8 2025, Windows x64 (API on .NET Framework
+  4.8.1, tested on Windows 7/8/10). Ways in: the EPLAN.exe command line (/Variant, /Quiet, /Auto, /NoLicenseDialog,
+  /NoUserRightsDialog), offline programs (EplApplication.Init + LockingStep), add-ins, scripts and Remoting (gRPC into a
+  RUNNING EPLAN). Documented operations: ProjectOpen/ProjectAction with OpenMode Standard|ReadOnly|Exclusive (opens in
+  that mode or not at all; a project needing an upgrade opens read-only); devicelist IMPORT/EXPORT/DELETE with
+  XDLXmlExporter, XDLCsvImporterExporter (semicolon) and XDLTxtImporterExporter; partslist; XMActionDCCommonExport /
+  XMActionDCImport (external editing by configuration scheme, .edc file); label; reports PROJECT; check PROJECT;
+  backup/restore (.zw1); projectmanagement CREATESNAPSHOTCOPY; export/import PXFPROJECT; generatemacros/preparemacros
+  (macro projects only), XMIaInsertMacro and Function.PlaceFunctionalMacro; ExecuteScript. No Project.Save: changes are
+  committed by transactions under locks. Identity: StorableObject.ToStringIdentifier is valid only while the project is
+  open, DatabaseIdentifier changes on reopen, ObjectIdentifier persistence is not stated; the visible identity is the
+  device tag (=AP+PT1-X4) and a user-defined property can carry an external ID. Licences: an API developer licence
+  limits projects to 5 pages; a runtime licence needs EADN-signed programs; scripts run without an API licence.
+- What cannot be confirmed without an install: the device list CSV header names and encoding, the TXT layout of an
+  external-editing scheme, EPLAN.exe exit codes, the order of global parameters and action, whether CREATESNAPSHOTCOPY
+  needs SCHEME, the licence each action needs and the behaviour under /NoLicenseDialog without one, the behaviour on a
+  project open in another EPLAN or with unsaved work, ObjectIdentifier persistence and whether a user property with the
+  VERA ID survives the device list round trip.
+- Design chosen from that: a VERA-side adapter on documented exchange files plus a small Windows helper on the
+  documented command line. Rejected: an offline .NET program or add-in (cannot be compiled or tested here and needs a
+  signed runtime licence), Remoting (attaches to a running EPLAN), PXF/EPJ, .edc and macro files (formats not
+  documented), and a manifest `find` program for EPLAN.exe (the manifest requires a version probe; EPLAN.exe has no
+  documented version option, so the probe would start EPLAN).
+- Product code in core next to the documentation engine: shared `eplan.ts` (profile `electrical-automation-eplan/<id>.json`
+  kind `vera-eplan-profile`, outcome kind `vera-eplan-outcome`, both format 1), core `electrical/eplan.ts` (strict table
+  reader on the documentation `csvRecords`, now taking a delimiter and returning spans; device tags; reconcile;
+  candidate; round-trip and outcome criteria; result) and `electrical/eplan-tool.ts`. Plugin `eplan` 0.1.0 (ecosystem
+  electrical, Windows x64 only, program `eplan-tool` = PEP 723 standard-library script, skill `eplan-exchange`, help
+  en/ro/de/fr) in the pack Electrical schematics and panels, group EPLAN exchange, default off. No npm dependency added.
+- Tools, gated on plugin `eplan`: `eplan` (read: inspect a table; reconcile devices by VERA ID or identifier, part
+  numbers with manufacturer prefixes, terminal points of panel strips and connections with wire numbers against a stored
+  electrical-documentation run, proposing `attributes.eplanTag` operations it never applies), `eplan_change` (write: a
+  new device list import candidate from a base export and its sha256; untouched records byte for byte; parts and empty
+  VERA ID cells filled; missing devices appended as `-<tag>`; nothing removed; report of what cannot transfer:
+  connections, terminals, macros, unmapped fields), `eplan_check` (write: one result with `source:documentation`,
+  `devices`, `part-numbers`, `terminals`, `connections` and, after an import, `identity`, `unchanged`, `applied`,
+  `outcome`).
+- eplan-tool (every EPLAN.exe line carries /NoRemoting, the copy must sit beside the project link): `plan` (prints
+  command lines), `export` (devicelist EXPORT and the scheme tables with the project opened
+  ReadOnly, device-read), `import` (CREATESNAPSHOTCOPY, devicelist IMPORT into the copy opened Exclusive, reports PROJECT,
+  re-export; device-write). Never ExecuteScript, never Remoting, never a command without /PROJECTNAME, never an import
+  into the profile's project. Refusals before EPLAN starts (exit 2): wrong or missing project, existing copy or output,
+  changed candidate (conflict), unsafe paths, other system, no EPLAN 2025. A failed, timed-out or stopped step ends the
+  run as failed or interrupted (exit 1, outcome.json written); success is decided by `eplan_check` on the re-export,
+  never by EPLAN's exit code.
+- Fixtures: `tests/fixtures/eplan/` (fictional plant M profile, device list, terminal and connection tables matching the
+  plant M documentation run); the plant M upstream chain moved from documentation-tool.test.ts into
+  `electrical/plant-m.test-support.ts`, shared by the documentation and EPLAN tool tests. Tested on Windows x64 only;
+  the real-EPLAN tests in `tests/plugins/eplan.test.ts` run only with VERA_TEST_EPLAN_PROFILE and were skipped.
+- Criteria: CAD-04-A open (no EPLAN, no licence: inspect/export/import/save never ran on a real EPLAN). CAD-04-B partly
+  (VERA side: identities, unchanged cells and applied values are checked on the round trip and the candidate keeps every
+  untouched record; macros are not handled; whether EPLAN keeps identities and properties is unproven). CAD-04-C partly
+  (VERA side: wrong project, conflict, existing copy, missing EPLAN refused before start; failed, interrupted or
+  mismatched outcomes never count as applied; EPLAN's own behaviour on a locked project, unsaved work, a missing licence
+  and Stop is unverified). CAD-04-D partly (data reconciled with the CAD-03 lists in tests; approval, refusal and
+  reopening of a candidate in EPLAN on Windows not demonstrated).
+- Open: everything above that needs a licensed EPLAN Electric P8 2025 with a fixture project; macros; connection and
+  terminal import (needs the .edc format); paths with spaces; native Ubuntu is out of scope (Windows-only adapter).

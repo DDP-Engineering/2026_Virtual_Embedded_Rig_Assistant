@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-a897a77d"
+
+title = "Stop the eplan-tool sequence at the first failure or Stop and record it as not completed"
+
+status = "active"
+
+requirement = """
+When an eplan-tool step exits non-zero, times out or does not produce its file, or the run is stopped, the helper shall end the EPLAN process it started, run no further step, write outcome.json with status failed or interrupted, the step and the reason, and exit 1, and shall write status completed only when every step exited 0 and produced its file.
+"""
+
+verification = "Plugin tests (Windows) run the step loop with a stand-in process instead of EPLAN: every step exiting 0 with its file gives completed with the files' sha256; an import exiting 3 gives failed step-failed:import and no later step; a missing export file gives no-file; a step that does not end gives timeout and its process is ended; a Stop during the import gives interrupted and its process is ended. Whether EPLAN itself behaves so is unverified: the real-application tests need VERA_TEST_EPLAN_PROFILE and were skipped."
+
+affected_paths = ["05_Software/plugins/eplan/scripts/eplan_tool.py"]
+
+linked_tests = ["05_Software/tests/plugins/eplan.test.ts"]
+
+
+spec = "specs/REQ-DATA-203d52e6.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-16
+updated = 2026-11-16

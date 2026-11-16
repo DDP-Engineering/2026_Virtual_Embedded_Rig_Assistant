@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-SEC-8fcf4dc1"
+
+title = "Run only finite documented EPLAN command-line actions on the named project or a new copy"
+
+status = "active"
+
+requirement = """
+The eplan-tool helper shall start EPLAN only as EPLAN.exe /Variant:"Electric P8" /NoRemoting with ProjectAction naming the profile's project link (export, OpenMode ReadOnly) or a new snapshot copy (import and its re-export, OpenMode Exclusive for the import and reports), running only the documented actions devicelist EXPORT or IMPORT with XDLCsvImporterExporter, XMActionDCCommonExport with the profile's scheme, projectmanagement CREATESNAPSHOTCOPY and reports PROJECT, and never ExecuteScript, Remoting, another action or a command without PROJECTNAME.
+"""
+
+verification = "Plugin tests: the dry-run plans of export and import list exactly these command lines with the profile's link or the copy; every plan line carries /NoRemoting and PROJECTNAME and none contains ExecuteScript; the manifest rules classify export device-read, import device-write and plan safe."
+
+affected_paths = ["05_Software/plugins/eplan/scripts/eplan_tool.py", "05_Software/plugins/eplan/plugin.yaml"]
+
+linked_tests = ["05_Software/tests/plugins/eplan.test.ts"]
+
+
+spec = "specs/REQ-DATA-203d52e6.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-16
+updated = 2026-11-16

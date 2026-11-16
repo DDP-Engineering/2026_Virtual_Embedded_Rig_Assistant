@@ -1,7 +1,7 @@
 # Maintainers' file of the catalog (spec REQ-DATA-b40d3f9b §1.2). Only maintainers change it.
 format: 1
 # Plugins maintained by the VERA maintainers; every other catalog plugin is community.
-official: [serial-monitor, esp32-esptool, esp32-idf, esp32-efuse, binutils, probe-rs, sigrok, git, analysis-skills, wireshark-tshark, can-python, can-dbc, microchip-pymcuprog, stm32-cubeprog, electronics-calc, kicad, parts-search, ngspice, ltspice, kicad-layout, freerouting, scpi-instruments, arduino-cli, micropython, circuitpython, bus-tools, mqtt-tools, ble-tools, wokwi, raspberry-pi-linux, lab-validation, hil-testing, gdb-debug, power-profiler, renode, zephyr, platformio, industrial-catalog, electrical-network, protection-coordination, motor-drives, power-quality-pfc, lighting-design, qelectrotech, panel-engineering, electrical-documentation]
+official: [serial-monitor, esp32-esptool, esp32-idf, esp32-efuse, binutils, probe-rs, sigrok, git, analysis-skills, wireshark-tshark, can-python, can-dbc, microchip-pymcuprog, stm32-cubeprog, electronics-calc, kicad, parts-search, ngspice, ltspice, kicad-layout, freerouting, scpi-instruments, arduino-cli, micropython, circuitpython, bus-tools, mqtt-tools, ble-tools, wokwi, raspberry-pi-linux, lab-validation, hil-testing, gdb-debug, power-profiler, renode, zephyr, platformio, industrial-catalog, electrical-network, protection-coordination, motor-drives, power-quality-pfc, lighting-design, qelectrotech, panel-engineering, electrical-documentation, eplan]
 # Discovery facts are maintained separately from package manifests. Publication dates are genuinely
 # unknown until a catalog release record establishes them; do not infer them from commits/builds.
 metadata:
@@ -77,6 +77,9 @@ metadata:
   electrical-documentation:
     activities: [design]
     keywords: [wire list, connection list, cable list, terminal plan, I/O list, PLC tags, labels, bill of materials, revision, change report, wire numbering, documentation, CSV, XLSX, PDF]
+  eplan:
+    activities: [design]
+    keywords: [EPLAN, EPLAN Electric P8, .elk, device list, part numbers, terminal strip, connection list, import, export, reconcile, external editing]
   panel-engineering:
     activities: [design]
     keywords: [control panel, panel layout, BOM, bill of materials, terminal strip, DIN rail, 24 V supply, power supply budget, enclosure, heat dissipation, temperature rise, IEC 61439, verification report]

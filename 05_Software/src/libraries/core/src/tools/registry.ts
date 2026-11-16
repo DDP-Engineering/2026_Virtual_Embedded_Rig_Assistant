@@ -7,6 +7,7 @@ import {
   electricalDocumentationExportTool,
   electricalDocumentationTool,
 } from "../electrical/documentation-tool.js";
+import { eplanChangeTool, eplanCheckTool, eplanTool } from "../electrical/eplan-tool.js";
 import { lightingDesignTool } from "../electrical/lighting-tool.js";
 import { motorDrivesTool } from "../electrical/motor-drives-tool.js";
 import { electricalNetworkTool } from "../electrical/network-tool.js";
@@ -77,6 +78,9 @@ const builtinDefinitions: Record<BuiltinToolName, ToolDefinition> = {
   electrical_documentation: electricalDocumentationTool,
   electrical_documentation_check: electricalDocumentationCheckTool,
   electrical_documentation_export: electricalDocumentationExportTool,
+  eplan: eplanTool,
+  eplan_change: eplanChangeTool,
+  eplan_check: eplanCheckTool,
   help: helpTool,
 };
 /** Tools offered only when the host composes a program host. */

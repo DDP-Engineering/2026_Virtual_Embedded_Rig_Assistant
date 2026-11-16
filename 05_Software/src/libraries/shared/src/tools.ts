@@ -39,6 +39,9 @@ export const builtinToolNames = [
   "electrical_documentation",
   "electrical_documentation_check",
   "electrical_documentation_export",
+  "eplan",
+  "eplan_change",
+  "eplan_check",
   "help",
 ] as const;
 

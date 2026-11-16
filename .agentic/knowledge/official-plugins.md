@@ -29,6 +29,9 @@ skills/panel-engineering; the panel file format, the engine, the two panel tools
 [electrical model](electrical-model.md). For electrical-documentation, start at
 plugins/electrical-documentation/plugin.yaml (no program, ecosystem `electrical`) and skills/electrical-documentation;
 the lists, checks, exports, the three documentation tools and their tests belong to [electrical model](electrical-model.md).
+For eplan, start at plugins/eplan/plugin.yaml (program `eplan-tool` = scripts/eplan_tool.py, ecosystem `electrical`,
+Windows x64 only), skills/eplan-exchange and tests/plugins/eplan.test.ts; the profile and table formats, the engine, the
+three EPLAN tools and their tests belong to [electrical model](electrical-model.md).
 
 For kicad, start at plugins/kicad/plugin.yaml, scripts/kicad_tool.py and scripts/kicad_support/ with spec
 .agentic/specs/REQ-DATA-c32834e3.md; tests/plugins/kicad.test.ts and tests/fixtures/kicad/ (fictional KiCad 10
@@ -410,6 +413,19 @@ that source metadata reaches the deterministic bundled index unchanged.
   store `electrical_documentation_check`, report failed and unknown criteria first and let the engineer fix the sources
   (never VERA), page lists and changes with `electrical_documentation`, export CSV/XLSX/PDF with
   `electrical_documentation_export`. Engine and tools: [electrical model](electrical-model.md), spec REQ-DATA-aa83ed5c.
+- `eplan` 0.1.0, ecosystem `electrical` (pack Electrical schematics and panels, group EPLAN exchange, default off;
+  activity `design`), Windows x64 only. Program `eplan-tool` = `scripts/eplan_tool.py` (PEP 723, standard library),
+  timeout 3600 s; EPLAN.exe is not a declared program (no documented version option: a probe would start EPLAN), the
+  script finds the highest `<SystemDrive>\Program Files\EPLAN\Platform\2025*\Bin\EPLAN.exe`. Rules: `--version`/
+  `--help` and `plan *` safe, `export *` device-read (project opened ReadOnly, new folder in the workbench), `import *`
+  device-write (CREATESNAPSHOTCOPY, devicelist IMPORT into the copy opened Exclusive, reports, re-export). Every command
+  is `"EPLAN.exe" /Variant:"Electric P8" /NoRemoting /Quiet:1 /NoLicenseDialog /NoUserRightsDialog /Auto <action>` with
+  /PROJECTNAME; never ExecuteScript or Remoting. Refusals (exit 2, status refused, nothing started): usage, platform,
+  profile, project-missing, copy-exists, copy-is-link, copy-folder (the copy must sit beside the project link), out-exists, out-outside, path (spaces or quotes), conflict,
+  outcome, eplan-missing; failures (exit 1, outcome.json written): step-failed, no-file, timeout (600 s per step,
+  taskkill /T /F), interrupted. Not verified on a real EPLAN; real tests gated on VERA_TEST_EPLAN_PROFILE. Skill
+  `eplan-exchange`: profile, export, reconcile, candidate, import into a copy, eplan_check. Engine and tools:
+  [electrical model](electrical-model.md), spec REQ-DATA-203d52e6.
 
 - `ngspice` 0.3.0, ecosystem `electronics` (Electronics design pack, group Simulation (ngspice), default on; activity
   `design`), Windows x64/Linux x64. Program `ngspice`: find `C:/Spice64/bin/ngspice_con.exe`,

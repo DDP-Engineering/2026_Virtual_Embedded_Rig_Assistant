@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-cafafa22"
+
+title = "Refuse an eplan-tool operation before EPLAN starts when its inputs are unsafe or invalid"
+
+status = "active"
+
+requirement = """
+If eplan-tool is asked to run with an invalid profile, a missing project link, a copy path that exists, equals the link or lies outside the project's folder, an output folder that exists or lies outside the working folder, a candidate whose sha256 differs from the stated one, a path with spaces or quotes, a system other than Windows or no EPLAN 2025 EPLAN.exe under Program Files/EPLAN/Platform, then the helper shall print a refused outcome with the reason and exit 2 without starting EPLAN or writing a file.
+"""
+
+verification = "Plugin tests (Windows): each refusal (including a copy in another folder and a malformed profile) prints status refused with its reason, exits 2 and creates no file; on a machine without EPLAN a valid export request is refused with eplan-missing."
+
+affected_paths = ["05_Software/plugins/eplan/scripts/eplan_tool.py"]
+
+linked_tests = ["05_Software/tests/plugins/eplan.test.ts"]
+
+
+spec = "specs/REQ-DATA-203d52e6.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-16
+updated = 2026-11-16

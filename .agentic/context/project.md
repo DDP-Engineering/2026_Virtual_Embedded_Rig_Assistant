@@ -190,7 +190,12 @@ references and connections, cable ends, terminal points and the device-terminal-
 revision only from a model document object, adds a change report against a previous run and stores one new result;
 `electrical_documentation` pages a list or shows what changed since a run; `electrical_documentation_export` writes a
 new CSV, XLSX (fflate) or PDF (own writer, Courier) file next to the run; nothing is printed, ordered or sent; the
-official plugin electrical-documentation brings its skill.
+official plugin electrical-documentation brings its skill. EPLAN exchange (plugin eplan, Windows x64, not yet run on a
+real EPLAN): a profile `electrical-automation-eplan/<id>.json` names EPLAN Electric P8 2025, the project link and the
+export columns; `eplan` reads the exported device, terminal and connection tables strictly and reconciles them with a
+documentation run; `eplan_change` prepares a device list import candidate that keeps untouched records byte for byte;
+`eplan_check` stores reconcile, round-trip and outcome criteria; the program eplan-tool runs only documented EPLAN
+command-line actions, imports only into a new snapshot copy and writes outcome.json.
 Parts search: Settings > Parts search holds supplier switches, credentials (Mouser, DigiKey, TME, Farnell, Rutronik; `parts:<id>` slots with the same consent and rollback) and region; the host tool `parts_search` is offered only with Web access on, the official parts-search plugin enabled for the workbench and a supplier enabled, contacts fixed supplier endpoints only, stores no result and never orders. The CLI reads MOUSER_API_KEY, DIGIKEY_CLIENT_ID/SECRET, TME_API_TOKEN/SECRET, FARNELL_API_KEY and RUTRONIK_API_KEY into memory. Live supplier probes need the user's own keys; see [parts search](../knowledge/parts-search.md).
 
 PCB layout candidates: the kicad-layout plugin (Electronics design pack, default off) edits a candidate copy of a

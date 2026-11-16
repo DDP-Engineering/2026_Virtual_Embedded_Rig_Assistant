@@ -7,10 +7,10 @@ title = "Describe the electrical tools in the workbench tools editor"
 status = "active"
 
 requirement = """
-The workbench tools editor shall list electrical_model, electrical_model_change, industrial_catalog, electrical_network, protection_coordination, motor_drives, power_quality, lighting_design, qelectrotech, qelectrotech_change, qelectrotech_check, panel_engineering, panel_engineering_check, electrical_documentation, electrical_documentation_check and electrical_documentation_export with a description in English, Romanian, German and French.
+The workbench tools editor shall list electrical_model, electrical_model_change, industrial_catalog, electrical_network, protection_coordination, motor_drives, power_quality, lighting_design, qelectrotech, qelectrotech_change, qelectrotech_check, panel_engineering, panel_engineering_check, electrical_documentation, electrical_documentation_check, electrical_documentation_export, eplan, eplan_change and eplan_check with a description in English, Romanian, German and French.
 """
 
-verification = "check:i18n passes with the sixteen keys in en, ro, de and fr; the workbench tools component maps the sixteen built-in names to their descriptions (typecheck enforces the record)."
+verification = "check:i18n passes with the nineteen keys in en, ro, de and fr; the workbench tools component maps the nineteen built-in names to their descriptions (typecheck enforces the record)."
 
 affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/workbench-tools.tsx", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json", "05_Software/src/apps/desktop/src/renderer/locales/fr.json", "05_Software/src/libraries/shared/src/tools.ts"]
 

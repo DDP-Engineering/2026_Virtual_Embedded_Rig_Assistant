@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-803299e7"
+
+title = "Never count an EPLAN import as applied without a completed outcome and matching re-export"
+
+status = "active"
+
+requirement = """
+If eplan_check is given a candidate without a valid eplan-tool outcome, or an outcome that is refused, failed or interrupted, that names another project link, profile sha256, candidate sha256 or operation, that lacks a snapshot, import, reports or export step with exit 0, or whose recorded output files do not match the named re-export files, then VERA shall fail the outcome criterion with the recorded reason, set the run status incomplete and never pass applied on data that was not re-exported from the copy.
+"""
+
+verification = "Tool tests: a missing outcome, each outcome status refused, failed and interrupted, another project link, another profile sha256, another candidate sha256, missing steps and a re-export whose sha256 differs from the outcome each fail outcome with the reason and leave the status incomplete; a completed matching outcome passes."
+
+affected_paths = ["05_Software/src/libraries/core/src/electrical/eplan.ts", "05_Software/src/libraries/core/src/electrical/eplan-tool.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/electrical/eplan-tool.test.ts"]
+
+
+spec = "specs/REQ-DATA-203d52e6.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-16
+updated = 2026-11-16

@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-0103d4c6"
+
+title = "Prepare an EPLAN device list import candidate that keeps every untouched row and cell"
+
+status = "active"
+
+requirement = """
+When eplan_change candidate is asked for with a profile, a base device list export and its sha256, a stored documentation run and a new .csv path, VERA shall prepare one new file that copies every base record whose mapped cells do not change byte for byte (header and line endings included), changes in the other records only the part number (the manufacturer's declared prefix plus the order code, when the EPLAN part is empty or differs) and an empty VERA ID cell, appends one record per documentation device missing from EPLAN that has a known order code or model object, with the device tag -<tag>, its part number and its VERA ID and every other cell empty, never removes a record, and returns a mapping report of updated, added, kept and EPLAN-only records and of what cannot transfer (connections, terminals, macros and every unmapped VERA field).
+"""
+
+verification = "Tool tests on plant M: the candidate's untouched records equal the base's raw text; a planted part number is updated with the prefix, an empty part filled, an empty VERA ID filled, a missing device appended and an EPLAN-only device kept; the report lists connections, terminals and macros as not transferred; preparing writes nothing and applying writes only the new file."
+
+affected_paths = ["05_Software/src/libraries/core/src/electrical/eplan.ts", "05_Software/src/libraries/core/src/electrical/eplan-tool.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/electrical/eplan-tool.test.ts"]
+
+
+spec = "specs/REQ-DATA-203d52e6.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-16
+updated = 2026-11-16

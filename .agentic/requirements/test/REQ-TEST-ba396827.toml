@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-TEST-ba396827"
+
+title = "Fictional plant M EPLAN exchange fixtures and real-application tests gated on an installation"
+
+status = "active"
+
+requirement = """
+The repository shall hold self-authored fictional plant M EPLAN exchange fixtures (a profile, a device list and terminal and connection tables matching the plant M documentation run; the tests build the eplan-tool outcome files from the documented outcome format) whose format details cite the public EPLAN API 2025 pages, and real-application tests that run only when VERA_TEST_EPLAN_PROFILE names a profile whose project is a fixture project of an installed, licensed EPLAN Electric P8 2025.
+"""
+
+verification = "Inspection: tests/fixtures/eplan holds the profile and tables, described in tests/fixtures/README.md with the eplan.help pages they follow; tests/plugins/eplan.test.ts skips the real-application cases without VERA_TEST_EPLAN_PROFILE."
+
+affected_paths = ["05_Software/tests/fixtures/eplan/"]
+
+linked_tests = ["05_Software/src/libraries/core/src/electrical/eplan-tool.test.ts", "05_Software/tests/plugins/eplan.test.ts"]
+
+
+spec = "specs/REQ-DATA-203d52e6.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-16
+updated = 2026-11-16

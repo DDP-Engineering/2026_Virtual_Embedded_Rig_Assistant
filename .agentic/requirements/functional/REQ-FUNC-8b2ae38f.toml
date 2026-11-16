@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-8b2ae38f"
+
+title = "Store an EPLAN check result with reconcile and round-trip criteria through an approved prepared change"
+
+status = "active"
+
+requirement = """
+When eplan_check is run with a profile, a stored documentation run and the exported tables (and optionally the base export, the candidate and the eplan-tool outcome file), VERA shall prepare one new result electrical-automation-results/<run-id>/result.json (producer eplan / check) whose criteria are the documentation run's freshness, devices, part-numbers, terminals and connections against the documentation lists and, with a candidate, identity (every base record's identity present once), unchanged (untouched records and unmapped cells equal), applied (every candidate value present) and outcome, with the files' sha256 as sources, written only after approval and changing no source file.
+"""
+
+verification = "Tool tests on plant M: a matching export gives pass criteria and status completed; a planted difference fails its criterion; a re-export that lost a record fails identity, one with a changed untouched cell fails unchanged, one without a candidate value fails applied; sources carry the sha256; source files keep their sha256."
+
+affected_paths = ["05_Software/src/libraries/core/src/electrical/eplan.ts", "05_Software/src/libraries/core/src/electrical/eplan-tool.ts", "05_Software/src/libraries/core/src/electrical/result-change.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/electrical/eplan-tool.test.ts"]
+
+
+spec = "specs/REQ-DATA-203d52e6.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-16
+updated = 2026-11-16

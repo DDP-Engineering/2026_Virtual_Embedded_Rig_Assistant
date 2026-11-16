@@ -35,7 +35,11 @@ short-circuit/busbars not evaluated, verification report, impact of a changed de
 `electrical_documentation`, `electrical_documentation_check`, `electrical_documentation_export`, material, connection,
 cable, terminal, label and I/O lists, tag CSV import, wire numbering and wire ends, device-terminal-I/O-tag chain,
 logical revision, change report, CSV/XLSX/PDF exports (spec .agentic/specs/REQ-DATA-aa83ed5c.md, core
-electrical/documentation.ts, documentation-export.ts, documentation-tool.ts), and the per-plugin tool gating (`electricalPluginTools`, `electricalToolOffered`). Start at 05_Software/src/libraries/core/src/electrical/ (model.ts, tools.ts) and
+electrical/documentation.ts, documentation-export.ts, documentation-tool.ts), EPLAN exchange: `eplan`, `eplan_change`,
+`eplan_check`, profiles `electrical-automation-eplan/<id>.json`, strict semicolon device/terminal/connection tables,
+EPLAN device tags =plant+location-identifier, reconcile with the documentation lists, the device list import candidate,
+round-trip and eplan-tool outcome criteria (spec .agentic/specs/REQ-DATA-203d52e6.md, shared eplan.ts, core
+electrical/eplan.ts, eplan-tool.ts; the helper eplan-tool belongs to official plugins), and the per-plugin tool gating (`electricalPluginTools`, `electricalToolOffered`). Start at 05_Software/src/libraries/core/src/electrical/ (model.ts, tools.ts) and
 shared/src/electrical-model.ts, with spec .agentic/specs/REQ-DATA-06c0bd54.md. Tests: core/src/electrical/*.test.ts,
 core/src/sessions/electrical-model.test.ts, desktop main/sessions.test.ts. The write flow itself
 (commitChange, WriteQueue) belongs to [file tools](file-tools.md); plugin packages and their helpers belong to
@@ -240,6 +244,29 @@ folders; VERA derives result freshness from the results' input snapshots and sto
   Tool `electrical_documentation_export` (write) {runId, format csv|xlsx|pdf, list?} prepares one new file
   `electrical-automation-results/<run>/documentation-<list>.csv|documentation.xlsx|documentation.pdf` through
   `commitChange` (existing file refused; binary preview = size and sha256).
+- EPLAN exchange (spec REQ-DATA-203d52e6): shared `eplanProfileSchema` (kind `vera-eplan-profile`, format 1: target
+  EPLAN Electric P8 2025 windows-x64, `project.link` absolute .elk path without spaces, `tables.devices.columns` tag +
+  part/description/vera, `partPrefixes` per manufacturer, optional `terminals` {scheme, language, columns strip, point}
+  and `connections` {scheme, language, columns from, to, wire?, crossSection?, color?}), `eplanOutcomeSchema` (kind
+  `vera-eplan-outcome`, format 1), `eplanProfileDir`, `eplanTables`, `eplanColumns`, `eplanLimits` (profile 64 KiB,
+  table 4 MiB / 20 000 records, outcome 256 KiB). Core pure: `parseEplanProfile` (`Invalid EPLAN profile <id>: ...`),
+  `decodeEplanTable`/`parseEplanTable` (UTF-8, BOM kept, `;` via the documentation `csvRecords(text, fail, delimiter)`
+  which returns record spans, header with every mapped header once, equal field counts, one empty final line,
+  `Invalid EPLAN <table> table <path>: line <n>: <reason>.`; records keep cells, raw text and mapped values),
+  `eplanTag`, `eplanEnd`, `eplanRecordText`, `reconcileEplan` (devices matched by VERA ID or identifier against the
+  documentation labels of kind device, parts against materials with the manufacturer prefix, terminals against the
+  terminal rows of panel strips, connections as unordered end pairs with wire numbers; `update-object` operations
+  recording `attributes.eplanTag`), `eplanCandidate`, `roundTripCriteria`, `outcomeCriterion`, `analyzeEplan`
+  (producer `eplan` / `check`, engine `vera-eplan` 1.0.0). Access: `readEplanProfile(root, id)`, `readEplanTable(root,
+  path, table, profile)`.
+- Tool `eplan` (read) {view inspect {profile, table, path, offset?} | reconcile {profile, documentationRun, devices,
+  terminals?, connections?}}; tool `eplan_change` (write) {action candidate, profile, base, sha256, documentationRun,
+  path} prepares one new .csv through `commitChange` (base sha256 checked at prepare, existing path refused, profile
+  without part and vera columns refused); tool `eplan_check` (write) {profile, documentationRun, exports {devices,
+  terminals?, connections?}, base? {path, sha256}, candidate?, outcome?} prepares one result through
+  `prepareResultChange` with criteria `source:documentation`, `devices`, `part-numbers`, `terminals`, `connections`
+  and with a candidate `identity`, `unchanged`, `applied`, `outcome` (status incomplete when a source or the outcome
+  fails).
 - Result format 1 has an optional strict `assemblies` list (<= 16; per assembly motor, circuit, method, conditional,
   devices <= 16 {tag, role, item|null, orderCode|null, setting?}, connections <= 32 {from, to, kind power|control},
   interlocks <= 8 {kind mechanical|electrical|sequence, devices, note}); `renderResultReport` lists them.
@@ -248,7 +275,8 @@ folders; VERA derives result freshness from the results' input snapshots and sto
   `electricalPluginTools` (`industrial_catalog` -> industrial-catalog, `electrical_network` -> electrical-network,
   `protection_coordination` -> protection-coordination, `motor_drives` -> motor-drives, `power_quality` -> power-quality-pfc, `lighting_design` -> lighting-design, `qelectrotech`, `qelectrotech_change`, `qelectrotech_check` -> qelectrotech, `panel_engineering`,
   `panel_engineering_check` -> panel-engineering, `electrical_documentation`, `electrical_documentation_check`,
-  `electrical_documentation_export` -> electrical-documentation) only while its own plugin ID
+  `electrical_documentation_export` -> electrical-documentation, `eplan`, `eplan_change`, `eplan_check` -> eplan) only
+  while its own plugin ID
   is loaded (`electricalToolOffered(name, plugins)`). `SessionHost.electricalPlugins` holds the loaded plugin IDs; the
   desktop sets it from the loaded plugins of those ecosystems. The headless CLI does not set it.
 
@@ -350,6 +378,15 @@ folders; VERA derives result freshness from the results' input snapshots and sto
   only and carry project, revision, run and model sha256; nothing is printed, ordered or sent (REQ-DATA-aa83ed5c,
   REQ-FUNC-68911c98, REQ-FUNC-9a06c922, REQ-FUNC-e7ad9a1c, REQ-FUNC-df08e0a4, REQ-FUNC-59134b83, REQ-FUNC-3d4e6392,
   REQ-FUNC-c0be3443).
+- EPLAN tables are read only as declared by the profile: semicolon UTF-8 text with a header holding every mapped
+  header once; anything else refuses the whole file. Reconcile proposes operations and never writes the model. A
+  candidate is a new file that copies every unchanged base record byte for byte, changes only the part and an empty
+  VERA ID cell of matched devices (an empty EPLAN part is filled), appends missing devices that have a known order
+  code or model object and removes nothing; connections, terminals and macros are
+  never imported. An import counts only when the outcome is a completed import of this candidate into the profile's
+  project whose re-export hashes match; otherwise `outcome` fails, `identity`/`unchanged`/`applied` cannot pass and the
+  run is incomplete. No EPLAN behaviour is confirmed without an installation (REQ-DATA-203d52e6, REQ-DATA-e601f922,
+  REQ-FUNC-f415fdc8, REQ-FUNC-0103d4c6, REQ-FUNC-8b2ae38f, REQ-REL-803299e7).
 - An import merges only through a mapping naming every imported ID as new or an existing entity of the same kind
   and type; anything else refuses the whole change (REQ-FUNC-784f108f).
 
@@ -384,6 +421,8 @@ folders; VERA derives result freshness from the results' input snapshots and sto
 | Documentation lists, checks, revision, change report | electrical/documentation.ts, spec REQ-DATA-aa83ed5c | electrical/documentation-tool.test.ts |
 | Documentation exports, tag file | electrical/documentation-export.ts, documentation.ts | electrical/documentation.test.ts |
 | Documentation tools | electrical/documentation-tool.ts | electrical/documentation-tool.test.ts |
+| EPLAN profile, tables, reconcile, candidate, round trip | shared eplan.ts, electrical/eplan.ts, spec REQ-DATA-203d52e6 | electrical/eplan.test.ts |
+| EPLAN tools | electrical/eplan-tool.ts | electrical/eplan-tool.test.ts (plant M bench electrical/plant-m.test-support.ts) |
 | Offering the tools | electrical/tools.ts (`electricalPluginTools`), sessions/service.ts filter, desktop main/sessions.ts | sessions/electrical-model.test.ts, desktop main/sessions.test.ts |
 
 ## Key behaviors
@@ -496,6 +535,13 @@ folders; VERA derives result freshness from the results' input snapshots and sto
 - REQ-FUNC-c0be3443 — CSV, XLSX and PDF exports as new files with the controlled header.
 - REQ-FUNC-359d4b0a — live changes since a stored documentation run.
 - REQ-TEST-e9acd927 — plant M documentation reference with planted defects.
+- REQ-DATA-203d52e6 — accept only a strictly valid EPLAN mapping profile.
+- REQ-DATA-e601f922 — read an EPLAN exchange table strictly, keeping unmapped columns.
+- REQ-FUNC-f415fdc8 — reconcile EPLAN devices, parts, terminals and connections with the documentation lists.
+- REQ-FUNC-0103d4c6 — device list import candidate keeping every untouched record and cell.
+- REQ-REL-f8d51ff3 — refuse an EPLAN candidate or check on a changed base or invalid inputs.
+- REQ-FUNC-8b2ae38f — EPLAN check result with reconcile and round-trip criteria.
+- REQ-REL-803299e7 — no import counted as applied without a completed outcome and matching re-export.
 
 ## Files
 
@@ -579,3 +625,10 @@ folders; VERA derives result freshness from the results' input snapshots and sto
 - `05_Software/src/libraries/core/src/electrical/documentation.test.ts` — tag file, section schema, export writers.
 - `05_Software/src/libraries/core/src/electrical/documentation-tool.test.ts` — plant M lists, planted defects, revision, changes, refusals, exports.
 - `05_Software/tests/fixtures/electrical-documentation/` — fictional documentation model and tag file.
+- `05_Software/src/libraries/shared/src/eplan.ts` — EPLAN profile and outcome schemas, limits.
+- `05_Software/src/libraries/core/src/electrical/eplan.ts` — profile, tables, tags, reconcile, candidate, check result.
+- `05_Software/src/libraries/core/src/electrical/eplan-tool.ts` — the three EPLAN tools.
+- `05_Software/src/libraries/core/src/electrical/eplan.test.ts` — profile, table reader, tags, record text.
+- `05_Software/src/libraries/core/src/electrical/eplan-tool.test.ts` — reconcile, candidate, check, outcome, refusals, gating.
+- `05_Software/src/libraries/core/src/electrical/plant-m.test-support.ts` — the plant M bench shared by the documentation and EPLAN tool tests.
+- `05_Software/tests/fixtures/eplan/` — fictional EPLAN profile, device list, terminal and connection tables of plant M.

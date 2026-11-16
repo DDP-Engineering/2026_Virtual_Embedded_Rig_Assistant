@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-f8d51ff3"
+
+title = "Refuse an EPLAN candidate on a changed base export or invalid inputs before any change"
+
+status = "active"
+
+requirement = """
+If an eplan_change candidate or eplan_check request names a base export whose current sha256 differs from the stated one, an existing target file, a missing, invalid or foreign profile or documentation run, a profile without a part or VERA column for a candidate, or a read-only session, then VERA shall refuse the request with the reason before preparing any change.
+"""
+
+verification = "Tool tests: each of a changed base export (conflict), an existing target, a missing profile, a foreign run, a profile without part and VERA columns and a read-only session is refused for eplan_change, and a changed base, a missing profile, a missing export and a read-only session for eplan_check, and no file is created or changed."
+
+affected_paths = ["05_Software/src/libraries/core/src/electrical/eplan-tool.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/electrical/eplan-tool.test.ts"]
+
+
+spec = "specs/REQ-DATA-203d52e6.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-16
+updated = 2026-11-16
