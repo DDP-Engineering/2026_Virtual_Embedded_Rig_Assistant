@@ -21,6 +21,10 @@ tickets in Gitea.
   E5 Small as a second local embedding model chosen per workbench, BGE Small EN staying the default.
 - Indexing limits: [indexing-limits.md](indexing-limits.md), **IDX-01…IDX-04** — `.gitignore` honored by
   default, maximum file size and indexed-file count per workbench, one selection for preview and indexing.
+- Bypass full access: [bypass-full-access.md](bypass-full-access.md), **BYP-01…BYP-03**, epic #307 — in Bypass every
+  agent tool may use any folder (program runs, log and register tools, plugin authoring), except VERA's own data.
+- Terminal: [terminal.md](terminal.md), **TERM-01…TERM-05**, epic #311 — a `run_command` shell tool with background runs and
+  monitoring, approvals and allowed commands, additional folders, the Runs tab, and a Terminal panel for the user.
 - Help and French: [help.md](help.md), **HELP-01…HELP-08** — help pages for VERA and every plugin in
   en, ro, de and fr (`05_Software/help/`), a Help button in place of the top-bar About button, French
   in the interface, and a `help` tool for the agent.
