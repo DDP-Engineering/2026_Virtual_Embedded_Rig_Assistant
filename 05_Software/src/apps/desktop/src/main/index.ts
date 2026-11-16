@@ -8,6 +8,7 @@ import { registerBunOAuthFlows } from "@earendil-works/pi-ai/bun-oauth";
 import {
   createCommandShellHost,
   createDownloadPdfExtractor,
+  createMaskingResolver,
   embeddingModelId,
   HelpLibrary,
   type LlmGateway,
@@ -59,13 +60,16 @@ import { CatalogChecks } from "./catalog-checks.js";
 import { ChatgptAuth } from "./chatgpt-auth.js";
 import { CredentialFile } from "./credentials.js";
 import { configureDataLocations } from "./data-locations.js";
-import { publicDocument, publicDocumentHit, publicViewer, publicWebDownload } from "./document-viewer.js";
+import { DisplayDocuments } from "./display-documents.js";
+import { DisplayIdentities, loadDisplayIdentityKey } from "./display-identities.js";
+import { publicViewer, publicWebDownload } from "./document-viewer.js";
 import { createDesktopDownloadTransfer } from "./download-transfer.js";
 import { createEmbeddingWarmup } from "./embedding-warmup.js";
 import {
   createEventEmitter,
   publicGuard,
   rendererSessionSnapshot,
+  sanitizeEvent,
   sanitizeSessionSummary,
 } from "./events.js";
 import { createFileAccess } from "./file-access.js";
@@ -182,6 +186,28 @@ let updates: Updates | undefined;
 export const emitAppEvent = createEventEmitter(
   () => window?.webContents,
   (text) => credentials.scrub(text),
+  (envelope) => {
+    if (envelope.topic === "workbench" && envelope.event.type === "index.document") {
+      const event = envelope.event;
+      return {
+        ...envelope,
+        event: {
+          ...event,
+          path: display.path(envelope.id, event.path),
+          document: event.document ? display.document(envelope.id, event.document) : null,
+        },
+      };
+    }
+    if (envelope.topic === "workbench" && envelope.event.type === "index.guard")
+      return {
+        ...envelope,
+        event: {
+          ...envelope.event,
+          guard: publicGuard(envelope.event.guard, (text) => display.scrub(envelope.id, text)),
+        },
+      };
+    return sanitizeEvent(envelope, (text) => credentials.scrub(text));
+  },
 );
 const logger = createLogger(dataLocations.paths.logs, systemClock);
 const credentials = new CredentialFile({
@@ -219,10 +245,19 @@ const workbench = new WorkbenchService(
       }
     },
     changed: (event) => {
+      if (event.event.type === "closed") display.close();
       emitAppEvent(eventEnvelopeSchema.parse(event));
     },
   },
   indexer.processor,
+);
+const display = new DisplayDocuments(
+  workbench,
+  createMaskingResolver(() => settings.get().settings),
+  (text) => credentials.scrub(text),
+  new DisplayIdentities(
+    loadDisplayIdentityKey(join(dataLocations.paths.userData, "display-identities.json")),
+  ),
 );
 /** Installed plugins live under userData; enablement is per workbench (workbench.yaml). */
 const plugins = new PluginStore({ root: join(dataLocations.paths.userData, "plugins") });
@@ -801,58 +836,44 @@ ipcMain.handle(
         await programs.stopRun(openWorkbenchFolder(workbenchId), id);
         return {};
       },
-      "docs.list": async ({ workbenchId }) => ({
-        workbenchId,
-        documents: (await workbench.listDocuments(workbenchId))
-          .map((doc) => publicDocument(doc, (text) => credentials.scrub(text)))
-          .filter((doc) => doc !== undefined),
-      }),
-      // Paths a redaction would change are left out, like docs.list (TASK-66b7d4aa).
-      "docs.tree": async ({ workbenchId, path }) => {
-        const listed = await workbench.listFolder(workbenchId, path);
-        return {
-          workbenchId,
-          path,
-          entries: listed.entries.filter((entry) => credentials.scrub(entry.path) === entry.path),
-          truncated: listed.truncated,
-        };
-      },
-      "docs.find": async ({ workbenchId, query }) => {
-        const found = await workbench.findFiles(workbenchId, query);
-        return {
-          workbenchId,
-          paths: found.paths.filter((path) => credentials.scrub(path) === path),
-          truncated: found.truncated,
-        };
-      },
-      "docs.read": async ({ workbenchId, path }) => ({
-        workbenchId,
-        content: publicViewer(await workbench.readText(workbenchId, path), (text) => credentials.scrub(text)),
-      }),
-      "docs.stat": async ({ workbenchId, path }) => ({
-        workbenchId,
-        properties: await workbench.statEntry(workbenchId, path),
-      }),
+      "docs.list": ({ workbenchId }) => display.list(workbenchId),
+      "docs.tree": ({ workbenchId, path }) => display.tree(workbenchId, path),
+      "docs.find": ({ workbenchId, query }) => display.find(workbenchId, query),
+      "docs.read": ({ workbenchId, path, requestId }) => display.read(workbenchId, path, requestId),
+      "docs.stat": ({ workbenchId, path }) => display.stat(workbenchId, path),
       // The Docs tree's OS actions go through the tree's confinement first (TASK-eae3a69e).
       "docs.openers": () => ({ apps: [...openers().keys()] }),
       "docs.openWith": ({ workbenchId, path, app }) =>
-        openWith(() => workbench.locateEntry(workbenchId, path), app, openers(), launchDetached),
-      "docs.systemApps": async ({ workbenchId, path }) => ({
-        apps: (await systemApps(() => workbench.locateEntry(workbenchId, path), systemAppDeps())).map(
-          ({ id, name }) => ({ id, name }),
+        openWith(
+          () => workbench.locateEntry(workbenchId, display.resolve(workbenchId, path)),
+          app,
+          openers(),
+          launchDetached,
         ),
+      "docs.systemApps": async ({ workbenchId, path }) => ({
+        apps: (
+          await systemApps(
+            () => workbench.locateEntry(workbenchId, display.resolve(workbenchId, path)),
+            systemAppDeps(),
+          )
+        ).map(({ id, name }) => ({ id, name })),
       }),
       "docs.openSystemApp": ({ workbenchId, path, app }) =>
-        openSystemApp(() => workbench.locateEntry(workbenchId, path), app, systemAppDeps(), launchDetached),
+        openSystemApp(
+          () => workbench.locateEntry(workbenchId, display.resolve(workbenchId, path)),
+          app,
+          systemAppDeps(),
+          launchDetached,
+        ),
       "docs.reveal": ({ workbenchId, path }) =>
         revealEntry(
-          () => workbench.locateEntry(workbenchId, path),
+          () => workbench.locateEntry(workbenchId, display.resolve(workbenchId, path)),
           (absolute) => shell.showItemInFolder(absolute),
         ),
       "docs.copyPath": ({ workbenchId, path, form }) =>
         copyEntry(
-          () => workbench.locateEntry(workbenchId, path),
-          path,
+          () => workbench.locateEntry(workbenchId, display.resolve(workbenchId, path)),
+          display.resolve(workbenchId, path),
           form,
           (text) => clipboard.writeText(text),
           sep,
@@ -860,37 +881,33 @@ ipcMain.handle(
       "docs.volume": async ({ workbenchId }) => ({
         workbenchId,
         volume: workbench.documentVolume(workbenchId),
-        guard: publicGuard(workbench.documentGuard(workbenchId), (text) => credentials.scrub(text)),
+        guard: display.guard(workbenchId),
       }),
       "docs.approve": async ({ workbenchId, files }) => {
         await workbench.approveDocuments(workbenchId, files);
         return {};
       },
-      "docs.search": async ({ workbenchId, query }) => ({
-        workbenchId,
-        results: (await workbench.searchDocuments(workbenchId, query))
-          .map((hit) => publicDocumentHit(hit, (text) => credentials.scrub(text)))
-          .filter((hit) => hit !== undefined),
-      }),
-      "docs.open": async (request) => {
-        const content =
-          "sessionId" in request
-            ? await sessions.run((service) =>
-                workbench.readDocuments(request.workbenchId, () =>
-                  service.openCitation(request.sessionId, request.messageId, request.ref),
+      "docs.search": ({ workbenchId, query }) => display.search(workbenchId, query),
+      "docs.open": (request) =>
+        display.open(
+          request.workbenchId,
+          () =>
+            "sessionId" in request
+              ? sessions.run((service) =>
+                  workbench.readDocuments(request.workbenchId, () =>
+                    service.openCitation(request.sessionId, request.messageId, request.ref),
+                  ),
+                )
+              : workbench.openDocument(
+                  request.workbenchId,
+                  "path" in request
+                    ? display.resolve(request.workbenchId, request.path)
+                    : display.resolveRef(request.workbenchId, request.ref),
+                  "path" in request,
                 ),
-              )
-            : await workbench.openDocument(
-                request.workbenchId,
-                "path" in request ? request.path : request.ref,
-                "path" in request,
-              );
-        // Match existing session/artifact disclosure scrubbing, while keeping PDF bytes intact.
-        return {
-          workbenchId: request.workbenchId,
-          content: publicViewer(content, (text) => credentials.scrub(text)),
-        };
-      },
+          request,
+          request.requestId,
+        ),
       "indexer.status": async () => ({ state: indexer.state() }),
       "indexer.restart": async () => {
         indexer.restart();
@@ -961,11 +978,19 @@ ipcMain.handle(
         }),
       "app.revealPath": ({ path }) =>
         sessions.run(() =>
-          revealPath(workbench.getSnapshot().folder, path, (absolute) => shell.showItemInFolder(absolute)),
+          revealPath(
+            workbench.getSnapshot().folder,
+            display.resolve(workbench.getSnapshot().config.id, path),
+            (absolute) => shell.showItemInFolder(absolute),
+          ),
         ),
       "app.openPath": ({ path }) =>
         sessions.run(() =>
-          openPath(workbench.getSnapshot().folder, path, (absolute) => shell.openPath(absolute)),
+          openPath(
+            workbench.getSnapshot().folder,
+            display.resolve(workbench.getSnapshot().config.id, path),
+            (absolute) => shell.openPath(absolute),
+          ),
         ),
       "session.list": async ({ workbenchId }) => {
         const current = workbench.getSnapshot(),

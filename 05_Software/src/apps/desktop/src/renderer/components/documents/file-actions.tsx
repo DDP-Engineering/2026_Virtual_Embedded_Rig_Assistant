@@ -56,6 +56,7 @@ export function useDescribeDocument() {
 
 export interface FileTarget {
   path: string;
+  displayPath?: string | undefined;
   type: DocsTreeEntry["type"];
   ignored: boolean;
 }
@@ -101,12 +102,12 @@ export function useFileActions(workbenchId: string, menuFor: string | undefined)
   const items = (entry: FileTarget, properties: () => void): TreeMenuItem[] => {
     const openIn: TreeMenuItem[] = [
       // The default application is reached through PathGuard, which refuses what VERA ignores.
-      ...(entry.type === "file" && !entry.ignored && canOpenExternally(entry.path)
+      ...(entry.type === "file" && !entry.ignored && canOpenExternally(entry.displayPath ?? entry.path)
         ? [
             {
               action: "open-external",
               label: t("documents.defaultApp"),
-              name: t("documents.openExternalNamed", { path: entry.path }),
+              name: t("documents.openExternalNamed", { path: entry.displayPath ?? entry.path }),
               run: () => perform(api.invoke("app.openPath", { path: entry.path })),
             },
           ]
@@ -151,7 +152,11 @@ export function useFileActions(workbenchId: string, menuFor: string | undefined)
             {
               action: "attach",
               label: t("documents.attach"),
-              disabled: entry.ignored || !attachments.attach || attachments.full,
+              disabled:
+                entry.ignored ||
+                /__vera_display_[A-Za-z0-9_-]+\.(?:\/|$)/.test(entry.path) ||
+                !attachments.attach ||
+                attachments.full,
               run: () => attachments.attach?.(entry.path),
             },
           ]

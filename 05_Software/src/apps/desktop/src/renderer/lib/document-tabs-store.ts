@@ -6,13 +6,23 @@ import { z } from "zod";
 /** One renderer record per workbench session: `vera.tabs.<workbenchId>.<sessionId>` (TASK-061fe00e). */
 const key = (workbenchId: string, sessionId: string) => `vera.tabs.${workbenchId}.${sessionId}`;
 const text = z.string().min(1).max(4096);
+const identity = z
+  .string()
+  .min(1)
+  .max(262144)
+  .refine((value) => value.length <= 4096 || /__vera_(?:display|reference)_/.test(value));
+const activeKey = z
+  .string()
+  .min(1)
+  .max(262160)
+  .refine((value) => value.length <= 4096 || /__vera_(?:display|reference)_/.test(value));
 const targetSchema = z.union([
   z.strictObject({ runId: programRunIdSchema }),
-  z.strictObject({ path: text }),
-  z.strictObject({ ref: text }),
+  z.strictObject({ path: identity }),
+  z.strictObject({ ref: identity }),
   z.strictObject({ downloadId: text }),
-  z.strictObject({ textPath: text, ignored: z.boolean().optional() }),
-  z.strictObject({ sessionId: text, messageId: text, ref: text }),
+  z.strictObject({ textPath: identity, ignored: z.boolean().optional() }),
+  z.strictObject({ sessionId: text, messageId: text, ref: identity }),
 ]);
 const count = z.number().int().min(0).max(Number.MAX_SAFE_INTEGER);
 const placeSchema = z.union([
@@ -26,7 +36,7 @@ const tabSchema = z.strictObject({ target: targetSchema, place: placeSchema.opti
 const MAX_TABS = 200;
 export const storedTabsSchema = z.strictObject({
   version: z.literal(1),
-  active: text,
+  active: activeKey,
   tabs: z.array(tabSchema).max(MAX_TABS),
 });
 export type StoredTabs = z.infer<typeof storedTabsSchema>;
@@ -57,7 +67,7 @@ export function writeTabs(
   if (deleted.has(key(workbenchId, sessionId))) return;
   // One tab that cannot be stored (an over-long path) is left out instead of losing the record.
   const tabs = value.tabs.filter((tab) => tabSchema.safeParse(tab).success).slice(-MAX_TABS);
-  const active = text.safeParse(value.active).success ? value.active : "chat";
+  const active = activeKey.safeParse(value.active).success ? value.active : "chat";
   try {
     storage.setItem(
       key(workbenchId, sessionId),

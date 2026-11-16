@@ -26,7 +26,6 @@ const tabId = (index: number) => `document-tab-${index}`;
 const panelId = (index: number) => `document-panel-${index}`;
 /** The workbench file a tab shows, from its document key (`file:<path>`). */
 const filePath = (key: string) => (key.startsWith("file:") ? key.slice(5) : undefined);
-const fileName = (path: string) => path.split("/").at(-1) || path;
 const focusTab = (index: number) => document.getElementById(tabId(index))?.focus();
 /** Focuses a tab by its key; a moved tab is re-inserted by React and loses focus. */
 const focusKey = (key: string) =>
@@ -168,7 +167,9 @@ export function DocumentTabs({ chat }: { chat: ReactNode }) {
         run: () => moveFocused(tab.key, 1),
       },
       ...(path !== undefined && tab.content?.kind !== "artifact"
-        ? actions.items({ path, type: "file", ignored }, () => setProperties({ path, ignored }))
+        ? actions.items({ path, displayPath: tab.content?.displayPath, type: "file", ignored }, () =>
+            setProperties({ path, ignored }),
+          )
         : "downloadId" in tab.target
           ? actions.downloadItems(tab.target.downloadId)
           : []),
@@ -352,7 +353,6 @@ export function DocumentTabs({ chat }: { chat: ReactNode }) {
         <TreeProperties
           workbenchId={workbenchId}
           path={properties.path}
-          name={fileName(properties.path)}
           type="file"
           ignored={properties.ignored}
           doc={documents.data?.find((doc) => doc.path === properties.path)}

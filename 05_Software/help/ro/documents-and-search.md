@@ -2,6 +2,8 @@
 
 VERA indexează documentația unui workbench pe calculatorul tău, astfel încât agentul să poată căuta în ea și să citeze exact pagina, secțiunea sau linia pe care a folosit-o. Indexarea folosește un model local și nu trimite nimic prin rețea. Când agentul citește un pasaj pentru a-ți răspunde, acel pasaj ajunge la furnizorul tău de modele, la fel ca restul conversației; cu un server local precum LM Studio sau Ollama, rămâne pe calculatorul tău.
 
+Mascarea afișării este dezactivată implicit. Când este activată pentru un workbench, secretele salvate din numele fișierelor și textul vizualizatorului apar ca [REDACTED]. Fișierele și rezultatele căutării rămân în listă și deschid același fișier, chiar dacă două nume mascate arată identic. Mascarea afișării nu schimbă indexarea sau ce poate trimite agentul unui model. Imaginile paginilor PDF păstrează octeții originali; se maschează doar textul extras.
+
 ## Ce se indexează
 
 Se indexează folderele bifate la **Editează workbenchul** → **Documente și RAG**, ținând cont de pattern-urile de includere și excludere de la **Avansat: pattern-uri de includere și excludere**. Se indexează aceste tipuri de fișiere:

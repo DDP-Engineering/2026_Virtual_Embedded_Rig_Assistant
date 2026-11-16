@@ -46,7 +46,10 @@ const collator = new Intl.Collator("en", { numeric: true, sensitivity: "base" })
 const byName = (a: DocsTreeEntry, b: DocsTreeEntry) =>
   a.type === b.type ? collator.compare(a.name, b.name) : a.type === "folder" ? -1 : 1;
 /** The entries of each folder from a filter's matching file paths; every folder is open. */
-function filteredFolders(paths: readonly string[]): Map<string, DocsTreeEntry[]> {
+function filteredFolders(
+  paths: readonly string[],
+  labels: Record<string, string> = {},
+): Map<string, DocsTreeEntry[]> {
   const folders = new Map<string, Map<string, DocsTreeEntry>>([["", new Map()]]);
   for (const path of paths) {
     const parts = path.split("/");
@@ -56,7 +59,8 @@ function filteredFolders(paths: readonly string[]): Map<string, DocsTreeEntry[]>
       const folder = n < parts.length;
       if (!folders.has(parent)) folders.set(parent, new Map());
       folders.get(parent)?.set(entryPath, {
-        name: parts[n - 1] as string,
+        name: labels[entryPath]?.split("/").at(-1) ?? (parts[n - 1] as string),
+        ...(labels[entryPath] === undefined ? {} : { displayPath: labels[entryPath] }),
         path: entryPath,
         type: folder ? "folder" : "file",
         // Name matches never come from ignored folders.
@@ -165,7 +169,10 @@ export function DocsTree({
     },
   });
   const folders = useMemo(() => {
-    if (query) return found.data ? filteredFolders(found.data.paths) : new Map<string, DocsTreeEntry[]>();
+    if (query)
+      return found.data
+        ? filteredFolders(found.data.paths, found.data.labels)
+        : new Map<string, DocsTreeEntry[]>();
     return new Map(
       listed.flatMap((result) => (result.data ? [[result.data.path, result.data.entries]] : [])),
     );
@@ -360,7 +367,6 @@ export function DocsTree({
         <TreeProperties
           workbenchId={workbenchId}
           path={properties.path}
-          name={properties.name}
           type={properties.type}
           ignored={properties.ignored}
           doc={properties.type === "file" ? byPath.get(properties.path) : undefined}

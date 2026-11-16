@@ -94,6 +94,17 @@ export function DocsTab({
       void client.invalidateQueries({ queryKey: ["docs.tree", workbenchId] });
       void client.invalidateQueries({ queryKey: ["docs.find", workbenchId] });
     };
+    const resetDisplay = (owner?: string) => {
+      for (const channel of [
+        "docs.list",
+        "docs.search",
+        "docs.tree",
+        "docs.find",
+        "docs.stat",
+        "docs.volume",
+      ])
+        void client.resetQueries({ queryKey: owner === undefined ? [channel] : [channel, owner] });
+    };
     const off = api.subscribe("workbench", workbenchId, (event) => {
       if (event.type === "index.progress") setProgress(event);
       if (event.type === "index.volume")
@@ -110,9 +121,16 @@ export function DocsTab({
         if (event.guard) setProgress(undefined);
       }
       if (event.type === "index.document") refresh();
+      if (event.type === "config.changed") resetDisplay(workbenchId);
+    });
+    const offApp = api.subscribe("app", (event) => {
+      if (event.type === "settings.changed") resetDisplay();
     });
     refresh();
-    return off;
+    return () => {
+      off();
+      offApp();
+    };
   }, [workbenchId, client]);
   useEffect(() => {
     // One debounce feeds the tree's name filter and the document search (TASK-b34f2cc7).
@@ -230,11 +248,11 @@ export function DocsTab({
                 <ol className="documents-list">
                   {results.data.map((hit) => (
                     <li key={hit.ref}>
-                      <p>{hit.ref}</p>
+                      <p>{hit.displayRef ?? hit.ref}</p>
                       <p>{hit.snippet}</p>
                       <button
                         type="button"
-                        aria-label={t("documents.openNamed", { path: hit.ref })}
+                        aria-label={t("documents.openNamed", { path: hit.displayRef ?? hit.ref })}
                         onClick={() => open?.({ ref: hit.ref })}
                       >
                         {t("documents.open")}

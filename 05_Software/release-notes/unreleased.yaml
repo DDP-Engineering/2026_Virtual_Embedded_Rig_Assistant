@@ -1,6 +1,13 @@
 version: Unreleased
 date: null
 entries:
+  - category: fixed
+    topic: { en: Files, ro: Fișiere, de: Dateien, fr: Fichiers }
+    text:
+      en: Display masking keeps secret-named files visible and opens their original contents.
+      ro: Mascarea afișării păstrează fișierele cu nume secrete vizibile și le deschide corect.
+      de: Die Anzeigemaskierung lässt Dateien mit geheimen Namen sichtbar und öffnet sie korrekt.
+      fr: Le masquage garde visibles les fichiers aux noms secrets et ouvre leur contenu correct.
   - category: new
     topic: { en: Terminal, ro: Terminal, de: Terminal, fr: Terminal }
     text:

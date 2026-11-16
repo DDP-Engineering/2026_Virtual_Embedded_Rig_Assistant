@@ -2,6 +2,9 @@
 
 VERA indexes the documentation of a workbench on your computer, so the agent can search it and cite the exact page, section or line it used. Indexing uses a local model and sends nothing over the network. When the agent reads a passage to answer you, that passage goes to your model provider like the rest of the conversation; with a local server such as LM Studio or Ollama it stays on your computer.
 
+Display masking is off by default. When enabled for a workbench, stored secrets in file names and viewer text appear as [REDACTED]. Files and search results remain listed and open the same file, even when two masked names look alike. Display masking does not change indexing or what the agent may send to a model. PDF page images keep their original bytes; only extracted text is masked.
+
+
 ## What is indexed
 
 The folders checked under **Edit workbench** → **Documents & RAG** are indexed, together with the include and exclude patterns under **Advanced: include and exclude patterns**. These file types are indexed:

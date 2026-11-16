@@ -8,6 +8,8 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ### Changed
 
+- Display masking follows app and workbench choices while keeping secret-named files visible and openable.
+
 - Auto-edit uses saved command prefixes; destructive shell commands always ask outside Bypass.
 
 - lab-validation 0.3.0: HIL validation reads host-approved outside inputs with workbench-owned output.

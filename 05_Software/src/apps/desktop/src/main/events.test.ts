@@ -418,3 +418,21 @@ it("sends large session events to the renderer bounded", () => {
     event: { preview: "x".repeat(8192), truncated: { preview: 20000 } },
   });
 });
+
+it("keeps validated privacy protocol choices when a stored secret equals an enum spelling", () => {
+  const send = vi.fn();
+  const emit = createEventEmitter(
+    () => ({ isDestroyed: () => false, send }),
+    (text) => scrub(text, ["on", "off", "default"]),
+  );
+  const config = workbenchSchema.parse({
+    format: 1,
+    id: "wb_01JB8Z6Q4M7N2K5R9T3V8X1Y0C",
+    name: "Privacy",
+    privacy: { mask: { display: "on", runs: "off", agent: "default" } },
+  });
+  expect(() =>
+    emit({ topic: "workbench", id: config.id, event: { type: "config.changed", config, warnings: [] } }),
+  ).not.toThrow();
+  expect(send.mock.calls[0]?.[1].event.config.privacy).toEqual(config.privacy);
+});

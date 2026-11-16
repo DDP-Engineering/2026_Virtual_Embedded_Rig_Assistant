@@ -2,6 +2,8 @@
 
 VERA indiziert die Dokumentation einer Workbench auf Ihrem Computer, damit der Agent sie durchsuchen und genau die Seite, den Abschnitt oder die Zeile angeben kann, die er verwendet hat. Die Indizierung verwendet ein lokales Modell und sendet nichts über das Netzwerk. Liest der Agent eine Textstelle, um Ihnen zu antworten, geht diese Textstelle wie der Rest der Unterhaltung an Ihren Modellanbieter; mit einem lokalen Server wie LM Studio oder Ollama bleibt sie auf Ihrem Computer.
 
+Die Anzeigemaskierung ist standardmäßig ausgeschaltet. Wenn sie für eine Workbench aktiviert ist, erscheinen gespeicherte Geheimnisse in Dateinamen und im Viewer-Text als [REDACTED]. Dateien und Suchtreffer bleiben aufgelistet und öffnen dieselbe Datei, auch wenn zwei maskierte Namen gleich aussehen. Dies ändert weder die Indizierung noch die Daten, die der Agent an ein Modell senden darf. PDF-Seitenbilder behalten ihre ursprünglichen Bytes; nur extrahierter Text wird maskiert.
+
 ## Was indiziert wird
 
 Indiziert werden die Ordner, die unter **Workbench bearbeiten** → **Dokumente & RAG** ausgewählt sind, zusammen mit den Ein- und Ausschlussmustern unter **Erweitert: Einschluss- und Ausschlussmuster**. Diese Dateitypen werden indiziert:

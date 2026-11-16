@@ -131,6 +131,7 @@ export function sanitizeEvent(envelope: EventEnvelope, scrub: (text: string) => 
   const configuration = (config: WorkbenchConfig): WorkbenchConfig => {
     const {
       format,
+      privacy,
       id,
       name,
       description,
@@ -156,6 +157,7 @@ export function sanitizeEvent(envelope: EventEnvelope, scrub: (text: string) => 
     return {
       ...(extra(extensions) as Record<string, unknown>),
       format,
+      ...(privacy === undefined ? {} : { privacy }),
       id,
       name: scrub(name).slice(0, 80),
       additional_folders: additional_folders.filter((path) => scrub(path) === path),
@@ -266,10 +268,16 @@ interface EventTarget {
   send(channel: string, envelope: EventEnvelope): void;
 }
 
-export function createEventEmitter(target: () => EventTarget | undefined, scrub?: (text: string) => string) {
+export function createEventEmitter(
+  target: () => EventTarget | undefined,
+  scrub?: (text: string) => string,
+  project?: (envelope: EventEnvelope) => EventEnvelope,
+) {
   return (envelope: EventEnvelope): boolean => {
     const input = eventEnvelopeSchema.parse(envelope);
-    const parsed = scrub ? eventEnvelopeSchema.parse(sanitizeEvent(input, scrub)) : input;
+    const parsed = eventEnvelopeSchema.parse(
+      project ? project(input) : scrub ? sanitizeEvent(input, scrub) : input,
+    );
     const contents = target();
     if (!contents || contents.isDestroyed()) return false;
     // Session events reach the renderer bounded like its snapshot; stored events keep full content.

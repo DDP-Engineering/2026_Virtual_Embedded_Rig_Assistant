@@ -20,7 +20,9 @@ and drains accepted updates/log writes on quit. Shared owns persisted and patch 
   persist false/false/true/true; omitted app areas use these defaults. Partial patches merge per area.
   Core `createMaskingResolver(() => settings.get().settings)` returns `maskingFor(workbench, area)`:
   explicit workbench on/off wins; default/omission reads the live app settings. No globals or copied
-  defaults. MASK-01 supplies infrastructure only; consumers and pages remain in MASK-02–05.
+  defaults. Display is consumed by the desktop document boundary; Runs, Agent/exports consumers and
+  settings pages remain planned. userData/display-identities.json stores the format-1 random host key
+  for authenticated opaque document paths; original paths stay outside renderer identity storage.
 
 Optional `settings.shell` is a trimmed executable name/absolute path; empty or absent selects the
 platform default. Format remains 1. Shared persisted/update schemas reject controls and values over

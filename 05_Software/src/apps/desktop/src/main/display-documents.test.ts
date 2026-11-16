@@ -1,0 +1,228 @@
+import { createMaskingResolver, type WorkbenchService } from "@vera/core";
+import { channels, type Settings, type ViewerContent, workbenchSchema } from "@vera/shared";
+import { describe, expect, it, vi } from "vitest";
+import { DisplayDocuments } from "./display-documents.js";
+import { DisplayIdentities } from "./display-identities.js";
+
+const id = "wb_01JB8Z6Q4M7N2K5R9T3V8X1Y0C";
+const otherId = "wb_01JB8Z6Q4M7N2K5R9T3V8X1Y0D";
+const secrets = ["mqtt-password-one", "mqtt-password-two"];
+const rawPaths = secrets.map((secret) => `docs/${secret}.txt`);
+function fixture() {
+  let settings: Pick<Settings, "privacy"> = {};
+  let config = workbenchSchema.parse({ format: 1, id, name: "Mask" });
+  const content = (path: string): ViewerContent => ({
+    kind: "text",
+    path,
+    ref: null,
+    snippet: "",
+    lines: [path === rawPaths[0] ? (secrets[0] as string) : (secrets[1] as string)],
+    start: 1,
+    end: 1,
+  });
+  const host = {
+    getSnapshot: () => ({ config, folder: "/owned" }),
+    listFolder: vi.fn(async (_id, path) => ({
+      entries: (path === "docs" ? rawPaths : ["docs"]).map((path) => ({
+        path,
+        name: path.split("/").at(-1),
+        type: path === "docs" ? "folder" : "file",
+        ignored: false,
+      })),
+      truncated: true,
+    })),
+    findFiles: vi.fn(async () => ({ paths: rawPaths, truncated: true })),
+    readText: vi.fn(async (_id, path) => content(path)),
+    statEntry: vi.fn(async (_id, path) => ({
+      path,
+      type: "file",
+      size: 12,
+      modified: "2026-11-17T00:00:00.000Z",
+    })),
+    listDocuments: vi.fn(async () =>
+      rawPaths.map((path, i) => ({
+        id: i + 1,
+        path,
+        kind: "text",
+        sha256: null,
+        bytes: 12,
+        mtime: "2026-11-17T00:00:00.000Z",
+        pages: null,
+        status: "pending",
+        error: null,
+        indexedAt: null,
+      })),
+    ),
+    searchDocuments: vi.fn(async () =>
+      rawPaths.map((path) => ({ path, ref: `${path}#L1-L1`, snippet: secrets[0], score: 1 })),
+    ),
+    documentGuard: () => null,
+  };
+  const display = new DisplayDocuments(
+    host as unknown as WorkbenchService,
+    createMaskingResolver(() => settings),
+    (text) => secrets.reduce((s, secret) => s.replaceAll(secret, "[REDACTED]"), text),
+    new DisplayIdentities(Buffer.alloc(32, 1)),
+  );
+  return {
+    display,
+    host,
+    content,
+    app: (on: boolean) => {
+      settings = { privacy: { mask: { display: on } } };
+    },
+    choice: (display: "default" | "on" | "off") => {
+      config = { ...config, privacy: { mask: { display } } };
+    },
+    switch: () => {
+      config = { ...config, id: otherId };
+    },
+  };
+}
+describe("Display boundary", () => {
+  it("keeps colliding entries and counts with live app/default/on/off presentation", async () => {
+    const f = fixture();
+    const off = channels["docs.tree"].response.parse(await f.display.tree(id, "docs"));
+    expect(off.entries.map((entry) => entry.name)).toEqual(secrets.map((secret) => `${secret}.txt`));
+    const first = off.entries[0];
+    expect(first?.path).not.toContain(secrets[0]);
+    expect((await f.display.read(id, first?.path as string)).content).toMatchObject({
+      lines: [secrets[0]],
+      displayPath: rawPaths[0],
+    });
+    const foundOff = await f.display.find(id, "mqtt");
+    f.app(true);
+    const on = channels["docs.tree"].response.parse(await f.display.tree(id, "docs"));
+    expect(on.entries.map((entry) => entry.name)).toEqual(["[REDACTED].txt", "[REDACTED].txt"]);
+    expect(on.entries.map((entry) => entry.path)).toEqual(off.entries.map((entry) => entry.path));
+    expect(new Set(on.entries.map((entry) => entry.path)).size).toBe(2);
+    expect(on.truncated).toBe(true);
+    const foundOn = channels["docs.find"].response.parse(await f.display.find(id, "mqtt"));
+    expect(foundOn.paths).toEqual(foundOff.paths);
+    expect(JSON.stringify(foundOn)).not.toContain("mqtt-password");
+    for (const entry of on.entries) {
+      expect((await f.display.read(id, entry.path)).content).toMatchObject({
+        lines: ["[REDACTED]"],
+        displayPath: "docs/[REDACTED].txt",
+      });
+      expect((await f.display.stat(id, entry.path)).properties.path).toBe(entry.path);
+    }
+    expect(f.host.readText.mock.calls.map((call) => call[1])).toContain(rawPaths[0]);
+    f.choice("off");
+    expect((await f.display.read(id, first?.path as string)).content).toMatchObject({ lines: [secrets[0]] });
+    f.app(false);
+    f.choice("on");
+    expect((await f.display.read(id, first?.path as string)).content).toMatchObject({
+      lines: ["[REDACTED]"],
+    });
+    f.choice("default");
+    expect((await f.display.read(id, first?.path as string)).content).toMatchObject({ lines: [secrets[0]] });
+  });
+  it("retains indexed list/search and exact reference identity without metadata secrets", async () => {
+    const f = fixture();
+    f.app(true);
+    const list = channels["docs.list"].response.parse(await f.display.list(id));
+    const hits = channels["docs.search"].response.parse(await f.display.search(id, "mqtt"));
+    expect(list.documents).toHaveLength(2);
+    expect(hits.results).toHaveLength(2);
+    expect(JSON.stringify([list, hits])).not.toContain("mqtt-password");
+    const hit = hits.results[0];
+    expect(f.display.resolveRef(id, hit?.ref as string)).toBe(`${rawPaths[0]}#L1-L1`);
+    const result = await f.display.open(
+      id,
+      async () => ({
+        ...f.content(rawPaths[0] as string),
+        ref: `${rawPaths[0]}#L1-L1`,
+      }),
+      { ref: hit?.ref as string },
+    );
+    expect(result.content.path).toBe(hit?.path);
+    expect(result.content.ref).toBe(hit?.ref);
+    const heading = `notes.md#h=${secrets[0]}`;
+    const opaque = f.display.ref(id, heading);
+    expect(opaque).not.toContain(secrets[0]);
+    expect(f.display.resolveRef(id, opaque)).toBe(heading);
+    expect(() => f.display.resolveRef(id, opaque.replace("#L1-L1", "#L2-L2"))).toThrowError();
+    expect(() => f.display.resolveRef(id, opaque.replace("notes.md/", "other.md/"))).toThrowError();
+  });
+  it("refuses a host reply for another original path or reference before publication", async () => {
+    const f = fixture();
+    const first = f.display.path(id, rawPaths[0] as string);
+    f.host.readText.mockImplementationOnce(async () => f.content(rawPaths[1] as string));
+    await expect(f.display.read(id, first, "request")).rejects.toMatchObject({ code: "NOT_FOUND" });
+    const ref = f.display.ref(id, `${rawPaths[0]}#L1-L1`);
+    await expect(
+      f.display.open(
+        id,
+        async () => ({ ...f.content(rawPaths[1] as string), ref: `${rawPaths[1]}#L1-L1` }),
+        { ref },
+        "request",
+      ),
+    ).rejects.toMatchObject({ code: "NOT_FOUND" });
+    for (const slug of ["", "_", secrets[0] as string]) {
+      const raw = `notes.md#h=${slug}`;
+      expect(f.display.resolveRef(id, f.display.ref(id, raw))).toBe(raw);
+    }
+  });
+  it("refuses forged and foreign identities before disk access and reopens stable identities", async () => {
+    const f = fixture();
+    const token = f.display.path(id, rawPaths[0] as string);
+    await expect(f.display.read(id, `${token}/wrong`)).rejects.toMatchObject({ code: "NOT_FOUND" });
+    expect(f.host.readText).not.toHaveBeenCalled();
+    f.switch();
+    await expect(f.display.read(id, token)).rejects.toMatchObject({ code: "CONFLICT" });
+    await expect(f.display.read(otherId, token)).rejects.toMatchObject({ code: "NOT_FOUND" });
+    const next = f.display.path(otherId, rawPaths[0] as string);
+    f.display.close();
+    expect((await f.display.read(otherId, next)).content).toMatchObject({ lines: [secrets[0]] });
+  });
+  it("rejects late replies after ownership changes or close/reopen", async () => {
+    const f = fixture();
+    let finish!: (value: { paths: string[]; truncated: boolean }) => void;
+    f.host.findFiles.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          finish = resolve;
+        }),
+    );
+    const result = f.display.find(id, "mqtt");
+    f.display.close();
+    finish({ paths: rawPaths, truncated: false });
+    await expect(result).rejects.toMatchObject({ code: "CONFLICT" });
+    f.host.findFiles.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          finish = resolve;
+        }),
+    );
+    const stale = f.display.find(id, "mqtt");
+    f.switch();
+    finish({ paths: rawPaths, truncated: false });
+    await expect(stale).rejects.toMatchObject({ code: "CONFLICT" });
+  });
+});
+
+it("keeps raw core-issued session citation paths and heading slugs exact", async () => {
+  const f = fixture();
+  for (const ref of ["__vera_display_notes/child.txt#L1-L1", "notes.md#h=__vera_display_heading"]) {
+    const path = ref.split("#")[0] as string;
+    const target = { sessionId: "ses_01JB8Z6Q4M7N2K5R9T3V8X1Y0C", ref };
+    const read = vi.fn(async () => ({ ...f.content(path), ref }));
+    await expect(f.display.open(id, read, target)).resolves.toMatchObject({ workbenchId: id });
+    expect(read).toHaveBeenCalledOnce();
+  }
+});
+
+it("bounds ordinary and session original references before host access", async () => {
+  const f = fixture();
+  const head = "notes.md#h=";
+  const within = head + "x".repeat(8192 - head.length);
+  expect(f.display.resolveRef(id, within)).toBe(within);
+  const ref = within + "x";
+  const read = vi.fn(async () => ({ ...f.content("notes.md"), ref }));
+  await expect(f.display.open(id, read, { ref })).rejects.toMatchObject({ code: "INVALID" });
+  await expect(
+    f.display.open(id, read, { ref, sessionId: "ses_01JB8Z6Q4M7N2K5R9T3V8X1Y0C" }),
+  ).rejects.toMatchObject({ code: "INVALID" });
+  expect(read).not.toHaveBeenCalled();
+});

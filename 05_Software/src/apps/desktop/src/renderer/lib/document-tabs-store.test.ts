@@ -88,3 +88,16 @@ it("leaves out tabs it cannot store, keeps the newest 200 and never rewrites a d
   writeTabs(storage, "wb_1", "s_4", record);
   expect(readTabs(storage, "wb_1", "s_4")).toEqual(record);
 });
+
+it("retains expanded opaque path and reference targets with their active key at format 1", () => {
+  const storage = memory();
+  const path = `docs/${Array.from({ length: 65 }, (_, i) => `__vera_display_${String(i).padStart(3, "0")}${"a".repeat(70)}.`).join("/")}/source.txt`;
+  expect(path.length).toBeGreaterThan(4096);
+  const record: StoredTabs = {
+    version: 1,
+    active: `file:${path}`,
+    tabs: [{ target: { path } }, { target: { ref: `${path}#L1-L1` } }],
+  };
+  writeTabs(storage, "wb_long", "s_long", record);
+  expect(readTabs(storage, "wb_long", "s_long")).toEqual(record);
+});

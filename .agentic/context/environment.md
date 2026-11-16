@@ -231,6 +231,12 @@ Headless `npm run vera -- run …` builds the CLI and dedicated grep worker with
 
 Desktop main registers the exact-pinned pi-ai public standalone OAuth entrypoint before composing authentication and gateway services, so login, refresh and token conversion are available in compiled Electron bundles. Core remains platform-independent. Focused native acceptance starts the actual bundled OAuth callback/prompt and cancels without opening a browser or exchanging tokens; scripted persistence and real personal acceptance remain separate.
 
+Display masking acceptance uses main/display-documents and display-identities tests, renderer Docs/tree/tab
+consumers and native e2e/display-masking.spec.ts with stored MQTT credentials and validated settings/
+workbench IPC. It checks colliding names, original target navigation, live choices, workbench isolation
+and persisted opaque tabs across restart. Original Windows proof is in evaluation-outputs/mask02;
+WSL2 is distinct from native Ubuntu.
+
 Document viewer acceptance uses shared documents-ipc, core knowledge/viewer and search provenance, workbench/service, main document-viewer scrubbing, renderer documents/markdown and immediate IPC/preload/mock/session/artifact/import consumers. Office extraction uses core knowledge/office.test.ts over the committed fixtures in tests/fixtures/documents/office (regenerate with `node tests/support/make-office-fixtures.mjs`), and native tests/e2e/office-documents.spec.ts proves worker extraction plus cited slide, heading and untitled leading-section (`#h=`) opening. Native tests/e2e/citations.spec.ts proves offline PDF page/snippet/search/zoom, repeated heading and line60–62 anchors, artifacts, Docs and restart; tests/e2e/documents.spec.ts checks en/ro/de light/dark/all-scale1024x640.
 
 Session export/search verification routes are core sessions/export.test.ts and service.test.ts, shared/session-export.test.ts, main/session-export.test.ts and native tests/e2e/session-search.spec.ts; exact execution policy is owned by the current task and user.

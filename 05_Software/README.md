@@ -463,3 +463,9 @@ WorkbenchService selection/removal identities. renderer/components/workbench-fol
 General and overview lists; desktop main/workbench-folders.ts omits masked paths from descriptive
 configuration. Core tools/additional-folders.test.ts and e2e/additional-folders.spec.ts cover access,
 revocation, protected aliases and masked grants. Storage and indexing stay in the main workbench.
+
+Display documents use desktop `main/display-documents.ts` for live per-workbench presentation and
+`main/display-identities.ts` for authenticated opaque sensitive paths/references. A format-1
+`display-identities.json` host-local key keeps sensitive document tabs usable across restart without
+persisting plaintext original paths in renderer storage. Focused tests sit beside both modules;
+`tests/e2e/display-masking.spec.ts` covers stored MQTT credentials, Files/Find selection and restart.

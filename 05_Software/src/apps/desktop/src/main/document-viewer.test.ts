@@ -96,16 +96,28 @@ it("redacts Docs paths/ref/snippets and retains protocol metadata and snippet bo
     error: null,
     indexedAt: null,
   });
-  expect(publicDocument(doc, scrub)).toBeUndefined();
-  expect(publicDocument({ ...doc, path: "docs/a.md" }, scrub)).toEqual({ ...doc, path: "docs/a.md" });
+  expect(publicDocument(doc, scrub, (path) => path.replaceAll("secret", "opaque"))).toMatchObject({
+    path: "docs/opaque.md",
+    displayPath: "docs/[redacted].md",
+  });
+  expect(publicDocument({ ...doc, path: "docs/a.md" }, scrub, (path) => path)).toMatchObject({
+    ...doc,
+    path: "docs/a.md",
+  });
   const hit = publicDocumentHit(
     { ref: "docs/secret.md#h=power", path: "docs/secret.md", snippet: "secret ".repeat(42), score: 1 },
     scrub,
+    (path) => path.replaceAll("secret", "opaque"),
+    (ref) => ref.replaceAll("secret", "opaque"),
   );
-  expect(hit).toBeUndefined();
+  expect(hit).toMatchObject({ path: "docs/opaque.md", displayPath: "docs/[redacted].md" });
   expect(
-    publicDocumentHit({ ref: "docs/a.md#h=power", path: "docs/a.md", snippet: "secret", score: 1 }, scrub)
-      ?.ref,
+    publicDocumentHit(
+      { ref: "docs/a.md#h=power", path: "docs/a.md", snippet: "secret", score: 1 },
+      scrub,
+      (path) => path,
+      (ref) => ref,
+    )?.ref,
   ).toBe("docs/a.md#h=power");
   const content = publicViewer(
     {
@@ -126,14 +138,21 @@ it("retains a valid complete search response beside sensitive headings and bound
     { ref: "docs/a.md#h=secret", path: "docs/a.md", snippet: "secret", score: 2 },
     { ref: "docs/a.md#h=power", path: "docs/a.md", snippet: "key ".repeat(75), score: 1 },
   ]
-    .map((hit) => publicDocumentHit(hit, scrub))
+    .map((hit) =>
+      publicDocumentHit(
+        hit,
+        scrub,
+        (path) => path,
+        (ref) => ref.replaceAll("secret", "opaque"),
+      ),
+    )
     .filter((hit) => hit !== undefined);
   const response = channels["docs.search"].response.parse({
     workbenchId: "wb_01JB8Z6Q4M7N2K5R9T3V8X1Y0C",
     results: hits,
   });
-  expect(response.results).toHaveLength(1);
-  expect(response.results[0]?.ref).toBe("docs/a.md#h=power");
+  expect(response.results).toHaveLength(2);
+  expect(response.results[0]?.ref).toBe("docs/a.md#h=opaque");
   expect(documentSearchHitSchema.safeParse(response.results[0]).success).toBe(true);
   expect(response.results[0]?.snippet.length).toBeLessThanOrEqual(300);
   const content = publicViewer(
@@ -151,4 +170,28 @@ it("retains a valid complete search response beside sensitive headings and bound
   expect(content.snippet.length).toBe(12000);
   expect(content.snippet).not.toContain("key");
   expect(viewerContentSchema.safeParse(content).success).toBe(true);
+});
+
+it("retains a sensitive document entry with a separate display label", () => {
+  const doc = documentSchema.parse({
+    id: 1,
+    path: "mqtt-password.txt",
+    kind: "text",
+    sha256: null,
+    bytes: 10,
+    mtime: "2026-11-17T00:00:00.000Z",
+    pages: null,
+    status: "pending",
+    error: null,
+    indexedAt: null,
+  });
+  expect(
+    publicDocument(
+      doc,
+      (text) => text.replaceAll("mqtt-password", "[REDACTED]"),
+      () => "opaque.txt",
+    ),
+  ).toMatchObject({
+    displayPath: "[REDACTED].txt",
+  });
 });

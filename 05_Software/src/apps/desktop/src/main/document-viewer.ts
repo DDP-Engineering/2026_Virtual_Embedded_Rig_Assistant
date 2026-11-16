@@ -26,17 +26,24 @@ export function publicWebDownload(
 export function publicDocument(
   document: DocumentRecord,
   scrub: (text: string) => string,
-): DocumentRecord | undefined {
-  return scrub(document.path) === document.path ? document : undefined;
+  identity: (path: string) => string,
+): DocumentRecord {
+  return { ...document, path: identity(document.path), displayPath: scrub(document.path) };
 }
 export function publicDocumentHit(
   hit: Response<"docs.search">["results"][number],
   scrub: (text: string) => string,
-): Response<"docs.search">["results"][number] | undefined {
-  // Redacted locator identities cannot resolve safely; keep other usable results.
-  if (scrub(hit.ref) !== hit.ref || scrub(hit.path) !== hit.path) return undefined;
-  const result = documentSearchHitSchema.safeParse({ ...hit, snippet: bounded(scrub(hit.snippet), 300) });
-  return result.success ? result.data : undefined;
+  identity: (path: string) => string,
+  reference: (ref: string) => string,
+): Response<"docs.search">["results"][number] {
+  return documentSearchHitSchema.parse({
+    ...hit,
+    path: identity(hit.path),
+    ref: reference(hit.ref),
+    displayPath: scrub(hit.path),
+    displayRef: scrub(hit.ref),
+    snippet: bounded(scrub(hit.snippet), 300),
+  });
 }
 function bounded(text: string, limit: number): string {
   const value = text.slice(0, limit);

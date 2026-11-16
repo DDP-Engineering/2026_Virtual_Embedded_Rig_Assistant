@@ -218,7 +218,10 @@ it("shows entries ignored by VERA in italic with faded icons, announced, expanda
   expect(row(".git/config")?.textContent).not.toContain("Not indexed");
   await click(row(".git/config"));
   await settle();
-  expect(invoke).toHaveBeenCalledWith("docs.read", { workbenchId: id, path: ".git/config" });
+  expect(invoke).toHaveBeenCalledWith(
+    "docs.read",
+    expect.objectContaining({ workbenchId: id, path: ".git/config", requestId: expect.any(String) }),
+  );
   expect(container.querySelector("[data-source-current]")?.textContent).toContain(".git/config");
   // An ignored allowlisted file has no Open in default app, in the menu or in its document tab.
   await click(row("node_modules"));
@@ -268,14 +271,20 @@ it("opens indexed documents and other text files in a document tab", async () =>
   await settle();
   await click(row("docs/a.md"));
   await settle();
-  expect(invoke).toHaveBeenCalledWith("docs.open", { workbenchId: id, path: "docs/a.md" });
+  expect(invoke).toHaveBeenCalledWith(
+    "docs.open",
+    expect.objectContaining({ workbenchId: id, path: "docs/a.md", requestId: expect.any(String) }),
+  );
   expect(container.querySelector('[data-heading="power"]')?.textContent).toContain("3.3 V");
   await click(row("firmware"));
   await settle();
   (row("firmware/main.c") as HTMLElement).focus();
   await key(row("firmware/main.c"), "Enter");
   await settle();
-  expect(invoke).toHaveBeenCalledWith("docs.read", { workbenchId: id, path: "firmware/main.c" });
+  expect(invoke).toHaveBeenCalledWith(
+    "docs.read",
+    expect.objectContaining({ workbenchId: id, path: "firmware/main.c", requestId: expect.any(String) }),
+  );
   expect(
     container.querySelector('[data-document-tabs] [role="tab"][aria-selected="true"]')?.getAttribute("title"),
   ).toBe("firmware/main.c");
@@ -383,7 +392,10 @@ it("offers Open, Attach as context, Open in, Show in Explorer, Copy and Properti
   await contextMenu(row("docs/a.md"));
   await click(menuItem("open"));
   await settle();
-  expect(invoke).toHaveBeenCalledWith("docs.open", { workbenchId: id, path: "docs/a.md" });
+  expect(invoke).toHaveBeenCalledWith(
+    "docs.open",
+    expect.objectContaining({ workbenchId: id, path: "docs/a.md", requestId: expect.any(String) }),
+  );
   // Shift+F10 and the context menu key open it from the keyboard; keys wrap and Tab closes.
   (row("board.txt") as HTMLElement).focus();
   await key(row("board.txt"), "F10", { shiftKey: true });

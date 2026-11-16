@@ -15,6 +15,9 @@ măsurători și scoruri sunt în [`../evaluators/`](../evaluators/README.md).
 | [fixtures/](fixtures/README.md) | Date fictive și scenarii de intrare; nu sunt rezultate de teste și nu conțin cod de evaluare. |
 | `support/` | Rularea E2E, reporterul Playwright, protecția de rețea și generatoarele documentelor demo/Office. Programele simulate și generatoarele unei singure fixturi rămân lângă aceasta, în `fixtures/`. |
 
+Native `e2e/display-masking.spec.ts` verifies conditional Display masking with stored MQTT credentials,
+Files/Find UI selection, colliding labels, live settings/workbench choices and restart-safe tabs.
+
 ## Inventarul testelor Vitest
 
 TERM-05 adds `packaging/terminal-runtime.test.ts` for native PTY architecture/helper closure,

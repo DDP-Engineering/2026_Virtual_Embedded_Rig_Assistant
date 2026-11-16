@@ -9,7 +9,12 @@ import { afterEach, expect, it, vi } from "vitest";
 import { api } from "../../api/index.js";
 import { removeTabs } from "../../lib/document-tabs-store.js";
 import { DocumentTabs } from "./document-tabs.js";
-import { DocumentViewerProvider, useDocumentViewer, type ViewerTarget } from "./viewer-context.js";
+import {
+  DocumentViewerProvider,
+  documentKey,
+  useDocumentViewer,
+  type ViewerTarget,
+} from "./viewer-context.js";
 import "../../i18n.js";
 
 vi.mock("../../api/index.js", async () => {
@@ -994,4 +999,131 @@ it("keeps a document opened during the restore, works without storage and forget
     invoke.mockRestore();
     localStorage.removeItem(key);
   }
+});
+
+function serveDisplayContent(masked: () => boolean) {
+  const original = api.invoke.bind(api);
+  vi.spyOn(api, "invoke").mockImplementation((async (channel: string, request: unknown) => {
+    if (channel === "docs.open") {
+      const data = request as { path: string; requestId: string };
+      return {
+        workbenchId: id,
+        requestId: data.requestId,
+        content: {
+          kind: "text",
+          path: data.path,
+          displayPath: `${masked() ? "[REDACTED]" : "cached-secret"}-${data.path.split("/").at(-1)}`,
+          ref: null,
+          snippet: "",
+          lines: [masked() ? "[REDACTED]" : "cached-secret"],
+          start: 1,
+          end: 1,
+        },
+      };
+    }
+    return original(channel as never, request as never);
+  }) as typeof api.invoke);
+}
+it("clears inactive tab labels and contents when Display changes", async () => {
+  const f = await mount();
+  await api.invoke("app.settings.update", { privacy: { mask: { display: false } } });
+  let masked = false;
+  serveDisplayContent(() => masked);
+  await f.open("md");
+  await f.open("board");
+  expect(f.view.textContent).toContain("cached-secret-a.md");
+  masked = true;
+  await act(async () => {
+    await api.invoke("app.settings.update", { privacy: { mask: { display: true } } });
+  });
+  await settle();
+  expect(f.view.textContent).not.toContain("cached-secret");
+  expect(f.view.querySelector("[data-source-current]")?.textContent).toContain("[REDACTED]");
+});
+it.each(["app", "workbench"])(
+  "reloads a cached inactive session scope after %s Display changes",
+  async (area) => {
+    const f = await mount(`${id}/session-b`);
+    await api.invoke("app.settings.update", { privacy: { mask: { display: false } } });
+    await api.invoke("workbench.config.update", {
+      workbenchId: id,
+      patch: { privacy: { mask: { display: "default" } } },
+    });
+    let masked = false;
+    serveDisplayContent(() => masked);
+    await f.open("md");
+    await f.render(`${id}/session-a`);
+    await f.open("board");
+    masked = true;
+    await act(async () => {
+      if (area === "app") await api.invoke("app.settings.update", { privacy: { mask: { display: true } } });
+      else
+        await api.invoke("workbench.config.update", {
+          workbenchId: id,
+          patch: { privacy: { mask: { display: "on" } } },
+        });
+    });
+    await settle();
+    await f.render(`${id}/session-b`);
+    await settle();
+    expect(f.view.textContent).not.toContain("cached-secret");
+    expect(f.view.querySelector("[data-source-current]")?.textContent).toContain("[REDACTED]");
+  },
+);
+
+it("restores raw current-format targets through host presentation after their names become secrets", async () => {
+  const first = "later-secret-first.txt",
+    second = "later-secret-second.txt";
+  const sessionId = "ses_01JB8Z6Q4M7N2K5R9T3V8X1Y0C";
+  localStorage.setItem(
+    `vera.tabs.${id}.${sessionId}`,
+    JSON.stringify({
+      version: 1,
+      active: `file:${second}`,
+      tabs: [{ target: { path: first } }, { target: { path: second } }],
+    }),
+  );
+  const original = api.invoke.bind(api);
+  vi.spyOn(api, "invoke").mockImplementation((async (channel: string, request: unknown) => {
+    const data = request as { path: string; requestId?: string };
+    if (channel === "docs.stat")
+      return {
+        workbenchId: id,
+        properties: {
+          path: data.path,
+          displayPath: "[REDACTED].txt",
+          type: "file",
+          size: 10,
+          modified: "2026-11-17T00:00:00.000Z",
+        },
+      };
+    if (channel === "docs.open")
+      return {
+        workbenchId: id,
+        requestId: data.requestId,
+        content: {
+          kind: "text",
+          path: data.path,
+          displayPath: "[REDACTED].txt",
+          ref: null,
+          snippet: "",
+          lines: ["[REDACTED]"],
+          start: 1,
+          end: 1,
+        },
+      };
+    return original(channel as never, request as never);
+  }) as typeof api.invoke);
+  const f = await mount(`${id}/${sessionId}`, sessionId);
+  await settle();
+  await settle();
+  expect(f.view.textContent).not.toContain("later-secret");
+  expect(
+    [...f.view.querySelectorAll<HTMLElement>("[data-tab-key]")].map((node) => node.title).join(" "),
+  ).not.toContain("later-secret");
+});
+
+it("keeps opaque document references in the same file tab as their path target", () => {
+  const path = "docs/__vera_display_cipher.";
+  expect(documentKey({ ref: `${path}/__vera_reference_cipher.#L1-L1` })).toBe(documentKey({ path }));
 });

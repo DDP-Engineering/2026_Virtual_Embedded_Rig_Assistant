@@ -62,6 +62,7 @@ const count = z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER);
 export const documentSchema = z.strictObject({
   id: count.positive(),
   path: z.string().min(1),
+  displayPath: z.string().optional(),
   kind: documentKindSchema,
   sha256: z
     .string()
@@ -82,12 +83,12 @@ export type DocumentReason = z.infer<typeof documentReasonSchema>;
 const path = z
   .string()
   .min(1)
-  .max(4096)
+  .max(262144)
   .refine((v) => !!parseRef(`${v}#L1-L1`));
 const ref = z
   .string()
   .min(1)
-  .max(8192)
+  .max(262144)
   .refine((v) => !!parseRef(v));
 const documentRef = ref.refine((v) => parseRef(v)?.kind !== "artifact");
 export const docsScopeSchema = z.strictObject({ workbenchId: workbenchIdSchema });
@@ -98,6 +99,7 @@ export const docsScopeSchema = z.strictObject({ workbenchId: workbenchIdSchema }
 export const docsTreeEntrySchema = z.strictObject({
   name: z.string().min(1),
   path: z.string().min(1),
+  displayPath: z.string().optional(),
   type: z.enum(["folder", "file"]),
   ignored: z.boolean(),
 });
@@ -105,6 +107,7 @@ export type DocsTreeEntry = z.infer<typeof docsTreeEntrySchema>;
 /** Properties of a Docs tree entry: bytes of a file (null for a folder) and the modified time. */
 export const docsEntryPropertiesSchema = z.strictObject({
   path: z.string().min(1),
+  displayPath: z.string().optional(),
   type: z.enum(["folder", "file"]),
   size: count.nullable(),
   modified: z.iso.datetime(),
@@ -134,7 +137,7 @@ export type DocumentVolume = z.infer<typeof documentVolumeSchema>;
 export const documentGuardSchema = z.strictObject({
   files: count,
   limit: count,
-  folders: z.array(z.strictObject({ path: z.string().min(1).max(4096), files: count })).max(10),
+  folders: z.array(z.strictObject({ path: z.string().min(1).max(262144), files: count })).max(10),
 });
 export type DocumentGuard = z.infer<typeof documentGuardSchema>;
 /**
@@ -155,9 +158,14 @@ export const documentVolumeLimit = { files: 2000, bytes: 2 * 1024 ** 3 } as cons
 export const exceedsDocumentVolume = (volume: DocumentVolume): boolean =>
   volume.files > documentVolumeLimit.files || volume.bytes > documentVolumeLimit.bytes;
 export const documentOpenSchema = z.union([
-  docsScopeSchema.extend({ path }),
-  docsScopeSchema.extend({ ref: documentRef }),
-  docsScopeSchema.extend({ sessionId: sessionIdSchema, messageId: z.string().min(1).max(256), ref }),
+  docsScopeSchema.extend({ path, requestId: z.string().min(1).max(256).optional() }),
+  docsScopeSchema.extend({ ref: documentRef, requestId: z.string().min(1).max(256).optional() }),
+  docsScopeSchema.extend({
+    sessionId: sessionIdSchema,
+    messageId: z.string().min(1).max(256),
+    ref,
+    requestId: z.string().min(1).max(256).optional(),
+  }),
 ]);
 const section = z.strictObject({
   slug: z.string(),
@@ -171,6 +179,7 @@ export const viewerContentSchema = z.discriminatedUnion("kind", [
     .strictObject({
       kind: z.literal("pdf"),
       path,
+      displayPath: z.string().optional(),
       ref: documentRef.nullable(),
       snippet: z.string().max(12000),
       data: z.string().max(140000000),
@@ -182,6 +191,7 @@ export const viewerContentSchema = z.discriminatedUnion("kind", [
   z.strictObject({
     kind: z.enum(["markdown", "html", "document", "spreadsheet"]),
     path,
+    displayPath: z.string().optional(),
     ref: documentRef.nullable(),
     snippet: z.string().max(12000),
     sections: z.array(section),
@@ -191,6 +201,7 @@ export const viewerContentSchema = z.discriminatedUnion("kind", [
     .strictObject({
       kind: z.literal("presentation"),
       path,
+      displayPath: z.string().optional(),
       ref: documentRef.nullable(),
       snippet: z.string().max(12000),
       slides: z.array(z.string()).min(1),
@@ -202,6 +213,7 @@ export const viewerContentSchema = z.discriminatedUnion("kind", [
     .strictObject({
       kind: z.literal("text"),
       path,
+      displayPath: z.string().optional(),
       ref: documentRef.nullable(),
       snippet: z.string().max(12000),
       lines: z.array(z.string()),
@@ -212,6 +224,7 @@ export const viewerContentSchema = z.discriminatedUnion("kind", [
   z.strictObject({
     kind: z.literal("artifact"),
     path: z.string(),
+    displayPath: z.string().optional(),
     ref,
     snippet: z.string().max(12000),
     content: z.string(),
@@ -222,6 +235,8 @@ export type ViewerContent = z.infer<typeof viewerContentSchema>;
 export const documentSearchHitSchema = z.strictObject({
   ref: documentRef,
   path,
+  displayPath: z.string().optional(),
+  displayRef: z.string().optional(),
   snippet: z.string().max(300),
   score: z.number().finite(),
 });

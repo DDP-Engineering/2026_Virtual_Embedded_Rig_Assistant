@@ -1,5 +1,5 @@
 // REQ-UX-4d1b3324
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { type DocumentRecord, veraError } from "@vera/shared";
 import { useEffect, useId, useRef } from "react";
 import { useTranslation } from "react-i18next";
@@ -15,7 +15,6 @@ import { ErrorMessage } from "../error-message.js";
 export function TreeProperties({
   workbenchId,
   path,
-  name,
   type,
   ignored,
   doc,
@@ -25,7 +24,6 @@ export function TreeProperties({
 }: {
   workbenchId: string;
   path: string;
-  name: string;
   type: "folder" | "file";
   /** Hidden from the agent and the index by VERA's ignore rules. */
   ignored: boolean;
@@ -37,6 +35,7 @@ export function TreeProperties({
 }) {
   const { t, i18n } = useTranslation();
   const bytes = useBytes();
+  const client = useQueryClient();
   const dialog = useRef<HTMLDialogElement>(null);
   const title = useId();
   const stat = useQuery({
@@ -58,7 +57,27 @@ export function TreeProperties({
       if (origin?.isConnected) origin.focus();
     };
   }, []);
+  useEffect(() => {
+    const reset = () => {
+      void client.resetQueries({ queryKey: ["docs.stat", workbenchId, path] });
+    };
+    const offApp = api.subscribe("app", (event) => {
+      if (event.type === "settings.changed") reset();
+    });
+    const offWorkbench = api.subscribe("workbench", workbenchId, (event) => {
+      if (event.type === "config.changed") reset();
+    });
+    return () => {
+      offApp();
+      offWorkbench();
+    };
+  }, [client, workbenchId, path]);
   const properties = stat.data;
+  const shownPath =
+    properties?.displayPath ??
+    properties?.path.replace(/__vera_(?:display|reference)_[A-Za-z0-9_-]+\.?/g, "[REDACTED]") ??
+    "[REDACTED]";
+  const name = shownPath.split("/").at(-1) ?? shownPath;
   const date = new Intl.DateTimeFormat(i18n.resolvedLanguage ?? "en", {
     dateStyle: "medium",
     timeStyle: "short",
@@ -77,7 +96,7 @@ export function TreeProperties({
       <h3 id={title}>{t("documents.propertiesTitle", { name })}</h3>
       <dl>
         <dt>{t("documents.propertyPath")}</dt>
-        <dd data-prop="path">{path}</dd>
+        <dd data-prop="path">{shownPath}</dd>
         <dt>{t("documents.propertyType")}</dt>
         <dd data-prop="type">{type === "folder" ? t("documents.typeFolder") : t("documents.typeFile")}</dd>
         {properties?.size != null && (

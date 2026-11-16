@@ -7,7 +7,8 @@ per-session sets saved per session), continuous PDF/text scrolling with zoom/fin
 Markdown/HTML/office anchors, presentation slides, numbered lines and Docs
 status/search/reindex/progress, and the Docs folder tree (single search box, ignored entries,
 memory, keyboard, context menu, Properties).
-Start under05_Software at shared/documents.ts, core/knowledge/viewer.ts and
+Start under05_Software at main/display-documents.ts and display-identities.ts for conditional
+Display masking, shared/documents.ts, core/knowledge/viewer.ts and
 renderer/components/documents. Focused tests are viewer.test.ts, search.test.ts,
 documents.test.ts, docs-tree.test.ts, core workbench/tree.test.ts and
 tests/e2e/{citations,documents,office-documents,docs-tree}.spec.ts.
@@ -31,6 +32,28 @@ progress travels through existing workbench events.
 Managed PDF downloads use downloads.list/open scoped IPC and a downloadId ViewerTarget; see [PDF downloads](pdf-downloads.md). Docs includes saved PDF history, and successful download tool cards open the existing viewer without indexing. Downloads open in a document tab of the chat area like every source, and uncited PDFs omit citation-only labels. Host publicWebDownload scrubs metadata strings and drops invalid redacted records.
 
 
+- DisplayDocuments uses the live createMaskingResolver(() => settings.get().settings) for Files,
+  Find, document list/search, text/viewer content and index document/guard presentation. App Display
+  defaults false; workbench default/on/off overrides it. Entries, ordering, counts and truncation stay
+  unchanged. Sensitive path segments and complete refs use deterministic AES-GCM identities,
+  authenticated to workbench ID, canonical folder and original parent using a format-1 host-local key
+  in userData/display-identities.json. Path identities end in a dot, outside valid host path syntax;
+  ordinary prefix names stay ordinary. Ref identities append a separate authenticated reference
+  segment and retain one file tab key. Session citations pass original refs to core provenance checks.
+  The exact protocol is in specs/REQ-SEC-df8a595a.md. displayPath/displayRef and Find labels carry presentation only.
+  Every host action resolves identity before existing confinement; no index/model/export rule changes.
+  A closed/switching workbench invalidates pending replies, while stored tabs reopen after restart
+  with the same key and owning folder. Text opens verify the exact original path/ref in main before
+  echoing the per-attempt requestId; renderer verifies owner and request correlation and retains its
+  ordinary identity checks for responses without correlation. Display/config events invalidate affected cached file scopes and their labels/content;
+  restored file tabs begin with safe labels and fetch host metadata, including raw targets saved before
+  credential registration. Inactive file tabs reload metadata without loading file bytes, while inactive scopes refresh on
+  return. App changes reset all cached workbench Display query data; workbench events reset that
+  owner only. Properties reloads its current host presentation. Privacy enum protocol stays structural
+  even if a stored short secret equals on/off/default. Format-1 saved target/key bounds admit opaque
+  expansion through 262144 characters. Runs/download views retain their separate policies. PDF bytes remain exact; only
+  extracted PDF text follows Display. Sensitive-name entries cannot attach opaque identities to chat;
+  the existing model admission still rejects stored-secret message text.
 - docs.list({workbenchId}) returns scoped document statuses/reasons.
 - docs.search({workbenchId,query}) returns at most20 current keyword hits after deduplicated per-source SHA/status/kind/locator verification and index epoch checks.
 - docs.open accepts workbenchId with indexed path, document ref, or
@@ -251,8 +274,7 @@ Managed PDF downloads use downloads.list/open scoped IPC and a downloadId Viewer
   5,000 entries per folder, 200 matches and 50,000 walked entries per find, 5 MiB per text
   view; binary (NUL probe or invalid UTF-8) and larger files fail with INVALID and
   `documents.textBinary` / `documents.textTooLarge`. statEntry refuses the workbench folder
-  itself. Main drops
-  listed or found paths the credential scrub would change and scrubs text views.
+  itself. Main retains every result and applies conditional Display presentation with separate host authority.
 - Scoped source selections and disposed requests prevent late content replacing another view while Shell/Welcome drafts stay mounted; there is no modal viewer.
   Controls use rem/theme tokens and en/ro/de; inner page scrolling contains overflow.
 
@@ -260,6 +282,7 @@ Managed PDF downloads use downloads.list/open scoped IPC and a downloadId Viewer
 
 | Change | Start | Focused proof |
 |---|---|---|
+| conditional Display / stable identity | main/display-documents.ts, display-identities.ts; renderer documents | display-documents.test.ts; display-identities.test.ts; e2e/display-masking.spec.ts |
 | wire/source/locator bounds | documents.ts; viewer.ts | documents-ipc.test.ts; viewer.test.ts |
 | provenance/session artifact | SessionService.openCitation | search.test.ts; citations.spec.ts |
 | ownership/lifecycle | WorkbenchService.readDocuments | service.test.ts |
@@ -275,6 +298,7 @@ Managed PDF downloads use downloads.list/open scoped IPC and a downloadId Viewer
 
 ## Key behaviors
 
+- REQ-FUNC-c07a945e, REQ-SEC-df8a595a — live conditional Display with stable restart-safe workbench-owned identities.
 - REQ-FUNC-28ad0001 — guarded scoped viewer payload and citation provenance.
 - REQ-UX-28ad0002 — accessible offline locator viewer and snippet navigation.
 - REQ-UX-28ad0003 — live Docs index, search/open/reindex and progress.
@@ -291,7 +315,7 @@ Managed PDF downloads use downloads.list/open scoped IPC and a downloadId Viewer
 
 Under05_Software: shared/{documents,ipc}.ts; core/knowledge/viewer.ts/test,
 core/sessions/service.ts, workbench/{service,tree}.ts/test and knowledge/search.test.ts;
-desktop/main/{index,document-viewer,security,content-policy,openers}.ts, openers.test.ts and
+desktop/main/{index,document-viewer,display-documents,display-identities,security,content-policy,openers}.ts, openers.test.ts and
 document-viewer.test.ts; renderer/components/documents/{viewer-context,docs-tab,
 pdf-viewer,docs-tree,tree-menu,tree-properties,open-externally,document-tabs,file-actions}.tsx, documents.test.ts and
 docs-tree.test.ts; session/{markdown,transcript,artifacts-tab};

@@ -1,5 +1,5 @@
 // REQ-UX-28ad0002
-import { parseRef, referenceLabel, type ViewerContent, veraError } from "@vera/shared";
+import { parseRef, referenceLabel, type ViewerContent, veraError, workbenchIdSchema } from "@vera/shared";
 import {
   createContext,
   lazy,
@@ -57,6 +57,9 @@ interface TabSet {
 }
 const EMPTY: TabSet = { tabs: [], active: CHAT };
 
+const displayName = (path: string) =>
+  path.replace(/__vera_(?:display|reference)_[A-Za-z0-9_-]+\.?/g, "[REDACTED]");
+const sourcePath = (path: string) => path.replace(/\/__vera_reference_[A-Za-z0-9_-]+\.$/, "");
 const fileName = (path: string) => path.split("/").at(-1) || path;
 /** One tab per document: the workbench path, the artifact or the download (REQ-FUNC-89161a95). */
 export function documentKey(target: ViewerTarget): string {
@@ -66,18 +69,19 @@ export function documentKey(target: ViewerTarget): string {
   if ("path" in target) return `file:${target.path}`;
   const parsed = parseRef(target.ref);
   if (!parsed || parsed.kind === "help") return `ref:${target.ref}`;
-  return parsed.kind === "artifact" ? `artifact:${parsed.name}` : `file:${parsed.path}`;
+  return parsed.kind === "artifact" ? `artifact:${parsed.name}` : `file:${sourcePath(parsed.path)}`;
 }
 function describe(target: ViewerTarget, download: string): { label: string; title: string } {
   if ("runId" in target) return { label: `${target.runId}.log`, title: `.vera/runs/${target.runId}.log` };
   if ("downloadId" in target) return { label: download, title: download };
-  if ("textPath" in target) return { label: fileName(target.textPath), title: target.textPath };
-  if ("path" in target) return { label: fileName(target.path), title: target.path };
+  if ("textPath" in target)
+    return { label: fileName(displayName(target.textPath)), title: displayName(target.textPath) };
+  if ("path" in target) return { label: fileName(displayName(target.path)), title: displayName(target.path) };
   const parsed = parseRef(target.ref);
   if (!parsed || parsed.kind === "help") return { label: referenceLabel(target.ref), title: target.ref };
   return parsed.kind === "artifact"
     ? { label: parsed.name, title: parsed.name }
-    : { label: fileName(parsed.path), title: parsed.path };
+    : { label: fileName(displayName(sourcePath(parsed.path))), title: displayName(sourcePath(parsed.path)) };
 }
 
 interface TabsState {
@@ -125,6 +129,10 @@ export function DocumentViewerProvider({
 }) {
   const { t } = useTranslation();
   const scope = contextScope ?? workbenchId;
+  const scopeOwners = useRef(new Map<string, string>());
+  useEffect(() => {
+    scopeOwners.current.set(scope, workbenchId);
+  }, [scope, workbenchId]);
   const [sets, setSets] = useState<ReadonlyMap<string, TabSet>>(new Map());
   const current = sets.get(scope) ?? EMPTY;
   // Attempts come from one counter, so a closed and reopened tab never takes an older answer.
@@ -340,7 +348,9 @@ export function DocumentViewerProvider({
         const restoredTabs: DocumentTab[] = fresh.map((tab) => ({
           key: documentKey(tab.target),
           target: tab.target,
-          ...describe(tab.target, download),
+          ...(documentKey(tab.target).startsWith("file:")
+            ? { label: "[REDACTED]", title: "[REDACTED]" }
+            : describe(tab.target, download)),
           attempt: ++attempts.current,
         }));
         const restoredKeys = new Set(restoredTabs.map((tab) => tab.key));
@@ -370,6 +380,7 @@ export function DocumentViewerProvider({
       if (tab.content || tab.error !== undefined || loading.current.has(request)) continue;
       loading.current.add(request);
       const { target, key, attempt } = tab;
+      const requestId = `display:${attempt}`;
       const call =
         "runId" in target
           ? api.invoke("runs.log", { workbenchId, id: target.runId, full: true }).then((log) => {
@@ -391,15 +402,19 @@ export function DocumentViewerProvider({
           : "downloadId" in target
             ? api.invoke("downloads.open", { workbenchId, downloadId: target.downloadId })
             : "textPath" in target
-              ? api.invoke("docs.read", { workbenchId, path: target.textPath })
-              : api.invoke("docs.open", { workbenchId, ...target });
+              ? api.invoke("docs.read", { workbenchId, path: target.textPath, requestId })
+              : api.invoke("docs.open", { workbenchId, ...target, requestId });
       const settle = (result: Pick<DocumentTab, "content" | "error">) =>
         setSets((map) => {
           const set = map.get(scope);
           const found = set?.tabs.find((entry) => entry.key === key);
           // A closed, reopened or retried tab ignores this late answer.
           if (!set || !found || found.attempt !== attempt) return map;
-          const name = result.content && "downloadId" in target ? fileName(result.content.path) : undefined;
+          const title =
+            result.content && !("runId" in target)
+              ? (result.content.displayPath ?? displayName(result.content.path))
+              : undefined;
+          const name = title === undefined ? undefined : fileName(title);
           return new Map(map).set(scope, {
             ...set,
             tabs: set.tabs.map((entry) =>
@@ -407,7 +422,7 @@ export function DocumentViewerProvider({
                 ? {
                     ...entry,
                     ...result,
-                    ...(name ? { label: name, title: result.content?.path ?? name } : {}),
+                    ...(name ? { label: name, title: title ?? name } : {}),
                   }
                 : entry,
             ),
@@ -417,15 +432,16 @@ export function DocumentViewerProvider({
         .then((result) => {
           if (
             result.workbenchId !== workbenchId ||
-            ("runId" in target
-              ? result.content.path !== `.vera/runs/${target.runId}.log`
-              : "downloadId" in target
-                ? !("downloadId" in result) || result.downloadId !== target.downloadId
-                : "textPath" in target
-                  ? result.content.path !== target.textPath
-                  : "ref" in target
-                    ? result.content.ref !== target.ref
-                    : result.content.path !== target.path)
+            ((!("requestId" in result) || result.requestId !== requestId) &&
+              ("runId" in target
+                ? result.content.path !== `.vera/runs/${target.runId}.log`
+                : "downloadId" in target
+                  ? !("downloadId" in result) || result.downloadId !== target.downloadId
+                  : "textPath" in target
+                    ? result.content.path !== target.textPath
+                    : "ref" in target
+                      ? result.content.ref !== target.ref
+                      : result.content.path !== target.path))
           )
             throw veraError("NOT_FOUND");
           settle({ content: result.content, error: undefined });
@@ -434,6 +450,76 @@ export function DocumentViewerProvider({
         .finally(() => loading.current.delete(request));
     }
   }, [current.tabs, current.active, scope, workbenchId]);
+  useEffect(() => {
+    const refresh = (owner?: string) =>
+      setSets(
+        (map) =>
+          new Map(
+            [...map].map(([ownedScope, set]) => {
+              if (owner !== undefined && scopeOwners.current.get(ownedScope) !== owner)
+                return [ownedScope, set];
+              return [
+                ownedScope,
+                {
+                  ...set,
+                  tabs: set.tabs.map((tab) =>
+                    "runId" in tab.target || "downloadId" in tab.target
+                      ? tab
+                      : {
+                          ...tab,
+                          label: "[REDACTED]",
+                          title: "[REDACTED]",
+                          content: undefined,
+                          error: undefined,
+                          attempt: ++attempts.current,
+                        },
+                  ),
+                },
+              ];
+            }),
+          ),
+      );
+    const offApp = api.subscribe("app", (event) => {
+      if (event.type === "settings.changed") refresh();
+    });
+    const offWorkbench = workbenchIdSchema.safeParse(workbenchId).success
+      ? api.subscribe("workbench", workbenchId, (event) => {
+          if (event.type === "config.changed") refresh(workbenchId);
+        })
+      : () => {};
+    return () => {
+      offApp();
+      offWorkbench();
+    };
+  }, [workbenchId]);
+  const metadataAttempts = useRef(new Map<string, number>());
+  useEffect(() => {
+    for (const tab of current.tabs) {
+      if (!tab.key.startsWith("file:") || tab.label !== "[REDACTED]") continue;
+      const owner = `${scope}\n${tab.key}`;
+      if (metadataAttempts.current.get(owner) === tab.attempt) continue;
+      metadataAttempts.current.set(owner, tab.attempt);
+      void api
+        .invoke("docs.stat", { workbenchId, path: tab.key.slice(5) })
+        .then((result) => {
+          if (result.workbenchId !== workbenchId) return;
+          const title = result.properties.displayPath ?? displayName(result.properties.path);
+          setSets((map) => {
+            const set = map.get(scope);
+            if (!set) return map;
+            return new Map(map).set(scope, {
+              ...set,
+              tabs: set.tabs.map((entry) =>
+                entry.key === tab.key && entry.attempt === tab.attempt
+                  ? { ...entry, label: fileName(title), title }
+                  : entry,
+              ),
+            });
+          });
+        })
+        .catch(() => {});
+    }
+  }, [current.tabs, scope, workbenchId]);
   const place = useCallback((key: string) => places.current.get(`${scope}\n${key}`), [scope]);
   const setPlace = useCallback(
     (key: string, value: DocumentPlace) => {

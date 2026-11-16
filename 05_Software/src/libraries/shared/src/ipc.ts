@@ -397,9 +397,9 @@ export const channels = {
   ),
   "docs.tree": defineChannel(
     "docs.tree",
-    docsScopeSchema.extend({ path: z.string().max(4096) }),
+    docsScopeSchema.extend({ path: z.string().max(262144) }),
     docsScopeSchema.extend({
-      path: z.string().max(4096),
+      path: z.string().max(262144),
       entries: z.array(docsTreeEntrySchema).max(5000),
       truncated: z.boolean(),
     }),
@@ -407,16 +407,26 @@ export const channels = {
   "docs.find": defineChannel(
     "docs.find",
     docsScopeSchema.extend({ query: z.string().trim().min(1).max(200) }),
-    docsScopeSchema.extend({ paths: z.array(z.string().min(1)).max(200), truncated: z.boolean() }),
+    docsScopeSchema.extend({
+      paths: z.array(z.string().min(1)).max(200),
+      labels: z.record(z.string(), z.string()).optional(),
+      truncated: z.boolean(),
+    }),
   ),
   "docs.read": defineChannel(
     "docs.read",
-    docsScopeSchema.extend({ path: z.string().min(1).max(4096) }),
-    docsScopeSchema.extend({ content: viewerContentSchema }),
+    docsScopeSchema.extend({
+      path: z.string().min(1).max(262144),
+      requestId: z.string().min(1).max(256).optional(),
+    }),
+    docsScopeSchema.extend({
+      content: viewerContentSchema,
+      requestId: z.string().min(1).max(256).optional(),
+    }),
   ),
   "docs.stat": defineChannel(
     "docs.stat",
-    docsScopeSchema.extend({ path: z.string().min(1).max(4096) }),
+    docsScopeSchema.extend({ path: z.string().min(1).max(262144) }),
     docsScopeSchema.extend({ properties: docsEntryPropertiesSchema }),
   ),
   "docs.openers": defineChannel(
@@ -426,28 +436,28 @@ export const channels = {
   ),
   "docs.openWith": defineChannel(
     "docs.openWith",
-    docsScopeSchema.extend({ path: z.string().min(1).max(4096), app: docsOpenerSchema }),
+    docsScopeSchema.extend({ path: z.string().min(1).max(262144), app: docsOpenerSchema }),
     z.strictObject({}),
   ),
   "docs.systemApps": defineChannel(
     "docs.systemApps",
-    docsScopeSchema.extend({ path: z.string().min(1).max(4096) }),
+    docsScopeSchema.extend({ path: z.string().min(1).max(262144) }),
     z.strictObject({ apps: z.array(docsSystemAppSchema).max(50) }),
   ),
   "docs.openSystemApp": defineChannel(
     "docs.openSystemApp",
-    docsScopeSchema.extend({ path: z.string().min(1).max(4096), app: docsSystemAppSchema.shape.id }),
+    docsScopeSchema.extend({ path: z.string().min(1).max(262144), app: docsSystemAppSchema.shape.id }),
     z.strictObject({}),
   ),
   "docs.reveal": defineChannel(
     "docs.reveal",
-    docsScopeSchema.extend({ path: z.string().min(1).max(4096) }),
+    docsScopeSchema.extend({ path: z.string().min(1).max(262144) }),
     z.strictObject({}),
   ),
   "docs.copyPath": defineChannel(
     "docs.copyPath",
     docsScopeSchema.extend({
-      path: z.string().min(1).max(4096),
+      path: z.string().min(1).max(262144),
       form: z.enum(["absolute", "relative", "name"]),
     }),
     z.strictObject({}),
@@ -474,7 +484,10 @@ export const channels = {
   "docs.open": defineChannel(
     "docs.open",
     documentOpenSchema,
-    docsScopeSchema.extend({ content: viewerContentSchema }),
+    docsScopeSchema.extend({
+      content: viewerContentSchema,
+      requestId: z.string().min(1).max(256).optional(),
+    }),
   ),
   "docs.reindex": defineChannel("docs.reindex", docsScopeSchema.partial(), z.strictObject({})),
   "indexer.status": defineChannel(
