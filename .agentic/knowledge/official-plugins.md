@@ -1532,3 +1532,5 @@ that source metadata reaches the deterministic bundled index unchanged.
 - `05_Software/tests/fixtures/esp32-esptool/fake_esptool.py` — stub esptool a fake uv installs as the pip entry point (distlib `.exe` launcher on Windows); records arguments and file hashes.
 - `05_Software/tests/fixtures/esp32-esptool/esptool-5.6.0-help.txt` — recorded `esptool --help` of 5.6.0.
 - `05_Software/tests/fixtures/esp32-esptool/flasher_args.json` — ESP-IDF esp32s3 hello_world flash layout.
+
+The lab-validation 0.3.0 HIL source reader accepts captured host scope/exclusions through input_paths.py; model request fields/options cannot choose it. Standalone calls retain confined input reads, and generated requests/results stay workbench-owned. Real-helper proof is tests/integration/hil-bypass.test.ts, distinct from the user-deferred full official-plugin suite.

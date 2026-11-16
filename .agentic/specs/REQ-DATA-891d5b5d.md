@@ -193,11 +193,11 @@ editor) only when the bound document's in-memory text still matches `memorySha25
 
 ## 10. apply_candidate (VERA core)
 
-A host tool, `{ "run": "<workbench-relative run folder>" }`, offered while the official `kicad-layout` plugin is
+A host tool, `{ "run": "<run folder allowed by the current tool scope>" }`, offered while the official `kicad-layout` plugin is
 enabled in the workbench and never in read-only mode. It reads state.json and refuses (nothing written) when:
-- the run folder or state.json is not a kicad-layout run inside the workbench, or the candidate is not a regular
+- the run folder or state.json is not a kicad-layout run allowed by the current tool scope, or the candidate is not a regular
   `.kicad_pcb` file inside the run folder starting with `(kicad_pcb` and at most 64 MiB;
-- the target `source.path` is not a regular `.kicad_pcb` file inside the workbench that the agent may write;
+- the target `source.path` is not a regular `.kicad_pcb` file allowed by the current tool scope that the agent may write;
 - `edits` is 0 or `objectives.status` is not `pass`;
 - the candidate's SHA-256 differs from `candidate.sha256` (changed after its check);
 - the target's SHA-256 differs from `source.sha256` (the source changed since the candidate was made);

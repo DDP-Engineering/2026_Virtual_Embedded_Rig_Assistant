@@ -1,6 +1,6 @@
 format: 1
 id: lab-validation
-version: 0.2.0
+version: 0.3.0
 license: LicenseRef-PolyForm-Noncommercial-1.0.0
 name: Measurement validation
 summary: Compare bench captures and simulations with requirements offline - measurements, limits and a report.
@@ -27,7 +27,7 @@ rules:
   - { match: "lab-validate {--version,--help,-h}", risk: safe }
   - match: "lab-validate inspect *"
     risk: safe
-    note: Offline analysis. Reads the named files in the workbench and prints what they hold; it writes nothing.
+    note: Offline analysis. Reads the named workbench files or host-approved HIL inputs and prints what they hold; it writes nothing.
   - match: "lab-validate {normalize,measure,align,compare,report} *"
     risk: safe
-    note: Offline analysis. Reads the request and its source files in the workbench, never changes them, and creates a new run folder under the results directory (default embedded-lab-results); no network, no other program.
+    note: Offline analysis. Reads the workbench request and its permitted source files (including host-approved HIL inputs), never changes them, and creates a new run folder under the results directory (default embedded-lab-results); no network, no other program.

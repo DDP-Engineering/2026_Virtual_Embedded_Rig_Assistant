@@ -4,7 +4,13 @@
 // read; no photometric engine is started.
 import { electricalModelPath } from "@vera/shared";
 import type { PreparedChange } from "../tools/changes.js";
-import { type ToolContext, type ToolDefinition, toolExcludedRoots } from "../tools/context.js";
+import {
+  type ToolContext,
+  type ToolDefinition,
+  toolExcludedRoots,
+  toolPathGuard,
+  toolSignal,
+} from "../tools/context.js";
 import { readCatalogFile } from "./catalog-tool.js";
 import { analyzeLighting, lightingRequestSchema } from "./lighting.js";
 import {
@@ -22,33 +28,39 @@ export async function prepareLightingDesign(
   raw: unknown,
   signal: AbortSignal,
 ): Promise<PreparedChange> {
+  signal = toolSignal(ctx, signal);
   signal.throwIfAborted();
   const request = lightingRequestSchema.parse(raw);
   const host = ctx.change;
   if (!host) throw Error("Workbench write host is unavailable.");
   host.assertWritable?.();
+  const inputGuard = await toolPathGuard(ctx);
   const file = await readModelFile(ctx.root, toolExcludedRoots(ctx));
   if (!file) throw Error(`The workbench has no electrical model (${electricalModelPath}).`);
   const { project, stamp: projectStamp } = await readLightingProject(
     ctx.root,
     request.project,
     toolExcludedRoots(ctx),
+    inputGuard,
   );
   const photometry = new Map<string, Awaited<ReturnType<typeof readPhotometryFile>>>();
   for (const type of project.types)
-    photometry.set(type.id, await readPhotometryFile(ctx.root, type.photometry, toolExcludedRoots(ctx)));
+    photometry.set(
+      type.id,
+      await readPhotometryFile(ctx.root, type.photometry, toolExcludedRoots(ctx), inputGuard),
+    );
   const catalogFile = request.catalog
-    ? await readCatalogFile(ctx.root, request.catalog, toolExcludedRoots(ctx))
+    ? await readCatalogFile(ctx.root, request.catalog, toolExcludedRoots(ctx), inputGuard)
     : null;
   let report = null;
   if (request.report) {
-    const read = await readLightingReport(ctx.root, request.report, toolExcludedRoots(ctx));
+    const read = await readLightingReport(ctx.root, request.report, toolExcludedRoots(ctx), inputGuard);
     if (read.report.project !== project.id)
       throw Error(
         `The report record ${request.report} belongs to ${read.report.project}, not to ${project.id}.`,
       );
     const evidenceSha256 = read.report.evidence
-      ? await hashEvidenceFile(ctx.root, read.report.evidence.path, toolExcludedRoots(ctx))
+      ? await hashEvidenceFile(ctx.root, read.report.evidence.path, toolExcludedRoots(ctx), inputGuard)
       : null;
     report = { ...read, evidenceSha256 };
   }

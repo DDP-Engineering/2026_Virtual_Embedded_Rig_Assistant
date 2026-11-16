@@ -4,7 +4,13 @@
 // switched and no regulator is set.
 import { type ElectricalResult, electricalModelPath } from "@vera/shared";
 import type { PreparedChange } from "../tools/changes.js";
-import { type ToolContext, type ToolDefinition, toolExcludedRoots } from "../tools/context.js";
+import {
+  type ToolContext,
+  type ToolDefinition,
+  toolExcludedRoots,
+  toolPathGuard,
+  toolSignal,
+} from "../tools/context.js";
 import { readCatalogFile } from "./catalog-tool.js";
 import { readMeasurementFile } from "./measurements.js";
 import { analyzePowerQuality, powerQualityRequestSchema } from "./power-quality.js";
@@ -18,11 +24,13 @@ export async function preparePowerQuality(
   raw: unknown,
   signal: AbortSignal,
 ): Promise<PreparedChange> {
+  signal = toolSignal(ctx, signal);
   signal.throwIfAborted();
   const request = powerQualityRequestSchema.parse(raw);
   const host = ctx.change;
   if (!host) throw Error("Workbench write host is unavailable.");
   host.assertWritable?.();
+  const inputGuard = await toolPathGuard(ctx);
   const file = await readModelFile(ctx.root, toolExcludedRoots(ctx));
   if (!file) throw Error(`The workbench has no electrical model (${electricalModelPath}).`);
   let network: ElectricalResult | null = null;
@@ -37,14 +45,14 @@ export async function preparePowerQuality(
       );
   }
   const measurements = request.measurements
-    ? await readMeasurementFile(ctx.root, request.measurements, toolExcludedRoots(ctx))
+    ? await readMeasurementFile(ctx.root, request.measurements, toolExcludedRoots(ctx), inputGuard)
     : null;
   if (measurements && measurements.series.file.board !== request.board)
     throw Error(
       `The measurement file ${request.measurements} measures ${measurements.series.file.board}, not ${request.board}.`,
     );
   const catalogFile = request.catalog
-    ? await readCatalogFile(ctx.root, request.catalog, toolExcludedRoots(ctx))
+    ? await readCatalogFile(ctx.root, request.catalog, toolExcludedRoots(ctx), inputGuard)
     : null;
   signal.throwIfAborted();
   const { runId, now } = newRun();

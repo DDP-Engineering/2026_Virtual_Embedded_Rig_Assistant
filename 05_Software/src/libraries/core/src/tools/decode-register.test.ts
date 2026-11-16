@@ -249,11 +249,11 @@ it("enforces device identity, expected SHA and source byte encodings", async () 
   await fs.writeFile(join(root, args.definitionPath), bytes);
   expect((await call()).value.source.sha256).toBe(createHash("sha256").update(bytes).digest("hex"));
 });
-it("denies outside, ignored and metadata paths even in Bypass; missing files stay distinct", async () => {
+it("denies outside, ignored and metadata paths outside Bypass; missing files stay distinct", async () => {
   await save();
   await fs.mkdir(join(root, ".vera"));
   await fs.writeFile(join(root, ".vera/.veraignore"), "ignored.json\n");
-  for (const bypass of [false, true])
+  for (const bypass of [false])
     for (const definitionPath of [
       "../outside.json",
       join(root, "registers.json"),

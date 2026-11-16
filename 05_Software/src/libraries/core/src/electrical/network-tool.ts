@@ -3,7 +3,13 @@
 // through the write flow (approval, before hash = absent, write queue). The model is only read.
 import { electricalModelPath } from "@vera/shared";
 import type { PreparedChange } from "../tools/changes.js";
-import { type ToolContext, type ToolDefinition, toolExcludedRoots } from "../tools/context.js";
+import {
+  type ToolContext,
+  type ToolDefinition,
+  toolExcludedRoots,
+  toolPathGuard,
+  toolSignal,
+} from "../tools/context.js";
 import { readCableTableFile } from "./cable-table.js";
 import { analyzeNetwork, networkRequestSchema } from "./network.js";
 import { newRun, prepareResultChange } from "./result-change.js";
@@ -15,14 +21,21 @@ export async function prepareElectricalNetwork(
   raw: unknown,
   signal: AbortSignal,
 ): Promise<PreparedChange> {
+  signal = toolSignal(ctx, signal);
   signal.throwIfAborted();
   const request = networkRequestSchema.parse(raw);
   const host = ctx.change;
   if (!host) throw Error("Workbench write host is unavailable.");
   host.assertWritable?.();
+  const inputGuard = await toolPathGuard(ctx);
   const file = await readModelFile(ctx.root, toolExcludedRoots(ctx));
   if (!file) throw Error(`The workbench has no electrical model (${electricalModelPath}).`);
-  const { table, stamp } = await readCableTableFile(ctx.root, request.cableTable, toolExcludedRoots(ctx));
+  const { table, stamp } = await readCableTableFile(
+    ctx.root,
+    request.cableTable,
+    toolExcludedRoots(ctx),
+    inputGuard,
+  );
   signal.throwIfAborted();
   const { runId, now } = newRun();
   const result = analyzeNetwork({

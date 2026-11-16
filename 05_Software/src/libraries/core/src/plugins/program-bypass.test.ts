@@ -6,6 +6,7 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { requestSha256 } from "../agent/approvals.js";
 import { type ToolContext, toolPathGuard } from "../tools/context.js";
 import { FakeHost } from "./fake-process-host.test-support.js";
+import { ResourceLeases } from "./leases.js";
 import { plugin } from "./program-fixtures.test-support.js";
 import { type ProgramChangeRequest, programApproval, verifyProgramFiles } from "./program-request.js";
 import { ProgramSession, runProgramTool } from "./program-tools.js";
@@ -320,3 +321,45 @@ it.each(["read-only", "ask", "auto-edit", "bypass"] as const)(
     expect(host.programs).toHaveLength(0);
   },
 );
+
+it("refuses matching-byte registry alias replacement at the final spawn check in Bypass", async () => {
+  const loaded = (await ctx.programs?.host.plugins())?.[0];
+  if (!loaded?.manifest.programs.fixture) throw Error("Missing fixture program");
+  loaded.manifest.programs.fixture.resources = {
+    option: "--instrument",
+    kinds: ["visa"],
+    cleanup: ["cleanup"],
+    grace: 1,
+    cleanupTimeout: 1,
+  };
+  const original = join(outside, "registry");
+  const replacement = join(outside, "replacement");
+  await mkdir(original);
+  await mkdir(replacement);
+  const registry = JSON.stringify({
+    format: 1,
+    resources: [
+      { alias: "scope", kind: "visa", resource: "TCPIP0::10.0.0.5::INSTR", profile: "rigol-ds1000z" },
+    ],
+  });
+  for (const folder of [original, replacement]) await writeFile(join(folder, "resources.json"), registry);
+  await symlink(original, join(root, "lab"), process.platform === "win32" ? "junction" : "dir");
+  runner = new ProgramRunner({
+    host,
+    clock: { sleep: async () => {} },
+    leases: new ResourceLeases({ root: join(scratch, "leases"), app: "test", pid: 4242, alive: () => true }),
+  });
+  if (!ctx.programs) throw Error("Missing programs");
+  ctx.programs.host.runner = runner;
+  const call = await prepare({ args: ["--instrument", "scope"], background: true });
+  let verified = false;
+  expect(approved.registry?.path).toBe(join(original, "resources.json").replaceAll("\\", "/"));
+  verify = async () => {
+    verified = true;
+    await rm(join(root, "lab"));
+    await symlink(replacement, join(root, "lab"), process.platform === "win32" ? "junction" : "dir");
+  };
+  await expect(call.apply(new AbortController().signal)).rejects.toThrow();
+  expect(verified).toBe(true);
+  expect(host.programs).toHaveLength(0);
+});

@@ -4,11 +4,10 @@ import { basename, dirname, join, posix } from "node:path";
 import { formatPatch, structuredPatch } from "diff";
 import { z } from "zod";
 import type { LoadedPlugin } from "../plugins/store.js";
-import { PathGuard } from "../workbench/path-guard.js";
 import { isBinary } from "./binary.js";
 import { assertAgentWritable, commitChange, type PreparedChange, protectedPath } from "./changes.js";
 import type { ToolContext, ToolDefinition } from "./context.js";
-import { toolExcludedRoots, toolPathGuard } from "./context.js";
+import { toolPathGuard, toolSignal } from "./context.js";
 
 /** The official plugin whose candidates apply_candidate writes (spec REQ-DATA-891d5b5d §10). */
 export const kicadLayoutPluginId = "kicad-layout";
@@ -93,21 +92,16 @@ export async function prepareApplyCandidate(
   raw: unknown,
   signal: AbortSignal,
 ): Promise<PreparedChange> {
+  signal = toolSignal(ctx, signal);
   signal.throwIfAborted();
   const args = applyCandidateParams.parse(raw);
   const host = ctx.change;
   if (!host) throw Error("Workbench write host is unavailable.");
   host.assertWritable?.();
-  const workbench = await PathGuard.create(
-    ctx.root,
-    ctx.root,
-    "workbench",
-    undefined,
-    toolExcludedRoots(ctx),
-  );
+  const workbench = await toolPathGuard(ctx);
   const run = await workbench.resolve(args.run);
   if (run.relative === "." || !(await lstat(run.absolute)).isDirectory())
-    throw Error("Choose a kicad-layout run folder inside the workbench.");
+    throw Error("Choose a kicad-layout run folder allowed by the current permission mode.");
   const statePath = await workbench.resolve(`${run.relative}/state.json`);
   let state: z.infer<typeof stateSchema>;
   try {
@@ -133,9 +127,9 @@ export async function prepareApplyCandidate(
   if (!state.source.path.toLowerCase().endsWith(".kicad_pcb"))
     throw Error("The target must be a .kicad_pcb file.");
   const inside = await workbench.resolve(state.source.path);
-  const target = await (await toolPathGuard(ctx)).resolve(state.source.path);
+  const target = inside;
   if (target.key !== inside.key || protectedPath(inside.relative))
-    throw Error("The target must be a board inside the workbench that the agent may write.");
+    throw Error("The target must be a board that the agent may write.");
   await assertAgentWritable(ctx, target);
   const before = await boardBytes(target.absolute, "source board");
   const beforeSha256 = hash(before);
@@ -155,7 +149,7 @@ export async function prepareApplyCandidate(
     callId: host.callId,
     tool: "apply_candidate" as const,
     path: changePath,
-    args: Object.freeze({ ...args }),
+    args: Object.freeze({ run: run.relative }),
     existed: true,
     beforeSha256,
     afterSha256,
@@ -178,16 +172,12 @@ export async function prepareApplyCandidate(
       diff,
       added,
       removed,
-      result: { path: changePath, sha256: afterSha256, bytes: after.length, run: args.run },
+      result: { path: changePath, sha256: afterSha256, bytes: after.length, run: run.relative },
       // The approval covers these bytes: a candidate changed since then, or a board opened in KiCad, stops the write.
       check: async () => {
-        const guard = await PathGuard.create(
-          ctx.root,
-          ctx.root,
-          "workbench",
-          undefined,
-          toolExcludedRoots(ctx),
-        );
+        workbench.assertAuthorized();
+        const guard = await toolPathGuard(ctx);
+        signal.throwIfAborted();
         if ((await guard.resolve(candidate.relative)).key !== candidate.key)
           throw Error("Conflict: candidate path changed.");
         const current = await readFile(candidate.absolute).catch(() => null);

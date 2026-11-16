@@ -1,8 +1,10 @@
+import { resolve } from "node:path";
 import { createContext, Script } from "node:vm";
 import {
   classifyCommand,
   credentialReferenceSchema,
   gitExecutionArguments,
+  LAB_REGISTRY_PATH,
   type PluginCredentialScope,
   type PluginProgram,
   pluginProgramNameSchema,
@@ -15,7 +17,7 @@ import type { ProgramPromptEntry } from "../agent/prompt.js";
 import type { Clock } from "../ports.js";
 import type { PreparedChange } from "../tools/changes.js";
 import { type ToolContext, type ToolDefinition, toolExcludedRoots, toolPathGuard } from "../tools/context.js";
-import { PathGuard } from "../workbench/path-guard.js";
+import type { PathGuard } from "../workbench/path-guard.js";
 import { prepareHilCall } from "./hil/run.js";
 import { type LauncherMode, programInvocation } from "./launcher.js";
 import {
@@ -228,8 +230,13 @@ export async function prepareCall(
   programs: ProgramContext,
   args: { program: string; args?: string[] | undefined; cwd?: string | undefined },
   signal: AbortSignal,
-  confinedGuard?: PathGuard,
+  inputGuard?: PathGuard,
+  registryLookup?: string,
 ) {
+  const epoch = ctx.permissionMode?.() === "bypass" ? ctx.bypassSignal?.() : undefined;
+  if (epoch) signal = AbortSignal.any([signal, epoch]);
+  const pathGuard = inputGuard ?? (await toolPathGuard(ctx));
+  signal.throwIfAborted();
   const { plugin, declared, resolved } = await locate(programs, args.program, signal);
   try {
     const programArgs = [
@@ -243,12 +250,12 @@ export async function prepareCall(
       args.args ?? [],
       signal,
       toolExcludedRoots(ctx),
+      pathGuard,
+      registryLookup ??
+        (args.cwd && args.cwd !== "."
+          ? `${(await pathGuard.resolve(args.cwd)).relative}/${LAB_REGISTRY_PATH}`
+          : LAB_REGISTRY_PATH),
     );
-    const pathGuard =
-      confinedGuard ??
-      (declared.plan === "hil"
-        ? await PathGuard.create(ctx.root, ctx.root, "workbench", undefined, toolExcludedRoots(ctx))
-        : await toolPathGuard(ctx));
     const prepared = await prepareProgramRequest({
       workbench: ctx.root,
       pathGuard,
@@ -399,6 +406,8 @@ export function startCall(
     check?: (() => Promise<void>) | undefined;
     /** The stdin line of a run naming a stored credential. */
     input?: string | undefined;
+    /** Host-only metadata for a generated HIL helper invocation. */
+    env?: Readonly<Record<string, string>> | undefined;
   },
 ): Promise<ProgramRun> {
   const pluginDir = current.plugin.folder;
@@ -422,10 +431,13 @@ export function startCall(
       ...Object.fromEntries(
         Object.entries(current.declared.env ?? {}).map(([name, value]) => [
           name,
-          value.replaceAll(WORKBENCH, ctx.root).replaceAll(PLUGIN_DIR, pluginDir),
+          current.prepared.registry && value === `${WORKBENCH}/${LAB_REGISTRY_PATH}`
+            ? resolve(ctx.root, current.prepared.registry.path)
+            : value.replaceAll(WORKBENCH, ctx.root).replaceAll(PLUGIN_DIR, pluginDir),
         ]),
       ),
       ...current.resolved.env,
+      ...options.env,
       // The helper refuses a registry other than the approved one (also in the cleanup run).
       ...(current.prepared.registry ? { VERA_REGISTRY_SHA256: current.prepared.registry.sha256 } : {}),
     },
@@ -484,16 +496,11 @@ async function prepare(ctx: ToolContext, raw: unknown, signal: AbortSignal): Pro
       mode,
       consume,
       signal,
+      revocation: preparedScope,
       refusal,
       foreground,
-      prepareCall: async (ctx, programs, args, signal) =>
-        prepareCall(
-          ctx,
-          programs,
-          args,
-          signal,
-          await PathGuard.create(ctx.root, ctx.root, "workbench", undefined, toolExcludedRoots(ctx)),
-        ),
+      prepareCall: async (ctx, programs, args, signal, registryLookup) =>
+        prepareCall(ctx, programs, args, signal, first.pathGuard, registryLookup),
       startCall,
       timeoutCap,
       programError,

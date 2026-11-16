@@ -169,3 +169,5 @@ Bypass acceptance (`e2e/bypass.spec.ts`) covers per-change confirmation/cancella
 Confined agent-input application-data exclusions also have shared core coverage in `src/libraries/core/src/tools/app-data-inputs.test.ts`, with candidate/apply, program/runner and HIL regressions beside those implementations.
 
 `e2e/program-bypass.spec.ts` uses two owned sibling Git repositories and the local echo-tools fixture to verify Bypass edits, real outside cwd execution, absolute JSON/Markdown export paths, workbench-owned logs, and background revocation after turn completion. `VERA_BYP01_EVIDENCE_DIR` retains exports, native snapshot and original logs. `core/src/plugins/program-bypass.test.ts` adds mode, argument-hash, alias and exclusion boundaries; `core/src/sessions/programs.test.ts` checks the durable session revocation signal.
+
+`integration/hil-bypass.test.ts` runs real standard-library HIL/lab-validation helpers on owned sibling inputs, checking canonical requests, host input policy exclusions and workbench-only output without instruments or external accounts.

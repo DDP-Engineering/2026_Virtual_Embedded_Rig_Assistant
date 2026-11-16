@@ -17,6 +17,7 @@ from typing import Any, Callable
 
 from . import units
 from .errors import Refused
+from .input_paths import InputPolicy, input_path, shown
 from .workspace import PathRefused, confined, regular_file, relative
 
 RESULT_LIMIT = 4 * 1024 * 1024
@@ -63,6 +64,7 @@ class Source:
 class Context:
     cwd: Path
     spelled: Path
+    input_policy: InputPolicy | None = None
 
 
 @dataclass(frozen=True)
@@ -89,19 +91,21 @@ def register(name: str, fields: set[str], description: str) -> Callable[[Callabl
 
 def _file(ctx: Context, raw: str, field_name: str, limit: int) -> tuple[Path, bytes, dict[str, Any]]:
     try:
-        path = regular_file(ctx.cwd, raw, field_name, ctx.spelled)
+        path = input_path(ctx.cwd, ctx.spelled, raw, field_name, ctx.input_policy)
+        if not path.is_file():
+            raise PathRefused(f"{field_name} is not a regular file.")
     except PathRefused as error:
         raise Refused("path", str(error)) from error
     size = path.stat().st_size
     if size > limit:
-        raise Refused("limit", f"{field_name}: {relative(ctx.cwd, path)} has {size} bytes, more than {limit}.")
+        raise Refused("limit", f"{field_name}: {shown(ctx.cwd, path)} has {size} bytes, more than {limit}.")
     data = path.read_bytes()
-    return path, data, {"path": relative(ctx.cwd, path), "bytes": len(data), "sha256": hashlib.sha256(data).hexdigest()}
+    return path, data, {"path": shown(ctx.cwd, path), "bytes": len(data), "sha256": hashlib.sha256(data).hexdigest()}
 
 
 def _folder(ctx: Context, raw: str, field_name: str) -> Path:
     try:
-        path = confined(ctx.cwd, raw, field_name, ctx.spelled)
+        path = input_path(ctx.cwd, ctx.spelled, raw, field_name, ctx.input_policy)
     except PathRefused as error:
         raise Refused("path", str(error)) from error
     if not path.is_dir():
@@ -180,7 +184,7 @@ def scpi_capture(source_id: str, spec: dict[str, Any], ctx: Context) -> Source:
     _, data, record = _member(ctx, folder, "result.json", field_name, RESULT_LIMIT)
     _requested_hash(spec, record, "result.json")
     document = _json(data, "result.json")
-    what = f"the capture folder {relative(ctx.cwd, folder)}"
+    what = f"the capture folder {shown(ctx.cwd, folder)}"
     if not (isinstance(document, dict) and document.get("format") == 1 and document.get("kind") == "scpi-result"
             and isinstance(document.get("series", []), list)):
         raise Refused("source", f"{what} has no format 1 scpi-result result.json.")
@@ -242,7 +246,7 @@ def scpi_capture(source_id: str, spec: dict[str, Any], ctx: Context) -> Source:
     source = Source(
         id=source_id,
         importer="scpi-capture",
-        path=relative(ctx.cwd, folder),
+        path=shown(ctx.cwd, folder),
         sha256=record["sha256"],
         files=files,
         channels=channels,
@@ -298,7 +302,7 @@ def power_capture(source_id: str, spec: dict[str, Any], ctx: Context) -> Source:
     _, data, record = _member(ctx, folder, "result.json", field_name, RESULT_LIMIT)
     _requested_hash(spec, record, "result.json")
     document = _json(data, "result.json")
-    what = f"the power folder {relative(ctx.cwd, folder)}"
+    what = f"the power folder {shown(ctx.cwd, folder)}"
     if not (isinstance(document, dict) and document.get("format") == 1 and document.get("kind") == "power-result"):
         raise Refused("source", f"{what} has no format 1 power-result result.json.")
     if document.get("operation") not in ("capture", "import"):
@@ -367,7 +371,7 @@ def power_capture(source_id: str, spec: dict[str, Any], ctx: Context) -> Source:
     source = Source(
         id=source_id,
         importer="power-capture",
-        path=relative(ctx.cwd, folder),
+        path=shown(ctx.cwd, folder),
         sha256=record["sha256"],
         files=[record, csv_record],
         channels=channels,
@@ -528,7 +532,7 @@ def spice(source_id: str, spec: dict[str, Any], ctx: Context) -> Source:
     _, data, record = _member(ctx, folder, "result.json", field_name, RESULT_LIMIT)
     _requested_hash(spec, record, "result.json")
     document = _json(data, "result.json")
-    what = f"the simulation folder {relative(ctx.cwd, folder)}"
+    what = f"the simulation folder {shown(ctx.cwd, folder)}"
     if not (isinstance(document, dict) and document.get("format") == 1 and document.get("kind") in ("ngspice-tool-result", "ltspice-tool-result")
             and isinstance(document.get("artifacts", []), list)):
         raise Refused("source", f"{what} has no format 1 ngspice-tool or ltspice-tool result.json.")
@@ -571,7 +575,7 @@ def spice(source_id: str, spec: dict[str, Any], ctx: Context) -> Source:
     return Source(
         id=source_id,
         importer="spice",
-        path=relative(ctx.cwd, folder),
+        path=shown(ctx.cwd, folder),
         sha256=record["sha256"],
         files=[record, csv_record],
         channels=channels,

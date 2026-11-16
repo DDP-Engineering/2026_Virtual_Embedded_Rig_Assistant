@@ -19,7 +19,7 @@ export interface ProgramResource {
 }
 export interface ClaimedResources {
   readonly resources: readonly ProgramResource[];
-  readonly registry: { readonly path: string; readonly sha256: string };
+  readonly registry: { readonly path: string; readonly sha256: string; readonly lookup?: string };
 }
 
 /** The aliases a call names with the program's resource option (`--instrument psu` or `--instrument=psu`). */
@@ -44,11 +44,17 @@ export async function readRegistry(
   workbench: string,
   signal?: AbortSignal,
   excludedRoots: readonly string[] = [],
-): Promise<{ registry: LabRegistry; sha256: string }> {
-  const guard = await PathGuard.create(workbench, workbench, "workbench", undefined, excludedRoots);
+  inputGuard?: PathGuard,
+  lookup: string = LAB_REGISTRY_PATH,
+): Promise<{ registry: LabRegistry; sha256: string; path: string }> {
+  const guard =
+    inputGuard ?? (await PathGuard.create(workbench, workbench, "workbench", undefined, excludedRoots));
   let absolute: string;
+  let path: string;
   try {
-    absolute = (await guard.resolve(LAB_REGISTRY_PATH)).absolute;
+    const target = await guard.resolve(lookup);
+    absolute = target.absolute;
+    path = target.relative;
   } catch (error) {
     if (error instanceof ApplicationDataAccessError) throw error;
     throw Error(`${LAB_REGISTRY_PATH} cannot be used: it lies outside the workbench or is ignored.`);
@@ -67,7 +73,8 @@ export async function readRegistry(
     throw Error(`${LAB_REGISTRY_PATH} cannot be read.`);
   }
   if (bytes.length > LAB_REGISTRY_BYTES) throw Error(`${LAB_REGISTRY_PATH} is larger than 256 KiB.`);
-  return { registry: parseRegistry(bytes), sha256: createHash("sha256").update(bytes).digest("hex") };
+  guard.assertAuthorized();
+  return { path, registry: parseRegistry(bytes), sha256: createHash("sha256").update(bytes).digest("hex") };
 }
 
 /** Validates registry bytes; an Error names `name` (the workbench path) and the first problem. */
@@ -95,12 +102,14 @@ export async function claimedResources(
   args: readonly string[],
   signal?: AbortSignal,
   excludedRoots: readonly string[] = [],
+  inputGuard?: PathGuard,
+  lookup: string = LAB_REGISTRY_PATH,
 ): Promise<ClaimedResources | undefined> {
   const declared = program.resources;
   if (!declared) return undefined;
   const aliases = namedAliases(declared.option, args);
   if (aliases.length === 0) return undefined;
-  const { registry, sha256 } = await readRegistry(workbench, signal, excludedRoots);
+  const { registry, sha256, path } = await readRegistry(workbench, signal, excludedRoots, inputGuard, lookup);
   const resources = aliases.map((alias) => {
     const entry = registry.resources.find((candidate) => candidate.alias === alias);
     if (!entry) throw Error(`The alias ${alias} is not declared in ${LAB_REGISTRY_PATH}.`);
@@ -120,6 +129,6 @@ export async function claimedResources(
   });
   return {
     resources: Object.freeze(resources),
-    registry: Object.freeze({ path: LAB_REGISTRY_PATH, sha256 }),
+    registry: Object.freeze({ path, sha256, ...(lookup === LAB_REGISTRY_PATH ? {} : { lookup }) }),
   };
 }

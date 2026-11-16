@@ -24,7 +24,7 @@ const denied = () =>
   new DecodeFailure(
     "DENIED",
     "path_denied",
-    "Choose an ordinary allowed workbench definition outside ignored paths, .vera and VERA application data.",
+    "Choose an ordinary definition allowed by the current permission mode, outside VERA application data.",
   );
 const MAX_BYTES = 1024 * 1024;
 
@@ -58,22 +58,26 @@ function boundedStructure(text: string): void {
   }
 }
 
-/** Always confined, including in Bypass; retains at most1MiB plus one overflow byte. */
+/** Reads with host-selected scope; retains at most1MiB plus one overflow byte. */
 export async function loadDefinition(
   root: string,
   path: string,
   expectedSha256: string | undefined,
   signal: AbortSignal,
   excludedRoots: readonly string[] = [],
+  inputGuard?: PathGuard,
 ) {
   signal.throwIfAborted();
   let guard: PathGuard;
   let target: Awaited<ReturnType<PathGuard["resolve"]>>;
-  const sourcePath = posix.normalize(path.replaceAll("\\", "/"));
+  let sourcePath = posix.normalize(path.replaceAll("\\", "/"));
+  let local = true;
   try {
-    guard = await PathGuard.create(root, root, "workbench", undefined, excludedRoots);
+    guard = inputGuard ?? (await PathGuard.create(root, root, "workbench", undefined, excludedRoots));
     target = await guard.resolve(path);
-    formatLineRef({ path: sourcePath, start: 1, end: 1 });
+    sourcePath = target.relative;
+    local = !sourcePath.startsWith("/") && !/^[A-Za-z]:/.test(sourcePath);
+    if (local) formatLineRef({ path: sourcePath, start: 1, end: 1 });
   } catch {
     throw denied();
   }
@@ -167,7 +171,11 @@ export async function loadDefinition(
     const lines = text.split("\n").length - (text.endsWith("\n") ? 1 : 0);
     return {
       definition: parsed.data,
-      source: { path: sourcePath, sha256, ref: formatLineRef({ path: sourcePath, start: 1, end: lines }) },
+      source: {
+        path: sourcePath,
+        sha256,
+        ref: local ? formatLineRef({ path: sourcePath, start: 1, end: lines }) : null,
+      },
     };
   } catch (error) {
     signal.throwIfAborted();

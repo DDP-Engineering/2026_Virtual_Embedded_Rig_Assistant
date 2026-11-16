@@ -1,5 +1,5 @@
 // Power measurement files (spec REQ-DATA-4dc5e2c7 "Measurement file"): strict format-1 reading of a P/Q/S and
-// harmonic profile with declared units and conventions, rows inline or in a CSV file, and the confined file access.
+// harmonic profile with declared units and conventions, rows inline or in a CSV file, and host-scoped input access.
 // Values are returned in fixed units: kW, kvar, kVA, V, A and shares (1) for factors, THD and harmonics.
 import { createHash } from "node:crypto";
 import { lstat, readFile } from "node:fs/promises";
@@ -226,10 +226,11 @@ async function fileBytes(
   path: string,
   label: string,
   excludedRoots: readonly string[] = [],
+  inputGuard?: PathGuard,
 ): Promise<Buffer> {
-  const target = await (await PathGuard.create(root, root, "workbench", undefined, excludedRoots)).resolve(
-    path,
-  );
+  const target = await (
+    inputGuard ?? (await PathGuard.create(root, root, "workbench", undefined, excludedRoots))
+  ).resolve(path);
   let info: Awaited<ReturnType<typeof lstat>>;
   try {
     info = await lstat(target.absolute);
@@ -243,16 +244,17 @@ async function fileBytes(
   return readFile(target.absolute);
 }
 
-/** Reads `electrical-automation-measurements/<id>.json` (and its CSV) strictly, confined to the workbench. */
+/** Reads `electrical-automation-measurements/<id>.json` (and its CSV) strictly, using the host input guard (confined by default). */
 export async function readMeasurementFile(
   root: string,
   id: string,
   excludedRoots: readonly string[] = [],
+  inputGuard?: PathGuard,
 ): Promise<{ series: MeasurementSeries; stamp: MeasurementStamp }> {
   if (!ID.test(id) || id.length > 64)
     throw Error(`The measurement id ${JSON.stringify(id)} is not a valid id.`);
   const path = `${powerMeasurementsDir}/${id}.json`;
-  const json = await fileBytes(root, path, "measurement file", excludedRoots);
+  const json = await fileBytes(root, path, "measurement file", excludedRoots, inputGuard);
   let csvName: unknown;
   try {
     csvName = (JSON.parse(json.toString("utf8")) as { csv?: unknown }).csv;
@@ -261,12 +263,28 @@ export async function readMeasurementFile(
   }
   const csv =
     typeof csvName === "string" && csvName === `${id}.csv`
-      ? await fileBytes(root, `${powerMeasurementsDir}/${csvName}`, "measurement csv file", excludedRoots)
+      ? await fileBytes(
+          root,
+          `${powerMeasurementsDir}/${csvName}`,
+          "measurement csv file",
+          excludedRoots,
+          inputGuard,
+        )
       : undefined;
   const series = parseMeasurements(json.toString("utf8"), csv?.toString("utf8"), id);
   const sha256 = createHash("sha256")
     .update(json)
     .update(csv ?? Buffer.alloc(0))
     .digest("hex");
-  return { series, stamp: { id, sha256, path, rows: series.times.length, origin: series.file.origin } };
+  const guard = inputGuard ?? (await PathGuard.create(root, root, "workbench", undefined, excludedRoots));
+  return {
+    series,
+    stamp: {
+      id,
+      sha256,
+      path: (await guard.resolve(path)).relative,
+      rows: series.times.length,
+      origin: series.file.origin,
+    },
+  };
 }

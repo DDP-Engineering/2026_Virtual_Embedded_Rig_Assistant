@@ -3,17 +3,15 @@ import { lstat } from "node:fs/promises";
 import { dangerousToken, ruleNamesProgram, veraError } from "@vera/shared";
 import { z } from "zod";
 import type { PreparedChange } from "../tools/changes.js";
-import { type ToolContext, type ToolDefinition, toolExcludedRoots } from "../tools/context.js";
-import { PathGuard } from "../workbench/path-guard.js";
+import { type ToolContext, type ToolDefinition, toolPathGuard, toolSignal } from "../tools/context.js";
+import type { PathGuard } from "../workbench/path-guard.js";
 import { readPluginPackage } from "./store.js";
 
 const params = z.strictObject({ path: z.string().min(1).max(4096) });
-/** Drafts stay in the workbench even when ordinary file tools have bypass scope. */
-async function draftPath(ctx: ToolContext, raw: unknown): Promise<string> {
+/** Draft source authority comes from the host-selected tool scope. */
+async function draftPath(guard: PathGuard, raw: unknown): Promise<string> {
   const { path } = params.parse(raw);
-  const target = await (
-    await PathGuard.create(ctx.root, ctx.root, "workbench", undefined, toolExcludedRoots(ctx))
-  ).resolve(path);
+  const target = await guard.resolve(path);
   if (!(await lstat(target.absolute)).isDirectory()) throw Error("Choose a plugin draft folder.");
   return target.absolute;
 }
@@ -21,11 +19,15 @@ export const pluginValidateTool: ToolDefinition = {
   name: "plugin_validate",
   class: "read",
   description:
-    "Validate a workbench plugin draft folder. Returns schema errors and lint warnings; installs nothing.",
+    "Validate a plugin draft folder; absolute outside sources require Bypass. VERA application data is always refused. Returns schema errors and lint warnings; installs nothing.",
   params,
   execute: async (ctx, raw, signal) => {
+    signal = toolSignal(ctx, signal);
+    const guard = await toolPathGuard(ctx);
     signal.throwIfAborted();
-    const pkg = await readPluginPackage(await draftPath(ctx, raw));
+    const path = await draftPath(guard, raw);
+    const pkg = await readPluginPackage(path);
+    await draftPath(guard, raw);
     const warnings: { code: string; path: string; detail: string }[] = [];
     const manifest = pkg.manifest;
     if (manifest) {
@@ -54,13 +56,17 @@ export const pluginValidateTool: ToolDefinition = {
   },
 };
 async function prepare(ctx: ToolContext, raw: unknown, signal: AbortSignal): Promise<PreparedChange> {
+  signal = toolSignal(ctx, signal);
+  const guard = await toolPathGuard(ctx);
   signal.throwIfAborted();
   const host = ctx.change,
     store = ctx.pluginBuilder;
   if (!host || !store) throw Error("Plugin builder host is unavailable.");
   host.assertWritable?.();
-  const path = await draftPath(ctx, raw);
+  const path = await draftPath(guard, raw);
   const review = await store.review(path);
+  signal.throwIfAborted();
+  await draftPath(guard, raw);
   if (review.issues.length || !review.manifest)
     throw Error(`Invalid plugin draft: ${JSON.stringify(review.issues)}`);
   const request = Object.freeze({
@@ -69,7 +75,7 @@ async function prepare(ctx: ToolContext, raw: unknown, signal: AbortSignal): Pro
     sessionId: host.sessionId,
     turnId: host.turnId,
     callId: host.callId,
-    path: params.parse(raw).path,
+    path: (await guard.resolve(params.parse(raw).path)).relative,
     args: Object.freeze({ path }),
     existed: false,
     beforeSha256: null,
@@ -87,8 +93,12 @@ async function prepare(ctx: ToolContext, raw: unknown, signal: AbortSignal): Pro
       signal.throwIfAborted();
       applySignal.throwIfAborted();
       host.assertWritable?.();
-      if ((await draftPath(ctx, raw)) !== path) throw veraError("CONFLICT");
+      guard.assertAuthorized();
+      const currentGuard = await toolPathGuard(ctx);
+      signal.throwIfAborted();
+      if ((await draftPath(currentGuard, raw)) !== path) throw veraError("CONFLICT");
       const installed = await store.installTrial(path, review.sha256, () => {
+        guard.assertAuthorized();
         signal.throwIfAborted();
         applySignal.throwIfAborted();
         host.assertWritable?.();
@@ -101,7 +111,7 @@ export const pluginInstallTool: ToolDefinition = {
   name: "plugin_install",
   class: "program",
   description:
-    "Request the user's review of a workbench plugin draft and install the exact reviewed files as trial. Always asks, including bypass. Does not enable, provision or promote plugins.",
+    "Request the user's review of a plugin draft (absolute outside sources require Bypass; VERA application data is refused) and install the exact reviewed files as trial. Always asks, including bypass. Does not enable, provision or promote plugins.",
   params,
   prepare,
   execute: async () => {

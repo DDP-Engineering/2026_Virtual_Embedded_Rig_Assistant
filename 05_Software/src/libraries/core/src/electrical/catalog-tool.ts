@@ -1,5 +1,5 @@
 // The industrial catalog's read tool (spec REQ-DATA-d7e27def "Tool industrial_catalog"): catalog files in
-// electrical-automation-catalogs/, confined to the workbench, read strictly; no network, no credential store.
+// electrical-automation-catalogs/, using the host input guard (confined by default), read strictly; no network, no credential store.
 import { createHash } from "node:crypto";
 import { lstat, readdir, readFile } from "node:fs/promises";
 import {
@@ -11,7 +11,7 @@ import {
   industrialCatalogLimits,
 } from "@vera/shared";
 import { z } from "zod";
-import { type ToolContext, type ToolDefinition, toolExcludedRoots } from "../tools/context.js";
+import { type ToolContext, type ToolDefinition, toolExcludedRoots, toolPathGuard } from "../tools/context.js";
 import { PathGuard } from "../workbench/path-guard.js";
 import {
   type CatalogStamp,
@@ -49,16 +49,21 @@ export async function readCatalogFile(
   root: string,
   id: string,
   excludedRoots: readonly string[] = [],
+  inputGuard?: PathGuard,
 ): Promise<CatalogFile> {
   const catalogId = electricalIdSchema.parse(id);
   const path = `${industrialCatalogDir}/${catalogId}.json`;
-  const target = await (await PathGuard.create(root, root, "workbench", undefined, excludedRoots)).resolve(
-    path,
-  );
+  const target = await (
+    inputGuard ?? (await PathGuard.create(root, root, "workbench", undefined, excludedRoots))
+  ).resolve(path);
   const bytes = await catalogBytes(target.absolute);
   if (bytes === null) throw Error(`The catalog ${path} does not exist.`);
+  inputGuard?.assertAuthorized();
   const catalog = parseCatalog(bytes.toString("utf8"), catalogId);
-  return { catalog, stamp: { id: catalog.id, version: catalog.version, sha256: hash(bytes), path } };
+  return {
+    catalog,
+    stamp: { id: catalog.id, version: catalog.version, sha256: hash(bytes), path: target.relative },
+  };
 }
 
 export interface CatalogListing {
@@ -77,8 +82,9 @@ export interface CatalogListing {
 export async function listCatalogs(
   root: string,
   excludedRoots: readonly string[] = [],
+  inputGuard?: PathGuard,
 ): Promise<CatalogListing[]> {
-  const guard = await PathGuard.create(root, root, "workbench", undefined, excludedRoots);
+  const guard = inputGuard ?? (await PathGuard.create(root, root, "workbench", undefined, excludedRoots));
   const folder = await guard.resolve(industrialCatalogDir);
   let names: string[];
   try {
@@ -129,6 +135,7 @@ export async function listCatalogs(
       tables: catalog.coordination.length,
     });
   }
+  guard.assertAuthorized();
   return listed;
 }
 
@@ -146,12 +153,21 @@ export const industrialCatalogParams = z.strictObject({
 });
 
 async function readView(ctx: ToolContext, raw: unknown): Promise<Record<string, unknown>> {
+  const inputGuard = await toolPathGuard(ctx);
   const args = industrialCatalogParams.parse(raw);
   if (args.view === "list")
-    return { path: industrialCatalogDir, catalogs: await listCatalogs(ctx.root, toolExcludedRoots(ctx)) };
+    return {
+      path: industrialCatalogDir,
+      catalogs: await listCatalogs(ctx.root, toolExcludedRoots(ctx), inputGuard),
+    };
   if (args.catalog === undefined)
     throw Error(`view ${args.view} needs catalog, a catalog id from view list.`);
-  const { catalog, stamp } = await readCatalogFile(ctx.root, args.catalog, toolExcludedRoots(ctx));
+  const { catalog, stamp } = await readCatalogFile(
+    ctx.root,
+    args.catalog,
+    toolExcludedRoots(ctx),
+    inputGuard,
+  );
   if (args.view === "select") {
     if (!args.requirements) throw Error("view select needs requirements.");
     return { ...selectItems(catalog, stamp, { ...args, requirements: args.requirements }) };

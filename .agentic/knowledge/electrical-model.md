@@ -39,7 +39,7 @@ folders; VERA derives result freshness from the results' input snapshots and sto
 
 ## Public interface
 
-Agent tool entrypoints pass toolExcludedRoots(ctx) into the confined model/result/catalog/cable/measurement/lighting/photometry/evidence readers. They refuse application data even when nested inside the workbench, before parsing bytes. Result listings resolve each child through the guard. Internal host callers retain default exclusions of none; stored result/model locations stay workbench-owned. Focused boundary proof is tools/app-data-inputs.test.ts and the valid protected cable-table case in network-tool.test.ts.
+Agent input entrypoints capture toolPathGuard(ctx) and retain it across catalog/cable/measurement/lighting/photometry/evidence and import reads; model/result storage keeps its confined guard. Identifier selectors remain identifiers, and canonical aliases outside the workbench require Bypass. They refuse application data even when nested inside the workbench, before parsing bytes. Result listings resolve each child through the guard. Internal host callers retain default exclusions of none; stored result/model locations stay workbench-owned. Focused boundary proof is tools/app-data-inputs.test.ts and the valid protected cable-table case in network-tool.test.ts.
 
 - Shared (`electrical-model.ts`): zod schemas `electricalModelSchema` (kind `vera-electrical-model`, format 1) and
   `electricalResultSchema` (kind `vera-electrical-result`, format 1), the fixed paths `electricalModelPath`,

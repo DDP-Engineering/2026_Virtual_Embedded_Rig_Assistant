@@ -299,7 +299,7 @@ Project metadata lives in `<project>/.vera/`: `workbench.yaml` (configuration),
 `WORKBENCH.md` (pinned engineering context), optional `.veraignore` (project-relative
 ignore patterns), and `skills/<name>/SKILL.md` (project skills). SQLite, locks,
 downloads and session artifacts use the same `.vera` folder. User documents and
-sources remain relative to the selected project root. Ordinary file tools and
+sources retain their declared identifier selectors, while input paths follow shared Bypass scope. Ordinary file tools and
 document indexing exclude `.vera`; skills use the dedicated bounded loader.
 The current layout is authoritative: opening requires `.vera/workbench.yaml`.
 Root-level files are ordinary project content and are never detected or migrated.
@@ -425,3 +425,7 @@ without changing model answer length, tool permissions or stored history.
 Renderer session controls include `bookmark-button.tsx` and `use-bookmarks.ts` beside the transcript: shared localized bookmark actions and optimistic event-backed state.
 
 `use-bookmark-navigation.ts` dispatches the configured next/previous bookmark commands through the transcript rail jump, including older rows that still need mounting. Bookmarked single/group markers use primary fill and a longer mark.
+
+BYP input-policy proof lives beside core tools in `tools/input-bypass.test.ts`, plugin authoring/HIL tests,
+`tools/apply-candidate.test.ts` and electrical tool tests; targeted `tests/integration/cli.test.ts` exercises
+built sibling analysis. Owned generated proof is under ignored `evaluation-outputs/byp02/`.

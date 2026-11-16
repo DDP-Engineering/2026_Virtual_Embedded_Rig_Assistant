@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import { lstat, readdir, readFile, stat } from "node:fs/promises";
-import { join } from "node:path";
+import { isAbsolute, join } from "node:path";
 import {
   HIL_PLAN_BYTES,
   type HilCleanupStep,
@@ -146,11 +146,13 @@ export async function readHilPlan(
   workbench: string,
   planArg: string,
   excludedRoots: readonly string[] = [],
+  inputGuard?: PathGuard,
 ): Promise<{ plan: HilPlan; path: string; bytes: Buffer; sha256: string }> {
   const refuse = (message: string, path = ""): never => {
     throw new HilPlanError([{ path, message }]);
   };
-  const guard = await PathGuard.create(workbench, workbench, "workbench", undefined, excludedRoots);
+  const guard =
+    inputGuard ?? (await PathGuard.create(workbench, workbench, "workbench", undefined, excludedRoots));
   let absolute = "";
   let relative = "";
   try {
@@ -183,7 +185,13 @@ export async function readHilPlan(
   if (duplicate !== undefined) refuse(`The key ${duplicate} appears twice in one object.`);
   const problems = hilPlanProblems(value);
   if (problems.length > 0) throw new HilPlanError(problems);
+  guard.assertAuthorized();
   return { plan: hilPlanSchema.parse(value), path: relative, bytes, sha256: sha256(bytes) };
+}
+
+/** Relative inputs use the approved HIL working directory; outputs remain workbench-owned. */
+function inputPath(own: PreparedCall, path: string): string {
+  return isAbsolute(path) || own.prepared.cwd === "." ? path : `${own.prepared.cwd}/${path}`;
 }
 
 /**
@@ -196,21 +204,22 @@ export async function compileHilPlan(input: HilCompileInput): Promise<CompiledHi
     path: planPath,
     bytes,
     sha256: planSha256,
-  } = await readHilPlan(input.workbench, input.planArg, input.excludedRoots);
+  } = await readHilPlan(
+    input.workbench,
+    inputPath(input.own, input.planArg),
+    input.excludedRoots,
+    input.own.pathGuard,
+  );
   const problems: HilProblem[] = [];
   const problem = (path: string, message: string) => problems.push({ path, message });
-  const guard = await PathGuard.create(
-    input.workbench,
-    input.workbench,
-    "workbench",
-    undefined,
-    input.excludedRoots,
-  );
+  const guard = input.own.pathGuard;
+  input.signal?.throwIfAborted();
+  guard.assertAuthorized();
 
-  // Firmware: a workbench file whose bytes match the plan's hash.
+  // Firmware retains the same host path authority and approved bytes.
   let firmwarePath = plan.firmware.path;
   try {
-    const resolved = await guard.resolve(plan.firmware.path);
+    const resolved = await guard.resolve(inputPath(input.own, plan.firmware.path));
     firmwarePath = resolved.relative;
     // The adapters pass the path as an argument: one that reads as an option is never a file to them.
     if (firmwarePath.startsWith("-"))
@@ -356,15 +365,18 @@ export async function compileHilPlan(input: HilCompileInput): Promise<CompiledHi
             continue;
           }
           try {
-            const resolved = await guard.resolve(fields.path);
+            const resolved = await guard.resolve(inputPath(input.own, fields.path));
             const info = await stat(resolved.absolute);
-            const target = info.isDirectory() ? join(resolved.absolute, "result.json") : resolved.absolute;
-            const digest = await hashFile(target, HIL_FIRMWARE_BYTES);
+            const target = info.isDirectory()
+              ? await guard.resolve(`${resolved.relative}/result.json`)
+              : resolved;
+            const digest = await hashFile(target.absolute, HIL_FIRMWARE_BYTES);
             if (fields.sha256 !== undefined && fields.sha256 !== digest)
               problem(`${where}.sha256`, `The source's SHA-256 is ${digest}.`);
+            fields.path = resolved.relative;
             sourceHashes[id] = digest;
             files.push({
-              path: info.isDirectory() ? `${resolved.relative}/result.json` : resolved.relative,
+              path: target.relative,
               sha256: digest,
               use: `source ${step.id}.${id}`,
             });
@@ -503,11 +515,17 @@ export async function planFilesUnchanged(
   workbench: string,
   compiled: CompiledHilPlan,
   excludedRoots: readonly string[] = [],
+  inputGuard?: PathGuard,
 ): Promise<boolean> {
-  const guard = await PathGuard.create(workbench, workbench, "workbench", undefined, excludedRoots);
-  for (const file of compiled.files.filter((bound) => bound.use === "plan" || bound.use === "firmware")) {
+  const guard =
+    inputGuard ?? (await PathGuard.create(workbench, workbench, "workbench", undefined, excludedRoots));
+  for (const file of compiled.files) {
     try {
-      if ((await hashFile((await guard.resolve(file.path)).absolute, HIL_FIRMWARE_BYTES)) !== file.sha256)
+      const target = await guard.resolve(file.path);
+      if (
+        target.relative !== file.path ||
+        (await hashFile(target.absolute, HIL_FIRMWARE_BYTES)) !== file.sha256
+      )
         return false;
     } catch {
       return false;

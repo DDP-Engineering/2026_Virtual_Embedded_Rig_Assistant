@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-SEC-88780a57"
+title = "Retain original Bypass epoch"
+status = "active"
+requirement = "When Bypass is revoked, VERA shall cancel input preparation, isolated worker access and background HIL/program work using the original admission epoch, including after leaving and re-entering Bypass."
+verification = "Delay admission or worker activity, revoke and re-enter Bypass, then assert no old call reads/spawns or returns protected results; background HIL stops after normal turn completion."
+affected_paths = ["05_Software/src/libraries/core/src/tools/", "05_Software/src/libraries/core/src/plugins/", "05_Software/src/libraries/core/src/electrical/"]
+linked_tests = ["05_Software/src/libraries/core/src/tools/input-bypass.test.ts", "05_Software/src/libraries/core/src/plugins/authoring.test.ts", "05_Software/src/libraries/core/src/plugins/hil/hil.test.ts", "05_Software/src/libraries/core/src/plugins/program-bypass.test.ts", "05_Software/src/libraries/core/src/tools/apply-candidate.test.ts", "05_Software/src/libraries/core/src/electrical/tools.test.ts", "05_Software/tests/integration/cli.test.ts"]
+created = 2026-11-16
+updated = 2026-11-16

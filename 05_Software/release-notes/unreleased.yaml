@@ -64,3 +64,10 @@ entries:
       ro: Bypass rulează programe declarate în foldere externe și le oprește când ieși din Bypass.
       de: Bypass führt deklarierte Programme in externen Ordnern aus und stoppt sie beim Verlassen.
       fr: Bypass lance les programmes déclarés dans des dossiers externes et les arrête à sa sortie.
+  - category: improved
+    topic: { en: Permissions, ro: Permisiuni, de: Berechtigungen, fr: Autorisations }
+    text:
+      en: Bypass also reaches outside analysis, plugin drafts, HIL and electrical inputs.
+      ro: Bypass permite și intrări externe pentru analiză, ciorne de plugin, HIL și calcule electrice.
+      de: Bypass erlaubt auch externe Eingaben für Analysen, Plugin-Entwürfe, HIL und Elektrik.
+      fr: Bypass accepte aussi les entrées externes d’analyse, de plugins, HIL et d’électricité.

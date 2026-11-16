@@ -55,22 +55,26 @@ export async function scanLog(
   raw: unknown,
   checkpoint: (value: ParseLogResult) => void,
   excludedRoots: readonly string[] = [],
+  scope: "filesystem" | "workbench" = "workbench",
 ): Promise<ParseLogResult> {
   const args = parseLogArgsSchema.parse(raw);
   const regex = args.profile ? logProfiles[args.profile] : patternFor(args.pattern ?? "");
   // Keep the requested, normalized spelling bounded even when it aliases a longer canonical path.
-  const sourcePath = posix.normalize(args.path.replaceAll("\\", "/"));
+  let sourcePath = posix.normalize(args.path.replaceAll("\\", "/"));
+  let local = true;
   let guard: PathGuard;
   let target: Awaited<ReturnType<PathGuard["resolve"]>>;
   try {
-    guard = await PathGuard.create(root, root, "workbench", undefined, excludedRoots);
+    guard = await PathGuard.create(root, root, scope, undefined, excludedRoots);
     target = await guard.resolve(args.path);
-    formatLineRef({ path: sourcePath, start: 1, end: 1 });
+    sourcePath = target.relative;
+    local = !sourcePath.startsWith("/") && !/^[A-Za-z]:/.test(sourcePath);
+    if (local) formatLineRef({ path: sourcePath, start: 1, end: 1 });
   } catch {
     throw new LogFailure(
       "DENIED",
       "path_denied",
-      "Choose an allowed workbench log outside ignored paths, .vera and VERA application data.",
+      "Choose a log allowed by the current permission mode, outside VERA application data.",
     );
   }
   let handle: Awaited<ReturnType<typeof open>>;
@@ -98,7 +102,8 @@ export async function scanLog(
     if (before.size > 50 * 1024 * 1024)
       throw new LogFailure("INVALID", "file_too_large", "Choose a log no larger than 50 MiB.");
     const result = emptyLogResult({ ...args, path: sourcePath });
-    const ref = (line: number) => formatLineRef({ path: sourcePath, start: line, end: line });
+    const ref = (line: number) =>
+      local ? formatLineRef({ path: sourcePath, start: line, end: line }) : null;
     const decoder = new TextDecoder("utf-8", { fatal: true, ignoreBOM: true });
     const hash = createHash("sha256");
     let eligible = 0;
@@ -185,7 +190,7 @@ export async function scanLog(
       }
       result.scan.lines = number;
       result.scan.bytes += consumed;
-      result.source.ref = formatLineRef({ path: sourcePath, start: 1, end: number });
+      result.source.ref = local ? formatLineRef({ path: sourcePath, start: 1, end: number }) : null;
       result.preview.omitted = eligible - result.events.length;
       if (result.preview.omitted) result.preview.truncated = true;
       if (number % 1000 === 0) emit();

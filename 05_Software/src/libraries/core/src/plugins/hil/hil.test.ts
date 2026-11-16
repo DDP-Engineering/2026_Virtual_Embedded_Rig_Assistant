@@ -5,7 +5,7 @@
 // REQ-REL-bddb3f0a REQ-REL-e44e0013 REQ-DATA-07b67f33 REQ-FUNC-1a55eab5 REQ-FUNC-6b178f3a REQ-UX-c4be4a14
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
-import { mkdir, mkdtemp, readdir, readFile, realpath, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readdir, readFile, realpath, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -1057,4 +1057,138 @@ it("refuses protected HIL plans and firmware without starting a program", async 
   ctx.managedRoots = [join(root, "build")];
   await expect(prepare("run")).rejects.toThrow(/VERA application data/);
   expect(host.programs).toHaveLength(0);
+});
+
+it("runs outside HIL plan and firmware with canonical approval paths and workbench-owned outputs", async () => {
+  const sibling = await realpath(await mkdtemp(join(tmpdir(), "vera-hil-sibling-")));
+  try {
+    const firmware = join(sibling, "image.elf");
+    const path = join(sibling, "plan.json");
+    await writeFile(firmware, FIRMWARE);
+    await writeFile(
+      path,
+      JSON.stringify(
+        plan({
+          firmware: { path: firmware, sha256: sha(FIRMWARE), format: "elf" },
+          steps: [{ id: "probe", use: "probe-rs.list" }],
+          cleanup: [],
+        }),
+      ),
+    );
+    await expect(prepare("run", { args: ["run", path] })).rejects.toThrow();
+    mode = "bypass";
+    const epoch = new AbortController();
+    ctx.bypassSignal = () => epoch.signal;
+    const change = await prepare("run", { args: ["run", path] });
+    approved = change.request;
+    expect(change.request.plan?.files).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ path: path.replaceAll("\\", "/") }),
+        expect.objectContaining({ path: firmware.replaceAll("\\", "/") }),
+      ]),
+    );
+    const result = await change.apply(signal());
+    expect(result.result).toMatch(/^embedded-lab-results\//);
+    const stored = await resultOf(result);
+    expect(stored.folder.startsWith(root)).toBe(true);
+    expect(host.programs.some((process) => process.executable === "/opt/probe-rs")).toBe(true);
+    expect(await readdir(sibling)).toEqual(["image.elf", "plan.json"]);
+  } finally {
+    await rm(sibling, { recursive: true, force: true });
+  }
+});
+it("keeps a canonical outside registry bound through recheck and refuses it in Ask", async () => {
+  const sibling = await realpath(await mkdtemp(join(tmpdir(), "vera-registry-sibling-")));
+  try {
+    const path = join(sibling, "resources.json");
+    await writeFile(path, JSON.stringify(registry));
+    await rm(join(root, "lab"), { recursive: true });
+    await symlink(sibling, join(root, "lab"), process.platform === "win32" ? "junction" : "dir");
+    await writePlan(
+      plan({ steps: [{ id: "scope", use: "scpi.identify", with: { instrument: "scope" } }], cleanup: [] }),
+    );
+    await expect(prepare("run")).rejects.toThrow();
+    mode = "bypass";
+    const change = await prepare("run");
+    approved = change.request;
+    expect(change.request.registry?.path).toBe(path.replaceAll("\\", "/"));
+    const result = await change.apply(signal());
+    expect(result.exitCode).toBe(0);
+    const changed = await prepare("run");
+    approved = changed.request;
+    await writeFile(path, JSON.stringify({ ...registry, resources: [] }));
+    await expect(changed.apply(signal())).rejects.toThrow();
+  } finally {
+    await rm(sibling, { recursive: true, force: true });
+  }
+});
+it("retains the original HIL epoch through preparation and stops background work after turn completion", async () => {
+  mode = "bypass";
+  let epoch = new AbortController();
+  ctx.bypassSignal = () => epoch.signal;
+  await writePlan(plan({ steps: [{ id: "probe", use: "probe-rs.list" }], cleanup: [] }));
+  const stale = await prepare("run");
+  approved = stale.request;
+  epoch.abort();
+  mode = "ask";
+  epoch = new AbortController();
+  mode = "bypass";
+  await expect(stale.apply(signal())).rejects.toThrow();
+  expect(host.programs).toHaveLength(0);
+  host.behave = () => {};
+  const change = await prepare("run", { background: true });
+  approved = change.request;
+  const result = await change.apply(signal());
+  const hold = session.get(result.handle as string);
+  expect(hold).toBeDefined();
+  await new Promise((resolve) => setTimeout(resolve, 20));
+  mode = "ask";
+  epoch.abort();
+  epoch = new AbortController();
+  mode = "bypass";
+  const ended = await hold?.done;
+  expect(ended?.stopped).toBe(true);
+});
+
+it("uses an outside HIL cwd for registry inputs while child execution and output stay workbench-owned", async () => {
+  const sibling = await realpath(await mkdtemp(join(tmpdir(), "vera-hil-cwd-")));
+  try {
+    await mkdir(join(sibling, "lab"));
+    await writeFile(join(sibling, "lab/resources.json"), JSON.stringify(registry));
+    await writeFile(join(sibling, "image.elf"), FIRMWARE);
+    await writeFile(
+      join(sibling, "plan.json"),
+      JSON.stringify(
+        plan({
+          firmware: { path: "image.elf", sha256: sha(FIRMWARE), format: "elf" },
+          steps: [{ id: "scope", use: "scpi.identify", with: { instrument: "scope" } }],
+          cleanup: [],
+        }),
+      ),
+    );
+    mode = "bypass";
+    let epoch = new AbortController();
+    ctx.bypassSignal = () => epoch.signal;
+    const args = { cwd: sibling, args: ["run", "plan.json"] };
+    const old = await prepare("run", args);
+    approved = old.request;
+    epoch.abort();
+    mode = "ask";
+    epoch = new AbortController();
+    mode = "bypass";
+    await expect(old.apply(signal())).rejects.toThrow();
+    const change = await prepare("run", args);
+    approved = change.request;
+    expect(change.request.registry?.path).toBe(join(sibling, "lab/resources.json").replaceAll("\\", "/"));
+    const result = await change.apply(signal());
+    expect(result.exitCode).toBe(0);
+    const child = host.programs.find((process) => process.executable === "/opt/scpi");
+    expect(child?.options.cwd).toBe(root);
+    expect(child?.options.env.SCPI_REGISTRY?.replaceAll("\\", "/")).toBe(
+      join(sibling, "lab/resources.json").replaceAll("\\", "/"),
+    );
+    expect((await resultOf(result)).folder.startsWith(root)).toBe(true);
+  } finally {
+    await rm(sibling, { recursive: true, force: true });
+  }
 });

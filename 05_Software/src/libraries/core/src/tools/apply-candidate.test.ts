@@ -1,7 +1,7 @@
 // apply_candidate (spec REQ-DATA-891d5b5d §10): a kicad-layout candidate replaces its source board only through the
 // write flow, after every check, and never when the source or the candidate changed or KiCad has the board open.
 import { createHash } from "node:crypto";
-import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -227,5 +227,22 @@ it("refuses protected candidate inputs before preparation and rechecks the polic
   const change = await api.applyCandidateTool.prepare?.(ctx, { run: RUN }, signal());
   ctx.managedRoots = [join(root, RUN)];
   await expect(change?.apply(signal())).rejects.toThrow(/VERA application data/);
+  expect(await source()).toBe(SOURCE);
+});
+
+it("applies an outside candidate only in Bypass and records its absolute target", async () => {
+  await cp(join(root, RUN), join(outside, "run"), { recursive: true });
+  const target = join(outside, "main.kicad_pcb");
+  await writeFile(target, SOURCE);
+  const statePath = join(outside, "run/state.json");
+  const state = JSON.parse(await readFile(statePath, "utf8"));
+  state.source.path = target;
+  await writeFile(statePath, JSON.stringify(state));
+  await expect(prepare({ run: join(outside, "run") })).rejects.toThrow();
+  const ctx = { ...context(), permissionMode: () => "bypass" as const };
+  const change = await api.prepareApplyCandidate(ctx, { run: join(outside, "run") }, signal());
+  expect(change.request).toMatchObject({ path: target.replaceAll("\\", "/") });
+  await change.apply(signal());
+  expect(await readFile(target, "utf8")).toBe(CANDIDATE);
   expect(await source()).toBe(SOURCE);
 });

@@ -1,5 +1,5 @@
 import { performance } from "node:perf_hooks";
-import { type PermissionMode, programPolicy, veraError } from "@vera/shared";
+import { LAB_REGISTRY_PATH, type PermissionMode, programPolicy, veraError } from "@vera/shared";
 import { monotonicFactory } from "ulid";
 import type { PreparedChange } from "../../tools/changes.js";
 import { type ToolContext, toolExcludedRoots } from "../../tools/context.js";
@@ -27,6 +27,7 @@ export interface HilCallInput {
   readonly mode: PermissionMode;
   readonly consume: (request: ProgramChangeRequest) => void;
   readonly signal: AbortSignal;
+  readonly revocation?: AbortSignal | undefined;
   readonly refusal: (request: ProgramChangeRequest, mode: string) => Error;
   readonly foreground: (result: RunResult, risk: string) => Record<string, unknown>;
   readonly prepareCall: (
@@ -34,6 +35,7 @@ export interface HilCallInput {
     programs: ProgramContext,
     args: { program: string; args?: string[] | undefined },
     signal: AbortSignal,
+    registryLookup?: string,
   ) => Promise<PreparedCall>;
   readonly startCall: typeof startCall;
   readonly timeoutCap: (call: PreparedCall) => number;
@@ -41,13 +43,14 @@ export interface HilCallInput {
 }
 
 const usage =
-  "Use hil check <plan> or hil run <plan>: one workbench-relative plan file, from the workbench root.";
+  "Use hil check <plan> or hil run <plan>: one plan file allowed by the current permission mode, relative to the approved working directory.";
 
 /** `hil check` compiles and prints the expansion; `hil run` asks one approval for it and runs it in VERA. */
 export async function prepareHilCall(input: HilCallInput): Promise<PreparedChange> {
   const { ctx, programs, args, first, mode, consume } = input;
+  const retainedSignal = (signal: AbortSignal) => AbortSignal.any([signal, input.signal]);
   const argv = args.args ?? [];
-  if (argv.length !== 2 || (args.cwd !== undefined && args.cwd !== ".")) throw Error(usage);
+  if (argv.length !== 2) throw Error(usage);
   if (args.timeout !== undefined)
     throw Error("A plan's budget limits its time; run_program's timeout is refused for hil run and check.");
   const planArg = argv[1] as string;
@@ -62,7 +65,13 @@ export async function prepareHilCall(input: HilCallInput): Promise<PreparedChang
       planArg,
       runId,
       prepare: (program, programArgs) =>
-        input.prepareCall(ctx, programs, { program, args: programArgs }, signal),
+        input.prepareCall(
+          ctx,
+          programs,
+          { program, args: programArgs },
+          signal,
+          first.prepared.cwd === "." ? LAB_REGISTRY_PATH : `${first.prepared.cwd}/${LAB_REGISTRY_PATH}`,
+        ),
       cap: input.timeoutCap,
       signal,
     });
@@ -80,6 +89,8 @@ export async function prepareHilCall(input: HilCallInput): Promise<PreparedChang
       async apply(applySignal: AbortSignal): Promise<Record<string, unknown>> {
         if (used) throw Error("This prepared program run was already used.");
         used = true;
+        applySignal = retainedSignal(applySignal);
+        applySignal.throwIfAborted();
         const current = await input.prepareCall(ctx, programs, args, applySignal);
         try {
           consume(current.prepared);
@@ -129,6 +140,8 @@ export async function prepareHilCall(input: HilCallInput): Promise<PreparedChang
     async apply(applySignal: AbortSignal): Promise<Record<string, unknown>> {
       if (used) throw Error("This prepared program run was already used.");
       used = true;
+      applySignal = retainedSignal(applySignal);
+      applySignal.throwIfAborted();
       // The approval covers the plan as compiled then; anything changed since is CONFLICT and nothing runs.
       let current: Awaited<ReturnType<typeof again>>;
       try {
@@ -146,6 +159,7 @@ export async function prepareHilCall(input: HilCallInput): Promise<PreparedChang
       const execution = new HilExecution(current.compiled, {
         workbench: ctx.root,
         excludedRoots: toolExcludedRoots(ctx),
+        pathGuard: first.pathGuard,
         sessionId: programs.sessionId,
         runner: programs.host.runner,
         start: (call, options) =>
@@ -154,6 +168,17 @@ export async function prepareHilCall(input: HilCallInput): Promise<PreparedChang
             timeoutMs: options.timeoutMs,
             parent: options.parent,
             check: options.check,
+            revocation: input.revocation,
+            ...(call.prepared.program === "lab-validate"
+              ? {
+                  env: {
+                    VERA_HIL_INPUT_POLICY: JSON.stringify({
+                      scope: first.pathGuard.scope,
+                      excludedRoots: toolExcludedRoots(ctx),
+                    }),
+                  },
+                }
+              : {}),
           }),
         now: () => new Date(),
         monotonic: () => performance.now(),
@@ -174,6 +199,10 @@ export async function prepareHilCall(input: HilCallInput): Promise<PreparedChang
       } catch (error) {
         throw input.programError(error, args.program);
       }
+      const revoke = () => execution.stop("stopped");
+      input.revocation?.addEventListener("abort", revoke, { once: true });
+      if (input.revocation?.aborted) execution.stop("stopped");
+      void execution.hold.done.finally(() => input.revocation?.removeEventListener("abort", revoke));
       if (!background) {
         applySignal.addEventListener("abort", () => execution.stop("stopped"), { once: true });
         // An abort while the hold was being created has already fired.

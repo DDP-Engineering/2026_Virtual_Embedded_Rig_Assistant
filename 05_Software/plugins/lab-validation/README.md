@@ -20,3 +20,8 @@ Offline, reproducible validation of measurements against requirements and simula
 - **Skills** `validation-planning` and `difference-explanation`.
 - **Extending**: importers and metrics are registries (`importers.register`, `metrics.register`); further metrics and
   importers are added there, not as a second engine.
+
+When VERA executes a HIL plan, the host supplies the captured input scope and application-data exclusions through
+`VERA_HIL_INPUT_POLICY`; request JSON and command options cannot select this authority. Source and member reads use
+`scripts/lab_validation/input_paths.py`, while request loading and result publication retain workbench confinement.
+Outside provenance is canonical absolute. Standalone invocations retain working-directory confinement.

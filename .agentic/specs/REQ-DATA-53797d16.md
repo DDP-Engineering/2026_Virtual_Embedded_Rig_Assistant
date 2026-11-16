@@ -240,3 +240,7 @@ fixed in the fixture README), L02-B (mV/V and ms/s, mapping and sign explicit), 
 step in the report), L02-D (a lag above the limit fails although cross-correlation makes the curves coincide), L02-E
 (gap, clipping, aliasing, missing band/conditions -> diagnostic and incomplete), L02-G (offline, inputs unchanged),
 L02-H (pass, fail and incomplete aggregated by `report`; no network). L02-F needs a real capture of a real circuit.
+
+## Host HIL input scope
+
+Standalone calls keep working-directory source confinement. For a host-compiled HIL call only, host environment metadata VERA_HIL_INPUT_POLICY supplies the captured tool guard scope and application-data exclusions; model request fields/options do not select scope. Source files and capture members may be canonical absolute outside paths in filesystem scope and refuse excluded lexical/canonical paths in every scope. Outside source provenance remains absolute. Request loading and result output stay within the workbench, and the host stops the original-epoch process on revocation.

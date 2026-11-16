@@ -56,13 +56,15 @@ export const parseLogResultSchema = z.strictObject({
         level: logLevelSchema,
         source: z.string().max(256).optional(),
         message: z.string().max(256),
-        ref,
+        ref: ref.nullable(),
       }),
     )
     .max(200),
   preview: z.strictObject({ truncated: z.boolean(), omitted: count }),
   unparsedSamples: z
-    .array(z.strictObject({ line: z.number().int().positive(), text: z.string().max(256), ref }))
+    .array(
+      z.strictObject({ line: z.number().int().positive(), text: z.string().max(256), ref: ref.nullable() }),
+    )
     .max(5),
 });
 export type ParseLogResult = z.infer<typeof parseLogResultSchema>;

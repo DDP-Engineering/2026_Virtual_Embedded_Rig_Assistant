@@ -10,4 +10,4 @@ Stable errors: missing file NOT_FOUND/not_found; refused path DENIED/path_denied
 
 OBSERVED: existing citation provenance collects structured ref properties, not arrays. The decode_register-specific validated result adds sourceRefs to issued refs; current guards and line bounds still validate them and openCitation uses the same source provenance.
 
-Constraints: confined in Bypass, no workers/devices, no mutation, format1, no migrations. Full epic gate remains with79/coordinator. Linux WSL2 proof is labelled separately from native Ubuntu.
+Constraints: shared tool scope permits outside absolute definitions only in Bypass; outside source/field refs are null with canonical absolute source paths, while sourceRefs retain existing workbench citation syntax and indexed identity is unchanged; no workers/devices, no mutation, format1, no migrations. Full epic gate remains with79/coordinator. Linux WSL2 proof is labelled separately from native Ubuntu.

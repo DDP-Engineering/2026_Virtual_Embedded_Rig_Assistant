@@ -20,6 +20,7 @@ async function execute(task: WorkerTask) {
         task.args,
         (value) => port.postMessage({ type: "checkpoint", value }),
         task.excludedRoots,
+        task.scope,
       );
       port.postMessage({ type: "done", value });
       return;

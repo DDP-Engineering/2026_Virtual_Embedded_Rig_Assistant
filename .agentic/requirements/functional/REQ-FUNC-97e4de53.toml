@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-FUNC-97e4de53"
+title = "Apply shared policy to agent input paths"
+status = "active"
+requirement = "When an agent supplies an input path to an analysis, plugin draft, HIL, bench-resource or electrical helper, VERA shall resolve it through the shared host-owned tool path policy, recording canonical absolute outside paths while retaining workbench-owned fixed storage and indexed-document identity."
+verification = "Owned sibling fixtures exercise parse_log, decode_register, plugin_validate/install, HIL plan/firmware/resource and electrical inputs; Bypass succeeds, Ask refuses, application-data aliases remain refused and fixed storage stays in the workbench."
+affected_paths = ["05_Software/src/libraries/core/src/tools/", "05_Software/src/libraries/core/src/plugins/", "05_Software/src/libraries/core/src/electrical/", "05_Software/src/libraries/shared/src/tools/", "05_Software/src/apps/desktop/src/renderer/locales/", "05_Software/src/libraries/core/src/agent/prompt.ts", "05_Software/plugins/lab-validation/", "05_Software/tests/integration/hil-bypass.test.ts", "05_Software/tests/plugins/lab-validation.test.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/tools/input-bypass.test.ts", "05_Software/src/libraries/core/src/plugins/authoring.test.ts", "05_Software/src/libraries/core/src/plugins/hil/hil.test.ts", "05_Software/src/libraries/core/src/plugins/program-bypass.test.ts", "05_Software/src/libraries/core/src/tools/apply-candidate.test.ts", "05_Software/src/libraries/core/src/electrical/tools.test.ts", "05_Software/tests/integration/cli.test.ts", "05_Software/tests/integration/hil-bypass.test.ts"]
+created = 2026-11-16
+updated = 2026-11-16

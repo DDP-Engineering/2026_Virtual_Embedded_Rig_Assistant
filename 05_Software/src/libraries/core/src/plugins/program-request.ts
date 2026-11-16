@@ -5,6 +5,7 @@ import { hostname, networkInterfaces } from "node:os";
 import { isAbsolute, join, relative, resolve } from "node:path";
 import {
   classifyCommand,
+  LAB_REGISTRY_PATH,
   type PluginRisk,
   type ProgramApproval,
   programArgumentRefusal,
@@ -56,7 +57,7 @@ export interface ProgramChangeRequest {
   readonly directories?: readonly ProgramDirectory[];
   /** Bench resources the run reserves (absent without a claim), and the registry bytes they come from. */
   readonly resources?: readonly ProgramResource[];
-  readonly registry?: { readonly path: string; readonly sha256: string };
+  readonly registry?: { readonly path: string; readonly sha256: string; readonly lookup?: string };
   /**
    * A HIL plan run (`hil run`): every operation, file and reservation the approval covers beyond the call's own
    * arguments (spec REQ-DATA-5f714098 §5). Hashed with the request; not part of the approval event.
@@ -304,17 +305,12 @@ export async function verifyProgramFiles(
     throw veraError("CONFLICT");
   }
   if (request.registry) {
-    const guard = await PathGuard.create(
-      request.workbench,
-      request.workbench,
-      "workbench",
-      undefined,
-      excludedRoots,
-    );
     const file = request.registry;
     let digest: string | undefined;
     try {
-      digest = await sha256((await guard.resolve(file.path)).absolute, signal);
+      const target = await guard.resolve(file.lookup ?? LAB_REGISTRY_PATH);
+      if (target.relative !== file.path) throw veraError("CONFLICT");
+      digest = await sha256(target.absolute, signal);
     } catch (error) {
       if (error instanceof ApplicationDataAccessError) throw error;
       signal?.throwIfAborted();
@@ -401,7 +397,7 @@ export function programApproval(request: ProgramChangeRequest): ProgramApproval 
     ...(request.resources && request.registry
       ? {
           resources: request.resources.map(({ alias, kind, resource }) => ({ alias, kind, resource })),
-          registry: { ...request.registry },
+          registry: { path: request.registry.path, sha256: request.registry.sha256 },
         }
       : {}),
   };

@@ -1,5 +1,5 @@
 // Lighting project files, report records and photometry files (spec REQ-DATA-affb2e6b "Files"): strict format-1
-// reading with ID and reference checks, and the confined file access. VERA only reads these files.
+// reading with ID and reference checks, and host-scoped input access. VERA only reads these files.
 import { createHash } from "node:crypto";
 import { createReadStream } from "node:fs";
 import { lstat, readFile } from "node:fs/promises";
@@ -154,10 +154,11 @@ async function confined(
   label: string,
   limit: number,
   excludedRoots: readonly string[] = [],
+  inputGuard?: PathGuard,
 ) {
-  const target = await (await PathGuard.create(root, root, "workbench", undefined, excludedRoots)).resolve(
-    path,
-  );
+  const target = await (
+    inputGuard ?? (await PathGuard.create(root, root, "workbench", undefined, excludedRoots))
+  ).resolve(path);
   let info: Awaited<ReturnType<typeof lstat>>;
   try {
     info = await lstat(target.absolute);
@@ -172,59 +173,89 @@ async function confined(
 }
 const sha256 = (bytes: Buffer) => createHash("sha256").update(bytes).digest("hex");
 
-async function readJsonFile(root: string, id: string, label: string, excludedRoots: readonly string[] = []) {
+async function readJsonFile(
+  root: string,
+  id: string,
+  label: string,
+  excludedRoots: readonly string[] = [],
+  inputGuard?: PathGuard,
+) {
   if (!ID.test(id) || id.length > 64) throw Error(`The ${label} id ${JSON.stringify(id)} is not a valid id.`);
   const path = `${lightingDir}/${id}.json`;
-  const target = await confined(root, path, label, lightingLimits.fileBytes, excludedRoots);
+  const target = await confined(root, path, label, lightingLimits.fileBytes, excludedRoots, inputGuard);
   const bytes = await readFile(target.absolute);
-  return { bytes, stamp: { id, path, sha256: sha256(bytes) } };
+  inputGuard?.assertAuthorized();
+  return { bytes, stamp: { id, path: target.relative, sha256: sha256(bytes) } };
 }
 
-/** Reads `electrical-automation-lighting/<id>.json` as a lighting project, confined to the workbench. */
+/** Reads `electrical-automation-lighting/<id>.json` as a lighting project, using the host input guard (confined by default). */
 export async function readLightingProject(
   root: string,
   id: string,
   excludedRoots: readonly string[] = [],
+  inputGuard?: PathGuard,
 ): Promise<{ project: LightingProject; stamp: LightingFileStamp }> {
-  const { bytes, stamp } = await readJsonFile(root, id, "lighting project", excludedRoots);
+  const { bytes, stamp } = await readJsonFile(root, id, "lighting project", excludedRoots, inputGuard);
   return { project: parseLightingProject(bytes.toString("utf8"), id), stamp };
 }
 
-/** Reads `electrical-automation-lighting/<id>.json` as a lighting report record, confined to the workbench. */
+/** Reads `electrical-automation-lighting/<id>.json` as a lighting report record, using the host input guard (confined by default). */
 export async function readLightingReport(
   root: string,
   id: string,
   excludedRoots: readonly string[] = [],
+  inputGuard?: PathGuard,
 ): Promise<{ report: LightingReport; stamp: LightingFileStamp }> {
-  const { bytes, stamp } = await readJsonFile(root, id, "lighting report record", excludedRoots);
+  const { bytes, stamp } = await readJsonFile(root, id, "lighting report record", excludedRoots, inputGuard);
   return { report: parseLightingReport(bytes.toString("utf8"), id), stamp };
 }
 
-/** Reads `electrical-automation-photometry/<name>` (.ies or .ldt, Latin-1), confined to the workbench. */
+/** Reads `electrical-automation-photometry/<name>` (.ies or .ldt, Latin-1), using the host input guard (confined by default). */
 export async function readPhotometryFile(
   root: string,
   name: string,
   excludedRoots: readonly string[] = [],
+  inputGuard?: PathGuard,
 ): Promise<{ photometry: Photometry; stamp: PhotometryStamp }> {
   if (!photometryFileNamePattern.test(name))
     throw Error(`The photometry file name ${JSON.stringify(name)} is not a valid .ies or .ldt name.`);
   const path = `${photometryDir}/${name}`;
-  const target = await confined(root, path, "photometry file", lightingLimits.photometryBytes, excludedRoots);
+  const target = await confined(
+    root,
+    path,
+    "photometry file",
+    lightingLimits.photometryBytes,
+    excludedRoots,
+    inputGuard,
+  );
   const bytes = await readFile(target.absolute);
+  inputGuard?.assertAuthorized();
   return {
     photometry: parsePhotometry(name, bytes.toString("latin1")),
-    stamp: { name, path, sha256: sha256(bytes) },
+    stamp: { name, path: target.relative, sha256: sha256(bytes) },
   };
 }
 
-/** The sha256 of an evidence file (an exported engine report) inside the workbench, streamed. */
+/** The sha256 of an evidence file (an exported engine report) allowed by the host input guard, streamed. */
 export async function hashEvidenceFile(
   root: string,
   path: string,
   excludedRoots: readonly string[] = [],
+  inputGuard?: PathGuard,
 ): Promise<string> {
-  const target = await confined(root, path, "evidence file", lightingLimits.evidenceBytes, excludedRoots);
+  const target = await confined(
+    root,
+    path,
+    "evidence file",
+    lightingLimits.evidenceBytes,
+    excludedRoots,
+    inputGuard,
+  );
   const hash = createHash("sha256");
-  for await (const chunk of createReadStream(target.absolute)) hash.update(chunk as Buffer);
+  for await (const chunk of createReadStream(target.absolute)) {
+    inputGuard?.assertAuthorized();
+    hash.update(chunk as Buffer);
+  }
+  inputGuard?.assertAuthorized();
   return hash.digest("hex");
 }

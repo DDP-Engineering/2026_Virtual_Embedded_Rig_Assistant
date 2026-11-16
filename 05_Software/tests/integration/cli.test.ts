@@ -1428,3 +1428,49 @@ it("CLI Bypass refuses configured application-data reads and writes", async () =
   expect(rows).toHaveLength(2);
   for (const event of rows) expect(event.event.ok).toBe(false);
 });
+
+it("CLI Bypass analyzes sibling inputs with canonical paths and no outside index storage", async () => {
+  const { dir, workbench } = await fixture();
+  const config = join(workbench, ".vera/workbench.yaml");
+  await writeFile(
+    config,
+    (await readFile(config, "utf8")).replace("permission_mode: ask", "permission_mode: bypass"),
+  );
+  const sibling = join(dir, "sibling");
+  await mkdir(sibling);
+  const log = join(sibling, "capture.log");
+  const definition = join(sibling, "register.json");
+  await writeFile(log, "2026-11-16T12:00:00Z INFO SIBLING_CAPTURE\n");
+  await writeFile(
+    definition,
+    JSON.stringify({
+      schemaVersion: 1,
+      device: { id: "fixture", revision: "A" },
+      sourceRefs: ["manual.md#L1-L1"],
+      registers: [{ name: "CTRL", widthBits: 8, fields: [] }],
+    }),
+  );
+  const script = join(dir, "sibling.jsonl");
+  await writeFile(
+    script,
+    [
+      { match: "Read the board", toolCalls: [{ name: "parse_log", args: { path: log, profile: "iso" } }] },
+      {
+        toolCalls: [
+          { name: "decode_register", args: { definitionPath: definition, register: "CTRL", value: "1" } },
+        ],
+      },
+      { text: "Sibling analysis completed" },
+    ]
+      .map((value) => JSON.stringify(value))
+      .join("\n"),
+  );
+  const result = await launch(replay(workbench, script)).result;
+  expect(result.code).toBe(0);
+  const done = events(result.stdout).filter((row) => row.event.type === "tool.done");
+  expect(done).toHaveLength(2);
+  for (const row of done) expect(row.event.ok).toBe(true);
+  expect(result.stdout).toContain("SIBLING_CAPTURE");
+  expect(result.stdout.replaceAll("\\\\", "/")).toContain(sibling.replaceAll("\\", "/"));
+  expect((await readdir(sibling)).sort()).toEqual(["capture.log", "register.json"]);
+});

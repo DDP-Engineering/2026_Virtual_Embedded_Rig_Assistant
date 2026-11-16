@@ -18,6 +18,7 @@ from . import VERSION, aggregate, align, decide, importers, metrics, report, req
 from .diagnostics import entry, merge
 from .errors import Refused
 from .importers import Context
+from .input_paths import host_policy
 from .series import window
 from .workspace import entered_directory, relative, valid_run_id
 
@@ -110,7 +111,7 @@ def main(argv: list[str] | None = None) -> int:
     started = report.now()
     try:
         operation, options = parse(args)
-        ctx = Context(Path(os.path.realpath(os.getcwd())), entered_directory())
+        ctx = Context(Path(os.path.realpath(os.getcwd())), entered_directory(), host_policy())
         if operation == "report":
             return _report(ctx, options, started)
         return _validate(ctx, operation, options, started)

@@ -7,7 +7,7 @@ title = "Classify every lab-validate operation as a safe offline analysis"
 status = "active"
 
 requirement = """
-The lab-validation rules shall classify every `lab-validate` operation (`--version`, `--help`, `inspect`, `normalize`, `measure`, `align`, `compare`, `report`) as `safe`, with notes stating that it reads workbench files and writes only a new run folder.
+The lab-validation rules shall classify every `lab-validate` operation (`--version`, `--help`, `inspect`, `normalize`, `measure`, `align`, `compare`, `report`) as `safe`, with notes stating that it reads workbench files or host-approved HIL inputs and writes only a new run folder.
 """
 
 verification = "A test classifies each operation through the shared rule matcher and expects `safe` with a note, and an unknown first argument falls to the default device-write risk."

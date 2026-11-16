@@ -65,6 +65,7 @@ export function toolExcludedRoots(ctx: ToolContext): readonly string[] {
   return [...(ctx.managedRoots ?? []), ...(ctx.pluginBuilder ? [ctx.pluginBuilder.root] : [])];
 }
 export async function toolPathGuard(ctx: ToolContext): Promise<PathGuard> {
+  const epoch = ctx.permissionMode?.() === "bypass" ? ctx.bypassSignal?.() : undefined;
   const excluded = toolExcludedRoots(ctx);
   if (ctx.permissionMode?.() !== "bypass")
     return PathGuard.create(ctx.root, ctx.root, "workbench", undefined, excluded);
@@ -73,6 +74,7 @@ export async function toolPathGuard(ctx: ToolContext): Promise<PathGuard> {
     ctx.root,
     "filesystem",
     () => {
+      epoch?.throwIfAborted();
       if (ctx.permissionMode?.() !== "bypass")
         throw Error("Bypass file access was revoked. Retry under the current permission mode.");
     },

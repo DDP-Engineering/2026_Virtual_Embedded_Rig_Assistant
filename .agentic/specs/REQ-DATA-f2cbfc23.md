@@ -6,9 +6,7 @@ REQ-REL-52212fce, REQ-FUNC-3bf3d5bc, REQ-REL-3817f2fd, REQ-FUNC-d4b72e6b, REQ-PL
 
 ## 1 Registry `lab/resources.json`
 
-One file per workbench, written by the user (or the agent through its approved file tools), read by the host and by
-plugin helpers. UTF-8 JSON, at most 256 KiB, a regular file inside the workbench reached through the workbench
-PathGuard. Format 1:
+One registry lookup at `lab/resources.json` relative to the approved program input working directory, written by the user (or the agent through approved file tools), read by the host and plugin helpers. UTF-8 JSON, at most 256 KiB, a regular file reached through toolPathGuard: outside canonical paths require Bypass and application data is refused in every mode. HIL children retain workbench execution/storage ownership while using their plan call's approved input registry. Format 1:
 
 ```json
 {
@@ -102,7 +100,7 @@ refused before approval. A call without the option claims nothing.
 `ProgramChangeRequest.resources` lists `{alias, kind, resource, keys}` and `registry {path, sha256}` (absent without a
 claim). The approval payload carries `resources: [{alias, kind, resource}]` and `registry`; the desktop card and the
 CLI prompt show them. After approval the request is prepared again and must equal the approved one (CONFLICT); right
-before spawn the registry is hashed again with the argument files (CONFLICT).
+before spawn the original registry lookup is resolved again, its canonical identity compared and its bytes hashed again with the argument files (CONFLICT). Registry provenance is canonical absolute outside the workbench; an internal lookup field retains the original path for the recheck and is not exported. Declared registry environment values use the canonical approved path.
 
 ## 5 Leases
 

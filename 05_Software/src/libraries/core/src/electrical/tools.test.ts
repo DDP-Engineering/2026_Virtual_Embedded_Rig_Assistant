@@ -323,6 +323,25 @@ describe("explicit-mapping import (REQ-FUNC-784f108f)", () => {
   const write = (document: unknown) => writeFile(join(root, "import.json"), JSON.stringify(document));
   const mapping = { "src-vendor": "new", "cir-x": "cir-m2", "mot-x": "mot-p3", "rel-x": "new" };
 
+  it("imports a sibling exchange only in Bypass and keeps the model in the workbench", async () => {
+    await install();
+    const sibling = await mkdtemp(join(tmpdir(), "vera-exchange-"));
+    try {
+      const path = join(sibling, "exchange.json");
+      await writeFile(path, JSON.stringify(exchange()));
+      const operations = [motor, { op: "import", path, mapping }];
+      await expect(prepare(operations)).rejects.toThrow();
+      const ctx = { ...context(), permissionMode: () => "bypass" as const };
+      const change = await api.prepareElectricalModelChange(ctx, { operations }, signal());
+      expect(change.request).toMatchObject({ path: MODEL });
+      await change.apply(signal());
+      expect(api.parseModel(await model()).objects.some((item) => item.id === "mot-p3")).toBe(true);
+      await expect(readFile(join(sibling, MODEL))).rejects.toMatchObject({ code: "ENOENT" });
+    } finally {
+      await rm(sibling, { recursive: true, force: true });
+    }
+  });
+
   it("merges when every ID is mapped, keeping mapped existing IDs and rewriting endpoints and citations", async () => {
     await install();
     await write(exchange());

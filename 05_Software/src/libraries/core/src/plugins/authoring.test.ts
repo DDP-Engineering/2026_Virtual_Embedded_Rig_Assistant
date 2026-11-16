@@ -1,4 +1,4 @@
-import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { programPolicy } from "@vera/shared";
@@ -159,4 +159,42 @@ it("refuses application-data draft access without affecting internal plugin revi
   expect(outcome.isError).toBe(true);
   expect(outcome.text).toContain("VERA application data");
   expect((await f.store.review(f.draft)).manifest?.id).toBe("fixture-cli");
+});
+
+it("validates and installs an outside draft only in Bypass, records absolute source and retains revocation", async () => {
+  const f = await fixture();
+  const outside = join(f.root, "outside", "fixture-cli");
+  await cp(f.draft, outside, { recursive: true });
+  let mode: "ask" | "bypass" = "ask";
+  let epoch = new AbortController();
+  const ctx = {
+    ...f.ctx,
+    permissionMode: () => mode,
+    bypassSignal: () => epoch.signal,
+    change: {
+      db: undefined as never,
+      queue: new WriteQueue(),
+      sessionId: "ses",
+      turnId: "turn",
+      callId: "call",
+      now: () => new Date().toISOString(),
+      recorded: () => undefined,
+    },
+  };
+  expect((await f.registry.execute(ctx, "plugin_validate", { path: outside }, signal())).isError).toBe(true);
+  await expect(f.registry.prepare(ctx, "plugin_install", { path: outside }, signal())).rejects.toThrow();
+  mode = "bypass";
+  expect((await f.registry.execute(ctx, "plugin_validate", { path: outside }, signal())).isError).toBe(false);
+  const revoked = await f.registry.prepare(ctx, "plugin_install", { path: outside }, signal());
+  expect(revoked.request).toMatchObject({ path: outside.replaceAll("\\", "/") });
+  epoch.abort();
+  mode = "ask";
+  epoch = new AbortController();
+  mode = "bypass";
+  await expect(revoked.apply(signal())).rejects.toThrow();
+  expect(await f.store.ids()).toEqual([]);
+  const install = await f.registry.prepare(ctx, "plugin_install", { path: outside }, signal());
+  expect((await install.apply(signal())).enabled).toBe(false);
+  expect(await f.store.ids()).toEqual(["fixture-cli"]);
+  expect((await f.store.load("fixture-cli")).folder.startsWith(f.store.root)).toBe(true);
 });

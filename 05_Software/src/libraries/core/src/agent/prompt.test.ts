@@ -62,9 +62,7 @@ it("describes the explicitly enabled full filesystem scope to Bypass models", ()
   ])
     expect(result.text).toContain(name);
   expect(result.text).toContain("VERA application data");
-  expect(result.text).toContain(
-    "parse_log, decode_register, plugin_validate and plugin_install remain workbench-confined",
-  );
+  expect(result.text).toContain("parse_log, decode_register, plugin_validate, plugin_install");
   expect(result.text).toContain("run_program also accepts outside absolute working directories");
   expect(result.text).toContain("Declared child programs are not sandboxed");
   expect(result.characters).toBe(result.text.length);

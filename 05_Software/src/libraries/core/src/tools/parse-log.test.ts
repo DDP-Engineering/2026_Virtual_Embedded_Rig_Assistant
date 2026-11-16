@@ -240,14 +240,14 @@ it("refuses a stale expected hash before a pathological regex can return source 
     ).value.scan.complete,
   ).toBe(true);
 });
-it("refuses traversal, ignore, metadata, absent files and disabled execution even in Bypass", async () => {
+it("refuses traversal, ignore and metadata outside Bypass, with distinct missing and disabled failures", async () => {
   await mkdir(join(root, ".vera"));
   await writeFile(join(root, ".vera/.veraignore"), "hidden.log\n");
   await log("2026-04-12T08:00:00Z INFO data");
   await writeFile(join(root, "hidden.log"), "secret");
   for (const path of ["../outside.log", ".vera/.veraignore", "hidden.log"]) {
     const ctx = createToolContext(root, pool);
-    ctx.permissionMode = () => "bypass";
+    ctx.permissionMode = () => "ask";
     expect(
       JSON.parse((await registry.execute(ctx, "parse_log", { path, profile: "iso" }, signal())).text),
     ).toMatchObject({ code: "DENIED", reason: "path_denied" });
@@ -346,7 +346,7 @@ it("aborts active and queued log work, includes queue time in deadlines and disp
 }, 20000);
 
 // REQ-SEC-3856567c
-it("passes application-data exclusions to its confined worker in Bypass", async () => {
+it("passes application-data exclusions to its filesystem worker in Bypass", async () => {
   await log("2026-04-12T08:00:00Z INFO private\n");
   const ctx = {
     ...createToolContext(root, pool),

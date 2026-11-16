@@ -18,7 +18,7 @@ import { z } from "zod";
 import type { LoadedPlugin } from "../plugins/store.js";
 import { assertAgentWritable, commitChange, type PreparedChange } from "../tools/changes.js";
 import type { ToolContext, ToolDefinition } from "../tools/context.js";
-import { toolExcludedRoots, toolPathGuard } from "../tools/context.js";
+import { toolExcludedRoots, toolPathGuard, toolSignal } from "../tools/context.js";
 import { PathGuard } from "../workbench/path-guard.js";
 import { applyOperations, electricalOperationSchema } from "./edit.js";
 import { checkModel, entityHash, modelIssues, parseModel, problemsText, serializeModel } from "./model.js";
@@ -311,8 +311,17 @@ export async function prepareElectricalModelChange(
   raw: unknown,
   signal: AbortSignal,
 ): Promise<PreparedChange> {
+  signal = toolSignal(ctx, signal);
   signal.throwIfAborted();
+  const inputGuard = await toolPathGuard(ctx);
   const args = electricalModelChangeParams.parse(raw);
+  const operations = [];
+  for (const operation of args.operations)
+    operations.push(
+      operation.op === "import"
+        ? { ...operation, path: (await inputGuard.resolve(operation.path)).relative }
+        : operation,
+    );
   const host = ctx.change;
   if (!host) throw Error("Workbench write host is unavailable.");
   host.assertWritable?.();
@@ -330,9 +339,9 @@ export async function prepareElectricalModelChange(
   const before = await fileBytes(inside.absolute, electricalLimits.modelBytes, "electrical model");
   const beforeSha256 = before === null ? null : hash(before);
   const current = before === null ? null : parseModel(before.toString("utf8"));
-  const { model, ids } = await applyOperations(current, args.operations, {
+  const { model, ids } = await applyOperations(current, operations, {
     readImport: async (path) => {
-      const source = await workbench.resolve(path);
+      const source = await inputGuard.resolve(path);
       const bytes = await fileBytes(source.absolute, electricalLimits.modelBytes, "exchange file");
       if (bytes === null) throw Error(`The exchange file ${path} does not exist.`);
       return bytes.toString("utf8");
@@ -355,7 +364,7 @@ export async function prepareElectricalModelChange(
     callId: host.callId,
     tool: "electrical_model_change" as const,
     path: changePath,
-    args: Object.freeze({ ...args }),
+    args: Object.freeze({ ...args, operations }),
     existed: before !== null,
     beforeSha256,
     afterSha256,

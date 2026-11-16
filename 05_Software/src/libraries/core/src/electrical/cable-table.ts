@@ -111,18 +111,19 @@ export function parseCableTable(text: string, fileId?: string): CableTable {
   return checked.table;
 }
 
-/** Reads `electrical-automation-tables/<id>.json` strictly, confined to the workbench. */
+/** Reads `electrical-automation-tables/<id>.json` strictly, using the host input guard (confined by default). */
 export async function readCableTableFile(
   root: string,
   id: string,
   excludedRoots: readonly string[] = [],
+  inputGuard?: PathGuard,
 ): Promise<{ table: CableTable; stamp: CableTableStamp }> {
   if (!/^[a-z][a-z0-9]*(?:-[a-z0-9]+)+$/.test(id) || id.length > 64)
     throw Error(`The cable table id ${JSON.stringify(id)} is not a valid id.`);
   const path = `${cableTableDir}/${id}.json`;
-  const target = await (await PathGuard.create(root, root, "workbench", undefined, excludedRoots)).resolve(
-    path,
-  );
+  const target = await (
+    inputGuard ?? (await PathGuard.create(root, root, "workbench", undefined, excludedRoots))
+  ).resolve(path);
   let info: Awaited<ReturnType<typeof lstat>>;
   try {
     info = await lstat(target.absolute);
@@ -134,8 +135,12 @@ export async function readCableTableFile(
   if (!info.isFile()) throw Error("The cable table is not an ordinary file.");
   if (info.size > cableTableLimits.fileBytes) throw Error("The cable table is larger than 1 MiB.");
   const bytes = await readFile(target.absolute);
+  inputGuard?.assertAuthorized();
   const table = parseCableTable(bytes.toString("utf8"), id);
-  return { table, stamp: { id: table.id, version: table.version, sha256: hash(bytes), path } };
+  return {
+    table,
+    stamp: { id: table.id, version: table.version, sha256: hash(bytes), path: target.relative },
+  };
 }
 
 /** The factor at the next tabulated point at or above `value`; undefined when the table does not cover it. */

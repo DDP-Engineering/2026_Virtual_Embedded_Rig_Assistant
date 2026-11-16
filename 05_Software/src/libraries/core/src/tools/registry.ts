@@ -182,7 +182,7 @@ export class ToolRegistry {
             reason: "invalid_arguments",
             error:
               name === "parse_log"
-                ? "Use a relative path and exactly one profile or pattern; check argument limits."
+                ? "Use a path allowed by the current mode and exactly one profile or pattern; check argument limits."
                 : "Supply definitionPath, register and an unsigned decimal/hex string; check argument limits.",
           }),
           isError: true,
@@ -228,8 +228,21 @@ export class ToolRegistry {
       class: tool.class,
       description:
         ctx.permissionMode?.() === "bypass" &&
-        ["read", "list", "glob", "grep", "write", "edit"].includes(tool.name)
-          ? `${tool.description} Bypass is active: ordinary filesystem paths may be absolute or relative to the workbench, including outside and ignored locations.`
+        [
+          "read",
+          "list",
+          "glob",
+          "grep",
+          "write",
+          "edit",
+          "parse_log",
+          "decode_register",
+          "plugin_validate",
+          "plugin_install",
+          "apply_candidate",
+          "run_program",
+        ].includes(tool.name)
+          ? `${tool.description} Bypass is active: agent input paths may be absolute or relative to the workbench, including outside and ignored locations.`
           : tool.description,
       params: tool.params,
       execute: async (args, signal) => {

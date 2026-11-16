@@ -110,13 +110,17 @@ export const decodeRegisterResultSchema = z.strictObject({
         valueHex: z.string(),
         valueDec: z.string(),
         label: z.string().nullable(),
-        ref: lineRef,
+        ref: lineRef.nullable(),
       }),
     )
     .max(64),
   unmappedMaskHex: z.string(),
   unmappedSetBitsHex: z.string(),
-  source: z.strictObject({ path: z.string(), sha256: z.string().regex(/^[a-f0-9]{64}$/), ref: lineRef }),
+  source: z.strictObject({
+    path: z.string(),
+    sha256: z.string().regex(/^[a-f0-9]{64}$/),
+    ref: lineRef.nullable(),
+  }),
   sourceRefs,
 });
 export type DecodeRegisterResult = z.infer<typeof decodeRegisterResultSchema>;

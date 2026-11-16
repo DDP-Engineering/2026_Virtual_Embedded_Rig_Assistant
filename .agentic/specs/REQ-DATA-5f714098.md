@@ -15,9 +15,7 @@ core handles two operations itself instead of starting the executable:
 | `hil run <plan>` | compiles, asks one approval for the expansion, executes it (section 6) | highest compiled risk (section 5) |
 
 Every other `hil` argument list starts the helper normally under the manifest rules: `hil --version`, `hil report --run
-DIR` (section 8). `<plan>` is one workbench file, exactly one further argument, given relative to the workbench root; a
-`hil check`/`hil run` with any other argument shape, a `cwd` other than the root or a run_program `timeout` (the budget
-limits a plan) is refused before any approval. `run` may run in the background
+DIR` (section 8). `<plan>` is exactly one further argument, resolved relative to the approved working directory; absolute outside plans and working directories require Bypass through toolPathGuard. Firmware and explicit source paths use that same input base. Generated requests, child execution/output folders and logs remain workbench-owned. Any other argument shape or a run_program `timeout` (the budget limits a plan) is refused before approval. `run` may run in the background
 (`program_output`, `program_stop`), like any run_program call.
 
 `hil check` answers exit 0 with the expansion, or exit 2 with `{"format": 1, "kind": "hil-plan-check", "valid": false,
@@ -71,7 +69,7 @@ A JSON file of at most 256 KiB, UTF-8, unique keys; every object is strict (an u
 | `setup.firmwareEffect` | `device-read`, `device-write` or `irreversible`: what the running firmware does outside the chip (required) |
 | `setup.effectNote` | 1-500 characters: the effect in words (required) |
 | `setup.interlocks` | optional, 0-16 entries of 1-200 characters (hardware interlocks or watchdogs of the setup) |
-| `firmware.path` | an existing regular workbench file of at most 64 MiB |
+| `firmware.path` | an existing regular file allowed by the shared tool policy, at most 64 MiB |
 | `firmware.sha256` | 64 hex; must equal the file's SHA-256 at compile time |
 | `firmware.format` | `elf`, `hex` or `bin`; `bin` needs `firmware.address` (`0x` + 1-8 hex digits) |
 | `budget.seconds` | 1-3600: the running phase's total time (steps), section 6 |
@@ -116,10 +114,10 @@ program's own manifest rules classify the built command line.
 Parameter values: probe `VID:PID[:SERIAL]` or `VID:PID-INTERFACE` text; chip 1-64 of `[A-Za-z0-9_.-]`; port `COMn`
 or `/dev/tty*`/`/dev/serial/by-id/*`; baud 1-4000000; duration 0.1-3600 s; until 1-256 characters; text 1-512
 characters without control characters; eol `crlf`, `lf`, `cr` or `none`; instrument a registry alias; channel 1-16 of
-`[A-Za-z0-9_]`; quantities numbers; hold 1-3500 s. A value starting with `-` (an option) is refused, and so is a firmware path whose workbench-relative form starts with `-`. `<step folder>` is
+`[A-Za-z0-9_]`; quantities numbers; hold 1-3500 s. A value starting with `-` (an option) is refused, and so is a firmware path whose canonical recorded form starts with `-`. `<step folder>` is
 `embedded-lab-results/<run-id>/steps/<step id>` (scpi and lab-validate create their run folders inside it).
 
-The `lab-validate.compare` request is a LAB-02 validation request in which each source has either `path` (a workbench
+The `lab-validate.compare` request is a LAB-02 validation request in which each source has either `path` (a shared-policy input
 file or run folder, hashed at compile time; its SHA-256, of the file or of the folder's `result.json`, is written into
 the generated request) or `step` (an earlier `scpi.capture` step; the executor names the capture folder that step's last
 passing attempt created). The executor writes `<step folder>.request.json` before the step runs; lab-validate itself
@@ -127,9 +125,9 @@ validates the rest of the request at run time.
 
 ## 4 Compilation (`check`, and `run` before its approval)
 
-Compilation reads the plan through the workbench path guard, validates it (section 2), checks the firmware hash, builds
+Compilation reads the plan through the captured shared tool path guard, validates it (section 2), checks the firmware hash, builds
 each step's arguments through its adapter and prepares each operation exactly as `run_program` prepares a call of that
-program (plugin enabled and issue-free, program resolvable, argument refusals, rule classification, workbench file
+program (plugin enabled and issue-free, program resolvable, argument refusals, rule classification, host-scoped file
 binding, registry aliases). Any problem refuses the whole plan before any process starts or any device is opened.
 
 Further refusals: `await` naming a step that is not an earlier background step, or awaited twice; a background step
@@ -258,3 +256,5 @@ and writes `report.html` (self-contained, escaped text, no script or external re
 `skipped` for skipped, not-run and incomplete) with exclusive creation; exit 0 written, 2 refused (missing, malformed,
 not done, outside the working directory, a report file already exists). It opens no network connection and starts no
 process.
+
+HIL input authority retains the original Bypass epoch through compilation, approval rechecks and background lifetime. Explicit source paths are normalized to canonical paths in compiled parameters and generated requests; every bound plan/firmware/source file is rechecked before a test step starts. Outside paths remain absolute in bindings and notes. The lab-validation child receives host-only scope/exclusion metadata through its environment, derived from the same guard; request JSON and model arguments cannot select it. Its source/member reads follow that scope and refuse application-data aliases, while generated request loading and output publication remain workbench-confined. Resource lookups use the approved HIL input cwd even though children execute from the workbench; declared registry environment paths are replaced with the canonical approved registry. The original lookup and hash are rechecked before spawn.

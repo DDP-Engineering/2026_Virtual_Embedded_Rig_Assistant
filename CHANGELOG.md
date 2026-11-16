@@ -8,6 +8,10 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ### Changed
 
+- lab-validation 0.3.0: HIL validation reads host-approved outside inputs with workbench-owned output.
+
+- Bypass extends to analysis, plugin drafts, HIL plans, bench resources and electrical inputs.
+
 - Bypass runs declared programs in outside folders, binds outside files and stops its runs when Bypass ends.
 
 - Bypass confirms each mode change; agent file access refuses VERA application data in every mode.
