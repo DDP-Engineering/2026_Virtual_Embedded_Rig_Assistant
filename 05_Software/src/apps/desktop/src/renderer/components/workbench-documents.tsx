@@ -4,6 +4,7 @@ import {
   documentFolderPattern,
   documentPatternFolder,
   type WorkbenchConfig,
+  workbenchDocsSchema,
 } from "@vera/shared";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -29,6 +30,70 @@ function useSettled<T>(value: T, delay: number): T {
     return () => clearTimeout(timer);
   }, [key, delay]);
   return settled;
+}
+
+/**
+ * A size in MB; empty means the fixed limits. "," is a decimal mark only as in "2,5", so "1,000"
+ * is refused rather than read as 1.
+ */
+const parseFileMB = (text: string) => {
+  const trimmed = text.trim();
+  if (!trimmed) return undefined;
+  const value = /^\d+,\d{1,2}$/.test(trimmed) ? trimmed.replace(",", ".") : trimmed;
+  return /^(\d+(\.\d*)?|\.\d+)$/.test(value) ? Number(value) : Number.NaN;
+};
+const parseCount = (text: string) => (/^\d+$/.test(text.trim()) ? Number(text.trim()) : Number.NaN);
+
+/**
+ * A limit typed as text, so text that is not a number stays visible and is refused. The draft gets
+ * the number, undefined when empty, or NaN, which the workbench schema refuses.
+ */
+function LimitField({
+  field,
+  label,
+  invalid,
+  value,
+  parse,
+  decimal,
+  disabled,
+  change,
+}: {
+  field: "max-file-mb" | "max-files";
+  label: string;
+  /** The alert shown while the value is refused, or undefined while it is valid. */
+  invalid: string | undefined;
+  value: number | undefined;
+  parse: (text: string) => number | undefined;
+  decimal: boolean;
+  disabled: boolean;
+  change: (value: number | undefined) => void;
+}) {
+  const [text, setText] = useState(value === undefined ? "" : String(value));
+  // A draft changed elsewhere is shown as it is; typed text is kept while it still means the value.
+  const shown = Object.is(parse(text), value)
+    ? text
+    : value === undefined || Number.isNaN(value)
+      ? ""
+      : String(value);
+  return (
+    <>
+      <label {...{ [`data-docs-${field}`]: "" }}>
+        {label}
+        <input
+          type="text"
+          inputMode={decimal ? "decimal" : "numeric"}
+          disabled={disabled}
+          value={shown}
+          aria-invalid={invalid !== undefined}
+          onChange={(e) => {
+            setText(e.currentTarget.value);
+            change(parse(e.currentTarget.value));
+          }}
+        />
+      </label>
+      {invalid !== undefined && <p role="alert">{invalid}</p>}
+    </>
+  );
 }
 
 /** Documentation folders of a workbench folder: detected checkboxes, Add folder, preview and raw globs. */
@@ -155,6 +220,37 @@ export function WorkbenchDocuments({
           />
           <span>{t("documentsSetup.gitignore")}</span>
         </label>
+        <LimitField
+          field="max-file-mb"
+          label={t("documentsSetup.maxFileMB")}
+          invalid={
+            workbenchDocsSchema.shape.maxFileMB.safeParse(docs.maxFileMB).success
+              ? undefined
+              : t("documentsSetup.maxFileMBInvalid")
+          }
+          value={docs.maxFileMB}
+          parse={parseFileMB}
+          decimal
+          disabled={disabled}
+          change={(maxFileMB) => {
+            const { maxFileMB: _previous, ...rest } = docs;
+            setDocs(maxFileMB === undefined ? rest : { ...rest, maxFileMB });
+          }}
+        />
+        <LimitField
+          field="max-files"
+          label={t("documentsSetup.maxFiles")}
+          invalid={
+            workbenchDocsSchema.shape.maxFiles.safeParse(docs.maxFiles).success
+              ? undefined
+              : t("documentsSetup.maxFilesInvalid")
+          }
+          value={docs.maxFiles}
+          parse={parseCount}
+          decimal={false}
+          disabled={disabled}
+          change={(maxFiles) => setDocs({ ...docs, maxFiles: maxFiles ?? Number.NaN })}
+        />
         {error !== undefined && <ErrorMessage error={error} />}
         {/* Said once: the indexing summary already ends with it when the preview was cut short. */}
         {scan.data?.truncated && !preview.data?.truncated && (

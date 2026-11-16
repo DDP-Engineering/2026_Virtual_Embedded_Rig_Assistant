@@ -1,4 +1,4 @@
-import { type WorkbenchSnapshot, workbenchPatchSchema } from "@vera/shared";
+import { type WorkbenchSnapshot, workbenchDocsSchema, workbenchPatchSchema } from "@vera/shared";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../api/index.js";
@@ -72,6 +72,8 @@ export function WorkbenchEditor({
   const dirty =
     instructions !== original ||
     JSON.stringify(comparable(config)) !== JSON.stringify(comparable(workbench.config));
+  // An invalid limit in Documents & RAG keeps Save off until it is corrected.
+  const valid = workbenchDocsSchema.safeParse(config.docs).success;
   useEffect(() => {
     dirtyChanged?.(dirty);
   }, [dirty, dirtyChanged]);
@@ -82,7 +84,7 @@ export function WorkbenchEditor({
       .map((s) => s.trim())
       .filter(Boolean);
   async function save() {
-    if (pending || workbench.readOnly || !loaded || !dirty) return;
+    if (pending || workbench.readOnly || !loaded || !dirty || !valid) return;
     setPending(true);
     setError(undefined);
     setPartial(false);
@@ -98,6 +100,8 @@ export function WorkbenchEditor({
           include: lines(config.docs.include.join("\n")),
           exclude: lines(config.docs.exclude.join("\n")),
           gitignore: config.docs.gitignore,
+          maxFileMB: config.docs.maxFileMB ?? null,
+          maxFiles: config.docs.maxFiles,
         },
         embeddings: config.embeddings,
         retrieval: { results: config.retrieval.results, mode: config.retrieval.mode },
@@ -154,7 +158,7 @@ export function WorkbenchEditor({
             type="button"
             data-project-save
             className="primary"
-            disabled={pending || workbench.readOnly || !loaded || !config.name.trim() || !dirty}
+            disabled={pending || workbench.readOnly || !loaded || !config.name.trim() || !dirty || !valid}
             onClick={() => void save()}
           >
             {pending ? t("projects.saving") : t("projects.save")}

@@ -20,7 +20,7 @@ import { PathGuard } from "../workbench/path-guard.js";
 import { WriteQueue } from "../workbench/write-queue.js";
 import type { Chunk } from "./chunk.js";
 import { type InspectInput, inspectSource, type SourceInspection } from "./inspect.js";
-import { documentKind, documentSelection, missing, sourceLimit } from "./kinds.js";
+import { documentKind, documentSelection, missing, sizeLimit } from "./kinds.js";
 import {
   ordinaryFile,
   readIgnorePolicy,
@@ -335,7 +335,8 @@ export class Ingester {
     }
     await this.queue.drain();
   }
-  private async selected(): Promise<{ guard: PathGuard; paths: string[]; bytes: number }> {
+  /** The selected paths and the skipped ones; the volume counts only what gets indexed. */
+  private async selected(): Promise<{ guard: PathGuard; paths: string[]; skipped: string[]; bytes: number }> {
     const guard = await PathGuard.create(this.options.root);
     const select = this.options.process?.select ?? selectDocuments;
     const selection = await select({
@@ -347,6 +348,7 @@ export class Ingester {
     return {
       guard,
       paths: selection.paths.map((entry) => entry.path),
+      skipped: selection.skipped.map((entry) => entry.path),
       bytes: selection.paths.reduce((sum, entry) => sum + entry.size, 0),
     };
   }
@@ -360,7 +362,7 @@ export class Ingester {
   }
   private async reconcile(selection?: Awaited<ReturnType<Ingester["selected"]>>): Promise<void> {
     this.options.assertWritable();
-    const { guard, paths, bytes } = selection ?? (await this.selected());
+    const { guard, paths, skipped, bytes } = selection ?? (await this.selected());
     if (this.closed) return;
     this.selectedVolume = { files: paths.length, bytes };
     this.emit({ type: "index.volume", files: paths.length, bytes });
@@ -377,18 +379,19 @@ export class Ingester {
           .run(fingerprint);
       });
     }
-    const selected = new Set(paths);
+    // Skipped documents keep a row, so the Files tab shows them with their reason.
+    const selected = new Set([...paths, ...skipped]);
     const removed = this.rows.list().filter((row) => !selected.has(row.path));
     this.mutation(() => {
       for (const row of removed) this.rows.remove(row.path);
     });
     for (const row of removed) this.emit({ type: "index.document", path: row.path, document: null });
-    let pending = paths.length,
+    let pending = selected.size,
       done = 0,
       failed = 0;
     const progress = () => this.emit({ type: "index.progress", pending, done, failed });
     progress();
-    for (const path of paths) {
+    for (const path of [...selected].sort()) {
       if (this.closed) return;
       if ((await this.ingest(guard, path)) === "failed") failed++;
       else done++;
@@ -430,7 +433,7 @@ export class Ingester {
       const target = await this.ordinary(guard, path);
       const before = await lstat(target.absolute);
       record = { ...record, bytes: before.size, mtime: before.mtime.toISOString() };
-      if (before.size > sourceLimit(kind)) {
+      if (before.size > sizeLimit(kind, this.options.config().docs)) {
         if (
           old?.status !== "unsupported" ||
           old.error !== "SIZE_LIMIT" ||

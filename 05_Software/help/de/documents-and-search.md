@@ -25,10 +25,10 @@ Der Tab **Dateien** im rechten Bereich zeigt den Fortschritt (**Index: … ferti
 | **Indiziert** | Durchsuchbar |
 | **Ausstehend** | Wartet auf die Indizierung |
 | **Fehlgeschlagen** | Konnte nicht gelesen oder verarbeitet werden; der Grund wird angezeigt, zum Beispiel **Größenlimit überschritten** |
-| **Nicht unterstützt** | Kein unterstützter Typ |
+| **Nicht unterstützt** | Kein unterstützter Typ oder größer als das Größenlimit (**Größenlimit überschritten**) |
 | **OCR erforderlich** | Ein gescanntes PDF ohne Textebene; VERA führt keine OCR aus |
 
-PDF- und Office-Dateien bis 100 MiB und Textdateien bis 20 MiB werden indiziert. **Neu indizieren** indiziert die Workbench erneut. Wurde die Indizierung nach wiederholten Fehlern angehalten, wählen Sie **Indexierung neu starten**.
+PDF- und Office-Dateien bis 100 MiB und Textdateien bis 20 MiB werden indiziert. **Maximale Dateigröße (MB)** unter **Workbench bearbeiten** → **Dokumente & RAG** senkt diese Limits für die Workbench (1 MB = 1.048.576 Bytes); sie erhöht sie nie. Lassen Sie das Feld leer, um sie beizubehalten. **Neu indizieren** indiziert die Workbench erneut. Wurde die Indizierung nach wiederholten Fehlern angehalten, wählen Sie **Indexierung neu starten**.
 
 Unter **Workbench bearbeiten** → **Indizierung** legt **Dokumentsuche** die Standardwerte des Agenten fest: **Ergebnisse pro Suche (1–20)** und **Suchmodus**: **Hybrid (Schlüsselwörter und Bedeutung)**, **Nur Schlüsselwörter** oder **Nur Bedeutung**.
 

@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-133f57ee"
+
+title = "Skip documents above the workbench file size limit"
+
+status = "active"
+
+requirement = """
+When the document selection finds a document larger than the lower of its fixed limit (100 MiB for PDF and Office, 20 MiB for text) and docs.maxFileMB, the indexer shall return it as skipped with reason too-large instead of selecting it, record it as unsupported with reason SIZE_LIMIT without reading it, and leave it out of the selected document count and bytes.
+"""
+
+verification = "Core test over a temporary workbench: with maxFileMB 25 a 30 MB PDF is returned as skipped (too-large) and recorded unsupported/SIZE_LIMIT while a 1 MB PDF is selected; without maxFileMB the 30 MB PDF is selected; with maxFileMB 500 a PDF of 100 MiB + 1 byte stays skipped; a file exactly at the limit is selected; the volume counts only the selected files."
+
+affected_paths = ["05_Software/src/libraries/core/src/knowledge/kinds.ts", "05_Software/src/libraries/core/src/knowledge/selection.ts", "05_Software/src/libraries/core/src/knowledge/ingest.ts", "05_Software/src/libraries/core/src/workbench/documents-scan.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/knowledge/ingest-selection.test.ts::skips documents above the lower of the fixed limit and docs.maxFileMB as too large", "05_Software/src/libraries/core/src/knowledge/ingest.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-16
+updated = 2026-11-16

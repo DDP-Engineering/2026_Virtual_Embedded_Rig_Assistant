@@ -24,11 +24,20 @@ export function documentKind(path: string): DocumentKind {
 /** Binary containers (PDF, office) share the larger source budget and skip the text check. */
 export const sourceLimit = (kind: DocumentKind) =>
   isDocumentKindIn(kind, binaryDocumentKinds) ? PDF_LIMIT : TEXT_LIMIT;
+const MIB = 1024 * 1024;
+/** The size a document may have: its fixed budget, lowered (never raised) by docs.maxFileMB. */
+export const sizeLimit = (kind: DocumentKind, docs: Pick<WorkbenchConfig["docs"], "maxFileMB">) =>
+  docs.maxFileMB === undefined
+    ? sourceLimit(kind)
+    : Math.min(sourceLimit(kind), Math.floor(docs.maxFileMB * MIB));
 export const missing = (error: unknown) =>
   ["ENOENT", "ENOTDIR"].includes((error as NodeJS.ErrnoException).code ?? "");
 
 /** Match tinyglobby's directory expansion/negation once, for both discovery and admission. */
-export function documentSelection(docs: WorkbenchConfig["docs"]): { include: string[]; exclude: string[] } {
+export function documentSelection(docs: Pick<WorkbenchConfig["docs"], "include" | "exclude">): {
+  include: string[];
+  exclude: string[];
+} {
   const include: string[] = [],
     exclude: string[] = [];
   const normalize = (pattern: string) => {

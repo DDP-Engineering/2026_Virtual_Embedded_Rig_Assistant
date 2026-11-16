@@ -82,6 +82,14 @@ mode offers empty, missing, read-only and warning fixtures.
   (REQ-FUNC-2336bfd2). Shared docs.gitignore (default true, format 1) switches the .gitignore part for indexing, the documentation
   scan/preview (workbench.scanDocs/previewDocs carry `gitignore`) and the Files tab; the agent PathGuard, files(query) and
   relativeFolder keep .veraignore only (REQ-FUNC-eade110e, REQ-UX-adae0c2f).
+- Shared docs.maxFileMB (optional positive MB, 1 MB = 1 MiB) and docs.maxFiles (positive integer,
+  default 10000) stay at format 1; a patch maxFileMB null removes it, and invalid values fail
+  workbenchSchema/workbenchPatchSchema (REQ-DATA-9fd427f1, REQ-DATA-3bae7e69). maxFiles is stored
+  and validated only; nothing enforces it yet. Documents & RAG shows "Maximum file size (MB)" and
+  "Maximum indexed files" as text fields parsed in components/workbench-documents.tsx (empty size =
+  unset; invalid text puts NaN in the draft, marks the field with an alert, and workbenchDocsSchema
+  keeps editor Save and New Workbench Create disabled) (REQ-UX-b189ed46, REQ-UX-4c2257b2). The
+  documentation preview still applies only the fixed size limits.
 - Shared workbenchSchema/configWarnings/mergeWorkbench/workbenchTemplate supply format1 defaults,
   passthrough extensions, unresolved disabled-name warnings and the specified English pinned template.
 - Native app.chooseFolder uses Electron dialog; instrumented compilation accepts VERA_TEST_DIALOG_PATH.

@@ -83,7 +83,11 @@ it("selects and inspects documents through the processor's ports when they are s
     sha256: expect.stringMatching(/^[a-f0-9]{64}$/),
   });
   // The selection port decides what is selected: a scripted selection drops b.txt.
-  select.mockImplementation(async () => ({ paths: [{ path: "docs/a.md", size: 3 }], retry: false }));
+  select.mockImplementation(async () => ({
+    paths: [{ path: "docs/a.md", size: 3 }],
+    skipped: [],
+    retry: false,
+  }));
   await h.service.reindexDocuments();
   expect(h.rows().get("docs/b.txt")).toBeUndefined();
   expect(h.service.documentVolume()).toEqual({ files: 1, bytes: 3 });

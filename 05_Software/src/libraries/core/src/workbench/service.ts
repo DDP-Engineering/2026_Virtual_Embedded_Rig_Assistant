@@ -520,7 +520,10 @@ export class WorkbenchService {
     return scanDocuments(folder, await this.ignoreRules(folder, gitignore));
   }
   /** What a documentation selection would index in a chosen folder. */
-  async previewDocuments(input: string, docs: WorkbenchConfig["docs"]): Promise<DocumentPreview> {
+  async previewDocuments(
+    input: string,
+    docs: Pick<WorkbenchConfig["docs"], "include" | "exclude" | "gitignore">,
+  ): Promise<DocumentPreview> {
     const folder = await this.folder(input);
     return previewDocuments(folder, docs, await this.ignoreRules(folder, docs.gitignore));
   }

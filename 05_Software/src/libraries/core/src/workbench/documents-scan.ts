@@ -127,7 +127,7 @@ export async function scanDocuments(
  */
 export async function previewDocuments(
   root: string,
-  docs: WorkbenchConfig["docs"],
+  docs: Pick<WorkbenchConfig["docs"], "include" | "exclude" | "gitignore">,
   ignored: (path: string) => boolean,
   bounds?: ScanBounds,
 ): Promise<DocumentPreview> {

@@ -405,3 +405,50 @@ it("reports listing failure without clearing configured ids and supports retry",
   await click("[data-workbench-plugins] button");
   await vi.waitFor(() => expect(toggle()?.checked).toBe(true));
 });
+
+const limitInput = (field: "max-file-mb" | "max-files") =>
+  container.querySelector(`[data-docs-${field}] input`) as HTMLInputElement;
+async function enterLimit(field: "max-file-mb" | "max-files", text: string) {
+  const user = userEvent.setup();
+  await act(async () => user.clear(limitInput(field)));
+  if (text) await act(async () => user.type(limitInput(field), text));
+}
+
+// REQ-UX-b189ed46 REQ-UX-4c2257b2
+it("saves the file size and count limits with the editor's patch and blocks Save while one is invalid", async () => {
+  const wb = snapshot();
+  wb.config.docs.maxFileMB = 40;
+  stub(wb);
+  await mount(createElement(WorkbenchEditor, { workbench: wb, saved: vi.fn(), close: vi.fn() }));
+  await click('[data-project-section="documents"]');
+  expect(limitInput("max-file-mb").value).toBe("40");
+  const save = () => container.querySelector<HTMLButtonElement>("[data-project-save]");
+  await enterLimit("max-file-mb", "0");
+  expect(save()?.disabled).toBe(true);
+  await enterLimit("max-file-mb", "");
+  await enterLimit("max-files", "2.5");
+  expect(save()?.disabled).toBe(true);
+  await enterLimit("max-files", "500");
+  expect(save()?.disabled).toBe(false);
+  await click("[data-project-save]");
+  expect(calls("workbench.config.update")[0]?.[1]).toMatchObject({
+    patch: { docs: { maxFileMB: null, maxFiles: 500 } },
+  });
+});
+
+// REQ-UX-b189ed46 REQ-UX-4c2257b2
+it("creates a workbench with the file size and count limits and blocks Create while one is invalid", async () => {
+  stub(snapshot());
+  await mount(createElement(WorkbenchCreate, { created: vi.fn() }));
+  await click('[data-action="choose-create"]');
+  await click('[data-project-section="documents"]');
+  const create = () => container.querySelector<HTMLButtonElement>('[data-action="create-workbench"]');
+  await enterLimit("max-file-mb", "-1");
+  expect(create()?.disabled).toBe(true);
+  await enterLimit("max-file-mb", "25");
+  expect(create()?.disabled).toBe(false);
+  await click('[data-action="create-workbench"]');
+  expect(calls("workbench.create")[0]?.[1]).toMatchObject({
+    config: { docs: { maxFileMB: 25, maxFiles: 10000 } },
+  });
+});

@@ -97,17 +97,17 @@ it("runs document processing, selection and inspection in the indexer and return
   expect(await pending).toEqual(result);
   const selection = h.host.processor.select?.({
     root: "/bench",
-    docs: { include: ["docs/**"], exclude: [], gitignore: true },
+    docs: { include: ["docs/**"], exclude: [], gitignore: true, maxFiles: 10000, maxFileMB: 25 },
     signal: new AbortController().signal,
   });
   await flush();
   const select = h.latest().sent.at(-1) as Message;
   expect(select).toMatchObject({
     type: "select",
-    input: { root: "/bench", docs: { include: ["docs/**"], exclude: [] } },
+    input: { root: "/bench", docs: { include: ["docs/**"], exclude: [], maxFileMB: 25 } },
   });
-  h.latest().reply(select.id, { paths: [{ path: "docs/a.pdf", size: 3 }], retry: false });
-  expect(await selection).toEqual({ paths: [{ path: "docs/a.pdf", size: 3 }], retry: false });
+  h.latest().reply(select.id, { paths: [{ path: "docs/a.pdf", size: 3 }], skipped: [], retry: false });
+  expect(await selection).toEqual({ paths: [{ path: "docs/a.pdf", size: 3 }], skipped: [], retry: false });
   const inspection = h.host.processor.inspect?.({
     root: "/bench",
     path: "docs/a.pdf",

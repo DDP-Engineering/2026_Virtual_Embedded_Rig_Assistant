@@ -680,7 +680,7 @@ it.each(["rebind", "close"])("settles startup waitIdle when %s cancels readiness
   const pending = ingest.waitIdle();
   await Promise.resolve();
   if (action === "rebind") {
-    config.docs = { include: ["reference/**"], exclude: [], gitignore: true };
+    config.docs = { include: ["reference/**"], exclude: [], gitignore: true, maxFiles: 10000 };
     ingest.request();
   } else await ingest.close();
   await pending;

@@ -25,10 +25,10 @@ Fila **Fișiere** din panoul din dreapta arată progresul (**Index: … finaliza
 | **Indexat** | Poate fi căutat |
 | **În așteptare** | Așteaptă să fie indexat |
 | **Eșuat** | Nu a putut fi citit sau procesat; motivul este afișat, de exemplu **Limită de dimensiune depășită** |
-| **Neacceptat** | Nu este un tip acceptat |
+| **Neacceptat** | Nu este un tip acceptat sau depășește limita de dimensiune (**Limită de dimensiune depășită**) |
 | **Necesită OCR** | Un PDF scanat fără strat de text; VERA nu rulează OCR |
 
-Se indexează fișiere PDF și Office de până la 100 MiB și fișiere text de până la 20 MiB. **Reindexează** indexează din nou workbenchul. Dacă indexarea s-a oprit după eșecuri repetate, selectează **Repornește indexarea**.
+Se indexează fișiere PDF și Office de până la 100 MiB și fișiere text de până la 20 MiB. **Dimensiune maximă fișier (MB)** de la **Editează workbenchul** → **Documente și RAG** coboară aceste limite pentru workbench (1 MB = 1.048.576 octeți); nu le crește niciodată. Lasă câmpul gol pentru a le păstra. **Reindexează** indexează din nou workbenchul. Dacă indexarea s-a oprit după eșecuri repetate, selectează **Repornește indexarea**.
 
 La **Editează workbenchul** → **Indexare**, **Căutare în documente** setează valorile implicite ale agentului: **Rezultate per căutare (1–20)** și **Mod de căutare**: **Hibrid (cuvinte cheie și sens)**, **Doar cuvinte cheie** sau **Doar după sens**.
 

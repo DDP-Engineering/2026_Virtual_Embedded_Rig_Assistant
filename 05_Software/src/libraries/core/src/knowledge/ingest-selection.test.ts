@@ -1,6 +1,6 @@
 // REQ-FUNC-c1a1c758 REQ-NFR-89d6114f REQ-DATA-d727f6e1 REQ-FUNC-a187563c
 import { randomUUID } from "node:crypto";
-import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, open, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, relative } from "node:path";
 import { type EventEnvelope, eventEnvelopeSchema } from "@vera/shared";
@@ -40,6 +40,7 @@ vi.mock("chokidar", async (original) => {
 import { SettingsService } from "../settings/service.js";
 import { DocumentsRepository } from "../storage/repos/documents.js";
 import { WorkbenchService } from "../workbench/service.js";
+import { selectDocuments } from "./selection.js";
 
 const cleanup: (() => Promise<unknown>)[] = [];
 afterEach(async () => {
@@ -305,3 +306,67 @@ it("reports the number and bytes of the selected documents after each selection"
   await h.service.reindexDocuments();
   expect(h.service.documentVolume()).toEqual({ files: 2, bytes: 150 });
 });
+
+const MiB = 1024 * 1024;
+/** A sparse file of `bytes` bytes: real sizes without writing them. */
+async function sparse(path: string, bytes: number) {
+  const file = await open(path, "w");
+  await file.truncate(bytes);
+  await file.close();
+}
+
+// REQ-FUNC-133f57ee REQ-DATA-9fd427f1
+it("skips documents above the lower of the fixed limit and docs.maxFileMB as too large", async () => {
+  const h = await harness({ "docs/small.md": "small" }, { include: ["docs/**"] });
+  await sparse(join(h.folder, "docs/scan.pdf"), 30 * MiB);
+  await sparse(join(h.folder, "docs/exact.pdf"), 25 * MiB);
+  await sparse(join(h.folder, "docs/huge.pdf"), 100 * MiB + 1);
+  const select = (maxFileMB?: number) =>
+    selectDocuments({
+      root: h.folder,
+      docs: {
+        include: ["docs/**"],
+        exclude: [],
+        gitignore: true,
+        maxFiles: 10000,
+        ...(maxFileMB ? { maxFileMB } : {}),
+      },
+      signal: new AbortController().signal,
+    });
+  expect(await select(25)).toEqual({
+    paths: [
+      { path: "docs/exact.pdf", size: 25 * MiB },
+      { path: "docs/small.md", size: 5 },
+    ],
+    skipped: [
+      { path: "docs/huge.pdf", size: 100 * MiB + 1, reason: "too-large" },
+      { path: "docs/scan.pdf", size: 30 * MiB, reason: "too-large" },
+    ],
+    retry: false,
+  });
+  // Without the setting the 30 MB PDF is indexed; a limit above the fixed one does not raise it.
+  for (const limit of [undefined, 500])
+    expect((await select(limit)).skipped.map((entry) => entry.path)).toEqual(["docs/huge.pdf"]);
+
+  await h.service.updateConfig({ docs: { maxFileMB: 25 } });
+  const yaml = await readFile(join(h.folder, ".vera/workbench.yaml"), "utf8");
+  expect(yaml).toMatch(/^format: 1$/m);
+  expect(yaml).toMatch(/^ {2}maxFileMB: 25$/m);
+  expect(yaml).toMatch(/^ {2}maxFiles: 10000$/m);
+  record.opened.length = 0;
+  await h.service.reindexDocuments();
+  const rows = new DocumentsRepository(h.service.getDatabase());
+  for (const path of ["docs/scan.pdf", "docs/huge.pdf"])
+    expect(rows.get(path)).toMatchObject({ status: "unsupported", error: "SIZE_LIMIT", sha256: null });
+  expect(rows.get("docs/exact.pdf")).toMatchObject({ error: null, bytes: 25 * MiB });
+  // A skipped document is recorded from its size alone, never opened; a selected one is read.
+  expect(record.opened.map(h.rel)).toContain("docs/exact.pdf");
+  expect(record.opened.map(h.rel)).not.toContain("docs/scan.pdf");
+  expect(h.service.documentVolume()).toEqual({ files: 2, bytes: 25 * MiB + 5 });
+
+  await h.service.updateConfig({ docs: { maxFileMB: null } });
+  expect(await readFile(join(h.folder, ".vera/workbench.yaml"), "utf8")).not.toContain("maxFileMB");
+  await h.service.reindexDocuments();
+  expect(rows.get("docs/scan.pdf")).toMatchObject({ error: null, bytes: 30 * MiB });
+  expect(rows.get("docs/huge.pdf")).toMatchObject({ status: "unsupported", error: "SIZE_LIMIT" });
+}, 20000);

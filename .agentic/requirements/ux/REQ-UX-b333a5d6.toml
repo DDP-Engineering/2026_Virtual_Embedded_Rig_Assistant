@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-UX-b333a5d6"
+
+title = "Show skipped documents with their reason"
+
+status = "active"
+
+requirement = """
+When a document is recorded as skipped for its size, the Files tab shall show it with its localized status and reason, "Unsupported" and "Size limit exceeded", in English, Romanian, German and French.
+"""
+
+verification = "Renderer test: with the browser mock's unsupported SIZE_LIMIT document, the Files tab row's status reads Unsupported · Size limit exceeded in en and the corresponding ro, de and fr texts after a language change."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/documents/file-actions.tsx", "05_Software/src/apps/desktop/src/renderer/components/documents/docs-tree.tsx", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json", "05_Software/src/apps/desktop/src/renderer/locales/fr.json", "05_Software/help/en/documents-and-search.md", "05_Software/help/ro/documents-and-search.md", "05_Software/help/de/documents-and-search.md", "05_Software/help/fr/documents-and-search.md"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/documents/documents.test.ts::shows a document skipped for its size with its status and reason in every language"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-16
+updated = 2026-11-16

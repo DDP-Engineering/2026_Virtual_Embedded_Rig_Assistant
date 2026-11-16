@@ -4,6 +4,7 @@ import {
   type WorkbenchConfig,
   type WorkbenchInspection,
   type WorkbenchSnapshot,
+  workbenchDocsSchema,
   workbenchSchema,
   workbenchTemplate,
 } from "@vera/shared";
@@ -39,6 +40,8 @@ export function WorkbenchCreate({
   const [error, setError] = useState<unknown>();
   const skillsPage = usePaged(inspection?.skills ?? []);
   const disabled = pending || busy;
+  // An invalid limit in Documents & RAG keeps Create off until it is corrected.
+  const valid = workbenchDocsSchema.safeParse(config.docs).success;
   async function perform(action: () => Promise<void>) {
     if (disabled) return;
     setPending(true);
@@ -58,7 +61,7 @@ export function WorkbenchCreate({
   const kept = inspection?.instructions ?? null;
   const shownInstructions = kept ?? instructions ?? workbenchTemplate(name.trim() || inspection?.name || "");
   function create() {
-    if (!inspection || inspection.existing || !name.trim()) return;
+    if (!inspection || inspection.existing || !name.trim() || !valid) return;
     return perform(async () => {
       const snapshot = await api.invoke("workbench.create", {
         folder: inspection.folder,
@@ -69,6 +72,8 @@ export function WorkbenchCreate({
             include: lines(config.docs.include),
             exclude: lines(config.docs.exclude),
             gitignore: config.docs.gitignore,
+            maxFileMB: config.docs.maxFileMB ?? null,
+            maxFiles: config.docs.maxFiles,
           },
           embeddings: config.embeddings,
           retrieval: { results: config.retrieval.results, mode: config.retrieval.mode },
@@ -177,7 +182,7 @@ export function WorkbenchCreate({
             type="button"
             data-action="create-workbench"
             className="primary"
-            disabled={disabled || !ready || !name.trim()}
+            disabled={disabled || !ready || !name.trim() || !valid}
             onClick={() => void create()}
           >
             {t("welcome.create")}

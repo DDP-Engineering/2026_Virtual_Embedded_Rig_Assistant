@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-UX-4c2257b2"
+
+title = "Refuse invalid file size and file count input"
+
+status = "active"
+
+requirement = """
+If the "Maximum file size (MB)" field holds zero, a negative number or text that is not a number, or the "Maximum indexed files" field holds anything but a positive whole number, then the Documents & RAG section shall mark that field invalid with a localized alert and Save and Create shall stay disabled until it is corrected.
+"""
+
+verification = "Renderer test: entering 0, -3 or a non-number in the size field, or 0, empty or 2.5 in the count field, sets aria-invalid and shows the alert, and the editor's Save stays disabled; correcting the value removes the alert and enables Save."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/workbench-documents.tsx", "05_Software/src/apps/desktop/src/renderer/components/workbench-editor.tsx", "05_Software/src/apps/desktop/src/renderer/components/workbench-create.tsx", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json", "05_Software/src/apps/desktop/src/renderer/locales/fr.json"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/documents/documents.test.ts::edits the maximum file size and indexed files and marks invalid values", "05_Software/src/apps/desktop/src/renderer/components/workbench-plugins.test.ts::saves the file size and count limits with the editor's patch and blocks Save while one is invalid", "05_Software/src/apps/desktop/src/renderer/components/workbench-plugins.test.ts::creates a workbench with the file size and count limits and blocks Create while one is invalid"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-16
+updated = 2026-11-16

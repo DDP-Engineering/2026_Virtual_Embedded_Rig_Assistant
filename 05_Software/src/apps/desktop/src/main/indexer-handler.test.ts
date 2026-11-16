@@ -20,7 +20,7 @@ function services() {
           input.signal.addEventListener("abort", () => reject(Error("aborted")), { once: true });
         }),
     ),
-    select: vi.fn(async () => ({ paths: [{ path: "docs/a.md", size: 1 }], retry: false })),
+    select: vi.fn(async () => ({ paths: [{ path: "docs/a.md", size: 1 }], skipped: [], retry: false })),
     inspect: vi.fn(async () => ({ status: "ok", sha256: "b".repeat(64), binary: false })),
     cached: false,
     embeddings: {
@@ -63,7 +63,7 @@ it("answers process, select and inspect requests with each service's result and 
   expect(sent).toContainEqual({
     id: 2,
     ok: true,
-    value: { paths: [{ path: "docs/a.md", size: 1 }], retry: false },
+    value: { paths: [{ path: "docs/a.md", size: 1 }], skipped: [], retry: false },
   });
   expect(sent).toContainEqual(expect.objectContaining({ id: 3, ok: true }));
   // An unknown request type or a failing service answers with an error, never a crash.

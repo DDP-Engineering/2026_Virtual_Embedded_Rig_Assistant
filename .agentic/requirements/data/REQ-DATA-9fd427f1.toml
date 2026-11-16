@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-DATA-9fd427f1"
+
+title = "Per-workbench file size and file count settings"
+
+status = "active"
+
+requirement = """
+The workbench configuration shall accept an optional docs.maxFileMB, a positive number of megabytes (1 MB = 1,048,576 bytes), and a docs.maxFiles positive integer that defaults to 10000, keep .vera/workbench.yaml at format 1, and treat a patch with docs.maxFileMB null as removing the setting.
+"""
+
+verification = "Shared schema test: a configuration without the fields parses to maxFiles 10000 and no maxFileMB; maxFileMB 25 and 0.5 and maxFiles 500 parse; mergeWorkbench with a patch maxFileMB 25 then null keeps then removes it; configWarnings reports no UNKNOWN_KEY for either field. Core test: saving a patch writes both fields into workbench.yaml at format 1."
+
+affected_paths = ["05_Software/src/libraries/shared/src/workbench.ts", "05_Software/src/libraries/core/src/workbench/service.ts", "05_Software/src/apps/desktop/src/main/events.ts"]
+
+linked_tests = ["05_Software/src/libraries/shared/src/workbench.test.ts::holds an optional file size limit and a file count that defaults to 10,000", "05_Software/src/libraries/core/src/knowledge/ingest-selection.test.ts::skips documents above the lower of the fixed limit and docs.maxFileMB as too large"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-16
+updated = 2026-11-16

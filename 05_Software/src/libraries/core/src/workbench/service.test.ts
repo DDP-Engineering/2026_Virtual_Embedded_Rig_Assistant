@@ -1107,7 +1107,7 @@ it("writes docs.gitignore on create and save and applies it to the scan and prev
     expect(await readFile(join(h.folder, ".vera/workbench.yaml"), "utf8")).toContain("gitignore: true");
     await h.service.updateConfig({ docs: { gitignore: false } });
     const saved = parseConfig(await readFile(join(h.folder, ".vera/workbench.yaml"), "utf8"));
-    expect(saved.docs).toEqual({ include: ["docs/**"], exclude: [], gitignore: false });
+    expect(saved.docs).toEqual({ include: ["docs/**"], exclude: [], gitignore: false, maxFiles: 10000 });
     expect(saved.format).toBe(1);
   } finally {
     await h.service.close();

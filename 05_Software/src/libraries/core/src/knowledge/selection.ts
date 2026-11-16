@@ -6,7 +6,7 @@ import picomatch from "picomatch";
 import { glob } from "tinyglobby";
 import { createGitignoreRules, createIgnoreRules } from "../workbench/ignore.js";
 import { PathGuard } from "../workbench/path-guard.js";
-import { documentKind, documentSelection, missing } from "./kinds.js";
+import { documentKind, documentSelection, missing, sizeLimit } from "./kinds.js";
 
 /**
  * The root's and nested .gitignore files, each read on first use. Only an ordinary file counts: a
@@ -102,15 +102,22 @@ export interface SelectInput {
   docs: WorkbenchConfig["docs"];
   signal: AbortSignal;
 }
-/** Selected document paths, sorted, with their sizes; `retry` when a path vanished meanwhile. */
+/** Why a selected document is not indexed: larger than its size limit. */
+export type SkipReason = "too-large";
+/**
+ * Selected document paths, sorted, with their sizes; the documents left out with their reason;
+ * `retry` when a path vanished meanwhile.
+ */
 export interface Selection {
   paths: { path: string; size: number }[];
+  skipped: { path: string; size: number; reason: SkipReason }[];
   retry: boolean;
 }
 /**
  * The documents a workbench selects: include minus exclude, the ignore policy (permanent rules,
  * .veraignore and, when docs.gitignore is on, .gitignore),
- * document types only, ordinary files without links. Runs in the desktop indexer process.
+ * document types only, ordinary files without links. A document above its size limit (the fixed
+ * one, lowered by docs.maxFileMB) is skipped as too large. Runs in the desktop indexer process.
  */
 export async function selectDocuments({ root, docs, signal }: SelectInput): Promise<Selection> {
   const guard = await PathGuard.create(root);
@@ -129,16 +136,19 @@ export async function selectDocuments({ root, docs, signal }: SelectInput): Prom
       })
     : [];
   const paths: Selection["paths"] = [];
+  const skipped: Selection["skipped"] = [];
   let retry = false;
   for (const path of listed.sort()) {
     if (signal.aborted) break;
     // The listing already drops other kinds; this keeps the rule independent of the walker.
     if (documentKind(path) === "other") continue;
     try {
-      paths.push({ path, size: (await ordinaryFile(root, guard, path)).size });
+      const { size } = await ordinaryFile(root, guard, path);
+      if (size > sizeLimit(documentKind(path), docs)) skipped.push({ path, size, reason: "too-large" });
+      else paths.push({ path, size });
     } catch (error) {
       if (missing(error)) retry = true;
     }
   }
-  return { paths, retry };
+  return { paths, skipped, retry };
 }

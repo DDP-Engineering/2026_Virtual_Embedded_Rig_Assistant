@@ -9,6 +9,7 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 ### Added
 
 - The document selection, its preview and the Files tab honor the workbench's .gitignore files (switch on by default).
+- Per-workbench maximum file size (lowers the fixed limits) and maximum indexed files settings in Documents & RAG.
 
 ## [0.2.0] - 2026-11-15
 

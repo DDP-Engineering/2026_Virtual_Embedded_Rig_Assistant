@@ -33,7 +33,7 @@ it("validates format1, defaults and retains nested extensions with warning paths
     vendor: { enabled: true },
     agent: { extension: 42 },
   });
-  expect(config.docs).toEqual({ include: ["docs/**"], exclude: [], gitignore: true });
+  expect(config.docs).toEqual({ include: ["docs/**"], exclude: [], gitignore: true, maxFiles: 10000 });
   expect(config.agent).toEqual({ permission_mode: "ask", model: null, extension: 42 });
   expect(config.vendor).toEqual({ enabled: true });
   expect(warnings(config)).toEqual([
@@ -91,7 +91,41 @@ it("turns docs.gitignore on by default and lets a patch turn it off", () => {
   const config = schema.parse({ format: 1, id: "wb_01JB8Z6Q4M7N2K5R9T3V8X1Y0C", name: "Board" });
   expect(config.docs.gitignore).toBe(true);
   const off = mergeWorkbench(config, { docs: { gitignore: false } });
-  expect(off.docs).toEqual({ include: ["docs/**"], exclude: [], gitignore: false });
+  expect(off.docs).toEqual({ include: ["docs/**"], exclude: [], gitignore: false, maxFiles: 10000 });
   expect(warnings(off)).toEqual([]);
   expect(workbenchPatchSchema.safeParse({ docs: { gitignore: "yes" } }).success).toBe(false);
+});
+
+// REQ-DATA-9fd427f1
+it("holds an optional file size limit and a file count that defaults to 10,000", () => {
+  const config = schema.parse({ format: 1, id: "wb_01JB8Z6Q4M7N2K5R9T3V8X1Y0C", name: "Board" });
+  expect(config.docs.maxFiles).toBe(10000);
+  expect(config.docs).not.toHaveProperty("maxFileMB");
+  for (const maxFileMB of [25, 0.5, 500]) {
+    const parsed = schema.parse({ ...config, docs: { ...config.docs, maxFileMB, maxFiles: 500 } });
+    expect(parsed.docs).toMatchObject({ maxFileMB, maxFiles: 500 });
+  }
+  const limited = mergeWorkbench(config, { docs: { maxFileMB: 25, maxFiles: 500 } });
+  expect(limited.docs).toMatchObject({ maxFileMB: 25, maxFiles: 500 });
+  expect(limited.format).toBe(1);
+  expect(warnings(limited)).toEqual([]);
+  const cleared = mergeWorkbench(limited, { docs: { maxFileMB: null } });
+  expect(cleared.docs).not.toHaveProperty("maxFileMB");
+  expect(cleared.docs.maxFiles).toBe(500);
+});
+
+// REQ-DATA-3bae7e69
+it("rejects a zero, negative or non-numeric file size limit and a file count that is no positive integer", () => {
+  const config = schema.parse({ format: 1, id: "wb_01JB8Z6Q4M7N2K5R9T3V8X1Y0C", name: "Board" });
+  for (const maxFileMB of [0, -5, Number.NaN, Number.POSITIVE_INFINITY, "25"]) {
+    expect(schema.safeParse({ ...config, docs: { ...config.docs, maxFileMB } }).success).toBe(false);
+    expect(workbenchPatchSchema.safeParse({ docs: { maxFileMB } }).success).toBe(false);
+  }
+  for (const maxFiles of [0, -1, 2.5, "10", Number.NaN]) {
+    expect(schema.safeParse({ ...config, docs: { ...config.docs, maxFiles } }).success).toBe(false);
+    expect(workbenchPatchSchema.safeParse({ docs: { maxFiles } }).success).toBe(false);
+  }
+  expect(
+    schema.safeParse({ ...config, docs: { ...config.docs, maxFileMB: 0.001, maxFiles: 1 } }).success,
+  ).toBe(true);
 });

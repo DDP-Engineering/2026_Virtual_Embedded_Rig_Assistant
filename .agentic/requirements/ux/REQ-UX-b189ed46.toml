@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-UX-b189ed46"
+
+title = "File size and file count fields in Documents and RAG"
+
+status = "active"
+
+requirement = """
+The Documents & RAG section of New Workbench and of the workbench editor shall offer localized "Maximum file size (MB)" and "Maximum indexed files" number fields without helper text, showing the draft's docs.maxFileMB (empty when unset) and docs.maxFiles, and Save and Create shall send them, with an emptied file size field removing docs.maxFileMB.
+"""
+
+verification = "Renderer test: the Documents section shows an empty size field and 10000 for the default draft; typing 25 and 500 sets docs.maxFileMB 25 and docs.maxFiles 500 in the draft; the editor's save patch carries both and, after clearing the size field, maxFileMB null; the create request carries both."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/workbench-documents.tsx", "05_Software/src/apps/desktop/src/renderer/components/workbench-editor.tsx", "05_Software/src/apps/desktop/src/renderer/components/workbench-create.tsx", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json", "05_Software/src/apps/desktop/src/renderer/locales/fr.json"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/documents/documents.test.ts::edits the maximum file size and indexed files and marks invalid values", "05_Software/src/apps/desktop/src/renderer/components/workbench-plugins.test.ts::saves the file size and count limits with the editor's patch and blocks Save while one is invalid", "05_Software/src/apps/desktop/src/renderer/components/workbench-plugins.test.ts::creates a workbench with the file size and count limits and blocks Create while one is invalid"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-16
+updated = 2026-11-16

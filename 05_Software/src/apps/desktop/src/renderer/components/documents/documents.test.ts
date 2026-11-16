@@ -1,15 +1,17 @@
 // @vitest-environment jsdom
 // REQ-UX-28ad0002 REQ-UX-28ad0003
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { act, type ComponentProps, createElement, type ReactNode } from "react";
+import userEvent from "@testing-library/user-event";
+import { type WorkbenchConfig, workbenchDocsSchema } from "@vera/shared";
+import { act, type ComponentProps, createElement, type ReactNode, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { expect, it, vi } from "vitest";
 import { api } from "../../api/index.js";
+import i18n from "../../i18n.js";
 import { WorkbenchDocuments } from "../workbench-documents.js";
 import { DocsTab } from "./docs-tab.js";
 import { DocumentTabs } from "./document-tabs.js";
 import { DocumentBody, DocumentViewerProvider, useDocumentViewer } from "./viewer-context.js";
-import "../../i18n.js";
 
 vi.mock("../../api/index.js", async () => {
   const { createMockApi } = await import("../../mocks/mockApi.js");
@@ -776,7 +778,7 @@ it("warns about a large selection in Docs and in the Documents section, never at
             { client },
             createElement(WorkbenchDocuments, {
               folder: "/mock/demo-board",
-              docs: { include: [include], exclude: [], gitignore: true },
+              docs: { include: [include], exclude: [], gitignore: true, maxFiles: 10000 },
               setDocs: () => {},
             }),
           ),
@@ -822,7 +824,7 @@ it("offers Use .gitignore, changes the draft and sends the switch with the scan 
           { client },
           createElement(WorkbenchDocuments, {
             folder: "/mock/demo-board",
-            docs: { include: ["docs/**"], exclude: [], gitignore },
+            docs: { include: ["docs/**"], exclude: [], gitignore, maxFiles: 10000 },
             setDocs: (docs) => changed.push(docs),
           }),
         ),
@@ -917,6 +919,112 @@ it("shows stopped indexing with a Restart action that restarts the indexer", asy
   } finally {
     invoke.mockRestore();
     spy.mockRestore();
+    await act(async () => root.unmount());
+    container.remove();
+  }
+});
+
+// REQ-UX-b189ed46 REQ-UX-4c2257b2
+it("edits the maximum file size and indexed files and marks invalid values", async () => {
+  let latest: WorkbenchConfig["docs"] = {
+    include: ["docs/**"],
+    exclude: [],
+    gitignore: true,
+    maxFiles: 10000,
+  };
+  function Draft() {
+    const [docs, setDocs] = useState(latest);
+    latest = docs;
+    return createElement(WorkbenchDocuments, { folder: "/mock/demo-board", docs, setDocs });
+  }
+  const container = document.createElement("div");
+  document.body.append(container);
+  const root = createRoot(container);
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  const user = userEvent.setup();
+  const size = () => container.querySelector("[data-docs-max-file-mb] input") as HTMLInputElement;
+  const count = () => container.querySelector("[data-docs-max-files] input") as HTMLInputElement;
+  const enter = async (input: () => HTMLInputElement, text: string) => {
+    await act(async () => user.clear(input()));
+    if (text) await act(async () => user.type(input(), text));
+  };
+  const alerts = () => [...container.querySelectorAll('[role="alert"]')].map((node) => node.textContent);
+  try {
+    await act(async () => root.render(createElement(QueryClientProvider, { client }, createElement(Draft))));
+    expect(container.querySelector("[data-docs-max-file-mb]")?.textContent).toBe("Maximum file size (MB)");
+    expect(container.querySelector("[data-docs-max-files]")?.textContent).toBe("Maximum indexed files");
+    expect(size().value).toBe("");
+    expect(count().value).toBe("10000");
+    await enter(size, "25");
+    await enter(count, "500");
+    expect(latest).toMatchObject({ maxFileMB: 25, maxFiles: 500 });
+    expect(alerts()).toEqual([]);
+    for (const text of ["0", "-3", "abc", "1,000"]) {
+      await enter(size, text);
+      expect(size().value).toBe(text);
+      expect(size().getAttribute("aria-invalid")).toBe("true");
+      expect(alerts()).toEqual(["Enter a number above zero, or leave the field empty."]);
+      expect(workbenchDocsSchema.safeParse(latest).success).toBe(false);
+    }
+    // "," is a decimal mark as in "2,5"; "1,000" above is refused, never read as 1.
+    await enter(size, "2,5");
+    expect(latest.maxFileMB).toBe(2.5);
+    await enter(size, "");
+    expect(latest).not.toHaveProperty("maxFileMB");
+    expect(size().getAttribute("aria-invalid")).toBe("false");
+    for (const text of ["0", "", "2.5"]) {
+      await enter(count, text);
+      expect(count().getAttribute("aria-invalid")).toBe("true");
+      expect(alerts()).toEqual(["Enter a whole number above zero."]);
+      expect(workbenchDocsSchema.safeParse(latest).success).toBe(false);
+    }
+    await enter(count, "1");
+    expect(alerts()).toEqual([]);
+    expect(workbenchDocsSchema.safeParse(latest).success).toBe(true);
+  } finally {
+    await act(async () => root.unmount());
+    container.remove();
+  }
+});
+
+// REQ-UX-b333a5d6
+it("shows a document skipped for its size with its status and reason in every language", async () => {
+  await api.invoke("workbench.open", { folder: "/mock/demo-board" });
+  const container = document.createElement("div");
+  document.body.append(container);
+  const root = createRoot(container);
+  const expected = {
+    en: "Unsupported · Size limit exceeded",
+    ro: "Neacceptat · Limită de dimensiune depășită",
+    de: "Nicht unterstützt · Größenlimit überschritten",
+    fr: "Non pris en charge · Limite de taille dépassée",
+  };
+  try {
+    await act(async () =>
+      root.render(
+        withQueries(
+          DocumentViewerProvider,
+          { workbenchId: id },
+          createElement(DocsTab, { workbenchId: id, readOnly: false }),
+        ),
+      ),
+    );
+    await settle();
+    await expandDocs(container);
+    const status = () =>
+      container
+        .querySelector('[data-document="docs/unsupported.pdf"] [data-doc-status]')
+        ?.getAttribute("title");
+    for (const [language, text] of Object.entries(expected)) {
+      await act(async () => {
+        await i18n.changeLanguage(language);
+      });
+      expect(status()).toBe(text);
+    }
+  } finally {
+    await act(async () => {
+      await i18n.changeLanguage("en");
+    });
     await act(async () => root.unmount());
     container.remove();
   }

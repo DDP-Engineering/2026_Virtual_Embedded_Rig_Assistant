@@ -25,10 +25,10 @@ L’onglet **Fichiers** du panneau droit affiche la progression (**Index : … 
 | **Indexé** | Consultable par la recherche |
 | **En attente** | En attente d’indexation |
 | **Échec** | N’a pas pu être lu ou traité ; la raison est affichée, par exemple **Limite de taille dépassée** |
-| **Non pris en charge** | Type non pris en charge |
+| **Non pris en charge** | Type non pris en charge, ou plus grand que la limite de taille (**Limite de taille dépassée**) |
 | **OCR requis** | Un PDF numérisé sans couche de texte ; VERA n’effectue pas d’OCR |
 
-Les fichiers PDF et Office jusqu’à 100 Mio et les fichiers texte jusqu’à 20 Mio sont indexés. **Réindexer** indexe à nouveau le banc de travail. Si l’indexation s’est arrêtée après des échecs répétés, sélectionnez **Relancer l’indexation**.
+Les fichiers PDF et Office jusqu’à 100 Mio et les fichiers texte jusqu’à 20 Mio sont indexés. **Taille maximale des fichiers (Mo)** dans **Modifier le banc** → **Documents et RAG** abaisse ces limites pour le banc (1 Mo = 1 048 576 octets) ; elle ne les relève jamais. Laissez le champ vide pour les conserver. **Réindexer** indexe à nouveau le banc de travail. Si l’indexation s’est arrêtée après des échecs répétés, sélectionnez **Relancer l’indexation**.
 
 Sous **Modifier le banc** → **Indexation**, **Recherche de documents** définit les valeurs par défaut de l’agent : **Résultats par recherche (1–20)** et **Mode de recherche** : **Hybride (mots-clés et sens)**, **Mots-clés uniquement** ou **Sens uniquement**.
 

@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-DATA-3bae7e69"
+
+title = "Refuse invalid file size and file count settings"
+
+status = "active"
+
+requirement = """
+If a workbench configuration or patch gives docs.maxFileMB a value that is zero, negative or not a finite number, or gives docs.maxFiles a value that is not a positive integer, then the workbench schema shall reject it.
+"""
+
+verification = "Shared schema test: workbenchSchema and workbenchPatchSchema reject maxFileMB 0, -5, NaN, Infinity and the string 25, and maxFiles 0, -1, 2.5 and the string 10; the boundary values maxFileMB 0.001 and maxFiles 1 are accepted."
+
+affected_paths = ["05_Software/src/libraries/shared/src/workbench.ts"]
+
+linked_tests = ["05_Software/src/libraries/shared/src/workbench.test.ts::rejects a zero, negative or non-numeric file size limit and a file count that is no positive integer"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-16
+updated = 2026-11-16

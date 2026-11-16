@@ -25,10 +25,10 @@ The **Files** tab of the right panel shows the progress (**Index: … done, … 
 | **Indexed** | Searchable |
 | **Pending** | Waiting to be indexed |
 | **Failed** | Could not be read or processed; the reason is shown, for example **Size limit exceeded** |
-| **Unsupported** | Not a supported type |
+| **Unsupported** | Not a supported type, or larger than the size limit (**Size limit exceeded**) |
 | **Needs OCR** | A scanned PDF without a text layer; VERA does not run OCR |
 
-PDF and Office files up to 100 MiB and text files up to 20 MiB are indexed. **Reindex** indexes the workbench again. If indexing stopped after repeated failures, select **Restart indexing**.
+PDF and Office files up to 100 MiB and text files up to 20 MiB are indexed. **Maximum file size (MB)** under **Edit workbench** → **Documents & RAG** lowers these limits for the workbench (1 MB = 1,048,576 bytes); it never raises them. Leave it empty to keep them. **Reindex** indexes the workbench again. If indexing stopped after repeated failures, select **Restart indexing**.
 
 Under **Edit workbench** → **Indexing**, **Document search** sets the agent's defaults: **Results per search (1–20)** and **Search mode**: **Hybrid (keywords and meaning)**, **Keywords only** or **Meaning only**.
 

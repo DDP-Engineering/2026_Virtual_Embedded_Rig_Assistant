@@ -2,12 +2,21 @@ import { z } from "zod";
 import { permissionModeSchema } from "./session.js";
 
 export const workbenchIdSchema = z.string().regex(/^wb_[0-7][0-9A-HJKMNP-TV-Z]{25}$/);
+/** A file size in MB (1 MB = 1,048,576 bytes); zod rejects NaN and infinite numbers. */
+const fileMB = z.number().positive();
+const fileCount = z.number().int().positive();
 const docs = z.looseObject({
   include: z.array(z.string()).default(["docs/**"]),
   exclude: z.array(z.string()).default([]),
   /** The root and nested .gitignore files also exclude paths from indexing and the Files tab. */
   gitignore: z.boolean().default(true),
+  /** Lowers the fixed document size limits (100 MiB PDF and Office, 20 MiB text); never raises them. */
+  maxFileMB: fileMB.optional(),
+  /** "Maximum indexed files" from Documents & RAG; stored and validated, not yet enforced. */
+  maxFiles: fileCount.default(10000),
 });
+/** The documentation settings of a workbench, for validating a draft before it is saved. */
+export const workbenchDocsSchema = docs;
 export const workbenchEmbeddingsSchema = z
   .strictObject({
     model: z.literal("Xenova/bge-small-en-v1.5").default("Xenova/bge-small-en-v1.5"),
@@ -49,7 +58,7 @@ export const workbenchSchema = z.looseObject({
     chunkSize: 1400,
     overlap: 200,
   }),
-  docs: docs.default({ include: ["docs/**"], exclude: [], gitignore: true }),
+  docs: docs.default({ include: ["docs/**"], exclude: [], gitignore: true, maxFiles: 10000 }),
   retrieval: workbenchRetrievalSchema.default({ results: 8, mode: "hybrid" }),
   skills: disabled.default({ disabled: [] }),
   tools: disabled.default({ disabled: [] }),
@@ -72,6 +81,9 @@ export const workbenchPatchSchema = z.strictObject({
       include: z.array(z.string()).optional(),
       exclude: z.array(z.string()).optional(),
       gitignore: z.boolean().optional(),
+      /** null removes the limit. */
+      maxFileMB: fileMB.nullable().optional(),
+      maxFiles: fileCount.optional(),
     })
     .optional(),
   retrieval: z
@@ -184,10 +196,11 @@ export function configWarnings(
 }
 export function mergeWorkbench(current: WorkbenchConfig, patch: WorkbenchPatch): WorkbenchConfig {
   const clean: WorkbenchPatch = JSON.parse(JSON.stringify(workbenchPatchSchema.parse(patch)));
+  const { maxFileMB, ...docs } = { ...current.docs, ...clean.docs };
   return workbenchSchema.parse({
     ...current,
     ...clean,
-    docs: { ...current.docs, ...clean.docs },
+    docs: maxFileMB === null || maxFileMB === undefined ? docs : { ...docs, maxFileMB },
     retrieval: { ...current.retrieval, ...clean.retrieval },
     skills: { ...current.skills, ...clean.skills },
     tools: { ...current.tools, ...clean.tools },

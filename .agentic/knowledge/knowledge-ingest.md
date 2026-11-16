@@ -42,7 +42,8 @@ createPdfExtractor accepts optional Node worker resourceLimits; existing ingest 
   store it as failed (PROCESSING) and skip it while the workbench stays open (RULING-006); `WorkbenchService.refreshDocuments()` requests one after the
   indexer restarts (TASK-f09609fd). Shared helpers (limits, documentKind, documentSelection)
   live in knowledge/kinds.ts and are re-exported from ingest.ts.
-- index.volume {files, bytes} follows every selection; Ingester.volume() and
+- index.volume {files, bytes} follows every selection and counts only the selected (not
+  skipped) documents; Ingester.volume() and
   WorkbenchService.documentVolume() return the last one (null before the first) and
   docs.volume exposes it. The renderer warns above shared documentVolumeLimit (more
   than 2,000 files or 2 GiB) in Docs and the Documents section; indexing continues
@@ -95,7 +96,11 @@ while .vera content stays permanently excluded from indexed documents.
   .veraignore ("*", "!*/", "!*.pdf") keeps them; when chokidar has no stats yet a
   path is skipped only if ignored in both forms. Bounded asynchronous SHA-256 reads cap
   input at 100MiB for binary kinds (PDF, office) and 20MiB for text; binary kinds
-  skip the text check. Exact limits are allowed. Binary text and oversized files
+  skip the text check. Exact limits are allowed. kinds.ts sizeLimit(kind, docs) lowers the
+  limit to floor(docs.maxFileMB x 1 MiB) when set, never raises it (REQ-FUNC-133f57ee);
+  selectDocuments returns documents above it in Selection.skipped (reason too-large), the
+  Ingester keeps their rows and records them unsupported/SIZE_LIMIT from lstat without
+  reading them. Binary text and oversized files
   carry BINARY/SIZE_LIMIT (TYPE_UNSUPPORTED stays a valid stored reason). Raw errors become
   IO/PROCESSING codes; an office archive over its entry/size limits is SIZE_LIMIT.
 - Same hash skips completed/pending/unsupported content; failed content retries.

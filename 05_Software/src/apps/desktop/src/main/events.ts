@@ -125,7 +125,7 @@ export function sanitizeEvent(envelope: EventEnvelope, scrub: (text: string) => 
       embeddings,
       ...extensions
     } = config;
-    const { include, exclude, gitignore, ...docExtensions } = docs;
+    const { include, exclude, gitignore, maxFileMB, maxFiles, ...docExtensions } = docs;
     const { results, mode, ...retrievalExtensions } = retrieval;
     const { disabled: disabledSkills, ...skillExtensions } = skills;
     const { disabled: disabledTools, ...toolExtensions } = tools;
@@ -145,6 +145,8 @@ export function sanitizeEvent(envelope: EventEnvelope, scrub: (text: string) => 
         include: include.map(scrub),
         exclude: exclude.map(scrub),
         gitignore,
+        ...(maxFileMB === undefined ? {} : { maxFileMB }),
+        maxFiles,
       },
       retrieval: { ...(extra(retrievalExtensions) as object), results, mode },
       skills: { ...(extra(skillExtensions) as object), disabled: disabledSkills.map(scrub) },
