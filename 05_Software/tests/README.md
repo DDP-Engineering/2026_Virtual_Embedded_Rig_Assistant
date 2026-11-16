@@ -17,6 +17,13 @@ măsurători și scoruri sunt în [`../evaluators/`](../evaluators/README.md).
 
 ## Inventarul testelor Vitest
 
+TERM-05 adds `packaging/terminal-runtime.test.ts` for native PTY architecture/helper closure,
+and `e2e/terminal.spec.ts` for actual typed input, resize/reflow, per-terminal agent consent,
+Linux background-job cleanup on close/workbench replacement/shutdown,
+revocation, close/switch cleanup and CSP under native or extracted packaged Electron. Set
+`VERA_TERM05_APP` to an explicitly extracted app binary and `VERA_TERM05_EVIDENCE_DIR` to owned
+evidence. `VERA_TERM05_SKIP_AGENT=1` limits release-artifact smoke to user terminal behavior.
+
 ### Tooling
 
 | Fișier | Ce verifică |

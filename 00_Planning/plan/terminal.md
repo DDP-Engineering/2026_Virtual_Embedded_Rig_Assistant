@@ -13,8 +13,8 @@ one AEGIS implementation chat and one local commit per ticket, without pushing o
 | 1 | TERM-01 | [#312](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/312) | Built-in shell commands, shell settings, clean environment and background monitoring | implemented: `8d2cd008e262eb213b42307fbf057c5af1ceb574`, TASK-002d804f |
 | 2 | TERM-02 | [#313](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/313) | Command approvals, allowed prefixes and destructive-pattern refusal | implemented: `f8d1b0f377d5fb94bd34b758123a27dca4af9bec`, TASK-4fbe3463 |
 | 3 | TERM-03 | [#314](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/314) | Additional workbench folders, file-tool access and immediate removal | implemented: `bcae0e6e64deeba94cee5dfa71965839a2a70613`, TASK-c819e1fd |
-| 4 | TERM-04 | [#315](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/315) | Commands, live output, stop and full logs in Runs | TASK-3a2872cc candidate; native replay and focused proof under evaluation-outputs/term04; coordinator commit pending |
-| 5 | TERM-05 | [#316](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/316) | Interactive terminal tabs, per-terminal read consent and packaged native runtime | planned |
+| 4 | TERM-04 | [#315](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/315) | Commands, live output, stop and full logs in Runs | implemented: `7c56304d036c95f5c743745de26b0098bb4a44ab`, TASK-3a2872cc |
+| 5 | TERM-05 | [#316](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/316) | Interactive terminal tabs, per-terminal read consent and packaged native runtime | implemented candidate: TASK-3f5447b9; focused and extracted Windows/WSL2 acceptance passed; coordinator owns review of handover and local commit |
 
 TERM-01 depends on BYP-01 #309, implemented in local commit 62630967. TERM-02 and TERM-03 follow
 TERM-01; TERM-04 follows both; TERM-05 is last. Only one implementation chat is active at a time.
@@ -61,3 +61,23 @@ session/prompt/settings and localized components; immediate runner/transport/CLI
 Windows and WSL2 pinned Node 24.21.0 process proof. Original logs and receipts are under
 `05_Software/evaluation-outputs/term01/platform/`. Native Ubuntu acceptance remains unavailable.
 Independent reviews and final strict/static results are recorded in the task journal. The coordinator committed TERM-01 as `8d2cd008e262eb213b42307fbf057c5af1ceb574` and closed #312. TERM-02 prefix grants are tracked in TASK-4fbe3463; additional folders, Runs enhancements and the interactive terminal remain in subsequent packages.
+
+## TERM-05 candidate proof
+
+TASK-3f5447b9, base `7c56304d036c95f5c743745de26b0098bb4a44ab`: all five packages now have
+implementations. TERM-05 adds workbench-owned xterm/node-pty terminals, per-terminal agent read
+consent with publication-time revocation, four-language help and native package closure checks.
+Focused proof covers 17 files and 111 tests. A terminal acceptance test passed against both the
+extracted Windows NSIS payload and the extracted Linux deb in WSL2, using their physical unpacked
+native binding. Receipts, artifact hashes and logs are under `05_Software/evaluation-outputs/term05/`.
+The Windows artifact integration proof predates only the final streaming-projection masking fix,
+which has focused host proof. The original extracted Linux proof is reused for unchanged physical
+loader, native binding, typing/reflow and consent paths. Current Linux lifecycle code additionally
+passes real-native pinned-Node proof for live background close, automatic cleanup after shell exit
+and zero new signals on later close. Both independent reviewers accepted this focused proof reuse;
+the redundant Linux asset rebuild was cancelled. These are not exact-current-source deliveries;
+a delivery requires a fresh build.
+The task journal records independent reviews and final static/strict results. The coordinator owns
+the TERM-05 local commit and any final epic gate. Full app, official-plugin and complete E2E suites,
+native Ubuntu acceptance and clean installation checks remain deferred; these focused results do
+not establish those gates.

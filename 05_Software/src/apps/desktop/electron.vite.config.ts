@@ -144,6 +144,7 @@ export default defineConfig(({ command }) => ({
       outDir: resolve(buildRoot, "main"),
       rollupOptions: {
         external: [
+          "node-pty",
           "better-sqlite3",
           "@huggingface/transformers",
           "onnxruntime-node",

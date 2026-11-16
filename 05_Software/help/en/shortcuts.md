@@ -11,6 +11,7 @@ These are VERA's default keyboard shortcuts. Change, add or remove them in **Set
 | Keyboard shortcuts | Ctrl+/ | Open Settings → Keyboard shortcuts. |
 | Toggle sidebar | Ctrl+B, Ctrl+Shift+S | Show or collapse the workbench navigation. |
 | Toggle right panel | Ctrl+Shift+B | Show or hide Context, Files and technical panels. |
+| Open terminal | Ctrl+Shift+T | Open and focus the user terminal. |
 | Find in conversation | Ctrl+F | Search the current session transcript. |
 | Focus message input | Unassigned | Move the cursor to the current message input. |
 | Focus model selector | Ctrl+Shift+M | Select the model control in the conversation. |
@@ -27,3 +28,5 @@ These are VERA's default keyboard shortcuts. Change, add or remove them in **Set
 Tab from a focused single-message rail marker to its bookmark action; Enter or Space toggles it. Escape closes the preview and returns focus to the marker.
 
 Open a finished run with **Open log** in Runs. The existing viewer shortcuts, including **Ctrl+F**, **Ctrl+G** and **Ctrl+W**, also work for run logs.
+
+**Ctrl+Shift+T** opens and focuses Terminal. While terminal input has focus, keys go to its shell. Create, select and close terminal tabs with their controls; each terminal has its own agent-read permission.

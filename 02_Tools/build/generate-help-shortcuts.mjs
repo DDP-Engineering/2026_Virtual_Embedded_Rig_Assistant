@@ -6,6 +6,8 @@ import { software } from "../environment/software.mjs";
 /** The words of the generated page that the interface catalogs do not hold. */
 const words = {
   en: {
+    terminal:
+      "**Ctrl+Shift+T** opens and focuses Terminal. While terminal input has focus, keys go to its shell. Create, select and close terminal tabs with their controls; each terminal has its own agent-read permission.",
     runLogs:
       "Open a finished run with **Open log** in Runs. The existing viewer shortcuts, including **Ctrl+F**, **Ctrl+G** and **Ctrl+W**, also work for run logs.",
     bookmark:
@@ -21,6 +23,8 @@ const words = {
     shortcuts: "Open {where}.",
   },
   ro: {
+    terminal:
+      "**Ctrl+Shift+T** deschide și focalizează Terminalul. Când intrarea terminalului este focalizată, tastele ajung la shell. Creează, selectează și închide filele din controalele lor; fiecare terminal are acord separat pentru citirea de către agent.",
     runLogs:
       "Deschide o rulare încheiată cu **Deschide jurnalul** din Rulări. Tastele vizualizatorului, inclusiv **Ctrl+F**, **Ctrl+G** și **Ctrl+W**, funcționează și pentru jurnale.",
     bookmark:
@@ -36,6 +40,8 @@ const words = {
     shortcuts: "Deschide {where}.",
   },
   de: {
+    terminal:
+      "**Ctrl+Shift+T** öffnet und fokussiert das Terminal. Bei fokussierter Terminaleingabe gehen Tasten an die Shell. Terminals über ihre Steuerelemente erstellen, auswählen und schließen; jedes hat eine eigene Lesefreigabe für den Agenten.",
     runLogs:
       "Öffnen Sie einen beendeten Lauf mit **Protokoll öffnen** unter Läufe. Die bestehenden Betrachterkürzel, darunter **Ctrl+F**, **Ctrl+G** und **Ctrl+W**, gelten auch für Protokolle.",
     bookmark:
@@ -51,6 +57,8 @@ const words = {
     shortcuts: "Öffnet {where}.",
   },
   fr: {
+    terminal:
+      "**Ctrl+Shift+T** ouvre et cible le Terminal. Lorsque sa saisie est ciblée, les touches vont au shell. Créez, sélectionnez et fermez les onglets avec leurs commandes ; chaque terminal possède sa propre autorisation de lecture par l’agent.",
     runLogs:
       "Ouvrez une exécution terminée avec **Ouvrir le journal** dans Exécutions. Les raccourcis du lecteur, dont **Ctrl+F**, **Ctrl+G** et **Ctrl+W**, fonctionnent aussi pour les journaux.",
     bookmark:
@@ -106,6 +114,8 @@ export async function shortcutPages() {
       text.bookmark,
       "",
       text.runLogs,
+      "",
+      text.terminal,
       "",
     ].join("\n");
   }

@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-SEC-c1ba6fbf"
+
+title = "Per-terminal agent read consent"
+
+status = "active"
+
+requirement = """
+When an agent requests terminal output, VERA shall return bounded recent output only for the requested terminal whose user has explicitly enabled agent reads.
+"""
+
+verification = "Create two terminals, refuse reads before consent, grant one and read its output, refuse the other and revoke the first; terminal_read exposes no input authority."
+
+affected_paths = ["05_Software/src/libraries/core/src/tools/terminal-read.ts", "05_Software/src/apps/desktop/src/main/terminals.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/tools/terminal-read.test.ts", "05_Software/src/apps/desktop/src/main/terminals.test.ts", "05_Software/tests/e2e/terminal.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-16
+updated = 2026-11-16

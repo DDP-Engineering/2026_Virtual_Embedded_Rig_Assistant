@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-UX-269fabc4"
+
+title = "Terminal tabs and keyboard access"
+
+status = "active"
+
+requirement = """
+When the user opens the right-panel Terminal tab or its configurable keyboard shortcut, VERA shall present multiple selectable interactive terminal tabs with per-terminal read-consent and close controls in English, Romanian, German and French.
+"""
+
+verification = "Renderer tests and native acceptance create/select/close two terminals, toggle distinct consent and open with keyboard; resize observes xterm reflow and PTY dimensions."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/terminal-tab.tsx", "05_Software/src/apps/desktop/src/renderer/lib/terminal-document.ts", "05_Software/src/apps/desktop/src/renderer/components/shell.tsx", "05_Software/src/apps/desktop/src/renderer/App.tsx", "05_Software/src/libraries/shared/src/keyboard-shortcuts.ts", "05_Software/src/libraries/shared/src/tools.ts", "05_Software/src/apps/desktop/src/renderer/components/keyboard-shortcuts.tsx", "05_Software/src/apps/desktop/src/renderer/components/workbench-tools.tsx", "02_Tools/build/generate-help-shortcuts.mjs"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/terminal-tab.test.ts", "05_Software/src/apps/desktop/src/renderer/lib/terminal-document.test.ts", "05_Software/src/apps/desktop/src/renderer/components/shell.test.ts", "05_Software/src/libraries/shared/src/keyboard-shortcuts.test.ts", "05_Software/tests/e2e/terminal.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-16
+updated = 2026-11-16

@@ -50,6 +50,7 @@ import { type ChangeRequest, type PreparedChange, recoverChanges } from "../tool
 import { createToolContext, type ToolContext } from "../tools/context.js";
 import type { HelpHost } from "../tools/help.js";
 import { capToolResult, programToolNames, ToolRegistry } from "../tools/registry.js";
+import type { TerminalReader } from "../tools/terminal-read.js";
 import type { WebDownloads } from "../web/downloads.js";
 import type { WebProvider } from "../web/provider.js";
 import { WriteQueue } from "../workbench/write-queue.js";
@@ -57,6 +58,7 @@ import { SessionHub, type SessionListener } from "./hub.js";
 import { timedGateway } from "./timed-gateway.js";
 
 export interface SessionHost {
+  terminals?: TerminalReader;
   db: Database.Database;
   root: string;
   gateway: LlmGateway;
@@ -697,6 +699,8 @@ export class SessionService {
       return scope.signal;
     };
     ctx.knowledge = this.knowledge;
+    if (this.host.terminals) ctx.terminals = this.host.terminals;
+    else delete ctx.terminals;
     if (this.host.pluginBuilder) ctx.pluginBuilder = this.host.pluginBuilder;
     if (this.host.managedRoots) ctx.managedRoots = this.host.managedRoots;
     if (this.host.web) ctx.web = this.host.web;
@@ -759,6 +763,7 @@ export class SessionService {
       .filter((tool) => tool.name !== "web_download" || !!this.host.downloads)
       .filter((tool) => tool.name !== "parts_search" || !!this.host.parts)
       .filter((tool) => tool.name !== "help" || !!this.host.help)
+      .filter((tool) => tool.name !== "terminal_read" || !!this.host.terminals)
       .filter((tool) => tool.name !== "apply_candidate" || !!this.host.applyCandidate)
       .filter((tool) => electricalToolOffered(tool.name, this.host.electricalPlugins ?? []))
       .filter(

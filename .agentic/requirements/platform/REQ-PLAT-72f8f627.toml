@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-PLAT-72f8f627"
+
+title = "Packaged native terminal runtime"
+
+status = "active"
+
+requirement = """
+The Windows x64 and Linux x64 application packages shall include their loadable native node-pty runtime and helpers without a separate user installation.
+"""
+
+verification = "Inspection: inspect architecture and unpacked helper closure and launch actual extracted packaged app binaries to run typed PTY commands; distinguish WSL2 from native Ubuntu and clean-install acceptance."
+
+affected_paths = ["02_Tools/release/package.mjs", "02_Tools/release/package-checks.mjs", "02_Tools/environment/prepare-windows-runtime.mjs", "02_Tools/environment/setup.py", "05_Software/src/apps/desktop/electron-builder.yml", "05_Software/src/apps/desktop/electron.vite.config.ts", "05_Software/src/apps/desktop/src/main/terminal-pty.ts", "05_Software/src/apps/desktop/package.json", "05_Software/package.json", "05_Software/package-lock.json"]
+
+linked_tests = ["05_Software/tests/packaging/terminal-runtime.test.ts", "05_Software/tests/packaging/packaging.test.ts", "05_Software/tests/e2e/terminal.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-16
+updated = 2026-11-16

@@ -104,6 +104,8 @@ import { exportSession } from "./session-export.js";
 import { createSessionOrder } from "./session-order.js";
 import { installSessionPerformance } from "./session-performance.js";
 import { SessionsHost } from "./sessions.js";
+import { createPtyFactory } from "./terminal-pty.js";
+import { TerminalService } from "./terminals.js";
 import { desktopUpdateBackend, updateDistribution } from "./update-backend.js";
 import { Updates } from "./updates.js";
 import { WebAccessService } from "./web-access.js";
@@ -225,6 +227,23 @@ const workbench = new WorkbenchService(
 /** Installed plugins live under userData; enablement is per workbench (workbench.yaml). */
 const plugins = new PluginStore({ root: join(dataLocations.paths.userData, "plugins") });
 const processHost = createDesktopProcessHost();
+const terminals = new TerminalService({
+  current: () => {
+    const snapshot = workbench.getSnapshot();
+    return { id: snapshot.config.id, folder: snapshot.folder };
+  },
+  shell: createCommandShellHost(
+    processHost,
+    () => settings.get().settings.shell,
+    (text) => credentials.scrub(text),
+  ),
+  pty: createPtyFactory(
+    processHost,
+    app.isPackaged ? join(process.resourcesPath, "app.asar.unpacked/node_modules/node-pty") : "node-pty",
+  ),
+  scrub: (text) => credentials.scrub(text),
+  secrets: () => credentials.knownSecrets(),
+});
 /** Plugin program runs; session stop, workbench close and app exit kill their process trees. */
 const programs = new ProgramRunner({
   host: processHost,
@@ -296,6 +315,7 @@ const catalogChecks = new CatalogChecks({
 });
 /** Runs of the open workbench stop before it closes or another workbench replaces it. */
 async function stopWorkbenchPrograms(): Promise<void> {
+  await terminals.closeAll();
   let folder: string;
   try {
     folder = workbench.getSnapshot().folder;
@@ -303,6 +323,15 @@ async function stopWorkbenchPrograms(): Promise<void> {
     return;
   }
   await programs.stopWorkbench(folder);
+}
+/** Refuse terminal authority while asynchronous workbench replacement still owns the old snapshot. */
+async function terminalTransition<T>(operation: () => Promise<T>): Promise<T> {
+  terminals.suspend();
+  try {
+    return await operation();
+  } finally {
+    terminals.resume();
+  }
 }
 const providers = new ProviderSettings(settings, credentials);
 const partsAccess = new PartsAccessService({
@@ -343,6 +372,7 @@ function interfaceLanguage(): HelpLanguage {
     : (helpLanguages.find((code) => app.getLocale().startsWith(code)) ?? "en");
 }
 const sessions = new SessionsHost({
+  terminals: (workbenchId) => terminals.reader(workbenchId),
   help: { app: help, language: interfaceLanguage },
   pluginBuilder: plugins,
   managedRoots: [dataLocations.paths.userData],
@@ -484,6 +514,22 @@ ipcMain.handle(
     target: () =>
       window && !window.isDestroyed() ? { webContents: window.webContents, url: rendererUrl } : undefined,
     handlers: {
+      "terminal.list": ({ workbenchId }) => terminals.list(workbenchId),
+      "terminal.create": ({ workbenchId, cols, rows }) => terminals.create(workbenchId, cols, rows),
+      "terminal.output": ({ workbenchId, id }) => terminals.output(workbenchId, id),
+      "terminal.input": ({ workbenchId, id, data }) => {
+        terminals.input(workbenchId, id, data);
+        return {};
+      },
+      "terminal.resize": ({ workbenchId, id, cols, rows }) => {
+        terminals.resize(workbenchId, id, cols, rows);
+        return {};
+      },
+      "terminal.consent": ({ workbenchId, id, shared }) => terminals.consent(workbenchId, id, shared),
+      "terminal.close": async ({ workbenchId, id }) => {
+        await terminals.close(workbenchId, id);
+        return {};
+      },
       "web.access.get": () => webAccess.get(),
       "web.access.save": (request) => webAccess.save(request),
       "web.access.removeKey": (request) => webAccess.removeKey(request),
@@ -1104,33 +1150,39 @@ ipcMain.handle(
         path: await workbench.relativeFolder(root, folder),
       }),
       "workbench.create": ({ folder, name, config, instructions }) =>
-        sessions.lifecycle(async () => {
-          embeddingWarmup.cancel();
-          await stopWorkbenchPrograms();
-          return publicWorkbenchFolders(
-            warmPrograms(
-              await workbench.create(folder, name, {
-                ...(config ? { config } : {}),
-                ...(instructions !== undefined ? { instructions } : {}),
-              }),
-            ),
-            (text) => credentials.scrub(text),
-          );
-        }),
+        sessions.lifecycle(() =>
+          terminalTransition(async () => {
+            embeddingWarmup.cancel();
+            await stopWorkbenchPrograms();
+            return publicWorkbenchFolders(
+              warmPrograms(
+                await workbench.create(folder, name, {
+                  ...(config ? { config } : {}),
+                  ...(instructions !== undefined ? { instructions } : {}),
+                }),
+              ),
+              (text) => credentials.scrub(text),
+            );
+          }),
+        ),
       "workbench.open": ({ folder }) =>
-        sessions.lifecycle(async () => {
-          embeddingWarmup.cancel();
-          await stopWorkbenchPrograms();
-          return publicWorkbenchFolders(warmPrograms(await workbench.open(folder)), (text) =>
-            credentials.scrub(text),
-          );
-        }),
+        sessions.lifecycle(() =>
+          terminalTransition(async () => {
+            embeddingWarmup.cancel();
+            await stopWorkbenchPrograms();
+            return publicWorkbenchFolders(warmPrograms(await workbench.open(folder)), (text) =>
+              credentials.scrub(text),
+            );
+          }),
+        ),
       "workbench.close": async () => {
-        await sessions.lifecycle(async () => {
-          embeddingWarmup.cancel();
-          await stopWorkbenchPrograms();
-          await workbench.close();
-        });
+        await sessions.lifecycle(() =>
+          terminalTransition(async () => {
+            embeddingWarmup.cancel();
+            await stopWorkbenchPrograms();
+            await workbench.close();
+          }),
+        );
         return {};
       },
       "workbench.recent": async ({ remove, pin, move, reveal }) => {
@@ -1278,12 +1330,14 @@ if (!app.requestSingleInstanceLock()) {
     }
     if (draining) return;
     draining = true;
+    terminals.suspend();
     // Installs and probes stop with the app; their uv and tar process trees are killed.
     const stopped = Promise.all([
       provisioner.drain(),
       scopedProvisioners.close(),
       pluginListings.close(),
       programs.stopAll(),
+      terminals.closeAll(),
     ]);
     catalogChecks.close();
     void stopped

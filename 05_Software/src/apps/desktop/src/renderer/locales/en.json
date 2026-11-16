@@ -96,7 +96,8 @@
     "artifacts": "Artifacts",
     "plan": "Plan",
     "placeholder": "Panel content will be available here.",
-    "runs": "Runs"
+    "runs": "Runs",
+    "terminal": "Terminal"
   },
   "workbench": {
     "name": "Workbench name",
@@ -689,7 +690,8 @@
     "decode_register": "Decode a captured register value using a local JSON definition, with exact field values and cited sources. Reads no device. Outside input paths require Bypass; VERA application data is refused.",
     "parts_search": "Search the enabled supplier catalogs (Mouser, DigiKey, TME, Farnell, Rutronik) by keyword or part number. Needs Web access, the parts-search plugin and a supplier set up in the plugin's Configuration on the Plugins page.",
     "help": "Read VERA's own help pages and the help of the workbench's enabled plugins, to answer questions about VERA. Read-only.",
-    "run_command": "Run shell commands with approval in Ask and Auto-edit, or without asking in Bypass."
+    "run_command": "Run shell commands with approval in Ask and Auto-edit, or without asking in Bypass.",
+    "terminal_read": "Read recent user terminal output only with consent for that terminal."
   },
   "projects": {
     "embeddingsGroup": "Embeddings",
@@ -787,7 +789,9 @@
     "nextBookmark": "Next bookmark",
     "previousBookmark": "Previous bookmark",
     "nextBookmarkDesc": "Jump to the next bookmarked message in this conversation.",
-    "previousBookmarkDesc": "Jump to the previous bookmarked message in this conversation."
+    "previousBookmarkDesc": "Jump to the previous bookmarked message in this conversation.",
+    "openTerminal": "Open terminal",
+    "openTerminalDesc": "Open and focus the user terminal."
   },
   "downloads": {
     "revealNamed": "Show in Explorer: {{name}}",
@@ -1202,5 +1206,13 @@
     "title": "Additional folders",
     "add": "Add folder",
     "remove": "Remove {{folder}}"
+  },
+  "terminal": {
+    "new": "New terminal",
+    "close": "Close terminal",
+    "tabs": "Terminals",
+    "name": "Terminal {{number}}",
+    "consent": "Allow agent to read this terminal",
+    "input": "Terminal input"
   }
 }

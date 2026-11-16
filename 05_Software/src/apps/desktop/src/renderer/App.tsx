@@ -20,6 +20,7 @@ import { SessionList } from "./components/session/session-list.js";
 import { SessionWorkspace } from "./components/session/workspace.js";
 import { Settings, useSettingsSections } from "./components/settings.js";
 import { Shell } from "./components/shell.js";
+import { TerminalTab } from "./components/terminal-tab.js";
 import { UpdateBanner } from "./components/updates.js";
 import { Workbench } from "./components/workbench.js";
 import type { ConfigSection } from "./components/workbench-config-form.js";
@@ -612,6 +613,9 @@ export function App() {
                       currentSessionId={chat ? activeSession : undefined}
                     />
                   ) : undefined
+                }
+                terminal={
+                  benchId && !settings ? <TerminalTab key={benchId} workbenchId={benchId} /> : undefined
                 }
               >
                 <UpdateBanner />

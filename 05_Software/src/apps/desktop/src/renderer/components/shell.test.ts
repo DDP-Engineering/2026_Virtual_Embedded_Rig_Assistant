@@ -9,6 +9,33 @@ import { Shell } from "./shell.js";
 vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
 afterEach(() => localStorage.clear());
 
+it("opens Terminal with the configurable shortcut and keeps it available in the right panel", async () => {
+  const container = document.createElement("div");
+  document.body.append(container);
+  const root = createRoot(container);
+  try {
+    await act(async () =>
+      root.render(createElement(Shell, { navigation: null, settings: false, navigate: () => {} })),
+    );
+    await act(async () =>
+      window.dispatchEvent(
+        new KeyboardEvent("keydown", {
+          key: "T",
+          ctrlKey: true,
+          shiftKey: true,
+          bubbles: true,
+          cancelable: true,
+        }),
+      ),
+    );
+    expect(container.querySelector('[data-panel="right"]')?.getAttribute("data-tab")).toBe("terminal");
+    expect(container.querySelector("#tab-terminal")?.textContent).toBe("Terminal");
+  } finally {
+    await act(async () => root.unmount());
+    container.remove();
+  }
+});
+
 it("retains Home, projects and Settings in a saved collapsed rail", async () => {
   const container = document.createElement("div");
   document.body.append(container);

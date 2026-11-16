@@ -75,3 +75,9 @@ Les outils ordinaires read, list, glob, grep, write et edit ainsi que les dossie
 ## Commandes dans Exécutions
 
 Ouvrez **Exécutions** dans le panneau droit pour voir la commande exacte, le dossier, la sortie en direct, le code de sortie et la durée. **Arrêter** termine tout l’arbre des processus ; l’agent voit cet arrêt à sa prochaine lecture de sortie. Pour les exécutions terminées, **Ouvrir le journal** affiche le journal complet conservé dans le lecteur de texte, y compris la sortie antérieure à la fin affichée. La session courante est sélectionnée par défaut ; **Toutes les sessions** affiche les autres exécutions. Les programmes des plugins gardent leurs noms déclarés. Les identifiants connus sont masqués dans les commandes, dossiers et sorties ; les journaux locaux conservent le texte original.
+
+## Terminal utilisateur
+
+Ouvrez **Terminal** à droite ou appuyez sur **Ctrl+Shift+T**. Le shell interactif démarre dans le dossier du banc selon Paramètres → Commandes. **Nouveau terminal** crée des onglets ; **Fermer le terminal** les termine. Redimensionnez le panneau pour réorganiser la sortie. Les programmes interactifs acceptent votre saisie. L’arrêt d’une session d’agent laisse les terminaux ouverts ; fermer ou remplacer le banc, ou quitter VERA, les ferme. Le support natif est inclus.
+
+Chaque terminal démarre en privé. Activez **Autoriser l’agent à lire ce terminal** séparément pour chaque terminal à partager. L’agent peut lister les terminaux partagés et lire leur sortie récente limitée avec terminal_read ; il ne peut ni créer, ni saisir, ni redimensionner, ni fermer les terminaux. Désactiver l’accord ou fermer le terminal bloque les lectures futures. La sortie déjà partagée reste dans l’historique. Le shell utilise vos droits système sans sandbox. VERA filtre les variables héritées contenant des identifiants et masque les identifiants connus dans la sortie divulguée ; le profil du shell et les programmes restent sous votre contrôle.

@@ -11,6 +11,7 @@ Acestea sunt scurtăturile de tastatură implicite ale VERA. Le poți schimba, a
 | Scurtături de tastatură | Ctrl+/ | Deschide Setări → Comenzi rapide. |
 | Afișează sau ascunde bara laterală | Ctrl+B, Ctrl+Shift+S | Extinde sau restrânge navigarea workbenchurilor. |
 | Afișează sau ascunde panoul din dreapta | Ctrl+Shift+B | Controlează afișarea Context, Fișiere și a panourilor tehnice. |
+| Deschide terminalul | Ctrl+Shift+T | Deschide și focalizează terminalul utilizatorului. |
 | Caută în conversație | Ctrl+F | Caută în mesajele sesiunii curente. |
 | Activează câmpul mesajului | Neatribuită | Mută cursorul în câmpul mesajului curent. |
 | Activează selectorul de model | Ctrl+Shift+M | Mută focalizarea pe modelul conversației. |
@@ -27,3 +28,5 @@ Acestea sunt scurtăturile de tastatură implicite ale VERA. Le poți schimba, a
 De la un reper individual focalizat, Tab ajunge la acțiunea de marcaj; Enter sau Spațiu o activează. Escape închide previzualizarea și readuce focalizarea la reper.
 
 Deschide o rulare încheiată cu **Deschide jurnalul** din Rulări. Tastele vizualizatorului, inclusiv **Ctrl+F**, **Ctrl+G** și **Ctrl+W**, funcționează și pentru jurnale.
+
+**Ctrl+Shift+T** deschide și focalizează Terminalul. Când intrarea terminalului este focalizată, tastele ajung la shell. Creează, selectează și închide filele din controalele lor; fiecare terminal are acord separat pentru citirea de către agent.

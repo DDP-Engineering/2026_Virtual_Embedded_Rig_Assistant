@@ -7,6 +7,8 @@ import type { ContextPolicy, ContextView } from "./context.js";
 
 export type StopReason = "end" | "aborted" | "error" | "limit";
 export interface ToolDef {
+  /** Synchronous final authorization and projection before tool result publication. */
+  publish?(args: unknown, output: string): string;
   name: string;
   class: "read" | "write" | "session" | "program";
   description: string;

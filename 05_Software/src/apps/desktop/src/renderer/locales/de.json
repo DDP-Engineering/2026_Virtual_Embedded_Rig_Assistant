@@ -96,7 +96,8 @@
     "artifacts": "Artefakte",
     "plan": "Plan",
     "placeholder": "Der Inhalt dieses Bereichs wird hier verfügbar sein.",
-    "runs": "Läufe"
+    "runs": "Läufe",
+    "terminal": "Terminal"
   },
   "workbench": {
     "name": "Name des Arbeitsbereichs",
@@ -689,7 +690,8 @@
     "decode_register": "Erfasst einen aufgezeichneten Registerwert anhand einer lokalen JSON-Definition mit exakten Feldwerten und zitierbaren Quellen. Liest keine Geräte aus. Externe Eingabepfade erfordern Bypass; VERA-Anwendungsdaten sind gesperrt.",
     "parts_search": "Durchsucht die aktivierten Lieferantenkataloge (Mouser, DigiKey, TME, Farnell, Rutronik) nach Stichwort oder Teilenummer. Erfordert Web access, das Plugin parts-search und einen in der Konfiguration des Plugins auf der Seite Plugins eingerichteten Lieferanten.",
     "help": "Liest die Hilfeseiten von VERA und die Hilfe der in der Workbench aktivierten Plugins, um Fragen zu VERA zu beantworten. Nur lesend.",
-    "run_command": "Shell-Befehle in Fragen und Automatisch bearbeiten nach Freigabe ausführen, in Bypass direkt."
+    "run_command": "Shell-Befehle in Fragen und Automatisch bearbeiten nach Freigabe ausführen, in Bypass direkt.",
+    "terminal_read": "Liest die letzte Terminalausgabe nur mit Zustimmung für dieses Terminal."
   },
   "projects": {
     "embeddingsGroup": "Embeddings",
@@ -787,7 +789,9 @@
     "nextBookmark": "Nächstes Lesezeichen",
     "previousBookmark": "Vorheriges Lesezeichen",
     "nextBookmarkDesc": "Zur nächsten markierten Nachricht in diesem Gespräch springen.",
-    "previousBookmarkDesc": "Zur vorherigen markierten Nachricht in diesem Gespräch springen."
+    "previousBookmarkDesc": "Zur vorherigen markierten Nachricht in diesem Gespräch springen.",
+    "openTerminal": "Terminal öffnen",
+    "openTerminalDesc": "Öffnet und fokussiert das Benutzerterminal."
   },
   "downloads": {
     "revealNamed": "Im Explorer anzeigen: {{name}}",
@@ -1202,5 +1206,13 @@
     "title": "Zusätzliche Ordner",
     "add": "Ordner hinzufügen",
     "remove": "{{folder}} entfernen"
+  },
+  "terminal": {
+    "new": "Neues Terminal",
+    "close": "Terminal schließen",
+    "tabs": "Terminals",
+    "name": "Terminal {{number}}",
+    "consent": "Agent darf dieses Terminal lesen",
+    "input": "Terminaleingabe"
   }
 }

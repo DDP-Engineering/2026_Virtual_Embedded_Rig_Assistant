@@ -103,6 +103,13 @@ it("requires native CPU files and rejects foreign native platform payloads", asy
   );
   expect(() => validateNativeFiles([], "win32")).toThrow(/missing native/);
   const paths = [
+    ...[
+      "pty.node",
+      "conpty.node",
+      "conpty_console_list.node",
+      "conpty/conpty.dll",
+      "conpty/OpenConsole.exe",
+    ].map((name) => `node_modules/node-pty/prebuilds/win32-x64/${name}`),
     "node_modules/better-sqlite3/prebuilds/win32-x64.node",
     "node_modules/onnxruntime-node/bin/napi-v6/win32/x64/onnxruntime_binding.node",
     "node_modules/onnxruntime-node/bin/napi-v6/win32/x64/onnxruntime.dll",
@@ -126,6 +133,7 @@ it("rejects missing, empty or altered individual PDF resources despite intact si
   const native = "node_modules/onnxruntime-node/bin/napi-v6/linux/x64/";
   try {
     for (const path of [
+      "node_modules/node-pty/prebuilds/linux-x64/pty.node",
       "node_modules/better-sqlite3/prebuilds/linux-x64.node",
       `${native}onnxruntime_binding.node`,
       `${native}libonnxruntime.so.1`,

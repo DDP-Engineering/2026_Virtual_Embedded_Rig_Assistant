@@ -32,6 +32,11 @@ Plugin management uses compact package rows and explicit dependency checks; sele
 
 ## Implementation orientation
 
+[User terminals](../knowledge/terminals.md) owns interactive xterm/node-pty tabs in the right panel,
+workbench-bound shell lifetime and Ctrl+Shift+T. The agent receives only bounded recent output after
+explicit per-terminal consent, rechecked at publication; no terminal input/lifecycle authority reaches
+core. Native bindings, JS workers, ConPTY helpers and Windows runtime DLLs ship outside ASAR.
+
 General web research uses enabled web_search/web_read over vendor-neutral WebProvider with default anonymous Exa MCP with selectable Tavily and Brave Search. [Web search](../knowledge/web-search.md) routes bounded calls, public source extraction and confirmed source links; no mandatory account/key or startup egress.
 
 Sidebar session/workbench action menus are exclusive. New session reuses an unused idle unarchived session in the current workbench, with transactional rapid-click protection and composer focus.

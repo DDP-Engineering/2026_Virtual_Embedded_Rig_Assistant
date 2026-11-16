@@ -8,6 +8,7 @@ it("converts every tool schema and validates samples while filtering disabled na
   const registry = new api.ToolRegistry();
   expect(registry.available().map((tool) => tool.name)).toEqual(builtinToolNames);
   const samples = {
+    terminal_read: {},
     read: { path: "docs/a.txt" },
     list: {},
     glob: { pattern: "**/*.md" },
@@ -110,6 +111,7 @@ it("converts every tool schema and validates samples while filtering disabled na
     "run_command",
     "program_output",
     "program_stop",
+    "terminal_read",
     "plugin_validate",
     "plugin_install",
     "apply_candidate",

@@ -75,3 +75,9 @@ The ordinary read, list, glob, grep, write and edit tools and shell working dire
 ## Commands in Runs
 
 Open **Runs** in the right panel to see the actual command, working folder, live output, exit code and duration. **Stop** ends the whole process tree; the agent sees it stopped on its next output read. For finished runs, **Open log** opens the full retained log in the text viewer, including output beyond the live tail. The current session is selected by default; choose **All sessions** for other runs. Plugin runs keep their declared program labels. Known credentials are masked in commands, folders and output; local logs retain original text.
+
+## User terminal
+
+Open **Terminal** in the right panel or press **Ctrl+Shift+T**. The interactive shell starts in the workbench folder, using Settings → Commands. Create and close tabs with **New terminal** and **Close terminal**; resize the panel to reflow output. Interactive programs accept your typing. Agent session stops leave user terminals running; closing or replacing the workbench, or quitting VERA, closes them. Native terminal support is bundled.
+
+Every terminal starts private. Enable **Allow agent to read this terminal** separately for each terminal you want to share. The agent can list shared terminals and use terminal_read for bounded recent output; it cannot create, type into, resize or close terminals. Disable consent or close the terminal to stop future reads. Output already shared stays in session history. The shell uses your OS permissions without a sandbox. VERA filters inherited credential variables and masks known credentials in disclosed output; your shell profile and programs remain under your control.

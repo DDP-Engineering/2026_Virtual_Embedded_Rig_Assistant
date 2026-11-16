@@ -17,6 +17,15 @@ harnesses in [05_Software/evaluators](../05_Software/evaluators/README.md).
 
 ## Setup
 
+Linux source setup also requires `build-essential`: npm builds the pinned node-pty N-API module
+for the host. Windows uses the pinned package's x64 N-API prebuild and bundled ConPTY helpers.
+`release/package.mjs` stages only the host node-pty runtime outside ASAR and includes app-local
+Windows runtime DLLs. `--output-root=<absolute folder>` confines packaging to an owned root;
+`--reuse-bundled-plugins` verifies and reads the existing bundled catalog without rebuilding it.
+`--bundled-plugins=<absolute folder>` selects an owned catalog destination/source for isolated builds.
+`--windows-runtime=<absolute folder>` stages a separate runtime cache with the same committed pins
+and Microsoft signature checks; `VERA_VC_REDIST_DIR` selects its source DLL folder.
+
 Requirements on the machine: Python 3.11+ and Git. Everything else is installed inside this folder.
 
 | | Windows | Ubuntu |

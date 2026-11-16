@@ -96,6 +96,13 @@ import {
   skillsScopeSchema,
   skillTargetSchema,
 } from "./skills.js";
+import {
+  terminalOwnerSchema,
+  terminalSizeSchema,
+  terminalSnapshotSchema,
+  terminalSummarySchema,
+  terminalTargetSchema,
+} from "./terminals.js";
 import { updateSnapshotSchema } from "./updates.js";
 import {
   webAccessCancelSchema,
@@ -157,6 +164,29 @@ export const appInfoSchema = z.strictObject({
     .optional(),
 });
 export const channels = {
+  "terminal.list": defineChannel("terminal.list", terminalOwnerSchema, z.array(terminalSummarySchema).max(8)),
+  "terminal.create": defineChannel(
+    "terminal.create",
+    terminalOwnerSchema.extend(terminalSizeSchema.shape),
+    terminalSummarySchema,
+  ),
+  "terminal.output": defineChannel("terminal.output", terminalTargetSchema, terminalSnapshotSchema),
+  "terminal.input": defineChannel(
+    "terminal.input",
+    terminalTargetSchema.extend({ data: z.string().min(1).max(16384) }),
+    z.strictObject({}),
+  ),
+  "terminal.resize": defineChannel(
+    "terminal.resize",
+    terminalTargetSchema.extend(terminalSizeSchema.shape),
+    z.strictObject({}),
+  ),
+  "terminal.close": defineChannel("terminal.close", terminalTargetSchema, z.strictObject({})),
+  "terminal.consent": defineChannel(
+    "terminal.consent",
+    terminalTargetSchema.extend({ shared: z.boolean() }),
+    terminalSummarySchema,
+  ),
   "web.access.get": defineChannel("web.access.get", z.strictObject({}), webAccessSnapshotSchema),
   "web.access.save": defineChannel("web.access.save", webAccessSaveSchema, webAccessSaveResultSchema),
   "web.access.removeKey": defineChannel("web.access.removeKey", webAccessProviderSchema, z.strictObject({})),

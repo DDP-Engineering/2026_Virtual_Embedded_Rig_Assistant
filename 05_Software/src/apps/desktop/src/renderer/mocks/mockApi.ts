@@ -34,6 +34,7 @@ import {
   type SessionSummary,
   settingsPatchSchema,
   skillTemplate,
+  type TerminalSnapshot,
   type UpdateSnapshot,
   veraError,
   type WebProviderId,
@@ -185,6 +186,13 @@ export function createMockApi(
   const provisionedPlugins = new Set<string>();
   /** Program runs and their logs by workbench id, seeded with one running and one ended run. */
   const runs = new Map<string, { run: ProgramRunInfo; log: string }[]>();
+  const terminals = new Map<string, { owner: string; snapshot: TerminalSnapshot }>();
+  const userTerminal = (owner: string, id: string) => {
+    if (owner !== current().snapshot.config.id) throw veraError("CONFLICT");
+    const entry = terminals.get(id);
+    if (!entry || entry.owner !== owner) throw veraError("NOT_FOUND");
+    return entry.snapshot;
+  };
   function workbenchRuns(workbenchId: string) {
     if (workbenchId !== current().snapshot.config.id) throw veraError("CONFLICT");
     let list = runs.get(workbenchId);
@@ -521,6 +529,63 @@ export function createMockApi(
     if (channel.startsWith("session.") || channel.startsWith("changes.") || channel.startsWith("artifacts."))
       return channels[channel].response.parse(sessions.invoke(channel, input.data)) as Response<C>;
     switch (channel) {
+      case "terminal.list": {
+        const { workbenchId } = channels["terminal.list"].request.parse(input.data);
+        if (workbenchId !== current().snapshot.config.id) throw veraError("CONFLICT");
+        value = [...terminals.values()]
+          .filter((entry) => entry.owner === workbenchId)
+          .map(({ snapshot: { output: _output, ...summary } }) => summary);
+        break;
+      }
+      case "terminal.create": {
+        const { workbenchId } = channels["terminal.create"].request.parse(input.data);
+        if (workbenchId !== current().snapshot.config.id) throw veraError("CONFLICT");
+        if (terminals.size >= 8) throw veraError("BUSY");
+        const snapshot: TerminalSnapshot = {
+          id: crypto.randomUUID(),
+          number: terminals.size + 1,
+          shared: false,
+          running: true,
+          output: "$ ",
+        };
+        terminals.set(snapshot.id, { owner: workbenchId, snapshot });
+        const { output: _output, ...summary } = snapshot;
+        value = summary;
+        break;
+      }
+      case "terminal.output": {
+        const { workbenchId, id } = channels["terminal.output"].request.parse(input.data);
+        value = userTerminal(workbenchId, id);
+        break;
+      }
+      case "terminal.input": {
+        const { workbenchId, id, data } = channels["terminal.input"].request.parse(input.data);
+        const terminal = userTerminal(workbenchId, id);
+        terminal.output = (terminal.output + data.replaceAll("\r", "\r\n$ ")).slice(-262144);
+        value = {};
+        break;
+      }
+      case "terminal.resize": {
+        const { workbenchId, id } = channels["terminal.resize"].request.parse(input.data);
+        userTerminal(workbenchId, id);
+        value = {};
+        break;
+      }
+      case "terminal.consent": {
+        const { workbenchId, id, shared } = channels["terminal.consent"].request.parse(input.data);
+        const terminal = userTerminal(workbenchId, id);
+        terminal.shared = shared;
+        const { output: _output, ...summary } = terminal;
+        value = summary;
+        break;
+      }
+      case "terminal.close": {
+        const { workbenchId, id } = channels["terminal.close"].request.parse(input.data);
+        userTerminal(workbenchId, id);
+        terminals.delete(id);
+        value = {};
+        break;
+      }
       case "update.get":
         value = updateState;
         break;
@@ -1567,6 +1632,7 @@ What this plugin does.
         break;
       }
       case "workbench.close": {
+        terminals.clear();
         if (active) {
           const config = current().snapshot.config;
           await sessions.close();

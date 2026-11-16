@@ -14,6 +14,7 @@ export function WorkbenchTools({
   const { t } = useTranslation();
   const id = useId();
   const descriptions: Record<BuiltinToolName, string> = {
+    terminal_read: t("workbenchTools.terminal_read"),
     read: t("workbenchTools.read"),
     list: t("workbenchTools.list"),
     glob: t("workbenchTools.glob"),

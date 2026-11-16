@@ -1,7 +1,7 @@
 appId: engineering.ddp.vera
 productName: VERA
 asar: true
-# Both native dependencies use N-API prebuilds; keep their upstream bytes.
+# Native dependencies use N-API; node-pty is built on Linux during npm install.
 npmRebuild: false
 directories:
   app: src/apps/desktop
@@ -15,6 +15,7 @@ files:
   - '!node_modules/node-addon-api/**'
   - '!node_modules/onnxruntime-node/script/**'
 asarUnpack:
+  - node_modules/node-pty/**
   - node_modules/better-sqlite3/prebuilds/**
   - node_modules/onnxruntime-node/bin/**
   - node_modules/@img/**

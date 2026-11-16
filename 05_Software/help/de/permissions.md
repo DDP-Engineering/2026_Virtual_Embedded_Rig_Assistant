@@ -68,3 +68,7 @@ Unter **Workbench bearbeiten > Allgemein > Zusätzliche Ordner** wählst du **Or
 Die normalen Werkzeuge read, list, glob, grep, write und edit sowie Shell-Arbeitsordner nutzen diese Ordner mit denselben Freigaben für Fragen oder Automatisch bearbeiten wie die Workbench. Externe Pfade müssen absolut sein; relative Pfade beginnen weiter in der Haupt-Workbench. Externe Quellen haben absolute Identitäten ohne lokale Dokumentzitate. Ignorierregeln bleiben aktiv; VERA-Anwendungsdaten sind auch über Verknüpfungen gesperrt. Hinzufügen indiziert die Ordner nicht: Index, Protokolle, Artefakte und erzeugte Daten bleiben in der Haupt-Workbench. Befehle behalten die Rechte des Systemkontos und laufen ohne Sandbox.
 
 Die Steuerelemente unter Läufe ändern keine Befehlsberechtigungen. Stoppen beendet den Prozessbaum; der Agent sieht dies beim nächsten Lesen der Ausgabe.
+
+## Benutzerterminal
+
+Jedes Terminal beginnt privat. Aktivieren Sie **Agent darf dieses Terminal lesen** separat für jedes freizugebende Terminal. Der Agent kann freigegebene Terminals auflisten und begrenzte letzte Ausgabe mit terminal_read lesen; er kann keine Terminals erstellen, beschreiben, skalieren oder schließen. Deaktivieren oder Schließen verhindert weitere Zugriffe. Bereits geteilte Ausgabe bleibt im Sitzungsverlauf. Die Shell verwendet Ihre Betriebssystemrechte ohne Sandbox. VERA filtert geerbte Zugangsdatenvariablen und maskiert bekannte Zugangsdaten in offengelegter Ausgabe; Shell-Profil und Programme bleiben unter Ihrer Kontrolle.

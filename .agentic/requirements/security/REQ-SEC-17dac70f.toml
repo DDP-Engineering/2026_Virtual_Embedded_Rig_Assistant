@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-SEC-17dac70f"
+
+title = "Terminal ownership and publication revocation"
+
+status = "active"
+
+requirement = """
+If a terminal read loses its current workbench ownership or consent before publication, VERA shall refuse publication of its captured output.
+"""
+
+verification = "Capture an allowed read then revoke, close or switch workbench before publication; assert no captured text reaches tool.done or agent transcript; strict IPC rejects foreign IDs and invalid input."
+
+affected_paths = ["05_Software/src/libraries/core/src/agent/runtime.ts", "05_Software/src/libraries/core/src/agent/types.ts", "05_Software/src/libraries/core/src/tools/context.ts", "05_Software/src/libraries/core/src/tools/registry.ts", "05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/apps/desktop/src/main/sessions.ts", "05_Software/src/apps/desktop/src/main/terminals.ts", "05_Software/src/libraries/shared/src/ipc.ts", "05_Software/src/libraries/shared/src/terminals.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/tools/terminal-read.test.ts", "05_Software/src/apps/desktop/src/main/terminals.test.ts", "05_Software/src/libraries/shared/src/terminal-ipc.test.ts", "05_Software/tests/e2e/terminal.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-16
+updated = 2026-11-16

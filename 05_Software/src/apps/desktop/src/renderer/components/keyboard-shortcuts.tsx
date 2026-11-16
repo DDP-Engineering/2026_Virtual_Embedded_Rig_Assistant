@@ -29,6 +29,7 @@ export function KeyboardShortcuts({
     shortcuts: [t("keyboard.shortcuts"), t("keyboard.shortcutsDesc")],
     toggleSidebar: [t("keyboard.toggleSidebar"), t("keyboard.toggleSidebarDesc")],
     toggleRightPanel: [t("keyboard.toggleRightPanel"), t("keyboard.toggleRightPanelDesc")],
+    openTerminal: [t("keyboard.openTerminal"), t("keyboard.openTerminalDesc")],
     find: [t("keyboard.find"), t("keyboard.findDesc")],
     focusComposer: [t("keyboard.focusComposer"), t("keyboard.focusComposerDesc")],
     focusModel: [t("keyboard.focusModel"), t("keyboard.focusModelDesc")],

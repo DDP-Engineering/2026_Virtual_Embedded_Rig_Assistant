@@ -21,6 +21,7 @@ export const builtinToolNames = [
   "run_command",
   "program_output",
   "program_stop",
+  "terminal_read",
   "plugin_validate",
   "plugin_install",
   "apply_candidate",

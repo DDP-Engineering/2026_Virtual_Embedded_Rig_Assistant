@@ -64,11 +64,11 @@ export async function prepareWindowsRuntime(manifest, target, options = {}) {
   return { version: manifest.version, files: manifest.files };
 }
 
-export async function prepareBundledWindowsRuntime() {
+export async function prepareBundledWindowsRuntime(target = join(root, "src/windows_runtime")) {
   const manifest = JSON.parse(
     await readFile(join(root, "src/windows_runtime/windows-runtime-manifest.json"), "utf8"),
   );
-  return prepareWindowsRuntime(manifest, join(root, "src/windows_runtime"));
+  return prepareWindowsRuntime(manifest, target);
 }
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   if (process.platform !== "win32")

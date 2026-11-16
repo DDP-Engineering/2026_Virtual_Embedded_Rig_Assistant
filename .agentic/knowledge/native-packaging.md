@@ -48,6 +48,14 @@ builds omit the probe branch and worker entry while retaining bundled runtime/mo
 
 ## Public interface
 
+User-terminal closure includes node-pty 1.1.0's host N-API binding and Windows ConPTY helpers,
+all outside ASAR. Main loads its physical unpacked package. Source Linux npm install builds its
+binding with g++/make; Windows uses the pinned upstream x64 prebuild. Both prepack and extracted
+target checks follow 11 relative JS/worker modules and verify actual x64 PE/ELF headers and hashes.
+`--output-root`, `--bundled-plugins` and `--windows-runtime` select owned packaging destinations;
+`--reuse-bundled-plugins` verifies an existing catalog. Runtime overrides retain committed DLL pins
+and Microsoft source-signature checks. [User terminals](terminals.md) routes actual extracted-app proof.
+
 Already-built artifact functional/egress acceptance belongs to [release smoke](release-smoke.md).
 
 From `05_Software`: `npm run prepare:model` (`-- --offline` verifies cache only),

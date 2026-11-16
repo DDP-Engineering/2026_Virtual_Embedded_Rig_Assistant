@@ -68,3 +68,7 @@ Agentul poate executa comenzi shell cu `run_command`. Întreabă și comenzile f
 Instrumentele obișnuite read, list, glob, grep, write și edit și directoarele comenzilor shell pot folosi aceste foldere cu aceleași aprobări Întreabă sau Editare automată ca workbench-ul. Folosește căi absolute pentru fișiere externe; căile relative pornesc din workbench-ul principal. Sursele externe au identități absolute, fără citări locale de documente. Regulile de ignorare rămân active, iar datele VERA sunt refuzate și prin legături. Adăugarea nu indexează folderele: indexul, jurnalele, artefactele și datele generate rămân în workbench-ul principal. Comenzile păstrează drepturile contului sistemului, fără sandbox.
 
 Controalele din Rulări nu schimbă permisiunile comenzilor. Oprirea încheie arborele de procese și este vizibilă agentului la următoarea citire a ieșirii.
+
+## Terminalul utilizatorului
+
+Fiecare terminal pornește privat. Activează **Permite agentului să citească acest terminal** separat pentru fiecare terminal pe care vrei să îl partajezi. Agentul poate lista terminalele partajate și citi ieșirea recentă limitată cu terminal_read; nu poate crea, scrie în, redimensiona sau închide terminale. Retrage acordul sau închide terminalul pentru a opri citirile viitoare. Ieșirea deja partajată rămâne în istoricul sesiunii. Shell-ul folosește permisiunile tale de sistem, fără sandbox. VERA filtrează variabilele moștenite cu credențiale și maschează credențialele cunoscute în ieșirea divulgată; profilul shell-ului și programele rămân sub controlul tău.

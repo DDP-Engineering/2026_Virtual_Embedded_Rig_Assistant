@@ -432,6 +432,16 @@ built sibling analysis. Owned generated proof is under ignored `evaluation-outpu
 
 ## Shell command implementation
 
+User terminals are separate from agent commands: desktop `main/terminals.ts` owns ephemeral PTYs,
+workbench ownership, bounded masked output and consent; `main/terminal-pty.ts` loads node-pty at
+the host edge; `main/terminal-processes.ts` includes Linux job-control process groups in cleanup.
+Shared `terminals.ts` defines strict user IPC. Core `tools/terminal-read.ts` exposes
+only reading and runtime publication revalidation; sessions without that port omit the tool.
+Renderer `components/terminal-tab.tsx` owns xterm/FitAddon views and terminal controls;
+`lib/terminal-document.ts` projects xterm-generated styles through CSSOM under the existing CSP.
+Focused tests sit beside these files; `tests/e2e/terminal.spec.ts` accepts development or explicitly
+selected extracted packaged binaries through `VERA_TERM05_APP` and retains original receipts.
+
 Built-in `run_command` lives in `src/libraries/core/src/plugins/command-tools.ts`; `shell.ts`
 resolves platform shells and filters the inherited user environment. `runner.ts` supplies logs,
 timeouts and process-tree ownership. `command-settings.tsx` provides Settings → Commands;

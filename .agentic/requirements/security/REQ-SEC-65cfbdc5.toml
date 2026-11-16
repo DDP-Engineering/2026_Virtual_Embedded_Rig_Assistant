@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-SEC-65cfbdc5"
+
+title = "Terminal environment and output masking"
+
+status = "active"
+
+requirement = """
+When terminal data crosses to the renderer or agent, VERA shall apply the host credential masking policy while starting shells with the existing filtered user environment.
+"""
+
+verification = "Use stored-secret fixtures and credential-valued environment entries; assert filtered env and masked recent output including split writes and bounded tails."
+
+affected_paths = ["05_Software/src/apps/desktop/src/main/terminals.ts", "05_Software/src/apps/desktop/src/main/index.ts"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/main/terminals.test.ts", "05_Software/tests/e2e/terminal.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-16
+updated = 2026-11-16

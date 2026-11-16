@@ -12,6 +12,7 @@ import type { WebProvider } from "../web/provider.js";
 import { PathGuard } from "../workbench/path-guard.js";
 import type { ChangeHost, PreparedChange } from "./changes.js";
 import type { HelpHost } from "./help.js";
+import type { TerminalReader } from "./terminal-read.js";
 import type { TodoHost } from "./todo.js";
 
 export interface ReadFingerprint {
@@ -19,6 +20,7 @@ export interface ReadFingerprint {
   mtimeMs: number;
 }
 export interface ToolContext {
+  terminals?: TerminalReader;
   root: string;
   permissionMode?: () => PermissionMode;
   bypassSignal?: () => AbortSignal;
@@ -44,6 +46,8 @@ export interface ToolContext {
   managedRoots?: readonly string[];
 }
 export interface ToolDefinition {
+  /** Recheck a revocable read immediately before runtime disclosure. */
+  publish?(ctx: ToolContext, args: unknown, output: string): string;
   name: string;
   /** `program` tools ask the approval gate per command line, in every permission mode. */
   class: "read" | "write" | "session" | "program";

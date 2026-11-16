@@ -75,3 +75,9 @@ Instrumentele obișnuite read, list, glob, grep, write și edit și directoarele
 ## Comenzi în Rulări
 
 Deschide **Rulări** în panoul din dreapta pentru comanda exactă, folder, ieșire în timp real, cod de ieșire și durată. **Oprește** încheie întregul arbore de procese; agentul vede oprirea la următoarea citire a ieșirii. Pentru rulările încheiate, **Deschide jurnalul** deschide jurnalul complet păstrat în vizualizatorul text, inclusiv ieșirea dinaintea cozii afișate. Sesiunea curentă este selectată implicit; alege **Toate sesiunile** pentru alte rulări. Programele pluginurilor își păstrează etichetele declarate. Datele de autentificare cunoscute sunt mascate în comenzi, foldere și ieșire; jurnalele locale păstrează textul original.
+
+## Terminalul utilizatorului
+
+Deschide **Terminal** în panoul din dreapta sau apasă **Ctrl+Shift+T**. Shell-ul interactiv pornește în folderul workbench-ului, folosind Setări → Comenzi. Creează și închide file cu **Terminal nou** și **Închide terminalul**; redimensionează panoul pentru a rearanja ieșirea. Programele interactive acceptă tastarea. Oprirea sesiunii agentului lasă terminalele active; închiderea sau înlocuirea workbench-ului și ieșirea din VERA le închid. Suportul nativ este inclus.
+
+Fiecare terminal pornește privat. Activează **Permite agentului să citească acest terminal** separat pentru fiecare terminal pe care vrei să îl partajezi. Agentul poate lista terminalele partajate și citi ieșirea recentă limitată cu terminal_read; nu poate crea, scrie în, redimensiona sau închide terminale. Retrage acordul sau închide terminalul pentru a opri citirile viitoare. Ieșirea deja partajată rămâne în istoricul sesiunii. Shell-ul folosește permisiunile tale de sistem, fără sandbox. VERA filtrează variabilele moștenite cu credențiale și maschează credențialele cunoscute în ieșirea divulgată; profilul shell-ului și programele rămân sub controlul tău.

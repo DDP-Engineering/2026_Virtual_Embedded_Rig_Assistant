@@ -1,5 +1,6 @@
+import { createHash } from "node:crypto";
 import { readdir, readFile, stat } from "node:fs/promises";
-import { join } from "node:path";
+import { join, posix } from "node:path";
 import { software } from "../environment/software.mjs";
 
 const pdfSource = join(software, "node_modules/pdfjs-dist");
@@ -71,12 +72,14 @@ export function inspectPayloadFiles(files) {
 }
 
 export function foreignNative(path, platform) {
+  const pty = /node-pty\/prebuilds\/([^/]+)\//.exec(path);
   const sqlite = /better-sqlite3\/prebuilds\/([^/]+)\.node$/.exec(path);
   const onnx = /onnxruntime-node\/bin\/napi-v6\/([^/]+)\/([^/]+)\//.exec(path);
   const sharp = /@img\/sharp(?:-libvips)?-([^/]+)\//.exec(path);
   const canvas = /@napi-rs\/canvas-([^/]+)\//.exec(path);
   return Boolean(
-    (sqlite && sqlite[1] !== `${platform}-x64`) ||
+    (pty && pty[1] !== `${platform}-x64`) ||
+      (sqlite && sqlite[1] !== `${platform}-x64`) ||
       (onnx && (onnx[1] !== platform || onnx[2] !== "x64")) ||
       (sharp && sharp[1] !== `${platform}-x64`) ||
       (canvas && !canvas[1].startsWith(`${platform}-x64-`)) ||
@@ -87,6 +90,7 @@ export function foreignNative(path, platform) {
 export function validateNativeFiles(paths, platform) {
   const ort = `node_modules/onnxruntime-node/bin/napi-v6/${platform}/x64/`;
   const required = [
+    ...ptyNativeFiles(platform),
     `node_modules/better-sqlite3/prebuilds/${platform}-x64.node`,
     `${ort}onnxruntime_binding.node`,
     ...(platform === "win32"
@@ -97,6 +101,80 @@ export function validateNativeFiles(paths, platform) {
   for (const requiredPath of required)
     if (!paths.includes(requiredPath)) throw new Error(`missing native: ${requiredPath}`);
   for (const path of paths) if (foreignNative(path, platform)) throw new Error(`foreign native: ${path}`);
+}
+
+/** Files node-pty loads or executes outside ASAR, including the selected Windows ConPTY DLL host. */
+export function ptyNativeFiles(platform) {
+  const names =
+    platform === "win32"
+      ? ["pty.node", "conpty.node", "conpty_console_list.node", "conpty/conpty.dll", "conpty/OpenConsole.exe"]
+      : ["pty.node"];
+  return names.map((name) => `node_modules/node-pty/prebuilds/${platform}-x64/${name}`);
+}
+
+/** Validate native machine headers rather than trusting a platform-labelled directory. */
+export async function checkPtyNative(readResource, platform) {
+  const files = [];
+  for (const path of ptyNativeFiles(platform)) {
+    const bytes = await readResource(path);
+    let valid = false;
+    if (platform === "win32" && bytes.length >= 64 && bytes.toString("ascii", 0, 2) === "MZ") {
+      const offset = bytes.readUInt32LE(60);
+      valid =
+        offset <= bytes.length - 6 &&
+        bytes.readUInt32LE(offset) === 0x4550 &&
+        bytes.readUInt16LE(offset + 4) === 0x8664;
+    } else if (platform === "linux" && bytes.length >= 20) {
+      valid =
+        bytes.subarray(0, 4).equals(Buffer.from([127, 69, 76, 70])) &&
+        bytes[4] === 2 &&
+        bytes[5] === 1 &&
+        bytes.readUInt16LE(18) === 62;
+    }
+    if (!valid) throw new Error(`node-pty native architecture: ${path}`);
+    files.push({ path, bytes: bytes.length, sha256: createHash("sha256").update(bytes).digest("hex") });
+  }
+  return files;
+}
+
+/** node-pty's source, tests, debug symbols and foreign builds are not runtime dependencies. */
+export function ptyRuntimeFile(path, platform) {
+  if (!path.startsWith("node_modules/node-pty/")) return true;
+  const local = path.slice("node_modules/node-pty/".length);
+  if (
+    !local ||
+    ["lib", "prebuilds", `prebuilds/${platform}-x64`, `prebuilds/${platform}-x64/conpty`].includes(local)
+  )
+    return true;
+  return (
+    /^(?:package\.json|LICENSE)$/.test(local) ||
+    (local.startsWith("lib/") &&
+      (!/\.[^/]+$/.test(local) || (local.endsWith(".js") && !local.endsWith(".test.js")))) ||
+    (local.startsWith(`prebuilds/${platform}-x64/`) && /\.(?:node|dll|exe)$/.test(local))
+  );
+}
+
+/** Inspect pinned node-pty's relative CommonJS graph, including its separately launched worker. */
+export async function checkPtyJavaScript(readResource) {
+  const root = "node_modules/node-pty/lib/";
+  const pending = [
+    `${root}index.js`,
+    `${root}worker/conoutSocketWorker.js`,
+    `${root}conpty_console_list_agent.js`,
+  ];
+  const seen = new Set();
+  while (pending.length) {
+    const path = pending.pop();
+    if (seen.has(path)) continue;
+    if (!path.startsWith(root)) throw new Error(`node-pty JavaScript closure: ${path}`);
+    seen.add(path);
+    const code = (await readResource(path)).toString("utf8");
+    for (const match of code.matchAll(/require\(['"](\.[^'"]+)['"]\)/g)) {
+      const dependency = posix.normalize(posix.join(posix.dirname(path), match[1]));
+      pending.push(dependency.endsWith(".js") ? dependency : `${dependency}.js`);
+    }
+  }
+  return seen.size;
 }
 
 export async function payloadFiles(directory) {

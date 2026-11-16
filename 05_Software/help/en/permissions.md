@@ -68,3 +68,7 @@ In **Edit workbench > General > Additional folders**, choose **Add folder** and 
 The ordinary read, list, glob, grep, write and edit tools and shell working directories can use these folders with the same Ask or Auto-edit approvals as the workbench. Give outside paths as absolute paths; relative paths still start at the main workbench. Outside sources use absolute identities without local document citations. Ignore rules still apply, and VERA application data is refused even through links. Adding folders does not index them: indexes, logs, artifacts and generated data stay in the main workbench. Commands retain OS account permissions and are not sandboxed.
 
 Runs controls do not change command permissions. Stopping from Runs ends the process tree and is visible to the agent on its next output read.
+
+## User terminal
+
+Every terminal starts private. Enable **Allow agent to read this terminal** separately for each terminal you want to share. The agent can list shared terminals and use terminal_read for bounded recent output; it cannot create, type into, resize or close terminals. Disable consent or close the terminal to stop future reads. Output already shared stays in session history. The shell uses your OS permissions without a sandbox. VERA filters inherited credential variables and masks known credentials in disclosed output; your shell profile and programs remain under your control.

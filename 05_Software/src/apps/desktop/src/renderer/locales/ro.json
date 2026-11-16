@@ -96,7 +96,8 @@
     "artifacts": "Artefacte",
     "plan": "Plan",
     "placeholder": "Conținutul panoului va fi disponibil aici.",
-    "runs": "Rulări"
+    "runs": "Rulări",
+    "terminal": "Terminal"
   },
   "workbench": {
     "name": "Numele spațiului de lucru",
@@ -689,7 +690,8 @@
     "decode_register": "Decodează o valoare de registru capturată folosind o definiție JSON locală, cu valori exacte ale câmpurilor și surse citabile. Nu citește dispozitive. Căile externe cer Bypass; accesul la datele aplicației VERA este refuzat.",
     "parts_search": "Caută în cataloagele furnizorilor activați (Mouser, DigiKey, TME, Farnell, Rutronik) după cuvinte cheie sau cod de piesă. Necesită Web access, pluginul parts-search și un furnizor configurat în secțiunea Configurare a pluginului, pe pagina Pluginuri.",
     "help": "Citește paginile de ajutor ale VERA și ajutorul pluginurilor activate în workbench, pentru întrebări despre VERA. Doar citire.",
-    "run_command": "Execută comenzi shell cu aprobare în Întreabă și Editare automată, sau direct în Bypass."
+    "run_command": "Execută comenzi shell cu aprobare în Întreabă și Editare automată, sau direct în Bypass.",
+    "terminal_read": "Citește ieșirea recentă a terminalului doar cu acord pentru acel terminal."
   },
   "projects": {
     "embeddingsGroup": "Embeddings",
@@ -787,7 +789,9 @@
     "nextBookmark": "Marcajul următor",
     "previousBookmark": "Marcajul anterior",
     "nextBookmarkDesc": "Sari la următorul mesaj marcat din această conversație.",
-    "previousBookmarkDesc": "Sari la mesajul marcat anterior din această conversație."
+    "previousBookmarkDesc": "Sari la mesajul marcat anterior din această conversație.",
+    "openTerminal": "Deschide terminalul",
+    "openTerminalDesc": "Deschide și focalizează terminalul utilizatorului."
   },
   "downloads": {
     "revealNamed": "Arată în Explorer: {{name}}",
@@ -1202,5 +1206,13 @@
     "title": "Foldere suplimentare",
     "add": "Adaugă folder",
     "remove": "Elimină {{folder}}"
+  },
+  "terminal": {
+    "new": "Terminal nou",
+    "close": "Închide terminalul",
+    "tabs": "Terminale",
+    "name": "Terminal {{number}}",
+    "consent": "Permite agentului să citească acest terminal",
+    "input": "Intrare terminal"
   }
 }

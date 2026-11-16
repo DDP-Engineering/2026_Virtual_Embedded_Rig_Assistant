@@ -51,6 +51,7 @@ export function Shell({
   plan,
   docs,
   runs,
+  terminal,
 }: {
   children?: ReactNode;
   navigation: ReactNode;
@@ -68,6 +69,7 @@ export function Shell({
   plan?: ReactNode;
   docs?: ReactNode;
   runs?: ReactNode;
+  terminal?: ReactNode;
 }) {
   const { t } = useTranslation();
   const [layout, setLayout] = useState(initialLayout);
@@ -75,6 +77,16 @@ export function Shell({
   useEffect(() => {
     const listener = (event: KeyboardEvent) => {
       const command = shortcutCommand(event, bindings);
+      if (command === "openTerminal") {
+        event.preventDefault();
+        setLayout((value) => ({ ...value, rightCollapsed: false }));
+        setTab("terminal");
+        window.setTimeout(
+          () => document.querySelector<HTMLTextAreaElement>(".terminal-surface textarea")?.focus(),
+          0,
+        );
+        return;
+      }
       if (command !== "toggleSidebar" && command !== "toggleRightPanel") return;
       event.preventDefault();
       setLayout((value) =>
@@ -208,6 +220,7 @@ export function Shell({
     { id: "artifacts", label: t("panel.artifacts") },
     { id: "plan", label: t("panel.plan") },
     { id: "runs", label: t("panel.runs") },
+    { id: "terminal", label: t("panel.terminal") },
   ];
   const style = {
     "--sidebar-width": `${layout.sidebar}rem`,
@@ -483,7 +496,9 @@ export function Shell({
                           ? artifacts
                           : id === "plan"
                             ? plan
-                            : runs) ?? <p className="muted">{t("panel.placeholder")}</p>)}
+                            : id === "runs"
+                              ? runs
+                              : terminal) ?? <p className="muted">{t("panel.placeholder")}</p>)}
               </div>
             ))}
           </aside>

@@ -18,6 +18,7 @@ import {
   SessionService,
   type SettingsService,
   type SkillCatalog,
+  type TerminalReader,
   unavailablePartsTools,
   unavailableWebTools,
   type WebDownloads,
@@ -65,6 +66,7 @@ export class SessionsHost {
   constructor(
     private readonly options: {
       workbench: WorkbenchService;
+      terminals?: (workbenchId: string) => TerminalReader;
       settings: SettingsService;
       gateway: () => ProviderGateway;
       credentials: CredentialFile;
@@ -163,6 +165,7 @@ export class SessionsHost {
         this.service = new SessionService({
           db,
           root: snapshot.folder,
+          ...(options.terminals ? { terminals: options.terminals(workbenchId) } : {}),
           readOnly: snapshot.readOnly,
           additionalFolders: () => {
             const current = options.workbench.getSnapshot();

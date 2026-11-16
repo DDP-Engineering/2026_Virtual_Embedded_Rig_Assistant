@@ -61,6 +61,15 @@ Run commands from 05_Software using the repository-local npmw.py wrapper when No
 
 ## Verification
 
+User-terminal verification uses main/terminals.test.ts, core/tools/terminal-read.test.ts, strict
+shared terminal IPC, renderer terminal-tab/terminal-document tests and tests/e2e/terminal.spec.ts.
+VERA_TERM05_APP selects an extracted packaged binary; VERA_TERM05_EVIDENCE_DIR retains original
+runtime/native paths, interactive input, resize/reflow, real stored-credential masking and consent
+receipts. Packaging tests inspect actual PE/ELF x64 headers and the relative JS/worker closure.
+Windows NSIS extraction uses the embedded app payload without installation. Linux deb extraction
+runs under WSL2 with pinned /home/dpasare/vera-cap-01/node-v24.21.0-linux-x64/bin/node; WSL2 is
+distinct from native Ubuntu. Clean-install/native Ubuntu and full epic gates require separate proof.
+
 Workbench plugin draft selection: renderer workbench-plugins.test.ts and plugins.test.ts plus the native workbench draft case in tests/e2e/plugins-ui.spec.ts cover empty defaults, Save/Cancel, readonly/trust, failed-save retry, two-workbench isolation and reopening. Existing plugin-builder and browser plugin flows select packages through Edit workbench → Plugins.
 
 Scoped plugin acceptance uses core/plugins/scoped-store.test.ts and program-tools.test.ts plus the scoped

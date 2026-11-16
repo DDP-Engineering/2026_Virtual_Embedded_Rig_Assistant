@@ -75,3 +75,9 @@ Die normalen Werkzeuge read, list, glob, grep, write und edit sowie Shell-Arbeit
 ## Befehle in Läufe
 
 Öffnen Sie **Läufe** im rechten Bereich für den genauen Befehl, Ordner, laufende Ausgabe, Exit-Code und Dauer. **Stoppen** beendet den gesamten Prozessbaum; der Agent sieht den Stopp beim nächsten Lesen der Ausgabe. Bei beendeten Läufen öffnet **Protokoll öffnen** das vollständige aufbewahrte Protokoll im Textbetrachter, auch die Ausgabe vor dem angezeigten Ende. Standardmäßig ist die aktuelle Sitzung ausgewählt; **Alle Sitzungen** zeigt andere Läufe. Plugin-Läufe behalten ihre deklarierten Programmnamen. Bekannte Zugangsdaten werden in Befehlen, Ordnern und Ausgaben maskiert; lokale Protokolle behalten den Originaltext.
+
+## Benutzerterminal
+
+Öffnen Sie **Terminal** rechts oder drücken Sie **Ctrl+Shift+T**. Die interaktive Shell startet im Workbench-Ordner gemäß Einstellungen → Befehle. **Neues Terminal** erstellt Tabs; **Terminal schließen** beendet sie. Größenänderungen brechen die Ausgabe neu um. Interaktive Programme nehmen Ihre Eingaben an. Das Ende einer Agentensitzung lässt Benutzerterminals weiterlaufen; Schließen oder Wechseln der Workbench und Beenden von VERA schließen sie. Native Terminalunterstützung ist enthalten.
+
+Jedes Terminal beginnt privat. Aktivieren Sie **Agent darf dieses Terminal lesen** separat für jedes freizugebende Terminal. Der Agent kann freigegebene Terminals auflisten und begrenzte letzte Ausgabe mit terminal_read lesen; er kann keine Terminals erstellen, beschreiben, skalieren oder schließen. Deaktivieren oder Schließen verhindert weitere Zugriffe. Bereits geteilte Ausgabe bleibt im Sitzungsverlauf. Die Shell verwendet Ihre Betriebssystemrechte ohne Sandbox. VERA filtert geerbte Zugangsdatenvariablen und maskiert bekannte Zugangsdaten in offengelegter Ausgabe; Shell-Profil und Programme bleiben unter Ihrer Kontrolle.

@@ -12,6 +12,10 @@ The synchronous prompt builder consumes workbench name, decoded pinned text, res
 
 ## Public interface
 
+ToolDef optionally supplies synchronous `publish(args, output)`. After awaited execution and abort
+checking, ReferenceRuntime invokes it before tool.done or transcript disclosure; a rejection becomes
+an ordinary failed result. [User terminals](terminals.md) uses it to recheck revocable read leases.
+
 When the host offers commands, `SystemPromptInput.commands` adds instructions for run_command,
 closed stdin/noninteractive flags, background program_output polling with waitMs/until and program_stop.
 It explicitly states OS-account execution without a sandbox. Read-only omits this instruction and the
@@ -28,7 +32,7 @@ cover offered/Read-only commands and retain the existing optional program block 
 - Before each model budget calculation, ReferenceRuntime awaits optional gateway.prepareModel(model,signal). This resolves live provider capabilities for cold/expired catalogs without relying on renderer queries; readiness errors settle through the normal turn error path. Timed/session wrappers preserve the hook. Reasoning is snapshotted at dispatch by SessionService, including internal subsequent model calls.
 
 - start accepts systemPrompt,model string,ToolDef[],Message[],ContextPolicy and optional maxToolCallsPerTurn (default50); send runs one turn and returns end/aborted/error/limit; abort propagates the turn signal; onEvent returns unsubscribe; messages returns full detached pi Message[]. Busy start/send return BUSY.
-- RuntimeHost owns gateway,now,nextId,approve(validated cloned call,signal) and optional steering(), a detached durable FIFO queue snapshot. ToolDef owns name,class(read/write/session),description,params(zod),execute(args,signal). Approval host binds decisions to the prepared change.
+- RuntimeHost owns gateway,now,nextId,approve(validated cloned call,signal) and optional steering(), a detached durable FIFO queue snapshot. ToolDef owns name,class(read/write/session/program),description,params(zod),execute(args,signal) and optional publish(args,output). Approval host binds decisions to the prepared change.
 - RuntimeInit optionally accepts a session-owned ContextCompactor; default runtime instances retain it across sends and reset it at start. ContextCompactor.prepare asynchronously creates derived history views using one bounded summary callback and an optional original-turn history boundary.
 - ContextPolicy.prepare resolves a counted view from current capabilities. TokenCounter counts a whole system/tools/messages request and labels estimates. toolSpecs converts pure JSON Schema through Type.Unsafe; original zod validates execution arguments.
 - buildSystemPrompt({workbench,pinned,skills,env}) returns {text,characters}; characters counts UTF16 code units of the final text. PromptEnvironment supplies Clock, windows/linux OS family, veraVersion, session permissionMode and indexedDocuments. Skill metadata preserves caller order.

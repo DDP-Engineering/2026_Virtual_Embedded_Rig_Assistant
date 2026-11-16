@@ -26,12 +26,14 @@ import { loadSkillTool } from "./load-skill.js";
 import { parseLogTool } from "./parse-log.js";
 import { partsSearchTool } from "./parts.js";
 import { readTool } from "./read.js";
+import { terminalReadTool } from "./terminal-read.js";
 import { todoTool } from "./todo.js";
 import { webReadTool, webSearchTool } from "./web.js";
 import { webDownloadTool } from "./web-download.js";
 import { writeTool } from "./write.js";
 
 const builtinDefinitions: Record<BuiltinToolName, ToolDefinition> = {
+  terminal_read: terminalReadTool,
   read: readTool,
   list: listTool,
   glob: globTool,
@@ -139,7 +141,15 @@ export class ToolRegistry {
     return this.definitions.filter((tool) => !disabled.includes(tool.name));
   }
   specs(disabled: readonly string[] = []) {
-    return toolSpecs(this.available(disabled).map((tool) => ({ ...tool, execute: async () => "" })));
+    return toolSpecs(
+      this.available(disabled).map(({ name, description, params, class: toolClass }) => ({
+        name,
+        description,
+        params,
+        class: toolClass,
+        execute: async () => "",
+      })),
+    );
   }
   async prepare(
     ctx: ToolContext,
@@ -252,6 +262,9 @@ export class ToolRegistry {
           ? `${tool.description} Bypass is active: agent input paths may be absolute or relative to the workbench, including outside and ignored locations.`
           : tool.description,
       params: tool.params,
+      ...(tool.publish
+        ? { publish: (args: unknown, output: string) => tool.publish?.(ctx, args, output) ?? output }
+        : {}),
       execute: async (args, signal) => {
         const outcome = await this.execute(ctx, tool.name, args, signal, blocked);
         if (outcome.isError) throw Error(outcome.text);

@@ -28,6 +28,10 @@ left/right/Home/End move focus and Down or Enter opens the selected native menu.
 
 ## Public interface
 
+The right panel also has [Terminal](terminals.md), with multiple interactive user tabs and per-terminal
+agent-read consent. Shell owns configurable openTerminal (Ctrl+Shift+T); terminal input retains shell
+keystrokes. xterm/FitAddon views use strict user IPC and CSSOM-generated styles under the existing CSP.
+
 Settings → Commands uses `components/command-settings.tsx` and the shared shell setting. Save and
 Cancel control a local draft; clearing the field selects automatic resolution. Localized labels,
 placeholder and built-in tool description exist in en/ro/de/fr. Shell approvals show literal command,

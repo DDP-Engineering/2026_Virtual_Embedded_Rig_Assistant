@@ -21,6 +21,8 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ### Added
 
+- User terminal tabs support interactive shells, resizing and explicit per-terminal consent for agent output reads.
+
 - Runs shows shell commands, folders, live output and durations, with Stop and complete logs in the viewer.
 
 - Workbenches grant file tools and shell working directories access to user-selected additional folders.

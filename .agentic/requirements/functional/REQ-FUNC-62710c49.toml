@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-62710c49"
+
+title = "Interactive user terminals"
+
+status = "active"
+
+requirement = """
+When the user opens a terminal in an open workbench, VERA shall start an interactive platform shell in that workbench folder accepting user input and PTY resizing until exit, user close, workbench replacement or application shutdown.
+"""
+
+verification = "Start real Windows and Linux shells, type a command and resize; observe cwd, output, dimensions and close cleanup; a closed terminal refuses further input. Linux job-control background processes stop on terminal close, workbench replacement and application shutdown."
+
+affected_paths = ["05_Software/src/apps/desktop/src/main/terminals.ts", "05_Software/src/apps/desktop/src/main/terminal-pty.ts", "05_Software/src/apps/desktop/src/main/terminal-processes.ts", "05_Software/src/apps/desktop/src/main/index.ts"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/main/terminals.test.ts", "05_Software/src/apps/desktop/src/main/terminal-processes.test.ts", "05_Software/src/apps/desktop/src/main/terminal-pty.test.ts", "05_Software/tests/e2e/terminal.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-16
+updated = 2026-11-16

@@ -35,6 +35,10 @@ which owns verified assets, native staging and artifact measurements.
 
 ## Invariants
 
+- Desktop pins node-pty1.1.0, xterm6.0.0 and FitAddon0.11.0. The node-pty install script is allowed
+  for Linux N-API compilation; setup checks g++/make. Desktop Vite keeps native loading at the host
+  edge; [user terminals](terminals.md) routes exact runtime and extracted-artifact verification.
+
 - Direct dependency versions are exact; install from the committed lockfile using npm ci.
   Core pins @earendil-works/pi-ai1.1.0 for the gateway, zod4.6.5/typebox1.3.27 for tool-schema projection, yaml2.9.1, ulid3.0.2 and ignore7.0.12 for parsing, identity and ignore rules; tinyglobby0.2.17 for file discovery and diff9.0.0 for structured unified file patches/counts. Tooling pins esbuild0.25.12 for isolated worker bundles.
 - Desktop Vite main resolves core/shared from source; preload/renderer resolve shared from source.

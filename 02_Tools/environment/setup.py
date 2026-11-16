@@ -130,6 +130,8 @@ def check_linux_libraries() -> bool:
     ldconfig = shutil.which("ldconfig") or "/sbin/ldconfig"
     known = subprocess.run([ldconfig, "-p"], capture_output=True, text=True).stdout
     missing: list[str] = []
+    if not shutil.which("g++") or not shutil.which("make"):
+        missing.append("build-essential")
     for soname, package in tc.CONFIG["linux_libraries"]["electron"].items():
         if soname not in known:
             missing.append(package)
@@ -139,7 +141,7 @@ def check_linux_libraries() -> bool:
     if missing:
         report(MISSING, "system libraries", "sudo apt install " + " ".join(missing))
         return False
-    report(OK, "system libraries", "Electron runtime libraries and xvfb present")
+    report(OK, "system libraries", "Electron runtime libraries, native build tools and xvfb present")
     return True
 
 

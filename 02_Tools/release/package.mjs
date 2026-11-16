@@ -15,9 +15,12 @@ import { prepareBundledWindowsRuntime } from "../environment/prepare-windows-run
 import { importSoftware, software, softwareRequire } from "../environment/software.mjs";
 import {
   checkPdfResources,
+  checkPtyJavaScript,
+  checkPtyNative,
   checkStagedPayload,
   foreignNative,
   inspectPayloadFiles,
+  ptyRuntimeFile,
   releaseHookMarkers,
   validateNativeFiles,
 } from "./package-checks.mjs";
@@ -181,7 +184,11 @@ export async function stageHelp(stage, source = join(root, "help")) {
   await cp(source, join(stage, "resources", "help"), { recursive: true });
 }
 
-export async function stageRuntime(mode, outputRoot = resolve(root, "release_tmp")) {
+export async function stageRuntime(
+  mode,
+  outputRoot = resolve(root, "release_tmp"),
+  { bundledPlugins = bundledPluginsFolder, windowsRuntime = join(root, "src/windows_runtime") } = {},
+) {
   const stage = resolve(outputRoot, `staging-${process.platform}-${mode}`);
   // Removal is confined to this build's generated staging directory.
   if (!stage.startsWith(`${resolve(outputRoot)}${sep}`)) throw new Error("Unsafe staging path");
@@ -196,7 +203,7 @@ export async function stageRuntime(mode, outputRoot = resolve(root, "release_tmp
   await cp(join(root, "src/models/model-manifest.json"), join(stage, "resources/model-manifest.json"));
   const uvManifest = JSON.parse(await readFile(join(root, "src/uv/uv-manifest.json"), "utf8"));
   await stageUv(stage, uvEntry(uvManifest, uvPlatform()));
-  await stageBundledPlugins(stage);
+  await stageBundledPlugins(stage, bundledPlugins);
   await stageHelp(stage);
   // VERA's license ships next to the executable (extraFiles), as its Notices section requires.
   await cp(join(root, "../LICENSE.txt"), join(stage, "resources/LICENSE.txt"));
@@ -205,7 +212,7 @@ export async function stageRuntime(mode, outputRoot = resolve(root, "release_tmp
     join(stage, "resources/windows-runtime-manifest.json"),
   );
   if (process.platform === "win32") {
-    await cp(join(root, "src/windows_runtime"), join(stage, "resources/windows-runtime"), {
+    await cp(windowsRuntime, join(stage, "resources/windows-runtime"), {
       recursive: true,
       filter: (source) => source !== join(root, "src/windows_runtime/windows-runtime-manifest.json"),
     });
@@ -217,6 +224,7 @@ export async function stageRuntime(mode, outputRoot = resolve(root, "release_tmp
     "onnxruntime-node",
     "pdfjs-dist",
     "electron-updater",
+    "node-pty",
   ];
   const seen = new Set();
   const packages = [];
@@ -248,11 +256,14 @@ export async function stageRuntime(mode, outputRoot = resolve(root, "release_tmp
         return (
           !foreignNative(`${runtimePath}/`, process.platform) &&
           !foreignNative(runtimePath, process.platform) &&
+          ptyRuntimeFile(runtimePath, process.platform) &&
           !runtimePath.startsWith("node_modules/onnxruntime-web/")
         );
       },
     });
     packages.push({ name, version: manifest.version, path });
+    // node-addon-api is node-pty's build dependency; the compiled N-API runtime never imports it.
+    if (name === "node-pty") return;
     for (const dependency of Object.keys(manifest.dependencies ?? {})) {
       await copyDependency(dependency, directory, dependency in (manifest.optionalDependencies ?? {}));
     }
@@ -261,16 +272,23 @@ export async function stageRuntime(mode, outputRoot = resolve(root, "release_tmp
     }
   }
   for (const name of runtimeNames) await copyDependency(name, join(root, "src/apps/desktop"));
+  if (process.platform === "linux") {
+    const native = join(stage, "node_modules/node-pty/prebuilds/linux-x64");
+    await mkdir(native, { recursive: true });
+    await cp(join(root, "node_modules/node-pty/build/Release/pty.node"), join(native, "pty.node"));
+  }
   if (process.platform === "win32") {
-    // Node's native addon loader searches the addon's directory, so VC++ must be beside ORT.
-    await cp(
-      join(root, "src/windows_runtime"),
-      join(stage, "node_modules/onnxruntime-node/bin/napi-v6/win32/x64"),
-      {
+    for (const folder of ["prebuilds/win32-x64", "prebuilds/win32-x64/conpty"]) {
+      await cp(windowsRuntime, join(stage, "node_modules/node-pty", folder), {
         recursive: true,
         filter: (source) => source !== join(root, "src/windows_runtime/windows-runtime-manifest.json"),
-      },
-    );
+      });
+    }
+    // Node's native addon loader searches the addon's directory, so VC++ must be beside ORT.
+    await cp(windowsRuntime, join(stage, "node_modules/onnxruntime-node/bin/napi-v6/win32/x64"), {
+      recursive: true,
+      filter: (source) => source !== join(root, "src/windows_runtime/windows-runtime-manifest.json"),
+    });
   }
   await writeFile(
     join(stage, "package.json"),
@@ -332,10 +350,20 @@ async function packageApp() {
     VERA_SIGNED_BUILD: distribution.forceCodeSigning ? "1" : "0",
   };
   await prepareBundledModel();
-  await prepareBundledPlugins();
+  const bundledPlugins = resolve(
+    process.argv.find((arg) => arg.startsWith("--bundled-plugins="))?.slice("--bundled-plugins=".length) ??
+      bundledPluginsFolder,
+  );
+  if (process.argv.includes("--reuse-bundled-plugins")) await checkBundledPlugins(bundledPlugins);
+  else await prepareBundledPlugins({ target: bundledPlugins });
   const uv = await prepareBundledUv();
   const uvBinary = uvEntry(uv.manifest, uv.platform);
-  const windowsRuntime = process.platform === "win32" ? await prepareBundledWindowsRuntime() : undefined;
+  const windowsRuntimePath = resolve(
+    process.argv.find((arg) => arg.startsWith("--windows-runtime="))?.slice("--windows-runtime=".length) ??
+      join(root, "src/windows_runtime"),
+  );
+  const windowsRuntime =
+    process.platform === "win32" ? await prepareBundledWindowsRuntime(windowsRuntimePath) : undefined;
   run(
     join(dirname(require.resolve("electron-vite/package.json")), "bin/electron-vite.js"),
     ["build", "src/apps/desktop"],
@@ -353,12 +381,18 @@ async function packageApp() {
   // Exclude foreign N-API binaries without altering the installed dependencies.
   const builderModule = await importSoftware("electron-builder");
   const mode = testBuild ? "test" : "release";
-  const output = join(root, "release_tmp", mode);
-  const staged = await stageRuntime(mode);
+  const outputRoot = resolve(
+    process.argv.find((arg) => arg.startsWith("--output-root="))?.slice("--output-root=".length) ??
+      join(root, "release_tmp"),
+  );
+  const output = join(outputRoot, mode);
+  const staged = await stageRuntime(mode, outputRoot, { bundledPlugins, windowsRuntime: windowsRuntimePath });
+  await checkPtyNative((path) => readFile(join(staged.stage, path)), process.platform);
+  await checkPtyJavaScript((path) => readFile(join(staged.stage, path)));
   const manifest = JSON.parse(await readFile(join(root, "src/models/model-manifest.json"), "utf8"));
   const prepack = await checkStagedPayload(staged.stage, process.platform, manifest);
   // This mode's generated output is rebuilt from scratch, so stale artifacts cannot pass.
-  if (!output.startsWith(`${resolve(root, "release_tmp")}${sep}`)) throw new Error("Unsafe output path");
+  if (!output.startsWith(`${outputRoot}${sep}`)) throw new Error("Unsafe output path");
   await rm(output, { recursive: true, force: true });
   // Fast deterministic deflate.
   process.env.ELECTRON_BUILDER_COMPRESSION_LEVEL = "1";
@@ -427,6 +461,13 @@ async function packageApp() {
         throw new Error("Executable signature verification failed");
     }
     targetPayloads.push({
+      ptyJavaScriptModules: await checkPtyJavaScript((path) =>
+        readFile(join(unpacked, "resources/app.asar.unpacked", path)),
+      ),
+      pty: await checkPtyNative(
+        (path) => readFile(join(unpacked, "resources/app.asar.unpacked", path)),
+        process.platform,
+      ),
       target,
       appAsarSha256: createHash("sha256")
         .update(await readFile(archive))
@@ -462,7 +503,7 @@ async function packageApp() {
   const archive = join(unpacked, "resources/app.asar");
   const { entries, onnxruntimeBytes } = await inspectAppArchive(archive, testBuild);
   validateNativeFiles(
-    entries.map((path) => path.slice(1)).filter((path) => /\.(?:node|dll|so(?:\.1)?)$/.test(path)),
+    entries.map((path) => path.slice(1)),
     process.platform,
   );
   const native = [...entries, ...measured.files.map((file) => file.path)];
