@@ -11,6 +11,7 @@ const assistant = z.strictObject({
   turnId: z.string().nullable(),
   text: z.string(),
   streaming: z.boolean(),
+  replyToMessageIds: z.array(z.string()).optional(),
   citations: z.array(z.strictObject({ ref: z.string(), valid: z.boolean() })),
 });
 const tool = z.strictObject({
@@ -151,6 +152,7 @@ class Draft {
   private readonly fresh = new Set<unknown>();
   private ids: Map<string, number> | undefined;
   private errors: number | undefined;
+  private admitted: number | undefined;
   constructor(
     readonly s: SessionState,
     private readonly copyOnWrite: boolean,
@@ -195,11 +197,22 @@ class Draft {
     const items = this.list("items");
     if (this.ids && !this.ids.has(value.id)) this.ids.set(value.id, items.length);
     if (value.kind === "error" && this.errors !== undefined) this.errors++;
+    if (value.kind === "user" && !value.pending) this.admitted = items.length;
     items.push(value);
     this.fresh.add(value);
   }
+  admit(index: number): void {
+    if (this.admitted !== undefined) this.admitted = Math.max(this.admitted, index);
+  }
+  /** Cached across a fold so usage-absent request ownership keeps linear replay cost. */
+  admittedUser(): string | null {
+    if (this.admitted === undefined)
+      this.admitted = this.s.items.findLastIndex((item) => item.kind === "user" && !item.pending);
+    return this.s.items[this.admitted]?.id ?? null;
+  }
   replaceItems(items: SessionItem[]): void {
     this.s.items = items;
+    this.admitted = undefined;
     this.fresh.add(items);
     this.ids = undefined;
   }
@@ -209,6 +222,17 @@ class Draft {
     if (!this.copyOnWrite) this.errors = count;
     return count;
   }
+}
+
+/** Request ownership is frozen when a reply starts, before later queued messages are admitted. */
+function replyOwners(d: Draft): string[] {
+  if (d.s.usage.promptIds)
+    return d.s.usage.promptIds.filter((id) => {
+      const item = d.s.items[d.find(id, "user")];
+      return item?.kind === "user" && !item.pending;
+    });
+  const id = d.admittedUser();
+  return id === null ? [] : [id];
 }
 
 /** The single event switch shared by the fold and the live update. It never writes to `event`. */
@@ -270,8 +294,10 @@ function reduce(d: Draft, event: SessionEvent): void {
     case "message.delivered":
       for (let i = 0; i < s.items.length; i++) {
         const current = s.items[i];
-        if (current?.kind === "user" && "pending" in current && event.messageIds.includes(current.id))
+        if (current?.kind === "user" && "pending" in current && event.messageIds.includes(current.id)) {
           delete (d.at("items", i) as typeof current).pending;
+          d.admit(i);
+        }
       }
       break;
     case "reasoning.delta":
@@ -285,21 +311,24 @@ function reduce(d: Draft, event: SessionEvent): void {
           turnId,
           text: event.text,
           streaming: true,
+          replyToMessageIds: replyOwners(d),
           citations: [],
         });
       else (d.at("items", index) as Extract<SessionItem, { kind: "assistant" }>).text += event.text;
       break;
     }
     case "message.done": {
+      const index = d.find(event.messageId, "assistant");
+      const previous = s.items[index];
       const done: SessionItem = {
         kind: "assistant",
         id: event.messageId,
         turnId,
         text: event.text,
         streaming: false,
+        replyToMessageIds: previous?.kind === "assistant" ? previous.replyToMessageIds : replyOwners(d),
         citations: event.citations,
       };
-      const index = d.find(event.messageId, "assistant");
       if (index < 0) d.push(done);
       else d.list("items")[index] = done;
       break;

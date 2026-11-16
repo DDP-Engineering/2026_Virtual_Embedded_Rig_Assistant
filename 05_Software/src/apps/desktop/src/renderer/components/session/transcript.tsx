@@ -18,6 +18,7 @@ import { useDocumentViewer } from "../documents/viewer-context.js";
 import { ErrorMessage } from "../error-message.js";
 import { HelpContext, helpCitationKey } from "../help.js";
 import { ApprovalCard } from "./approval-card.js";
+import { BookmarkButton } from "./bookmark-button.js";
 import { argsText, ToolOutput } from "./bounded-text.js";
 import { Disclosure } from "./disclosure.js";
 import { Markdown } from "./markdown.js";
@@ -26,6 +27,7 @@ import { contentOffset, scrollTarget } from "./transcript-navigation.js";
 import { type NavigatorMessage, TranscriptNavigator } from "./transcript-navigator.js";
 import { searchMatch, streamingBlocks, type ToolItem, transcriptRows } from "./transcript-projection.js";
 import { TranscriptScroll } from "./transcript-scroll.js";
+import { useBookmarks } from "./use-bookmarks.js";
 
 /** PERF-07: rows of the first commit, newest first; older rows are prepended in idle chunks. */
 const INITIAL_ROWS = 40;
@@ -61,6 +63,7 @@ export function Transcript({
   disabled?: boolean;
 }) {
   const { t } = useTranslation();
+  const bookmarks = useBookmarks(sessionId, state.bookmarkedMessageIds, disabled || !sessionId);
   const scroll = useRef<HTMLDivElement>(null);
   const content = useRef<HTMLDivElement>(null);
   const transcriptId = useId();
@@ -146,15 +149,18 @@ export function Transcript({
   retryRef.current = retry;
   const onRetry = useCallback(() => retryRef.current(), []);
   const latestError = useMemo(() => state.items.findLast((i) => i.kind === "error")?.id, [state.items]);
-  const userMessages = useMemo(
-    () =>
-      rows.flatMap((row): NavigatorMessage[] =>
-        row.kind !== "group" && row.item.kind === "user"
-          ? [{ id: row.item.id, text: row.item.text, pending: !!row.item.pending }]
-          : [],
-      ),
-    [rows],
-  );
+  const userMessages = useMemo(() => {
+    const messages = new Map<string, NavigatorMessage>();
+    for (const item of state.items)
+      if (item.kind === "user")
+        messages.set(item.id, { id: item.id, text: item.text, pending: !!item.pending });
+      else if (item.kind === "assistant" && item.text)
+        for (const id of item.replyToMessageIds ?? []) {
+          const user = messages.get(id);
+          if (user && !user.pending && user.reply === undefined) user.reply = item.text;
+        }
+    return [...messages.values()];
+  }, [state.items]);
   const approvalsByCall = useMemo(() => {
     const byCall = new Map<string, Approval[]>();
     for (const approval of state.approvals)
@@ -169,111 +175,120 @@ export function Transcript({
     latestTurn !== undefined &&
     (latestTurn.stopReason === "aborted" || state.interrupted.includes(latestTurn.turnId));
   return (
-    <div className="transcript-frame" data-chat-detail={detail}>
-      <TranscriptScroll viewport={scroll} content={content} controls={transcriptId} />
-      <TranscriptNavigator
-        key={sessionId ?? ""}
-        viewport={scroll}
-        content={content}
-        anchors={anchors}
-        messages={userMessages}
-        live={!!state.activeTurnId}
-        controls={transcriptId}
-        onNavigate={navigate}
-      />
-      <div
-        className="transcript"
-        ref={scroll}
-        id={transcriptId}
-        data-transcript
-        role="log"
-        aria-label={t("chat.transcript")}
-        // biome-ignore lint/a11y/noNoninteractiveTabindex: Scrollable transcript receives keyboard scrolling and a visible focus ring.
-        tabIndex={0}
-        onScroll={(e) => {
-          const node = e.currentTarget;
-          const atEnd = node.scrollHeight - node.scrollTop - node.clientHeight < 80;
-          settledMax.current = node.scrollHeight - node.clientHeight;
-          // Within a screen of the oldest mounted row (scrolling, Home, the rail): mount the rest now,
-          // as a transition so input stays responsive while it renders.
-          if (first > 0 && !atEnd && node.scrollTop < node.clientHeight) {
-            toTop.current = node.scrollTop < 1;
-            startTransition(() => setStart(0));
-          }
-          if (suspended.current !== null && (!atEnd || Math.abs(node.scrollTop - suspended.current) < 2))
-            return;
-          suspended.current = null;
-          following.current = atEnd;
-        }}
-      >
-        <div className="transcript-content" ref={content}>
-          {!state.items.length && <p className="muted">{t("chat.empty")}</p>}
-          {detail === "verbose" &&
-            Object.entries(reasoning).map(([id, text]) => (
-              <Disclosure className="reasoning" key={id} title={t("chat.reasoning")}>
-                <pre>{text}</pre>
-              </Disclosure>
-            ))}
-          {shown.map((row) => {
-            if (row.kind === "group")
+    <>
+      {bookmarks.error !== undefined && <ErrorMessage error={bookmarks.error} />}
+      <div className="transcript-frame" data-chat-detail={detail}>
+        <TranscriptScroll viewport={scroll} content={content} controls={transcriptId} />
+        <TranscriptNavigator
+          key={sessionId ?? ""}
+          viewport={scroll}
+          content={content}
+          anchors={anchors}
+          messages={userMessages}
+          live={!!state.activeTurnId}
+          controls={transcriptId}
+          onNavigate={navigate}
+          bookmarked={bookmarks.has}
+          bookmarkDisabled={(id) => disabled || !sessionId || bookmarks.busy(id)}
+          onBookmark={bookmarks.toggle}
+        />
+        <div
+          className="transcript"
+          ref={scroll}
+          id={transcriptId}
+          data-transcript
+          role="log"
+          aria-label={t("chat.transcript")}
+          // biome-ignore lint/a11y/noNoninteractiveTabindex: Scrollable transcript receives keyboard scrolling and a visible focus ring.
+          tabIndex={0}
+          onScroll={(e) => {
+            const node = e.currentTarget;
+            const atEnd = node.scrollHeight - node.scrollTop - node.clientHeight < 80;
+            settledMax.current = node.scrollHeight - node.clientHeight;
+            // Within a screen of the oldest mounted row (scrolling, Home, the rail): mount the rest now,
+            // as a transition so input stays responsive while it renders.
+            if (first > 0 && !atEnd && node.scrollTop < node.clientHeight) {
+              toTop.current = node.scrollTop < 1;
+              startTransition(() => setStart(0));
+            }
+            if (suspended.current !== null && (!atEnd || Math.abs(node.scrollTop - suspended.current) < 2))
+              return;
+            suspended.current = null;
+            following.current = atEnd;
+          }}
+        >
+          <div className="transcript-content" ref={content}>
+            {!state.items.length && <p className="muted">{t("chat.empty")}</p>}
+            {detail === "verbose" &&
+              Object.entries(reasoning).map(([id, text]) => (
+                <Disclosure className="reasoning" key={id} title={t("chat.reasoning")}>
+                  <pre>{text}</pre>
+                </Disclosure>
+              ))}
+            {shown.map((row) => {
+              if (row.kind === "group")
+                return (
+                  <ToolGroupRow
+                    key={`group/${row.id}`}
+                    tools={row.tools}
+                    updates={updates}
+                    sessionId={sessionId}
+                  />
+                );
+              const item = row.item;
+              const key = `${item.kind}/${item.id}`;
+              if (item.kind === "tool")
+                return (
+                  <ToolRow
+                    key={key}
+                    item={item}
+                    detail={detail}
+                    update={updates[item.id]}
+                    approvals={approvalsByCall.get(item.id) ?? NO_APPROVALS}
+                    sessionId={sessionId}
+                    disabled={disabled}
+                  />
+                );
+              if (item.kind === "error")
+                return (
+                  <ErrorRow
+                    key={key}
+                    item={item}
+                    canRetry={item.id === latestError && !state.activeTurnId && item.retryable}
+                    retry={onRetry}
+                  />
+                );
               return (
-                <ToolGroupRow
-                  key={`group/${row.id}`}
-                  tools={row.tools}
-                  updates={updates}
-                  sessionId={sessionId}
-                />
-              );
-            const item = row.item;
-            const key = `${item.kind}/${item.id}`;
-            if (item.kind === "tool")
-              return (
-                <ToolRow
+                <MessageRow
                   key={key}
                   item={item}
+                  match={searchMatch(item, needle)}
+                  highlighted={
+                    item.kind === "user" && highlight?.sessionId === sessionId && highlight?.id === item.id
+                  }
+                  sessionId={sessionId}
+                  anchors={anchors}
                   detail={detail}
-                  update={updates[item.id]}
-                  approvals={approvalsByCall.get(item.id) ?? NO_APPROVALS}
-                  sessionId={sessionId}
-                  disabled={disabled}
+                  bookmarked={bookmarks.has(item.id)}
+                  bookmarkDisabled={disabled || !sessionId || bookmarks.busy(item.id)}
+                  onBookmark={bookmarks.toggle}
                 />
               );
-            if (item.kind === "error")
-              return (
-                <ErrorRow
-                  key={key}
-                  item={item}
-                  canRetry={item.id === latestError && !state.activeTurnId && item.retryable}
-                  retry={onRetry}
-                />
-              );
-            return (
-              <MessageRow
-                key={key}
-                item={item}
-                match={searchMatch(item, needle)}
-                highlighted={
-                  item.kind === "user" && highlight?.sessionId === sessionId && highlight?.id === item.id
-                }
-                sessionId={sessionId}
-                anchors={anchors}
-                detail={detail}
-              />
-            );
-          })}
-          {stopped && (
-            <p className="muted" data-chat-stopped role="status">
-              {t("chatDetail.stopped")}
-            </p>
-          )}
-          {detail === "minimal" && state.activeTurnId && state.status === "running" && (
-            <p className="muted" data-chat-working role="status">
-              {t("chat.working")}
-            </p>
-          )}
+            })}
+            {stopped && (
+              <p className="muted" data-chat-stopped role="status">
+                {t("chatDetail.stopped")}
+              </p>
+            )}
+            {detail === "minimal" && state.activeTurnId && state.status === "running" && (
+              <p className="muted" data-chat-working role="status">
+                {t("chat.working")}
+              </p>
+            )}
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
 type Item = SessionState["items"][number];
@@ -290,6 +305,9 @@ const MessageRow = memo(function MessageRow({
   sessionId,
   anchors,
   detail,
+  bookmarked,
+  bookmarkDisabled,
+  onBookmark,
 }: {
   item: Extract<Item, { kind: "user" | "assistant" }>;
   match: boolean;
@@ -297,6 +315,9 @@ const MessageRow = memo(function MessageRow({
   sessionId: string | undefined;
   anchors: Map<string, HTMLElement>;
   detail: ChatDetail;
+  bookmarked: boolean;
+  bookmarkDisabled: boolean;
+  onBookmark: (id: string, value: boolean) => void;
 }) {
   const { t } = useTranslation();
   const openDocument = useDocumentViewer();
@@ -336,6 +357,11 @@ const MessageRow = memo(function MessageRow({
       {item.kind === "user" ? (
         <>
           <strong>{t("chat.you")}</strong>
+          <BookmarkButton
+            bookmarked={bookmarked}
+            disabled={bookmarkDisabled}
+            onToggle={() => onBookmark(id, !bookmarked)}
+          />
           {item.pending && (
             <span role="status" data-message-pending>
               {t("chat.pending")}

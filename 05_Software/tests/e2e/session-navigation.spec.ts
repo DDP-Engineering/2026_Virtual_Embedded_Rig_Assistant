@@ -256,10 +256,10 @@ test("markers map, preview and reach user messages while the rail keeps its cont
     await page.keyboard.press("Home");
     await expect(marker(page, 1)).toBeFocused();
     expect(await scrollTop(page)).toBe(reading);
-    await expect(page.getByRole("tooltip")).toHaveText("Short question");
+    await expect(page.locator("[data-nav-preview] strong")).toHaveText("Short question");
     await shot(page, "keyboard");
     await page.keyboard.press("Escape");
-    await expect(page.getByRole("tooltip")).toHaveCount(0);
+    await expect(page.locator("[data-nav-preview]")).toHaveCount(0);
     await page.keyboard.press("Enter");
     await expectJump(page, 0);
     await expect(marker(page, 1)).toBeFocused();
@@ -268,7 +268,7 @@ test("markers map, preview and reach user messages while the rail keeps its cont
     await expect(view(page)).toBeFocused();
     // Pointer preview: plain text, inside the window, dismissible.
     await marker(page, 7).hover();
-    const tooltip = page.getByRole("tooltip");
+    const tooltip = page.locator("[data-nav-preview]");
     await expect(tooltip).toHaveText(/^Seeded question 5\./);
     const box = await tooltip.boundingBox();
     expect(box).toBeTruthy();
@@ -332,7 +332,7 @@ test("a streaming reply never pulls the reader back after a jump until an explic
     await send(page, "Queued while streaming", 13);
     await expect(users(page).nth(12).locator("[data-message-pending]")).toHaveCount(1);
     await marker(page, 13).hover();
-    await expect(page.getByRole("tooltip")).toHaveText("Pending delivery — Queued while streaming");
+    await expect(page.locator("[data-nav-preview]")).toContainText("Pending delivery");
     // A jump that lands within the 80 px follow threshold of the end still suspends following.
     const nearEnd = await page.evaluate(() => {
       const viewport = document.querySelector("[data-transcript]") as HTMLElement;
@@ -370,7 +370,7 @@ test("a streaming reply never pulls the reader back after a jump until an explic
     // The delivered message keeps its single marker or group entry, now without the pending label.
     if (await marker(page, 13).count()) {
       await marker(page, 13).hover();
-      await expect(page.getByRole("tooltip")).toHaveText("Queued while streaming");
+      await expect(page.locator("[data-nav-preview] strong")).toHaveText("Queued while streaming");
     } else {
       await lane(page).locator("[data-nav-marker][aria-expanded]").last().click();
       await expect(page.locator("[data-nav-selector]")).toContainText("Queued while streaming");
@@ -442,15 +442,15 @@ test("geometry follows disclosures and detail levels, and each session keeps onl
     for (let round = 0; round < 3; round++) {
       await marker(page, 4).click();
       await marker(page, 5).hover();
-      await expect(page.getByRole("tooltip")).toBeVisible();
+      await expect(page.locator("[data-nav-preview]")).toBeVisible();
       await page.locator(`[data-session="${sessionId}"]`).click();
       await expect(lane(page)).toHaveCount(0);
-      await expect(page.getByRole("tooltip")).toHaveCount(0);
+      await expect(page.locator("[data-nav-preview]")).toHaveCount(0);
       await expect(page.locator("[data-nav-highlight]")).toHaveCount(0);
       await page.locator(`[data-session="${toolsId}"]`).click();
       await expect(lane(page)).toBeVisible();
       await expect(page.locator("[data-nav-highlight]")).toHaveCount(0);
-      await expect(page.getByRole("tooltip")).toHaveCount(0);
+      await expect(page.locator("[data-nav-preview]")).toHaveCount(0);
       await expect(status(page)).toHaveText("");
     }
     // Only the current navigator and the rail observe the conversation after repeated switches.
@@ -561,7 +561,7 @@ test("500 messages stay reachable through groups, scrolling reuses measured anch
     await expectMapped(page);
     await shot(page, "narrow");
     await groups.last().hover();
-    const tooltip = await page.getByRole("tooltip").boundingBox();
+    const tooltip = await page.locator("[data-nav-preview]").boundingBox();
     expect(tooltip).toBeTruthy();
     expect((tooltip?.x ?? 0) + (tooltip?.width ?? 0)).toBeLessThanOrEqual(1024);
     expect((tooltip?.y ?? 0) + (tooltip?.height ?? 0)).toBeLessThanOrEqual(640);

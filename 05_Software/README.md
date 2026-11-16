@@ -421,3 +421,5 @@ Approvals, errors, stopped-turn notices and useful download actions remain visib
 Full details are always available through **Activity**. Save applies the preference
 across the workbench's sessions; Cancel discards the draft. The setting controls display,
 without changing model answer length, tool permissions or stored history.
+
+Renderer session controls include `bookmark-button.tsx` and `use-bookmarks.ts` beside the transcript: shared localized bookmark actions and optimistic event-backed state.

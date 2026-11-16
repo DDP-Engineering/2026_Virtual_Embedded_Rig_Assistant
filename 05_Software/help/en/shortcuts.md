@@ -21,3 +21,5 @@ These are VERA's default keyboard shortcuts. Change, add or remove them in **Set
 |---|---|
 | F1 | Open the help page of the current screen. |
 | F10 | Move to the File, Edit and View menus. |
+
+Tab from a focused single-message rail marker to its bookmark action; Enter or Space toggles it. Escape closes the preview and returns focus to the marker.

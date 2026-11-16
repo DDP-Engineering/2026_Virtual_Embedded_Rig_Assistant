@@ -176,6 +176,8 @@
     "operations": "Opérations : {{count}}"
   },
   "chat": {
+    "bookmark": "Ajouter un signet",
+    "removeBookmark": "Retirer le signet",
     "attachments": "Fichiers joints",
     "removeAttachment": "Retirer la pièce jointe : {{path}}",
     "promptInput": "Entrée",

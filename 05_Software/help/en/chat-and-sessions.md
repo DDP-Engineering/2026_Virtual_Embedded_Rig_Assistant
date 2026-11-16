@@ -55,3 +55,7 @@ Saved message bookmarks stay in JSON exports; Markdown marks bookmarked user mes
 ## The right panel
 
 **Toggle right panel** shows tabs for the open session: **Context** (workbench instructions and available skills), **Files**, **Changes**, **Artifacts** (text results the agent saved, with **Export** and **Reveal in folder**), **Plan** (the agent's task list) and **Runs** (program runs of plugins).
+
+## Bookmarks
+
+Hover over one of your messages or use Tab to reach its bookmark icon. Select **Bookmark** to mark it; the filled icon uses **Remove bookmark** to clear it. The rail preview shows the first line of your message and the start of the agent reply, with the same bookmark action. Changes appear immediately; a failed save restores the previous state and shows an error. Archived sessions and read-only workbenches allow viewing only.

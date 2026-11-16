@@ -3662,3 +3662,48 @@ legend {
     overflow-y: visible;
   }
 }
+
+.bookmark-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border-color: transparent;
+  background: transparent;
+  color: var(--muted-foreground);
+}
+.bookmark-button[aria-pressed="true"] {
+  color: var(--primary);
+}
+.transcript-item.user {
+  position: relative;
+  padding-right: 3rem;
+}
+.transcript-item.user > .bookmark-button {
+  position: absolute;
+  top: 0.3rem;
+  right: 0.3rem;
+  opacity: 0;
+  pointer-events: none;
+}
+.transcript-item.user:hover > .bookmark-button,
+.transcript-item.user:focus-within > .bookmark-button {
+  opacity: 1;
+  pointer-events: auto;
+}
+.transcript-preview-title {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+.transcript-preview-title > strong {
+  min-width: 0;
+}
+.transcript-navigator-popup > p {
+  margin: 0.4rem 0 0;
+  color: var(--muted-foreground);
+}

@@ -21,3 +21,5 @@ Dies sind die Standard-Tastenkürzel von VERA. Ändern, ergänzen oder entfernen
 |---|---|
 | F1 | Öffnet die Hilfeseite des aktuellen Bildschirms. |
 | F10 | Wechselt zu den Menüs Datei, Bearbeiten und Ansicht. |
+
+Von einer fokussierten Einzelmarkierung führt Tab zur Lesezeichenaktion; Eingabe oder Leertaste schaltet sie um. Escape schließt die Vorschau und setzt den Fokus auf die Markierung zurück.

@@ -8,6 +8,8 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ### Added
 
+- User messages and rail previews share bookmark controls; previews show the first prompt line and reply start.
+
 - Per-session user-message bookmarks persist across restarts and remain in session exports.
 - The document selection, its preview and the Files tab honor the workbench's .gitignore files (switch on by default).
 - Per-workbench maximum file size (lowers the fixed limits) and maximum indexed files settings in Documents & RAG.

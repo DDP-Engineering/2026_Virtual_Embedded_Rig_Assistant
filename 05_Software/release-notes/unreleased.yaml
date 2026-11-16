@@ -36,3 +36,10 @@ entries:
       ro: Exporturile sesiunilor păstrează marcajele salvate ale mesajelor.
       de: Sitzungsexporte behalten gespeicherte Nachrichtenlesezeichen bei.
       fr: Les exports de session conservent les signets enregistrés des messages.
+  - category: new
+    topic: { en: Sessions, ro: Sesiuni, de: Sitzungen, fr: Sessions }
+    text:
+      en: Bookmark your messages from the conversation or its title and reply preview.
+      ro: Marchează mesajele din conversație sau din previzualizarea cu titlu și răspuns.
+      de: Setze Lesezeichen an Nachrichten im Gespräch oder in der Titel- und Antwortvorschau.
+      fr: Ajoutez des signets aux messages dans la conversation ou l’aperçu du titre et de la réponse.

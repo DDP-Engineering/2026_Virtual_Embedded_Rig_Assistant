@@ -21,3 +21,5 @@ Acestea sunt scurtăturile de tastatură implicite ale VERA. Le poți schimba, a
 |---|---|
 | F1 | Deschide pagina de ajutor a ecranului curent. |
 | F10 | Mută focalizarea pe meniurile Fișier, Editare și Vizualizare. |
+
+De la un reper individual focalizat, Tab ajunge la acțiunea de marcaj; Enter sau Spațiu o activează. Escape închide previzualizarea și readuce focalizarea la reper.

@@ -159,3 +159,5 @@ versiune publică.
 
 Lansatoarele mediilor de release (VM Linux offline, Windows offline și Windows Sandbox)
 sunt în [02_Tools/release](../../02_Tools/README.md#release).
+
+`e2e/bookmarks.spec.ts` covers message/preview bookmark controls in four browser languages and native restart/archive guards.

@@ -55,3 +55,7 @@ Gespeicherte Nachrichtenlesezeichen bleiben im JSON-Export erhalten; Markdown ke
 ## Der rechte Bereich
 
 **Rechten Bereich ein- oder ausblenden** zeigt Tabs für die geöffnete Sitzung: **Kontext** (Workbench-Anweisungen und verfügbare Skills), **Dateien**, **Änderungen**, **Artefakte** (Textergebnisse, die der Agent gespeichert hat, mit **Exportieren** und **Im Ordner anzeigen**), **Plan** (die Aufgabenliste des Agenten) und **Läufe** (Programmläufe von Plugins).
+
+## Lesezeichen
+
+Bewege den Zeiger über eine eigene Nachricht oder erreiche ihr Lesezeichensymbol mit Tab. **Lesezeichen setzen** markiert sie; das gefüllte Symbol bietet **Lesezeichen entfernen**. Die Vorschau an der Leiste zeigt die erste Nachrichtenzeile und den Anfang der Agentenantwort mit derselben Lesezeichenaktion. Änderungen erscheinen sofort; bei einem Speicherfehler wird der vorherige Zustand wiederhergestellt und ein Fehler angezeigt. Archivierte Sitzungen und schreibgeschützte Workbenches erlauben nur das Anzeigen.

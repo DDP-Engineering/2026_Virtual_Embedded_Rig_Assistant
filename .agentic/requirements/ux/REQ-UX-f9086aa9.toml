@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-UX-f9086aa9"
+title = "Synchronize optimistic bookmark controls"
+status = "active"
+requirement = "When either user-message bookmark action is activated, VERA shall immediately project the desired bookmark state into both the message and its rail preview while the existing bookmark IPC saves it."
+verification = "Hold the IPC promise and assert both pressed states change before settlement, then acknowledge it before its event and assert the optimistic state remains until the snapshot catches up."
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/session/use-bookmarks.ts", "05_Software/src/apps/desktop/src/renderer/components/session/transcript.tsx", "05_Software/src/apps/desktop/src/renderer/components/session/transcript-navigator.tsx", "05_Software/src/apps/desktop/src/renderer/components/session/workspace.tsx", "05_Software/src/apps/desktop/src/renderer/App.tsx"]
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/session/transcript-navigator.test.ts", "05_Software/tests/e2e/bookmarks.spec.ts"]
+created = 2026-11-16
+updated = 2026-11-16

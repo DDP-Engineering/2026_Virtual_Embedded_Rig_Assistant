@@ -71,7 +71,7 @@ the backend; reasoning and live tool-update presentation are transient renderer 
   holds one marker per displayed user message, pending ones included, placed proportionally over
   the whole content (12 + clamp(y/S)·(H-24)); markers whose 24 px targets would overlap merge
   deterministically into count groups with a non-modal fieldset selector. Hover/focus shows a
-  plain-text preview (140 code points, empty/pending labels, Escape, stays while hovered);
+  plain-text title/reply preview (each at most 140 code points, empty/pending labels, Escape, stays while hovered);
   activation scrolls the message 16 px below the top or to the native limit, outlines it for 1.5 s,
   announces "Moved to message N" and keeps focus in the lane. One roving Tab stop with arrows,
   Home/End; aria-current marks the last message at or above scrollTop + min(80, V/4). A jump
@@ -224,3 +224,10 @@ and essential cards; `workbench-config-form.tsx` owns the localized selector.
 Change map: level semantics → projection/transcript tests; config route → App/Workspace;
 all-level essential interactions → transcript-detail.test.ts; native persistence, Ask/Stop
 and restart → tests/e2e/chat-detail.spec.ts. Existing scroll/focus rules are retained.
+
+## User-message bookmarks
+
+- Transcript owns useBookmarks, a per-session optimistic overlay on snapshot bookmarkedMessageIds. Message and single-marker preview share BookmarkButton and the same projected value/in-flight lock. Successful IPC retains the optimistic value until the event/snapshot confirms it; failure restores the preceding value and shows ErrorMessage. Obsolete session/unmount completions are ignored.
+- Message buttons reveal on hover and focus-within, render a filled icon when set and have localized Bookmark/Remove bookmark names in en/ro/de/fr. App supplies selected-summary archive state (locked until known); workspace combines it with readOnly for transcript mutation guards. IPC remains authoritative.
+- Single-marker preview is an accessible group with first prompt line as title, start of the first nonempty assistant reply bound to that user by shared replyToMessageIds below, and only the bookmark action. Tool rows do not break association. Pending rows have no reply; delivery and replay preserve earlier reply ownership, and admitted batches may share a reply. Marker ordinals stay in accessible names. Tab enters the card action and Escape restores its marker. Group selectors retain existing navigation.
+- Files: components/session/bookmark-button.tsx, use-bookmarks.ts, transcript.tsx, transcript-navigator.tsx and styles.css. Focused proof: transcript-navigator.test.ts and tests/e2e/bookmarks.spec.ts; immediate transcript-render/detail/workspace and session-navigation regressions preserve memoization/scroll/focus behavior. Distinct bookmarked markers and next/previous commands remain planned in BKM-03.

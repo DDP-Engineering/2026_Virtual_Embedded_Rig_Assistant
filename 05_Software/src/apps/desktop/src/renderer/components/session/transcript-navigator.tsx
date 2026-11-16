@@ -11,6 +11,7 @@ import {
   useState,
 } from "react";
 import { useTranslation } from "react-i18next";
+import { BookmarkButton } from "./bookmark-button.js";
 import {
   contentOffset,
   currentIndex,
@@ -20,7 +21,7 @@ import {
   previewText,
 } from "./transcript-navigation.js";
 
-export type NavigatorMessage = { id: string; text: string; pending: boolean };
+export type NavigatorMessage = { id: string; text: string; pending: boolean; reply?: string };
 type Layout = { ids: string[]; starts: number[]; scrollHeight: number; height: number; width: number };
 type Entry = { message: NavigatorMessage; ordinal: number };
 type Group = { key: string; center: number; members: Entry[] };
@@ -55,6 +56,9 @@ export function TranscriptNavigator({
   live = false,
   controls,
   onNavigate,
+  bookmarked = () => false,
+  bookmarkDisabled = () => true,
+  onBookmark,
 }: {
   viewport: RefObject<HTMLDivElement | null>;
   content: RefObject<HTMLDivElement | null>;
@@ -64,6 +68,9 @@ export function TranscriptNavigator({
   live?: boolean;
   controls: string;
   onNavigate: (id: string) => boolean;
+  bookmarked?: (id: string) => boolean;
+  bookmarkDisabled?: (id: string) => boolean;
+  onBookmark?: (id: string, value: boolean) => void;
 }) {
   const { t } = useTranslation();
   const id = useId();
@@ -248,11 +255,13 @@ export function TranscriptNavigator({
     const close = (event: KeyboardEvent) => {
       if (event.key !== "Escape" || event.defaultPrevented || document.querySelector("dialog[open]")) return;
       event.preventDefault();
+      const key = previewGroup?.key;
+      if (popup.current?.contains(document.activeElement) && key) buttons.current.get(key)?.focus();
       setPreview(null);
     };
     document.addEventListener("keydown", close);
     return () => document.removeEventListener("keydown", close);
-  }, [previewShown]);
+  }, [previewShown, previewGroup?.key]);
   useEffect(() => {
     if (selector === null) return;
     const outside = (event: Event) => {
@@ -289,7 +298,9 @@ export function TranscriptNavigator({
   };
   const leave = () => {
     clearTimeout(hide.current);
-    hide.current = setTimeout(() => setPreview(null), 300);
+    hide.current = setTimeout(() => {
+      if (!popup.current?.contains(document.activeElement)) setPreview(null);
+    }, 300);
   };
   const stay = () => clearTimeout(hide.current);
   if (!visible) return null;
@@ -373,10 +384,13 @@ export function TranscriptNavigator({
               aria-controls={expanded ? `${id}-selector` : undefined}
               aria-describedby={single && previewGroup?.key === group.key ? `${id}-preview` : undefined}
               onFocus={() => {
+                stay();
                 if (!holds(group, focusId)) setFocusId(group.key);
                 if (!openGroup) setPreview(group.key);
               }}
-              onBlur={() => setPreview((shown) => (shown === group.key ? null : shown))}
+              onBlur={(event) => {
+                if (!popup.current?.contains(event.relatedTarget)) leave();
+              }}
               onPointerEnter={() => {
                 stay();
                 if (!openGroup) setPreview(group.key);
@@ -457,17 +471,46 @@ export function TranscriptNavigator({
           </fieldset>
         </div>
       ) : previewGroup ? (
+        // biome-ignore lint/a11y/useSemanticElements: Nonmodal preview group includes text and one action; fieldset would imply a form.
         <div
           ref={popup}
           id={`${id}-preview`}
           className="transcript-navigator-popup"
-          role="tooltip"
+          role="group"
+          aria-label={previewGroup.members.length === 1 ? undefined : groupLabel(previewGroup)}
+          aria-labelledby={previewGroup.members.length === 1 ? `${id}-title` : undefined}
+          data-nav-preview
+          onFocus={stay}
+          onBlur={(event) => {
+            if (!event.currentTarget.contains(event.relatedTarget)) leave();
+          }}
           onPointerEnter={stay}
           onPointerLeave={leave}
         >
-          {previewGroup.members.length === 1 && previewGroup.members[0]
-            ? line(previewGroup.members[0])
-            : groupLabel(previewGroup)}
+          {previewGroup.members.length === 1 && previewGroup.members[0] ? (
+            <>
+              <div className="transcript-preview-title">
+                <strong id={`${id}-title`}>
+                  {previewText(previewGroup.members[0].message.text.split(/\r?\n/, 1)[0] ?? "") ||
+                    t("chat.navigator.empty")}
+                </strong>
+                <BookmarkButton
+                  bookmarked={bookmarked(previewGroup.members[0].message.id)}
+                  disabled={bookmarkDisabled(previewGroup.members[0].message.id)}
+                  onToggle={() => {
+                    const messageId = previewGroup.members[0]?.message.id;
+                    if (messageId) onBookmark?.(messageId, !bookmarked(messageId));
+                  }}
+                />
+              </div>
+              {previewGroup.members[0].message.pending && <span>{t("chat.pending")}</span>}
+              {previewGroup.members[0].message.reply && (
+                <p>{previewText(previewGroup.members[0].message.reply)}</p>
+              )}
+            </>
+          ) : (
+            groupLabel(previewGroup)
+          )}
         </div>
       ) : null}
       <span role="status" className="sr-only">

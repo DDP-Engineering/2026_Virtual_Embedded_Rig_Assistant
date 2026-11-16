@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-UX-94b2ef16"
+title = "User-message bookmark controls"
+status = "active"
+requirement = "When a user hovers or keyboard-focuses a user message, the transcript shall expose an icon-only bookmark toggle with a filled set state and localized Bookmark or Remove bookmark accessible name in English, Romanian, German and French."
+verification = "Render user and assistant messages in each language; inspect icon labels/pressed state and use browser computed styles to verify hover/focus visibility."
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/session/transcript-navigator.test.ts", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json", "05_Software/src/apps/desktop/src/renderer/locales/fr.json", "05_Software/src/apps/desktop/src/renderer/App.tsx", "05_Software/src/apps/desktop/src/renderer/components/session/bookmark-button.tsx", "05_Software/src/apps/desktop/src/renderer/components/session/transcript-navigator.tsx", "05_Software/src/apps/desktop/src/renderer/components/session/transcript.tsx", "05_Software/src/apps/desktop/src/renderer/components/session/workspace.tsx", "05_Software/src/apps/desktop/src/renderer/components/session/use-bookmarks.ts", "05_Software/src/apps/desktop/src/renderer/styles.css"]
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/session/transcript-navigator.test.ts", "05_Software/tests/e2e/bookmarks.spec.ts"]
+created = 2026-11-16
+updated = 2026-11-16

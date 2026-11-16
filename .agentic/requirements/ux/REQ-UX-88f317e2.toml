@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-UX-88f317e2"
+title = "Conversation rail preview card"
+status = "active"
+requirement = "When a single user-message marker is hovered or focused, the rail shall show a preview card containing the first line of that user message as title, the start of its agent reply when available and only a bookmark action, keeping the message ordinal in the marker accessible name."
+verification = "Use multiline prompts, absent replies, tool-interleaved replies and queued/delivered prompts through live updates and replay; assert title/reply plain text, one action and no ordinal in the card; Tab into action and Escape back to marker."
+affected_paths = ["05_Software/src/libraries/shared/src/session-state.ts", "05_Software/src/libraries/shared/src/session-state.test.ts", "02_Tools/build/generate-help-shortcuts.mjs", "05_Software/src/apps/desktop/src/renderer/App.tsx", "05_Software/src/apps/desktop/src/renderer/components/session/bookmark-button.tsx", "05_Software/src/apps/desktop/src/renderer/components/session/transcript-navigator.tsx", "05_Software/src/apps/desktop/src/renderer/components/session/transcript.tsx", "05_Software/src/apps/desktop/src/renderer/components/session/workspace.tsx", "05_Software/src/apps/desktop/src/renderer/components/session/use-bookmarks.ts", "05_Software/src/apps/desktop/src/renderer/styles.css"]
+linked_tests = ["05_Software/src/libraries/shared/src/session-state.test.ts", "05_Software/src/apps/desktop/src/renderer/components/session/transcript-navigator.test.ts", "05_Software/tests/e2e/bookmarks.spec.ts"]
+created = 2026-11-16
+updated = 2026-11-16

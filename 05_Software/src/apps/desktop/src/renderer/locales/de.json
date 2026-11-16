@@ -176,6 +176,8 @@
     "operations": "Vorgänge: {{count}}"
   },
   "chat": {
+    "bookmark": "Lesezeichen setzen",
+    "removeBookmark": "Lesezeichen entfernen",
     "attachments": "Angehängte Dateien",
     "removeAttachment": "Anhang entfernen: {{path}}",
     "promptInput": "Eingabe",

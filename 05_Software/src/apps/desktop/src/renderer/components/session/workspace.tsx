@@ -19,6 +19,7 @@ export function SessionWorkspace({
   workbenchId,
   changed,
   readOnly,
+  archived = false,
   detail = "normal",
   composerFocusRequest = 0,
   composerFocused,
@@ -27,6 +28,7 @@ export function SessionWorkspace({
   workbenchId: string;
   changed: () => void;
   readOnly: boolean;
+  archived?: boolean;
   detail?: ChatDetail;
   composerFocusRequest?: number;
   /** Called once a focus request is taken, so the app drops it and never replays it. */
@@ -204,7 +206,7 @@ export function SessionWorkspace({
           }}
           search={search}
           sessionId={id}
-          disabled={readOnly}
+          disabled={readOnly || archived}
         />
       )}
       {failure !== undefined && <ErrorMessage error={failure} />}

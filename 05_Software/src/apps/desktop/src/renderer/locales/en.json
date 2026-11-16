@@ -176,6 +176,8 @@
     "operations": "Operations: {{count}}"
   },
   "chat": {
+    "bookmark": "Bookmark",
+    "removeBookmark": "Remove bookmark",
     "attachments": "Attached files",
     "removeAttachment": "Remove attachment: {{path}}",
     "promptInput": "Input",

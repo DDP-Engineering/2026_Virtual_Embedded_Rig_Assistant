@@ -55,3 +55,7 @@ Marcajele salvate ale mesajelor rămân în exporturile JSON; Markdown indică m
 ## Panoul din dreapta
 
 **Arată sau ascunde panoul din dreapta** afișează file pentru sesiunea deschisă: **Context** (instrucțiunile workbenchului și skill-urile disponibile), **Fișiere**, **Modificări**, **Artefacte** (rezultatele text salvate de agent, cu **Exportă** și **Arată în folder**), **Plan** (lista de sarcini a agentului) și **Rulări** (rulările de programe ale pluginurilor).
+
+## Marcaje
+
+Treci cu indicatorul peste un mesaj propriu sau folosește Tab pentru a ajunge la pictograma de marcaj. Alege **Marchează**; pictograma plină oferă **Elimină marcajul**. Previzualizarea de pe margine arată primul rând al mesajului și începutul răspunsului agentului, cu aceeași acțiune de marcaj. Modificarea apare imediat; dacă salvarea eșuează, starea anterioară revine și apare o eroare. În sesiunile arhivate și workbench-urile doar pentru citire poți doar consulta marcajele.

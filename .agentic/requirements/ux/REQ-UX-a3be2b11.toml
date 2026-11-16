@@ -7,7 +7,7 @@ title = "Preview a user message from its marker"
 status = "active"
 
 requirement = """
-When a message marker gets hover or keyboard focus, VERA shall show a plain-text preview of at most 140 normalized characters of the message, without the message number, (a localized label for an empty message, marked when pending) inside the window, closing on Escape and staying while the pointer is over it.
+When a message marker gets hover or keyboard focus, VERA shall show a plain-text preview card with the first line of the user message and the start of its agent reply, each bounded to 140 normalized characters, without the message number, with a localized label for an empty message and a pending marker when applicable inside the window, closing on Escape and staying while the pointer is over it.
 """
 
 verification = "Unit tests check normalization and the 140-character cut by code point; component tests check hover and focus previews, empty and pending labels, Escape and pointer moves onto the preview; a browser test checks the preview stays inside a small window."
@@ -23,4 +23,4 @@ priority = "normal"   # low | normal | high
 rationale = ""        # why this behavior exists, if not obvious
 
 created = 2026-11-11
-updated = 2026-11-15
+updated = 2026-11-16

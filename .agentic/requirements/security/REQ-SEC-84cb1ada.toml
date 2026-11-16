@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-SEC-84cb1ada"
+title = "Lock bookmark controls for immutable sessions"
+status = "active"
+requirement = "While a workbench is read-only, its selected session is archived or a bookmark write for that message is pending, VERA shall disable both bookmark controls for that message."
+verification = "Render the transcript disabled and hold a bookmark IPC promise to assert both controls are disabled; archive a real session in native Electron and assert its message and preview actions are disabled."
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/session/use-bookmarks.ts", "05_Software/src/apps/desktop/src/renderer/components/session/transcript.tsx", "05_Software/src/apps/desktop/src/renderer/components/session/transcript-navigator.tsx", "05_Software/src/apps/desktop/src/renderer/components/session/workspace.tsx", "05_Software/src/apps/desktop/src/renderer/App.tsx"]
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/session/transcript-navigator.test.ts", "05_Software/tests/e2e/bookmarks.spec.ts"]
+created = 2026-11-16
+updated = 2026-11-16

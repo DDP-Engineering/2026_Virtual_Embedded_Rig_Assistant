@@ -3,10 +3,17 @@
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import userEvent from "@testing-library/user-event";
-import { emptySessionState, type SessionState } from "@vera/shared";
+import {
+  applySessionEvent,
+  emptySessionState,
+  foldSessionEvents,
+  type SessionEvent,
+  type SessionState,
+} from "@vera/shared";
 import { act, createElement } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
+import { api } from "../../api/index.js";
 import i18n from "../../i18n.js";
 import { Transcript } from "./transcript.js";
 import { type NavigatorMessage, TranscriptNavigator } from "./transcript-navigator.js";
@@ -176,8 +183,8 @@ it("previews plain normalized text on focus, labels empty and pending messages, 
   const pending = messages.map((message) => (message.id === "m2" ? { ...message, pending: true } : message));
   const { render } = await navigator([0, 1000, 2000, 3000], pending);
   await user.tab();
-  const tooltip = () => container.querySelector('[role="tooltip"]');
-  expect(tooltip()?.textContent).toBe("<b>Hello</b> world");
+  const tooltip = () => container.querySelector("[data-nav-preview]");
+  expect(tooltip()?.textContent).toBe("<b>Hello</b>");
   expect(tooltip()?.querySelector("b")).toBeNull();
   expect(markers()[0]?.getAttribute("aria-describedby")).toBe(tooltip()?.id);
   await user.keyboard("{Escape}");
@@ -185,7 +192,7 @@ it("previews plain normalized text on focus, labels empty and pending messages, 
   await user.keyboard("{ArrowDown}");
   expect(tooltip()?.textContent).toBe("Empty message");
   await user.keyboard("{ArrowDown}");
-  expect(tooltip()?.textContent).toBe("Pending delivery — Queued");
+  expect(tooltip()?.textContent).toBe("QueuedPending delivery");
   await render(messages);
   expect(markers()).toHaveLength(4);
   expect(tooltip()?.textContent).toBe("Queued");
@@ -238,7 +245,7 @@ it("opens a group selector, navigates to the exact member and restores focus to 
   expect(selector()).toBeNull();
   expect(onNavigate).toHaveBeenCalledTimes(1);
   await user.hover(group);
-  expect(container.querySelector('[role="tooltip"]')?.textContent).toBe("Messages 2–4 (3)");
+  expect(container.querySelector("[data-nav-preview]")?.textContent).toBe("Messages 2–4 (3)");
   expect(group.hasAttribute("aria-describedby")).toBe(false);
 });
 
@@ -271,9 +278,9 @@ it("consumes Escape only while a preview is open, so other Escape shortcuts stil
     return event.defaultPrevented;
   };
   await user.hover(markers()[1] as HTMLElement);
-  expect(container.querySelector('[role="tooltip"]')).not.toBeNull();
+  expect(container.querySelector("[data-nav-preview]")).not.toBeNull();
   expect(await pressEscape()).toBe(true);
-  expect(container.querySelector('[role="tooltip"]')).toBeNull();
+  expect(container.querySelector("[data-nav-preview]")).toBeNull();
   expect(await pressEscape()).toBe(false);
 });
 
@@ -351,6 +358,7 @@ const conversation = (count: number): SessionState => ({
       kind: "assistant" as const,
       id: `a${index}`,
       turnId: `t${index}`,
+      replyToMessageIds: [`u${index}`],
       text: `Answer ${index + 1}`,
       streaming: false,
       citations: [],
@@ -392,7 +400,7 @@ function transcriptGeometry() {
 }
 
 const client = new QueryClient();
-const renderTranscript = async (state: SessionState, sessionId: string) => {
+const renderTranscript = async (state: SessionState, sessionId: string, disabled = false) => {
   await act(async () =>
     root?.render(
       createElement(
@@ -405,6 +413,7 @@ const renderTranscript = async (state: SessionState, sessionId: string) => {
           retry: vi.fn(),
           search: "",
           sessionId,
+          disabled,
         }),
       ),
     ),
@@ -457,7 +466,7 @@ it("jumps near the top, highlights briefly, keeps auto-follow suspended until an
   await render(conversation(2), "b");
   expect(vi.getTimerCount()).toBe(0);
   expect(highlighted()).toEqual([]);
-  expect(container.querySelector('[role="tooltip"]')).toBeNull();
+  expect(container.querySelector("[data-nav-preview]")).toBeNull();
   expect(status()).toBe("");
   await act(async () => vi.advanceTimersByTime(1500));
   expect(vi.getTimerCount()).toBe(0);
@@ -519,4 +528,136 @@ it("throttles measuring while a turn streams and moves markers when the turn end
   expect(top()).toBe("352.5px");
   expect(vi.getTimerCount()).toBe(0);
   expect(reads.count).toBeGreaterThan(4);
+});
+
+// REQ-UX-94b2ef16 REQ-UX-88f317e2 REQ-REL-16690ed0
+it("shares optimistic bookmarks with a keyboard-reachable title/reply card and rolls back failures", async () => {
+  transcriptGeometry();
+  const state = conversation(4);
+  state.items[0] = { kind: "user", id: "u0", text: "First line\nSecond line" };
+  state.items.splice(1, 0, { kind: "tool", id: "tool", turnId: "t0", name: "read", args: {}, status: "ok" });
+  await renderTranscript(state, "a");
+  const button = () =>
+    container.querySelector<HTMLButtonElement>('[data-message-kind="user"] [data-bookmark]');
+  expect(button()?.getAttribute("aria-label")).toBe("Bookmark");
+  expect(container.querySelector('[data-message-kind="assistant"] [data-bookmark]')).toBeNull();
+  let reject!: (error: unknown) => void;
+  vi.mocked(api.invoke).mockImplementationOnce(
+    () =>
+      new Promise((_, no) => {
+        reject = no;
+      }),
+  );
+  await act(async () => button()?.click());
+  expect(button()?.getAttribute("aria-pressed")).toBe("true");
+  await act(async () => markers()[0]?.focus());
+  const card = () => container.querySelector<HTMLElement>("[data-nav-preview]");
+  expect(card()?.querySelector("strong")?.textContent).toBe("First line");
+  expect(card()?.textContent).toContain("Answer 1");
+  expect(card()?.textContent).not.toContain("Second line");
+  expect(card()?.textContent).not.toContain("Message 1");
+  expect(card()?.querySelectorAll("button")).toHaveLength(1);
+  expect(card()?.querySelector("button")?.getAttribute("aria-pressed")).toBe("true");
+  expect(card()?.querySelector("button")?.disabled).toBe(true);
+  await act(async () => reject({ code: "DENIED", messageKey: "errors.DENIED" }));
+  expect(button()?.getAttribute("aria-pressed")).toBe("false");
+  expect(card()?.querySelector("button")?.getAttribute("aria-pressed")).toBe("false");
+  expect(container.querySelector('[role="alert"]')?.textContent).toBe(i18n.t("errors.DENIED"));
+  const user = userEvent.setup();
+  await act(async () => user.tab());
+  expect(document.activeElement).toBe(card()?.querySelector("button"));
+  await act(async () => user.keyboard("{Enter}"));
+  expect(api.invoke).toHaveBeenLastCalledWith("session.bookmark", {
+    sessionId: "a",
+    messageId: "u0",
+    bookmarked: true,
+  });
+  expect(button()?.getAttribute("aria-pressed")).toBe("true");
+  await renderTranscript({ ...state, bookmarkedMessageIds: ["u0"] }, "a");
+  await act(async () => user.keyboard("{Escape}"));
+  expect(card()).toBeNull();
+  expect(document.activeElement).toBe(markers()[0]);
+});
+
+it.each([
+  ["en", "Bookmark", "Remove bookmark"],
+  ["ro", "Marchează", "Elimină marcajul"],
+  ["de", "Lesezeichen setzen", "Lesezeichen entfernen"],
+  ["fr", "Ajouter un signet", "Retirer le signet"],
+])("localizes bookmark names in %s and discards obsolete session failures", async (language, add, remove) => {
+  transcriptGeometry();
+  await i18n.changeLanguage(language);
+  const state = conversation(2);
+  await renderTranscript({ ...state, bookmarkedMessageIds: ["u0"] }, "a");
+  const button = () =>
+    container.querySelector<HTMLButtonElement>('[data-message-kind="user"] [data-bookmark]');
+  expect(button()?.getAttribute("aria-label")).toBe(remove);
+  let reject!: (error: unknown) => void;
+  vi.mocked(api.invoke).mockImplementationOnce(
+    () =>
+      new Promise((_, no) => {
+        reject = no;
+      }),
+  );
+  await act(async () => button()?.click());
+  expect(button()?.getAttribute("aria-label")).toBe(add);
+  await renderTranscript(state, "b");
+  await act(async () => reject(Error("obsolete")));
+  expect(button()?.getAttribute("aria-pressed")).toBe("false");
+  expect(container.querySelector('[role="alert"]')).toBeNull();
+});
+
+it("locks both bookmark controls when disabled and retains an acknowledged optimistic value on retry failure", async () => {
+  transcriptGeometry();
+  const state = conversation(4);
+  const button = () =>
+    container.querySelector<HTMLButtonElement>('[data-message-kind="user"] [data-bookmark]');
+  await renderTranscript(state, "a", true);
+  await act(async () => markers()[0]?.focus());
+  expect(button()?.disabled).toBe(true);
+  expect(container.querySelector<HTMLButtonElement>("[data-nav-preview] button")?.disabled).toBe(true);
+  await renderTranscript(state, "a");
+  await act(async () => button()?.click());
+  expect(button()?.getAttribute("aria-pressed")).toBe("true");
+  vi.mocked(api.invoke).mockRejectedValueOnce(Error("offline"));
+  await act(async () => button()?.click());
+  expect(button()?.getAttribute("aria-pressed")).toBe("true");
+  expect(container.querySelector('[role="alert"]')).not.toBeNull();
+  await renderTranscript({ ...state, bookmarkedMessageIds: ["u0"] }, "a");
+  await act(async () => button()?.click());
+  expect(button()?.getAttribute("aria-pressed")).toBe("false");
+  await renderTranscript(state, "a");
+  expect(button()?.getAttribute("aria-pressed")).toBe("false");
+});
+
+it("keeps a running reply with its admitted prompt across queued delivery and replay", async () => {
+  transcriptGeometry();
+  const events: SessionEvent[] = [
+    { type: "message.user", messageId: "u", text: "Original" },
+    { type: "turn.started", turnId: "t" },
+    { type: "usage.updated", inputTokens: 0, outputTokens: 0, promptIds: ["u"] },
+    { type: "message.queued", messageId: "q", text: "Queued", timestamp: 1 },
+    { type: "message.done", messageId: "a", text: "Original reply", citations: [] },
+  ];
+  let state = foldSessionEvents(events);
+  const reply = async (index: number) => {
+    await act(async () => markers()[index]?.focus());
+    return container.querySelector("[data-nav-preview] p")?.textContent;
+  };
+  await renderTranscript(state, "a");
+  expect(await reply(0)).toBe("Original reply");
+  expect(await reply(1)).toBeUndefined();
+  const delivered: SessionEvent = { type: "message.delivered", messageIds: ["q"] };
+  state = applySessionEvent(state, delivered);
+  await renderTranscript(state, "a");
+  expect(await reply(0)).toBe("Original reply");
+  expect(await reply(1)).toBeUndefined();
+  const later: SessionEvent[] = [
+    delivered,
+    { type: "usage.updated", inputTokens: 0, outputTokens: 0, promptIds: ["q"] },
+    { type: "message.done", messageId: "b", text: "Queued reply", citations: [] },
+  ];
+  await renderTranscript(foldSessionEvents([...events, ...later]), "a");
+  expect(await reply(0)).toBe("Original reply");
+  expect(await reply(1)).toBe("Queued reply");
 });

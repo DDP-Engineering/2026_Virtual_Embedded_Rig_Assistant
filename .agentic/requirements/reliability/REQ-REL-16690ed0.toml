@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-REL-16690ed0"
+title = "Optimistic bookmark failure recovery"
+status = "active"
+requirement = "When a bookmark mutation fails, the transcript shall roll back its optimistic bookmark state in both message and preview controls and display a localized error."
+verification = "Hold then reject bookmark IPC; both controls change before completion and revert with translated alert; later retry succeeds; session changes ignore obsolete completion."
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/App.tsx", "05_Software/src/apps/desktop/src/renderer/components/session/bookmark-button.tsx", "05_Software/src/apps/desktop/src/renderer/components/session/transcript-navigator.tsx", "05_Software/src/apps/desktop/src/renderer/components/session/transcript.tsx", "05_Software/src/apps/desktop/src/renderer/components/session/workspace.tsx", "05_Software/src/apps/desktop/src/renderer/components/session/use-bookmarks.ts", "05_Software/src/apps/desktop/src/renderer/styles.css"]
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/session/transcript-navigator.test.ts", "05_Software/tests/e2e/bookmarks.spec.ts"]
+created = 2026-11-16
+updated = 2026-11-16

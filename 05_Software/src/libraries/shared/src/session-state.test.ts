@@ -184,6 +184,19 @@ it("drops unfinalized live text at an aborted boundary and detaches event-owned 
   expect(state.todos[0]?.text).toBe("read");
 });
 
+/** Compare the original reducer contract; reply ownership has its own event/replay assertions. */
+function withoutReplyOwnership(state: shared.SessionState): shared.SessionState {
+  return {
+    ...state,
+    items: state.items.map((item) => {
+      if (item.kind !== "assistant") return item;
+      const copy = { ...item };
+      delete copy.replyToMessageIds;
+      return copy;
+    }),
+  };
+}
+
 /** The pre-PERF-02 reducer, kept verbatim as the oracle for the in-place fold and the copy-on-write apply. */
 function oracleApply(state: shared.SessionState, input: shared.SessionEvent): shared.SessionState {
   const event: shared.SessionEvent = JSON.parse(JSON.stringify(input));
@@ -459,7 +472,7 @@ describe("PERF-02 reducer without full-state copies (REQ-FUNC-5e2438d5)", () => 
     for (const events of [mixed, durable])
       for (let n = 0; n <= events.length; n++) {
         const prefix = events.slice(0, n);
-        expect(shared.foldSessionEvents(owned(prefix))).toEqual(
+        expect(withoutReplyOwnership(shared.foldSessionEvents(owned(prefix)))).toEqual(
           prefix.reduce(oracleApply, shared.emptySessionState()),
         );
       }
@@ -481,7 +494,9 @@ describe("PERF-02 reducer without full-state copies (REQ-FUNC-5e2438d5)", () => 
 
   it("never writes to the events it folds", () => {
     const events = deepFreeze(owned(mixed));
-    expect(shared.foldSessionEvents(events)).toEqual(mixed.reduce(oracleApply, shared.emptySessionState()));
+    expect(withoutReplyOwnership(shared.foldSessionEvents(events))).toEqual(
+      mixed.reduce(oracleApply, shared.emptySessionState()),
+    );
   });
 
   it("applies every event like the old reducer without mutating the input state or event", () => {
@@ -490,7 +505,7 @@ describe("PERF-02 reducer without full-state copies (REQ-FUNC-5e2438d5)", () => 
     for (const input of mixed) {
       const next = shared.applySessionEvent(state, deepFreeze(owned([input])[0] as shared.SessionEvent));
       oracle = oracleApply(oracle, input);
-      expect(next).toEqual(oracle);
+      expect(withoutReplyOwnership(next)).toEqual(oracle);
       expect(next).not.toBe(state);
       state = deepFreeze(next);
     }
@@ -547,4 +562,88 @@ describe("PERF-02 reducer without full-state copies (REQ-FUNC-5e2438d5)", () => 
     });
     expect(done.turns).toBe(base.turns);
   });
+});
+
+it("binds reply ownership at request time and preserves it across delivery, completion and replay", () => {
+  const events: shared.SessionEvent[] = [
+    { type: "message.user", messageId: "u", text: "Original" },
+    { type: "turn.started", turnId: "t" },
+    { type: "usage.updated", inputTokens: 0, outputTokens: 0, promptIds: ["u"] },
+    { type: "message.queued", messageId: "q", text: "Queued", timestamp: 1 },
+    { type: "message.delta", messageId: "a", text: "Original" },
+    { type: "message.done", messageId: "a", text: "Original reply", citations: [] },
+    { type: "message.delivered", messageIds: ["q"] },
+    { type: "usage.updated", inputTokens: 0, outputTokens: 0, promptIds: ["q"] },
+    { type: "message.done", messageId: "b", text: "Queued reply", citations: [] },
+  ];
+  const replay = shared.foldSessionEvents(events);
+  let live = shared.emptySessionState();
+  for (const event of events) live = shared.applySessionEvent(live, event);
+  expect(live).toEqual(replay);
+  expect(shared.foldSessionEvents(events.filter((event) => !shared.isLiveSessionEvent(event)))).toEqual(
+    replay,
+  );
+  expect(replay.items.find((item) => item.id === "a")).toMatchObject({ replyToMessageIds: ["u"] });
+  expect(replay.items.find((item) => item.id === "b")).toMatchObject({ replyToMessageIds: ["q"] });
+  expect(shared.sessionStateSchema.parse(replay)).toEqual(replay);
+});
+
+it("associates a shared reply with every admitted prompt while excluding pending or unknown owners", () => {
+  const state = shared.foldSessionEvents([
+    { type: "message.user", messageId: "u", text: "Original" },
+    { type: "message.queued", messageId: "q", text: "Admitted steering", timestamp: 1 },
+    { type: "message.queued", messageId: "pending", text: "Still waiting", timestamp: 2 },
+    { type: "message.delivered", messageIds: ["q"] },
+    { type: "usage.updated", inputTokens: 0, outputTokens: 0, promptIds: ["u", "q", "pending", "unknown"] },
+    { type: "message.done", messageId: "a", text: "Shared reply", citations: [] },
+  ]);
+  expect(state.items.at(-1)).toMatchObject({ replyToMessageIds: ["u", "q"] });
+});
+
+it("binds current usage-absent events to the admitted user at reply creation", () => {
+  const state = shared.foldSessionEvents([
+    { type: "message.user", messageId: "u", text: "Original" },
+    { type: "message.queued", messageId: "q", text: "Queued", timestamp: 1 },
+    { type: "message.done", messageId: "a", text: "Original reply", citations: [] },
+    { type: "message.delivered", messageIds: ["q"] },
+    { type: "message.done", messageId: "b", text: "Queued reply", citations: [] },
+  ]);
+  expect(state.items.find((item) => item.id === "a")).toMatchObject({ replyToMessageIds: ["u"] });
+  expect(state.items.find((item) => item.id === "b")).toMatchObject({ replyToMessageIds: ["q"] });
+});
+
+it("keeps recovered queue ownership identical in live and replay after a newer normal prompt", () => {
+  const events: shared.SessionEvent[] = [
+    { type: "message.user", messageId: "old", text: "Original" },
+    { type: "turn.started", turnId: "first" },
+    { type: "message.queued", messageId: "q", text: "Recovered", timestamp: 1 },
+    { type: "turn.done", turnId: "first", stopReason: "aborted" },
+    { type: "message.user", messageId: "u", text: "New instruction" },
+    { type: "turn.started", turnId: "next" },
+    { type: "message.delivered", messageIds: ["q"] },
+    { type: "message.done", messageId: "a", text: "Current reply", citations: [] },
+  ];
+  const replay = shared.foldSessionEvents(events);
+  let live = shared.emptySessionState();
+  for (const event of events) live = shared.applySessionEvent(live, event);
+  expect(replay).toEqual(live);
+  expect(replay.items.at(-1)).toMatchObject({ replyToMessageIds: ["u"] });
+});
+
+it("keeps admitted reply ownership after an interrupted streaming row is removed", () => {
+  const events: shared.SessionEvent[] = [
+    { type: "message.user", messageId: "u", text: "Original" },
+    { type: "turn.started", turnId: "first" },
+    { type: "message.delta", messageId: "partial", text: "Interrupted" },
+    { type: "message.queued", messageId: "q", text: "Admitted", timestamp: 1 },
+    { type: "message.delivered", messageIds: ["q"] },
+    { type: "turn.done", turnId: "first", stopReason: "aborted" },
+    { type: "turn.started", turnId: "next" },
+    { type: "message.done", messageId: "a", text: "Current reply", citations: [] },
+  ];
+  const replay = shared.foldSessionEvents(events);
+  let live = shared.emptySessionState();
+  for (const event of events) live = shared.applySessionEvent(live, event);
+  expect(replay).toEqual(live);
+  expect(replay.items.at(-1)).toMatchObject({ replyToMessageIds: ["q"] });
 });

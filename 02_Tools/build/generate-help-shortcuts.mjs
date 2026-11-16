@@ -6,6 +6,8 @@ import { software } from "../environment/software.mjs";
 /** The words of the generated page that the interface catalogs do not hold. */
 const words = {
   en: {
+    bookmark:
+      "Tab from a focused single-message rail marker to its bookmark action; Enter or Space toggles it. Escape closes the preview and returns focus to the marker.",
     intro:
       "These are VERA's default keyboard shortcuts. Change, add or remove them in **{where}**; see [Settings](settings.md).",
     action: "Action",
@@ -17,6 +19,8 @@ const words = {
     shortcuts: "Open {where}.",
   },
   ro: {
+    bookmark:
+      "De la un reper individual focalizat, Tab ajunge la acțiunea de marcaj; Enter sau Spațiu o activează. Escape închide previzualizarea și readuce focalizarea la reper.",
     intro:
       "Acestea sunt scurtăturile de tastatură implicite ale VERA. Le poți schimba, adăuga sau elimina în **{where}**; vezi [Setări](settings.md).",
     action: "Acțiune",
@@ -28,6 +32,8 @@ const words = {
     shortcuts: "Deschide {where}.",
   },
   de: {
+    bookmark:
+      "Von einer fokussierten Einzelmarkierung führt Tab zur Lesezeichenaktion; Eingabe oder Leertaste schaltet sie um. Escape schließt die Vorschau und setzt den Fokus auf die Markierung zurück.",
     intro:
       "Dies sind die Standard-Tastenkürzel von VERA. Ändern, ergänzen oder entfernen Sie sie unter **{where}**; siehe [Einstellungen](settings.md).",
     action: "Aktion",
@@ -39,6 +45,8 @@ const words = {
     shortcuts: "Öffnet {where}.",
   },
   fr: {
+    bookmark:
+      "Depuis un repère individuel ciblé, Tab atteint l’action de signet ; Entrée ou Espace la bascule. Échap ferme l’aperçu et ramène le focus au repère.",
     intro:
       "Voici les raccourcis clavier par défaut de VERA. Modifiez-les, ajoutez-en ou supprimez-les dans **{where}** ; voir [Paramètres](settings.md).",
     action: "Action",
@@ -86,6 +94,8 @@ export async function shortcutPages() {
       "|---|---|",
       `| F1 | ${text.f1} |`,
       `| F10 | ${text.f10} |`,
+      "",
+      text.bookmark,
       "",
     ].join("\n");
   }

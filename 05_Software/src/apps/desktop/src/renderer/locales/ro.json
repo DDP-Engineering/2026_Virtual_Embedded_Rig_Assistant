@@ -176,6 +176,8 @@
     "operations": "Operații: {{count}}"
   },
   "chat": {
+    "bookmark": "Marchează",
+    "removeBookmark": "Elimină marcajul",
     "attachments": "Fișiere atașate",
     "removeAttachment": "Elimină atașamentul: {{path}}",
     "promptInput": "Intrare",

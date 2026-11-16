@@ -746,6 +746,9 @@ export function App() {
                         detail={bench.data?.config.chat.detail ?? "normal"}
                         changed={changed}
                         readOnly={readOnly}
+                        archived={
+                          sessions.data?.find((session) => session.id === activeSession)?.archived ?? true
+                        }
                         composerFocusRequest={
                           composerFocus && composerFocus.id === activeSession ? composerFocus.request : 0
                         }
