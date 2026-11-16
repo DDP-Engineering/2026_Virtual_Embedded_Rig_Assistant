@@ -32,6 +32,8 @@ export function KeyboardShortcuts({
     find: [t("keyboard.find"), t("keyboard.findDesc")],
     focusComposer: [t("keyboard.focusComposer"), t("keyboard.focusComposerDesc")],
     focusModel: [t("keyboard.focusModel"), t("keyboard.focusModelDesc")],
+    nextBookmark: [t("keyboard.nextBookmark"), t("keyboard.nextBookmarkDesc")],
+    previousBookmark: [t("keyboard.previousBookmark"), t("keyboard.previousBookmarkDesc")],
   };
   const [search, setSearch] = useState("");
   const searchInput = useRef<HTMLInputElement>(null);

@@ -8,6 +8,8 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ### Added
 
+- Bookmarked rail markers stand out, with configurable next and previous bookmark shortcuts.
+
 - User messages and rail previews share bookmark controls; previews show the first prompt line and reply start.
 
 - Per-session user-message bookmarks persist across restarts and remain in session exports.

@@ -11,6 +11,8 @@ export const shortcutCommands = [
   "find",
   "focusComposer",
   "focusModel",
+  "nextBookmark",
+  "previousBookmark",
 ] as const;
 export type ShortcutCommand = (typeof shortcutCommands)[number];
 export const defaultShortcuts: Record<ShortcutCommand, readonly string[]> = {
@@ -24,6 +26,8 @@ export const defaultShortcuts: Record<ShortcutCommand, readonly string[]> = {
   find: ["Mod+F"],
   focusComposer: [],
   focusModel: ["Mod+Shift+M"],
+  nextBookmark: ["Mod+Alt+N"],
+  previousBookmark: ["Mod+Alt+P"],
 };
 export type ShortcutOverrides = Partial<Record<ShortcutCommand, string[]>>;
 // Preserve native editing, window and reload commands. Other aliases are app-local.

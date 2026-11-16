@@ -423,3 +423,5 @@ across the workbench's sessions; Cancel discards the draft. The setting controls
 without changing model answer length, tool permissions or stored history.
 
 Renderer session controls include `bookmark-button.tsx` and `use-bookmarks.ts` beside the transcript: shared localized bookmark actions and optimistic event-backed state.
+
+`use-bookmark-navigation.ts` dispatches the configured next/previous bookmark commands through the transcript rail jump, including older rows that still need mounting. Bookmarked single/group markers use primary fill and a longer mark.

@@ -773,7 +773,11 @@
     "press": "Appuyez sur des touches…",
     "recordHint": "Utilisez Ctrl (ou Command), éventuellement Alt/Shift, avec une lettre, un chiffre, une virgule ou une barre oblique. Escape annule. Les chiffres avec Shift, la virgule et la barre oblique utilisent la position physique de leur touche.",
     "invalid": "Cette combinaison n’est pas prise en charge ou est réservée à l’édition de texte, à la fenêtre ou aux outils de développement.",
-    "conflict": "Cette combinaison est déjà attribuée. Supprimez ou modifiez d’abord l’autre attribution."
+    "conflict": "Cette combinaison est déjà attribuée. Supprimez ou modifiez d’abord l’autre attribution.",
+    "nextBookmark": "Signet suivant",
+    "previousBookmark": "Signet précédent",
+    "nextBookmarkDesc": "Aller au prochain message marqué dans cette conversation.",
+    "previousBookmarkDesc": "Aller au message marqué précédent dans cette conversation."
   },
   "downloads": {
     "revealNamed": "Afficher dans l’Explorateur : {{name}}",

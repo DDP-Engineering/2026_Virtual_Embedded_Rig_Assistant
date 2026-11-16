@@ -20,6 +20,7 @@ import {
   markerCenter,
   previewText,
 } from "./transcript-navigation.js";
+import { useBookmarkNavigation } from "./use-bookmark-navigation.js";
 
 export type NavigatorMessage = { id: string; text: string; pending: boolean; reply?: string };
 type Layout = { ids: string[]; starts: number[]; scrollHeight: number; height: number; width: number };
@@ -276,8 +277,28 @@ export function TranscriptNavigator({
     const text = t("chat.navigator.moved", { ordinal });
     setStatus((previous) => (previous === text ? `${text}${NO_BREAK_SPACE}` : text));
   };
+  const rememberDestination = useBookmarkNavigation({
+    viewport,
+    messages,
+    bookmarked,
+    layout,
+    onNavigate,
+    onArrive: (messageId, ordinal) => {
+      setSelector(null);
+      setPreview(null);
+      setFocusId(messageId);
+      const group = groups.find((entry) => holds(entry, messageId));
+      const button = group && buttons.current.get(group.key);
+      if (button) button.focus();
+      else viewport.current?.focus();
+      announce(ordinal);
+    },
+  });
   const go = (entry: Entry) => {
-    if (onNavigate(entry.message.id)) announce(entry.ordinal);
+    if (onNavigate(entry.message.id)) {
+      rememberDestination(entry.message.id);
+      announce(entry.ordinal);
+    }
   };
   const activate = (group: Group) => {
     const only = group.members.length === 1 ? group.members[0] : undefined;
@@ -303,7 +324,12 @@ export function TranscriptNavigator({
     }, 300);
   };
   const stay = () => clearTimeout(hide.current);
-  if (!visible) return null;
+  if (!visible)
+    return (
+      <span role="status" className="sr-only">
+        {status}
+      </span>
+    );
   return (
     // biome-ignore lint/a11y/noStaticElementInteractions: Tracks focus for regrouping and forwards wheel scrolling; the controls inside are buttons.
     <div
@@ -371,6 +397,9 @@ export function TranscriptNavigator({
                 else buttons.current.delete(group.key);
               }}
               data-nav-marker
+              data-nav-bookmarked={
+                group.members.some((entry) => bookmarked(entry.message.id)) ? "" : undefined
+              }
               data-nav-members={group.members.length}
               tabIndex={group.key === tabStop ? 0 : -1}
               style={{ top: group.center - MARKER_SIZE / 2 }}

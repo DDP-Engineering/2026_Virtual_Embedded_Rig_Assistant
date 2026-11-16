@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-UX-f62a82bc"
+title = "Distinguish bookmarked rail markers"
+status = "active"
+requirement = "While any user message represented by a conversation rail marker is bookmarked, VERA shall display that marker filled in the primary color and slightly longer at every rail density, including count groups."
+verification = "Render sparse and grouped markers with one bookmarked member; assert only the owning marker is marked and clear after removal; inspect computed fill/color/length in browser at sparse and grouped densities."
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/session/transcript-navigator.tsx", "05_Software/src/apps/desktop/src/renderer/styles.css"]
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/session/transcript-navigator.test.ts", "05_Software/tests/e2e/bookmark-navigation.spec.ts"]
+created = 2026-11-16
+updated = 2026-11-16

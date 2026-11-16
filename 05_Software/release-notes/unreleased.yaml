@@ -43,3 +43,10 @@ entries:
       ro: Marchează mesajele din conversație sau din previzualizarea cu titlu și răspuns.
       de: Setze Lesezeichen an Nachrichten im Gespräch oder in der Titel- und Antwortvorschau.
       fr: Ajoutez des signets aux messages dans la conversation ou l’aperçu du titre et de la réponse.
+  - category: improved
+    topic: { en: Sessions, ro: Sesiuni, de: Sitzungen, fr: Sessions }
+    text:
+      en: Find marked messages on the rail and jump between them with editable bookmark shortcuts.
+      ro: Găsește mesajele marcate pe margine și sari între ele cu taste configurabile.
+      de: Finde markierte Nachrichten auf der Leiste und springe per anpassbaren Tastenkürzeln zu ihnen.
+      fr: Repérez les signets sur la barre et passez de l’un à l’autre avec des raccourcis modifiables.

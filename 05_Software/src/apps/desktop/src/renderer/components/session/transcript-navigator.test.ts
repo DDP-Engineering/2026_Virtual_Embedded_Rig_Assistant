@@ -3,6 +3,7 @@
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import userEvent from "@testing-library/user-event";
+import type { ShortcutOverrides } from "@vera/shared";
 import {
   applySessionEvent,
   emptySessionState,
@@ -15,6 +16,8 @@ import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { api } from "../../api/index.js";
 import i18n from "../../i18n.js";
+import { ShortcutContext } from "../../lib/shortcuts.js";
+import * as documentTabs from "../documents/viewer-context.js";
 import { Transcript } from "./transcript.js";
 import { type NavigatorMessage, TranscriptNavigator } from "./transcript-navigator.js";
 
@@ -95,21 +98,30 @@ const texts = (count: number, text = (index: number) => `Question ${index + 1}`)
 async function navigator(
   starts: readonly number[],
   messages = texts(starts.length),
-  onNavigate = vi.fn(() => true),
+  onNavigate = vi.fn((_id: string) => true),
   scrollHeight = 4000,
+  bookmarked = (_id: string) => false,
+  bindings?: ShortcutOverrides,
 ) {
   const { viewport, content, anchors, reads } = geometry(starts, scrollHeight);
+  const viewportRef = { current: viewport };
+  const contentRef = { current: content };
   const render = async (next: readonly NavigatorMessage[]) => {
     await act(async () =>
       root?.render(
-        createElement(TranscriptNavigator, {
-          viewport: { current: viewport },
-          content: { current: content },
-          anchors,
-          messages: next,
-          controls: "transcript",
-          onNavigate,
-        }),
+        createElement(
+          ShortcutContext.Provider,
+          { value: bindings },
+          createElement(TranscriptNavigator, {
+            viewport: viewportRef,
+            content: contentRef,
+            anchors,
+            messages: next,
+            controls: "transcript",
+            onNavigate,
+            bookmarked,
+          }),
+        ),
       ),
     );
     await flushFrames();
@@ -660,4 +672,166 @@ it("keeps a running reply with its admitted prompt across queued delivery and re
   await renderTranscript(foldSessionEvents([...events, ...later]), "a");
   expect(await reply(0)).toBe("Original reply");
   expect(await reply(1)).toBe("Queued reply");
+});
+
+// REQ-UX-f62a82bc REQ-UX-5722a63f
+it("marks sparse and grouped markers when any member is bookmarked and updates without layout reads", async () => {
+  const marked = new Set(["m0", "m2"]);
+  const { render, reads } = await navigator([0, 1000, 1010, 3000], undefined, undefined, 4000, (id) =>
+    marked.has(id),
+  );
+  expect(markers().map((node) => node.hasAttribute("data-nav-bookmarked"))).toEqual([true, true, false]);
+  const count = reads.count;
+  marked.clear();
+  await render(texts(4));
+  expect(markers().every((node) => !node.hasAttribute("data-nav-bookmarked"))).toBe(true);
+  expect(reads.count).toBe(count);
+});
+
+it("jumps through exact bookmarked members in both directions without wrapping, retaining lane focus", async () => {
+  const user = userEvent.setup();
+  const starts = [0, 1000, 1010, 2000, 3000];
+  const onNavigate = vi.fn((_id: string) => true);
+  const { viewport } = await navigator(starts, undefined, onNavigate, 4000, (id) =>
+    ["m1", "m2", "m4"].includes(id),
+  );
+  onNavigate.mockImplementation((id: string) => {
+    viewport.scrollTop = (starts[Number(id.slice(1))] ?? 0) - 16;
+    viewport.dispatchEvent(new Event("scroll"));
+    return true;
+  });
+  await user.keyboard("{Control>}{Alt>}n{/Alt}{/Control}");
+  expect(onNavigate).toHaveBeenLastCalledWith("m1");
+  expect(document.activeElement).toBe(markers()[1]);
+  expect(status()).toBe("Moved to message 2");
+  await user.keyboard("{Control>}{Alt>}n{/Alt}{/Control}");
+  expect(onNavigate).toHaveBeenLastCalledWith("m2");
+  await user.keyboard("{Control>}{Alt>}n{/Alt}{/Control}");
+  expect(onNavigate).toHaveBeenLastCalledWith("m4");
+  const calls = onNavigate.mock.calls.length;
+  await user.keyboard("{Control>}{Alt>}n{/Alt}{/Control}");
+  expect(onNavigate).toHaveBeenCalledTimes(calls);
+  await user.keyboard("{Control>}{Alt>}p{/Alt}{/Control}");
+  expect(onNavigate).toHaveBeenLastCalledWith("m2");
+  await user.keyboard("{Control>}{Alt>}p{/Alt}{/Control}");
+  expect(onNavigate).toHaveBeenLastCalledWith("m1");
+  await user.keyboard("{Control>}{Alt>}p{/Alt}{/Control}");
+  expect(onNavigate).toHaveBeenCalledTimes(calls + 2);
+});
+
+it("uses custom keys, removes default keys and yields to modal, capture, handled, IME and repeated events", async () => {
+  const user = userEvent.setup();
+  const { onNavigate } = await navigator([0, 1000, 3000], undefined, undefined, 4000, (id) => id === "m1", {
+    nextBookmark: ["Mod+Shift+U"],
+    previousBookmark: [],
+  });
+  await user.keyboard("{Control>}{Alt>}n{/Alt}{/Control}");
+  expect(onNavigate).not.toHaveBeenCalled();
+  const command = (extra: KeyboardEventInit = {}) =>
+    new KeyboardEvent("keydown", {
+      key: "U",
+      ctrlKey: true,
+      shiftKey: true,
+      bubbles: true,
+      cancelable: true,
+      ...extra,
+    });
+  for (const extra of [{ repeat: true }, { isComposing: true }]) {
+    await act(async () => window.dispatchEvent(command(extra)));
+  }
+  const handled = command();
+  handled.preventDefault();
+  await act(async () => window.dispatchEvent(handled));
+  const altGraph = command();
+  Object.defineProperty(altGraph, "getModifierState", { value: () => true });
+  await act(async () => window.dispatchEvent(altGraph));
+  const dialog = document.createElement("dialog");
+  dialog.setAttribute("open", "");
+  document.body.append(dialog);
+  await act(async () => window.dispatchEvent(command()));
+  dialog.remove();
+  const input = document.createElement("input");
+  input.setAttribute("data-shortcut-capture", "");
+  document.body.append(input);
+  await act(async () => input.dispatchEvent(command()));
+  expect(onNavigate).not.toHaveBeenCalled();
+  await act(async () => window.dispatchEvent(command()));
+  expect(onNavigate).toHaveBeenCalledWith("m1");
+});
+
+it("leaves empty bookmark sessions still and focuses the transcript when there is no overflow lane", async () => {
+  const user = userEvent.setup();
+  const empty = await navigator([0, 100, 200]);
+  await user.keyboard("{Control>}{Alt>}n{/Alt}{/Control}");
+  expect(empty.onNavigate).not.toHaveBeenCalled();
+  const fit = await navigator([0, 100, 200], undefined, undefined, 400, (id) => id === "m2");
+  fit.viewport.tabIndex = 0;
+  await user.keyboard("{Control>}{Alt>}n{/Alt}{/Control}");
+  expect(fit.onNavigate).toHaveBeenCalledWith("m2");
+  expect(document.activeElement).toBe(fit.viewport);
+  expect(status()).toBe("Moved to message 3");
+});
+
+it("mounts an older bookmarked row before retrying the shared rail jump", async () => {
+  vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+  const viewport = transcriptGeometry();
+  const state = { ...conversation(100), bookmarkedMessageIds: ["u0"] };
+  await renderTranscript(state, "progressive-bookmarks");
+  expect(container.querySelectorAll("article")).toHaveLength(40);
+  await act(async () =>
+    window.dispatchEvent(
+      new KeyboardEvent("keydown", {
+        key: "p",
+        ctrlKey: true,
+        altKey: true,
+        bubbles: true,
+        cancelable: true,
+      }),
+    ),
+  );
+  await flushFrames();
+  expect(container.querySelectorAll("article")).toHaveLength(200);
+  expect(container.querySelector("[data-nav-highlight]")?.textContent).toBe("YouQuestion 1");
+  expect(viewport()?.scrollTop).toBe(0);
+  expect(document.activeElement).toBe(markers()[0]);
+});
+
+it("yields bookmark commands while a document tab owns the conversation area", async () => {
+  const user = userEvent.setup();
+  const tab = vi
+    .spyOn(documentTabs, "useDocumentTabs")
+    .mockReturnValue({ active: "file:manual" } as NonNullable<
+      ReturnType<typeof documentTabs.useDocumentTabs>
+    >);
+  const { onNavigate, render } = await navigator(
+    [0, 1000, 3000],
+    undefined,
+    undefined,
+    4000,
+    (id) => id === "m1",
+  );
+  await user.keyboard("{Control>}{Alt>}n{/Alt}{/Control}");
+  expect(onNavigate).not.toHaveBeenCalled();
+  tab.mockReturnValue(undefined);
+  await render(texts(3));
+  await user.keyboard("{Control>}{Alt>}n{/Alt}{/Control}");
+  expect(onNavigate).toHaveBeenCalledWith("m1");
+});
+
+it("starts shortcuts from the latest manual rail destination when jumps share the end clamp", async () => {
+  const user = userEvent.setup();
+  const starts = [0, 1200, 1300, 1400];
+  const onNavigate = vi.fn((_id: string) => true);
+  const { viewport } = await navigator(starts, undefined, onNavigate, 1500, (id) => id !== "m0");
+  onNavigate.mockImplementation((id: string) => {
+    viewport.scrollTop = Math.min(1100, (starts[Number(id.slice(1))] ?? 0) - 16);
+    viewport.dispatchEvent(new Event("scroll"));
+    return true;
+  });
+  await user.keyboard("{Control>}{Alt>}n{/Alt}{/Control}");
+  expect(onNavigate).toHaveBeenLastCalledWith("m1");
+  await user.click(markers()[3] as HTMLButtonElement);
+  expect(onNavigate).toHaveBeenLastCalledWith("m3");
+  await user.keyboard("{Control>}{Alt>}p{/Alt}{/Control}");
+  expect(onNavigate).toHaveBeenLastCalledWith("m2");
 });

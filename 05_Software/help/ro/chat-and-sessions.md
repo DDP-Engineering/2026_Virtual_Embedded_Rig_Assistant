@@ -59,3 +59,5 @@ Marcajele salvate ale mesajelor rămân în exporturile JSON; Markdown indică m
 ## Marcaje
 
 Treci cu indicatorul peste un mesaj propriu sau folosește Tab pentru a ajunge la pictograma de marcaj. Alege **Marchează**; pictograma plină oferă **Elimină marcajul**. Previzualizarea de pe margine arată primul rând al mesajului și începutul răspunsului agentului, cu aceeași acțiune de marcaj. Modificarea apare imediat; dacă salvarea eșuează, starea anterioară revine și apare o eroare. În sesiunile arhivate și workbench-urile doar pentru citire poți doar consulta marcajele.
+
+Marcajele de pe margine sunt pline, în culoarea principală și puțin mai lungi. Un grup este marcat dacă oricare mesaj din el are un marcaj. Folosește **Marcajul următor** (**Ctrl+Alt+N**) sau **Marcajul anterior** (**Ctrl+Alt+P**) pentru a sări între mesaje; navigarea se oprește la primul sau ultimul marcaj. Modifică tastele în **Setări → Comenzi rapide**.

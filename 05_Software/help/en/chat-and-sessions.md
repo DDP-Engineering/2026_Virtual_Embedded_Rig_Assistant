@@ -59,3 +59,5 @@ Saved message bookmarks stay in JSON exports; Markdown marks bookmarked user mes
 ## Bookmarks
 
 Hover over one of your messages or use Tab to reach its bookmark icon. Select **Bookmark** to mark it; the filled icon uses **Remove bookmark** to clear it. The rail preview shows the first line of your message and the start of the agent reply, with the same bookmark action. Changes appear immediately; a failed save restores the previous state and shows an error. Archived sessions and read-only workbenches allow viewing only.
+
+Bookmarked rail markers are filled in the primary color and slightly longer. A grouped marker is marked when any message in it has a bookmark. Use **Next bookmark** (**Ctrl+Alt+N**) or **Previous bookmark** (**Ctrl+Alt+P**) to jump between marked messages; navigation stops at the first or last bookmark. Change these keys in **Settings → Keyboard shortcuts**.

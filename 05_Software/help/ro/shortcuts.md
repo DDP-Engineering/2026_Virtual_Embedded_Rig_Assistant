@@ -14,6 +14,8 @@ Acestea sunt scurtăturile de tastatură implicite ale VERA. Le poți schimba, a
 | Caută în conversație | Ctrl+F | Caută în mesajele sesiunii curente. |
 | Activează câmpul mesajului | Neatribuită | Mută cursorul în câmpul mesajului curent. |
 | Activează selectorul de model | Ctrl+Shift+M | Mută focalizarea pe modelul conversației. |
+| Marcajul următor | Ctrl+Alt+N | Sari la următorul mesaj marcat din această conversație. |
+| Marcajul anterior | Ctrl+Alt+P | Sari la mesajul marcat anterior din această conversație. |
 
 ## Taste fixe
 

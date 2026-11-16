@@ -773,7 +773,11 @@
     "press": "Tasten drücken…",
     "recordHint": "Ctrl (oder Command), optional Alt/Shift, und einen Buchstaben, eine Ziffer, Komma oder Schrägstrich verwenden. Escape bricht ab. Ziffern, Komma und Schrägstrich verwenden auch mit Shift ihre physischen Tastenpositionen.",
     "invalid": "Diese Kombination wird nicht unterstützt oder ist für Textbearbeitung, Fenster oder Entwicklerwerkzeuge reserviert.",
-    "conflict": "Diese Kombination ist bereits zugewiesen. Zuerst die andere Zuweisung entfernen oder ändern."
+    "conflict": "Diese Kombination ist bereits zugewiesen. Zuerst die andere Zuweisung entfernen oder ändern.",
+    "nextBookmark": "Nächstes Lesezeichen",
+    "previousBookmark": "Vorheriges Lesezeichen",
+    "nextBookmarkDesc": "Zur nächsten markierten Nachricht in diesem Gespräch springen.",
+    "previousBookmarkDesc": "Zur vorherigen markierten Nachricht in diesem Gespräch springen."
   },
   "downloads": {
     "revealNamed": "Im Explorer anzeigen: {{name}}",

@@ -14,6 +14,8 @@ Dies sind die Standard-Tastenkürzel von VERA. Ändern, ergänzen oder entfernen
 | In Unterhaltung suchen | Ctrl+F | Die Nachrichten der aktuellen Sitzung durchsuchen. |
 | Nachrichteneingabe fokussieren | Nicht zugewiesen | Den Cursor in die aktuelle Nachrichteneingabe bewegen. |
 | Modellauswahl fokussieren | Ctrl+Shift+M | Die Modellauswahl der Unterhaltung fokussieren. |
+| Nächstes Lesezeichen | Ctrl+Alt+N | Zur nächsten markierten Nachricht in diesem Gespräch springen. |
+| Vorheriges Lesezeichen | Ctrl+Alt+P | Zur vorherigen markierten Nachricht in diesem Gespräch springen. |
 
 ## Feste Tasten
 

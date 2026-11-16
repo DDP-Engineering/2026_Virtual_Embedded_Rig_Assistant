@@ -161,3 +161,5 @@ Lansatoarele mediilor de release (VM Linux offline, Windows offline și Windows 
 sunt în [02_Tools/release](../../02_Tools/README.md#release).
 
 `e2e/bookmarks.spec.ts` covers message/preview bookmark controls in four browser languages and native restart/archive guards.
+
+`e2e/bookmark-navigation.spec.ts` covers sparse/grouped marker styling, three marks in long sessions, browser renderer restart against a retained mock backend, native process restart and next/previous navigation with localized Settings entries in en/ro/de/fr.

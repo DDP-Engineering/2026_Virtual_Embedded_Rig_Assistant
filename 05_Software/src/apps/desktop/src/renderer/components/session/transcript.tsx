@@ -135,7 +135,11 @@ export function Transcript({
   const navigate = (id: string) => {
     const node = scroll.current;
     const element = anchors.get(id);
-    if (!node || !element?.isConnected) return false;
+    if (!node) return false;
+    if (!element?.isConnected) {
+      setStart(0);
+      return false;
+    }
     following.current = false;
     node.scrollTop = scrollTarget(contentOffset(node)(element), node.scrollHeight, node.clientHeight);
     suspended.current = node.scrollTop;

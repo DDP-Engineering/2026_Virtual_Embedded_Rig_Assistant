@@ -14,6 +14,8 @@ Voici les raccourcis clavier par défaut de VERA. Modifiez-les, ajoutez-en ou su
 | Rechercher dans la conversation | Ctrl+F | Rechercher dans la transcription de la session en cours. |
 | Activer la saisie du message | Non attribué | Placer le curseur dans la saisie du message en cours. |
 | Activer le sélecteur de modèle | Ctrl+Shift+M | Sélectionner la commande du modèle dans la conversation. |
+| Signet suivant | Ctrl+Alt+N | Aller au prochain message marqué dans cette conversation. |
+| Signet précédent | Ctrl+Alt+P | Aller au message marqué précédent dans cette conversation. |
 
 ## Touches fixes
 

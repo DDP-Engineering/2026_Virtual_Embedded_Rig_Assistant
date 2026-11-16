@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-UX-5722a63f"
+title = "Navigate bookmarked user messages"
+status = "active"
+requirement = "When the next or previous bookmark command is invoked in the visible conversation, VERA shall jump to the next or previous bookmarked user message relative to the current reading message using the existing rail scroll, highlight, announcement and lane focus behavior, retaining position when no directional destination exists."
+verification = "In a long conversation mark three separated messages, restart, navigate both directions in en/ro/de/fr, assert exact highlighted message, scroll target and lane focus; cover empty sets, boundaries, grouped members, modal/hidden contexts, and progressively mounted history."
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/session/transcript-navigator.tsx", "05_Software/src/apps/desktop/src/renderer/components/session/transcript.tsx", "05_Software/src/apps/desktop/src/renderer/components/session/use-bookmark-navigation.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/session/transcript-navigator.test.ts", "05_Software/tests/e2e/bookmark-navigation.spec.ts"]
+created = 2026-11-16
+updated = 2026-11-16

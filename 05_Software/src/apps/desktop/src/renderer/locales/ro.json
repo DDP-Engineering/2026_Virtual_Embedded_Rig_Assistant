@@ -773,7 +773,11 @@
     "press": "Apasă tastele…",
     "recordHint": "Folosește Ctrl (sau Command), opțional Alt/Shift, și o literă, cifră, virgulă sau bară oblică. Escape anulează. Cifrele, virgula și bara oblică folosesc poziția fizică a tastei, inclusiv cu Shift.",
     "invalid": "Combinația nu este acceptată sau este rezervată editării textului, ferestrei ori instrumentelor de dezvoltare.",
-    "conflict": "Combinația este deja atribuită. Șterge sau modifică mai întâi cealaltă atribuire."
+    "conflict": "Combinația este deja atribuită. Șterge sau modifică mai întâi cealaltă atribuire.",
+    "nextBookmark": "Marcajul următor",
+    "previousBookmark": "Marcajul anterior",
+    "nextBookmarkDesc": "Sari la următorul mesaj marcat din această conversație.",
+    "previousBookmarkDesc": "Sari la mesajul marcat anterior din această conversație."
   },
   "downloads": {
     "revealNamed": "Arată în Explorer: {{name}}",

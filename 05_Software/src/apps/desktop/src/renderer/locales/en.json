@@ -773,7 +773,11 @@
     "press": "Press keys…",
     "recordHint": "Use Ctrl (or Command), optionally Alt/Shift, with a letter, digit, comma or slash. Escape cancels. Shifted digits, comma and slash use their physical key positions.",
     "invalid": "This combination is unsupported or reserved for text editing, the window or developer tools.",
-    "conflict": "This combination is already assigned. Remove or change the other assignment first."
+    "conflict": "This combination is already assigned. Remove or change the other assignment first.",
+    "nextBookmark": "Next bookmark",
+    "previousBookmark": "Previous bookmark",
+    "nextBookmarkDesc": "Jump to the next bookmarked message in this conversation.",
+    "previousBookmarkDesc": "Jump to the previous bookmarked message in this conversation."
   },
   "downloads": {
     "revealNamed": "Show in Explorer: {{name}}",

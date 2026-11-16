@@ -2243,6 +2243,23 @@ legend {
 .transcript-navigator [data-nav-marker]:not([data-nav-members="1"])[aria-current]:focus-visible {
   outline-color: var(--primary-foreground);
 }
+/* REQ-UX-f62a82bc: preserve targets while extending the visible bookmarked mark. */
+.transcript-navigator [data-nav-marker][data-nav-bookmarked] {
+  color: var(--primary);
+}
+.transcript-navigator [data-nav-members="1"][data-nav-bookmarked]::before {
+  width: 1.1rem;
+  background: currentColor;
+}
+.transcript-navigator [data-nav-marker][data-nav-bookmarked]:not([data-nav-members="1"]) {
+  left: -0.15rem;
+  width: calc(100% + 0.3rem);
+  background: var(--primary);
+  color: var(--primary-foreground);
+}
+.transcript-navigator [data-nav-marker][data-nav-bookmarked]:not([data-nav-members="1"]):focus-visible {
+  outline-color: var(--primary-foreground);
+}
 /* REQ-UX-a3be2b11 REQ-UX-7b49305a: preview and group selector stay inside the conversation frame. */
 .transcript-navigator-popup {
   position: absolute;

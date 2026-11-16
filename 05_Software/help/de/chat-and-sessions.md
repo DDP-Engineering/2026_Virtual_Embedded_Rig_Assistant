@@ -59,3 +59,5 @@ Gespeicherte Nachrichtenlesezeichen bleiben im JSON-Export erhalten; Markdown ke
 ## Lesezeichen
 
 Bewege den Zeiger über eine eigene Nachricht oder erreiche ihr Lesezeichensymbol mit Tab. **Lesezeichen setzen** markiert sie; das gefüllte Symbol bietet **Lesezeichen entfernen**. Die Vorschau an der Leiste zeigt die erste Nachrichtenzeile und den Anfang der Agentenantwort mit derselben Lesezeichenaktion. Änderungen erscheinen sofort; bei einem Speicherfehler wird der vorherige Zustand wiederhergestellt und ein Fehler angezeigt. Archivierte Sitzungen und schreibgeschützte Workbenches erlauben nur das Anzeigen.
+
+Markierte Positionen auf der Leiste sind gefüllt, in der Primärfarbe und etwas länger. Eine Gruppe ist markiert, sobald eine ihrer Nachrichten ein Lesezeichen hat. Mit **Nächstes Lesezeichen** (**Strg+Alt+N**) und **Vorheriges Lesezeichen** (**Strg+Alt+P**) springst du zwischen markierten Nachrichten; am ersten oder letzten Lesezeichen endet die Navigation. Ändere die Tasten unter **Einstellungen → Tastenkombinationen**.

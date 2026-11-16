@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-UX-17662553"
+title = "Configure bookmark navigation shortcuts"
+status = "active"
+requirement = "VERA shall expose localized next and previous bookmark commands in Settings Keyboard shortcuts with conflict-free Mod+Alt+N and Mod+Alt+P defaults and the existing editable, removable and resettable bindings."
+verification = "Assert valid defaults and conflict rejection, serialize reassignment/removal, exercise customized command and disabled default, and inspect localized Settings entries/generated help in all four languages."
+affected_paths = ["05_Software/src/libraries/shared/src/keyboard-shortcuts.ts", "05_Software/src/apps/desktop/src/renderer/components/keyboard-shortcuts.tsx", "05_Software/src/apps/desktop/src/renderer/locales/"]
+linked_tests = ["05_Software/src/libraries/shared/src/keyboard-shortcuts.test.ts", "05_Software/src/apps/desktop/src/renderer/components/session/transcript-navigator.test.ts", "05_Software/tests/e2e/bookmark-navigation.spec.ts"]
+created = 2026-11-16
+updated = 2026-11-16

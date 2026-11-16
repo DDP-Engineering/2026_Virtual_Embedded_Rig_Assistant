@@ -2,9 +2,12 @@
 
 PURPOSE: let the user mark the messages that matter in a long session and return to them in one step from the
 conversation's left rail.
-STATE: BKM-01 committed at 5184f7d5265a1418b38b6a15abe1683a57174452 (TASK-d20f7557).
-BKM-02 implemented 2026-11-16 (TASK-d798dbc7), coordinator validation/commit pending.
-BKM-03 remains planned. Product code follows AEGIS, one work package per task.
+STATE: all three work packages implemented and validated with focused proof:
+BKM-01 (TASK-d20f7557, commit 5184f7d5265a1418b38b6a15abe1683a57174452),
+BKM-02 (TASK-d798dbc7, commit 2b17a67f20505dbfac0739b5b45e4815daaae6da),
+BKM-03 (TASK-21b9c878, #306; its local commit is recorded in Git).
+Full-suite testing is explicitly deferred by the user; native Ubuntu acceptance remains unverified.
+Product code follows AEGIS, one work package per task.
 
 ## Current state (2026-11-16)
 
@@ -13,8 +16,10 @@ CHAT-NAV-01 draws one marker per user message on the rail beside the conversatio
 line and the start of the reply (each bounded by
 `previewText` to 140 characters), and the bookmark action; a click or the keyboard jumps to the message.
 Message and preview actions share optimistic state and rollback on IPC errors. Read-only/archived actions
-are disabled. Bookmark persistence is implemented by BKM-01; distinct rail markers and bookmark navigation
-remain planned in BKM-03.
+are disabled. Bookmark persistence is implemented by BKM-01. Bookmarked rail markers are filled in the primary color
+and longer, with any-member indication for groups. Next/previous commands use the existing rail jump
+and focus behavior, default to Ctrl+Alt+N/P and are editable in Settings > Keyboard shortcuts.
+Navigation follows user-message order and stops at the first or last bookmark.
 
 ## Decisions (2026-11-15)
 
@@ -58,3 +63,5 @@ shortcuts) and the four interface languages are updated inside each work package
 
 - A bookmarks list in the right panel, bookmarks on agent replies, and bookmarks shared across sessions; each can
   follow as its own work package.
+
+Focused BKM-03 proof: `transcript-navigator.test.ts`, `keyboard-shortcuts.test.ts` and `bookmark-navigation.spec.ts`; Windows Chromium renderer restart against a retained mock backend and native Electron process restart both retain three marks in long sessions and navigate in en/ro/de/fr. Existing BKM-01/02 proof remains applicable to unchanged persistence and controls.

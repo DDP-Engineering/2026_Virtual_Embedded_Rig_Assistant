@@ -121,7 +121,7 @@ keys without invoking commands. A modal recorder supports Tab, Escape and confli
 feedback. Confirmed app.settings keyboardShortcuts overrides are supplied through
 ShortcutContext; absent overrides use shared defaults and empty lists disable a
 command. App owns session/workbench/settings navigation; Shell owns panel toggles;
-Workspace owns transcript find and composer/model focus. Exact modifiers, IME,
+Workspace owns transcript find and composer/model focus. TranscriptNavigator owns next/previous bookmark commands through use-bookmark-navigation.ts; shared defaults are Mod+Alt+N/P and the same Settings editor can edit/remove/reset both commands. Labels and generated help exist in en/ro/de/fr. Exact modifiers, IME,
 AltGr, repeats, handled events, dialogs and recording guards retain input ownership.
 Native editing/window/developer combinations are reserved; Enter/Shift+Enter/Escape
 retain existing contextual behavior. See shared keyboard-shortcuts.ts and

@@ -59,3 +59,5 @@ Les signets enregistrés restent dans les exports JSON ; Markdown indique les me
 ## Signets
 
 Survolez un de vos messages ou utilisez Tab pour atteindre son icône de signet. **Ajouter un signet** le marque ; l’icône remplie propose **Retirer le signet**. L’aperçu dans la barre affiche la première ligne du message et le début de la réponse de l’agent, avec la même action de signet. La modification apparaît immédiatement ; un échec d’enregistrement rétablit l’état précédent et affiche une erreur. Les sessions archivées et les bancs en lecture seule permettent seulement la consultation.
+
+Les repères avec signet sont pleins, dans la couleur principale et un peu plus longs. Un groupe est marqué dès qu’un de ses messages a un signet. Utilisez **Signet suivant** (**Ctrl+Alt+N**) ou **Signet précédent** (**Ctrl+Alt+P**) pour passer entre les messages marqués ; la navigation s’arrête au premier ou au dernier signet. Modifiez les touches dans **Paramètres → Raccourcis clavier**.
