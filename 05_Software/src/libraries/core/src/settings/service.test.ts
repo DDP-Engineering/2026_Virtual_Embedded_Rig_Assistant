@@ -63,7 +63,6 @@ describe("application settings persistence", () => {
     expect(first.settings).toEqual({
       schemaVersion: 1,
       installationId: expect.stringMatching(/^[0-9a-f-]{36}$/),
-      suppressBypassWarning: false,
       webAccess: { enabled: true, provider: "exa", authentication: "anonymous" },
       language: "system",
       theme: "system",
@@ -94,18 +93,6 @@ describe("application settings persistence", () => {
       throw new Error("observer failed");
     });
     await expect(h.service.update({ theme: "dark" })).resolves.toMatchObject({ settings: { theme: "dark" } });
-  });
-  it("persists the typed Bypass warning preference and reloads it independently of project configuration", async () => {
-    const h = harness();
-    await h.service.load();
-    expect(h.service.get().settings.suppressBypassWarning).toBe(false);
-    await h.service.update({ suppressBypassWarning: true });
-    const reload = harness(h.files.get("/data/settings.json"));
-    await reload.service.load();
-    expect(reload.service.get().settings.suppressBypassWarning).toBe(true);
-    await expect(h.service.update({ suppressBypassWarning: "true" } as never)).rejects.toMatchObject({
-      code: "INVALID",
-    });
   });
   it("serializes concurrent patches, emits only committed state and returns detached snapshots", async () => {
     const h = harness();

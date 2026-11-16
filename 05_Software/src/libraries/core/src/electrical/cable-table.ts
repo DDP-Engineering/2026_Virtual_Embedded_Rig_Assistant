@@ -115,11 +115,14 @@ export function parseCableTable(text: string, fileId?: string): CableTable {
 export async function readCableTableFile(
   root: string,
   id: string,
+  excludedRoots: readonly string[] = [],
 ): Promise<{ table: CableTable; stamp: CableTableStamp }> {
   if (!/^[a-z][a-z0-9]*(?:-[a-z0-9]+)+$/.test(id) || id.length > 64)
     throw Error(`The cable table id ${JSON.stringify(id)} is not a valid id.`);
   const path = `${cableTableDir}/${id}.json`;
-  const target = await (await PathGuard.create(root)).resolve(path);
+  const target = await (await PathGuard.create(root, root, "workbench", undefined, excludedRoots)).resolve(
+    path,
+  );
   let info: Awaited<ReturnType<typeof lstat>>;
   try {
     info = await lstat(target.absolute);

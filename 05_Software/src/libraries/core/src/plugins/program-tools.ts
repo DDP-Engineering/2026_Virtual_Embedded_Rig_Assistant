@@ -14,7 +14,7 @@ import { z } from "zod";
 import type { ProgramPromptEntry } from "../agent/prompt.js";
 import type { Clock } from "../ports.js";
 import type { PreparedChange } from "../tools/changes.js";
-import type { ToolContext, ToolDefinition } from "../tools/context.js";
+import { type ToolContext, type ToolDefinition, toolExcludedRoots } from "../tools/context.js";
 import { prepareHilCall } from "./hil/run.js";
 import { type LauncherMode, programInvocation } from "./launcher.js";
 import {
@@ -231,9 +231,16 @@ export async function prepareCall(
       ...(declared.optionSyntax === "git" ? gitExecutionArguments(args.args ?? []) : (args.args ?? [])),
     ];
     const invocation = programInvocation(resolved, programArgs);
-    const claimed = await claimedResources(ctx.root, declared, args.args ?? [], signal);
+    const claimed = await claimedResources(
+      ctx.root,
+      declared,
+      args.args ?? [],
+      signal,
+      toolExcludedRoots(ctx),
+    );
     const prepared = await prepareProgramRequest({
       workbench: ctx.root,
+      excludedRoots: toolExcludedRoots(ctx),
       plugin,
       program: args.program,
       executable: resolved.executable,
@@ -384,6 +391,7 @@ export function startCall(
   return programs.host.runner.start({
     sessionId: programs.sessionId,
     workbench: ctx.root,
+    excludedRoots: toolExcludedRoots(ctx),
     executable: current.resolved.executable,
     args: current.invocation,
     ...(current.resolved.launcher ? { programArgs: current.programArgs } : {}),
@@ -410,7 +418,7 @@ export function startCall(
     ...(options.signal ? { signal: options.signal } : {}),
     beforeSpawn: async () => {
       await options.check?.();
-      await verifyProgramFiles(current.prepared, options.verifySignal);
+      await verifyProgramFiles(current.prepared, options.verifySignal, toolExcludedRoots(ctx));
       await current.plugin.verify?.();
     },
     label: {

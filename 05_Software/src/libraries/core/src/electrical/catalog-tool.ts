@@ -11,7 +11,7 @@ import {
   industrialCatalogLimits,
 } from "@vera/shared";
 import { z } from "zod";
-import type { ToolContext, ToolDefinition } from "../tools/context.js";
+import { type ToolContext, type ToolDefinition, toolExcludedRoots } from "../tools/context.js";
 import { PathGuard } from "../workbench/path-guard.js";
 import {
   type CatalogStamp,
@@ -45,10 +45,16 @@ export interface CatalogFile {
   stamp: CatalogStamp;
 }
 /** Reads `electrical-automation-catalogs/<id>.json` strictly; throws when it is missing or invalid. */
-export async function readCatalogFile(root: string, id: string): Promise<CatalogFile> {
+export async function readCatalogFile(
+  root: string,
+  id: string,
+  excludedRoots: readonly string[] = [],
+): Promise<CatalogFile> {
   const catalogId = electricalIdSchema.parse(id);
   const path = `${industrialCatalogDir}/${catalogId}.json`;
-  const target = await (await PathGuard.create(root)).resolve(path);
+  const target = await (await PathGuard.create(root, root, "workbench", undefined, excludedRoots)).resolve(
+    path,
+  );
   const bytes = await catalogBytes(target.absolute);
   if (bytes === null) throw Error(`The catalog ${path} does not exist.`);
   const catalog = parseCatalog(bytes.toString("utf8"), catalogId);
@@ -68,8 +74,11 @@ export interface CatalogListing {
   tables?: number;
 }
 /** Every `*.json` of the catalog folder, by name; a broken one is listed invalid and the others stay usable. */
-export async function listCatalogs(root: string): Promise<CatalogListing[]> {
-  const guard = await PathGuard.create(root);
+export async function listCatalogs(
+  root: string,
+  excludedRoots: readonly string[] = [],
+): Promise<CatalogListing[]> {
+  const guard = await PathGuard.create(root, root, "workbench", undefined, excludedRoots);
   const folder = await guard.resolve(industrialCatalogDir);
   let names: string[];
   try {
@@ -138,10 +147,11 @@ export const industrialCatalogParams = z.strictObject({
 
 async function readView(ctx: ToolContext, raw: unknown): Promise<Record<string, unknown>> {
   const args = industrialCatalogParams.parse(raw);
-  if (args.view === "list") return { path: industrialCatalogDir, catalogs: await listCatalogs(ctx.root) };
+  if (args.view === "list")
+    return { path: industrialCatalogDir, catalogs: await listCatalogs(ctx.root, toolExcludedRoots(ctx)) };
   if (args.catalog === undefined)
     throw Error(`view ${args.view} needs catalog, a catalog id from view list.`);
-  const { catalog, stamp } = await readCatalogFile(ctx.root, args.catalog);
+  const { catalog, stamp } = await readCatalogFile(ctx.root, args.catalog, toolExcludedRoots(ctx));
   if (args.view === "select") {
     if (!args.requirements) throw Error("view select needs requirements.");
     return { ...selectItems(catalog, stamp, { ...args, requirements: args.requirements }) };

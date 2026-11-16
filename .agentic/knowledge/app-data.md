@@ -16,7 +16,7 @@ and drains accepted updates/log writes on quit. Shared owns persisted and patch 
 
 ## Public interface
 
-- Optional suppressBypassWarning is a non-secret application preference, false by default. The typed patch accepts a boolean and serial settings persistence confirms suppression before the notice closes. It affects presentation only, leaving session/workbench mode and execution authority independent.
+- The shared permission picker confirms each Bypass change before applying it. Settings contains no warning-suppression preference. Desktop and CLI pass their selected userData root as host-owned managedRoots to SessionService; agent file guards exclude its lexical/canonical aliases in every mode. Settings, credentials and plugin loaders retain their internal storage authority.
 
 - SettingsService.load/get/update/close; get/update return detached {settings}. Settings are
   never read-only.

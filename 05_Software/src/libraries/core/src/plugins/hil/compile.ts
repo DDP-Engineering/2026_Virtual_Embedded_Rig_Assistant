@@ -13,7 +13,7 @@ import {
   programCommandLine,
   serialPortKey,
 } from "@vera/shared";
-import { PathGuard } from "../../workbench/path-guard.js";
+import { ApplicationDataAccessError, PathGuard } from "../../workbench/path-guard.js";
 import type { LeaseClaim } from "../leases.js";
 import type { ProgramChangeRequest } from "../program-request.js";
 import type { PreparedCall } from "../program-tools.js";
@@ -94,6 +94,7 @@ export interface CompiledHilPlan {
 }
 export interface HilCompileInput {
   readonly workbench: string;
+  readonly excludedRoots?: readonly string[];
   /** The `hil run|check` call itself (risk, trial and file binding of its own arguments). */
   readonly own: PreparedCall;
   readonly planArg: string;
@@ -144,18 +145,20 @@ export function duplicateJsonKey(text: string): string | undefined {
 export async function readHilPlan(
   workbench: string,
   planArg: string,
+  excludedRoots: readonly string[] = [],
 ): Promise<{ plan: HilPlan; path: string; bytes: Buffer; sha256: string }> {
   const refuse = (message: string, path = ""): never => {
     throw new HilPlanError([{ path, message }]);
   };
-  const guard = await PathGuard.create(workbench);
+  const guard = await PathGuard.create(workbench, workbench, "workbench", undefined, excludedRoots);
   let absolute = "";
   let relative = "";
   try {
     const resolved = await guard.resolve(planArg);
     absolute = resolved.absolute;
     relative = resolved.relative;
-  } catch {
+  } catch (error) {
+    if (error instanceof ApplicationDataAccessError) throw error;
     refuse(`The plan ${planArg} is not a workbench file VERA may read.`);
   }
   let bytes: Buffer;
@@ -193,10 +196,16 @@ export async function compileHilPlan(input: HilCompileInput): Promise<CompiledHi
     path: planPath,
     bytes,
     sha256: planSha256,
-  } = await readHilPlan(input.workbench, input.planArg);
+  } = await readHilPlan(input.workbench, input.planArg, input.excludedRoots);
   const problems: HilProblem[] = [];
   const problem = (path: string, message: string) => problems.push({ path, message });
-  const guard = await PathGuard.create(input.workbench);
+  const guard = await PathGuard.create(
+    input.workbench,
+    input.workbench,
+    "workbench",
+    undefined,
+    input.excludedRoots,
+  );
 
   // Firmware: a workbench file whose bytes match the plan's hash.
   let firmwarePath = plan.firmware.path;
@@ -490,8 +499,12 @@ export async function compileHilPlan(input: HilCompileInput): Promise<CompiledHi
 }
 
 /** Checks that the plan file and the firmware still have the compiled bytes; false on any difference. */
-export async function planFilesUnchanged(workbench: string, compiled: CompiledHilPlan): Promise<boolean> {
-  const guard = await PathGuard.create(workbench);
+export async function planFilesUnchanged(
+  workbench: string,
+  compiled: CompiledHilPlan,
+  excludedRoots: readonly string[] = [],
+): Promise<boolean> {
+  const guard = await PathGuard.create(workbench, workbench, "workbench", undefined, excludedRoots);
   for (const file of compiled.files.filter((bound) => bound.use === "plan" || bound.use === "firmware")) {
     try {
       if ((await hashFile((await guard.resolve(file.path)).absolute, HIL_FIRMWARE_BYTES)) !== file.sha256)

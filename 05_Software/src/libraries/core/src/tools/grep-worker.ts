@@ -15,8 +15,11 @@ async function execute(task: WorkerTask) {
   try {
     if (task.kind === "parse_log") {
       const { scanLog } = await import("./parse-log-worker.js");
-      const value = await scanLog(task.root, task.args, (value) =>
-        port.postMessage({ type: "checkpoint", value }),
+      const value = await scanLog(
+        task.root,
+        task.args,
+        (value) => port.postMessage({ type: "checkpoint", value }),
+        task.excludedRoots,
       );
       port.postMessage({ type: "done", value });
       return;
@@ -32,6 +35,8 @@ async function execute(task: WorkerTask) {
       task.root,
       task.root,
       task.scope === "filesystem" ? "filesystem" : "workbench",
+      undefined,
+      task.excludedRoots,
     );
     const signal = new AbortController().signal;
     const files = await discoverFiles(guard, args.path ?? ".", args.glob ?? "**/*", signal);

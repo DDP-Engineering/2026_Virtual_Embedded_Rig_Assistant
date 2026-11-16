@@ -38,7 +38,7 @@ export interface ToolContext {
   /** Plugin programs of the session; absent when the host composes no program host. */
   programs?: ProgramContext;
   pluginBuilder?: PluginStore;
-  /** Host-owned application data: never writable by agent file tools, even in bypass. */
+  /** Host-owned application data: never accessible through agent file paths, even in bypass. */
   managedRoots?: readonly string[];
 }
 export interface ToolDefinition {
@@ -60,10 +60,22 @@ export function toolSignal(ctx: ToolContext, signal: AbortSignal): AbortSignal {
     ? AbortSignal.any([signal, ctx.bypassSignal()])
     : signal;
 }
+/** Exclusions belong to the host; internal plugin/credential readers retain their own authority. */
+export function toolExcludedRoots(ctx: ToolContext): readonly string[] {
+  return [...(ctx.managedRoots ?? []), ...(ctx.pluginBuilder ? [ctx.pluginBuilder.root] : [])];
+}
 export async function toolPathGuard(ctx: ToolContext): Promise<PathGuard> {
-  if (ctx.permissionMode?.() !== "bypass") return PathGuard.create(ctx.root);
-  return PathGuard.create(ctx.root, ctx.root, "filesystem", () => {
-    if (ctx.permissionMode?.() !== "bypass")
-      throw Error("Bypass file access was revoked. Retry under the current permission mode.");
-  });
+  const excluded = toolExcludedRoots(ctx);
+  if (ctx.permissionMode?.() !== "bypass")
+    return PathGuard.create(ctx.root, ctx.root, "workbench", undefined, excluded);
+  return PathGuard.create(
+    ctx.root,
+    ctx.root,
+    "filesystem",
+    () => {
+      if (ctx.permissionMode?.() !== "bypass")
+        throw Error("Bypass file access was revoked. Retry under the current permission mode.");
+    },
+    excluded,
+  );
 }

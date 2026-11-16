@@ -150,3 +150,13 @@ it("ships an immutable official create-plugin skill and keeps disabling availabl
   await expect(catalog.load("create-plugin", undefined, signal())).rejects.toMatchObject({ code: "DENIED" });
   expect(await readFile(join(f.draft, "plugin.yaml"), "utf8")).toContain("fixture-cli");
 });
+
+// REQ-SEC-3856567c
+it("refuses application-data draft access without affecting internal plugin review", async () => {
+  const f = await fixture();
+  const ctx = { ...f.ctx, managedRoots: [f.draft], permissionMode: () => "bypass" as const };
+  const outcome = await f.registry.execute(ctx, "plugin_validate", { path: "plugins/fixture-cli" }, signal());
+  expect(outcome.isError).toBe(true);
+  expect(outcome.text).toContain("VERA application data");
+  expect((await f.store.review(f.draft)).manifest?.id).toBe("fixture-cli");
+});

@@ -1,12 +1,6 @@
 // REQ-UX-33b9d601 REQ-UX-bb147586
-import {
-  type QueryClient,
-  type UseQueryResult,
-  useMutation,
-  useQuery,
-  useQueryClient,
-} from "@tanstack/react-query";
-import { type PermissionMode, permissionModeSchema, type SettingsSnapshot } from "@vera/shared";
+import { type QueryClient, useQueryClient } from "@tanstack/react-query";
+import { type PermissionMode, permissionModeSchema } from "@vera/shared";
 import { TriangleAlert } from "lucide-react";
 import { type RefObject, useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
@@ -55,31 +49,39 @@ export function PermissionPicker({
   const [error, setError] = useState<unknown>();
   const picker = useRef<HTMLSelectElement>(null);
   const alive = useRef(false);
-  const preferences = useQuery({ queryKey: ["app.settings"], queryFn: () => api.getSettings() });
+  const busy = useRef(false);
   useEffect(() => {
     alive.current = true;
     return () => {
       alive.current = false;
     };
   }, []);
-  async function choose(next: PermissionMode) {
-    if (disabled || pending) return;
+  async function choose(next: PermissionMode, confirmed = false) {
+    if (disabled || busy.current || next === mode) return;
+    busy.current = true;
     setPending(true);
     setError(undefined);
     try {
-      await change(next);
-      if (next !== "bypass") return;
-      // An unreadable plugin list shows the warning even when it is suppressed.
-      const rules = workbenchId ? await irreversibleRules(client, workbenchId).catch(() => null) : [];
-      if (!alive.current) return;
-      setIrreversible(rules ?? []);
-      if (rules === null || rules.length > 0 || preferences.data?.settings.suppressBypassWarning !== true)
+      if (next === "bypass" && !confirmed) {
+        const rules = workbenchId ? await irreversibleRules(client, workbenchId).catch(() => []) : [];
+        if (!alive.current) return;
+        setIrreversible(rules);
         setWarning(true);
+      } else {
+        await change(next);
+        if (alive.current) setWarning(false);
+      }
     } catch (failure) {
       if (alive.current) setError(failure);
     } finally {
+      busy.current = false;
       if (alive.current) setPending(false);
     }
+  }
+  function cancel() {
+    if (busy.current) return;
+    setWarning(false);
+    setError(undefined);
   }
   return (
     <>
@@ -91,7 +93,7 @@ export function PermissionPicker({
           aria-label={label ?? t("approval.mode")}
           className={mode === "bypass" ? "bypass-selected" : undefined}
           value={mode}
-          disabled={disabled || pending}
+          disabled={disabled || pending || warning}
           onChange={(event) => void choose(permissionModeSchema.parse(event.target.value))}
         >
           <option value="read-only">{t("approval.readOnly")}</option>
@@ -100,16 +102,17 @@ export function PermissionPicker({
           <option value="bypass">⚠ {t("bypass.option")}</option>
         </select>
       </label>
-      {error !== undefined && <ErrorMessage error={error} />}
+      {!warning && error !== undefined && <ErrorMessage error={error} />}
       {warning &&
         createPortal(
           <BypassWarning
             opener={picker}
-            preferences={preferences}
             irreversible={irreversible}
-            close={() => {
-              setWarning(false);
-            }}
+            pending={pending}
+            disabled={disabled}
+            error={error}
+            cancel={cancel}
+            confirm={() => void choose("bypass", true)}
           />,
           document.body,
         )}
@@ -119,55 +122,44 @@ export function PermissionPicker({
 
 function BypassWarning({
   opener,
-  preferences,
   irreversible,
-  close,
+  pending,
+  disabled,
+  error,
+  cancel,
+  confirm,
 }: {
   opener: RefObject<HTMLSelectElement | null>;
-  preferences: UseQueryResult<SettingsSnapshot, Error>;
   irreversible: IrreversibleRule[];
-  close: () => void;
+  pending: boolean;
+  disabled: boolean;
+  error: unknown;
+  cancel: () => void;
+  confirm: () => void;
 }) {
   const { t } = useTranslation();
-  const client = useQueryClient();
   const title = useId(),
     description = useId();
   const dialog = useRef<HTMLDialogElement>(null);
-  const [remember, setRemember] = useState(false);
-  const save = useMutation({
-    mutationFn: () => api.updateSettings({ suppressBypassWarning: true }),
-    onSuccess: (snapshot) => client.setQueryData(["app.settings"], snapshot),
-  });
   useEffect(() => {
     const node = dialog.current;
     node?.showModal();
-    node?.querySelector<HTMLButtonElement>('[data-action="close-bypass-warning"]')?.focus();
+    node?.querySelector<HTMLButtonElement>('[data-action="cancel-bypass"]')?.focus();
     return () => {
       node?.close();
       if (opener.current?.isConnected) opener.current.focus();
     };
   }, [opener]);
-  async function dismiss() {
-    if (save.isPending) return;
-    if (remember) {
-      try {
-        await save.mutateAsync();
-      } catch {
-        return;
-      }
-    }
-    close();
-  }
   return (
     <dialog
       ref={dialog}
       className="pinned-dialog bypass-warning"
       aria-labelledby={title}
       aria-describedby={description}
-      aria-busy={save.isPending}
+      aria-busy={pending}
       onCancel={(event) => {
         event.preventDefault();
-        void dismiss();
+        if (!pending) cancel();
       }}
     >
       <header>
@@ -191,33 +183,19 @@ function BypassWarning({
           </ul>
         </section>
       )}
-      <label className="bypass-remember">
-        <input
-          type="checkbox"
-          data-hide-bypass-warning
-          checked={remember}
-          disabled={!preferences.data || save.isPending}
-          onChange={(event) => setRemember(event.target.checked)}
-        />
-        <span>{t("bypass.dontShowAgain")}</span>
-      </label>
-      {preferences.isError && (
-        <>
-          <ErrorMessage error={preferences.error} />
-          <button type="button" onClick={() => void preferences.refetch()}>
-            {t("settings.retry")}
-          </button>
-        </>
-      )}
-      {save.isError && <ErrorMessage error={save.error} />}
+      {error !== undefined && <ErrorMessage error={error} />}
       <footer>
+        <button type="button" data-action="cancel-bypass" disabled={pending} onClick={cancel}>
+          {t("workbench.cancel")}
+        </button>
         <button
           type="button"
-          data-action="close-bypass-warning"
-          disabled={save.isPending}
-          onClick={() => void dismiss()}
+          className="primary"
+          data-action="confirm-bypass"
+          disabled={pending || disabled}
+          onClick={confirm}
         >
-          {t("panel.close")}
+          {t("bypass.confirm")}
         </button>
       </footer>
     </dialog>

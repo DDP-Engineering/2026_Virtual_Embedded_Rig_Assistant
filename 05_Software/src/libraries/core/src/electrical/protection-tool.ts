@@ -3,7 +3,7 @@
 // write flow. The model, the catalog and every device are only read; nothing is configured.
 import { electricalModelPath } from "@vera/shared";
 import type { PreparedChange } from "../tools/changes.js";
-import type { ToolContext, ToolDefinition } from "../tools/context.js";
+import { type ToolContext, type ToolDefinition, toolExcludedRoots } from "../tools/context.js";
 import { readCableTableFile } from "./cable-table.js";
 import { readCatalogFile } from "./catalog-tool.js";
 import { analyzeProtection, protectionRequestSchema } from "./protection.js";
@@ -12,12 +12,16 @@ import { resultFreshness } from "./results.js";
 import { readModelFile, readResultFile } from "./tools.js";
 
 /** k of the cable table the network result names, if that table is unchanged since the network run. */
-async function cableK(root: string, text: string | undefined): Promise<{ k: number | null; text: string }> {
+async function cableK(
+  root: string,
+  text: string | undefined,
+  excludedRoots: readonly string[] = [],
+): Promise<{ k: number | null; text: string }> {
   const match = text ? /^(\S+) .+ sha256 ([0-9a-f]{16})$/.exec(text) : null;
   if (!match) return { k: null, text: "the network result names no cable table" };
   const [, id, prefix] = match as unknown as [string, string, string];
   try {
-    const { table, stamp } = await readCableTableFile(root, id);
+    const { table, stamp } = await readCableTableFile(root, id, excludedRoots);
     if (stamp.sha256.slice(0, 16) !== prefix)
       return { k: null, text: `cable table ${id} changed since the network run` };
     return {
@@ -43,9 +47,9 @@ export async function prepareProtectionCoordination(
   const host = ctx.change;
   if (!host) throw Error("Workbench write host is unavailable.");
   host.assertWritable?.();
-  const file = await readModelFile(ctx.root);
+  const file = await readModelFile(ctx.root, toolExcludedRoots(ctx));
   if (!file) throw Error(`The workbench has no electrical model (${electricalModelPath}).`);
-  const network = await readResultFile(ctx.root, request.network);
+  const network = await readResultFile(ctx.root, request.network, toolExcludedRoots(ctx));
   if (network.producer.plugin !== "electrical-network" || network.producer.operation !== "network")
     throw Error(`The result ${request.network} was not produced by electrical-network.`);
   const fresh = resultFreshness(network, file.model);
@@ -53,9 +57,13 @@ export async function prepareProtectionCoordination(
     throw Error(
       `The network result ${request.network} is stale (changed: ${fresh.changed.join(", ") || "none"}; removed: ${fresh.removed.join(", ") || "none"}): run electrical_network again.`,
     );
-  const { catalog, stamp } = await readCatalogFile(ctx.root, request.catalog);
+  const { catalog, stamp } = await readCatalogFile(ctx.root, request.catalog, toolExcludedRoots(ctx));
   const condition = network.conditions.cableTable;
-  const cable = await cableK(ctx.root, condition && "text" in condition ? condition.text : undefined);
+  const cable = await cableK(
+    ctx.root,
+    condition && "text" in condition ? condition.text : undefined,
+    toolExcludedRoots(ctx),
+  );
   signal.throwIfAborted();
   const { runId, now } = newRun();
   const result = analyzeProtection({

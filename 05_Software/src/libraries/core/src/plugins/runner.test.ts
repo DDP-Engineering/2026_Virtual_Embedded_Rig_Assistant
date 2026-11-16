@@ -676,3 +676,34 @@ describe("review round 1 (spec REQ-DATA-f563074f)", () => {
     expect(await runner.log(root, run.id)).toMatchObject({ text: "aaaa\nbbbb\ncccc\n", truncated: false });
   });
 });
+
+// REQ-SEC-3856567c
+it("refuses an application-data working directory and its alias before spawn", async () => {
+  const data = join(root, "data");
+  await mkdir(data);
+  await symlink(data, join(root, "alias"), process.platform === "win32" ? "junction" : "dir");
+  for (const cwd of ["data", "alias"])
+    await expect(runner.start(request({ cwd, excludedRoots: [data] }))).rejects.toMatchObject({
+      code: "DENIED",
+    });
+  expect(host.programs).toHaveLength(0);
+});
+it("rechecks application-data cwd exclusion after asynchronous pre-spawn work", async () => {
+  const data = join(root, "data"),
+    work = join(root, "work");
+  await mkdir(data);
+  await mkdir(work);
+  await expect(
+    runner.start(
+      request({
+        cwd: "work",
+        excludedRoots: [data],
+        beforeSpawn: async () => {
+          await rm(work, { recursive: true });
+          await symlink(data, work, process.platform === "win32" ? "junction" : "dir");
+        },
+      }),
+    ),
+  ).rejects.toThrow(/VERA application data/);
+  expect(host.programs).toHaveLength(0);
+});

@@ -25,7 +25,7 @@ mode offers empty, missing, read-only and warning fixtures.
 
 ## Public interface
 
-- Agent defaults reuse the shared permission enum including Bypass. The editor's PermissionPicker shows the same full-access warning and permanent selection marking as the composer; project Save persists the default and Cancel discards that draft. Warning suppression is an independently saved application preference.
+- Agent defaults reuse the shared permission enum including Bypass. The editor's PermissionPicker requires the same per-change explicit Bypass confirmation and permanent selection marking as the composer; cancelling confirmation preserves the prior draft mode. Project Save persists the default and editor Cancel discards that draft.
 
 - The editor's Tools section lists the shared built-in catalog with en/ro/de descriptions and enabled checkboxes. Draft selection writes the existing tools.disabled array on Save; Cancel discards it and read-only/loading/pending controls remain disabled. WorkbenchService recognizes shared built-ins by default when reporting unknown disabled names; injected host catalogs retain their existing authority.
 

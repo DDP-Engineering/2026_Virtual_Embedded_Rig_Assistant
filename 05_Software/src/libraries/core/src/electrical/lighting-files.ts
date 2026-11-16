@@ -148,8 +148,16 @@ export const parseLightingProject = (text: string, fileId?: string) =>
 export const parseLightingReport = (text: string, fileId?: string) =>
   parseJson(text, "lighting report record", (raw) => checkLightingReport(raw, fileId));
 
-async function confined(root: string, path: string, label: string, limit: number) {
-  const target = await (await PathGuard.create(root)).resolve(path);
+async function confined(
+  root: string,
+  path: string,
+  label: string,
+  limit: number,
+  excludedRoots: readonly string[] = [],
+) {
+  const target = await (await PathGuard.create(root, root, "workbench", undefined, excludedRoots)).resolve(
+    path,
+  );
   let info: Awaited<ReturnType<typeof lstat>>;
   try {
     info = await lstat(target.absolute);
@@ -164,10 +172,10 @@ async function confined(root: string, path: string, label: string, limit: number
 }
 const sha256 = (bytes: Buffer) => createHash("sha256").update(bytes).digest("hex");
 
-async function readJsonFile(root: string, id: string, label: string) {
+async function readJsonFile(root: string, id: string, label: string, excludedRoots: readonly string[] = []) {
   if (!ID.test(id) || id.length > 64) throw Error(`The ${label} id ${JSON.stringify(id)} is not a valid id.`);
   const path = `${lightingDir}/${id}.json`;
-  const target = await confined(root, path, label, lightingLimits.fileBytes);
+  const target = await confined(root, path, label, lightingLimits.fileBytes, excludedRoots);
   const bytes = await readFile(target.absolute);
   return { bytes, stamp: { id, path, sha256: sha256(bytes) } };
 }
@@ -176,8 +184,9 @@ async function readJsonFile(root: string, id: string, label: string) {
 export async function readLightingProject(
   root: string,
   id: string,
+  excludedRoots: readonly string[] = [],
 ): Promise<{ project: LightingProject; stamp: LightingFileStamp }> {
-  const { bytes, stamp } = await readJsonFile(root, id, "lighting project");
+  const { bytes, stamp } = await readJsonFile(root, id, "lighting project", excludedRoots);
   return { project: parseLightingProject(bytes.toString("utf8"), id), stamp };
 }
 
@@ -185,8 +194,9 @@ export async function readLightingProject(
 export async function readLightingReport(
   root: string,
   id: string,
+  excludedRoots: readonly string[] = [],
 ): Promise<{ report: LightingReport; stamp: LightingFileStamp }> {
-  const { bytes, stamp } = await readJsonFile(root, id, "lighting report record");
+  const { bytes, stamp } = await readJsonFile(root, id, "lighting report record", excludedRoots);
   return { report: parseLightingReport(bytes.toString("utf8"), id), stamp };
 }
 
@@ -194,11 +204,12 @@ export async function readLightingReport(
 export async function readPhotometryFile(
   root: string,
   name: string,
+  excludedRoots: readonly string[] = [],
 ): Promise<{ photometry: Photometry; stamp: PhotometryStamp }> {
   if (!photometryFileNamePattern.test(name))
     throw Error(`The photometry file name ${JSON.stringify(name)} is not a valid .ies or .ldt name.`);
   const path = `${photometryDir}/${name}`;
-  const target = await confined(root, path, "photometry file", lightingLimits.photometryBytes);
+  const target = await confined(root, path, "photometry file", lightingLimits.photometryBytes, excludedRoots);
   const bytes = await readFile(target.absolute);
   return {
     photometry: parsePhotometry(name, bytes.toString("latin1")),
@@ -207,8 +218,12 @@ export async function readPhotometryFile(
 }
 
 /** The sha256 of an evidence file (an exported engine report) inside the workbench, streamed. */
-export async function hashEvidenceFile(root: string, path: string): Promise<string> {
-  const target = await confined(root, path, "evidence file", lightingLimits.evidenceBytes);
+export async function hashEvidenceFile(
+  root: string,
+  path: string,
+  excludedRoots: readonly string[] = [],
+): Promise<string> {
+  const target = await confined(root, path, "evidence file", lightingLimits.evidenceBytes, excludedRoots);
   const hash = createHash("sha256");
   for await (const chunk of createReadStream(target.absolute)) hash.update(chunk as Buffer);
   return hash.digest("hex");

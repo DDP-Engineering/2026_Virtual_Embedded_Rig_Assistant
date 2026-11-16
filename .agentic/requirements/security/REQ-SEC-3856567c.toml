@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-SEC-3856567c"
+
+title = "Refuse agent filesystem access to application data in every mode"
+
+status = "active"
+
+requirement = "When an agent filesystem tool targets the host-configured VERA application data folder or a canonical alias into it, VERA shall refuse access in every permission mode with an application-data error."
+
+verification = "Attempt existing and new paths, normalized paths, Windows case/junction aliases and an excluded root within the workbench; read/write refusals preserve bytes, ordinary sibling access and internal host storage still work."
+
+affected_paths = ["05_Software/src/libraries/core/src/knowledge/search.ts", "05_Software/src/libraries/core/src/knowledge/search.test.ts", "05_Software/src/libraries/core/src/plugins/", "05_Software/src/libraries/core/src/workbench/path-guard.ts", "05_Software/src/libraries/core/src/tools/", "05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/apps/desktop/src/main/", "05_Software/src/apps/cli/src/", "05_Software/src/libraries/core/src/workbench/path-guard.test.ts", "05_Software/src/libraries/core/src/workers/node-host.test.ts", "05_Software/src/libraries/core/src/plugins/authoring.ts", "05_Software/src/libraries/core/src/plugins/authoring.test.ts", "05_Software/src/libraries/core/src/ports.ts", "05_Software/src/libraries/core/src/electrical/"]
+
+linked_tests = ["05_Software/src/libraries/core/src/knowledge/search.test.ts", "05_Software/src/libraries/core/src/workbench/path-guard.test.ts", "05_Software/src/libraries/core/src/tools/write-edit.test.ts", "05_Software/src/libraries/core/src/workers/node-host.test.ts", "05_Software/src/libraries/core/src/tools/parse-log.test.ts", "05_Software/src/libraries/core/src/tools/decode-register.test.ts", "05_Software/src/libraries/core/src/plugins/authoring.test.ts", "05_Software/tests/integration/cli.test.ts", "05_Software/tests/e2e/bypass.spec.ts", "05_Software/src/libraries/core/src/tools/app-data-inputs.test.ts", "05_Software/src/libraries/core/src/tools/apply-candidate.test.ts", "05_Software/src/libraries/core/src/plugins/program-tools.test.ts", "05_Software/src/libraries/core/src/plugins/runner.test.ts", "05_Software/src/libraries/core/src/plugins/hil/hil.test.ts", "05_Software/src/libraries/core/src/electrical/network-tool.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-16
+updated = 2026-11-16

@@ -54,6 +54,7 @@ export async function scanLog(
   root: string,
   raw: unknown,
   checkpoint: (value: ParseLogResult) => void,
+  excludedRoots: readonly string[] = [],
 ): Promise<ParseLogResult> {
   const args = parseLogArgsSchema.parse(raw);
   const regex = args.profile ? logProfiles[args.profile] : patternFor(args.pattern ?? "");
@@ -62,14 +63,14 @@ export async function scanLog(
   let guard: PathGuard;
   let target: Awaited<ReturnType<PathGuard["resolve"]>>;
   try {
-    guard = await PathGuard.create(root);
+    guard = await PathGuard.create(root, root, "workbench", undefined, excludedRoots);
     target = await guard.resolve(args.path);
     formatLineRef({ path: sourcePath, start: 1, end: 1 });
   } catch {
     throw new LogFailure(
       "DENIED",
       "path_denied",
-      "Choose an allowed workbench log outside ignored paths and .vera.",
+      "Choose an allowed workbench log outside ignored paths, .vera and VERA application data.",
     );
   }
   let handle: Awaited<ReturnType<typeof open>>;

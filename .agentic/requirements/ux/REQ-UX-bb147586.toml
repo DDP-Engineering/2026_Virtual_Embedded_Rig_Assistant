@@ -2,19 +2,17 @@ schema = 1
 
 id = "REQ-UX-bb147586"
 
-title = "Remember the user's Bypass warning dismissal preference"
+title = "Cancel a Bypass mode change"
 
 status = "active"
 
-requirement = """
-When the Bypass warning is dismissed with its do-not-show-again checkbox selected, VERA shall persist the user's application-level warning suppression preference for subsequent selections and restarts, retaining a visible error and notice if saving fails.
-"""
+requirement = "When a user cancels or escapes the Bypass confirmation, VERA shall retain the previously selected permission mode and restore focus to its selector."
 
-verification = "Dismiss unchecked and verify another Bypass selection reopens the notice; dismiss checked and verify no notice on subsequent selections or native restart. Force a settings-save failure and assert visible error with notice retained. The marked Bypass selector remains visible in all cases."
+verification = "Choose Bypass while Ask or Auto-edit is active, cancel with the button or Escape, assert no change callback and original mode/focus; a later choice shows confirmation again."
 
-affected_paths = ["05_Software/src/libraries/shared/src/settings.ts", "05_Software/src/apps/desktop/src/renderer/components/permission-picker.tsx", "05_Software/src/libraries/core/src/settings/service.test.ts", "05_Software/src/apps/desktop/src/renderer/components/permission-picker.test.ts"]
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/permission-picker.tsx", "05_Software/src/libraries/shared/src/settings.ts", "05_Software/src/libraries/core/src/settings/service.test.ts"]
 
-linked_tests = ["05_Software/src/libraries/core/src/settings/service.test.ts", "05_Software/src/apps/desktop/src/renderer/components/permission-picker.test.ts", "05_Software/tests/e2e/bypass.spec.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/permission-picker.test.ts", "05_Software/tests/e2e/bypass.spec.ts"]
 
 
 spec = ""
@@ -23,4 +21,4 @@ priority = "normal"   # low | normal | high
 rationale = ""        # why this behavior exists, if not obvious
 
 created = 2026-10-30
-updated = 2026-11-01
+updated = 2026-11-16

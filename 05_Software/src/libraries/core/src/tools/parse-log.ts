@@ -1,5 +1,5 @@
 import { boundLogResult, emptyLogResult, parseLogArgsSchema, parseLogResultSchema } from "@vera/shared";
-import type { ToolDefinition } from "./context.js";
+import { type ToolDefinition, toolExcludedRoots } from "./context.js";
 
 export const parseLogTool: ToolDefinition = {
   name: "parse_log",
@@ -17,7 +17,10 @@ export const parseLogTool: ToolDefinition = {
         error: "The log worker is unavailable. Reopen the workbench.",
       };
     // Analysis capabilities remain confined even when ordinary file tools use Bypass.
-    const result = await ctx.workers.run({ kind: "parse_log", root: ctx.root, args }, signal);
+    const result = await ctx.workers.run(
+      { kind: "parse_log", root: ctx.root, args, excludedRoots: toolExcludedRoots(ctx) },
+      signal,
+    );
     if (result.reason === "aborted") throw Error("Log analysis aborted.");
     if (result.failure)
       return {

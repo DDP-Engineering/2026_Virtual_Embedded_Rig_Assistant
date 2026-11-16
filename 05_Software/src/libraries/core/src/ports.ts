@@ -14,6 +14,8 @@ export interface WorkerTask {
   root: string;
   args: unknown;
   scope?: "filesystem";
+  /** Host-owned application-data exclusions; never model arguments. */
+  excludedRoots?: readonly string[];
 }
 export interface WorkerResult {
   value?: ParseLogResult;

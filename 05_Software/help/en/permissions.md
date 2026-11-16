@@ -17,9 +17,11 @@ Switching to a stricter mode cancels approvals the agent was given under the pre
 
 ## Bypass
 
-Bypass shows a warning first: the agent can then damage projects, files or application settings outside the workbench. The warning also lists the rules of your enabled plugins that make permanent changes or act outside the device, because in Bypass they run without asking. **Don't show this message next time** hides the warning; the selected Bypass mode stays marked in red.
+Each change to Bypass first asks you to confirm that the agent can read and change files and run programs in any folder your operating system account can access, including outside the workbench. Choose **Enable Bypass** to apply the change. **Cancel** or Escape keeps the previous mode. Every new change to Bypass asks again, including after restarting VERA; the selected mode remains marked in red. The same confirmation lists irreversible rules of enabled, issue-free plugins that are not trials.
 
-Even in Bypass, only enabled tools are available, operating system permissions apply, the agent cannot change `.vera/workbench.yaml` or `.vera/plugins`, and commands of trial plugins still ask.
+VERA's application data folder, including settings, stored credentials, installed plugins and review records, is refused by agent filesystem tools in every mode, for reading as well as writing, including through path aliases. VERA continues to manage its own settings and plugins normally. Only enabled tools are available; OS permissions, tool limits and trial-plugin approvals still apply. The agent cannot change `.vera/workbench.yaml` or `.vera/plugins`.
+
+Ordinary file tools can reach outside the workbench in Bypass. Program working directories, captured-log and register analysis and plugin drafts currently remain workbench-confined. The document index, artifacts, run logs and `.vera/` stay in the workbench.
 
 ## Approve or deny
 

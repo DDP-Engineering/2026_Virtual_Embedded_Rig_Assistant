@@ -205,3 +205,15 @@ it("ships the electrical-network plugin in the electrical ecosystem, which enabl
     /^---\r?\nname: network-sizing\r?\n/,
   );
 });
+
+// REQ-SEC-3856567c
+it("refuses a valid cable-table input in nested application data", async () => {
+  const ctx = {
+    ...context(),
+    permissionMode: () => "bypass" as const,
+    managedRoots: [join(root, "electrical-automation-tables")],
+  };
+  await expect(api.electricalNetworkTool.prepare?.(ctx, request, signal())).rejects.toThrow(
+    /VERA application data/,
+  );
+});

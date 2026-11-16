@@ -533,8 +533,8 @@
   "bypass": {
     "option": "Bypass — acces complet",
     "title": "Bypass: acces complet la fișiere",
-    "warning": "Agentul poate citi și modifica fișiere oriunde contul tău are acces, inclusiv în afara workbenchului, fără să mai ceară confirmare. Poate deteriora proiecte, fișiere sau setările aplicațiilor. Sunt disponibile doar tool-urile activate; permisiunile sistemului de operare se păstrează.",
-    "dontShowAgain": "Nu mai afișa acest mesaj data viitoare",
+    "warning": "Agentul poate citi și modifica fișiere și rula programe în orice dosar accesibil contului tău din sistemul de operare, inclusiv în afara workbenchului, fără să ceară aprobare. Poate deteriora fișiere, proiecte sau dispozitive. Datele aplicației VERA sunt excluse; sunt disponibile doar instrumentele activate și limitele lor se aplică în continuare.",
+    "confirm": "Activează Bypass",
     "irreversible": "Aceste reguli ale pluginurilor activate fac modificări permanente sau acționează în afara dispozitivului. În Bypass rulează fără să întrebe:"
   },
   "webAccess": {

@@ -62,6 +62,7 @@ export interface HilStepResult {
 }
 export interface HilExecutionDeps {
   readonly workbench: string;
+  readonly excludedRoots?: readonly string[];
   readonly sessionId: string;
   readonly runner: ProgramRunner;
   /** Starts one prepared operation as a child run of the plan hold. */
@@ -385,7 +386,7 @@ export class HilExecution {
           ? {}
           : {
               check: async () => {
-                if (!(await planFilesUnchanged(this.deps.workbench, this.compiled)))
+                if (!(await planFilesUnchanged(this.deps.workbench, this.compiled, this.deps.excludedRoots)))
                   throw veraError("CONFLICT");
               },
             }),

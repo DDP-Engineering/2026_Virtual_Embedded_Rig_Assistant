@@ -198,7 +198,11 @@ export class DocumentKnowledge {
     if (typeof epoch !== "string") throw Error("Missing current embedding epoch.");
     return epoch;
   }
-  async search(raw: SearchArgs, signal: AbortSignal): Promise<{ results: SearchResult[]; message?: string }> {
+  async search(
+    raw: SearchArgs,
+    signal: AbortSignal,
+    excludedRoots: readonly string[] = [],
+  ): Promise<{ results: SearchResult[]; message?: string }> {
     const parsed = searchDocsSchema.parse(raw);
     const configured = this.defaults();
     const args = {
@@ -275,7 +279,7 @@ export class DocumentKnowledge {
           ? lexical.map((r) => ({ id: r.id, score: -r.bm25 }))
           : fuseRanks([lexical.map((r) => r.id), semantic.map((r) => r.id)]);
     const byId = new Map(rows.map((r) => [r.id, r]));
-    const guard = await PathGuard.create(this.root);
+    const guard = await PathGuard.create(this.root, this.root, "workbench", undefined, excludedRoots);
     const results: SearchResult[] = [];
     for (const hit of ranked) {
       signal.throwIfAborted();
@@ -309,9 +313,13 @@ export class DocumentKnowledge {
         }
       : { results };
   }
-  async read(raw: ReadDocArgs, signal: AbortSignal): Promise<Record<string, unknown>> {
+  async read(
+    raw: ReadDocArgs,
+    signal: AbortSignal,
+    excludedRoots: readonly string[] = [],
+  ): Promise<Record<string, unknown>> {
     const args = readDocSchema.parse(raw);
-    const guard = await PathGuard.create(this.root),
+    const guard = await PathGuard.create(this.root, this.root, "workbench", undefined, excludedRoots),
       target = await guard.resolve(args.path);
     const doc = new DocumentsRepository(this.db).get(target.relative);
     if (doc?.status !== "indexed" || !doc.sha256 || doc.kind === "other")
@@ -329,6 +337,7 @@ export class DocumentKnowledge {
       signal,
       assertWritable: () => {},
     });
+    await guard.resolve(args.path);
     const extraction = extractionSchema.parse(JSON.parse(stored));
     const pages = args.page !== undefined || args.pageEnd !== undefined;
     const lines = args.lineStart !== undefined || args.lineEnd !== undefined;

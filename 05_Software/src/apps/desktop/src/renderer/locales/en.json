@@ -533,8 +533,8 @@
   "bypass": {
     "option": "Bypass — full access",
     "title": "Bypass: full file access",
-    "warning": "The agent can read and change files wherever your account has access, including outside the workbench, without asking for confirmation. It can damage projects, files or application settings. Only enabled tools are available; operating system permissions still apply.",
-    "dontShowAgain": "Don't show this message next time",
+    "warning": "The agent can read and change files and run programs in any folder your operating system account can access, including outside the workbench, without asking for approval. This can damage files, projects or devices. VERA application data is excluded; only enabled tools are available and their limits still apply.",
+    "confirm": "Enable Bypass",
     "irreversible": "These rules of enabled plugins make permanent changes or act outside the device. In Bypass they run without asking:"
   },
   "webAccess": {

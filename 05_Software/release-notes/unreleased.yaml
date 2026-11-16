@@ -50,3 +50,10 @@ entries:
       ro: Găsește mesajele marcate pe margine și sari între ele cu taste configurabile.
       de: Finde markierte Nachrichten auf der Leiste und springe per anpassbaren Tastenkürzeln zu ihnen.
       fr: Repérez les signets sur la barre et passez de l’un à l’autre avec des raccourcis modifiables.
+  - category: improved
+    topic: { en: Permissions, ro: Permisiuni, de: Berechtigungen, fr: Permissions }
+    text:
+      en: Each Bypass change asks for confirmation; agent file tools refuse VERA application data.
+      ro: Fiecare trecere la Bypass cere confirmare; instrumentele de fișiere refuză datele VERA.
+      de: Jeder Bypass-Wechsel fragt nach; Dateiwerkzeuge sperren die VERA-Anwendungsdaten.
+      fr: Chaque passage à Bypass demande confirmation ; les outils de fichiers refusent les données VERA.

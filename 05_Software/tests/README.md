@@ -163,3 +163,7 @@ sunt în [02_Tools/release](../../02_Tools/README.md#release).
 `e2e/bookmarks.spec.ts` covers message/preview bookmark controls in four browser languages and native restart/archive guards.
 
 `e2e/bookmark-navigation.spec.ts` covers sparse/grouped marker styling, three marks in long sessions, browser renderer restart against a retained mock backend, native process restart and next/previous navigation with localized Settings entries in en/ro/de/fr.
+
+Bypass acceptance (`e2e/bypass.spec.ts`) covers per-change confirmation/cancellation in all four languages and native application-data refusal for actual read/write calls, alongside ordinary outside-file edits and restart. The configured CLI application-data boundary is exercised in `integration/cli.test.ts`; immediate irreversible-plugin approval behavior remains in `e2e/program-approvals.spec.ts`.
+
+Confined agent-input application-data exclusions also have shared core coverage in `src/libraries/core/src/tools/app-data-inputs.test.ts`, with candidate/apply, program/runner and HIL regressions beside those implementations.

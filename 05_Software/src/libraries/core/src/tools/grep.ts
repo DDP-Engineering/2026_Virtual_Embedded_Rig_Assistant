@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { ToolDefinition } from "./context.js";
+import { type ToolDefinition, toolExcludedRoots } from "./context.js";
 
 export const grepParams = z.strictObject({
   pattern: z.string().min(1),
@@ -24,6 +24,7 @@ export const grepTool: ToolDefinition = {
         kind: "grep",
         root: ctx.root,
         args,
+        excludedRoots: toolExcludedRoots(ctx),
         ...(ctx.permissionMode?.() === "bypass" ? { scope: "filesystem" as const } : {}),
       },
       signal,

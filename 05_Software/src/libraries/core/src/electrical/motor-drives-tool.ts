@@ -4,7 +4,7 @@
 // device are only read; no drive is configured or parameterised.
 import { type ElectricalModel, type ElectricalResult, electricalModelPath } from "@vera/shared";
 import type { PreparedChange } from "../tools/changes.js";
-import type { ToolContext, ToolDefinition } from "../tools/context.js";
+import { type ToolContext, type ToolDefinition, toolExcludedRoots } from "../tools/context.js";
 import { readCatalogFile } from "./catalog-tool.js";
 import { analyzeMotorDrives, motorDrivesRequestSchema } from "./motor-drives.js";
 import { newRun, prepareResultChange } from "./result-change.js";
@@ -19,8 +19,9 @@ async function currentResult(
   plugin: string,
   operation: string,
   rerun: string,
+  excludedRoots: readonly string[] = [],
 ): Promise<ElectricalResult> {
-  const result = await readResultFile(root, runId);
+  const result = await readResultFile(root, runId, excludedRoots);
   if (result.producer.plugin !== plugin || result.producer.operation !== operation)
     throw Error(`The result ${runId} was not produced by ${plugin}.`);
   const fresh = resultFreshness(result, model);
@@ -42,7 +43,7 @@ export async function prepareMotorDrives(
   const host = ctx.change;
   if (!host) throw Error("Workbench write host is unavailable.");
   host.assertWritable?.();
-  const file = await readModelFile(ctx.root);
+  const file = await readModelFile(ctx.root, toolExcludedRoots(ctx));
   if (!file) throw Error(`The workbench has no electrical model (${electricalModelPath}).`);
   const protection = await currentResult(
     ctx.root,
@@ -51,6 +52,7 @@ export async function prepareMotorDrives(
     "protection-coordination",
     "protection",
     "protection_coordination",
+    toolExcludedRoots(ctx),
   );
   const networkRun = protection.conditions.networkRun;
   if (!networkRun || !("text" in networkRun))
@@ -62,8 +64,9 @@ export async function prepareMotorDrives(
     "electrical-network",
     "network",
     "electrical_network",
+    toolExcludedRoots(ctx),
   );
-  const { catalog, stamp } = await readCatalogFile(ctx.root, request.catalog);
+  const { catalog, stamp } = await readCatalogFile(ctx.root, request.catalog, toolExcludedRoots(ctx));
   signal.throwIfAborted();
   const { runId, now } = newRun();
   const result = analyzeMotorDrives({

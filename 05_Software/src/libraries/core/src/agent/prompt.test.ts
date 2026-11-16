@@ -45,6 +45,26 @@ it("describes the explicitly enabled full filesystem scope to Bypass models", ()
   const result = prompt.buildSystemPrompt({ ...base, env: { ...base.env, permissionMode: "bypass" } });
   expect(result.text).toContain("Permission mode: bypass");
   expect(result.text).toContain("absolute paths outside the workbench");
+  for (const name of [
+    "read",
+    "list",
+    "glob",
+    "grep",
+    "write",
+    "edit",
+    "apply_candidate",
+    "electrical_model_change",
+    "electrical_network",
+    "protection_coordination",
+    "motor_drives",
+    "power_quality",
+    "lighting_design",
+  ])
+    expect(result.text).toContain(name);
+  expect(result.text).toContain("VERA application data");
+  expect(result.text).toContain(
+    "run_program, parse_log, decode_register, plugin_validate and plugin_install remain workbench-confined",
+  );
   expect(result.characters).toBe(result.text.length);
 });
 const rules = [

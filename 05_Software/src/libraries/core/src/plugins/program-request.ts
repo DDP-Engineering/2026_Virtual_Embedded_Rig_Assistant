@@ -10,7 +10,12 @@ import {
   programArgumentRefusal,
   veraError,
 } from "@vera/shared";
-import { type GuardedPath, PathGuard, validateRelativePath } from "../workbench/path-guard.js";
+import {
+  ApplicationDataAccessError,
+  type GuardedPath,
+  PathGuard,
+  validateRelativePath,
+} from "../workbench/path-guard.js";
 import type { ClaimedResources, ProgramResource } from "./resource-registry.js";
 import type { LoadedPlugin } from "./store.js";
 
@@ -54,6 +59,7 @@ export interface ProgramChangeRequest {
 }
 export interface ProgramRequestInput {
   workbench: string;
+  excludedRoots?: readonly string[];
   plugin: LoadedPlugin;
   program: string;
   /** The resolved executable path; resolving it is the caller's job. */
@@ -196,6 +202,7 @@ async function namedFile(
     if (read.remote || read.device) return undefined;
     if (read.stream !== undefined) {
       const base = resolve(cwd, read.stream);
+      await guard.assertNotExcluded(base);
       // A stream holds other bytes than the file the approval could hash.
       if (read.stream && inside(guard.root, base) && (await exists(base)))
         throw denied({ reason: "stream", index });
@@ -204,13 +211,15 @@ async function namedFile(
     path = read.path;
   }
   try {
+    await guard.assertNotExcluded(isAbsolute(path) ? path : resolve(cwd, path));
     if (isAbsolute(path)) path = await realpath(path);
     else path = resolve(cwd, path);
     if (!inside(guard.root, path)) return undefined;
     path = relative(guard.root, path) || ".";
     target = await guard.resolve(path);
     if (!(await lstat(target.absolute)).isFile()) return undefined;
-  } catch {
+  } catch (error) {
+    if (error instanceof ApplicationDataAccessError) throw error;
     // Missing, ignored or outside paths are ordinary arguments, not files.
     signal?.throwIfAborted();
     if (await reservedFile(guard.root, path)) throw denied({ reason: "unbound", index });
@@ -238,8 +247,18 @@ async function reservedFile(root: string, path: string): Promise<boolean> {
   }
 }
 /** Hashes the files of an approved request again; CONFLICT when any differs or cannot be read. */
-export async function verifyProgramFiles(request: ProgramChangeRequest, signal?: AbortSignal): Promise<void> {
-  const guard = await PathGuard.create(request.workbench);
+export async function verifyProgramFiles(
+  request: ProgramChangeRequest,
+  signal?: AbortSignal,
+  excludedRoots: readonly string[] = [],
+): Promise<void> {
+  const guard = await PathGuard.create(
+    request.workbench,
+    request.workbench,
+    "workbench",
+    undefined,
+    excludedRoots,
+  );
   for (const file of [...request.files, ...(request.registry ? [request.registry] : [])]) {
     let digest: string | undefined;
     try {
@@ -266,7 +285,13 @@ export async function prepareProgramRequest(input: ProgramRequestInput): Promise
     input.args,
     manifest.programs[input.program]?.optionSyntax,
   );
-  const guard = await PathGuard.create(input.workbench);
+  const guard = await PathGuard.create(
+    input.workbench,
+    input.workbench,
+    "workbench",
+    undefined,
+    input.excludedRoots,
+  );
   const directory = await guard.resolve(input.cwd ?? ".");
   const cwd = directory.relative;
   const platform = input.platform ?? process.platform;

@@ -56,7 +56,6 @@ const fontSizeSchema = z.union([
   z.literal(24),
 ]);
 const mutable = {
-  suppressBypassWarning: z.boolean().optional(),
   webAccess: webAccessSettingsSchema,
   /** Absent until the user first saves Settings > Parts search; readers apply partsSearchDefaults. */
   partsSearch: partsSearchSettingsSchema.optional(),
@@ -90,7 +89,6 @@ export const settingsSchema = z.strictObject({
   ...mutable,
 });
 export const settingsPatchSchema = z.strictObject({
-  suppressBypassWarning: mutable.suppressBypassWarning,
   keyboardShortcuts: mutable.keyboardShortcuts,
   language: mutable.language.optional(),
   theme: mutable.theme.optional(),
@@ -136,7 +134,6 @@ export function defaultSettings(installationId: string): Settings {
   return {
     schemaVersion: 1,
     installationId,
-    suppressBypassWarning: false,
     webAccess: { ...webAccessDefaults },
     language: "system",
     theme: "system",

@@ -2,7 +2,7 @@ import { performance } from "node:perf_hooks";
 import { type PermissionMode, programPolicy, veraError } from "@vera/shared";
 import { monotonicFactory } from "ulid";
 import type { PreparedChange } from "../../tools/changes.js";
-import type { ToolContext } from "../../tools/context.js";
+import { type ToolContext, toolExcludedRoots } from "../../tools/context.js";
 import type { ProgramChangeRequest } from "../program-request.js";
 import type { PreparedCall, ProgramContext, startCall } from "../program-tools.js";
 import type { RunResult } from "../runner.js";
@@ -57,6 +57,7 @@ export async function prepareHilCall(input: HilCallInput): Promise<PreparedChang
   const compile = (own: PreparedCall, signal: AbortSignal): Promise<CompiledHilPlan> =>
     compileHilPlan({
       workbench: ctx.root,
+      excludedRoots: toolExcludedRoots(ctx),
       own,
       planArg,
       runId,
@@ -144,6 +145,7 @@ export async function prepareHilCall(input: HilCallInput): Promise<PreparedChang
       const background = args.background === true;
       const execution = new HilExecution(current.compiled, {
         workbench: ctx.root,
+        excludedRoots: toolExcludedRoots(ctx),
         sessionId: programs.sessionId,
         runner: programs.host.runner,
         start: (call, options) =>

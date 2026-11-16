@@ -1,6 +1,6 @@
 // REQ-FUNC-a7ad5920 REQ-UX-33b9d601 REQ-UX-bb147586
 
-import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { _electron, expect, test } from "@playwright/test";
@@ -9,7 +9,9 @@ import { resolveConfig } from "electron-vite";
 import { createServer } from "vite";
 import { installNetworkGuard, outboundAttempts } from "./network-guard.js";
 
-test("marked Bypass selectors display dismissible warning and remember its suppression", async ({ page }) => {
+test("marked Bypass selectors confirm each change and cancellation retains the previous mode", async ({
+  page,
+}) => {
   const config = (await resolveConfig({ root: "src/apps/desktop" }, "serve", "development")).config?.renderer;
   if (!config) throw Error("Missing renderer config");
   const server = await createServer({
@@ -35,6 +37,7 @@ test("marked Bypass selectors display dismissible warning and remember its suppr
       ["ro", "în afara workbenchului"],
       ["de", "außerhalb der Workbench"],
       ["en", "outside the workbench"],
+      ["fr", "hors du workbench"],
     ]) {
       await page.locator('[data-i18n="nav.settings"]').click();
       await page.locator('[data-section="appearance"]').click();
@@ -52,40 +55,36 @@ test("marked Bypass selectors display dismissible warning and remember its suppr
       const bounds = await page.locator(".bypass-warning").boundingBox();
       const viewport = page.viewportSize();
       expect((bounds?.y ?? 0) + (bounds?.height ?? 0)).toBeLessThanOrEqual((viewport?.height ?? 0) + 1);
+      await expect(picker).toHaveValue("ask");
       await page.keyboard.press("Escape");
-      await picker.selectOption("ask");
+      await expect(picker).toHaveValue("ask");
+      await expect(picker).toBeFocused();
     }
     await picker.selectOption("bypass");
     const warning = page.locator(".bypass-warning");
     await expect(warning).toBeVisible();
-    await expect(warning.getByRole("button")).toHaveCount(1);
-    await expect(warning).toContainText("outside the workbench");
-    await expect(picker).toHaveClass(/bypass-selected/);
-    await page.locator('[data-action="close-bypass-warning"]').click();
+    await expect(warning.getByRole("button")).toHaveCount(2);
+    await expect(picker).toHaveValue("ask");
+    await page.locator('[data-action="cancel-bypass"]').click();
+    await expect(picker).toHaveValue("ask");
     await expect(picker).toBeFocused();
-    await picker.selectOption("ask");
-    await picker.selectOption("bypass");
-    await expect(warning).toBeVisible();
-    await page.keyboard.press("Escape");
-    await expect(warning).toBeHidden();
-    await picker.selectOption("ask");
-    await picker.selectOption("bypass");
-    await page.locator('[data-action="close-bypass-warning"]').click();
-    await expect(warning).toBeHidden();
-    await picker.selectOption("ask");
-    await picker.selectOption("bypass");
-    await page.locator("[data-hide-bypass-warning]").check();
-    await page.locator('[data-action="close-bypass-warning"]').click();
-    await picker.selectOption("ask");
-    await picker.selectOption("bypass");
-    await expect(picker).toHaveValue("bypass");
-    await expect(warning).toBeHidden();
+    for (const prior of ["ask", "auto-edit"]) {
+      await picker.selectOption(prior);
+      await picker.selectOption("bypass");
+      await expect(warning).toHaveCount(1);
+      await expect(picker).toHaveValue(prior);
+      await page.locator('[data-action="confirm-bypass"]').click();
+      await expect(picker).toHaveValue("bypass");
+      await expect(warning).toBeHidden();
+      await expect(picker).toHaveClass(/bypass-selected/);
+      await expect(picker).toBeFocused();
+    }
   } finally {
     await server.close();
   }
 });
 
-test("native full filesystem Bypass executes outside tools and remembers mode and warning preference across restart", async () => {
+test("native Bypass refuses application-data reads and writes and confirms each mode change across restart", async () => {
   test.setTimeout(60000);
   const root = await mkdtemp(join(tmpdir(), "vera-bypass-ui-"));
   const folder = join(root, "bench"),
@@ -115,6 +114,12 @@ test("native full filesystem Bypass executes outside tools and remembers mode an
         ],
       },
       { toolCalls: [{ name: "write", args: { path: ".vera/bypass-owned.txt", content: "owned metadata" } }] },
+      { toolCalls: [{ name: "read", args: { path: join(root, "profile/settings.json") } }] },
+      {
+        toolCalls: [
+          { name: "write", args: { path: join(root, "profile/forbidden.txt"), content: "forbidden" } },
+        ],
+      },
       { text: "External operations completed" },
     ]
       .map((event) => JSON.stringify(event))
@@ -149,7 +154,7 @@ test("native full filesystem Bypass executes outside tools and remembers mode an
     await expect(page.locator(".bypass-warning")).toContainText("outside the workbench");
     if (process.env.VERA_BYPASS_SCREENSHOT)
       await page.screenshot({ path: process.env.VERA_BYPASS_SCREENSHOT });
-    await page.locator('[data-action="close-bypass-warning"]').click();
+    await page.locator('[data-action="confirm-bypass"]').click();
     await expect(page.locator(".workbench-editor [data-permission-picker]")).toBeFocused();
     await page.locator("[data-project-save]").click();
     await expect(page.locator(".workbench-editor")).toHaveCount(0);
@@ -160,8 +165,7 @@ test("native full filesystem Bypass executes outside tools and remembers mode an
     if (!id) throw Error("Missing session id");
     await picker.selectOption("ask");
     await picker.selectOption("bypass");
-    await page.locator("[data-hide-bypass-warning]").check();
-    await page.locator('[data-action="close-bypass-warning"]').click();
+    await page.locator('[data-action="confirm-bypass"]').click();
     await page.evaluate(
       async (id) =>
         (window as unknown as { vera: VeraBridge }).vera.invoke("session.model.set", {
@@ -170,6 +174,7 @@ test("native full filesystem Bypass executes outside tools and remembers mode an
         }),
       id,
     );
+    const settingsBefore = await readFile(join(root, "profile/settings.json"), "utf8");
     const message = page.getByRole("textbox", { name: "Message", exact: true });
     await message.fill("Access external files using the enabled tools");
     await message.press("Enter");
@@ -180,8 +185,14 @@ test("native full filesystem Bypass executes outside tools and remembers mode an
     );
     expect(view.snapshot.mode).toBe("bypass");
     const toolRows = view.snapshot.items.filter((item) => item.kind === "tool");
-    expect(toolRows).toHaveLength(7);
-    for (const row of toolRows) expect(row).toMatchObject({ status: "ok" });
+    expect(toolRows).toHaveLength(9);
+    for (const row of toolRows.slice(0, 7)) expect(row).toMatchObject({ status: "ok" });
+    for (const row of toolRows.slice(7)) {
+      expect(row).toMatchObject({ status: "error" });
+      expect(JSON.stringify(row)).toContain("VERA application data");
+    }
+    expect(await readFile(join(root, "profile/settings.json"), "utf8")).toBe(settingsBefore);
+    await expect(stat(join(root, "profile/forbidden.txt"))).rejects.toMatchObject({ code: "ENOENT" });
     for (const approval of view.snapshot.approvals) expect(approval.decision).toBe("approved");
     expect(await readFile(path, "utf8")).toBe("new external FIND_ME\n");
     expect(await readFile(join(outside, "created.txt"), "utf8")).toBe("created by Bypass");
@@ -198,7 +209,12 @@ test("native full filesystem Bypass executes outside tools and remembers mode an
     await expect(picker).toHaveValue("bypass");
     await picker.selectOption("ask");
     await picker.selectOption("bypass");
-    await expect(page.locator(".bypass-warning")).toBeHidden();
+    await expect(page.locator(".bypass-warning")).toHaveCount(1);
+    await expect(picker).toHaveValue("ask");
+    await page.locator('[data-action="cancel-bypass"]').click();
+    await expect(picker).toHaveValue("ask");
+    await picker.selectOption("bypass");
+    await page.locator('[data-action="confirm-bypass"]').click();
     await expect(picker).toHaveClass(/bypass-selected/);
     expect(await outboundAttempts(app)).toEqual([]);
   } finally {

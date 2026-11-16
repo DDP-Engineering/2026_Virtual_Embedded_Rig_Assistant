@@ -17,9 +17,11 @@ Ein Wechsel in einen strengeren Modus widerruft Freigaben, die der Agent im vorh
 
 ## Bypass
 
-Bypass zeigt zuerst eine Warnung: Der Agent kann dann Projekte, Dateien oder Anwendungseinstellungen außerhalb der Workbench beschädigen. Die Warnung listet außerdem die Regeln Ihrer aktivierten Plugins auf, die dauerhafte Änderungen vornehmen oder außerhalb des Geräts wirken, denn in Bypass laufen sie ohne Nachfrage. **Diese Meldung beim nächsten Mal nicht mehr anzeigen** blendet die Warnung aus; der gewählte Bypass-Modus bleibt rot markiert.
+Jeder Wechsel zu Bypass verlangt zuerst Ihre Bestätigung, dass der Agent Dateien lesen und ändern sowie Programme in jedem Ordner ausführen kann, auf den Ihr Betriebssystemkonto zugreifen kann, auch außerhalb der Workbench. Wählen Sie **Bypass aktivieren**, um den Wechsel anzuwenden. **Abbrechen** oder Escape behält den bisherigen Modus bei. Jeder erneute Wechsel zu Bypass fragt wieder nach, auch nach einem Neustart von VERA; der ausgewählte Modus bleibt rot markiert. Dieselbe Bestätigung listet irreversible Regeln aktivierter, fehlerfreier Plugins auf, die keine Test-Plugins sind.
 
-Auch in Bypass sind nur aktivierte Werkzeuge verfügbar, die Berechtigungen des Betriebssystems gelten, der Agent kann `.vera/workbench.yaml` und `.vera/plugins` nicht ändern, und Befehle von Test-Plugins fragen weiterhin nach.
+Der Anwendungsdatenordner von VERA mit Einstellungen, gespeicherten Zugangsdaten, installierten Plugins und Prüfprotokollen ist für Dateizugriffe des Agenten in jedem Modus gesperrt, sowohl zum Lesen als auch zum Schreiben, auch über Pfad-Aliase. VERA verwaltet seine eigenen Einstellungen und Plugins weiterhin normal. Nur aktivierte Werkzeuge sind verfügbar; Betriebssystemrechte, Werkzeuggrenzen und Freigaben für Test-Plugins gelten weiterhin. Der Agent kann `.vera/workbench.yaml` und `.vera/plugins` nicht ändern.
+
+Allgemeine Dateiwerkzeuge erreichen im Bypass Pfade außerhalb der Workbench. Programm-Arbeitsverzeichnisse, die Analyse erfasster Protokolle und Register sowie Plugin-Entwürfe bleiben derzeit auf die Workbench beschränkt. Dokumentindex, Artefakte, Ausführungsprotokolle und `.vera/` bleiben in der Workbench.
 
 ## Genehmigen oder ablehnen
 

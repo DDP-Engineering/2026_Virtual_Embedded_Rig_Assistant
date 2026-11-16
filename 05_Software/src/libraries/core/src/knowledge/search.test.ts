@@ -796,3 +796,51 @@ it("falls back to keyword results when the indexer cannot rank, and still fails 
     await h.close();
   }
 });
+
+// REQ-SEC-3856567c
+it("agent document reads and every ranking mode exclude indexed application data and aliases", async () => {
+  const h = await harness();
+  try {
+    await mkdir(join(h.root, "data"));
+    await h.add("data/private.txt", "APP_PRIVATE_TOKEN searchterm");
+    await h.add("docs/public.txt", "public searchterm");
+    await mkdir(join(h.root, "data-alias"));
+    await h.add("data-alias/alias.txt", "APP_PRIVATE_TOKEN searchterm");
+    await writeFile(join(h.root, "data/alias.txt"), "APP_PRIVATE_TOKEN searchterm");
+    await rm(join(h.root, "data-alias"), { recursive: true });
+    await symlink(
+      join(h.root, "data"),
+      join(h.root, "data-alias"),
+      process.platform === "win32" ? "junction" : "dir",
+    );
+    const registry = new ToolRegistry();
+    for (const mode of ["read-only", "ask", "auto-edit", "bypass"] as const) {
+      const ctx = {
+        ...createToolContext(h.root),
+        knowledge: h.knowledge,
+        managedRoots: [join(h.root, "data")],
+        permissionMode: () => mode,
+      };
+      for (const path of ["data/private.txt", "data-alias/alias.txt"]) {
+        const read = await registry.execute(ctx, "read_doc", { path }, h.signal);
+        expect(read.isError).toBe(true);
+        expect(read.text).toContain("VERA application data");
+        expect(read.text).not.toContain("APP_PRIVATE_TOKEN");
+      }
+      for (const mode of ["keyword", "semantic", "hybrid"] as const) {
+        const result = await registry.execute(ctx, "search_docs", { query: "searchterm", mode }, h.signal);
+        expect(result.isError).toBe(false);
+        expect(JSON.parse(result.text).results.map((row: { path: string }) => row.path)).toEqual([
+          "docs/public.txt",
+        ]);
+        expect(result.text).not.toContain("APP_PRIVATE_TOKEN");
+      }
+    }
+    // User-owned index/extraction storage is unchanged and remains available to its internal reader.
+    expect(await h.knowledge.read({ path: "data/private.txt" }, h.signal)).toMatchObject({
+      text: expect.stringContaining("APP_PRIVATE_TOKEN"),
+    });
+  } finally {
+    await h.close();
+  }
+});

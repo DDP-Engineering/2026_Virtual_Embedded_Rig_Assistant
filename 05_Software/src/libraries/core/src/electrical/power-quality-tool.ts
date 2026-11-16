@@ -4,7 +4,7 @@
 // switched and no regulator is set.
 import { type ElectricalResult, electricalModelPath } from "@vera/shared";
 import type { PreparedChange } from "../tools/changes.js";
-import type { ToolContext, ToolDefinition } from "../tools/context.js";
+import { type ToolContext, type ToolDefinition, toolExcludedRoots } from "../tools/context.js";
 import { readCatalogFile } from "./catalog-tool.js";
 import { readMeasurementFile } from "./measurements.js";
 import { analyzePowerQuality, powerQualityRequestSchema } from "./power-quality.js";
@@ -23,11 +23,11 @@ export async function preparePowerQuality(
   const host = ctx.change;
   if (!host) throw Error("Workbench write host is unavailable.");
   host.assertWritable?.();
-  const file = await readModelFile(ctx.root);
+  const file = await readModelFile(ctx.root, toolExcludedRoots(ctx));
   if (!file) throw Error(`The workbench has no electrical model (${electricalModelPath}).`);
   let network: ElectricalResult | null = null;
   if (request.network) {
-    network = await readResultFile(ctx.root, request.network);
+    network = await readResultFile(ctx.root, request.network, toolExcludedRoots(ctx));
     if (network.producer.plugin !== "electrical-network" || network.producer.operation !== "network")
       throw Error(`The result ${request.network} was not produced by electrical-network.`);
     const fresh = resultFreshness(network, file.model);
@@ -37,13 +37,15 @@ export async function preparePowerQuality(
       );
   }
   const measurements = request.measurements
-    ? await readMeasurementFile(ctx.root, request.measurements)
+    ? await readMeasurementFile(ctx.root, request.measurements, toolExcludedRoots(ctx))
     : null;
   if (measurements && measurements.series.file.board !== request.board)
     throw Error(
       `The measurement file ${request.measurements} measures ${measurements.series.file.board}, not ${request.board}.`,
     );
-  const catalogFile = request.catalog ? await readCatalogFile(ctx.root, request.catalog) : null;
+  const catalogFile = request.catalog
+    ? await readCatalogFile(ctx.root, request.catalog, toolExcludedRoots(ctx))
+    : null;
   signal.throwIfAborted();
   const { runId, now } = newRun();
   const result = analyzePowerQuality({

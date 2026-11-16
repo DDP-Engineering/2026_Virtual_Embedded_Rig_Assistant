@@ -17,9 +17,11 @@ Passer à un mode plus strict annule les approbations accordées à l’agent da
 
 ## Contournement
 
-Le mode Contournement affiche d’abord un avertissement : l’agent peut alors endommager des projets, des fichiers ou des paramètres d’application en dehors du banc de travail. L’avertissement liste aussi les règles de vos plugins activés qui effectuent des modifications permanentes ou agissent en dehors de l’appareil, car en mode Contournement elles s’exécutent sans demander. **Ne plus afficher ce message** masque l’avertissement ; le mode Contournement sélectionné reste signalé en rouge.
+Chaque passage à Bypass demande d’abord de confirmer que l’agent peut lire et modifier des fichiers et exécuter des programmes dans tout dossier accessible à votre compte du système, y compris hors du workbench. Choisissez **Activer Bypass** pour appliquer le changement. **Annuler** ou Échap conserve le mode précédent. Chaque nouveau passage à Bypass demande une confirmation, même après le redémarrage de VERA ; le mode sélectionné reste marqué en rouge. La même confirmation liste les règles irréversibles des plugins activés, sans erreur et qui ne sont pas à l’essai.
 
-Même en mode Contournement, seuls les outils activés sont disponibles, les autorisations du système d’exploitation s’appliquent, l’agent ne peut pas modifier `.vera/workbench.yaml` ni `.vera/plugins`, et les commandes des plugins d’essai demandent toujours une approbation.
+Le dossier des données de l’application VERA, avec les paramètres, identifiants enregistrés, plugins installés et dossiers de vérification, est refusé aux outils de fichiers de l’agent dans tous les modes, en lecture comme en écriture, y compris par des alias de chemin. VERA continue à gérer normalement ses propres paramètres et plugins. Seuls les outils activés sont disponibles ; les droits du système, les limites des outils et les approbations des plugins à l’essai restent applicables. L’agent ne peut pas modifier `.vera/workbench.yaml` ou `.vera/plugins`.
+
+Les outils de fichiers ordinaires peuvent accéder hors du workbench en Bypass. Les répertoires de travail des programmes, l’analyse des journaux et registres capturés et les brouillons de plugins restent actuellement limités au workbench. L’index documentaire, les artefacts, journaux d’exécution et `.vera/` restent dans le workbench.
 
 ## Approuver ou refuser
 

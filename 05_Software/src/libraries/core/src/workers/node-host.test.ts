@@ -1,5 +1,5 @@
 import { getEventListeners } from "node:events";
-import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, expect, it } from "vitest";
@@ -124,4 +124,32 @@ it("contains synchronous worker startup failure and restores capacity for real m
     matches: [{ path: "00-good.txt", line: 1, text: "ok", ref: "00-good.txt#L1-L1" }],
   });
   expect(pool.activeCount).toBe(0);
+});
+
+// REQ-SEC-3856567c
+it("workers refuse app-data search and omit excluded descendants in both scopes", async () => {
+  const data = join(root, "data");
+  await mkdir(data);
+  await writeFile(join(data, "private.txt"), "ok secret");
+  const h = host(10000);
+  for (const scope of [undefined, "filesystem"] as const) {
+    const policy = { root, ...(scope ? { scope } : {}), excludedRoots: [data] };
+    expect(
+      await h.run(
+        { kind: "grep", ...policy, args: { path: "data", pattern: "ok" } },
+        new AbortController().signal,
+      ),
+    ).toMatchObject({ error: expect.stringContaining("VERA application data"), matches: [] });
+    const result = await h.run(
+      { kind: "grep", ...policy, args: { pattern: "ok" } },
+      new AbortController().signal,
+    );
+    expect(result.matches.map((match) => match.path)).toEqual(["00-good.txt"]);
+    expect(
+      await h.run(
+        { kind: "parse_log", ...policy, args: { path: "data/private.txt", profile: "iso" } },
+        new AbortController().signal,
+      ),
+    ).toMatchObject({ failure: { code: "DENIED", reason: "path_denied" } });
+  }
 });

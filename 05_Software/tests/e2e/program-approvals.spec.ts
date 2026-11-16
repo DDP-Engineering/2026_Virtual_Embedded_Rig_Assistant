@@ -107,7 +107,7 @@ test("lists irreversible plugin rules in the bypass warning, then runs the comma
     await expect(warning.locator("[data-bypass-irreversible] li")).toHaveText(
       "esp32-efuse espefuse * burn-key * — Burns a key into eFuse permanently.",
     );
-    await page.locator('[data-action="close-bypass-warning"]').click();
+    await page.locator('[data-action="confirm-bypass"]').click();
     await expect(warning).toBeHidden();
     await input.fill("burn the key");
     await input.press("Enter");

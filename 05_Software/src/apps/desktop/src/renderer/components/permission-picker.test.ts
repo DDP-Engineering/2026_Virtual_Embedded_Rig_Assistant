@@ -52,39 +52,99 @@ async function mount() {
   expect(document.querySelector(".bypass-warning")).toBeTruthy();
   return { picker, user, snapshot };
 }
-it("keeps the warning and a visible error when suppression cannot be saved, then retries successfully", async () => {
-  const { picker, user, snapshot } = await mount();
-  vi.mocked(api.updateSettings).mockRejectedValueOnce({ code: "DENIED", messageKey: "errors.DENIED" });
+it.each(["en", "ro", "de", "fr"])(
+  "confirms each Bypass change and cancels without changing mode in %s",
+  async (language) => {
+    const { picker, user } = await mount();
+    await act(async () => {
+      await i18n.changeLanguage(language);
+    });
+    expect(picker.value).toBe("ask");
+    expect(document.querySelectorAll(".bypass-warning")).toHaveLength(1);
+    expect(document.querySelector(".bypass-warning")?.textContent).toContain(i18n.t("bypass.warning"));
+    await act(async () => {
+      await user.click(document.querySelector('[data-action="cancel-bypass"]') as HTMLElement);
+    });
+    expect(picker.value).toBe("ask");
+    expect(document.activeElement).toBe(picker);
+    await act(async () => {
+      await user.selectOptions(picker, "auto-edit");
+    });
+    await act(async () => {
+      await user.selectOptions(picker, "bypass");
+    });
+    expect(picker.value).toBe("auto-edit");
+    await act(async () => {
+      document
+        .querySelector("dialog")
+        ?.dispatchEvent(new Event("cancel", { cancelable: true, bubbles: true }));
+    });
+    expect(picker.value).toBe("auto-edit");
+    await act(async () => {
+      await user.selectOptions(picker, "bypass");
+    });
+    await act(async () => {
+      await user.click(document.querySelector('[data-action="confirm-bypass"]') as HTMLElement);
+    });
+    expect(picker.value).toBe("bypass");
+    expect(picker.className).toContain("bypass-selected");
+    expect(document.querySelector(".bypass-warning")).toBeNull();
+    await act(async () => {
+      await user.selectOptions(picker, "ask");
+    });
+    await act(async () => {
+      await user.selectOptions(picker, "bypass");
+    });
+    expect(document.querySelectorAll(".bypass-warning")).toHaveLength(1);
+    expect(picker.value).toBe("ask");
+  },
+);
+
+it("keeps a failed mode save visible for retry and prevents duplicate confirmation", async () => {
+  await mount();
+  await act(async () => root.unmount());
+  root = createRoot(container);
+  let resolve!: () => void;
+  const change = vi
+    .fn()
+    .mockRejectedValueOnce({ code: "DENIED", messageKey: "errors.DENIED" })
+    .mockImplementationOnce(
+      () =>
+        new Promise<void>((done) => {
+          resolve = done;
+        }),
+    );
+  await act(async () =>
+    root.render(
+      createElement(
+        QueryClientProvider,
+        { client },
+        createElement(PermissionPicker, { mode: "ask", disabled: false, change }),
+      ),
+    ),
+  );
+  const user = userEvent.setup();
   await act(async () => {
-    await user.click(document.querySelector("[data-hide-bypass-warning]") as HTMLElement);
+    await user.selectOptions(container.querySelector("select") as HTMLSelectElement, "bypass");
   });
   await act(async () => {
-    await user.click(document.querySelector('[data-action="close-bypass-warning"]') as HTMLElement);
+    await user.click(document.querySelector('[data-action="confirm-bypass"]') as HTMLElement);
   });
   expect(document.querySelector(".bypass-warning [role=alert]")).toBeTruthy();
-  expect(document.querySelector(".bypass-warning")).toBeTruthy();
-  vi.mocked(api.updateSettings).mockResolvedValueOnce({
-    ...snapshot,
-    settings: { ...snapshot.settings, suppressBypassWarning: true },
-  });
   await act(async () => {
-    await user.click(document.querySelector('[data-action="close-bypass-warning"]') as HTMLElement);
+    await user.click(document.querySelector('[data-action="confirm-bypass"]') as HTMLElement);
   });
-  expect(document.querySelector(".bypass-warning")).toBeNull();
-  expect(api.updateSettings).toHaveBeenCalledWith({ suppressBypassWarning: true });
-  await act(async () => {
-    await user.selectOptions(picker, "ask");
-    await user.selectOptions(picker, "bypass");
-  });
+  expect((document.querySelector('[data-action="confirm-bypass"]') as HTMLButtonElement).disabled).toBe(true);
+  expect(change).toHaveBeenCalledTimes(2);
+  await act(async () => resolve());
   expect(document.querySelector(".bypass-warning")).toBeNull();
 });
 
 // REQ-UX-12185f60
-it("lists the irreversible rules of enabled plugins even when the warning is suppressed", async () => {
+it("lists eligible irreversible rules in the same confirmation before changing mode", async () => {
   await i18n.changeLanguage("en");
   const settings = {
     ...defaultSettings("1b9dc50c-d87d-484b-88e6-04cb5f7c5a19"),
-    suppressBypassWarning: true,
   };
   vi.mocked(api.getSettings).mockResolvedValue({ settings });
   const summary = { issues: [], enabled: true, tier: "local" as const };
@@ -120,11 +180,13 @@ it("lists the irreversible rules of enabled plugins even when the warning is sup
   expect(warning?.textContent).toContain("Permanent.");
   vi.mocked(api.invoke).mockResolvedValue([]);
   await act(async () => {
-    await user.click(document.querySelector('[data-action="close-bypass-warning"]') as HTMLElement);
+    await user.click(document.querySelector('[data-action="confirm-bypass"]') as HTMLElement);
   });
   await act(async () => {
     await user.selectOptions(container.querySelector("select") as HTMLSelectElement, "ask");
+  });
+  await act(async () => {
     await user.selectOptions(container.querySelector("select") as HTMLSelectElement, "bypass");
   });
-  expect(document.querySelector(".bypass-warning")).toBeNull();
+  expect(document.querySelector(".bypass-warning")).toBeTruthy();
 });

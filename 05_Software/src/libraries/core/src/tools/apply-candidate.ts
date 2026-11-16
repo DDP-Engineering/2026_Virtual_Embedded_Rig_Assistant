@@ -8,7 +8,7 @@ import { PathGuard } from "../workbench/path-guard.js";
 import { isBinary } from "./binary.js";
 import { assertAgentWritable, commitChange, type PreparedChange, protectedPath } from "./changes.js";
 import type { ToolContext, ToolDefinition } from "./context.js";
-import { toolPathGuard } from "./context.js";
+import { toolExcludedRoots, toolPathGuard } from "./context.js";
 
 /** The official plugin whose candidates apply_candidate writes (spec REQ-DATA-891d5b5d §10). */
 export const kicadLayoutPluginId = "kicad-layout";
@@ -98,13 +98,20 @@ export async function prepareApplyCandidate(
   const host = ctx.change;
   if (!host) throw Error("Workbench write host is unavailable.");
   host.assertWritable?.();
-  const workbench = await PathGuard.create(ctx.root);
+  const workbench = await PathGuard.create(
+    ctx.root,
+    ctx.root,
+    "workbench",
+    undefined,
+    toolExcludedRoots(ctx),
+  );
   const run = await workbench.resolve(args.run);
   if (run.relative === "." || !(await lstat(run.absolute)).isDirectory())
     throw Error("Choose a kicad-layout run folder inside the workbench.");
+  const statePath = await workbench.resolve(`${run.relative}/state.json`);
   let state: z.infer<typeof stateSchema>;
   try {
-    state = stateSchema.parse(JSON.parse(await readFile(join(run.absolute, "state.json"), "utf8")));
+    state = stateSchema.parse(JSON.parse(await readFile(statePath.absolute, "utf8")));
   } catch {
     throw Error("The folder holds no kicad-layout state (state.json, format 1).");
   }
@@ -174,6 +181,15 @@ export async function prepareApplyCandidate(
       result: { path: changePath, sha256: afterSha256, bytes: after.length, run: args.run },
       // The approval covers these bytes: a candidate changed since then, or a board opened in KiCad, stops the write.
       check: async () => {
+        const guard = await PathGuard.create(
+          ctx.root,
+          ctx.root,
+          "workbench",
+          undefined,
+          toolExcludedRoots(ctx),
+        );
+        if ((await guard.resolve(candidate.relative)).key !== candidate.key)
+          throw Error("Conflict: candidate path changed.");
         const current = await readFile(candidate.absolute).catch(() => null);
         if (current === null || hash(current) !== afterSha256)
           throw Error("Conflict: the candidate changed after approval. Check it again before applying.");

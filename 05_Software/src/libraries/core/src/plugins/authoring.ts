@@ -3,7 +3,7 @@ import { lstat } from "node:fs/promises";
 import { dangerousToken, ruleNamesProgram, veraError } from "@vera/shared";
 import { z } from "zod";
 import type { PreparedChange } from "../tools/changes.js";
-import type { ToolContext, ToolDefinition } from "../tools/context.js";
+import { type ToolContext, type ToolDefinition, toolExcludedRoots } from "../tools/context.js";
 import { PathGuard } from "../workbench/path-guard.js";
 import { readPluginPackage } from "./store.js";
 
@@ -11,7 +11,9 @@ const params = z.strictObject({ path: z.string().min(1).max(4096) });
 /** Drafts stay in the workbench even when ordinary file tools have bypass scope. */
 async function draftPath(ctx: ToolContext, raw: unknown): Promise<string> {
   const { path } = params.parse(raw);
-  const target = await (await PathGuard.create(ctx.root)).resolve(path);
+  const target = await (
+    await PathGuard.create(ctx.root, ctx.root, "workbench", undefined, toolExcludedRoots(ctx))
+  ).resolve(path);
   if (!(await lstat(target.absolute)).isDirectory()) throw Error("Choose a plugin draft folder.");
   return target.absolute;
 }

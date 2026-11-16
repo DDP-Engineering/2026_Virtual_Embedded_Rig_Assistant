@@ -533,8 +533,8 @@
   "bypass": {
     "option": "Contournement — accès complet",
     "title": "Contournement : accès complet aux fichiers",
-    "warning": "L’agent peut lire et modifier des fichiers partout où votre compte a accès, y compris hors du banc de travail, sans demander de confirmation. Il peut endommager des projets, des fichiers ou les paramètres de l’application. Seuls les outils activés sont disponibles ; les autorisations du système d’exploitation s’appliquent toujours.",
-    "dontShowAgain": "Ne plus afficher ce message",
+    "warning": "L’agent peut lire et modifier des fichiers et exécuter des programmes dans tout dossier accessible à votre compte du système, y compris hors du workbench, sans demander d’approbation. Cela peut endommager des fichiers, projets ou appareils. Les données de l’application VERA sont exclues ; seuls les outils activés sont disponibles et leurs limites restent applicables.",
+    "confirm": "Activer Bypass",
     "irreversible": "Ces règles des plugins activés apportent des modifications définitives ou agissent hors de l’appareil. En mode Contournement, elles s’exécutent sans demander :"
   },
   "webAccess": {

@@ -221,8 +221,15 @@ export function parseMeasurements(
   return checked.series;
 }
 
-async function fileBytes(root: string, path: string, label: string): Promise<Buffer> {
-  const target = await (await PathGuard.create(root)).resolve(path);
+async function fileBytes(
+  root: string,
+  path: string,
+  label: string,
+  excludedRoots: readonly string[] = [],
+): Promise<Buffer> {
+  const target = await (await PathGuard.create(root, root, "workbench", undefined, excludedRoots)).resolve(
+    path,
+  );
   let info: Awaited<ReturnType<typeof lstat>>;
   try {
     info = await lstat(target.absolute);
@@ -240,11 +247,12 @@ async function fileBytes(root: string, path: string, label: string): Promise<Buf
 export async function readMeasurementFile(
   root: string,
   id: string,
+  excludedRoots: readonly string[] = [],
 ): Promise<{ series: MeasurementSeries; stamp: MeasurementStamp }> {
   if (!ID.test(id) || id.length > 64)
     throw Error(`The measurement id ${JSON.stringify(id)} is not a valid id.`);
   const path = `${powerMeasurementsDir}/${id}.json`;
-  const json = await fileBytes(root, path, "measurement file");
+  const json = await fileBytes(root, path, "measurement file", excludedRoots);
   let csvName: unknown;
   try {
     csvName = (JSON.parse(json.toString("utf8")) as { csv?: unknown }).csv;
@@ -253,7 +261,7 @@ export async function readMeasurementFile(
   }
   const csv =
     typeof csvName === "string" && csvName === `${id}.csv`
-      ? await fileBytes(root, `${powerMeasurementsDir}/${csvName}`, "measurement csv file")
+      ? await fileBytes(root, `${powerMeasurementsDir}/${csvName}`, "measurement csv file", excludedRoots)
       : undefined;
   const series = parseMeasurements(json.toString("utf8"), csv?.toString("utf8"), id);
   const sha256 = createHash("sha256")

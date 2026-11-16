@@ -391,3 +391,16 @@ it("maps descriptor read failures to a stable refusal", async () => {
   });
   failure(await call(), "DENIED", "path_denied");
 });
+
+// REQ-SEC-3856567c
+it("refuses a definition in application data in every mode", async () => {
+  await save();
+  vi.mocked(fs.open).mockClear();
+  for (const mode of ["read-only", "ask", "auto-edit", "bypass"] as const) {
+    const ctx = { ...createToolContext(root), managedRoots: [root], permissionMode: () => mode };
+    const outcome = await registry.execute(ctx, "decode_register", args, new AbortController().signal);
+    expect(JSON.parse(outcome.text)).toMatchObject({ code: "DENIED", reason: "path_denied" });
+    expect(outcome.text).toContain("VERA application data");
+    expect(fs.open).not.toHaveBeenCalled();
+  }
+});

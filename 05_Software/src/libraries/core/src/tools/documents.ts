@@ -1,5 +1,5 @@
 import { readDocSchema, searchDocsSchema } from "../knowledge/search.js";
-import type { ToolDefinition } from "./context.js";
+import { type ToolDefinition, toolExcludedRoots } from "./context.js";
 export const searchDocsTool: ToolDefinition = {
   name: "search_docs",
   class: "read",
@@ -9,7 +9,7 @@ export const searchDocsTool: ToolDefinition = {
   execute: async (ctx, args, signal) => {
     if (!ctx.knowledge)
       return { results: [], message: "No documents indexed yet. Use grep to search text files." };
-    return ctx.knowledge.search(searchDocsSchema.parse(args), signal);
+    return ctx.knowledge.search(searchDocsSchema.parse(args), signal, toolExcludedRoots(ctx));
   },
 };
 export const readDocTool: ToolDefinition = {
@@ -20,6 +20,6 @@ export const readDocTool: ToolDefinition = {
   params: readDocSchema,
   execute: async (ctx, args, signal) => {
     if (!ctx.knowledge) throw Error("Document index unavailable. Use read/grep or index documents.");
-    return ctx.knowledge.read(readDocSchema.parse(args), signal);
+    return ctx.knowledge.read(readDocSchema.parse(args), signal, toolExcludedRoots(ctx));
   },
 };

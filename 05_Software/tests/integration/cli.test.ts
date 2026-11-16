@@ -1394,3 +1394,37 @@ it("scoped CLI local Git clone and pulled helper require explicit machine hash r
   ).toContain("PULLED-HELPER");
   expect((await git(bench, "status", "--porcelain", "--untracked-files=no")).stdout).toBe("");
 }, 120000);
+
+// REQ-SEC-3856567c
+it("CLI Bypass refuses configured application-data reads and writes", async () => {
+  const { dir, workbench } = await fixture();
+  const config = join(workbench, ".vera/workbench.yaml");
+  await writeFile(
+    config,
+    (await readFile(config, "utf8")).replace("permission_mode: ask", "permission_mode: bypass"),
+  );
+  const data = join(dir, "bypass-data");
+  await mkdir(data);
+  const path = join(data, "private.txt");
+  await writeFile(path, "PRIVATE_APPLICATION_BYTES");
+  const script = join(dir, "bypass-data.jsonl");
+  await writeFile(
+    script,
+    [
+      { match: "Read the board", toolCalls: [{ name: "read", args: { path } }] },
+      { toolCalls: [{ name: "write", args: { path: join(data, "new.txt"), content: "changed" } }] },
+      { text: "Guard checked" },
+    ]
+      .map((value) => JSON.stringify(value))
+      .join("\n"),
+  );
+  const result = await launch([...replay(workbench, script), "--data", data]).result;
+  expect(result.code).toBe(0);
+  expect(result.stdout).toContain("VERA application data");
+  expect(result.stdout).not.toContain("PRIVATE_APPLICATION_BYTES");
+  expect(await readFile(path, "utf8")).toBe("PRIVATE_APPLICATION_BYTES");
+  await expect(readFile(join(data, "new.txt"))).rejects.toMatchObject({ code: "ENOENT" });
+  const rows = events(result.stdout).filter((row) => row.event.type === "tool.done");
+  expect(rows).toHaveLength(2);
+  for (const event of rows) expect(event.event.ok).toBe(false);
+});

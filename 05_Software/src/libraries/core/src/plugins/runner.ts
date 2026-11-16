@@ -33,6 +33,8 @@ export interface RunRequest {
   sessionId: string;
   /** Absolute workbench root. */
   workbench: string;
+  /** Host-owned agent exclusions; internal program loading retains its own authority. */
+  excludedRoots?: readonly string[];
   /** Resolved executable path; the runner never looks a program up by name. */
   executable: string;
   args: readonly string[];
@@ -366,7 +368,13 @@ class Run implements ActiveRun {
   /** Guards the working directory, opens the log, prunes old logs and starts the program. */
   async begin(): Promise<void> {
     const { host } = this.settings;
-    const guard = await PathGuard.create(this.request.workbench);
+    const guard = await PathGuard.create(
+      this.request.workbench,
+      this.request.workbench,
+      "workbench",
+      undefined,
+      this.request.excludedRoots,
+    );
     let cwd: string;
     try {
       cwd = (await guard.resolve(this.request.cwd ?? ".")).absolute;
@@ -396,6 +404,8 @@ class Run implements ActiveRun {
       throw error;
     }
     await this.record();
+    if ((await guard.resolve(this.request.cwd ?? ".")).absolute !== cwd)
+      throw thrown("DENIED", { cwd: this.request.cwd ?? "." });
     // The last stop check stays right before the spawn: a stop during any await above ends the run here.
     if (this.request.signal?.aborted) this.reason = "stopped";
     if (this.reason) {

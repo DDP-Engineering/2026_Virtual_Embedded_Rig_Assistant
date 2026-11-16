@@ -1047,3 +1047,14 @@ describe("power-profiler steps (REQ-FUNC-068ff296)", () => {
     });
   });
 });
+
+// REQ-SEC-3856567c
+it("refuses protected HIL plans and firmware without starting a program", async () => {
+  await writePlan(plan());
+  mode = "bypass";
+  ctx.managedRoots = [join(root, "hil")];
+  await expect(prepare("run")).rejects.toThrow(/VERA application data/);
+  ctx.managedRoots = [join(root, "build")];
+  await expect(prepare("run")).rejects.toThrow(/VERA application data/);
+  expect(host.programs).toHaveLength(0);
+});

@@ -17,9 +17,11 @@ Trecerea la un mod mai strict anulează aprobările date agentului în modul ant
 
 ## Bypass
 
-Bypass afișează mai întâi un avertisment: agentul poate atunci deteriora proiecte, fișiere sau setări ale aplicației din afara workbenchului. Avertismentul listează și regulile pluginurilor activate care fac modificări permanente sau acționează în afara dispozitivului, deoarece în Bypass ele rulează fără întrebare. **Nu mai afișa acest mesaj data viitoare** ascunde avertismentul; modul Bypass selectat rămâne marcat cu roșu.
+Fiecare trecere la Bypass îți cere mai întâi să confirmi că agentul poate citi și modifica fișiere și rula programe în orice dosar accesibil contului tău din sistemul de operare, inclusiv în afara workbenchului. Alege **Activează Bypass** pentru a aplica schimbarea. **Anulează** sau Escape păstrează modul anterior. Fiecare nouă trecere la Bypass cere confirmare, inclusiv după repornirea VERA; modul selectat rămâne marcat cu roșu. Aceeași confirmare listează regulile ireversibile ale pluginurilor activate, fără probleme și care nu sunt de probă.
 
-Chiar și în Bypass, sunt disponibile doar instrumentele activate, se aplică permisiunile sistemului de operare, agentul nu poate modifica `.vera/workbench.yaml` sau `.vera/plugins`, iar comenzile pluginurilor de probă cer în continuare aprobare.
+Dosarul de date al aplicației VERA, inclusiv setările, credențialele salvate, pluginurile instalate și înregistrările de verificare, este refuzat instrumentelor de fișiere ale agentului în orice mod, atât la citire, cât și la scriere, inclusiv prin aliasuri de cale. VERA continuă să își gestioneze normal setările și pluginurile. Sunt disponibile doar instrumentele activate; se aplică permisiunile sistemului, limitele instrumentelor și aprobările pluginurilor de probă. Agentul nu poate modifica `.vera/workbench.yaml` sau `.vera/plugins`.
+
+Instrumentele obișnuite de fișiere pot accesa căi din afara workbenchului în Bypass. Directoarele de lucru ale programelor, analiza jurnalelor și registrelor capturate și schițele de pluginuri rămân deocamdată în workbench. Indexul documentelor, artefactele, jurnalele execuțiilor și `.vera/` rămân în workbench.
 
 ## Aprobă sau refuză
 

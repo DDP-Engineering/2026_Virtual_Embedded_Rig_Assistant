@@ -44,7 +44,7 @@ The workbench Plugins editor selects installed packages per workbench as an unsa
 
 The workbench Tools editor presents the shared built-in catalog with localized descriptions and enabled checkboxes, persisting exclusions through the current tools.disabled configuration.
 
-Session/workbench permission modes include explicit Bypass for enabled ordinary file tools with full OS-account filesystem scope, including outside/ignored paths. It retains durable exact grants, integrity limits and revocation on downgrade. The shared marked permission picker presents a localized dismissible warning and a persisted application-level suppression preference.
+Session/workbench permission modes include explicit Bypass for enabled ordinary file tools with full OS-account filesystem scope, including outside/ignored paths. It retains durable exact grants, integrity limits and revocation on downgrade. Host-configured application data is refused for reads and writes through the shared path policy in every mode, including canonical aliases. The shared marked permission picker requires one explicit en/ro/de/fr confirmation before each change to Bypass; Cancel/Escape retains the prior mode and focus.
 
 [Release smoke](../knowledge/release-smoke.md) routes exact-artifact offline resources,
 normal loopback tools/approval/citation/restart and external process-tree egress.

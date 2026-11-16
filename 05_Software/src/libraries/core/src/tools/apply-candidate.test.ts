@@ -216,3 +216,16 @@ describe("apply_candidate", () => {
     expect(diffOf(change)).toMatch(/lines left out/);
   });
 });
+
+// REQ-SEC-3856567c
+it("refuses protected candidate inputs before preparation and rechecks the policy on apply", async () => {
+  const ctx = { ...context(), permissionMode: () => "bypass" as const, managedRoots: [join(root, RUN)] };
+  await expect(api.applyCandidateTool.prepare?.(ctx, { run: RUN }, signal())).rejects.toThrow(
+    /VERA application data/,
+  );
+  ctx.managedRoots = [];
+  const change = await api.applyCandidateTool.prepare?.(ctx, { run: RUN }, signal());
+  ctx.managedRoots = [join(root, RUN)];
+  await expect(change?.apply(signal())).rejects.toThrow(/VERA application data/);
+  expect(await source()).toBe(SOURCE);
+});

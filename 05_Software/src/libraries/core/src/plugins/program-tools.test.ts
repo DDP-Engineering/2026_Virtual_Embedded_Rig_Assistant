@@ -1,7 +1,7 @@
 import { writeFileSync } from "node:fs";
-import { cp, mkdir, mkdtemp, readdir, readFile, realpath, rm, writeFile } from "node:fs/promises";
+import { cp, mkdir, mkdtemp, readdir, readFile, realpath, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { join, relative } from "node:path";
 import { type PermissionMode, pluginManifestSchema, veraError } from "@vera/shared";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { requestSha256 } from "../agent/approvals.js";
@@ -732,3 +732,48 @@ it("scoped trust invalidates pending approvals and rechecks after consumption im
   await expect(final.apply(signal())).rejects.toThrow(/changed after approval/);
   expect(host.programs).toHaveLength(0);
 }, 30000);
+
+// REQ-SEC-3856567c
+it.each(["read-only", "ask", "auto-edit", "bypass"] as const)(
+  "refuses nested application-data cwd and file arguments in %s",
+  async (permission) => {
+    mode = permission;
+    ctx.managedRoots = [join(root, "build")];
+    for (const args of [
+      { program: "echo", args: ["version"], cwd: "build" },
+      { program: "echo", args: ["write", "build/app.bin"] },
+    ])
+      await expect(prepare(args)).rejects.toThrow(/VERA application data/);
+    expect(host.programs).toHaveLength(0);
+  },
+);
+
+// REQ-SEC-3856567c
+it("refuses external application-data absolute arguments and canonical aliases before unbound fallback", async () => {
+  const data = await mkdtemp(join(tmpdir(), "vera-external-data-"));
+  try {
+    await writeFile(join(data, "settings.json"), "private");
+    await symlink(data, join(root, "data-alias"), process.platform === "win32" ? "junction" : "dir");
+    ctx.managedRoots = [data];
+    mode = "bypass";
+    for (const path of [join(data, "settings.json"), join(root, "data-alias/settings.json")])
+      await expect(prepare({ program: "echo", args: ["write", path] })).rejects.toThrow(
+        /VERA application data/,
+      );
+    await expect(
+      prepare({
+        program: "echo",
+        cwd: "build",
+        args: ["write", relative(join(root, "build"), join(data, "settings.json"))],
+      }),
+    ).rejects.toThrow(/VERA application data/);
+    if (process.platform === "win32")
+      for (const suffix of ["::$DATA", ":payload", ":payload:$DATA"])
+        await expect(
+          prepare({ program: "echo", args: ["write", `${join(data, "settings.json")}${suffix}`] }),
+        ).rejects.toThrow(/VERA application data/);
+    expect(host.programs).toHaveLength(0);
+  } finally {
+    await rm(data, { recursive: true, force: true });
+  }
+});

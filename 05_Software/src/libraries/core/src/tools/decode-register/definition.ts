@@ -24,7 +24,7 @@ const denied = () =>
   new DecodeFailure(
     "DENIED",
     "path_denied",
-    "Choose an ordinary allowed workbench definition outside ignored paths and .vera.",
+    "Choose an ordinary allowed workbench definition outside ignored paths, .vera and VERA application data.",
   );
 const MAX_BYTES = 1024 * 1024;
 
@@ -64,13 +64,14 @@ export async function loadDefinition(
   path: string,
   expectedSha256: string | undefined,
   signal: AbortSignal,
+  excludedRoots: readonly string[] = [],
 ) {
   signal.throwIfAborted();
   let guard: PathGuard;
   let target: Awaited<ReturnType<PathGuard["resolve"]>>;
   const sourcePath = posix.normalize(path.replaceAll("\\", "/"));
   try {
-    guard = await PathGuard.create(root);
+    guard = await PathGuard.create(root, root, "workbench", undefined, excludedRoots);
     target = await guard.resolve(path);
     formatLineRef({ path: sourcePath, start: 1, end: 1 });
   } catch {

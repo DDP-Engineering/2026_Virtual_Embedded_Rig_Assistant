@@ -1,5 +1,5 @@
 import { decodeRegisterArgsSchema } from "@vera/shared";
-import type { ToolDefinition } from "./context.js";
+import { type ToolDefinition, toolExcludedRoots } from "./context.js";
 import { decodeRegister } from "./decode-register/decode.js";
 import { DecodeFailure, loadDefinition } from "./decode-register/definition.js";
 
@@ -17,6 +17,7 @@ export const decodeRegisterTool: ToolDefinition = {
         args.definitionPath,
         args.expectedSha256,
         signal,
+        toolExcludedRoots(ctx),
       );
       return decodeRegister(definition, args, source);
     } catch (error) {

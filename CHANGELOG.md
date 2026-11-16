@@ -6,6 +6,11 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ## [Unreleased]
 
+### Changed
+
+- Bypass confirms each mode change; agent file access refuses VERA application data in every mode.
+- Delete settings.json from earlier pre-releases after removal of the Bypass warning suppression preference.
+
 ### Added
 
 - Bookmarked rail markers stand out, with configurable next and previous bookmark shortcuts.

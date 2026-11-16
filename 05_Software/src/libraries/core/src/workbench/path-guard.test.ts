@@ -107,3 +107,46 @@ describe("file tool confinement", () => {
     },
   );
 });
+
+// REQ-SEC-3856567c
+it.each(["workbench", "filesystem"] as const)(
+  "refuses application data and canonical aliases in %s scope",
+  async (scope) => {
+    const data = join(root, "app-data");
+    await mkdir(data);
+    await writeFile(join(data, "settings.json"), "private");
+    await mkdir(join(root, "app-data-sibling"));
+    await symlink(data, join(root, "data-alias"), process.platform === "win32" ? "junction" : "dir");
+    const g = await api.PathGuard.create(root, root, scope, undefined, [data]);
+    for (const path of [
+      "app-data",
+      "app-data/settings.json",
+      "Docs/../app-data/new/deep.txt",
+      "data-alias/settings.json",
+      "data-alias/new/deep.txt",
+    ]) {
+      await expect(g.resolve(path)).rejects.toThrow(/VERA application data/);
+    }
+    if (process.platform === "win32")
+      await expect(g.resolve("APP-DATA/SETTINGS.JSON")).rejects.toThrow(/VERA application data/);
+    expect(await g.resolve("app-data-sibling/new.txt")).toMatchObject({
+      relative: "app-data-sibling/new.txt",
+    });
+    const aliasedExclusion = await api.PathGuard.create(root, root, scope, undefined, [
+      join(root, "data-alias"),
+    ]);
+    await expect(aliasedExclusion.resolve("app-data/new.txt")).rejects.toThrow(/VERA application data/);
+    // Internal host storage deliberately does not carry agent exclusions.
+    expect(await (await guard()).resolve("app-data/settings.json")).toMatchObject({
+      relative: "app-data/settings.json",
+    });
+  },
+);
+
+it("refuses missing application-data descendants through existing parent aliases", async () => {
+  await symlink(outside, join(root, "host-alias"), process.platform === "win32" ? "junction" : "dir");
+  const g = await api.PathGuard.create(root, root, "filesystem", undefined, [
+    join(root, "host-alias/future-data"),
+  ]);
+  await expect(g.resolve(join(outside, "future-data/new.txt"))).rejects.toThrow(/VERA application data/);
+});

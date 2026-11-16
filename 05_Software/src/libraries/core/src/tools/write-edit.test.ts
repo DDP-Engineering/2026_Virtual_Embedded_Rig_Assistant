@@ -257,3 +257,36 @@ it("checks again after pending insertion and resolves rename/recording failures 
     status: "applied",
   });
 });
+
+// REQ-SEC-3856567c
+it.each(["read-only", "ask", "auto-edit", "bypass"] as const)(
+  "refuses app-data reads, discovery and writes in %s",
+  async (mode) => {
+    const data = join(root, "data");
+    await mkdir(data);
+    await writeFile(join(data, "settings.json"), "private bytes");
+    const ctx = { ...context(), permissionMode: () => mode, managedRoots: [data] };
+    const registry = new api.ToolRegistry();
+    for (const [name, args] of [
+      ["read", { path: "data/settings.json" }],
+      ["list", { path: "data" }],
+      ["glob", { path: "data", pattern: "**/*" }],
+    ] as const) {
+      const outcome = await registry.execute(ctx, name, args, signal());
+      expect(outcome.isError).toBe(true);
+      expect(outcome.text).toContain("VERA application data");
+      expect(outcome.text).not.toContain("private bytes");
+    }
+    for (const path of ["data/settings.json", "data/new/deep.txt"])
+      await expect(registry.prepare(ctx, "write", { path, content: "changed" }, signal())).rejects.toThrow(
+        /VERA application data/,
+      );
+    expect(await readFile(join(data, "settings.json"), "utf8")).toBe("private bytes");
+    expect((await registry.execute(ctx, "list", { path: ".", depth: 3 }, signal())).text).not.toContain(
+      "settings.json",
+    );
+    expect((await registry.execute(ctx, "glob", { pattern: "**/*" }, signal())).text).not.toContain(
+      "settings.json",
+    );
+  },
+);

@@ -8,7 +8,7 @@ import {
   labResourceKeys,
   type PluginProgram,
 } from "@vera/shared";
-import { PathGuard } from "../workbench/path-guard.js";
+import { ApplicationDataAccessError, PathGuard } from "../workbench/path-guard.js";
 
 /** A registry alias a run_program call names, with its identity keys (spec REQ-DATA-f2cbfc23 §3-4). */
 export interface ProgramResource {
@@ -43,12 +43,14 @@ export function namedAliases(option: string, args: readonly string[]): string[] 
 export async function readRegistry(
   workbench: string,
   signal?: AbortSignal,
+  excludedRoots: readonly string[] = [],
 ): Promise<{ registry: LabRegistry; sha256: string }> {
-  const guard = await PathGuard.create(workbench);
+  const guard = await PathGuard.create(workbench, workbench, "workbench", undefined, excludedRoots);
   let absolute: string;
   try {
     absolute = (await guard.resolve(LAB_REGISTRY_PATH)).absolute;
-  } catch {
+  } catch (error) {
+    if (error instanceof ApplicationDataAccessError) throw error;
     throw Error(`${LAB_REGISTRY_PATH} cannot be used: it lies outside the workbench or is ignored.`);
   }
   let bytes: Buffer;
@@ -92,12 +94,13 @@ export async function claimedResources(
   program: PluginProgram,
   args: readonly string[],
   signal?: AbortSignal,
+  excludedRoots: readonly string[] = [],
 ): Promise<ClaimedResources | undefined> {
   const declared = program.resources;
   if (!declared) return undefined;
   const aliases = namedAliases(declared.option, args);
   if (aliases.length === 0) return undefined;
-  const { registry, sha256 } = await readRegistry(workbench, signal);
+  const { registry, sha256 } = await readRegistry(workbench, signal, excludedRoots);
   const resources = aliases.map((alias) => {
     const entry = registry.resources.find((candidate) => candidate.alias === alias);
     if (!entry) throw Error(`The alias ${alias} is not declared in ${LAB_REGISTRY_PATH}.`);

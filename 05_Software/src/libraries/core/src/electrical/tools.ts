@@ -3,7 +3,6 @@
 // hash, write queue, approval). Plugin helpers read the same files; only VERA writes the model.
 import { createHash } from "node:crypto";
 import { lstat, readdir, readFile } from "node:fs/promises";
-import { join } from "node:path";
 import {
   type ElectricalModel,
   type ElectricalResult,
@@ -19,7 +18,7 @@ import { z } from "zod";
 import type { LoadedPlugin } from "../plugins/store.js";
 import { assertAgentWritable, commitChange, type PreparedChange } from "../tools/changes.js";
 import type { ToolContext, ToolDefinition } from "../tools/context.js";
-import { toolPathGuard } from "../tools/context.js";
+import { toolExcludedRoots, toolPathGuard } from "../tools/context.js";
 import { PathGuard } from "../workbench/path-guard.js";
 import { applyOperations, electricalOperationSchema } from "./edit.js";
 import { checkModel, entityHash, modelIssues, parseModel, problemsText, serializeModel } from "./model.js";
@@ -83,8 +82,13 @@ export interface ModelFile {
   model: ElectricalModel;
 }
 /** Reads the workbench's model file strictly; null when there is none. Always confined to the workbench. */
-export async function readModelFile(root: string): Promise<ModelFile | null> {
-  const target = await (await PathGuard.create(root)).resolve(electricalModelPath);
+export async function readModelFile(
+  root: string,
+  excludedRoots: readonly string[] = [],
+): Promise<ModelFile | null> {
+  const target = await (await PathGuard.create(root, root, "workbench", undefined, excludedRoots)).resolve(
+    electricalModelPath,
+  );
   const bytes = await fileBytes(target.absolute, electricalLimits.modelBytes, "electrical model");
   if (bytes === null) return null;
   return { bytes, sha256: hash(bytes), model: parseModel(bytes.toString("utf8")) };
@@ -104,8 +108,13 @@ export interface ResultEntry {
   removed?: string[];
 }
 /** The newest result folders first (by name), each with its freshness against the model. */
-export async function listResults(root: string, model: ElectricalModel | null): Promise<ResultEntry[]> {
-  const folder = await (await PathGuard.create(root)).resolve(electricalResultsDir);
+export async function listResults(
+  root: string,
+  model: ElectricalModel | null,
+  excludedRoots: readonly string[] = [],
+): Promise<ResultEntry[]> {
+  const guard = await PathGuard.create(root, root, "workbench", undefined, excludedRoots);
+  const folder = await guard.resolve(electricalResultsDir);
   let names: string[];
   try {
     names = (await readdir(folder.absolute, { withFileTypes: true }))
@@ -121,7 +130,7 @@ export async function listResults(root: string, model: ElectricalModel | null): 
     let bytes: Buffer | null;
     try {
       bytes = await fileBytes(
-        join(folder.absolute, runId, electricalResultFile),
+        (await guard.resolve(`${electricalResultsDir}/${runId}/${electricalResultFile}`)).absolute,
         electricalLimits.resultBytes,
         "result",
       );
@@ -166,9 +175,15 @@ export async function listResults(root: string, model: ElectricalModel | null): 
 }
 
 /** One stored result, strictly read; throws when it is missing or invalid. */
-export async function readResultFile(root: string, runId: string): Promise<ElectricalResult> {
+export async function readResultFile(
+  root: string,
+  runId: string,
+  excludedRoots: readonly string[] = [],
+): Promise<ElectricalResult> {
   const path = `${electricalResultsDir}/${runId}/${electricalResultFile}`;
-  const target = await (await PathGuard.create(root)).resolve(path);
+  const target = await (await PathGuard.create(root, root, "workbench", undefined, excludedRoots)).resolve(
+    path,
+  );
   const bytes = await fileBytes(target.absolute, electricalLimits.resultBytes, "result");
   if (bytes === null) throw Error(`The result ${runId} does not exist.`);
   let raw: unknown;
@@ -196,12 +211,15 @@ export const electricalModelParams = z.strictObject({
 
 async function readView(ctx: ToolContext, raw: unknown): Promise<Record<string, unknown>> {
   const args = electricalModelParams.parse(raw);
-  const file = await readModelFile(ctx.root);
+  const file = await readModelFile(ctx.root, toolExcludedRoots(ctx));
   if (args.view === "results")
-    return { path: electricalResultsDir, results: await listResults(ctx.root, file?.model ?? null) };
+    return {
+      path: electricalResultsDir,
+      results: await listResults(ctx.root, file?.model ?? null, toolExcludedRoots(ctx)),
+    };
   if (args.view === "report") {
     if (args.runId === undefined) throw Error("view report needs a runId.");
-    const result = await readResultFile(ctx.root, args.runId);
+    const result = await readResultFile(ctx.root, args.runId, toolExcludedRoots(ctx));
     const fresh = resultFreshness(result, file?.model ?? null);
     return {
       runId: args.runId,
@@ -298,7 +316,13 @@ export async function prepareElectricalModelChange(
   const host = ctx.change;
   if (!host) throw Error("Workbench write host is unavailable.");
   host.assertWritable?.();
-  const workbench = await PathGuard.create(ctx.root);
+  const workbench = await PathGuard.create(
+    ctx.root,
+    ctx.root,
+    "workbench",
+    undefined,
+    toolExcludedRoots(ctx),
+  );
   const inside = await workbench.resolve(electricalModelPath);
   const target = await (await toolPathGuard(ctx)).resolve(electricalModelPath);
   if (target.key !== inside.key) throw Error("The electrical model must be inside the workbench.");

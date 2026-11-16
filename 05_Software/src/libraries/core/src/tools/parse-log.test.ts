@@ -344,3 +344,16 @@ it("aborts active and queued log work, includes queue time in deadlines and disp
   await pool.dispose();
   expect(await closing).toMatchObject({ reason: "aborted" });
 }, 20000);
+
+// REQ-SEC-3856567c
+it("passes application-data exclusions to its confined worker in Bypass", async () => {
+  await log("2026-04-12T08:00:00Z INFO private\n");
+  const ctx = {
+    ...createToolContext(root, pool),
+    managedRoots: [root],
+    permissionMode: () => "bypass" as const,
+  };
+  const outcome = await registry.execute(ctx, "parse_log", { path: "log.txt", profile: "iso" }, signal());
+  expect(JSON.parse(outcome.text)).toMatchObject({ code: "DENIED", reason: "path_denied" });
+  expect(outcome.text).toContain("VERA application data");
+});

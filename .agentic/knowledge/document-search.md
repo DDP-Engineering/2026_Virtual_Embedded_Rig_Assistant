@@ -19,6 +19,8 @@ use their own persistent host because their payloads, lifetimes and caches diffe
 
 ## Public interface
 
+- Agent search_docs/read_doc pass host-only application-data exclusions as the final search/read argument. DocumentKnowledge keeps workbench scope, refuses protected raw/extracted reads and omits protected cached search snippets in keyword/semantic/hybrid results, including canonical aliases. The index and internal default readers are unchanged. knowledge/search.test.ts exercises all four session modes against an already indexed protected document and a replaced alias.
+
 - EmbeddingHost(entry, models, manifest, deadlineMs=120000) embeds passages in
   batches32 and ranks normalized cosine top50. embed/rank accept root and signal;
   rank accepts vectors or a lazy vector provider evaluated at serialized admission;

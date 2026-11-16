@@ -11,6 +11,31 @@ export interface GuardedPath {
 
 const pathIdentity = (path: string) => (process.platform === "win32" ? path.toLowerCase() : path);
 
+async function canonicalPath(path: string) {
+  let ancestor = path;
+  const tail: string[] = [];
+  for (;;) {
+    try {
+      await lstat(ancestor);
+      break;
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
+      const parent = dirname(ancestor);
+      if (parent === ancestor) throw error;
+      tail.unshift(relative(parent, ancestor));
+      ancestor = parent;
+    }
+  }
+  return { canonical: join(await realpath(ancestor), ...tail), exists: tail.length === 0 };
+}
+
+/** A host-owned boundary that program argument binding must never downgrade to an unbound argument. */
+export class ApplicationDataAccessError extends Error {
+  constructor() {
+    super("Agent access to VERA application data is refused in every permission mode.");
+  }
+}
+
 export function validateRelativePath(path: string): string {
   const slash = path.replaceAll("\\", "/");
   if (!path || slash.startsWith("/") || isAbsolute(path) || /[\0:]/.test(path))
@@ -30,6 +55,7 @@ export class PathGuard {
     private readonly ignored: (path: string) => boolean,
     readonly scope: "workbench" | "filesystem" = "workbench",
     private readonly authorize?: () => void,
+    private readonly excludedRoots: readonly string[] = [],
   ) {}
 
   /** A separately confined skill root may use its owning project's ignore policy. */
@@ -38,11 +64,17 @@ export class PathGuard {
     policyRoot = root,
     scope: "workbench" | "filesystem" = "workbench",
     authorize?: () => void,
+    excludedRoots: readonly string[] = [],
   ): Promise<PathGuard> {
     if (!isAbsolute(root)) throw Error("Workbench root must be absolute.");
     const canonical = await realpath(root);
     if (!(await lstat(canonical)).isDirectory()) throw Error("Workbench root must be a directory.");
-    if (scope === "filesystem") return new PathGuard(canonical, () => false, scope, authorize);
+    const excluded: string[] = [];
+    for (const root of excludedRoots) {
+      if (!isAbsolute(root)) throw Error("Application data root must be absolute.");
+      excluded.push(pathIdentity(resolve(root)), pathIdentity((await canonicalPath(root)).canonical));
+    }
+    if (scope === "filesystem") return new PathGuard(canonical, () => false, scope, authorize, excluded);
     let text = "";
     const metadata = join(await realpath(policyRoot), ".vera");
     const ignorePath = join(metadata, ".veraignore");
@@ -59,7 +91,7 @@ export class PathGuard {
     } catch (error) {
       if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
     }
-    return new PathGuard(canonical, createIgnoreRules(text));
+    return new PathGuard(canonical, createIgnoreRules(text), scope, authorize, excluded);
   }
 
   private confined(path: string): string {
@@ -69,6 +101,22 @@ export class PathGuard {
       throw Error("Path leaves the workbench.");
     }
     return relative(this.root, path).split(sep).join("/");
+  }
+
+  private exclude(path: string): void {
+    for (const root of this.excludedRoots) {
+      const rel = relative(root, pathIdentity(path));
+      if (rel !== ".." && !rel.startsWith(`..${sep}`) && !isAbsolute(rel))
+        throw new ApplicationDataAccessError();
+    }
+  }
+
+  /** Checks only host exclusions; this grants no scope or file binding to an outside program argument. */
+  async assertNotExcluded(path: string): Promise<void> {
+    if (!this.excludedRoots.length) return;
+    const lexical = resolve(this.root, path);
+    this.exclude(lexical);
+    this.exclude((await canonicalPath(lexical)).canonical);
   }
 
   private allowed(path: string): void {
@@ -98,28 +146,16 @@ export class PathGuard {
       }
     }
     const lexical = resolve(this.root, this.scope === "filesystem" ? path : validateRelativePath(path));
+    this.exclude(lexical);
     this.allowed(this.confined(lexical));
-    let ancestor = lexical;
-    const tail: string[] = [];
-    for (;;) {
-      try {
-        await lstat(ancestor);
-        break;
-      } catch (error) {
-        if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
-        const parent = dirname(ancestor);
-        if (parent === ancestor) throw error;
-        tail.unshift(relative(parent, ancestor));
-        ancestor = parent;
-      }
-    }
-    const canonical = join(await realpath(ancestor), ...tail);
+    const { canonical, exists } = await canonicalPath(lexical);
     this.authorize?.();
-    if (this.scope === "filesystem" && tail.length === 0) {
+    if (this.scope === "filesystem" && exists) {
       const info = await lstat(canonical);
       if (!info.isFile() && !info.isDirectory())
         throw Error("Choose an ordinary file or directory, not a device or special file.");
     }
+    this.exclude(canonical);
     const rel = this.confined(canonical);
     this.allowed(rel);
     return {

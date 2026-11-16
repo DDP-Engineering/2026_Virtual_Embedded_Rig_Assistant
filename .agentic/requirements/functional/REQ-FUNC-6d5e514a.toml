@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-FUNC-6d5e514a"
+
+title = "Describe shared Bypass tool scope in the system prompt"
+
+status = "active"
+
+requirement = "While the session is in Bypass, VERA shall name every currently shared-policy tool in the system prompt alongside its filesystem scope, application-data exclusion and existing tool limits."
+
+verification = "Build prompts in every mode; assert exact shared-policy tool names and application-data exclusion only in Bypass, with no false claim that remaining confined tools already have wider scope."
+
+affected_paths = ["05_Software/src/libraries/core/src/agent/prompt.ts", "05_Software/src/libraries/core/src/agent/prompt.test.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/agent/prompt.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-16
+updated = 2026-11-16

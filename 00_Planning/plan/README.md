@@ -7,6 +7,8 @@ tickets in Gitea.
 
 ## Open plans
 
+- Bypass scope: [bypass.md](bypass.md), **BYP-03 #308, BYP-01 #309, BYP-02 #310 / epic #307** —
+  all agent path tools outside the workbench in Bypass, with application data refused in every mode.
 - Delivery packages: [delivery.md](delivery.md), **DEL-01…DEL-06** — VERA for Windows and Linux and
   the plugins as separate deliverables in `07_Delivery`, built by scripts in `02_Tools/delivery/`.
 - File lister: [file-viewer.md](file-viewer.md), **VIEW-01…VIEW-06** — any workbench file in Text (word
