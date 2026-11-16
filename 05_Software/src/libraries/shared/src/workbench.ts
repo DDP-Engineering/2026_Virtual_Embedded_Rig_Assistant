@@ -12,7 +12,7 @@ const docs = z.looseObject({
   gitignore: z.boolean().default(true),
   /** Lowers the fixed document size limits (100 MiB PDF and Office, 20 MiB text); never raises them. */
   maxFileMB: fileMB.optional(),
-  /** "Maximum indexed files" from Documents & RAG; stored and validated, not yet enforced. */
+  /** "Maximum indexed files" from Documents & RAG: above it indexing stops until "Index anyway". */
   maxFiles: fileCount.default(10000),
 });
 /** The documentation settings of a workbench, for validating a draft before it is saved. */
@@ -135,13 +135,6 @@ export const documentScanSchema = z.strictObject({
   truncated: z.boolean(),
 });
 export type DocumentScan = z.infer<typeof documentScanSchema>;
-export const documentPreviewSchema = z.strictObject({
-  files: count,
-  bytes: count,
-  officePending: count,
-  truncated: z.boolean(),
-});
-export type DocumentPreview = z.infer<typeof documentPreviewSchema>;
 const globSpecial = /[[\](){}*?|]/g;
 /**
  * The include pattern selecting everything below a literal workbench-relative folder. Glob

@@ -22,3 +22,10 @@ entries:
       ro: Indexarea așteaptă la o selecție neobișnuit de mare și arată cele mai mari foldere.
       de: Die Indizierung wartet bei einer ungewöhnlich großen Auswahl und zeigt die größten Ordner.
       fr: L’indexation attend devant une sélection inhabituellement grande et montre les plus gros dossiers.
+  - category: improved
+    topic: { en: Workbench, ro: Workbench, de: Workbench, fr: Workbench }
+    text:
+      en: The document count before saving matches indexing and warns about a too large selection.
+      ro: Numărul de documente dinainte de salvare corespunde indexării și avertizează la o selecție mare.
+      de: Die Dokumentanzahl vor dem Speichern entspricht der Indizierung und warnt bei zu großer Auswahl.
+      fr: Le nombre de documents avant enregistrement suit l’indexation et signale une sélection trop grande.

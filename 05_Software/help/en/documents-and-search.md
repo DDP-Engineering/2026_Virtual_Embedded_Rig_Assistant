@@ -32,6 +32,8 @@ PDF and Office files up to 100 MiB and text files up to 20 MiB are indexed. **Ma
 
 **Maximum indexed files** under **Edit workbench** → **Documents & RAG** (10,000 by default) guards against an unexpectedly large selection. When more documents are selected, indexing does not start: the **Files** tab shows the count, the ten folders with the most selected documents (subfolders included), **Index anyway** and **Edit exclusions**. Nothing is indexed, changed or removed meanwhile, and indexing never takes only part of the selection. **Index anyway** indexes all of them and remembers the count; a later selection up to 20 % larger keeps indexing, a larger one stops again. **Edit exclusions** opens **Documents & RAG** to narrow the selection.
 
+The document count in **New workbench** and **Documents & RAG** is counted with the same rules as indexing (ignore files, file size and file count limits), so it matches what gets indexed. When the selection is above **Maximum indexed files**, the warning appears there before you save. Counting stops after 5 seconds on a very large folder; the count then reads "at least".
+
 Under **Edit workbench** → **Indexing**, **Document search** sets the agent's defaults: **Results per search (1–20)** and **Search mode**: **Hybrid (keywords and meaning)**, **Keywords only** or **Meaning only**.
 
 ## The Files tab

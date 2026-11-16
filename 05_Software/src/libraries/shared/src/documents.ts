@@ -137,6 +137,19 @@ export const documentGuardSchema = z.strictObject({
   folders: z.array(z.strictObject({ path: z.string().min(1).max(4096), files: count })).max(10),
 });
 export type DocumentGuard = z.infer<typeof documentGuardSchema>;
+/**
+ * What the indexer's document selection admits for a folder and its documentation settings, counted
+ * before anything is indexed: `truncated` when the preview's time limit stopped the count, so the
+ * numbers are a lower bound; `guard` when the selection is above the file limit (TASK-ef5fef5b).
+ */
+export const documentPreviewSchema = z.strictObject({
+  files: count,
+  bytes: count,
+  officePending: count,
+  truncated: z.boolean(),
+  guard: documentGuardSchema.nullable(),
+});
+export type DocumentPreview = z.infer<typeof documentPreviewSchema>;
 /** Above either value the Docs panel and the Documents section warn; indexing continues. */
 export const documentVolumeLimit = { files: 2000, bytes: 2 * 1024 ** 3 } as const;
 export const exceedsDocumentVolume = (volume: DocumentVolume): boolean =>

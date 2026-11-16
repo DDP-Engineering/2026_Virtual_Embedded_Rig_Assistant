@@ -45,7 +45,7 @@ import type { WorkbenchHost } from "../ports.js";
 import { SkillCatalog } from "../skills/catalog.js";
 import { openDb, type WorkbenchDatabase } from "../storage/db.js";
 import { DocumentsRepository } from "../storage/repos/documents.js";
-import { previewDocuments, relativeFolder, scanDocuments } from "./documents-scan.js";
+import { PREVIEW_TIME_LIMIT_MS, previewDocuments, relativeFolder, scanDocuments } from "./documents-scan.js";
 import { acquireGuard } from "./guard.js";
 import { createIgnoreRules } from "./ignore.js";
 import { findFiles, listFolder, locateEntry, readText, statEntry } from "./tree.js";
@@ -534,13 +534,19 @@ export class WorkbenchService {
     const folder = await this.folder(input);
     return scanDocuments(folder, await this.ignoreRules(folder, gitignore));
   }
-  /** What a documentation selection would index in a chosen folder. */
+  /**
+   * What a documentation selection would index in a chosen folder, counted by the indexer's own
+   * selection within PREVIEW_TIME_LIMIT_MS. The active workbench's own folder applies its "Index
+   * anyway" approval, as its indexing does.
+   */
   async previewDocuments(
     input: string,
-    docs: Pick<WorkbenchConfig["docs"], "include" | "exclude" | "gitignore">,
+    docs: Pick<WorkbenchConfig["docs"], "include" | "exclude" | "gitignore" | "maxFileMB" | "maxFiles">,
   ): Promise<DocumentPreview> {
     const folder = await this.folder(input);
-    return previewDocuments(folder, docs, await this.ignoreRules(folder, docs.gitignore));
+    // Read synchronously, so a workbench closing meanwhile cannot interleave.
+    const approved = this.state?.folder === folder ? (this.ingest?.approved() ?? null) : null;
+    return previewDocuments(folder, docs, { signal: AbortSignal.timeout(PREVIEW_TIME_LIMIT_MS), approved });
   }
   /** A picked folder as a path relative to a workbench folder; ignored folders are refused. */
   async relativeFolder(rootInput: string, input: string): Promise<string> {

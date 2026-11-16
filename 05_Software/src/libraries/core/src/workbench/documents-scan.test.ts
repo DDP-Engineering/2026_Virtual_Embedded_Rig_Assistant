@@ -24,6 +24,8 @@ async function bench() {
     ".git/config": "[core]",
     "build/out.txt": "ignored build log",
     "readme.txt": "root level",
+    // The preview reads the ignore rules from the folder, like indexing.
+    ".vera/.veraignore": "build/\n",
   };
   for (const [path, content] of Object.entries(files)) {
     await mkdir(join(root, path, ".."), { recursive: true });
@@ -32,6 +34,18 @@ async function bench() {
   return root;
 }
 const ignored = createIgnoreRules("build/\n");
+/** Documentation settings with the defaults the tests do not vary. */
+const docs = (
+  include: string[],
+  exclude: string[] = [],
+  more: { maxFileMB?: number; maxFiles?: number } = {},
+) => ({
+  include,
+  exclude,
+  gitignore: false,
+  maxFiles: 10000,
+  ...more,
+});
 
 // REQ-FUNC-4ee03ca8
 it("scans first-level documentation folders by kind and size, skipping code, ignored and VCS folders", async () => {
@@ -75,36 +89,66 @@ it("does not follow symbolic links while scanning", async () => {
 // REQ-FUNC-ad5868a2
 it("previews what the ingest selection admits, with modern office files indexed and legacy ones pending", async () => {
   const root = await bench();
-  expect(
-    await previewDocuments(root, { include: ["datasheets/**"], exclude: [], gitignore: false }, ignored),
-  ).toEqual({
+  expect(await previewDocuments(root, docs(["datasheets/**"]))).toEqual({
     files: 2,
     bytes: 26,
     officePending: 0,
     truncated: false,
+    guard: null,
   });
+  expect(await previewDocuments(root, docs(["datasheets/**", "notes"]))).toEqual({
+    files: 4,
+    bytes: 43,
+    officePending: 1,
+    truncated: false,
+    guard: null,
+  });
+  expect(await previewDocuments(root, docs(["datasheets/**", "notes/**"], ["notes/deep"]))).toEqual({
+    files: 4,
+    bytes: 43,
+    officePending: 0,
+    truncated: false,
+    guard: null,
+  });
+  // Source code is not a document type and is not indexed (TASK-e5310cdb); build/ is ignored.
+  expect((await previewDocuments(root, docs(["src/**"]))).files).toBe(0);
+  expect((await previewDocuments(root, docs(["build/**"]))).files).toBe(0);
+  await expect(previewDocuments(root, docs(["../**"]))).rejects.toMatchObject({ code: "INVALID" });
+});
+
+// REQ-FUNC-ad5868a2
+it("previews documents at any depth, bounded only by its time limit", async () => {
+  const root = await bench();
+  const deep = "notes/1/2/3/4/5/6/7/8/9/10";
+  await mkdir(join(root, deep), { recursive: true });
+  await writeFile(join(root, deep, "deep.md"), "# Deep");
+  expect(await previewDocuments(root, docs(["notes/**"]))).toMatchObject({ files: 3, truncated: false });
+  // A count stopped by its time limit is reported as truncated, never as complete.
+  const stopped = await previewDocuments(root, docs(["**"]), { signal: AbortSignal.abort() });
+  expect(stopped.truncated).toBe(true);
+  expect(stopped.files).toBeLessThan(6);
+});
+
+// REQ-FUNC-817bbf83
+it("returns the indexer's count guard when the preview selects more than the file limit", async () => {
+  const root = await bench();
+  // datasheets/ 2, notes/ 2 and readme.txt; the legacy .xls, code and ignored files are not counted.
+  expect((await previewDocuments(root, docs(["**"], [], { maxFiles: 5 }))).guard).toBeNull();
+  expect((await previewDocuments(root, docs(["**"], [], { maxFiles: 4 }))).guard).toEqual({
+    files: 5,
+    limit: 4,
+    folders: [
+      { path: "datasheets", files: 2 },
+      { path: "notes", files: 2 },
+    ],
+  });
+  // An approval raises the limit to 120 % of the approved count, as in indexing.
+  expect((await previewDocuments(root, docs(["**"], [], { maxFiles: 3 }), { approved: 5 })).guard).toBeNull();
   expect(
-    await previewDocuments(
-      root,
-      { include: ["datasheets/**", "notes"], exclude: [], gitignore: false },
-      ignored,
-    ),
-  ).toEqual({ files: 4, bytes: 43, officePending: 1, truncated: false });
-  expect(
-    await previewDocuments(
-      root,
-      { include: ["datasheets/**", "notes/**"], exclude: ["notes/deep"], gitignore: false },
-      ignored,
-    ),
-  ).toEqual({ files: 4, bytes: 43, officePending: 0, truncated: false });
-  // Source code is not a document type and is not indexed (TASK-e5310cdb).
-  expect(
-    (await previewDocuments(root, { include: ["src/**"], exclude: [], gitignore: false }, ignored)).files,
-  ).toBe(0);
-  await expect(
-    previewDocuments(root, { include: ["../**"], exclude: [], gitignore: false }, ignored),
-  ).rejects.toMatchObject({
-    code: "INVALID",
+    (await previewDocuments(root, docs(["**"], [], { maxFiles: 3 }), { approved: 3 })).guard,
+  ).toMatchObject({
+    files: 5,
+    limit: 3,
   });
 });
 
@@ -155,9 +199,8 @@ it("skips unreadable folders as a partial scan instead of failing", async () => 
     const scan = await scanDocuments(root, ignored);
     expect(scan.truncated).toBe(true);
     expect(scan.folders.map((f) => f.path)).toEqual(["datasheets", "notes"]);
-    expect(
-      (await previewDocuments(root, { include: ["**"], exclude: [], gitignore: false }, ignored)).truncated,
-    ).toBe(true);
+    // Indexing skips an unreadable folder too, so the preview counts the rest and is complete.
+    expect(await previewDocuments(root, docs(["**"]))).toMatchObject({ files: 5, truncated: false });
   } finally {
     await chmod(join(root, "locked"), 0o700);
   }
@@ -166,26 +209,23 @@ it("skips unreadable folders as a partial scan instead of failing", async () => 
 // REQ-FUNC-ad5868a2
 it("previews nothing for an empty selection and skips files over the ingest size limits", async () => {
   const root = await bench();
-  expect(await previewDocuments(root, { include: [], exclude: [], gitignore: false }, ignored)).toEqual({
+  expect(await previewDocuments(root, docs([]))).toEqual({
     files: 0,
     bytes: 0,
     officePending: 0,
     truncated: false,
+    guard: null,
   });
   const large = await open(join(root, "datasheets/huge.txt"), "w");
   await large.truncate(TEXT_LIMIT + 1);
   await large.close();
-  expect(
-    (await previewDocuments(root, { include: ["datasheets/**"], exclude: [], gitignore: false }, ignored))
-      .files,
-  ).toBe(2);
-  expect(
-    (
-      await previewDocuments(root, { include: ["datasheets/**"], exclude: [], gitignore: false }, ignored, {
-        maxEntries: 2,
-      })
-    ).truncated,
-  ).toBe(true);
+  expect((await previewDocuments(root, docs(["datasheets/**"]))).files).toBe(2);
+  // docs.maxFileMB lowers the limit: 1 byte above 1 MiB is skipped, as indexing skips it.
+  const mib = await open(join(root, "datasheets/mib.pdf"), "w");
+  await mib.truncate(1024 * 1024 + 1);
+  await mib.close();
+  expect((await previewDocuments(root, docs(["datasheets/**"]))).files).toBe(3);
+  expect((await previewDocuments(root, docs(["datasheets/**"], [], { maxFileMB: 1 }))).files).toBe(2);
 });
 
 // REQ-FUNC-03b73d56

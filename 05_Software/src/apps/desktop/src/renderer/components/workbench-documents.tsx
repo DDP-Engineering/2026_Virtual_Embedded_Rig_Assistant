@@ -1,5 +1,6 @@
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import {
+  type DocumentGuard,
   type DocumentScanKind,
   documentFolderPattern,
   documentPatternFolder,
@@ -96,6 +97,37 @@ function LimitField({
   );
 }
 
+/**
+ * The count guard as the preview sees it: indexing this selection will stop before it starts. A
+ * warning only; Create and Save stay available, and the Docs tab then offers Index anyway.
+ */
+function PreviewGuard({
+  guard,
+  atLeast,
+  number,
+}: {
+  guard: DocumentGuard;
+  atLeast: boolean;
+  number: Intl.NumberFormat;
+}) {
+  const { t } = useTranslation();
+  const values = { files: number.format(guard.files), limit: number.format(guard.limit) };
+  return (
+    <div className="volume-warning" role="status" data-docs-guard>
+      <p>{atLeast ? t("documentsSetup.guardAtLeast", values) : t("documentsSetup.guard", values)}</p>
+      {guard.folders.length > 0 && (
+        <ul aria-label={t("documents.guardFolders")}>
+          {guard.folders.map((folder) => (
+            <li key={folder.path} data-guard-folder={folder.path}>
+              {t("documents.guardFolder", { path: folder.path, files: number.format(folder.files) })}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
 /** Documentation folders of a workbench folder: detected checkboxes, Add folder, preview and raw globs. */
 export function WorkbenchDocuments({
   folder,
@@ -108,7 +140,7 @@ export function WorkbenchDocuments({
   setDocs: (docs: Docs) => void;
   disabled?: boolean;
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const bytes = useBytes();
   const [error, setError] = useState<unknown>();
   const kinds: Record<DocumentScanKind, string> = {
@@ -126,14 +158,31 @@ export function WorkbenchDocuments({
     queryFn: () => api.invoke("workbench.scanDocs", { folder, gitignore }),
     ...fresh,
   });
-  // Typing a pattern under Advanced walks the folder once it pauses, not on every keystroke.
-  const settled = useSettled({ include, exclude }, 300);
+  // Typing a pattern or a limit walks the folder once it pauses, not on every keystroke. The preview
+  // counts with the limits indexing applies, so it waits while one of them is refused.
+  const limits = workbenchDocsSchema.safeParse(docs).success
+    ? { ...(docs.maxFileMB === undefined ? {} : { maxFileMB: docs.maxFileMB }), maxFiles: docs.maxFiles }
+    : undefined;
+  const settled = useSettled({ include, exclude, limits }, 300);
   const preview = useQuery({
-    queryKey: ["workbench.previewDocs", folder, settled.include, settled.exclude, gitignore],
-    queryFn: () => api.invoke("workbench.previewDocs", { folder, ...settled, gitignore }),
+    queryKey: ["workbench.previewDocs", folder, settled, gitignore],
+    queryFn: () =>
+      api.invoke("workbench.previewDocs", {
+        folder,
+        include: settled.include,
+        exclude: settled.exclude,
+        gitignore,
+        ...(settled.limits as NonNullable<typeof settled.limits>),
+      }),
+    enabled: settled.limits !== undefined,
     placeholderData: keepPreviousData,
     ...fresh,
   });
+  const number = new Intl.NumberFormat(i18n.resolvedLanguage ?? "en");
+  const counted = {
+    count: number.format(preview.data?.files ?? 0),
+    size: bytes(preview.data?.bytes ?? 0),
+  };
   const detected = scan.data?.folders ?? [];
   // Literal folder patterns that the scan did not report: added by hand, or listed in the YAML.
   // They stay listed after unchecking so keyboard focus is not lost.
@@ -252,19 +301,21 @@ export function WorkbenchDocuments({
           change={(maxFiles) => setDocs({ ...docs, maxFiles: maxFiles ?? Number.NaN })}
         />
         {error !== undefined && <ErrorMessage error={error} />}
-        {/* Said once: the indexing summary already ends with it when the preview was cut short. */}
-        {scan.data?.truncated && !preview.data?.truncated && (
-          <p className="muted">{t("documentsSetup.truncated")}</p>
-        )}
+        {scan.data?.truncated && <p className="muted">{t("documentsSetup.truncated")}</p>}
         {preview.data && (
           <p role="status" className="workbench-documents-preview" data-docs-preview>
-            {t("documentsSetup.preview", { count: preview.data.files, size: bytes(preview.data.bytes) })}
+            {/* Stopped by its time limit, the count is a lower bound and never stated as exact. */}
+            {preview.data.truncated
+              ? t("documentsSetup.previewAtLeast", counted)
+              : t("documentsSetup.preview", counted)}
             {preview.data.officePending > 0 &&
               ` ${t("documentsSetup.officePending", { count: preview.data.officePending })}`}
-            {preview.data.truncated && ` ${t("documentsSetup.truncated")}`}
           </p>
         )}
-        {preview.data && <VolumeWarning volume={preview.data} preview />}
+        {preview.data?.guard && (
+          <PreviewGuard guard={preview.data.guard} atLeast={preview.data.truncated} number={number} />
+        )}
+        {preview.data && !preview.data.guard && <VolumeWarning volume={preview.data} preview />}
         {preview.isError && <ErrorMessage error={preview.error} />}
         <details className="workbench-documents-advanced" data-docs-advanced>
           <summary>{t("documentsSetup.advanced")}</summary>

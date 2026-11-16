@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-UX-c44bc346"
+
+title = "Count guard warning in the Documents section"
+
+status = "active"
+
+requirement = """
+While the selection preview returns a guard, the Documents section of New Workbench and of the workbench editor shall show, before Create or Save, a warning with the localized selected count, the limit and the top folders with their counts, worded as at least when the preview was stopped by its time limit, without disabling Create or Save.
+"""
+
+verification = "Renderer tests: a previewDocs response with a guard of 12,001 over 10,000 shows the warning with count, limit and folders in New Workbench and in the editor in en, ro, de and fr while Create/Save stays enabled; a guard null response shows no warning."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/workbench-documents.tsx", "05_Software/src/apps/desktop/src/renderer/mocks/mockApi.ts", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json", "05_Software/src/apps/desktop/src/renderer/locales/fr.json"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/workbench-plugins.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-16
+updated = 2026-11-16

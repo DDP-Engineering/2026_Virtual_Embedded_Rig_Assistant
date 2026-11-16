@@ -10,6 +10,7 @@ import {
   docsTreeEntrySchema,
   documentGuardSchema,
   documentOpenSchema,
+  documentPreviewSchema,
   documentSchema,
   documentSearchHitSchema,
   documentVolumeSchema,
@@ -106,9 +107,9 @@ import {
 } from "./web-access.js";
 import {
   configSnapshotSchema,
-  documentPreviewSchema,
   documentScanSchema,
   pinnedSchema,
+  workbenchDocsSchema,
   workbenchIdSchema,
   workbenchPatchSchema,
   workbenchSnapshotSchema,
@@ -706,6 +707,8 @@ export const channels = {
       include: z.array(z.string()).max(1000),
       exclude: z.array(z.string()).max(1000),
       gitignore: z.boolean(),
+      maxFileMB: workbenchDocsSchema.shape.maxFileMB,
+      maxFiles: workbenchDocsSchema.shape.maxFiles.unwrap(),
     }),
     documentPreviewSchema,
   ),

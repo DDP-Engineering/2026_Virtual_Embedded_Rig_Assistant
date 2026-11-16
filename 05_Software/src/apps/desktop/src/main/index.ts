@@ -1071,8 +1071,10 @@ ipcMain.handle(
       },
       "workbench.inspect": ({ folder }) => workbench.inspect(folder),
       "workbench.scanDocs": ({ folder, gitignore }) => workbench.scanDocuments(folder, gitignore),
-      "workbench.previewDocs": ({ folder, include, exclude, gitignore }) =>
-        workbench.previewDocuments(folder, { include, exclude, gitignore }),
+      "workbench.previewDocs": async ({ folder, ...docs }) => {
+        const preview = await workbench.previewDocuments(folder, docs);
+        return { ...preview, guard: publicGuard(preview.guard, (text) => credentials.scrub(text)) };
+      },
       "workbench.relativeFolder": async ({ root, folder }) => ({
         path: await workbench.relativeFolder(root, folder),
       }),

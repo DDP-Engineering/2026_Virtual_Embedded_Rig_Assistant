@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-817bbf83"
+
+title = "Count guard of a selection preview"
+
+status = "active"
+
+requirement = """
+When a selection preview selects more documents than the file limit, which is docs.maxFiles raised by the active workbench's Index anyway approval when the previewed folder is the active workbench, VERA shall return a guard with the selected count, that limit and the top folders by the indexer's guard rule, and a null guard when the count is at or below the limit.
+"""
+
+verification = "Core test on a generated workbench: maxFiles + 1 Markdown files preview with guard {files, limit, folders} equal to the indexer's index.guard; exactly maxFiles preview with guard null; after Index anyway the active workbench's own preview has guard null while the same count in another folder is still guarded."
+
+affected_paths = ["05_Software/src/libraries/core/src/workbench/documents-scan.ts", "05_Software/src/libraries/core/src/knowledge/guard.ts", "05_Software/src/libraries/core/src/knowledge/ingest.ts", "05_Software/src/libraries/core/src/workbench/service.ts", "05_Software/src/libraries/shared/src/workbench.ts", "05_Software/src/apps/desktop/src/main/index.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/workbench/documents-scan.test.ts::returns the indexer's count guard when the preview selects more than the file limit", "05_Software/src/libraries/core/src/knowledge/ingest-guard.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-16
+updated = 2026-11-16

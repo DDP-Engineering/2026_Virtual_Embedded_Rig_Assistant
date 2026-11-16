@@ -53,9 +53,12 @@ mode offers empty, missing, read-only and warning fixtures.
 - WorkbenchService.scanDocuments(folder), previewDocuments(folder, docs) and relativeFolder(root, picked)
   (core workbench/documents-scan.ts; IPC workbench.scanDocs/previewDocs/relativeFolder). The scan walks at most
   20000 entries and 8 levels without links or ignored paths and returns first-level folders holding PDF, office,
-  Markdown, HTML or .txt documents with per-kind counts and bytes (names and counts only). The preview reuses
-  ingest's exported documentSelection() and documentKind(); modern office files count as documents and only matched
-  legacy .doc/.ppt/.xls and RTF files count as not indexed (officePending); `~$` Office owner files are neither.
+  Markdown, HTML or .txt documents with per-kind counts and bytes (names and counts only). The preview runs
+  the indexer's selectDocuments() itself (ignore policy, kinds, ordinary files, maxFileMB), so its files/bytes equal
+  the indexed volume; its only bound is PREVIEW_TIME_LIMIT_MS (5 s, `truncated` exactly when it stopped the count).
+  It returns the count guard (documentGuard over docs.maxFiles; the active workbench's own folder applies its Index
+  anyway approval). Modern office files count as documents and only matched legacy .doc/.ppt/.xls and RTF files count
+  as not indexed (officePending, via selectDocuments' `unindexed` hook); `~$` Office owner files are neither.
   relativeFolder returns a forward-slash path inside the root (an alias above the root is accepted) and DENIED for the root, outside, ignored or linked folders, including links looping back to the root. Generated include patterns use documentFolderPattern() (bracket-escaped, leading '!' as @(!)); documentPatternFolder() reads literal ones back.
 - WorkbenchService.create(existingAbsoluteFolder,name,{config?,instructions?}), open(folder), close().
   create merges the optional patch (name excluded) over defaults and validates it before any write
@@ -143,7 +146,8 @@ mode offers empty, missing, read-only and warning fixtures.
 - REQ-FUNC-3815bacc / REQ-FUNC-38107da8 — create with initial configuration; invalid draft rejected before writes.
 - REQ-UX-2c674629 / REQ-UX-56c8cefc / REQ-UX-68353a4e / REQ-UX-7f289a2c — creation-only page, name default, existing-folder Open, draft sections.
 - REQ-UX-efb3e4fb — confirmation before leaving the editor page with unsaved edits.
-- REQ-FUNC-4ee03ca8 / REQ-FUNC-ad5868a2 / REQ-FUNC-03b73d56 — bounded documentation scan, selection preview and in-workbench relative folders.
+- REQ-FUNC-4ee03ca8 / REQ-FUNC-ad5868a2 / REQ-FUNC-817bbf83 / REQ-FUNC-03b73d56 — bounded documentation scan, selection preview with its count guard and in-workbench relative folders.
+- REQ-UX-8d82a10a / REQ-UX-c44bc346 — at-least preview wording and the count guard warning in the Documents section.
 - REQ-UX-5b390823 / REQ-UX-64605f7e / REQ-UX-b96730c7 / REQ-UX-b7002720 / REQ-UX-ff645484 — Documents checklist, creation preselection, Add folder, preview line and Advanced globs.
 - REQ-UX-9e7529d5 — missing recent display and removal in the sidebar.
 - REQ-FUNC-df70c1c8 / REQ-FUNC-2b3ff3a8 / REQ-UX-ab0d5e61 — move within the pinned group, open keeps place, row menu and keyboard.

@@ -32,6 +32,8 @@ Se indexează fișiere PDF și Office de până la 100 MiB și fișiere text de 
 
 **Număr maxim de fișiere indexate** de la **Editează workbenchul** → **Documente și RAG** (implicit 10.000) protejează de o selecție neașteptat de mare. Când sunt selectate mai multe documente, indexarea nu pornește: fila **Fișiere** arată numărul, cele zece foldere cu cele mai multe documente selectate (inclusiv subfolderele), **Indexează oricum** și **Editează excluderile**. Între timp nimic nu este indexat, modificat sau eliminat, iar indexarea nu ia niciodată doar o parte din selecție. **Indexează oricum** le indexează pe toate și reține numărul; o selecție ulterioară cu până la 20 % mai mare continuă indexarea, una mai mare o oprește din nou. **Editează excluderile** deschide **Documente și RAG** pentru a restrânge selecția.
 
+Numărul de documente din **Workbench nou** și **Documente și RAG** se calculează cu aceleași reguli ca indexarea (fișiere de ignorare, limitele de dimensiune și de număr de fișiere), deci corespunde cu ce se indexează. Când selecția depășește **Număr maxim de fișiere indexate**, avertismentul apare acolo înainte de salvare. Pe un folder foarte mare numărarea se oprește după 5 secunde; numărul apare atunci ca „cel puțin”.
+
 La **Editează workbenchul** → **Indexare**, **Căutare în documente** setează valorile implicite ale agentului: **Rezultate per căutare (1–20)** și **Mod de căutare**: **Hibrid (cuvinte cheie și sens)**, **Doar cuvinte cheie** sau **Doar după sens**.
 
 ## Fila Fișiere

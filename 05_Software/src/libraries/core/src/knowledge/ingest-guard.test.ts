@@ -1,4 +1,4 @@
-// REQ-FUNC-9a05625c REQ-FUNC-37067755 REQ-DATA-b12d0ef7 REQ-FUNC-09c7b5d0
+// REQ-FUNC-9a05625c REQ-FUNC-37067755 REQ-DATA-b12d0ef7 REQ-FUNC-09c7b5d0 REQ-FUNC-817bbf83
 import { randomUUID } from "node:crypto";
 import { mkdir, mkdtemp, readFile, rename, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -124,6 +124,15 @@ it("stops an oversized selection before indexing anything and indexes after Inde
   expect(h.rows()).toEqual([]);
   expect(h.processed).toEqual([]);
   expect(h.service.documentVolume()).toMatchObject({ files: 12000 });
+  // IDX-04-A and B: the preview of the same folder counts and guards the selection as indexing does.
+  const preview = () =>
+    h.service.previewDocuments(h.folder, {
+      include: ["docs/**"],
+      exclude: [],
+      gitignore: true,
+      maxFiles: 10000,
+    });
+  expect(await preview()).toMatchObject({ files: 12000, truncated: false, guard: stopped });
 
   // 10,000 files index without a stop.
   for (const n of [7, 8]) await rm(join(h.folder, `docs/n0${n}`), { recursive: true });
@@ -132,6 +141,7 @@ it("stops an oversized selection before indexing anything and indexes after Inde
   expect(h.service.documentGuard()).toBeNull();
   expect(h.rows()).toHaveLength(10000);
   expect(new Set(h.processed).size).toBe(10000);
+  expect(await preview()).toMatchObject({ files: 10000, guard: null });
 
   // Growing past the limit stops again; a guarded Reindex keeps the existing index as it is.
   await add("more", [7, 8]);
@@ -170,3 +180,19 @@ it("stops an oversized selection before indexing anything and indexes after Inde
   expect(h.processed).toHaveLength(processed);
   expect(h.approved()).toBe("12000");
 }, 600000);
+
+// REQ-FUNC-817bbf83
+it("applies the active workbench's approval to its own preview only", async () => {
+  const h = await harness(async (folder) => generate(join(folder, "docs"), 3));
+  const other = join(h.folder, "../other");
+  await generate(join(other, "docs"), 3);
+  await h.service.updateConfig({ docs: { maxFiles: 2 } });
+  const preview = (folder: string) =>
+    h.service.previewDocuments(folder, { include: ["docs/**"], exclude: [], gitignore: true, maxFiles: 2 });
+  await h.service.reindexDocuments();
+  expect(h.guards().at(-1)).toMatchObject({ files: 3, limit: 2 });
+  expect((await preview(h.folder)).guard).toEqual(h.guards().at(-1));
+  await h.service.approveDocuments(h.id, 3);
+  expect((await preview(h.folder)).guard).toBeNull();
+  expect((await preview(other)).guard).toMatchObject({ files: 3, limit: 2 });
+});

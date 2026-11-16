@@ -706,7 +706,12 @@ it("warns about a large selection in Docs and in the Documents section, never at
     if (channel === "docs.volume") return { workbenchId: id, volume, guard: null };
     if (channel === "workbench.previewDocs") {
       const include = (request as { include: string[] }).include[0] ?? "";
-      return { truncated: false, ...(previews[include] ?? { files: 1, bytes: 1 }), officePending: 0 };
+      return {
+        truncated: false,
+        ...(previews[include] ?? { files: 1, bytes: 1 }),
+        officePending: 0,
+        guard: null,
+      };
     }
     return original(channel as never, request as never);
   }) as typeof api.invoke);

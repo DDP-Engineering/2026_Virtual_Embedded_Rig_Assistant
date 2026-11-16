@@ -327,7 +327,8 @@ export class Ingester {
     });
     this.request();
   }
-  private approved(): number | null {
+  /** The count approved with "Index anyway"; null without an approval. */
+  approved(): number | null {
     const value = this.options.db
       .prepare("SELECT value FROM meta WHERE key='index_approved_files'")
       .pluck()

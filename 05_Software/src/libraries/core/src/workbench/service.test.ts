@@ -1057,6 +1057,7 @@ it("documentation scan, preview and relative folders apply the folder's ignore r
         include: ["datasheets/**", "drafts/**"],
         exclude: [],
         gitignore: true,
+        maxFiles: 10000,
       })
     ).files,
   ).toBe(1);
@@ -1069,7 +1070,7 @@ it("documentation scan, preview and relative folders apply the folder's ignore r
     code: "NOT_FOUND",
   });
   await expect(
-    h.service.previewDocuments("relative", { include: [], exclude: [], gitignore: true }),
+    h.service.previewDocuments("relative", { include: [], exclude: [], gitignore: true, maxFiles: 10000 }),
   ).rejects.toMatchObject({
     code: "INVALID",
   });
@@ -1097,7 +1098,8 @@ it("writes docs.gitignore on create and save and applies it to the scan and prev
   expect(await folders(true)).toEqual(["build", "manuals", "notes"]);
   expect(await folders(false)).toEqual([".venv", "build", "htmlcov", "manuals", "notes"]);
   const files = async (gitignore: boolean) =>
-    (await h.service.previewDocuments(h.folder, { include: ["**"], exclude: [], gitignore })).files;
+    (await h.service.previewDocuments(h.folder, { include: ["**"], exclude: [], gitignore, maxFiles: 10000 }))
+      .files;
   // build/manual.pdf, manuals/a.pdf and notes/draft.md; the nested file drops only manuals/draft.md.
   expect(await files(true)).toBe(3);
   expect(await files(false)).toBe(7);

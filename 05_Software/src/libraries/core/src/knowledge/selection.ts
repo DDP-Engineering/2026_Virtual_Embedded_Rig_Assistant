@@ -99,8 +99,14 @@ export async function ordinaryFile(root: string, guard: PathGuard, path: string)
 
 export interface SelectInput {
   root: string;
-  docs: WorkbenchConfig["docs"];
+  docs: Pick<WorkbenchConfig["docs"], "include" | "exclude" | "gitignore" | "maxFileMB" | "maxFiles">;
+  /** Aborting stops the walk; the selection then holds what was found so far. */
   signal: AbortSignal;
+  /**
+   * Called for each listed file that is no document kind and not ignored, before include matching;
+   * the selection preview counts legacy Office files with it (TASK-ef5fef5b).
+   */
+  unindexed?: (path: string) => void;
 }
 /** Why a selected document is not indexed: larger than its size limit. */
 export type SkipReason = "too-large";
@@ -119,7 +125,7 @@ export interface Selection {
  * document types only, ordinary files without links. A document above its size limit (the fixed
  * one, lowered by docs.maxFileMB) is skipped as too large. Runs in the desktop indexer process.
  */
-export async function selectDocuments({ root, docs, signal }: SelectInput): Promise<Selection> {
+export async function selectDocuments({ root, docs, signal, unindexed }: SelectInput): Promise<Selection> {
   const guard = await PathGuard.create(root);
   const { include, exclude } = documentSelection(docs);
   const { ignored } = readIgnorePolicy(root, docs.gitignore);
@@ -132,7 +138,13 @@ export async function selectDocuments({ root, docs, signal }: SelectInput): Prom
         onlyFiles: true,
         followSymbolicLinks: false,
         expandDirectories: false,
-        fs: prunedListing(root, (rel, directory) => skipEntry(rel, directory, ignored, excluded)),
+        signal,
+        fs: prunedListing(root, (rel, directory) => {
+          const skip = skipEntry(rel, directory, ignored, excluded);
+          if (skip && unindexed && !directory && documentKind(rel) === "other" && !ignored(rel))
+            unindexed(rel);
+          return skip;
+        }),
       })
     : [];
   const paths: Selection["paths"] = [];

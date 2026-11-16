@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-UX-8d82a10a"
+
+title = "Preview count stopped by the time limit"
+
+status = "active"
+
+requirement = """
+When the selection preview was stopped by its time limit, the Documents section shall state the count as at least the number found so far and never as an exact count.
+"""
+
+verification = "Renderer test: a previewDocs response with truncated true shows the at-least wording in en, ro, de and fr and not the exact wording; truncated false shows the exact wording."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/workbench-documents.tsx", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json", "05_Software/src/apps/desktop/src/renderer/locales/fr.json"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/workbench-plugins.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-16
+updated = 2026-11-16

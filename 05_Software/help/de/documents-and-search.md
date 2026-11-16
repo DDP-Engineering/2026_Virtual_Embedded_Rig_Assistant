@@ -32,6 +32,8 @@ PDF- und Office-Dateien bis 100 MiB und Textdateien bis 20 MiB werden indiziert.
 
 **Maximale Anzahl indizierter Dateien** unter **Workbench bearbeiten** → **Dokumente & RAG** (standardmäßig 10.000) schützt vor einer unerwartet großen Auswahl. Sind mehr Dokumente ausgewählt, startet die Indizierung nicht: Der Tab **Dateien** zeigt die Anzahl, die zehn Ordner mit den meisten ausgewählten Dokumenten (Unterordner eingeschlossen), **Trotzdem indexieren** und **Ausschlüsse bearbeiten**. Währenddessen wird nichts indiziert, geändert oder entfernt, und die Indizierung nimmt nie nur einen Teil der Auswahl. **Trotzdem indexieren** indiziert alle und merkt sich die Anzahl; eine spätere Auswahl, die bis zu 20 % größer ist, wird weiter indiziert, eine größere hält wieder an. **Ausschlüsse bearbeiten** öffnet **Dokumente & RAG**, um die Auswahl einzugrenzen.
 
+Die Dokumentanzahl in **Neue Workbench** und **Dokumente & RAG** wird nach denselben Regeln wie die Indizierung gezählt (Ignore-Dateien, Dateigrößen- und Dateianzahl-Limit) und entspricht damit dem, was indiziert wird. Liegt die Auswahl über **Maximale Anzahl indizierter Dateien**, erscheint die Warnung dort schon vor dem Speichern. Bei einem sehr großen Ordner endet die Zählung nach 5 Sekunden; die Anzahl lautet dann „mindestens“.
+
 Unter **Workbench bearbeiten** → **Indizierung** legt **Dokumentsuche** die Standardwerte des Agenten fest: **Ergebnisse pro Suche (1–20)** und **Suchmodus**: **Hybrid (Schlüsselwörter und Bedeutung)**, **Nur Schlüsselwörter** oder **Nur Bedeutung**.
 
 ## Der Tab Dateien

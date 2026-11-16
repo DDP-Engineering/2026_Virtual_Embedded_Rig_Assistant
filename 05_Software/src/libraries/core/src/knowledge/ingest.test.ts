@@ -220,7 +220,7 @@ it("documentation preview counts exactly the documents ingest admits for the sam
     "docs/c.docx",
     "notes/keep.md",
   ]);
-  const preview = await h.service.previewDocuments(h.folder, { ...docs, gitignore: true });
+  const preview = await h.service.previewDocuments(h.folder, { ...docs, gitignore: true, maxFiles: 10000 });
   expect(preview.files).toBe(admitted.length);
   expect(preview.officePending).toBe(1);
 }, 15000);

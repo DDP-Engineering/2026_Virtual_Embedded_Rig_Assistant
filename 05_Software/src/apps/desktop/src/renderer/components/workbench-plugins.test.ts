@@ -62,7 +62,7 @@ function stub(wb: WorkbenchSnapshot, entries: PluginSummary[] = [echo]) {
       return { folder: "/new-bench", name: "New bench", existing: false, instructions: null, skills: [] };
     if (channel === "workbench.scanDocs") return { folders: [] };
     if (channel === "workbench.previewDocs")
-      return { files: 0, bytes: 0, officePending: 0, truncated: false };
+      return { files: 0, bytes: 0, officePending: 0, truncated: false, guard: null };
     if (channel === "workbench.create")
       return {
         ...wb,
@@ -488,4 +488,119 @@ it("opens the editor at Documents & RAG when asked, and switches there again on 
     ),
   );
   expect(current()).toBe("documents");
+});
+
+// REQ-UX-c44bc346 REQ-UX-8d82a10a
+it("warns before Save and Create when the preview selects more than the file limit, as at least when stopped", async () => {
+  const guard = {
+    files: 12001,
+    limit: 10000,
+    folders: [
+      { path: "docs", files: 12001 },
+      { path: "docs/big", files: 3000 },
+    ],
+  };
+  let preview: unknown = { files: 12001, bytes: 5, officePending: 0, truncated: false, guard };
+  const wb = snapshot();
+  stub(wb);
+  const base = invokeImplementation();
+  vi.mocked(api.invoke).mockImplementation((async (channel: string, request: unknown) =>
+    channel === "workbench.previewDocs" ? preview : base(channel as never, request as never)) as never);
+  const warning = () => container.querySelector("[data-docs-guard]");
+  const status = () => container.querySelector("[data-docs-preview]")?.textContent ?? "";
+  const expected = {
+    en: [
+      "Indexing will not start: 12,001 documents are selected, more than the limit of 10,000.",
+      "docs/big: 3,000",
+      "Documents to index: 12,001",
+      "Indexing will not start: at least 12,001 documents are selected, more than the limit of 10,000.",
+      "Documents to index: at least 12,001",
+    ],
+    ro: [
+      "Indexarea nu va porni: sunt selectate 12.001 documente, peste limita de 10.000.",
+      "docs/big: 3.000",
+      "Documente de indexat: 12.001",
+      "Indexarea nu va porni: sunt selectate cel puțin 12.001 documente, peste limita de 10.000.",
+      "Documente de indexat: cel puțin 12.001",
+    ],
+    de: [
+      "Indexierung startet nicht: 12.001 Dokumente sind ausgewählt, mehr als das Limit von 10.000.",
+      "docs/big: 3.000",
+      "Zu indizierende Dokumente: 12.001",
+      "Indexierung startet nicht: mindestens 12.001 Dokumente sind ausgewählt, mehr als das Limit von 10.000.",
+      "Zu indizierende Dokumente: mindestens 12.001",
+    ],
+    fr: [
+      "L’indexation ne démarrera pas : 12 001 documents sont sélectionnés, au-delà de la limite de 10 000.",
+      "docs/big : 3 000",
+      "Documents à indexer : 12 001",
+      "L’indexation ne démarrera pas : au moins 12 001 documents sont sélectionnés, au-delà de la limite de 10 000.",
+      "Documents à indexer : au moins 12 001",
+    ],
+  };
+  const editor = async () => {
+    await mount(createElement(WorkbenchEditor, { workbench: wb, saved: vi.fn(), close: vi.fn() }));
+    await click('[data-project-section="documents"]');
+    await vi.waitFor(() => expect(warning()).not.toBeNull());
+  };
+  try {
+    await editor();
+    for (const [language, [text, folder, count]] of Object.entries(expected)) {
+      await act(async () => {
+        await i18n.changeLanguage(language);
+      });
+      expect(warning()?.querySelector("p")?.textContent).toBe(text);
+      expect(container.querySelector('[data-docs-guard] [data-guard-folder="docs/big"]')?.textContent).toBe(
+        folder,
+      );
+      expect(status()).toContain(count as string);
+    }
+    // A warning, not a block: a changed draft can be saved while it shows.
+    await click("[data-docs-gitignore] input");
+    await vi.waitFor(() => expect(warning()).not.toBeNull());
+    expect(container.querySelector<HTMLButtonElement>("[data-project-save]")?.disabled).toBe(false);
+    // The preview sends the draft's limits, as indexing applies them.
+    expect(calls("workbench.previewDocs").at(-1)?.[1]).toMatchObject({ maxFiles: 10000 });
+
+    // Stopped by its time limit, neither the count nor the warning claims an exact number.
+    await act(async () => root.unmount());
+    container.remove();
+    preview = { files: 12001, bytes: 5, officePending: 0, truncated: true, guard };
+    await editor();
+    for (const [language, [, , , text, count]] of Object.entries(expected)) {
+      await act(async () => {
+        await i18n.changeLanguage(language);
+      });
+      expect(warning()?.querySelector("p")?.textContent).toBe(text);
+      expect(status()).toContain(count as string);
+    }
+    await act(async () => {
+      await i18n.changeLanguage("en");
+    });
+
+    // New Workbench shows the same warning before Create, which stays available.
+    await act(async () => root.unmount());
+    container.remove();
+    preview = { files: 12001, bytes: 5, officePending: 0, truncated: false, guard };
+    await mount(createElement(WorkbenchCreate, { created: vi.fn() }));
+    await click('[data-action="choose-create"]');
+    await click('[data-project-section="documents"]');
+    await vi.waitFor(() => expect(warning()?.querySelector("p")?.textContent).toBe(expected.en[0]));
+    expect(container.querySelector<HTMLButtonElement>('[data-action="create-workbench"]')?.disabled).toBe(
+      false,
+    );
+    // Within the limit there is no warning.
+    preview = { files: 10000, bytes: 5, officePending: 0, truncated: false, guard: null };
+    await act(async () => root.unmount());
+    container.remove();
+    await mount(createElement(WorkbenchCreate, { created: vi.fn() }));
+    await click('[data-action="choose-create"]');
+    await click('[data-project-section="documents"]');
+    await vi.waitFor(() => expect(status()).toContain("10,000"));
+    expect(warning()).toBeNull();
+  } finally {
+    await act(async () => {
+      await i18n.changeLanguage("en");
+    });
+  }
 });

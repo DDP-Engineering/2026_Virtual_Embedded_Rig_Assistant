@@ -1,18 +1,18 @@
 import { lstat, opendir, realpath } from "node:fs/promises";
 import { dirname, extname, isAbsolute, join, relative, resolve, sep } from "node:path";
 import {
-  binaryDocumentKinds,
   type DocumentKind,
   type DocumentPreview,
   type DocumentScan,
   type DocumentScanKind,
-  isDocumentKindIn,
   veraError,
   type WorkbenchConfig,
 } from "@vera/shared";
 import picomatch from "picomatch";
-import { documentKind, documentSelection, PDF_LIMIT, TEXT_LIMIT } from "../knowledge/ingest.js";
+import { documentGuard } from "../knowledge/guard.js";
+import { documentKind, documentSelection } from "../knowledge/ingest.js";
 import { isOfficeOwnerFile } from "../knowledge/office-format.js";
+import { selectDocuments } from "../knowledge/selection.js";
 
 export interface ScanBounds {
   maxEntries?: number;
@@ -45,7 +45,7 @@ const skippable = (error: unknown) =>
   ["EACCES", "EPERM", "ENOENT", "ENOTDIR", "EBUSY"].includes((error as NodeJS.ErrnoException).code ?? "");
 
 /**
- * Bounded breadth-first walk of ordinary files below root. Never follows links, never enters
+ * Bounded breadth-first walk of ordinary files below root, for the documentation-folder scan. Never follows links, never enters
  * ignored paths and skips unreadable or vanished entries; reports an incomplete walk as truncated.
  * `visit` returns a size request only for files it needs sized, so most files cost no lstat.
  */
@@ -121,15 +121,24 @@ export async function scanDocuments(
   };
 }
 
+/** The preview's only bound: past it the count stops and is reported as a lower bound. */
+export const PREVIEW_TIME_LIMIT_MS = 5000;
+export interface PreviewOptions {
+  /** Stops the count early; the service passes a timeout of PREVIEW_TIME_LIMIT_MS. */
+  signal?: AbortSignal;
+  /** The workbench's "Index anyway" approval, which raises its file limit as in indexing. */
+  approved?: number | null;
+}
+
 /**
- * Counts what ingest would admit for a selection, using ingest's own pattern normalization, kinds
- * and size limits.
+ * Counts what indexing would admit for a selection by running the indexer's own document
+ * selection, so the count, the size limits and the count guard match indexing (TASK-ef5fef5b).
+ * Legacy Office and RTF files that the selection matches but cannot index are counted apart.
  */
 export async function previewDocuments(
   root: string,
-  docs: Pick<WorkbenchConfig["docs"], "include" | "exclude" | "gitignore">,
-  ignored: (path: string) => boolean,
-  bounds?: ScanBounds,
+  docs: Pick<WorkbenchConfig["docs"], "include" | "exclude" | "gitignore" | "maxFileMB" | "maxFiles">,
+  { signal = new AbortController().signal, approved = null }: PreviewOptions = {},
 ): Promise<DocumentPreview> {
   let patterns: ReturnType<typeof documentSelection>;
   try {
@@ -137,30 +146,28 @@ export async function previewDocuments(
   } catch {
     throw veraError("INVALID");
   }
-  const result = { files: 0, bytes: 0, officePending: 0, truncated: false };
-  if (!patterns.include.length) return result;
   const include = picomatch(patterns.include, { dot: true, posix: true });
   const exclude = picomatch(patterns.exclude, { dot: true, posix: true });
-  result.truncated = await walk(
+  let officePending = 0;
+  const { paths } = await selectDocuments({
     root,
-    ignored,
-    (path) => {
-      if (!include(path) || exclude(path)) return undefined;
-      const kind = documentKind(path);
-      if (isPendingOffice(path, kind)) {
-        result.officePending++;
-        return undefined;
-      }
-      if (kind === "other") return undefined;
-      return (bytes) => {
-        if (bytes > (isDocumentKindIn(kind, binaryDocumentKinds) ? PDF_LIMIT : TEXT_LIMIT)) return;
-        result.files++;
-        result.bytes += bytes;
-      };
+    docs,
+    signal,
+    unindexed: (path) => {
+      if (isPendingOffice(path, documentKind(path)) && include(path) && !exclude(path)) officePending++;
     },
-    bounds,
-  );
-  return result;
+  });
+  return {
+    files: paths.length,
+    bytes: paths.reduce((sum, entry) => sum + entry.size, 0),
+    officePending,
+    truncated: signal.aborted,
+    guard: documentGuard(
+      paths.map((entry) => entry.path),
+      docs.maxFiles,
+      approved,
+    ),
+  };
 }
 
 const same = (a: string, b: string) =>

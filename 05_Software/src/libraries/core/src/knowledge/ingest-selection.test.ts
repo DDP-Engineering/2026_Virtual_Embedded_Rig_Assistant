@@ -134,7 +134,7 @@ it("selects, reads and records only document files, in any letter case", async (
   for (const path of others) expect(announced).not.toContain(path);
 });
 
-// REQ-FUNC-eade110e REQ-FUNC-2336bfd2
+// REQ-FUNC-eade110e REQ-FUNC-2336bfd2 REQ-FUNC-ad5868a2
 it("leaves out what the root and nested .gitignore files exclude while docs.gitignore is on", async () => {
   const layout = {
     ".gitignore": ".venv/\nhtmlcov/\nbuild/html/\ndocs/gen.md\n!.git/\n!node_modules/\n",
@@ -154,6 +154,10 @@ it("leaves out what the root and nested .gitignore files exclude while docs.giti
   const real = ["build/manual.pdf", "docs/gen.md", "docs/guide.md", "draft.md"];
   const on = await harness(layout, { include: ["**/*"] });
   expect(on.rows()).toEqual(real);
+  // IDX-04-A: the preview of the same folder counts exactly what was indexed.
+  const preview = (h: typeof on, gitignore: boolean) =>
+    h.service.previewDocuments(h.folder, { include: ["**/*"], exclude: [], gitignore, maxFiles: 10000 });
+  expect(await preview(on, true)).toMatchObject({ files: real.length, truncated: false, guard: null });
   expect(record.opened.map(on.rel).filter((path) => path.startsWith(".venv"))).toEqual([]);
   const off = await harness(layout, { include: ["**/*"], gitignore: false });
   expect(off.rows()).toEqual(
@@ -165,6 +169,7 @@ it("leaves out what the root and nested .gitignore files exclude while docs.giti
       "htmlcov/index.html",
     ].sort(),
   );
+  expect((await preview(off, false)).files).toBe(off.rows().length);
 });
 
 it("keeps folders that an allowlist .veraignore re-includes", async () => {
@@ -315,7 +320,7 @@ async function sparse(path: string, bytes: number) {
   await file.close();
 }
 
-// REQ-FUNC-133f57ee REQ-DATA-9fd427f1
+// REQ-FUNC-133f57ee REQ-DATA-9fd427f1 REQ-FUNC-ad5868a2
 it("skips documents above the lower of the fixed limit and docs.maxFileMB as too large", async () => {
   const h = await harness({ "docs/small.md": "small" }, { include: ["docs/**"] });
   await sparse(join(h.folder, "docs/scan.pdf"), 30 * MiB);
@@ -363,6 +368,16 @@ it("skips documents above the lower of the fixed limit and docs.maxFileMB as too
   expect(record.opened.map(h.rel)).toContain("docs/exact.pdf");
   expect(record.opened.map(h.rel)).not.toContain("docs/scan.pdf");
   expect(h.service.documentVolume()).toEqual({ files: 2, bytes: 25 * MiB + 5 });
+  // IDX-04-A: the preview applies the same lowered limit and counts the indexed documents only.
+  expect(
+    await h.service.previewDocuments(h.folder, {
+      include: ["docs/**"],
+      exclude: [],
+      gitignore: true,
+      maxFileMB: 25,
+      maxFiles: 10000,
+    }),
+  ).toMatchObject({ files: 2, bytes: 25 * MiB + 5, truncated: false });
 
   await h.service.updateConfig({ docs: { maxFileMB: null } });
   expect(await readFile(join(h.folder, ".vera/workbench.yaml"), "utf8")).not.toContain("maxFileMB");

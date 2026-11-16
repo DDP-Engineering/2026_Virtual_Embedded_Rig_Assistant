@@ -592,13 +592,16 @@ export function createMockApi(
         break;
       }
       case "workbench.previewDocs": {
-        const { folder, include, exclude } = channels["workbench.previewDocs"].request.parse(input.data);
+        const { folder, include, exclude, maxFiles } = channels["workbench.previewDocs"].request.parse(
+          input.data,
+        );
         // Prefix matching stands in for ingest globs: "<folder>/**", "<folder>" and "**".
         const prefix = (pattern: string) =>
           documentPatternFolder(pattern) ?? pattern.replace(/\/?\*\*$/, "").replace(/\/$/, "");
         const matches = (patterns: string[], path: string) =>
           patterns.some((p) => p.trim() && (!prefix(p) || path.startsWith(`${prefix(p)}/`)));
         const result = { files: 0, bytes: 0, officePending: 0, truncated: false };
+        const folders = new Map<string, number>();
         for (const file of docFiles.get(folder) ?? [])
           if (matches(include, file.path) && !matches(exclude, file.path)) {
             // Modern office files are indexed; legacy binary formats and RTF stay pending.
@@ -606,9 +609,23 @@ export function createMockApi(
             else {
               result.files++;
               result.bytes += file.bytes;
+              const top = file.path.split("/")[0] as string;
+              folders.set(top, (folders.get(top) ?? 0) + 1);
             }
           }
-        value = result;
+        // The count guard by first-level folders only; core counts every folder level.
+        const guard =
+          result.files > maxFiles
+            ? {
+                files: result.files,
+                limit: maxFiles,
+                folders: [...folders]
+                  .map(([path, files]) => ({ path, files }))
+                  .sort((a, b) => b.files - a.files)
+                  .slice(0, 10),
+              }
+            : null;
+        value = { ...result, guard };
         break;
       }
       case "workbench.relativeFolder": {
