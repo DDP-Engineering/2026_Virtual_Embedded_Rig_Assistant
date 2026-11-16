@@ -21,6 +21,7 @@ import { TextViewer } from "./text-viewer.js";
 const PdfViewer = lazy(() => import("./pdf-viewer.js"));
 // Retain exact portable target variants without workbench identity supplied by callers.
 export type ViewerTarget =
+  | { runId: string }
   | { path: string }
   | { ref: string }
   | { downloadId: string }
@@ -59,6 +60,7 @@ const EMPTY: TabSet = { tabs: [], active: CHAT };
 const fileName = (path: string) => path.split("/").at(-1) || path;
 /** One tab per document: the workbench path, the artifact or the download (REQ-FUNC-89161a95). */
 export function documentKey(target: ViewerTarget): string {
+  if ("runId" in target) return `run:${target.runId}`;
   if ("downloadId" in target) return `download:${target.downloadId}`;
   if ("textPath" in target) return `file:${target.textPath}`;
   if ("path" in target) return `file:${target.path}`;
@@ -67,6 +69,7 @@ export function documentKey(target: ViewerTarget): string {
   return parsed.kind === "artifact" ? `artifact:${parsed.name}` : `file:${parsed.path}`;
 }
 function describe(target: ViewerTarget, download: string): { label: string; title: string } {
+  if ("runId" in target) return { label: `${target.runId}.log`, title: `.vera/runs/${target.runId}.log` };
   if ("downloadId" in target) return { label: download, title: download };
   if ("textPath" in target) return { label: fileName(target.textPath), title: target.textPath };
   if ("path" in target) return { label: fileName(target.path), title: target.path };
@@ -368,11 +371,28 @@ export function DocumentViewerProvider({
       loading.current.add(request);
       const { target, key, attempt } = tab;
       const call =
-        "downloadId" in target
-          ? api.invoke("downloads.open", { workbenchId, downloadId: target.downloadId })
-          : "textPath" in target
-            ? api.invoke("docs.read", { workbenchId, path: target.textPath })
-            : api.invoke("docs.open", { workbenchId, ...target });
+        "runId" in target
+          ? api.invoke("runs.log", { workbenchId, id: target.runId, full: true }).then((log) => {
+              if (log.id !== target.runId || log.truncated) throw veraError("NOT_FOUND");
+              const lines = log.text.split("\n");
+              return {
+                workbenchId,
+                content: {
+                  kind: "text" as const,
+                  path: `.vera/runs/${target.runId}.log`,
+                  ref: null,
+                  snippet: "",
+                  lines,
+                  start: 1,
+                  end: lines.length,
+                },
+              };
+            })
+          : "downloadId" in target
+            ? api.invoke("downloads.open", { workbenchId, downloadId: target.downloadId })
+            : "textPath" in target
+              ? api.invoke("docs.read", { workbenchId, path: target.textPath })
+              : api.invoke("docs.open", { workbenchId, ...target });
       const settle = (result: Pick<DocumentTab, "content" | "error">) =>
         setSets((map) => {
           const set = map.get(scope);
@@ -397,13 +417,15 @@ export function DocumentViewerProvider({
         .then((result) => {
           if (
             result.workbenchId !== workbenchId ||
-            ("downloadId" in target
-              ? !("downloadId" in result) || result.downloadId !== target.downloadId
-              : "textPath" in target
-                ? result.content.path !== target.textPath
-                : "ref" in target
-                  ? result.content.ref !== target.ref
-                  : result.content.path !== target.path)
+            ("runId" in target
+              ? result.content.path !== `.vera/runs/${target.runId}.log`
+              : "downloadId" in target
+                ? !("downloadId" in result) || result.downloadId !== target.downloadId
+                : "textPath" in target
+                  ? result.content.path !== target.textPath
+                  : "ref" in target
+                    ? result.content.ref !== target.ref
+                    : result.content.path !== target.path)
           )
             throw veraError("NOT_FOUND");
           settle({ content: result.content, error: undefined });

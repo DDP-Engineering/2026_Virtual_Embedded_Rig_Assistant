@@ -71,3 +71,7 @@ Folosește opțiuni neinteractive: intrarea standard a agentului este închisă.
 ## Foldere suplimentare
 
 Instrumentele obișnuite read, list, glob, grep, write și edit și directoarele comenzilor shell pot folosi aceste foldere cu aceleași aprobări Întreabă sau Editare automată ca workbench-ul. Folosește căi absolute pentru fișiere externe; căile relative pornesc din workbench-ul principal. Sursele externe au identități absolute, fără citări locale de documente. Regulile de ignorare rămân active, iar datele VERA sunt refuzate și prin legături. Adăugarea nu indexează folderele: indexul, jurnalele, artefactele și datele generate rămân în workbench-ul principal. Comenzile păstrează drepturile contului sistemului, fără sandbox.
+
+## Comenzi în Rulări
+
+Deschide **Rulări** în panoul din dreapta pentru comanda exactă, folder, ieșire în timp real, cod de ieșire și durată. **Oprește** încheie întregul arbore de procese; agentul vede oprirea la următoarea citire a ieșirii. Pentru rulările încheiate, **Deschide jurnalul** deschide jurnalul complet păstrat în vizualizatorul text, inclusiv ieșirea dinaintea cozii afișate. Sesiunea curentă este selectată implicit; alege **Toate sesiunile** pentru alte rulări. Programele pluginurilor își păstrează etichetele declarate. Datele de autentificare cunoscute sunt mascate în comenzi, foldere și ieșire; jurnalele locale păstrează textul original.

@@ -41,6 +41,7 @@ Managed PDF downloads use downloads.list/open scoped IPC and a downloadId Viewer
 - DocumentViewer.open(ref,snippet?) and openPath(path) check source/locators;
   SessionService.openCitation resolves a completed assistant citation against
   preceding successful tool results and current file/artifact content.
+- Finished run logs use a validated runId target and `run:<id>` tab key. The provider loads `runs.log({workbenchId,id,full:true})`, rejects mismatched IDs or truncated replies, then renders ordinary text lines in the existing viewer. Run targets persist at renderer version 1 and do not enable file-path actions; log IPC derives the path from the current workbench and ULID.
 - DocumentViewerProvider keeps one tab set per `scope` (`<workbench>/<session>`) for the run:
   `{tabs, active}` with `active` = `CHAT` or a tab key (REQ-UX-5fc1d7d3). `useDocumentViewer()`
   returns `open(target)`: the document key (`file:<path>` from path, textPath or the path of a

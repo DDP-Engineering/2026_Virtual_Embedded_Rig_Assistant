@@ -30,6 +30,8 @@ import { hostVariable, killProcessTree } from "./process-tree.js";
 import { OutputDecoder, TailBuffer } from "./run-output.js";
 
 export interface RunRequest {
+  /** Original command text, supplied only by the built-in command tool. */
+  command?: string;
   /** Host-filtered full user environment for built-in shell commands only. */
   commandEnvironment?: () => Record<string, string>;
   sessionId: string;
@@ -109,6 +111,8 @@ export interface RunResult {
   cleanup?: "none" | "separate" | "failed";
 }
 export interface RunRead {
+  /** Present after the run was stopped, including Stop from Runs. */
+  stopped?: true;
   /** Output since the previous read, at most `tailChars` characters. */
   output: string;
   truncated: boolean;
@@ -457,6 +461,7 @@ class Run implements ActiveRun {
       output,
       truncated,
       running: !this.result,
+      ...(this.result?.stopped ? { stopped: true as const } : {}),
       ...(this.result ? { exitCode: this.result.exitCode } : {}),
       ...(this.result?.physical
         ? { physical: this.result.physical, cleanup: this.result.cleanup ?? "none" }
@@ -641,6 +646,7 @@ class Run implements ActiveRun {
       sessionId: this.request.sessionId,
       ...(label ? { plugin: label.plugin, program: label.program } : {}),
       args: [...(label?.args ?? [])],
+      ...(this.request.command && this.cwd ? { command: { text: this.request.command, cwd: this.cwd } } : {}),
       background: this.background,
       startedAt: this.startedAt,
       ...(result
@@ -798,6 +804,7 @@ class Hold implements ActiveRun, RunHold {
       output,
       truncated,
       running: !this.result,
+      ...(this.result?.stopped ? { stopped: true as const } : {}),
       ...(this.result ? { exitCode: this.result.exitCode } : {}),
       ...(this.result?.physical
         ? { physical: this.result.physical, cleanup: this.result.cleanup ?? "none" }
@@ -1161,8 +1168,13 @@ export class ProgramRunner {
       if (!info.isFile()) throw veraError("NOT_FOUND");
       const length = Math.min(info.size, maxBytes);
       const buffer = Buffer.alloc(length);
-      const { bytesRead } = await file.read(buffer, 0, length, info.size - length);
-      let bytes = buffer.subarray(0, bytesRead);
+      let total = 0;
+      while (total < length) {
+        const { bytesRead } = await file.read(buffer, total, length - total, info.size - length + total);
+        if (!bytesRead) break;
+        total += bytesRead;
+      }
+      let bytes = buffer.subarray(0, total);
       // A cut tail starts after its first line break, never inside a line (a character or a secret).
       if (info.size > length) bytes = bytes.subarray(bytes.indexOf(10) + 1);
       return {

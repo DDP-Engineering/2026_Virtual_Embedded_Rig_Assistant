@@ -732,11 +732,23 @@ ipcMain.handle(
         runs: (await programs.list(openWorkbenchFolder(workbenchId))).map((run) => ({
           ...run,
           args: run.args.map((arg) => credentials.scrub(arg)),
+          ...(run.command
+            ? {
+                command: {
+                  text: credentials.scrub(run.command.text),
+                  cwd: credentials.scrub(run.command.cwd),
+                },
+              }
+            : {}),
           ...(run.error === undefined ? {} : { error: credentials.scrub(run.error) }),
         })),
       }),
-      "runs.log": async ({ workbenchId, id }) => {
-        const log = await programs.log(openWorkbenchFolder(workbenchId), id);
+      "runs.log": async ({ workbenchId, id, full }) => {
+        const log = await programs.log(
+          openWorkbenchFolder(workbenchId),
+          id,
+          full ? Number.POSITIVE_INFINITY : undefined,
+        );
         return { ...log, text: credentials.scrub(log.text) };
       },
       "runs.stop": async ({ workbenchId, id }) => {

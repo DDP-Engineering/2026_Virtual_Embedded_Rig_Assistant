@@ -79,6 +79,7 @@ async function prepare(ctx: ToolContext, raw: unknown, signal: AbortSignal): Pro
       if (requestSha256(prepared.request) !== requestSha256(first.request)) throw veraError("CONFLICT");
       const lifetime = background ? revocation : admission;
       const run = await programs.host.runner.start({
+        command: args.command,
         sessionId: programs.sessionId,
         workbench: ctx.root,
         excludedRoots: toolExcludedRoots(ctx),

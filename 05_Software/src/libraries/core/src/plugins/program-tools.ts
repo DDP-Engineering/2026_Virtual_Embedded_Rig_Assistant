@@ -644,6 +644,7 @@ export const programOutputTool: ToolDefinition = {
           output,
           truncated: truncated || gathered.total > output.length,
           running: read.running,
+          ...(read.stopped ? { stopped: true } : {}),
           ...(read.running ? {} : { exitCode: read.exitCode ?? null }),
           ...(read.physical ? { physical: read.physical, cleanup: read.cleanup } : {}),
           ...(matches ? { matched } : {}),

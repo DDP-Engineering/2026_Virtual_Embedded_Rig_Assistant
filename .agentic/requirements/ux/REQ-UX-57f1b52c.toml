@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-UX-57f1b52c"
+
+title = "Commands in Runs"
+
+status = "active"
+
+requirement = "When commands are listed in Runs, the desktop shall show the actual command, folder, live output, state, available exit code and elapsed or final duration while preserving declared-plugin presentation and current-session filters."
+
+verification = "Four-locale component tests assert command/folder/output refresh, stopped state and final duration, declared plugin vera/shell distinction; native replay proves ready server, UI Stop, next agent program_output stopped."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/runs-tab.tsx"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/runs-tab.test.ts", "05_Software/tests/e2e/command-runs.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-16
+updated = 2026-11-16

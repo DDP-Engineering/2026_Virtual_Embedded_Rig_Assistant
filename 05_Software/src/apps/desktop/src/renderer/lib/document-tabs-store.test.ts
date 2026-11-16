@@ -19,6 +19,7 @@ const record: StoredTabs = {
     { target: { ref: "docs/a.pdf#p=3" }, place: { page: 3 } },
     { target: { textPath: "logs/big.log", ignored: true }, place: { line: 251 } },
     { target: { downloadId: "dl_1" } },
+    { target: { runId: "01JC00000000000000000000R2" }, place: { line: 20 } },
   ],
 };
 
@@ -44,6 +45,7 @@ it("reads a missing, unparsable, foreign-version or tampered record as nothing",
     JSON.stringify({ ...record, tabs: [{ target: { path: "" } }] }),
     JSON.stringify({ ...record, tabs: [{ target: { path: "a" }, place: { page: -1 } }] }),
     JSON.stringify({ ...record, tabs: [{ target: { url: "https://example.com" } }] }),
+    JSON.stringify({ ...record, tabs: [{ target: { runId: "../outside" } }] }),
   ]) {
     storage.items.set(key, bad);
     expect(readTabs(storage, "wb_1", "s_1")).toBeUndefined();

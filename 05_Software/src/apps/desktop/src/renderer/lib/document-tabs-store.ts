@@ -1,10 +1,13 @@
 // REQ-DATA-3b6664f9 REQ-REL-f19a4bc2 REQ-FUNC-d9d16533
+
+import { programRunIdSchema } from "@vera/shared";
 import { z } from "zod";
 
 /** One renderer record per workbench session: `vera.tabs.<workbenchId>.<sessionId>` (TASK-061fe00e). */
 const key = (workbenchId: string, sessionId: string) => `vera.tabs.${workbenchId}.${sessionId}`;
 const text = z.string().min(1).max(4096);
 const targetSchema = z.union([
+  z.strictObject({ runId: programRunIdSchema }),
   z.strictObject({ path: text }),
   z.strictObject({ ref: text }),
   z.strictObject({ downloadId: text }),

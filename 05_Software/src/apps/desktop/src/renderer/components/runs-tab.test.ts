@@ -80,7 +80,7 @@ const click = async (element: HTMLElement) => {
   });
 };
 
-it.each(["en", "ro", "de"])(
+it.each(["en", "ro", "de", "fr"])(
   "lists runs with their command line, plugin and state, and refreshes them (%s)",
   async (language) => {
     await i18n.changeLanguage(language);
@@ -104,11 +104,40 @@ it.each(["en", "ro", "de"])(
   },
 );
 
+it.each(["en", "ro", "de", "fr"])(
+  "shows actual commands, folder, live output and duration (%s)",
+  async (language) => {
+    await i18n.changeLanguage(language);
+    const state = stub([{ ...serve, command: { text: "node server.cjs", cwd: "D:/sibling" } }], "READY\n");
+    await render();
+    await vi.waitFor(() => expect($("[data-run-output]")?.textContent).toBe("READY\n"));
+    expect($("[data-run-cwd]")?.textContent).toContain("D:/sibling");
+    expect($("[data-run]").textContent).toContain("node server.cjs");
+    state.log = "READY\nheartbeat\n";
+    await vi.waitFor(() => expect($("[data-run-output]")?.textContent).toContain("heartbeat"), {
+      timeout: 3000,
+    });
+    state.runs = state.runs.map((run) => ({ ...run, state: "exited", exitCode: 7, durationMs: 1234 }));
+    await client.invalidateQueries({ queryKey: ["runs", workbenchId] });
+    await vi.waitFor(() => expect($("[data-run-duration]")?.textContent).toContain("1.234"));
+    expect($("[data-run]").textContent).toContain(i18n.t("runs.exitCode", { code: 7 }));
+  },
+);
+
 it("says when the workbench has no runs", async () => {
   await i18n.changeLanguage("en");
   stub([]);
   await render();
   await vi.waitFor(() => expect(container.textContent).toContain(i18n.t("runs.none")));
+});
+
+it("preserves declared vera/shell plugin labels instead of inferring command identity", async () => {
+  await i18n.changeLanguage("en");
+  stub([{ ...serve, plugin: "vera", program: "shell", args: ["declared"] }]);
+  await render();
+  await vi.waitFor(() => expect($("[data-run]")?.textContent).toContain("shell declared"));
+  expect($("[data-run]").textContent).toContain(i18n.t("runs.plugin", { plugin: "vera" }));
+  expect($("[data-run-output]")).toBeNull();
 });
 
 it("opens a run log that refreshes while the run is running and closes back to its button", async () => {

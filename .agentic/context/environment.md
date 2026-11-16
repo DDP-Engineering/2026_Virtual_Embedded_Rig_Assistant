@@ -358,7 +358,7 @@ Original logs and receipts live in ignored 05_Software/evaluation-outputs/term01
 Windows pinned Node 24.21.0 proves PowerShell 7, Windows PowerShell fallback, .cmd, UTF-8 quoting,
 stdin EOF, clean environment, background readiness/tree stop and session/app cleanup. WSL2 Ubuntu
 uses /home/dpasare/vera-cap-01/node-v24.21.0-linux-x64/bin/node for the same acceptance with bash.
-WSL2 proof is distinct from native Ubuntu acceptance, which is unavailable on this host.
+WSL2 proof is distinct from native Ubuntu acceptance, which is unavailable on this host. Runs acceptance uses focused command/runner/shared/component/viewer tests, native replay `tests/e2e/command-runs.spec.ts` (real sibling parent/child HTTP servers, UI Stop, next stopped agent output, masked metadata/full viewer, exit code/duration and session filters), and source-bundled `tests/support/command-runs-platform-probe.ts` for Linux short-read/full-log behavior. Original TERM04 logs/receipts/screenshots live under ignored evaluation-outputs/term04.
 
 Additional-folder acceptance uses core tools/additional-folders.test.ts, workbench/path-guard.test.ts
 and service.test.ts, plus native/browser tests/e2e/additional-folders.spec.ts. Native receipts and

@@ -1165,7 +1165,9 @@
       "stopped": "Stopped",
       "timedOut": "Timed out",
       "interrupted": "Interrupted"
-    }
+    },
+    "folder": "Folder: {{folder}}",
+    "duration": "Duration: {{seconds}} s"
   },
   "about": {
     "fullName": "Virtual Embedded Rig Assistant",

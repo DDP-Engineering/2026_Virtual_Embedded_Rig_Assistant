@@ -679,6 +679,21 @@ export const programRunRecordSchema = z.strictObject({
   program: pluginProgramNameSchema.optional(),
   /** The agent's arguments, never the executable or prefixes. */
   args: z.array(z.string().max(4096)).max(64),
+  /** Built-in commands have explicit identity; plugin/program names never classify a shell run. */
+  command: z
+    .strictObject({
+      text: z
+        .string()
+        .min(1)
+        .max(4096)
+        .refine((value) => !value.includes("\0")),
+      cwd: z
+        .string()
+        .min(1)
+        .max(4096)
+        .refine((value) => !value.includes("\0")),
+    })
+    .optional(),
   background: z.boolean(),
   startedAt: z.iso.datetime(),
   end: z.enum(["exited", "stopped", "timedOut"]).optional(),

@@ -71,3 +71,7 @@ Fragen verlangt für jeden Befehl eine Freigabe. In Automatisch bearbeiten speic
 ## Zusätzliche Ordner
 
 Die normalen Werkzeuge read, list, glob, grep, write und edit sowie Shell-Arbeitsordner nutzen diese Ordner mit denselben Freigaben für Fragen oder Automatisch bearbeiten wie die Workbench. Externe Pfade müssen absolut sein; relative Pfade beginnen weiter in der Haupt-Workbench. Externe Quellen haben absolute Identitäten ohne lokale Dokumentzitate. Ignorierregeln bleiben aktiv; VERA-Anwendungsdaten sind auch über Verknüpfungen gesperrt. Hinzufügen indiziert die Ordner nicht: Index, Protokolle, Artefakte und erzeugte Daten bleiben in der Haupt-Workbench. Befehle behalten die Rechte des Systemkontos und laufen ohne Sandbox.
+
+## Befehle in Läufe
+
+Öffnen Sie **Läufe** im rechten Bereich für den genauen Befehl, Ordner, laufende Ausgabe, Exit-Code und Dauer. **Stoppen** beendet den gesamten Prozessbaum; der Agent sieht den Stopp beim nächsten Lesen der Ausgabe. Bei beendeten Läufen öffnet **Protokoll öffnen** das vollständige aufbewahrte Protokoll im Textbetrachter, auch die Ausgabe vor dem angezeigten Ende. Standardmäßig ist die aktuelle Sitzung ausgewählt; **Alle Sitzungen** zeigt andere Läufe. Plugin-Läufe behalten ihre deklarierten Programmnamen. Bekannte Zugangsdaten werden in Befehlen, Ordnern und Ausgaben maskiert; lokale Protokolle behalten den Originaltext.

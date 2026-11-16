@@ -71,3 +71,7 @@ Demander exige un accord pour chaque commande. En Modification auto, Toujours au
 ## Dossiers supplémentaires
 
 Les outils ordinaires read, list, glob, grep, write et edit ainsi que les dossiers de travail shell utilisent ces dossiers avec les mêmes accords Demander ou Modification auto que le banc. Les chemins externes doivent être absolus ; les chemins relatifs partent toujours du banc principal. Les sources externes ont une identité absolue, sans citation locale de document. Les règles d’exclusion restent actives ; les données VERA sont refusées même via des liens. L’ajout n’indexe pas ces dossiers : index, journaux, artefacts et données générées restent dans le banc principal. Les commandes gardent les droits du compte système, sans bac à sable.
+
+## Commandes dans Exécutions
+
+Ouvrez **Exécutions** dans le panneau droit pour voir la commande exacte, le dossier, la sortie en direct, le code de sortie et la durée. **Arrêter** termine tout l’arbre des processus ; l’agent voit cet arrêt à sa prochaine lecture de sortie. Pour les exécutions terminées, **Ouvrir le journal** affiche le journal complet conservé dans le lecteur de texte, y compris la sortie antérieure à la fin affichée. La session courante est sélectionnée par défaut ; **Toutes les sessions** affiche les autres exécutions. Les programmes des plugins gardent leurs noms déclarés. Les identifiants connus sont masqués dans les commandes, dossiers et sorties ; les journaux locaux conservent le texte original.

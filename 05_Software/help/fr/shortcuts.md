@@ -25,3 +25,5 @@ Voici les raccourcis clavier par défaut de VERA. Modifiez-les, ajoutez-en ou su
 | F10 | Passe aux menus Fichier, Édition et Affichage. |
 
 Depuis un repère individuel ciblé, Tab atteint l’action de signet ; Entrée ou Espace la bascule. Échap ferme l’aperçu et ramène le focus au repère.
+
+Ouvrez une exécution terminée avec **Ouvrir le journal** dans Exécutions. Les raccourcis du lecteur, dont **Ctrl+F**, **Ctrl+G** et **Ctrl+W**, fonctionnent aussi pour les journaux.

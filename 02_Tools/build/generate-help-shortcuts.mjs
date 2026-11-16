@@ -6,6 +6,8 @@ import { software } from "../environment/software.mjs";
 /** The words of the generated page that the interface catalogs do not hold. */
 const words = {
   en: {
+    runLogs:
+      "Open a finished run with **Open log** in Runs. The existing viewer shortcuts, including **Ctrl+F**, **Ctrl+G** and **Ctrl+W**, also work for run logs.",
     bookmark:
       "Tab from a focused single-message rail marker to its bookmark action; Enter or Space toggles it. Escape closes the preview and returns focus to the marker.",
     intro:
@@ -19,6 +21,8 @@ const words = {
     shortcuts: "Open {where}.",
   },
   ro: {
+    runLogs:
+      "Deschide o rulare încheiată cu **Deschide jurnalul** din Rulări. Tastele vizualizatorului, inclusiv **Ctrl+F**, **Ctrl+G** și **Ctrl+W**, funcționează și pentru jurnale.",
     bookmark:
       "De la un reper individual focalizat, Tab ajunge la acțiunea de marcaj; Enter sau Spațiu o activează. Escape închide previzualizarea și readuce focalizarea la reper.",
     intro:
@@ -32,6 +36,8 @@ const words = {
     shortcuts: "Deschide {where}.",
   },
   de: {
+    runLogs:
+      "Öffnen Sie einen beendeten Lauf mit **Protokoll öffnen** unter Läufe. Die bestehenden Betrachterkürzel, darunter **Ctrl+F**, **Ctrl+G** und **Ctrl+W**, gelten auch für Protokolle.",
     bookmark:
       "Von einer fokussierten Einzelmarkierung führt Tab zur Lesezeichenaktion; Eingabe oder Leertaste schaltet sie um. Escape schließt die Vorschau und setzt den Fokus auf die Markierung zurück.",
     intro:
@@ -45,6 +51,8 @@ const words = {
     shortcuts: "Öffnet {where}.",
   },
   fr: {
+    runLogs:
+      "Ouvrez une exécution terminée avec **Ouvrir le journal** dans Exécutions. Les raccourcis du lecteur, dont **Ctrl+F**, **Ctrl+G** et **Ctrl+W**, fonctionnent aussi pour les journaux.",
     bookmark:
       "Depuis un repère individuel ciblé, Tab atteint l’action de signet ; Entrée ou Espace la bascule. Échap ferme l’aperçu et ramène le focus au repère.",
     intro:
@@ -96,6 +104,8 @@ export async function shortcutPages() {
       `| F10 | ${text.f10} |`,
       "",
       text.bookmark,
+      "",
+      text.runLogs,
       "",
     ].join("\n");
   }

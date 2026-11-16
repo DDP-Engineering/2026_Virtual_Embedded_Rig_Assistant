@@ -3,6 +3,7 @@ import { type ProgramRunInfo, programCommandLine } from "@vera/shared";
 import { useEffect, useId, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../api/index.js";
+import { useDocumentViewer } from "./documents/viewer-context.js";
 import { ErrorMessage } from "./error-message.js";
 
 /** The Runs list refreshes this often while the tab is shown. */
@@ -18,7 +19,8 @@ function useStateLabels() {
     interrupted: t("runs.state.interrupted"),
   } satisfies Record<ProgramRunInfo["state"], string>;
 }
-const commandLine = (run: ProgramRunInfo) => programCommandLine(run.program ?? "?", run.args);
+const commandLine = (run: ProgramRunInfo) =>
+  run.command?.text ?? programCommandLine(run.program ?? "?", run.args);
 
 function LogDialog({
   workbenchId,
@@ -94,6 +96,25 @@ function RunRow({
   const states = useStateLabels();
   const [stopping, setStopping] = useState(false);
   const [error, setError] = useState<unknown>();
+  const [now, setNow] = useState(Date.now);
+  useEffect(() => {
+    if (run.state !== "running") return;
+    const timer = setInterval(() => setNow(Date.now()), REFRESH_MS);
+    return () => clearInterval(timer);
+  }, [run.state]);
+  const log = useQuery({
+    queryKey: ["run-log", workbenchId, run.id, run.state],
+    queryFn: () => api.invoke("runs.log", { workbenchId, id: run.id }),
+    enabled: !!run.command,
+    staleTime: 0,
+    refetchInterval: run.state === "running" ? REFRESH_MS : false,
+  });
+  const output = useRef<HTMLPreElement>(null);
+  const text = log.data?.text.slice(-12000);
+  useEffect(() => {
+    if (text !== undefined && output.current) output.current.scrollTop = output.current.scrollHeight;
+  }, [text]);
+  const duration = run.durationMs ?? Math.max(0, now - Date.parse(run.startedAt));
   async function stop() {
     setStopping(true);
     setError(undefined);
@@ -111,17 +132,28 @@ function RunRow({
       <code className="run-command">{commandLine(run)}</code>
       <p className="muted">
         <span data-run-session>{t("runs.session", { title: session })} · </span>
-        {run.plugin && <span>{t("runs.plugin", { plugin: run.plugin })} · </span>}
+        {run.plugin && !run.command && <span>{t("runs.plugin", { plugin: run.plugin })} · </span>}
         <time dateTime={run.startedAt}>{new Date(run.startedAt).toLocaleString(i18n.language)}</time>
         {run.background && <span> · {t("runs.background")}</span>}
       </p>
+      {run.command && <p data-run-cwd>{t("runs.folder", { folder: run.command.cwd })}</p>}
       <p className="run-state">
         <strong>{states[run.state]}</strong>
         {run.exitCode !== undefined && run.exitCode !== null && (
           <span> · {t("runs.exitCode", { code: run.exitCode })}</span>
         )}
         {run.error && <span> · {run.error}</span>}
+        {(run.durationMs !== undefined || run.state === "running") && (
+          <span data-run-duration> · {t("runs.duration", { seconds: (duration / 1000).toFixed(3) })}</span>
+        )}
       </p>
+      {run.command && log.isError && <ErrorMessage error={log.error} />}
+      {run.command && log.data && (
+        // biome-ignore lint/a11y/noNoninteractiveTabindex: the live log supports keyboard scrolling.
+        <pre ref={output} className="run-log run-live-output" data-run-output tabIndex={0}>
+          {text}
+        </pre>
+      )}
       {error !== undefined && <ErrorMessage error={error} />}
       <div className="workbench-actions">
         <button type="button" data-action="run-log" onClick={() => open(run)}>
@@ -143,7 +175,7 @@ type SortOrder = "newest" | "oldest" | "plugin" | "session" | "state";
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 /**
- * Plugin program runs of the open workbench: running and recent, with their logs and Stop.
+ * Commands and plugin program runs of the open workbench, with their logs and Stop.
  * Filters by session (the current one by default), plugin, state and date, and sorts by any of them.
  */
 export function RunsTab({
@@ -157,6 +189,7 @@ export function RunsTab({
 }) {
   const { t } = useTranslation();
   const states = useStateLabels();
+  const openDocument = useDocumentViewer();
   const [viewing, setViewing] = useState<ProgramRunInfo>();
   const [sessionFilter, setSessionFilter] = useState<SessionFilter>("current");
   const [pluginFilter, setPluginFilter] = useState("all");
@@ -172,7 +205,14 @@ export function RunsTab({
   const titles = new Map(sessions.map((session) => [session.id, session.title || t("chat.untitled")]));
   const titleOf = (id: string) => titles.get(id) ?? t("runs.unknownSession");
   const all = runs.data?.runs ?? [];
-  const plugins = [...new Set(all.map((run) => run.plugin).filter((plugin) => plugin !== undefined))].sort();
+  const plugins = [
+    ...new Set(
+      all
+        .filter((run) => !run.command)
+        .map((run) => run.plugin)
+        .filter((plugin) => plugin !== undefined),
+    ),
+  ].sort();
   // "Current session" falls back to all sessions when no conversation is open.
   const session =
     sessionFilter === "current" ? currentSessionId : sessionFilter === "all" ? undefined : sessionFilter;
@@ -184,7 +224,7 @@ export function RunsTab({
         : 0;
   const shown = all
     .filter((run) => session === undefined || run.sessionId === session)
-    .filter((run) => pluginFilter === "all" || run.plugin === pluginFilter)
+    .filter((run) => pluginFilter === "all" || (!run.command && run.plugin === pluginFilter))
     .filter((run) => stateFilter === "all" || run.state === stateFilter)
     .filter((run) => Date.parse(run.startedAt) >= since)
     .sort((a, b) => {
@@ -278,7 +318,9 @@ export function RunsTab({
             workbenchId={workbenchId}
             run={run}
             session={titleOf(run.sessionId)}
-            open={setViewing}
+            open={(run) =>
+              run.state !== "running" && openDocument ? openDocument({ runId: run.id }) : setViewing(run)
+            }
           />
         ))}
       </ul>

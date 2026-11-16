@@ -25,3 +25,5 @@ These are VERA's default keyboard shortcuts. Change, add or remove them in **Set
 | F10 | Move to the File, Edit and View menus. |
 
 Tab from a focused single-message rail marker to its bookmark action; Enter or Space toggles it. Escape closes the preview and returns focus to the marker.
+
+Open a finished run with **Open log** in Runs. The existing viewer shortcuts, including **Ctrl+F**, **Ctrl+G** and **Ctrl+W**, also work for run logs.

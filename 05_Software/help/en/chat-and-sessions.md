@@ -71,3 +71,7 @@ Ask requests approval for every command. In Auto-edit, Always allow saves the ch
 ## Additional folders
 
 The ordinary read, list, glob, grep, write and edit tools and shell working directories can use these folders with the same Ask or Auto-edit approvals as the workbench. Give outside paths as absolute paths; relative paths still start at the main workbench. Outside sources use absolute identities without local document citations. Ignore rules still apply, and VERA application data is refused even through links. Adding folders does not index them: indexes, logs, artifacts and generated data stay in the main workbench. Commands retain OS account permissions and are not sandboxed.
+
+## Commands in Runs
+
+Open **Runs** in the right panel to see the actual command, working folder, live output, exit code and duration. **Stop** ends the whole process tree; the agent sees it stopped on its next output read. For finished runs, **Open log** opens the full retained log in the text viewer, including output beyond the live tail. The current session is selected by default; choose **All sessions** for other runs. Plugin runs keep their declared program labels. Known credentials are masked in commands, folders and output; local logs retain original text.

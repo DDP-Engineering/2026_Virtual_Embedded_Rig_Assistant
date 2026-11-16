@@ -101,6 +101,13 @@ it("validates the plugin picker and review", () => {
 
 // REQ-FUNC-39617f81, REQ-FUNC-f024d73c, REQ-FUNC-8c38d223
 it("validates the runs list, log and stop channels", () => {
+  expect(
+    channels["runs.log"].request.safeParse({
+      workbenchId: "wb_01JB8Z6Q4M7N2K5R9T3V8X1Y0C",
+      id: "01JC00000000000000000000R2",
+      full: true,
+    }).success,
+  ).toBe(true);
   const id = "01JB8Z6Q4M7N2K5R9T3V8X1Y0C";
   expect(channels["runs.list"].request.parse({ workbenchId })).toEqual({ workbenchId });
   expect(channels["runs.list"].request.safeParse({}).success).toBe(false);
@@ -116,6 +123,21 @@ it("validates the runs list, log and stop channels", () => {
     log: `.vera/runs/${id}.log`,
   };
   expect(channels["runs.list"].response.parse({ runs: [run] }).runs).toHaveLength(1);
+  expect(
+    channels["runs.list"].response.parse({
+      runs: [{ ...run, command: { text: "node server.cjs", cwd: "D:/folder" } }],
+    }).runs[0]?.command,
+  ).toEqual({ text: "node server.cjs", cwd: "D:/folder" });
+  for (const command of [
+    { text: "", cwd: "D:/folder" },
+    { text: "echo hi", cwd: "" },
+    { text: "a\0b", cwd: "D:/folder" },
+    { text: "echo hi", cwd: "x", extra: true },
+  ])
+    expect(channels["runs.list"].response.safeParse({ runs: [{ ...run, command }] }).success).toBe(false);
+  expect(
+    channels["runs.log"].request.safeParse({ workbenchId, id, path: "secret", full: true }).success,
+  ).toBe(false);
   expect(
     channels["runs.list"].response.parse({
       runs: [{ ...run, state: "exited", end: "exited", exitCode: 0, durationMs: 12 }],

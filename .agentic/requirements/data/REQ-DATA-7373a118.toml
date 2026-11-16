@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-DATA-7373a118"
+
+title = "Shell run metadata"
+
+status = "active"
+
+requirement = "When a built-in shell command starts, the runner shall persist its explicit command text and canonical working folder in its format-1 run record."
+
+verification = "Focused command-tools test starts a background command in a subfolder and asserts exact command/canonical cwd before and after Stop; shared schema rejects empty and malformed metadata."
+
+affected_paths = ["05_Software/src/libraries/core/src/plugins/runner.ts", "05_Software/src/libraries/core/src/plugins/command-tools.ts", "05_Software/src/libraries/shared/src/plugins.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/plugins/command-tools.test.ts", "05_Software/src/libraries/shared/src/plugins-ipc.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-16
+updated = 2026-11-16

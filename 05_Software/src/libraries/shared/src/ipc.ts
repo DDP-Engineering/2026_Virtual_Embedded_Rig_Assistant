@@ -348,7 +348,11 @@ export const channels = {
   ),
   "runs.log": defineChannel(
     "runs.log",
-    z.strictObject({ workbenchId: workbenchIdSchema, id: programRunIdSchema }),
+    z.strictObject({
+      workbenchId: workbenchIdSchema,
+      id: programRunIdSchema,
+      full: z.literal(true).optional(),
+    }),
     programRunLogSchema,
   ),
   "runs.stop": defineChannel(

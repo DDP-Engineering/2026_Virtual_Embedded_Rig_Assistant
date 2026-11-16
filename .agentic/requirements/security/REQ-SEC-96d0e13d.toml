@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-SEC-96d0e13d"
+
+title = "Masked shell run presentation"
+
+status = "active"
+
+requirement = "When shell run metadata or logs cross to the renderer, the main process shall scrub known credentials from command text, working folder and output using the existing Program runs masking policy."
+
+verification = "Native acceptance stores a synthetic credential embedded in command/cwd/output and asserts it is absent from runs.list and both tail/full runs.log disclosure while raw local logs remain unchanged."
+
+affected_paths = ["05_Software/src/apps/desktop/src/main/index.ts"]
+
+linked_tests = ["05_Software/tests/e2e/command-runs.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-16
+updated = 2026-11-16

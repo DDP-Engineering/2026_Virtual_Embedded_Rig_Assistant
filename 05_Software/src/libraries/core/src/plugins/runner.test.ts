@@ -633,6 +633,23 @@ describe("run records, list, log and stop (spec REQ-DATA-f563074f)", () => {
     await expect(runner.log(root, "../secret")).rejects.toMatchObject({ code: "NOT_FOUND" });
   });
 
+  it("reads the entire retained log beyond the default tail without following links", async () => {
+    runner = make({ host, clock: { sleep: async () => {} } });
+    const run = await runner.start(request({ label, background: true }));
+    const output = `FIRST\n${"line\n".repeat(250000)}LAST\n`;
+    host.programs[0]?.print(output);
+    await run.stop();
+    expect(await runner.log(root, run.id)).toMatchObject({ truncated: true });
+    expect(await runner.log(root, run.id, Number.POSITIVE_INFINITY)).toMatchObject({
+      text: output,
+      truncated: false,
+      running: false,
+    });
+    await expect(runner.log(root, "../outside", Number.POSITIVE_INFINITY)).rejects.toMatchObject({
+      code: "NOT_FOUND",
+    });
+  });
+
   // REQ-FUNC-8c38d223
   it("stops a running run of the workbench and refuses a run that is not running there", async () => {
     const other = await realpath(await mkdtemp(join(tmpdir(), "vera-runner-other-")));

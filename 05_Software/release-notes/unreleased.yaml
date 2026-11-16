@@ -92,3 +92,10 @@ entries:
       ro: Adaugă foldere pentru fișierele și comenzile agentului; elimină-le pentru a retrage accesul.
       de: Ordner für Agentendateien und Befehle hinzufügen; Entfernen widerruft den Zugriff.
       fr: Ajoutez des dossiers pour les fichiers et commandes de l’agent ; supprimez-les pour retirer l’accès.
+  - category: improved
+    topic: { en: Runs, ro: Rulări, de: Läufe, fr: Exécutions }
+    text:
+      en: See commands, folders, live output and durations; stop runs and open full logs in the viewer.
+      ro: Vezi comenzi, foldere, ieșire și durate; oprește rulări și deschide jurnale complete.
+      de: Befehle, Ordner, Ausgabe und Dauer sehen; Läufe stoppen und vollständige Protokolle öffnen.
+      fr: Voyez commandes, dossiers, sorties et durées ; arrêtez et ouvrez les journaux complets.

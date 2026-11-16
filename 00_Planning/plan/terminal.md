@@ -12,8 +12,8 @@ one AEGIS implementation chat and one local commit per ticket, without pushing o
 |---|---|---|---|---|
 | 1 | TERM-01 | [#312](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/312) | Built-in shell commands, shell settings, clean environment and background monitoring | implemented: `8d2cd008e262eb213b42307fbf057c5af1ceb574`, TASK-002d804f |
 | 2 | TERM-02 | [#313](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/313) | Command approvals, allowed prefixes and destructive-pattern refusal | implemented: `f8d1b0f377d5fb94bd34b758123a27dca4af9bec`, TASK-4fbe3463 |
-| 3 | TERM-03 | [#314](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/314) | Additional workbench folders, file-tool access and immediate removal | TASK-c819e1fd candidate; focused native/browser and WSL2 boundary proof; coordinator commit pending |
-| 4 | TERM-04 | [#315](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/315) | Commands, live output, stop and full logs in Runs | planned |
+| 3 | TERM-03 | [#314](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/314) | Additional workbench folders, file-tool access and immediate removal | implemented: `bcae0e6e64deeba94cee5dfa71965839a2a70613`, TASK-c819e1fd |
+| 4 | TERM-04 | [#315](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/315) | Commands, live output, stop and full logs in Runs | TASK-3a2872cc candidate; native replay and focused proof under evaluation-outputs/term04; coordinator commit pending |
 | 5 | TERM-05 | [#316](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/316) | Interactive terminal tabs, per-terminal read consent and packaged native runtime | planned |
 
 TERM-01 depends on BYP-01 #309, implemented in local commit 62630967. TERM-02 and TERM-03 follow

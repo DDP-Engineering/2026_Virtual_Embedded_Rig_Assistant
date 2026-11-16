@@ -439,9 +439,10 @@ ordinary `run_program` calls use `toolPathGuard`; only Bypass accepts outside cw
 - Manifest `translations` (optional): `ro|de|fr` → `{summary, description}` with the English limits; catalog index
   entries carry it, and shared `pluginText(entry, language)` picks the interface language's texts, else English, for
   catalog cards, the pack chooser, the review and installed rows. Plugin help pages are shown by [Help](help.md).
+- Built-in command records carry optional strict `command: {text,cwd}` metadata in format 1; only the command tool supplies it and the runner captures canonical cwd. Declared plugin names never classify commands. Runs shows actual command/folder, a scrolling last-12000-character output tail polling each second, elapsed/final duration and exit code, retaining current-session filtering. Running logs retain the existing live dialog; finished logs open a `runId` target in the existing text viewer through full=true. Full and tail reads fill the stat-sized byte window even across short reads, keep workbench-owned ULID identity and refuse linked/nonregular logs. UI Stop uses the existing tree kill; subsequent session-owned program_output includes stopped=true. Local raw logs remain unchanged. Focused acceptance: command-tools/runner/shared IPC/Runs/document-tabs tests, native `tests/e2e/command-runs.spec.ts` and `tests/support/command-runs-platform-probe.ts` for pinned WSL2 Linux.
 - Runs (shared): `programRunIdSchema` (ULID), `programRunRecordSchema` (format 1), `programRunSchema` (adds
   `state: running|exited|stopped|timedOut|interrupted` and `log`), `programRunLogSchema`. IPC `runs.list
-  {workbenchId}` → `{runs}`, `runs.log {workbenchId, id}`, `runs.stop {workbenchId, id}`; another workbench id
+  {workbenchId}` → `{runs}`, `runs.log {workbenchId, id, full?}`, `runs.stop {workbenchId, id}`; another workbench id
   is CONFLICT, a run id without a log or not running there is NOT_FOUND. The browser mock seeds one running
   and one ended run per workbench and answers the review with an echo-tools-like manifest.
 - Catalog (shared `plugin-catalog.ts`): `catalogIndexSchema` (index.json format 1 `{format, plugins, packs}`),
@@ -652,7 +653,7 @@ ordinary `run_program` calls use `toolPathGuard`; only Bypass accepts outside cw
 - Desktop main redacts known credentials from the program payload (executable, args, cwd, notes, file
   paths) of events and snapshots; the confirmation word is not redacted.
 - The desktop app installs only a package with the hash its review showed; `plugins.review` never writes.
-- `runs.list` arguments and errors and `runs.log` text reach the renderer with known credentials redacted; a
+- `runs.list` arguments, explicit command text/canonical cwd and errors and `runs.log` text reach the renderer with known credentials redacted; a
   truncated log tail starts after its first line break.
 - A run record holds the agent's arguments only, never the executable, download prefix or program prefix.
   It is written right before spawn and rewritten at the end before `done` settles (through a temporary file

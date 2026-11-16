@@ -65,8 +65,38 @@ const targets: Record<string, ViewerTarget> = {
   download: { downloadId: "dl_01JB8Z6Q4M7N2K5R9T3V8X1Y0C" },
   board: { path: "board.txt" },
   log: { textPath: "logs/big.log" },
+  run: { runId: "01JC00000000000000000000R2" },
   logLine: { ref: "logs/big.log#L5-L5" },
 };
+
+it("opens complete run logs by ID in the text viewer and rejects mismatched replies", async () => {
+  const { open } = await mount();
+  const original = api.invoke.bind(api);
+  const spy = vi.spyOn(api, "invoke").mockImplementation((async (channel: string, request: unknown) =>
+    channel === "runs.log"
+      ? {
+          id: targets.run && "runId" in targets.run ? targets.run.runId : "",
+          text: "FIRST\nLAST\n",
+          truncated: false,
+          running: false,
+        }
+      : original(channel as never, request as never)) as typeof api.invoke);
+  await open("run");
+  expect(spy).toHaveBeenCalledWith("runs.log", {
+    workbenchId: id,
+    id: "01JC00000000000000000000R2",
+    full: true,
+  });
+  expect(container?.querySelector(".document-body")?.textContent).toContain("FIRST");
+  expect(container?.querySelector(".document-body")?.textContent).toContain("LAST");
+  spy.mockImplementation((async (channel: string, request: unknown) =>
+    channel === "runs.log"
+      ? { id: "01JC00000000000000000000R3", text: "wrong owner", truncated: false, running: false }
+      : original(channel as never, request as never)) as typeof api.invoke);
+  await open("run");
+  expect(container?.textContent).not.toContain("wrong owner");
+  expect(container?.querySelector("[data-source-current]")?.textContent).toContain("Retry");
+});
 
 async function mount(scope = `${id}/session-a`, sessionId?: string) {
   await api.invoke("workbench.open", { folder: "/mock/demo-board" });

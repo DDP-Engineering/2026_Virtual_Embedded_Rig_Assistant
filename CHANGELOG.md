@@ -21,6 +21,8 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ### Added
 
+- Runs shows shell commands, folders, live output and durations, with Stop and complete logs in the viewer.
+
 - Workbenches grant file tools and shell working directories access to user-selected additional folders.
 
 - The agent runs approved shell commands with configurable shells, full logs and monitored background runs.

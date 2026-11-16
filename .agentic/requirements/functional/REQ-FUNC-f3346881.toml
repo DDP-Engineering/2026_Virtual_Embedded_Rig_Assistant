@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-FUNC-f3346881"
+
+title = "Report Runs Stop through agent output"
+
+status = "active"
+
+requirement = "When a background run has been stopped from Runs, the agent program_output tool shall return running=false and stopped=true for its existing session-owned handle."
+
+verification = "Focused command-tools test and native replay server acceptance stop through runs.stop then read program_output; other-session handles remain refused by existing program-tools tests."
+
+affected_paths = ["05_Software/src/libraries/core/src/plugins/runner.ts", "05_Software/src/libraries/core/src/plugins/program-tools.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/plugins/command-tools.test.ts", "05_Software/src/libraries/core/src/plugins/program-tools.test.ts", "05_Software/tests/e2e/command-runs.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-16
+updated = 2026-11-16

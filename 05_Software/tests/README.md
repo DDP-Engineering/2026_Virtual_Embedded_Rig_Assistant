@@ -183,3 +183,7 @@ four-locale browser controls. VERA_TERM03_EVIDENCE_DIR retains native proof. Cor
 `tools/additional-folders.test.ts` covers ordinary file operations, worker revocation and protected aliases.
 
 `integration/additional-folders.test.ts` runs `support/additional-folder-platform-probe.ts` against real files and shell processes; the same probe bundles for pinned WSL2 Node without a second dependency tree.
+
+`e2e/command-runs.spec.ts` proves real sibling server readiness, live masked command/folder/output, Runs Stop of the whole tree, next agent output stopped, full viewer logs, exit code/duration and session isolation. Original receipts use `VERA_TERM04_EVIDENCE_DIR`.
+
+`support/command-runs-platform-probe.ts` bundles current source for pinned Linux Node: real sibling command server, scoped run identity, short-read-safe full/tail logs, Stop and next agent output.

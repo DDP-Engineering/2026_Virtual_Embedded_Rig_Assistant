@@ -70,6 +70,24 @@ it("offers the built-in shell command and accepts a user shell setting", () => {
   expect(settingsPatchSchema.safeParse({ shell: "pwsh" }).success).toBe(true);
 });
 
+it("records explicit command identity and canonical cwd, and shares UI Stop with the agent handle", async () => {
+  const command = "echo 'ready'";
+  const call = await prepare({ command, cwd: "cwd", background: true });
+  const result = await call.apply(signal());
+  expect(await runner.list(root)).toMatchObject([
+    { command: { text: command, cwd: join(root, "cwd") }, state: "running" },
+  ]);
+  host.programs[0]?.print("ready\n");
+  await runner.stopRun(root, String(result.handle));
+  expect(await programOutputTool.execute(ctx, { handle: result.handle }, signal())).toMatchObject({
+    running: false,
+    stopped: true,
+  });
+  expect(await runner.list(root)).toMatchObject([
+    { command: { text: command, cwd: join(root, "cwd") }, state: "stopped", durationMs: expect.any(Number) },
+  ]);
+});
+
 it("keeps the longest accepted command in the run list and refuses commands exceeding its record limit", async () => {
   const command = "x".repeat(4096);
   const call = await prepare({ command, background: true });

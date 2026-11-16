@@ -3715,3 +3715,10 @@ legend {
   margin: 0.4rem 0 0;
   color: var(--muted-foreground);
 }
+
+.run-live-output {
+  max-height: 12rem;
+  overflow: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
