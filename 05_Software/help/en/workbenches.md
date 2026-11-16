@@ -61,3 +61,9 @@ A workbench opens read-only when another VERA process already has it open, for e
 `.vera/` contains a `.gitignore` that keeps only the configuration, instructions, `.veraignore` and skills under version control. The agent cannot change `workbench.yaml` or `.vera/plugins`, in any permission mode.
 
 `.veraignore` uses the same pattern syntax as `.gitignore`. The folders `.vera`, `.git` and `node_modules` are always ignored.
+
+## Additional folders
+
+In **Edit workbench > General > Additional folders**, choose **Add folder** and select an absolute folder, for example a sibling repository. **Save** grants access; **Cancel** discards the selection. The overview lists the saved folders. Remove a folder and Save to revoke access immediately, including pending operations. Read-only workbenches cannot change these grants.
+
+The ordinary read, list, glob, grep, write and edit tools and shell working directories can use these folders with the same Ask or Auto-edit approvals as the workbench. Give outside paths as absolute paths; relative paths still start at the main workbench. Outside sources use absolute identities without local document citations. Ignore rules still apply, and VERA application data is refused even through links. Adding folders does not index them: indexes, logs, artifacts and generated data stay in the main workbench. Commands retain OS account permissions and are not sandboxed.

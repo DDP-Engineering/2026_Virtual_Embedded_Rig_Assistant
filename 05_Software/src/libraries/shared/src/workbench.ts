@@ -2,6 +2,45 @@ import { z } from "zod";
 import { commandPrefixListSchema } from "./command-prefix.js";
 import { permissionModeSchema } from "./session.js";
 
+/** Portable stored folder syntax; host resolution additionally checks the local directory. */
+export const additionalFolderSchema = z
+  .string()
+  .min(1)
+  .max(4096)
+  .refine((path) => {
+    const slash = path.replaceAll("\\", "/");
+    if (
+      Array.from(path).some((character) => character.charCodeAt(0) < 32 || character.charCodeAt(0) === 127) ||
+      /^\/\/[?.]\//.test(slash)
+    )
+      return false;
+    const windows = /^[A-Za-z]:\//.test(slash);
+    if (!windows && !slash.startsWith("/")) return false;
+    if (!windows && path.startsWith("\\") && !path.startsWith("\\\\")) return false;
+    const body = windows ? slash.slice(3) : slash.replace(/^\/\/?/, "");
+    if (body.includes(":")) return false;
+    if (slash.startsWith("//") && body.split("/").filter(Boolean).length < 2) return false;
+    return body
+      .split("/")
+      .every(
+        (part) =>
+          !part ||
+          (part !== "." &&
+            part !== ".." &&
+            !/[ .]$/.test(part) &&
+            !/^(con|prn|aux|nul|com[1-9¹²³]|lpt[1-9¹²³])\s*(\.|$)/i.test(part) &&
+            !/[<>"|?*]/.test(part)),
+      );
+  }, "Use an ordinary absolute folder path.");
+export const additionalFoldersSchema = z
+  .array(additionalFolderSchema)
+  .max(64)
+  .refine(
+    (paths) =>
+      new Set(paths.map((path) => path.replaceAll("\\", "/").replace(/\/$/, ""))).size === paths.length,
+    "Additional folders must be unique.",
+  );
+
 export const workbenchIdSchema = z.string().regex(/^wb_[0-7][0-9A-HJKMNP-TV-Z]{25}$/);
 /** A file size in MB (1 MB = 1,048,576 bytes); zod rejects NaN and infinite numbers. */
 const fileMB = z.number().positive();
@@ -52,6 +91,7 @@ const agent = z.looseObject({
 });
 export const workbenchSchema = z.looseObject({
   format: z.literal(1),
+  additional_folders: additionalFoldersSchema.default([]),
   id: workbenchIdSchema,
   name: z.string().trim().min(1).max(80),
   description: z.string().optional(),
@@ -74,6 +114,7 @@ export function workbenchTemplate(name: string): string {
   return `# ${name}\n\n## Device under test\nBoard, MCU, revision, key parts.\n\n## Bench setup\nPower, probes, programmers, interfaces and where they connect.\n\n## Conventions\nHow results, logs and notes are named and where they go.\n\n## Known issues\nLab or hardware quirks the agent should check first.\n`;
 }
 export const workbenchPatchSchema = z.strictObject({
+  additional_folders: additionalFoldersSchema.optional(),
   chat: z.strictObject({ detail: chatDetailSchema.optional() }).optional(),
   embeddings: workbenchEmbeddingsSchema.optional(),
   name: z.string().trim().min(1).max(80).optional(),

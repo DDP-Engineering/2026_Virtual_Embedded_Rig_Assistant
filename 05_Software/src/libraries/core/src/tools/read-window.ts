@@ -99,6 +99,7 @@ export async function readWindow(
       currentStat.dev !== before.dev
     )
       throw Error("File changed while reading. Read it again.");
+    guard.assertAuthorized();
     return {
       target,
       selected,

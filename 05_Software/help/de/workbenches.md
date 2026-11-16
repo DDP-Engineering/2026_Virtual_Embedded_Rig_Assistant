@@ -61,3 +61,9 @@ Eine Workbench wird schreibgeschützt geöffnet, wenn ein anderer VERA-Prozess s
 `.vera/` enthält eine `.gitignore`, die nur die Konfiguration, die Anweisungen, `.veraignore` und die Skills unter Versionskontrolle hält. Der Agent kann `workbench.yaml` und `.vera/plugins` in keinem Berechtigungsmodus ändern.
 
 `.veraignore` verwendet dieselbe Mustersyntax wie `.gitignore`. Die Ordner `.vera`, `.git` und `node_modules` werden immer ignoriert.
+
+## Zusätzliche Ordner
+
+Unter **Workbench bearbeiten > Allgemein > Zusätzliche Ordner** wählst du **Ordner hinzufügen** und einen absoluten Ordner, etwa ein benachbartes Repository. **Speichern** erteilt Zugriff; **Abbrechen** verwirft die Auswahl. Die Übersicht zeigt gespeicherte Ordner. Entfernen und Speichern widerruft den Zugriff sofort, auch für wartende Vorgänge. Schreibgeschützte Workbenches können diese Freigaben nicht ändern.
+
+Die normalen Werkzeuge read, list, glob, grep, write und edit sowie Shell-Arbeitsordner nutzen diese Ordner mit denselben Freigaben für Fragen oder Automatisch bearbeiten wie die Workbench. Externe Pfade müssen absolut sein; relative Pfade beginnen weiter in der Haupt-Workbench. Externe Quellen haben absolute Identitäten ohne lokale Dokumentzitate. Ignorierregeln bleiben aktiv; VERA-Anwendungsdaten sind auch über Verknüpfungen gesperrt. Hinzufügen indiziert die Ordner nicht: Index, Protokolle, Artefakte und erzeugte Daten bleiben in der Haupt-Workbench. Befehle behalten die Rechte des Systemkontos und laufen ohne Sandbox.

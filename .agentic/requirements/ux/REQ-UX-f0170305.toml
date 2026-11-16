@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-UX-f0170305"
+title = "Edit and display additional folders"
+status = "active"
+requirement = "When editing General, VERA shall offer user folder selection and removal through existing Save/Cancel and read-only controls and display saved folders in the overview in all four interface languages."
+verification = "Native choose/save/cancel/restart/remove and localized focused UI proof show saved grants only; read-only controls disabled."
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/workbench-folders.tsx", "05_Software/src/apps/desktop/src/renderer/components/workbench-editor.tsx"]
+linked_tests = ["05_Software/tests/e2e/additional-folders.spec.ts", "05_Software/src/apps/desktop/src/renderer/components/workbench-folders.test.ts"]
+priority = "high"
+created = 2026-11-16
+updated = 2026-11-16

@@ -42,6 +42,8 @@ Agent activity presents localized historical per-prompt token consumption and fr
 
 The workbench Plugins editor selects installed packages per workbench as an unsaved draft; Save/Create persists plugins.enabled and Cancel leaves it unchanged. New workbenches default to no plugins selected. Global plugin installation/management remains separate.
 
+The General editor stages additional absolute folders through native host-owned selection IDs with Save/Cancel, read-only controls and a complete masked overview list. Live host grants cover ordinary file tools and shell cwd under normal approvals; removal refuses pending operations and does not widen indexing or storage.
+
 The workbench Tools editor presents the shared built-in catalog with localized descriptions and enabled checkboxes, persisting exclusions through the current tools.disabled configuration.
 
 Session/workbench permission modes include explicit Bypass for enabled declared program runs and ordinary file tools with full OS-account filesystem scope, including outside/ignored paths. It retains durable exact grants, integrity limits and revocation on downgrade. Host-configured application data is refused for reads and writes through the shared path policy in every mode, including canonical aliases. The shared marked permission picker requires one explicit en/ro/de/fr confirmation before each change to Bypass; Cancel/Escape retains the prior mode and focus.

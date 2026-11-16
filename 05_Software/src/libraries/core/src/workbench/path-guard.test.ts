@@ -150,3 +150,39 @@ it("refuses missing application-data descendants through existing parent aliases
   ]);
   await expect(g.resolve(join(outside, "future-data/new.txt"))).rejects.toThrow(/VERA application data/);
 });
+
+// REQ-SEC-f0170302, REQ-SEC-f0170303, REQ-SEC-f0170304
+it("confines additional roots, retains absolute identities and revokes old guards", async () => {
+  let folders = [outside];
+  const ctx = Object.assign(api.createToolContext(root), { additionalFolders: () => folders });
+  const { toolPathGuard } = await import("../tools/context.js");
+  const g = await toolPathGuard(ctx, true);
+  await writeFile(join(outside, "notes.txt"), "sibling");
+  expect((await g.resolve(join(outside, "notes.txt"))).relative).toBe(
+    join(outside, "notes.txt").replaceAll("\\", "/"),
+  );
+  expect((await g.resolve("Docs/Notes.md")).relative).toBe("Docs/Notes.md");
+  await expect(g.resolve(join(outside, "../unlisted/file.txt"))).rejects.toThrow();
+  await symlink(root, join(outside, "escape"), process.platform === "win32" ? "junction" : "dir");
+  await expect(g.resolve(join(outside, "escape/Docs/Notes.md"))).rejects.toThrow();
+  folders = [];
+  await expect(g.resolve(join(outside, "notes.txt"))).rejects.toThrow(/revoked/);
+  await expect((await toolPathGuard(ctx, true)).resolve(join(outside, "notes.txt"))).rejects.toThrow();
+});
+
+it("keeps primary ignores under nested grants and canonical alias identities under external grants", async () => {
+  const { toolPathGuard } = await import("../tools/context.js");
+  const ctx = Object.assign(api.createToolContext(root), {
+    additionalFolders: () => [join(root, "hidden"), outside],
+  });
+  await mkdir(join(root, "hidden"));
+  await expect((await toolPathGuard(ctx, true)).resolve(join(root, "hidden/file.txt"))).rejects.toThrow(
+    /ignored/,
+  );
+  const alias = join(root, "sibling-alias");
+  await symlink(outside, alias, process.platform === "win32" ? "junction" : "dir");
+  ctx.additionalFolders = () => [alias];
+  const g = await toolPathGuard(ctx, true);
+  expect((await g.resolve(join(alias, "new.txt"))).key).toBe((await g.resolve(join(outside, "new.txt"))).key);
+  await expect(g.resolve("../outside/new.txt")).rejects.toThrow();
+});

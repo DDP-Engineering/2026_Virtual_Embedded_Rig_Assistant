@@ -1,4 +1,9 @@
-import { type WorkbenchSnapshot, workbenchDocsSchema, workbenchPatchSchema } from "@vera/shared";
+import {
+  type CommandPrefixDisplay,
+  type WorkbenchSnapshot,
+  workbenchDocsSchema,
+  workbenchPatchSchema,
+} from "@vera/shared";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../api/index.js";
@@ -34,6 +39,8 @@ export function WorkbenchEditor({
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<unknown>();
   const [partial, setPartial] = useState(false);
+  const [addedFolders, setAddedFolders] = useState<CommandPrefixDisplay[]>([]);
+  const [removedFolders, setRemovedFolders] = useState<string[]>([]);
   const [removedCommandPrefixes, setRemovedCommandPrefixes] = useState<string[]>([]);
   const loadGeneration = useRef(0);
   const mounted = useRef(true);
@@ -69,11 +76,13 @@ export function WorkbenchEditor({
   }, [shown]);
   // Edits stay unsaved until a save completes, so a failed save is never left behind unseen. Skills
   // are saved by their own switches at once, so they are never part of this draft.
-  const comparable = ({ skills: _saved, ...value }: typeof config) => {
+  const comparable = ({ skills: _saved, additional_folders: _folders, ...value }: typeof config) => {
     const { allowed_commands: _grants, ...agent } = value.agent;
     return { ...value, agent, plugins: { ...value.plugins, enabled: [...value.plugins.enabled].sort() } };
   };
   const dirty =
+    addedFolders.length > 0 ||
+    removedFolders.length > 0 ||
     removedCommandPrefixes.length > 0 ||
     instructions !== original ||
     JSON.stringify(comparable(config)) !== JSON.stringify(comparable(workbench.config));
@@ -121,6 +130,8 @@ export function WorkbenchEditor({
       const updated = await api.invoke("workbench.config.update", {
         patch,
         workbenchId: workbench.config.id,
+        ...(addedFolders.length ? { addAdditionalFolders: addedFolders.map(({ id }) => id) } : {}),
+        ...(removedFolders.length ? { removeAdditionalFolders: removedFolders } : {}),
         ...(removedCommandPrefixes.length ? { removeCommandPrefixes: removedCommandPrefixes } : {}),
       });
       configSaved = true;
@@ -184,6 +195,12 @@ export function WorkbenchEditor({
         setInstructions={setInstructions}
         folder={workbench.folder}
         workbenchId={workbench.config.id}
+        addedFolders={addedFolders}
+        removedFolders={removedFolders}
+        changeFolders={(added, removed) => {
+          setAddedFolders(added);
+          setRemovedFolders(removed);
+        }}
         removedCommandPrefixes={removedCommandPrefixes}
         removeCommandPrefix={(id) => setRemovedCommandPrefixes((current) => [...new Set([...current, id])])}
         readOnly={workbench.readOnly}

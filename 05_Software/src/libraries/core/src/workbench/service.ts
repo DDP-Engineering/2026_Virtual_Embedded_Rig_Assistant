@@ -3,6 +3,8 @@ import { existsSync, lstatSync, readFileSync } from "node:fs";
 import { link, lstat, mkdir, open, readdir, realpath, rename, unlink } from "node:fs/promises";
 import { basename, dirname, isAbsolute, join } from "node:path";
 import {
+  additionalFolderSchema,
+  additionalFoldersSchema,
   binaryDocumentKinds,
   builtinToolNames,
   commandPrefixIdsSchema,
@@ -68,6 +70,7 @@ function requireJson(value: unknown, ancestors = new Set<object>()): void {
   for (const item of Object.values(value)) requireJson(item, ancestors);
   ancestors.delete(value);
 }
+const folderId = (path: string) => createHash("sha256").update(`folder\0${path}`).digest("hex");
 const commandPrefixId = (prefix: string) => createHash("sha256").update(prefix).digest("hex");
 
 export function parseConfig(text: string): WorkbenchConfig {
@@ -132,6 +135,7 @@ async function exclusive(path: string, text: string): Promise<void> {
   }
 }
 export class WorkbenchService {
+  private readonly folderSelections = new Map<string, string>();
   private state: WorkbenchSnapshot | undefined;
   private owned: { folder: string; token: string } | undefined;
   private database: WorkbenchDatabase | undefined;
@@ -755,14 +759,21 @@ export class WorkbenchService {
     patch: WorkbenchPatch,
     expectedId?: string,
     removeCommandPrefixes: readonly string[] = [],
+    folders: { add?: readonly string[]; remove?: readonly string[] } = {},
   ): Promise<{ config: WorkbenchConfig; warnings: WorkbenchWarning[] }> {
     return this.run(() =>
       this.writes.run(async () => {
         const parsed = workbenchPatchSchema.safeParse(patch);
         const removals = commandPrefixIdsSchema.safeParse(removeCommandPrefixes);
+        const added = commandPrefixIdsSchema.safeParse(folders.add ?? []);
+        const removed = commandPrefixIdsSchema.safeParse(folders.remove ?? []);
         if (
           !parsed.success ||
           !removals.success ||
+          !added.success ||
+          !removed.success ||
+          ((added.data.length || removed.data.length) &&
+            (!expectedId || parsed.data.additional_folders !== undefined)) ||
           (removals.data.length && (!expectedId || parsed.data.agent?.allowed_commands !== undefined))
         )
           throw veraError("INVALID");
@@ -772,8 +783,28 @@ export class WorkbenchService {
         if (current.id !== state.config.id) throw veraError("CONFLICT");
         const currentIds = current.agent.allowed_commands.map(commandPrefixId);
         if (removals.data.some((id) => !currentIds.includes(id))) throw veraError("CONFLICT");
+        const folderIds = current.additional_folders.map(folderId);
+        if (removed.data.some((id) => !folderIds.includes(id))) throw veraError("CONFLICT");
+        const selections = added.data.map((id) => this.folderSelections.get(`${expectedId}:${id}`));
+        if (selections.some((path) => path === undefined)) throw veraError("CONFLICT");
+        const folderPatch =
+          added.data.length || removed.data.length
+            ? {
+                additional_folders: [
+                  ...new Set([
+                    ...current.additional_folders.filter((path) => !removed.data.includes(folderId(path))),
+                    ...(selections as string[]),
+                  ]),
+                ],
+              }
+            : {};
+        if (
+          !additionalFoldersSchema.safeParse(folderPatch.additional_folders ?? current.additional_folders)
+            .success
+        )
+          throw veraError("INVALID");
         const config = mergeWorkbench(
-          current,
+          { ...current, ...folderPatch },
           removals.data.length
             ? {
                 ...parsed.data,
@@ -802,6 +833,33 @@ export class WorkbenchService {
         return { config: structuredClone(config), warnings };
       }),
     );
+  }
+  /** Native user selection is staged as an opaque identity until editor Save. */
+  chooseAdditionalFolder(path: string, expectedId: string): Promise<{ id: string; path: string }> {
+    return this.run(async () => {
+      const state = await this.writable();
+      if (state.config.id !== expectedId) throw veraError("CONFLICT");
+      if (!additionalFolderSchema.safeParse(path).success || !isAbsolute(path)) throw veraError("INVALID");
+      let canonical: string;
+      try {
+        canonical = await realpath(path);
+        if (!(await lstat(canonical)).isDirectory()) throw veraError("INVALID");
+      } catch {
+        throw veraError("INVALID");
+      }
+      if (!additionalFolderSchema.safeParse(canonical).success) throw veraError("INVALID");
+      const id = folderId(canonical);
+      if (this.folderSelections.size >= 64 && !this.folderSelections.has(`${expectedId}:${id}`))
+        this.folderSelections.delete(this.folderSelections.keys().next().value as string);
+      this.folderSelections.set(`${expectedId}:${id}`, canonical);
+      return { id, path: canonical };
+    });
+  }
+  /** Complete grant identities survive credential masking at the presentation boundary. */
+  async listAdditionalFolders(expectedId: string): Promise<{ id: string; path: string }[]> {
+    const { config } = await this.getConfig();
+    if (config.id !== expectedId) throw veraError("CONFLICT");
+    return config.additional_folders.map((path) => ({ id: folderId(path), path }));
   }
   /** Complete authoritative grant identities; display masking belongs to the host boundary. */
   async listCommandPrefixes(expectedId: string): Promise<{ id: string; prefix: string }[]> {

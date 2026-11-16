@@ -1195,5 +1195,10 @@
     "title": "Aide",
     "pages": "Pages d’aide",
     "plugins": "Plugins"
+  },
+  "folders": {
+    "title": "Dossiers supplémentaires",
+    "add": "Ajouter un dossier",
+    "remove": "Supprimer {{folder}}"
   }
 }

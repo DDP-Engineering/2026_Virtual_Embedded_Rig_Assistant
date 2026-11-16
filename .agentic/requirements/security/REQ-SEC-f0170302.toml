@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-SEC-f0170302"
+title = "Grant only live host-selected file and command roots"
+status = "active"
+requirement = "For file tools and command working directories outside Bypass, VERA shall accept paths only inside the workbench or currently user-granted additional folders under the current permission approvals."
+verification = "Read/list/glob/grep/write/edit and approved command in sibling succeed; unlisted paths and symlink escapes refuse; relative paths retain main workbench meaning."
+affected_paths = ["05_Software/src/libraries/core/src/tools/context.ts", "05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/libraries/core/src/plugins/command-tools.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/tools/additional-folders.test.ts", "05_Software/src/libraries/core/src/plugins/command-tools.test.ts", "05_Software/tests/e2e/additional-folders.spec.ts"]
+priority = "high"
+created = 2026-11-16
+updated = 2026-11-16

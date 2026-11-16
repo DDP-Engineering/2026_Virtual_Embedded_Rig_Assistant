@@ -139,6 +139,8 @@ const workbenchHandlers = {
   "workbench.recent": unused,
   "workbench.config.get": unused,
   "workbench.commandPrefixes.list": unused,
+  "workbench.additionalFolders.list": unused,
+  "workbench.additionalFolders.choose": unused,
   "workbench.config.update": unused,
   "workbench.pinned.get": unused,
   "workbench.pinned.update": unused,

@@ -129,3 +129,29 @@ it("rejects a zero, negative or non-numeric file size limit and a file count tha
     schema.safeParse({ ...config, docs: { ...config.docs, maxFileMB: 0.001, maxFiles: 1 } }).success,
   ).toBe(true);
 });
+
+// REQ-DATA-f0170301
+it("validates bounded absolute additional folders in format1", () => {
+  const base = { format: 1, id: "wb_01JB8Z6Q4M7N2K5R9T3V8X1Y0C", name: "Folders" };
+  expect(schema.parse(base).additional_folders).toEqual([]);
+  for (const path of ["/home/user/repo", "D:/Projects/repo", "D:\\Projects\\repo", "//server/share/repo"])
+    expect(workbenchPatchSchema.safeParse({ additional_folders: [path] }).success).toBe(true);
+  for (const path of [
+    "relative",
+    "../repo",
+    "C:repo",
+    "\\repo",
+    "//?/C:/repo",
+    "/repo/../other",
+    "/repo/aux.txt",
+    "/repo/trailing.",
+    "/repo/stream:x",
+    "/repo/a\nb",
+  ])
+    expect(schema.safeParse({ ...base, additional_folders: [path] }).success, path).toBe(false);
+  expect(workbenchPatchSchema.safeParse({ additional_folders: ["/repo", "/repo"] }).success).toBe(false);
+  expect(
+    workbenchPatchSchema.safeParse({ additional_folders: Array.from({ length: 65 }, (_, i) => `/repo${i}`) })
+      .success,
+  ).toBe(false);
+});

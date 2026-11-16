@@ -176,3 +176,10 @@ Confined agent-input application-data exclusions also have shared core coverage 
 `integration/hil-bypass.test.ts` runs real standard-library HIL/lab-validation helpers on owned sibling inputs, checking canonical requests, host input policy exclusions and workbench-only output without instruments or external accounts.
 
 `e2e/command-prefixes.spec.ts` covers native command approval, format1 persistence/restart, Auto-edit/Ask and destructive refusal, immediate removal including credential-masked grants and unrelated-save preservation, plus four-language browser editor Save/Cancel. Native receipts use VERA_TERM02_EVIDENCE_DIR.
+
+`e2e/additional-folders.spec.ts` proves native General chooser Save/Cancel, sibling Ask read/command,
+unlisted/protected refusal, restart, pending-request revocation, masked unrelated save/removal and
+four-locale browser controls. VERA_TERM03_EVIDENCE_DIR retains native proof. Core
+`tools/additional-folders.test.ts` covers ordinary file operations, worker revocation and protected aliases.
+
+`integration/additional-folders.test.ts` runs `support/additional-folder-platform-probe.ts` against real files and shell processes; the same probe bundles for pinned WSL2 Node without a second dependency tree.

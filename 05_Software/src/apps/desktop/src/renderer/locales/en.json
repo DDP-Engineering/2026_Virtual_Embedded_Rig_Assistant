@@ -1195,5 +1195,10 @@
     "title": "Help",
     "pages": "Help pages",
     "plugins": "Plugins"
+  },
+  "folders": {
+    "title": "Additional folders",
+    "add": "Add folder",
+    "remove": "Remove {{folder}}"
   }
 }

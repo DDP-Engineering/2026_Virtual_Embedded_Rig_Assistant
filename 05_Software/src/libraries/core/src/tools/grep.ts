@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { type ToolDefinition, toolExcludedRoots } from "./context.js";
+import { type ToolDefinition, toolExcludedRoots, toolPathGuard } from "./context.js";
 
 export const grepParams = z.strictObject({
   pattern: z.string().min(1),
@@ -19,16 +19,20 @@ export const grepTool: ToolDefinition = {
   async execute(ctx, raw, signal) {
     const args = grepParams.parse(raw);
     if (!ctx.workers) throw Error("Grep worker host is unavailable.");
+    const guard = await toolPathGuard(ctx, true);
+    guard.assertAuthorized();
     const result = await ctx.workers.run(
       {
         kind: "grep",
         root: ctx.root,
         args,
         excludedRoots: toolExcludedRoots(ctx),
-        ...(ctx.permissionMode?.() === "bypass" ? { scope: "filesystem" as const } : {}),
+        additionalRoots: guard.additionalRoots,
+        ...(guard.scope === "filesystem" ? { scope: "filesystem" as const } : {}),
       },
       signal,
     );
+    guard.assertAuthorized();
     if (result.error) throw Error(result.error);
     if (result.reason === "aborted") throw Error("Grep aborted.");
     const metadata = { truncated: result.truncated, ...(result.reason ? { reason: result.reason } : {}) };

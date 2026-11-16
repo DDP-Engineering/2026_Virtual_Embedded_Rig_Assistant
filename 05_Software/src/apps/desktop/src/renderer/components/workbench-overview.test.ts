@@ -43,7 +43,10 @@ it("shows each session's stored size in the overview table", async () => {
         archived: false,
       }) as SessionSummary,
   );
-  vi.mocked(api.invoke).mockResolvedValue({ ses_a: 3 * 1024 * 1024 } as never);
+  vi.mocked(api.invoke).mockImplementation(
+    async (channel) =>
+      (channel === "workbench.additionalFolders.list" ? [] : { ses_a: 3 * 1024 * 1024 }) as never,
+  );
   container = document.createElement("div");
   document.body.append(container);
   root = createRoot(container);

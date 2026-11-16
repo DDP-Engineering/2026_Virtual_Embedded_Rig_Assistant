@@ -14,7 +14,7 @@ export const listTool: ToolDefinition = {
   }),
   async execute(ctx, raw, signal) {
     const args = listTool.params.parse(raw) as { path?: string; depth?: number };
-    const guard = await toolPathGuard(ctx);
+    const guard = await toolPathGuard(ctx, true);
     const base = await guard.resolve(args.path ?? ".");
     const entries: { name: string; type: "file" | "directory"; bytes: number }[] = [];
     const walk = async (path: string, depth: number) => {
@@ -42,6 +42,7 @@ export const listTool: ToolDefinition = {
       }
     };
     await walk(base.relative, args.depth ?? 1);
+    guard.assertAuthorized();
     return { entries };
   },
 };

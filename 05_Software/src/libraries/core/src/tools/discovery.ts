@@ -42,5 +42,6 @@ export async function discoverFiles(guard: PathGuard, path: string, pattern: str
     if (!info.isFile() || info.isSymbolicLink()) continue;
     files.push({ path: target.relative, mtimeMs: info.mtimeMs, size: info.size });
   }
+  guard.assertAuthorized();
   return files;
 }

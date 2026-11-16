@@ -85,3 +85,10 @@ entries:
       ro: Salvează prefixe pentru Editare automată; comenzile periculoase cer acord în afara Bypass.
       de: Befehlspräfixe für Automatisch bearbeiten speichern; gefährliche Befehle fragen außerhalb Bypass.
       fr: Enregistrez des préfixes pour Modification auto ; les commandes dangereuses demandent hors Bypass.
+  - category: new
+    topic: { en: Workbench, ro: Workbench, de: Workbench, fr: Workbench }
+    text:
+      en: Add folders for agent file access and command working directories; remove them to revoke access.
+      ro: Adaugă foldere pentru fișierele și comenzile agentului; elimină-le pentru a retrage accesul.
+      de: Ordner für Agentendateien und Befehle hinzufügen; Entfernen widerruft den Zugriff.
+      fr: Ajoutez des dossiers pour les fichiers et commandes de l’agent ; supprimez-les pour retirer l’accès.

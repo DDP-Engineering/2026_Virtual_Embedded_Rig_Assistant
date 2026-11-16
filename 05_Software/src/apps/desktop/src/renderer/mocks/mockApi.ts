@@ -99,6 +99,7 @@ export function createMockApi(
     errorCode: null,
   };
   let settings = defaultSettings("1b9dc50c-d87d-484b-88e6-04cb5f7c5a19");
+  const folderSelections = new Map<string, string>();
   const benches = new Map<string, { snapshot: WorkbenchSnapshot; pinned: string }>();
   let active: string | undefined;
   const skillFiles = new Map<string, string>();
@@ -1617,6 +1618,8 @@ What this plugin does.
           patch,
           workbenchId,
           removeCommandPrefixes = [],
+          addAdditionalFolders = [],
+          removeAdditionalFolders = [],
         } = channels["workbench.config.update"].request.parse(input.data);
         const bench = current();
         if (bench.snapshot.readOnly) throw veraError("DENIED");
@@ -1631,8 +1634,31 @@ What this plugin does.
           throw veraError("CONFLICT");
         if (removeCommandPrefixes.length && patch.agent?.allowed_commands !== undefined)
           throw veraError("INVALID");
+        const folderEntries = await Promise.all(
+          bench.snapshot.config.additional_folders.map(async (path) => ({
+            path,
+            id: await skillHash(`folder\0${path}`),
+          })),
+        );
+        if (removeAdditionalFolders.some((id) => !folderEntries.some((entry) => entry.id === id)))
+          throw veraError("CONFLICT");
+        const selected = addAdditionalFolders.map((id) => folderSelections.get(`${workbenchId}:${id}`));
+        if (selected.some((path) => path === undefined)) throw veraError("CONFLICT");
+        const folderPatch =
+          addAdditionalFolders.length || removeAdditionalFolders.length
+            ? {
+                additional_folders: [
+                  ...new Set([
+                    ...folderEntries
+                      .filter(({ id }) => !removeAdditionalFolders.includes(id))
+                      .map(({ path }) => path),
+                    ...(selected as string[]),
+                  ]),
+                ],
+              }
+            : {};
         const config = mergeWorkbench(
-          bench.snapshot.config,
+          { ...bench.snapshot.config, ...folderPatch },
           removeCommandPrefixes.length
             ? {
                 ...patch,
@@ -1652,6 +1678,27 @@ What this plugin does.
           emit({ topic: "workbench", id: config.id, event: { type: "config.changed", config, warnings } });
         }
         value = { config, warnings };
+        break;
+      }
+      case "workbench.additionalFolders.list": {
+        const { workbenchId } = channels["workbench.additionalFolders.list"].request.parse(input.data);
+        if (current().snapshot.config.id !== workbenchId) throw veraError("CONFLICT");
+        value = await Promise.all(
+          current().snapshot.config.additional_folders.map(async (path) => ({
+            id: await skillHash(`folder\0${path}`),
+            label: path,
+          })),
+        );
+        break;
+      }
+      case "workbench.additionalFolders.choose": {
+        const { workbenchId } = channels["workbench.additionalFolders.choose"].request.parse(input.data);
+        if (current().snapshot.config.id !== workbenchId) throw veraError("CONFLICT");
+        if (current().snapshot.readOnly) throw veraError("DENIED");
+        const path = "/mock/additional-repo";
+        const id = await skillHash(`folder\0${path}`);
+        folderSelections.set(`${workbenchId}:${id}`, path);
+        value = { id, label: path };
         break;
       }
       case "workbench.commandPrefixes.list": {

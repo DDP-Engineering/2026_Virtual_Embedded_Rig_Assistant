@@ -134,6 +134,7 @@ export function sanitizeEvent(envelope: EventEnvelope, scrub: (text: string) => 
       id,
       name,
       description,
+      additional_folders,
       docs,
       retrieval,
       skills,
@@ -157,6 +158,7 @@ export function sanitizeEvent(envelope: EventEnvelope, scrub: (text: string) => 
       format,
       id,
       name: scrub(name).slice(0, 80),
+      additional_folders: additional_folders.filter((path) => scrub(path) === path),
       embeddings: { ...embeddings },
       ...(description === undefined ? {} : { description: scrub(description) }),
       docs: {

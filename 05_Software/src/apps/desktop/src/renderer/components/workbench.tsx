@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { api } from "../api/index.js";
 import { ErrorMessage } from "./error-message.js";
 import { Pager, usePaged } from "./pager.js";
+import { WorkbenchFolders } from "./workbench-folders.js";
 
 /** Bytes in the largest unit (binary steps) with a localized unit name: "840 kB", "2.4 MB". */
 export function formatBytes(bytes: number | undefined, language: string): string {
@@ -100,6 +101,11 @@ export function Workbench({
               </button>
             )}
           </header>
+          <WorkbenchFolders
+            key={`${active.config.id}:${JSON.stringify(active.config.additional_folders)}`}
+            workbenchId={active.config.id}
+            live
+          />
           {active.readOnly && <p role="status">{t("workbench.readOnly")}</p>}
           {active.warnings.length > 0 && (
             <ul className="workbench-warnings">

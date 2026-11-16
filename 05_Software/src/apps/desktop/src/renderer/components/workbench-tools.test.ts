@@ -37,7 +37,9 @@ it.each([false, true])("tool checkboxes retain configured state and honor readOn
   });
   vi.mocked(api.invoke).mockImplementation(
     async (channel) =>
-      (channel === "skills.list" ? [] : { content: "Instructions", oversized: false }) as never,
+      (channel === "skills.list" || channel === "workbench.additionalFolders.list"
+        ? []
+        : { content: "Instructions", oversized: false }) as never,
   );
   container = document.createElement("div");
   document.body.append(container);
@@ -108,7 +110,9 @@ it("a skill switched in its own panel leaves the editor without unsaved changes"
   });
   vi.mocked(api.invoke).mockImplementation(
     async (channel) =>
-      (channel === "skills.list" ? [] : { content: "Instructions", oversized: false }) as never,
+      (channel === "skills.list" || channel === "workbench.additionalFolders.list"
+        ? []
+        : { content: "Instructions", oversized: false }) as never,
   );
   container = document.createElement("div");
   document.body.append(container);

@@ -61,3 +61,9 @@ Un workbench se deschide doar pentru citire atunci când un alt proces VERA îl 
 `.vera/` conține un `.gitignore` care păstrează sub controlul versiunilor doar configurația, instrucțiunile, `.veraignore` și skill-urile. Agentul nu poate modifica `workbench.yaml` sau `.vera/plugins`, în niciun mod de permisiuni.
 
 `.veraignore` folosește aceeași sintaxă de pattern-uri ca `.gitignore`. Folderele `.vera`, `.git` și `node_modules` sunt ignorate întotdeauna.
+
+## Foldere suplimentare
+
+În **Editare workbench > General > Foldere suplimentare**, alege **Adaugă folder** și selectează un folder absolut, de exemplu un depozit alăturat. **Salvează** acordă acces; **Anulează** renunță la selecție. Prezentarea generală listează folderele salvate. Elimină un folder și salvează pentru a revoca imediat accesul, inclusiv pentru operații în așteptare. Workbench-urile doar în citire nu pot schimba aceste permisiuni.
+
+Instrumentele obișnuite read, list, glob, grep, write și edit și directoarele comenzilor shell pot folosi aceste foldere cu aceleași aprobări Întreabă sau Editare automată ca workbench-ul. Folosește căi absolute pentru fișiere externe; căile relative pornesc din workbench-ul principal. Sursele externe au identități absolute, fără citări locale de documente. Regulile de ignorare rămân active, iar datele VERA sunt refuzate și prin legături. Adăugarea nu indexează folderele: indexul, jurnalele, artefactele și datele generate rămân în workbench-ul principal. Comenzile păstrează drepturile contului sistemului, fără sandbox.

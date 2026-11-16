@@ -132,7 +132,7 @@ export async function prepareChange(
   const host = ctx.change;
   if (!host) throw Error("Workbench write host is unavailable.");
   host.assertWritable?.();
-  const guard = await toolPathGuard(ctx);
+  const guard = await toolPathGuard(ctx, true);
   const target = await guard.resolve(args.path);
   await assertAgentWritable(ctx, target);
   if (target.relative === ".") throw Error("Choose a workbench file.");
@@ -171,6 +171,7 @@ export async function prepareChange(
   const added = lines.filter((line) => line.startsWith("+")).length;
   const removed = lines.filter((line) => line.startsWith("-")).length;
   const diff = formatPatch(patch);
+  guard.assertAuthorized();
   const request = Object.freeze({
     workbench: ctx.root,
     sessionId: host.sessionId,
@@ -255,21 +256,27 @@ export function commitChange(options: CommitOptions): PreparedChange["apply"] {
     if (consumed) throw Error("Prepared change was already consumed.");
     consumed = true;
     return host.queue.run(async () => {
+      let currentGuard: PathGuard | undefined;
       const check = async () => {
         signal.throwIfAborted();
         applySignal.throwIfAborted();
         host.assertWritable?.();
-        const current = await (await toolPathGuard(ctx)).resolve(options.path);
+        const guard = await toolPathGuard(ctx, true);
+        const current = await guard.resolve(options.path);
         await assertAgentWritable(ctx, current);
         if (current.key !== target.key || current.relative !== target.relative) throw conflict();
         const currentBytes = await contents(current);
         if ((currentBytes === null ? null : hash(currentBytes)) !== beforeSha256) throw conflict();
         await options.check?.();
+        guard.assertAuthorized();
+        currentGuard = guard;
         return current;
       };
       await check();
+      currentGuard?.assertAuthorized();
       await mkdir(dirname(target.absolute), { recursive: true });
       await check();
+      currentGuard?.assertAuthorized();
       const id = Number(
         host.db
           .prepare(
@@ -285,6 +292,7 @@ export function commitChange(options: CommitOptions): PreparedChange["apply"] {
           before !== null && process.platform !== "win32"
             ? (await stat(target.absolute)).mode & 0o777
             : undefined;
+        currentGuard?.assertAuthorized();
         const file = await open(temporary, "wx", 0o600);
         try {
           await file.writeFile(after);
@@ -294,6 +302,7 @@ export function commitChange(options: CommitOptions): PreparedChange["apply"] {
           await file.close();
         }
         await check();
+        currentGuard?.assertAuthorized();
         await rename(temporary, target.absolute);
         renamed = true;
         const publish = host.db.transaction(() => {

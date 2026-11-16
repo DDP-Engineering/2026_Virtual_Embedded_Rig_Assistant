@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-DATA-f0170301"
+title = "Persist user-selected additional folders"
+status = "active"
+requirement = "When the user saves additional workbench folders, VERA shall persist a unique bounded list of ordinary absolute directory paths in workbench format 1."
+verification = "Save sibling folders, reopen and compare exact grants; reject relative, device, ambiguous, duplicate and oversized lists."
+affected_paths = ["05_Software/src/libraries/shared/src/workbench.ts", "05_Software/src/libraries/core/src/workbench/service.ts"]
+linked_tests = ["05_Software/src/libraries/shared/src/workbench.test.ts", "05_Software/src/libraries/core/src/workbench/service.test.ts"]
+priority = "high"
+created = 2026-11-16
+updated = 2026-11-16

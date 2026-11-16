@@ -9,6 +9,12 @@ export interface GuardedPath {
   key: string;
 }
 
+/** Captured host root identity transferred to isolated file workers. */
+export interface PathRootBinding {
+  readonly lexical: string;
+  readonly canonical: string;
+}
+
 const pathIdentity = (path: string) => (process.platform === "win32" ? path.toLowerCase() : path);
 
 async function canonicalPath(path: string) {
@@ -56,6 +62,7 @@ export class PathGuard {
     readonly scope: "workbench" | "filesystem" = "workbench",
     private readonly authorize?: () => void,
     private readonly excludedRoots: readonly string[] = [],
+    readonly additionalRoots: readonly PathRootBinding[] = [],
   ) {}
 
   /** A separately confined skill root may use its owning project's ignore policy. */
@@ -65,6 +72,7 @@ export class PathGuard {
     scope: "workbench" | "filesystem" = "workbench",
     authorize?: () => void,
     excludedRoots: readonly string[] = [],
+    additionalRoots: readonly (string | PathRootBinding)[] = [],
   ): Promise<PathGuard> {
     if (!isAbsolute(root)) throw Error("Workbench root must be absolute.");
     const canonical = await realpath(root);
@@ -91,13 +99,37 @@ export class PathGuard {
     } catch (error) {
       if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
     }
-    return new PathGuard(canonical, createIgnoreRules(text), scope, authorize, excluded);
+    const additional: PathRootBinding[] = [];
+    for (const binding of additionalRoots) {
+      const path = typeof binding === "string" ? binding : binding.lexical;
+      if (!isAbsolute(path)) throw Error("Additional folder must be absolute.");
+      try {
+        const target = await realpath(path);
+        if (typeof binding !== "string" && pathIdentity(target) !== pathIdentity(binding.canonical))
+          throw Error("Additional folder changed since authorization. Retry.");
+        if (!(await lstat(target)).isDirectory()) continue;
+        additional.push({ lexical: resolve(path), canonical: target });
+      } catch (error) {
+        if (!["ENOENT", "ENOTDIR"].includes((error as NodeJS.ErrnoException).code ?? "")) throw error;
+      }
+    }
+    authorize?.();
+    return new PathGuard(canonical, createIgnoreRules(text), scope, authorize, excluded, additional);
+  }
+
+  private contains(root: string, path: string): boolean {
+    const rel = relative(pathIdentity(root), pathIdentity(path));
+    return rel !== ".." && !rel.startsWith(`..${sep}`) && !isAbsolute(rel);
   }
 
   private confined(path: string): string {
     const rel = relative(pathIdentity(this.root), pathIdentity(path));
     if (rel === ".." || rel.startsWith(`..${sep}`) || isAbsolute(rel)) {
-      if (this.scope === "filesystem") return path.split(sep).join("/");
+      if (
+        this.scope === "filesystem" ||
+        this.additionalRoots.some((root) => this.contains(root.canonical, path))
+      )
+        return path.split(sep).join("/");
       throw Error("Path leaves the workbench.");
     }
     return relative(this.root, path).split(sep).join("/");
@@ -131,7 +163,7 @@ export class PathGuard {
 
   async resolve(path: string): Promise<GuardedPath> {
     this.authorize?.();
-    if (this.scope === "filesystem") {
+    if (this.scope === "filesystem" || this.additionalRoots.length) {
       if (!path || /[\0\r\n]/.test(path)) throw Error("Use an ordinary filesystem path.");
       if (process.platform === "win32") {
         const slash = path.replaceAll("\\", "/");
@@ -150,19 +182,52 @@ export class PathGuard {
         }
       }
     }
-    const lexical = resolve(this.root, this.scope === "filesystem" ? path : validateRelativePath(path));
+    const lexical = resolve(
+      this.root,
+      this.scope === "filesystem" || (this.additionalRoots.length && isAbsolute(path))
+        ? path
+        : validateRelativePath(path),
+    );
+    const binding =
+      this.scope === "filesystem"
+        ? undefined
+        : [{ lexical: this.root, canonical: this.root }, ...this.additionalRoots]
+            .filter(
+              (root) =>
+                (isAbsolute(path) || root.canonical === this.root) &&
+                (this.contains(root.lexical, lexical) || this.contains(root.canonical, lexical)),
+            )
+            .sort(
+              (a, b) =>
+                Math.max(b.lexical.length, b.canonical.length) -
+                Math.max(a.lexical.length, a.canonical.length),
+            )[0];
+    if (this.scope !== "filesystem" && (!binding || (!isAbsolute(path) && binding.canonical !== this.root)))
+      throw Error("Path leaves the workbench and additional folders.");
     this.exclude(lexical);
-    this.allowed(this.confined(lexical));
+    if (this.contains(this.root, lexical)) this.allowed(relative(this.root, lexical).split(sep).join("/"));
+    if (binding)
+      this.allowed(
+        relative(this.contains(binding.lexical, lexical) ? binding.lexical : binding.canonical, lexical)
+          .split(sep)
+          .join("/"),
+      );
+    else this.allowed(this.confined(lexical));
     const { canonical, exists } = await canonicalPath(lexical);
     this.authorize?.();
-    if (this.scope === "filesystem" && exists) {
+    if ((this.scope === "filesystem" || this.additionalRoots.length) && exists) {
       const info = await lstat(canonical);
       if (!info.isFile() && !info.isDirectory())
         throw Error("Choose an ordinary file or directory, not a device or special file.");
     }
     this.exclude(canonical);
+    if (this.contains(this.root, canonical))
+      this.allowed(relative(this.root, canonical).split(sep).join("/"));
+    if (binding && !this.contains(binding.canonical, canonical))
+      throw Error("Path leaves its granted folder.");
     const rel = this.confined(canonical);
-    this.allowed(rel);
+    this.allowed(binding ? relative(binding.canonical, canonical).split(sep).join("/") : rel);
+    this.assertAuthorized();
     return {
       absolute: canonical,
       relative: rel || ".",

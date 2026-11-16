@@ -1,3 +1,4 @@
+import { isAbsolute } from "node:path";
 import { parentPort } from "node:worker_threads";
 import { formatLineRef, parseLineRef } from "@vera/shared";
 import type { GrepMatch, WorkerTask } from "../ports.js";
@@ -38,6 +39,7 @@ async function execute(task: WorkerTask) {
       task.scope === "filesystem" ? "filesystem" : "workbench",
       undefined,
       task.excludedRoots,
+      task.additionalRoots,
     );
     const signal = new AbortController().signal;
     const files = await discoverFiles(guard, args.path ?? ".", args.glob ?? "**/*", signal);
@@ -63,7 +65,7 @@ async function execute(task: WorkerTask) {
           path: file.path,
           line: i + 1,
           text: content ? text.slice(0, 16000) : "",
-          ...(guard.scope !== "filesystem" || parseLineRef(`${file.path}#L${i + 1}-L${i + 1}`)
+          ...(!isAbsolute(file.path) || parseLineRef(`${file.path}#L${i + 1}-L${i + 1}`)
             ? { ref: formatLineRef({ path: file.path, start: i + 1, end: i + 1 }) }
             : {}),
         };

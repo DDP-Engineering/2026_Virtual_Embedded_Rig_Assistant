@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-SEC-f0170304"
+title = "Preserve protected exclusions and source identities"
+status = "active"
+requirement = "For additional-folder access, VERA shall preserve lexical and canonical application-data refusal and canonical absolute outside-path provenance without extending workbench storage or index authority."
+verification = "Protected nested aliases and missing descendants refuse in all modes; outside read has absolute path and no workbench citation; logs remain in workbench."
+affected_paths = ["05_Software/src/libraries/core/src/workbench/path-guard.ts", "05_Software/src/libraries/core/src/tools/read.ts", "05_Software/src/libraries/core/src/tools/grep-worker.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/workbench/path-guard.test.ts", "05_Software/src/libraries/core/src/tools/additional-folders.test.ts", "05_Software/tests/integration/additional-folders.test.ts"]
+priority = "high"
+created = 2026-11-16
+updated = 2026-11-16

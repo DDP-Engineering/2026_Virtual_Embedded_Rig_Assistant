@@ -12,6 +12,8 @@ Core SessionService owns one workbench's durable sessions over injected AgentRun
 
 ## Public interface
 
+- SessionHost.additionalFolders reads the active workbench's live user configuration for ordinary file tools and shell cwd. Desktop validates captured workbench identity and CLI uses its current WorkbenchService snapshot. Model parameters and sanitized renderer configuration do not supply grants. Existing approval modes and Bypass epochs remain unchanged; pending operations resolve current authority at execution and outside paths remain canonical absolute without local source citations.
+
 - SessionService.bookmark(id, messageId, bookmarked) records `message.bookmarked` through SessionHub and publishes only after commit. It accepts this session's durable user/queued messages, including during a turn, and never writes agent transcript rows. INVALID rejects unknown, assistant, tool or other-session targets; DENIED rejects archived sessions and read-only/lost-ownership workbenches; deleting sessions are BUSY and closed services CONFLICT. Reads, replay and export remain available in archived/read-only sessions.
 - `bookmarkedMessageIds` is a unique array of user IDs in the shared snapshot. The reducer sets/clears membership and ignores unknown/non-user targets; pure live updates detach only the bookmark collection. Format-1 events retain the state across real database reopen and JSON export. Markdown marks bookmarked user headings.
 

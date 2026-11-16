@@ -95,6 +95,7 @@ export interface SessionHost {
   programs?: ProgramHost;
   /** Live workbench grants, supplied only by the host; model arguments never select them. */
   commandPrefixes?: () => readonly string[];
+  additionalFolders?: () => readonly string[];
   saveCommandPrefix?: (prefix: string) => Promise<void>;
   pluginBuilder?: import("../plugins/store.js").PluginStore;
   managedRoots?: readonly string[];
@@ -685,6 +686,7 @@ export class SessionService {
     const ctx = this.contexts.get(id) ?? createToolContext(this.host.root, this.host.workers);
     this.contexts.set(id, ctx);
     ctx.permissionMode = () => this.row(id).permission_mode;
+    ctx.additionalFolders = () => this.host.additionalFolders?.() ?? [];
     ctx.bypassSignal = () => {
       if (this.row(id).permission_mode !== "bypass") return AbortSignal.abort();
       let scope = this.bypassScopes.get(id);

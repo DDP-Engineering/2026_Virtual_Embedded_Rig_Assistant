@@ -360,4 +360,12 @@ stdin EOF, clean environment, background readiness/tree stop and session/app cle
 uses /home/dpasare/vera-cap-01/node-v24.21.0-linux-x64/bin/node for the same acceptance with bash.
 WSL2 proof is distinct from native Ubuntu acceptance, which is unavailable on this host.
 
+Additional-folder acceptance uses core tools/additional-folders.test.ts, workbench/path-guard.test.ts
+and service.test.ts, plus native/browser tests/e2e/additional-folders.spec.ts. Native receipts and
+original logs use evaluation-outputs/term03; VERA_TERM03_EVIDENCE_DIR retains the desktop receipt.
+The standalone tests/support/additional-folder-platform-probe.ts proves real file/command cwd,
+protected aliases, workbench logs and pending revocation under pinned Windows/WSL2 Node24.21.0;
+its optional independently bundled worker also proves canonical-root retarget refusal on Linux.
+WSL2 is separate from unavailable native Ubuntu acceptance; unchanged shell/prefix proof is reused.
+
 TERM command-prefix acceptance uses the focused tests/e2e/command-prefixes.spec.ts with VERA_TEST=1 instrumented build. VERA_TERM02_EVIDENCE_DIR retains native receipt/screenshot; original focused/static logs live under evaluation-outputs/term02. TERM01 process/shell proofs are reused for unchanged runner behavior. Native Ubuntu is unavailable on this host.

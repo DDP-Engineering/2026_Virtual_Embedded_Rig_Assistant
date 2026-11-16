@@ -22,6 +22,8 @@ export interface ToolContext {
   root: string;
   permissionMode?: () => PermissionMode;
   bypassSignal?: () => AbortSignal;
+  /** Live host-owned user grants; only ordinary file tools and command cwd use them. */
+  additionalFolders?: () => readonly string[];
   workers?: WorkerPool;
   lastReads: Map<string, ReadFingerprint>;
   change?: ChangeHost;
@@ -64,11 +66,26 @@ export function toolSignal(ctx: ToolContext, signal: AbortSignal): AbortSignal {
 export function toolExcludedRoots(ctx: ToolContext): readonly string[] {
   return [...(ctx.managedRoots ?? []), ...(ctx.pluginBuilder ? [ctx.pluginBuilder.root] : [])];
 }
-export async function toolPathGuard(ctx: ToolContext): Promise<PathGuard> {
+export async function toolPathGuard(ctx: ToolContext, additional = false): Promise<PathGuard> {
   const epoch = ctx.permissionMode?.() === "bypass" ? ctx.bypassSignal?.() : undefined;
   const excluded = toolExcludedRoots(ctx);
-  if (ctx.permissionMode?.() !== "bypass")
-    return PathGuard.create(ctx.root, ctx.root, "workbench", undefined, excluded);
+  if (ctx.permissionMode?.() !== "bypass") {
+    const folders = additional ? [...(ctx.additionalFolders?.() ?? [])] : [];
+    const version = JSON.stringify(folders);
+    return PathGuard.create(
+      ctx.root,
+      ctx.root,
+      "workbench",
+      () => {
+        if (additional && JSON.stringify(ctx.additionalFolders?.() ?? []) !== version)
+          throw Error(
+            "Additional folder access was revoked. Retry under the current workbench configuration.",
+          );
+      },
+      excluded,
+      folders,
+    );
+  }
   return PathGuard.create(
     ctx.root,
     ctx.root,

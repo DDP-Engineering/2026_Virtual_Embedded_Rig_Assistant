@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-SEC-f0170306"
+title = "Preserve hidden grants on unrelated saves"
+status = "active"
+requirement = "When configuration paths are credential-masked for presentation, VERA shall preserve exact live grants on unrelated saves and apply explicit additions and removals using host-owned identities."
+verification = "Masked active path remains after name save; ID removal removes it; sanitized labels cannot become grant paths and stale IDs refuse."
+affected_paths = ["05_Software/src/libraries/core/src/workbench/service.ts", "05_Software/src/apps/desktop/src/main/workbench-folders.ts", "05_Software/src/libraries/shared/src/ipc.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/workbench/service.test.ts", "05_Software/src/apps/desktop/src/main/workbench-folders.test.ts", "05_Software/tests/e2e/additional-folders.spec.ts"]
+priority = "high"
+created = 2026-11-16
+updated = 2026-11-16

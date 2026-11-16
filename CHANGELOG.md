@@ -21,6 +21,8 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ### Added
 
+- Workbenches grant file tools and shell working directories access to user-selected additional folders.
+
 - The agent runs approved shell commands with configurable shells, full logs and monitored background runs.
 
 - Bookmarked rail markers stand out, with configurable next and previous bookmark shortcuts.

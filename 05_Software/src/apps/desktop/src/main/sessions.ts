@@ -164,6 +164,11 @@ export class SessionsHost {
           db,
           root: snapshot.folder,
           readOnly: snapshot.readOnly,
+          additionalFolders: () => {
+            const current = options.workbench.getSnapshot();
+            if (current.config.id !== workbenchId) throw veraError("CONFLICT");
+            return current.config.additional_folders;
+          },
           commandPrefixes: () => {
             const current = options.workbench.getSnapshot();
             if (current.config.id !== workbenchId) throw veraError("CONFLICT");

@@ -1,10 +1,11 @@
-import type { WorkbenchConfig } from "@vera/shared";
+import type { CommandPrefixDisplay, WorkbenchConfig } from "@vera/shared";
 import { type Dispatch, type ReactNode, type SetStateAction, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ModelSelect } from "./model-select.js";
 import { PermissionPicker } from "./permission-picker.js";
 import { WorkbenchCommandPrefixes } from "./workbench-command-prefixes.js";
 import { WorkbenchDocuments } from "./workbench-documents.js";
+import { WorkbenchFolders } from "./workbench-folders.js";
 import { WorkbenchPlugins } from "./workbench-plugins.js";
 import { WorkbenchTools } from "./workbench-tools.js";
 
@@ -43,6 +44,9 @@ export function WorkbenchConfigForm({
   general,
   locked = false,
   request,
+  addedFolders = [],
+  removedFolders = [],
+  changeFolders,
   removedCommandPrefixes = [],
   removeCommandPrefix,
 }: {
@@ -67,6 +71,9 @@ export function WorkbenchConfigForm({
   locked?: boolean;
   /** Shows this section; a new request object switches to it again (Docs tab "Edit exclusions"). */
   request?: { section: ConfigSection } | undefined;
+  addedFolders?: readonly CommandPrefixDisplay[];
+  removedFolders?: readonly string[];
+  changeFolders?: (added: CommandPrefixDisplay[], removed: string[]) => void;
   removedCommandPrefixes?: readonly string[];
   removeCommandPrefix?: (id: string) => void;
 }) {
@@ -136,6 +143,15 @@ export function WorkbenchConfigForm({
                 />
               </label>
               {!general && <p className="path-text">{folder}</p>}
+              {workbenchId && changeFolders && (
+                <WorkbenchFolders
+                  workbenchId={workbenchId}
+                  added={addedFolders}
+                  removed={removedFolders}
+                  change={changeFolders}
+                  disabled={disabled || readOnly}
+                />
+              )}
             </>
           )}
           {section === "documents" && (

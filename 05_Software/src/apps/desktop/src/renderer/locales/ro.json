@@ -1195,5 +1195,10 @@
     "title": "Ajutor",
     "pages": "Pagini de ajutor",
     "plugins": "Pluginuri"
+  },
+  "folders": {
+    "title": "Foldere suplimentare",
+    "add": "Adaugă folder",
+    "remove": "Elimină {{folder}}"
   }
 }

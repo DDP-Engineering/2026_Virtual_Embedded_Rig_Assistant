@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-SEC-f0170303"
+title = "Revoke removed folders before execution"
+status = "active"
+requirement = "When an additional folder is removed, VERA shall refuse subsequent file access and pending file or command execution requiring that folder."
+verification = "Prepare a request, remove grant while awaiting approval or worker result, then assert no write/spawn/result publication."
+affected_paths = ["05_Software/src/libraries/core/src/workbench/path-guard.ts", "05_Software/src/libraries/core/src/tools/grep.ts", "05_Software/src/libraries/core/src/tools/changes.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/tools/additional-folders.test.ts", "05_Software/src/libraries/core/src/plugins/command-tools.test.ts", "05_Software/tests/e2e/additional-folders.spec.ts"]
+priority = "high"
+created = 2026-11-16
+updated = 2026-11-16

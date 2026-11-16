@@ -65,6 +65,32 @@ async function harness() {
   };
   return { root, folder, host, events, settings, paths, service: new WorkbenchService(host) };
 }
+
+// REQ-DATA-f0170301, REQ-SEC-f0170306
+it("stages explicit folder identities and preserves hidden grants across unrelated save and restart", async () => {
+  const h = await harness();
+  try {
+    const { config } = await h.service.create(h.folder, "Folders");
+    const sibling = join(h.root, "secret-folder");
+    await mkdir(sibling);
+    const grant = await h.service.chooseAdditionalFolder(sibling, config.id);
+    expect(h.service.getSnapshot().config.additional_folders).toEqual([]);
+    await h.service.updateConfig({}, config.id, [], { add: [grant.id] });
+    await h.service.allowCommandPrefix("npm test", config.id);
+    await h.service.updateConfig({ name: "Renamed" }, config.id);
+    await h.service.close();
+    expect((await h.service.open(h.folder)).config.additional_folders).toEqual([sibling]);
+    expect(await h.service.listAdditionalFolders(config.id)).toEqual([{ id: grant.id, path: sibling }]);
+    await expect(
+      h.service.updateConfig({}, config.id, [], { remove: ["0".repeat(64)] }),
+    ).rejects.toMatchObject({ code: "CONFLICT" });
+    await h.service.updateConfig({}, config.id, [], { remove: [grant.id] });
+    expect(h.service.getSnapshot().config.additional_folders).toEqual([]);
+    expect(h.service.getSnapshot().config.agent.allowed_commands).toEqual(["npm test"]);
+  } finally {
+    await h.service.close();
+  }
+});
 // REQ-DATA-4a830b9a
 it("persists eligible user command prefixes across restart and removal without losing other config", async () => {
   const h = await harness();
@@ -1236,6 +1262,30 @@ it("loads the enabled, installed plugins and lists their skills", async () => {
       "skills.disabled.echo-guide",
       "plugins.enabled.ghost",
     ]);
+  } finally {
+    await h.service.close();
+  }
+});
+
+it("rejects stale selections and a 65th folder with typed errors without changing grants", async () => {
+  const h = await harness();
+  try {
+    const { config } = await h.service.create(h.folder, "Bounded folders");
+    await expect(h.service.updateConfig({}, config.id, [], { add: ["0".repeat(64)] })).rejects.toMatchObject({
+      code: "CONFLICT",
+    });
+    const grant = await h.service.chooseAdditionalFolder(h.folder, config.id);
+    await expect(
+      h.service.updateConfig({ additional_folders: [] }, config.id, [], { add: [grant.id] }),
+    ).rejects.toMatchObject({ code: "INVALID" });
+    await h.service.updateConfig(
+      { additional_folders: Array.from({ length: 64 }, (_, i) => join(h.root, `folder${i}`)) },
+      config.id,
+    );
+    await expect(h.service.updateConfig({}, config.id, [], { add: [grant.id] })).rejects.toMatchObject({
+      code: "INVALID",
+    });
+    expect(h.service.getSnapshot().config.additional_folders).toHaveLength(64);
   } finally {
     await h.service.close();
   }

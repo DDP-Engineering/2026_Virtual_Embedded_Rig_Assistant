@@ -1195,5 +1195,10 @@
     "title": "Hilfe",
     "pages": "Hilfeseiten",
     "plugins": "Plugins"
+  },
+  "folders": {
+    "title": "Zusätzliche Ordner",
+    "add": "Ordner hinzufügen",
+    "remove": "{{folder}} entfernen"
   }
 }

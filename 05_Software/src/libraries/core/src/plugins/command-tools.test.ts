@@ -186,3 +186,31 @@ it("rejects a prepared Bypass request after downgrade and kills a timed-out comm
     running: false,
   });
 });
+
+// REQ-SEC-f0170302, REQ-SEC-f0170303
+it("accepts an added sibling cwd and refuses pending commands after removal at apply and spawn", async () => {
+  const sibling = await mkdtemp(join(tmpdir(), "vera-command-sibling-"));
+  let folders = [sibling];
+  ctx.additionalFolders = () => folders;
+  try {
+    const call = await prepare({ command: "echo sibling", cwd: sibling, background: true });
+    await call.apply(signal());
+    expect(host.programs[0]?.options.cwd).toBe(await realpath(sibling));
+    const pending = await prepare({ command: "echo pending", cwd: sibling, background: true });
+    folders = [];
+    await expect(pending.apply(signal())).rejects.toThrow();
+    expect(host.programs).toHaveLength(1);
+    folders = [sibling];
+    const next = await prepare({ command: "echo late", cwd: sibling, background: true });
+    const start = runner.start.bind(runner);
+    vi.spyOn(runner, "start").mockImplementationOnce(async (request) => {
+      folders = [];
+      return start(request);
+    });
+    await expect(next.apply(signal())).rejects.toThrow();
+    expect(host.programs).toHaveLength(1);
+  } finally {
+    await runner.stopAll();
+    await rm(sibling, { recursive: true, force: true });
+  }
+});

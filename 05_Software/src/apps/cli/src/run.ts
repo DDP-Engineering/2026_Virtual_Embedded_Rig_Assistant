@@ -240,6 +240,7 @@ export async function runTurn(
       commandPrefixes: () => workbench.getSnapshot().config.agent.allowed_commands,
       pluginBuilder: new PluginStore({ root: join(location.paths.userData, "plugins") }),
       managedRoots: [location.paths.userData],
+      additionalFolders: () => workbench.getSnapshot().config.additional_folders,
       embeddings: documents.embeddings,
       writeQueue: workbench.getWriteQueue(),
       mode: snapshot.config.agent.permission_mode,

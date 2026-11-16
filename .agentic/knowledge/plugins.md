@@ -306,6 +306,9 @@ in Ask and unmatched Auto-edit commands, is absent/refused in Read-only and uses
 program approval payload adapts command display without a plugin risk claim. The request binds the
 literal command (at most 4096 characters, matching the run-record argument bound), resolved shell/argv, canonical cwd, original cwd, timeout and background flag.
 Original cwd is re-resolved before spawn with host data exclusions and captured Bypass epochs;
+run_command also accepts live user-selected additional workbench folders outside Bypass, with
+normal command approvals and removal rechecked at apply/spawn. This does not widen run_program,
+plugin arguments, indexing or fixed storage authority;
 background lifetime excludes the completed turn signal. Commands are arbitrary shell syntax under
 OS-account permissions, not a filesystem sandbox. `RunRequest.commandEnvironment` is host-only and
 used by built-in commands; declared plugins retain the minimal environment policy. NodeProcessHost

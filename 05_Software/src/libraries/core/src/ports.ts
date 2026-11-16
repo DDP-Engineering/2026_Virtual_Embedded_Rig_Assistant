@@ -1,5 +1,7 @@
 /** Host-owned data locations; core does not resolve Electron paths. */
+
 import type { EventEnvelope, ParseLogResult, SettingsPatch, SettingsSnapshot, VeraError } from "@vera/shared";
+import type { PathRootBinding } from "./workbench/path-guard.js";
 
 /** Host-owned isolated file analysis; matching never executes on the main thread. */
 export interface GrepMatch {
@@ -16,6 +18,7 @@ export interface WorkerTask {
   scope?: "filesystem";
   /** Host-owned application-data exclusions; never model arguments. */
   excludedRoots?: readonly string[];
+  additionalRoots?: readonly PathRootBinding[];
 }
 export interface WorkerResult {
   value?: ParseLogResult;

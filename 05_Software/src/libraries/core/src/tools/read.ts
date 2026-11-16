@@ -1,3 +1,4 @@
+import { isAbsolute } from "node:path";
 import { formatLineRef, parseLineRef } from "@vera/shared";
 import { z } from "zod";
 import type { ToolDefinition } from "./context.js";
@@ -16,20 +17,21 @@ export const readTool: ToolDefinition = {
   }),
   async execute(ctx, raw, signal) {
     const args = readTool.params.parse(raw) as { path: string; offset?: number; limit?: number };
-    const guard = await toolPathGuard(ctx);
+    const guard = await toolPathGuard(ctx, true);
     const target = await guard.resolve(args.path);
     if (/\.pdf$/i.test(target.relative)) throw Error("Use read_doc to read PDF documents.");
     const offset = args.offset ?? 1;
     const file = await readWindow(guard, args.path, offset, args.limit ?? 2000, signal);
     const end = file.selected.at(-1)?.line;
     const ref =
-      end && (guard.scope !== "filesystem" || parseLineRef(`${file.target.relative}#L${offset}-L${end}`))
+      end && (!isAbsolute(file.target.relative) || parseLineRef(`${file.target.relative}#L${offset}-L${end}`))
         ? formatLineRef({ path: file.target.relative, start: offset, end })
         : undefined;
+    guard.assertAuthorized();
     ctx.lastReads.set(file.target.key, { sha256: file.sha256, mtimeMs: file.mtimeMs });
     return {
       text: file.selected.map((line) => `${line.line}: ${line.text}`).join("\n"),
-      ...(guard.scope === "filesystem" ? { path: target.relative } : {}),
+      ...(isAbsolute(file.target.relative) ? { path: file.target.relative } : {}),
       totalLines: file.totalLines,
       truncated: file.truncated,
       ...(ref ? { ref } : {}),

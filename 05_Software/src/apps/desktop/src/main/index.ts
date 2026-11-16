@@ -109,6 +109,7 @@ import { Updates } from "./updates.js";
 import { WebAccessService } from "./web-access.js";
 import { popupWindowMenu, restoreWindowBounds, titleBarOverlay, windowBackground } from "./window-chrome.js";
 import { loadWindowState, saveWindowState, type WindowState } from "./window-state.js";
+import { publicWorkbenchFolders } from "./workbench-folders.js";
 import { createDesktopWorkerPool } from "./worker-pool.js";
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -1094,18 +1095,23 @@ ipcMain.handle(
         sessions.lifecycle(async () => {
           embeddingWarmup.cancel();
           await stopWorkbenchPrograms();
-          return warmPrograms(
-            await workbench.create(folder, name, {
-              ...(config ? { config } : {}),
-              ...(instructions !== undefined ? { instructions } : {}),
-            }),
+          return publicWorkbenchFolders(
+            warmPrograms(
+              await workbench.create(folder, name, {
+                ...(config ? { config } : {}),
+                ...(instructions !== undefined ? { instructions } : {}),
+              }),
+            ),
+            (text) => credentials.scrub(text),
           );
         }),
       "workbench.open": ({ folder }) =>
         sessions.lifecycle(async () => {
           embeddingWarmup.cancel();
           await stopWorkbenchPrograms();
-          return warmPrograms(await workbench.open(folder));
+          return publicWorkbenchFolders(warmPrograms(await workbench.open(folder)), (text) =>
+            credentials.scrub(text),
+          );
         }),
       "workbench.close": async () => {
         await sessions.lifecycle(async () => {
@@ -1125,13 +1131,46 @@ ipcMain.handle(
         }
         return entries;
       },
-      "workbench.config.get": async () => ({
-        ...(await workbench.getConfig()),
-        readOnly: workbench.getSnapshot().readOnly,
-        folder: workbench.getSnapshot().folder,
-      }),
-      "workbench.config.update": ({ patch, workbenchId, removeCommandPrefixes }) =>
-        workbench.updateConfig(workbenchPatchSchema.parse(patch), workbenchId, removeCommandPrefixes),
+      "workbench.config.get": async () =>
+        publicWorkbenchFolders(
+          {
+            ...(await workbench.getConfig()),
+            readOnly: workbench.getSnapshot().readOnly,
+            folder: workbench.getSnapshot().folder,
+          },
+          (text) => credentials.scrub(text),
+        ),
+      "workbench.config.update": ({
+        patch,
+        workbenchId,
+        removeCommandPrefixes,
+        addAdditionalFolders,
+        removeAdditionalFolders,
+      }) =>
+        workbench
+          .updateConfig(workbenchPatchSchema.parse(patch), workbenchId, removeCommandPrefixes, {
+            ...(addAdditionalFolders ? { add: addAdditionalFolders } : {}),
+            ...(removeAdditionalFolders ? { remove: removeAdditionalFolders } : {}),
+          })
+          .then((value) => publicWorkbenchFolders(value, (text) => credentials.scrub(text))),
+      "workbench.additionalFolders.list": async ({ workbenchId }) =>
+        (await workbench.listAdditionalFolders(workbenchId)).map(({ id, path }) => ({
+          id,
+          label: credentials.scrub(path),
+        })),
+      "workbench.additionalFolders.choose": async ({ workbenchId }) => {
+        let path: string | undefined;
+        if (__VERA_TEST__ && process.env.VERA_TEST_DIALOG_PATH) path = process.env.VERA_TEST_DIALOG_PATH;
+        else {
+          if (!window || window.isDestroyed()) return null;
+          const result = await dialog.showOpenDialog(window, { properties: ["openDirectory"] });
+          if (result.canceled) return null;
+          path = result.filePaths[0];
+        }
+        if (!path) return null;
+        const chosen = await workbench.chooseAdditionalFolder(path, workbenchId);
+        return { id: chosen.id, label: credentials.scrub(chosen.path) };
+      },
       "workbench.commandPrefixes.list": async ({ workbenchId }) =>
         (await workbench.listCommandPrefixes(workbenchId)).map(({ id, prefix }) => ({
           id,

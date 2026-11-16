@@ -759,13 +759,27 @@ export const channels = {
         patch: workbenchPatchSchema,
         workbenchId: workbenchIdSchema.optional(),
         removeCommandPrefixes: commandPrefixIdsSchema.optional(),
+        addAdditionalFolders: commandPrefixIdsSchema.optional(),
+        removeAdditionalFolders: commandPrefixIdsSchema.optional(),
       })
       .refine(
         (value) =>
-          !value.removeCommandPrefixes?.length ||
-          (value.workbenchId !== undefined && value.patch.agent?.allowed_commands === undefined),
+          (!value.removeCommandPrefixes?.length ||
+            (value.workbenchId !== undefined && value.patch.agent?.allowed_commands === undefined)) &&
+          (!(value.addAdditionalFolders?.length || value.removeAdditionalFolders?.length) ||
+            (value.workbenchId !== undefined && value.patch.additional_folders === undefined)),
       ),
     configSnapshotSchema,
+  ),
+  "workbench.additionalFolders.list": defineChannel(
+    "workbench.additionalFolders.list",
+    z.strictObject({ workbenchId: workbenchIdSchema }),
+    z.array(commandPrefixDisplaySchema).max(64),
+  ),
+  "workbench.additionalFolders.choose": defineChannel(
+    "workbench.additionalFolders.choose",
+    z.strictObject({ workbenchId: workbenchIdSchema }),
+    commandPrefixDisplaySchema.nullable(),
   ),
   "workbench.commandPrefixes.list": defineChannel(
     "workbench.commandPrefixes.list",
