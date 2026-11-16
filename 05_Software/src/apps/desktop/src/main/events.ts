@@ -1,6 +1,7 @@
 import {
   boundSessionEvent,
   boundSessionState,
+  type DocumentGuard,
   type EventEnvelope,
   eventEnvelopeSchema,
   modelReferenceSchema,
@@ -36,6 +37,15 @@ function scrubModel(model: string | null, scrub: (text: string) => string): stri
   if (model === null) return null;
   const value = scrub(model);
   return modelReferenceSchema.safeParse(value).success ? value : "[REDACTED]/[REDACTED]";
+}
+/** The count guard with its folder paths redacted, for the guard event and docs.volume. */
+export function publicGuard(
+  guard: DocumentGuard | null,
+  scrub: (text: string) => string,
+): DocumentGuard | null {
+  return (
+    guard && { ...guard, folders: guard.folders.map((folder) => ({ ...folder, path: scrub(folder.path) })) }
+  );
 }
 export function sanitizeSessionSummary(
   summary: SessionSummary,
@@ -209,6 +219,8 @@ export function sanitizeEvent(envelope: EventEnvelope, scrub: (text: string) => 
   const event = envelope.event;
   // Counters only: no paths or user text to scrub.
   if (event.type === "index.progress" || event.type === "index.volume") return envelope;
+  if (event.type === "index.guard")
+    return { ...envelope, event: { ...event, guard: publicGuard(event.guard, scrub) } };
   if (event.type === "index.document")
     return {
       ...envelope,

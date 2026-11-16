@@ -30,6 +30,8 @@ L’onglet **Fichiers** du panneau droit affiche la progression (**Index : … 
 
 Les fichiers PDF et Office jusqu’à 100 Mio et les fichiers texte jusqu’à 20 Mio sont indexés. **Taille maximale des fichiers (Mo)** dans **Modifier le banc** → **Documents et RAG** abaisse ces limites pour le banc (1 Mo = 1 048 576 octets) ; elle ne les relève jamais. Laissez le champ vide pour les conserver. **Réindexer** indexe à nouveau le banc de travail. Si l’indexation s’est arrêtée après des échecs répétés, sélectionnez **Relancer l’indexation**.
 
+**Nombre maximal de fichiers indexés** dans **Modifier le banc** → **Documents et RAG** (10 000 par défaut) protège d’une sélection anormalement grande. Quand plus de documents sont sélectionnés, l’indexation ne démarre pas : l’onglet **Fichiers** affiche leur nombre, les dix dossiers contenant le plus de documents sélectionnés (sous-dossiers compris), **Indexer quand même** et **Modifier les exclusions**. Entre-temps, rien n’est indexé, modifié ni supprimé, et l’indexation ne prend jamais qu’une partie de la sélection. **Indexer quand même** les indexe tous et retient leur nombre ; une sélection ultérieure jusqu’à 20 % plus grande continue d’être indexée, une plus grande arrête à nouveau. **Modifier les exclusions** ouvre **Documents et RAG** pour restreindre la sélection.
+
 Sous **Modifier le banc** → **Indexation**, **Recherche de documents** définit les valeurs par défaut de l’agent : **Résultats par recherche (1–20)** et **Mode de recherche** : **Hybride (mots-clés et sens)**, **Mots-clés uniquement** ou **Sens uniquement**.
 
 ## L’onglet Fichiers

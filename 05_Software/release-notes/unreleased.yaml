@@ -15,3 +15,10 @@ entries:
       ro: Un workbench poate seta o dimensiune maximă pentru indexare; fișierele mai mari arată motivul.
       de: Eine Workbench kann eine maximale Dateigröße zum Indizieren festlegen; größere zeigen den Grund.
       fr: Un banc peut fixer une taille maximale à indexer ; les fichiers plus grands montrent pourquoi.
+  - category: new
+    topic: { en: Workbench, ro: Workbench, de: Workbench, fr: Workbench }
+    text:
+      en: Indexing waits before an unusually large selection and shows its largest folders; index it anyway.
+      ro: Indexarea așteaptă la o selecție neobișnuit de mare și arată cele mai mari foldere.
+      de: Die Indizierung wartet bei einer ungewöhnlich großen Auswahl und zeigt die größten Ordner.
+      fr: L’indexation attend devant une sélection inhabituellement grande et montre les plus gros dossiers.

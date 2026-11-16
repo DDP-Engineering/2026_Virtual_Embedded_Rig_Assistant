@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-UX-597b7c82"
+
+title = "Edit exclusions opens Documents and RAG"
+
+status = "active"
+
+requirement = """
+When the user chooses Edit exclusions in the Docs tab's guard block, the desktop app shall open the workbench editor of the active workbench at its Documents & RAG section.
+"""
+
+verification = "Renderer test: clicking Edit exclusions calls the Docs tab's edit callback; the workbench editor opened with section documents shows the Documents & RAG fields first."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/App.tsx", "05_Software/src/apps/desktop/src/renderer/components/workbench-editor.tsx", "05_Software/src/apps/desktop/src/renderer/components/workbench-config-form.tsx", "05_Software/src/apps/desktop/src/renderer/components/documents/docs-tab.tsx"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/documents/documents.test.ts::shows the count guard with its top folders, Index anyway and Edit exclusions in every language", "05_Software/src/apps/desktop/src/renderer/components/workbench-plugins.test.ts::opens the editor at Documents & RAG when asked, and switches there again on a new request"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-16
+updated = 2026-11-16

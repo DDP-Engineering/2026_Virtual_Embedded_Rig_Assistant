@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-UX-0c1aea14"
+
+title = "Guard state in the Docs tab"
+
+status = "active"
+
+requirement = """
+While the active workbench's indexing is stopped by the guard, the Docs tab shall show the localized selected count and limit, the top folders with their counts, an Index anyway button (disabled when read-only) that sends the shown count, and an Edit exclusions button, in place of the indexing progress and volume warning.
+"""
+
+verification = "Renderer test: a docs.volume response with a guard of 12,000 over 10,000 shows the count, limit and folders in en, ro, de and fr; Index anyway invokes docs.approve with files 12,000; an index.guard event with guard null removes the block; read-only disables Index anyway."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/documents/docs-tab.tsx", "05_Software/src/apps/desktop/src/renderer/components/documents/index-guard.tsx", "05_Software/src/apps/desktop/src/renderer/mocks/mockApi.ts", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json", "05_Software/src/apps/desktop/src/renderer/locales/fr.json"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/documents/documents.test.ts::shows the count guard with its top folders, Index anyway and Edit exclusions in every language"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-16
+updated = 2026-11-16

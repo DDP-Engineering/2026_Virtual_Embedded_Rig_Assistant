@@ -137,18 +137,23 @@ it("opens externally only allowlisted document extensions, in any case", () => {
 it("accepts document volumes as non-negative safe integers on docs.volume and index.volume", () => {
   const workbenchId = "wb_01ARZ3NDEKTSV4RRFFQ69G5FAV";
   const response = channels["docs.volume"].response;
-  expect(response.parse({ workbenchId, volume: { files: 3, bytes: 400 } })).toEqual({
+  expect(response.parse({ workbenchId, volume: { files: 3, bytes: 400 }, guard: null })).toEqual({
     workbenchId,
     volume: { files: 3, bytes: 400 },
+    guard: null,
   });
-  expect(response.parse({ workbenchId, volume: null })).toEqual({ workbenchId, volume: null });
+  expect(response.parse({ workbenchId, volume: null, guard: null })).toEqual({
+    workbenchId,
+    volume: null,
+    guard: null,
+  });
   for (const volume of [
     { files: -1, bytes: 0 },
     { files: 1.5, bytes: 0 },
     { files: 1, bytes: 1, extra: 1 },
     { files: 1 },
   ])
-    expect(response.safeParse({ workbenchId, volume }).success).toBe(false);
+    expect(response.safeParse({ workbenchId, volume, guard: null }).success).toBe(false);
   expect(channels["docs.volume"].request.safeParse({ workbenchId, extra: 1 }).success).toBe(false);
   const event = {
     topic: "workbench",
@@ -325,4 +330,27 @@ it("offers the system's Open with dialog and registered applications through str
       .success,
   ).toBe(false);
   expect(channels["docs.openSystemApp"].response.parse({})).toEqual({});
+});
+
+// REQ-FUNC-9a05625c REQ-FUNC-09c7b5d0
+it("carries the count guard on docs.volume and index.guard and approves only a positive count", () => {
+  const workbenchId = "wb_01ARZ3NDEKTSV4RRFFQ69G5FAV";
+  const guard = { files: 12000, limit: 10000, folders: [{ path: "docs/big", files: 3000 }] };
+  const response = channels["docs.volume"].response;
+  expect(response.parse({ workbenchId, volume: { files: 12000, bytes: 9 }, guard })).toMatchObject({ guard });
+  const folders = Array.from({ length: 11 }, (_, n) => ({ path: `f${n}`, files: 1 }));
+  for (const value of [
+    { ...guard, folders },
+    { ...guard, files: -1 },
+    { ...guard, folders: [{ path: "", files: 1 }] },
+  ])
+    expect(response.safeParse({ workbenchId, volume: null, guard: value }).success).toBe(false);
+  for (const value of [guard, null])
+    expect(eventEnvelopeSchema.safeParse(envelope({ type: "index.guard", guard: value })).success).toBe(true);
+  const approve = channels["docs.approve"];
+  expect(approve.request.parse({ workbenchId, files: 12000 })).toEqual({ workbenchId, files: 12000 });
+  for (const files of [0, -1, 1.5, "12000"])
+    expect(approve.request.safeParse({ workbenchId, files }).success).toBe(false);
+  expect(approve.request.safeParse({ files: 1 }).success).toBe(false);
+  expect(approve.response.parse({})).toEqual({});
 });

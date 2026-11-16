@@ -25,8 +25,19 @@ createPdfExtractor accepts optional Node worker resourceLimits; existing ingest 
 - WorkbenchService.reindexDocuments serializes an owned rebuild. Strict empty
   docs.reindex IPC invokes it through desktop main; the mock enforces ownership.
 - Ingester.request coalesces changes with trailing1000ms debounce; reindex selects
-  first, then clears and reconciles in the same queue (a failed selection leaves the index
-  intact, TASK-f09609fd); close stops/aborts/drains before disposal.
+  first and clears only inside reconcile, after the count guard let the selection through, in
+  the same queue (a failed or guarded selection leaves the index intact, TASK-f09609fd,
+  REQ-FUNC-9a05625c); close stops/aborts/drains before disposal.
+- Count guard (knowledge/guard.ts, TASK-4321c06b): after each selection reconcile emits
+  index.volume, then index.guard {guard: {files, limit, folders}|null}. The limit is
+  fileLimit(docs.maxFiles, approved) = max(maxFiles, floor(1.2 x approved)); above it no row is
+  created, changed or removed (REQ-FUNC-9a05625c), at or below it indexing runs
+  (REQ-FUNC-37067755). folders are topFolders(paths): up to ten folders by selected documents
+  including subfolders, ties by path, no root, a folder left out when its parent holds the same
+  count (REQ-FUNC-065c8ad1). Ingester.approve(files) stores meta index_approved_files and requests
+  a reconciliation; WorkbenchService.approveDocuments(id, files) checks CONFLICT, ownership
+  (DENIED) and NOT_FOUND like reindexDocuments (REQ-DATA-b12d0ef7, REQ-FUNC-09c7b5d0).
+  Ingester.guard() / WorkbenchService.documentGuard() return the last guard.
 - DocumentProcessor receives root/path/kind/hash/AbortSignal/ownership callback and returns
   indexed/failed/unsupported/needs_ocr with optional pages/stable reason and ordered chunks. The
   processor must settle on abort; publication checks file identity and ownership,
@@ -45,7 +56,7 @@ createPdfExtractor accepts optional Node worker resourceLimits; existing ingest 
 - index.volume {files, bytes} follows every selection and counts only the selected (not
   skipped) documents; Ingester.volume() and
   WorkbenchService.documentVolume() return the last one (null before the first) and
-  docs.volume exposes it. The renderer warns above shared documentVolumeLimit (more
+  docs.volume exposes it with the guard. The renderer warns above shared documentVolumeLimit (more
   than 2,000 files or 2 GiB) in Docs and the Documents section; indexing continues
   (TASK-e5310cdb). Docs reads docs.volume again on every mount, since events reach only
   a mounted tab. The Documents section preview, which runs before indexing, has its own
@@ -120,6 +131,7 @@ while .vera content stays permanently excluded from indexed documents.
 | Change | Start | Focused verification |
 |---|---|---|
 | Selection/hash/limits/status/processing | Ingester | ingest.test.ts |
+| Count guard, approval margin, top folders | knowledge/guard.ts, Ingester.reconcile | guard.test.ts; ingest-guard.test.ts (generated 12,000-file workbench, ~2 min) |
 | Invalidation/publication/indexes | DocumentsRepository | real schema FTS/synthetic embedding cases and processor/watcher/search integration |
 | Lifecycle | WorkbenchService | ingest and workbench service tests |
 | IPC/event shape/redaction | shared contracts, main/events | documents-ipc and main events tests; native ingest |
@@ -132,6 +144,7 @@ while .vera content stays permanently excluded from indexed documents.
 ## Files
 
 - src/libraries/core/src/knowledge/{ingest.ts,ingest.test.ts} — queue and integration.
+- src/libraries/core/src/knowledge/{guard.ts,guard.test.ts,ingest-guard.test.ts} — count guard.
 - src/libraries/core/src/storage/repos/documents.ts — metadata and derived cleanup.
 - src/libraries/core/src/workbench/service.ts — ownership/lifecycle/reindex.
 - src/libraries/shared/src/{documents.ts,documents-ipc.test.ts,events.ts,ipc.ts} — contracts.

@@ -61,7 +61,12 @@ import { configureDataLocations } from "./data-locations.js";
 import { publicDocument, publicDocumentHit, publicViewer, publicWebDownload } from "./document-viewer.js";
 import { createDesktopDownloadTransfer } from "./download-transfer.js";
 import { createEmbeddingWarmup } from "./embedding-warmup.js";
-import { createEventEmitter, rendererSessionSnapshot, sanitizeSessionSummary } from "./events.js";
+import {
+  createEventEmitter,
+  publicGuard,
+  rendererSessionSnapshot,
+  sanitizeSessionSummary,
+} from "./events.js";
 import { createFileAccess } from "./file-access.js";
 import { systemClock } from "./host-ports.js";
 import { IndexerHost } from "./indexer-host.js";
@@ -790,7 +795,12 @@ ipcMain.handle(
       "docs.volume": async ({ workbenchId }) => ({
         workbenchId,
         volume: workbench.documentVolume(workbenchId),
+        guard: publicGuard(workbench.documentGuard(workbenchId), (text) => credentials.scrub(text)),
       }),
+      "docs.approve": async ({ workbenchId, files }) => {
+        await workbench.approveDocuments(workbenchId, files);
+        return {};
+      },
       "docs.search": async ({ workbenchId, query }) => ({
         workbenchId,
         results: (await workbench.searchDocuments(workbenchId, query))

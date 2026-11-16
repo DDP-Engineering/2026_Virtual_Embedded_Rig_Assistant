@@ -22,6 +22,7 @@ import { Settings, useSettingsSections } from "./components/settings.js";
 import { Shell } from "./components/shell.js";
 import { UpdateBanner } from "./components/updates.js";
 import { Workbench } from "./components/workbench.js";
+import type { ConfigSection } from "./components/workbench-config-form.js";
 import { WorkbenchCreate } from "./components/workbench-create.js";
 import { WorkbenchEditor } from "./components/workbench-editor.js";
 import { WorkbenchNavigation } from "./components/workbench-navigation.js";
@@ -40,6 +41,7 @@ export function App() {
   const [help, setHelp] = useState<string>();
   const [newWorkbench, setNewWorkbench] = useState(false);
   const [editor, setEditor] = useState<WorkbenchSnapshot>();
+  const [editorRequest, setEditorRequest] = useState<{ section: ConfigSection }>();
   const [createdCount, setCreatedCount] = useState(0);
   const editorDirty = useRef(false);
   const editorOrigin = useRef<HTMLElement | null>(null);
@@ -52,8 +54,9 @@ export function App() {
     () => !editorDirty.current || window.confirm(t("projects.discardChanges")),
     [t],
   );
-  const openEditor = useCallback((value: WorkbenchSnapshot) => {
+  const openEditor = useCallback((value: WorkbenchSnapshot, section?: ConfigSection) => {
     editorOrigin.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    setEditorRequest(section ? { section } : undefined);
     setEditor(value);
   }, []);
   const closeEditor = useCallback(() => {
@@ -569,7 +572,20 @@ export function App() {
                 }
                 docs={
                   benchId && !settings ? (
-                    <DocsTab key={benchId} workbenchId={benchId} readOnly={readOnly} />
+                    <DocsTab
+                      key={benchId}
+                      workbenchId={benchId}
+                      readOnly={readOnly}
+                      editExclusions={() => {
+                        if (!activeWorkbench) return;
+                        // Like Edit in the workbench list: the editor replaces the other views.
+                        setNewWorkbench(false);
+                        setPlugins(false);
+                        setHelp(undefined);
+                        setChat(false);
+                        openEditor(activeWorkbench, "documents");
+                      }}
+                    />
                   ) : undefined
                 }
                 changes={
@@ -666,6 +682,7 @@ export function App() {
                       key={editor.config.id}
                       shown={!settings && !plugins && help === undefined && !newWorkbench}
                       workbench={editor}
+                      request={editorRequest}
                       close={closeEditor}
                       dirtyChanged={setEditorDirty}
                       saved={(value) => {

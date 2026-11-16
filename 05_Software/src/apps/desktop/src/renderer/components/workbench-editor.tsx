@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { api } from "../api/index.js";
 import { ErrorMessage } from "./error-message.js";
 import { SkillsPanel } from "./skills.js";
-import { WorkbenchConfigForm } from "./workbench-config-form.js";
+import { type ConfigSection, WorkbenchConfigForm } from "./workbench-config-form.js";
 
 export function WorkbenchEditor({
   workbench,
@@ -12,6 +12,7 @@ export function WorkbenchEditor({
   saved,
   dirtyChanged,
   shown = true,
+  request,
 }: {
   workbench: WorkbenchSnapshot;
   close: () => void;
@@ -20,6 +21,8 @@ export function WorkbenchEditor({
   dirtyChanged?: (dirty: boolean) => void;
   /** Installation may temporarily hide this owner without discarding its draft. */
   shown?: boolean;
+  /** The section to show, e.g. Documents & RAG from the Docs tab's "Edit exclusions". */
+  request?: { section: ConfigSection } | undefined;
 }) {
   const { t } = useTranslation();
   const ref = useRef<HTMLElement>(null);
@@ -167,6 +170,7 @@ export function WorkbenchEditor({
       </header>
       <WorkbenchConfigForm
         shown={shown}
+        request={request}
         label={t("projects.edit")}
         config={config}
         setConfig={setConfig}

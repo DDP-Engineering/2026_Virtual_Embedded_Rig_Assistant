@@ -2,6 +2,7 @@ import { lstatSync } from "node:fs";
 import { lstat } from "node:fs/promises";
 import { join, relative, sep } from "node:path";
 import {
+  type DocumentGuard,
   type DocumentKind,
   type DocumentReason,
   type DocumentRecord,
@@ -19,6 +20,7 @@ import { createIgnoreRules } from "../workbench/ignore.js";
 import { PathGuard } from "../workbench/path-guard.js";
 import { WriteQueue } from "../workbench/write-queue.js";
 import type { Chunk } from "./chunk.js";
+import { documentGuard } from "./guard.js";
 import { type InspectInput, inspectSource, type SourceInspection } from "./inspect.js";
 import { documentKind, documentSelection, missing, sizeLimit } from "./kinds.js";
 import {
@@ -125,6 +127,7 @@ export class Ingester {
   private matches = (_path: string) => false;
   private excluded = (_path: string) => false;
   private selectedVolume: DocumentVolume | null = null;
+  private selectedGuard: DocumentGuard | null = null;
   /** Indexer crashes per document content while it was processed (RULING-006). */
   private readonly crashes = new Map<string, number>();
   /**
@@ -307,15 +310,34 @@ export class Ingester {
   reindex(): Promise<void> {
     if (this.closed) return Promise.reject(veraError("DENIED"));
     return this.queue.run(async () => {
-      // Select first: a stopped indexer must not leave an emptied index behind.
-      const selection = await this.selected();
-      const removed = this.rows.list();
-      this.mutation(() => {
-        for (const row of removed) this.rows.remove(row.path);
-      });
-      for (const row of removed) this.emit({ type: "index.document", path: row.path, document: null });
-      await this.reconcile(selection);
+      // Select first: a stopped indexer must not leave an emptied index behind, and neither must
+      // the count guard (reconcile clears only once the selection may be indexed).
+      await this.reconcile(await this.selected(), true);
     });
+  }
+  /**
+   * "Index anyway": stores the approved selection count in the workbench database, where it
+   * survives Reindex, and reconciles again (TASK-4321c06b).
+   */
+  approve(files: number): void {
+    this.mutation(() => {
+      this.options.db
+        .prepare("INSERT OR REPLACE INTO meta(key,value) VALUES('index_approved_files',?)")
+        .run(String(files));
+    });
+    this.request();
+  }
+  private approved(): number | null {
+    const value = this.options.db
+      .prepare("SELECT value FROM meta WHERE key='index_approved_files'")
+      .pluck()
+      .get();
+    const files = Number(value);
+    return typeof value === "string" && Number.isSafeInteger(files) && files > 0 ? files : null;
+  }
+  /** The count guard of the last selection; null when it was indexed or before the first one. */
+  guard(): DocumentGuard | null {
+    return this.selectedGuard && structuredClone(this.selectedGuard);
   }
   private async waitForWatcher(): Promise<void> {
     while (!this.closed) {
@@ -360,12 +382,27 @@ export class Ingester {
   private async ordinary(guard: PathGuard, path: string) {
     return (await ordinaryFile(this.options.root, guard, path)).target;
   }
-  private async reconcile(selection?: Awaited<ReturnType<Ingester["selected"]>>): Promise<void> {
+  private async reconcile(
+    selection?: Awaited<ReturnType<Ingester["selected"]>>,
+    clear = false,
+  ): Promise<void> {
     this.options.assertWritable();
     const { guard, paths, skipped, bytes } = selection ?? (await this.selected());
     if (this.closed) return;
     this.selectedVolume = { files: paths.length, bytes };
     this.emit({ type: "index.volume", files: paths.length, bytes });
+    // Above the file limit nothing is indexed, changed or removed until the user decides; the
+    // selection is never cut to an arbitrary first part (TASK-4321c06b).
+    this.selectedGuard = documentGuard(paths, this.options.config().docs.maxFiles, this.approved());
+    this.emit({ type: "index.guard", guard: this.selectedGuard });
+    if (this.selectedGuard) return;
+    if (clear) {
+      const cleared = this.rows.list();
+      this.mutation(() => {
+        for (const row of cleared) this.rows.remove(row.path);
+      });
+      for (const row of cleared) this.emit({ type: "index.document", path: row.path, document: null });
+    }
     const fingerprint = JSON.stringify(this.options.config().embeddings);
     const previous = this.options.db
       .prepare("SELECT value FROM meta WHERE key='indexing_config'")

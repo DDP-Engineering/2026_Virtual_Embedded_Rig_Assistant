@@ -452,3 +452,40 @@ it("creates a workbench with the file size and count limits and blocks Create wh
     config: { docs: { maxFileMB: 25, maxFiles: 10000 } },
   });
 });
+
+// REQ-UX-597b7c82
+it("opens the editor at Documents & RAG when asked, and switches there again on a new request", async () => {
+  await i18n.changeLanguage("en");
+  const wb = snapshot();
+  stub(wb);
+  const current = () =>
+    container.querySelector('[aria-current="page"]')?.getAttribute("data-project-section");
+  await mount(
+    createElement(WorkbenchEditor, {
+      workbench: wb,
+      saved: vi.fn(),
+      close: vi.fn(),
+      request: { section: "documents" },
+    }),
+  );
+  expect(current()).toBe("documents");
+  await vi.waitFor(() => expect(container.querySelector("[data-docs-gitignore]")).not.toBeNull());
+  await click('[data-project-section="general"]');
+  expect(current()).toBe("general");
+  // "Edit exclusions" again while the editor is open: a new request object switches back.
+  await act(async () =>
+    root.render(
+      createElement(
+        QueryClientProvider,
+        { client },
+        createElement(WorkbenchEditor, {
+          workbench: wb,
+          saved: vi.fn(),
+          close: vi.fn(),
+          request: { section: "documents" },
+        }),
+      ),
+    ),
+  );
+  expect(current()).toBe("documents");
+});

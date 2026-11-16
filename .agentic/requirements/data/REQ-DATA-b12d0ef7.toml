@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-DATA-b12d0ef7"
+
+title = "Approve an oversized selection with Index anyway"
+
+status = "active"
+
+requirement = """
+When the user chooses Index anyway for a guarded selection of N documents, the desktop app shall store N as the approved count in the workbench database's meta table, keep it across Reindex, and index every later selection of up to floor(1.2 x N) documents without stopping.
+"""
+
+verification = "Core test: after approving 12,000 all 12,000 documents index; adding 500 files (12,500) keeps indexing; doubling to 24,000 stops again with limit 14,400; the approval stays stored across Reindex."
+
+affected_paths = ["05_Software/src/libraries/core/src/knowledge/ingest.ts", "05_Software/src/libraries/core/src/knowledge/guard.ts", "05_Software/src/libraries/core/src/workbench/service.ts", "05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/libraries/shared/src/ipc.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/knowledge/ingest-guard.test.ts::stops an oversized selection before indexing anything and indexes after Index anyway", "05_Software/src/libraries/core/src/knowledge/guard.test.ts::limits to docs.maxFiles, raised to 120 % of an approved count"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-16
+updated = 2026-11-16

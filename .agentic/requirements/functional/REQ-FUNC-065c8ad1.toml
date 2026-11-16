@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-065c8ad1"
+
+title = "Top folders of a guarded selection"
+
+status = "active"
+
+requirement = """
+When the guard stops a selection, the guard summary shall list up to ten folders ordered by the number of selected documents they contain including subfolders (ties by path), leaving out the workbench root and any folder whose parent folder contains the same number.
+"""
+
+verification = "Core unit test of the folder summary: twelve folders of 1,000 files list the ten largest with 1,000 each in path order; a single chain .venv/lib/site lists only .venv; a nested folder with fewer files than its parent is listed after it; files at the root count toward no folder."
+
+affected_paths = ["05_Software/src/libraries/core/src/knowledge/guard.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/knowledge/guard.test.ts::lists the ten folders with the most selected files, subfolders included", "05_Software/src/libraries/core/src/knowledge/ingest-guard.test.ts::stops an oversized selection before indexing anything and indexes after Index anyway"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-16
+updated = 2026-11-16

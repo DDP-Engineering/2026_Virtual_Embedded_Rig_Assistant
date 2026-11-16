@@ -8,6 +8,7 @@ import {
   docsScopeSchema,
   docsSystemAppSchema,
   docsTreeEntrySchema,
+  documentGuardSchema,
   documentOpenSchema,
   documentSchema,
   documentSearchHitSchema,
@@ -418,7 +419,16 @@ export const channels = {
   "docs.volume": defineChannel(
     "docs.volume",
     docsScopeSchema,
-    docsScopeSchema.extend({ volume: documentVolumeSchema.nullable() }),
+    docsScopeSchema.extend({
+      volume: documentVolumeSchema.nullable(),
+      guard: documentGuardSchema.nullable(),
+    }),
+  ),
+  /** "Index anyway": approves the guarded selection's count for the active workbench. */
+  "docs.approve": defineChannel(
+    "docs.approve",
+    docsScopeSchema.extend({ files: z.number().int().positive().max(Number.MAX_SAFE_INTEGER) }),
+    z.strictObject({}),
   ),
   "docs.search": defineChannel(
     "docs.search",

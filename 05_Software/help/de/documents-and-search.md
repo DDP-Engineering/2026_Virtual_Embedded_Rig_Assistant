@@ -30,6 +30,8 @@ Der Tab **Dateien** im rechten Bereich zeigt den Fortschritt (**Index: … ferti
 
 PDF- und Office-Dateien bis 100 MiB und Textdateien bis 20 MiB werden indiziert. **Maximale Dateigröße (MB)** unter **Workbench bearbeiten** → **Dokumente & RAG** senkt diese Limits für die Workbench (1 MB = 1.048.576 Bytes); sie erhöht sie nie. Lassen Sie das Feld leer, um sie beizubehalten. **Neu indizieren** indiziert die Workbench erneut. Wurde die Indizierung nach wiederholten Fehlern angehalten, wählen Sie **Indexierung neu starten**.
 
+**Maximale Anzahl indizierter Dateien** unter **Workbench bearbeiten** → **Dokumente & RAG** (standardmäßig 10.000) schützt vor einer unerwartet großen Auswahl. Sind mehr Dokumente ausgewählt, startet die Indizierung nicht: Der Tab **Dateien** zeigt die Anzahl, die zehn Ordner mit den meisten ausgewählten Dokumenten (Unterordner eingeschlossen), **Trotzdem indexieren** und **Ausschlüsse bearbeiten**. Währenddessen wird nichts indiziert, geändert oder entfernt, und die Indizierung nimmt nie nur einen Teil der Auswahl. **Trotzdem indexieren** indiziert alle und merkt sich die Anzahl; eine spätere Auswahl, die bis zu 20 % größer ist, wird weiter indiziert, eine größere hält wieder an. **Ausschlüsse bearbeiten** öffnet **Dokumente & RAG**, um die Auswahl einzugrenzen.
+
 Unter **Workbench bearbeiten** → **Indizierung** legt **Dokumentsuche** die Standardwerte des Agenten fest: **Ergebnisse pro Suche (1–20)** und **Suchmodus**: **Hybrid (Schlüsselwörter und Bedeutung)**, **Nur Schlüsselwörter** oder **Nur Bedeutung**.
 
 ## Der Tab Dateien

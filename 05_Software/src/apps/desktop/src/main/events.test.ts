@@ -42,6 +42,15 @@ it("transports ingest progress and redacts document paths while preserving statu
   expect(send.mock.calls[0]?.[1].event.document).toEqual({ ...document, path: "docs/[REDACTED].pdf" });
   expect(send.mock.calls[0]?.[1].event.path).toBe("docs/[REDACTED].pdf");
   expect(send.mock.calls[1]?.[1].event).toEqual({ type: "index.progress", pending: 0, done: 1, failed: 0 });
+  // REQ-FUNC-9a05625c: the count guard's folder paths are redacted like document paths.
+  for (const guard of [{ files: 12, limit: 10, folders: [{ path: "docs/secret", files: 12 }] }, null])
+    emit({ topic: "workbench", id: "wb_01JB8Z6Q4M7N2K5R9T3V8X1Y0C", event: { type: "index.guard", guard } });
+  expect(send.mock.calls[2]?.[1].event.guard).toEqual({
+    files: 12,
+    limit: 10,
+    folders: [{ path: "docs/[REDACTED]", files: 12 }],
+  });
+  expect(send.mock.calls[3]?.[1].event).toEqual({ type: "index.guard", guard: null });
   for (const call of send.mock.calls) expect(eventEnvelopeSchema.safeParse(call[1]).success).toBe(true);
 });
 // REQ-FUNC-2e8a54c7 REQ-DATA-d968385c

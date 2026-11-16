@@ -118,7 +118,11 @@ Managed PDF downloads use downloads.list/open scoped IPC and a downloadId Viewer
 - Docs tab layout (TASK-b34f2cc7, documents/docs-tab.tsx): one search box (`data-docs-search`,
   "Search files and documents", 200 characters), then one `.docs-actions` row with Reindex and
   Collapse all (wrapping only when too narrow; Collapse all is disabled while the box has
-  text), progress, warnings and the tree. One 250 ms
+  text), progress, warnings and the tree. While the count guard stops indexing
+  (documents/index-guard.tsx, `data-index-guard`, role alert) it replaces progress and the volume
+  warning with the localized count and limit, the top folders (`data-guard-folder`), Index anyway
+  (docs.approve with the shown count, disabled read-only) and Edit exclusions, which App turns
+  into openEditor(active, "documents") (REQ-UX-0c1aea14, REQ-UX-597b7c82). One 250 ms
   debounce feeds both the tree's name filter and docs.search; while the box has text the
   keyword hits render under the tree in an "In documents" section (`data-docs-hits`, with its
   own loading, empty and retry states) (REQ-UX-2504362b, REQ-UX-d455531b).

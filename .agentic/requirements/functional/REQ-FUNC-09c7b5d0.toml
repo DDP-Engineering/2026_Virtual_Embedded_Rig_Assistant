@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-09c7b5d0"
+
+title = "Refuse an approval outside the active writable workbench"
+
+status = "active"
+
+requirement = """
+If an Index anyway approval names a workbench other than the active one, or the active workbench is read-only or has no indexer, the desktop app shall reject it with CONFLICT, DENIED or NOT_FOUND and store no approval.
+"""
+
+verification = "Core test: approving with another workbench id fails with CONFLICT and leaves the meta table without an approval; the docs.approve request schema refuses a count of 0 or a fraction."
+
+affected_paths = ["05_Software/src/libraries/core/src/workbench/service.ts", "05_Software/src/libraries/shared/src/ipc.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/knowledge/ingest-guard.test.ts::stops an oversized selection before indexing anything and indexes after Index anyway", "05_Software/src/libraries/shared/src/documents-ipc.test.ts::carries the count guard on docs.volume and index.guard and approves only a positive count"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-16
+updated = 2026-11-16

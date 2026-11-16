@@ -127,6 +127,16 @@ export type IndexerState = z.infer<typeof indexerStateSchema>;
 /** Number and source bytes of the documents the last selection admitted (TASK-e5310cdb). */
 export const documentVolumeSchema = z.strictObject({ files: count, bytes: count });
 export type DocumentVolume = z.infer<typeof documentVolumeSchema>;
+/**
+ * Indexing stopped before it started: more selected documents than the workbench file limit (the
+ * larger of docs.maxFiles and 120 % of the approved count), with the folders holding most of them.
+ */
+export const documentGuardSchema = z.strictObject({
+  files: count,
+  limit: count,
+  folders: z.array(z.strictObject({ path: z.string().min(1).max(4096), files: count })).max(10),
+});
+export type DocumentGuard = z.infer<typeof documentGuardSchema>;
 /** Above either value the Docs panel and the Documents section warn; indexing continues. */
 export const documentVolumeLimit = { files: 2000, bytes: 2 * 1024 ** 3 } as const;
 export const exceedsDocumentVolume = (volume: DocumentVolume): boolean =>

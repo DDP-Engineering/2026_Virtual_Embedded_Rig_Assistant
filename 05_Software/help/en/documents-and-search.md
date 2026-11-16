@@ -30,6 +30,8 @@ The **Files** tab of the right panel shows the progress (**Index: … done, … 
 
 PDF and Office files up to 100 MiB and text files up to 20 MiB are indexed. **Maximum file size (MB)** under **Edit workbench** → **Documents & RAG** lowers these limits for the workbench (1 MB = 1,048,576 bytes); it never raises them. Leave it empty to keep them. **Reindex** indexes the workbench again. If indexing stopped after repeated failures, select **Restart indexing**.
 
+**Maximum indexed files** under **Edit workbench** → **Documents & RAG** (10,000 by default) guards against an unexpectedly large selection. When more documents are selected, indexing does not start: the **Files** tab shows the count, the ten folders with the most selected documents (subfolders included), **Index anyway** and **Edit exclusions**. Nothing is indexed, changed or removed meanwhile, and indexing never takes only part of the selection. **Index anyway** indexes all of them and remembers the count; a later selection up to 20 % larger keeps indexing, a larger one stops again. **Edit exclusions** opens **Documents & RAG** to narrow the selection.
+
 Under **Edit workbench** → **Indexing**, **Document search** sets the agent's defaults: **Results per search (1–20)** and **Search mode**: **Hybrid (keywords and meaning)**, **Keywords only** or **Meaning only**.
 
 ## The Files tab

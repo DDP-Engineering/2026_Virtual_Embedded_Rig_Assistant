@@ -75,8 +75,10 @@ AppEvents use shared updates.ts; [updates](updates.md) owns their lifecycle/capa
   {workbenchId,path} -> {apps:[{id,name}]} and docs.openSystemApp {workbenchId,path,app} -> {}
   reach the OS only after core `locateEntry` (TASK-eae3a69e, TASK-c49f03d5, main/openers.ts); main drops listed
   or found paths the credential scrub would change and scrubs text views.
-  index.volume and docs.volume ({workbenchId} -> {workbenchId, volume|null}) carry
-  only counters and pass unscrubbed. App event indexer.status {state} and the strict empty
+  index.volume and docs.volume ({workbenchId} -> {workbenchId, volume|null, guard|null}) carry
+  counters; the guard's folder paths (index.guard and docs.volume) are scrubbed by main
+  publicGuard. docs.approve {workbenchId, files: positive integer} -> {} records "Index anyway"
+  (TASK-4321c06b). App event indexer.status {state} and the strict empty
   channels indexer.status -> {state} and indexer.restart -> {} belong to the
   [indexer process](indexer-process.md).
   [Knowledge ingest](knowledge-ingest.md) owns their lifecycle and persistence.

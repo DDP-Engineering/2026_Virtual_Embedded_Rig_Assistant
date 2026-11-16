@@ -1005,6 +1005,16 @@ legend {
   padding: 0.4rem 0.6rem;
   border-left: 3px solid var(--destructive);
 }
+.index-guard {
+  margin: 0.4rem 0;
+  padding: 0.4rem 0.6rem;
+  border-left: 3px solid var(--destructive);
+  overflow-wrap: anywhere;
+}
+.index-guard ul {
+  margin: 0.3rem 0;
+  padding-left: 1.2rem;
+}
 .volume-warning {
   margin: 0.4rem 0;
   padding: 0.4rem 0.6rem;

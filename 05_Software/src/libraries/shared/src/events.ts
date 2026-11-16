@@ -1,5 +1,10 @@
 import { z } from "zod";
-import { documentSchema, documentVolumeSchema, indexerStateSchema } from "./documents.js";
+import {
+  documentGuardSchema,
+  documentSchema,
+  documentVolumeSchema,
+  indexerStateSchema,
+} from "./documents.js";
 import { downloadApprovalSchema, validDownloadApproval } from "./downloads.js";
 import type { Channel, Request, Response } from "./ipc.js";
 import { programApprovalSchema, validProgramApproval } from "./program-rules.js";
@@ -44,6 +49,8 @@ export const workbenchEventSchema = z.discriminatedUnion("type", [
     failed: z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER),
   }),
   z.strictObject({ type: z.literal("index.volume"), ...documentVolumeSchema.shape }),
+  /** The count guard of the last selection; null when it indexes (TASK-4321c06b). */
+  z.strictObject({ type: z.literal("index.guard"), guard: documentGuardSchema.nullable() }),
   z.strictObject({ type: z.literal("opened"), workbench: workbenchSnapshotSchema }),
   z.strictObject({ type: z.literal("closed") }),
   z.strictObject({

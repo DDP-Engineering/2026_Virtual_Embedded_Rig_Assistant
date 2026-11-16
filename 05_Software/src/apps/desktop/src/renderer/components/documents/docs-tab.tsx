@@ -1,6 +1,6 @@
-// REQ-UX-28ad0003 REQ-UX-2504362b REQ-UX-d455531b
+// REQ-UX-28ad0003 REQ-UX-2504362b REQ-UX-d455531b REQ-UX-0c1aea14 REQ-UX-597b7c82
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { veraError, type WorkbenchEvent } from "@vera/shared";
+import { type DocumentGuard, type DocumentVolume, veraError, type WorkbenchEvent } from "@vera/shared";
 import { useEffect, useId, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../../api/index.js";
@@ -8,10 +8,22 @@ import { ErrorMessage } from "../error-message.js";
 import { DocsTree, useTreeExpansion } from "./docs-tree.js";
 import { DownloadsList } from "./downloads.js";
 import { useDescribeDocument } from "./file-actions.js";
+import { IndexGuard } from "./index-guard.js";
 import { useDocumentViewer } from "./viewer-context.js";
 import { VolumeWarning } from "./volume-warning.js";
 
-export function DocsTab({ workbenchId, readOnly }: { workbenchId: string; readOnly: boolean }) {
+type VolumeState = { volume: DocumentVolume | null; guard: DocumentGuard | null };
+
+export function DocsTab({
+  workbenchId,
+  readOnly,
+  editExclusions,
+}: {
+  workbenchId: string;
+  readOnly: boolean;
+  /** Opens Edit workbench > Documents & RAG, from the count guard's "Edit exclusions". */
+  editExclusions?: () => void;
+}) {
   const describe = useDescribeDocument();
   const { t } = useTranslation(),
     client = useQueryClient(),
@@ -35,12 +47,13 @@ export function DocsTab({ workbenchId, readOnly }: { workbenchId: string; readOn
     queryKey: ["docs.volume", workbenchId],
     // Events reach only a mounted Docs tab, so a remount reads the current volume again.
     refetchOnMount: "always",
-    queryFn: async () => {
+    queryFn: async (): Promise<VolumeState> => {
       const result = await api.invoke("docs.volume", { workbenchId });
       if (result.workbenchId !== workbenchId) throw veraError("CONFLICT");
-      return result.volume;
+      return { volume: result.volume, guard: result.guard };
     },
   });
+  const guard = volume.data?.guard ?? null;
   const indexer = useQuery({
     queryKey: ["indexer.status"],
     refetchOnMount: "always",
@@ -84,7 +97,18 @@ export function DocsTab({ workbenchId, readOnly }: { workbenchId: string; readOn
     const off = api.subscribe("workbench", workbenchId, (event) => {
       if (event.type === "index.progress") setProgress(event);
       if (event.type === "index.volume")
-        client.setQueryData(["docs.volume", workbenchId], { files: event.files, bytes: event.bytes });
+        client.setQueryData<VolumeState>(["docs.volume", workbenchId], (state) => ({
+          guard: state?.guard ?? null,
+          volume: { files: event.files, bytes: event.bytes },
+        }));
+      if (event.type === "index.guard") {
+        client.setQueryData<VolumeState>(["docs.volume", workbenchId], (state) => ({
+          volume: state?.volume ?? null,
+          guard: event.guard,
+        }));
+        // A stopped selection reports no progress; an earlier run's counts would mislead.
+        if (event.guard) setProgress(undefined);
+      }
       if (event.type === "index.document") refresh();
     });
     refresh();
@@ -141,8 +165,19 @@ export function DocsTab({ workbenchId, readOnly }: { workbenchId: string; readOn
           {t("documents.collapseAll")}
         </button>
       </div>
-      {progress && <p role="status">{t("documents.progress", progress)}</p>}
-      <VolumeWarning volume={volume.data} />
+      {guard ? (
+        <IndexGuard
+          workbenchId={workbenchId}
+          guard={guard}
+          readOnly={readOnly}
+          editExclusions={editExclusions}
+        />
+      ) : (
+        <>
+          {progress && <p role="status">{t("documents.progress", progress)}</p>}
+          <VolumeWarning volume={volume.data?.volume} />
+        </>
+      )}
       {indexer.data === "stopped" && (
         <div className="indexer-stopped" role="alert" data-indexer-stopped>
           <p>{t("documents.indexerStopped")}</p>

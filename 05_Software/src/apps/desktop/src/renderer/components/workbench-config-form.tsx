@@ -41,6 +41,7 @@ export function WorkbenchConfigForm({
   shown = true,
   general,
   locked = false,
+  request,
 }: {
   label: string;
   config: WorkbenchConfig;
@@ -61,6 +62,8 @@ export function WorkbenchConfigForm({
   general?: ReactNode;
   /** Only General is available, e.g. until New workbench has a folder. */
   locked?: boolean;
+  /** Shows this section; a new request object switches to it again (Docs tab "Edit exclusions"). */
+  request?: { section: ConfigSection } | undefined;
 }) {
   const { t } = useTranslation();
   const labels = {
@@ -73,8 +76,13 @@ export function WorkbenchConfigForm({
     embeddings: t("projects.indexing"),
     plugins: t("projects.plugins"),
   };
-  const [section, setSection] = useState<ConfigSection>("general");
+  const [section, setSection] = useState<ConfigSection>(request?.section ?? "general");
   const content = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!request) return;
+    setSection(request.section);
+    if (content.current) content.current.scrollTop = 0;
+  }, [request]);
   const instructionsInput = useRef<HTMLTextAreaElement>(null);
   useEffect(() => {
     if (section === "instructions" && !disabled) instructionsInput.current?.focus();

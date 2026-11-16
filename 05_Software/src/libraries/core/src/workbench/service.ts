@@ -6,6 +6,7 @@ import {
   binaryDocumentKinds,
   builtinToolNames,
   configWarnings,
+  type DocumentGuard,
   type DocumentPreview,
   type DocumentScan,
   type DocumentVolume,
@@ -360,6 +361,15 @@ export class WorkbenchService {
       return { completion: this.ingest.reindex() };
     }).then(({ completion }) => completion);
   }
+  /** "Index anyway" for the active workbench's guarded selection of `files` documents. */
+  approveDocuments(workbenchId: string, files: number): Promise<void> {
+    return this.run(async () => {
+      if (this.current().config.id !== workbenchId) throw veraError("CONFLICT");
+      this.assertSessionWritable();
+      if (!this.ingest) throw veraError("NOT_FOUND");
+      this.ingest.approve(files);
+    });
+  }
   /** Serialize reads against workbench close/switch, rechecking identity and current ownership. */
   readDocuments<T>(id: string, read: (root: string, db: Database.Database) => Promise<T>): Promise<T> {
     return this.run(async () => {
@@ -408,6 +418,11 @@ export class WorkbenchService {
   documentVolume(workbenchId?: string): DocumentVolume | null {
     if (workbenchId && this.current().config.id !== workbenchId) throw veraError("CONFLICT");
     return this.ingest?.volume() ?? null;
+  }
+  /** The active workbench's count guard; null when its last selection was indexed. */
+  documentGuard(workbenchId?: string): DocumentGuard | null {
+    if (workbenchId && this.current().config.id !== workbenchId) throw veraError("CONFLICT");
+    return this.ingest?.guard() ?? null;
   }
   listDocuments(id: string) {
     return this.readDocuments(id, async (_root, db) => new DocumentsRepository(db).list());

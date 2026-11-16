@@ -703,7 +703,7 @@ it("warns about a large selection in Docs and in the Documents section, never at
   };
   const original = api.invoke.bind(api);
   const invoke = vi.spyOn(api, "invoke").mockImplementation((async (channel: string, request: unknown) => {
-    if (channel === "docs.volume") return { workbenchId: id, volume };
+    if (channel === "docs.volume") return { workbenchId: id, volume, guard: null };
     if (channel === "workbench.previewDocs") {
       const include = (request as { include: string[] }).include[0] ?? "";
       return { truncated: false, ...(previews[include] ?? { files: 1, bytes: 1 }), officePending: 0 };
@@ -1025,6 +1025,126 @@ it("shows a document skipped for its size with its status and reason in every la
     await act(async () => {
       await i18n.changeLanguage("en");
     });
+    await act(async () => root.unmount());
+    container.remove();
+  }
+});
+
+// REQ-UX-0c1aea14 REQ-UX-597b7c82
+it("shows the count guard with its top folders, Index anyway and Edit exclusions in every language", async () => {
+  await api.invoke("workbench.open", { folder: "/mock/demo-board" });
+  const guard = {
+    files: 12000,
+    limit: 10000,
+    folders: [
+      { path: "docs", files: 12000 },
+      { path: "docs/big", files: 3000 },
+    ],
+  };
+  const original = api.invoke.bind(api);
+  const invoke = vi.spyOn(api, "invoke").mockImplementation((async (channel: string, request: unknown) => {
+    if (channel === "docs.volume") return { workbenchId: id, volume: { files: 12000, bytes: 5 }, guard };
+    if (channel === "docs.approve") return {};
+    return original(channel as never, request as never);
+  }) as typeof api.invoke);
+  const handlers: ((event: unknown) => void)[] = [];
+  const subscribe = api.subscribe.bind(api);
+  const spy = vi.spyOn(api, "subscribe").mockImplementation(((topic: string, ...rest: unknown[]) => {
+    if (topic === "workbench") handlers.push(rest.at(-1) as (event: unknown) => void);
+    return (subscribe as (...args: unknown[]) => () => void)(topic, ...rest);
+  }) as typeof api.subscribe);
+  const container = document.createElement("div");
+  document.body.append(container);
+  const root = createRoot(container);
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false, staleTime: Number.POSITIVE_INFINITY } },
+  });
+  const editExclusions = vi.fn();
+  const render = (readOnly: boolean) =>
+    act(async () =>
+      root.render(
+        createElement(
+          QueryClientProvider,
+          { client },
+          createElement(
+            DocumentViewerProvider,
+            { workbenchId: id },
+            createElement(DocsTab, { workbenchId: id, readOnly, editExclusions }),
+          ),
+        ),
+      ),
+    );
+  const block = () => container.querySelector("[data-index-guard]");
+  const button = (action: string) => container.querySelector<HTMLButtonElement>(`[data-action="${action}"]`);
+  const expected = {
+    en: [
+      "Indexing did not start: 12,000 documents are selected, more than the limit of 10,000.",
+      "docs/big: 3,000",
+      "Index anyway",
+      "Edit exclusions",
+    ],
+    ro: [
+      "Indexarea nu a pornit: sunt selectate 12.000 documente, peste limita de 10.000.",
+      "docs/big: 3.000",
+      "Indexează oricum",
+      "Editează excluderile",
+    ],
+    de: [
+      "Indexierung nicht gestartet: 12.000 Dokumente sind ausgewählt, mehr als das Limit von 10.000.",
+      "docs/big: 3.000",
+      "Trotzdem indexieren",
+      "Ausschlüsse bearbeiten",
+    ],
+    fr: [
+      "L’indexation n’a pas démarré : 12 000 documents sont sélectionnés, au-delà de la limite de 10 000.",
+      "docs/big : 3 000",
+      "Indexer quand même",
+      "Modifier les exclusions",
+    ],
+  };
+  try {
+    await render(false);
+    await settle();
+    expect(block()?.getAttribute("role")).toBe("alert");
+    // The guard replaces the volume warning; the documents indexed earlier stay listed.
+    expect(container.querySelector("[data-volume-warning]")).toBeNull();
+    for (const [language, [text, folder, anyway, edit]] of Object.entries(expected)) {
+      await act(async () => {
+        await i18n.changeLanguage(language);
+      });
+      expect(block()?.querySelector("p")?.textContent).toBe(text);
+      expect(container.querySelector('[data-guard-folder="docs/big"]')?.textContent).toBe(folder);
+      expect(button("index-anyway")?.textContent).toBe(anyway);
+      expect(button("edit-exclusions")?.textContent).toBe(edit);
+    }
+    await act(async () => {
+      await i18n.changeLanguage("en");
+    });
+    expect(container.querySelectorAll("[data-guard-folder]")).toHaveLength(2);
+    await act(async () => button("edit-exclusions")?.click());
+    expect(editExclusions).toHaveBeenCalledOnce();
+    await act(async () => button("index-anyway")?.click());
+    expect(invoke).toHaveBeenCalledWith("docs.approve", { workbenchId: id, files: 12000 });
+    // Indexing starts: the next selection reports no guard and the block goes away.
+    await act(async () => {
+      for (const on of handlers) on({ type: "index.guard", guard: null });
+    });
+    await settle();
+    expect(block()).toBeNull();
+    // A read-only workbench cannot approve.
+    await act(async () => {
+      for (const on of handlers) on({ type: "index.guard", guard });
+    });
+    await render(true);
+    await settle();
+    expect(button("index-anyway")?.disabled).toBe(true);
+    expect(button("edit-exclusions")?.disabled).toBe(false);
+  } finally {
+    await act(async () => {
+      await i18n.changeLanguage("en");
+    });
+    invoke.mockRestore();
+    spy.mockRestore();
     await act(async () => root.unmount());
     container.remove();
   }

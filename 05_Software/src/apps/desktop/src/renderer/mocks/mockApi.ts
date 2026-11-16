@@ -1012,7 +1012,16 @@ What this plugin does.
         value = {
           workbenchId,
           volume: { files: documents.length, bytes: documents.reduce((sum, doc) => sum + doc.bytes, 0) },
+          guard: null,
         };
+        break;
+      }
+      case "docs.approve": {
+        if (current().snapshot.readOnly) throw veraError("DENIED");
+        const { workbenchId } = channels["docs.approve"].request.parse(input.data);
+        if (workbenchId !== current().snapshot.config.id) throw veraError("CONFLICT");
+        emit({ topic: "workbench", id: workbenchId, event: { type: "index.guard", guard: null } });
+        value = {};
         break;
       }
       case "downloads.list": {

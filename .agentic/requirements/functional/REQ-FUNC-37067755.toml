@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-37067755"
+
+title = "Index a selection within the workbench file limit"
+
+status = "active"
+
+requirement = """
+When a reconciliation selects no more indexable documents than the workbench file limit, the Ingester shall index the selection and emit an index.guard event with no guard.
+"""
+
+verification = "Core test: a generated workbench of exactly 10,000 Markdown files with docs.maxFiles 10,000 indexes all 10,000 and its last index.guard event carries guard null."
+
+affected_paths = ["05_Software/src/libraries/core/src/knowledge/ingest.ts", "05_Software/src/libraries/core/src/knowledge/guard.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/knowledge/ingest-guard.test.ts::stops an oversized selection before indexing anything and indexes after Index anyway", "05_Software/src/libraries/core/src/knowledge/guard.test.ts::stops only a selection above the limit"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-16
+updated = 2026-11-16
