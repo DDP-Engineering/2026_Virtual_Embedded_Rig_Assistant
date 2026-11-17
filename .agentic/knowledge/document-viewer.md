@@ -51,7 +51,9 @@ Managed PDF downloads use downloads.list/open scoped IPC and a downloadId Viewer
   return. App changes reset all cached workbench Display query data; workbench events reset that
   owner only. Properties reloads its current host presentation. Privacy enum protocol stays structural
   even if a stored short secret equals on/off/default. Format-1 saved target/key bounds admit opaque
-  expansion through 262144 characters. Runs/download views retain their separate policies. PDF bytes remain exact; only
+  expansion through 262144 characters. Run full-log tabs use runs.log and the live Program runs choice, default off, independently of Display.
+  Settings/config events clear cached run content and bump attempts across inactive session scopes; late
+  replies cannot restore old presentation. Download views retain their separate policy. PDF bytes remain exact; only
   extracted PDF text follows Display. Sensitive-name entries cannot attach opaque identities to chat;
   the existing model admission still rejects stored-secret message text.
 - docs.list({workbenchId}) returns scoped document statuses/reasons.

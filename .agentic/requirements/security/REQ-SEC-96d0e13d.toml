@@ -6,13 +6,13 @@ title = "Masked shell run presentation"
 
 status = "active"
 
-requirement = "When shell run metadata or logs cross to the renderer, the main process shall scrub known credentials from command text, working folder and output using the existing Program runs masking policy."
+requirement = "When shell run metadata or logs cross to the renderer, the main process shall scrub known credentials from command text, working folder and output only when the live Program runs choice resolves on."
 
-verification = "Native acceptance stores a synthetic credential embedded in command/cwd/output and asserts it is absent from runs.list and both tail/full runs.log disclosure while raw local logs remain unchanged."
+verification = "Native acceptance stores a synthetic credential embedded in command/cwd/output and asserts it is visible off and absent on in runs.list and both tail/full runs.log disclosure while raw local logs remain unchanged."
 
-affected_paths = ["05_Software/src/apps/desktop/src/main/index.ts"]
+affected_paths = ["05_Software/src/apps/desktop/src/main/run-presentation.ts", "05_Software/src/apps/desktop/src/main/index.ts"]
 
-linked_tests = ["05_Software/tests/e2e/command-runs.spec.ts"]
+linked_tests = ["05_Software/tests/e2e/run-masking.spec.ts", "05_Software/src/apps/desktop/src/main/run-presentation.test.ts", "05_Software/tests/e2e/command-runs.spec.ts"]
 
 
 spec = ""
@@ -21,4 +21,4 @@ priority = "normal"   # low | normal | high
 rationale = ""        # why this behavior exists, if not obvious
 
 created = 2026-11-16
-updated = 2026-11-16
+updated = 2026-11-17

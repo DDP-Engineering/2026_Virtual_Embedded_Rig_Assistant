@@ -4,6 +4,7 @@ import type { PluginSummary } from "@vera/shared";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../api/index.js";
+import { observeProgramAction } from "../hooks/use-run-presentation.js";
 import { ErrorMessage } from "./error-message.js";
 import { catalogKey } from "./plugin-catalog.js";
 import {
@@ -251,24 +252,17 @@ function WorkbenchPluginSetup({
     setBusy(true);
     setError(undefined);
     try {
-      await client.cancelQueries({ queryKey, exact: true });
-      if (kind === "archive") {
-        const statuses = await api.invoke("plugins.installArchive", {
-          ...request,
-          program: program ?? "",
-          sha256: plugin.sha256 ?? "",
-        });
-        if (statuses) client.setQueryData(queryKey, statuses);
-      } else
-        await client.fetchQuery({
-          queryKey,
-          staleTime: 0,
-          retry: false,
-          queryFn: () =>
-            kind === "check"
-              ? api.invoke("plugins.check", request)
-              : api.invoke("plugins.provision", request),
-        });
+      await observeProgramAction(client, queryKey, request, () =>
+        kind === "archive"
+          ? api.invoke("plugins.installArchive", {
+              ...request,
+              program: program ?? "",
+              sha256: plugin.sha256 ?? "",
+            })
+          : kind === "check"
+            ? api.invoke("plugins.check", request)
+            : api.invoke("plugins.provision", request),
+      );
     } catch (failure) {
       if (live.current) setError(failure);
     } finally {

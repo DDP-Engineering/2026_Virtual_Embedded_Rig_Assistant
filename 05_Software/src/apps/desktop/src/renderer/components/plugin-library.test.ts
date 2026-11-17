@@ -85,7 +85,7 @@ function setup() {
       return { source: "bundled", plugins: state.entries, packs: [] } satisfies PluginCatalogView;
     }
     if (channel === "app.settings.get") return { settings: { plugins: {} } };
-    if (channel === "plugins.check") {
+    if (channel === "plugins.check" || channel === "plugins.programs") {
       if (request.id === state.fail) throw veraError("NOT_FOUND");
       return [{ name: "tool", kind: "find", state: request.id === "plugin-00" ? "missing" : "ready" }];
     }

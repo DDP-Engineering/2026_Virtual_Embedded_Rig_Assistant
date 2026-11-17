@@ -7,14 +7,14 @@ title = "Terminal environment and output masking"
 status = "active"
 
 requirement = """
-When terminal data crosses to the renderer or agent, VERA shall apply the host credential masking policy while starting shells with the existing filtered user environment.
+When terminal output is requested, VERA shall project user snapshots using the live Program runs choice and consented agent reads using unconditional credential masking with split-secret and partial VT prefix holding, independently of the user choice.
 """
 
-verification = "Use stored-secret fixtures and credential-valued environment entries; assert filtered env and masked recent output including split writes and bounded tails."
+verification = "Toggle the live runs choice on running and finished user snapshots; assert off exposes and on redacts while consented recent reads always redact split/VT secrets and retain bounded tails and publication revocation. Reuse unchanged filtered shell-environment proof."
 
 affected_paths = ["05_Software/src/apps/desktop/src/main/terminals.ts", "05_Software/src/apps/desktop/src/main/index.ts"]
 
-linked_tests = ["05_Software/src/apps/desktop/src/main/terminals.test.ts", "05_Software/tests/e2e/terminal.spec.ts"]
+linked_tests = ["05_Software/tests/e2e/run-masking.spec.ts", "05_Software/src/apps/desktop/src/main/terminals.test.ts", "05_Software/tests/e2e/terminal.spec.ts"]
 
 
 spec = ""
@@ -23,4 +23,4 @@ priority = "normal"   # low | normal | high
 rationale = ""        # why this behavior exists, if not obvious
 
 created = 2026-11-16
-updated = 2026-11-16
+updated = 2026-11-17

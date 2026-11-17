@@ -190,7 +190,7 @@ export function RunsTab({
   const { t } = useTranslation();
   const states = useStateLabels();
   const openDocument = useDocumentViewer();
-  const [viewing, setViewing] = useState<ProgramRunInfo>();
+  const [viewing, setViewing] = useState<string>();
   const [sessionFilter, setSessionFilter] = useState<SessionFilter>("current");
   const [pluginFilter, setPluginFilter] = useState("all");
   const [stateFilter, setStateFilter] = useState("all");
@@ -205,6 +205,7 @@ export function RunsTab({
   const titles = new Map(sessions.map((session) => [session.id, session.title || t("chat.untitled")]));
   const titleOf = (id: string) => titles.get(id) ?? t("runs.unknownSession");
   const all = runs.data?.runs ?? [];
+  const viewedRun = all.find((run) => run.id === viewing);
   const plugins = [
     ...new Set(
       all
@@ -319,12 +320,14 @@ export function RunsTab({
             run={run}
             session={titleOf(run.sessionId)}
             open={(run) =>
-              run.state !== "running" && openDocument ? openDocument({ runId: run.id }) : setViewing(run)
+              run.state !== "running" && openDocument ? openDocument({ runId: run.id }) : setViewing(run.id)
             }
           />
         ))}
       </ul>
-      {viewing && <LogDialog workbenchId={workbenchId} run={viewing} close={() => setViewing(undefined)} />}
+      {viewedRun && (
+        <LogDialog workbenchId={workbenchId} run={viewedRun} close={() => setViewing(undefined)} />
+      )}
     </section>
   );
 }

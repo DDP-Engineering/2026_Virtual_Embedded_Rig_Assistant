@@ -8,6 +8,8 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ### Changed
 
+- Program runs and user terminal output follow live app/workbench masking, defaulting off; agent reads stay masked.
+
 - Display masking follows app and workbench choices while keeping secret-named files visible and openable.
 
 - Auto-edit uses saved command prefixes; destructive shell commands always ask outside Bypass.

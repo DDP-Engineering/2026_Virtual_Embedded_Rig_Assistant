@@ -463,12 +463,12 @@ export function DocumentViewerProvider({
                 {
                   ...set,
                   tabs: set.tabs.map((tab) =>
-                    "runId" in tab.target || "downloadId" in tab.target
+                    "downloadId" in tab.target
                       ? tab
                       : {
                           ...tab,
-                          label: "[REDACTED]",
-                          title: "[REDACTED]",
+                          label: "runId" in tab.target ? tab.label : "[REDACTED]",
+                          title: "runId" in tab.target ? tab.title : "[REDACTED]",
                           content: undefined,
                           error: undefined,
                           attempt: ++attempts.current,

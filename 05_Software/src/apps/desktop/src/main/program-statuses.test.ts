@@ -23,3 +23,29 @@ it("bounds expanded redaction while preserving a valid useful dependency failure
   expect(statuses[0]?.hint).toHaveLength(1024);
   expect(statuses[0]?.link).toHaveLength(1024);
 });
+
+it("masks every descriptive program status field while retaining schema identities", () => {
+  const status = {
+    name: "tool",
+    kind: "find",
+    state: "ready",
+    version: "secret",
+    range: "secret",
+    path: "/secret/tool",
+    detail: "secret",
+    hint: "secret",
+    link: "https://secret.example",
+  } as const;
+  const projected = scrubProgramStatuses([status], (value) => value.replaceAll("secret", "[REDACTED]"));
+  expect(projected[0]).toEqual({
+    ...status,
+    version: "[REDACTED]",
+    range: "[REDACTED]",
+    path: "/[REDACTED]/tool",
+    detail: "[REDACTED]",
+    hint: "[REDACTED]",
+    link: "https://[REDACTED].example",
+  });
+  expect(pluginProgramStatusSchema.array().parse(projected)).toEqual(projected);
+  expect(scrubProgramStatuses([status], (value) => value)).toEqual([status]);
+});

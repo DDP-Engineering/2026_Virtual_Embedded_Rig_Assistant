@@ -12,6 +12,7 @@ import { configurationNeeds, pluginPlatform, pluginText } from "@vera/shared";
 import { useContext, useEffect, useId, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../api/index.js";
+import { observeProgramAction } from "../hooks/use-run-presentation.js";
 import { ErrorMessage } from "./error-message.js";
 import { HelpContext, helpLanguage, pluginHelpKey } from "./help.js";
 import {
@@ -416,31 +417,23 @@ function PluginCard({
   }
   async function dependencyAction(kind: "check" | "provision" | "reinstall" | "archive", program?: string) {
     await perform(kind, async () => {
-      await client.cancelQueries({ queryKey, exact: true });
-      if (kind === "archive") {
-        const statuses = await api.invoke("plugins.installArchive", {
-          ...request,
-          program: program as string,
-          sha256: plugin.sha256 ?? "",
-        });
-        if (!statuses) return;
-        client.setQueryData(queryKey, statuses);
-      } else {
-        await client.fetchQuery({
-          queryKey,
-          staleTime: 0,
-          retry: false,
-          queryFn: () =>
-            kind === "check"
-              ? api.invoke("plugins.check", request)
-              : kind === "reinstall"
-                ? api.invoke("plugins.reinstall", request)
-                : api.invoke("plugins.provision", request),
-        });
-      }
-      if (alive.current) setCheckedAt(new Date().toLocaleTimeString(i18n.language));
+      const updated = await observeProgramAction(client, queryKey, request, () =>
+        kind === "archive"
+          ? api.invoke("plugins.installArchive", {
+              ...request,
+              program: program as string,
+              sha256: plugin.sha256 ?? "",
+            })
+          : kind === "check"
+            ? api.invoke("plugins.check", request)
+            : kind === "reinstall"
+              ? api.invoke("plugins.reinstall", request)
+              : api.invoke("plugins.provision", request),
+      );
+      if (updated !== undefined && alive.current) setCheckedAt(new Date().toLocaleTimeString(i18n.language));
     });
   }
+
   // What only an installed plugin has: its dependency checks and its configuration.
   const installedSections = healthy && (
     <>
@@ -775,17 +768,8 @@ export function Plugins({ workbench }: { workbench?: PluginsWorkbench | undefine
         setCheckingAll(plugin.id);
         const key = pluginProgramsKey(workbench?.id, plugin);
         try {
-          await client.cancelQueries({ queryKey: key, exact: true });
-          await client.fetchQuery({
-            queryKey: key,
-            staleTime: 0,
-            retry: false,
-            queryFn: () =>
-              api.invoke("plugins.check", {
-                id: plugin.id,
-                ...(workbench ? { workbenchId: workbench.id } : {}),
-              }),
-          });
+          const request = { id: plugin.id, ...(workbench ? { workbenchId: workbench.id } : {}) };
+          await observeProgramAction(client, key, request, () => api.invoke("plugins.check", request));
         } catch (failure) {
           result.failures.push({ id: plugin.id, error: failure });
         }

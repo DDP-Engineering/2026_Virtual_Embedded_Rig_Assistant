@@ -33,7 +33,6 @@ import {
   type HelpPage,
   type HelpPageSummary,
   helpLanguages,
-  type PluginProgramStatus,
   veraError,
   type WorkbenchSnapshot,
   workbenchPatchSchema,
@@ -98,11 +97,11 @@ import { PluginCredentialService, programCredentials } from "./plugin-credential
 import { PluginListingHost } from "./plugin-list-host.js";
 import { createDesktopProcessHost } from "./process-host.js";
 import { testProgramResolver } from "./program-resolver.js";
-import { scrubProgramStatuses } from "./program-statuses.js";
 import { ProviderGateway } from "./provider-gateway.js";
 import { ProviderSettings } from "./provider-settings.js";
 import { ProvisionerHosts } from "./provisioner-hosts.js";
 import { openPath, revealPath } from "./reveal-path.js";
+import { RunPresentation } from "./run-presentation.js";
 import { bundledResponse, installSessionPolicy, secureSession, secureWindow } from "./security.js";
 import { exportSession } from "./session-export.js";
 import { createSessionOrder } from "./session-order.js";
@@ -251,9 +250,10 @@ const workbench = new WorkbenchService(
   },
   indexer.processor,
 );
+const maskingFor = createMaskingResolver(() => settings.get().settings);
 const display = new DisplayDocuments(
   workbench,
-  createMaskingResolver(() => settings.get().settings),
+  maskingFor,
   (text) => credentials.scrub(text),
   new DisplayIdentities(
     loadDisplayIdentityKey(join(dataLocations.paths.userData, "display-identities.json")),
@@ -278,6 +278,7 @@ const terminals = new TerminalService({
   ),
   scrub: (text) => credentials.scrub(text),
   secrets: () => credentials.knownSecrets(),
+  maskUserOutput: () => maskingFor(workbench.getSnapshot().config, "runs"),
 });
 /** Plugin program runs; session stop, workbench close and app exit kill their process trees. */
 const programs = new ProgramRunner({
@@ -496,10 +497,12 @@ function activePluginStore(workbenchId?: string): PluginStore {
     return plugins;
   }
 }
-/** A plugin was installed, removed, toggled or provisioned: resolve programs and prompt entries again. */
-function programStatuses(statuses: PluginProgramStatus[]): PluginProgramStatus[] {
-  return scrubProgramStatuses(statuses, (value) => credentials.scrub(value));
-}
+const runPresentation = new RunPresentation({
+  current: () => workbench.getSnapshot(),
+  maskingFor,
+  scrub: (text) => credentials.scrub(text),
+  runner: programs,
+});
 /** `id` limits the forgotten program resolutions to that plugin; found programs stay stored by file stamp. */
 function pluginsChanged(id?: string): void {
   provisioner.invalidate(id);
@@ -681,21 +684,27 @@ ipcMain.handle(
         return installed;
       },
       "plugins.programs": async ({ id, workbenchId }) =>
-        programStatuses(
-          await (workbenchId
-            ? scopedProvisioners.run(activePluginStore(workbenchId), (host) =>
-                host.statuses(id, undefined, provisioner),
-              )
-            : provisioner.statuses(id)),
+        runPresentation.statuses(
+          () =>
+            workbenchId
+              ? scopedProvisioners.run(activePluginStore(workbenchId), (host) =>
+                  host.statuses(id, undefined, provisioner),
+                )
+              : provisioner.statuses(id),
+          workbenchId,
         ),
       "plugins.check": async ({ id, workbenchId }) => {
-        const statuses = await (workbenchId
-          ? scopedProvisioners.run(activePluginStore(workbenchId), (host) =>
-              host.check(id, undefined, provisioner),
-            )
-          : provisioner.check(id));
+        const statuses = await runPresentation.statuses(
+          () =>
+            workbenchId
+              ? scopedProvisioners.run(activePluginStore(workbenchId), (host) =>
+                  host.check(id, undefined, provisioner),
+                )
+              : provisioner.check(id),
+          workbenchId,
+        );
         sessions.invalidatePrograms();
-        return programStatuses(statuses);
+        return statuses;
       },
       "plugins.installArchive": async ({ id, program, sha256, workbenchId }) => {
         const before = workbenchId ? workbench.getSnapshot() : undefined;
@@ -731,19 +740,21 @@ ipcMain.handle(
         if (selected.canceled || !selected.filePaths[0]) return null;
         await validate();
         try {
-          return programStatuses(
-            await (workbenchId
-              ? scopedProvisioners.run(store, (host) =>
-                  host.installArchive(
-                    id,
-                    program,
-                    selected.filePaths[0] as string,
-                    sha256,
-                    undefined,
-                    provisioner,
-                  ),
-                )
-              : provisioner.installArchive(id, program, selected.filePaths[0], sha256)),
+          return await runPresentation.statuses(
+            () =>
+              workbenchId
+                ? scopedProvisioners.run(store, (host) =>
+                    host.installArchive(
+                      id,
+                      program,
+                      selected.filePaths[0] as string,
+                      sha256,
+                      undefined,
+                      provisioner,
+                    ),
+                  )
+                : provisioner.installArchive(id, program, selected.filePaths[0] as string, sha256),
+            workbenchId,
           );
         } finally {
           pluginsChanged(id);
@@ -751,12 +762,14 @@ ipcMain.handle(
       },
       "plugins.provision": async ({ id, workbenchId }) => {
         try {
-          return programStatuses(
-            await (workbenchId
-              ? scopedProvisioners.run(activePluginStore(workbenchId), (host) =>
-                  host.install(id, undefined, provisioner),
-                )
-              : provisioner.install(id)),
+          return await runPresentation.statuses(
+            () =>
+              workbenchId
+                ? scopedProvisioners.run(activePluginStore(workbenchId), (host) =>
+                    host.install(id, undefined, provisioner),
+                  )
+                : provisioner.install(id),
+            workbenchId,
           );
         } finally {
           pluginsChanged(id);
@@ -764,12 +777,14 @@ ipcMain.handle(
       },
       "plugins.reinstall": async ({ id, workbenchId }) => {
         try {
-          return programStatuses(
-            await (workbenchId
-              ? scopedProvisioners.run(activePluginStore(workbenchId), (host) =>
-                  host.reinstall(id, undefined, provisioner),
-                )
-              : provisioner.reinstall(id)),
+          return await runPresentation.statuses(
+            () =>
+              workbenchId
+                ? scopedProvisioners.run(activePluginStore(workbenchId), (host) =>
+                    host.reinstall(id, undefined, provisioner),
+                  )
+                : provisioner.reinstall(id),
+            workbenchId,
           );
         } finally {
           pluginsChanged();
@@ -807,31 +822,8 @@ ipcMain.handle(
           ),
         };
       },
-      // Runs of the open workbench only; another workbench id is CONFLICT like the other workbench channels.
-      // Arguments and output cross to the renderer redacted, like program approval payloads and documents.
-      "runs.list": async ({ workbenchId }) => ({
-        runs: (await programs.list(openWorkbenchFolder(workbenchId))).map((run) => ({
-          ...run,
-          args: run.args.map((arg) => credentials.scrub(arg)),
-          ...(run.command
-            ? {
-                command: {
-                  text: credentials.scrub(run.command.text),
-                  cwd: credentials.scrub(run.command.cwd),
-                },
-              }
-            : {}),
-          ...(run.error === undefined ? {} : { error: credentials.scrub(run.error) }),
-        })),
-      }),
-      "runs.log": async ({ workbenchId, id, full }) => {
-        const log = await programs.log(
-          openWorkbenchFolder(workbenchId),
-          id,
-          full ? Number.POSITIVE_INFINITY : undefined,
-        );
-        return { ...log, text: credentials.scrub(log.text) };
-      },
+      "runs.list": ({ workbenchId }) => runPresentation.list(workbenchId),
+      "runs.log": ({ workbenchId, id, full }) => runPresentation.log(workbenchId, id, full),
       "runs.stop": async ({ workbenchId, id }) => {
         await programs.stopRun(openWorkbenchFolder(workbenchId), id);
         return {};

@@ -385,6 +385,13 @@ WSL2 is separate from unavailable native Ubuntu acceptance; unchanged shell/pref
 
 TERM command-prefix acceptance uses the focused tests/e2e/command-prefixes.spec.ts with VERA_TEST=1 instrumented build. VERA_TERM02_EVIDENCE_DIR retains native receipt/screenshot; original focused/static logs live under evaluation-outputs/term02. TERM01 process/shell proofs are reused for unchanged runner behavior. Native Ubuntu is unavailable on this host.
 
+MASK-03 proof uses focused host/IPC/Runs/terminal/viewer tests and native run-masking.spec.ts:
+stored MQTT secret printed by a real process, run args/canonical cwd/status/tail/full logs, running
+dialog and finished viewer live changes, interactive terminal snapshots and two-workbench isolation.
+Original logs/receipt and bundled-source WSL2 probe are under evaluation-outputs/mask03. WSL2 uses
+pinned Linux Node24.21.0; it is distinct from unavailable native Ubuntu. Unchanged TERM PTY/native
+packaging proof is reused; selected delivery artifacts and final exact-source gate remain deferred.
+
 MASK-01 infrastructure proof uses shared privacy/workbench/IPC contracts, core settings/masking and
 settings/workbench persistence cases. No native shell/PTY behavior changes: reuse TERM proof.
 Original focused/static logs use evaluation-outputs/mask01. Full suites/deliveries remain deferred;

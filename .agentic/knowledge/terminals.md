@@ -21,11 +21,14 @@ main. Renderer owns the xterm view and controls through strict user IPC. Shells 
   use UUID terminal IDs. Create fixes cwd to the workbench and selects Settings → Commands' shell.
 - Up to eight live/finished terminal tabs remain until close, workbench replacement or app shutdown.
   Bash uses `-il`, sh `-i`, PowerShell `-NoLogo`; agent command flags and closed stdin are separate.
-- Host capture retains at most 262144 raw characters, dropping a cut leading line. User snapshots are
-  masked against current known credentials; split secret prefixes are held. The renderer appends
+- Host capture retains at most 262144 raw characters, dropping a cut leading line. User snapshots follow the live Program runs choice, default off. With masking on,
+  current known credentials are masked and split secret prefixes are held. The renderer appends
   snapshot deltas and reconstructs a bounded view when truncation or masking changes the prefix.
   Plain projection keeps incomplete VT sequences pending so partial CSI/OSC/DCS cannot bypass
   known-secret prefix holding between callbacks.
+- Agent recent output always uses the masked held-prefix projection independently of user masking;
+  raw host capture is never published directly through the reader. Finished user snapshots also
+  resolve the live choice on every poll.
 - `terminal_read {terminalId?}` lists only shared terminals when omitted; an ID returns at most
   12000 recent plain characters. Consent starts false and applies to one terminal in its workbench.
 - Grant epochs and current ownership are checked again by the runtime's synchronous publication hook.

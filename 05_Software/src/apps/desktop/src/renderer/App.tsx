@@ -29,6 +29,7 @@ import { WorkbenchEditor } from "./components/workbench-editor.js";
 import { WorkbenchNavigation } from "./components/workbench-navigation.js";
 import { SessionViewProvider } from "./hooks/session-view.js";
 import { usePreferences } from "./hooks/use-preferences.js";
+import { useRunPresentation } from "./hooks/use-run-presentation.js";
 import { ATTACHMENT_LIMIT, addAttachment } from "./lib/attachments.js";
 import { removeTabs } from "./lib/document-tabs-store.js";
 import { screenHelpPage } from "./lib/help-pages.js";
@@ -95,6 +96,7 @@ export function App() {
     retry: false,
   });
   const benchId = bench.data?.config.id;
+  useRunPresentation(benchId);
   const readOnly = bench.data?.readOnly ?? false;
   const benchFailure = bench.isError && (bench.error as { code?: string }).code !== "NOT_FOUND";
 

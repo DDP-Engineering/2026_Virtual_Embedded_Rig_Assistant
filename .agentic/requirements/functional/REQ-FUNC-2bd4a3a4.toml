@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-2bd4a3a4"
+title = "Program run presentation follows live area masking"
+status = "active"
+requirement = "When run metadata, logs or program provisioning statuses are presented to the local user, VERA shall apply the live Program runs app default or workbench override, leaving raw local run records and logs unchanged."
+verification = "Store an MQTT credential, run a real program printing it and compare args, command/canonical cwd, errors, tail/full logs and statuses off/on; exercise inherit and opposite workbench overrides independently of Display."
+affected_paths = ["05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/apps/desktop/src/main/run-presentation.ts", "05_Software/src/apps/desktop/src/main/program-statuses.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/run-presentation.test.ts", "05_Software/src/apps/desktop/src/main/program-statuses.test.ts", "05_Software/tests/e2e/run-masking.spec.ts"]
+spec = ""
+priority = "normal"
+created = 2026-11-17
+updated = 2026-11-17

@@ -6,6 +6,7 @@ import { act, createElement } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, expect, it, vi } from "vitest";
 import { api } from "../api/index.js";
+import { useRunPresentation } from "../hooks/use-run-presentation.js";
 import i18n from "../i18n.js";
 import { HelpContext } from "./help.js";
 import { Plugins } from "./plugins.js";
@@ -107,7 +108,12 @@ function stub(options: {
         return [{ name: "echo", kind: "find", state: "ready", version: "22.11.0" }];
       case "plugins.reinstall":
         state.reinstalled = true;
-        return state.programs.map((program) => ({ ...program, state: "ready", problem: undefined }));
+        state.programs = state.programs.map((program) => ({
+          ...program,
+          state: "ready",
+          problem: undefined,
+        }));
+        return state.programs;
       case "plugins.toggle":
         state.installed = state.installed.map((plugin) =>
           plugin.id === request.id ? { ...plugin, enabled: request.enabled as boolean } : plugin,
@@ -165,13 +171,23 @@ it("groups top actions and starts with compact accessible rows and explicit depe
   expect(calls("plugins.check")).toHaveLength(1);
   expect(calls("plugins.toggle")).toEqual([]);
 });
-async function render(props: Parameters<typeof Plugins>[0] = { workbench }) {
+function PrivacyPlugins(props: Parameters<typeof Plugins>[0]) {
+  useRunPresentation(props.workbench?.id);
+  return createElement(Plugins, props);
+}
+async function render(props: Parameters<typeof Plugins>[0] = { workbench }, privacy = false) {
   container = document.createElement("div");
   document.body.append(container);
   root = createRoot(container);
   client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   await act(async () => {
-    root.render(createElement(QueryClientProvider, { client }, createElement(Plugins, props)));
+    root.render(
+      createElement(
+        QueryClientProvider,
+        { client },
+        createElement(privacy ? PrivacyPlugins : Plugins, props),
+      ),
+    );
   });
   await click('[data-library-status="installed"]');
 }
@@ -221,7 +237,7 @@ it("does not retain Ready dependency data after reinstalling an identical packag
   await vi.waitFor(() =>
     expect(($('[data-action="plugin-provision"]') as HTMLButtonElement).disabled).toBe(false),
   );
-  expect(calls("plugins.programs")).toHaveLength(0);
+  expect(calls("plugins.programs")).toHaveLength(2);
   expect(calls("plugins.check")).toHaveLength(2);
 });
 
@@ -957,4 +973,64 @@ it("opens a plugin's help from its row and shows no Help for a plugin without he
   expect($('[data-plugin="plain-tools"] [data-action="plugin-help"]')).toBeNull();
   await click('[data-plugin="echo-tools"] [data-action="plugin-help"]');
   expect(open).toHaveBeenCalledExactlyOnceWith("plugin/echo-tools");
+});
+
+function privacyEvents() {
+  const app: ((event: { type: string }) => void)[] = [];
+  vi.mocked(api.subscribe).mockImplementation(((topic: string, ...args: unknown[]) => {
+    if (topic === "app") app.push(args.at(-1) as (event: { type: string }) => void);
+    return () => {};
+  }) as typeof api.subscribe);
+  return () => {
+    for (const callback of app) callback({ type: "settings.changed" });
+  };
+}
+it("refreshes checked disabled program statuses without repeating explicit actions", async () => {
+  await i18n.changeLanguage("en");
+  const state = stub({
+    installed: [echo],
+    programs: [{ name: "echo", kind: "find", state: "ready", version: "private-status" }],
+  });
+  const changed = privacyEvents();
+  await render({ workbench }, true);
+  await click('[data-action="plugin-expand"]');
+  await click('[data-action="plugin-check"]');
+  await vi.waitFor(() => expect(container.textContent).toContain("private-status"));
+  state.programs = [{ name: "echo", kind: "find", state: "ready", version: "[REDACTED]" }];
+  await act(async () => changed());
+  await vi.waitFor(() => expect(container.textContent).toContain("[REDACTED]"));
+  expect(container.textContent).not.toContain("private-status");
+  expect(calls("plugins.check")).toHaveLength(1);
+  expect(calls("plugins.provision")).toHaveLength(0);
+});
+it("keeps a late archive result out of the status cache after privacy changes", async () => {
+  await i18n.changeLanguage("en");
+  const state = stub({
+    installed: [echo],
+    programs: [{ name: "echo", kind: "download", state: "missing", hint: "private-status" }],
+  });
+  const changed = privacyEvents();
+  const original = vi.mocked(api.invoke).getMockImplementation();
+  if (!original) throw Error("Missing API fixture");
+  let finish = (_statuses: unknown) => {};
+  vi.mocked(api.invoke).mockImplementation((async (channel: string, request: Record<string, unknown>) =>
+    channel === "plugins.installArchive"
+      ? new Promise((done) => {
+          finish = done;
+        })
+      : original(channel as never, request as never)) as never);
+  await render({ workbench }, true);
+  await click('[data-action="plugin-expand"]');
+  await click('[data-action="plugin-check"]');
+  await click('[data-action="plugin-install-archive"]');
+  state.programs = [{ name: "echo", kind: "download", state: "ready", detail: "[REDACTED]" }];
+  await act(async () => {
+    changed();
+  });
+  await act(async () => {
+    finish([{ name: "echo", kind: "download", state: "ready", detail: "private-status" }]);
+  });
+  await vi.waitFor(() => expect(container.textContent).toContain("[REDACTED]"));
+  expect(container.textContent).not.toContain("private-status");
+  expect(calls("plugins.installArchive")).toHaveLength(1);
 });

@@ -197,3 +197,5 @@ four-locale browser controls. VERA_TERM03_EVIDENCE_DIR retains native proof. Cor
 `e2e/command-runs.spec.ts` proves real sibling server readiness, live masked command/folder/output, Runs Stop of the whole tree, next agent output stopped, full viewer logs, exit code/duration and session isolation. Original receipts use `VERA_TERM04_EVIDENCE_DIR`.
 
 `support/command-runs-platform-probe.ts` bundles current source for pinned Linux Node: real sibling command server, scoped run identity, short-read-safe full/tail logs, Stop and next agent output.
+
+`e2e/run-masking.spec.ts` proves native stored MQTT credentials in actual command output, run arguments/canonical cwd, provisioning statuses, tail/full logs and terminal snapshots with live app/workbench overrides and two-workbench isolation. Original receipts/logs use evaluation-outputs/mask03; no delivery artifacts are rebuilt.

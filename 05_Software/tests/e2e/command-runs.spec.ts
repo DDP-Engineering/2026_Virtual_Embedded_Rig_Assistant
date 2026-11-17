@@ -116,6 +116,7 @@ setInterval(() => console.log('heartbeat ${secret}'), 200);
         storageConsent: false,
       });
     expect(credential.status).toBe("saved");
+    await invoke(page, "app.settings.update", { privacy: { mask: { runs: true } } });
     const runs = async () => (await invoke(page, "runs.list", { workbenchId: config.id })).runs;
     await expect.poll(async () => (await runs()).length).toBe(1);
     const run = (await runs())[0] as ProgramRunInfo;

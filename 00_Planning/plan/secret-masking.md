@@ -14,7 +14,7 @@ choices and supplies a live-settings resolver; Display consumers follow the reso
 | Area | Where | What is masked |
 |---|---|---|
 | Display | `desktop/src/main/index.ts` | Files/Find and document list/search retain all results with separate opaque identities; names and viewer text (`docs.read`) follow live Display |
-| Program runs | `desktop/src/main/index.ts` | run arguments, errors and logs shown in the Runs tab, program statuses |
+| Program runs | `desktop/src/main/run-presentation.ts`, `terminals.ts` | run args, commands/canonical folders, errors, tail/full logs, program statuses and user terminal snapshots follow live runs (default off); agent terminal reads remain independently masked |
 | Agent and model | `core/src/sessions/service.ts`, `core/src/llm/stream-scrub.ts` | tool results sent to the model, the model's streamed text, session search |
 | Artifacts and exports | `core/src/artifacts/store.ts`, `desktop/src/main/artifacts.ts` | saved artifacts, exported artifacts and sessions |
 

@@ -469,3 +469,5 @@ Display documents use desktop `main/display-documents.ts` for live per-workbench
 `display-identities.json` host-local key keeps sensitive document tabs usable across restart without
 persisting plaintext original paths in renderer storage. Focused tests sit beside both modules;
 `tests/e2e/display-masking.spec.ts` covers stored MQTT credentials, Files/Find selection and restart.
+
+Run presentation uses desktop main/run-presentation.ts with the live Program runs resolver, separate from raw local logs and agent scrubbing. renderer/hooks/use-run-presentation.ts resets run/status caches; full-log viewer attempts refresh across inactive sessions. Sibling tests cover inheritance, ownership and live policy changes.

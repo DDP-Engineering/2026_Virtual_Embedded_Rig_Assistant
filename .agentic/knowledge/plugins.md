@@ -299,6 +299,23 @@ renderer plugins.test.ts, tests/integration/plugin-builder.test.ts and tests/e2e
 
 ## Public interface
 
+- Desktop main `RunPresentation` projects args, command text/canonical cwd, run errors and tail/full
+  logs through live Program runs masking, default false. Explicit workbench choices override app
+  defaults; global unscoped program status requests use app defaults. Raw records/logs stay intact.
+  Owner ID/folder is captured before asynchronous reads and rechecked before publication; stale,
+  closed or foreign workbenches return CONFLICT. Status detail/hint/link/version/range/path are
+  projected and bounded without changing schema identities or credential admission.
+  App owns `useRunPresentation`, resetting Runs/log/program-status query caches and cancelling old
+  replies on settings/config events. Previously observed disabled status queries re-read only passive
+  plugins.programs; unchecked entries stay unchecked and action query functions are never replayed.
+  Check/install/archive actions retain their own completion, then publish a fresh passive observation;
+  their direct replies never overwrite the presentation cache. Completion retires any passive read
+  started during the action before a fresh read or failure publication; original action errors propagate. Dialogs resolve the selected run ID from fresh rows. Finished
+  full-log viewer tabs invalidate attempts across inactive session caches. Display does not decide
+  run masking. No provisioning status event contains output; consumers refresh existing query IPC.
+  Tests: main/run-presentation.test.ts, program-statuses.test.ts, renderer hook/Runs/document-tabs
+  tests and native tests/e2e/run-masking.spec.ts (REQ-FUNC-2bd4a3a4/7ddb3926, REQ-SEC-ff8ae422).
+
 Built-in shell commands use `plugins/command-tools.ts` and `shell.ts` with the existing runner and
 ProgramSession handles. `ProgramHost.shell` resolves current settings and supplies filtered user
 environment. `run_command {command,cwd?,timeout?,background?}` requires exact single-use user approval

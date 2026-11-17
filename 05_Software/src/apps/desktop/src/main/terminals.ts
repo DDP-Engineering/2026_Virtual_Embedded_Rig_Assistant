@@ -62,6 +62,7 @@ export class TerminalService {
       shell: CommandShellHost;
       pty: PtyFactory;
       scrub(text: string): string;
+      maskUserOutput(): boolean;
       secrets(): readonly string[];
     },
   ) {}
@@ -166,7 +167,10 @@ export class TerminalService {
   }
   output(owner: string, id: string): TerminalSnapshot {
     const entry = this.entry(owner, id);
-    return { ...this.summary(entry), output: this.publicOutput(entry) };
+    return {
+      ...this.summary(entry),
+      output: this.host.maskUserOutput() ? this.publicOutput(entry) : entry.output,
+    };
   }
   input(owner: string, id: string, data: string): void {
     z.string().min(1).max(16384).parse(data);

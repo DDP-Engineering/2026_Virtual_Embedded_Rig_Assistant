@@ -1127,3 +1127,45 @@ it("keeps opaque document references in the same file tab as their path target",
   const path = "docs/__vera_display_cipher.";
   expect(documentKey({ ref: `${path}/__vera_reference_cipher.#L1-L1` })).toBe(documentKey({ path }));
 });
+
+it.each(["app", "workbench"])(
+  "refreshes cached inactive full run logs after %s privacy changes",
+  async (area) => {
+    const f = await mount(`${id}/run-session-b`);
+    await api.invoke("app.settings.update", { privacy: { mask: { runs: false } } });
+    await api.invoke("workbench.config.update", {
+      workbenchId: id,
+      patch: { privacy: { mask: { runs: "default" } } },
+    });
+    let masked = false;
+    const original = api.invoke.bind(api);
+    vi.spyOn(api, "invoke").mockImplementation((async (channel: string, request: unknown) =>
+      channel === "runs.log"
+        ? {
+            id: "01JC00000000000000000000R2",
+            text: masked ? "[REDACTED]" : "cached-run-secret",
+            truncated: false,
+            running: false,
+          }
+        : original(channel as never, request as never)) as typeof api.invoke);
+    await f.open("run");
+    expect(f.view.textContent).toContain("cached-run-secret");
+    await f.render(`${id}/run-session-a`);
+    await f.open("run");
+    masked = true;
+    await act(async () => {
+      if (area === "app") await api.invoke("app.settings.update", { privacy: { mask: { runs: true } } });
+      else
+        await api.invoke("workbench.config.update", {
+          workbenchId: id,
+          patch: { privacy: { mask: { runs: "on" } } },
+        });
+    });
+    await settle();
+    expect(f.view.textContent).not.toContain("cached-run-secret");
+    await f.render(`${id}/run-session-b`);
+    await settle();
+    expect(f.view.textContent).not.toContain("cached-run-secret");
+    expect(f.view.textContent).toContain("[REDACTED]");
+  },
+);

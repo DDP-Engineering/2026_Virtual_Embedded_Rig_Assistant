@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import { TerminalService, type UserPty } from "./terminals.js";
 
 function fixture() {
+  let masking = true;
   let current = { id: "bench-a", folder: "/workbench" };
   const processes: ReturnType<typeof pty>[] = [];
   function pty() {
@@ -44,6 +45,7 @@ function fixture() {
   };
   const service = new TerminalService({
     current: () => current,
+    maskUserOutput: () => masking,
     shell,
     pty: { spawn, stop },
     scrub: (text) => text.replaceAll("private-token-123", "[REDACTED]"),
@@ -51,6 +53,9 @@ function fixture() {
   });
   return {
     service,
+    masking: (value: boolean) => {
+      masking = value;
+    },
     processes,
     spawn,
     stop,
@@ -236,4 +241,28 @@ describe("user terminal host", () => {
     await Promise.all(Array.from({ length: 7 }, () => f.service.create("bench-a", 80, 24)));
     await expect(f.service.create("bench-a", 80, 24)).rejects.toMatchObject({ code: "BUSY" });
   });
+});
+
+it("toggles local snapshots live while agent reads hold split secrets independently", async () => {
+  const f = fixture();
+  const terminal = await f.service.create("bench-a", 80, 24);
+  f.masking(false);
+  f.processes[0]?.print("prefix private-token-");
+  expect(f.service.output("bench-a", terminal.id).output).toBe("prefix private-token-");
+  f.service.consent("bench-a", terminal.id, true);
+  const reader = f.service.reader("bench-a");
+  expect(JSON.parse(reader.publish(JSON.stringify(reader.read(terminal.id)))).text).toBe("prefix ");
+  f.processes[0]?.print("123\n");
+  expect(f.service.output("bench-a", terminal.id).output).toContain("private-token-123");
+  expect(JSON.parse(reader.publish(JSON.stringify(reader.read(terminal.id)))).text).toBe(
+    "prefix [REDACTED]\n",
+  );
+  f.processes[0]?.finish();
+  f.masking(true);
+  expect(f.service.output("bench-a", terminal.id).output).toBe("prefix [REDACTED]\n");
+  f.masking(false);
+  expect(f.service.output("bench-a", terminal.id).output).toBe("prefix private-token-123\n");
+  f.service.consent("bench-a", terminal.id, false);
+  expect(() => reader.read(terminal.id)).toThrow();
+  await f.service.closeAll();
 });

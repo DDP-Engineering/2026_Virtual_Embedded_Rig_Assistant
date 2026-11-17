@@ -93,7 +93,7 @@ setInterval(() => {}, 1000);
       if (message.type() === "error") consoleErrors.push(message.text());
     });
     page.on("pageerror", (error) => consoleErrors.push(error.stack ?? error.message));
-    await invoke(page, "app.settings.update", { language: "en" });
+    await invoke(page, "app.settings.update", { language: "en", privacy: { mask: { runs: true } } });
     let saved = await invoke(page, "providers.save", { provider: "openai", apiKey: secret, model: "unused" });
     if (saved.status === "consent-required")
       saved = await invoke(page, "providers.save", {

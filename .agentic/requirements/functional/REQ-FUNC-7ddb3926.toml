@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-7ddb3926"
+title = "Cached run presentation refreshes on privacy changes"
+status = "active"
+requirement = "When app settings or the current workbench privacy choice changes, VERA shall refresh run rows, live and finished log dialogs, program statuses and full-log viewer tabs including cached inactive sessions using the current Program runs choice."
+verification = "Open running and finished rows/dialogs and full-log tabs in two session caches; toggle app/workbench privacy and verify old presentation is replaced, including late replies."
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/hooks/use-run-presentation.ts", "05_Software/src/apps/desktop/src/renderer/App.tsx", "05_Software/src/apps/desktop/src/renderer/components/plugins.tsx", "05_Software/src/apps/desktop/src/renderer/components/workbench-plugins.tsx", "05_Software/src/apps/desktop/src/renderer/components/runs-tab.tsx", "05_Software/src/apps/desktop/src/renderer/components/documents/viewer-context.tsx"]
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/plugins.test.ts", "05_Software/src/apps/desktop/src/renderer/components/workbench-plugins.test.ts", "05_Software/src/apps/desktop/src/renderer/hooks/use-run-presentation.test.ts", "05_Software/src/apps/desktop/src/renderer/components/runs-tab.test.ts", "05_Software/src/apps/desktop/src/renderer/components/documents/document-tabs.test.ts", "05_Software/tests/e2e/run-masking.spec.ts"]
+spec = ""
+priority = "normal"
+created = 2026-11-17
+updated = 2026-11-17

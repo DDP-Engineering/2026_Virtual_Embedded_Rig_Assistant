@@ -109,7 +109,7 @@ entries:
   - category: improved
     topic: { en: Runs, ro: Rulări, de: Läufe, fr: Exécutions }
     text:
-      en: See commands, folders, live output and durations; stop runs and open full logs in the viewer.
-      ro: Vezi comenzi, foldere, ieșire și durate; oprește rulări și deschide jurnale complete.
-      de: Befehle, Ordner, Ausgabe und Dauer sehen; Läufe stoppen und vollständige Protokolle öffnen.
-      fr: Voyez commandes, dossiers, sorties et durées ; arrêtez et ouvrez les journaux complets.
+      en: Run logs and terminal output follow your masking choice, off by default; agent reads stay masked.
+      ro: Jurnalele și terminalul urmează mascarea aleasă, implicit oprită; citirile agentului rămân mascate.
+      de: "Laufprotokolle und Terminal: Maskierung ist standardmäßig aus; Agentenlesezugriffe bleiben maskiert."
+      fr: "Journaux et terminal : masquage désactivé par défaut ; lectures de l’agent toujours masquées."

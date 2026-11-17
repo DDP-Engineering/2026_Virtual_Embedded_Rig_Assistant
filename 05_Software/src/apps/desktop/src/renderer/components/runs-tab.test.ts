@@ -169,3 +169,18 @@ it("stops a running run and shows it stopped", async () => {
   );
   expect($('[data-action="run-stop"]')).toBeNull();
 });
+
+it("refreshes the open log dialog command after a live presentation reset", async () => {
+  const state = stub([serve], "private-token");
+  await render();
+  await vi.waitFor(() => expect($("[data-action=run-log]")).not.toBeNull());
+  await click($("[data-action=run-log]"));
+  state.runs = [{ ...serve, args: ["[REDACTED]"] }];
+  state.log = "[REDACTED]";
+  await act(async () => {
+    await client.resetQueries({ queryKey: ["runs"] });
+    await client.resetQueries({ queryKey: ["run-log"] });
+  });
+  await vi.waitFor(() => expect($("dialog .approval-command").textContent).toContain("[REDACTED]"));
+  expect($("dialog").textContent).not.toContain("private-token");
+});

@@ -14,13 +14,14 @@ import { act, createElement } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, expect, it, vi } from "vitest";
 import { api } from "../api/index.js";
+import { useRunPresentation } from "../hooks/use-run-presentation.js";
 import i18n from "../i18n.js";
 import { catalogKey } from "./plugin-catalog.js";
 import { WorkbenchCreate } from "./workbench-create.js";
 import { WorkbenchEditor } from "./workbench-editor.js";
 import { WorkbenchPlugins } from "./workbench-plugins.js";
 
-vi.mock("../api/index.js", () => ({ api: { invoke: vi.fn() } }));
+vi.mock("../api/index.js", () => ({ api: { invoke: vi.fn(), subscribe: vi.fn(() => () => {}) } }));
 vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
 let root: Root;
 let container: HTMLDivElement;
@@ -229,7 +230,7 @@ it("uses passive readiness until an explicit check and never provisions just by 
   stub(wb);
   const originalInvoke = invokeImplementation();
   vi.mocked(api.invoke).mockImplementation((async (channel: string, request: Record<string, unknown>) => {
-    if (channel === "plugins.check")
+    if (channel === "plugins.check" || channel === "plugins.programs")
       return [{ name: "echo", kind: "find", state: "missing", hint: "Install the vendor SDK" }];
     return originalInvoke(channel as never, request as never);
   }) as never);
@@ -291,7 +292,7 @@ it("replaces stale ready with unavailable after an explicit check fails", async 
   let failing = false;
   const original = invokeImplementation();
   vi.mocked(api.invoke).mockImplementation((async (channel: string, request: Record<string, unknown>) => {
-    if (channel === "plugins.check") {
+    if (channel === "plugins.check" || channel === "plugins.programs") {
       if (failing) throw veraError("NOT_FOUND");
       return [{ name: "echo", kind: "find", state: "ready" }];
     }
@@ -603,4 +604,54 @@ it("warns before Save and Create when the preview selects more than the file lim
       await i18n.changeLanguage("en");
     });
   }
+});
+
+it("refreshes checked workbench status and ignores a late archive presentation", async () => {
+  await i18n.changeLanguage("en");
+  const wb = snapshot();
+  stub(wb);
+  const original = invokeImplementation();
+  let masked = false,
+    finish = (_value: unknown) => {};
+  const listeners: ((event: { type: string }) => void)[] = [];
+  vi.mocked(api.subscribe).mockImplementation(((topic: string, ...args: unknown[]) => {
+    if (topic === "app") listeners.push(args.at(-1) as (event: { type: string }) => void);
+    return () => {};
+  }) as typeof api.subscribe);
+  vi.mocked(api.invoke).mockImplementation((async (channel: string, request: Record<string, unknown>) => {
+    if (channel === "plugins.check" || channel === "plugins.programs")
+      return [
+        { name: "echo", kind: "download", state: "missing", hint: masked ? "[REDACTED]" : "private-status" },
+      ];
+    if (channel === "plugins.installArchive")
+      return new Promise((done) => {
+        finish = done;
+      });
+    return original(channel as never, request as never);
+  }) as never);
+  function PrivacyWorkbench() {
+    useRunPresentation(wb.config.id);
+    return createElement(WorkbenchPlugins, { workbenchId: wb.config.id, enabled: [], toggle: vi.fn() });
+  }
+  await mount(createElement(PrivacyWorkbench));
+  await vi.waitFor(() =>
+    expect(container.querySelector("[data-workbench-configuration] summary")).not.toBeNull(),
+  );
+  await click("[data-workbench-configuration] summary");
+  expect(calls("plugins.programs")).toHaveLength(0);
+  await click('[data-action="plugin-check"]');
+  await vi.waitFor(() => expect(container.textContent).toContain("private-status"));
+  await click('[data-action="plugin-install-archive"]');
+  masked = true;
+  await act(async () => {
+    for (const listener of listeners) listener({ type: "settings.changed" });
+  });
+  await vi.waitFor(() => expect(container.textContent).toContain("[REDACTED]"));
+  await act(async () => {
+    finish([{ name: "echo", kind: "download", state: "ready", detail: "private-status" }]);
+  });
+  await vi.waitFor(() => expect(container.textContent).not.toContain("private-status"));
+  expect(container.textContent).toContain("[REDACTED]");
+  expect(calls("plugins.check")).toHaveLength(1);
+  expect(calls("plugins.installArchive")).toHaveLength(1);
 });

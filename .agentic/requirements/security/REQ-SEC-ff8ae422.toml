@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-SEC-ff8ae422"
+title = "Run presentation refuses foreign workbench ownership"
+status = "active"
+requirement = "If run presentation targets a workbench other than the current owner or ownership changes during an asynchronous read, VERA shall refuse disclosure with CONFLICT."
+verification = "Request another workbench ID and switch owner while list/log/status reads wait; assert CONFLICT rather than another workbench policy or output."
+affected_paths = ["05_Software/src/apps/desktop/src/main/run-presentation.ts", "05_Software/src/apps/desktop/src/main/index.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/run-presentation.test.ts", "05_Software/tests/e2e/run-masking.spec.ts"]
+spec = ""
+priority = "normal"
+created = 2026-11-17
+updated = 2026-11-17
