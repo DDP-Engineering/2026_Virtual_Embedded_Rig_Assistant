@@ -1,25 +1,21 @@
 #!/usr/bin/env python3
-# -----------------------------------------------------------------------------
-# Copyright (c) 2026 DDP Engineering
-# This software is licensed under the PolyForm Noncommercial License 1.0.0.
-# Commercial use requires a separate commercial license.
-# See the LICENSE.txt in the .agentic folder for full license details.
+# SPDX-FileCopyrightText: 2026 DDP Engineering
 # SPDX-License-Identifier: LicenseRef-PolyForm-Noncommercial-1.0.0
-# -----------------------------------------------------------------------------
 """
-@file aegis.py
-@brief The AEGIS companion CLI: a scaffolder and a reporter.
-@details Single file, stdlib only, Python >= 3.11. Invoked as
-         `python .agentic/aegis.py <cmd>` from the repo root on Windows and
-         Linux alike; it locates its own `.agentic` directory from
-         `__file__`, never from the working directory. Commands exit 0 on
-         success and 1 with a one-line message on user error - no
-         tracebacks for expected failures.
-@details The ownership split is law here: `requirements/`,
-         `specs/`, `tasks/` and `knowledge/` are user data and are only
-         ever created as empty folders; `context/` holds project-owned
-         Markdown scaffolds. Context files and `aegis.toml` are written only
-         when absent; root pointer files are appended to under a marker.
+The AEGIS companion CLI: a scaffolder and a reporter.
+
+Single file, stdlib only, Python >= 3.11. Invoked as
+`python .agentic/aegis.py <cmd>` from the repo root on Windows and
+Linux alike; it locates its own `.agentic` directory from
+`__file__`, never from the working directory. Commands exit 0 on
+success and 1 with a one-line message on user error - no
+tracebacks for expected failures.
+
+The ownership split is law here: `requirements/`,
+`specs/`, `tasks/` and `knowledge/` are user data and are only
+ever created as empty folders; `context/` holds project-owned
+Markdown scaffolds. Context files and `aegis.toml` are written only
+when absent; root pointer files are appended to under a marker.
 """
 
 from __future__ import annotations
@@ -42,7 +38,7 @@ from pathlib import Path
 
 import tomllib
 
-VERSION = "0.15.0"
+VERSION = "0.16.1"
 SCHEMA = 1
 
 AGENTIC = Path(__file__).resolve().parent
@@ -116,7 +112,7 @@ test = "pytest -q"
 # Nothing here by default: a command is stopped only when you ask for it,
 # because a limit short enough to cut off a healthy suite would report a
 # failure that never happened. A stopped command is reported as proving
-# nothing - never as a failure.
+# nothing (`command-timeout`) - never as a failed test.
 # test = 5400
 # lint = 120
 
@@ -130,7 +126,7 @@ docs = []  # documentation paths; still scanned for secrets, not source
 # Set this when the branch your work merges into is not the one AEGIS would
 # find on its own. Without it the base is whatever `origin/HEAD` points at,
 # then a local `master`, then a local `main`. It decides what `check`,
-# `impacted`, `anchor` and `evolution` consider changed.
+# `test --impacted` and `report` consider changed.
 
 [interaction]
 # false stops at every completed stage and presents the next choices.
@@ -158,6 +154,13 @@ types = ["structure"]
 # journal. The journal log line is the durable record either way.
 commit_fingerprints = false
 
+[context]
+# Size budget in KB for .agentic/context/project.md, environment.md and each
+# knowledge page. These pages are read at every frame, so edit sections in
+# place instead of adding one per task; check reports a page above the
+# budget as `context-size`. 0, or no page_kb at all, means no budget.
+page_kb = 24
+
 [zones]
 # What each stage may write besides `.agentic/`, which every stage may
 # always write. Values name the globs above: "source", "tests". A stage
@@ -183,17 +186,28 @@ strict_promote = []
 POINTER_DIGEST = """\
 ## AEGIS workflow
 
-This repository uses AEGIS to guide software implementation, one feature,
-fix or change per task. Before changing the product, read
-`.agentic/AGENTS.md`; it routes you to one step file per stage.
+This repository uses AEGIS for changes that add or change a durable product
+rule: logic, data, security, performance, integrations, or a product-wide UI
+rule such as a theme, layout system, accessibility or interaction
+convention. For those, read `.agentic/AGENTS.md` first; it routes you to one
+step file per stage.
 
-- New work: run `python .agentic/aegis.py status` (an open task may cover
-  it), then follow `.agentic/steps/1_frame.md`.
+Make other changes directly, with no journal or requirement: a bug fix that
+restores intended behavior, a local UI adjustment (one element's position,
+spacing, wording or style), a refactor with no behavior change, or a test,
+docs or tooling fix. A fix that contradicts an active requirement, adds
+behavior, or touches security or data handling uses AEGIS. The user's
+explicit choice wins; otherwise start with one line,
+`LANE: direct|aegis - <why>`.
+
+- New AEGIS work: run `python .agentic/aegis.py status` (an open task may
+  cover it), then follow `.agentic/steps/1_frame.md`.
 - An existing task: run `python .agentic/aegis.py brief TASK-<id>` and read
   what its `Read next` line names.
 
-Stages: frame -> specify -> design -> build -> validate -> done; the quick
-path is frame -> build -> validate -> done. The CLI writes the journal state:
+Stages: frame -> specify -> design -> build -> validate -> done; specify and
+design have skip rules for work that does not need them. The CLI writes the
+journal state:
 `advance` finishes a stage, `pause` stops for the user, `log` and `ruling`
 record events and decisions. End every session with `advance` or `pause`.
 
@@ -210,11 +224,8 @@ class UserError(Exception):
     """An expected failure, reported as one line without a traceback."""
 
 
-# small helpers
-
-
 def today() -> str:
-    """@brief Today's date as YYYY-MM-DD."""
+    """Today's date as YYYY-MM-DD."""
     # DTZ011 is suppressed below: the local calendar date is the intent. A
     # journal line dated in UTC would disagree with the human writing it on
     # either side of midnight.
@@ -222,13 +233,13 @@ def today() -> str:
 
 
 def utc_now() -> str:
-    """@brief Current UTC time as a stable ISO 8601 string."""
+    """Current UTC time as a stable ISO 8601 string."""
     return (_dt.datetime.now(_dt.timezone.utc).isoformat(timespec="microseconds")
             .replace("+00:00", "Z"))
 
 
 def rel(path: Path) -> str:
-    """@brief Repo-relative path with forward slashes, for output and storage."""
+    """Repo-relative path with forward slashes, for output and storage."""
     try:
         return path.resolve().relative_to(ROOT).as_posix()
     except ValueError:
@@ -236,17 +247,18 @@ def rel(path: Path) -> str:
 
 
 def generated_python_cache(path: str) -> bool:
-    """@brief Whether a repository path is generated Python bytecode."""
+    """Whether a repository path is generated Python bytecode."""
     parts = path.split("/")
     return "__pycache__" in parts or path.lower().endswith((".pyc", ".pyo"))
 
 
 def read_text(path: Path) -> str:
     """
-    @brief Read UTF-8 text with newlines normalised to LF.
-    @details A corrupt (non-UTF-8) artifact is a one-line user error, not a
-             traceback - `check` must be able to report it like any other
-             broken file.
+    Read UTF-8 text with newlines normalised to LF.
+
+    A corrupt (non-UTF-8) artifact is a one-line user error, not a
+    traceback - `check` must be able to report it like any other
+    broken file.
     """
     try:
         return path.read_text(encoding="utf-8").replace("\r\n", "\n")
@@ -254,17 +266,28 @@ def read_text(path: Path) -> str:
         raise UserError(f"{rel(path)} is not valid UTF-8: {exc}") from None
 
 
+def read_raw_text(path: Path) -> str:
+    """Read UTF-8 text with its newlines untouched, for a file `init` edits in place."""
+    try:
+        with path.open("r", encoding="utf-8", newline="") as handle:
+            return handle.read()  # newline="" disables universal-newline translation
+    except UnicodeDecodeError as exc:
+        raise UserError(f"{rel(path)} is not valid UTF-8; save it as UTF-8 and "
+                        f"run init again ({exc})") from None
+
+
 def write_text(path: Path, text: str) -> None:
-    """@brief Write UTF-8 text (no BOM) with LF endings, creating parents."""
+    """Write UTF-8 text (no BOM) with LF endings, creating parents."""
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(text, encoding="utf-8", newline="\n")
 
 
 def write_new(path: Path, text: str) -> None:
     """
-    @brief Create a file exclusively - a concurrent duplicate loses cleanly.
-    @details `open("x")` is the collision backstop behind the id allocator:
-             two processes racing for the same id cannot both win silently.
+    Create a file exclusively - a concurrent duplicate loses cleanly.
+
+    `open("x")` is the collision backstop behind the id allocator:
+    two processes racing for the same id cannot both win silently.
     """
     path.parent.mkdir(parents=True, exist_ok=True)
     try:
@@ -276,7 +299,7 @@ def write_new(path: Path, text: str) -> None:
 
 
 def template(name: str) -> str:
-    """@brief Load a payload template, or fail with a one-line message."""
+    """Load a payload template, or fail with a one-line message."""
     path = AGENTIC / "templates" / name
     if not path.is_file():
         raise UserError(f"missing template: {rel(path)}")
@@ -285,15 +308,17 @@ def template(name: str) -> str:
 
 def run_git(*args: str) -> tuple[int, str] | None:
     """
-    @brief Run git in the repo root with captured output.
-    @details Returns (returncode, stdout), or None when the git binary is
-             missing or the call itself failed - callers degrade, never crash.
-    @details Output is held in memory: a very large diff (generated or
-             vendored trees) costs proportional memory for the duration of
-             the call. There is no in-tool mitigation - `[check] ignore`
-             filters findings *after* the patch has been captured, so it
-             does not reduce this. Keep generated trees out of the diff
-             (`.gitignore`, a vendor submodule) if it matters here.
+    Run git in the repo root with captured output.
+
+    Returns (returncode, stdout), or None when the git binary is
+    missing or the call itself failed - callers degrade, never crash.
+
+    Output is held in memory: a very large diff (generated or
+    vendored trees) costs proportional memory for the duration of
+    the call. There is no in-tool mitigation - `[check] ignore`
+    filters findings *after* the patch has been captured, so it
+    does not reduce this. Keep generated trees out of the diff
+    (`.gitignore`, a vendor submodule) if it matters here.
     """
     try:
         out = subprocess.run(
@@ -313,10 +338,11 @@ def run_git(*args: str) -> tuple[int, str] | None:
 
 def git_head() -> str:
     """
-    @brief The checked-out commit, or "" when there is no history yet.
-    @details Recorded in a task journal at creation so every later
-             measurement of what the task changed has an exact starting
-             point instead of guessing at the branch's fork point.
+    The checked-out commit, or "" when there is no history yet.
+
+    Recorded in a task journal at creation so every later
+    measurement of what the task changed has an exact starting
+    point instead of guessing at the branch's fork point.
     """
     out = run_git("rev-parse", "HEAD")
     if out is None or out[0] != 0 or not out[1].strip():
@@ -326,9 +352,10 @@ def git_head() -> str:
 
 def git_branch() -> str:
     """
-    @brief Current git branch, or "unknown" when git is absent or fails.
-    @details `branch --show-current`, not `rev-parse --abbrev-ref HEAD`: it
-             also answers before the repository's first commit exists.
+    Current git branch, or "unknown" when git is absent or fails.
+
+    `branch --show-current`, not `rev-parse --abbrev-ref HEAD`: it
+    also answers before the repository's first commit exists.
     """
     out = run_git("branch", "--show-current")
     if out is None or out[0] != 0 or not out[1].strip():
@@ -337,7 +364,7 @@ def git_branch() -> str:
 
 
 def load_config() -> dict:
-    """@brief Parse `.agentic/aegis.toml`; empty dict when it does not exist."""
+    """Parse `.agentic/aegis.toml`; empty dict when it does not exist."""
     path = AGENTIC / "aegis.toml"
     if not path.is_file():
         return {}
@@ -350,17 +377,18 @@ def load_config() -> dict:
 
 def cfg_table(cfg: dict, name: str) -> dict:
     """
-    @brief One top-level config table, tolerating a wrongly typed value.
-    @details `commands = "text"` is valid TOML but not a table; treating it
-             as an empty table keeps every caller on the one-line error
-             contract instead of raising AttributeError.
+    One top-level config table, tolerating a wrongly typed value.
+
+    `commands = "text"` is valid TOML but not a table; treating it
+    as an empty table keeps every caller on the one-line error
+    contract instead of raising AttributeError.
     """
     value = cfg.get(name)
     return value if isinstance(value, dict) else {}
 
 
 def review_settings(cfg: dict) -> tuple[bool, int]:
-    """@brief Return fail-safe explicit-review enablement and fix-cycle bound."""
+    """Return fail-safe explicit-review enablement and fix-cycle bound."""
     table = cfg_table(cfg, "review")
     raw_enabled = table.get("enabled", False)
     enabled = raw_enabled if isinstance(raw_enabled, bool) else False
@@ -372,23 +400,24 @@ def review_settings(cfg: dict) -> tuple[bool, int]:
 
 
 def autopilot_enabled(cfg: dict) -> bool:
-    """@brief Return fail-safe configured autopilot enablement."""
+    """Return fail-safe configured autopilot enablement."""
     raw = cfg_table(cfg, "interaction").get("autopilot", False)
     return raw if isinstance(raw, bool) else False
 
 
 def commit_fingerprints(cfg: dict) -> bool:
-    """@brief Whether anchor/evolution sidecars are committed; fail-safe false."""
+    """Whether anchor/evolution sidecars are committed; fail-safe false."""
     raw = cfg_table(cfg, "records").get("commit_fingerprints", False)
     return raw if isinstance(raw, bool) else False
 
 
 def interaction_mode(cfg: dict, header: dict | None = None) -> str:
     """
-    @brief Resolve the durable task mode, then the repository default.
-    @param[in] cfg Parsed AEGIS configuration.
-    @param[in] header Optional task-journal header.
-    @return `checkpoint` or `autopilot`.
+    Resolve the durable task mode, then the repository default.
+
+    cfg: Parsed AEGIS configuration.
+    header: Optional task-journal header.
+    Returns: `checkpoint` or `autopilot`.
     """
     recorded = str((header or {}).get("interaction", "")).strip().lower()
     if recorded in INTERACTION_MODES:
@@ -397,13 +426,13 @@ def interaction_mode(cfg: dict, header: dict | None = None) -> str:
 
 
 def toml_string(value: str) -> str:
-    """@brief Quote a value as a TOML basic string."""
+    """Quote a value as a TOML basic string."""
     escaped = value.replace("\\", "\\\\").replace('"', '\\"')
     return f'"{escaped}"'
 
 
 def new_id(taken: set[str]) -> str:
-    """@brief A fresh 8-hex-char CSPRNG id not present in `taken`."""
+    """A fresh 8-hex-char CSPRNG id not present in `taken`."""
     for _ in range(200):
         candidate = secrets.token_hex(4)
         if candidate not in taken:
@@ -412,14 +441,12 @@ def new_id(taken: set[str]) -> str:
 
 
 def taken_ids(folder: str, pattern: str) -> set[str]:
-    """@brief The id suffixes of every artifact matching `pattern` under `folder`."""
+    """The id suffixes of every artifact matching `pattern` under `folder`."""
     return {
         path.stem.rsplit("-", 1)[-1].lower()
         for path in (AGENTIC / folder).glob(pattern)
     }
 
-
-# journal parsing - one place, reused by status and (later) check
 
 TITLE_RE = re.compile(
     r"^#[ \t]+(TASK-[0-9A-Za-z]{4,12})[ \t]*(?:—|-{1,2})[ \t]*(.*?)[ \t]*$", re.MULTILINE
@@ -430,14 +457,15 @@ CHECK_RE = re.compile(r"^\s*-\s*\[([ xX])\]\s*(.*?)\s*$")
 
 def parse_journal(text: str) -> dict:
     """
-    @brief Parse a task journal into id, title, header, checklist and log.
-    @details Plain regex over `key: value` lines - no YAML. The header is the
-             run of key/value lines that follows the `# TASK-<id> - <title>`
-             heading; it ends at the first blank line after it starts or at
-             the first line that is not a key/value pair. A repeated key keeps
-             its first written value - an empty template line never hides one,
-             and `header_with` rewrites the first line - and is listed under
-             `repeated`.
+    Parse a task journal into id, title, header, checklist and log.
+
+    Plain regex over `key: value` lines - no YAML. The header is the
+    run of key/value lines that follows the `# TASK-<id> - <title>`
+    heading; it ends at the first blank line after it starts or at
+    the first line that is not a key/value pair. A repeated key keeps
+    its first written value - an empty template line never hides one,
+    and `header_with` rewrites the first line - and is listed under
+    `repeated`.
     """
     lines = text.replace("\r\n", "\n").split("\n")
     result: dict = {"id": "", "title": "", "header": {}, "repeated": [], "checklist": [],
@@ -501,10 +529,11 @@ def parse_journal(text: str) -> dict:
 
 def read_journal(task_id: str) -> tuple[Path, dict]:
     """
-    @brief Locate and parse one journal by id, with or without the prefix.
-    @details The id is validated as pure hex before it touches the
-             filesystem - a crafted id like `TASK-../../x` must never
-             resolve outside `.agentic/tasks/`.
+    Locate and parse one journal by id, with or without the prefix.
+
+    The id is validated as pure hex before it touches the
+    filesystem - a crafted id like `TASK-../../x` must never
+    resolve outside `.agentic/tasks/`.
     """
     suffix = task_id.split("-", 1)[1] if "-" in task_id else task_id
     if not re.fullmatch(r"[0-9A-Fa-f]{4,12}", suffix):
@@ -519,7 +548,7 @@ def read_journal(task_id: str) -> tuple[Path, dict]:
 
 
 def visible_children(parent_id: str) -> list[tuple[Path, dict]]:
-    """@brief Return readable child journals visible in this checkout, sorted."""
+    """Return readable child journals visible in this checkout, sorted."""
     normalized = parent_id.upper()
     children: list[tuple[Path, dict]] = []
     for path in sorted((AGENTIC / "tasks").glob("TASK-*.md")):
@@ -533,16 +562,13 @@ def visible_children(parent_id: str) -> list[tuple[Path, dict]]:
     return sorted(children, key=lambda item: (item[1].get("id") or item[0].stem).upper())
 
 
-# repository anchor / evolution
-
-
 def state_path(journal: Path, kind: str) -> Path:
-    """@brief The task-owned anchor or evolution sidecar path."""
+    """The task-owned anchor or evolution sidecar path."""
     return journal.with_suffix(f".{kind}.json")
 
 
 def read_json_file(path: Path, label: str) -> dict:
-    """@brief Read one UTF-8 JSON object or raise a concise user error."""
+    """Read one UTF-8 JSON object or raise a concise user error."""
     try:
         value = json.loads(read_text(path))
     except json.JSONDecodeError as exc:
@@ -553,7 +579,7 @@ def read_json_file(path: Path, label: str) -> dict:
 
 
 def write_json_file(path: Path, value: dict) -> None:
-    """@brief Atomically write deterministic UTF-8/LF JSON."""
+    """Atomically write deterministic UTF-8/LF JSON."""
     text = json.dumps(value, ensure_ascii=False, indent=2, sort_keys=True) + "\n"
     fd, temporary = -1, ""
     try:
@@ -580,9 +606,10 @@ def write_json_file(path: Path, value: dict) -> None:
 
 def visible_repo_paths() -> list[str]:
     """
-    @brief Git-visible paths, excluding AEGIS state and Python bytecode caches.
-    @details `--exclude-standard` honors every normal ignore source. NUL
-             separation preserves whitespace and newlines in filenames.
+    Git-visible paths, excluding AEGIS state and Python bytecode caches.
+
+    `--exclude-standard` honors every normal ignore source. NUL
+    separation preserves whitespace and newlines in filenames.
     """
     probe = run_git("rev-parse", "--git-dir")
     if probe is None:
@@ -605,10 +632,11 @@ def visible_repo_paths() -> list[str]:
 
 def fingerprint(path: Path, name: str) -> dict | None:
     """
-    @brief A stable content identity for a regular file, symlink, or submodule.
-    @details Regular files stream through SHA-256. Symlinks hash their link
-             text rather than following it. A missing tracked path is omitted,
-             which represents its current worktree deletion.
+    A stable content identity for a regular file, symlink, or submodule.
+
+    Regular files stream through SHA-256. Symlinks hash their link
+    text rather than following it. A missing tracked path is omitted,
+    which represents its current worktree deletion.
     """
     try:
         if path.is_symlink():
@@ -627,9 +655,17 @@ def fingerprint(path: Path, name: str) -> dict | None:
                 raise UserError(f"{name} changed while it was being fingerprinted")
             return {"kind": "file", "sha256": digest.hexdigest()}
         if path.is_dir():
-            head = run_git("-C", name, "rev-parse", "HEAD")
-            if head and head[0] == 0 and head[1].strip():
-                return {"kind": "submodule", "commit": head[1].strip()}
+            # without its own `.git`, `git -C` would answer for the repository
+            # above; an uninitialised submodule is the commit the index records
+            if (path / ".git").exists():
+                head = run_git("-C", name, "rev-parse", "HEAD")
+                commit = head[1].strip() if head and head[0] == 0 else ""
+            else:
+                entry = run_git("ls-files", "--stage", "--", name)
+                fields = entry[1].split() if entry and entry[0] == 0 else []
+                commit = fields[1] if fields[:1] == ["160000"] else ""
+            if commit:
+                return {"kind": "submodule", "commit": commit}
             raise UserError(f"cannot fingerprint repository directory entry: {name}")
         if not path.exists():
             return None
@@ -641,7 +677,7 @@ def fingerprint(path: Path, name: str) -> dict | None:
 
 
 def repository_manifest() -> dict[str, dict]:
-    """@brief Current Git-visible repository content map."""
+    """Current Git-visible repository content map."""
     files: dict[str, dict] = {}
     for name in visible_repo_paths():
         value = fingerprint(ROOT / name, name)
@@ -651,7 +687,7 @@ def repository_manifest() -> dict[str, dict]:
 
 
 def file_area(path: str, source_globs: list[str], test_globs: list[str]) -> str:
-    """@brief Categorize one repository path from the anchor's layout."""
+    """Categorize one repository path from the anchor's layout."""
     if match_any(path, test_globs):
         return "tests"
     if match_any(path, source_globs):
@@ -660,14 +696,14 @@ def file_area(path: str, source_globs: list[str], test_globs: list[str]) -> str:
 
 
 def valid_utc(value: object) -> bool:
-    """@brief Whether a value is the UTC timestamp form emitted by AEGIS."""
+    """Whether a value is the UTC timestamp form emitted by AEGIS."""
     return isinstance(value, str) and bool(re.fullmatch(
         r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{6}Z", value
     ))
 
 
 def valid_fingerprint(value: object) -> bool:
-    """@brief Whether a value is a closed schema-1 repository identity."""
+    """Whether a value is a closed schema-1 repository identity."""
     if not isinstance(value, dict):
         return False
     kind = value.get("kind")
@@ -683,7 +719,7 @@ def valid_fingerprint(value: object) -> bool:
 
 
 def validate_anchor(value: dict, task: str, path: Path) -> dict:
-    """@brief Validate the closed anchor schema used by evolution and check."""
+    """Validate the closed anchor schema used by evolution and check."""
     if value.get("schema") != 1:
         raise UserError(f"{rel(path)} anchor schema must be 1")
     if value.get("task") != task:
@@ -722,7 +758,7 @@ def validate_anchor(value: dict, task: str, path: Path) -> dict:
 
 
 def validate_history(value: dict, task: str, path: Path) -> dict:
-    """@brief Validate the compact evolution-history envelope."""
+    """Validate the compact evolution-history envelope."""
     if value.get("schema") != 1:
         raise UserError(f"{rel(path)} evolution schema must be 1")
     if value.get("task") != task:
@@ -743,14 +779,14 @@ def validate_history(value: dict, task: str, path: Path) -> dict:
 
 
 def evolution_history(path: Path, task: str) -> dict:
-    """@brief Existing compact history, or a new empty envelope."""
+    """Existing compact history, or a new empty envelope."""
     if not path.is_file():
         return {"schema": 1, "task": task, "reports": []}
     return validate_history(read_json_file(path, "evolution"), task, path)
 
 
 def cmd_anchor(args: argparse.Namespace) -> int:
-    """@brief Record the current Git-visible repository content for one task."""
+    """Record the current Git-visible repository content for one task."""
     journal, data = read_journal(args.task)
     task = journal.stem
     anchor_file = state_path(journal, "anchor")
@@ -809,7 +845,7 @@ def cmd_anchor(args: argparse.Namespace) -> int:
 
 
 def compare_manifests(anchor: dict, current: dict[str, dict]) -> tuple[list[dict], dict]:
-    """@brief Changed entries and aggregate counts for one anchor comparison."""
+    """Changed entries and aggregate counts for one anchor comparison."""
     source_globs = list(anchor.get("source_globs", []))
     test_globs = list(anchor.get("test_globs", []))
     before_files = anchor["files"]
@@ -840,7 +876,7 @@ def compare_manifests(anchor: dict, current: dict[str, dict]) -> tuple[list[dict
 
 
 def cmd_evolution(args: argparse.Namespace) -> int:
-    """@brief Compare the repository with its active task anchor and save it."""
+    """Compare the repository with its active task anchor and save it."""
     journal, data = read_journal(args.task)
     task = journal.stem
     anchor_file = state_path(journal, "anchor")
@@ -896,16 +932,14 @@ def cmd_evolution(args: argparse.Namespace) -> int:
     return 0
 
 
-# init
-
-
 def write_pointer(name: str) -> str:
     """
-    @brief Create or update one root pointer file, never clobbering content.
-    @details An existing file keeps every byte outside the marker pair -
-             including its newline style: a CRLF file stays CRLF. The managed
-             block is appended when absent and replaced exactly between the
-             markers when present. Returns a one-word outcome for the report.
+    Create or update one root pointer file, never clobbering content.
+
+    An existing file keeps every byte outside the marker pair -
+    including its newline style: a CRLF file stays CRLF. The managed
+    block is appended when absent and replaced exactly between the
+    markers when present. Returns a one-word outcome for the report.
     """
     path = ROOT / name
     block = f"{MARK_BEGIN}\n\n{POINTER_DIGEST}\n{MARK_END}\n"
@@ -913,8 +947,7 @@ def write_pointer(name: str) -> str:
         write_text(path, f"# {name}\n\n{block}")
         return "created"
 
-    with path.open("r", encoding="utf-8", newline="") as handle:
-        raw = handle.read()  # newline="" disables universal-newline translation
+    raw = read_raw_text(path)
     crlf = "\r\n" in raw
     text = raw.replace("\r\n", "\n")
 
@@ -953,7 +986,7 @@ def write_pointer(name: str) -> str:
 
 
 def tracked_fingerprints() -> list[str] | None:
-    """@brief Sidecar paths git tracks, or None when git cannot answer."""
+    """Sidecar paths git tracks, or None when git cannot answer."""
     out = run_git("ls-files", "-z", "--", *FINGERPRINT_PATTERNS)
     if out is None or out[0] != 0:
         return None
@@ -962,11 +995,12 @@ def tracked_fingerprints() -> list[str] | None:
 
 def write_ignore_block(commit: bool) -> str:
     """
-    @brief Maintain the managed fingerprint block in the root `.gitignore`.
-    @details `commit` false ensures the block is present, creating the file
-             when absent; true removes the block and creates nothing. Every
-             byte outside the marker pair is preserved, newline style
-             included. Returns a one-word outcome for the init report.
+    Maintain the managed fingerprint block in the root `.gitignore`.
+
+    `commit` false ensures the block is present, creating the file
+    when absent; true removes the block and creates nothing. Every
+    byte outside the marker pair is preserved, newline style
+    included. Returns a one-word outcome for the init report.
     """
     path = ROOT / IGNORE_FILE
     block = "\n".join((IGNORE_MARK_BEGIN, *FINGERPRINT_PATTERNS,
@@ -977,8 +1011,7 @@ def write_ignore_block(commit: bool) -> str:
         write_text(path, block)
         return "created"
 
-    with path.open("r", encoding="utf-8", newline="") as handle:
-        raw = handle.read()
+    raw = read_raw_text(path)
     crlf = "\r\n" in raw
     text = raw.replace("\r\n", "\n")
 
@@ -1024,7 +1057,7 @@ def write_ignore_block(commit: bool) -> str:
 
 
 def cmd_init(args: argparse.Namespace) -> int:
-    """@brief Finishing step after the payload was copied into a repo."""
+    """Finishing step after the payload was copied into a repo."""
     if not (AGENTIC / "AGENTS.md").is_file():
         raise UserError(f"payload looks incomplete: no {rel(AGENTIC / 'AGENTS.md')}")
 
@@ -1100,9 +1133,6 @@ def cmd_init(args: argparse.Namespace) -> int:
     return 0
 
 
-# task / req
-
-
 #: the payload license block that opens a Markdown or TOML template; records
 #: generated from a template belong to the project and do not carry it.
 LICENSE_PROLOGUE_RE = re.compile(
@@ -1111,7 +1141,7 @@ LICENSE_PROLOGUE_RE = re.compile(
 
 
 def scaffold_template(name: str) -> str:
-    """@brief A new project record from a template: no license block, no authoring notes."""
+    """A new project record from a template: no license block, no authoring notes."""
     text = LICENSE_PROLOGUE_RE.sub("", template(name), count=1)
     text = re.sub(
         r"^<!-- AEGIS:TEMPLATE\n.*?^-->\n|"
@@ -1121,8 +1151,8 @@ def scaffold_template(name: str) -> str:
 
 
 def cmd_task(args: argparse.Namespace) -> int:
-    """@brief Scaffold a task journal from .agentic/templates/task.md."""
-    title = args.title.strip()
+    """Scaffold a task journal from .agentic/templates/task.md."""
+    title = one_line(args.title)  # a line break would continue into the header
     if not title:
         raise UserError("task title must not be empty")
     if re.fullmatch(r"TASK-[0-9A-Fa-f]{4,12}", title):
@@ -1183,7 +1213,7 @@ def cmd_task(args: argparse.Namespace) -> int:
 
 
 def cmd_req(args: argparse.Namespace) -> int:
-    """@brief Scaffold a requirement from templates/requirement.toml."""
+    """Scaffold a requirement from templates/requirement.toml."""
     key = args.category.strip().lower()
     if key not in CATEGORIES:
         known = ", ".join(sorted({v[0] for v in CATEGORIES.values()}))
@@ -1214,11 +1244,8 @@ def cmd_req(args: argparse.Namespace) -> int:
     return 0
 
 
-# status - the resume entry point
-
-
 def cmd_status(args: argparse.Namespace) -> int:
-    """@brief List task journals, or show one task's state in detail."""
+    """List task journals, or show one task's state in detail."""
     if args.task:
         return status_one(args.task, args.json)
 
@@ -1263,12 +1290,12 @@ def cmd_status(args: argparse.Namespace) -> int:
               f"{header.get('type', '?'):<8} {title}")
     if len(parsed) > STATUS_CAP:
         print(f"  ... {len(parsed) - STATUS_CAP} more (see .agentic/tasks/)")
-    print("Resume one with: python .agentic/aegis.py status TASK-<id>")
+    print("Resume one with: python .agentic/aegis.py brief TASK-<id>")
     return 0
 
 
 def status_one(task_id: str, as_json: bool = False) -> int:
-    """@brief Show one journal's header, checklist state and last log lines."""
+    """Show one journal's header, checklist state and last log lines."""
     path, data = read_journal(task_id)
     stage = data["header"].get("stage", "?")
 
@@ -1333,9 +1360,6 @@ def status_one(task_id: str, as_json: bool = False) -> int:
     return 0
 
 
-# summary - explicit recorded facts, not an inference from the log
-
-
 STAGE_REPORT_FIELDS = ("stage", "result", "current", "changed", "evidence",
                        "issues", "next", "needs_user", "spec_compliance",
                        "implementation_quality", "review_round")
@@ -1349,6 +1373,7 @@ RULING_SOURCES = ("user", "repository", "requirement", "technical")
 DEFAULT_MAX_FIX_CYCLES = 2
 #: the largest accepted `[review] max_fix_cycles`; total rounds are one more.
 MAX_FIX_CYCLES_LIMIT = 255
+MAX_REVIEW_ROUNDS = 1 + MAX_FIX_CYCLES_LIMIT
 SUMMARY_VALUE_LIMIT = 240
 BRIEF_VALUE_LIMIT = 240
 BRIEF_RULING_LIMIT = 8
@@ -1360,7 +1385,7 @@ INLINE_CODE_OR_COMMENT_RE = re.compile(
 
 
 def live_markdown_lines(text: str) -> list[str]:
-    """@brief Return visible Markdown lines, excluding fences and comments."""
+    """Return visible Markdown lines, excluding fences and comments."""
     visible_lines: list[str] = []
     comment = False
     fence = ""
@@ -1397,7 +1422,7 @@ def live_markdown_lines(text: str) -> list[str]:
 
 
 def parse_rulings(text: str) -> tuple[list[dict[str, str]], list[str]]:
-    """@brief Parse valid Rulings in journal order plus bounded diagnostics."""
+    """Parse valid Rulings in journal order plus bounded diagnostics."""
     records: list[dict[str, str]] = []
     errors: list[str] = []
     seen_ids: set[str] = set()
@@ -1451,7 +1476,7 @@ def parse_rulings(text: str) -> tuple[list[dict[str, str]], list[str]]:
 
 
 def active_rulings(records: list[dict[str, str]]) -> list[dict[str, str]]:
-    """@brief Return valid ruling records not superseded by a later record."""
+    """Return valid ruling records not superseded by a later record."""
     active: list[dict[str, str]] = []
     earlier: set[str] = set()
     for record in records:
@@ -1464,7 +1489,7 @@ def active_rulings(records: list[dict[str, str]]) -> list[dict[str, str]]:
 
 
 def parse_handoff(text: str) -> dict[str, str]:
-    """@brief Read one optional strict Handoff field section."""
+    """Read one optional strict Handoff field section."""
     fields: dict[str, str] = {}
     active = seen = False
     for line in live_markdown_lines(text):
@@ -1494,10 +1519,12 @@ def parse_handoff(text: str) -> dict[str, str]:
 
 
 def parse_stage_report(text: str) -> dict[str, str]:
-    """@brief Read one optional plain-field Stage report; reject ambiguity.
-    @details Empty scaffold fields are valid. This parser deliberately does
-             not alter the legacy journal parser or its status JSON schema.
-    @exception UserError An unknown, duplicate or malformed field/section.
+    """Read one optional plain-field Stage report; reject ambiguity.
+
+    Empty scaffold fields are valid. This parser deliberately does
+    not alter the legacy journal parser or its status JSON schema.
+
+    Raises UserError: An unknown, duplicate or malformed field/section.
     """
     fields: dict[str, str] = {}
     active = seen = False
@@ -1559,14 +1586,15 @@ def parse_stage_report(text: str) -> dict[str, str]:
         if value and allowed is not None and value not in allowed:
             raise UserError(f"invalid Stage report {key}; expected {', '.join(allowed)}")
         if key == "review_round" and value and (
-                not value.isdecimal() or not 1 <= int(value) <= 6):
-            raise UserError("invalid Stage report review_round; expected 1 through 6")
+                not value.isdecimal() or not 1 <= int(value) <= MAX_REVIEW_ROUNDS):
+            raise UserError("invalid Stage report review_round; expected 1 through "
+                            f"{MAX_REVIEW_ROUNDS}")
         fields[key] = value
     return fields
 
 
 def bound_stage_report(text: str, current: str) -> tuple[dict[str, str], str]:
-    """@brief Parse the current Stage report or return a freshness notice."""
+    """Parse the current Stage report or return a freshness notice."""
     record = parse_stage_report(text)
     notice = ""
     if not any(record.values()):
@@ -1579,7 +1607,7 @@ def bound_stage_report(text: str, current: str) -> tuple[dict[str, str], str]:
 
 
 def summary_value(value: str) -> tuple[str, bool]:
-    """@brief Make one bounded printable line, explicitly marking any omission."""
+    """Make one bounded printable line, explicitly marking any omission."""
     clean = " ".join("".join(char if char.isprintable() else " "
                              for char in value).split()) or "not recorded"
     if len(clean) <= SUMMARY_VALUE_LIMIT:
@@ -1588,34 +1616,34 @@ def summary_value(value: str) -> tuple[str, bool]:
     return clean[:SUMMARY_VALUE_LIMIT - len(suffix)] + suffix, True
 
 
-# state - one CLI-written block; legacy Handoff and Stage report stay readable
-
 #: the `## State` fields, in the order the CLI writes them.
 STATE_FIELDS = ("status", "reported", "next", "must_read", "changed", "evidence",
                 "issues", "spec_compliance", "implementation_quality", "review_round")
 #: working: a stage is in progress; waiting/blocked: the user is needed;
 #: ready: the next stage can start; done: implementation guidance is complete.
 STATE_STATUSES = ("working", "waiting", "blocked", "ready", "done")
-#: the stages each path walks; deliver is a legacy stage that closes to done.
-PATH_STAGES = {"full": ("frame", "specify", "design", "build", "validate", "done"),
-               "quick": ("frame", "build", "validate", "done")}
+#: the stages every task walks; specify and design may be recorded as skipped.
+#: deliver is a legacy stage that closes to done.
+WORK_STAGES = ("frame", "specify", "design", "build", "validate", "done")
 ADOPT_STAGES = ("survey", "components", "close", "done")
 FENCE_RE = re.compile(r"^ {0,3}(`{3,}|~{3,})")
 
 
 def one_line(value: str | None) -> str:
-    """@brief Collapse a command-line value to one printable line for a record field."""
+    """Collapse a command-line value to one printable line for a record field."""
     return " ".join("".join(char if char.isprintable() else " "
                             for char in (value or "")).split())
 
 
 def section_bounds(text: str, name: str) -> tuple[int, int] | None:
     """
-    @brief Line span of the body of the first `## <name>...` section.
-    @details Headings inside fenced blocks are content, not structure. The span
-             runs from the line after the heading to the next level-two heading
-             or the end of the text.
-    @return (first body line, end line) indexes into `text.split("\\n")`, or None.
+    Line span of the body of the first `## <name>...` section.
+
+    Headings inside fenced blocks are content, not structure. The span
+    runs from the line after the heading to the next level-two heading
+    or the end of the text.
+
+    Returns: (first body line, end line) indexes into `text.split("\\n")`, or None.
     """
     lines = text.split("\n")
     fence = ""
@@ -1639,7 +1667,7 @@ def section_bounds(text: str, name: str) -> tuple[int, int] | None:
 
 
 def section_with(text: str, name: str, body: str) -> str:
-    """@brief Replace a section's body, or append the section when it is missing."""
+    """Replace a section's body, or append the section when it is missing."""
     span = section_bounds(text, name)
     if span is None:
         return text.rstrip("\n") + f"\n\n## {name}\n\n{body.rstrip()}\n"
@@ -1653,7 +1681,7 @@ def section_with(text: str, name: str, body: str) -> str:
 
 
 def lines_appended(text: str, span: tuple[int, int], line: str) -> str:
-    """@brief Insert `line` after the last non-blank line of a section body."""
+    """Insert `line` after the last non-blank line of a section body."""
     lines = text.split("\n")
     start, end = span
     last = end
@@ -1664,7 +1692,7 @@ def lines_appended(text: str, span: tuple[int, int], line: str) -> str:
 
 
 def section_without(text: str, name: str) -> str:
-    """@brief Remove a section, heading included; absent sections leave text unchanged."""
+    """Remove a section, heading included; absent sections leave text unchanged."""
     span = section_bounds(text, name)
     if span is None:
         return text
@@ -1674,7 +1702,7 @@ def section_without(text: str, name: str) -> str:
 
 
 def log_with(text: str, message: str) -> str:
-    """@brief Append one dated line at the end of the Log section, keeping older lines."""
+    """Append one dated line at the end of the Log section, keeping older lines."""
     line = f"- {today()} {message}"
     span = section_bounds(text, "log")
     return section_with(text, "Log", line) if span is None else lines_appended(text, span, line)
@@ -1682,10 +1710,11 @@ def log_with(text: str, message: str) -> str:
 
 def header_with(text: str, key: str, value: str) -> str:
     """
-    @brief Set one journal header line, or add it at the end of the header block.
-    @details The header is read as parse_journal reads it - the key/value lines
-             under the title, up to the first blank line - so a same-named
-             field in a later section is never touched.
+    Set one journal header line, or add it at the end of the header block.
+
+    The header is read as parse_journal reads it - the key/value lines
+    under the title, up to the first blank line - so a same-named
+    field in a later section is never touched.
     """
     entry = f"{key}: {value}".rstrip()
     lines = text.split("\n")
@@ -1714,15 +1743,16 @@ def header_with(text: str, key: str, value: str) -> str:
 
 
 def has_section(text: str, name: str) -> bool:
-    """@brief Whether a live (unfenced, uncommented) `## <name>` heading exists."""
+    """Whether a live (unfenced, uncommented) `## <name>` heading exists."""
     return any(line.startswith("## ") and line[3:].strip().lower() == name
                for line in live_markdown_lines(text))
 
 
 def parse_state(text: str) -> dict[str, str]:
     """
-    @brief Read the CLI-written `## State` fields; reject ambiguity or invalid values.
-    @exception UserError An unknown, duplicate or malformed field or section.
+    Read the CLI-written `## State` fields; reject ambiguity or invalid values.
+
+    Raises UserError: An unknown, duplicate or malformed field or section.
     """
     fields: dict[str, str] = {}
     active = seen = False
@@ -1754,14 +1784,14 @@ def parse_state(text: str) -> dict[str, str]:
                 and value not in REVIEW_VERDICTS:
             raise UserError(f"invalid State {key}; expected {', '.join(REVIEW_VERDICTS)}")
         if key == "review_round" and value and (
-                not value.isdecimal() or not 1 <= int(value) <= 6):
-            raise UserError("invalid State review_round; expected 1 through 6")
+                not value.isdecimal() or not 1 <= int(value) <= MAX_REVIEW_ROUNDS):
+            raise UserError(f"invalid State review_round; expected 1 through {MAX_REVIEW_ROUNDS}")
         fields[key] = value
     return fields
 
 
 def stored_state(text: str) -> dict[str, str]:
-    """@brief Recorded state fields from `## State` or the legacy sections; {} when unreadable."""
+    """Recorded state fields from `## State` or the legacy sections; {} when unreadable."""
     try:
         if has_section(text, "state"):
             return parse_state(text)
@@ -1782,13 +1812,15 @@ def stored_state(text: str) -> dict[str, str]:
 
 def journal_state(text: str, current: str) -> tuple[dict[str, str], str]:
     """
-    @brief The journal's current state in Stage-report terms, from either format.
-    @details A `## State` block is authoritative; a journal without one is read
-             from its legacy Handoff and Stage report. `needs_user` derives from
-             the status, so it is never recorded twice.
-    @return (record, notice): a missing, incomplete or stale state yields an empty
-            record and a notice that tells the reader to refresh it.
-    @exception UserError A malformed State, Handoff or Stage report.
+    The journal's current state in Stage-report terms, from either format.
+
+    A `## State` block is authoritative; a journal without one is read
+    from its legacy Handoff and Stage report. `needs_user` derives from
+    the status, so it is never recorded twice.
+
+    Returns: (record, notice): a missing, incomplete or stale state yields an empty
+    record and a notice that tells the reader to refresh it.
+    Raises UserError: A malformed State, Handoff or Stage report.
     """
     if not has_section(text, "state"):
         record, notice = bound_stage_report(text, current)
@@ -1812,7 +1844,7 @@ def journal_state(text: str, current: str) -> tuple[dict[str, str], str]:
 
 
 def state_with(text: str, state: dict[str, str]) -> str:
-    """@brief Write the State block and retire legacy Handoff and Stage report sections."""
+    """Write the State block and retire legacy Handoff and Stage report sections."""
     for legacy in ("handoff", "stage report"):
         text = section_without(text, legacy)
     body = "\n".join(f"{key}: {state.get(key, '')}".rstrip() for key in STATE_FIELDS)
@@ -1820,9 +1852,10 @@ def state_with(text: str, state: dict[str, str]) -> str:
 
 
 def review_fields(previous: dict[str, str], cfg: dict, clear: bool = False) -> dict[str, str]:
-    """@brief Review fields from the configuration and the previous state.
-    @param[in] clear Blank both verdicts while keeping the consumed round, as a
-                     changed candidate requires.
+    """Review fields from the configuration and the previous state.
+
+    clear: Blank both verdicts while keeping the consumed round, as a
+          changed candidate requires.
     """
     enabled, _cycles = review_settings(cfg)
     if not enabled:
@@ -1834,7 +1867,7 @@ def review_fields(previous: dict[str, str], cfg: dict, clear: bool = False) -> d
 
 
 def must_read(path: Path, stage: str, extra: list[str] | None = None) -> str:
-    """@brief The journal, the stage's step file and any named repository paths."""
+    """The journal, the stage's step file and any named repository paths."""
     items = [rel(path)]
     step = STAGE_STEP_FILES.get(stage)
     if step:
@@ -1852,7 +1885,7 @@ def must_read(path: Path, stage: str, extra: list[str] | None = None) -> str:
 
 
 def step_checklist(step: str) -> str | None:
-    """@brief A step file's 'Done when' list; None when the file or the list is missing."""
+    """A step file's 'Done when' list; None when the file or the list is missing."""
     path = AGENTIC / "steps" / step
     if not path.is_file():
         return None
@@ -1865,41 +1898,42 @@ def step_checklist(step: str) -> str | None:
 
 
 def done_when(stage: str) -> str | None:
-    """@brief The checklist for entering `stage`; adoption phases share one list."""
+    """The checklist for entering `stage`; adoption phases share one list."""
     step = STAGE_STEP_FILES.get(stage)
     if not step or stage in ADOPT_STAGES:
         return None
     return step_checklist(step)
 
 
-def stage_order(header: dict, stage: str) -> tuple[str, ...]:
-    """@brief The stage sequence that contains `stage` for this journal's path.
-    @details A legacy deliver stage sits between validate and done, so going
-             back to validate from it is a return."""
+def stage_order(stage: str) -> tuple[str, ...]:
+    """The stage sequence that contains `stage`.
+
+    A legacy deliver stage sits between validate and done, so going
+    back to validate from it is a return. A legacy `path:` header line
+    no longer changes the order: the old quick path's stages are a
+    subset of this one, so its journals still move forward."""
     if stage in ADOPT_STAGES and stage != "done":
         return ADOPT_STAGES
-    order = PATH_STAGES["quick" if header.get("path", "").strip() == "quick" else "full"]
-    return order[:-1] + ("deliver", "done") if stage == "deliver" else order
+    return WORK_STAGES[:-1] + ("deliver", "done") if stage == "deliver" else WORK_STAGES
 
 
-def next_stage(header: dict, stage: str) -> str:
-    """@brief The stage that follows `stage` on this journal's path."""
+def next_stage(stage: str) -> str:
+    """The stage that follows `stage`."""
     if stage == "deliver":
         return "done"
-    order = stage_order(header, stage)
+    order = stage_order(stage)
     if stage not in order or stage == "done":
-        raise UserError(f"no stage follows '{stage}' on the {header.get('path') or 'full'} "
-                        "path; name one with --to")
+        raise UserError(f"no stage follows '{stage}'; name one with --to")
     return order[order.index(stage) + 1]
 
 
 def recorded_value(value: str | None, previous: dict[str, str], key: str) -> str:
-    """@brief A new command-line value, or the previously recorded one when omitted."""
+    """A new command-line value, or the previously recorded one when omitted."""
     return one_line(value) if value is not None else previous.get(key, "")
 
 
 def summary_lines(path: Path) -> list[str]:
-    """@brief The bounded stage summary of one journal, one field per line."""
+    """The bounded stage summary of one journal, one field per line."""
     data = parse_journal(read_text(path))
     current = data["header"].get("stage", "")
     if current not in KNOWN_STAGES:
@@ -1931,14 +1965,11 @@ def summary_lines(path: Path) -> list[str]:
 
 def record_reminders(header: dict, repeated: list[str] | tuple, text: str) -> list[str]:
     """
-    @brief Records that later stages read and an edit put out of shape - the
-           header and the Rulings - printed as reminders, never refusals.
+    Records that later stages read and an edit put out of shape - the
+    header and the Rulings - printed as reminders, never refusals.
     """
     notes = [f"the header has more than one {key}: line; keep the one with its value and "
              "delete the other" for key in repeated]
-    if header.get("path", "").strip() == "quick" and not split_ids(header.get("requirements", "")):
-        notes.append("the quick path names the existing requirement IDs it restores on the "
-                     "header's requirements: line; add them")
     _records, errors = parse_rulings(text)
     if errors:
         notes.append(f"Rulings holds lines `ruling` did not write ({errors[0]}"
@@ -1954,9 +1985,9 @@ LABEL_ONLY_RE = re.compile(r"^[A-Z][A-Za-z -]*:$")
 
 def section_reminders(text: str, stage: str) -> list[str]:
     """
-    @brief A stage that pauses or completes while its own journal section is
-           still empty - comments and bare template labels only - as a
-           reminder, never a refusal.
+    A stage that pauses or completes while its own journal section is
+    still empty - comments and bare template labels only - as a
+    reminder, never a refusal.
     """
     name = STAGE_SECTIONS.get(stage)
     span = section_bounds(text, name) if name else None
@@ -1976,10 +2007,11 @@ LOG_LABEL_STAGES = {"red": "build", "green": "build", "final": "validate"}
 
 def log_reminders(header: dict, task: str, message: str) -> list[str]:
     """
-    @brief A Log line that records a later stage's work - a red, green or final
-           label, or that stage's own name - while the header still names an
-           earlier stage: a reminder to advance, never a refusal.
-    @param[in] message The stage-prefixed line as logged.
+    A Log line that records a later stage's work - a red, green or final
+    label, or that stage's own name - while the header still names an
+    earlier stage: a reminder to advance, never a refusal.
+
+    message: The stage-prefixed line as logged.
     """
     stage = header.get("stage", "")
     if stage not in KNOWN_STAGES:
@@ -1987,7 +2019,7 @@ def log_reminders(header: dict, task: str, message: str) -> list[str]:
     body = message[len(stage) + 1:] if message.lower().startswith(stage + ":") else message
     label = body.split(":", 1)[0].strip().lower()
     owner = LOG_LABEL_STAGES.get(label, label)
-    order = stage_order(header, stage)
+    order = stage_order(stage)
     if owner not in STAGE_STEP_FILES or owner not in order or stage not in order \
             or order.index(owner) <= order.index(stage):
         return []
@@ -1996,17 +2028,17 @@ def log_reminders(header: dict, task: str, message: str) -> list[str]:
             f"more {owner} work"]
 
 
-def checkpoint_hint(header: dict, stage: str, task: str) -> str:
+def checkpoint_hint(stage: str, task: str) -> str:
     """
-    @brief How a stage waiting on the user resumes when they move on: the
-           `advance` that records it. The hint is conditional; it infers no
-           approval. Adoption pauses after each component inside `components`,
-           where continuing means the next component, so that stage gets none.
+    How a stage waiting on the user resumes when they move on: the
+    `advance` that records it. The hint is conditional; it infers no
+    approval. Adoption pauses after each component inside `components`,
+    where continuing means the next component, so that stage gets none.
     """
     if stage == "components":
         return ""
     try:
-        following = next_stage(header, stage)
+        following = next_stage(stage)
     except UserError:
         return ""
     command = f"`python .agentic/aegis.py advance {task}`"
@@ -2018,9 +2050,10 @@ def checkpoint_hint(header: dict, stage: str, task: str) -> str:
 
 def cmd_pause(args: argparse.Namespace) -> int:
     """
-    @brief Record a pause or blocker in the State block, then print the summary.
-    @details Changed, evidence and issues keep their recorded values unless given;
-             review fields follow the configuration. The header stage is unchanged.
+    Record a pause or blocker in the State block, then print the summary.
+
+    Changed, evidence and issues keep their recorded values unless given;
+    review fields follow the configuration. The header stage is unchanged.
     """
     path, data = read_journal(args.task)
     text = read_text(path)
@@ -2048,11 +2081,12 @@ def cmd_pause(args: argparse.Namespace) -> int:
 
 def cmd_advance(args: argparse.Namespace) -> int:
     """
-    @brief Record a stage transition: header, Done checklist, Log line and State.
-    @details Without --to the next stage follows the journal's path; --to also
-             names a return, which waits for the user and clears enabled review
-             verdicts while keeping the consumed round. Advancing never checks
-             whether the stage's work was done - that stays the agent's call.
+    Record a stage transition: header, Done checklist, Log line and State.
+
+    Without --to the next stage follows the journal's path; --to also
+    names a return, which waits for the user and clears enabled review
+    verdicts while keeping the consumed round. Advancing never checks
+    whether the stage's work was done - that stays the agent's call.
     """
     path, data = read_journal(args.task)
     text = read_text(path)
@@ -2060,15 +2094,12 @@ def cmd_advance(args: argparse.Namespace) -> int:
     stage = header.get("stage", "")
     if stage not in KNOWN_STAGES:
         raise UserError("journal has no valid current stage")
-    if args.path:  # the path choice decides which stage follows frame
-        text = header_with(text, "path", args.path)
-        header = {**header, "path": args.path}
-    target = (args.to or next_stage(header, stage)).strip().lower()
+    target = (args.to or next_stage(stage)).strip().lower()
     if target not in KNOWN_STAGES:
         raise UserError(f"unknown stage '{target}'")
     if target == stage:
         raise UserError(f"the task is already at {stage}")
-    order = stage_order(header, stage)
+    order = stage_order(stage)
     returning = stage in order and target in order and order.index(target) < order.index(stage)
     previous = stored_state(text)
     cfg = load_config()
@@ -2123,7 +2154,7 @@ def cmd_advance(args: argparse.Namespace) -> int:
 
 
 def cmd_log(args: argparse.Namespace) -> int:
-    """@brief Append one dated, stage-prefixed line to the journal Log."""
+    """Append one dated, stage-prefixed line to the journal Log."""
     path, data = read_journal(args.task)
     message = one_line(" ".join(args.text))
     if not message:
@@ -2139,7 +2170,7 @@ def cmd_log(args: argparse.Namespace) -> int:
 
 
 def cmd_ruling(args: argparse.Namespace) -> int:
-    """@brief Append one durable decision to Rulings; earlier rulings are never edited."""
+    """Append one durable decision to Rulings; earlier rulings are never edited."""
     path, _data = read_journal(args.task)
     text = read_text(path)
     records, _errors = parse_rulings(text)
@@ -2168,10 +2199,11 @@ def cmd_ruling(args: argparse.Namespace) -> int:
 
 def cmd_verdict(args: argparse.Namespace) -> int:
     """
-    @brief Record independent review verdicts and the review round in the State block.
-    @details Verdicts come from the reviewers; this command only records them.
-             It refuses while explicit review is disabled, where both verdicts
-             stay `disabled`.
+    Record independent review verdicts and the review round in the State block.
+
+    Verdicts come from the reviewers; this command only records them.
+    It refuses while explicit review is disabled, where both verdicts
+    stay `disabled`.
     """
     path, data = read_journal(args.task)
     text = read_text(path)
@@ -2182,8 +2214,8 @@ def cmd_verdict(args: argparse.Namespace) -> int:
     if not enabled:
         raise UserError("explicit review is disabled in .agentic/aegis.toml; "
                         "verdicts stay disabled")
-    if args.round is not None and not 1 <= args.round <= min(6, 1 + max_fix_cycles):
-        raise UserError(f"review round must be 1 through {min(6, 1 + max_fix_cycles)}")
+    if args.round is not None and not 1 <= args.round <= 1 + max_fix_cycles:
+        raise UserError(f"review round must be 1 through {1 + max_fix_cycles}")
     previous = stored_state(text)
     state = {key: previous.get(key, "") for key in STATE_FIELDS}
     if not state["reported"].startswith(f"{stage} - ") or not state["status"]:
@@ -2203,10 +2235,11 @@ def cmd_verdict(args: argparse.Namespace) -> int:
 
 
 def cmd_summary(args: argparse.Namespace) -> int:
-    """@brief Print a bounded stage snapshot without writes, Git or commands.
-    @details Recorded outcomes are author statements, not fresh proof. Missing
-             or mismatched bindings suppress outcome and next-action claims.
-             Any shortened value requires full-journal review before proceeding.
+    """Print a bounded stage snapshot without writes, Git or commands.
+
+    Recorded outcomes are author statements, not fresh proof. Missing
+    or mismatched bindings suppress outcome and next-action claims.
+    Any shortened value requires full-journal review before proceeding.
     """
     path, _data = read_journal(args.task)
     print("\n".join(summary_lines(path)))
@@ -2214,7 +2247,7 @@ def cmd_summary(args: argparse.Namespace) -> int:
 
 
 def brief_lines(path: Path, journal: dict, text: str, cfg: dict) -> list[str]:
-    """@brief Render one deterministic bounded resume brief from durable files."""
+    """Render one deterministic bounded resume brief from durable files."""
     header = journal.get("header", {})
     current = header.get("stage", "")
     record, state_notice = journal_state(text, current)
@@ -2256,7 +2289,7 @@ def brief_lines(path: Path, journal: dict, text: str, cfg: dict) -> list[str]:
     step = STAGE_STEP_FILES.get(current)
     read_next = (f".agentic/steps/{step}, then the State must_read paths" if step
                  else "nothing to resume; implementation guidance is complete")
-    hint = (checkpoint_hint(header, current, journal.get("id") or path.stem)
+    hint = (checkpoint_hint(current, journal.get("id") or path.stem)
             if step and not state_notice and record.get("status") == "waiting" else "")
     if hint:
         read_next += f". {hint}"
@@ -2273,7 +2306,6 @@ def brief_lines(path: Path, journal: dict, text: str, cfg: dict) -> list[str]:
         "AEGIS brief",
         f"Task: {task}",
         f"Stage: {clean(current)}",
-        f"Path: {clean(header.get('path', ''))}",
         f"Branch/base: {branch} @ {base}",
         f"Parent: {parent}",
         f"Requirements: {requirements}",
@@ -2317,9 +2349,9 @@ def brief_lines(path: Path, journal: dict, text: str, cfg: dict) -> list[str]:
 
 def diagram_decision(cfg: dict) -> str:
     """
-    @brief What design draws, computed from `[diagrams]` exactly as diagrams.md
-           defines it: only the boolean true enables; a missing or non-list
-           `types` means structure; an empty or unknown-only list draws nothing.
+    What design draws, computed from `[diagrams]` exactly as diagrams.md
+    defines it: only the boolean true enables; a missing or non-list
+    `types` means structure; an empty or unknown-only list draws nothing.
     """
     table = cfg_table(cfg, "diagrams")
     if table.get("enabled") is not True:
@@ -2333,15 +2365,13 @@ def diagram_decision(cfg: dict) -> str:
 
 
 def cmd_brief(args: argparse.Namespace) -> int:
-    """@brief Print a deterministic bounded durable resume brief."""
+    """Print a deterministic bounded durable resume brief."""
     path, journal = read_journal(args.task)
     text = read_text(path)
     for line in brief_lines(path, journal, text, load_config()):
         print(line)
     return 0
 
-
-# check - the heuristic catalog
 
 #: (slug, one-line description). The slugs are the stable vocabulary the
 #: later `--strict` promotion list will use - never rename one.
@@ -2350,7 +2380,7 @@ CHECKS: tuple[tuple[str, str], ...] = (
     ("dup-id", "id matches filename and category folder; ids are unique"),
     ("journal-header", "task journal header parses; its requirement ids exist"),
     ("spec-missing", "spec references resolve to existing files"),
-    ("uncovered-source", "changed source files are covered by affected_paths"),
+    ("uncovered-source", "with --task, changed source files are covered by affected_paths"),
     ("no-linked-tests", "active requirements have existing linked tests"),
     ("stale-paths", "affected_paths entries still exist on disk"),
     ("scope-drift", "a build/validate/deliver task's diff touches its requirements"),
@@ -2369,6 +2399,8 @@ CHECKS: tuple[tuple[str, str], ...] = (
     ("manual-verification", "a requirement is verified by hand, not by test"),
     ("review-state", "enabled explicit-review evidence matches its configured bound"),
     ("stage-zone", "the diff stays inside the current stage's write zone"),
+    ("context-size", "context and knowledge pages stay within [context] page_kb, when set"),
+    ("duplicate-heading", "context and knowledge pages repeat no level-two heading"),
 )
 
 #: the zone names a `[zones]` entry may list; both resolve to the matching
@@ -2404,6 +2436,7 @@ CONFIG_SHAPE: dict[str, dict[str, type]] = {
     "review": {"enabled": bool, "max_fix_cycles": int},
     "diagrams": {"enabled": bool, "types": list},
     "records": {"commit_fingerprints": bool},
+    "context": {"page_kb": int},
 }
 
 #: the diagram types `[diagrams] types` may name.
@@ -2411,7 +2444,7 @@ DIAGRAM_TYPES = ("structure", "sequence", "state")
 
 
 def check_config(add, cfg: dict) -> None:
-    """@brief Advisory shape check for aegis.toml: schema, tables, key types."""
+    """Advisory shape check for aegis.toml: schema, tables, key types."""
     name = ".agentic/aegis.toml"
     schema = cfg.get("schema")
     if cfg and (isinstance(schema, bool) or schema != SCHEMA):
@@ -2432,6 +2465,9 @@ def check_config(add, cfg: dict) -> None:
             and not 0 <= cycles <= MAX_FIX_CYCLES_LIMIT):
         add("WARN", "config", name,
             f"[review] max_fix_cycles should be 0 through {MAX_FIX_CYCLES_LIMIT}")
+    page_kb = cfg_table(cfg, "context").get("page_kb")
+    if isinstance(page_kb, int) and not isinstance(page_kb, bool) and page_kb < 0:
+        add("WARN", "config", name, "[context] page_kb should be 0 or more")
     types = cfg_table(cfg, "diagrams").get("types")
     if isinstance(types, list) and any(item not in DIAGRAM_TYPES for item in types):
         add("WARN", "config", name,
@@ -2465,7 +2501,7 @@ def check_config(add, cfg: dict) -> None:
 
 
 def stage_zones(cfg: dict) -> dict[str, tuple[str, ...]]:
-    """@brief DEFAULT_ZONES with any `[zones]` entry from aegis.toml applied."""
+    """DEFAULT_ZONES with any `[zones]` entry from aegis.toml applied."""
     merged = dict(DEFAULT_ZONES)
     for stage, names in cfg_table(cfg, "zones").items():
         merged[stage] = tuple(str_list(names))
@@ -2496,7 +2532,7 @@ STAGE_STEP_FILES = {
 
 
 def repo_relative_ok(entry: str) -> bool:
-    """@brief True when a stored path stays inside the repository."""
+    """True when a stored path stays inside the repository."""
     if entry.startswith(("/", "\\")) or re.match(r"^[A-Za-z]:", entry):
         return False
     return ".." not in entry.replace("\\", "/").split("/")
@@ -2529,12 +2565,15 @@ NOT_TICKET_PREFIXES = frozenset({
 
 
 def is_ticket_reference(hit: str) -> bool:
-    """@brief True when a TICKET_RE hit is a ticket, not a standard or format."""
+    """True when a TICKET_RE hit is a ticket, not a standard or format."""
     if hit.startswith(("#", "TASK-", "REQ-")):
         return True
     return hit.split("-", 1)[0].upper() not in NOT_TICKET_PREFIXES
 
 DIFF_HEADER_RE = re.compile(r"^diff --git a/(.*) b/(.*)$")
+#: `git diff` formats for people: a user's `color.ui` or `diff.external` changes
+#: what it prints, and a patch the parser cannot read looks like a clean one.
+PLAIN_PATCH = ("--no-color", "--no-ext-diff")
 
 CHECK_EPILOG = (
     f"the {len(CHECKS)} checks (slug - what silent means):\n"
@@ -2572,23 +2611,24 @@ judgement on the repository.
 
 
 def str_list(value: object) -> list[str]:
-    """@brief A TOML value as a list of strings, tolerating a scalar."""
+    """A TOML value as a list of strings, tolerating a scalar."""
     if isinstance(value, (list, tuple)):
         return [str(item) for item in value]
     return [str(value)] if value else []
 
 
 def split_ids(value: str) -> list[str]:
-    """@brief Split a `requirements:` header value into individual ids."""
+    """Split a `requirements:` header value into individual ids."""
     return [part for part in re.split(r"[\s,]+", value.strip()) if part]
 
 
 def match_path(path: str, pattern: str) -> bool:
     """
-    @brief One layout/affected_paths entry against one repo-relative path.
-    @details A trailing `/` or a bare directory name matches by prefix; an
-             entry with glob characters matches by fnmatchcase - the
-             case-sensitive variant, so Windows and Linux agree; else exact.
+    One layout/affected_paths entry against one repo-relative path.
+
+    A trailing `/` or a bare directory name matches by prefix; an
+    entry with glob characters matches by fnmatchcase - the
+    case-sensitive variant, so Windows and Linux agree; else exact.
     """
     if pattern.endswith("/"):
         # the directory itself is inside its own entry, not just its children
@@ -2599,16 +2639,17 @@ def match_path(path: str, pattern: str) -> bool:
 
 
 def match_any(path: str, patterns: list[str]) -> bool:
-    """@brief True when any entry of `patterns` matches `path`."""
+    """True when any entry of `patterns` matches `path`."""
     return any(match_path(path, pattern) for pattern in patterns)
 
 
 def default_branch(cfg: dict) -> str:
     """
-    @brief The ref the diff is based on; "" when none can be resolved.
-    @details Resolution order (documented in `check --help`): an explicit
-             `[layout] default_branch` always wins; else the branch
-             origin/HEAD points at; else a local `master`, then `main`.
+    The ref the diff is based on; "" when none can be resolved.
+
+    Resolution order (documented in `check --help`): an explicit
+    `[layout] default_branch` always wins; else the branch
+    origin/HEAD points at; else a local `master`, then `main`.
     """
     configured = str(cfg_table(cfg, "layout").get("default_branch", "") or "")
     if configured:
@@ -2636,11 +2677,12 @@ JSON_SCHEMA = 1
 
 def emit_json(payload: dict) -> None:
     """
-    @brief Print one JSON document as the command's entire stdout.
-    @details Every envelope carries `schema` so a consumer fails loudly on a
-             contract change instead of silently misparsing. Human progress
-             lines go to stderr under `--json`, keeping stdout a single
-             parseable document.
+    Print one JSON document as the command's entire stdout.
+
+    Every envelope carries `schema` so a consumer fails loudly on a
+    contract change instead of silently misparsing. Human progress
+    lines go to stderr under `--json`, keeping stdout a single
+    parseable document.
     """
     print(json.dumps({"schema": JSON_SCHEMA, **payload},
                      ensure_ascii=False, indent=2, sort_keys=False))
@@ -2649,7 +2691,7 @@ STATUS_CAP = 20
 
 
 def untracked_files() -> list[str]:
-    """@brief Relevant untracked, non-ignored files, decoded NUL-safely."""
+    """Relevant untracked, non-ignored files, decoded NUL-safely."""
     out = run_git("ls-files", "--others", "--exclude-standard", "-z")
     if not out or out[0] != 0:
         return []
@@ -2659,9 +2701,10 @@ def untracked_files() -> list[str]:
 
 def added_lines_of(file: str) -> list[tuple[str, str]]:
     """
-    @brief Every line of an untracked text file, treated as an added line.
-    @details Bounded (`MAX_SCAN_BYTES`) and binary-safe: oversized or binary
-             files contribute their name to the file list but no text.
+    Every line of an untracked text file, treated as an added line.
+
+    Bounded (`MAX_SCAN_BYTES`) and binary-safe: oversized or binary
+    files contribute their name to the file list but no text.
     """
     path = ROOT / file
     try:
@@ -2678,11 +2721,12 @@ def added_lines_of(file: str) -> list[tuple[str, str]]:
 
 def diff_base(cfg: dict, revision: str = "") -> tuple[str, str]:
     """
-    @brief The revision every diff is taken against, and why it failed.
-    @details Without an explicit revision this is the merge base with the
-             default branch - right for reviewing a whole branch. An explicit
-             revision (`--base HEAD` during the edit-run loop) is used as
-             given, so only work after that point counts as changed.
+    The revision every diff is taken against, and why it failed.
+
+    Without an explicit revision this is the merge base with the
+    default branch - right for reviewing a whole branch. An explicit
+    revision (`--base HEAD` during the edit-run loop) is used as
+    given, so only work after that point counts as changed.
     """
     probe = run_git("rev-parse", "--git-dir")
     if probe is None:
@@ -2707,14 +2751,15 @@ def collect_diff(cfg: dict,
                  revision: str = "") -> tuple[list[str], list[tuple[str, str]],
                                               list[str], str]:
     """
-    @brief Changed files and added lines versus the diff base.
-    @details File names come from `git diff --name-only -z` (robust against
-             quoted/non-ASCII paths); added text from the patch for tracked
-             files plus bounded reads of untracked files, so work in progress
-             is visible before it is ever staged. Returns (files, added
-             (file, text) pairs, gaps, reason); gaps name files whose added
-             content could not be scanned, and a non-empty reason means the
-             diff-based checks must degrade to NOTE lines.
+    Changed files and added lines versus the diff base.
+
+    File names come from `git diff --name-only -z` (robust against
+    quoted/non-ASCII paths); added text from the patch for tracked
+    files plus bounded reads of untracked files, so work in progress
+    is visible before it is ever staged. Returns (files, added
+    (file, text) pairs, gaps, reason); gaps name files whose added
+    content could not be scanned, and a non-empty reason means the
+    diff-based checks must degrade to NOTE lines.
     """
     resolved, reason = diff_base(cfg, revision)
     if reason:
@@ -2731,7 +2776,7 @@ def collect_diff(cfg: dict,
     # quotepath=false keeps non-ASCII names unquoted so header attribution
     # works for them; names with quotes or backslashes stay quoted and are
     # picked up by the per-file fallback below.
-    patch = run_git("-c", "core.quotepath=false", "diff", resolved, "--")
+    patch = run_git("-c", "core.quotepath=false", "diff", *PLAIN_PATCH, resolved, "--")
     if patch and patch[0] == 0:
         current = ""
         for line in patch[1].split("\n"):
@@ -2751,7 +2796,7 @@ def collect_diff(cfg: dict,
     # diff them one at a time, where the name is known from the file list.
     unattributed = [f for f in files if f not in seen_in_patch]
     for name in unattributed[:MAX_REDIFF_FILES]:
-        one = run_git("diff", resolved, "--", name)
+        one = run_git("diff", *PLAIN_PATCH, resolved, "--", name)
         if one and one[0] == 0:
             added.extend((name, line[1:]) for line in one[1].split("\n")
                          if line.startswith("+") and not line.startswith("+++ "))
@@ -2771,9 +2816,10 @@ def collect_diff(cfg: dict,
 
 def scan_requirements(add, skip) -> list[tuple[str, Path, dict]]:
     """
-    @brief Single pass over the requirement tree: checks 1 and 2.
-    @details Returns the parsed records for the link checks; files that fail
-             to parse at all are reported and dropped from the records.
+    Single pass over the requirement tree: checks 1 and 2.
+
+    Returns the parsed records for the link checks; files that fail
+    to parse at all are reported and dropped from the records.
     """
     records: list[tuple[str, Path, dict]] = []
     by_id: dict[str, list[str]] = {}
@@ -2830,14 +2876,15 @@ MANUAL_PREFIXES = ("Manual:", "Inspection:")
 
 def manual_method(verification: str) -> str:
     """
-    @brief The declared by-hand method, or "" when none is declared.
-    @details Some behaviors no test can settle - a look-and-see judgement, an
-             install on clean hardware, a printed page. Naming the method
-             after `Manual:` or `Inspection:` records it as a deliberate
-             choice, and check reports check 19 instead of check 6: still
-             printed, still counted, but a NOTE, so it never fails --strict
-             and never joins the standing list of tests still owed. The
-             prefix alone does not count - it has to name a method.
+    The declared by-hand method, or "" when none is declared.
+
+    Some behaviors no test can settle - a look-and-see judgement, an
+    install on clean hardware, a printed page. Naming the method
+    after `Manual:` or `Inspection:` records it as a deliberate
+    choice, and check reports check 19 instead of check 6: still
+    printed, still counted, but a NOTE, so it never fails --strict
+    and never joins the standing list of tests still owed. The
+    prefix alone does not count - it has to name a method.
     """
     text = " ".join(verification.split())
     for prefix in MANUAL_PREFIXES:
@@ -2848,12 +2895,13 @@ def manual_method(verification: str) -> str:
 
 def link_failure(entry: str) -> str:
     """
-    @brief Why one `linked_tests` entry does not resolve, or "" when it does.
-    @details The single place a linked test is judged to exist, so a finding
-             and a coverage class can never disagree about one. An entry with
-             no file part at all - a bare `::name` - is nobody's evidence of
-             anything, but it is also not a broken path, so it is passed over
-             rather than reported.
+    Why one `linked_tests` entry does not resolve, or "" when it does.
+
+    The single place a linked test is judged to exist, so a finding
+    and a coverage class can never disagree about one. An entry with
+    no file part at all - a bare `::name` - is nobody's evidence of
+    anything, but it is also not a broken path, so it is passed over
+    rather than reported.
     """
     file = entry.split("::", 1)[0]
     if not file:
@@ -2867,16 +2915,17 @@ def link_failure(entry: str) -> str:
 
 def coverage_class(record: dict) -> str:
     """
-    @brief Which coverage class one requirement record belongs to.
-    @details The single place the precedence lives, so that every reader of a
-             record - `check`, the diagram, `explain` - reaches the same
-             verdict. The ladder is `check`'s own: a withdrawn behavior first,
-             then one still in draft, which `check` deliberately says nothing
-             about; then, among active records, a linked test that does not
-             resolve, which is a warning and not evidence, then a declared
-             by-hand method where nothing is linked, then nothing at all.
-             A broken link outranks a `Manual:` method beside it, because the
-             record claims a test that is not there - the claim is the finding.
+    Which coverage class one requirement record belongs to.
+
+    The single place the precedence lives, so that every reader of a
+    record - `check`, the diagram, `explain` - reaches the same
+    verdict. The ladder is `check`'s own: a withdrawn behavior first,
+    then one still in draft, which `check` deliberately says nothing
+    about; then, among active records, a linked test that does not
+    resolve, which is a warning and not evidence, then a declared
+    by-hand method where nothing is linked, then nothing at all.
+    A broken link outranks a `Manual:` method beside it, because the
+    record claims a test that is not there - the claim is the finding.
     """
     status = str(record.get("status", "") or "")
     if status == "retired":
@@ -2891,7 +2940,7 @@ def coverage_class(record: dict) -> str:
 
 
 def check_requirement_links(add, records) -> None:
-    """@brief Per-requirement checks 4, 6, 7, 10 and 19 over the parsed records."""
+    """Per-requirement checks 4, 6, 7, 10 and 19 over the parsed records."""
     for relpath, _path, data in records:
         spec_ref = str(data.get("spec", "") or "").strip()
         if spec_ref and not repo_relative_ok(spec_ref):
@@ -2936,7 +2985,7 @@ def check_requirement_links(add, records) -> None:
 
 
 def scan_journals(add, skip, req_ids: set[str]) -> list[tuple[str, dict]]:
-    """@brief Single pass over the task journals: checks 3 and 11."""
+    """Single pass over the task journals: checks 3 and 11."""
     journals: list[tuple[str, dict]] = []
     for path in sorted((AGENTIC / "tasks").glob("TASK-*.md")):
         relpath = rel(path)
@@ -3040,7 +3089,7 @@ def scan_journals(add, skip, req_ids: set[str]) -> list[tuple[str, dict]]:
 
 
 def check_review_state(add, cfg: dict, journals: list[tuple[str, dict]]) -> None:
-    """@brief Check enabled explicit-review evidence against its finite policy."""
+    """Check enabled explicit-review evidence against its finite policy."""
     enabled, max_fix_cycles = review_settings(cfg)
     if not enabled:
         return
@@ -3078,19 +3127,23 @@ def check_review_state(add, cfg: dict, journals: list[tuple[str, dict]]) -> None
 
 def check_diff(add, skip, cfg, records, journals, scope) -> None:
     """
-    @brief Diff-based checks 5, 8, 9, 12, 13 and 20.
-    @details `scope` is the parsed journal of `--task` or None; it narrows
-             check 5's coverage set and checks 8 and 20 to that one task, and
-             its `base:` header - the commit the task started from - becomes
-             the diff basis, so the findings describe that task rather than
-             everything its branch has done. Without a usable diff every check
-             here emits one NOTE and returns.
+    Diff-based checks 5, 8, 9, 12, 13 and 20.
+
+    `scope` is the parsed journal of `--task` or None; it narrows
+    checks 8 and 20 to that one task, and its `base:` header - the
+    commit the task started from - becomes the diff basis, so the
+    findings describe that task rather than everything its branch has
+    done. Check 5 runs only with a scope: changes made outside AEGIS
+    need no requirement, so an unscoped diff says nothing about
+    coverage. Without a usable diff every check here emits one NOTE
+    and returns.
     """
     base = str(scope["header"].get("base", "")).strip() if scope else ""
     files, added, gaps, reason = collect_diff(cfg, base)
     if reason:
         for slug in DIFF_CHECKS:
-            add("NOTE", slug, "(diff)", f"skipped: {reason}")
+            if slug != "uncovered-source" or scope:
+                add("NOTE", slug, "(diff)", f"skipped: {reason}")
         return
     # WARN, not NOTE: a team that promotes `secret-in-diff` in CI is asking
     # for the secret scan to be trusted, and an unscanned file is precisely
@@ -3114,12 +3167,10 @@ def check_diff(add, skip, cfg, records, journals, scope) -> None:
         cover = [p for rid in rids for p in info.get(rid, ("", []))[1]]
         drift_journals = [(rp, d) for rp, d in journals if d["id"] == scope["id"]]
     else:
-        cover = [p for _rp, _p, d in records
-                 if str(d.get("status", "")) != "retired"
-                 for p in str_list(d.get("affected_paths"))]
+        cover = []
         drift_journals = journals
 
-    for file in files:  # 5: uncovered-source
+    for file in files if scope else []:  # 5: uncovered-source
         # a deleted file is still in the diff, but demanding a requirement
         # cover a file that no longer exists is an unactionable finding
         if not (ROOT / file).is_file():
@@ -3206,11 +3257,70 @@ def check_diff(add, skip, cfg, records, journals, scope) -> None:
                     f"edited in stage '{stage}', whose write zone is {named}")
 
 
+def level_two_headings(text: str) -> list[str]:
+    """The `## ` headings of a Markdown page, outside fenced blocks."""
+    headings: list[str] = []
+    fence = ""
+    for line in text.split("\n"):
+        opening = FENCE_RE.match(line)
+        if fence:
+            if opening and opening.group(1)[0] == fence[0] and len(opening.group(1)) >= len(fence):
+                fence = ""
+            continue
+        if opening:
+            fence = opening.group(1)
+            continue
+        if line.startswith("## "):
+            headings.append(line[3:].strip())
+    return headings
+
+
+def check_context_pages(add, skip, cfg: dict) -> None:
+    """
+    Checks 23 and 24: current-state pages stay short and edited in place.
+
+    Project context and knowledge pages are read at every frame, so a
+    page that grows by a section per task makes every later task pay
+    for it. `context-size` reports a page above `[context] page_kb`
+    (0 or no setting means no budget); `duplicate-heading` reports a
+    level-two heading written twice, the mark of a section appended
+    instead of edited. An unreadable page is skipped here; `components`
+    reports a knowledge page it cannot read.
+    """
+    budget = cfg_table(cfg, "context").get("page_kb")
+    if isinstance(budget, bool) or not isinstance(budget, int) or budget < 0:
+        budget = 0  # no budget; check_config reports a bad value
+    pages: list[tuple[Path, str]] = []
+    for name in CONTEXT_FILES:
+        path = AGENTIC / "context" / name
+        if path.is_file() and not path.is_symlink():
+            try:
+                pages.append((path, read_text(path)))
+            except (UserError, OSError):
+                continue
+    pages += knowledge_page_texts(on_error=lambda _path, _exc: None)
+    for path, text in pages:
+        relpath = rel(path)
+        if skip(relpath):
+            continue
+        size_kb = -(-len(text.encode("utf-8")) // 1024)
+        if budget and size_kb > budget:
+            add("WARN", "context-size", relpath, f"{size_kb} KB > page_kb {budget}")
+        counts: dict[str, int] = {}
+        for heading in level_two_headings(text):
+            counts[heading] = counts.get(heading, 0) + 1
+        for heading, count in counts.items():
+            if count > 1:
+                add("WARN", "duplicate-heading", relpath,
+                    f"'## {heading}' appears {count} times")
+
+
 def run_checks(cfg: dict, task: str | None) -> list[tuple[str, str, str, str]]:
     """
-    @brief Collect the full findings list of the check catalog.
-    @details Shared by `check` and `report`. `task` scopes the diff-based
-             checks to that journal exactly as `check --task` does.
+    Collect the full findings list of the check catalog.
+
+    Shared by `check` and `report`. `task` scopes the diff-based
+    checks to that journal exactly as `check --task` does.
     """
     ignore = str_list(cfg_table(cfg, "check").get("ignore"))
     findings: list[tuple[str, str, str, str]] = []
@@ -3236,6 +3346,7 @@ def run_checks(cfg: dict, task: str | None) -> list[tuple[str, str, str, str]]:
     journals = scan_journals(add, skip, req_ids)
     check_review_state(add, cfg, journals)
     check_diff(add, skip, cfg, records, journals, scope)
+    check_context_pages(add, skip, cfg)
     if scope_path is not None and scope is not None:
         check_repo_evolution(add, scope_path, scope)
     return findings
@@ -3243,12 +3354,13 @@ def run_checks(cfg: dict, task: str | None) -> list[tuple[str, str, str, str]]:
 
 def check_fingerprints(add, cfg: dict) -> None:
     """
-    @brief Report anchor/evolution sidecars whose git state contradicts
-           `[records] commit_fingerprints`.
-    @details With the setting false, sidecars still tracked are a warning
-             and a missing managed ignore block is a note; with it true, a
-             leftover block is a warning. AEGIS never untracks a file: the
-             remedy is printed for a human to run.
+    Report anchor/evolution sidecars whose git state contradicts
+    `[records] commit_fingerprints`.
+
+    With the setting false, sidecars still tracked are a warning
+    and a missing managed ignore block is a note; with it true, a
+    leftover block is a warning. AEGIS never untracks a file: the
+    remedy is printed for a human to run.
     """
     commit = commit_fingerprints(cfg)
     path = ROOT / IGNORE_FILE
@@ -3268,7 +3380,7 @@ def check_fingerprints(add, cfg: dict) -> None:
 
 
 def check_repo_evolution(add, journal: Path, scope: dict) -> None:
-    """@brief Report missing or unreadable state records for one scoped task."""
+    """Report missing or unreadable state records for one scoped task."""
     task = journal.stem
     anchor_file = state_path(journal, "anchor")
     history_file = state_path(journal, "evolution")
@@ -3302,14 +3414,15 @@ def check_repo_evolution(add, journal: Path, scope: dict) -> None:
 
 def command_timeout(cfg: dict, name: str = "") -> int | None:
     """
-    @brief The limit for one command in seconds, or None for no limit.
-    @details `[timeouts] <name>` wins, then the shared `[commands] timeout`,
-             and absent means None: nothing shipped may stop a command the
-             repository believes is healthy. A suite that legitimately runs
-             for an hour is the repository's business, and a limit low enough
-             to cut it short would report a failure that never happened. Zero,
-             negative and unreadable values all mean no limit too, so the only
-             way to get one is to ask for it.
+    The limit for one command in seconds, or None for no limit.
+
+    `[timeouts] <name>` wins, then the shared `[commands] timeout`,
+    and absent means None: nothing shipped may stop a command the
+    repository believes is healthy. A suite that legitimately runs
+    for an hour is the repository's business, and a limit low enough
+    to cut it short would report a failure that never happened. Zero,
+    negative and unreadable values all mean no limit too, so the only
+    way to get one is to ask for it.
     """
     table = cfg_table(cfg, "timeouts")
     raw = table.get(name) if name and name in table else \
@@ -3325,13 +3438,14 @@ def command_timeout(cfg: dict, name: str = "") -> int | None:
 
 def command_workdir(cfg: dict) -> Path:
     """
-    @brief Where configured commands run: `[commands] workdir`, else the root.
-    @details A repository whose application sits below the root would
-             otherwise have to embed a directory change in the command
-             string, which silently invalidates every path substituted into
-             that command. An absent, escaping, or missing directory falls
-             back to the root - the `config` check reports it; nothing here
-             blocks.
+    Where configured commands run: `[commands] workdir`, else the root.
+
+    A repository whose application sits below the root would
+    otherwise have to embed a directory change in the command
+    string, which silently invalidates every path substituted into
+    that command. An absent, escaping, or missing directory falls
+    back to the root - the `config` check reports it; nothing here
+    blocks.
     """
     raw = str(cfg_table(cfg, "commands").get("workdir", "")).strip()
     if not raw or not repo_relative_ok(raw):
@@ -3342,10 +3456,11 @@ def command_workdir(cfg: dict) -> Path:
 
 def runnable_commands(cfg: dict) -> list[tuple[str, str]]:
     """
-    @brief The `[commands]` entries that can run as-is, in file order.
-    @details The reserved keys - which name configuration, not commands -
-             and template entries containing `{` (such as `test_impacted`)
-             are not directly runnable and are skipped.
+    The `[commands]` entries that can run as-is, in file order.
+
+    The reserved keys - which name configuration, not commands -
+    and template entries containing `{` (such as `test_impacted`)
+    are not directly runnable and are skipped.
     """
     return [
         (name, value)
@@ -3357,10 +3472,11 @@ def runnable_commands(cfg: dict) -> list[tuple[str, str]]:
 
 def kill_tree(proc: subprocess.Popen) -> bool:
     """
-    @brief Kill a timed-out command and its descendants, per platform.
-    @details Returns True when the platform reported a successful tree kill;
-             False means descendants may have survived (restricted sandboxes
-             can deny `taskkill`) and the caller must say so.
+    Kill a timed-out command and its descendants, per platform.
+
+    Returns True when the platform reported a successful tree kill;
+    False means descendants may have survived (restricted sandboxes
+    can deny `taskkill`) and the caller must say so.
     """
     if sys.platform == "win32":
         killed = False
@@ -3386,25 +3502,26 @@ def kill_tree(proc: subprocess.Popen) -> bool:
 def run_command(command: str, timeout: int | None, capture: bool = True,
                 cwd: Path | None = None) -> tuple[int, float, list[str], bool]:
     """
-    @brief Run one configured shell command, by default in the repo root.
-    @details Returns (exit code, seconds, captured output tail, stopped). The
-             `stopped` flag says the limit ended the command, which the exit
-             code alone cannot: a command is free to exit 124 by itself, and a
-             caller reporting whether anything was proven must not guess. Exit
-             124 on timeout: the command's process tree is killed where the platform
-             allows it (`taskkill /F /T` on Windows, the session group on
-             POSIX), and when that kill is refused - restricted sandboxes do
-             refuse it - the shell is still killed and the returned tail says
-             descendants may have survived. Exit 127 when the command could
-             not be launched at all. With capture=False the output streams to
-             the console and the tail is empty - used by `aegis test`, where
-             live output matters. Captured output goes to a temporary file,
-             so memory stays flat whatever the command emits and only the
-             last 4 KiB is ever read back. The cost moves to the temp
-             volume - note this is a cost capture *adds*: run in a terminal
-             the same output would stream and be discarded, so a
-             pathologically noisy command can fill the temp volume here
-             when it would not have filled anything there.
+    Run one configured shell command, by default in the repo root.
+
+    Returns (exit code, seconds, captured output tail, stopped). The
+    `stopped` flag says the limit ended the command, which the exit
+    code alone cannot: a command is free to exit 124 by itself, and a
+    caller reporting whether anything was proven must not guess. Exit
+    124 on timeout: the command's process tree is killed where the platform
+    allows it (`taskkill /F /T` on Windows, the session group on
+    POSIX), and when that kill is refused - restricted sandboxes do
+    refuse it - the shell is still killed and the returned tail says
+    descendants may have survived. Exit 127 when the command could
+    not be launched at all. With capture=False the output streams to
+    the console and the tail is empty - used by `aegis test`, where
+    live output matters. Captured output goes to a temporary file,
+    so memory stays flat whatever the command emits and only the
+    last 4 KiB is ever read back. The cost moves to the temp
+    volume - note this is a cost capture *adds*: run in a terminal
+    the same output would stream and be discarded, so a
+    pathologically noisy command can fill the temp volume here
+    when it would not have filled anything there.
     """
     start = time.monotonic()
     kwargs: dict = {"cwd": str(cwd or ROOT), "shell": True}
@@ -3465,11 +3582,12 @@ SIDE_EFFECT_NAME_RE = re.compile(r"deploy|migrat|publish|release|push|upload",
 
 def plan_configured_commands(cfg: dict) -> list[tuple[str, str, str, str]]:
     """
-    @brief Decide what `check --run` would execute, without executing it.
-    @details Returns one `(name, command, decision, reason)` per configured
-             entry, where `decision` is `run` or `skipped`. Both the preview
-             and the real run read this single function, so a `--dry-run`
-             plan can never promise a different set than `--run` delivers.
+    Decide what `check --run` would execute, without executing it.
+
+    Returns one `(name, command, decision, reason)` per configured
+    entry, where `decision` is `run` or `skipped`. Both the preview
+    and the real run read this single function, so a `--dry-run`
+    plan can never promise a different set than `--run` delivers.
     """
     allowed = str_list(cfg_table(cfg, "check").get("run"))
     plan: list[tuple[str, str, str, str]] = []
@@ -3487,18 +3605,19 @@ def plan_configured_commands(cfg: dict) -> list[tuple[str, str, str, str]]:
 
 def preview_configured_commands(cfg: dict, stream=None) -> list[dict]:
     """
-    @brief Print what `check --run` would execute, and run nothing.
-    @details `--run` already prints `run: <name> started` before each command,
-             but that reaches a human watching a live terminal - an agent
-             calling the command through a shell tool receives all output only
-             once the command has returned, by which time an hour-long suite
-             has already been spent. A caller that must decide *whether* it can
-             afford this proof needs the answer beforehand, so this prints the
-             plan and the per-command limit, and returns.
+    Print what `check --run` would execute, and run nothing.
 
-             The limit is the honest duration signal available without running
-             anything: `no limit` says the repository believes the command may
-             legitimately take as long as it takes.
+    `--run` already prints `run: <name> started` before each command,
+    but that reaches a human watching a live terminal - an agent
+    calling the command through a shell tool receives all output only
+    once the command has returned, by which time an hour-long suite
+    has already been spent. A caller that must decide *whether* it can
+    afford this proof needs the answer beforehand, so this prints the
+    plan and the per-command limit, and returns.
+
+    The limit is the honest duration signal available without running
+    anything: `no limit` says the repository believes the command may
+    legitimately take as long as it takes.
     """
     out = stream if stream is not None else sys.stdout
     plan = plan_configured_commands(cfg)
@@ -3527,21 +3646,23 @@ def preview_configured_commands(cfg: dict, stream=None) -> list[dict]:
 def run_configured_commands(cfg: dict, findings: list,
                             stream=None) -> list[dict]:
     """
-    @brief Execute the verification `[commands]` entries for `check --run`.
-    @details `check --run` is a verification pass, not a deployment tool: an
-             explicit `[check] run` list restricts execution to those names;
-             without one, every plain entry runs except names that look like
-             side effects (deploy/migrate/publish/release/push/upload), which
-             are skipped with a visible line. Progress prints as each command
-             finishes rather than at the end, so a long suite does not look
-             hung. Each failure appends an ERROR finding (`command-failed`),
-             and running *nothing* appends an ERROR (`nothing-ran`), which
-             fails strict mode on its own - silence must never read as proof
-             that the suite passed. What *did* run is only ever what
-             `[commands]` (minus `[check] run` exclusions) covers.
-    @details Progress goes to `stream` (stdout by default; stderr under
-             `--json`, so stdout stays one parseable document). Returns one
-             record per configured command for the JSON envelope.
+    Execute the verification `[commands]` entries for `check --run`.
+
+    `check --run` is a verification pass, not a deployment tool: an
+    explicit `[check] run` list restricts execution to those names;
+    without one, every plain entry runs except names that look like
+    side effects (deploy/migrate/publish/release/push/upload), which
+    are skipped with a visible line. Progress prints as each command
+    finishes rather than at the end, so a long suite does not look
+    hung. Each failure appends an ERROR finding (`command-failed`),
+    and running *nothing* appends an ERROR (`nothing-ran`), which
+    fails strict mode on its own - silence must never read as proof
+    that the suite passed. What *did* run is only ever what
+    `[commands]` (minus `[check] run` exclusions) covers.
+
+    Progress goes to `stream` (stdout by default; stderr under
+    `--json`, so stdout stays one parseable document). Returns one
+    record per configured command for the JSON envelope.
     """
     entries = plan_configured_commands(cfg)
     out = stream if stream is not None else sys.stdout
@@ -3598,12 +3719,13 @@ def run_configured_commands(cfg: dict, findings: list,
 
 def cmd_check(args: argparse.Namespace) -> int:
     """
-    @brief Run the check catalog and print the findings report.
-    @details Advisory by design: exits 0 - except with --strict (the CI
-             mode), which exits 1 on errors, failed --run commands, and
-             warnings promoted via `[check] strict_promote`. One finding per
-             line, `LEVEL  CHECK-ID  path - message`, sorted by path, capped
-             at 100 columns; then two summary lines.
+    Run the check catalog and print the findings report.
+
+    Advisory by design: exits 0 - except with --strict (the CI
+    mode), which exits 1 on errors, failed --run commands, and
+    warnings promoted via `[check] strict_promote`. One finding per
+    line, `LEVEL  CHECK-ID  path - message`, sorted by path, capped
+    at 100 columns; then two summary lines.
     """
     cfg = load_config()
     findings = run_checks(cfg, args.task)
@@ -3674,9 +3796,6 @@ def cmd_check(args: argparse.Namespace) -> int:
     return 0
 
 
-# test / report
-
-
 #: shape of a substitutable test reference: safe characters only, and it may
 #: not start with `-` (an option-like ref could alter the runner's behavior).
 #: Anything else falls back to the full suite instead of reaching the shell.
@@ -3693,12 +3812,13 @@ COMMAND_LENGTH_LIMIT = 8000
 
 def rebase_ref(entry: str, workdir: Path) -> str:
     """
-    @brief One repository-relative test reference, seen from `workdir`.
-    @details References are stored repository-relative so they stay
-             comparable whatever a repository configures; only substitution
-             knows where the command will run. Returns "" when the reference
-             lies outside the working directory, where the command could not
-             reach it.
+    One repository-relative test reference, seen from `workdir`.
+
+    References are stored repository-relative so they stay
+    comparable whatever a repository configures; only substitution
+    knows where the command will run. Returns "" when the reference
+    lies outside the working directory, where the command could not
+    reach it.
     """
     if workdir == ROOT:
         return entry
@@ -3713,15 +3833,16 @@ def rebase_ref(entry: str, workdir: Path) -> str:
 
 def impacted_tests(cfg: dict, revision: str = "") -> tuple[list[str], str]:
     """
-    @brief The focused regression set: diff -> requirements -> linked_tests.
-    @details The traceability mapping driven in reverse, with two safety
-             rules. Completeness: every changed source file must be covered
-             by some requirement's affected_paths, otherwise the focused set
-             would silently skip the uncovered work and the caller falls back
-             to the full suite. Hygiene: any test reference containing shell
-             metacharacters in a path forces fallback. Unsupported selector
-             suffixes are discarded in favor of the validated whole file;
-             no discarded suffix is substituted into a shell command.
+    The focused regression set: diff -> requirements -> linked_tests.
+
+    The traceability mapping driven in reverse, with two safety
+    rules. Completeness: every changed source file must be covered
+    by some requirement's affected_paths, otherwise the focused set
+    would silently skip the uncovered work and the caller falls back
+    to the full suite. Hygiene: any test reference containing shell
+    metacharacters in a path forces fallback. Unsupported selector
+    suffixes are discarded in favor of the validated whole file;
+    no discarded suffix is substituted into a shell command.
     """
     files, _added, _gaps, reason = collect_diff(cfg, revision)
     if reason:
@@ -3785,13 +3906,14 @@ def impacted_tests(cfg: dict, revision: str = "") -> tuple[list[str], str]:
 def fit_impacted(template_cmd: str, tests: list[str],
                  reason: str) -> tuple[str, list[str], str]:
     """
-    @brief Substitute the focused set, coarsening it until it can launch.
-    @details A selector list long enough to exceed the platform's command
-             line cannot start at all, which is a worse outcome than running
-             a slightly wider set. So the ladder is: exact selectors, then
-             each distinct test file once, then the caller's full-suite
-             fallback. Returns (command, references used, reason); an empty
-             command means the caller must fall back and say why.
+    Substitute the focused set, coarsening it until it can launch.
+
+    A selector list long enough to exceed the platform's command
+    line cannot start at all, which is a worse outcome than running
+    a slightly wider set. So the ladder is: exact selectors, then
+    each distinct test file once, then the caller's full-suite
+    fallback. Returns (command, references used, reason); an empty
+    command means the caller must fall back and say why.
     """
     if not tests:
         return "", tests, reason
@@ -3815,10 +3937,11 @@ def fit_impacted(template_cmd: str, tests: list[str],
 
 def append_log(task_id: str, message: str) -> None:
     """
-    @brief Append one dated log line at the end of the journal's Log section.
-    @details The Log section may not be the last section once a delivery
-             report has been appended, so the line is inserted before the
-             next `## ` heading rather than blindly at end of file.
+    Append one dated log line at the end of the journal's Log section.
+
+    The Log section may not be the last section once a delivery
+    report has been appended, so the line is inserted before the
+    next `## ` heading rather than blindly at end of file.
     """
     path, _data = read_journal(task_id)
     write_text(path, log_with(read_text(path), message))
@@ -3826,11 +3949,12 @@ def append_log(task_id: str, message: str) -> None:
 
 def cmd_test(args: argparse.Namespace) -> int:
     """
-    @brief Convenience runner for one configured command (default: test).
-    @details Output streams live; the exit code mirrors the command's own
-             result. --impacted substitutes the focused regression set into
-             the `test_impacted` template and falls back to the full `test`
-             command - saying why - whenever the set cannot be used.
+    Convenience runner for one configured command (default: test).
+
+    Output streams live; the exit code mirrors the command's own
+    result. --impacted substitutes the focused regression set into
+    the `test_impacted` template and falls back to the full `test`
+    command - saying why - whenever the set cannot be used.
     """
     cfg = load_config()
     commands = cfg_table(cfg, "commands")
@@ -3907,23 +4031,24 @@ COMPONENT_TITLE_WIDTH = 80
 
 def mermaid_label(text: str) -> str:
     """
-    @brief One requirement title, safe inside a quoted Mermaid node label.
-    @details Mermaid reads `"` and `#` inside a label as syntax, so both are
-             replaced rather than escaped - a label is a caption, and a
-             caption that breaks the drawing is worse than one that lost a
-             quotation mark.
+    One requirement title, safe inside a quoted Mermaid node label.
+
+    Mermaid reads `"` and `#` inside a label as syntax, so both are
+    replaced rather than escaped - a label is a caption, and a
+    caption that breaks the drawing is worse than one that lost a
+    quotation mark.
     """
     flat = " ".join(str(text).split()).replace('"', "'").replace("#", "no.")
     return flat[:LABEL_WIDTH - 1] + "…" if len(flat) > LABEL_WIDTH else flat
 
 
 def mermaid_id(text: str) -> str:
-    """@brief A Mermaid node or subgraph id: letters, digits and underscores."""
+    """A Mermaid node or subgraph id: letters, digits and underscores."""
     return re.sub(r"[^A-Za-z0-9]", "_", str(text)) or "node"
 
 
 def lexical_repo_path(path: Path) -> str:
-    """@brief A repository-relative path that does not resolve symlinks."""
+    """A repository-relative path that does not resolve symlinks."""
     try:
         return path.relative_to(ROOT).as_posix()
     except ValueError:
@@ -3931,7 +4056,7 @@ def lexical_repo_path(path: Path) -> str:
 
 
 def catalogue_path(path: Path) -> str:
-    """@brief A printable lexical path safe as one catalogue output field."""
+    """A printable lexical path safe as one catalogue output field."""
     value = lexical_repo_path(path)
     if not value or any(not char.isprintable() for char in value):
         raise UserError(
@@ -3941,11 +4066,12 @@ def catalogue_path(path: Path) -> str:
 
 def knowledge_page_texts(on_error=None) -> list[tuple[Path, str]]:
     """
-    @brief Read catalogue pages without interpreting their prose.
-    @details A link may alias another page inside the knowledge directory, but
-             may not turn a file elsewhere into component knowledge. Callers
-             receive the lexical catalogue path so output never exposes or
-             substitutes a resolved target path.
+    Read catalogue pages without interpreting their prose.
+
+    A link may alias another page inside the knowledge directory, but
+    may not turn a file elsewhere into component knowledge. Callers
+    receive the lexical catalogue path so output never exposes or
+    substitutes a resolved target path.
     """
     pages: list[tuple[Path, str]] = []
     knowledge = AGENTIC / "knowledge"
@@ -3971,7 +4097,7 @@ def knowledge_page_texts(on_error=None) -> list[tuple[Path, str]]:
 
 
 def component_title(value: str, fallback: str) -> str:
-    """@brief One bounded printable component-catalogue title field."""
+    """One bounded printable component-catalogue title field."""
     def normalized(text: str) -> str:
         return " ".join("".join(char if char.isprintable() else " "
                                  for char in text).split())
@@ -3983,7 +4109,7 @@ def component_title(value: str, fallback: str) -> str:
 
 
 def knowledge_titles() -> list[tuple[str, str]]:
-    """@brief Every page's safe display title and lexical catalogue path."""
+    """Every page's safe display title and lexical catalogue path."""
     titles: list[tuple[str, str]] = []
     for path, text in knowledge_page_texts():
         path_label = catalogue_path(path)
@@ -3996,14 +4122,15 @@ def knowledge_titles() -> list[tuple[str, str]]:
 
 def knowledge_components(on_error=None) -> list[tuple[str, str, list[str]]]:
     """
-    @brief Every component page as (stem, display name, claimed requirement ids).
-    @details Only two things are read out of the prose, both by strict
-             pattern: the first `# ` heading for the name, and the requirement
-             ids under `## Key behaviors`. The template calls those sections
-             recommended rather than mandatory, so nothing load-bearing is
-             parsed out of a page - a page missing its heading is still listed,
-             under its file name. A caller providing on_error may report and
-             skip unreadable pages; otherwise the existing error propagates.
+    Every component page as (stem, display name, claimed requirement ids).
+
+    Only two things are read out of the prose, both by strict
+    pattern: the first `# ` heading for the name, and the requirement
+    ids under `## Key behaviors`. The template calls those sections
+    recommended rather than mandatory, so nothing load-bearing is
+    parsed out of a page - a page missing its heading is still listed,
+    under its file name. A caller providing on_error may report and
+    skip unreadable pages; otherwise the existing error propagates.
     """
     components: list[tuple[str, str, list[str]]] = []
     for path, text in knowledge_page_texts(on_error=on_error):
@@ -4022,7 +4149,7 @@ def knowledge_components(on_error=None) -> list[tuple[str, str, list[str]]]:
 
 
 def cmd_components(_args: argparse.Namespace) -> int:
-    """@brief List every component knowledge page by display name and path."""
+    """List every component knowledge page by display name and path."""
     titles = knowledge_titles()
     if not titles:
         print("no component knowledge pages")
@@ -4035,10 +4162,10 @@ def cmd_components(_args: argparse.Namespace) -> int:
 def diagram_scope(args: argparse.Namespace,
                   components: list[tuple[str, str, list[str]]]) -> set[str] | None:
     """
-    @brief The requirement ids the diagram is restricted to, or None for all.
+    The requirement ids the diagram is restricted to, or None for all.
     @raises UserError when both scopes are named at once, or when the named
-            component or task does not exist, so an unknown scope reads as a
-            mistake instead of an empty register.
+     component or task does not exist, so an unknown scope reads as a
+     mistake instead of an empty register.
     """
     if args.component and args.task:
         # one scope at a time: silently honoring one and dropping the other
@@ -4061,12 +4188,13 @@ def render_diagram(records: list[tuple[str, Path, dict]],
                    components: list[tuple[str, str, list[str]]],
                    scope: set[str] | None) -> str:
     """
-    @brief The coverage flowchart for `records`, grouped by claiming component.
-    @details Left to right so the component groups sit side by side and each
-             one stacks its own behaviors; every node carries the class its
-             record earned. Requirements no page claims are grouped last
-             rather than dropped, because an unclaimed behavior is exactly
-             what a reader needs to see.
+    The coverage flowchart for `records`, grouped by claiming component.
+
+    Left to right so the component groups sit side by side and each
+    one stacks its own behaviors; every node carries the class its
+    record earned. Requirements no page claims are grouped last
+    rather than dropped, because an unclaimed behavior is exactly
+    what a reader needs to see.
     """
     by_id = {str(data.get("id", "") or ""): data for _relpath, _path, data in records}
     in_scope = {rid: data for rid, data in by_id.items()
@@ -4111,12 +4239,13 @@ def render_diagram(records: list[tuple[str, Path, dict]],
 
 def cmd_diagram(args: argparse.Namespace) -> int:
     """
-    @brief Draw the requirement register as a Mermaid coverage flowchart.
-    @details Derived entirely from records already in the repository, so it
-             needs no model, no network and no renderer: the output is text
-             that Git diffs and that Markdown viewers draw for themselves.
-             `--out` writes the file as UTF-8 explicitly - printing it would
-             leave the characters at the mercy of the console code page.
+    Draw the requirement register as a Mermaid coverage flowchart.
+
+    Derived entirely from records already in the repository, so it
+    needs no model, no network and no renderer: the output is text
+    that Git diffs and that Markdown viewers draw for themselves.
+    `--out` writes the file as UTF-8 explicitly - printing it would
+    leave the characters at the mercy of the console code page.
     """
     components = knowledge_components()
     scope = diagram_scope(args, components)
@@ -4160,24 +4289,25 @@ TRACE_COLUMNS: tuple[tuple[str, str], ...] = (
 
 
 def flat(value: object) -> str:
-    """@brief One record field as a single line, however TOML wrapped it."""
+    """One record field as a single line, however TOML wrapped it."""
     return " ".join(str(value or "").split())
 
 
 def trace_rows(records: list[tuple[str, Path, dict]],
                components: list[tuple[str, str, list[str]]]) -> list[dict]:
     """
-    @brief One row per requirement, ordered by category and then by id.
-    @details List columns stay lists here and are joined by each renderer,
-             because the separator belongs to the format rather than to the
-             record. Nothing is shortened anywhere in this path: `summary`
-             and `brief` bound their values because they are resume views for
-             a context-limited reader, whereas this is a durable artifact
-             whose whole point is completeness, and a clipped path list reads
-             as the whole list to the person it was written for.
-             Every status is carried, draft and retired included — they are
-             part of what the register holds, and dropping either would
-             misreport it.
+    One row per requirement, ordered by category and then by id.
+
+    List columns stay lists here and are joined by each renderer,
+    because the separator belongs to the format rather than to the
+    record. Nothing is shortened anywhere in this path: `summary`
+    and `brief` bound their values because they are resume views for
+    a context-limited reader, whereas this is a durable artifact
+    whose whole point is completeness, and a clipped path list reads
+    as the whole list to the person it was written for.
+    Every status is carried, draft and retired included — they are
+    part of what the register holds, and dropping either would
+    misreport it.
     """
     owner: dict[str, str] = {}
     for _stem, name, claimed in components:
@@ -4216,19 +4346,20 @@ def trace_rows(records: list[tuple[str, Path, dict]],
 
 
 def trace_cell(row: dict, key: str, joiner: str) -> str:
-    """@brief One column of one row, with list columns joined for the format."""
+    """One column of one row, with list columns joined for the format."""
     value = row[key]
     return joiner.join(value) if isinstance(value, list) else str(value)
 
 
 def render_trace_csv(rows: list[dict]) -> str:
     """
-    @brief The traceability record as comma-separated values.
-    @details Header row and data only — no summary block, no preamble, so a
-             spreadsheet's autofilter and sort apply to the whole file. The
-             standard-library writer owns the quoting rules, which is what
-             keeps a statement holding a comma, a quote or a line break from
-             silently becoming extra columns.
+    The traceability record as comma-separated values.
+
+    Header row and data only — no summary block, no preamble, so a
+    spreadsheet's autofilter and sort apply to the whole file. The
+    standard-library writer owns the quoting rules, which is what
+    keeps a statement holding a comma, a quote or a line break from
+    silently becoming extra columns.
     """
     buffer = io.StringIO()
     writer = csv.writer(buffer, lineterminator="\n")
@@ -4241,9 +4372,10 @@ def render_trace_csv(rows: list[dict]) -> str:
 
 def trace_markdown_text(value: object) -> str:
     """
-    @brief Literal, single-line cell text with no active inline Markdown.
-    @details Entities preserve backslashes, table delimiters and markup as
-             text; renderer-owned list breaks are inserted only afterwards.
+    Literal, single-line cell text with no active inline Markdown.
+
+    Entities preserve backslashes, table delimiters and markup as
+    text; renderer-owned list breaks are inserted only afterwards.
     """
     return "".join(f"&#{ord(char)};" if char in "&<>\\`*_[]|~" else char
                    for char in flat(value))
@@ -4251,10 +4383,11 @@ def trace_markdown_text(value: object) -> str:
 
 def render_trace_md(rows: list[dict], unreadable: list[str]) -> str:
     """
-    @brief The traceability record as a Markdown table under a summary block.
-    @details Each scalar and list entry is flattened and escaped as literal
-             text before list entries are joined with renderer-owned `<br>`
-             breaks. User text cannot add table cells, HTML or inline markup.
+    The traceability record as a Markdown table under a summary block.
+
+    Each scalar and list entry is flattened and escaped as literal
+    text before list entries are joined with renderer-owned `<br>`
+    breaks. User text cannot add table cells, HTML or inline markup.
     """
     counts: dict[str, int] = {}
     for row in rows:
@@ -4294,18 +4427,19 @@ def render_trace_md(rows: list[dict], unreadable: list[str]) -> str:
 
 def cmd_trace(args: argparse.Namespace) -> int:
     """
-    @brief Emit the requirement register as a flat traceability record.
-    @details The third reader of the register, and the only one that leaves
-             the repository: `diagram` groups it into a picture that stops
-             being legible past a few dozen nodes, `explain` answers about one
-             path, and this narrows nothing. Because it is handed on rather
-             than read in place, it is also the only one owing an escaping and
-             encoding contract.
-             A requirement file that will not parse is named on stderr and
-             omitted rather than dropped in silence — `check` is the authority
-             on findings and already errors on that file, so this stays
-             advisory, but an export that quietly under-reports is worse than
-             one that admits the gap.
+    Emit the requirement register as a flat traceability record.
+
+    The third reader of the register, and the only one that leaves
+    the repository: `diagram` groups it into a picture that stops
+    being legible past a few dozen nodes, `explain` answers about one
+    path, and this narrows nothing. Because it is handed on rather
+    than read in place, it is also the only one owing an escaping and
+    encoding contract.
+    A requirement file that will not parse is named on stderr and
+    omitted rather than dropped in silence — `check` is the authority
+    on findings and already errors on that file, so this stays
+    advisory, but an export that quietly under-reports is worse than
+    one that admits the gap.
     """
     findings: dict[str, list[str]] = {}
 
@@ -4324,7 +4458,7 @@ def cmd_trace(args: argparse.Namespace) -> int:
     knowledge_errors: list[str] = []
 
     def knowledge_error(path: Path, error: Exception) -> None:
-        """@brief Report missing ownership evidence without discarding rows."""
+        """Report missing ownership evidence without discarding rows."""
         relpath = lexical_repo_path(path)
         knowledge_errors.append(relpath)
         print(f"warning: knowledge page unavailable: {relpath}: {error}; "
@@ -4372,18 +4506,19 @@ DEVIATION_RE = re.compile(
 
 def recorded_deviations(text: str) -> list[str]:
     """
-    @brief Every deviation a journal records, in the order it recorded them.
-    @details Reads the whole journal rather than only its `## Log` section: a
-             deviation filed under the wrong heading is still one the approver
-             has to see, and a delivery report that quietly dropped it would
-             be worse than no report. A bare line counts as much as a bullet,
-             because that is the shape AGENTS.md prints. Wrapped lines are
-             rejoined, so a deviation is carried whole rather than cut at the
-             margin. Only the contract's own shape is harvested -
-             `DEVIATION <stage>: ...` or its ` - ` spelling - never a sentence
-             that merely mentions the word, and the token is stripped from
-             what is returned, which is also what stops a second report from
-             re-listing the first one's.
+    Every deviation a journal records, in the order it recorded them.
+
+    Reads the whole journal rather than only its `## Log` section: a
+    deviation filed under the wrong heading is still one the approver
+    has to see, and a delivery report that quietly dropped it would
+    be worse than no report. A bare line counts as much as a bullet,
+    because that is the shape AGENTS.md prints. Wrapped lines are
+    rejoined, so a deviation is carried whole rather than cut at the
+    margin. Only the contract's own shape is harvested -
+    `DEVIATION <stage>: ...` or its ` - ` spelling - never a sentence
+    that merely mentions the word, and the token is stripped from
+    what is returned, which is also what stops a second report from
+    re-listing the first one's.
     """
     entries: list[str] = []
     current = ""
@@ -4411,13 +4546,14 @@ def recorded_deviations(text: str) -> list[str]:
 
 def repo_path_arg(value: str) -> str:
     """
-    @brief One operator-supplied path as a repository-relative POSIX string.
+    One operator-supplied path as a repository-relative POSIX string.
     @raises UserError when the path resolves outside the repository.
-    @details Takes whatever the shell handed over - native separators, an
-             absolute path, a leading `./` - because an operator pastes what
-             their terminal printed. Backslashes are translated on every
-             platform, not only on Windows, so the same argument means the
-             same thing in a Linux CI job as on the machine it was copied from.
+
+    Takes whatever the shell handed over - native separators, an
+    absolute path, a leading `./` - because an operator pastes what
+    their terminal printed. Backslashes are translated on every
+    platform, not only on Windows, so the same argument means the
+    same thing in a Linux CI job as on the machine it was copied from.
     """
     raw = Path(value.strip().strip('"').replace("\\", "/"))
     if raw.is_absolute():
@@ -4450,13 +4586,14 @@ def repo_path_arg(value: str) -> str:
 
 def cmd_explain(args: argparse.Namespace) -> int:
     """
-    @brief Report what governs one repository path, and what delivered it.
-    @details The register is written once per behavior and read almost never,
-             because nothing leads from a file back to it. This is that way
-             round: path to requirements, grouped by the component claiming
-             each, with how it is verified and the journals that carry it.
-             A path no requirement covers is stated plainly - ungoverned code
-             is a finding, not an empty answer.
+    Report what governs one repository path, and what delivered it.
+
+    The register is written once per behavior and read almost never,
+    because nothing leads from a file back to it. This is that way
+    round: path to requirements, grouped by the component claiming
+    each, with how it is verified and the journals that carry it.
+    A path no requirement covers is stated plainly: code that only
+    direct changes touched has none, and that is not a defect.
     """
     target = repo_path_arg(args.path)
     layout = cfg_table(load_config(), "layout")
@@ -4479,9 +4616,6 @@ def cmd_explain(args: argparse.Namespace) -> int:
     print(f"{target}  [{area}]{exists}")
     if not matched:
         print("\nno requirement covers this path.")
-        if area != "other":
-            print("that is a finding: it sits inside the configured "
-                  f"{area} globs, so something is expected to govern it.")
         return 0
 
     print(f"\ngoverned by {len(matched)} requirement(s):")
@@ -4520,11 +4654,12 @@ def cmd_explain(args: argparse.Namespace) -> int:
 
 def cmd_report(args: argparse.Namespace) -> int:
     """
-    @brief Append the delivery summary section to a task journal.
-    @details Gathers the journal state, the linked requirement titles, the
-             diff shape versus the merge base and the check counts (scoped to
-             this task). Append-only: repeated runs add dated sections and the
-             journal keeps its history.
+    Append the delivery summary section to a task journal.
+
+    Gathers the journal state, the linked requirement titles, the
+    diff shape versus the merge base and the check counts (scoped to
+    this task). Append-only: repeated runs add dated sections and the
+    journal keeps its history.
     """
     cfg = load_config()
     path, data = read_journal(args.task)
@@ -4579,7 +4714,7 @@ def cmd_report(args: argparse.Namespace) -> int:
         f"## Delivery report ({today()})",
         "",
         (f"- stage: {header.get('stage', '?')}; type: {header.get('type', '?')};"
-         f" path: {header.get('path', '?')}; branch: {header.get('branch', '?')}"),
+         f" branch: {header.get('branch', '?')}"),
         "- requirements:" if req_lines else "- requirements: none linked",
         *req_lines,
         # judgement before totals: a warning count says how much happened,
@@ -4606,11 +4741,8 @@ def cmd_report(args: argparse.Namespace) -> int:
     return 0
 
 
-# entry point
-
-
 def state_arguments(parser: argparse.ArgumentParser) -> None:
-    """@brief The State options shared by pause and advance; omitted ones keep their value."""
+    """The State options shared by pause and advance; omitted ones keep their value."""
     parser.add_argument("--read", action="append",
                         help="a repository path the next session must read "
                              "(repeatable or comma-separated)")
@@ -4620,7 +4752,7 @@ def state_arguments(parser: argparse.ArgumentParser) -> None:
 
 
 def build_parser() -> argparse.ArgumentParser:
-    """@brief The argparse tree for every implemented command."""
+    """The argparse tree for every implemented command."""
     parser = argparse.ArgumentParser(
         prog="aegis",
         description="AEGIS companion CLI - a scaffolder and a reporter.",
@@ -4716,8 +4848,6 @@ def build_parser() -> argparse.ArgumentParser:
         "advance", help="move a task to its next stage and record the State")
     advance.add_argument("task", help="TASK-<id> or <id>")
     advance.add_argument("--to", help="the target stage (default: the next one on the path)")
-    advance.add_argument("--path", choices=tuple(PATH_STAGES),
-                         help="record the chosen path first (normally at frame)")
     advance.add_argument("--reason", help="why, kept in the Log line (returns and skips)")
     advance.add_argument("--skipped", action="store_true",
                          help="the stage was skipped rather than completed")
@@ -4797,7 +4927,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: list[str] | None = None) -> int:
-    """@brief Parse arguments and dispatch; expected errors exit 1, no traceback."""
+    """Parse arguments and dispatch; expected errors exit 1, no traceback."""
     for stream in (sys.stdout, sys.stderr):
         try:  # a title may hold characters the console encoding cannot render
             stream.reconfigure(errors="replace")

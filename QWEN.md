@@ -12,31 +12,30 @@ remotes, labels, configuration, `02_Tools` setup), planning and architecture doc
 
 <!-- AEGIS:BEGIN (managed by .agentic/aegis.py init) -->
 
-## Project rules
-
-- **Pre-release until 1.0.0:** no data migrations, no compatibility with earlier builds and no
-  readers for older formats; stored format versions stay `1`. VERA still changes a lot, and
-  compatibility code would grow its complexity enormously. Details: `AGENTS.md`, "Pre-release policy".
-- **English** for code, comments, commit messages, `CHANGELOG.md` and internal documents; user-facing
-  text (interface, help, release notes) in English, Romanian, German and French.
-- A notable change adds one line under `## [Unreleased]` in `CHANGELOG.md`; a user-visible one also
-  adds an entry to `05_Software/release-notes/unreleased.yaml` (`01_Documentation/Releases.md`).
-- Code style: `01_Documentation/Code_Style.md`. No license headers in files (`REUSE.toml`).
-- Repository layout, commits and validation: `AGENTS.md`.
-
 ## AEGIS workflow
 
-This repository uses AEGIS to guide software implementation, one feature,
-fix or change per task. Before changing the product, read
-`.agentic/AGENTS.md`; it routes you to one step file per stage.
+This repository uses AEGIS for changes that add or change a durable product
+rule: logic, data, security, performance, integrations, or a product-wide UI
+rule such as a theme, layout system, accessibility or interaction
+convention. For those, read `.agentic/AGENTS.md` first; it routes you to one
+step file per stage.
 
-- New work: run `python .agentic/aegis.py status` (an open task may cover
-  it), then follow `.agentic/steps/1_frame.md`.
+Make other changes directly, with no journal or requirement: a bug fix that
+restores intended behavior, a local UI adjustment (one element's position,
+spacing, wording or style), a refactor with no behavior change, or a test,
+docs or tooling fix. A fix that contradicts an active requirement, adds
+behavior, or touches security or data handling uses AEGIS. The user's
+explicit choice wins; otherwise start with one line,
+`LANE: direct|aegis - <why>`.
+
+- New AEGIS work: run `python .agentic/aegis.py status` (an open task may
+  cover it), then follow `.agentic/steps/1_frame.md`.
 - An existing task: run `python .agentic/aegis.py brief TASK-<id>` and read
   what its `Read next` line names.
 
-Stages: frame -> specify -> design -> build -> validate -> done; the quick
-path is frame -> build -> validate -> done. The CLI writes the journal state:
+Stages: frame -> specify -> design -> build -> validate -> done; specify and
+design have skip rules for work that does not need them. The CLI writes the
+journal state:
 `advance` finishes a stage, `pause` stops for the user, `log` and `ruling`
 record events and decisions. End every session with `advance` or `pause`.
 

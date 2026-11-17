@@ -1,15 +1,12 @@
 <!--
-Copyright (c) 2026 DDP Engineering
-This software is licensed under the PolyForm Noncommercial License 1.0.0.
-Commercial use requires a separate commercial license.
-See the LICENSE.txt in the .agentic folder for full license details.
+SPDX-FileCopyrightText: 2026 DDP Engineering
 SPDX-License-Identifier: LicenseRef-PolyForm-Noncommercial-1.0.0
 -->
 
 # Stage 1 — frame
 
-**Purpose:** Turn the ask into an agreed scope and a chosen path, recorded in
-a new task journal that every later stage reads.
+**Purpose:** Turn the ask into an agreed scope, recorded in a new task
+journal that every later stage reads.
 
 **Read:**
 
@@ -46,7 +43,7 @@ a new task journal that every later stage reads.
    requirements and rules; missing triggers, boundaries and failure cases;
    and permission, compatibility, security and data effects. A question is
    decision-blocking when its answer changes the desired outcome, the
-   authorized scope, the handling of existing or deleted data, or the path.
+   authorized scope, or the handling of existing or deleted data.
    Put those under `Decision-blocking questions` and keep every other gap in
    `Unknowns`.
 5. Do not settle open behavior by convention: error responses, exit codes,
@@ -55,34 +52,21 @@ a new task journal that every later stage reads.
    `Proposed behaviors`, marked as not accepted, and do not repeat them as
    scope, constraints or success signals. An exclusion in `Out of scope`
    needs a source too.
-6. Choose the path. Quick only when every row holds; any `no` or `unknown`
-   means full:
-
-   | Criterion | Holds? | Evidence |
-   |---|---|---|
-   | no new externally observable behavior | yes / no / unknown | |
-   | no new interface or data format | | |
-   | no new dependency | | |
-   | an existing requirement already covers the behavior | | |
-   | no security or data-handling change | | |
-
-   Restoring required behavior is not a new contract. Copy the table into
-   `Path and reason` and set the header's `path:` line to the chosen path. On
-   the quick path, put the existing requirement IDs on the header's
-   `requirements:` line now.
+6. When existing requirements already cover the behavior, put their IDs on
+   the header's `requirements:` line now; specify may then be skipped.
 7. Decide whether the work needs child tasks: only for independently scoped
    work that can stand as an ordinary task.
 8. **Audit.** Every STATED claim has the user's words behind it, every
    proposed behavior serves a success signal, no unknown became behavior,
-   and scope, exclusions, examples and path agree.
+   and scope, exclusions and examples agree.
 
 **Finish:**
 
 - Checkpoint: `python .agentic/aegis.py pause TASK-<id> --next "<question>"`,
   where the question is the first decision-blocking question or, when none
-  remains, "Accept the framed scope and continue to specify?" (build on the
-  quick path). Show the summary, the Frame in brief and the choices:
-  continue, revise the scope or path, or stop. When the user accepts, run
+  remains, "Accept the framed scope and continue to specify?". Show the
+  summary, the Frame in brief and the choices: continue, revise the scope,
+  or stop. When the user accepts, run
   `python .agentic/aegis.py advance TASK-<id> --reason "scope accepted"` and
   read the next step file.
 - Autopilot: with no blocking question, `advance TASK-<id>` and read the next
@@ -94,7 +78,7 @@ a new task journal that every later stage reads.
       constraints, success signals, evidence and unknowns
 - [ ] material claims labelled stated, observed, inferred or unknown
 - [ ] decision-blocking questions answered or asked
-- [ ] path chosen, with the criteria table in `Path and reason`
+- [ ] covering requirements named on the `requirements:` line, when they exist
 - [ ] the journal's `branch:` matches the current checkout
 - [ ] proposed behaviors serve the desired outcome and success signals
 - [ ] scope accepted by the user (checkpoint) or recorded (autopilot)

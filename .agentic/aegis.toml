@@ -123,3 +123,6 @@ ignore = []
 strict_promote = []
 # Targeted tests run separately; see 02_Tools/verification-policy.md.
 run = ["lint", "typecheck", "i18n", "help"]
+
+[context]
+page_kb = 24

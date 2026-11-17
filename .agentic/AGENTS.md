@@ -1,39 +1,51 @@
 <!--
-Copyright (c) 2026 DDP Engineering
-This software is licensed under the PolyForm Noncommercial License 1.0.0.
-Commercial use requires a separate commercial license.
-See the LICENSE.txt in the .agentic folder for full license details.
+SPDX-FileCopyrightText: 2026 DDP Engineering
 SPDX-License-Identifier: LicenseRef-PolyForm-Noncommercial-1.0.0
 -->
 
 # AEGIS — agent workflow
 
-AEGIS guides you through implementing one software feature, fix or change at
-a time, stage by stage. It guides and never blocks: `check` is an advisory
-report, Git is the store, and every artifact is a plain file on the task's
-branch. Each task leaves the requirements and component knowledge accurate,
-so the next task — in a later session or on another developer's branch —
-starts from a current map.
+AEGIS guides you through implementing one feature, fix or change at a time,
+stage by stage. It guides and never blocks: `check` is an advisory report,
+Git is the store, and every artifact is a plain file on the task's branch.
+Each task leaves the requirements and component knowledge accurate, so the
+next task — in a later session or on another developer's branch — starts
+from a current map.
 
 ## Scope
 
-AEGIS covers software implementation: work that changes, tests or documents
-the product. Commits, pushes, pull requests, merges, tickets, releases and
-packaging are outside it; follow the repository's own procedures and the
-user's instructions for those.
+AEGIS governs changes that add or change a durable product rule: logic,
+data, security, performance, integrations, or a product-wide UI rule such as
+a theme, layout system, accessibility or interaction convention. A rule
+applies to a class of things, and a later change could break it; a test
+should catch that.
+
+Make other changes directly, with no journal or requirement: a bug fix that
+restores intended behavior, a local UI adjustment (one element's position,
+spacing, wording or style), a refactor with no behavior change, or a test,
+docs or tooling fix. Follow the repository's own practice, and add a
+regression test for a logic bug. A fix that contradicts an active
+requirement, adds behavior, or touches security or data handling is a
+change: use AEGIS. The user's explicit choice wins; otherwise start with one
+line, `LANE: direct|aegis - <why>`, and carry on.
+
+Commits, pushes, pull requests, merges, tickets, releases and packaging are
+outside it; follow the repository's own procedures and the user's
+instructions for those.
 
 ## Stages
 
 | Stage | Step file | Result |
 |---|---|---|
-| frame | `.agentic/steps/1_frame.md` | Agreed scope and path, in a new task journal |
+| frame | `.agentic/steps/1_frame.md` | Agreed scope, in a new task journal |
 | specify | `.agentic/steps/2_specify.md` | One requirement per behavior; a spec where needed |
 | design | `.agentic/steps/3_design.md` | A short design note, or the reason to skip it |
 | build | `.agentic/steps/4_build.md` | Failing tests first, then the implementation, until green |
 | validate | `.agentic/steps/5_validate.md` | Reviewed candidate, current knowledge, final proof; the task closes |
 
-Full path: frame → specify → design → build → validate → done. Quick path,
-when frame qualifies a small fix or change: frame → build → validate → done.
+Path: frame → specify → design → build → validate → done. Specify and design
+each have a skip rule for work that does not need them; frame, build and
+validate are never skipped.
 Read a stage's step file when you enter that stage. Adopting an existing
 repository is a one-time task described in `.agentic/steps/adopt.md`.
 
@@ -166,8 +178,8 @@ unrelated findings are not deviations.
 | Configuration | `.agentic/aegis.toml`: commands, layout, interaction, review, diagrams |
 
 Source and tests stay where the repository keeps them. Frame, specify and
-design write only under `.agentic/`; `check` reports other edits as
-`stage-zone`. Do not edit the payload — `.agentic/AGENTS.md`, `CLI.md`,
+design write only under `.agentic/`; `check` reports a source or test edit
+made in those stages as `stage-zone`. Do not edit the payload — `.agentic/AGENTS.md`, `CLI.md`,
 `steps/`, `templates/`, `aegis.py` and `LICENSE.txt` are replaced on upgrade;
 tell the user what needs to change instead.
 

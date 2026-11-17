@@ -1,8 +1,5 @@
 <!--
-Copyright (c) 2026 DDP Engineering
-This software is licensed under the PolyForm Noncommercial License 1.0.0.
-Commercial use requires a separate commercial license.
-See the LICENSE.txt in the .agentic folder for full license details.
+SPDX-FileCopyrightText: 2026 DDP Engineering
 SPDX-License-Identifier: LicenseRef-PolyForm-Noncommercial-1.0.0
 -->
 
@@ -14,12 +11,12 @@ path with file tools; never open a second journal for the same task.
 
 Who writes what:
 - The CLI writes the header stage, the Done checklist, Log lines, Rulings and
-  State. `advance` moves to the next stage on the path (or `--to` a named one),
+  State. `advance` moves to the next stage (or `--to` a named one),
   `pause` records a stop or a blocker, `log` adds one durable event, `ruling`
-  adds one decision and `verdict` records explicit review results. Each prints
-  the summary and the next step.
+  adds one decision and `verdict` records explicit review results. `advance`,
+  `pause` and `verdict` print the summary.
 - You edit Frame, Requirement coverage and Design directly, tick Done checklist
-  items as they are met, and edit the header lines type, path, interaction,
+  items as they are met, and edit the header lines type, interaction,
   requirements and parent in place: one `key: value` per line, no blank lines
   or comments inside the header block.
 
@@ -28,10 +25,9 @@ Header values:
                 (adoption: survey | components | close | done; deliver is a
                 legacy stage that closes to done)
   type          feature | fix | change | adopt
-  path          full | quick
   interaction   checkpoint | autopilot
-  requirements  comma-separated requirement IDs; empty until specify, except a
-                quick fix of an existing contract, which records its IDs at frame
+  requirements  comma-separated requirement IDs; frame records the existing
+                requirements that cover the work, specify adds the rest
   parent        optional top-level TASK-<id>; blank for an ordinary task
   branch, base, opened   written at creation; leave them unchanged
 
@@ -52,7 +48,6 @@ State fields, written by the CLI and read by `brief` and `summary`:
 
 stage: frame
 type: feature
-path: full
 interaction: checkpoint
 requirements:
 parent:
@@ -85,7 +80,6 @@ Assumptions:
 Unknowns:
 Decision-blocking questions:
 Proposed behaviors:
-Path and reason:
 
 ## Requirement coverage
 

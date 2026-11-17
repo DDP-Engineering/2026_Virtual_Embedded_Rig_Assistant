@@ -1,8 +1,5 @@
 <!--
-Copyright (c) 2026 DDP Engineering
-This software is licensed under the PolyForm Noncommercial License 1.0.0.
-Commercial use requires a separate commercial license.
-See the LICENSE.txt in the .agentic folder for full license details.
+SPDX-FileCopyrightText: 2026 DDP Engineering
 SPDX-License-Identifier: LicenseRef-PolyForm-Noncommercial-1.0.0
 -->
 
@@ -54,10 +51,13 @@ Correct the candidate first, and run no full proof yet:
    current template: remove a retired `## Architecture` section and keep any
    still-true constraint from it in Purpose and boundaries or Invariants. A
    page made from the template leaves out its license comment and its
-   `AEGIS:TEMPLATE` notes.
+   guidance comment.
 4. Bring the affected sections of `.agentic/context/project.md` and
    `.agentic/context/environment.md` into line with the candidate. Replace
-   stale claims and leave unrelated sections alone.
+   stale claims and leave unrelated sections alone. On knowledge and context
+   pages alike, edit the existing sections in place and add no section for
+   one task; `check` reports a page above `[context] page_kb` or with a
+   repeated heading.
 5. Re-read each requirement: its status and prose describe the built
    behavior, its verification matches what settles it, and its paths and
    links are current. A mismatch with an established contract goes back to
@@ -116,4 +116,4 @@ workflow: confirm that its recorded proof still describes the checkout, then
 - [ ] remaining warnings and pre-existing failures explained
 - [ ] `report` appended
 
-**Skip when:** Never, on either path.
+**Skip when:** Never.

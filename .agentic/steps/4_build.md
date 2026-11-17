@@ -1,8 +1,5 @@
 <!--
-Copyright (c) 2026 DDP Engineering
-This software is licensed under the PolyForm Noncommercial License 1.0.0.
-Commercial use requires a separate commercial license.
-See the LICENSE.txt in the .agentic folder for full license details.
+SPDX-FileCopyrightText: 2026 DDP Engineering
 SPDX-License-Identifier: LicenseRef-PolyForm-Noncommercial-1.0.0
 -->
 
@@ -89,5 +86,5 @@ validate.
 - [ ] affected docstrings, usage examples and setup instructions updated
 - [ ] `check` clean, or each remaining warning explained in the Log
 
-**Skip when:** Never, on either path. Documentation-only work logs which
+**Skip when:** Never. Documentation-only work logs which
 requirements it re-read instead of inventing a test.

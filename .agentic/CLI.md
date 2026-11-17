@@ -1,8 +1,5 @@
 <!--
-Copyright (c) 2026 DDP Engineering
-This software is licensed under the PolyForm Noncommercial License 1.0.0.
-Commercial use requires a separate commercial license.
-See the LICENSE.txt file for full license details.
+SPDX-FileCopyrightText: 2026 DDP Engineering
 SPDX-License-Identifier: LicenseRef-PolyForm-Noncommercial-1.0.0
 -->
 
@@ -22,7 +19,8 @@ repository root.
 The CLI scaffolds artifacts, writes task-journal state, runs configured
 project commands, and reports advisory findings. It does not replace the
 workflow in `.agentic/AGENTS.md`: it never decides whether a stage's work is
-done, and it does not commit, push, merge, read tickets, or access the network.
+done, and it does not commit, push, merge or read tickets. The CLI itself makes
+no network requests; configured project commands may do so.
 
 ## Command summary
 
@@ -96,8 +94,8 @@ python .agentic/aegis.py init [--git]
 - adds or refreshes the managed AEGIS digest in root
   `AGENTS.md`, `CLAUDE.md`, and `QWEN.md`;
 - adds or removes the managed anchor/evolution block in the root `.gitignore`
-  according to `[records] commit_fingerprints`, and names sidecars that are
-  still tracked so a human can untrack them (it never runs `git rm`);
+  according to `[records] commit_fingerprints`, and reports how many sidecars
+  are still tracked so a human can untrack them (it never runs `git rm`);
 - reports whether Git is installed and whether the directory is a repository;
 - preserves project-owned data and an existing `.agentic/aegis.toml`.
 
@@ -125,8 +123,8 @@ python .agentic/aegis.py init --git
 ```
 
 Afterward, edit `.agentic/aegis.toml` so `[commands]`, `[layout]`, optional
-`[interaction]`, `[diagrams]`, `[records]`, and `[check]` settings describe the
-repository.
+`[interaction]`, `[diagrams]`, `[records]`, `[context]`, and `[check]` settings
+describe the repository.
 
 ## `task`
 
@@ -217,24 +215,23 @@ A header key written twice keeps its first written value: an empty template
 line never hides a value written on another line, and the writers update the
 first line. `pause` and `advance` print a note, never a refusal, when frame,
 specify or design stops with its own section still empty, and for a record an
-edit put out of shape: a repeated header key, a quick path without the
-requirement IDs it restores, or Rulings lines that `ruling` did not write.
+edit put out of shape: a repeated header key, or Rulings lines that `ruling`
+did not write.
 
 ## `advance`
 
 ```text
-python .agentic/aegis.py advance <TASK-id|id> [--to STAGE] [--path {full,quick}] [--skipped]
+python .agentic/aegis.py advance <TASK-id|id> [--to STAGE] [--skipped]
                                  [--reason TEXT] [--next TEXT] [--read PATH]
                                  [--changed TEXT] [--evidence TEXT] [--issues TEXT]
 ```
 
 **Description:** Record a stage transition. Without `--to`, the next stage is
-the one after the current stage on the journal's path: full is frame, specify,
-design, build, validate, done; quick is frame, build, validate, done. The
-header stage changes, the Done checklist becomes the destination step's
-"Done when" list, one Log line records the transition, and the State says
-what to do next. `--path` records the chosen path before the next stage is
-worked out. `--to` an earlier stage records a return: the State waits for the
+the one after the current stage in frame, specify, design, build, validate,
+done. The header stage changes, the Done checklist becomes the destination
+step's "Done when" list, one Log line records the transition, and the State
+says what to do next. A `path:` header line in an older journal is kept and
+no longer changes the order. `--to` an earlier stage records a return: the State waits for the
 user and enabled review verdicts are cleared while the consumed round is kept.
 `--skipped` records a skipped stage. Reaching `done` closes the implementation
 guidance; commit, push and integration belong to the developer.
@@ -251,7 +248,7 @@ an earlier one must change.
 
 ```text
 python .agentic/aegis.py advance TASK-8b12
-python .agentic/aegis.py advance TASK-8b12 --path quick --reason "one function, existing tests"
+python .agentic/aegis.py advance TASK-8b12 --skipped --reason "REQ-FUNC-1a2b3c4d covers it"
 python .agentic/aegis.py advance TASK-8b12 --to specify --reason "a missing error case"
 python .agentic/aegis.py advance TASK-8b12 --evidence "check --strict --run exit 0"
 ```
@@ -479,7 +476,8 @@ fields contain the agent's recorded observations and decisions; blank values
 print `not recorded`.
 
 Output fields, in order: **Stage, Task, Current, Requirements, Changed,
-Evidence, Issues, Next, Needs user, Spec compliance, Implementation quality,
+Evidence, Issues, Next, Needs user, Specification compliance, Implementation
+quality,
 Review round, Details**. Stage combines the reported
 stage and result; Current and Requirements come from the journal header.
 Details points to the full journal. Each value is at most 240 characters,
@@ -514,7 +512,7 @@ presence of the two project context files. It
 does not call Git, run commands, write files, advance stages, or infer approval.
 Two calls against unchanged files are byte-identical.
 
-The fixed output order is: `AEGIS brief`, Task, Stage, Path, Branch/base,
+The fixed output order is: `AEGIS brief`, Task, Stage, Branch/base,
 Parent, Requirements, Context, Checklist, State, Outcome, Interaction, Review,
 Diagrams, Active rulings, Visible children, Read next, and Details. Scalar
 values are limited to 240 characters; at most eight active rulings and twenty
@@ -606,8 +604,9 @@ max_fix_cycles = 2
 ```
 
 `enabled` must be a TOML Boolean. `max_fix_cycles` must be an integer from 0
-through 255, not a Boolean. Invalid values warn and fail safe to disabled review
-with the default bound. When enabled, `verdict` records `spec_compliance` and
+through 255, not a Boolean. Invalid values warn and fail safe: an invalid
+`enabled` disables review, and an invalid `max_fix_cycles` allows no fix cycle.
+When enabled, `verdict` records `spec_compliance` and
 `implementation_quality` independently as `approved` or `changes_required`,
 plus `review_round`, in the State. Both verdicts cover the same candidate; any
 candidate edit invalidates both. The maximum total rounds are
@@ -649,6 +648,21 @@ journal. `check` reports `fingerprints-tracked` when the repository disagrees
 with the setting: sidecars still tracked while it is `false`, or the block
 still present while it is `true`. AEGIS never untracks a file; `init` prints
 the `git rm --cached` command for a human to run.
+
+Current-state pages have a size budget:
+
+```toml
+[context]
+page_kb = 24
+```
+
+`page_kb` applies to `.agentic/context/project.md`, `environment.md` and each
+knowledge page. These pages are read at every frame, so a page that grows by a
+section per task costs every later task. `check` reports a page above the
+budget as `context-size` and a level-two heading written twice in one page as
+`duplicate-heading`; both are warnings, never refusals. `init` writes 24. A
+missing value or `0` means no budget; a negative or non-integer value warns
+and also means no budget.
 
 ## `check`
 
@@ -692,6 +706,8 @@ Options:
   the proof costs - it reports the commands and their limits without
   starting any of them, and is never itself evidence;
 - use `--strict --run` after the final candidate is stable or in CI;
+- `uncovered-source` runs only with `--task`: changes made outside AEGIS need
+  no requirement, so the whole-branch diff says nothing about coverage;
 - use `--json` only when a script needs structured results.
 
 **Examples:**
@@ -1005,9 +1021,8 @@ requirement, with its status, how it is verified, and its spec where it has
 one. Then the task journals whose `requirements:` header lists any of them.
 
 The path may be repo-relative or absolute, with native or forward separators.
-A path no requirement covers is reported plainly, and said to be a finding
-when it sits inside the configured `source` or `tests` globs — ungoverned
-code in a governed area is worth knowing about.
+A path no requirement covers is reported plainly. Code that only direct
+changes touched, outside AEGIS, has no requirement, and that is not a defect.
 
 **When to use:** Reading unfamiliar code and asking "why is this here, and
 what am I allowed to change?". It is the register read backwards: `req` and
@@ -1026,7 +1041,8 @@ python .agentic/aegis.py explain C:\repo\src\export\m3u.py
 | Situation | Exit behavior |
 |---|---|
 | `init`, `task`, `advance`, `pause`, `log`, `ruling`, `verdict`, `req`, `anchor`, `evolution`, `status`, `summary`, `brief`, `components`, `report`, `diagram`, `trace`, or `explain` succeeds | Exit 0. |
-| Usage, missing task, invalid configuration, or another expected CLI error | One error line on stderr and exit 1. |
+| Missing task, invalid configuration, or another expected CLI error | One error line on stderr and exit 1. |
+| Unknown command, option or argument value | The usage text on stderr and exit 2. |
 | Plain `check` finds errors or warnings | Exit 0; it remains advisory. |
 | `check --strict` finds a strict failure | Exit 1. |
 | `test` runs a configured command | Return that command's exit code. |

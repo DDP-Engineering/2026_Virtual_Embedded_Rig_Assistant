@@ -1,8 +1,5 @@
 <!--
-Copyright (c) 2026 DDP Engineering
-This software is licensed under the PolyForm Noncommercial License 1.0.0.
-Commercial use requires a separate commercial license.
-See the LICENSE.txt in the .agentic folder for full license details.
+SPDX-FileCopyrightText: 2026 DDP Engineering
 SPDX-License-Identifier: LicenseRef-PolyForm-Noncommercial-1.0.0
 -->
 
@@ -72,5 +69,4 @@ constrained path and a reviewer can see why it was chosen.
 - [ ] `affected_paths` match the expected files
 - [ ] knowledge pages unchanged
 
-**Skip when:** Step 1 gives the one skip rule. The quick path does not visit
-design.
+**Skip when:** Step 1 gives the one skip rule.

@@ -1,8 +1,5 @@
 <!--
-Copyright (c) 2026 DDP Engineering
-This software is licensed under the PolyForm Noncommercial License 1.0.0.
-Commercial use requires a separate commercial license.
-See the LICENSE.txt in the .agentic folder for full license details.
+SPDX-FileCopyrightText: 2026 DDP Engineering
 SPDX-License-Identifier: LicenseRef-PolyForm-Noncommercial-1.0.0
 -->
 
@@ -11,7 +8,7 @@ SPDX-License-Identifier: LicenseRef-PolyForm-Noncommercial-1.0.0
 **Purpose:** Show the human operator the proposed implementation before
 build writes code. Read this file only when the `Diagrams:` line of
 `python .agentic/aegis.py brief TASK-<id>` says `draw`. A task with no design
-note (quick path, or a design recorded as skipped) draws nothing.
+note (a design recorded as skipped) draws nothing.
 
 **Steps:**
 

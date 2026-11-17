@@ -1,8 +1,5 @@
 <!--
-Copyright (c) 2026 DDP Engineering
-This software is licensed under the PolyForm Noncommercial License 1.0.0.
-Commercial use requires a separate commercial license.
-See the LICENSE.txt in the .agentic folder for full license details.
+SPDX-FileCopyrightText: 2026 DDP Engineering
 SPDX-License-Identifier: LicenseRef-PolyForm-Noncommercial-1.0.0
 -->
 
@@ -85,6 +82,6 @@ edit another task's journal.
 - [ ] every ID on the journal's `requirements:` line; `check` shows no
       format errors
 
-**Skip when:** A change with no externally observable effect that existing
-requirements fully cover: `advance TASK-<id> --skipped --reason "<why>"`.
-The quick path does not visit specify.
+**Skip when:** The requirements frame put on the `requirements:` line already
+cover the whole change, such as restoring behavior they require, and it adds
+nothing they do not say: `advance TASK-<id> --skipped --reason "<why>"`.
