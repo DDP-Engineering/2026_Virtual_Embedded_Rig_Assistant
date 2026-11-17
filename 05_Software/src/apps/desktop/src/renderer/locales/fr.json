@@ -1249,7 +1249,8 @@
       "interrupted": "Interrompue"
     },
     "folder": "Dossier : {{folder}}",
-    "duration": "Durée : {{seconds}} s"
+    "duration": "Durée : {{seconds}} s",
+    "durationValue": "{{seconds}} s"
   },
   "about": {
     "fullName": "Virtual Embedded Rig Assistant",

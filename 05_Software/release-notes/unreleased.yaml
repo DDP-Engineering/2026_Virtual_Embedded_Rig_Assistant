@@ -39,10 +39,10 @@ entries:
   - category: improved
     topic: { en: Interface, ro: Interfață, de: Oberfläche, fr: Interface }
     text:
-      en: Compact icons, balanced chat, no repeated VERA heading; Context becomes Instructions and skills.
-      ro: Pictograme compacte, chat centrat fără titluri VERA; Context devine Instrucțiuni și skills.
-      de: Kompakte Symbole, zentrierter Chat ohne VERA-Titel; Kontext heißt jetzt Anweisungen und Skills.
-      fr: Icônes compactes, chat centré sans titre VERA ; Contexte devient Instructions et compétences.
+      en: Compact panels, clearer run cards, centered chat and renamed Instructions and skills tab.
+      ro: Panouri compacte, carduri de rulare clare, chat centrat și tabul Instrucțiuni și skills.
+      de: Kompakte Panels, klare Laufkarten, zentrierter Chat und der Tab Anweisungen und Skills.
+      fr: Panneaux compacts, exécutions lisibles, chat centré et onglet Instructions et compétences.
   - category: fixed
     topic: { en: Terminal, ro: Terminal, de: Terminal, fr: Terminal }
     text:

@@ -3355,10 +3355,11 @@ legend {
 }
 .runs-list > li {
   display: grid;
-  gap: 0.25rem;
+  gap: 0.625rem;
   border: 0.0625rem solid var(--border);
   border-radius: 0.5rem;
   padding: 0.6rem;
+  background: var(--card);
   min-width: 0;
   overflow-wrap: anywhere;
 }
@@ -3366,8 +3367,88 @@ legend {
   margin: 0;
 }
 .run-command {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  padding: 0.4rem 0.5rem;
+  border-radius: 0.3rem;
+  background: var(--background);
   white-space: pre-wrap;
   overflow-wrap: anywhere;
+}
+.run-summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.75rem;
+}
+.run-state,
+.run-duration,
+.run-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-width: 0;
+}
+.run-state {
+  padding: 0.1rem 0.5rem;
+  border: 0.0625rem solid var(--border);
+  border-radius: 1rem;
+  background: var(--muted);
+}
+.run-state::before {
+  content: "";
+  width: 0.4rem;
+  height: 0.4rem;
+  border-radius: 50%;
+  background: currentColor;
+  flex-shrink: 0;
+}
+[data-state="running"] > .run-summary .run-state {
+  background: var(--accent);
+  color: var(--accent-foreground);
+  border-color: var(--primary);
+}
+.run-duration,
+.run-exit,
+.run-metadata {
+  font-size: 0.875em;
+  color: var(--muted-foreground);
+}
+[data-state="timedOut"] > .run-summary .run-state,
+[data-state="interrupted"] > .run-summary .run-state,
+.run-exit[data-failed="true"],
+.run-error {
+  color: var(--destructive);
+}
+.run-duration {
+  font-variant-numeric: tabular-nums;
+}
+.run-icon {
+  width: 1em;
+  height: 1em;
+}
+.run-metadata {
+  display: grid;
+  gap: 0.3rem;
+}
+.run-meta-value {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.run-mode {
+  flex-shrink: 0;
+  padding: 0 0.35rem;
+  border-radius: 0.25rem;
+  background: var(--muted);
+}
+.run-actions {
+  border-top: 0.0625rem solid var(--border);
+  padding-top: 0.5rem;
 }
 .run-log {
   max-height: 60vh;
@@ -4008,6 +4089,7 @@ legend {
 
 .run-live-output {
   max-height: 12rem;
+  margin: 0;
   overflow: auto;
   white-space: pre-wrap;
   overflow-wrap: anywhere;

@@ -1,5 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { type ProgramRunInfo, programCommandLine } from "@vera/shared";
+import { CalendarDays, FolderOpen, MessageSquare, Puzzle, Timer } from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../api/index.js";
@@ -115,6 +116,9 @@ function RunRow({
     if (text !== undefined && output.current) output.current.scrollTop = output.current.scrollHeight;
   }, [text]);
   const duration = run.durationMs ?? Math.max(0, now - Date.parse(run.startedAt));
+  const seconds = (duration / 1000).toFixed(3);
+  const durationLabel = t("runs.duration", { seconds });
+  const startedAt = new Date(run.startedAt).toLocaleString(i18n.language);
   async function stop() {
     setStopping(true);
     setError(undefined);
@@ -129,33 +133,66 @@ function RunRow({
   }
   return (
     <li data-run={run.id} data-state={run.state}>
-      <code className="run-command">{commandLine(run)}</code>
-      <p className="muted">
-        <span data-run-session>{t("runs.session", { title: session })} · </span>
-        {run.plugin && !run.command && <span>{t("runs.plugin", { plugin: run.plugin })} · </span>}
-        <time dateTime={run.startedAt}>{new Date(run.startedAt).toLocaleString(i18n.language)}</time>
-        {run.background && <span> · {t("runs.background")}</span>}
-      </p>
-      {run.command && <p data-run-cwd>{t("runs.folder", { folder: run.command.cwd })}</p>}
-      <p className="run-state">
-        <strong>{states[run.state]}</strong>
-        {run.exitCode !== undefined && run.exitCode !== null && (
-          <span> · {t("runs.exitCode", { code: run.exitCode })}</span>
-        )}
-        {run.error && <span> · {run.error}</span>}
+      <code className="run-command" title={commandLine(run)}>
+        {commandLine(run)}
+      </code>
+      <div className="run-summary">
+        <strong className="run-state">{states[run.state]}</strong>
         {(run.durationMs !== undefined || run.state === "running") && (
-          <span data-run-duration> · {t("runs.duration", { seconds: (duration / 1000).toFixed(3) })}</span>
+          <span className="run-duration" data-run-duration title={durationLabel}>
+            <Timer className="run-icon" aria-hidden="true" />
+            <span className="sr-only">{durationLabel}</span>
+            <span aria-hidden="true">{t("runs.durationValue", { seconds })}</span>
+          </span>
         )}
-      </p>
+        {run.exitCode !== undefined && run.exitCode !== null && (
+          <span className="run-exit" data-failed={run.exitCode !== 0}>
+            {t("runs.exitCode", { code: run.exitCode })}
+          </span>
+        )}
+      </div>
+      <div className="run-metadata">
+        <div className="run-meta" title={t("runs.session", { title: session })}>
+          <MessageSquare className="run-icon" aria-hidden="true" />
+          <span className="run-meta-value" data-run-session>
+            <span className="sr-only">{t("runs.session", { title: "" })}</span>
+            {session}
+          </span>
+        </div>
+        <div className="run-meta">
+          <CalendarDays className="run-icon" aria-hidden="true" />
+          <time className="run-meta-value" dateTime={run.startedAt} title={startedAt}>
+            <span className="sr-only">{t("runs.filterDate")}: </span>
+            {startedAt}
+          </time>
+          {run.background && <span className="run-mode">{t("runs.background")}</span>}
+        </div>
+        {run.plugin && !run.command && (
+          <div className="run-meta" title={t("runs.plugin", { plugin: run.plugin })}>
+            <Puzzle className="run-icon" aria-hidden="true" />
+            <span className="run-meta-value">{t("runs.plugin", { plugin: run.plugin })}</span>
+          </div>
+        )}
+        {run.command && (
+          <div className="run-meta" title={t("runs.folder", { folder: run.command.cwd })}>
+            <FolderOpen className="run-icon" aria-hidden="true" />
+            <code className="run-meta-value" data-run-cwd>
+              <span className="sr-only">{t("runs.folder", { folder: "" })}</span>
+              {run.command.cwd}
+            </code>
+          </div>
+        )}
+      </div>
+      {run.error && <p className="run-error">{run.error}</p>}
       {run.command && log.isError && <ErrorMessage error={log.error} />}
-      {run.command && log.data && (
+      {run.command && text?.trim() && (
         // biome-ignore lint/a11y/noNoninteractiveTabindex: the live log supports keyboard scrolling.
         <pre ref={output} className="run-log run-live-output" data-run-output tabIndex={0}>
           {text}
         </pre>
       )}
       {error !== undefined && <ErrorMessage error={error} />}
-      <div className="workbench-actions">
+      <div className="workbench-actions run-actions">
         <button type="button" data-action="run-log" onClick={() => open(run)}>
           {t("runs.openLog")}
         </button>

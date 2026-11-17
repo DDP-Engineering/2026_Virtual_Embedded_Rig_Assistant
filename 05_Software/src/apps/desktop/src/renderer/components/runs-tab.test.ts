@@ -131,6 +131,21 @@ it("says when the workbench has no runs", async () => {
   await vi.waitFor(() => expect(container.textContent).toContain(i18n.t("runs.none")));
 });
 
+it.each(["", " \n\t"])(
+  "keeps a blank command log %j accessible without an empty output block",
+  async (log) => {
+    stub([{ ...serve, command: { text: "node server.cjs", cwd: "D:/sibling" } }], log);
+    await render();
+    await vi.waitFor(() => expect($("[data-action=run-log]")).not.toBeNull());
+    await vi.waitFor(() =>
+      expect(vi.mocked(api.invoke).mock.calls.some(([channel]) => channel === "runs.log")).toBe(true),
+    );
+    expect($("[data-run-output]")).toBeNull();
+    await click($("[data-action=run-log]"));
+    await vi.waitFor(() => expect($("dialog [data-run-log]")?.textContent).toBe(log));
+  },
+);
+
 it("preserves declared vera/shell plugin labels instead of inferring command identity", async () => {
   await i18n.changeLanguage("en");
   stub([{ ...serve, plugin: "vera", program: "shell", args: ["declared"] }]);

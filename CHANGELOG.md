@@ -22,6 +22,7 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ### Changed
 
+- Runs cards separate command, status, duration and metadata with compact icons and readable rows.
 - UI checks follow compact viewer controls, await terminal creation and use the renderer's actual port.
 - Test startup caches transformed modules and isolates native processing; complex UI checks tolerate loaded hosts.
 - Chat describes tool actions and results clearly, with raw data and duration in expandable technical details.
