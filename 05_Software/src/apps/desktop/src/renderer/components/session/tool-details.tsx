@@ -215,13 +215,13 @@ export const ToolDetails = memo(function ToolDetails({
             <Pager {...pager} />
           </>
         )}
-        {output !== undefined ? (
+        {output?.trim() ? (
           <>
             <pre>{output.slice(0, 12000)}</pre>
             {output.length > 12000 && <p>{t("toolActivity.moreInTechnical")}</p>}
           </>
         ) : (
-          raw &&
+          raw?.trim() &&
           !result &&
           !/^\s*[{[]/.test(raw) && (
             <BoundedText

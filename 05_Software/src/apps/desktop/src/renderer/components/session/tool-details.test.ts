@@ -144,6 +144,29 @@ it.each([
   },
 );
 
+it.each([undefined, "", " \n\t"])(
+  "omits blank program output %j while retaining technical details",
+  async (output) => {
+    const summary = JSON.stringify({ running: true, output });
+    await render(tool({ name: "program_output", args: { handle: "run-1" }, summary }));
+    expect(container.querySelector(".tool-activity-status")?.textContent).toBe("Program still running");
+    await expand();
+    expect(container.querySelector(".tool-activity-body > pre")).toBeNull();
+    expect(container.querySelector(".tool-technical > button")).not.toBeNull();
+    await technical();
+    expect(container.querySelector(".tool-technical")?.textContent).toContain(summary);
+  },
+);
+
+it("omits blank plain previews and preserves whitespace around meaningful output", async () => {
+  await render(tool({ name: "unknown_extension", summary: " \n\t" }));
+  await expand();
+  expect(container.querySelector(".tool-activity-body > pre")).toBeNull();
+  const output = " \n  Listening on port 3000.\n";
+  await render(tool({ name: "program_output", summary: JSON.stringify({ running: true, output }) }));
+  expect(container.querySelector(".tool-activity-body > pre")?.textContent).toBe(output);
+});
+
 it("shows returned search counts, change counts and readable errors without inventing unknown output", async () => {
   await render(
     tool({ name: "search_docs", args: { query: "pinout" }, summary: JSON.stringify({ results: [] }) }),

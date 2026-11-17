@@ -4,10 +4,10 @@ entries:
   - category: fixed
     topic: { en: Chat, ro: Chat, de: Chat, fr: Chat }
     text:
-      en: Tool activity keeps translated labels, readable plan steps and optional technical details.
-      ro: Apelurile de instrumente au etichete traduse, pași de plan lizibili și detalii tehnice opționale.
-      de: Werkzeugaktivitäten zeigen übersetzte Texte, lesbare Planschritte und optionale technische Details.
-      fr: Les outils affichent des libellés traduits, un plan lisible et des détails techniques facultatifs.
+      en: Tool calls have translated labels, readable plans, optional details and no empty output blocks.
+      ro: Apelurile de instrumente au texte traduse, planuri lizibile și detalii fără blocuri goale.
+      de: Werkzeugaufrufe zeigen übersetzte Texte, lesbare Pläne und Details ohne leere Ausgabefelder.
+      fr: Les outils gardent libellés traduits, plans lisibles et détails, sans bloc de résultat vide.
   - category: fixed
     topic: { en: Commands, ro: Comenzi, de: Befehle, fr: Commandes }
     text:
