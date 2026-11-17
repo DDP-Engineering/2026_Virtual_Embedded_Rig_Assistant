@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-FUNC-69645e84"
+title = "Read bounded physical document byte windows"
+status = "active"
+requirement = "When an authorized caller requests a valid byte window of an ordinary owning-workbench file, VERA shall return base64 bytes at the original offset through EOF together with the original physical size, with a maximum requested length of 1 MiB and bounded read memory independent of file size."
+verification = "Use a real 200MiB sparse file, binary and ignored inputs; compare exact requested bytes, physical size, EOF/empty windows, and instrument descriptor reads to prove the fixed I/O bound."
+affected_paths = ["05_Software/src/libraries/shared/src/documents.ts", "05_Software/src/libraries/shared/src/ipc.ts", "05_Software/src/libraries/core/src/workbench/read-bytes.ts", "05_Software/src/libraries/core/src/workbench/service.ts", "05_Software/src/libraries/core/src/index.ts", "05_Software/src/apps/desktop/src/main/display-documents.ts", "05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/libraries/shared/src/documents-ipc.test.ts", "05_Software/src/libraries/core/src/workbench/read-bytes.test.ts", "05_Software/src/libraries/core/src/workbench/service.test.ts", "05_Software/src/apps/desktop/src/main/display-documents.test.ts", "05_Software/src/apps/desktop/src/preload/bridge.test.ts", "05_Software/src/apps/desktop/src/main/ipc-router.test.ts"]
+linked_tests = ["05_Software/src/libraries/shared/src/documents-ipc.test.ts", "05_Software/src/libraries/core/src/workbench/read-bytes.test.ts", "05_Software/src/libraries/core/src/workbench/service.test.ts::keeps viewer byte reads confined in Bypass even with an additional-folder grant", "05_Software/src/apps/desktop/src/main/display-documents.test.ts", "05_Software/src/apps/desktop/src/preload/bridge.test.ts"]
+spec = "specs/REQ-FUNC-69645e84.md"
+created = 2026-11-17
+updated = 2026-11-17

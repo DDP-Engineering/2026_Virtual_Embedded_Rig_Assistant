@@ -48,6 +48,13 @@ mode offers empty, missing, read-only and warning fixtures.
   selects project/.vera or the host userData root. Reads serialize with lifecycle; writes
   use shared admission, exclusive creation and original SHA256 before publication.
 
+- `readBytes(workbenchId,path,offset,length)` serializes a bounded physical byte read with lifecycle,
+  using only the active owning folder even in Bypass with additional-folder grants. Its raw Buffer
+  includes a fixed64KiB context per side and remains host-only; [Document viewer](document-viewer.md)
+  owns the strict IPC, encoded masking and exact byte protocol. Missing owners fail CONFLICT,
+  closed workbenches NOT_FOUND; ignored/binary files are valid. read-bytes.test.ts and the focused
+  service test prove bounded200MiB I/O, file/root/link/race refusal and physical size.
+
 - listFolder/findFiles/readText/statEntry(workbenchId, ...) run the Docs tree reads of core
   workbench/tree.ts on the active workbench folder (CONFLICT otherwise). They need no storage,
   so read-only snapshots browse too; [Document viewer](document-viewer.md) owns their contract.

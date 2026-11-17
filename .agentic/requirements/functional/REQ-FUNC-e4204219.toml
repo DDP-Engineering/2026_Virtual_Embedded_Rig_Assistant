@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-FUNC-e4204219"
+title = "Reject invalid byte window requests"
+status = "active"
+requirement = "If a document byte-read window has a negative, fractional or unsafe offset, a length outside 1 through 1048576, unsafe end arithmetic or unexpected request fields, VERA shall refuse it with INVALID."
+verification = "Validate strict shared requests and direct host windows for negative/fractional/unsafe/zero/oversized values, extra fields and safe-integer overflow; accept exact limits."
+affected_paths = ["05_Software/src/libraries/shared/src/documents.ts", "05_Software/src/libraries/shared/src/ipc.ts", "05_Software/src/libraries/core/src/workbench/read-bytes.ts", "05_Software/src/libraries/shared/src/documents-ipc.test.ts", "05_Software/src/libraries/core/src/workbench/read-bytes.test.ts", "05_Software/src/apps/desktop/src/preload/bridge.test.ts"]
+linked_tests = ["05_Software/src/libraries/shared/src/documents-ipc.test.ts", "05_Software/src/libraries/core/src/workbench/read-bytes.test.ts", "05_Software/src/apps/desktop/src/preload/bridge.test.ts"]
+spec = "specs/REQ-FUNC-69645e84.md"
+created = 2026-11-17
+updated = 2026-11-17

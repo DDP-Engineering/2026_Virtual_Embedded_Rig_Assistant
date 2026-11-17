@@ -66,6 +66,40 @@ async function harness() {
   return { root, folder, host, events, settings, paths, service: new WorkbenchService(host) };
 }
 
+it("keeps viewer byte reads confined in Bypass even with an additional-folder grant", async () => {
+  const h = await harness();
+  try {
+    const { config } = await h.service.create(h.folder, "Bytes", {
+      config: { agent: { permission_mode: "bypass" } },
+    });
+    const sibling = join(h.root, "outside");
+    await mkdir(sibling);
+    await writeFile(join(sibling, "secret.bin"), "outside");
+    const grant = await h.service.chooseAdditionalFolder(sibling, config.id);
+    await h.service.updateConfig({}, config.id, [], { add: [grant.id] });
+    await mkdir(join(h.folder, "ignored"));
+    await writeFile(join(h.folder, ".vera/.veraignore"), "ignored/\n");
+    await writeFile(join(h.folder, "ignored/raw.bin"), Buffer.from([0, 255, 65]));
+    const source = await h.service.readBytes(config.id, "ignored/raw.bin", 1, 2);
+    expect(source).toMatchObject({ path: "ignored/raw.bin", offset: 1, size: 3 });
+    expect(source.bytes.subarray(source.offset - source.start, source.offset - source.start + 2)).toEqual(
+      Buffer.from([255, 65]),
+    );
+    expect(await h.service.statEntry(config.id, "ignored/raw.bin")).toMatchObject({ type: "file", size: 3 });
+    for (const path of ["../outside/secret.bin", join(sibling, "secret.bin")])
+      await expect(h.service.readBytes(config.id, path, 0, 1)).rejects.toMatchObject({ code: "DENIED" });
+    await expect(
+      h.service.readBytes("wb_01JB8Z6Q4M7N2K5R9T3V8X1Y0D", "ignored/raw.bin", 0, 1),
+    ).rejects.toMatchObject({ code: "CONFLICT" });
+    await h.service.close();
+    await expect(h.service.readBytes(config.id, "ignored/raw.bin", 0, 1)).rejects.toMatchObject({
+      code: "NOT_FOUND",
+    });
+  } finally {
+    await h.service.close();
+  }
+});
+
 it("saves masking choices across reopen while retaining extensions and TERM grants", async () => {
   const h = await harness();
   try {

@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-SEC-f561466e"
+title = "Confine byte reads to ordinary workbench files"
+status = "active"
+requirement = "If a document byte-read path names a link, a folder, an ambiguous alias or a location outside its owning workbench, VERA shall refuse it with DENIED irrespective of permission mode or additional-folder grants."
+verification = "Exercise traversal, absolute and Windows aliases, file links and ancestor links, and the WorkbenchService under Bypass with an additional folder; assert DENIED before bytes are published."
+affected_paths = ["05_Software/src/libraries/core/src/workbench/read-bytes.ts", "05_Software/src/libraries/core/src/workbench/service.ts", "05_Software/src/libraries/core/src/workbench/read-bytes.test.ts", "05_Software/src/libraries/core/src/workbench/service.test.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/workbench/read-bytes.test.ts", "05_Software/src/libraries/core/src/workbench/service.test.ts::keeps viewer byte reads confined in Bypass even with an additional-folder grant"]
+spec = "specs/REQ-FUNC-69645e84.md"
+created = 2026-11-17
+updated = 2026-11-17

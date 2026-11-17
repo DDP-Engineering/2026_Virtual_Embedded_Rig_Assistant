@@ -56,6 +56,19 @@ Managed PDF downloads use downloads.list/open scoped IPC and a downloadId Viewer
   replies cannot restore old presentation. Download views retain their separate policy. PDF bytes remain exact; only
   extracted PDF text follows Display. Sensitive-name entries cannot attach opaque identities to chat;
   the existing model admission still rejects stored-secret message text.
+- `docs.readBytes({workbenchId,path,offset,length})` reads any ordinary owning-workbench file,
+  ignored or binary included, at original physical offsets (safe integers, length1..1048576).
+  It returns `{workbenchId,path,displayPath,offset,size,data}` with base64 data through EOF;
+  `docs.stat` retains file/folder Properties and the original physical size. Core read-bytes.ts
+  uses bounded positional I/O, ordinary/canonical root and path rechecks, and descriptor inode/dev/
+  size/mtime/ctime checks before/after reading; missing sources return NOT_FOUND, changed sources
+  CONFLICT, invalid windows INVALID and disallowed paths DENIED. Bypass/additional folders never
+  extend viewer scope. A fixed64KiB host-only context per side bounds input to1MiB+128KiB.
+  DisplayDocuments rechecks owner/generation and current Display/secrets after asynchronous work.
+  On replaces all overlapping literal/JSON-escaped secret bytes in UTF8, UTF16LE/BE, Windows1252,
+  ISO88591/2 with0x2A, preserving length/offset/physical size; overlong representations mask the
+  entire returned window. UTF16 masked pairs decode as U+2A2A. Off returns exact original bytes.
+  Exact contract: specs/REQ-FUNC-69645e84.md. No viewer controls consume it yet.
 - docs.list({workbenchId}) returns scoped document statuses/reasons.
 - docs.search({workbenchId,query}) returns at most20 current keyword hits after deduplicated per-source SHA/status/kind/locator verification and index epoch checks.
 - docs.open accepts workbenchId with indexed path, document ref, or
@@ -296,9 +309,13 @@ Managed PDF downloads use downloads.list/open scoped IPC and a downloadId Viewer
 | tab menu, drag, tab keys | documents/document-tabs.tsx; viewer-context move/closeMany; file-actions.tsx | document-tabs.test.ts; citations.spec.ts (real drag) |
 | search box, In documents, actions row | documents/docs-tab.tsx (`useTreeExpansion`); styles `.docs-actions` | docs-tree.test.ts; documents.test.ts; documents.spec.ts |
 | row context menu / Properties | documents/tree-menu.tsx; tree-properties.tsx; mockApi docs.stat | docs-tree.test.ts; documents.test.ts; docs-tree.spec.ts |
+| Bounded physical byte reads | core/workbench/read-bytes.ts and service.ts; shared documents/ipc.ts; main display-documents.ts and display-bytes.ts | read-bytes.test.ts; display-bytes.test.ts; display-documents.test.ts; documents-ipc.test.ts; focused service/bridge tests |
 | Open in / Show in Explorer / Copy | main/openers.ts; index.ts docs.openers/openWith/reveal/copyPath/systemApps/openSystemApp; core locateEntry; file-actions.tsx useFileActions | openers.test.ts; tree.test.ts; documents-ipc.test.ts; docs-tree.test.ts; docs-tree.spec.ts |
 
 ## Key behaviors
+
+- REQ-FUNC-69645e84, REQ-FUNC-e4204219, REQ-SEC-f561466e, REQ-REL-0fa2a8e9,
+  REQ-SEC-d707ed8d, REQ-FUNC-c21cc184 — bounded physical bytes, confinement, typed races and live encoded masking.
 
 - REQ-FUNC-c07a945e, REQ-SEC-df8a595a — live conditional Display with stable restart-safe workbench-owned identities.
 - REQ-FUNC-28ad0001 — guarded scoped viewer payload and citation provenance.
@@ -316,8 +333,8 @@ Managed PDF downloads use downloads.list/open scoped IPC and a downloadId Viewer
 ## Files
 
 Under05_Software: shared/{documents,ipc}.ts; core/knowledge/viewer.ts/test,
-core/sessions/service.ts, workbench/{service,tree}.ts/test and knowledge/search.test.ts;
-desktop/main/{index,document-viewer,display-documents,display-identities,security,content-policy,openers}.ts, openers.test.ts and
+core/sessions/service.ts, workbench/{service,tree,read-bytes}.ts/test and knowledge/search.test.ts;
+desktop/main/{index,document-viewer,display-documents,display-bytes,display-identities,security,content-policy,openers}.ts, openers.test.ts and
 document-viewer.test.ts; renderer/components/documents/{viewer-context,docs-tab,
 pdf-viewer,docs-tree,tree-menu,tree-properties,open-externally,document-tabs,file-actions}.tsx, documents.test.ts and
 docs-tree.test.ts; session/{markdown,transcript,artifacts-tab};

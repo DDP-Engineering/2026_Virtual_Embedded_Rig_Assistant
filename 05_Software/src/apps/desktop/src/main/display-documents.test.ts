@@ -9,6 +9,7 @@ const otherId = "wb_01JB8Z6Q4M7N2K5R9T3V8X1Y0D";
 const secrets = ["mqtt-password-one", "mqtt-password-two"];
 const rawPaths = secrets.map((secret) => `docs/${secret}.txt`);
 function fixture() {
+  const registered = [...secrets];
   let settings: Pick<Settings, "privacy"> = {};
   let config = workbenchSchema.parse({ format: 1, id, name: "Mask" });
   const content = (path: string): ViewerContent => ({
@@ -33,6 +34,10 @@ function fixture() {
     })),
     findFiles: vi.fn(async () => ({ paths: rawPaths, truncated: true })),
     readText: vi.fn(async (_id, path) => content(path)),
+    readBytes: vi.fn(async (_id: string, path: string, offset: number, _length: number) => {
+      const bytes = Buffer.from(`prefix ${registered[0]} suffix`);
+      return { path, offset, size: bytes.length, start: 0, bytes };
+    }),
     statEntry: vi.fn(async (_id, path) => ({
       path,
       type: "file",
@@ -63,11 +68,13 @@ function fixture() {
     createMaskingResolver(() => settings),
     (text) => secrets.reduce((s, secret) => s.replaceAll(secret, "[REDACTED]"), text),
     new DisplayIdentities(Buffer.alloc(32, 1)),
+    () => registered,
   );
   return {
     display,
     host,
     content,
+    register: (secret: string) => registered.push(secret),
     app: (on: boolean) => {
       settings = { privacy: { mask: { display: on } } };
     },
@@ -200,6 +207,84 @@ describe("Display boundary", () => {
     finish({ paths: rawPaths, truncated: false });
     await expect(stale).rejects.toMatchObject({ code: "CONFLICT" });
   });
+});
+
+it("publishes bounded byte windows through opaque identities and the current Display choice", async () => {
+  const f = fixture();
+  const path = f.display.path(id, rawPaths[0] as string);
+  const read = async () =>
+    channels["docs.readBytes"].response.parse(await f.display.readBytes(id, path, 9, 4));
+  expect(f.display.readBytes, "byte publication boundary exists").toBeTypeOf("function");
+  expect(Buffer.from((await read()).data, "base64").toString()).toBe("tt-p");
+  f.app(true);
+  const masked = await read();
+  expect(masked).toMatchObject({
+    workbenchId: id,
+    path,
+    displayPath: "docs/[REDACTED].txt",
+    offset: 9,
+    size: 31,
+  });
+  expect(Buffer.from(masked.data, "base64").toString()).toBe("****");
+  expect(f.host.readBytes).toHaveBeenLastCalledWith(id, rawPaths[0], 9, 4);
+  f.choice("off");
+  expect(Buffer.from((await read()).data, "base64").toString()).toBe("tt-p");
+  f.app(false);
+  f.choice("on");
+  expect(Buffer.from((await read()).data, "base64").toString()).toBe("****");
+  f.choice("default");
+  expect(Buffer.from((await read()).data, "base64").toString()).toBe("tt-p");
+  expect((await f.display.stat(id, path)).properties.size).toBe(12);
+});
+
+it("resolves Display and newly registered byte secrets after all asynchronous work", async () => {
+  const f = fixture();
+  for (const on of [true, false]) {
+    f.app(!on);
+    let finish!: () => void;
+    const gate = new Promise<void>((resolve) => {
+      finish = resolve;
+    });
+    f.host.readBytes.mockImplementationOnce(async (_id, path, offset) => {
+      await gate;
+      return { path, offset, start: 0, size: 16, bytes: Buffer.from("late-secret-1234") };
+    });
+    const result = f.display.readBytes(id, "safe.bin", 2, 4);
+    f.register("late-secret-1234");
+    f.app(on);
+    finish();
+    expect(Buffer.from((await result).data, "base64").toString()).toBe(on ? "****" : "te-s");
+  }
+});
+
+it("refuses forged, foreign, mismatched and stale byte identities", async () => {
+  const f = fixture();
+  const token = f.display.path(id, rawPaths[0] as string);
+  await expect(f.display.readBytes(id, `${token}/wrong`, 0, 1)).rejects.toMatchObject({ code: "NOT_FOUND" });
+  await expect(f.display.readBytes(otherId, token, 0, 1)).rejects.toMatchObject({ code: "CONFLICT" });
+  expect(f.host.readBytes).not.toHaveBeenCalled();
+  f.host.readBytes.mockImplementationOnce(async () => ({
+    path: "wrong",
+    offset: 0,
+    start: 0,
+    size: 0,
+    bytes: Buffer.alloc(0),
+  }));
+  await expect(f.display.readBytes(id, token, 0, 1)).rejects.toMatchObject({ code: "NOT_FOUND" });
+  for (const close of [() => f.display.close(), () => f.switch()]) {
+    let finish!: () => void;
+    const gate = new Promise<void>((resolve) => {
+      finish = resolve;
+    });
+    f.host.readBytes.mockImplementationOnce(async (_id, path, offset) => {
+      await gate;
+      return { path, offset, start: 0, size: 0, bytes: Buffer.alloc(0) };
+    });
+    const result = f.display.readBytes(id, token, 0, 1);
+    close();
+    finish();
+    await expect(result).rejects.toMatchObject({ code: "CONFLICT" });
+  }
 });
 
 it("keeps raw core-issued session citation paths and heading slugs exact", async () => {

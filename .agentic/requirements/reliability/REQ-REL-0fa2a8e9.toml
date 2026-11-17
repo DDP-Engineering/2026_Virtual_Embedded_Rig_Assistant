@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-REL-0fa2a8e9"
+title = "Reject changed or vanished byte sources"
+status = "active"
+requirement = "If the byte-read source vanishes or its file identity, metadata or canonical ancestor binding changes between validation and publication, VERA shall return NOT_FOUND for a missing source or CONFLICT for a changed source instead of bytes."
+verification = "Replace the file between lstat and open, change/truncate it during reads, retarget an ancestor and remove it at controlled descriptor barriers; assert typed failure and descriptor closure."
+affected_paths = ["05_Software/src/libraries/core/src/workbench/read-bytes.ts", "05_Software/src/libraries/core/src/workbench/read-bytes.test.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/workbench/read-bytes.test.ts"]
+spec = "specs/REQ-FUNC-69645e84.md"
+created = 2026-11-17
+updated = 2026-11-17

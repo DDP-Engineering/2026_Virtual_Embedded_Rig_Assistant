@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-FUNC-c21cc184"
+title = "Publish bytes using the current Display choice"
+status = "active"
+requirement = "When an asynchronous document byte read completes, VERA shall publish it using the current owning workbench Display choice and current registered secrets through the existing opaque Display identity boundary."
+verification = "Delay real host reads while toggling app/default/on/off, registering a secret or closing/switching workbenches; assert current masking, exact opaque identity and refusal of stale/forged/foreign requests."
+affected_paths = ["05_Software/src/apps/desktop/src/main/display-documents.ts", "05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/apps/desktop/src/main/display-documents.test.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/display-documents.test.ts"]
+spec = "specs/REQ-FUNC-69645e84.md"
+created = 2026-11-17
+updated = 2026-11-17

@@ -7,6 +7,7 @@ import {
   veraError,
   type WorkbenchConfig,
 } from "@vera/shared";
+import { maskByteWindow } from "./display-bytes.js";
 import type { DisplayIdentities } from "./display-identities.js";
 import { publicDocument, publicDocumentHit, publicViewer } from "./document-viewer.js";
 import { publicGuard } from "./events.js";
@@ -25,6 +26,7 @@ export class DisplayDocuments {
     private maskingFor: (config: WorkbenchConfig, area: "display") => boolean,
     private redact: (text: string) => string,
     private identities: DisplayIdentities,
+    private secrets: () => readonly string[],
   ) {}
   close() {
     this.generation++;
@@ -162,6 +164,26 @@ export class DisplayDocuments {
         path: this.path(id, properties.path),
         displayPath: this.scrub(id, properties.path),
       },
+    };
+  }
+  async readBytes(id: string, path: string, offset: number, length: number) {
+    const original = this.resolve(id, path);
+    const source = await this.run(id, () => this.workbench.readBytes(id, original, offset, length));
+    if (source.path !== original || source.offset !== offset) throw veraError("NOT_FOUND");
+    const masked = this.maskingFor(this.current(id).config, "display");
+    const bytes = masked
+      ? maskByteWindow(source, length, this.secrets())
+      : source.bytes.subarray(
+          offset - source.start,
+          offset - source.start + Math.min(length, Math.max(0, source.size - offset)),
+        );
+    return {
+      workbenchId: id,
+      path: this.path(id, original),
+      displayPath: this.scrub(id, original),
+      offset,
+      size: source.size,
+      data: bytes.toString("base64"),
     };
   }
   async search(id: string, query: string) {

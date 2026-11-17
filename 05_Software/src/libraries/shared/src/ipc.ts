@@ -4,6 +4,8 @@ import { changeDetailSchema, changeIdSchema, changeSummarySchema } from "./chang
 import { chatgptLoginSchema, chatgptStatusSchema } from "./chatgpt.js";
 import { commandPrefixDisplaySchema, commandPrefixIdsSchema, commandPrefixSchema } from "./command-prefix.js";
 import {
+  docsByteReadSchema,
+  docsByteWindowSchema,
   docsEntryPropertiesSchema,
   docsOpenerSchema,
   docsScopeSchema,
@@ -428,6 +430,11 @@ export const channels = {
     "docs.stat",
     docsScopeSchema.extend({ path: z.string().min(1).max(262144) }),
     docsScopeSchema.extend({ properties: docsEntryPropertiesSchema }),
+  ),
+  "docs.readBytes": defineChannel(
+    "docs.readBytes",
+    docsByteWindowSchema.extend({ workbenchId: docsScopeSchema.shape.workbenchId }),
+    docsByteReadSchema.extend({ workbenchId: docsScopeSchema.shape.workbenchId }),
   ),
   "docs.openers": defineChannel(
     "docs.openers",

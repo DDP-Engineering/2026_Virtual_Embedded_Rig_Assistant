@@ -67,6 +67,7 @@ const workbenchHandlers = {
   "docs.tree": unused,
   "docs.find": unused,
   "docs.read": unused,
+  "docs.readBytes": unused,
   "docs.stat": unused,
   "docs.openers": unused,
   "docs.openWith": unused,

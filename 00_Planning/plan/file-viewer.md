@@ -2,9 +2,9 @@
 
 PURPOSE: open any workbench file inside VERA the way a file manager's lister does: as text with word wrap and a
 chosen encoding, as hex, or rendered, without a size limit and without an external program.
-STATE: planned 2026-11-15. Product code follows AEGIS, one work package per task.
+STATE: VIEW-01 implemented as an uncommitted validated candidate (TASK-64079701, #286); VIEW-02 through VIEW-06 remain planned. Product code follows AEGIS, one work package per task.
 
-## Today (2026-11-15)
+## Current implementation (2026-11-17)
 
 - The Files tab lists every file and folder, ignored ones marked; it skips symbolic links and stops at 5,000
   entries per folder (`core/src/workbench/tree.ts`).
@@ -12,9 +12,15 @@ STATE: planned 2026-11-15. Product code follows AEGIS, one work package per task
   numbered lines (`docs.read` → `readText`, `TEXT_VIEW_LIMIT`). It refuses other encodings and binary files
   ("This file is not text") and larger files ("larger than 5 MB"). Lines never wrap; there is no hex view and no
   image view. Open externally hands a file to a system program.
-- Stored secrets (provider keys, plugin credentials) are always replaced by `[REDACTED]` in what VERA shows:
-  viewer text, document lists, program run arguments and logs; the Files tab and Find even drop entries whose
-  path contains a stored secret (`credentials.scrub` in `desktop/src/main/index.ts`).
+- Display masking is live, defaults off and supports per-workbench overrides. Opaque workbench-owned identities
+  retain secret-named Files/Find entries. MASK-02 is committed at cb8f0bcd; the completed MASK predecessor
+  sequence ends at b709882a9f23d64966c0e44cedbb1dc3bcd23e06 (VIEW-01 base).
+- VIEW-01 adds `docs.readBytes` and reuses `docs.stat`: physical offsets/size, at most 1 MiB returned and
+  64 KiB host-only matching context per side. Masking replaces intersecting secret bytes with 0x2A for UTF-8,
+  UTF-16 LE/BE and supported single-byte encodings, with whole-window masking for overlong secrets.
+  Contract: `.agentic/specs/REQ-FUNC-69645e84.md`. Done A/B: focused shared/core/host/transport tests and
+  real stored-credential/200 MiB Windows and WSL2 probes in ignored `evaluation-outputs/view01`.
+  Coordinator owns the local commit/issue closure; native Ubuntu and final delivery gates remain deferred.
 
 ## Decisions (2026-11-15)
 

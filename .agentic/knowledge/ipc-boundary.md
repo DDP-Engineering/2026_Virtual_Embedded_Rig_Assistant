@@ -73,6 +73,12 @@ AppEvents use shared updates.ts; [updates](updates.md) owns their lifecycle/capa
   save requires original content SHA256. Main authorizes the existing exact frame
   before WorkbenchService lifecycle/ownership checks. [Skills](skills.md) owns content.
 
+- `docs.readBytes` adds a strict workbench-owned opaque path, nonnegative safe offset and1..1048576
+  length with safe end arithmetic. Its strict reply supplies original offset/physical size and bounded
+  base64 bytes with Display-safe path metadata. Shared schemas reject extra fields and malformed or
+  oversized data; preload derives the allowlist from channels. [Document viewer](document-viewer.md)
+  owns masking/confinement. No UI calls or mock-mode consumer use the byte API yet.
+
 - docs.reindex accepts an optional workbenchId and an empty response with workbench ownership checks. docs.list/search/open require exact workbenchId and return scoped typed records/results/content. Open accepts an indexed path, document ref, or session/message citation; host provenance and current guarded source checks precede disclosure. [Document viewer](document-viewer.md) owns these reads.
   Workbench index.progress/index.document transport batch counters and typed
   records/removals; main redacts paths while retaining enums/hashes/counts.

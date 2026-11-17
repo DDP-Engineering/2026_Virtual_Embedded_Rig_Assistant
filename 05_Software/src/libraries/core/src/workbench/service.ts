@@ -53,6 +53,7 @@ import { DocumentsRepository } from "../storage/repos/documents.js";
 import { PREVIEW_TIME_LIMIT_MS, previewDocuments, relativeFolder, scanDocuments } from "./documents-scan.js";
 import { acquireGuard } from "./guard.js";
 import { createIgnoreRules } from "./ignore.js";
+import { readBytes } from "./read-bytes.js";
 import { findFiles, listFolder, locateEntry, readText, statEntry } from "./tree.js";
 import { WriteQueue } from "./write-queue.js";
 
@@ -404,6 +405,10 @@ export class WorkbenchService {
   /** A text file of the active workbench, ignored or not, for the Source tab. */
   readText(workbenchId: string, path: string) {
     return this.run(async () => readText(this.activeFolder(workbenchId), path));
+  }
+  /** Physical bytes with host-only masking context, always confined to the owning workbench. */
+  readBytes(workbenchId: string, path: string, offset: number, length: number) {
+    return this.run(async () => readBytes(this.activeFolder(workbenchId), path, offset, length));
   }
   /** Type, size and modified time of a file or folder of the active workbench, ignored or not. */
   statEntry(workbenchId: string, path: string) {

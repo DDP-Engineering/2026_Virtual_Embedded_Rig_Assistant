@@ -265,6 +265,7 @@ const display = new DisplayDocuments(
   new DisplayIdentities(
     loadDisplayIdentityKey(join(dataLocations.paths.userData, "display-identities.json")),
   ),
+  () => credentials.knownSecrets(),
 );
 /** Installed plugins live under userData; enablement is per workbench (workbench.yaml). */
 const plugins = new PluginStore({ root: join(dataLocations.paths.userData, "plugins") });
@@ -840,6 +841,8 @@ ipcMain.handle(
       "docs.tree": ({ workbenchId, path }) => display.tree(workbenchId, path),
       "docs.find": ({ workbenchId, query }) => display.find(workbenchId, query),
       "docs.read": ({ workbenchId, path, requestId }) => display.read(workbenchId, path, requestId),
+      "docs.readBytes": ({ workbenchId, path, offset, length }) =>
+        display.readBytes(workbenchId, path, offset, length),
       "docs.stat": ({ workbenchId, path }) => display.stat(workbenchId, path),
       // The Docs tree's OS actions go through the tree's confinement first (TASK-eae3a69e).
       "docs.openers": () => ({ apps: [...openers().keys()] }),

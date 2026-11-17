@@ -104,6 +104,7 @@ export * from "./web/provider.js";
 export { acquireGuard as acquireWorkbenchGuard } from "./workbench/guard.js";
 export * from "./workbench/ignore.js";
 export * from "./workbench/path-guard.js";
+export * from "./workbench/read-bytes.js";
 export * from "./workbench/service.js";
 export * from "./workbench/tree.js";
 export * from "./workbench/write-queue.js";

@@ -30,6 +30,23 @@ function fixture() {
   };
   return { transport, listeners, bridge: createBridge(transport) };
 }
+it("transports bounded document bytes and rejects invalid windows before transport", async () => {
+  const { bridge, transport } = fixture();
+  const request = {
+    workbenchId: "wb_01JB8Z6Q4M7N2K5R9T3V8X1Y0C",
+    path: "ignored/file.bin",
+    offset: 1,
+    length: 2,
+  };
+  const response = { workbenchId: request.workbenchId, path: request.path, offset: 1, size: 3, data: "AP8=" };
+  transport.invoke.mockResolvedValueOnce({ ok: true, value: response } as never);
+  expect(await bridge.invoke("docs.readBytes", request)).toEqual(response);
+  expect(transport.invoke).toHaveBeenCalledExactlyOnceWith("vera:invoke", "docs.readBytes", request);
+  await expect(bridge.invoke("docs.readBytes", { ...request, length: 1048577 })).rejects.toMatchObject({
+    code: "INVALID",
+  });
+  expect(transport.invoke).toHaveBeenCalledTimes(1);
+});
 it("registers a session replay subscription before dispatch and filters its token with idempotent cleanup", async () => {
   const { bridge, transport, listeners } = fixture();
   transport.invoke.mockResolvedValue({ ok: true, value: {} } as never);
@@ -138,6 +155,7 @@ it("infers registry types and returns validated metadata", async () => {
     | "docs.tree"
     | "docs.find"
     | "docs.read"
+    | "docs.readBytes"
     | "docs.stat"
     | "docs.openers"
     | "docs.openWith"

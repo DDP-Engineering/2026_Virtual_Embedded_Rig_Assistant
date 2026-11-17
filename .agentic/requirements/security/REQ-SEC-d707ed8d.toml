@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-SEC-d707ed8d"
+title = "Mask encoded secret bytes across window edges"
+status = "active"
+requirement = "While Display masking resolves on at publication, VERA shall replace every returned byte intersecting a registered secret representation in UTF8, UTF16LE, UTF16BE, Windows1252, ISO88591 or ISO88592 with 0x2A, including matches spanning either window edge, conservatively masking the whole returned window when a secret exceeds the bounded matching context."
+verification = "Compare exact masked byte spans at every split of non-ASCII fixtures in the six encodings and escaped/overlapping matches; verify preserved length/offset/physical size, original bytes when off, and whole-window masking for overlong secrets."
+affected_paths = ["05_Software/src/apps/desktop/src/main/display-bytes.ts", "05_Software/src/apps/desktop/src/main/display-documents.ts", "05_Software/src/libraries/shared/src/documents.ts", "05_Software/src/apps/desktop/src/main/display-bytes.test.ts", "05_Software/src/apps/desktop/src/main/display-documents.test.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/display-bytes.test.ts", "05_Software/src/apps/desktop/src/main/display-documents.test.ts"]
+spec = "specs/REQ-FUNC-69645e84.md"
+created = 2026-11-17
+updated = 2026-11-17

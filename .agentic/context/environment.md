@@ -61,6 +61,14 @@ Run commands from 05_Software using the repository-local npmw.py wrapper when No
 
 ## Verification
 
+Document byte-window proof uses shared documents-ipc, core workbench/read-bytes, the focused
+service Bypass/additional-folder case, main display-bytes/display-documents/router, preload bridge
+and tooling boundaries tests. Original logs and source-bundled real-file probes live in ignored
+evaluation-outputs/view01. Pinned Windows and WSL2 Node24.21.0 each reload a stored synthetic
+credential, check350 split byte windows in six encodings and the tail of a200MiB sparse file.
+WSL2 is distinct from unavailable native Ubuntu; full suites/delivery gates remain deferred.
+Unchanged native/packaging proof is reused.
+
 Privacy settings proof uses renderer privacy-settings/workbench-privacy and use-preferences tests for localized drafts, effective agent-off confirmation, readonly/failure recovery and stale-read rejection. Focused native tests/e2e/privacy-settings.spec.ts saves actual app/config files, creates and isolates two workbenches, follows live app defaults and restarts Electron in en/ro/de/fr. Original evidence is evaluation-outputs/mask05. Existing consumer/native package proof is reused; full app/plugin/E2E, native Ubuntu/clean-install and exact-source delivery gates remain user-deferred.
 
 Masking consumer proof uses sessions/masking.test.ts, llm gateway/stream-scrub, desktop exports/events/terminals and selected CLI process cases. Native agent-masking.spec.ts uses a real stored MQTT fixture credential and local replay to verify independent session and artifact exports, snapshots/search/detail and irreversible saved redaction. Original logs/receipt use evaluation-outputs/mask04. Unchanged TERM PTY/native packaging evidence is reused; WSL2 is distinct from unavailable native Ubuntu, and full suites/deliveries remain deferred.

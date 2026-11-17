@@ -354,3 +354,30 @@ it("carries the count guard on docs.volume and index.guard and approves only a p
   expect(approve.request.safeParse({ files: 1 }).success).toBe(false);
   expect(approve.response.parse({})).toEqual({});
 });
+it("bounds physical byte-window requests and replies through strict docs channels", () => {
+  const workbenchId = "wb_01JB8Z6Q4M7N2K5R9T3V8X1Y0C";
+  const channel = channels["docs.readBytes"];
+  expect(channel, "bounded byte-window IPC is available").toBeDefined();
+  const request = { workbenchId, path: "ignored/binary.bin", offset: 0, length: 1048576 };
+  expect(channel.request.parse(request)).toEqual(request);
+  for (const patch of [
+    { offset: -1 },
+    { offset: 0.5 },
+    { offset: Number.MAX_SAFE_INTEGER + 1 },
+    { offset: Number.MAX_SAFE_INTEGER, length: 1 },
+    { length: -1 },
+    { length: 0 },
+    { length: 0.5 },
+    { length: 1048577 },
+    { path: "" },
+    { encoding: "utf8" },
+  ])
+    expect(channel.request.safeParse({ ...request, ...patch }).success).toBe(false);
+  const reply = { workbenchId, path: request.path, offset: 3, size: 5, data: "AP8=" };
+  expect(channel.response.parse(reply)).toEqual(reply);
+  for (const patch of [{ offset: -1 }, { size: -1 }, { size: 4 }, { data: "not base64" }, { bytes: [0] }])
+    expect(channel.response.safeParse({ ...reply, ...patch }).success).toBe(false);
+  expect(channel.response.parse({ ...reply, offset: 20, data: "" }).data).toBe("");
+  const full = { ...reply, offset: 0, size: 1048576, data: `${"////".repeat(Math.floor(1048576 / 3))}/w==` };
+  expect(channel.response.parse(full)).toEqual(full);
+});

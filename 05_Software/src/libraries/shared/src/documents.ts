@@ -92,6 +92,33 @@ const ref = z
   .refine((v) => !!parseRef(v));
 const documentRef = ref.refine((v) => parseRef(v)?.kind !== "artifact");
 export const docsScopeSchema = z.strictObject({ workbenchId: workbenchIdSchema });
+export const DOCS_BYTE_WINDOW_LIMIT = 1024 * 1024;
+/** Host-only matching context on each side of a byte window. */
+export const DOCS_BYTE_CONTEXT_LIMIT = 65536;
+export const docsByteWindowSchema = z
+  .strictObject({
+    path: z.string().min(1).max(262144),
+    offset: count,
+    length: count.positive().max(DOCS_BYTE_WINDOW_LIMIT),
+  })
+  .refine((v) => Number.isSafeInteger(v.offset + v.length));
+/** Base64 bytes preserve physical offsets and size, including masked 0x2A bytes. */
+export const docsByteReadSchema = z
+  .strictObject({
+    path: z.string().min(1).max(262144),
+    displayPath: z.string().optional(),
+    offset: count,
+    size: count,
+    data: z
+      .string()
+      .max(4 * Math.ceil(DOCS_BYTE_WINDOW_LIMIT / 3))
+      .regex(/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/),
+  })
+  .refine((v) => {
+    const bytes = (v.data.length * 3) / 4 - (v.data.endsWith("==") ? 2 : v.data.endsWith("=") ? 1 : 0);
+    return bytes <= DOCS_BYTE_WINDOW_LIMIT && bytes <= Math.max(0, v.size - v.offset);
+  });
+export type DocsByteRead = z.infer<typeof docsByteReadSchema>;
 /**
  * One entry of a workbench folder in the Docs tree (TASK-66b7d4aa); `ignored` marks what the
  * agent and the index do not see (TASK-b34f2cc7).

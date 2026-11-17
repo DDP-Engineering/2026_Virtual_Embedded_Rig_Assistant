@@ -43,6 +43,12 @@ raw execution authority. CLI session-output.ts replaces the replay-only scrubber
 sessions/masking.test.ts, llm/stream-scrub.test.ts and CLI session-output.test.ts; native
 tests/e2e/agent-masking.spec.ts proves independent export/disclosure choices. Saved redaction is irreversible.
 
+The document host API supplies bounded physical byte windows through `docs.readBytes` and file size
+through the existing `docs.stat`. Core `workbench/read-bytes.ts` owns confined positional reads;
+main `display-bytes.ts` owns length-preserving secret masking with bounded context. These prepare
+later large-file/text/hex/image modes without adding controls yet. The exact contract is in
+[the byte protocol](../.agentic/specs/REQ-FUNC-69645e84.md); focused tests sit beside both modules.
+
 Unit and component tests remain beside the implementation in `src/`. Environment, build and
 release tooling lives in [02_Tools](../02_Tools/README.md); it resolves packages from this
 folder's `node_modules/`, so there is a single dependency tree.
