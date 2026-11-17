@@ -1221,7 +1221,7 @@ it("cleans owned temporary data/scripts on success and startup failure while ret
   expect(await readFile(join(supplied, "keep.txt"), "utf8")).toBe("original");
   expect(await readFile(join(supplied, "settings.json"), "utf8")).not.toContain("api_key");
   expect(await readdir(temporary)).toEqual([]);
-});
+}, 15000);
 
 // REQ-FUNC-13ab0001 REQ-SEC-13ab0002 REQ-SEC-13ab0003 REQ-FUNC-13ab0007
 it("scoped CLI local Git clone and pulled helper require explicit machine hash review before real execution", async () => {

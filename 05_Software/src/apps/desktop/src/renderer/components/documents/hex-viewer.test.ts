@@ -116,4 +116,4 @@ it("navigates, finds a border sequence, selects/copies bytes, validates inputs a
     node.remove();
     vi.restoreAllMocks();
   }
-});
+}, 15000);

@@ -13,7 +13,7 @@ beforeAll(async () => {
     true,
   );
   ({ CredentialFile } = await import("./credentials.js"));
-});
+}, 30000);
 const secret = "fake-WP08-only-middle-private-9Zx4";
 function harness(secure = true, backend = "gnome_libsecret", platform = "linux") {
   const disk = new Map<string, string>();

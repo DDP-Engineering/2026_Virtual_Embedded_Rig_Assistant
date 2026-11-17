@@ -134,7 +134,7 @@ it("mounts the newest 40 rows first and the rest in idle chunks, keeping the end
   expect(articles()).toHaveLength(2000);
   expect(articles()[0]?.textContent).toContain("question 0");
   expect(viewport().scrollTop).toBe(2000 * ROW - VIEWPORT);
-});
+}, 15000);
 
 it("mounts a short session at once and keeps rows that arrive later", async () => {
   const state = conversation(10);
@@ -174,7 +174,7 @@ it("mounts every row for a search, so the oldest match is outlined", async () =>
   expect(container.querySelector("[data-search-match=true]")?.textContent).toContain("question 0");
   await render(conversation(1000), "");
   expect(articles()).toHaveLength(2000);
-});
+}, 15000);
 
 it("mounts the rest at once when the reader reaches the top, and Ctrl+Home lands on the first message", async () => {
   await render(conversation(1000));

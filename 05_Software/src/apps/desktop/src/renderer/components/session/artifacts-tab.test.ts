@@ -23,8 +23,8 @@ async function settle() {
   });
 }
 function button(text: string) {
-  const node = [...container.querySelectorAll<HTMLButtonElement>("button")].find((b) =>
-    b.textContent?.includes(text),
+  const node = [...container.querySelectorAll<HTMLButtonElement>("button")].find(
+    (b) => b.textContent?.includes(text) || b.getAttribute("aria-label")?.includes(text),
   );
   expect(node, text).toBeTruthy();
   return node as HTMLButtonElement;

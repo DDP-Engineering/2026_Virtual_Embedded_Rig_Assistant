@@ -4,6 +4,7 @@ import { defineConfig } from "vitest/config";
 // Workspaces contain local unit/component tests; root projects group cross-cutting verification.
 export default defineConfig({
   test: {
+    fsModuleCache: true,
     maxWorkers: Math.min(4, availableParallelism()),
     projects: [
       "src/libraries/*",

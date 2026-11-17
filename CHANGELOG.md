@@ -21,6 +21,7 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ### Changed
 
+- Test startup caches transformed modules and isolates native processing; complex UI checks tolerate loaded hosts.
 - Chat describes tool actions and results clearly, with raw data and duration in expandable technical details.
 - Files places icon actions beside search and shows compact indexing progress with expandable failures.
 - The Context tab and icon tooltip are named Instructions and skills in all four interface languages.

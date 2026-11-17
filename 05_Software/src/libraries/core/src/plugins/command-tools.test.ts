@@ -214,9 +214,14 @@ it("rejects a prepared Bypass request after downgrade and kills a timed-out comm
   const timed = await prepare({ command: "sleep", timeout: 1, background: true });
   const result = await timed.apply(signal());
   await vi.waitFor(() => expect(host.programs[0]?.exited).toBe(true), { timeout: 2000 });
-  expect(await programOutputTool.execute(ctx, { handle: result.handle }, signal())).toMatchObject({
-    running: false,
-  });
+  await vi.waitFor(
+    async () => {
+      expect(await programOutputTool.execute(ctx, { handle: result.handle }, signal())).toMatchObject({
+        running: false,
+      });
+    },
+    { timeout: 2000 },
+  );
 });
 
 // REQ-SEC-f0170302, REQ-SEC-f0170303

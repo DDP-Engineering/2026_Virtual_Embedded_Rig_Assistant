@@ -3,6 +3,8 @@ import { defineConfig } from "vitest/config";
 
 // Native startup deadlines and high-volume filesystem fixtures must not compete with other workers.
 export const resourceTests = [
+  "src/knowledge/processor.test.ts",
+  "src/tools/parse-log.test.ts",
   "src/workers/node-host.test.ts",
   "src/knowledge/ingest-guard.test.ts",
   "src/knowledge/search.test.ts",

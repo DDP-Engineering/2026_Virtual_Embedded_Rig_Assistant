@@ -150,7 +150,7 @@ test("attaches Docs tree entries to the active chat from the workbench page and 
   await send();
   await settle();
   expect(invoke).toHaveBeenCalledWith("session.send", { sessionId: expect.any(String), text: "@docs/a.pdf" });
-});
+}, 15000);
 
 // TASK-79f6ffd3: the conversation hidden behind a document tab
 test("attaching while a document tab is shown brings back the Chat tab, and hidden chat ignores window keys", async () => {

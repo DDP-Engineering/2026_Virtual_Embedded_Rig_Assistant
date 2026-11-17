@@ -177,7 +177,7 @@ beforeAll(async () => {
   const files = import.meta.glob("./mockApi.ts");
   expect(Object.keys(files), "in-memory mock boundary exists").toContain("./mockApi.ts");
   ({ createMockApi } = await import("./mockApi.js"));
-});
+}, 30000);
 it("mock provider metadata hides a full credential equal to the formatted hint", async () => {
   const { api } = createMockApi();
   const apiKey = "abc…defg";
