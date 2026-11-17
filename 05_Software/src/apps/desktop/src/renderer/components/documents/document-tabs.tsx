@@ -427,6 +427,7 @@ function DocumentPanel({ tab, index, leave }: { tab: DocumentTab; index: number;
           run: () => setGotoRequest((value) => value + 1),
         },
       ];
+    if (tab.imageFile) return [];
     if (content.kind === "text")
       return [
         copy,
@@ -488,12 +489,12 @@ function DocumentPanel({ tab, index, leave }: { tab: DocumentTab; index: number;
           // Ctrl+F finds in text and PDFs, Ctrl+G goes to a text line; each shows its field on demand.
           const mod = (event.ctrlKey || event.metaKey) && !event.altKey && !event.shiftKey;
           const key = event.key.toLowerCase();
-          if (mod && key === "f" && (content?.kind === "pdf" || content?.kind === "text")) {
+          if (mod && key === "f" && !tab.imageFile && (content?.kind === "pdf" || content?.kind === "text")) {
             event.preventDefault();
             event.stopPropagation();
             find(event.currentTarget);
           }
-          if (mod && key === "g" && content?.kind === "text") {
+          if (mod && key === "g" && !tab.imageFile && content?.kind === "text") {
             event.preventDefault();
             event.stopPropagation();
             setGotoRequest((value) => value + 1);
@@ -538,6 +539,7 @@ function DocumentPanel({ tab, index, leave }: { tab: DocumentTab; index: number;
               bytes={tab.textBytes}
               largeText={tab.largeText}
               hexFile={tab.hexFile}
+              imageFile={tab.imageFile}
               retry={() => state.retry(tab.key)}
               place={state.place(tab.key)}
               onPlace={(place) => state.setPlace(tab.key, place)}

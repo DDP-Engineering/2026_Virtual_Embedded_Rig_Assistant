@@ -1,10 +1,9 @@
 import { mkdir, mkdtemp, readFile, realpath, rm, writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
-import { _electron, expect, type Page, test } from "@playwright/test";
+import { _electron, expect, type Page } from "@playwright/test";
 import type { Channel, Request, Response, VeraBridge } from "@vera/shared";
-import { resolveConfig } from "electron-vite";
-import { createServer } from "vite";
 import { parse } from "yaml";
+import { test } from "./fixtures.js";
 import { installNetworkGuard, outboundAttempts } from "./network-guard.js";
 
 const invoke = <C extends Channel>(page: Page, channel: C, request: Request<C>): Promise<Response<C>> =>
@@ -14,19 +13,10 @@ const invoke = <C extends Channel>(page: Page, channel: C, request: Request<C>):
     { channel, request },
   ) as Promise<Response<C>>;
 
-test("browser privacy drafts and localized controls fit the compact layout in all four languages", async ({
-  page,
-  context,
-}) => {
+test("browser privacy drafts and localized controls fit the compact layout in all four languages", {
+  tag: "@parallel-browser",
+}, async ({ page, rendererUrl, context }) => {
   test.setTimeout(90000);
-  const renderer = (await resolveConfig({ root: "src/apps/desktop" }, "serve", "development")).config
-    ?.renderer;
-  if (!renderer) throw Error("renderer config");
-  const server = await createServer({
-    ...renderer,
-    define: { ...renderer.define, "import.meta.env.VITE_API": JSON.stringify("mock") },
-    server: { ...renderer.server, port: 0, strictPort: false, hmr: false },
-  });
   const errors: string[] = [],
     outbound: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
@@ -37,57 +27,51 @@ test("browser privacy drafts and localized controls fit the compact layout in al
       await route.abort();
     }
   });
-  try {
-    await server.listen();
-    const address = server.httpServer?.address();
-    if (!address || typeof address === "string") throw Error("address");
-    await page.setViewportSize({ width: 1024, height: 700 });
-    await page.goto(`http://127.0.0.1:${address.port}/?mock=chat`);
-    await page.locator('[data-i18n="nav.welcome"]').click();
-    await page.locator("#workbench-name").fill("Browser privacy");
-    await page.locator('[data-action="choose-create"]').click();
-    await page.locator('[data-action="create-workbench"]').click();
-    for (const language of ["en", "ro", "de", "fr"]) {
-      await page.locator('[data-i18n="nav.settings"]').click();
-      await page.locator('[data-section="appearance"]').click();
-      await page.locator("#language").selectOption(language);
-      await page.locator('[data-section="data"]').click();
-      const agent = page.locator('[data-mask-area="agent"] input');
-      if (!(await agent.isChecked())) {
-        await agent.click();
-        await page.locator("[data-privacy-save]").click();
-        await expect(page.locator("[data-privacy-save]")).toBeDisabled();
-      }
+
+  await page.setViewportSize({ width: 1024, height: 700 });
+  await page.goto(`${rendererUrl}/?mock=chat`);
+  await page.locator('[data-i18n="nav.welcome"]').click();
+  await page.locator("#workbench-name").fill("Browser privacy");
+  await page.locator('[data-action="choose-create"]').click();
+  await page.locator('[data-action="create-workbench"]').click();
+  for (const language of ["en", "ro", "de", "fr"]) {
+    await page.locator('[data-i18n="nav.settings"]').click();
+    await page.locator('[data-section="appearance"]').click();
+    await page.locator("#language").selectOption(language);
+    await page.locator('[data-section="data"]').click();
+    const agent = page.locator('[data-mask-area="agent"] input');
+    if (!(await agent.isChecked())) {
       await agent.click();
-      await page.locator('[data-action="cancel-mask-off"]').click();
-      await expect(agent).toBeChecked();
-      await expect(agent).toBeFocused();
-      await agent.click();
-      await page.locator('[data-action="confirm-mask-off"]').click();
       await page.locator("[data-privacy-save]").click();
       await expect(page.locator("[data-privacy-save]")).toBeDisabled();
-      await page.locator('[data-action="leave-settings"]').click();
-      await page.locator('[data-action="edit-workbench-overview"]').click();
-      await page.locator('[data-project-section="privacy"]').click();
-      const choice = page.locator('[data-mask-area="agent"] select');
-      await expect(choice).toHaveValue("default");
-      await choice.selectOption("on");
-      await choice.selectOption("default");
-      await page.locator('[data-action="confirm-mask-off"]').click();
-      await expect(page.locator("[data-project-save]")).toBeDisabled();
-      const bounds = await page.locator("[data-privacy-controls]").boundingBox();
-      expect(bounds).toBeTruthy();
-      expect((bounds?.x ?? 0) + (bounds?.width ?? 0)).toBeLessThanOrEqual(1025);
-      await page.screenshot({
-        path: resolve(`evaluation-outputs/mask05/native/${language}-browser-compact.png`),
-      });
-      await page.locator("[data-project-cancel]").click();
     }
-    expect(errors).toEqual([]);
-    expect(outbound).toEqual([]);
-  } finally {
-    await server.close();
+    await agent.click();
+    await page.locator('[data-action="cancel-mask-off"]').click();
+    await expect(agent).toBeChecked();
+    await expect(agent).toBeFocused();
+    await agent.click();
+    await page.locator('[data-action="confirm-mask-off"]').click();
+    await page.locator("[data-privacy-save]").click();
+    await expect(page.locator("[data-privacy-save]")).toBeDisabled();
+    await page.locator('[data-action="leave-settings"]').click();
+    await page.locator('[data-action="edit-workbench-overview"]').click();
+    await page.locator('[data-project-section="privacy"]').click();
+    const choice = page.locator('[data-mask-area="agent"] select');
+    await expect(choice).toHaveValue("default");
+    await choice.selectOption("on");
+    await choice.selectOption("default");
+    await page.locator('[data-action="confirm-mask-off"]').click();
+    await expect(page.locator("[data-project-save]")).toBeDisabled();
+    const bounds = await page.locator("[data-privacy-controls]").boundingBox();
+    expect(bounds).toBeTruthy();
+    expect((bounds?.x ?? 0) + (bounds?.width ?? 0)).toBeLessThanOrEqual(1025);
+    await page.screenshot({
+      path: resolve(`evaluation-outputs/mask05/native/${language}-browser-compact.png`),
+    });
+    await page.locator("[data-project-cancel]").click();
   }
+  expect(errors).toEqual([]);
+  expect(outbound).toEqual([]);
 });
 
 for (const language of ["en", "ro", "de", "fr"] as const) {

@@ -502,7 +502,17 @@ test("New Workbench creates only and submits the configured draft with prefilled
   expect(page.querySelector<HTMLInputElement>("#workbench-name")?.value).toBe("new-board");
   expect(
     [...page.querySelectorAll("[data-project-section]")].map((b) => b.getAttribute("data-project-section")),
-  ).toEqual(["general", "instructions", "documents", "embeddings", "agent", "skills", "tools", "plugins"]);
+  ).toEqual([
+    "general",
+    "instructions",
+    "documents",
+    "embeddings",
+    "agent",
+    "skills",
+    "tools",
+    "plugins",
+    "privacy",
+  ]);
   await act(async () => page.querySelector<HTMLButtonElement>('[data-project-section="tools"]')?.click());
   await act(async () => page.querySelector<HTMLInputElement>('[data-tool-toggle="web_search"]')?.click());
   await act(async () =>
@@ -783,7 +793,17 @@ test("workbench editor shows the creation page's sections and the open workbench
   if (!editor) throw Error("Missing editor");
   expect(
     [...editor.querySelectorAll("[data-project-section]")].map((b) => b.getAttribute("data-project-section")),
-  ).toEqual(["general", "instructions", "documents", "embeddings", "agent", "skills", "tools", "plugins"]);
+  ).toEqual([
+    "general",
+    "instructions",
+    "documents",
+    "embeddings",
+    "agent",
+    "skills",
+    "tools",
+    "plugins",
+    "privacy",
+  ]);
   await openDocuments(editor);
   expect(docsFolder(editor, "datasheets")?.checked).toBe(true);
   expect(docsFolder(editor, "notes")?.checked).toBe(false);
@@ -1448,6 +1468,7 @@ test("Settings selects one page with vertical tabs, including placeholders and k
     "providers",
     "web",
     "appearance",
+    "commands",
     "notifications",
     "shortcuts",
     "updates",

@@ -2,10 +2,9 @@
 import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
-import { _electron, expect, type Page, test } from "@playwright/test";
+import { _electron, expect, type Page } from "@playwright/test";
 import type { VeraBridge } from "@vera/shared";
-import { resolveConfig } from "electron-vite";
-import { createServer } from "vite";
+import { test } from "./fixtures.js";
 import { installNetworkGuard, outboundAttempts } from "./network-guard.js";
 
 const users = (page: Page) => page.locator('[data-message-kind="user"]');
@@ -77,102 +76,88 @@ async function localizedNavigation(page: Page, id: string, indices: number[]) {
   }
 }
 
-test("browser mock restart retains three long-session marks and localized bookmark navigation", async ({
-  page: host,
-  context,
-}) => {
+test("browser mock restart retains three long-session marks and localized bookmark navigation", {
+  tag: "@parallel-browser",
+}, async ({ page: host, rendererUrl, context }) => {
   test.setTimeout(120000);
-  const config = (await resolveConfig({ root: "src/apps/desktop" }, "serve", "development")).config?.renderer;
-  if (!config) throw Error("Missing renderer config");
-  const server = await createServer({
-    ...config,
-    define: { ...config.define, "import.meta.env.VITE_API": JSON.stringify("mock") },
-    server: { ...config.server, port: 0, strictPort: false, hmr: false },
+
+  const url = `${rendererUrl}/?mock=chat`;
+  await host.goto(url);
+  // Keep the mock backend alive in its own window while the tested renderer restarts.
+  const moduleUrl = await host.evaluate(() =>
+    [...performance.getEntriesByType("resource")]
+      .map((entry) => entry.name)
+      .find((name) => /mocks\/mockApi\.ts/.test(name)),
+  );
+  if (!moduleUrl) throw Error("Missing mock module");
+  await host.evaluate(async (url) => {
+    const module = await import(/* @vite-ignore */ url);
+    (window as unknown as { bookmarkBackend: unknown }).bookmarkBackend = module.createMockApi().api;
+  }, moduleUrl);
+  await context.route(/\/api\/index\.ts(?:\?|$)/, async (route) => {
+    if (route.request().frame().page() === host) return route.continue();
+    await route.fulfill({
+      contentType: "text/javascript",
+      body: "export const usingMocks = true; export const api = window.opener.bookmarkBackend;",
+    });
   });
-  try {
-    await server.listen();
-    const address = server.httpServer?.address();
-    if (!address || typeof address === "string") throw Error("Missing address");
-    const url = `http://127.0.0.1:${address.port}/?mock=chat`;
-    await host.goto(url);
-    // Keep the mock backend alive in its own window while the tested renderer restarts.
-    const moduleUrl = await host.evaluate(() =>
-      [...performance.getEntriesByType("resource")]
-        .map((entry) => entry.name)
-        .find((name) => /mocks\/mockApi\.ts/.test(name)),
-    );
-    if (!moduleUrl) throw Error("Missing mock module");
-    await host.evaluate(async (url) => {
-      const module = await import(/* @vite-ignore */ url);
-      (window as unknown as { bookmarkBackend: unknown }).bookmarkBackend = module.createMockApi().api;
-    }, moduleUrl);
-    await context.route(/\/api\/index\.ts(?:\?|$)/, async (route) => {
-      if (route.request().frame().page() === host) return route.continue();
-      await route.fulfill({
-        contentType: "text/javascript",
-        body: "export const usingMocks = true; export const api = window.opener.bookmarkBackend;",
-      });
-    });
-    const popup = context.waitForEvent("page");
-    await host.evaluate((url) => {
-      window.open(url);
-    }, url);
-    const page = await popup;
-    await page.setViewportSize({ width: 1024, height: 640 });
-    await page.locator('[data-i18n="nav.welcome"]').click();
-    await page.locator('[data-action="choose-create"]').click();
-    await page.locator('[data-action="create-workbench"]').click();
-    await page.locator('[data-action="new-session"]').click();
-    const id = await page.locator('[data-session][aria-current="page"]').getAttribute("data-session");
-    if (!id) throw Error("Missing session");
-    for (let index = 0; index < 4; index++) {
-      await page.locator(".composer textarea").fill(`Question ${index}\n${"Long prompt line\n".repeat(20)}`);
-      await page.locator(".composer textarea").press("Enter");
-      await expect(users(page)).toHaveCount(index + 1);
-      await expect(page.locator("[data-message-kind=assistant] [role=status]")).toHaveCount(0);
-    }
-    await mark(page, 1);
-    const sparse = await page.locator('[data-nav-bookmarked][data-nav-members="1"]').evaluate((node) => {
-      const style = getComputedStyle(node, "::before");
-      const ordinary = document.querySelector("[data-nav-marker]:not([data-nav-bookmarked])");
-      if (!ordinary) throw Error("Missing ordinary marker");
-      return {
-        width: parseFloat(style.width),
-        normal: parseFloat(getComputedStyle(ordinary, "::before").width),
-        fill: style.backgroundColor,
-        color: getComputedStyle(node).color,
-      };
-    });
-    expect(sparse.width).toBeGreaterThan(sparse.normal);
-    expect(sparse.fill).toBe(sparse.color);
-    await page.locator(".composer textarea").fill("seed 80 messages");
+  const popup = context.waitForEvent("page");
+  await host.evaluate((url) => {
+    window.open(url);
+  }, url);
+  const page = await popup;
+  await page.setViewportSize({ width: 1024, height: 640 });
+  await page.locator('[data-i18n="nav.welcome"]').click();
+  await page.locator('[data-action="choose-create"]').click();
+  await page.locator('[data-action="create-workbench"]').click();
+  await page.locator('[data-action="new-session"]').click();
+  const id = await page.locator('[data-session][aria-current="page"]').getAttribute("data-session");
+  if (!id) throw Error("Missing session");
+  for (let index = 0; index < 4; index++) {
+    await page.locator(".composer textarea").fill(`Question ${index}\n${"Long prompt line\n".repeat(20)}`);
     await page.locator(".composer textarea").press("Enter");
-    await expect(users(page)).toHaveCount(85);
-    await mark(page, 35);
-    await mark(page, 65);
-    await expect(marked(page)).toHaveCount(3);
-    const group = page.locator('[data-nav-bookmarked]:not([data-nav-members="1"])').first();
-    await expect(group).toBeVisible();
-    const groupStyle = await group.evaluate((node) => {
-      const style = getComputedStyle(node);
-      const lane = node.parentElement?.getBoundingClientRect();
-      return {
-        fill: style.backgroundColor,
-        color: style.color,
-        width: node.getBoundingClientRect().width,
-        lane: lane?.width ?? 0,
-      };
-    });
-    expect(groupStyle.fill).not.toBe("rgba(0, 0, 0, 0)");
-    expect(groupStyle.fill).not.toBe(groupStyle.color);
-    expect(groupStyle.width).toBeGreaterThan(groupStyle.lane);
-    await page.reload();
-    await page.locator(`[data-session="${id}"]`).click();
-    await localizedNavigation(page, id, [1, 35, 65]);
-    await page.close();
-  } finally {
-    await server.close();
+    await expect(users(page)).toHaveCount(index + 1);
+    await expect(page.locator("[data-message-kind=assistant] [role=status]")).toHaveCount(0);
   }
+  await mark(page, 1);
+  const sparse = await page.locator('[data-nav-bookmarked][data-nav-members="1"]').evaluate((node) => {
+    const style = getComputedStyle(node, "::before");
+    const ordinary = document.querySelector("[data-nav-marker]:not([data-nav-bookmarked])");
+    if (!ordinary) throw Error("Missing ordinary marker");
+    return {
+      width: parseFloat(style.width),
+      normal: parseFloat(getComputedStyle(ordinary, "::before").width),
+      fill: style.backgroundColor,
+      color: getComputedStyle(node).color,
+    };
+  });
+  expect(sparse.width).toBeGreaterThan(sparse.normal);
+  expect(sparse.fill).toBe(sparse.color);
+  await page.locator(".composer textarea").fill("seed 80 messages");
+  await page.locator(".composer textarea").press("Enter");
+  await expect(users(page)).toHaveCount(85);
+  await mark(page, 35);
+  await mark(page, 65);
+  await expect(marked(page)).toHaveCount(3);
+  const group = page.locator('[data-nav-bookmarked]:not([data-nav-members="1"])').first();
+  await expect(group).toBeVisible();
+  const groupStyle = await group.evaluate((node) => {
+    const style = getComputedStyle(node);
+    const lane = node.parentElement?.getBoundingClientRect();
+    return {
+      fill: style.backgroundColor,
+      color: style.color,
+      width: node.getBoundingClientRect().width,
+      lane: lane?.width ?? 0,
+    };
+  });
+  expect(groupStyle.fill).not.toBe("rgba(0, 0, 0, 0)");
+  expect(groupStyle.fill).not.toBe(groupStyle.color);
+  expect(groupStyle.width).toBeGreaterThan(groupStyle.lane);
+  await page.reload();
+  await page.locator(`[data-session="${id}"]`).click();
+  await localizedNavigation(page, id, [1, 35, 65]);
+  await page.close();
 });
 
 test("native restart retains long-session marked groups and navigates in every language", async () => {

@@ -72,6 +72,7 @@ export function fixtures() {
           turnId: turn,
           text: answer,
           streaming: false,
+          replyToMessageIds: [user],
           citations: [{ ref: "board.txt#L1-L2", valid: true }],
         });
         stored.push(
@@ -109,6 +110,7 @@ export function fixtures() {
           mode: "ask",
           activeTurnId: null,
           interrupted: [],
+          bookmarkedMessageIds: [],
           items,
           turns,
           approvals: [],

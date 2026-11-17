@@ -450,7 +450,7 @@ describe("package", () => {
 describe("command line and request (REQ-DATA-53797d16)", { timeout: 120_000 }, () => {
   it("prints its version and the registered importers and metrics", () => {
     const version = spawnSync(python, [script, "--version"], { encoding: "utf8", env: baseEnv() });
-    expect(version.stdout.trim()).toMatch(/^lab-validate 0\.2\.0$/);
+    expect(version.stdout.trim()).toBe(`lab-validate ${manifest().version}`);
     const help = spawnSync(python, [script, "--help"], { encoding: "utf8", env: baseEnv() });
     expect(help.status).toBe(0);
     for (const name of [

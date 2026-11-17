@@ -53,7 +53,7 @@ coordinates clamp to content bounds. Browser mock acknowledges the native-only o
   Node integration disabled, and a minimum size of 1024 by 640.
 - Session-created protection routes dictionary initialization to local vera://app resources and disables automatic spellchecking synchronously; default-session protection precedes startup awaits and window spellcheck=false prevents renderer use of remote Hunspell dictionaries.
 - Navigation, new windows, webviews and permission requests/checks are denied before content loads.
-- Production CSP is identical in meta and response headers; protocol assets stay inside the real renderer root.
+- Production CSP is identical in meta and response headers; protocol assets stay inside the real renderer root. Images allow only self and Blob sources for the workbench preview; scripts/styles/connect/workers/fonts/object/base/frame/form restrictions are preserved. SVG preview remains img-only, with external loads/scripts/navigation inert.
 - Development origin is exactly `http://127.0.0.1:5173`; its inline-script allowances are content hashes.
 - Valid visible normal bounds persist atomically in window-state.json version 1. Corrupt, other-version
   or off-screen state uses centered defaults and is overwritten on close.
@@ -63,7 +63,7 @@ coordinates clamp to content bounds. Browser mock acknowledges the native-only o
 | Change requested | Start with | Focused verification |
 |---|---|---|
 | Launch/instance behavior | `src/main/index.ts` | built shell acceptance |
-| Asset/security policy | `src/main/security.ts`, `content-policy.ts` | built security acceptance |
+| Asset/security policy | `src/main/security.ts`, `content-policy.ts` | content-policy.test.ts; built image-preview.spec.ts security assertions |
 | Geometry/storage format | `src/main/window-state.ts` | `window-state.test.ts`, geometry acceptance |
 | Metadata/API/events | [ipc-boundary](ipc-boundary.md) | shell and browser mock acceptance |
 | Renderer styles | `src/renderer/styles.css` | shell screenshot and development acceptance |
@@ -90,37 +90,6 @@ coordinates clamp to content bounds. Browser mock acknowledges the native-only o
 - `REQ-NFR-f3e0377c` — the first `session.send` of an open workbench with vectors of the current model embeds one
   short text in the indexer to load the model (`embedding-warmup.ts`); workbench create/open/close cancels it.
 
-## Architecture
-
-```mermaid
-flowchart TD
-  launch([Electron launch]) --> main[main/index.ts]
-  main --> lock[requestSingleInstanceLock]
-  main --> security[secureSession / secureWindow]
-  main --> state[loadWindowState / saveWindowState]
-  state --> file[(userData/window-state.json)]
-  main --> window[BrowserWindow]
-  window --> chrome[Hidden titlebar and native overlay controls]
-  router --> menus[Fixed native role menus]
-  window --> preload[preload/index.cjs]
-  main --> protocol[bundledResponse]
-  protocol --> assets[(renderer output + CSP headers)]
-  window --> renderer[React foundation App + Query + i18n + CSS]
-  main --> nativeTheme[nativeTheme from loaded/updated settings]
-  main -->|compiled test hook| probe[native packaging probe before window]
-  renderer --> api[renderer API / window.vera]
-  api --> router[main IPC router]
-  router --> workbench[core WorkbenchService]
-  router --> picker[Electron folder dialog]
-  assets --> renderer
-  dev([loopback Vite server]) --> renderer
-  config[electron.vite.config.ts] --> dev
-  config --> mode[build-mode.js]
-```
-
-This diagram shows shell ownership and build outputs. The IPC boundary page details the shared
-schema, metadata and event call graph. The application-data page details core settings and host adapters; CLI exposes its workspace skeleton.
-
 ## Files
 
 Paths below are relative to `05_Software/src/apps/desktop/` unless qualified.
@@ -128,7 +97,7 @@ Paths below are relative to `05_Software/src/apps/desktop/` unless qualified.
 - `package.json`, `tsconfig*.json`, `vitest.config.ts` — package identity and process-specific compilation/tests.
 - `electron.vite.config.ts`, `components.json` — build/dev CSP and shadcn configuration.
 - `src/main/index.ts` — lifecycle, lock, window creation and close ordering.
-- `src/main/security.ts`, `content-policy.ts` — confined asset responses and denial handlers.
+- `src/main/security.ts`, `content-policy.ts` and its test — confined asset responses, image-only Blob policy and denial handlers.
 - `src/main/window-state.ts`, `window-state.test.ts` — storage and recovery semantics.
 - `src/main/window-chrome.ts` — title bar overlay, window background and native role menus.
 - `src/main/embedding-warmup.ts`, `embedding-warmup.test.ts` — first-message embedding warm-up.

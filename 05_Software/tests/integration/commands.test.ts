@@ -11,6 +11,6 @@ it("runs actual commands, closed stdin, clean environment and background process
     expect(receipt.background).toMatchObject({ allDead: true });
     expect(receipt.lifecycle).toEqual({ sessionStop: true, appStop: true });
   } finally {
-    await rm(root, { recursive: true, force: true });
+    await rm(root, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 });
   }
 }, 60000);

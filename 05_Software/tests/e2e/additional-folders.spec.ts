@@ -2,11 +2,10 @@ import { execFileSync } from "node:child_process";
 import { mkdir, mkdtemp, readFile, rm, stat, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
-import { _electron, expect, type Page, test } from "@playwright/test";
+import { _electron, expect, type Page } from "@playwright/test";
 import type { Channel, Request, Response, VeraBridge } from "@vera/shared";
-import { resolveConfig } from "electron-vite";
-import { createServer } from "vite";
 import { parse } from "yaml";
+import { test } from "./fixtures.js";
 
 const invoke = <C extends Channel>(page: Page, channel: C, request: Request<C>): Promise<Response<C>> =>
   page.evaluate(
@@ -243,58 +242,45 @@ test("native additional folder grants persist, authorize Ask operations and revo
   }
 });
 
-test("browser General folders Save and Cancel in four locales", async ({ page }) => {
-  const config = (await resolveConfig({ root: "src/apps/desktop" }, "serve", "development")).config?.renderer;
-  if (!config) throw Error("Missing renderer config");
-  const server = await createServer({
-    ...config,
-    define: { ...config.define, "import.meta.env.VITE_API": JSON.stringify("mock") },
-    server: { ...config.server, port: 0, strictPort: false, hmr: false },
-  });
-  await server.listen();
-  try {
-    const address = server.httpServer?.address();
-    if (!address || typeof address === "string") throw Error("Missing server");
-    await page.goto(`http://127.0.0.1:${address.port}/?mock=chat`);
-    await page.locator('[data-i18n="nav.welcome"]').click();
-    await page.locator("#workbench-name").fill("Folder editor");
-    await page.locator('[data-action="choose-create"]').click();
-    await page.locator('[data-action="create-workbench"]').click();
-    for (const [language, label] of [
-      ["en", "Additional folders"],
-      ["ro", "Foldere suplimentare"],
-      ["de", "Zusätzliche Ordner"],
-      ["fr", "Dossiers supplémentaires"],
-    ]) {
-      await page.evaluate(async (language) => {
-        const { api } = await import(/* @vite-ignore */ `${"/api/index.ts"}`);
-        await api.invoke("app.settings.update", { language });
-      }, language);
-      await general(page);
-      await expect(page.locator(".workbench-editor [data-additional-folders] h4")).toHaveText(
-        label as string,
-      );
-      await page.locator("[data-add-folder]").click();
-      await page.locator("[data-project-cancel]").click();
-      await general(page);
-      await expect(page.locator(".workbench-editor [data-additional-folders] li")).toHaveCount(0);
-      await page.locator("[data-add-folder]").click();
-      await page.locator("[data-project-save]").click();
-      await expect(page.locator(".workbench-editor")).toBeHidden();
-      await expect(page.locator(".workbench-overview [data-additional-folders] li")).toContainText(
-        "/mock/additional-repo",
-      );
-      await general(page);
-      await page.locator("[data-remove-folder]").click();
-      await page.locator("[data-project-cancel]").click();
-      await general(page);
-      await expect(page.locator(".workbench-editor [data-additional-folders] li")).toHaveCount(1);
-      await page.locator("[data-remove-folder]").click();
-      await page.locator("[data-project-save]").click();
-      await expect(page.locator(".workbench-editor")).toBeHidden();
-      await expect(page.locator(".workbench-overview [data-additional-folders] li")).toHaveCount(0);
-    }
-  } finally {
-    await server.close();
+test("browser General folders Save and Cancel in four locales", { tag: "@parallel-browser" }, async ({
+  page,
+  rendererUrl,
+}) => {
+  await page.goto(`${rendererUrl}/?mock=chat`);
+  await page.locator('[data-i18n="nav.welcome"]').click();
+  await page.locator("#workbench-name").fill("Folder editor");
+  await page.locator('[data-action="choose-create"]').click();
+  await page.locator('[data-action="create-workbench"]').click();
+  for (const [language, label] of [
+    ["en", "Additional folders"],
+    ["ro", "Foldere suplimentare"],
+    ["de", "Zusätzliche Ordner"],
+    ["fr", "Dossiers supplémentaires"],
+  ]) {
+    await page.evaluate(async (language) => {
+      const { api } = await import(/* @vite-ignore */ `${"/api/index.ts"}`);
+      await api.invoke("app.settings.update", { language });
+    }, language);
+    await general(page);
+    await expect(page.locator(".workbench-editor [data-additional-folders] h4")).toHaveText(label as string);
+    await page.locator("[data-add-folder]").click();
+    await page.locator("[data-project-cancel]").click();
+    await general(page);
+    await expect(page.locator(".workbench-editor [data-additional-folders] li")).toHaveCount(0);
+    await page.locator("[data-add-folder]").click();
+    await page.locator("[data-project-save]").click();
+    await expect(page.locator(".workbench-editor")).toBeHidden();
+    await expect(page.locator(".workbench-overview [data-additional-folders] li")).toContainText(
+      "/mock/additional-repo",
+    );
+    await general(page);
+    await page.locator("[data-remove-folder]").click();
+    await page.locator("[data-project-cancel]").click();
+    await general(page);
+    await expect(page.locator(".workbench-editor [data-additional-folders] li")).toHaveCount(1);
+    await page.locator("[data-remove-folder]").click();
+    await page.locator("[data-project-save]").click();
+    await expect(page.locator(".workbench-editor")).toBeHidden();
+    await expect(page.locator(".workbench-overview [data-additional-folders] li")).toHaveCount(0);
   }
 });

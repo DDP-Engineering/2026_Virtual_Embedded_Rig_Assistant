@@ -168,7 +168,12 @@ async function acceptance(page: Page, cdp: CDPSession, platform: string, target:
       clearInterval(state.timer);
       return state.gaps;
     });
-    await page.screenshot({ path: join(evidence, `${platform}-large.png`) });
+    // Screenshot capture is diagnostic; functional geometry and heap bounds are asserted independently.
+    await page
+      .screenshot({ path: join(evidence, `${platform}-large.png`), timeout: 5000 })
+      .catch(async (error: Error) => {
+        await writeFile(join(evidence, `${platform}-screenshot-error.txt`), error.message);
+      });
     await writeFile(
       join(evidence, `${platform}-receipt.json`),
       JSON.stringify(
@@ -248,7 +253,14 @@ test("browser genuine200MiB log navigation, late Find, Go to line and bounded me
         await route.fulfill({
           json: {
             workbenchId,
-            properties: { path, type: "file", size: fixture.size, modified: "2026-11-17T00:00:00.000Z" },
+            properties: {
+              path,
+              type: "file",
+              extension: ".log",
+              rendered: false,
+              size: fixture.size,
+              modified: "2026-11-17T00:00:00.000Z",
+            },
           },
         });
       } else {
@@ -277,7 +289,7 @@ test("browser genuine200MiB log navigation, late Find, Go to line and bounded me
     await acceptance(page, await context.newCDPSession(page), "browser", fixture.target);
     expect(errors).toEqual([]);
   } finally {
-    await page.screenshot({ path: join(evidence, "browser-last.png") }).catch(() => {});
+    await page.screenshot({ path: join(evidence, "browser-last.png"), timeout: 5000 }).catch(() => {});
     await handle.close();
     if (server.exitCode === null) {
       const stopped = once(server, "exit");

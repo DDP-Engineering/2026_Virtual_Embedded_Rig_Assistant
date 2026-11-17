@@ -29,12 +29,15 @@ function manualClock() {
 }
 
 describe("killProcessTree", () => {
-  it("runs taskkill /T /F /PID from System32 of SystemRoot on Windows", async () => {
+  it("runs System32 tree termination with a late-child sweep on Windows", async () => {
     const { host, spawns, signals } = fakeHost("win32", { SYSTEMROOT: "D:\\Win" });
     await killProcessTree(host, 4242, manualClock());
     expect(spawns).toHaveLength(1);
-    expect(spawns[0]?.executable).toBe("D:\\Win\\System32\\taskkill.exe");
-    expect(spawns[0]?.args).toEqual(["/T", "/F", "/PID", "4242"]);
+    expect(spawns[0]?.executable).toBe("D:\\Win\\System32\\WindowsPowerShell\\v1.0\\powershell.exe");
+    const script = Buffer.from(spawns[0]?.args[3] ?? "", "base64").toString("utf16le");
+    expect(script).toContain("$targetPid = 4242");
+    expect(script).toContain("& 'D:\\Win\\System32\\taskkill.exe' /T /F /PID $targetPid");
+    expect(script).toContain("Get-CimInstance Win32_Process");
     expect(spawns[0]?.options.group).toBe(false);
     expect(signals).toEqual([]);
   });

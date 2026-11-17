@@ -3,7 +3,7 @@ import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { _electron, expect, test } from "@playwright/test";
-import type { VeraBridge } from "@vera/shared";
+import { builtinToolNames, type VeraBridge } from "@vera/shared";
 import { installNetworkGuard, outboundAttempts } from "./network-guard.js";
 
 test("native chat retains per-prompt tokens and initial context through tools, later prompts and restart", async () => {
@@ -56,6 +56,13 @@ test("native chat retains per-prompt tokens and initial context through tools, l
     await page.locator("[data-project-save]").click();
     await expect(page.locator(".workbench-editor")).toHaveCount(0);
     await page.locator('[data-action="new-session"]').click();
+    await page.evaluate(
+      async (disabled) =>
+        (window as unknown as { vera: VeraBridge }).vera.invoke("workbench.config.update", {
+          patch: { tools: { disabled } },
+        }),
+      builtinToolNames.filter((name) => name !== "read"),
+    );
     const id = await page.locator('[data-session][aria-current="page"]').getAttribute("data-session");
     if (!id) throw Error("Missing session");
     await page.evaluate(

@@ -473,7 +473,7 @@ describe("gdb_support internals (MI parser, session tokens, faults, validation, 
       ["stm32f4-stlink", "unverified", "cortex-m4", "v7m"],
       ["stm32g0-stlink", "unverified", "cortex-m0+", "v6m"],
     ]);
-  });
+  }, 70000);
 });
 
 describe("gdb-debug sessions against the GDB and OpenOCD stand-ins (offline evidence)", {

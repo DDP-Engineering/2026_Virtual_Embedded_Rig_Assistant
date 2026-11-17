@@ -5,6 +5,25 @@ import { readFileMode, rememberFileMode, resolveFileMode } from "./file-mode.js"
 
 vi.mock("../../api/index.js", () => ({ api: { invoke: vi.fn() } }));
 const id = "wb_01JB8Z6Q4M7N2K5R9T3V8X1Y0C";
+it.each([".png", ".jpg", ".jpeg", ".gif", ".webp", ".bmp", ".svg"])(
+  "offers unindexed %s as Rendered and retains explicit Hex without reading image bytes early",
+  async (extension) => {
+    const path = "__vera_display_image.";
+    vi.mocked(api.invoke).mockResolvedValue({
+      workbenchId: id,
+      properties: { path, extension, type: "file", size: 8000000, modified: null, rendered: false },
+    } as never);
+    const result = await readFileMode(id, path, "image:1");
+    expect(result.modeInfo).toEqual({ extension, modes: ["rendered", "text", "hex"], mode: "rendered" });
+    expect("imageFile" in result && result.imageFile).toMatchObject({ path, size: 8000000 });
+    expect(api.invoke).not.toHaveBeenCalledWith("docs.open", expect.anything());
+    expect(api.invoke).not.toHaveBeenCalledWith("docs.readBytes", expect.anything());
+    rememberFileMode(localStorage, extension, "hex");
+    expect((await readFileMode(id, path, "image:2")).modeInfo.mode).toBe("hex");
+    rememberFileMode(localStorage, extension, "rendered");
+    expect((await readFileMode(id, path, "image:3")).modeInfo.mode).toBe("rendered");
+  },
+);
 afterEach(() => {
   localStorage.clear();
   vi.resetAllMocks();

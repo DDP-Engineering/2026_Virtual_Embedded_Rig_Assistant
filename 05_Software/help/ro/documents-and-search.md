@@ -76,3 +76,9 @@ Clic selectează un octet; tragerea sau Shift+clic extinde selecția, inclusiv �
 ## Moduri de vizualizare
 
 Alege **Randat**, **Text** sau **Hex** în bara fișierului. Randarea este disponibilă pentru PDF, Markdown, HTML și formatele Office acceptate, dacă sunt indexate. Markdown și HTML neindexate sau ignorate se deschid ca Text; formatele binare fără randare disponibilă se deschid ca Hex. Aceste opțiuni implicite nu schimbă alegerea salvată. Fișierele binare și necunoscute se deschid automat în Hex. Alege Text explicit pentru un format necunoscut; codificarea și caracterele de înlocuire rămân disponibile. Alegerea modului se păstrează pentru aceeași extensie, inclusiv după repornirea VERA. Deschiderea în aplicația implicită rămâne în meniul filei. Citările își păstrează vizualizarea și intervalul verificate; artefactele, descărcările și jurnalele rulărilor păstrează vizualizările proprii.
+
+## Previzualizarea imaginilor
+
+Fișierele PNG, JPEG, GIF, WebP, BMP și SVG se deschid ca **Randat** fără indexare. **Zoom imagine** pornește cu **Potrivire**, micșorând imaginea la spațiul disponibil fără a mări imaginile mici; Potrivire urmărește redimensionarea panoului. Alege 25% până la 400% pentru a scala imaginea originală decodată, apoi revino la Potrivire. SVG rămâne imagine: scripturile, legăturile și resursele externe sunt inactive. **Text** și **Hex** rămân disponibile, iar alegerea explicită se păstrează pe extensie.
+
+Octeții imaginii urmează mascarea Afișare curentă. Mascarea poate împiedica decodarea; și imaginile incompatibile sau corupte arată o eroare sigură cu **Reîncearcă**. Folosește Hex pentru a inspecta octeții returnați. Previzualizarea asamblează ferestre limitate într-o resursă de imagine completă în browser; memoria necesară crește cu dimensiunea imaginii codificate și decodate și depinde de resursele decodorului. Nu se impune o limită de dimensiune a fișierului.

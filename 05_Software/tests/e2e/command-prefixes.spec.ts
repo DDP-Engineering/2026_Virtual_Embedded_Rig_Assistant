@@ -1,11 +1,10 @@
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
-import { _electron, expect, type Page, test } from "@playwright/test";
+import { _electron, expect, type Page } from "@playwright/test";
 import type { Channel, Request, Response, VeraBridge } from "@vera/shared";
-import { resolveConfig } from "electron-vite";
-import { createServer } from "vite";
 import { parse } from "yaml";
+import { test } from "./fixtures.js";
 
 const invoke = <C extends Channel>(page: Page, channel: C, request: Request<C>): Promise<Response<C>> =>
   page.evaluate(
@@ -187,54 +186,42 @@ test("native command prefix approval persists across restart and removal restore
   }
 });
 
-test("browser Agent prefix removal uses Save and Cancel in four languages", async ({ page }) => {
-  const config = (await resolveConfig({ root: "src/apps/desktop" }, "serve", "development")).config?.renderer;
-  if (!config) throw Error("Missing renderer config");
-  const server = await createServer({
-    ...config,
-    define: { ...config.define, "import.meta.env.VITE_API": JSON.stringify("mock") },
-    server: { ...config.server, port: 0, strictPort: false, hmr: false },
-  });
-  await server.listen();
-  try {
-    const address = server.httpServer?.address();
-    if (!address || typeof address === "string") throw Error("Missing server address");
-    await page.goto(`http://127.0.0.1:${address.port}/?mock=chat`);
-    await page.locator('[data-i18n="nav.welcome"]').click();
-    await page.locator("#workbench-name").fill("Prefix editor");
-    await page.locator('[data-action="choose-create"]').click();
-    await page.locator('[data-action="create-workbench"]').click();
-    for (const [language, label] of [
-      ["en", "Allowed commands"],
-      ["ro", "Comenzi permise"],
-      ["de", "Erlaubte Befehle"],
-      ["fr", "Commandes autorisées"],
-    ]) {
-      await page.evaluate(
-        async ({ language }) => {
-          const { api } = await import(/* @vite-ignore */ `${"/api/index.ts"}`);
-          await api.invoke("app.settings.update", { language });
-          const { config } = await api.invoke("workbench.config.get", {});
-          await api.invoke("workbench.config.update", {
-            workbenchId: config.id,
-            patch: { agent: { allowed_commands: ["npm test", "git"] } },
-          });
-        },
-        { language },
-      );
-      await agent(page);
-      await expect(page.locator("[data-command-prefixes] h4")).toHaveText(label as string);
-      await page.locator("[data-remove-command-prefix]").first().click();
-      await page.locator("[data-project-cancel]").click();
-      await agent(page);
-      await expect(page.locator("[data-command-prefixes] li")).toHaveCount(2);
-      await page.locator("[data-remove-command-prefix]").first().click();
-      await page.locator("[data-project-save]").click();
-      await agent(page);
-      await expect(page.locator("[data-command-prefixes] li code")).toHaveText(["git"]);
-      await page.locator("[data-project-cancel]").click();
-    }
-  } finally {
-    await server.close();
+test("browser Agent prefix removal uses Save and Cancel in four languages", {
+  tag: "@parallel-browser",
+}, async ({ page, rendererUrl }) => {
+  await page.goto(`${rendererUrl}/?mock=chat`);
+  await page.locator('[data-i18n="nav.welcome"]').click();
+  await page.locator("#workbench-name").fill("Prefix editor");
+  await page.locator('[data-action="choose-create"]').click();
+  await page.locator('[data-action="create-workbench"]').click();
+  for (const [language, label] of [
+    ["en", "Allowed commands"],
+    ["ro", "Comenzi permise"],
+    ["de", "Erlaubte Befehle"],
+    ["fr", "Commandes autorisées"],
+  ]) {
+    await page.evaluate(
+      async ({ language }) => {
+        const { api } = await import(/* @vite-ignore */ `${"/api/index.ts"}`);
+        await api.invoke("app.settings.update", { language });
+        const { config } = await api.invoke("workbench.config.get", {});
+        await api.invoke("workbench.config.update", {
+          workbenchId: config.id,
+          patch: { agent: { allowed_commands: ["npm test", "git"] } },
+        });
+      },
+      { language },
+    );
+    await agent(page);
+    await expect(page.locator("[data-command-prefixes] h4")).toHaveText(label as string);
+    await page.locator("[data-remove-command-prefix]").first().click();
+    await page.locator("[data-project-cancel]").click();
+    await agent(page);
+    await expect(page.locator("[data-command-prefixes] li")).toHaveCount(2);
+    await page.locator("[data-remove-command-prefix]").first().click();
+    await page.locator("[data-project-save]").click();
+    await agent(page);
+    await expect(page.locator("[data-command-prefixes] li code")).toHaveText(["git"]);
+    await page.locator("[data-project-cancel]").click();
   }
 });

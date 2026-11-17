@@ -35,10 +35,12 @@ it("assembles bounded masked text windows and refuses inconsistent byte replies"
         workbenchId: id,
         properties: {
           path: "sample.txt",
+          extension: ".txt",
+          rendered: false,
           type: "file",
           size: failure === "large" ? 5 * 1024 * 1024 + 1 : bytes.length,
           modified:
-            failure === "modified" && statReads > 1 ? "2026-11-17T00:00:01.000Z" : "2026-11-17T00:00:00.000Z",
+            failure === "modified" && statReads > 2 ? "2026-11-17T00:00:01.000Z" : "2026-11-17T00:00:00.000Z",
         },
       };
     }
@@ -87,6 +89,7 @@ it("assembles bounded masked text windows and refuses inconsistent byte replies"
     expect(container.querySelector('[data-line="1"]')?.textContent).toContain("é");
     const reads = invoke.mock.calls.filter(([name]) => name === "docs.readBytes");
     expect(reads.map(([, request]) => request)).toEqual([
+      { workbenchId: id, path: "sample.txt", offset: 0, length: 4096 },
       { workbenchId: id, path: "sample.txt", offset: 0, length: 1024 * 1024 },
       { workbenchId: id, path: "sample.txt", offset: 1024 * 1024, length: 6 },
     ]);

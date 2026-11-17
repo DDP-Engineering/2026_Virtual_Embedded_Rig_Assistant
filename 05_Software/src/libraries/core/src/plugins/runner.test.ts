@@ -2,7 +2,7 @@ import { mkdir, mkdtemp, readdir, readFile, realpath, rm, symlink, writeFile } f
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { FakeHost } from "./fake-process-host.test-support.js";
+import { FakeHost, FakeProcess } from "./fake-process-host.test-support.js";
 import { ProgramRunner, type ProgramRunnerOptions, programEnvironment, type RunRequest } from "./runner.js";
 
 // REQ-PLAT-2ab2eb65: EIM/PowerShell needs executable extensions even for a known launcher.
@@ -226,15 +226,44 @@ describe("process tree", () => {
     expect(await running).toMatchObject({ stopped: true });
   });
 
+  it("waits for Windows descendant cleanup after the shell has already exited", async () => {
+    host = new FakeHost("win32", { SystemRoot: "C:\\Windows" });
+    const spawn = host.spawn.bind(host);
+    let release!: () => void;
+    const cleanup = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    host.spawn = (executable, args, options) => {
+      if (args.includes("-EncodedCommand")) {
+        host.programs[0]?.finish({ code: 1, signal: null });
+        const killer = new FakeProcess(999, executable, args, options);
+        void cleanup.then(() => killer.finish({ code: 0, signal: null }));
+        return killer;
+      }
+      return spawn(executable, args, options);
+    };
+    runner = make({ host, clock: { sleep: async () => {} } });
+    const run = await runner.start(request({ background: true }));
+    let settled = false;
+    const stopping = run.stop().then((result) => {
+      settled = true;
+      return result;
+    });
+    await tick();
+    expect(settled).toBe(false);
+    release();
+    expect(await stopping).toMatchObject({ stopped: true });
+  });
+
   it("uses taskkill on Windows", async () => {
     host = new FakeHost("win32", { SystemRoot: "C:\\Windows" });
     runner = make({ host, clock: { sleep: async () => {} } });
     const run = await runner.start(request({ background: true }));
     const result = await run.stop();
     expect(result.stopped).toBe(true);
-    const kill = host.processes.find((process) => process.executable.endsWith("taskkill.exe"));
-    expect(kill?.executable).toBe("C:\\Windows\\System32\\taskkill.exe");
-    expect(kill?.args).toEqual(["/T", "/F", "/PID", "100"]);
+    const kill = host.processes.find((process) => process.args.includes("-EncodedCommand"));
+    expect(kill?.executable).toBe("C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe");
+    expect(Buffer.from(kill?.args[3] ?? "", "base64").toString("utf16le")).toContain("$targetPid = 100");
   });
 });
 

@@ -76,3 +76,9 @@ Un clic sélectionne un octet ; glisser ou Maj+clic étend la sélection, même 
 ## Modes d’affichage
 
 Choisissez **Rendu**, **Texte** ou **Hex** dans la barre du fichier. Le rendu est proposé pour les PDF, Markdown, HTML et formats Office pris en charge et indexés. Markdown et HTML non indexés ou ignorés ouvrent en Texte ; les formats binaires sans rendu disponible ouvrent en Hex. Ces choix par défaut ne remplacent pas votre préférence enregistrée. Les fichiers binaires ou inconnus s’ouvrent automatiquement en Hex. Choisissez Texte pour un format inconnu ; les réglages d’encodage et de remplacement restent disponibles. Ce choix est mémorisé par extension, même après le redémarrage de VERA. L’ouverture dans l’application par défaut reste dans le menu de l’onglet. Les citations gardent leur vue et leur plage vérifiées ; les artefacts, téléchargements et journaux conservent leurs propres vues.
+
+## Aperçu des images
+
+Les fichiers PNG, JPEG, GIF, WebP, BMP et SVG ouvrent en **Rendu** sans indexation. **Zoom de l’image** commence par **Ajuster** : les grandes images sont réduites à l’espace disponible, les petites ne sont pas agrandies. Ajuster suit la taille du panneau. Choisissez de 25% à 400% pour redimensionner l’image décodée d’origine, puis revenez à Ajuster. Le SVG reste une image : scripts, liens et ressources externes sont inactifs. **Texte** et **Hex** restent accessibles ; le choix explicite est mémorisé par extension.
+
+Les octets suivent le masquage Affichage actuel. Celui-ci peut empêcher le décodage ; une image incompatible ou corrompue affiche aussi une erreur sûre avec **Réessayer**. Utilisez Hex pour examiner les octets reçus. L’aperçu assemble des fenêtres bornées en une ressource image complète du navigateur. La mémoire requise dépend donc de la taille encodée et décodée et des ressources du décodeur. Aucune limite fixe de taille du fichier n’est imposée.

@@ -3,10 +3,9 @@ import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { _electron, expect, type Page, test } from "@playwright/test";
+import { _electron, expect, type Page } from "@playwright/test";
 import type { SessionState, VeraBridge } from "@vera/shared";
-import { resolveConfig } from "electron-vite";
-import { createServer } from "vite";
+import { test } from "./fixtures.js";
 import { installNetworkGuard, outboundAttempts } from "./network-guard.js";
 
 const desktop = join(dirname(fileURLToPath(import.meta.url)), "../../src/apps/desktop");
@@ -182,62 +181,50 @@ test("native Minimal keeps exact Ask approval and Stop usable", async () => {
 });
 
 // REQ-UX-b94a613e
-test("browser Chat detail stays usable in en/ro/de at minimum size and enlarged text", async ({ page }) => {
+test("browser Chat detail stays usable in en/ro/de at minimum size and enlarged text", {
+  tag: "@parallel-browser",
+}, async ({ page, rendererUrl }) => {
   test.setTimeout(60000);
-  const resolved = await resolveConfig({ root: "src/apps/desktop" }, "serve", "development"),
-    renderer = resolved.config?.renderer;
-  if (!renderer) throw Error("renderer");
-  const server = await createServer({
-    ...renderer,
-    define: { ...renderer.define, "import.meta.env.VITE_API": JSON.stringify("mock") },
-    server: { ...renderer.server, port: 0, strictPort: false, hmr: false },
-  });
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(e.message));
-  try {
-    await server.listen();
-    const addr = server.httpServer?.address();
-    if (!addr || typeof addr === "string") throw Error("address");
-    await page.setViewportSize({ width: 1024, height: 640 });
-    await page.goto(`http://127.0.0.1:${addr.port}/?mock=chat`);
-    await page.locator('[data-i18n="nav.welcome"]').click();
-    await page.locator('[data-action="choose-create"]').click();
-    await page.locator('[data-action="create-workbench"]').click();
-    for (const language of ["en", "ro", "de"]) {
-      await page.locator('[data-i18n="nav.settings"]').click();
-      await page.locator('[data-section="appearance"]').click();
-      await page.locator("#language").selectOption(language);
-      await page.locator('[data-section="appearance"]').click();
-      await page.locator("#interface-font-size").selectOption("1.5");
-      await page.locator('[data-action="leave-settings"]').click();
-      await page.locator('[data-action="edit-workbench-overview"]').click();
-      await page.locator('[data-project-section="agent"]').click();
-      const picker = page.locator("select[data-chat-detail]");
-      await expect(picker).toHaveValue("normal");
-      for (const theme of ["light", "dark"]) {
-        // Theme-only visual matrix; persistence of preferences has its own acceptance.
-        await page.locator("html").evaluate((html, value) => {
-          html.dataset.theme = value;
-        }, theme);
-        for (const level of ["verbose", "normal", "minimal"]) {
-          await picker.selectOption(level);
-          await expect(page.locator("[data-project-save]")).toBeVisible();
-          expect(await picker.evaluate((el) => el.getBoundingClientRect().right <= innerWidth)).toBe(true);
-          expect(
-            await page.evaluate(
-              () =>
-                document.documentElement.scrollWidth <= innerWidth &&
-                document.documentElement.scrollHeight <= innerHeight,
-            ),
-          ).toBe(true);
-        }
+
+  await page.setViewportSize({ width: 1024, height: 640 });
+  await page.goto(`${rendererUrl}/?mock=chat`);
+  await page.locator('[data-i18n="nav.welcome"]').click();
+  await page.locator('[data-action="choose-create"]').click();
+  await page.locator('[data-action="create-workbench"]').click();
+  for (const language of ["en", "ro", "de"]) {
+    await page.locator('[data-i18n="nav.settings"]').click();
+    await page.locator('[data-section="appearance"]').click();
+    await page.locator("#language").selectOption(language);
+    await page.locator('[data-section="appearance"]').click();
+    await page.locator("#interface-font-size").selectOption("1.5");
+    await page.locator('[data-action="leave-settings"]').click();
+    await page.locator('[data-action="edit-workbench-overview"]').click();
+    await page.locator('[data-project-section="agent"]').click();
+    const picker = page.locator("select[data-chat-detail]");
+    await expect(picker).toHaveValue("normal");
+    for (const theme of ["light", "dark"]) {
+      // Theme-only visual matrix; persistence of preferences has its own acceptance.
+      await page.locator("html").evaluate((html, value) => {
+        html.dataset.theme = value;
+      }, theme);
+      for (const level of ["verbose", "normal", "minimal"]) {
+        await picker.selectOption(level);
+        await expect(page.locator("[data-project-save]")).toBeVisible();
+        expect(await picker.evaluate((el) => el.getBoundingClientRect().right <= innerWidth)).toBe(true);
+        expect(
+          await page.evaluate(
+            () =>
+              document.documentElement.scrollWidth <= innerWidth &&
+              document.documentElement.scrollHeight <= innerHeight,
+          ),
+        ).toBe(true);
       }
-      if (process.env.VERA_CHAT_SCREENSHOT && language === "ro")
-        await page.screenshot({ path: process.env.VERA_CHAT_SCREENSHOT });
-      await page.locator("[data-project-cancel]").first().click();
     }
-    expect(errors).toEqual([]);
-  } finally {
-    await server.close();
+    if (process.env.VERA_CHAT_SCREENSHOT && language === "ro")
+      await page.screenshot({ path: process.env.VERA_CHAT_SCREENSHOT });
+    await page.locator("[data-project-cancel]").first().click();
   }
+  expect(errors).toEqual([]);
 });

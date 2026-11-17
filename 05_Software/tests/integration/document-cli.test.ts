@@ -3,8 +3,7 @@ import { createHash } from "node:crypto";
 import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
-import { build } from "esbuild";
-import { expect, it } from "vitest";
+import { expect, inject, it } from "vitest";
 
 const software = fileURLToPath(new URL("../../", import.meta.url));
 it("runs owned CLI index/search and PDF replay through real local worker bundles, preserving a locked snapshot", async () => {
@@ -17,36 +16,7 @@ it("runs owned CLI index/search and PDF replay through real local worker bundles
     ? await mkdtemp(join(process.env.VERA_DOC_EVIDENCE_DIR, "cli-"))
     : undefined;
   try {
-    await build({
-      entryPoints: {
-        index: join(software, "src/apps/cli/src/index.ts"),
-        "grep-worker": join(software, "src/apps/cli/src/grep-worker.ts"),
-        "pdf-worker": join(software, "src/apps/cli/src/pdf-worker.ts"),
-        "embedding-worker": join(software, "src/apps/cli/src/embedding-worker.ts"),
-      },
-      outdir: out,
-      bundle: true,
-      platform: "node",
-      format: "esm",
-      target: "node24",
-      packages: "external",
-      alias: {
-        "@vera/core": join(software, "src/libraries/core/src/index.ts"),
-        "@vera/shared": join(software, "src/libraries/shared/src/index.ts"),
-        "@vera/core/replay": join(software, "src/libraries/core/src/llm/replay.ts"),
-        "@vera/core/grep-worker": join(software, "src/libraries/core/src/tools/grep-worker.ts"),
-        "@vera/core/pdf-worker": join(software, "src/libraries/core/src/knowledge/pdf-worker.ts"),
-        "@vera/core/embedding-worker": join(software, "src/libraries/core/src/knowledge/embedding-worker.ts"),
-      },
-    });
-    await build({
-      entryPoints: [join(software, "tests/support/network-guard.ts")],
-      outfile: join(out, "guard.mjs"),
-      bundle: true,
-      platform: "node",
-      format: "esm",
-      footer: { js: "installTestNetworkGuard();" },
-    });
+    await cp(inject("cliBundle"), out, { recursive: true });
     if (evidence) await cp(out, join(evidence, "bundle"), { recursive: true });
     await cp(join(software, "tests/fixtures/workbenches/demo-board"), bench, { recursive: true });
     let count = 0;

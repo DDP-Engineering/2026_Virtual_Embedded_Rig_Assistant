@@ -511,3 +511,8 @@ preference map, and the existing bounded readers. `viewer-context.tsx` owns atte
 
 Core workbench `statEntry` reports Rendered availability through a direct current document/extraction lookup.
 Unindexed or ignored Markdown/HTML keeps byte-backed Text; unsupported saved Rendered choices are retained.
+
+Image previews use `renderer/components/documents/image-source.ts` (bounded masked byte assembly),
+`image-viewer.tsx`/CSS (effect-owned resource, inert image decode, fit and original-image zoom),
+and sibling source/component tests. Shared extension classification makes all six formats available
+without indexing. `tests/support/image-preview-fixtures.ts` generates acceptance fixtures.

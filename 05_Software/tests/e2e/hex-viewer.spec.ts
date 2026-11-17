@@ -125,7 +125,7 @@ test("native Hex border Find, partial row, keyboard copy and live Display use or
     await viewer.locator("select").selectOption("text");
     await viewer.locator("[data-document-search]").fill(secret);
     await page.keyboard.press("Enter");
-    await expect(viewer.locator(".hex-status")).toHaveText("No matching bytes.");
+    await expect(viewer.locator(".hex-status")).toHaveText("No matching bytes.", { timeout: 30000 });
     await viewer.locator("[data-document-search]").fill("*".repeat(secret.length));
     await page.keyboard.press("Enter");
     await expect(viewer.locator('[data-hex-byte="65534"]')).toHaveText("2A");

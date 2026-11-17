@@ -1,86 +1,71 @@
+import { test } from "./fixtures.js";
 // REQ-FUNC-a7ad5920 REQ-UX-33b9d601 REQ-UX-bb147586
 
 import { mkdir, mkdtemp, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
-import { _electron, expect, test } from "@playwright/test";
-import type { VeraBridge } from "@vera/shared";
-import { resolveConfig } from "electron-vite";
-import { createServer } from "vite";
+import { _electron, expect } from "@playwright/test";
+import { builtinToolNames, type VeraBridge } from "@vera/shared";
 import { installNetworkGuard, outboundAttempts } from "./network-guard.js";
 
-test("marked Bypass selectors confirm each change and cancellation retains the previous mode", async ({
-  page,
-}) => {
-  const config = (await resolveConfig({ root: "src/apps/desktop" }, "serve", "development")).config?.renderer;
-  if (!config) throw Error("Missing renderer config");
-  const server = await createServer({
-    ...config,
-    define: { ...config.define, "import.meta.env.VITE_API": JSON.stringify("mock") },
-    server: { ...config.server, port: 0, strictPort: false, hmr: false },
-  });
-  try {
-    await server.listen();
-    const addr = server.httpServer?.address();
-    if (!addr || typeof addr === "string") throw Error("Missing renderer address");
-    await page.goto(`http://127.0.0.1:${addr.port}/?mock=chat`);
-    await page.locator('[data-i18n="nav.welcome"]').click();
-    await page.locator("#workbench-name").fill("Bypass bench");
-    await page.locator('[data-action="choose-create"]').click();
-    await page.locator('[data-action="create-workbench"]').click();
-    await page.locator('[data-action="new-session"]').click();
-    const sessionId = await page.locator('[data-session][aria-current="page"]').getAttribute("data-session");
-    if (!sessionId) throw Error("Missing browser session");
-    const picker = page.locator(".composer [data-permission-picker]");
-    await expect(page.locator('.composer option[value="bypass"]')).toHaveCount(1);
-    for (const [language, phrase] of [
-      ["ro", "în afara workbenchului"],
-      ["de", "außerhalb der Workbench"],
-      ["en", "outside the workbench"],
-      ["fr", "hors du workbench"],
-    ]) {
-      await page.locator('[data-i18n="nav.settings"]').click();
+test("marked Bypass selectors confirm each change and cancellation retains the previous mode", {
+  tag: "@parallel-browser",
+}, async ({ page, rendererUrl }) => {
+  await page.goto(`${rendererUrl}/?mock=chat`);
+  await page.locator('[data-i18n="nav.welcome"]').click();
+  await page.locator("#workbench-name").fill("Bypass bench");
+  await page.locator('[data-action="choose-create"]').click();
+  await page.locator('[data-action="create-workbench"]').click();
+  await page.locator('[data-action="new-session"]').click();
+  const sessionId = await page.locator('[data-session][aria-current="page"]').getAttribute("data-session");
+  if (!sessionId) throw Error("Missing browser session");
+  const picker = page.locator(".composer [data-permission-picker]");
+  await expect(page.locator('.composer option[value="bypass"]')).toHaveCount(1);
+  for (const [language, phrase] of [
+    ["ro", "în afara workbenchului"],
+    ["de", "außerhalb der Workbench"],
+    ["en", "outside the workbench"],
+    ["fr", "hors du workbench"],
+  ]) {
+    await page.locator('[data-i18n="nav.settings"]').click();
+    await page.locator('[data-section="appearance"]').click();
+    await page.locator("#language").selectOption(language as string);
+    if (language === "de") {
+      await page.setViewportSize({ width: 1024, height: 640 });
       await page.locator('[data-section="appearance"]').click();
-      await page.locator("#language").selectOption(language as string);
-      if (language === "de") {
-        await page.setViewportSize({ width: 1024, height: 640 });
-        await page.locator('[data-section="appearance"]').click();
-        await page.locator('[data-theme-option="dark"]').click();
-        await page.locator("#interface-font-size").selectOption("1.5");
-      }
-      await page.locator('[data-action="leave-settings"]').click();
-      await page.locator(`[data-session="${sessionId}"]`).click();
-      await picker.selectOption("bypass");
-      await expect(page.locator(".bypass-warning")).toContainText(phrase as string);
-      const bounds = await page.locator(".bypass-warning").boundingBox();
-      const viewport = page.viewportSize();
-      expect((bounds?.y ?? 0) + (bounds?.height ?? 0)).toBeLessThanOrEqual((viewport?.height ?? 0) + 1);
-      await expect(picker).toHaveValue("ask");
-      await page.keyboard.press("Escape");
-      await expect(picker).toHaveValue("ask");
-      await expect(picker).toBeFocused();
+      await page.locator('[data-theme-option="dark"]').click();
+      await page.locator("#interface-font-size").selectOption("1.5");
     }
+    await page.locator('[data-action="leave-settings"]').click();
+    await page.locator(`[data-session="${sessionId}"]`).click();
     await picker.selectOption("bypass");
-    const warning = page.locator(".bypass-warning");
-    await expect(warning).toBeVisible();
-    await expect(warning.getByRole("button")).toHaveCount(2);
+    await expect(page.locator(".bypass-warning")).toContainText(phrase as string);
+    const bounds = await page.locator(".bypass-warning").boundingBox();
+    const viewport = page.viewportSize();
+    expect((bounds?.y ?? 0) + (bounds?.height ?? 0)).toBeLessThanOrEqual((viewport?.height ?? 0) + 1);
     await expect(picker).toHaveValue("ask");
-    await page.locator('[data-action="cancel-bypass"]').click();
+    await page.keyboard.press("Escape");
     await expect(picker).toHaveValue("ask");
     await expect(picker).toBeFocused();
-    for (const prior of ["ask", "auto-edit"]) {
-      await picker.selectOption(prior);
-      await picker.selectOption("bypass");
-      await expect(warning).toHaveCount(1);
-      await expect(picker).toHaveValue(prior);
-      await page.locator('[data-action="confirm-bypass"]').click();
-      await expect(picker).toHaveValue("bypass");
-      await expect(warning).toBeHidden();
-      await expect(picker).toHaveClass(/bypass-selected/);
-      await expect(picker).toBeFocused();
-    }
-  } finally {
-    await server.close();
+  }
+  await picker.selectOption("bypass");
+  const warning = page.locator(".bypass-warning");
+  await expect(warning).toBeVisible();
+  await expect(warning.getByRole("button")).toHaveCount(2);
+  await expect(picker).toHaveValue("ask");
+  await page.locator('[data-action="cancel-bypass"]').click();
+  await expect(picker).toHaveValue("ask");
+  await expect(picker).toBeFocused();
+  for (const prior of ["ask", "auto-edit"]) {
+    await picker.selectOption(prior);
+    await picker.selectOption("bypass");
+    await expect(warning).toHaveCount(1);
+    await expect(picker).toHaveValue(prior);
+    await page.locator('[data-action="confirm-bypass"]').click();
+    await expect(picker).toHaveValue("bypass");
+    await expect(warning).toBeHidden();
+    await expect(picker).toHaveClass(/bypass-selected/);
+    await expect(picker).toBeFocused();
   }
 });
 
@@ -173,6 +158,14 @@ test("native Bypass refuses application-data reads and writes and confirms each 
           modelRef: "replay/bypass",
         }),
       id,
+    );
+    // Keep the replay's context focused on the file operations exercised by this scenario.
+    await page.evaluate(
+      async (disabled) =>
+        (window as unknown as { vera: VeraBridge }).vera.invoke("workbench.config.update", {
+          patch: { tools: { disabled } },
+        }),
+      builtinToolNames.filter((name) => !["read", "list", "glob", "grep", "edit", "write"].includes(name)),
     );
     const settingsBefore = await readFile(join(root, "profile/settings.json"), "utf8");
     const message = page.getByRole("textbox", { name: "Message", exact: true });

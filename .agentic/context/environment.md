@@ -428,4 +428,4 @@ settings/workbench persistence cases. No native shell/PTY behavior changes: reus
 Original focused/static logs use evaluation-outputs/mask01. Full suites/deliveries remain deferred;
 native Ubuntu is unavailable on this Windows host.
 
-VIEW mode acceptance uses tests/e2e/viewer-modes.spec.ts with original browser/native restart receipts in ignored evaluation-outputs/view05.
+VIEW mode acceptance uses tests/e2e/viewer-modes.spec.ts with original browser/native restart receipts in ignored evaluation-outputs/view05. Image acceptance uses tests/e2e/image-preview.spec.ts and generated support/image-preview-fixtures.ts for all six formats, real Hex signatures, inert scripted SVG/network/load assertions, fit/resize/original-resource400% geometry, stored-credential Display refresh and corrupt-image Retry in browser and Windows Electron. Original logs/receipts/screenshots stay in evaluation-outputs/view06; native Ubuntu and exact-source delivery/full gates remain deferred.

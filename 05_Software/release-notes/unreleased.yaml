@@ -1,13 +1,27 @@
 version: Unreleased
 date: null
 entries:
+  - category: fixed
+    topic: { en: Terminal, ro: Terminal, de: Terminal, fr: Terminal }
+    text:
+      en: Terminal history no longer inserts control characters when switching tabs or reopening the panel.
+      ro: Terminalul nu mai inserează caractere de control la reafișarea istoricului.
+      de: Terminalverläufe fügen beim erneuten Anzeigen keine Steuerzeichen mehr ein.
+      fr: Le terminal n’insère plus de caractères de contrôle lors du réaffichage de l’historique.
+  - category: fixed
+    topic: { en: Commands, ro: Comenzi, de: Befehle, fr: Commandes }
+    text:
+      en: Stopping a command on Windows also cleans up child processes started during termination.
+      ro: Oprirea unei comenzi pe Windows elimină și procesele copil pornite în timpul opririi.
+      de: Beim Stoppen eines Windows-Befehls werden auch währenddessen gestartete Kindprozesse beendet.
+      fr: L’arrêt d’une commande Windows nettoie aussi les processus enfants lancés pendant l’arrêt.
   - category: new
     topic: { en: Files, ro: Fișiere, de: Dateien, fr: Fichiers }
     text:
-      en: Switch Rendered, Text or Hex; binary files open in Hex and your choice stays per extension.
-      ro: Alege Randat, Text sau Hex; fișierele binare se deschid în Hex, iar extensia reține alegerea.
-      de: Gerendert, Text oder Hex wählen; Binärdateien öffnen in Hex, die Wahl bleibt pro Dateiendung.
-      fr: Choisissez Rendu, Texte ou Hex ; les binaires ouvrent en Hex, le choix reste par extension.
+      en: Switch Rendered, Text or Hex; preview images with zoom to 400% and remember each extension.
+      ro: Alege Randat, Text sau Hex; vezi imagini cu zoom până la 400% și reține modul pe extensie.
+      de: Gerendert, Text oder Hex wählen; Bilder bis 400% zoomen und die Wahl pro Dateiendung merken.
+      fr: Choisissez Rendu, Texte ou Hex ; zoomez les images à 400% et mémorisez le mode par extension.
   - category: new
     topic: { en: Files, ro: Fișiere, de: Dateien, fr: Fichiers }
     text:

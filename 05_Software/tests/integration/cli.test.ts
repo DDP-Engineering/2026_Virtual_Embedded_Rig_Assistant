@@ -12,8 +12,7 @@ import { NodeWorkerPool, openDb, PluginStore, SessionService } from "@vera/core"
 import { ReplayGateway } from "@vera/core/replay";
 import type { SessionEvent } from "@vera/shared";
 import Database from "better-sqlite3";
-import { buildSync } from "esbuild";
-import { afterAll, afterEach, beforeAll, expect, it } from "vitest";
+import { afterAll, afterEach, beforeAll, expect, inject, it } from "vitest";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 let compiled: string;
@@ -67,37 +66,12 @@ beforeAll(async () => {
   await mkdir(join(root, "node_modules/.cache"), { recursive: true });
   compiled = await mkdtemp(join(root, "node_modules/.cache/vera-cli-test-"));
   cleanup.push(compiled);
-  buildSync({
-    entryPoints: {
-      index: join(root, "src/apps/cli/src/index.ts"),
-      "grep-worker": join(root, "src/apps/cli/src/grep-worker.ts"),
-    },
-    outdir: compiled,
-    bundle: true,
-    format: "esm",
-    platform: "node",
-    target: "node24",
-    packages: "external",
-    alias: {
-      "@vera/core": join(root, "src/libraries/core/src/index.ts"),
-      "@vera/core/replay": join(root, "src/libraries/core/src/llm/replay.ts"),
-      "@vera/core/grep-worker": join(root, "src/libraries/core/src/tools/grep-worker.ts"),
-      "@vera/shared": join(root, "src/libraries/shared/src/index.ts"),
-    },
-  });
+  await cp(inject("cliBundle"), compiled, { recursive: true });
   await writeFile(
     join(compiled, "signal.mjs"),
     `const original = process.stdout.write.bind(process.stdout); let sent = false;
 process.stdout.write = (...args) => { const result = original(...args); if (!sent && String(args[0]).includes('"turn.started"')) { sent = true; setTimeout(() => process.emit(process.env.VERA_CLI_SIGNAL_TEST), 30); } return result; };`,
   );
-  buildSync({
-    entryPoints: [join(root, "tests/support/network-guard.ts")],
-    outfile: join(compiled, "guard.mjs"),
-    platform: "node",
-    format: "esm",
-    bundle: true,
-    footer: { js: "installTestNetworkGuard();" },
-  });
   if (process.env.VERA_CLI_EVIDENCE_DIR) {
     await mkdir(process.env.VERA_CLI_EVIDENCE_DIR, { recursive: true });
     evidence = await mkdtemp(join(process.env.VERA_CLI_EVIDENCE_DIR, `suite-${process.pid}-`));

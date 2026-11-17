@@ -77,3 +77,9 @@ Click a byte to select it; drag or Shift-click to extend, including across windo
 ## View modes
 
 Choose **Rendered**, **Text** or **Hex** in the file toolbar. Rendered is available for indexed PDF, Markdown, HTML and supported Office formats. Unindexed or ignored Markdown and HTML open as Text; unavailable rendered binary formats open as Hex. These defaults do not overwrite your saved choice. Binary and unknown files open in Hex automatically. Choose Text explicitly for an unknown format; encoding and replacement controls remain available. Your mode choice is remembered for files with the same extension, including after restarting VERA. Open in the default application remains in the file tab menu. Citations retain their verified view and range; artifacts, downloads and run logs keep their own viewers.
+
+## Image preview
+
+PNG, JPEG, GIF, WebP, BMP and SVG files open as **Rendered** without indexing. **Image zoom** starts at **Fit**, shrinking the image to the available space without enlarging small images; Fit follows panel size changes. Choose 25% through 400% to scale the original decoded image, then choose Fit again. SVG stays an image: scripts, links and external resources are inactive. **Text** and **Hex** stay available and your deliberate mode is remembered per extension.
+
+Image bytes follow the current Display masking choice. Masking can make an encoded image undecodable; an unsupported or corrupt image also shows a safe error with **Retry**. Use Hex to inspect the returned bytes. Preview assembles bounded byte windows into a complete browser image resource, so encoded and decoded images still need memory proportional to their size and remain subject to browser decoder resources. No file-size cutoff is imposed.

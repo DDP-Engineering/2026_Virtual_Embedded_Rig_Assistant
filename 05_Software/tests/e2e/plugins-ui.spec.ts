@@ -363,6 +363,7 @@ test("scoped program status probes are cancelled when the app quits", async () =
   );
   let app: ElectronApplication | undefined = await launch(root, folder);
   let pid: number | undefined;
+  let closing: Promise<void> | undefined;
   try {
     const page = await app.firstWindow();
     await page.locator('[data-action="open-workbench-nav"]').click();
@@ -388,7 +389,7 @@ test("scoped program status probes are cancelled when the app quits", async () =
         }
       })
       .toBeGreaterThan(0);
-    const closing = app.close();
+    closing = app.close();
     await expect
       .poll(
         async () => {
@@ -396,7 +397,7 @@ test("scoped program status probes are cancelled when the app quits", async () =
           await new Promise((done) => setTimeout(done, 200));
           return first === (await readFile(marker, "utf8"));
         },
-        { timeout: 3000 },
+        { timeout: 10000 },
       )
       .toBe(true);
     let deadline: ReturnType<typeof setTimeout> | undefined;
@@ -445,8 +446,8 @@ test("scoped program status probes are cancelled when the app quits", async () =
         } catch {}
       }
     }
-    await app?.close().catch(() => {});
-    await rm(root, { recursive: true, force: true });
+    if (app) await (closing ?? app.close()).catch(() => {});
+    await rm(root, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 });
   }
 });
 

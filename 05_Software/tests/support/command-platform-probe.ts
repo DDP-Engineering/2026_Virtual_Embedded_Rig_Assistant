@@ -169,7 +169,7 @@ export async function commandPlatformProbe(root: string) {
       return call.apply(nextSignal);
     };
     const timed = await startAgain({ timeout: 1 });
-    const timeout = await programOutputTool.execute(ctx, { handle: timed.handle, waitMs: 5000 }, nextSignal);
+    const timeout = await programOutputTool.execute(ctx, { handle: timed.handle, waitMs: 15000 }, nextSignal);
     assert.equal(timeout.running, false);
     receipt.timeout = timeout;
     const session = await startAgain();

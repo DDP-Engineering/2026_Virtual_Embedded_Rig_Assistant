@@ -63,6 +63,7 @@ const renderedExtensions = new Set([
   ".pptx",
   ".odp",
 ]);
+const imageExtensions = new Set([".png", ".jpg", ".jpeg", ".gif", ".webp", ".bmp", ".svg"]);
 const textExtensions = new Set([
   ".txt",
   ".csv",
@@ -102,8 +103,14 @@ const textExtensions = new Set([
   ".asm",
 ]);
 /** Recognized extensions are a public vocabulary; unknown suffixes need no plaintext renderer metadata. */
-export function viewerExtensionKind(extension: string): "rendered" | "text" | "unknown" {
-  return renderedExtensions.has(extension) ? "rendered" : textExtensions.has(extension) ? "text" : "unknown";
+export function viewerExtensionKind(extension: string): "rendered" | "image" | "text" | "unknown" {
+  return imageExtensions.has(extension)
+    ? "image"
+    : renderedExtensions.has(extension)
+      ? "rendered"
+      : textExtensions.has(extension)
+        ? "text"
+        : "unknown";
 }
 export const documentReasonSchema = z.enum([
   "SIZE_LIMIT",

@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-REL-2b14e715"
+title = "Dispose obsolete image resources"
+status = "active"
+requirement = "When an image preview is replaced, its owner changes or it unmounts, the viewer shall dispose its owned resource lifetime by cancelling obsolete publication and revoking any created Blob URL."
+verification = "Unmount during a deferred byte reply and assert no Blob publication or further reads; run StrictMode and replace an active resource, asserting URL revocation and no stale content after live Display refresh."
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/documents/image-source.ts", "05_Software/src/apps/desktop/src/renderer/components/documents/image-viewer.tsx", "05_Software/src/apps/desktop/src/renderer/components/documents/viewer-context.tsx"]
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/documents/image-source.test.ts", "05_Software/src/apps/desktop/src/renderer/components/documents/image-viewer.test.ts", "05_Software/tests/e2e/image-preview.spec.ts"]
+created = 2026-11-17
+updated = 2026-11-17

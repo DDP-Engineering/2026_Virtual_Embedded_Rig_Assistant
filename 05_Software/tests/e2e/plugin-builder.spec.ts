@@ -6,7 +6,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
 import { _electron, expect, type Page, test } from "@playwright/test";
-import type { VeraBridge } from "@vera/shared";
+import { builtinToolNames, type VeraBridge } from "@vera/shared";
 import { installNetworkGuard, outboundAttempts } from "./network-guard.js";
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -113,6 +113,18 @@ test("authors from help, reviews trial in bypass and promotes with the user butt
     await page.locator('[data-action="choose-create"]').click();
     await page.locator('[data-action="create-workbench"]').click();
     const { config } = await invoke<{ config: { id: string } }>(page, "workbench.config.get", {});
+    await invoke(page, "workbench.config.update", {
+      patch: {
+        tools: {
+          disabled: builtinToolNames.filter(
+            (name) =>
+              !["load_skill", "read", "write", "plugin_validate", "plugin_install", "run_program"].includes(
+                name,
+              ),
+          ),
+        },
+      },
+    });
     await page.locator('[data-action="new-session"]').click();
     const input = page.getByRole("textbox", { name: "Message", exact: true });
     await expect(input).toBeEnabled();

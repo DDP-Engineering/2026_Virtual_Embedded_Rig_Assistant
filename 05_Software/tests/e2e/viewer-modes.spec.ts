@@ -1,9 +1,8 @@
-import { spawn } from "node:child_process";
-import { once } from "node:events";
 import { mkdir, mkdtemp, writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
-import { _electron, expect, type Page, test } from "@playwright/test";
+import { _electron, expect, type Page } from "@playwright/test";
 import type { Channel, Request, Response, VeraBridge } from "@vera/shared";
+import { test } from "./fixtures.js";
 import { installNetworkGuard, outboundAttempts } from "./network-guard.js";
 
 const evidence = resolve("evaluation-outputs/view05");
@@ -28,27 +27,15 @@ async function markdownModes(page: Page) {
   await expect(panel(page).locator('[data-hex-byte="0"]')).toBeVisible();
 }
 
-test("browser unknown defaults Hex, Markdown switches and remembers its extension on reload", async ({
-  page,
-}) => {
+test("browser unknown defaults Hex, Markdown switches and remembers its extension on reload", {
+  tag: "@parallel-browser",
+}, async ({ page, rendererUrl }) => {
   test.setTimeout(90000);
   await mkdir(evidence, { recursive: true });
-  const server = spawn(process.execPath, ["../02_Tools/environment/dev-renderer.mjs"], {
-    env: { ...process.env, VITE_API: "mock" },
-    stdio: ["ignore", "pipe", "pipe"],
-  });
-  let output = "";
-  server.stdout.on("data", (chunk) => {
-    output += chunk;
-  });
-  server.stderr.on("data", (chunk) => {
-    output += chunk;
-  });
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
   try {
-    await expect.poll(() => output, { timeout: 25000 }).toContain("VERA_RENDERER_READY");
-    await page.goto("http://127.0.0.1:5173/?mock=chat");
+    await page.goto(`${rendererUrl}/?mock=chat`);
     await page.evaluate(() => localStorage.clear());
     await page.reload();
     await page.locator("[data-workbench-entry] .workbench-group-name").click();
@@ -56,8 +43,10 @@ test("browser unknown defaults Hex, Markdown switches and remembers its extensio
     await page.locator("#tab-docs").click();
     await page.locator('[data-tree-path="manuals"]').click();
     await page.locator('[data-tree-path="manuals/scope-capture.png"]').click();
+    await expect(panel(page).locator("[data-image-retry]")).toBeVisible();
+    await choose(page, "hex");
     await expect(panel(page).locator('[data-hex-byte="0"]')).toHaveText("00");
-    await expect(panel(page).locator('[data-viewer-mode="rendered"]')).toHaveCount(0);
+    await expect(panel(page).locator('[data-viewer-mode="rendered"]')).toHaveCount(1);
     await choose(page, "text");
     await panel(page).locator("[data-show-as-text]").click();
     await expect(panel(page).locator('[data-line="1"]')).toBeVisible();
@@ -95,12 +84,6 @@ test("browser unknown defaults Hex, Markdown switches and remembers its extensio
     }
     throw error;
   } finally {
-    if (server.exitCode === null) {
-      const stopped = once(server, "exit");
-      server.kill("SIGTERM");
-      await stopped;
-    }
-    await writeFile(join(evidence, "browser-server.log"), output);
   }
 });
 

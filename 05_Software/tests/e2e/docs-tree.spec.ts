@@ -97,6 +97,7 @@ test("native Docs tree browses the workbench, marks what VERA ignores, opens fil
     const rootItems = menu.locator('[role="menuitem"][data-menu-depth="0"]');
     await expect(rootItems).toHaveText([
       "Open",
+      "Show as Hex",
       "Attach as context",
       "Open in",
       process.platform === "win32" ? "Show in Explorer" : "Show in folder",

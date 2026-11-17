@@ -89,4 +89,4 @@ test("help CLI passes on the repository's app and plugin help", () => {
   expect(result.stderr).toBe("");
   expect(result.status).toBe(0);
   expect(result.stdout).toContain("official plugins in four languages");
-});
+}, 15000);

@@ -76,3 +76,9 @@ Ein Klick wählt ein Byte; Ziehen oder Umschalt+Klick erweitert die Auswahl auch
 ## Ansichtsmodi
 
 Wählen Sie **Gerendert**, **Text** oder **Hex** in der Dateileiste. Die gerenderte Ansicht ist für indizierte PDF-, Markdown-, HTML- und unterstützte Office-Dateien verfügbar. Nicht indizierte oder ignorierte Markdown- und HTML-Dateien öffnen als Text; binäre Formate ohne verfügbare Darstellung öffnen als Hex. Die gespeicherte Auswahl bleibt dabei erhalten. Binäre und unbekannte Dateien öffnen automatisch in Hex. Für unbekannte Formate lässt sich Text ausdrücklich wählen; Kodierung und Ersatzzeichen bleiben verfügbar. Die Auswahl gilt für dieselbe Dateiendung und bleibt nach einem Neustart von VERA erhalten. Das Öffnen in der Standardanwendung bleibt im Tab-Menü. Zitate behalten ihre geprüfte Ansicht und ihren Bereich; Artefakte, Downloads und Ausführungsprotokolle behalten ihre eigenen Ansichten.
+
+## Bildvorschau
+
+PNG, JPEG, GIF, WebP, BMP und SVG öffnen ohne Indizierung als **Gerendert**. **Bildzoom** beginnt mit **Einpassen**: Große Bilder werden an den verfügbaren Platz angepasst, kleine nicht vergrößert. Einpassen folgt Änderungen der Panelgröße. Wähle 25% bis 400%, um das ursprünglich dekodierte Bild zu skalieren, und kehre dann zu Einpassen zurück. SVG bleibt ein Bild; Skripte, Links und externe Ressourcen sind inaktiv. **Text** und **Hex** bleiben verfügbar; die bewusste Moduswahl wird je Dateiendung gespeichert.
+
+Die Bildbytes folgen der aktuellen Anzeigemaskierung. Maskierung kann die Dekodierung verhindern; auch ungültige oder beschädigte Bilder zeigen einen sicheren Fehler mit **Erneut versuchen**. Hex zeigt die zurückgegebenen Bytes. Die Vorschau setzt begrenzte Bytefenster zu einer vollständigen Browser-Bildressource zusammen. Kodierte und dekodierte Bilder benötigen daher Speicher entsprechend ihrer Größe und unterliegen den Ressourcen des Browserdekoders. Es gibt keine feste Dateigrößengrenze.

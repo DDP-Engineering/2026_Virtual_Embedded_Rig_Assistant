@@ -2,6 +2,7 @@ import { type DocsEntryProperties, veraError, viewerExtensionKind } from "@vera/
 import { z } from "zod";
 import { api } from "../../api/index.js";
 import { readHexFile } from "./hex-source.js";
+import { type ImageFile, imageMime } from "./image-source.js";
 import { readTextFile } from "./read-text-file.js";
 import { detectTextEncoding } from "./text-encoding.js";
 
@@ -46,7 +47,8 @@ export function resolveFileMode(
   binary = false,
   renderedAvailable = true,
 ): FileModeInfo {
-  const rendered = viewerExtensionKind(extension) === "rendered" && renderedAvailable;
+  const kind = viewerExtensionKind(extension);
+  const rendered = kind === "image" || (kind === "rendered" && renderedAvailable);
   const modes: FileMode[] = rendered ? ["rendered", "text", "hex"] : ["text", "hex"];
   const preferred = deliberate ?? preferences(storage)[extension];
   const fallback = rendered
@@ -104,6 +106,11 @@ export async function readFileMode(
   // Binary Markdown/HTML has no meaningful automatic rendered view.
   if (binary && deliberate === undefined && !preferences(localStorage)[extension]) modeInfo.mode = "hex";
   onInfo?.(modeInfo);
+  if (modeInfo.mode === "rendered" && viewerExtensionKind(extension) === "image") {
+    const result = await readHexFile(workbenchId, path);
+    const imageFile: ImageFile = { ...result.hexFile, mime: imageMime(extension) };
+    return { workbenchId, content: result.content, imageFile, modeInfo };
+  }
   let result =
     modeInfo.mode === "hex"
       ? await readHexFile(workbenchId, path)

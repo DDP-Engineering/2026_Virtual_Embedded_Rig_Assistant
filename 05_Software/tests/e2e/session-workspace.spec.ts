@@ -1,84 +1,70 @@
 import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
-import { _electron, expect, test } from "@playwright/test";
+import { _electron, expect } from "@playwright/test";
 import type { VeraBridge } from "@vera/shared";
-import { resolveConfig } from "electron-vite";
-import { createServer } from "vite";
+import { test } from "./fixtures.js";
 import { installNetworkGuard, outboundAttempts } from "./network-guard.js";
 
-test("compact composer grows, caps, shrinks and keeps context on demand at desktop widths", async ({
-  page,
-}) => {
-  const config = (await resolveConfig({ root: "src/apps/desktop" }, "serve", "development")).config?.renderer;
-  if (!config) throw Error("Renderer configuration missing");
-  const server = await createServer({
-    ...config,
-    define: { ...config.define, "import.meta.env.VITE_API": JSON.stringify("mock") },
-    server: { ...config.server, port: 0, strictPort: false, hmr: false },
-  });
+test("compact composer grows, caps, shrinks and keeps context on demand at desktop widths", {
+  tag: "@parallel-browser",
+}, async ({ page, rendererUrl }) => {
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(e.message));
-  try {
-    await server.listen();
-    const addr = server.httpServer?.address();
-    if (!addr || typeof addr === "string") throw Error("Renderer address missing");
-    await page.setViewportSize({ width: 1280, height: 900 });
-    await page.goto(`http://127.0.0.1:${addr.port}/?mock=chat`);
-    await page.locator('[data-i18n="nav.welcome"]').click();
-    await page.locator("#workbench-name").fill("Layout bench");
-    await page.locator('[data-action="choose-create"]').click();
-    await page.locator('[data-action="create-workbench"]').click();
-    await page.locator('[data-action="new-session"]').click();
-    const input = page.getByRole("textbox", { name: "Message", exact: true });
-    await expect(input).toBeEnabled();
-    const timestamp = page.locator('[data-session][aria-current="page"] time');
-    await expect(timestamp).toBeVisible();
-    await expect(timestamp).toHaveAttribute("datetime", /T/);
-    await expect(timestamp).toHaveAttribute("title", /^Last activity: /);
-    await expect(page.locator('[data-session][aria-current="page"] [data-session-status]')).toHaveClass(
-      "sr-only",
-    );
-    await expect(page.locator(".session-workspace").getByRole("button", { name: /Export/ })).toHaveCount(0);
-    await expect(page.locator("[data-usage]")).toHaveCount(0);
-    const height = () => input.evaluate((node) => node.getBoundingClientRect().height);
-    const initial = await height();
-    await input.fill("Detailed request\n".repeat(8));
-    await expect.poll(height).toBeGreaterThan(initial);
-    await input.fill("Detailed request\n".repeat(80));
-    expect(await height()).toBeLessThanOrEqual(316);
-    expect(await input.evaluate((node) => node.scrollHeight > node.clientHeight)).toBe(true);
-    await input.fill("Short");
-    await expect.poll(height).toBeLessThan(initial + 5);
-    const context = page.locator('[data-action="show-context"]');
-    await context.click();
-    await expect(page.getByRole("dialog")).toBeVisible();
-    await expect(page.getByRole("dialog").locator("[data-usage]")).toBeVisible();
-    await page.keyboard.press("Escape");
-    await expect(context).toBeFocused();
-    await expect(page.locator("[data-usage]")).toHaveCount(0);
-    for (const width of [1280, 760]) {
-      await page.setViewportSize({ width, height: 720 });
-      await expect(input).toBeVisible();
-      expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
-      const bounds = await page.locator(".composer").boundingBox();
-      expect(bounds && bounds.x + bounds.width).toBeLessThanOrEqual(width);
-    }
-    await input.fill("");
-    const current = page.locator('[data-session][aria-current="page"]');
-    const row = current.locator("..");
-    await row.locator("summary").click();
-    await expect(row.getByRole("button", { name: "Export Markdown", exact: true })).toBeVisible();
-    await row.locator('[data-action="archive-session"]').click();
-    const archived = page.locator(".archived-sessions");
-    await expect(archived.locator("[data-session]")).toHaveCount(1);
-    await archived.locator(".session-options summary").click();
-    await archived.locator('[data-action="restore-session"]').click();
-    await expect(archived).toHaveCount(0);
-    expect(errors).toEqual([]);
-  } finally {
-    await server.close();
+
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.goto(`${rendererUrl}/?mock=chat`);
+  await page.locator('[data-i18n="nav.welcome"]').click();
+  await page.locator("#workbench-name").fill("Layout bench");
+  await page.locator('[data-action="choose-create"]').click();
+  await page.locator('[data-action="create-workbench"]').click();
+  await page.locator('[data-action="new-session"]').click();
+  const input = page.getByRole("textbox", { name: "Message", exact: true });
+  await expect(input).toBeEnabled();
+  const timestamp = page.locator('[data-session][aria-current="page"] time');
+  await expect(timestamp).toBeVisible();
+  await expect(timestamp).toHaveAttribute("datetime", /T/);
+  await expect(timestamp).toHaveAttribute("title", /^Last activity: /);
+  await expect(page.locator('[data-session][aria-current="page"] [data-session-status]')).toHaveClass(
+    "sr-only",
+  );
+  await expect(page.locator(".session-workspace").getByRole("button", { name: /Export/ })).toHaveCount(0);
+  await expect(page.locator("[data-usage]")).toHaveCount(0);
+  const height = () => input.evaluate((node) => node.getBoundingClientRect().height);
+  const initial = await height();
+  await input.fill("Detailed request\n".repeat(8));
+  await expect.poll(height).toBeGreaterThan(initial);
+  await input.fill("Detailed request\n".repeat(80));
+  expect(await height()).toBeLessThanOrEqual(316);
+  expect(await input.evaluate((node) => node.scrollHeight > node.clientHeight)).toBe(true);
+  await input.fill("Short");
+  await expect.poll(height).toBeLessThan(initial + 5);
+  const context = page.locator('[data-action="show-context"]');
+  await context.click();
+  await expect(page.getByRole("dialog")).toBeVisible();
+  await expect(page.getByRole("dialog").locator("[data-usage]")).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(context).toBeFocused();
+  await expect(page.locator("[data-usage]")).toHaveCount(0);
+  for (const width of [1280, 760]) {
+    await page.setViewportSize({ width, height: 720 });
+    await expect(input).toBeVisible();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+    const bounds = await page.locator(".composer").boundingBox();
+    expect(bounds && bounds.x + bounds.width).toBeLessThanOrEqual(width);
   }
+  await input.fill("");
+  const current = page.locator('[data-session][aria-current="page"]');
+  const row = current.locator("..");
+  await row.locator("summary").click();
+  await expect(row.getByRole("button", { name: "Export Markdown", exact: true })).toBeVisible();
+  await row.locator('[data-action="archive-session"]').click();
+  const archived = page.locator(".archived-sessions");
+  await expect(archived.locator("[data-session]")).toHaveCount(1);
+  await archived.locator(".session-options summary").click();
+  await archived.locator('[data-action="restore-session"]').click();
+  await expect(archived).toHaveCount(0);
+  expect(errors).toEqual([]);
 });
 
 test("native session exposes live tools/context and durable sidebar archive without replacing history", async () => {

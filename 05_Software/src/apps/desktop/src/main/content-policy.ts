@@ -1,5 +1,6 @@
 export const productionCsp = [
   "default-src 'self'",
+  "img-src 'self' blob:",
   "script-src 'self'",
   "style-src 'self'",
   "connect-src 'self'",

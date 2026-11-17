@@ -367,6 +367,10 @@
     "renewalDue": "Le renouvellement du jeton est dû ; il se renouvelle automatiquement si nécessaire."
   },
   "documents": {
+    "imageZoom": "Zoom de l’image",
+    "imageFit": "Ajuster",
+    "imagePreview": "Aperçu de l’image",
+    "imageError": "Impossible d’afficher cette image. Elle peut être incompatible, corrompue ou modifiée par le masquage Affichage. Utilisez Hex pour voir ses octets.",
     "attach": "Joindre comme contexte",
     "viewer": "Visionneuse de documents",
     "search": "Rechercher des fichiers et documents",

@@ -63,6 +63,7 @@ test("Display masking preserves MQTT-named Files, Find identity, live choices an
   try {
     await installNetworkGuard(app);
     let page = await app.firstWindow();
+    await page.waitForLoadState("load");
     await invoke(page, "app.settings.update", { language: "en" });
     for (const [i, password] of secrets.entries()) {
       const saved = await invoke(page, "mqtt.credentials.save", {
@@ -241,11 +242,12 @@ test("Display masking preserves MQTT-named Files, Find identity, live choices an
     await expect
       .poll(() =>
         page.evaluate(
-          ({ workbenchId, sessionId }) => localStorage.getItem(`vera.tabs.${workbenchId}.${sessionId}`),
+          ({ workbenchId, sessionId }) =>
+            JSON.parse(localStorage.getItem(`vera.tabs.${workbenchId}.${sessionId}`) ?? "null")?.active,
           { workbenchId, sessionId: session.id },
         ),
       )
-      .not.toBeNull();
+      .toBe(`file:${second.path}`);
     const before = await page.evaluate(
       ({ workbenchId, sessionId }) =>
         JSON.parse(localStorage.getItem(`vera.tabs.${workbenchId}.${sessionId}`) ?? "null"),
@@ -258,6 +260,7 @@ test("Display masking preserves MQTT-named Files, Find identity, live choices an
     app = await launch();
     await installNetworkGuard(app);
     page = await app.firstWindow();
+    await page.waitForLoadState("load");
     await invoke(page, "workbench.open", { folder });
     const afterRead = await invoke(page, "docs.read", { workbenchId, path: second.path });
     expect(afterRead.content).toMatchObject({ lines: ["SECOND [REDACTED]", "needle", ""] });

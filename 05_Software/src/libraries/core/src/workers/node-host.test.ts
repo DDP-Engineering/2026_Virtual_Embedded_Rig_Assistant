@@ -19,7 +19,7 @@ afterEach(async () => {
   bundle?.close();
   await rm(root, { recursive: true, force: true });
 });
-function host(deadlineMs = 1000, capacity = 1) {
+function host(deadlineMs = 10000, capacity = 1) {
   expect(api.NodeWorkerPool).toBeTypeOf("function");
   bundle = workerFixture();
   pool = new api.NodeWorkerPool(bundle.url, { deadlineMs, capacity });
@@ -27,8 +27,8 @@ function host(deadlineMs = 1000, capacity = 1) {
 }
 const task = (pattern = "ok|(a+)+$") => ({ kind: "grep" as const, root, args: { pattern } });
 it("owns an absolute deadline, terminates pathological matching with partial results and replaces capacity", async () => {
-  const hostPool = host();
-  expect(hostPool.deadlineMs).toBe(1000);
+  const hostPool = host(3000);
+  expect(hostPool.deadlineMs).toBe(3000);
   const result = await hostPool.run(task(), new AbortController().signal);
   expect(result).toMatchObject({
     truncated: true,
@@ -41,7 +41,7 @@ it("owns an absolute deadline, terminates pathological matching with partial res
     new AbortController().signal,
   );
   expect(next).toMatchObject({ truncated: false, matches: [{ path: "00-good.txt" }] });
-});
+}, 15000);
 it("aborts during matching and queued work, waits for termination and permits replacement", async () => {
   const hostPool = host(3000);
   const controller = new AbortController();

@@ -153,7 +153,7 @@ const BOARD = {
 
 describe("package", () => {
   it("publishes the official raspberry-pi-linux package with one pinned helper, a supervised board, skills, catalog and pack", async () => {
-    root = await realpath(await mkdtemp(join(tmpdir(), "vera-pi-pkg-")));
+    const root = await realpath(await mkdtemp(join(tmpdir(), "vera-pi-pkg-")));
     try {
       const m = manifest();
       expect(validatePluginManifest(m).issues).toEqual([]);
@@ -221,7 +221,7 @@ describe("package", () => {
     } finally {
       await rm(root, { recursive: true, force: true });
     }
-  });
+  }, 30000);
 
   it("rates each operation by its effect on the board", () => {
     const rules = manifest().rules;

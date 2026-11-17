@@ -73,7 +73,9 @@ it("validates strict documentation scan, preview and relative-folder channels", 
   ).toBe(false);
   const preview = { folder: "C:/b", include: ["docs/**"], exclude: [], gitignore: true, maxFiles: 10000 };
   expect(channels["workbench.previewDocs"].request.safeParse(preview).success).toBe(true);
-  expect(channels["workbench.previewDocs"].request.safeParse({ ...preview, maxFileMB: 25 }).success).toBe(true);
+  expect(channels["workbench.previewDocs"].request.safeParse({ ...preview, maxFileMB: 25 }).success).toBe(
+    true,
+  );
   // The preview counts with the indexer's limits, so the file limit is required.
   const { maxFiles: _maxFiles, ...withoutLimit } = preview;
   expect(channels["workbench.previewDocs"].request.safeParse(withoutLimit).success).toBe(false);

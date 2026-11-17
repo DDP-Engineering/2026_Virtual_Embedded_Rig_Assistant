@@ -1,5 +1,13 @@
 import type { ProcessExit, ProcessHost, ProcessSpawnOptions } from "../ports.js";
 
+function terminationTarget(executable: string, args: readonly string[]): string | undefined {
+  if (executable.endsWith("taskkill.exe")) return args[3];
+  const encoded = args.indexOf("-EncodedCommand");
+  return executable.endsWith("powershell.exe") && encoded >= 0
+    ? /\$targetPid = (\d+)/.exec(Buffer.from(args[encoded + 1] ?? "", "base64").toString("utf16le"))?.[1]
+    : undefined;
+}
+
 /** A scripted process: tests print output and finish it by hand. */
 export class FakeProcess {
   exited = false;
@@ -34,7 +42,7 @@ export class FakeHost implements ProcessHost {
     readonly env: Record<string, string> = { PATH: "/usr/bin" },
   ) {}
   get programs() {
-    return this.processes.filter((process) => !process.executable.endsWith("taskkill.exe"));
+    return this.processes.filter((process) => !terminationTarget(process.executable, process.args));
   }
   spawn(executable: string, args: readonly string[], options: ProcessSpawnOptions) {
     if (this.failNext) {
@@ -47,8 +55,9 @@ export class FakeHost implements ProcessHost {
     }
     const process = new FakeProcess(this.nextPid++, executable, args, options);
     this.processes.push(process);
-    if (executable.endsWith("taskkill.exe")) {
-      this.programs.find((program) => String(program.pid) === args[3])?.finish({ code: 1, signal: null });
+    const treeTarget = terminationTarget(executable, args);
+    if (treeTarget) {
+      this.programs.find((program) => String(program.pid) === treeTarget)?.finish({ code: 1, signal: null });
       process.finish({ code: 0, signal: null });
     }
     return process;

@@ -7,7 +7,7 @@ per-session sets saved per session), continuous PDF/text scrolling with zoom/fin
 Markdown/HTML/office anchors, presentation slides, numbered lines and Docs
 status/search/reindex/progress, and the Docs folder tree (single search box, ignored entries,
 memory, keyboard, context menu, Properties).
-Select file-mode.ts for ordinary-file toolbar modes and extension preferences.
+Select file-mode.ts for ordinary-file toolbar modes and extension preferences; image-source.ts and image-viewer.tsx own index-independent PNG/JPEG/GIF/WebP/BMP/SVG preview, fit and zoom.
 Start under05_Software at main/display-documents.ts and display-identities.ts for conditional
 Display masking, shared/documents.ts, core/knowledge/viewer.ts and
 renderer/components/documents (hex-{source,rows,viewer} for byte viewing; text-encoding.ts, read-text-file.ts, use-text-rows.ts, large-text-{source,index,find,window,rows,viewer} for byte-backed text). Focused tests are viewer.test.ts, search.test.ts,
@@ -28,7 +28,8 @@ progress travels through existing workbench events.
 
 ## Public interface
 
-- Plain path/textPath targets use file-mode.ts: docs.stat supplies a real extension key computed by main before path identity projection; recognized extensions use their lower-case public vocabulary and unknown suffixes use the existing host-keyed identity namespace, independent of filename/workbench/Display state. Unknown extensions default Hex; recognized text uses a fixed4096-byte prefix to detect binary control bytes with BOM-aware decoding. Core statEntry supplies a compact rendered capability from the current indexed record, matching size/mtime, extraction presence (or needs-OCR PDF pages) and current ignore rules, using a direct path lookup rather than loading all documents or source bytes. Only available indexed PDF/Markdown/HTML/Office sources offer Rendered/Text/Hex. Other files offer Text/Hex: unavailable Markdown/HTML defaults Text, unavailable binary containers default Hex. A saved unavailable Rendered preference remains unchanged. Raw text remains explicitly available for unknown formats, with existing encoding/replacement controls. No complete large text is fetched to choose a mode.
+- Plain path/textPath targets use file-mode.ts: docs.stat supplies a real extension key computed by main before path identity projection; recognized extensions use their lower-case public vocabulary and unknown suffixes use the existing host-keyed identity namespace, independent of filename/workbench/Display state. Unknown extensions default Hex; recognized text uses a fixed4096-byte prefix to detect binary control bytes with BOM-aware decoding. Core statEntry supplies a compact rendered capability from the current indexed record, matching size/mtime, extraction presence (or needs-OCR PDF pages) and current ignore rules, using a direct path lookup rather than loading all documents or source bytes. Available indexed PDF/Markdown/HTML/Office sources and recognized images offer Rendered/Text/Hex. Images default Rendered independently of indexing. Other files offer Text/Hex: unavailable Markdown/HTML defaults Text, unavailable binary containers default Hex. A saved unavailable Rendered preference remains unchanged. Raw text remains explicitly available for unknown formats, with existing encoding/replacement controls. No complete large text is fetched to choose a mode.
+- ImageFile is transient host-owned metadata with MIME, never persisted or placed in shared ViewerContent. Plain-image Rendered uses the same confined stat boundary as Hex and never calls docs.open. ImageViewer owns a fresh HexSource and AbortController per effect; readImageBlob assembles64KiB Display-policy byte parts, yields between parts and rechecks final size/mtime before creating a MIME Blob. Encoded data and the decoded browser image require memory proportional to image size; there is no arbitrary size cutoff. The effect creates/revokes its Blob URL; replacement, Display attempt refresh and unmount abort stale publication. SVG enters only img, with no live markup, scripts, handlers, navigation or external-resource loads. Only img-src adds Blob to local resources; other CSP restrictions remain. Decode failure uses safe localized text and Retry; typed read failures retain ErrorMessage and Retry, and the parent Text/Hex toolbar remains available. Fit shrinks to the available width/height without enlarging small images; Intrinsic CSS max-width/max-height recomputes fit, and25–400 percent scales the original decoded resource. No canvas/screenshot resampling or image-mask bypass exists.
 - The strict version1 localStorage record `vera.viewer.modes` stores `{version:1,extensions:{[realExtension]:mode}}`. Only deliberate toolbar choices or the Files Hex action write it; automatic defaults, load errors, unsupported preferences and metadata refresh do not. Malformed/unavailable records resolve defaults; quota denial keeps the explicit current-tab choice. Another extension is independent. Rendered failures retain the toolbar and Retry so Text/Hex remains reachable.
 - An explicit click on the effective mode also remembers that choice while retaining the current body/place/attempt. Switching to another mode clears incompatible place/content, increments the provider-wide attempt and uses the existing owner/attempt settlement guards. Verified refs/citations never enter the plain-file loader or get mode controls; artifacts, downloads and run logs keep their loaders. HexSource is created and disposed by the owning mount effect so development effect replay creates a fresh source and old operations remain cancelled.
 - SessionService admits UTF8 control-byte logs only for successful parse_log line-ref provenance. The viewer uses guarded direct reads up to50MiB, fatal UTF8 and matching source hashes, independent of document indexing; ordinary document/file refs retain binary and index checks.
@@ -345,6 +346,7 @@ Managed PDF downloads use downloads.list/open scoped IPC and a downloadId Viewer
 | tab menu, drag, tab keys | documents/document-tabs.tsx; viewer-context move/closeMany; file-actions.tsx | document-tabs.test.ts; citations.spec.ts (real drag) |
 | search box, In documents, actions row | documents/docs-tab.tsx (`useTreeExpansion`); styles `.docs-actions` | docs-tree.test.ts; documents.test.ts; documents.spec.ts |
 | row context menu / Properties | documents/tree-menu.tsx; tree-properties.tsx; mockApi docs.stat | docs-tree.test.ts; documents.test.ts; docs-tree.spec.ts |
+| Image previews and resource lifetime | documents/image-source.ts; image-viewer.tsx/CSS; file-mode.ts; content-policy.ts and renderer index.html | image-source.test.ts; image-viewer.test.ts; content-policy.test.ts; browser/native e2e/image-preview.spec.ts |
 | File modes and extension preferences | documents/file-mode.ts; viewer-context; document-tabs; main/display-documents; core/workbench/service statEntry; shared documents metadata | file-mode.test.ts; document-tabs.test.ts; native/browser e2e/viewer-modes.spec.ts |
 | Hex rows/search/copy | renderer/documents hex-{source,rows,viewer}, viewer-context, docs-tree, document-tabs-store | hex-source.test.ts; hex-viewer.test.ts; native e2e/hex-viewer.spec.ts |
 | Large text windows/index/search | renderer/documents large-text-{source,index,find,window,rows,viewer} | large-text.test.ts; read-text-file.test.ts; e2e/large-text.spec.ts genuine 200 MiB browser/native heap/pulse proof |
@@ -353,6 +355,12 @@ Managed PDF downloads use downloads.list/open scoped IPC and a downloadId Viewer
 | Open in / Show in Explorer / Copy | main/openers.ts; index.ts docs.openers/openWith/reveal/copyPath/systemApps/openSystemApp; core locateEntry; file-actions.tsx useFileActions | openers.test.ts; tree.test.ts; documents-ipc.test.ts; docs-tree.test.ts; docs-tree.spec.ts |
 
 ## Key behaviors
+
+- REQ-FUNC-71a6501a: six index-independent image formats through bounded bytes and retained Hex.
+- REQ-SEC-21021e27: SVG remains an inert image resource under restrictive CSP.
+- REQ-UX-2b81bcdc: resize-aware fit and original decoded image zoom through400%.
+- REQ-REL-35fd9a5f: safe failures/Retry.
+- REQ-REL-2b14e715: effect-owned cancellation and Blob URL lifetime.
 
 - REQ-FUNC-bc3f25bd, REQ-FUNC-12972046, REQ-DATA-7af13314, REQ-REL-2c2e6e93: applicable file modes, bounded automatic Hex selection and independent persistent extension choices.
 - REQ-FUNC-94765114, REQ-FUNC-69596c3b, REQ-FUNC-b66d2d80, REQ-FUNC-53b3527c, REQ-REL-63f0f1cc, REQ-REL-a4d21663: bounded Hex rows, offset navigation, cancellable byte Find, selection copy, invalid input and Retry.
@@ -382,6 +390,7 @@ core/sessions/service.ts, workbench/{service,tree,read-bytes}.ts/test and knowle
 desktop/main/{index,document-viewer,display-documents,display-bytes,display-identities,security,content-policy,openers}.ts, openers.test.ts and
 document-viewer.test.ts; renderer/components/documents/{viewer-context,docs-tab,
 pdf-viewer,docs-tree,tree-menu,tree-properties,open-externally,document-tabs,file-actions,text-viewer}.tsx;
+image-source.ts/test, image-viewer.tsx/CSS/test and e2e/image-preview.spec.ts with generated support/image-preview-fixtures.ts;
 file-mode.ts/test and e2e/viewer-modes.spec.ts; hex-source.ts, hex-rows.tsx, hex-viewer.tsx/CSS with sibling source/component tests;
 text-encoding.ts, read-text-file.ts, use-text-rows.ts with sibling tests, documents.test.ts and
 docs-tree.test.ts; session/{markdown,transcript,artifacts-tab};

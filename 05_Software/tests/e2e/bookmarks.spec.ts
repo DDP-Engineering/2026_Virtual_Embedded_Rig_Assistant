@@ -2,10 +2,9 @@
 import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
-import { _electron, expect, type Page, test } from "@playwright/test";
+import { _electron, expect, type Page } from "@playwright/test";
 import type { VeraBridge } from "@vera/shared";
-import { resolveConfig } from "electron-vite";
-import { createServer } from "vite";
+import { test } from "./fixtures.js";
 import { installNetworkGuard, outboundAttempts } from "./network-guard.js";
 
 const users = (page: Page) => page.locator('[data-message-kind="user"]');
@@ -18,78 +17,65 @@ async function preview(page: Page, index = 0) {
   return marker;
 }
 
-test("browser bookmark controls reveal on hover/focus and localize the title/reply card", async ({
-  page,
-}) => {
+test("browser bookmark controls reveal on hover/focus and localize the title/reply card", {
+  tag: "@parallel-browser",
+}, async ({ page, rendererUrl }) => {
   test.setTimeout(60000);
-  const config = (await resolveConfig({ root: "src/apps/desktop" }, "serve", "development")).config?.renderer;
-  if (!config) throw Error("Missing renderer config");
-  const server = await createServer({
-    ...config,
-    define: { ...config.define, "import.meta.env.VITE_API": JSON.stringify("mock") },
-    server: { ...config.server, port: 0, strictPort: false, hmr: false },
-  });
-  try {
-    await server.listen();
-    const address = server.httpServer?.address();
-    if (!address || typeof address === "string") throw Error("Missing address");
-    await page.setViewportSize({ width: 1024, height: 640 });
-    await page.goto(`http://127.0.0.1:${address.port}/?mock=chat`);
-    await page.locator('[data-i18n="nav.welcome"]').click();
-    await page.locator('[data-action="choose-create"]').click();
-    await page.locator('[data-action="create-workbench"]').click();
-    await page.locator('[data-action="new-session"]').click();
-    const sessionId = await page.locator('[data-session][aria-current="page"]').getAttribute("data-session");
-    for (let index = 0; index < 3; index++) {
-      const input = page.locator(".composer textarea");
-      await input.fill(`Question ${index + 1}\n${"Additional prompt line\n".repeat(18)}`);
-      await input.press("Enter");
-      await expect(users(page)).toHaveCount(index + 1);
-      await expect(page.locator('[data-message-kind="assistant"]')).toHaveCount(index + 1);
-      await expect(page.locator("[data-message-kind=assistant] [role=status]")).toHaveCount(0);
-    }
-    for (const [language, add, remove] of [
-      ["en", "Bookmark", "Remove bookmark"],
-      ["ro", "Marchează", "Elimină marcajul"],
-      ["de", "Lesezeichen setzen", "Lesezeichen entfernen"],
-      ["fr", "Ajouter un signet", "Retirer le signet"],
-    ]) {
-      await page.locator('[data-i18n="nav.settings"]').click();
-      await page.locator('[data-section="appearance"]').click();
-      await page.locator("#language").selectOption(language as string);
-      await page.locator('[data-action="leave-settings"]').click();
-      await page.locator(`[data-session="${sessionId}"]`).click();
-      const action = users(page).first().locator("[data-bookmark]");
-      await action.scrollIntoViewIfNeeded();
-      await page.locator(".composer textarea").focus();
-      await page.mouse.move(1000, 10);
-      await expect(action).toHaveCSS("opacity", "0");
-      await users(page).first().hover();
-      await expect(action).toHaveCSS("opacity", "1");
-      await action.focus();
-      await page.mouse.move(1000, 10);
-      await expect(action).toHaveCSS("opacity", "1");
-      await expect(action).toHaveAccessibleName(add as string);
-      await action.press("Enter");
-      await expect(action).toHaveAttribute("aria-pressed", "true");
-      const marker = await preview(page);
-      await expect(card(page).locator("strong")).toHaveText("Question 1");
-      await expect(card(page)).not.toContainText("Additional prompt line");
-      await expect(card(page)).not.toContainText("Message 1");
-      await expect(card(page).locator("p")).not.toBeEmpty();
-      await expect(card(page).getByRole("button")).toHaveCount(1);
-      await expect(card(page).getByRole("button")).toHaveAccessibleName(remove as string);
-      await marker.press("Tab");
-      await expect(card(page).getByRole("button")).toBeFocused();
-      await card(page).getByRole("button").press("Enter");
-      await expect(action).toHaveAttribute("aria-pressed", "false");
-      await page.keyboard.press("Escape");
-      await expect(card(page)).toHaveCount(0);
-      await expect(marker).toBeFocused();
-      expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-    }
-  } finally {
-    await server.close();
+
+  await page.setViewportSize({ width: 1024, height: 640 });
+  await page.goto(`${rendererUrl}/?mock=chat`);
+  await page.locator('[data-i18n="nav.welcome"]').click();
+  await page.locator('[data-action="choose-create"]').click();
+  await page.locator('[data-action="create-workbench"]').click();
+  await page.locator('[data-action="new-session"]').click();
+  const sessionId = await page.locator('[data-session][aria-current="page"]').getAttribute("data-session");
+  for (let index = 0; index < 3; index++) {
+    const input = page.locator(".composer textarea");
+    await input.fill(`Question ${index + 1}\n${"Additional prompt line\n".repeat(18)}`);
+    await input.press("Enter");
+    await expect(users(page)).toHaveCount(index + 1);
+    await expect(page.locator('[data-message-kind="assistant"]')).toHaveCount(index + 1);
+    await expect(page.locator("[data-message-kind=assistant] [role=status]")).toHaveCount(0);
+  }
+  for (const [language, add, remove] of [
+    ["en", "Bookmark", "Remove bookmark"],
+    ["ro", "Marchează", "Elimină marcajul"],
+    ["de", "Lesezeichen setzen", "Lesezeichen entfernen"],
+    ["fr", "Ajouter un signet", "Retirer le signet"],
+  ]) {
+    await page.locator('[data-i18n="nav.settings"]').click();
+    await page.locator('[data-section="appearance"]').click();
+    await page.locator("#language").selectOption(language as string);
+    await page.locator('[data-action="leave-settings"]').click();
+    await page.locator(`[data-session="${sessionId}"]`).click();
+    const action = users(page).first().locator("[data-bookmark]");
+    await action.scrollIntoViewIfNeeded();
+    await page.locator(".composer textarea").focus();
+    await page.mouse.move(1000, 10);
+    await expect(action).toHaveCSS("opacity", "0");
+    await users(page).first().hover();
+    await expect(action).toHaveCSS("opacity", "1");
+    await action.focus();
+    await page.mouse.move(1000, 10);
+    await expect(action).toHaveCSS("opacity", "1");
+    await expect(action).toHaveAccessibleName(add as string);
+    await action.press("Enter");
+    await expect(action).toHaveAttribute("aria-pressed", "true");
+    const marker = await preview(page);
+    await expect(card(page).locator("strong")).toHaveText("Question 1");
+    await expect(card(page)).not.toContainText("Additional prompt line");
+    await expect(card(page)).not.toContainText("Message 1");
+    await expect(card(page).locator("p")).not.toBeEmpty();
+    await expect(card(page).getByRole("button")).toHaveCount(1);
+    await expect(card(page).getByRole("button")).toHaveAccessibleName(remove as string);
+    await marker.press("Tab");
+    await expect(card(page).getByRole("button")).toBeFocused();
+    await card(page).getByRole("button").press("Enter");
+    await expect(action).toHaveAttribute("aria-pressed", "false");
+    await page.keyboard.press("Escape");
+    await expect(card(page)).toHaveCount(0);
+    await expect(marker).toBeFocused();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   }
 });
 

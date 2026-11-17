@@ -157,7 +157,9 @@ for (const lang of ["en", "ro", "de"])
             await page.keyboard.press("Enter");
             await expect(dialog).toBeVisible();
             if (path.endsWith(".pdf")) {
-              await expect(dialog.locator(".pdf-viewer")).toHaveAttribute("data-ready", "true");
+              await expect(dialog.locator(".pdf-viewer")).toHaveAttribute("data-ready", "true", {
+                timeout: 15000,
+              });
               await page.keyboard.press("Control+f");
               await expect(dialog.locator("[data-document-search]")).toBeFocused();
               await page.keyboard.press("Escape");

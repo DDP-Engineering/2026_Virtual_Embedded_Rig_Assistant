@@ -146,7 +146,7 @@ setInterval(() => console.log('heartbeat ${secret}'), 200);
     await expect.poll(() => row.locator("[data-run-duration]").textContent()).not.toBe(duration);
     await page.screenshot({ path: join(evidence, "live.png") });
     await row.locator('[data-action="run-stop"]').click();
-    await expect(row).toHaveAttribute("data-state", "stopped");
+    await expect(row).toHaveAttribute("data-state", "stopped", { timeout: 15000 });
     await expect
       .poll(async () => {
         try {

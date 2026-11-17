@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-UX-2b81bcdc"
+title = "Fit and zoom original decoded images"
+status = "active"
+requirement = "When an image preview is loaded, the viewer shall fit it to the available container and allow zooming the original decoded image through400 percent with return to fit and automatic fit recomputation on container resize."
+verification = "Assert natural dimensions, fitted geometry, resize,400 percent and zoom back using the same resource URL; capture browser/native screenshots and geometry."
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/documents/", "05_Software/src/libraries/shared/src/documents.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/documents/image-viewer.test.ts", "05_Software/tests/e2e/image-preview.spec.ts"]
+created = 2026-11-17
+updated = 2026-11-17

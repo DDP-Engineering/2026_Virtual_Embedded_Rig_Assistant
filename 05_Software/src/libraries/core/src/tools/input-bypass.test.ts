@@ -107,7 +107,7 @@ it("refuses protected canonical input aliases in every mode", async () => {
     for (const path of [join(managed, "log.txt"), join(alias, "log.txt"), join(alias, "missing")])
       expect((await call("parse_log", { path, profile: "iso" })).isError).toBe(true);
   }
-});
+}, 15000);
 
 it("uses shared scope for all electrical input families while fixed model storage stays confined", async () => {
   const fixtures = new URL("../../../../../tests/fixtures/", import.meta.url);

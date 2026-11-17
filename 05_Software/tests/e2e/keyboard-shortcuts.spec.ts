@@ -1,121 +1,107 @@
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
-import { _electron, expect, test } from "@playwright/test";
+import { _electron, expect } from "@playwright/test";
 import type { VeraBridge } from "@vera/shared";
-import { resolveConfig } from "electron-vite";
-import { createServer } from "vite";
+import { test } from "./fixtures.js";
 import { installNetworkGuard, outboundAttempts } from "./network-guard.js";
 
-test("shortcut UI edits aliases, rejects conflicts, removes and resets, with isolated key capture", async ({
-  page,
-}) => {
-  const config = (await resolveConfig({ root: "src/apps/desktop" }, "serve", "development")).config?.renderer;
-  if (!config) throw Error("renderer config");
-  const server = await createServer({
-    ...config,
-    define: { ...config.define, "import.meta.env.VITE_API": JSON.stringify("mock") },
-    server: { ...config.server, port: 0, strictPort: false, hmr: false },
-  });
+test("shortcut UI edits aliases, rejects conflicts, removes and resets, with isolated key capture", {
+  tag: "@parallel-browser",
+}, async ({ page, rendererUrl }) => {
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
-  try {
-    await server.listen();
-    const address = server.httpServer?.address();
-    if (!address || typeof address === "string") throw Error("server address");
-    await page.goto(`http://127.0.0.1:${address.port}/?mock=chat`);
-    await expect(page.locator("[data-empty-workbench]")).toBeVisible();
-    await page.keyboard.press("Control+/");
-    const section = page.locator('[data-settings-section="shortcuts"]');
-    await expect(section).toBeVisible();
-    const settings = section.locator('[data-shortcut="settings"]');
-    await settings.getByRole("button", { name: "Edit Open settings: Ctrl+,", exact: true }).click();
-    const recorder = page.getByRole("dialog");
-    await recorder.getByRole("textbox").press("Control+n");
-    await recorder.getByRole("button", { name: "Save", exact: true }).click();
-    await expect(recorder.getByRole("alert")).toBeVisible();
-    await recorder.getByRole("textbox").press("Control+Shift+p");
-    await recorder.getByRole("textbox").press("Tab");
-    await expect(recorder.getByRole("button", { name: "Cancel", exact: true })).toBeFocused();
-    await recorder.getByRole("button", { name: "Save", exact: true }).click();
-    await expect(settings.locator("kbd")).toHaveText("Ctrl+Shift+P");
-    await page.locator('[data-action="leave-settings"]').click();
-    await page.keyboard.press("Control+,");
-    await expect(section).not.toBeVisible();
-    await page.keyboard.press("Control+Shift+p");
-    await expect(section).toBeVisible();
-    const newSession = section.locator('[data-shortcut="newSession"]');
-    await newSession.getByRole("button", { name: "Remove New session: Ctrl+N", exact: true }).click();
-    await newSession.getByRole("button", { name: "Remove New session: Ctrl+Shift+O", exact: true }).click();
-    await expect(newSession).toContainText("Unassigned");
-    const create = section.locator('[data-shortcut="newWorkbench"]');
-    await create.getByRole("button", { name: "Add shortcut: New workbench", exact: true }).click();
-    await recorder.getByRole("textbox").press("Control+Shift+n");
-    await recorder.getByRole("button", { name: "Save", exact: true }).click();
-    await expect(create.locator("kbd")).toHaveText("Ctrl+Shift+N");
-    await create.getByRole("button", { name: "Edit New workbench: Ctrl+Shift+N", exact: true }).click();
-    await recorder.getByRole("textbox").evaluate((input) =>
-      input.dispatchEvent(
-        new KeyboardEvent("keydown", {
-          key: "!",
-          code: "Digit1",
-          ctrlKey: true,
-          shiftKey: true,
-          bubbles: true,
-          cancelable: true,
-        }),
-      ),
-    );
-    await expect(recorder.getByRole("textbox")).toHaveValue("Ctrl+Shift+1");
-    await recorder.getByRole("button", { name: "Save", exact: true }).click();
-    await expect(create.locator("kbd")).toHaveText("Ctrl+Shift+1");
-    await page.evaluate(() =>
-      window.dispatchEvent(
-        new KeyboardEvent("keydown", {
-          key: "!",
-          code: "Digit1",
-          ctrlKey: true,
-          shiftKey: true,
-          bubbles: true,
-          cancelable: true,
-        }),
-      ),
-    );
-    await expect(page.locator("#workbench-name")).toBeVisible();
-    await page.keyboard.press("Control+/");
-    await section.getByRole("searchbox").fill("model");
-    await expect(section.locator("[data-shortcut]")).toHaveCount(1);
-    await section.getByRole("button", { name: "Search by key combination", exact: true }).click();
-    await expect(section.getByRole("searchbox")).toBeFocused();
-    await page.keyboard.press("Control+Shift+p");
-    await expect(section.locator("[data-shortcut]")).toHaveCount(1);
-    await section.getByRole("searchbox").press("Escape");
-    await section.getByRole("button", { name: "Restore all defaults", exact: true }).click();
-    await expect(settings.locator("kbd")).toHaveText("Ctrl+,");
-    await expect(newSession.locator("kbd")).toHaveCount(2);
-    // The workbench editor is a page, not a modal dialog: app navigation shortcuts still route,
-    // and without unsaved edits they leave it without asking.
-    await page.locator('[data-action="leave-settings"]').click();
-    const wb = page.locator("[data-workbench-entry]").first();
-    await wb.getByRole("button", { name: "VERA-DEMO-01", exact: true }).click();
-    await page.locator('[data-action="edit-workbench-overview"]').click();
-    await expect(page.locator(".workbench-editor")).toBeVisible();
-    await page.keyboard.press("Control+/");
-    await expect(page.locator(".workbench-editor")).toHaveCount(0);
-    await expect(section).toBeVisible();
-    await page.locator('[data-action="leave-settings"]').click();
-    await page.keyboard.press("Control+b");
-    await expect(page.locator('[data-toggle="sidebar"]')).toHaveAttribute("aria-expanded", "false");
-    await page.keyboard.press("Control+b");
-    await expect(page.locator('[data-toggle="sidebar"]')).toHaveAttribute("aria-expanded", "true");
-    await page.keyboard.press("Control+/");
-    await page.setViewportSize({ width: 1024, height: 640 });
-    await expect(section).toBeVisible();
-    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-    expect(errors).toEqual([]);
-  } finally {
-    await server.close();
-  }
+
+  await page.goto(`${rendererUrl}/?mock=chat`);
+  await expect(page.locator("[data-empty-workbench]")).toBeVisible();
+  await page.keyboard.press("Control+/");
+  const section = page.locator('[data-settings-section="shortcuts"]');
+  await expect(section).toBeVisible();
+  const settings = section.locator('[data-shortcut="settings"]');
+  await settings.getByRole("button", { name: "Edit Open settings: Ctrl+,", exact: true }).click();
+  const recorder = page.getByRole("dialog");
+  await recorder.getByRole("textbox").press("Control+n");
+  await recorder.getByRole("button", { name: "Save", exact: true }).click();
+  await expect(recorder.getByRole("alert")).toBeVisible();
+  await recorder.getByRole("textbox").press("Control+Shift+p");
+  await recorder.getByRole("textbox").press("Tab");
+  await expect(recorder.getByRole("button", { name: "Cancel", exact: true })).toBeFocused();
+  await recorder.getByRole("button", { name: "Save", exact: true }).click();
+  await expect(settings.locator("kbd")).toHaveText("Ctrl+Shift+P");
+  await page.locator('[data-action="leave-settings"]').click();
+  await page.keyboard.press("Control+,");
+  await expect(section).not.toBeVisible();
+  await page.keyboard.press("Control+Shift+p");
+  await expect(section).toBeVisible();
+  const newSession = section.locator('[data-shortcut="newSession"]');
+  await newSession.getByRole("button", { name: "Remove New session: Ctrl+N", exact: true }).click();
+  await newSession.getByRole("button", { name: "Remove New session: Ctrl+Shift+O", exact: true }).click();
+  await expect(newSession).toContainText("Unassigned");
+  const create = section.locator('[data-shortcut="newWorkbench"]');
+  await create.getByRole("button", { name: "Add shortcut: New workbench", exact: true }).click();
+  await recorder.getByRole("textbox").press("Control+Shift+n");
+  await recorder.getByRole("button", { name: "Save", exact: true }).click();
+  await expect(create.locator("kbd")).toHaveText("Ctrl+Shift+N");
+  await create.getByRole("button", { name: "Edit New workbench: Ctrl+Shift+N", exact: true }).click();
+  await recorder.getByRole("textbox").evaluate((input) =>
+    input.dispatchEvent(
+      new KeyboardEvent("keydown", {
+        key: "!",
+        code: "Digit1",
+        ctrlKey: true,
+        shiftKey: true,
+        bubbles: true,
+        cancelable: true,
+      }),
+    ),
+  );
+  await expect(recorder.getByRole("textbox")).toHaveValue("Ctrl+Shift+1");
+  await recorder.getByRole("button", { name: "Save", exact: true }).click();
+  await expect(create.locator("kbd")).toHaveText("Ctrl+Shift+1");
+  await page.evaluate(() =>
+    window.dispatchEvent(
+      new KeyboardEvent("keydown", {
+        key: "!",
+        code: "Digit1",
+        ctrlKey: true,
+        shiftKey: true,
+        bubbles: true,
+        cancelable: true,
+      }),
+    ),
+  );
+  await expect(page.locator("#workbench-name")).toBeVisible();
+  await page.keyboard.press("Control+/");
+  await section.getByRole("searchbox").fill("model");
+  await expect(section.locator("[data-shortcut]")).toHaveCount(1);
+  await section.getByRole("button", { name: "Search by key combination", exact: true }).click();
+  await expect(section.getByRole("searchbox")).toBeFocused();
+  await page.keyboard.press("Control+Shift+p");
+  await expect(section.locator("[data-shortcut]")).toHaveCount(1);
+  await section.getByRole("searchbox").press("Escape");
+  await section.getByRole("button", { name: "Restore all defaults", exact: true }).click();
+  await expect(settings.locator("kbd")).toHaveText("Ctrl+,");
+  await expect(newSession.locator("kbd")).toHaveCount(2);
+  // The workbench editor is a page, not a modal dialog: app navigation shortcuts still route,
+  // and without unsaved edits they leave it without asking.
+  await page.locator('[data-action="leave-settings"]').click();
+  const wb = page.locator("[data-workbench-entry]").first();
+  await wb.getByRole("button", { name: "VERA-DEMO-01", exact: true }).click();
+  await page.locator('[data-action="edit-workbench-overview"]').click();
+  await expect(page.locator(".workbench-editor")).toBeVisible();
+  await page.keyboard.press("Control+/");
+  await expect(page.locator(".workbench-editor")).toHaveCount(0);
+  await expect(section).toBeVisible();
+  await page.locator('[data-action="leave-settings"]').click();
+  await page.keyboard.press("Control+b");
+  await expect(page.locator('[data-toggle="sidebar"]')).toHaveAttribute("aria-expanded", "false");
+  await page.keyboard.press("Control+b");
+  await expect(page.locator('[data-toggle="sidebar"]')).toHaveAttribute("aria-expanded", "true");
+  await page.keyboard.press("Control+/");
+  await page.setViewportSize({ width: 1024, height: 640 });
+  await expect(section).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  expect(errors).toEqual([]);
 });
 
 test("native shortcut overrides survive restart and deleted bindings remain disabled", async () => {

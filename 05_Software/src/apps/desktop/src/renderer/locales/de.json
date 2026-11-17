@@ -367,6 +367,10 @@
     "renewalDue": "Das Token muss erneuert werden; dies erfolgt bei Bedarf automatisch."
   },
   "documents": {
+    "imageZoom": "Bildzoom",
+    "imageFit": "Einpassen",
+    "imagePreview": "Bildvorschau",
+    "imageError": "Dieses Bild kann nicht angezeigt werden. Es ist eventuell ungültig, beschädigt oder durch Anzeigemaskierung verändert. Hex zeigt die Bytes.",
     "attach": "Als Kontext anhängen",
     "viewer": "Dokumentanzeige",
     "search": "Dateien und Dokumente suchen",

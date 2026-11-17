@@ -2,10 +2,9 @@
 import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
-import { _electron, expect, type Page, test } from "@playwright/test";
+import { _electron, expect, type Page } from "@playwright/test";
 import type { VeraBridge } from "@vera/shared";
-import { resolveConfig } from "electron-vite";
-import { createServer } from "vite";
+import { test } from "./fixtures.js";
 import { installNetworkGuard, outboundAttempts } from "./network-guard.js";
 
 async function contained(page: Page, composer = true) {
@@ -46,157 +45,140 @@ async function contained(page: Page, composer = true) {
   }
 }
 
-test("fixed viewport and independent left conversation rail retain composer and reading position", async ({
-  page,
-}) => {
-  const config = (await resolveConfig({ root: "src/apps/desktop" }, "serve", "development")).config?.renderer;
-  if (!config) throw Error("Missing renderer config");
-  const server = await createServer({
-    ...config,
-    define: { ...config.define, "import.meta.env.VITE_API": JSON.stringify("mock") },
-    server: { ...config.server, port: 0, strictPort: false, hmr: false },
+test("fixed viewport and independent left conversation rail retain composer and reading position", {
+  tag: "@parallel-browser",
+}, async ({ page, rendererUrl }) => {
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.goto(`${rendererUrl}/?mock=chat`);
+  await page.locator('[data-i18n="nav.welcome"]').click();
+  await page.locator("#workbench-name").fill("Scroll bench");
+  await page.locator('[data-action="choose-create"]').click();
+  await page.locator('[data-action="create-workbench"]').click();
+  await page.locator('[data-action="new-session"]').click();
+  const sessionId = await page.locator('[data-session][aria-current="page"]').getAttribute("data-session");
+  if (!sessionId) throw Error("Missing session identity");
+  const input = page.getByRole("textbox", { name: "Message", exact: true });
+  await expect(input).toBeEnabled();
+  await expect(page.getByRole("scrollbar")).toBeHidden();
+  await input.fill("A long request with enough lines to overflow the conversation.\n".repeat(100));
+  await input.press("Enter");
+  await expect(page.locator('[data-message-kind="assistant"]')).toHaveCount(1);
+  await contained(page);
+  const transcript = page.locator("[data-transcript]");
+  const rail = page.getByRole("scrollbar", { name: "Scroll conversation" });
+  await expect(rail).toBeVisible();
+  expect(await transcript.evaluate((node) => getComputedStyle(node).scrollbarWidth)).toBe("none");
+  const railBox = await rail.boundingBox();
+  const messageBox = await page.locator(".transcript-item").first().boundingBox();
+  expect((railBox?.x ?? 0) + (railBox?.width ?? 0)).toBeLessThanOrEqual(messageBox?.x ?? 0);
+  await rail.focus();
+  await page.keyboard.press("Home");
+  await expect.poll(() => transcript.evaluate((node) => node.scrollTop)).toBe(0);
+  await page.keyboard.press("ArrowDown");
+  await expect.poll(() => transcript.evaluate((node) => node.scrollTop)).toBeGreaterThan(0);
+  const afterArrow = await transcript.evaluate((node) => node.scrollTop);
+  await page.keyboard.press("PageDown");
+  await expect.poll(() => transcript.evaluate((node) => node.scrollTop)).toBeGreaterThan(afterArrow);
+  await page.keyboard.press("PageUp");
+  await expect.poll(() => transcript.evaluate((node) => node.scrollTop)).toBeLessThanOrEqual(afterArrow + 1);
+  await page.keyboard.press("End");
+  await expect(rail).toHaveAttribute("aria-valuenow", "100");
+  const track = await rail.boundingBox();
+  if (!track) throw Error("Missing rail");
+  await rail.click({ position: { x: track.width / 2, y: track.height / 3 } });
+  await expect.poll(() => transcript.evaluate((node) => node.scrollTop)).toBeGreaterThan(0);
+  const thumb = await rail.locator("[data-scroll-thumb]").boundingBox();
+  if (!thumb) throw Error("Missing thumb");
+  const beforeDrag = await transcript.evaluate((node) => node.scrollTop);
+  await page.mouse.move(thumb.x + thumb.width / 2, thumb.y + thumb.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(thumb.x + thumb.width / 2, track.y + track.height - 2, { steps: 5 });
+  await page.mouse.up();
+  await expect.poll(() => transcript.evaluate((node) => node.scrollTop)).toBeGreaterThan(beforeDrag);
+  await rail.focus();
+  await page.keyboard.press("Home");
+  await expect.poll(() => transcript.evaluate((node) => node.scrollTop)).toBe(0);
+  await transcript.hover();
+  await page.mouse.wheel(0, 160);
+  await expect.poll(() => transcript.evaluate((node) => node.scrollTop)).toBeGreaterThan(0);
+  const beforeTouch = await transcript.evaluate((node) => node.scrollTop);
+  const chatBox = await transcript.boundingBox();
+  if (!chatBox) throw Error("Missing transcript bounds");
+  const cdp = await page.context().newCDPSession(page);
+  await cdp.send("Emulation.setTouchEmulationEnabled", { enabled: true, maxTouchPoints: 1 });
+  const touchX = Math.round(chatBox.x + chatBox.width / 2);
+  const touchY = Math.round(chatBox.y + chatBox.height / 2);
+  await cdp.send("Input.dispatchTouchEvent", {
+    type: "touchStart",
+    touchPoints: [{ x: touchX, y: touchY }],
   });
-  try {
-    await server.listen();
-    const address = server.httpServer?.address();
-    if (!address || typeof address === "string") throw Error("Missing renderer address");
-    await page.setViewportSize({ width: 1280, height: 900 });
-    await page.goto(`http://127.0.0.1:${address.port}/?mock=chat`);
-    await page.locator('[data-i18n="nav.welcome"]').click();
-    await page.locator("#workbench-name").fill("Scroll bench");
-    await page.locator('[data-action="choose-create"]').click();
-    await page.locator('[data-action="create-workbench"]').click();
-    await page.locator('[data-action="new-session"]').click();
-    const sessionId = await page.locator('[data-session][aria-current="page"]').getAttribute("data-session");
-    if (!sessionId) throw Error("Missing session identity");
-    const input = page.getByRole("textbox", { name: "Message", exact: true });
-    await expect(input).toBeEnabled();
-    await expect(page.getByRole("scrollbar")).toBeHidden();
-    await input.fill("A long request with enough lines to overflow the conversation.\n".repeat(100));
-    await input.press("Enter");
-    await expect(page.locator('[data-message-kind="assistant"]')).toHaveCount(1);
-    await contained(page);
-    const transcript = page.locator("[data-transcript]");
-    const rail = page.getByRole("scrollbar", { name: "Scroll conversation" });
-    await expect(rail).toBeVisible();
-    expect(await transcript.evaluate((node) => getComputedStyle(node).scrollbarWidth)).toBe("none");
-    const railBox = await rail.boundingBox();
-    const messageBox = await page.locator(".transcript-item").first().boundingBox();
-    expect((railBox?.x ?? 0) + (railBox?.width ?? 0)).toBeLessThanOrEqual(messageBox?.x ?? 0);
-    await rail.focus();
-    await page.keyboard.press("Home");
-    await expect.poll(() => transcript.evaluate((node) => node.scrollTop)).toBe(0);
-    await page.keyboard.press("ArrowDown");
-    await expect.poll(() => transcript.evaluate((node) => node.scrollTop)).toBeGreaterThan(0);
-    const afterArrow = await transcript.evaluate((node) => node.scrollTop);
-    await page.keyboard.press("PageDown");
-    await expect.poll(() => transcript.evaluate((node) => node.scrollTop)).toBeGreaterThan(afterArrow);
-    await page.keyboard.press("PageUp");
-    await expect
-      .poll(() => transcript.evaluate((node) => node.scrollTop))
-      .toBeLessThanOrEqual(afterArrow + 1);
-    await page.keyboard.press("End");
-    await expect(rail).toHaveAttribute("aria-valuenow", "100");
-    const track = await rail.boundingBox();
-    if (!track) throw Error("Missing rail");
-    await rail.click({ position: { x: track.width / 2, y: track.height / 3 } });
-    await expect.poll(() => transcript.evaluate((node) => node.scrollTop)).toBeGreaterThan(0);
-    const thumb = await rail.locator("[data-scroll-thumb]").boundingBox();
-    if (!thumb) throw Error("Missing thumb");
-    const beforeDrag = await transcript.evaluate((node) => node.scrollTop);
-    await page.mouse.move(thumb.x + thumb.width / 2, thumb.y + thumb.height / 2);
-    await page.mouse.down();
-    await page.mouse.move(thumb.x + thumb.width / 2, track.y + track.height - 2, { steps: 5 });
-    await page.mouse.up();
-    await expect.poll(() => transcript.evaluate((node) => node.scrollTop)).toBeGreaterThan(beforeDrag);
-    await rail.focus();
-    await page.keyboard.press("Home");
-    await expect.poll(() => transcript.evaluate((node) => node.scrollTop)).toBe(0);
-    await transcript.hover();
-    await page.mouse.wheel(0, 160);
-    await expect.poll(() => transcript.evaluate((node) => node.scrollTop)).toBeGreaterThan(0);
-    const beforeTouch = await transcript.evaluate((node) => node.scrollTop);
-    const chatBox = await transcript.boundingBox();
-    if (!chatBox) throw Error("Missing transcript bounds");
-    const cdp = await page.context().newCDPSession(page);
-    await cdp.send("Emulation.setTouchEmulationEnabled", { enabled: true, maxTouchPoints: 1 });
-    const touchX = Math.round(chatBox.x + chatBox.width / 2);
-    const touchY = Math.round(chatBox.y + chatBox.height / 2);
+  for (let step = 1; step <= 5; step++)
     await cdp.send("Input.dispatchTouchEvent", {
-      type: "touchStart",
-      touchPoints: [{ x: touchX, y: touchY }],
+      type: "touchMove",
+      touchPoints: [{ x: touchX, y: touchY - step * 25 }],
     });
-    for (let step = 1; step <= 5; step++)
-      await cdp.send("Input.dispatchTouchEvent", {
-        type: "touchMove",
-        touchPoints: [{ x: touchX, y: touchY - step * 25 }],
-      });
-    await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
-    await expect.poll(() => transcript.evaluate((node) => node.scrollTop)).toBeGreaterThan(beforeTouch);
-    await cdp.detach();
-    // A CDP touchEnd starts inertial scrolling. Capture the reading position only after it settles.
-    await transcript.evaluate(
-      (node) =>
-        new Promise<void>((resolve, reject) => {
-          let previous = node.scrollTop;
-          let stable = 0;
-          const limit = performance.now() + 5000;
-          const measure = () => {
-            const top = node.scrollTop;
-            stable = top === previous ? stable + 1 : 0;
-            previous = top;
-            if (stable >= 12) resolve();
-            else if (performance.now() >= limit) reject(Error("Touch scrolling did not settle"));
-            else requestAnimationFrame(measure);
-          };
-          requestAnimationFrame(measure);
-        }),
-    );
-    const reading = await transcript.evaluate((node) => node.scrollTop);
-    await input.fill("Another short question");
-    await input.press("Enter");
-    await expect(page.locator('[data-message-kind="assistant"]')).toHaveCount(2);
-    expect(await transcript.evaluate((node) => node.scrollTop)).toBeCloseTo(reading, 0);
-    await rail.focus();
-    await page.keyboard.press("End");
-    await input.fill("A third question while following the conversation");
-    await input.press("Enter");
-    await expect(page.locator('[data-message-kind="assistant"]')).toHaveCount(3);
-    await expect(rail).toHaveAttribute("aria-valuenow", "100");
+  await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+  await expect.poll(() => transcript.evaluate((node) => node.scrollTop)).toBeGreaterThan(beforeTouch);
+  await cdp.detach();
+  // A CDP touchEnd starts inertial scrolling. Capture the reading position only after it settles.
+  await transcript.evaluate(
+    (node) =>
+      new Promise<void>((resolve, reject) => {
+        let previous = node.scrollTop;
+        let stable = 0;
+        const limit = performance.now() + 5000;
+        const measure = () => {
+          const top = node.scrollTop;
+          stable = top === previous ? stable + 1 : 0;
+          previous = top;
+          if (stable >= 12) resolve();
+          else if (performance.now() >= limit) reject(Error("Touch scrolling did not settle"));
+          else requestAnimationFrame(measure);
+        };
+        requestAnimationFrame(measure);
+      }),
+  );
+  const reading = await transcript.evaluate((node) => node.scrollTop);
+  await input.fill("Another short question");
+  await input.press("Enter");
+  await expect(page.locator('[data-message-kind="assistant"]')).toHaveCount(2);
+  expect(await transcript.evaluate((node) => node.scrollTop)).toBeCloseTo(reading, 0);
+  await rail.focus();
+  await page.keyboard.press("End");
+  await input.fill("A third question while following the conversation");
+  await input.press("Enter");
+  await expect(page.locator('[data-message-kind="assistant"]')).toHaveCount(3);
+  await expect(rail).toHaveAttribute("aria-valuenow", "100");
+  await page.locator('[data-i18n="nav.settings"]').click();
+  await page.locator('[data-section="updates"]').click();
+  await page.locator('[data-i18n="updates.check"]').click();
+  await page.locator('[data-i18n="updates.download"]').click();
+  await expect(page.locator("[data-update-banner]")).toBeVisible();
+  await page.locator('[data-action="leave-settings"]').click();
+  await page.locator(`[data-session="${sessionId}"]`).click();
+  await contained(page);
+  if (process.env.VERA_SCROLL_SCREENSHOT)
+    await page.screenshot({ path: `${process.env.VERA_SCROLL_SCREENSHOT}.normal.png` });
+  for (const [width, scale] of [
+    [1280, 1],
+    [1024, 1.5],
+  ] as const) {
+    await page.setViewportSize({ width, height: 640 });
     await page.locator('[data-i18n="nav.settings"]').click();
-    await page.locator('[data-section="updates"]').click();
-    await page.locator('[data-i18n="updates.check"]').click();
-    await page.locator('[data-i18n="updates.download"]').click();
-    await expect(page.locator("[data-update-banner]")).toBeVisible();
+    await page.locator('[data-section="appearance"]').click();
+    await page.locator("#interface-font-size").selectOption(String(scale));
+    await page.locator('[data-action="reset-typography"]').scrollIntoViewIfNeeded();
+    await contained(page, false);
     await page.locator('[data-action="leave-settings"]').click();
     await page.locator(`[data-session="${sessionId}"]`).click();
+    await input.fill("Multiline composer\n".repeat(80));
     await contained(page);
-    if (process.env.VERA_SCROLL_SCREENSHOT)
-      await page.screenshot({ path: `${process.env.VERA_SCROLL_SCREENSHOT}.normal.png` });
-    for (const [width, scale] of [
-      [1280, 1],
-      [1024, 1.5],
-    ] as const) {
-      await page.setViewportSize({ width, height: 640 });
-      await page.locator('[data-i18n="nav.settings"]').click();
-      await page.locator('[data-section="appearance"]').click();
-      await page.locator("#interface-font-size").selectOption(String(scale));
-      await page.locator('[data-action="reset-typography"]').scrollIntoViewIfNeeded();
-      await contained(page, false);
-      await page.locator('[data-action="leave-settings"]').click();
-      await page.locator(`[data-session="${sessionId}"]`).click();
-      await input.fill("Multiline composer\n".repeat(80));
-      await contained(page);
-      await input.fill("");
-      await expect(rail).toBeVisible();
-    }
-    if (process.env.VERA_SCROLL_SCREENSHOT)
-      await page.screenshot({ path: process.env.VERA_SCROLL_SCREENSHOT });
-    await page.locator('[data-action="new-session"]').click();
-    await expect(page.getByRole("scrollbar")).toBeHidden();
-  } finally {
-    await server.close();
+    await input.fill("");
+    await expect(rail).toBeVisible();
   }
+  if (process.env.VERA_SCROLL_SCREENSHOT) await page.screenshot({ path: process.env.VERA_SCROLL_SCREENSHOT });
+  await page.locator('[data-action="new-session"]').click();
+  await expect(page.getByRole("scrollbar")).toBeHidden();
 });
 
 test("native Electron confines long conversation scrolling to the session", async () => {

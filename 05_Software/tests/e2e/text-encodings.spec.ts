@@ -1,9 +1,8 @@
-import { spawn } from "node:child_process";
-import { once } from "node:events";
 import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
-import { _electron, expect, type Page, test } from "@playwright/test";
+import { _electron, expect, type Page } from "@playwright/test";
 import type { Channel, Request, Response, VeraBridge } from "@vera/shared";
+import { test } from "./fixtures.js";
 import { installNetworkGuard, outboundAttempts } from "./network-guard.js";
 
 const evidence = resolve("evaluation-outputs/view02");
@@ -108,40 +107,22 @@ async function acceptance(page: Page, platform: string) {
   );
 }
 
-test("browser text encodings, explicit replacement and measured wrapped navigation", async ({ page }) => {
+test("browser text encodings, explicit replacement and measured wrapped navigation", {
+  tag: "@parallel-browser",
+}, async ({ page, rendererUrl }) => {
   test.setTimeout(90000);
   await mkdir(evidence, { recursive: true });
-  const server = spawn(process.execPath, ["../02_Tools/environment/dev-renderer.mjs"], {
-    env: { ...process.env, VITE_API: "mock" },
-    stdio: ["ignore", "pipe", "pipe"],
-  });
-  let output = "";
-  server.stdout.on("data", (chunk) => {
-    output += chunk;
-  });
-  server.stderr.on("data", (chunk) => {
-    output += chunk;
-  });
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
-  try {
-    await expect.poll(() => output, { timeout: 25000 }).toContain("VERA_RENDERER_READY");
-    await page.goto("http://127.0.0.1:5173/?mock=chat");
-    await page.evaluate(() => localStorage.clear());
-    await page.reload();
-    await page.locator("[data-workbench-entry] .workbench-group-name").click();
-    await page.locator('[data-toggle="right"]').click();
-    await page.locator("#tab-docs").click();
-    await acceptance(page, "browser");
-    expect(errors).toEqual([]);
-  } finally {
-    if (server.exitCode === null) {
-      const stopped = once(server, "exit");
-      server.kill("SIGTERM");
-      await stopped;
-    }
-    await writeFile(join(evidence, "browser-server.log"), output);
-  }
+
+  await page.goto(`${rendererUrl}/?mock=chat`);
+  await page.evaluate(() => localStorage.clear());
+  await page.reload();
+  await page.locator("[data-workbench-entry] .workbench-group-name").click();
+  await page.locator('[data-toggle="right"]').click();
+  await page.locator("#tab-docs").click();
+  await acceptance(page, "browser");
+  expect(errors).toEqual([]);
 });
 
 test("native text encodings and measured wrapped navigation through confined masked bytes", async () => {

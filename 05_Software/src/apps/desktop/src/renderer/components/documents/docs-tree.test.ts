@@ -118,6 +118,8 @@ it("opens indexed ordinary text through byte windows without fetching its comple
         workbenchId: id,
         properties: {
           path: input.path,
+          extension: ".txt",
+          rendered: false,
           type: "file",
           size: 200 * 1024 * 1024,
           modified: "2026-11-17T00:00:00.000Z",

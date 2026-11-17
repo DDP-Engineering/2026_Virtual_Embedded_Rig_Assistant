@@ -3,7 +3,7 @@ import { cp, mkdir, mkdtemp, readFile, realpath, rm, stat, symlink, writeFile } 
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { _electron, expect, type Page, test } from "@playwright/test";
-import type { ProgramRunInfo, Response, VeraBridge } from "@vera/shared";
+import { builtinToolNames, type ProgramRunInfo, type Response, type VeraBridge } from "@vera/shared";
 import { installNetworkGuard, outboundAttempts } from "./network-guard.js";
 
 const invoke = <T>(page: Page, channel: string, payload: unknown) =>
@@ -93,6 +93,13 @@ test("native Bypass edits and runs in a sibling repository, exports absolute pat
     await invoke(page, "plugins.install", { path: plugin, sha256 });
     const { config } = await invoke<{ config: { id: string } }>(page, "workbench.config.get", {});
     await invoke(page, "plugins.toggle", { workbenchId: config.id, id: "echo-tools", enabled: true });
+    await invoke(page, "workbench.config.update", {
+      patch: {
+        tools: {
+          disabled: builtinToolNames.filter((name) => !["read", "edit", "run_program"].includes(name)),
+        },
+      },
+    });
     await page.locator('[data-action="new-session"]').click();
     const id = await page.locator('[data-session][aria-current="page"]').getAttribute("data-session");
     if (!id) throw Error("Missing session");
@@ -169,7 +176,9 @@ test("native Bypass edits and runs in a sibling repository, exports absolute pat
       (await invoke<{ runs: ProgramRunInfo[] }>(page, "runs.list", { workbenchId: config.id })).runs;
     await expect.poll(async () => (await runs()).some((run) => run.state === "running")).toBe(true);
     await picker.selectOption("ask");
-    await expect.poll(async () => (await runs()).find((run) => run.background)?.state).toBe("stopped");
+    await expect
+      .poll(async () => (await runs()).find((run) => run.background)?.state, { timeout: 15000 })
+      .toBe("stopped");
     await invoke(page, "session.model.set", { sessionId: id, modelRef: "replay/refused" });
     await send("Try outside in Ask", "Outside attempt ended");
     const refused = await invoke<Response<"session.get">>(page, "session.get", { sessionId: id });

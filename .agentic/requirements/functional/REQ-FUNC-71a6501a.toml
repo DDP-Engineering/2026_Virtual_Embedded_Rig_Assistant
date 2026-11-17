@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-FUNC-71a6501a"
+title = "Preview workbench images from bounded bytes"
+status = "active"
+requirement = "When an ordinary PNG, JPEG, GIF, WebP, BMP or SVG workbench file is opened in Rendered mode, the viewer shall preview it from bounded Display-policy byte reads independently of indexing while retaining applicable Text and Hex choices and extension preferences."
+verification = "Open all six formats without indexing; verify bounded original-offset reads, opaque identity, preferences and actual Hex bytes for each; reject mismatched byte replies."
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/documents/", "05_Software/src/libraries/shared/src/documents.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/documents/file-mode.test.ts", "05_Software/src/apps/desktop/src/renderer/components/documents/image-source.test.ts", "05_Software/tests/e2e/image-preview.spec.ts"]
+created = 2026-11-17
+updated = 2026-11-17

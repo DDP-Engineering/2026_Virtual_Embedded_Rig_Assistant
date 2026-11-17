@@ -367,6 +367,10 @@
     "renewalDue": "Tokenul trebuie reînnoit; reînnoirea se face automat la nevoie."
   },
   "documents": {
+    "imageZoom": "Zoom imagine",
+    "imageFit": "Potrivire",
+    "imagePreview": "Previzualizare imagine",
+    "imageError": "Imaginea nu poate fi afișată. Poate fi incompatibilă, coruptă sau modificată de mascarea Afișare. Folosiți Hex pentru octeți.",
     "attach": "Atașează ca context",
     "viewer": "Vizualizare document",
     "search": "Caută fișiere și documente",

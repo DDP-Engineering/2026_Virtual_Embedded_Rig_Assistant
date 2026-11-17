@@ -2,7 +2,7 @@
 
 PURPOSE: open any workbench file inside VERA the way a file manager's lister does: as text with word wrap and a
 chosen encoding, as hex, or rendered, without a size limit and without an external program.
-STATE: VIEW-01 committed at 2a886177455e1c2adc669072b768e7af50f62367 (TASK-64079701, #286 closed); VIEW-02 committed at c6ede1959372fd1c39b7411f35a4a40a6bb3d91b (TASK-9a5b9ff2, #287 closed); VIEW-03 committed at b33e44979a840b3a945316b4d43fed8e5631475a (TASK-d6ed6549, #288 closed); VIEW-04 committed at e1e477afbeccd86ff96fd48e65b23bc5e28ebe5f (TASK-5bdc042a, #289 closed); VIEW-05 candidate implemented (TASK-a4d526f6, #290; coordinator owns acceptance/commit); VIEW-06 remains planned. Product code follows AEGIS, one work package per task.
+STATE: VIEW-01 committed at 2a886177455e1c2adc669072b768e7af50f62367 (TASK-64079701, #286 closed); VIEW-02 committed at c6ede1959372fd1c39b7411f35a4a40a6bb3d91b (TASK-9a5b9ff2, #287 closed); VIEW-03 committed at b33e44979a840b3a945316b4d43fed8e5631475a (TASK-d6ed6549, #288 closed); VIEW-04 committed at e1e477afbeccd86ff96fd48e65b23bc5e28ebe5f (TASK-5bdc042a, #289 closed); VIEW-05 committed at f272ad5179e6f52f36263b12cbbf3d444eb48407 (TASK-a4d526f6, #290 closed); VIEW-06 implemented candidate (TASK-180f3be3, #291; coordinator owns acceptance/commit and #291/#285 closure). Product code follows AEGIS, one work package per task.
 
 ## Current implementation (2026-11-17)
 
@@ -14,7 +14,7 @@ STATE: VIEW-01 committed at 2a886177455e1c2adc669072b768e7af50f62367 (TASK-64079
   Larger text uses64 KiB windows, a byte scrollbar, bounded sparse progressive indexing, exact-settling
   Go to line and cancellable windowed Find with matching-line counts and wrapping. Verified large-text
   citations use compact, sealed revision-bound sources and retain their original range; rendered
-  formats keep their established paths. Hex offers bounded16-byte virtual rows, offset navigation, cancellable UTF8/hex Find and masked selection copy from the Files menu. Plain-file toolbar modes use real host extension keys and current indexed Rendered availability, retain readable Text for unindexed/ignored Markdown/HTML, and remember deliberate choices across restart; binary/unknown files default Hex. Image view remains planned.
+  formats keep their established paths. Hex offers bounded16-byte virtual rows, offset navigation, cancellable UTF8/hex Find and masked selection copy from the Files menu. Plain-file toolbar modes use real host extension keys and current indexed Rendered availability, retain readable Text for unindexed/ignored Markdown/HTML, and remember deliberate choices across restart; binary/unknown files default Hex. PNG/JPEG/GIF/WebP/BMP/SVG previews are index-independent, fitted and zoomable through400%; SVG stays an inert image, and Text/Hex remain available.
 - Display masking is live, defaults off and supports per-workbench overrides. Opaque workbench-owned identities
   retain secret-named Files/Find entries. MASK-02 is committed at cb8f0bcd; the completed MASK predecessor
   sequence ends at b709882a9f23d64966c0e44cedbb1dc3bcd23e06 (VIEW-01 base).
@@ -35,7 +35,10 @@ STATE: VIEW-01 committed at 2a886177455e1c2adc669072b768e7af50f62367 (TASK-64079
 
 - VIEW-04 Done A/B: hex-source.test.ts, hex-viewer.test.ts and native tests/e2e/hex-viewer.spec.ts prove cross-window Find, partial rows/nonprintables, keyboard selection across displayed windows, actual clipboard, bounded rows and live stored-credential Display refresh. Original proof: evaluation-outputs/view04. TASK-5bdc042a/#289 was committed by the coordinator at e1e477afbeccd86ff96fd48e65b23bc5e28ebe5f; #289 is closed.
 
-- VIEW-05 Done A/B: file-mode.test.ts and document-tabs.test.ts cover defaults, mode switches, opaque extensions, storage failures and citation provenance; tests/e2e/viewer-modes.spec.ts provides browser and Windows Electron acceptance with two Markdown files and a full application restart. TASK-a4d526f6/#290 is an unstaged candidate; original proof is in evaluation-outputs/view05 and coordinator owns acceptance/commit/closure.
+- VIEW-05 Done A/B: file-mode.test.ts and document-tabs.test.ts cover defaults, mode switches, opaque extensions, storage failures and citation provenance; tests/e2e/viewer-modes.spec.ts provides browser and Windows Electron acceptance with two Markdown files and a full application restart. TASK-a4d526f6/#290 was committed by the coordinator at f272ad5179e6f52f36263b12cbbf3d444eb48407; #290 is closed. Original proof remains in evaluation-outputs/view05.
+
+- VIEW-06 Done A/B: image-source.test.ts, image-viewer.test.ts and file-mode.test.ts cover bounded consistent reads, cancellation/URL cleanup, errors and independent applicability/preferences. tests/e2e/image-preview.spec.ts previews PNG/JPEG/GIF/WebP/BMP/SVG and checks real Hex signatures for each, scripted SVG inertness and no external loads, original-resource400% raster/SVG geometry, zoom back/fit/resize, opaque identities, live stored-credential Display refresh and corrupt-image Retry. Browser and Windows Electron proof/logs/screenshots remain in evaluation-outputs/view06. TASK-180f3be3/#291 is an unstaged candidate based on VIEW05 commit f272ad5179e6f52f36263b12cbbf3d444eb48407; coordinator alone accepts/commits/closes #291 and epic #285.
+- All six VIEW implementations are present. This is focused feature acceptance, not the deferred final integrated gate: there is no calibrated comparison with the session-open performance budget. Native Ubuntu, final complete app/plugin/E2E suites and exact-source delivery verification remain user-deferred/coordinator-owned. Unchanged byte/native/packaging proof is reused; no200MiB rerun or delivery rebuild is claimed. Encoded image Blob and browser decoded surfaces require memory proportional to image size and remain subject to browser decoder resources, without an arbitrary image file cutoff.
 
 ## Decisions (2026-11-15)
 

@@ -5,10 +5,9 @@ import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { _electron, expect, test } from "@playwright/test";
+import { _electron, expect } from "@playwright/test";
 import type { VeraBridge } from "@vera/shared";
-import { resolveConfig } from "electron-vite";
-import { createServer } from "vite";
+import { test } from "./fixtures.js";
 import { installNetworkGuard, outboundAttempts } from "./network-guard.js";
 
 const desktop = join(dirname(fileURLToPath(import.meta.url)), "../../src/apps/desktop");
@@ -317,14 +316,9 @@ test("native approval switches session mode and read-only aborts the next wait",
   }
 });
 
-test("browser approval keys and mode picker remain accessible at minimum size", async ({ page, context }) => {
-  const config = (await resolveConfig({ root: "src/apps/desktop" }, "serve", "development")).config?.renderer;
-  if (!config) throw Error("Missing renderer configuration");
-  const server = await createServer({
-    ...config,
-    define: { ...config.define, "import.meta.env.VITE_API": JSON.stringify("mock") },
-    server: { ...config.server, port: 0, strictPort: false, hmr: false },
-  });
+test("browser approval keys and mode picker remain accessible at minimum size", {
+  tag: "@parallel-browser",
+}, async ({ page, rendererUrl, context }) => {
   const attempts: string[] = [],
     errors: string[] = [];
   page.on("pageerror", (e) => errors.push(e.message));
@@ -335,37 +329,31 @@ test("browser approval keys and mode picker remain accessible at minimum size", 
       await route.abort();
     }
   });
-  try {
-    await server.listen();
-    const address = server.httpServer?.address();
-    if (!address || typeof address === "string") throw Error("Missing renderer address");
-    await page.setViewportSize({ width: 1024, height: 640 });
-    await page.goto(`http://127.0.0.1:${address.port}/?mock=chat`);
-    await page.locator('[data-i18n="nav.welcome"]').click();
-    await page.locator("[data-workbench-entry] .workbench-group-name").click();
-    await page.locator('[data-action="new-session"]').click();
-    const input = page.getByRole("textbox", { name: "Message", exact: true });
-    await expect(input).toBeEnabled();
-    await page.getByRole("combobox", { name: "Permission mode" }).selectOption("ask");
-    await input.fill("Edit notes");
-    await input.press("Enter");
-    const card = page.locator("[data-approval-card]");
-    await expect(card).toBeVisible();
-    await expect(input).toBeDisabled();
-    await card.focus();
-    await card.press("D");
-    await expect(input).toBeEnabled();
-    await input.fill("Edit notes again");
-    await input.press("Enter");
-    const latest = page.locator("[data-approval-card]").last();
-    await latest.getByRole("button", { name: "Approve and switch to auto-edit", exact: true }).click();
-    await expect(input).toBeEnabled();
-    await expect(page.getByRole("combobox", { name: "Permission mode" })).toHaveValue("auto-edit");
-    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-    expect(attempts).toEqual([]);
-    expect(errors).toEqual([]);
-    await page.screenshot({ path: test.info().outputPath("approval-browser-minimum.png") });
-  } finally {
-    await server.close();
-  }
+
+  await page.setViewportSize({ width: 1024, height: 640 });
+  await page.goto(`${rendererUrl}/?mock=chat`);
+  await page.locator('[data-i18n="nav.welcome"]').click();
+  await page.locator("[data-workbench-entry] .workbench-group-name").click();
+  await page.locator('[data-action="new-session"]').click();
+  const input = page.getByRole("textbox", { name: "Message", exact: true });
+  await expect(input).toBeEnabled();
+  await page.getByRole("combobox", { name: "Permission mode" }).selectOption("ask");
+  await input.fill("Edit notes");
+  await input.press("Enter");
+  const card = page.locator("[data-approval-card]");
+  await expect(card).toBeVisible();
+  await expect(input).toBeDisabled();
+  await card.focus();
+  await card.press("D");
+  await expect(input).toBeEnabled();
+  await input.fill("Edit notes again");
+  await input.press("Enter");
+  const latest = page.locator("[data-approval-card]").last();
+  await latest.getByRole("button", { name: "Approve and switch to auto-edit", exact: true }).click();
+  await expect(input).toBeEnabled();
+  await expect(page.getByRole("combobox", { name: "Permission mode" })).toHaveValue("auto-edit");
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  expect(attempts).toEqual([]);
+  expect(errors).toEqual([]);
+  await page.screenshot({ path: test.info().outputPath("approval-browser-minimum.png") });
 });

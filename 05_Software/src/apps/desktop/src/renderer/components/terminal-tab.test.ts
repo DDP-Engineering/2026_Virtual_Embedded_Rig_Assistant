@@ -19,12 +19,18 @@ vi.mock("../lib/terminal-document.js", () => ({
 }));
 vi.mock("@xterm/xterm", () => ({
   Terminal: class {
-    options = {};
+    options = { disableStdin: false };
     loadAddon() {}
     open() {}
     focus() {}
     reset() {}
-    write = native.write;
+    write(data: string, parsed?: () => void) {
+      native.write(data);
+      queueMicrotask(() => {
+        if (data.includes("\x1b[c") && !this.options.disableStdin) native.input("\x1b[?1;2c");
+        parsed?.();
+      });
+    }
     dispose = native.dispose;
     onData(listener: typeof native.input) {
       native.input = listener;
@@ -151,3 +157,85 @@ it.each(["en", "ro", "de", "fr"])(
     expect(native.dispose).toHaveBeenCalled();
   },
 );
+
+it("renders restored and replaced history without resending terminal replies, while live queries and typing still work", async () => {
+  vi.useFakeTimers();
+  const owner = "wb_01JB8Z6Q4M7N2K5R9T3V8X1Y0C";
+  const row: TerminalSummary = {
+    id: "00000000-0000-4000-8000-000000000001",
+    number: 1,
+    shared: false,
+    running: true,
+  };
+  let output = "history\x1b[c";
+  vi.mocked(api.invoke).mockImplementation(async (channel) => {
+    if (channel === "terminal.list") return [row] as never;
+    if (channel === "terminal.output") return { ...row, output } as never;
+    return {} as never;
+  });
+  const container = document.createElement("div");
+  document.body.append(container);
+  const root = createRoot(container);
+  const inputs = () => vi.mocked(api.invoke).mock.calls.filter(([channel]) => channel === "terminal.input");
+  try {
+    await act(async () => root.render(createElement(TerminalTab, { workbenchId: owner })));
+    expect(native.write).toHaveBeenCalledWith(output);
+    expect(inputs()).toHaveLength(0);
+    output += "live\x1b[c";
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(250);
+    });
+    expect(inputs()).toHaveLength(1);
+    expect(inputs()[0]?.[1]).toMatchObject({ data: "\x1b[?1;2c" });
+    output = "masked history\x1b[c";
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(250);
+    });
+    expect(inputs()).toHaveLength(1);
+    await act(async () => native.input("ordinary user input"));
+    expect(inputs()).toHaveLength(2);
+    expect(inputs()[1]?.[1]).toMatchObject({ data: "ordinary user input" });
+  } finally {
+    await act(async () => root.unmount());
+    container.remove();
+  }
+});
+
+it("answers fresh terminal startup queries once and does not answer them again after remount", async () => {
+  vi.useFakeTimers();
+  const owner = "wb_01JB8Z6Q4M7N2K5R9T3V8X1Y0C";
+  const row: TerminalSummary = {
+    id: "00000000-0000-4000-8000-000000000002",
+    number: 2,
+    shared: false,
+    running: true,
+  };
+  let created = false;
+  vi.mocked(api.invoke).mockImplementation(async (channel) => {
+    if (channel === "terminal.list") return (created ? [row] : []) as never;
+    if (channel === "terminal.create") {
+      created = true;
+      return row as never;
+    }
+    if (channel === "terminal.output") return { ...row, output: "startup\x1b[c" } as never;
+    return {} as never;
+  });
+  const container = document.createElement("div");
+  document.body.append(container);
+  const root = createRoot(container);
+  const inputs = () => vi.mocked(api.invoke).mock.calls.filter(([channel]) => channel === "terminal.input");
+  try {
+    await act(async () => root.render(createElement(TerminalTab, { workbenchId: owner })));
+    expect(inputs()).toHaveLength(1);
+    expect(inputs()[0]?.[1]).toMatchObject({ data: "\x1b[?1;2c" });
+    await act(async () => root.render(null));
+    await act(async () => root.render(createElement(TerminalTab, { workbenchId: owner })));
+    expect(inputs()).toHaveLength(1);
+    expect(
+      vi.mocked(api.invoke).mock.calls.filter(([channel]) => channel === "terminal.create"),
+    ).toHaveLength(1);
+  } finally {
+    await act(async () => root.unmount());
+    container.remove();
+  }
+});

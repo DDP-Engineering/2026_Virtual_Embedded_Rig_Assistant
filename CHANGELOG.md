@@ -6,7 +6,16 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ## [Unreleased]
 
+### Fixed
+
+- Terminal history replay no longer injects control replies into the shell when reopening or switching tabs.
+
+- Windows command Stop waits for descendant cleanup and reaps children created during process-tree termination.
+
 ### Changed
+
+- Test runners parallelize isolated checks, share renderer/CLI preparation and validate desktop build reuse.
+- Milestone tests refresh viewer/session fixtures, align plugin versions and isolate costly checks.
 
 - Agent/model and artifact/export masking follow independent live app/workbench choices, both defaulting on.
 
@@ -27,6 +36,7 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ### Added
 
+- Image previews fit PNG, JPEG, GIF, WebP, BMP and inert SVG, with original-image zoom through 400% and Hex.
 - File viewer modes switch between Rendered, Text and Hex, with binary defaults and remembered extension choices.
 
 - Hex view offers virtual byte rows, offset jumps, cancellable text/byte Find and selection copy.

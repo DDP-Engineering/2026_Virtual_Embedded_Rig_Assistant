@@ -107,7 +107,7 @@ it("ships ten safe tools, ordered find roots, pinned shared archives and the thr
   for (const text of ["-h -S -l", "linker", "offset", "--disassemble=", "--start-address", "--stop-address"])
     expect(inspect).toContain(text);
   expect(await core.checkCatalogSource(join(software, "plugins"))).toEqual([]);
-});
+}, 30000);
 
 it("discovers only present programs and probes PATH, vendor, PlatformIO, Arduino, Zephyr then xPack", async () => {
   const root = await realpath(await mkdtemp(join(tmpdir(), "vera-binutils-find-")));

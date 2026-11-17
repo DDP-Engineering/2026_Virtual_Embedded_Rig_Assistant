@@ -18,6 +18,8 @@ import { Markdown } from "../session/markdown.js";
 import { type FileMode, type FileModeInfo, readFileMode, rememberFileMode } from "./file-mode.js";
 import type { HexFile } from "./hex-source.js";
 import { HexViewer } from "./hex-viewer.js";
+import type { ImageFile } from "./image-source.js";
+import { ImageViewer } from "./image-viewer.js";
 import type { LargeTextFile } from "./large-text-source.js";
 import { LargeTextViewer } from "./large-text-viewer.js";
 import type { ZoomRequest } from "./pdf-viewer.js";
@@ -55,6 +57,7 @@ export interface DocumentTab {
   textBytes?: Uint8Array | undefined;
   largeText?: LargeTextFile | undefined;
   hexFile?: HexFile | undefined;
+  imageFile?: ImageFile | undefined;
   modeInfo?: FileModeInfo | undefined;
   modeChoice?: FileMode | undefined;
   rememberMode?: boolean | undefined;
@@ -187,6 +190,7 @@ export function DocumentViewerProvider({
                     textBytes: undefined,
                     largeText: undefined,
                     hexFile: undefined,
+                    imageFile: undefined,
                     modeInfo: undefined,
                     modeChoice: undefined,
                     rememberMode: "textPath" in target && target.hex === true,
@@ -267,6 +271,7 @@ export function DocumentViewerProvider({
                 textBytes: undefined,
                 largeText: undefined,
                 hexFile: undefined,
+                imageFile: undefined,
                 error: undefined,
                 attempt: ++attempts.current,
               }
@@ -309,6 +314,7 @@ export function DocumentViewerProvider({
                       textBytes: undefined,
                       largeText: undefined,
                       hexFile: undefined,
+                      imageFile: undefined,
                       error: undefined,
                       attempt: ++attempts.current,
                     }
@@ -464,7 +470,10 @@ export function DocumentViewerProvider({
       const { target, key, attempt } = tab;
       const requestId = `display:${attempt}`;
       const settle = (
-        result: Pick<DocumentTab, "content" | "textBytes" | "largeText" | "hexFile" | "modeInfo" | "error">,
+        result: Pick<
+          DocumentTab,
+          "content" | "textBytes" | "largeText" | "hexFile" | "imageFile" | "modeInfo" | "error"
+        >,
       ) =>
         setSets((map) => {
           const set = map.get(scope);
@@ -575,6 +584,7 @@ export function DocumentViewerProvider({
             textBytes: "textBytes" in result ? result.textBytes : undefined,
             largeText: "largeText" in result ? result.largeText : undefined,
             hexFile: "hexFile" in result ? result.hexFile : undefined,
+            imageFile: "imageFile" in result ? result.imageFile : undefined,
             modeInfo: "modeInfo" in result ? result.modeInfo : undefined,
             error: undefined,
           });
@@ -606,6 +616,7 @@ export function DocumentViewerProvider({
                           textBytes: undefined,
                           largeText: undefined,
                           hexFile: undefined,
+                          imageFile: undefined,
                           error: undefined,
                           attempt: ++attempts.current,
                         },
@@ -695,6 +706,7 @@ export function DocumentBody({
   bytes,
   largeText,
   hexFile,
+  imageFile,
   place,
   onPlace,
   retry,
@@ -706,6 +718,7 @@ export function DocumentBody({
   bytes?: Uint8Array | undefined;
   largeText?: LargeTextFile | undefined;
   hexFile?: HexFile | undefined;
+  imageFile?: ImageFile | undefined;
   /** Where the document was left; without it the cited unit is shown (REQ-UX-1f53a583). */
   place?: DocumentPlace | undefined;
   onPlace?: ((place: DocumentPlace) => void) | undefined;
@@ -747,6 +760,7 @@ export function DocumentBody({
       anchor?.focus();
     }
   }, [content]);
+  if (imageFile) return <ImageViewer file={imageFile} retry={retry} />;
   if (hexFile)
     return (
       <HexViewer

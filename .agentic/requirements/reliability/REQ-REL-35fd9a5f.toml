@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-REL-35fd9a5f"
+title = "Keep failed image previews recoverable"
+status = "active"
+requirement = "If image reading or decoding fails, the viewer shall show a safe localized error with Retry while retaining Hex access."
+verification = "Inject changed-file/invalid byte/decode failures and Retry; assert typed error, safe decode text and Hex access; exercise Display refresh with a stored secret."
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/documents/", "05_Software/src/libraries/shared/src/documents.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/documents/image-source.test.ts", "05_Software/src/apps/desktop/src/renderer/components/documents/image-viewer.test.ts", "05_Software/tests/e2e/image-preview.spec.ts"]
+created = 2026-11-17
+updated = 2026-11-17

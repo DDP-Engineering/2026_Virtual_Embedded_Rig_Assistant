@@ -7,6 +7,7 @@ import { type DocumentGuard, type EventEnvelope, eventEnvelopeSchema } from "@ve
 import { afterEach, expect, it } from "vitest";
 import { SettingsService } from "../settings/service.js";
 import { DocumentsRepository } from "../storage/repos/documents.js";
+import { previewDocuments } from "../workbench/documents-scan.js";
 import { WorkbenchService } from "../workbench/service.js";
 import type { DocumentProcessor, Ingester } from "./ingest.js";
 
@@ -25,7 +26,7 @@ async function generate(folder: string, count: number, from = 0) {
     await Promise.all(names.slice(at, at + 500).map((name) => writeFile(name, "# Note\n")));
 }
 
-async function harness(prepare: (folder: string) => Promise<void>) {
+async function harness(prepare: (folder: string) => Promise<void>, maxFiles = 10000) {
   const root = await mkdtemp(join(tmpdir(), "vera-guard-"));
   cleanup.push(() => rm(root, { recursive: true, force: true }));
   const folder = join(root, "bench");
@@ -74,7 +75,7 @@ async function harness(prepare: (folder: string) => Promise<void>) {
     processDocument,
   );
   cleanup.push(() => service.close());
-  const snapshot = await service.create(folder, "Guard");
+  const snapshot = await service.create(folder, "Guard", { config: { docs: { maxFiles } } });
   const rows = () => new DocumentsRepository(service.getDatabase()).list();
   const guards = () =>
     events.flatMap((envelope) => (envelope.event.type === "index.guard" ? [envelope.event.guard] : []));
@@ -83,18 +84,38 @@ async function harness(prepare: (folder: string) => Promise<void>) {
   return { folder, service, id: snapshot.config.id, events, processed, rows, guards, approved };
 }
 
+// Full-size selection is checked once; approval/reindex state transitions below use the same boundary ratios.
+it("counts all 12000 actual files before refusing the default indexing limit", async () => {
+  const h = await harness((folder) => generate(join(folder, "docs"), 12000));
+  await (h.service as unknown as { ingest: Ingester }).ingest.waitIdle();
+  expect(h.service.documentGuard()).toEqual({
+    files: 12000,
+    limit: 10000,
+    folders: [{ path: "docs", files: 12000 }],
+  });
+  expect(h.rows()).toEqual([]);
+  expect(h.processed).toEqual([]);
+  const preview = await previewDocuments(h.folder, {
+    include: ["docs/**"],
+    exclude: [],
+    gitignore: true,
+    maxFiles: 10000,
+  });
+  expect(preview).toMatchObject({ files: 12000, truncated: false, guard: h.service.documentGuard() });
+}, 180000);
+
 /**
- * IDX-03-A..C over a generated workbench: docs/big/a 2,000, docs/big/b 1,000 and docs/n00..n08 with
- * 1,000 Markdown files each, 12,000 in all, under the default docs.maxFiles of 10,000. Files added
+ * IDX-03-A..C over a generated workbench: docs/big/a 20, docs/big/b 10 and docs/n00..n08 with
+ * 10 Markdown files each, 120 in all, under a configured docs.maxFiles of 100. Files added
  * later are written outside the workbench and moved in with one rename, so no reconciliation sees a
  * half-written step.
  */
 it("stops an oversized selection before indexing anything and indexes after Index anyway", async () => {
   const h = await harness(async (folder) => {
-    await generate(join(folder, "docs/big/a"), 2000);
-    await generate(join(folder, "docs/big/b"), 1000);
-    for (let n = 0; n < 9; n++) await generate(join(folder, `docs/n0${n}`), 1000);
-  });
+    await generate(join(folder, "docs/big/a"), 20);
+    await generate(join(folder, "docs/big/b"), 10);
+    for (let n = 0; n < 9; n++) await generate(join(folder, `docs/n0${n}`), 10);
+  }, 100);
   // Test seam: the active Ingester, to wait until a reconciliation of the current disk state ends.
   const ingester = () => (h.service as unknown as { ingest: Ingester }).ingest;
   const settle = async () => {
@@ -102,20 +123,20 @@ it("stops an oversized selection before indexing anything and indexes after Inde
     await ingester().waitIdle();
   };
   const stage = join(h.folder, "../stage");
-  const add = async (name: string, folders: number[], count = (_n: number) => 1000) => {
+  const add = async (name: string, folders: number[], count = (_n: number) => 10) => {
     for (const n of folders) await generate(join(stage, name, `n${String(n).padStart(2, "0")}`), count(n));
     await rename(join(stage, name), join(h.folder, "docs", name));
   };
   await settle();
   const stopped: DocumentGuard = {
-    files: 12000,
-    limit: 10000,
+    files: 120,
+    limit: 100,
     folders: [
-      { path: "docs", files: 12000 },
-      { path: "docs/big", files: 3000 },
-      { path: "docs/big/a", files: 2000 },
-      { path: "docs/big/b", files: 1000 },
-      ...[0, 1, 2, 3, 4, 5].map((n) => ({ path: `docs/n0${n}`, files: 1000 })),
+      { path: "docs", files: 120 },
+      { path: "docs/big", files: 30 },
+      { path: "docs/big/a", files: 20 },
+      { path: "docs/big/b", files: 10 },
+      ...[0, 1, 2, 3, 4, 5].map((n) => ({ path: `docs/n0${n}`, files: 10 })),
     ],
   };
   // IDX-03-A and C: the guard reports the count and top folders; nothing is recorded or indexed.
@@ -123,25 +144,26 @@ it("stops an oversized selection before indexing anything and indexes after Inde
   expect(h.service.documentGuard()).toEqual(stopped);
   expect(h.rows()).toEqual([]);
   expect(h.processed).toEqual([]);
-  expect(h.service.documentVolume()).toMatchObject({ files: 12000 });
+  expect(h.service.documentVolume()).toMatchObject({ files: 120 });
   // IDX-04-A and B: the preview of the same folder counts and guards the selection as indexing does.
+  // Count equivalence is independent of machine speed; service deadline/truncation has separate coverage.
   const preview = () =>
-    h.service.previewDocuments(h.folder, {
+    previewDocuments(h.folder, {
       include: ["docs/**"],
       exclude: [],
       gitignore: true,
-      maxFiles: 10000,
+      maxFiles: 100,
     });
-  expect(await preview()).toMatchObject({ files: 12000, truncated: false, guard: stopped });
+  expect(await preview()).toMatchObject({ files: 120, truncated: false, guard: stopped });
 
-  // 10,000 files index without a stop.
+  // 100 files index without a stop.
   for (const n of [7, 8]) await rm(join(h.folder, `docs/n0${n}`), { recursive: true });
   await settle();
   expect(h.guards().at(-1)).toBeNull();
   expect(h.service.documentGuard()).toBeNull();
-  expect(h.rows()).toHaveLength(10000);
-  expect(new Set(h.processed).size).toBe(10000);
-  expect(await preview()).toMatchObject({ files: 10000, guard: null });
+  expect(h.rows()).toHaveLength(100);
+  expect(new Set(h.processed).size).toBe(100);
+  expect(await preview()).toMatchObject({ files: 100, guard: null });
 
   // Growing past the limit stops again; a guarded Reindex keeps the existing index as it is.
   await add("more", [7, 8]);
@@ -149,37 +171,37 @@ it("stops an oversized selection before indexing anything and indexes after Inde
   const indexed = h.rows();
   let processed = h.processed.length;
   await h.service.reindexDocuments();
-  expect(h.guards().at(-1)).toMatchObject({ files: 12000, limit: 10000 });
+  expect(h.guards().at(-1)).toMatchObject({ files: 120, limit: 100 });
   expect(h.rows()).toEqual(indexed);
   expect(h.processed).toHaveLength(processed);
 
-  // IDX-03-B: Index anyway approves 12,000 and all of them index.
-  await expect(h.service.approveDocuments("wb_00000000000000000000000000", 12000)).rejects.toMatchObject({
+  // IDX-03-B: Index anyway approves 120 and all of them index.
+  await expect(h.service.approveDocuments("wb_00000000000000000000000000", 120)).rejects.toMatchObject({
     code: "CONFLICT",
   });
   expect(h.approved()).toBeUndefined();
-  await h.service.approveDocuments(h.id, 12000);
-  expect(h.approved()).toBe("12000");
+  await h.service.approveDocuments(h.id, 120);
+  expect(h.approved()).toBe("120");
   await ingester().waitIdle();
   expect(h.guards().at(-1)).toBeNull();
-  expect(h.rows()).toHaveLength(12000);
+  expect(h.rows()).toHaveLength(120);
 
-  // 500 more keep indexing.
-  await add("extra", [9], () => 500);
+  // 5 more keep indexing.
+  await add("extra", [9], () => 5);
   await settle();
   expect(h.guards().at(-1)).toBeNull();
-  expect(h.rows()).toHaveLength(12500);
+  expect(h.rows()).toHaveLength(125);
 
   // Doubling the selection stops again, at 120 % of the approved count, also after a Reindex.
-  await add("double", [10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21], (n) => (n < 21 ? 1000 : 500));
+  await add("double", [10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21], (n) => (n < 21 ? 10 : 5));
   await settle();
   processed = h.processed.length;
   await h.service.reindexDocuments();
-  expect(h.guards().at(-1)).toMatchObject({ files: 24000, limit: 14400 });
-  expect(h.rows()).toHaveLength(12500);
+  expect(h.guards().at(-1)).toMatchObject({ files: 240, limit: 144 });
+  expect(h.rows()).toHaveLength(125);
   expect(h.processed).toHaveLength(processed);
-  expect(h.approved()).toBe("12000");
-}, 600000);
+  expect(h.approved()).toBe("120");
+}, 60000);
 
 // REQ-FUNC-817bbf83
 it("applies the active workbench's approval to its own preview only", async () => {

@@ -57,6 +57,7 @@ evidence. `VERA_TERM05_SKIP_AGENT=1` limits release-artifact smoke to user termi
 | [session-performance-probe.test.ts](tooling/session-performance-probe.test.ts) | Sondele de performanță compilate în aplicație. |
 | [skeleton.test.ts](tooling/skeleton.test.ts) | Workspaces, configurația TypeScript și comenzile proiectului. |
 | [test-discovery.test.ts](tooling/test-discovery.test.ts) | Descoperirea fișierelor de test de către proiectele Vitest. |
+| [test-execution.test.ts](tooling/test-execution.test.ts) | Exact E2E selection, report isolation and desktop build-cache invalidation. |
 
 ### Integration
 
@@ -82,6 +83,52 @@ evidence. `VERA_TERM05_SKIP_AGENT=1` limits release-artifact smoke to user termi
 
 ## Rulare
 
+### Execution cost and shared resources
+
+Vitest runs isolated workspace files with at most four workers (bounded by available CPUs).
+Isolation and the outbound-network guard remain enabled. The `core-resources` project runs
+filesystem-heavy and worker-deadline suites one file at a time after the other workspace tests,
+without competing fixture creation. `--project "core*"` selects both core projects. The ingest guard
+counts 12,000 real files once; its approval/reindex flow uses a configured 100-file limit with the
+same boundary ratios. `knowledge/guard.test.ts` keeps the exact 10,000/12,000/12,500/24,000 boundaries.
+`tooling`,
+`integration`, `packaging` and `plugins` follow in separate ordered groups, one file at a time;
+groups cannot overlap shared CLI/build outputs. `--maxWorkers` overrides the workspace limit for profiling.
+`support/cli-bundle-setup.ts` compiles the CLI and its real workers once per integration run;
+CLI consumers copy that bundle before changing their own fixtures.
+
+`e2e/fixtures.ts` provides one mock renderer server per Playwright worker, with available ports
+and separate optimizer directories. Browser contexts and their localStorage remain per-test.
+Tests using this fixture carry `@parallel-browser`. Device/network servers and native app profiles
+keep their existing ownership; performance, focus and native tests remain in the serial group.
+
+`support/test-e2e.mjs` first collects the requested tests without executing them, then runs the
+tagged browser group with two workers and the remaining group with one, in that order. It uses exact
+Playwright test lists to retain nested/parameterized selection. No matching tests is an error.
+Explicit browser `--workers` is respected. Stateful/interactive Playwright options (sharding,
+last-failed, only-changed, UI/debug and user test lists), custom configurations and machine/HTML
+reporters use one unchanged Playwright execution so selection state and reports are not split or overwritten.
+
+```powershell
+python ../02_Tools/environment/npmw.py npm run test:e2e -- --browser-only bookmarks.spec.ts privacy-settings.spec.ts --grep browser
+python ../02_Tools/environment/npmw.py npm run test:e2e -- --serial-only image-preview.spec.ts --grep native
+```
+
+Browser-only selections skip the Electron build. Native selections use `support/test-build.mjs`:
+reuse requires identical source/configuration/help/release/toolchain inputs, build environment and
+output bytes. A source/flag change, missing file or edited output rebuilds automatically. Changing
+inputs while building fails rather than certifying a mixed candidate. Records live in
+`node_modules/.cache/test-builds`; no unchecked skip-build option is supplied. This only avoids
+duplicate local compilation; native/delivery tests still exercise their real runtime.
+Listing/help do not build. Direct `npx playwright test` remains a single serial invocation and
+requires the caller to prepare the appropriate native build. Avoid running a desktop build or
+development instance against the same output directory during native acceptance.
+
+`tooling/test-execution.test.ts` checks exact test partitioning and build invalidation. Original
+focused profiling receipts for this change are retained in `evaluation-outputs/test-suite-speed/`;
+they measure a selected batch, not the complete suite. Full milestone verification remains governed
+by `02_Tools/verification-policy.md`.
+
 Din `05_Software`, se poate selecta unul dintre cele trei proiecte Vitest:
 
 ```powershell
@@ -100,6 +147,23 @@ python ../02_Tools/environment/npmw.py npx vitest run tests/plugins/kicad.test.t
 Run it when a plugin or the plugin system changes and before a delivery; `npm run verify:all`
 runs `verify` and then the plugin suite.
 
+
+The MQTT and Raspberry Pi suites need Python 3.11+ with `paho-mqtt==2.1.0`, `asyncssh==2.24.1`
+and `cryptography==49.0.0`. Install these in an owned test virtual environment and set `VERA_TEST_PYTHON`
+to its Python executable; the suites otherwise use `python` on Windows or `python3` on Linux.
+For example, from `05_Software` in PowerShell:
+
+```powershell
+python -m venv evaluation-outputs/plugin-test-python
+./evaluation-outputs/plugin-test-python/Scripts/python.exe -m pip install paho-mqtt==2.1.0 asyncssh==2.24.1 cryptography==49.0.0
+$env:VERA_TEST_PYTHON = (Resolve-Path evaluation-outputs/plugin-test-python/Scripts/python.exe).Path
+python ../02_Tools/environment/npmw.py npm run test:plugins
+```
+
+These match the helpers' declared dependency pins. Retain `pip freeze` with run evidence when recording a milestone.
+MQTT uses a local fixture broker; Raspberry Pi SSH tests use the local Linux shell, or the default
+WSL distribution on Windows. This is protocol/kernel evidence, not physical Raspberry Pi evidence.
+
 Pentru un singur fișier:
 
 ```powershell
@@ -115,9 +179,9 @@ verificărilor este în [02_Tools/verification-policy.md](../../02_Tools/verific
 
 ## E2E
 
-`npm run test:e2e` rulează [support/test-e2e.mjs](support/test-e2e.mjs): compilează
-desktopul, apoi lansează Playwright cu `playwright.config.ts`; pe Linux folosește
-`xvfb-run -a`. Argumentele suplimentare sunt transmise către Playwright:
+`npm run test:e2e` invokes [support/test-e2e.mjs](support/test-e2e.mjs): it prepares or reuses
+the desktop build for serial selections, then launches Playwright with `playwright.config.ts`;
+Linux uses `xvfb-run -a`. Group flags are handled by the runner; other arguments reach Playwright:
 
 ```powershell
 python ../02_Tools/environment/npmw.py npm run test:e2e -- tests/e2e/workbench.spec.ts
@@ -227,3 +291,14 @@ Original logs/screenshots/receipt stay in `evaluation-outputs/view04`.
 Markdown Rendered/Text/Hex and remembered real-extension mode in browser and native Electron.
 Native acceptance uses two Markdown files, an opaque secret-named source and a full process restart.
 Original logs, screenshots and receipts remain under ignored `evaluation-outputs/view05`.
+
+`e2e/image-preview.spec.ts` checks all six unindexed image formats, Hex for each, inert scripted SVG,
+fit/resize/400%/zoom-back geometry, original resource identity, live Display and corrupt-image Retry
+in browser and Windows Electron. `support/image-preview-fixtures.ts` generates the fixtures.
+Original logs/screenshots/receipts live in ignored `evaluation-outputs/view06`.
+
+`e2e/terminal-replay.spec.ts` couples the real TerminalService/node-pty backend to the real xterm
+surface through a local test bridge. It checks shell protocol queries, tab reselection and renderer
+reload without submitting commands through the user's terminal. Historical queries must not send
+replies again; a new query must still receive its reply. Evidence stays in
+`evaluation-outputs/terminal-input-fix/`.

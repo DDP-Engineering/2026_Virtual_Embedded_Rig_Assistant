@@ -12,10 +12,12 @@ function TerminalSurface({
   workbenchId,
   terminal,
   failure,
+  freshTerminals,
 }: {
   workbenchId: string;
   terminal: TerminalSummary;
   failure(error: unknown): void;
+  freshTerminals: Set<string>;
 }) {
   const { t } = useTranslation();
   const container = useRef<HTMLElement>(null);
@@ -23,11 +25,13 @@ function TerminalSurface({
     if (!container.current) return;
     let live = true;
     let previous = "";
+    let initial = true;
     let timer: ReturnType<typeof setTimeout>;
     const element = container.current;
     const styles = terminalDocument(element.ownerDocument);
     const term = new Terminal({
       cursorBlink: true,
+      disableStdin: true,
       scrollback: 3000,
       allowProposedApi: false,
       fontFamily: "Consolas, monospace",
@@ -60,12 +64,17 @@ function TerminalSurface({
       try {
         const snapshot = await api.invoke("terminal.output", { workbenchId, id: terminal.id });
         if (!live) return;
-        if (snapshot.output.startsWith(previous)) term.write(snapshot.output.slice(previous.length));
-        else {
-          term.reset();
-          term.write(snapshot.output);
-        }
+        const append = snapshot.output.startsWith(previous);
+        const replay = !append || (initial && !freshTerminals.has(terminal.id));
+        // Parsing historical VT queries must not inject old device/cursor replies into the live shell.
+        term.options.disableStdin = replay || !snapshot.running;
+        if (!append) term.reset();
+        const data = append ? snapshot.output.slice(previous.length) : snapshot.output;
+        if (data) await new Promise<void>((parsed) => term.write(data, parsed));
+        if (!live) return;
         previous = snapshot.output;
+        freshTerminals.delete(terminal.id);
+        initial = false;
         term.options.disableStdin = !snapshot.running;
       } catch (error) {
         if (live) failure(error);
@@ -85,7 +94,7 @@ function TerminalSurface({
       term.dispose();
       styles.dispose();
     };
-  }, [workbenchId, terminal.id, failure]);
+  }, [workbenchId, terminal.id, failure, freshTerminals]);
   return (
     <section
       className="terminal-surface"
@@ -105,6 +114,7 @@ export function TerminalTab({ workbenchId }: { workbenchId: string }) {
   const [error, setError] = useState<unknown>();
   const [pending, setPending] = useState(false);
   const revision = useRef(0);
+  const freshTerminals = useRef(new Set<string>());
   const selected = terminals.find((terminal) => terminal.id === active);
   useEffect(() => {
     let live = true;
@@ -114,8 +124,11 @@ export function TerminalTab({ workbenchId }: { workbenchId: string }) {
       try {
         let rows = await api.invoke("terminal.list", { workbenchId });
         if (!live) return;
-        if (version === revision.current && initial && !rows.length)
-          rows = [await api.invoke("terminal.create", { workbenchId, cols: 80, rows: 24 })];
+        if (version === revision.current && initial && !rows.length) {
+          const created = await api.invoke("terminal.create", { workbenchId, cols: 80, rows: 24 });
+          if (live) freshTerminals.current.add(created.id);
+          rows = [created];
+        }
         if (!live) return;
         if (version === revision.current) {
           setTerminals(rows);
@@ -141,6 +154,7 @@ export function TerminalTab({ workbenchId }: { workbenchId: string }) {
     setError(undefined);
     try {
       const terminal = await api.invoke("terminal.create", { workbenchId, cols: 80, rows: 24 });
+      freshTerminals.current.add(terminal.id);
       setTerminals((rows) => [...rows, terminal]);
       setActive(terminal.id);
     } catch (failure) {
@@ -157,6 +171,7 @@ export function TerminalTab({ workbenchId }: { workbenchId: string }) {
     setError(undefined);
     try {
       await api.invoke("terminal.close", { workbenchId, id: selected.id });
+      freshTerminals.current.delete(selected.id);
       setTerminals((rows) => rows.filter((row) => row.id !== selected.id));
       setActive(terminals.find((row) => row.id !== selected.id)?.id);
     } catch (failure) {
@@ -241,6 +256,7 @@ export function TerminalTab({ workbenchId }: { workbenchId: string }) {
               workbenchId={workbenchId}
               terminal={selected}
               failure={setError}
+              freshTerminals={freshTerminals.current}
             />
           </div>
         </>

@@ -474,6 +474,8 @@ class Run implements ActiveRun {
     return this.done;
   }
 
+  private killing: Promise<void> | undefined;
+
   private kill(reason: "timedOut" | "stopped"): void {
     if (this.exited || this.reason) return;
     this.reason = reason;
@@ -481,7 +483,7 @@ class Run implements ActiveRun {
     const pid = this.pid;
     const { host, clock, killGraceMs } = this.settings;
     const treeKill = () => {
-      if (!this.exited) void killProcessTree(host, pid, clock, killGraceMs).catch(() => {});
+      if (!this.exited) this.killing = killProcessTree(host, pid, clock, killGraceMs).catch(() => {});
     };
     const { lease } = this.request;
     if (!lease || !this.control) {
@@ -620,6 +622,8 @@ class Run implements ActiveRun {
 
   private async finish(exit: ProcessExit): Promise<void> {
     this.exited = true;
+    // Windows shell exit can precede the cleanup of children started during taskkill enumeration.
+    if (this.settings.host.platform === "win32") await this.killing;
     clearTimeout(this.timer);
     clearTimeout(this.graceTimer);
     this.request.signal?.removeEventListener("abort", this.abort);

@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-SEC-21021e27"
+title = "Keep SVG preview in an inert image context"
+status = "active"
+requirement = "When an SVG is previewed, the viewer shall render it only as a Blob image resource with browser image isolation preventing script execution, event handlers, navigation and external resource loads under the restrictive content policy with only local and Blob image sources."
+verification = "Load SVG with script, onload, links and external image/style references; assert actual decode, unchanged script sentinel/location, no nested live SVG or frame and no resource requests in browser and native Electron."
+affected_paths = ["05_Software/src/apps/desktop/src/main/content-policy.ts", "05_Software/src/apps/desktop/src/renderer/index.html", "05_Software/src/apps/desktop/src/renderer/components/documents/", "05_Software/src/libraries/shared/src/documents.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/documents/image-viewer.test.ts", "05_Software/tests/e2e/image-preview.spec.ts", "05_Software/src/apps/desktop/src/main/content-policy.test.ts"]
+created = 2026-11-17
+updated = 2026-11-17

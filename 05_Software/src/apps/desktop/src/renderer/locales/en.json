@@ -367,6 +367,10 @@
     "renewalDue": "Token renewal is due; it renews automatically when needed."
   },
   "documents": {
+    "imageZoom": "Image zoom",
+    "imageFit": "Fit",
+    "imagePreview": "Image preview",
+    "imageError": "Cannot preview this image. It may be unsupported, corrupt or changed by Display masking. Use Hex to inspect its bytes.",
     "attach": "Attach as context",
     "viewer": "Document viewer",
     "search": "Search files and documents",
