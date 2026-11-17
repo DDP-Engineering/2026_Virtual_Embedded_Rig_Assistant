@@ -70,7 +70,7 @@ when its open proof is recorded there. A plugin's bundled helper programs print 
 | `esp32-esptool` | 0.2.0 | real esptool 5.6.0 provisioned and run; identify/flash on real ESP32 boards open |
 | `gdb-debug` | 0.2.0 | real xPack GDB and OpenOCD without a probe (LAB-04); probe and board open |
 | `hil-testing` | 0.2.0 | real helper processes and runner (LAB-07); real board and probe open |
-| `lab-validation` | 0.2.0 | real runner and uv provisioning (LAB-02); a real capture of a real circuit open |
+| `lab-validation` | 0.3.0 | real runner and uv provisioning (LAB-02); a real capture of a real circuit open |
 | `microchip-pymcuprog` | 0.2.0 | real pymcuprog: hex conversion, failed ping on a missing port; UPDI board open |
 | `micropython` | 0.2.0 | real mpremote 1.29.0 against a simulated board (IOT-02); real board open |
 | `mqtt-tools` | 0.2.0 | real paho-mqtt 2.1.0 against the local TLS test broker (IOT-05); product broker and device open |
@@ -171,5 +171,5 @@ Open: sigrok (its package is not published), and a native Ubuntu run.
   shows stored or missing, never the value.
 - Automatic install only for pip, script and download programs and for required plugins; `find` programs
   (vendor tools) get detection, the vendor guide and Check again. VERA never installs a vendor program.
-- Every new UI text in en/ro/de; Windows x64 and native Ubuntu x64 (WSL2 stands in where no native Ubuntu
+- Every new UI text in en/ro/de/fr; Windows x64 and native Ubuntu x64 (WSL2 stands in where no native Ubuntu
   host exists, recorded as such).

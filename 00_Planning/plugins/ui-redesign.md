@@ -1,6 +1,6 @@
 # Plugins — catalog discovery and workbench activation
 
-Date: 2026-11-11. Status: metadata validated at `a67012a`, global library validated at `bbc7a0f`, and workbench redesign implemented in candidate TASK-4f522ea5. The final ticket owns focused integrated acceptance; its local commit is coordinator-owned.
+Date: 2026-11-11. Status: implemented: metadata at `a67012a` (#86), global library at `bbc7a0f` (#87), workbench redesign at `071b274f` (#88, TASK-4f522ea5).
 The user requested that this proposal and its interactive HTML be saved and tracked in Gitea.
 
 Implemented as PLG-23…PLG-25.

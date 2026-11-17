@@ -19,8 +19,8 @@ November 2026; the plugin owner rechecks them when writing the manifest.
 | Crash analysis | toolchain `addr2line` (from EIM), `esp-coredump` | `esp32-idf` (programs `xtensa-addr2line`, `riscv-addr2line`) | `safe` |
 | Partitions and data images | `parttool.py`, `gen_esp32part.py`, `otatool.py`, `nvs_partition_gen`, `spiffsgen.py` / `mklittlefs` | `esp32-idf` | generate: `safe`; write to the chip: `device-write` |
 | eFuses and secure boot | `espefuse` (`summary`, `dump`, `burn-efuse`, `burn-key`, `burn-block-data`, `write-protect-efuse`, `read-protect-efuse`, `set-flash-voltage`), `espsecure` | `esp32-efuse` (off by default) | summary, dump: `device-read`; every `burn-*`, `*-protect-*`, `set-flash-voltage`: `irreversible`; `espsecure` key generation and signing: `safe` |
-| JTAG debug | OpenOCD-esp32 (portable download), GDB batch mode | `esp32-openocd` | server start, read registers: `device-read`; `program_esp`, flash writes: `device-write` |
-| Emulation and tests | Espressif QEMU (`idf.py qemu`), Wokwi CLI, pytest-embedded | `esp32-qemu` | `safe` |
+| JTAG debug | OpenOCD-esp32 (portable download), GDB batch mode | `esp32-openocd` (not shipped) | server start, read registers: `device-read`; `program_esp`, flash writes: `device-write` |
+| Emulation and tests | Espressif QEMU (`idf.py qemu`), Wokwi CLI, pytest-embedded | `esp32-qemu` (not shipped) | `safe` |
 | Alternative stacks | Arduino CLI with arduino-esp32, PlatformIO, espflash / espup (Rust), MicroPython `mpremote` | community candidates | as esptool |
 
 Not wrappable: Flash Download Tool (Windows GUI only). Not needed in the first release: Espressif's
@@ -42,8 +42,8 @@ USB identifiers used by `serial-monitor` to name the board family:
 | Core | `serial-monitor` | `script` (`scripts/serial_monitor.py`, pyserial 3.5; a file named `serial.py` would shadow pyserial's `serial` package) | on |
 | Core | `esp32-esptool` | `pip: esptool>=5,<6` | on |
 | ESP-IDF build | `esp32-idf` | `find` EIM and ESP-IDF ≥ 5.4; `hint` links the EIM installer | on |
-| JTAG debug | `esp32-openocd` | `download` OpenOCD-esp32 release per platform | off |
-| Emulation | `esp32-qemu` | through EIM (`idf.py qemu`) | off |
+| JTAG debug | `esp32-openocd` (not shipped) | `download` OpenOCD-esp32 release per platform | off |
+| Emulation | `esp32-qemu` (not shipped) | through EIM (`idf.py qemu`) | off |
 | Security (irreversible) | `esp32-efuse` | `pip: esptool>=5,<6` (provides `espefuse`, `espsecure`) | off |
 
 ### 1.3 Excerpts
@@ -99,7 +99,7 @@ VERA's typed command approval remains enforced. `safe` describes hardware risk, 
 |---|---|---|
 | `can-python` | script `can` on python-can: list interfaces and drivers; bounded listen-only capture to ASC/BLF/candump log; send; replay | list: `safe`; capture: `device-read`; capture `--active` (backend without listen-only): `device-write`; **any send or replay: `irreversible`** (actuation on a live bus) |
 | `can-dbc` | `cantools` (`pip`): dump, list, convert, generate_c_source; script `can-decode` decodes a log file with a database | `safe`; `cantools decode`/`plot` (read stdin, which VERA closes) and `monitor` (interactive): `blocked` |
-| `can-utils` (Linux, not shipped yet) | `candump`, `cansend`, `cangen` (`find`) | `candump`: `device-read`; `cansend`, `cangen`: `irreversible` |
+| `can-utils` (Linux, not shipped) | `candump`, `cansend`, `cangen` (`find`) | `candump`: `device-read`; `cansend`, `cangen`: `irreversible` |
 
 Backends: PCAN (PEAK driver), Vector XL, Kvaser CANlib, slcan (serial), gs_usb/candleLight
 (libusb), SocketCAN on Linux. Vendor drivers are never bundled; drivers are shared libraries, so the `can`
@@ -120,15 +120,15 @@ they are candidates for the deferred MCP path, not a requirement.
 | Plugin | Programs | Risk |
 |---|---|---|
 | `microchip-pymcuprog` | `pymcuprog` (`pip`): ping, read, write, erase over UPDI (SerialUPDI), PICkit 4 / Snap in AVR mode, Atmel-ICE, nEDBG (pymcuprog 3.19 has no PICkit 5) | ping, read: `device-read`; write, erase: `device-write`; fuse, config-word, lock-bit and all-memory writes, every hex-file write (it can carry those segments), `setsupplyvoltage` and `-H` high voltage: `irreversible` |
-| `microchip-avrdude` | `avrdude` (`find`) | same split; `-U lock:` and fuse writes: `irreversible` |
-| `microchip-mplab` | MPLAB X IPE `ipecmd`, MDB (`find` in the MPLAB X install) | program: `device-write`; code protect: `irreversible` |
+| `microchip-avrdude` (not shipped) | `avrdude` (`find`) | same split; `-U lock:` and fuse writes: `irreversible` |
+| `microchip-mplab` (not shipped) | MPLAB X IPE `ipecmd`, MDB (`find` in the MPLAB X install) | program: `device-write`; code protect: `irreversible` |
 
 ## 5. STM32
 
 | Plugin | Programs | Risk |
 |---|---|---|
 | `stm32-cubeprog` | `STM32_Programmer_CLI` (`find`; program `stm32_programmer_cli`) | `-c`, `-r`, `-ob displ`: `device-read`; `-w`, `-e`: `device-write`; any option-byte write (`-ob`), above all `RDP=0xCC` (level 2, permanent), and the protection, OTP, key, secure-firmware, FUS, debug-authentication, HSM-license and power commands: `irreversible`; `-script`: `blocked` |
-| `stm32-openocd` | OpenOCD (`download` or `find`) | as `esp32-openocd` |
+| `stm32-openocd` (not shipped) | OpenOCD (`download` or `find`) | as `esp32-openocd` |
 
 ## 6. Bench tools (vendor-neutral)
 
@@ -153,7 +153,7 @@ Host-side design work; none of these plugins drives hardware. Delivered as ELEC-
 |---|---|---|---|
 | `electronics-calc` | `elec-calc` (standard-library script): dc, divider, rc, losses, thermal, tolerance, report | `safe`; `report` creates a new run folder in the workbench | implemented (ELEC-01) |
 | `kicad` | find `kicad-cli` (version and help only); `kicad-tool` (standard-library script): inspect, erc, drc, bom, netlist, export, review-report on a copy of the project | `safe` for kicad-tool (a new run folder in the workbench); other kicad-cli commands `blocked` | implemented (ELEC-02) |
-| `parts-search`, `ngspice`, `ltspice`, `kicad-layout`, `freerouting` | see the plan page | set per package | planned (ELEC-03...ELEC-07) |
+| `parts-search`, `ngspice`, `ltspice`, `kicad-layout`, `freerouting` | see each plugin's `README.md` in `05_Software/plugins/` | set per package | implemented (ELEC-03...ELEC-07) |
 
 NOTES:
 - Exact subcommand spellings, defaults and version ranges belong in each plugin's manifest and are

@@ -170,15 +170,18 @@ it("rejects every release test hook including the audit environment name", async
   const { verifyAppCode, documentWorkerMarkers } = await import(
     pathToFileURL(join(root, "../02_Tools/release/package.mjs")).href
   );
+  // Any VERA_TEST_ name is refused, also one no list ever named.
   for (const marker of [
     "VERA_REPLAY_DIR",
-    "VERA_TEST_DIALOG_PATH",
     "VERA_NETWORK_AUDIT",
-    "VERA_TEST_CHATGPT",
+    "process.env.VERA_TEST_CATALOG_KEY",
+    "process.env.VERA_TEST_NEVER_LISTED",
   ])
     expect(() => verifyAppCode([...documentWorkerMarkers, marker].join(";"), false)).toThrow(
       /Build boundary/,
     );
+  const commented = [...documentWorkerMarkers, "  // fixture plugins come from VERA_TEST_PROGRAMS"];
+  expect(() => verifyAppCode(commented.join("\n"), false)).not.toThrow();
 });
 
 it("verifies immutable model assets and refuses altered cache/downloads or escaping paths", async () => {

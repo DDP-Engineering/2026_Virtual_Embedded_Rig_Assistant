@@ -11,17 +11,26 @@ export class ArchiveError extends Error {
   override name = "ArchiveError";
 }
 
+/** A guard against archive bombs only: far above any real dependency archive (a download ends at 2 GiB). */
+const ZIP_LIMITS = { bytes: 16 * 1024 ** 3, entries: 1_000_000 };
+
 /**
  * Extracts a zip into an empty folder, entry by entry as the file streams in (stored and deflate).
  * Every entry name must be a plugin-relative path after `\` becomes `/`; entries are written as plain
- * files and folders, so a zip never creates a link.
+ * files and folders, so a zip never creates a link. An archive over `limits` is an ArchiveError.
  */
-export async function extractZip(file: string, target: string, signal?: AbortSignal): Promise<void> {
+export async function extractZip(
+  file: string,
+  target: string,
+  signal?: AbortSignal,
+  limits = ZIP_LIMITS,
+): Promise<void> {
   const unzip = new Unzip();
   unzip.register(UnzipInflate);
   const handles = new Set<FileHandle>();
   let failure: unknown;
   let entries = 0;
+  let bytes = 0;
   let pending: Promise<void> = Promise.resolve();
   const fail = (error: unknown) => {
     failure ??= error instanceof ArchiveError ? error : new ArchiveError("The zip archive cannot be read.");
@@ -37,7 +46,10 @@ export async function extractZip(file: string, target: string, signal?: AbortSig
       fail(new ArchiveError(`The zip entry ${JSON.stringify(entry.name)} leaves its folder.`));
       return;
     }
-    entries++;
+    if (++entries > limits.entries) {
+      fail(new ArchiveError("The zip archive holds too many entries."));
+      return;
+    }
     const destination = join(target, ...path.split("/"));
     if (folder) {
       chain(async () => {
@@ -49,6 +61,11 @@ export async function extractZip(file: string, target: string, signal?: AbortSig
     entry.ondata = (error, data, final) => {
       if (error) {
         fail(error);
+        return;
+      }
+      bytes += data.length;
+      if (bytes > limits.bytes) {
+        fail(new ArchiveError("The zip archive is too large when extracted."));
         return;
       }
       chain(async () => {

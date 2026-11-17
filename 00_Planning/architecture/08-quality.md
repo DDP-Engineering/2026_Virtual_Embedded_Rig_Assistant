@@ -29,8 +29,8 @@ that wrapper (`.agentic/aegis.toml`); `aegis check --run` runs lint, typecheck a
 | `npm run typecheck` | `tsc -b` over the solution `tsconfig.json` (references: tools, shared, core, desktop, cli) |
 | `npm test` | `vitest run`: workspace projects `shared`, `core`, `desktop`, `cli` plus root projects `tooling`, `integration`, `packaging`; `-- --project <name>` selects one |
 | `npm run test:coverage` | the same with V8 coverage into `coverage/`, for information only |
-| `npm run verify` | lint, typecheck, `check:i18n`, test, in that order |
-| `npm run check:i18n` | the en/ro/de catalogs against the keys the renderer uses: missing, unused and translation-only keys (06 §6) |
+| `npm run verify` | lint, typecheck, `check:i18n`, `check:help`, `check:release-notes`, test, in that order |
+| `npm run check:i18n` | the en/ro/de/fr catalogs against the keys the renderer uses: missing, unused and translation-only keys (06 §6) |
 | `npm run test:e2e` | `electron-vite build`, then Playwright over `tests/e2e/` (extra arguments pass through); Linux wraps it in `xvfb-run -a`. Specs that use test switches need the build made with `VERA_TEST=1` in the environment; the script does not set it |
 | `npm run perf:sessions -- run\|calibrate\|compare …` | isolated compiled native previous-session loading measurements (quick5/full30 samples per case), explicit environment-specific references, calibrated budget/regression comparison; see the command guide above |
 | `npm run dev`, `dev:renderer`, `build` | electron-vite watch launch; the renderer alone on Vite (`VITE_API=mock` for the mock bridge); a build into `src/apps/desktop/out/` |
@@ -59,7 +59,7 @@ in Windows Sandbox or a VM with its adapters down).
 | Core integration | `src/libraries/core/src/sessions/*.test.ts`, `storage/session-recovery.test.ts`, `knowledge/*.test.ts` (there is no `src/libraries/core/test/`) | replay sessions: bounded first turns, approvals, concurrent edits, restart recovery, citations |
 | Renderer components | `src/apps/desktop/src/renderer/**/*.test.ts` | per-file `@vitest-environment jsdom`, React `createRoot` and `@testing-library/user-event` over the mock API (`mocks/mockApi.ts`, 06 §8) |
 | Root Vitest projects | `tests/tooling/`, `tests/integration/`, `tests/packaging/` | import boundaries, build modes, demo documents, i18n checker, network guard, workspace skeleton; CLI process, document CLI and hosts, retrieval, worker hosts; payload checks, smoke tooling, update feed configuration and server |
-| End-to-end | `tests/e2e/*.spec.ts` | Playwright `_electron.launch` of the electron-vite build with the development Electron binary, a temporary `--user-data-dir` and workbenches created or copied in temporary folders; browser specs run the mock renderer (`dev:renderer`, `VITE_API=mock`) in Chromium at 127.0.0.1:5173. One worker, serial |
+| End-to-end | `tests/e2e/*.spec.ts` | Playwright `_electron.launch` of the electron-vite build with the development Electron binary, a temporary `--user-data-dir` and workbenches created or copied in temporary folders; browser specs run the mock renderer (`dev:renderer`, `VITE_API=mock`) in Chromium at 127.0.0.1:5173. The runner (`tests/support/test-e2e.mjs`) runs the specs tagged `parallel-browser` with two workers, then the others with one worker, serial |
 | Release package smoke | `tests/packaging/smoke/smoke-package.mjs` with `smoke-runtime`, `smoke-server`, `smoke-egress`, `smoke-report` | the release artifact itself: offline indexing, scripted loopback session, egress check (§5) |
 | Retrieval evaluation | `evaluators/eval-retrieval-harness/eval-retrieval.mjs`, `evaluators/retrieval-support/`, `tests/fixtures/retrieval/` | recall@5 thresholds (05 §8) |
 
@@ -76,10 +76,10 @@ in Windows Sandbox or a VM with its adapters down).
   states. `tests/tooling/build-mode.test.ts` executes the emitted code of both build modes, including
   the picker override. E2E runs serially because Vite owns port 5173.
 - Other fixtures: `documents/` (text and scanned PDF, HTML, Markdown, office samples),
-  `i18n/missing-key.json`, `retrieval/` (questions and bge/e5 model manifests), `app-data/` (current-format
+  `i18n/missing-key.json`, `retrieval/` (the questions in `demo-board.yaml`), `app-data/` (current-format
   `credentials.json`, `workbench.yaml` and the crash-recovery fixture `interrupted-sessions.json`). The
   settings version fixtures and the `upgrade/` fixtures were removed with the migrations (07 §6).
-- `tests/fixtures/llm-scripts/<scenario>.jsonl`: replay scripts, one per scenario (14 on 2026-11-01).
+- `tests/fixtures/llm-scripts/<scenario>.jsonl`: replay scripts, one per scenario (17).
   The format follows `09_Others/benchpilot-reference/apps/server/src/llm/replay.ts`; VERA's provider is
   `src/libraries/core/src/llm/replay.ts`. One line per model step; empty lines and `//` lines are
   skipped:
@@ -130,7 +130,7 @@ in Windows Sandbox or a VM with its adapters down).
   core creates IDs with `ulid()` directly (`ses_`, `art_`, `apv_`).
 - Each test that touches the file system works in its own temporary directory.
 - UI assertions use roles and `data-i18n` translation keys; many E2E and smoke checks also match English
-  accessible names (for example "Approve", "Docs").
+  accessible names (for example "Approve", "Files").
 - Screenshots are never compared pixel by pixel (fonts differ between operating systems). E2E writes
   them into the run's temporary Playwright output folder, which `tests/support/cleanup-e2e-output.mjs`
   deletes at exit, so they are not kept by default; `smoke:package` keeps its screenshots in its root.

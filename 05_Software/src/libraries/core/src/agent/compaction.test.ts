@@ -38,6 +38,7 @@ const exchange = (): Message[] => [
   answer(`Measure reset timing. [[board.txt#L1-L2]] ${"a".repeat(850)}`),
 ];
 const request = (messages: Message[]) => ({ system: "Current system rules", tools: [], messages });
+const text = (value: string) => ({ type: "text" as const, text: value });
 
 it("continues a small-window multi-turn replay, counts both requests and retains the complete transcript", async () => {
   const requests: LlmRequest[] = [];
@@ -161,6 +162,27 @@ it.each(["throw", "invalid", "length", "tools"])(
     expect(JSON.stringify(input)).toBe(saved);
   },
 );
+
+const acceptedReplies: [string, (json: string) => AssistantMessage["content"]][] = [
+  ["a reasoning block", (json) => [{ type: "thinking", thinking: "plan" }, text(json)]],
+  ["a json code fence", (json) => [text(`\`\`\`json\n${json}\n\`\`\`\n`)]],
+  ["a bare code fence", (json) => [text(`\`\`\`\n${json}\n\`\`\``)]],
+];
+it.each(acceptedReplies)("accepts a summary reply with %s", async (_name, content) => {
+  const input = request([
+    ...exchange(),
+    ...exchange(),
+    { role: "user", content: "Keep current instruction", timestamp: 2 },
+  ]);
+  const reply = summary();
+  const json = reply.content[0]?.type === "text" ? reply.content[0].text : "";
+  const view = await new ContextCompactor().prepare(input, caps, policy, async () => ({
+    ...reply,
+    content: content(json),
+  }));
+  expect(view.compactionStatus).toBe("completed");
+  expect(JSON.stringify(view.messages)).toContain("Use 3.3V for the board.");
+});
 
 it("rejects interrupted exchanges, including transient pair repair", async () => {
   const summarize = vi.fn(async () => summary());

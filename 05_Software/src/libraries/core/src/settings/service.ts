@@ -25,7 +25,11 @@ export class SettingsService {
   ) {}
 
   load(): Promise<void> {
-    this.loading ??= this.initialize();
+    // A failed load (a busy or locked file) is not cached: the next call reads the file again.
+    this.loading ??= this.initialize().catch((error) => {
+      this.loading = undefined;
+      throw error;
+    });
     return this.loading;
   }
 

@@ -5,7 +5,7 @@ into a small, sourced, manual test plan.
 DONE-WHEN: the replay test and the rubric cases of §5 pass. Shared rules:
 [contracts](../../contracts.md); related skill: [firmware-comparator](../firmware-comparator/SPEC.md);
 work: [PLAN](PLAN.md).
-STATUS: rewritten 2026-11-01; nothing implemented yet. Ships in the `analysis-skills` plugin.
+STATUS: rewritten 2026-11-01; implemented. Ships in the `analysis-skills` plugin.
 
 ## 1. Inputs
 

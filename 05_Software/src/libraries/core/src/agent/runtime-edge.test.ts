@@ -141,6 +141,37 @@ it("stops an executing tool through its signal and closes every call", async () 
     isError: true,
   });
 });
+it.each([
+  ["write", "written", false],
+  ["program", "written", false],
+  ["read", "Aborted.", true],
+] as const)(
+  "reports a completed %s tool as %j when the user stops during it",
+  async (toolClass, text, isError) => {
+    const tool: ToolDef = {
+      name: "read",
+      class: toolClass,
+      description: "tool",
+      params: z.strictObject({ path: z.string() }),
+      execute: async () => {
+        f.runtime.abort();
+        return "written";
+      },
+    };
+    const f = fixture(
+      async function* () {
+        yield { type: "done", message: message([call], "toolUse") };
+      },
+      [tool],
+    );
+    expect((await f.runtime.send("start")).stopReason).toBe("aborted");
+    expect(f.runtime.messages().at(-1)).toMatchObject({
+      role: "toolResult",
+      content: [{ type: "text", text }],
+      isError,
+    });
+  },
+);
 it("never executes truncated model tool arguments", async () => {
   let executions = 0;
   const tool: ToolDef = {

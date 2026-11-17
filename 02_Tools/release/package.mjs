@@ -21,7 +21,7 @@ import {
   foreignNative,
   inspectPayloadFiles,
   ptyRuntimeFile,
-  releaseHookMarkers,
+  releaseHooks,
   validateNativeFiles,
 } from "./package-checks.mjs";
 import { updatePublish } from "./update-config.mjs";
@@ -90,9 +90,11 @@ export function verifyAppCode(code, testBuild) {
   for (const marker of probeMarkers) {
     if (testBuild !== code.includes(marker)) throw new Error(`Build boundary failed for ${marker}`);
   }
-  if (!testBuild)
-    for (const marker of releaseHookMarkers)
-      if (code.includes(marker)) throw new Error(`Build boundary failed for ${marker}`);
+  const hooks = testBuild ? [] : releaseHooks(code);
+  if (hooks.length)
+    throw new Error(
+      `Build boundary failed for ${hooks.join(", ")}: test-only code in the release build, guard it with __VERA_TEST__`,
+    );
   for (const marker of documentWorkerMarkers)
     if (!code.includes(marker)) throw new Error(`Document worker missing: ${marker}`);
 }

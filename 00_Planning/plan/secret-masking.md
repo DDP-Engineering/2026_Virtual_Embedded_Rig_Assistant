@@ -81,7 +81,7 @@ checks real files and process restart; focused component tests cover stale async
 dirty gating, Cancel/Escape focus, failed saves and read-only controls. Original logs/screenshots/receipts
 are retained under `05_Software/evaluation-outputs/mask05/`; the task journal records exact commands,
 counts, independent review verdicts and final static/strict results. Its implementation state is done;
-the coordinator owns the local ticket commit and child/epic closure.
+MASK-05 is committed at b709882a9f23d64966c0e44cedbb1dc3bcd23e06.
 
 MASK-01–04 consumer proof remains valid for unchanged core/host paths. TERM physical PTY/package closure
 proof is reused without rebuilding selected delivery artifacts. No full app, official-plugin or complete

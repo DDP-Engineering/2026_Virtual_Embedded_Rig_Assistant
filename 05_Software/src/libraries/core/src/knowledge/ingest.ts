@@ -103,6 +103,8 @@ function watchTargets(root: string, docs: WorkbenchConfig["docs"]): string[] {
   ].sort();
 }
 const isGitignore = (rel: string) => rel === ".gitignore" || rel.endsWith("/.gitignore");
+/** The coarsest file time step in use (FAT): closer than this, two writes can share one time. */
+const RACY_MS = 2000;
 
 /** One serial ingest queue owned by one writable workbench, independent of session writes. */
 export class Ingester {
@@ -130,6 +132,11 @@ export class Ingester {
   private selectedGuard: DocumentGuard | null = null;
   /** Indexer crashes per document content while it was processed (RULING-006). */
   private readonly crashes = new Map<string, number>();
+  /**
+   * Document content processed since this workbench opened. A failure stored by an earlier open
+   * gets one more try, so a transient one (worker crash, deadline on a busy machine) heals itself.
+   */
+  private readonly attempted = new Set<string>();
   /**
    * True for a folder the walk and the watcher must not enter, or a file that is no document:
    * neither is listed further, opened or recorded (TASK-e5310cdb).
@@ -453,6 +460,21 @@ export class Ingester {
     this.emit({ type: "index.document", path: row.path, document: row });
     return row;
   }
+  /** False when chunks of the document lack a vector of the current embedding model. */
+  private embedded(doc: DocumentRecord): boolean {
+    const modelId = this.options.process?.modelId;
+    if (!modelId) return true;
+    const db = this.options.db;
+    return (
+      db.prepare("SELECT count(*) FROM chunks WHERE doc_id=?").pluck().get(doc.id) ===
+      db
+        .prepare(
+          "SELECT count(*) FROM embeddings e JOIN chunks c ON c.id=e.chunk_id WHERE c.doc_id=? AND e.model_id=?",
+        )
+        .pluck()
+        .get(doc.id, modelId)
+    );
+  }
   private async ingest(guard: PathGuard, path: string): Promise<string> {
     const old = this.rows.get(path);
     const kind = documentKind(path);
@@ -486,6 +508,18 @@ export class Ingester {
         this.publish({ ...record, status: "unsupported", error: "TYPE_UNSUPPORTED" }, true);
         return "unsupported";
       }
+      // An indexed file with the same size and time is not read again. A time too close to the
+      // indexing could hide a second write of the same size, so that file is read.
+      if (
+        old?.status === "indexed" &&
+        old.kind === kind &&
+        old.bytes === before.size &&
+        old.mtime === record.mtime &&
+        old.indexedAt !== null &&
+        Date.parse(old.indexedAt) - before.mtimeMs > RACY_MS &&
+        this.embedded(old)
+      )
+        return "indexed";
       const inspect = this.options.process?.inspect ?? inspectSource;
       const inspection = await inspect({
         root: this.options.root,
@@ -517,22 +551,15 @@ export class Ingester {
           this.publish({ ...record, status: "failed", error: "PROCESSING" }, true);
         return "failed";
       }
+      // Unchanged content keeps its result. That includes a failure, once it was tried since the
+      // workbench opened: after that it waits for a content change or Reindex, which clears the rows.
+      const attempt = `${path}\n${record.sha256}`;
       if (
         old?.sha256 === record.sha256 &&
         old.kind === kind &&
-        old.status !== "failed" &&
         !(old.status === "pending" && this.options.process) &&
-        !(
-          old.status === "indexed" &&
-          this.options.process?.modelId &&
-          this.options.db.prepare("SELECT count(*) FROM chunks WHERE doc_id=?").pluck().get(old.id) !==
-            this.options.db
-              .prepare(
-                "SELECT count(*) FROM embeddings e JOIN chunks c ON c.id=e.chunk_id WHERE c.doc_id=? AND e.model_id=?",
-              )
-              .pluck()
-              .get(old.id, this.options.process.modelId)
-        )
+        !(old.status === "indexed" && !this.embedded(old)) &&
+        !(old.status === "failed" && !this.attempted.has(attempt))
       )
         return old.status;
       if (inspection.binary) {
@@ -542,6 +569,7 @@ export class Ingester {
       const pending = this.publish(record, true);
       if (!this.options.process) return "pending";
       const embeddings = this.options.config().embeddings;
+      this.attempted.add(attempt);
       const result = await this.options.process({
         embeddings,
         root: this.options.root,

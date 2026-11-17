@@ -12,9 +12,10 @@ import { strToU8, zipSync } from "fflate";
 import { afterEach, expect, it } from "vitest";
 import { openDb } from "../storage/db.js";
 import { DocumentsRepository } from "../storage/repos/documents.js";
+import type { EmbeddingPort } from "./embedding.js";
 import { type DocumentInput, Ingester } from "./ingest.js";
 import { createDocumentProcessor } from "./processor.js";
-import { createOfficeExtractor, createPdfExtractor } from "./worker-host.js";
+import { createOfficeExtractor, createPdfExtractor, pdfDeadline } from "./worker-host.js";
 
 const software = fileURLToPath(new URL("../../../../../", import.meta.url));
 const cleanup: (() => Promise<unknown>)[] = [];
@@ -323,6 +324,53 @@ it.each(["abort", "deadline", "exit", "error", "invalid"])(
     ).rejects.toThrow();
   },
 );
+it("gives a large PDF more time than the base deadline, up to 15 minutes", async () => {
+  const MIB = 1024 * 1024;
+  expect(pdfDeadline(120000, 1024)).toBe(120000);
+  expect(pdfDeadline(120000, 20 * MIB)).toBe(600000);
+  expect(pdfDeadline(120000, 100 * MIB)).toBe(900000);
+  const root = await fixtureRoot(),
+    entry = join(root, "slow-worker.mjs");
+  await writeFile(
+    entry,
+    `import {parentPort} from 'node:worker_threads'; parentPort.once('message', () => setTimeout(() => parentPort.postMessage({kind:'pdf',pages:['late page']}), 400));`,
+  );
+  const extract = createPdfExtractor(pathToFileURL(entry), 50),
+    signal = new AbortController().signal;
+  await expect(extract(new Uint8Array(1), signal)).rejects.toThrow(/deadline/);
+  expect(await extract(new Uint8Array(MIB), signal)).toEqual({ kind: "pdf", pages: ["late page"] });
+});
+it("embeds a long document in batches of 64 chunks, in order, and stops between batches on abort", async () => {
+  const root = await fixtureRoot(),
+    doc = await input(root, "docs/manual.pdf", "opaque fixture");
+  const pages = Array.from({ length: 150 }, (_, n) => `Page ${n + 1} describes register ${n} in words.`);
+  const sizes: number[] = [];
+  let next = 0;
+  const port: EmbeddingPort = {
+    modelId: "test",
+    embed: async (_root, texts) => {
+      sizes.push(texts.length);
+      return texts.map(() => Float32Array.of(next++));
+    },
+    rank: async () => [],
+    release: async () => {},
+  };
+  const pdf = async () => ({ kind: "pdf" as const, pages });
+  const result = await createDocumentProcessor(pdf, port)(doc);
+  expect(sizes).toEqual([64, 64, 22]);
+  expect(result.chunks).toHaveLength(150);
+  expect(result.derived?.vectors?.map((v) => v[0])).toEqual(Array.from({ length: 150 }, (_, n) => n));
+  const controller = new AbortController();
+  const aborting = createDocumentProcessor(pdf, {
+    ...port,
+    embed: async (...args) => {
+      controller.abort();
+      return port.embed(...args);
+    },
+  });
+  await expect(aborting({ ...doc, signal: controller.signal })).rejects.toThrow();
+  expect(sizes).toEqual([64, 64, 22, 64]);
+});
 it("rejects source hash mismatch, invalid UTF8 and invalid cache keys without cache publication", async () => {
   const root = await fixtureRoot(),
     processor = createDocumentProcessor(noPdf);

@@ -29,12 +29,28 @@ export function windowBackground(dark: boolean): string {
 }
 
 /** Native role menus expose fixed host commands, never renderer-supplied templates. */
-export function popupWindowMenu(window: BrowserWindow | undefined, request: Request<"window.menu">) {
+export function popupWindowMenu(
+  window: BrowserWindow | undefined,
+  request: Request<"window.menu">,
+  packaged: boolean,
+) {
   if (!window || window.isDestroyed()) throw veraError("NOT_FOUND");
   const templates: Record<Request<"window.menu">["menu"], MenuItemConstructorOptions> = {
     file: { role: "fileMenu" },
     edit: { role: "editMenu" },
-    view: { role: "viewMenu" },
+    // The role's own submenu adds Reload and Developer Tools, which a release must not offer.
+    view: packaged
+      ? {
+          role: "viewMenu",
+          submenu: [
+            { role: "resetZoom" },
+            { role: "zoomIn" },
+            { role: "zoomOut" },
+            { type: "separator" },
+            { role: "togglefullscreen" },
+          ],
+        }
+      : { role: "viewMenu" },
     help: { role: "help", submenu: [{ role: "about" }] },
   };
   const menu = Menu.buildFromTemplate([templates[request.menu]]).items[0]?.submenu;

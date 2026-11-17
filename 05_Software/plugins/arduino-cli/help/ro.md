@@ -23,7 +23,8 @@ Agentul te întreabă ce placă și ce port să folosească atunci când sunt co
 
 - Sigur, rulează fără să întrebe: inspectarea unui sketch, căutările de plăci, core-uri și biblioteci, rapoartele de rulare și curățarea cache-ului de build al VERA.
 - Citire dispozitiv: listarea plăcilor (porturi seriale și descoperire mDNS) și compilarea, care rulează compilatorul core-ului și hook-urile de build pe acest computer.
-- Scriere dispozitiv: instalarea de core-uri, biblioteci și indexuri în mediul Arduino al VERA și încărcarea, care scrie flash-ul plăcii și pornește imediat noul firmware. Cu un programator, încărcarea suprascrie și bootloaderul.
+- Scriere dispozitiv: instalarea de core-uri, biblioteci și indexuri în mediul Arduino al VERA și încărcarea, care scrie flash-ul plăcii și pornește imediat noul firmware.
+- Ireversibil: încărcarea cu `--programmer`, care suprascrie și bootloaderul. VERA îți cere să tastezi cuvântul de confirmare, cu excepția modului Bypass.
 - Blocat: orice comandă `arduino-cli` directă.
 
 În modul Întreabă, VERA cere aprobarea înaintea fiecărei comenzi de citire dispozitiv și de scriere dispozitiv; Editare automată rulează comenzile de citire dispozitiv fără să întrebe.

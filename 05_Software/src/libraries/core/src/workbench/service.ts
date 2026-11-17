@@ -1,6 +1,6 @@
 import { createHash, randomUUID } from "node:crypto";
 import { existsSync, lstatSync, readFileSync } from "node:fs";
-import { link, lstat, mkdir, open, readdir, realpath, rename, unlink } from "node:fs/promises";
+import { link, lstat, mkdir, open, readdir, realpath, rename, rm, unlink } from "node:fs/promises";
 import { basename, dirname, extname, isAbsolute, join } from "node:path";
 import {
   additionalFolderSchema,
@@ -1019,33 +1019,35 @@ export class WorkbenchService {
       }),
     );
   }
+  /** The lock's owner; none when there is no lock or it does not parse (a crash can leave it empty). */
   private async lock(folder: string): Promise<{ pid: number; token: string | undefined } | undefined> {
     const path = join(folder, ".vera/lock");
     if (!(await ordinary(path, false))) return undefined;
     const raw = await this.host.files.read(path);
     if (raw === undefined) return undefined;
+    let data: unknown;
     try {
-      const data: unknown = JSON.parse(raw);
-      if (
-        typeof data !== "object" ||
-        data === null ||
-        !("pid" in data) ||
-        typeof data.pid !== "number" ||
-        !Number.isSafeInteger(data.pid) ||
-        data.pid <= 0 ||
-        !("app" in data) ||
-        typeof data.app !== "string" ||
-        !("since" in data) ||
-        typeof data.since !== "string"
-      )
-        throw veraError("CONFLICT");
-      return {
-        pid: data.pid,
-        token: "token" in data && typeof data.token === "string" ? data.token : undefined,
-      };
+      data = JSON.parse(raw);
     } catch {
-      throw veraError("CONFLICT");
+      return undefined;
     }
+    if (
+      typeof data !== "object" ||
+      data === null ||
+      !("pid" in data) ||
+      typeof data.pid !== "number" ||
+      !Number.isSafeInteger(data.pid) ||
+      data.pid <= 0 ||
+      !("app" in data) ||
+      typeof data.app !== "string" ||
+      !("since" in data) ||
+      typeof data.since !== "string"
+    )
+      return undefined;
+    return {
+      pid: data.pid,
+      token: "token" in data && typeof data.token === "string" ? data.token : undefined,
+    };
   }
   private async acquire(
     folder: string,
@@ -1070,7 +1072,8 @@ export class WorkbenchService {
       await mkdir(join(folder, ".vera"), { recursive: true });
       const lock = await this.lock(folder);
       if (lock && this.host.isProcessAlive(lock.pid)) return { readOnly: true };
-      if (lock) await unlink(join(folder, ".vera/lock"));
+      // Also removes a lock that did not parse, which reads as no owner.
+      await rm(join(folder, ".vera/lock"), { force: true });
       await this.prepare(folder);
       const token = this.host.token();
       await exclusive(

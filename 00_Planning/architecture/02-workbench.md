@@ -48,6 +48,9 @@ embeddings:
 docs:
   include: ["docs/**"]          # globs, relative to the workbench root
   exclude: []
+  gitignore: true               # .gitignore files also exclude paths from indexing and the Files tab
+  maxFileMB: 25                 # optional, no default; lowers the fixed document size limits
+  maxFiles: 10000               # above it indexing stops until "Index anyway"
 retrieval:
   results: 8                    # 1–20; search_docs default k
   mode: hybrid                  # hybrid | keyword | semantic; search_docs default mode
@@ -55,9 +58,19 @@ skills:
   disabled: []                  # skill names hidden from this workbench (§5)
 tools:
   disabled: []                  # built-in tool names not offered to the model
+plugins:
+  enabled: []                   # plugin ids enabled for this workbench
+chat:
+  detail: normal                # verbose | normal | minimal; presentation only
+interface:
+  right_panel_tabs: [context, docs, changes, artifacts, plan, runs, terminal]   # visible tabs, in order
 agent:
+  allowed_commands: []          # saved command prefixes for run_command, at most 100
   permission_mode: ask          # read-only | ask | auto-edit | bypass; the default for new sessions
   model: null                   # optional "<providerId>/<modelId>"; else the app default
+additional_folders: []          # absolute folder paths outside the workbench root, at most 64
+privacy:                        # optional, no default
+  mask: { display: default }    # display | runs | agent | exports, each default | on | off
 ```
 
 Every block except `format`, `id` and `name` is optional and takes the defaults shown.
@@ -70,16 +83,25 @@ Every block except `format`, `id` and `name` is optional and takes the defaults 
 | `description` | optional string |
 | `embeddings` | strict object: unknown keys are an error, not a warning; chunking is in `05-knowledge-rag.md` |
 | `docs.include`, `docs.exclude` | glob arrays; selection rules in §4 |
+| `docs.gitignore` | boolean, default `true` |
+| `docs.maxFileMB` | optional positive number of MiB; lowers the fixed size limits, never raises them |
+| `docs.maxFiles` | positive integer, default 10000; limit in `05-knowledge-rag.md` §1 |
 | `retrieval` | used when `search_docs` passes no `k` or `mode` |
-| `skills.disabled`, `tools.disabled` | non-empty names; unknown names produce an `UNKNOWN_NAME` warning, not an error; tools are the 17 built-ins of `shared/src/tools.ts` |
+| `skills.disabled`, `tools.disabled` | non-empty names; unknown names produce an `UNKNOWN_NAME` warning, not an error; tools are the 34 built-ins of `shared/src/tools.ts` |
+| `plugins.enabled` | non-empty plugin ids; unknown ids produce an `UNKNOWN_NAME` warning |
+| `chat.detail` | `verbose`, `normal` or `minimal`; default `normal` |
+| `interface.right_panel_tabs` | unique tab ids from the list above; default all seven |
+| `agent.allowed_commands` | at most 100 command prefixes; an entry the prefix rules no longer accept is dropped on load |
 | `agent.permission_mode` | enum above; default `ask` |
 | `agent.model` | `null` or `"<providerId>/<modelId>"` (syntax only); a session's own model wins, then this, then the app default |
+| `additional_folders` | at most 64 unique ordinary absolute folder paths |
+| `privacy.mask` | strict object; `display`, `runs`, `agent`, `exports`, each `default`, `on` or `off` |
 
 Parsing (`parseConfig`, `core/src/workbench/service.ts`): YAML with unique keys; values must be
 JSON-compatible. A YAML error reports `YAML_INVALID` with line and column, a schema error
 `CONFIG_INVALID` with path and line. Unknown keys at the top level and inside `docs`, `retrieval`,
-`skills`, `tools` and `agent` are preserved on save and reported as `UNKNOWN_KEY` warnings, so they
-are not lost. Saves merge a strict patch, write the file atomically through the
+`skills`, `tools`, `plugins`, `chat`, `interface` and `agent` are preserved on save and reported as
+`UNKNOWN_KEY` warnings, so they are not lost. Saves merge a strict patch, write the file atomically through the
 workbench write queue and do not keep YAML comments or formatting. Web tools are also withheld from
 the model when the global web-access settings do not allow them, independently of `tools.disabled`.
 

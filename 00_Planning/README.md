@@ -25,7 +25,7 @@ in Git history.
 | [architecture/07-packaging-updates.md](architecture/07-packaging-updates.md) | package contents, targets, versions and channels, portable mode, updates, data format versions (migrations deferred until the first public release), signing |
 | [architecture/08-quality.md](architecture/08-quality.md) | commands, test layers, fixtures and replay, release-package smoke and egress check |
 | [decisions/README.md](decisions/README.md) | every architecture decision in one table: what was decided and why |
-| [plan/README.md](plan/README.md) | open plans, work deferred by the user and proofs still open (hardware, native Ubuntu, release) |
+| [plan/README.md](plan/README.md) | open and delivered plans, work deferred by the user and proofs still open (hardware, native Ubuntu, release) |
 | [plugins/README.md](plugins/README.md) | plugins for embedded tools (decisions accepted 2026-11-01): format, risk rules, provisioning, catalog, ESP32 pack, work packages PLG-01…18; supersedes the wrapper and serial seams and laws L3 (shell part) and L5 |
 | [capabilities/README.md](capabilities/README.md) | analysis capabilities CAP-01…04 (rewritten 2026-11-01): parse_log and decode_register tools, firmware-comparator and test-planner skills in the analysis-skills plugin; Gitea epic #75 |
-| [optional-companions.md](optional-companions.md) | optional desktop pets proposal (PET-01…08, not implemented) |
+| [optional-companions.md](optional-companions.md) | optional desktop pets proposal (not implemented) |

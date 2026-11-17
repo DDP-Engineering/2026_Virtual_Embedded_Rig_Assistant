@@ -172,7 +172,7 @@ it("publishes the official kicad package, its pack and two installed skills", as
   expect(validatePluginManifest(m).issues).toEqual([]);
   expect(m).toMatchObject({
     id: "kicad",
-    version: "0.3.0",
+    version: "0.3.1",
     ecosystem: "electronics",
     platforms: ["windows-x64", "linux-x64"],
   });
@@ -282,6 +282,39 @@ it("keeps the shared path module byte-identical in both electronics plugins (REQ
   expect(sha256(kicadCopy)).toBe(sha256(elecCopy));
 });
 
+it("quotes bom.csv cells a spreadsheet would run as a formula", () => {
+  const rows = [
+    { quantity: 1, references: ["R1"], value: "=1+1", footprint: "@lib:R", mpn: "-2+SUM(A1)", dnp: false },
+    { quantity: 2, references: ["U1", "U2"], value: "-5V", footprint: "\tlib:U", mpn: null, dnp: true },
+    { quantity: 1, references: ["C1"], value: "10uF", footprint: "lib:C-0805", mpn: "A=B", dnp: false },
+    { quantity: 1, references: ["U3"], value: "+3V3", footprint: "-40..85C", mpn: "+12V", dnp: false },
+    {
+      quantity: 1,
+      references: ["D1"],
+      value: "+cmd|' /C calc'!A0",
+      footprint: "lib:D",
+      mpn: null,
+      dnp: false,
+    },
+  ];
+  const code =
+    "import json, sys; sys.path.insert(0, sys.argv[1]); from kicad_support import bom; " +
+    "sys.stdout.write(bom.csv_text(json.loads(sys.argv[2])))";
+  const run = spawnSync(python, ["-c", code, scripts, JSON.stringify(rows)], {
+    encoding: "utf8",
+    env: sourceEnv(),
+  });
+  expect(run.status, run.stderr).toBe(0);
+  expect(run.stdout.trim().split(/\r?\n/)).toEqual([
+    "Quantity,References,Value,Footprint,MPN,DNP",
+    "1,R1,'=1+1,'@lib:R,'-2+SUM(A1),",
+    '2,"U1,U2",-5V,\'\tlib:U,,yes',
+    "1,C1,10uF,lib:C-0805,A=B,",
+    "1,U3,+3V3,-40..85C,+12V,",
+    "1,D1,'+cmd|' /C calc'!A0,lib:D,,",
+  ]);
+});
+
 describe("kicad-tool without KiCad", { timeout: 300_000 }, () => {
   let dir: string;
   beforeAll(async () => {
@@ -294,7 +327,7 @@ describe("kicad-tool without KiCad", { timeout: 300_000 }, () => {
   it("prints its version and refuses unusable command lines (REQ-DATA-c32834e3)", () => {
     const version = kt(["--version"], dir);
     expect(version.code).toBe(0);
-    expect(version.stdout.trim()).toBe("kicad-tool 0.3.0");
+    expect(version.stdout.trim()).toBe("kicad-tool 0.3.1");
     for (const help of [["--help"], ["erc", "--help"], ["export", "--help"]]) {
       const shown = kt(help, dir);
       expect(shown.code, help.join(" ")).toBe(0);
@@ -1013,7 +1046,7 @@ describe.skipIf(!kicad10)("kicad-tool with the real KiCad 10", { timeout: 600_00
     expect(doc).toMatchObject({
       format: 1,
       tool: "kicad-tool",
-      version: "0.3.0",
+      version: "0.3.1",
       operation: "erc",
       runId: "doc-1",
       truncated: false,
@@ -2151,7 +2184,7 @@ it.skipIf(!uv || !kicad10)(
       const release = await core.buildCatalogRelease(fileURLToPath(plugins), join(root, "release"));
       expect(release.issues).toEqual([]);
       const store = new core.PluginStore({ root: join(root, "plugins") });
-      await store.install(join(root, "release/kicad-0.3.0.zip"));
+      await store.install(join(root, "release/kicad-0.3.1.zip"));
       provisioner = new core.Provisioner({
         store,
         root: join(root, "runtime"),
@@ -2167,7 +2200,7 @@ it.skipIf(!uv || !kicad10)(
       const statuses = await provisioner.install("kicad");
       expect(statuses).toMatchObject([
         { name: "kicad-cli", kind: "find", state: "ready", version: located?.version },
-        { name: "kicad-tool", kind: "script", state: "ready", version: "0.3.0" },
+        { name: "kicad-tool", kind: "script", state: "ready", version: "0.3.1" },
       ]);
       const plugin = await store.load("kicad");
       const resolved = await provisioner.resolve(plugin, "kicad-tool");

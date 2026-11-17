@@ -17,7 +17,7 @@ Une carte vous avertit lorsque le plugin n’est pas disponible pour votre plate
 
 ## Examen et confiance
 
-Avant l’installation, VERA affiche un examen : la **Composition** (les programmes et leur provenance, les compétences, les fichiers de données, les documents) et les **Opérations**, c’est-à-dire les règles de commande du plugin regroupées par niveau de risque. Les mises à jour qui modifient des programmes, des sources ou des règles sont examinées à nouveau. Si les fichiers du plugin changent après l’installation, VERA cesse de l’utiliser jusqu’à ce que vous le réinstalliez.
+Avant l’installation, VERA affiche un examen : ce que contient le plugin (les **Programmes** et leur provenance, les **Compétences**, les **Profils et fichiers de données**, les **Documents**) et les **Opérations**, c’est-à-dire les règles de commande du plugin regroupées par niveau de risque. Les mises à jour qui modifient des programmes, des sources ou des règles sont examinées à nouveau. Si les fichiers du plugin changent après l’installation, VERA cesse de l’utiliser jusqu’à ce que vous le réinstalliez.
 
 Les plugins ont un niveau de confiance :
 
@@ -36,7 +36,7 @@ L’installation n’active pas un plugin. Ouvrez **Modifier le banc** → **Plu
 
 ## Dépendances
 
-Le bloc **État** d’un plugin installé vérifie trois choses : **Dépendances**, **Configuration** et **Utilisation**. Il affiche **Prêt** uniquement lorsque les trois sont prêtes.
+Le bloc **État** d’un plugin installé vérifie deux choses : **Dépendances** et **Configuration**. Il affiche **Prêt** uniquement lorsque les deux sont prêtes.
 
 - **Vérifier les dépendances** recherche les programmes ; **Vérifier toutes les dépendances** le fait pour chaque plugin.
 - **Installer les dépendances** installe ce que VERA peut installer lui-même (paquets Python, scripts et téléchargements à version figée) dans son propre dossier de programmes. Chaque téléchargement est vérifié par rapport à son SHA-256.

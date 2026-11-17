@@ -1,6 +1,6 @@
 format: 1
 id: stm32-cubeprog
-version: 0.2.0
+version: 0.2.1
 license: LicenseRef-PolyForm-Noncommercial-1.0.0
 name: STM32CubeProgrammer
 summary: Program, verify and erase STM32 parts and read or change option bytes with STM32CubeProgrammer.
@@ -58,7 +58,7 @@ rules:
   - { match: "stm32_programmer_cli * <unknown> *", risk: device-write, note: A command or spelling the STM32CubeProgrammer 2.23.0 help does not list; check STM32_Programmer_CLI --help. }
   - match: "stm32_programmer_cli * -ob <write> *"
     risk: irreversible
-    note: Writes option bytes. RDP=0xBB enables read protection, which only a full mass erase removes; RDP=0xCC (level 2) is permanent and blocks debug access forever. Wrong boot or watchdog settings can also lock the part out.
+    note: Writes option bytes. RDP=0xCC (readout protection level 2) is permanent - it cannot be undone and disables debug access and option-byte changes forever. RDP=0xBB (level 1) enables read protection, which only a full mass erase removes. Wrong boot or watchdog settings can also lock the part out.
   - match: "stm32_programmer_cli * {-rdu,-tzenreg} *"
     risk: irreversible
     note: Regresses read protection or TrustZone, which mass-erases the flash.

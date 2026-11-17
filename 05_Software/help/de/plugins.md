@@ -17,7 +17,7 @@ Eine Karte warnt, wenn das Plugin für Ihre Plattform nicht verfügbar ist oder 
 
 ## Prüfung und Vertrauen
 
-Vor der Installation zeigt VERA eine Prüfübersicht: die **Zusammensetzung** (Programme und ihre Herkunft, Skills, Datendateien, Dokumente) und die **Operationen**, also die Befehlsregeln des Plugins, gruppiert nach Risikostufe. Updates, die Programme, Quellen oder Regeln ändern, werden erneut geprüft. Ändern sich die Dateien des Plugins nach der Installation, verwendet VERA es nicht mehr, bis Sie es erneut installieren.
+Vor der Installation zeigt VERA eine Prüfübersicht: was das Plugin enthält (**Programme** und ihre Herkunft, **Skills**, **Profile und Datendateien**, **Dokumente**), und die **Operationen**, also die Befehlsregeln des Plugins, gruppiert nach Risikostufe. Updates, die Programme, Quellen oder Regeln ändern, werden erneut geprüft. Ändern sich die Dateien des Plugins nach der Installation, verwendet VERA es nicht mehr, bis Sie es erneut installieren.
 
 Plugins haben eine Vertrauensstufe:
 
@@ -36,7 +36,7 @@ Durch die Installation wird ein Plugin nicht aktiviert. Öffnen Sie **Workbench 
 
 ## Abhängigkeiten
 
-Der Block **Status** eines installierten Plugins prüft drei Dinge: **Abhängigkeiten**, **Konfiguration** und **Verwendung**. Er zeigt **Bereit** nur, wenn alle drei bereit sind.
+Der Block **Status** eines installierten Plugins prüft zwei Dinge: **Abhängigkeiten** und **Konfiguration**. Er zeigt **Bereit** nur, wenn beide bereit sind.
 
 - **Abhängigkeiten prüfen** sucht nach den Programmen; **Alle Abhängigkeiten prüfen** tut dies für jedes Plugin.
 - **Abhängigkeiten installieren** installiert, was VERA selbst installieren kann (Python-Pakete, Skripte und Downloads mit fester Version), in seinen eigenen Programmordner. Jeder Download wird anhand seines SHA-256 geprüft.

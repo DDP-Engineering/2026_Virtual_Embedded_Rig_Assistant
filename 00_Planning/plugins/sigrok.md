@@ -5,7 +5,7 @@ read or drive bench instruments through `sigrok-cli` from the DDP Engineering si
 DONE-WHEN: on Windows x64 and Linux x64 the agent scans for an ATK-DL16 logic analyzer and a Hantek
 DSO-3062L, captures a bounded trace to a workbench file, decodes UART and I2C from it, and reads a
 bench power supply; setting a supply output waits for the typed confirmation outside `bypass`.
-STATUS: proposed 2026-11-01; not implemented. Plugin format and rules: [architecture.md](architecture.md).
+STATUS: implemented (plugin version 0.2.0). Plugin format and rules: [architecture.md](architecture.md).
 Work package: PLG-21 in [plan.md](plan.md).
 
 ## 1. Source: the DDP sigrok fork

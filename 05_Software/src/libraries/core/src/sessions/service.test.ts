@@ -702,6 +702,13 @@ it("CRUD keeps renamed title, deletes artifact folder and all rows; read-only de
   const ro = new core.SessionService({ ...host, readOnly: true });
   expect(() => ro.create()).toThrow(expect.objectContaining({ code: "DENIED" }));
 });
+it("titles a session from its first message without cutting a surrogate pair", async () => {
+  const { service } = await setup();
+  const s = service.create();
+  service.send(s.id, `${"x".repeat(59)}\u{1F600} and more`);
+  await service.waitIdle(s.id);
+  expect(service.list()[0]?.title).toBe("x".repeat(59));
+});
 it("replay precedes reentrant live emission and callbacks cannot mutate persisted state", async () => {
   const { service } = await setup();
   const s = service.create();

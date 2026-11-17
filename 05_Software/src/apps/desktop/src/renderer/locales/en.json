@@ -64,6 +64,10 @@
     "YAML_INVALID": "Invalid YAML at line {{line}}, column {{column}}.",
     "CONFIG_INVALID": "Invalid workbench configuration at {{path}}, line {{line}}."
   },
+  "renderError": {
+    "message": "VERA could not display this window.",
+    "reload": "Reload"
+  },
   "nav": {
     "settings": "Settings",
     "welcome": "Home",

@@ -77,6 +77,8 @@ export interface PreparedChange {
   readonly request: ChangeRequest;
   apply(signal: AbortSignal): Promise<Record<string, unknown>>;
 }
+// A larger bound lets the diff of two long, different texts hold the host for many seconds.
+const DIFF_EDITS = 4000;
 const hash = (bytes: Buffer) => createHash("sha256").update(bytes).digest("hex");
 const conflict = () => Error("Conflict: the file changed. Read it again before preparing a new change.");
 async function contents(target: GuardedPath): Promise<Buffer | null> {
@@ -166,11 +168,14 @@ export async function prepareChange(
   const after = Buffer.from(output, "utf8");
   const afterSha256 = hash(after);
   const changePath = guard.scope === "filesystem" ? target.absolute.replaceAll("\\", "/") : target.relative;
-  const patch = structuredPatch(changePath, changePath, original, output, "", "");
-  const lines = patch.hunks.flatMap((hunk) => hunk.lines);
+  // An unbounded diff of two large, different texts blocks the process; the change stays possible without it.
+  const patch = structuredPatch(changePath, changePath, original, output, "", "", {
+    maxEditLength: DIFF_EDITS,
+  });
+  const lines = patch?.hunks.flatMap((hunk) => hunk.lines) ?? [];
   const added = lines.filter((line) => line.startsWith("+")).length;
   const removed = lines.filter((line) => line.startsWith("-")).length;
-  const diff = formatPatch(patch);
+  const diff = patch ? formatPatch(patch) : `The file differs in more than ${DIFF_EDITS} lines.\n`;
   guard.assertAuthorized();
   const request = Object.freeze({
     workbench: ctx.root,

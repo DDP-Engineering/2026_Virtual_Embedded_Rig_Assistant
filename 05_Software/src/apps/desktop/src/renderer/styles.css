@@ -701,6 +701,9 @@ button.primary:not(:disabled),
   background: var(--primary);
   border-color: var(--primary);
 }
+.render-error {
+  padding: 2rem;
+}
 fieldset {
   border: 0;
   margin: 0;

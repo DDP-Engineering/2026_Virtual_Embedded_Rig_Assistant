@@ -17,7 +17,7 @@ A card warns when the plugin is not available for your platform or can write to 
 
 ## Review and trust
 
-Before installing, VERA shows a review: the **Composition** (programs and where they come from, skills, data files, documents) and the **Operations**, the plugin's command rules grouped by risk level. Updates that change programs, sources or rules are reviewed again. If the plugin's files change after installation, VERA stops using it until you install it again.
+Before installing, VERA shows a review: what the plugin contains (**Programs** and where they come from, **Skills**, **Profiles and data files**, **Documents**) and the **Operations**, the plugin's command rules grouped by risk level. Updates that change programs, sources or rules are reviewed again. If the plugin's files change after installation, VERA stops using it until you install it again.
 
 Plugins carry a tier:
 
@@ -36,7 +36,7 @@ Installing does not enable a plugin. Open **Edit workbench** → **Plugins**, ch
 
 ## Dependencies
 
-The **Status** block of an installed plugin checks three things: **Dependencies**, **Configuration** and **Use**. It shows **Ready** only when all three are ready.
+The **Status** block of an installed plugin checks two things: **Dependencies** and **Configuration**. It shows **Ready** only when both are ready.
 
 - **Check dependencies** looks for the programs; **Check all dependencies** does this for every plugin.
 - **Install dependencies** installs what VERA can install itself (Python packages, scripts and pinned downloads) into its own program folder. Each download is checked against its SHA-256.

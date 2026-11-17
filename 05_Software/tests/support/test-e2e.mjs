@@ -6,6 +6,8 @@ import { dirname, join } from "node:path";
 import { ensureDesktopTestBuild } from "./test-build.mjs";
 import { e2eLanes, needsSingleE2eRun } from "./test-execution.mjs";
 
+// The specs drive hooks that exist only in a build made with VERA_TEST=1; the build and Playwright inherit it.
+process.env.VERA_TEST ??= "1";
 const require = createRequire(import.meta.url);
 const vite = join(dirname(require.resolve("electron-vite/package.json")), "bin/electron-vite.js");
 const playwright = require.resolve("@playwright/test/cli");

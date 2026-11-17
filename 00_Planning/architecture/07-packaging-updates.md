@@ -53,9 +53,9 @@ upgrade safety (L10, WP-32) are deferred until the first public release (§6).
   `credentials*.json`, `*.pfx`, `*.p12`, `*.key`) and no API-key or private-key patterns in text files.
   The build fails if its inputs (scripts, builder config, lock file, manifests) change while it runs.
 - No size budget (ADR-0017). The packaging script may report the largest contributors but never
-  fails on size; `package-report.json` lists the 15 largest files. A pinned `uv` binary for plugins is
-  planned (ADR-0017, plugin work package PLG-05); not implemented as of 2026-11-01 — nothing in
-  `package.mjs` or `electron-builder.yml` ships it.
+  fails on size; `package-report.json` lists the 15 largest files. A pinned `uv` binary for plugins
+  ships in `<resources>/uv/` (ADR-0017): `src/uv/uv-manifest.json` pins version 0.13.7 and
+  `npm run prepare:uv` fetches and verifies it.
 - The official plugins ship as a plugin catalog release in `<resources>/plugins/` (`npm run prepare:plugins`,
   run by `package`; each zip is checked against its index before and after packing). The default plugin
   catalog folder is the build input `VERA_PLUGIN_CATALOG_URL`, under the update feed's URL rule; it is empty
@@ -91,7 +91,7 @@ platform's native binaries are included.
 
 ## 3. Version and channels
 
-- One Semantic Version per build, taken from `src/apps/desktop/package.json` (`0.0.0` on 2026-11-01);
+- One Semantic Version per build, taken from `src/apps/desktop/package.json` (`0.2.0`);
   pre-releases use `-beta.N`.
 - Channels `latest` ("Stable") and `beta` ("Beta (includes stable)"). The Updates setting picks the
   channel. electron-builder writes update files for all channels. The app keeps one updater per channel:

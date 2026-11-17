@@ -31,10 +31,17 @@ def build(instances: list[dict[str, Any]]) -> dict[str, Any]:
     return {"rows": rows, "excluded": excluded, "instances": instances, "included": len(included)}
 
 
+def _csv_cell(text: str) -> str:
+    """A cell a spreadsheet would run as a formula gets a leading quote; values such as +3V3 or -5V stay as they are."""
+    formula = text.startswith(("=", "@", "\t", "\r")) or (text.startswith(("+", "-")) and any(mark in text for mark in "(|!"))
+    return "'" + text if formula else text
+
+
 def csv_text(rows: list[dict[str, Any]]) -> str:
     buffer = io.StringIO()
     writer = csv.writer(buffer, lineterminator="\n")
     writer.writerow(HEADER)
     for row in rows:
-        writer.writerow([row["quantity"], ",".join(row["references"]), row["value"], row["footprint"], row["mpn"] or "", "yes" if row["dnp"] else ""])
+        texts = [",".join(row["references"]), row["value"], row["footprint"], row["mpn"] or ""]
+        writer.writerow([row["quantity"], *(_csv_cell(text) for text in texts), "yes" if row["dnp"] else ""])
     return buffer.getvalue()

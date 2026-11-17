@@ -61,6 +61,10 @@ const checkDeadline = (deadlineMs: number, label: string) => {
   if (!Number.isFinite(deadlineMs) || deadlineMs <= 0) throw Error(`Invalid ${label} worker deadline.`);
 };
 
+/** A large manual needs more than the base deadline: 30 s per MiB, at most 15 minutes. */
+export const pdfDeadline = (baseMs: number, bytes: number) =>
+  Math.max(baseMs, Math.min(15 * 60_000, Math.round((bytes / (1024 * 1024)) * 30_000)));
+
 export function createPdfExtractor(
   entry: URL,
   deadlineMs = 120000,
@@ -73,7 +77,7 @@ export function createPdfExtractor(
       "PDF",
       bytes,
       signal,
-      deadlineMs,
+      pdfDeadline(deadlineMs, bytes.byteLength),
       (value) => {
         const parsed = extractionSchema.safeParse(value);
         if (parsed.success && parsed.data.kind === "pdf") return parsed.data;

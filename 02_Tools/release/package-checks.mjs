@@ -37,19 +37,26 @@ export async function checkPdfResources(readResource, source = pdfSource) {
   return count;
 }
 
-export const releaseHookMarkers = [
+const releaseHookMarkers = [
   "packaging-probe",
   "I2C1_CR1",
   "VERA_REPLAY_DIR",
   "VERA_REPLAY_DELAY_MS",
-  "VERA_TEST_DIALOG_PATH",
-  "VERA_TEST_ALLOW_WRITES",
-  "VERA_TEST_CHATGPT",
   "VERA_NETWORK_AUDIT",
   "fictional-native-access-WP21",
   "registerReplay",
   "veraTestFileTools",
 ];
+
+/** The test hooks left in bundle code: the listed markers and every `VERA_TEST_` environment name. */
+export function releaseHooks(code) {
+  // The main bundle is not minified and keeps source comments; a hook named in a comment is not a hook.
+  const live = code.replace(/^\s*(?:\/\/|\/\*|\*).*$/gm, "");
+  return [
+    ...releaseHookMarkers.filter((marker) => code.includes(marker)),
+    ...new Set(live.match(/VERA_TEST_[A-Z_]+/g) ?? []),
+  ];
+}
 
 /** Diagnostics intentionally carry paths/categories, never matched bytes. */
 export function inspectPayloadFiles(files) {

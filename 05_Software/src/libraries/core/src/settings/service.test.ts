@@ -206,6 +206,13 @@ describe("application settings persistence", () => {
     await h.service.update({ language: "en" });
     expect(h.service.get().settings).toMatchObject({ theme: "system", language: "en" });
   });
+  it("retries the load after a failed read", async () => {
+    const h = harness();
+    h.fileAccess.read.mockRejectedValueOnce(Object.assign(new Error("busy"), { code: "EBUSY" }));
+    await expect(h.service.load()).rejects.toThrow("busy");
+    await h.service.load();
+    expect(h.service.get().settings.schemaVersion).toBe(1);
+  });
   it("load is shared and shutdown drains accepted updates while denying new work", async () => {
     const h = harness();
     await Promise.all([h.service.load(), h.service.load()]);

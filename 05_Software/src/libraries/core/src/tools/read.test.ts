@@ -1,9 +1,11 @@
+import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { mkdir, mkdtemp, rm, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, expect, it } from "vitest";
 import * as api from "../index.js";
+import { readGuardedFile } from "./files.js";
 
 let root: string;
 beforeEach(async () => {
@@ -83,6 +85,17 @@ it("refuses binaries and PDFs and records no failed fingerprint", async () => {
     api.readTool.execute(ctx, { path: "vendor.PDF" }, new AbortController().signal),
   ).rejects.toThrow(/read_doc/);
   expect(ctx.lastReads.size).toBe(0);
+});
+// The FIFO has no writer: opening it would block the read for good.
+it.skipIf(process.platform === "win32")("refuses a FIFO without opening it", async () => {
+  execFileSync("mkfifo", [join(root, "pipe")]);
+  const signal = new AbortController().signal;
+  await expect(api.readTool.execute(context(), { path: "pipe" }, signal)).rejects.toThrow(
+    "Read an ordinary file.",
+  );
+  await expect(readGuardedFile(await api.PathGuard.create(root), "pipe", 1024, signal)).rejects.toThrow(
+    "Read an ordinary file.",
+  );
 });
 it("registry capping of escaped numbered text retains the exact visible line range", async () => {
   const ctx = context();

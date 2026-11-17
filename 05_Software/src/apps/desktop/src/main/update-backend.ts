@@ -112,12 +112,14 @@ export class ElectronUpdateBackend implements UpdateBackend {
         );
         const link = file ? new URL(file.url, this.options.url) : null;
         const base = new URL(this.options.url);
+        // Compared as a folder, so /vera never admits a sibling such as /vera-evil/.
+        const folder = base.pathname.endsWith("/") ? base.pathname : `${base.pathname}/`;
         const safeLink =
           link &&
           link.origin === base.origin &&
           !link.username &&
           !link.password &&
-          link.pathname.startsWith(base.pathname)
+          link.pathname.startsWith(folder)
             ? link.href
             : null;
         offers.push({

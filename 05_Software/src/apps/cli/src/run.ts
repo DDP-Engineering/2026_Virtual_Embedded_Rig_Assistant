@@ -41,6 +41,7 @@ import { cliProgramCredentials, pluginCredentialsFromEnvironment } from "./plugi
 import { createCliProcessHost } from "./process-host.js";
 import { createCliProvisioner } from "./provisioning.js";
 import { sessionOutput } from "./session-output.js";
+import { cliVersion } from "./version.js";
 import { createCliWorkerPool } from "./worker-pool.js";
 
 export async function runTurn(
@@ -158,7 +159,7 @@ export async function runTurn(
         files,
         settings,
         pid: process.pid,
-        appVersion: "0.0.0",
+        appVersion: cliVersion,
         now: () => nodeClock.now(),
         token: randomUUID,
         isProcessAlive: (pid) => {
@@ -266,7 +267,7 @@ export async function runTurn(
           env: {
             clock: nodeClock,
             osFamily: process.platform === "win32" ? "windows" : "linux",
-            veraVersion: "0.0.0",
+            veraVersion: cliVersion,
             permissionMode: mode,
             indexedDocuments: (
               db.prepare("SELECT count(*) AS n FROM documents WHERE status='indexed'").get() as { n: number }

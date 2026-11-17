@@ -895,7 +895,7 @@ it("takes over dead lock, respects live owner without mutations, and closes only
   await h.service.close();
   expect(JSON.parse(await readFile(lock, "utf8")).token).toBe("replacement");
 });
-it("concurrent opens have one writer, guard contention is conservative, malformed locks conflict", async () => {
+it("concurrent opens have one writer, guard contention is conservative, malformed locks are replaced", async () => {
   const h = await harness();
   await h.service.create(h.folder, "Board");
   await h.service.close();
@@ -907,8 +907,15 @@ it("concurrent opens have one writer, guard contention is conservative, malforme
   expect(await h.service.open(h.folder)).toMatchObject({ readOnly: false });
   await h.service.close();
   await rm(join(h.folder, ".vera/lock.guard"), { recursive: true });
-  await writeFile(join(h.folder, ".vera/lock"), "invalid");
-  await expect(h.service.open(h.folder)).rejects.toMatchObject({ code: "CONFLICT" });
+  // A crash between creating and writing the lock leaves it empty; a damaged one may hold anything.
+  for (const damaged of ["", "invalid", '{"pid":"1"}']) {
+    await writeFile(join(h.folder, ".vera/lock"), damaged);
+    expect(await h.service.open(h.folder)).toMatchObject({ readOnly: false });
+    expect(JSON.parse(await readFile(join(h.folder, ".vera/lock"), "utf8"))).toMatchObject({
+      pid: process.pid,
+    });
+    await h.service.close();
+  }
 });
 it("reassesses same-folder ownership on reopen", async () => {
   const h = await harness();

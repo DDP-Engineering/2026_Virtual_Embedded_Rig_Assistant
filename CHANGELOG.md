@@ -8,10 +8,41 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ### Fixed
 
+- Document indexing no longer re-reads unchanged indexed files on every refresh.
+- A document that failed to index is retried once when the workbench opens, after it changes, or on Reindex.
+- Large manuals index reliably: embeddings run in batches and the PDF time limit grows with file size.
+- Document search with a path filter no longer loads every matching passage into memory.
+- VERA starts even when its display identity key file is damaged; a new key is created.
+- Quitting saves settings, credentials and logs even when one shutdown step fails.
+- The window reloads after a renderer crash instead of staying blank.
+- A display error shows a message with a Reload button instead of an empty window.
+- Update release links are accepted only inside the configured update folder.
+- Context compaction works with reasoning models and with models that wrap the summary in a code fence.
+- Very large file changes show a "diff too large" note instead of holding the application on a long diff.
+- Reading a pipe, socket or device file is refused at once instead of blocking the application on Linux.
+- A change that completed just as you pressed Stop is reported to the model as applied, not as aborted.
+- Settings load again after a temporary read failure instead of staying broken until restart.
+- A workbench with a damaged lock file opens normally instead of failing with a conflict.
+- A plugin zip or dependency archive that would inflate to an absurd size is refused as invalid.
+- A run on Windows finishes even when stopping its process tree hangs.
+- The plugin catalog stops waiting after 30 seconds when its server does not answer; downloads get 15 minutes.
+- Session titles no longer end in a broken character when an emoji falls at the cut.
+- The Files tab refreshes once per burst while indexing instead of once per document.
+- The CLI reports its real version instead of 0.0.0 in workbenches it creates and in the agent prompt.
+- Romanian: corrected "Anulează-o" and use "Acces web" consistently.
+- Help: the Plugins and Documents pages match the Status block and the index status line.
+- parts-search 0.3.1: bom.csv quotes cells that a spreadsheet would run as a formula; rail names stay as written.
+- kicad 0.3.1: bom.csv quotes cells that a spreadsheet would run as a formula; rail names stay as written.
+- kicad-layout 0.3.1: kicad-cli output is read as UTF-8, so non-ASCII messages no longer fail the DRC step.
+- can-dbc 0.3.1: can-decode --limit must be a positive integer.
+- circuitpython 0.2.1: deploy refuses target names ending in a dot or space or holding a colon.
+- arduino-cli 0.2.1: upload with --programmer is irreversible and needs the typed confirmation.
+- esp32-esptool 0.2.1: --encrypt, --encrypt-files and --ignore-flash-enc-efuse need the typed confirmation.
+- stm32-cubeprog 0.2.1: the option-byte approval note leads with the permanent RDP level 2 warning.
 - Shell commands run under PowerShell Constrained Language Mode; cmdlet text keeps the console code page there.
 - Approval shortcuts A and D no longer fire while the command-prefix list has the key.
 - Saved command prefixes no longer approve git forms that run a named program or discard work.
-- Remove saved prefixes naming git restore, bisect, difftool, mergetool, filter-branch or foreach from workbench.yaml.
+- A saved command prefix that is no longer eligible is ignored; its workbench still opens.
 - On Linux, a file deleted while its bytes are read is reported as missing, not as a conflict.
 - UI checks read the renderer's address from coloured output and wait for a pending bookmark update.
 - Closing a terminal suspends its I/O and ignores late responses from the terminal being closed.
@@ -29,6 +60,12 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ### Changed
 
+- Release builds no longer show Reload and Developer Tools in the View menu.
+- Release packaging refuses any VERA_TEST_ test hook left in the release build, not only the listed ones.
+- npm run test:e2e builds the instrumented desktop by default; setting VERA_TEST=1 first is no longer needed.
+- Test runs of the renderer dev server take a free port instead of 5173.
+- Setup requires Python 3.11.4 or newer.
+- Planning and architecture documents match the code again: tools, settings, plugins, indexing limits, plans.
 - About opens with What's new collapsed, leaving application details visible first.
 - Runs cards separate command, status, duration and metadata with compact icons and readable rows.
 - UI checks follow compact viewer controls, await terminal creation and use the renderer's actual port.

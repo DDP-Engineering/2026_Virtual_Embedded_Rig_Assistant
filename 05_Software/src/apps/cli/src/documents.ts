@@ -3,6 +3,7 @@ import { DocumentKnowledge, DocumentsRepository, SettingsService, WorkbenchServi
 import type { DocumentOptions } from "./args.js";
 import { createDocumentServices } from "./document-processor.js";
 import { type ConsoleLogger, createNodeFiles, createPaths, nodeClock } from "./host-ports.js";
+import { cliVersion } from "./version.js";
 
 export async function runDocuments(
   options: DocumentOptions,
@@ -30,7 +31,7 @@ export async function runDocuments(
         files,
         settings,
         pid: process.pid,
-        appVersion: "0.0.0",
+        appVersion: cliVersion,
         now: () => nodeClock.now(),
         token: randomUUID,
         isProcessAlive: (pid) => {

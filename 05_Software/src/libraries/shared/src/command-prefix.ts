@@ -98,6 +98,11 @@ export const commandPrefixListSchema = z
   .array(commandPrefixSchema)
   .max(100)
   .refine((items) => new Set(items).size === items.length);
+/** Stored grants: an entry the current policy no longer accepts is dropped, so the workbench still opens. */
+export const storedCommandPrefixesSchema = z
+  .array(z.string())
+  .max(100)
+  .transform((items) => [...new Set(items)].filter((item) => !!words(item)));
 export const commandPrefixIdsSchema = z
   .array(z.string().regex(/^[0-9a-f]{64}$/))
   .max(100)

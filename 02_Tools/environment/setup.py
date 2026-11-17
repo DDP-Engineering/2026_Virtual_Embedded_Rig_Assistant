@@ -21,8 +21,9 @@ import urllib.request
 import zipfile
 from pathlib import Path
 
-if sys.version_info < (3, 11):
-    sys.exit(f"Python 3.11 or newer is required (found {sys.version.split()[0]}).")
+# 3.11.4 is the first 3.11 release with the tarfile extraction filter that install_node uses.
+if sys.version_info < (3, 11, 4):
+    sys.exit(f"Python 3.11.4 or newer is required (found {sys.version.split()[0]}); install a newer Python.")
 
 import toolchain as tc  # noqa: E402  (after the version gate: it relies on 3.9+ string methods)
 

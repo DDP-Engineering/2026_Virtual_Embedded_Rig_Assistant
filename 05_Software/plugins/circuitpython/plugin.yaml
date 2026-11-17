@@ -1,6 +1,6 @@
 format: 1
 id: circuitpython
-version: 0.2.0
+version: 0.2.1
 license: LicenseRef-PolyForm-Noncommercial-1.0.0
 name: CircuitPython
 summary: Deploy code and pinned libraries to a CircuitPython board and capture its console run.

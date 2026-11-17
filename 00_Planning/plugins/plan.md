@@ -9,8 +9,8 @@ DONE-WHEN: steps 1 and 2 are complete. On Windows x64 and Linux x64 a user insta
 from the catalog and asks the agent to identify, build, flash and monitor a real ESP32 board; the
 release smoke covers the approval card, the typed confirmation and process-tree termination.
 STATUS: original decisions accepted 2026-11-01; per-package implementation outcomes are recorded
-below. The plugin foundations, catalog and manager exist; the 2026-11-11 UI redesign is planned,
-not implemented. Builds on code that already exists: skill catalog, approvals bound to `requestSha256`,
+below. The plugin foundations, catalog and manager exist; the 2026-11-11 UI redesign is
+implemented (PLG-23…PLG-25). Builds on code that already exists: skill catalog, approvals bound to `requestSha256`,
 permission modes, tool registry. Implementation follows the repository's AEGIS workflow
 (CLAUDE.md), one work package per task. Gitea tracks each work package as one issue.
 
@@ -117,7 +117,7 @@ desktop app. **Depends on:** PLG-01. **Specs:** architecture §2.2, §4.
   notes, file hashes; a typed field for irreversible commands.
 - Bypass warning: switching a session to `bypass` lists the irreversible rules of its enabled
   plugins.
-- All strings through i18n (`en`, `ro`, `de`).
+- All strings through i18n (`en`, `ro`, `de`, `fr`).
 **Done when:** table-driven tests cover every row of the mode matrix, highest-wins with several
 subcommands, both spellings, an unmatched command, an `@file` argument, a changed image file voiding
 an approval, a wrong typed word being refused, and a trial plugin's `safe` command still waiting for
@@ -164,7 +164,7 @@ background run read with `until`, and the prompt snapshot shows the block only f
   the CLI in place of `unresolvedPrograms`; the `<programs>` block then lists the resolved programs.
 **Done when:** on clean Windows and Ubuntu machines without Python, `esptool` and a PEP 723 script
 install and run; a `download` with a wrong hash is refused; a missing `find` program shows its hint.
-- Done 2026-11-02: pinned uv 0.13.1 (`src/uv/uv-manifest.json`, `npm run prepare:uv`, `<resources>/uv/`),
+- Done 2026-11-02: pinned uv (`src/uv/uv-manifest.json`, version 0.13.7; `npm run prepare:uv`, `<resources>/uv/`),
   core `Provisioner` (all four kinds, version probe and `version.range`, statuses), `plugins.programs` and
   `plugins.provision` IPC, settings `plugins.index`/`plugins.proxy`, `vera plugin install`, the provisioner as
   resolver in desktop and the CLI, and cached `<programs>` entries in desktop sessions. Manifest additions:
@@ -179,7 +179,7 @@ install and run; a `download` with a wrong hash is refused; a missing `find` pro
   errors; enable per workbench; install from folder or zip; review screen (programs, install sources,
   every rule with its risk and note); uninstall.
 - Runs panel: running and recent runs, open log, stop.
-- All strings through i18n (`en`, `ro`, `de`).
+- All strings through i18n (`en`, `ro`, `de`, `fr`).
 **Done when:** Playwright e2e installs the fixture plugin from a folder through the review screen,
 enables it for one workbench, shows a manifest error for a broken plugin, opens a run log and stops a
 background run from the panel.
@@ -418,7 +418,7 @@ Windows and Linux the agent explains recent history without approvals and commit
 |---|---|---|---|
 | R-P1 | A rule classifies a dangerous command too low | highest risk wins; unmatched → `device-write`; CI token lint; real-board tests for official plugins | PLG-03, PLG-07 |
 | R-P2 | A vendor CLI renames commands (as esptool v4 → v5 did) | version range in the manifest; out-of-range version disables the program with a message; catalog updates ship without a VERA release | PLG-05, PLG-07 |
-| R-P3 | PyPI or the CPython host is blocked on company networks | index URL and proxy settings; offline bundles deferred | PLG-05 |
+| R-P3 | PyPI or the CPython host is blocked on company networks | index URL and proxy settings; the offline dependency kit (`npm run delivery:plugin-deps`) | PLG-05 |
 | R-P4 | Orphan processes keep a COM port open after a timeout | process-tree kill; serial-port guard; kill on exit | PLG-02 |
 | R-P5 | `eim run` takes one string, not argv | verified first in PLG-10; launcher quoting with refusal of metacharacters | PLG-10 |
 | R-P6 | A community plugin is malicious | review, tiers, hash pinning, review screen, trial mode | PLG-07, PLG-12 |

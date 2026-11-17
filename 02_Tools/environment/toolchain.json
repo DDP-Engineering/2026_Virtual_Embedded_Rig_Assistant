@@ -1,5 +1,5 @@
 {
-  "python": { "minimum": "3.11" },
+  "python": { "minimum": "3.11.4" },
   "node": {
     "version": "24.21.0",
     "base_url": "https://nodejs.org/dist/v24.21.0/",

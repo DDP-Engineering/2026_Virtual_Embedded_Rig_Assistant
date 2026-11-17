@@ -19,7 +19,7 @@ NEW_LIMIT = 50
 
 def _run(arguments: list[str], seconds: int, what: str) -> None:
     try:
-        done = subprocess.run(arguments, capture_output=True, text=True, timeout=seconds, check=False,
+        done = subprocess.run(arguments, capture_output=True, encoding="utf-8", errors="replace", timeout=seconds, check=False,
                               stdin=subprocess.DEVNULL, creationflags=0x08000000 if hasattr(subprocess, "STARTUPINFO") else 0)
     except subprocess.TimeoutExpired as error:
         raise fail("kicad", "kicad-cli", f"kicad-cli {what} did not finish within {seconds} s.") from error

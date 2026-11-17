@@ -2,9 +2,9 @@
 
 PURPOSE: the single source for VERA's laws, stack, process model, IPC boundary, module map, source
 layout, data locations and network egress. Other specs and the work packages cite it by section.
-SCOPE: VERA 1.0 (milestones M0–M5 in `../plan/README.md`). This file describes the implementation in
-`05_Software/` as of 2026-11-01; anything not built yet is marked. Wrapper tools, serial, camera and
-voice are post-1.0 and appear here only as reserved seams or planned plugins.
+SCOPE: the VERA pre-release, version 0.2.0. This file describes the implementation in
+`05_Software/`; anything not built yet is marked. Wrapper tools and serial are plugins; camera and
+voice are post-1.0 and appear here only as reserved seams.
 
 ## 1. Laws
 
@@ -15,14 +15,14 @@ Every work package preserves these. Changing one is an architecture decision, re
 |---|---|
 | L1 | `src/libraries/core` never imports `electron`. Host services reach it through the ports in `src/libraries/core/src/ports.ts` and the module ports listed in §4. |
 | L2 | The renderer has no Node access. It reaches the main process only through the typed IPC contract in `src/libraries/shared/src/ipc.ts`, validated with zod on both sides. |
-| L3 | Agent tools act only inside the open workbench root, and general file tools can neither read nor write `.vera/`, except in the `bypass` permission mode: there `read`, `list`, `glob`, `grep`, `write` and `edit` take filesystem scope (any ordinary absolute or relative path the OS account can reach, `.vera/` and ignore rules included, writes approved by the mode); the scope follows the live mode and is revoked on a downgrade. `artifact_save` and `web_download` write only into the managed `.vera/artifacts/` and `.vera/downloads/`. There is no shell tool. Planned, not implemented as of 2026-11-01: plugin programs are a further exception to confinement: they run without a shell under risk rules and approvals (ADR-0016, `../plugins/architecture.md`). |
+| L3 | Agent tools act only inside the open workbench root, and general file tools can neither read nor write `.vera/`, except in the `bypass` permission mode: there `read`, `list`, `glob`, `grep`, `write` and `edit` take filesystem scope (any ordinary absolute or relative path the OS account can reach, `.vera/` and ignore rules included, writes approved by the mode); the scope follows the live mode and is revoked on a downgrade. `artifact_save` and `web_download` write only into the managed `.vera/artifacts/` and `.vera/downloads/`. `run_command` is the shell tool: it runs a command under approvals and saved command prefixes and is hidden in `read-only` (`../plan/terminal.md`). Plugin programs are a further exception to confinement: they run without a shell under risk rules and approvals (ADR-0016, `../plugins/architecture.md`). |
 | L4 | Only `write` and `edit` change user files, and only as the session's permission mode allows (`read-only`, `ask`, `auto-edit`, `bypass`). `web_download` needs the user's approval in every mode except `bypass`. Project metadata under `.vera` is managed through application APIs; outside `bypass`, general file tools cannot access it. |
-| L5 | Superseded by ADR-0017: the app still starts offline with its models, fonts and assets, and plugins may download programs and runtimes at run time after a user action. Not implemented as of 2026-11-01: plugin provisioning; today's only downloads are approved `web_download` files and updates (§8). |
+| L5 | Superseded by ADR-0017: the app still starts offline with its models, fonts and assets, and plugins may download programs and runtimes at run time after a user action. Plugin provisioning is implemented (`core/src/plugins/provisioning.ts`); the other downloads are approved `web_download` files and updates (§8). |
 | L6 | Outbound network goes only to the destinations in §8. VERA listens on no external port. It listens only on loopback: pi-ai's OAuth callback on `127.0.0.1:1455` during a ChatGPT sign-in, and an ephemeral `127.0.0.1` CONNECT tunnel for the duration of each HTTPS `web_download` transfer. No telemetry. |
 | L7 | Secrets exist only in the main-process credential store (04 §5); the CLI keeps them in memory, read from environment variables or `--key-file`. They never reach the renderer, logs, events, the database or error text; IPC responses, events and logs are scrubbed of every registered secret. |
 | L8 | Document and file content is data, never instructions. No tool executes content. |
-| L9 | Every user-facing string goes through i18n; `en` is the source catalog (`ro` and `de` also ship). Core returns error codes, not sentences. |
-| L10 | Deferred until the first public release: a persisted-format change ships with a migration, and data written by a newer version is never modified. During development formats change in place at version 1: every format or schema version field is kept and is always 1, and any other value is invalid data, reported like other invalid data. Data from an earlier development build may stop loading and is deleted or recreated. There are no migrations, upgrade backups, legacy fallbacks, newer-version guards or upgrade fixtures (root `AGENTS.md`, "Development compatibility policy"; WP-32). The application's update feature (07 §5) is not part of this deferral. |
+| L9 | Every user-facing string goes through i18n; `en` is the source catalog (`ro`, `de` and `fr` also ship). Core returns error codes, not sentences. |
+| L10 | Deferred until the first public release: a persisted-format change ships with a migration, and data written by a newer version is never modified. During development formats change in place at version 1: every format or schema version field is kept and is always 1, and any other value is invalid data, reported like other invalid data. Data from an earlier development build may stop loading and is deleted or recreated. There are no migrations, upgrade backups, legacy fallbacks, newer-version guards or upgrade fixtures (root `AGENTS.md`, "Pre-release policy (until 1.0.0)"; WP-32). The application's update feature (07 §5) is not part of this deferral. |
 | L11 | Automated tests never call a real model. Core and test builds use the replay provider; release-package agent tests use a scripted loopback endpoint through the normal custom-provider path (08 §3, ADR-0012). Vitest projects and e2e runs block non-loopback connections (`tests/support/network-guard.ts`). |
 
 ## 2. Stack
@@ -128,16 +128,23 @@ Channel catalogue (namespace `.` method):
 |---|---|
 | `app` | `info`, `settings.get`, `settings.update`, `openExternal` (http/https only, after a UI confirmation), `chooseFolder`, `revealPath`, `openPath` (allowlisted document types inside the workbench, opened with the OS default application) |
 | `window` | `menu` (native File, Edit, View and Help role menus for the hidden title bar) |
-| `workbench` | `inspect`, `scanDocs`, `previewDocs`, `relativeFolder`, `create`, `open`, `close`, `recent` (remove, pin, move, reveal), `config.get`, `config.update`, `pinned.get`, `pinned.update`, `files` (path completion for `@`) |
-| `session` | `list`, `search`, `create`, `get` (snapshot + `seq`), `revision`, `rename`, `archive.set`, `move`, `delete`, `export`, `send`, `stop`, `approval.decide`, `model.set`, `mode.set`, `reasoning.get`, `reasoning.set` |
-| `docs` | `list`, `volume`, `search`, `open`, `reindex` |
+| `workbench` | `inspect`, `scanDocs`, `previewDocs`, `relativeFolder`, `create`, `open`, `close`, `storage`, `recent` (remove, pin, move, reveal), `config.get`, `config.update`, `additionalFolders.list`, `additionalFolders.choose`, `commandPrefixes.list`, `pinned.get`, `pinned.update`, `files` (path completion for `@`) |
+| `session` | `list`, `sizes`, `search`, `create`, `get` (snapshot + `seq`), `revision`, `item.detail`, `bookmark`, `rename`, `archive.set`, `move`, `delete`, `export`, `send`, `stop`, `approval.decide`, `model.set`, `mode.set`, `reasoning.get`, `reasoning.set` |
+| `docs` | `list`, `tree`, `find`, `read`, `stat`, `readBytes`, `openers`, `openWith`, `systemApps`, `openSystemApp`, `reveal`, `copyPath`, `volume`, `approve`, `search`, `open`, `reindex` |
 | `indexer` | `status`, `restart` |
 | `downloads` | `list`, `open` (PDF viewer content), `reveal` (by id; main locates and verifies the managed `web_download` file and shows it in the file manager, since `app.revealPath` refuses `.vera/`) |
 | `skills` | `list`, `open`, `create`, `save`, `toggle` |
+| `plugins` | `list`, `choose`, `review`, `scopedReview`, `scopedTrust`, `install`, `promote`, `export`, `uninstall`, `toggle`, `programs`, `check`, `installArchive`, `provision`, `reinstall`, `configuration`, `catalog`, `catalogReview`, `catalogPreview`, `catalogInstall` |
+| `runs` | `list`, `log`, `stop` |
+| `terminal` | `list`, `create`, `output`, `input`, `resize`, `close`, `consent` |
+| `commands` | `shells` |
 | `providers` | `list`, `save`, `remove`, `test`, `models`, `discover` (LM Studio), `chatgpt.login`, `chatgpt.cancel`, `chatgpt.status`, `chatgpt.logout` |
 | `web.access` | `get`, `save`, `removeKey`, `test`, `cancel` |
+| `parts.access` | `get`, `save`, `removeKey`, `test`, `cancel` |
+| `mqtt.credentials`, `wokwi.credentials` | `list`, `save`, `remove` |
 | `artifacts` | `list`, `open`, `reveal`, `export` |
 | `changes` | `list`, `get` |
+| `help` | `list`, `read` |
 | `update` | `get`, `check`, `download`, `restart`, `openRelease` (portable builds) |
 
 Renamed from the plan: `docs.read` is `docs.open`, `skills.get` is `skills.open`, `update.status` is
@@ -154,14 +161,21 @@ src/libraries/shared/src/        # no runtime dependencies besides zod; imported
   refs.ts                   # citation reference parser and formatter (05 §7)
   workbench.ts, settings.ts # file-format schemas
   providers.ts, chatgpt.ts, web-access.ts, updates.ts, documents.ts, downloads.ts, skills.ts,
-  tools.ts, session*.ts, artifacts.ts, changes.ts, keyboard-shortcuts.ts, ordering.ts
+  tools.ts, session*.ts, artifacts.ts, changes.ts, keyboard-shortcuts.ts, ordering.ts,
+  plugins.ts, plugin-catalog.ts, plugin-settings.ts, plugin-credentials.ts, program-rules.ts,
+  terminals.ts, command-prefix.ts, electrical-model.ts, industrial-catalog.ts, parts-search.ts, help.ts
 src/libraries/core/src/          # Electron-agnostic (L1)
   ports.ts                  # CredentialStore, WorkerPool, WorkbenchHost, PathProvider, Clock, Logger, FileAccess
   workbench/                # create, open, validate, path guard, ignore rules, lock and lock guard, write queue
   storage/                  # SQLite connection, current-schema check, repositories (no migration runner)
   sessions/                 # session service, event hub, snapshots, resume, export
   agent/                    # runtime, context policy and compaction, system prompt, permissions, approvals, citations
-  tools/                    # registry, the 17 built-in tools (03 §4), recorded changes, grep worker
+  tools/                    # registry of the 34 built-in tools (03 §4), recorded changes, grep worker
+  plugins/                  # plugin store, archive, catalog, provisioning, program runner, shell commands, HIL
+  electrical/               # project model, industrial catalog, network, protection, motor, power-quality
+                            # and lighting engines and their tools
+  parts/                    # parts-search suppliers
+  help/                     # help page library
   knowledge/                # ingest and watcher, selection, extraction, chunking, embedding host and worker,
                             # keyword and hybrid search, viewer, refs
   llm/                      # pi-ai providers and gateway, ChatGPT catalog, replay provider, connection test, secret scrubber
@@ -173,7 +187,9 @@ src/libraries/core/src/          # Electron-agnostic (L1)
 src/apps/desktop/src/
   main/                     # lifecycle, window, IPC router, events, credential store, updater, worker pool,
                             # VERA Indexer host and process, data locations and portable mode, security,
-                            # logger, providers and ChatGPT sign-in, web access, download transfer
+                            # logger, providers and ChatGPT sign-in, web access, download transfer,
+                            # plugin listing, provisioning and credentials, program runs, terminals (node-pty),
+                            # parts access
   preload/                  # contextBridge: window.vera
   renderer/                 # React app (06), locales, browser mock API
 src/apps/cli/src/               # headless `vera` CLI over core: run a prompt, index, search
@@ -300,7 +316,7 @@ CDNs reject Chromium HTTP/2 streams.
 | Any public http/https URL given to `web_download`, and up to 5 redirects | global Web access and the tool are enabled and the user approves the download (automatic only in `bypass`) | core `WebDownloads`: public-address DNS check, ≤100 MiB; HTTPS through an anonymous in-memory Chromium session pinned to the checked address by a loopback tunnel, HTTP directly |
 | Any http/https link | the user clicks it and confirms; opens in the system browser | `app.openExternal` |
 
-Planned, not implemented as of 2026-11-01 (accepted in ADR-0016, ADR-0017 and ADR-0019):
+Plugin destinations (ADR-0016, ADR-0017 and ADR-0019):
 
 | Destination | When | Source |
 |---|---|---|
@@ -319,8 +335,8 @@ Planned, not implemented as of 2026-11-01 (accepted in ADR-0016, ADR-0017 and AD
 - In-app update download and install work for NSIS and AppImage installs; the portable ZIP opens the
   release page (`update.openRelease`), and deb installs only notify. Channels are `latest` and
   `beta`; downgrades are refused and every update file needs SHA-512 metadata.
-- The product version (Semantic Versioning, from `src/apps/desktop/package.json`, `0.0.0` on
-  2026-11-01) is shown in the app's metadata panel and compared by the updater with semver.
+- The product version (Semantic Versioning, from `src/apps/desktop/package.json`, `0.2.0`)
+  is shown in the app's metadata panel and compared by the updater with semver.
 
 NOTES:
 - Reserved seams, not built in 1.0: `<workbench>/tools/` for wrapper descriptors that reuse the shape
@@ -328,6 +344,6 @@ NOTES:
   serial and camera; a `SpeechToText` port for voice (06 §9).
 - The wrapper-descriptor and serial seams are replaced by plugins (`../plugins/architecture.md`):
   installed plugins live in `<userData>/plugins/`, serial access is the `serial-monitor` plugin, and
-  no per-command descriptor exists. Not implemented as of 2026-11-01: the Settings plugin page is a
-  placeholder (`renderer/components/plugins.tsx`) and no plugin code exists in core or main.
+  no per-command descriptor exists. The Plugins page is `renderer/components/plugins.tsx`; the plugin
+  code is in `core/src/plugins/` and the main process.
 - Work packages cite this file as `01 §n`.

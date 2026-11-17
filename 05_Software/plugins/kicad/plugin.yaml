@@ -1,6 +1,6 @@
 format: 1
 id: kicad
-version: 0.3.0
+version: 0.3.1
 license: LicenseRef-PolyForm-Noncommercial-1.0.0
 name: KiCad schematic and PCB analysis
 summary: Analyse KiCad 10 schematics and boards without changing them - ERC, DRC, BOM, netlists and exports.

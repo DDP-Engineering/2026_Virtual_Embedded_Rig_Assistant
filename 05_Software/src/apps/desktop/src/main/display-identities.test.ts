@@ -1,7 +1,7 @@
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { expect, it } from "vitest";
+import { expect, it, vi } from "vitest";
 import { DisplayIdentities, loadDisplayIdentityKey } from "./display-identities.js";
 
 it("reopens opaque paths with the persisted format-1 key, binding workbench, folder and parent", () => {
@@ -24,8 +24,47 @@ it("reopens opaque paths with the persisted format-1 key, binding workbench, fol
     const moved = `other/${a.split("/")[1]}`;
     expect(() => restarted.decode(owner, moved)).toThrowError();
     expect(JSON.parse(readFileSync(file, "utf8")).schemaVersion).toBe(1);
-    writeFileSync(file, JSON.stringify({ schemaVersion: 2, key: "a".repeat(64) }));
-    expect(() => loadDisplayIdentityKey(file)).toThrowError();
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+it("replaces a damaged key file with a new key instead of failing, and reuses it afterwards", () => {
+  const root = mkdtempSync(join(tmpdir(), "vera-display-"));
+  try {
+    const file = join(root, "display-identities.json");
+    const warn = vi.fn();
+    const original = loadDisplayIdentityKey(file, warn);
+    // A first start creates the key without a warning.
+    expect(warn).not.toHaveBeenCalled();
+    const damaged = ["", "{", JSON.stringify({ schemaVersion: 2, key: "a".repeat(64) })];
+    for (const [index, content] of damaged.entries()) {
+      writeFileSync(file, content);
+      const key = loadDisplayIdentityKey(file, warn);
+      expect(warn).toHaveBeenCalledTimes(index + 1);
+      expect(warn).toHaveBeenLastCalledWith("display.identities.key.replaced");
+      expect(key).toHaveLength(32);
+      expect(key.equals(original)).toBe(false);
+      expect(JSON.parse(readFileSync(file, "utf8"))).toEqual({ schemaVersion: 1, key: key.toString("hex") });
+      expect(loadDisplayIdentityKey(file, warn).equals(key)).toBe(true);
+    }
+    expect(warn).toHaveBeenCalledTimes(damaged.length);
+    // The temporary file of the atomic write does not stay behind.
+    expect(readdirSync(root)).toEqual(["display-identities.json"]);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+it("still returns a key for this run when the key file cannot be written", () => {
+  const root = mkdtempSync(join(tmpdir(), "vera-display-"));
+  try {
+    // A directory in the key file's place can be neither read nor replaced.
+    const file = join(root, "display-identities.json");
+    mkdirSync(file);
+    const warn = vi.fn();
+    expect(loadDisplayIdentityKey(file, warn)).toHaveLength(32);
+    expect(warn).toHaveBeenLastCalledWith("display.identities.key.unsaved");
   } finally {
     rmSync(root, { recursive: true, force: true });
   }

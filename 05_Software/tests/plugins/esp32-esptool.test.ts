@@ -267,6 +267,20 @@ describe("risk rules", () => {
     }
     expect(classify("write-flash", "0x0", "a.bin").risk).toBe("device-write");
   });
+  it("classifies flash-encryption writes as irreversible", () => {
+    for (const [args, word] of [
+      [["--port", "COM7", "write-flash", "--encrypt", "0x10000", "app.bin"], "--encrypt"],
+      [["write-flash", "--encrypt-files", "0x10000", "app.bin"], "--encrypt-files"],
+      [["write_flash", "--ignore-flash-enc-efuse", "0x10000", "app.bin"], "--ignore-flash-enc-efuse"],
+      [["write-flash", "--ignore_flash_enc_efuse", "0x10000", "app.bin"], "--ignore-flash-enc-efuse"],
+    ] as const) {
+      const result = classify(...args);
+      expect(result.risk, args.join(" ")).toBe("irreversible");
+      expect(result.confirm, args.join(" ")).toBe(word);
+      expect(result.notes.join(" "), args.join(" ")).toContain(word);
+    }
+    expect(classify("write-flash", "--erase-all", "0x0", "a.bin").risk).toBe("device-write");
+  });
   it("names only esptool 5.6.0 commands and classifies every one (REQ-SEC-9c665082)", async () => {
     const help = await readFile(join(fixtures, "esptool-5.6.0-help.txt"), "utf8");
     const commands = [...help.matchAll(/^│ ([a-z][a-z0-9-]+) {2,}/gm)].map((m) => m[1] as string);

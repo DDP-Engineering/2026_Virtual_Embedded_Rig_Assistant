@@ -23,7 +23,8 @@ L’agent vous demande quelle carte et quel port utiliser quand plusieurs sont c
 
 - Sûr, exécuté sans demander : examen d’un sketch, recherches de cartes, de cores et de bibliothèques, rapports d’exécution et nettoyage du cache de build de VERA.
 - Lecture appareil : liste des cartes (ports série et découverte mDNS) et compilation, qui exécute le compilateur et les hooks de build du core sur cet ordinateur.
-- Écriture appareil : installation de cores, de bibliothèques et d’index dans l’environnement Arduino de VERA, et téléversement, qui écrit la flash de la carte et démarre immédiatement le nouveau firmware. Avec un programmateur, un téléversement écrase aussi le bootloader.
+- Écriture appareil : installation de cores, de bibliothèques et d’index dans l’environnement Arduino de VERA, et téléversement, qui écrit la flash de la carte et démarre immédiatement le nouveau firmware.
+- Irréversible : téléversement avec `--programmer`, qui écrase aussi le bootloader. VERA vous demande de taper le mot de confirmation, sauf en mode Contournement.
 - Bloqué : toute commande `arduino-cli` directe.
 
 En mode Demander, VERA demande avant chaque commande de lecture appareil et d’écriture appareil ; le mode Modification auto exécute les commandes de lecture appareil sans demander.

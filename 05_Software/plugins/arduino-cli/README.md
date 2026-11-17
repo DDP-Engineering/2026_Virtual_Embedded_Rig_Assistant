@@ -29,6 +29,7 @@ anything or ask Arduino's online board-identification service.
 | `compile --sketch DIR --fqbn F` | device-read | runs the core's compiler, recipes and hooks on a copy of the sketch |
 | `install index`, `install core`, `install library` | device-write | downloads into VERA's Arduino environment |
 | `upload --build RESULT --port P --identity K` | device-write | writes the verified binary to the board |
+| `upload ... --programmer ID` | irreversible | also overwrites the bootloader; needs the typed confirmation |
 
 Results go to `arduino-iot-results/<run-id>/` in the workbench (`result.json`, `report.md`, logs, the sketch copy and
 the binaries), never inside `.vera`. The daemon, the interactive monitor, burning a bootloader, fuses and OTA upload

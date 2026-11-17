@@ -41,7 +41,7 @@ Engineers almost always have a toolchain already; a second copy of several hundr
 ```yaml
 format: 1
 id: binutils
-version: 1.0.0
+version: 0.3.0
 name: GNU binutils (ARM, RISC-V)
 description: Inspect firmware ELF files - sizes, symbols, sections, targeted disassembly and crash addresses to source lines. Use for size growth, map and memory layout questions and HardFault decoding.
 ecosystem: general

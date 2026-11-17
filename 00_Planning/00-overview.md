@@ -73,7 +73,7 @@ artefactele de release și dovada de rețea pe Windows (pktmon).
 | Workbench = folder | se copiază, se versionează în Git; configurarea și skill-urile stau în `.vera/`, iar un al doilea proces deschide workbench-ul doar pentru citire |
 | Un singur fișier SQLite per workbench | index FTS5 și trigram, vectori, sesiuni, artefacte; schema e fixă (versiunea 3), fără migrații |
 | Embeddings calculate local, cu modelul inclus | documentele nu pleacă din calculator la indexare; modelul ales este BGE-small q8 (ADR-0015) |
-| Fără tool de shell | agentul nu poate rula comenzi; programele externe vor veni prin plugin-uri (ADR-0016, planificat) |
+| Tool de shell doar cu aprobare | agentul rulează comenzi prin `run_command`, cu aprobare; programele externe vin prin plugin-uri (ADR-0016) |
 | Agentul nu-și poate rescrie singur instrucțiunile | în afara modului *Bypass*, `.vera/` e inaccesibil tool-urilor; configurarea se schimbă doar din aplicație |
 | Buget de context la fiecare apel | rezervă loc pentru răspuns și reduce rezultatele tool-urilor; compactarea istoricului peste 80 % |
 | Aprobare pentru modificarea exactă, o singură dată | o coadă de scriere comună tuturor sesiunilor; un fișier schimbat între timp cere o nouă aprobare; restartul nu rescrie fișiere |

@@ -216,7 +216,7 @@ describe("package", () => {
     expect(validatePluginManifest(m).issues).toEqual([]);
     expect(m).toMatchObject({
       id: "circuitpython",
-      version: "0.2.0",
+      version: "0.2.1",
       platforms: ["windows-x64", "linux-x64"],
     });
     expect(Object.keys(m.programs)).toEqual(["circuitpython-tool"]);
@@ -315,7 +315,7 @@ describe("package", () => {
     expect(
       cpy(vol("deploy", "--source", "a.py", "--target", "/a.py", "--port", "COM7")).json.errors[0].code,
     ).toBe("arguments");
-    expect(cpy(["--version"]).stdout.trim()).toBe("circuitpython-tool 0.2.0");
+    expect(cpy(["--version"]).stdout.trim()).toBe("circuitpython-tool 0.2.1");
     expect(cpy(vol("identify", "--run-id", "same")).json.status).toBe("pass");
     const again = cpy(vol("identify", "--run-id", "same"));
     expect(again.code).toBe(2);
@@ -826,6 +826,12 @@ describe("deploy", () => {
       expect(cpy(vol("deploy", "--source", "b.py", "--target", target)).json.errors[0].code).toBe(
         "target-path",
       );
+    // Windows would write these as boot.py, below the --boot guard.
+    for (const target of ["/boot.py.", "/boot.py ", "/boot.py::$DATA", "/lib./a.py"]) {
+      const refused = cpy(vol("deploy", "--source", "b.py", "--target", target)).json.errors[0];
+      expect(refused.code, target).toBe("target-path");
+      expect(refused.message).toContain("name the file without them");
+    }
     expect(
       cpy(vol("deploy", "--source", "b.py", "--target", "/a.py", "--source", "b.py", "--target", "/A.PY"))
         .json.errors[0].code,

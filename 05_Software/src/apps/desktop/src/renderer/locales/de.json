@@ -64,6 +64,10 @@
     "YAML_INVALID": "Ungültiges YAML in Zeile {{line}}, Spalte {{column}}.",
     "CONFIG_INVALID": "Ungültige Arbeitsbereichskonfiguration bei {{path}}, Zeile {{line}}."
   },
+  "renderError": {
+    "message": "VERA konnte dieses Fenster nicht anzeigen.",
+    "reload": "Neu laden"
+  },
   "nav": {
     "settings": "Einstellungen",
     "welcome": "Start",

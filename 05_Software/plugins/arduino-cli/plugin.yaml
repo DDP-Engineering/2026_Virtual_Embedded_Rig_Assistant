@@ -1,6 +1,6 @@
 format: 1
 id: arduino-cli
-version: 0.2.0
+version: 0.2.1
 license: LicenseRef-PolyForm-Noncommercial-1.0.0
 name: Arduino CLI
 summary: Compile Arduino sketches with a pinned arduino-cli and upload the verified binary to an identified board.
@@ -79,3 +79,6 @@ rules:
     risk: device-write
     note: Writes the verified binary of the named compile run to the board's flash; the new firmware starts at once and may drive the board's outputs. With --programmer it also overwrites the bootloader.
     timeout: 600
+  - match: "arduino-tool upload * --programmer *"
+    risk: irreversible
+    note: An upload through a programmer overwrites the board's bootloader; later uploads over USB need the bootloader burned again with a programmer.

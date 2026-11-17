@@ -14,12 +14,19 @@ import os
 import sys
 from typing import NoReturn
 
-VERSION = "0.3.0"
+VERSION = "0.3.1"
 
 
 def fail(message) -> NoReturn:
     print(f"can-decode: {message}", file=sys.stderr)
     sys.exit(2)
+
+
+def positive(text: str) -> int:
+    value = int(text)
+    if value < 1:
+        raise argparse.ArgumentTypeError("must be a positive integer, such as 20")
+    return value
 
 
 def value_text(value, unit):
@@ -34,7 +41,7 @@ def main():
     parser.add_argument("--dbc", required=True, help="database file (.dbc, .kcd, .sym, .arxml)")
     parser.add_argument("--input", required=True, help="log file (.asc, .blf, .log, .csv, .trc)")
     parser.add_argument("--id", action="append", default=[], help="only this arbitration ID in hex; repeatable")
-    parser.add_argument("--limit", type=int, help="print at most this many decoded frames")
+    parser.add_argument("--limit", type=positive, help="print at most this many decoded frames")
     parser.add_argument("--no-choices", action="store_true", help="print raw values instead of choice names")
     parser.add_argument("--no-strict", action="store_true", help="skip database consistency checks")
     args = parser.parse_args()

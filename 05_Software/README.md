@@ -45,7 +45,7 @@ tests/e2e/agent-masking.spec.ts proves independent export/disclosure choices. Sa
 
 The document host API supplies bounded physical byte windows through `docs.readBytes` and file size
 through the existing `docs.stat`. Core `workbench/read-bytes.ts` owns confined positional reads;
-main `display-bytes.ts` owns length-preserving secret masking with bounded context. These power bounded text and Hex views; image preview is planned. The exact contract is in
+main `display-bytes.ts` owns length-preserving secret masking with bounded context. These power bounded text and Hex views and the image preview. The exact contract is in
 [the byte protocol](../.agentic/specs/REQ-FUNC-69645e84.md); focused tests sit beside both modules.
 
 Unit and component tests remain beside the implementation in `src/`. Environment, build and
@@ -165,7 +165,7 @@ so build and development work before compiled library output exists.
 
 The desktop shell displays name, version, platform, architecture, portable marker and OS locale from `app.info`, and saves normal window bounds in `<userData>/window-state.json` (version 1). An invalid, other-version or off-screen file uses centred defaults and is overwritten on close.
 Welcome and Settings use memory navigation; Ctrl+, opens Settings without changing the authorized URL.
-Appearance selects Light/Dark/System and five text scales from a 14px base; controls and code use rem.
+Appearance selects Light/Dark/System and six text scales from a 14px base; controls and code use rem.
 Main follows the saved preference with nativeTheme.themeSource. Panels resize by pointer or arrow/Home/End keys and collapse; right-panel content overlays below1280px.
 Renderer geometry lives in the separate localStorage key vera.ui.layout at version 1, with a required source width; invalid or other-version data uses the defaults.
 The strict application settings schema stays authoritative. Providers edits credentials and custom endpoints. Data & privacy edits app defaults with Save/Cancel; Updates and About have their own panels.
@@ -229,7 +229,7 @@ Full scripted session, update and external egress acceptance belongs to WP31–3
 The renderer uses one `api/` interface: `ipcApi` wraps `window.vera`; `mockApi` supplies the same
 app.info, app.settings.get/update and app subscriptions in memory. The OpenAI browser fixture catalog contains mock-openai and is available offline before auth; mock Test honors explicit model overrides and separate authentication. The API exposes
 getSettings/updateSettings returning {settings}. TanStack Query owns metadata and settings snapshots; mutations apply confirmed preferences and settings.changed invalidates the cache.
-i18next catalogs in `src/renderer/locales/{en,ro,de}.json` cover labels, accessible names and structured error keys/params. System language resolves the OS locale, with English fallback. App subscriptions are invalidation signals; later event domains
+i18next catalogs in `src/apps/desktop/src/renderer/locales/{en,ro,de,fr}.json` cover labels, accessible names and structured error keys/params. System language resolves the OS locale, with English fallback. App subscriptions are invalidation signals; later event domains
 add their own schemas and services. `portable` reports a `vera.portable` marker beside the executable;
 the regular marker selects adjacent data before readiness. Installed mode uses Electron userData,
 with --user-data-dir available for isolated tests. Selected portable/override directories are created
@@ -349,7 +349,7 @@ Welcome creates a workbench in an existing chosen folder without .vera/workbench
 
 Workbench format1 retains unknown keys and warns; any other format gives CONFIG_INVALID at path format. A live process lock opens read-only; a dead process lock is taken over. Ambiguous lock coordination opens read-only with a warning. Network shares warn as unsupported; use local disk folders. File completion exposes up to50 relative paths under common ignore rules. Runtime content stays in .vera with its own ignore file. See [workbench architecture](../00_Planning/architecture/02-workbench.md).
 
-For native folder-dialog acceptance, compile instrumented code by setting VERA_TEST=1 before npm run test:e2e. VERA_TEST_DIALOG_PATH chooses the temporary folder only in emitted instrumented builds; release emission omits this environment hook. Test fixtures are copied from tests/fixtures/workbenches/demo-board; runtime never modifies the source fixture. Mock API exposes empty, missing, read-only and warnings scenarios through createMockApi for browser/component tests.
+For native folder-dialog acceptance, npm run test:e2e compiles instrumented code; it sets VERA_TEST=1 itself. VERA_TEST_DIALOG_PATH chooses the temporary folder only in emitted instrumented builds; release emission omits this environment hook. Test fixtures are copied from tests/fixtures/workbenches/demo-board; runtime never modifies the source fixture. Mock API exposes empty, missing, read-only and warnings scenarios through createMockApi for browser/component tests.
 
 Settings → Providers configures OpenAI API keys/models and multiple OpenAI-compatible `/v1` endpoints. Keys are masked and cleared after saving; only bounded hints return from main. Custom defaults are32768 context tokens and4096 output tokens, with a positive input budget after the architectural safety margin. Credential JSON uses safeStorage encryption; unavailable or Linux basic_text storage asks each time whether to keep the key only for this run or persist without secure encryption. Future settings/credential formats preserve bytes. See [.agentic/knowledge/providers.md](../.agentic/knowledge/providers.md) for the API and recovery contract.
 

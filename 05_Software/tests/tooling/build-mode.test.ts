@@ -78,7 +78,10 @@ it.each([
   ["0", "false"],
 ] as const)(
   "compiles the test flag %s from a fresh source checkout independently of runtime overrides",
-  (flag, expected) => {
+  async (flag, expected) => {
+    const { releaseHooks } = await import(
+      pathToFileURL(join(root, "../02_Tools/release/package-checks.mjs")).href
+    );
     const output = join(checkout, `out-${flag}`);
     expect(existsSync(join(checkout, "src/libraries/shared/dist/index.js"))).toBe(false);
     const build = spawnSync(process.execPath, [vite, "build", "src/apps/desktop"], {
@@ -119,21 +122,12 @@ it.each([
       expect(code).not.toContain("Could not dynamically require");
     } else {
       expect(code).not.toContain("VERA Test");
+      // The packaging check itself: its markers and every VERA_TEST_ environment name.
+      expect(releaseHooks(code)).toEqual([]);
       for (const marker of [
-        "packaging-probe",
-        "I2C1_CR1",
-        "VERA_TEST_DIALOG_PATH",
-        "VERA_REPLAY_DIR",
-        "VERA_REPLAY_DELAY_MS",
-        "VERA_TEST_ALLOW_WRITES",
-        "VERA_TEST_CHATGPT",
-        "fictional-native-access-WP21",
         "fictional-native-model",
         "Unexpected scripted catalog request",
         "replay_",
-        "registerReplay",
-        "veraTestFileTools",
-        "VERA_NETWORK_AUDIT",
         // Session performance probes and the stream injector exist only in the perf:sessions build.
         "veraSessionPerformance",
       ]) {

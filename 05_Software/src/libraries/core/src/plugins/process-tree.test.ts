@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import type { ProcessHost, ProcessSpawnOptions } from "../ports.js";
 import { killProcessTree } from "./process-tree.js";
 
@@ -40,6 +40,24 @@ describe("killProcessTree", () => {
     expect(script).toContain("Get-CimInstance Win32_Process");
     expect(spawns[0]?.options.group).toBe(false);
     expect(signals).toEqual([]);
+  });
+
+  it("stops waiting for a Windows tree termination that hangs", async () => {
+    const { host } = fakeHost("win32");
+    host.spawn = () => ({ pid: 99, exit: new Promise(() => {}) });
+    vi.useFakeTimers();
+    try {
+      let settled = false;
+      const killing = killProcessTree(host, 4242, manualClock()).then(() => {
+        settled = true;
+      });
+      await vi.advanceTimersByTimeAsync(19_999);
+      expect(settled).toBe(false);
+      await vi.advanceTimersByTimeAsync(1);
+      await killing;
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("sends SIGTERM to the Linux process group, then SIGKILL after the 3 s grace", async () => {

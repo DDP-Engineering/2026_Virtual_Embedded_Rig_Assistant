@@ -31,6 +31,9 @@ kicad-tool review-report --project FILE [--refill-zones]   inspect, ERC and DRC 
 `FILE` is the `.kicad_pro`, `.kicad_sch` or `.kicad_pcb` of the project, inside the working directory. Every
 operation also takes `--results-dir DIR` (default `electronics-results`) and `--run-id ID`. Export kinds:
 `sch-pdf`, `sch-svg`, `pcb-pdf`, `pcb-svg`, `gerbers` (these three need `--layers`), `drill`, `pos`.
+In `bom.csv` a cell that starts with `=` or `@`, or with `+` or `-` and holds `(`, `|` or `!`, gets a leading `'`,
+so a spreadsheet shows it as text instead of running it as a formula; values such as `+3V3` or `-5V` stay as they
+are, and `bom.json` keeps every value unchanged.
 
 Each run creates `<results-dir>/<run-id>/` with `result.json` (everything), `report.md` and KiCad's own files
 (`erc.json`, `drc.json`, `netlist.net`, `stats.json`, `exports/...`), and prints one JSON document of at most

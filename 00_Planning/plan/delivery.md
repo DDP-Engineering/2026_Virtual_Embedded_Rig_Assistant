@@ -43,8 +43,8 @@ Everything below `07_Delivery/` except `README.md` is git-ignored.
     delivery.json       what was built: version, commit, host per part, files with SHA-256 and size
 ```
 
-`<version>` is the desktop package version (`src/apps/desktop/package.json`). While it is `0.0.0`,
-the folder is `vera-0.0.0-<short commit>` so two builds never collide. A script refuses to overwrite
+`<version>` is the desktop package version (`src/apps/desktop/package.json`, `0.2.0`). For version
+`0.0.0` the folder is `vera-0.0.0-<short commit>` so two builds never collide. A script refuses to overwrite
 an existing part folder; `--replace` replaces only the part it builds.
 
 The existing working folders stay as they are: `07_Delivery/plugins/` (built by
@@ -85,4 +85,4 @@ half-written part on failure (build in a temporary folder, rename at the end).
   `vera-plugins-<version>.zip`; today the catalog URL accepts only HTTPS or loopback.
 - `gdb-debug` could `requires: [binutils]` and use the `arm-none-eabi-gdb` in the xPack binutils
   already downloads, instead of asking the user to install it.
-- Windows code signing (not configured; SmartScreen warns) and setting a real app version.
+- Windows code signing (not configured; SmartScreen warns).

@@ -6,7 +6,7 @@ checks.
 DONE-WHEN: the replay test and the rubric cases of §5 pass. Shared rules:
 [contracts](../../contracts.md); tools: [parse_log](../../tools/parse_log/SPEC.md),
 [decode_register](../../tools/decode_register/SPEC.md); work: [PLAN](PLAN.md).
-STATUS: rewritten 2026-11-01; nothing implemented yet. Ships in the `analysis-skills` plugin.
+STATUS: rewritten 2026-11-01; implemented. Ships in the `analysis-skills` plugin.
 
 ## 1. Inputs
 

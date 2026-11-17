@@ -17,6 +17,7 @@ import {
 import { createRequire } from "node:module";
 import { dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
+import { releaseHooks } from "../../../../02_Tools/release/package-checks.mjs";
 import { checkEgress } from "./smoke-egress.mjs";
 import { fileIdentity, startupFailureFacts } from "./smoke-report.mjs";
 
@@ -176,14 +177,7 @@ export async function extractArtifact(artifact, root, report, reuse = false) {
   const pkg = JSON.parse(asar.extractFile(archive, "package.json").toString());
   assert.equal(pkg.name, "vera", "Instrumented or foreign artifact package");
   const main = asar.extractFile(archive, join("out", "main", "index.js")).toString();
-  for (const marker of [
-    "VERA_TEST_DIALOG_PATH",
-    "VERA_REPLAY_DIR",
-    "VERA_NETWORK_AUDIT",
-    "VERA_TEST_ALLOW_WRITES",
-    "--packaging-probe=",
-  ])
-    assert(!main.includes(marker), `Release contains test marker ${marker}`);
+  assert.deepEqual(releaseHooks(main), [], "Release contains test markers");
   const portable = await lstat(join(dirname(executable), "vera.portable"))
     .then((s) => s.isFile())
     .catch((e) => {

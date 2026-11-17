@@ -6,4 +6,4 @@ working directory is written last, by this package, after the source files were 
 
 FORMAT = 1
 TOOL = "kicad-tool"
-VERSION = "0.3.0"
+VERSION = "0.3.1"

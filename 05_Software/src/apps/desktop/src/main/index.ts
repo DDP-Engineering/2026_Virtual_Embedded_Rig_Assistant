@@ -101,6 +101,7 @@ import { testProgramResolver } from "./program-resolver.js";
 import { ProviderGateway } from "./provider-gateway.js";
 import { ProviderSettings } from "./provider-settings.js";
 import { ProvisionerHosts } from "./provisioner-hosts.js";
+import { recoverRenderer } from "./renderer-recovery.js";
 import { openPath, revealPath } from "./reveal-path.js";
 import { RunPresentation } from "./run-presentation.js";
 import { bundledResponse, installSessionPolicy, secureSession, secureWindow } from "./security.js";
@@ -108,6 +109,7 @@ import { exportSession } from "./session-export.js";
 import { createSessionOrder } from "./session-order.js";
 import { installSessionPerformance } from "./session-performance.js";
 import { SessionsHost } from "./sessions.js";
+import { drainShutdown } from "./shutdown.js";
 import { createPtyFactory } from "./terminal-pty.js";
 import { TerminalService } from "./terminals.js";
 import { desktopUpdateBackend, updateDistribution } from "./update-backend.js";
@@ -264,7 +266,9 @@ const display = new DisplayDocuments(
   maskingFor,
   (text) => credentials.scrub(text),
   new DisplayIdentities(
-    loadDisplayIdentityKey(join(dataLocations.paths.userData, "display-identities.json")),
+    loadDisplayIdentityKey(join(dataLocations.paths.userData, "display-identities.json"), (event) =>
+      logger.log("warn", event),
+    ),
   ),
   () => credentials.knownSecrets(),
 );
@@ -1147,7 +1151,7 @@ ipcMain.handle(
         "plugin" in request
           ? pluginHelpPage(request.plugin, request.language)
           : help.read(request.page, request.language),
-      "window.menu": (request) => popupWindowMenu(window, request),
+      "window.menu": (request) => popupWindowMenu(window, request, app.isPackaged),
       "commands.shells": () => detectCommandShells(processHost),
       "app.settings.get": () => {
         const snapshot = settings.get();
@@ -1315,6 +1319,10 @@ async function createWindow(state: WindowState): Promise<void> {
   created.webContents.on("did-start-navigation", (_event, _url, isInPlace, isMainFrame) => {
     if (isMainFrame && !isInPlace) sessions.clearSubscriptions();
   });
+  recoverRenderer(created, (reason, reloading) => {
+    logger.log("error", "window.renderer.gone", { reason, reloading });
+    sessions.clearSubscriptions();
+  });
   let closing = false;
   created.on("close", (event) => {
     if (updates?.hasDownloaded && !updates.shuttingDown) {
@@ -1364,43 +1372,45 @@ if (!app.requestSingleInstanceLock()) {
     if (draining) return;
     draining = true;
     terminals.suspend();
-    // Installs and probes stop with the app; their uv and tar process trees are killed.
-    const stopped = Promise.all([
-      provisioner.drain(),
-      scopedProvisioners.close(),
-      pluginListings.close(),
-      programs.stopAll(),
-      terminals.closeAll(),
-    ]);
     catalogChecks.close();
-    void stopped
-      .then(() => sessions.close())
-      .then(() => workbench.close())
-      .then(() => fileWorkers.dispose())
-      .then(() => indexer.close())
-      .then(() => closeFileProbe?.())
-      .then(() => modelGateway.close())
-      .then(() => chatgpt.close())
-      .then(() => providers.close())
-      .then(() => webAccess.close())
-      .then(() => partsAccess.close())
-      .then(() => credentials.close())
-      .then(() => settings.close())
-      .then(() => logger.flush())
-      .then(() => {
-        drained = true;
-        if (!updates?.finishShutdown()) {
-          updates?.close();
-          app.quit();
-        }
-      })
-      .catch(() => {
-        console.error("VERA shutdown persistence failed");
+    void drainShutdown(
+      // Installs and probes stop with the app; their uv and tar process trees are killed.
+      [
+        ["provisioner", () => provisioner.drain()],
+        ["scopedProvisioners", () => scopedProvisioners.close()],
+        ["pluginListings", () => pluginListings.close()],
+        ["programs", () => programs.stopAll()],
+        ["terminals", () => terminals.closeAll()],
+      ],
+      [
+        ["sessions", () => sessions.close()],
+        ["workbench", () => workbench.close()],
+        ["fileWorkers", () => fileWorkers.dispose()],
+        ["indexer", () => indexer.close()],
+        ["fileProbe", () => closeFileProbe?.()],
+        ["modelGateway", () => modelGateway.close()],
+        ["chatgpt", () => chatgpt.close()],
+        ["providers", () => providers.close()],
+        ["webAccess", () => webAccess.close()],
+        ["partsAccess", () => partsAccess.close()],
+        ["credentials", () => credentials.close()],
+        ["settings", () => settings.close()],
+        ["log", () => logger.flush()],
+      ],
+      // Logged before the log step flushes; the will-quit flush below covers a failed log step.
+      (step) => logger.log("error", "app.shutdown.step.failed", { step }),
+    ).then((clean) => {
+      drained = true;
+      try {
         // A failed drain must never start the installer.
-        updates?.close();
-        drained = true;
-        app.quit();
-      });
+        if (clean && updates?.finishShutdown()) return;
+      } catch {
+        clean = false;
+      }
+      if (!clean) console.error("VERA shutdown persistence failed");
+      updates?.close();
+      app.quit();
+    });
   });
   let logsDraining = false;
   let logsDrained = false;

@@ -384,7 +384,8 @@ export class ReferenceRuntime implements AgentRuntime {
           }
           signal.throwIfAborted();
           output = await tool.execute(args, signal);
-          if (signal.aborted) throw Error("Aborted.");
+          // A write or program that completed stays applied after a stop: the model must see its result.
+          if (signal.aborted && tool.class !== "write" && tool.class !== "program") throw Error("Aborted.");
           if (tool.publish) output = tool.publish(args, output);
         } catch (error) {
           failed = true;

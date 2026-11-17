@@ -2,19 +2,23 @@
 
 PURPOSE: keep indexing of large repositories fast and its search results clean, by honoring `.gitignore`, letting
 the user lower the file size limit and stopping before an unexpectedly large selection is indexed.
-STATE: planned 2026-11-15. Product code follows AEGIS, one work package per task.
+STATE: implemented: IDX-01 #275 (186eb701), IDX-02 #276 (debce19c), IDX-03 #277 (f1408b35), IDX-04 #278
+(9315d4d5). Product code follows AEGIS, one work package per task.
 
-## Today (2026-11-15)
+## Current implementation
 
 - The indexer selects every document-kind file (PDF, Markdown, HTML, Office, `.txt`, `.csv`, `.tsv`) under Include
-  minus Exclude, with no count limit (`core/src/knowledge/selection.ts`). Code and logs are never indexed.
-- Ignored: `.veraignore` and, always, `.vera`, `.git` and `node_modules` (`core/src/workbench/ignore.ts`). The
-  repository's `.gitignore` is not read, so virtual environments, `build/`, `dist/`, `target/`, coverage reports
-  and generated HTML documentation are indexed when Include covers them.
-- File size limits are fixed in code: 100 MiB for PDF and Office, 20 MiB for text (`core/src/knowledge/kinds.ts`).
-- The New Workbench and workbench editor preview walks at most 20,000 entries and depth 8 and warns above 2,000
-  files or 2 GiB (`core/src/workbench/documents-scan.ts`); indexing itself has neither bound, so the preview can
-  show less than what gets indexed.
+  minus Exclude (`core/src/knowledge/selection.ts`). Above `docs.maxFiles` (default 10,000) nothing is indexed
+  until "Index anyway" (`core/src/knowledge/guard.ts`). Code and logs are never indexed.
+- Ignored: `.veraignore` and, always, `.vera`, `.git` and `node_modules` (`core/src/workbench/ignore.ts`). With
+  `docs.gitignore` on (the default), the root and nested `.gitignore` files are read too, so virtual
+  environments, `build/`, `dist/`, `target/`, coverage reports and generated HTML documentation they list are
+  not indexed.
+- File size limits: 100 MiB for PDF and Office, 20 MiB for text (`core/src/knowledge/kinds.ts`); `docs.maxFileMB`
+  lowers them.
+- The New Workbench and workbench editor preview runs the indexer's own selection with a 5 s time limit
+  (`core/src/workbench/documents-scan.ts`), so the preview and indexing count the same files; it warns above
+  2,000 files or 2 GiB.
 - Indexing runs in its own process; the window stays responsive, but a first run over thousands of documents is
   long and the workbench database grows with every chunk and vector.
 

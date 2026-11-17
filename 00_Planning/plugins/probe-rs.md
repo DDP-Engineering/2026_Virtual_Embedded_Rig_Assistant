@@ -46,7 +46,7 @@ releases. Vendor plugins keep only what probe-rs cannot do, for example STM32 op
 ```yaml
 format: 1
 id: probe-rs
-version: 1.0.0
+version: 0.2.0
 name: probe-rs
 description: Flash, verify, reset, read memory and stream RTT logs on ARM Cortex-M and RISC-V microcontrollers through CMSIS-DAP, ST-Link, J-Link, FTDI, WCH-Link or ESP32 USB-JTAG probes.
 ecosystem: general

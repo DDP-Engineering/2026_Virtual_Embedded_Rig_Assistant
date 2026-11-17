@@ -1099,8 +1099,11 @@ export class SessionService {
       if (event.type === "message.delivered") this.sync(id, transcript);
       if (event.type === "message.user") {
         this.sync(id, transcript);
-        if (!this.row(id).title)
-          this.host.db.prepare("UPDATE sessions SET title=? WHERE id=?").run(event.text.slice(0, 60), id);
+        if (!this.row(id).title) {
+          // The cut must not leave half of a surrogate pair at the end.
+          const title = event.text.slice(0, 60).replace(/[\uD800-\uDBFF]$/, "");
+          this.host.db.prepare("UPDATE sessions SET title=? WHERE id=?").run(title, id);
+        }
       }
       if (event.type === "tool.started")
         this.host.db

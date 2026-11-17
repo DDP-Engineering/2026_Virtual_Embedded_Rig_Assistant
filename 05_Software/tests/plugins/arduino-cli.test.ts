@@ -242,6 +242,12 @@ describe("package", { timeout: 30_000 }, () => {
     expect(risk("arduino-tool", ["upload", "--build", "r.json", "--port", "COM5", "--identity", "x"])).toBe(
       "device-write",
     );
+    for (const programmer of [["--programmer", "usbasp"], ["--programmer=usbasp"]]) {
+      const upload = ["upload", "--build", "r.json", "--port", "COM5", "--identity", "x", ...programmer];
+      const result = classifyCommand(m.rules ?? [], "arduino-tool", upload);
+      expect(result).toMatchObject({ risk: "irreversible", confirm: "upload" });
+      expect(result.notes.join(" ")).toContain("bootloader");
+    }
     const readme = await readFile(join(source, "README.md"), "utf8");
     for (const text of [
       "1.6.0",
@@ -300,7 +306,7 @@ describe("package", { timeout: 30_000 }, () => {
   it("prints its version and offers no daemon, monitor, bootloader or OTA operation (REQ-SEC-93d5fc98)", async () => {
     const b = await bench();
     expect(spawnSync(python, ["-I", script, "--version"], { encoding: "utf8" }).stdout.trim()).toBe(
-      "arduino-tool 0.2.0",
+      "arduino-tool 0.2.1",
     );
     const help = spawnSync(python, ["-I", script, "--help"], { encoding: "utf8" }).stdout;
     for (const operation of [

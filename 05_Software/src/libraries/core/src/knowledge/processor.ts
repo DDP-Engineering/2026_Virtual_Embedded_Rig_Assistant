@@ -32,6 +32,8 @@ const cacheSchema = z
   .object({ version: z.literal(1), sha256: z.string().regex(/^[a-f0-9]{64}$/), extraction: extractionSchema })
   .strict();
 const CACHE_LIMIT = 128 * 1024 * 1024;
+/** Chunks per embedder call: its deadline then covers one batch, not a whole manual. */
+const EMBED_BATCH = 64;
 const absent = (e: unknown) => (e as NodeJS.ErrnoException).code === "ENOENT";
 function allowed(input: DocumentInput) {
   input.signal.throwIfAborted();
@@ -255,14 +257,15 @@ export function createDocumentProcessor(
     const chunks = needsOcr(extraction)
       ? []
       : chunkDocument(extraction, extname(input.path).toLowerCase() === ".csv", input.embeddings);
-    const vectors =
-      embeddings && chunks.length
-        ? await embeddings.embed(
-            input.root,
-            chunks.map((c) => c.text),
-            input.signal,
-          )
-        : undefined;
+    let vectors: Float32Array[] | undefined;
+    if (embeddings && chunks.length) {
+      vectors = [];
+      for (let start = 0; start < chunks.length; start += EMBED_BATCH) {
+        allowed(input);
+        const batch = chunks.slice(start, start + EMBED_BATCH).map((c) => c.text);
+        vectors.push(...(await embeddings.embed(input.root, batch, input.signal)));
+      }
+    }
     allowed(input);
     return needsOcr(extraction)
       ? { status: "needs_ocr", reason: "NEEDS_OCR", ...pages, chunks: [] }

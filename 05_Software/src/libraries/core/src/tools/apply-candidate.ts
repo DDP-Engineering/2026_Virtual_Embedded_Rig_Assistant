@@ -109,6 +109,7 @@ export async function prepareApplyCandidate(
   } catch {
     throw Error("The folder holds no kicad-layout state (state.json, format 1).");
   }
+  // state.json is a workbench file the agent can write: these gates catch a failed run, the approval is the control.
   if (state.edits < 1) throw Error("The candidate has no edit to apply.");
   if (state.objectives.status !== "pass")
     throw Error(
@@ -126,10 +127,8 @@ export async function prepareApplyCandidate(
     throw Error("The candidate must be a .kicad_pcb file inside the run folder.");
   if (!state.source.path.toLowerCase().endsWith(".kicad_pcb"))
     throw Error("The target must be a .kicad_pcb file.");
-  const inside = await workbench.resolve(state.source.path);
-  const target = inside;
-  if (target.key !== inside.key || protectedPath(inside.relative))
-    throw Error("The target must be a board that the agent may write.");
+  const target = await workbench.resolve(state.source.path);
+  if (protectedPath(target.relative)) throw Error("The target must be a board that the agent may write.");
   await assertAgentWritable(ctx, target);
   const before = await boardBytes(target.absolute, "source board");
   const beforeSha256 = hash(before);
@@ -140,7 +139,7 @@ export async function prepareApplyCandidate(
   const afterSha256 = hash(after);
   if (afterSha256 !== state.candidate.sha256)
     throw Error("The candidate changed since its check; edit it again or open a new candidate.");
-  const changePath = inside.relative;
+  const changePath = target.relative;
   const { diff, added, removed } = boardDiff(changePath, before.toString("utf8"), after.toString("utf8"));
   const request = Object.freeze({
     workbench: ctx.root,

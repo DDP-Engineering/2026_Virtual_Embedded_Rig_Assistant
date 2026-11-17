@@ -165,6 +165,18 @@ it("cancels an aborted call, ignores its late result and releases a workbench's 
   expect(h.latest().sent.at(-1)).toMatchObject({ type: "release", root: "/bench" });
 });
 
+it("ends an aborted call even when the cancel cannot be posted", async () => {
+  const h = harness();
+  const controller = new AbortController();
+  const pending = h.host.processor(input(controller.signal));
+  await flush();
+  h.latest().postMessage = () => {
+    throw Error("channel closed");
+  };
+  controller.abort(Error("stopped by the user"));
+  await expect(pending).rejects.toThrow("stopped by the user");
+});
+
 it("does not start an indexer only to release a workbench", async () => {
   const h = harness();
   await h.host.processor.release?.("/bench");

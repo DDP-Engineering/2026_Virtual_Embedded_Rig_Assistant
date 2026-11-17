@@ -11,6 +11,15 @@ describe("command prefix storage and user IPC", () => {
     for (const prefix of ["", "git push --force", "rm -rf .", "npm test; echo bad", "npm test\necho bad"])
       expect(workbenchPatchSchema.safeParse({ agent: { allowed_commands: [prefix] } }).success).toBe(false);
   });
+  it("drops a stored grant the policy no longer accepts instead of refusing the workbench", () => {
+    const config = workbenchSchema.parse({
+      format: 1,
+      id: "wb_01JB8Z6Q4M7N2K5R9T3V8X1Y0C",
+      name: "Bench",
+      agent: { allowed_commands: ["npm test", "git restore", "npm test", "git"] },
+    });
+    expect(config.agent.allowed_commands).toEqual(["npm test", "git"]);
+  });
   it("accepts an explicit user prefix only on an approved exact request", () => {
     const input = {
       sessionId: "ses_01JB8Z6Q4M7N2K5R9T3V8X1Y0C",

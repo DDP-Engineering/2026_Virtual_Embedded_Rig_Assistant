@@ -1,5 +1,5 @@
 import { createCipheriv, createDecipheriv, createHmac, randomBytes } from "node:crypto";
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
 import { veraError } from "@vera/shared";
 import { z } from "zod";
@@ -7,18 +7,30 @@ import { z } from "zod";
 const prefix = "__vera_display_";
 const marked = (part: string) => part.startsWith(prefix) && part.endsWith(".");
 const keySchema = z.strictObject({ schemaVersion: z.literal(1), key: z.string().regex(/^[a-f0-9]{64}$/) });
-/** A host-local key makes opaque document identities stable across restarts without storing paths. */
-export function loadDisplayIdentityKey(file: string): Buffer {
+/**
+ * A host-local key makes opaque document identities stable across restarts without storing paths.
+ * This never throws, so one bad file cannot keep the application from starting: a missing or damaged
+ * key file gets a new key (earlier identities stop resolving), and a key that cannot be saved is
+ * used for this run only.
+ */
+export function loadDisplayIdentityKey(file: string, warn: (event: string) => void = () => {}): Buffer {
   try {
     return Buffer.from(keySchema.parse(JSON.parse(readFileSync(file, "utf8"))).key, "hex");
   } catch (error) {
-    if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw veraError("INVALID");
+    if ((error as NodeJS.ErrnoException).code !== "ENOENT") warn("display.identities.key.replaced");
     const key = randomBytes(32);
-    mkdirSync(dirname(file), { recursive: true });
-    writeFileSync(file, JSON.stringify({ schemaVersion: 1, key: key.toString("hex") }), {
-      mode: 0o600,
-      flag: "wx",
-    });
+    const temporary = `${file}.tmp`;
+    try {
+      mkdirSync(dirname(file), { recursive: true });
+      // Flushed and renamed into place, so a crash or power loss never leaves a truncated key file.
+      writeFileSync(temporary, JSON.stringify({ schemaVersion: 1, key: key.toString("hex") }), {
+        mode: 0o600,
+        flush: true,
+      });
+      renameSync(temporary, file);
+    } catch {
+      warn("display.identities.key.unsaved");
+    }
     return key;
   }
 }

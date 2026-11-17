@@ -2,7 +2,7 @@
 
 PURPOSE: build CAP-02 in two tasks. Spec: [SPEC](SPEC.md); shared rules: [contracts](../../contracts.md).
 DONE-WHEN: both tasks pass their tests on Windows x64 and Linux x64 and `npm run verify` passes.
-STATUS: planned 2026-11-01. Implementation follows the repository's AEGIS workflow. Independent of
+STATUS: implemented. Implementation follows the repository's AEGIS workflow. Independent of
 CAP-01: no worker is needed.
 
 ## Task 1 — schema, parser and decoder

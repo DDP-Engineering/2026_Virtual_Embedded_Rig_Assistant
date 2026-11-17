@@ -3,6 +3,7 @@ import { lstat, open } from "node:fs/promises";
 import { fileRevision } from "../workbench/file-revision.js";
 import type { PathGuard } from "../workbench/path-guard.js";
 import { isBinary } from "./binary.js";
+import { assertNotSpecialFile } from "./files.js";
 
 /** Full-file metadata scan stays streaming; only the requested source window is retained. */
 export async function readWindow(
@@ -15,6 +16,7 @@ export async function readWindow(
 ) {
   signal.throwIfAborted();
   const target = await guard.resolve(path);
+  await assertNotSpecialFile(target.absolute);
   const handle = await open(target.absolute, "r");
   try {
     const before = await handle.stat();

@@ -4,7 +4,6 @@ VERA indexes the documentation of a workbench on your computer, so the agent can
 
 Display masking is off by default. When enabled for a workbench, stored secrets in file names and viewer text appear as [REDACTED]. Files and search results remain listed and open the same file, even when two masked names look alike. Display masking does not change indexing or what the agent may send to a model. PDF page images keep their original bytes; only extracted text is masked.
 
-
 ## What is indexed
 
 The folders checked under **Edit workbench** → **Documents & RAG** are indexed, together with the include and exclude patterns under **Advanced: include and exclude patterns**. These file types are indexed:
@@ -20,8 +19,8 @@ With **Use .gitignore** checked (the default for new workbenches), files and fol
 Indexing runs in the background and follows changes: new, changed and deleted files are picked up automatically.
 
 ## Index status
+
 The **Files** tab places the **Reindex** and **Collapse all** icon buttons beside search. Hover over an icon for its label. While indexing, a compact line shows completed and remaining files; it disappears after successful completion. The Reindex tooltip keeps the document and failure counts. Expand a failure count to see file names and reasons, and choose **Reindex** to retry the whole selection. Failures remain available when you reopen the tab. Each document also has its own status:
-The **Files** tab of the right panel shows the progress (**Index: … done, … pending, … failed**) and marks each document:
 
 | Status | Meaning |
 |---|---|

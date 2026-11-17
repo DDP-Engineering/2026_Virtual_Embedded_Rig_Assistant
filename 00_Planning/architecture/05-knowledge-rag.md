@@ -39,9 +39,11 @@ chokidar on the literal docs.include prefixes + .vera/workbench.yaml + .vera/.ve
 - A file that changes while it is processed is retried on the next pass; nothing partial is stored.
 - Statuses `pending | indexed | failed | unsupported | needs_ocr`; reasons `SIZE_LIMIT |
   TYPE_UNSUPPORTED | BINARY | IO | PROCESSING | NEEDS_OCR`.
-- Size limits: PDF and Office 100 MiB, Markdown, HTML and text 20 MiB; larger files become
-  `unsupported` / `SIZE_LIMIT`. Above 2 000 selected files or 2 GiB of source the Docs panel and
-  the workbench form's Documents section warn; indexing continues.
+- Size limits: PDF and Office 100 MiB, Markdown, HTML and text 20 MiB, lowered by `docs.maxFileMB`;
+  larger files become `unsupported` / `SIZE_LIMIT`. Above 2 000 selected files or 2 GiB of source
+  the Docs panel and the workbench form's Documents section warn; indexing continues. Above
+  `docs.maxFiles` selected files (default 10 000) nothing is indexed until the user chooses "Index
+  anyway" (`core/src/knowledge/guard.ts`).
 
 ## 2. Extraction
 

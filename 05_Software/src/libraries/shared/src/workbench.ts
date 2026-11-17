@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { commandPrefixListSchema } from "./command-prefix.js";
+import { commandPrefixListSchema, storedCommandPrefixesSchema } from "./command-prefix.js";
 import { workbenchPrivacySchema } from "./privacy.js";
 import { permissionModeSchema } from "./session.js";
 
@@ -100,7 +100,7 @@ export const workbenchRetrievalSchema = z.looseObject({
 });
 export type WorkbenchRetrieval = Pick<z.infer<typeof workbenchRetrievalSchema>, "results" | "mode">;
 const agent = z.looseObject({
-  allowed_commands: commandPrefixListSchema.default([]),
+  allowed_commands: storedCommandPrefixesSchema.default([]),
   permission_mode: permissionModeSchema.default("ask"),
   model: z
     .string()

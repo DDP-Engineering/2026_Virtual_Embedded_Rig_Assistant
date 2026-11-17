@@ -24,7 +24,7 @@ The agent finds the port with the serial monitor and never guesses it. It confir
 - Safe, runs without asking: commands that work on files only (`merge-bin`, `image-info`, `elf2image`).
 - Device-read: identifying the chip, reading the MAC, flash ID and security state, verifying and reading flash. Every command that connects resets the chip into its bootloader and stops the running firmware.
 - Device-write: `write-flash`, `erase-flash`, `erase-region` and `load-ram`. The approval card lists each image with its SHA-256; if an image is rebuilt after you approve, the run fails and is requested again.
-- Irreversible: `write-mem`, `write-flash-status` and any command with `--force`. These can set eFuse bits or flash lock bits for good, or make a secured chip unbootable. The agent uses them only when you ask for exactly that command, and VERA asks you to type the confirmation word, except in Bypass.
+- Irreversible: `write-mem`, `write-flash-status` and any command with `--force`, `--encrypt`, `--encrypt-files` or `--ignore-flash-enc-efuse`. These can set eFuse bits or flash lock bits for good, or make a secured chip unbootable. The agent uses them only when you ask for exactly that command, and VERA asks you to type the confirmation word, except in Bypass.
 
 In Ask mode VERA asks before each device-read and device-write command; Auto-edit runs device-read commands without asking.
 

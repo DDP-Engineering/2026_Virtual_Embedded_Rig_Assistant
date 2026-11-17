@@ -101,6 +101,14 @@ def markdown(document: dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
+def _csv_cell(value: object) -> object:
+    """A text cell a spreadsheet would run as a formula gets a leading quote; +3V3, -5V and numbers stay as they are."""
+    if not isinstance(value, str):
+        return value
+    formula = value.startswith(("=", "@", "\t", "\r")) or (value.startswith(("+", "-")) and any(mark in value for mark in "(|!"))
+    return "'" + value if formula else value
+
+
 def bom(document: dict[str, Any]) -> str:
     buffer = io.StringIO()
     writer = csv.writer(buffer, lineterminator="\r\n")
@@ -108,12 +116,12 @@ def bom(document: dict[str, Any]) -> str:
     proposed = _proposed(document)
     if proposed:
         offer = best_offer(proposed, document["currency"]) or {}
-        writer.writerow([
+        writer.writerow([_csv_cell(cell) for cell in [
             "proposed", document["quantity"], proposed["manufacturer"], proposed["mpn"], proposed["package"] or "",
             offer.get("supplier", ""), offer.get("sku", ""), offer.get("packaging") or "", offer.get("orderQuantity", ""),
             "" if offer.get("unitPrice") is None else offer["unitPrice"], offer.get("currency") or "",
             offer.get("retrievedAt", ""), "" if not offer else ("yes" if offer["stale"] else "no"),
-        ])
+        ]])
     return buffer.getvalue()
 
 

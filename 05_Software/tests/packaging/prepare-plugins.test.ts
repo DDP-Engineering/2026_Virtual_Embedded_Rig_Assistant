@@ -92,7 +92,7 @@ it("builds the official plugins into a bundled catalog release and checks it aga
   expect(index.plugins.find((plugin: { id: string }) => plugin.id === "kicad")).toMatchObject({
     activities: ["design"],
     ecosystem: "electronics",
-    version: "0.3.0",
+    version: "0.3.1",
   });
   for (const plugin of index.plugins) {
     expect(plugin.activities.length).toBeGreaterThan(0);

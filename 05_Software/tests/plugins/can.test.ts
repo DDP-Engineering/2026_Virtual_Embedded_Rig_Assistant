@@ -415,6 +415,11 @@ describe("the can script with a fake python-can", { timeout: 60_000 }, () => {
     const id = await run(["--dbc", dbc, "--input", dbc, "--id", "zz"], { script: decodeScript });
     expect(id.code).toBe(2);
     expect(id.stderr).toContain("--id must be hexadecimal");
+    for (const limit of ["-1", "0"]) {
+      const refused = await run(["--dbc", dbc, "--input", dbc, "--limit", limit], { script: decodeScript });
+      expect(refused.code, limit).toBe(2);
+      expect(refused.stderr).toContain("--limit: must be a positive integer");
+    }
   });
 });
 
@@ -552,7 +557,7 @@ it.skipIf(!uv)(
       const release = await core.buildCatalogRelease(fileURLToPath(plugins), join(root, "release"));
       expect(release.issues).toEqual([]);
       const store = new core.PluginStore({ root: join(root, "plugins") });
-      for (const zip of [`can-python-0.2.0.zip`, `can-dbc-0.3.0.zip`])
+      for (const zip of [`can-python-0.2.0.zip`, `can-dbc-0.3.1.zip`])
         await store.install(join(root, "release", zip));
       provisioner = new core.Provisioner({
         store,

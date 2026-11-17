@@ -193,7 +193,7 @@ it("publishes the official kicad-layout package, its pack and skill (REQ-PLAT-39
   expect(validatePluginManifest(m).issues).toEqual([]);
   expect(m).toMatchObject({
     id: "kicad-layout",
-    version: "0.3.0",
+    version: "0.3.1",
     ecosystem: "electronics",
     platforms: ["windows-x64", "linux-x64"],
   });
@@ -297,10 +297,30 @@ describe("kicad-layout-tool without KiCad", { timeout: 300_000 }, () => {
 
   it("prints its version and help (REQ-DATA-891d5b5d)", () => {
     const version = spawnSync(python, [tool, "--version"], { encoding: "utf8", env: baseEnv() });
-    expect(version.stdout.trim()).toMatch(/^kicad-layout-tool 0\.3\.0$/);
+    expect(version.stdout.trim()).toMatch(/^kicad-layout-tool 0\.3\.1$/);
     const help = spawnSync(python, [tool, "--help"], { encoding: "utf8", env: baseEnv() });
     for (const word of ["open", "edit", "close", "--board", "--run", "--json"])
       expect(help.stdout).toContain(word);
+  });
+
+  it("reads kicad-cli output as UTF-8 with replacement, whatever the locale", () => {
+    const code = [
+      "import sys",
+      "sys.path.insert(0, sys.argv[1])",
+      "from kicad_layout_support import drc",
+      "from kicad_layout_support.request import Failed",
+      "child = \"import sys; sys.stderr.buffer.write(b'ge' + bytes([0xc3, 0xa4, 0x81]) + b'ndert'); sys.exit(3)\"",
+      "try:",
+      "    drc._run([sys.executable, '-c', child], 30, 'drc')",
+      "except Failed as error:",
+      "    print(ascii(str(error)))",
+    ].join("\n");
+    const run = spawnSync(python, ["-c", code, join(source, "scripts")], {
+      encoding: "utf8",
+      env: baseEnv(),
+    });
+    expect(run.status, run.stderr).toBe(0);
+    expect(run.stdout.trim()).toBe("'kicad-cli drc failed (exit 3): ge\\xe4\\ufffdndert'");
   });
 
   it("refuses an open of anything but a workbench board before starting KiCad (REQ-REL-19ac705f)", async () => {
@@ -344,7 +364,7 @@ describe("kicad-layout-tool without KiCad", { timeout: 300_000 }, () => {
       kind: "kicad-layout-state",
       runId: "offline",
       tool: "kicad-layout-tool",
-      toolVersion: "0.3.0",
+      toolVersion: "0.3.1",
       kicad: "10.0.8",
       source: { path: "boards/layout.kicad_pcb", sha256: sha256(candidate), bytes: candidate.length },
       candidate: {

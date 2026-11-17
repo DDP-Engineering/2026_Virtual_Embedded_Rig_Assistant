@@ -3,7 +3,7 @@ import { mkdir, mkdtemp, readdir, readFile, rename, rm, symlink, unlink, writeFi
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { classifyCommand, pluginOperations } from "@vera/shared";
+import { classifyCommand, PLUGIN_LIMITS, pluginOperations } from "@vera/shared";
 import { zipSync } from "fflate";
 import { afterEach, expect, it } from "vitest";
 import { stringify } from "yaml";
@@ -339,14 +339,14 @@ it("uninstalls a plugin and reports NOT_FOUND for one that is not installed", as
   await expect(f.store.uninstall("../x")).rejects.toMatchObject({ code: "NOT_FOUND" });
 });
 
-/** Rewrites every local and central uncompressed-size field of a zip to 0. */
-function hideSizes(zip: Uint8Array): Uint8Array {
+/** Rewrites every local and central uncompressed-size field of a zip to `size`. */
+function declareSizes(zip: Uint8Array, size: number): Uint8Array {
   const copy = new Uint8Array(zip);
   const view = new DataView(copy.buffer);
   for (let i = 0; i + 4 <= copy.length; i++) {
     const signature = view.getUint32(i, true);
-    if (signature === 0x04034b50) view.setUint32(i + 22, 0, true);
-    if (signature === 0x02014b50) view.setUint32(i + 24, 0, true);
+    if (signature === 0x04034b50) view.setUint32(i + 22, size, true);
+    if (signature === 0x02014b50) view.setUint32(i + 24, size, true);
   }
   return copy;
 }
@@ -356,7 +356,10 @@ it("refuses a zip whose directory hides stored sizes and folder names that colli
   const f = await fixture();
   const files = Object.fromEntries(Object.entries(packageFiles()).map(([k, v]) => [k, Buffer.from(v)]));
   const lying = join(f.root, "lying.zip");
-  await writeFile(lying, hideSizes(zipSync({ ...files, "blob.bin": new Uint8Array(1024) }, { level: 0 })));
+  await writeFile(
+    lying,
+    declareSizes(zipSync({ ...files, "blob.bin": new Uint8Array(1024) }, { level: 0 }), 0),
+  );
   await expectInvalid(f.store.install(lying));
   for (const extra of [
     { "Docs/a.md": "a", "docs/b.md": "b" },
@@ -369,6 +372,19 @@ it("refuses a zip whose directory hides stored sizes and folder names that colli
     ),
     { issue: "yaml" },
   );
+  expect(await f.entries()).toEqual([]);
+});
+
+it("refuses a zip whose directory declares a file or a package over the inflated-size limits", async () => {
+  const f = await fixture();
+  const files = Object.fromEntries(Object.entries(packageFiles()).map(([k, v]) => [k, Buffer.from(v)]));
+  const bomb = join(f.root, "bomb.zip");
+  await writeFile(bomb, declareSizes(zipSync(files, { level: 1 }), PLUGIN_LIMITS.inflatedFileBytes + 1));
+  await expectInvalid(f.store.install(bomb));
+  // Six files, each under the file limit, together over the package limit.
+  const many = { ...files, "a.bin": Buffer.from("a"), "b.bin": Buffer.from("b") };
+  await writeFile(bomb, declareSizes(zipSync(many, { level: 1 }), PLUGIN_LIMITS.inflatedBytes / 5));
+  await expectInvalid(f.store.install(bomb));
   expect(await f.entries()).toEqual([]);
 });
 

@@ -199,7 +199,11 @@ export class IndexerHost {
     return new Promise<T>((resolve, reject) => {
       const abort = () => {
         if (!this.pending.delete(id)) return;
-        this.endpoint?.postMessage({ type: "cancel", id });
+        try {
+          this.endpoint?.postMessage({ type: "cancel", id });
+        } catch {
+          // An indexer that cannot be reached has nothing left to cancel; the call still ends below.
+        }
         reject(signal?.reason ?? Error("Aborted."));
       };
       this.pending.set(id, {

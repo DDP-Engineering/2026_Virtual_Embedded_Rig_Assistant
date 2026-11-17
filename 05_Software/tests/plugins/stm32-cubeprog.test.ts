@@ -208,7 +208,9 @@ it("classifies every command of a line at the highest risk", async () => {
   ] as const;
   for (const [risk, args] of cases) expect(classify([...args]).risk, args.join(" ")).toBe(risk);
   expect(classify([...swd, "-ob", "RDP=0xCC"])).toMatchObject({ confirm: "-ob" });
-  expect(classify([...swd, "-ob", "RDP=0xCC"]).notes.join(" ")).toContain("RDP=0xCC");
+  expect(classify([...swd, "-ob", "RDP=0xCC"]).notes.join(" ")).toMatch(
+    /RDP=0xCC \(readout protection level 2\) is permanent - it cannot be undone/,
+  );
   expect(classify([...swd, "--readunprotect"]).confirm).toBe("-rdu");
   expect(classify([...swd, "-setOEM1KEY", "1", "2"]).confirm).toBe("-lockrdp1");
   expect(classify(["--power", "on"]).confirm).toBe("-pwr");

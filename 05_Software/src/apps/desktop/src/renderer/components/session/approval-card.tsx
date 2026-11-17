@@ -50,15 +50,17 @@ function ProgramDetails({ program }: { program: ProgramApproval }) {
       </dl>
       {program.notes.length > 0 && (
         <ul className="approval-notes" aria-label={t("approval.notes")}>
-          {program.notes.map((note) => (
-            <li key={note}>{note}</li>
+          {program.notes.map((note, index) => (
+            // biome-ignore lint/suspicious/noArrayIndexKey: notes can repeat; the list is never reordered.
+            <li key={`${index}:${note}`}>{note}</li>
           ))}
         </ul>
       )}
       {program.files.length > 0 && (
         <ul className="approval-files" aria-label={t("approval.files")}>
-          {program.files.map((file) => (
-            <li key={file.arg}>
+          {program.files.map((file, index) => (
+            // biome-ignore lint/suspicious/noArrayIndexKey: an argument can name two files; the list is never reordered.
+            <li key={`${index}:${file.arg}`}>
               <code>{file.path}</code> <span className="approval-sha">SHA-256 {file.sha256}</span>
             </li>
           ))}

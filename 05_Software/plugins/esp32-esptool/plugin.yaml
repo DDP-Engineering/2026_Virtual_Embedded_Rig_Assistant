@@ -1,6 +1,6 @@
 format: 1
 id: esp32-esptool
-version: 0.2.0
+version: 0.2.1
 license: LicenseRef-PolyForm-Noncommercial-1.0.0
 name: ESP32 esptool
 summary: Identify, flash, verify, erase and read Espressif chips over a serial port with esptool.
@@ -46,5 +46,11 @@ rules:
   - match: "esptool * --force *"
     risk: irreversible
     note: --force skips esptool's security checks; on a chip with secure boot or flash encryption the write or erase can make it unbootable for good.
+  - match: "esptool * {--encrypt,--encrypt-files} *"
+    risk: irreversible
+    note: --encrypt and --encrypt-files write images through the chip's flash encryption; with eFuse settings that do not fit, the chip cannot boot what was written.
+  - match: "esptool * --ignore-flash-enc-efuse *"
+    risk: irreversible
+    note: --ignore-flash-enc-efuse skips esptool's check of the flash-encryption eFuses; an encrypted write to a chip that is not set up for it can leave it unbootable.
 docs:
   - https://docs.espressif.com/projects/esptool/en/latest/

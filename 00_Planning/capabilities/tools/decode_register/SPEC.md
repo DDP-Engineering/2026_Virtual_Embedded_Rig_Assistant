@@ -4,7 +4,7 @@ PURPOSE: CAP-02, an internal `read` tool that decodes a captured register value 
 definition file, field by field, without precision loss.
 DONE-WHEN: the acceptance cases of §5 pass on Windows x64 and Linux x64. Shared rules:
 [contracts](../../contracts.md); work: [PLAN](PLAN.md).
-STATUS: rewritten 2026-11-01; nothing implemented yet.
+STATUS: rewritten 2026-11-01; implemented.
 
 ## 1. Boundary
 

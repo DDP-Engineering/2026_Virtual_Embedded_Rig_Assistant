@@ -107,7 +107,7 @@ it("publishes the official parts-search package, its pack group, activity and tw
   expect(validatePluginManifest(m).issues).toEqual([]);
   expect(m).toMatchObject({
     id: "parts-search",
-    version: "0.3.0",
+    version: "0.3.1",
     ecosystem: "electronics",
     platforms: ["windows-x64", "linux-x64"],
   });
@@ -192,6 +192,39 @@ it("imports nothing that can reach a network or place an order (REQ-FUNC-8dfa1ca
       /^\s*(?:import|from)\s+(?:socket|ssl|http|urllib|ftplib|smtplib|asyncio|subprocess)\b/m,
     );
   }
+});
+
+it("quotes bom.csv cells a spreadsheet would run as a formula", () => {
+  const offer = {
+    supplier: "-5V",
+    sku: '=HYPERLINK("http://x")',
+    packaging: "@reel",
+    orderQuantity: 100,
+    unitPrice: 0.19,
+    extendedPrice: 19,
+    currency: "EUR",
+    retrievedAt: "2026-01-01T00:00:00.000Z",
+    stale: false,
+  };
+  const document = {
+    quantity: 100,
+    currency: "EUR",
+    proposed: 0,
+    devices: [
+      { manufacturer: "\tFictional Semi", mpn: "+3V3", package: "+cmd|' /C calc'!A0", offers: [offer] },
+    ],
+  };
+  const code =
+    "import json, sys; sys.path.insert(0, sys.argv[1]); from parts_support import report; " +
+    "sys.stdout.buffer.write(report.bom(json.loads(sys.argv[2])).encode('utf-8'))";
+  const result = spawnSync(python, ["-c", code, scripts, JSON.stringify(document)], {
+    encoding: "utf8",
+    env: env(),
+  });
+  expect(result.status, result.stderr).toBe(0);
+  expect(result.stdout.split("\r\n")[1]).toBe(
+    `proposed,100,'\tFictional Semi,+3V3,'+cmd|' /C calc'!A0,-5V,"'=HYPERLINK(""http://x"")",'@reel,100,0.19,EUR,2026-01-01T00:00:00.000Z,no`,
+  );
 });
 
 describe("parts-compare", { timeout: 120_000 }, () => {
@@ -604,7 +637,7 @@ it.skipIf(!uv)(
       const release = await core.buildCatalogRelease(fileURLToPath(plugins), join(root, "release"));
       expect(release.issues).toEqual([]);
       const store = new core.PluginStore({ root: join(root, "plugins") });
-      await store.install(join(root, "release/parts-search-0.3.0.zip"));
+      await store.install(join(root, "release/parts-search-0.3.1.zip"));
       provisioner = new core.Provisioner({
         store,
         root: join(root, "runtime"),
@@ -618,7 +651,7 @@ it.skipIf(!uv)(
         },
       });
       expect(await provisioner.install("parts-search")).toEqual([
-        { name: "parts-compare", kind: "script", state: "ready", version: "0.3.0" },
+        { name: "parts-compare", kind: "script", state: "ready", version: "0.3.1" },
       ]);
       const resolved = await provisioner.resolve(await store.load("parts-search"), "parts-compare");
       if (!resolved) throw Error("parts-compare did not resolve");

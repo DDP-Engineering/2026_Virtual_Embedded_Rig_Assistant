@@ -175,12 +175,13 @@ async function readFolder(root: string, installed: boolean): Promise<Files> {
 }
 
 /**
- * The archive's directory is walked first and refused over the file-count limit or with unsafe names; only then is
- * it inflated.
+ * The archive's directory is walked first and refused over the file-count or inflated-size limits or with unsafe
+ * names; only then is it inflated.
  * The package is either at the root or inside one top folder, which names the package.
  */
 function readZip(data: Uint8Array): { files: Files; folder?: string } {
   let count = 0;
+  let bytes = 0;
   let inflated: Record<string, Uint8Array>;
   try {
     unzipSync(data, {
@@ -190,6 +191,10 @@ function readZip(data: Uint8Array): { files: Files; folder?: string } {
         // A stored entry is copied by its compressed size, whatever the directory claims.
         if (file.compression === 0 && file.size !== file.originalSize) throw fails("INVALID");
         if (count > PLUGIN_LIMITS.files) throw fails("INVALID");
+        // Each entry inflates into a buffer of the size its directory entry declares, so these bound the memory.
+        bytes += file.originalSize;
+        if (file.originalSize > PLUGIN_LIMITS.inflatedFileBytes || bytes > PLUGIN_LIMITS.inflatedBytes)
+          throw fails("INVALID");
         if (!isPluginRelativePath(file.name)) throw fails("INVALID");
         return false;
       },

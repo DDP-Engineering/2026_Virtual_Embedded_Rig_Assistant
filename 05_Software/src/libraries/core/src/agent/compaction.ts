@@ -12,6 +12,8 @@ Return only JSON: {"summary":"concise factual history","decisions":["decision an
 Keep the result substantially shorter than the history. Current system rules take precedence.`;
 const fingerprint = (messages: Message[]) =>
   createHash("sha256").update(JSON.stringify(messages)).digest("hex");
+/** Local models often wrap the JSON reply in one Markdown code fence. */
+const withoutFence = (text: string) => /^```(?:json)?\s*([\s\S]*?)\s*```$/i.exec(text.trim())?.[1] ?? text;
 
 /** Only whole successful exchanges before the current user instruction are eligible. */
 function completedExchanges(messages: Message[], current: number): { start: number; end: number }[] {
@@ -153,12 +155,13 @@ export class ContextCompactor {
     } catch {
       return finish(base, "failed");
     }
-    if (response?.stopReason !== "stop" || response.content.some((block) => block.type !== "text"))
+    // A reasoning block beside the answer is expected from a reasoning model; a tool call is not a summary.
+    if (response?.stopReason !== "stop" || response.content.some((block) => block.type === "toolCall"))
       return finish(base, "failed");
     const text = response.content.map((block) => (block.type === "text" ? block.text : "")).join("");
     let parsed: unknown;
     try {
-      parsed = JSON.parse(text);
+      parsed = JSON.parse(withoutFence(text));
     } catch {
       return finish(base, "failed");
     }

@@ -23,7 +23,8 @@ Der Agent fragt Sie, welches Board und welchen Port er verwenden soll, wenn mehr
 
 - Sicher, läuft ohne Rückfrage: Untersuchen eines Sketches, Abfragen zu Boards, Cores und Bibliotheken, Laufberichte und das Leeren von VERAs Build-Cache.
 - Gerät lesen: Auflisten der Boards (serielle Ports und mDNS-Erkennung) und Kompilieren, das den Compiler und die Build-Hooks des Cores auf diesem Computer ausführt.
-- Gerät schreiben: Installieren von Cores, Bibliotheken und Indizes in VERAs Arduino-Umgebung sowie Hochladen, das den Flash des Boards beschreibt und die neue Firmware sofort startet. Mit einem Programmer überschreibt ein Upload auch den Bootloader.
+- Gerät schreiben: Installieren von Cores, Bibliotheken und Indizes in VERAs Arduino-Umgebung sowie Hochladen, das den Flash des Boards beschreibt und die neue Firmware sofort startet.
+- Irreversibel: Hochladen mit `--programmer`, das auch den Bootloader überschreibt. VERA fordert Sie auf, das Bestätigungswort einzugeben, außer im Bypass.
 - Gesperrt: jeder direkte `arduino-cli`-Befehl.
 
 Im Modus Nachfragen fragt VERA vor jedem Befehl der Stufen Gerät lesen und Gerät schreiben nach; Auto-Edit führt Befehle der Stufe Gerät lesen ohne Rückfrage aus.

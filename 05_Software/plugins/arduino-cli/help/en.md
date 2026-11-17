@@ -23,7 +23,8 @@ The agent asks you which board and port to use when more than one is connected o
 
 - Safe, runs without asking: inspecting a sketch, board, core and library lookups, run reports and cleaning VERA's build cache.
 - Device-read: listing boards (serial ports and mDNS discovery) and compiling, which runs the core's compiler and build hooks on this computer.
-- Device-write: installing cores, libraries and indexes into VERA's Arduino environment, and uploading, which writes the board's flash and starts the new firmware at once. With a programmer an upload also overwrites the bootloader.
+- Device-write: installing cores, libraries and indexes into VERA's Arduino environment, and uploading, which writes the board's flash and starts the new firmware at once.
+- Irreversible: uploading with `--programmer`, which also overwrites the bootloader. VERA asks you to type the confirmation word, except in Bypass.
 - Blocked: every direct `arduino-cli` command.
 
 In Ask mode VERA asks before each device-read and device-write command; Auto-edit runs device-read commands without asking.

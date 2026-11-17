@@ -17,7 +17,7 @@ Un card te avertizează când pluginul nu este disponibil pentru platforma ta sa
 
 ## Revizuire și încredere
 
-Înainte de instalare, VERA afișează o revizuire: **Componență** (programele și proveniența lor, skill-uri, fișiere de date, documente) și **Operații**, regulile de comandă ale pluginului grupate după nivelul de risc. Actualizările care schimbă programe, surse sau reguli sunt revizuite din nou. Dacă fișierele pluginului se modifică după instalare, VERA nu îl mai folosește până când nu îl instalezi din nou.
+Înainte de instalare, VERA afișează o revizuire: ce conține pluginul (**Programe** și proveniența lor, **Abilități**, **Profiluri și fișiere de date**, **Documente**) și **Operații**, regulile de comandă ale pluginului grupate după nivelul de risc. Actualizările care schimbă programe, surse sau reguli sunt revizuite din nou. Dacă fișierele pluginului se modifică după instalare, VERA nu îl mai folosește până când nu îl instalezi din nou.
 
 Pluginurile au un nivel de încredere:
 
@@ -36,7 +36,7 @@ Instalarea nu activează un plugin. Deschide **Editează workbenchul** → **Plu
 
 ## Dependențe
 
-Blocul **Stare** al unui plugin instalat verifică trei lucruri: **Dependențe**, **Configurare** și **Utilizare**. Afișează **Gata** doar când toate trei sunt pregătite.
+Blocul **Stare** al unui plugin instalat verifică două lucruri: **Dependențe** și **Configurare**. Afișează **Gata** doar când ambele sunt pregătite.
 
 - **Verifică dependențele** caută programele; **Verifică toate dependențele** face acest lucru pentru fiecare plugin.
 - **Instalează dependențele** instalează ce poate instala VERA singur (pachete Python, scripturi și descărcări cu versiune fixată) în propriul folder de programe. Fiecare descărcare este verificată după SHA-256.

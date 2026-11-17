@@ -53,6 +53,9 @@ def target(value: str) -> str:
     segments = value[1:].split("/")
     if len(segments) > 8 or any(segment in ("", ".", "..") for segment in segments):
         raise refuse("must name a file without empty, '.' or '..' segments, at most 8 deep")
+    # Windows drops a trailing dot or space and reads ':' as a stream, so '/boot.py.' would write boot.py.
+    if any(segment.endswith((".", " ")) or ":" in segment for segment in segments):
+        raise refuse("has a name that ends in a dot or a space, or holds ':'; name the file without them, such as /code.py")
     if value.casefold() == "/boot_out.txt":
         raise refuse("names the file the firmware writes at every start")
     if value.casefold().endswith(PART):

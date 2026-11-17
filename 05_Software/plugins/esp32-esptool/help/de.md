@@ -24,7 +24,7 @@ Der Agent findet den Port mit dem Serial Monitor und rät ihn nie. Er bestätigt
 - Sicher, läuft ohne Rückfrage: Befehle, die nur mit Dateien arbeiten (`merge-bin`, `image-info`, `elf2image`).
 - Gerät lesen: Identifizieren des Chips, Lesen von MAC, Flash-ID und Sicherheitsstatus, Verifizieren und Auslesen des Flashs. Jeder Befehl, der eine Verbindung aufbaut, setzt den Chip in seinen Bootloader zurück und stoppt die laufende Firmware.
 - Gerät schreiben: `write-flash`, `erase-flash`, `erase-region` und `load-ram`. Die Freigabekarte listet jedes Image mit seiner SHA-256 auf; wird ein Image nach Ihrer Freigabe neu gebaut, schlägt der Lauf fehl und wird erneut angefordert.
-- Irreversibel: `write-mem`, `write-flash-status` und jeder Befehl mit `--force`. Diese können eFuse-Bits oder Flash-Sperrbits endgültig setzen oder einen gesicherten Chip unbootbar machen. Der Agent verwendet sie nur, wenn Sie genau diesen Befehl verlangen, und VERA fordert Sie auf, das Bestätigungswort einzugeben, außer im Bypass.
+- Irreversibel: `write-mem`, `write-flash-status` und jeder Befehl mit `--force`, `--encrypt`, `--encrypt-files` oder `--ignore-flash-enc-efuse`. Diese können eFuse-Bits oder Flash-Sperrbits endgültig setzen oder einen gesicherten Chip unbootbar machen. Der Agent verwendet sie nur, wenn Sie genau diesen Befehl verlangen, und VERA fordert Sie auf, das Bestätigungswort einzugeben, außer im Bypass.
 
 Im Modus Nachfragen fragt VERA vor jedem Befehl der Stufen Gerät lesen und Gerät schreiben nach; Auto-Edit führt Befehle der Stufe Gerät lesen ohne Rückfrage aus.
 

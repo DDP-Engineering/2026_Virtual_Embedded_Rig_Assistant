@@ -1,6 +1,6 @@
 format: 1
 id: can-dbc
-version: 0.3.0
+version: 0.3.1
 license: LicenseRef-PolyForm-Noncommercial-1.0.0
 name: CAN databases (cantools)
 summary: Decode CAN logs into named signals with DBC, KCD, SYM or ARXML databases using cantools.

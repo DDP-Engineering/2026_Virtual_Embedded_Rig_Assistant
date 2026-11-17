@@ -4,4 +4,4 @@ FORMAT = 1
 KIND = "circuitpython-tool-result"
 SET_KIND = "circuitpython-library-set"
 TOOL = "circuitpython-tool"
-VERSION = "0.2.0"
+VERSION = "0.2.1"

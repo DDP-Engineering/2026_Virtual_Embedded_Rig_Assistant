@@ -3,7 +3,7 @@
 PURPOSE: the rules CAP-01…CAP-04 share: tool boundaries, evidence and citations, errors, limits,
 worker execution, the fixture workbench and how the skills ship.
 DONE-WHEN: every capability's SPEC cites these rules instead of restating them.
-STATUS: rewritten 2026-11-01 against the code at commit 33e72b8; nothing implemented yet.
+STATUS: rewritten 2026-11-01 against the code at commit 33e72b8; CAP-01…CAP-04 are implemented.
 
 ## 1. Boundaries
 

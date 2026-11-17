@@ -95,6 +95,14 @@ export function DocsTab({
       void client.invalidateQueries({ queryKey: ["docs.tree", workbenchId] });
       void client.invalidateQueries({ queryKey: ["docs.find", workbenchId] });
     };
+    // Indexing reports every document; one refresh after a burst replaces a reload per event.
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const refreshSoon = () => {
+      timer ??= setTimeout(() => {
+        timer = undefined;
+        refresh();
+      }, 300);
+    };
     const resetDisplay = (owner?: string) => {
       for (const channel of [
         "docs.list",
@@ -121,7 +129,7 @@ export function DocsTab({
         // A stopped selection reports no progress; an earlier run's counts would mislead.
         if (event.guard) setProgress(undefined);
       }
-      if (event.type === "index.document") refresh();
+      if (event.type === "index.document") refreshSoon();
       if (event.type === "config.changed") resetDisplay(workbenchId);
     });
     const offApp = api.subscribe("app", (event) => {
@@ -129,6 +137,7 @@ export function DocsTab({
     });
     refresh();
     return () => {
+      clearTimeout(timer);
       off();
       offApp();
     };

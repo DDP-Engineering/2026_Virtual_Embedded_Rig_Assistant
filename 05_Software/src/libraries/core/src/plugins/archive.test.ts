@@ -67,6 +67,23 @@ it("refuses zip entries that leave the extraction folder", async () => {
   await expect(extractZip(join(root, "broken.zip"), join(root, "out"))).rejects.toBeInstanceOf(ArchiveError);
 });
 
+it("refuses a zip that inflates past the byte limit or holds too many entries", async () => {
+  const root = await temp();
+  const file = await zipFile(root, { "a.bin": new Uint8Array(4096), "b.bin": new Uint8Array(4096) });
+  for (const [name, limits] of Object.entries({
+    bytes: { bytes: 8191, entries: 2 },
+    entries: { bytes: 8192, entries: 1 },
+  })) {
+    const target = join(root, name);
+    await mkdir(target);
+    await expect(extractZip(file, target, undefined, limits), name).rejects.toBeInstanceOf(ArchiveError);
+  }
+  const target = join(root, "fits");
+  await mkdir(target);
+  await extractZip(file, target, undefined, { bytes: 8192, entries: 2 });
+  expect((await readFile(join(target, "b.bin"))).length).toBe(4096);
+});
+
 // REQ-SEC-e51bc0d8
 it("refuses a tree with a link that resolves outside it and accepts links inside", async () => {
   const root = await temp();

@@ -45,7 +45,7 @@ esp32-esptool/
 ```yaml
 format: 1
 id: esp32-esptool
-version: 1.0.0
+version: 0.2.1
 license: LicenseRef-PolyForm-Noncommercial-1.0.0   # SPDX id; optional, every official plugin sets it
 name: ESP32 esptool
 summary: Identify, flash, verify, erase and read Espressif chips over a serial port with esptool.
@@ -85,8 +85,8 @@ docs:
   - https://docs.espressif.com/projects/esptool/en/latest/
 ```
 
-This is the shipped manifest (`05_Software/plugins/esp32-esptool/plugin.yaml`, PLG-09): its rules classify every command
-esptool 5.6.0 lists, as ADR-0018 asks of plugin authors.
+This is an excerpt of the shipped manifest (`05_Software/plugins/esp32-esptool/plugin.yaml`, PLG-09), which also
+carries `translations`: its rules classify every command esptool 5.6.0 lists, as ADR-0018 asks of plugin authors.
 
 | Field | Rule |
 |---|---|
@@ -446,7 +446,7 @@ sources. Launchers require find without fallback.
 | `download: { <platform>: { url, sha256, path?, prefix? } }` | portable binaries: probe-rs, OpenOCD-esp32, the sigrok fork, xPack toolchains, … | downloads (at most 2 GiB), verifies SHA-256, extracts `.zip` (in VERA, as a stream; a zip never creates a link) or `.tar.gz`, `.tgz` and `.tar.xz` (the system tar: bsdtar from System32 on Windows, GNU tar on Linux) into `runtime/downloads/<sha256>/` and runs `path` inside it; any other URL is a single file (AppImage) stored as is under `path` or the URL's last segment and made executable. `prefix` lists fixed leading arguments, for example `[--cli]` for the sigrok AppImage. Links that leave the folder and special files are refused; a failure keeps nothing |
 | `find: { windows: [...], linux: [...] }` + `hint` | vendor suites the user installs: EIM/ESP-IDF, Wireshark, STM32CubeProgrammer, MPLAB X, PEAK drivers | entry by entry: `%PATH%`/`$PATH` searches PATH for `<program>.exe`/`<program>`; other entries expand `~` and variables and match `*` globs, highest name first, a folder meaning `<folder>/<program>[.exe]` (on Windows only `.exe` files, on Linux only executable ones); the first such file is probed. If missing, shows `hint` and its link |
 
-- `uv` 0.13.1 ships in the VERA package (`<resources>/uv/`, pinned by `05_Software/src/uv/uv-manifest.json`,
+- `uv` 0.13.7 ships in the VERA package (`<resources>/uv/`, pinned by `05_Software/src/uv/uv-manifest.json`,
   one binary per platform, archive and binary SHA-256 checked by `npm run prepare:uv` and again in the
   packaged app). Every uv call gets `UV_CACHE_DIR`, `UV_PYTHON_INSTALL_DIR`, `UV_PYTHON_BIN_DIR`,
   `UV_TOOL_DIR` and `UV_TOOL_BIN_DIR` under `<userData>/plugins/runtime/`, `UV_MANAGED_PYTHON=1`,
@@ -517,7 +517,8 @@ vera-plugins/                    # one Git repository
     packs.yaml                   # ecosystem packs
     catalog.yaml                 # maintainers only: official plugins, reviewed rules
     CONTRIBUTING.md
-  .github/workflows/             # vera catalog check on PR; on tag vera catalog build, publish its files
+  .github/workflows/catalog.yml  # copied from the template 05_Software/plugins/.ci/catalog.yml: vera catalog
+                                 # check on PR; on tag vera catalog build
 ```
 
 - `index.json` format 1 is `{format, plugins, packs}`; an entry is `{id, version, tier, ecosystem, platforms, name,
@@ -554,14 +555,13 @@ vera-plugins/                    # one Git repository
   groups:
     - { name: Core, plugins: [serial-monitor, esp32-esptool], default: true }
     - { name: ESP-IDF build, plugins: [esp32-idf], default: true }
-    - { name: JTAG debug, plugins: [esp32-openocd] }
-    - { name: Security (irreversible), plugins: [esp32-efuse] }
+    - { name: Security (irreversible), plugins: [esp32-efuse], default: false }
 ```
 
 The UI shows packs as checkable groups (pack → groups → plugins) and installs the selected
 plugins. Pack contents: [packs.md](packs.md).
 
-### Planned discovery/activation redesign (2026-11-11; not implemented)
+### Discovery/activation redesign (2026-11-11; implemented as PLG-23…PLG-25)
 
 [ui-redesign.md](ui-redesign.md) supersedes the checkable-packs presentation above: one list per
 Available/Installed tab, combined search and filters, chronology/name sorting and pagination.
@@ -612,10 +612,11 @@ an installed plugin.
 | Item | Trigger |
 |---|---|
 | MCP servers in a plugin (`mcpServers`, the standard `.mcp.json` shape; one rule per tool name). Candidate: Espressif's `idf.py mcp-server` (ESP-IDF ≥ 6.0: `set_target`, `build_project`, `flash_project`, `clean_project`) | a server offers something `run_program` cannot |
-| Workbench-scoped plugins in `.vera/plugins/`, trusted per machine by hash | phase 3 of the plan |
 | Structured bench description (`bench:` in `workbench.yaml`) | after user feedback; `WORKBENCH.md` covers it now |
-| Offline bundles (plugin + uv cache) for air-gapped labs | on request |
 | macOS | with the app |
+
+Implemented: workbench-scoped plugins in `.vera/plugins/`, trusted per machine by hash (PLG-13),
+and the offline dependency kit per platform for air-gapped labs (PLG-08 #269).
 
 NOTES:
 - Code anchors: tool interface `core/src/tools/context.ts:31`; registry `core/src/tools/registry.ts`;

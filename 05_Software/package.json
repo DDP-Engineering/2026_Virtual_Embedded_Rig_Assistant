@@ -3,7 +3,7 @@
   "license": "LicenseRef-PolyForm-Noncommercial-1.0.0",
   "private": true,
   "type": "module",
-  "description": "VERA â€” Virtual Embedded Rig Assistant",
+  "description": "VERA — Virtual Embedded Rig Assistant",
   "workspaces": [
     "src/libraries/*",
     "src/apps/*"

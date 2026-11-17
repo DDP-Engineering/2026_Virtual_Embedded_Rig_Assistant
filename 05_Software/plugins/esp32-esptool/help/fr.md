@@ -24,7 +24,7 @@ L’agent trouve le port avec le moniteur série et ne le devine jamais. Il conf
 - Sûr, exécuté sans demander : les commandes qui ne travaillent que sur des fichiers (`merge-bin`, `image-info`, `elf2image`).
 - Lecture appareil : identification de la puce, lecture de la MAC, de l’ID de flash et de l’état de sécurité, vérification et lecture de la flash. Chaque commande qui se connecte réinitialise la puce dans son bootloader et arrête le firmware en cours d’exécution.
 - Écriture appareil : `write-flash`, `erase-flash`, `erase-region` et `load-ram`. La carte d’approbation liste chaque image avec son SHA-256 ; si une image est recompilée après votre approbation, l’exécution échoue et l’approbation est redemandée.
-- Irréversible : `write-mem`, `write-flash-status` et toute commande avec `--force`. Elles peuvent fixer définitivement des bits d’eFuse ou de verrouillage de la flash, ou rendre une puce sécurisée impossible à démarrer. L’agent ne les utilise que si vous demandez exactement cette commande, et VERA vous demande de taper le mot de confirmation, sauf en mode Contournement.
+- Irréversible : `write-mem`, `write-flash-status` et toute commande avec `--force`, `--encrypt`, `--encrypt-files` ou `--ignore-flash-enc-efuse`. Elles peuvent fixer définitivement des bits d’eFuse ou de verrouillage de la flash, ou rendre une puce sécurisée impossible à démarrer. L’agent ne les utilise que si vous demandez exactement cette commande, et VERA vous demande de taper le mot de confirmation, sauf en mode Contournement.
 
 En mode Demander, VERA demande avant chaque commande de lecture appareil et d’écriture appareil ; le mode Modification auto exécute les commandes de lecture appareil sans demander.
 

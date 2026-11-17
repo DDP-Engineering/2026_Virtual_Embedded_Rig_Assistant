@@ -24,18 +24,24 @@ export class KeywordSearch {
   search(query: string, acceptsPath?: (path: string) => boolean): KeywordCandidate[] {
     const terms = [...new Set(query.match(/[\p{L}\p{N}_][\p{L}\p{N}\p{M}_]*/gu) ?? [])];
     if (!terms.length) return [];
+    // A path filter is resolved to document ids first, so the match query keeps its LIMIT and
+    // never loads the text of chunks that are filtered out.
+    const docs =
+      acceptsPath &&
+      JSON.stringify(
+        (this.db.prepare("SELECT id,path FROM documents").all() as { id: number; path: string }[])
+          .filter((doc) => acceptsPath(doc.path))
+          .map((doc) => doc.id),
+      );
     const select = (table: "chunks_fts" | "chunks_tri", tokens: string[]): Row[] =>
       tokens.length
-        ? (
-            this.db
-              .prepare(`SELECT c.id,c.doc_id AS docId,c.ordinal,d.path,c.locator_json AS locatorJson,
+        ? (this.db
+            .prepare(`SELECT c.id,c.doc_id AS docId,c.ordinal,d.path,c.locator_json AS locatorJson,
               c.text,bm25(${table}) AS bm25 FROM ${table}
               JOIN chunks c ON c.id=${table}.rowid JOIN documents d ON d.id=c.doc_id
-              WHERE ${table} MATCH ? ORDER BY bm25(${table}),c.id ${acceptsPath ? "" : "LIMIT 50"}`)
-              .all(tokens.map(quote).join(" OR ")) as Row[]
-          )
-            .filter((r) => !acceptsPath || acceptsPath(r.path))
-            .slice(0, 50)
+              WHERE ${table} MATCH ? ${docs ? "AND c.doc_id IN (SELECT value FROM json_each(?))" : ""}
+              ORDER BY bm25(${table}),c.id LIMIT 50`)
+            .all(tokens.map(quote).join(" OR "), ...(docs ? [docs] : [])) as Row[])
         : [];
     const words = select("chunks_fts", terms);
     const fragments = select(

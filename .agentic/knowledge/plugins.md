@@ -38,8 +38,8 @@ next to each, the gate's run_program branch is tested in `core/src/agent/program
 and real processes run in `05_Software/tests/integration/process-hosts.test.ts` and
 `05_Software/tests/integration/provisioning.test.ts`. [Native packaging](native-packaging.md) owns `prepare:uv`
 and the `<resources>/uv/` payload; [Headless CLI](headless-cli.md) owns the `vera plugin install` command.
-[Official plugins](official-plugins.md) owns the shipped plugin packages in `05_Software/plugins/` (today
-`serial-monitor`, `esp32-esptool`, `esp32-idf` and `binutils`) and that folder's catalog source files (`packs.yaml`, `catalog.yaml`). [Workbench](workbench.md) owns workbench.yaml, its write queue and warnings; [Skills](skills.md)
+[Official plugins](official-plugins.md) owns the shipped plugin packages in `05_Software/plugins/` (one
+folder per plugin) and that folder's catalog source files (`packs.yaml`, `catalog.yaml`). [Workbench](workbench.md) owns workbench.yaml, its write queue and warnings; [Skills](skills.md)
 owns Agent Skills discovery, plugin skills included; [IPC boundary](ipc-boundary.md)
 owns channel registration and frame authorization; [Sessions](sessions.md) owns the ApprovalGate
 lifecycle, and [Chat UI](chat-ui.md) and [Renderer foundation](renderer-foundation.md) own the

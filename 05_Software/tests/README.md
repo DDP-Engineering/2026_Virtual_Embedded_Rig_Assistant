@@ -59,9 +59,14 @@ evidence. `VERA_TERM05_SKIP_AGENT=1` limits release-artifact smoke to user termi
 |---|---|
 | [boundaries.test.ts](tooling/boundaries.test.ts) | Separarea modulelor prin regulile de import. |
 | [build-mode.test.ts](tooling/build-mode.test.ts) | Identitatea și hook-urile compilate în modurile release/instrumentat. |
+| [delivery.test.ts](tooling/delivery.test.ts) | Versiunea, sumele SHA-256, înlocuirea părților și notele de release ale livrării. |
 | [demo-documents.test.ts](tooling/demo-documents.test.ts) | Generatorul PDF al fixturilor și concordanța inventarului cu fișierele. |
+| [help.test.ts](tooling/help.test.ts) | Verificatorul paginilor de ajutor: aceleași pagini în patru limbi și linkuri valide. |
+| [help-shortcuts.test.ts](tooling/help-shortcuts.test.ts) | Pagina de ajutor a scurtăturilor, generată din registrul de comenzi. |
 | [i18n.test.ts](tooling/i18n.test.ts) | Verificatorul cataloagelor de traducere. |
 | [network-guard.test.ts](tooling/network-guard.test.ts) | Blocarea conexiunilor externe în mediul de test. |
+| [plugin-license.test.ts](tooling/plugin-license.test.ts) | Licența declarată de fiecare plugin oficial. |
+| [release-version.test.ts](tooling/release-version.test.ts) | Ordinea versiunilor, `set-version` și verificarea notelor de release. |
 | [session-performance.test.ts](tooling/session-performance.test.ts) | Fixturile, raportul și comparația harness-ului de performanță. |
 | [session-performance-probe.test.ts](tooling/session-performance-probe.test.ts) | Sondele de performanță compilate în aplicație. |
 | [skeleton.test.ts](tooling/skeleton.test.ts) | Workspaces, configurația TypeScript și comenzile proiectului. |
@@ -138,7 +143,8 @@ focused profiling receipts for this change are retained in `evaluation-outputs/t
 they measure a selected batch, not the complete suite. Full milestone verification remains governed
 by `02_Tools/verification-policy.md`.
 
-Din `05_Software`, se poate selecta unul dintre cele trei proiecte Vitest:
+Din `05_Software`, se poate selecta unul dintre proiectele Vitest din `tests/` rulate de `npm test`
+(al patrulea, `plugins`, are comanda proprie de mai jos):
 
 ```powershell
 python ../02_Tools/environment/npmw.py npm test -- --project tooling

@@ -8,9 +8,11 @@ export function hostVariable(host: ProcessHost, name: string): string | undefine
   return key === undefined ? undefined : host.env[key];
 }
 
+const WINDOWS_KILL_MS = 20_000;
+
 /**
  * Kills a program and every process it started (plugins architecture §3.2). Windows: System32 `taskkill /T /F /PID`, followed by reaping children
- * created during its enumeration. Elsewhere the program leads its own process group: SIGTERM to the group, then
+ * created during its enumeration, waiting at most 20 s for it. Elsewhere the program leads its own process group: SIGTERM to the group, then
  * SIGKILL after `graceMs`, unless the group is already gone.
  */
 export async function killProcessTree(
@@ -22,7 +24,7 @@ export async function killProcessTree(
   if (host.platform === "win32") {
     const systemRoot = hostVariable(host, "SystemRoot") ?? "C:\\Windows";
     const script = windowsTreeKill(pid, systemRoot);
-    await host.spawn(
+    const helper = host.spawn(
       win32.join(systemRoot, "System32/WindowsPowerShell/v1.0/powershell.exe"),
       ["-NoProfile", "-NonInteractive", "-EncodedCommand", Buffer.from(script, "utf16le").toString("base64")],
       {
@@ -31,7 +33,13 @@ export async function killProcessTree(
         group: false,
         output: () => {},
       },
-    ).exit;
+    );
+    // A PowerShell that hangs must not keep the caller (a run waiting to finish) waiting forever.
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const timeout = new Promise<void>((resolve) => {
+      timer = setTimeout(resolve, WINDOWS_KILL_MS);
+    });
+    await Promise.race([helper.exit, timeout]).finally(() => clearTimeout(timer));
     return;
   }
   if (!host.signal(-pid, "SIGTERM")) return;

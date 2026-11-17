@@ -6,7 +6,7 @@ import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import type { CatalogChannel } from "@vera/shared";
-import { afterEach, expect, it } from "vitest";
+import { afterEach, expect, it, vi } from "vitest";
 import { parse, stringify } from "yaml";
 import { PluginCatalog } from "./catalog.js";
 import { buildCatalogRelease, signCatalogRelease } from "./catalog-source.js";
@@ -173,7 +173,7 @@ it("reads the configured catalog and falls back to the bundled one when it is un
   });
   expect(remote.plugins.find((p) => p.id === "esp32-esptool")).not.toHaveProperty("addedAt");
   expect(remote.plugins.map((plugin) => [plugin.id, plugin.version, plugin.tier])).toEqual([
-    ["esp32-esptool", "0.2.0", "official"],
+    ["esp32-esptool", "0.2.1", "official"],
     ["serial-monitor", "1.0.1", "official"],
   ]);
   expect(remote.packs[0]?.groups[0]).toEqual({
@@ -223,13 +223,39 @@ it("treats a read redirected away from https or loopback http as unreachable", a
   expect((await ignored.catalog.view({ refresh: true })).source).toBe("none");
 });
 
+it("treats a catalog read that never answers as unreachable when its timeout ends", async () => {
+  const data = await temp("data");
+  const timeout = new AbortController();
+  const timer = vi.spyOn(AbortSignal, "timeout").mockReturnValue(timeout.signal);
+  try {
+    const catalog = new PluginCatalog({
+      store: new PluginStore({ root: join(data, "plugins") }),
+      root: join(data, "plugins", "catalog"),
+      location: () => "https://catalog.example.test/vera/",
+      fetch: (_url, init) =>
+        new Promise((_resolve, reject) => {
+          init.signal?.addEventListener("abort", () => reject(init.signal?.reason));
+          timeout.abort();
+        }),
+    });
+    expect(await catalog.view({ refresh: true })).toMatchObject({ source: "none", problem: "unreachable" });
+    expect(timer).toHaveBeenCalledWith(30_000);
+  } finally {
+    timer.mockRestore();
+  }
+});
+
 // REQ-FUNC-f244f8f6
 it("installs a reviewed catalog plugin with its tier and the catalog source, once per review", async () => {
   const { state, url } = await host();
   state.folder = await release();
   const { catalog, store, kept, data } = await fixture({ location: url });
   await catalog.view({ refresh: true });
+  const timer = vi.spyOn(AbortSignal, "timeout");
   const reviewed = await catalog.review("serial-monitor");
+  // A package download gets a far longer limit than the index reads, so a slow connection still completes.
+  expect(timer).toHaveBeenLastCalledWith(15 * 60_000);
+  timer.mockRestore();
   expect(reviewed).toMatchObject({
     id: "serial-monitor",
     version: "0.2.0",
@@ -468,7 +494,7 @@ it("reads the selected channel's index from a remote catalog and every plugin fr
   expect(state.requests).toEqual(["index-stable.json", "index-stable.json.sig"]);
   setChannel("pre-release");
   expect(await ids(false)).toEqual([
-    ["esp32-esptool", "0.2.0"],
+    ["esp32-esptool", "0.2.1"],
     ["serial-monitor", "1.0.1"],
   ]);
   expect(state.requests.slice(2)).toEqual(["index-pre-release.json", "index-pre-release.json.sig"]);
@@ -476,7 +502,7 @@ it("reads the selected channel's index from a remote catalog and every plugin fr
   setChannel("stable");
   setLocation(undefined);
   expect(await ids(false)).toEqual([
-    ["esp32-esptool", "0.2.0"],
+    ["esp32-esptool", "0.2.1"],
     ["serial-monitor", "0.2.0"],
   ]);
 });

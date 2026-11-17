@@ -24,7 +24,7 @@ Agentul găsește portul cu monitorul serial și nu îl ghicește niciodată. Co
 - Sigur, rulează fără să întrebe: comenzile care lucrează doar cu fișiere (`merge-bin`, `image-info`, `elf2image`).
 - Citire dispozitiv: identificarea cipului, citirea MAC-ului, a ID-ului flash și a stării de securitate, verificarea și citirea flash-ului. Fiecare comandă care se conectează resetează cipul în bootloader și oprește firmware-ul care rulează.
 - Scriere dispozitiv: `write-flash`, `erase-flash`, `erase-region` și `load-ram`. Cardul de aprobare listează fiecare imagine cu SHA-256 al ei; dacă o imagine este recompilată după ce ai aprobat, rularea eșuează și aprobarea este cerută din nou.
-- Ireversibil: `write-mem`, `write-flash-status` și orice comandă cu `--force`. Acestea pot seta definitiv biți eFuse sau biți de blocare a flash-ului ori pot face ca un cip securizat să nu mai pornească. Agentul le folosește doar când ceri exact acea comandă, iar VERA îți cere să tastezi cuvântul de confirmare, cu excepția modului Bypass.
+- Ireversibil: `write-mem`, `write-flash-status` și orice comandă cu `--force`, `--encrypt`, `--encrypt-files` sau `--ignore-flash-enc-efuse`. Acestea pot seta definitiv biți eFuse sau biți de blocare a flash-ului ori pot face ca un cip securizat să nu mai pornească. Agentul le folosește doar când ceri exact acea comandă, iar VERA îți cere să tastezi cuvântul de confirmare, cu excepția modului Bypass.
 
 În modul Întreabă, VERA cere aprobarea înaintea fiecărei comenzi de citire dispozitiv și de scriere dispozitiv; Editare automată rulează comenzile de citire dispozitiv fără să întrebe.
 

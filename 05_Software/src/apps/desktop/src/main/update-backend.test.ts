@@ -8,6 +8,7 @@ import { ElectronUpdateBackend, publisherConfigured } from "./update-backend.js"
 vi.mock("electron", () => ({ app: { getVersion: () => "1.0.0", isPackaged: true } }));
 class FakeUpdater extends EventEmitter {
   sha512: string | undefined = Buffer.alloc(64).toString("base64");
+  url = "update.exe";
   autoDownload = true;
   autoInstallOnAppQuit = true;
   allowDowngrade = true;
@@ -28,17 +29,22 @@ class FakeUpdater extends EventEmitter {
       isUpdateAvailable: this.available,
       updateInfo: {
         version: this.version,
-        files: [{ url: "update.exe", sha512: this.sha512, sha2: "a".repeat(64) }],
+        files: [{ url: this.url, sha512: this.sha512, sha2: "a".repeat(64) }],
         releaseDate: "2026-10-13",
         releaseNotes: "Notes",
       },
     };
   }
 }
-function setup(stable: string, beta: string, distribution: "installed" | "portable" = "installed") {
+function setup(
+  stable: string,
+  beta: string,
+  distribution: "installed" | "portable" = "installed",
+  url = "https://updates.test/vera/",
+) {
   const updaters = { latest: new FakeUpdater(stable), beta: new FakeUpdater(beta) };
   const backend = new ElectronUpdateBackend({
-    url: "https://updates.test/vera/",
+    url,
     version: "1.0.0",
     platform: "win32",
     distribution,
@@ -66,6 +72,13 @@ it("disables implicit downloads/install/downgrades and beta selects stable when 
   expect(h.updaters.latest.downloadUpdate).toHaveBeenCalledTimes(1);
   expect(h.updaters.beta.downloadUpdate).not.toHaveBeenCalled();
   expect(h.updaters.latest.quitAndInstall).toHaveBeenCalledWith(true, true);
+});
+it("offers a release link only inside the update folder, not in a sibling with the same prefix", async () => {
+  const h = setup("1.1.0", "1.0.0", "installed", "https://updates.test/vera");
+  h.updaters.latest.url = "https://updates.test/vera/update.exe";
+  expect(await h.backend.check("latest")).toMatchObject({ link: "https://updates.test/vera/update.exe" });
+  h.updaters.latest.url = "https://updates.test/vera-evil/update.exe";
+  expect(await h.backend.check("latest")).toMatchObject({ version: "1.1.0", link: null });
 });
 it("uses an active native managed updater when APPIMAGE is absent", async () => {
   const select = Reflect.get(backendModule, "nativeUpdaterClass");

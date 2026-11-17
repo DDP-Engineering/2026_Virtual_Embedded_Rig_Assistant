@@ -12,7 +12,9 @@ Evidence-based component selection for VERA.
 - **`parts-compare`** (`scripts/parts_compare.py`, standard library) compares candidates offline: hard constraints
   first, preferences second; only confirmed datasheet values with a page or table, under the constraint's
   conditions, are evidence. It writes `comparison.json`, `comparison.md` and a proposed `bom.csv` to
-  `electronics-results/<run-id>/`, and never orders anything or changes a project.
+  `electronics-results/<run-id>/`, and never orders anything or changes a project. In `bom.csv` a text cell that
+  starts with `=` or `@`, or with `+` or `-` and holds `(`, `|` or `!`, gets a leading `'`, so a spreadsheet shows
+  it as text, not as a formula; values such as `+3V3` or `-5V` stay as they are.
 - **Skills**: `component-selection` (the workflow) and `component-families` (checks per family).
 
 Exact interfaces: the specifications REQ-DATA-9fd50acb (search) and REQ-DATA-6b26f2a5 (comparison) in VERA's

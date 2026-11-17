@@ -1,6 +1,6 @@
 format: 1
 id: kicad-layout
-version: 0.3.0
+version: 0.3.1
 license: LicenseRef-PolyForm-Noncommercial-1.0.0
 name: KiCad PCB placement and local routing
 summary: Place footprints and add local tracks on a candidate copy of a KiCad 10 board, checked by DRC.

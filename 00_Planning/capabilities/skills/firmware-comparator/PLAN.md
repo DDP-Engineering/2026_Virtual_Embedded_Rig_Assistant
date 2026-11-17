@@ -3,7 +3,7 @@
 PURPOSE: build CAP-03 as a skill of the official `analysis-skills` plugin. Spec: [SPEC](SPEC.md);
 shared rules: [contracts](../../contracts.md).
 DONE-WHEN: the three tasks pass and the rubric results are recorded.
-STATUS: planned 2026-11-01. Needs CAP-01, CAP-02, plugin store PLG-01 (#57) and plugin skills in the
+STATUS: implemented. Needs CAP-01, CAP-02, plugin store PLG-01 (#57) and plugin skills in the
 agent PLG-04 (#60). Implementation follows the repository's AEGIS workflow.
 
 ## Task 1 — plugin and skill assets

@@ -5,7 +5,8 @@ engineering evidence: two internal VERA tools and two Agent Skills.
 DONE-WHEN: CAP-01…CAP-04 pass their acceptance on Windows x64 and Linux x64, and the two skills ship
 in the official `analysis-skills` plugin.
 STATUS: rewritten 2026-11-01 for the plugin architecture (`../plugins/`) and the code at commit
-33e72b8; nothing implemented yet. Tracked in Gitea: milestone "Analysis capabilities", epic #75.
+33e72b8; CAP-01…CAP-04 are implemented: `parse_log` and `decode_register` are built-in tools and
+`analysis-skills` 0.3.0 ships both skills. Tracked in Gitea: milestone "Analysis capabilities", epic #75.
 The 2026-10-09 version used a fictional `vera-log-v1` log format and a RunRecord v1 metadata schema;
 both are dropped.
 

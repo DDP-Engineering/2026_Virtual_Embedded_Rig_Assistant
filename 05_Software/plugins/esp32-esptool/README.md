@@ -4,6 +4,7 @@ reads Espressif chips over a serial port. VERA installs it with its bundled uv. 
 
 Commands that only work on files (`merge-bin`, `image-info`, `elf2image`) are safe; commands that connect reset the
 chip into its bootloader (device-read); `write-flash`, `erase-flash`, `erase-region` and `load-ram` are device-write;
-`write-mem`, `write-flash-status` and any `--force` are irreversible and need the typed confirmation.
+`write-mem`, `write-flash-status` and any `--force`, `--encrypt`, `--encrypt-files` or `--ignore-flash-enc-efuse` are
+irreversible and need the typed confirmation.
 
 On Linux the user must be in the group that owns serial ports: `dialout` (Debian, Ubuntu, Fedora) or `uucp` (Arch).

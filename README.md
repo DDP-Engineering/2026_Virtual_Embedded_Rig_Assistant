@@ -7,10 +7,10 @@ virtual workbench: a local folder that holds a project's documents, skills and t
 a model; the agent searches the documents, reads and edits workbench files with your approval, and
 saves session artifacts.
 
-**Status:** the VERA 1.0 plan (milestones M0–M5) is implemented; later work is planned in
+**Status:** pre-release 0.2.0; open and delivered plans are in
 [00_Planning](00_Planning/README.md).
 
-**Setup** (Windows or Ubuntu, needs Python 3.11+ and Git): `python 02_Tools/environment/setup.py` installs the
+**Setup** (Windows or Ubuntu, needs Python 3.11.4+ and Git): `python 02_Tools/environment/setup.py` installs the
 pinned Node.js and the npm packages inside the repository. Details: [02_Tools](02_Tools/README.md).
 
 | Folder | Content |

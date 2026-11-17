@@ -51,6 +51,9 @@ interface Snapshot {
 }
 /** An index signature file is 88 base64 characters; anything longer is not one. */
 const SIGNATURE_BYTES = 1024;
+/** How long one remote file, headers and body, may take: the index or its signature, and a package zip. */
+const INDEX_TIMEOUT_MS = 30_000;
+const ZIP_TIMEOUT_MS = 15 * 60_000;
 /**
  * A read that failed in transfer: network, HTTP status, a redirect off HTTPS, or a missing file. `missing`
  * when the server answered 404 Not Found.
@@ -112,6 +115,7 @@ export class PluginCatalog {
     origin: Origin,
     name: string,
     limit: number,
+    timeoutMs: number,
     signal?: AbortSignal,
   ): Promise<{ bytes: Uint8Array; over: boolean }> {
     if (origin.kind === "bundled") {
@@ -127,8 +131,10 @@ export class PluginCatalog {
       }
     }
     let response: Response;
+    // A server that stops answering ends the read like any other failed transfer.
+    const bounded = AbortSignal.any([...(signal ? [signal] : []), AbortSignal.timeout(timeoutMs)]);
     try {
-      response = await this.options.fetch(`${origin.url}${name}`, { signal });
+      response = await this.options.fetch(`${origin.url}${name}`, { signal: bounded });
     } catch (error) {
       signal?.throwIfAborted();
       throw new Unreachable();
@@ -171,7 +177,7 @@ export class PluginCatalog {
     const name = origin.kind === "remote" ? catalogChannelIndex(origin.channel) : "index.json";
     let read: { bytes: Uint8Array; over: boolean };
     try {
-      read = await this.read(origin, name, CATALOG_LIMITS.indexBytes, signal);
+      read = await this.read(origin, name, CATALOG_LIMITS.indexBytes, INDEX_TIMEOUT_MS, signal);
     } catch (error) {
       if (error instanceof Unreachable) return "unreachable";
       throw error;
@@ -180,7 +186,7 @@ export class PluginCatalog {
     if (origin.kind === "remote") {
       let signature: { bytes: Uint8Array; over: boolean };
       try {
-        signature = await this.read(origin, `${name}.sig`, SIGNATURE_BYTES, signal);
+        signature = await this.read(origin, `${name}.sig`, SIGNATURE_BYTES, INDEX_TIMEOUT_MS, signal);
       } catch (error) {
         // Only a signature the server does not have is "unsigned"; any other failed read is a transfer problem.
         if (error instanceof Unreachable) return error.missing ? "unsigned" : "unreachable";
@@ -322,7 +328,7 @@ export class PluginCatalog {
     const { entry, origin } = this.entry(await this.snapshot(false, signal), id);
     let read: { bytes: Uint8Array; over: boolean };
     try {
-      read = await this.read(origin, entry.url, entry.bytes, signal);
+      read = await this.read(origin, entry.url, entry.bytes, ZIP_TIMEOUT_MS, signal);
     } catch (error) {
       if (error instanceof Unreachable) throw failure("OFFLINE", "download");
       throw error;
@@ -337,7 +343,7 @@ export class PluginCatalog {
     await rm(this.options.root, { recursive: true, force: true });
     let read: { bytes: Uint8Array; over: boolean };
     try {
-      read = await this.read(origin, entry.url, entry.bytes, signal);
+      read = await this.read(origin, entry.url, entry.bytes, ZIP_TIMEOUT_MS, signal);
     } catch (error) {
       if (error instanceof Unreachable) throw failure("OFFLINE", "download");
       throw error;

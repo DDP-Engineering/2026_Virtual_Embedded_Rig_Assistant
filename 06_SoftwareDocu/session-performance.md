@@ -1,7 +1,7 @@
 # Previous-session performance checks
 
-Status2026-11-12: the user requested only a descriptive measurement of existing behavior for now.
-The [completed Windows evaluation](eval-performance-outputs/session-loading-2026-11-12-windows.md) contains360
+Status 2026-11-12: the user requested only a descriptive measurement of existing behavior for now.
+The [completed Windows evaluation](eval-performance-outputs/session-loading-2026-11-12-windows.md) contains 360
 valid samples. Calibration/comparison commands below remain experimental and have no completed
 native acceptance or established reference. Feature/milestone usage below is a deferred proposal,
 not an active verification gate. No loader/rendering optimization was made.

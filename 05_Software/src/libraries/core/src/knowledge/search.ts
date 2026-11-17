@@ -377,7 +377,7 @@ export class DocumentKnowledge {
         text += (count ? separator : "") + unit;
         count++;
       }
-      if (!count) throw Error("A locator unit exceeds12000 characters. Use a narrower source section.");
+      if (!count) throw Error("A locator unit exceeds 12000 characters. Use a narrower source section.");
       return { text, count, truncated: count < units.length };
     };
     const path = target.relative;

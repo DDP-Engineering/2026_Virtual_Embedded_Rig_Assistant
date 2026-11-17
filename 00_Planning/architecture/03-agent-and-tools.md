@@ -172,6 +172,25 @@ skill metadata preserves caller order.
 | `todo` | session | `items: [{id?, text, status: pending \| in_progress \| done}]` | `{items}`, the stored list |
 | `artifact_save` | session | `name`, `content`, `description?`, `overwrite?` | `{ref: "artifact:<name>", bytes}` |
 
+The catalogue holds 34 tools. The other 20:
+
+| Tool | Class | Purpose |
+|---|---|---|
+| `parse_log`, `decode_register` | read | log parsing and register decoding (`../capabilities/README.md`) |
+| `parts_search` | read | supplier catalog search by `query` or `mpn` |
+| `run_program` | program | a plugin program with an argument array, never a shell (`../plugins/architecture.md`) |
+| `run_command` | program | `command`, `cwd?`, `timeout?`, `background?` in the configured shell (`../plan/terminal.md`) |
+| `program_output`, `program_stop` | read | output and stop of a background run by `handle` |
+| `terminal_read` | read | recent output of a user terminal that gave read consent |
+| `plugin_validate` | read | validates a plugin draft folder; installs nothing |
+| `plugin_install` | program | installs a reviewed plugin draft as trial; always asks |
+| `apply_candidate` | write | writes a `kicad-layout` candidate over its source board |
+| `electrical_model` | read | reads the electrical project model and its results |
+| `electrical_model_change` | write | changes the electrical project model |
+| `industrial_catalog` | read | reads the workbench's industrial catalogs |
+| `electrical_network`, `protection_coordination`, `motor_drives`, `power_quality`, `lighting_design` | write | electrical calculations that store a result (`../plan/electrical-power.md`) |
+| `help` | read | VERA's help pages and the help of the enabled plugins |
+
 Within a turn, `write`, `edit`, `web_download`, `artifact_save` and `todo` run in sequence; contiguous
 read tools run in parallel. Every workbench-file write, artifact save and download also goes through
 the write queue of §6, across all sessions.
@@ -194,8 +213,8 @@ Contracts the tests pin down:
   untrusted and cited with Markdown links. Disabling or changing access revokes active calls;
   service limits and failures are recoverable tool errors, without automatic fallback. Links open in
   the system browser after confirmation.
-- `web_download` (REQ-FUNC-b975a8b5) needs Web access enabled but no provider key. It is a write
-  tool: its prepared request (§6) is always `protected`, so it asks even in `auto-edit`. VERA fetches
+- `web_download` (`.agentic/specs/pdf-downloads.md`) needs Web access enabled but no provider key.
+  It is a write tool: its prepared request (§6) is always `protected`, so it asks even in `auto-edit`. VERA fetches
   the URL directly, without cookies, credentials or proxy: every resolved address must be public
   (IPv6 global unicast only), at most 5 redirects, each revalidated, identity encoding only,
   ≤ 100 MiB, 120 s. A PDF must carry `%PDF-` and parse in a bounded worker. The file and a
@@ -375,8 +394,9 @@ type SessionEvent =
 
 ## 10. Untrusted content
 
-Documents, logs, vendor PDFs and web pages can contain text addressed to the model. Defences as of
-2026-11-01: the prompt rules in §3; no shell tool; writes and downloads gated by §6; protected paths;
+Documents, logs, vendor PDFs and web pages can contain text addressed to the model. Defences: the
+prompt rules in §3; shell commands (`run_command`) and plugin programs (`run_program`) gated by
+approvals; writes and downloads gated by §6; protected paths;
 workbench confinement (§5) unless the user selects `bypass`; web tools that send only the explicit
 query, objective or URL to fixed endpoints and reject private, local and credential URLs; downloads
 from public addresses only, never returned to the model, executed or indexed; compaction summaries
@@ -385,9 +405,9 @@ artifacts that contain stored credentials. Any post-1.0 tool that reaches hardwa
 defence in its ADR.
 
 NOTES:
-- Not implemented as of 2026-11-01: wrapper execution (post-1.0, descriptor-based, never a free
-  shell), `apply_patch` for Codex-trained models, image input.
-- Wrapper execution is now specified as plugins (`../plugins/architecture.md`, ADR-0016): generic
-  `run_program` under per-plugin risk rules instead of per-command descriptors; still never a shell.
-  Its defences against untrusted content are in that file's §10.
+- Not implemented: `apply_patch` for Codex-trained models, image input.
+- Wrapper execution is implemented as plugins (`../plugins/architecture.md`, ADR-0016): generic
+  `run_program` under per-plugin risk rules instead of per-command descriptors, never through a
+  shell; `run_command` is the separate shell tool. The defences of plugin programs against
+  untrusted content are in that file's §10.
 - Work packages cite this file as `03 §n`.

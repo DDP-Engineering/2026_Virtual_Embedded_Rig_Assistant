@@ -3,7 +3,7 @@
 PURPOSE: build CAP-04 as the second skill of the `analysis-skills` plugin. Spec: [SPEC](SPEC.md);
 shared rules: [contracts](../../contracts.md).
 DONE-WHEN: the three tasks pass and the rubric results are recorded.
-STATUS: planned 2026-11-01. Needs CAP-03, which creates the `analysis-skills` plugin. Implementation
+STATUS: implemented. Needs CAP-03, which creates the `analysis-skills` plugin. Implementation
 follows the repository's AEGIS workflow.
 
 ## Task 1 — skill assets

@@ -2,7 +2,7 @@
 
 PURPOSE: user help for VERA and for every plugin, in English, Romanian, German and French, opened from
 a Help button in the top bar, available offline, and readable by the agent.
-STATE: planned 2026-11-15. Product code follows AEGIS, one work package per task; writing and
+STATE: implemented (HELP-01…HELP-08). Product code follows AEGIS, one work package per task; writing and
 translating the pages is documentation inside those tasks.
 
 ## Decisions (agreed with the user, 2026-11-15)

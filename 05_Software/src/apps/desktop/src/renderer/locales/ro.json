@@ -64,6 +64,10 @@
     "YAML_INVALID": "YAML invalid la linia {{line}}, coloana {{column}}.",
     "CONFIG_INVALID": "Configurație invalidă a spațiului de lucru la {{path}}, linia {{line}}."
   },
+  "renderError": {
+    "message": "VERA nu a putut afișa această fereastră.",
+    "reload": "Reîncarcă"
+  },
   "nav": {
     "settings": "Setări",
     "welcome": "Acasă",
@@ -409,7 +413,7 @@
     "manual": "Lipește URL-ul final de redirecționare dacă autentificarea nu se încheie",
     "submit": "Finalizează autentificarea",
     "timeout": "Autentificarea a expirat după 10 minute. Încearcă din nou.",
-    "portBusy": "Portul 1455 este ocupat, adesea de o autentificare neterminată în Codex CLI. Anuleaz-o și încearcă din nou.",
+    "portBusy": "Portul 1455 este ocupat, adesea de o autentificare neterminată în Codex CLI. Anulează-o și încearcă din nou.",
     "loginFailed": "Autentificarea ChatGPT a eșuat. Încearcă din nou.",
     "browserFailed": "Pagina de autentificare nu se poate deschide. Încearcă din nou.",
     "renewalDue": "Tokenul trebuie reînnoit; reînnoirea se face automat la nevoie."
@@ -657,7 +661,7 @@
     }
   },
   "partsSearch": {
-    "description": "Cataloagele furnizorilor pentru pluginul oficial parts-search. VERA trimite furnizorilor activați doar textul căutării sau codul piesei; datele de acces rămân pe acest calculator și nu sunt arătate agentului. Căutările cer și Web access și pluginul activat pentru workbench. Rezultatele sunt instantanee fără taxe sau transport și nu se plasează nicio comandă.",
+    "description": "Cataloagele furnizorilor pentru pluginul oficial parts-search. VERA trimite furnizorilor activați doar textul căutării sau codul piesei; datele de acces rămân pe acest calculator și nu sunt arătate agentului. Căutările cer și Acces web și pluginul activat pentru workbench. Rezultatele sunt instantanee fără taxe sau transport și nu se plasează nicio comandă.",
     "loading": "Se încarcă setările de căutare a componentelor…",
     "region": "Regiunea pentru prețuri și stoc",
     "country": "Țara (2 litere)",
@@ -694,7 +698,7 @@
       "rate-limited": "S-a atins limita de cereri a furnizorului. Reîncearcă mai târziu.",
       "timeout": "Furnizorul nu a răspuns la timp.",
       "unavailable": "Furnizorul nu a putut fi contactat.",
-      "disabled": "Web access este dezactivat.",
+      "disabled": "Accesul web este dezactivat.",
       "cancelled": "Test anulat."
     }
   },
@@ -765,7 +769,7 @@
     "power_quality": "Evaluează compensarea factorului de putere la un tablou dintr-un rezultat de rețea actual și un fișier de măsurători cu unități și convenții declarate: factorul de deplasare față de factorul de putere total, necesarul de kvar până la o țintă, o baterie fixă sau automată cu trepte, supracompensarea, verificări ale condensatoarelor, reactoarelor, contactoarelor și protecțiilor din date citate și rezonanța față de armonicile măsurate; salvează rezultatul după aprobare, ca o scriere, și nu comută nicio treaptă. Necesită pluginul power-quality-pfc. Căile externe cer Bypass; accesul la datele aplicației VERA este refuzat.",
     "lighting_design": "Proiectează iluminatul interior dintr-un proiect de iluminat cu fotometrii IES sau LDT: o estimare preliminară prin metoda fluxului cu factori de utilizare citați și componenta directă pe grila de calcul, diagnostic pentru scară, unități, orientare și fotometrie, iar verificarea iluminării menținute, a uniformității și a orbirii numai dintr-un raport potrivit al unui motor fotometric precum DIALux evo; salvează rezultatul după aprobare ca o scriere și nu rulează niciun motor. Necesită pluginul lighting-design. Căile externe cer Bypass; accesul la datele aplicației VERA este refuzat.",
     "decode_register": "Decodează o valoare de registru capturată folosind o definiție JSON locală, cu valori exacte ale câmpurilor și surse citabile. Nu citește dispozitive. Căile externe cer Bypass; accesul la datele aplicației VERA este refuzat.",
-    "parts_search": "Caută în cataloagele furnizorilor activați (Mouser, DigiKey, TME, Farnell, Rutronik) după cuvinte cheie sau cod de piesă. Necesită Web access, pluginul parts-search și un furnizor configurat în secțiunea Configurare a pluginului, pe pagina Pluginuri.",
+    "parts_search": "Caută în cataloagele furnizorilor activați (Mouser, DigiKey, TME, Farnell, Rutronik) după cuvinte cheie sau cod de piesă. Necesită Acces web, pluginul parts-search și un furnizor configurat în secțiunea Configurare a pluginului, pe pagina Pluginuri.",
     "help": "Citește paginile de ajutor ale VERA și ajutorul pluginurilor activate în workbench, pentru întrebări despre VERA. Doar citire.",
     "run_command": "Execută comenzi shell cu aprobare în Întreabă și Editare automată, sau direct în Bypass.",
     "terminal_read": "Citește ieșirea recentă a terminalului doar cu acord pentru acel terminal."

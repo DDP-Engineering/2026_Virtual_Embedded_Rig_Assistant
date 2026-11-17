@@ -4,11 +4,16 @@ import { pluginCredentialScopeSchema } from "./plugin-credentials.js";
 import { pluginParametersSchema } from "./plugin-settings.js";
 import { workbenchIdSchema } from "./workbench.js";
 
-/** Import limits of one plugin package (folder or zip); its size in bytes is not limited. */
+/**
+ * Import limits of one plugin package (folder or zip). The inflated sizes guard a zip against archive bombs only:
+ * far above any real plugin, which is scripts and text.
+ */
 export const PLUGIN_LIMITS = {
   files: 4096,
   manifestBytes: 256 * 1024,
   issues: 64,
+  inflatedFileBytes: 128 * 1024 * 1024,
+  inflatedBytes: 512 * 1024 * 1024,
 } as const;
 export const pluginIdSchema = z.string().regex(/^[a-z0-9-]{1,64}$/);
 export const pluginProgramNameSchema = z.string().regex(/^[a-z0-9._-]{1,64}$/);

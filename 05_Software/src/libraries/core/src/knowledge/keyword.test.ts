@@ -1,7 +1,7 @@
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { afterEach, beforeEach, expect, it } from "vitest";
+import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import * as core from "../index.js";
 import type { WorkbenchDatabase } from "../storage/db.js";
 import { DocumentsRepository } from "../storage/repos/documents.js";
@@ -97,6 +97,22 @@ it("caps each list and the deduplicated union at 50 with deterministic numeric-i
     expect(hits.map((c) => c.rank)).toEqual(Array.from({ length: 50 }, (_, i) => i + 1));
     expect(search.search(query)).toEqual(hits);
   }
+});
+it("applies a path filter per document, keeping the cap of 50 for the accepted ones", () => {
+  for (const name of ["skipped", "wanted"])
+    add(
+      `docs/${name}.pdf`,
+      Array.from({ length: 60 }, (_, i) => page("I2C1_CR1", i + 1)),
+    );
+  const accepts = vi.fn((path: string) => path === "docs/wanted.pdf");
+  for (const query of ["I2C1_CR1", "C1_CR"]) {
+    const hits = search.search(query, accepts);
+    expect(hits.map((c) => c.id)).toEqual(Array.from({ length: 50 }, (_, i) => i + 61));
+    expect(hits.map((c) => c.rank)).toEqual(Array.from({ length: 50 }, (_, i) => i + 1));
+  }
+  // Asked once per document and search, not once per matching chunk loaded with its text.
+  expect(accepts).toHaveBeenCalledTimes(4);
+  expect(search.search("I2C1_CR1", () => false)).toEqual([]);
 });
 it("preserves bm25 order for ordinary words and returns every stored locator kind", () => {
   add("docs/locators.pdf", [

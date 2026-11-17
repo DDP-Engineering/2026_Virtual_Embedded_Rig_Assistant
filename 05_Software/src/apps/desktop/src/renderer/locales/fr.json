@@ -64,6 +64,10 @@
     "YAML_INVALID": "YAML non valide à la ligne {{line}}, colonne {{column}}.",
     "CONFIG_INVALID": "Configuration du banc de travail non valide dans {{path}}, ligne {{line}}."
   },
+  "renderError": {
+    "message": "VERA n’a pas pu afficher cette fenêtre.",
+    "reload": "Recharger"
+  },
   "nav": {
     "settings": "Paramètres",
     "welcome": "Accueil",

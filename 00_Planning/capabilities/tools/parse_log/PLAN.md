@@ -2,7 +2,7 @@
 
 PURPOSE: build CAP-01 in three tasks. Spec: [SPEC](SPEC.md); shared rules: [contracts](../../contracts.md).
 DONE-WHEN: all three tasks pass their tests on Windows x64 and Linux x64 and `npm run verify` passes.
-STATUS: planned 2026-11-01. Implementation follows the repository's AEGIS workflow.
+STATUS: implemented. Implementation follows the repository's AEGIS workflow.
 
 ## Task 1 — schemas and profiles
 

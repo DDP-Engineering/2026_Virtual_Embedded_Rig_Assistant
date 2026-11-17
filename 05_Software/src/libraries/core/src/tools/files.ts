@@ -1,10 +1,18 @@
 import { lstat, open } from "node:fs/promises";
 import type { PathGuard } from "../workbench/path-guard.js";
 
+/** Opening a FIFO blocks a thread until a writer appears, so special files are refused before the open. */
+export async function assertNotSpecialFile(path: string): Promise<void> {
+  const info = await lstat(path);
+  if (info.isFIFO() || info.isSocket() || info.isCharacterDevice() || info.isBlockDevice())
+    throw Error("Read an ordinary file.");
+}
+
 /** Bound allocation/I/O and verify the opened ordinary file stayed at the guarded path. */
 export async function readGuardedFile(guard: PathGuard, path: string, maxBytes: number, signal: AbortSignal) {
   signal.throwIfAborted();
   const target = await guard.resolve(path);
+  await assertNotSpecialFile(target.absolute);
   const handle = await open(target.absolute, "r");
   try {
     const before = await handle.stat();
