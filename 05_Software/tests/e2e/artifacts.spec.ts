@@ -8,6 +8,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { _electron, expect, test } from "@playwright/test";
 import type { VeraBridge } from "@vera/shared";
+import { rendererUrlFromOutput } from "./fixtures.js";
 import { installNetworkGuard, outboundAttempts } from "./network-guard.js";
 import { changeSetting } from "./settings-navigation.js";
 
@@ -289,7 +290,7 @@ test.describe("browser artifacts", () => {
           server.stderr.on("data", ready);
           server.once("error", fail);
         });
-        await page.goto("http://127.0.0.1:5173/?mock=chat");
+        await page.goto(`${rendererUrlFromOutput(output)}?mock=chat`);
         await page.evaluate(() => localStorage.clear());
         await page.reload();
         await page.locator('[data-i18n="nav.settings"]').click();

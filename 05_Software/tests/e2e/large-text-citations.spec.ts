@@ -136,7 +136,7 @@ test("native indexed and issued large-text citations cross IPC compactly and kee
       { timeout: 20000 },
     );
     await expect(large.locator('[data-line="251"]')).toHaveAttribute("aria-current", "true");
-    await expect(large.locator("[data-text-cancel]")).toHaveCount(0);
+    await expect(panel.locator("[data-text-cancel]")).toHaveCount(0);
     const geometry = await large.locator('[data-line="250"]').evaluate((node) => {
       const body = node.closest(".document-body");
       return {

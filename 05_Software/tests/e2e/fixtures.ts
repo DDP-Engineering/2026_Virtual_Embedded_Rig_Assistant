@@ -3,6 +3,13 @@ import { test as base } from "@playwright/test";
 
 export { expect } from "@playwright/test";
 
+/** The actual loopback port printed by a ready renderer, including Vite's port-conflict fallback. */
+export function rendererUrlFromOutput(output: string): string {
+  const url = output.match(/http:\/\/127\.0\.0\.1:\d+\//)?.[0];
+  if (!url) throw Error("Renderer did not report its loopback URL");
+  return url;
+}
+
 /** One mock renderer per worker; Playwright still creates a fresh browser context per test. */
 export const test = base.extend<Record<never, never>, { rendererUrl: string }>({
   rendererUrl: [

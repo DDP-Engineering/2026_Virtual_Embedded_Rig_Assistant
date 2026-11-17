@@ -4,6 +4,7 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { _electron, expect, test } from "@playwright/test";
+import { rendererUrlFromOutput } from "./fixtures.js";
 import { installNetworkGuard, outboundAttempts } from "./network-guard.js";
 import { changeSetting } from "./settings-navigation.js";
 
@@ -102,6 +103,7 @@ test("compact navigation fits all languages, themes and text scales at minimum s
   });
   const outbound: string[] = [],
     errors: string[] = [];
+  let output = "";
   page.on("pageerror", (error) => errors.push(error.message));
   await context.route("**/*", async (route) => {
     if (new URL(route.request().url()).hostname === "127.0.0.1") await route.continue();
@@ -112,7 +114,6 @@ test("compact navigation fits all languages, themes and text scales at minimum s
   });
   try {
     await new Promise<void>((resolve, reject) => {
-      let output = "";
       const timer = setTimeout(() => reject(Error(`Renderer startup timeout: ${output}`)), 20000);
       const read = (chunk: Buffer) => {
         output += chunk.toString();
@@ -126,7 +127,7 @@ test("compact navigation fits all languages, themes and text scales at minimum s
       server.once("error", reject);
     });
     await page.setViewportSize({ width: 1024, height: 640 });
-    await page.goto("http://127.0.0.1:5173");
+    await page.goto(rendererUrlFromOutput(output));
     for (const language of ["en", "ro", "de"]) {
       for (const theme of ["light", "dark"]) {
         for (const scale of [0.875, 1, 1.125, 1.25, 1.5]) {

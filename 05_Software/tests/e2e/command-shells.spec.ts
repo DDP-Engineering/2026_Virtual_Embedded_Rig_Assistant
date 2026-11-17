@@ -111,6 +111,8 @@ test("native detected shell choices start compatible terminals and preserve exis
     expect(installed.length).toBeGreaterThan(0);
     if (process.platform === "win32") expect(installed.some((choice) => choice.id === "cmd")).toBe(true);
     for (const choice of installed) {
+      if ((await page.locator('[data-toggle="right"]').getAttribute("aria-expanded")) === "true")
+        await page.locator('[data-toggle="right"]').click();
       await page.locator('[data-i18n="nav.settings"]').click();
       await page.locator('[data-section="commands"]').click();
       const select = page.locator("#command-shell");
@@ -128,11 +130,12 @@ test("native detected shell choices start compatible terminals and preserve exis
         await page.locator('[data-toggle="right"]').click();
       await page.locator("#tab-terminal").click();
       await expect(page.locator(".terminal-surface textarea")).toBeAttached();
-      if (
-        (await invoke(page, "terminal.list", { workbenchId: bench.config.id })).length > 0 &&
-        choice !== installed[0]
-      ) {
+      const previous = await invoke(page, "terminal.list", { workbenchId: bench.config.id });
+      if (previous.length > 0 && choice !== installed[0]) {
         await page.getByRole("button", { name: "New terminal", exact: true }).click();
+        await expect
+          .poll(async () => (await invoke(page, "terminal.list", { workbenchId: bench.config.id })).length)
+          .toBe(previous.length + 1);
       }
       const terminals = await invoke(page, "terminal.list", { workbenchId: bench.config.id });
       const terminal = terminals.at(-1);

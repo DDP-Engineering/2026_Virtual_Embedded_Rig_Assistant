@@ -2,6 +2,7 @@ import { spawn } from "node:child_process";
 import { existsSync, readFileSync, renameSync } from "node:fs";
 import { expect, test } from "@playwright/test";
 import { defaultSettings } from "@vera/shared";
+import { rendererUrlFromOutput } from "./fixtures.js";
 import { changeSetting } from "./settings-navigation.js";
 
 test("browser mock displays the same metadata screen through dev:renderer", async ({ page, context }) => {
@@ -52,7 +53,7 @@ test("browser mock displays the same metadata screen through dev:renderer", asyn
         reject(new Error(`Renderer exit ${code}: ${output}`));
       });
     });
-    await page.goto("http://127.0.0.1:5173/");
+    await page.goto(rendererUrlFromOutput(output));
     await expect(page.locator('[data-i18n="home.title"]')).toBeVisible();
     await expect(page.locator(".metadata")).toHaveCount(0);
     await page.locator('[data-i18n="nav.settings"]').click();

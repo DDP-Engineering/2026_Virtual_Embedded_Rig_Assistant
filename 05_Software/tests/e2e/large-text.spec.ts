@@ -5,6 +5,7 @@ import { join, resolve } from "node:path";
 import { _electron, type CDPSession, expect, type Page, test } from "@playwright/test";
 import type { Channel, Request, Response, VeraBridge } from "@vera/shared";
 import { LARGE_TEXT_BYTES, LARGE_TEXT_SECRET, makeLargeTextFixture } from "../support/large-text-fixture.js";
+import { rendererUrlFromOutput } from "./fixtures.js";
 import { installNetworkGuard, outboundAttempts } from "./network-guard.js";
 
 const evidence = resolve("evaluation-outputs/view03");
@@ -61,7 +62,7 @@ async function acceptance(page: Page, cdp: CDPSession, platform: string, target:
       `Row ${String(target).padStart(8, "0")}`,
       { timeout: 90000 },
     );
-    await expect(large.locator("[data-text-cancel]")).toHaveCount(0, { timeout: 90000 });
+    await expect(panel.locator("[data-text-cancel]")).toHaveCount(0, { timeout: 90000 });
     console.log(`${platform}: unindexed Go to line settled`);
     await sample("progressive-goto");
     const seek = async (offset: number) => {
@@ -70,7 +71,7 @@ async function acceptance(page: Page, cdp: CDPSession, platform: string, target:
         node.dispatchEvent(new Event("input", { bubbles: true }));
       }, offset);
       await expect(large).toHaveAttribute("data-exact", "true", { timeout: 90000 });
-      await expect(large.locator("[data-text-cancel]")).toHaveCount(0, { timeout: 90000 });
+      await expect(panel.locator("[data-text-cancel]")).toHaveCount(0, { timeout: 90000 });
       expect(Number(await large.getAttribute("data-window-bytes"))).toBeLessThanOrEqual(4 * 65536);
       expect(Number(await large.getAttribute("data-index-checkpoints"))).toBeLessThanOrEqual(1026);
       expect(await large.locator("[data-line]").count()).toBeLessThan(180);
@@ -92,7 +93,7 @@ async function acceptance(page: Page, cdp: CDPSession, platform: string, target:
     await expect(large.locator("[data-search-match]").first()).toHaveText("VIEW03 LATE café 😀", {
       timeout: 90000,
     });
-    await expect(large.locator("[data-text-cancel]")).toHaveCount(0, { timeout: 90000 });
+    await expect(panel.locator("[data-text-cancel]")).toHaveCount(0, { timeout: 90000 });
     await sample("late-find");
     console.log(`${platform}: late Find settled`);
     await panel.press("Control+g");
@@ -103,7 +104,7 @@ async function acceptance(page: Page, cdp: CDPSession, platform: string, target:
       { timeout: 90000 },
     );
     await expect(large).toHaveAttribute("data-exact", "true");
-    await expect(large.locator("[data-text-cancel]")).toHaveCount(0, { timeout: 90000 });
+    await expect(panel.locator("[data-text-cancel]")).toHaveCount(0, { timeout: 90000 });
     const geometry = await large.locator(`[data-line="${target}"]`).evaluate((node) => {
       const body = node.closest(".document-body");
       return {
@@ -115,8 +116,8 @@ async function acceptance(page: Page, cdp: CDPSession, platform: string, target:
     expect(geometry.top).toBeLessThan(geometry.height);
     await panel.press("Control+f");
     await panel.locator("[data-document-search]").fill("VIEW03 absent result");
-    await expect(large.locator("[data-text-cancel]")).toBeVisible();
-    await large.locator("[data-text-cancel]").click();
+    await expect(panel.locator("[data-text-cancel]")).toBeVisible();
+    await panel.locator("[data-text-cancel]").click();
     const cancelledAt = await large.getAttribute("data-byte-offset");
     await page.waitForTimeout(300);
     expect(await large.getAttribute("data-byte-offset")).toBe(cancelledAt);
@@ -125,13 +126,13 @@ async function acceptance(page: Page, cdp: CDPSession, platform: string, target:
     await expect(large.locator("[data-search-match]").first()).toHaveText("VIEW03 LATE café 😀", {
       timeout: 90000,
     });
-    await expect(large.locator("[data-text-cancel]")).toHaveCount(0, { timeout: 90000 });
+    await expect(panel.locator("[data-text-cancel]")).toHaveCount(0, { timeout: 90000 });
     await sample("repeated-full-find");
     await panel.locator("[data-document-search]").fill("LONG_COLUMN_MATCH café 😀");
     await expect(large.locator("[data-search-match]").first()).toHaveText("LONG_COLUMN_MATCH café 😀", {
       timeout: 90000,
     });
-    await expect(large.locator("[data-text-cancel]")).toHaveCount(0, { timeout: 90000 });
+    await expect(panel.locator("[data-text-cancel]")).toHaveCount(0, { timeout: 90000 });
     const matchGeometry = async () =>
       large.locator("[data-current-search-match]").evaluate((node) => {
         const body = node.closest(".document-body");
@@ -159,7 +160,7 @@ async function acceptance(page: Page, cdp: CDPSession, platform: string, target:
     };
     console.log(`${platform}: long-line geometry ${JSON.stringify(await matchGeometry())}`);
     await expect.poll(visibleMatch).toBe(true);
-    await large.locator("[data-text-wrap]").check();
+    await panel.locator(".viewer-toolbar-controls [data-text-wrap]").check();
     await expect.poll(visibleMatch).toBe(true);
     await sample("six-MiB-line-match");
     const baseline = heaps[0]?.used ?? 0;
@@ -280,7 +281,7 @@ test("browser genuine200MiB log navigation, late Find, Go to line and bounded me
         });
       }
     });
-    await page.goto("http://127.0.0.1:5173/?mock=chat");
+    await page.goto(`${rendererUrlFromOutput(output)}?mock=chat`);
     await page.evaluate(() => localStorage.clear());
     await page.reload();
     await page.locator("[data-workbench-entry] .workbench-group-name").click();
@@ -347,12 +348,13 @@ test("native genuine200MiB confined log with bounded navigation and live Display
         })
       ).status,
     ).toBe("saved");
-    const large = page.locator("[data-large-text]");
+    const panel = page.locator("[data-source-current]"),
+      large = panel.locator("[data-large-text]");
     await large.locator(".document-body").press("Control+Home");
     await expect(large.locator('[data-line="1"]')).toContainText(LARGE_TEXT_SECRET);
     await page.locator("[data-source-current]").press("Control+f");
     await page.locator("[data-document-search]").fill("VIEW03 absent during Display change");
-    await expect(large.locator("[data-text-cancel]")).toBeVisible();
+    await expect(panel.locator("[data-text-cancel]")).toBeVisible();
     await invoke(page, "app.settings.update", { privacy: { mask: { display: true } } });
     await expect(large).not.toContainText(LARGE_TEXT_SECRET);
     await expect(large.locator('[data-line="1"]')).toContainText("*".repeat(LARGE_TEXT_SECRET.length));

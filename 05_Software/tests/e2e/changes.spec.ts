@@ -8,6 +8,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { _electron, expect, test } from "@playwright/test";
 import type { VeraBridge } from "@vera/shared";
+import { rendererUrlFromOutput } from "./fixtures.js";
 import { installNetworkGuard, outboundAttempts } from "./network-guard.js";
 
 const desktop = join(dirname(fileURLToPath(import.meta.url)), "../../src/apps/desktop");
@@ -285,7 +286,7 @@ test.describe("browser changes", () => {
         });
       });
 
-      await page.goto("http://127.0.0.1:5173/?mock=chat");
+      await page.goto(`${rendererUrlFromOutput(output)}?mock=chat`);
       await page.locator("[data-workbench-entry] .workbench-group-name").click();
       await page.locator('[data-action="new-session"]').click();
       const input = page.getByRole("textbox", { name: "Message", exact: true });

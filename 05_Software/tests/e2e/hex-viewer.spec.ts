@@ -87,7 +87,7 @@ test("native Hex border Find, partial row, keyboard copy and live Display use or
     await page.keyboard.press("Enter");
     await expect(viewer.locator('[data-hex-byte="131070"]')).toHaveAttribute("aria-pressed", "true");
     await expect(viewer.locator('[data-hex-byte="131074"]')).toHaveAttribute("aria-pressed", "true");
-    await viewer.locator('[data-hex-copy="hex"]').click();
+    await page.locator('.viewer-toolbar-controls [data-hex-copy="hex"]').click();
     await expect.poll(() => app.evaluate(({ clipboard }) => clipboard.readText())).toBe("41 42 00 FF 43");
     await viewer.locator("[data-document-search]").press("Escape");
     await expect(rows).toBeFocused();
@@ -111,7 +111,7 @@ test("native Hex border Find, partial row, keyboard copy and live Display use or
     await viewer.locator("[data-document-search]").fill(secret);
     await page.keyboard.press("Enter");
     await expect(viewer.locator('[data-hex-byte="65534"]')).toHaveAttribute("aria-pressed", "true");
-    await viewer.locator('[data-hex-copy="text"]').click();
+    await page.locator('.viewer-toolbar-controls [data-hex-copy="text"]').click();
     await expect.poll(() => app.evaluate(({ clipboard }) => clipboard.readText())).toBe(secret);
     await viewer.locator("[data-document-search]").fill("pending scan");
     await page.keyboard.press("Enter");
@@ -129,14 +129,14 @@ test("native Hex border Find, partial row, keyboard copy and live Display use or
     await viewer.locator("[data-document-search]").fill("*".repeat(secret.length));
     await page.keyboard.press("Enter");
     await expect(viewer.locator('[data-hex-byte="65534"]')).toHaveText("2A");
-    await viewer.locator('[data-hex-copy="text"]').click();
+    await page.locator('.viewer-toolbar-controls [data-hex-copy="text"]').click();
     await expect
       .poll(() => app.evaluate(({ clipboard }) => clipboard.readText()))
       .toBe("*".repeat(secret.length));
     await viewer.locator("[data-document-search]").fill("missing query");
     await page.keyboard.press("Enter");
-    await viewer.locator("[data-hex-cancel]").click();
-    await expect(viewer.locator("[data-hex-cancel]")).toHaveCount(0);
+    await page.locator(".viewer-toolbar-controls [data-hex-cancel]").click();
+    await expect(page.locator(".viewer-toolbar-controls [data-hex-cancel]")).toHaveCount(0);
     await viewer.locator("[data-document-search]").press("Escape");
     await expect(rows).toBeFocused();
     for (const [language, label] of [

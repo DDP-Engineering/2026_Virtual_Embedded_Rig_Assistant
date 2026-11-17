@@ -2,6 +2,7 @@
 import { spawn } from "node:child_process";
 import { once } from "node:events";
 import { expect, test } from "@playwright/test";
+import { rendererUrlFromOutput } from "./fixtures.js";
 import { changeSetting } from "./settings-navigation.js";
 
 test.use({ viewport: { width: 1024, height: 640 } });
@@ -46,7 +47,7 @@ for (const lang of ["en", "ro", "de"])
           server.stderr.on("data", ready);
           server.once("error", fail);
         });
-        await page.goto("http://127.0.0.1:5173/?mock=chat");
+        await page.goto(`${rendererUrlFromOutput(output)}?mock=chat`);
         await page.evaluate(() => localStorage.clear());
         await page.reload();
         await page.locator('[data-i18n="nav.settings"]').click();

@@ -7,6 +7,7 @@ import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { _electron, expect, test } from "@playwright/test";
 import type { VeraBridge } from "@vera/shared";
+import { rendererUrlFromOutput } from "./fixtures.js";
 import { installNetworkGuard, outboundAttempts } from "./network-guard.js";
 import { changeSetting } from "./settings-navigation.js";
 
@@ -219,7 +220,7 @@ test("browser skills editor fits en/ro/de, light/dark and every text scale with 
       server.once("error", fail);
     });
     for (const lang of ["en", "ro", "de"]) {
-      await page.goto("http://127.0.0.1:5173/?mock=chat");
+      await page.goto(`${rendererUrlFromOutput(output)}?mock=chat`);
       await page.evaluate(() => localStorage.clear());
       await page.reload();
       await page.locator('[data-i18n="nav.settings"]').click();

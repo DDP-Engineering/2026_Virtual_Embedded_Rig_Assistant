@@ -5,6 +5,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { _electron, type ElectronApplication, expect, test } from "@playwright/test";
 import type { VeraBridge } from "@vera/shared";
+import { rendererUrlFromOutput } from "./fixtures.js";
 import { installNetworkGuard, outboundAttempts } from "./network-guard.js";
 import { changeSetting } from "./settings-navigation.js";
 
@@ -208,7 +209,7 @@ test("browser subscription controls support manual/cancel/signout and en/ro/de a
       });
     });
     await page.setViewportSize({ width: 1024, height: 640 });
-    await page.goto("http://127.0.0.1:5173");
+    await page.goto(rendererUrlFromOutput(output));
     await page.locator('[data-i18n="nav.settings"]').click();
     await page.locator('[data-section="providers"]').click();
     const card = page.locator('[data-provider="chatgpt"]');

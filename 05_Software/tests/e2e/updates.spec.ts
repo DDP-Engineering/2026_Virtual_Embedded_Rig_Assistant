@@ -1,5 +1,6 @@
 import { spawn } from "node:child_process";
 import { expect, test } from "@playwright/test";
+import { rendererUrlFromOutput } from "./fixtures.js";
 import { changeSetting } from "./settings-navigation.js";
 
 test("Updates controls/notes/banner are usable in en/ro/de at minimum size", async ({ page, context }) => {
@@ -34,7 +35,7 @@ test("Updates controls/notes/banner are usable in en/ro/de at minimum size", asy
       server.stderr.on("data", read);
       server.once("error", reject);
     });
-    await page.goto("http://127.0.0.1:5173/");
+    await page.goto(rendererUrlFromOutput(output));
     await page.locator('[data-i18n="nav.settings"]').click();
     await page.locator('[data-section="updates"]').click();
     const panel = page.locator("#section-updates");
