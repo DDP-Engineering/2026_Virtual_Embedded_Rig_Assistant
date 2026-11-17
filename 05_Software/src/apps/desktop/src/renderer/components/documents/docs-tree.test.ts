@@ -227,7 +227,7 @@ it("lists document matches under the filtered tree from the same search box", as
   await vi.waitFor(() => expect(container.querySelector("[data-docs-hits]")).toBeNull());
 });
 
-it("keeps Reindex and Collapse all on one row under the search box", async () => {
+it("collapses expanded folders with the accessible icon beside search and preserves filtering", async () => {
   await mount();
   const collapse = () => container.querySelector<HTMLButtonElement>('[data-action="collapse-all"]');
   expect(collapse()?.disabled).toBe(true);
@@ -239,17 +239,22 @@ it("keeps Reindex and Collapse all on one row under the search box", async () =>
   expect(collapse()?.disabled).toBe(true);
   await type("");
   expect(collapse()?.disabled).toBe(false);
-  const actions = container.querySelector(".docs-actions") as HTMLElement;
-  expect(actions.querySelector('[data-action="reindex"]')?.textContent).toBe("Reindex");
-  expect(actions.querySelector('[data-action="collapse-all"]')?.textContent).toBe("Collapse all");
-  // The search box comes first, then the actions row, then the tree.
-  const order = [
-    container.querySelector("[data-docs-search]"),
-    actions,
-    container.querySelector('[role="tree"]'),
-  ] as Element[];
-  expect(order[0]?.compareDocumentPosition(order[1] as Node)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
-  expect(order[1]?.compareDocumentPosition(order[2] as Node)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+  const toolbar = container.querySelector(".docs-toolbar") as HTMLElement;
+  expect(toolbar.querySelector("[data-docs-search]")).not.toBeNull();
+  for (const [action, label] of [
+    ["reindex", "Reindex"],
+    ["collapse-all", "Collapse all"],
+  ]) {
+    const button = toolbar.querySelector(`[data-action="${action}"]`);
+    expect(button?.getAttribute("aria-label")).toBe(label);
+    expect(button?.getAttribute("title")).toContain(label);
+    expect(button?.querySelector('svg[aria-hidden="true"]')).not.toBeNull();
+  }
+  await click(collapse() ?? null);
+  await settle();
+  expect(row("docs")?.getAttribute("aria-expanded")).toBe("false");
+  expect(collapse()?.disabled).toBe(true);
+  expect(localStorage.getItem(`vera.docs.tree.${id}`)).toBeNull();
 });
 
 it("shows entries ignored by VERA in italic with faded icons, announced, expandable and readable", async () => {

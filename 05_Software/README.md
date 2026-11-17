@@ -52,6 +52,11 @@ Unit and component tests remain beside the implementation in `src/`. Environment
 release tooling lives in [02_Tools](../02_Tools/README.md); it resolves packages from this
 folder's `node_modules/`, so there is a single dependency tree.
 
+The renderer's `components/session/tool-details.tsx` presents localized tool actions, readable results
+and lazy technical details. Its component tests cover status, command output and preserved raw data.
+Plan updates share the Plan tab's readable task rows. `tests/e2e/i18n-hmr.spec.ts` verifies that live
+catalog updates reach mounted tool rows without reloading or resetting the selected language.
+
 The bundled official `analysis-skills` plugin supplies captured `firmware-comparator` and sourced
 manual `test-planner` procedures with on-demand templates. Install from its folder or local catalog,
 then enable it per workbench. Test plans include readiness, one to five cases and future results to
@@ -90,6 +95,13 @@ in Settings → About, while Home contains workbench creation/opening and recent
 
 The fictional corpus in `tests/fixtures/workbenches/demo-board/` is copied only into isolated verification workbenches. The application opens user-selected projects and packages real model/runtime resources.
 Configuration and npm workspace manifests remain at the software root.
+
+Desktop document controls share `components/documents/viewer-toolbar.tsx`: image zoom, text wrap
+and encoding, and Hex actions join the file mode buttons in one responsive row.
+Core `workbench/storage-size.ts` measures ordinary files inside `.vera` asynchronously, without
+following links. The overview reads `workbench.storage` on entry and offers an explicit refresh.
+Commands detects installed PowerShell, Cmd and native Bash variants through `commands.shells`;
+`plugins/shell-native.test.ts` checks real available interpreters, quoting and exit status.
 
 Model/DLL binaries in `src/models/` and `src/windows_runtime/` are ignored by Git;
 their manifests remain versioned beside them. Packaging maps these source locations

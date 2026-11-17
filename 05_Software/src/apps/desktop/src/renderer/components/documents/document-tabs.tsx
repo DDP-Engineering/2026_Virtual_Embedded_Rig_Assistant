@@ -21,6 +21,7 @@ import type { ZoomRequest } from "./pdf-viewer.js";
 import { TreeMenu, type TreeMenuItem } from "./tree-menu.js";
 import { TreeProperties } from "./tree-properties.js";
 import { CHAT, DocumentBody, type DocumentTab, useDocumentTabs } from "./viewer-context.js";
+import { ViewerToolbarTarget } from "./viewer-toolbar.js";
 
 const tabId = (index: number) => `document-tab-${index}`;
 const panelId = (index: number) => `document-panel-${index}`;
@@ -369,6 +370,7 @@ function DocumentPanel({ tab, index, leave }: { tab: DocumentTab; index: number;
   const { t } = useTranslation();
   const state = useDocumentTabs();
   const node = useRef<HTMLElement>(null);
+  const [toolbar, setToolbar] = useState<HTMLDivElement | null>(null);
   const [findRequest, setFindRequest] = useState(0);
   const [gotoRequest, setGotoRequest] = useState(0);
   const [zoomRequest, setZoomRequest] = useState<ZoomRequest>();
@@ -507,23 +509,26 @@ function DocumentPanel({ tab, index, leave }: { tab: DocumentTab; index: number;
         }}
       >
         {tab.modeInfo && (
-          <fieldset className="viewer-mode-toolbar" aria-label={t("documents.mode")}>
-            {tab.modeInfo.modes.map((mode) => (
-              <button
-                type="button"
-                key={mode}
-                data-viewer-mode={mode}
-                aria-pressed={tab.modeInfo?.mode === mode}
-                onClick={() => state.setMode(tab.key, mode)}
-              >
-                {mode === "rendered"
-                  ? t("documents.modeRendered")
-                  : mode === "text"
-                    ? t("documents.modeText")
-                    : t("documents.modeHex")}
-              </button>
-            ))}
-          </fieldset>
+          <div className="viewer-toolbar-row">
+            <fieldset className="viewer-mode-toolbar" aria-label={t("documents.mode")}>
+              {tab.modeInfo.modes.map((mode) => (
+                <button
+                  type="button"
+                  key={mode}
+                  data-viewer-mode={mode}
+                  aria-pressed={tab.modeInfo?.mode === mode}
+                  onClick={() => state.setMode(tab.key, mode)}
+                >
+                  {mode === "rendered"
+                    ? t("documents.modeRendered")
+                    : mode === "text"
+                      ? t("documents.modeText")
+                      : t("documents.modeHex")}
+                </button>
+              ))}
+            </fieldset>
+            <div className="viewer-toolbar-controls" ref={setToolbar} />
+          </div>
         )}
         {error !== undefined ? (
           <>
@@ -533,21 +538,23 @@ function DocumentPanel({ tab, index, leave }: { tab: DocumentTab; index: number;
             </button>
           </>
         ) : content ? (
-          <Suspense fallback={<p role="status">{t("home.loading")}</p>}>
-            <DocumentBody
-              content={content}
-              bytes={tab.textBytes}
-              largeText={tab.largeText}
-              hexFile={tab.hexFile}
-              imageFile={tab.imageFile}
-              retry={() => state.retry(tab.key)}
-              place={state.place(tab.key)}
-              onPlace={(place) => state.setPlace(tab.key, place)}
-              findRequest={findRequest}
-              gotoRequest={gotoRequest}
-              zoomRequest={zoomRequest}
-            />
-          </Suspense>
+          <ViewerToolbarTarget value={toolbar}>
+            <Suspense fallback={<p role="status">{t("home.loading")}</p>}>
+              <DocumentBody
+                content={content}
+                bytes={tab.textBytes}
+                largeText={tab.largeText}
+                hexFile={tab.hexFile}
+                imageFile={tab.imageFile}
+                retry={() => state.retry(tab.key)}
+                place={state.place(tab.key)}
+                onPlace={(place) => state.setPlace(tab.key, place)}
+                findRequest={findRequest}
+                gotoRequest={gotoRequest}
+                zoomRequest={zoomRequest}
+              />
+            </Suspense>
+          </ViewerToolbarTarget>
         ) : (
           <p role="status">{t("home.loading")}</p>
         )}

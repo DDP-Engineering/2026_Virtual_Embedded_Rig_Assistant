@@ -67,12 +67,14 @@ for (const lang of ["en", "ro", "de"])
           "data-status",
           "pending",
         );
-        // REQ-UX-d455531b: one search box; Reindex and Collapse all share a row.
+        // The search box and accessible icon actions share one compact row.
         await expect(docs.locator("input")).toHaveCount(1);
         const reindexTop = (await docs.locator('[data-action="reindex"]').boundingBox())?.y;
         const collapseTop = (await docs.locator('[data-action="collapse-all"]').boundingBox())?.y;
         expect(reindexTop).toBeDefined();
         expect(Math.abs((reindexTop ?? 0) - (collapseTop ?? Number.NaN))).toBeLessThan(2);
+        const searchTop = (await docs.locator("[data-docs-search]").boundingBox())?.y;
+        expect(Math.abs((searchTop ?? Number.NaN) - (reindexTop ?? 0))).toBeLessThan(8);
         // REQ-UX-2504362b: document hits are listed under the filtered tree.
         await docs.locator("[data-docs-search]").fill("power");
         await expect(docs.locator("[data-docs-hits] .documents-list li")).toHaveCount(1);

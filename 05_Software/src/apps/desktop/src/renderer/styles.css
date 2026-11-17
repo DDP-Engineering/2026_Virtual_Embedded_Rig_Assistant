@@ -437,6 +437,78 @@ main {
   width: 100%;
   text-align: left;
 }
+.tool-activity-title {
+  display: grid;
+  grid-template-columns: 1.15rem minmax(0, 1fr) auto 1rem;
+  align-items: center;
+  gap: 0.5rem;
+}
+.tool-activity-title > svg {
+  width: 1.1rem;
+  height: 1.1rem;
+}
+.tool-activity-description {
+  min-width: 0;
+}
+.tool-activity-description strong,
+.tool-activity-target,
+.tool-activity-caption {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tool-activity-caption,
+.tool-activity-status {
+  color: var(--muted-foreground);
+  font-size: 0.85em;
+}
+.tool-activity-title[data-tool-status="error"] > svg,
+.tool-activity-title[data-tool-status="error"] .tool-activity-status {
+  color: var(--destructive);
+}
+.tool-activity-title[data-tool-status="running"] > svg:first-child {
+  animation: activity-spin 1.2s linear infinite;
+}
+.tool-activity > .disclosure-toggle[aria-expanded="true"] .tool-activity-chevron {
+  transform: rotate(90deg);
+}
+.tool-activity-body {
+  display: grid;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  min-width: 0;
+}
+.tool-activity-body pre {
+  max-height: 24rem;
+  overflow: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.tool-result-list {
+  display: grid;
+  gap: 0.5rem;
+  padding-inline-start: 1.5rem;
+  overflow-wrap: anywhere;
+}
+.tool-technical > .disclosure-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  width: auto;
+  padding: 0.25rem 0;
+  border: 0;
+  background: transparent;
+  color: var(--muted-foreground);
+  font-size: 0.85em;
+}
+.tool-technical > .disclosure-toggle svg {
+  width: 1em;
+  height: 1em;
+}
+.tool-technical > .disclosure-toggle[aria-expanded="true"] svg {
+  transform: rotate(90deg);
+}
 .markdown ul,
 .markdown ol {
   padding-left: 1.5rem;
@@ -712,6 +784,7 @@ legend {
   overflow-wrap: anywhere;
 }
 .right-panel {
+  container: right-panel / inline-size;
   flex-shrink: 0;
   width: min(var(--right-width), 50vw);
   min-width: 0;
@@ -721,18 +794,62 @@ legend {
   padding: 1rem;
   overflow: auto;
 }
-.panel-header {
+.panel-toolbar {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
-  gap: 0.5rem;
-  justify-content: space-between;
+  gap: 0.4rem;
+  margin-bottom: 0.5rem;
+  flex-shrink: 0;
+}
+.panel-close {
+  flex-shrink: 0;
+  width: 2rem;
 }
 .panel-tabs {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 0.25rem;
+}
+.panel-tabs button,
+.panel-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  min-height: 2.25rem;
+  padding: 0.25rem 0.1rem;
+}
+.panel-tabs svg,
+.panel-close svg {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+@container right-panel (width < 16rem) {
+  .panel-tabs {
+    gap: 0.125rem;
+  }
+  .panel-tabs button {
+    padding-inline: 0;
+  }
+  .panel-tabs svg {
+    width: 1rem;
+    height: 1rem;
+  }
+  .panel-close {
+    width: 1.5rem;
+  }
+}
+.right-panel[data-tab="terminal"] {
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem;
-  margin-block: 1rem;
+  flex-direction: column;
+  overflow: hidden;
+}
+.right-panel[data-tab="terminal"] > #panel-terminal {
+  display: flex;
+  flex: 1;
+  min-height: 0;
 }
 .resizer {
   height: 100%;
@@ -1274,6 +1391,45 @@ legend {
   gap: 0.6rem;
   padding: 0.75rem 1.5rem 1rem;
 }
+.overview-storage {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.4rem;
+}
+.overview-storage button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.2rem;
+}
+.overview-storage svg {
+  width: 1rem;
+  height: 1rem;
+}
+.viewer-toolbar-row,
+.viewer-toolbar-controls {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  min-width: 0;
+  flex-shrink: 0;
+}
+.viewer-toolbar-controls:empty {
+  display: none;
+}
+.viewer-toolbar-controls {
+  flex-shrink: 1;
+  max-width: 100%;
+}
+.viewer-toolbar-controls > * {
+  min-width: 0;
+  max-width: 100%;
+}
+.viewer-toolbar-row button {
+  white-space: nowrap;
+}
 .viewer-mode-toolbar {
   display: flex;
   flex: 0 0 auto;
@@ -1504,13 +1660,54 @@ legend {
   gap: 0.6rem;
   min-width: 0;
 }
-.docs-actions {
+.docs-toolbar {
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
+  align-items: center;
+  gap: 0.35rem;
+  min-width: 0;
 }
-.docs-actions button {
-  flex: 1 1 auto;
+.docs-toolbar input {
+  flex: 1;
+}
+.docs-toolbar button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 2.25rem;
+  height: 2.25rem;
+  padding: 0.25rem;
+}
+.docs-index-status {
+  font-size: 0.85em;
+}
+.docs-index-failures summary {
+  cursor: pointer;
+}
+.docs-index-failures summary svg {
+  display: inline;
+  width: 1em;
+  height: 1em;
+  vertical-align: -0.1em;
+  margin-right: 0.25em;
+}
+.docs-index-failures ul {
+  margin: 0.5rem 0;
+  padding-left: 1.25rem;
+  overflow-wrap: anywhere;
+}
+.docs-indexing {
+  animation: activity-spin 1.2s linear infinite;
+}
+@keyframes activity-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .docs-indexing,
+  .tool-activity-title[data-tool-status="running"] > svg:first-child {
+    animation: none;
+  }
 }
 .docs-hits h3 {
   margin: 0.4rem 0;
@@ -1802,6 +1999,7 @@ legend {
 }
 .workbench-editor > header,
 .workbench-create > header,
+[data-settings-section="commands"] > header,
 [data-settings-section="data"] > header {
   display: flex;
   align-items: center;
@@ -1815,7 +2013,8 @@ legend {
   margin: 0;
   overflow-wrap: anywhere;
 }
-[data-settings-section="data"] > header h2 {
+[data-settings-section="data"] > header h2,
+[data-settings-section="commands"] > header h2 {
   margin: 0 auto 0 0;
 }
 [data-settings-section="data"] [data-privacy-controls] {
@@ -2210,6 +2409,7 @@ legend {
   white-space: nowrap;
 }
 .session-workspace > .transcript-frame {
+  --transcript-navigation-width: calc(1.25rem + max(1.5rem, 24px));
   position: relative;
   flex: 1;
   min-height: 0;
@@ -2220,9 +2420,8 @@ legend {
 .transcript-frame > .transcript {
   height: 100%;
   min-height: 0;
-  padding: 1rem max(1.5rem, calc((100% - 58rem) / 2));
-  /* Rail (1.25rem) plus marker lane (at least 24px) plus a gap, so neither covers the text. */
-  padding-left: max(calc(1.75rem + max(1.5rem, 24px)), calc((100% - 58rem) / 2));
+  margin-left: var(--transcript-navigation-width);
+  padding: 1rem 1.5rem;
   overscroll-behavior: contain;
   scrollbar-width: none;
 }
@@ -2234,6 +2433,9 @@ legend {
   flex-direction: column;
   gap: 1rem;
   min-width: 0;
+  width: 100%;
+  max-width: 58rem;
+  margin-inline: auto;
 }
 /* REQ-UX-1676bc64: a quiet segmented rail with a full-size pointer target. */
 .transcript-scroll-rail {
@@ -3813,26 +4015,63 @@ legend {
 
 .terminal-panel {
   display: flex;
+  flex: 1;
   flex-direction: column;
   gap: 0.5rem;
   min-width: 0;
+  min-height: 0;
 }
-.terminal-actions,
+.terminal-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+  flex-shrink: 0;
+}
+.terminal-actions {
+  display: flex;
+  gap: 0.25rem;
+  flex-shrink: 0;
+}
+.terminal-actions button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0.25rem;
+}
+.terminal-actions svg {
+  width: 1.1rem;
+  height: 1.1rem;
+}
 .terminal-tabs {
   display: flex;
-  gap: 0.4rem;
-  flex-wrap: wrap;
+  flex: 1;
+  gap: 0.35rem;
+  min-width: 0;
+  overflow-x: auto;
+}
+.terminal-tabs button {
+  flex-shrink: 0;
+  padding: 0.3rem 0.5rem;
+  white-space: nowrap;
 }
 .terminal-tabs [aria-selected="true"] {
   border-color: var(--primary);
 }
 .terminal-consent {
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   gap: 0.4rem;
 }
+#terminal-active {
+  flex: 1;
+  min-height: 0;
+}
 .terminal-surface {
-  height: max(16rem, calc(100vh - 24rem));
+  height: 100%;
   min-width: 0;
   background: #000;
 }

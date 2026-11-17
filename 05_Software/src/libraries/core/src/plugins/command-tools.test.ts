@@ -70,6 +70,20 @@ it("offers the built-in shell command and accepts a user shell setting", () => {
   expect(settingsPatchSchema.safeParse({ shell: "pwsh" }).success).toBe(true);
 });
 
+it("carries host-owned Cmd quoting through the runner without adding model-controlled flags", async () => {
+  if (!ctx.programs?.host.shell) throw Error("Missing shell host");
+  ctx.programs.host.shell.resolve = async () => ({
+    executable: "C:\\Windows\\System32\\cmd.exe",
+    kind: "cmd",
+  });
+  const command = 'echo "A&B"';
+  const call = await prepare({ command, background: true });
+  const result = await call.apply(signal());
+  expect(host.programs[0]?.options.windowsVerbatimArguments).toBe(true);
+  expect(call.request).toMatchObject({ executableArgs: ["/d", "/s", "/c", `"${command}"`] });
+  await runner.stopRun(root, String(result.handle));
+});
+
 it("records explicit command identity and canonical cwd, and shares UI Stop with the agent handle", async () => {
   const command = "echo 'ready'";
   const call = await prepare({ command, cwd: "cwd", background: true });

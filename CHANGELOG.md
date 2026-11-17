@@ -8,11 +8,27 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ### Fixed
 
+- Tool activity shows readable plan steps; translation catalogs refresh in an already running development app.
+- Commands aligns Cancel and Save at the top right, matching Data & privacy.
+
+- Terminal text follows the code/output text size setting immediately and refits its rows and columns.
+
+- Files shows active indexing or failures; large-selection advice stays in the documentation setup preview.
+
 - Terminal history replay no longer injects control replies into the shell when reopening or switching tabs.
 
 - Windows command Stop waits for descendant cleanup and reaps children created during process-tree termination.
 
 ### Changed
+
+- Chat describes tool actions and results clearly, with raw data and duration in expandable technical details.
+- Files places icon actions beside search and shows compact indexing progress with expandable failures.
+- The Context tab and icon tooltip are named Instructions and skills in all four interface languages.
+- Commands offers detected shell choices and Custom, with native Cmd and Bash support on Windows.
+- Right-panel tabs and terminal actions use compact icons; assistant replies omit the repeated VERA heading.
+- Chat messages are centered in the space beside the navigation rail, with balanced horizontal margins.
+- Image zoom, text wrap and encoding, and Hex actions share the file-mode toolbar.
+- Workbench overview shows the total .vera folder size with an on-demand refresh.
 
 - Test runners parallelize isolated checks, share renderer/CLI preparation and validate desktop build reuse.
 - Milestone tests refresh viewer/session fixtures, align plugin versions and isolate costly checks.

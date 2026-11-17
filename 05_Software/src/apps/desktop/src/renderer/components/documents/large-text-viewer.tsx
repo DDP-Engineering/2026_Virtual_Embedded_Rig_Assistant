@@ -10,6 +10,7 @@ import { type LargeTextFile, LargeTextSource, TEXT_SCAN_BYTES } from "./large-te
 import { readTextWindow } from "./large-text-window.js";
 import { type TextEncoding, textEncodings } from "./text-encoding.js";
 import type { DocumentPlace } from "./viewer-context.js";
+import { ViewerToolbar } from "./viewer-toolbar.js";
 
 /** Byte navigation, progressive sparse indexing and cancellable search without file-wide text state. */
 export function LargeTextViewer({
@@ -187,47 +188,49 @@ export function LargeTextViewer({
       data-exact={view?.exact}
       data-window-revision={serial.current}
     >
-      <div className="document-toolbar">
-        <label>
-          <input
-            type="checkbox"
-            data-text-wrap
-            checked={wrap}
-            onChange={(event) => setWrap(event.target.checked)}
-          />
-          {t("documents.wordWrap")}
-        </label>
-        {!file.verified && (
+      <ViewerToolbar>
+        <div className="document-toolbar">
           <label>
-            {t("documents.encoding")}
-            <select
-              data-text-encoding
-              value={encoding}
-              onChange={(event) => {
-                cancel();
-                setEncoding(event.target.value as TextEncoding);
-                setReplace(false);
-              }}
-            >
-              {textEncodings.map((value) => (
-                <option key={value} value={value}>
-                  {value.toUpperCase()}
-                </option>
-              ))}
-            </select>
+            <input
+              type="checkbox"
+              data-text-wrap
+              checked={wrap}
+              onChange={(event) => setWrap(event.target.checked)}
+            />
+            {t("documents.wordWrap")}
           </label>
-        )}
-        <span
-          className="text-scan-controls"
-          aria-hidden={!busy}
-          style={{ visibility: busy ? "visible" : "hidden" }}
-        >
-          <span role="status">{t("documents.scanning")}</span>
-          <button type="button" data-text-cancel={busy ? "" : undefined} disabled={!busy} onClick={cancel}>
-            {t("workbench.cancel")}
-          </button>
-        </span>
-      </div>
+          {!file.verified && (
+            <label>
+              {t("documents.encoding")}
+              <select
+                data-text-encoding
+                value={encoding}
+                onChange={(event) => {
+                  cancel();
+                  setEncoding(event.target.value as TextEncoding);
+                  setReplace(false);
+                }}
+              >
+                {textEncodings.map((value) => (
+                  <option key={value} value={value}>
+                    {value.toUpperCase()}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
+          <span
+            className="text-scan-controls"
+            aria-hidden={!busy}
+            style={{ visibility: busy ? "visible" : "hidden" }}
+          >
+            <span role="status">{t("documents.scanning")}</span>
+            <button type="button" data-text-cancel={busy ? "" : undefined} disabled={!busy} onClick={cancel}>
+              {t("workbench.cancel")}
+            </button>
+          </span>
+        </div>
+      </ViewerToolbar>
       {bar === "find" && (
         <FindBar
           label={t("documents.find")}

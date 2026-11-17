@@ -1,14 +1,21 @@
 import {
   Activity,
   ArrowLeft,
+  BookOpen,
   CircleQuestionMark,
+  FileDiff,
   Folder,
   Home,
+  ListTodo,
+  Package,
   PanelLeft,
   PanelRight,
+  Play,
   Plus,
   Puzzle,
   Settings as SettingsIcon,
+  SquareTerminal,
+  X,
 } from "lucide-react";
 import {
   type CSSProperties,
@@ -214,13 +221,13 @@ export function Shell({
     );
   }
   const tabs = [
-    { id: "context", label: t("panel.context") },
-    { id: "docs", label: t("panel.docs") },
-    { id: "changes", label: t("panel.changes") },
-    { id: "artifacts", label: t("panel.artifacts") },
-    { id: "plan", label: t("panel.plan") },
-    { id: "runs", label: t("panel.runs") },
-    { id: "terminal", label: t("panel.terminal") },
+    { id: "context", label: t("panel.context"), icon: BookOpen },
+    { id: "docs", label: t("panel.docs"), icon: Folder },
+    { id: "changes", label: t("panel.changes"), icon: FileDiff },
+    { id: "artifacts", label: t("panel.artifacts"), icon: Package },
+    { id: "plan", label: t("panel.plan"), icon: ListTodo },
+    { id: "runs", label: t("panel.runs"), icon: Play },
+    { id: "terminal", label: t("panel.terminal"), icon: SquareTerminal },
   ];
   const style = {
     "--sidebar-width": `${layout.sidebar}rem`,
@@ -424,56 +431,66 @@ export function Shell({
           {children}
         </main>
         {!layout.rightCollapsed && (
-          <aside id="right-panel" data-panel="right" data-tab={tab} className="right-panel">
+          <aside
+            id="right-panel"
+            data-panel="right"
+            data-tab={tab}
+            className="right-panel"
+            aria-label={t("panel.title")}
+          >
             {separator("right")}
-            <div className="panel-header">
-              <strong>{t("panel.title")}</strong>
+            <div className="panel-toolbar">
+              <div className="panel-tabs" role="tablist" aria-label={t("panel.title")}>
+                {tabs.map(({ id, label, icon: Icon }) => (
+                  <button
+                    type="button"
+                    role="tab"
+                    id={`tab-${id}`}
+                    aria-label={label}
+                    title={label}
+                    aria-controls={`panel-${id}`}
+                    aria-selected={tab === id}
+                    tabIndex={tab === id ? 0 : -1}
+                    key={id}
+                    onClick={() => setTab(id)}
+                    onKeyDown={(event) => {
+                      if (event.altKey || event.ctrlKey || event.metaKey || event.nativeEvent.isComposing)
+                        return;
+                      const index = tabs.findIndex((entry) => entry.id === id);
+                      const next =
+                        event.key === "Home"
+                          ? 0
+                          : event.key === "End"
+                            ? tabs.length - 1
+                            : event.key === "ArrowRight"
+                              ? (index + 1) % tabs.length
+                              : event.key === "ArrowLeft"
+                                ? (index + tabs.length - 1) % tabs.length
+                                : undefined;
+                      const target = next === undefined ? undefined : tabs[next];
+                      if (target) {
+                        event.preventDefault();
+                        setTab(target.id);
+                        document.getElementById(`tab-${target.id}`)?.focus();
+                      }
+                    }}
+                  >
+                    <Icon aria-hidden="true" />
+                  </button>
+                ))}
+              </div>
               <button
                 type="button"
+                className="panel-close"
+                aria-label={t("panel.close")}
+                title={t("panel.close")}
                 onClick={() => {
                   setLayout((value) => ({ ...value, rightCollapsed: true }));
                   panelToggle.current?.focus();
                 }}
               >
-                {t("panel.close")}
+                <X aria-hidden="true" />
               </button>
-            </div>
-            <div className="panel-tabs" role="tablist" aria-label={t("panel.title")}>
-              {tabs.map(({ id, label }) => (
-                <button
-                  type="button"
-                  role="tab"
-                  id={`tab-${id}`}
-                  aria-controls={`panel-${id}`}
-                  aria-selected={tab === id}
-                  tabIndex={tab === id ? 0 : -1}
-                  key={id}
-                  onClick={() => setTab(id)}
-                  onKeyDown={(event) => {
-                    if (event.altKey || event.ctrlKey || event.metaKey || event.nativeEvent.isComposing)
-                      return;
-                    const index = tabs.findIndex((entry) => entry.id === id);
-                    const next =
-                      event.key === "Home"
-                        ? 0
-                        : event.key === "End"
-                          ? tabs.length - 1
-                          : event.key === "ArrowRight"
-                            ? (index + 1) % tabs.length
-                            : event.key === "ArrowLeft"
-                              ? (index + tabs.length - 1) % tabs.length
-                              : undefined;
-                    const target = next === undefined ? undefined : tabs[next];
-                    if (target) {
-                      event.preventDefault();
-                      setTab(target.id);
-                      document.getElementById(`tab-${target.id}`)?.focus();
-                    }
-                  }}
-                >
-                  {label}
-                </button>
-              ))}
             </div>
             {tabs.map(({ id }) => (
               <div

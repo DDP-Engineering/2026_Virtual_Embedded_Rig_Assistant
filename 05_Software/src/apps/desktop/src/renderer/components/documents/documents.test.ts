@@ -74,6 +74,11 @@ it("opens live Docs heading/search refs, renders statuses and progress, restores
   try {
     await render(false);
     await settle();
+    const failures = container.querySelector<HTMLDetailsElement>(".docs-index-failures");
+    expect(failures?.open).toBe(false);
+    expect(failures?.querySelector("summary")?.textContent).toContain("1 file could not be indexed");
+    expect(failures?.querySelector("li")?.textContent).toContain("docs/failed.pdf");
+    expect(failures?.querySelector("li")?.textContent).toContain("Processing failed");
     await expandDocs(container);
     expect(container.querySelectorAll("[data-document]")).toHaveLength(10);
     expect(container.textContent).toContain("Needs OCR");
@@ -86,12 +91,22 @@ it("opens live Docs heading/search refs, renders statuses and progress, restores
       document.activeElement?.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true })),
     );
     expect(document.activeElement).toBe(doc);
-    const reindex = [...container.querySelectorAll<HTMLButtonElement>("button")].find(
-      (b) => b.textContent === "Reindex",
-    );
+    const reindex = container.querySelector<HTMLButtonElement>('[data-action="reindex"]');
     await act(async () => reindex?.click());
     await settle();
-    expect(container.textContent).toContain("0 pending");
+    expect(container.querySelector(".docs-index-failures summary")?.textContent).toContain(
+      "1 file could not be indexed",
+    );
+    expect(reindex?.title).toContain("9 documents · 1 failed");
+    const retry = container.querySelector<HTMLButtonElement>(".docs-index-failures button");
+    const invoke = vi.spyOn(api, "invoke");
+    try {
+      await act(async () => retry?.click());
+      await settle();
+      expect(invoke).toHaveBeenCalledWith("docs.reindex", { workbenchId: id });
+    } finally {
+      invoke.mockRestore();
+    }
     const input = container.querySelector<HTMLInputElement>("input");
     await act(async () => {
       if (input) {
@@ -105,6 +120,7 @@ it("opens live Docs heading/search refs, renders statuses and progress, restores
     await render(true);
     await settle();
     expect(reindex?.disabled).toBe(true);
+    expect(container.querySelector<HTMLButtonElement>(".docs-index-failures button")?.disabled).toBe(true);
   } finally {
     await act(async () => root.unmount());
     container.remove();
@@ -698,10 +714,9 @@ it("keeps the source open when Escape only ends an IME composition", async () =>
 });
 
 // REQ-UX-05c5b146 REQ-UX-d64e808a
-it("warns about a large selection in Docs and in the Documents section, never at the limits", async () => {
+it("reports active indexing in Files and warns about large selections before saving", async () => {
   await api.invoke("workbench.open", { folder: "/mock/demo-board" });
   const GiB = 1024 ** 3;
-  let volume: { files: number; bytes: number } | null = { files: 2001, bytes: 10 };
   const previews: Record<string, { files: number; bytes: number; truncated?: boolean }> = {
     "big/**": { files: 2001, bytes: 5 },
     "edge/**": { files: 2000, bytes: 2 * GiB },
@@ -710,7 +725,8 @@ it("warns about a large selection in Docs and in the Documents section, never at
   };
   const original = api.invoke.bind(api);
   const invoke = vi.spyOn(api, "invoke").mockImplementation((async (channel: string, request: unknown) => {
-    if (channel === "docs.volume") return { workbenchId: id, volume, guard: null };
+    if (channel === "docs.volume")
+      return { workbenchId: id, volume: { files: 2001, bytes: 10 }, guard: null };
     if (channel === "workbench.previewDocs") {
       const include = (request as { include: string[] }).include[0] ?? "";
       return {
@@ -757,30 +773,27 @@ it("warns about a large selection in Docs and in the Documents section, never at
   try {
     await docs();
     await settle();
-    expect(warning()).toContain("2,001");
     await expandDocs(container);
     expect(container.querySelectorAll("[data-document]")).toHaveLength(10);
-    // At exactly 2,000 files and 2 GiB there is no warning; the list stays.
-    await act(async () => deliver({ type: "index.volume", files: 2000, bytes: 2 * GiB }));
-    // Query observers are notified on the next tick.
-    await settle();
-    expect(warning()).toBeNull();
-    expect(container.querySelectorAll("[data-document]")).toHaveLength(10);
-    await act(async () => deliver({ type: "index.volume", files: 5, bytes: 2 * GiB + 1 }));
-    await settle();
-    expect(warning()).toContain("2 GB");
-    // Indexing progress keeps being reported beside the warning.
     await act(async () => deliver({ type: "index.progress", pending: 4, done: 1, failed: 0 }));
     await settle();
-    expect(container.textContent).toContain("Index: 1 done, 4 pending, 0 failed");
-    expect(warning()).toContain("2 GB");
-    // Another right-panel tab unmounts Docs; on return the volume is read again, not the cache.
-    await act(async () => root.render(createElement("div")));
-    volume = { files: 10, bytes: 10 };
-    await docs();
+    expect(container.querySelector(".docs-index-status")?.textContent).toContain(
+      "Indexing… 1 done · 4 remaining",
+    );
+    expect(container.querySelector('[data-action="reindex"]')?.getAttribute("aria-busy")).toBe("true");
+    await act(async () => deliver({ type: "index.progress", pending: 0, done: 5, failed: 0 }));
     await settle();
-    expect(warning()).toBeNull();
-    volume = null;
+    expect(container.querySelector(".docs-index-status")).toBeNull();
+    expect(container.querySelector('[data-action="reindex"]')?.getAttribute("title")).toContain(
+      "5 documents · 0 failed",
+    );
+    // Failed documents remain actionable after a run ends.
+    await act(async () => deliver({ type: "index.progress", pending: 0, done: 4, failed: 1 }));
+    await settle();
+    expect(container.querySelector(".docs-index-failures summary")?.textContent).toContain(
+      "1 file could not be indexed",
+    );
+    expect(container.querySelector('[data-action="reindex"]')?.getAttribute("aria-busy")).toBe("false");
     // The Documents section warns beside its preview statement while the preview is too large.
     const section = (include: string) =>
       act(async () =>
@@ -903,8 +916,7 @@ it("shows stopped indexing with a Restart action that restarts the indexer", asy
     );
     await settle();
     const stopped = () => container.querySelector("[data-indexer-stopped]");
-    const reindex = () =>
-      [...container.querySelectorAll<HTMLButtonElement>("button")].find((b) => b.textContent === "Reindex");
+    const reindex = () => container.querySelector<HTMLButtonElement>('[data-action="reindex"]');
     expect(stopped()).toBeNull();
     // A stopped status event shows the message; Reindex waits, since it would empty the index first.
     state = "stopped";

@@ -12,6 +12,8 @@ const native = vi.hoisted(() => ({
   resize: (_size: { cols: number; rows: number }) => {},
   write: vi.fn(),
   dispose: vi.fn(),
+  created: vi.fn(),
+  fit: vi.fn(),
 }));
 vi.mock("../api/index.js", () => ({ api: { invoke: vi.fn() } }));
 vi.mock("../lib/terminal-document.js", () => ({
@@ -19,7 +21,11 @@ vi.mock("../lib/terminal-document.js", () => ({
 }));
 vi.mock("@xterm/xterm", () => ({
   Terminal: class {
-    options = { disableStdin: false };
+    options: { disableStdin: boolean; fontSize: number };
+    constructor(options: { disableStdin: boolean; fontSize: number }) {
+      this.options = { ...options };
+      native.created(this);
+    }
     loadAddon() {}
     open() {}
     focus() {}
@@ -44,7 +50,7 @@ vi.mock("@xterm/xterm", () => ({
 }));
 vi.mock("@xterm/addon-fit", () => ({
   FitAddon: class {
-    fit() {}
+    fit = native.fit;
   },
 }));
 vi.stubGlobal(
@@ -58,6 +64,50 @@ vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
 afterEach(() => {
   vi.clearAllMocks();
   vi.useRealTimers();
+});
+
+it("updates the mounted terminal font and refits immediately when code text size changes", async () => {
+  const owner = "wb_01JB8Z6Q4M7N2K5R9T3V8X1Y0C";
+  const row: TerminalSummary = {
+    id: "00000000-0000-4000-8000-000000000001",
+    number: 1,
+    shared: false,
+    running: true,
+  };
+  vi.mocked(api.invoke).mockImplementation(async (channel) => {
+    if (channel === "terminal.list") return [row] as never;
+    if (channel === "terminal.output") return { ...row, output: "retained shell history" } as never;
+    return {} as never;
+  });
+  const documentRoot = document.documentElement;
+  const previous = documentRoot.style.getPropertyValue("--code-font-size");
+  documentRoot.style.setProperty("--code-font-size", "20px");
+  const container = document.createElement("div");
+  document.body.append(container);
+  const root = createRoot(container);
+  try {
+    await act(async () => root.render(createElement(TerminalTab, { workbenchId: owner })));
+    const term = native.created.mock.calls[0]?.[0] as { options: { fontSize: number } };
+    expect(term.options.fontSize).toBe(20);
+    const surface = container.querySelector(".terminal-surface");
+    Object.defineProperties(surface, { clientWidth: { value: 600 }, clientHeight: { value: 300 } });
+    for (const size of [10, 12, 14, 16, 20, 24]) {
+      const fits = native.fit.mock.calls.length;
+      await act(async () => documentRoot.style.setProperty("--code-font-size", `${size}px`));
+      expect(term.options.fontSize).toBe(size);
+      expect(native.fit).toHaveBeenCalledTimes(fits + 1);
+    }
+    await act(async () => documentRoot.style.removeProperty("--code-font-size"));
+    expect(term.options.fontSize).toBe(14);
+    expect(native.created).toHaveBeenCalledTimes(1);
+    expect(native.dispose).not.toHaveBeenCalled();
+    expect(native.write).toHaveBeenCalledExactlyOnceWith("retained shell history");
+  } finally {
+    await act(async () => root.unmount());
+    container.remove();
+    if (previous) documentRoot.style.setProperty("--code-font-size", previous);
+    else documentRoot.style.removeProperty("--code-font-size");
+  }
 });
 
 it.each(["en", "ro", "de", "fr"])(
@@ -120,7 +170,7 @@ it.each(["en", "ro", "de", "fr"])(
       const buttons = () => [...container.querySelectorAll<HTMLButtonElement>("button")];
       await act(async () =>
         buttons()
-          .find((button) => button.textContent === i18n.t("terminal.new"))
+          .find((button) => button.getAttribute("aria-label") === i18n.t("terminal.new"))
           ?.click(),
       );
       expect(checkbox()?.checked).toBe(false);
@@ -144,7 +194,7 @@ it.each(["en", "ro", "de", "fr"])(
       });
       await act(async () =>
         buttons()
-          .find((button) => button.textContent === i18n.t("terminal.close"))
+          .find((button) => button.getAttribute("aria-label") === i18n.t("terminal.close"))
           ?.click(),
       );
       expect(rows).toHaveLength(1);

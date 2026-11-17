@@ -1,4 +1,4 @@
-import { capToolResult } from "@vera/core";
+import { type CommandShell, capToolResult } from "@vera/core";
 import { describe, expect, it, vi } from "vitest";
 import { TerminalService, type UserPty } from "./terminals.js";
 
@@ -41,7 +41,7 @@ function fixture() {
   });
   const stop = vi.fn(async (_pty: UserPty) => {});
   const shell = {
-    resolve: vi.fn(async () => ({ executable: "/bin/bash", kind: "bash" as const })),
+    resolve: vi.fn(async (): Promise<CommandShell> => ({ executable: "/bin/bash", kind: "bash" })),
     environment: () => ({ PATH: "/bin", HOME: "/home/user" }),
   };
   const service = new TerminalService({
@@ -72,6 +72,20 @@ function fixture() {
 }
 
 describe("user terminal host", () => {
+  it.each(["powershell", "cmd", "bash", "sh"] as const)(
+    "starts new %s terminals with interactive arguments",
+    async (kind) => {
+      const f = fixture();
+      f.shell.resolve.mockResolvedValue({ executable: kind, kind });
+      await f.service.create("bench-a", 80, 24);
+      expect(f.spawn).toHaveBeenCalledWith(
+        kind,
+        kind === "powershell" ? ["-NoLogo"] : kind === "cmd" ? ["/d"] : kind === "bash" ? ["-il"] : ["-i"],
+        expect.objectContaining({ cwd: "/workbench", cols: 80, rows: 24 }),
+      );
+      await f.service.closeAll();
+    },
+  );
   it("publishes a consented control-heavy capture after the registry caps serialized JSON", async () => {
     const f = fixture(),
       a = await f.service.create("bench-a", 80, 24);

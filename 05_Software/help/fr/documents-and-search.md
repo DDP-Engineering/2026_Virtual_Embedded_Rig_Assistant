@@ -20,7 +20,7 @@ L’indexation s’exécute en arrière-plan et suit les changements : les fich
 
 ## État de l’index
 
-L’onglet **Fichiers** du panneau droit affiche la progression (**Index : … terminés, … en attente, … en échec**) et signale l’état de chaque document :
+L’onglet **Fichiers** place les icônes **Réindexer** et **Tout réduire** à côté de la recherche. Leur libellé apparaît au survol. Pendant l’indexation, une ligne compacte indique les fichiers terminés et restants ; elle disparaît après réussite. L’infobulle de réindexation conserve le nombre de documents et d’échecs. Dépliez le nombre d’échecs pour voir les fichiers et les raisons, puis choisissez **Réindexer** pour réessayer toute la sélection. Les échecs restent disponibles à la réouverture. Chaque document possède aussi son état :
 
 | État | Signification |
 |---|---|

@@ -29,7 +29,7 @@ it("opens Terminal with the configurable shortcut and keeps it available in the 
       ),
     );
     expect(container.querySelector('[data-panel="right"]')?.getAttribute("data-tab")).toBe("terminal");
-    expect(container.querySelector("#tab-terminal")?.textContent).toBe("Terminal");
+    expect(container.querySelector("#tab-terminal")?.getAttribute("aria-label")).toBe("Terminal");
   } finally {
     await act(async () => root.unmount());
     container.remove();

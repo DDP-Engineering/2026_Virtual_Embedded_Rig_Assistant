@@ -1,5 +1,11 @@
 import { randomUUID } from "node:crypto";
-import { type CommandShellHost, capToolResult, OutputDecoder, type TerminalReader } from "@vera/core";
+import {
+  type CommandShellHost,
+  capToolResult,
+  interactiveShellArguments,
+  OutputDecoder,
+  type TerminalReader,
+} from "@vera/core";
 import {
   type TerminalSnapshot,
   type TerminalSummary,
@@ -105,11 +111,12 @@ export class TerminalService {
       const shell = await this.host.shell.resolve();
       this.owner(owner);
       if (generation !== this.generation) throw veraError("CONFLICT");
-      const pty = this.host.pty.spawn(
-        shell.executable,
-        shell.kind === "powershell" ? ["-NoLogo"] : shell.kind === "bash" ? ["-il"] : ["-i"],
-        { cwd: current.folder, env: this.host.shell.environment(), cols, rows },
-      );
+      const pty = this.host.pty.spawn(shell.executable, interactiveShellArguments(shell), {
+        cwd: current.folder,
+        env: this.host.shell.environment(),
+        cols,
+        rows,
+      });
       const entry: Entry = {
         id: randomUUID(),
         number: ++this.number,

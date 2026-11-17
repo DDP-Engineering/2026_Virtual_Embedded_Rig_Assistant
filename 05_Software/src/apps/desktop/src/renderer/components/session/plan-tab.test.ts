@@ -46,7 +46,7 @@ async function mount() {
   await settle();
   await act(async () => button("Empty session").click());
   await act(async () => container.querySelector<HTMLButtonElement>("[data-toggle=right]")?.click());
-  await act(async () => button("Plan").click());
+  await act(async () => container.querySelector<HTMLButtonElement>("#tab-plan")?.click());
   await settle();
 }
 it("connects Plan to the selected session empty list", async () => {

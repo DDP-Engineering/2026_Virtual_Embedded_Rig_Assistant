@@ -20,7 +20,7 @@ Indexarea rulează în fundal și urmărește modificările: fișierele noi, mod
 
 ## Starea indexului
 
-Fila **Fișiere** din panoul din dreapta arată progresul (**Index: … finalizate, … în așteptare, … eșuate**) și marchează fiecare document:
+Fila **Fișiere** pune pictogramele **Reindexează** și **Restrânge tot** lângă căutare. Eticheta apare la trecerea cursorului. În timpul indexării, un rând compact arată fișierele finalizate și rămase; dispare la finalizarea cu succes. Tooltipul reindexării păstrează numărul de documente și erori. Extinde numărul de erori pentru fișiere și motive, apoi alege **Reindexează** pentru a reîncerca întreaga selecție. Erorile rămân disponibile la redeschiderea filei. Fiecare document are și o stare proprie:
 
 | Stare | Semnificație |
 |---|---|

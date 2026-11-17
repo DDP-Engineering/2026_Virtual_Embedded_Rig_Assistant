@@ -10,6 +10,17 @@ import { updateChannelSchema, updateModeSchema } from "./updates.js";
 import { webAccessDefaults, webAccessSettingsSchema } from "./web-access.js";
 import { workbenchIdSchema } from "./workbench.js";
 
+export const commandShellOptionSchema = z.strictObject({
+  id: z.enum(["pwsh", "powershell", "cmd", "bash"]),
+  executable: z
+    .string()
+    .min(1)
+    .max(4096)
+    .refine((path) => /^(?:[A-Za-z]:[\\/]|\\\\|\/)/.test(path) && !/\p{Cc}/u.test(path))
+    .nullable(),
+});
+export type CommandShellOption = z.infer<typeof commandShellOptionSchema>;
+
 export const recentWorkbenchSchema = z.strictObject({
   folder: z.string().min(1),
   id: workbenchIdSchema,

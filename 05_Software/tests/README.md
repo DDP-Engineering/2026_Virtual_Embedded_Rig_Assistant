@@ -18,6 +18,9 @@ măsurători și scoruri sunt în [`../evaluators/`](../evaluators/README.md).
 Native `e2e/display-masking.spec.ts` verifies conditional Display masking with stored MQTT credentials,
 Files/Find UI selection, colliding labels, live settings/workbench choices and restart-safe tabs.
 
+Browser `e2e/i18n-hmr.spec.ts` checks live translation-catalog replacement on mounted tool activity,
+preserving the selected language and expanded plan without a page reload.
+
 Native `e2e/privacy-settings.spec.ts` covers both privacy pages in en/ro/de/fr, unsaved confirmation,
 live inherited defaults, new-workbench choices, independent owners and process restart persistence.
 Original screenshots/receipts use `evaluation-outputs/mask05/native`.

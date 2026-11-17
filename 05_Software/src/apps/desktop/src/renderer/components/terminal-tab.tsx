@@ -1,6 +1,7 @@
-import type { TerminalSummary } from "@vera/shared";
+import { type TerminalSummary, typographyDefaults } from "@vera/shared";
 import { FitAddon } from "@xterm/addon-fit";
 import { Terminal } from "@xterm/xterm";
+import { Plus, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../api/index.js";
@@ -28,6 +29,11 @@ function TerminalSurface({
     let initial = true;
     let timer: ReturnType<typeof setTimeout>;
     const element = container.current;
+    const root = element.ownerDocument.documentElement;
+    const fontSize = () => {
+      const value = Number.parseFloat(getComputedStyle(root).getPropertyValue("--code-font-size"));
+      return Number.isFinite(value) && value > 0 ? value : typographyDefaults.codeFontSize;
+    };
     const styles = terminalDocument(element.ownerDocument);
     const term = new Terminal({
       cursorBlink: true,
@@ -35,7 +41,7 @@ function TerminalSurface({
       scrollback: 3000,
       allowProposedApi: false,
       fontFamily: "Consolas, monospace",
-      fontSize: 13,
+      fontSize: fontSize(),
       screenReaderMode: true,
       documentOverride: styles.document,
     });
@@ -58,6 +64,13 @@ function TerminalSurface({
     };
     const observer = new ResizeObserver(size);
     observer.observe(element);
+    const preferences = new MutationObserver(() => {
+      const value = fontSize();
+      if (term.options.fontSize === value) return;
+      term.options.fontSize = value;
+      size();
+    });
+    preferences.observe(root, { attributes: true, attributeFilter: ["style"] });
     size();
     term.focus();
     async function poll() {
@@ -89,6 +102,7 @@ function TerminalSurface({
       live = false;
       clearTimeout(timer);
       observer.disconnect();
+      preferences.disconnect();
       input.dispose();
       resized.dispose();
       term.dispose();
@@ -198,45 +212,51 @@ export function TerminalTab({ workbenchId }: { workbenchId: string }) {
   }
   return (
     <section className="terminal-panel" aria-label={t("panel.terminal")}>
-      <div className="terminal-actions">
-        <button
-          type="button"
-          onClick={() => {
-            void create();
-          }}
-          disabled={pending || terminals.length >= 8}
-        >
-          {t("terminal.new")}
-        </button>
-        {selected && (
+      <div className="terminal-toolbar">
+        <div className="terminal-actions">
           <button
             type="button"
             onClick={() => {
-              void close();
+              void create();
             }}
-            disabled={pending}
+            aria-label={t("terminal.new")}
+            title={t("terminal.new")}
+            disabled={pending || terminals.length >= 8}
           >
-            {t("terminal.close")}
+            <Plus aria-hidden="true" />
           </button>
-        )}
+          {selected && (
+            <button
+              type="button"
+              onClick={() => {
+                void close();
+              }}
+              aria-label={t("terminal.close")}
+              title={t("terminal.close")}
+              disabled={pending}
+            >
+              <X aria-hidden="true" />
+            </button>
+          )}
+        </div>
+        <div className="terminal-tabs" role="tablist" aria-label={t("terminal.tabs")}>
+          {terminals.map((terminal) => (
+            <button
+              type="button"
+              key={terminal.id}
+              role="tab"
+              aria-selected={terminal.id === active}
+              aria-controls="terminal-active"
+              id={`terminal-${terminal.id}`}
+              onClick={() => setActive(terminal.id)}
+            >
+              {t("terminal.name", { number: terminal.number })}
+              {!terminal.running && ` (${terminal.exitCode ?? ""})`}
+            </button>
+          ))}
+        </div>
       </div>
       {error !== undefined && <ErrorMessage error={error} />}
-      <div className="terminal-tabs" role="tablist" aria-label={t("terminal.tabs")}>
-        {terminals.map((terminal) => (
-          <button
-            type="button"
-            key={terminal.id}
-            role="tab"
-            aria-selected={terminal.id === active}
-            aria-controls="terminal-active"
-            id={`terminal-${terminal.id}`}
-            onClick={() => setActive(terminal.id)}
-          >
-            {t("terminal.name", { number: terminal.number })}
-            {!terminal.running && ` (${terminal.exitCode ?? ""})`}
-          </button>
-        ))}
-      </div>
       {selected && (
         <>
           <label className="terminal-consent">

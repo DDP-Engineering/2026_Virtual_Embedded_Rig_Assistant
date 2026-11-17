@@ -9,6 +9,7 @@ import {
   createCommandShellHost,
   createDownloadPdfExtractor,
   createMaskingResolver,
+  detectCommandShells,
   embeddingModelId,
   HelpLibrary,
   type LlmGateway,
@@ -1147,6 +1148,7 @@ ipcMain.handle(
           ? pluginHelpPage(request.plugin, request.language)
           : help.read(request.page, request.language),
       "window.menu": (request) => popupWindowMenu(window, request),
+      "commands.shells": () => detectCommandShells(processHost),
       "app.settings.get": () => {
         const snapshot = settings.get();
         if (credentials.containsSecret(snapshot)) throw { code: "INVALID", messageKey: "errors.INVALID" };
@@ -1234,6 +1236,7 @@ ipcMain.handle(
           },
           (text) => credentials.scrub(text),
         ),
+      "workbench.storage": ({ workbenchId }) => workbench.storageSize(workbenchId),
       "workbench.config.update": ({
         patch,
         workbenchId,

@@ -89,7 +89,12 @@ import {
 import { permissionModeSchema, sessionIdSchema, sessionSummarySchema } from "./session.js";
 import { sessionExportFormatSchema, sessionSearchQuerySchema } from "./session-export.js";
 import { sessionStateSchema } from "./session-state.js";
-import { recentWorkbenchStateSchema, settingsPatchSchema, settingsSnapshotSchema } from "./settings.js";
+import {
+  commandShellOptionSchema,
+  recentWorkbenchStateSchema,
+  settingsPatchSchema,
+  settingsSnapshotSchema,
+} from "./settings.js";
 import {
   SKILL_BYTES,
   skillContentSchema,
@@ -748,6 +753,14 @@ export const channels = {
   "help.list": defineChannel("help.list", helpListRequestSchema, z.array(helpPageSummarySchema).max(256)),
   "help.read": defineChannel("help.read", helpReadRequestSchema, helpPageSchema),
   "app.settings.get": defineChannel("app.settings.get", z.strictObject({}), settingsSnapshotSchema),
+  "commands.shells": defineChannel(
+    "commands.shells",
+    z.strictObject({}),
+    z
+      .array(commandShellOptionSchema)
+      .length(4)
+      .refine((options) => new Set(options.map((option) => option.id)).size === 4),
+  ),
   "app.settings.update": defineChannel("app.settings.update", settingsPatchSchema, settingsSnapshotSchema),
   "app.chooseFolder": defineChannel(
     "app.chooseFolder",
@@ -789,6 +802,11 @@ export const channels = {
     workbenchSnapshotSchema,
   ),
   "workbench.close": defineChannel("workbench.close", z.strictObject({}), z.strictObject({})),
+  "workbench.storage": defineChannel(
+    "workbench.storage",
+    z.strictObject({ workbenchId: workbenchIdSchema }),
+    z.strictObject({ workbenchId: workbenchIdSchema, bytes: z.number().int().nonnegative() }),
+  ),
   "workbench.recent": defineChannel(
     "workbench.recent",
     z.strictObject({

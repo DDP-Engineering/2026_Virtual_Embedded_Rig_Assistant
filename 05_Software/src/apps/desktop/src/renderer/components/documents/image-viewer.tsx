@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ErrorMessage } from "../error-message.js";
 import { type ImageFile, readImageBlob } from "./image-source.js";
+import { ViewerToolbar } from "./viewer-toolbar.js";
 import "./image-viewer.css";
 
 type Size = { width: number; height: number };
@@ -40,19 +41,21 @@ export function ImageViewer({ file, retry }: { file: ImageFile; retry?: (() => v
   const height = natural && !fit ? (natural.height * Number(zoom)) / 100 : undefined;
   return (
     <div className="image-viewer" data-image-viewer>
-      <div className="image-toolbar">
-        <label>
-          {t("documents.imageZoom")}
-          <select data-image-zoom value={zoom} onChange={(event) => setZoom(event.target.value)}>
-            <option value="fit">{t("documents.imageFit")}</option>
-            {zooms.map((value) => (
-              <option key={value} value={value}>
-                {value}%
-              </option>
-            ))}
-          </select>
-        </label>
-      </div>
+      <ViewerToolbar>
+        <div className="image-toolbar">
+          <label>
+            {t("documents.imageZoom")}
+            <select data-image-zoom value={zoom} onChange={(event) => setZoom(event.target.value)}>
+              <option value="fit">{t("documents.imageFit")}</option>
+              {zooms.map((value) => (
+                <option key={value} value={value}>
+                  {value}%
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+      </ViewerToolbar>
       {failure !== undefined && (
         <div className="image-error">
           {failure === "decode" ? (

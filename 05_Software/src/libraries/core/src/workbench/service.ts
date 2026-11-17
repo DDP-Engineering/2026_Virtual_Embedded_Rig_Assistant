@@ -55,6 +55,7 @@ import { PREVIEW_TIME_LIMIT_MS, previewDocuments, relativeFolder, scanDocuments 
 import { acquireGuard } from "./guard.js";
 import { createIgnoreRules } from "./ignore.js";
 import { readBytes } from "./read-bytes.js";
+import { workbenchStorageBytes } from "./storage-size.js";
 import { findFiles, listFolder, locateEntry, readText, statEntry } from "./tree.js";
 import { WriteQueue } from "./write-queue.js";
 
@@ -737,6 +738,18 @@ export class WorkbenchService {
   }
   getSnapshot(): WorkbenchSnapshot {
     return structuredClone(this.current());
+  }
+  /** Counts local workbench storage without holding the workbench lifecycle queue. */
+  async storageSize(id: string): Promise<{ workbenchId: string; bytes: number }> {
+    const state = this.current();
+    const database = this.database;
+    const check = () => {
+      const current = this.current();
+      if (current.config.id !== id || current.folder !== state.folder || this.database !== database)
+        throw veraError("CONFLICT");
+    };
+    check();
+    return { workbenchId: id, bytes: await workbenchStorageBytes(state.folder, check) };
   }
   /** Sessions recheck ownership immediately before synchronous SQLite mutations. */
   assertSessionWritable(): void {

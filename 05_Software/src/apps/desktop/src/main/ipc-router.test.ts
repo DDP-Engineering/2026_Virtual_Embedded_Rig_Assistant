@@ -17,6 +17,7 @@ const unused = () => {
   throw { code: "NOT_FOUND", messageKey: "errors.NOT_FOUND" };
 };
 const workbenchHandlers = {
+  "commands.shells": unused,
   "terminal.list": unused,
   "terminal.create": unused,
   "terminal.output": unused,
@@ -146,6 +147,7 @@ const workbenchHandlers = {
   "workbench.close": unused,
   "workbench.recent": unused,
   "workbench.config.get": unused,
+  "workbench.storage": unused,
   "workbench.commandPrefixes.list": unused,
   "workbench.additionalFolders.list": unused,
   "workbench.additionalFolders.choose": unused,

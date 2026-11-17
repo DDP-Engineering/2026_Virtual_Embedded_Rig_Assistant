@@ -30,6 +30,8 @@ import { hostVariable, killProcessTree } from "./process-tree.js";
 import { OutputDecoder, TailBuffer } from "./run-output.js";
 
 export interface RunRequest {
+  /** Host-quoted Windows Cmd invocation from the built-in command tool only. */
+  windowsVerbatimArguments?: boolean;
   /** Original command text, supplied only by the built-in command tool. */
   command?: string;
   /** Host-filtered full user environment for built-in shell commands only. */
@@ -439,6 +441,7 @@ class Run implements ActiveRun {
       group: host.platform !== "win32",
       output: (stream, chunk) => this.append(this.decoders[stream].write(chunk)),
       ...(this.request.input === undefined ? {} : { input: this.request.input }),
+      ...(this.request.windowsVerbatimArguments ? { windowsVerbatimArguments: true } : {}),
     });
     this.pid = child.pid;
     if (this.request.timeoutMs !== undefined)

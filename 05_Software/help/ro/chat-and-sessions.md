@@ -34,6 +34,8 @@ Cât timp agentul lucrează, poți continua să scrii și să trimiți mesaje, d
 
 Aprobările care te așteaptă, erorile și cardurile de descărcare sunt afișate la orice nivel; aprobările acordate de modul de permisiuni sunt ascunse la **Minimal** și grupate la **Normal**. Nivelul schimbă doar afișarea; sesiunea salvată și exporturile ei sunt întotdeauna complete.
 
+Activitatea instrumentelor arată pe scurt acțiunea, fișierul, pagina sau comanda vizată și starea. Extinde operația pentru rezultat sau pentru comanda exactă și folderul de lucru. **Detalii tehnice** conține numele instrumentului, durata, argumentele originale și rezultatul brut; fragmentele mari salvate pot fi încărcate integral. Un cod de ieșire diferit de zero apare ca eroare, iar rulările în fundal au o etichetă distinctă. Nivelurile de detaliu și cererile de aprobare își păstrează comportamentul. Operațiile de actualizare a planului arată pașii efectivi și starea lor la extindere; detaliile tehnice sunt opționale și separate.
+
 ## Raționament
 
 Pentru modelele care îl acceptă, **Nivel de reasoning** oferă **Implicit** și nivelurile declarate de model, de exemplu **Minim**, **Redus**, **Mediu**, **Ridicat** sau **Maxim**. Nivelurile mai ridicate gândesc mai mult înainte de a răspunde. Pentru modelele fără niveluri de raționament, controlul este ascuns. Îl poți schimba în timpul unei execuții; noul nivel se aplică următoarei cereri. Textul raționamentului este afișat doar la **Verbose**.
@@ -54,7 +56,7 @@ Marcajele salvate ale mesajelor rămân în exporturile JSON; Markdown indică m
 
 ## Panoul din dreapta
 
-**Arată sau ascunde panoul din dreapta** afișează file pentru sesiunea deschisă: **Context** (instrucțiunile workbenchului și skill-urile disponibile), **Fișiere**, **Modificări**, **Artefacte** (rezultatele text salvate de agent, cu **Exportă** și **Arată în folder**), **Plan** (lista de sarcini a agentului) și **Rulări** (rulările de programe ale pluginurilor).
+**Arată sau ascunde panoul din dreapta** afișează file pentru sesiunea deschisă: **Instrucțiuni și skills** (instrucțiunile workbenchului și skill-urile disponibile), **Fișiere**, **Modificări**, **Artefacte** (rezultatele text salvate de agent, cu **Exportă** și **Arată în folder**), **Plan** (lista de sarcini a agentului) și **Rulări** (rulările de programe ale pluginurilor).
 
 ## Marcaje
 

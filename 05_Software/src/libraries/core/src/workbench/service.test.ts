@@ -66,6 +66,23 @@ async function harness() {
   return { root, folder, host, events, settings, paths, service: new WorkbenchService(host) };
 }
 
+it("measures storage only for the open workbench", async () => {
+  const h = await harness();
+  try {
+    const { config } = await h.service.create(h.folder, "Storage");
+    const result = await h.service.storageSize(config.id);
+    expect(result.workbenchId).toBe(config.id);
+    expect(result.bytes).toBeGreaterThan(0);
+    await expect(h.service.storageSize("wb_01JB8Z6Q4M7N2K5R9T3V8X1Y0D")).rejects.toMatchObject({
+      code: "CONFLICT",
+    });
+    await h.service.close();
+    await expect(h.service.storageSize(config.id)).rejects.toMatchObject({ code: "NOT_FOUND" });
+  } finally {
+    await h.service.close();
+  }
+});
+
 it("keeps viewer byte reads confined in Bypass even with an additional-folder grant", async () => {
   const h = await harness();
   try {

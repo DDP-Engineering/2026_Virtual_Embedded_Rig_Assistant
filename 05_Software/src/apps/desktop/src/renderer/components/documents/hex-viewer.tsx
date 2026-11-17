@@ -12,6 +12,7 @@ import {
   parseHexOffset,
 } from "./hex-source.js";
 import type { DocumentPlace } from "./viewer-context.js";
+import { ViewerToolbar } from "./viewer-toolbar.js";
 import "./hex-viewer.css";
 
 /** Read-only byte viewer; every async operation belongs to this mounted Display attempt. */
@@ -232,39 +233,46 @@ export function HexViewer({
         }
       }}
     >
-      <div className="hex-controls">
-        <button
-          type="button"
-          data-hex-find-open
-          onClick={() => {
-            setFindOpen(true);
-            search.current?.focus();
-          }}
-        >
-          {t("documents.find")}
-        </button>
-        <button
-          type="button"
-          data-hex-goto-open
-          onClick={() => {
-            setGotoOpen(true);
-            goto.current?.focus();
-          }}
-        >
-          {t("documents.hexGoTo")}
-        </button>
-        <button type="button" data-hex-copy="hex" disabled={!selection || busy} onClick={() => copy("hex")}>
-          {t("documents.hexCopy")}
-        </button>
-        <button type="button" data-hex-copy="text" disabled={!selection || busy} onClick={() => copy("text")}>
-          {t("documents.hexCopyText")}
-        </button>
-        {busy && (
-          <button type="button" data-hex-cancel onClick={cancel}>
-            {t("workbench.cancel")}
+      <ViewerToolbar>
+        <div className="hex-controls">
+          <button
+            type="button"
+            data-hex-find-open
+            onClick={() => {
+              setFindOpen(true);
+              search.current?.focus();
+            }}
+          >
+            {t("documents.find")}
           </button>
-        )}
-      </div>
+          <button
+            type="button"
+            data-hex-goto-open
+            onClick={() => {
+              setGotoOpen(true);
+              goto.current?.focus();
+            }}
+          >
+            {t("documents.hexGoTo")}
+          </button>
+          <button type="button" data-hex-copy="hex" disabled={!selection || busy} onClick={() => copy("hex")}>
+            {t("documents.hexCopy")}
+          </button>
+          <button
+            type="button"
+            data-hex-copy="text"
+            disabled={!selection || busy}
+            onClick={() => copy("text")}
+          >
+            {t("documents.hexCopyText")}
+          </button>
+          {busy && (
+            <button type="button" data-hex-cancel onClick={cancel}>
+              {t("workbench.cancel")}
+            </button>
+          )}
+        </div>
+      </ViewerToolbar>
       {findOpen && (
         <form
           className="hex-controls"

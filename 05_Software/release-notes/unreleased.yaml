@@ -2,6 +2,48 @@ version: Unreleased
 date: null
 entries:
   - category: fixed
+    topic: { en: Chat, ro: Chat, de: Chat, fr: Chat }
+    text:
+      en: Tool activity keeps translated labels, readable plan steps and optional technical details.
+      ro: Apelurile de instrumente au etichete traduse, pași de plan lizibili și detalii tehnice opționale.
+      de: Werkzeugaktivitäten zeigen übersetzte Texte, lesbare Planschritte und optionale technische Details.
+      fr: Les outils affichent des libellés traduits, un plan lisible et des détails techniques facultatifs.
+  - category: fixed
+    topic: { en: Commands, ro: Comenzi, de: Befehle, fr: Commandes }
+    text:
+      en: Commands positions Cancel and Save at the top right, matching Data & privacy.
+      ro: Comenzi aliniază Anulare și Salvare în dreapta sus, la fel ca Date și confidențialitate.
+      de: Unter Befehle stehen Abbrechen und Speichern oben rechts wie bei Daten und Datenschutz.
+      fr: Commandes aligne Annuler et Enregistrer en haut à droite, comme Données et confidentialité.
+  - category: fixed
+    topic: { en: Terminal, ro: Terminal, de: Terminal, fr: Terminal }
+    text:
+      en: Terminal text follows the code/output text size setting immediately and refits the terminal.
+      ro: Textul terminalului urmează imediat dimensiunea pentru cod/ieșire și recalculează rândurile.
+      de: Terminaltext folgt sofort der Schriftgröße für Code/Ausgabe und passt Zeilen und Spalten an.
+      fr: Le terminal suit immédiatement la taille du texte de code/sortie et ajuste lignes et colonnes.
+  - category: new
+    topic: { en: Workbench, ro: Workbench, de: Workbench, fr: Workbench }
+    text:
+      en: See the storage used by the workbench’s .vera folder and refresh its size on demand.
+      ro: Vezi spațiul ocupat de folderul .vera al workbench-ului și actualizează dimensiunea la cerere.
+      de: Speicherbelegung des .vera-Ordners der Workbench anzeigen und bei Bedarf aktualisieren.
+      fr: Consultez l’espace utilisé par le dossier .vera du banc et actualisez sa taille à la demande.
+  - category: fixed
+    topic: { en: Files, ro: Fișiere, de: Dateien, fr: Fichiers }
+    text:
+      en: Files uses icons beside search, compact indexing progress and expandable failure details.
+      ro: Fișiere are pictograme lângă căutare, progres compact și detalii extensibile pentru erori.
+      de: Dateien bietet Symbole neben der Suche, kompakten Indexfortschritt und aufklappbare Fehlerdetails.
+      fr: Fichiers regroupe les icônes près de la recherche, la progression et les détails des échecs.
+  - category: improved
+    topic: { en: Interface, ro: Interfață, de: Oberfläche, fr: Interface }
+    text:
+      en: Compact icons, balanced chat, no repeated VERA heading; Context becomes Instructions and skills.
+      ro: Pictograme compacte, chat centrat fără titluri VERA; Context devine Instrucțiuni și skills.
+      de: Kompakte Symbole, zentrierter Chat ohne VERA-Titel; Kontext heißt jetzt Anweisungen und Skills.
+      fr: Icônes compactes, chat centré sans titre VERA ; Contexte devient Instructions et compétences.
+  - category: fixed
     topic: { en: Terminal, ro: Terminal, de: Terminal, fr: Terminal }
     text:
       en: Terminal history no longer inserts control characters when switching tabs or reopening the panel.
@@ -32,10 +74,10 @@ entries:
   - category: improved
     topic: { en: Files, ro: Fișiere, de: Dateien, fr: Fichiers }
     text:
-      en: Read large text with encodings, wrap, byte scrolling, line jumps and cancellable Find.
-      ro: Citește texte mari cu codificări, încadrare, derulare în octeți, salturi și căutare anulabilă.
-      de: Große Texte mit Kodierungen, Umbruch, Byte-Bildlauf, Zeilensprüngen und abbrechbarer Suche lesen.
-      fr: "Grands textes : encodage, retour à la ligne, défilement, saut et recherche annulable."
+      en: Read large text with encoding, wrap, jumps and Find; viewer controls share one compact row.
+      ro: Citește texte mari cu codificare, încadrare, salturi și căutare; controalele au un rând compact.
+      de: Große Texte mit Kodierung, Umbruch, Sprüngen und Suche; Ansichtsregler in einer kompakten Zeile.
+      fr: Grands textes avec encodage, retour à la ligne, sauts et recherche ; commandes sur une ligne.
   - category: improved
     topic: { en: Data & privacy, ro: Date și confidențialitate, de: Daten & Datenschutz, fr: Données et confidentialité }
     text:
@@ -92,13 +134,6 @@ entries:
       ro: Numărul de documente dinainte de salvare corespunde indexării și avertizează la o selecție mare.
       de: Die Dokumentanzahl vor dem Speichern entspricht der Indizierung und warnt bei zu großer Auswahl.
       fr: Le nombre de documents avant enregistrement suit l’indexation et signale une sélection trop grande.
-  - category: improved
-    topic: { en: Sessions, ro: Sesiuni, de: Sitzungen, fr: Sessions }
-    text:
-      en: Session exports retain saved message bookmarks.
-      ro: Exporturile sesiunilor păstrează marcajele salvate ale mesajelor.
-      de: Sitzungsexporte behalten gespeicherte Nachrichtenlesezeichen bei.
-      fr: Les exports de session conservent les signets enregistrés des messages.
   - category: new
     topic: { en: Sessions, ro: Sesiuni, de: Sitzungen, fr: Sessions }
     text:
@@ -109,10 +144,10 @@ entries:
   - category: improved
     topic: { en: Sessions, ro: Sesiuni, de: Sitzungen, fr: Sessions }
     text:
-      en: Find marked messages on the rail and jump between them with editable bookmark shortcuts.
-      ro: Găsește mesajele marcate pe margine și sari între ele cu taste configurabile.
-      de: Finde markierte Nachrichten auf der Leiste und springe per anpassbaren Tastenkürzeln zu ihnen.
-      fr: Repérez les signets sur la barre et passez de l’un à l’autre avec des raccourcis modifiables.
+      en: Find bookmarks on the rail, navigate with editable shortcuts and keep them in session exports.
+      ro: Găsește marcaje pe margine, navighează cu taste configurabile și păstrează-le în exporturi.
+      de: Lesezeichen auf der Leiste finden, mit anpassbaren Kürzeln ansteuern und in Exporten behalten.
+      fr: Repérez les signets sur la barre, utilisez des raccourcis modifiables et gardez-les à l’export.
   - category: improved
     topic: { en: Permissions, ro: Permisiuni, de: Berechtigungen, fr: Permissions }
     text:
@@ -137,10 +172,10 @@ entries:
   - category: new
     topic: { en: Commands, ro: Comenzi, de: Befehle, fr: Commandes }
     text:
-      en: Let the agent run shell commands, monitor background work and stop it when finished.
-      ro: Agentul poate executa comenzi shell, urmări lucrul în fundal și opri procesele la final.
-      de: Der Agent führt Shell-Befehle aus, überwacht Hintergrundarbeit und beendet sie nach Abschluss.
-      fr: L’agent exécute des commandes shell, surveille le travail en arrière-plan et l’arrête à la fin.
+      en: Run and monitor commands; choose an installed shell, including Cmd and Git Bash, or a custom path.
+      ro: Rulează și urmărește comenzi; alege un shell instalat, inclusiv Cmd și Git Bash, sau o cale proprie.
+      de: Befehle verfolgen; installierte Shell wie Cmd oder Git Bash oder eigenen Pfad wählen.
+      fr: Exécutez et suivez les commandes ; choisissez Cmd, Git Bash, un shell installé ou un chemin.
   - category: improved
     topic: { en: Permissions, ro: Permisiuni, de: Berechtigungen, fr: Permissions }
     text:

@@ -19,10 +19,10 @@ import { ErrorMessage } from "../error-message.js";
 import { HelpContext, helpCitationKey } from "../help.js";
 import { ApprovalCard } from "./approval-card.js";
 import { BookmarkButton } from "./bookmark-button.js";
-import { argsText, ToolOutput } from "./bounded-text.js";
 import { Disclosure } from "./disclosure.js";
 import { Markdown } from "./markdown.js";
 import { PromptUsage } from "./prompt-usage.js";
+import { ToolDetails } from "./tool-details.js";
 import { contentOffset, scrollTarget } from "./transcript-navigation.js";
 import { type NavigatorMessage, TranscriptNavigator } from "./transcript-navigator.js";
 import { searchMatch, streamingBlocks, type ToolItem, transcriptRows } from "./transcript-projection.js";
@@ -353,6 +353,7 @@ const MessageRow = memo(function MessageRow({
     <article
       ref={kind === "user" ? anchor : undefined}
       data-message-kind={kind}
+      aria-label={kind === "assistant" ? t("home.title") : undefined}
       data-nav-highlight={highlighted ? "" : undefined}
       className={`transcript-item ${kind}`}
       data-search-match={match ? "true" : undefined}
@@ -377,7 +378,6 @@ const MessageRow = memo(function MessageRow({
         </>
       ) : (
         <>
-          <strong>VERA</strong>
           {item.streaming ? (
             // Only the growing last block is parsed again per frame; message.done renders it whole.
             streamingBlocks(item.text).map((block, index) => <Markdown key={String(index)} text={block} />)
@@ -463,9 +463,7 @@ function ToolGroupRow({
         title={
           <>
             {t("chatDetail.operations", { count: tools.length })}
-            {tools.some((tool) => tool.status === "running")
-              ? ` · ${t("chat.running")}`
-              : ` · ${t("chat.toolOk")}`}
+            {tools.some((tool) => tool.status === "running") ? ` · ${t("chat.running")}` : ""}
           </>
         }
       >
@@ -476,39 +474,3 @@ function ToolGroupRow({
     </div>
   );
 }
-/** Shared by full tool rows and expandable Normal activity groups. */
-const ToolDetails = memo(function ToolDetails({
-  item,
-  update,
-  sessionId,
-}: {
-  item: ToolItem;
-  update: string | undefined;
-  sessionId: string | undefined;
-}) {
-  const { t } = useTranslation();
-  return (
-    <Disclosure
-      tool={item.name}
-      title={
-        <>
-          <span aria-hidden="true">⌕ </span>
-          <strong>{item.name}</strong>{" "}
-          <span>
-            {item.status === "running"
-              ? t("chat.running")
-              : item.status === "ok"
-                ? t("chat.toolOk")
-                : t("chat.error")}
-          </span>{" "}
-          {item.name === "web_download" && item.status === "ok"
-            ? t("downloads.saved")
-            : (item.summary || argsText(item, false)).slice(0, 100)}{" "}
-          {item.durationMs !== undefined && `${item.durationMs} ms`}
-        </>
-      }
-    >
-      <ToolOutput item={item} update={update} sessionId={sessionId} />
-    </Disclosure>
-  );
-});

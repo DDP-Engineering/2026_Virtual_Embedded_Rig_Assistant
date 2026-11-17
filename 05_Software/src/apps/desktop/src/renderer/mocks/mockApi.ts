@@ -1592,6 +1592,26 @@ What this plugin does.
       case "window.menu":
         value = {};
         break;
+      case "commands.shells":
+        value = [
+          {
+            id: "pwsh",
+            executable: info.platform === "win32" ? "C:\\Program Files\\PowerShell\\7\\pwsh.exe" : null,
+          },
+          {
+            id: "powershell",
+            executable:
+              info.platform === "win32"
+                ? "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe"
+                : null,
+          },
+          { id: "cmd", executable: info.platform === "win32" ? "C:\\Windows\\System32\\cmd.exe" : null },
+          {
+            id: "bash",
+            executable: info.platform === "win32" ? "C:\\Program Files\\Git\\bin\\bash.exe" : "/bin/bash",
+          },
+        ];
+        break;
       case "app.settings.get":
         value = { settings };
         break;
@@ -1689,6 +1709,12 @@ What this plugin does.
           emitAppEvent({ type: "settings.changed" });
         }
         value = settings.recentWorkbenches.map((e) => ({ ...e, missing: !benches.has(e.folder) }));
+        break;
+      }
+      case "workbench.storage": {
+        const { workbenchId } = channels["workbench.storage"].request.parse(input.data);
+        if (workbenchId !== current().snapshot.config.id) throw veraError("CONFLICT");
+        value = { workbenchId, bytes: 148 * 1024 * 1024 };
         break;
       }
       case "workbench.config.get":

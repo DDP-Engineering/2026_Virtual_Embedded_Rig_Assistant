@@ -26,7 +26,7 @@ it("formats sizes in the largest binary unit with localized names", () => {
   expect(formatBytes(2.4 * 1024 * 1024, "de")).toBe("2,4 MB");
 });
 
-it("shows each session's stored size in the overview table", async () => {
+it("shows session sizes and refreshes local workbench storage in the overview", async () => {
   await i18n.changeLanguage("en");
   const config = workbenchSchema.parse({ format: 1, id: "wb_01JB8Z6Q4M7N2K5R9T3V8X1Y0C", name: "Bench" });
   const at = "2026-11-15T20:00:00.000Z";
@@ -43,9 +43,14 @@ it("shows each session's stored size in the overview table", async () => {
         archived: false,
       }) as SessionSummary,
   );
+  let storageBytes = 512 * 1024;
   vi.mocked(api.invoke).mockImplementation(
     async (channel) =>
-      (channel === "workbench.additionalFolders.list" ? [] : { ses_a: 3 * 1024 * 1024 }) as never,
+      (channel === "workbench.additionalFolders.list"
+        ? []
+        : channel === "workbench.storage"
+          ? { workbenchId: config.id, bytes: storageBytes }
+          : { ses_a: 3 * 1024 * 1024 }) as never,
   );
   container = document.createElement("div");
   document.body.append(container);
@@ -71,5 +76,14 @@ it("shows each session's stored size in the overview table", async () => {
       "3 MB",
       "—",
     ]),
+  );
+  expect(api.invoke).toHaveBeenCalledWith("workbench.storage", { workbenchId: config.id });
+  await vi.waitFor(() =>
+    expect(container.querySelector("[data-workbench-storage]")?.textContent).toBe("512 kB"),
+  );
+  storageBytes = 4 * 1024 * 1024;
+  await act(async () => container.querySelector<HTMLButtonElement>(".overview-storage button")?.click());
+  await vi.waitFor(() =>
+    expect(container.querySelector("[data-workbench-storage]")?.textContent).toBe("4 MB"),
   );
 });

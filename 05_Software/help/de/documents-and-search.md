@@ -20,7 +20,7 @@ Die Indizierung läuft im Hintergrund und folgt Änderungen: Neue, geänderte un
 
 ## Indexstatus
 
-Der Tab **Dateien** im rechten Bereich zeigt den Fortschritt (**Index: … fertig, … ausstehend, … fehlgeschlagen**) und kennzeichnet jedes Dokument:
+Der Tab **Dateien** zeigt die Symbolschaltflächen **Neu indizieren** und **Alle einklappen** neben der Suche. Beim Darüberfahren erscheint ihre Beschriftung. Während der Indexierung zeigt eine kompakte Zeile fertige und verbleibende Dateien; nach erfolgreichem Abschluss verschwindet sie. Der Tooltip der Neuindizierung zeigt weiterhin Dokument- und Fehleranzahl. Klappen Sie die Fehleranzahl für Dateinamen und Gründe auf und wählen Sie **Neu indizieren**, um die gesamte Auswahl erneut zu verarbeiten. Fehler bleiben beim erneuten Öffnen sichtbar. Jedes Dokument hat außerdem einen eigenen Status:
 
 | Status | Bedeutung |
 |---|---|

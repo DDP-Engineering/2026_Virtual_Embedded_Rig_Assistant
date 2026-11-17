@@ -6,7 +6,8 @@
   min-height: 0;
 }
 .image-toolbar {
-  padding: 0.4rem;
+  display: flex;
+  align-items: center;
 }
 .image-toolbar label {
   display: flex;

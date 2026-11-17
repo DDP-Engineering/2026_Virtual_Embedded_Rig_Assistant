@@ -86,6 +86,7 @@ async function prepare(ctx: ToolContext, raw: unknown, signal: AbortSignal): Pro
         pathGuard: prepared.guard,
         executable: prepared.shell.executable,
         args: prepared.invocation,
+        ...(prepared.shell.kind === "cmd" ? { windowsVerbatimArguments: true } : {}),
         cwd: originalCwd,
         commandEnvironment: () => shellHost.environment(),
         background,

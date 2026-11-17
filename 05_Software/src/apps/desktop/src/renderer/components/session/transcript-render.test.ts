@@ -78,7 +78,9 @@ it("builds collapsed tool details only when opened, keeping aria-controls resolv
   expect(toggle.getAttribute("aria-expanded")).toBe("true");
   expect(panel?.hidden).toBe(false);
   expect(panel?.textContent).toContain("very large preview body");
+  await act(async () => container.querySelector<HTMLButtonElement>(".tool-technical > button")?.click());
   expect(panel?.textContent).toContain('"path": "board-notes.txt"');
+  toggle.focus();
   await act(async () => userEvent.setup().keyboard(" "));
   expect(panel?.hidden).toBe(true);
   expect(container.textContent).not.toContain("very large preview body");

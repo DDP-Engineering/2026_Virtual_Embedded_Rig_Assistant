@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import type { SessionSummary, WorkbenchSnapshot } from "@vera/shared";
+import { type SessionSummary, veraError, type WorkbenchSnapshot } from "@vera/shared";
+import { RefreshCw } from "lucide-react";
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../api/index.js";
@@ -73,6 +74,17 @@ export function Workbench({
     queryKey: ["session.sizes", activeId, revision],
     queryFn: () => api.invoke("session.sizes", { workbenchId: activeId as string }),
     enabled: !!activeId && !!sessions?.length,
+  });
+  const storage = useQuery({
+    queryKey: ["workbench.storage", activeId],
+    enabled: !!activeId,
+    refetchOnMount: "always",
+    retry: false,
+    queryFn: async () => {
+      const result = await api.invoke("workbench.storage", { workbenchId: activeId as string });
+      if (result.workbenchId !== activeId) throw veraError("CONFLICT");
+      return result;
+    },
   });
   const warningLabels = {
     UNKNOWN_KEY: t("workbench.unknownKey"),
@@ -159,7 +171,25 @@ export function Workbench({
                   <dt>{t("projects.overlap")}</dt>
                   <dd>{number.format(active.config.embeddings.overlap)}</dd>
                 </div>
+                <div className="overview-row">
+                  <dt>{t("overview.storageSize")}</dt>
+                  <dd className="overview-storage" aria-busy={storage.isFetching}>
+                    <span data-workbench-storage aria-live="polite">
+                      {formatBytes(storage.data?.bytes, language)}
+                    </span>
+                    <button
+                      type="button"
+                      aria-label={t("overview.refreshStorage")}
+                      title={t("overview.refreshStorage")}
+                      disabled={storage.isFetching}
+                      onClick={() => void storage.refetch()}
+                    >
+                      <RefreshCw aria-hidden="true" />
+                    </button>
+                  </dd>
+                </div>
               </dl>
+              {storage.isError && <ErrorMessage error={storage.error} />}
             </div>
           </div>
           <section className="overview-card workbench-session-summary">

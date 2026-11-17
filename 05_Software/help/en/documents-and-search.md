@@ -20,7 +20,7 @@ With **Use .gitignore** checked (the default for new workbenches), files and fol
 Indexing runs in the background and follows changes: new, changed and deleted files are picked up automatically.
 
 ## Index status
-
+The **Files** tab places the **Reindex** and **Collapse all** icon buttons beside search. Hover over an icon for its label. While indexing, a compact line shows completed and remaining files; it disappears after successful completion. The Reindex tooltip keeps the document and failure counts. Expand a failure count to see file names and reasons, and choose **Reindex** to retry the whole selection. Failures remain available when you reopen the tab. Each document also has its own status:
 The **Files** tab of the right panel shows the progress (**Index: … done, … pending, … failed**) and marks each document:
 
 | Status | Meaning |

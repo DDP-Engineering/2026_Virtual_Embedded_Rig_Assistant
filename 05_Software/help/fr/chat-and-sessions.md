@@ -34,6 +34,8 @@ Pendant que l’agent travaille, vous pouvez continuer à écrire et envoyer d�
 
 Les approbations qui vous attendent, les erreurs et les cartes de téléchargement s’affichent à tous les niveaux ; les approbations accordées par le mode d’autorisation sont masquées en **Minimal** et regroupées en **Normal**. Le niveau ne change que l’affichage ; la session enregistrée et ses exports sont toujours complets.
 
+Les activités affichent une action courte, le fichier, la page ou la commande concernés et leur état. Dépliez-les pour lire le résultat ou la commande exacte et le dossier de travail. **Détails techniques** contient le nom de l’outil, la durée, les arguments d’origine et le résultat brut ; les grands extraits enregistrés restent chargeables en entier. Un code de sortie non nul apparaît comme une erreur et les exécutions en arrière-plan sont distinguées. Les niveaux de détail et les demandes d’approbation gardent leur comportement. Les mises à jour du plan affichent les étapes réelles et leur état au dépliage ; les détails techniques restent facultatifs et séparés.
+
 ## Raisonnement
 
 Pour les modèles qui le prennent en charge, **Niveau de raisonnement** propose **Par défaut** et les niveaux déclarés par le modèle, par exemple **Minimal**, **Faible**, **Moyen**, **Élevé** ou **Maximal**. Avec un niveau plus élevé, le modèle réfléchit plus longtemps avant de répondre. Pour les modèles sans niveaux de raisonnement, la commande est masquée. Vous pouvez la modifier pendant un tour ; le nouveau niveau s’applique à la requête suivante. Le texte du raisonnement lui-même ne s’affiche qu’au niveau **Détaillé**.
@@ -54,7 +56,7 @@ Les signets enregistrés restent dans les exports JSON ; Markdown indique les me
 
 ## Le panneau droit
 
-**Afficher/masquer le panneau droit** affiche des onglets pour la session ouverte : **Contexte** (instructions du banc de travail et compétences disponibles), **Fichiers**, **Modifications**, **Artefacts** (résultats texte enregistrés par l’agent, avec **Exporter** et **Afficher dans le dossier**), **Plan** (la liste de tâches de l’agent) et **Exécutions** (exécutions de programmes des plugins).
+**Afficher/masquer le panneau droit** affiche des onglets pour la session ouverte : **Instructions et compétences** (instructions du banc de travail et compétences disponibles), **Fichiers**, **Modifications**, **Artefacts** (résultats texte enregistrés par l’agent, avec **Exporter** et **Afficher dans le dossier**), **Plan** (la liste de tâches de l’agent) et **Exécutions** (exécutions de programmes des plugins).
 
 ## Signets
 

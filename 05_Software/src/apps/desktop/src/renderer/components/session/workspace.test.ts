@@ -1095,6 +1095,7 @@ test("chat fixtures render tool arguments, invalid citations, provider Retry and
   expect(container.querySelectorAll("[data-tool-row]")).toHaveLength(2);
   expect(container.querySelectorAll("[data-citation]")).toHaveLength(1);
   await act(async () => container.querySelector<HTMLElement>("[data-tool-row] button")?.click());
+  await act(async () => container.querySelector<HTMLElement>(".tool-technical > button")?.click());
   expect(container.textContent).toContain('"path": "board.txt"');
   await act(async () =>
     container
@@ -1239,6 +1240,11 @@ test("session list creation, rename, confirmed delete and tool details work by k
   container.querySelector<HTMLButtonElement>(`[data-session="${toolsId}"]`)?.focus();
   await act(async () => user.keyboard("{Enter}"));
   await settle();
+  const group = container.querySelector<HTMLButtonElement>("[data-tool-group] > section > button");
+  if (group?.getAttribute("aria-expanded") === "false") {
+    group.focus();
+    await act(async () => user.keyboard(" "));
+  }
   const summary = container.querySelector<HTMLElement>("[data-tool-row] button") as HTMLElement;
   summary.focus();
   await act(async () => user.keyboard(" "));

@@ -1,8 +1,23 @@
-import { settingsPatchSchema } from "@vera/shared";
+import { channels, settingsPatchSchema } from "@vera/shared";
 import { describe, expect, it } from "vitest";
-import { commandEnvironment, resolveCommandShell, shellArguments } from "./shell.js";
+import {
+  commandEnvironment,
+  detectCommandShells,
+  interactiveShellArguments,
+  resolveCommandShell,
+  shellArguments,
+} from "./shell.js";
 
 const find = (files: string[]) => async (path: string) => files.includes(path);
+it("validates unique shell variants and absolute executable paths across IPC", () => {
+  const channel = channels["commands.shells"];
+  const options = ["pwsh", "powershell", "cmd", "bash"].map((id) => ({ id, executable: null }));
+  expect(channel.request.safeParse({ path: "C:/other.exe" }).success).toBe(false);
+  expect(channel.response.safeParse(options).success).toBe(true);
+  expect(channel.response.safeParse([options[0], options[0], options[2], options[3]]).success).toBe(false);
+  for (const executable of ["relative/bash.exe", "C:/bad\nname.exe", "", 12])
+    expect(channel.response.safeParse([{ id: "pwsh", executable }, ...options.slice(1)]).success).toBe(false);
+});
 describe("platform shell resolution", () => {
   it("prefers PowerShell 7 and resolves mixed-case Windows PATH with spaces", async () => {
     const host = {
@@ -43,8 +58,8 @@ describe("platform shell resolution", () => {
     );
     await expect(resolveCommandShell(host, "./bash", find([]))).rejects.toThrow("absolute path");
     await expect(
-      resolveCommandShell({ platform: "win32", env: {} }, "C:\\cmd.exe", find(["C:\\cmd.exe"])),
-    ).rejects.toThrow("pwsh.exe");
+      resolveCommandShell({ platform: "win32", env: {} }, "C:\\other.exe", find(["C:\\other.exe"])),
+    ).rejects.toThrow("Select PowerShell, Cmd");
   });
   it("finds standard installed shells when PATH is absent", async () => {
     expect(await resolveCommandShell({ platform: "linux", env: {} }, "", find(["/bin/sh"]))).toEqual({
@@ -59,6 +74,55 @@ describe("platform shell resolution", () => {
       ),
     ).toMatchObject({ kind: "powershell" });
   });
+});
+
+it("detects all Windows families, including Git Bash beside git/cmd, without treating WSL as native Bash", async () => {
+  const host = {
+    platform: "win32",
+    env: { Path: "C:\\Windows\\System32;D:\\Git\\cmd", SystemRoot: "C:\\Windows" },
+  };
+  const files = [
+    "C:\\Program Files\\PowerShell\\7\\pwsh.exe",
+    "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+    "C:\\Windows\\System32\\cmd.exe",
+    "C:\\Windows\\System32\\bash.exe",
+    "D:\\Git\\bin\\bash.exe",
+  ];
+  expect(await detectCommandShells(host, find(files))).toEqual([
+    { id: "pwsh", executable: files[0] },
+    { id: "powershell", executable: files[1] },
+    { id: "cmd", executable: files[2] },
+    { id: "bash", executable: files[4] },
+  ]);
+  expect(await resolveCommandShell(host, "bash", find(files))).toEqual({
+    executable: files[4],
+    kind: "bash",
+  });
+  expect(await resolveCommandShell(host, "cmd", find(files))).toEqual({ executable: files[2], kind: "cmd" });
+  await expect(resolveCommandShell(host, files[3], find(files))).rejects.toThrow("No command shell");
+});
+
+it("reports unavailable variants explicitly and supports PowerShell on Linux", async () => {
+  expect(await detectCommandShells({ platform: "win32", env: {} }, find([]))).toEqual(
+    ["pwsh", "powershell", "cmd", "bash"].map((id) => ({ id, executable: null })),
+  );
+  const host = { platform: "linux", env: { PATH: "/bin:/opt/tools" } };
+  expect(await resolveCommandShell(host, "/opt/tools/pwsh", find(["/opt/tools/pwsh"]))).toMatchObject({
+    kind: "powershell",
+  });
+});
+
+it("uses Cmd quoting without silently discarding multiline commands and gives each terminal its startup arguments", () => {
+  const shell = { executable: "C:\\Windows\\System32\\cmd.exe", kind: "cmd" as const };
+  expect(shellArguments(shell, 'echo "A&B"')).toEqual(["/d", "/s", "/c", '"echo "A&B""']);
+  expect(() => shellArguments(shell, "echo first\necho second")).toThrow("one line");
+  for (const [kind, args] of [
+    ["powershell", ["-NoLogo"]],
+    ["cmd", ["/d"]],
+    ["bash", ["-il"]],
+    ["sh", ["-i"]],
+  ] as const)
+    expect(interactiveShellArguments({ executable: kind, kind })).toEqual(args);
 });
 describe("literal shell syntax", () => {
   const command = "node -e \"console.log('é; $x `&')\"\nprintf '%s' '$HOME'";

@@ -524,11 +524,12 @@ test("browser mock displays the same metadata screen through dev:renderer", asyn
         // The group's tool rows mount only once it is open.
         await expect(page.locator("[data-tool-row]")).toHaveCount(2);
         const detail = page.locator("[data-tool-row]").first();
-        await expect(detail.locator("button")).toBeVisible();
-        await detail.locator("button").focus();
-        await expect(detail.locator("button")).toBeFocused();
+        const activity = detail.locator(":scope > button.disclosure-toggle");
+        await expect(activity).toBeVisible();
+        await activity.focus();
+        await expect(activity).toBeFocused();
         await page.keyboard.press("Space");
-        await expect(detail.locator("button")).toHaveAttribute("aria-expanded", "true");
+        await expect(activity).toHaveAttribute("aria-expanded", "true");
         await expect(detail.locator("pre").last()).toContainText("Source line");
         await context.unroute("**/api/index.*");
       }

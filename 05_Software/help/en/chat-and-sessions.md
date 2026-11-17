@@ -34,6 +34,8 @@ While the agent works, you can keep typing and send more messages, for example "
 
 Approvals waiting for you, errors and download cards are shown at every level; approvals the permission mode granted are hidden at **Minimal** and grouped at **Normal**. The level changes only the display; the saved session and its exports are always complete.
 
+Tool activity uses a short action description, the affected file, page or command, and its status. Expand it to read the result or exact command and working folder. **Technical details** contains the tool name, duration, original arguments and raw result; large stored excerpts can still be loaded in full. A nonzero program exit code is shown as an error, and background runs are labelled separately. Detail levels and approval requests keep their existing behavior. Plan-update operations show the actual task steps and their statuses when expanded; optional technical details stay separate.
+
 ## Reasoning
 
 For models that support it, **Reasoning level** offers **Default** and the levels the model declares, for example **Minimal**, **Low**, **Medium**, **High** or **Maximum**. Higher levels think longer before answering. For models without reasoning levels the control is hidden. You can change it during a turn; the new level applies to the next request. The reasoning text itself is shown only at **Verbose**.
@@ -54,7 +56,7 @@ Saved message bookmarks stay in JSON exports; Markdown marks bookmarked user mes
 
 ## The right panel
 
-**Toggle right panel** shows tabs for the open session: **Context** (workbench instructions and available skills), **Files**, **Changes**, **Artifacts** (text results the agent saved, with **Export** and **Reveal in folder**), **Plan** (the agent's task list) and **Runs** (program runs of plugins).
+**Toggle right panel** shows tabs for the open session: **Instructions and skills** (workbench instructions and available skills), **Files**, **Changes**, **Artifacts** (text results the agent saved, with **Export** and **Reveal in folder**), **Plan** (the agent's task list) and **Runs** (program runs of plugins).
 
 ## Bookmarks
 

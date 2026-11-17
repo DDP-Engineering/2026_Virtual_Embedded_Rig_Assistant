@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { FindBar } from "./find-bar.js";
 import { decodeTextLines, detectTextEncoding, type TextEncoding, textEncodings } from "./text-encoding.js";
 import { useTextRows } from "./use-text-rows.js";
+import { ViewerToolbar } from "./viewer-toolbar.js";
 
 const EMPTY_LINES: string[] = [];
 
@@ -90,37 +91,39 @@ export function TextViewer({
   };
   return (
     <div className="text-viewer">
-      <div className="document-toolbar">
-        <label>
-          <input
-            type="checkbox"
-            data-text-wrap
-            checked={wrap}
-            onChange={(event) => setWrap(event.target.checked)}
-          />
-          {t("documents.wordWrap")}
-        </label>
-        {bytes && (
+      <ViewerToolbar>
+        <div className="document-toolbar">
           <label>
-            {t("documents.encoding")}
-            <select
-              data-text-encoding
-              value={encoding}
-              onChange={(event) => {
-                setEncoding(event.target.value as TextEncoding);
-                setReplace(false);
-                setCurrent(0);
-              }}
-            >
-              {textEncodings.map((value) => (
-                <option key={value} value={value}>
-                  {value.toUpperCase()}
-                </option>
-              ))}
-            </select>
+            <input
+              type="checkbox"
+              data-text-wrap
+              checked={wrap}
+              onChange={(event) => setWrap(event.target.checked)}
+            />
+            {t("documents.wordWrap")}
           </label>
-        )}
-      </div>
+          {bytes && (
+            <label>
+              {t("documents.encoding")}
+              <select
+                data-text-encoding
+                value={encoding}
+                onChange={(event) => {
+                  setEncoding(event.target.value as TextEncoding);
+                  setReplace(false);
+                  setCurrent(0);
+                }}
+              >
+                {textEncodings.map((value) => (
+                  <option key={value} value={value}>
+                    {value.toUpperCase()}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
+        </div>
+      </ViewerToolbar>
       {decoded === null && (
         <div>
           <p role="alert">{t("documents.textBinary")}</p>

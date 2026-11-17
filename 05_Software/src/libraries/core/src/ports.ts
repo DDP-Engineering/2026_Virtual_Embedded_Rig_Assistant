@@ -46,6 +46,8 @@ export interface SpawnedProcess {
   readonly exit: Promise<ProcessExit>;
 }
 export interface ProcessSpawnOptions {
+  /** Host-quoted Cmd command string; never supplied by a plugin or tool request. */
+  windowsVerbatimArguments?: boolean;
   cwd: string;
   env: Record<string, string>;
   /** Start the program as the leader of its own process group (Linux tree kill). */

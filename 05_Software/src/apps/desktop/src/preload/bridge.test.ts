@@ -87,6 +87,7 @@ it("registers a session replay subscription before dispatch and filters its toke
 });
 it("infers registry types and returns validated metadata", async () => {
   expectTypeOf<Channel>().toEqualTypeOf<
+    | "commands.shells"
     | "terminal.list"
     | "terminal.create"
     | "terminal.output"
@@ -220,6 +221,7 @@ it("infers registry types and returns validated metadata", async () => {
     | "workbench.close"
     | "workbench.recent"
     | "workbench.config.get"
+    | "workbench.storage"
     | "workbench.additionalFolders.list"
     | "workbench.additionalFolders.choose"
     | "workbench.commandPrefixes.list"

@@ -19,6 +19,18 @@ class FakeChild extends EventEmitter {
 const options = { cwd: "/w", env: { PATH: "/bin" }, group: true, output: () => {} };
 
 describe("NodeProcessHost", () => {
+  it("keeps Cmd command-line quoting verbatim on Windows", () => {
+    const calls: Parameters<SpawnFunction>[] = [];
+    const host = new NodeProcessHost((...call) => {
+      calls.push(call);
+      return new FakeChild(1);
+    });
+    Object.defineProperty(host, "platform", { value: "win32" });
+    const args = ["/d", "/s", "/c", '"echo "A&B""'];
+    host.spawn("C:\\Windows\\System32\\cmd.exe", args, { ...options, windowsVerbatimArguments: true });
+    expect(calls[0]?.[1]).toEqual(args);
+    expect(calls[0]?.[2].windowsVerbatimArguments).toBe(true);
+  });
   it("spawns without a shell, hidden, with stdin closed and the requested group", () => {
     const calls: Parameters<SpawnFunction>[] = [];
     const host = new NodeProcessHost((...call) => {

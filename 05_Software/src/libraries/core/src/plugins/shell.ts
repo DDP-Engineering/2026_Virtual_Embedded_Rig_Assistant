@@ -1,12 +1,13 @@
 import { constants } from "node:fs";
 import { access, stat } from "node:fs/promises";
 import { posix, win32 } from "node:path";
+import type { CommandShellOption } from "@vera/shared";
 import type { ProcessHost } from "../ports.js";
 import { hostVariable } from "./process-tree.js";
 
 export interface CommandShell {
   executable: string;
-  kind: "powershell" | "bash" | "sh";
+  kind: "powershell" | "cmd" | "bash" | "sh";
 }
 export interface CommandShellHost {
   resolve(signal?: AbortSignal): Promise<CommandShell>;
@@ -40,44 +41,117 @@ async function executable(path: string, windows: boolean): Promise<boolean> {
   }
 }
 
-/** Resolve a shell without invoking it; an explicit unavailable selection never falls back. */
-export async function resolveCommandShell(
-  host: Pick<ProcessHost, "platform" | "env">,
-  configured = "",
-  exists: (path: string) => Promise<boolean> = (path) => executable(path, host.platform === "win32"),
-): Promise<CommandShell> {
+type ShellPlatform = Pick<ProcessHost, "platform" | "env">;
+type Exists = (path: string) => Promise<boolean>;
+
+function shellFinder(host: ShellPlatform, exists: Exists) {
   const windows = host.platform === "win32";
   const paths = windows ? win32 : posix;
   const variable = (name: string) => hostVariable(host as ProcessHost, name);
-  const find = async (name: string): Promise<string | undefined> => {
-    if (paths.isAbsolute(name)) return (await exists(name)) ? name : undefined;
-    if (/[\\/]/.test(name)) throw Error("The shell must be an executable name or an absolute path.");
-    for (const directory of (variable("PATH") ?? "").split(windows ? ";" : ":")) {
-      const folder = directory.replace(/^"(.*)"$/, "$1");
-      if (!paths.isAbsolute(folder)) continue;
-      const path = paths.join(folder, windows && !/\.exe$/i.test(name) ? `${name}.exe` : name);
+  const wslBash = win32.join(variable("SystemRoot") ?? "C:\\Windows", "System32", "bash.exe").toLowerCase();
+  return async (name: string): Promise<string | undefined> => {
+    const candidates = paths.isAbsolute(name)
+      ? [name]
+      : /[\\/]/.test(name)
+        ? []
+        : (variable("PATH") ?? "")
+            .split(windows ? ";" : ":")
+            .map((directory) => directory.replace(/^"(.*)"$/, "$1"))
+            .filter((directory) => paths.isAbsolute(directory))
+            .map((directory) =>
+              paths.join(directory, windows && !/\.exe$/i.test(name) ? `${name}.exe` : name),
+            );
+    if (!candidates.length && /[\\/]/.test(name) && !paths.isAbsolute(name))
+      throw Error("The shell must be an executable name or an absolute path.");
+    for (const path of candidates) {
+      // System32/bash.exe is a WSL launcher, not a native Bash with the current Windows cwd/environment.
+      if (windows && win32.normalize(path).toLowerCase() === wslBash) continue;
       if (await exists(path)) return path;
     }
     return undefined;
   };
+}
+
+/** Detects supported installed shells without starting them or changing the machine. */
+export async function detectCommandShells(
+  host: ShellPlatform,
+  exists: Exists = (path) => executable(path, host.platform === "win32"),
+): Promise<CommandShellOption[]> {
+  const windows = host.platform === "win32";
+  const variable = (name: string) => hostVariable(host as ProcessHost, name);
+  const find = shellFinder(host, exists);
+  const first = async (names: string[]) => {
+    for (const name of names) {
+      const path = await find(name);
+      if (path) return path;
+    }
+    return null;
+  };
+  const systemRoot = variable("SystemRoot") ?? "C:\\Windows";
+  const programFiles = variable("ProgramFiles") ?? "C:\\Program Files";
+  const gitFolders = windows
+    ? [
+        programFiles,
+        variable("ProgramFiles(x86)"),
+        variable("LocalAppData") && win32.join(variable("LocalAppData") as string, "Programs"),
+      ]
+        .filter((path): path is string => !!path && win32.isAbsolute(path))
+        .map((path) => win32.join(path, "Git", "bin", "bash.exe"))
+    : [];
+  if (windows) {
+    for (const directory of (variable("PATH") ?? "").split(";")) {
+      const path = directory.replace(/^"(.*)"$/, "$1");
+      if (win32.isAbsolute(path) && /^(?:cmd|bin)$/i.test(win32.basename(path)))
+        gitFolders.push(win32.join(win32.dirname(path), "bin", "bash.exe"));
+    }
+  }
+  const candidates = [
+    {
+      id: "pwsh" as const,
+      names: [
+        "pwsh",
+        ...(windows
+          ? [win32.join(programFiles, "PowerShell", "7", "pwsh.exe")]
+          : ["/opt/microsoft/powershell/7/pwsh"]),
+      ],
+    },
+    {
+      id: "powershell" as const,
+      names: windows
+        ? [win32.join(systemRoot, "System32", "WindowsPowerShell", "v1.0", "powershell.exe"), "powershell"]
+        : [],
+    },
+    { id: "cmd" as const, names: windows ? [win32.join(systemRoot, "System32", "cmd.exe"), "cmd"] : [] },
+    { id: "bash" as const, names: ["bash", ...gitFolders, ...(windows ? [] : ["/bin/bash"])] },
+  ];
+  return Promise.all(candidates.map(async ({ id, names }) => ({ id, executable: await first(names) })));
+}
+
+/** An explicit unavailable selection never falls back to a different shell. */
+export async function resolveCommandShell(
+  host: ShellPlatform,
+  configured = "",
+  exists: Exists = (path) => executable(path, host.platform === "win32"),
+): Promise<CommandShell> {
+  const windows = host.platform === "win32";
+  const paths = windows ? win32 : posix;
+  const find = shellFinder(host, exists);
   let resolved: string | undefined;
-  if (configured) resolved = await find(configured);
-  else if (windows)
+  if (configured) {
+    resolved = await find(configured);
+    if (!resolved && /^(?:pwsh|powershell|cmd|bash)(?:\.exe)?$/i.test(configured))
+      resolved =
+        (await detectCommandShells(host, exists)).find(
+          (shell) => shell.id === configured.replace(/\.exe$/i, "").toLowerCase(),
+        )?.executable ?? undefined;
+  } else if (windows) {
+    const installed = await detectCommandShells(host, exists);
     resolved =
-      (await find("pwsh")) ??
-      (await find(
-        win32.join(variable("ProgramFiles") ?? "C:\\Program Files", "PowerShell", "7", "pwsh.exe"),
-      )) ??
-      (await find(
-        win32.join(
-          variable("SystemRoot") ?? "C:\\Windows",
-          "System32",
-          "WindowsPowerShell",
-          "v1.0",
-          "powershell.exe",
-        ),
-      ));
-  else
+      installed.find((shell) => shell.id === "pwsh")?.executable ??
+      installed.find((shell) => shell.id === "powershell")?.executable ??
+      installed.find((shell) => shell.id === "cmd")?.executable ??
+      undefined;
+  } else
     resolved =
       (await find("bash")) ?? (await find("/bin/bash")) ?? (await find("sh")) ?? (await find("/bin/sh"));
   if (!resolved) throw Error("No command shell is available. Select an installed shell in Settings.");
@@ -85,13 +159,39 @@ export async function resolveCommandShell(
     .basename(resolved)
     .replace(/\.exe$/i, "")
     .toLowerCase();
-  if (windows && !["pwsh", "powershell"].includes(name))
-    throw Error("Select pwsh.exe or powershell.exe on Windows.");
-  return { executable: resolved, kind: windows ? "powershell" : name === "bash" ? "bash" : "sh" };
+  if (windows && !["pwsh", "powershell", "cmd", "bash", "sh"].includes(name))
+    throw Error("Select PowerShell, Cmd or a native Bash/sh executable on Windows.");
+  return {
+    executable: resolved,
+    kind:
+      name === "pwsh" || name === "powershell"
+        ? "powershell"
+        : name === "cmd" && windows
+          ? "cmd"
+          : name === "bash"
+            ? "bash"
+            : "sh",
+  };
+}
+
+/** Startup arguments for a user-owned interactive terminal. */
+export function interactiveShellArguments(shell: CommandShell): string[] {
+  return shell.kind === "powershell"
+    ? ["-NoLogo"]
+    : shell.kind === "cmd"
+      ? ["/d"]
+      : shell.kind === "bash"
+        ? ["-il"]
+        : ["-i"];
 }
 
 /** Pass literal shell syntax as one argv item; PowerShell's wrapper preserves native exit status. */
 export function shellArguments(shell: CommandShell, command: string): string[] {
+  if (shell.kind === "cmd") {
+    if (/[\r\n]/.test(command))
+      throw Error("Cmd commands must be on one line; use & or && between commands.");
+    return ["/d", "/s", "/c", `"${command}"`];
+  }
   if (shell.kind !== "powershell") return [shell.kind === "bash" ? "-lc" : "-c", command];
   const literal =
     `${command}\nif ($?) { exit 0 }; if ($LASTEXITCODE) { exit $LASTEXITCODE }; exit 1`.replaceAll("'", "''");

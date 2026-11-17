@@ -315,7 +315,7 @@ export function WorkbenchDocuments({
         {preview.data?.guard && (
           <PreviewGuard guard={preview.data.guard} atLeast={preview.data.truncated} number={number} />
         )}
-        {preview.data && !preview.data.guard && <VolumeWarning volume={preview.data} preview />}
+        {preview.data && !preview.data.guard && <VolumeWarning volume={preview.data} />}
         {preview.isError && <ErrorMessage error={preview.error} />}
         <details className="workbench-documents-advanced" data-docs-advanced>
           <summary>{t("documentsSetup.advanced")}</summary>

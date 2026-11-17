@@ -2,6 +2,17 @@ import { expect, it } from "vitest";
 import { channels } from "./ipc.js";
 import { documentFolderPattern, documentPatternFolder } from "./workbench.js";
 
+it("binds local storage measurements to a workbench and rejects invalid byte counts", () => {
+  const channel = channels["workbench.storage"];
+  const workbenchId = "wb_01JB8Z6Q4M7N2K5R9T3V8X1Y0C";
+  expect(channel.request.parse({ workbenchId })).toEqual({ workbenchId });
+  expect(channel.response.parse({ workbenchId, bytes: 2 ** 40 })).toEqual({ workbenchId, bytes: 2 ** 40 });
+  for (const bytes of [-1, 0.5, Number.MAX_SAFE_INTEGER + 1, "100"])
+    expect(channel.response.safeParse({ workbenchId, bytes }).success).toBe(false);
+  for (const request of [{}, { workbenchId: "bad" }, { workbenchId, folder: "C:/other" }])
+    expect(channel.request.safeParse(request).success).toBe(false);
+});
+
 // REQ-FUNC-38107da8 REQ-FUNC-81ce68df
 it("validates strict workbench creation drafts and inspection results", () => {
   const create = channels["workbench.create"].request;

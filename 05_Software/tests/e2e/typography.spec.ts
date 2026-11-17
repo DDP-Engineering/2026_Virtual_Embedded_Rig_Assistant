@@ -81,6 +81,61 @@ test("Appearance keeps interface, conversation and code sizes independent and re
   expect(outbound).toEqual([]);
 });
 
+test("terminal follows live code text sizes without replacing its surface or sending shell input", {
+  tag: "@parallel-browser",
+}, async ({ page, rendererUrl }) => {
+  await page.setViewportSize({ width: 1600, height: 900 });
+  await page.goto(`${rendererUrl}/?mock=chat`);
+  await page.evaluate(async () => {
+    const modulePath = "/api/index.ts";
+    const { api } = await import(modulePath);
+    const original = api.invoke.bind(api);
+    const calls: { channel: string; input: unknown }[] = [];
+    Object.assign(window, { terminalFontCalls: calls });
+    api.invoke = (channel: string, input: unknown) => {
+      if (channel.startsWith("terminal.")) calls.push({ channel, input });
+      return original(channel, input);
+    };
+  });
+  await page.locator("[data-workbench-entry] .workbench-group-name").first().click();
+  await page.locator('[data-toggle="right"]').click();
+  await page.locator("#tab-terminal").click();
+  const rows = page.locator(".terminal-surface .xterm-rows");
+  const font = () => rows.evaluate((node) => getComputedStyle(node).fontSize);
+  await expect.poll(font).toBe("14px");
+  const surface = await page.locator(".terminal-surface").elementHandle();
+  const calls = () =>
+    page.evaluate(
+      () =>
+        Reflect.get(window, "terminalFontCalls") as {
+          channel: string;
+          input: { cols: number; rows: number };
+        }[],
+    );
+  const grid = async () => (await calls()).filter((call) => call.channel === "terminal.resize").at(-1)?.input;
+  await expect.poll(grid).toBeTruthy();
+  const initial = await grid();
+  for (const size of [10, 12, 14, 16, 20, 24]) {
+    await page.evaluate(async (codeFontSize) => {
+      const modulePath = "/api/index.ts";
+      await (await import(modulePath)).api.updateSettings({ codeFontSize });
+    }, size);
+    await expect.poll(font).toBe(`${size}px`);
+    expect(await surface?.evaluate((node) => node.isConnected)).toBe(true);
+  }
+  await expect.poll(async () => (await grid())?.cols ?? Infinity).toBeLessThan(initial?.cols ?? 0);
+  await expect.poll(async () => (await grid())?.rows ?? Infinity).toBeLessThan(initial?.rows ?? 0);
+  await page.locator('[data-i18n="nav.settings"]').click();
+  await page.locator('[data-section="appearance"]').click();
+  await page.locator('[data-action="reset-typography"]').click();
+  await page.locator('[data-action="leave-settings"]').click();
+  await expect.poll(font).toBe("14px");
+  await expect.poll(grid).toEqual(initial);
+  expect((await calls()).filter((call) => call.channel === "terminal.create")).toHaveLength(1);
+  expect((await calls()).filter((call) => call.channel === "terminal.input")).toHaveLength(0);
+  await expect(rows).toContainText("$");
+});
+
 test("native desktop accepts every size through preload and main, and retains it after restart", async () => {
   test.setTimeout(90000);
   const desktop = join(dirname(fileURLToPath(import.meta.url)), "../../src/apps/desktop");

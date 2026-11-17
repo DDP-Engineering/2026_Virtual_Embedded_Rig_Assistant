@@ -26,6 +26,7 @@ export type SpawnFunction = (
     env: Record<string, string>;
     shell: false;
     windowsHide: true;
+    windowsVerbatimArguments?: boolean;
     detached: boolean;
     stdio: ["ignore" | "pipe", "pipe", "pipe"];
   },
@@ -55,6 +56,11 @@ export class NodeProcessHost implements ProcessHost {
         env: options.env,
         shell: false,
         windowsHide: true,
+        ...(options.windowsVerbatimArguments &&
+        this.platform === "win32" &&
+        /(?:^|[\\/])cmd(?:\.exe)?$/i.test(executable)
+          ? { windowsVerbatimArguments: true }
+          : {}),
         detached: options.group,
         stdio: [options.input === undefined ? "ignore" : "pipe", "pipe", "pipe"],
       });
