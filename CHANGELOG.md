@@ -8,7 +8,9 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ### Changed
 
-- Program runs and user terminal output follow live app/workbench masking, defaulting off; agent reads stay masked.
+- Agent/model and artifact/export masking follow independent live app/workbench choices, both defaulting on.
+
+- Program runs and user terminal output follow live app/workbench masking, defaulting off; agent reads use their own policy.
 
 - Display masking follows app and workbench choices while keeping secret-named files visible and openable.
 

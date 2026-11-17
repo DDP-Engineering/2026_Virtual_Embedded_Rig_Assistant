@@ -1,9 +1,18 @@
 /** Keep a raw tail long enough to recognize a credential crossing provider delta boundaries. */
-export function createStreamScrubber(secrets: () => readonly string[], scrub: (text: string) => string) {
+export function createStreamScrubber(
+  secrets: () => readonly string[],
+  scrub: (text: string) => string,
+  enabled: () => boolean = () => true,
+) {
   let buffer = "";
   return {
     push(delta: string): string {
       buffer += delta;
+      if (!enabled()) {
+        const output = buffer;
+        buffer = "";
+        return output;
+      }
       const patterns = [
         ...new Set(
           secrets()
@@ -25,7 +34,7 @@ export function createStreamScrubber(secrets: () => readonly string[], scrub: (t
       return output;
     },
     flush(): string {
-      const output = scrub(buffer);
+      const output = enabled() ? scrub(buffer) : buffer;
       buffer = "";
       return output;
     },

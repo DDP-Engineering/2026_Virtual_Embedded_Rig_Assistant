@@ -228,7 +228,7 @@ it("accepts empty/exact5MiB UTF8 content, refuses overlimit and restores bytes a
   expect(store.list(session.id)).toEqual(original);
   expect(await readdir(join(path, ".."))).toEqual(["summary.md"]);
 });
-it("rejects pending abort/ownership loss/disabled tools/credential saves and leaves no artifact rows", async () => {
+it("rejects pending abort/ownership loss/disabled tools/credential names and leaves no artifact rows", async () => {
   const { store, artifactHost: host, handle, root, session } = await direct();
   const signal = new AbortController().signal;
   const abort = new AbortController();
@@ -243,7 +243,7 @@ it("rejects pending abort/ownership loss/disabled tools/credential saves and lea
   );
   host.assertWritable = () => {};
   host.scrub = (s) => s.replaceAll("credential", "[redacted]");
-  await expect(store.save(host, { name: "summary.md", content: "credential" }, signal)).rejects.toThrow(
+  await expect(store.save(host, { name: "credential.md", content: "safe" }, signal)).rejects.toThrow(
     /credential/,
   );
   const context = core.createToolContext(root);
@@ -339,4 +339,26 @@ it("artifact fixture preserves automatic pathological and normal grep selection"
       done?.type === "done" ? done.message.content.find((c) => c.type === "toolCall") : null,
     ).toMatchObject({ name: tool });
   }
+});
+
+it("resolves artifact content masking inside the write queue after a live change", async () => {
+  const { store, artifactHost: host, path } = await direct();
+  let mask = false,
+    release = () => {};
+  const held = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  const pending = host.queue.run(() => held);
+  host.scrub = (text) => text.replaceAll("fixture-private-283", "[REDACTED]");
+  host.scrubContent = (text) => (mask ? (host.scrub?.(text) ?? text) : text);
+  const save = store.save(
+    host,
+    { name: "summary.md", content: "fixture-private-283" },
+    new AbortController().signal,
+  );
+  mask = true;
+  release();
+  await pending;
+  expect(await save).toMatchObject({ bytes: 10 });
+  expect(await readFile(path, "utf8")).toBe("[REDACTED]");
 });

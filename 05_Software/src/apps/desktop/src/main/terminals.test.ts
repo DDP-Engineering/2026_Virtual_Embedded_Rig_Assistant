@@ -4,6 +4,7 @@ import { TerminalService, type UserPty } from "./terminals.js";
 
 function fixture() {
   let masking = true;
+  let agent = true;
   let current = { id: "bench-a", folder: "/workbench" };
   const processes: ReturnType<typeof pty>[] = [];
   function pty() {
@@ -46,6 +47,7 @@ function fixture() {
   const service = new TerminalService({
     current: () => current,
     maskUserOutput: () => masking,
+    maskAgentOutput: () => agent,
     shell,
     pty: { spawn, stop },
     scrub: (text) => text.replaceAll("private-token-123", "[REDACTED]"),
@@ -53,6 +55,9 @@ function fixture() {
   });
   return {
     service,
+    agent: (value: boolean) => {
+      agent = value;
+    },
     masking: (value: boolean) => {
       masking = value;
     },
@@ -265,4 +270,46 @@ it("toggles local snapshots live while agent reads hold split secrets independen
   f.service.consent("bench-a", terminal.id, false);
   expect(() => reader.read(terminal.id)).toThrow();
   await f.service.closeAll();
+});
+
+it.each([true, false])(
+  "keeps terminal agent disclosure independent of runs=%s and rechecks live policy",
+  async (runs) => {
+    const f = fixture();
+    f.masking(runs);
+    const terminal = await f.service.create("bench-a", 80, 24);
+    f.service.consent("bench-a", terminal.id, true);
+    f.processes[0]?.print("private-token-123\n");
+    const reader = f.service.reader("bench-a");
+    const capture = JSON.stringify(reader.read(terminal.id));
+    expect(JSON.parse(reader.publish(capture)).text).toBe("[REDACTED]\n");
+    f.agent(false);
+    expect(JSON.parse(reader.publish(capture)).text).toBe("private-token-123\n");
+    expect(f.service.output("bench-a", terminal.id).output).toBe(
+      runs ? "[REDACTED]\n" : "private-token-123\n",
+    );
+    f.agent(true);
+    expect(JSON.parse(reader.publish(capture)).text).toBe("[REDACTED]\n");
+    f.service.consent("bench-a", terminal.id, false);
+    expect(() => reader.publish(capture)).toThrow(/revoked/);
+  },
+);
+
+it("masks complete terminal capture before bounding and uses clean VT projection when agent is off", async () => {
+  const f = fixture(),
+    terminal = await f.service.create("bench-a", 80, 24);
+  f.service.consent("bench-a", terminal.id, true);
+  f.processes[0]?.print(`${"x".repeat(12000)}private-token-123 end`);
+  const reader = f.service.reader("bench-a");
+  const capture = JSON.stringify(reader.read(terminal.id));
+  const masked = JSON.parse(reader.publish(capture)).text;
+  expect(masked).toContain("[REDACTED]");
+  expect(masked).not.toContain("token-123");
+  f.agent(false);
+  f.processes[0]?.print("\x1b]0;pending");
+  expect(JSON.parse(reader.publish(capture)).text).not.toContain("pending");
+  f.processes[0]?.print("\x07private-token-\x1b[");
+  expect(JSON.parse(reader.publish(capture)).text).toContain("private-token-");
+  f.processes[0]?.print("31m123");
+  expect(JSON.parse(reader.publish(capture)).text).toContain("private-token-123");
 });

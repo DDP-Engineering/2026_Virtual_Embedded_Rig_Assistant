@@ -36,8 +36,12 @@ node_modules/         Ignored installed dependencies
 
 Shared `src/libraries/shared/src/privacy.ts` validates optional masking preferences. Core
 `src/libraries/core/src/settings/masking.ts` binds `maskingFor(workbench, area)` to a live settings
-getter; its adjacent tests cover all area choices. This infrastructure does not yet change consumers
-or add Settings controls.
+getter; all four areas now consume their live choices. Agent/model and exports default on, while
+Display and Program runs default off. Settings controls remain in MASK-05. Core sessions/masking.ts
+projects model streams and request history; llm/message-scrub.ts retains protocol discriminants and
+raw execution authority. CLI session-output.ts replaces the replay-only scrubber. Focused tests are
+sessions/masking.test.ts, llm/stream-scrub.test.ts and CLI session-output.test.ts; native
+tests/e2e/agent-masking.spec.ts proves independent export/disclosure choices. Saved redaction is irreversible.
 
 Unit and component tests remain beside the implementation in `src/`. Environment, build and
 release tooling lives in [02_Tools](../02_Tools/README.md); it resolves packages from this

@@ -2,6 +2,13 @@ version: Unreleased
 date: null
 entries:
   - category: fixed
+    topic: { en: Privacy, ro: Confidențialitate, de: Datenschutz, fr: Confidentialité }
+    text:
+      en: Agent and export masking now follow their own app and workbench choices.
+      ro: Mascarea agentului și a exporturilor respectă alegerile aplicației și ale workbench-ului.
+      de: Agenten- und Exportmaskierung folgen nun ihren eigenen App- und Workbench-Einstellungen.
+      fr: Le masquage de l’agent et des exports suit leurs choix propres dans l’application et le banc.
+  - category: fixed
     topic: { en: Files, ro: Fișiere, de: Dateien, fr: Fichiers }
     text:
       en: Display masking keeps secret-named files visible and opens their original contents.

@@ -61,6 +61,8 @@ Run commands from 05_Software using the repository-local npmw.py wrapper when No
 
 ## Verification
 
+Masking consumer proof uses sessions/masking.test.ts, llm gateway/stream-scrub, desktop exports/events/terminals and selected CLI process cases. Native agent-masking.spec.ts uses a real stored MQTT fixture credential and local replay to verify independent session and artifact exports, snapshots/search/detail and irreversible saved redaction. Original logs/receipt use evaluation-outputs/mask04. Unchanged TERM PTY/native packaging evidence is reused; WSL2 is distinct from unavailable native Ubuntu, and full suites/deliveries remain deferred.
+
 User-terminal verification uses main/terminals.test.ts, core/tools/terminal-read.test.ts, strict
 shared terminal IPC, renderer terminal-tab/terminal-document tests and tests/e2e/terminal.spec.ts.
 VERA_TERM05_APP selects an extracted packaged binary; VERA_TERM05_EVIDENCE_DIR retains original

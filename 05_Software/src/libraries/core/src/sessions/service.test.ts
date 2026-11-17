@@ -804,10 +804,10 @@ it("retains large first-turn tool results while every gateway request fits a tra
     inputBudget: 3976,
     supportsTools: true,
   });
-  const requests: Omit<core.LlmRequest, "signal">[] = [];
+  const requests: Omit<core.LlmRequest, "signal" | "maskOutput">[] = [];
   const original = gateway.stream.bind(gateway);
   gateway.stream = (request) => {
-    const { signal: _, ...data } = request;
+    const { signal: _, maskOutput: _maskOutput, ...data } = request;
     requests.push(structuredClone(data));
     return original(request);
   };

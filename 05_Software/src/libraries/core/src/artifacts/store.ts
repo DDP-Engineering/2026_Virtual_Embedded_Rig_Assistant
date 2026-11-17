@@ -38,6 +38,7 @@ export interface ArtifactHost {
   assertWritable(): void;
   record(event: SessionEvent): () => void;
   scrub?(text: string): string;
+  scrubContent?(text: string): string;
 }
 const key = (path: string) => (process.platform === "win32" ? resolve(path).toLowerCase() : resolve(path));
 const hash = (bytes: Buffer) => createHash("sha256").update(bytes).digest("hex");
@@ -180,11 +181,25 @@ export class ArtifactStore {
       );
     const bytes = Buffer.from(args.content, "utf8");
     if (bytes.length > ARTIFACT_MAX_BYTES) throw Error("Artifact content exceeds the5MiB UTF8 limit.");
-    if (host.scrub && host.scrub(JSON.stringify(args)) !== JSON.stringify(args))
+    if (host.scrub && host.scrub(args.name) !== args.name)
       throw Error("Artifact content contains protected credential data.");
     return host.queue.run(async () => {
       signal.throwIfAborted();
       host.assertWritable();
+      if (host.scrub && host.scrub(args.name) !== args.name)
+        throw Error("Artifact name contains protected credential data.");
+      args = {
+        ...args,
+        content: host.scrubContent?.(args.content) ?? host.scrub?.(args.content) ?? args.content,
+        ...(args.description === undefined
+          ? {}
+          : {
+              description:
+                host.scrubContent?.(args.description) ?? host.scrub?.(args.description) ?? args.description,
+            }),
+      };
+      const bytes = Buffer.from(args.content, "utf8");
+      if (bytes.length > ARTIFACT_MAX_BYTES) throw Error("Artifact content exceeds the5MiB UTF8 limit.");
       const path = this.path(host.sessionId, args.name, true);
       const old = this.repository.named(host.sessionId, args.name);
       let previous: Buffer | undefined;

@@ -2,7 +2,7 @@
 
 ## Routing
 
-Select for `vera run`, `vera index`, `vera search`, arguments, event/usage formatting, Node host ports and lifecycle. Start at05_Software/src/apps/cli/src/{index,args,run,host-ports,replay-output}.ts and 02_Tools/build/build-cli.mjs. Focused tests are tests/integration/cli.test.ts and src/apps/cli/src/host-ports.test.ts. [Sessions](sessions.md) owns durable transcript/events/recovery; [agent runtime](agent-runtime.md) owns context policy; [LLM gateway](llm-gateway.md) owns providers/replay; [file tools](file-tools.md) owns confinement and worker deadlines; [software tooling](software-tooling.md) owns npm/TypeScript/verification.
+Select for `vera run`, `vera index`, `vera search`, arguments, event/usage formatting, Node host ports and lifecycle. Start at05_Software/src/apps/cli/src/{index,args,run,host-ports,session-output}.ts and 02_Tools/build/build-cli.mjs. Focused tests are tests/integration/cli.test.ts and src/apps/cli/src/host-ports.test.ts. [Sessions](sessions.md) owns durable transcript/events/recovery; [agent runtime](agent-runtime.md) owns context policy; [LLM gateway](llm-gateway.md) owns providers/replay; [file tools](file-tools.md) owns confinement and worker deadlines; [software tooling](software-tooling.md) owns npm/TypeScript/verification.
 
 ## Purpose and boundaries
 
@@ -12,8 +12,7 @@ CLI runs one durable SessionService turn over core/shared with Node-only host ad
 
 `run.ts` composes `createCommandShellHost` with the live settings.shell and logger scrubber, reusing
 its ProgramRunner/session cleanup. The durable approval path handles run_command and reads saved workbench prefixes for Auto-edit; the TTY prompt
-shows the literal command, cwd and shell. Existing approval flags apply. Command output passes through
-logger scrubbing and commands use closed stdin. `tests/integration/commands.test.ts` exercises the
+shows the literal command, cwd and shell. Existing approval flags apply. Command output follows the live agent choice; diagnostics retain logger scrubbing and commands use closed stdin. `tests/integration/commands.test.ts` exercises the
 shared real shell path; `src/apps/cli/src/approval-prompt.test.ts` covers immediate prompt consumers.
 
 
@@ -66,9 +65,9 @@ same catalog. Promotion/export controls remain user actions on the desktop Plugi
 - CLI bundle uses exact installed esbuild and external dependencies/native addon; shared/core source aliases build without previous library output. Independent grep-worker entry resides beside index. Workspace bin points to dist/index.js.
 - Process tests preload the existing Node loopback guard, use fictional keys and copied demo files, and exercise production deadline/context policy. Linux also executes the unflagged CLI in a real PTY, approves/denies and interrupts the waiting prompt, and sends an actual native SIGINT; a harness emits the same registered signal handlers inside real processes on both platforms.
 
-- Repository .npmrc suppresses npm run-script banners to preserve event-only stdout and avoid raw argument reflection. Explicit replay records decode JSON escapes before canonical serialization is scrubbed and staged, preserving comment/blank-line support and core validation. Process receipts bind the actual executed index/worker paths and bytes, including npm-built dist. Process evidence uses a unique suite directory, exclusive writes, original byte streams and copied bundle hashes for each child.
+- Repository .npmrc suppresses npm run-script banners to preserve event-only stdout and avoid raw argument reflection. Explicit replay records decode JSON escapes before canonical serialization is staged, preserving comment/blank-line support and core validation. Process receipts bind the actual executed index/worker paths and bytes, including npm-built dist. Process evidence uses a unique suite directory, exclusive writes, original byte streams and copied bundle hashes for each child.
 
-Replay output passes through the CLI scrubReplayOutput adapter after bindings/interpolation: it aggregates the existing in-memory response deltas, scrubs complete text/tool argument values, then scrubs terminal/partial objects before runtime consumption or persistence. Replay emits one safe delta per complete text/tool value, retains original source-delta counts and source order. OpenAI/custom incremental streaming remains the shared gateway contract.
+Replay, OpenAI and custom model output use SessionService live agent projection with split-secret holding. Raw execution arguments remain transient authority; saved session arguments/messages follow agent. session-output.ts projects typed JSONL/pretty content, including session model references with valid-reference fallback, without corrupting protocol enums/identities. Errors and stderr diagnostics always scrub. Artifacts independently use exports; both choices default on and inherit live settings unless the workbench overrides them.
 
 ## Change map
 
@@ -85,7 +84,7 @@ REQ-FUNC-1ed659ec session; FUNCe0645fcd output; REL88dd69b2 exits; SEC25008e88 r
 
 ## Files
 
-Under05_Software: src/apps/cli/{package.json,tsconfig.json,vitest.config.ts,src/index.ts,src/args.ts,src/run.ts,src/host-ports.ts,src/replay-output.ts,src/approval-prompt.ts,src/approval-prompt.test.ts,src/host-ports.test.ts,src/worker-pool.ts,src/grep-worker.ts};02_Tools/build/build-cli.mjs;package.json/package-lock.json;tests/integration/cli.test.ts;tests/fixtures/workbenches/demo-board/board.txt;README.md.
+Under05_Software: src/apps/cli/{package.json,tsconfig.json,vitest.config.ts,src/index.ts,src/args.ts,src/run.ts,src/host-ports.ts,src/session-output.ts,src/session-output.test.ts,src/approval-prompt.ts,src/approval-prompt.test.ts,src/host-ports.test.ts,src/worker-pool.ts,src/grep-worker.ts};02_Tools/build/build-cli.mjs;package.json/package-lock.json;tests/integration/cli.test.ts;tests/fixtures/workbenches/demo-board/board.txt;README.md.
 
 CLI selects Exa/Tavily/Brave through ConfiguredWebProvider and applies the same current global enabled/authentication preference. Anonymous ignores keys. API-key mode reads explicit EXA_API_KEY/TAVILY_API_KEY/BRAVE_SEARCH_API_KEY for the selected provider through MemoryCredentials with redaction; it fails closed when absent and never reads Electron safeStorage credentials. No extra CLI flags or endpoint configuration. See [web access](web-search.md).
 

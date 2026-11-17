@@ -1,4 +1,4 @@
-import type { AssistantMessage, Model, TSchema } from "@earendil-works/pi-ai";
+import type { Model, TSchema } from "@earendil-works/pi-ai";
 import { openAICompletionsApi } from "@earendil-works/pi-ai/api/openai-completions.lazy";
 import { createModels, createProvider, type MutableModels } from "@earendil-works/pi-ai/models";
 import { openaiProvider } from "@earendil-works/pi-ai/providers/openai";
@@ -13,6 +13,7 @@ import type { CredentialStore } from "../ports.js";
 import { parseChatGptCatalog } from "./chatgpt-catalog.js";
 import { mapProviderError, type ProviderFailure } from "./errors.js";
 import { type LlmEvent, type LlmGateway, type LlmRequest, splitModelReference } from "./gateway.js";
+import { scrubAssistantMessage } from "./message-scrub.js";
 import { createStreamScrubber } from "./stream-scrub.js";
 
 export type { AuthInteraction, Models } from "@earendil-works/pi-ai";
@@ -131,46 +132,6 @@ export function createCollections(
   if (!builtIn.auth.oauth) throw veraError("INTERNAL");
   subscription.setProvider({ ...builtIn, auth: { oauth: builtIn.auth.oauth } });
   return { api, subscription };
-}
-function safeMessage(
-  message: AssistantMessage,
-  scrub: GatewayHost["scrub"],
-  timestamp: number,
-): AssistantMessage {
-  const safe = (v: unknown): unknown =>
-    typeof v === "string"
-      ? scrub(v)
-      : Array.isArray(v)
-        ? v.map(safe)
-        : v && typeof v === "object"
-          ? Object.fromEntries(Object.entries(v).map(([k, x]) => [scrub(k), safe(x)]))
-          : v;
-  return {
-    ...(safe(message) as AssistantMessage),
-    role: message.role,
-    api: message.api,
-    stopReason: message.stopReason,
-    usage: message.usage,
-    timestamp,
-    model: scrub(message.model),
-    provider: scrub(message.provider),
-    content: message.content.map((c) =>
-      c.type === "text"
-        ? { ...(safe(c) as typeof c), type: c.type, text: scrub(c.text) }
-        : c.type === "thinking"
-          ? { ...(safe(c) as typeof c), type: c.type, thinking: scrub(c.thinking) }
-          : c.type === "toolCall"
-            ? {
-                ...(safe(c) as typeof c),
-                type: c.type,
-                id: scrub(c.id),
-                name: scrub(c.name),
-                arguments: safe(c.arguments) as typeof c.arguments,
-              }
-            : c,
-    ),
-    ...(message.errorMessage ? { errorMessage: scrub(message.errorMessage) } : {}),
-  };
 }
 export function createPiAiGateway(
   host: GatewayHost,
@@ -490,7 +451,8 @@ export function createPiAiGateway(
           ...(key?.type === "api_key" && key.key ? [key.key] : []),
           ...(key?.type === "oauth" ? [key.access, key.refresh] : []),
         ];
-        const textScrubber = createStreamScrubber(secrets, host.scrub);
+        const outputScrub = (text: string) => (request.maskOutput?.() === false ? text : host.scrub(text));
+        const textScrubber = createStreamScrubber(secrets, host.scrub, request.maskOutput);
         let sourceDeltas = 0;
         const toolScrubbers = new Map<number, ReturnType<typeof createStreamScrubber>>();
         for await (const event of stream) {
@@ -501,7 +463,7 @@ export function createPiAiGateway(
           } else if (event.type === "toolcall_delta") {
             let redactor = toolScrubbers.get(event.contentIndex);
             if (!redactor) {
-              redactor = createStreamScrubber(secrets, host.scrub);
+              redactor = createStreamScrubber(secrets, host.scrub, request.maskOutput);
               toolScrubbers.set(event.contentIndex, redactor);
             }
             const delta = redactor.push(event.delta);
@@ -514,13 +476,19 @@ export function createPiAiGateway(
               if (delta) yield { type: "tool", index, delta };
             }
             if (event.type === "done")
-              yield { type: "done", message: safeMessage(event.message, host.scrub, host.now()) };
+              yield {
+                type: "done",
+                message: scrubAssistantMessage(event.message, outputScrub, host.now(), true, host.scrub),
+              };
             else
               yield {
                 type: "error",
                 error: mapProviderError(event.error.errorMessage ?? "", host.scrub, endpoint, failure),
                 aborted: event.reason === "aborted",
-                partial: safeMessage(event.error, host.scrub, host.now()),
+                partial: {
+                  ...scrubAssistantMessage(event.error, outputScrub, host.now(), true, host.scrub),
+                  errorMessage: host.scrub(event.error.errorMessage ?? ""),
+                },
               };
           }
         }

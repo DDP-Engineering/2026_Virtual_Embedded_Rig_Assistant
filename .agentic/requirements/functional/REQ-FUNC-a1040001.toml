@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-FUNC-a1040001"
+title = "Streamed model output follows live agent masking"
+status = "active"
+requirement = "When model output is streamed or completed in a session, VERA shall apply the live Agent and model choice with split-secret prefix holding while masking is enabled and retain unconditional provider-error protection."
+verification = "Fake and loopback providers emit split credentials and terminal metadata; assert deltas and durable completion on/off, live changes and masked errors."
+affected_paths = ["05_Software/src/libraries/core/src/sessions/masking.ts", "05_Software/src/libraries/core/src/llm/message-scrub.ts", "05_Software/src/libraries/core/src/llm/stream-scrub.ts", "05_Software/src/libraries/core/src/llm/providers.ts", "05_Software/src/libraries/core/src/llm/gateway.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/sessions/masking.test.ts", "05_Software/src/libraries/core/src/llm/stream-scrub.test.ts", "05_Software/src/libraries/core/src/llm/gateway.test.ts", "05_Software/tests/e2e/agent-masking.spec.ts"]
+created = 2026-11-17
+updated = 2026-11-17

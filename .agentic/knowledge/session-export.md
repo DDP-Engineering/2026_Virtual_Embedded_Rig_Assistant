@@ -6,15 +6,15 @@ Select for SessionService.search/exportSession, schemaVersion1 archives, buildSe
 
 ## Purpose and boundaries
 
-Core searches existing persisted message events and builds deterministic Markdown over full event-backed transcript. Shared owns strict search/format/archive contracts. Main scrubs structured metadata/events/changes and holds the workbench lifecycle while a native save picker selects the atomic destination. React presents scoped search and export controls.
+Core searches existing persisted message events and builds deterministic Markdown over full event-backed transcript. Shared owns strict search/format/archive contracts. Main projects structured metadata/events/changes using the independent live exports choice and holds the workbench lifecycle while a native save picker selects the atomic destination. React presents scoped search and export controls.
 
 ## Public interface
 
 Format-1 JSON archives include `message.bookmarked` events unchanged. Folding them reconstructs `bookmarkedMessageIds`; Markdown appends `(bookmarked)` to user headings with an active bookmark, including pending users. Set/clear history stays in JSON, while Markdown reflects current membership. core sessions/bookmarks.test.ts verifies database restart, archive replay and Markdown annotations.
 
-SessionService.search(query) trims1..1000 characters and matches host-scrubbed title or user/queued/assistant text with Unicode lowercase literal includes, retaining existing list order. exportSession(id) validates current session and returns schemaVersion1, session metadata and increasing seq/createdAt/event records. Live-only deltas remain transient. buildSessionMarkdown(data,changes) renders English archival sections, literal fenced text, pending markers, tool summaries, persisted citation validity and applied stored diffs.
+SessionService.search(query) trims1..1000 characters and matches titles projected using the live agent choice or user/queued/assistant text with Unicode lowercase literal includes, retaining existing list order. exportSession(id) validates current session and returns schemaVersion1, session metadata and increasing seq/createdAt/event records. Live-only deltas remain transient. buildSessionMarkdown(data,changes) renders English archival sections, literal fenced text, pending markers, tool summaries, persisted citation validity and applied stored diffs.
 
-session.search {query}->SessionSummary[] and session.export {sessionId,format:md|json}->{exported:boolean} use existing authorization/serial host. Export snapshots after picker confirmation, supports read-only reads, denies managed runtime destinations, cancellation writes nothing. JSON redaction runs on typed fields before serialization. Markdown scrubs diffs before formatting. Default filename uses safe session ID.
+session.search {query}->SessionSummary[] and session.export {sessionId,format:md|json}->{exported:boolean} use existing authorization/serial host. Export snapshots after picker confirmation, supports read-only reads, denies managed runtime destinations, cancellation writes nothing. JSON redaction runs on typed fields before serialization when exports resolves on; off preserves retained literal content. Provider errors remain protected independently. Markdown applies exports masking to diffs before formatting. The choice is resolved after the native picker; saved redaction is irreversible. Default filename uses safe session ID.
 
 App maintains ordinary list for active selection and separate workbench/query search cache. Search filters never change active transcript. SessionWorkspace export actions expose completion/cancel/errors; mock mirrors durable message matching and exported result through strict channels. en/ro/de label all controls.
 

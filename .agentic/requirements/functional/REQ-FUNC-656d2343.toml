@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-FUNC-656d2343"
+title = "Session and artifact exports follow independent live choice"
+status = "active"
+requirement = "When an artifact or JSON/Markdown session export is written, VERA shall apply the live Artifacts and exports choice at publication independently of the Agent and model, Display and Program runs choices."
+verification = "Export retained raw source across the matrix including a policy change during the picker; verify literal bytes only with exports off and unchanged destination guards."
+affected_paths = ["05_Software/src/apps/desktop/src/main/artifacts.ts", "05_Software/src/apps/desktop/src/main/session-export.ts", "05_Software/src/apps/desktop/src/main/index.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/session-export.test.ts", "05_Software/src/apps/desktop/src/main/artifacts.test.ts", "05_Software/tests/e2e/agent-masking.spec.ts"]
+created = 2026-11-17
+updated = 2026-11-17

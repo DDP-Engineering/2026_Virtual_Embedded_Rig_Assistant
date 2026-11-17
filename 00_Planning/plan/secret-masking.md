@@ -3,20 +3,25 @@
 PURPOSE: let the user decide, for each area and each workbench, whether VERA replaces stored secrets with
 `[REDACTED]`, so the user sees all information by default and masking is a choice.
 STATE: MASK-01 #280 infrastructure implemented and committed in f78c1de6599a876c7990c04047abd16288ffa7a2 (TASK-6170ebf2; proof: evaluation-outputs/mask01).
-MASK-02 #281 Display implemented in TASK-cfee41bb (candidate; focused proof: evaluation-outputs/mask02; final validation in its journal). MASK-03–05 remain planned. Product code follows AEGIS, one work package per task.
+MASK-02 #281 Display committed in cb8f0bcd15d9895c51d5d222ceb9b33f780daba8 (TASK-cfee41bb; proof: evaluation-outputs/mask02). MASK-03 #282 Program runs committed in be4e3120d747c5b2e2c78ea617417c7166605e4d (TASK-bea71615; proof: evaluation-outputs/mask03). MASK-04 #283 is the TASK-4912fc24 candidate (proof: evaluation-outputs/mask04). MASK-05 remains planned. Product code follows AEGIS, one work package per task.
 
 ## Today (2026-11-17)
 
-Stored secrets (provider keys, plugin credentials such as MQTT, Wokwi or parts-supplier keys) are always masked by
-`credentials.scrub` (`core/src/llm/scrub.ts`). MASK-01 stores optional strict app booleans and workbench
-choices and supplies a live-settings resolver; Display consumers follow the resolver; remaining consumers scrub unconditionally until MASK-03–04:
+Stored secrets are registered with the unconditional credential scrubber. MASK-01 stores strict optional
+app booleans and workbench choices and supplies the live resolver; all four consumer areas now follow
+that resolver. Provider failures, connection tests, logging, credential admission and child-environment
+filtering retain their unconditional protection. MASK-05 adds the settings controls.
 
 | Area | Where | What is masked |
 |---|---|---|
 | Display | `desktop/src/main/index.ts` | Files/Find and document list/search retain all results with separate opaque identities; names and viewer text (`docs.read`) follow live Display |
-| Program runs | `desktop/src/main/run-presentation.ts`, `terminals.ts` | run args, commands/canonical folders, errors, tail/full logs, program statuses and user terminal snapshots follow live runs (default off); agent terminal reads remain independently masked |
-| Agent and model | `core/src/sessions/service.ts`, `core/src/llm/stream-scrub.ts` | tool results sent to the model, the model's streamed text, session search |
+| Program runs | `desktop/src/main/run-presentation.ts`, `terminals.ts` | run args, commands/canonical folders, errors, tail/full logs, program statuses and user terminal snapshots follow live runs (default off); agent terminal reads follow the independent agent choice with consent rechecks |
+| Agent and model | `core/src/sessions/service.ts`, `core/src/llm/stream-scrub.ts` | tool results sent to the model, the model's streamed text, session search and presentation |
 | Artifacts and exports | `core/src/artifacts/store.ts`, `desktop/src/main/artifacts.ts` | saved artifacts, exported artifacts and sessions |
+
+Previously saved redacted content cannot be recovered by disabling masking; a fresh read or recreation
+from original source is required. Raw execution arguments remain separate from presentation and saved
+session projections, so Agent and model does not dictate artifact bytes.
 
 Provider error messages and the connection test also mask; they protect the key of the provider that failed and
 stay always on.

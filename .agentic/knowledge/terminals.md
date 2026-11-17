@@ -26,8 +26,10 @@ main. Renderer owns the xterm view and controls through strict user IPC. Shells 
   snapshot deltas and reconstructs a bounded view when truncation or masking changes the prefix.
   Plain projection keeps incomplete VT sequences pending so partial CSI/OSC/DCS cannot bypass
   known-secret prefix holding between callbacks.
-- Agent recent output always uses the masked held-prefix projection independently of user masking;
-  raw host capture is never published directly through the reader. Finished user snapshots also
+- Agent recent output follows the live Agent and model choice independently of user runs masking.
+  Publication rechecks the leases, refreshes bounded recent output and masks the complete captured
+  window before taking the tail when on, preserving split-secret and partial VT prefix holding.
+  Off uses the bounded clean OutputDecoder projection; raw authority stays in main. Finished user snapshots also
   resolve the live choice on every poll.
 - `terminal_read {terminalId?}` lists only shared terminals when omitted; an ID returns at most
   12000 recent plain characters. Consent starts false and applies to one terminal in its workbench.

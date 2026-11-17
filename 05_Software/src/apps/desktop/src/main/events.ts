@@ -124,7 +124,11 @@ export function rendererSessionSnapshot(
 }
 
 /** Preserve schema fields/identities; redact user text and arbitrary extension keys/values. */
-export function sanitizeEvent(envelope: EventEnvelope, scrub: (text: string) => string): EventEnvelope {
+export function sanitizeEvent(
+  envelope: EventEnvelope,
+  scrub: (text: string) => string,
+  protect = scrub,
+): EventEnvelope {
   const extra = (value: unknown): unknown => scrubExtra(value, scrub);
   const warnings = (items: WorkbenchWarning[]) =>
     items.map(({ code, path }) => ({ code, ...(path === undefined ? {} : { path: scrub(path) }) }));
@@ -192,6 +196,12 @@ export function sanitizeEvent(envelope: EventEnvelope, scrub: (text: string) => 
   if (envelope.topic === "session") {
     const event = envelope.event;
     const result = { ...event };
+    if (event.type === "error")
+      Reflect.set(
+        result,
+        "messageKey",
+        protect(event.messageKey) === event.messageKey ? event.messageKey : `errors.${event.code}`,
+      );
     for (const key of ["text", "title", "summary", "preview", "diff", "path", "name"]) {
       if (key in result && typeof Reflect.get(result, key) === "string")
         Reflect.set(result, key, scrub(Reflect.get(result, key)));

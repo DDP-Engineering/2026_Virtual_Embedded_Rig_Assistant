@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-FUNC-8bcce7ee"
+title = "Artifact content follows live exports masking"
+status = "active"
+requirement = "When a session artifact is saved, VERA shall persist its content and description using the live Artifacts and exports choice while retaining credential-bearing name refusal and managed-storage validation."
+verification = "Save content with exports on/off independently of agent; verify actual bytes, metadata/hash, queued policy changes and read back with agent on."
+affected_paths = ["05_Software/src/libraries/core/src/artifacts/store.ts", "05_Software/src/libraries/core/src/sessions/service.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/sessions/masking.test.ts", "05_Software/src/libraries/core/src/sessions/artifacts.test.ts"]
+created = 2026-11-17
+updated = 2026-11-17

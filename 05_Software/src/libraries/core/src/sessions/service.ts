@@ -5,6 +5,7 @@ import {
   type ChangeSummary,
   changeIdSchema,
   isLiveSessionEvent,
+  type MaskingArea,
   type PermissionMode,
   type ProgramApproval,
   parseRef,
@@ -55,6 +56,7 @@ import type { WebDownloads } from "../web/downloads.js";
 import type { WebProvider } from "../web/provider.js";
 import { WriteQueue } from "../workbench/write-queue.js";
 import { SessionHub, type SessionListener } from "./hub.js";
+import { MaskingContextPolicy, maskMessages, maskModelStream, maskValue } from "./masking.js";
 import { timedGateway } from "./timed-gateway.js";
 
 export interface SessionHost {
@@ -91,6 +93,8 @@ export interface SessionHost {
   /** Host ownership is checked before each accepted mutation and event persistence. */
   assertWritable?: () => void;
   scrub?: (text: string) => string;
+  masking?: (area: MaskingArea) => boolean;
+  knownSecrets?: () => readonly string[];
   disabledTools?: readonly string[];
   writeQueue?: WriteQueue;
   /** Plugin programs of the workbench; without it the program tools are not offered. */
@@ -187,6 +191,10 @@ export class SessionService {
       this.recover();
     }
   }
+  /** Content policy only; authorization continues to use the unconditional host scrubber. */
+  maskContent(area: MaskingArea, text: string): string {
+    return this.host.masking?.(area) === false ? text : (this.host.scrub?.(text) ?? text);
+  }
   private now(): string {
     return this.host.clock.now().toISOString();
   }
@@ -239,7 +247,7 @@ export class SessionService {
     const parsed = sessionSearchQuerySchema.safeParse(query);
     if (!parsed.success) throw veraError("INVALID");
     const needle = parsed.data.toLowerCase();
-    const matches = (text: string) => (this.host.scrub?.(text) ?? text).toLowerCase().includes(needle);
+    const matches = (text: string) => this.maskContent("agent", text).toLowerCase().includes(needle);
     const events = new EventsRepository(this.host.db);
     return this.list().filter(
       (session) => matches(session.title) || events.messageTexts(session.id).some(matches),
@@ -607,7 +615,7 @@ export class SessionService {
   private sync(id: string, transcript: Message[]): void {
     const stored = this.messages.list(id);
     for (let i = stored.length; i < transcript.length; i++) {
-      const message = transcript[i];
+      const message = maskMessages(transcript.slice(i, i + 1), (text) => this.maskContent("agent", text))[0];
       if (!message) continue;
       this.messages.create({
         session_id: id,
@@ -751,6 +759,7 @@ export class SessionService {
         const value = this.hub.record(id, event);
         return () => this.hub.publish(id, value);
       },
+      scrubContent: (text) => this.maskContent("exports", text),
       ...(this.host.scrub ? { scrub: this.host.scrub } : {}),
     };
     const registry = this.host.registry ?? new ToolRegistry();
@@ -773,6 +782,10 @@ export class SessionService {
       .filter((tool) => tool.name !== "run_command" || !!this.host.programs?.shell)
       .map((tool) => ({
         ...tool,
+        publish: (args: unknown, output: string) => {
+          const authorized = tool.publish?.(args, output) ?? output;
+          return this.maskContent("agent", authorized);
+        },
         execute: async (args: unknown, signal: AbortSignal) => {
           await durable();
           if (tool.class === "program") {
@@ -783,7 +796,7 @@ export class SessionService {
               // The run consumes its approval itself, with the request prepared again right before it starts.
               if (run.request.tool === "plugin_install") this.approvals.consume(run.request);
               const { text } = capToolResult(await run.apply(signal));
-              return this.host.scrub?.(text) ?? text;
+              return text;
             } catch (error) {
               throw Error(
                 this.host.scrub?.(error instanceof Error ? error.message : "Tool failed.") ??
@@ -800,7 +813,7 @@ export class SessionService {
               if (!permissions) this.approvals.consume(change.request);
               const result = await change.apply(signal);
               const text = JSON.stringify(result);
-              return this.host.scrub?.(text) ?? text;
+              return text;
             } catch (error) {
               throw Error(
                 this.host.scrub?.(error instanceof Error ? error.message : "Tool failed.") ??
@@ -819,7 +832,7 @@ export class SessionService {
           this.writable();
           try {
             const result = await tool.execute(args, signal);
-            return this.host.scrub?.(result) ?? result;
+            return result;
           } catch (error) {
             throw Error(
               this.host.scrub?.(error instanceof Error ? error.message : "Tool failed.") ??
@@ -829,6 +842,9 @@ export class SessionService {
         },
       }));
     const writeToolNames = new Set(tools.filter((tool) => tool.class === "write").map((tool) => tool.name));
+    const contextPolicy = new MaskingContextPolicy(this.host.contextPolicy ?? new ContextPolicy(), (text) =>
+      this.maskContent("agent", text),
+    );
     const gateway = timedGateway(this.host.gateway, this.host.noOutputTimeoutMs ?? 300000);
     const self = this;
     const runtimeHost: RuntimeHost = {
@@ -845,16 +861,33 @@ export class SessionService {
         stream: async function* (request) {
           await durable();
           request.signal.throwIfAborted();
-          yield* gateway.stream({
-            ...request,
-            sessionId: id,
-            reasoning: self.requestReasoning(id, request.model) ?? null,
-            tools: request.tools.filter(
-              (tool) =>
-                self.row(id).permission_mode !== "read-only" ||
-                (!writeToolNames.has(tool.name) && tool.name !== "run_command"),
-            ),
-          });
+          const tools = request.tools.filter(
+            (tool) =>
+              self.row(id).permission_mode !== "read-only" ||
+              (!writeToolNames.has(tool.name) && tool.name !== "run_command"),
+          );
+          // Settings may change while durable events are published after runtime budgeting.
+          const view = contextPolicy.prepare(
+            { system: request.system, tools, messages: request.messages },
+            gateway.capabilities(request.model, request.maxOutputTokens),
+          );
+          if (!view.fits) {
+            yield { type: "error", error: veraError("CONTEXT_LIMIT"), aborted: false };
+            return;
+          }
+          yield* maskModelStream(
+            gateway.stream({
+              ...request,
+              sessionId: id,
+              maskOutput: () => self.host.masking?.("agent") !== false,
+              messages: view.messages,
+              reasoning: self.requestReasoning(id, request.model) ?? null,
+              tools,
+            }),
+            () => self.host.masking?.("agent") !== false,
+            self.host.knownSecrets ?? (() => []),
+            (text) => self.host.scrub?.(text) ?? text,
+          );
         },
       },
       now: () => this.host.clock.now().getTime(),
@@ -963,7 +996,7 @@ export class SessionService {
       model,
       tools,
       messages: this.transcript(id),
-      contextPolicy: this.host.contextPolicy ?? new ContextPolicy(),
+      contextPolicy,
       contextCompactor,
       maxToolCallsPerTurn: this.host.maxToolCallsPerTurn ?? 50,
     });
@@ -1046,6 +1079,8 @@ export class SessionService {
           (ref) => this.knowledge.validDocumentRef(ref),
         ),
       };
+    } else if (event.type === "tool.started") {
+      publicEvent = { ...event, args: maskValue(event.args, (text) => this.maskContent("agent", text)) };
     } else if (event.type === "tool.done") {
       publicEvent = {
         type: "tool.done",
@@ -1072,7 +1107,14 @@ export class SessionService {
           .prepare(
             "INSERT INTO tool_calls(id,session_id,name,args_json,status,started_at) VALUES (?,?,?,?,?,?)",
           )
-          .run(event.callId, id, event.name, JSON.stringify(event.args), "pending", this.now());
+          .run(
+            event.callId,
+            id,
+            event.name,
+            JSON.stringify(maskValue(event.args, (text) => this.maskContent("agent", text))),
+            "pending",
+            this.now(),
+          );
       if (event.type === "tool.done")
         this.host.db
           .prepare("UPDATE tool_calls SET result_json=?,status=?,ended_at=? WHERE id=? AND session_id=?")

@@ -17,6 +17,10 @@ export function mapProviderError(
     const params = structured.data.params;
     return {
       ...structured.data,
+      messageKey:
+        scrub(structured.data.messageKey) === structured.data.messageKey
+          ? structured.data.messageKey
+          : `errors.${structured.data.code}`,
       ...(params
         ? {
             params: Object.fromEntries(

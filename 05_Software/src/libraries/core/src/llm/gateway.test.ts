@@ -67,10 +67,12 @@ async function events(
   output?: number,
   reasoning?: string,
   model = "custom:local/org/model",
+  maskOutput?: () => boolean,
 ) {
   const results: LlmEvent[] = [];
   for await (const event of gateway.stream({
     model,
+    ...(maskOutput ? { maskOutput } : {}),
     ...(reasoning !== undefined ? { reasoning } : {}),
     system: "system",
     messages: [{ role: "user", content: "hi", timestamp: 0 }],
@@ -557,4 +559,57 @@ it("isolates cancellation of callers sharing ChatGPT catalog discovery", async (
   expect(first?.status).toBe("rejected");
   expect(second?.status).toBe("fulfilled");
   expect(loads).toBe(1);
+});
+
+for (const agent of [true, false])
+  for (const exports of [true, false])
+    for (const display of [true, false])
+      for (const runs of [true, false]) {
+        it(`protects provider errors and connection tests with agent=${agent}, exports=${exports}, display=${display}, runs=${runs}`, async () => {
+          const { url } = await endpoint((req, res) => {
+            if (req.url?.endsWith("/models"))
+              return void res
+                .writeHead(200, { "content-type": "application/json" })
+                .end(JSON.stringify({ data: [{ id: "org/model" }] }));
+            res
+              .writeHead(500, { "content-type": "application/json" })
+              .end(JSON.stringify({ error: { message: secret } }));
+          });
+          const { gateway, settings } = setup(url);
+          settings.privacy = { mask: { agent, exports, display, runs } };
+          const output = await events(gateway, undefined, undefined, "custom:local/org/model", () => agent);
+          expect(output.at(-1)?.type).toBe("error");
+          expect(JSON.stringify(output)).not.toContain(secret);
+          const connection = await testConnection(
+            gateway,
+            "custom:local",
+            "org/model",
+            undefined,
+            () => 0,
+            (s) => scrub(s, [secret]),
+          );
+          expect(connection.steps.some((step) => step.status === "fail")).toBe(true);
+          expect(JSON.stringify(connection)).not.toContain(secret);
+        });
+      }
+
+it.each([true, false])("streams split model text using live request output masking=%s", async (enabled) => {
+  const { url } = await endpoint((_req, res) => {
+    res.writeHead(200, { "content-type": "text/event-stream" });
+    for (const content of [secret.slice(0, 10), secret.slice(10), " suffix"])
+      res.write(
+        `data: ${JSON.stringify({ id: "mask", choices: [{ index: 0, delta: { content }, finish_reason: null }] })}\n\n`,
+      );
+    res.write(
+      `data: ${JSON.stringify({ id: "mask", choices: [{ index: 0, delta: {}, finish_reason: "stop" }] })}\n\n`,
+    );
+    res.end("data: [DONE]\n\n");
+  });
+  const out = await events(setup(url).gateway, undefined, undefined, "custom:local/org/model", () => enabled);
+  const text = out
+    .filter((event) => event.type === "text")
+    .map((event) => (event.type === "text" ? event.delta : ""))
+    .join("");
+  expect(text).toContain(enabled ? "[REDACTED]" : secret);
+  expect(JSON.stringify(out.at(-1))).toContain(enabled ? "[REDACTED]" : secret);
 });

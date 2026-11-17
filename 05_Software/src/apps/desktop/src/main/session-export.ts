@@ -14,18 +14,20 @@ export async function exportSession(
     choose(name: string): Promise<string | null>;
     write(path: string, content: string): Promise<void>;
     scrub(text: string): string;
+    masking?(): boolean;
   },
 ): Promise<{ exported: boolean }> {
   service.get(id);
   const path = await options.choose(`${id}.${format}`);
   if (path === null) return { exported: false };
   const target = exportDestination(options.root, path);
+  const scrub = (text: string) => (options.masking?.() === false ? text : options.scrub(text));
   const source = service.exportSession(id);
   const data = sessionExportSchema.parse({
     ...source,
-    session: sanitizeSessionSummary(source.session, options.scrub),
+    session: sanitizeSessionSummary(source.session, scrub),
     events: source.events.map((row) => {
-      const envelope = sanitizeEvent({ topic: "session", id, event: row.event }, options.scrub);
+      const envelope = sanitizeEvent({ topic: "session", id, event: row.event }, scrub, options.scrub);
       return { ...row, event: envelope.event };
     }),
   });
@@ -36,7 +38,7 @@ export async function exportSession(
           data,
           service.listChanges(id).map((change) => {
             const detail = service.getChange(change.changeId);
-            return { ...detail, path: options.scrub(detail.path), diff: options.scrub(detail.diff) };
+            return { ...detail, path: scrub(detail.path), diff: scrub(detail.diff) };
           }),
         );
   await options.write(target, content);

@@ -2,6 +2,7 @@ import {
   buildSystemPrompt,
   type Clock,
   type ConfiguredPartsProvider,
+  createMaskingResolver,
   type EmbeddingPort,
   electricalModelPlugin,
   type HelpLibrary,
@@ -268,6 +269,12 @@ export class SessionsHost {
             }).text,
           assertWritable: () => options.workbench.assertSessionWritable(),
           scrub: (text) => options.credentials.scrub(text),
+          knownSecrets: () => options.credentials.knownSecrets(),
+          masking: (area) => {
+            const current = options.workbench.getSnapshot();
+            if (current.config.id !== workbenchId) throw veraError("CONFLICT");
+            return createMaskingResolver(() => options.settings.get().settings)(current.config, area);
+          },
         });
         this.db = db;
       }
@@ -306,7 +313,7 @@ export class SessionsHost {
         return current.list();
       }, false);
     }
-    return rows.map((row) => ({ ...row, title: this.options.credentials.scrub(row.title) }));
+    return rows.map((row) => ({ ...row, title: this.service?.maskContent("agent", row.title) ?? row.title }));
   }
   /** Recomputes the program prompt entries on the next session call: a plugin was installed, removed, toggled or provisioned. */
   invalidatePrograms(): void {

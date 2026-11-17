@@ -55,6 +55,7 @@ export async function exportArtifact(
     choose(name: string): Promise<string | null>;
     write(path: string, content: string): Promise<void>;
     scrub(text: string): string;
+    masking?(): boolean;
   },
 ): Promise<{ exported: boolean }> {
   const name = service.verifiedArtifact(id).artifact.name;
@@ -62,6 +63,9 @@ export async function exportArtifact(
   const path = await options.choose(name);
   if (path === null) return { exported: false };
   const { artifact } = service.verifiedArtifact(id);
-  await options.write(exportDestination(options.root, path), options.scrub(artifact.content));
+  await options.write(
+    exportDestination(options.root, path),
+    options.masking?.() === false ? artifact.content : options.scrub(artifact.content),
+  );
   return { exported: true };
 }

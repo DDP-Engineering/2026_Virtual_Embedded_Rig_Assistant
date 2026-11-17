@@ -103,3 +103,28 @@ it("rejects relative and managed runtime destinations including junctions", asyn
   }
   expect(write).not.toHaveBeenCalled();
 });
+
+it.each(["json", "md"] as const)(
+  "resolves exports after the picker independently of retained agent history in %s",
+  async (format) => {
+    const root = await mkdtemp(join(tmpdir(), "vera-mask04-export-"));
+    roots.push(root);
+    await mkdir(join(root, ".vera"));
+    let mask = true;
+    const write = vi.fn(async (_path: string, _content: string) => {});
+    const scrub = (text: string) => text.replaceAll("secret", "[REDACTED]");
+    for (const choice of [false, true]) {
+      await exportSession(service, id, format, {
+        root,
+        write,
+        scrub,
+        masking: () => mask,
+        choose: async () => {
+          mask = choice;
+          return join(root, `out.${format}`);
+        },
+      });
+      expect(write.mock.calls.at(-1)?.[1].includes("secret")).toBe(!choice);
+    }
+  },
+);

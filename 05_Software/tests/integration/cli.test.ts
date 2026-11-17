@@ -1474,3 +1474,63 @@ it("CLI Bypass analyzes sibling inputs with canonical paths and no outside index
   expect(result.stdout.replaceAll("\\\\", "/")).toContain(sibling.replaceAll("\\", "/"));
   expect((await readdir(sibling)).sort()).toEqual(["capture.log", "register.json"]);
 });
+
+it.each([true, false])(
+  "CLI masking honors agent=%s for a credential file read and exports independently",
+  async (agent) => {
+    const { workbench, dir } = await fixture();
+    const key = "fictional-mask04-cli-credential";
+    const config = join(workbench, ".vera/workbench.yaml");
+    await writeFile(
+      config,
+      `${await readFile(config, "utf8")}privacy:\n  mask:\n    agent: ${agent ? "on" : "off"}\n    exports: ${agent ? "off" : "on"}\n`,
+    );
+    await writeFile(join(workbench, "private.txt"), key);
+    const script = join(dir, "mask04.jsonl");
+    await writeFile(
+      script,
+      [
+        { toolCalls: [{ name: "read", args: { path: "private.txt" } }] },
+        { toolCalls: [{ name: "artifact_save", args: { name: "report.txt", content: key } }] },
+        { text: `Result ${key}` },
+      ]
+        .map((step) => JSON.stringify(step))
+        .join("\n"),
+    );
+    const result = await launch(replay(workbench, script), { OPENAI_API_KEY: key }).result;
+    expect(result.code).toBe(0);
+    const records = events(result.stdout);
+    const read = records.find((row) => row.event.type === "tool.done");
+    expect(read.event.ok).toBe(true);
+    expect(read.event.summary).toContain(agent ? "[REDACTED]" : key);
+    expect(records.filter((row) => row.event.type === "message.done").at(-1).event.text).toContain(
+      agent ? "[REDACTED]" : key,
+    );
+    expect(result.stderr).not.toContain(key);
+    const saved = records.find((row) => row.event.type === "artifact.saved");
+    expect(await readFile(join(workbench, ".vera/artifacts", saved.sessionId, "report.txt"), "utf8")).toBe(
+      agent ? key : "[REDACTED]",
+    );
+  },
+);
+
+it.each([true, false])(
+  "CLI model references honor agent=%s for a later registered MQTT credential",
+  async (agent) => {
+    const { workbench, dir } = await fixture();
+    const config = join(workbench, ".vera/workbench.yaml");
+    await writeFile(
+      config,
+      `${await readFile(config, "utf8")}privacy:\n  mask:\n    agent: ${agent ? "on" : "off"}\n`,
+    );
+    const script = join(dir, "model-reference.jsonl");
+    await writeFile(script, JSON.stringify({ text: "Ready" }));
+    const result = await launch(replay(workbench, script), { VERA_MQTT_PASSWORD_FIXTURE: "script" }).result;
+    expect(result.code).toBe(0);
+    const refs = events(result.stdout)
+      .filter((row) => row.event.type === "session.updated" && row.event.modelRef !== undefined)
+      .map((row) => row.event.modelRef);
+    expect(refs).toContain(agent ? "replay/[REDACTED]" : "replay/script");
+    expect(result.stderr).not.toContain("replay/script");
+  },
+);

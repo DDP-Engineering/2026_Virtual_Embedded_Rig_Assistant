@@ -7,6 +7,7 @@ import {
   ConfiguredWebProvider,
   createCommandShellHost,
   createDownloadPdfExtractor,
+  createMaskingResolver,
   createPiAiGateway,
   type LlmGateway,
   leaseRoot,
@@ -39,7 +40,7 @@ import { cliPartsProvider, partsFromEnvironment } from "./parts-env.js";
 import { cliProgramCredentials, pluginCredentialsFromEnvironment } from "./plugin-credentials-env.js";
 import { createCliProcessHost } from "./process-host.js";
 import { createCliProvisioner } from "./provisioning.js";
-import { scrubReplayOutput } from "./replay-output.js";
+import { sessionOutput } from "./session-output.js";
 import { createCliWorkerPool } from "./worker-pool.js";
 
 export async function runTurn(
@@ -113,18 +114,16 @@ export async function runTurn(
       resources.push(replayLocation.close);
       const dir = join(replayLocation.paths.userData, "scripts");
       await mkdir(dir);
-      // Decode all JSON escapes before scrubbing; core retains validation and replay semantics.
+      // SessionService projects model output after replay interpolation.
       const script = (await readFile(options.script ?? "", "utf8"))
         .split(/\r?\n/)
         .filter((line) => line.trim() && !line.trim().startsWith("//"))
-        .map((line) => logger.scrub(JSON.stringify(JSON.parse(line))))
+        .map((line) => JSON.stringify(JSON.parse(line)))
         .join("\n");
       await writeFile(join(dir, "script.jsonl"), script, {
         mode: 0o600,
       });
-      gateway = scrubReplayOutput(new ReplayGateway({ dir, now: () => nodeClock.now().getTime() }), (text) =>
-        logger.scrub(text),
-      );
+      gateway = new ReplayGateway({ dir, now: () => nodeClock.now().getTime() });
       await gateway.models("replay", signal);
       model = "replay/script";
     } else {
@@ -254,6 +253,9 @@ export async function runTurn(
       model: () => model,
       assertWritable: () => workbench.assertSessionWritable(),
       scrub: (text) => logger.scrub(text),
+      knownSecrets: () => logger.knownSecrets(),
+      masking: (area) =>
+        createMaskingResolver(() => settings.get().settings)(workbench.getSnapshot().config, area),
       prompt: (mode) =>
         buildSystemPrompt({
           workbench: snapshot.config,
@@ -278,10 +280,18 @@ export async function runTurn(
     const since = options.session ? service.get(id).seq : 0;
     if (options.session) service.setModel(id, model);
     off = service.subscribe(id, since, (seq, event) => {
-      const record = { sessionId: id, ...(seq === undefined ? {} : { seq }), event };
+      const record = {
+        sessionId: id,
+        ...(seq === undefined ? {} : { seq }),
+        event: sessionOutput(
+          event,
+          (text) => service.maskContent("agent", text),
+          (text) => logger.scrub(text),
+        ),
+      };
       const line =
         options.format === "jsonl" ? JSON.stringify(record) : `${id} ${event.type} ${JSON.stringify(record)}`;
-      process.stdout.write(`${logger.scrub(line)}\n`);
+      process.stdout.write(`${line}\n`);
       if (event.type === "approval.requested")
         void Promise.resolve()
           .then(async () => {

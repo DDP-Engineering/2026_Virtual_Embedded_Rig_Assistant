@@ -7,10 +7,10 @@ title = "Terminal environment and output masking"
 status = "active"
 
 requirement = """
-When terminal output is requested, VERA shall project user snapshots using the live Program runs choice and consented agent reads using unconditional credential masking with split-secret and partial VT prefix holding, independently of the user choice.
+When terminal output is requested, VERA shall project user snapshots using the live Program runs choice and consented agent reads using the live Agent and model choice with split-secret and partial VT prefix holding when agent masking is on, independently of the user choice.
 """
 
-verification = "Toggle the live runs choice on running and finished user snapshots; assert off exposes and on redacts while consented recent reads always redact split/VT secrets and retain bounded tails and publication revocation. Reuse unchanged filtered shell-environment proof."
+verification = "Toggle the live runs choice on running and finished user snapshots; assert off exposes and on redacts while consented recent reads follow agent independently, redact split/VT secrets when on and retain bounded tails and publication revocation. Reuse unchanged filtered shell-environment proof."
 
 affected_paths = ["05_Software/src/apps/desktop/src/main/terminals.ts", "05_Software/src/apps/desktop/src/main/index.ts"]
 

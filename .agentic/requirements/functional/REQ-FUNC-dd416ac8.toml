@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-FUNC-dd416ac8"
+title = "Live agent masking at session disclosure boundaries"
+status = "active"
+requirement = "When session tool output is published to a model, VERA shall apply the live Agent and model masking choice independently of Display, Program runs and exports, retaining tool publication authority checks."
+verification = "Read a real credential-bearing file through SessionService and capture the fake provider request for on/off, inheritance, overrides, live transitions and isolated workbenches."
+affected_paths = ["05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/libraries/core/src/sessions/masking.ts", "05_Software/src/apps/desktop/src/main/sessions.ts", "05_Software/src/apps/cli/src/run.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/sessions/masking.test.ts", "05_Software/tests/integration/cli.test.ts"]
+created = 2026-11-17
+updated = 2026-11-17

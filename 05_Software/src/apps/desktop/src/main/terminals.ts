@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { type CommandShellHost, OutputDecoder, type TerminalReader } from "@vera/core";
+import { type CommandShellHost, capToolResult, OutputDecoder, type TerminalReader } from "@vera/core";
 import {
   type TerminalSnapshot,
   type TerminalSummary,
@@ -63,6 +63,7 @@ export class TerminalService {
       pty: PtyFactory;
       scrub(text: string): string;
       maskUserOutput(): boolean;
+      maskAgentOutput?(): boolean;
       secrets(): readonly string[];
     },
   ) {}
@@ -141,7 +142,7 @@ export class TerminalService {
       this.creating--;
     }
   }
-  private publicOutput(entry: Entry): string {
+  private publicOutput(entry: Pick<Entry, "output">): string {
     const text = entry.output;
     // A secret split over PTY callbacks must not reveal its leading fragment on an interim poll.
     const trim = (value: string) => {
@@ -222,7 +223,7 @@ export class TerminalService {
         const data = {
           leases: entries.map((entry) => ({ id: entry.id, grant: entry.grant })),
           terminals: entries.map((entry) => ({ id: entry.id, number: entry.number, running: entry.running })),
-          ...(id ? { text: this.recent(entries[0] as Entry) } : {}),
+          ...(id ? { text: this.recent(entries[0] as Entry, false) } : {}),
         };
         return data;
       },
@@ -233,16 +234,19 @@ export class TerminalService {
           const entry = this.entry(owner, lease.id);
           if (!entry.shared || entry.grant !== lease.grant) throw Error("Terminal read consent was revoked.");
         }
-        return JSON.stringify({
+        const entries = data.leases.map((lease) => this.entry(owner, lease.id));
+        return capToolResult({
           ...(data.truncated ? { truncated: true } : {}),
-          terminals: data.terminals,
-          ...(data.text === undefined ? {} : { text: this.host.scrub(data.text) }),
-        });
+          terminals: entries.map((entry) => ({ id: entry.id, number: entry.number, running: entry.running })),
+          ...(data.text === undefined
+            ? {}
+            : { text: this.recent(entries[0] as Entry, this.host.maskAgentOutput?.() !== false) }),
+        }).text;
       },
     };
   }
-  private recent(entry: Entry): string {
-    const text = this.host.scrub(this.strip(this.publicOutput(entry)));
+  private recent(entry: Entry, mask: boolean): string {
+    const text = this.strip(mask ? this.publicOutput(entry) : entry.output);
     if (text.length <= 12000) return text;
     const tail = text.slice(-12000);
     const first = tail.charCodeAt(0);

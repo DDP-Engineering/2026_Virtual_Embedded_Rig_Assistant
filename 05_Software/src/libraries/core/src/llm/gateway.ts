@@ -35,6 +35,8 @@ export interface LlmRequest {
   maxOutputTokens?: number;
   sessionId?: string;
   reasoning?: string | null;
+  /** Live session output policy; connection tests omit it and always mask. */
+  maskOutput?: () => boolean;
 }
 export type LlmEvent =
   | { type: "text"; delta: string; sourceDeltas?: number }

@@ -16,7 +16,7 @@ Core ArtifactStore owns bounded UTF8 files in the application-managed .vera/arti
 - Shared formatArtifactRef/parseArtifactRef/validArtifactName and strict ArtifactSummary/Content schemas have no host imports. Portable1..100 ASCII name characters exclude dot/dotdot, trailing dot and device stems;5MiB means5*1024*1024 UTF8 bytes.
 - SessionService listArtifacts/openArtifact/verifiedArtifact protect current row/service lifetime; deletion shares write admission and SQLite cascades metadata. Citation validity requires a successful issued tool ref and verified file in the citing session.
 - Main exportDestination(root,path) resolves existing ancestors and rejects runtime .vera destinations for both artifact and [session exports](session-export.md).
-- IPC artifacts.list {sessionId}->ArtifactSummary[]; open/reveal/export {artifactId}; open adds UTF8 content; reveal returns{}; export returns{exported:boolean}. SessionsHost holds its lifecycle throughout the dialog; native export refreshes source after selection and refuses managed runtime destinations, including canonical aliases. Cancellation writes nothing. Main refuses credential-bearing names and scrubs descriptions/content/export.
+- IPC artifacts.list {sessionId}->ArtifactSummary[]; open/reveal/export {artifactId}; open adds UTF8 content; reveal returns{}; export returns{exported:boolean}. SessionsHost holds its lifecycle throughout the dialog; native export refreshes source after selection and refuses managed runtime destinations, including canonical aliases. Cancellation writes nothing. Save and native export refuse credential-bearing names unconditionally. Content and descriptions follow the live exports choice at the write-queue boundary; bytes and SHA256 describe the projected file. Open/list/export use exports independently of agent. Native export resolves policy again after the picker. Saved redaction is irreversible.
 - ArtifactsTab lists sizes/times, selects safe Markdown or wrapped plain text and exports/reveals with localized errors. Query keys include workbench/session/event revision/artifact; overwrite revision refreshes content, navigation discards obsolete results and action errors. Browser mock implements corresponding channels and artifact-save scenario.
 
 ## Invariants
@@ -24,7 +24,7 @@ Core ArtifactStore owns bounded UTF8 files in the application-managed .vera/arti
 - Ordinary canonical managed ancestors/files, single-link files, current owned lock, lifetime and AbortSignal are checked before saves; general file tools retain .vera confinement.
 - Runtime sequences non-read classes; cross-session saves/deletion share one workbench queue. Session-mode read-only does not change application-managed artifact authority; workbench read-only does.
 - Artifacts use the current schema (schema_version 1). Filesystem and SQLite have separate crash boundaries: interrupted mismatches are refused by open/citations; explicit overwrite repairs the stored artifact. Untracked/name-alias files require another name or user reconciliation.
-- Core imports no Electron; renderer imports no host/core/Node. Sandboxing, exact vera://app origin, import rules and secret redaction stay authoritative.
+- Core imports no Electron; renderer imports no host/core/Node. Sandboxing, exact vera://app origin, import rules and credential admission stay authoritative; content redaction follows exports.
 
 ## Change map
 
@@ -41,21 +41,6 @@ Core ArtifactStore owns bounded UTF8 files in the application-managed .vera/arti
 The save-artifact replay fixture matches save prompts about artifacts or summaries. Other replay/auto prompts retain their matching scenarios, including pathological and normal grep.
 
 REQ-FUNC-bf809842 save/bounds;REQ-DATA-e3d4d5ba metadata/events;REQ-FUNC-997412a4 refs;REQ-FUNC-b3d37df6 reads;REQ-SEC-86010eb5 confinement/lifecycle;REQ-FUNC-5ece91b7 reveal;REQ-FUNC-8c00fdea export;REQ-UX-76d958ce viewer;REQ-REL-da260a86 refresh/isolation.
-
-## Architecture
-
-```mermaid
-flowchart LR
- SessionService --> ArtifactStore
- ToolRegistry --> artifactSaveTool --> ArtifactStore
- ArtifactStore --> WriteQueue
- ArtifactStore --> ManagedOrdinaryPaths
- ArtifactStore --> ArtifactsRepository --> SQLite
- ArtifactStore --> SessionHub
- Citations --> ArtifactStore
- ArtifactsTab --> IPC --> SessionsHost --> SessionService
- IPC --> NativeDialogShellExport
-```
 
 ## Files
 

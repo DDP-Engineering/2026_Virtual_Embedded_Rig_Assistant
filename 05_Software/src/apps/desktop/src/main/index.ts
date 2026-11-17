@@ -205,7 +205,11 @@ export const emitAppEvent = createEventEmitter(
           guard: publicGuard(envelope.event.guard, (text) => display.scrub(envelope.id, text)),
         },
       };
-    return sanitizeEvent(envelope, (text) => credentials.scrub(text));
+    return sanitizeEvent(
+      envelope,
+      (text) => (envelope.topic === "session" ? sessionContent(text) : credentials.scrub(text)),
+      (text) => credentials.scrub(text),
+    );
   },
 );
 const logger = createLogger(dataLocations.paths.logs, systemClock);
@@ -251,6 +255,9 @@ const workbench = new WorkbenchService(
   indexer.processor,
 );
 const maskingFor = createMaskingResolver(() => settings.get().settings);
+function sessionContent(text: string): string {
+  return maskingFor(workbench.getSnapshot().config, "agent") ? credentials.scrub(text) : text;
+}
 const display = new DisplayDocuments(
   workbench,
   maskingFor,
@@ -279,6 +286,7 @@ const terminals = new TerminalService({
   scrub: (text) => credentials.scrub(text),
   secrets: () => credentials.knownSecrets(),
   maskUserOutput: () => maskingFor(workbench.getSnapshot().config, "runs"),
+  maskAgentOutput: () => maskingFor(workbench.getSnapshot().config, "agent"),
 });
 /** Plugin program runs; session stop, workbench close and app exit kill their process trees. */
 const programs = new ProgramRunner({
@@ -938,17 +946,26 @@ ipcMain.handle(
       "providers.chatgpt.logout": () => chatgpt.logout(),
       "artifacts.list": ({ sessionId }) =>
         sessions.run((s) =>
-          s.listArtifacts(sessionId).map((a) => publicArtifact(a, (text) => credentials.scrub(text))),
+          s
+            .listArtifacts(sessionId)
+            .map((a) =>
+              publicArtifact(a, (text) =>
+                maskingFor(workbench.getSnapshot().config, "exports") ? credentials.scrub(text) : text,
+              ),
+            ),
         ),
       "artifacts.open": ({ artifactId }) =>
         sessions.run(async (s) =>
-          publicArtifact(await s.openArtifact(artifactId), (text) => credentials.scrub(text)),
+          publicArtifact(await s.openArtifact(artifactId), (text) =>
+            maskingFor(workbench.getSnapshot().config, "exports") ? credentials.scrub(text) : text,
+          ),
         ),
       "artifacts.reveal": ({ artifactId }) =>
         sessions.run((s) => revealArtifact(s, artifactId, (path) => shell.showItemInFolder(path))),
       "artifacts.export": ({ artifactId }) =>
         sessions.run((s) =>
           exportArtifact(s, artifactId, {
+            masking: () => maskingFor(workbench.getSnapshot().config, "exports"),
             root: workbench.getSnapshot().folder,
             choose: async (name) => {
               if (__VERA_TEST__ && process.env.VERA_TEST_DIALOG_PATH)
@@ -996,7 +1013,7 @@ ipcMain.handle(
           throw veraError("CONFLICT");
         return sessionOrder.list(
           current.config.id,
-          rows.map((item) => sanitizeSessionSummary(item, (text) => credentials.scrub(text))),
+          rows.map((item) => sanitizeSessionSummary(item, sessionContent)),
         );
       },
       "session.move": ({ workbenchId, sessionId, offset }) =>
@@ -1013,13 +1030,12 @@ ipcMain.handle(
       "session.search": ({ query, workbenchId }) =>
         sessions.run((s) => {
           if (workbenchId && workbench.getSnapshot().config.id !== workbenchId) throw veraError("CONFLICT");
-          return s
-            .search(query)
-            .map((item) => sanitizeSessionSummary(item, (text) => credentials.scrub(text)));
+          return s.search(query).map((item) => sanitizeSessionSummary(item, sessionContent));
         }),
       "session.export": ({ sessionId, format }) =>
         sessions.run((s) =>
           exportSession(s, sessionId, format, {
+            masking: () => maskingFor(workbench.getSnapshot().config, "exports"),
             root: workbench.getSnapshot().folder,
             choose: async (name) => {
               if (__VERA_TEST__ && process.env.VERA_TEST_DIALOG_PATH)
@@ -1039,9 +1055,7 @@ ipcMain.handle(
         sessions.run((s) => {
           if (workbenchId && workbench.getSnapshot().config.id !== workbenchId) throw veraError("CONFLICT");
           if (credentials.containsSecret(modelRef)) throw { code: "INVALID", messageKey: "errors.INVALID" };
-          return sanitizeSessionSummary(s.create(modelRef, mode, reuseEmpty), (text) =>
-            credentials.scrub(text),
-          );
+          return sanitizeSessionSummary(s.create(modelRef, mode, reuseEmpty), (text) => sessionContent(text));
         }),
       "session.revision": ({ sessionId }) => sessions.run((service) => service.revision(sessionId)),
       "session.get": ({ sessionId }) =>
@@ -1049,11 +1063,11 @@ ipcMain.handle(
           const value = s.get(sessionId);
           return {
             ...value,
-            snapshot: rendererSessionSnapshot(value.snapshot, (text) => credentials.scrub(text)),
+            snapshot: rendererSessionSnapshot(value.snapshot, sessionContent),
           };
         }),
       "session.item.detail": ({ sessionId, itemId, field }) =>
-        sessions.run((s) => ({ text: credentials.scrub(s.itemDetail(sessionId, itemId, field)) })),
+        sessions.run((s) => ({ text: sessionContent(s.itemDetail(sessionId, itemId, field)) })),
       "session.bookmark": ({ sessionId, messageId, bookmarked }) =>
         sessions.run((s) => {
           s.bookmark(sessionId, messageId, bookmarked);
@@ -1062,12 +1076,10 @@ ipcMain.handle(
       "session.rename": ({ sessionId, title }) =>
         sessions.run((s) => {
           if (credentials.containsSecret(title)) throw { code: "INVALID", messageKey: "errors.INVALID" };
-          return sanitizeSessionSummary(s.rename(sessionId, title), (text) => credentials.scrub(text));
+          return sanitizeSessionSummary(s.rename(sessionId, title), sessionContent);
         }),
       "session.archive.set": ({ sessionId, archived }) =>
-        sessions.run((s) =>
-          sanitizeSessionSummary(s.setArchived(sessionId, archived), (text) => credentials.scrub(text)),
-        ),
+        sessions.run((s) => sanitizeSessionSummary(s.setArchived(sessionId, archived), sessionContent)),
       "session.delete": ({ sessionId }) =>
         sessions.run(async (s) => {
           await s.delete(sessionId);
@@ -1112,12 +1124,10 @@ ipcMain.handle(
       "session.model.set": ({ sessionId, modelRef }) =>
         sessions.run((s) => {
           if (credentials.containsSecret(modelRef)) throw { code: "INVALID", messageKey: "errors.INVALID" };
-          return sanitizeSessionSummary(s.setModel(sessionId, modelRef), (text) => credentials.scrub(text));
+          return sanitizeSessionSummary(s.setModel(sessionId, modelRef), sessionContent);
         }),
       "session.mode.set": ({ sessionId, mode }) =>
-        sessions.run((s) =>
-          sanitizeSessionSummary(s.setMode(sessionId, mode), (text) => credentials.scrub(text)),
-        ),
+        sessions.run((s) => sanitizeSessionSummary(s.setMode(sessionId, mode), sessionContent)),
       "providers.discover": (request) => modelGateway.discover(request),
       "providers.models": ({ id }) => modelGateway.models(id),
       "providers.test": ({ id, model }) => modelGateway.test(id, model),
