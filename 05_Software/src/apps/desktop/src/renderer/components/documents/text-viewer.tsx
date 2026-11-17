@@ -1,13 +1,12 @@
 // REQ-UX-8a994f4b REQ-UX-58cf59b2 REQ-UX-fe9ec5c2 REQ-NFR-0fe89e49
 import type { ViewerContent } from "@vera/shared";
-import { type ReactNode, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { type ReactNode, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { FindBar } from "./find-bar.js";
+import { decodeTextLines, detectTextEncoding, type TextEncoding, textEncodings } from "./text-encoding.js";
+import { useTextRows } from "./use-text-rows.js";
 
-/** Lines kept rendered beyond the view on each side; the DOM stays bounded for any file size. */
-const OVERSCAN = 40;
-/** The line height when layout reports none (a hidden tab or a test DOM). */
-const FALLBACK_LINE = 20;
+const EMPTY_LINES: string[] = [];
 
 function marked(text: string, query: string): ReactNode {
   if (!query) return text || " ";
@@ -28,19 +27,19 @@ function marked(text: string, query: string): ReactNode {
 }
 
 /**
- * A text document as one continuous scroll of numbered lines (TASK-4c04273a). Lines do not wrap and
- * share one height, so the scroll height covers every line while only the lines near the view are
- * in the DOM. It opens at the kept first visible line, else at the cited lines; Ctrl+G and Ctrl+F
- * show a small field only when asked.
+ * Continuous numbered text with measured wrapped rows and a bounded DOM. Find and Go to line
+ * keep source-line identities while the layout changes.
  */
 export function TextViewer({
   content,
+  bytes,
   line: kept,
   onLine,
   findRequest,
   gotoRequest,
 }: {
   content: Extract<ViewerContent, { kind: "text" }>;
+  bytes?: Uint8Array | undefined;
   /** The first visible line the tab was left at. */
   line?: number | undefined;
   onLine?: ((line: number) => void) | undefined;
@@ -49,71 +48,41 @@ export function TextViewer({
   gotoRequest: number;
 }) {
   const { t } = useTranslation();
-  const body = useRef<HTMLElement>(null);
-  const probe = useRef<HTMLDivElement>(null);
-  const [lineHeight, setLineHeight] = useState(FALLBACK_LINE);
-  const [top, setTop] = useState(0);
-  const [height, setHeight] = useState(0);
+  const [encoding, setEncoding] = useState<TextEncoding>(() => (bytes ? detectTextEncoding(bytes) : "utf-8"));
+  const [replace, setReplace] = useState(false);
+  const decoded = useMemo(
+    () => (bytes ? decodeTextLines(bytes, encoding, replace) : content.lines),
+    [bytes, encoding, replace, content.lines],
+  );
+  const lines = decoded ?? EMPTY_LINES;
+  const [wrap, setWrap] = useState(false);
+  const { body, probe, offsets, visible, scrollTo } = useTextRows(
+    lines,
+    wrap,
+    {
+      line: kept ?? content.start,
+      align: kept ? "top" : "third",
+    },
+    onLine,
+  );
   const [bar, setBar] = useState<"find" | "goto">();
   const [query, setQuery] = useState("");
   const [goto, setGoto] = useState("");
   const [current, setCurrent] = useState(0);
-  const count = content.lines.length;
+  const count = lines.length;
   const needle = query.trim().toLowerCase();
   // Lowered once per document, so each keystroke of a search only scans.
-  const lower = useMemo(() => content.lines.map((text) => text.toLowerCase()), [content.lines]);
+  const lower = useMemo(() => lines.map((text) => text.toLowerCase()), [lines]);
   const matches = useMemo(
     () => (needle ? lower.flatMap((text, i) => (text.includes(needle) ? [i + 1] : [])) : []),
     [lower, needle],
   );
-  const report = useRef(onLine);
-  report.current = onLine;
-  const scrollTo = (line: number, align: "top" | "third" = "third") => {
-    const node = body.current;
-    if (!node) return;
-    const target = Math.max(1, Math.min(count, line));
-    const offset = align === "top" ? 0 : Math.floor((node.clientHeight || 0) / 3);
-    node.scrollTop = Math.max(0, (target - 1) * lineHeight - offset);
-    setTop(node.scrollTop);
-  };
-  // One line's real height, measured once the body is laid out.
-  useLayoutEffect(() => {
-    const measured = probe.current?.getBoundingClientRect().height;
-    if (measured && measured > 0) setLineHeight(measured);
-  }, []);
-  // The kept first line wins; otherwise the cited lines are brought into view.
-  // biome-ignore lint/correctness/useExhaustiveDependencies: placed once when the document mounts.
-  useLayoutEffect(() => {
-    if (kept) scrollTo(kept, "top");
-    else if (content.start > 1) scrollTo(content.start);
-  }, [lineHeight]);
-  useEffect(() => {
-    const node = body.current;
-    if (!node) return;
-    const sync = () => {
-      setTop(node.scrollTop);
-      setHeight(node.clientHeight);
-      report.current?.(Math.floor(node.scrollTop / lineHeight) + 1);
-    };
-    sync();
-    node.addEventListener("scroll", sync, { passive: true });
-    const resize = typeof ResizeObserver === "undefined" ? undefined : new ResizeObserver(sync);
-    resize?.observe(node);
-    return () => {
-      node.removeEventListener("scroll", sync);
-      resize?.disconnect();
-    };
-  }, [lineHeight]);
   useEffect(() => {
     if (findRequest) setBar("find");
   }, [findRequest]);
   useEffect(() => {
     if (gotoRequest) setBar("goto");
   }, [gotoRequest]);
-  const first = Math.max(1, Math.floor(top / lineHeight) + 1 - OVERSCAN);
-  const last = Math.min(count, Math.ceil((top + (height || lineHeight * 20)) / lineHeight) + OVERSCAN);
-  const visible: number[] = [];
-  for (let n = first; n <= last; n++) visible.push(n);
   const closeBar = () => {
     if (bar === "find") setQuery("");
     setBar(undefined);
@@ -121,6 +90,45 @@ export function TextViewer({
   };
   return (
     <div className="text-viewer">
+      <div className="document-toolbar">
+        <label>
+          <input
+            type="checkbox"
+            data-text-wrap
+            checked={wrap}
+            onChange={(event) => setWrap(event.target.checked)}
+          />
+          {t("documents.wordWrap")}
+        </label>
+        {bytes && (
+          <label>
+            {t("documents.encoding")}
+            <select
+              data-text-encoding
+              value={encoding}
+              onChange={(event) => {
+                setEncoding(event.target.value as TextEncoding);
+                setReplace(false);
+                setCurrent(0);
+              }}
+            >
+              {textEncodings.map((value) => (
+                <option key={value} value={value}>
+                  {value.toUpperCase()}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
+      </div>
+      {decoded === null && (
+        <div>
+          <p role="alert">{t("documents.textBinary")}</p>
+          <button type="button" data-show-as-text onClick={() => setReplace(true)}>
+            {t("documents.showAsText")}
+          </button>
+        </div>
+      )}
       {bar === "find" && (
         <FindBar
           label={t("documents.find")}
@@ -159,14 +167,20 @@ export function TextViewer({
           close={closeBar}
         />
       )}
-      {/* biome-ignore lint/a11y/noNoninteractiveTabindex: Named text region supports keyboard scrolling. */}
-      <section ref={body} className="document-body" aria-label={t("documents.viewer")} tabIndex={0}>
-        <div className="document-lines" style={{ height: count * lineHeight }}>
+      <section
+        ref={body}
+        hidden={decoded === null}
+        className="document-body"
+        aria-label={t("documents.viewer")}
+        // biome-ignore lint/a11y/noNoninteractiveTabindex: Named text region supports keyboard scrolling.
+        tabIndex={0}
+      >
+        <div className="document-lines" data-wrap={wrap} style={{ height: offsets[count] ?? 0 }}>
           <div ref={probe} className="document-line-probe" aria-hidden="true">
             0
           </div>
           {visible.map((line) => {
-            const text = content.lines[line - 1] ?? "";
+            const text = lines[line - 1] ?? "";
             const matched = matches.length > 0 && matches[current] === line;
             return (
               <div
@@ -176,7 +190,11 @@ export function TextViewer({
                 aria-current={
                   line >= content.start && line <= content.end && content.ref !== null ? "true" : undefined
                 }
-                style={{ top: (line - 1) * lineHeight, height: lineHeight }}
+                style={{
+                  top: offsets[line - 1],
+                  minHeight:
+                    offsets[line] === undefined ? undefined : (offsets[line] ?? 0) - (offsets[line - 1] ?? 0),
+                }}
               >
                 <span className="line-number">{line}</span>
                 <span>{marked(text, needle)}</span>

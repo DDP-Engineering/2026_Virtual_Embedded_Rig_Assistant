@@ -22,6 +22,10 @@ Native `e2e/privacy-settings.spec.ts` covers both privacy pages in en/ro/de/fr, 
 live inherited defaults, new-workbench choices, independent owners and process restart persistence.
 Original screenshots/receipts use `evaluation-outputs/mask05/native`.
 
+`e2e/text-encodings.spec.ts` verifies Latin-1/UTF16 BOM decoding, encoding changes,
+explicit replacement and measured distant wrapped Find/Go to line in browser and native Electron.
+Owned receipts/screenshots and original logs live under `evaluation-outputs/view02`.
+
 ## Inventarul testelor Vitest
 
 TERM-05 adds `packaging/terminal-runtime.test.ts` for native PTY architecture/helper closure,

@@ -50,6 +50,7 @@ import { mockDocument, mockDocuments } from "./documents.js";
 import { mockAppInfo } from "./fixtures.js";
 import { mockHelpList, mockHelpRead, mockPluginHelpLanguages, mockPluginHelpRead } from "./help.js";
 import { MockSessions } from "./sessions.js";
+import { mockTextBytes, mockTextPaths } from "./text-files.js";
 
 const openAiFixture = {
   id: "mock-openai",
@@ -78,6 +79,7 @@ export function createMockApi(
       ? []
       : [
           ...mockDocuments.map((doc) => doc.path),
+          ...mockTextPaths,
           "firmware/main.c",
           "firmware/drivers/i2c.c",
           "manuals/rm0440-reference.txt",
@@ -1035,12 +1037,23 @@ What this plugin does.
         };
         break;
       }
+      case "docs.readBytes": {
+        const { workbenchId, path, offset, length } = channels["docs.readBytes"].request.parse(input.data);
+        if (workbenchId !== current().snapshot.config.id) throw veraError("CONFLICT");
+        if (!treeFiles().includes(path)) throw veraError("NOT_FOUND");
+        const bytes = mockTextBytes(path);
+        const part = bytes.slice(offset, offset + length);
+        let binary = "";
+        for (const byte of part) binary += String.fromCharCode(byte);
+        value = { workbenchId, path, offset, size: bytes.length, data: btoa(binary) };
+        break;
+      }
       case "docs.stat": {
         const { workbenchId, path } = channels["docs.stat"].request.parse(input.data);
         if (workbenchId !== current().snapshot.config.id) throw veraError("CONFLICT");
         const modified = "2026-10-13T00:00:00.000Z";
         if (treeFiles().includes(path)) {
-          const size = mockDocuments.find((doc) => doc.path === path)?.bytes ?? 42;
+          const size = mockTextBytes(path).length;
           value = { workbenchId, properties: { path, type: "file", size, modified } };
         } else if (treeFiles().some((file) => file.startsWith(`${path}/`))) {
           value = { workbenchId, properties: { path, type: "folder", size: null, modified } };

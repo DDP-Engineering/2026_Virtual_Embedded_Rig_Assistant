@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-FUNC-c5def0c3"
+title = "Decode small file text using BOM or selected encoding"
+status = "active"
+requirement = "When an ordinary workbench file opens as text within the 5 MiB text limit, VERA shall decode its bytes with TextDecoder using UTF-8 or UTF-16 LE/BE BOM detection, otherwise UTF-8, and re-decode on selection of UTF-8, Windows-1252, ISO-8859-1, ISO-8859-2 or UTF-16 LE/BE."
+verification = "Unit and component tests decode BOM variants, Latin-1 and Latin-2, switch encoding without another host read and retain rendered/citation content; browser/native acceptance opens Latin-1 and UTF16 BOM files."
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/documents/", "05_Software/src/apps/desktop/src/renderer/mocks/mockApi.ts", "05_Software/src/apps/desktop/src/renderer/mocks/text-files.ts", "05_Software/src/apps/desktop/src/renderer/locales/", "05_Software/src/apps/desktop/src/renderer/styles.css"]
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/documents/text-encoding.test.ts", "05_Software/src/apps/desktop/src/renderer/components/documents/text-viewer.test.ts", "05_Software/src/apps/desktop/src/renderer/components/documents/read-text-file.test.ts", "05_Software/tests/e2e/text-encodings.spec.ts"]
+spec = ""
+priority = "normal"
+created = 2026-11-17
+updated = 2026-11-17

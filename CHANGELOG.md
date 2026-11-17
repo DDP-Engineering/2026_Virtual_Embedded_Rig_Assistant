@@ -27,6 +27,8 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ### Added
 
+- Text files offer BOM detection, encoding selection, explicit replacement decoding and measured word wrap navigation.
+
 - Bounded document byte reads prepare large-file and hex viewers with byte-preserving Display masking.
 
 - Data & privacy offers app masking defaults and per-workbench choices, with confirmation before agent masking is off.

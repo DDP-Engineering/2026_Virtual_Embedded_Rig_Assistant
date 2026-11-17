@@ -1317,8 +1317,7 @@ legend {
   font-family: monospace;
   font-size: var(--code-font-size, 14px);
 }
-/* Continuous text (TASK-4c04273a): every line has one height and does not wrap, so the scroll
-   height covers the whole file while only the lines in view are in the DOM. */
+/* Source lines remain virtual rows; wrapped heights are measured after layout. */
 .document-lines {
   position: relative;
   min-width: max-content;
@@ -1331,6 +1330,21 @@ legend {
   grid-template-columns: 4rem max-content;
   gap: 0.6rem;
   white-space: pre;
+}
+.document-lines[data-wrap="true"] {
+  min-width: 0;
+  width: 100%;
+}
+.document-lines[data-wrap="true"] > div[data-line] {
+  grid-template-columns: 4rem minmax(0, 1fr);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.document-lines > div[data-line] > span:last-child {
+  min-width: 0;
+}
+.text-viewer .document-body {
+  overflow-anchor: none;
 }
 .document-line-probe {
   position: absolute;
@@ -1385,7 +1399,7 @@ legend {
 .document-toolbar input[type="number"] {
   width: 4rem;
 }
-.document-toolbar input:not([type="number"]) {
+.document-toolbar input:not([type="number"], [type="checkbox"]) {
   width: 10rem;
   max-width: 100%;
 }

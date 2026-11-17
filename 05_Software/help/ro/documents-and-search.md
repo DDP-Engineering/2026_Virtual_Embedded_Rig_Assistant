@@ -52,6 +52,8 @@ Meniul unui fișier oferă **Deschide**, **Atașează ca context**, **Deschide �
 
 Documentele se deschid ca file lângă fila **Chat**, așa că conversația rămâne unde era. Poți comuta liber între ele.
 
+Fișierele text de până la 5 MiB oferă **Codificare** și **Încadrare pe rânduri**. Marcajele BOM UTF-8 și UTF-16 sunt detectate; fără BOM se folosește UTF-8. Alege Windows-1252, ISO-8859-1, ISO-8859-2 sau UTF-16 LE/BE când este nevoie. Chromium decodează ISO-8859-1 prin aliasul Windows-1252. **Afișează ca text** arată octeții invalizi ca semne de înlocuire. Căutarea și saltul la linie folosesc liniile sursă numerotate chiar și cu încadrarea activă. Aceste controale nu modifică fișierul, indexarea sau verificarea citărilor. Cu mascarea afișării activă, textul obișnuit înlocuiește octeții secreți cu asteriscuri (perechile UTF-16 apar ca ⨪); numele și textul citărilor folosesc [REDACTED].
+
 - Fișierele PDF se derulează continuu și afișează numărul paginii. Mărește sau micșorează cu Ctrl+rotița mouse-ului sau cu Ctrl+= , Ctrl+- și Ctrl+0.
 - Ctrl+F caută text într-un PDF sau într-un document text; în fișierele text, Ctrl+G sare la o linie.
 - Ctrl+Tab și Ctrl+Shift+Tab comută între file, Ctrl+W închide fila curentă, iar Escape revine la **Chat**.

@@ -9,7 +9,7 @@ status/search/reindex/progress, and the Docs folder tree (single search box, ign
 memory, keyboard, context menu, Properties).
 Start under05_Software at main/display-documents.ts and display-identities.ts for conditional
 Display masking, shared/documents.ts, core/knowledge/viewer.ts and
-renderer/components/documents. Focused tests are viewer.test.ts, search.test.ts,
+renderer/components/documents (text-encoding.ts, read-text-file.ts, use-text-rows.ts for byte-backed text). Focused tests are viewer.test.ts, search.test.ts,
 documents.test.ts, docs-tree.test.ts, core workbench/tree.test.ts and
 tests/e2e/{citations,documents,office-documents,docs-tree}.spec.ts.
 [Document search](document-search.md) owns retrieval/extraction validity;
@@ -124,13 +124,25 @@ Managed PDF downloads use downloads.list/open scoped IPC and a downloadId Viewer
   SessionWorkspace ignores its window shortcuts; a composer focus request (Attach as context) is
   taken once (`composerFocused` clears it in App), selects Chat once and focuses the composer when
   it is enabled.
-- Continuous viewers (TASK-4c04273a), with no navigation toolbar. `TextViewer` (text-viewer.tsx)
-  lays every line out at one measured, unwrapped height (`.document-lines` is `count * lineHeight`
-  tall) and mounts only the lines in view plus 40 each side; it opens at the kept first visible
-  line, else with the cited start a third down, and reports the first visible line
-  (REQ-UX-8a994f4b, REQ-NFR-0fe89e49). `FindBar` (find-bar.tsx) is the on-demand field: Enter and
-  Shift+Enter step, Escape closes it and focuses the document body without leaving the tab
-  (REQ-UX-fe9ec5c2, REQ-UX-58cf59b2, REQ-UX-3eb27a6c).
+- TextViewer offers a Word wrap checkbox for numbered source text. `use-text-rows.ts` measures
+  mounted row heights and keeps estimates for unseen rows, with 40 overscan rows per side. Pending
+  Find/Go to line targets settle after measurement; wrap/width/font changes invalidate measurements
+  while preserving the source anchor before the browser clamps a shrinking spacer. The kept first
+  line wins over citation start, and scroll reports retain source line numbers. FindBar stays
+  on demand with Enter/Shift+Enter stepping and Escape returning focus to the body.
+- Ordinary file text up to 5 MiB uses read-text-file.ts: docs.stat, sequential <=1MiB docs.readBytes,
+  consistent owner/host identity/physical offsets/size/exact lengths, then matching final stat mtime.
+  An empty file still performs one byte read. The host applies live Display masking before bytes
+  enter the renderer; source bytes are transient per tab attempt, never persisted, and Display
+  refresh clears them with content. Opaque identities stay original action targets. Size errors use
+  textTooLarge, inconsistent reads use CONFLICT. Existing indexed text above 5 MiB keeps its verified
+  extraction without encoding controls until large-file support; this does not widen raw loading.
+- text-encoding.ts uses TextDecoder: UTF8/UTF16LE/BE BOM detection, otherwise UTF8, with explicit
+  UTF8/Windows1252/ISO8859-1/ISO8859-2/UTF16LE/BE selection. ISO8859-1 follows Chromium's Windows1252
+  alias. Invalid strict decoding or NUL requests Show as text; explicit replacement decoding uses
+  U+FFFD for invalid sequences. Changing encoding retries strict decoding without another host read.
+  Verified references, runs, downloads, artifacts and rendered PDF/Markdown/Office keep their
+  existing content/provenance; text citations gain wrapping without a raw-byte re-read.
 - PdfViewer reads every page box at load, so `.pdf-scroll` holds one `.pdf-sheet[data-page-number]`
   per page; only pages within 2 of the page in view draw a canvas and text layer (pinned bundled
   module worker). The page in view is the one at a third of the view height; `.pdf-indicator`
@@ -286,9 +298,9 @@ Managed PDF downloads use downloads.list/open scoped IPC and a downloadId Viewer
   missing ones NOT_FOUND. Ignored entries are listed, read and inspected for the user's own
   panel only (TASK-b34f2cc7): docs.find skips them, and the agent's PathGuard, ingest
   selection and providers still never see them. Bounds:
-  5,000 entries per folder, 200 matches and 50,000 walked entries per find, 5 MiB per text
-  view; binary (NUL probe or invalid UTF-8) and larger files fail with INVALID and
-  `documents.textBinary` / `documents.textTooLarge`. statEntry refuses the workbench folder
+  5,000 entries per folder, 200 matches and 50,000 walked entries per find. The legacy docs.read
+  API retains its strict UTF8/NUL and 5MiB checks; the ordinary file UI uses the byte-backed text
+  path above with explicit replacement and selected encodings. statEntry refuses the workbench folder
   itself. Main retains every result and applies conditional Display presentation with separate host authority.
 - Scoped source selections and disposed requests prevent late content replacing another view while Shell/Welcome drafts stay mounted; there is no modal viewer.
   Controls use rem/theme tokens and en/ro/de; inner page scrolling contains overflow.
@@ -309,10 +321,13 @@ Managed PDF downloads use downloads.list/open scoped IPC and a downloadId Viewer
 | tab menu, drag, tab keys | documents/document-tabs.tsx; viewer-context move/closeMany; file-actions.tsx | document-tabs.test.ts; citations.spec.ts (real drag) |
 | search box, In documents, actions row | documents/docs-tab.tsx (`useTreeExpansion`); styles `.docs-actions` | docs-tree.test.ts; documents.test.ts; documents.spec.ts |
 | row context menu / Properties | documents/tree-menu.tsx; tree-properties.tsx; mockApi docs.stat | docs-tree.test.ts; documents.test.ts; docs-tree.spec.ts |
+| Text decoding and measured wrap | renderer/documents text-encoding, read-text-file, text-viewer, use-text-rows | sibling tests; e2e/text-encodings.spec.ts browser/native |
 | Bounded physical byte reads | core/workbench/read-bytes.ts and service.ts; shared documents/ipc.ts; main display-documents.ts and display-bytes.ts | read-bytes.test.ts; display-bytes.test.ts; display-documents.test.ts; documents-ipc.test.ts; focused service/bridge tests |
 | Open in / Show in Explorer / Copy | main/openers.ts; index.ts docs.openers/openWith/reveal/copyPath/systemApps/openSystemApp; core locateEntry; file-actions.tsx useFileActions | openers.test.ts; tree.test.ts; documents-ipc.test.ts; docs-tree.test.ts; docs-tree.spec.ts |
 
 ## Key behaviors
+
+- REQ-FUNC-c5def0c3, REQ-UX-5a886e34, REQ-UX-77baabba, REQ-REL-3bb0b405: selected text decoding, explicit replacement, measured wrapped navigation and consistent bounded assembly.
 
 - REQ-FUNC-69645e84, REQ-FUNC-e4204219, REQ-SEC-f561466e, REQ-REL-0fa2a8e9,
   REQ-SEC-d707ed8d, REQ-FUNC-c21cc184 — bounded physical bytes, confinement, typed races and live encoded masking.
@@ -336,7 +351,8 @@ Under05_Software: shared/{documents,ipc}.ts; core/knowledge/viewer.ts/test,
 core/sessions/service.ts, workbench/{service,tree,read-bytes}.ts/test and knowledge/search.test.ts;
 desktop/main/{index,document-viewer,display-documents,display-bytes,display-identities,security,content-policy,openers}.ts, openers.test.ts and
 document-viewer.test.ts; renderer/components/documents/{viewer-context,docs-tab,
-pdf-viewer,docs-tree,tree-menu,tree-properties,open-externally,document-tabs,file-actions}.tsx, documents.test.ts and
+pdf-viewer,docs-tree,tree-menu,tree-properties,open-externally,document-tabs,file-actions,text-viewer}.tsx;
+text-encoding.ts, read-text-file.ts, use-text-rows.ts with sibling tests, documents.test.ts and
 docs-tree.test.ts; session/{markdown,transcript,artifacts-tab};
 App/Shell/styles/locales/mock documents+mockApi; electron.vite.config.ts/index.html;
 tests/fixtures/llm-scripts/{document-viewer,office-citations}.jsonl;

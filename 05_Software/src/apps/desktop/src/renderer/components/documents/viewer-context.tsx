@@ -16,6 +16,7 @@ import { api } from "../../api/index.js";
 import { readTabs, type StoredTabs, writeTabs } from "../../lib/document-tabs-store.js";
 import { Markdown } from "../session/markdown.js";
 import type { ZoomRequest } from "./pdf-viewer.js";
+import { readTextFile } from "./read-text-file.js";
 import { TextViewer } from "./text-viewer.js";
 
 const PdfViewer = lazy(() => import("./pdf-viewer.js"));
@@ -45,6 +46,8 @@ export interface DocumentTab {
   label: string;
   title: string;
   content?: ViewerContent | undefined;
+  /** Display-masked small-file bytes, transient and invalidated with the content attempt. */
+  textBytes?: Uint8Array | undefined;
   error?: unknown;
   /** Bumped by every open of the tab and by Retry; a load answers only its own attempt. */
   attempt: number;
@@ -170,6 +173,7 @@ export function DocumentViewerProvider({
                     label: "downloadId" in target ? tab.label : label,
                     title: "downloadId" in target ? tab.title : title,
                     content: undefined,
+                    textBytes: undefined,
                     error: undefined,
                     attempt: ++attempts.current,
                   }
@@ -231,7 +235,13 @@ export function DocumentViewerProvider({
         ...set,
         tabs: set.tabs.map((tab) =>
           tab.key === key
-            ? { ...tab, content: undefined, error: undefined, attempt: ++attempts.current }
+            ? {
+                ...tab,
+                content: undefined,
+                textBytes: undefined,
+                error: undefined,
+                attempt: ++attempts.current,
+              }
             : tab,
         ),
       }));
@@ -402,9 +412,19 @@ export function DocumentViewerProvider({
           : "downloadId" in target
             ? api.invoke("downloads.open", { workbenchId, downloadId: target.downloadId })
             : "textPath" in target
-              ? api.invoke("docs.read", { workbenchId, path: target.textPath, requestId })
-              : api.invoke("docs.open", { workbenchId, ...target, requestId });
-      const settle = (result: Pick<DocumentTab, "content" | "error">) =>
+              ? readTextFile(workbenchId, target.textPath)
+              : api.invoke("docs.open", { workbenchId, ...target, requestId }).then(async (result) => {
+                  // Verified references retain the exact provenance/content issued by their host.
+                  if (!("path" in target) || result.content.kind !== "text") return result;
+                  if (
+                    result.workbenchId !== workbenchId ||
+                    (result.requestId !== requestId && result.content.path !== target.path)
+                  )
+                    return result;
+                  const text = await readTextFile(workbenchId, target.path, result.content);
+                  return { ...result, textBytes: text.textBytes };
+                });
+      const settle = (result: Pick<DocumentTab, "content" | "textBytes" | "error">) =>
         setSets((map) => {
           const set = map.get(scope);
           const found = set?.tabs.find((entry) => entry.key === key);
@@ -444,7 +464,11 @@ export function DocumentViewerProvider({
                       : result.content.path !== target.path))
           )
             throw veraError("NOT_FOUND");
-          settle({ content: result.content, error: undefined });
+          settle({
+            content: result.content,
+            textBytes: "textBytes" in result ? result.textBytes : undefined,
+            error: undefined,
+          });
         })
         .catch((failure: unknown) => settle({ content: undefined, error: failure ?? veraError("INTERNAL") }))
         .finally(() => loading.current.delete(request));
@@ -470,6 +494,7 @@ export function DocumentViewerProvider({
                           label: "runId" in tab.target ? tab.label : "[REDACTED]",
                           title: "runId" in tab.target ? tab.title : "[REDACTED]",
                           content: undefined,
+                          textBytes: undefined,
                           error: undefined,
                           attempt: ++attempts.current,
                         },
@@ -555,6 +580,7 @@ export function DocumentViewerProvider({
 
 export function DocumentBody({
   content,
+  bytes,
   place,
   onPlace,
   findRequest = 0,
@@ -562,6 +588,7 @@ export function DocumentBody({
   zoomRequest,
 }: {
   content: ViewerContent;
+  bytes?: Uint8Array | undefined;
   /** Where the document was left; without it the cited unit is shown (REQ-UX-1f53a583). */
   place?: DocumentPlace | undefined;
   onPlace?: ((place: DocumentPlace) => void) | undefined;
@@ -616,6 +643,7 @@ export function DocumentBody({
     return (
       <TextViewer
         content={content}
+        bytes={bytes}
         line={place && "line" in place ? place.line : undefined}
         onLine={(line) => onPlace?.({ line })}
         findRequest={findRequest}

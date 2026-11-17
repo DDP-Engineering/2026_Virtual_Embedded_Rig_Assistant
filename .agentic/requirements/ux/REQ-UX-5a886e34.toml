@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-UX-5a886e34"
+title = "Explicitly show invalid file bytes as replacement text"
+status = "active"
+requirement = "If the selected text encoding cannot strictly decode a workbench file or the decoded file has NUL characters, VERA shall offer Show as text to display replacement decoding after explicit selection."
+verification = "Component test opens invalid UTF8, observes the not-text message and Show as text, chooses it and observes U+FFFD; choosing an applicable single-byte encoding recovers strict text without consent."
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/documents/text-viewer.tsx", "05_Software/src/apps/desktop/src/renderer/components/documents/text-encoding.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/documents/text-encoding.test.ts", "05_Software/src/apps/desktop/src/renderer/components/documents/text-viewer.test.ts", "05_Software/tests/e2e/text-encodings.spec.ts"]
+spec = ""
+priority = "normal"
+created = 2026-11-17
+updated = 2026-11-17

@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-UX-77baabba"
+title = "Navigate measured wrapped text rows"
+status = "active"
+requirement = "When word wrap is enabled in a text document, VERA shall measure rendered source-line heights for virtual scrolling so Find and Go to line reveal their requested source line with its original number."
+verification = "Component/browser/native tests wrap unequal long lines, Find and Go to distant lines and verify target viewport geometry and measured row height; switch wrap off and resize while retaining a bounded rendered row count."
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/documents/text-viewer.tsx", "05_Software/src/apps/desktop/src/renderer/components/documents/use-text-rows.ts", "05_Software/src/apps/desktop/src/renderer/styles.css"]
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/documents/text-viewer.test.ts", "05_Software/tests/e2e/text-encodings.spec.ts"]
+spec = ""
+priority = "normal"
+created = 2026-11-17
+updated = 2026-11-17

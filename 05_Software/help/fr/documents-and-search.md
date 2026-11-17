@@ -52,6 +52,8 @@ Dans une réponse, chaque puce de citation indique la source et l’emplacement�
 
 Les documents s’ouvrent dans des onglets à côté de l’onglet **Discussion**, si bien que la conversation reste où elle était. Vous pouvez passer librement de l’un à l’autre.
 
+Les fichiers texte jusqu’à 5 Mio proposent **Encodage** et **Retour à la ligne**. Les BOM UTF-8 et UTF-16 sont détectés ; sans BOM, UTF-8 est utilisé. Choisissez Windows-1252, ISO-8859-1, ISO-8859-2 ou UTF-16 LE/BE au besoin. Chromium décode ISO-8859-1 via son alias Windows-1252. **Afficher en texte** affiche les octets invalides comme caractères de remplacement. Recherche et saut à la ligne utilisent les lignes source numérotées même avec le retour à la ligne. Ces commandes ne modifient ni le fichier, ni l’indexation, ni la vérification des citations. Si le masquage est actif, le texte ordinaire remplace les octets secrets par des astérisques (les paires UTF-16 apparaissent comme ⨪) ; noms et citations rendues utilisent [REDACTED].
+
 - Les fichiers PDF défilent en continu et affichent le numéro de page. Zoomez avec Ctrl+molette de la souris ou avec Ctrl+= , Ctrl+- et Ctrl+0.
 - Ctrl+F recherche du texte dans un PDF ou un document texte ; dans les fichiers texte, Ctrl+G permet d’aller à une ligne.
 - Ctrl+Tab et Ctrl+Shift+Tab passent d’un onglet à l’autre, Ctrl+W ferme l’onglet actif, et Escape revient à **Discussion**.

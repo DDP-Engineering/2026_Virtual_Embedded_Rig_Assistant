@@ -162,14 +162,33 @@ function bigLog(lines = 600): ViewerContent {
 }
 function serveBigLog() {
   const original = api.invoke.bind(api);
+  const log = bigLog();
+  const bytes = new TextEncoder().encode(log.kind === "text" ? log.lines.join("\n") : "");
   return vi.spyOn(api, "invoke").mockImplementation(async (channel: string, request: unknown) => {
-    const data = request as { path?: string; ref?: string };
+    const data = request as { path?: string; ref?: string; offset: number; length: number };
     if (channel === "docs.read" && data.path === "logs/big.log")
       return { workbenchId: id, content: bigLog() } as never;
     if (channel === "docs.stat" && data.path === "logs/big.log")
       return {
         workbenchId: id,
-        properties: { path: data.path, type: "file", size: 6000, modified: "2026-10-13T00:00:00.000Z" },
+        properties: {
+          path: data.path,
+          type: "file",
+          size: bytes.length,
+          modified: "2026-10-13T00:00:00.000Z",
+        },
+      } as never;
+    if (channel === "docs.readBytes" && data.path === "logs/big.log")
+      return {
+        workbenchId: id,
+        path: data.path,
+        size: bytes.length,
+        offset: data.offset,
+        data: btoa(
+          Array.from(bytes.slice(data.offset, data.offset + data.length), (byte) =>
+            String.fromCharCode(byte),
+          ).join(""),
+        ),
       } as never;
     if (channel === "docs.open" && data.ref === "logs/big.log#L5-L5")
       return { workbenchId: id, content: { ...bigLog(), ref: data.ref, start: 5, end: 5 } } as never;
@@ -1004,6 +1023,27 @@ it("keeps a document opened during the restore, works without storage and forget
 function serveDisplayContent(masked: () => boolean) {
   const original = api.invoke.bind(api);
   vi.spyOn(api, "invoke").mockImplementation((async (channel: string, request: unknown) => {
+    const data = request as { path: string; offset: number; length: number };
+    const text = masked() ? "[REDACTED]" : "cached-secret";
+    if (channel === "docs.stat")
+      return {
+        workbenchId: id,
+        properties: {
+          path: data.path,
+          displayPath: `${text}-${data.path.split("/").at(-1)}`,
+          type: "file",
+          size: text.length,
+          modified: "2026-11-17T00:00:00.000Z",
+        },
+      };
+    if (channel === "docs.readBytes")
+      return {
+        workbenchId: id,
+        path: data.path,
+        offset: data.offset,
+        size: text.length,
+        data: btoa(text.slice(data.offset, data.offset + data.length)),
+      };
     if (channel === "docs.open") {
       const data = request as { path: string; requestId: string };
       return {

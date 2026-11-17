@@ -67,7 +67,11 @@ and tooling boundaries tests. Original logs and source-bundled real-file probes 
 evaluation-outputs/view01. Pinned Windows and WSL2 Node24.21.0 each reload a stored synthetic
 credential, check350 split byte windows in six encodings and the tail of a200MiB sparse file.
 WSL2 is distinct from unavailable native Ubuntu; full suites/delivery gates remain deferred.
-Unchanged native/packaging proof is reused.
+Unchanged native/packaging proof is reused. Text UI verification adds sibling text-encoding,
+read-text-file and text-viewer tests plus existing tabs/tree/documents regressions. Focused browser
+and native Electron tests/e2e/text-encodings.spec.ts prove Latin1/UTF16 BOM, encoding changes,
+replacement, measured distant navigation, wrap/resize and live stored-credential Display refresh.
+Original logs/geometry receipts/screenshots live under evaluation-outputs/view02; no packaging changes.
 
 Privacy settings proof uses renderer privacy-settings/workbench-privacy and use-preferences tests for localized drafts, effective agent-off confirmation, readonly/failure recovery and stale-read rejection. Focused native tests/e2e/privacy-settings.spec.ts saves actual app/config files, creates and isolates two workbenches, follows live app defaults and restarts Electron in en/ro/de/fr. Original evidence is evaluation-outputs/mask05. Existing consumer/native package proof is reused; full app/plugin/E2E, native Ubuntu/clean-install and exact-source delivery gates remain user-deferred.
 

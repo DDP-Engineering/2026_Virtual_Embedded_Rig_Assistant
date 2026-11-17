@@ -150,10 +150,14 @@ test("Display masking preserves MQTT-named Files, Find identity, live choices an
     await page.locator(`[data-session="${alternateSession.id}"]`).click();
     await invoke(page, "app.settings.update", { privacy: { mask: { display: true } } });
     await page.locator(`[data-session="${session.id}"]`).click();
-    await expect(page.locator("[data-source-current]")).toContainText("SECOND [REDACTED]");
+    await expect(page.locator("[data-source-current]")).toContainText(
+      `SECOND ${"*".repeat(secrets[1]?.length ?? 0)}`,
+    );
     await expect(page.locator("[data-document-tabs]")).not.toContainText("mask02-mqtt");
     await page.locator(`[data-tab-key="file:${first.path}"]`).click();
-    await expect(page.locator("[data-source-current]")).toContainText("FIRST [REDACTED]");
+    await expect(page.locator("[data-source-current]")).toContainText(
+      `FIRST ${"*".repeat(secrets[0]?.length ?? 0)}`,
+    );
     await expect(page.locator("[data-source-current]")).not.toContainText(secrets[0] as string);
     await expect(docs().locator(`[data-tree-path="${first.path}"] .tree-name`)).toHaveText("[REDACTED].txt");
     await expect(docs().locator(`[data-tree-path="${second.path}"] .tree-name`)).toHaveText("[REDACTED].txt");
@@ -172,7 +176,9 @@ test("Display masking preserves MQTT-named Files, Find identity, live choices an
     await expect(docs().locator('[role="treeitem"][data-tree-type="file"]')).toHaveCount(2);
     await docs().locator(`[data-tree-path="${second.path}"]`).focus();
     await page.keyboard.press("Enter");
-    await expect(page.locator("[data-source-current]")).toContainText("SECOND [REDACTED]");
+    await expect(page.locator("[data-source-current]")).toContainText(
+      `SECOND ${"*".repeat(secrets[1]?.length ?? 0)}`,
+    );
     await expect(page.locator('[data-document-tabs] [data-tab-key^="file:"]')).toHaveCount(2);
     expect(
       (
@@ -193,7 +199,9 @@ test("Display masking preserves MQTT-named Files, Find identity, live choices an
       patch: { privacy: { mask: { display: "on" } } },
     });
     await invoke(page, "app.settings.update", { privacy: { mask: { display: false } } });
-    await expect(page.locator("[data-source-current]")).toContainText("SECOND [REDACTED]");
+    await expect(page.locator("[data-source-current]")).toContainText(
+      `SECOND ${"*".repeat(secrets[1]?.length ?? 0)}`,
+    );
     const refused = async (path: string) => {
       try {
         await invoke(page, "docs.read", { workbenchId, path });
@@ -222,10 +230,14 @@ test("Display masking preserves MQTT-named Files, Find identity, live choices an
         ).status,
       ).toBe("saved");
     await invoke(page, "app.settings.update", { privacy: { mask: { display: true } } });
-    await expect(page.locator("[data-source-current]")).toContainText("LATER_SECOND [REDACTED]");
+    await expect(page.locator("[data-source-current]")).toContainText(
+      `LATER_SECOND ${"*".repeat(laterSecrets[1]?.length ?? 0)}`,
+    );
     await expect(page.locator("[data-document-tabs]")).not.toContainText("mask02-later");
     await page.locator(`[data-tab-key="file:${second.path}"]`).click();
-    await expect(page.locator("[data-source-current]")).toContainText("SECOND [REDACTED]");
+    await expect(page.locator("[data-source-current]")).toContainText(
+      `SECOND ${"*".repeat(secrets[1]?.length ?? 0)}`,
+    );
     await expect
       .poll(() =>
         page.evaluate(
@@ -252,7 +264,9 @@ test("Display masking preserves MQTT-named Files, Find identity, live choices an
     await page.reload();
     const selectedSession = page.locator(`[data-session="${session.id}"]`);
     await selectedSession.click();
-    await expect(page.locator("[data-source-current]")).toContainText("SECOND [REDACTED]");
+    await expect(page.locator("[data-source-current]")).toContainText(
+      `SECOND ${"*".repeat(secrets[1]?.length ?? 0)}`,
+    );
     await expect(page.locator("[data-document-tabs]")).not.toContainText("mask02-later");
     const reopenedTree = await invoke(page, "docs.tree", { workbenchId, path: "docs" });
     expect(reopenedTree.entries.map((entry) => entry.path)).toEqual(

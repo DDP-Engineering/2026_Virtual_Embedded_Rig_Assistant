@@ -122,7 +122,16 @@ it("shows the workbench as a lazily expanded tree with document status and dimme
   expect(container.querySelector('[role="tree"]')).not.toBeNull();
   expect(container.querySelector(".documents-list")).toBeNull();
   // Folders first, then files, top level only while folders are collapsed.
-  expect(visible()).toEqual([".git", ".vera", "docs", "firmware", "manuals", "node_modules", "board.txt"]);
+  expect(visible()).toEqual([
+    ".git",
+    ".vera",
+    "docs",
+    "firmware",
+    "manuals",
+    "node_modules",
+    "text-samples",
+    "board.txt",
+  ]);
   expect(row("docs")?.getAttribute("aria-expanded")).toBe("false");
   await click(row("docs"));
   await settle();
@@ -219,8 +228,8 @@ it("shows entries ignored by VERA in italic with faded icons, announced, expanda
   await click(row(".git/config"));
   await settle();
   expect(invoke).toHaveBeenCalledWith(
-    "docs.read",
-    expect.objectContaining({ workbenchId: id, path: ".git/config", requestId: expect.any(String) }),
+    "docs.readBytes",
+    expect.objectContaining({ workbenchId: id, path: ".git/config", offset: 0 }),
   );
   expect(container.querySelector("[data-source-current]")?.textContent).toContain(".git/config");
   // An ignored allowlisted file has no Open in default app, in the menu or in its document tab.
@@ -282,8 +291,8 @@ it("opens indexed documents and other text files in a document tab", async () =>
   await key(row("firmware/main.c"), "Enter");
   await settle();
   expect(invoke).toHaveBeenCalledWith(
-    "docs.read",
-    expect.objectContaining({ workbenchId: id, path: "firmware/main.c", requestId: expect.any(String) }),
+    "docs.readBytes",
+    expect.objectContaining({ workbenchId: id, path: "firmware/main.c", offset: 0 }),
   );
   expect(
     container.querySelector('[data-document-tabs] [role="tab"][aria-selected="true"]')?.getAttribute("title"),
@@ -700,7 +709,7 @@ it("shows the properties of documents, other files and folders", async () => {
   expect(dialog()?.hasAttribute("open")).toBe(true);
   expect(prop("path")).toBe("docs/a.pdf");
   expect(prop("type")).toBe("File");
-  expect(prop("size")).toMatch(/100/);
+  expect(prop("size")).toMatch(/4/);
   expect(prop("modified")).toMatch(/2026/);
   expect(prop("status")).toBe("Indexed");
   expect(prop("pages")).toBe("2");

@@ -483,3 +483,8 @@ persisting plaintext original paths in renderer storage. Focused tests sit besid
 Run presentation uses desktop main/run-presentation.ts with the live Program runs resolver, separate from raw local logs and agent scrubbing. renderer/hooks/use-run-presentation.ts resets run/status caches; full-log viewer attempts refresh across inactive sessions. Sibling tests cover inheritance, ownership and live policy changes.
 
 Privacy controls: renderer/components/privacy-settings.tsx owns the app draft; workbench-privacy.tsx consumes the confirmed settings query and the existing workbench draft; privacy-controls.tsx presents switches/choices and the agent disclosure dialog. Focused tests sit beside these components; tests/e2e/privacy-settings.spec.ts proves native four-language Save/Cancel, inheritance and independent persistence.
+
+Text file controls live in renderer/components/documents/text-viewer.tsx, with text-encoding.ts,
+read-text-file.ts and use-text-rows.ts for bounded masked bytes and measured wrapped navigation.
+Sibling tests and tests/e2e/text-encodings.spec.ts cover BOM/selected decoding, replacement,
+window consistency, source-line geometry and live Display refresh. Browser examples are in mocks/text-files.ts.

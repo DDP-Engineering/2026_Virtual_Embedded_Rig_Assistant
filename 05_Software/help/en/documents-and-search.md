@@ -53,6 +53,8 @@ In an answer, each citation chip names the source and the place: page, page rang
 
 Documents open as tabs next to the **Chat** tab, so the conversation stays where it was. You can switch between them freely.
 
+Text files up to 5 MiB offer **Encoding** and **Word wrap**. UTF-8 and UTF-16 BOMs are detected; without a BOM, UTF-8 is used. Choose Windows-1252, ISO-8859-1, ISO-8859-2 or UTF-16 LE/BE when needed. Chromium decodes ISO-8859-1 using its Windows-1252 alias. **Show as text** displays invalid bytes as replacement characters. Find and Go to line use the original numbered source lines even when wrapped. These controls do not change the file, indexing or citation verification. With Display masking on, ordinary file text replaces secret bytes with asterisks (UTF-16 pairs appear as ⨪); names and rendered citation text use [REDACTED].
+
 - PDF files scroll continuously and show the page number. Zoom with Ctrl+mouse wheel or Ctrl+= , Ctrl+- and Ctrl+0.
 - Ctrl+F finds text in a PDF or text document; in text files Ctrl+G goes to a line.
 - Ctrl+Tab and Ctrl+Shift+Tab switch tabs, Ctrl+W closes the current tab, and Escape returns to **Chat**.

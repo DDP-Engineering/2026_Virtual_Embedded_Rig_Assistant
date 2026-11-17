@@ -34,8 +34,10 @@ Plugin management uses compact package rows and explicit dependency checks; sele
 
 The document host exposes bounded `docs.readBytes` with original offsets/physical size and fixed
 host-only context, strict owning-workbench confinement and live length-preserving Display masking
-for UTF8/UTF16/single-byte secrets. Existing `docs.stat` supplies physical size; later VIEW packages
-own controls and large-file/hex/image rendering. [Document viewer](../knowledge/document-viewer.md)
+for UTF8/UTF16/single-byte secrets. Existing `docs.stat` supplies physical size. Ordinary text files
+up to5MiB offer BOM/selected decoding and explicit replacement via bounded byte assembly; numbered text
+offers measured wrapping with Find/Go to line. Verified citations and rendered formats keep their host
+content. Later VIEW packages own large-file/hex/image rendering. [Document viewer](../knowledge/document-viewer.md)
 routes the exact byte contract and focused proof.
 
 [User terminals](../knowledge/terminals.md) owns interactive xterm/node-pty tabs in the right panel,

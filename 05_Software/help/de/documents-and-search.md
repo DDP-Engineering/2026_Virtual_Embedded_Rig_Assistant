@@ -52,6 +52,8 @@ In einer Antwort nennt jeder Quellen-Chip die Quelle und die Stelle: Seite, Seit
 
 Dokumente öffnen sich als Tabs neben dem Tab **Chat**, sodass die Unterhaltung an ihrer Stelle bleibt. Sie können frei zwischen ihnen wechseln.
 
+Textdateien bis 5 MiB bieten **Zeichenkodierung** und **Zeilenumbruch**. UTF-8- und UTF-16-BOMs werden erkannt; ohne BOM gilt UTF-8. Bei Bedarf Windows-1252, ISO-8859-1, ISO-8859-2 oder UTF-16 LE/BE wählen. Chromium dekodiert ISO-8859-1 über den Alias Windows-1252. **Als Text anzeigen** zeigt ungültige Bytes als Ersatzzeichen. Suche und Zeilensprung verwenden auch bei Umbruch die ursprünglichen nummerierten Quellzeilen. Diese Steuerelemente ändern weder Datei noch Indexierung oder Zitierprüfung. Bei Anzeigemaskierung ersetzt gewöhnlicher Dateitext geheime Bytes durch Sternchen (UTF-16-Paare erscheinen als ⨪); Namen und gerenderter Zitiertext verwenden [REDACTED].
+
 - PDF-Dateien scrollen fortlaufend und zeigen die Seitenzahl. Zoomen Sie mit Ctrl+Mausrad oder mit Ctrl+= , Ctrl+- und Ctrl+0.
 - Ctrl+F sucht Text in einem PDF- oder Textdokument; in Textdateien springt Ctrl+G zu einer Zeile.
 - Ctrl+Tab und Ctrl+Shift+Tab wechseln zwischen Tabs, Ctrl+W schließt den aktuellen Tab, und Escape kehrt zu **Chat** zurück.

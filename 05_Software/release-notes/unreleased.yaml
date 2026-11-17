@@ -2,6 +2,13 @@ version: Unreleased
 date: null
 entries:
   - category: improved
+    topic: { en: Files, ro: Fișiere, de: Dateien, fr: Fichiers }
+    text:
+      en: Choose text encodings and word wrap; Find and Go to line follow wrapped source lines.
+      ro: Alege codificarea și încadrarea textului; căutarea și saltul la linie urmăresc liniile sursă.
+      de: Textkodierung und Zeilenumbruch wählen; Suche und Zeilensprung folgen den Quellzeilen.
+      fr: Choisissez l’encodage et le retour à la ligne ; recherche et saut suivent les lignes source.
+  - category: improved
     topic: { en: Data & privacy, ro: Date și confidențialitate, de: Daten & Datenschutz, fr: Données et confidentialité }
     text:
       en: Choose masking defaults and workbench overrides; confirm before turning agent masking off.

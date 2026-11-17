@@ -506,6 +506,7 @@ function DocumentPanel({ tab, index, leave }: { tab: DocumentTab; index: number;
           <Suspense fallback={<p role="status">{t("home.loading")}</p>}>
             <DocumentBody
               content={content}
+              bytes={tab.textBytes}
               place={state.place(tab.key)}
               onPlace={(place) => state.setPlace(tab.key, place)}
               findRequest={findRequest}
