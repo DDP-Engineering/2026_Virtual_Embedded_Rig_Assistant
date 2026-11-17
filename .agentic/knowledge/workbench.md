@@ -29,7 +29,7 @@ mode offers empty, missing, read-only and warning fixtures.
   areas follow live app defaults through core settings/masking.ts. Unknown privacy keys, areas and
   values reject INVALID with errors.CONFIG_INVALID and YAML path/line on open. Partial area saves
   preserve other choices, extension fields, allowed command prefixes and additional folders at
-  format1. This configuration infrastructure does not yet change consumer scrubbing or add pages.
+  format1. All four consumers follow the resolved policy. Edit/New workbench → Data & privacy stages Default/On/Off choices and shows the live app value in Default. Existing Save/Cancel/read-only ownership applies; enabling inheritance that disables Agent and model asks before changing the draft.
 
 - `additional_folders` is a bounded unique list of ordinary absolute paths in format1, default empty. General stages native chooser selections and removals until Save; Cancel discards them and read-only controls cannot mutate them. WorkbenchService retains selected canonical paths by opaque SHA256 identity and applies additions/removals atomically against the current host config, rejecting stale IDs and lists above64 with typed errors. Complete list identities carry scrubbed labels; masked paths are omitted from descriptive renderer config, while unrelated saves never echo or replace grants. The overview lists complete saved identities. Host live config grants only ordinary read/list/glob/grep/write/edit and run_command cwd; indexing, storage, artifacts and generated outputs keep the main root. Focused service/schema, core additional-folder tools and native `tests/e2e/additional-folders.spec.ts` prove persistence/revocation/masking.
 

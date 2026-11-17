@@ -20,8 +20,7 @@ and drains accepted updates/log writes on quit. Shared owns persisted and patch 
   persist false/false/true/true; omitted app areas use these defaults. Partial patches merge per area.
   Core `createMaskingResolver(() => settings.get().settings)` returns `maskingFor(workbench, area)`:
   explicit workbench on/off wins; default/omission reads the live app settings. No globals or copied
-  defaults. Display and Runs are consumed by their desktop presentation boundaries; Agent/exports consumers and
-  settings pages remain planned. Runs uses the current workbench override or live app default, false when omitted. userData/display-identities.json stores the format-1 random host key
+  defaults. Display and Runs are consumed by their desktop presentation boundaries; Agent/exports consumers use their independent policies. Settings → Data & privacy stages app choices until Save; the workbench editor shows live inherited values. Runs uses the current workbench override or live app default, false when omitted. userData/display-identities.json stores the format-1 random host key
   for authenticated opaque document paths; original paths stay outside renderer identity storage.
 
 Optional `settings.shell` is a trimmed executable name/absolute path; empty or absent selects the

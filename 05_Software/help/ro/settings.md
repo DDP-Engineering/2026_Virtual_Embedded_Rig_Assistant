@@ -10,8 +10,18 @@
 | **Notificări** | Nu este încă disponibilă |
 | **Comenzi rapide** | Propriile tale combinații de taste |
 | **Actualizări** | Cum se actualizează VERA |
-| **Date și confidențialitate** | Nu este încă disponibilă |
+| **Date și confidențialitate** | Valorile implicite de mascare pentru patru zone |
 | **Despre** | Versiunea, runtime-ul, licența și componentele terțe |
+
+## Date și confidențialitate
+
+Alege dacă secretele stocate sunt înlocuite cu `[REDACTED]` în **Afișare**, **Rulări de programe**, **Agent și model** și **Artefacte și exporturi**. Afișarea și rulările sunt dezactivate implicit; agentul și modelul și artefactele și exporturile sunt activate. Sunt mascate doar secretele stocate cunoscute de VERA; alte texte sensibile nu sunt detectate automat. Erorile furnizorilor, testele de conexiune și jurnalele de diagnostic își păstrează protecția necondiționată.
+
+Folosește **Salvează** sau **Anulează** în dreapta sus. Comutatoarele schimbă doar schița până la salvare. Dezactivarea **Agent și model** cere confirmare: secretele stocate găsite în fișiere sau în rezultatele instrumentelor pot ajunge la furnizorul modelului. Anularea sau Escape păstrează alegerea anterioară. Celelalte zone nu cer confirmare.
+
+În **Editează workbenchul → Date și confidențialitate**, fiecare zonă are **Implicit**, **Activat** sau **Dezactivat**. Implicit arată valoarea curentă a aplicației și urmează schimbările ei; alegerile explicite aparțin workbenchului și sunt copiate cu configurația sa. Alegerea Implicit cere confirmare dacă dezactivează Agent și model. Workbenchurile noi moștenesc valorile aplicației dacă nu alegi altfel. Workbenchurile doar în citire nu pot salva modificări.
+
+Dezactivarea mascării nu recuperează conținutul deja salvat ca `[REDACTED]`, inclusiv istoricul sesiunilor și artefactele. Citește-l sau recreează-l din sursa originală. Activarea mascării nu șterge istoricul brut salvat anterior.
 
 ## Aspect și limbă
 

@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-SEC-01bc890a"
+title = "Confirm effective agent masking disable before changing the draft"
+status = "active"
+requirement = """When a user selection changes effective Agent and model masking from on to off in app or workbench privacy settings, the desktop shall require confirmation warning that stored secrets found in files or tool output can reach the model provider, with confirmation affecting only the draft and Cancel or Escape preserving the previous choice and restoring control focus."""
+verification = """Test app true to false, workbench on to off and on to Default with app false; cancel and Escape preserve value/focus and no persistence, confirm changes draft only; other areas and Default resolving on do not prompt in four languages."""
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/", "05_Software/src/apps/desktop/src/renderer/hooks/use-preferences.ts", "05_Software/src/apps/desktop/src/renderer/styles.css", "05_Software/src/apps/desktop/src/renderer/locales/"]
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/privacy-settings.test.ts", "05_Software/src/apps/desktop/src/renderer/components/workbench-privacy.test.ts", "05_Software/src/apps/desktop/src/renderer/hooks/use-preferences.test.ts", "05_Software/tests/e2e/privacy-settings.spec.ts"]
+priority = "normal"
+created = 2026-11-17
+updated = 2026-11-17

@@ -1214,5 +1214,18 @@
     "name": "Terminal {{number}}",
     "consent": "Agent darf dieses Terminal lesen",
     "input": "Terminaleingabe"
+  },
+  "privacy": {
+    "display": "Anzeige",
+    "runs": "Programmläufe",
+    "agent": "Agent und Modell",
+    "exports": "Artefakte und Exporte",
+    "default": "Standard ({{value}})",
+    "on": "Ein",
+    "off": "Aus",
+    "confirmTitle": "Maskierung für Agent und Modell ausschalten?",
+    "warning": "Gespeicherte Geheimnisse aus Dateien oder Werkzeugausgaben können bei ausgeschalteter Maskierung für Agent und Modell an den Modellanbieter gesendet werden.",
+    "confirm": "Maskierung ausschalten",
+    "loading": "Datenschutzeinstellungen werden geladen…"
   }
 }

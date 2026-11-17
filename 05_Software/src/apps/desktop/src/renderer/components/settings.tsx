@@ -5,12 +5,13 @@ import { About } from "./about.js";
 import { CommandSettings } from "./command-settings.js";
 import { ErrorMessage } from "./error-message.js";
 import { KeyboardShortcuts } from "./keyboard-shortcuts.js";
+import { PrivacySettings } from "./privacy-settings.js";
 import { Providers } from "./providers.js";
 import { UpdatesPanel } from "./updates.js";
 import { WebAccessPanel } from "./web-access.js";
 
 /** Settings pages with their own panel; every other page shows the generic section below. */
-const OWN_PANELS = new Set(["providers", "web", "appearance", "updates", "shortcuts", "commands"]);
+const OWN_PANELS = new Set(["providers", "web", "appearance", "updates", "shortcuts", "commands", "data"]);
 
 export function useSettingsSections() {
   const { t } = useTranslation();
@@ -81,6 +82,9 @@ export function Settings({
       {section === "web" && <WebAccessPanel />}
       {section === "commands" && (
         <CommandSettings shell={snapshot.settings.shell} saving={saving} update={update} />
+      )}
+      {section === "data" && (
+        <PrivacySettings privacy={snapshot.settings.privacy} saving={saving} update={update} />
       )}
       <section
         hidden={section !== "appearance"}

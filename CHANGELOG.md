@@ -27,6 +27,8 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ### Added
 
+- Data & privacy offers app masking defaults and per-workbench choices, with confirmation before agent masking is off.
+
 - Masking configuration contracts and a shared resolver prepare per-area app defaults and workbench choices.
 
 - User terminal tabs support interactive shells, resizing and explicit per-terminal consent for agent output reads.

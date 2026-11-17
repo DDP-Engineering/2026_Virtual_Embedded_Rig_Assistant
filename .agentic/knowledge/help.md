@@ -11,6 +11,8 @@ documents and their viewer belong to [Document viewer](document-viewer.md); inte
 
 ## Help view
 
+- Settings and Workbenches pages explain Data & privacy in en/ro/de/fr: app defaults, per-workbench inheritance, explicit Save/Cancel, agent/model provider disclosure, read-only limits and irreversible saved redaction (including retained raw history).
+
 - A Help (?) button (`data-action="show-help"`) beside the right-panel toggle opens Help at `index`; F1 (no modifiers,
   not while a dialog or shortcut recording owns keys) opens `screenHelpPage(screen)` (`renderer/lib/help-pages.ts`).
 - `renderer/components/help.tsx` `HelpView`: the page (session `Markdown` with the `link` hook, so `name.md` links open

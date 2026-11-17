@@ -3,14 +3,14 @@
 PURPOSE: let the user decide, for each area and each workbench, whether VERA replaces stored secrets with
 `[REDACTED]`, so the user sees all information by default and masking is a choice.
 STATE: MASK-01 #280 infrastructure implemented and committed in f78c1de6599a876c7990c04047abd16288ffa7a2 (TASK-6170ebf2; proof: evaluation-outputs/mask01).
-MASK-02 #281 Display committed in cb8f0bcd15d9895c51d5d222ceb9b33f780daba8 (TASK-cfee41bb; proof: evaluation-outputs/mask02). MASK-03 #282 Program runs committed in be4e3120d747c5b2e2c78ea617417c7166605e4d (TASK-bea71615; proof: evaluation-outputs/mask03). MASK-04 #283 is the TASK-4912fc24 candidate (proof: evaluation-outputs/mask04). MASK-05 remains planned. Product code follows AEGIS, one work package per task.
+MASK-02 #281 Display committed in cb8f0bcd15d9895c51d5d222ceb9b33f780daba8 (TASK-cfee41bb; proof: evaluation-outputs/mask02). MASK-03 #282 Program runs committed in be4e3120d747c5b2e2c78ea617417c7166605e4d (TASK-bea71615; proof: evaluation-outputs/mask03). MASK-04 #283 committed in ae08f837637f7d9c6626372e1535226ceb90f2cd (TASK-4912fc24; proof: evaluation-outputs/mask04). MASK-05 #284 implemented in TASK-1c503009 (proof: evaluation-outputs/mask05); all five packages are implemented. Product code follows AEGIS, one work package per task.
 
 ## Today (2026-11-17)
 
 Stored secrets are registered with the unconditional credential scrubber. MASK-01 stores strict optional
 app booleans and workbench choices and supplies the live resolver; all four consumer areas now follow
 that resolver. Provider failures, connection tests, logging, credential admission and child-environment
-filtering retain their unconditional protection. MASK-05 adds the settings controls.
+filtering retain their unconditional protection. MASK-05 exposes the settings controls with explicit drafts, live inherited labels and an effective agent-off confirmation.
 
 | Area | Where | What is masked |
 |---|---|---|
@@ -72,3 +72,18 @@ the [file viewer plan](file-viewer.md) reads its masking from MASK-02.
 
 - Masking values that are not stored secrets (for example a key typed directly into a file the user never
   stored), and the provider error and connection-test masking, which stay always on.
+
+## Integrated implementation evidence and remaining gates
+
+MASK-05 TASK-1c503009 completes both Settings pages, new-workbench inheritance, four-language controls/help,
+agent disclosure confirmation and independent workbench persistence. Native `privacy-settings.spec.ts`
+checks real files and process restart; focused component tests cover stale async reads, live defaults,
+dirty gating, Cancel/Escape focus, failed saves and read-only controls. Original logs/screenshots/receipts
+are retained under `05_Software/evaluation-outputs/mask05/`; the task journal records exact commands,
+counts, independent review verdicts and final static/strict results. Its implementation state is done;
+the coordinator owns the local ticket commit and child/epic closure.
+
+MASK-01–04 consumer proof remains valid for unchanged core/host paths. TERM physical PTY/package closure
+proof is reused without rebuilding selected delivery artifacts. No full app, official-plugin or complete
+E2E suite, native Ubuntu, clean-install or exact-current-source final delivery gate is claimed; all remain
+user-deferred. WSL2 pinned Linux Node proof from the predecessor packages is distinct from native Ubuntu.

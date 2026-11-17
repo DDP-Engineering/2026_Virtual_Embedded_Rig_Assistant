@@ -67,3 +67,7 @@ Un workbench se deschide doar pentru citire atunci când un alt proces VERA îl 
 În **Editare workbench > General > Foldere suplimentare**, alege **Adaugă folder** și selectează un folder absolut, de exemplu un depozit alăturat. **Salvează** acordă acces; **Anulează** renunță la selecție. Prezentarea generală listează folderele salvate. Elimină un folder și salvează pentru a revoca imediat accesul, inclusiv pentru operații în așteptare. Workbench-urile doar în citire nu pot schimba aceste permisiuni.
 
 Instrumentele obișnuite read, list, glob, grep, write și edit și directoarele comenzilor shell pot folosi aceste foldere cu aceleași aprobări Întreabă sau Editare automată ca workbench-ul. Folosește căi absolute pentru fișiere externe; căile relative pornesc din workbench-ul principal. Sursele externe au identități absolute, fără citări locale de documente. Regulile de ignorare rămân active, iar datele VERA sunt refuzate și prin legături. Adăugarea nu indexează folderele: indexul, jurnalele, artefactele și datele generate rămân în workbench-ul principal. Comenzile păstrează drepturile contului sistemului, fără sandbox.
+
+## Date și confidențialitate
+
+Alege Implicit, Activat sau Dezactivat pentru fiecare zonă de mascare, apoi Salvează sau Anulează în dreapta sus. Implicit arată și urmează valoarea aplicației; alegerile rămân independente între workbenchuri. Vezi [Setări](settings.md) pentru avertizarea despre furnizorul modelului și limitele istoricului salvat.

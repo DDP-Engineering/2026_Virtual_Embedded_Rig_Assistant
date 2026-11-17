@@ -78,7 +78,16 @@ export function WorkbenchEditor({
   // are saved by their own switches at once, so they are never part of this draft.
   const comparable = ({ skills: _saved, additional_folders: _folders, ...value }: typeof config) => {
     const { allowed_commands: _grants, ...agent } = value.agent;
-    return { ...value, agent, plugins: { ...value.plugins, enabled: [...value.plugins.enabled].sort() } };
+    const { privacy: _privacy, ...rest } = value;
+    const mask = Object.fromEntries(
+      Object.entries(value.privacy?.mask ?? {}).filter(([, choice]) => choice !== "default"),
+    );
+    return {
+      ...rest,
+      agent,
+      privacy: mask,
+      plugins: { ...value.plugins, enabled: [...value.plugins.enabled].sort() },
+    };
   };
   const dirty =
     addedFolders.length > 0 ||
@@ -126,6 +135,7 @@ export function WorkbenchEditor({
         tools: { disabled: config.tools.disabled },
         plugins: { enabled: config.plugins.enabled },
         chat: { detail: config.chat.detail },
+        ...(config.privacy ? { privacy: config.privacy } : {}),
       });
       const updated = await api.invoke("workbench.config.update", {
         patch,

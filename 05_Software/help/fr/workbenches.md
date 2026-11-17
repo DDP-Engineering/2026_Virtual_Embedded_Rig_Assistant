@@ -67,3 +67,7 @@ Un banc de travail s’ouvre en lecture seule lorsqu’un autre processus VERA l
 Dans **Modifier le banc > Général > Dossiers supplémentaires**, choisissez **Ajouter un dossier**, puis un dossier absolu, par exemple un dépôt voisin. **Enregistrer** accorde l’accès ; **Annuler** abandonne la sélection. La vue d’ensemble liste les dossiers enregistrés. Supprimez un dossier et enregistrez pour révoquer immédiatement l’accès, y compris pour les opérations en attente. Un banc en lecture seule ne peut pas modifier ces autorisations.
 
 Les outils ordinaires read, list, glob, grep, write et edit ainsi que les dossiers de travail shell utilisent ces dossiers avec les mêmes accords Demander ou Modification auto que le banc. Les chemins externes doivent être absolus ; les chemins relatifs partent toujours du banc principal. Les sources externes ont une identité absolue, sans citation locale de document. Les règles d’exclusion restent actives ; les données VERA sont refusées même via des liens. L’ajout n’indexe pas ces dossiers : index, journaux, artefacts et données générées restent dans le banc principal. Les commandes gardent les droits du compte système, sans bac à sable.
+
+## Données et confidentialité
+
+Choisissez Par défaut, Activé ou Désactivé pour chaque domaine de masquage, puis Enregistrer ou Annuler en haut à droite. Par défaut affiche et suit la valeur de l’application ; les choix restent indépendants entre les bancs. Consultez les [Paramètres](settings.md) pour l’avertissement sur le fournisseur du modèle et les limites de l’historique enregistré.

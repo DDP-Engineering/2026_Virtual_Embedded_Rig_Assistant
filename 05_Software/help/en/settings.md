@@ -10,8 +10,18 @@
 | **Notifications** | Not available yet |
 | **Keyboard shortcuts** | Your own key combinations |
 | **Updates** | How VERA updates itself |
-| **Data & privacy** | Not available yet |
+| **Data & privacy** | Masking defaults for four areas |
 | **About** | Version, runtime, license and third-party components |
+
+## Data & privacy
+
+Choose whether stored secrets are replaced with `[REDACTED]` in **Display**, **Program runs**, **Agent and model**, and **Artifacts and exports**. Display and Program runs are off by default; Agent and model and Artifacts and exports are on. Only stored secrets known to VERA are masked; other sensitive text is not detected automatically. Provider errors, connection tests and diagnostic logs keep their unconditional protection.
+
+Use **Save** or **Cancel** at the top right. A switch changes only the draft until Save. Turning **Agent and model** off asks for confirmation: stored secrets found in files or tool output can reach the model provider. Cancelling or pressing Escape preserves the previous choice. The other areas do not ask.
+
+Under **Edit workbench → Data & privacy**, each area has **Default**, **On** or **Off**. Default shows the current app value and follows later app changes; explicit choices belong to that workbench and travel with its configuration. Choosing Default also asks for confirmation if it turns Agent and model off. New workbenches inherit the app values unless you choose otherwise. Read-only workbenches cannot save changes.
+
+Disabling masking cannot recover content already saved as `[REDACTED]`, including session history and artifacts. Read or recreate it from the original source. Previously saved raw history is not erased by enabling masking.
 
 ## Appearance and language
 

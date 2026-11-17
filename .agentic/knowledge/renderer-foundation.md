@@ -44,11 +44,11 @@ component coverage is command-settings.test.ts and session/approval-card.test.ts
   read-only/warnings and the keyboard pinned dialog are owned by [workbench](workbench.md).
 - Shell supplies resizable/collapsible sidebar and right panel; session Context shows pinned context/skills, Changes presents completed session edits/counts/diffs and reveal through the [Changes](changes.md) component; Docs presents the live document index; documents open as tabs of the chat area beside the Chat tab ([document viewer](document-viewer.md)); Artifacts opens/reveals/exports session content; Plan displays current session todos; Runs lists the open workbench's plugin program runs with their logs and Stop ([Plugins](plugins.md)).
   Below1280px the right panel overlays the centre. Tabs expose stable linked panels and a single Tab stop with Left/Right/Home/End activation.
-- Settings pages are Providers, Web access, Appearance and language (Light/Dark/System, six interface scales, chat and code text sizes, System/en/ro/de/fr), Notifications, Keyboard shortcuts, Updates (distribution-specific state/actions), Data (placeholder) and About; there are no Parts search, MQTT, Wokwi, Storage or Configuration pages (plugin settings live in the plugin Configuration). [Providers](providers.md) owns masked credentials, endpoint forms and consent.
+- Settings pages are Providers, Web access, Appearance and language (Light/Dark/System, six interface scales, chat and code text sizes, System/en/ro/de/fr), Notifications, Keyboard shortcuts, Updates (distribution-specific state/actions), Data & privacy (four app masking switches with explicit Save/Cancel) and About; there are no Parts search, MQTT, Wokwi, Storage or Configuration pages (plugin settings live in the plugin Configuration). [Providers](providers.md) owns masked credentials, endpoint forms and consent.
 - About renders a brand band (DDP logo, name, version, license name and Required Notice lines), the application name, version, platform, architecture, portable state and system locale
   from strict app.info, optional runtime versions (Electron, Chromium, Node.js, V8 from AppInfo.runtime), the license text (repo-root LICENSE.txt) and a third-party components table. Home contains workbench actions and recents. Build/signing labels do not
   appear in the presentation; native packaging owns compiled identity and signature checks.
-- usePreferences loads {settings}, applies mutation responses, invalidates on settings.changed
+- usePreferences and useSettingsSnapshot share the app.settings query; cancellation-aware reads reject stale completions after newer confirmed data. Mutations cancel older reads before publishing their confirmed snapshot. The owner invalidates on settings.changed
   and cleans up its app subscription. Failure displays localized structured errors and retry.
 - System theme follows prefers-color-scheme; root data-theme is light/dark. Main nativeTheme.themeSource
   follows the persisted setting. Root font is14px times scale; geometry and code use rem.
@@ -59,6 +59,10 @@ component coverage is command-settings.test.ts and session/approval-card.test.ts
   [foundation spec](../specs/REQ-UX-4a040001.md).
 - check:i18n uses TypeScript AST translation references and finite registered key collections;
   it rejects missing/unused/translation-only keys and arbitrary dynamic calls.
+
+Settings → Data & privacy uses privacy-settings.tsx and privacy-controls.tsx. A partial per-area app draft survives background updates and failed saves; only changed areas reach Save. WorkbenchConfigForm → Data & privacy uses workbench-privacy.tsx with the same confirmed query, live Default (On/Off) labels and the owner config draft. Editor/create Save includes privacy; Cancel never writes it. Read-only controls stay disabled. Core createMaskingResolver remains the policy authority; renderer labels use shared maskingDefaults.
+
+Agent and model effective on→off selections open a portaled native disclosure dialog. This includes explicit On→Default when the app agent value is false. Confirm changes only the draft; Cancel/Escape preserves choice and restores opener focus. Other areas and Default resolving on do not prompt. No helper text appears below controls. Focused proof: privacy-settings.test.ts, workbench-privacy.test.ts, hooks/use-preferences.test.ts and native tests/e2e/privacy-settings.spec.ts in en/ro/de/fr.
 
 ## Invariants
 
@@ -84,6 +88,9 @@ component coverage is command-settings.test.ts and session/approval-card.test.ts
 | Query invalidation | hooks/use-preferences.ts | native external update and browser save failure |
 
 ## Key behaviors
+
+- REQ-UX-a57996c8 / REQ-UX-65f41205 — app/workbench privacy drafts and inherited labels.
+- REQ-SEC-01bc890a / REQ-REL-53b7d5ce — agent-off draft confirmation and stale-read/draft protection.
 
 - REQ-UX-4a040001 — shell and memory routes.
 - REQ-UX-4a040002 — saved resize/collapse geometry and responsive overlay.

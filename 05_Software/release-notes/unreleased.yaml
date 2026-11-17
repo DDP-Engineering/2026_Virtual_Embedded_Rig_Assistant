@@ -1,6 +1,13 @@
 version: Unreleased
 date: null
 entries:
+  - category: improved
+    topic: { en: Data & privacy, ro: Date și confidențialitate, de: Daten & Datenschutz, fr: Données et confidentialité }
+    text:
+      en: Choose masking defaults and workbench overrides; confirm before turning agent masking off.
+      ro: Alege mascarea implicită și pe workbench; confirmă înainte de a dezactiva mascarea agentului.
+      de: Maskierung für App und Workbench wählen; das Ausschalten beim Agenten bestätigen.
+      fr: Choisissez le masquage par application et par banc ; confirmez sa désactivation pour l’agent.
   - category: fixed
     topic: { en: Privacy, ro: Confidențialitate, de: Datenschutz, fr: Confidentialité }
     text:

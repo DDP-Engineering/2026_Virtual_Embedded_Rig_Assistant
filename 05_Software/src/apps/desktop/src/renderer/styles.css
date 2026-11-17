@@ -1753,7 +1753,8 @@ legend {
   display: none;
 }
 .workbench-editor > header,
-.workbench-create > header {
+.workbench-create > header,
+[data-settings-section="data"] > header {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -1765,6 +1766,45 @@ legend {
 .workbench-create > header h3 {
   margin: 0;
   overflow-wrap: anywhere;
+}
+[data-settings-section="data"] > header h2 {
+  margin: 0 auto 0 0;
+}
+[data-settings-section="data"] [data-privacy-controls] {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
+  margin-top: 1rem;
+}
+[data-settings-section="data"] [data-mask-area] {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+[data-privacy-controls] input[role="switch"] {
+  appearance: none;
+  flex-shrink: 0;
+  width: 2.6rem;
+  height: 1.5rem;
+  margin: 0;
+  padding: 0.15rem;
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  background: var(--muted);
+}
+[data-privacy-controls] input[role="switch"]::before {
+  content: "";
+  display: block;
+  width: 1.05rem;
+  height: 1.05rem;
+  border-radius: 50%;
+  background: var(--foreground);
+}
+[data-privacy-controls] input[role="switch"]:checked {
+  background: var(--primary);
+}
+[data-privacy-controls] input[role="switch"]:checked::before {
+  transform: translateX(1.1rem);
+  background: var(--primary-foreground);
 }
 .workbench-actions {
   display: flex;

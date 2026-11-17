@@ -6,13 +6,30 @@ import i18next from "../i18n.js";
 import { resolveLanguage } from "../lib/language.js";
 
 const settingsKey = ["app.settings"];
+/** Shared confirmed snapshot; a late read cannot replace a newer confirmed update. */
+export function useSettingsSnapshot() {
+  const client = useQueryClient();
+  return useQuery({
+    queryKey: settingsKey,
+    queryFn: async ({ signal }) => {
+      const previous = client.getQueryData<SettingsSnapshot>(settingsKey);
+      const result = await api.getSettings();
+      signal.throwIfAborted();
+      const current = client.getQueryData<SettingsSnapshot>(settingsKey);
+      return current !== previous && current ? current : result;
+    },
+  });
+}
 export function usePreferences(locale: string) {
   const client = useQueryClient();
-  const snapshot = useQuery({ queryKey: settingsKey, queryFn: () => api.getSettings() });
+  const snapshot = useSettingsSnapshot();
   const mutation = useMutation({
     scope: { id: "app.settings" },
     mutationFn: (patch: SettingsPatch) => api.updateSettings(patch),
-    onSuccess: (result: SettingsSnapshot) => client.setQueryData(settingsKey, result),
+    onSuccess: async (result: SettingsSnapshot) => {
+      await client.cancelQueries({ queryKey: settingsKey });
+      client.setQueryData(settingsKey, result);
+    },
   });
   useEffect(
     () =>

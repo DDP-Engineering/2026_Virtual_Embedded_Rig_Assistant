@@ -10,8 +10,18 @@
 | **Notifications** | Pas encore disponible |
 | **Raccourcis clavier** | Vos propres combinaisons de touches |
 | **Mises à jour** | La façon dont VERA se met à jour |
-| **Données et confidentialité** | Pas encore disponible |
+| **Données et confidentialité** | Valeurs de masquage par défaut pour quatre domaines |
 | **À propos** | Version, environnement d’exécution, licence et composants tiers |
+
+## Données et confidentialité
+
+Choisissez si les secrets enregistrés sont remplacés par `[REDACTED]` dans **Affichage**, **Exécutions de programmes**, **Agent et modèle** et **Artefacts et exports**. L’affichage et les exécutions sont désactivés par défaut ; l’agent et le modèle ainsi que les artefacts et exports sont activés. Seuls les secrets enregistrés connus de VERA sont masqués ; les autres textes sensibles ne sont pas détectés automatiquement. Les erreurs des fournisseurs, les tests de connexion et les journaux de diagnostic restent toujours protégés.
+
+Utilisez **Enregistrer** ou **Annuler** en haut à droite. Les commutateurs ne modifient que le brouillon avant l’enregistrement. Désactiver **Agent et modèle** demande confirmation : les secrets enregistrés trouvés dans les fichiers ou les résultats des outils peuvent atteindre le fournisseur du modèle. Annuler ou Échap conserve le choix précédent. Les autres domaines ne demandent pas confirmation.
+
+Dans **Modifier le banc → Données et confidentialité**, chaque domaine propose **Par défaut**, **Activé** ou **Désactivé**. Par défaut affiche la valeur actuelle de l’application et suit ses changements ; les choix explicites appartiennent au banc et voyagent avec sa configuration. Par défaut demande aussi confirmation si ce choix désactive Agent et modèle. Les nouveaux bancs héritent des valeurs de l’application sans choix explicite. Les bancs en lecture seule ne peuvent pas enregistrer de modifications.
+
+Désactiver le masquage ne restaure pas les contenus déjà enregistrés sous `[REDACTED]`, y compris l’historique des sessions et les artefacts. Relisez ou recréez-les à partir de la source d’origine. Activer le masquage n’efface pas l’historique brut enregistré auparavant.
 
 ## Apparence et langue
 

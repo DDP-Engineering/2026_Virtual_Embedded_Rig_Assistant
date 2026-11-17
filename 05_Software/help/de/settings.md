@@ -10,8 +10,18 @@
 | **Benachrichtigungen** | Noch nicht verfügbar |
 | **Tastenkombinationen** | Ihre eigenen Tastenkombinationen |
 | **Aktualisierungen** | Wie VERA sich selbst aktualisiert |
-| **Daten & Datenschutz** | Noch nicht verfügbar |
+| **Daten & Datenschutz** | Maskierungsstandards für vier Bereiche |
 | **Über** | Version, Laufzeit, Lizenz und Komponenten von Drittanbietern |
+
+## Daten & Datenschutz
+
+Wählen Sie, ob gespeicherte Geheimnisse in **Anzeige**, **Programmläufe**, **Agent und Modell** und **Artefakte und Exporte** durch `[REDACTED]` ersetzt werden. Anzeige und Programmläufe sind standardmäßig aus; Agent und Modell sowie Artefakte und Exporte sind ein. Nur VERA bekannte gespeicherte Geheimnisse werden maskiert; andere vertrauliche Texte werden nicht automatisch erkannt. Anbieterfehler, Verbindungstests und Diagnoseprotokolle bleiben immer geschützt.
+
+**Speichern** und **Abbrechen** stehen oben rechts. Schalter ändern bis zum Speichern nur den Entwurf. Beim Ausschalten von **Agent und Modell** erscheint eine Bestätigung: gespeicherte Geheimnisse aus Dateien oder Werkzeugausgaben können den Modellanbieter erreichen. Abbrechen oder Escape behält die bisherige Auswahl. Die anderen Bereiche fragen nicht nach.
+
+Unter **Workbench bearbeiten → Daten & Datenschutz** hat jeder Bereich **Standard**, **Ein** oder **Aus**. Standard zeigt den aktuellen App-Wert und folgt späteren Änderungen; ausdrückliche Werte gehören zur Workbench und werden mit ihrer Konfiguration kopiert. Auch Standard fragt nach, wenn dadurch Agent und Modell ausgeschaltet wird. Neue Workbenches übernehmen ohne eigene Auswahl die App-Werte. Schreibgeschützte Workbenches können Änderungen nicht speichern.
+
+Ausschalten stellt bereits als `[REDACTED]` gespeicherte Inhalte einschließlich Sitzungsverlauf und Artefakten nicht wieder her. Lesen oder erstellen Sie diese aus der Originalquelle neu. Einschalten löscht keinen zuvor unmaskiert gespeicherten Verlauf.
 
 ## Darstellung und Sprache
 

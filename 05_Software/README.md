@@ -37,7 +37,7 @@ node_modules/         Ignored installed dependencies
 Shared `src/libraries/shared/src/privacy.ts` validates optional masking preferences. Core
 `src/libraries/core/src/settings/masking.ts` binds `maskingFor(workbench, area)` to a live settings
 getter; all four areas now consume their live choices. Agent/model and exports default on, while
-Display and Program runs default off. Settings controls remain in MASK-05. Core sessions/masking.ts
+Display and Program runs default off. Settings and Edit workbench → Data & privacy expose four switches/choices with live inherited labels and an agent-off confirmation. Core sessions/masking.ts
 projects model streams and request history; llm/message-scrub.ts retains protocol discriminants and
 raw execution authority. CLI session-output.ts replaces the replay-only scrubber. Focused tests are
 sessions/masking.test.ts, llm/stream-scrub.test.ts and CLI session-output.test.ts; native
@@ -57,8 +57,8 @@ toggle switches between full project/session navigation and a compact icon rail;
 project navigation and Settings remain reachable. Collapse and panel sizes persist.
 Settings opens its sidebar automatically and displays one selected category at a time;
 Up/Down and Home/End select categories. Providers, Appearance, Language, Updates and About
-contain current controls; Notifications, Keyboard shortcuts, Storage, Configuration and
-Data & privacy show a placeholder until implemented.
+contain current controls; Data & privacy uses explicit Save/Cancel for per-area app defaults.
+Notifications remains a placeholder.
 Appearance offers the same six named sizes for interface, conversation and code/output:
 Extra small, Small, Normal, Large, Extra large and Largest. Sizes remain independent,
 with immediate previews; numeric dimensions are internal. Normal is the default.
@@ -151,7 +151,7 @@ Welcome and Settings use memory navigation; Ctrl+, opens Settings without changi
 Appearance selects Light/Dark/System and five text scales from a 14px base; controls and code use rem.
 Main follows the saved preference with nativeTheme.themeSource. Panels resize by pointer or arrow/Home/End keys and collapse; right-panel content overlays below1280px.
 Renderer geometry lives in the separate localStorage key vera.ui.layout at version 1, with a required source width; invalid or other-version data uses the defaults.
-The strict application settings schema stays authoritative. Providers edits credentials and custom endpoints. Updates, Data & privacy and About are placeholder sections (About also shows metadata).
+The strict application settings schema stays authoritative. Providers edits credentials and custom endpoints. Data & privacy edits app defaults with Save/Cancel; Updates and About have their own panels.
 
 Skills settings opens from Edit workbench → Tools/skills or session Context. Skills live at
 `<workbench>/.vera/skills/<name>/SKILL.md` or `<userData>/skills/<name>/SKILL.md`; workbench
@@ -475,3 +475,5 @@ persisting plaintext original paths in renderer storage. Focused tests sit besid
 `tests/e2e/display-masking.spec.ts` covers stored MQTT credentials, Files/Find selection and restart.
 
 Run presentation uses desktop main/run-presentation.ts with the live Program runs resolver, separate from raw local logs and agent scrubbing. renderer/hooks/use-run-presentation.ts resets run/status caches; full-log viewer attempts refresh across inactive sessions. Sibling tests cover inheritance, ownership and live policy changes.
+
+Privacy controls: renderer/components/privacy-settings.tsx owns the app draft; workbench-privacy.tsx consumes the confirmed settings query and the existing workbench draft; privacy-controls.tsx presents switches/choices and the agent disclosure dialog. Focused tests sit beside these components; tests/e2e/privacy-settings.spec.ts proves native four-language Save/Cancel, inheritance and independent persistence.

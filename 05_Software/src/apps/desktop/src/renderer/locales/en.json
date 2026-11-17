@@ -1214,5 +1214,18 @@
     "name": "Terminal {{number}}",
     "consent": "Allow agent to read this terminal",
     "input": "Terminal input"
+  },
+  "privacy": {
+    "display": "Display",
+    "runs": "Program runs",
+    "agent": "Agent and model",
+    "exports": "Artifacts and exports",
+    "default": "Default ({{value}})",
+    "on": "On",
+    "off": "Off",
+    "confirmTitle": "Turn off Agent and model masking?",
+    "warning": "Stored secrets found in files or tool output can be sent to the model provider when Agent and model masking is off.",
+    "confirm": "Turn off masking",
+    "loading": "Loading privacy settings…"
   }
 }

@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-UX-65f41205"
+title = "Workbench masking choices show live inherited app values"
+status = "active"
+requirement = """When editing or creating a workbench, the desktop shall offer localized Default, On and Off choices for each masking area, showing the live inherited app value in Default and using the owning config draft and Save/Cancel lifecycle with mutations disabled for read-only workbenches."""
+verification = """Choose overrides and Default, refresh app defaults, Save/reopen, cancel and switch workbench; verify independent choices, clean/dirty gating, no storage before Save and readonly controls."""
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/", "05_Software/src/apps/desktop/src/renderer/hooks/use-preferences.ts", "05_Software/src/apps/desktop/src/renderer/styles.css", "05_Software/src/apps/desktop/src/renderer/locales/"]
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/privacy-settings.test.ts", "05_Software/src/apps/desktop/src/renderer/components/workbench-privacy.test.ts", "05_Software/src/apps/desktop/src/renderer/hooks/use-preferences.test.ts", "05_Software/tests/e2e/privacy-settings.spec.ts"]
+priority = "normal"
+created = 2026-11-17
+updated = 2026-11-17

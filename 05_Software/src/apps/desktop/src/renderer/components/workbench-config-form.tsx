@@ -7,6 +7,7 @@ import { WorkbenchCommandPrefixes } from "./workbench-command-prefixes.js";
 import { WorkbenchDocuments } from "./workbench-documents.js";
 import { WorkbenchFolders } from "./workbench-folders.js";
 import { WorkbenchPlugins } from "./workbench-plugins.js";
+import { WorkbenchPrivacy } from "./workbench-privacy.js";
 import { WorkbenchTools } from "./workbench-tools.js";
 
 export const configSections = [
@@ -18,6 +19,7 @@ export const configSections = [
   "skills",
   "tools",
   "plugins",
+  "privacy",
 ] as const;
 export type ConfigSection = (typeof configSections)[number];
 
@@ -87,6 +89,7 @@ export function WorkbenchConfigForm({
     skills: t("projects.skills"),
     embeddings: t("projects.indexing"),
     plugins: t("projects.plugins"),
+    privacy: t("settings.data"),
   };
   const [section, setSection] = useState<ConfigSection>(request?.section ?? "general");
   const content = useRef<HTMLDivElement>(null);
@@ -121,6 +124,14 @@ export function WorkbenchConfigForm({
       <div ref={content} className="workbench-editor-content">
         {notices}
         <fieldset disabled={(readOnly && section !== "instructions" && section !== "plugins") || disabled}>
+          {section === "privacy" && (
+            <WorkbenchPrivacy
+              key={workbenchId ?? folder}
+              config={config}
+              setConfig={setConfig}
+              disabled={disabled || readOnly}
+            />
+          )}
           {section === "general" && (
             <>
               {general}

@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-REL-53b7d5ce"
+title = "Retain privacy drafts across settings refresh and failed saves"
+status = "active"
+requirement = """While a privacy draft is open, the desktop shall retain user-edited areas across confirmed settings refreshes and failed saves, using the latest confirmed values for unedited inherited app areas and rejecting stale asynchronous fetch results."""
+verification = """Delay initial app settings read while a newer confirmed update arrives; verify inherited labels follow newest values without overwriting workbench drafts, app edits survive external refresh and save failure remains retryable; changing owner discards old pending confirmation."""
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/", "05_Software/src/apps/desktop/src/renderer/hooks/", "05_Software/src/apps/desktop/src/renderer/styles.css", "05_Software/src/apps/desktop/src/renderer/locales/"]
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/privacy-settings.test.ts", "05_Software/src/apps/desktop/src/renderer/components/workbench-privacy.test.ts", "05_Software/src/apps/desktop/src/renderer/hooks/use-preferences.test.ts", "05_Software/tests/e2e/privacy-settings.spec.ts"]
+priority = "normal"
+created = 2026-11-17
+updated = 2026-11-17

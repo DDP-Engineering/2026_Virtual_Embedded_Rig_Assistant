@@ -1214,5 +1214,18 @@
     "name": "Terminal {{number}}",
     "consent": "Autoriser l’agent à lire ce terminal",
     "input": "Saisie du terminal"
+  },
+  "privacy": {
+    "display": "Affichage",
+    "runs": "Exécutions de programmes",
+    "agent": "Agent et modèle",
+    "exports": "Artefacts et exports",
+    "default": "Par défaut ({{value}})",
+    "on": "Activé",
+    "off": "Désactivé",
+    "confirmTitle": "Désactiver le masquage pour l’agent et le modèle ?",
+    "warning": "Les secrets enregistrés trouvés dans les fichiers ou les résultats des outils peuvent être envoyés au fournisseur du modèle lorsque le masquage pour l’agent et le modèle est désactivé.",
+    "confirm": "Désactiver le masquage",
+    "loading": "Chargement des paramètres de confidentialité…"
   }
 }

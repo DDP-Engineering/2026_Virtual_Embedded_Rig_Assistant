@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-UX-a57996c8"
+title = "App masking switches use an explicit privacy draft"
+status = "active"
+requirement = """When the user edits Settings > Data & privacy, the desktop shall offer localized Display, Program runs, Agent and model and Artifacts and exports switches as an unsaved draft with top-right Cancel and primary Save that persists the changed app areas."""
+verification = """Toggle each area from omitted and explicit defaults; no update before Save, Cancel resets and Save persists/reopens in en/ro/de/fr; unchanged draft disables Save."""
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/", "05_Software/src/apps/desktop/src/renderer/hooks/use-preferences.ts", "05_Software/src/apps/desktop/src/renderer/styles.css", "05_Software/src/apps/desktop/src/renderer/locales/"]
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/privacy-settings.test.ts", "05_Software/src/apps/desktop/src/renderer/components/workbench-privacy.test.ts", "05_Software/src/apps/desktop/src/renderer/hooks/use-preferences.test.ts", "05_Software/tests/e2e/privacy-settings.spec.ts"]
+priority = "normal"
+created = 2026-11-17
+updated = 2026-11-17

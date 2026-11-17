@@ -1214,5 +1214,18 @@
     "name": "Terminal {{number}}",
     "consent": "Permite agentului să citească acest terminal",
     "input": "Intrare terminal"
+  },
+  "privacy": {
+    "display": "Afișare",
+    "runs": "Rulări de programe",
+    "agent": "Agent și model",
+    "exports": "Artefacte și exporturi",
+    "default": "Implicit ({{value}})",
+    "on": "Activat",
+    "off": "Dezactivat",
+    "confirmTitle": "Dezactivați mascarea pentru agent și model?",
+    "warning": "Secretele stocate găsite în fișiere sau în rezultatele instrumentelor pot fi trimise furnizorului modelului când mascarea pentru agent și model este dezactivată.",
+    "confirm": "Dezactivează mascarea",
+    "loading": "Se încarcă setările de confidențialitate…"
   }
 }
