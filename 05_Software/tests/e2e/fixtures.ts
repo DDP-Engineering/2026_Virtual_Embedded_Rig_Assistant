@@ -1,11 +1,13 @@
 import { join } from "node:path";
+import { stripVTControlCharacters } from "node:util";
 import { test as base } from "@playwright/test";
 
 export { expect } from "@playwright/test";
 
 /** The actual loopback port printed by a ready renderer, including Vite's port-conflict fallback. */
 export function rendererUrlFromOutput(output: string): string {
-  const url = output.match(/http:\/\/127\.0\.0\.1:\d+\//)?.[0];
+  // Playwright workers force colours, so Vite prints the port between escape codes.
+  const url = stripVTControlCharacters(output).match(/http:\/\/127\.0\.0\.1:\d+\//)?.[0];
   if (!url) throw Error("Renderer did not report its loopback URL");
   return url;
 }

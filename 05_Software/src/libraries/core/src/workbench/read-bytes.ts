@@ -73,8 +73,10 @@ export async function readBytes(
       throw error;
     }
     try {
-      if (!sameFile(info, await handle.stat())) throw veraError("CONFLICT");
+      // Before and after the read the path is checked first: unlinking changes the open file's
+      // ctime on Linux, and a removed file is reported as missing, not as a conflict.
       await checkPath();
+      if (!sameFile(info, await handle.stat())) throw veraError("CONFLICT");
       const count = Math.min(length, Math.max(0, info.size - offset));
       const start = count ? Math.max(0, offset - DOCS_BYTE_CONTEXT_LIMIT) : offset;
       const end = count
@@ -92,8 +94,8 @@ export async function readBytes(
         if (!bytesRead) throw veraError("CONFLICT");
         filled += bytesRead;
       }
-      if (!sameFile(info, await handle.stat())) throw veraError("CONFLICT");
       await checkPath();
+      if (!sameFile(info, await handle.stat())) throw veraError("CONFLICT");
       return { path, offset, size: info.size, start, bytes, revision: fileRevision(info) };
     } finally {
       await handle.close();

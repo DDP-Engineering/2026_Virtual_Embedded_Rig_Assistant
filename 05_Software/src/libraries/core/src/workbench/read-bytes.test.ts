@@ -164,6 +164,17 @@ it("reports a vanished file or a replacement folder when open fails", async () =
   }
 });
 
+it("reports a file removed between open and the first check as missing", async () => {
+  vi.mocked(fs.open).mockImplementationOnce(async (...args) => {
+    const handle = await actual.open(...args);
+    await fs.unlink(join(root, "ignored/binary.bin"));
+    return handle;
+  });
+  await expect(reader.readBytes(root, "ignored/binary.bin", 0, 5)).rejects.toMatchObject({
+    code: "NOT_FOUND",
+  });
+});
+
 it.each(["rewrite", "truncate", "remove"])("refuses %s during a read", async (change) => {
   vi.mocked(fs.open).mockImplementationOnce(async (...args) => {
     const handle = await actual.open(...args);

@@ -504,6 +504,7 @@ test("New Workbench creates only and submits the configured draft with prefilled
     [...page.querySelectorAll("[data-project-section]")].map((b) => b.getAttribute("data-project-section")),
   ).toEqual([
     "general",
+    "interface",
     "instructions",
     "documents",
     "embeddings",
@@ -795,6 +796,7 @@ test("workbench editor shows the creation page's sections and the open workbench
     [...editor.querySelectorAll("[data-project-section]")].map((b) => b.getAttribute("data-project-section")),
   ).toEqual([
     "general",
+    "interface",
     "instructions",
     "documents",
     "embeddings",

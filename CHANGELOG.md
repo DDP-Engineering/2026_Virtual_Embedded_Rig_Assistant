@@ -8,6 +8,8 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ### Fixed
 
+- On Linux, a file deleted while its bytes are read is reported as missing, not as a conflict.
+- UI checks read the renderer's address from coloured output and wait for a pending bookmark update.
 - Closing a terminal suspends its I/O and ignores late responses from the terminal being closed.
 - Tool calls no longer show blank output blocks when the result is empty or contains only whitespace.
 - Tool activity shows readable plan steps; translation catalogs refresh in an already running development app.

@@ -152,6 +152,8 @@ test("native bookmarks persist after restart and archived sessions lock both con
     await marker.press("Tab");
     await card(page).getByRole("button").press("Enter");
     await expect(users(page).first().locator("[data-bookmark]")).toHaveAttribute("aria-pressed", "false");
+    // The optimistic state changes at once; the control stays disabled until the request settles.
+    await expect(card(page).getByRole("button")).toBeEnabled();
     await card(page).getByRole("button").press("Enter");
     await expect
       .poll(
