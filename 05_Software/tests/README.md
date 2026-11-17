@@ -21,6 +21,12 @@ Files/Find UI selection, colliding labels, live settings/workbench choices and r
 Browser `e2e/i18n-hmr.spec.ts` checks live translation-catalog replacement on mounted tool activity,
 preserving the selected language and expanded plan without a page reload.
 
+Plugin acceptance uses `VERA_TEST_PYTHON` when set. On Windows an isolated environment can live at
+`02_Tools/runtime/test-python`; create it with `python -m venv`, then install `paho-mqtt==2.1.0`,
+`cryptography==49.0.0`, `asyncssh==2.24.1`, `flatbuffers==25.12.19` and `PyYAML==6.0.3` with its pip.
+Set `VERA_TEST_PYTHON` to that environment's absolute `Scripts/python.exe` path before running the
+plugin suite. The Raspberry Pi SSH fixture additionally uses the default WSL Linux shell on Windows.
+
 Native `e2e/privacy-settings.spec.ts` covers both privacy pages in en/ro/de/fr, unsaved confirmation,
 live inherited defaults, new-workbench choices, independent owners and process restart persistence.
 Original screenshots/receipts use `evaluation-outputs/mask05/native`.
