@@ -32,6 +32,7 @@ Wählen Sie **Workbench bearbeiten** in der Übersicht oder im Zeilenmenü. Änd
 | Abschnitt | Was er festlegt |
 |---|---|
 | **Allgemein** | Name und Beschreibung |
+| **Oberfläche** | Sichtbarkeit der **Tabs im rechten Bereich** |
 | **Dokumente & RAG** | Welche Ordner und Dateien indiziert werden |
 | **Agent und Chat** | Standardmodell, Standard-Berechtigungsmodus, **Detailgrad** |
 | **Anweisungen** | Der Text von `.vera/WORKBENCH.md`, den der Agent in jeder Sitzung liest |
@@ -41,6 +42,14 @@ Wählen Sie **Workbench bearbeiten** in der Übersicht oder im Zeilenmenü. Änd
 | **Plugins** | Welche installierten Plugins diese Workbench aktiviert |
 
 Halten Sie die Anweisungen kurz und sachlich: das Board, der Mikrocontroller, die Toolchain, Konventionen. Nur die ersten 16 KB werden an den Agenten übergeben; VERA warnt, wenn der Text länger ist.
+
+## Tabs im rechten Bereich
+
+Öffnen Sie **Workbench bearbeiten > Oberfläche > Tabs im rechten Bereich**. Wählen Sie die sichtbaren Tabs: Anweisungen und Skills, Dateien, Änderungen, Artefakte, Plan, Läufe und Terminal. Standardmäßig sind alle ausgewählt. **Standard wiederherstellen** wählt alle im Entwurf aus; **Speichern** übernimmt den Entwurf, **Abbrechen** verwirft ihn.
+
+Speichern aktualisiert sofort alle Sitzungen dieser Workbench, auch nach erneutem Öffnen oder einem Neustart von VERA. Andere Workbenches behalten ihre eigene Auswahl. Wird der aktive Tab ausgeblendet, wird der erste verbleibende Tab in der üblichen Reihenfolge ausgewählt. Sind alle ausgeblendet, schließt sich der rechte Bereich und die übliche Öffnen-Schaltfläche entfällt. **Tabs im rechten Bereich** bleibt auf der Hauptseite erreichbar; der Editor ist auch über Übersicht und Seitenleistenmenü zugänglich.
+
+Pfeiltasten, Pos1 und Ende besuchen nur sichtbare Tabs. Das Terminal-Tastenkürzel blendet keinen versteckten Tab ein, sondern bietet einen Link zu diesen Einstellungen. Ausblenden ändert nur die Darstellung: Anweisungen, Dateien, Änderungen, Artefakte, Pläne und Verlauf bleiben erhalten, Agentenwerkzeuge arbeiten weiter und laufende Terminals und Programme werden nicht beendet. Schließen bleibt im angezeigten Bereich verfügbar und ist kein konfigurierbarer Tab.
 
 ## Schreibgeschützte Workbenches
 

@@ -235,6 +235,7 @@ it("scrubs event user text while short secrets preserve protocol fields and disc
       allowed_commands: ["npm test", `npm ${privateKey}`],
     },
     chat: { detail: "minimal", extension: privateKey },
+    interface: { right_panel_tabs: ["context", "terminal"], extension: privateKey },
     [privateKey]: { detail: privateKey },
   });
   for (const short of [
@@ -249,6 +250,10 @@ it("scrubs event user text while short secrets preserve protocol fields and disc
     "chat",
     "detail",
     "minimal",
+    "interface",
+    "right_panel_tabs",
+    "context",
+    "terminal",
   ]) {
     const send = vi.fn();
     const emit = createEventEmitter(
@@ -273,6 +278,7 @@ it("scrubs event user text while short secrets preserve protocol fields and disc
       expect(JSON.stringify(envelope)).not.toContain(privateKey);
     }
     expect(send.mock.calls[1]?.[1].event.config.chat.detail).toBe("minimal");
+    expect(send.mock.calls[1]?.[1].event.config.interface.right_panel_tabs).toEqual(["context", "terminal"]);
     expect(send.mock.calls[0]?.[1]).toEqual({ topic: "app", id: "app", event: { type: "settings.changed" } });
   }
 });

@@ -32,6 +32,7 @@ Select **Edit workbench** on the overview or in the row menu. Change the section
 | Section | What it sets |
 |---|---|
 | **General** | Name and description |
+| **Interface** | **Right panel tabs** visibility |
 | **Documents & RAG** | Which folders and files are indexed |
 | **Agent and chat** | Default model, default permission mode, **Detail level** |
 | **Instructions** | The text of `.vera/WORKBENCH.md`, which the agent reads in every session |
@@ -41,6 +42,14 @@ Select **Edit workbench** on the overview or in the row menu. Change the section
 | **Plugins** | Which installed plugins this workbench enables |
 
 Keep the instructions short and factual: the board, the MCU, the toolchain, conventions. Only the first 16 KB are given to the agent; VERA warns when the text is longer.
+
+## Right panel tabs
+
+Open **Edit workbench > Interface > Right panel tabs**. Select which tabs to show: Instructions and skills, Files, Changes, Artifacts, Plan, Runs and Terminal. All are selected by default. **Restore defaults** selects all tabs in the draft; **Save** applies it and **Cancel** discards it.
+
+Saving updates every session of this workbench immediately, including after reopening or restarting VERA. Other workbenches keep their own selection. Hiding the active tab selects the first remaining tab in the normal order. Hiding every tab closes the right panel and removes its usual open button. **Right panel tabs** remains available on the main page, and **Edit workbench** stays accessible from the overview and sidebar menu.
+
+Arrow keys, Home and End visit only visible tabs. The terminal shortcut never reveals a hidden tab; it offers a link to these workbench settings instead. Hiding tabs only changes presentation: stored instructions, files, changes, artifacts, plans and history remain intact, agent tools still work, and running terminals and programs continue. Close is always available while the panel is displayed and is not a configurable tab.
 
 ## Read-only workbenches
 

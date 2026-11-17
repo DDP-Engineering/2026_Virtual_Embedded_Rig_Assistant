@@ -136,6 +136,7 @@
   },
   "panel": {
     "title": "Panoul din dreapta",
+    "hiddenTab": "Această filă este ascunsă. Modifică Filele panoului din dreapta în setările workbench-ului.",
     "close": "Închide",
     "context": "Instrucțiuni și skills",
     "docs": "Fișiere",
@@ -785,6 +786,9 @@
     "expand": "Arată sesiunile",
     "collapse": "Ascunde sesiunile",
     "general": "General",
+    "interface": "Interfață",
+    "rightPanelTabs": "Filele panoului din dreapta",
+    "restorePanelTabs": "Restabilește valorile implicite",
     "documents": "Documente și RAG",
     "agent": "Agent și chat",
     "instructions": "Instrucțiuni",

@@ -1,6 +1,13 @@
 version: Unreleased
 date: null
 entries:
+  - category: new
+    topic: { en: Workbench, ro: Workbench, de: Workbench, fr: Workbench }
+    text:
+      en: Choose visible right-panel tabs per workbench and check its storage size on demand.
+      ro: Alege filele vizibile din dreapta pe workbench și verifică spațiul ocupat la cerere.
+      de: Rechte Tabs je Workbench wählen und bei Bedarf deren Speicherbelegung prüfen.
+      fr: Choisissez les onglets droits par banc et consultez son espace utilisé à la demande.
   - category: fixed
     topic: { en: Chat, ro: Chat, de: Chat, fr: Chat }
     text:
@@ -22,13 +29,6 @@ entries:
       ro: Textul terminalului urmează imediat dimensiunea pentru cod/ieșire și recalculează rândurile.
       de: Terminaltext folgt sofort der Schriftgröße für Code/Ausgabe und passt Zeilen und Spalten an.
       fr: Le terminal suit immédiatement la taille du texte de code/sortie et ajuste lignes et colonnes.
-  - category: new
-    topic: { en: Workbench, ro: Workbench, de: Workbench, fr: Workbench }
-    text:
-      en: See the storage used by the workbench’s .vera folder and refresh its size on demand.
-      ro: Vezi spațiul ocupat de folderul .vera al workbench-ului și actualizează dimensiunea la cerere.
-      de: Speicherbelegung des .vera-Ordners der Workbench anzeigen und bei Bedarf aktualisieren.
-      fr: Consultez l’espace utilisé par le dossier .vera du banc et actualisez sa taille à la demande.
   - category: fixed
     topic: { en: Files, ro: Fișiere, de: Dateien, fr: Fichiers }
     text:

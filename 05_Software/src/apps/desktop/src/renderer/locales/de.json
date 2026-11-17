@@ -136,6 +136,7 @@
   },
   "panel": {
     "title": "Rechter Bereich",
+    "hiddenTab": "Dieser Tab ist ausgeblendet. Ändern Sie Tabs im rechten Bereich in den Workbench-Einstellungen.",
     "close": "Schließen",
     "context": "Anweisungen und Skills",
     "docs": "Dateien",
@@ -785,6 +786,9 @@
     "expand": "Sitzungen anzeigen",
     "collapse": "Sitzungen ausblenden",
     "general": "Allgemein",
+    "interface": "Oberfläche",
+    "rightPanelTabs": "Tabs im rechten Bereich",
+    "restorePanelTabs": "Standard wiederherstellen",
     "documents": "Dokumente & RAG",
     "agent": "Agent und Chat",
     "instructions": "Anweisungen",

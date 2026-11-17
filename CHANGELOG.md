@@ -58,6 +58,7 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ### Added
 
+- Workbenches can choose visible right-panel tabs, with saved preferences and draft default restoration.
 - Image previews fit PNG, JPEG, GIF, WebP, BMP and inert SVG, with original-image zoom through 400% and Hex.
 - File viewer modes switch between Rendered, Text and Hex, with binary defaults and remembered extension choices.
 

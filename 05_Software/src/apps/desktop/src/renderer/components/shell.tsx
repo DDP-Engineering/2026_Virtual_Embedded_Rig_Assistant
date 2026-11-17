@@ -1,20 +1,15 @@
+import { type RightPanelTab, rightPanelTabIds } from "@vera/shared";
 import {
   Activity,
   ArrowLeft,
-  BookOpen,
   CircleQuestionMark,
-  FileDiff,
   Folder,
   Home,
-  ListTodo,
-  Package,
   PanelLeft,
   PanelRight,
-  Play,
   Plus,
   Puzzle,
   Settings as SettingsIcon,
-  SquareTerminal,
   X,
 } from "lucide-react";
 import {
@@ -32,6 +27,7 @@ import ddpLogoDark from "../assets/ddp-logo-dark.png";
 import ddpLogoLight from "../assets/ddp-logo-light.png";
 import { defaultLayout, type Layout, readLayout, saveLayout } from "../lib/layout.js";
 import { ShortcutContext, shortcutCommand } from "../lib/shortcuts.js";
+import { rightPanelTabs } from "./right-panel-tabs.js";
 
 type Side = "sidebar" | "right";
 function initialLayout() {
@@ -59,7 +55,13 @@ export function Shell({
   docs,
   runs,
   terminal,
+  workbenchId,
+  visibleTabs = rightPanelTabIds,
+  configurePanelTabs,
 }: {
+  workbenchId?: string | undefined;
+  visibleTabs?: readonly RightPanelTab[] | undefined;
+  configurePanelTabs?: (() => void) | undefined;
   children?: ReactNode;
   navigation: ReactNode;
   settings: boolean;
@@ -81,13 +83,56 @@ export function Shell({
   const { t } = useTranslation();
   const [layout, setLayout] = useState(initialLayout);
   const bindings = useContext(ShortcutContext);
+  const tabs = rightPanelTabs(t).filter(({ id }) => visibleTabs.includes(id));
+  const [selection, setSelection] = useState<{
+    workbenchId: string | undefined;
+    tab: RightPanelTab | undefined;
+  }>({
+    workbenchId,
+    tab: "context",
+  });
+  const tab =
+    selection.workbenchId === workbenchId && tabs.some(({ id }) => id === selection.tab)
+      ? selection.tab
+      : tabs[0]?.id;
+  const [blockedRequest, setBlockedRequest] = useState<{
+    workbenchId: string | undefined;
+    target: "terminal" | "panel";
+  }>();
+  const hiddenRequest =
+    blockedRequest !== undefined &&
+    blockedRequest.workbenchId === workbenchId &&
+    (blockedRequest.target === "terminal" ? !visibleTabs.includes("terminal") : tabs.length === 0);
+  const panelHadFocus = useRef(false);
+  const settingsLink = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    setSelection({ workbenchId, tab });
+  }, [tab, workbenchId]);
+  useEffect(() => {
+    // A removed selector or panel must not strand focus on the document body.
+    if (panelHadFocus.current && document.activeElement === document.body) {
+      const target = tab ? document.getElementById(`tab-${tab}`) : null;
+      (
+        target ??
+        settingsLink.current ??
+        panelToggle.current ??
+        document.getElementById("main-content")
+      )?.focus();
+      panelHadFocus.current = false;
+    }
+  });
   useEffect(() => {
     const listener = (event: KeyboardEvent) => {
       const command = shortcutCommand(event, bindings);
       if (command === "openTerminal") {
         event.preventDefault();
+        if (!visibleTabs.includes("terminal")) {
+          setBlockedRequest({ workbenchId, target: "terminal" });
+          return;
+        }
+        setBlockedRequest(undefined);
         setLayout((value) => ({ ...value, rightCollapsed: false }));
-        setTab("terminal");
+        setSelection({ workbenchId, tab: "terminal" });
         window.setTimeout(
           () => document.querySelector<HTMLTextAreaElement>(".terminal-surface textarea")?.focus(),
           0,
@@ -96,6 +141,10 @@ export function Shell({
       }
       if (command !== "toggleSidebar" && command !== "toggleRightPanel") return;
       event.preventDefault();
+      if (command === "toggleRightPanel" && visibleTabs.length === 0) {
+        setBlockedRequest({ workbenchId, target: "panel" });
+        return;
+      }
       setLayout((value) =>
         command === "toggleSidebar"
           ? { ...value, sidebarCollapsed: !value.sidebarCollapsed }
@@ -104,8 +153,7 @@ export function Shell({
     };
     window.addEventListener("keydown", listener);
     return () => window.removeEventListener("keydown", listener);
-  }, [bindings]);
-  const [tab, setTab] = useState("context");
+  }, [bindings, visibleTabs, workbenchId]);
   // Each panel can grow up to half the window (to the middle of the screen).
   const halfWindow = () =>
     window.innerWidth / 2 / Number.parseFloat(getComputedStyle(document.documentElement).fontSize);
@@ -220,15 +268,6 @@ export function Shell({
       />
     );
   }
-  const tabs = [
-    { id: "context", label: t("panel.context"), icon: BookOpen },
-    { id: "docs", label: t("panel.docs"), icon: Folder },
-    { id: "changes", label: t("panel.changes"), icon: FileDiff },
-    { id: "artifacts", label: t("panel.artifacts"), icon: Package },
-    { id: "plan", label: t("panel.plan"), icon: ListTodo },
-    { id: "runs", label: t("panel.runs"), icon: Play },
-    { id: "terminal", label: t("panel.terminal"), icon: SquareTerminal },
-  ];
   const style = {
     "--sidebar-width": `${layout.sidebar}rem`,
     "--right-width": `${layout.right}rem`,
@@ -315,18 +354,20 @@ export function Shell({
             <CircleQuestionMark aria-hidden="true" />
           </button>
         )}
-        <button
-          ref={panelToggle}
-          type="button"
-          data-toggle="right"
-          aria-label={t("layout.toggleRight")}
-          title={t("layout.toggleRight")}
-          aria-expanded={!layout.rightCollapsed}
-          aria-controls="right-panel"
-          onClick={() => setLayout((value) => ({ ...value, rightCollapsed: !value.rightCollapsed }))}
-        >
-          <PanelRight aria-hidden="true" />
-        </button>
+        {tabs.length > 0 && (
+          <button
+            ref={panelToggle}
+            type="button"
+            data-toggle="right"
+            aria-label={t("layout.toggleRight")}
+            title={t("layout.toggleRight")}
+            aria-expanded={!layout.rightCollapsed}
+            aria-controls="right-panel"
+            onClick={() => setLayout((value) => ({ ...value, rightCollapsed: !value.rightCollapsed }))}
+          >
+            <PanelRight aria-hidden="true" />
+          </button>
+        )}
       </header>
       <div className="shell-body">
         <aside id="sidebar" data-panel="sidebar" className="sidebar" data-collapsed={layout.sidebarCollapsed}>
@@ -428,15 +469,28 @@ export function Shell({
         </aside>
         <main id="main-content" tabIndex={-1}>
           {menuUnavailable && <p role="alert">{t("windowMenu.unavailable")}</p>}
+          {hiddenRequest && <p role="status">{t("panel.hiddenTab")}</p>}
+          {configurePanelTabs && (hiddenRequest || tabs.length === 0) && (
+            <button ref={settingsLink} type="button" data-configure-panel-tabs onClick={configurePanelTabs}>
+              {t("projects.rightPanelTabs")}
+            </button>
+          )}
           {children}
         </main>
-        {!layout.rightCollapsed && (
+        {!layout.rightCollapsed && tabs.length > 0 && (
           <aside
             id="right-panel"
             data-panel="right"
             data-tab={tab}
             className="right-panel"
             aria-label={t("panel.title")}
+            onFocusCapture={() => {
+              panelHadFocus.current = true;
+            }}
+            onBlurCapture={(event) => {
+              if (event.relatedTarget && !event.currentTarget.contains(event.relatedTarget))
+                panelHadFocus.current = false;
+            }}
           >
             {separator("right")}
             <div className="panel-toolbar">
@@ -452,7 +506,7 @@ export function Shell({
                     aria-selected={tab === id}
                     tabIndex={tab === id ? 0 : -1}
                     key={id}
-                    onClick={() => setTab(id)}
+                    onClick={() => setSelection({ workbenchId, tab: id })}
                     onKeyDown={(event) => {
                       if (event.altKey || event.ctrlKey || event.metaKey || event.nativeEvent.isComposing)
                         return;
@@ -470,7 +524,7 @@ export function Shell({
                       const target = next === undefined ? undefined : tabs[next];
                       if (target) {
                         event.preventDefault();
-                        setTab(target.id);
+                        setSelection({ workbenchId, tab: target.id });
                         document.getElementById(`tab-${target.id}`)?.focus();
                       }
                     }}

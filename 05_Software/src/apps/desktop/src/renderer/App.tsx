@@ -553,6 +553,21 @@ export function App() {
               changed={changed}
             >
               <Shell
+                workbenchId={benchId}
+                visibleTabs={bench.data?.config.interface.right_panel_tabs}
+                configurePanelTabs={
+                  activeWorkbench
+                    ? () => {
+                        if (!leaveEditor()) return;
+                        setSettings(false);
+                        setNewWorkbench(false);
+                        setPlugins(false);
+                        setHelp(undefined);
+                        setChat(false);
+                        openEditor(activeWorkbench, "interface");
+                      }
+                    : undefined
+                }
                 settings={settings}
                 newSelected={newWorkbench}
                 pluginsSelected={plugins}
