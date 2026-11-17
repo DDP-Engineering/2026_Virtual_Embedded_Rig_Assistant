@@ -32,6 +32,7 @@ Selectează **Editează workbenchul** în prezentare sau în meniul rândului. M
 | Secțiune | Ce setează |
 |---|---|
 | **General** | Numele și descrierea |
+| **Interfață** | Vizibilitatea pentru **Filele panoului din dreapta** |
 | **Documente și RAG** | Ce foldere și fișiere sunt indexate |
 | **Agent și chat** | Modelul implicit, modul de permisiuni implicit, **Nivel de detaliu** |
 | **Instrucțiuni** | Textul din `.vera/WORKBENCH.md`, pe care agentul îl citește în fiecare sesiune |
@@ -41,6 +42,14 @@ Selectează **Editează workbenchul** în prezentare sau în meniul rândului. M
 | **Pluginuri** | Ce pluginuri instalate activează acest workbench |
 
 Păstrează instrucțiunile scurte și factuale: placa, microcontrolerul, toolchainul, convențiile. Doar primii 16 KB ajung la agent; VERA te avertizează când textul este mai lung.
+
+## Filele panoului din dreapta
+
+Deschide **Editează workbench > Interfață > Filele panoului din dreapta**. Alege filele vizibile: Instrucțiuni și skills, Fișiere, Modificări, Artefacte, Plan, Rulări și Terminal. Implicit sunt selectate toate. **Restabilește valorile implicite** le selectează în ciornă; **Salvează** aplică selecția, iar **Anulează** o abandonează.
+
+Salvarea actualizează imediat toate sesiunile acestui workbench, inclusiv după redeschidere sau repornirea VERA. Alte workbenchuri își păstrează propriile selecții. Dacă ascunzi fila activă, este selectată prima filă rămasă în ordinea obișnuită. Dacă le ascunzi pe toate, panoul se închide și butonul obișnuit de deschidere dispare. **Filele panoului din dreapta** rămâne accesibil pe pagina principală, iar editorul rămâne disponibil din prezentarea workbench-ului și meniul lateral.
+
+Săgețile, Home și End parcurg doar filele vizibile. Scurtătura terminalului nu dezvăluie o filă ascunsă, ci oferă acces la aceste setări. Ascunderea schimbă doar afișarea: instrucțiunile, fișierele, modificările, artefactele, planurile și istoricul se păstrează; instrumentele agentului funcționează în continuare, iar terminalele și programele active nu sunt oprite. Închide rămâne disponibil când panoul este afișat și nu este o filă configurabilă.
 
 ## Workbenchuri doar pentru citire
 

@@ -136,6 +136,7 @@
   },
   "panel": {
     "title": "Right panel",
+    "hiddenTab": "This tab is hidden. Change Right panel tabs in workbench settings to show it.",
     "close": "Close",
     "context": "Instructions and skills",
     "docs": "Files",
@@ -785,6 +786,9 @@
     "expand": "Show sessions",
     "collapse": "Hide sessions",
     "general": "General",
+    "interface": "Interface",
+    "rightPanelTabs": "Right panel tabs",
+    "restorePanelTabs": "Restore defaults",
     "documents": "Documents & RAG",
     "agent": "Agent and chat",
     "instructions": "Instructions",

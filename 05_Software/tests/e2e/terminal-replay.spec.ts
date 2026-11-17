@@ -164,6 +164,33 @@ api.invoke = (channel, input) => channel.startsWith('terminal.')
     expect(count()).toBe(before);
     await query("TWO");
     expect(count()).toBe(before + 1);
+    // Hiding selectors must only detach the view, never terminate its PTY or foreground program.
+    const running = join(root, "running.cjs");
+    await writeFile(running, "setInterval(() => console.log('HIDDEN_TAB_TICK'), 300);\n");
+    service.input(
+      owner,
+      first.id,
+      `${process.platform === "win32" ? "& " : ""}${quote(process.execPath)} ${quote(running)}\r`,
+    );
+    await expect.poll(output).toContain("HIDDEN_TAB_TICK");
+    await page.locator('[data-action="edit-workbench-overview"]').click();
+    await page.locator('[data-project-section="interface"]').click();
+    await page.locator('[data-panel-tab-toggle="terminal"]').uncheck();
+    await page.locator('[data-panel-tab-toggle="runs"]').uncheck();
+    await page.locator("[data-project-save]").click();
+    await expect(page.locator("#tab-terminal")).toHaveCount(0);
+    await expect(page.locator("#tab-runs")).toHaveCount(0);
+    const hiddenLength = output().length;
+    await expect.poll(() => output().length).toBeGreaterThan(hiddenLength);
+    expect(service.list(owner).find((terminal) => terminal.id === first.id)?.running).toBe(true);
+    await page.keyboard.press("Control+Shift+T");
+    await expect(page.locator("#tab-terminal")).toHaveCount(0);
+    await page.locator("[data-configure-panel-tabs]").click();
+    await page.locator("[data-restore-panel-tabs]").click();
+    await page.locator("[data-project-save]").click();
+    await page.locator("#tab-terminal").click();
+    await expect(page.locator(".xterm-rows")).toContainText("HIDDEN_TAB_TICK");
+    expect(service.list(owner)).toHaveLength(2);
     expect(output()).not.toContain("ParserError");
     expect(outbound).toEqual([]);
     await writeFile(

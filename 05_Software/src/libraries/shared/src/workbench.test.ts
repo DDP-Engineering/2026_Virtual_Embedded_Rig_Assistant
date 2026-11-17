@@ -1,10 +1,32 @@
 import { expect, it } from "vitest";
 import {
   mergeWorkbench,
+  rightPanelTabIds,
   workbenchSchema as schema,
   configWarnings as warnings,
   workbenchPatchSchema,
 } from "./workbench.js";
+
+it("defaults to every content tab, preserves presentation settings and validates tab identities", () => {
+  const base = schema.parse({ format: 1, id: "wb_01JB8Z6Q4M7N2K5R9T3V8X1Y0C", name: "Board" });
+  expect(base.interface.right_panel_tabs).toEqual(rightPanelTabIds);
+  for (const right_panel_tabs of [[], ["docs"], [...rightPanelTabIds]]) {
+    const config = mergeWorkbench(base, workbenchPatchSchema.parse({ interface: { right_panel_tabs } }));
+    expect(mergeWorkbench(config, { name: "Other", interface: {} }).interface.right_panel_tabs).toEqual(
+      right_panel_tabs,
+    );
+    expect(config.agent).toEqual(base.agent);
+    expect(config.tools).toEqual(base.tools);
+    expect(warnings(config)).toEqual([]);
+  }
+  for (const right_panel_tabs of [["close"], ["Files"], ["terminal", "terminal"], null, "docs", [1]]) {
+    expect(schema.safeParse({ ...base, interface: { right_panel_tabs } }).success).toBe(false);
+    expect(workbenchPatchSchema.safeParse({ interface: { right_panel_tabs } }).success).toBe(false);
+  }
+  const extended = schema.parse({ ...base, interface: { extra: true } });
+  expect(warnings(extended)).toContainEqual({ code: "UNKNOWN_KEY", path: "interface.extra" });
+  expect(workbenchPatchSchema.safeParse({ interface: { extra: true } }).success).toBe(false);
+});
 
 // REQ-DATA-4a830b9a
 it("defaults chat detail to normal, merges independently and rejects invalid levels", () => {

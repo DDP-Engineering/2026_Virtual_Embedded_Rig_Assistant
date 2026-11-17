@@ -6,12 +6,14 @@ import { PermissionPicker } from "./permission-picker.js";
 import { WorkbenchCommandPrefixes } from "./workbench-command-prefixes.js";
 import { WorkbenchDocuments } from "./workbench-documents.js";
 import { WorkbenchFolders } from "./workbench-folders.js";
+import { WorkbenchInterface } from "./workbench-interface.js";
 import { WorkbenchPlugins } from "./workbench-plugins.js";
 import { WorkbenchPrivacy } from "./workbench-privacy.js";
 import { WorkbenchTools } from "./workbench-tools.js";
 
 export const configSections = [
   "general",
+  "interface",
   "instructions",
   "documents",
   "embeddings",
@@ -82,6 +84,7 @@ export function WorkbenchConfigForm({
   const { t } = useTranslation();
   const labels = {
     general: t("projects.general"),
+    interface: t("projects.interface"),
     documents: t("projects.documents"),
     agent: t("projects.agent"),
     instructions: t("projects.instructions"),
@@ -124,6 +127,7 @@ export function WorkbenchConfigForm({
       <div ref={content} className="workbench-editor-content">
         {notices}
         <fieldset disabled={(readOnly && section !== "instructions" && section !== "plugins") || disabled}>
+          {section === "interface" && <WorkbenchInterface config={config} setConfig={setConfig} />}
           {section === "privacy" && (
             <WorkbenchPrivacy
               key={workbenchId ?? folder}

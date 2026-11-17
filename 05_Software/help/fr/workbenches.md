@@ -32,6 +32,7 @@ Sélectionnez **Modifier le banc** dans la vue d’ensemble ou dans le menu de l
 | Section | Ce qu’elle définit |
 |---|---|
 | **Général** | Nom et description |
+| **Interface** | Visibilité des **Onglets du panneau droit** |
 | **Documents et RAG** | Les dossiers et fichiers indexés |
 | **Agent et conversation** | Modèle par défaut, mode d’autorisation par défaut, **Niveau de détail** |
 | **Instructions** | Le texte de `.vera/WORKBENCH.md`, que l’agent lit dans chaque session |
@@ -41,6 +42,14 @@ Sélectionnez **Modifier le banc** dans la vue d’ensemble ou dans le menu de l
 | **Plugins** | Les plugins installés que ce banc de travail active |
 
 Gardez des instructions courtes et factuelles : la carte, le microcontrôleur, la chaîne de compilation, les conventions. Seuls les 16 premiers Ko sont transmis à l’agent ; VERA vous avertit lorsque le texte est plus long.
+
+## Onglets du panneau droit
+
+Ouvrez **Modifier le banc > Interface > Onglets du panneau droit**. Sélectionnez les onglets visibles : Instructions et compétences, Fichiers, Modifications, Artefacts, Plan, Exécutions et Terminal. Tous sont sélectionnés par défaut. **Rétablir les valeurs par défaut** les sélectionne dans le brouillon ; **Enregistrer** applique le choix et **Annuler** l’abandonne.
+
+L’enregistrement actualise immédiatement toutes les sessions de ce banc, même après réouverture ou redémarrage de VERA. Les autres bancs conservent leur propre sélection. Masquer l’onglet actif sélectionne le premier onglet restant dans l’ordre habituel. Tous les masquer ferme le panneau et supprime son bouton d’ouverture habituel. **Onglets du panneau droit** reste accessible sur la page principale ; l’éditeur reste disponible depuis la vue d’ensemble et le menu latéral.
+
+Les flèches, Début et Fin ne parcourent que les onglets visibles. Le raccourci du terminal ne révèle jamais un onglet masqué et propose un lien vers ces paramètres. Le masquage ne change que l’affichage : instructions, fichiers, modifications, artefacts, plans et historique sont conservés, les outils de l’agent fonctionnent toujours et les terminaux et programmes actifs continuent. Fermer reste disponible lorsque le panneau est affiché et n’est pas un onglet configurable.
 
 ## Bancs de travail en lecture seule
 

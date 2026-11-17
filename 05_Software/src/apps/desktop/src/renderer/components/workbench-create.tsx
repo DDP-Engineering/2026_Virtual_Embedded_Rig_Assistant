@@ -82,6 +82,7 @@ export function WorkbenchCreate({
           skills: { disabled: skillsDisabled },
           plugins: { enabled: config.plugins.enabled },
           chat: { detail: config.chat.detail },
+          interface: { right_panel_tabs: config.interface.right_panel_tabs },
           ...(config.privacy ? { privacy: config.privacy } : {}),
         },
         ...(kept === null ? { instructions: shownInstructions } : {}),

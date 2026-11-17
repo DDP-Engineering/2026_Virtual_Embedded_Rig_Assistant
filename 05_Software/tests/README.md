@@ -210,6 +210,14 @@ reporterul [support/cleanup-e2e-output.mjs](support/cleanup-e2e-output.mjs), inc
 după eșecuri. Configurația dezactivează trace/video/capturi automate. Înlocuirea
 reporterelor din CLI poate ocoli reporterul de curățare.
 
+Right-panel visibility coverage:
+- `e2e/right-panel-tabs-ui.spec.ts`: browser Save/Cancel, defaults, filtered keyboard navigation,
+  workbench isolation and all-hidden settings recovery.
+- `e2e/right-panel-tabs.spec.ts`: sandboxed Electron persistence across restart, session consistency,
+  workbench switching and a foreground terminal program surviving hidden selectors.
+- `e2e/terminal-replay.spec.ts`: real host PTYs with browser xterm, including continued output while
+  Terminal and Runs selectors are hidden and restoration without losing terminals.
+
 ## Support
 
 | Fișier | Ce face | Cum este folosit / rezultat |

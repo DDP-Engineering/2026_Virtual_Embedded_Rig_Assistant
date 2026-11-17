@@ -295,6 +295,38 @@ it("rejects a 101st user command grant with a typed error", async () => {
     await h.service.close();
   }
 });
+it("persists right-panel tabs per workbench across fresh service instances without changing content", async () => {
+  const h = await harness();
+  let service = h.service;
+  try {
+    const first = await service.create(h.folder, "First");
+    await service.updatePinned("Keep instructions");
+    await writeFile(join(h.folder, "source.txt"), "Keep source");
+    await service.updateConfig({ interface: { right_panel_tabs: ["docs", "plan"] } }, first.config.id);
+    await service.updateConfig({ name: "Renamed" });
+    await service.close();
+    service = new WorkbenchService(h.host);
+    const secondFolder = join(h.root, "second");
+    await mkdir(secondFolder);
+    const second = await service.create(secondFolder, "Second", {
+      config: { interface: { right_panel_tabs: [] } },
+    });
+    expect(second.config.interface.right_panel_tabs).toEqual([]);
+    await service.close();
+    service = new WorkbenchService(h.host);
+    const reopened = await service.open(h.folder);
+    expect(reopened.config.interface.right_panel_tabs).toEqual(["docs", "plan"]);
+    expect(reopened.config.agent).toEqual(first.config.agent);
+    expect(reopened.config.tools).toEqual(first.config.tools);
+    expect((await service.getPinned()).content).toBe("Keep instructions");
+    expect(await readFile(join(h.folder, "source.txt"), "utf8")).toBe("Keep source");
+    await service.close();
+    expect((await service.open(secondFolder)).config.interface.right_panel_tabs).toEqual([]);
+  } finally {
+    await service.close();
+  }
+});
+
 it("persists chat detail independently across workbench save and reopen", async () => {
   const h = await harness();
   try {

@@ -2,13 +2,14 @@
 // REQ-UX-e0e51891 REQ-UX-25921e97 REQ-UX-93fd56dc
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import userEvent from "@testing-library/user-event";
-import type { ProgramRunInfo } from "@vera/shared";
+import type { ProgramRunInfo, RightPanelTab } from "@vera/shared";
 import { act, createElement } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, expect, it, vi } from "vitest";
 import { api } from "../api/index.js";
 import i18n from "../i18n.js";
 import { RunsTab } from "./runs-tab.js";
+import { Shell } from "./shell.js";
 
 vi.mock("../api/index.js", () => ({ api: { invoke: vi.fn() } }));
 vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
@@ -168,6 +169,43 @@ it("opens a run log that refreshes while the run is running and closes back to i
   await click($('[data-action="run-log-close"]'));
   expect($("[data-run-log]")).toBeNull();
   expect(document.activeElement).toBe(button);
+});
+
+it("hiding Runs detaches presentation without stopping active work or losing its log", async () => {
+  localStorage.clear();
+  const state = stub([serve]);
+  await render();
+  const show = async (visibleTabs: RightPanelTab[]) =>
+    act(async () =>
+      root.render(
+        createElement(
+          QueryClientProvider,
+          { client },
+          createElement(Shell, {
+            navigation: null,
+            settings: false,
+            navigate: vi.fn(),
+            visibleTabs,
+            runs: createElement(RunsTab, { workbenchId }),
+          }),
+        ),
+      ),
+    );
+  await show(["runs", "docs"]);
+  await click($('[data-toggle="right"]'));
+  await click($("#tab-runs"));
+  await vi.waitFor(() => expect($(`[data-run="${serve.id}"]`)).not.toBeNull());
+  await show(["docs"]);
+  expect($("#tab-runs")).toBeNull();
+  expect($(`[data-run="${serve.id}"]`)).toBeNull();
+  expect(state.runs[0]?.state).toBe("running");
+  state.log = "boot\nwork continued while hidden\n";
+  await show(["runs", "docs"]);
+  await click($("#tab-runs"));
+  await click($('[data-action="run-log"]'));
+  await vi.waitFor(() => expect($("[data-run-log]")?.textContent).toContain("work continued while hidden"));
+  expect(vi.mocked(api.invoke).mock.calls.filter(([channel]) => channel === "runs.stop")).toHaveLength(0);
+  localStorage.clear();
 });
 
 it("stops a running run and shows it stopped", async () => {

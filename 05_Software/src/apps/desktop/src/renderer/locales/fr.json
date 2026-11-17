@@ -136,6 +136,7 @@
   },
   "panel": {
     "title": "Panneau droit",
+    "hiddenTab": "Cet onglet est masqué. Modifiez les Onglets du panneau droit dans les paramètres du banc.",
     "close": "Fermer",
     "context": "Instructions et compétences",
     "docs": "Fichiers",
@@ -785,6 +786,9 @@
     "expand": "Afficher les sessions",
     "collapse": "Masquer les sessions",
     "general": "Général",
+    "interface": "Interface",
+    "rightPanelTabs": "Onglets du panneau droit",
+    "restorePanelTabs": "Rétablir les valeurs par défaut",
     "documents": "Documents et RAG",
     "agent": "Agent et conversation",
     "instructions": "Instructions",

@@ -75,6 +75,24 @@ const plugins = z.looseObject({ enabled: z.array(z.string().min(1)).default([]) 
 export const chatDetailSchema = z.enum(["verbose", "normal", "minimal"]);
 export type ChatDetail = z.infer<typeof chatDetailSchema>;
 const chat = z.looseObject({ detail: chatDetailSchema.default("normal") });
+/** Content tabs in display order; Close is a control, not a configurable tab. */
+export const rightPanelTabIds = [
+  "context",
+  "docs",
+  "changes",
+  "artifacts",
+  "plan",
+  "runs",
+  "terminal",
+] as const;
+export type RightPanelTab = (typeof rightPanelTabIds)[number];
+const rightPanelTabsSchema = z
+  .array(z.enum(rightPanelTabIds))
+  .max(rightPanelTabIds.length)
+  .refine((tabs) => new Set(tabs).size === tabs.length, "Right panel tabs must be unique.");
+const workbenchInterface = z.looseObject({
+  right_panel_tabs: rightPanelTabsSchema.default([...rightPanelTabIds]),
+});
 /** Defaults for the agent's search_docs when it passes no k or mode of its own. */
 export const workbenchRetrievalSchema = z.looseObject({
   results: z.number().int().min(1).max(20).default(8),
@@ -108,6 +126,7 @@ export const workbenchSchema = z.looseObject({
   tools: disabled.default({ disabled: [] }),
   plugins: plugins.default({ enabled: [] }),
   chat: chat.default({ detail: "normal" }),
+  interface: workbenchInterface.default({ right_panel_tabs: [...rightPanelTabIds] }),
   agent: agent.default({ permission_mode: "ask", model: null, allowed_commands: [] }),
 });
 export type WorkbenchConfig = z.infer<typeof workbenchSchema>;
@@ -119,6 +138,7 @@ export const workbenchPatchSchema = z.strictObject({
   privacy: workbenchPrivacySchema.optional(),
   additional_folders: additionalFoldersSchema.optional(),
   chat: z.strictObject({ detail: chatDetailSchema.optional() }).optional(),
+  interface: z.strictObject({ right_panel_tabs: rightPanelTabsSchema.optional() }).optional(),
   embeddings: workbenchEmbeddingsSchema.optional(),
   name: z.string().trim().min(1).max(80).optional(),
   description: z.string().optional(),
@@ -215,6 +235,7 @@ export function configWarnings(
     tools: disabled.shape,
     plugins: plugins.shape,
     chat: chat.shape,
+    interface: workbenchInterface.shape,
     agent: agent.shape,
     embeddings: { model: true, chunkSize: true, overlap: true },
     retrieval: workbenchRetrievalSchema.shape,
@@ -246,6 +267,7 @@ export function mergeWorkbench(current: WorkbenchConfig, patch: WorkbenchPatch):
     tools: { ...current.tools, ...clean.tools },
     plugins: { ...current.plugins, ...clean.plugins },
     chat: { ...current.chat, ...clean.chat },
+    interface: { ...current.interface, ...clean.interface },
     agent: { ...current.agent, ...clean.agent },
     ...(current.privacy || clean.privacy
       ? {
