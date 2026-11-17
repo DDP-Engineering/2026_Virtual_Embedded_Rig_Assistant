@@ -475,7 +475,11 @@
     "hexPosition": "Byte-Position",
     "hexNoMatch": "Keine passenden Bytes.",
     "hexInvalid": "Ungültiger Offset oder Suchtext, oder Auswahl über 64 KiB.",
-    "hexShow": "Als Hex anzeigen"
+    "hexShow": "Als Hex anzeigen",
+    "mode": "Ansichtsmodus",
+    "modeRendered": "Gerendert",
+    "modeText": "Text",
+    "modeHex": "Hex"
   },
   "skills": {
     "settings": "Skills-Einstellungen",

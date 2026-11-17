@@ -100,6 +100,48 @@ it("keeps viewer byte reads confined in Bypass even with an additional-folder gr
   }
 });
 
+it("reports Rendered only for current indexed extraction and excludes ignored or stale sources", async () => {
+  const h = await harness();
+  try {
+    const { config } = await h.service.create(h.folder, "Viewer capabilities");
+    const path = "ordinary.md",
+      text = "# Heading\nReadable source.\n";
+    await writeFile(join(h.folder, path), text);
+    const properties = await h.service.statEntry(config.id, path);
+    expect(properties).toMatchObject({ rendered: false });
+    const rows = new DocumentsRepository(h.service.getDatabase());
+    const doc = rows.save({
+      path,
+      kind: "markdown",
+      sha256: createHash("sha256").update(text).digest("hex"),
+      bytes: Buffer.byteLength(text),
+      mtime: properties.modified,
+      pages: null,
+      status: "indexed",
+      error: null,
+      indexedAt: null,
+    });
+    expect(await h.service.statEntry(config.id, path)).toMatchObject({ rendered: false });
+    rows.replaceChunks(doc.id, [], {
+      extraction: {
+        kind: "markdown",
+        sections: [{ slug: "heading", path: ["Heading"], text, start: 1, end: 2 }],
+      },
+    });
+    expect(await h.service.statEntry(config.id, path)).toMatchObject({ rendered: true });
+    await writeFile(join(h.folder, ".vera/.veraignore"), "ordinary.md\n");
+    expect(await h.service.statEntry(config.id, path)).toMatchObject({ rendered: false });
+    await writeFile(join(h.folder, ".vera/.veraignore"), "");
+    await writeFile(join(h.folder, path), "Changed source with a different size.");
+    expect(await h.service.statEntry(config.id, path)).toMatchObject({ rendered: false });
+    await expect(h.service.statEntry("wb_01JB8Z6Q4M7N2K5R9T3V8X1Y0D", path)).rejects.toMatchObject({
+      code: "CONFLICT",
+    });
+  } finally {
+    await h.service.close();
+  }
+});
+
 it("saves masking choices across reopen while retaining extensions and TERM grants", async () => {
   const h = await harness();
   try {

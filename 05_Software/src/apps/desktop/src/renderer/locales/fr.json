@@ -475,7 +475,11 @@
     "hexPosition": "Position en octets",
     "hexNoMatch": "Aucun octet correspondant.",
     "hexInvalid": "Décalage ou recherche invalide, ou sélection supérieure à 64 Kio.",
-    "hexShow": "Afficher en hexadécimal"
+    "hexShow": "Afficher en hexadécimal",
+    "mode": "Mode d’affichage",
+    "modeRendered": "Rendu",
+    "modeText": "Texte",
+    "modeHex": "Hex"
   },
   "skills": {
     "settings": "Paramètres des compétences",

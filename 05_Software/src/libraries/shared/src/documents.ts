@@ -50,6 +50,61 @@ export function opensExternally(path: string): boolean {
   const dot = name.lastIndexOf(".");
   return dot > 0 && (externalDocumentExtensions as readonly string[]).includes(name.slice(dot).toLowerCase());
 }
+const renderedExtensions = new Set([
+  ".pdf",
+  ".md",
+  ".markdown",
+  ".html",
+  ".htm",
+  ".docx",
+  ".odt",
+  ".xlsx",
+  ".ods",
+  ".pptx",
+  ".odp",
+]);
+const textExtensions = new Set([
+  ".txt",
+  ".csv",
+  ".tsv",
+  ".log",
+  ".json",
+  ".jsonl",
+  ".yaml",
+  ".yml",
+  ".toml",
+  ".xml",
+  ".ini",
+  ".cfg",
+  ".conf",
+  ".c",
+  ".h",
+  ".cpp",
+  ".hpp",
+  ".cc",
+  ".rs",
+  ".py",
+  ".js",
+  ".jsx",
+  ".ts",
+  ".tsx",
+  ".css",
+  ".sh",
+  ".ps1",
+  ".bat",
+  ".cmd",
+  ".sql",
+  ".v",
+  ".sv",
+  ".vhd",
+  ".vhdl",
+  ".s",
+  ".asm",
+]);
+/** Recognized extensions are a public vocabulary; unknown suffixes need no plaintext renderer metadata. */
+export function viewerExtensionKind(extension: string): "rendered" | "text" | "unknown" {
+  return renderedExtensions.has(extension) ? "rendered" : textExtensions.has(extension) ? "text" : "unknown";
+}
 export const documentReasonSchema = z.enum([
   "SIZE_LIMIT",
   "TYPE_UNSUPPORTED",
@@ -140,9 +195,11 @@ export const docsTreeEntrySchema = z.strictObject({
   ignored: z.boolean(),
 });
 export type DocsTreeEntry = z.infer<typeof docsTreeEntrySchema>;
-/** Properties of a Docs tree entry: bytes of a file (null for a folder) and the modified time. */
+/** Physical entry properties plus host viewer metadata; unknown extension keys stay opaque. */
 export const docsEntryPropertiesSchema = z.strictObject({
   path: z.string().min(1),
+  extension: z.string().max(4096).optional(),
+  rendered: z.boolean().optional(),
   displayPath: z.string().optional(),
   type: z.enum(["folder", "file"]),
   size: count.nullable(),

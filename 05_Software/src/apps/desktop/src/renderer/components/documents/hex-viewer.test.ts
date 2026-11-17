@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { act, createElement } from "react";
+import { act, createElement, StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { expect, it, vi } from "vitest";
 import { api } from "../../api/index.js";
@@ -73,7 +73,7 @@ it("navigates, finds a border sequence, selects/copies bytes, validates inputs a
   });
   Object.defineProperty(document, "execCommand", { configurable: true, value: exec });
   try {
-    await act(async () => root.render(createElement(HexViewer, { file })));
+    await act(async () => root.render(createElement(StrictMode, null, createElement(HexViewer, { file }))));
     await wait(() => !!node.querySelector("[data-hex-byte]"));
     expect(node.querySelectorAll("[data-hex-row]").length).toBeLessThanOrEqual(100);
     await click("[data-hex-find-open]");

@@ -6,9 +6,9 @@ title = "Show only the document in a document tab"
 
 status = "active"
 
-requirement = "While a document tab is selected, the desktop app shall show only the document in the tab's panel, without a path line or action buttons, and keep the document's full path in the tab's tooltip."
+requirement = "While a document tab is selected, the desktop app shall show the document and its applicable view-mode toolbar in the tab's panel, without a path line or file-action buttons, and keep the document's full path in the tab's tooltip."
 
-verification = "Renderer test: a selected docs/a.md tab shows its sections and no `.document-path` line and no button outside the document body; the tab's title is docs/a.md; boundary: an error with Retry is still shown in the panel."
+verification = "Renderer test: a selected docs/a.md tab shows its sections and view-mode toolbar, no `.document-path` line and no file-action button outside the document body; the tab's title is docs/a.md; boundary: an error with Retry is still shown in the panel."
 
 affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/documents/document-tabs.tsx", "05_Software/src/apps/desktop/src/renderer/components/documents/open-externally.tsx", "05_Software/src/apps/desktop/src/renderer/styles.css"]
 
@@ -21,4 +21,4 @@ priority = "normal"   # low | normal | high
 rationale = ""        # why this behavior exists, if not obvious
 
 created = 2026-11-01
-updated = 2026-11-01
+updated = 2026-11-17

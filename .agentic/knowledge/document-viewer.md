@@ -7,6 +7,7 @@ per-session sets saved per session), continuous PDF/text scrolling with zoom/fin
 Markdown/HTML/office anchors, presentation slides, numbered lines and Docs
 status/search/reindex/progress, and the Docs folder tree (single search box, ignored entries,
 memory, keyboard, context menu, Properties).
+Select file-mode.ts for ordinary-file toolbar modes and extension preferences.
 Start under05_Software at main/display-documents.ts and display-identities.ts for conditional
 Display masking, shared/documents.ts, core/knowledge/viewer.ts and
 renderer/components/documents (hex-{source,rows,viewer} for byte viewing; text-encoding.ts, read-text-file.ts, use-text-rows.ts, large-text-{source,index,find,window,rows,viewer} for byte-backed text). Focused tests are viewer.test.ts, search.test.ts,
@@ -27,6 +28,9 @@ progress travels through existing workbench events.
 
 ## Public interface
 
+- Plain path/textPath targets use file-mode.ts: docs.stat supplies a real extension key computed by main before path identity projection; recognized extensions use their lower-case public vocabulary and unknown suffixes use the existing host-keyed identity namespace, independent of filename/workbench/Display state. Unknown extensions default Hex; recognized text uses a fixed4096-byte prefix to detect binary control bytes with BOM-aware decoding. Core statEntry supplies a compact rendered capability from the current indexed record, matching size/mtime, extraction presence (or needs-OCR PDF pages) and current ignore rules, using a direct path lookup rather than loading all documents or source bytes. Only available indexed PDF/Markdown/HTML/Office sources offer Rendered/Text/Hex. Other files offer Text/Hex: unavailable Markdown/HTML defaults Text, unavailable binary containers default Hex. A saved unavailable Rendered preference remains unchanged. Raw text remains explicitly available for unknown formats, with existing encoding/replacement controls. No complete large text is fetched to choose a mode.
+- The strict version1 localStorage record `vera.viewer.modes` stores `{version:1,extensions:{[realExtension]:mode}}`. Only deliberate toolbar choices or the Files Hex action write it; automatic defaults, load errors, unsupported preferences and metadata refresh do not. Malformed/unavailable records resolve defaults; quota denial keeps the explicit current-tab choice. Another extension is independent. Rendered failures retain the toolbar and Retry so Text/Hex remains reachable.
+- An explicit click on the effective mode also remembers that choice while retaining the current body/place/attempt. Switching to another mode clears incompatible place/content, increments the provider-wide attempt and uses the existing owner/attempt settlement guards. Verified refs/citations never enter the plain-file loader or get mode controls; artifacts, downloads and run logs keep their loaders. HexSource is created and disposed by the owning mount effect so development effect replay creates a fresh source and old operations remain cancelled.
 - SessionService admits UTF8 control-byte logs only for successful parse_log line-ref provenance. The viewer uses guarded direct reads up to50MiB, fatal UTF8 and matching source hashes, independent of document indexing; ordinary document/file refs retain binary and index checks.
 
 Managed PDF downloads use downloads.list/open scoped IPC and a downloadId ViewerTarget; see [PDF downloads](pdf-downloads.md). Docs includes saved PDF history, and successful download tool cards open the existing viewer without indexing. Downloads open in a document tab of the chat area like every source, and uncited PDFs omit citation-only labels. Host publicWebDownload scrubs metadata strings and drops invalid redacted records.
@@ -102,8 +106,7 @@ Managed PDF downloads use downloads.list/open scoped IPC and a downloadId Viewer
   opener when it is still shown, else the Chat tab. In the panel Ctrl+F asks a PDF or text body for its
   find field (or focuses an open one) and Ctrl+G asks a text body for its go-to-line field, by
   bumping `findRequest` / `gotoRequest` (REQ-UX-d64f086f, REQ-UX-58cf59b2).
-- The document panel shows only the document (or its load error with Retry): no path line or
-  buttons; the path is the tab's tooltip (REQ-UX-968b89b0). A tab menu action's error or notice
+- The document panel shows its applicable Rendered/Text/Hex toolbar and the document (or its load error with Retry), without a path line or file-action buttons; the path is the tab's tooltip (REQ-UX-968b89b0). A tab menu action's error or notice
   shows in `[data-tab-notices]`, the row between the tab strip and the panels, also while Chat is
   selected, and clears when another tab is selected. Tab keys and stale menus: the window listener
   is idle while any `[data-tree-menu]` is open, and a menu whose tab closed goes away.
@@ -161,7 +164,7 @@ Managed PDF downloads use downloads.list/open scoped IPC and a downloadId Viewer
   U+FFFD for invalid sequences. Changing encoding retries strict decoding without another host read.
   Small verified references, runs, downloads, artifacts and rendered PDF/Markdown/Office retain
   existing host content/provenance; larger text references use the verified revision-bound windows above.
-- Hex opens from the Files row menu as `textPath` with `hex:true`, retaining the original file tab key and target identity; normal Open restores the ordinary file view. Its transient HexFile adopts the host-owned byte path from stat, including a newly opaque identity after credential registration. Format-1 tab storage admits the explicit Hex target and physical `{offset}` place. Citations retain their verified paths and ranges.
+- Hex opens automatically for unknown extensions or binary control bytes in a recognized text prefix, or from the toolbar and Files row menu. The explicit menu uses `textPath` with `hex:true`, retaining the original file tab key and identity; normal Open resolves the remembered extension preference. A later toolbar choice clears the menu override in the saved target. Its transient HexFile adopts the host-owned byte path from stat, including a newly opaque identity after credential registration. Format-1 tab storage admits the explicit Hex target and physical `{offset}` place. Citations retain their verified paths and ranges.
   HexSource owns four64KiB cached windows and serializes reads; each renderer window/scan/copy is at most64KiB. HexRows mounts at most100 rows, each16 bytes with physical uppercase hexadecimal offset, spaced uppercase bytes and ASCII0x20..0x7E (dot otherwise), including partial EOF rows. A byte slider spans arbitrary safe-integer file sizes without giant DOM/spacers; local scrolling/wheel and keyboard cross bounded windows.
   Go to offset accepts decimal or0x-prefixed hex in0..size-1 (zero for empty files). Find uses case-sensitive UTF8 or even hexadecimal pairs with optional whitespace, <=4096 bytes, streaming KMP across64KiB borders, next/wrap and scalar hit state. Query/mode replacement, Cancel, Escape, owner/attempt change and unmount abort publication. Input/paint yields once per scan window.
   Selection stores anchor/focus physical bytes; pointer drag/Shift-click and Shift+arrows extend it. Ctrl+C copies spaced uppercase hex; Ctrl+Shift+C copies UTF8 replacement-decoded text. Copy checks metadata before/after a fresh masked read and rejects ranges above64KiB. Clipboard uses a temporary offscreen textarea with execCommand, keeping sandbox permissions unchanged. All Find/copy bytes follow live Display; cached sources disappear on settings/config refresh. Malformed input shows localized feedback; read failures show the structured error and Retry (the parent reloads metadata). Escape closes fields/cancels before returning focus to the byte region. Hex context actions name Find and Go to offset.
@@ -206,15 +209,14 @@ Managed PDF downloads use downloads.list/open scoped IPC and a downloadId Viewer
   .gitignore excludes while docs.gitignore is on (REQ-FUNC-ed6a4de8; left out of Find too), come with
   `ignored: true` (inherited inside ignored folders) and render in italic muted text at AA
   contrast with faded icons (`data-ignored`, screen-reader "Ignored by VERA"); they expand, are
-  remembered and open as text like other rows, but never offer Open in default app, which
+  remembered and use the applicable file mode like other rows, but never offer Open in default app, which
   PathGuard refuses (REQ-UX-ed65cbbc, TASK-b34f2cc7).
   Documents from docs.list mark their rows with a status icon whose tooltip and screen-reader
   text give the status and reason (`data-document`, `data-status`); other files are dimmed
   (`data-indexed=false`). A cut-off listing says so on its folder row or, for the top level,
   above the tree (`data-tree-truncated`). Folder rows count the indexed documents beneath them and
   mark failed, needs-OCR or unsupported ones (`folderSummaries`, from the index, no disk walk).
-  Activation opens indexed and needs-OCR documents with docs.open and any other file as text
-  through docs.read (`ViewerTarget {textPath}`) (REQ-UX-c28dde55, REQ-UX-795a7f61,
+  Activation opens indexed and needs-OCR document paths or ordinary `textPath` targets through the metadata-first mode loader (REQ-UX-c28dde55, REQ-UX-795a7f61,
   REQ-UX-775eb693, REQ-FUNC-70dc2e8f).
 - The search box's text filters the tree through docs.find({workbenchId,query}): matching file
   paths of the whole workbench outside ignored entries, first 200 with a "more matches" note,
@@ -343,6 +345,7 @@ Managed PDF downloads use downloads.list/open scoped IPC and a downloadId Viewer
 | tab menu, drag, tab keys | documents/document-tabs.tsx; viewer-context move/closeMany; file-actions.tsx | document-tabs.test.ts; citations.spec.ts (real drag) |
 | search box, In documents, actions row | documents/docs-tab.tsx (`useTreeExpansion`); styles `.docs-actions` | docs-tree.test.ts; documents.test.ts; documents.spec.ts |
 | row context menu / Properties | documents/tree-menu.tsx; tree-properties.tsx; mockApi docs.stat | docs-tree.test.ts; documents.test.ts; docs-tree.spec.ts |
+| File modes and extension preferences | documents/file-mode.ts; viewer-context; document-tabs; main/display-documents; core/workbench/service statEntry; shared documents metadata | file-mode.test.ts; document-tabs.test.ts; native/browser e2e/viewer-modes.spec.ts |
 | Hex rows/search/copy | renderer/documents hex-{source,rows,viewer}, viewer-context, docs-tree, document-tabs-store | hex-source.test.ts; hex-viewer.test.ts; native e2e/hex-viewer.spec.ts |
 | Large text windows/index/search | renderer/documents large-text-{source,index,find,window,rows,viewer} | large-text.test.ts; read-text-file.test.ts; e2e/large-text.spec.ts genuine 200 MiB browser/native heap/pulse proof |
 | Text decoding and measured wrap | renderer/documents text-encoding, read-text-file, text-viewer, use-text-rows | sibling tests; e2e/text-encodings.spec.ts browser/native |
@@ -351,6 +354,7 @@ Managed PDF downloads use downloads.list/open scoped IPC and a downloadId Viewer
 
 ## Key behaviors
 
+- REQ-FUNC-bc3f25bd, REQ-FUNC-12972046, REQ-DATA-7af13314, REQ-REL-2c2e6e93: applicable file modes, bounded automatic Hex selection and independent persistent extension choices.
 - REQ-FUNC-94765114, REQ-FUNC-69596c3b, REQ-FUNC-b66d2d80, REQ-FUNC-53b3527c, REQ-REL-63f0f1cc, REQ-REL-a4d21663: bounded Hex rows, offset navigation, cancellable byte Find, selection copy, invalid input and Retry.
 
 - REQ-FUNC-c5def0c3, REQ-UX-5a886e34, REQ-UX-77baabba, REQ-REL-3bb0b405: selected text decoding, explicit replacement, measured wrapped navigation and consistent bounded assembly.
@@ -378,7 +382,7 @@ core/sessions/service.ts, workbench/{service,tree,read-bytes}.ts/test and knowle
 desktop/main/{index,document-viewer,display-documents,display-bytes,display-identities,security,content-policy,openers}.ts, openers.test.ts and
 document-viewer.test.ts; renderer/components/documents/{viewer-context,docs-tab,
 pdf-viewer,docs-tree,tree-menu,tree-properties,open-externally,document-tabs,file-actions,text-viewer}.tsx;
-hex-source.ts, hex-rows.tsx, hex-viewer.tsx/CSS with sibling source/component tests;
+file-mode.ts/test and e2e/viewer-modes.spec.ts; hex-source.ts, hex-rows.tsx, hex-viewer.tsx/CSS with sibling source/component tests;
 text-encoding.ts, read-text-file.ts, use-text-rows.ts with sibling tests, documents.test.ts and
 docs-tree.test.ts; session/{markdown,transcript,artifacts-tab};
 App/Shell/styles/locales/mock documents+mockApi; electron.vite.config.ts/index.html;

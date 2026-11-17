@@ -1,7 +1,7 @@
 import { createHash, randomUUID } from "node:crypto";
 import { existsSync, lstatSync, readFileSync } from "node:fs";
 import { link, lstat, mkdir, open, readdir, realpath, rename, unlink } from "node:fs/promises";
-import { basename, dirname, isAbsolute, join } from "node:path";
+import { basename, dirname, extname, isAbsolute, join } from "node:path";
 import {
   additionalFolderSchema,
   additionalFoldersSchema,
@@ -27,6 +27,7 @@ import {
   skillNameSchema,
   skillTemplate,
   veraError,
+  viewerExtensionKind,
   type WorkbenchConfig,
   type WorkbenchCreate,
   type WorkbenchEvent,
@@ -412,7 +413,26 @@ export class WorkbenchService {
   }
   /** Type, size and modified time of a file or folder of the active workbench, ignored or not. */
   statEntry(workbenchId: string, path: string) {
-    return this.run(async () => statEntry(this.activeFolder(workbenchId), path));
+    return this.run(async () => {
+      const root = this.activeFolder(workbenchId);
+      const properties = await statEntry(root, path);
+      let rendered = false;
+      if (properties.type === "file" && viewerExtensionKind(extname(path).toLowerCase()) === "rendered") {
+        const db = this.getDatabase(),
+          doc = new DocumentsRepository(db).get(path);
+        const ignored = await this.ignoreRules(root, this.current().config.docs.gitignore);
+        rendered =
+          !!doc &&
+          !ignored(path) &&
+          doc.sha256 !== null &&
+          doc.bytes === properties.size &&
+          doc.mtime === properties.modified &&
+          (doc.status === "indexed" || doc.status === "needs_ocr") &&
+          (!!db.prepare("SELECT 1 FROM document_extractions WHERE doc_id=?").get(doc.id) ||
+            (doc.kind === "pdf" && doc.status === "needs_ocr" && (doc.pages ?? 0) > 0));
+      }
+      return { ...properties, rendered };
+    });
   }
   /** The absolute path and kind of an entry of the active workbench for the Docs tree's OS actions. */
   locateEntry(workbenchId: string, path: string) {

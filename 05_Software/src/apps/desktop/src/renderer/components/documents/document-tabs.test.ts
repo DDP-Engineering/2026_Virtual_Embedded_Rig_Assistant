@@ -43,6 +43,7 @@ afterEach(async () => {
   root = undefined;
   container = undefined;
   vi.restoreAllMocks();
+  localStorage.removeItem("vera.viewer.modes");
 });
 
 /** Buttons that open targets, rendered outside the tabs like the Files tree and citation chips. */
@@ -61,7 +62,11 @@ function Openers({ targets }: { targets: Record<string, ViewerTarget> }) {
   );
 }
 const targets: Record<string, ViewerTarget> = {
+  binary: { textPath: "board.bin" },
+  mdHex: { textPath: "docs/a.md", hex: true },
+  unindexed: { textPath: "unindexed.md" },
   md: { path: "docs/a.md" },
+  mdOther: { path: "docs/other.md" },
   reset: { ref: "docs/a.md#h=reset" },
   html: { path: "docs/a.html" },
   htmlRef: { ref: "docs/a.html#h=reset" },
@@ -73,6 +78,165 @@ const targets: Record<string, ViewerTarget> = {
   run: { runId: "01JC00000000000000000000R2" },
   logLine: { ref: "logs/big.log#L5-L5" },
 };
+
+it("defaults unknown files to Hex and offers explicit Text without loading whole text first", async () => {
+  const { open, view } = await mount();
+  const original = api.invoke.bind(api);
+  const spy = vi.spyOn(api, "invoke").mockImplementation((async (channel: string, request: unknown) => {
+    const data = request as { path?: string; offset?: number };
+    if (data.path === "board.bin" && channel === "docs.stat")
+      return {
+        workbenchId: id,
+        properties: {
+          path: "board.bin",
+          extension: ".bin",
+          type: "file",
+          size: 2,
+          modified: "2026-11-17T00:00:00.000Z",
+        },
+      };
+    if (data.path === "board.bin" && channel === "docs.readBytes")
+      return { workbenchId: id, path: "board.bin", offset: data.offset, size: 2, data: "AP8=" };
+    return original(channel as never, request as never);
+  }) as typeof api.invoke);
+  await open("binary");
+  expect(view.querySelector("[data-hex-viewer]")).not.toBeNull();
+  expect(view.querySelector('[data-viewer-mode="text"]')).not.toBeNull();
+  expect(view.querySelector('[data-viewer-mode="rendered"]')).toBeNull();
+  expect(spy.mock.calls.some(([channel]) => channel === "docs.open")).toBe(false);
+  await act(async () => view.querySelector<HTMLButtonElement>('[data-viewer-mode="text"]')?.click());
+  await settle();
+  expect(view.querySelector("[data-show-as-text]")).not.toBeNull();
+  await act(async () => view.querySelector<HTMLButtonElement>("[data-show-as-text]")?.click());
+  expect(view.querySelector('[data-line="1"]')?.textContent).toContain("�");
+  localStorage.removeItem("vera.viewer.modes");
+});
+
+it("switches Markdown through all modes, remembers another real extension and keeps citation provenance", async () => {
+  const original = api.invoke.bind(api);
+  vi.spyOn(api, "invoke").mockImplementation((async (channel: string, request: unknown) => {
+    const data = request as { path?: string };
+    if (data.path !== "docs/other.md") return original(channel as never, request as never);
+    const reply = (await original(channel as never, { ...data, path: "docs/a.md" } as never)) as {
+      properties: object;
+    };
+    if (channel === "docs.stat")
+      return { ...reply, properties: { ...(reply as { properties: object }).properties, path: data.path } };
+    return { ...reply, path: data.path };
+  }) as typeof api.invoke);
+  const h = await mount();
+  await h.open("md");
+  expect(h.view.querySelector('[data-heading="reset"]')).not.toBeNull();
+  const choose = async (mode: string) => {
+    await act(async () => h.view.querySelector<HTMLButtonElement>(`[data-viewer-mode="${mode}"]`)?.click());
+    await settle();
+  };
+  await choose("text");
+  expect(h.view.querySelector("[data-text-encoding]")).not.toBeNull();
+  await choose("hex");
+  expect(h.view.querySelector("[data-hex-viewer]")).not.toBeNull();
+  await h.open("mdOther");
+  expect(h.view.querySelector('[data-viewer-mode="hex"]')?.getAttribute("aria-pressed")).toBe("true");
+  await choose("rendered");
+  await h.open("md");
+  expect(h.view.querySelector('[data-heading="reset"]')).not.toBeNull();
+  await h.open("power");
+  expect(h.view.querySelector("[data-viewer-mode]")).toBeNull();
+  expect(h.view.querySelector('[data-heading="power"]')?.getAttribute("aria-current")).toBe("true");
+  localStorage.removeItem("vera.viewer.modes");
+});
+
+it("keeps mode controls on a rendered failure and rejects a late rendered answer after switching", async () => {
+  const original = api.invoke.bind(api);
+  let release: ((value: unknown) => void) | undefined;
+  let fail = true;
+  vi.spyOn(api, "invoke").mockImplementation((async (channel: string, request: unknown) => {
+    if (channel !== "docs.open") return original(channel as never, request as never);
+    if (fail) throw Object.assign(Error("not indexed"), { code: "NOT_FOUND" });
+    return new Promise<unknown>((done) => {
+      release = done;
+    });
+  }) as typeof api.invoke);
+  const h = await mount();
+  await h.open("md");
+  expect(h.view.querySelector('[role="alert"]')).not.toBeNull();
+  expect(h.view.querySelectorAll("[data-viewer-mode]")).toHaveLength(3);
+  expect(localStorage.getItem("vera.viewer.modes")).toBeNull();
+  fail = false;
+  await h.open("md");
+  await act(async () => h.view.querySelector<HTMLButtonElement>('[data-viewer-mode="hex"]')?.click());
+  await settle();
+  expect(h.view.querySelector("[data-hex-viewer]")).not.toBeNull();
+  await act(async () =>
+    release?.({
+      workbenchId: id,
+      content: {
+        kind: "markdown",
+        path: "docs/a.md",
+        ref: null,
+        snippet: "",
+        sections: [{ slug: "stale", path: [], text: "late answer", start: 1, end: 1 }],
+        anchor: null,
+      },
+    }),
+  );
+  await settle();
+  expect(h.view.querySelector("[data-hex-viewer]")).not.toBeNull();
+  expect(h.view.textContent).not.toContain("late answer");
+});
+
+it("remembers explicit Files Hex by real extension and replaces its saved override after a toolbar choice", async () => {
+  const session = "mode-menu";
+  const h = await mount(`${id}/${session}`, session);
+  await h.open("mdHex");
+  expect(h.view.querySelector("[data-hex-viewer]")).not.toBeNull();
+  expect(JSON.parse(localStorage.getItem("vera.viewer.modes") ?? "null").extensions[".md"]).toBe("hex");
+  await act(async () => h.view.querySelector<HTMLButtonElement>('[data-viewer-mode="text"]')?.click());
+  await settle();
+  await act(async () => window.dispatchEvent(new Event("pagehide")));
+  expect(JSON.parse(localStorage.getItem(`vera.tabs.${id}.${session}`) ?? "null").tabs[0].target).toEqual({
+    textPath: "docs/a.md",
+  });
+  await h.open("md");
+  expect(h.view.querySelector('[data-viewer-mode="text"]')?.getAttribute("aria-pressed")).toBe("true");
+  removeTabs(localStorage, id, session);
+});
+
+it("remembers clicking the active Text fallback without reloading and applies it to indexed Markdown", async () => {
+  localStorage.setItem(
+    "vera.viewer.modes",
+    JSON.stringify({ version: 1, extensions: { ".md": "rendered" } }),
+  );
+  const original = api.invoke.bind(api);
+  vi.spyOn(api, "invoke").mockImplementation((async (channel: string, request: unknown) => {
+    const data = request as { path?: string; offset?: number };
+    if (data.path === "unindexed.md" && channel === "docs.stat")
+      return {
+        workbenchId: id,
+        properties: {
+          path: data.path,
+          extension: ".md",
+          rendered: false,
+          type: "file",
+          size: 4,
+          modified: "2026-11-17T00:00:00.000Z",
+        },
+      };
+    if (data.path === "unindexed.md" && channel === "docs.readBytes")
+      return { workbenchId: id, path: data.path, offset: data.offset, size: 4, data: btoa("# ok") };
+    return original(channel as never, request as never);
+  }) as typeof api.invoke);
+  const h = await mount();
+  await h.open("unindexed");
+  const body = h.view.querySelector(".document-body");
+  expect(h.view.querySelector('[data-viewer-mode="text"]')?.getAttribute("aria-pressed")).toBe("true");
+  await act(async () => h.view.querySelector<HTMLButtonElement>('[data-viewer-mode="text"]')?.click());
+  await settle();
+  expect(JSON.parse(localStorage.getItem("vera.viewer.modes") ?? "null").extensions[".md"]).toBe("text");
+  expect(h.view.querySelector(".document-body")).toBe(body);
+  await h.open("md");
+  expect(h.view.querySelector('[data-viewer-mode="text"]')?.getAttribute("aria-pressed")).toBe("true");
+});
 
 it("opens complete run logs by ID in the text viewer and rejects mismatched replies", async () => {
   const { open } = await mount();
@@ -173,6 +337,7 @@ function serveBigLog() {
         workbenchId: id,
         properties: {
           path: data.path,
+          extension: ".log",
           type: "file",
           size: bytes.length,
           modified: "2026-10-13T00:00:00.000Z",
@@ -611,7 +776,9 @@ it("shows only the document in a tab and offers its file actions in the tab menu
   expect(panel?.querySelector(".document-path")).toBeNull();
   expect(panel?.querySelector('[data-action="open-external"]')).toBeNull();
   expect(
-    [...(panel?.querySelectorAll("button") ?? [])].filter((button) => !button.closest(".document-body")),
+    [...(panel?.querySelectorAll("button") ?? [])].filter(
+      (button) => !button.closest(".document-body, .viewer-mode-toolbar"),
+    ),
   ).toEqual([]);
   expect(h.tab("a.md")?.title).toBe("docs/a.md");
   await openMenu(h, "a.md");
@@ -771,7 +938,7 @@ it("starts from Chat on an unreadable record and keeps a restored tab whose docu
   localStorage.setItem(key, JSON.stringify({ version: 2, active: "chat", tabs: [] }));
   const original = api.invoke.bind(api);
   const invoke = vi.spyOn(api, "invoke").mockImplementation(async (channel: string, request: unknown) => {
-    if (channel === "docs.open" && (request as { path?: string }).path === "board.txt")
+    if (channel === "docs.readBytes" && (request as { path?: string }).path === "board.txt")
       throw Object.assign(Error("busy"), { code: "INTERNAL" });
     return original(channel as never, request as never);
   });
@@ -848,7 +1015,7 @@ it("goes to a line with Ctrl+G and finds text with Ctrl+F in a text tab, Escape 
   try {
     const h = await mount();
     await h.open("log");
-    expect(h.view.querySelector("[data-source-current] button")).toBeNull();
+    expect(h.view.querySelector("[data-source-current] button:not([data-viewer-mode])")).toBeNull();
     await keyOn(document.activeElement, "g", { ctrlKey: true });
     const goto = h.view.querySelector<HTMLInputElement>("[data-document-goto]");
     expect(document.activeElement).toBe(goto);
@@ -1030,6 +1197,7 @@ function serveDisplayContent(masked: () => boolean) {
         workbenchId: id,
         properties: {
           path: data.path,
+          extension: /\.[^/.]+$/.exec(data.path)?.[0] ?? "",
           displayPath: `${text}-${data.path.split("/").at(-1)}`,
           type: "file",
           size: text.length,
@@ -1131,6 +1299,7 @@ it("restores raw current-format targets through host presentation after their na
         workbenchId: id,
         properties: {
           path: data.path,
+          extension: ".txt",
           displayPath: "[REDACTED].txt",
           type: "file",
           size: 10,

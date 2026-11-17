@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-FUNC-bc3f25bd"
+title = "Select applicable workbench file viewer modes"
+status = "active"
+requirement = """When an ordinary workbench file is opened, the viewer shall offer applicable Rendered, Text and Hex toolbar modes while using current indexed Rendered availability and preserving confined byte access, verified citation provenance and existing non-file semantics."""
+
+verification = "Open binary/unknown files and Markdown; assert default Hex, all three Markdown modes, explicit replacement Text, bounded reads, unindexed/ignored Markdown and HTML default Text, unavailable containers default Hex without preference writes, and no file mode toolbar for verified citations or non-file targets."
+affected_paths = ["05_Software/src/libraries/core/src/workbench/service.ts", "05_Software/src/apps/desktop/src/renderer/components/documents/", "05_Software/src/apps/desktop/src/main/display-documents.ts", "05_Software/src/libraries/shared/src/documents.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/workbench/service.test.ts", "05_Software/src/apps/desktop/src/renderer/components/documents/file-mode.test.ts", "05_Software/src/apps/desktop/src/renderer/components/documents/document-tabs.test.ts", "05_Software/tests/e2e/viewer-modes.spec.ts"]
+created = 2026-11-17
+updated = 2026-11-17

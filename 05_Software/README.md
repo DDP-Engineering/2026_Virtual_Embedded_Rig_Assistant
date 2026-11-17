@@ -503,3 +503,11 @@ range, restored-mtime replacement, focus, wrapping counts and window Retry.
 The renderer document viewer includes `hex-source.ts` (bounded masked bytes, streaming Find and copy),
 `hex-rows.tsx` (virtual rows) and `hex-viewer.tsx`/CSS (navigation, selection and controls), with sibling
 source/component tests. `tests/e2e/hex-viewer.spec.ts` verifies native byte-boundary and live Display behavior.
+
+File mode selection lives in `renderer/components/documents/file-mode.ts`, with focused sibling tests.
+It uses host `docs.stat` real extension keys (sealed for unknown suffixes) before loading content, a version1 localStorage
+preference map, and the existing bounded readers. `viewer-context.tsx` owns attempt-safe switching;
+`document-tabs.tsx` supplies the localized toolbar. Verified citations keep their provenance loader.
+
+Core workbench `statEntry` reports Rendered availability through a direct current document/extraction lookup.
+Unindexed or ignored Markdown/HTML keeps byte-backed Text; unsupported saved Rendered choices are retained.

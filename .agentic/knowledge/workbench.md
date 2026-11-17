@@ -25,6 +25,7 @@ mode offers empty, missing, read-only and warning fixtures.
 
 ## Public interface
 
+- statEntry retains confined physical metadata and supplies a compact rendered capability for recognized document formats from a direct indexed-record lookup: current size/mtime, extraction presence (or needs-OCR PDF pages), status and ignore rules. It reads no complete file and the viewer still verifies source content when opening. Unindexed/ignored Markdown/HTML remains readable through byte-backed Text; binary containers without Rendered default Hex.
 - Optional strict `privacy.mask` accepts display/runs/agent/exports choices default/on/off. Omitted
   areas follow live app defaults through core settings/masking.ts. Unknown privacy keys, areas and
   values reject INVALID with errors.CONFIG_INVALID and YAML path/line on open. Partial area saves

@@ -87,6 +87,16 @@ function fixture() {
   };
 }
 describe("Display boundary", () => {
+  it("keeps unknown secret-bearing extensions opaque and stable across files and Display choices", async () => {
+    const f = fixture();
+    f.app(true);
+    const first = await f.display.stat(id, `docs/one.${secrets[0]}`);
+    expect(JSON.stringify(first)).not.toContain(secrets[0]);
+    f.app(false);
+    const second = await f.display.stat(id, `docs/two.${secrets[0]}`);
+    expect(second.properties.extension).toBe(first.properties.extension);
+    expect((await f.display.stat(id, "docs/file.txt")).properties.extension).toBe(".txt");
+  });
   it("keeps colliding entries and counts with live app/default/on/off presentation", async () => {
     const f = fixture();
     const off = channels["docs.tree"].response.parse(await f.display.tree(id, "docs"));
@@ -113,6 +123,9 @@ describe("Display boundary", () => {
         displayPath: "docs/[REDACTED].txt",
       });
       expect((await f.display.stat(id, entry.path)).properties.path).toBe(entry.path);
+      expect(
+        channels["docs.stat"].response.parse(await f.display.stat(id, entry.path)).properties.extension,
+      ).toBe(".txt");
     }
     expect(f.host.readText.mock.calls.map((call) => call[1])).toContain(rawPaths[0]);
     f.choice("off");

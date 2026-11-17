@@ -61,7 +61,7 @@ afterEach(async () => {
   vi.restoreAllMocks();
 });
 
-const log: ViewerContent = {
+const log: Extract<ViewerContent, { kind: "text" }> = {
   kind: "text",
   path: "logs/uart.log",
   ref: null,
@@ -89,8 +89,28 @@ const targets: Record<string, ViewerTarget> = {
 async function mount() {
   await api.invoke("workbench.open", { folder: "/mock/demo-board" });
   const original = api.invoke.bind(api);
+  const bytes = new TextEncoder().encode(log.lines.join("\n"));
   vi.spyOn(api, "invoke").mockImplementation(async (channel: string, request: unknown) => {
-    const data = request as { path?: string };
+    const data = request as { path?: string; offset: number; length: number };
+    if (channel === "docs.stat" && data.path === "logs/uart.log")
+      return {
+        workbenchId: id,
+        properties: {
+          path: data.path,
+          extension: ".log",
+          type: "file",
+          size: bytes.length,
+          modified: "2026-11-17T00:00:00.000Z",
+        },
+      } as never;
+    if (channel === "docs.readBytes" && data.path === "logs/uart.log")
+      return {
+        workbenchId: id,
+        path: data.path,
+        offset: data.offset,
+        size: bytes.length,
+        data: btoa(String.fromCharCode(...bytes.slice(data.offset, data.offset + data.length))),
+      } as never;
     if (channel === "docs.read" && data.path === "logs/uart.log")
       return { workbenchId: id, content: log } as never;
     if (channel === "docs.open" && data.path === "docs/a.pdf")

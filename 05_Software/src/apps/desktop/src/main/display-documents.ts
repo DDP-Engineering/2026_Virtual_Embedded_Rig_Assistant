@@ -1,3 +1,4 @@
+import { extname } from "node:path";
 import type { WorkbenchService } from "@vera/core";
 import {
   type DocumentRecord,
@@ -5,6 +6,7 @@ import {
   parseRef,
   type ViewerContent,
   veraError,
+  viewerExtensionKind,
   type WorkbenchConfig,
 } from "@vera/shared";
 import { maskByteWindow } from "./display-bytes.js";
@@ -168,10 +170,15 @@ export class DisplayDocuments {
     const original = this.resolve(id, path);
     const properties = await this.run(id, () => this.workbench.statEntry(id, original));
     if (properties.path !== original) throw veraError("NOT_FOUND");
+    const extension = extname(original).toLowerCase();
     return {
       workbenchId: id,
       properties: {
         ...properties,
+        extension:
+          viewerExtensionKind(extension) === "unknown"
+            ? this.identities.encode("viewer-extension", extension)
+            : extension,
         path: this.path(id, properties.path),
         displayPath: this.scrub(id, properties.path),
       },

@@ -27,6 +27,8 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ### Added
 
+- File viewer modes switch between Rendered, Text and Hex, with binary defaults and remembered extension choices.
+
 - Hex view offers virtual byte rows, offset jumps, cancellable text/byte Find and selection copy.
 
 - Large text files open in bounded windows with byte scrolling, progressive line jumps and cancellable Find.

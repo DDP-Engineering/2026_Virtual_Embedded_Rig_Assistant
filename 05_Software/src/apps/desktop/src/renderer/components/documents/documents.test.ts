@@ -11,7 +11,12 @@ import i18n from "../../i18n.js";
 import { WorkbenchDocuments } from "../workbench-documents.js";
 import { DocsTab } from "./docs-tab.js";
 import { DocumentTabs } from "./document-tabs.js";
-import { DocumentBody, DocumentViewerProvider, useDocumentViewer } from "./viewer-context.js";
+import {
+  DocumentBody,
+  DocumentViewerProvider,
+  useDocumentViewer,
+  type ViewerTarget,
+} from "./viewer-context.js";
 
 vi.mock("../../api/index.js", async () => {
   const { createMockApi } = await import("../../mocks/mockApi.js");
@@ -458,7 +463,7 @@ it("offers Open in default app for allowlisted workbench documents only and show
   };
   const spy = vi.spyOn(api, "invoke").mockImplementation((async (
     channel: string,
-    request: { path?: string },
+    request: { path?: string; ref?: string },
   ) => {
     if (channel === "app.openPath") {
       opened.push(request);
@@ -466,9 +471,11 @@ it("offers Open in default app for allowlisted workbench documents only and show
     }
     if (channel === "docs.open" && request.path && sources[request.path])
       return { workbenchId: id, content: sources[request.path] };
+    if (channel === "docs.open" && request.ref === "artifact:summary.md")
+      return { workbenchId: id, content: sources["summary.md"] };
     return invoke(channel as "app.info", request as never);
   }) as typeof api.invoke);
-  let target: { path: string } = { path: "docs/a.pdf" };
+  let target: ViewerTarget = { path: "docs/a.pdf" };
   function Open() {
     const open = useDocumentViewer();
     return createElement(
@@ -563,7 +570,7 @@ it("offers Open in default app for allowlisted workbench documents only and show
     expect(container.querySelector('.docs-tree [data-i18n="errors.INTERNAL"]')).toBeTruthy();
     for (const path of ["tools/flash.py", ".vera/downloads/d/chip.pdf", "summary.md"]) {
       await act(async () => container.querySelector<HTMLButtonElement>('[data-action="close-tab"]')?.click());
-      target = { path };
+      target = path === "summary.md" ? { ref: "artifact:summary.md" } : { path };
       await act(async () => container.querySelector<HTMLButtonElement>("[data-test-open]")?.click());
       await settle();
       expect(

@@ -427,3 +427,5 @@ MASK-01 infrastructure proof uses shared privacy/workbench/IPC contracts, core s
 settings/workbench persistence cases. No native shell/PTY behavior changes: reuse TERM proof.
 Original focused/static logs use evaluation-outputs/mask01. Full suites/deliveries remain deferred;
 native Ubuntu is unavailable on this Windows host.
+
+VIEW mode acceptance uses tests/e2e/viewer-modes.spec.ts with original browser/native restart receipts in ignored evaluation-outputs/view05.

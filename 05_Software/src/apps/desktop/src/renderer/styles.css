@@ -1274,6 +1274,17 @@ legend {
   gap: 0.6rem;
   padding: 0.75rem 1.5rem 1rem;
 }
+.viewer-mode-toolbar {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.viewer-mode-toolbar [aria-pressed="true"] {
+  border-color: var(--primary);
+}
 /* A dragged document tab lands before the marked tab, or at the strip's end. */
 .document-tab-strip-end {
   flex: 1 0 2rem;

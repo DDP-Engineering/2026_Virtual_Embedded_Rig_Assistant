@@ -15,7 +15,8 @@ import { useTranslation } from "react-i18next";
 import { api } from "../../api/index.js";
 import { readTabs, type StoredTabs, writeTabs } from "../../lib/document-tabs-store.js";
 import { Markdown } from "../session/markdown.js";
-import { type HexFile, readHexFile } from "./hex-source.js";
+import { type FileMode, type FileModeInfo, readFileMode, rememberFileMode } from "./file-mode.js";
+import type { HexFile } from "./hex-source.js";
 import { HexViewer } from "./hex-viewer.js";
 import type { LargeTextFile } from "./large-text-source.js";
 import { LargeTextViewer } from "./large-text-viewer.js";
@@ -54,6 +55,9 @@ export interface DocumentTab {
   textBytes?: Uint8Array | undefined;
   largeText?: LargeTextFile | undefined;
   hexFile?: HexFile | undefined;
+  modeInfo?: FileModeInfo | undefined;
+  modeChoice?: FileMode | undefined;
+  rememberMode?: boolean | undefined;
   error?: unknown;
   /** Bumped by every open of the tab and by Retry; a load answers only its own attempt. */
   attempt: number;
@@ -104,6 +108,7 @@ interface TabsState {
   /** Moves a document tab before another one, or to the end with `null`. */
   move: (key: string, before: string | null) => void;
   retry: (key: string) => void;
+  setMode: (key: string, mode: FileMode) => void;
   /** The place a tab was left at, given back when its document mounts again (REQ-UX-1f53a583). */
   place: (key: string) => DocumentPlace | undefined;
   setPlace: (key: string, place: DocumentPlace) => void;
@@ -182,12 +187,25 @@ export function DocumentViewerProvider({
                     textBytes: undefined,
                     largeText: undefined,
                     hexFile: undefined,
+                    modeInfo: undefined,
+                    modeChoice: undefined,
+                    rememberMode: "textPath" in target && target.hex === true,
                     error: undefined,
                     attempt: ++attempts.current,
                   }
                 : tab,
             )
-          : [...set.tabs, { key, target, label, title, attempt: ++attempts.current }];
+          : [
+              ...set.tabs,
+              {
+                key,
+                target,
+                label,
+                title,
+                rememberMode: "textPath" in target && target.hex === true,
+                attempt: ++attempts.current,
+              },
+            ];
         return { tabs, active: key };
       });
       reveal?.();
@@ -257,6 +275,50 @@ export function DocumentViewerProvider({
       }));
     },
     [change],
+  );
+  const setMode = useCallback(
+    (key: string, mode: FileMode) => {
+      const tab = current.tabs.find((entry) => entry.key === key);
+      const info = tab?.modeInfo;
+      if (!info?.modes.includes(mode)) return;
+      rememberFileMode(localStorage, info.extension, mode);
+      const switching = info.mode !== mode;
+      if (switching) {
+        places.current.delete(`${scope}\n${key}`);
+        focusRequest.current = true;
+      }
+      change((set) => ({
+        ...set,
+        tabs: set.tabs.map((entry) =>
+          entry.key === key
+            ? {
+                ...entry,
+                modeChoice: mode,
+                rememberMode: false,
+                modeInfo: { ...info, mode },
+                target:
+                  "textPath" in entry.target
+                    ? {
+                        textPath: entry.target.textPath,
+                        ...(entry.target.ignored === undefined ? {} : { ignored: entry.target.ignored }),
+                      }
+                    : entry.target,
+                ...(switching
+                  ? {
+                      content: undefined,
+                      textBytes: undefined,
+                      largeText: undefined,
+                      hexFile: undefined,
+                      error: undefined,
+                      attempt: ++attempts.current,
+                    }
+                  : {}),
+              }
+            : entry,
+        ),
+      }));
+    },
+    [current.tabs, scope, change],
   );
   // ---- Saving and restoring a session's tabs in localStorage (TASK-061fe00e).
   /** Sessions whose stored tabs were read (and checked) in this run; only those are saved. */
@@ -401,55 +463,8 @@ export function DocumentViewerProvider({
       loading.current.add(request);
       const { target, key, attempt } = tab;
       const requestId = `display:${attempt}`;
-      const call =
-        "runId" in target
-          ? api.invoke("runs.log", { workbenchId, id: target.runId, full: true }).then((log) => {
-              if (log.id !== target.runId || log.truncated) throw veraError("NOT_FOUND");
-              const lines = log.text.split("\n");
-              return {
-                workbenchId,
-                content: {
-                  kind: "text" as const,
-                  path: `.vera/runs/${target.runId}.log`,
-                  ref: null,
-                  snippet: "",
-                  lines,
-                  start: 1,
-                  end: lines.length,
-                },
-              };
-            })
-          : "downloadId" in target
-            ? api.invoke("downloads.open", { workbenchId, downloadId: target.downloadId })
-            : "textPath" in target
-              ? target.hex
-                ? readHexFile(workbenchId, target.textPath)
-                : readTextFile(workbenchId, target.textPath)
-              : api.invoke("docs.open", { workbenchId, ...target, requestId }).then(async (result) => {
-                  if (result.content.kind !== "text" || (!("path" in target) && !result.content.byteSource))
-                    return result;
-                  if (
-                    result.workbenchId !== workbenchId ||
-                    (result.requestId !== requestId &&
-                      ("path" in target
-                        ? result.content.path !== target.path
-                        : "ref" in target && result.content.ref !== target.ref))
-                  )
-                    return result;
-                  const text = await readTextFile(
-                    workbenchId,
-                    "path" in target ? target.path : result.content.path,
-                    result.content,
-                  );
-                  return {
-                    ...result,
-                    content: text.content,
-                    textBytes: text.textBytes,
-                    largeText: text.largeText,
-                  };
-                });
       const settle = (
-        result: Pick<DocumentTab, "content" | "textBytes" | "largeText" | "hexFile" | "error">,
+        result: Pick<DocumentTab, "content" | "textBytes" | "largeText" | "hexFile" | "modeInfo" | "error">,
       ) =>
         setSets((map) => {
           const set = map.get(scope);
@@ -474,6 +489,71 @@ export function DocumentViewerProvider({
             ),
           });
         });
+      const call =
+        "runId" in target
+          ? api.invoke("runs.log", { workbenchId, id: target.runId, full: true }).then((log) => {
+              if (log.id !== target.runId || log.truncated) throw veraError("NOT_FOUND");
+              const lines = log.text.split("\n");
+              return {
+                workbenchId,
+                content: {
+                  kind: "text" as const,
+                  path: `.vera/runs/${target.runId}.log`,
+                  ref: null,
+                  snippet: "",
+                  lines,
+                  start: 1,
+                  end: lines.length,
+                },
+              };
+            })
+          : "path" in target || "textPath" in target
+            ? readFileMode(
+                workbenchId,
+                "path" in target ? target.path : target.textPath,
+                requestId,
+                tab.modeChoice ?? ("textPath" in target && target.hex ? "hex" : undefined),
+                (modeInfo) => {
+                  const live = latestSets.current.get(scope)?.tabs.find((entry) => entry.key === key);
+                  if (tab.rememberMode && live?.attempt === attempt && "textPath" in target) {
+                    rememberFileMode(localStorage, modeInfo.extension, "hex");
+                    change((set) => ({
+                      ...set,
+                      tabs: set.tabs.map((entry) =>
+                        entry.key === key && entry.attempt === attempt
+                          ? {
+                              ...entry,
+                              rememberMode: false,
+                              modeChoice: "hex",
+                              target: {
+                                textPath: target.textPath,
+                                ...(target.ignored === undefined ? {} : { ignored: target.ignored }),
+                              },
+                            }
+                          : entry,
+                      ),
+                    }));
+                  }
+                  settle({ modeInfo });
+                },
+              )
+            : "downloadId" in target
+              ? api.invoke("downloads.open", { workbenchId, downloadId: target.downloadId })
+              : api.invoke("docs.open", { workbenchId, ...target, requestId }).then(async (result) => {
+                  if (result.content.kind !== "text" || !result.content.byteSource) return result;
+                  if (
+                    result.workbenchId !== workbenchId ||
+                    (result.requestId !== requestId && result.content.ref !== target.ref)
+                  )
+                    return result;
+                  const text = await readTextFile(workbenchId, result.content.path, result.content);
+                  return {
+                    ...result,
+                    content: text.content,
+                    textBytes: text.textBytes,
+                    largeText: text.largeText,
+                  };
+                });
       void call
         .then((result) => {
           if (
@@ -495,13 +575,14 @@ export function DocumentViewerProvider({
             textBytes: "textBytes" in result ? result.textBytes : undefined,
             largeText: "largeText" in result ? result.largeText : undefined,
             hexFile: "hexFile" in result ? result.hexFile : undefined,
+            modeInfo: "modeInfo" in result ? result.modeInfo : undefined,
             error: undefined,
           });
         })
         .catch((failure: unknown) => settle({ content: undefined, error: failure ?? veraError("INTERNAL") }))
         .finally(() => loading.current.delete(request));
     }
-  }, [current.tabs, current.active, scope, workbenchId]);
+  }, [current.tabs, current.active, scope, workbenchId, change]);
   useEffect(() => {
     const refresh = (owner?: string) =>
       setSets(
@@ -594,12 +675,13 @@ export function DocumentViewerProvider({
       closeMany,
       move,
       retry,
+      setMode,
       place,
       setPlace,
       opener,
       focusRequest,
     }),
-    [workbenchId, current, select, close, closeMany, move, retry, place, setPlace, opener],
+    [workbenchId, current, select, close, closeMany, move, retry, setMode, place, setPlace, opener],
   );
   return (
     <ViewerContext.Provider value={open}>

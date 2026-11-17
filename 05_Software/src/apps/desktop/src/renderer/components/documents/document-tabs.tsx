@@ -505,6 +505,25 @@ function DocumentPanel({ tab, index, leave }: { tab: DocumentTab; index: number;
           }
         }}
       >
+        {tab.modeInfo && (
+          <fieldset className="viewer-mode-toolbar" aria-label={t("documents.mode")}>
+            {tab.modeInfo.modes.map((mode) => (
+              <button
+                type="button"
+                key={mode}
+                data-viewer-mode={mode}
+                aria-pressed={tab.modeInfo?.mode === mode}
+                onClick={() => state.setMode(tab.key, mode)}
+              >
+                {mode === "rendered"
+                  ? t("documents.modeRendered")
+                  : mode === "text"
+                    ? t("documents.modeText")
+                    : t("documents.modeHex")}
+              </button>
+            ))}
+          </fieldset>
+        )}
         {error !== undefined ? (
           <>
             <ErrorMessage error={error} />

@@ -38,7 +38,7 @@ for UTF8/UTF16/single-byte secrets. Existing `docs.stat` supplies physical size.
 offer BOM/selected decoding, explicit replacement and measured wrapping. Files up to 5 MiB use bounded
 byte assembly; larger text uses64 KiB windows, a byte scrollbar, bounded sparse progressive line indexes,
 exact-settling Go to line and cancellable windowed Find. Verified large-text citations retain their provenance and range through sealed revision-bound windows;
-rendered formats retain their host content. Hex offers bounded virtual16-byte rows, physical offset jumps, streaming cancellable text/byte Find and masked selection copy through the Files menu. Later VIEW packages own general mode selection/preferences and image rendering. [Document viewer](../knowledge/document-viewer.md)
+rendered formats retain their host content. Hex offers bounded virtual16-byte rows, physical offset jumps, streaming cancellable text/byte Find and masked selection copy through the Files menu. Plain files offer applicable Rendered/Text/Hex toolbar modes, automatic Hex for binary/unknown sources and persistent deliberate preferences by host-resolved real extension; current indexed Rendered capability preserves Text for unindexed/ignored Markdown/HTML and Hex for unavailable containers without rewriting preferences; verified citations keep their provenance/range loader. Image rendering remains planned. [Document viewer](../knowledge/document-viewer.md)
 routes the exact byte contract and focused proof.
 
 [User terminals](../knowledge/terminals.md) owns interactive xterm/node-pty tabs in the right panel,

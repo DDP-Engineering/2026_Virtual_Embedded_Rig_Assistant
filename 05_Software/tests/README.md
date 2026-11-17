@@ -222,3 +222,8 @@ four-locale browser controls. VERA_TERM03_EVIDENCE_DIR retains native proof. Cor
 `e2e/hex-viewer.spec.ts` exercises native Hex border Find, partial rows/nonprintables, bounded DOM,
 keyboard selection, actual clipboard and live stored-credential Display masking in four locales.
 Original logs/screenshots/receipt stay in `evaluation-outputs/view04`.
+
+`e2e/viewer-modes.spec.ts` checks automatic binary/unknown Hex, explicit replacement Text,
+Markdown Rendered/Text/Hex and remembered real-extension mode in browser and native Electron.
+Native acceptance uses two Markdown files, an opaque secret-named source and a full process restart.
+Original logs, screenshots and receipts remain under ignored `evaluation-outputs/view05`.

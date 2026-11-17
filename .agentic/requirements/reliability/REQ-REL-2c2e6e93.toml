@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-REL-2c2e6e93"
+title = "Keep file viewing usable with invalid or unavailable mode storage"
+status = "active"
+requirement = """If persisted viewer mode storage is invalid, unavailable or unsupported by the current extension, VERA shall resolve an applicable default while retaining an explicit tab choice for the current run without rewriting automatic fallbacks."""
+verification = "Supply invalid JSON, version2, invalid mode, denied reads, failed writes and unsupported Rendered for a binary extension; assert applicable mode, independent extensions and no automatic writes."
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/documents/file-mode.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/documents/file-mode.test.ts", "05_Software/src/apps/desktop/src/renderer/components/documents/document-tabs.test.ts", "05_Software/tests/e2e/viewer-modes.spec.ts"]
+created = 2026-11-17
+updated = 2026-11-17

@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-FUNC-12972046"
+title = "Open binary and unknown sources in Hex automatically"
+status = "active"
+requirement = """When an ordinary file has an unknown extension or binary control bytes in its bounded text prefix and no applicable deliberate preference, the viewer shall open Hex while keeping explicit Text available."""
+verification = "Open unknown and binary text-extension fixtures; assert Hex and a usable explicit Text choice, while BOM UTF16 text retains Text and binary containers with a renderer retain their rendered default."
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/documents/file-mode.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/documents/file-mode.test.ts", "05_Software/src/apps/desktop/src/renderer/components/documents/document-tabs.test.ts", "05_Software/tests/e2e/viewer-modes.spec.ts"]
+created = 2026-11-17
+updated = 2026-11-17

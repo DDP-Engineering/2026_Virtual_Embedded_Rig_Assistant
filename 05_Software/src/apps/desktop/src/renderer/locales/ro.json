@@ -475,7 +475,11 @@
     "hexPosition": "Poziție în octeți",
     "hexNoMatch": "Niciun octet corespunzător.",
     "hexInvalid": "Offset sau căutare nevalidă, ori selecția depășește 64 KiB.",
-    "hexShow": "Arată ca hex"
+    "hexShow": "Arată ca hex",
+    "mode": "Mod de vizualizare",
+    "modeRendered": "Randat",
+    "modeText": "Text",
+    "modeHex": "Hex"
   },
   "skills": {
     "settings": "Setări pentru skill-uri",

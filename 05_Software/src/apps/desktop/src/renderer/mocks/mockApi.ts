@@ -1054,7 +1054,14 @@ What this plugin does.
         const modified = "2026-10-13T00:00:00.000Z";
         if (treeFiles().includes(path)) {
           const size = mockTextBytes(path).length;
-          value = { workbenchId, properties: { path, type: "file", size, modified } };
+          const extension = /\.[^/.]+$/.exec(path)?.[0].toLowerCase() ?? "";
+          const doc = mockDocuments.find((doc) => doc.path === path);
+          const rendered =
+            !!doc &&
+            doc.kind !== "text" &&
+            doc.kind !== "other" &&
+            (doc.status === "indexed" || doc.status === "needs_ocr");
+          value = { workbenchId, properties: { path, extension, rendered, type: "file", size, modified } };
         } else if (treeFiles().some((file) => file.startsWith(`${path}/`))) {
           value = { workbenchId, properties: { path, type: "folder", size: null, modified } };
         } else throw veraError("NOT_FOUND");

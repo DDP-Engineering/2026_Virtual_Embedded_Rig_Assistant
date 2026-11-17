@@ -2,7 +2,7 @@
 
 PURPOSE: open any workbench file inside VERA the way a file manager's lister does: as text with word wrap and a
 chosen encoding, as hex, or rendered, without a size limit and without an external program.
-STATE: VIEW-01 committed at 2a886177455e1c2adc669072b768e7af50f62367 (TASK-64079701, #286 closed); VIEW-02 committed at c6ede1959372fd1c39b7411f35a4a40a6bb3d91b (TASK-9a5b9ff2, #287 closed); VIEW-03 committed at b33e44979a840b3a945316b4d43fed8e5631475a (TASK-d6ed6549, #288 closed); VIEW-04 candidate implemented (TASK-5bdc042a, #289; coordinator owns acceptance/commit); VIEW-05 and VIEW-06 remain planned. Product code follows AEGIS, one work package per task.
+STATE: VIEW-01 committed at 2a886177455e1c2adc669072b768e7af50f62367 (TASK-64079701, #286 closed); VIEW-02 committed at c6ede1959372fd1c39b7411f35a4a40a6bb3d91b (TASK-9a5b9ff2, #287 closed); VIEW-03 committed at b33e44979a840b3a945316b4d43fed8e5631475a (TASK-d6ed6549, #288 closed); VIEW-04 committed at e1e477afbeccd86ff96fd48e65b23bc5e28ebe5f (TASK-5bdc042a, #289 closed); VIEW-05 candidate implemented (TASK-a4d526f6, #290; coordinator owns acceptance/commit); VIEW-06 remains planned. Product code follows AEGIS, one work package per task.
 
 ## Current implementation (2026-11-17)
 
@@ -14,7 +14,7 @@ STATE: VIEW-01 committed at 2a886177455e1c2adc669072b768e7af50f62367 (TASK-64079
   Larger text uses64 KiB windows, a byte scrollbar, bounded sparse progressive indexing, exact-settling
   Go to line and cancellable windowed Find with matching-line counts and wrapping. Verified large-text
   citations use compact, sealed revision-bound sources and retain their original range; rendered
-  formats keep their established paths. Hex offers bounded16-byte virtual rows, offset navigation, cancellable UTF8/hex Find and masked selection copy from the Files menu. Image view remains planned.
+  formats keep their established paths. Hex offers bounded16-byte virtual rows, offset navigation, cancellable UTF8/hex Find and masked selection copy from the Files menu. Plain-file toolbar modes use real host extension keys and current indexed Rendered availability, retain readable Text for unindexed/ignored Markdown/HTML, and remember deliberate choices across restart; binary/unknown files default Hex. Image view remains planned.
 - Display masking is live, defaults off and supports per-workbench overrides. Opaque workbench-owned identities
   retain secret-named Files/Find entries. MASK-02 is committed at cb8f0bcd; the completed MASK predecessor
   sequence ends at b709882a9f23d64966c0e44cedbb1dc3bcd23e06 (VIEW-01 base).
@@ -33,7 +33,9 @@ STATE: VIEW-01 committed at 2a886177455e1c2adc669072b768e7af50f62367 (TASK-64079
   source/index/search and boundary/cancellation tests sit in large-text.test.ts. TASK-d6ed6549/#288
   was committed by the coordinator at b33e44979a840b3a945316b4d43fed8e5631475a; #288 is closed.
 
-- VIEW-04 Done A/B: hex-source.test.ts, hex-viewer.test.ts and native tests/e2e/hex-viewer.spec.ts prove cross-window Find, partial rows/nonprintables, keyboard selection across displayed windows, actual clipboard, bounded rows and live stored-credential Display refresh. Original proof: evaluation-outputs/view04. TASK-5bdc042a/#289 is an unstaged candidate; coordinator owns acceptance, commit and closure.
+- VIEW-04 Done A/B: hex-source.test.ts, hex-viewer.test.ts and native tests/e2e/hex-viewer.spec.ts prove cross-window Find, partial rows/nonprintables, keyboard selection across displayed windows, actual clipboard, bounded rows and live stored-credential Display refresh. Original proof: evaluation-outputs/view04. TASK-5bdc042a/#289 was committed by the coordinator at e1e477afbeccd86ff96fd48e65b23bc5e28ebe5f; #289 is closed.
+
+- VIEW-05 Done A/B: file-mode.test.ts and document-tabs.test.ts cover defaults, mode switches, opaque extensions, storage failures and citation provenance; tests/e2e/viewer-modes.spec.ts provides browser and Windows Electron acceptance with two Markdown files and a full application restart. TASK-a4d526f6/#290 is an unstaged candidate; original proof is in evaluation-outputs/view05 and coordinator owns acceptance/commit/closure.
 
 ## Decisions (2026-11-15)
 

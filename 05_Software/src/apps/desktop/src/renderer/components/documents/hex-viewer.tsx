@@ -1,5 +1,5 @@
 import { veraError } from "@vera/shared";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ErrorMessage } from "../error-message.js";
 import { HexRows, type HexSelection, type HexWindow } from "./hex-rows.js";
@@ -31,7 +31,7 @@ export function HexViewer({
   gotoRequest?: number;
 }) {
   const { t } = useTranslation();
-  const source = useMemo(() => new HexSource(file), [file]);
+  const source = useRef<HexSource | undefined>(undefined);
   const body = useRef<HTMLElement>(null),
     search = useRef<HTMLInputElement>(null),
     goto = useRef<HTMLInputElement>(null);
@@ -64,15 +64,19 @@ export function HexViewer({
     operation.current = undefined;
     setBusy(false);
   };
-  useEffect(
-    () => () => {
+  useEffect(() => {
+    const owned = new HexSource(file);
+    source.current = owned;
+    return () => {
       operation.current?.abort();
-      source.dispose();
-    },
-    [source],
-  );
+      owned.dispose();
+      if (source.current === owned) source.current = undefined;
+    };
+  }, [file]);
   useEffect(() => {
     void attempt;
+    const owned = source.current;
+    if (!owned) return;
     const controller = new AbortController(),
       signal = controller.signal;
     const target = Math.max(0, Math.min(Math.max(0, file.size - 1), position));
@@ -80,9 +84,9 @@ export function HexViewer({
     setError(undefined);
     setView(undefined);
     void (async () => {
-      await source.verify(signal);
-      const bytes = await source.read(start, HEX_WINDOW_BYTES, signal, true);
-      await source.verify(signal);
+      await owned.verify(signal);
+      const bytes = await owned.read(start, HEX_WINDOW_BYTES, signal, true);
+      await owned.verify(signal);
       signal.throwIfAborted();
       setView({ offset: start, bytes, target });
       report.current?.({ offset: target });
@@ -90,7 +94,7 @@ export function HexViewer({
       if (!signal.aborted) setError(failure);
     });
     return () => controller.abort();
-  }, [source, file.size, position, attempt]);
+  }, [file, position, attempt]);
   useEffect(() => {
     if (findRequest) setFindOpen(true);
   }, [findRequest]);
@@ -134,6 +138,8 @@ export function HexViewer({
     }
   };
   const find = () => {
+    const owned = source.current;
+    if (!owned) return;
     let pattern: Uint8Array;
     try {
       pattern = hexPattern(query, mode);
@@ -142,7 +148,7 @@ export function HexViewer({
       return;
     }
     void run(async (signal) => {
-      const found = await source.find(pattern, Math.min(file.size, (lastFind.current ?? -1) + 1), signal);
+      const found = await owned.find(pattern, Math.min(file.size, (lastFind.current ?? -1) + 1), signal);
       signal.throwIfAborted();
       if (found === null) {
         setNotice(t("documents.hexNoMatch"));
@@ -156,13 +162,14 @@ export function HexViewer({
     });
   };
   const copy = (as: HexMode) => {
-    if (!selection) return;
+    const owned = source.current;
+    if (!selection || !owned) return;
     if (Math.abs(selection.focus - selection.anchor) >= HEX_WINDOW_BYTES) {
       setInvalid(true);
       return;
     }
     void run(async (signal) => {
-      const value = await source.copy(selection.anchor, selection.focus, as, signal);
+      const value = await owned.copy(selection.anchor, selection.focus, as, signal);
       signal.throwIfAborted();
       const field = document.createElement("textarea"),
         focused = document.activeElement;

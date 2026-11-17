@@ -4,6 +4,13 @@ entries:
   - category: new
     topic: { en: Files, ro: Fișiere, de: Dateien, fr: Fichiers }
     text:
+      en: Switch Rendered, Text or Hex; binary files open in Hex and your choice stays per extension.
+      ro: Alege Randat, Text sau Hex; fișierele binare se deschid în Hex, iar extensia reține alegerea.
+      de: Gerendert, Text oder Hex wählen; Binärdateien öffnen in Hex, die Wahl bleibt pro Dateiendung.
+      fr: Choisissez Rendu, Texte ou Hex ; les binaires ouvrent en Hex, le choix reste par extension.
+  - category: new
+    topic: { en: Files, ro: Fișiere, de: Dateien, fr: Fichiers }
+    text:
       en: Inspect bytes in Hex, jump to offsets, find text or bytes and copy selected hex or text.
       ro: Inspectează octeți în Hex, sari la offset, caută text sau octeți și copiază selecția.
       de: Bytes in Hex ansehen, zu Offsets springen, Text oder Bytes suchen und die Auswahl kopieren.
