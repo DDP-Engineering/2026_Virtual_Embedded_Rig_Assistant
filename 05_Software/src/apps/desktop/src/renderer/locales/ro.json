@@ -417,6 +417,8 @@
     "typeFile": "Fișier",
     "encoding": "Codificare",
     "wordWrap": "Încadrare pe rânduri",
+    "bytePosition": "Poziție în octeți",
+    "scanning": "Scanare…",
     "showAsText": "Afișează ca text",
     "textBinary": "Acest fișier nu este text și nu poate fi afișat aici.",
     "textTooLarge": "Acest fișier depășește 5 MB și nu poate fi afișat aici.",

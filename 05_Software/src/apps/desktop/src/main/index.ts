@@ -841,8 +841,8 @@ ipcMain.handle(
       "docs.tree": ({ workbenchId, path }) => display.tree(workbenchId, path),
       "docs.find": ({ workbenchId, query }) => display.find(workbenchId, query),
       "docs.read": ({ workbenchId, path, requestId }) => display.read(workbenchId, path, requestId),
-      "docs.readBytes": ({ workbenchId, path, offset, length }) =>
-        display.readBytes(workbenchId, path, offset, length),
+      "docs.readBytes": ({ workbenchId, path, offset, length, revision }) =>
+        display.readBytes(workbenchId, path, offset, length, revision),
       "docs.stat": ({ workbenchId, path }) => display.stat(workbenchId, path),
       // The Docs tree's OS actions go through the tree's confinement first (TASK-eae3a69e).
       "docs.openers": () => ({ apps: [...openers().keys()] }),

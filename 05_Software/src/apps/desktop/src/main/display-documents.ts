@@ -102,6 +102,17 @@ export class DisplayDocuments {
       path: this.path(id, content.path),
       displayPath: this.scrub(id, content.path),
       ref: content.ref === null ? null : this.ref(id, content.ref),
+      ...(content.kind === "text" && content.byteSource
+        ? {
+            byteSource: {
+              ...content.byteSource,
+              revision: this.identities.encode(
+                `${this.owner}\nbyte-source:${content.path}`,
+                content.byteSource.revision,
+              ),
+            },
+          }
+        : {}),
     } as ViewerContent;
   }
   private async run<T>(id: string, read: () => Promise<T>) {
@@ -166,10 +177,26 @@ export class DisplayDocuments {
       },
     };
   }
-  async readBytes(id: string, path: string, offset: number, length: number) {
+  async readBytes(id: string, path: string, offset: number, length: number, revision?: string) {
     const original = this.resolve(id, path);
+    if (revision !== undefined && !/^__vera_display_[A-Za-z0-9_-]+\.$/.test(revision))
+      throw veraError("DENIED");
     const source = await this.run(id, () => this.workbench.readBytes(id, original, offset, length));
     if (source.path !== original || source.offset !== offset) throw veraError("NOT_FOUND");
+    if (
+      revision !== undefined &&
+      this.identities.decode(`${this.owner}\nbyte-source:${original}`, revision) !== source.revision
+    )
+      throw veraError("CONFLICT");
+    const lineEnds: number[] = [];
+    if (revision !== undefined) {
+      const end = Math.min(source.size, offset + length);
+      for (let at = offset; at < end; at++) {
+        const byte = source.bytes[at - source.start],
+          next = source.bytes[at + 1 - source.start];
+        if (byte === 10 || (byte === 13 && next !== 10)) lineEnds.push(at - offset + 1);
+      }
+    }
     const masked = this.maskingFor(this.current(id).config, "display");
     const bytes = masked
       ? maskByteWindow(source, length, this.secrets())
@@ -184,6 +211,7 @@ export class DisplayDocuments {
       offset,
       size: source.size,
       data: bytes.toString("base64"),
+      ...(revision === undefined ? {} : { revision, lineEnds }),
     };
   }
   async search(id: string, query: string) {

@@ -15,6 +15,8 @@ import { useTranslation } from "react-i18next";
 import { api } from "../../api/index.js";
 import { readTabs, type StoredTabs, writeTabs } from "../../lib/document-tabs-store.js";
 import { Markdown } from "../session/markdown.js";
+import type { LargeTextFile } from "./large-text-source.js";
+import { LargeTextViewer } from "./large-text-viewer.js";
 import type { ZoomRequest } from "./pdf-viewer.js";
 import { readTextFile } from "./read-text-file.js";
 import { TextViewer } from "./text-viewer.js";
@@ -48,6 +50,7 @@ export interface DocumentTab {
   content?: ViewerContent | undefined;
   /** Display-masked small-file bytes, transient and invalidated with the content attempt. */
   textBytes?: Uint8Array | undefined;
+  largeText?: LargeTextFile | undefined;
   error?: unknown;
   /** Bumped by every open of the tab and by Retry; a load answers only its own attempt. */
   attempt: number;
@@ -174,6 +177,7 @@ export function DocumentViewerProvider({
                     title: "downloadId" in target ? tab.title : title,
                     content: undefined,
                     textBytes: undefined,
+                    largeText: undefined,
                     error: undefined,
                     attempt: ++attempts.current,
                   }
@@ -239,6 +243,7 @@ export function DocumentViewerProvider({
                 ...tab,
                 content: undefined,
                 textBytes: undefined,
+                largeText: undefined,
                 error: undefined,
                 attempt: ++attempts.current,
               }
@@ -414,17 +419,29 @@ export function DocumentViewerProvider({
             : "textPath" in target
               ? readTextFile(workbenchId, target.textPath)
               : api.invoke("docs.open", { workbenchId, ...target, requestId }).then(async (result) => {
-                  // Verified references retain the exact provenance/content issued by their host.
-                  if (!("path" in target) || result.content.kind !== "text") return result;
+                  if (result.content.kind !== "text" || (!("path" in target) && !result.content.byteSource))
+                    return result;
                   if (
                     result.workbenchId !== workbenchId ||
-                    (result.requestId !== requestId && result.content.path !== target.path)
+                    (result.requestId !== requestId &&
+                      ("path" in target
+                        ? result.content.path !== target.path
+                        : "ref" in target && result.content.ref !== target.ref))
                   )
                     return result;
-                  const text = await readTextFile(workbenchId, target.path, result.content);
-                  return { ...result, textBytes: text.textBytes };
+                  const text = await readTextFile(
+                    workbenchId,
+                    "path" in target ? target.path : result.content.path,
+                    result.content,
+                  );
+                  return {
+                    ...result,
+                    content: text.content,
+                    textBytes: text.textBytes,
+                    largeText: text.largeText,
+                  };
                 });
-      const settle = (result: Pick<DocumentTab, "content" | "textBytes" | "error">) =>
+      const settle = (result: Pick<DocumentTab, "content" | "textBytes" | "largeText" | "error">) =>
         setSets((map) => {
           const set = map.get(scope);
           const found = set?.tabs.find((entry) => entry.key === key);
@@ -467,6 +484,7 @@ export function DocumentViewerProvider({
           settle({
             content: result.content,
             textBytes: "textBytes" in result ? result.textBytes : undefined,
+            largeText: "largeText" in result ? result.largeText : undefined,
             error: undefined,
           });
         })
@@ -495,6 +513,7 @@ export function DocumentViewerProvider({
                           title: "runId" in tab.target ? tab.title : "[REDACTED]",
                           content: undefined,
                           textBytes: undefined,
+                          largeText: undefined,
                           error: undefined,
                           attempt: ++attempts.current,
                         },
@@ -581,17 +600,21 @@ export function DocumentViewerProvider({
 export function DocumentBody({
   content,
   bytes,
+  largeText,
   place,
   onPlace,
+  retry,
   findRequest = 0,
   gotoRequest = 0,
   zoomRequest,
 }: {
   content: ViewerContent;
   bytes?: Uint8Array | undefined;
+  largeText?: LargeTextFile | undefined;
   /** Where the document was left; without it the cited unit is shown (REQ-UX-1f53a583). */
   place?: DocumentPlace | undefined;
   onPlace?: ((place: DocumentPlace) => void) | undefined;
+  retry?: (() => void) | undefined;
   /** Bumped by Ctrl+F and Ctrl+G in the tab (TASK-4c04273a). */
   findRequest?: number;
   gotoRequest?: number;
@@ -637,6 +660,18 @@ export function DocumentBody({
         onPage={(page) => onPlace?.({ page })}
         findRequest={findRequest}
         zoomRequest={zoomRequest}
+      />
+    );
+  if (content.kind === "text" && largeText)
+    return (
+      <LargeTextViewer
+        file={largeText}
+        content={content}
+        retry={retry}
+        place={place}
+        onPlace={onPlace}
+        findRequest={findRequest}
+        gotoRequest={gotoRequest}
       />
     );
   if (content.kind === "text")

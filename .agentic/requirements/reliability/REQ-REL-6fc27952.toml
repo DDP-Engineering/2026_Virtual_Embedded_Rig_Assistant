@@ -10,9 +10,9 @@ requirement = "If a document tab's content cannot be loaded, the desktop app sha
 
 verification = "Renderer test: the mock API fails docs.open once for b.md; its tab shows the error and Retry, the a.md tab still shows its document, and Retry loads b.md; boundary: a citation to the failed document retries it in the same tab."
 
-affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/documents/viewer-context.tsx", "05_Software/src/apps/desktop/src/renderer/components/documents/document-tabs.tsx"]
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/documents/viewer-context.tsx", "05_Software/src/apps/desktop/src/renderer/components/documents/document-tabs.tsx", "05_Software/src/apps/desktop/src/renderer/components/documents/large-text-viewer.tsx"]
 
-linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/documents/document-tabs.test.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/documents/document-tabs.test.ts", "05_Software/src/apps/desktop/src/renderer/components/documents/large-text-viewer.test.ts", "05_Software/tests/e2e/large-text-citations.spec.ts"]
 
 
 spec = ""
@@ -21,4 +21,4 @@ priority = "normal"   # low | normal | high
 rationale = ""        # why this behavior exists, if not obvious
 
 created = 2026-11-01
-updated = 2026-11-01
+updated = 2026-11-17

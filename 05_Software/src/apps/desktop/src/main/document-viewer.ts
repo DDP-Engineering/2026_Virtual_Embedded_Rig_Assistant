@@ -75,6 +75,7 @@ export function publicViewer(content: ViewerContent, scrub: (text: string) => st
         lines: content.lines.map(scrub),
         start: content.start,
         end: content.end,
+        ...(content.byteSource ? { byteSource: content.byteSource } : {}),
       };
     case "artifact":
       return {

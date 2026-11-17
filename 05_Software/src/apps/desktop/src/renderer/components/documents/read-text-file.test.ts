@@ -90,7 +90,7 @@ it("assembles bounded masked text windows and refuses inconsistent byte replies"
       { workbenchId: id, path: "sample.txt", offset: 0, length: 1024 * 1024 },
       { workbenchId: id, path: "sample.txt", offset: 1024 * 1024, length: 6 },
     ]);
-    for (failure of ["owner", "path", "offset", "size", "short", "large", "modified"]) {
+    for (failure of ["owner", "path", "offset", "size", "short", "modified"]) {
       statReads = 0;
       await open();
       expect(container.querySelector('[data-line="1"]'), failure).toBeNull();
@@ -104,7 +104,7 @@ it("assembles bounded masked text windows and refuses inconsistent byte replies"
   }
 });
 
-it("reads empty files and preserves existing large indexed extraction without byte assembly", async () => {
+it("reads empty files and opens large ordinary text as a bounded source descriptor", async () => {
   let size = 0;
   const spy = vi.spyOn(api, "invoke").mockImplementation((async (channel: string) => {
     if (channel === "docs.stat")
@@ -113,7 +113,7 @@ it("reads empty files and preserves existing large indexed extraction without by
         properties: { path: "sample.txt", type: "file", size, modified: "2026-11-17T00:00:00.000Z" },
       };
     if (channel === "docs.readBytes")
-      return { workbenchId: id, path: "sample.txt", size, offset: 0, data: "" };
+      return { workbenchId: id, path: "sample.txt", size, offset: 0, data: size ? "77u/eA==" : "" };
     throw Error(channel);
   }) as typeof api.invoke);
   try {
@@ -135,12 +135,16 @@ it("reads empty files and preserves existing large indexed extraction without by
       start: 1,
       end: 1,
     };
-    expect(await readTextFile(id, "sample.txt", existing)).toEqual({
+    const result = await readTextFile(id, "sample.txt", existing);
+    expect(result.content.lines).toEqual([]);
+    expect(result).toHaveProperty("largeText", {
       workbenchId: id,
-      content: existing,
-      textBytes: undefined,
+      path: "sample.txt",
+      size,
+      modified: "2026-11-17T00:00:00.000Z",
+      encoding: "utf-8",
     });
-    expect(spy.mock.calls.some(([channel]) => channel === "docs.readBytes")).toBe(false);
+    expect(spy.mock.calls.filter(([channel]) => channel === "docs.readBytes")).toHaveLength(1);
   } finally {
     spy.mockRestore();
   }

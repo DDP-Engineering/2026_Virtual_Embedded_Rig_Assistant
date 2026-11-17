@@ -1,9 +1,11 @@
 import { DOCS_BYTE_WINDOW_LIMIT, type ViewerContent, veraError } from "@vera/shared";
 import { api } from "../../api/index.js";
+import { type LargeTextFile, LargeTextSource } from "./large-text-source.js";
+import { detectTextEncoding } from "./text-encoding.js";
 
 const TEXT_LIMIT = 5 * 1024 * 1024;
 
-/** Current small-file text loading; large-file indexing/window navigation belongs to VIEW-03. */
+/** Ordinary text uses bounded assembly for small files and a transient window source for large ones. */
 export async function readTextFile(
   workbenchId: string,
   path: string,
@@ -13,9 +15,45 @@ export async function readTextFile(
   if (stat.workbenchId !== workbenchId) throw veraError("CONFLICT");
   const { properties } = stat;
   if (properties.type !== "file" || properties.size === null) throw veraError("INVALID");
+  if (
+    existing?.byteSource &&
+    (existing.byteSource.size !== properties.size || existing.byteSource.modified !== properties.modified)
+  )
+    throw veraError("CONFLICT");
+  const content: Extract<ViewerContent, { kind: "text" }> = {
+    ...(existing ?? {
+      kind: "text",
+      path,
+      displayPath: properties.displayPath ?? properties.path,
+      ref: null,
+      snippet: "",
+      start: 1,
+      end: 1,
+    }),
+    lines: [],
+  };
   if (properties.size > TEXT_LIMIT) {
-    if (existing) return { workbenchId, content: existing, textBytes: undefined };
-    throw { code: "INVALID", messageKey: "documents.textTooLarge" };
+    const largeText: LargeTextFile = {
+      workbenchId,
+      path: properties.path,
+      size: properties.size,
+      modified: properties.modified,
+      encoding: "utf-8",
+    };
+    if (existing?.byteSource) {
+      const verified = existing.byteSource;
+      largeText.verified = { revision: verified.revision, lines: verified.lines, utf8Log: verified.utf8Log };
+      return { workbenchId, content, textBytes: undefined, largeText };
+    }
+    const source = new LargeTextSource(largeText);
+    const signal = new AbortController().signal;
+    try {
+      largeText.encoding = detectTextEncoding(await source.read(0, 4, signal));
+      await source.verify(signal);
+    } finally {
+      source.dispose();
+    }
+    return { workbenchId, content, textBytes: undefined, largeText };
   }
   const bytes = new Uint8Array(properties.size);
   // Even an empty file is read so a change after stat cannot silently produce an empty view.
@@ -42,15 +80,5 @@ export async function readTextFile(
     after.properties.modified !== properties.modified
   )
     throw veraError("CONFLICT");
-  const content: Extract<ViewerContent, { kind: "text" }> = existing ?? {
-    kind: "text",
-    path,
-    displayPath: properties.displayPath ?? properties.path,
-    ref: null,
-    snippet: "",
-    lines: [],
-    start: 1,
-    end: 1,
-  };
-  return { workbenchId, content, textBytes: bytes };
+  return { workbenchId, content, textBytes: bytes, largeText: undefined };
 }

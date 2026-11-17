@@ -417,6 +417,8 @@
     "typeFile": "File",
     "encoding": "Encoding",
     "wordWrap": "Word wrap",
+    "bytePosition": "Byte position",
+    "scanning": "Scanning…",
     "showAsText": "Show as text",
     "textBinary": "This file is not text and cannot be shown here.",
     "textTooLarge": "This file is larger than 5 MB and cannot be shown here.",

@@ -10,9 +10,9 @@ requirement = "When the user presses Ctrl+F in a text document tab, the desktop 
 
 verification = "Renderer test: in a 600-line log with ERR on lines 5, 300 and 590, typing err shows 1 of 3 with line 5 in view and marked; Enter shows 2 of 3 at line 300; Shift+Enter from 1 wraps to 3; Escape closes the field; boundary: no match shows 0 of 0 and keeps the view."
 
-affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/documents/text-viewer.tsx", "05_Software/src/apps/desktop/src/renderer/components/documents/find-bar.tsx", "05_Software/src/apps/desktop/src/renderer/locales/"]
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/documents/text-viewer.tsx", "05_Software/src/apps/desktop/src/renderer/components/documents/find-bar.tsx", "05_Software/src/apps/desktop/src/renderer/locales/", "05_Software/src/apps/desktop/src/renderer/components/documents/large-text-viewer.tsx"]
 
-linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/documents/documents.test.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/documents/documents.test.ts", "05_Software/src/apps/desktop/src/renderer/components/documents/large-text-viewer.test.ts", "05_Software/tests/e2e/large-text-citations.spec.ts"]
 
 
 spec = ""
@@ -21,4 +21,4 @@ priority = "normal"   # low | normal | high
 rationale = ""        # why this behavior exists, if not obvious
 
 created = 2026-11-01
-updated = 2026-11-01
+updated = 2026-11-17

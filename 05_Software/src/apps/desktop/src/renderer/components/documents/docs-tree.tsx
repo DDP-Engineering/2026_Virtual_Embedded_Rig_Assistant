@@ -191,9 +191,9 @@ export function DocsTree({
   const activate = (row: Row) => {
     if (row.type === "folder") return toggle(row.path, !row.expanded);
     const doc = byPath.get(row.path);
-    // Indexed documents open in their viewer; any other file is read as text.
+    // Ordinary text goes straight to bytes; rendered documents retain their indexed viewer.
     open?.(
-      doc && (doc.status === "indexed" || doc.status === "needs_ocr")
+      doc && doc.kind !== "text" && (doc.status === "indexed" || doc.status === "needs_ocr")
         ? { path: row.path }
         : row.ignored
           ? { textPath: row.path, ignored: true }

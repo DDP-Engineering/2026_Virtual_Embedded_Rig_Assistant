@@ -1,15 +1,86 @@
 // REQ-FUNC-28ad0001
 import { createHash } from "node:crypto";
-import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, stat, utimes, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import Database from "better-sqlite3";
 import { expect, it } from "vitest";
 import { DocumentsRepository } from "../storage/repos/documents.js";
 import { schemaSql } from "../storage/schema.js";
+import { readBytes } from "../workbench/read-bytes.js";
 import { documentKind } from "./ingest.js";
 import { createDocumentProcessor } from "./processor.js";
 import { DocumentViewer } from "./viewer.js";
+
+it("compacts verified large indexed and line citations before transport and binds their original source revision", async () => {
+  const root = await mkdtemp(join(tmpdir(), "vera-large-citation-"));
+  const db = new Database(":memory:");
+  db.exec(schemaSql);
+  const path = "large.txt",
+    text = `${"x".repeat(6 * 1024 * 1024)}\r\nTARGET\rLAST\n`;
+  try {
+    await writeFile(join(root, path), text);
+    const fixedTime = new Date("2026-11-17T00:00:00.000Z");
+    await utimes(join(root, path), fixedTime, fixedTime);
+    const hash = createHash("sha256").update(text).digest("hex");
+    const doc = new DocumentsRepository(db).save({
+      path,
+      kind: "text",
+      sha256: hash,
+      bytes: Buffer.byteLength(text),
+      mtime: new Date().toISOString(),
+      pages: null,
+      status: "indexed",
+      error: null,
+      indexedAt: null,
+    });
+    db.prepare("INSERT INTO document_extractions(doc_id,extraction_json) VALUES(?,?)").run(
+      doc.id,
+      JSON.stringify({ kind: "text", lines: [text.slice(0, 6 * 1024 * 1024), "TARGET", "LAST"] }),
+    );
+    const viewer = new DocumentViewer(root, db);
+    const result = await viewer.open(`${path}#L2-L3`, "issued snippet");
+    expect(result).toMatchObject({
+      kind: "text",
+      path,
+      ref: `${path}#L2-L3`,
+      snippet: "issued snippet",
+      lines: [],
+      start: 2,
+      end: 3,
+      byteSource: { lines: 3, size: Buffer.byteLength(text), utf8Log: false },
+    });
+    expect(JSON.stringify(result).length).toBeLessThan(1000);
+    if (result.kind !== "text" || !result.byteSource) throw Error("Missing compact source");
+    expect((await readBytes(root, path, 0, 4)).revision).toBe(result.byteSource.revision);
+    expect(await viewer.openPath(path)).toMatchObject({ lines: [], byteSource: { lines: 3 } });
+    const fractionalTime = 1794873600 + 0.75 / 1000;
+    await utimes(join(root, path), fractionalTime, fractionalTime);
+    const fractional = await viewer.openPath(path);
+    expect(fractional.kind === "text" && fractional.byteSource?.modified).toBe(
+      (await stat(join(root, path))).mtime.toISOString(),
+    );
+    await utimes(join(root, path), fixedTime, fixedTime);
+    const baseline = await viewer.open(`${path}#L2-L3`);
+    if (baseline.kind !== "text" || !baseline.byteSource) throw Error("Missing baseline source");
+    const before = await stat(join(root, path));
+    await writeFile(join(root, path), text.replace("TARGET", "CHANGE"));
+    await utimes(join(root, path), before.atime, before.mtime);
+    expect((await stat(join(root, path))).mtimeMs).toBe(before.mtimeMs);
+    expect((await readBytes(root, path, 0, 4)).revision).not.toBe(baseline.byteSource.revision);
+    await expect(viewer.open(`${path}#L2-L3`)).rejects.toMatchObject({ code: "NOT_FOUND" });
+    const log = `\0${"x".repeat(6 * 1024 * 1024)}control\n`;
+    await writeFile(join(root, "control.log"), log);
+    await expect(viewer.open("control.log#L1-L1")).rejects.toMatchObject({ code: "NOT_FOUND" });
+    expect(await viewer.open("control.log#L1-L1", "", false, true)).toMatchObject({
+      lines: [],
+      byteSource: { utf8Log: true, lines: 1 },
+    });
+  } finally {
+    db.close();
+    await rm(root, { recursive: true, force: true });
+  }
+});
 
 it("opens exact page ranges, duplicate heading anchors and unindexed file-tool lines; refuses stale/invalid sources", async () => {
   const root = await mkdtemp(join(tmpdir(), "vera-viewer-"));

@@ -417,6 +417,8 @@
     "typeFile": "Fichier",
     "encoding": "Encodage",
     "wordWrap": "Retour à la ligne",
+    "bytePosition": "Position en octets",
+    "scanning": "Analyse…",
     "showAsText": "Afficher en texte",
     "textBinary": "Ce fichier n’est pas un fichier texte et ne peut pas être affiché ici.",
     "textTooLarge": "Ce fichier dépasse 5 MB et ne peut pas être affiché ici.",

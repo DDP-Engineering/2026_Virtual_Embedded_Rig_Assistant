@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import { lstat, open } from "node:fs/promises";
+import { fileRevision } from "../workbench/file-revision.js";
 import type { PathGuard } from "../workbench/path-guard.js";
 import { isBinary } from "./binary.js";
 
@@ -107,6 +108,9 @@ export async function readWindow(
       truncated: clipped || offset - 1 + limit < totalLines,
       sha256: hash.digest("hex"),
       mtimeMs: after.mtimeMs,
+      modified: after.mtime.toISOString(),
+      size: after.size,
+      revision: fileRevision(after),
     };
   } finally {
     await handle.close();

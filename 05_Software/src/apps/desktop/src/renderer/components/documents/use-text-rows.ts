@@ -22,6 +22,7 @@ export function useTextRows(
   wrap: boolean,
   initial: Target,
   onLine?: ((line: number) => void) | undefined,
+  lineBase = 1,
 ) {
   const body = useRef<HTMLElement>(null);
   const probe = useRef<HTMLDivElement>(null);
@@ -93,7 +94,7 @@ export function useTextRows(
     let changed = false;
     if (wrap)
       for (const row of node.querySelectorAll<HTMLElement>("[data-line]")) {
-        const index = Number(row.dataset.line) - 1;
+        const index = Number(row.dataset.line) - lineBase;
         const height = row.getBoundingClientRect().height;
         if (height > 0 && next.get(index) !== height) {
           next.set(index, height);

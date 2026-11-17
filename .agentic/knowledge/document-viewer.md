@@ -9,7 +9,7 @@ status/search/reindex/progress, and the Docs folder tree (single search box, ign
 memory, keyboard, context menu, Properties).
 Start under05_Software at main/display-documents.ts and display-identities.ts for conditional
 Display masking, shared/documents.ts, core/knowledge/viewer.ts and
-renderer/components/documents (text-encoding.ts, read-text-file.ts, use-text-rows.ts for byte-backed text). Focused tests are viewer.test.ts, search.test.ts,
+renderer/components/documents (text-encoding.ts, read-text-file.ts, use-text-rows.ts, large-text-{source,index,find,window,rows,viewer} for byte-backed text). Focused tests are viewer.test.ts, search.test.ts,
 documents.test.ts, docs-tree.test.ts, core workbench/tree.test.ts and
 tests/e2e/{citations,documents,office-documents,docs-tree}.spec.ts.
 [Document search](document-search.md) owns retrieval/extraction validity;
@@ -63,12 +63,12 @@ Managed PDF downloads use downloads.list/open scoped IPC and a downloadId Viewer
   uses bounded positional I/O, ordinary/canonical root and path rechecks, and descriptor inode/dev/
   size/mtime/ctime checks before/after reading; missing sources return NOT_FOUND, changed sources
   CONFLICT, invalid windows INVALID and disallowed paths DENIED. Bypass/additional folders never
-  extend viewer scope. A fixed64KiB host-only context per side bounds input to1MiB+128KiB.
+  extend viewer scope. A fixed64 KiB host-only context per side bounds input to1MiB+128KiB.
   DisplayDocuments rechecks owner/generation and current Display/secrets after asynchronous work.
   On replaces all overlapping literal/JSON-escaped secret bytes in UTF8, UTF16LE/BE, Windows1252,
   ISO88591/2 with0x2A, preserving length/offset/physical size; overlong representations mask the
   entire returned window. UTF16 masked pairs decode as U+2A2A. Off returns exact original bytes.
-  Exact contract: specs/REQ-FUNC-69645e84.md. No viewer controls consume it yet.
+  Exact contract: specs/REQ-FUNC-69645e84.md. Ordinary text consumes it through the reader and bounded large-text source.
 - docs.list({workbenchId}) returns scoped document statuses/reasons.
 - docs.search({workbenchId,query}) returns at most20 current keyword hits after deduplicated per-source SHA/status/kind/locator verification and index epoch checks.
 - docs.open accepts workbenchId with indexed path, document ref, or
@@ -131,18 +131,36 @@ Managed PDF downloads use downloads.list/open scoped IPC and a downloadId Viewer
   line wins over citation start, and scroll reports retain source line numbers. FindBar stays
   on demand with Enter/Shift+Enter stepping and Escape returning focus to the body.
 - Ordinary file text up to 5 MiB uses read-text-file.ts: docs.stat, sequential <=1MiB docs.readBytes,
-  consistent owner/host identity/physical offsets/size/exact lengths, then matching final stat mtime.
-  An empty file still performs one byte read. The host applies live Display masking before bytes
-  enter the renderer; source bytes are transient per tab attempt, never persisted, and Display
-  refresh clears them with content. Opaque identities stay original action targets. Size errors use
-  textTooLarge, inconsistent reads use CONFLICT. Existing indexed text above 5 MiB keeps its verified
-  extraction without encoding controls until large-file support; this does not widen raw loading.
+  consistent owner/host identity/physical offsets/size/exact lengths and matching final stat mtime.
+  An empty file still reads once. Larger ordinary text uses a transient LargeTextFile descriptor,
+  four cached64 KiB byte windows and one decoded/measured window. A separate byte-position scrollbar
+  reaches arbitrary offsets; inner scrolling and edge wheel/keys move through adjacent fragments.
+  UTF8/UTF16 boundary handling retains complete characters; long lines use bounded fragments marked ….
+  LargeTextIndex retains one progressive cursor and <=1026 sparse checkpoints, with physical stride
+  derived from file size. Approximate row labels (≈) settle exactly after yielding chunk scans.
+  Go to line shows an estimated window first, then scans/settles exactly, clamping beyond EOF.
+  Find scans256 KiB at a time with query-sized raw overlap, scalar matching-line counters and first/last/selected hits; Enter/Shift+Enter wrap, with current/total counts;
+  Cancel, a superseding request or unmount aborts publication. Search/index loops yield per chunk.
+  Find keeps its physical match column visible inside long-line fragments, including after wrap changes.
+  All byte replies validate owner/path/offset/physical size/base64/exact lengths and opening metadata
+  before publication; mismatches use CONFLICT. Display refresh remounts the attempt, aborts old work
+  and clears caches/indexes. No source bytes or line index are persisted; kept large-file scroll is
+  its physical byte offset. Indexed ordinary text tree entries use textPath directly, avoiding a
+  complete extraction reply. Verified text above5MiB returns empty lines plus compact byteSource after
+  existing issued-reference/SHA checks; original ref/snippet/start/end remain, and the large viewer
+  settles the cited initial line and aria-current range. Core captures size, actual stat date and
+  dev/ino/size/mtimeMs/ctimeMs revision from the verified streaming snapshot; Display seals revision
+  to owner/path, and readBytes refuses a changed revision before returning masked bytes. Bounded
+  original CR/CRLF/LF lineEnds preserve source identities when Display masking hides newline bytes.
+  Verified UTF8/control-log admission stays host-owned. Retry repeats parent provenance/loading,
+  Escape focuses the body. Runs and rendered formats retain their existing host content paths.
+  Exact compact contract: specs/REQ-FUNC-ed0b45c5.md.
 - text-encoding.ts uses TextDecoder: UTF8/UTF16LE/BE BOM detection, otherwise UTF8, with explicit
   UTF8/Windows1252/ISO8859-1/ISO8859-2/UTF16LE/BE selection. ISO8859-1 follows Chromium's Windows1252
   alias. Invalid strict decoding or NUL requests Show as text; explicit replacement decoding uses
   U+FFFD for invalid sequences. Changing encoding retries strict decoding without another host read.
-  Verified references, runs, downloads, artifacts and rendered PDF/Markdown/Office keep their
-  existing content/provenance; text citations gain wrapping without a raw-byte re-read.
+  Small verified references, runs, downloads, artifacts and rendered PDF/Markdown/Office retain
+  existing host content/provenance; larger text references use the verified revision-bound windows above.
 - PdfViewer reads every page box at load, so `.pdf-scroll` holds one `.pdf-sheet[data-page-number]`
   per page; only pages within 2 of the page in view draw a canvas and text layer (pinned bundled
   module worker). The page in view is the one at a third of the view height; `.pdf-indicator`
@@ -303,7 +321,7 @@ Managed PDF downloads use downloads.list/open scoped IPC and a downloadId Viewer
   path above with explicit replacement and selected encodings. statEntry refuses the workbench folder
   itself. Main retains every result and applies conditional Display presentation with separate host authority.
 - Scoped source selections and disposed requests prevent late content replacing another view while Shell/Welcome drafts stay mounted; there is no modal viewer.
-  Controls use rem/theme tokens and en/ro/de; inner page scrolling contains overflow.
+  Controls use rem/theme tokens and en/ro/de/fr; inner page scrolling contains overflow.
 
 ## Change map
 
@@ -321,6 +339,7 @@ Managed PDF downloads use downloads.list/open scoped IPC and a downloadId Viewer
 | tab menu, drag, tab keys | documents/document-tabs.tsx; viewer-context move/closeMany; file-actions.tsx | document-tabs.test.ts; citations.spec.ts (real drag) |
 | search box, In documents, actions row | documents/docs-tab.tsx (`useTreeExpansion`); styles `.docs-actions` | docs-tree.test.ts; documents.test.ts; documents.spec.ts |
 | row context menu / Properties | documents/tree-menu.tsx; tree-properties.tsx; mockApi docs.stat | docs-tree.test.ts; documents.test.ts; docs-tree.spec.ts |
+| Large text windows/index/search | renderer/documents large-text-{source,index,find,window,rows,viewer} | large-text.test.ts; read-text-file.test.ts; e2e/large-text.spec.ts genuine 200 MiB browser/native heap/pulse proof |
 | Text decoding and measured wrap | renderer/documents text-encoding, read-text-file, text-viewer, use-text-rows | sibling tests; e2e/text-encodings.spec.ts browser/native |
 | Bounded physical byte reads | core/workbench/read-bytes.ts and service.ts; shared documents/ipc.ts; main display-documents.ts and display-bytes.ts | read-bytes.test.ts; display-bytes.test.ts; display-documents.test.ts; documents-ipc.test.ts; focused service/bridge tests |
 | Open in / Show in Explorer / Copy | main/openers.ts; index.ts docs.openers/openWith/reveal/copyPath/systemApps/openSystemApp; core locateEntry; file-actions.tsx useFileActions | openers.test.ts; tree.test.ts; documents-ipc.test.ts; docs-tree.test.ts; docs-tree.spec.ts |

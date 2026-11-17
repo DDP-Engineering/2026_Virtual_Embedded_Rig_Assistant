@@ -4,10 +4,10 @@ entries:
   - category: improved
     topic: { en: Files, ro: Fișiere, de: Dateien, fr: Fichiers }
     text:
-      en: Choose text encodings and word wrap; Find and Go to line follow wrapped source lines.
-      ro: Alege codificarea și încadrarea textului; căutarea și saltul la linie urmăresc liniile sursă.
-      de: Textkodierung und Zeilenumbruch wählen; Suche und Zeilensprung folgen den Quellzeilen.
-      fr: Choisissez l’encodage et le retour à la ligne ; recherche et saut suivent les lignes source.
+      en: Read large text with encodings, wrap, byte scrolling, line jumps and cancellable Find.
+      ro: Citește texte mari cu codificări, încadrare, derulare în octeți, salturi și căutare anulabilă.
+      de: Große Texte mit Kodierungen, Umbruch, Byte-Bildlauf, Zeilensprüngen und abbrechbarer Suche lesen.
+      fr: "Grands textes : encodage, retour à la ligne, défilement, saut et recherche annulable."
   - category: improved
     topic: { en: Data & privacy, ro: Date și confidențialitate, de: Daten & Datenschutz, fr: Données et confidentialité }
     text:

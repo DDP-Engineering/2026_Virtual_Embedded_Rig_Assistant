@@ -26,6 +26,15 @@ Original screenshots/receipts use `evaluation-outputs/mask05/native`.
 explicit replacement and measured distant wrapped Find/Go to line in browser and native Electron.
 Owned receipts/screenshots and original logs live under `evaluation-outputs/view02`.
 
+`e2e/large-text.spec.ts` uses `support/large-text-fixture.ts` to generate genuine 200 MiB variable-row
+logs for browser and native byte scrolling, late Find, exact Go to line, cancellation, heap/pulse
+measurements and native live Display refresh. Original evidence lives in `evaluation-outputs/view03`.
+
+`e2e/large-text-citations.spec.ts` proves compact indexed and actual issued large-text citations,
+source-range placement, scalar Find counts/wrapping, Escape focus and live Display. The standalone
+`support/large-text-source-probe.ts` checks verified revision/date and same-size replacement with
+restored exact mtime on pinned Windows/WSL2 Node. Original proof stays in `evaluation-outputs/view03`.
+
 ## Inventarul testelor Vitest
 
 TERM-05 adds `packaging/terminal-runtime.test.ts` for native PTY architecture/helper closure,

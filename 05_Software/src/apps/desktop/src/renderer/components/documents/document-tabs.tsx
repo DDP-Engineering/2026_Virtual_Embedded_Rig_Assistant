@@ -507,6 +507,8 @@ function DocumentPanel({ tab, index, leave }: { tab: DocumentTab; index: number;
             <DocumentBody
               content={content}
               bytes={tab.textBytes}
+              largeText={tab.largeText}
+              retry={() => state.retry(tab.key)}
               place={state.place(tab.key)}
               onPlace={(place) => state.setPlace(tab.key, place)}
               findRequest={findRequest}

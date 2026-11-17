@@ -16,6 +16,46 @@ const document = {
   indexedAt: null,
 };
 const envelope = (event: unknown) => ({ topic: "workbench", id: "wb_01JB8Z6Q4M7N2K5R9T3V8X1Y0C", event });
+
+it("admits compact verified text ranges and bounds revision-bound newline metadata", () => {
+  const content = {
+    kind: "text",
+    path: "large.txt",
+    ref: "large.txt#L900-L901",
+    snippet: "issued",
+    lines: [],
+    start: 900,
+    end: 901,
+    byteSource: {
+      size: 6 * 1024 * 1024,
+      modified: "2026-11-17T00:00:00.000Z",
+      revision: "sealed",
+      lines: 1000,
+      utf8Log: false,
+    },
+  };
+  expect(viewerContentSchema.safeParse(content).success).toBe(true);
+  for (const patch of [
+    { end: 1001 },
+    { lines: ["unbounded payload"] },
+    { byteSource: { ...content.byteSource, revision: "" } },
+  ])
+    expect(viewerContentSchema.safeParse({ ...content, ...patch }).success).toBe(false);
+  const workbenchId = "wb_01JB8Z6Q4M7N2K5R9T3V8X1Y0C";
+  const read = {
+    workbenchId,
+    path: "large.txt",
+    offset: 0,
+    size: 3,
+    data: "YQoK",
+    revision: "sealed",
+    lineEnds: [2, 3],
+  };
+  expect(channels["docs.readBytes"].response.safeParse(read).success).toBe(true);
+  for (const lineEnds of [[3, 2], [2, 2], [0], [4]])
+    expect(channels["docs.readBytes"].response.safeParse({ ...read, lineEnds }).success).toBe(false);
+  expect(channels["docs.readBytes"].response.safeParse({ ...read, revision: undefined }).success).toBe(false);
+});
 // REQ-FUNC-28ad0001
 it("requires exact workbench identity and typed viewer requests without client snippets", () => {
   const workbenchId = "wb_01JB8Z6Q4M7N2K5R9T3V8X1Y0C";

@@ -100,6 +100,7 @@ export const docsByteWindowSchema = z
     path: z.string().min(1).max(262144),
     offset: count,
     length: count.positive().max(DOCS_BYTE_WINDOW_LIMIT),
+    revision: z.string().min(1).max(4096).optional(),
   })
   .refine((v) => Number.isSafeInteger(v.offset + v.length));
 /** Base64 bytes preserve physical offsets and size, including masked 0x2A bytes. */
@@ -109,6 +110,8 @@ export const docsByteReadSchema = z
     displayPath: z.string().optional(),
     offset: count,
     size: count,
+    revision: z.string().min(1).max(4096).optional(),
+    lineEnds: z.array(count.positive().max(DOCS_BYTE_WINDOW_LIMIT)).max(DOCS_BYTE_WINDOW_LIMIT).optional(),
     data: z
       .string()
       .max(4 * Math.ceil(DOCS_BYTE_WINDOW_LIMIT / 3))
@@ -116,7 +119,13 @@ export const docsByteReadSchema = z
   })
   .refine((v) => {
     const bytes = (v.data.length * 3) / 4 - (v.data.endsWith("==") ? 2 : v.data.endsWith("=") ? 1 : 0);
-    return bytes <= DOCS_BYTE_WINDOW_LIMIT && bytes <= Math.max(0, v.size - v.offset);
+    return (
+      bytes <= DOCS_BYTE_WINDOW_LIMIT &&
+      bytes <= Math.max(0, v.size - v.offset) &&
+      (v.lineEnds === undefined ||
+        (v.revision !== undefined &&
+          v.lineEnds.every((end, i) => end <= bytes && end > (v.lineEnds?.[i - 1] ?? 0))))
+    );
   });
 export type DocsByteRead = z.infer<typeof docsByteReadSchema>;
 /**
@@ -246,8 +255,21 @@ export const viewerContentSchema = z.discriminatedUnion("kind", [
       lines: z.array(z.string()),
       start: count.positive(),
       end: count,
+      byteSource: z
+        .strictObject({
+          size: count.positive(),
+          modified: z.iso.datetime(),
+          revision: z.string().min(1).max(4096),
+          lines: count,
+          utf8Log: z.boolean(),
+        })
+        .optional(),
     })
-    .refine((v) => v.end <= v.lines.length && (v.end >= v.start || v.lines.length === 0)),
+    .refine((v) =>
+      v.byteSource
+        ? v.lines.length === 0 && v.end <= v.byteSource.lines && v.end >= v.start
+        : v.end <= v.lines.length && (v.end >= v.start || v.lines.length === 0),
+    ),
   z.strictObject({
     kind: z.literal("artifact"),
     path: z.string(),

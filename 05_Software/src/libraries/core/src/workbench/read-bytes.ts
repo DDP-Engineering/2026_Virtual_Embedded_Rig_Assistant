@@ -2,6 +2,7 @@ import { constants, type Stats } from "node:fs";
 import { lstat, open, realpath } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { DOCS_BYTE_CONTEXT_LIMIT, docsByteWindowSchema, veraError, veraErrorSchema } from "@vera/shared";
+import { fileRevision } from "./file-revision.js";
 import { locateEntry } from "./tree.js";
 
 /** Raw host-only bytes include matching context; never transport this object to the renderer. */
@@ -11,6 +12,7 @@ export interface ByteReadSource {
   size: number;
   start: number;
   bytes: Buffer;
+  revision?: string;
 }
 const identity = (path: string) => (process.platform === "win32" ? path.toLowerCase() : path);
 const sameFile = (a: Stats, b: Stats) =>
@@ -92,7 +94,7 @@ export async function readBytes(
       }
       if (!sameFile(info, await handle.stat())) throw veraError("CONFLICT");
       await checkPath();
-      return { path, offset, size: info.size, start, bytes };
+      return { path, offset, size: info.size, start, bytes, revision: fileRevision(info) };
     } finally {
       await handle.close();
     }

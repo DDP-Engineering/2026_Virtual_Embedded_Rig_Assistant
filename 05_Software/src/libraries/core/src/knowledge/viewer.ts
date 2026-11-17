@@ -56,7 +56,24 @@ export class DocumentViewer {
         )
           throw Error("Index changed.");
         if (parsed.end > lines.length) throw Error("Line bounds.");
-        return { ...base, kind: "text", lines, start: parsed.start, end: parsed.end };
+        return {
+          ...base,
+          kind: "text",
+          lines: bytes.length > 5 * 1024 * 1024 ? [] : lines,
+          start: parsed.start,
+          end: parsed.end,
+          ...(bytes.length > 5 * 1024 * 1024
+            ? {
+                byteSource: {
+                  size: window.size,
+                  modified: window.modified,
+                  revision: window.revision,
+                  lines: lines.length,
+                  utf8Log,
+                },
+              }
+            : {}),
+        };
       }
       const checked = await this.indexedSource(path, signal);
       const { bytes, extraction } = checked;
@@ -88,6 +105,31 @@ export class DocumentViewer {
       if (extraction.kind === "text") {
         if (parsed) throw Error("Text locator required.");
         if (isBinary(bytes)) throw Error("Binary.");
+        if (bytes.length > 5 * 1024 * 1024) {
+          const window = await readWindow(guard, path, 1, 1, signal);
+          const after = rows.get(path);
+          if (
+            window.sha256 !== checked.doc.sha256 ||
+            after?.id !== checked.doc.id ||
+            after.sha256 !== checked.doc.sha256 ||
+            after.status !== checked.doc.status
+          )
+            throw Error("Source or index changed.");
+          return {
+            ...base,
+            kind: "text",
+            lines: [],
+            start: 1,
+            end: window.totalLines,
+            byteSource: {
+              size: window.size,
+              modified: window.modified,
+              revision: window.revision,
+              lines: window.totalLines,
+              utf8Log: false,
+            },
+          };
+        }
         return { ...base, kind: "text", lines: extraction.lines, start: 1, end: extraction.lines.length };
       }
       if (parsed && parsed.kind !== "heading") throw Error("Heading locator required.");

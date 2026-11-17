@@ -106,6 +106,43 @@ const menuItems = () =>
   );
 const submenu = (action: string) =>
   menu()?.querySelector<HTMLElement>(`[role="menu"][data-submenu="${action}"]`);
+
+it("opens indexed ordinary text through byte windows without fetching its complete extraction", async () => {
+  const original = api.invoke.bind(api);
+  const invoke = vi.spyOn(api, "invoke").mockImplementation((async (
+    channel: string,
+    input: { path?: string; offset: number; length: number },
+  ) => {
+    if (input.path === "board.txt" && channel === "docs.stat")
+      return {
+        workbenchId: id,
+        properties: {
+          path: input.path,
+          type: "file",
+          size: 200 * 1024 * 1024,
+          modified: "2026-11-17T00:00:00.000Z",
+        },
+      };
+    if (input.path === "board.txt" && channel === "docs.readBytes")
+      return {
+        workbenchId: id,
+        path: input.path,
+        size: 200 * 1024 * 1024,
+        offset: input.offset,
+        data: btoa("x".repeat(input.length)),
+      };
+    return original(channel as never, input as never);
+  }) as typeof api.invoke);
+  await mount();
+  await click(row("board.txt"));
+  await settle();
+  expect(
+    invoke.mock.calls.filter(
+      ([channel, input]) => channel === "docs.open" && "path" in input && input.path === "board.txt",
+    ),
+  ).toHaveLength(0);
+  expect(container.querySelector("[data-large-text]")).not.toBeNull();
+});
 const subItems = (action: string) =>
   [...(submenu(action)?.querySelectorAll<HTMLElement>('[role="menuitem"]') ?? [])].map(
     (item) => item.dataset.menuAction,

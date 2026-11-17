@@ -2,17 +2,19 @@
 
 PURPOSE: open any workbench file inside VERA the way a file manager's lister does: as text with word wrap and a
 chosen encoding, as hex, or rendered, without a size limit and without an external program.
-STATE: VIEW-01 committed at 2a886177455e1c2adc669072b768e7af50f62367 (TASK-64079701, #286 closed); VIEW-02 candidate implemented (TASK-9a5b9ff2, #287; coordinator owns acceptance/commit); VIEW-03 through VIEW-06 remain planned. Product code follows AEGIS, one work package per task.
+STATE: VIEW-01 committed at 2a886177455e1c2adc669072b768e7af50f62367 (TASK-64079701, #286 closed); VIEW-02 committed at c6ede1959372fd1c39b7411f35a4a40a6bb3d91b (TASK-9a5b9ff2, #287 closed); VIEW-03 candidate implemented (TASK-d6ed6549, #288; coordinator owns acceptance/commit); VIEW-04 through VIEW-06 remain planned. Product code follows AEGIS, one work package per task.
 
 ## Current implementation (2026-11-17)
 
 - The Files tab lists every file and folder, ignored ones marked; it skips symbolic links and stops at 5,000
   entries per folder (`core/src/workbench/tree.ts`).
-- The viewer renders PDF, Markdown, HTML and Office text. Ordinary small text files (up to5MiB)
-  assemble masked byte windows and detect UTF8/UTF16 BOMs, otherwise UTF8; users may select six
+- The viewer renders PDF, Markdown, HTML and Office text. Ordinary text files up to 5 MiB assemble masked byte windows and detect UTF8/UTF16 BOMs, otherwise UTF8; users may select six
   encodings or explicitly Show as text with replacement characters. Word wrap measures virtual
   source rows for Find/Go to line and retains the visible source anchor across width/wrap changes.
-  Verified citations/rendered content keep their established paths; no Hex or image view yet.
+  Larger text uses64 KiB windows, a byte scrollbar, bounded sparse progressive indexing, exact-settling
+  Go to line and cancellable windowed Find with matching-line counts and wrapping. Verified large-text
+  citations use compact, sealed revision-bound sources and retain their original range; rendered
+  formats keep their established paths. No Hex or image view yet.
 - Display masking is live, defaults off and supports per-workbench overrides. Opaque workbench-owned identities
   retain secret-named Files/Find entries. MASK-02 is committed at cb8f0bcd; the completed MASK predecessor
   sequence ends at b709882a9f23d64966c0e44cedbb1dc3bcd23e06 (VIEW-01 base).
@@ -25,8 +27,11 @@ STATE: VIEW-01 committed at 2a886177455e1c2adc669072b768e7af50f62367 (TASK-64079
 
 - VIEW-02 Done A/B browser/native acceptance: tests/e2e/text-encodings.spec.ts, original geometry
   receipts/screenshots/logs in evaluation-outputs/view02. Focused tests cover decoding, explicit
-  replacement, bounded consistent reads and existing viewer consumers. Coordinator owns candidate
-  verification, local commit and issue closure; VIEW-03 remains the next package.
+  replacement, bounded consistent reads and existing viewer consumers. Coordinator committed VIEW02 at c6ede1959372fd1c39b7411f35a4a40a6bb3d91b and closed #287.
+- VIEW-03 DoneA/B uses tests/e2e/large-text.spec.ts and a genuine 200 MiB variable-row log, with original
+  browser/native receipts, heap/pulse measurements and logs in evaluation-outputs/view03. Bounded
+  source/index/search and boundary/cancellation tests sit in large-text.test.ts. TASK-d6ed6549/#288
+  is an unstaged candidate; coordinator owns final acceptance, local commit and issue closure.
 
 ## Decisions (2026-11-15)
 

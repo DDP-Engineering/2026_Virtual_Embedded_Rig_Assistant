@@ -363,7 +363,7 @@ The repository npm configuration keeps CLI stdout as event-only JSONL by suppres
 
 ## Session artifacts
 
-The agent saves UTF8 outputs with `artifact_save` (session class, sequential, no approval), up to5MiB under `.vera/artifacts/<session-id>/<name>`. Use portable ASCII names of at most100 characters and `overwrite:true` to replace an existing artifact. Metadata and `artifact.saved` persist with the session; successful `artifact:<name>` refs validate against that session’s current verified file. Read-only workbenches preserve their files.
+The agent saves UTF8 outputs with `artifact_save` (session class, sequential, no approval), up to 5 MiB under `.vera/artifacts/<session-id>/<name>`. Use portable ASCII names of at most100 characters and `overwrite:true` to replace an existing artifact. Metadata and `artifact.saved` persist with the session; successful `artifact:<name>` refs validate against that session’s current verified file. Read-only workbenches preserve their files.
 
 The Artifacts tab lists names, bytes and times, opens Markdown/plain text, and offers native Reveal and Export. Export uses a save dialog; cancelling writes nothing. Deleting a session removes its artifact folder. See [artifact contracts](../.agentic/knowledge/artifacts.md) for confinement, crash-mismatch handling and tests. `tests/fixtures/llm-scripts/save-artifact.jsonl` runs in desktop test replay or the ordinary headless replay CLI.
 
@@ -488,3 +488,15 @@ Text file controls live in renderer/components/documents/text-viewer.tsx, with t
 read-text-file.ts and use-text-rows.ts for bounded masked bytes and measured wrapped navigation.
 Sibling tests and tests/e2e/text-encodings.spec.ts cover BOM/selected decoding, replacement,
 window consistency, source-line geometry and live Display refresh. Browser examples are in mocks/text-files.ts.
+
+Large ordinary text uses documents/large-text-{source,index,find,window,rows,viewer} for a four-window
+64 KiB LRU, transient256 KiB scans, bounded sparse line checkpoints and measured window rows. The byte
+scrollbar reaches distant offsets while indexing settles line numbers. large-text.test.ts covers
+boundary decoding, sparse navigation, consistency and cancellation; tests/e2e/large-text.spec.ts
+uses support/large-text-fixture.ts and original evidence under evaluation-outputs/view03.
+
+Verified large text uses core/knowledge/viewer.ts with tools/read-window.ts and workbench/file-revision.ts
+for compact snapshot metadata. main/display-documents.ts seals revisions, verifies current byte reads
+and supplies original newline ends before Display masking. Shared documents.ts guards the compact
+contract; native large-text-citations.spec.ts and support/large-text-source-probe.ts cover provenance,
+range, restored-mtime replacement, focus, wrapping counts and window Retry.

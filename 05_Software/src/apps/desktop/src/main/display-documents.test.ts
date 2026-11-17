@@ -311,3 +311,57 @@ it("bounds ordinary and session original references before host access", async (
   ).rejects.toMatchObject({ code: "INVALID" });
   expect(read).not.toHaveBeenCalled();
 });
+
+it("seals verified text revisions to owner and path and retains original newline positions under Display masking", async () => {
+  const f = fixture(),
+    path = rawPaths[0] as string;
+  const raw = Buffer.from("a\r\nb\rc\n");
+  f.host.readBytes.mockImplementation(async (_id, sourcePath, offset) => ({
+    path: sourcePath,
+    offset,
+    size: raw.length,
+    start: 0,
+    bytes: raw,
+    revision: "verified-revision",
+  }));
+  const shown = f.display.viewer(id, {
+    ...f.content(path),
+    kind: "text",
+    ref: `${path}#L2-L3`,
+    lines: [],
+    start: 2,
+    end: 3,
+    byteSource: {
+      size: 6 * 1024 * 1024,
+      modified: "2026-11-17T00:00:00.000Z",
+      revision: "verified-revision",
+      lines: 3,
+      utf8Log: false,
+    },
+  });
+  if (shown.kind !== "text" || !shown.byteSource) throw Error("Missing source");
+  expect(shown.byteSource.revision).not.toContain("verified-revision");
+  f.register("a\r\nb");
+  f.app(true);
+  const reply = await f.display.readBytes(id, shown.path, 0, raw.length, shown.byteSource.revision);
+  expect(reply.lineEnds).toEqual([3, 5, 7]);
+  expect(reply.revision).toBe(shown.byteSource.revision);
+  await expect(f.display.readBytes(id, shown.path, 0, 1, "verified-revision")).rejects.toMatchObject({
+    code: "DENIED",
+  });
+  expect(Buffer.from(reply.data, "base64").toString()).toBe("****\rc\n");
+  await expect(
+    f.display.readBytes(id, f.display.path(id, rawPaths[1] as string), 0, 1, shown.byteSource.revision),
+  ).rejects.toBeDefined();
+  f.host.readBytes.mockImplementation(async (_id, sourcePath, offset) => ({
+    path: sourcePath,
+    offset,
+    size: raw.length,
+    start: 0,
+    bytes: raw,
+    revision: "replaced-same-size",
+  }));
+  await expect(f.display.readBytes(id, shown.path, 0, 4, shown.byteSource.revision)).rejects.toMatchObject({
+    code: "CONFLICT",
+  });
+});

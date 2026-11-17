@@ -417,6 +417,8 @@
     "typeFile": "Datei",
     "encoding": "Zeichenkodierung",
     "wordWrap": "Zeilenumbruch",
+    "bytePosition": "Byteposition",
+    "scanning": "Suche läuft…",
     "showAsText": "Als Text anzeigen",
     "textBinary": "Diese Datei ist kein Text und kann hier nicht angezeigt werden.",
     "textTooLarge": "Diese Datei ist größer als 5 MB und kann hier nicht angezeigt werden.",

@@ -77,7 +77,11 @@ AppEvents use shared updates.ts; [updates](updates.md) owns their lifecycle/capa
   length with safe end arithmetic. Its strict reply supplies original offset/physical size and bounded
   base64 bytes with Display-safe path metadata. Shared schemas reject extra fields and malformed or
   oversized data; preload derives the allowlist from channels. [Document viewer](document-viewer.md)
-  owns masking/confinement. No UI calls or mock-mode consumer use the byte API yet.
+  owns masking/confinement. Ordinary text and large-file navigation consume it. Verified large-text sources add an optional sealed
+  revision; strict replies echo it with bounded, increasing original lineEnds. The host compares exact
+  verified revision before publication and applies current Display masking. docs.open compacts verified
+  text above5MiB to empty lines plus byteSource metadata while preserving ref/snippet/range; its schema
+  validates bounds against original source line count. Exact contract: specs/REQ-FUNC-ed0b45c5.md.
 
 - docs.reindex accepts an optional workbenchId and an empty response with workbench ownership checks. docs.list/search/open require exact workbenchId and return scoped typed records/results/content. Open accepts an indexed path, document ref, or session/message citation; host provenance and current guarded source checks precede disclosure. [Document viewer](document-viewer.md) owns these reads.
   Workbench index.progress/index.document transport batch counters and typed
