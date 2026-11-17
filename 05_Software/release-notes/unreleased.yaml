@@ -46,10 +46,10 @@ entries:
   - category: fixed
     topic: { en: Terminal, ro: Terminal, de: Terminal, fr: Terminal }
     text:
-      en: Terminal history no longer inserts control characters when switching tabs or reopening the panel.
-      ro: Terminalul nu mai inserează caractere de control la reafișarea istoricului.
-      de: Terminalverläufe fügen beim erneuten Anzeigen keine Steuerzeichen mehr ein.
-      fr: Le terminal n’insère plus de caractères de contrôle lors du réaffichage de l’historique.
+      en: Terminal history avoids control characters; closing no longer shows a missing-operation error.
+      ro: Istoricul nu mai introduce caractere de control; închiderea terminalului nu mai afișează erori.
+      de: Keine Steuerzeichen beim Anzeigen des Verlaufs und keine Fehlermeldung beim Schließen.
+      fr: Plus de caractères de contrôle dans l’historique ni d’erreur à la fermeture du terminal.
   - category: fixed
     topic: { en: Commands, ro: Comenzi, de: Befehle, fr: Commandes }
     text:

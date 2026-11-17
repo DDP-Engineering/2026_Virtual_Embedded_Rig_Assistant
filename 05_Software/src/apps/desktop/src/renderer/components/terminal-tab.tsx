@@ -2,7 +2,7 @@ import { type TerminalSummary, typographyDefaults } from "@vera/shared";
 import { FitAddon } from "@xterm/addon-fit";
 import { Terminal } from "@xterm/xterm";
 import { Plus, X } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { type RefObject, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../api/index.js";
 import { terminalDocument } from "../lib/terminal-document.js";
@@ -14,17 +14,20 @@ function TerminalSurface({
   terminal,
   failure,
   freshTerminals,
+  closingTerminal,
 }: {
   workbenchId: string;
   terminal: TerminalSummary;
   failure(error: unknown): void;
   freshTerminals: Set<string>;
+  closingTerminal: RefObject<string | undefined>;
 }) {
   const { t } = useTranslation();
   const container = useRef<HTMLElement>(null);
   useEffect(() => {
     if (!container.current) return;
     let live = true;
+    const available = () => live && closingTerminal.current !== terminal.id;
     let previous = "";
     let initial = true;
     let timer: ReturnType<typeof setTimeout>;
@@ -49,14 +52,15 @@ function TerminalSurface({
     term.loadAddon(fit);
     styles.open(() => term.open(element));
     const input = term.onData((data) => {
+      if (!available()) return;
       void api.invoke("terminal.input", { workbenchId, id: terminal.id, data }).catch((error) => {
-        if (live) failure(error);
+        if (available()) failure(error);
       });
     });
     const resized = term.onResize(({ cols, rows }) => {
-      if (cols < 2 || rows < 1 || cols > 500 || rows > 300) return;
+      if (!available() || cols < 2 || rows < 1 || cols > 500 || rows > 300) return;
       void api.invoke("terminal.resize", { workbenchId, id: terminal.id, cols, rows }).catch((error) => {
-        if (live) failure(error);
+        if (available()) failure(error);
       });
     });
     const size = () => {
@@ -75,8 +79,9 @@ function TerminalSurface({
     term.focus();
     async function poll() {
       try {
+        if (!available()) return;
         const snapshot = await api.invoke("terminal.output", { workbenchId, id: terminal.id });
-        if (!live) return;
+        if (!available()) return;
         const append = snapshot.output.startsWith(previous);
         const replay = !append || (initial && !freshTerminals.has(terminal.id));
         // Parsing historical VT queries must not inject old device/cursor replies into the live shell.
@@ -90,12 +95,13 @@ function TerminalSurface({
         initial = false;
         term.options.disableStdin = !snapshot.running;
       } catch (error) {
-        if (live) failure(error);
+        if (available()) failure(error);
+      } finally {
+        if (live)
+          timer = setTimeout(() => {
+            void poll();
+          }, 250);
       }
-      if (live)
-        timer = setTimeout(() => {
-          void poll();
-        }, 250);
     }
     void poll();
     return () => {
@@ -108,7 +114,7 @@ function TerminalSurface({
       term.dispose();
       styles.dispose();
     };
-  }, [workbenchId, terminal.id, failure, freshTerminals]);
+  }, [workbenchId, terminal.id, failure, freshTerminals, closingTerminal]);
   return (
     <section
       className="terminal-surface"
@@ -129,6 +135,7 @@ export function TerminalTab({ workbenchId }: { workbenchId: string }) {
   const [pending, setPending] = useState(false);
   const revision = useRef(0);
   const freshTerminals = useRef(new Set<string>());
+  const closingTerminal = useRef<string | undefined>(undefined);
   const selected = terminals.find((terminal) => terminal.id === active);
   useEffect(() => {
     let live = true;
@@ -180,6 +187,8 @@ export function TerminalTab({ workbenchId }: { workbenchId: string }) {
   }
   async function close() {
     if (!selected) return;
+    // Suspend I/O before the host can delete the terminal; React unmounts its surface after close resolves.
+    closingTerminal.current = selected.id;
     revision.current++;
     setPending(true);
     setError(undefined);
@@ -189,6 +198,7 @@ export function TerminalTab({ workbenchId }: { workbenchId: string }) {
       setTerminals((rows) => rows.filter((row) => row.id !== selected.id));
       setActive(terminals.find((row) => row.id !== selected.id)?.id);
     } catch (failure) {
+      closingTerminal.current = undefined;
       setError(failure);
     } finally {
       revision.current++;
@@ -277,6 +287,7 @@ export function TerminalTab({ workbenchId }: { workbenchId: string }) {
               terminal={selected}
               failure={setError}
               freshTerminals={freshTerminals.current}
+              closingTerminal={closingTerminal}
             />
           </div>
         </>

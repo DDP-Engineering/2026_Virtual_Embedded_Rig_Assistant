@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import type { TerminalSummary } from "@vera/shared";
+import { type TerminalSummary, veraError } from "@vera/shared";
 import { act, createElement } from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, expect, it, vi } from "vitest";
@@ -289,3 +289,95 @@ it("answers fresh terminal startup queries once and does not answer them again a
     container.remove();
   }
 });
+
+it.each([true, false])(
+  "suspends terminal I/O during close and recovers correctly (success: %s)",
+  async (success) => {
+    vi.useFakeTimers();
+    const owner = "wb_01JB8Z6Q4M7N2K5R9T3V8X1Y0C";
+    const row: TerminalSummary = {
+      id: "00000000-0000-4000-8000-000000000001",
+      number: 1,
+      shared: false,
+      running: true,
+    };
+    let rows = [row],
+      finished = false;
+    let finishClose: (() => void) | undefined;
+    const failures: ((error: unknown) => void)[] = [];
+    vi.mocked(api.invoke).mockImplementation(async (channel) => {
+      if (channel === "terminal.list") return rows as never;
+      if (channel === "terminal.create") {
+        rows = [{ ...row, id: "00000000-0000-4000-8000-000000000002", number: 2 }];
+        return rows[0] as never;
+      }
+      if (channel === "terminal.close")
+        return await new Promise<never>((resolve, reject) => {
+          finishClose = () => {
+            finished = true;
+            if (success) {
+              rows = [];
+              resolve({} as never);
+            } else reject(veraError("DENIED"));
+          };
+        });
+      if (["terminal.output", "terminal.input", "terminal.resize"].includes(channel)) {
+        if (!finished) return await new Promise<never>((_resolve, reject) => failures.push(reject));
+        return { ...rows[0], output: "ready" } as never;
+      }
+      return {} as never;
+    });
+    const container = document.createElement("div");
+    document.body.append(container);
+    const root = createRoot(container);
+    const ioCalls = () =>
+      vi
+        .mocked(api.invoke)
+        .mock.calls.filter(([channel]) =>
+          ["terminal.output", "terminal.input", "terminal.resize"].includes(channel),
+        );
+    try {
+      await act(async () => root.render(createElement(TerminalTab, { workbenchId: owner })));
+      await act(async () => {
+        native.input("pwd\r");
+        native.resize({ cols: 60, rows: 20 });
+      });
+      expect(failures).toHaveLength(3);
+      await act(async () =>
+        container.querySelector<HTMLButtonElement>(".terminal-actions button:last-child")?.click(),
+      );
+      await act(async () => {
+        for (const reject of failures) reject(veraError("NOT_FOUND"));
+      });
+      expect(container.querySelector('[role="alert"]')).toBeNull();
+      const calls = ioCalls().length;
+      await act(async () => {
+        native.input("ignored while closing");
+        native.resize({ cols: 80, rows: 24 });
+        await vi.advanceTimersByTimeAsync(500);
+      });
+      expect(ioCalls()).toHaveLength(calls);
+      await act(async () => finishClose?.());
+      if (success) {
+        expect(container.querySelectorAll('[role="tab"]')).toHaveLength(0);
+        expect(container.querySelector('[role="alert"]')).toBeNull();
+        await act(async () =>
+          container.querySelector<HTMLButtonElement>(".terminal-actions button")?.click(),
+        );
+        expect(container.querySelector("[data-terminal-id]")?.getAttribute("data-terminal-id")).toBe(
+          rows[0]?.id,
+        );
+      } else {
+        expect(container.querySelectorAll('[role="tab"]')).toHaveLength(1);
+        expect(container.querySelector('[role="alert"]')?.getAttribute("data-i18n")).toBe("errors.DENIED");
+        await act(async () => vi.advanceTimersByTimeAsync(250));
+        expect(ioCalls().length).toBeGreaterThan(calls);
+      }
+      expect(native.write).toHaveBeenCalledWith("ready");
+    } finally {
+      if (!finished) await act(async () => finishClose?.());
+      await act(async () => root.unmount());
+      container.remove();
+    }
+  },
+);
