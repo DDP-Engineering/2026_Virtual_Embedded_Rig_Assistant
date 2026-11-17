@@ -218,6 +218,15 @@ export function DocsTree({
       label: t("documents.open"),
       run: () => (row.type === "folder" ? toggle(row.path, true) : activate(row)),
     },
+    ...(row.type === "file"
+      ? [
+          {
+            action: "open-hex",
+            label: t("documents.hexShow"),
+            run: () => open?.({ textPath: row.path, hex: true, ...(row.ignored ? { ignored: true } : {}) }),
+          },
+        ]
+      : []),
     ...actions.items(row, () => setProperties(row)),
   ];
   const onKey = (event: KeyboardEvent<HTMLDivElement>, row: Row, index: number) => {

@@ -462,7 +462,20 @@
     "documentActions": "Actions for {{name}}",
     "zoomIn": "Zoom in",
     "zoomOut": "Zoom out",
-    "zoomReset": "Reset zoom"
+    "zoomReset": "Reset zoom",
+    "hexView": "Hex viewer",
+    "hexGoTo": "Go to offset",
+    "hexCopy": "Copy as hex",
+    "hexCopyText": "Copy as text",
+    "hexFindMode": "Find format",
+    "hexSequence": "Hex bytes",
+    "hexUtf8": "UTF-8 text",
+    "hexFindNext": "Find next",
+    "hexOffset": "Byte offset",
+    "hexPosition": "Byte position",
+    "hexNoMatch": "No matching bytes.",
+    "hexInvalid": "Invalid offset or query, or selection exceeds 64 KiB.",
+    "hexShow": "Show as Hex"
   },
   "skills": {
     "settings": "Skills settings",

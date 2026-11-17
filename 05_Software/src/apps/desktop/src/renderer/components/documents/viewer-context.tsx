@@ -15,6 +15,8 @@ import { useTranslation } from "react-i18next";
 import { api } from "../../api/index.js";
 import { readTabs, type StoredTabs, writeTabs } from "../../lib/document-tabs-store.js";
 import { Markdown } from "../session/markdown.js";
+import { type HexFile, readHexFile } from "./hex-source.js";
+import { HexViewer } from "./hex-viewer.js";
 import type { LargeTextFile } from "./large-text-source.js";
 import { LargeTextViewer } from "./large-text-viewer.js";
 import type { ZoomRequest } from "./pdf-viewer.js";
@@ -32,7 +34,7 @@ export type ViewerTarget =
    * A workbench file shown as plain text, indexed or not (TASK-66b7d4aa); `ignored` files have no
    * Open in default app, which PathGuard refuses (TASK-b34f2cc7).
    */
-  | { textPath: string; ignored?: boolean }
+  | { textPath: string; ignored?: boolean; hex?: true }
   | { sessionId: string; messageId: string; ref: string };
 const ViewerContext = createContext<((target: ViewerTarget) => void) | undefined>(undefined);
 /** Opens a target in its document tab of the chat area (TASK-79f6ffd3). */
@@ -41,7 +43,7 @@ export function useDocumentViewer() {
 }
 
 /** Where a document was left: the PDF page, the first shown text line or a scroll offset. */
-export type DocumentPlace = { page: number } | { line: number } | { scroll: number };
+export type DocumentPlace = { page: number } | { line: number } | { scroll: number } | { offset: number };
 export interface DocumentTab {
   key: string;
   target: ViewerTarget;
@@ -51,6 +53,7 @@ export interface DocumentTab {
   /** Display-masked small-file bytes, transient and invalidated with the content attempt. */
   textBytes?: Uint8Array | undefined;
   largeText?: LargeTextFile | undefined;
+  hexFile?: HexFile | undefined;
   error?: unknown;
   /** Bumped by every open of the tab and by Retry; a load answers only its own attempt. */
   attempt: number;
@@ -178,6 +181,7 @@ export function DocumentViewerProvider({
                     content: undefined,
                     textBytes: undefined,
                     largeText: undefined,
+                    hexFile: undefined,
                     error: undefined,
                     attempt: ++attempts.current,
                   }
@@ -244,6 +248,7 @@ export function DocumentViewerProvider({
                 content: undefined,
                 textBytes: undefined,
                 largeText: undefined,
+                hexFile: undefined,
                 error: undefined,
                 attempt: ++attempts.current,
               }
@@ -417,7 +422,9 @@ export function DocumentViewerProvider({
           : "downloadId" in target
             ? api.invoke("downloads.open", { workbenchId, downloadId: target.downloadId })
             : "textPath" in target
-              ? readTextFile(workbenchId, target.textPath)
+              ? target.hex
+                ? readHexFile(workbenchId, target.textPath)
+                : readTextFile(workbenchId, target.textPath)
               : api.invoke("docs.open", { workbenchId, ...target, requestId }).then(async (result) => {
                   if (result.content.kind !== "text" || (!("path" in target) && !result.content.byteSource))
                     return result;
@@ -441,7 +448,9 @@ export function DocumentViewerProvider({
                     largeText: text.largeText,
                   };
                 });
-      const settle = (result: Pick<DocumentTab, "content" | "textBytes" | "largeText" | "error">) =>
+      const settle = (
+        result: Pick<DocumentTab, "content" | "textBytes" | "largeText" | "hexFile" | "error">,
+      ) =>
         setSets((map) => {
           const set = map.get(scope);
           const found = set?.tabs.find((entry) => entry.key === key);
@@ -485,6 +494,7 @@ export function DocumentViewerProvider({
             content: result.content,
             textBytes: "textBytes" in result ? result.textBytes : undefined,
             largeText: "largeText" in result ? result.largeText : undefined,
+            hexFile: "hexFile" in result ? result.hexFile : undefined,
             error: undefined,
           });
         })
@@ -514,6 +524,7 @@ export function DocumentViewerProvider({
                           content: undefined,
                           textBytes: undefined,
                           largeText: undefined,
+                          hexFile: undefined,
                           error: undefined,
                           attempt: ++attempts.current,
                         },
@@ -601,6 +612,7 @@ export function DocumentBody({
   content,
   bytes,
   largeText,
+  hexFile,
   place,
   onPlace,
   retry,
@@ -611,6 +623,7 @@ export function DocumentBody({
   content: ViewerContent;
   bytes?: Uint8Array | undefined;
   largeText?: LargeTextFile | undefined;
+  hexFile?: HexFile | undefined;
   /** Where the document was left; without it the cited unit is shown (REQ-UX-1f53a583). */
   place?: DocumentPlace | undefined;
   onPlace?: ((place: DocumentPlace) => void) | undefined;
@@ -652,6 +665,17 @@ export function DocumentBody({
       anchor?.focus();
     }
   }, [content]);
+  if (hexFile)
+    return (
+      <HexViewer
+        file={hexFile}
+        retry={retry}
+        place={place}
+        onPlace={onPlace}
+        findRequest={findRequest}
+        gotoRequest={gotoRequest}
+      />
+    );
   if (content.kind === "pdf")
     return (
       <PdfViewer

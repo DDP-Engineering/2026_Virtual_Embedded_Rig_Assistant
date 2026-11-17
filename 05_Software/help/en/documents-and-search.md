@@ -65,3 +65,11 @@ Large files are read in windows. The rightmost scrollbar selects a byte position
 ## Downloads
 
 With **Web access** enabled, the agent can download a public file into `.vera/downloads/` of the workbench. In **Ask** and **Auto-edit** it asks first and shows the source address and the maximum size. A downloaded PDF gets an **Open PDF** card in the conversation and appears under **Downloaded files** in the **Files** tab. Downloads are not indexed automatically; to make one searchable, copy it into an indexed folder. See [Settings](settings.md) for web access and [Permissions](permissions.md) for approvals.
+
+## Hex view
+
+In a file's **Files** menu, choose **Show as Hex**. Each read-only row shows its physical offset, up to 16 hexadecimal bytes and printable ASCII; other bytes appear as dots. The final row can be shorter. The byte-position slider reaches any part of the file; the inner scrollbar moves through a bounded window. Use the ordinary **Open** action to return to the file's usual view.
+
+**Go to offset** (Ctrl+G) accepts decimal bytes or a hexadecimal value prefixed with `0x`, from zero through the final byte. **Find** (Ctrl+F) searches **Hex bytes** such as `41 42 00 FF`, with optional spaces, or case-sensitive **UTF-8 text**. Enter finds the next occurrence and wraps at the end. Queries contain at most 4,096 bytes. **Cancel**, Escape or a new query stops an active scan; Escape closes the fields and returns focus to the bytes.
+
+Click a byte to select it; drag or Shift-click to extend, including across windows. Arrow keys move the selection, Shift+arrows extend it, Page Up/Down move a screen, and Ctrl+Home/End reaches the start/end. **Copy as hex** (Ctrl+C) copies uppercase bytes separated by spaces. **Copy as text** (Ctrl+Shift+C) decodes UTF-8 with replacement characters. Copy is limited to 64 KiB per selection; choose a smaller range when the limit is exceeded. Display masking replaces secret bytes with `2A` (asterisks), and Find and copy use those same masked bytes. Read errors offer **Retry**.

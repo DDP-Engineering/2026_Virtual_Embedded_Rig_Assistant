@@ -86,6 +86,7 @@ and source-probe-wsl-final original logs use pinned Node24.21.0 and captured fra
 same-size replacement. The installed WSL distro is Ubuntu; pinned Linux Node remains
 /home/dpasare/vera-cap-01/node-v24.21.0-linux-x64/bin/node. WSL2 is not native Ubuntu.
 Reuse unchanged VIEW01 confinement/native packaging proof; no delivery rebuild is needed.
+Hex verification adds hex-source.test.ts and hex-viewer.test.ts for row formatting, boundary KMP, cancellation, identity/length/metadata checks, arbitrary safe offsets, selection/copy and Retry. Native tests/e2e/hex-viewer.spec.ts uses an owned16MiB+19-byte binary, real clipboard, keyboard window crossing, last partial row, four locales and stored-credential live Display refresh during Find. Original logs/receipt/screenshot use evaluation-outputs/view04; host/packaging source is unchanged.
 
 Privacy settings proof uses renderer privacy-settings/workbench-privacy and use-preferences tests for localized drafts, effective agent-off confirmation, readonly/failure recovery and stale-read rejection. Focused native tests/e2e/privacy-settings.spec.ts saves actual app/config files, creates and isolates two workbenches, follows live app defaults and restarts Electron in en/ro/de/fr. Original evidence is evaluation-outputs/mask05. Existing consumer/native package proof is reused; full app/plugin/E2E, native Ubuntu/clean-install and exact-source delivery gates remain user-deferred.
 

@@ -64,3 +64,11 @@ Fișierele mari sunt citite în ferestre. Bara din dreapta selectează poziția 
 ## Descărcări
 
 Cu **Acces web** activat, agentul poate descărca un fișier public în `.vera/downloads/` al workbenchului. În **Întreabă** și **Editare automată**, cere mai întâi aprobare și afișează adresa sursei și dimensiunea maximă. Un PDF descărcat primește un card **Deschide PDF** în conversație și apare la **Fișiere descărcate** în fila **Fișiere**. Descărcările nu sunt indexate automat; pentru ca o descărcare să poată fi căutată, copiaz-o într-un folder indexat. Vezi [Setări](settings.md) pentru accesul web și [Permisiuni](permissions.md) pentru aprobări.
+
+## Vizualizare hexazecimală
+
+În meniul unui fișier din **Fișiere**, alege **Arată ca hex**. Fiecare rând arată offsetul fizic, cel mult 16 octeți hexazecimali și caracterele ASCII imprimabile; ceilalți octeți apar ca puncte. Ultimul rând poate fi mai scurt. Glisorul poziției ajunge oriunde în fișier, iar bara interioară derulează o fereastră limitată. Acțiunea obișnuită **Deschide** revine la vizualizarea normală. Fișierul nu este modificat.
+
+**Salt la offset** (Ctrl+G) acceptă un număr zecimal de octeți sau o valoare hexazecimală cu prefixul `0x`, de la zero la ultimul octet. **Caută** (Ctrl+F) caută **Octeți hexazecimali**, precum `41 42 00 FF`, cu spații opționale, sau **Text UTF-8**, cu majuscule distincte. Enter găsește următoarea apariție și reia de la început după final. Căutarea acceptă cel mult 4.096 de octeți. **Anulează**, Escape sau o căutare nouă oprește scanarea; Escape închide câmpurile și readuce focalizarea la octeți.
+
+Clic selectează un octet; tragerea sau Shift+clic extinde selecția, inclusiv între ferestre. Săgețile mută selecția, Shift+săgeți o extinde, Page Up/Down mută un ecran, iar Ctrl+Home/End ajunge la început/final. **Copiază ca hex** (Ctrl+C) copiază octeți cu majuscule separați prin spații. **Copiază ca text** (Ctrl+Shift+C) decodează UTF-8 cu caractere de înlocuire. Limita este de 64 KiB pe selecție; alege un interval mai mic dacă este depășită. Mascarea afișării înlocuiește octeții secreți cu `2A` (asterisc); căutarea și copierea folosesc aceiași octeți mascați. Erorile oferă **Reîncearcă**.

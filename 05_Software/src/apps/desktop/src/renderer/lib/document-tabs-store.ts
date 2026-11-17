@@ -21,12 +21,13 @@ const targetSchema = z.union([
   z.strictObject({ path: identity }),
   z.strictObject({ ref: identity }),
   z.strictObject({ downloadId: text }),
-  z.strictObject({ textPath: identity, ignored: z.boolean().optional() }),
+  z.strictObject({ textPath: identity, ignored: z.boolean().optional(), hex: z.literal(true).optional() }),
   z.strictObject({ sessionId: text, messageId: text, ref: identity }),
 ]);
 const count = z.number().int().min(0).max(Number.MAX_SAFE_INTEGER);
 const placeSchema = z.union([
   z.strictObject({ page: count }),
+  z.strictObject({ offset: count }),
   z.strictObject({ line: count }),
   z.strictObject({ scroll: z.number().min(0).max(Number.MAX_SAFE_INTEGER) }),
 ]);

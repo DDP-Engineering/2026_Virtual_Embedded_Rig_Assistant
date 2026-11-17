@@ -64,3 +64,11 @@ Große Dateien werden in Fenstern gelesen. Die rechte Bildlaufleiste wählt eine
 ## Downloads
 
 Ist **Webzugriff** aktiviert, kann der Agent eine öffentliche Datei in `.vera/downloads/` der Workbench herunterladen. In **Nachfragen** und **Auto-Edit** fragt er zuerst nach und zeigt die Quelladresse und die maximale Größe. Ein heruntergeladenes PDF erhält in der Unterhaltung eine Karte **PDF öffnen** und erscheint im Tab **Dateien** unter **Heruntergeladene Dateien**. Downloads werden nicht automatisch indiziert; um einen Download durchsuchbar zu machen, kopieren Sie ihn in einen indizierten Ordner. Zum Webzugriff siehe [Einstellungen](settings.md), zu Freigaben [Berechtigungen](permissions.md).
+
+## Hex-Ansicht
+
+Im Menü einer Datei unter **Dateien** öffnet **Als Hex anzeigen** die schreibgeschützte Ansicht. Jede Zeile zeigt den physischen Offset, bis zu 16 Hex-Bytes und druckbare ASCII-Zeichen; andere Bytes erscheinen als Punkte. Die letzte Zeile kann kürzer sein. Der Positionsregler erreicht die gesamte Datei, die innere Bildlaufleiste bewegt ein begrenztes Fenster. **Öffnen** kehrt zur üblichen Ansicht zurück.
+
+**Zu Offset springen** (Strg+G) akzeptiert dezimale Bytepositionen oder Hexwerte mit `0x`, von null bis zum letzten Byte. **Suchen** (Strg+F) sucht **Hex-Bytes** wie `41 42 00 FF`, mit optionalen Leerzeichen, oder **UTF-8-Text** unter Beachtung der Großschreibung. Eingabe findet den nächsten Treffer und beginnt am Dateiende wieder vorne. Eine Suche umfasst höchstens 4.096 Bytes. **Abbrechen**, Escape oder eine neue Suchanfrage stoppt den Lauf; Escape schließt die Felder und fokussiert die Bytes.
+
+Ein Klick wählt ein Byte; Ziehen oder Umschalt+Klick erweitert die Auswahl auch über Fenstergrenzen. Pfeile bewegen die Auswahl, Umschalt+Pfeile erweitern sie, Bild auf/ab bewegt eine Bildschirmhöhe und Strg+Pos1/Ende erreicht Anfang/Ende. **Als Hex kopieren** (Strg+C) kopiert großgeschriebene Bytes mit Leerzeichen. **Als Text kopieren** (Strg+Umschalt+C) decodiert UTF-8 mit Ersatzzeichen. Pro Auswahl sind höchstens 64 KiB kopierbar; bei Überschreitung einen kleineren Bereich wählen. Die Anzeigemaskierung ersetzt geheime Bytes durch `2A` (Sternchen); Suche und Kopieren verwenden dieselben maskierten Bytes. Lesefehler bieten **Erneut versuchen**.

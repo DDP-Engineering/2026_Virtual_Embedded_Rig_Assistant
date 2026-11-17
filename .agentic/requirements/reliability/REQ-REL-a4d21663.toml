@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-a4d21663"
+
+title = "Hexadecimal failed read recovery"
+
+status = "active"
+
+requirement = """
+If a Hex byte read or ownership/size/modified validation fails, the viewer shall show the structured error with Retry and prevent the failed operation from publishing bytes or clipboard content.
+"""
+
+verification = "Reject wrong-owner, offset, length, size and changed final stat; inject a read failure and successfully Retry in the component."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/documents/hex-source.ts", "05_Software/src/apps/desktop/src/renderer/components/documents/hex-viewer.tsx", "05_Software/src/apps/desktop/src/renderer/components/documents/hex-rows.tsx", "05_Software/src/apps/desktop/src/renderer/components/documents/hex-viewer.css", "05_Software/src/apps/desktop/src/renderer/components/documents/viewer-context.tsx", "05_Software/src/apps/desktop/src/renderer/components/documents/document-tabs.tsx", "05_Software/src/apps/desktop/src/renderer/components/documents/docs-tree.tsx", "05_Software/src/apps/desktop/src/renderer/lib/document-tabs-store.ts", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json", "05_Software/src/apps/desktop/src/renderer/locales/fr.json"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/documents/hex-source.test.ts", "05_Software/src/apps/desktop/src/renderer/components/documents/hex-viewer.test.ts", "05_Software/tests/e2e/hex-viewer.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-17
+updated = 2026-11-17

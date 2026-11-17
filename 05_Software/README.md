@@ -45,8 +45,7 @@ tests/e2e/agent-masking.spec.ts proves independent export/disclosure choices. Sa
 
 The document host API supplies bounded physical byte windows through `docs.readBytes` and file size
 through the existing `docs.stat`. Core `workbench/read-bytes.ts` owns confined positional reads;
-main `display-bytes.ts` owns length-preserving secret masking with bounded context. These prepare
-later large-file/text/hex/image modes without adding controls yet. The exact contract is in
+main `display-bytes.ts` owns length-preserving secret masking with bounded context. These power bounded text and Hex views; image preview is planned. The exact contract is in
 [the byte protocol](../.agentic/specs/REQ-FUNC-69645e84.md); focused tests sit beside both modules.
 
 Unit and component tests remain beside the implementation in `src/`. Environment, build and
@@ -500,3 +499,7 @@ for compact snapshot metadata. main/display-documents.ts seals revisions, verifi
 and supplies original newline ends before Display masking. Shared documents.ts guards the compact
 contract; native large-text-citations.spec.ts and support/large-text-source-probe.ts cover provenance,
 range, restored-mtime replacement, focus, wrapping counts and window Retry.
+
+The renderer document viewer includes `hex-source.ts` (bounded masked bytes, streaming Find and copy),
+`hex-rows.tsx` (virtual rows) and `hex-viewer.tsx`/CSS (navigation, selection and controls), with sibling
+source/component tests. `tests/e2e/hex-viewer.spec.ts` verifies native byte-boundary and live Display behavior.

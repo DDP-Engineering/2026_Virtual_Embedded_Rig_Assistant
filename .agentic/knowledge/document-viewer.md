@@ -9,7 +9,7 @@ status/search/reindex/progress, and the Docs folder tree (single search box, ign
 memory, keyboard, context menu, Properties).
 Start under05_Software at main/display-documents.ts and display-identities.ts for conditional
 Display masking, shared/documents.ts, core/knowledge/viewer.ts and
-renderer/components/documents (text-encoding.ts, read-text-file.ts, use-text-rows.ts, large-text-{source,index,find,window,rows,viewer} for byte-backed text). Focused tests are viewer.test.ts, search.test.ts,
+renderer/components/documents (hex-{source,rows,viewer} for byte viewing; text-encoding.ts, read-text-file.ts, use-text-rows.ts, large-text-{source,index,find,window,rows,viewer} for byte-backed text). Focused tests are viewer.test.ts, search.test.ts,
 documents.test.ts, docs-tree.test.ts, core workbench/tree.test.ts and
 tests/e2e/{citations,documents,office-documents,docs-tree}.spec.ts.
 [Document search](document-search.md) owns retrieval/extraction validity;
@@ -161,6 +161,10 @@ Managed PDF downloads use downloads.list/open scoped IPC and a downloadId Viewer
   U+FFFD for invalid sequences. Changing encoding retries strict decoding without another host read.
   Small verified references, runs, downloads, artifacts and rendered PDF/Markdown/Office retain
   existing host content/provenance; larger text references use the verified revision-bound windows above.
+- Hex opens from the Files row menu as `textPath` with `hex:true`, retaining the original file tab key and target identity; normal Open restores the ordinary file view. Its transient HexFile adopts the host-owned byte path from stat, including a newly opaque identity after credential registration. Format-1 tab storage admits the explicit Hex target and physical `{offset}` place. Citations retain their verified paths and ranges.
+  HexSource owns four64KiB cached windows and serializes reads; each renderer window/scan/copy is at most64KiB. HexRows mounts at most100 rows, each16 bytes with physical uppercase hexadecimal offset, spaced uppercase bytes and ASCII0x20..0x7E (dot otherwise), including partial EOF rows. A byte slider spans arbitrary safe-integer file sizes without giant DOM/spacers; local scrolling/wheel and keyboard cross bounded windows.
+  Go to offset accepts decimal or0x-prefixed hex in0..size-1 (zero for empty files). Find uses case-sensitive UTF8 or even hexadecimal pairs with optional whitespace, <=4096 bytes, streaming KMP across64KiB borders, next/wrap and scalar hit state. Query/mode replacement, Cancel, Escape, owner/attempt change and unmount abort publication. Input/paint yields once per scan window.
+  Selection stores anchor/focus physical bytes; pointer drag/Shift-click and Shift+arrows extend it. Ctrl+C copies spaced uppercase hex; Ctrl+Shift+C copies UTF8 replacement-decoded text. Copy checks metadata before/after a fresh masked read and rejects ranges above64KiB. Clipboard uses a temporary offscreen textarea with execCommand, keeping sandbox permissions unchanged. All Find/copy bytes follow live Display; cached sources disappear on settings/config refresh. Malformed input shows localized feedback; read failures show the structured error and Retry (the parent reloads metadata). Escape closes fields/cancels before returning focus to the byte region. Hex context actions name Find and Go to offset.
 - PdfViewer reads every page box at load, so `.pdf-scroll` holds one `.pdf-sheet[data-page-number]`
   per page; only pages within 2 of the page in view draw a canvas and text layer (pinned bundled
   module worker). The page in view is the one at a third of the view height; `.pdf-indicator`
@@ -339,12 +343,15 @@ Managed PDF downloads use downloads.list/open scoped IPC and a downloadId Viewer
 | tab menu, drag, tab keys | documents/document-tabs.tsx; viewer-context move/closeMany; file-actions.tsx | document-tabs.test.ts; citations.spec.ts (real drag) |
 | search box, In documents, actions row | documents/docs-tab.tsx (`useTreeExpansion`); styles `.docs-actions` | docs-tree.test.ts; documents.test.ts; documents.spec.ts |
 | row context menu / Properties | documents/tree-menu.tsx; tree-properties.tsx; mockApi docs.stat | docs-tree.test.ts; documents.test.ts; docs-tree.spec.ts |
+| Hex rows/search/copy | renderer/documents hex-{source,rows,viewer}, viewer-context, docs-tree, document-tabs-store | hex-source.test.ts; hex-viewer.test.ts; native e2e/hex-viewer.spec.ts |
 | Large text windows/index/search | renderer/documents large-text-{source,index,find,window,rows,viewer} | large-text.test.ts; read-text-file.test.ts; e2e/large-text.spec.ts genuine 200 MiB browser/native heap/pulse proof |
 | Text decoding and measured wrap | renderer/documents text-encoding, read-text-file, text-viewer, use-text-rows | sibling tests; e2e/text-encodings.spec.ts browser/native |
 | Bounded physical byte reads | core/workbench/read-bytes.ts and service.ts; shared documents/ipc.ts; main display-documents.ts and display-bytes.ts | read-bytes.test.ts; display-bytes.test.ts; display-documents.test.ts; documents-ipc.test.ts; focused service/bridge tests |
 | Open in / Show in Explorer / Copy | main/openers.ts; index.ts docs.openers/openWith/reveal/copyPath/systemApps/openSystemApp; core locateEntry; file-actions.tsx useFileActions | openers.test.ts; tree.test.ts; documents-ipc.test.ts; docs-tree.test.ts; docs-tree.spec.ts |
 
 ## Key behaviors
+
+- REQ-FUNC-94765114, REQ-FUNC-69596c3b, REQ-FUNC-b66d2d80, REQ-FUNC-53b3527c, REQ-REL-63f0f1cc, REQ-REL-a4d21663: bounded Hex rows, offset navigation, cancellable byte Find, selection copy, invalid input and Retry.
 
 - REQ-FUNC-c5def0c3, REQ-UX-5a886e34, REQ-UX-77baabba, REQ-REL-3bb0b405: selected text decoding, explicit replacement, measured wrapped navigation and consistent bounded assembly.
 
@@ -371,6 +378,7 @@ core/sessions/service.ts, workbench/{service,tree,read-bytes}.ts/test and knowle
 desktop/main/{index,document-viewer,display-documents,display-bytes,display-identities,security,content-policy,openers}.ts, openers.test.ts and
 document-viewer.test.ts; renderer/components/documents/{viewer-context,docs-tab,
 pdf-viewer,docs-tree,tree-menu,tree-properties,open-externally,document-tabs,file-actions,text-viewer}.tsx;
+hex-source.ts, hex-rows.tsx, hex-viewer.tsx/CSS with sibling source/component tests;
 text-encoding.ts, read-text-file.ts, use-text-rows.ts with sibling tests, documents.test.ts and
 docs-tree.test.ts; session/{markdown,transcript,artifacts-tab};
 App/Shell/styles/locales/mock documents+mockApi; electron.vite.config.ts/index.html;

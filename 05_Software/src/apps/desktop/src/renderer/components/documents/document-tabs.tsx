@@ -417,6 +417,16 @@ function DocumentPanel({ tab, index, leave }: { tab: DocumentTab; index: number;
       keys: "Control+F",
       run: () => find(node.current),
     };
+    if (tab.hexFile)
+      return [
+        findItem,
+        {
+          action: "go-to-offset",
+          label: t("documents.hexGoTo"),
+          keys: "Control+G",
+          run: () => setGotoRequest((value) => value + 1),
+        },
+      ];
     if (content.kind === "text")
       return [
         copy,
@@ -508,6 +518,7 @@ function DocumentPanel({ tab, index, leave }: { tab: DocumentTab; index: number;
               content={content}
               bytes={tab.textBytes}
               largeText={tab.largeText}
+              hexFile={tab.hexFile}
               retry={() => state.retry(tab.key)}
               place={state.place(tab.key)}
               onPlace={(place) => state.setPlace(tab.key, place)}

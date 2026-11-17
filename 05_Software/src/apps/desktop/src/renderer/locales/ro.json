@@ -462,7 +462,20 @@
     "documentActions": "Acțiuni pentru {{name}}",
     "zoomIn": "Mărește",
     "zoomOut": "Micșorează",
-    "zoomReset": "Resetează zoomul"
+    "zoomReset": "Resetează zoomul",
+    "hexView": "Vizualizare hexazecimală",
+    "hexGoTo": "Salt la offset",
+    "hexCopy": "Copiază ca hex",
+    "hexCopyText": "Copiază ca text",
+    "hexFindMode": "Format de căutare",
+    "hexSequence": "Octeți hexazecimali",
+    "hexUtf8": "Text UTF-8",
+    "hexFindNext": "Găsește următorul",
+    "hexOffset": "Offset de octet",
+    "hexPosition": "Poziție în octeți",
+    "hexNoMatch": "Niciun octet corespunzător.",
+    "hexInvalid": "Offset sau căutare nevalidă, ori selecția depășește 64 KiB.",
+    "hexShow": "Arată ca hex"
   },
   "skills": {
     "settings": "Setări pentru skill-uri",

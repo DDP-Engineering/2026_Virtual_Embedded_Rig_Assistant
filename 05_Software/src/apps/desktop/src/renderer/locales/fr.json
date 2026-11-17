@@ -462,7 +462,20 @@
     "documentActions": "Actions pour {{name}}",
     "zoomIn": "Zoom avant",
     "zoomOut": "Zoom arrière",
-    "zoomReset": "Réinitialiser le zoom"
+    "zoomReset": "Réinitialiser le zoom",
+    "hexView": "Vue hexadécimale",
+    "hexGoTo": "Aller au décalage",
+    "hexCopy": "Copier en hexadécimal",
+    "hexCopyText": "Copier en texte",
+    "hexFindMode": "Format de recherche",
+    "hexSequence": "Octets hexadécimaux",
+    "hexUtf8": "Texte UTF-8",
+    "hexFindNext": "Rechercher suivant",
+    "hexOffset": "Décalage en octets",
+    "hexPosition": "Position en octets",
+    "hexNoMatch": "Aucun octet correspondant.",
+    "hexInvalid": "Décalage ou recherche invalide, ou sélection supérieure à 64 Kio.",
+    "hexShow": "Afficher en hexadécimal"
   },
   "skills": {
     "settings": "Paramètres des compétences",

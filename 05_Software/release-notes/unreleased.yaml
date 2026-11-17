@@ -1,6 +1,13 @@
 version: Unreleased
 date: null
 entries:
+  - category: new
+    topic: { en: Files, ro: Fișiere, de: Dateien, fr: Fichiers }
+    text:
+      en: Inspect bytes in Hex, jump to offsets, find text or bytes and copy selected hex or text.
+      ro: Inspectează octeți în Hex, sari la offset, caută text sau octeți și copiază selecția.
+      de: Bytes in Hex ansehen, zu Offsets springen, Text oder Bytes suchen und die Auswahl kopieren.
+      fr: Affichez les octets en Hex, allez à un décalage, cherchez et copiez la sélection.
   - category: improved
     topic: { en: Files, ro: Fișiere, de: Dateien, fr: Fichiers }
     text:

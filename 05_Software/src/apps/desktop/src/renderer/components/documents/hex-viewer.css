@@ -1,0 +1,70 @@
+.hex-viewer {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
+}
+.hex-controls,
+.hex-position {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+.hex-controls input {
+  min-width: 5rem;
+}
+.hex-position input {
+  flex: 1;
+  min-width: 5rem;
+}
+.hex-status {
+  min-height: 1.5rem;
+}
+.hex-rows {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  font-family: var(--font-mono, monospace);
+}
+.hex-lines {
+  position: relative;
+  min-width: max-content;
+}
+.hex-probe {
+  position: absolute;
+  visibility: hidden;
+  height: 1.5rem;
+}
+.hex-row {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  white-space: pre;
+}
+.hex-address {
+  color: var(--muted-foreground);
+  min-width: 8ch;
+}
+.hex-bytes {
+  display: flex;
+  width: 48ch;
+}
+.hex-bytes button {
+  font: inherit;
+  line-height: inherit;
+  min-height: 0;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  width: 3ch;
+  background: transparent;
+  color: inherit;
+}
+.hex-bytes button[aria-pressed="true"],
+.hex-row [data-selected] {
+  background: var(--accent);
+  color: var(--accent-foreground);
+}

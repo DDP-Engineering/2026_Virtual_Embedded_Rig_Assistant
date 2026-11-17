@@ -19,6 +19,7 @@ const record: StoredTabs = {
     { target: { ref: "docs/a.pdf#p=3" }, place: { page: 3 } },
     { target: { textPath: "logs/big.log", ignored: true }, place: { line: 251 } },
     { target: { downloadId: "dl_1" } },
+    { target: { textPath: "firmware.bin", hex: true }, place: { offset: 65534 } },
     { target: { runId: "01JC00000000000000000000R2" }, place: { line: 20 } },
   ],
 };

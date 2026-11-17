@@ -422,9 +422,11 @@ it("offers Open, Attach as context, Open in, Show in Explorer, Copy and Properti
   await settle();
   expect(container.querySelector('[role="tree"] button')).toBeNull();
   await contextMenu(row("docs/a.pdf"));
-  expect(menuItems()).toEqual(["open", "attach", "open-in", "reveal", "copy", "properties"]);
+  expect(menuItems()).toEqual(["open", "open-hex", "attach", "open-in", "reveal", "copy", "properties"]);
   expect(menu()?.getAttribute("aria-label")).toContain("a.pdf");
   expect(document.activeElement).toBe(menuItem("open"));
+  await key(document.activeElement, "ArrowDown");
+  expect(document.activeElement).toBe(menuItem("open-hex"));
   await key(document.activeElement, "ArrowDown");
   expect(document.activeElement).toBe(menuItem("attach"));
   await key(document.activeElement, "Escape");
@@ -609,7 +611,7 @@ it("opens Docs tree items in the default app and the detected programs from Open
   await unmount();
   await mount();
   await contextMenu(row("firmware/main.c"));
-  expect(menuItems()).toEqual(["open", "reveal", "copy", "properties"]);
+  expect(menuItems()).toEqual(["open", "open-hex", "reveal", "copy", "properties"]);
 });
 
 it("lists the system's applications for a file on Linux and Other app on Windows, only for files", async () => {

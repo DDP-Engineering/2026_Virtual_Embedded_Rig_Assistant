@@ -218,3 +218,7 @@ four-locale browser controls. VERA_TERM03_EVIDENCE_DIR retains native proof. Cor
 `e2e/run-masking.spec.ts` proves native stored MQTT credentials in actual command output, run arguments/canonical cwd, provisioning statuses, tail/full logs and terminal snapshots with live app/workbench overrides and two-workbench isolation. Original receipts/logs use evaluation-outputs/mask03; no delivery artifacts are rebuilt.
 
 `e2e/agent-masking.spec.ts` proves stored MQTT credential masking with live independent agent/exports choices, snapshot/detail/search, native JSON/Markdown and artifact exports, and irreversible saved redaction. Original logs/receipt use evaluation-outputs/mask04. Focused CLI process cases share the same contracts without external providers.
+
+`e2e/hex-viewer.spec.ts` exercises native Hex border Find, partial rows/nonprintables, bounded DOM,
+keyboard selection, actual clipboard and live stored-credential Display masking in four locales.
+Original logs/screenshots/receipt stay in `evaluation-outputs/view04`.
