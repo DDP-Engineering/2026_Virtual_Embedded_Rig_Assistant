@@ -56,7 +56,7 @@ export function About({ info }: { info: AppInfo }) {
         <img className="about-logo" src={ddpLogo} alt="DDP Engineering" />
       </header>
       {releases.length > 0 && (
-        <details className="about-block about-notices" data-about-whats-new open>
+        <details className="about-block about-notices" data-about-whats-new>
           <summary>
             <h3>{t("about.whatsNew")}</h3>
           </summary>

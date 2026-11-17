@@ -53,7 +53,10 @@ test("built shell enforces the desktop security boundary", async () => {
     await page.locator('[data-i18n="nav.settings"]').click();
     await page.locator('[data-section="about"]').click();
     await expect(page.locator('[data-i18n="home.version"]')).toBeVisible({ timeout: 5000 });
-    // What's new lists the bundled release notes of this version.
+    // What's new starts collapsed and lists the bundled release notes when opened.
+    const whatsNew = page.locator("[data-about-whats-new]");
+    await expect(whatsNew).not.toHaveAttribute("open");
+    await whatsNew.locator("summary").click();
     const desktopPackage = join(
       dirname(fileURLToPath(import.meta.url)),
       "../../src/apps/desktop/package.json",

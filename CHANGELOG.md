@@ -23,6 +23,7 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ### Changed
 
+- About opens with What's new collapsed, leaving application details visible first.
 - Runs cards separate command, status, duration and metadata with compact icons and readable rows.
 - UI checks follow compact viewer controls, await terminal creation and use the renderer's actual port.
 - Test startup caches transformed modules and isolates native processing; complex UI checks tolerate loaded hosts.

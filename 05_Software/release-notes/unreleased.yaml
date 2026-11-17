@@ -9,12 +9,12 @@ entries:
       de: Werkzeugaufrufe zeigen übersetzte Texte, lesbare Pläne und Details ohne leere Ausgabefelder.
       fr: Les outils gardent libellés traduits, plans lisibles et détails, sans bloc de résultat vide.
   - category: fixed
-    topic: { en: Commands, ro: Comenzi, de: Befehle, fr: Commandes }
+    topic: { en: Settings, ro: Setări, de: Einstellungen, fr: Paramètres }
     text:
-      en: Commands positions Cancel and Save at the top right, matching Data & privacy.
-      ro: Comenzi aliniază Anulare și Salvare în dreapta sus, la fel ca Date și confidențialitate.
-      de: Unter Befehle stehen Abbrechen und Speichern oben rechts wie bei Daten und Datenschutz.
-      fr: Commandes aligne Annuler et Enregistrer en haut à droite, comme Données et confidentialité.
+      en: Commands aligns Cancel/Save at the top right; About starts with What's new collapsed.
+      ro: În Comenzi, Anulare/Salvare sunt sus în dreapta; secțiunea Noutăți este restrânsă inițial.
+      de: Befehle zeigt Abbrechen/Speichern oben rechts; Neuigkeiten unter Über ist anfangs eingeklappt.
+      fr: Commandes aligne Annuler/Enregistrer en haut à droite ; À propos replie les nouveautés.
   - category: fixed
     topic: { en: Terminal, ro: Terminal, de: Terminal, fr: Terminal }
     text:
