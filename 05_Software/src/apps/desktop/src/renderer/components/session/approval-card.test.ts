@@ -61,6 +61,54 @@ it.each(["en", "ro", "de", "fr"])("sends only an explicit chosen user prefix in 
   });
 });
 
+it("decides with A and D on the card, never while the prefix list has the key", async () => {
+  const approval = {
+    approvalId: "apv",
+    callId: "call",
+    requestSha256: "a".repeat(64),
+    tool: "run_command",
+    path: "shell",
+    diff: "",
+    bytes: 0,
+    decision: null,
+    program: {
+      pluginId: "vera",
+      trial: false,
+      program: "shell",
+      programVersion: null,
+      executable: "/bin/bash",
+      args: ["apt list"],
+      cwd: "/repo",
+      risk: "device-write",
+      confirm: null,
+      files: [],
+      notes: [],
+    },
+  } as SessionState["approvals"][number];
+  container = document.createElement("div");
+  document.body.append(container);
+  root = createRoot(container);
+  await act(async () =>
+    root?.render(createElement(ApprovalCard, { approval, sessionId: "s", disabled: false })),
+  );
+  vi.mocked(api.invoke).mockClear();
+  const press = (target: Element | null | undefined, key: string) =>
+    act(async () => {
+      target?.dispatchEvent(new KeyboardEvent("keydown", { key, bubbles: true, cancelable: true }));
+    });
+  const prefixes = container.querySelector("[data-command-prefix]");
+  expect(prefixes).not.toBeNull();
+  await press(prefixes, "a");
+  await press(prefixes, "d");
+  expect(api.invoke).not.toHaveBeenCalled();
+  await press(container.querySelector("[data-approval-card]"), "a");
+  expect(api.invoke).toHaveBeenCalledTimes(1);
+  expect(api.invoke).toHaveBeenLastCalledWith(
+    "session.approval.decide",
+    expect.objectContaining({ approvalId: "apv", decision: "approved" }),
+  );
+});
+
 it.each(["en", "ro", "de", "fr"])(
   "shows a literal shell command, cwd and shell with approve/deny in %s",
   async (language) => {

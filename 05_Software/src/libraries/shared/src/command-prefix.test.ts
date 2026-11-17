@@ -94,6 +94,29 @@ describe("conservative command prefix policy", () => {
     "git push --mir",
     "git -ccore.sshCommand=bad push",
     "git -c alias.x=bad x",
+    "git ls-remote --upload-pack=./x.bat .",
+    "git fetch --upload-pack ./x.bat origin",
+    "git ls-remote --upload-pa=./x.bat .",
+    "git push --receive-pack=./x.bat origin main",
+    "git clone -u ./x.bat . copy",
+    "git grep -O./x.bat word",
+    "git grep --open-files-in-pager=./x.bat word",
+    "git difftool --extcmd=./x.bat",
+    "git rebase -x ./x.bat main",
+    "git bisect run ./x.bat",
+    "git submodule foreach ./x.bat",
+    "git --exec-path=./bin status",
+    "git checkout -- .",
+    "git checkout .",
+    "git checkout HEAD -- src/main.c",
+    "git restore .",
+    "git restore --staged src/main.c",
+    "git switch --discard-changes main",
+    "git stash drop",
+    "git stash clear",
+    "npm test --script-shell=./x.sh",
+    "tar -x --to-command=./x.sh",
+    "tar -c --use-compress-program=./x.sh src",
     "rm -rf .",
     "rmdir /s /q .",
     "Remove-Item . -Recurse -Force",
@@ -121,5 +144,18 @@ describe("conservative command prefix policy", () => {
     expect(commandPrefixMatches(command, prefix)).toBe(false);
     expect(commandPrefixes(command)).toEqual([]);
     expect(commandPrefixMatches(command, command.split(" ")[0] ?? "")).toBe(false);
+  });
+  it.each([
+    "git status",
+    "git log --oneline -- src",
+    "git diff -- src/main.c",
+    "git checkout main",
+    "git switch main",
+    "git push -u origin main",
+    "git grep -o word",
+    "git stash list",
+    "git stash pop",
+  ])("keeps %s eligible under a saved git prefix", (command) => {
+    expect(commandPrefixMatches(command, "git")).toBe(true);
   });
 });

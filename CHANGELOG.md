@@ -8,6 +8,10 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ### Fixed
 
+- Shell commands run under PowerShell Constrained Language Mode; cmdlet text keeps the console code page there.
+- Approval shortcuts A and D no longer fire while the command-prefix list has the key.
+- Saved command prefixes no longer approve git forms that run a named program or discard work.
+- Remove saved prefixes naming git restore, bisect, difftool, mergetool, filter-branch or foreach from workbench.yaml.
 - On Linux, a file deleted while its bytes are read is reported as missing, not as a conflict.
 - UI checks read the renderer's address from coloured output and wait for a pending bookmark update.
 - Closing a terminal suspends its I/O and ignores late responses from the terminal being closed.

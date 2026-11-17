@@ -154,7 +154,10 @@ export function ApprovalCard({
       onKeyDown={(event) => {
         if (
           locked ||
+          // Typing in a field or stepping through the prefix list is not a decision.
           event.target instanceof HTMLInputElement ||
+          event.target instanceof HTMLSelectElement ||
+          event.target instanceof HTMLTextAreaElement ||
           event.altKey ||
           event.ctrlKey ||
           event.metaKey ||

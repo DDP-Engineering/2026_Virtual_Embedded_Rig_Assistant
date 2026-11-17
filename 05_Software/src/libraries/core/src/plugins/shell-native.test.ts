@@ -11,14 +11,6 @@ for (const option of installed) {
     async () => {
       if (!option.executable) throw Error("Missing installed shell");
       const shell = await resolveCommandShell(host, option.executable);
-      // Cmd built-ins emit the Windows code page; other adapters emit UTF-8.
-      const marker = shell.kind === "cmd" ? "quote & command" : "quote & Unicode: caf\u00e9";
-      const command =
-        shell.kind === "powershell"
-          ? `Write-Output '${marker}'`
-          : shell.kind === "cmd"
-            ? `echo "${marker}"`
-            : `printf '%s\\n' '${marker}'`;
       const run = async (command: string) => {
         const chunks: Buffer[] = [];
         const child = host.spawn(shell.executable, shellArguments(shell, command), {
@@ -37,6 +29,17 @@ for (const option of installed) {
           clearTimeout(deadline);
         }
       };
+      const constrained =
+        shell.kind === "powershell" &&
+        (await run("$ExecutionContext.SessionState.LanguageMode")).text.includes("ConstrainedLanguage");
+      // Cmd built-ins and constrained PowerShell emit the console code page; other adapters emit UTF-8.
+      const marker = shell.kind === "cmd" || constrained ? "quote & command" : "quote & Unicode: café";
+      const command =
+        shell.kind === "powershell"
+          ? `Write-Output '${marker}'`
+          : shell.kind === "cmd"
+            ? `echo "${marker}"`
+            : `printf '%s\\n' '${marker}'`;
       const result = await run(command);
       expect(result.exit.code).toBe(0);
       expect(result.text).toContain(marker);

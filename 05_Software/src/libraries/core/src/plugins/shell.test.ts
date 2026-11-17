@@ -140,6 +140,8 @@ describe("literal shell syntax", () => {
       expect(args[4]).toContain(command.replaceAll("'", "''"));
       expect(args[4]).toContain("UTF8Encoding");
       expect(args[4]).toContain("exit $LASTEXITCODE");
+      // The fallback for Constrained Language Mode needs no .NET call.
+      expect(args[4]).toMatch(/LanguageMode -eq 'FullLanguage'.*else \{ Invoke-Expression \$veraCommand \}$/);
     },
   );
 });

@@ -99,6 +99,20 @@ entries:
       ro: Mascarea afișării păstrează fișierele cu nume secrete vizibile și le deschide corect.
       de: Die Anzeigemaskierung lässt Dateien mit geheimen Namen sichtbar und öffnet sie korrekt.
       fr: Le masquage garde visibles les fichiers aux noms secrets et ouvre leur contenu correct.
+  - category: fixed
+    topic: { en: Commands, ro: Comenzi, de: Befehle, fr: Commandes }
+    text:
+      en: Commands run on Windows computers that restrict PowerShell to Constrained Language Mode.
+      ro: Comenzile rulează pe calculatoare Windows care restrâng PowerShell la Constrained Language Mode.
+      de: Befehle laufen auf Windows-Rechnern, die PowerShell auf den Constrained Language Mode beschränken.
+      fr: Les commandes s’exécutent sur les PC Windows limitant PowerShell au Constrained Language Mode.
+  - category: fixed
+    topic: { en: Permissions, ro: Permisiuni, de: Berechtigungen, fr: Autorisations }
+    text:
+      en: Approval keys ignore the prefix list; saved prefixes no longer cover risky git forms.
+      ro: Tastele de aprobare ignoră lista de prefixe; prefixele salvate nu mai acoperă forme git riscante.
+      de: Freigabetasten ignorieren die Präfixliste; gespeicherte Präfixe decken riskante git-Formen nicht ab.
+      fr: Les touches d’approbation ignorent la liste de préfixes ; formes git risquées exclues des préfixes.
   - category: new
     topic: { en: Terminal, ro: Terminal, de: Terminal, fr: Terminal }
     text:

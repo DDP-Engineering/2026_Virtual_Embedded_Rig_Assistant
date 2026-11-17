@@ -195,12 +195,14 @@ export function shellArguments(shell: CommandShell, command: string): string[] {
   if (shell.kind !== "powershell") return [shell.kind === "bash" ? "-lc" : "-c", command];
   const literal =
     `${command}\nif ($?) { exit 0 }; if ($LASTEXITCODE) { exit $LASTEXITCODE }; exit 1`.replaceAll("'", "''");
+  // Constrained Language Mode (WDAC, AppLocker) refuses the .NET calls. There the command still runs
+  // with its exit status; cmdlet text keeps the console code page, as Cmd output does.
   return [
     "-NoLogo",
     "-NoProfile",
     "-NonInteractive",
     "-Command",
-    `$OutputEncoding = [Console]::OutputEncoding = [System.Text.UTF8Encoding]::new($false); $global:LASTEXITCODE = 0; & ([scriptblock]::Create('${literal}'))`,
+    `$veraCommand = '${literal}'; $global:LASTEXITCODE = 0; if ($ExecutionContext.SessionState.LanguageMode -eq 'FullLanguage') { $OutputEncoding = [Console]::OutputEncoding = [System.Text.UTF8Encoding]::new($false); & ([scriptblock]::Create($veraCommand)) } else { Invoke-Expression $veraCommand }`,
   ];
 }
 
