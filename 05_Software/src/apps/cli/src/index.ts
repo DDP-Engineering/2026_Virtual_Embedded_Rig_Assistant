@@ -27,6 +27,14 @@ try {
   // Discover all explicit key-files before strict parser diagnostics, retaining each secret.
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i] ?? "";
+    // A variable named by --key-env holds a secret too, whatever the parser later says about the name.
+    const named =
+      arg === "--key-env" ? argv[i + 1] : arg.startsWith("--key-env=") ? arg.slice(10) : undefined;
+    const secret = named ? process.env[named] : undefined;
+    if (secret) {
+      logger.registerSecret(secret);
+      logger.registerSecret(secret.trim());
+    }
     const path = arg === "--key-file" ? argv[++i] : arg.startsWith("--key-file=") ? arg.slice(11) : undefined;
     if (!path) continue;
     try {
@@ -63,7 +71,9 @@ try {
   else {
     const credential = options.keyFile ? loaded.get(options.keyFile) : undefined;
     if (credential?.error) throw credential.error;
-    const ambient = options.keyFile ? undefined : environmentKey(options.provider, process.env);
+    const ambient = options.keyFile
+      ? undefined
+      : environmentKey(options.provider, process.env, options.keyEnv);
     if (ambient?.note) process.stderr.write(`vera: ${ambient.note}\n`);
     const key = options.keyFile ? credential?.key : ambient?.key;
     process.exitCode = await runTurn(options, logger, controller.signal, key);

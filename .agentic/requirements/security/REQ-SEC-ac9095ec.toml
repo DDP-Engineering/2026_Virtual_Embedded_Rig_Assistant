@@ -2,13 +2,13 @@ schema = 1
 
 id = "REQ-SEC-ac9095ec"
 
-title = "Send the environment key to OpenAI only"
+title = "Send only a named or OpenAI environment key"
 
 status = "active"
 
-requirement = "While a run has no key-file, the CLI shall take the provider key from OPENAI_API_KEY for the openai provider only, send no environment key to a custom provider, and name --key-file on stderr when a custom provider runs with OPENAI_API_KEY set or the openai provider has no key."
+requirement = "While a run has no key-file, the CLI shall take the provider key from the environment variable that --key-env names or, without that option, from OPENAI_API_KEY for the openai provider only, and shall name --key-file and --key-env on stderr when a custom provider runs with OPENAI_API_KEY set or the openai provider has no key."
 
-verification = "CLI unit test with a fictional key: the openai provider receives the environment key; the custom provider receives none and gets a note that names --key-file and does not contain the key; openai without a key gets a note naming OPENAI_API_KEY and --key-file; a custom provider without the variable and a replay run get neither key nor note."
+verification = "CLI unit test with a fictional key: the openai provider receives the environment key; the custom provider receives none and gets a note that names --key-file and does not contain the key; openai without a key gets a note naming OPENAI_API_KEY and --key-file; a custom provider without the variable and a replay run get neither key nor note; with --key-env any provider receives the trimmed value of the named variable, an unset or empty one is a usage error naming it, and the parser refuses a value that is not a variable name and --key-env together with --key-file."
 
 affected_paths = ["05_Software/src/apps/cli/src/provider-key.ts", "05_Software/src/apps/cli/src/index.ts", "05_Software/src/apps/cli/src/args.ts", "05_Software/README.md"]
 

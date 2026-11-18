@@ -8,6 +8,7 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ### Added
 
+- CLI: --key-env <NAME> takes the provider key from the named environment variable, for any provider.
 - Workbenches can choose visible right-panel tabs, with saved preferences and draft default restoration.
 - Image previews fit PNG, JPEG, GIF, WebP, BMP and inert SVG, with original-image zoom through 400% and Hex.
 - File viewer modes switch between Rendered, Text and Hex, with binary defaults and remembered extension choices.
@@ -100,7 +101,7 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 - ChatGPT sign-in status is polled only while a sign-in is in progress.
 - Errors with an unknown message key show the message for their error code, not "internal error".
 - PDF viewer: long documents open sooner; page sizes are measured in the background.
-- CLI: OPENAI_API_KEY is used only for the OpenAI provider; a custom provider takes its key from --key-file.
+- CLI: OPENAI_API_KEY is used only for the OpenAI provider, never sent to a custom provider's host.
 - Commands with one-letter options such as -p, -r, -m, -d or -h can be saved for automatic approval.
 - Internal turn and model stream failures are written to the application log, with secrets masked.
 - Register definitions have length limits on names, labels and addresses.

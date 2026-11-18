@@ -4,7 +4,8 @@ import { DEPENDENCY_KIT_PLATFORMS, type DependencyKitPlatform } from "@vera/core
 import { customConfigSchema, modelReferenceSchema, pluginIdSchema, sessionIdSchema } from "@vera/shared";
 
 export const USAGE = `Usage: vera run --workbench <dir> --prompt <text>
-  [--session <id>] [--data <dir>] [--key-file <file>] [--format jsonl|pretty]
+  [--session <id>] [--data <dir>] [--key-file <file> | --key-env <NAME>]
+  [--format jsonl|pretty]
   [--approve all|none] (otherwise prompt on TTY; non-TTY denies)
   --provider replay --script <file>
   --provider openai --model <id>
@@ -24,8 +25,9 @@ export const USAGE = `Usage: vera run --workbench <dir> --prompt <text>
     [--k 1..20] [--path-glob <glob>] [--data <dir>]
 
 Provider defaults to openai; format defaults to jsonl. Keys: a UTF-8 --key-file
-for any provider; without it, OPENAI_API_KEY for openai only (never sent to a
-custom provider). Data defaults to an owned temporary folder.
+or the environment variable named by --key-env, for any provider; without
+either, OPENAI_API_KEY for openai only (never sent to a custom provider).
+Data defaults to an owned temporary folder.
 Exit codes: 0=end/help, 1=error/aborted/limit, 2=usage error.`;
 export class UsageError extends Error {}
 export interface RunOptions {
@@ -38,6 +40,7 @@ export interface RunOptions {
   session?: string;
   data?: string;
   keyFile?: string;
+  keyEnv?: string;
   script?: string;
   baseUrl?: string;
   approve?: "all" | "none";
@@ -305,6 +308,7 @@ export function parseCommand(
           "session",
           "data",
           "key-file",
+          "key-env",
           "provider",
           "script",
           "model",
@@ -338,7 +342,11 @@ export function parseCommand(
       baseUrl = text("base-url"),
       session = text("session"),
       data = text("data"),
-      keyFile = text("key-file");
+      keyFile = text("key-file"),
+      keyEnv = text("key-env");
+    if (keyEnv !== undefined && !/^[A-Za-z_][A-Za-z0-9_]*$/.test(keyEnv))
+      throw new UsageError("Invalid --key-env.");
+    if (keyFile && keyEnv) throw new UsageError("Use --key-file or --key-env, not both.");
     const approve = text("approve");
     if (approve !== undefined && approve !== "all" && approve !== "none")
       throw new UsageError("Invalid --approve.");
@@ -367,6 +375,7 @@ export function parseCommand(
       ...(session ? { session } : {}),
       ...(data ? { data: resolve(data) } : {}),
       ...(keyFile ? { keyFile: resolve(keyFile) } : {}),
+      ...(keyEnv ? { keyEnv } : {}),
       ...(approve ? { approve } : {}),
     };
   } catch (error) {
