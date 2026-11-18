@@ -25,6 +25,7 @@ import * as core from "@vera/core";
 import { classifyCommand, type PluginManifest, validatePluginManifest } from "@vera/shared";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { parse } from "yaml";
+import { reportSkip } from "../support/skip-marker.js";
 
 const plugins = new URL("../../plugins/", import.meta.url);
 const source = fileURLToPath(new URL("kicad/", plugins));
@@ -997,6 +998,7 @@ const located = (() => {
 const kicad10 = located?.version.startsWith("10.") === true;
 if (!kicad10) console.warn("kicad.test.ts: no KiCad 10 kicad-cli found; the real-KiCad cases are skipped.");
 
+reportSkip(!kicad10, "the real KiCad tests", "no KiCad 10 kicad-cli found (install KiCad 10)");
 describe.skipIf(!kicad10)("kicad-tool with the real KiCad 10", { timeout: 600_000 }, () => {
   let dir: string;
   let pristine: Record<string, string>;
@@ -2172,6 +2174,11 @@ it("leaves the installed package unchanged by a run (REQ-REL-20ece322)", async (
 }, 120_000);
 
 const uv = process.env.VERA_KICAD_UV;
+reportSkip(
+  !uv || !kicad10,
+  "the provisioned real-KiCad test",
+  "needs KiCad 10 and VERA_KICAD_UV set to a uv executable",
+);
 // Explicit real acceptance: VERA_KICAD_UV names a uv executable; provisioning may download uv's managed CPython.
 it.skipIf(!uv || !kicad10)(
   "runs through VERA's provisioner and ProgramRunner with the real KiCad (REQ-PLAT-c30fa145)",

@@ -13,6 +13,7 @@ import { fileURLToPath } from "node:url";
 import { classifyCommand, type PluginManifest, validatePluginManifest } from "@vera/shared";
 import { describe, expect, it } from "vitest";
 import { parse } from "yaml";
+import { reportSkip } from "../support/skip-marker.js";
 
 const plugins = new URL("../../plugins/", import.meta.url);
 const source = fileURLToPath(new URL("ltspice/", plugins));
@@ -1135,6 +1136,7 @@ describe.skipIf(!ltspice)("real LTspice runs", { timeout: 300_000 }, () => {
     }
   });
 
+  reportSkip(!ngspice, "the ngspice comparison", "ngspice not installed (set VERA_TEST_NGSPICE)");
   it.skipIf(!ngspice)(
     "matches ngspice-tool on the same requests within the README tolerances (REQ-TEST-99244ca8)",
     async () => {

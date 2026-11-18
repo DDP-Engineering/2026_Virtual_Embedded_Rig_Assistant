@@ -74,3 +74,32 @@ Existing user workbenches and profiles are never part of this directory.
 and `interrupted-sessions.json`, the crash-recovery fixture with interrupted sessions.
 Every stored format is version 1 during development, so there are no previous-version
 or newer-version fixtures.
+
+## Provenance
+
+`REUSE.toml` declares one license for the whole repository and has no entry for a single fixture.
+This section records what the repository itself says about fixtures that are not, or may not be,
+written for VERA. It does not settle their licensing.
+
+Origin recorded in the repository:
+
+- `power-quality-pfc/meas-hipe-main-terminal-2017-10-24.json` + `.csv`: an excerpt of the HIPE data set 1.0.1
+  (KIT), CC BY 4.0. The source, the license and the changes are in the `source` field of the JSON file and in
+  the paragraph above. `REUSE.toml` still gives it the repository license.
+- `stm32/STM32_Programmer_CLI-2.23.0-help.txt`: the recorded help output of STM32CubeProgrammer 2.23.0, named in
+  `plugins/stm32-cubeprog/README.md`. The text is STMicroelectronics'; no license is recorded for it.
+- `renode/engine/platforms/boards/stm32f4_discovery.repl` and `renode/engine/platforms/cpus/stm32f4.repl`:
+  unchanged platform descriptions of Renode 1.17.0, MIT license, (c) Antmicro. `renode/make_engine.py` states
+  this, and the SHA-256 of each file equals the upstream hash recorded in
+  `plugins/renode/profiles/stm32f4-discovery/`. The files carry no notice of their own.
+- `kicad/*/fixture.pretty/` and `kicad-layout/board/fixture.pretty/`: footprints that the `make_fixtures.py`
+  scripts write from the `FOOTPRINTS` table in `kicad/make_fixtures.py`. They share short names such as `R_0603`
+  and `SOT-23` with the official KiCad library; their geometry comes from that table, not from the library.
+
+Origin not recorded:
+
+- `renode/stock/stm32f4_discovery.resc`: `tests/plugins/renode.test.ts` calls it the stock Renode script. The
+  Renode release it was copied from and its license are not recorded.
+- `stm32/blink.hex` and `microchip/app.hex`: Intel HEX files that hold a counting byte pattern, not firmware.
+  No generator or note says how they were made.
+- `documents/pages.pdf` and `documents/scanned.pdf`: no generator, no note and no producer metadata in the files.

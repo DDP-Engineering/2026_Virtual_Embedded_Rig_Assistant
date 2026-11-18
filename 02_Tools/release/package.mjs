@@ -25,6 +25,7 @@ import {
   releaseHooks,
   validateNativeFiles,
 } from "./package-checks.mjs";
+import { thirdPartyNotices } from "./third-party.mjs";
 import { updatePublish } from "./update-config.mjs";
 
 const root = software;
@@ -85,6 +86,27 @@ export async function measureDirectory(directory) {
   await walk(directory);
   files.sort((a, b) => b.bytes - a.bytes);
   return { bytes: files.reduce((sum, file) => sum + file.bytes, 0), files };
+}
+
+/**
+ * The files below a folder that its manifest does not name, as sorted `/` paths. The model and Windows
+ * runtime folders are copied into the installer as a whole, so such a file would ship without any check.
+ */
+export async function unexpectedFiles(folder, expected) {
+  const known = new Set(expected);
+  return (await readdir(folder, { recursive: true, withFileTypes: true }))
+    .filter((item) => !item.isDirectory())
+    .map((item) => relative(folder, join(item.parentPath, item.name)).replaceAll(sep, "/"))
+    .filter((path) => !known.has(path))
+    .sort();
+}
+
+async function warnUnexpectedFiles(folder, expected) {
+  const unexpected = await unexpectedFiles(folder, expected);
+  if (unexpected.length)
+    console.warn(
+      `WARNING: ${unexpected.length} file(s) in ${folder} that its manifest does not name ship in the installer unchecked: ${unexpected.join(", ")}`,
+    );
 }
 
 export function verifyAppCode(code, testBuild) {
@@ -204,6 +226,11 @@ export async function stageRuntime(
   await mkdir(stage, { recursive: true });
   await cp(join(root, "src/apps/desktop/out"), join(stage, "out"), { recursive: true });
   await mkdir(join(stage, "resources"), { recursive: true });
+  const model = JSON.parse(await readFile(join(root, "src/models/model-manifest.json"), "utf8"));
+  await warnUnexpectedFiles(join(root, "src/models"), [
+    "model-manifest.json",
+    ...model.files.map((file) => `${model.modelId}/${file.path}`),
+  ]);
   await cp(join(root, "src/models"), join(stage, "resources/models"), {
     recursive: true,
     filter: (source) => source !== join(root, "src/models/model-manifest.json"),
@@ -215,11 +242,22 @@ export async function stageRuntime(
   await stageHelp(stage);
   // VERA's license ships next to the executable (extraFiles), as its Notices section requires.
   await cp(join(root, "../LICENSE.txt"), join(stage, "resources/LICENSE.txt"));
+  // The bundled libraries' names, versions and licenses ship beside it (extraFiles in packageApp).
+  await writeFile(join(stage, "resources/THIRD-PARTY-NOTICES.txt"), thirdPartyNotices(root));
   await cp(
     join(root, "src/windows_runtime/windows-runtime-manifest.json"),
     join(stage, "resources/windows-runtime-manifest.json"),
   );
   if (process.platform === "win32") {
+    const runtime = JSON.parse(
+      await readFile(join(root, "src/windows_runtime/windows-runtime-manifest.json"), "utf8"),
+    );
+    // NOTICE.txt is written by prepare-windows-runtime.mjs.
+    await warnUnexpectedFiles(windowsRuntime, [
+      "windows-runtime-manifest.json",
+      "NOTICE.txt",
+      ...runtime.files.map((file) => file.path),
+    ]);
     await cp(windowsRuntime, join(stage, "resources/windows-runtime"), {
       recursive: true,
       filter: (source) => source !== join(root, "src/windows_runtime/windows-runtime-manifest.json"),
@@ -330,6 +368,7 @@ async function packageApp() {
     "../02_Tools/environment/prepare-plugins.mjs",
     "../02_Tools/environment/software.mjs",
     "../02_Tools/release/update-config.mjs",
+    "../02_Tools/release/third-party.mjs",
     "src/apps/desktop/electron-builder.yml",
     "src/apps/desktop/electron.vite.config.ts",
     "package-lock.json",
@@ -431,6 +470,8 @@ async function packageApp() {
         "!node_modules/@huggingface/transformers/dist/transformers.web*",
         "!node_modules/@huggingface/transformers/dist/transformers.min*",
       ],
+      // Added to the license entry of electron-builder.yml: the builder joins the two lists.
+      extraFiles: [{ from: "resources/THIRD-PARTY-NOTICES.txt", to: "THIRD-PARTY-NOTICES.txt" }],
     },
     publish: "never",
   };

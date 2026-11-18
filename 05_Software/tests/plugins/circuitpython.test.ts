@@ -22,6 +22,7 @@ import * as core from "@vera/core";
 import { classifyCommand, type PluginManifest, validatePluginManifest } from "@vera/shared";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { parse } from "yaml";
+import { reportSkip } from "../support/skip-marker.js";
 
 const software = fileURLToPath(new URL("../../", import.meta.url));
 const pluginFolder = join(software, "plugins", "circuitpython");
@@ -1139,6 +1140,12 @@ describe("VERA's runner and lease registry", { timeout: 60_000 }, () => {
   });
 });
 
+reportSkip(
+  !process.env.VERA_CIRCUITPYTHON_UV,
+  "the real circup tests",
+  "set VERA_CIRCUITPYTHON_UV to a uv executable",
+);
+
 // Opt-in: the real circup 3.1.0 and pyserial 3.5 from PyPI (VERA_CIRCUITPYTHON_UV = a real uv), installed by VERA's
 // provisioner. The fixture bundle and simulated volume stay; only circup's conventions are real. With
 // VERA_CIRCUITPYTHON_BUNDLE_TAG the real Adafruit bundle of that tag is downloaded from github.com as well.
@@ -1216,6 +1223,12 @@ describe.skipIf(!process.env.VERA_CIRCUITPYTHON_UV)("real circup (opt-in)", { ti
     );
   });
 });
+
+reportSkip(
+  !process.env.VERA_TEST_CIRCUITPY_VOLUME || !process.env.VERA_TEST_CIRCUITPY_IDENTITY,
+  "the real CircuitPython board test",
+  "set VERA_TEST_CIRCUITPY_VOLUME and VERA_TEST_CIRCUITPY_IDENTITY",
+);
 
 // Hardware: a real CircuitPython board named by VERA_TEST_CIRCUITPY_VOLUME and VERA_TEST_CIRCUITPY_IDENTITY, with
 // circup and pyserial importable by the Python in VERA_TEST_PYTHON. Writes only /vera-test.py on that drive.

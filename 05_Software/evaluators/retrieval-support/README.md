@@ -1,13 +1,13 @@
-# Module comune pentru evaluarea căutării
+# Shared modules for the retrieval evaluation
 
-Module interne folosite de [evaluarea căutării](../eval-retrieval-harness/eval-retrieval.mjs).
-Nu sunt comenzi independente. Rularea, scratch-ul și outputs sunt descrise în
-[README-ul evaluatorilor](../README.md).
+Internal modules of the [retrieval evaluation](../eval-retrieval-harness/eval-retrieval.mjs).
+They are not standalone commands. How to run the evaluation, its scratch folder and its outputs are
+described in the [evaluators README](../README.md).
 
-| Fișier | Rol | Intrări și rezultate |
+| File | Role | Inputs and results |
 |---|---|---|
-| [corpus.mjs](corpus.mjs) | Construiește corpusul fix de evaluare cu aceleași extractoare și reguli de chunking folosite de produs. | `loadCorpus(workbench, pdfWorker)` citește cele trei PDF-uri demo, notele de bring-up, pinout-ul, boot log-ul și `board.txt`; întoarce chunk-uri și hash-urile surselor. Este împachetat de harness pentru a putea importa sursele TypeScript. |
-| [evaluation.mjs](evaluation.mjs) | Validează întrebările și țintele; calculează clasamente keyword/semantic, fuziune RRF și metrici pe limbi. | Primește corpusul, întrebările și clasamentele. Folosește SQLite FTS pentru referința keyword; nu lansează singur o evaluare și nu descarcă modele. Testele lui sunt în `tests/integration/retrieval.test.ts`. |
+| [corpus.mjs](corpus.mjs) | Builds the fixed evaluation corpus with the same extractors and chunking rules as the product. | `loadCorpus(workbench, pdfWorker)` reads the three demo PDFs, the bring-up notes, the pinout, the boot log and `board.txt`; it returns the chunks and the size and SHA-256 of each source. The harness bundles it so that it can import the TypeScript sources. |
+| [evaluation.mjs](evaluation.mjs) | Validates the questions and their targets; computes keyword and semantic rankings, RRF fusion and metrics per language. | Takes the corpus, the questions and the rankings. Uses SQLite FTS for the keyword reference; it does not start an evaluation by itself and does not download models. Its tests are in `tests/integration/retrieval.test.ts`. |
 
-Datele de intrare rămân fixturi comune: demo-ul din `tests/fixtures/workbenches/demo-board/`,
-întrebările din `tests/fixtures/retrieval/demo-board.yaml`.
+The inputs are shared fixtures: the demo workbench in `tests/fixtures/workbenches/demo-board/` and
+the questions in `tests/fixtures/retrieval/demo-board.yaml`.

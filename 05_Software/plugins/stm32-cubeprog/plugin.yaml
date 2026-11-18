@@ -42,8 +42,9 @@ programs:
     timeout: 600
 # stm32cubeprog syntax turns every command of the line into its canonical lower-case short name (aliases folded), with
 # a qualifier where one name has two risks: -ob/-otp/-psrss displ or <write>, -corereg <write>, debugauth (debug
-# authentication); a board-free listing is <list-only> instead of -l. A spelling the help does not list is <unknown> plus
-# every command it could mean. The typed word is the command (debugauth for debug authentication).
+# authentication); an -ob write of readout protection level 2 adds rdp=0xcc; a board-free listing is <list-only> instead
+# of -l. A spelling the help does not list is <unknown> plus every command it could mean. The typed word is the command
+# (debugauth for debug authentication, rdp=0xcc for level 2, whose rule therefore stands first among the irreversible).
 rules:
   - { match: "stm32_programmer_cli * {-h,-version,-q,-log,-vb,-y,-sl,-ms,-fchecksum,-tm,-ra,-nv,--skiperase,-noreconnect,-force_no_da,-el,-elbl} *", risk: safe, note: "Help, version, output settings, command modifiers and host-file tools (-fchecksum, -sl and -ms modify or read files only)." }
   - { match: "stm32_programmer_cli * <list-only> *", risk: safe, note: Lists probes or ports without connecting to a target. }
@@ -56,9 +57,12 @@ rules:
     note: Writes, erases or fills flash or RAM, runs code, or changes wireless-stack state that a new download restores. A hex, srec or ELF image can also carry option-byte or OTP segments, which -w programs too.
   - { match: "stm32_programmer_cli * -corereg <write> *", risk: device-write, note: Writes core registers of the halted target. }
   - { match: "stm32_programmer_cli * <unknown> *", risk: device-write, note: A command or spelling the STM32CubeProgrammer 2.23.0 help does not list; check STM32_Programmer_CLI --help. }
+  - match: "stm32_programmer_cli * rdp=0xcc *"
+    risk: irreversible
+    note: RDP=0xCC (readout protection level 2) is permanent - it cannot be undone and disables debug access and option-byte changes forever.
   - match: "stm32_programmer_cli * -ob <write> *"
     risk: irreversible
-    note: Writes option bytes. RDP=0xCC (readout protection level 2) is permanent - it cannot be undone and disables debug access and option-byte changes forever. RDP=0xBB (level 1) enables read protection, which only a full mass erase removes. Wrong boot or watchdog settings can also lock the part out.
+    note: Writes option bytes. RDP=0xBB (level 1) enables read protection, which only a full mass erase removes. Wrong boot or watchdog settings can also lock the part out.
   - match: "stm32_programmer_cli * {-rdu,-tzenreg} *"
     risk: irreversible
     note: Regresses read protection or TrustZone, which mass-erases the flash.

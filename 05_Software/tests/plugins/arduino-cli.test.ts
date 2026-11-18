@@ -27,6 +27,7 @@ import * as core from "@vera/core";
 import { classifyCommand, type PluginManifest, validatePluginManifest } from "@vera/shared";
 import { afterAll, describe, expect, it } from "vitest";
 import { parse } from "yaml";
+import { reportSkip } from "../support/skip-marker.js";
 
 const plugins = new URL("../../plugins/", import.meta.url);
 const source = fileURLToPath(new URL("arduino-cli/", plugins));
@@ -1222,6 +1223,11 @@ describe("Stop and clean", () => {
   }, 60_000);
 });
 
+reportSkip(
+  !realTool,
+  "the real arduino-cli tests",
+  "set VERA_TEST_ARDUINO_CLI to an arduino-cli 1.6 and VERA_ARDUINO_HOME to its environment",
+);
 describe.skipIf(!realTool)("real arduino-cli (VERA_TEST_ARDUINO_CLI, VERA_ARDUINO_HOME)", () => {
   async function real() {
     const root = await realpath(await mkdtemp(join(tmpdir(), "vera-arduino-real-")));
@@ -1421,6 +1427,11 @@ describe.skipIf(!realTool)("real arduino-cli (VERA_TEST_ARDUINO_CLI, VERA_ARDUIN
   }, 300_000);
 });
 
+reportSkip(
+  !realTool || !boardPort || !boardIdentity,
+  "the real board test",
+  "needs the real arduino-cli and a connected board (set VERA_TEST_ARDUINO_PORT and VERA_TEST_ARDUINO_IDENTITY)",
+);
 describe.skipIf(!realTool || !boardPort || !boardIdentity)(
   "real board (VERA_TEST_ARDUINO_PORT, VERA_TEST_ARDUINO_IDENTITY)",
   () => {

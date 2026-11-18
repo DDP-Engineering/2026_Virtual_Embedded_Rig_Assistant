@@ -1,8 +1,8 @@
 # Comenzi rapide
 
-Acestea sunt scurtăturile de tastatură implicite ale VERA. Le poți schimba, adăuga sau elimina în **Setări → Comenzi rapide**; vezi [Setări](settings.md).
+Acestea sunt comenzile rapide implicite ale VERA. Le poți schimba, adăuga sau elimina în **Setări → Comenzi rapide**; vezi [Setări](settings.md).
 
-| Acțiune | Scurtătură | Ce face |
+| Acțiune | Comandă rapidă | Ce face |
 |---|---|---|
 | Sesiune nouă | Ctrl+N, Ctrl+Shift+O | Începe o conversație în workbench-ul activ. |
 | Workbench nou | Neatribuită | Afișează formularul pentru crearea unui workbench. |
@@ -20,10 +20,10 @@ Acestea sunt scurtăturile de tastatură implicite ale VERA. Le poți schimba, a
 
 ## Taste fixe
 
-| Scurtătură | Ce face |
+| Comandă rapidă | Ce face |
 |---|---|
 | F1 | Deschide pagina de ajutor a ecranului curent. |
-| F10 | Mută focalizarea pe meniurile Fișier, Editare și Vizualizare. |
+| F10 | Focalizează meniul Fișier din bara de sus; tastele săgeată trec la Editare și Vizualizare. |
 
 De la un reper individual focalizat, Tab ajunge la acțiunea de marcaj; Enter sau Spațiu o activează. Escape închide previzualizarea și readuce focalizarea la reper.
 

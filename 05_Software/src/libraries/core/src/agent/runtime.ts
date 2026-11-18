@@ -131,7 +131,7 @@ export class ReferenceRuntime implements AgentRuntime {
       stopReason = controller.signal.aborted ? "aborted" : "error";
       if (stopReason === "error") {
         this.report("Agent turn failed", error);
-        this.emit({ type: "error", code: "INTERNAL", messageKey: "error.internal", retryable: false });
+        this.emit({ type: "error", code: "INTERNAL", messageKey: "errors.INTERNAL", retryable: false });
       }
     } finally {
       this.emit({ type: "turn.done", turnId, stopReason });
@@ -335,7 +335,7 @@ export class ReferenceRuntime implements AgentRuntime {
         reportUsage(final);
         if (signal.aborted) return "aborted";
         this.report("Model stream failed", error);
-        this.emit({ type: "error", code: "PROVIDER", messageKey: "error.provider", retryable: false });
+        this.emit({ type: "error", code: "PROVIDER", messageKey: "errors.PROVIDER", retryable: false });
         return "error";
       }
       if (signal.aborted) {
@@ -345,7 +345,7 @@ export class ReferenceRuntime implements AgentRuntime {
       }
       if (!final) {
         retainPartial();
-        this.emit({ type: "error", code: "PROVIDER", messageKey: "error.provider", retryable: false });
+        this.emit({ type: "error", code: "PROVIDER", messageKey: "errors.PROVIDER", retryable: false });
         return "error";
       }
       this.transcript.push(structuredClone(final));

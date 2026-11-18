@@ -14,6 +14,7 @@ import * as core from "@vera/core";
 import { type PluginManifest, validatePluginManifest } from "@vera/shared";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { parse } from "yaml";
+import { reportSkip } from "../support/skip-marker.js";
 
 const plugins = new URL("../../plugins/", import.meta.url);
 const tool = fileURLToPath(new URL("freerouting/scripts/freerouting_tool.py", plugins));
@@ -37,6 +38,8 @@ const routerReason =
         : "";
 const router = routerReason === "";
 const gui = router && Boolean(process.env.VERA_TEST_KICAD_GUI);
+reportSkip(!router, "the real Freerouting tests", routerReason);
+reportSkip(!gui, "the KiCad PCB editor test", "needs the real Freerouting setup and VERA_TEST_KICAD_GUI");
 
 /** The environment VERA's runner gives freerouting-tool (allowlist plus the used programs' paths). */
 const uvCache = (() => {

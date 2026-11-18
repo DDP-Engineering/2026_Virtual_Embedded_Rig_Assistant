@@ -20,8 +20,8 @@ The agent uses the `wireshark-analyze` and `wireshark-capture` skills. It always
 
 ## Risk and approvals
 
-- **Safe** (runs without asking): reading a saved capture with any filter, field, statistics or output option, help, version and listing the interfaces. Output files such as a filtered copy are written without approval.
-- **Device read** (asks in **Ask** mode, runs on its own in **Auto-edit**): a live capture. A command without `-r` also captures live, on the first interface.
+- **Safe** (runs without asking): reading a saved capture with any filter, field, statistics or output option, help, version and listing the interfaces.
+- **Device read** (asks in **Ask** mode, runs on its own in **Auto-edit**): a live capture, and any command that writes a file or folder (`-w`, `--export-objects`, `--export-tls-session-keys`, `--log-file`), such as a filtered copy of a capture. A command without `-r` also captures live, on the first interface.
 - **Device write** (asks in **Ask** and **Auto-edit**): an option this plugin does not recognise.
 - **Blocked**: Lua scripts, which can run arbitrary code, and RPCAP passwords on the command line, which would be stored in run logs.
 

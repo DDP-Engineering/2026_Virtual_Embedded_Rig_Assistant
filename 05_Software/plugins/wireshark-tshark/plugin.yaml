@@ -1,6 +1,6 @@
 format: 1
 id: wireshark-tshark
-version: 0.3.0
+version: 0.3.1
 license: LicenseRef-PolyForm-Noncommercial-1.0.0
 name: Wireshark (TShark)
 summary: Analyse network capture files and capture live traffic with TShark.
@@ -28,11 +28,13 @@ programs:
       hint: "Install Wireshark (Windows: includes TShark and offers Npcap) from https://www.wireshark.org/download.html, or your distribution's tshark package."
     version: { args: [--version], match: '^TShark \(Wireshark\) (\d+\.\d+\.\d+)' }
     timeout: 300
-# tshark syntax projects option roles: <info> exits before capturing, <file> reads -r, <capture> opens an
-# interface (or the default one when no capture file is read), <unknown> is an unrecognised option.
+# tshark syntax projects option roles: <info> exits before capturing, <file> reads -r, <write> names an output
+# file or folder (-w, --export-objects, --export-tls-session-keys, --log-file), <capture> opens an interface (or
+# the default one when no capture file is read), <unknown> is an unrecognised option.
 rules:
   - { match: "tshark * <info> *", risk: safe }
-  - { match: "tshark * <file> *", risk: safe, note: Reads a saved capture file; output files such as -w or --export-objects are written without approval. }
+  - { match: "tshark * <file> *", risk: safe, note: Reads a saved capture file. }
+  - { match: "tshark * <write> *", risk: device-read, note: "Writes the file or folder that -w, --export-objects, --export-tls-session-keys or --log-file names; it may lie outside the workbench." }
   - match: "tshark * <capture> *"
     risk: device-read
     note: Captures live traffic. Without -r tshark captures on the first interface. Needs Npcap on Windows or dumpcap capture permissions on Linux; extcap interfaces such as sshdump or rpcap reach other hosts.

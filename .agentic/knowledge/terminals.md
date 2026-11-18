@@ -85,7 +85,7 @@ Paths abbreviated above are under `05_Software/src/apps/desktop/src/` or the nam
 carry its capability and publication contract. Renderer `mocks/mockApi.ts` mirrors strict user IPC;
 `components/workbench-tools.tsx` and four catalogs describe the optional agent tool. Shared/core index
 exports expose their contracts. `02_Tools/build/generate-help-shortcuts.mjs` generates localized
-shortcut guidance; `help/<language>/{chat-and-sessions,permissions,shortcuts}.md` documents consent.
+shortcut guidance; `help/<language>/permissions.md` documents consent; `chat-and-sessions.md` links to it.
 `02_Tools/environment/setup.py` checks Linux native build prerequisites; `prepare-windows-runtime.mjs`
 supports separately pinned runtime caches. Native acceptance selects `VERA_TERM05_APP` and retains
 receipts under `VERA_TERM05_EVIDENCE_DIR`; WSL2 does not establish native Ubuntu/clean-install acceptance.

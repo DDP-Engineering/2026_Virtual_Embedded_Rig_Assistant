@@ -4,7 +4,7 @@ VERA, der Virtual Embedded Rig Assistant, ist ein Desktop-Workbench für Embedde
 
 ## Hilfe öffnen
 
-- Wählen Sie **?** in der oberen Leiste, neben **Rechten Bereich ein- oder ausblenden**.
+- Wählen Sie **Hilfe**, das Fragezeichen in der oberen Leiste, neben **Rechten Bereich ein- oder ausblenden**.
 - Drücken Sie F1, um die Hilfeseite des Bildschirms zu öffnen, auf dem Sie sich befinden.
 
 Die Hilfe zeigt die Liste der Seiten und die ausgewählte Seite. Links zwischen Seiten öffnen die verlinkte Seite innerhalb der Hilfe.

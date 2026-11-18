@@ -49,7 +49,7 @@ WP-01…WP-38, ELEC, LAB, IOT, PERF-01, CHAT-NAV-01, REPO-01, PLG-23…25) were 
 - Performance regression references and gates (#91): only measurement exists
   (`npm run perf:sessions`, [results](../../06_SoftwareDocu/session-performance.md)). Startup,
   Plugins and indexing benchmarks are later scope.
-- Session search has no UI; human review of the `ro`/`de` translations is not recorded.
+- Human review of the `ro`/`de` translations is not recorded.
 - `supportsTools` from the connection test is recorded but no UI warning uses it.
 
 ## Open proofs

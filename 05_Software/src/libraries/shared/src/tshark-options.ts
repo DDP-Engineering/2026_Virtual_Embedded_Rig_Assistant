@@ -73,7 +73,17 @@ const capture = new Set([
   "list-data-link-types",
   "list-time-stamp-types",
 ]);
-const roles = ["<info>", "<file>", "<capture>", "<unknown>", "<execute>", "<credentials>"] as const;
+/** Options whose value names a file or folder tshark writes (tshark -h, 4.6.8); `-w -` is standard output. */
+const writes = new Set(["w", "export-objects", "export-tls-session-keys", "log-file"]);
+const roles = [
+  "<info>",
+  "<file>",
+  "<write>",
+  "<capture>",
+  "<unknown>",
+  "<execute>",
+  "<credentials>",
+] as const;
 type Role = (typeof roles)[number];
 
 /** getopt_long resolution: an exact name, else the only name it abbreviates. */
@@ -95,6 +105,7 @@ export function tsharkRuleArguments(args: readonly string[]): string[] {
     if (name === "extension" && /^lua_script/i.test(value ?? "")) found.add("<execute>");
     else if (name === "rpcap-auth") found.add("<credentials>");
     else if (capture.has(name)) found.add("<capture>");
+    else if (writes.has(name) && value !== "-") found.add("<write>");
     else if (tail) return;
     else if (info.has(name)) found.add("<info>");
     else if (name === "read-file") found.add("<file>");

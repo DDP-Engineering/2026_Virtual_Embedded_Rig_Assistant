@@ -1,8 +1,8 @@
 # Tastenkombinationen
 
-Dies sind die Standard-Tastenkürzel von VERA. Ändern, ergänzen oder entfernen Sie sie unter **Einstellungen → Tastenkombinationen**; siehe [Einstellungen](settings.md).
+Dies sind die Standard-Tastenkombinationen von VERA. Ändern, ergänzen oder entfernen Sie sie unter **Einstellungen → Tastenkombinationen**; siehe [Einstellungen](settings.md).
 
-| Aktion | Tastenkürzel | Funktion |
+| Aktion | Tastenkombination | Funktion |
 |---|---|---|
 | Neue Sitzung | Ctrl+N, Ctrl+Shift+O | Eine Unterhaltung im aktiven Workbench starten. |
 | Neuer Workbench | Nicht zugewiesen | Das Formular zum Erstellen eines Workbenchs anzeigen. |
@@ -20,13 +20,13 @@ Dies sind die Standard-Tastenkürzel von VERA. Ändern, ergänzen oder entfernen
 
 ## Feste Tasten
 
-| Tastenkürzel | Funktion |
+| Tastenkombination | Funktion |
 |---|---|
 | F1 | Öffnet die Hilfeseite des aktuellen Bildschirms. |
-| F10 | Wechselt zu den Menüs Datei, Bearbeiten und Ansicht. |
+| F10 | Fokussiert das Menü Datei in der oberen Leiste; die Pfeiltasten wechseln zu Bearbeiten und Ansicht. |
 
 Von einer fokussierten Einzelmarkierung führt Tab zur Lesezeichenaktion; Eingabe oder Leertaste schaltet sie um. Escape schließt die Vorschau und setzt den Fokus auf die Markierung zurück.
 
-Öffnen Sie einen beendeten Lauf mit **Protokoll öffnen** unter Läufe. Die bestehenden Betrachterkürzel, darunter **Ctrl+F**, **Ctrl+G** und **Ctrl+W**, gelten auch für Protokolle.
+Öffnen Sie einen beendeten Lauf mit **Protokoll öffnen** unter Läufe. Die Tastenkombinationen des Betrachters, darunter **Ctrl+F**, **Ctrl+G** und **Ctrl+W**, gelten auch für Protokolle.
 
 **Ctrl+Shift+T** öffnet und fokussiert das Terminal. Bei fokussierter Terminaleingabe gehen Tasten an die Shell. Terminals über ihre Steuerelemente erstellen, auswählen und schließen; jedes hat eine eigene Lesefreigabe für den Agenten.

@@ -19,6 +19,7 @@ import * as core from "@vera/core";
 import { classifyCommand, type PluginManifest, validatePluginManifest } from "@vera/shared";
 import { afterEach, describe, expect, it } from "vitest";
 import { parse } from "yaml";
+import { reportSkip } from "../support/skip-marker.js";
 
 const software = fileURLToPath(new URL("../../", import.meta.url));
 const pluginFolder = join(software, "plugins", "wokwi");
@@ -1174,6 +1175,7 @@ describe("collect-results, artifacts and report", () => {
 });
 
 const realCli = process.env.VERA_TEST_WOKWI_CLI;
+reportSkip(!realCli, "the real wokwi-cli tests", "set VERA_TEST_WOKWI_CLI to a wokwi-cli 0.29.1");
 describe.skipIf(!realCli)("the real wokwi-cli 0.29.1, offline only (REQ-TEST-dce7445c)", () => {
   it("reports its version and lints a diagram offline", async () => {
     const b = await bench();

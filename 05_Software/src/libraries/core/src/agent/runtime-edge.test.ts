@@ -69,7 +69,7 @@ function fixture(stream: LlmGateway["stream"], tools: ToolDef[] = [], host: Part
 it("retains text on stream abort with no executable partial calls and closes once", async () => {
   const f = fixture(async function* () {
     yield { type: "text", delta: "partial text" };
-    yield { type: "error", error: { code: "PROVIDER", messageKey: "error.provider" }, aborted: true };
+    yield { type: "error", error: { code: "PROVIDER", messageKey: "errors.PROVIDER" }, aborted: true };
   });
   f.runtime.onEvent((e) => {
     if (e.type === "message.delta") f.runtime.abort();
@@ -305,6 +305,13 @@ it("hands swallowed turn-loop exceptions to the host log and survives a failing 
   expect((await stream.runtime.send("go")).stopReason).toBe("error");
   expect(logged).toHaveLength(1);
   expect(logged[0]).toContain("Model stream failed: Error: socket closed");
+  // The keys the renderer translates (`errors.<CODE>`), not a key of their own.
+  expect(stream.events).toContainEqual({
+    type: "error",
+    code: "PROVIDER",
+    messageKey: "errors.PROVIDER",
+    retryable: false,
+  });
   let clockReads = 0;
   const internal = fixture(failing, [], {
     now: () => {
@@ -316,5 +323,10 @@ it("hands swallowed turn-loop exceptions to the host log and survives a failing 
     },
   });
   expect((await internal.runtime.send("go")).stopReason).toBe("error");
-  expect(internal.events.some((e) => e.type === "error" && e.code === "INTERNAL")).toBe(true);
+  expect(internal.events).toContainEqual({
+    type: "error",
+    code: "INTERNAL",
+    messageKey: "errors.INTERNAL",
+    retryable: false,
+  });
 });

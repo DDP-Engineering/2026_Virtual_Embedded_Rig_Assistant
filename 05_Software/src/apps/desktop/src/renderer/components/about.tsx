@@ -4,7 +4,7 @@ import ddpLogo from "../assets/ddp-logo-dark.png";
 import { type ReleaseCategory, releasesFor } from "../lib/release-notes.js";
 import { Metadata } from "./metadata.js";
 
-/** Third-party runtime libraries of the desktop app, read from package-lock.json at build time. */
+/** Third-party libraries of the desktop, core and shared workspaces, read from package-lock.json at build time. */
 declare const __VERA_THIRD_PARTY__: { name: string; version: string; license: string }[];
 /** VERA's license text (repository LICENSE.txt), embedded at build time. */
 declare const __VERA_LICENSE__: string;
@@ -123,7 +123,7 @@ export function About({ info }: { info: AppInfo }) {
             </thead>
             <tbody>
               {__VERA_THIRD_PARTY__.map((item) => (
-                <tr key={item.name}>
+                <tr key={`${item.name}@${item.version}`}>
                   <td>{item.name}</td>
                   <td>{item.version}</td>
                   <td>{item.license || "—"}</td>

@@ -144,7 +144,7 @@ AppEvents use shared updates.ts; [updates](updates.md) owns their lifecycle/capa
 - Each subscription owns its listener; unsubscribe removes it once.
 - Coalescing preserves first-key insertion order; caller merge policies own text/update semantics.
 - App metadata portable reports the effective executable-adjacent regular vera.portable marker decision.
-- Changed settings saves emit settings.changed after persistence. Settings are never read-only.
+- Changed settings saves emit settings.changed after persistence, with `masking: false` when only presentation settings differ (language, theme, text and font sizes, keyboard shortcuts, recent workbenches, session order); a provider save that stores an API key emits it unmarked. Settings are never read-only.
 
 ## Change map
 

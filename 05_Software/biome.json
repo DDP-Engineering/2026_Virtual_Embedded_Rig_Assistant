@@ -28,10 +28,19 @@
     "enabled": true,
     "rules": {
       "preset": "recommended",
-      "nursery": { "noFloatingPromises": "error" }
+      "nursery": { "noFloatingPromises": "error" },
+      "style": { "noDescendingSpecificity": "off" }
     }
   },
   "overrides": [
+    {
+      "includes": ["**/*.test.ts", "**/*.test.tsx", "**/*.test-support.ts", "tests/**"],
+      "linter": { "rules": { "style": { "noNonNullAssertion": "off" } } }
+    },
+    {
+      "includes": ["tests/plugins/kicad.test.ts"],
+      "linter": { "rules": { "suspicious": { "noTemplateCurlyInString": "off" } } }
+    },
     {
       "includes": ["src/apps/desktop/src/renderer/**/*.css"],
       "css": { "parser": { "tailwindDirectives": true } }

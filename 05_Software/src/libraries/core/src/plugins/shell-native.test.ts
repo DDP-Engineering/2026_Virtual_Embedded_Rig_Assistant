@@ -7,7 +7,7 @@ const host = new NodeProcessHost(spawn);
 const installed = await detectCommandShells(host);
 for (const option of installed) {
   it.skipIf(!option.executable)(
-    `executes quoted commands and preserves exit status in ${option.id}`,
+    `executes quoted commands and preserves exit status in ${option.id}${option.executable ? "" : " (not installed on this host)"}`,
     async () => {
       if (!option.executable) throw Error("Missing installed shell");
       const shell = await resolveCommandShell(host, option.executable);

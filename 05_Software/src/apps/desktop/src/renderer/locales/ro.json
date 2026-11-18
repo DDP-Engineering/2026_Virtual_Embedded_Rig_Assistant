@@ -1249,6 +1249,7 @@
     "stop": "Oprește",
     "logTitle": "Jurnalul rulării",
     "truncated": "Se afișează ultimul 1 MiB din jurnal.",
+    "tailOnly": "Ieșirea anterioară nu este afișată.",
     "close": "Închide",
     "state": {
       "running": "Rulează",

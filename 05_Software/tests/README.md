@@ -72,6 +72,7 @@ evidence. `VERA_TERM05_SKIP_AGENT=1` limits release-artifact smoke to user termi
 | [skeleton.test.ts](tooling/skeleton.test.ts) | Workspaces, the TypeScript configuration and the project commands. |
 | [test-discovery.test.ts](tooling/test-discovery.test.ts) | Discovery of test files by the Vitest projects. |
 | [test-execution.test.ts](tooling/test-execution.test.ts) | Exact E2E selection, report isolation and desktop build-cache invalidation. |
+| [third-party.test.ts](tooling/third-party.test.ts) | The third-party component list: the version and license of each workspace dependency. |
 
 ### Integration
 
@@ -80,10 +81,17 @@ evidence. `VERA_TERM05_SKIP_AGENT=1` limits release-artifact smoke to user termi
 
 | File | What it checks |
 |---|---|
+| [additional-folders.test.ts](integration/additional-folders.test.ts) | Real file and shell access in a sibling folder, and immediate revocation of the folder. |
 | [cli.test.ts](integration/cli.test.ts) | The CLI process, arguments, sessions, approvals, output and resource cleanup. |
+| [commands.test.ts](integration/commands.test.ts) | Real shell commands: closed stdin, clean environment and background process trees. |
 | [document-cli.test.ts](integration/document-cli.test.ts) | Document indexing and search through the CLI. |
 | [document-hosts.test.ts](integration/document-hosts.test.ts) | PDF processing and the local models for desktop and CLI, in the source and the distribution layout. |
+| [hil-bypass.test.ts](integration/hil-bypass.test.ts) | The real HIL validation helper on sibling inputs: canonical sources, host exclusions and output ownership. |
+| [plugin-builder.test.ts](integration/plugin-builder.test.ts) | The plugin builder: a draft from CLI help, trial review, approved runs and promotion only through the user. |
+| [process-hosts.test.ts](integration/process-hosts.test.ts) | The CLI and desktop process hosts: arguments, closed stdin, environment, output limits, timeout and Stop. |
+| [provisioning.test.ts](integration/provisioning.test.ts) | Program provisioning: tar archive installs, refusal of links that leave the folder, and the version range probe. |
 | [retrieval.test.ts](integration/retrieval.test.ts) | Evaluation of rankings, the fixed questions, FTS and result fusion. |
+| [scoped-programs.test.ts](integration/scoped-programs.test.ts) | An approved program run uses its original helper when a new plugin hash is trusted after final verification. |
 | [worker-hosts.test.ts](integration/worker-hosts.test.ts) | The desktop and CLI workers, cancellation, time limits and worker replacement. |
 
 ### Packaging
@@ -93,6 +101,7 @@ evidence. `VERA_TERM05_SKIP_AGENT=1` limits release-artifact smoke to user termi
 | [packaging.test.ts](packaging/packaging.test.ts) | Models and DLLs, the native payload, resources, ASAR and the package limits. |
 | [package-smoke.test.ts](packaging/package-smoke.test.ts) | The smoke tools: extraction, identities, network observation and reading of the evidence. |
 | [prepare-plugins.test.ts](packaging/prepare-plugins.test.ts) | Building and checking the bundled plugin catalog. |
+| [terminal-runtime.test.ts](packaging/terminal-runtime.test.ts) | The staged terminal runtime: its JS closure, the PTY architecture and the native helper hashes. |
 | [updates.test.ts](packaging/updates.test.ts) | The update feed configuration and the local server used in the checks. |
 
 ## Running

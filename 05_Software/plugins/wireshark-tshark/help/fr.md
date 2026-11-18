@@ -20,8 +20,8 @@ L’agent utilise les compétences `wireshark-analyze` et `wireshark-capture`. I
 
 ## Risques et approbations
 
-- **Sûr** (exécuté sans demander) : lecture d’une capture enregistrée avec n’importe quelle option de filtre, de champ, de statistiques ou de sortie, aide, version et liste des interfaces. Les fichiers de sortie, comme une copie filtrée, sont écrits sans approbation.
-- **Lecture appareil** (demande en mode **Demander**, exécuté directement en mode **Modification auto**) : une capture en direct. Une commande sans `-r` capture aussi en direct, sur la première interface.
+- **Sûr** (exécuté sans demander) : lecture d’une capture enregistrée avec n’importe quelle option de filtre, de champ, de statistiques ou de sortie, aide, version et liste des interfaces.
+- **Lecture appareil** (demande en mode **Demander**, exécuté directement en mode **Modification auto**) : une capture en direct, et toute commande qui écrit un fichier ou un dossier (`-w`, `--export-objects`, `--export-tls-session-keys`, `--log-file`), par exemple une copie filtrée d’une capture. Une commande sans `-r` capture aussi en direct, sur la première interface.
 - **Écriture appareil** (demande en modes **Demander** et **Modification auto**) : une option que ce plugin ne reconnaît pas.
 - **Bloqué** : les scripts Lua, qui peuvent exécuter du code arbitraire, et les mots de passe RPCAP sur la ligne de commande, qui seraient enregistrés dans les journaux d’exécution.
 

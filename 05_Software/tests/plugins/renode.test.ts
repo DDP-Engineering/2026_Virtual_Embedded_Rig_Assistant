@@ -17,6 +17,7 @@ import * as core from "@vera/core";
 import { classifyCommand, type PluginManifest, validatePluginManifest } from "@vera/shared";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { parse } from "yaml";
+import { reportSkip } from "../support/skip-marker.js";
 
 const software = fileURLToPath(new URL("../../", import.meta.url));
 const plugins = join(software, "plugins");
@@ -988,6 +989,7 @@ describe("VERA's runner stopping a run (real processes, stand-in engine, L06-E, 
 });
 
 const realEngine = process.env.VERA_RENODE_REAL ?? "";
+reportSkip(!realEngine, "the real Renode tests", "set VERA_RENODE_REAL to a Renode 1.17.0 executable");
 
 describe.skipIf(!realEngine)("the real Renode 1.17.0 (opt-in VERA_RENODE_REAL)", { timeout: 600_000 }, () => {
   const real = (args: string[]) => {

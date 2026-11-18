@@ -1,4 +1,4 @@
-"""Test hook of kicad-layout-tool (KICAD_LAYOUT_TEST_HOOK): run in-process at named points with `point`, `run_dir`,
+"""Test hook of kicad-layout-tool (tool_with_hooks.py): run in-process at named points with `point`, `run_dir`,
 `state` and `socket` in its globals. HOOK_POINT selects the point and HOOK_ACTION what to do there:
 - move-other: a second API client moves footprint R3 by 1 mm (an item the request did not name);
 - sleep: write the file HOOK_MARKER, then sleep two minutes (the test stops the helper);

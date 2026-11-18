@@ -1249,6 +1249,7 @@
     "stop": "Arrêter",
     "logTitle": "Journal d’exécution",
     "truncated": "Seul le dernier 1 MiB du journal est affiché.",
+    "tailOnly": "La sortie antérieure n’est pas affichée.",
     "close": "Fermer",
     "state": {
       "running": "En cours",

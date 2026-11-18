@@ -21,12 +21,12 @@ project and footprint library. Run `python make_fixtures.py` from this folder af
 
 ## hooks/
 
-- `hook.py`: run inside the helper at named points (`KICAD_LAYOUT_TEST_HOOK`, `HOOK_POINT`, `HOOK_ACTION`): move an
-  item the request did not name, sleep inside the commit (after the first operation) so that the test can stop the
-  helper, or stop the PCB editor (a lost connection).
-- `editor_stub.py`: a PCB editor that never serves the API (`KICAD_LAYOUT_TEST_EDITOR`).
+- `tool_with_hooks.py`: the helper with the tests' seams (`uv run --script`, in place of the plugin's script): it
+  imports the plugin's command line, replaces its hook function with `hook.py` and its editor launch with
+  `editor_stub.py`, and runs it. The shipped helper has no such seams.
+- `hook.py`: run inside the helper at named points (`HOOK_POINT`, `HOOK_ACTION`): move an item the request did not
+  name, sleep inside the commit (after the first operation) so that the test can stop the helper, or stop the PCB
+  editor (a lost connection).
+- `editor_stub.py`: a PCB editor that never serves the API.
 - `nudge.py`: a second API client (`uv run --script`): unsaved moves, revert, whether an API answers, and the open
   documents with the in-memory text's SHA-256.
-
-VERA never passes these test variables to plugin programs: its runner gives a program only an allowlisted
-environment.

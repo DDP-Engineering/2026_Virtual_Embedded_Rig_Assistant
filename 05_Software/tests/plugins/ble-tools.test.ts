@@ -20,6 +20,7 @@ import * as core from "@vera/core";
 import { classifyCommand, type PluginManifest, validatePluginManifest } from "@vera/shared";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { parse } from "yaml";
+import { reportSkip } from "../support/skip-marker.js";
 
 const software = fileURLToPath(new URL("../../", import.meta.url));
 const pluginFolder = join(software, "plugins", "ble-tools");
@@ -1333,6 +1334,11 @@ describe("the runner reserves and supervises the device", { timeout: 60_000 }, (
 });
 
 const realPython = process.env.VERA_TEST_BLE_PYTHON;
+reportSkip(
+  !realPython,
+  "the Bluetooth adapter test",
+  "set VERA_TEST_BLE_PYTHON to a Python with the pinned Bleak",
+);
 describe.skipIf(!realPython)("this computer's Bluetooth adapter (hardware evidence, scan only)", () => {
   it("scans passively through the pinned Bleak's own backend", () => {
     const { PYTHONPATH: _p, VERA_RUN_CONTROL: _a, ...rest } = process.env;

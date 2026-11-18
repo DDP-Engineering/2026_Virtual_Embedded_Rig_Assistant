@@ -35,6 +35,7 @@ import {
 } from "@vera/shared";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { parse } from "yaml";
+import { reportSkip } from "../support/skip-marker.js";
 
 const software = fileURLToPath(new URL("../../", import.meta.url));
 const plugins = join(software, "plugins");
@@ -1205,6 +1206,11 @@ function rmSyncCore(part?: string) {
   rmSync(part ? join(coreDir, part) : join(coreDir, "platforms"), { recursive: true, force: true });
 }
 
+reportSkip(
+  !helperPython || !realRoot,
+  "the real PlatformIO Core tests",
+  "set VERA_PIO_PYTHON and VERA_PIO_REAL (a folder prepared by prepare-packages)",
+);
 describe.skipIf(!helperPython || !realRoot)(
   "real PlatformIO Core 6.2.0 (opt-in VERA_PIO_REAL)",
   { timeout: 1_800_000 },
@@ -1283,6 +1289,7 @@ describe.skipIf(!helperPython || !realRoot)(
       });
     });
 
+    reportSkip(!realGcc, "the native host test", "set VERA_PIO_REAL_GCC to a folder with a host gcc");
     it.skipIf(!realGcc)(
       "runs the native Unity suites on the host: pass, fail and skip stay distinct (L08-C)",
       async () => {

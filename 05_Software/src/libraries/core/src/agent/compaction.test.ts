@@ -319,7 +319,7 @@ it("settles running compaction usage after abort without dispatching a normal re
       calls++;
       expect(input.system).toContain("Return only JSON:");
       runtime.abort();
-      yield { type: "error", error: { code: "PROVIDER", messageKey: "error.provider" }, aborted: true };
+      yield { type: "error", error: { code: "PROVIDER", messageKey: "errors.PROVIDER" }, aborted: true };
     },
   };
   const runtime = new ReferenceRuntime({

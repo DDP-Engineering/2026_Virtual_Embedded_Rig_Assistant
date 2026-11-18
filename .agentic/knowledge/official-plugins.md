@@ -705,7 +705,8 @@ that source metadata reaches the deterministic bundled index unchanged.
   connect, reads, verify, resets, core control and displays device-read; writes, erases, fill, go, core writes and
   wireless-stack start/delete device-write; option-byte writes, RDP/TZ regression and locks, OTP, keys, SFI/SSFI/SSP,
   IP modules, FUS upgrade, antirollback, security/default OB, product-state and OB-RSS changes, PMIC, debug
-  authentication, HSM licenses and probe power irreversible (typed command); `-script` blocked. catalog.yaml reviews
+  authentication, HSM licenses and probe power irreversible (typed command; `rdp=0xcc` for an option-byte
+  write that sets readout protection level 2); `-script` blocked. catalog.yaml reviews
   the `{-ob,-otp,-psrss} displ` rule for the `otp` token. Tests check every command of the recorded 2.23.0 help.
 
 - `microchip-pymcuprog` 0.2.0, ecosystem `microchip` (Microchip pack, Programming (pymcuprog), default on), Windows
@@ -743,13 +744,14 @@ that source metadata reaches the deterministic bundled index unchanged.
   Opt-in VERA_CAN_UV acceptance captures, transmits after typed words and decodes on udp_multicast; real
   adapters and Linux vcan0 remain unverified. Optional can-utils is not shipped.
 
-- `wireshark-tshark` 0.3.0, ecosystem `wireshark` (own Wireshark pack, Capture analysis group, default
+- `wireshark-tshark` 0.3.1, ecosystem `wireshark` (own Wireshark pack, Capture analysis group, default
   on), Windows x64/Linux x64: find-only `tshark` (Windows `%PATH%` then `%ProgramFiles%/Wireshark/tshark.exe`;
   Linux `$PATH` then `/usr/bin/tshark`), never downloaded; missing shows the Wireshark/distribution hint with
   its download link. `--version` probe without a range (rules measured on 4.6.8), timeout 300 s.
   `optionSyntax: tshark` projects role tokens: `<info>` (-h/-v/-D/--list-sources, -G reports) and `<file>` (-r)
   safe; `<capture>` (-i/--source/-I/-L/--list-time-stamp-types, or neither -r nor info) device-read; `<unknown>`
-  (unrecognised or ambiguous) device-write;
+  (unrecognised or ambiguous) device-write; `<write>` (-w to a file, --export-objects,
+  --export-tls-session-keys, --log-file) device-read;
   `<execute>` (-X lua_script*) and `<credentials>` (-A) blocked. Skills wireshark-analyze (overview,
   filters, field export, statistics, frame citations) and wireshark-capture (tshark -D, confirmed interface,
   capture filter, -a duration or -c bound, saved .pcapng). Windows replay uses the real TShark and the
@@ -1194,8 +1196,8 @@ that source metadata reaches the deterministic bundled index unchanged.
 - tshark parsing follows TShark: case-sensitive letters with the measured value letters, grouped flags,
   attached or separate values, exact-or-unique long abbreviations (ambiguous is `<unknown>`), and the end of
   options at the first non-option or `--`. Arguments after that end are still read for raising roles
-  (capture, execute, credentials), never for `<info>` or `<file>`, so filter text cannot lower risk. Output
-  files of safe commands (-w, --export-objects, --log-file) need no approval. The user's Wireshark profile
+  (capture, write, execute, credentials), never for `<info>` or `<file>`, so filter text cannot lower risk. A
+  command that writes an output file asks like a capture; `-w -` stays safe. The user's Wireshark profile
   Lua/binary plugins still load; argv rules cannot prevent that.
 
 - Sigrok rules use the `sigrok-cli` option syntax to distinguish flags and values and

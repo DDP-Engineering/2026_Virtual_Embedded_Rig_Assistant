@@ -16,6 +16,7 @@ import {
 } from "@vera/shared";
 import { expect, it } from "vitest";
 import { parse } from "yaml";
+import { reportSkip } from "../support/skip-marker.js";
 
 const source = new URL("../../plugins/esp32-efuse/", import.meta.url);
 const manifest = async (): Promise<PluginManifest> =>
@@ -164,6 +165,7 @@ it("teaches an explicit single burn review with summary and a session artifact p
 
 const sleep = (ms: number) => new Promise<void>((done) => setTimeout(done, ms));
 const uv = process.env.VERA_EFUSE_UV;
+reportSkip(!uv, "the real espefuse test", "set VERA_EFUSE_UV to the pinned uv executable");
 const evidence = process.env.VERA_TEST_EVIDENCE_DIR;
 const hash = (bytes: Uint8Array) => createHash("sha256").update(bytes).digest("hex");
 

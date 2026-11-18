@@ -20,8 +20,8 @@ Der Agent verwendet die Skills `wireshark-analyze` und `wireshark-capture`. Er l
 
 ## Risiko und Freigaben
 
-- **Sicher** (läuft ohne Rückfrage): Lesen einer gespeicherten Aufzeichnung mit beliebigen Filter-, Feld-, Statistik- oder Ausgabeoptionen, Hilfe, Version und Auflisten der Schnittstellen. Ausgabedateien wie eine gefilterte Kopie werden ohne Freigabe geschrieben.
-- **Gerät lesen** (fragt im Modus **Nachfragen** nach, läuft in **Auto-Edit** selbstständig): eine Live-Aufzeichnung. Ein Befehl ohne `-r` zeichnet ebenfalls live auf, an der ersten Schnittstelle.
+- **Sicher** (läuft ohne Rückfrage): Lesen einer gespeicherten Aufzeichnung mit beliebigen Filter-, Feld-, Statistik- oder Ausgabeoptionen, Hilfe, Version und Auflisten der Schnittstellen.
+- **Gerät lesen** (fragt im Modus **Nachfragen** nach, läuft in **Auto-Edit** selbstständig): eine Live-Aufzeichnung und jeder Befehl, der eine Datei oder einen Ordner schreibt (`-w`, `--export-objects`, `--export-tls-session-keys`, `--log-file`), etwa eine gefilterte Kopie einer Aufzeichnung. Ein Befehl ohne `-r` zeichnet ebenfalls live auf, an der ersten Schnittstelle.
 - **Gerät schreiben** (fragt in **Nachfragen** und **Auto-Edit** nach): eine Option, die dieses Plugin nicht erkennt.
 - **Gesperrt**: Lua-Skripte, die beliebigen Code ausführen können, und RPCAP-Passwörter auf der Befehlszeile, die in Laufprotokollen gespeichert würden.
 

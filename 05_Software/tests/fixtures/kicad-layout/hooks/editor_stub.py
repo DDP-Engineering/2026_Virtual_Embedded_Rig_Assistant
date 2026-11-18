@@ -1,4 +1,4 @@
-"""A PCB editor that never serves the KiCad API (KICAD_LAYOUT_TEST_EDITOR): it records its PID and waits until it is
+"""A PCB editor that never serves the KiCad API (tool_with_hooks.py starts it): it records its PID and waits until it is
 stopped, so the open's wait ends in a connection failure."""
 
 import os

@@ -33,18 +33,18 @@ describe("launcherArgs", () => {
     ]);
   });
 
-  it.each(['"', "'", "&", "|", ";", "<", ">", "^", "%", "$", "`", "\0", "\n", "\r"])(
-    "refuses a string-mode token containing %j with INVALID naming its index",
-    (character) => {
-      const command = ["idf.py", "build", `a${character}b`];
-      let caught: unknown;
-      try {
-        launcherArgs(["run"], command, "string");
-      } catch (error) {
-        caught = error;
-      }
-      expect(caught).toMatchObject({ code: "INVALID", params: { index: 2 } });
-      expect(launcherArgs(["run"], command, "argv")).toEqual(["run", ...command]);
-    },
-  );
+  it.each([
+    ...['"', "'", "&", "|", ";", "<", ">", "^", "%", "$", "`", "\0", "\n", "\r"],
+    ...["\u2018", "\u2019", "\u201a", "\u201b", "\u201c", "\u201d", "\u201e", "\u201f"],
+  ])("refuses a string-mode token containing %j with INVALID naming its index", (character) => {
+    const command = ["idf.py", "build", `a${character}b`];
+    let caught: unknown;
+    try {
+      launcherArgs(["run"], command, "string");
+    } catch (error) {
+      caught = error;
+    }
+    expect(caught).toMatchObject({ code: "INVALID", params: { index: 2 } });
+    expect(launcherArgs(["run"], command, "argv")).toEqual(["run", ...command]);
+  });
 });

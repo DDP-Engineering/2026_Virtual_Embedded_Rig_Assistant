@@ -1249,6 +1249,7 @@
     "stop": "Stoppen",
     "logTitle": "Laufprotokoll",
     "truncated": "Es wird das letzte 1 MiB des Protokolls angezeigt.",
+    "tailOnly": "Frühere Ausgaben werden nicht angezeigt.",
     "close": "Schließen",
     "state": {
       "running": "Läuft",

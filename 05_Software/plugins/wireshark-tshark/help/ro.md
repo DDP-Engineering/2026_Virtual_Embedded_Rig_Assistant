@@ -20,8 +20,8 @@ Agentul folosește skill-urile `wireshark-analyze` și `wireshark-capture`. Cite
 
 ## Risc și aprobări
 
-- **Sigur** (rulează fără să întrebe): citirea unei capturi salvate cu orice filtru, câmp, statistică sau opțiune de ieșire, ajutorul, versiunea și listarea interfețelor. Fișierele de ieșire, precum o copie filtrată, se scriu fără aprobare.
-- **Citire dispozitiv** (întreabă în modul **Întreabă**, rulează singur în **Editare automată**): o captură live. O comandă fără `-r` capturează și ea live, pe prima interfață.
+- **Sigur** (rulează fără să întrebe): citirea unei capturi salvate cu orice filtru, câmp, statistică sau opțiune de ieșire, ajutorul, versiunea și listarea interfețelor.
+- **Citire dispozitiv** (întreabă în modul **Întreabă**, rulează singur în **Editare automată**): o captură live și orice comandă care scrie un fișier sau un dosar (`-w`, `--export-objects`, `--export-tls-session-keys`, `--log-file`), de exemplu o copie filtrată a unei capturi. O comandă fără `-r` capturează și ea live, pe prima interfață.
 - **Scriere dispozitiv** (întreabă în **Întreabă** și **Editare automată**): o opțiune pe care acest plugin nu o recunoaște.
 - **Blocat**: scripturile Lua, care pot rula cod arbitrar, și parolele RPCAP în linia de comandă, care ar fi stocate în logurile rulărilor.
 

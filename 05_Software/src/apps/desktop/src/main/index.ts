@@ -34,6 +34,8 @@ import {
   type HelpPage,
   type HelpPageSummary,
   helpLanguages,
+  type Settings,
+  settingsChangedEvent,
   veraError,
   type WorkbenchSnapshot,
   workbenchPatchSchema,
@@ -230,12 +232,16 @@ const credentials = new CredentialFile({
   logger,
   platform: process.platform,
 });
+let announcedSettings: Settings | undefined;
 const settings = new SettingsService({
   files: createFileAccess(systemClock),
   paths: dataLocations.paths,
   uuid: randomUUID,
   changed: () => {
-    emitAppEvent({ topic: "app", id: "app", event: { type: "settings.changed" } });
+    // Compared with the settings last announced, so a theme or layout change keeps open documents.
+    const next = settings.get().settings;
+    emitAppEvent({ topic: "app", id: "app", event: settingsChangedEvent(announcedSettings, next) });
+    announcedSettings = next;
     updates?.settingsChanged();
   },
 });
@@ -1159,7 +1165,13 @@ ipcMain.handle(
       "providers.models": ({ id }) => modelGateway.models(id),
       "providers.test": ({ id, model }) => modelGateway.test(id, model),
       "providers.list": () => providers.list(),
-      "providers.save": (request) => providers.save(request),
+      "providers.save": async (request) => {
+        const result = await providers.save(request);
+        // A replaced key leaves the settings as they were; shown documents still have to mask it.
+        if (request.apiKey && result.status === "saved")
+          emitAppEvent({ topic: "app", id: "app", event: { type: "settings.changed" } });
+        return result;
+      },
       "providers.remove": (request) => providers.remove(request),
       "app.info": () => getAppInfo(dataLocations.portable),
       "help.list": async ({ language }) => [
@@ -1472,6 +1484,7 @@ if (!firstInstance) {
           screen.getAllDisplays().map((display) => display.workArea),
         ),
       ]);
+      announcedSettings = settings.get().settings;
       updates = new Updates({
         distribution: updateDistribution(dataLocations.portable),
         configured: Boolean(__VERA_UPDATE_URL__),

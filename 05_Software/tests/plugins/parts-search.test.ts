@@ -11,6 +11,7 @@ import * as core from "@vera/core";
 import { classifyCommand, type PluginManifest, validatePluginManifest } from "@vera/shared";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { parse } from "yaml";
+import { reportSkip } from "../support/skip-marker.js";
 
 const plugins = new URL("../../plugins/", import.meta.url);
 const source = fileURLToPath(new URL("parts-search/", plugins));
@@ -626,6 +627,7 @@ describe("parts-compare", { timeout: 120_000 }, () => {
 });
 
 const uv = process.env.VERA_PARTS_UV;
+reportSkip(!uv, "the real uv test", "set VERA_PARTS_UV to a uv executable");
 // Explicit real acceptance: VERA_PARTS_UV names a uv executable; provisioning may download uv's managed CPython.
 it.skipIf(!uv)(
   "runs offline through a real uv on its managed Python (REQ-PLAT-cad89d58)",

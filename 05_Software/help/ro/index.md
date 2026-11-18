@@ -4,7 +4,7 @@ VERA, Virtual Embedded Rig Assistant, este un workbench desktop pentru inginerii
 
 ## Deschide ajutorul
 
-- Selectează **?** în bara de sus, lângă **Arată sau ascunde panoul din dreapta**.
+- Selectează **Ajutor**, semnul întrebării din bara de sus, lângă **Arată sau ascunde panoul din dreapta**.
 - Apasă F1 pentru a deschide pagina de ajutor a ecranului în care te afli.
 
 Ajutorul afișează lista de pagini și pagina selectată. Linkurile dintre pagini deschid pagina respectivă tot în Ajutor.

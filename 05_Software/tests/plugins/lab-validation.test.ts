@@ -16,6 +16,7 @@ import { ReplayGateway } from "@vera/core/replay";
 import { classifyCommand, type PluginManifest, validatePluginManifest } from "@vera/shared";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { parse } from "yaml";
+import { reportSkip } from "../support/skip-marker.js";
 
 const plugins = new URL("../../plugins/", import.meta.url);
 const pluginFolder = fileURLToPath(new URL("lab-validation/", plugins));
@@ -1932,6 +1933,7 @@ it("runs from an ask-mode session without approval through the real runner and l
 }, 120_000);
 
 const uv = process.env.VERA_LABVAL_UV;
+reportSkip(!uv, "the real uv test", "set VERA_LABVAL_UV to a uv executable");
 // Explicit real acceptance: VERA_LABVAL_UV names a uv executable whose managed CPython is installed. The default tests
 // need neither uv nor the network.
 it.skipIf(!uv)(

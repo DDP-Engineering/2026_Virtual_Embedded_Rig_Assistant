@@ -4,7 +4,7 @@ VERA, le Virtual Embedded Rig Assistant, est une application de bureau qui sert 
 
 ## Ouvrir l’aide
 
-- Sélectionnez **?** dans la barre supérieure, à côté de **Afficher/masquer le panneau droit**.
+- Sélectionnez **Aide**, le point d’interrogation dans la barre supérieure, à côté de **Afficher/masquer le panneau droit**.
 - Appuyez sur F1 pour ouvrir la page d’aide de l’écran sur lequel vous vous trouvez.
 
 L’aide affiche la liste des pages et la page sélectionnée. Les liens entre les pages ouvrent la page liée dans l’aide.

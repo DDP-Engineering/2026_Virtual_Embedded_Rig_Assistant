@@ -501,8 +501,9 @@ export function DocumentViewerProvider({
       const call =
         "runId" in target
           ? api.invoke("runs.log", { workbenchId, id: target.runId, full: true }).then((log) => {
-              if (log.id !== target.runId || log.truncated) throw veraError("NOT_FOUND");
-              const lines = log.text.split("\n");
+              if (log.id !== target.runId) throw veraError("NOT_FOUND");
+              // A log longer than the host sends arrives as its tail; the first line says so.
+              const lines = (log.truncated ? `[${t("runs.tailOnly")}]\n${log.text}` : log.text).split("\n");
               return {
                 workbenchId,
                 content: {
@@ -592,7 +593,7 @@ export function DocumentViewerProvider({
         .catch((failure: unknown) => settle({ content: undefined, error: failure ?? veraError("INTERNAL") }))
         .finally(() => loading.current.delete(request));
     }
-  }, [current.tabs, current.active, scope, workbenchId, change]);
+  }, [current.tabs, current.active, scope, workbenchId, change, t]);
   useEffect(() => {
     const refresh = (owner?: string) =>
       setSets(
@@ -627,7 +628,8 @@ export function DocumentViewerProvider({
           ),
       );
     const offApp = api.subscribe("app", (event) => {
-      if (event.type === "settings.changed") refresh();
+      // Theme, language and layout changes leave masked content as it is; the tabs keep their documents.
+      if (event.type === "settings.changed" && event.masking !== false) refresh();
     });
     const offWorkbench = workbenchIdSchema.safeParse(workbenchId).success
       ? api.subscribe("workbench", workbenchId, (event) => {

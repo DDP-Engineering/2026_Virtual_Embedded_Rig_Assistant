@@ -6,7 +6,7 @@
 import { spawn, spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { existsSync } from "node:fs";
-import { cp, mkdir, mkdtemp, readdir, readFile, realpath, rm, writeFile } from "node:fs/promises";
+import { cp, mkdir, mkdtemp, readdir, readFile, realpath, rm, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -196,6 +196,48 @@ it("leaves out and counts series rows that are not finite numbers", async () => 
       ],
       4,
     ]);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+it("stops an engine whose log outgrows the output limit and names the limit", async () => {
+  const root = await realpath(await mkdtemp(join(tmpdir(), "vera-ngspice-limit-")));
+  try {
+    // A stand-in engine prints without end (or only sleeps); the limit is lowered so a second of output meets it.
+    const harness = [
+      "import json, pathlib, subprocess, sys",
+      "sys.dont_write_bytecode = True",
+      "sys.path.insert(0, sys.argv[1])",
+      "from ngspice_support import engine",
+      "noisy = 'import sys, time\\nwhile True:\\n    sys.stdout.write(\"x\" * 4096)\\n    sys.stdout.flush()\\n    time.sleep(0.01)'",
+      "quiet = 'import time\\ntime.sleep(60)'",
+      "real = subprocess.Popen",
+      "engine.OUTPUT_LIMIT = 16 * 1024",
+      "out = []",
+      "for index, (code, limit) in enumerate(((noisy, 30.0), (quiet, 0.5))):",
+      "    subprocess.Popen = lambda args, code=code, **options: real([sys.executable, '-c', code], **options)",
+      "    done = engine.run(engine.Engine('ngspice', '42'), pathlib.Path(sys.argv[2]), 'effective.cir', f'series{index}.dat', f'ngspice{index}.log', limit)",
+      "    out.append({'status': done.status, 'exit': done.exit, 'seconds': done.seconds, 'problems': done.problems})",
+      "print(json.dumps(out))",
+    ].join("\n");
+    const ran = spawnSync(python, ["-I", "-c", harness, scripts, root], { encoding: "utf8", env: env() });
+    expect(ran.status, ran.stderr).toBe(0);
+    const [limited, late] = JSON.parse(ran.stdout);
+    expect(limited).toMatchObject({
+      status: "failed",
+      exit: null,
+      problems: [
+        {
+          kind: "limit",
+          line: "The engine was stopped: its log and series grew beyond the output limit of 16384 bytes.",
+        },
+      ],
+    });
+    expect(limited.seconds).toBeLessThan(10);
+    expect(late).toMatchObject({ status: "timeout", exit: null, problems: [{ kind: "timeout" }] });
+    // Both stand-ins were killed: their logs can be removed and the first one stopped growing near the limit.
+    expect((await stat(join(root, "ngspice0.log"))).size).toBeLessThan(4 * 1024 * 1024);
   } finally {
     await rm(root, { recursive: true, force: true });
   }

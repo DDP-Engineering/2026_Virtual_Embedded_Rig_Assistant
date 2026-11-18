@@ -19,6 +19,7 @@ import * as core from "@vera/core";
 import { classifyCommand, type PluginManifest, validatePluginManifest } from "@vera/shared";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { parse } from "yaml";
+import { reportSkip } from "../support/skip-marker.js";
 
 const software = fileURLToPath(new URL("../../", import.meta.url));
 const pluginFolder = join(software, "plugins", "micropython");
@@ -828,6 +829,12 @@ describe("VERA's runner and lease registry", { timeout: 60_000 }, () => {
   });
 });
 
+reportSkip(
+  !process.env.VERA_MICROPYTHON_UV,
+  "the real mpremote test",
+  "set VERA_MICROPYTHON_UV to a uv executable",
+);
+
 // Opt-in: the real mpremote 1.29.0 from PyPI (VERA_MICROPYTHON_UV = a real uv), driving the simulated board through
 // the fake pyserial. This proves the helper against the pinned package's raw-REPL client, not any board.
 describe.skipIf(!process.env.VERA_MICROPYTHON_UV)(
@@ -895,6 +902,12 @@ describe.skipIf(!process.env.VERA_MICROPYTHON_UV)(
       expect(ran.json).toMatchObject({ status: "pass", output: "real mpremote\r\n" });
     });
   },
+);
+
+reportSkip(
+  !process.env.VERA_TEST_MICROPYTHON_PORT || !process.env.VERA_TEST_MICROPYTHON_IDENTITY,
+  "the real MicroPython board tests",
+  "set VERA_TEST_MICROPYTHON_PORT and VERA_TEST_MICROPYTHON_IDENTITY",
 );
 
 // Hardware: a real MicroPython board named by VERA_TEST_MICROPYTHON_PORT and VERA_TEST_MICROPYTHON_IDENTITY, with

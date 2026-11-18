@@ -7,7 +7,7 @@ title = "Classify tshark commands from parsed option roles"
 status = "active"
 
 requirement = """
-When the agent submits a tshark command, VERA shall classify it from tshark's parsed option roles at the highest matching risk: reading a capture file and information-only commands (help, version, reports and interface listing) safe, any live capture (an interface, monitor-mode, link-type or timestamp-type option, or no capture file to read) device-read, and an unrecognised or ambiguous option device-write.
+When the agent submits a tshark command, VERA shall classify it from tshark's parsed option roles at the highest matching risk: reading a capture file and information-only commands (help, version, reports and interface listing) safe, any live capture (an interface, monitor-mode, link-type or timestamp-type option, or no capture file to read) and any command that writes a file (-w to anything but standard output, --export-objects, --export-tls-session-keys, --log-file) device-read, and an unrecognised or ambiguous option device-write.
 """
 
 verification = "Classify every rule row with short, grouped, long, abbreviated-long and equals spellings, option values that look like options, a filter-only command line with no -r, -r combined with -i, and an unknown option; each must take the highest matching risk."
@@ -23,4 +23,4 @@ priority = "high"   # low | normal | high
 rationale = ""        # why this behavior exists, if not obvious
 
 created = 2026-11-11
-updated = 2026-11-11
+updated = 2026-11-19

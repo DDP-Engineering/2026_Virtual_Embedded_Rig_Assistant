@@ -68,21 +68,17 @@ Bookmarked rail markers are filled in the primary color and slightly longer. A g
 
 Use non-interactive flags: agent stdin is closed. Foreground commands return an exit code, the last 12,000 output characters and a full log in `.vera/runs`. Background commands return a handle; the agent polls `program_output`, using `until` for a readiness line, and ends them with `program_stop`. They survive a completed tool turn and stop with the session, app or the Bypass mode that started them. The local Runs view follows the Program runs secret-masking policy; local run logs keep the original output. The child inherits user environment variables without VERA provider keys or stored credential values. Commands are limited to 4,096 characters.
 
-Ask requests approval for every command. In Auto-edit, Always allow saves the chosen literal command prefix for this workbench; for example, npm test also permits npm test -- --watch=false. Edit workbench > Agent lists these prefixes; remove one and Save to restore prompting immediately. Recursive deletes, force pushes, hard resets, formatting and disk tools always ask outside Bypass and cannot be saved. Complex syntax, quoted or escaped words, pipelines, substitutions and command separators also require explicit approval. Prefixes authorize command arguments, not a sandbox for script behavior.
-
-## Additional folders
-
-The ordinary read, list, glob, grep, write and edit tools and shell working directories can use these folders with the same Ask or Auto-edit approvals as the workbench. Give outside paths as absolute paths; relative paths still start at the main workbench. Outside sources use absolute identities without local document citations. Ignore rules still apply, and VERA application data is refused even through links. Adding folders does not index them: indexes, logs, artifacts and generated data stay in the main workbench. Commands retain OS account permissions and are not sandboxed.
+Command approvals and saved command prefixes are described in [Permissions](permissions.md); folders outside the workbench in [Workbenches](workbenches.md).
 
 ## Commands in Runs
 
-Open **Runs** in the right panel to see the actual command, working folder, live output, exit code and duration. **Stop** ends the whole process tree; the agent sees it stopped on its next output read. For finished runs, **Open log** opens the full retained log in the text viewer, including output beyond the live tail. The current session is selected by default; choose **All sessions** for other runs. Plugin runs keep their declared program labels. Program runs masking defaults off. When on, it masks stored secrets in arguments, commands, folders, errors, output and program statuses. The workbench choice overrides the app default. Changes refresh open logs, including full logs in the viewer; local logs retain original text.
+Open **Runs** in the right panel to see the actual command, working folder, live output, exit code and duration. **Stop** ends the whole process tree; the agent sees it stopped on its next output read. For finished runs, **Open log** opens the retained log in the text viewer, including output beyond the live tail; a log over 8 MiB shows its last 8 MiB. The current session is selected by default; choose **All sessions** for other runs. Plugin runs keep their declared program labels. Program runs masking defaults off. When on, it masks stored secrets in arguments, commands, folders, errors, output and program statuses. The workbench choice overrides the app default. Changes refresh open logs, including full logs in the viewer; local logs retain original text.
 
 ## User terminal
 
 Open **Terminal** in the right panel or press **Ctrl+Shift+T**. The interactive shell starts in the workbench folder, using Settings → Commands. Create and close tabs with **New terminal** and **Close terminal**; resize the panel to reflow output. Interactive programs accept your typing. Agent session stops leave user terminals running; closing or replacing the workbench, or quitting VERA, closes them. Native terminal support is bundled.
 
-Every terminal starts private. Enable **Allow agent to read this terminal** separately for each terminal you want to share. The agent can list shared terminals and use terminal_read for bounded recent output; it cannot create, type into, resize or close terminals. Disable consent or close the terminal to stop future reads. Output already shared stays in session history. The shell uses your OS permissions without a sandbox. VERA filters inherited credential variables. Local terminal output follows Program runs masking, which defaults off; consented agent reads follow the independent Agent and model choice, which defaults on. Your shell profile and programs remain under your control.
+Every terminal starts private. To let the agent read one, see [Permissions](permissions.md).
 
 ## Secret masking for the agent and exports
 

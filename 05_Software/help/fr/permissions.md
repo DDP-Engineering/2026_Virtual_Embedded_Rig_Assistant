@@ -61,13 +61,11 @@ L’agent peut exécuter des commandes shell avec `run_command`. Demander et les
 
 Demander exige un accord pour chaque commande. En Modification auto, Toujours autoriser enregistre le préfixe littéral choisi pour ce banc ; npm test permet aussi npm test -- --watch=false. Modifier le banc > Agent liste ces préfixes ; supprimez-en un et enregistrez pour rétablir immédiatement la demande. Les suppressions récursives, push forcés, reset hard, formatages et outils de disque demandent toujours hors Contournement et ne peuvent pas être enregistrés. La syntaxe complexe, les mots entre guillemets ou échappés, les tubes, substitutions et séparateurs exigent aussi un accord explicite. Les préfixes autorisent les arguments sans isoler les effets des scripts. Les secrets du préfixe restent masqués ; Supprimer retire l’autorisation même si son libellé est masqué.
 
+Les commandes du panneau Exécutions ne modifient pas les autorisations. Arrêter termine l’arbre des processus ; l’agent voit cet arrêt à sa prochaine lecture de sortie.
+
 ## Dossiers supplémentaires
 
-Dans **Modifier le banc > Général > Dossiers supplémentaires**, choisissez **Ajouter un dossier**, puis un dossier absolu, par exemple un dépôt voisin. **Enregistrer** accorde l’accès ; **Annuler** abandonne la sélection. La vue d’ensemble liste les dossiers enregistrés. Supprimez un dossier et enregistrez pour révoquer immédiatement l’accès, y compris pour les opérations en attente. Un banc en lecture seule ne peut pas modifier ces autorisations.
-
-Les outils ordinaires read, list, glob, grep, write et edit ainsi que les dossiers de travail shell utilisent ces dossiers avec les mêmes accords Demander ou Modification auto que le banc. Les chemins externes doivent être absolus ; les chemins relatifs partent toujours du banc principal. Les sources externes ont une identité absolue, sans citation locale de document. Les règles d’exclusion restent actives ; les données VERA sont refusées même via des liens. L’ajout n’indexe pas ces dossiers : index, journaux, artefacts et données générées restent dans le banc principal. Les commandes gardent les droits du compte système, sans bac à sable.
-
-Les commandes du panneau Exécutions ne modifient pas les autorisations. Arrêter termine l’arbre des processus ; l’agent voit cet arrêt à sa prochaine lecture de sortie.
+Un banc peut accorder à l’agent des dossiers hors du sien. Leurs fichiers et les dossiers de travail shell suivent les mêmes accords Demander ou Modification auto que le banc. Voir [Bancs de travail](workbenches.md).
 
 ## Terminal utilisateur
 

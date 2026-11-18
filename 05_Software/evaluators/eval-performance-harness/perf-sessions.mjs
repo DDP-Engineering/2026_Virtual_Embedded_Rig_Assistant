@@ -89,10 +89,12 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
       if (child.error) throw child.error;
       process.exitCode = child.status ?? 2;
     } else process.exitCode = await main(process.argv.slice(2));
-  } catch {
+  } catch (error) {
     console.error(
       "Invalid performance arguments/evidence or preparation failure; no passing comparison produced.",
     );
+    // The stack names the failing step; the line above alone hides whether it was an argument or the run.
+    console.error(error instanceof Error ? (error.stack ?? error.message) : error);
     process.exitCode = 2;
   }
 }

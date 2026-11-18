@@ -20,7 +20,7 @@ The installer adds the ST-LINK drivers on Windows; Linux needs ST's udev rules
 | `-h`, `--version`, `-q`, `-log`, `-vb`, `-y`, modifiers, `-fchecksum`, `-sl`, `-ms`, `-l st-link-only` | safe |
 | `-c`, `-l`, reads (`-r`, `-r32`...), `-checksum`, `-v`, `-blankcheck`, resets, halt/run/step, `-ob displ`, `-otp displ`, `-psrss displ`, other displays | device-read |
 | `-w`/`-d`, `-w32`/`-w16`/`-w8`, `-e`, `-fillmemory`, `-g`, core-register writes, wireless-stack start/delete | device-write |
-| `-ob` with anything but `displ` (above all `RDP=0xCC`), `-rdu`, `-tzenreg`, RDP lock/unlock, OTP writes, keys, SFI/SSFI/SSP, IP modules, `-fwupgrade`, `-antirollback`, `-dsecurity`, `-setdefaultob`, `-psrss`/`-obrss` changes, `-pmic`, debug authentication (`debugauth=` other than 2; typed word `debugauth`), HSM licenses, `-pwr` | irreversible (typed command) |
+| `-ob` with anything but `displ` (above all `RDP=0xCC`), `-rdu`, `-tzenreg`, RDP lock/unlock, OTP writes, keys, SFI/SSFI/SSP, IP modules, `-fwupgrade`, `-antirollback`, `-dsecurity`, `-setdefaultob`, `-psrss`/`-obrss` changes, `-pmic`, debug authentication (`debugauth=` other than 2; typed word `debugauth`), HSM licenses, `-pwr` | irreversible (typed command; `RDP=0xCC` for an option-byte write of readout protection level 2) |
 | `-script` | blocked |
 | an unknown command, or a spelling the help does not list | device-write, plus every command it could mean |
 

@@ -72,6 +72,12 @@ const byName = new Map(
   [...documented].map(([spelling, name]): [string, string] => [spelling.replace(/^-+/, ""), name]),
 );
 
+/**
+ * Readout protection level 2 among the joined words of an option-byte write (the CLI ignores inner spaces): hex with
+ * or without `0x`, or decimal. A longer value also matches, which only fails closed.
+ */
+const rdpLevel2 = /rdp=(?:0x0*cc|cc|204)/;
+
 /** A word the CLI may take as a command: any dash word except a number (`-1`, `-0.5`, `-0x10` are arguments). */
 const commandLike = (word: string) =>
   word.startsWith("-") && !/^-(?:\d+(?:\.\d*)?|\.\d+|0x[0-9a-f]+)$/.test(word);
@@ -88,7 +94,8 @@ function meanings(word: string): string[] {
 /**
  * Project an STM32_Programmer_CLI line for rules only; the original argv is executed unchanged. Every command
  * becomes its canonical name, with a qualifier where one name has two risks: `-ob`/`-otp`/`-psrss` `displ` or
- * `<write>` (`word=` is allowed only after `-otp displ`), `-corereg <write>` for an assignment and `debugauth` for
+ * `<write>` (`word=` is allowed only after `-otp displ`), `rdp=0xcc` after an `-ob` that names readout protection
+ * level 2 in any value spelling, `-corereg <write>` for an assignment and `debugauth` for
  * any word starting `debugauth` except `debugauth=2`, wherever it stands; a board-free listing (`-l st-link-only`)
  * becomes `<list-only>` instead of `-l`. Words are lower-cased and, failing closed, split at white space (the CLI
  * trims words and ignores inner spaces); a word before the first command is <unknown>.
@@ -116,6 +123,7 @@ export function stm32RuleArguments(args: readonly string[]): string[] {
           values[0] === "displ" &&
           values.slice(1).every((value) => name === "-otp" && value.startsWith("word="));
         result.push(display ? "displ" : "<write>");
+        if (name === "-ob" && rdpLevel2.test(values.join(""))) result.push("rdp=0xcc");
       } else if (name === "-corereg" && values.some((value) => value.includes("="))) result.push("<write>");
     }
   }

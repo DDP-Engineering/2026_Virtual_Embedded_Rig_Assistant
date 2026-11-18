@@ -6,9 +6,9 @@ title = "Full run logs in document viewer"
 
 status = "active"
 
-requirement = "When the user opens a finished run log from Runs, the desktop shall display the complete workbench-owned log in the existing text viewer using only a validated run ID."
+requirement = "When the user opens a finished run log from Runs, the desktop shall display the workbench-owned log in the existing text viewer using only a validated run ID: the complete log up to 8 MiB, otherwise its last 8 MiB under a first line saying that earlier output is not shown."
 
-verification = "Runner log larger than default tail retains first and last lines in full read; IPC refuses arbitrary path/invalid ID; viewer verifies returned ID and displays full text; native acceptance opens the finished server log."
+verification = "Runner log larger than default tail retains first and last lines in full read; IPC refuses arbitrary path/invalid ID; viewer verifies returned ID and displays full text; a truncated reply shows its tail under the notice line; native acceptance opens the finished server log."
 
 affected_paths = ["05_Software/src/libraries/shared/src/ipc.ts", "05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/apps/desktop/src/renderer/components/documents/viewer-context.tsx", "05_Software/src/apps/desktop/src/renderer/lib/document-tabs-store.ts"]
 
@@ -21,4 +21,4 @@ priority = "normal"   # low | normal | high
 rationale = ""        # why this behavior exists, if not obvious
 
 created = 2026-11-16
-updated = 2026-11-16
+updated = 2026-11-19

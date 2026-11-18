@@ -11,6 +11,7 @@ import { ReplayGateway } from "@vera/core/replay";
 import { classifyCommand, type PluginManifest, validatePluginManifest } from "@vera/shared";
 import { expect, it } from "vitest";
 import { parse } from "yaml";
+import { reportSkip } from "../support/skip-marker.js";
 
 const plugins = new URL("../../plugins/", import.meta.url);
 const source = new URL("microchip-pymcuprog/", plugins);
@@ -297,6 +298,7 @@ it("waits for the typed word before a fuse write starts", async () => {
 }, 120_000);
 
 const uv = process.env.VERA_MCU_UV;
+reportSkip(!uv, "the real pymcuprog test", "set VERA_MCU_UV to a uv executable");
 // Explicit real acceptance: VERA_MCU_UV names a uv executable. This user-action provisioning downloads Python and
 // pymcuprog; no step touches hardware (makeuf2 converts a file; the ping names a serial port that does not exist).
 it.skipIf(!uv)(

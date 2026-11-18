@@ -7,7 +7,6 @@ from __future__ import annotations
 
 import argparse
 import os
-import runpy
 import secrets
 import shutil
 import sys
@@ -134,10 +133,7 @@ def _run_files(folder: Path) -> tuple[dict[str, Any], dict[str, Any]]:
 
 
 def _hook(point: str, **values: Any) -> None:
-    """KICAD_LAYOUT_TEST_HOOK names a Python file the tests run at named points (VERA never passes it to programs)."""
-    path = os.environ.get("KICAD_LAYOUT_TEST_HOOK")
-    if path:
-        runpy.run_path(path, init_globals={"point": point, **values})
+    """The named points of an edit. The shipped tool does nothing here; the tests' wrapper replaces this function."""
 
 
 def _open(args: argparse.Namespace, cwd: Path, spelled: Path, started: str) -> dict[str, Any]:

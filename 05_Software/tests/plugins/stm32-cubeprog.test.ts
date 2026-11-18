@@ -207,10 +207,45 @@ it("classifies every command of a line at the highest risk", async () => {
     ["blocked", ["-.5-script", "flash.prg"]],
   ] as const;
   for (const [risk, args] of cases) expect(classify([...args]).risk, args.join(" ")).toBe(risk);
-  expect(classify([...swd, "-ob", "RDP=0xCC"])).toMatchObject({ confirm: "-ob" });
-  expect(classify([...swd, "-ob", "RDP=0xCC"]).notes.join(" ")).toMatch(
-    /RDP=0xCC \(readout protection level 2\) is permanent - it cannot be undone/,
-  );
+  // Readout protection level 2 is permanent: in every value spelling it has its own note and typed word.
+  const level2 = m.rules.find((rule) => rule.match.includes("rdp=0xcc"))?.note;
+  expect(level2).toMatch(/RDP=0xCC \(readout protection level 2\) is permanent - it cannot be undone/);
+  for (const args of [
+    ["-ob", "RDP=0xCC"],
+    ["-OB", "rdp=0xcc"],
+    ["--optionbytes", "Rdp=0XcC"],
+    ["-ob", "RDP=0x00CC"],
+    ["-ob", "RDP=CC"],
+    ["-ob", "RDP=204"],
+    ["-ob", "RDP", "=", "0xCC"],
+    ["-ob RDP=0xCC"],
+    ["---ob", "RDP=0xCC"],
+    ["-ob", "nBOOT0=0", "RDP=0xCC", "BOR_LEV=1"],
+    ["-ob", "displ", "RDP=0xCC"],
+    ["-rdu", "-ob", "RDP=0xCC"],
+  ]) {
+    const found = classify([...swd, ...args]);
+    expect(found, args.join(" ")).toMatchObject({ risk: "irreversible", confirm: "rdp=0xcc" });
+    expect(found.notes, args.join(" ")).toContain(level2);
+  }
+  // Every other option-byte write keeps the option-byte prompt.
+  for (const args of [
+    ["-ob", "RDP=0xBB"],
+    ["-ob", "RDP=0xAA"],
+    ["-ob", "RDP=0xC"],
+    ["-ob", "nBOOT0=0", "WRP1A_STRT=0xCC"],
+    ["-ob", "unlockchip"],
+    ["-ob"],
+  ]) {
+    const found = classify([...swd, ...args]);
+    expect(found, args.join(" ")).toMatchObject({ risk: "irreversible", confirm: "-ob" });
+    expect(found.notes, args.join(" ")).not.toContain(level2);
+  }
+  for (const args of [
+    ["-ob", "displ"],
+    ["-ob", "displ", "-otp", "write", "RDP=0xCC"],
+  ])
+    expect(classify([...swd, ...args]).notes, args.join(" ")).not.toContain(level2);
   expect(classify([...swd, "--readunprotect"]).confirm).toBe("-rdu");
   expect(classify([...swd, "-setOEM1KEY", "1", "2"]).confirm).toBe("-lockrdp1");
   expect(classify(["--power", "on"]).confirm).toBe("-pwr");

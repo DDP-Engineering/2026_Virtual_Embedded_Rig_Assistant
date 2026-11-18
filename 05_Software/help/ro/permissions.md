@@ -61,13 +61,11 @@ Agentul poate executa comenzi shell cu `run_command`. Întreabă și comenzile f
 
 Întreabă cere aprobare pentru fiecare comandă. În Editare automată, Permite întotdeauna salvează prefixul literal ales pentru acest workbench; de exemplu, npm test permite și npm test -- --watch=false. Editare workbench > Agent listează prefixele; elimină unul și salvează pentru a cere din nou aprobare imediat. Ștergerile recursive, push forțat, resetările hard, formatarea și instrumentele de disc cer mereu aprobare în afara Bypass și nu pot fi salvate. Sintaxa complexă, cuvintele între ghilimele sau cu escape, conductele, substituțiile și separatorii de comenzi cer și ele aprobare explicită. Prefixele autorizează argumente, fără a izola efectele scripturilor. Secretele dintr-un prefix rămân mascate; Elimină șterge permisiunea salvată chiar dacă textul este mascat.
 
+Controalele din Rulări nu schimbă permisiunile comenzilor. Oprirea încheie arborele de procese și este vizibilă agentului la următoarea citire a ieșirii.
+
 ## Foldere suplimentare
 
-În **Editare workbench > General > Foldere suplimentare**, alege **Adaugă folder** și selectează un folder absolut, de exemplu un depozit alăturat. **Salvează** acordă acces; **Anulează** renunță la selecție. Prezentarea generală listează folderele salvate. Elimină un folder și salvează pentru a revoca imediat accesul, inclusiv pentru operații în așteptare. Workbench-urile doar în citire nu pot schimba aceste permisiuni.
-
-Instrumentele obișnuite read, list, glob, grep, write și edit și directoarele comenzilor shell pot folosi aceste foldere cu aceleași aprobări Întreabă sau Editare automată ca workbench-ul. Folosește căi absolute pentru fișiere externe; căile relative pornesc din workbench-ul principal. Sursele externe au identități absolute, fără citări locale de documente. Regulile de ignorare rămân active, iar datele VERA sunt refuzate și prin legături. Adăugarea nu indexează folderele: indexul, jurnalele, artefactele și datele generate rămân în workbench-ul principal. Comenzile păstrează drepturile contului sistemului, fără sandbox.
-
-Controalele din Rulări nu schimbă permisiunile comenzilor. Oprirea încheie arborele de procese și este vizibilă agentului la următoarea citire a ieșirii.
+Un workbench poate acorda agentului foldere din afara lui. Fișierele lor și directoarele comenzilor shell urmează aceleași aprobări Întreabă sau Editare automată ca workbench-ul. Vezi [Workbench-uri](workbenches.md).
 
 ## Terminalul utilizatorului
 

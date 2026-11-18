@@ -313,6 +313,28 @@ it("names the files of a bundled catalog release that no index lists", async () 
   }
 });
 
+it("names the files of a model or Windows runtime folder that its manifest does not name", async () => {
+  const { unexpectedFiles } = await import(pathToFileURL(join(root, "../02_Tools/release/package.mjs")).href);
+  const manifest = JSON.parse(await readFile(join(root, "src/models/model-manifest.json"), "utf8"));
+  const expected = manifest.files.map((file: { path: string }) => `${manifest.modelId}/${file.path}`);
+  const dir = await mkdtemp(join(tmpdir(), "vera-model-extra-"));
+  try {
+    for (const path of expected) {
+      await mkdir(dirname(join(dir, path)), { recursive: true });
+      await writeFile(join(dir, path), "x");
+    }
+    expect(await unexpectedFiles(dir, expected)).toEqual([]);
+    await writeFile(join(dir, manifest.modelId, "onnx/model.onnx"), "x");
+    await writeFile(join(dir, "stray.txt"), "x");
+    expect(await unexpectedFiles(dir, expected)).toEqual([
+      `${manifest.modelId}/onnx/model.onnx`,
+      "stray.txt",
+    ]);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
 it("ships runtime resources without fictional workbench fixtures", async () => {
   const config = parse(await readFile(join(root, "src/apps/desktop/electron-builder.yml"), "utf8"));
   const shipped = config.extraResources.map((resource: { from: string }) => resource.from);

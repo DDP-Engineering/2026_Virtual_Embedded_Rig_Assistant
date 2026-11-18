@@ -23,7 +23,7 @@ Voici les raccourcis clavier par défaut de VERA. Modifiez-les, ajoutez-en ou su
 | Raccourci | Effet |
 |---|---|
 | F1 | Ouvre la page d’aide de l’écran actuel. |
-| F10 | Passe aux menus Fichier, Édition et Affichage. |
+| F10 | Cible le menu Fichier de la barre supérieure ; les touches fléchées passent à Édition et Affichage. |
 
 Depuis un repère individuel ciblé, Tab atteint l’action de signet ; Entrée ou Espace la bascule. Échap ferme l’aperçu et ramène le focus au repère.
 

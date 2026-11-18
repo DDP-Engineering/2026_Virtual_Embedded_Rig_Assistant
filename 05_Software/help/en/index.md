@@ -4,7 +4,7 @@ VERA, the Virtual Embedded Rig Assistant, is a desktop workbench for embedded en
 
 ## Open help
 
-- Select **?** in the top bar, next to **Toggle right panel**.
+- Select **Help**, the question mark in the top bar, next to **Toggle right panel**.
 - Press F1 to open the help page of the screen you are on.
 
 Help shows the list of pages and the selected page. Links between pages open the linked page inside Help.

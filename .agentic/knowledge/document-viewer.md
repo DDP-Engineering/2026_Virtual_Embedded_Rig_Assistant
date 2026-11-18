@@ -50,7 +50,7 @@ Managed PDF downloads use downloads.list/open scoped IPC and a downloadId Viewer
   A closed/switching workbench invalidates pending replies, while stored tabs reopen after restart
   with the same key and owning folder. Text opens verify the exact original path/ref in main before
   echoing the per-attempt requestId; renderer verifies owner and request correlation and retains its
-  ordinary identity checks for responses without correlation. Display/config events invalidate affected cached file scopes and their labels/content;
+  ordinary identity checks for responses without correlation. Display/config events invalidate affected cached file scopes and their labels/content, except an app `settings.changed` marked `masking: false`;
   restored file tabs begin with safe labels and fetch host metadata, including raw targets saved before
   credential registration. Inactive file tabs reload metadata without loading file bytes, while inactive scopes refresh on
   return. App changes reset all cached workbench Display query data; workbench events reset that
@@ -84,7 +84,7 @@ Managed PDF downloads use downloads.list/open scoped IPC and a downloadId Viewer
 - DocumentViewer.open(ref,snippet?) and openPath(path) check source/locators;
   SessionService.openCitation resolves a completed assistant citation against
   preceding successful tool results and current file/artifact content.
-- Finished run logs use a validated runId target and `run:<id>` tab key. The provider loads `runs.log({workbenchId,id,full:true})`, rejects mismatched IDs or truncated replies, then renders ordinary text lines in the existing viewer. Run targets persist at renderer version 1 and do not enable file-path actions; log IPC derives the path from the current workbench and ULID.
+- Finished run logs use a validated runId target and `run:<id>` tab key. The provider loads `runs.log({workbenchId,id,full:true})`, rejects mismatched IDs, then renders ordinary text lines in the existing viewer; the host returns at most the last 8 MiB, and a truncated reply is shown under a first line saying that earlier output is not shown. Run targets persist at renderer version 1 and do not enable file-path actions; log IPC derives the path from the current workbench and ULID.
 - DocumentViewerProvider keeps one tab set per `scope` (`<workbench>/<session>`) for the run:
   `{tabs, active}` with `active` = `CHAT` or a tab key (REQ-UX-5fc1d7d3). `useDocumentViewer()`
   returns `open(target)`: the document key (`file:<path>` from path, textPath or the path of a

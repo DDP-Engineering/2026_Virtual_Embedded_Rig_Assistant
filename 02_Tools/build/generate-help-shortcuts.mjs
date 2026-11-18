@@ -19,7 +19,7 @@ const words = {
     description: "What it does",
     fixed: "Fixed keys",
     f1: "Open the help page of the current screen.",
-    f10: "Move to the File, Edit and View menus.",
+    f10: "Focus the File menu in the top bar; the arrow keys move to Edit and View.",
     shortcuts: "Open {where}.",
   },
   ro: {
@@ -30,30 +30,30 @@ const words = {
     bookmark:
       "De la un reper individual focalizat, Tab ajunge la acțiunea de marcaj; Enter sau Spațiu o activează. Escape închide previzualizarea și readuce focalizarea la reper.",
     intro:
-      "Acestea sunt scurtăturile de tastatură implicite ale VERA. Le poți schimba, adăuga sau elimina în **{where}**; vezi [Setări](settings.md).",
+      "Acestea sunt comenzile rapide implicite ale VERA. Le poți schimba, adăuga sau elimina în **{where}**; vezi [Setări](settings.md).",
     action: "Acțiune",
-    keys: "Scurtătură",
+    keys: "Comandă rapidă",
     description: "Ce face",
     fixed: "Taste fixe",
     f1: "Deschide pagina de ajutor a ecranului curent.",
-    f10: "Mută focalizarea pe meniurile Fișier, Editare și Vizualizare.",
+    f10: "Focalizează meniul Fișier din bara de sus; tastele săgeată trec la Editare și Vizualizare.",
     shortcuts: "Deschide {where}.",
   },
   de: {
     terminal:
       "**Ctrl+Shift+T** öffnet und fokussiert das Terminal. Bei fokussierter Terminaleingabe gehen Tasten an die Shell. Terminals über ihre Steuerelemente erstellen, auswählen und schließen; jedes hat eine eigene Lesefreigabe für den Agenten.",
     runLogs:
-      "Öffnen Sie einen beendeten Lauf mit **Protokoll öffnen** unter Läufe. Die bestehenden Betrachterkürzel, darunter **Ctrl+F**, **Ctrl+G** und **Ctrl+W**, gelten auch für Protokolle.",
+      "Öffnen Sie einen beendeten Lauf mit **Protokoll öffnen** unter Läufe. Die Tastenkombinationen des Betrachters, darunter **Ctrl+F**, **Ctrl+G** und **Ctrl+W**, gelten auch für Protokolle.",
     bookmark:
       "Von einer fokussierten Einzelmarkierung führt Tab zur Lesezeichenaktion; Eingabe oder Leertaste schaltet sie um. Escape schließt die Vorschau und setzt den Fokus auf die Markierung zurück.",
     intro:
-      "Dies sind die Standard-Tastenkürzel von VERA. Ändern, ergänzen oder entfernen Sie sie unter **{where}**; siehe [Einstellungen](settings.md).",
+      "Dies sind die Standard-Tastenkombinationen von VERA. Ändern, ergänzen oder entfernen Sie sie unter **{where}**; siehe [Einstellungen](settings.md).",
     action: "Aktion",
-    keys: "Tastenkürzel",
+    keys: "Tastenkombination",
     description: "Funktion",
     fixed: "Feste Tasten",
     f1: "Öffnet die Hilfeseite des aktuellen Bildschirms.",
-    f10: "Wechselt zu den Menüs Datei, Bearbeiten und Ansicht.",
+    f10: "Fokussiert das Menü Datei in der oberen Leiste; die Pfeiltasten wechseln zu Bearbeiten und Ansicht.",
     shortcuts: "Öffnet {where}.",
   },
   fr: {
@@ -70,7 +70,7 @@ const words = {
     description: "Effet",
     fixed: "Touches fixes",
     f1: "Ouvre la page d’aide de l’écran actuel.",
-    f10: "Passe aux menus Fichier, Édition et Affichage.",
+    f10: "Cible le menu Fichier de la barre supérieure ; les touches fléchées passent à Édition et Affichage.",
     shortcuts: "Ouvre {where}.",
   },
 };

@@ -32,6 +32,7 @@ import {
   type Request,
   type Response,
   type SessionSummary,
+  settingsChangedEvent,
   settingsPatchSchema,
   skillTemplate,
   type TerminalSnapshot,
@@ -1621,8 +1622,9 @@ What this plugin does.
       case "app.settings.update": {
         const next = mergeSettings(settings, settingsPatchSchema.parse(input.data));
         if (JSON.stringify(next) !== JSON.stringify(settings)) {
+          const event = settingsChangedEvent(settings, next);
           settings = next;
-          emitAppEvent({ type: "settings.changed" });
+          emitAppEvent(event);
         }
         value = { settings };
         break;

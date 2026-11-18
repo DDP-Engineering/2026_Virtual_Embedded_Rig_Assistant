@@ -19,6 +19,7 @@ import * as core from "@vera/core";
 import { classifyCommand, type PluginManifest, validatePluginManifest } from "@vera/shared";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { parse } from "yaml";
+import { reportSkip } from "../support/skip-marker.js";
 
 const software = fileURLToPath(new URL("../../", import.meta.url));
 const pluginFolder = join(software, "plugins", "raspberry-pi-linux");
@@ -431,6 +432,11 @@ const events = (log: string): Json[] =>
         .map((line) => JSON.parse(line))
     : [];
 
+reportSkip(
+  !linux,
+  "the SSH tests",
+  "no Linux shell with /usr/bin/python3 (WSL on Windows), or VERA_TEST_PI_REMOTE=none",
+);
 describe.skipIf(!linux)("over SSH with the remote helper on a real Linux shell", { timeout: 240_000 }, () => {
   const remote = linux as NonNullable<typeof linux>;
   let keys = "";
@@ -999,7 +1005,7 @@ describe.skipIf(!linux)("over SSH with the remote helper on a real Linux shell",
   });
 
   it("starts, reads and stops only a listed user service and collects its journal", async (ctx) => {
-    if (!services) ctx.skip();
+    if (!services) ctx.skip("the Linux shell has no running systemd user manager");
     const start = pi(["service-start", "--board", "pi", "--project", project(), "--service", unit]);
     expect(start.code, JSON.stringify(start.json.errors)).toBe(0);
     expect(start.json.service).toMatchObject({ unit, activeState: "active", keepRunning: true });

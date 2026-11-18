@@ -26,6 +26,7 @@ import {
 } from "@vera/shared";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { parse } from "yaml";
+import { reportSkip } from "../support/skip-marker.js";
 
 const software = fileURLToPath(new URL("../../", import.meta.url));
 const plugins = join(software, "plugins");
@@ -1232,6 +1233,13 @@ describe("VERA's runner supervising the helper (real processes, stand-ins)", { t
 
 const realGdb = process.env.VERA_GDB_REAL_GDB ?? "";
 const realOpenOcd = process.env.VERA_GDB_REAL_OPENOCD ?? "";
+reportSkip(!realGdb, "the real GDB tests", "set VERA_GDB_REAL_GDB to an arm-none-eabi-gdb 12 or newer");
+reportSkip(!realOpenOcd, "the real OpenOCD test", "set VERA_GDB_REAL_OPENOCD to an OpenOCD 0.12.0 or newer");
+reportSkip(
+  !process.env.VERA_GDB_ORACLE_PYTHON,
+  "the pyelftools oracle test",
+  "set VERA_GDB_ORACLE_PYTHON to a Python with pyelftools 0.32",
+);
 
 describe.skipIf(!realGdb)(
   "gdb-debug with a real GDB against the stand-in's remote-protocol target (opt-in)",

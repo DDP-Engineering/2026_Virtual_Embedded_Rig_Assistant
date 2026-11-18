@@ -1249,6 +1249,7 @@
     "stop": "Stop",
     "logTitle": "Run log",
     "truncated": "Showing the last 1 MiB of the log.",
+    "tailOnly": "Earlier output is not shown.",
     "close": "Close",
     "state": {
       "running": "Running",

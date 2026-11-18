@@ -1,5 +1,5 @@
 """Running ngspice (spec REQ-DATA-29b9a988 §2, §5, §6): locating the engine, the effective netlist with the helper's
-own control block, the batch run under a deadline, the log classification and the series."""
+own control block, the batch run under a deadline and an output-size watchdog, the log classification and the series."""
 
 from __future__ import annotations
 
@@ -17,6 +17,9 @@ from typing import Any
 from .request import Problem, Refused, Request
 
 MINIMUM = 42
+# Bytes the log and the series of one run may reach together: above the largest series the profiles admit
+# (5 000 000 rows of 33 columns, about 3 GiB), so only a runaway engine meets it.
+OUTPUT_LIMIT = 4 * 1024 ** 3
 _VERSION = re.compile(r"ngspice-(\d+)")
 _PROBLEMS = (
     ("convergence", re.compile(r"no convergence|timestep too small|gmin stepping failed|source stepping failed", re.I)),
@@ -112,20 +115,38 @@ def control_block(request: Request, series: str, parameters: dict[str, float], t
     return "\n".join(lines) + "\n"
 
 
+def _size(path: Path) -> int:
+    try:
+        return path.stat().st_size
+    except OSError:
+        return 0
+
+
 def run(engine: Engine, cwd: Path, effective: str, series: str, log: str, time_limit: float) -> Outcome:
-    """Runs `ngspice -b -n effective` in `cwd`; on the deadline the engine is killed and the run is `timeout`."""
+    """Runs `ngspice -b -n effective` in `cwd`; on the deadline the engine is killed and the run is `timeout`, and
+    when its log and series outgrow OUTPUT_LIMIT it is killed and the run is `failed`."""
     started = time.monotonic()
     with open(cwd / log, "wb") as handle:
         flags = subprocess.CREATE_NO_WINDOW if sys.platform == "win32" else 0  # type: ignore[attr-defined]
         process = subprocess.Popen([engine.executable, "-b", "-n", effective], cwd=cwd, stdin=subprocess.DEVNULL,
                                    stdout=handle, stderr=subprocess.STDOUT, creationflags=flags)
-        try:
-            code = process.wait(timeout=time_limit)
-        except subprocess.TimeoutExpired:
+        stopped: Outcome | None = None
+        while stopped is None:
+            try:
+                code = process.wait(timeout=0.2)
+                break
+            except subprocess.TimeoutExpired:
+                seconds = time.monotonic() - started
+                if seconds > time_limit:
+                    stopped = Outcome("timeout", None, seconds, [
+                        {"kind": "timeout", "line": f"The engine ran longer than {time_limit:g} s and was stopped."}])
+                elif _size(cwd / log) + _size(cwd / series) > OUTPUT_LIMIT:
+                    stopped = Outcome("failed", None, seconds, [
+                        {"kind": "limit", "line": f"The engine was stopped: its log and series grew beyond the output limit of {OUTPUT_LIMIT} bytes."}])
+        if stopped is not None:
             process.kill()
             process.wait()
-            return Outcome("timeout", None, time.monotonic() - started,
-                           [{"kind": "timeout", "line": f"The engine ran longer than {time_limit:g} s and was stopped."}])
+            return stopped
     seconds = time.monotonic() - started
     text = (cwd / log).read_text(encoding="utf-8", errors="replace")
     problems: list[dict[str, str]] = []

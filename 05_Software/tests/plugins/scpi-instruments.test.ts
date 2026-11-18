@@ -18,6 +18,7 @@ import * as core from "@vera/core";
 import { classifyCommand, type PluginManifest, validatePluginManifest } from "@vera/shared";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { parse } from "yaml";
+import { reportSkip } from "../support/skip-marker.js";
 
 const software = fileURLToPath(new URL("../../", import.meta.url));
 const pluginFolder = join(software, "plugins", "scpi-instruments");
@@ -1016,6 +1017,8 @@ describe("VERA's runner supervising real helper processes", { timeout: 90_000 },
     expect(run.output).toContain("OTHERPROCESSRUN");
   });
 });
+
+reportSkip(!process.env.VERA_SCPI_UV, "the real PyVISA tests", "set VERA_SCPI_UV to a uv executable");
 
 // Opt-in: the real PyVISA and pyvisa-py from PyPI (VERA_SCPI_UV = a real uv), through a real TCPIP SOCKET connection
 // to a local SCPI server. This proves the library path, not any instrument.

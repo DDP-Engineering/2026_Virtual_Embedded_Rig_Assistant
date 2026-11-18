@@ -8,6 +8,8 @@ import { defineConfig } from "electron-vite";
 import type { Plugin } from "vite";
 import { parse as parseYaml } from "yaml";
 // @ts-expect-error build helper is a Node ESM module.
+import * as thirdParty from "../../../../02_Tools/release/third-party.mjs";
+// @ts-expect-error build helper is a Node ESM module.
 import * as updateConfig from "../../../../02_Tools/release/update-config.mjs";
 import { productionCsp } from "./src/main/content-policy.js";
 
@@ -23,7 +25,6 @@ function licenseText(): string {
     return "";
   }
 }
-/** The desktop app's third-party runtime libraries with version and license, for the About page. */
 /** The release notes in 05_Software/release-notes, for Settings → About → What's new. */
 function releaseNotes(): unknown[] {
   const folder = resolve(root, "../../../release-notes");
@@ -36,19 +37,10 @@ function releaseNotes(): unknown[] {
   }
 }
 
+/** The third-party libraries of the desktop, core and shared workspaces, for the About page. */
 function thirdPartyComponents(): { name: string; version: string; license: string }[] {
   try {
-    const dependencies = Object.keys(
-      JSON.parse(readFileSync(resolve(root, "package.json"), "utf8")).dependencies ?? {},
-    );
-    const lock = JSON.parse(readFileSync(resolve(root, "../../../package-lock.json"), "utf8")).packages ?? {};
-    return dependencies
-      .filter((name) => !name.startsWith("@vera/"))
-      .sort()
-      .map((name) => {
-        const entry = lock[`node_modules/${name}`] ?? {};
-        return { name, version: String(entry.version ?? ""), license: String(entry.license ?? "") };
-      });
+    return thirdParty.thirdPartyComponents(resolve(root, "../../.."));
   } catch {
     return [];
   }

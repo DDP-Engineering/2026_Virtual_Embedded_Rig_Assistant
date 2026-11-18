@@ -8,7 +8,6 @@ from __future__ import annotations
 import hashlib
 import os
 import subprocess
-import sys
 import tempfile
 import time
 from pathlib import Path
@@ -149,14 +148,12 @@ def editor_executable(kicad_cli: Path) -> Path:
 
 
 def launch(kicad_cli: Path, board: Path) -> subprocess.Popen[bytes]:
-    """Starts KiCad's PCB editor on the candidate, detached from the helper's output (the runner reads it to EOF).
-    KICAD_LAYOUT_TEST_EDITOR names a Python stub for tests (VERA never passes it to programs)."""
-    stub = os.environ.get("KICAD_LAYOUT_TEST_EDITOR")
-    command = [sys.executable, stub, str(board)] if stub else [str(editor_executable(kicad_cli)), str(board)]
-    if not stub and not editor_executable(kicad_cli).is_file():
-        raise fail("kicad", "kicad", f"KiCad's PCB editor ({editor_executable(kicad_cli).name}) was not found next to kicad-cli.")
+    """Starts KiCad's PCB editor on the candidate, detached from the helper's output (the runner reads it to EOF)."""
+    editor = editor_executable(kicad_cli)
+    if not editor.is_file():
+        raise fail("kicad", "kicad", f"KiCad's PCB editor ({editor.name}) was not found next to kicad-cli.")
     return subprocess.Popen(
-        command,
+        [str(editor), str(board)],
         cwd=str(board.parent),
         stdin=subprocess.DEVNULL,
         stdout=subprocess.DEVNULL,

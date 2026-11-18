@@ -24,7 +24,7 @@ The agent uses the `stm32-flash` and `stm32-option-bytes` skills. It agrees the 
 - **Safe** (runs without asking): help, version, output settings, host-file tools and listing probes without connecting.
 - **Device read** (asks in **Ask** mode, runs on its own in **Auto-edit**): connecting, reading, verifying, resets, halt/run/step and displaying option bytes, OTP or product state. Resets affect the running program.
 - **Device write** (asks in **Ask** and **Auto-edit**): writing, erasing or filling flash or RAM, running code, writing core registers and wireless-stack changes; also unknown commands. A hex, srec or ELF image can carry option-byte or OTP segments, which a write programs too.
-- **Irreversible** (asks, and you type the command, for example `-ob`): option-byte writes, read-protection and TrustZone regression (mass erase), RDP lock and unlock, OTP, keys, secure firmware, product state, debug authentication, HSM licenses and switching the target supply. RDP level 1 is removed only by a mass erase; RDP level 2 is permanent and blocks debug access forever. In **Bypass — full access** these run without asking.
+- **Irreversible** (asks, and you type the command, for example `-ob`): option-byte writes, read-protection and TrustZone regression (mass erase), RDP lock and unlock, OTP, keys, secure firmware, product state, debug authentication, HSM licenses and switching the target supply. RDP level 1 is removed only by a mass erase; RDP level 2 is permanent and blocks debug access forever, so an option-byte write that sets it asks you to type `RDP=0xCC` instead. In **Bypass — full access** these run without asking.
 - **Blocked**: script files, because VERA cannot classify the commands they contain.
 
 ## Limits

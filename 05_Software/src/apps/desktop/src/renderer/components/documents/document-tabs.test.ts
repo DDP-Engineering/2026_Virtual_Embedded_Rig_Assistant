@@ -267,6 +267,45 @@ it("opens complete run logs by ID in the text viewer and rejects mismatched repl
   expect(container?.querySelector("[data-source-current]")?.textContent).toContain("Retry");
 });
 
+const serveRunLog = (truncated: boolean) => {
+  const original = api.invoke.bind(api);
+  const spy = vi
+    .spyOn(api, "invoke")
+    .mockImplementation((async (channel: string, request: unknown) =>
+      channel === "runs.log"
+        ? { id: "01JC00000000000000000000R2", text: "LATE\nLAST\n", truncated, running: false }
+        : original(channel as never, request as never)) as typeof api.invoke);
+  return () => spy.mock.calls.filter(([channel]) => channel === "runs.log").length;
+};
+
+it("shows the tail of a run log longer than the host sends, under a line that says so", async () => {
+  const { open } = await mount();
+  serveRunLog(true);
+  await open("run");
+  const body = container?.querySelector(".document-body")?.textContent;
+  expect(body).toContain("[Earlier output is not shown.]");
+  expect(body).toContain("LAST");
+});
+
+it("keeps open documents on a theme change and loads them again on a masking change", async () => {
+  const { open } = await mount();
+  await api.invoke("app.settings.update", { theme: "light", privacy: { mask: { runs: false } } });
+  const loads = serveRunLog(false);
+  await open("run");
+  expect(loads()).toBe(1);
+  await act(async () => {
+    await api.invoke("app.settings.update", { theme: "dark" });
+  });
+  await settle();
+  expect(loads()).toBe(1);
+  expect(container?.querySelector(".document-body")?.textContent).toContain("LAST");
+  await act(async () => {
+    await api.invoke("app.settings.update", { privacy: { mask: { runs: true } } });
+  });
+  await settle();
+  expect(loads()).toBe(2);
+});
+
 async function mount(scope = `${id}/session-a`, sessionId?: string) {
   await api.invoke("workbench.open", { folder: "/mock/demo-board" });
   container = document.createElement("div");

@@ -15,6 +15,7 @@ import { ReplayGateway } from "@vera/core/replay";
 import { classifyCommand, type PluginManifest, validatePluginManifest } from "@vera/shared";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { parse } from "yaml";
+import { reportSkip } from "../support/skip-marker.js";
 
 const plugins = new URL("../../plugins/", import.meta.url);
 const source = fileURLToPath(new URL("electronics-calc/", plugins));
@@ -1704,6 +1705,7 @@ it("runs from an ask-mode session without approval through the real runner (REQ-
 }, 120_000);
 
 const uv = process.env.VERA_ELEC_UV;
+reportSkip(!uv, "the real uv test", "set VERA_ELEC_UV to a uv executable");
 // Explicit real acceptance: VERA_ELEC_UV names a uv executable. Provisioning is a user action that may download
 // uv's managed CPython; the default tests need neither uv nor the network.
 it.skipIf(!uv)(

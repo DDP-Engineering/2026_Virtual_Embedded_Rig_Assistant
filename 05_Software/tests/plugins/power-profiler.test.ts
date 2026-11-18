@@ -25,6 +25,7 @@ import {
 } from "@vera/shared";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { parse } from "yaml";
+import { reportSkip } from "../support/skip-marker.js";
 
 const software = fileURLToPath(new URL("../../", import.meta.url));
 const plugins = join(software, "plugins");
@@ -1172,6 +1173,11 @@ describe("lab-validate and reports read power captures as recorded (L05-G, REQ-F
 // the real driver imports and enumerates with no meter attached, and that a missing meter leaves the live evidence of
 // L05-A, L05-C and L05-H explicitly unmet (blocked, device-missing), never a pass.
 const realPython = process.env.VERA_POWER_REAL_PYTHON ?? "";
+reportSkip(
+  !realPython,
+  "the real pyjoulescope_driver tests",
+  "set VERA_POWER_REAL_PYTHON to a Python with pyjoulescope_driver 2.5.5",
+);
 describe.skipIf(!realPython)("the real pyjoulescope_driver 2.5.5 without a meter (REQ-PLAT-cd7e4f2c)", () => {
   const real = (args: string[]) => exec(profileScript, args, { PYTHONPATH: "", FAKE_JSDRV: "" }, realPython);
   it("imports and enumerates the driver and finds no meter", () => {

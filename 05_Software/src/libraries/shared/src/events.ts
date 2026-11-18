@@ -16,6 +16,7 @@ import {
   stopReasonSchema,
   todoItemsSchema,
 } from "./session.js";
+import type { Settings } from "./settings.js";
 import { updateOfferSchema, updateSnapshotSchema } from "./updates.js";
 import {
   workbenchIdSchema,
@@ -25,7 +26,11 @@ import {
 } from "./workbench.js";
 
 export const appEventSchema = z.discriminatedUnion("type", [
-  z.strictObject({ type: z.literal("settings.changed") }),
+  z.strictObject({
+    type: z.literal("settings.changed"),
+    /** False when the change cannot alter masked content; absent, shown documents are loaded again. */
+    masking: z.literal(false).optional(),
+  }),
   z.strictObject({
     type: z.literal("update.available"),
     ...updateOfferSchema.pick({ version: true, notes: true }).shape,
@@ -36,6 +41,28 @@ export const appEventSchema = z.discriminatedUnion("type", [
   z.strictObject({ type: z.literal("plugins.catalog") }),
 ]);
 export type AppEvent = z.infer<typeof appEventSchema>;
+/** Settings with no masking policy and no credential behind them. */
+const presentationSettings = [
+  "language",
+  "theme",
+  "textScale",
+  "chatFontSize",
+  "codeFontSize",
+  "keyboardShortcuts",
+  "recentWorkbenches",
+  "sessionOrder",
+];
+/** The event for saved settings: `masking: false` only when nothing but presentation settings differ. */
+export function settingsChangedEvent(previous: Settings | undefined, next: Settings): AppEvent {
+  const changed = previous
+    ? [...new Set([...Object.keys(previous), ...Object.keys(next)])].filter(
+        (key) => JSON.stringify(Reflect.get(previous, key)) !== JSON.stringify(Reflect.get(next, key)),
+      )
+    : [];
+  return changed.length && changed.every((key) => presentationSettings.includes(key))
+    ? { type: "settings.changed", masking: false }
+    : { type: "settings.changed" };
+}
 export const workbenchEventSchema = z.discriminatedUnion("type", [
   z.strictObject({
     type: z.literal("index.document"),

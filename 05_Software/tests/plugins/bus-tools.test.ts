@@ -21,6 +21,7 @@ import * as core from "@vera/core";
 import { classifyCommand, type PluginManifest, validatePluginManifest } from "@vera/shared";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { parse } from "yaml";
+import { reportSkip } from "../support/skip-marker.js";
 
 const software = fileURLToPath(new URL("../../", import.meta.url));
 const pluginFolder = join(software, "plugins", "bus-tools");
@@ -1115,6 +1116,11 @@ describe("the runner reserves and supervises the adapter", { timeout: 60_000 }, 
 const port = process.env.VERA_TEST_BUS_PIRATE_PORT;
 const terminal = process.env.VERA_TEST_BUS_PIRATE_TERMINAL;
 const identity = process.env.VERA_TEST_BUS_PIRATE_IDENTITY;
+reportSkip(
+  !port || !terminal || !identity,
+  "the real Bus Pirate tests",
+  "set VERA_TEST_BUS_PIRATE_PORT, VERA_TEST_BUS_PIRATE_TERMINAL and VERA_TEST_BUS_PIRATE_IDENTITY",
+);
 describe.skipIf(!port || !terminal || !identity)("a real Bus Pirate (hardware evidence, read-only)", () => {
   it("identifies the adapter through BPIO2", async () => {
     await writeFile(

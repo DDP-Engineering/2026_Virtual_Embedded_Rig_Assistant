@@ -204,7 +204,7 @@ it("mock settings use the same validated shape, immutable id and post-update eve
   expect(await get()).toMatchObject({
     settings: { theme: "dark", installationId: initial.settings.installationId },
   });
-  expect(on).toHaveBeenCalledExactlyOnceWith({ type: "settings.changed" });
+  expect(on).toHaveBeenCalledExactlyOnceWith({ type: "settings.changed", masking: false });
   await api.invoke("app.settings.update", {});
   expect(on).toHaveBeenCalledTimes(1);
   await expect(

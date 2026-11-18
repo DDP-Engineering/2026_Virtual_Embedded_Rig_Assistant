@@ -99,7 +99,8 @@ it("projects args, command/canonical cwd, error, tail/full logs and statuses usi
   await check(true);
   f.choice("default");
   await check(false);
-  expect(f.runner.log).toHaveBeenCalledWith("/owned", run.id, Number.POSITIVE_INFINITY);
+  // A full log is bounded: the runner returns its last 8 MiB and marks it truncated.
+  expect(f.runner.log).toHaveBeenCalledWith("/owned", run.id, 8 * 1024 * 1024);
   expect(run.args).toEqual([secret]);
   expect(statuses[0]?.detail).toBe(secret);
   f.choice("on");

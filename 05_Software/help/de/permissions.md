@@ -61,13 +61,11 @@ Der Agent führt Shell-Befehle mit `run_command` aus. Fragen und Befehle ohne er
 
 Fragen verlangt für jeden Befehl eine Freigabe. In Automatisch bearbeiten speichert Immer erlauben das gewählte wörtliche Befehlspräfix für diesen Workbench; npm test erlaubt beispielsweise auch npm test -- --watch=false. Workbench bearbeiten > Agent listet die Präfixe; nach Entfernen und Speichern wird sofort wieder gefragt. Rekursives Löschen, erzwungenes Pushen, Hard-Resets, Formatieren und Datenträgerwerkzeuge fragen außerhalb von Bypass immer nach und können nicht gespeichert werden. Komplexe Syntax, Anführungszeichen, Escape-Zeichen, Pipes, Ersetzungen und Befehlstrenner verlangen ebenfalls eine ausdrückliche Freigabe. Präfixe erlauben Argumente; sie isolieren die Wirkung von Skripten nicht. Gespeicherte Geheimnisse im Präfix bleiben maskiert; Entfernen löscht die Freigabe auch bei maskierter Anzeige.
 
+Die Steuerelemente unter Läufe ändern keine Befehlsberechtigungen. Stoppen beendet den Prozessbaum; der Agent sieht dies beim nächsten Lesen der Ausgabe.
+
 ## Zusätzliche Ordner
 
-Unter **Workbench bearbeiten > Allgemein > Zusätzliche Ordner** wählen Sie **Ordner hinzufügen** und einen absoluten Ordner, etwa ein benachbartes Repository. **Speichern** erteilt Zugriff; **Abbrechen** verwirft die Auswahl. Die Übersicht zeigt gespeicherte Ordner. Entfernen und Speichern widerruft den Zugriff sofort, auch für wartende Vorgänge. Schreibgeschützte Workbenches können diese Freigaben nicht ändern.
-
-Die normalen Werkzeuge read, list, glob, grep, write und edit sowie Shell-Arbeitsordner nutzen diese Ordner mit denselben Freigaben für Fragen oder Automatisch bearbeiten wie der Workbench. Externe Pfade müssen absolut sein; relative Pfade beginnen weiter im Haupt-Workbench. Externe Quellen haben absolute Identitäten ohne lokale Dokumentzitate. Ignorierregeln bleiben aktiv; VERA-Anwendungsdaten sind auch über Verknüpfungen gesperrt. Hinzufügen indiziert die Ordner nicht: Index, Protokolle, Artefakte und erzeugte Daten bleiben im Haupt-Workbench. Befehle behalten die Rechte des Systemkontos und laufen ohne Sandbox.
-
-Die Steuerelemente unter Läufe ändern keine Befehlsberechtigungen. Stoppen beendet den Prozessbaum; der Agent sieht dies beim nächsten Lesen der Ausgabe.
+Ein Workbench kann dem Agenten Ordner außerhalb des eigenen freigeben. Für ihre Dateien und Shell-Arbeitsordner gelten dieselben Freigaben für Fragen oder Automatisch bearbeiten wie für den Workbench. Siehe [Workbenches](workbenches.md).
 
 ## Benutzerterminal
 

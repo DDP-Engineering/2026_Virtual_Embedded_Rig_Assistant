@@ -16,6 +16,7 @@ import {
 } from "@vera/shared";
 import { afterAll, expect, it } from "vitest";
 import { parse } from "yaml";
+import { reportSkip } from "../support/skip-marker.js";
 
 const software = join(dirname(fileURLToPath(import.meta.url)), "../..");
 const source = join(software, "plugins/binutils");
@@ -217,6 +218,11 @@ it("discovers only present programs and probes PATH, vendor, PlatformIO, Arduino
 
 // Explicit local archives opt in to genuine, large toolchain acceptance; no test has network access.
 const archives = process.env.VERA_BINUTILS_ARCHIVES;
+reportSkip(
+  !archives,
+  "the real-toolchain test",
+  "set VERA_BINUTILS_ARCHIVES to a folder with the pinned toolchain archives",
+);
 it.skipIf(!archives)(
   "analyzes real ARM/RISC-V ELFs through replay with downloaded and found toolchains",
   async () => {

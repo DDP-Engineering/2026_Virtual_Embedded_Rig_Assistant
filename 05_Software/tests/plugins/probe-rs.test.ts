@@ -16,6 +16,7 @@ import {
 } from "@vera/shared";
 import { afterAll, expect, it } from "vitest";
 import { parse } from "yaml";
+import { reportSkip } from "../support/skip-marker.js";
 
 const software = join(dirname(fileURLToPath(import.meta.url)), "../..");
 const source = join(software, "plugins/probe-rs");
@@ -459,6 +460,11 @@ it("refuses flashing an ELF changed after the approval was prepared", async () =
 
 // Genuine release archives are opt-in, local transport only; ordinary tests never need network/hardware.
 const archives = process.env.VERA_PROBE_RS_ARCHIVES;
+reportSkip(
+  !archives,
+  "the real probe-rs test",
+  "set VERA_PROBE_RS_ARCHIVES to a folder with the pinned release archives",
+);
 it.skipIf(!archives)(
   "provisions and runs the real downloaded and found 0.32.0 CLI offline",
   async () => {

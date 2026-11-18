@@ -33,6 +33,12 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ### Changed
 
+- Help: additional folders, command approvals and terminal consent are each explained once, with links.
+- Packaging warns about files in the model and Windows runtime folders that their manifests do not name.
+- Lint: non-null assertions are allowed in tests and the CSS specificity rule is off; about 300 warnings are gone.
+- Tests: plugin suites that need a real tool or archive report a named skip saying what enables them.
+- Tests: the command integration test reports a named skip on Windows hosts without PowerShell 7.
+- Test fixtures have a provenance list; five files are listed with no recorded origin.
 - Delivery verify warns about unsigned installers, an unsigned catalog, mixed commits and a dirty tree.
 - Packaging warns about files in the bundled plugins folder that no catalog index lists.
 - catalog sign warns when the signing key is not checked against a public key.
@@ -81,6 +87,19 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ### Fixed
 
+- Open document tabs no longer reload when only theme, language, text size, shortcuts or session order change.
+- Opening a run log larger than 8 MiB shows its last 8 MiB instead of loading the whole file into memory.
+- Saving a provider API key masks it in open document tabs at once.
+- String-launcher programs (ESP-IDF via EIM) refuse arguments with typographic quotes, which PowerShell reads as quotes.
+- Agent runtime errors carry the standard keys errors.INTERNAL and errors.PROVIDER.
+- About lists the libraries of the core and shared packages too; installers carry THIRD-PARTY-NOTICES.txt.
+- Help: the shortcuts page uses one term per language and describes F10 as it works.
+- perf:sessions prints the stack trace when a run fails.
+- stm32-cubeprog 0.2.1: writing readout protection level 2 (RDP=0xCC) asks for its own typed word; it is permanent.
+- wireshark-tshark 0.3.1: commands that write a file (-w, --export-objects, key or log files) ask for approval.
+- ngspice 0.3.1: a run whose log and series outgrow 4 GiB is stopped with a message naming the limit.
+- kicad-layout 0.3.1: the helper no longer runs a script or editor named by test environment variables.
+- probe-rs 0.2.1: the flash skill refers to the esp32-flash skill only when the esp32-esptool plugin is enabled.
 - Session search reads only the messages that can match instead of every message of every session.
 - File completion in the composer stops after 50,000 folder entries instead of walking the whole workbench.
 - A secret pasted into the first message no longer appears in the automatic session title.

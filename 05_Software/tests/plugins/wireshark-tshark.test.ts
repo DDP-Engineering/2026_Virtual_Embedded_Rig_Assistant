@@ -76,8 +76,9 @@ it("classifies parsed tshark option roles at the highest risk", async () => {
     ["safe", ["-r", "cap.pcapng", "-q", "-z", "io,phs"]],
     ["safe", ["-r", "cap.pcapng", "-x", "-V", "-O", "coap"]],
     ["safe", ["-r", "cap.pcapng", "--hexdump", "frames"]],
-    ["safe", ["-r", "cap.pcapng", "-2", "-R", "udp", "-w", "udp.pcapng"]],
-    ["safe", ["-r", "cap.pcapng", "--export-objects", "http,objects"]],
+    ["safe", ["-r", "cap.pcapng", "-2", "-R", "udp", "-w", "-"]],
+    ["safe", ["-r", "cap.pcapng", "-w-"]],
+    ["safe", ["-r", "cap.pcapng", "-W", "n", "-U", "tap"]],
     ["safe", ["-r", "cap.pcapng", "-o", "tcp.check_checksum:TRUE", "-d", "udp.port==5684,coap"]],
     ["safe", ["-r", "cap.pcapng", "-X", "read_format:pcapng"]],
     ["safe", ["-r", "cap.pcapng", "--selected-frame", "3", "--print-timers"]],
@@ -85,6 +86,17 @@ it("classifies parsed tshark option roles at the highest risk", async () => {
     ["safe", ["-r", "cap.pcapng", "-e", "-I"]],
     ["safe", ["-r", "cap.pcapng", "coap"]],
     ["safe", ["-r", "cap.pcapng", "--", "-v"]],
+    // Reading a capture file while writing a file or folder.
+    ["device-read", ["-r", "cap.pcapng", "-2", "-R", "udp", "-w", "udp.pcapng"]],
+    ["device-read", ["-r", "cap.pcapng", "-wudp.pcapng"]],
+    ["device-read", ["-nw", "/tmp/udp.pcapng", "-r", "cap.pcapng"]],
+    ["device-read", ["-r", "cap.pcapng", "--export-objects", "http,objects"]],
+    ["device-read", ["-r", "cap.pcapng", "--export-o=http,objects"]],
+    ["device-read", ["-r", "cap.pcapng", "--export-tls-session-keys", "keys.log"]],
+    ["device-read", ["-r", "cap.pcapng", "--log-file=tshark.log"]],
+    ["device-read", ["-r", "cap.pcapng", "coap", "-w", "udp.pcapng"]],
+    ["device-read", ["-r", "cap.pcapng", "--", "--export-objects", "http,objects"]],
+    ["device-read", ["-v", "-w", "udp.pcapng"]],
     // Live capture: an interface option, a link or timestamp type query, or no capture file at all.
     ["device-read", ["-i", "eth0"]],
     ["device-read", ["-ieth0"]],
@@ -135,6 +147,11 @@ it("classifies parsed tshark option roles at the highest risk", async () => {
   ] as const;
   for (const [risk, args] of cases) expect(classify([...args]).risk, args.join(" ")).toBe(risk);
   expect(classify(["-i", "eth0"]).notes.join(" ")).toContain("Npcap");
+  const writes = m.rules.find((rule) => rule.match.includes("<write>"))?.note;
+  expect(writes).toContain("--export-objects");
+  expect(classify(["-r", "cap.pcapng", "-w", "udp.pcapng"]).notes).toContain(writes);
+  expect(classify(["-i", "eth0", "-w", "live.pcapng"]).notes).toContain(writes);
+  expect(classify(["-r", "cap.pcapng", "-Y", "-w"]).notes).not.toContain(writes);
   expect(classify(["-r", "cap.pcapng", "-X", "lua_script:x.lua"]).notes.join(" ")).toContain("Lua");
 });
 
@@ -266,7 +283,7 @@ async function workbench(scripts: Record<string, unknown[]>) {
   expect(release.issues).toEqual([]);
   expect(release.index?.plugins.find((item) => item.id === "wireshark-tshark")?.tier).toBe("official");
   const store = new core.PluginStore({ root: join(root, "plugins") });
-  await store.install(join(root, "release/wireshark-tshark-0.3.0.zip"));
+  await store.install(join(root, "release/wireshark-tshark-0.3.1.zip"));
   const plugin = await store.load("wireshark-tshark");
   const skills = new core.SkillCatalog({
     root: bench,

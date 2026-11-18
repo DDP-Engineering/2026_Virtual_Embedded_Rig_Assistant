@@ -24,8 +24,8 @@ base address or substitute an ELF from a later rebuild.
 For ESP-IDF builds, inspect the vendor build metadata first: an IDF bootloader-compatible ELF may
 require `--binary-format idf` and exact `--idf-bootloader`/`--idf-partition-table` files. Keep all named
 inputs workbench-relative so their hashes appear in approval; verify using the same format/inputs.
-Do not assume a generic ELF supplies a bootloader or partition table. Use esp32-flash for the
-build's established serial/flasher_args.json workflow when appropriate.
+Do not assume a generic ELF supplies a bootloader or partition table. When the esp32-esptool plugin
+is enabled, its esp32-flash skill covers the build's established serial/flasher_args.json workflow.
 
 `run` combines flashing and RTT and is device-write; load probe-rs-rtt and start it in the background.
 Do not add erase, mass-unlock, --allow-erase-all or security operations to resolve an ordinary error.

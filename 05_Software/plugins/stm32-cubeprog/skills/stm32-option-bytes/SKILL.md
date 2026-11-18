@@ -21,7 +21,7 @@ value you computed and showed first:
 ```
 
 Every option-byte write is irreversible in VERA: in ask mode it waits for the
-typed word `-ob`. State the old value, the new value and the consequence before
+typed word `-ob`, and a write of `RDP=0xCC` for the typed word `RDP=0xCC`. State the old value, the new value and the consequence before
 the call. Read protection needs particular care:
 
 - `RDP=0xBB` (level 1) blocks debug reads of flash. Going back to `RDP=0xAA`

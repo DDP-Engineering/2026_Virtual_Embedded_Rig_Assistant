@@ -13,6 +13,7 @@ import { ReplayGateway } from "@vera/core/replay";
 import { classifyCommand, type PluginManifest, validatePluginManifest } from "@vera/shared";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { parse } from "yaml";
+import { reportSkip } from "../support/skip-marker.js";
 
 const plugins = new URL("../../plugins/", import.meta.url);
 const fixtures = fileURLToPath(new URL("../fixtures/can/", import.meta.url));
@@ -567,6 +568,7 @@ it("waits for the typed word before a transmit starts", async () => {
 }, 120_000);
 
 const uv = process.env.VERA_CAN_UV;
+reportSkip(!uv, "the real python-can test", "set VERA_CAN_UV to a uv executable");
 // Explicit real acceptance: VERA_CAN_UV names a uv executable. This user-action provisioning downloads Python,
 // python-can and cantools; default tests have no network or hardware dependency.
 it.skipIf(!uv)(

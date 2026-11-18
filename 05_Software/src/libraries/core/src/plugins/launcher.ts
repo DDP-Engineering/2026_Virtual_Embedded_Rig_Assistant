@@ -6,8 +6,11 @@ import { veraError } from "@vera/shared";
  */
 export type LauncherMode = "argv" | "string";
 
-/** Characters a launcher's own command parser or shell could act on; refused in `string` mode. */
-const UNSAFE = /["'&|;<>^%$`\0\r\n]/;
+/**
+ * Characters a launcher's own command parser or shell could act on; refused in `string` mode.
+ * PowerShell reads the typographic quotes (U+2018 to U+201F) as quote characters too.
+ */
+const UNSAFE = /["'&|;<>^%$`\0\r\n\u2018-\u201f]/;
 
 /**
  * Arguments that follow the launcher's executable: the launcher's own arguments, then the command.

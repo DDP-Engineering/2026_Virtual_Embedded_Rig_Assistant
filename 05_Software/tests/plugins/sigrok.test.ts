@@ -10,6 +10,7 @@ import { ReplayGateway } from "@vera/core/replay";
 import { classifyCommand, type PluginManifest, validatePluginManifest } from "@vera/shared";
 import { expect, it } from "vitest";
 import { parse } from "yaml";
+import { reportSkip } from "../support/skip-marker.js";
 
 const plugins = new URL("../../plugins/", import.meta.url);
 const source = new URL("sigrok/", plugins);
@@ -290,6 +291,11 @@ function samples() {
   return Buffer.from(Array.from({ length: 256 }, (_, i) => (uart[i] ?? 1) | (i2c[i] ?? 6)));
 }
 
+reportSkip(
+  !archives,
+  "the real sigrok test",
+  "set VERA_SIGROK_ARCHIVES to a folder with the pinned archives",
+);
 it.skipIf(!archives)(
   "provisions the exact fork and decodes UART and I2C from srzip without hardware",
   async () => {

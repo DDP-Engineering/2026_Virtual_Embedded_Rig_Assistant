@@ -20,6 +20,8 @@ const source = fileURLToPath(new URL("kicad-layout/", plugins));
 const tool = join(source, "scripts", "kicad_layout_tool.py");
 const fixtures = fileURLToPath(new URL("../fixtures/kicad-layout/", import.meta.url));
 const hooks = join(fixtures, "hooks");
+/** The helper with the tests' seams: hook.py at its named points and editor_stub.py as the PCB editor. */
+const hooked = join(hooks, "tool_with_hooks.py");
 const windows = process.platform === "win32";
 const sha256 = (data: string | Uint8Array) => createHash("sha256").update(data).digest("hex");
 const sleep = (ms: number) => new Promise<void>((done) => setTimeout(done, ms));
@@ -141,15 +143,25 @@ const plain = (args: string[], cwd: string, env: NodeJS.ProcessEnv = baseEnv()) 
     args.join(" "),
   );
 /** The helper through uv with the pinned PEP 723 dependencies; `offline` as VERA runs it (run --offline). */
-const helper = (args: string[], cwd: string, env: NodeJS.ProcessEnv = baseEnv(), offline = false) =>
+const helper = (
+  args: string[],
+  cwd: string,
+  env: NodeJS.ProcessEnv = baseEnv(),
+  offline = false,
+  script = tool,
+) =>
   settle(
-    spawnSync(uv ?? "uv", ["run", "--quiet", ...(offline ? ["--offline"] : []), "--script", tool, ...args], {
-      cwd,
-      encoding: "utf8",
-      env,
-      timeout: 300_000,
-      maxBuffer: 16 * 1024 * 1024,
-    }),
+    spawnSync(
+      uv ?? "uv",
+      ["run", "--quiet", ...(offline ? ["--offline"] : []), "--script", script, ...args],
+      {
+        cwd,
+        encoding: "utf8",
+        env,
+        timeout: 300_000,
+        maxBuffer: 16 * 1024 * 1024,
+      },
+    ),
     args.join(" "),
   );
 const hashes = async (folder: string) => {
@@ -220,6 +232,9 @@ it("publishes the official kicad-layout package, its pack and skill (REQ-PLAT-39
   expect(script).toMatch(
     /# dependencies = \["kicad-python==0\.8\.0", "protobuf==5\.29\.6", "pynng==0\.9\.0"\]/,
   );
+  // The tests' wrapper runs the helper on the same pinned API client.
+  const pinned = /^# dependencies = .*$/m;
+  expect((await readFile(hooked, "utf8")).match(pinned)?.[0]).toBe(script.match(pinned)?.[0]);
   const catalog = parse(await readFile(new URL("catalog.yaml", plugins), "utf8"));
   expect(catalog.official).toContain("kicad-layout");
   expect(catalog.metadata["kicad-layout"].activities).toEqual(["design"]);
@@ -566,12 +581,17 @@ describe("kicad-layout-tool without KiCad", { timeout: 300_000 }, () => {
       const pidFile = join(dir, "stub.pid");
       // The stub editor stands in for KiCad's; any existing file passes the kicad-cli check, which comes first.
       const env = baseEnv({
-        KICAD_LAYOUT_TEST_EDITOR: join(hooks, "editor_stub.py"),
         KICAD_LAYOUT_WAIT_SECONDS: "4",
         STUB_PID_FILE: pidFile,
         VERA_PROGRAM_KICAD_CLI: python,
       });
-      const opened = helper(["open", "--board", "boards/layout.kicad_pcb", "--run-id", "stub"], dir, env);
+      const opened = helper(
+        ["open", "--board", "boards/layout.kicad_pcb", "--run-id", "stub"],
+        dir,
+        env,
+        false,
+        hooked,
+      );
       expect(opened.code, opened.stdout).toBe(3);
       expect(opened.doc.problems[0]?.kind).toBe("connection");
       expect(opened.doc.problems[0]?.message).toContain("Preferences > Plugins");
@@ -617,12 +637,13 @@ describe.skipIf(!gui)(
     let dir: string;
     const editors: number[] = [];
     // Every helper run gets the environment and the uv arguments of VERA's program runner.
-    const run = (args: string[], env: NodeJS.ProcessEnv = veraEnv()) => helper(args, dir, env, true);
+    const run = (args: string[], env: NodeJS.ProcessEnv = veraEnv(), script = tool) =>
+      helper(args, dir, env, true, script);
     const open = (runId: string, board = "boards/layout.kicad_pcb") =>
       run(["open", "--board", board, "--run-id", runId]);
     const state = (runId: string) => json(join(dir, "electronics-results", runId, "state.json"));
     const board = (runId: string) => json(join(dir, "electronics-results", runId, "board.json"));
-    const edit = async (runId: string, operations: object[], env?: NodeJS.ProcessEnv) =>
+    const edit = async (runId: string, operations: object[], env?: NodeJS.ProcessEnv, script?: string) =>
       run(
         [
           "edit",
@@ -632,6 +653,7 @@ describe.skipIf(!gui)(
           request((await state(runId)).candidate.sha256, operations),
         ],
         env,
+        script,
       );
     /** result.json's inputs and artifacts name files of the run folder (or the workbench) with their SHA-256. */
     const checkFiles = async (runId: string, doc: LayoutDocument) => {
@@ -1185,11 +1207,8 @@ describe.skipIf(!gui)(
       const done = await edit(
         "b",
         [{ op: "place", footprint: "R4", at: [114, 126] }],
-        veraEnv({
-          KICAD_LAYOUT_TEST_HOOK: join(hooks, "hook.py"),
-          HOOK_POINT: "before-unchanged",
-          HOOK_ACTION: "move-other",
-        }),
+        veraEnv({ HOOK_POINT: "before-unchanged", HOOK_ACTION: "move-other" }),
+        hooked,
       );
       expect(done.code, done.stdout).toBe(3);
       expect(done.doc.problems[0]?.kind).toBe("kicad");
@@ -1204,12 +1223,8 @@ describe.skipIf(!gui)(
       const done = await edit(
         "b",
         [{ op: "place", footprint: "R4", at: [114, 126] }],
-        veraEnv({
-          KICAD_LAYOUT_TEST_HOOK: join(hooks, "hook.py"),
-          HOOK_POINT: "before-unchanged",
-          HOOK_ACTION: "duplicate-placed",
-          HOOK_REF: "R4",
-        }),
+        veraEnv({ HOOK_POINT: "before-unchanged", HOOK_ACTION: "duplicate-placed", HOOK_REF: "R4" }),
+        hooked,
       );
       expect(done.code, done.stdout).toBe(3);
       expect(done.doc.problems[0]).toMatchObject({
@@ -1230,7 +1245,7 @@ describe.skipIf(!gui)(
           "--quiet",
           "--offline",
           "--script",
-          tool,
+          hooked,
           "edit",
           "--run",
           "electronics-results/b",
@@ -1240,7 +1255,6 @@ describe.skipIf(!gui)(
         {
           cwd: dir,
           env: veraEnv({
-            KICAD_LAYOUT_TEST_HOOK: join(hooks, "hook.py"),
             // After the first operation: the footprint has moved inside the open commit.
             HOOK_POINT: "after-operation",
             HOOK_ACTION: "sleep",
@@ -1272,11 +1286,8 @@ describe.skipIf(!gui)(
       const done = await edit(
         "b",
         [{ op: "place", footprint: "R4", at: [114, 128] }],
-        veraEnv({
-          KICAD_LAYOUT_TEST_HOOK: join(hooks, "hook.py"),
-          HOOK_POINT: "after-bind",
-          HOOK_ACTION: "kill-editor",
-        }),
+        veraEnv({ HOOK_POINT: "after-bind", HOOK_ACTION: "kill-editor" }),
+        hooked,
       );
       expect(done.code, done.stdout).toBe(3);
       expect(done.doc.problems[0]?.kind).toBe("connection");

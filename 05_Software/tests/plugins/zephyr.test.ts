@@ -25,6 +25,7 @@ import {
 } from "@vera/shared";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { parse } from "yaml";
+import { reportSkip } from "../support/skip-marker.js";
 
 const software = fileURLToPath(new URL("../../", import.meta.url));
 const plugins = join(software, "plugins");
@@ -1279,6 +1280,11 @@ describe.skipIf(!helperPython)(
   },
 );
 
+reportSkip(
+  !helperPython || !realRoot,
+  "the real Zephyr tests",
+  "set VERA_ZEPHYR_PYTHON and VERA_ZEPHYR_REAL (a folder with the real workspace)",
+);
 describe.skipIf(!helperPython || !realRoot)(
   "real Zephyr 4.4.2, SDK 1.0.1 and Twister on this machine (opt-in)",
   {
@@ -1414,6 +1420,11 @@ describe.skipIf(!helperPython || !realRoot)(
       }
     });
 
+    reportSkip(
+      !realCli,
+      "the real STM32_Programmer_CLI test",
+      "set VERA_ZEPHYR_REAL_CLI to STM32_Programmer_CLI",
+    );
     it.skipIf(!realCli)(
       "drives the real STM32_Programmer_CLI through west flash with the probe serial, no board attached (L07-E part)",
       async () => {

@@ -61,7 +61,7 @@ when its open proof is recorded there. A plugin's bundled helper programs print 
 | `ngspice` | 0.3.1 | real ngspice-47 on Windows 11 (ELEC-04); no hardware |
 | `parts-search` | 0.3.1 | real uv run on Windows 11 (ELEC-03); no hardware |
 | `renode` | 0.3.0 | real Renode 1.17.0 on Windows 11 (LAB-06); virtual boards, no hardware |
-| `wireshark-tshark` | 0.3.0 | real TShark replay and a live loopback capture on Windows/Npcap; Linux unverified |
+| `wireshark-tshark` | 0.3.1 | real TShark replay and a live loopback capture on Windows/Npcap; Linux unverified |
 | `arduino-cli` | 0.2.1 | real compiles with arduino-cli 1.6.0 (IOT-01); upload, serial readback, two boards open |
 | `ble-tools` | 0.2.0 | real Bleak 3.1.0 and one passive scan (IOT-06); read/notify/write, pairing, BlueZ open |
 | `can-python` | 0.2.1 | real python-can on a udp_multicast bus on Windows; real adapters and vcan0 open |
@@ -76,7 +76,7 @@ when its open proof is recorded there. A plugin's bundled helper programs print 
 | `mqtt-tools` | 0.2.1 | real paho-mqtt 2.1.0 against the local TLS test broker (IOT-05); product broker and device open |
 | `platformio` | 0.2.1 | real PlatformIO 6.2.0 builds, host tests, Renode device tests (LAB-08); board upload open |
 | `power-profiler` | 0.2.1 | real pyjoulescope_driver 2.5.5 without a meter (LAB-05); JS220 and board open |
-| `probe-rs` | 0.2.0 | real probe-rs CLI offline; Nucleo, RP2040 and ESP32-C3 probes, RTT open |
+| `probe-rs` | 0.2.1 | real probe-rs CLI offline; Nucleo, RP2040 and ESP32-C3 probes, RTT open |
 | `raspberry-pi-linux` | 0.2.0 | real asyncssh 2.24.1 against an SSH test server in WSL (IOT-08); a Raspberry Pi open |
 | `scpi-instruments` | 0.2.1 | real PyVISA 1.16.2 + pyvisa-py against simulated servers (LAB-01); real instruments open |
 | `serial-monitor` | 0.2.0 | real pyserial through the real provisioner and runner; real-board capture open |

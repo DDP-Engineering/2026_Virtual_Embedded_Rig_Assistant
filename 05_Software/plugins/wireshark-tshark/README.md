@@ -19,6 +19,7 @@ were measured against the options of TShark 4.6.8.
 | Command | Risk |
 |---|---|
 | `-r <file>` with any filter, field, statistics or output option; `-v`, `-h`, `-G` reports; `-D`/`--list-sources` interface listing | safe |
+| an option that writes a file or folder: `-w <file>`, `--export-objects`, `--export-tls-session-keys`, `--log-file` | device-read |
 | `-i`/`--source`, `-I`, `-L`, `--list-time-stamp-types`, or no `-r` at all (tshark then captures the first interface) | device-read |
 | an option this plugin does not recognise | device-write |
 | `-X lua_script…` (runs Lua code), `-A user:password` (RPCAP credentials) | blocked |
@@ -27,9 +28,9 @@ The plugin parses tshark's options the way tshark does: case-sensitive
 letters (`-x` dumps bytes, `-X` sets extension options), grouped flags
 (`-nr`), attached values (`-ifoo`), unique long-option abbreviations and the
 end of options at the first filter word or `--`. A filter word never lowers
-the risk of the options after it. Output files written by safe commands
-(`-w`, `--export-objects`, `--log-file`) need no approval, like other
-analysis outputs.
+the risk of the options after it. A command that writes a file asks like a
+live capture does, because the path may lie outside the workbench; `-w -`
+writes to standard output and stays safe.
 
 ## Live capture
 
