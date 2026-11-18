@@ -211,6 +211,7 @@ it("budgets actual masked historical and compaction requests after a short-secre
     contextWindow: 10000,
     maxOutputTokens: 1000,
     safetyMargin: 1024,
+    input: ["text" as const],
     inputBudget: 7976,
     supportsTools: true,
   });
@@ -233,6 +234,7 @@ it("rechecks masking expansion after async durable publication before provider d
     contextWindow: 6000,
     maxOutputTokens: 1000,
     safetyMargin: 1024,
+    input: ["text" as const],
     inputBudget: 3976,
     supportsTools: true,
   });

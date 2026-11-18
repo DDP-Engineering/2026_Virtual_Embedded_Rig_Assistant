@@ -16,6 +16,8 @@ Type in the message box (**Ask VERA about your project…**). Enter sends, Shift
 
 Next to the message box you choose the **Model**, the **Reasoning level** and the **Permission mode** of this session. New sessions take the model and permission mode from the workbench settings.
 
+See [Providers and models](providers.md) for how VERA determines image support for your chosen model.
+
 ## Steer or stop a running turn
 
 While the agent works, you can keep typing and send more messages, for example "also check the errata". They show **Pending delivery** until the agent takes them in at its next step. While an approval card waits for your decision, sending is paused.

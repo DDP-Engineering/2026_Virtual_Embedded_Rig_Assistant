@@ -173,6 +173,7 @@
     "name": "Name des Endpunkts",
     "baseUrl": "Basis-URL",
     "model": "Modell",
+    "acceptsImages": "Akzeptiert Bilder",
     "contextWindow": "Kontextfenster (Tokens)",
     "maxOutput": "Maximale Ausgabe (Tokens)",
     "endpointKey": "API-Schlüssel des Endpunkts",

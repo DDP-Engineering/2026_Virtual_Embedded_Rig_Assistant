@@ -114,6 +114,7 @@ export class ReplayGateway implements LlmGateway {
     if (output !== undefined && (!Number.isSafeInteger(output) || output <= 0)) throw veraError("INVALID");
     const maxOutputTokens = Math.min(output ?? 4096, 4096);
     return {
+      input: ["text" as const],
       contextWindow: 32768,
       maxOutputTokens,
       safetyMargin: 1639,

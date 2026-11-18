@@ -173,6 +173,7 @@
     "name": "Numele endpoint-ului",
     "baseUrl": "URL de bază",
     "model": "Model",
+    "acceptsImages": "Acceptă imagini",
     "contextWindow": "Fereastră de context (tokenuri)",
     "maxOutput": "Ieșire maximă (tokenuri)",
     "endpointKey": "Cheia API a endpoint-ului",

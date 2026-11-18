@@ -38,6 +38,10 @@ Für LM Studio ist ein API-Schlüssel optional.
 
 Entnehmen Sie das Kontextfenster der Dokumentation des Modells oder Ihren Servereinstellungen. Ein zu großer Wert führt zu Fehlern des Servers; ein zu kleiner lässt VERA den Verlauf früher als nötig zusammenfassen.
 
+## Bildunterstützung
+
+VERA liest die Bildunterstützung aus den Modellkatalogen von ChatGPT und der OpenAI-API. Für LM Studio, Ollama oder einen anderen kompatiblen Endpunkt das Modell auswählen oder eingeben. Wenn es Bilder verarbeiten kann, **Akzeptiert Bilder** einschalten und **Speichern** wählen. Die Option ist für jedes Modell zunächst ausgeschaltet.
+
 ## Eine Verbindung testen
 
 **Testen** führt vier Prüfungen aus: **Erreichbarkeit**, **Authentifizierung und Modell**, **Werkzeugaufrufe** und **Streaming**. Jede zeigt **Bestanden**, **Fehlgeschlagen** oder **Übersprungen**. Der Agent verwendet Werkzeugaufrufe, um Dokumente zu durchsuchen, Dateien zu lesen und zu ändern und Programme auszuführen; wählen Sie daher ein Modell, das **Werkzeugaufrufe** besteht.

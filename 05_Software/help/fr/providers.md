@@ -38,6 +38,10 @@ Pour LM Studio, une clé API est facultative.
 
 Reprenez la fenêtre de contexte de la documentation du modèle ou des paramètres de votre serveur. Une valeur trop grande provoque des erreurs du serveur ; une valeur trop petite amène VERA à résumer l’historique plus tôt que nécessaire.
 
+## Prise en charge des images
+
+VERA lit la prise en charge des images dans les catalogues de modèles ChatGPT et de l’API OpenAI. Pour LM Studio, Ollama ou un autre point de terminaison compatible, sélectionnez ou saisissez le modèle. S’il prend en charge les images en entrée, activez **Accepte les images**, puis sélectionnez **Enregistrer**. L’option est désactivée par défaut pour chaque modèle.
+
 ## Tester une connexion
 
 **Tester** exécute quatre vérifications : **Accessibilité**, **Authentification et modèle**, **Appel d’outils** et **Streaming**. Chacune affiche **Réussi**, **Échec** ou **Ignoré**. L’agent utilise des appels d’outils pour rechercher dans les documents, lire et modifier des fichiers et exécuter des programmes ; choisissez donc un modèle qui réussit **Appel d’outils**.

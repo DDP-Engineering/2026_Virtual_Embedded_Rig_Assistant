@@ -92,6 +92,7 @@ Facts that span components:
 - Permission modes are Read-only, Ask, Auto-edit and Bypass, per session with a workbench default. Bypass gives file tools, commands and declared program runs the full OS-account filesystem scope after one explicit confirmation per change. Host-configured application data is refused for reads and writes in every mode, including through aliases. Commands and programs run with OS-account permissions and are not sandboxed. See file-tools, plugins and sessions.
 - Privacy masking has four areas: agent, exports, Display and Program runs. Settings hold the app defaults and each workbench may override them. See app-data.
 - The interface, help and approval texts exist in en, ro, de and fr.
+- Provider model capabilities include input modalities. Settings > Providers stores the image opt-in for each custom model within its connection.
 - Plugin selection is per workbench and defaults to none. Global plugin installation is separate from workbench enablement.
 - Plugin secrets (MQTT passwords, Wokwi tokens, parts search keys) stay in VERA's credential store and are edited in the plugin's Configuration section on the Plugins page; App settings has no page for them. MQTT and Wokwi secrets reach only an approved run of the enabled official plugin, on its stdin. See plugins and parts-search.
 - The official plugins are verified against simulators and stand-ins. Real-hardware acceptance and native Ubuntu acceptance are pending; official-plugins lists what is pending per plugin.

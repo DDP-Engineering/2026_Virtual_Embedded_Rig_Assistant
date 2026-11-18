@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-4dbd29dd"
+
+title = "Expose OpenAI model input modalities"
+
+status = "active"
+
+requirement = """
+When VERA resolves an OpenAI API model, the gateway shall expose the input modalities declared for that model in its pinned OpenAI model list in both its capabilities and provider catalog.
+"""
+
+verification = "Resolve two OpenAI models with different modality declarations and compare both surfaces to the pinned model list."
+
+affected_paths = ["05_Software/src/libraries/core/src/llm/providers.ts", "05_Software/src/libraries/shared/src/providers.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/llm/gateway.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-19
+updated = 2026-11-19

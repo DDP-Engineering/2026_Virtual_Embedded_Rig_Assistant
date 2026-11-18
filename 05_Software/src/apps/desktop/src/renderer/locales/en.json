@@ -173,6 +173,7 @@
     "name": "Endpoint name",
     "baseUrl": "Base URL",
     "model": "Model",
+    "acceptsImages": "Accepts images",
     "contextWindow": "Context window (tokens)",
     "maxOutput": "Maximum output (tokens)",
     "endpointKey": "Endpoint API key",

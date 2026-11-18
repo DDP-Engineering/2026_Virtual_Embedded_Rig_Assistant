@@ -39,7 +39,7 @@ function customModel(config: Custom, provider: string, id = config.model): Model
     provider,
     baseUrl: config.baseUrl.replace(/\/+$/, ""),
     reasoning: !!profile?.reasoningOptions.length,
-    input: ["text"],
+    input: config.imageModels?.includes(id) ? ["text", "image"] : ["text"],
     cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
     contextWindow: profile?.contextWindow ?? config.contextWindow,
     maxTokens: profile?.maxOutputTokens ?? config.maxOutputTokens,
@@ -88,6 +88,7 @@ function limits(
   )
     throw veraError("INVALID");
   return {
+    input: [...model.input],
     contextWindow: model.contextWindow,
     maxOutputTokens,
     safetyMargin,

@@ -38,6 +38,10 @@ An API key is optional for LM Studio.
 
 Take the context window from the model's documentation or your server settings. A value that is too large leads to errors from the server; one that is too small makes VERA summarize history earlier than needed.
 
+## Image support
+
+VERA reads image support from the ChatGPT and OpenAI API model catalogs. For LM Studio, Ollama or another compatible endpoint, select or enter the model, turn on **Accepts images** if it supports image input, and select **Save**. The switch starts off for each model.
+
 ## Test a connection
 
 **Test** runs four checks: **Reachability**, **Authentication and model**, **Tool calling** and **Streaming**. Each shows **Pass**, **Fail** or **Skipped**. The agent uses tool calls to search documents, read and change files and run programs, so choose a model that passes **Tool calling**.

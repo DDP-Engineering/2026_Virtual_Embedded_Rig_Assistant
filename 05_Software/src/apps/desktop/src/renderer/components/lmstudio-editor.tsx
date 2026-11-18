@@ -4,6 +4,7 @@ import { useEffect, useId, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../api/index.js";
 import { ErrorMessage } from "./error-message.js";
+import { ProviderImageSwitch } from "./provider-image-switch.js";
 
 type Custom = ProviderList["custom"][number];
 function profile(model: DiscoveredModel): ModelProfile {
@@ -29,6 +30,7 @@ export function LmStudioEditor({
   const [name, setName] = useState(initial?.name ?? "LM Studio");
   const [models, setModels] = useState<ModelProfile[]>(initial?.models ?? []);
   const [selected, setSelected] = useState(initial?.model ?? "");
+  const [imageModels, setImageModels] = useState(initial?.imageModels ?? []);
   const [baseUrl, setBaseUrl] = useState(initial?.baseUrl ?? "");
   const [testing, setTesting] = useState(false);
   const [error, setError] = useState<unknown>();
@@ -126,6 +128,7 @@ export function LmStudioEditor({
               maxOutputTokens: current.maxOutputTokens,
               protocol: "lmstudio",
               models,
+              imageModels,
               ...(current.supportsTools === undefined ? {} : { supportsTools: current.supportsTools }),
             },
             ...(clearKey ? { apiKey: "" } : key ? { apiKey: key } : {}),
@@ -212,6 +215,7 @@ export function LmStudioEditor({
                 </option>
               ))}
             </select>
+            <ProviderImageSwitch model={selected} imageModels={imageModels} setImageModels={setImageModels} />
             <p className="muted">{t("discovery.perModel")}</p>
             {current.maxContextWindow && (
               <p data-model-maximum>{t("discovery.maximum", { count: current.maxContextWindow })}</p>

@@ -1,6 +1,13 @@
 version: Unreleased
 date: null
 entries:
+  - category: new
+    topic: { en: Providers, ro: Furnizori, de: Anbieter, fr: Fournisseurs }
+    text:
+      en: Set whether individual models on local and compatible connections accept images.
+      ro: Alege ce modele ale conexiunilor locale și compatibile acceptă imagini.
+      de: Für jedes Modell einer lokalen oder kompatiblen Verbindung die Bildunterstützung festlegen.
+      fr: Choisissez les modèles des connexions locales ou compatibles qui acceptent les images.
   - category: fixed
     topic: { en: Skills, ro: Skills, de: Skills, fr: Compétences }
     text:
@@ -67,17 +74,10 @@ entries:
   - category: new
     topic: { en: Files, ro: Fișiere, de: Dateien, fr: Fichiers }
     text:
-      en: Switch Rendered, Text or Hex; preview images with zoom to 400% and remember each extension.
-      ro: Alege Randat, Text sau Hex; vezi imagini cu zoom până la 400% și reține modul pe extensie.
-      de: Gerendert, Text oder Hex wählen; Bilder bis 400% zoomen und die Wahl pro Dateiendung merken.
-      fr: Choisissez Rendu, Texte ou Hex ; zoomez les images à 400% et mémorisez le mode par extension.
-  - category: new
-    topic: { en: Files, ro: Fișiere, de: Dateien, fr: Fichiers }
-    text:
-      en: Inspect bytes in Hex, jump to offsets, find text or bytes and copy selected hex or text.
-      ro: Inspectează octeți în Hex, sari la offset, caută text sau octeți și copiază selecția.
-      de: Bytes in Hex ansehen, zu Offsets springen, Text oder Bytes suchen und die Auswahl kopieren.
-      fr: Affichez les octets en Hex, allez à un décalage, cherchez et copiez la sélection.
+      en: Remember views by extension. Zoom to 400%, jump to offsets, find bytes or text, and copy.
+      ro: Reține modul pe extensie, mărește la 400%, sari la offset, caută octeți sau text și copiază.
+      de: Modus je Endung merken, bis 400% zoomen, Offsets anspringen, Bytes oder Text suchen und kopieren.
+      fr: Mémorisez le mode par extension, zoomez à 400%, sautez au décalage, cherchez et copiez texte/octets.
   - category: improved
     topic: { en: Files, ro: Fișiere, de: Dateien, fr: Fichiers }
     text:

@@ -26,6 +26,7 @@ import {
   type PluginManifest,
   type PluginReview,
   type ProgramRunInfo,
+  type ProviderCatalog,
   partsSearchDefaults,
   partsSupplierIds,
   providerSlug,
@@ -53,10 +54,11 @@ import { mockHelpList, mockHelpRead, mockPluginHelpLanguages, mockPluginHelpRead
 import { MockSessions } from "./sessions.js";
 import { mockTextBytes, mockTextPaths } from "./text-files.js";
 
-const openAiFixture = {
+const openAiFixture: ProviderCatalog["models"][number] = {
   id: "mock-openai",
   name: "Mock OpenAI model",
   reference: "openai/mock-openai",
+  input: ["text", "image"],
   contextWindow: 32768,
   maxOutputTokens: 4096,
   safetyMargin: 1639,
@@ -1455,6 +1457,7 @@ What this plugin does.
                 id: profile.id,
                 name: profile.name,
                 reference: `${id}/${profile.id}`,
+                input: config.imageModels?.includes(profile.id) ? ["text", "image"] : ["text"],
                 contextWindow: profile.contextWindow,
                 maxOutputTokens: profile.maxOutputTokens,
                 safetyMargin,

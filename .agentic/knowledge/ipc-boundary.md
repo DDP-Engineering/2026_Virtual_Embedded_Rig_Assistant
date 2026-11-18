@@ -103,6 +103,7 @@ AppEvents use shared updates.ts; [updates](updates.md) owns their lifecycle/capa
 
 - Shared defineChannel, channels, Channel, Request, Response, VeraError and VeraBridge.
 - providers.list/save/remove/models/test use strict public projections and key-bearing write requests; [Providers](providers.md) owns main-only values, consent, configuration and bounded hints. Main scrubs known-secret error params and event user text before transport.
+- providers.models returns text and image input modalities as part of each model's capabilities. Custom providers.list/save carry the optional imageModels list of enabled IDs per connection.
 - providers.chatgpt.login/cancel/status/logout use strict metadata and guarded manualCode/promptId requests. app.openExternal requires confirmed:true and HTTP(S); main further confines OAuth to the pinned auth page. [Providers](providers.md) owns secret isolation and lifecycle.
 - app.info accepts a strict empty object and returns name/version/platform/arch/portable/locale,
   compiled testBuild and signing (signed/unsigned/not-applicable). [Native packaging](native-packaging.md)

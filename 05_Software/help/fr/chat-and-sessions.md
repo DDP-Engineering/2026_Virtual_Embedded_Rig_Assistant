@@ -16,6 +16,8 @@ Saisissez votre texte dans la zone de message (**Interrogez VERA sur votre proje
 
 À côté de la zone de message, vous choisissez le **Modèle**, le **Niveau de raisonnement** et le **Mode d’autorisation** de cette session. Les nouvelles sessions reprennent le modèle et le mode d’autorisation des paramètres du banc de travail.
 
+Consultez [Fournisseurs et modèles](providers.md) pour savoir comment VERA détermine si le modèle choisi accepte les images.
+
 ## Orienter ou arrêter un tour en cours
 
 Pendant que l’agent travaille, vous pouvez continuer à écrire et envoyer d’autres messages, par exemple « vérifie aussi l’errata ». Ils affichent **En attente d’envoi** jusqu’à ce que l’agent les prenne en compte à son étape suivante. Tant qu’une carte d’approbation attend votre décision, l’envoi est suspendu.

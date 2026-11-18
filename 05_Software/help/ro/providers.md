@@ -38,6 +38,10 @@ Pentru LM Studio, cheia API este opțională.
 
 Ia fereastra de context din documentația modelului sau din setările serverului. O valoare prea mare duce la erori de la server; una prea mică face ca VERA să rezume istoricul mai devreme decât este necesar.
 
+## Suport pentru imagini
+
+VERA citește suportul pentru imagini din cataloagele de modele ChatGPT și API OpenAI. Pentru LM Studio, Ollama sau alt endpoint compatibil, alege ori introdu modelul. Dacă acceptă imagini, activează **Acceptă imagini** și alege **Salvează**. Opțiunea este inițial dezactivată pentru fiecare model.
+
 ## Testează o conexiune
 
 **Testează** rulează patru verificări: **Conectivitate**, **Autentificare și model**, **Apelare instrumente** și **Streaming**. Fiecare afișează **Reușit**, **Eșuat** sau **Omis**. Agentul folosește apeluri de instrumente pentru a căuta în documente, a citi și modifica fișiere și a rula programe, așa că alege un model care trece de **Apelare instrumente**.

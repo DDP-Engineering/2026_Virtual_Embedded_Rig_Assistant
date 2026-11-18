@@ -173,6 +173,7 @@
     "name": "Nom du point de terminaison",
     "baseUrl": "URL de base",
     "model": "Modèle",
+    "acceptsImages": "Accepte les images",
     "contextWindow": "Fenêtre de contexte (jetons)",
     "maxOutput": "Sortie maximale (jetons)",
     "endpointKey": "Clé API du point de terminaison",

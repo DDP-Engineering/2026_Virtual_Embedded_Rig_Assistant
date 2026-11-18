@@ -31,6 +31,9 @@ strict public projections. Renderer holds a password draft until save/cancel and
 - ProviderSettings list/save/remove/recordToolSupport/close serializes provider edits and supplies configured/hint metadata.
 - providers.list({}) returns OpenAI/custom configurations and secureStorage. Public schemas
   select known non-secret fields. providers.save returns saved or consent-required; remove returns{}.
+- Settings > Providers stores the Accepts images switch by exact model ID within each custom
+  connection. The enabled IDs are saved and returned as imageModels. An absent or empty list leaves
+  every model off. LM Studio rediscovery preserves the saved choices by ID.
 - OpenAI model omission retains it, empty string clears it; credential omission retains, empty clears.
   OpenAI remove clears the key while keeping model configuration; custom remove clears configuration/key.
 - Exact formats, defaults, limits and recovery: [credentials spec](../specs/REQ-SEC-fe4d5c4c.md).
@@ -54,9 +57,10 @@ strict public projections. Renderer holds a password draft until save/cancel and
   text is rejected; low-entropy known keys match whole text values for this guard.
 - Strict provider writes validate unique names/slugs, HTTP(S)/v1 URLs without credentials/query/fragment,
   positive safe integer budgets with max(1024,ceil(context*0.05)) safety margin, and secret-free fields.
+- Image-enabled model IDs are bounded, unique and free of whitespace. An explicit empty list clears the choices.
 - Provider settings are strict: unknown keys are invalid. Settings failure restores the exact encoded entry and prior credential/location, retaining the previous disk/memory decision across crypto availability changes. Two-file crash atomicity is not claimed.
 - UI saves avoid Query mutation caches for key-bearing requests and clear password drafts on success/cancel.
-  Native modal consent offers memory, weak disk or cancel, closes on disposal and restores a connected opener. Per-endpoint edit/remove/test accessible names include endpoint identity; loading and result states are textual. Controls use en/ro/de and WP04 layouts/focus.
+  Native modal consent offers memory, weak disk or cancel, closes on disposal and restores a connected opener. Per-endpoint edit/remove/test accessible names include endpoint identity; loading and result states are textual. Controls use en/ro/de/fr and WP04 layouts/focus.
 
 ## Change map
 
@@ -69,6 +73,7 @@ strict public projections. Renderer holds a password draft until save/cancel and
 | Error/event redaction | core llm/scrub.ts; main store/router/events | scrub/credentials/provider/events tests |
 | Subscription lifecycle/consent/refresh | main chatgpt-auth/subscription-store; renderer chatgpt | chatgpt-auth.test.ts; chatgpt.test.ts; tests/e2e/chatgpt.spec.ts |
 | Masked/localized forms | renderer components/providers.tsx | tests/e2e/providers.spec.ts and mock.spec.ts |
+| Per-model image opt-in | renderer components/{provider-image-switch,lmstudio-editor,providers}.tsx | provider-settings.test.ts and tests/e2e/{providers,providers-layout}.spec.ts |
 
 ## Key behaviors
 
@@ -84,6 +89,7 @@ strict public projections. Renderer holds a password draft until save/cancel and
 - REQ-SEC-0b898261 — public metadata and bounded/short hints.
 - REQ-FUNC-6c666347 — validated provider IPC boundary.
 - REQ-UX-fb4b9424 — masked localized and accessible provider editor.
+- REQ-UX-1eb152b7 and REQ-FUNC-8446181d — localized per-model image opt-in, settings persistence and invalid ID rejection.
 
 ## Architecture
 
@@ -114,6 +120,7 @@ Paths relative to05_Software.
 - src/apps/desktop/src/main/{chatgpt-auth,subscription-store,open-external}.ts and tests — main-owned OAuth, explicit refresh consent and confirmed external opening.
 - src/libraries/shared/src/chatgpt.ts; renderer components/{chatgpt,consent-dialog}.tsx and chatgpt.test.ts; tests/e2e/chatgpt.spec.ts — strict metadata and native/browser controls.
 - src/apps/desktop/src/main/{credentials,provider-settings}.ts — crypto persistence and coordinated operations.
+- src/apps/desktop/src/renderer/components/provider-image-switch.tsx — model-specific switch shared by both custom editors.
 - src/apps/desktop/src/main/{index,ipc-router,events}.ts — startup/drain, handlers, known-secret response guards.
 - src/apps/desktop/src/renderer/components/{providers,settings}.tsx — masked forms and consent modal.
 - src/apps/desktop/src/renderer/mocks/mockApi.ts — metadata-only provider fixtures.

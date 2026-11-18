@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-UX-1eb152b7"
+
+title = "Set image capability per custom model"
+
+status = "active"
+
+requirement = """
+Where Settings > Providers edits an LM Studio, Ollama or other OpenAI-compatible model, the editor shall offer a localized, default-off Accepts images switch whose saved value is restored for that model on reopening.
+"""
+
+verification = "Set and clear the switch with distinct model IDs in both editor paths. Inspect the resulting settings and verify the saved list is restored by the desktop after restart."
+
+affected_paths = ["05_Software/src/libraries/shared/src/providers.ts", "05_Software/src/apps/desktop/src/main/provider-settings.ts", "05_Software/src/apps/desktop/src/renderer/components/providers.tsx", "05_Software/src/apps/desktop/src/renderer/components/lmstudio-editor.tsx", "05_Software/src/apps/desktop/src/renderer/locales/", "05_Software/src/apps/desktop/src/renderer/components/provider-image-switch.tsx", "05_Software/src/apps/desktop/src/renderer/mocks/mockApi.ts"]
+
+linked_tests = ["05_Software/tests/e2e/providers.spec.ts", "05_Software/tests/e2e/providers-layout.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-19
+updated = 2026-11-19

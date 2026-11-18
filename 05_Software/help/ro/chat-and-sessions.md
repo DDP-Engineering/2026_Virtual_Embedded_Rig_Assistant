@@ -16,6 +16,8 @@ Scrie în caseta de mesaj (**Întreabă VERA despre proiect…**). Enter trimite
 
 Lângă caseta de mesaj alegi **Model**, **Nivel de reasoning** și **Mod de permisiuni** pentru această sesiune. Sesiunile noi preiau modelul și modul de permisiuni din setările workbench-ului.
 
+Vezi [Furnizori și modele](providers.md) pentru a afla cum stabilește VERA dacă modelul ales acceptă imagini.
+
 ## Ghidează sau oprește o execuție în curs
 
 Cât timp agentul lucrează, poți continua să scrii și să trimiți mesaje, de exemplu „verifică și errata”. Acestea afișează **În așteptarea livrării** până când agentul le preia la pasul următor. Cât timp un card de aprobare așteaptă decizia ta, trimiterea este suspendată.

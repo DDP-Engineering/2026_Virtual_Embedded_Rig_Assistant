@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-8446181d"
+
+title = "Validate saved image model identifiers"
+
+status = "active"
+
+requirement = """
+If a custom provider save supplies invalid or duplicate image-enabled model IDs, the provider settings service shall reject it as INVALID.
+"""
+
+verification = "Send a save with a malformed or duplicate ID, check the error and verify the previous persisted selection is untouched."
+
+affected_paths = ["05_Software/src/libraries/shared/src/providers.ts", "05_Software/src/apps/desktop/src/main/provider-settings.ts"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/main/provider-settings.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-19
+updated = 2026-11-19
