@@ -24,6 +24,8 @@ export function ErrorMessage({ error }: { error: unknown }) {
     "errors.BUSY": t("errors.BUSY", options),
     "errors.DENIED": t("errors.DENIED", options),
     "errors.CONTEXT_LIMIT": t("errors.CONTEXT_LIMIT", options),
+    "errors.IMAGE_FORMAT": t("errors.IMAGE_FORMAT", options),
+    "errors.IMAGE_TOO_LARGE": t("errors.IMAGE_TOO_LARGE", options),
     "errors.PROVIDER": t("errors.PROVIDER", options),
     "errors.OFFLINE": t("errors.OFFLINE", options),
     "errors.INTERNAL": t("errors.INTERNAL", options),

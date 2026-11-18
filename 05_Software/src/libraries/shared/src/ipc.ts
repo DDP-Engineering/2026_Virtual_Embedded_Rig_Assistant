@@ -86,7 +86,12 @@ import {
   providerTestRequestSchema,
   providerTestResultSchema,
 } from "./providers.js";
-import { permissionModeSchema, sessionIdSchema, sessionSummarySchema } from "./session.js";
+import {
+  messageImagesSchema,
+  permissionModeSchema,
+  sessionIdSchema,
+  sessionSummarySchema,
+} from "./session.js";
 import { sessionExportFormatSchema, sessionSearchQuerySchema } from "./session-export.js";
 import { sessionStateSchema } from "./session-state.js";
 import {
@@ -700,10 +705,13 @@ export const channels = {
   ),
   "session.send": defineChannel(
     "session.send",
-    z.strictObject({
-      sessionId: sessionIdSchema,
-      text: z.string().refine((value) => value.trim().length > 0),
-    }),
+    z
+      .strictObject({
+        sessionId: sessionIdSchema,
+        text: z.string(),
+        images: messageImagesSchema.optional(),
+      })
+      .refine(({ text, images }) => text.trim().length > 0 || !!images?.length),
     z.strictObject({ turnId: z.string().min(1), messageId: z.string().min(1) }),
   ),
   "session.stop": defineChannel(

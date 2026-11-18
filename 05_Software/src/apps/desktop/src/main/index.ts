@@ -1117,10 +1117,12 @@ ipcMain.handle(
           await s.delete(sessionId);
           return {};
         }),
-      "session.send": ({ sessionId, text }) =>
-        sessions.run((s) => {
+      "session.send": ({ sessionId, text, images }) =>
+        sessions.run(async (s) => {
           if (credentials.containsSecret(text)) throw { code: "INVALID", messageKey: "errors.INVALID" };
-          const sent = s.send(sessionId, text);
+          const sent = images?.length
+            ? await s.sendWithImages(sessionId, text, images)
+            : s.send(sessionId, text);
           embeddingWarmup.request(workbench.getSnapshot().config.id);
           return sent;
         }),

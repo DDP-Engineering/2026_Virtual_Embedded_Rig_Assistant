@@ -1,6 +1,7 @@
 import { isAbsolute } from "node:path";
 import type { Message, ToolCall, ToolResultMessage } from "@earendil-works/pi-ai";
 import {
+  acceptsImages,
   type ChangeDetail,
   type ChangeSummary,
   changeIdSchema,
@@ -29,6 +30,7 @@ import { type ApprovalDecision, ApprovalGate, requestSha256 } from "../agent/app
 import { issuedLogRefs, validateCitations } from "../agent/citations.js";
 import { ContextCompactor } from "../agent/compaction.js";
 import { ContextPolicy } from "../agent/context.js";
+import { imagePaths } from "../agent/message-images.js";
 import type { PermissionEngine } from "../agent/permissions.js";
 import { ReferenceRuntime, toolResult } from "../agent/runtime.js";
 import type { AgentRuntime, RuntimeEvent, RuntimeHost, StopReason } from "../agent/types.js";
@@ -57,6 +59,7 @@ import type { WebProvider } from "../web/provider.js";
 import { WriteQueue } from "../workbench/write-queue.js";
 import { SessionHub, type SessionListener } from "./hub.js";
 import { MaskingContextPolicy, maskMessages, maskModelStream, maskValue } from "./masking.js";
+import { projectMessageImages, SessionImages } from "./session-images.js";
 import { timedGateway } from "./timed-gateway.js";
 
 export interface SessionHost {
@@ -660,9 +663,19 @@ export class SessionService {
     }
   }
   send(id: string, text: string): { turnId: string; messageId: string } {
+    return this.admitMessage(id, text);
+  }
+  /** Validate files before admitting the message to the current or next turn. */
+  async sendWithImages(id: string, text: string, images: string[]) {
+    this.row(id);
+    this.writable();
+    const paths = await new SessionImages(this.host.root, this.host.managedRoots).validate(images);
+    return this.admitMessage(id, text, paths.length ? paths : undefined);
+  }
+  private admitMessage(id: string, text: string, images?: string[]): { turnId: string; messageId: string } {
     const current = this.row(id);
     this.writable();
-    if (!text.trim()) throw veraError("INVALID");
+    if (!text.trim() && !images?.length) throw veraError("INVALID");
     if (this.closing || this.deleting.has(id)) throw veraError("BUSY");
     const active = this.active.get(id);
     if (active) {
@@ -684,6 +697,7 @@ export class SessionService {
           type: "message.queued",
           messageId,
           text,
+          ...(images && { images }),
           timestamp: this.host.clock.now().getTime(),
         });
       })();
@@ -691,7 +705,6 @@ export class SessionService {
       return { turnId: active.turnId, messageId };
     }
     const row = this.idle(id);
-    if (!text.trim()) throw veraError("INVALID");
     let processing = Promise.resolve();
     let failed = false;
     const durable = async () => {
@@ -859,28 +872,42 @@ export class SessionService {
     const runtimeHost: RuntimeHost = {
       log: (message) => this.host.log?.(this.host.scrub?.(message) ?? message),
       steering: () =>
-        this.hub
-          .get(id)
-          .snapshot.items.flatMap((item) =>
-            item.kind === "user" && item.pending
-              ? [{ messageId: item.id, text: item.text, timestamp: item.timestamp ?? 0 }]
-              : [],
-          ),
+        this.hub.get(id).snapshot.items.flatMap((item) =>
+          item.kind === "user" && item.pending
+            ? [
+                {
+                  messageId: item.id,
+                  text: item.text,
+                  ...(item.images && { images: item.images }),
+                  timestamp: item.timestamp ?? 0,
+                },
+              ]
+            : [],
+        ),
       gateway: {
         ...gateway,
         stream: async function* (request) {
           await durable();
           request.signal.throwIfAborted();
-          const tools = request.tools.filter(
-            (tool) =>
-              self.row(id).permission_mode !== "read-only" ||
-              (!writeToolNames.has(tool.name) && tool.name !== "run_command"),
-          );
-          // Settings may change while durable events are published after runtime budgeting.
-          const view = contextPolicy.prepare(
-            { system: request.system, tools, messages: request.messages },
-            gateway.capabilities(request.model, request.maxOutputTokens),
-          );
+          // Settings may change while durable events are published or attachments are read.
+          const caps = () => gateway.capabilities(request.model, request.maxOutputTokens);
+          let capabilities = caps();
+          let messages = request.messages;
+          if (messages.some((message) => imagePaths(message).length)) {
+            const reader = acceptsImages(capabilities)
+              ? new SessionImages(self.host.root, self.host.managedRoots)
+              : undefined;
+            messages = await projectMessageImages(request.messages, request.signal, reader);
+            capabilities = caps();
+            if (reader && !acceptsImages(capabilities))
+              messages = await projectMessageImages(request.messages, request.signal);
+          }
+          request.signal.throwIfAborted();
+          const readOnly = self.row(id).permission_mode === "read-only";
+          const tools = readOnly
+            ? request.tools.filter((tool) => !writeToolNames.has(tool.name) && tool.name !== "run_command")
+            : request.tools;
+          const view = contextPolicy.prepare({ system: request.system, tools, messages }, capabilities);
           if (!view.fits) {
             yield { type: "error", error: veraError("CONTEXT_LIMIT"), aborted: false };
             return;
@@ -1042,7 +1069,7 @@ export class SessionService {
       });
     });
     turn.done = runtime
-      .send(text)
+      .send(text, images)
       .then(async (result) => {
         await processing;
         if (failed) result = { stopReason: "error" };

@@ -52,6 +52,8 @@
     "no": "No"
   },
   "errors": {
+    "IMAGE_FORMAT": "Choose a valid PNG, JPEG, GIF or WebP image. SVG is unsupported.",
+    "IMAGE_TOO_LARGE": "An image can be at most 20 MiB.",
     "INVALID": "The request is invalid.",
     "NOT_FOUND": "The requested operation {{operation}} was not found.",
     "CONFLICT": "The operation conflicts with the current state.",

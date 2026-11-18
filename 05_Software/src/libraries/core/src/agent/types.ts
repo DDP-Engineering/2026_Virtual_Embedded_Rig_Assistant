@@ -30,14 +30,14 @@ export interface RuntimeHost {
   nextId(): string;
   approve(call: Readonly<ToolCall>, signal: AbortSignal): Promise<"approved" | "denied" | "aborted">;
   /** Durable, undelivered user messages; detached FIFO snapshot, without consuming them. */
-  steering?(): { messageId: string; text: string; timestamp: number }[];
+  steering?(): { messageId: string; text: string; images?: string[]; timestamp: number }[];
   /** An exception the turn loop reports only as a generic error; the host scrubs secrets before it writes the text. */
   log?(message: string): void;
 }
 export type RuntimeEvent =
   | { type: "turn.started"; turnId: string }
   | { type: "turn.done"; turnId: string; stopReason: StopReason }
-  | { type: "message.user"; messageId: string; text: string }
+  | { type: "message.user"; messageId: string; text: string; images?: string[] }
   | { type: "message.delivered"; messageIds: string[] }
   | { type: "message.delta"; messageId: string; text: string }
   | { type: "tool.delta"; messageId: string; index: number; text: string }
@@ -60,7 +60,7 @@ export type RuntimeEvent =
   | { type: "error"; code: VeraError["code"]; messageKey: string; retryable: boolean };
 export interface AgentRuntime {
   start(init: RuntimeInit): void;
-  send(text: string): Promise<{ stopReason: StopReason }>;
+  send(text: string, images?: string[]): Promise<{ stopReason: StopReason }>;
   abort(): void;
   onEvent(listener: (event: RuntimeEvent) => void): () => void;
   messages(): Message[];

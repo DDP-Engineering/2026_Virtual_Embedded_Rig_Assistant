@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-81c071bc"
+
+title = "Refuse excess image references"
+
+status = "active"
+
+requirement = """
+If a chat message references more than eight images, VERA shall refuse the message as invalid before recording it.
+"""
+
+verification = "Send nine image references through the IPC schema and session service and check refusal without a durable message."
+
+affected_paths = ["05_Software/src/libraries/shared/src/ipc.ts", "05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/libraries/shared/src/session.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/sessions/session-images.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-19
+updated = 2026-11-19

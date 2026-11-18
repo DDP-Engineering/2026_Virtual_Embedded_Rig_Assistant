@@ -52,6 +52,8 @@
     "no": "Non"
   },
   "errors": {
+    "IMAGE_FORMAT": "Choisissez une image PNG, JPEG, GIF ou WebP valide. Le format SVG est incompatible.",
+    "IMAGE_TOO_LARGE": "Une image peut faire au maximum 20 Mio.",
     "INVALID": "La requête n’est pas valide.",
     "NOT_FOUND": "L’opération demandée {{operation}} est introuvable.",
     "CONFLICT": "L’opération est en conflit avec l’état actuel.",

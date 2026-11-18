@@ -52,6 +52,8 @@
     "no": "Nu"
   },
   "errors": {
+    "IMAGE_FORMAT": "Alege o imagine PNG, JPEG, GIF sau WebP validă. Formatul SVG nu este acceptat.",
+    "IMAGE_TOO_LARGE": "O imagine poate avea cel mult 20 MiB.",
     "INVALID": "Cererea nu este validă.",
     "NOT_FOUND": "Operația solicitată {{operation}} nu a fost găsită.",
     "CONFLICT": "Operația intră în conflict cu starea curentă.",

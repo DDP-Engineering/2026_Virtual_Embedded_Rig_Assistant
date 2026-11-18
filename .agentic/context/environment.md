@@ -6,7 +6,7 @@
 
 - The machine supplies Python 3.11.4 or newer and Git. Everything else installs inside the repository.
 - Node.js 24.21.0 is pinned by version and SHA-256 and lives in `02_Tools/runtime/` (git-ignored). `05_Software/package.json` requires Node `>=24 <25`.
-- npm dependencies are pinned exactly in `05_Software/package.json` and its lockfile. Among them: Electron 44.7.0, electron-builder 26.17.0, electron-vite 5.0.0, TypeScript 6.0.3, Vitest 5.0.3, Playwright 1.64.0, Biome 2.5.15, esbuild 0.25.12, better-sqlite3 13.0.3 and node-pty 1.1.0.
+- npm dependencies are pinned exactly in `05_Software/package.json` and its lockfile. Among them: Electron 44.7.0, electron-builder 26.17.0, electron-vite 5.0.0, TypeScript 6.0.3, Vitest 5.0.3, Playwright 1.64.0, Biome 2.5.15, esbuild 0.25.12, better-sqlite3 13.0.3 and node-pty 1.1.0. Chat image preparation uses sharp 0.35.5 with the host-native image libraries already staged for the desktop.
 - Managed plugin Python uses the pinned uv 0.13.7 (`05_Software/src/uv/uv-manifest.json`). `npm run prepare:uv` fetches and verifies it.
 - The local embedding model is pinned by manifest. `npm run prepare:model` materializes it; `-- --offline` only verifies cached assets. Runtime assets never require a model download.
 

@@ -16,6 +16,8 @@ Type in the message box (**Ask VERA about your project…**). Enter sends, Shift
 
 Next to the message box you choose the **Model**, the **Reasoning level** and the **Permission mode** of this session. New sessions take the model and permission mode from the workbench settings.
 
+A message can reference up to eight workbench images in PNG, JPEG, GIF or WebP, with a limit of 20 MiB per file. VERA scales the copy sent to an image-capable model to a maximum of 2048 pixels on its longest side and keeps the original file. A text-only model receives the paths. Compaction keeps older image paths as text notes. Session exports include those paths.
+
 See [Providers and models](providers.md) for how VERA determines image support for your chosen model.
 
 ## Steer or stop a running turn
@@ -84,4 +86,4 @@ Every terminal starts private. To let the agent read one, see [Permissions](perm
 
 ## Secret masking for the agent and exports
 
-Agent and model masking applies to tool results sent to the provider, streamed answers, session search and session presentation. Artifacts and exports independently controls saved artifact content and descriptions, artifact exports and JSON/Markdown session exports. Both default on; an explicit workbench choice overrides the live app default. Turning Agent and model off permits stored secrets found in files or tool output to reach the provider. Program runs and Display choices do not change these rules. Provider errors, connection tests and diagnostic logs always mask stored credentials. Terminal reads still require consent for that specific terminal. Masking cannot recover text already saved as [REDACTED]; use a new read or recreate the artifact from its original source.
+Agent and model masking applies to tool results sent to the provider, streamed answers, session search and session presentation. Masking checks the file path as text. Image pixels are outside its scope. Artifacts and exports independently controls saved artifact content and descriptions, artifact exports and JSON/Markdown session exports. Both default on; an explicit workbench choice overrides the live app default. Turning Agent and model off permits stored secrets found in files or tool output to reach the provider. Program runs and Display choices do not change these rules. Provider errors, connection tests and diagnostic logs always mask stored credentials. Terminal reads still require consent for that specific terminal. Masking cannot recover text already saved as [REDACTED]; use a new read or recreate the artifact from its original source.

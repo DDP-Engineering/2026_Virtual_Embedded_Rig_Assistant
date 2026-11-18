@@ -140,6 +140,7 @@ export default defineConfig(({ command }) => ({
           "better-sqlite3",
           "@huggingface/transformers",
           "onnxruntime-node",
+          "sharp",
           "pdfjs-dist/legacy/build/pdf.mjs",
           "electron-updater",
         ],

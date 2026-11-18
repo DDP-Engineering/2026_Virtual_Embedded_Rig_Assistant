@@ -268,6 +268,7 @@ export async function stageRuntime(
     "better-sqlite3",
     "@huggingface/transformers",
     "onnxruntime-node",
+    "sharp",
     "pdfjs-dist",
     "electron-updater",
     "node-pty",

@@ -1,6 +1,7 @@
 import type { Message, ToolResultMessage } from "@earendil-works/pi-ai";
-import type { ModelCapabilities } from "@vera/shared";
+import { acceptsImages, type ModelCapabilities } from "@vera/shared";
 import type { ToolSpec } from "../llm/gateway.js";
+import { imagePaths, imageRequestMessage } from "./message-images.js";
 
 export interface ContextInput {
   system: string;
@@ -20,16 +21,34 @@ export interface ContextView {
   compactionStatus?: "none" | "running" | "completed" | "unavailable" | "failed";
   requestViewTokens?: number;
 }
-/** Conservative UTF-8 byte estimate plus explicit framing; replace with a whole-request tokenizer when available. */
-export const conservativeCounter: TokenCounter = (input) => ({
-  tokens:
-    Buffer.byteLength(JSON.stringify(input), "utf8") +
-    32 +
-    16 +
-    input.tools.length * 32 +
-    input.messages.reduce((n, m) => n + 16 + (Array.isArray(m.content) ? m.content.length * 8 : 8), 0),
-  estimated: true,
-});
+const estimatedImageTokens = 2048;
+// Use the longest supported MIME spelling to include the request framing in preflight.
+const imageEstimate = { type: "image" as const, mimeType: "image/jpeg", data: "" };
+
+/** Estimate text and framing from UTF-8 bytes and image cost separately from its encoding. */
+export const conservativeCounter: TokenCounter = (input) => {
+  let images = 0;
+  const messages = input.messages.map((message) => {
+    if ((message.role !== "user" && message.role !== "toolResult") || typeof message.content === "string")
+      return message;
+    const content = message.content.map((part) => {
+      if (part.type !== "image") return part;
+      images++;
+      return { ...part, data: "" };
+    });
+    return { ...message, content };
+  });
+  return {
+    tokens:
+      Buffer.byteLength(JSON.stringify({ ...input, messages }), "utf8") +
+      32 +
+      16 +
+      input.tools.length * 32 +
+      input.messages.reduce((n, m) => n + 16 + (Array.isArray(m.content) ? m.content.length * 8 : 8), 0) +
+      images * estimatedImageTokens,
+    estimated: true,
+  };
+};
 export function sourceRefs(value: unknown, refs = new Set<string>()): Set<string> {
   if (typeof value === "string") {
     for (const match of value.matchAll(/\[\[([^\]]+)\]\]/g)) if (match[1]) refs.add(match[1]);
@@ -73,12 +92,29 @@ function minimumResult(result: ToolResultMessage): ToolResultMessage {
 }
 export class ContextPolicy {
   constructor(private readonly count: TokenCounter = conservativeCounter) {}
-  prepare(input: ContextInput, capabilities: ModelCapabilities, reduce = true): ContextView {
+  prepare(
+    input: ContextInput,
+    capabilities: ModelCapabilities,
+    reduce = true,
+    scrubAttachmentText?: (text: string) => string,
+  ): ContextView {
     const messages = structuredClone(input.messages);
     const safetyMarginTokens = Math.max(1024, Math.ceil(capabilities.contextWindow * 0.05));
     const inputBudgetTokens = capabilities.contextWindow - capabilities.maxOutputTokens - safetyMarginTokens;
+    const vision = acceptsImages(capabilities);
     const measure = () => {
-      const value = this.count({ ...input, messages });
+      const projected = messages.map((message) => {
+        const paths = imagePaths(message);
+        return message.role === "user" && paths.length
+          ? imageRequestMessage(
+              message,
+              paths,
+              vision ? paths.map(() => imageEstimate) : undefined,
+              scrubAttachmentText,
+            )
+          : message;
+      });
+      const value = this.count({ ...input, messages: projected });
       if (!Number.isSafeInteger(value.tokens) || value.tokens < 0)
         throw new Error("Invalid token counter result");
       return value;

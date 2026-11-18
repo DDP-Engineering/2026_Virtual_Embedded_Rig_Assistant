@@ -16,6 +16,8 @@ Scrie în caseta de mesaj (**Întreabă VERA despre proiect…**). Enter trimite
 
 Lângă caseta de mesaj alegi **Model**, **Nivel de reasoning** și **Mod de permisiuni** pentru această sesiune. Sesiunile noi preiau modelul și modul de permisiuni din setările workbench-ului.
 
+Un mesaj poate indica până la opt imagini PNG, JPEG, GIF sau WebP din workbench, cu o limită de 20 MiB pe fișier. VERA redimensionează copia trimisă unui model care acceptă imagini la cel mult 2048 de pixeli pe latura lungă și păstrează fișierul original. Un model care acceptă doar text primește căile. Compactarea păstrează căile imaginilor mai vechi în note text. Exporturile sesiunii includ aceste căi.
+
 Vezi [Furnizori și modele](providers.md) pentru a afla cum stabilește VERA dacă modelul ales acceptă imagini.
 
 ## Ghidează sau oprește o execuție în curs
@@ -84,4 +86,4 @@ Fiecare terminal pornește privat. Pentru a permite agentului să citească unul
 
 ## Mascarea secretelor pentru agent și exporturi
 
-Mascarea Agent și model se aplică rezultatelor instrumentelor trimise furnizorului, răspunsurilor transmise, căutării și afișării sesiunilor. Artefacte și exporturi controlează separat conținutul și descrierile artefactelor salvate, exportul lor și exporturile JSON/Markdown ale sesiunilor. Ambele sunt implicit active; alegerea explicită a workbench-ului are prioritate față de setarea curentă a aplicației. Oprirea mascării Agent și model permite trimiterea către furnizor a secretelor stocate găsite în fișiere sau rezultate. Rulări și Afișare nu schimbă aceste reguli. Erorile furnizorului, testele conexiunii și jurnalele de diagnostic maschează mereu credențialele stocate. Citirea terminalului cere în continuare acordul pentru acel terminal. Textul deja salvat ca [REDACTED] nu poate fi recuperat prin oprirea mascării; citește din nou sursa originală sau recreează artefactul.
+Mascarea Agent și model se aplică rezultatelor instrumentelor trimise furnizorului, răspunsurilor transmise, căutării și afișării sesiunilor. Mascarea verifică textul căii fișierului. Pixelii imaginii sunt în afara domeniului ei. Artefacte și exporturi controlează separat conținutul și descrierile artefactelor salvate, exportul lor și exporturile JSON/Markdown ale sesiunilor. Ambele sunt implicit active; alegerea explicită a workbench-ului are prioritate față de setarea curentă a aplicației. Oprirea mascării Agent și model permite trimiterea către furnizor a secretelor stocate găsite în fișiere sau rezultate. Rulări și Afișare nu schimbă aceste reguli. Erorile furnizorului, testele conexiunii și jurnalele de diagnostic maschează mereu credențialele stocate. Citirea terminalului cere în continuare acordul pentru acel terminal. Textul deja salvat ca [REDACTED] nu poate fi recuperat prin oprirea mascării; citește din nou sursa originală sau recreează artefactul.

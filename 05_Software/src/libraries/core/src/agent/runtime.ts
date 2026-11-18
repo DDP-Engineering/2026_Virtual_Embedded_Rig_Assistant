@@ -2,6 +2,7 @@
 import type { AssistantMessage, Message, ToolCall, ToolResultMessage } from "@earendil-works/pi-ai";
 import { veraError } from "@vera/shared";
 import { ContextCompactor } from "./compaction.js";
+import type { UserImageMessage } from "./message-images.js";
 import { toolSpecs } from "./tool.js";
 import type { AgentRuntime, RuntimeEvent, RuntimeHost, RuntimeInit, StopReason } from "./types.js";
 
@@ -65,6 +66,15 @@ export function buildContext(stored: Message[], _now: number, currentStart = sto
   }
   return out;
 }
+function userMessage(message: { text: string; images?: string[]; timestamp: number }): UserImageMessage {
+  return {
+    role: "user",
+    content: message.text,
+    ...(message.images?.length && { images: [...message.images] }),
+    timestamp: message.timestamp,
+  };
+}
+
 export class ReferenceRuntime implements AgentRuntime {
   private init: RuntimeInit | undefined;
   private transcript: Message[] = [];
@@ -111,7 +121,7 @@ export class ReferenceRuntime implements AgentRuntime {
   abort(): void {
     this.controller?.abort();
   }
-  async send(text: string): Promise<{ stopReason: StopReason }> {
+  async send(text: string, images?: string[]): Promise<{ stopReason: StopReason }> {
     if (this.controller) throw veraError("BUSY");
     const init = this.init;
     if (!init) throw veraError("INVALID");
@@ -121,8 +131,9 @@ export class ReferenceRuntime implements AgentRuntime {
     const messageId = this.host.nextId();
     const currentStart = this.transcript.length;
     const recovered = new Set(this.host.steering?.().map((message) => message.messageId));
-    this.transcript.push({ role: "user", content: text, timestamp: this.host.now() });
-    this.emit({ type: "message.user", messageId, text });
+    const prompt = userMessage({ text, ...(images && { images }), timestamp: this.host.now() });
+    this.transcript.push(prompt);
+    this.emit({ type: "message.user", messageId, text, ...(prompt.images && { images: prompt.images }) });
     this.emit({ type: "turn.started", turnId });
     let stopReason: StopReason = "error";
     try {
@@ -159,11 +170,6 @@ export class ReferenceRuntime implements AgentRuntime {
     const recoveredPositions = new Set<number>();
     const pending = () =>
       (this.host.steering?.() ?? []).filter((message) => !delivered.has(message.messageId));
-    const userMessage = (message: { text: string; timestamp: number }): Message => ({
-      role: "user",
-      content: message.text,
-      timestamp: message.timestamp,
-    });
     for (;;) {
       if (signal.aborted) return "aborted";
       const tools = toolSpecs(init.tools);

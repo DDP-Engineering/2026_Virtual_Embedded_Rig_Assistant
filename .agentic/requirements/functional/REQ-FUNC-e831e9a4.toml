@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-e831e9a4"
+
+title = "Dispatch image paths to text models"
+
+status = "active"
+
+requirement = """
+When the chosen model accepts text only, VERA shall send image paths as text.
+"""
+
+verification = "Record a fake compatible endpoint request for a text-only model and inspect its user message for the path and absence of image parts."
+
+affected_paths = ["05_Software/src/libraries/core/src/sessions/session-images.ts", "05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/libraries/core/src/sessions/masking.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/sessions/session-images.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-19
+updated = 2026-11-19

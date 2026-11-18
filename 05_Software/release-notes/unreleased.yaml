@@ -2,6 +2,13 @@ version: Unreleased
 date: null
 entries:
   - category: new
+    topic: { en: Chat, ro: Chat, de: Chat, fr: Chat }
+    text:
+      en: Send workbench images to models that accept them. Text-only models receive the file paths.
+      ro: Trimite imagini din workbench modelelor compatibile. Modelele doar text primesc căile.
+      de: Bilder aus der Workbench an geeignete Modelle senden. Reine Textmodelle erhalten die Pfade.
+      fr: Envoyez des images du banc aux modèles compatibles. Les modèles texte reçoivent les chemins.
+  - category: new
     topic: { en: Providers, ro: Furnizori, de: Anbieter, fr: Fournisseurs }
     text:
       en: Set whether individual models on local and compatible connections accept images.
@@ -123,17 +130,10 @@ entries:
   - category: new
     topic: { en: Workbench, ro: Workbench, de: Workbench, fr: Banc de travail }
     text:
-      en: Indexing skips what the repository's Git ignore rules exclude, such as build output.
-      ro: Indexarea omite ce exclud regulile Git ignore ale depozitului, de exemplu rezultatele build-ului.
-      de: Die Indizierung überspringt, was die Git-Ignore-Regeln des Repositorys ausschließen, etwa Builds.
-      fr: L’indexation ignore ce que les règles Git ignore du dépôt excluent, comme les sorties de build.
-  - category: new
-    topic: { en: Workbench, ro: Workbench, de: Workbench, fr: Banc de travail }
-    text:
-      en: A workbench can set a maximum file size for indexing; larger files show why they were skipped.
-      ro: Un workbench poate seta o dimensiune maximă pentru indexare; fișierele mai mari arată motivul.
-      de: Ein Workbench kann eine maximale Dateigröße zum Indizieren festlegen; größere zeigen den Grund.
-      fr: Un banc peut fixer une taille maximale à indexer ; les fichiers plus grands montrent pourquoi.
+      en: Indexing honors Git ignore and explains skips over a configurable file size limit.
+      ro: Indexarea respectă Git ignore și explică omiterile peste limita de mărime configurabilă.
+      de: Die Indizierung beachtet Git Ignore und begründet Auslassungen über dem einstellbaren Limit.
+      fr: L’indexation suit Git ignore et explique les exclusions au-delà de la taille configurable.
   - category: new
     topic: { en: Workbench, ro: Workbench, de: Workbench, fr: Banc de travail }
     text:

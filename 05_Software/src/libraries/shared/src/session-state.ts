@@ -3,7 +3,13 @@ import { downloadApprovalSchema, validDownloadApproval } from "./downloads.js";
 import { type SessionEvent, usageEventSchema } from "./events.js";
 import { programApprovalSchema, validProgramApproval } from "./program-rules.js";
 import { reasoningOptionSchema } from "./provider-discovery.js";
-import { permissionModeSchema, sessionStatusSchema, stopReasonSchema, todoItemsSchema } from "./session.js";
+import {
+  messageImagesSchema,
+  permissionModeSchema,
+  sessionStatusSchema,
+  stopReasonSchema,
+  todoItemsSchema,
+} from "./session.js";
 
 const assistant = z.strictObject({
   kind: z.literal("assistant"),
@@ -47,6 +53,7 @@ export const sessionStateSchema = z.strictObject({
         kind: z.literal("user"),
         id: z.string(),
         text: z.string(),
+        images: messageImagesSchema.optional(),
         pending: z.boolean().optional(),
         timestamp: z.number().int().nonnegative().optional(),
         usage: z
@@ -273,7 +280,13 @@ function reduce(d: Draft, event: SessionEvent): void {
       break;
     }
     case "message.user":
-      if (d.find(event.messageId) < 0) d.push({ kind: "user", id: event.messageId, text: event.text });
+      if (d.find(event.messageId) < 0)
+        d.push({
+          kind: "user",
+          id: event.messageId,
+          text: event.text,
+          ...(event.images && { images: event.images }),
+        });
       break;
     case "message.bookmarked": {
       if (d.find(event.messageId, "user") < 0) break;
@@ -288,6 +301,7 @@ function reduce(d: Draft, event: SessionEvent): void {
           kind: "user",
           id: event.messageId,
           text: event.text,
+          ...(event.images && { images: event.images }),
           pending: true,
           timestamp: event.timestamp,
         });

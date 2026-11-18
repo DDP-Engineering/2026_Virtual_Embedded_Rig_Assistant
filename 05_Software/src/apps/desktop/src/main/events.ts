@@ -75,7 +75,8 @@ function sanitizeTodos(items: TodoItem[], scrub: (text: string) => string): Todo
 }
 type SessionItem = SessionState["items"][number];
 function sanitizeItem(item: SessionItem, scrub: (text: string) => string): SessionItem {
-  if (item.kind === "user") return { ...item, text: scrub(item.text) };
+  if (item.kind === "user")
+    return { ...item, text: scrub(item.text), ...(item.images && { images: item.images.map(scrub) }) };
   if (item.kind === "assistant")
     return {
       ...item,
@@ -213,6 +214,8 @@ export function sanitizeEvent(
       if (event.title !== undefined) Reflect.set(result, "title", scrub(event.title).slice(0, 60));
       if (event.modelRef !== undefined) Reflect.set(result, "modelRef", scrubModel(event.modelRef, scrub));
     }
+    if ((event.type === "message.user" || event.type === "message.queued") && event.images)
+      Reflect.set(result, "images", event.images.map(scrub));
     if (event.type === "tool.started") Reflect.set(result, "args", extra(event.args));
     if ((event.type === "approval.requested" || event.type === "tool.done") && event.program)
       Reflect.set(result, "program", scrubProgram(event.program, scrub));

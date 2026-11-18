@@ -28,15 +28,26 @@ const data = sessionExportSchema.parse({
     {
       seq: 1,
       createdAt: null,
-      event: { type: "message.queued", messageId: "q", text: "secret", timestamp: 1 },
+      event: { type: "message.user", messageId: "u", text: "secret", images: ["photos/secret.jpeg"] },
     },
     {
       seq: 2,
       createdAt: null,
-      event: { type: "tool.started", callId: "c", name: "read", args: { secret: "secret" } },
+      event: {
+        type: "message.queued",
+        messageId: "q",
+        text: "secret",
+        timestamp: 1,
+        images: ["captures/secret.png"],
+      },
     },
     {
       seq: 3,
+      createdAt: null,
+      event: { type: "tool.started", callId: "c", name: "read", args: { secret: "secret" } },
+    },
+    {
+      seq: 4,
       createdAt: null,
       event: {
         type: "message.done",
@@ -81,12 +92,22 @@ it("cancels without writing; snapshots after picker and redacts structured JSON 
     if (format === "json") {
       const result = sessionExportSchema.parse(JSON.parse(String(content)));
       expect(result.events[0]?.event).toMatchObject({
+        type: "message.user",
+        messageId: "u",
+        images: ["photos/[REDACTED].jpeg"],
+      });
+      expect(result.events[1]?.event).toMatchObject({
         type: "message.queued",
         messageId: "q",
         text: "[REDACTED]",
+        images: ["captures/[REDACTED].png"],
       });
-      expect(result.events[1]?.event).toMatchObject({ args: { "[REDACTED]": "[REDACTED]" } });
-    } else expect(content).toContain("+[REDACTED]");
+      expect(result.events[2]?.event).toMatchObject({ args: { "[REDACTED]": "[REDACTED]" } });
+    } else {
+      expect(content).toContain("+[REDACTED]");
+      expect(content).toContain("captures/[REDACTED].png");
+      expect(content).toContain("photos/[REDACTED].jpeg");
+    }
   }
 });
 
