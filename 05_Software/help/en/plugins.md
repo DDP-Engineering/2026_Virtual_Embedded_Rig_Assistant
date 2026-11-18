@@ -34,6 +34,16 @@ A workbench can also carry plugin packages in `.vera/plugins/`. They are used on
 
 Installing does not enable a plugin. Open **Edit workbench** → **Plugins**, check the plugin and select **Save**. Only enabled plugins are offered to the agent in that workbench.
 
+## Tools and plugin capabilities
+
+**Tools** contains general VERA capabilities, including `run_program`, `run_command`, `program_output`, `program_stop` and terminal access. Plugin programs, including Git's dedicated integration, are listed with their plugin under **Plugins**. Their execution still requires the generic tool allowance and the existing command risk and session permission rules.
+
+**Allowed tools** on a plugin card controls its specialized capabilities, independently of the plugin checkbox. Electrical calculations and the industrial catalog require their named provider. `apply_candidate` requires official `kicad-layout`; `parts_search` requires official `parts-search`, web access and an enabled supplier set up in the plugin's Configuration on the Plugins page. The dependency state distinguishes a disabled, missing, unloadable or non-official package from an enabled dependency; enabled does not promise that external programs, supplier credentials or session permissions are ready. Use **Configure** to check program dependencies.
+
+**Shared electrical / automation tools** is the only place for `electrical_model` and `electrical_model_change`. At least one enabled, loadable plugin from either ecosystem is required. Other ecosystems do not activate them. **Tools requiring plugins not installed** lets you inspect dependencies and retain restrictions even without the package.
+
+Allowing a tool never installs or enables a plugin. Enabling a plugin never removes an explicit tool restriction. Both lists are drafts until **Save**; **Cancel** discards both. Restrictions persist when reopening, and read-only sessions still hide write and execution tools. Use Tab to reach checkboxes and Space to toggle them; Enter or Space opens capability groups.
+
 ## Dependencies
 
 The **Status** block of an installed plugin checks two things: **Dependencies** and **Configuration**. It shows **Ready** only when both are ready.

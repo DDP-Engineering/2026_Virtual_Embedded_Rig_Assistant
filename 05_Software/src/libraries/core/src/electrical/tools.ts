@@ -8,8 +8,11 @@ import {
   type ElectricalResult,
   electricalIdSchema,
   electricalLimits,
+  electricalModelEcosystems,
   electricalModelPath,
+  electricalModelToolNames,
   electricalObjectTypes,
+  electricalPluginTools,
   electricalResultFile,
   electricalResultsDir,
 } from "@vera/shared";
@@ -25,17 +28,7 @@ import { checkModel, entityHash, modelIssues, parseModel, problemsText, serializ
 import { renderResultReport } from "./report.js";
 import { checkResult, resultFreshness } from "./results.js";
 
-/** The model tools, offered while any plugin of the electrical or automation ecosystem is loaded. */
-export const electricalModelToolNames: readonly string[] = ["electrical_model", "electrical_model_change"];
-/** The plugin-specific tools, each offered only while its own plugin (by plugin ID) is loaded. */
-export const electricalPluginTools: Readonly<Record<string, string>> = {
-  industrial_catalog: "industrial-catalog",
-  electrical_network: "electrical-network",
-  protection_coordination: "protection-coordination",
-  motor_drives: "motor-drives",
-  power_quality: "power-quality-pfc",
-  lighting_design: "lighting-design",
-};
+export { electricalModelEcosystems, electricalModelToolNames, electricalPluginTools } from "@vera/shared";
 /** Every tool a host offers only with electrical or automation plugins loaded. */
 export const electricalToolNames: readonly string[] = [
   ...electricalModelToolNames,
@@ -44,11 +37,9 @@ export const electricalToolNames: readonly string[] = [
 /** Whether a host whose loaded electrical/automation plugins have these IDs offers the tool. */
 export function electricalToolOffered(name: string, plugins: readonly string[]): boolean {
   if (!electricalToolNames.includes(name)) return true;
-  const owner = electricalPluginTools[name];
+  const owner = (electricalPluginTools as Readonly<Record<string, string>>)[name];
   return owner === undefined ? plugins.length > 0 : plugins.includes(owner);
 }
-/** Plugins of these ecosystems build on the electrical model; the desktop enables its tools while one is loaded. */
-export const electricalModelEcosystems: readonly string[] = ["electrical", "automation"];
 export function electricalModelPlugin(plugin: {
   manifest: Pick<LoadedPlugin["manifest"], "ecosystem">;
 }): boolean {
