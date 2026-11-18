@@ -8,6 +8,7 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ### Fixed
 
+- Skills clarifies activation and scopes, opens new instructions immediately and supports read-only viewing and retries.
 - Closing a terminal suspends its I/O and ignores late responses from the terminal being closed.
 - Tool calls no longer show blank output blocks when the result is empty or contains only whitespace.
 - Tool activity shows readable plan steps; translation catalogs refresh in an already running development app.

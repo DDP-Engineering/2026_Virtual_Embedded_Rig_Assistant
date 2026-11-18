@@ -170,11 +170,15 @@ Main follows the saved preference with nativeTheme.themeSource. Panels resize by
 Renderer geometry lives in the separate localStorage key vera.ui.layout at version 1, with a required source width; invalid or other-version data uses the defaults.
 The strict application settings schema stays authoritative. Providers edits credentials and custom endpoints. Data & privacy edits app defaults with Save/Cancel; Updates and About have their own panels.
 
-Skills settings opens from Edit workbench → Tools/skills or session Context. Skills live at
+Skills management uses shared `components/skills.tsx` in Edit workbench → Skills and the session
+Instructions and skills dialog; `components/skill-editor.tsx` opens instructions. Skills live at
 `<workbench>/.vera/skills/<name>/SKILL.md` or `<userData>/skills/<name>/SKILL.md`; workbench
-folders take precedence. Create supplies an editable template; invalid skills show
-diagnostics, and disabled/invalid skills stay outside the next-turn prompt index.
-The agent loads enabled instructions and confined extra files with `load_skill`.
+folders take precedence. Create and edit opens the new template immediately. Workbench/user
+instructions can be edited; official/plugin instructions can only be viewed. Activation saves
+immediately per workbench and does not execute anything; Close never rolls it back. User scope
+belongs to the current VERA profile, not other users or installations. Invalid skills show diagnostics,
+and disabled/invalid skills stay outside the next-turn prompt index. The agent loads enabled
+instructions and confined extra files with `load_skill`.
 
 Production loads bundled assets through the confined `vera://app` protocol, with the same restrictive
 CSP in both the HTML meta and response headers. Development uses `http://127.0.0.1:5173` and permits

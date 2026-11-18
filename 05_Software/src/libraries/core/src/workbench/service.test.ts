@@ -466,6 +466,29 @@ it("opens the current workbench format unchanged and refuses another format with
   expect(await readFile(h.paths.settings, "utf8")).toBe(beforeSettings);
   expect(existsSync(join(h.folder, ".vera/lock"))).toBe(false);
 });
+it("persists skill activation per workbench while sharing user instructions in the profile", async () => {
+  const h = await harness();
+  try {
+    const a = await h.service.create(h.folder, "A");
+    await h.service.saveSkill(a.config.id, "user", "personal");
+    await h.service.toggleSkill(a.config.id, "personal", false);
+    await h.service.close();
+    const other = join(h.root, "other");
+    await mkdir(other);
+    const b = await h.service.create(other, "B");
+    expect(
+      (await h.service.listSkills(b.config.id)).find((skill) => skill.name === "personal"),
+    ).toMatchObject({ source: "user", enabled: true });
+    expect((await h.service.openSkill(b.config.id, "user", "personal")).content).toContain("name: personal");
+    await h.service.close();
+    await h.service.open(h.folder);
+    expect(
+      (await h.service.listSkills(a.config.id)).find((skill) => skill.name === "personal"),
+    ).toMatchObject({ source: "user", enabled: false });
+  } finally {
+    await h.service.close();
+  }
+});
 it("manages skills exclusively with stale hash, ownership and current workbench admission", async () => {
   const h = await harness();
   try {

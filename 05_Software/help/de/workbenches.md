@@ -43,6 +43,14 @@ Wählen Sie **Workbench bearbeiten** in der Übersicht oder im Zeilenmenü. Änd
 
 Halten Sie die Anweisungen kurz und sachlich: das Board, der Mikrocontroller, die Toolchain, Konventionen. Nur die ersten 16 KB werden an den Agenten übergeben; VERA warnt, wenn der Text länger ist.
 
+## Skills
+
+Skills sind wiederverwendbare Agentenanweisungen, keine Befehle. Öffnen Sie **Workbench bearbeiten > Skills** oder **Skills** im Sitzungstab **Anweisungen und Skills**. **Aktiviert** macht Anweisungen in dieser Workbench verfügbar, ohne sie auszuführen. Die Aktivierung wird sofort gespeichert; Schließen des Panels oder Abbrechen anderer Workbench-Änderungen macht sie nicht rückgängig.
+
+Wählen Sie **Skill erstellen**, geben Sie einen Namen aus Kleinbuchstaben (a–z), Ziffern und Bindestrichen ein (1–64 Zeichen) und wählen Sie **Diese Workbench** oder **Alle meine Workbenches**. Letzteres speichert den Skill im aktuellen VERA-Benutzerprofil, ohne ihn automatisch mit anderen Benutzern oder Installationen zu teilen. **Erstellen und bearbeiten** öffnet eine Vorlage: Beschreibung und Ablauf ergänzen, dann speichern. **Abbrechen** verwirft unfertige Änderungen, nicht den bereits erstellten Skill.
+
+Workbench- und Benutzer-Skills bieten **Anweisungen bearbeiten**. Offizielle und Plugin-Skills bieten schreibgeschütztes **Anweisungen anzeigen**. **Liste aktualisieren** liest die Liste neu; **Erneut versuchen** erscheint nur nach einem Fehler und wiederholt diese Operation. Schreibgeschützte Workbenches erlauben Aktualisieren und Anzeigen, aber keine Änderungen. **Schließen** oder Escape schließt den Dialog; Escape verwirft zuerst ein geöffnetes Erstellungs- oder Bearbeitungsformular.
+
 ## Tabs im rechten Bereich
 
 Öffnen Sie **Workbench bearbeiten > Oberfläche > Tabs im rechten Bereich**. Wählen Sie die sichtbaren Tabs: Anweisungen und Skills, Dateien, Änderungen, Artefakte, Plan, Läufe und Terminal. Standardmäßig sind alle ausgewählt. **Standard wiederherstellen** wählt alle im Entwurf aus; **Speichern** übernimmt den Entwurf, **Abbrechen** verwirft ihn.

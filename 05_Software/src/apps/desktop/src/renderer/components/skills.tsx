@@ -1,10 +1,12 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import type { SkillSummary } from "@vera/shared";
+import { type SkillSummary, skillNameSchema } from "@vera/shared";
+import { Plus, RefreshCw, X } from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../api/index.js";
 import { ErrorMessage } from "./error-message.js";
 import { Pager, usePaged } from "./pager.js";
+import { SkillEditor } from "./skill-editor.js";
 
 function defineTranslationKeys<const T extends readonly string[]>(keys: T): T {
   return keys;
@@ -17,10 +19,6 @@ const errorKeys = defineTranslationKeys([
   "skills.errors.unavailable",
 ]);
 const errorIndex = { name: 0, description: 1, frontmatter: 2, unavailable: 3 } as const;
-/** Workbench and user skills open in the editor; plugin skills belong to the installed plugin. */
-type EditableSkill = SkillSummary & { source: "workbench" | "user" };
-const editable = (skill: SkillSummary): skill is EditableSkill =>
-  skill.source === "workbench" || skill.source === "user";
 
 export function SkillSettings({ workbenchId, readOnly }: { workbenchId: string; readOnly: boolean }) {
   const { t } = useTranslation();
@@ -61,7 +59,9 @@ function SkillsDialog({
   const { t } = useTranslation();
   const titleId = useId();
   const dialog = useRef<HTMLDialogElement>(null);
+  const [busy, setBusy] = useState(false);
   function finish() {
+    if (busy) return;
     dialog.current?.close();
     close();
   }
@@ -81,258 +81,313 @@ function SkillsDialog({
         finish();
       }}
     >
-      <h2 id={titleId}>{t("skills.settings")}</h2>
-      <SkillsPanel workbenchId={workbenchId} readOnly={readOnly} />
-      <button type="button" onClick={finish}>
-        {t("workbench.cancel")}
-      </button>
+      <header className="skills-toolbar">
+        <h2 id={titleId}>{t("skills.settings")}</h2>
+        <button
+          type="button"
+          className="icon-button"
+          aria-label={t("skills.close")}
+          title={t("skills.close")}
+          disabled={busy}
+          onClick={finish}
+        >
+          <X aria-hidden="true" />
+        </button>
+      </header>
+      <SkillsPanel workbenchId={workbenchId} readOnly={readOnly} busyChanged={setBusy} />
     </dialog>
   );
 }
-/**
- * The workbench's skills: creating one on the left, the list on the right (enable, open SKILL.md),
- * one page at a time. Shown in the workbench editor's Skills section and inside the skills dialog.
- */
-export function SkillsPanel({ workbenchId, readOnly }: { workbenchId: string; readOnly: boolean }) {
+
+/** Shared immediate-save skill management for the workbench editor and session dialog. */
+export function SkillsPanel({
+  workbenchId,
+  readOnly,
+  busyChanged,
+}: {
+  workbenchId: string;
+  readOnly: boolean;
+  busyChanged?: (busy: boolean) => void;
+}) {
   const { t } = useTranslation();
   const client = useQueryClient();
   const formId = useId();
+  const panel = useRef<HTMLDivElement>(null);
+  const createTrigger = useRef<HTMLButtonElement>(null);
+  const nameInput = useRef<HTMLInputElement>(null);
+  const editorTrigger = useRef<HTMLButtonElement | null>(null);
+  const restoreCreateFocus = useRef(false);
+  const submitting = useRef(false);
+  const mounted = useRef(true);
+  const [creating, setCreating] = useState(false);
   const [name, setName] = useState("");
   const [source, setSource] = useState<"workbench" | "user">("workbench");
-  const [editing, setEditing] = useState<EditableSkill>();
+  const [editing, setEditing] = useState<{ skill: SkillSummary; template: boolean }>();
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<unknown>();
-  const editorTrigger = useRef<HTMLButtonElement | null>(null);
+  const [failure, setFailure] = useState<{ error: unknown; retry: () => Promise<unknown> }>();
+  const [notice, setNotice] = useState("");
   const skills = useQuery({
     queryKey: ["skills", workbenchId],
     queryFn: () => api.invoke("skills.list", { workbenchId }),
+    retry: false,
   });
   const { rows, pager } = usePaged(skills.data ?? []);
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
+  useEffect(() => {
+    busyChanged?.(busy);
+  }, [busy, busyChanged]);
+  useEffect(() => {
+    if (creating) nameInput.current?.focus();
+    else if (restoreCreateFocus.current) {
+      createTrigger.current?.focus();
+      restoreCreateFocus.current = false;
+    }
+  }, [creating]);
   async function perform(action: () => Promise<unknown>) {
+    if (submitting.current || readOnly) return;
+    submitting.current = true;
     setBusy(true);
-    setError(undefined);
+    setFailure(undefined);
+    setNotice("");
     try {
       await action();
       await client.invalidateQueries({ queryKey: ["skills", workbenchId] });
-    } catch (failure) {
-      setError(failure);
+    } catch (error) {
+      if (mounted.current) setFailure({ error, retry: action });
     } finally {
-      setBusy(false);
+      submitting.current = false;
+      if (mounted.current) setBusy(false);
     }
   }
+  function cancelCreation() {
+    if (submitting.current) return;
+    restoreCreateFocus.current = true;
+    setCreating(false);
+    setName("");
+    setFailure(undefined);
+  }
+  async function refresh() {
+    setNotice("");
+    const result = await skills.refetch();
+    if (!result.isError && mounted.current) setNotice(t("skills.refreshed"));
+  }
+  const disabled = busy || skills.isFetching;
   return (
-    <div className="skills-panel" data-skills-panel>
-      <div className="skills-panel-side">
-        {readOnly && <p role="status">{t("workbench.readOnly")}</p>}
-        {(error !== undefined || skills.isError) && <ErrorMessage error={error ?? skills.error} />}
+    <div ref={panel} className="skills-panel" data-skills-panel>
+      <p id={`${formId}-activation`}>{t("skills.explanation")}</p>
+      {readOnly && <p role="status">{t("skills.readOnlyWorkbench")}</p>}
+      <div className="skills-toolbar">
+        <button
+          ref={createTrigger}
+          type="button"
+          data-action="new-skill"
+          disabled={readOnly || disabled || creating}
+          title={readOnly ? t("skills.readOnlyWorkbench") : undefined}
+          onClick={() => {
+            setFailure(undefined);
+            setNotice("");
+            setCreating(true);
+          }}
+        >
+          <Plus aria-hidden="true" /> {t("skills.new")}
+        </button>
+        <button
+          type="button"
+          className="icon-button"
+          data-action="refresh-skills"
+          disabled={disabled}
+          aria-label={t("skills.refresh")}
+          title={t("skills.refresh")}
+          onClick={() => void refresh()}
+        >
+          <RefreshCw aria-hidden="true" />
+        </button>
+      </div>
+      <div role="status" aria-live="polite" className="skills-feedback">
+        {busy ? t("skills.saving") : skills.isFetching ? t("skills.loading") : notice}
+      </div>
+      {failure && (
+        <div role="alert">
+          <p>{t("skills.actionFailed")}</p>
+          <ErrorMessage error={failure.error} />
+          <button type="button" disabled={disabled || readOnly} onClick={() => void perform(failure.retry)}>
+            {t("settings.retry")}
+          </button>
+        </div>
+      )}
+      {creating && (
         <form
-          className="workbench-form"
+          className="workbench-form skill-create"
+          aria-busy={busy}
+          onKeyDown={(event) => {
+            if (event.key === "Escape") {
+              event.preventDefault();
+              event.stopPropagation();
+              cancelCreation();
+            }
+          }}
           onSubmit={(event) => {
             event.preventDefault();
+            event.stopPropagation();
+            if (!skillNameSchema.safeParse(name).success) return;
             void perform(async () => {
               await api.invoke("skills.create", { workbenchId, name, source });
+              if (!mounted.current) return;
+              setCreating(false);
               setName("");
+              editorTrigger.current = createTrigger.current;
+              setEditing({ skill: { name, source, description: "", enabled: true }, template: true });
             });
           }}
         >
+          <p id={`${formId}-name-help`}>{t("skills.nameHelp")}</p>
           <label htmlFor={`${formId}-name`}>{t("skills.name")}</label>
           <input
+            ref={nameInput}
             id={`${formId}-name`}
             data-skill-name
             required
             pattern="[a-z0-9-]{1,64}"
             maxLength={64}
             value={name}
+            aria-describedby={`${formId}-name-help`}
+            aria-invalid={name.length > 0 && !skillNameSchema.safeParse(name).success}
             disabled={busy || readOnly}
-            onChange={(event) => setName(event.target.value)}
+            onChange={(event) => {
+              setName(event.target.value);
+              setFailure(undefined);
+            }}
           />
           <label htmlFor={`${formId}-source`}>{t("skills.source")}</label>
           <select
             id={`${formId}-source`}
+            data-skill-source
             value={source}
             disabled={busy || readOnly}
-            onChange={(event) => setSource(event.target.value as "workbench" | "user")}
+            aria-describedby={`${formId}-scope`}
+            onChange={(event) => {
+              setSource(event.target.value as "workbench" | "user");
+              setFailure(undefined);
+            }}
           >
-            <option value="workbench">{t("skills.workbench")}</option>
-            <option value="user">{t("skills.user")}</option>
+            <option value="workbench">{t("skills.locationWorkbench")}</option>
+            <option value="user">{t("skills.locationUser")}</option>
           </select>
-          <button
-            type="submit"
-            data-action="create-skill"
-            className="primary"
-            disabled={busy || readOnly || !/^[a-z0-9-]{1,64}$/.test(name)}
-          >
-            {t("skills.create")}
-          </button>
+          <p id={`${formId}-scope`}>
+            {source === "workbench" ? t("skills.scopeWorkbench") : t("skills.scopeUser")}
+          </p>
+          <div className="workbench-actions">
+            <button type="button" disabled={busy} onClick={cancelCreation}>
+              {t("workbench.cancel")}
+            </button>
+            <button
+              type="submit"
+              data-action="create-skill"
+              className="primary"
+              aria-describedby={`${formId}-name-help`}
+              disabled={busy || readOnly || !skillNameSchema.safeParse(name).success}
+            >
+              {t("skills.create")}
+            </button>
+          </div>
         </form>
-        <button type="button" disabled={busy} onClick={() => void skills.refetch()}>
-          {t("settings.retry")}
-        </button>
-      </div>
-      <div className="skills-panel-list">
-        {skills.isPending && <p role="status">{t("home.loading")}</p>}
+      )}
+      <div className="skills-panel-list" aria-busy={skills.isFetching || busy}>
+        {skills.isError && (
+          <div role="alert">
+            <p>{t("skills.listFailed")}</p>
+            <ErrorMessage error={skills.error} />
+            <button type="button" disabled={disabled} onClick={() => void refresh()}>
+              {t("settings.retry")}
+            </button>
+          </div>
+        )}
         {skills.data?.length === 0 && <p className="muted">{t("chat.noSkills")}</p>}
         <ul className="skills-list">
-          {rows.map((skill) => (
-            <li key={skill.name} className="workbench-tool-option" data-skill={skill.name}>
-              <input
-                type="checkbox"
-                aria-label={t("skills.enabledNamed", { name: skill.name })}
-                checked={skill.enabled}
-                disabled={busy || readOnly}
-                onChange={(event) =>
-                  void perform(() =>
-                    api.invoke("skills.toggle", {
-                      workbenchId,
-                      name: skill.name,
-                      enabled: event.target.checked,
-                    }),
-                  )
-                }
-              />
-              <span className="skill-text">
-                <strong>{skill.name}</strong>{" "}
-                <span className="muted">
-                  {skill.source === "plugin"
-                    ? t("skills.plugin", { plugin: skill.plugin ?? "" })
-                    : skill.source === "official"
-                      ? t("skills.official")
-                      : t(sourceKeys[skill.source === "workbench" ? 0 : 1])}
+          {rows.map((skill) => {
+            const editable = !readOnly && (skill.source === "workbench" || skill.source === "user");
+            return (
+              <li key={skill.name} data-skill={skill.name}>
+                <span className="skill-text">
+                  <strong>{skill.name}</strong>
+                  <span className="skill-source">
+                    {skill.source === "plugin"
+                      ? t("skills.plugin", { plugin: skill.plugin ?? "" })
+                      : skill.source === "official"
+                        ? t("skills.official")
+                        : t(sourceKeys[skill.source === "workbench" ? 0 : 1])}
+                  </span>
+                  {skill.description && <span className="muted skill-description">{skill.description}</span>}
+                  {skill.error && <span role="status">{t(errorKeys[errorIndex[skill.error]])}</span>}
                 </span>
-                {skill.description && <span className="muted skill-description">{skill.description}</span>}
-                {skill.error && <span role="status">{t(errorKeys[errorIndex[skill.error]])}</span>}
-              </span>
-              {editable(skill) && (
-                <button
-                  type="button"
-                  disabled={busy}
-                  data-action="open-skill"
-                  aria-label={t("skills.openNamed", { name: skill.name })}
-                  onClick={(event) => {
-                    editorTrigger.current = event.currentTarget;
-                    setEditing(skill);
-                  }}
-                >
-                  {t("skills.open")}
-                </button>
-              )}
-            </li>
-          ))}
+                <div className="skill-actions">
+                  <label className="skill-switch">
+                    <input
+                      type="checkbox"
+                      role="switch"
+                      aria-checked={skill.enabled}
+                      aria-label={t("skills.enabledNamed", { name: skill.name })}
+                      aria-describedby={`${formId}-activation`}
+                      checked={skill.enabled}
+                      disabled={busy || readOnly}
+                      onChange={(event) => {
+                        const enabled = event.currentTarget.checked;
+                        void perform(async () => {
+                          await api.invoke("skills.toggle", { workbenchId, name: skill.name, enabled });
+                          if (mounted.current) setNotice(t("skills.activationSaved"));
+                        });
+                      }}
+                    />
+                    {skill.enabled ? t("skills.enabled") : t("skills.disabled")}
+                  </label>
+                  <button
+                    type="button"
+                    disabled={busy}
+                    data-action="open-skill"
+                    aria-label={
+                      editable
+                        ? t("skills.editNamed", { name: skill.name })
+                        : t("skills.viewNamed", { name: skill.name })
+                    }
+                    onClick={(event) => {
+                      editorTrigger.current = event.currentTarget;
+                      setEditing({ skill, template: false });
+                    }}
+                  >
+                    {editable ? t("skills.edit") : t("skills.view")}
+                  </button>
+                </div>
+              </li>
+            );
+          })}
         </ul>
         <Pager {...pager} />
       </div>
       {editing && (
         <SkillEditor
-          key={`${editing.source}:${editing.name}`}
-          skill={editing}
+          key={`${editing.skill.source}:${editing.skill.name}`}
+          skill={editing.skill}
+          template={editing.template}
           workbenchId={workbenchId}
           readOnly={readOnly}
-          close={() => {
+          close={(saved) => {
             setEditing(undefined);
-            editorTrigger.current?.focus();
+            if (saved) setNotice(t("skills.saved"));
+            const row = [...(panel.current?.querySelectorAll<HTMLElement>("[data-skill]") ?? [])].find(
+              (node) => node.dataset.skill === editing.skill.name,
+            );
+            (
+              row?.querySelector<HTMLButtonElement>("[data-action=open-skill]") ?? editorTrigger.current
+            )?.focus();
             void client.invalidateQueries({ queryKey: ["skills", workbenchId] });
           }}
         />
       )}
     </div>
-  );
-}
-function SkillEditor({
-  skill,
-  workbenchId,
-  readOnly,
-  close,
-}: {
-  skill: EditableSkill;
-  workbenchId: string;
-  readOnly: boolean;
-  close: () => void;
-}) {
-  const { t } = useTranslation();
-  const session = useId();
-  const dialog = useRef<HTMLDialogElement>(null);
-  const input = useRef<HTMLTextAreaElement>(null);
-  const [content, setContent] = useState("");
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<unknown>();
-  const target = { workbenchId, name: skill.name, source: skill.source };
-  const loaded = useQuery({
-    queryKey: ["skill.editor", workbenchId, skill.source, skill.name, session],
-    queryFn: () => api.invoke("skills.open", target),
-    staleTime: Infinity,
-    gcTime: 0,
-    refetchOnWindowFocus: false,
-    refetchOnReconnect: false,
-  });
-  useEffect(() => {
-    const node = dialog.current;
-    node?.showModal();
-    return () => node?.close();
-  }, []);
-  useEffect(() => {
-    if (loaded.data) {
-      setContent(loaded.data.content);
-      input.current?.focus();
-    }
-  }, [loaded.data]);
-  const titleId = `${session}-title`;
-  function finish() {
-    dialog.current?.close();
-    close();
-  }
-  return (
-    <dialog
-      ref={dialog}
-      className="pinned-dialog"
-      aria-labelledby={titleId}
-      onCancel={(event) => {
-        event.stopPropagation();
-        event.preventDefault();
-        if (!saving) finish();
-      }}
-    >
-      <form
-        className="workbench-form"
-        onSubmit={(event) => {
-          event.preventDefault();
-          if (!loaded.data || readOnly) return;
-          setSaving(true);
-          setError(undefined);
-          void api
-            .invoke("skills.save", { ...target, content, sha256: loaded.data.sha256 })
-            .then(finish)
-            .catch(setError)
-            .finally(() => setSaving(false));
-        }}
-      >
-        <h3 id={titleId}>{skill.name}/SKILL.md</h3>
-        {loaded.isPending && <p role="status">{t("home.loading")}</p>}
-        {(error !== undefined || loaded.isError) && <ErrorMessage error={error ?? loaded.error} />}
-        {loaded.isError && (
-          <button type="button" onClick={() => void loaded.refetch()}>
-            {t("settings.retry")}
-          </button>
-        )}
-        <label htmlFor={`${session}-content`}>{t("skills.content")}</label>
-        <textarea
-          ref={input}
-          id={`${session}-content`}
-          data-skill-content
-          rows={14}
-          value={content}
-          onChange={(event) => setContent(event.target.value)}
-          readOnly={readOnly}
-          disabled={!loaded.data || saving}
-        />
-        <div className="workbench-actions">
-          <button type="button" disabled={saving} onClick={finish}>
-            {t("workbench.cancel")}
-          </button>
-          <button type="submit" data-action="save-skill" disabled={readOnly || !loaded.data || saving}>
-            {t("workbench.save")}
-          </button>
-        </div>
-      </form>
-    </dialog>
   );
 }

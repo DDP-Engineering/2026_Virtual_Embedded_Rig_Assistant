@@ -263,6 +263,13 @@ it("lists and loads skills of enabled plugins as source plugin (REQ-FUNC-6d88d2e
   const signal = new AbortController().signal;
   expect(await catalog.load("echo-guide", undefined, signal)).toMatchObject({ text: "PLUGIN BODY\n" });
   expect(await catalog.load("echo-guide", "ports.md", signal)).toMatchObject({ text: "PORTS" });
+  f.disabled.push("echo-guide", "create-plugin");
+  expect((await catalog.read("plugin", "echo-guide")).content).toContain("PLUGIN BODY");
+  expect((await catalog.read("official", "create-plugin")).content).toContain("name: create-plugin");
+  await expect(catalog.read("official", "unknown")).rejects.toMatchObject({ code: "NOT_FOUND" });
+  await expect(catalog.read("plugin", "../echo-guide")).rejects.toMatchObject({ code: "INVALID" });
+  await expect(catalog.load("echo-guide", undefined, signal)).rejects.toMatchObject({ code: "DENIED" });
+  f.disabled.length = 0;
   await expect(catalog.load("echo-guide", "../../plugin.yaml", signal)).rejects.toThrow();
   enabled.length = 0;
   expect((await catalog.list()).filter((s) => s.source !== "official")).toEqual([]);

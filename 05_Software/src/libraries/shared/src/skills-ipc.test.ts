@@ -25,21 +25,23 @@ it("validates strict skill scope/source/name/content/hash without renderer path 
     ]),
   ).toHaveLength(1);
 });
-it("lists plugin skills but refuses plugin targets for open, create and save (REQ-SEC-f7e4f258)", () => {
+it("allows viewing every skill source while restricting creation and saving to owned sources", () => {
   expect(
     channels["skills.list"].response.parse([
       { name: "echo-guide", source: "plugin", plugin: "echo-tools", description: "Guide.", enabled: true },
     ]),
   ).toHaveLength(1);
-  for (const channel of ["skills.open", "skills.create"] as const) {
-    expect(
-      channels[channel].request.safeParse({ ...scope, name: "echo-guide", source: "plugin" }).success,
-    ).toBe(false);
-    expect(
-      channels[channel].request.safeParse({ ...scope, name: "echo-guide", source: "workbench" }).success,
-    ).toBe(true);
-  }
   const save = { ...scope, name: "echo-guide", content: "x", sha256: "a".repeat(64) };
-  expect(channels["skills.save"].request.safeParse({ ...save, source: "plugin" }).success).toBe(false);
-  expect(channels["skills.save"].request.safeParse({ ...save, source: "user" }).success).toBe(true);
+  for (const source of ["workbench", "user", "plugin", "official"] as const) {
+    const target = { ...scope, name: "echo-guide", source };
+    const owned = source === "workbench" || source === "user";
+    expect(channels["skills.open"].request.safeParse(target).success).toBe(true);
+    expect(channels["skills.create"].request.safeParse(target).success).toBe(owned);
+    expect(channels["skills.save"].request.safeParse({ ...save, source }).success).toBe(owned);
+  }
+  for (const target of [
+    { ...scope, name: "reader", source: "other" },
+    { ...scope, name: "reader", source: "official", path: "/secret" },
+  ])
+    expect(channels["skills.open"].request.safeParse(target).success).toBe(false);
 });
