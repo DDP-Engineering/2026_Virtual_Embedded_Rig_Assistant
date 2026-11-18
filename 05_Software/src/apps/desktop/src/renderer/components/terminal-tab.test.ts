@@ -73,6 +73,7 @@ it("updates the mounted terminal font and refits immediately when code text size
     id: "00000000-0000-4000-8000-000000000001",
     number: 1,
     shared: false,
+    shell: "bash",
     running: true,
   };
   vi.mocked(api.invoke).mockImplementation(async (channel) => {
@@ -137,6 +138,7 @@ it.each(["en", "ro", "de", "fr"])(
           id: `00000000-0000-4000-8000-00000000000${rows.length + 1}`,
           number: rows.length + 1,
           shared: false,
+          shell: "bash" as const,
           running: true,
         };
         rows.push(row);
@@ -216,6 +218,7 @@ it("renders restored and replaced history without resending terminal replies, wh
     id: "00000000-0000-4000-8000-000000000001",
     number: 1,
     shared: false,
+    shell: "bash",
     running: true,
   };
   let output = "history\x1b[c";
@@ -259,6 +262,7 @@ it("appends only the new tail when the host trims the head of a full buffer", as
     id: "00000000-0000-4000-8000-000000000001",
     number: 1,
     shared: false,
+    shell: "bash",
     running: true,
   };
   let snapshot = { output: "line 1\nline 2\n", start: 0 };
@@ -300,6 +304,7 @@ it("answers fresh terminal startup queries once and does not answer them again a
     id: "00000000-0000-4000-8000-000000000002",
     number: 2,
     shared: false,
+    shell: "bash",
     running: true,
   };
   let created = false;
@@ -341,6 +346,7 @@ it.each([true, false])(
       id: "00000000-0000-4000-8000-000000000001",
       number: 1,
       shared: false,
+      shell: "bash",
       running: true,
     };
     let rows = [row],

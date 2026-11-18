@@ -533,6 +533,12 @@ export function createMockApi(
     if (channel.startsWith("session.") || channel.startsWith("changes.") || channel.startsWith("artifacts."))
       return channels[channel].response.parse(sessions.invoke(channel, input.data)) as Response<C>;
     switch (channel) {
+      case "app.clipboard.write": {
+        const { text } = channels["app.clipboard.write"].request.parse(input.data);
+        await navigator.clipboard.writeText(text);
+        value = {};
+        break;
+      }
       case "terminal.list": {
         const { workbenchId } = channels["terminal.list"].request.parse(input.data);
         if (workbenchId !== current().snapshot.config.id) throw veraError("CONFLICT");
@@ -542,12 +548,13 @@ export function createMockApi(
         break;
       }
       case "terminal.create": {
-        const { workbenchId } = channels["terminal.create"].request.parse(input.data);
+        const { workbenchId, shell } = channels["terminal.create"].request.parse(input.data);
         if (workbenchId !== current().snapshot.config.id) throw veraError("CONFLICT");
         if (terminals.size >= 8) throw veraError("BUSY");
         const snapshot: TerminalSnapshot = {
           id: crypto.randomUUID(),
           number: terminals.size + 1,
+          shell: shell ?? "bash",
           shared: false,
           running: true,
           output: "$ ",
@@ -569,6 +576,14 @@ export function createMockApi(
         const output = terminal.output + data.replaceAll("\r", "\r\n$ ");
         terminal.start += Math.max(0, output.length - 262144);
         terminal.output = output.slice(-262144);
+        value = {};
+        break;
+      }
+      case "terminal.execute": {
+        const { workbenchId, id, shell, text } = channels["terminal.execute"].request.parse(input.data);
+        const terminal = userTerminal(workbenchId, id);
+        if (!terminal.running || terminal.shell !== shell) throw veraError("CONFLICT");
+        terminal.output = `${terminal.output}${text}\r\n$ `.slice(-262144);
         value = {};
         break;
       }

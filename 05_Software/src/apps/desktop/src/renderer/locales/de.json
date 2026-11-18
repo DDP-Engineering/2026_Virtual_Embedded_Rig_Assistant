@@ -231,6 +231,16 @@
     "stopped": "Durchlauf gestoppt oder unterbrochen.",
     "operations": "Vorgänge: {{count}}"
   },
+  "chatActions": {
+    "copyResponse": "Antwort kopieren",
+    "copyCode": "Codeblock kopieren",
+    "run": "Im Terminal ausführen",
+    "runShell": "Im Terminal ausführen ({{shell}})",
+    "destination": "Zielterminal",
+    "clipboardFailed": "Kopieren in die Zwischenablage fehlgeschlagen. Versuchen Sie es erneut.",
+    "shellMismatch": "Die Terminal-Shell passt nicht zu diesem Befehlsblock.",
+    "shellUnavailable": "Keine kompatible {{shell}}-Shell ist installiert."
+  },
   "chat": {
     "bookmark": "Lesezeichen setzen",
     "removeBookmark": "Lesezeichen entfernen",

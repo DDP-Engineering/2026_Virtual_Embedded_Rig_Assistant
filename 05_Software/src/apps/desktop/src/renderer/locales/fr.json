@@ -231,6 +231,16 @@
     "stopped": "Tour arrêté ou interrompu.",
     "operations": "Opérations : {{count}}"
   },
+  "chatActions": {
+    "copyResponse": "Copier la réponse",
+    "copyCode": "Copier le bloc de code",
+    "run": "Exécuter dans le terminal",
+    "runShell": "Exécuter dans le terminal ({{shell}})",
+    "destination": "Terminal de destination",
+    "clipboardFailed": "Impossible de copier dans le presse-papiers. Réessayez.",
+    "shellMismatch": "Le shell du terminal ne correspond pas à ce bloc de commandes.",
+    "shellUnavailable": "Aucun shell {{shell}} compatible n’est installé."
+  },
   "chat": {
     "bookmark": "Ajouter un signet",
     "removeBookmark": "Retirer le signet",

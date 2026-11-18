@@ -8,6 +8,7 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ### Added
 
+- Chat replies and code blocks offer exact copying; explicit Bash and PowerShell blocks run in compatible terminals.
 - CLI: --key-env <NAME> takes the provider key from the named environment variable, for any provider.
 - Workbenches can choose visible right-panel tabs, with saved preferences and draft default restoration.
 - Image previews fit PNG, JPEG, GIF, WebP, BMP and inert SVG, with original-image zoom through 400% and Hex.

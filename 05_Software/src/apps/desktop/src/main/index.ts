@@ -22,6 +22,7 @@ import {
   pluginPlatform,
   ResourceLeases,
   readPluginHelp,
+  resolveCommandShell,
   SettingsService,
   settingStates,
   splitModelReference,
@@ -298,6 +299,21 @@ const terminals = new TerminalService({
     () => settings.get().settings.shell,
     (text) => credentials.scrub(text),
   ),
+  shellForBlock: async (kind) => {
+    const installed = await detectCommandShells(processHost);
+    const executable = installed.find(
+      (shell) =>
+        shell.executable &&
+        (kind === "powershell" ? shell.id === "pwsh" || shell.id === "powershell" : shell.id === "bash"),
+    )?.executable;
+    if (!executable)
+      throw {
+        ...veraError("NOT_FOUND"),
+        messageKey: "chatActions.shellUnavailable",
+        params: { shell: kind },
+      };
+    return resolveCommandShell(processHost, executable);
+  },
   pty: createPtyFactory(
     processHost,
     app.isPackaged ? join(process.resourcesPath, "app.asar.unpacked/node_modules/node-pty") : "node-pty",
@@ -588,7 +604,16 @@ ipcMain.handle(
       window && !window.isDestroyed() ? { webContents: window.webContents, url: rendererUrl } : undefined,
     handlers: {
       "terminal.list": ({ workbenchId }) => terminals.list(workbenchId),
-      "terminal.create": ({ workbenchId, cols, rows }) => terminals.create(workbenchId, cols, rows),
+      "app.clipboard.write": ({ text }) => {
+        clipboard.writeText(text);
+        return {};
+      },
+      "terminal.create": ({ workbenchId, cols, rows, shell }) =>
+        terminals.create(workbenchId, cols, rows, shell),
+      "terminal.execute": ({ workbenchId, id, shell, text }) => {
+        terminals.execute(workbenchId, id, shell, text);
+        return {};
+      },
       "terminal.output": ({ workbenchId, id }) => terminals.output(workbenchId, id),
       "terminal.input": ({ workbenchId, id, data }) => {
         terminals.input(workbenchId, id, data);

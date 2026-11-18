@@ -8,10 +8,13 @@ import ReactMarkdown, { type Components } from "react-markdown";
 import rehypeHighlight from "rehype-highlight";
 import remarkGfm from "remark-gfm";
 import { ExternalSourceLink } from "./external-source-link.js";
+import { CodeBlock } from "./message-actions.js";
 
 interface Node {
   type: string;
   value?: string;
+  lang?: string | null;
+  position?: { start: { offset?: number }; end: { offset?: number } };
   children?: Node[];
   data?: { hName: string; hProperties: Record<string, string> };
 }
@@ -90,7 +93,38 @@ function CitationIcon({ kind }: { kind: Reference["kind"] }) {
   }[kind];
   return <Icon width="1em" height="1em" aria-hidden="true" />;
 }
-const remarkPlugins = [remarkGfm, remarkCitations];
+function remarkBlockSource() {
+  return (tree: Node, file: { value: unknown }) => {
+    const source = String(file.value);
+    function walk(node: Node) {
+      if (node.type === "code") {
+        const raw = source.slice(node.position?.start.offset, node.position?.end.offset);
+        const lines = raw.split(/\r\n|\n|\r/);
+        const opening = lines[0]?.match(/^ {0,3}(`{3,}|~{3,})/);
+        const closing = lines.length > 1 ? lines.at(-1)?.match(/^[ >\t]*(`{3,}|~{3,})[ \t]*$/) : undefined;
+        // The parser includes a fence-looking content line in value when it did not close the block.
+        const contentLines = node.value ? node.value.split(/\r\n|\n|\r/).length : 0;
+        const complete =
+          !!opening &&
+          !!closing &&
+          lines.length >= contentLines + 2 &&
+          opening[1]?.[0] === closing[1]?.[0] &&
+          (closing[1]?.length ?? 0) >= (opening[1]?.length ?? 0);
+        node.data = {
+          hName: "code",
+          hProperties: {
+            "data-block-text": node.value ?? "",
+            "data-block-language": node.lang ?? "",
+            "data-block-complete": String(complete),
+          },
+        };
+      }
+      for (const child of node.children ?? []) walk(child);
+    }
+    walk(tree);
+  };
+}
+const remarkPlugins = [remarkGfm, remarkCitations, remarkBlockSource];
 const rehypePlugins = [rehypeHighlight];
 const NO_CITATIONS: { ref: string; valid: boolean }[] = [];
 /**
@@ -102,15 +136,19 @@ export const Markdown = memo(function Markdown({
   citations = NO_CITATIONS,
   onCitation,
   link,
+  assistantActions = false,
+  streaming = false,
 }: {
   text: string;
+  assistantActions?: boolean;
+  streaming?: boolean;
   citations?: { ref: string; valid: boolean }[];
   onCitation?: ((ref: string) => void) | undefined;
   /** An in-app target for a link (help pages); other links stay external-confirmed or inert. */
   link?: ((href: string) => { page: string; open: () => void } | undefined) | undefined;
 }) {
-  const options = useRef({ citations, onCitation, link });
-  options.current = { citations, onCitation, link };
+  const options = useRef({ citations, onCitation, link, assistantActions, streaming });
+  options.current = { citations, onCitation, link, assistantActions, streaming };
   // Keep chip DOM identity and keyboard focus through transcript refresh and modal updates.
   const components = useMemo<Components>(
     () => ({
@@ -137,6 +175,20 @@ export const Markdown = memo(function Markdown({
           );
         },
       } as Components),
+      code: ({ children, className }) => <code className={className}>{children}</code>,
+      pre: ({ children, node }) => {
+        const code = node?.children[0];
+        if (!options.current.assistantActions || code?.type !== "element") return <pre>{children}</pre>;
+        return (
+          <CodeBlock
+            text={String(code.properties["data-block-text"] ?? "")}
+            language={String(code.properties["data-block-language"] ?? "")}
+            streaming={options.current.streaming || code.properties["data-block-complete"] !== "true"}
+          >
+            {children}
+          </CodeBlock>
+        );
+      },
       img: ({ alt }) => <span>{alt}</span>,
       table: ({ children }) => (
         <div className="markdown-table">

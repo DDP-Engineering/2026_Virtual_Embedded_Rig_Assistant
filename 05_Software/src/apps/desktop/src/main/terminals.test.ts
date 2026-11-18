@@ -72,6 +72,61 @@ function fixture() {
 }
 
 describe("user terminal host", () => {
+  it.each(["powershell", "bash"] as const)(
+    "dispatches an entire %s block once without losing Unicode or multiline boundaries",
+    async (kind) => {
+      const f = fixture();
+      f.shell.resolve.mockResolvedValue({ executable: kind, kind });
+      const terminal = await f.service.create("bench-a", 80, 24, kind);
+      expect(terminal.shell).toBe(kind);
+      const text = "Get-Content README.MD -TotalCount 10\r\n'Știință 🧪'\n\n\\tail\tend";
+      f.service.execute("bench-a", terminal.id, kind, text);
+      const write = f.processes[0]!.write;
+      expect(write).toHaveBeenCalledTimes(1);
+      const data = write.mock.calls[0]![0] as string;
+      expect(data.startsWith("\u0015")).toBe(true);
+      expect(data.endsWith("\r")).toBe(true);
+      expect(data.slice(0, -1)).not.toMatch(/[\r\n]/);
+      if (kind === "powershell") {
+        expect(data).toContain(". ([scriptblock]::Create(");
+        const encoded = data.match(/FromBase64String\('([^']+)'\)/)![1]!;
+        expect(Buffer.from(encoded, "base64").toString("utf8")).toBe(text);
+      } else expect(data).toContain("\\r\\n\\'Știință 🧪\\'\\n\\n\\\\tail\\tend");
+      await f.service.closeAll();
+    },
+  );
+  it("fails closed on shell mismatch, exited terminals, invalid text and foreign workbench destinations", async () => {
+    const f = fixture();
+    const terminal = await f.service.create("bench-a", 80, 24);
+    expect(() => f.service.execute("bench-a", terminal.id, "powershell", "Get-Content README.MD")).toThrow();
+    for (const text of ["", "x".repeat(16385), "echo x\u001b[200~", "echo x\0"])
+      expect(() => f.service.execute("bench-a", terminal.id, "bash", text)).toThrow();
+    expect(() => f.service.execute("bench-b", terminal.id, "bash", "pwd")).toThrow();
+    f.processes[0]!.finish();
+    expect(() => f.service.execute("bench-a", terminal.id, "bash", "pwd")).toThrow();
+    expect(f.processes[0]!.write).not.toHaveBeenCalled();
+    f.switch();
+    expect(() => f.service.execute("bench-b", terminal.id, "bash", "pwd")).toThrow();
+    await f.service.closeAll();
+  });
+  it("does not create an incompatible terminal or finish creation after a workbench switch", async () => {
+    const f = fixture();
+    await expect(f.service.create("bench-a", 80, 24, "powershell")).rejects.toMatchObject({
+      messageKey: "chatActions.shellMismatch",
+    });
+    let release: ((shell: CommandShell) => void) | undefined;
+    f.shell.resolve.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          release = resolve;
+        }),
+    );
+    const pending = f.service.create("bench-a", 80, 24, "bash");
+    f.switch();
+    release!({ executable: "/bin/bash", kind: "bash" });
+    await expect(pending).rejects.toMatchObject({ code: "CONFLICT" });
+    expect(f.spawn).not.toHaveBeenCalled();
+  });
   it.each(["powershell", "cmd", "bash", "sh"] as const)(
     "starts new %s terminals with interactive arguments",
     async (kind) => {

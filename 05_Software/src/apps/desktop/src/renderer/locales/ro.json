@@ -231,6 +231,16 @@
     "stopped": "Execuție oprită sau întreruptă.",
     "operations": "Operații: {{count}}"
   },
+  "chatActions": {
+    "copyResponse": "Copiază răspunsul",
+    "copyCode": "Copiază blocul de cod",
+    "run": "Execută în terminal",
+    "runShell": "Execută în terminal ({{shell}})",
+    "destination": "Terminal de destinație",
+    "clipboardFailed": "Nu s-a putut copia în clipboard. Încearcă din nou.",
+    "shellMismatch": "Shell-ul terminalului nu corespunde acestui bloc de comenzi.",
+    "shellUnavailable": "Nu este instalat un shell {{shell}} compatibil."
+  },
   "chat": {
     "bookmark": "Marchează",
     "removeBookmark": "Elimină marcajul",

@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import {
+  type CommandShell,
   type CommandShellHost,
   capToolResult,
   interactiveShellArguments,
@@ -7,6 +8,9 @@ import {
   type TerminalReader,
 } from "@vera/core";
 import {
+  type CommandBlockShell,
+  commandBlockShellSchema,
+  commandBlockTextSchema,
   type TerminalSnapshot,
   type TerminalSummary,
   terminalIdSchema,
@@ -35,6 +39,7 @@ type Entry = {
   number: number;
   owner: string;
   pty: UserPty;
+  shell: CommandShell["kind"];
   shared: boolean;
   grant: number;
   running: boolean;
@@ -68,6 +73,7 @@ export class TerminalService {
     private readonly host: {
       current(): { id: string; folder: string };
       shell: CommandShellHost;
+      shellForBlock?(kind: CommandBlockShell): Promise<CommandShell>;
       pty: PtyFactory;
       scrub(text: string): string;
       maskUserOutput(): boolean;
@@ -93,6 +99,7 @@ export class TerminalService {
       id: entry.id,
       number: entry.number,
       shared: entry.shared,
+      shell: entry.shell,
       running: entry.running,
       ...(entry.exitCode === undefined ? {} : { exitCode: entry.exitCode }),
     };
@@ -103,14 +110,25 @@ export class TerminalService {
       .filter((entry) => entry.owner === owner)
       .map((entry) => this.summary(entry));
   }
-  async create(owner: string, cols: number, rows: number): Promise<TerminalSummary> {
+  async create(
+    owner: string,
+    cols: number,
+    rows: number,
+    requestedShell?: CommandBlockShell,
+  ): Promise<TerminalSummary> {
+    if (requestedShell !== undefined) commandBlockShellSchema.parse(requestedShell);
     terminalSizeSchema.parse({ cols, rows });
     const current = this.owner(owner);
     const generation = this.generation;
     if (this.entries.size + this.creating >= 8) throw veraError("BUSY");
     this.creating++;
     try {
-      const shell = await this.host.shell.resolve();
+      const shell =
+        requestedShell && this.host.shellForBlock
+          ? await this.host.shellForBlock(requestedShell)
+          : await this.host.shell.resolve();
+      if (requestedShell && shell.kind !== requestedShell)
+        throw { ...veraError("CONFLICT"), messageKey: "chatActions.shellMismatch" };
       this.owner(owner);
       if (generation !== this.generation) throw veraError("CONFLICT");
       const pty = this.host.pty.spawn(shell.executable, interactiveShellArguments(shell), {
@@ -124,6 +142,7 @@ export class TerminalService {
         number: ++this.number,
         owner,
         pty,
+        shell: shell.kind,
         shared: false,
         grant: 0,
         running: true,
@@ -192,6 +211,20 @@ export class TerminalService {
     const entry = this.entry(owner, id);
     if (!entry.running) throw veraError("CONFLICT");
     entry.pty.write(data);
+  }
+  /** Executes original block text inside its declared shell, never as a line-by-line paste. */
+  execute(owner: string, id: string, shell: CommandBlockShell, text: string): void {
+    commandBlockShellSchema.parse(shell);
+    commandBlockTextSchema.parse(text);
+    const entry = this.entry(owner, id);
+    if (!entry.running) throw veraError("CONFLICT");
+    if (entry.shell !== shell) throw { ...veraError("CONFLICT"), messageKey: "chatActions.shellMismatch" };
+    // One physical input line avoids readline/PSReadLine interpreting pasted newlines as separate submissions.
+    const command =
+      shell === "powershell"
+        ? `. ([scriptblock]::Create([Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('${Buffer.from(text, "utf8").toString("base64")}'))))`
+        : `eval -- $'${text.replaceAll("\\", "\\\\").replaceAll("'", "\\'").replaceAll("\r", "\\r").replaceAll("\n", "\\n").replaceAll("\t", "\\t")}'`;
+    entry.pty.write(`\u0015${command}\r`);
   }
   resize(owner: string, id: string, cols: number, rows: number): void {
     terminalSizeSchema.parse({ cols, rows });
