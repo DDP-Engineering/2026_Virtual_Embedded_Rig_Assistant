@@ -87,6 +87,23 @@ it("searches anonymously and normalizes Exa source blocks with bounded content",
   expect(result.sources[1]!.content.length).toBeLessThanOrEqual(3500);
 });
 
+it("skips a malformed source block and keeps the sources that parse", async () => {
+  const fixture = mcp(() =>
+    text(
+      [
+        source,
+        "Title: Broken block without a link",
+        "Title: Third\nURL: https://example.org/\nText:\nMore.",
+      ].join("\n\n---\n\n"),
+    ),
+  );
+  const result = await new api.ExaWebProvider({ fetch: fixture.fetch }).search(
+    { query: "topic" },
+    new AbortController().signal,
+  );
+  expect(result.sources.map((item) => item.title)).toEqual(["Reliable source", "Third"]);
+});
+
 it("reads one public page through MCP and supports a different provider behind the same tools", async () => {
   expect(api.ExaWebProvider).toBeTypeOf("function");
   const fixture = mcp(() => text("# Example\nURL: https://example.com/\n\nPublic page."));

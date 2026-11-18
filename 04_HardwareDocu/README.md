@@ -1,3 +1,4 @@
 # Hardware Documentation
 
-Datasheets, pinouts and protocol references for the hardware VERA is tested with.
+Reserved for datasheets, pinouts and protocol references of hardware VERA is tested with. It holds
+no files yet.

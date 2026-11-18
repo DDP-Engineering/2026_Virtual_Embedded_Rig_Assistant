@@ -158,6 +158,49 @@ it("keeps the shared path module byte-identical in the electronics and lab plugi
   expect(new Set(copies.map(sha256)).size).toBe(1);
 });
 
+it("leaves out and counts series rows that are not finite numbers", async () => {
+  const root = await realpath(await mkdtemp(join(tmpdir(), "vera-ngspice-series-")));
+  try {
+    const series = join(root, "series.dat");
+    await writeFile(
+      series,
+      [
+        " time v(out) v(out)",
+        " 0.0 1.0 0.0",
+        " 1.0 nan 0.0",
+        " 2.0 inf 0.0",
+        " 3.0 oops 0.0",
+        " 4.0 2.0",
+        " 5.0 3.0 -1.5",
+        "",
+      ].join("\n"),
+    );
+    const parsed = spawnSync(
+      python,
+      [
+        "-I",
+        "-c",
+        "import json, sys, pathlib; sys.dont_write_bytecode = True; sys.path.insert(0, sys.argv[1]); " +
+          "from ngspice_support.engine import parse_series; print(json.dumps(parse_series(pathlib.Path(sys.argv[2]))))",
+        scripts,
+        series,
+      ],
+      { encoding: "utf8", env: env() },
+    );
+    expect(parsed.status, parsed.stderr).toBe(0);
+    expect(JSON.parse(parsed.stdout)).toEqual([
+      ["time", "v(out) re", "v(out) im"],
+      [
+        [0, 1, 0],
+        [5, 3, -1.5],
+      ],
+      4,
+    ]);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
 describe("ngspice-tool refusals before the engine", { timeout: 120_000 }, () => {
   let dir: string;
   beforeAll(async () => {
@@ -983,7 +1026,7 @@ it.skipIf(!uv)(
       const release = await core.buildCatalogRelease(fileURLToPath(plugins), join(root, "release"));
       expect(release.issues).toEqual([]);
       const store = new core.PluginStore({ root: join(root, "plugins") });
-      await store.install(join(root, "release/ngspice-0.3.0.zip"));
+      await store.install(join(root, "release/ngspice-0.3.1.zip"));
       provisioner = new core.Provisioner({
         store,
         root: join(root, "runtime"),

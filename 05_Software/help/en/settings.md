@@ -7,6 +7,7 @@
 | **Providers** | AI model access; see [Providers and models](providers.md) |
 | **Web access** | Web search and reading for the agent |
 | **Appearance and language** | Language, theme and text sizes |
+| **Commands** | The shell for agent commands and new terminals |
 | **Notifications** | Not available yet |
 | **Keyboard shortcuts** | Your own key combinations |
 | **Updates** | How VERA updates itself |

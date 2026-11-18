@@ -200,18 +200,66 @@ describe("main encrypted credential store", () => {
     // Version 1 is the only credentials format during development (AGENTS.md).
     '{"schemaVersion":2,"entries":{}}',
     "broken",
-    '{"schemaVersion":1,"entries":{"openai":{"encoding":"safeStorage","value":"invalid%"}}}',
-  ])("preserves invalid bytes %s", async (raw) => {
+  ])("starts empty on a damaged file %s and keeps a copy of it", async (raw) => {
     const h = harness();
     h.disk.set("/data/credentials.json", raw);
-    await expect(h.store.read("openai")).rejects.toMatchObject({ code: "INVALID" });
-    await expect(
-      h.store.modify("openai", async () => ({ type: "api_key", key: secret })),
-    ).rejects.toBeDefined();
+    expect(await h.store.list()).toEqual([]);
     expect(h.disk.get("/data/credentials.json")).toBe(raw);
-    expect(h.files.writeAtomic).not.toHaveBeenCalled();
-    // Shutdown continues to settings and logs after a credential file that failed to load.
-    await expect(h.store.close()).resolves.toBeUndefined();
+    expect(h.disk.get("/data/credentials.json.damaged")).toBe(raw);
+    expect(h.logger.log).toHaveBeenCalledWith("warn", "credentials.file.damaged");
+    await h.store.modify("openai", async () => ({ type: "api_key", key: secret }));
+    expect(await h.reload().read("openai")).toEqual({ type: "api_key", key: secret });
+    expect(h.disk.get("/data/credentials.json.damaged")).toBe(raw);
+  });
+  it("loads the readable entries, skips and keeps the unreadable ones, and lets them be entered again", async () => {
+    const h = harness();
+    await h.store.modify("openai", async () => ({ type: "api_key", key: secret }));
+    await h.store.modify("mqtt:bench", async () => ({ type: "api_key", key: "fake-broker-private" }));
+    const document = JSON.parse(h.disk.get("/data/credentials.json") ?? "");
+    const undecryptable = document.entries["mqtt:bench"];
+    document.entries.malformed = { encoding: "safeStorage", value: "invalid%" };
+    h.disk.set("/data/credentials.json", JSON.stringify(document));
+    h.crypto.decryptString.mockImplementation((value: Buffer) => {
+      const text = Buffer.from(value.map((x) => x ^ 0x5a)).toString();
+      if (text.includes("fake-broker-private")) throw new Error("keyring cannot decrypt");
+      return text;
+    });
+    const store = h.reload();
+    expect(await store.list()).toEqual([{ providerId: "openai", type: "api_key" }]);
+    expect(await store.read("mqtt:bench")).toBeUndefined();
+    expect(h.logger.log.mock.calls).toEqual([
+      ["warn", "credentials.entries.skipped", { ids: ["mqtt:bench", "malformed"] }],
+    ]);
+    expect(h.files.writeAtomic).toHaveBeenCalledTimes(2);
+    await store.modify("malformed", async () => ({ type: "api_key", key: "fake-entered-again" }));
+    const saved = JSON.parse(h.disk.get("/data/credentials.json") ?? "");
+    expect(saved.entries["mqtt:bench"]).toEqual(undecryptable);
+    expect(await h.reload().list()).toEqual([
+      { providerId: "openai", type: "api_key" },
+      { providerId: "malformed", type: "api_key" },
+    ]);
+  });
+  it("masks keys and passwords but not short values or user names and public ids", async () => {
+    const h = harness();
+    await h.store.modify("mqtt:bench", async () => ({
+      type: "api_key",
+      key: "fake-broker-private",
+      env: { username: "bench-operator" },
+    }));
+    await h.store.modify("parts:digikey", async () => ({
+      type: "api_key",
+      key: "fake-client-secret",
+      env: { id: "fake-client-id", token: "admin" },
+    }));
+    h.store.registerSecret("admin");
+    expect(h.logger.registerSecret.mock.calls).toEqual([["fake-broker-private"], ["fake-client-secret"]]);
+    for (const store of [h.store, h.reload()]) {
+      await store.load();
+      const text = "admin bench-operator fake-client-id";
+      expect(store.scrub(text)).toBe(text);
+      expect(store.containsSecret("admin")).toBe(false);
+      expect(store.scrub("fake-broker-private fake-client-secret")).toBe("[REDACTED] [REDACTED]");
+    }
   });
   it("failed atomic save and cancellation preserve both memory and disk and close drains mutations", async () => {
     const h = harness();

@@ -19,12 +19,20 @@ describe("embedding warm-up", () => {
     expect(embed).toHaveBeenCalledWith("/bench", expect.any(AbortSignal));
   });
 
-  it("starts no embedding when the workbench has no vectors", async () => {
+  it("starts no embedding when the workbench has no vectors and tries again on a later message", async () => {
+    let root: string | undefined;
     const embed = vi.fn(async () => {});
-    const warmup = createEmbeddingWarmup({ hasVectors: async () => undefined, embed });
+    const warmup = createEmbeddingWarmup({ hasVectors: async () => root, embed });
     warmup.request("w1");
     await tick();
     expect(embed).not.toHaveBeenCalled();
+    root = "/bench";
+    warmup.request("w1");
+    await tick();
+    warmup.request("w1");
+    await tick();
+    expect(embed).toHaveBeenCalledTimes(1);
+    expect(embed).toHaveBeenCalledWith("/bench", expect.any(AbortSignal));
   });
 
   it("aborts on close and warms again after the workbench reopens", async () => {

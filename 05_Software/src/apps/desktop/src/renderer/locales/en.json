@@ -499,7 +499,8 @@
       "BINARY": "Binary file",
       "IO": "Source unavailable",
       "PROCESSING": "Processing failed",
-      "NEEDS_OCR": "No searchable text; OCR required"
+      "NEEDS_OCR": "No searchable text; OCR required",
+      "NAME_UNSUPPORTED": "Unsupported file name"
     },
     "openNamed": "Open {{path}}",
     "pageText": "Text of page {{page}}",

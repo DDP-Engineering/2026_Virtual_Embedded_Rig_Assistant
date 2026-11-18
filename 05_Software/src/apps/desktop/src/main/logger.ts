@@ -6,6 +6,8 @@ export function createLogger(directory: string, clock: Clock): Logger {
   const secrets = new Map<string, number>();
   let queue = Promise.resolve();
   let failure: unknown;
+  // Old files are pruned with the first entry and then when the day changes, not with every entry.
+  let prunedDay: string | undefined;
   function redact(serialized: string): string {
     const tokens = [...secrets.keys()].flatMap((secret) => [secret, JSON.stringify(secret).slice(1, -1)]);
     const ordered = [...new Set(tokens)].sort((a, b) => b.length - a.length);
@@ -41,11 +43,14 @@ export function createLogger(directory: string, clock: Clock): Logger {
           await appendFile(join(directory, `vera-${timestamp.slice(0, 10)}.log`), `${redact(serialized)}\n`, {
             mode: 0o600,
           });
+          const day = timestamp.slice(0, 10);
+          if (day === prunedDay) return;
           const daily = (await readdir(directory))
             .filter((file) => /^vera-\d{4}-\d{2}-\d{2}\.log$/.test(file))
             .sort()
             .reverse();
           for (const file of daily.slice(7)) await rm(join(directory, file));
+          prunedDay = day;
         })
         .catch((error: unknown) => {
           failure ??= error;

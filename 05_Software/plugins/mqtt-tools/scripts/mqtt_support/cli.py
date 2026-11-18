@@ -22,7 +22,8 @@ NETWORK = ("connect-test", "subscribe", "publish", "request")
 
 
 def _terminate(_signum: int, _frame: Any) -> None:
-    """SIGTERM (VERA's Stop on Linux): the running operation unsubscribes and disconnects at its next step."""
+    """SIGTERM (VERA's Stop on Linux) or the console break event on Windows: the running operation unsubscribes and
+    disconnects at its next step."""
     STOP.requested = True
 
 
@@ -98,8 +99,8 @@ def main(argv: list[str]) -> int:
     started = report.stamp()
     operation = next((value for value in argv if not value.startswith("-")), "usage")
     document = report.header(operation if operation in OPERATIONS else "usage", started)
-    if hasattr(signal, "SIGTERM") and os.name != "nt":
-        signal.signal(signal.SIGTERM, _terminate)
+    # Windows delivers no SIGTERM a process can handle; its catchable stop request is the break event.
+    signal.signal(signal.SIGBREAK if os.name == "nt" else signal.SIGTERM, _terminate)
     folder: Path | None = None
     try:
         args = _parser().parse_args(argv)

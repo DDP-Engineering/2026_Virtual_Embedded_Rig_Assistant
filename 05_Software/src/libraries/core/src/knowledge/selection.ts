@@ -5,7 +5,7 @@ import { veraError, type WorkbenchConfig } from "@vera/shared";
 import picomatch from "picomatch";
 import { glob } from "tinyglobby";
 import { createGitignoreRules, createIgnoreRules } from "../workbench/ignore.js";
-import { PathGuard } from "../workbench/path-guard.js";
+import { PathGuard, validateRelativePath } from "../workbench/path-guard.js";
 import { documentKind, documentSelection, missing, sizeLimit } from "./kinds.js";
 
 /**
@@ -108,8 +108,24 @@ export interface SelectInput {
    */
   unindexed?: (path: string) => void;
 }
-/** Why a selected document is not indexed: larger than its size limit. */
-export type SkipReason = "too-large";
+/**
+ * False for a path the path guard refuses by its name on every platform: a `:`, a name ending in a
+ * dot or a space, or a Windows device name. Such files exist on Linux and macOS, and `aux.md` on
+ * current Windows.
+ */
+export function portablePath(path: string): boolean {
+  try {
+    validateRelativePath(path);
+    return true;
+  } catch {
+    return false;
+  }
+}
+/**
+ * Why a selected document is not indexed: larger than its size limit, or named in a way the path
+ * guard refuses.
+ */
+export type SkipReason = "too-large" | "unsupported-name";
 /**
  * Selected document paths, sorted, with their sizes; the documents left out with their reason;
  * `retry` when a path vanished meanwhile.
@@ -123,7 +139,8 @@ export interface Selection {
  * The documents a workbench selects: include minus exclude, the ignore policy (permanent rules,
  * .veraignore and, when docs.gitignore is on, .gitignore),
  * document types only, ordinary files without links. A document above its size limit (the fixed
- * one, lowered by docs.maxFileMB) is skipped as too large. Runs in the desktop indexer process.
+ * one, lowered by docs.maxFileMB) is skipped as too large, one the path guard refuses by its name
+ * as an unsupported name. Runs in the desktop indexer process.
  */
 export async function selectDocuments({ root, docs, signal, unindexed }: SelectInput): Promise<Selection> {
   const guard = await PathGuard.create(root);
@@ -160,6 +177,8 @@ export async function selectDocuments({ root, docs, signal, unindexed }: SelectI
       else paths.push({ path, size });
     } catch (error) {
       if (missing(error)) retry = true;
+      // Reported, so the user sees why the file is not indexed; it is never opened.
+      else if (!portablePath(path)) skipped.push({ path, size: 0, reason: "unsupported-name" });
     }
   }
   return { paths, skipped, retry };

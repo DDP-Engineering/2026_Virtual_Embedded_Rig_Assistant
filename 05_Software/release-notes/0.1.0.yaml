@@ -2,17 +2,17 @@ version: 0.1.0
 date: 2026-11-15
 entries:
   - category: new
-    topic: { en: Workbench, ro: Workbench, de: Workbench, fr: Workbench }
+    topic: { en: Workbench, ro: Workbench, de: Workbench, fr: Banc de travail }
     text:
       en: Chat with an agent that reads, searches and edits your project documents with your approval.
-      ro: Discutați cu un agent care citește, caută și editează documentele proiectului cu acordul dvs.
+      ro: Discută cu un agent care citește, caută și editează documentele proiectului cu acordul tău.
       de: Ein Agent liest, durchsucht und bearbeitet Ihre Projektdokumente mit Ihrer Zustimmung.
       fr: Un agent lit, recherche et modifie les documents de votre projet avec votre accord.
   - category: new
     topic: { en: Providers, ro: Furnizori, de: Anbieter, fr: Fournisseurs }
     text:
       en: Use OpenAI, a ChatGPT subscription, LM Studio, Ollama or another compatible endpoint.
-      ro: Folosiți OpenAI, un abonament ChatGPT, LM Studio, Ollama sau alt endpoint compatibil.
+      ro: Folosește OpenAI, un abonament ChatGPT, LM Studio, Ollama sau alt endpoint compatibil.
       de: Nutzen Sie OpenAI, ein ChatGPT-Abo, LM Studio, Ollama oder einen anderen kompatiblen Endpunkt.
       fr: Utilisez OpenAI, un abonnement ChatGPT, LM Studio, Ollama ou un autre point d’accès compatible.
   - category: new
@@ -26,7 +26,7 @@ entries:
     topic: { en: Plugins, ro: Pluginuri, de: Plugins, fr: Plugins }
     text:
       en: Install plugin dependencies from an offline kit on a computer without network.
-      ro: Instalați dependențele pluginurilor dintr-un kit offline pe un calculator fără rețea.
+      ro: Instalează dependențele pluginurilor dintr-un kit offline pe un calculator fără rețea.
       de: Installieren Sie Plugin-Abhängigkeiten aus einem Offline-Paket ohne Netzwerk.
       fr: Installez les dépendances des plugins depuis un kit hors ligne, sans réseau.
   - category: new
@@ -47,6 +47,6 @@ entries:
     topic: { en: About, ro: Despre, de: Über, fr: À propos }
     text:
       en: See what changed in each version under Settings, About.
-      ro: Vedeți ce s-a schimbat în fiecare versiune în Setări, Despre.
+      ro: Vezi ce s-a schimbat în fiecare versiune în Setări, Despre.
       de: Sehen Sie unter Einstellungen, Über, was sich in jeder Version geändert hat.
       fr: Consultez les nouveautés de chaque version dans Paramètres, À propos.

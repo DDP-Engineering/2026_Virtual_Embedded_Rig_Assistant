@@ -16,7 +16,8 @@ raises error frames on the bus. Typical channels: `PCAN_USBBUS1` (pcan), `0`
 (socketcan).
 
 Create `captures/` in the workbench and choose an unused file name. Always
-bound the capture with `--duration <seconds>` or `--max-messages <n>`:
+bound the capture with `--duration <seconds>` or `--max-messages <n>` (with only
+`--max-messages` it ends after 240 s at the latest; add `--duration` for longer):
 
 ```text
 can capture --interface pcan --channel PCAN_USBBUS1 --bitrate 500000 --duration 10 --output captures/bus.asc

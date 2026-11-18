@@ -12,11 +12,12 @@ import hashlib
 import json
 import os
 import secrets
+import signal
 import subprocess
 import time
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 from . import VERSION
 from .errors import Refused
@@ -90,6 +91,30 @@ def read_run(folder: Path) -> dict[str, Any]:
             document["code"] = "interrupted"
             document["reason"] = "The run ended without finishing its result (stopped or killed)."
     return document
+
+
+def kill_tree(process: subprocess.Popen[bytes]) -> None:
+    """Ends a step's process and what it started, so a stopped run leaves no programmer running."""
+    if os.name == "nt":
+        # terminate() would end only the first process; taskkill /T ends the tree.
+        taskkill = os.path.join(os.environ.get("SystemRoot", r"C:\Windows"), "System32", "taskkill.exe")
+        try:
+            subprocess.run([taskkill, "/T", "/F", "/PID", str(process.pid)], stdin=subprocess.DEVNULL,
+                           capture_output=True, timeout=20, check=False)
+        except (OSError, subprocess.TimeoutExpired):
+            pass
+    elif os.getpgrp() == os.getpid():
+        # VERA starts the helper as the leader of its own process group: the signal reaches every process of the
+        # step, and the helper ignores it to finish its result.
+        signal.signal(signal.SIGTERM, signal.SIG_IGN)
+        os.killpg(os.getpgrp(), signal.SIGTERM)
+    else:
+        process.terminate()
+    try:
+        process.wait(timeout=5)
+    except subprocess.TimeoutExpired:
+        process.kill()
+        process.wait()
 
 
 class Run:
@@ -179,8 +204,12 @@ class Run:
         except OSError:
             pass
 
-    def step(self, name: str, argv: list[str], cwd: Path, env: dict[str, str]) -> tuple[int, Path]:
-        """Runs one process with its output in `<name>.log`, closed stdin, no shell; returns the exit code."""
+    def step(self, name: str, argv: list[str], cwd: Path, env: dict[str, str],
+             stop_requested: Callable[[], bool] | None = None) -> tuple[int, Path]:
+        """Runs one process with its output in `<name>.log`, closed stdin, no shell; returns the exit code.
+
+        With `stop_requested` (a supervised run) the process tree is ended as soon as VERA asks the run to stop.
+        """
         assert self.folder is not None
         log = self.folder / f"{name}.log"
         entry: dict[str, Any] = {"name": name, "command": [str(part) for part in argv], "cwd": str(cwd),
@@ -197,6 +226,9 @@ class Run:
                 entry["exit"] = -1
                 return -1, log
             while process.poll() is None:
+                if stop_requested is not None and stop_requested():
+                    kill_tree(process)
+                    break
                 time.sleep(0.25)
                 self.write()
         entry["exit"] = process.returncode

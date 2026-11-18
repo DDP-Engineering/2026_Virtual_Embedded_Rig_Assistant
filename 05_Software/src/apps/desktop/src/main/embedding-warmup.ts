@@ -18,7 +18,11 @@ export function createEmbeddingWarmup(options: {
       void options
         .hasVectors(workbenchId)
         .then((root) => {
-          if (root !== undefined && !controller.signal.aborted) return options.embed(root, controller.signal);
+          // An aborted request is no longer the current one.
+          if (controller.signal.aborted) return;
+          if (root !== undefined) return options.embed(root, controller.signal);
+          // Nothing is indexed yet: forget the request, so a message after the first indexing warms up.
+          current = undefined;
         })
         .catch(() => {});
     },

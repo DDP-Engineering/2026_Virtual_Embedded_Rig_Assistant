@@ -4,7 +4,7 @@ O sesiune este o conversație cu agentul în cadrul unui workbench. VERA salveaz
 
 ## Pornește și gestionează sesiuni
 
-- **Sesiune nouă** pornește o conversație în workbenchul deschis. Dacă există o sesiune goală nefolosită, VERA o deschide pe aceea în loc să creeze alta.
+- **Sesiune nouă** pornește o conversație în workbench-ul deschis. Dacă există o sesiune goală nefolosită, VERA o deschide pe aceea în loc să creeze alta.
 - Primul mesaj devine titlul. **Redenumește** setează un titlu ales de tine.
 - **Caută sesiuni** găsește sesiuni după titlu și după textul mesajelor.
 - Fiecare rând de sesiune afișează ora ultimei activități și are un meniu cu **Exportă Markdown**, **Exportă JSON**, **Redenumește**, **Mută mai sus**, **Mută mai jos**, **Arhivează** și **Șterge**.
@@ -14,7 +14,7 @@ O sesiune este o conversație cu agentul în cadrul unui workbench. VERA salveaz
 
 Scrie în caseta de mesaj (**Întreabă VERA despre proiect…**). Enter trimite, Shift+Enter adaugă un rând, iar @ completează căile fișierelor din workbench. Pentru a-i da agentului un fișier, alege **Atașează ca context** pe acel fișier în fila **Fișiere**; fișierul apare ca etichetă deasupra casetei de mesaj.
 
-Lângă caseta de mesaj alegi **Model**, **Nivel de reasoning** și **Mod de permisiuni** pentru această sesiune. Sesiunile noi preiau modelul și modul de permisiuni din setările workbenchului.
+Lângă caseta de mesaj alegi **Model**, **Nivel de reasoning** și **Mod de permisiuni** pentru această sesiune. Sesiunile noi preiau modelul și modul de permisiuni din setările workbench-ului.
 
 ## Ghidează sau oprește o execuție în curs
 
@@ -24,7 +24,7 @@ Cât timp agentul lucrează, poți continua să scrii și să trimiți mesaje, d
 
 ## Niveluri de detaliu
 
-**Nivel de detaliu** se setează pentru fiecare workbench în **Editează workbenchul** → **Agent și chat**:
+**Nivel de detaliu** se setează pentru fiecare workbench în **Editează workbench-ul** → **Agent și chat**:
 
 | Nivel | Ce afișează conversația |
 |---|---|
@@ -50,13 +50,13 @@ Indicatorul de context afișează **Context utilizat** ca procent din fereastra 
 
 - **Arhivează** mută o sesiune încheiată în **Sesiuni arhivate**; **Restaurează** o readuce. Nu se pierde nimic.
 - **Șterge** elimină sesiunea și artefactele ei după o confirmare. Fișierele descărcate de agent rămân în workbench.
-- **Exportă Markdown** scrie un transcript lizibil cu rezumate ale instrumentelor, citări și modificări aplicate; **Exportă JSON** scrie înregistrarea completă a evenimentelor. Ambele deschid un dialog de salvare și funcționează și în workbenchurile doar pentru citire.
+- **Exportă Markdown** scrie un transcript lizibil cu rezumate ale instrumentelor, citări și modificări aplicate; **Exportă JSON** scrie înregistrarea completă a evenimentelor. Ambele deschid un dialog de salvare și funcționează și în workbench-urile doar pentru citire.
 
 Marcajele salvate ale mesajelor rămân în exporturile JSON; Markdown indică mesajele utilizatorului cu marcaj. Marcajele aparțin sesiunii și nu sunt trimise agentului.
 
 ## Panoul din dreapta
 
-**Arată sau ascunde panoul din dreapta** afișează file pentru sesiunea deschisă: **Instrucțiuni și skills** (instrucțiunile workbenchului și skill-urile disponibile), **Fișiere**, **Modificări**, **Artefacte** (rezultatele text salvate de agent, cu **Exportă** și **Arată în folder**), **Plan** (lista de sarcini a agentului) și **Rulări** (rulările de programe ale pluginurilor).
+**Arată sau ascunde panoul din dreapta** afișează file pentru sesiunea deschisă: **Instrucțiuni și skill-uri** (instrucțiunile workbench-ului și skill-urile disponibile), **Fișiere**, **Modificări**, **Artefacte** (rezultatele text salvate de agent, cu **Exportă** și **Arată în folder**), **Plan** (lista de sarcini a agentului) și **Rulări** (rulările de programe ale pluginurilor).
 
 ## Marcaje
 

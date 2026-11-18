@@ -22,10 +22,10 @@ test("marked Bypass selectors confirm each change and cancellation retains the p
   const picker = page.locator(".composer [data-permission-picker]");
   await expect(page.locator('.composer option[value="bypass"]')).toHaveCount(1);
   for (const [language, phrase] of [
-    ["ro", "în afara workbenchului"],
-    ["de", "außerhalb der Workbench"],
+    ["ro", "în afara workbench-ului"],
+    ["de", "außerhalb des Workbenchs"],
     ["en", "outside the workbench"],
-    ["fr", "hors du workbench"],
+    ["fr", "hors du banc de travail"],
   ]) {
     await page.locator('[data-i18n="nav.settings"]').click();
     await page.locator('[data-section="appearance"]').click();

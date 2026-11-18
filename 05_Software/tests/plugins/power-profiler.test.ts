@@ -388,6 +388,19 @@ describe("integrals on offline fixtures (L05-B, REQ-FUNC-4995f945, REQ-REL-d02aa
     expect(existsSync(join(root, "embedded-lab-results", "bad"))).toBe(false);
   });
 
+  it("refuses an import one row past the limit, before it reads the rest of the file", async () => {
+    // The row after the limit is refused; the malformed rows behind it are never reached.
+    const rows = Array.from({ length: 1_000_001 }, (_, k) => `${k},1,3,3`);
+    await writeFile(join(root, "data", "long.csv"), `t,i_mA,v,p_mW\n${rows.join("\n")}\nx,y\nx,y\n`);
+    const long = analyze(importArgs("long.csv", "long"));
+    expect(long.code).toBe(2);
+    expect(long.json.problems[0]).toMatchObject({
+      code: "limit",
+      message: "--csv holds more than 1000000 rows.",
+    });
+    expect(existsSync(join(root, "embedded-lab-results", "long"))).toBe(false);
+  });
+
   it("records an import's meter identity as declared, never as measured", async () => {
     imported("uniform-constant.csv", "decl", ["--meter-model", "JS220", "--meter-serial", "000415"]);
     expect((await result("decl")).meter).toMatchObject({

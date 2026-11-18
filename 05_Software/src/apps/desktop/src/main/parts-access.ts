@@ -85,8 +85,8 @@ export class PartsAccessService {
     return operation;
   }
   save(request: PartsAccessSave) {
-    for (const value of [request?.credential?.secret, request?.credential?.id])
-      if (typeof value === "string") this.host.credentials.registerSecret(value);
+    const secret = request?.credential?.secret;
+    if (typeof secret === "string") this.host.credentials.registerSecret(secret);
     const parsed = partsAccessSaveSchema.safeParse(request);
     if (!parsed.success) return Promise.reject(veraError("INVALID"));
     return this.enqueue(async () => {

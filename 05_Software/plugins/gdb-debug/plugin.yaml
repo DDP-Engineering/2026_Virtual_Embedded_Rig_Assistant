@@ -1,6 +1,6 @@
 format: 1
 id: gdb-debug
-version: 0.2.0
+version: 0.2.1
 license: LicenseRef-PolyForm-Noncommercial-1.0.0
 name: GDB debugging
 summary: Inspect firmware ELF files and debug a Cortex-M target through a probe in supervised GDB sessions.
@@ -81,6 +81,10 @@ rules:
   - match: "gdb-debug break *"
     risk: device-write
     timeout: 3600
+  # --count allows 100 steps of up to 10 s each, plus connecting and the final snapshot.
+  - match: "gdb-debug step *"
+    risk: device-write
+    timeout: 1800
   - match: "gdb-debug * --firmware-effect actuates *"
     risk: irreversible
     note: The firmware drives actuators. Halting it can leave an output in its last state, and running or resuming it lets it act on the hardware.

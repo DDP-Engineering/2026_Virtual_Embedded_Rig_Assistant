@@ -8,7 +8,14 @@ export function validateGlob(pattern: string): void {
     throw Error("Glob must stay inside the workbench.");
 }
 
-export async function discoverFiles(guard: PathGuard, path: string, pattern: string, signal: AbortSignal) {
+/** Files matching a glob; with `limit`, collection stops there and a result of that length is incomplete. */
+export async function discoverFiles(
+  guard: PathGuard,
+  path: string,
+  pattern: string,
+  signal: AbortSignal,
+  limit = Number.POSITIVE_INFINITY,
+) {
   validateGlob(pattern);
   const base = await guard.resolve(path);
   const paths = await glob(pattern, {
@@ -30,6 +37,7 @@ export async function discoverFiles(guard: PathGuard, path: string, pattern: str
   });
   const files: { path: string; mtimeMs: number; size: number }[] = [];
   for (const item of paths) {
+    if (files.length >= limit) break;
     signal.throwIfAborted();
     const relative = base.relative === "." ? item : `${base.relative}/${item}`;
     let target: GuardedPath;

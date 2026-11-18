@@ -1,6 +1,6 @@
 format: 1
 id: mqtt-tools
-version: 0.2.0
+version: 0.2.1
 license: LicenseRef-PolyForm-Noncommercial-1.0.0
 name: MQTT tools (telemetry and commands)
 summary: Capture MQTT telemetry and send controlled device commands on a broker the workbench configures.

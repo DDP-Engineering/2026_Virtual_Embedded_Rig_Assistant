@@ -1,6 +1,6 @@
 format: 1
 id: micropython
-version: 0.2.0
+version: 0.2.1
 license: LicenseRef-PolyForm-Noncommercial-1.0.0
 name: MicroPython
 summary: Copy files, deploy and run scripts on a MicroPython board and capture its console.

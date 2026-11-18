@@ -339,7 +339,7 @@ describe("hil-testing package", () => {
     const manifest = load("hil-testing").manifest;
     expect(manifest).toMatchObject({
       id: "hil-testing",
-      version: "0.2.0",
+      version: "0.2.1",
       ecosystem: "lab",
       platforms: ["windows-x64", "linux-x64"],
     });
@@ -378,7 +378,7 @@ describe("hil-testing package", () => {
   it("refuses reports of unfinished, foreign or outside folders and never runs plans itself", async () => {
     const helper = (args: string[]) =>
       spawnSync(python, [SCRIPTS.hil as string, ...args], { cwd: root, encoding: "utf8" });
-    expect(helper(["--version"]).stdout.trim()).toBe("hil-testing 0.2.0");
+    expect(helper(["--version"]).stdout.trim()).toBe("hil-testing 0.2.1");
     expect(helper(["run", "hil/plan.json"]).status).toBe(2);
     await mkdir(join(root, "embedded-lab-results", "r1"), { recursive: true });
     await writeFile(
@@ -394,5 +394,44 @@ describe("hil-testing package", () => {
     expect(helper(["report", "--run", ".."]).status).toBe(2);
     expect(helper(["report", "--run", ".vera"]).status).toBe(2);
     expect(existsSync(join(root, "embedded-lab-results", "r1", "report.html"))).toBe(false);
+  });
+
+  it("reports a run whose event lines are partly unreadable and whose plan is not an object", async () => {
+    const folder = join(root, "embedded-lab-results", "r2");
+    await mkdir(folder, { recursive: true });
+    await writeFile(
+      join(folder, "result.json"),
+      JSON.stringify({
+        format: 1,
+        kind: "hil-test-result",
+        state: "done",
+        status: "pass",
+        runId: "r2",
+        plan: "bench-smoke",
+        steps: [{ id: "flash", phase: "setup", use: "probe", status: "pass" }],
+      }),
+    );
+    await writeFile(
+      join(folder, "events.jsonl"),
+      ['{"t":1,"event":"first"}', "{not json", "[1,2]", "", '{"t":2,"event":"after-the-bad-lines"}', ""].join(
+        "\n",
+      ),
+    );
+    const run = spawnSync(python, [SCRIPTS.hil as string, "report", "--run", "embedded-lab-results/r2"], {
+      cwd: root,
+      encoding: "utf8",
+    });
+    expect(run.status, run.stderr).toBe(0);
+    expect(JSON.parse(run.stdout)).toEqual({
+      format: 1,
+      kind: "hil-report",
+      status: "pass",
+      files: ["report.html", "report.md", "junit.xml"],
+      warnings: ["2 lines of events.jsonl were not readable events and are left out of the timeline."],
+    });
+    const page = readFileSync(join(folder, "report.html"), "utf8");
+    expect(page).toContain("after-the-bad-lines");
+    expect(page).toContain("2 lines of events.jsonl were not readable events");
+    expect(readFileSync(join(folder, "junit.xml"), "utf8")).toContain('classname="plan.steps.setup"');
   });
 });

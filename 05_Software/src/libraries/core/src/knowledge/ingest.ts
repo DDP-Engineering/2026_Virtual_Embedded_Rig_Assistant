@@ -19,12 +19,14 @@ import { DocumentsRepository } from "../storage/repos/documents.js";
 import { createIgnoreRules } from "../workbench/ignore.js";
 import { PathGuard } from "../workbench/path-guard.js";
 import { WriteQueue } from "../workbench/write-queue.js";
+import { pruneExtractionCache } from "./cache-prune.js";
 import type { Chunk } from "./chunk.js";
 import { documentGuard } from "./guard.js";
 import { type InspectInput, inspectSource, type SourceInspection } from "./inspect.js";
 import { documentKind, documentSelection, missing, sizeLimit } from "./kinds.js";
 import {
   ordinaryFile,
+  portablePath,
   readIgnorePolicy,
   type SelectInput,
   type Selection,
@@ -443,6 +445,21 @@ export class Ingester {
       pending--;
       progress();
     }
+    // A quiet moment: every selected document has its row and no further run is queued.
+    if (!this.closed && !this.requested) await this.pruneCache();
+  }
+  /** Drops cached extractions that no stored document refers to; a failure only leaves files behind. */
+  private async pruneCache(): Promise<void> {
+    try {
+      this.options.assertWritable();
+      const hashes = this.options.db
+        .prepare("SELECT sha256 FROM documents WHERE sha256 IS NOT NULL")
+        .pluck()
+        .all() as string[];
+      await pruneExtractionCache(this.options.root, new Set(hashes));
+    } catch {
+      /* the cache only saves a repeated extraction */
+    }
   }
   private publish(
     record: Omit<DocumentRecord, "id">,
@@ -489,6 +506,12 @@ export class Ingester {
       error: null,
       indexedAt: null,
     };
+    // The path guard refuses this name on every platform; the row says why and the file is not opened.
+    if (!portablePath(path)) {
+      if (old?.status !== "unsupported" || old.error !== "NAME_UNSUPPORTED")
+        this.publish({ ...record, status: "unsupported", error: "NAME_UNSUPPORTED" }, true);
+      return "unsupported";
+    }
     try {
       const target = await this.ordinary(guard, path);
       const before = await lstat(target.absolute);

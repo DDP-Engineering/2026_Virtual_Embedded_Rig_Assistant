@@ -1,12 +1,13 @@
 # Setări
 
-**Setări** din partea de jos a barei laterale deschide setările aplicației. Acestea se aplică tuturor workbenchurilor; setările unui singur workbench se află la **Editează workbenchul** (vezi [Workbenchuri](workbenches.md)). Modificările sunt salvate imediat ce le faci, cu excepția paginilor care au propriul buton **Salvează**. **Înapoi la workbenchuri** te readuce la lucru.
+**Setări** din partea de jos a barei laterale deschide setările aplicației. Acestea se aplică tuturor workbench-urilor; setările unui singur workbench se află la **Editează workbench-ul** (vezi [Workbench-uri](workbenches.md)). Modificările sunt salvate imediat ce le faci, cu excepția paginilor care au propriul buton **Salvează**. **Înapoi la workbench-uri** te readuce la lucru.
 
 | Pagină | Ce setează |
 |---|---|
 | **Furnizori** | Accesul la modele AI; vezi [Furnizori și modele](providers.md) |
 | **Acces web** | Căutarea și citirea pe web pentru agent |
 | **Aspect și limbă** | Limba, tema și dimensiunile textului |
+| **Comenzi** | Shell-ul pentru comenzile agentului și terminalele noi |
 | **Notificări** | Nu este încă disponibilă |
 | **Comenzi rapide** | Propriile tale combinații de taste |
 | **Actualizări** | Cum se actualizează VERA |
@@ -19,7 +20,7 @@ Alege dacă secretele stocate sunt înlocuite cu `[REDACTED]` în **Afișare**, 
 
 Folosește **Salvează** sau **Anulează** în dreapta sus. Comutatoarele schimbă doar schița până la salvare. Dezactivarea **Agent și model** cere confirmare: secretele stocate găsite în fișiere sau în rezultatele instrumentelor pot ajunge la furnizorul modelului. Anularea sau Escape păstrează alegerea anterioară. Celelalte zone nu cer confirmare.
 
-În **Editează workbenchul → Date și confidențialitate**, fiecare zonă are **Implicit**, **Activat** sau **Dezactivat**. Implicit arată valoarea curentă a aplicației și urmează schimbările ei; alegerile explicite aparțin workbenchului și sunt copiate cu configurația sa. Alegerea Implicit cere confirmare dacă dezactivează Agent și model. Workbenchurile noi moștenesc valorile aplicației dacă nu alegi altfel. Workbenchurile doar în citire nu pot salva modificări.
+În **Editează workbench-ul → Date și confidențialitate**, fiecare zonă are **Implicit**, **Activat** sau **Dezactivat**. Implicit arată valoarea curentă a aplicației și urmează schimbările ei; alegerile explicite aparțin workbench-ului și sunt copiate cu configurația sa. Alegerea Implicit cere confirmare dacă dezactivează Agent și model. Workbench-urile noi moștenesc valorile aplicației dacă nu alegi altfel. Workbench-urile doar în citire nu pot salva modificări.
 
 Dezactivarea mascării nu recuperează conținutul deja salvat ca `[REDACTED]`, inclusiv istoricul sesiunilor și artefactele. Citește-l sau recreează-l din sursa originală. Activarea mascării nu șterge istoricul brut salvat anterior.
 
@@ -35,7 +36,7 @@ Dezactivarea mascării nu recuperează conținutul deja salvat ca `[REDACTED]`, 
 
 ## Comenzi rapide
 
-Pagina listează fiecare comandă cu combinația sa de taste. Poți adăuga, schimba sau elimina combinații; **Restabilește valoarea implicită** și **Restabilește toate valorile implicite** anulează modificările tale. Combinațiile folosesc Ctrl, opțional cu Alt sau Shift, și o literă, o cifră, virgula sau bara oblică; VERA refuză combinațiile rezervate sau deja atribuite. Lista implicită se află în [Scurtături de tastatură](shortcuts.md).
+Pagina listează fiecare comandă cu combinația sa de taste. Poți adăuga, schimba sau elimina combinații; **Restabilește valoarea implicită** și **Restabilește toate valorile implicite** anulează modificările tale. Combinațiile folosesc Ctrl, opțional cu Alt sau Shift, și o literă, o cifră, virgula sau bara oblică; VERA refuză combinațiile rezervate sau deja atribuite. Lista implicită se află în [Comenzi rapide](shortcuts.md).
 
 ## Actualizări
 
@@ -54,13 +55,13 @@ Versiunea portabilă doar anunță actualizările: deschide linkul de descărcar
 Accesul web îi permite agentului să caute pe webul public, să citească pagini publice și să descarce fișiere publice. Este activat implicit, cu Exa în mod anonim.
 
 1. Bifează sau debifează **Activează accesul web**.
-2. Alege **Provider de căutare**: Exa, Tavily sau Brave.
+2. Alege **Furnizor de căutare**: Exa, Tavily sau Brave.
 3. Alege **Mod de acces**: **Anonim — fără cont** sau **Folosește cheia mea API** și introdu cheia. Brave are întotdeauna nevoie de o cheie și doar caută; nu poate citi pagini.
 4. Selectează **Salvează**, apoi **Testează conexiunea**.
 
 Doar textul căutării și adresele cerute de agent părăsesc calculatorul tău; VERA nu încarcă fișiere de proiect pentru o căutare. Utilizarea anonimă este supusă limitelor furnizorului. Rezultatele web sunt tratate drept conținut nesigur, iar agentul le citează cu linkurile lor publice; la deschiderea unui link, ești întrebat înainte ca browserul să îl deschidă.
 
-Dezactivarea accesului web oprește și căutările și descărcările în curs. Workbenchurile individuale pot dezactiva instrumentele web la **Editează workbenchul** → **Instrumente**.
+Dezactivarea accesului web oprește și căutările și descărcările în curs. Workbench-urile individuale pot dezactiva instrumentele web la **Editează workbench-ul** → **Instrumente**.
 
 ## Despre
 

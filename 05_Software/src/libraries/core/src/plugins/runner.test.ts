@@ -283,6 +283,19 @@ describe("output, log and retention", () => {
     expect(await readFile(join(root, result.log), "utf8")).toBe(clean);
   });
 
+  it("stops writing the log at its size cap with one marker while the run and its tail go on", async () => {
+    runner = make({ host, clock: { sleep: async () => {} }, logBytes: 10 });
+    const run = await runner.start(request());
+    for (const letter of ["a", "b", "c", "d"]) host.programs[0]?.print(letter.repeat(8));
+    host.programs[0]?.finish({ code: 0, signal: null });
+    const result = await run.done;
+    expect(result).toMatchObject({ exitCode: 0, truncated: false });
+    expect(result.output).toBe(`${"a".repeat(8)}${"b".repeat(8)}${"c".repeat(8)}${"d".repeat(8)}`);
+    expect(await readFile(join(root, result.log), "utf8")).toBe(
+      `${"a".repeat(8)}${"b".repeat(8)}\n[VERA] log truncated: size limit reached, the run continues\n`,
+    );
+  });
+
   it("returns the whole output untruncated when it is short", async () => {
     const run = await runner.start(request());
     host.programs[0]?.print("a".repeat(100));

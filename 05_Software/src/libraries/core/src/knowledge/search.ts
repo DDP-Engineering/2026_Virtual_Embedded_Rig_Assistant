@@ -443,8 +443,12 @@ export class DocumentKnowledge {
     const parsed = parseRef(ref);
     return !!parsed && (parsed.kind === "page" || parsed.kind === "page-range") && this.validDocumentRef(ref);
   }
-  /** Issuance is checked by citations; validate current source and extraction bounds without output caps. */
-  async validDocumentRef(ref: string): Promise<boolean> {
+  /**
+   * Issuance is checked by citations; validate current source and extraction bounds without output caps.
+   * `verified` holds the source checks of one finished message, so the citations into one file read
+   * and hash it once instead of once each.
+   */
+  async validDocumentRef(ref: string, verified?: Map<string, Promise<void>>): Promise<boolean> {
     const parsed = parseRef(ref);
     if (!parsed || parsed.kind === "artifact" || parsed.kind === "lines" || parsed.kind === "help")
       return false;
@@ -456,14 +460,21 @@ export class DocumentKnowledge {
         return false;
       // Markdown preambles are cited by line range, never as the untitled `#h=` section.
       if (parsed.kind === "heading" && !parsed.slug && doc.kind === "markdown") return false;
-      await verifyDocumentSource({
-        root: this.root,
-        path: parsed.path,
-        kind: doc.kind,
-        sha256: doc.sha256,
-        signal: new AbortController().signal,
-        assertWritable: () => {},
-      });
+      const key = `${doc.kind}\n${doc.sha256}\n${parsed.path}`;
+      let source = verified?.get(key);
+      if (!source) {
+        // Only the outcome is kept, not the file's bytes.
+        source = verifyDocumentSource({
+          root: this.root,
+          path: parsed.path,
+          kind: doc.kind,
+          sha256: doc.sha256,
+          signal: new AbortController().signal,
+          assertWritable: () => {},
+        }).then(() => {});
+        verified?.set(key, source);
+      }
+      await source;
       const current = new DocumentsRepository(this.db).get(target.relative);
       if (
         current?.id !== doc.id ||

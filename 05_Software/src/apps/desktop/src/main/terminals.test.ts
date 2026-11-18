@@ -190,6 +190,21 @@ describe("user terminal host", () => {
     expect(result.text.length).toBeLessThanOrEqual(12000);
     expect(result.text).toContain("0123456789");
   });
+  it("reports how many characters a full buffer dropped so a poll can append the new tail", async () => {
+    const f = fixture(),
+      a = await f.service.create("bench-a", 80, 24);
+    f.masking(false);
+    f.processes[0]?.print("first\n");
+    expect(f.service.output("bench-a", a.id).start).toBe(0);
+    f.processes[0]?.print("0123456789\n".repeat(30000));
+    const full = f.service.output("bench-a", a.id);
+    expect(full.start).toBeGreaterThan(0);
+    expect(full.start + full.output.length).toBe(330006);
+    f.processes[0]?.print("tail\n");
+    const next = f.service.output("bench-a", a.id);
+    expect(next.start).toBeGreaterThan(full.start);
+    expect(next.output).toBe(`${full.output.slice(next.start - full.start)}tail\n`);
+  });
   it("masks credentials split by terminal formatting before renderer disclosure", async () => {
     const f = fixture(),
       a = await f.service.create("bench-a", 80, 24);

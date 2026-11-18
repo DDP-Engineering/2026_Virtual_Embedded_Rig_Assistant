@@ -231,11 +231,9 @@ def scpi_capture(source_id: str, spec: dict[str, Any], ctx: Context) -> Source:
             v.append(value)
             kept_lines.append(line)
         _increasing(t, kept_lines, name)
-        clipped = _clipped(ctx, folder, field_name, artifacts, channel, what, files)
+        clipped = _clipped(ctx, folder, field_name, artifacts, channel, what, files, len(t))
         if clipped is None:
             raise Refused("source", f"{what} keeps no raw-{channel}.bin and preamble-{channel}.json; clipping cannot be checked.")
-        if len(clipped) != len(t):
-            raise Refused("source", f"{what}: raw-{channel}.bin holds {len(clipped)} samples, the waveform {len(t)}.")
         channels[channel] = Channel(t, v, clipped, "V", True, missing, {"file": name, "unit": "V", "time": "time_s (s)"})
     if not channels:
         raise Refused("source", f"{what} holds no series.")
@@ -265,7 +263,8 @@ def scpi_capture(source_id: str, spec: dict[str, Any], ctx: Context) -> Source:
 
 
 def _clipped(ctx: Context, folder: Path, field_name: str, artifacts: dict[str, dict[str, Any]], channel: str,
-             what: str, files: list[dict[str, Any]]) -> list[bool] | None:
+             what: str, files: list[dict[str, Any]], count: int) -> list[bool] | None:
+    """Whether each of the waveform's `count` samples sits on a clip code of the raw block; None without one."""
     preamble_name, raw_name = f"preamble-{channel}.json", f"raw-{channel}.bin"
     if preamble_name not in artifacts or raw_name not in artifacts:
         return None
@@ -281,6 +280,9 @@ def _clipped(ctx: Context, folder: Path, field_name: str, artifacts: dict[str, d
     files += [preamble_record, raw_record]
     if len(raw) % width:
         raise Refused("source", f"{raw_name} is not a whole number of {width}-byte samples.")
+    # Compared before the block is decoded: a raw file of another length never becomes a list of its samples.
+    if len(raw) // width != count:
+        raise Refused("source", f"{what}: {raw_name} holds {len(raw) // width} samples, the waveform {count}.")
     low, high = form.get("clipLow"), form.get("clipHigh")
     signed, order = bool(form.get("signed")), form["endian"]
     codes = (int.from_bytes(raw[i : i + width], order, signed=signed) for i in range(0, len(raw), width))

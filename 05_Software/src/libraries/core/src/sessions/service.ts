@@ -1067,6 +1067,8 @@ export class SessionService {
     let publicEvent: SessionEvent;
     if (event.type === "message.done") {
       this.host.db.transaction(() => this.sync(id, transcript))();
+      // One source check per cited file for the whole message, not one per citation.
+      const verified = new Map<string, Promise<void>>();
       publicEvent = {
         type: "message.done",
         messageId: event.messageId,
@@ -1076,7 +1078,7 @@ export class SessionService {
           event.text,
           transcript,
           (name) => this.artifacts.exists(id, name),
-          (ref) => this.knowledge.validDocumentRef(ref),
+          (ref) => this.knowledge.validDocumentRef(ref, verified),
         ),
       };
     } else if (event.type === "tool.started") {
@@ -1194,95 +1196,104 @@ export class SessionService {
   }
   private recover(): void {
     for (const row of this.sessions.list()) {
-      this.host.db.transaction(() => {
-        const undecided = this.host.db
-          .prepare("SELECT id FROM approvals WHERE session_id=? AND decision IS NULL")
-          .all(row.id) as { id: string }[];
-        for (const approval of undecided) {
-          this.host.db
-            .prepare(
-              "UPDATE approvals SET decision='aborted',decided_by='mode',decided_at=? WHERE id=? AND decision IS NULL",
-            )
-            .run(this.now(), approval.id);
-          this.hub.record(row.id, {
-            type: "approval.decided",
-            approvalId: approval.id,
-            decision: "aborted",
-            by: "mode",
-          });
-        }
-        const rows = this.messages.list(row.id);
-        const repaired: { raw: string; role: string; created: string | null }[] = [];
-        let changed = false;
-        for (let i = 0; i < rows.length; i++) {
-          const stored = rows[i];
-          if (!stored) continue;
-          const message = JSON.parse(stored.content_json) as Message;
-          repaired.push({ raw: stored.content_json, role: message.role, created: stored.created_at });
-          if (message.role !== "assistant") continue;
-          const calls = message.content.filter((c): c is ToolCall => c.type === "toolCall");
-          const answered = new Set<string>();
-          while (rows[i + 1]?.role === "toolResult") {
-            const result = rows[++i];
-            if (!result) break;
-            answered.add((JSON.parse(result.content_json) as ToolResultMessage).toolCallId);
-            repaired.push({ raw: result.content_json, role: "toolResult", created: result.created_at });
-          }
-          for (const call of calls)
-            if (!answered.has(call.id)) {
-              const saved = this.host.db
-                .prepare("SELECT result_json FROM tool_calls WHERE session_id=? AND id=?")
-                .get(row.id, call.id) as { result_json: string | null } | undefined;
-              let result = saved?.result_json
-                ? (JSON.parse(saved.result_json) as ToolResultMessage)
-                : undefined;
-              if (result?.role !== "toolResult")
-                result = toolResult(
-                  call,
-                  "Interrupted: call outcome unresolved.",
-                  true,
-                  this.host.clock.now().getTime(),
-                );
-              repaired.push({ raw: JSON.stringify(result), role: "toolResult", created: this.now() });
-              changed = true;
-            }
-        }
-        if (changed) {
-          this.host.db.prepare("DELETE FROM messages WHERE session_id=?").run(row.id);
-          for (const [index, m] of repaired.entries())
-            this.messages.create({
-              session_id: row.id,
-              seq: index + 1,
-              role: m.role,
-              content_json: m.raw,
-              created_at: m.created,
+      try {
+        this.host.db.transaction(() => {
+          const undecided = this.host.db
+            .prepare("SELECT id FROM approvals WHERE session_id=? AND decision IS NULL")
+            .all(row.id) as { id: string }[];
+          for (const approval of undecided) {
+            this.host.db
+              .prepare(
+                "UPDATE approvals SET decision='aborted',decided_by='mode',decided_at=? WHERE id=? AND decision IS NULL",
+              )
+              .run(this.now(), approval.id);
+            this.hub.record(row.id, {
+              type: "approval.decided",
+              approvalId: approval.id,
+              decision: "aborted",
+              by: "mode",
             });
-        }
-        if (row.status === "running" || row.status === "awaiting_approval") {
-          const snapshot = this.hub.get(row.id).snapshot;
-          const turnId = snapshot.activeTurnId ?? `interrupted_${row.id}`;
-          for (const item of snapshot.items)
-            if (item.kind === "tool" && item.status === "running")
-              this.hub.record(row.id, {
-                type: "tool.done",
-                callId: item.id,
-                ok: false,
-                summary: "Interrupted.",
-                durationMs: 0,
+          }
+          const rows = this.messages.list(row.id);
+          const repaired: { raw: string; role: string; created: string | null }[] = [];
+          let changed = false;
+          try {
+            for (let i = 0; i < rows.length; i++) {
+              const stored = rows[i];
+              if (!stored) continue;
+              const message = JSON.parse(stored.content_json) as Message;
+              repaired.push({ raw: stored.content_json, role: message.role, created: stored.created_at });
+              if (message.role !== "assistant") continue;
+              const calls = message.content.filter((c): c is ToolCall => c.type === "toolCall");
+              const answered = new Set<string>();
+              while (rows[i + 1]?.role === "toolResult") {
+                const result = rows[++i];
+                if (!result) break;
+                answered.add((JSON.parse(result.content_json) as ToolResultMessage).toolCallId);
+                repaired.push({ raw: result.content_json, role: "toolResult", created: result.created_at });
+              }
+              for (const call of calls)
+                if (!answered.has(call.id)) {
+                  const saved = this.host.db
+                    .prepare("SELECT result_json FROM tool_calls WHERE session_id=? AND id=?")
+                    .get(row.id, call.id) as { result_json: string | null } | undefined;
+                  let result = saved?.result_json
+                    ? (JSON.parse(saved.result_json) as ToolResultMessage)
+                    : undefined;
+                  if (result?.role !== "toolResult")
+                    result = toolResult(
+                      call,
+                      "Interrupted: call outcome unresolved.",
+                      true,
+                      this.host.clock.now().getTime(),
+                    );
+                  repaired.push({ raw: JSON.stringify(result), role: "toolResult", created: this.now() });
+                  changed = true;
+                }
+            }
+          } catch {
+            // A damaged message row: the transcript stays as stored, the interrupted turn is still closed.
+            changed = false;
+          }
+          if (changed) {
+            this.host.db.prepare("DELETE FROM messages WHERE session_id=?").run(row.id);
+            for (const [index, m] of repaired.entries())
+              this.messages.create({
+                session_id: row.id,
+                seq: index + 1,
+                role: m.role,
+                content_json: m.raw,
+                created_at: m.created,
               });
-          this.host.db
-            .prepare(
-              "UPDATE tool_calls SET status='aborted',result_json=COALESCE(result_json,?),ended_at=? WHERE session_id=? AND status='pending'",
-            )
-            .run(JSON.stringify({ error: "Interrupted." }), this.now(), row.id);
-          this.hub.record(row.id, { type: "session.interrupted", turnId });
-          this.hub.record(row.id, { type: "turn.done", turnId, stopReason: "aborted" });
-          this.host.db
-            .prepare("UPDATE sessions SET status='idle',updated_at=? WHERE id=?")
-            .run(this.now(), row.id);
-          this.hub.record(row.id, { type: "session.updated", status: "idle" });
-        }
-      })();
+          }
+          if (row.status === "running" || row.status === "awaiting_approval") {
+            const snapshot = this.hub.get(row.id).snapshot;
+            const turnId = snapshot.activeTurnId ?? `interrupted_${row.id}`;
+            for (const item of snapshot.items)
+              if (item.kind === "tool" && item.status === "running")
+                this.hub.record(row.id, {
+                  type: "tool.done",
+                  callId: item.id,
+                  ok: false,
+                  summary: "Interrupted.",
+                  durationMs: 0,
+                });
+            this.host.db
+              .prepare(
+                "UPDATE tool_calls SET status='aborted',result_json=COALESCE(result_json,?),ended_at=? WHERE session_id=? AND status='pending'",
+              )
+              .run(JSON.stringify({ error: "Interrupted." }), this.now(), row.id);
+            this.hub.record(row.id, { type: "session.interrupted", turnId });
+            this.hub.record(row.id, { type: "turn.done", turnId, stopReason: "aborted" });
+            this.host.db
+              .prepare("UPDATE sessions SET status='idle',updated_at=? WHERE id=?")
+              .run(this.now(), row.id);
+            this.hub.record(row.id, { type: "session.updated", status: "idle" });
+          }
+        })();
+      } catch {
+        // A damaged session stays as stored (its transaction rolled back); the others still load.
+      }
     }
   }
 }

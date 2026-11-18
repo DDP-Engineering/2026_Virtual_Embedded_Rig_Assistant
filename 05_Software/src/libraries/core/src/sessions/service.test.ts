@@ -770,6 +770,35 @@ it("recovery closes both active statuses and repairs unanswered calls idempotent
   again.send(sessions[0]!.id, "Read");
   expect(await again.waitIdle(sessions[0]!.id)).toEqual({ stopReason: "end" });
 });
+it("recovery keeps the other sessions when one has a damaged message or event row", async () => {
+  const { service, host, handle } = await setup();
+  const damaged = service.create();
+  const healthy = service.create();
+  const run = handle.db.prepare("UPDATE sessions SET status='running' WHERE id=?");
+  for (const s of [damaged, healthy]) {
+    run.run(s.id);
+    new core.EventsRepository(handle.db).create({
+      session_id: s.id,
+      seq: 2,
+      type: "turn.started",
+      payload_json: JSON.stringify({ type: "turn.started", turnId: "t" }),
+      created_at: "",
+    });
+  }
+  const messages = new core.MessagesRepository(handle.db);
+  messages.create({ session_id: damaged.id, seq: 1, role: "assistant", content_json: "{", created_at: "" });
+  // A damaged message row: the transcript stays as stored and both interrupted turns are closed.
+  const recovered = new core.SessionService(host);
+  for (const s of [damaged, healthy])
+    expect(recovered.get(s.id).snapshot).toMatchObject({ status: "idle", activeTurnId: null });
+  expect(messages.list(damaged.id).map((r) => r.content_json)).toEqual(["{"]);
+  // A damaged event log: that session stays as stored, the other one still recovers.
+  for (const s of [damaged, healthy]) run.run(s.id);
+  handle.db.prepare("UPDATE events SET payload_json='{' WHERE session_id=? AND seq=1").run(damaged.id);
+  const status = (id: string) => new core.SessionService(host).list().find((s) => s.id === id)?.status;
+  expect(status(healthy.id)).toBe("idle");
+  expect(status(damaged.id)).toBe("running");
+});
 it("permission port denies execution and no-output timeout terminates stalled streams", async () => {
   const { service } = await setup({ permissions: { allow: () => false } });
   const s = service.create();

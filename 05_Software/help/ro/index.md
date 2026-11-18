@@ -1,6 +1,6 @@
 # Ajutor VERA
 
-VERA, Virtual Embedded Rig Assistant, este un workbench desktop pentru inginerii de sisteme embedded. Deschizi un folder de proiect ca workbench, iar VERA îi indexează pe calculatorul tău fișele tehnice, manualele și notițele. Un agent AI răspunde la întrebările tale despre proiect și citează paginile pe care le-a folosit; o citare deschide documentul exact în acel loc. Prin pluginuri, agentul poate rula și uneltele de pe bancul tău de lucru, cum ar fi unelte de programare flash, monitoare seriale sau debuggere, întotdeauna în modul de permisiuni pe care îl alegi.
+VERA, Virtual Embedded Rig Assistant, este un workbench desktop pentru inginerii de sisteme embedded. Deschizi un folder de proiect ca workbench, iar VERA îi indexează pe calculatorul tău fișele tehnice, manualele și notițele. Un agent AI răspunde la întrebările tale despre proiect și citează paginile pe care le-a folosit; o citare deschide documentul exact în acel loc. Prin pluginuri, agentul poate rula și instrumentele de pe bancul tău de lucru, cum ar fi instrumente de programare flash, monitoare seriale sau debuggere, întotdeauna în modul de permisiuni pe care îl alegi.
 
 ## Deschide ajutorul
 
@@ -24,14 +24,14 @@ Fiecare plugin instalat are propria pagină de ajutor: ce face pluginul, de ce a
 | Pagină | Ce acoperă |
 |---|---|
 | [Primii pași](getting-started.md) | Prima pornire, un furnizor, un prim workbench, o primă întrebare |
-| [Workbenchuri](workbenches.md) | Crearea, deschiderea, fixarea și editarea workbenchurilor; workbenchuri doar pentru citire; folderul `.vera/` |
+| [Workbench-uri](workbenches.md) | Crearea, deschiderea, fixarea și editarea workbench-urilor; workbench-uri doar pentru citire; folderul `.vera/` |
 | [Chat și sesiuni](chat-and-sessions.md) | Sesiuni, ghidarea unei execuții în curs, arhivare, export, niveluri de detaliu, raționament |
 | [Permisiuni](permissions.md) | Doar citire, Întreabă, Editare automată și Bypass; aprobări, modificări și niveluri de risc |
 | [Documente și căutare](documents-and-search.md) | Indexare, căutare, citări, vizualizatorul de documente, descărcări |
 | [Furnizori și modele](providers.md) | OpenAI, abonament ChatGPT, LM Studio, Ollama și alte endpointuri |
 | [Pluginuri](plugins.md) | Catalog, instalare, revizuire și încredere, dependențe, configurare, pachete |
 | [Setări](settings.md) | Aspect, limbă, actualizări, acces web, comenzi rapide |
-| [Scurtături de tastatură](shortcuts.md) | Toate scurtăturile de tastatură din VERA |
+| [Comenzi rapide](shortcuts.md) | Toate comenzile rapide din VERA |
 | [Instalare offline](offline-install.md) | Instalarea VERA și a pluginurilor pe un calculator fără rețea |
 | [Depanare](troubleshooting.md) | Probleme frecvente, jurnale și locul unde VERA își păstrează datele |
 

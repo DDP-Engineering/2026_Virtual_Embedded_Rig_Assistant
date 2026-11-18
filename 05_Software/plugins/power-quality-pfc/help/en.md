@@ -29,4 +29,4 @@ The tool is a write tool: it is not offered in Read-only sessions, and VERA asks
 - Windows x64 and Linux x64. Verified on Windows x64 and WSL2; not yet run on native Ubuntu x64.
 - Preliminary engineering support: no verified design, no conformity statement and no full power-quality report. Capacitors correct the displacement part only.
 - Missing data stays unknown and never passes: without a fault level, margin or harmonic data the resonance verdict is unknown, and a capacitor and reactor pairing is accepted only from a cited table.
-- No filter design, no switching transients, no minimum fault level (the network result gives the maximum only).
+- No filter design and no switching transients. Resonance is checked at the maximum fault level and, when the network result holds it, at the minimum.

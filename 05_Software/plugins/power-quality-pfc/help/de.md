@@ -29,4 +29,4 @@ Das Werkzeug schreibt: In Sitzungen im Modus Nur lesen wird es nicht angeboten, 
 - Windows x64 und Linux x64. Geprüft unter Windows x64 und WSL2; unter nativem Ubuntu x64 noch nicht ausgeführt.
 - Vorläufige Ingenieurunterstützung: kein geprüfter Entwurf, keine Konformitätserklärung und kein vollständiger Netzqualitätsbericht. Kondensatoren korrigieren nur den Verschiebungsanteil.
 - Fehlende Daten bleiben unbekannt und bestehen nie: Ohne Kurzschlussleistung, Abstand oder Oberschwingungsdaten ist das Resonanzurteil unbekannt, und eine Kondensator-Drossel-Paarung wird nur aus einer zitierten Tabelle akzeptiert.
-- Kein Filterentwurf, keine Schalttransienten, keine minimale Kurzschlussleistung (das Netzergebnis liefert nur das Maximum).
+- Kein Filterentwurf und keine Schalttransienten. Die Resonanz wird bei der maximalen Kurzschlussleistung und, wenn das Netzergebnis sie enthält, bei der minimalen geprüft.

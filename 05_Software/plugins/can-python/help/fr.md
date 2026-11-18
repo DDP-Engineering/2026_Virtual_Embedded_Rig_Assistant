@@ -31,6 +31,7 @@ En mode Demander, VERA demande avant chaque capture ; le mode Modification auto
 
 - Windows x64 et Linux x64.
 - Les vrais adaptateurs et `vcan0` sous Linux ne sont pas encore couverts par les tests de VERA ; l’écoute seule est demandée au backend et n’est pas relue sur l’adaptateur.
+- Une capture limitée seulement par un nombre de trames se termine au plus tard après 240 secondes ; demandez une durée pour enregistrer plus longtemps.
 - Une capture `.blf` arrêtée avant la fin de sa durée peut être incomplète ; `.asc` et `.log` sont écrits trame par trame.
 - Les réglages du bus proviennent uniquement de la ligne de commande ; `~/.canrc`, `can.ini` et les variables `CAN_*` sont ignorés.
 - Référence : https://python-can.readthedocs.io/en/v4.6.1/

@@ -115,6 +115,7 @@ export function viewerExtensionKind(extension: string): "rendered" | "image" | "
 export const documentReasonSchema = z.enum([
   "SIZE_LIMIT",
   "TYPE_UNSUPPORTED",
+  "NAME_UNSUPPORTED",
   "BINARY",
   "IO",
   "PROCESSING",

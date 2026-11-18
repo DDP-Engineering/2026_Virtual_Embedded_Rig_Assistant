@@ -31,6 +31,7 @@ Im Modus Nachfragen fragt VERA vor jeder Aufzeichnung nach; Auto-Edit führt Auf
 
 - Windows x64 und Linux x64.
 - Echte Adapter und Linux-`vcan0` werden von VERAs Tests noch nicht abgedeckt; der Listen-only-Modus wird beim Backend angefordert und nicht vom Adapter zurückgelesen.
+- Eine nur durch eine Frame-Anzahl begrenzte Aufzeichnung endet spätestens nach 240 Sekunden; für eine längere Aufzeichnung eine Dauer angeben.
 - Eine `.blf`-Aufzeichnung, die vor Ablauf ihrer Dauer gestoppt wird, kann unvollständig sein; `.asc` und `.log` werden Frame für Frame geschrieben.
 - Buseinstellungen kommen nur von der Befehlszeile; `~/.canrc`, `can.ini` und `CAN_*`-Variablen werden ignoriert.
 - Referenz: https://python-can.readthedocs.io/en/v4.6.1/

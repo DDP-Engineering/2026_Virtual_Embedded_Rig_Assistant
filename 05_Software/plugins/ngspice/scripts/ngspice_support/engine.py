@@ -3,6 +3,7 @@ own control block, the batch run under a deadline, the log classification and th
 
 from __future__ import annotations
 
+import math
 import os
 import re
 import shutil
@@ -40,6 +41,7 @@ class Outcome:
     problems: list[dict[str, str]] = field(default_factory=list)
     columns: list[str] = field(default_factory=list)
     rows: list[list[float]] = field(default_factory=list)
+    dropped: int = 0  # series rows left out: unparseable, not finite or of another width
 
 
 def locate() -> Engine:
@@ -142,33 +144,36 @@ def run(engine: Engine, cwd: Path, effective: str, series: str, log: str, time_l
         if not path.is_file() and not problems:
             problems.append({"kind": "engine", "line": "The engine wrote no series."})
         return Outcome("failed", code, seconds, problems)
-    columns, rows = parse_series(path)
+    columns, rows, dropped = parse_series(path)
     if not rows:
-        return Outcome("failed", code, seconds, [{"kind": "engine", "line": "The engine wrote an empty series."}])
-    return Outcome("ok", code, seconds, [], columns, rows)
+        line = f"The engine wrote no usable series row ({dropped} rows were not finite numbers of the header's width)." if dropped else "The engine wrote an empty series."
+        return Outcome("failed", code, seconds, [{"kind": "engine", "line": line}])
+    return Outcome("ok", code, seconds, [], columns, rows, dropped)
 
 
-def parse_series(path: Path) -> tuple[list[str], list[list[float]]]:
+def parse_series(path: Path) -> tuple[list[str], list[list[float]], int]:
     """wrdata with wr_singlescale and wr_vecnames: a header of names (scale first) and rows of numbers. A complex
-    vector takes two columns under one name; they become `<name> re` and `<name> im`."""
+    vector takes two columns under one name; they become `<name> re` and `<name> im`. A row that is not one finite
+    number per column is left out and counted."""
     lines = [line for line in path.read_text(encoding="utf-8", errors="replace").splitlines() if line.strip()]
     if not lines:
-        return [], []
+        return [], [], 0
     names = lines[0].split()
-    rows = []
-    for line in lines[1:]:
-        try:
-            rows.append([float(value) for value in line.split()])
-        except ValueError:
-            continue
     columns: list[str] = []
     for position, name in enumerate(names):
         if position > 0 and names.count(name) == 2:
             columns.append(f"{name} {'re' if names.index(name) == position else 'im'}")
         else:
             columns.append(name)
-    rows = [row for row in rows if len(row) == len(columns)]
-    return columns, rows
+    rows = []
+    for line in lines[1:]:
+        try:
+            row = [float(value) for value in line.split()]
+        except ValueError:
+            continue
+        if len(row) == len(columns) and all(math.isfinite(value) for value in row):
+            rows.append(row)
+    return columns, rows, len(lines) - 1 - len(rows)
 
 
 def copy_inputs(chain: Any, run_dir: Path, transform: Any, copy_target: Any) -> None:

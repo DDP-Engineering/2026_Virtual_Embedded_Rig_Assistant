@@ -228,6 +228,15 @@ def instrument(request: Request, result: Result) -> int:
             session.close()
         result["lifecycle"] = {"phases": lifecycle.phases + ["released"], "physical": lifecycle.physical, "stopRequested": lifecycle.stopped}
         lifecycle.report("released")
+    # Added last, so the reason of a failure stays the first problem; only when a state-changing command was sent.
+    if request.operation in ("configure", "output") and lifecycle.physical != "unchanged":
+        used = result["instrument"]["profile"]
+        if used["verification"]["status"] != "verified":
+            result.problem(
+                "profile-unverified",
+                f"Profile {used['id']} is not verified on a real instrument: its commands come from the vendor's "
+                "programming guide. Check the readback and the instrument itself.",
+            )
     if result["status"] == "incomplete" and exit_code == 0:
         exit_code = 3
     if result["status"] == "fail" and exit_code == 0:

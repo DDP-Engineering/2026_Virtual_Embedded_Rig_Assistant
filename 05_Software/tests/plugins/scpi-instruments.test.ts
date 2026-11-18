@@ -138,7 +138,7 @@ describe("package", () => {
     expect(validatePluginManifest(m).issues).toEqual([]);
     expect(m).toMatchObject({
       id: "scpi-instruments",
-      version: "0.2.0",
+      version: "0.2.1",
       ecosystem: "lab",
       platforms: ["windows-x64", "linux-x64"],
     });
@@ -701,6 +701,9 @@ describe("the helper against a fake PyVISA (offline evidence)", { timeout: 60_00
       lifecycle: { physical: "confirmed" },
       hold: { seconds: 2, stopped: false },
     });
+    // The shipped profile is unverified: the run passes and says so.
+    expect(result.problems.map((problem: { code: string }) => problem.code)).toEqual(["profile-unverified"]);
+    expect(run.json.problems[0].message).toMatch(/rigol-dp800 is not verified on a real instrument/);
     // Measured at 0, 1 and 2 s: the output stays on for --hold seconds by the clock, not per loop step.
     expect(result.hold.samples).toBe(3);
     const started = Date.parse(result.started);
@@ -782,7 +785,8 @@ describe("the helper against a fake PyVISA (offline evidence)", { timeout: 60_00
     );
     const run = scpi(["configure", "--instrument", "psu", "--set", "CH1.voltage=5"]);
     expect(run.code).toBe(2);
-    expect(run.json.problems[0].code).toBe("output-on");
+    // Nothing was changed, so the block is the only problem (no unverified-profile warning).
+    expect(run.json.problems.map((problem: { code: string }) => problem.code)).toEqual(["output-on"]);
     expect(resultOf(run).commands).toEqual(["*IDN?", ":OUTP? CH1"]);
   });
 
@@ -859,7 +863,7 @@ describe("the helper against a fake PyVISA (offline evidence)", { timeout: 60_00
     expect(result).toMatchObject({
       format: 1,
       kind: "scpi-result",
-      tool: { name: "scpi-instruments", version: "0.2.0" },
+      tool: { name: "scpi-instruments", version: "0.2.1" },
     });
   });
 });

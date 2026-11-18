@@ -1,12 +1,13 @@
 # Einstellungen
 
-**Einstellungen** unten in der Seitenleiste öffnet die Anwendungseinstellungen. Sie gelten für alle Workbenches; die Einstellungen einer einzelnen Workbench finden Sie unter **Workbench bearbeiten** (siehe [Workbenches](workbenches.md)). Änderungen werden sofort gespeichert, außer auf Seiten mit einer eigenen Schaltfläche **Speichern**. **Zurück zu Workbenches** führt Sie zurück zu Ihrer Arbeit.
+**Einstellungen** unten in der Seitenleiste öffnet die Anwendungseinstellungen. Sie gelten für alle Workbenches; die Einstellungen eines einzelnen Workbenchs finden Sie unter **Workbench bearbeiten** (siehe [Workbenches](workbenches.md)). Änderungen werden sofort gespeichert, außer auf Seiten mit einer eigenen Schaltfläche **Speichern**. **Zurück zu Workbenches** führt Sie zurück zu Ihrer Arbeit.
 
 | Seite | Was sie festlegt |
 |---|---|
 | **Anbieter** | Zugang zu KI-Modellen; siehe [Anbieter und Modelle](providers.md) |
 | **Webzugriff** | Websuche und Lesen von Webseiten für den Agenten |
 | **Darstellung und Sprache** | Sprache, Design und Textgrößen |
+| **Befehle** | Die Shell für Agentenbefehle und neue Terminals |
 | **Benachrichtigungen** | Noch nicht verfügbar |
 | **Tastenkombinationen** | Ihre eigenen Tastenkombinationen |
 | **Aktualisierungen** | Wie VERA sich selbst aktualisiert |
@@ -19,7 +20,7 @@ Wählen Sie, ob gespeicherte Geheimnisse in **Anzeige**, **Programmläufe**, **A
 
 **Speichern** und **Abbrechen** stehen oben rechts. Schalter ändern bis zum Speichern nur den Entwurf. Beim Ausschalten von **Agent und Modell** erscheint eine Bestätigung: gespeicherte Geheimnisse aus Dateien oder Werkzeugausgaben können den Modellanbieter erreichen. Abbrechen oder Escape behält die bisherige Auswahl. Die anderen Bereiche fragen nicht nach.
 
-Unter **Workbench bearbeiten → Daten & Datenschutz** hat jeder Bereich **Standard**, **Ein** oder **Aus**. Standard zeigt den aktuellen App-Wert und folgt späteren Änderungen; ausdrückliche Werte gehören zur Workbench und werden mit ihrer Konfiguration kopiert. Auch Standard fragt nach, wenn dadurch Agent und Modell ausgeschaltet wird. Neue Workbenches übernehmen ohne eigene Auswahl die App-Werte. Schreibgeschützte Workbenches können Änderungen nicht speichern.
+Unter **Workbench bearbeiten → Daten & Datenschutz** hat jeder Bereich **Standard**, **Ein** oder **Aus**. Standard zeigt den aktuellen App-Wert und folgt späteren Änderungen; ausdrückliche Werte gehören zum Workbench und werden mit seiner Konfiguration kopiert. Auch Standard fragt nach, wenn dadurch Agent und Modell ausgeschaltet wird. Neue Workbenches übernehmen ohne eigene Auswahl die App-Werte. Schreibgeschützte Workbenches können Änderungen nicht speichern.
 
 Ausschalten stellt bereits als `[REDACTED]` gespeicherte Inhalte einschließlich Sitzungsverlauf und Artefakten nicht wieder her. Lesen oder erstellen Sie diese aus der Originalquelle neu. Einschalten löscht keinen zuvor unmaskiert gespeicherten Verlauf.
 
@@ -35,7 +36,7 @@ Ausschalten stellt bereits als `[REDACTED]` gespeicherte Inhalte einschließlich
 
 ## Tastenkombinationen
 
-Die Seite listet jeden Befehl mit seiner Tastenkombination auf. Sie können Kombinationen hinzufügen, ändern oder entfernen; **Standard wiederherstellen** und **Alle Standards wiederherstellen** machen Ihre Änderungen rückgängig. Kombinationen verwenden Ctrl, optional mit Alt oder Shift, und einen Buchstaben, eine Ziffer, ein Komma oder einen Schrägstrich; VERA lehnt reservierte oder bereits belegte Kombinationen ab. Die Standardliste finden Sie unter [Tastenkürzel](shortcuts.md).
+Die Seite listet jeden Befehl mit seiner Tastenkombination auf. Sie können Kombinationen hinzufügen, ändern oder entfernen; **Standard wiederherstellen** und **Alle Standards wiederherstellen** machen Ihre Änderungen rückgängig. Kombinationen verwenden Ctrl, optional mit Alt oder Shift, und einen Buchstaben, eine Ziffer, ein Komma oder einen Schrägstrich; VERA lehnt reservierte oder bereits belegte Kombinationen ab. Die Standardliste finden Sie unter [Tastenkombinationen](shortcuts.md).
 
 ## Aktualisierungen
 

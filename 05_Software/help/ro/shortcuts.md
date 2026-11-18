@@ -1,15 +1,15 @@
-# Scurtături de tastatură
+# Comenzi rapide
 
 Acestea sunt scurtăturile de tastatură implicite ale VERA. Le poți schimba, adăuga sau elimina în **Setări → Comenzi rapide**; vezi [Setări](settings.md).
 
 | Acțiune | Scurtătură | Ce face |
 |---|---|---|
-| Sesiune nouă | Ctrl+N, Ctrl+Shift+O | Începe o conversație în workbenchul activ. |
+| Sesiune nouă | Ctrl+N, Ctrl+Shift+O | Începe o conversație în workbench-ul activ. |
 | Workbench nou | Neatribuită | Afișează formularul pentru crearea unui workbench. |
 | Deschide workbench | Ctrl+O | Alege și deschide folderul unui workbench. |
 | Deschide setările | Ctrl+, | Afișează setările aplicației. |
-| Scurtături de tastatură | Ctrl+/ | Deschide Setări → Comenzi rapide. |
-| Afișează sau ascunde bara laterală | Ctrl+B, Ctrl+Shift+S | Extinde sau restrânge navigarea workbenchurilor. |
+| Comenzi rapide | Ctrl+/ | Deschide Setări → Comenzi rapide. |
+| Afișează sau ascunde bara laterală | Ctrl+B, Ctrl+Shift+S | Extinde sau restrânge navigarea workbench-urilor. |
 | Afișează sau ascunde panoul din dreapta | Ctrl+Shift+B | Controlează afișarea Context, Fișiere și a panourilor tehnice. |
 | Deschide terminalul | Ctrl+Shift+T | Deschide și focalizează terminalul utilizatorului. |
 | Caută în conversație | Ctrl+F | Caută în mesajele sesiunii curente. |

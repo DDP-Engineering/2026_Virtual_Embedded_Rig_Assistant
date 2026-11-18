@@ -12,7 +12,7 @@ import random
 from dataclasses import dataclass
 from typing import Any, Callable, Sequence
 
-from .contract import CalcError, Reader, Result, refuse
+from .contract import CalcError, Problem, Reader, Result, refuse
 from .quantities import (
     DEGREE_C,
     RESULT_UNITS,
@@ -27,6 +27,7 @@ MAX_PARAMETERS = 12
 MAX_OUTPUTS = 6  # Thirteen results per output must still fit the output limit of a document.
 SAMPLES = (100, 100_000)
 MAX_SEED = 2**63 - 1
+MAX_REDRAWS = 100  # Of one Monte Carlo sample whose draws fall outside the target's domain.
 # Result unit -> the dimension and temperature role a limit of that output is read with.
 LIMIT_KINDS: dict[str, tuple[str, str]] = {
     unit: (dimension, "plain") for dimension, unit in RESULT_UNITS.items() if dimension not in ("temperature", "temperature-difference", "angle", "decibel")
@@ -170,6 +171,23 @@ def _percentile(ordered: Sequence[float], fraction: float) -> float:
     lower = math.floor(position)
     upper = min(lower + 1, len(ordered) - 1)
     return ordered[lower] + (position - lower) * (ordered[upper] - ordered[lower])
+
+
+def _mostly_rejected(last: Problem, varied: Sequence[Parameter], rejected: int, drawn: int) -> CalcError:
+    """The refusal of a Monte Carlo run whose draws mostly leave the target's domain: the last rejected draw's
+    own refusal (its path names the input), followed by the share of rejected draws and that input's range."""
+    named = [item for item in varied if last.path == f"target.input.{item.name}"] or list(varied)
+    ranges = "; ".join(
+        f"{item.name} from {item.low:g} to {item.high:g} {item.unit}"
+        + (f" at {item.sigmas:g} sigmas" if item.distribution == "normal" else "")
+        for item in named
+    )
+    return refuse(
+        last.code,
+        last.path,
+        f"{last.message} {rejected} of {drawn} Monte Carlo draws were outside the target's domain ({ranges}); "
+        "narrow the tolerance or raise sigmas.",
+    )
 
 
 def run(document: dict[str, Any], operations: Sequence[str], evaluate: Evaluate) -> Result:
@@ -320,17 +338,33 @@ def run(document: dict[str, Any], operations: Sequence[str], evaluate: Evaluate)
     if samples is not None and seed is not None:
         generator = random.Random(seed)
         columns: list[list[float]] = [[] for _ in outputs]
+        rejected = 0
         for sample in range(samples):
-            setting = {}
-            for item in varied:
-                if item.distribution == "normal":
-                    assert item.sigmas is not None
-                    first, second = generator.random(), generator.random()
-                    deviate = math.sqrt(-2.0 * math.log(1.0 - first)) * math.cos(2.0 * math.pi * second)
-                    setting[item.name] = (item.low + item.high) / 2 + deviate * (item.high - item.low) / (2 * item.sigmas)
-                else:
-                    setting[item.name] = item.low + (item.high - item.low) * generator.random()
-            for column, value in zip(columns, attempt(setting, lambda: f"At Monte Carlo sample {sample} {setting}")):
+            redraws = 0
+            while True:
+                setting = {}
+                for item in varied:
+                    if item.distribution == "normal":
+                        assert item.sigmas is not None
+                        first, second = generator.random(), generator.random()
+                        deviate = math.sqrt(-2.0 * math.log(1.0 - first)) * math.cos(2.0 * math.pi * second)
+                        setting[item.name] = (item.low + item.high) / 2 + deviate * (item.high - item.low) / (2 * item.sigmas)
+                    else:
+                        setting[item.name] = item.low + (item.high - item.low) * generator.random()
+                try:
+                    values = attempt(setting, lambda: f"At Monte Carlo sample {sample} {setting}")
+                    break
+                except CalcError as error:
+                    # A wide normal distribution reaches values the target has no result for (R <= 0): that
+                    # draw is replaced. Any other refusal still ends the request.
+                    if any(problem.code != "domain" for problem in error.problems):
+                        raise
+                    rejected += 1
+                    redraws += 1
+                    # More rejected draws than samples means over half of all draws are outside the domain.
+                    if redraws > MAX_REDRAWS or rejected > samples:
+                        raise _mostly_rejected(error.problems[0], varied, rejected, sample + rejected) from error
+            for column, value in zip(columns, values):
                 column.append(value)
         for index, name in enumerate(outputs):
             ordered = sorted(columns[index])
@@ -352,6 +386,7 @@ def run(document: dict[str, Any], operations: Sequence[str], evaluate: Evaluate)
             "generator": "CPython random.Random (MT19937): uniform by min + (max - min) * u, normal by Box-Muller",
             "seed": seed,
             "samples": samples,
+            "rejected": rejected,
             "python": platform.python_version(),
         }
         result.formulas += [
@@ -360,7 +395,14 @@ def run(document: dict[str, Any], operations: Sequence[str], evaluate: Evaluate)
             "stdDev = sqrt(sum((x - mean)^2) / (n - 1)); percentiles by linear interpolation",
         ]
         result.assumptions.append("Monte Carlo parameters are statistically independent.")
-        if any(item.distribution == "normal" for item in varied):
+        if rejected:
+            truncated = (
+                f"{rejected} of {samples + rejected} Monte Carlo draws were outside the target's domain and were "
+                "drawn again: the distributions are truncated to the domain"
+            )
+            result.assumptions.append(f"{truncated}; the statistics describe the {samples} accepted samples.")
+            result.warn(f"{truncated}. Check the tolerance and sigmas of the parameters.")
+        elif any(item.distribution == "normal" for item in varied):
             result.assumptions.append("Normal distributions are not truncated: samples may fall outside the declared range.")
         result.warn("Monte Carlo statistics do not replace the worst-case corner results; check both.")
         result.limits.append(

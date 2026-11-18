@@ -5,8 +5,15 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import Database from "better-sqlite3";
 import { strToU8, zipSync } from "fflate";
-import { expect, it } from "vitest";
+import { expect, it, vi } from "vitest";
 import { z } from "zod";
+
+// Counts the source checks only; the real check still runs.
+vi.mock("./processor.js", async (original) => {
+  const actual = await original<typeof import("./processor.js")>();
+  return { ...actual, verifyDocumentSource: vi.fn(actual.verifyDocumentSource) };
+});
+
 import { validateCitations } from "../agent/citations.js";
 import { ReplayGateway } from "../llm/replay.js";
 import { SessionService } from "../sessions/service.js";
@@ -16,7 +23,7 @@ import { createToolContext } from "../tools/context.js";
 import { ToolRegistry } from "../tools/registry.js";
 import type { EmbeddingPort } from "./embedding.js";
 import { documentKind } from "./ingest.js";
-import { createDocumentProcessor } from "./processor.js";
+import { createDocumentProcessor, verifyDocumentSource } from "./processor.js";
 import { DocumentKnowledge, fuseRanks, sectionParts } from "./search.js";
 
 const software = fileURLToPath(new URL("../../../../../", import.meta.url));
@@ -200,6 +207,52 @@ it("validates all issued document kinds against current extraction bounds indepe
     await h.add("docs/a.html", "<h1>Reset</h1><p>Assert.</p>");
     h.db.prepare("UPDATE documents SET status='pending' WHERE path=?").run("docs/a.html");
     expect(await h.knowledge.validDocumentRef("docs/a.html#h=reset")).toBe(false);
+  } finally {
+    await h.close();
+  }
+});
+it("reads and hashes a cited source once for all citations of one finished message", async () => {
+  const h = await harness();
+  try {
+    await h.add(
+      "docs/a.pdf",
+      "fixture PDF source",
+      [1, 2, 3].map((n) => `page ${n} of the fixture datasheet`),
+    );
+    await h.add("docs/b.md", "# Power\n3.3 V\n");
+    const refs = [
+      "docs/a.pdf#p=1",
+      "docs/a.pdf#p=2",
+      "docs/a.pdf#p=1-3",
+      "docs/a.pdf#p=4",
+      "docs/b.md#h=power",
+    ];
+    const messages = [
+      {
+        role: "toolResult" as const,
+        toolName: "search_docs",
+        toolCallId: "c",
+        isError: false,
+        timestamp: 0,
+        content: [{ type: "text" as const, text: JSON.stringify({ results: refs.map((ref) => ({ ref })) }) }],
+      },
+    ];
+    const reads = vi.mocked(verifyDocumentSource);
+    reads.mockClear();
+    const verified = new Map<string, Promise<void>>();
+    const checked = await validateCitations(
+      h.root,
+      refs.map((ref) => `[[${ref}]]`).join(" "),
+      messages,
+      undefined,
+      (ref) => h.knowledge.validDocumentRef(ref, verified),
+    );
+    expect(checked.map((c) => c.valid)).toEqual([true, true, true, false, true]);
+    expect(reads).toHaveBeenCalledTimes(2);
+    // The next message starts without earlier checks, so a source changed meanwhile is refused.
+    await writeFile(join(h.root, "docs/a.pdf"), "changed");
+    expect(await h.knowledge.validDocumentRef("docs/a.pdf#p=1", new Map())).toBe(false);
+    expect(reads).toHaveBeenCalledTimes(3);
   } finally {
     await h.close();
   }

@@ -158,7 +158,7 @@ describe("package", () => {
   it("publishes the official micropython package with one pinned helper, two skills, catalog and pack entries", async () => {
     const m = manifest();
     expect(validatePluginManifest(m).issues).toEqual([]);
-    expect(m).toMatchObject({ id: "micropython", version: "0.2.0", platforms: ["windows-x64", "linux-x64"] });
+    expect(m).toMatchObject({ id: "micropython", version: "0.2.1", platforms: ["windows-x64", "linux-x64"] });
     expect(Object.keys(m.programs)).toEqual(["micropython-tool"]);
     expect(m.programs["micropython-tool"]?.install).toEqual({ script: "scripts/micropython_tool.py" });
     expect(readFileSync(script, "utf8")).toContain(
@@ -402,6 +402,35 @@ describe("identify, files and read-file", () => {
     await boardFile("/big.bin", Buffer.alloc(1024 * 1024 + 1));
     await setBench({ fsSize: 16 * 1024 * 1024 });
     expect(codes(mpy(device("read-file", "--remote", "/big.bin")))).toEqual(["too-large"]);
+  });
+
+  it("names the host copy of a board file safely when its name is a Windows device or ends in a dot", () => {
+    const remotes = [
+      "/main.py",
+      "/lib/my data.txt",
+      "/COM1",
+      "/lib/nul.txt",
+      "/aux",
+      "/notes.",
+      "/lib/notes.",
+    ];
+    const run = spawnSync(
+      python,
+      [
+        "-c",
+        "import json, sys; sys.path.insert(0, sys.argv[1]); from micropython_support.operations import _local_name; " +
+          "print(json.dumps([_local_name(path) for path in sys.argv[2:]]))",
+        scripts,
+        ...remotes,
+      ],
+      { env: environment(), encoding: "utf8" },
+    );
+    expect(run.status, run.stderr).toBe(0);
+    const names = JSON.parse(run.stdout) as string[];
+    expect(names.slice(0, 2)).toEqual(["main.py", "my_data.txt"]);
+    for (const name of names.slice(2)) expect(name).toMatch(/^file-[0-9a-f]{12}$/);
+    // The fallback is taken from the whole board path: two unusable names stay two files.
+    expect(new Set(names).size).toBe(names.length);
   });
 
   it("refuses remote paths outside the allowed form before opening the port", () => {

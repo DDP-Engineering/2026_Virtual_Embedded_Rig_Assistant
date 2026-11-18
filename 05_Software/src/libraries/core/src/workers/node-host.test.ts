@@ -67,6 +67,16 @@ it("aborts during matching and queued work, waits for termination and permits re
     ).matches,
   ).toHaveLength(1);
 });
+it("starts a queued task's deadline when it gets its worker, not when it was queued", async () => {
+  const hostPool = host(1500);
+  const blocking = hostPool.run(task(), new AbortController().signal);
+  const queued = hostPool.run(
+    { kind: "grep" as const, root, args: { pattern: "ok", glob: "00*" } },
+    new AbortController().signal,
+  );
+  expect(await blocking).toMatchObject({ reason: "timeout" });
+  expect(await queued).toMatchObject({ truncated: false, matches: [{ path: "00-good.txt" }] });
+});
 it("isolates one task per worker and a busy worker does not prevent another task", async () => {
   const hostPool = host(1500, 2);
   const controller = new AbortController();

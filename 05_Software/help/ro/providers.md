@@ -15,23 +15,23 @@ Tokenul se reînnoiește automat. **Deconectare** îl elimină.
 
 ## API OpenAI
 
-1. La **Conexiuni API / locale**, selectează **Adaugă o conexiune** și alege **API OpenAI** ca **Provider**.
+1. La **Conexiuni API / locale**, selectează **Adaugă o conexiune** și alege **API OpenAI** ca **Furnizor**.
 2. Introdu **Cheie API OpenAI** și, opțional, **Model OpenAI**.
 3. Selectează **Salvează**.
 
 ## LM Studio
 
 1. Pornește serverul LM Studio și încarcă un model.
-2. **Adaugă o conexiune**, **Provider** LM Studio. Adresa `http://localhost:1234` este completată automat.
+2. **Adaugă o conexiune**, **Furnizor** LM Studio. Adresa `http://localhost:1234` este completată automat.
 3. Selectează **Testează conexiunea**. VERA citește modelele de conversație ale serverului; modelele de embedding sunt omise.
-4. Pentru fiecare model, verifică limita de context afișată de VERA. Dacă serverul nu raportează niciuna, seteaz-o tu. Valorile opționale **Raționament** și **Temperatură** rămân pe **Implicit la provider** dacă nu le setezi.
+4. Pentru fiecare model, verifică limita de context afișată de VERA. Dacă serverul nu raportează niciuna, seteaz-o tu. Valorile opționale **Raționament** și **Temperatură** rămân pe **Implicit la furnizor** dacă nu le setezi.
 5. Selectează **Salvează**.
 
 Pentru LM Studio, cheia API este opțională.
 
 ## Ollama și alte endpointuri compatibile
 
-1. **Adaugă o conexiune**, **Provider** Ollama sau **Alt provider compatibil**. Pentru Ollama, **URL de bază** `http://localhost:11434/v1` este completat automat.
+1. **Adaugă o conexiune**, **Furnizor** Ollama sau **Alt furnizor compatibil**. Pentru Ollama, **URL de bază** `http://localhost:11434/v1` este completat automat.
 2. Introdu **Numele endpoint-ului**, **URL de bază** (o adresă `http` sau `https` care se termină în `/v1`), numele de la **Model** așa cum îl cunoaște serverul, **Fereastră de context (tokenuri)** și **Ieșire maximă (tokenuri)**.
 3. Introdu **Cheia API a endpoint-ului** dacă serverul are nevoie de una sau lasă câmpul gol.
 4. Selectează **Salvează**.
@@ -49,9 +49,9 @@ Cheile sunt stocate criptat cu stocarea securizată a sistemului de operare. Câ
 ## Alege un model
 
 - Pentru o sesiune: alege **Model** lângă caseta de mesaj.
-- Pentru un workbench: **Editează workbenchul** → **Agent și chat** → **Model implicit**, scris ca `provider/model`. Lasă câmpul gol pentru a folosi valoarea implicită a aplicației.
+- Pentru un workbench: **Editează workbench-ul** → **Agent și chat** → **Model implicit**, scris ca `provider/model`. Lasă câmpul gol pentru a folosi valoarea implicită a aplicației.
 
-Alegerea din sesiune are prioritate față de valoarea implicită a workbenchului, iar valoarea implicită a workbenchului față de cea a aplicației.
+Alegerea din sesiune are prioritate față de valoarea implicită a workbench-ului, iar valoarea implicită a workbench-ului față de cea a aplicației.
 
 ## Erori frecvente
 

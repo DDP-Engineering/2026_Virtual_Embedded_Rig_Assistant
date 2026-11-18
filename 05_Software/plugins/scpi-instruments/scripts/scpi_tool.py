@@ -5,8 +5,8 @@
 """Identified bench instruments through PyVISA for VERA (program `scpi` of the scpi-instruments plugin).
 
 Operations: capabilities, discover-configured, identify, read, capture, status, configure, close, output, decode.
-Instruments are declared in the workbench's lab/resources.json and acted on only through the package's validated
-profiles; there is no raw SCPI. Exit codes: 0 pass, 1 fail, 2 refused or blocked before any instrument effect,
+Instruments are declared in the workbench's lab/resources.json and acted on only through the package's profiles
+(none verified on a real instrument yet); there is no raw SCPI. Exit codes: 0 pass, 1 fail, 2 refused or blocked before any instrument effect,
 3 incomplete or error during I/O.
 """
 

@@ -15,6 +15,10 @@ export const terminalSummarySchema = z.strictObject({
   running: z.boolean(),
   exitCode: z.number().int().optional(),
 });
-export const terminalSnapshotSchema = terminalSummarySchema.extend({ output: z.string().max(262144) });
+/** `start` counts the characters the host dropped before `output`; it only grows as the buffer trims its head. */
+export const terminalSnapshotSchema = terminalSummarySchema.extend({
+  output: z.string().max(262144),
+  start: z.number().int().nonnegative(),
+});
 export type TerminalSummary = z.infer<typeof terminalSummarySchema>;
 export type TerminalSnapshot = z.infer<typeof terminalSnapshotSchema>;

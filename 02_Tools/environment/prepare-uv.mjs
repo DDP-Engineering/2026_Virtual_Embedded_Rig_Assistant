@@ -74,7 +74,8 @@ export async function checkUvBinary(path, entry) {
 /**
  * Writes `<destination>/<platform>/<binary>` from the pinned archive only when the archive and the
  * extracted binary match the manifest. The archive is cached in `<destination>/.cache/` and reused
- * once verified; a mismatch fails naming the file and leaves no binary behind.
+ * once verified; a cached archive that no longer matches is downloaded again. A mismatch of a fresh
+ * download or of the binary fails naming the file and leaves no binary behind.
  */
 export async function prepareUv(
   manifest,
@@ -92,19 +93,27 @@ export async function prepareUv(
   await rm(target, { force: true });
   const name = entry.url.split("/").at(-1);
   const cached = join(destination, ".cache", entry.sha256, name);
-  let archive;
-  try {
-    archive = await readFile(cached);
-    if (sha256(archive) !== entry.sha256) throw new Error(`uv archive integrity mismatch: ${name}`);
-  } catch (error) {
+  let archive = await readFile(cached).catch((error) => {
     if (error.code !== "ENOENT") throw error;
-    if (offline) throw new Error(`Verified uv archive missing: ${name}`);
+  });
+  // A damaged cache entry (an interrupted write, a disk fault) is downloaded again, not trusted and not fatal.
+  if (!archive || sha256(archive) !== entry.sha256) {
+    if (offline)
+      throw new Error(
+        archive ? `uv archive integrity mismatch: ${name}` : `Verified uv archive missing: ${name}`,
+      );
     const response = await fetchImpl(entry.url, { signal: AbortSignal.timeout(300_000) });
     if (!response.ok) throw new Error(`uv download failed (${response.status}): ${name}`);
     archive = Buffer.from(await response.arrayBuffer());
     if (sha256(archive) !== entry.sha256) throw new Error(`uv archive integrity mismatch: ${name}`);
     await mkdir(dirname(cached), { recursive: true });
-    await writeFile(cached, archive);
+    const partial = `${cached}.${randomUUID()}.partial`;
+    try {
+      await writeFile(partial, archive, { flag: "wx" });
+      await rename(partial, cached);
+    } finally {
+      await rm(partial, { force: true });
+    }
   }
   const binary = extractMember(archive, entry);
   if (!binary) throw new Error(`uv archive lacks ${entry.member}: ${name}`);

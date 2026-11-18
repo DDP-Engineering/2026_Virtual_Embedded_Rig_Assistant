@@ -261,7 +261,7 @@ describe("package", () => {
     expect(validatePluginManifest(m).issues).toEqual([]);
     expect(m).toMatchObject({
       id: "gdb-debug",
-      version: "0.2.0",
+      version: "0.2.1",
       ecosystem: "lab",
       platforms: ["windows-x64", "linux-x64"],
     });
@@ -357,6 +357,8 @@ describe("risk of each operation (REQ-SEC-00f3d2b9, REQ-SEC-ad412ce8)", () => {
     for (const [expected, program, args] of cases)
       expect(classifyCommand(rules, program, args).risk, `${program} ${args.join(" ")}`).toBe(expected);
     expect(classifyCommand(rules, "gdb-debug", ["break", ...live, "--at", "f"]).timeout).toBe(3600);
+    // 100 steps of up to 10 s each do not fit the program's 300 s.
+    expect(classifyCommand(rules, "gdb-debug", ["step", ...live, "--count", "100"]).timeout).toBe(1800);
     // The probe-rs plugin keeps its interactive and server commands blocked: LAB-04 adds no generic unblocking.
     const probeRs: PluginManifest = parse(readFileSync(join(plugins, "probe-rs", "plugin.yaml"), "utf8"));
     for (const command of ["gdb", "debug", "dap-server", "serve"])

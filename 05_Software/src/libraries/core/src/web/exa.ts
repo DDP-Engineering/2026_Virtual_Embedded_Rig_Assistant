@@ -46,13 +46,17 @@ export class ExaWebProvider implements WebProvider {
     const blocks = text.split(/\n\s*---\s*\n(?=\s*Title:)/);
     const sources: WebSource[] = [];
     let truncated = false;
+    let malformed = 0;
     for (const block of blocks) {
       const match =
         /^Title:\s*([^\n]*)\nURL:\s*(\S+)[^\n]*\n(?:Published:[^\n]*\n)?(?:Author:[^\n]*\n)?(?:Highlights:|Text:|Content:)\s*\n?([\s\S]*)$/.exec(
           block.trim(),
         );
-      if (!match)
-        throw new WebFailure("Web provider returned an invalid response. Retry or refine the search.");
+      // One malformed block never discards the sources that did parse.
+      if (!match) {
+        malformed++;
+        continue;
+      }
       try {
         const content = match[3]!.trim();
         sources.push({
@@ -66,7 +70,11 @@ export class ExaWebProvider implements WebProvider {
       }
     }
     if (!sources.length)
-      throw new WebFailure("Web provider returned no usable public sources. Refine the search.");
+      throw new WebFailure(
+        malformed === blocks.length
+          ? "Web provider returned an invalid response. Retry or refine the search."
+          : "Web provider returned no usable public sources. Refine the search.",
+      );
     return this.result(sources.slice(0, args.limit), truncated || sources.length > args.limit);
   }
 

@@ -57,9 +57,9 @@ export class PluginCredentialService {
     return list;
   }
   async save(request: unknown): Promise<{ status: "saved" | "consent-required" }> {
-    const raw = request as { username?: unknown; password?: unknown; token?: unknown } | undefined;
+    const raw = request as { password?: unknown; token?: unknown } | undefined;
     // Registered before validation, so even a refused value never reaches a log unredacted.
-    for (const value of [raw?.username, raw?.password, raw?.token])
+    for (const value of [raw?.password, raw?.token])
       if (typeof value === "string" && value) this.host.credentials.registerSecret(value);
     const parsed = parseSave(this.scope, request);
     if (!parsed) throw veraError("INVALID");

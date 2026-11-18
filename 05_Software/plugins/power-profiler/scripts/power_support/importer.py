@@ -58,12 +58,15 @@ def read(cwd: Path, spelled: Path, args: Any) -> dict[str, Any]:
         raise Refused("source", "--csv is not UTF-8 text.") from error
     if args.delimiter not in DELIMITERS:
         raise Refused("request", "--delimiter is ',', ';' or tab.")
-    rows = list(csv.reader(io.StringIO(text), delimiter=DELIMITERS[args.delimiter]))
-    rows = [row for row in rows if row and any(cell.strip() for cell in row)]
+    rows: list[list[str]] = []
+    for row in csv.reader(io.StringIO(text), delimiter=DELIMITERS[args.delimiter]):
+        if row and any(cell.strip() for cell in row):
+            rows.append(row)
+            # Refused one row past the limit, before the rest of a 64 MiB file becomes a list.
+            if len(rows) - 1 > ROW_LIMIT:
+                raise Refused("limit", f"--csv holds more than {ROW_LIMIT} rows.")
     if len(rows) < 3:
         raise Refused("source", "--csv needs a header and at least two rows.")
-    if len(rows) - 1 > ROW_LIMIT:
-        raise Refused("limit", f"--csv holds more than {ROW_LIMIT} rows.")
     header = [cell.strip() for cell in rows[0]]
 
     def column(name: str | None, option: str) -> int | None:

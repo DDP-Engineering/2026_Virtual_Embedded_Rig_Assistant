@@ -143,7 +143,7 @@ def _simulate(run_dir: Path, prefix: str, request: Request, chain: netlist.Chain
     measured = [measure.measure(spec, outcome.columns, outcome.rows) if ok else {"id": spec["id"], "kind": spec["kind"], "status": "not-evaluated"} for spec in request.measurements]
     by_id = {m["id"]: m for m in measured}
     return {"status": outcome.status, "engine": {"status": outcome.status, "exit": outcome.exit, "seconds": round(outcome.seconds, 3), "problems": outcome.problems},
-            "columns": outcome.columns, "rows": outcome.rows, "measurements": measured,
+            "columns": outcome.columns, "rows": outcome.rows, "droppedRows": outcome.dropped, "measurements": measured,
             "criteria": measure.criteria(request.criteria, by_id, ok)}
 
 
@@ -260,8 +260,10 @@ def _simulate_and_write(operation: str, args: argparse.Namespace, cwd: Path, spe
                               "temperature": temperature, "parameters": request.parameters, "droppedCards": chain.dropped,
                               "options": chain.options, "warnings": (chain.warnings + dropped)[:20], "limits": report.LIMITS}
     files: dict[str, tuple[str, bytes]] = {}
+    dropped_rows = 0
     if operation == "run":
         simulated = _simulate(run_dir, "", request, chain, ngspice, request.parameters, temperature)
+        dropped_rows = simulated["droppedRows"]
         status = "not-applicable" if _not_applicable(request, simulated) else simulated["status"]
         result.update({"status": status, "engine": simulated["engine"], "measurements": simulated["measurements"], "criteria": simulated["criteria"]})
         if status == "not-applicable":
@@ -282,6 +284,7 @@ def _simulate_and_write(operation: str, args: argparse.Namespace, cwd: Path, spe
                 continue
             limited = Request(**{**request.__dict__, "time_limit": min(request.time_limit, remaining)})
             simulated = _simulate(run_dir, f"points/{index}/", limited, chain, ngspice, point["parameters"], point["temperature"])
+            dropped_rows += simulated["droppedRows"]
             outcomes.append({"index": index, "inputs": point["inputs"], "status": simulated["status"], "engine": simulated["engine"],
                              "measurements": simulated["measurements"], "criteria": simulated["criteria"]})
         result["points"] = outcomes
@@ -292,6 +295,8 @@ def _simulate_and_write(operation: str, args: argparse.Namespace, cwd: Path, spe
             result["warnings"].append(f"The sweep used its {SWEEP_BUDGET:.0f} s budget; the remaining points did not run.")
         elif any(p["status"] != "ok" for p in outcomes):
             result["status"] = "failed"
+    if dropped_rows:
+        result["warnings"].append(f"{dropped_rows} rows of the engine's series were left out: they were not rows of finite numbers (unparseable, NaN or infinite).")
     if not _unchanged(cwd, spelled, args, request_info, chain):
         raise Refused([Problem("output", "", "An input file changed while the simulation ran; the run was discarded.")])
     result["finishedAt"] = _stamp(datetime.now(timezone.utc))

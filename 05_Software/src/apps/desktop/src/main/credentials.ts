@@ -18,8 +18,15 @@ export interface CredentialCrypto {
 }
 export type CredentialStorage = "encrypted" | "unprotected" | "memory" | null;
 type Entry = { encoding: "safeStorage" | "unprotected"; value: string; weak: boolean };
-/** The credentials format; its version stays 1 during development (AGENTS.md). */
-type Document = { schemaVersion: 1; entries: Record<string, Entry> };
+/**
+ * The credentials format; its version stays 1 during development (AGENTS.md). An entry that could not
+ * be read is kept as found, so a keyring that works again at the next start can still read it.
+ */
+type Document = { schemaVersion: 1; entries: Record<string, unknown> };
+/** A shorter value is an ordinary word ("admin", "1234"); masking it would hide it in every text. */
+const SECRET_MIN_LENGTH = 6;
+/** Credential fields that hold a public identifier, not a secret. */
+const identifierFields = new Set(["username", "user", "id"]);
 function object(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
@@ -68,7 +75,7 @@ export class CredentialFile implements CredentialStore {
     return this.locations.get(id) ?? null;
   }
   registerSecret(secret: string): void {
-    if (!secret || this.secrets.has(secret)) return;
+    if (secret.length < SECRET_MIN_LENGTH || this.secrets.has(secret)) return;
     this.secrets.add(secret);
     this.host.logger.registerSecret(secret);
   }
@@ -76,7 +83,8 @@ export class CredentialFile implements CredentialStore {
     const walk = (item: unknown): void => {
       if (typeof item === "string") this.registerSecret(item);
       else if (Array.isArray(item)) item.forEach(walk);
-      else if (object(item)) Object.values(item).forEach(walk);
+      else if (object(item))
+        for (const [key, field] of Object.entries(item)) if (!identifierFields.has(key)) walk(field);
     };
     const { type: _type, ...rest } = value;
     const fields: Record<string, unknown> = rest;
@@ -134,41 +142,59 @@ export class CredentialFile implements CredentialStore {
     try {
       parsed = JSON.parse(raw);
     } catch {
-      throw veraError("INVALID");
+      parsed = undefined;
     }
-    if (!object(parsed) || parsed.schemaVersion !== 1 || !object(parsed.entries)) throw veraError("INVALID");
-    const entries: Record<string, Entry> = {};
+    if (!object(parsed) || parsed.schemaVersion !== 1 || !object(parsed.entries)) {
+      // Start empty so keys can be entered again; the next save replaces the file, so keep a copy.
+      await this.host.files.writeAtomic(`${this.host.file}.damaged`, raw).catch(() => {});
+      this.host.logger.log("warn", "credentials.file.damaged");
+      return;
+    }
+    const entries: Record<string, unknown> = {};
     const values = new Map<string, Credential>();
     const locations = new Map<string, CredentialStorage>();
+    const skipped: string[] = [];
     for (const [id, entry] of Object.entries(parsed.entries)) {
-      if (
-        !id ||
-        !object(entry) ||
-        !["safeStorage", "unprotected"].includes(String(entry.encoding)) ||
-        typeof entry.value !== "string" ||
-        typeof entry.weak !== "boolean" ||
-        !/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(entry.value) ||
-        !entry.value
-      )
-        throw veraError("INVALID");
-      let value: unknown;
-      try {
-        const buffer = Buffer.from(entry.value, "base64");
-        value = JSON.parse(
-          entry.encoding === "safeStorage" ? this.host.crypto.decryptString(buffer) : buffer.toString("utf8"),
-        );
-      } catch {
-        throw veraError("INVALID");
+      entries[id] = entry;
+      const value = this.decode(id, entry);
+      if (value === undefined) {
+        skipped.push(id);
+        continue;
       }
-      if (!credential(value) || (entry.encoding === "unprotected" && !entry.weak)) throw veraError("INVALID");
+      const { encoding, value: encoded, weak } = entry as Entry;
       this.register(value);
       values.set(id, value);
-      locations.set(id, entry.weak ? "unprotected" : "encrypted");
-      entries[id] = { encoding: entry.encoding as Entry["encoding"], value: entry.value, weak: entry.weak };
+      locations.set(id, weak ? "unprotected" : "encrypted");
+      entries[id] = { encoding, value: encoded, weak };
     }
+    // The other credentials stay usable; a skipped one can be entered again under the same id.
+    if (skipped.length) this.host.logger.log("warn", "credentials.entries.skipped", { ids: skipped });
     this.document = { schemaVersion: 1, entries };
     this.values = values;
     this.locations = locations;
+  }
+  /** The credential of one stored entry; undefined when the entry is malformed or cannot be decrypted. */
+  private decode(id: string, entry: unknown): Credential | undefined {
+    if (
+      !id ||
+      !object(entry) ||
+      !["safeStorage", "unprotected"].includes(String(entry.encoding)) ||
+      typeof entry.value !== "string" ||
+      typeof entry.weak !== "boolean" ||
+      !/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(entry.value) ||
+      !entry.value ||
+      (entry.encoding === "unprotected" && !entry.weak)
+    )
+      return undefined;
+    try {
+      const buffer = Buffer.from(entry.value, "base64");
+      const value: unknown = JSON.parse(
+        entry.encoding === "safeStorage" ? this.host.crypto.decryptString(buffer) : buffer.toString("utf8"),
+      );
+      return credential(value) ? value : undefined;
+    } catch {
+      return undefined;
+    }
   }
   async read(id: string, options?: AuthOperationOptions): Promise<Credential | undefined> {
     options?.signal?.throwIfAborted();
@@ -222,7 +248,7 @@ export class CredentialFile implements CredentialStore {
             encoding: available ? "safeStorage" : "unprotected",
             value: (available ? this.host.crypto.encryptString(text) : Buffer.from(text)).toString("base64"),
             weak: !secure,
-          };
+          } satisfies Entry;
         } catch {
           throw veraError("INTERNAL");
         }

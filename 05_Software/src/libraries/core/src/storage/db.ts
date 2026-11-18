@@ -1,5 +1,5 @@
 import { constants, lstatSync, rmSync } from "node:fs";
-import { copyFile, type FileHandle, mkdtemp, open, rm } from "node:fs/promises";
+import { copyFile, type FileHandle, lstat, mkdtemp, open, readdir, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { veraError } from "@vera/shared";
@@ -60,12 +60,30 @@ async function capture(path: string, file: string): Promise<boolean> {
   }
   return before[0] === (await stamp(path)) && before[1] === (await stamp(`${path}-wal`));
 }
+const SNAPSHOT_PREFIX = "vera-storage-";
+const STALE_MS = 24 * 60 * 60 * 1000;
+/** Removes private copies older than a day that a crash or a held file left in the temp folder; best effort. */
+async function sweepSnapshots(): Promise<void> {
+  const names = await readdir(tmpdir()).catch(() => []);
+  for (const name of names) {
+    if (!name.startsWith(SNAPSHOT_PREFIX)) continue;
+    const folder = join(tmpdir(), name);
+    try {
+      const info = await lstat(folder);
+      if (info.isDirectory() && Date.now() - info.mtimeMs > STALE_MS)
+        await rm(folder, { recursive: true, force: true });
+    } catch {
+      // Another process still holds or already removed it.
+    }
+  }
+}
 /**
  * SQLite reads a private copy so even WAL recovery/SHM creation cannot alter protected source data.
  * The copy is asynchronous, so a large database does not block the main process.
  */
 async function snapshot(path: string): Promise<WorkbenchDatabase> {
-  const temporary = await mkdtemp(join(tmpdir(), "vera-storage-"));
+  await sweepSnapshots();
+  const temporary = await mkdtemp(join(tmpdir(), SNAPSHOT_PREFIX));
   let db: Database.Database | undefined;
   try {
     const file = join(temporary, "vera.db");
@@ -81,12 +99,16 @@ async function snapshot(path: string): Promise<WorkbenchDatabase> {
       db: result,
       close() {
         if (result.open) result.close();
-        rmSync(temporary, { recursive: true, force: true });
+        try {
+          rmSync(temporary, { recursive: true, force: true });
+        } catch {
+          // Windows can still hold the copy (EBUSY, EPERM); a later snapshot sweeps what stays behind.
+        }
       },
     };
   } catch (error) {
     db?.close();
-    await rm(temporary, { recursive: true, force: true });
+    await rm(temporary, { recursive: true, force: true }).catch(() => {});
     throw busy(error);
   }
 }

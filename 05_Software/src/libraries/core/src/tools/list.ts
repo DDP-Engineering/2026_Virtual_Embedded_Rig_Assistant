@@ -4,6 +4,9 @@ import type { GuardedPath } from "../workbench/path-guard.js";
 import type { ToolDefinition } from "./context.js";
 import { toolPathGuard } from "./context.js";
 
+/** Entries collected at most; the tool result cap cuts the returned list far below this. */
+const LISTED = 5000;
+
 export const listTool: ToolDefinition = {
   name: "list",
   class: "read",
@@ -22,6 +25,7 @@ export const listTool: ToolDefinition = {
       for (const item of (await readdir(folder.absolute, { withFileTypes: true })).sort((a, b) =>
         a.name.localeCompare(b.name),
       )) {
+        if (entries.length >= LISTED) return;
         signal.throwIfAborted();
         if (item.isSymbolicLink() || (!item.isFile() && !item.isDirectory())) continue;
         const relative = path === "." ? item.name : `${path}/${item.name}`;
@@ -43,6 +47,6 @@ export const listTool: ToolDefinition = {
     };
     await walk(base.relative, args.depth ?? 1);
     guard.assertAuthorized();
-    return { entries };
+    return { entries, ...(entries.length >= LISTED ? { truncated: true } : {}) };
   },
 };

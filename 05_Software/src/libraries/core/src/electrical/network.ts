@@ -95,6 +95,8 @@ const C_MIN = 0.95;
 const C_Q_MAX = 1.1;
 const C_Q_MIN = 1.0;
 const DEFAULT_RQ_XQ = 0.1;
+/** Share of the supply voltage a motor's rated voltage may differ by before a message names it. */
+const MOTOR_VOLTAGE_TOLERANCE = 0.1;
 const sig = (value: number) => Number(value.toPrecision(6));
 
 // ---- model reading ---------------------------------------------------------------------------------------------
@@ -402,9 +404,15 @@ export function analyzeNetwork(input: NetworkInput): ElectricalResult {
       const voltage = prop(object, "ratedVoltage", "voltage") ?? (phases === 1 ? u0 : un);
       const rated = prop(object, "ratedPower", "power");
       const efficiency = prop(object, "efficiency", "ratio");
-      if (current !== null && pf !== null && phases !== null)
+      if (current !== null && pf !== null && phases !== null) {
         p = (phases === 3 ? Math.sqrt(3) * voltage : voltage) * current * pf;
-      else if (rated !== null && efficiency !== null && efficiency > 0 && efficiency <= 1)
+        // A winding voltage (230 V on a 400 V network) with the current of the other connection misstates the load.
+        const supply = phases === 1 ? u0 : un;
+        if (Math.abs(voltage - supply) > MOTOR_VOLTAGE_TOLERANCE * supply)
+          messages.push(
+            `${label(object)}: rated voltage ${sig(voltage)} V differs from the supply's ${sig(supply)} V by more than ${MOTOR_VOLTAGE_TOLERANCE * 100} %; its input power is computed from its own rated voltage and rated current - check that both belong to the connection used on this network.`,
+          );
+      } else if (rated !== null && efficiency !== null && efficiency > 0 && efficiency <= 1)
         p = rated / efficiency;
       else if (efficiency !== null && (efficiency <= 0 || efficiency > 1))
         messages.push(`${label(object)}: efficiency ${efficiency} is outside 0..1 (unit 1) or 0..100 %.`);
@@ -581,8 +589,12 @@ export function analyzeNetwork(input: NetworkInput): ElectricalResult {
       sourceZMax = atRatio((cMax * un) / (Math.sqrt(3) * ikMax));
       if (ikMin === null) minProblem = "shortCircuitCurrentMin unknown";
       else sourceZMin = atRatio((C_MIN * un) / (Math.sqrt(3) * ikMin));
-      if (tn && ze !== null) sourceLoop = scale(atRatio(ze), 3);
-      else
+      if (tn && ze !== null) {
+        sourceLoop = scale(atRatio(ze), 3);
+        assumptions.push(
+          `Earth-fault loop impedance Ze of ${label(source)} split into resistance and reactance with the short-circuit R/X ratio ${rx} (resistanceReactanceRatio); Ze states no ratio of its own.`,
+        );
+      } else
         earthProblem = tn ? "earthFaultLoopImpedance unknown" : `earthing ${earthing ?? "unknown"} is not TN`;
     }
   } else scProblem.push(`source kind ${kind ?? "unknown"} is not transformer or supply`);
@@ -656,6 +668,9 @@ export function analyzeNetwork(input: NetworkInput): ElectricalResult {
         value("ik3Max", object.id, ik && ik / 1000, "kA");
         const ip = peak(nodeZMax.get(object.id) ?? null, ik);
         value("peakCurrent", object.id, ip && ip / 1000, "kA");
+        // The weak end of the fault level, for checks that get worse with a weaker network (bank resonance).
+        const ikMin = ik3(C_MIN, nodeZMin.get(object.id) ?? null);
+        value("ik3Min", object.id, ikMin && ikMin / 1000, "kA");
       }
       continue;
     }

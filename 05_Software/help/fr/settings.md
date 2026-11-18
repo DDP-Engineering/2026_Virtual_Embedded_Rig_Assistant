@@ -7,6 +7,7 @@
 | **Fournisseurs** | Accès aux modèles d’IA ; consultez [Fournisseurs et modèles](providers.md) |
 | **Accès web** | Recherche et lecture sur le web pour l’agent |
 | **Apparence et langue** | Langue, thème et tailles de texte |
+| **Commandes** | Le shell des commandes de l’agent et des nouveaux terminaux |
 | **Notifications** | Pas encore disponible |
 | **Raccourcis clavier** | Vos propres combinaisons de touches |
 | **Mises à jour** | La façon dont VERA se met à jour |

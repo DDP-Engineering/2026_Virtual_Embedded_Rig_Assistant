@@ -1,8 +1,8 @@
 # SCPI bench instruments (scpi-instruments)
 
 Program `scpi` identifies the bench instruments a workbench declares, reads values, captures waveforms, changes
-settings and powers a DUT output for a bounded hold - only through the validated profiles in `profiles/`. There is no
-raw SCPI, no instrument search on the network and no driver installation.
+settings and powers a DUT output for a bounded hold - only through the profiles in `profiles/`, none of which is verified on a real
+instrument yet (support matrix below). There is no raw SCPI, no instrument search on the network and no driver installation.
 
 ## Install
 
@@ -47,8 +47,9 @@ verification status, the lifecycle (phases, `physical` state), values or series 
 sent and the artifacts with SHA-256. Exit codes: 0 pass, 1 fail, 2 refused or blocked before any effect, 3 incomplete
 or error during I/O. Problem codes: `truncated-transfer`, `visa-timeout`, `instrument-absent`, `driver-missing`,
 `connection-lost`, `reconnected`, `unexpected-reply`, `identity-mismatch`, `profile-unknown`, `registry-changed`,
-`state-unknown`, `readback-mismatch`, `output-on`, `clipped`, `stopped`, `limit`, `request`, `internal`. A refusal
-before any instrument is contacted prints its document without creating a run folder.
+`state-unknown`, `readback-mismatch`, `output-on`, `clipped`, `stopped`, `limit`, `request`, `internal`, and the
+warning `profile-unverified` on a `configure` or `output` that sent a state-changing command through an unverified
+profile. A refusal before any instrument is contacted prints its document without creating a run folder.
 
 ## Reservation and cleanup
 

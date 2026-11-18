@@ -10,7 +10,7 @@ Diese Seite führt Sie vom ersten Start bis zu einer ersten Antwort mit Quellenv
 
 ## Erster Start
 
-VERA öffnet sich auf **Start**, wo Ihre **Arbeitsbereiche** aufgelistet sind und **Arbeitsbereich erstellen** angeboten wird. Die Seitenleiste enthält **Neue Workbench**, **Workbench öffnen** und **Plugins**; **Einstellungen** befindet sich unten in der Seitenleiste.
+VERA öffnet sich auf **Start**, wo Ihre **Workbenches** aufgelistet sind und **Workbench erstellen** angeboten wird. Die Seitenleiste enthält **Neuer Workbench**, **Workbench öffnen** und **Plugins**; **Einstellungen** befindet sich unten in der Seitenleiste.
 
 Um zuerst die Sprache der Oberfläche zu ändern, öffnen Sie **Einstellungen** → **Darstellung und Sprache** und wählen Sie unter **Sprache der Oberfläche** eine Sprache.
 
@@ -24,12 +24,12 @@ Um zuerst die Sprache der Oberfläche zu ändern, öffnen Sie **Einstellungen** 
 
 Details finden Sie unter [Anbieter und Modelle](providers.md).
 
-## Schritt 2: eine Workbench erstellen
+## Schritt 2: einen Workbench erstellen
 
-1. Wählen Sie **Neue Workbench**.
+1. Wählen Sie **Neuer Workbench**.
 2. Wählen Sie **Ordner auswählen** und wählen Sie Ihren Projektordner. Der Name wird aus dem Ordnernamen übernommen.
 3. Prüfen Sie unter **Dokumente & RAG** die Dokumentationsordner, die VERA gefunden hat, oder verwenden Sie **Ordner hinzufügen…**.
-4. Wählen Sie **Arbeitsbereich erstellen**.
+4. Wählen Sie **Workbench erstellen**.
 
 VERA beginnt im Hintergrund mit der Indizierung. Sie können bereits chatten; der Tab **Dateien** im rechten Bereich zeigt den Fortschritt der Indizierung. Siehe [Workbenches](workbenches.md) und [Dokumente und Suche](documents-and-search.md).
 

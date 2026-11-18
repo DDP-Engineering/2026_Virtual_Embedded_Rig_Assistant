@@ -14,13 +14,16 @@ interface Pending {
   value?: WorkerResult["value"];
   worker?: Worker;
   terminal: boolean;
-  timer: ReturnType<typeof setTimeout>;
+  timer?: ReturnType<typeof setTimeout>;
   abort: () => void;
   resolve: (result: WorkerResult) => void;
   onPartial?: (value: unknown) => void;
 }
 
-/** Absolute deadlines belong to this host, including queue time. One task per worker. */
+/**
+ * Absolute deadlines belong to this host and start when a task gets its worker: a task waiting behind
+ * others is never reported as timed out without having run. One task per worker.
+ */
 export class NodeWorkerPool implements WorkerPool {
   readonly deadlineMs: number;
   private readonly capacity: number;
@@ -52,14 +55,11 @@ export class NodeWorkerPool implements WorkerPool {
       const job: Pending = {
         task: structuredClone(task),
         signal,
-        deadline: performance.now() + this.deadlineMs,
+        deadline: Number.POSITIVE_INFINITY,
         matches: [],
         terminal: false,
         resolve,
         ...(onPartial ? { onPartial } : {}),
-        timer: setTimeout(() => {
-          this.finish(job, { truncated: true, reason: "timeout" });
-        }, this.deadlineMs),
         abort: () => {
           this.finish(job, { truncated: true, reason: "aborted" });
         },
@@ -73,11 +73,11 @@ export class NodeWorkerPool implements WorkerPool {
     while (!this.closed && this.active.size < this.capacity && this.queue.length) {
       const job = this.queue.shift();
       if (!job || job.terminal) continue;
-      if (performance.now() >= job.deadline) {
-        this.finish(job, { truncated: true, reason: "timeout" });
-        continue;
-      }
       this.active.add(job);
+      job.deadline = performance.now() + this.deadlineMs;
+      job.timer = setTimeout(() => {
+        this.finish(job, { truncated: true, reason: "timeout" });
+      }, this.deadlineMs);
       try {
         const worker = new Worker(this.entry);
         job.worker = worker;

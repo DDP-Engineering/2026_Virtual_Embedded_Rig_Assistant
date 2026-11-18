@@ -1,6 +1,6 @@
 format: 1
 id: power-quality-pfc
-version: 0.1.0
+version: 0.1.1
 license: LicenseRef-PolyForm-Noncommercial-1.0.0
 name: Power quality and reactive compensation
 summary: Import P/Q/S and harmonic measurements, size a fixed or automatic capacitor bank and check overcompensation, equipment and resonance.

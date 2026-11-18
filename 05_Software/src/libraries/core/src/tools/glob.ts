@@ -3,6 +3,9 @@ import type { ToolDefinition } from "./context.js";
 import { toolPathGuard } from "./context.js";
 import { discoverFiles } from "./discovery.js";
 
+/** Files examined at most; far above the 500 returned, so a huge tree costs a bounded number of file checks. */
+const DISCOVERED = 5000;
+
 export const globTool: ToolDefinition = {
   name: "glob",
   class: "read",
@@ -11,7 +14,8 @@ export const globTool: ToolDefinition = {
   async execute(ctx, raw, signal) {
     const args = globTool.params.parse(raw) as { pattern: string; path?: string };
     const guard = await toolPathGuard(ctx, true);
-    const files = await discoverFiles(guard, args.path ?? ".", args.pattern, signal);
+    // Past the cap the result is the newest of the files examined and is marked truncated like any cut list.
+    const files = await discoverFiles(guard, args.path ?? ".", args.pattern, signal, DISCOVERED);
     files.sort((a, b) => b.mtimeMs - a.mtimeMs || a.path.localeCompare(b.path));
     guard.assertAuthorized();
     return { paths: files.slice(0, 500).map((file) => file.path), truncated: files.length > 500 };

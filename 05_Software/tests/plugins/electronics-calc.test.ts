@@ -131,7 +131,7 @@ it("publishes the official electronics-calc package, its pack, activity and two 
   expect(validatePluginManifest(m).issues).toEqual([]);
   expect(m).toMatchObject({
     id: "electronics-calc",
-    version: "0.3.0",
+    version: "0.3.1",
     ecosystem: "electronics",
     platforms: ["windows-x64", "linux-x64"],
   });
@@ -320,7 +320,7 @@ describe("the elec-calc script", { timeout: 120_000 }, () => {
     expect(doc).toMatchObject({
       format: 1,
       kind: "elec-calc-result",
-      tool: { name: "elec-calc", version: "0.3.0" },
+      tool: { name: "elec-calc", version: "0.3.1" },
       operation: "losses",
       model: "linear-regulator",
       runId: "t1",
@@ -1005,6 +1005,43 @@ ${help.slice(help.indexOf("A current is one of"))}`;
       // An untruncated normal distribution is narrower than the uniform one but may pass the corners.
       expect(value(doc, "vout.stdDev")).toBeLessThan(uniformSd);
       expect(doc?.assumptions.join("\n")).toContain("not truncated");
+      expect(doc?.details.monteCarlo).toMatchObject({ rejected: 0 });
+    });
+
+    it("draws again a sample outside the target's domain and reports the rejected draws", () => {
+      // One sigma at 50 %: about 2.3 % of the rTop draws are at or below zero.
+      const wide = (tolerance: string, sigmas: number) => ({
+        target: { operation: "divider", input: divider },
+        outputs: ["vout"],
+        parameters: {
+          rTop: { tolerance, distribution: "normal", sigmas },
+          rBottom: { tolerance, distribution: "normal", sigmas },
+        },
+        monteCarlo: { samples: 2000, seed: 7 },
+      });
+      const run = inline("tolerance", wide("50 %", 1));
+      expect(run.code, run.stdout).toBe(0);
+      const rejected = (run.doc?.details.monteCarlo as { rejected: number } | undefined)?.rejected ?? 0;
+      expect(rejected).toBeGreaterThan(20);
+      expect(rejected).toBeLessThan(200);
+      expect(run.doc?.details.monteCarlo).toMatchObject({ samples: 2000 });
+      expect(run.doc?.warnings.join("\n")).toContain(`${rejected} of ${2000 + rejected} Monte Carlo draws`);
+      expect(run.doc?.assumptions.join("\n")).toContain("truncated to the domain");
+      expect(run.doc?.assumptions.join("\n")).not.toContain("not truncated");
+      expect(value(run.doc, "vout.sampleMin")).toBeGreaterThan(0);
+      expect(value(run.doc, "vout.sampleMax")).toBeLessThan(5);
+
+      // Most draws invalid: the request is refused and names the input and its range.
+      const refused = inline("tolerance", wide("99 %", 0.1));
+      expect(refused.code).toBe(2);
+      expect(refused.doc?.errors).toHaveLength(1);
+      expect(refused.doc?.errors?.[0]).toMatchObject({
+        code: "domain",
+        path: expect.stringMatching(/^target\.input\.r(Top|Bottom)$/),
+      });
+      expect(refused.doc?.errors?.[0]?.message).toMatch(
+        /^At Monte Carlo sample \d+ .* Monte Carlo draws were outside .*from 100 to 19900 Ω at 0\.1 sigmas/,
+      );
     });
   });
 
@@ -1078,7 +1115,7 @@ ${help.slice(help.indexOf("A current is one of"))}`;
       expect(report).toMatchObject({
         format: 1,
         kind: "elec-calc-report",
-        tool: { name: "elec-calc", version: "0.3.0" },
+        tool: { name: "elec-calc", version: "0.3.1" },
         runId: "r1",
         title: "Power stage review",
         notes: ["Bench revision B"],
@@ -1608,7 +1645,7 @@ it("runs from an ask-mode session without approval through the real runner (REQ-
       settings: () => undefined,
     });
     expect(await provisioner.install("electronics-calc")).toEqual([
-      { name: "elec-calc", kind: "script", state: "ready", version: "0.3.0" },
+      { name: "elec-calc", kind: "script", state: "ready", version: "0.3.1" },
     ]);
     const plugin = await store.load("electronics-calc");
     const resolved = await provisioner.resolve(plugin, "elec-calc");
@@ -1679,7 +1716,7 @@ it.skipIf(!uv)(
       const release = await core.buildCatalogRelease(fileURLToPath(plugins), join(root, "release"));
       expect(release.issues).toEqual([]);
       const store = new core.PluginStore({ root: join(root, "plugins") });
-      await store.install(join(root, "release/electronics-calc-0.3.0.zip"));
+      await store.install(join(root, "release/electronics-calc-0.3.1.zip"));
       provisioner = new core.Provisioner({
         store,
         root: join(root, "runtime"),
@@ -1693,7 +1730,7 @@ it.skipIf(!uv)(
         },
       });
       expect(await provisioner.install("electronics-calc")).toEqual([
-        { name: "elec-calc", kind: "script", state: "ready", version: "0.3.0" },
+        { name: "elec-calc", kind: "script", state: "ready", version: "0.3.1" },
       ]);
       const plugin = await store.load("electronics-calc");
       const resolved = await provisioner.resolve(plugin, "elec-calc");

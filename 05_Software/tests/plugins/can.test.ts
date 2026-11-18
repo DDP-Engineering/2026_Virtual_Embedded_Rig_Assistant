@@ -6,7 +6,7 @@ import { spawn, spawnSync } from "node:child_process";
 import { existsSync } from "node:fs";
 import { copyFile, mkdir, mkdtemp, readFile, realpath, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import * as core from "@vera/core";
 import { ReplayGateway } from "@vera/core/replay";
@@ -266,6 +266,37 @@ describe("the can script with a fake python-can", { timeout: 60_000 }, () => {
     );
   });
 
+  it("ends a capture bounded only by --max-messages on a quiet bus after its default duration", async () => {
+    const help = await run(["capture", "--help"]);
+    expect(help.stdout.replace(/\s+/g, " ")).toContain("seconds to capture (default 240 when only");
+    // The shipped default shortened, so the test does not wait four minutes for the quiet bus.
+    const shortened = [
+      "import sys",
+      "sys.path.insert(0, sys.argv.pop(1))",
+      "import can_bus",
+      "can_bus.DEFAULT_DURATION = 0.5",
+      "can_bus.main()",
+    ].join("\n");
+    const result = await run(
+      [
+        shortened,
+        dirname(canScript),
+        "capture",
+        "--interface",
+        "udp_multicast",
+        "--channel",
+        "g",
+        "--max-messages",
+        "5",
+      ],
+      { script: "-c" },
+    );
+    expect(result.code, result.stderr).toBe(0);
+    expect(result.stderr).toContain(
+      "0 frames from udp_multicast:g (software bus) to stdout, stopped by duration",
+    );
+  });
+
   it("refuses a capture that cannot be listen-only unless --active is given", async () => {
     for (const bus of [
       ["--interface", "gs_usb", "--channel", "0"],
@@ -473,7 +504,7 @@ it("waits for the typed word before a transmit starts", async () => {
       settings: () => undefined,
     });
     expect(await provisioner.install("can-python")).toEqual([
-      { name: "can", kind: "script", state: "ready", version: "0.2.0" },
+      { name: "can", kind: "script", state: "ready", version: "0.2.1" },
     ]);
     const plugin = await store.load("can-python");
     const runs = async () =>
@@ -557,7 +588,7 @@ it.skipIf(!uv)(
       const release = await core.buildCatalogRelease(fileURLToPath(plugins), join(root, "release"));
       expect(release.issues).toEqual([]);
       const store = new core.PluginStore({ root: join(root, "plugins") });
-      for (const zip of [`can-python-0.2.0.zip`, `can-dbc-0.3.1.zip`])
+      for (const zip of [`can-python-0.2.1.zip`, `can-dbc-0.3.1.zip`])
         await store.install(join(root, "release", zip));
       provisioner = new core.Provisioner({
         store,

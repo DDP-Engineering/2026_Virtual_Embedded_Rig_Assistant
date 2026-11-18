@@ -139,6 +139,8 @@ export interface ProgramRunnerOptions {
   tailChars?: number;
   maxBackground?: number;
   logsKept?: number;
+  /** Program output a run log keeps on disk; 64 MiB by default. */
+  logBytes?: number;
   killGraceMs?: number;
   /** Run id factory; ULIDs by default, so log names sort by age. */
   id?: () => string;
@@ -173,6 +175,7 @@ const DEVICE_PORT = /^\/dev\/(?:tty\S*|serial\/by-id\/.+)$/;
 /** A serial port inside a sigrok-cli driver specification (`driver:conn=COM3:...`). */
 const CONN = /(?:^|:)conn=([^:]+)/i;
 const CONTROL_BYTES = 64 * 1024;
+const LOG_TRUNCATED = "\n[VERA] log truncated: size limit reached, the run continues\n";
 const thrown = (code: "BUSY" | "DENIED", params: Record<string, string | number>) => ({
   ...veraError(code),
   params,
@@ -338,6 +341,7 @@ class Run implements ActiveRun {
   private folder: string | undefined;
   private startedAt: string | undefined;
   private writing = Promise.resolve();
+  private logged = 0;
   private readonly decoders = { stdout: new OutputDecoder(), stderr: new OutputDecoder() };
   private readonly tail: TailBuffer;
   private unread: TailBuffer;
@@ -609,7 +613,10 @@ class Run implements ActiveRun {
     if (!text) return;
     this.tail.push(text);
     this.unread.push(text);
-    this.write(text);
+    // A chatty program never fills the disk: past the cap only the in-memory tail keeps following the run.
+    if (this.logged > this.settings.logBytes) return;
+    this.logged += Buffer.byteLength(text);
+    this.write(this.logged > this.settings.logBytes ? `${text}${LOG_TRUNCATED}` : text);
   }
 
   private write(text: string): void {
@@ -947,6 +954,7 @@ export class ProgramRunner {
       tailChars: options.tailChars ?? 12_000,
       maxBackground: options.maxBackground ?? 4,
       logsKept: options.logsKept ?? 200,
+      logBytes: options.logBytes ?? 64 * 1024 * 1024,
       killGraceMs: options.killGraceMs ?? 3000,
       now: options.now ?? (() => new Date()),
       devicePath: options.devicePath ?? ((path) => realpathSync(path)),

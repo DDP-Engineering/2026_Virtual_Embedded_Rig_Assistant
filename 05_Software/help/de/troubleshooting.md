@@ -8,9 +8,9 @@
 - **Das Kontextlimit wurde erreicht**: Kürzen Sie die Eingabe, starten Sie eine neue Sitzung oder korrigieren Sie das Kontextfenster einer benutzerdefinierten Verbindung.
 - Ein hängender Durchlauf lässt sich jederzeit mit **Stoppen** beenden.
 
-## Die Workbench ist schreibgeschützt
+## Der Workbench ist schreibgeschützt
 
-Die Meldung **Dieser Arbeitsbereich ist schreibgeschützt, da ein anderer Prozess oder eine Sperre ihn besitzt.** bedeutet, dass ein anderer VERA-Prozess die Workbench geöffnet hat. Schließen Sie diesen und öffnen Sie die Workbench erneut. Eine Workbench auf einer Netzwerkfreigabe wird nicht unterstützt; verschieben Sie sie auf ein lokales Laufwerk.
+Die Meldung **Dieser Workbench ist schreibgeschützt, da ein anderer Prozess oder eine Sperre ihn besitzt.** bedeutet, dass ein anderer VERA-Prozess den Workbench geöffnet hat. Schließen Sie diesen und öffnen Sie den Workbench erneut. Ein Workbench auf einer Netzwerkfreigabe wird nicht unterstützt; verschieben Sie ihn auf ein lokales Laufwerk.
 
 ## Der Agent findet etwas in den Dokumenten nicht
 
@@ -28,7 +28,7 @@ Die zitierte Datei wurde nach der Antwort geändert oder entfernt, oder der Agen
 
 ## Der Agent verwendet ein Plugin nicht
 
-- Ist das Plugin für diese Workbench aktiviert? Prüfen Sie **Workbench bearbeiten** → **Plugins**.
+- Ist das Plugin für diesen Workbench aktiviert? Prüfen Sie **Workbench bearbeiten** → **Plugins**.
 - Zeigt sein **Status** **Bereit** an? Andernfalls wählen Sie **Abhängigkeiten prüfen**, installieren Sie, was fehlt, und vervollständigen Sie seine **Konfiguration**.
 - Im Modus **Nur lesen** laufen nur sichere Befehle; Befehle mit der Einstufung **Gesperrt** laufen nie. Siehe [Berechtigungen](permissions.md).
 - **Auf diesem Computer nicht vertrauenswürdig** oder **Die Dateien des Plugins haben sich seit der Prüfung geändert; installieren Sie es erneut.**: Prüfen Sie das Plugin und installieren Sie es erneut.
@@ -52,7 +52,7 @@ VERA startet nicht, wenn seine `settings.json` beschädigt ist oder von Hand in 
 
 ## Protokolle
 
-VERA schreibt eine Protokolldatei pro Tag, `vera-YYYY-MM-DD.log`, in den Ordner `logs` seines Datenordners und behält die neuesten sieben. Schlüssel und andere bekannte Geheimnisse werden aus den Protokollen entfernt. Die Programmausgabe von Plugins steht nicht in diesen Protokollen, sondern in `.vera/runs/` der Workbench.
+VERA schreibt eine Protokolldatei pro Tag, `vera-YYYY-MM-DD.log`, in den Ordner `logs` seines Datenordners und behält die neuesten sieben. Schlüssel und andere bekannte Geheimnisse werden aus den Protokollen entfernt. Die Programmausgabe von Plugins steht nicht in diesen Protokollen, sondern in `.vera/runs/` des Workbenchs.
 
 ## Wo VERA seine Daten ablegt
 
@@ -72,4 +72,4 @@ Die Anwendungsdaten liegen in einem Ordner:
 | `plugins/` | Installierte Plugins und die Programme, die VERA für sie installiert hat |
 | `window-state.json` | Fenstergröße und -position |
 
-Alles, was zu einem Projekt gehört, etwa Sitzungen, der Dokumentindex, Artefakte, Downloads und Laufprotokolle, liegt im eigenen Ordner `.vera/` der Workbench; siehe [Workbenches](workbenches.md).
+Alles, was zu einem Projekt gehört, etwa Sitzungen, der Dokumentindex, Artefakte, Downloads und Laufprotokolle, liegt im eigenen Ordner `.vera/` des Workbenchs; siehe [Workbenches](workbenches.md).

@@ -31,6 +31,7 @@ Magistrala CAN îi permite agentului să găsească adaptoare CAN, să captureze
 
 - Windows x64 și Linux x64.
 - Adaptoarele reale și `vcan0` pe Linux nu sunt încă acoperite de testele VERA; modul listen-only este cerut backend-ului și nu este citit înapoi de la adaptor.
+- O captură limitată doar printr-un număr de cadre se încheie după cel mult 240 de secunde; cere o durată pentru a înregistra mai mult.
 - O captură `.blf` oprită înainte de durata ei poate fi incompletă; `.asc` și `.log` se scriu cadru cu cadru.
 - Setările magistralei vin doar din linia de comandă; `~/.canrc`, `can.ini` și variabilele `CAN_*` sunt ignorate.
 - Referință: https://python-can.readthedocs.io/en/v4.6.1/

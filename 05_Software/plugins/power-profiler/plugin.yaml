@@ -1,6 +1,6 @@
 format: 1
 id: power-profiler
-version: 0.2.0
+version: 0.2.1
 license: LicenseRef-PolyForm-Noncommercial-1.0.0
 name: Power profiling
 summary: Measure a board's current, power and energy with a Joulescope JS220 and analyse the captures offline.

@@ -486,7 +486,10 @@ export function analyzeProtection(input: ProtectionInput): ElectricalResult {
 
       // Rated current or setting: Ib <= In <= Iz.
       const adjustable = item.parameters.some((parameter) => parameter.name === "settingCurrentMax");
+      // A device may cite several rated currents (derated at a higher ambient): the smallest is the safe side for
+      // Ib <= In, the largest for In <= Iz, I2 <= 1.45 Iz and the instantaneous trip current.
       let inValue: Num = null;
+      let inTop: Num = null;
       let inNote = "";
       let rangeFail = false;
       if (adjustable) {
@@ -503,31 +506,36 @@ export function analyzeProtection(input: ProtectionInput): ElectricalResult {
             inNote = `Setting ${sig(setting)} A is outside the cited setting range ${range}.${cite(high.criterion)}`;
           } else {
             inValue = setting;
+            inTop = setting;
             inNote = `Setting ${sig(setting)} A inside the cited range ${range}.${cite(high.criterion)}`;
           }
         }
       } else {
         const rated = pick(item, "ratedCurrent", "A", "low");
+        const top = pick(item, "ratedCurrent", "A", "high");
         inValue = rated.value;
+        inTop = top.value;
         inNote =
-          rated.value === null
+          rated.value === null || top.value === null
             ? sentence(why(rated.criterion, "rated current"))
-            : `In ${sig(rated.value)} A.${cite(rated.criterion)}`;
+            : near(rated.value, top.value)
+              ? `In ${sig(rated.value)} A.${cite(rated.criterion)}`
+              : `In cited from ${sig(rated.value)} A to ${sig(top.value)} A: Ib is compared with the smallest, Iz and I2 with the largest.${cite(top.criterion)}`;
       }
-      value(`ratedCurrent:${code}`, circuit.id, inValue, "A");
+      value(`ratedCurrent:${code}`, circuit.id, inTop, "A");
       {
         let verdict: Verdict = "unknown";
         let note = inNote;
         if (rangeFail) verdict = "fail";
-        else if (inValue !== null && (ib === null || iz === null))
+        else if (inValue !== null && inTop !== null && (ib === null || iz === null))
           note = `${inNote} ${ib === null ? "Design current Ib" : "Current-carrying capacity Iz"} unknown in the network result.`;
-        else if (inValue !== null && ib !== null && iz !== null) {
-          verdict = atLeast(inValue, ib) && atLeast(iz, inValue) ? "pass" : "fail";
+        else if (inValue !== null && inTop !== null && ib !== null && iz !== null) {
+          verdict = atLeast(inValue, ib) && atLeast(iz, inTop) ? "pass" : "fail";
           note = `${inNote} Ib ${sig(ib)} A <= In <= Iz ${sig(iz)} A.`;
         }
         push("rated-current", "Rated current between Ib and Iz", {
           verdict,
-          ...(inValue === null ? {} : { measured: { value: sig(inValue), unit: "A" } }),
+          ...(inTop === null ? {} : { measured: { value: sig(inTop), unit: "A" } }),
           ...(iz === null ? {} : { limit: { value: sig(iz), unit: "A" } }),
           note,
         });
@@ -536,7 +544,7 @@ export function analyzeProtection(input: ProtectionInput): ElectricalResult {
       // Conventional tripping current: I2 <= 1.45 Iz.
       {
         const ratio = pick(item, "conventionalTrippingCurrentRatio", "1", "high");
-        const i2 = ratio.value === null || inValue === null ? null : ratio.value * inValue;
+        const i2 = ratio.value === null || inTop === null ? null : ratio.value * inTop;
         value(`conventionalTrippingCurrent:${code}`, circuit.id, i2, "A");
         push("conventional-tripping", "Conventional tripping current I2 <= 1.45 Iz", {
           verdict: i2 === null || iz === null ? "unknown" : atLeast(1.45 * iz, i2) ? "pass" : "fail",
@@ -545,11 +553,11 @@ export function analyzeProtection(input: ProtectionInput): ElectricalResult {
           note:
             ratio.value === null
               ? sentence(why(ratio.criterion, "conventional tripping ratio"))
-              : inValue === null
+              : inTop === null
                 ? "In or setting unknown."
                 : iz === null
                   ? "Current-carrying capacity Iz unknown in the network result."
-                  : `I2 = ${sig(ratio.value)} x ${sig(inValue)} A.${cite(ratio.criterion)}`,
+                  : `I2 = ${sig(ratio.value)} x ${sig(inTop)} A.${cite(ratio.criterion)}`,
         });
       }
 
@@ -592,7 +600,7 @@ export function analyzeProtection(input: ProtectionInput): ElectricalResult {
         const multiple = pick(item, "magneticTripMultiple", "1", "high");
         const absolute = pick(item, "magneticTripCurrent", "A", "high");
         const im =
-          absolute.value ?? (multiple.value !== null && inValue !== null ? multiple.value * inValue : null);
+          absolute.value ?? (multiple.value !== null && inTop !== null ? multiple.value * inTop : null);
         if (im !== null) {
           const tolerance = pick(item, "magneticTripTolerance", "%", "high");
           const cited = pick(item, "magneticTripTimeMax", "s", "high");

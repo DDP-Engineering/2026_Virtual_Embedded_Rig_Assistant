@@ -1,6 +1,6 @@
 # Instrumente de laborator SCPI
 
-Acest plugin îi permite agentului să lucreze cu instrumentele de laborator pe care le declară workbenchul tău: un multimetru, un osciloscop sau o sursă de alimentare, prin PyVISA. Identifică un instrument, citește valori cu unități, capturează forme de undă, modifică setări și alimentează o placă de la o ieșire a sursei pentru o menținere limitată. Fiecare comandă provine dintr-un profil validat; nu există SCPI brut și nici căutare în rețea. Fiecare instrument este rezervat pe durata rulării, iar ieșirile lui sunt oprite după apăsarea butonului Oprește, un timeout sau un crash, altfel starea este raportată ca necunoscută. Rezultatele ajung în `embedded-lab-results/`.
+Acest plugin îi permite agentului să lucreze cu instrumentele de laborator pe care le declară workbenchul tău: un multimetru, un osciloscop sau o sursă de alimentare, prin PyVISA. Identifică un instrument, citește valori cu unități, capturează forme de undă, modifică setări și alimentează o placă de la o ieșire a sursei pentru o menținere limitată. Fiecare comandă provine dintr-un profil al pachetului; nu există SCPI brut și nici căutare în rețea. Fiecare instrument este rezervat pe durata rulării, iar ieșirile lui sunt oprite după apăsarea butonului Oprește, un timeout sau un crash, altfel starea este raportată ca necunoscută. Rezultatele ajung în `embedded-lab-results/`.
 
 ## Ce necesită
 
@@ -27,6 +27,6 @@ Agentul folosește skill-urile `bench-instruments` și `instrument-profiles`.
 
 ## Limitări
 
-- Windows x64 și Linux x64. Niciun profil nu a fost încă verificat pe un instrument real; Ubuntu nativ și VISA de la producător nu au fost rulate.
+- Windows x64 și Linux x64. Niciun profil nu a fost încă verificat pe un instrument real, așa că un rezultat care a modificat setări sau a alimentat o ieșire poartă avertismentul `profile-unverified`; Ubuntu nativ și VISA de la producător nu au fost rulate.
 - Un instrument a cărui identitate nu corespunde niciunui profil primește doar identify.
 - VERA nu poate bloca alte programe și nimic nu poate opri o ieșire dacă se pierde întregul computer sau VERA.

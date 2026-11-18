@@ -52,4 +52,6 @@ Real adapters and Linux vcan0 have not been exercised by VERA's tests; the
 opt-in acceptance uses udp_multicast. Listen-only is requested from the
 backend as documented by python-can and is not read back from the adapter. A
 background `.blf` capture that is stopped before its duration can be
-incomplete; `.asc` and `.log` are written frame by frame.
+incomplete; `.asc` and `.log` are written frame by frame. A capture with only
+`--max-messages` ends after 240 s at the latest; give `--duration` for a longer
+one.

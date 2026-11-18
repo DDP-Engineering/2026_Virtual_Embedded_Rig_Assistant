@@ -80,7 +80,7 @@ def upload(cwd: Path, spelled: Path, raw: str, build_raw: str, alias: str, effec
     env = run_env(ctx, "build", None, run.folder)
     env["PLATFORMIO_UPLOAD_FLAGS"] = f'-c "adapter serial {probe.serial}"'
     command = [*environment.pio_command(), "run", "-d", str(request.project), "-e", name, "-t", "nobuild", "-t", "upload"]
-    code, _ = run.step("upload", command, request.project, env)
+    code, _ = run.step("upload", command, request.project, env, lifecycle.stop_requested)
     if lifecycle.stop_requested():
         run.set_status("stopped", "stop-requested", "VERA asked the run to stop; the target's flash content is unknown.")
     if code != 0:

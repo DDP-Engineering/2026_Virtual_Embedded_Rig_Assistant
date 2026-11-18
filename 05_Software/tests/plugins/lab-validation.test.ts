@@ -355,7 +355,7 @@ describe("package", () => {
     expect(validatePluginManifest(m).issues).toEqual([]);
     expect(m).toMatchObject({
       id: "lab-validation",
-      version: "0.3.0",
+      version: "0.3.1",
       ecosystem: "lab",
       platforms: ["windows-x64", "linux-x64"],
     });
@@ -1333,7 +1333,7 @@ describe("results and report", { timeout: 180_000 }, () => {
     expect(result).toMatchObject({
       format: 1,
       kind: "lab-validation-result",
-      tool: { name: "lab-validation", version: "0.3.0" },
+      tool: { name: "lab-validation", version: "0.3.1" },
       operation: "compare",
       runId: "docs",
       status: "fail",
@@ -1613,6 +1613,36 @@ describe("review round 1 cases", { timeout: 180_000 }, () => {
     expect(resultOf(root, run).criteria[0].diagnostics).toContain("source-incomplete");
   });
 
+  it("refuses a capture whose raw block holds another number of samples than its waveform (REQ-FUNC-8342826a)", async () => {
+    const capture = await scpiCapture(root, "cap-raw");
+    const rawPath = join(root, capture, "raw-CHAN1.bin");
+    const raw = readFileSync(rawPath).subarray(1);
+    await writeFile(rawPath, raw);
+    // The recorded hash follows the shorter block, so only the sample count differs.
+    const resultPath = join(root, capture, "result.json");
+    const document = JSON.parse(readFileSync(resultPath, "utf8")) as Json;
+    for (const artifact of document.artifacts)
+      if (String(artifact.path).endsWith("raw-CHAN1.bin")) artifact.sha256 = sha256(raw);
+    await writeFile(resultPath, JSON.stringify(document));
+    const request = await requestFile(
+      root,
+      "requests/raw.json",
+      base({
+        sources: { scope: { importer: "scpi-capture", path: capture } },
+        signals: { ch1: { source: "scope", channel: "CHAN1" } },
+      }),
+    );
+    const run = lv(root, ["normalize", "--request", request, "--run-id", "raw"]);
+    expect(run.code).toBe(2);
+    expect(run.json.problems[0]).toMatchObject({
+      code: "source",
+      message: expect.stringMatching(
+        new RegExp(`raw-CHAN1\\.bin holds ${raw.length} samples, the waveform ${raw.length + 1}\\.$`),
+      ),
+    });
+    expect(existsSync(join(root, "embedded-lab-results", "raw"))).toBe(false);
+  });
+
   it("bounds cross-correlation by the samples, not the time span (REQ-FUNC-2f239a32)", async () => {
     const request = await requestFile(
       root,
@@ -1854,7 +1884,7 @@ it("runs from an ask-mode session without approval through the real runner and l
       settings: () => undefined,
     });
     expect(await provisioner.install("lab-validation")).toEqual([
-      { name: "lab-validate", kind: "script", state: "ready", version: "0.3.0" },
+      { name: "lab-validate", kind: "script", state: "ready", version: "0.3.1" },
     ]);
     const plugin = await store.load("lab-validation");
     const gateway = new ReplayGateway({ dir: join(temp, "scripts"), now: Date.now });
@@ -1910,7 +1940,7 @@ it.skipIf(!uv)(
       const release = await core.buildCatalogRelease(fileURLToPath(plugins), join(temp, "release"));
       expect(release.issues).toEqual([]);
       const store = new core.PluginStore({ root: join(temp, "plugins") });
-      await store.install(join(temp, "release/lab-validation-0.3.0.zip"));
+      await store.install(join(temp, "release/lab-validation-0.3.1.zip"));
       provisioner = new core.Provisioner({
         store,
         root: join(temp, "runtime"),
@@ -1924,7 +1954,7 @@ it.skipIf(!uv)(
         },
       });
       expect(await provisioner.install("lab-validation")).toEqual([
-        { name: "lab-validate", kind: "script", state: "ready", version: "0.3.0" },
+        { name: "lab-validate", kind: "script", state: "ready", version: "0.3.1" },
       ]);
       const plugin = await store.load("lab-validation");
       const resolved = await provisioner.resolve(plugin, "lab-validate");

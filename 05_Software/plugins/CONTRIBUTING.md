@@ -77,7 +77,7 @@ Network calculations come from VERA's `electrical_network` tool (plugin `electri
 `electrical-automation-tables/<id>.json` (kind `vera-cable-table`, format 1, every value from one cited source with
 its licence terms), and stores a result with stable intermediate names per subject - `designCurrent`,
 `ik3MaxStart`, `peakCurrentStart`, `ik3MinEnd`, `ik1MinEnd` on circuits, `crossSection` and `currentCapacity` on
-cables, `activePower:<scenario>` and `ik3Max` on boards. Protection, motor and power-quality helpers read those
+cables, `activePower:<scenario>`, `ik3Max` and `ik3Min` on boards. Protection, motor and power-quality helpers read those
 values from the stored result (and check its freshness with `electrical_model` view `results`) instead of
 recomputing them; `electrical_model` view `report` renders any stored result as Markdown.
 

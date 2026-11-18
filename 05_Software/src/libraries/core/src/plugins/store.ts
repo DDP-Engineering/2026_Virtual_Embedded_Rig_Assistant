@@ -79,6 +79,12 @@ export interface PluginOrigin {
 const RECORD = "install.json";
 const MANIFEST = "plugin.yaml";
 const RECORD_BYTES = 64 * 1024;
+/** The installed folder a reinstall moved aside, until the new one is in place. */
+const PREVIOUS = ".previous";
+/** Younger staging entries may belong to an install another VERA process is running right now. */
+const STALE_STAGE_MS = 60 * 60 * 1000;
+/** Store roots whose staging folder this process has already recovered and swept. */
+const recovered = new Map<string, Promise<void>>();
 const order = (a: string, b: string) => (a < b ? -1 : a > b ? 1 : 0);
 const fails = (code: VeraError["code"]) => veraError(code);
 const errno = (error: unknown) => (error as NodeJS.ErrnoException | undefined)?.code;
@@ -535,8 +541,36 @@ export class PluginStore {
         : {}),
     };
   }
+  /**
+   * Once per process and root, before the first read or change: puts back the previous copy of a plugin whose
+   * reinstall stopped between its two renames and removes what older operations left in staging. Best effort.
+   */
+  private recover(): Promise<void> {
+    let done = recovered.get(this.root);
+    if (!done) {
+      done = this.sweep().catch(() => {});
+      recovered.set(this.root, done);
+    }
+    return done;
+  }
+  private async sweep(): Promise<void> {
+    for (const name of await readdir(this.staging)) {
+      const path = join(this.staging, name);
+      const previous = name.endsWith(PREVIOUS);
+      const record = previous ? await readRecord(join(path, RECORD)) : undefined;
+      const target = record && join(this.installed, record.id);
+      if (target && !(await lstat(target).catch(() => undefined))) {
+        await rename(path, target).catch(() => {});
+        continue;
+      }
+      const info = await lstat(path).catch(() => undefined);
+      if (info && (previous || Date.now() - info.mtimeMs > STALE_STAGE_MS))
+        await rm(path, { recursive: true, force: true }).catch(() => {});
+    }
+  }
   private serial<T>(task: () => Promise<T>): Promise<T> {
-    const run = this.queue.then(task, task);
+    const recoveredTask = () => this.recover().then(task);
+    const run = this.queue.then(recoveredTask, recoveredTask);
     this.queue = run.catch(() => {});
     return run;
   }
@@ -550,6 +584,7 @@ export class PluginStore {
       if (ids.length > 1024) throw fails("INVALID");
       return ids;
     }
+    await this.recover();
     try {
       const entries = await readdir(this.installed, { withFileTypes: true });
       return entries
@@ -747,7 +782,7 @@ export class PluginStore {
         await writeFile(join(stage, RECORD), `${JSON.stringify(record, null, 2)}\n`, { flag: "wx" });
         await mkdir(this.installed, { recursive: true });
         const target = join(this.installed, manifest.id);
-        const previous = join(this.staging, this.uuid());
+        const previous = join(this.staging, `${this.uuid()}${PREVIOUS}`);
         assertCurrent?.();
         let replaced = false;
         try {

@@ -21,7 +21,7 @@ import sys
 import time
 from typing import NoReturn
 
-VERSION = "0.2.0"
+VERSION = "0.2.1"
 # The first argument must name the command: VERA's rules classify it, and argparse would otherwise accept a
 # leading "--" before the subcommand.
 FIRST = {"list", "capture", "send", "replay", "--version", "--help", "-h"}
@@ -32,6 +32,9 @@ LOG_SUFFIXES = (".asc", ".blf", ".log")
 SOFTWARE = {"virtual", "udp_multicast"}
 # python-can opens these at 500 kbit/s when no bitrate is given; never let that happen silently.
 BITRATE_REQUIRED = {"pcan", "kvaser", "gs_usb"}
+# A capture bounded only by --max-messages would wait forever on a quiet bus. It ends before the program's 300 s
+# timeout in plugin.yaml, so the log file is closed and the summary printed.
+DEFAULT_DURATION = 240.0
 FD_LENGTHS = {0, 1, 2, 3, 4, 5, 6, 7, 8, 12, 16, 20, 24, 32, 48, 64}
 HINTS = {
     "pcan": "Install the PEAK device driver with PCAN-Basic from https://www.peak-system.com/ "
@@ -122,7 +125,12 @@ def socketcan_listen_only(channel):
     ip = shutil.which("ip")
     if not ip:
         return False
-    result = subprocess.run([ip, "-json", "-details", "link", "show", channel], capture_output=True, text=True)
+    try:
+        result = subprocess.run(
+            [ip, "-json", "-details", "link", "show", channel], capture_output=True, text=True, timeout=10
+        )
+    except subprocess.TimeoutExpired:
+        return False
     if result.returncode != 0:
         return False
     try:
@@ -212,12 +220,12 @@ def capture_command(args):
     reason = "duration"
     try:
         bus = open_bus(args, switches)
-        deadline = time.monotonic() + args.duration if args.duration is not None else None
+        deadline = time.monotonic() + (args.duration if args.duration is not None else DEFAULT_DURATION)
         while True:
-            remaining = None if deadline is None else deadline - time.monotonic()
-            if remaining is not None and remaining <= 0:
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
                 break
-            message = bus.recv(timeout=0.2 if remaining is None else min(0.2, remaining))
+            message = bus.recv(timeout=min(0.2, remaining))
             if message is None:
                 continue
             count += 1
@@ -338,7 +346,11 @@ def parser():
     listing.add_argument("--interfaces", help=f"comma-separated subset of {','.join(INTERFACES)}")
     capture = commands.add_parser("capture", help="listen-only capture to a log file", allow_abbrev=False)
     bus_options(capture)
-    capture.add_argument("--duration", type=positive_float, help="seconds to capture")
+    capture.add_argument(
+        "--duration",
+        type=positive_float,
+        help=f"seconds to capture (default {DEFAULT_DURATION:g} when only --max-messages is given)",
+    )
     capture.add_argument("--max-messages", type=positive_int, help="stop after this many frames")
     capture.add_argument("--output", help="new log file (.asc, .blf or .log); omitted: print frames")
     capture.add_argument("--active", action="store_true", help="allow a backend without listen-only (acknowledges)")

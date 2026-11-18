@@ -18,7 +18,12 @@ CAPTURE_LIMIT = 1024 * 1024
 
 
 def _local_name(path: str) -> str:
-    return re.sub(r"[^A-Za-z0-9._-]", "_", remote.name(path))[:100] or "file"
+    """The board file's name for the host copy. A name Windows cannot hold as a file (a device such as COM1 or
+    NUL.txt, a trailing dot) becomes `file-<hash of the board path>`, so the read still succeeds."""
+    name = re.sub(r"[^A-Za-z0-9._-]", "_", remote.name(path))[:100]
+    if not name or name.endswith(".") or workspace.is_device(name):
+        return f"file-{hashlib.sha256(path.encode('utf-8', 'surrogatepass')).hexdigest()[:12]}"
+    return name
 
 
 def identify(session: Session, document: dict[str, Any]) -> None:

@@ -28,11 +28,11 @@ Plugins haben eine Vertrauensstufe:
 | **Lokal** | Von Ihnen mit **Aus Ordner installieren…** oder **Aus ZIP installieren…** installiert |
 | **Test** | Vom Agenten in einer Sitzung entworfen; jeder Befehl fragt nach einer Freigabe, auch in Bypass. **Als lokal einstufen** vertraut ihm |
 
-Eine Workbench kann auch Plugin-Pakete in `.vera/plugins/` mitbringen. Sie werden erst verwendet, nachdem Sie **Workbench-Plugin prüfen** und **Diesem Paket vertrauen** gewählt haben; das Vertrauen wird nur auf diesem Computer gespeichert, und jede Änderung am Paket erfordert eine neue Prüfung.
+Ein Workbench kann auch Plugin-Pakete in `.vera/plugins/` mitbringen. Sie werden erst verwendet, nachdem Sie **Workbench-Plugin prüfen** und **Diesem Paket vertrauen** gewählt haben; das Vertrauen wird nur auf diesem Computer gespeichert, und jede Änderung am Paket erfordert eine neue Prüfung.
 
-## Ein Plugin für eine Workbench aktivieren
+## Ein Plugin für einen Workbench aktivieren
 
-Durch die Installation wird ein Plugin nicht aktiviert. Öffnen Sie **Workbench bearbeiten** → **Plugins**, wählen Sie das Plugin aus und wählen Sie **Speichern**. Nur aktivierte Plugins werden dem Agenten in dieser Workbench angeboten.
+Durch die Installation wird ein Plugin nicht aktiviert. Öffnen Sie **Workbench bearbeiten** → **Plugins**, wählen Sie das Plugin aus und wählen Sie **Speichern**. Nur aktivierte Plugins werden dem Agenten in diesem Workbench angeboten.
 
 ## Abhängigkeiten
 
@@ -50,7 +50,7 @@ Manche Plugins benötigen Einstellungen, die mit **Einrichtung erforderlich** ge
 
 ## Programmläufe
 
-Jeder Befehl, den der Agent ausführt, durchläuft Ihren Berechtigungsmodus (siehe [Berechtigungen](permissions.md)). Der Tab **Läufe** im rechten Bereich listet die Läufe der Workbench auf; **Protokoll öffnen** zeigt die Ausgabe, und **Stoppen** beendet ein laufendes Programm. Protokolle werden in `.vera/runs/` aufbewahrt.
+Jeder Befehl, den der Agent ausführt, durchläuft Ihren Berechtigungsmodus (siehe [Berechtigungen](permissions.md)). Der Tab **Läufe** im rechten Bereich listet die Läufe des Workbenchs auf; **Protokoll öffnen** zeigt die Ausgabe, und **Stoppen** beendet ein laufendes Programm. Protokolle werden in `.vera/runs/` aufbewahrt.
 
 ## Updates und der Katalog
 

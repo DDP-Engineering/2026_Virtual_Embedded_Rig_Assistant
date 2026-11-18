@@ -38,6 +38,7 @@ const reasonKeys = defineTranslationKeys([
   "documents.reason.IO",
   "documents.reason.PROCESSING",
   "documents.reason.NEEDS_OCR",
+  "documents.reason.NAME_UNSUPPORTED",
 ]);
 const reasonIndex = {
   SIZE_LIMIT: 0,
@@ -46,6 +47,7 @@ const reasonIndex = {
   IO: 3,
   PROCESSING: 4,
   NEEDS_OCR: 5,
+  NAME_UNSUPPORTED: 6,
 } as const;
 /** The localized index status (and reason) of a document, as Files shows it. */
 export function useDescribeDocument() {

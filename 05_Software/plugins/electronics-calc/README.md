@@ -117,7 +117,11 @@ replaced by a link while a report runs, the report is discarded.
 - Corner analysis finds the extremes only for outputs that are monotonic in
   each parameter; the `monotonic` check reports where that fails. Monte Carlo
   needs an explicit seed and distribution per parameter and always comes with
-  the corners. The same seed repeats exactly on one Python runtime.
+  the corners. The same seed repeats exactly on one Python runtime. A draw
+  outside the target's domain (a resistance at or below zero from a wide
+  normal distribution) is drawn again; `details.monteCarlo.rejected` counts
+  those draws and a warning says the distribution was truncated. A run with
+  more rejected draws than samples is refused.
 - No thermal certification, CFD/FEM, Cauer networks, repetitive-pulse thermal
   superposition, magnetic core-loss estimation or insulation sizing.
 

@@ -1,5 +1,16 @@
 import { existsSync } from "node:fs";
-import { mkdir, mkdtemp, readdir, readFile, rename, rm, symlink, unlink, writeFile } from "node:fs/promises";
+import {
+  mkdir,
+  mkdtemp,
+  readdir,
+  readFile,
+  rename,
+  rm,
+  symlink,
+  unlink,
+  utimes,
+  writeFile,
+} from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -228,6 +239,23 @@ it("replaces the whole installation on reinstall", async () => {
   expect(summary).toMatchObject({ version: "1.3.0", issues: [], sha256: pluginIntegrity(bytes(next)) });
   expect(existsSync(join(f.installed, "esp32-esptool", "extra.txt"))).toBe(false);
   expect(await f.create().list()).toEqual([summary]);
+});
+
+it("puts back a plugin whose reinstall was interrupted and sweeps old staging leftovers on first use", async () => {
+  const f = await fixture();
+  // Installed through another root, so this root's first use is the list below.
+  const elsewhere = new PluginStore({ root: join(f.root, "elsewhere") });
+  const summary = await elsewhere.install(await f.folder(packageFiles()));
+  const staging = join(f.pluginsRoot, "staging");
+  await mkdir(staging, { recursive: true });
+  await mkdir(f.installed);
+  await rename(join(f.root, "elsewhere", "installed", "esp32-esptool"), join(staging, "one.previous"));
+  await mkdir(join(staging, "stale"));
+  const old = new Date(Date.now() - 2 * 60 * 60 * 1000);
+  await utimes(join(staging, "stale"), old, old);
+  await mkdir(join(staging, "recent"));
+  expect(await f.store.list()).toEqual([summary]);
+  expect(await readdir(staging)).toEqual(["recent"]);
 });
 
 // REQ-FUNC-f003e3e5

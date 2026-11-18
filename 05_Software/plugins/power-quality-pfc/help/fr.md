@@ -29,4 +29,4 @@ L’outil écrit : il n’est pas proposé dans les sessions en Lecture seule, e
 - Windows x64 et Linux x64. Vérifié sous Windows x64 et WSL2 ; pas encore exécuté sous Ubuntu x64 natif.
 - Aide d’ingénierie préliminaire : pas de conception vérifiée, pas de déclaration de conformité et pas de rapport complet de qualité de l’énergie. Les condensateurs ne corrigent que la part de déplacement.
 - Les données manquantes restent inconnues et ne passent jamais : sans niveau de court-circuit, marge ou données d’harmoniques, le verdict de résonance est inconnu, et un couple condensateur-self n’est accepté que depuis un tableau cité.
-- Pas de conception de filtre, pas de transitoires de commutation, pas de niveau de court-circuit minimal (le résultat de réseau ne donne que le maximum).
+- Pas de conception de filtre ni de transitoires de commutation. La résonance est contrôlée au niveau de court-circuit maximal et, quand le résultat de réseau le contient, au niveau minimal.

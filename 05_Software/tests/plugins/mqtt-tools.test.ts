@@ -298,12 +298,34 @@ describe("package and risk rules", () => {
       expect(run.code).toBe(2);
       expect(run.json.errors[0].code).toBe("usage");
     }
-    expect((await mt(["--version"])).stdout.trim()).toBe("mqtt-tool 0.2.0");
+    expect((await mt(["--version"])).stdout.trim()).toBe("mqtt-tool 0.2.1");
     const ourPaths = await readFile(join(pluginFolder, "scripts", "mqtt_support", "workspace.py"));
     const shared = await readFile(
       join(software, "plugins", "bus-tools", "scripts", "bus_support", "workspace.py"),
     );
     expect(ourPaths.equals(shared)).toBe(true);
+  });
+
+  it("takes the platform's stop signal as a stop request (the break event on Windows, SIGTERM elsewhere)", () => {
+    const run = spawnSync(
+      python,
+      [
+        "-c",
+        [
+          "import os, signal, sys",
+          "sys.dont_write_bytecode = True",
+          "sys.path.insert(0, sys.argv[1])",
+          "from mqtt_support import cli",
+          "from mqtt_support.connection import STOP",
+          "cli.main(['--version'])",
+          "signal.raise_signal(signal.SIGBREAK if os.name == 'nt' else signal.SIGTERM)",
+          "print('stop requested' if STOP.requested else 'ignored')",
+        ].join("\n"),
+        join(pluginFolder, "scripts"),
+      ],
+      { encoding: "utf8" },
+    );
+    expect(run.stdout.trim().split("\n").at(-1), run.stderr).toBe("stop requested");
   });
 
   it("is an official catalog plugin in the Arduino pack and installs with its skills", async () => {

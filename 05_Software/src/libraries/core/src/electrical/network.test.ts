@@ -288,6 +288,7 @@ describe("fault currents (PWR-02-B, pandapower 3.1.2 and hand calculation)", () 
     ] as const) {
       near(valueAt(result, "ik3Max", board), ref.ik3Max, TOL_FAULT);
       near(valueAt(result, "peakCurrent", board), ref.ip, TOL_FAULT);
+      near(valueAt(result, "ik3Min", board), ref.ik3Min, TOL_FAULT);
     }
     near(valueAt(result, "ik3MaxStart", "cir-m1"), PANDAPOWER_A.sub.ik3Max, TOL_FAULT);
     for (const [circuit, ref] of [
@@ -334,6 +335,8 @@ describe("fault currents (PWR-02-B, pandapower 3.1.2 and hand calculation)", () 
       }),
     );
     near(valueAt(supply, "ik3Max", "brd-main"), 10, TOL_BALANCE);
+    near(valueAt(supply, "ik3Min", "brd-main"), 6, TOL_BALANCE);
+    expect(supply.assumptions.join(" ")).toMatch(/Ze of T1 \(sup-t1\) .* short-circuit R\/X ratio 0\.5/);
     // Ik1 at the end of W4 = 0.95 x 230.94 / |Ze + Z_L(160 °C) + Z_PE(160 °C)| with Ze 50 mΩ at R/X 0.5:
     // Ze = 22.361 + j44.721 mΩ; L: 7.41 x 0.02 x 1.56 = 231.19 mΩ + j2 mΩ; PE: 12.1 x 0.02 x 1.56 = 377.52 mΩ + j2 mΩ;
     // |Z| = 632.95 mΩ -> 0.34662 kA.
@@ -440,6 +443,27 @@ describe("unsupported networks and missing data never pass (PWR-02-C)", () => {
     expect(criterionOf(result, "current-capacity", "cir-f1")?.verdict).toBe("unknown");
     expect(result.status).toBe("incomplete");
   });
+  it("names a motor whose rated voltage is not the supply's and still computes its power", () => {
+    // 230 V winding data with 36 A on the 400 V network: P = sqrt3 x 230 x 36 x 0.85 = 12.1902 kW, as before.
+    const delta = run(
+      networkA((o) => {
+        setProp(o, "mot-p1", "ratedCurrent", q(36, "A"));
+        setProp(o, "mot-p1", "ratedVoltage", q(230, "V"));
+      }),
+    );
+    near(valueAt(delta, "designCurrent", "cir-m1"), (36 * 230) / 400, TOL_BALANCE);
+    expect(delta.messages.join(" ")).toMatch(
+      /M1 \(mot-p1\): rated voltage 230 V differs from the supply's 400 V/,
+    );
+    // 380 V on 400 V is inside the 10 % tolerance.
+    const close = run(
+      networkA((o) => {
+        setProp(o, "mot-p1", "ratedCurrent", q(21, "A"));
+        setProp(o, "mot-p1", "ratedVoltage", q(380, "V"));
+      }),
+    );
+    expect(close.messages.join(" ")).not.toMatch(/rated voltage/);
+  });
   it("keeps P, Q and S but not the phase currents when a single-phase load has no phase", () => {
     const result = run(networkA((o) => ((o.get("cir-s1") as ElectricalObject).attributes = {})));
     near(valueAt(result, "activePower:normal", "brd-main"), 14.15, TOL_BALANCE);
@@ -511,6 +535,7 @@ describe("unknown stays unknown and the status says so (review round 1)", () => 
     );
     expect(criterionOf(noMin, "short-circuit-minimum", "sup-t1")?.verdict).toBe("unknown");
     expect(valueAt(noMin, "ik3MinEnd", "cir-m1")).toBeNull();
+    expect(valueAt(noMin, "ik3Min", "brd-main")).toBeNull();
     expect(valueAt(noMin, "ik3Max", "brd-main")).not.toBeNull();
     const parallel = networkA((o) => o.set("cbl-w5", cable("cbl-w5", 60, 35)));
     parallel.relations.push(rel("routes", "cbl-w5", "cir-f1"));

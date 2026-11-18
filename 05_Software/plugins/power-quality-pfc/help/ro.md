@@ -29,4 +29,4 @@ Instrumentul este de scriere: nu este oferit în sesiunile Doar citire, iar VERA
 - Windows x64 și Linux x64. Verificat pe Windows x64 și WSL2; încă nerulat pe Ubuntu x64 nativ.
 - Suport de inginerie preliminar: fără proiect verificat, fără declarație de conformitate și fără raport complet de calitate a energiei. Condensatoarele corectează doar partea de deplasare.
 - Datele lipsă rămân necunoscute și nu trec niciodată: fără nivel de scurtcircuit, marjă sau date armonice verdictul de rezonanță este necunoscut, iar o pereche condensator-bobină se acceptă doar dintr-un tabel citat.
-- Fără proiectare de filtre, fără regimuri tranzitorii de comutare, fără nivelul minim de scurtcircuit (rezultatul de rețea dă doar maximul).
+- Fără proiectare de filtre și fără regimuri tranzitorii de comutare. Rezonanța se verifică la nivelul maxim de scurtcircuit și, când rezultatul de rețea îl conține, la cel minim.

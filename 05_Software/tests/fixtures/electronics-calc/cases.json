@@ -3917,7 +3917,7 @@
           }
         },
         {
-          "name": "refusal at a sample names the sample",
+          "name": "refusal when most samples leave the domain names the sample",
           "operation": "tolerance",
           "input": {
             "target": {
@@ -3932,9 +3932,14 @@
             "outputs": ["vout"],
             "parameters": {
               "rTop": {
-                "tolerance": "90 %",
+                "tolerance": "99 %",
                 "distribution": "normal",
-                "sigmas": 0.5
+                "sigmas": 0.1
+              },
+              "rBottom": {
+                "tolerance": "99 %",
+                "distribution": "normal",
+                "sigmas": 0.1
               }
             },
             "monteCarlo": {

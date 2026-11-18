@@ -141,7 +141,7 @@ def flash(cwd: Path, spelled: Path, raw: str, build_raw: str, alias: str, effect
     env = environment.build(run.folder, workspace.zephyr, offline=True, first=[cli.parent])
     command = [sys.executable, "-m", "west", "flash", "-d", posix(request.build_dir), "-r", RUNNER, "--no-rebuild",
                "--dev-id", probe.serial, "--cli", posix(cli)]
-    code, _ = run.step("flash", command, request.workspace, env)
+    code, _ = run.step("flash", command, request.workspace, env, lifecycle.stop_requested)
     if lifecycle.stop_requested():
         run.set_status("stopped", "stop-requested", "VERA asked the run to stop; the flash state is unknown.")
     if code != 0:

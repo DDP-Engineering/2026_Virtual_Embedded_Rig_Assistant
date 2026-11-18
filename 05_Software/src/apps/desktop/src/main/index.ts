@@ -1100,15 +1100,16 @@ ipcMain.handle(
           embeddingWarmup.request(workbench.getSnapshot().config.id);
           return sent;
         }),
+      // Stop and approval decisions must not wait for plugin loading and program probing.
       "session.stop": ({ sessionId }) => {
-        return sessions.run((s) => ({ stopped: s.stop(sessionId) }));
+        return sessions.run((s) => ({ stopped: s.stop(sessionId) }), false);
       },
       "session.approval.decide": (request) =>
         sessions.run(async (s) => {
           if (request.commandPrefix !== undefined) await s.allowCommandApproval(request);
           else s.decideApproval(request);
           return {};
-        }),
+        }, false),
       "session.reasoning.get": ({ sessionId }) =>
         sessions.run(async (s) => {
           const value = await s.reasoningOptions(sessionId);

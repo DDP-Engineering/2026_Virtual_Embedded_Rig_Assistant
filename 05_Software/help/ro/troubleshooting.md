@@ -8,16 +8,16 @@
 - **Limita contextului a fost atinsă**: scurtează intrarea, pornește o sesiune nouă sau corectează fereastra de context a unei conexiuni personalizate.
 - O execuție blocată poate fi încheiată oricând cu **Oprește**.
 
-## Workbenchul este doar pentru citire
+## Workbench-ul este doar pentru citire
 
-Mesajul **Acest spațiu de lucru este deschis doar pentru citire deoarece alt proces sau o blocare îl deține.** înseamnă că un alt proces VERA are workbenchul deschis. Închide-l, apoi deschide din nou workbenchul. Un workbench aflat pe un folder partajat în rețea nu este acceptat; mută-l pe un disc local.
+Mesajul **Acest workbench este deschis doar pentru citire deoarece alt proces sau o blocare îl deține.** înseamnă că un alt proces VERA are workbench-ul deschis. Închide-l, apoi deschide din nou workbench-ul. Un workbench aflat pe un folder partajat în rețea nu este acceptat; mută-l pe un disc local.
 
 ## Agentul nu găsește ceva în documente
 
 1. Deschide fila **Fișiere** și uită-te la starea documentului.
 2. **Necesită OCR**: PDF-ul este o scanare fără text. Folosește un PDF cu strat de text.
 3. **Eșuat** sau **Neacceptat**: motivul este afișat pe document și în **Proprietăți**. Fișierele vechi `.doc`, `.ppt` și `.xls` nu sunt indexate.
-4. Documentul nu este marcat deloc: se află în afara folderelor indexate. Adaugă-i folderul la **Editează workbenchul** → **Documente și RAG** și verifică dacă nu îl exclude `.vera/.veraignore` sau, cu **Folosește .gitignore** bifat, un fișier `.gitignore`.
+4. Documentul nu este marcat deloc: se află în afara folderelor indexate. Adaugă-i folderul la **Editează workbench-ul** → **Documente și RAG** și verifică dacă nu îl exclude `.vera/.veraignore` sau, cu **Folosește .gitignore** bifat, un fișier `.gitignore`.
 5. Selectează **Reindexează**. Dacă indexarea s-a oprit, selectează **Repornește indexarea**.
 
 Vezi [Documente și căutare](documents-and-search.md).
@@ -28,7 +28,7 @@ Fișierul citat s-a modificat sau a fost eliminat după răspuns ori agentul a c
 
 ## Agentul nu folosește un plugin
 
-- Este pluginul activat pentru acest workbench? Verifică **Editează workbenchul** → **Pluginuri**.
+- Este pluginul activat pentru acest workbench? Verifică **Editează workbench-ul** → **Pluginuri**.
 - Blocul său **Stare** afișează **Gata**? Dacă nu, selectează **Verifică dependențele**, instalează ce lipsește și completează **Configurare**.
 - În modul **Doar citire** rulează doar comenzile sigure; comenzile clasificate **Blocat** nu rulează niciodată. Vezi [Permisiuni](permissions.md).
 - **Fără încredere pe această mașină** sau **Fișierele pluginului s-au schimbat după verificare; instalează-l din nou.**: revizuiește și instalează din nou pluginul.
@@ -66,10 +66,10 @@ Datele aplicației se află într-un singur folder:
 
 | Element | Conținut |
 |---|---|
-| `settings.json` | Preferințe, conexiuni la furnizori fără chei, workbenchuri recente |
+| `settings.json` | Preferințe, conexiuni la furnizori fără chei, workbench-uri recente |
 | `credentials.json` | Chei și tokenuri de autentificare, criptate acolo unde sistemul permite |
 | `logs/` | Fișiere jurnal zilnice |
 | `plugins/` | Pluginurile instalate și programele instalate de VERA pentru ele |
 | `window-state.json` | Dimensiunea și poziția ferestrei |
 
-Tot ce aparține unui proiect, cum ar fi sesiunile, indexul documentelor, artefactele, descărcările și jurnalele rulărilor, se află în folderul `.vera/` propriu al workbenchului; vezi [Workbenchuri](workbenches.md).
+Tot ce aparține unui proiect, cum ar fi sesiunile, indexul documentelor, artefactele, descărcările și jurnalele rulărilor, se află în folderul `.vera/` propriu al workbench-ului; vezi [Workbench-uri](workbenches.md).

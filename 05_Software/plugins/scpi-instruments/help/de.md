@@ -1,6 +1,6 @@
 # SCPI-Labormessgeräte
 
-Dieses Plugin ermöglicht dem Agenten, über PyVISA mit den Labormessgeräten zu arbeiten, die Ihre Workbench deklariert: einem Multimeter, einem Oszilloskop oder einem Netzgerät. Es identifiziert ein Messgerät, liest Werte mit Einheiten, zeichnet Signalverläufe auf, ändert Einstellungen und versorgt ein Board für eine begrenzte Haltezeit über einen Ausgang eines Netzgeräts. Jeder Befehl stammt aus einem validierten Profil; es gibt kein Raw-SCPI und keine Netzwerksuche. Jedes Messgerät wird für den Lauf reserviert, und seine Ausgänge werden nach Stoppen, einer Zeitüberschreitung oder einem Absturz ausgeschaltet, oder der Zustand wird als unbekannt gemeldet. Die Ergebnisse landen unter `embedded-lab-results/`.
+Dieses Plugin ermöglicht dem Agenten, über PyVISA mit den Labormessgeräten zu arbeiten, die Ihre Workbench deklariert: einem Multimeter, einem Oszilloskop oder einem Netzgerät. Es identifiziert ein Messgerät, liest Werte mit Einheiten, zeichnet Signalverläufe auf, ändert Einstellungen und versorgt ein Board für eine begrenzte Haltezeit über einen Ausgang eines Netzgeräts. Jeder Befehl stammt aus einem Profil des Pakets; es gibt kein Raw-SCPI und keine Netzwerksuche. Jedes Messgerät wird für den Lauf reserviert, und seine Ausgänge werden nach Stoppen, einer Zeitüberschreitung oder einem Absturz ausgeschaltet, oder der Zustand wird als unbekannt gemeldet. Die Ergebnisse landen unter `embedded-lab-results/`.
 
 ## Voraussetzungen
 
@@ -27,6 +27,6 @@ Der Agent verwendet die Skills `bench-instruments` und `instrument-profiles`.
 
 ## Grenzen
 
-- Windows x64 und Linux x64. Noch kein Profil ist an einem echten Messgerät geprüft; natives Ubuntu und Hersteller-VISA sind noch nicht ausgeführt.
+- Windows x64 und Linux x64. Noch kein Profil ist an einem echten Messgerät geprüft, daher trägt ein Ergebnis, das Einstellungen geändert oder einen Ausgang eingeschaltet hat, die Warnung `profile-unverified`; natives Ubuntu und Hersteller-VISA sind noch nicht ausgeführt.
 - Ein Messgerät, dessen Identität zu keinem Profil passt, erhält nur identify.
 - VERA kann andere Programme nicht aussperren, und nichts kann einen Ausgang ausschalten, wenn der ganze Computer oder VERA ausfällt.

@@ -1,6 +1,6 @@
 format: 1
 id: can-python
-version: 0.2.0
+version: 0.2.1
 license: LicenseRef-PolyForm-Noncommercial-1.0.0
 name: CAN bus (python-can)
 summary: Capture CAN traffic listen-only and send or replay frames through python-can adapters.

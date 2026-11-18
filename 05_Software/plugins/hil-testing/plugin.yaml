@@ -1,6 +1,6 @@
 format: 1
 id: hil-testing
-version: 0.2.0
+version: 0.2.1
 license: LicenseRef-PolyForm-Noncommercial-1.0.0
 name: HIL testing
 summary: Run finite hardware-in-the-loop test plans on a real board through the enabled lab plugins.

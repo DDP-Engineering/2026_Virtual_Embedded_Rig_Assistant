@@ -39,6 +39,32 @@ it("writes levels and timestamps as JSON lines and retains seven newest daily fi
     await rm(dir, { recursive: true, force: true });
   }
 });
+it("prunes old daily files with the first entry and when the day changes, not with every entry", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "vera-log-prune-"));
+  try {
+    const old = Array.from({ length: 8 }, (_, i) => `vera-2026-09-0${i + 1}.log`);
+    for (const file of old) await writeFile(join(dir, file), "");
+    let date = new Date("2026-10-10T08:00:00Z");
+    const logger = createLogger(dir, { now: () => date, sleep: async () => {} });
+    logger.log("info", "start");
+    await logger.flush();
+    expect((await readdir(dir)).sort()).toEqual([...old.slice(2), "vera-2026-10-10.log"]);
+    await writeFile(join(dir, "vera-2026-09-01.log"), "");
+    logger.log("info", "same day");
+    await logger.flush();
+    expect(await readdir(dir)).toContain("vera-2026-09-01.log");
+    date = new Date("2026-10-11T08:00:00Z");
+    logger.log("info", "next day");
+    await logger.flush();
+    expect((await readdir(dir)).sort()).toEqual([
+      ...old.slice(3),
+      "vera-2026-10-10.log",
+      "vera-2026-10-11.log",
+    ]);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
 it("registered secrets never appear in any line, including escaped nested values and keys", async () => {
   const dir = await mkdtemp(join(tmpdir(), "vera-redact-"));
   try {

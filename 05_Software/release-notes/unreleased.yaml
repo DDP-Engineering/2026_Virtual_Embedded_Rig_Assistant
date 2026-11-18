@@ -2,11 +2,11 @@ version: Unreleased
 date: null
 entries:
   - category: new
-    topic: { en: Workbench, ro: Workbench, de: Workbench, fr: Workbench }
+    topic: { en: Workbench, ro: Workbench, de: Workbench, fr: Banc de travail }
     text:
       en: Choose visible right-panel tabs per workbench and check its storage size on demand.
       ro: Alege filele vizibile din dreapta pe workbench și verifică spațiul ocupat la cerere.
-      de: Rechte Tabs je Workbench wählen und bei Bedarf deren Speicherbelegung prüfen.
+      de: Rechte Tabs je Workbench wählen und bei Bedarf dessen Speicherbelegung prüfen.
       fr: Choisissez les onglets droits par banc et consultez son espace utilisé à la demande.
   - category: fixed
     topic: { en: Chat, ro: Chat, de: Chat, fr: Chat }
@@ -40,7 +40,7 @@ entries:
     topic: { en: Interface, ro: Interfață, de: Oberfläche, fr: Interface }
     text:
       en: Compact panels, clearer run cards, centered chat and renamed Instructions and skills tab.
-      ro: Panouri compacte, carduri de rulare clare, chat centrat și tabul Instrucțiuni și skills.
+      ro: Panouri compacte, carduri de rulare clare, chat centrat și tabul Instrucțiuni și skill-uri.
       de: Kompakte Panels, klare Laufkarten, zentrierter Chat und der Tab Anweisungen und Skills.
       fr: Panneaux compacts, exécutions lisibles, chat centré et onglet Instructions et compétences.
   - category: fixed
@@ -121,28 +121,28 @@ entries:
       de: Interaktive Terminal-Tabs nutzen; Agentenlesezugriff für jedes Terminal separat erlauben.
       fr: Utilisez des terminaux interactifs ; autorisez la lecture par l’agent pour chacun.
   - category: new
-    topic: { en: Workbench, ro: Workbench, de: Workbench, fr: Workbench }
+    topic: { en: Workbench, ro: Workbench, de: Workbench, fr: Banc de travail }
     text:
       en: Indexing skips what the repository's Git ignore rules exclude, such as build output.
       ro: Indexarea omite ce exclud regulile Git ignore ale depozitului, de exemplu rezultatele build-ului.
       de: Die Indizierung überspringt, was die Git-Ignore-Regeln des Repositorys ausschließen, etwa Builds.
       fr: L’indexation ignore ce que les règles Git ignore du dépôt excluent, comme les sorties de build.
   - category: new
-    topic: { en: Workbench, ro: Workbench, de: Workbench, fr: Workbench }
+    topic: { en: Workbench, ro: Workbench, de: Workbench, fr: Banc de travail }
     text:
       en: A workbench can set a maximum file size for indexing; larger files show why they were skipped.
       ro: Un workbench poate seta o dimensiune maximă pentru indexare; fișierele mai mari arată motivul.
-      de: Eine Workbench kann eine maximale Dateigröße zum Indizieren festlegen; größere zeigen den Grund.
+      de: Ein Workbench kann eine maximale Dateigröße zum Indizieren festlegen; größere zeigen den Grund.
       fr: Un banc peut fixer une taille maximale à indexer ; les fichiers plus grands montrent pourquoi.
   - category: new
-    topic: { en: Workbench, ro: Workbench, de: Workbench, fr: Workbench }
+    topic: { en: Workbench, ro: Workbench, de: Workbench, fr: Banc de travail }
     text:
       en: Indexing waits before an unusually large selection and shows its largest folders; index it anyway.
-      ro: Indexarea așteaptă la o selecție neobișnuit de mare și arată cele mai mari foldere.
-      de: Die Indizierung wartet bei einer ungewöhnlich großen Auswahl und zeigt die größten Ordner.
-      fr: L’indexation attend devant une sélection inhabituellement grande et montre les plus gros dossiers.
+      ro: Indexarea așteaptă la o selecție neobișnuit de mare, arată cele mai mari foldere; indexează oricum.
+      de: Indizierung wartet bei ungewöhnlich großer Auswahl, zeigt die größten Ordner; trotzdem indexieren.
+      fr: "Sélection anormalement grande : l’indexation attend, montre ses gros dossiers ; indexez quand même."
   - category: improved
-    topic: { en: Workbench, ro: Workbench, de: Workbench, fr: Workbench }
+    topic: { en: Workbench, ro: Workbench, de: Workbench, fr: Banc de travail }
     text:
       en: The document count before saving matches indexing and warns about a too large selection.
       ro: Numărul de documente dinainte de salvare corespunde indexării și avertizează la o selecție mare.
@@ -153,7 +153,7 @@ entries:
     text:
       en: Bookmark your messages from the conversation or its title and reply preview.
       ro: Marchează mesajele din conversație sau din previzualizarea cu titlu și răspuns.
-      de: Setze Lesezeichen an Nachrichten im Gespräch oder in der Titel- und Antwortvorschau.
+      de: Setzen Sie Lesezeichen an Nachrichten im Gespräch oder in der Titel- und Antwortvorschau.
       fr: Ajoutez des signets aux messages dans la conversation ou l’aperçu du titre et de la réponse.
   - category: improved
     topic: { en: Sessions, ro: Sesiuni, de: Sitzungen, fr: Sessions }
@@ -163,42 +163,42 @@ entries:
       de: Lesezeichen auf der Leiste finden, mit anpassbaren Kürzeln ansteuern und in Exporten behalten.
       fr: Repérez les signets sur la barre, utilisez des raccourcis modifiables et gardez-les à l’export.
   - category: improved
-    topic: { en: Permissions, ro: Permisiuni, de: Berechtigungen, fr: Permissions }
+    topic: { en: Permissions, ro: Permisiuni, de: Berechtigungen, fr: Autorisations }
     text:
       en: Each Bypass change asks for confirmation; agent file tools refuse VERA application data.
       ro: Fiecare trecere la Bypass cere confirmare; instrumentele de fișiere refuză datele VERA.
       de: Jeder Bypass-Wechsel fragt nach; Dateiwerkzeuge sperren die VERA-Anwendungsdaten.
-      fr: Chaque passage à Bypass demande confirmation ; les outils de fichiers refusent les données VERA.
+      fr: Chaque passage à Contournement est à confirmer ; les outils de fichiers refusent les données VERA.
   - category: improved
-    topic: { en: Permissions, ro: Permisiuni, de: Berechtigungen, fr: Permissions }
+    topic: { en: Permissions, ro: Permisiuni, de: Berechtigungen, fr: Autorisations }
     text:
       en: Bypass runs declared programs in outside folders and stops them when you leave Bypass.
       ro: Bypass rulează programe declarate în foldere externe și le oprește când ieși din Bypass.
       de: Bypass führt deklarierte Programme in externen Ordnern aus und stoppt sie beim Verlassen.
-      fr: Bypass lance les programmes déclarés dans des dossiers externes et les arrête à sa sortie.
+      fr: Contournement lance les programmes déclarés dans des dossiers externes et les arrête à sa sortie.
   - category: improved
     topic: { en: Permissions, ro: Permisiuni, de: Berechtigungen, fr: Autorisations }
     text:
       en: Bypass also reaches outside analysis, plugin drafts, HIL and electrical inputs.
       ro: Bypass permite și intrări externe pentru analiză, ciorne de plugin, HIL și calcule electrice.
       de: Bypass erlaubt auch externe Eingaben für Analysen, Plugin-Entwürfe, HIL und Elektrik.
-      fr: Bypass accepte aussi les entrées externes d’analyse, de plugins, HIL et d’électricité.
+      fr: Contournement accepte aussi les entrées externes d’analyse, de plugins, HIL et d’électricité.
   - category: new
     topic: { en: Commands, ro: Comenzi, de: Befehle, fr: Commandes }
     text:
       en: Run and monitor commands; choose an installed shell, including Cmd and Git Bash, or a custom path.
       ro: Rulează și urmărește comenzi; alege un shell instalat, inclusiv Cmd și Git Bash, sau o cale proprie.
-      de: Befehle verfolgen; installierte Shell wie Cmd oder Git Bash oder eigenen Pfad wählen.
+      de: Befehle ausführen und verfolgen; installierte Shell wie Cmd oder Git Bash oder eigenen Pfad wählen.
       fr: Exécutez et suivez les commandes ; choisissez Cmd, Git Bash, un shell installé ou un chemin.
   - category: improved
-    topic: { en: Permissions, ro: Permisiuni, de: Berechtigungen, fr: Permissions }
+    topic: { en: Permissions, ro: Permisiuni, de: Berechtigungen, fr: Autorisations }
     text:
       en: Save command prefixes for Auto-edit; dangerous commands still ask outside Bypass.
       ro: Salvează prefixe pentru Editare automată; comenzile periculoase cer acord în afara Bypass.
       de: Befehlspräfixe für Automatisch bearbeiten speichern; gefährliche Befehle fragen außerhalb Bypass.
-      fr: Enregistrez des préfixes pour Modification auto ; les commandes dangereuses demandent hors Bypass.
+      fr: Enregistrez des préfixes en Modification auto ; les commandes risquées demandent hors Contournement.
   - category: new
-    topic: { en: Workbench, ro: Workbench, de: Workbench, fr: Workbench }
+    topic: { en: Workbench, ro: Workbench, de: Workbench, fr: Banc de travail }
     text:
       en: Add folders for agent file access and command working directories; remove them to revoke access.
       ro: Adaugă foldere pentru fișierele și comenzile agentului; elimină-le pentru a retrage accesul.

@@ -1,6 +1,6 @@
 # Instruments de banc SCPI
 
-Ce plugin permet à l’agent de travailler avec les instruments de banc que déclare votre banc de travail : un multimètre, un oscilloscope ou une alimentation, au moyen de PyVISA. Il identifie un instrument, lit des valeurs avec leurs unités, capture des formes d’onde, modifie des réglages et alimente une carte depuis une sortie d’alimentation pendant une durée de maintien limitée. Chaque commande provient d’un profil validé ; il n’y a ni SCPI brut ni recherche sur le réseau. Chaque instrument est réservé pour l’exécution, et ses sorties sont coupées après Arrêter, un dépassement de délai ou un plantage, ou bien l’état est signalé comme inconnu. Les résultats vont dans `embedded-lab-results/`.
+Ce plugin permet à l’agent de travailler avec les instruments de banc que déclare votre banc de travail : un multimètre, un oscilloscope ou une alimentation, au moyen de PyVISA. Il identifie un instrument, lit des valeurs avec leurs unités, capture des formes d’onde, modifie des réglages et alimente une carte depuis une sortie d’alimentation pendant une durée de maintien limitée. Chaque commande provient d’un profil du paquet ; il n’y a ni SCPI brut ni recherche sur le réseau. Chaque instrument est réservé pour l’exécution, et ses sorties sont coupées après Arrêter, un dépassement de délai ou un plantage, ou bien l’état est signalé comme inconnu. Les résultats vont dans `embedded-lab-results/`.
 
 ## Prérequis
 
@@ -27,6 +27,6 @@ L’agent utilise les compétences `bench-instruments` et `instrument-profiles`.
 
 ## Limites
 
-- Windows x64 et Linux x64. Aucun profil n’a encore été vérifié avec un vrai instrument ; Ubuntu natif et les bibliothèques VISA des fabricants n’ont pas été exécutés.
+- Windows x64 et Linux x64. Aucun profil n’a encore été vérifié avec un vrai instrument, si bien qu’un résultat qui a modifié des réglages ou alimenté une sortie porte l’avertissement `profile-unverified` ; Ubuntu natif et les bibliothèques VISA des fabricants n’ont pas été exécutés.
 - Un instrument dont l’identité ne correspond à aucun profil n’a droit qu’à identify.
 - VERA ne peut pas empêcher l’accès des autres programmes, et rien ne peut couper une sortie si l’ordinateur entier ou VERA est perdu.

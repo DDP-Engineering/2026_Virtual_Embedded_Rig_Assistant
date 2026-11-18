@@ -1,6 +1,6 @@
 format: 1
 id: ngspice
-version: 0.3.0
+version: 0.3.1
 license: LicenseRef-PolyForm-Noncommercial-1.0.0
 name: ngspice circuit simulation
 summary: Reproducible local circuit simulation with ngspice - analyses, sweeps, Monte Carlo and pass/fail.

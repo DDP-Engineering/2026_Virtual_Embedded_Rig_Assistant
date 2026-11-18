@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import { existsSync } from "node:fs";
-import { mkdir, mkdtemp, readdir, readFile, rm, symlink } from "node:fs/promises";
+import { mkdir, mkdtemp, readdir, readFile, rm, symlink, utimes } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { basename, dirname, join } from "node:path";
 import Database from "better-sqlite3";
@@ -11,6 +11,7 @@ import { openDb, type WorkbenchDatabase } from "./db.js";
 const copies = vi.hoisted(() => ({
   folders: [] as string[],
   before: undefined as undefined | ((source: string) => Promise<void>),
+  removeFails: false,
 }));
 vi.mock("node:fs", async (original) => {
   const actual = await original<typeof import("node:fs")>();
@@ -19,6 +20,10 @@ vi.mock("node:fs", async (original) => {
     mkdtempSync: (prefix: string) => {
       copies.folders.push(prefix);
       return actual.mkdtempSync(prefix);
+    },
+    rmSync: (...args: Parameters<typeof actual.rmSync>) => {
+      if (copies.removeFails) throw Object.assign(new Error("EBUSY"), { code: "EBUSY" });
+      return actual.rmSync(...args);
     },
   };
 });
@@ -44,6 +49,7 @@ const options = { workbenchId: "wb_test", appVersion: "0.0.0" };
 afterEach(async () => {
   copies.folders.length = 0;
   copies.before = undefined;
+  copies.removeFails = false;
   for (const handle of handles.splice(0)) handle.close();
   for (const root of roots.splice(0)) await rm(root, { recursive: true, force: true });
 });
@@ -276,4 +282,26 @@ it.each(["EBUSY", "EPERM"])("a copy refused with %s fails BUSY", async (code) =>
   };
   await expect(openDb(file, { ...options, readOnly: true })).rejects.toMatchObject({ code: "BUSY" });
   expect(privateCopies()).toHaveLength(1);
+});
+it("closing a snapshot never throws when its private copy cannot be removed", async () => {
+  const file = await path();
+  (await opened(file)).close();
+  const readOnly = await openDb(file, { ...options, readOnly: true });
+  const copy = dirname(readOnly.db.name);
+  roots.push(copy);
+  copies.removeFails = true;
+  expect(() => readOnly.close()).not.toThrow();
+  expect(existsSync(copy)).toBe(true);
+});
+it("a new snapshot removes private copies older than a day and keeps recent ones", async () => {
+  const file = await path();
+  (await opened(file)).close();
+  const stale = await mkdtemp(join(tmpdir(), "vera-storage-"));
+  const recent = await mkdtemp(join(tmpdir(), "vera-storage-"));
+  roots.push(stale, recent);
+  const old = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000);
+  await utimes(stale, old, old);
+  await opened(file, { readOnly: true });
+  expect(existsSync(stale)).toBe(false);
+  expect(existsSync(recent)).toBe(true);
 });

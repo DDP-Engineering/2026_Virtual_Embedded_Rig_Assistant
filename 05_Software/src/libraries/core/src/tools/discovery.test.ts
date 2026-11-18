@@ -3,6 +3,8 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, expect, it } from "vitest";
 import * as api from "../index.js";
+import { PathGuard } from "../workbench/path-guard.js";
+import { discoverFiles } from "./discovery.js";
 
 let root: string;
 let outside: string;
@@ -52,3 +54,20 @@ it("globs newest first with relative base and caps at500", async () => {
   expect(JSON.stringify(all)).not.toMatch(/node_modules|\.vera\/|\.git\/|hidden\/|escape\//);
   await expect(api.globTool.execute(ctx, { pattern: "../**/*" }, signal())).rejects.toThrow();
 });
+it("stops collecting at a hard entry count and marks the result truncated", async () => {
+  const guard = await PathGuard.create(root);
+  expect(await discoverFiles(guard, "docs", "**/*.md", signal(), 1)).toHaveLength(1);
+  expect(await discoverFiles(guard, "docs", "**/*.md", signal())).toHaveLength(2);
+  await mkdir(join(root, "big"));
+  const names = Array.from({ length: 5001 }, (_, index) => `${index}.md`);
+  for (let start = 0; start < names.length; start += 250)
+    await Promise.all(names.slice(start, start + 250).map((name) => writeFile(join(root, "big", name), "")));
+  const ctx = api.createToolContext(root);
+  const listed = await api.listTool.execute(ctx, { path: "big" }, signal());
+  expect(listed.entries).toHaveLength(5000);
+  expect(listed.truncated).toBe(true);
+  expect((await api.listTool.execute(ctx, { path: "docs" }, signal())).truncated).toBeUndefined();
+  expect(await api.globTool.execute(ctx, { pattern: "big/*.md" }, signal())).toMatchObject({
+    truncated: true,
+  });
+}, 60_000);

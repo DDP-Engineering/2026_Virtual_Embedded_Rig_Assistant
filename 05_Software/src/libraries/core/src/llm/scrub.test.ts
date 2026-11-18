@@ -13,3 +13,19 @@ it("scrubs embedded errors, overlapping keys and JSON escaped secrets without tr
   );
   expect(scrub("ordinary failure", [key])).toBe("ordinary failure");
 });
+it("builds the token list of a secret set once and again only after a secret is added", () => {
+  let builds = 0;
+  class Counted extends Set<string> {
+    override [Symbol.iterator]() {
+      builds++;
+      return super[Symbol.iterator]();
+    }
+  }
+  const secrets = new Counted(["fake-first-private"]);
+  expect(scrub("a fake-first-private", secrets)).toBe("a [REDACTED]");
+  expect(scrub("b fake-first-private fake-second-private", secrets)).toBe("b [REDACTED] fake-second-private");
+  expect(builds).toBe(1);
+  secrets.add("fake-second-private");
+  expect(scrub("c fake-first-private fake-second-private", secrets)).toBe("c [REDACTED] [REDACTED]");
+  expect(builds).toBe(2);
+});

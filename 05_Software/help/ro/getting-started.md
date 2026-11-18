@@ -10,7 +10,7 @@ Această pagină te duce de la prima pornire la un prim răspuns cu citări. Dur
 
 ## Prima pornire
 
-VERA se deschide pe **Acasă**, care îți afișează **Spații de lucru** și oferă **Creează un spațiu de lucru**. Bara laterală conține **Workbench nou**, **Deschide workbench** și **Pluginuri**; **Setări** se află în partea de jos a barei laterale.
+VERA se deschide pe **Acasă**, care îți afișează **Workbench-uri** și oferă **Creează un workbench**. Bara laterală conține **Workbench nou**, **Deschide workbench** și **Pluginuri**; **Setări** se află în partea de jos a barei laterale.
 
 Pentru a schimba mai întâi limba interfeței, deschide **Setări** → **Aspect și limbă** și alege o valoare la **Limba interfeței**.
 
@@ -19,7 +19,7 @@ Pentru a schimba mai întâi limba interfeței, deschide **Setări** → **Aspec
 1. Deschide **Setări** → **Furnizori**.
 2. Alege una dintre variante:
    - Abonament ChatGPT: la **Abonamente**, selectează **Autentificare cu ChatGPT** și finalizează autentificarea în browser.
-   - Cheie API sau server local: la **Conexiuni API / locale**, selectează **Adaugă o conexiune**, alege **Provider** (**API OpenAI**, LM Studio, Ollama sau **Alt provider compatibil**), completează câmpurile și selectează **Salvează**.
+   - Cheie API sau server local: la **Conexiuni API / locale**, selectează **Adaugă o conexiune**, alege **Furnizor** (**API OpenAI**, LM Studio, Ollama sau **Alt furnizor compatibil**), completează câmpurile și selectează **Salvează**.
 3. Selectează **Testează** lângă conexiune. Toți cei patru pași (**Conectivitate**, **Autentificare și model**, **Apelare instrumente**, **Streaming**) ar trebui să afișeze **Reușit**.
 
 Detaliile sunt în [Furnizori și modele](providers.md).
@@ -29,9 +29,9 @@ Detaliile sunt în [Furnizori și modele](providers.md).
 1. Selectează **Workbench nou**.
 2. Selectează **Alege folderul** și alege folderul proiectului. Numele se completează din numele folderului.
 3. La **Documente și RAG**, verifică folderele de documentație găsite de VERA sau folosește **Adaugă folder…**.
-4. Selectează **Creează un spațiu de lucru**.
+4. Selectează **Creează un workbench**.
 
-VERA începe indexarea în fundal. Poți folosi deja chatul; fila **Fișiere** din panoul din dreapta arată progresul indexării. Vezi [Workbenchuri](workbenches.md) și [Documente și căutare](documents-and-search.md).
+VERA începe indexarea în fundal. Poți folosi deja chatul; fila **Fișiere** din panoul din dreapta arată progresul indexării. Vezi [Workbench-uri](workbenches.md) și [Documente și căutare](documents-and-search.md).
 
 ## Pasul 3: pune o primă întrebare
 
@@ -45,6 +45,6 @@ Dacă agentul vrea să modifice un fișier sau să ruleze un program, îți cere
 
 ## Pașii următori
 
-- Lasă agentul să lucreze cu uneltele de pe bancul tău de lucru: [Pluginuri](plugins.md).
+- Lasă agentul să lucreze cu instrumentele de pe bancul tău de lucru: [Pluginuri](plugins.md).
 - Află cum funcționează sesiunile, ghidarea și exportul: [Chat și sesiuni](chat-and-sessions.md).
 - Ajustează dimensiunile textului, tema și actualizările: [Setări](settings.md).

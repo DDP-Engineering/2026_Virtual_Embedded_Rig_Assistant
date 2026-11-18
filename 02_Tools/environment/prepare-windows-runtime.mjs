@@ -1,6 +1,6 @@
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { software } from "./software.mjs";
@@ -56,7 +56,13 @@ export async function prepareWindowsRuntime(manifest, target, options = {}) {
     checked.push({ file, bytes, cached });
   }
   await mkdir(target, { recursive: true });
-  for (const { file, bytes, cached } of checked) if (!cached) await writeFile(join(target, file.path), bytes);
+  for (const { file, bytes, cached } of checked) {
+    if (cached) continue;
+    // Copied under a temporary name: an interrupted copy must not leave a truncated DLL that fails every later run.
+    const partial = join(target, `${file.path}.partial`);
+    await writeFile(partial, bytes);
+    await rename(partial, join(target, file.path));
+  }
   await writeFile(
     join(target, "NOTICE.txt"),
     `Microsoft Visual C++ Runtime x64 ${manifest.version ?? "fixture"}.\nUnmodified runtime files, copyright Microsoft Corporation.\nRedistribution: ${manifest.redistribution ?? "fixture"}\nLicense terms: ${manifest.license ?? "fixture"}\n`,

@@ -14,8 +14,9 @@ helper's code decides which slots each operation uses, so a profile cannot turn 
 | `rigol-dp800` | power supply | DP832, DP832A | unverified |
 
 `unverified` means the commands come from the vendor's programming guide and have not been run by VERA against that
-instrument; say so whenever you report a result. `scpi capabilities --profile <id>` prints a profile with its
-verification record.
+instrument; say so whenever you report a result. A `configure` or `output` that changed the instrument through such
+a profile lists the problem `profile-unverified` in its result. `scpi capabilities --profile <id>` prints a profile
+with its verification record.
 
 - An instrument whose identity matches no profile gets `identify` only. Never suggest pointing an entry at another
   model's profile.

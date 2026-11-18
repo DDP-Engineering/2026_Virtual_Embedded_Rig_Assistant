@@ -19,13 +19,12 @@ unrelated cleanup, refactoring and polish.
 
 ## Milestone
 
-Full testing runs once per milestone on Windows and native Ubuntu:
-M2/WP-21, M3/WP-29, M4/WP-33 and M5/WP-38.
+Full testing runs once per milestone on Windows and native Ubuntu.
 
 Choose one owner: the last ticket OR the coordinator. The last ticket may supply
 full proof for the integrated commit when source/test/configuration match; otherwise
 the coordinator runs it after commit. Never both. Record owner, commit and results
-in implementation-cycle.json before starting the next milestone.
+in the last ticket's task journal before starting the next milestone.
 
 The gate is npm run verify:all (verify and the plugin suite), the complete Electron/browser suite, applicable CLI
 regressions and strict AEGIS. Avoid repeated tests/statics already covered by these
@@ -47,7 +46,7 @@ unknown Temp folders, user files, other chats or pinned runtimes.
 
 ## Release
 
-After WP-38, reuse the M5 suite proof for unchanged code and perform the remaining
-release checks required by the plan, including deferred clean/offline Windows and
+For a release, reuse the last milestone's suite proof for unchanged code and perform
+the remaining release checks required by the plan, including deferred clean/offline Windows and
 VC++ self-containment. No duplicate full suite for a handover or release label.
 Remote publication requires its separate authorization.

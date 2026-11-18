@@ -29,6 +29,7 @@ function TerminalSurface({
     let live = true;
     const available = () => live && closingTerminal.current !== terminal.id;
     let previous = "";
+    let start = 0;
     let initial = true;
     let timer: ReturnType<typeof setTimeout>;
     const element = container.current;
@@ -82,15 +83,19 @@ function TerminalSurface({
         if (!available()) return;
         const snapshot = await api.invoke("terminal.output", { workbenchId, id: terminal.id });
         if (!available()) return;
-        const append = snapshot.output.startsWith(previous);
+        // A full host buffer drops its head on new output: compare only the part of the last
+        // snapshot that the host still holds, so a trimmed head is an append and not a redraw.
+        const kept = previous.slice(Math.max(0, snapshot.start - start));
+        const append = snapshot.output.startsWith(kept);
         const replay = !append || (initial && !freshTerminals.has(terminal.id));
         // Parsing historical VT queries must not inject old device/cursor replies into the live shell.
         term.options.disableStdin = replay || !snapshot.running;
         if (!append) term.reset();
-        const data = append ? snapshot.output.slice(previous.length) : snapshot.output;
+        const data = append ? snapshot.output.slice(kept.length) : snapshot.output;
         if (data) await new Promise<void>((parsed) => term.write(data, parsed));
         if (!live) return;
         previous = snapshot.output;
+        start = snapshot.start;
         freshTerminals.delete(terminal.id);
         initial = false;
         term.options.disableStdin = !snapshot.running;

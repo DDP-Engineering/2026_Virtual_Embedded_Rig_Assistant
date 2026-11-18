@@ -78,6 +78,8 @@ Report the corner results (`vout.min`, `vout.max`) first: they are the
 worst case. `monteCarlo` is optional, needs an explicit `seed` and a
 `distribution` for every parameter, and never replaces the corners. If the
 `monotonic` check fails, say that the true extreme may lie inside the range.
+If a warning says draws were rejected, the distribution was truncated to the
+model's domain: report the count and suggest a narrower tolerance or more sigmas.
 A run takes at most 6 outputs and 12 parameters; 100000 samples of a large
 model can take about a minute.
 

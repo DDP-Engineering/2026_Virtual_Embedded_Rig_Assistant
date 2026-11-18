@@ -231,6 +231,35 @@ describe("overload (REQ-FUNC-f24b4131)", () => {
     });
   });
 
+  it("compares Iz and I2 with the largest cited rated current and Ib with the smallest", () => {
+    // A fictional derated value: In 16 A, 13 A at 60 °C. Iz 15 A: In 16 A > Iz although 13 A <= 15 A;
+    // I2 = 1.45 x 16 = 23.2 A > 1.45 x 15 = 21.75 A.
+    const derated = edited((copy) => {
+      item(copy, "itm-a9f74216").parameters.push(
+        fictional("ratedCurrent", 13, "A", { ambientTemperature: { value: 60, unit: "°C" } }),
+      );
+    });
+    const circuits = [{ circuit: "cir-l1", candidates: ["itm-a9f74216"] }];
+    const small = run(
+      { circuits },
+      { catalog: derated, network: withValue("currentCapacity", "cbl-w3", 15) },
+    );
+    expect(find(small, "rated-current:A9F74216")).toMatchObject({
+      verdict: "fail",
+      measured: { value: 16, unit: "A" },
+      limit: { value: 15, unit: "A" },
+    });
+    expect(find(small, "rated-current:A9F74216").note).toContain("from 13 A to 16 A");
+    expect(find(small, "conventional-tripping:A9F74216")).toMatchObject({
+      verdict: "fail",
+      measured: { value: 23.2 },
+      limit: { value: 21.75 },
+    });
+    // Ib 14 A is above the derated 13 A: not established as carried, although In 16 A <= Iz 30 A.
+    const loaded = run({ circuits }, { catalog: derated, network: withValue("designCurrent", "cir-l1", 14) });
+    expect(find(loaded, "rated-current:A9F74216")).toMatchObject({ verdict: "fail" });
+  });
+
   it("checks an adjustable device at its requested setting inside the cited range", () => {
     const outside = run({
       circuits: [{ circuit: "cir-m1", candidates: ["itm-gv2me14"], setting: 11 }],

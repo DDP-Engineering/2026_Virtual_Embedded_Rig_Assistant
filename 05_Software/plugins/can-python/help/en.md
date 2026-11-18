@@ -31,6 +31,7 @@ In Ask mode VERA asks before each capture; Auto-edit runs listen-only captures w
 
 - Windows x64 and Linux x64.
 - Real adapters and Linux `vcan0` are not yet exercised by VERA's tests; listen-only is requested from the backend and not read back from the adapter.
+- A capture limited only by a frame count ends after 240 seconds at the latest; ask for a duration to record longer.
 - A `.blf` capture stopped before its duration can be incomplete; `.asc` and `.log` are written frame by frame.
 - Bus settings come only from the command line; `~/.canrc`, `can.ini` and `CAN_*` variables are ignored.
 - Reference: https://python-can.readthedocs.io/en/v4.6.1/

@@ -49,9 +49,9 @@ Schlüssel werden mit dem sicheren Speicher Ihres Betriebssystems verschlüsselt
 ## Ein Modell wählen
 
 - Für eine Sitzung: Wählen Sie das **Modell** neben dem Nachrichtenfeld.
-- Für eine Workbench: **Workbench bearbeiten** → **Agent und Chat** → **Standardmodell**, geschrieben als `provider/model`. Lassen Sie das Feld leer, um den Standard der Anwendung zu verwenden.
+- Für einen Workbench: **Workbench bearbeiten** → **Agent und Chat** → **Standardmodell**, geschrieben als `provider/model`. Lassen Sie das Feld leer, um den Standard der Anwendung zu verwenden.
 
-Die Auswahl in der Sitzung hat Vorrang vor dem Standard der Workbench und dieser vor dem Standard der Anwendung.
+Die Auswahl in der Sitzung hat Vorrang vor dem Standard des Workbenchs und dieser vor dem Standard der Anwendung.
 
 ## Häufige Fehler
 

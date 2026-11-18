@@ -1,6 +1,6 @@
 format: 1
 id: electronics-calc
-version: 0.3.0
+version: 0.3.1
 license: LicenseRef-PolyForm-Noncommercial-1.0.0
 name: Electronics calculations
 summary: Reproducible electrical and thermal calculations with units, tolerances and a report, fully offline.

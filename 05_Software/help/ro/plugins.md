@@ -1,6 +1,6 @@
 # Pluginuri
 
-Pluginurile îi permit agentului să controleze uneltele de pe bancul tău de lucru: unelte de programare flash și de depanare, monitoare seriale, analizoare de magistrală, simulatoare, instrumente de măsură. Un plugin își declară programele, modul în care VERA le instalează, nivelul de risc al fiecărei comenzi și skill-urile care îl învață pe agent să le folosească. Fiecare plugin instalat are propria pagină de ajutor în Ajutor și pe cardul său.
+Pluginurile îi permit agentului să controleze instrumentele de pe bancul tău de lucru: instrumente de programare flash și de depanare, monitoare seriale, analizoare de magistrală, simulatoare, instrumente de măsură. Un plugin își declară programele, modul în care VERA le instalează, nivelul de risc al fiecărei comenzi și skill-urile care îl învață pe agent să le folosească. Fiecare plugin instalat are propria pagină de ajutor în Ajutor și pe cardul său.
 
 ## Găsește și instalează un plugin
 
@@ -17,7 +17,7 @@ Un card te avertizează când pluginul nu este disponibil pentru platforma ta sa
 
 ## Revizuire și încredere
 
-Înainte de instalare, VERA afișează o revizuire: ce conține pluginul (**Programe** și proveniența lor, **Abilități**, **Profiluri și fișiere de date**, **Documente**) și **Operații**, regulile de comandă ale pluginului grupate după nivelul de risc. Actualizările care schimbă programe, surse sau reguli sunt revizuite din nou. Dacă fișierele pluginului se modifică după instalare, VERA nu îl mai folosește până când nu îl instalezi din nou.
+Înainte de instalare, VERA afișează o revizuire: ce conține pluginul (**Programe** și proveniența lor, **Skill-uri**, **Profiluri și fișiere de date**, **Documente**) și **Operații**, regulile de comandă ale pluginului grupate după nivelul de risc. Actualizările care schimbă programe, surse sau reguli sunt revizuite din nou. Dacă fișierele pluginului se modifică după instalare, VERA nu îl mai folosește până când nu îl instalezi din nou.
 
 Pluginurile au un nivel de încredere:
 
@@ -25,14 +25,14 @@ Pluginurile au un nivel de încredere:
 |---|---|
 | **Oficial** | Din catalog, marcat acolo ca oficial |
 | **Comunitate** | Orice alt plugin din catalog |
-| **Local** | Instalat de tine cu **Instalează din dosar…** sau **Instalează din zip…** |
+| **Local** | Instalat de tine cu **Instalează din folder…** sau **Instalează din zip…** |
 | **Probă** | Creat de agent într-o sesiune; fiecare comandă cere aprobare, inclusiv în Bypass. **Promovează ca local** îi acordă încredere |
 
 Un workbench poate conține și pachete de pluginuri în `.vera/plugins/`. Acestea sunt folosite doar după ce selectezi **Revizuiește pluginul workbench** și **Acordă încredere pachetului**; încrederea este stocată doar pe acest calculator, iar orice modificare a pachetului necesită o nouă revizuire.
 
 ## Activează un plugin pentru un workbench
 
-Instalarea nu activează un plugin. Deschide **Editează workbenchul** → **Pluginuri**, bifează pluginul și selectează **Salvează**. Doar pluginurile activate îi sunt oferite agentului în acel workbench.
+Instalarea nu activează un plugin. Deschide **Editează workbench-ul** → **Pluginuri**, bifează pluginul și selectează **Salvează**. Doar pluginurile activate îi sunt oferite agentului în acel workbench.
 
 ## Dependențe
 
@@ -50,7 +50,7 @@ Unele pluginuri au nevoie de setări, marcate **Necesită configurare** și intr
 
 ## Rulări de programe
 
-Fiecare comandă rulată de agent trece prin modul tău de permisiuni (vezi [Permisiuni](permissions.md)). Fila **Rulări** din panoul din dreapta listează rulările workbenchului; **Deschide jurnalul** afișează ieșirea, iar **Oprește** încheie un program în curs. Jurnalele sunt păstrate în `.vera/runs/`.
+Fiecare comandă rulată de agent trece prin modul tău de permisiuni (vezi [Permisiuni](permissions.md)). Fila **Rulări** din panoul din dreapta listează rulările workbench-ului; **Deschide jurnalul** afișează ieșirea, iar **Oprește** încheie un program în curs. Jurnalele sunt păstrate în `.vera/runs/`.
 
 ## Actualizări și catalogul
 

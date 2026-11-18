@@ -1,20 +1,20 @@
 format: 1
 id: scpi-instruments
-version: 0.2.0
+version: 0.2.1
 license: LicenseRef-PolyForm-Noncommercial-1.0.0
 name: SCPI bench instruments
 summary: Read, capture and control declared bench instruments (multimeter, oscilloscope, supply) through PyVISA.
-description: Identify declared bench instruments (multimeter, oscilloscope, power supply) through PyVISA, read values, capture waveforms, change settings and power a DUT output for a bounded hold - only through the package's validated profiles, with each instrument reserved for the run and its outputs switched off after Stop, timeout or a crash, or the state reported unknown when that cannot be confirmed.
+description: Identify declared bench instruments (multimeter, oscilloscope, power supply) through PyVISA, read values, capture waveforms, change settings and power a DUT output for a bounded hold - only through the package's profiles (none verified on a real instrument yet), with each instrument reserved for the run and its outputs switched off after Stop, timeout or a crash, or the state reported unknown when that cannot be confirmed.
 translations:
   ro:
     summary: "Citește, capturează și controlează instrumente de laborator declarate (multimetru, osciloscop, sursă) prin PyVISA."
-    description: "Identifică instrumente de laborator declarate (multimetru, osciloscop, sursă de alimentare) prin PyVISA, citește valori, capturează forme de undă, modifică setări și alimentează o ieșire către DUT pentru o menținere limitată - doar prin profilurile validate ale pachetului, cu fiecare instrument rezervat pe durata rulării și ieșirile lui oprite după Oprește, un timeout sau un crash, ori cu starea raportată ca necunoscută când acest lucru nu poate fi confirmat."
+    description: "Identifică instrumente de laborator declarate (multimetru, osciloscop, sursă de alimentare) prin PyVISA, citește valori, capturează forme de undă, modifică setări și alimentează o ieșire către DUT pentru o menținere limitată - doar prin profilurile pachetului (niciunul verificat încă pe un instrument real), cu fiecare instrument rezervat pe durata rulării și ieșirile lui oprite după Oprește, un timeout sau un crash, ori cu starea raportată ca necunoscută când acest lucru nu poate fi confirmat."
   de:
     summary: "Deklarierte Labormessgeräte (Multimeter, Oszilloskop, Netzgerät) über PyVISA auslesen, aufzeichnen und steuern."
-    description: "Deklarierte Labormessgeräte (Multimeter, Oszilloskop, Netzgerät) über PyVISA identifizieren, Werte lesen, Signalverläufe aufzeichnen, Einstellungen ändern und einen DUT-Ausgang für eine begrenzte Haltezeit versorgen - nur über die validierten Profile des Pakets, mit jedem Messgerät für den Lauf reserviert und seinen Ausgängen nach Stoppen, Zeitüberschreitung oder Absturz ausgeschaltet, oder der Zustand wird als unbekannt gemeldet, wenn sich das nicht bestätigen lässt."
+    description: "Deklarierte Labormessgeräte (Multimeter, Oszilloskop, Netzgerät) über PyVISA identifizieren, Werte lesen, Signalverläufe aufzeichnen, Einstellungen ändern und einen DUT-Ausgang für eine begrenzte Haltezeit versorgen - nur über die Profile des Pakets (noch keines an einem echten Messgerät geprüft), mit jedem Messgerät für den Lauf reserviert und seinen Ausgängen nach Stoppen, Zeitüberschreitung oder Absturz ausgeschaltet, oder der Zustand wird als unbekannt gemeldet, wenn sich das nicht bestätigen lässt."
   fr:
     summary: "Lisez, capturez et pilotez les instruments de banc déclarés (multimètre, oscilloscope, alimentation) avec PyVISA."
-    description: "Identifiez les instruments de banc déclarés (multimètre, oscilloscope, alimentation) avec PyVISA, lisez des valeurs, capturez des formes d’onde, modifiez des réglages et alimentez une sortie vers un DUT pendant une durée de maintien limitée - uniquement via les profils validés du paquet, chaque instrument étant réservé pour l’exécution et ses sorties coupées après Arrêter, un dépassement de délai ou un plantage, ou l’état signalé comme inconnu si cela ne peut pas être confirmé."
+    description: "Identifiez les instruments de banc déclarés (multimètre, oscilloscope, alimentation) avec PyVISA, lisez des valeurs, capturez des formes d’onde, modifiez des réglages et alimentez une sortie vers un DUT pendant une durée de maintien limitée - uniquement via les profils du paquet (aucun encore vérifié avec un vrai instrument), chaque instrument étant réservé pour l’exécution et ses sorties coupées après Arrêter, un dépassement de délai ou un plantage, ou l’état signalé comme inconnu si cela ne peut pas être confirmé."
 ecosystem: lab
 platforms: [windows-x64, linux-x64]
 docs: [README.md, "https://pyvisa.readthedocs.io/en/1.16.2/", "https://pyvisa.readthedocs.io/projects/pyvisa-py/en/latest/"]
@@ -51,11 +51,11 @@ rules:
     note: Sets the oscilloscope's waveform transfer source, mode and format (not the acquisition) and reads the waveform in memory.
   - match: "scpi configure *"
     risk: device-write
-    note: Changes instrument settings after the identity check and reads them back; a power supply's set-points change only while its output is off.
+    note: Changes instrument settings after the identity check and reads them back; a power supply's set-points change only while its output is off. No shipped profile is verified on a real instrument yet.
   - match: "scpi close *"
     risk: device-write
     note: Switches every output of the instrument off and reads it back. VERA runs the same command as the cleanup after Stop, timeout or a crash.
   - match: "scpi output *"
     risk: irreversible
     timeout: 3600
-    note: Energizes a power supply output at the given voltage and current limit for --hold seconds, then switches it off and reads it back; Stop and timeout switch it off first.
+    note: Energizes a power supply output at the given voltage and current limit for --hold seconds, then switches it off and reads it back; Stop and timeout switch it off first. No shipped profile is verified on a real instrument yet.

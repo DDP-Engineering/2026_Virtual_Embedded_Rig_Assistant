@@ -41,7 +41,8 @@ def _run_folder(raw: str) -> Path:
     return folder
 
 
-def _load(folder: Path) -> tuple[dict[str, Any], list[dict[str, Any]]]:
+def _load(folder: Path) -> tuple[dict[str, Any], list[dict[str, Any]], int]:
+    """The result, the first events of the timeline and how many event lines were skipped as not a JSON object."""
     path = folder / "result.json"
     try:
         if not path.is_file() or path.stat().st_size > RESULT_BYTES:
@@ -54,17 +55,32 @@ def _load(folder: Path) -> tuple[dict[str, Any], list[dict[str, Any]]]:
     if result.get("state") != "done":
         raise Refused("The run has not finished; report it once its state is done.")
     events: list[dict[str, Any]] = []
+    skipped = 0
     try:
-        with (folder / "events.jsonl").open(encoding="utf-8") as stream:
+        # A line that is not text or not a JSON object is skipped and counted; the timeline goes on after it.
+        with (folder / "events.jsonl").open(encoding="utf-8", errors="replace") as stream:
             for line in stream:
                 if len(events) >= EVENTS_SHOWN:
                     break
-                value = json.loads(line)
+                if not line.strip():
+                    continue
+                try:
+                    value = json.loads(line)
+                except (ValueError, RecursionError):
+                    value = None
                 if isinstance(value, dict):
                     events.append(value)
-    except (OSError, ValueError):
+                else:
+                    skipped += 1
+    except OSError:
         pass
-    return result, events
+    return result, events, skipped
+
+
+def _object(result: dict[str, Any], key: str) -> dict[str, Any]:
+    """A field of the result that holds an object; any other value reads as an empty one."""
+    value = result.get(key)
+    return value if isinstance(value, dict) else {}
 
 
 def _steps(result: dict[str, Any]) -> list[tuple[str, dict[str, Any]]]:
@@ -97,12 +113,13 @@ def _link(folder: Path, target: Any) -> str:
 
 def junit(result: dict[str, Any]) -> str:
     rows = _steps(result)
+    plan = _object(result, "plan")
     counts = {"failures": 0, "errors": 0, "skipped": 0}
     cases = []
     for group, step in rows:
         status = str(step.get("status", ""))
         name = str(step.get("id", ""))
-        classname = f"{result.get('plan', {}).get('id', 'plan')}.{group}.{step.get('phase', '')}"
+        classname = f"{plan.get('id', 'plan')}.{group}.{step.get('phase', '')}"
         body = ""
         message = f"{status}: {step.get('use', '')}"
         if status == "fail":
@@ -118,8 +135,7 @@ def junit(result: dict[str, Any]) -> str:
         cases.append(
             f'  <testcase classname={quoteattr(classname)} name={quoteattr(name)} time="{_seconds(step):.3f}">{body}</testcase>'
         )
-    plan = result.get("plan", {}) if isinstance(result.get("plan"), dict) else {}
-    used = result.get("budget", {}).get("usedMs", 0) if isinstance(result.get("budget"), dict) else 0
+    used = _object(result, "budget").get("usedMs", 0)
     return (
         '<?xml version="1.0" encoding="UTF-8"?>\n<testsuites>\n'
         f"<testsuite name={quoteattr(str(plan.get('id', 'plan')))} tests=\"{len(rows)}\" failures=\"{counts['failures']}\" "
@@ -133,9 +149,9 @@ def junit(result: dict[str, Any]) -> str:
 
 
 def markdown(result: dict[str, Any]) -> str:
-    plan = result.get("plan") or {}
-    setup = result.get("setup") or {}
-    firmware = result.get("firmware") or {}
+    plan = _object(result, "plan")
+    setup = _object(result, "setup")
+    firmware = _object(result, "firmware")
     lines = [
         f"# HIL run {result.get('runId')}: {plan.get('title', '')}",
         "",
@@ -164,11 +180,11 @@ def markdown(result: dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
-def report_html(result: dict[str, Any], events: list[dict[str, Any]], folder: Path) -> str:
+def report_html(result: dict[str, Any], events: list[dict[str, Any]], skipped: int, folder: Path) -> str:
     e = lambda value: html.escape("" if value is None else str(value))  # noqa: E731
-    plan = result.get("plan") or {}
-    setup = result.get("setup") or {}
-    firmware = result.get("firmware") or {}
+    plan = _object(result, "plan")
+    setup = _object(result, "setup")
+    firmware = _object(result, "firmware")
     rows = []
     for group, step in _steps(result):
         for attempt in step.get("attempts") or [{}]:
@@ -196,6 +212,7 @@ def report_html(result: dict[str, Any], events: list[dict[str, Any]], folder: Pa
         for p in result.get("problems") or []
         if isinstance(p, dict)
     )
+    left_out = f"<p>{skipped} lines of events.jsonl were not readable events and are left out.</p>" if skipped else ""
     wiring = "".join(f"<li>{e(wire)}</li>" for wire in setup.get("wiring") or [])
     return f"""<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><title>HIL {e(plan.get('id'))} {e(result.get('runId'))}</title>
@@ -209,20 +226,20 @@ def report_html(result: dict[str, Any], events: list[dict[str, Any]], folder: Pa
 <p>Firmware {e(firmware.get('path'))} ({e(firmware.get('format'))}) sha256 {e(firmware.get('sha256'))}</p>
 <h2>Steps</h2><table><tr><th>Group</th><th>Step</th><th>Phase</th><th>Use</th><th>Status</th><th>Attempt</th><th>Exit</th><th>t (ms)</th><th>Problem</th><th>Links</th></tr>{"".join(rows)}</table>
 <h2>Problems</h2><ul>{problems or "<li>none</li>"}</ul>
-<h2>Timeline</h2><p>{e(result.get('correlation'))}</p>
+<h2>Timeline</h2><p>{e(result.get('correlation'))}</p>{left_out}
 <table><tr><th>t (ms)</th><th>Host time</th><th>Event</th><th>Step</th><th>Details</th></tr>{timeline}</table>
 <p>Generated by hil-testing {e(VERSION)}.</p></body></html>
 """
 
 
 def report(folder: Path) -> dict[str, Any]:
-    result, events = _load(folder)
+    result, events, skipped = _load(folder)
     for name in OUTPUTS:
         # lexists: a link (even a dangling one) in place of a report file counts as present.
         if os.path.lexists(folder / name):
             raise Refused(f"{name} already exists in the run folder; a report is written once.")
     contents = {
-        "report.html": report_html(result, events, folder),
+        "report.html": report_html(result, events, skipped, folder),
         "report.md": markdown(result),
         "junit.xml": junit(result),
     }
@@ -240,7 +257,10 @@ def report(folder: Path) -> dict[str, Any]:
             except OSError:
                 pass
         raise Refused(f"The report cannot be written: {error.strerror or error}.") from error
-    return {"format": 1, "kind": "hil-report", "status": result.get("status"), "files": written}
+    outcome: dict[str, Any] = {"format": 1, "kind": "hil-report", "status": result.get("status"), "files": written}
+    if skipped:
+        outcome["warnings"] = [f"{skipped} lines of events.jsonl were not readable events and are left out of the timeline."]
+    return outcome
 
 
 def main(argv: list[str] | None = None) -> int:

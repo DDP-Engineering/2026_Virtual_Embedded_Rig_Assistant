@@ -86,7 +86,7 @@ it("builds the official plugins into a bundled catalog release and checks it aga
   expect(index.plugins.find((plugin: { id: string }) => plugin.id === "electronics-calc")).toMatchObject({
     activities: ["design"],
     ecosystem: "electronics",
-    version: "0.3.0",
+    version: "0.3.1",
   });
   // REQ-DATA-ece2d69c
   expect(index.plugins.find((plugin: { id: string }) => plugin.id === "kicad")).toMatchObject({

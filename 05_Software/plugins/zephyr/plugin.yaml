@@ -1,6 +1,6 @@
 format: 1
 id: zephyr
-version: 0.2.0
+version: 0.2.1
 license: LicenseRef-PolyForm-Noncommercial-1.0.0
 name: Zephyr builds, tests and flashing
 summary: Build Zephyr applications, run Twister tests and flash an exact board from a pinned west workspace.

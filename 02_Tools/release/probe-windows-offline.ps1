@@ -30,7 +30,9 @@ try {
   $stage = 'extraction'
   $destination = Join-Path ([IO.Path]::GetTempPath()) ('VERA offline package ' + [Guid]::NewGuid().ToString('N'))
   Expand-Archive -LiteralPath $artifactPath -DestinationPath $destination
-  $exe = Join-Path $destination 'VERA.exe'
+  # A test build is packaged as vera-test.exe, a release build as vera.exe (package.mjs, executableName).
+  $exe = Join-Path $destination 'vera-test.exe'
+  if (-not (Test-Path -LiteralPath $exe)) { $exe = Join-Path $destination 'VERA.exe' }
   $stage = 'application-launch'
   $arguments = @(( '--packaging-probe="' + (Join-Path $evidence 'probe.json') + '"'), ('--user-data-dir="' + (Join-Path $destination 'user-data') + '"'))
   $run = Start-Process -FilePath $exe -ArgumentList $arguments -PassThru -WindowStyle Hidden `

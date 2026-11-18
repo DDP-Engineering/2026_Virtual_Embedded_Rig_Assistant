@@ -545,6 +545,76 @@ describe("conventions and scenarios", () => {
     expect(fifthOnly.status).toBe("incomplete");
   });
 
+  describe("resonance at both ends of the fault level", () => {
+    // A fixed 30 kvar bank (need 61 - 101 x tan(acos 0.95) = 27.8 kvar, one fictional 30 kvar unit) with the 5th and
+    // 7th measured: Ssc 1080 kVA gives h = sqrt(1080 / 30) = 6.0, clear of both; Ssc 750 kVA gives 5.0, on the 5th.
+    const KA = (kva: number) => kva / (Math.sqrt(3) * 400);
+    /** The network result without its scenarios and with the board's fault currents replaced (null removes one). */
+    const faultLevels = (max: [number, string], min: [number, string] | null): ElectricalResult => {
+      const copy = structuredClone(network);
+      for (const key of Object.keys(copy.conditions))
+        if (key.startsWith("scenario")) delete copy.conditions[key];
+      copy.intermediate = copy.intermediate.filter(
+        (entry) => !(entry.subject === "brd-main" && (entry.name === "ik3Max" || entry.name === "ik3Min")),
+      );
+      copy.intermediate.push({ name: "ik3Max", subject: "brd-main", value: max[0], unit: max[1] });
+      if (min) copy.intermediate.push({ name: "ik3Min", subject: "brd-main", value: min[0], unit: min[1] });
+      return copy;
+    };
+    const harmonics = () =>
+      file(
+        {},
+        [
+          [t(1), 100, 60, 2, 0, 1],
+          [t(2), 101, 61, 2, 0, 1],
+        ],
+        [5, 6, 7].map((order) => ({ name: `U${order}`, quantity: "harmonicVoltage", order, unit: "%" })),
+      );
+    const bank = (levels: ElectricalResult) =>
+      run(
+        { ...BASIC, catalog: "cat-pfc", steps: [{ capacitor: "itm-fict-small" }], resonanceMargin: 0.1 },
+        { network: levels, series: harmonics(), catalog: withSmallStep(30) },
+      );
+
+    it("fails when only the minimum fault level puts the order on a harmonic", () => {
+      const result = bank(faultLevels([KA(1080), "kA"], [KA(750), "kA"]));
+      expect(result.conditions.bankType).toEqual({ text: "fixed" });
+      expect(amountOf(result, "shortCircuitPower")).toBeCloseTo(1080, 3);
+      expect(amountOf(result, "shortCircuitPowerMin")).toBeCloseTo(750, 3);
+      expect(amountOf(result, "resonanceOrder:FICT-SMALL@1")).toBeCloseTo(6, 5);
+      expect(criterion(result, "resonance:FICT-SMALL")).toMatchObject({
+        verdict: "fail",
+        note: expect.stringMatching(
+          /^1 step\(s\): h 5 near measured order 5 at minimum Ssc \(Ssc 1080 kVA maximum and 750 kVA minimum,/,
+        ),
+      });
+    });
+
+    it("keeps the verdict of the maximum level and says so when no minimum is stored", () => {
+      const result = bank(faultLevels([KA(1080), "kA"], null));
+      expect(criterion(result, "resonance:FICT-SMALL")).toMatchObject({
+        verdict: "pass",
+        note: expect.stringMatching(/Ssc 1080 kVA maximum only/),
+      });
+      expect(amountOf(result, "shortCircuitPowerMin")).toBeNull();
+      expect(result.messages.join("\n")).toMatch(/no minimum fault current at MDB \(brd-main\)/);
+      // Both levels clear of the harmonics: pass, and no such message.
+      const clear = bank(faultLevels([KA(1080), "kA"], [KA(1050), "kA"]));
+      expect(criterion(clear, "resonance:FICT-SMALL").verdict).toBe("pass");
+      expect(clear.messages.join("\n")).not.toMatch(/no minimum fault current/);
+    });
+
+    it("converts stored values from their unit and does not use one of another dimension", () => {
+      const amperes = bank(faultLevels([KA(1080) * 1000, "A"], [KA(750) * 1000, "A"]));
+      expect(amountOf(amperes, "shortCircuitPower")).toBeCloseTo(1080, 3);
+      expect(amountOf(amperes, "shortCircuitPowerMin")).toBeCloseTo(750, 3);
+      const volts = bank(faultLevels([KA(1080), "kV"], null));
+      expect(amountOf(volts, "shortCircuitPower")).toBeNull();
+      expect(criterion(volts, "resonance:FICT-SMALL").verdict).toBe("unknown");
+      expect(volts.messages.join("\n")).toMatch(/stores ik3Max in kV, not a unit of current/);
+    });
+  });
+
   it("proposes a fixed bank for a constant load", () => {
     const steady = file({}, [
       [t(1), 100, 60],

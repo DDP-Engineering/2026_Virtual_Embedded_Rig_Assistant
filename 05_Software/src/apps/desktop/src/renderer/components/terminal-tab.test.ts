@@ -11,6 +11,7 @@ const native = vi.hoisted(() => ({
   input: (_data: string) => {},
   resize: (_size: { cols: number; rows: number }) => {},
   write: vi.fn(),
+  reset: vi.fn(),
   dispose: vi.fn(),
   created: vi.fn(),
   fit: vi.fn(),
@@ -29,7 +30,7 @@ vi.mock("@xterm/xterm", () => ({
     loadAddon() {}
     open() {}
     focus() {}
-    reset() {}
+    reset = native.reset;
     write(data: string, parsed?: () => void) {
       native.write(data);
       queueMicrotask(() => {
@@ -245,6 +246,47 @@ it("renders restored and replaced history without resending terminal replies, wh
     await act(async () => native.input("ordinary user input"));
     expect(inputs()).toHaveLength(2);
     expect(inputs()[1]?.[1]).toMatchObject({ data: "ordinary user input" });
+  } finally {
+    await act(async () => root.unmount());
+    container.remove();
+  }
+});
+
+it("appends only the new tail when the host trims the head of a full buffer", async () => {
+  vi.useFakeTimers();
+  const owner = "wb_01JB8Z6Q4M7N2K5R9T3V8X1Y0C";
+  const row: TerminalSummary = {
+    id: "00000000-0000-4000-8000-000000000001",
+    number: 1,
+    shared: false,
+    running: true,
+  };
+  let snapshot = { output: "line 1\nline 2\n", start: 0 };
+  vi.mocked(api.invoke).mockImplementation(async (channel) => {
+    if (channel === "terminal.list") return [row] as never;
+    if (channel === "terminal.output") return { ...row, ...snapshot } as never;
+    return {} as never;
+  });
+  const container = document.createElement("div");
+  document.body.append(container);
+  const root = createRoot(container);
+  const next = async (value: typeof snapshot) => {
+    snapshot = value;
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(250);
+    });
+  };
+  try {
+    await act(async () => root.render(createElement(TerminalTab, { workbenchId: owner })));
+    expect(native.write).toHaveBeenLastCalledWith("line 1\nline 2\n");
+    await next({ output: "line 2\nline 3\n", start: 7 });
+    expect(native.write).toHaveBeenLastCalledWith("line 3\n");
+    await next({ output: "line 9\n", start: 60 });
+    expect(native.write).toHaveBeenLastCalledWith("line 9\n");
+    expect(native.reset).not.toHaveBeenCalled();
+    await next({ output: "masked\n", start: 60 });
+    expect(native.reset).toHaveBeenCalledTimes(1);
+    expect(native.write).toHaveBeenLastCalledWith("masked\n");
   } finally {
     await act(async () => root.unmount());
     container.remove();

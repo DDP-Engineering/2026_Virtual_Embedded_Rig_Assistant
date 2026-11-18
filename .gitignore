@@ -41,6 +41,7 @@ __pycache__/
 !/05_Software/tests/fixtures/workbenches/demo-board/.vera/
 
 # Local Vite environment overrides are per-developer. Shared .env.<mode> files stay in Git.
+**/.env
 **/.env.local
 **/.env.*.local
 
@@ -55,5 +56,10 @@ desktop.ini
 .agentic/tasks/*.anchor.json
 .agentic/tasks/*.evolution.json
 # AEGIS:END
-# The catalog signing private key lives outside every repository (02_Tools/release/catalog-release.md).
-catalog-signing-key.pem
+# Private keys and certificates never belong in Git; the catalog signing private key lives outside
+# every repository (02_Tools/release/catalog-release.md). Public keys (*.pub.pem) are committed.
+*.pem
+!*.pub.pem
+*.pfx
+*.p12
+*.key

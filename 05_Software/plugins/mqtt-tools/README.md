@@ -66,8 +66,9 @@ instructions.
 - No command is sent twice. A connection lost after the PUBLISH and before its acknowledgement gives
   `delivery: unknown`; it may have reached the device. Publish and request never reconnect.
 - Stop and a disconnect do not revoke a message the broker accepted, or a Will it already published. On Linux, Stop
-  ends a capture with UNSUBSCRIBE and DISCONNECT; on Windows the run is terminated and the broker sees a dropped
-  connection (and publishes a declared Will). The run folder keeps every message already recorded.
+  ends a capture with UNSUBSCRIBE and DISCONNECT, and so does a console break event (Ctrl+Break) on Windows; VERA's
+  Stop on Windows terminates the run, so the broker sees a dropped connection (and publishes a declared Will). The
+  run folder keeps every message already recorded.
 - A QoS 1 message may be delivered twice by the broker; the device and the capture's `duplicate` marking deal with it.
 
 Exit codes: 0 pass, 1 fail (`response-timeout`), 2 blocked before any packet, 3 incomplete or error.

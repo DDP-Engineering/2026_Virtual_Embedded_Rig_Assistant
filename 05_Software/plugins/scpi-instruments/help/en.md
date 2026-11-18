@@ -1,6 +1,6 @@
 # SCPI bench instruments
 
-This plugin lets the agent work with the bench instruments your workbench declares: a multimeter, an oscilloscope or a power supply, through PyVISA. It identifies an instrument, reads values with units, captures waveforms, changes settings and powers a board from a supply output for a bounded hold. Every command comes from a validated profile; there is no raw SCPI and no network search. Each instrument is reserved for the run, and its outputs are switched off after Stop, a timeout or a crash, or the state is reported as unknown. Results go to `embedded-lab-results/`.
+This plugin lets the agent work with the bench instruments your workbench declares: a multimeter, an oscilloscope or a power supply, through PyVISA. It identifies an instrument, reads values with units, captures waveforms, changes settings and powers a board from a supply output for a bounded hold. Every command comes from a profile in the package; there is no raw SCPI and no network search. Each instrument is reserved for the run, and its outputs are switched off after Stop, a timeout or a crash, or the state is reported as unknown. Results go to `embedded-lab-results/`.
 
 ## What it needs
 
@@ -27,6 +27,6 @@ The agent uses the `bench-instruments` and `instrument-profiles` skills.
 
 ## Limits
 
-- Windows x64 and Linux x64. No profile has been verified on a real instrument yet; native Ubuntu and vendor VISA have not been run.
+- Windows x64 and Linux x64. No profile has been verified on a real instrument yet, so a result that changed settings or energized an output carries the warning `profile-unverified`; native Ubuntu and vendor VISA have not been run.
 - An instrument whose identity matches no profile gets identify only.
 - VERA cannot lock out other programs, and nothing can switch an output off if the whole computer or VERA is lost.

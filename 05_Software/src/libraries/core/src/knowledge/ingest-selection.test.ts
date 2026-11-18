@@ -312,6 +312,31 @@ it("reports the number and bytes of the selected documents after each selection"
   expect(h.service.documentVolume()).toEqual({ files: 2, bytes: 150 });
 });
 
+it("reports a document whose name the path guard refuses as skipped and records why", async () => {
+  // A Windows device name is an ordinary file name on Linux, macOS and current Windows.
+  const h = await harness({ "docs/aux.md": "# Aux", "docs/board.md": "# Board" }, { include: ["docs/**"] });
+  expect(
+    await selectDocuments({
+      root: h.folder,
+      docs: { include: ["docs/**"], exclude: [], gitignore: true, maxFiles: 10000 },
+      signal: new AbortController().signal,
+    }),
+  ).toEqual({
+    paths: [{ path: "docs/board.md", size: 7 }],
+    skipped: [{ path: "docs/aux.md", size: 0, reason: "unsupported-name" }],
+    retry: false,
+  });
+  const rows = new DocumentsRepository(h.service.getDatabase());
+  expect(rows.get("docs/aux.md")).toMatchObject({
+    status: "unsupported",
+    error: "NAME_UNSUPPORTED",
+    sha256: null,
+  });
+  expect(rows.get("docs/board.md")).toMatchObject({ error: null });
+  expect(record.opened.map(h.rel)).not.toContain("docs/aux.md");
+  expect(h.service.documentVolume()).toEqual({ files: 1, bytes: 7 });
+});
+
 const MiB = 1024 * 1024;
 /** A sparse file of `bytes` bytes: real sizes without writing them. */
 async function sparse(path: string, bytes: number) {

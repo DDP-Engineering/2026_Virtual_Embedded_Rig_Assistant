@@ -9,7 +9,7 @@ no regulator. It reads an optional current `electrical_network` result, a measur
 ## 1. Confirm the network result
 
 `electrical_model {"view": "results"}`: take the newest `electrical-network` result whose freshness is `current`
-(skill `network-sizing`). It gives the board's P and Q per scenario and the maximum fault level for the resonance;
+(skill `network-sizing`). It gives the board's P and Q per scenario and the maximum and minimum fault levels for the resonance;
 without it the resonance and the guide's configuration rule stay unknown.
 
 ## 2. Import the measurements

@@ -1,6 +1,6 @@
 # VERA-Hilfe
 
-VERA, der Virtual Embedded Rig Assistant, ist eine Desktop-Workbench für Embedded-Ingenieure. Sie öffnen einen Projektordner als Workbench, und VERA indiziert dessen Datenblätter, Handbücher und Notizen auf Ihrem Computer. Ein KI-Agent beantwortet Ihre Fragen zum Projekt und nennt die Seiten, die er verwendet hat; ein Quellenverweis öffnet das Dokument an genau dieser Stelle. Über Plugins kann der Agent auch die Werkzeuge an Ihrem Laborplatz ausführen, etwa Flash-Tools, serielle Monitore oder Debugger, immer in dem Berechtigungsmodus, den Sie wählen.
+VERA, der Virtual Embedded Rig Assistant, ist ein Desktop-Workbench für Embedded-Ingenieure. Sie öffnen einen Projektordner als Workbench, und VERA indiziert dessen Datenblätter, Handbücher und Notizen auf Ihrem Computer. Ein KI-Agent beantwortet Ihre Fragen zum Projekt und nennt die Seiten, die er verwendet hat; ein Quellenverweis öffnet das Dokument an genau dieser Stelle. Über Plugins kann der Agent auch die Werkzeuge an Ihrem Laborplatz ausführen, etwa Flash-Tools, serielle Monitore oder Debugger, immer in dem Berechtigungsmodus, den Sie wählen.
 
 ## Hilfe öffnen
 
@@ -23,7 +23,7 @@ Jedes installierte Plugin hat eine eigene Hilfeseite: was das Plugin tut, was es
 
 | Seite | Inhalt |
 |---|---|
-| [Erste Schritte](getting-started.md) | Erster Start, ein Anbieter, eine erste Workbench, eine erste Frage |
+| [Erste Schritte](getting-started.md) | Erster Start, ein Anbieter, ein erster Workbench, eine erste Frage |
 | [Workbenches](workbenches.md) | Workbenches erstellen, öffnen, anheften und bearbeiten; schreibgeschützte Workbenches; der Ordner `.vera/` |
 | [Chat und Sitzungen](chat-and-sessions.md) | Sitzungen, einen laufenden Durchlauf steuern, Archivieren, Export, Detailgrade, Reasoning |
 | [Berechtigungen](permissions.md) | Nur lesen, Nachfragen, Auto-Edit und Bypass; Freigaben, Änderungen und Risikostufen |
@@ -31,7 +31,7 @@ Jedes installierte Plugin hat eine eigene Hilfeseite: was das Plugin tut, was es
 | [Anbieter und Modelle](providers.md) | OpenAI, ChatGPT-Abonnement, LM Studio, Ollama und andere Endpunkte |
 | [Plugins](plugins.md) | Katalog, Installation, Prüfung und Vertrauen, Abhängigkeiten, Konfiguration, Pakete |
 | [Einstellungen](settings.md) | Darstellung, Sprache, Aktualisierungen, Webzugriff, Tastenkombinationen |
-| [Tastenkürzel](shortcuts.md) | Alle Tastenkürzel von VERA |
+| [Tastenkombinationen](shortcuts.md) | Alle Tastenkombinationen von VERA |
 | [Offline-Installation](offline-install.md) | VERA und Plugins auf einem Computer ohne Netzwerk installieren |
 | [Fehlerbehebung](troubleshooting.md) | Häufige Probleme, Protokolle und wo VERA seine Daten ablegt |
 

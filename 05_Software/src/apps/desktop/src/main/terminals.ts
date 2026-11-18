@@ -40,6 +40,8 @@ type Entry = {
   running: boolean;
   exitCode?: number;
   output: string;
+  /** Characters trimmed from the head of `output` so far. */
+  dropped: number;
   listeners: { dispose(): void }[];
 };
 const BUFFER = 262144;
@@ -126,6 +128,7 @@ export class TerminalService {
         grant: 0,
         running: true,
         output: "",
+        dropped: 0,
         listeners: [],
       };
       this.entries.set(entry.id, entry);
@@ -134,9 +137,11 @@ export class TerminalService {
           if (this.entries.get(entry.id) !== entry) return;
           entry.output += data;
           if (entry.output.length > BUFFER) {
+            const length = entry.output.length;
             const tail = entry.output.slice(-BUFFER);
             // Drop a cut line rather than disclose the suffix of a secret at the buffer boundary.
             entry.output = tail.slice(tail.indexOf("\n") < 0 ? tail.length : tail.indexOf("\n") + 1);
+            entry.dropped += length - entry.output.length;
           }
         }),
         pty.onExit(({ exitCode }) => {
@@ -178,6 +183,8 @@ export class TerminalService {
     return {
       ...this.summary(entry),
       output: this.host.maskUserOutput() ? this.publicOutput(entry) : entry.output,
+      // Lets the renderer tell a trimmed head from changed content and append only the new tail.
+      start: entry.dropped,
     };
   }
   input(owner: string, id: string, data: string): void {

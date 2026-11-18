@@ -202,7 +202,7 @@ describe("package", { timeout: 60_000 }, () => {
     expect(validatePluginManifest(m).issues).toEqual([]);
     expect(m).toMatchObject({
       id: "zephyr",
-      version: "0.2.0",
+      version: "0.2.1",
       ecosystem: "lab",
       platforms: ["windows-x64", "linux-x64"],
     });
@@ -258,6 +258,53 @@ describe("package", { timeout: 60_000 }, () => {
     const gdb = (name: string) => readFile(join(plugins, "gdb-debug", "scripts", "gdb_support", name));
     expect(sha256(await own("workspace.py"))).toBe(sha256(await gdb("workspace.py")));
     expect(sha256(await own("elf.py"))).toBe(sha256(await gdb("elf.py")));
+  });
+});
+
+describe("supervised steps", { timeout: 60_000 }, () => {
+  it("ends the step's process tree as soon as VERA requests a stop", async () => {
+    const temp = await realpath(await mkdtemp(join(tmpdir(), "vera-zephyr-stop-")));
+    // The step starts a child that starts its own child, the way an upload starts the programmer.
+    const child = [
+      "import json, os, subprocess, sys, time",
+      "inner = subprocess.Popen([sys.executable, '-c', 'import time; time.sleep(120)'])",
+      "open(sys.argv[1], 'w').write(json.dumps([os.getpid(), inner.pid]))",
+      "open(sys.argv[1] + '.ready', 'w').close()",
+      "time.sleep(120)",
+    ].join("\n");
+    const script = [
+      "import json, os, sys",
+      "from pathlib import Path",
+      "from zephyr_support.result import Run",
+      // VERA starts a helper as the leader of its own process group on Linux.
+      "os.name == 'nt' or os.setsid()",
+      "folder = Path(sys.argv[1])",
+      "run = Run('flash', 'hardware')",
+      "run.folder = folder",
+      "pids = folder / 'pids.json'",
+      "ready = folder / 'pids.json.ready'",
+      "code, _ = run.step('flash', [sys.executable, '-c', sys.argv[2], str(pids)], folder, dict(os.environ), ready.exists)",
+      "print(json.dumps({'pids': json.loads(pids.read_text()), 'step': run['steps'][0]}))",
+    ].join("\n");
+    try {
+      const done = spawnSync(
+        process.env.VERA_TEST_PYTHON ?? (windows ? "python" : "python3"),
+        ["-c", script, temp, child],
+        {
+          env: { ...process.env, PYTHONPATH: join(pluginFolder, "scripts"), PYTHONDONTWRITEBYTECODE: "1" },
+          encoding: "utf8",
+          timeout: 50_000,
+        },
+      );
+      expect(done.status, done.stderr).toBe(0);
+      const { pids, step } = JSON.parse(done.stdout.trim().split("\n").at(-1) ?? "{}");
+      expect(step.exit).not.toBe(0);
+      expect(step.seconds).toBeLessThan(30);
+      for (let i = 0; i < 50 && pids.some(alive); i++) await sleep(100);
+      expect(pids.map(alive)).toEqual([false, false]);
+    } finally {
+      await rm(temp, { recursive: true, force: true });
+    }
   });
 });
 

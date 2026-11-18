@@ -13,7 +13,11 @@ const logger = new ConsoleLogger((line) => {
 });
 if (process.env.OPENAI_API_KEY) logger.registerSecret(process.env.OPENAI_API_KEY);
 const controller = new AbortController();
-const stop = () => controller.abort();
+// The first signal aborts the run; a second one exits at once, so a hung cleanup can be interrupted.
+const stop = (signal?: NodeJS.Signals) => {
+  if (controller.signal.aborted) process.exit(signal === "SIGTERM" ? 143 : 130);
+  controller.abort();
+};
 process.on("SIGINT", stop);
 process.on("SIGTERM", stop);
 try {

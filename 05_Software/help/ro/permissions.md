@@ -1,10 +1,10 @@
 # Permisiuni
 
-Modul de permisiuni decide ce poate face agentul fără să te întrebe: să modifice fișiere, să descarce fișiere și să ruleze programele pluginurilor pe bancul tău de lucru. Citirea workbenchului, căutarea în documente și salvarea artefactelor nu necesită niciodată aprobare.
+Modul de permisiuni decide ce poate face agentul fără să te întrebe: să modifice fișiere, să descarce fișiere și să ruleze programele pluginurilor pe bancul tău de lucru. Citirea workbench-ului, căutarea în documente și salvarea artefactelor nu necesită niciodată aprobare.
 
 ## Alege un mod
 
-Alege modul cu **Mod de permisiuni** de lângă caseta de mesaj. Se aplică sesiunii respective și poate fi schimbat oricând, inclusiv în timpul unei execuții. Sesiunile noi pornesc cu modul implicit al workbenchului din **Editează workbenchul** → **Agent și chat** → **Permisiuni**; un workbench nou pornește cu **Întreabă**.
+Alege modul cu **Mod de permisiuni** de lângă caseta de mesaj. Se aplică sesiunii respective și poate fi schimbat oricând, inclusiv în timpul unei execuții. Sesiunile noi pornesc cu modul implicit al workbench-ului din **Editează workbench-ul** → **Agent și chat** → **Permisiuni**; un workbench nou pornește cu **Întreabă**.
 
 | Mod | Modificări de fișiere | Programe |
 |---|---|---|
@@ -17,9 +17,9 @@ Trecerea la un mod mai strict anulează aprobările date agentului în modul ant
 
 ## Bypass
 
-Fiecare trecere la Bypass îți cere mai întâi să confirmi că agentul poate citi și modifica fișiere și rula programe în orice dosar accesibil contului tău din sistemul de operare, inclusiv în afara workbenchului. Alege **Activează Bypass** pentru a aplica schimbarea. **Anulează** sau Escape păstrează modul anterior. Fiecare nouă trecere la Bypass cere confirmare, inclusiv după repornirea VERA; modul selectat rămâne marcat cu roșu. Aceeași confirmare listează regulile ireversibile ale pluginurilor activate, fără probleme și care nu sunt de probă.
+Fiecare trecere la Bypass îți cere mai întâi să confirmi că agentul poate citi și modifica fișiere și rula programe în orice folder accesibil contului tău din sistemul de operare, inclusiv în afara workbench-ului. Alege **Activează Bypass** pentru a aplica schimbarea. **Anulează** sau Escape păstrează modul anterior. Fiecare nouă trecere la Bypass cere confirmare, inclusiv după repornirea VERA; modul selectat rămâne marcat cu roșu. Aceeași confirmare listează regulile ireversibile ale pluginurilor activate, fără probleme și care nu sunt de probă.
 
-Dosarul de date al aplicației VERA, inclusiv setările, credențialele salvate, pluginurile instalate și înregistrările de verificare, este refuzat instrumentelor de fișiere ale agentului în orice mod, atât la citire, cât și la scriere, inclusiv prin aliasuri de cale. VERA continuă să își gestioneze normal setările și pluginurile. Sunt disponibile doar instrumentele activate; se aplică permisiunile sistemului, limitele instrumentelor și aprobările pluginurilor de probă. Agentul nu poate modifica `.vera/workbench.yaml` sau `.vera/plugins`.
+Folderul de date al aplicației VERA, inclusiv setările, credențialele salvate, pluginurile instalate și înregistrările de verificare, este refuzat instrumentelor de fișiere ale agentului în orice mod, atât la citire, cât și la scriere, inclusiv prin aliasuri de cale. VERA continuă să își gestioneze normal setările și pluginurile. Sunt disponibile doar instrumentele activate; se aplică permisiunile sistemului, limitele instrumentelor și aprobările pluginurilor de probă. Agentul nu poate modifica `.vera/workbench.yaml` sau `.vera/plugins`.
 
 Instrumentele obișnuite de fișiere și programele declarate pot accesa căi externe în Bypass. Directorul de lucru poate fi o cale absolută externă; fișierele externe existente din argumente sunt legate prin calea absolută și verificate din nou înainte de pornire. Ask, Auto-edit și Read-only refuză directoarele externe și argumentele recunoscute ca fișiere sau directoare externe. Argumentele de directoare externe sunt afișate prin căi absolute, inclusiv aliasurile; conținutul lor nu primește hash-uri. Ieșirea din Bypass oprește rulările sale, inclusiv cele din fundal după încheierea turei. Programele copil declarate nu sunt izolate într-un sandbox. Analiza jurnalelor și registrelor capturate, validarea și instalarea ciornelor de plugin, intrările candidaților, planurile și firmware-ul HIL, resursele de banc și intrările electrice urmează și ele Bypass. Căile absolute externe și aliasurile canonice sunt permise numai în Bypass; selectorii de identificatori rămân identificatori. Sursele externe arată căi absolute canonice fără legături către documente indexate. Instalarea pluginurilor cere în continuare verificare. Modelele și rezultatele electrice fixe, cererile HIL generate, indexul, artefactele, jurnalele și `.vera/` rămân în workbench. Ieșirea din Bypass anulează analiza și lucrările HIL în curs, inclusiv în fundal.
 

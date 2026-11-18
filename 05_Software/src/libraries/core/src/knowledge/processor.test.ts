@@ -165,6 +165,54 @@ it("persists extraction and locators through real ingest, change, deletion and r
   expect(rows.get("docs/board.md")).toBeUndefined();
 });
 
+it("prunes cached extractions that no stored document refers to once a reconcile is done", async () => {
+  const root = await fixtureRoot();
+  await input(root, "docs/board.md", "# Board\nfirst");
+  await input(root, "docs/keep.md", "# Keep\nsteady");
+  const handle = await openDb(join(root, ".vera/vera.db"), {
+    workbenchId: "wb_01JB8Z6Q4M7N2K5R9T3V8X1Y0C",
+    appVersion: "0.0.0",
+  });
+  cleanup.push(async () => handle.close());
+  const ingest = new Ingester({
+    root,
+    db: handle.db,
+    config: () =>
+      workbenchSchema.parse({
+        format: 1,
+        id: "wb_01JB8Z6Q4M7N2K5R9T3V8X1Y0C",
+        name: "fixture",
+        docs: { include: ["docs/**"], exclude: [] },
+      }),
+    assertWritable: () => {},
+    now: () => new Date(),
+    emit: () => {},
+    process: createDocumentProcessor(noPdf),
+  });
+  cleanup.push(() => ingest.close());
+  const directory = join(root, ".vera/cache/extract");
+  const rows = new DocumentsRepository(handle.db);
+  const cached = async () => (await readdir(directory)).sort();
+  // The prune waits for a run with no further one queued, so poll past the watcher's own requests.
+  const settled = async (names: string[]) => {
+    await ingest.reindex();
+    await expect.poll(cached, { timeout: 8000 }).toEqual(names.sort());
+  };
+  await ingest.reindex();
+  const first = rows.get("docs/board.md")?.sha256,
+    keep = rows.get("docs/keep.md")?.sha256;
+  await writeFile(join(directory, "notes.txt"), "not a cache file");
+  await settled([`${first}.json`, `${keep}.json`, "notes.txt"]);
+  await writeFile(join(root, "docs/board.md"), "# Board\nsecond");
+  await ingest.reindex();
+  const second = rows.get("docs/board.md")?.sha256;
+  expect(second).not.toBe(first);
+  await settled([`${keep}.json`, `${second}.json`, "notes.txt"]);
+  await rm(join(root, "docs/board.md"));
+  await settled([`${keep}.json`, "notes.txt"]);
+  expect(rows.get("docs/keep.md")).toMatchObject({ status: "indexed" });
+});
+
 it("close aborts a blocked real PDF worker and drains without chunks or cache publication", async () => {
   const root = await fixtureRoot();
   await input(root, "docs/board.pdf", "PDF waiting fixture");

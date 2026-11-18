@@ -120,7 +120,8 @@ def check_packages(fix: bool) -> bool:
         report(MISSING, "npm packages", "node_modules missing or older than package-lock.json")
         return False
     print("  running npm ci in 05_Software")
-    ok = run_npm(["ci"]) == 0
+    # 05_Software/.npmrc is silent so `npm run vera` prints only the CLI's output; an install must show its errors.
+    ok = run_npm(["ci", "--loglevel=error"]) == 0
     report(OK if ok else MISSING, "npm packages", "npm ci done" if ok else "npm ci failed")
     return ok
 

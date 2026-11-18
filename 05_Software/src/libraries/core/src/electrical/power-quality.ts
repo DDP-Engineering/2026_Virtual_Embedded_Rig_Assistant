@@ -199,7 +199,7 @@ export function analyzePowerQuality(input: PowerQualityInput): ElectricalResult 
     "Load convention: P > 0 is drawn from the supply and inductive reactive power is positive; declared generator or capacitive-positive data are converted.",
     "Network-result scenarios use the board's P and Q from the loads' power factors (fundamental reactive power); their total power factor is unknown because the network model has no harmonics.",
     "Harmonic currents and the distortion power are kept unchanged by the compensation (a plain bank may amplify them, a detuned bank absorbs part of them).",
-    "The fault level at the board is the maximum one (cmax) of the network result; a lower fault level lowers the resonance orders.",
+    "The fault level at the board comes from the network result: the maximum one (cmax) and, when it is stored, the minimum one (cmin). The resonance orders are evaluated at both, the configuration rule (Gh/Ssc) at the maximum; a lower fault level lowers the resonance orders.",
     "Each measured interval is evaluated on its own; the regulator model connects the fewest equal steps that reach the target without leading operation.",
   ];
   const limits: string[] = [
@@ -319,9 +319,17 @@ export function analyzePowerQuality(input: PowerQualityInput): ElectricalResult 
   // ---- network values ------------------------------------------------------------------------------------------
   conditions.board = { text: label(board).slice(0, 200) };
   conditions.targetPowerFactor = { value: request.targetPowerFactor, unit: "1" };
-  const stored = (name: string): Num => {
+  /** A stored network value of the board in kA, kW or kvar, converted from the unit it was stored in. */
+  const stored = (name: string, dimension: string): Num => {
     const entry = network?.intermediate.find((item) => item.name === name && item.subject === board.id);
-    return entry?.value ?? null;
+    if (!entry || entry.value === null) return null;
+    if (unitDimension(entry.unit) !== dimension) {
+      messages.push(
+        `The network result stores ${name} in ${entry.unit}, not a unit of ${dimension}: it is not used.`,
+      );
+      return null;
+    }
+    return toBaseUnit(entry.value, entry.unit) / 1000;
   };
   let un: Num = null;
   if (network) {
@@ -347,11 +355,18 @@ export function analyzePowerQuality(input: PowerQualityInput): ElectricalResult 
     messages.push(
       "The network frequency is unknown (no measurement file, no source frequency): step outputs stay unknown.",
     );
-  const ik3 = stored("ik3Max");
+  const ik3 = stored("ik3Max", "current");
+  const ik3Min = stored("ik3Min", "current");
   const ssc = ik3 !== null && un !== null ? Math.sqrt(3) * un * ik3 : null; // V x kA = kVA
+  const sscMin = ik3Min !== null && un !== null ? Math.sqrt(3) * un * ik3Min : null;
   value("shortCircuitPower", ssc, "kVA");
+  value("shortCircuitPowerMin", sscMin, "kVA");
   if (network && ik3 === null)
     messages.push(`The network result gives no maximum fault current at ${label(board)}.`);
+  else if (network && ik3Min === null && request.steps?.length)
+    messages.push(
+      `The network result gives no minimum fault current at ${label(board)}: resonance is checked at the maximum fault level only. A lower fault level (a transformer or generator out of service) lowers the resonance orders and can move one onto a harmonic.`,
+    );
 
   // ---- scenarios -------------------------------------------------------------------------------------------------
   const tanTarget = Math.tan(Math.acos(request.targetPowerFactor));
@@ -391,8 +406,8 @@ export function analyzePowerQuality(input: PowerQualityInput): ElectricalResult 
     .map(([, entry]) => ((entry as { text: string }).text.split(":")[0] ?? "").trim())
     .filter((name) => /^[a-z][a-z0-9-]{0,31}$/.test(name));
   for (const scenario of scenarioIds) {
-    const p = stored(`activePower:${scenario}`);
-    const q = stored(`reactivePower:${scenario}`);
+    const p = stored(`activePower:${scenario}`, "power");
+    const q = stored(`reactivePower:${scenario}`, "reactive-power");
     if (p === null || q === null || p <= 0) {
       messages.push(
         `Network scenario ${scenario}: P or Q at ${label(board)} is unknown or not positive; not evaluated.`,
@@ -976,6 +991,7 @@ export function analyzePowerQuality(input: PowerQualityInput): ElectricalResult 
       sources.add(GUIDE_SOURCES[2] as string);
       let verdict: Verdict = "pass";
       const notes: string[] = [];
+      const hits: string[] = [];
       const missing =
         qc === null
           ? "the step output is unknown"
@@ -992,32 +1008,47 @@ export function analyzePowerQuality(input: PowerQualityInput): ElectricalResult 
         verdict = "unknown";
         notes.push(`Unknown: ${missing}.`);
       }
-      if (qc !== null && ssc !== null)
-        states.forEach((state) => {
-          const order = resonanceOrder(ssc, state * qc, p);
-          if (state <= 12) value(`resonanceOrder:${key}@${state}`, order, "1");
-          if (missing) return;
-          const width = margin as number;
-          const near = [...significant].filter((h) => Math.abs(order - h) <= width * h + EPSILON);
-          const unmeasured = Array.from({ length: 49 }, (_, at) => at + 2).filter(
-            (h) => !measuredOrders.has(h) && Math.abs(order - h) <= width * h + EPSILON,
-          );
-          if (near.length) {
-            verdict = "fail";
-            notes.push(`${state} step(s): h ${fmt(order)} near measured order ${near.join(", ")}`);
-          } else if (highestOrder !== null && order > highestOrder * (1 + width)) {
-            if (verdict === "pass") verdict = "unknown";
-            notes.push(`${state} step(s): h ${fmt(order)} above the highest measured order ${highestOrder}`);
-          } else if (unmeasured.length) {
-            if (verdict === "pass") verdict = "unknown";
-            notes.push(`${state} step(s): h ${fmt(order)} near unmeasured order ${unmeasured.join(", ")}`);
-          }
+      if (qc !== null && ssc !== null) {
+        // Both ends of the fault level: a weaker network lowers the order and can move it onto a harmonic, so the
+        // worse of the two verdicts stands.
+        const levels =
+          sscMin === null
+            ? [{ ssc, at: "" }]
+            : [
+                { ssc, at: " at maximum Ssc" },
+                { ssc: sscMin, at: " at minimum Ssc" },
+              ];
+        levels.forEach((level, index) => {
+          states.forEach((state) => {
+            const order = resonanceOrder(level.ssc, state * qc, p);
+            if (index === 0 && state <= 12) value(`resonanceOrder:${key}@${state}`, order, "1");
+            if (missing) return;
+            const width = margin as number;
+            const near = [...significant].filter((h) => Math.abs(order - h) <= width * h + EPSILON);
+            const unmeasured = Array.from({ length: 49 }, (_, at) => at + 2).filter(
+              (h) => !measuredOrders.has(h) && Math.abs(order - h) <= width * h + EPSILON,
+            );
+            const head = `${state} step(s): h ${fmt(order)}`;
+            if (near.length) {
+              verdict = "fail";
+              hits.push(`${head} near measured order ${near.join(", ")}${level.at}`);
+            } else if (highestOrder !== null && order > highestOrder * (1 + width)) {
+              if (verdict === "pass") verdict = "unknown";
+              notes.push(`${head} above the highest measured order ${highestOrder}${level.at}`);
+            } else if (unmeasured.length) {
+              if (verdict === "pass") verdict = "unknown";
+              notes.push(`${head} near unmeasured order ${unmeasured.join(", ")}${level.at}`);
+            }
+          });
         });
+        // The failing states first, the maximum level before the minimum: the note is cut at 1000 characters.
+        notes.unshift(...hits);
+      }
       if (!missing && !notes.length)
         notes.push("No bank state resonates within the margin of a significant measured order.");
       check("resonance", "Parallel resonance against the measured harmonic orders", {
         verdict: states.length ? verdict : missing ? "unknown" : "pass",
-        note: `${notes.join("; ")}${missing ? "" : ` (Ssc ${fmt(ssc as number)} kVA, margin ${margin}, threshold ${request.harmonicThreshold ?? "> 0"} %).`}`,
+        note: `${notes.join("; ")}${missing ? "" : ` (Ssc ${fmt(ssc as number)} kVA${sscMin === null ? " maximum only" : ` maximum and ${fmt(sscMin)} kVA minimum`}, margin ${margin}, threshold ${request.harmonicThreshold ?? "> 0"} %).`}`,
       });
     }
     // Contactor and protection for this step.

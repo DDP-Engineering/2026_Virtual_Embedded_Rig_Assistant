@@ -1,10 +1,10 @@
 # Chat und Sitzungen
 
-Eine Sitzung ist eine Unterhaltung mit dem Agenten innerhalb einer Workbench. VERA speichert jede Sitzung in der Workbench, sodass Sie die App schließen und später weitermachen können. Mehrere Sitzungen können gleichzeitig laufen.
+Eine Sitzung ist eine Unterhaltung mit dem Agenten innerhalb eines Workbenchs. VERA speichert jede Sitzung im Workbench, sodass Sie die App schließen und später weitermachen können. Mehrere Sitzungen können gleichzeitig laufen.
 
 ## Sitzungen starten und verwalten
 
-- **Neue Sitzung** startet eine Unterhaltung in der geöffneten Workbench. Gibt es eine ungenutzte leere Sitzung, öffnet VERA diese, statt eine weitere anzulegen.
+- **Neue Sitzung** startet eine Unterhaltung im geöffneten Workbench. Gibt es eine ungenutzte leere Sitzung, öffnet VERA diese, statt eine weitere anzulegen.
 - Die erste Nachricht wird zum Titel. **Umbenennen** legt einen eigenen Titel fest.
 - **Sitzungen suchen** findet Sitzungen nach Titel und Nachrichtentext.
 - Jede Sitzungszeile zeigt den Zeitpunkt der letzten Aktivität und hat ein Menü mit **Markdown exportieren**, **JSON exportieren**, **Umbenennen**, **Nach oben verschieben**, **Nach unten verschieben**, **Archivieren** und **Löschen**.
@@ -12,7 +12,7 @@ Eine Sitzung ist eine Unterhaltung mit dem Agenten innerhalb einer Workbench. VE
 
 ## Eine Nachricht schreiben
 
-Schreiben Sie in das Nachrichtenfeld (**Frage VERA zu deinem Projekt…**). Enter sendet, Shift+Enter fügt eine Zeile ein, und @ vervollständigt Pfade von Workbench-Dateien. Um dem Agenten eine Datei zu geben, wählen Sie im Tab **Dateien** an der Datei **Als Kontext anhängen**; sie erscheint als Chip über dem Nachrichtenfeld.
+Schreiben Sie in das Nachrichtenfeld (**Fragen Sie VERA zu Ihrem Projekt…**). Enter sendet, Shift+Enter fügt eine Zeile ein, und @ vervollständigt Pfade von Workbench-Dateien. Um dem Agenten eine Datei zu geben, wählen Sie im Tab **Dateien** an der Datei **Als Kontext anhängen**; sie erscheint als Chip über dem Nachrichtenfeld.
 
 Neben dem Nachrichtenfeld wählen Sie **Modell**, **Reasoning-Stufe** und **Berechtigungsmodus** dieser Sitzung. Neue Sitzungen übernehmen Modell und Berechtigungsmodus aus den Workbench-Einstellungen.
 
@@ -49,7 +49,7 @@ Die Kontextanzeige zeigt **Kontextnutzung** als Prozentsatz des Kontextfensters 
 ## Archivieren, löschen und exportieren
 
 - **Archivieren** verschiebt eine abgeschlossene Sitzung in **Archivierte Sitzungen**; **Wiederherstellen** holt sie zurück. Nichts geht verloren.
-- **Löschen** entfernt die Sitzung und ihre Artefakte nach einer Bestätigung. Dateien, die der Agent heruntergeladen hat, bleiben in der Workbench.
+- **Löschen** entfernt die Sitzung und ihre Artefakte nach einer Bestätigung. Dateien, die der Agent heruntergeladen hat, bleiben im Workbench.
 - **Markdown exportieren** schreibt ein lesbares Transkript mit Werkzeugzusammenfassungen, Quellenverweisen und angewendeten Änderungen; **JSON exportieren** schreibt die vollständige Ereignisaufzeichnung. Beide öffnen einen Speichern-Dialog und funktionieren auch in schreibgeschützten Workbenches.
 
 Gespeicherte Nachrichtenlesezeichen bleiben im JSON-Export erhalten; Markdown kennzeichnet markierte Nutzernachrichten. Lesezeichen gehören zur Sitzung und werden nicht an den Agenten gesendet.
@@ -60,19 +60,19 @@ Gespeicherte Nachrichtenlesezeichen bleiben im JSON-Export erhalten; Markdown ke
 
 ## Lesezeichen
 
-Bewege den Zeiger über eine eigene Nachricht oder erreiche ihr Lesezeichensymbol mit Tab. **Lesezeichen setzen** markiert sie; das gefüllte Symbol bietet **Lesezeichen entfernen**. Die Vorschau an der Leiste zeigt die erste Nachrichtenzeile und den Anfang der Agentenantwort mit derselben Lesezeichenaktion. Änderungen erscheinen sofort; bei einem Speicherfehler wird der vorherige Zustand wiederhergestellt und ein Fehler angezeigt. Archivierte Sitzungen und schreibgeschützte Workbenches erlauben nur das Anzeigen.
+Bewegen Sie den Zeiger über eine eigene Nachricht oder erreichen Sie ihr Lesezeichensymbol mit Tab. **Lesezeichen setzen** markiert sie; das gefüllte Symbol bietet **Lesezeichen entfernen**. Die Vorschau an der Leiste zeigt die erste Nachrichtenzeile und den Anfang der Agentenantwort mit derselben Lesezeichenaktion. Änderungen erscheinen sofort; bei einem Speicherfehler wird der vorherige Zustand wiederhergestellt und ein Fehler angezeigt. Archivierte Sitzungen und schreibgeschützte Workbenches erlauben nur das Anzeigen.
 
-Markierte Positionen auf der Leiste sind gefüllt, in der Primärfarbe und etwas länger. Eine Gruppe ist markiert, sobald eine ihrer Nachrichten ein Lesezeichen hat. Mit **Nächstes Lesezeichen** (**Strg+Alt+N**) und **Vorheriges Lesezeichen** (**Strg+Alt+P**) springst du zwischen markierten Nachrichten; am ersten oder letzten Lesezeichen endet die Navigation. Ändere die Tasten unter **Einstellungen → Tastenkombinationen**.
+Markierte Positionen auf der Leiste sind gefüllt, in der Primärfarbe und etwas länger. Eine Gruppe ist markiert, sobald eine ihrer Nachrichten ein Lesezeichen hat. Mit **Nächstes Lesezeichen** (**Ctrl+Alt+N**) und **Vorheriges Lesezeichen** (**Ctrl+Alt+P**) springen Sie zwischen markierten Nachrichten; am ersten oder letzten Lesezeichen endet die Navigation. Ändern Sie die Tasten unter **Einstellungen → Tastenkombinationen**.
 
 ## Shell-Befehle
 
-Nutze nicht interaktive Optionen: die Standardeingabe des Agenten ist geschlossen. Vordergrundbefehle liefern den Exitcode, die letzten 12.000 Ausgabezeichen und das vollständige Protokoll in `.vera/runs`. Hintergrundbefehle liefern eine Kennung; der Agent liest `program_output`, nutzt `until` für eine Bereitschaftsmeldung und beendet sie mit `program_stop`. Sie überleben einen abgeschlossenen Werkzeugaufruf und enden mit Sitzung, App oder dem Bypass-Modus, der sie gestartet hat. Die lokale Ansicht der Läufe folgt der Geheimnismaskierung für Programmläufe; lokale Protokolle behalten die Originalausgabe. Kindprozesse erben Benutzerumgebungsvariablen ohne VERA-Anbieterschlüssel oder gespeicherte Zugangsdaten. Befehle sind auf 4.096 Zeichen begrenzt.
+Nutzen Sie nicht interaktive Optionen: die Standardeingabe des Agenten ist geschlossen. Vordergrundbefehle liefern den Exitcode, die letzten 12.000 Ausgabezeichen und das vollständige Protokoll in `.vera/runs`. Hintergrundbefehle liefern eine Kennung; der Agent liest `program_output`, nutzt `until` für eine Bereitschaftsmeldung und beendet sie mit `program_stop`. Sie überleben einen abgeschlossenen Werkzeugaufruf und enden mit Sitzung, App oder dem Bypass-Modus, der sie gestartet hat. Die lokale Ansicht der Läufe folgt der Geheimnismaskierung für Programmläufe; lokale Protokolle behalten die Originalausgabe. Kindprozesse erben Benutzerumgebungsvariablen ohne VERA-Anbieterschlüssel oder gespeicherte Zugangsdaten. Befehle sind auf 4.096 Zeichen begrenzt.
 
-Fragen verlangt für jeden Befehl eine Freigabe. In Automatisch bearbeiten speichert Immer erlauben das gewählte wörtliche Befehlspräfix für diese Workbench; npm test erlaubt beispielsweise auch npm test -- --watch=false. Workbench bearbeiten > Agent listet die Präfixe; nach Entfernen und Speichern wird sofort wieder gefragt. Rekursives Löschen, erzwungenes Pushen, Hard-Resets, Formatieren und Datenträgerwerkzeuge fragen außerhalb von Bypass immer nach und können nicht gespeichert werden. Komplexe Syntax, Anführungszeichen, Escape-Zeichen, Pipes, Ersetzungen und Befehlstrenner verlangen ebenfalls eine ausdrückliche Freigabe. Präfixe erlauben Argumente; sie isolieren die Wirkung von Skripten nicht.
+Fragen verlangt für jeden Befehl eine Freigabe. In Automatisch bearbeiten speichert Immer erlauben das gewählte wörtliche Befehlspräfix für diesen Workbench; npm test erlaubt beispielsweise auch npm test -- --watch=false. Workbench bearbeiten > Agent listet die Präfixe; nach Entfernen und Speichern wird sofort wieder gefragt. Rekursives Löschen, erzwungenes Pushen, Hard-Resets, Formatieren und Datenträgerwerkzeuge fragen außerhalb von Bypass immer nach und können nicht gespeichert werden. Komplexe Syntax, Anführungszeichen, Escape-Zeichen, Pipes, Ersetzungen und Befehlstrenner verlangen ebenfalls eine ausdrückliche Freigabe. Präfixe erlauben Argumente; sie isolieren die Wirkung von Skripten nicht.
 
 ## Zusätzliche Ordner
 
-Die normalen Werkzeuge read, list, glob, grep, write und edit sowie Shell-Arbeitsordner nutzen diese Ordner mit denselben Freigaben für Fragen oder Automatisch bearbeiten wie die Workbench. Externe Pfade müssen absolut sein; relative Pfade beginnen weiter in der Haupt-Workbench. Externe Quellen haben absolute Identitäten ohne lokale Dokumentzitate. Ignorierregeln bleiben aktiv; VERA-Anwendungsdaten sind auch über Verknüpfungen gesperrt. Hinzufügen indiziert die Ordner nicht: Index, Protokolle, Artefakte und erzeugte Daten bleiben in der Haupt-Workbench. Befehle behalten die Rechte des Systemkontos und laufen ohne Sandbox.
+Die normalen Werkzeuge read, list, glob, grep, write und edit sowie Shell-Arbeitsordner nutzen diese Ordner mit denselben Freigaben für Fragen oder Automatisch bearbeiten wie der Workbench. Externe Pfade müssen absolut sein; relative Pfade beginnen weiter im Haupt-Workbench. Externe Quellen haben absolute Identitäten ohne lokale Dokumentzitate. Ignorierregeln bleiben aktiv; VERA-Anwendungsdaten sind auch über Verknüpfungen gesperrt. Hinzufügen indiziert die Ordner nicht: Index, Protokolle, Artefakte und erzeugte Daten bleiben im Haupt-Workbench. Befehle behalten die Rechte des Systemkontos und laufen ohne Sandbox.
 
 ## Befehle in Läufe
 
@@ -80,7 +80,7 @@ Die normalen Werkzeuge read, list, glob, grep, write und edit sowie Shell-Arbeit
 
 ## Benutzerterminal
 
-Öffnen Sie **Terminal** rechts oder drücken Sie **Ctrl+Shift+T**. Die interaktive Shell startet im Workbench-Ordner gemäß Einstellungen → Befehle. **Neues Terminal** erstellt Tabs; **Terminal schließen** beendet sie. Größenänderungen brechen die Ausgabe neu um. Interaktive Programme nehmen Ihre Eingaben an. Das Ende einer Agentensitzung lässt Benutzerterminals weiterlaufen; Schließen oder Wechseln der Workbench und Beenden von VERA schließen sie. Native Terminalunterstützung ist enthalten.
+Öffnen Sie **Terminal** rechts oder drücken Sie **Ctrl+Shift+T**. Die interaktive Shell startet im Workbench-Ordner gemäß Einstellungen → Befehle. **Neues Terminal** erstellt Tabs; **Terminal schließen** beendet sie. Größenänderungen brechen die Ausgabe neu um. Interaktive Programme nehmen Ihre Eingaben an. Das Ende einer Agentensitzung lässt Benutzerterminals weiterlaufen; Schließen oder Wechseln des Workbenchs und Beenden von VERA schließen sie. Native Terminalunterstützung ist enthalten.
 
 Jedes Terminal beginnt privat. Aktivieren Sie **Agent darf dieses Terminal lesen** separat für jedes freizugebende Terminal. Der Agent kann freigegebene Terminals auflisten und begrenzte letzte Ausgabe mit terminal_read lesen; er kann keine Terminals erstellen, beschreiben, skalieren oder schließen. Deaktivieren oder Schließen verhindert weitere Zugriffe. Bereits geteilte Ausgabe bleibt im Sitzungsverlauf. Die Shell verwendet Ihre Betriebssystemrechte ohne Sandbox. VERA filtert geerbte Zugangsdatenvariablen. Die lokale Terminalausgabe folgt der standardmäßig ausgeschalteten Maskierung von Programmläufen; erlaubte Agentenlesezugriffe folgen der unabhängigen, standardmäßig aktiven Auswahl Agent und Modell. Shell-Profil und Programme bleiben unter Ihrer Kontrolle.
 
