@@ -623,7 +623,5 @@ NOTES:
   skills `core/src/skills/catalog.ts`; approvals `core/src/agent/approvals.ts`; `ChangeRequest`
   `core/src/tools/changes.ts:54`; modes `shared/src/session.ts:5`; workbench config
   `shared/src/workbench.ts`; ports `core/src/ports.ts`; prompt `core/src/agent/prompt.ts`.
-- Spawn reference: `09_Others/benchpilot-reference/apps/server/src/tshark.ts` (argument array, no
-  shell, timeout, output cap).
 - Verify while implementing: how `eim run` takes its command (one string or argv); that esptool and
   espefuse v5 accept both `_` and `-`; espefuse `--virt` for tests without hardware; the sizes of §5 on Ubuntu.

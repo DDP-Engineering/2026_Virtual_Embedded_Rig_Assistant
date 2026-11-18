@@ -10,7 +10,7 @@ requirement = "While the Docs tree shows a folder, the desktop app shall show th
 
 verification = "Renderer test: a folder holding three indexed documents, one of them failed, deeper in a subfolder, shows 3 and the problem marker; a folder with only indexed documents has no marker; a folder without documents shows no count."
 
-affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/documents/docs-tree.tsx", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json"]
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/documents/docs-tree.tsx", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json", "05_Software/src/apps/desktop/src/renderer/locales/fr.json"]
 
 linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/documents/docs-tree.test.ts::counts indexed documents beneath each folder and marks problems", "05_Software/tests/e2e/docs-tree.spec.ts"]
 

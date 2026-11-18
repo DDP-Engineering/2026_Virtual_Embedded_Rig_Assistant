@@ -10,7 +10,7 @@ requirement = "While the Docs search box has text, the desktop app shall list th
 
 verification = "Renderer test with the mock API: typing 'power' keeps the tree, narrowed to name matches, and lists the hit in docs/a.md below it under 'In documents' with its snippet; Open shows it in Source; a query with no document hits says so while name matches still show; browser e2e searches 'power' and opens the hit."
 
-affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/documents/docs-tab.tsx", "05_Software/src/apps/desktop/src/renderer/components/documents/docs-tree.tsx", "05_Software/src/apps/desktop/src/renderer/styles.css", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json"]
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/documents/docs-tab.tsx", "05_Software/src/apps/desktop/src/renderer/components/documents/docs-tree.tsx", "05_Software/src/apps/desktop/src/renderer/styles.css", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json", "05_Software/src/apps/desktop/src/renderer/locales/fr.json"]
 
 linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/documents/docs-tree.test.ts::lists document matches under the filtered tree from the same search box", "05_Software/tests/e2e/documents.spec.ts"]
 

@@ -12,7 +12,7 @@ While a tool's arguments or output or an approval's diff is shown as an excerpt,
 
 verification = "Renderer transcript-detail.test.ts: a cut tool preview shows the excerpt and exactly one \"Show full output (64 KB)\" button (none for the small arguments or other tools); clicking it calls session.item.detail once and shows the full text; check:i18n covers en/ro/de."
 
-affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/session/bounded-text.tsx", "05_Software/src/apps/desktop/src/renderer/components/session/transcript.tsx", "05_Software/src/apps/desktop/src/renderer/components/session/session-inspector.tsx", "05_Software/src/apps/desktop/src/renderer/components/session/approval-card.tsx", "05_Software/src/apps/desktop/src/renderer/components/session/workspace.tsx", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json"]
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/session/bounded-text.tsx", "05_Software/src/apps/desktop/src/renderer/components/session/transcript.tsx", "05_Software/src/apps/desktop/src/renderer/components/session/session-inspector.tsx", "05_Software/src/apps/desktop/src/renderer/components/session/approval-card.tsx", "05_Software/src/apps/desktop/src/renderer/components/session/workspace.tsx", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json", "05_Software/src/apps/desktop/src/renderer/locales/fr.json"]
 
 linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/session/transcript-detail.test.ts"]
 

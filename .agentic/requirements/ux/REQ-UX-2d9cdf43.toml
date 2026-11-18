@@ -10,7 +10,7 @@ requirement = "While a workbench is open, the desktop app shall restore the Docs
 
 verification = "Renderer test: expanded folders survive a remount and differ per workbench; Collapse all closes every folder and the saved state is cleared."
 
-affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/documents/docs-tree.tsx", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json"]
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/documents/docs-tree.tsx", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json", "05_Software/src/apps/desktop/src/renderer/locales/fr.json"]
 
 linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/documents/docs-tree.test.ts::remembers expanded folders per workbench and collapses them all", "05_Software/src/apps/desktop/src/renderer/components/documents/docs-tree.test.ts::drops saved folders that are gone and says when the top listing is cut off"]
 

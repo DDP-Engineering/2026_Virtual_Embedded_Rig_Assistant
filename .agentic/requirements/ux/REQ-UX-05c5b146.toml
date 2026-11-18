@@ -10,7 +10,7 @@ requirement = "While the selected documents of the active workbench number more 
 
 verification = "Renderer test with the mock API: 2,001 files or 2 GiB + 1 byte shows the warning with the localized count and size; exactly 2,000 files and 2 GiB shows none; documents keep being listed and indexing progress continues; locales en/ro/de."
 
-affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/documents/docs-tab.tsx", "05_Software/src/apps/desktop/src/renderer/components/documents/volume-warning.tsx", "05_Software/src/apps/desktop/src/renderer/lib/bytes.ts", "05_Software/src/apps/desktop/src/renderer/styles.css", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json", "05_Software/src/apps/desktop/src/renderer/mocks/mockApi.ts"]
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/documents/docs-tab.tsx", "05_Software/src/apps/desktop/src/renderer/components/documents/volume-warning.tsx", "05_Software/src/apps/desktop/src/renderer/lib/bytes.ts", "05_Software/src/apps/desktop/src/renderer/styles.css", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json", "05_Software/src/apps/desktop/src/renderer/locales/fr.json", "05_Software/src/apps/desktop/src/renderer/mocks/mockApi.ts"]
 
 linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/documents/documents.test.ts::warns about a large selection in Docs and in the Documents section, never at the limits"]
 

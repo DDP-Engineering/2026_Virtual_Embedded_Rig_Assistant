@@ -13,8 +13,8 @@ follows the repository's AEGIS workflow.
 - `SKILL.md` names only existing tools: `load_skill`, `list`, `glob`, `grep`, `read`, `search_docs`,
   `read_doc`, `decode_register`, `todo` and `artifact_save`. It names plugin commands only as optional
   plan steps and never calls `run_program`.
-- Start from `09_Others/benchpilot-reference/skills/test-planner/SKILL.md`; keep its
-  evidence → risk → targeted cases structure; drop its catalog, simulation and execution APIs.
+- The skill started from BenchPilot's test-planner skill: it keeps the evidence → risk → targeted
+  cases structure, without the catalog, simulation and execution APIs.
 - Tests: the skill loads with source `plugin`; the template has the six sections and the TP case
   fields of SPEC §3.
 

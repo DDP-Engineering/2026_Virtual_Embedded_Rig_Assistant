@@ -10,7 +10,7 @@ requirement = "When the user chooses Copy > Absolute path, Relative path or File
 
 verification = "Renderer test: each Copy item invokes the copy channel with its form for the row's path; a success shows 'Copied to the clipboard.'; an error reply shows under the tree; native e2e: the three items put the absolute path, the relative path with platform separators and the file name of firmware/main.c on the clipboard."
 
-affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/documents/docs-tree.tsx", "05_Software/src/apps/desktop/src/renderer/mocks/mockApi.ts", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json"]
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/documents/docs-tree.tsx", "05_Software/src/apps/desktop/src/renderer/mocks/mockApi.ts", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json", "05_Software/src/apps/desktop/src/renderer/locales/fr.json"]
 
 linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/documents/docs-tree.test.ts::copies a Docs tree item's path from the Copy submenu and says so", "05_Software/tests/e2e/docs-tree.spec.ts"]
 

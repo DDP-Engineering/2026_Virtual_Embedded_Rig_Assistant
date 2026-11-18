@@ -180,7 +180,7 @@ async function launch(executable, label, extra = {}) {
     result: "PASS",
   });
   assert(runtime.packaged);
-  assert.equal(runtime.electron, "44.7.0");
+  assert.equal(runtime.electron, "44.11.4");
   assert.equal(info.testBuild, true);
   assert.match(page.url(), /^vera:\/\/app\//);
   const receipt = {
@@ -330,7 +330,7 @@ try {
         directories: { app: staged.stage, output },
         ...distribution,
         compression: "normal",
-        electronVersion: "44.7.0",
+        electronVersion: "44.11.4",
         extraMetadata: {
           version,
           description: `${ticket} local update test`,

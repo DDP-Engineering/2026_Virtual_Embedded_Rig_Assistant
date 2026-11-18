@@ -13,8 +13,8 @@ agent PLG-04 (#60). Implementation follows the repository's AEGIS workflow.
   `skills/firmware-comparator/templates/comparison.md`.
 - `SKILL.md` names only existing tools: `load_skill`, `list`, `glob`, `grep`, `read`, `parse_log`,
   `decode_register`, `search_docs`, `read_doc`, `artifact_save` and, for step 8, `run_program`.
-- Start from the procedure in `09_Others/benchpilot-reference/skills/firmware-comparator/SKILL.md`;
-  drop its catalog, evaluator and traffic APIs.
+- The procedure started from BenchPilot's firmware-comparator skill, without its catalog, evaluator
+  and traffic APIs.
 - Tests: the plugin validates against the PLG-01 schema; the skill loads through `load_skill` with
   source `plugin`; the template has the seven sections of SPEC §3.
 

@@ -54,7 +54,7 @@ test("native hosts ingest and reindex through confined IPC/events, then close an
   }));
   try {
     expect(await realpath(loaded.execPath)).toBe(await realpath(executable));
-    expect(loaded.electron).toBe("44.7.0");
+    expect(loaded.electron).toBe("44.11.4");
     await installNetworkGuard(app);
     const page = await app.firstWindow();
     await page.waitForFunction(() => !!(window as unknown as Window & { vera?: VeraBridge }).vera);

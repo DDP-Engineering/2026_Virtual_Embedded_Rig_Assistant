@@ -14,6 +14,7 @@ import * as core from "@vera/core";
 import { classifyCommand, type PluginManifest, validatePluginManifest } from "@vera/shared";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { parse } from "yaml";
+import { reportSkip } from "../support/skip-marker.js";
 
 const plugins = new URL("../../plugins/", import.meta.url);
 const source = fileURLToPath(new URL("ngspice/", plugins));
@@ -1132,3 +1133,6 @@ it.skipIf(!uv)(
   },
   900_000,
 );
+
+reportSkip(!engine, "the real-engine tests", "install ngspice or set VERA_TEST_NGSPICE to its executable");
+reportSkip(!uv, "the provisioned-engine test", "set VERA_NGSPICE_UV and VERA_NGSPICE_ARCHIVE");

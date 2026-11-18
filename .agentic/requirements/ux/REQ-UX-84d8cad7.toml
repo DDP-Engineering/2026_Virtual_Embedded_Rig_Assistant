@@ -12,7 +12,7 @@ The Plugins page catalog settings shall offer a channel choice of Stable (versio
 
 verification = "Renderer plugin-catalog test: choosing Pre-release saves plugins.channel with the catalog URL kept and reloads the catalog view; a view with problem unsigned or untrusted shows its message in en, ro and de."
 
-affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/plugin-catalog.tsx", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json", "05_Software/src/apps/desktop/src/renderer/styles.css"]
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/plugin-catalog.tsx", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json", "05_Software/src/apps/desktop/src/renderer/locales/fr.json", "05_Software/src/apps/desktop/src/renderer/styles.css"]
 
 linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/plugin-catalog.test.ts"]
 

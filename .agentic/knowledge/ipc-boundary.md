@@ -68,7 +68,7 @@ Strict update.get/check/download/restart/openRelease channels and update.availab
 AppEvents use shared updates.ts; [updates](updates.md) owns their lifecycle/capability gates.
 
 - plugins.list/install/uninstall/toggle use strict optional workbenchId, absolute install path and plugin id
-  contracts; see [plugins](plugins.md).
+  contracts; see [plugin store](plugins-store.md).
 - skills.list/open/create/save/toggle use strict workbenchId/source/name contracts;
   save requires original content SHA256. Main authorizes the existing exact frame
   before WorkbenchService lifecycle/ownership checks. [Skills](skills.md) owns content.

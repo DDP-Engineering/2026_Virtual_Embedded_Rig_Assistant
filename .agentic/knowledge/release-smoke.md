@@ -31,7 +31,7 @@ Electron and expects oracleFAIL. See [manual procedure](../../06_SoftwareDocu/re
 - Production session-created policy sets a local dictionary URL and disables spellchecking;
   observed production configuration disables remote dictionary downloads and
   native ONNX telemetry before inference; the harness supplies no opt-out.
-- Immutable artifact; release identity/Electron44.7.0/sandbox/vera://app and actual
+- Immutable artifact; release identity/Electron44.11.4/sandbox/vera://app and actual
   owned userData asserted before app mutations and every restart.
 - Off updates and copied demo provide real SQLite/local CPU embedding/PDF canvas.
 - Existing Windows install identity is protected before NSIS; extraction fallback

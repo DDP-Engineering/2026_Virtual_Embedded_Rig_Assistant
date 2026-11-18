@@ -12,7 +12,7 @@ The Configuration section of the installed parts-search plugin shall offer the p
 
 verification = "In the renderer test the parts search form lists the five suppliers, saves an enabled supplier with a new key, shows a stored key only as configured, removes it, and renders every label in en, ro and de; the plugins page test shows it in the parts-search Configuration section."
 
-affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/parts-access.tsx", "05_Software/src/apps/desktop/src/renderer/components/plugin-configuration.tsx", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json", "05_Software/src/apps/desktop/src/renderer/mocks/mockApi.ts", "05_Software/src/apps/desktop/src/renderer/components/workbench-tools.tsx"]
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/parts-access.tsx", "05_Software/src/apps/desktop/src/renderer/components/plugin-configuration.tsx", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json", "05_Software/src/apps/desktop/src/renderer/locales/fr.json", "05_Software/src/apps/desktop/src/renderer/mocks/mockApi.ts", "05_Software/src/apps/desktop/src/renderer/components/workbench-tools.tsx"]
 
 linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/parts-access.test.ts", "05_Software/src/apps/desktop/src/renderer/components/plugins.test.ts"]
 

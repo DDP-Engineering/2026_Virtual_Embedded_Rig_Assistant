@@ -18,7 +18,7 @@ upgrade safety (L10, WP-32) are deferred until the first public release (§6).
 
 ## 1. Self-containment rules
 
-- The package carries Electron 44.7.0 (Chromium and Node) and the app code that electron-vite bundles
+- The package carries Electron 44.11.4 (Chromium and Node) and the app code that electron-vite bundles
   into `out/`. As `node_modules` it carries only the runtime packages kept external to the bundle
   (better-sqlite3, @huggingface/transformers, onnxruntime-node, pdfjs-dist, electron-updater) and their
   dependency closure, copied into `release_tmp/staging-<platform>-<mode>/`. It also carries the

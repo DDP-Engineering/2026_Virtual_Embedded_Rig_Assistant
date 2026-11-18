@@ -378,7 +378,7 @@ export async function launchObserved(context, label, report, allowed = [], testB
         "FAIL before mutation: actual userData differs from owned profile",
       );
       within(root, await realpath(runtime.data));
-      assert.equal(runtime.electron, "44.7.0");
+      assert.equal(runtime.electron, "44.11.4");
       assert.equal(runtime.sandbox, true);
       assert.equal(runtime.spellcheck, false, "Automatic dictionary networking must be disabled by the app");
       assert.equal(

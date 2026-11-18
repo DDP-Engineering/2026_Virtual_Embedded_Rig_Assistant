@@ -1,0 +1,143 @@
+# Official plugins: CAN, network capture and bus transactions
+
+## Routing
+
+Select for `can-python` (program `can`, a PEP 723 python-can script: list, listen-only capture, send, replay; skills
+can-capture and can-transmit); `can-dbc` (pip cantools plus the `can-decode` script; skill can-decode);
+`wireshark-tshark` (capture-file analysis and bounded live capture through the user's TShark, tshark option-role
+classification, two skills); and `bus-tools` (program `bus-tool`, a pinned flatbuffers/pyserial PEP 723 script:
+bounded I2C, SPI and UART transactions through a Bus Pirate 5/6 in BPIO2 mode declared in `lab/resources.json`, with
+devices, capabilities, identify, configure-bus, read-register, transfer, capture, release and report; skills
+bus-transactions and bus-profiles).
+
+For bus-tools, start at plugins/bus-tools/plugin.yaml, scripts/bus_tool.py and scripts/bus_support/ (cli.py dispatch
+and argument limits, registry.py bus-adapter entries, profile.py bus profiles, ports.py identity keys, adapter.py the
+binary-port link, bpio.py FlatBuffers slots, cobs.py, operations.py the operation flow and final state, lifecycle.py,
+report.py) with spec .agentic/specs/REQ-DATA-634d35da.md; tests/plugins/bus-tools.test.ts and
+tests/fixtures/bus-tools/fake-serial (a simulated Bus Pirate 5 in BPIO2 mode with I2C, SPI and UART targets - offline
+evidence only) own its coverage. Its workspace.py is a byte-identical copy of circuitpython-tool's; its reservation and
+cleanup are platform behaviour, see [Plugin bench resources](plugins-bench-resources.md).
+
+The conventions shared by all official plugins (package format, catalog source, packs, versions and evidence
+levels) and the page of every other plugin are in [Official plugins](official-plugins.md). The platform that
+installs, classifies, approves and runs these programs is [Plugins](plugins.md); plugin skill discovery is
+[Skills](skills.md).
+
+## Public interface
+
+- `can-python` 0.2.0, ecosystem `can` (CAN pack, Bus capture and transmit, default on), Windows x64/Linux x64:
+  program `can` = `scripts/can_bus.py` on `python-can[serial,gs-usb,pcan,multicast]==4.6.1` (imports python-can
+  lazily, so `--version` needs no dependency), timeout 300 s. `can list` prints `{configs, drivers}`:
+  detected configs for pcan/vector/kvaser/slcan/gs_usb/socketcan and per-backend driver availability
+  (ctypes library lookup, pyserial, libusb backend, Linux) with install hints; no bus opens. `capture`
+  requires `--duration` or `--max-messages`, writes `.asc`/`.blf`/`.log` through `can.Logger` (text formats
+  flushed per frame) or prints candump-style lines, and ends with `[can] N frames ... (mode) ..., stopped by
+  duration|max-messages` on stderr. `send` (hex ID/data, extended, FD/BRS, count/period) and `replay`
+  (`can.MessageSync` timing, `--ignore-timestamps`, `--max-messages`). Exit 0 done, 2 usage or refused capture
+  before any bus opens, 3 open/IO failure with the backend hint. The first argument must be a command (a
+  leading `--` would reach a subcommand on CPython 3.12+); every Bus gets `ignore_config=True` and digit-only
+  channels are passed as integers (ignore_config skips python-can's casting); pcan, kvaser and gs_usb need --bitrate; the capture output must be new (removed again if the bus never opened); FD payloads use
+  canonical lengths and --brs needs --fd; replay stops right after --max-messages. Rules: list/help/version
+  safe, capture device-read, capture `--active` device-write, send/replay irreversible (confirm word =
+  subcommand), backstop `can * {send,replay} *` irreversible.
+- `can-dbc` 0.3.0, ecosystem `can` (DBC decoding, default on): pip `cantools>=45,<46` (version probe range
+  `>=45,<46`; dump/list/convert/generate_c_source safe; decode/plot blocked because they read stdin, monitor
+  blocked as an interactive view) and `can-decode` = `scripts/can_decode.py` on cantools 45.1.2 + python-can
+  4.6.1: `--dbc --input [--id]... [--limit] [--no-choices] [--no-strict]`, one `time id message sig=value unit`
+  line per decoded frame and a decoded/errors/unknown-ID summary; exit 2 for unreadable inputs; safe.
+  Opt-in VERA_CAN_UV acceptance captures, transmits after typed words and decodes on udp_multicast; real
+  adapters and Linux vcan0 remain unverified. Optional can-utils is not shipped.
+
+- `wireshark-tshark` 0.3.1, ecosystem `wireshark` (own Wireshark pack, Capture analysis group, default
+  on), Windows x64/Linux x64: find-only `tshark` (Windows `%PATH%` then `%ProgramFiles%/Wireshark/tshark.exe`;
+  Linux `$PATH` then `/usr/bin/tshark`), never downloaded; missing shows the Wireshark/distribution hint with
+  its download link. `--version` probe without a range (rules measured on 4.6.8), timeout 300 s.
+  `optionSyntax: tshark` projects role tokens: `<info>` (-h/-v/-D/--list-sources, -G reports) and `<file>` (-r)
+  safe; `<capture>` (-i/--source/-I/-L/--list-time-stamp-types, or neither -r nor info) device-read; `<unknown>`
+  (unrecognised or ambiguous) device-write; `<write>` (-w to a file, --export-objects,
+  --export-tls-session-keys, --log-file) device-read;
+  `<execute>` (-X lua_script*) and `<credentials>` (-A) blocked. Skills wireshark-analyze (overview,
+  filters, field export, statistics, frame citations) and wireshark-capture (tshark -D, confirmed interface,
+  capture filter, -a duration or -c bound, saved .pcapng). Windows replay uses the real TShark and the
+  generated sample; the opt-in VERA_TSHARK_LIVE_INTERFACE test captures self-sent loopback datagrams after
+  approval on Windows/Npcap. Linux execution remains unverified. `-o extcap.*` credential values are not refused.
+
+- `bus-tools` 0.1.0, ecosystem `lab` (Arduino pack, group "Bus transactions (I2C, SPI, UART)", default on; activities
+  `testing`, `debug`, `communication`), Windows x64 and Linux x64. Program `bus-tool` = `scripts/bus_tool.py` (PEP 723,
+  `flatbuffers==25.12.19`, `pyserial==3.5`), timeout 120 s, env `BUS_REGISTRY=${workbench}/lab/resources.json`,
+  `resources {option: --adapter, kinds: [bus-adapter], grace: 5, cleanup: [release], cleanupTimeout: 30}`. Risks:
+  `devices`, `capabilities`, `report` safe; `identify` device-read; `configure-bus`, `read-register`, `transfer`,
+  `capture` (120 s), `release` device-write; any call with `--power` irreversible. Backend `bus-pirate-bpio2` only:
+  StatusResponse hardware major 5 or 6 and FlatBuffers major 2 (`adapter-unsupported`; a packet-level error too); a port
+  that answers no valid COBS/BPIO2 status in 2 s is `not-bpio2`. Order per adapter call: registry (hash
+  `registry-changed`, alias `adapter-unknown`), profile (`profile-invalid`: format 1, commonGround true, logicMv
+  1200-5000, I2C 1 kHz-1 MHz, SPI 10 kHz-20 MHz, UART 300-1 000 000 baud, I2C addresses 0x08-0x77, registers <=4 bytes
+  written and 1-64 read, limits <=512 bytes and <=10 s), request (`register-unknown`, `clears-flags`,
+  `transfer-not-allowed`, `limit`, `power-not-allowed`, `capture-mode`), VERA's unknown marker (`state-unknown` except
+  identify/release), both ports by identity (`port-missing`, `identity-mismatch`), then only the binary port is opened.
+  Wire: COBS frames ending in 0x00; RequestPacket version 2, minimum minor 0; one status, one configuration (mode
+  I2C/SPI/UART, ModeConfiguration fields, pull-ups, psu_enable with mV/mA only for `power.source: adapter` + `--power`
+  within the registry's `power`, else psu_disable), one status read-back (`config-error`, `config-mismatch`), byte limits
+  also from the adapter's mode_max_write/read (`limit`), one DataRequest (I2C: address<<1 first, start/stop; SPI:
+  start/stop as chip select; UART unframed); async DataResponses are kept apart for capture. Data errors: text naming
+  NACK `nack`, else `adapter-error`; `count-mismatch`; `unexpected-value` names SPI mode, wiring and logic voltage;
+  `no-response` (incomplete); serial failure `disconnected` (nothing more sent, physical unknown). Nothing is repeated.
+  Final state after configure-bus failures and every read-register, transfer and capture: `release` (HiZ, pull-ups and
+  supply off) or `keep`, read back -> `final.physical` confirmed/unknown; configure-bus leaves `configured`. Stop file
+  checked before configuration, data and during capture (`stopped`, release applied). Results
+  `arduino-iot-results/<run-id>/` (`bus-tool-result`, `report.md`, capture.bin and capture.csv); exit 0/1/2/3.
+  Evidence: the simulated adapter only; no real Bus Pirate yet (NACK text, UART async receive and per-mode limits
+  unconfirmed).
+
+## Invariants
+
+- can capture never opens a physical adapter actively by default: listen-only kwargs (pcan
+  `state=PASSIVE`, vector/slcan `listen_only`, kvaser `driver_mode=False`), software buses
+  (virtual, udp_multicast, socketcan `vcan*`) or a SocketCAN link that `ip -json -details` reports LISTEN-ONLY;
+  everything else needs `--active`. The scripts are not named can.py/cantools.py so they never shadow packages.
+
+- tshark parsing follows TShark: case-sensitive letters with the measured value letters, grouped flags,
+  attached or separate values, exact-or-unique long abbreviations (ambiguous is `<unknown>`), and the end of
+  options at the first non-option or `--`. Arguments after that end are still read for raising roles
+  (capture, write, execute, credentials), never for `<info>` or `<file>`, so filter text cannot lower risk. A
+  command that writes an output file asks like a capture; `-w -` stays safe. The user's Wireshark profile
+  Lua/binary plugins still load; argv rules cannot prevent that.
+
+- bus-tool opens only the registry entry's binary port, sends each BPIO2 request once, never writes a bootloader, reset,
+  self-test, pin-mask, LED or terminal-text field, never scans addresses and switches the adapter's supply on only with
+  `--power` within the registry's limits.
+
+## Change map
+
+| Change requested | Start with | Focused verification |
+|---|---|---|
+| CAN commands, listen-only map, driver hints | `plugins/can-python/scripts/can_bus.py`, `plugin.yaml` | `can.test.ts` matrix, fake python-can script cases, gate; `VERA_CAN_UV` real udp_multicast acceptance |
+| DBC decoding or cantools rules | `plugins/can-dbc/` | `can.test.ts`; fixtures `tests/fixtures/can/` |
+| tshark roles, rules, find list or skills | `plugins/wireshark-tshark/`, `shared/src/tshark-options.ts` | `wireshark-tshark.test.ts` (matrix, fake find roots, real-TShark replay; skips without tshark) |
+| A new TShark release | re-measure option arity with `tshark -r <file> -<letter>`, then `tshark-options.ts` | "classifies parsed tshark option roles" |
+
+## Key behaviors
+
+- `REQ-FUNC-ed24ef4a` / `REQ-REL-07f029dd` — can list with driver hints; open failure exit 3 with the hint.
+- `REQ-SEC-2eb33af8` / `REQ-SEC-9be4b959` — CAN and cantools risk rules.
+- `REQ-FUNC-cd61ecee` / `REQ-REL-35df942b` / `REQ-FUNC-4adc847a` / `REQ-FUNC-835a17ea` — listen-only capture, --active refusal, send, replay.
+- `REQ-REL-292d1dd5` / `REQ-REL-5edff0c2` — can usage errors exit 2 before any bus; unreadable can-decode inputs exit 2.
+- `REQ-FUNC-7951af72` / `REQ-UX-c9e6cb02` / `REQ-TEST-c20cfbb9` — can-decode, three skills, opt-in multicast acceptance.
+- `REQ-PLAT-e0466566` — real adapter and Linux vcan0 acceptance (pending hardware/host).
+
+- `REQ-FUNC-3a49793a` / `REQ-REL-0cc3c9ba` — find-only TShark discovery with version, missing hint and no download.
+- `REQ-SEC-3fa7a69c` / `REQ-SEC-4e0621b6` — tshark option-role risk; Lua scripts and -A credentials blocked.
+- `REQ-UX-c68ec8b8` / `REQ-TEST-1fbadc3c` — analysis/capture skills; real-TShark replay of the sample capture.
+- `REQ-PLAT-0b1587fd` — approved bounded live capture (opt-in loopback test; Windows run, Linux pending).
+- `REQ-PLAT-c2323ad5` — capture-file analysis on Linux x64 (manual, pending a Linux host with tshark).
+
+## Files
+
+- `05_Software/plugins/can-python/` — manifest, README (drivers, listen-only), `scripts/can_bus.py`, skills can-capture and can-transmit.
+- `05_Software/plugins/can-dbc/` — manifest, README, `scripts/can_decode.py`, skill can-decode.
+- `05_Software/tests/plugins/can.test.ts`, `tests/fixtures/can/` — rules, stdlib fake python-can (`fake-python-can/can`, records Bus kwargs and frames), typed gate with a fake uv, fictional DBC and candump log, opt-in real acceptance.
+
+- `05_Software/plugins/wireshark-tshark/` — manifest, README (risk table, capture setup, limits) and two skills.
+- `05_Software/src/libraries/shared/src/tshark-options.ts` — tshark role projection for rules only.
+- `05_Software/tests/plugins/wireshark-tshark.test.ts`, `tests/fixtures/wireshark-tshark/` — risk matrix,
+  find/hint with a fake host, generated CoAP/Modbus `sample.pcapng` (`build.py`) and real-TShark replay.

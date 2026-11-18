@@ -33,6 +33,9 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ### Changed
 
+- Electron 44.11.4, zod 4.6.7 and Vite 7.3.8; undici, hono and fast-uri are raised through the lock file.
+- The BenchPilot reference copy under 09_Others is removed; the planning documents no longer cite it.
+- Tests: the last three plugin suites with real-tool gates report named skips.
 - Help: additional folders, command approvals and terminal consent are each explained once, with links.
 - Packaging warns about files in the model and Windows runtime folders that their manifests do not name.
 - Lint: non-null assertions are allowed in tests and the CSS specificity rule is off; about 300 warnings are gone.

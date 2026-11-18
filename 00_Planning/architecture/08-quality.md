@@ -80,8 +80,7 @@ in Windows Sandbox or a VM with its adapters down).
   `credentials.json`, `workbench.yaml` and the crash-recovery fixture `interrupted-sessions.json`). The
   settings version fixtures and the `upgrade/` fixtures were removed with the migrations (07 §6).
 - `tests/fixtures/llm-scripts/<scenario>.jsonl`: replay scripts, one per scenario (17).
-  The format follows `09_Others/benchpilot-reference/apps/server/src/llm/replay.ts`; VERA's provider is
-  `src/libraries/core/src/llm/replay.ts`. One line per model step; empty lines and `//` lines are
+  The provider is `src/libraries/core/src/llm/replay.ts`. One line per model step; empty lines and `//` lines are
   skipped:
 
 ```jsonl
@@ -144,7 +143,7 @@ in Windows Sandbox or a VM with its adapters down).
 package name `vera`, no test markers in `out/main/index.js`, `testBuild` false and a packaged app. It
 never builds. Every launch gets its own environment (APPDATA, LOCALAPPDATA, XDG folders, HOME, TMP;
 `VERA_*` variables removed) and `--user-data-dir` in the smoke root (the zip uses its adjacent `data/`),
-with seeded settings that keep updates Off, and checks Electron 44.7.0, the sandbox, disabled spell-check
+with seeded settings that keep updates Off, and checks Electron 44.11.4, the sandbox, disabled spell-check
 and disabled ONNX Runtime telemetry. The Windows zip is extracted with electron-builder's cached 7-Zip;
 the NSIS installer is installed silently per-user, or, when a VERA installation already exists, its
 payload is extracted and the installation recorded as pending; the AppImage is extracted with

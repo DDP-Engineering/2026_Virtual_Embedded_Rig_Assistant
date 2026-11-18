@@ -1,0 +1,161 @@
+# Official plugins: ESP32 and serial console
+
+## Routing
+
+Select for `serial-monitor` (program `serial`: list serial ports with board family, capture a console with an optional
+DTR/RTS reset, send one line; skills `serial-console` and `esp32-identify`); `esp32-esptool` (program `esptool`,
+esptool v5 from PyPI: identify, flash, verify, erase and read ESP32 chips; skill `esp32-flash`); `esp32-idf`
+(EIM-activated idf.py, Xtensa/RISC-V addr2line; skills `esp32-build-fix` and `esp32-panic`); and `esp32-efuse`.
+
+Start at `05_Software/plugins/<id>/plugin.yaml`, and for serial-monitor at `scripts/serial_monitor.py`; tests are in
+`05_Software/tests/plugins/serial-monitor.test.ts` and `esp32-esptool.test.ts` and `esp32-idf.test.ts` with fixtures in
+`05_Software/tests/fixtures/serial-monitor/`, `esp32-esptool/` and `esp32-idf/`.
+
+For esp32-efuse, start at plugins/esp32-efuse/plugin.yaml and its review skill/README;
+tests/plugins/esp32-efuse.test.ts and tests/fixtures/esp32-efuse/ own risk coverage
+and opt-in real virtual acceptance through the unchanged plugin platform.
+
+The conventions shared by all official plugins (package format, catalog source, packs, versions and evidence
+levels) and the page of every other plugin are in [Official plugins](official-plugins.md). The platform that
+installs, classifies, approves and runs these programs is [Plugins](plugins.md); plugin skill discovery is
+[Skills](skills.md).
+
+## Public interface
+
+- `serial-monitor` 0.2.0, ecosystem `general`, platforms `windows-x64`, `linux-x64`, program `serial` with
+  `install: { script: scripts/serial_monitor.py }` (pyserial 3.5), probed with `--version`
+  (`serial-monitor <version>`).
+- Commands (spec `.agentic/specs/REQ-FUNC-42818bb7.md`): `serial list` prints a JSON array of `{port, vid_pid,
+  serial_number, family, description, by_id}` sorted by port; `serial capture --port P [--baud 115200]
+  [--duration 10] [--until REGEX] [--max-bytes 1048576] [--reset]` streams console bytes to stdout and ends with
+  `[serial-monitor] P: N bytes, stopped by duration|until|max-bytes` on stderr; `serial send --port P --text LINE
+  [--eol crlf|lf|cr|none] [--duration 1] ...` writes one line, then reads like capture.
+- Exit codes: 0 done, 2 invalid arguments (no port opened), 3 port failure (EACCES adds the `dialout`/`uucp`
+  instruction, others a list-again hint), 4 `--until` never matched.
+- `esp32-esptool` 0.2.0, ecosystem `esp32`, `requires: [serial-monitor]`, program `esptool` with
+  `install: { pip: "esptool>=5,<6" }`, resolved to `<runtime>/tools/esp32-esptool/bin/esptool[.exe]`, probed with
+  `esptool version` (`v(\d+\.\d+\.\d+)`, range `>=5,<6`; any other version is unavailable with problem `range`),
+  program timeout 120 s. Skill `esp32-flash`: port and chip first, offsets and images from `build/flasher_args.json`
+  as explicit pairs, stop for encrypted or secure-boot builds, `Hash of data verified.` per file or `verify-flash`,
+  boot log with `serial capture --port P --reset`.
+
+- `esp32-idf` is format 1, requires serial-monitor and detects user-installed EIM/IDF (`>=5.4,<7`).
+  Its idf.py find search locates eim and invokes `run` with `launcherMode: string`. Official EIM 0.20.1
+  on Windows and native Ubuntu takes one COMMAND string through PowerShell/Bash; the README records
+  the measured platform quoting and its limits. VERA starts the launcher without a shell.
+
+- `esp32-efuse` 0.2.0, ESP32, Windows x64/Linux x64: the official Security (irreversible)
+  group defaults off. Both espefuse and espsecure use pip esptool>=5,<6 and help-based version
+  probes. summary/dump/check-error/get-custom-mac/adc-info are device-read; every burn-* plus
+  write/read-protect-efuse and set-flash-voltage are irreversible with the OTP/brick note.
+  espsecure file crypto is safe (hardware risk, no file sandbox); HSM flags are blocked.
+  Three exact catalog lint exceptions cover program-name efuse/secure tokens at low risk.
+  Skill esp32-efuse-review requires a summary, explanation, one explicitly requested operation
+  and an artifact_save session plan before any irreversible call; no batch or implicit burns.
+  Actual closed-stdin virtual argv includes --chip esp32 --virt --path-efuse-file FILE
+  --do-not-confirm burn-efuse JTAG_DISABLE 1. The upstream BURN prompt is separate from VERA's
+  burn-efuse confirmation; bypass creates mode decisions. tests/plugins/esp32-efuse.test.ts
+  optionally provisions real v5 using VERA_EFUSE_UV and records raw process output/exit codes,
+  replay events, durable approvals and persistent virtual-state effects. No hardware burn runs.
+
+## Invariants
+
+- Rules: `serial {--version,--help,-h}` and `serial list *` are `safe`, `serial capture *` is `device-read` with a
+  reset note, `serial send *` is `device-write` with a firmware note; any other command line keeps the platform's
+  unmatched default `device-write`.
+- `list` never opens a port. Capture and send open with DTR asserted and RTS released, then release DTR, so the
+  lines never pass through the reset state DTR released + RTS asserted (Linux raises both lines on open; POSIX
+  also `exclusive=True`); only `capture --reset` asserts RTS (200 ms, DTR re-applied after each RTS change for
+  Windows usbser.sys) and clears the input buffer before releasing RTS, so the new boot output is kept.
+- Any exception from the port (SerialException; OSError or termios.error on Linux; ValueError for an unsupported
+  setting) is exit 3 with
+  the bytes already read kept.
+- Console bytes reach stdout unchanged and flushed per read, so background runs stream to `program_output`.
+- `--until` is searched in each complete line and the current partial line (at most its last 4096 characters),
+  decoded as UTF-8 with replacement characters and without a trailing CR.
+- esp32-esptool rules (every command esptool 5.6.0 lists matches one; recorded help in
+  `tests/fixtures/esp32-esptool/esptool-5.6.0-help.txt`): `esptool {version,--help,-h}` and `merge-bin`, `image-info`,
+  `elf2image` safe; `chip-id`, `read-mac`, `flash-id`, `read-mem`, `read-flash-status`, `read-flash-sfdp`,
+  `get-security-info`, `read-sdc-chip-info`, `verify-sdc-certificate`, `run`, and with a 1800 s timeout `read-flash`,
+  `verify-flash`, `dump-mem` device-read ("Resets the chip into its bootloader."); `write-flash`, `erase-flash`,
+  `erase-region` device-write with a 1800 s timeout, `load-ram` device-write; `write-mem`, `write-flash-status` and any
+  `--force` irreversible (confirm word: the command, or `--force`). Global options may precede the command; the
+  matcher's lowercase and `_`→`-` cover esptool v4 spellings. Other lines keep the default `device-write`.
+- Safe esptool commands write host files (`merge-bin -o`, `elf2image -o`) without approval, like other safe programs.
+- The script is not named `serial.py`: that name would make `import serial` load the script itself.
+- The installed copy must not change after install (integrity hash): tests run installed copies with
+  `PYTHONDONTWRITEBYTECODE=1`, and `uv run --script` executes the file as `__main__` without a bytecode cache.
+
+- Xtensa/RISC-V addr2line are local binaries found under IDF_TOOLS_PATH/default EIM roots; selection
+  must match the target and exact flashed ELF. VERA never installs the vendor suite or drivers.
+- idf.py build/size/configure commands are safe; coredump-info device-read; flash/app-flash/erase
+  device-write; efuse-* and secure-* irreversible; monitor/menuconfig/gdb/gdbtui blocked with an
+  explanatory note. Mixed flash+monitor is blocked. Skills change sdkconfig.defaults, never sdkconfig directly,
+  verify effective generated values and require an agreed project regeneration workflow for already-set values.
+- esp32-idf replay repairs a fixture compile error, rebuilds, performs fixture flash, captures Guru
+  Meditation via serial-monitor/fake pyserial and decodes fixture addresses. Real ESP-IDF compile,
+  flash, panic and source-line acceptance on both systems remains unverified without vendor tools/board.
+
+## Change map
+
+| Change requested | Start with | Focused verification |
+|---|---|---|
+| Risk rules or notes | `plugins/serial-monitor/plugin.yaml` `rules` | `serial-monitor.test.ts` "risk rules" |
+| Family table, list fields, by-id | `serial_monitor.py` `FAMILIES`, `list_command`, `by_id_links` | "list" tests; `fixtures/serial-monitor/by_id.py` |
+| Capture/send stop conditions, reset, exit codes | `serial_monitor.py` `read`, `reset`, `main`, `fail` | "capture", "send", "failures" tests |
+| Agent guidance | `skills/serial-console/SKILL.md`, `skills/esp32-identify/SKILL.md` | "offers the plugin's skills" test |
+| Fake port behaviour for tests | `fixtures/serial-monitor/fake-pyserial/serial/` | the whole file |
+| esptool rules, notes, timeouts | `plugins/esp32-esptool/plugin.yaml` `rules` | `esp32-esptool.test.ts` "risk rules" |
+| A new esptool release | re-record `fixtures/esp32-esptool/esptool-<v>-help.txt`, then rules and `version.range` | "names only esptool 5.6.0 commands" |
+| Flashing guidance | `plugins/esp32-esptool/skills/esp32-flash/SKILL.md` | "offers esp32-flash" test |
+| Stub esptool output | `fixtures/esp32-esptool/fake_esptool.py` | "in VERA" tests |
+| IDF rules, launcher detection or decoder paths | `plugins/esp32-idf/plugin.yaml` | `esp32-idf.test.ts`, core `provisioning.test.ts` |
+| Build repair or panic guidance | `plugins/esp32-idf/skills/` and README | `esp32-idf.test.ts` skill and replay cases |
+
+## Key behaviors
+
+- `REQ-FUNC-b7ceddbc` — the folder installs without issues; `serial` resolves to `uv run --quiet --offline --script <installed>/scripts/serial_monitor.py`.
+- `REQ-FUNC-3e33dbe8` — `--version` prints the manifest version for the probe.
+- `REQ-SEC-79b6adad` / `REQ-SEC-22dd5e18` / `REQ-SEC-5fd0ed52` — list/help safe, capture device-read, send device-write.
+- `REQ-FUNC-e80e3dd7` / `REQ-FUNC-742426ac` / `REQ-PLAT-19d5189a` — JSON list without opening, family table, Linux by-id.
+- `REQ-FUNC-42818bb7` / `REQ-FUNC-3ee59f30` / `REQ-REL-46027e04` — capture stop conditions and summary, RTS reset, exit 4.
+- `REQ-FUNC-6f7569e2` — send one line, then read the reply.
+- `REQ-PLAT-4013192c` / `REQ-REL-3c25e5c0` / `REQ-FUNC-0a001d5d` — EACCES group instruction, other failures, usage errors.
+- `REQ-UX-7dc52524` — skills `serial-console` and `esp32-identify`.
+- `REQ-TEST-4041b893` — a replay session lists without approval and captures after approval through the real runner.
+- `REQ-PLAT-f215472a` — real ESP32-S3 and ESP32+CP210x boards on Windows 11 and Ubuntu (manual).
+- `REQ-FUNC-b0d7c102` / `REQ-FUNC-3b4c7274` / `REQ-REL-a69bbfc4` — esptool installs from pip, its version probe, versions outside 5.x unavailable.
+- `REQ-SEC-bfed58fa` / `REQ-SEC-c8cf4a75` / `REQ-SEC-b3fe3c10` / `REQ-SEC-d1d8978f` — esptool safe, device-read, device-write and irreversible rules.
+- `REQ-SEC-9c665082` — the rules name only esptool 5.6.0 commands and classify all of them.
+- `REQ-FUNC-a3a042ec` — flash transfers may run 1800 s.
+- `REQ-UX-6a22c4dc` — skill `esp32-flash`.
+- `REQ-TEST-fe972de0` — a replay session identifies, flashes with image hashes on the card and captures the boot log.
+- `REQ-PLAT-d2b3fa4a` — real boards on Windows 11 and Ubuntu (manual).
+- `REQ-DATA-b4e317de` / `REQ-SEC-f98d4fd3` (Plugins) — write-flash approvals list each image's SHA-256; a rebuilt image fails CONFLICT.
+- `REQ-SEC-016c9aad` (Plugins) — a run naming a port that another unfinished run names (a background capture, a foreground upload) is BUSY.
+
+- `REQ-FUNC-10e10007` / `REQ-SEC-10e10008` — ESP-IDF package, vendor hints and risk rules.
+- `REQ-UX-10e1000a` / `REQ-UX-10e1000b` — build-fix/panic skills and deterministic replay.
+- `REQ-PLAT-10e1000c` — executed EIM transport; `REQ-PLAT-10e1000d` — outstanding real-board workflow.
+
+## Files
+
+- `05_Software/plugins/serial-monitor/plugin.yaml` — manifest: program `serial`, version probe, rules, docs.
+- `05_Software/plugins/serial-monitor/scripts/serial_monitor.py` — PEP 723 script: list, capture, send.
+- `05_Software/plugins/serial-monitor/skills/serial-console/SKILL.md` — how to use the program.
+- `05_Software/plugins/serial-monitor/skills/esp32-identify/SKILL.md` — identifying ESP32 boards and bridges.
+- `05_Software/plugins/serial-monitor/README.md` — catalog description.
+- `05_Software/tests/plugins/serial-monitor.test.ts` — package, rules, script behaviour, guard, replay session, skills.
+- `05_Software/tests/fixtures/serial-monitor/fake-pyserial/` — fake `serial` package driven by `FAKE_SERIAL_SCENARIO`, recording to `FAKE_SERIAL_RECORD`.
+- `05_Software/tests/fixtures/serial-monitor/by_id.py` — runs `list` with a test by-id folder.
+- `05_Software/tests/fixtures/serial-monitor/esp32s3-boot.log` — sample ESP32-S3 boot log.
+- `05_Software/plugins/esp32-esptool/plugin.yaml` — manifest: program `esptool` (pip), version probe, rules, docs.
+- `05_Software/plugins/esp32-esptool/skills/esp32-flash/SKILL.md` — identify, flash from flasher_args.json, verify, boot log.
+- `05_Software/plugins/esp32-esptool/README.md` — catalog description.
+- `05_Software/tests/plugins/esp32-esptool.test.ts` — package, provisioning, rules, replay session, skill.
+- `05_Software/tests/fixtures/esp32-esptool/fake_esptool.py` — stub esptool a fake uv installs as the pip entry point (distlib `.exe` launcher on Windows); records arguments and file hashes.
+- `05_Software/tests/fixtures/esp32-esptool/esptool-5.6.0-help.txt` — recorded `esptool --help` of 5.6.0.
+- `05_Software/tests/fixtures/esp32-esptool/flasher_args.json` — ESP-IDF esp32s3 hello_world flash layout.
+
+- `05_Software/plugins/esp32-idf/` — manifest, measured EIM transport README, build-fix and panic skills.
+- `05_Software/tests/plugins/esp32-idf.test.ts`, `tests/fixtures/esp32-idf/` — deterministic vendor executable/parser and session replay; no hardware or network.

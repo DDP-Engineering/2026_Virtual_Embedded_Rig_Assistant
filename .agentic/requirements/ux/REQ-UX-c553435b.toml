@@ -12,7 +12,7 @@ The Configuration section of the installed wokwi plugin shall offer a Wokwi toke
 
 verification = "Renderer test: the wokwi form renders reference and token fields without a username field and lists refs with storage; Replace puts the reference into the reference field; check:i18n passes with the keys in en, ro and de."
 
-affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/plugin-credentials.tsx", "05_Software/src/apps/desktop/src/renderer/components/plugin-configuration.tsx", "05_Software/src/apps/desktop/src/renderer/mocks/mockApi.ts", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json"]
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/plugin-credentials.tsx", "05_Software/src/apps/desktop/src/renderer/components/plugin-configuration.tsx", "05_Software/src/apps/desktop/src/renderer/mocks/mockApi.ts", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json", "05_Software/src/apps/desktop/src/renderer/locales/fr.json"]
 
 linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/plugin-credentials.test.ts"]
 

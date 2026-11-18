@@ -33,7 +33,7 @@ failure); `limit` (tool calls per turn, context budget, provider context rejecti
 ## 2. Runtime
 
 ADR-0003, confirmed by ADR-0014. `ReferenceRuntime` in `core/agent/runtime.ts` derives from the
-BenchPilot loop (`09_Others/benchpilot-reference/apps/server/src/agent/loop.ts`) and is the only
+BenchPilot agent loop and is the only
 production runtime. The session engine depends only on this interface:
 
 ```ts
@@ -228,7 +228,7 @@ Contracts the tests pin down:
   binary files and files over 5 MB, and caps match text at 16 000 and context lines at 2 000
   characters. File discovery, reads and JavaScript regex matching run in a dedicated task in
   `WorkerPool` (one task per worker, two workers), never on the main thread. The host owns an
-  absolute 10 s deadline, queue time included, and terminates the worker on expiry, returning
+  10 s deadline per task, counted from when the task gets its worker, and terminates the worker on expiry, returning
   received partial matches with `truncated: true` and `reason: "timeout"`. On abort it terminates the
   worker and the call fails "Grep aborted.". Invalid regex syntax is a tool error. The pool replaces
   terminated workers; it never falls back to matching on the main thread. The CLI supplies the same
@@ -339,8 +339,7 @@ never writes a file.
 
 ## 8. Session events
 
-Defined in `src/libraries/shared/src/events.ts`, extending the reference union in
-`09_Others/benchpilot-reference/packages/shared/src/events.ts`. `seq` increases per session.
+Defined in `src/libraries/shared/src/events.ts`. `seq` increases per session.
 Persisted events go to the `events` table; `message.delta`, `reasoning.delta` and `tool.update` are
 live-only.
 

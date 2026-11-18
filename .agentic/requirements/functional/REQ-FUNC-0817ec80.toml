@@ -12,7 +12,7 @@ When the engineer reviews a pack, the Plugins page shall show one review listing
 
 verification = "Renderer page test: the Arduino pack with its default groups shows one review with arduino-cli, its required serial-monitor and the other default plugins; Install calls catalogReview and catalogInstall once for each of exactly those ids, never shows the single-plugin review screen, provisions each and shows the install result block; unit test of the pack plan's order and installed-plugin skipping."
 
-affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/plugin-packs.tsx", "05_Software/src/apps/desktop/src/renderer/components/plugins.tsx", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json"]
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/plugin-packs.tsx", "05_Software/src/apps/desktop/src/renderer/components/plugins.tsx", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json", "05_Software/src/apps/desktop/src/renderer/locales/fr.json"]
 
 linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/plugin-packs.test.ts"]
 

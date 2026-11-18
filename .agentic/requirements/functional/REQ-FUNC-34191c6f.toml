@@ -12,7 +12,7 @@ When the user chooses Install with dependencies on a catalog card, the Plugins p
 
 verification = "Renderer test with the mock API: Install with dependencies on arduino-cli installs serial-monitor then arduino-cli and calls plugins.provision for both; the result lists a manual kicad-cli-like program with its guide, Check again calls plugins.check; an offline provision failure (problem download) is shown with its label. Manual: a real install of the pinned arduino-cli into a scratch folder reports ready."
 
-affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/plugins.tsx", "05_Software/src/apps/desktop/src/renderer/components/plugin-catalog.tsx", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json", "05_Software/src/apps/desktop/src/renderer/components/plugin-dependencies.tsx"]
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/plugins.tsx", "05_Software/src/apps/desktop/src/renderer/components/plugin-catalog.tsx", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json", "05_Software/src/apps/desktop/src/renderer/locales/fr.json", "05_Software/src/apps/desktop/src/renderer/components/plugin-dependencies.tsx"]
 
 linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/plugin-catalog.test.ts"]
 

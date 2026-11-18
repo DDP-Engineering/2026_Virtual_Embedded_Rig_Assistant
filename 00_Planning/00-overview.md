@@ -83,7 +83,7 @@ The full table, with IDs, is in `decisions/README.md`.
 
 | Decision | Why, and how it shows in the code |
 |---|---|
-| TypeScript + Electron | the same stack as BenchPilot (reference code in `09_Others/benchpilot-reference/`); ChatGPT sign-in and local embeddings work in Node without a server. The interface uses hand-written CSS |
+| TypeScript + Electron | the same stack as BenchPilot, the earlier proof of concept; ChatGPT sign-in and local embeddings work in Node without a server. The interface uses hand-written CSS |
 | Start from the BenchPilot reference code | the adoption stage is finished |
 | `pi-ai` for models; VERA owns the agent loop | ADR-0002 and ADR-0003; steering and compaction are built on that loop |
 | Workbench = folder | it can be copied and kept in Git; configuration and skills are in `.vera/`, and a second process opens the workbench read-only |
@@ -180,5 +180,5 @@ are described in `capabilities/`.
 
 ## Reference code
 
-VERA took over code from BenchPilot, an earlier proof of concept on the same stack. The copy of the
-relevant files is in `09_Others/benchpilot-reference/`. The takeover is finished.
+VERA took over code from BenchPilot, an earlier proof of concept on the same stack. The takeover is
+finished and the copy of those files was removed from the repository; Git history keeps it.

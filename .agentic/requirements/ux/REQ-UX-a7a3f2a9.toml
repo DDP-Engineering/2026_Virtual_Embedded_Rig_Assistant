@@ -12,7 +12,7 @@ When catalog metadata names the activity `design`, the shared catalog schema sha
 
 verification = "catalogMaintainersSchema parses activities [design] and CATALOG_ACTIVITIES holds it; `pluginActivityLabels`, from which the library controls build their activity options, returns a non-empty label for every activity id in en, ro and de, with Design, Proiectare and Entwurf for `design`; `check:i18n` passes."
 
-affected_paths = ["05_Software/src/libraries/shared/src/plugin-catalog.ts", "05_Software/src/apps/desktop/src/renderer/components/plugin-library-controls.tsx", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json", "05_Software/plugins/CONTRIBUTING.md"]
+affected_paths = ["05_Software/src/libraries/shared/src/plugin-catalog.ts", "05_Software/src/apps/desktop/src/renderer/components/plugin-library-controls.tsx", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json", "05_Software/src/apps/desktop/src/renderer/locales/fr.json", "05_Software/plugins/CONTRIBUTING.md"]
 
 linked_tests = ["05_Software/src/libraries/shared/src/plugin-catalog.test.ts", "05_Software/src/apps/desktop/src/renderer/components/plugin-library-controls.test.ts"]
 

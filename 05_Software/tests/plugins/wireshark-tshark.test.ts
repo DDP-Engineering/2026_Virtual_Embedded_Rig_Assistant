@@ -9,6 +9,7 @@ import { ReplayGateway } from "@vera/core/replay";
 import { classifyCommand, type PluginManifest, validatePluginManifest } from "@vera/shared";
 import { expect, it } from "vitest";
 import { parse } from "yaml";
+import { reportSkip } from "../support/skip-marker.js";
 
 const plugins = new URL("../../plugins/", import.meta.url);
 const source = new URL("wireshark-tshark/", plugins);
@@ -513,3 +514,5 @@ it.skipIf(!live)(
   },
   180_000,
 );
+
+reportSkip(!live, "the live loopback capture test", "set VERA_TSHARK_LIVE_INTERFACE to a loopback interface");

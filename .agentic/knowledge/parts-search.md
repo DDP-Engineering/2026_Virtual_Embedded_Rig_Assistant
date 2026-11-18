@@ -7,7 +7,7 @@ supplier credentials or the parts.access.* channels. Start at 05_Software/src/li
 (configured.ts, suppliers.ts, provider.ts, http.ts) and tools/parts.ts, with spec
 .agentic/specs/REQ-DATA-9fd50acb.md. Tests: core/src/parts/parts.test.ts, desktop main/parts-access.test.ts,
 renderer components/parts-access.test.ts, cli/src/parts-env.test.ts. The offline comparison program parts-compare
-belongs to [official plugins](official-plugins.md); general web search belongs to [web search](web-search.md).
+belongs to [official plugins](official-plugins-electronics.md); general web search belongs to [web search](web-search.md).
 
 ## Purpose and boundaries
 

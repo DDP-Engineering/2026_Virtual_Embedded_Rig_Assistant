@@ -12,7 +12,7 @@ When the chat detail level is Verbose, VERA shall display under each user messag
 
 verification = "Render multiple prompts in English, Romanian and German at Verbose, verify independent historical values, estimate/unavailable/shared labels and compact narrow layouts, and that Normal and Minimal show no line; native session restart retains the same statistics without additional model calls."
 
-affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/session/session-inspector.tsx", "05_Software/src/apps/desktop/src/renderer/styles.css", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json", "05_Software/src/apps/desktop/src/renderer/components/session/activity-usage.test.ts"]
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/session/session-inspector.tsx", "05_Software/src/apps/desktop/src/renderer/styles.css", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json", "05_Software/src/apps/desktop/src/renderer/locales/fr.json", "05_Software/src/apps/desktop/src/renderer/components/session/activity-usage.test.ts"]
 
 linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/session/activity-usage.test.ts", "05_Software/src/apps/desktop/src/renderer/components/session/workspace.test.ts", "05_Software/src/apps/desktop/src/renderer/components/session/usage-meter.test.ts", "05_Software/tests/e2e/prompt-usage.spec.ts"]
 

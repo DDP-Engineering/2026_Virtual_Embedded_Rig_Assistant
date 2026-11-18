@@ -12,7 +12,7 @@ When the catalog lists packs, the Plugins page shall offer Install a pack, which
 
 verification = "Renderer page test with a catalog holding the Arduino pack: Install a pack lists it, its default groups are checked and the Wokwi and Raspberry Pi Linux groups are not; a catalog without packs offers no Install a pack."
 
-affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/plugin-packs.tsx", "05_Software/src/apps/desktop/src/renderer/components/plugins.tsx", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json"]
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/plugin-packs.tsx", "05_Software/src/apps/desktop/src/renderer/components/plugins.tsx", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json", "05_Software/src/apps/desktop/src/renderer/locales/fr.json"]
 
 linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/plugin-packs.test.ts"]
 

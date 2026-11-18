@@ -37,7 +37,7 @@ strict public projections. Renderer holds a password draft until save/cancel and
 
 ## Invariants
 
-- Electron remains44.7.0 with sandbox/CSP/vera://app/preload/import boundaries. Core imports no Electron.
+- Electron remains44.11.4 with sandbox/CSP/vera://app/preload/import boundaries. Core imports no Electron.
 - Each persisted credential is encrypted JSON then base64 when safeStorage is available. Unavailable
   or Linux basic_text requires a fresh explicit choice. Refusal keeps the new key in memory and removes
   any prior disk value for that slot. Unavailable encryption plus accepted disk storage is explicitly

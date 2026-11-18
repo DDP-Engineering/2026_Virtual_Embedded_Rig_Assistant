@@ -315,7 +315,7 @@ it("terminates catastrophic regex with a last checkpoint, remains responsive and
   }
 }, 20000);
 
-it("aborts active and queued log work, includes queue time in deadlines and disposes capacity", async () => {
+it("aborts active and queued log work, starts a queued task's deadline when it gets its worker and disposes capacity", async () => {
   await pool.dispose();
   pool = new NodeWorkerPool(bundle.url, { deadlineMs: 2000, capacity: 1 });
   await log(`I ${"a".repeat(12000)}!`);
@@ -338,7 +338,10 @@ it("aborts active and queued log work, includes queue time in deadlines and disp
   const start = performance.now();
   const deadline = pool.run({ kind: "parse_log", root, args }, signal());
   expect(await deadline).toMatchObject({ reason: "timeout" });
-  expect(performance.now() - start).toBeLessThan(3500);
+  // The queued task waits out the busy one (2 s) and then gets its own 2 s: it is never timed out unrun.
+  const waited = performance.now() - start;
+  expect(waited).toBeGreaterThan(3500);
+  expect(waited).toBeLessThan(6500);
   expect(await busy).toMatchObject({ reason: "timeout" });
   const closing = pool.run({ kind: "parse_log", root, args }, signal());
   await pool.dispose();

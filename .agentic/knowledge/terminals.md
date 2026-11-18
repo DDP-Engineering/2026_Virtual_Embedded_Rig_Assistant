@@ -6,7 +6,7 @@ Select for right-panel Terminal, xterm/FitAddon, node-pty, interactive user inpu
 per-terminal consent, PTY lifecycle and packaged native helpers. Start at
 `05_Software/src/apps/desktop/src/main/terminals.ts`; focused tests are its sibling test,
 core `tools/terminal-read.test.ts`, shared `terminal-ipc.test.ts`, renderer `terminal-tab.test.ts`
-and `tests/e2e/terminal.spec.ts`. Agent shell commands belong to [plugins](plugins.md);
+and `tests/e2e/terminal.spec.ts`. Agent shell commands belong to [plugin program tools](plugins-program-tools.md);
 general artifact construction belongs to [native packaging](native-packaging.md).
 
 ## Purpose and boundaries

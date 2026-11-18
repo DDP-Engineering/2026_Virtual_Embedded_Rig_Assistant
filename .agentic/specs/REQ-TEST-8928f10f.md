@@ -6,7 +6,7 @@ settings. NSIS inventory precedes execution: existing VERA identity triggers
 extraction with actual installer acceptance pending, protecting installed data.
 Windows extraction requires cached pinned builder7Zip; Linux formats extract.
 Input artifact SHA is measured before and after. Actual Electron userData realpath,
-packaged release identity,44.7.0, sandbox and vera://app are observed before app
+packaged release identity,44.11.4, sandbox and vera://app are observed before app
 mutations on every launch/restart. Portable data remains adjacent.
 Observed native ONNX telemetry opt-out is established in the real parent before
 workers start. The session-global spellchecker downloader is disabled synchronously at session

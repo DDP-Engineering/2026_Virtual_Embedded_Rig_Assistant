@@ -213,6 +213,4 @@ NOTES:
 - Replay scripts and test switches: 08 §3. `ReplayGateway` reads one scenario per `*.jsonl` in
   `VERA_REPLAY_DIR`; model `replay/<name>`, or `replay/auto` matching the first line's `match` regex;
   fixed 32 768 window and 4 096 output, tools supported; text streams in 40-character chunks.
-- The starting code in `09_Others/benchpilot-reference/apps/server/src/llm/` (`providers.ts`,
-  `credentials.ts`, `oauth.ts`) is superseded by the files named above.
 - Work packages cite this file as `04 §n`.

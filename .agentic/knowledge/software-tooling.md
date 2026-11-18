@@ -40,7 +40,7 @@ which owns verified assets, native staging and artifact measurements.
   edge; [user terminals](terminals.md) routes exact runtime and extracted-artifact verification.
 
 - Direct dependency versions are exact; install from the committed lockfile using npm ci.
-  Core pins @earendil-works/pi-ai1.1.0 for the gateway, zod4.6.5/typebox1.3.27 for tool-schema projection, yaml2.9.1, ulid3.0.2 and ignore7.0.12 for parsing, identity and ignore rules; tinyglobby0.2.17 for file discovery and diff9.0.0 for structured unified file patches/counts. Tooling pins esbuild0.25.12 for isolated worker bundles.
+  Core pins @earendil-works/pi-ai1.1.0 for the gateway, zod4.6.7/typebox1.3.27 for tool-schema projection, yaml2.9.1, ulid3.0.2 and ignore7.0.12 for parsing, identity and ignore rules; tinyglobby0.2.17 for file discovery and diff9.0.0 for structured unified file patches/counts. Tooling pins esbuild0.25.12 for isolated worker bundles.
 - Desktop Vite main resolves core/shared from source; preload/renderer resolve shared from source.
   Core/desktop Vitest resolve their library dependencies from source; TypeScript supplies generated output for library consumers.
 - The tooling TypeScript project references shared/core before compiling e2e contracts and worker-host test consumers.

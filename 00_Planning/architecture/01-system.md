@@ -33,14 +33,14 @@ Versions are pinned exactly (`.npmrc` `save-exact=true`, `engine-strict=true`).
 |---|---|---|
 | Language | TypeScript 6.0.3, strict, ESM, project references (`tsc -b`) | ADR-0001 |
 | Build tooling | Node.js 24 (`engines` `>=24 <25`), npm workspaces `src/libraries/*` and `src/apps/*` | ADR-0001 |
-| Desktop shell | Electron 44.7.0 | ADR-0001, ADR-0013 |
-| Build and dev server | electron-vite 5.0.0 on Vite 7.3.7; the CLI is bundled with esbuild 0.25.12 | ADR-0001 |
+| Desktop shell | Electron 44.11.4 | ADR-0001, ADR-0013 |
+| Build and dev server | electron-vite 5.0.0 on Vite 7.3.8; the CLI is bundled with esbuild 0.25.12 | ADR-0001 |
 | Packaging and updates | electron-builder 26.17.0, electron-updater 6.8.10 (generic feed) | ADR-0008 |
 | UI | React 19.3.0, Tailwind CSS 4.3.3, lucide-react 1.55.0; shadcn/ui configuration (`components.json`) with one generated component (`ui/card.tsx`) on clsx and tailwind-merge | ADR-0001 |
 | UI data | TanStack Query 5.104.1 for requests; the shared session reducer for event streams | §3 |
 | Markdown | react-markdown 10.1.0, remark-gfm 4.0.1, rehype-highlight 7.0.2 | 06 |
 | i18n | i18next 26.4.3, react-i18next 17.0.16 | 06 |
-| Schemas | zod 4.6.5, the only schema language; tool parameters reach pi-ai as their JSON Schema wrapped by typebox 1.3.27 | ADR-0010, ADR-0014 |
+| Schemas | zod 4.6.7, the only schema language; tool parameters reach pi-ai as their JSON Schema wrapped by typebox 1.3.27 | ADR-0010, ADR-0014 |
 | Model access | `@earendil-works/pi-ai` 1.1.0 | ADR-0002 |
 | Agent loop | the reference loop in `core/src/agent/runtime.ts` | ADR-0003 |
 | Storage | SQLite through better-sqlite3 13.0.3, WAL, FTS5 (unicode61 and trigram tables) | ADR-0005, ADR-0013 |
@@ -52,7 +52,7 @@ Versions are pinned exactly (`.npmrc` `save-exact=true`, `engine-strict=true`).
 | Other runtime libraries | yaml 2.9.1 (`workbench.yaml`, skill frontmatter, update metadata), ulid 3.0.2 (ids), semver 7.8.0 (updater) | — |
 | Lint and format | Biome 2.5.15 | 08 |
 | Tests | Vitest 5.0.3; Playwright 1.64.0 for Electron and the browser mock mode | 08 |
-| Starting code | `09_Others/benchpilot-reference/` (BenchPilot proof of concept, same stack) | — |
+| Starting code | BenchPilot proof of concept, same stack; its copy was removed after the takeover | — |
 
 ## 3. Processes and the IPC boundary
 
@@ -87,7 +87,7 @@ flowchart LR
   crashes within 60 s stop it until `indexer.restart`. Its state reaches the renderer through
   `indexer.status` and the `indexer.status` app event (05 §1).
 - CPU-heavy work runs in worker threads. In main: `grep` discovery, reads and regex matching in the
-  `WorkerPool` port (`NodeWorkerPool`, 2 workers, 10 s deadline including queue time), and PDF text
+  `WorkerPool` port (`NodeWorkerPool`, 2 workers, 10 s deadline per task, counted from when it gets its worker), and PDF text
   of web downloads. In the Indexer: one disposable thread per PDF or Office extraction, with a
   deadline, and one persistent embedding thread per workbench. Each worker runs one task at a time;
   the host enforces deadlines and aborts by terminating the task's worker and replacing it. A

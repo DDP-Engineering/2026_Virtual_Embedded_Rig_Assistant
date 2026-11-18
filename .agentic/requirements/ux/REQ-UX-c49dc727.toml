@@ -12,7 +12,7 @@ When the Plugins page shows a package review or the expanded card of an installe
 
 verification = "Renderer component test: the bus-tools review and expanded installed card list program bus-tool with scripts/bus_tool.py, skills bus-profiles and bus-transactions with descriptions, three profiles/*.json files and the README.md document; an analysis-skills review lists its two skills and the runs-no-programs line; en/ro/de texts exist (check:i18n)."
 
-affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/plugin-contents.tsx", "05_Software/src/apps/desktop/src/renderer/components/plugins.tsx", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json"]
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/plugin-contents.tsx", "05_Software/src/apps/desktop/src/renderer/components/plugins.tsx", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json", "05_Software/src/apps/desktop/src/renderer/locales/fr.json"]
 
 linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/plugins.test.ts"]
 

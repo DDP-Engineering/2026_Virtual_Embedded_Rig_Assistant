@@ -14,6 +14,7 @@ import * as core from "@vera/core";
 import { classifyCommand, type PluginManifest, validatePluginManifest, versionInRange } from "@vera/shared";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { parse } from "yaml";
+import { reportSkip } from "../support/skip-marker.js";
 
 const plugins = new URL("../../plugins/", import.meta.url);
 const source = fileURLToPath(new URL("kicad-layout/", plugins));
@@ -1359,3 +1360,10 @@ describe.skipIf(!gui)(
     });
   },
 );
+
+reportSkip(
+  !existsSync(kicadCli),
+  "the installed kicad-cli version test",
+  `install KiCad 10 (kicad-cli at ${kicadCli})`,
+);
+reportSkip(!uv, "the editor connection-failure test", "install uv or set VERA_TEST_UV");

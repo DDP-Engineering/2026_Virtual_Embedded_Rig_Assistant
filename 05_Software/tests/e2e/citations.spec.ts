@@ -56,7 +56,7 @@ test("native citations open offline PDF snippets, heading/line anchors and sessi
     app.process().stdout?.on("data", (b) => output.stdout.push(String(b)));
     app.process().stderr?.on("data", (b) => output.stderr.push(String(b)));
     outputs.push(output);
-    expect(output.loaded.electron).toBe("44.7.0");
+    expect(output.loaded.electron).toBe("44.11.4");
     await installNetworkGuard(app);
     const currentPage = await app.firstWindow();
     currentPage.on("console", (msg) => {
