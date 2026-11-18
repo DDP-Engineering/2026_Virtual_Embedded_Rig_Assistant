@@ -43,6 +43,14 @@ Sélectionnez **Modifier le banc** dans la vue d’ensemble ou dans le menu de l
 
 Gardez des instructions courtes et factuelles : la carte, le microcontrôleur, la chaîne de compilation, les conventions. Seuls les 16 premiers Ko sont transmis à l’agent ; VERA vous avertit lorsque le texte est plus long.
 
+## Compétences
+
+Les compétences sont des instructions réutilisables pour l’agent, pas des commandes. Ouvrez **Modifier le banc > Compétences** ou **Compétences** dans l’onglet **Instructions et compétences** de la session. **Activée** rend les instructions disponibles dans ce banc sans les exécuter. L’activation est enregistrée immédiatement ; fermer le panneau ou annuler d’autres modifications du banc ne l’annule pas.
+
+Choisissez **Créer une compétence**, saisissez un nom composé de minuscules (a–z), chiffres et tirets (1–64 caractères), puis **Ce banc de travail** ou **Tous mes bancs de travail**. Ce dernier choix utilise le profil VERA actuel, sans partage automatique avec d’autres utilisateurs ou installations. **Créer et modifier** ouvre un modèle : complétez la description et la procédure, puis enregistrez. **Annuler** abandonne les modifications inachevées, pas la compétence déjà créée.
+
+Les compétences du banc et de l’utilisateur proposent **Modifier les instructions**. Les compétences officielles et des plugins proposent **Voir les instructions** en lecture seule. **Actualiser la liste** relit la liste ; **Réessayer** n’apparaît qu’après un échec et répète l’opération concernée. Un banc en lecture seule permet d’actualiser et de consulter, mais pas de modifier. **Fermer** ou Échap ferme le dialogue ; Échap abandonne d’abord le formulaire de création ou d’édition ouvert.
+
 ## Onglets du panneau droit
 
 Ouvrez **Modifier le banc > Interface > Onglets du panneau droit**. Sélectionnez les onglets visibles : Instructions et compétences, Fichiers, Modifications, Artefacts, Plan, Exécutions et Terminal. Tous sont sélectionnés par défaut. **Rétablir les valeurs par défaut** les sélectionne dans le brouillon ; **Enregistrer** applique le choix et **Annuler** l’abandonne.

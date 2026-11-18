@@ -1,6 +1,13 @@
 version: Unreleased
 date: null
 entries:
+  - category: fixed
+    topic: { en: Skills, ro: Skills, de: Skills, fr: Compétences }
+    text:
+      en: Clearer activation and scopes; create and edit instructions or view read-only skills.
+      ro: Activare și locații mai clare; creează, editează sau vezi instrucțiunile doar pentru citire.
+      de: Klare Aktivierung und Speicherorte; Anweisungen erstellen, bearbeiten oder nur lesen.
+      fr: Activation et portée clarifiées ; créez, modifiez ou consultez les instructions en lecture seule.
   - category: new
     topic: { en: Workbench, ro: Workbench, de: Workbench, fr: Banc de travail }
     text:

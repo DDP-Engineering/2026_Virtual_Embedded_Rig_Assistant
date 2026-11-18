@@ -107,6 +107,8 @@ export function createMockApi(
   const benches = new Map<string, { snapshot: WorkbenchSnapshot; pinned: string }>();
   let active: string | undefined;
   const skillFiles = new Map<string, string>();
+  const officialSkill =
+    "---\nname: create-plugin\ndescription: Research a CLI and draft a reviewed trial plugin.\n---\n";
   /** Documentation files the mock folder picker's default folder holds, for scan and preview. */
   const boardDocs = [
     { path: "datasheets/stm32g474.pdf", bytes: 3_000_000, kind: "pdf" },
@@ -365,8 +367,7 @@ export function createMockApi(
         "create-plugin",
         {
           source: "official",
-          content:
-            "---\nname: create-plugin\ndescription: Research a CLI and draft a reviewed trial plugin.\n---\n",
+          content: officialSkill,
         },
       ],
     ]);
@@ -728,8 +729,16 @@ export function createMockApi(
         if (request.workbenchId !== current().snapshot.config.id) throw veraError("CONFLICT");
         if (channel !== "skills.open" && current().snapshot.readOnly) throw veraError("DENIED");
         const key = skillKey(request.source, request.name);
-        let content = skillFiles.get(key);
+        let content =
+          request.source === "official"
+            ? request.name === "create-plugin"
+              ? officialSkill
+              : undefined
+            : request.source === "plugin"
+              ? undefined
+              : skillFiles.get(key);
         if (channel === "skills.create") {
+          channels["skills.create"].request.parse(input.data);
           if (content !== undefined) throw veraError("CONFLICT");
           content = skillTemplate(request.name);
           skillFiles.set(key, content);

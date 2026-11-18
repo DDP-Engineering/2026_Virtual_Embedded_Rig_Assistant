@@ -64,6 +64,19 @@ it("mock skills create/edit/toggle isolate workbenches and reject stale or read-
     readOnly.invoke("skills.toggle", { workbenchId: locked.config.id, name: "reader", enabled: false }),
   ).rejects.toMatchObject({ code: "DENIED" });
 });
+it("views official instructions without allowing writes or shadowing them with workbench content", async () => {
+  const { api } = createMockApi();
+  const wb = await api.invoke("workbench.create", { folder: "/mock/official-skills", name: "Skills" });
+  const target = { workbenchId: wb.config.id, source: "official" as const, name: "create-plugin" };
+  const official = await api.invoke("skills.open", target);
+  expect(official.content).toContain("name: create-plugin");
+  await expect(api.invoke("skills.create", target as never)).rejects.toThrow();
+  await expect(
+    api.invoke("skills.save", { ...target, content: "changed", sha256: official.sha256 } as never),
+  ).rejects.toThrow();
+  await api.invoke("skills.create", { ...target, source: "workbench" });
+  expect(await api.invoke("skills.open", target)).toEqual(official);
+});
 // REQ-FUNC-9dd7413b
 it("mock plugins install, list per workbench, toggle and uninstall in memory", async () => {
   const { api } = createMockApi();

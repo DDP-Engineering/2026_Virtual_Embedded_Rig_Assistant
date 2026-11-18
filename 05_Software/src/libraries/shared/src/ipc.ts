@@ -261,7 +261,11 @@ export const channels = {
     updateSnapshotSchema,
   ),
   "skills.list": defineChannel("skills.list", skillsScopeSchema, z.array(skillSummarySchema).max(2048)),
-  "skills.open": defineChannel("skills.open", skillTargetSchema, skillContentSchema),
+  "skills.open": defineChannel(
+    "skills.open",
+    skillTargetSchema.extend({ source: skillSummarySchema.shape.source }),
+    skillContentSchema,
+  ),
   "skills.create": defineChannel(
     "skills.create",
     skillTargetSchema.extend({ name: skillNameSchema }),

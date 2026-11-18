@@ -3,7 +3,7 @@ import { workbenchIdSchema } from "./workbench.js";
 export const SKILL_BYTES = 256 * 1024;
 export const skillNameSchema = z.string().regex(/^[a-z0-9-]{1,64}$/);
 export const skillSourceSchema = z.enum(["workbench", "user", "plugin", "official"]);
-/** Sources the user can open, create and save; plugin skills belong to the installed plugin. */
+/** Writable sources; official and installed plugin instructions can only be viewed. */
 export const skillEditableSourceSchema = z.enum(["workbench", "user"]);
 export const skillErrorSchema = z.enum(["name", "description", "frontmatter", "unavailable"]);
 export const skillSummarySchema = z.strictObject({
