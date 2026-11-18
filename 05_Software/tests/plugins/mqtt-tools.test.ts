@@ -443,6 +443,13 @@ describe("TLS and the credential (T05-A)", { timeout: 60_000 }, () => {
     expect(run.code, run.stdout).toBe(0);
     expect(run.json.broker.tls).toMatchObject({ enabled: true, verified: true });
     expect(run.json.credential).toEqual({ ref: "bench", supplied: true });
+    // The profile picks the broker, so the result names where the stored credential went.
+    expect(run.json.warnings).toEqual([
+      expect.objectContaining({
+        code: "credential-sent",
+        message: expect.stringContaining(`bench goes to localhost:${ports.tlsPorts[0]}`),
+      }),
+    ]);
     expect(run.json.client).toMatchObject({ protocol: "5", cleanSession: true, sessionPresent: false });
     const [connect] = ours("connect");
     expect(connect).toMatchObject({ tls: true, username: USER, hasPassword: true, clean: true, protocol: 5 });

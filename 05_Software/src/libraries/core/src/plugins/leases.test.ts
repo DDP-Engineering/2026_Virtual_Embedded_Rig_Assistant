@@ -91,6 +91,28 @@ describe("ResourceLeases", () => {
     await clean.release();
   });
 
+  it("removes a lease taken before the machine started although its PID is in use again", async () => {
+    await leases(999).acquire([claim()], owner("LOST"));
+    const at = (uptime: number) =>
+      new ResourceLeases({
+        root,
+        app: "test",
+        pid: 101,
+        alive: () => true,
+        now: () => new Date("2026-11-13T12:00:00Z"),
+        uptime: () => uptime,
+      });
+    // Two hours later: a machine that has run for three hours still has the holder, one started an hour ago cannot.
+    await expect(at(3 * 3600).acquire([claim()], owner("RUN1"))).rejects.toEqual(
+      busy({ holder: "process 999" }),
+    );
+    const held = await at(3600).acquire([claim()], owner("RUN1"));
+    expect(held.states).toEqual({
+      psu: expect.objectContaining({ state: "unknown", runId: "LOST", reason: "holder-lost" }),
+    });
+    await held.release();
+  });
+
   it("treats an unreadable lease as held and never deletes it", async () => {
     await writeFile(join(root, leaseFileName("usb:1ab1:0e11:dp8c1")), "{not json");
     await expect(leases(101).acquire([claim()], owner("RUN1"))).rejects.toEqual(

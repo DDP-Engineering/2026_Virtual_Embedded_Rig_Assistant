@@ -372,6 +372,18 @@ it.each(["abort", "deadline", "exit", "error", "invalid"])(
     ).rejects.toThrow();
   },
 );
+it("runs the PDF worker under the document heap limit unless the caller passes its own", async () => {
+  const root = await fixtureRoot(),
+    entry = pathToFileURL(join(root, "limits-worker.mjs")),
+    signal = new AbortController().signal;
+  await writeFile(
+    entry,
+    `import {parentPort,resourceLimits} from 'node:worker_threads'; parentPort.once('message', () => parentPort.postMessage({kind:'pdf',pages:[String(resourceLimits.maxOldGenerationSizeMb)]}));`,
+  );
+  expect((await createPdfExtractor(entry)(new Uint8Array(1), signal)).pages).toEqual(["2048"]);
+  const small = createPdfExtractor(entry, 5000, { maxOldGenerationSizeMb: 256 });
+  expect((await small(new Uint8Array(1), signal)).pages).toEqual(["256"]);
+});
 it("gives a large PDF more time than the base deadline, up to 15 minutes", async () => {
   const MIB = 1024 * 1024;
   expect(pdfDeadline(120000, 1024)).toBe(120000);

@@ -120,6 +120,22 @@ it("cancel clears pending manual input and disabled settings prevent start", asy
   );
   expect(button("Sign in with ChatGPT").disabled).toBe(true);
 });
+it("polls the sign-in status only while a sign-in is in progress", async () => {
+  await mount(true);
+  const invoke = vi.spyOn(api, "invoke");
+  const polls = () => invoke.mock.calls.filter(([channel]) => channel === "providers.chatgpt.status").length;
+  const wait = () =>
+    act(async () => {
+      await new Promise((r) => setTimeout(r, 1200));
+    });
+  await wait();
+  expect(polls()).toBe(0);
+  await act(async () => userEvent.setup().click(button("Sign in with ChatGPT")));
+  await settle();
+  const started = polls();
+  await wait();
+  expect(polls()).toBeGreaterThan(started);
+});
 it.each(["ro", "de"])("uses localized controls in %s", async (lang) => {
   await i18n.changeLanguage(lang);
   await mount();

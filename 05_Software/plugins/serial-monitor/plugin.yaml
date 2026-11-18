@@ -1,6 +1,6 @@
 format: 1
 id: serial-monitor
-version: 0.2.0
+version: 0.2.1
 license: LicenseRef-PolyForm-Noncommercial-1.0.0
 name: Serial monitor
 summary: List serial ports by USB ID, capture a board's console and send it one line.

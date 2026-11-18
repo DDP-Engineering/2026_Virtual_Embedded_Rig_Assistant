@@ -14,8 +14,11 @@ vi.mock("pdfjs-dist", () => ({
   getDocument: () => ({
     promise: Promise.resolve({
       numPages: pageCount,
-      getPage: async () => ({
-        getViewport: ({ scale }: { scale: number }) => ({ width: 600 * scale, height: 800 * scale }),
+      getPage: async (number: number) => ({
+        getViewport: ({ scale }: { scale: number }) => ({
+          width: 600 * scale,
+          height: (number === tallPage ? 1000 : 800) * scale,
+        }),
         render: () => ({ promise: Promise.resolve(), cancel: () => {} }),
         getTextContent: async () => ({ items: [] }),
       }),
@@ -29,6 +32,8 @@ vi.mock("pdfjs-dist", () => ({
 }));
 vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
 let pageCount = 3;
+/** The one page that is 1000 px high; 0 for none. */
+let tallPage = 0;
 /** A page box and its gap: 800 px at 100% plus 12 px. */
 const PAGE = 812;
 
@@ -124,6 +129,19 @@ it("lays every page out in one scroll, opens at the cited page and follows the p
   expect(h.indicator()).toBe("3 / 3");
   await h.scrollTo(0);
   expect(h.page()).toBe("1");
+});
+
+it("gives a page that differs from the first its own box and keeps the page in view", async () => {
+  tallPage = 2;
+  try {
+    const h = await show(pdf(["one", "two", "three"], 3));
+    const sheets = [...h.view.querySelectorAll<HTMLElement>(".pdf-sheet")];
+    expect(sheets.map((sheet) => sheet.style.height)).toEqual(["800px", "1000px", "800px"]);
+    expect(h.page()).toBe("3");
+    expect(h.scroll()?.scrollTop).toBe(PAGE + 1012);
+  } finally {
+    tallPage = 0;
+  }
 });
 
 it("zooms from the keyboard and Ctrl+wheel within 50-200% and keeps the page in view", async () => {

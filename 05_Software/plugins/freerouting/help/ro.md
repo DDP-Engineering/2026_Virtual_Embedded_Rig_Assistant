@@ -1,6 +1,6 @@
 # Autorouter Freerouting (local)
 
-Autorouterul Freerouting îi permite agentului să ruteze automat, pe acest computer, un candidat de placă KiCad 10 cu Freerouting 2.5.0. Exportă un Specctra DSN din candidatul salvat al unei rulări kicad-layout, îl rutează offline cu un buget finit de treceri și de timp, păstrând cuprul existent și cel blocat, și transformă noile trasee și via-uri într-o cerere kicad-layout. kicad-layout aplică apoi acea cerere pe candidat și o verifică prin DRC. Placa nu părăsește niciodată computerul, iar placa sursă se modifică doar când aprobi aplicarea unui candidat care trece verificările.
+Autorouterul Freerouting îi permite agentului să ruteze automat, pe acest computer, un candidat de placă KiCad 10 cu Freerouting 2.5.0. Exportă un Specctra DSN din candidatul salvat al unei rulări kicad-layout, îl rutează offline cu un buget finit de treceri și de timp, păstrând cuprul existent și cel blocat, și transformă noile trasee și via-uri într-o cerere kicad-layout. kicad-layout aplică apoi acea cerere pe candidat și o verifică prin DRC. Freerouting rulează cu funcțiile online dezactivate, iar placa sursă se modifică doar când aprobi aplicarea unui candidat care trece verificările.
 
 ## Ce necesită
 
@@ -33,5 +33,5 @@ Aplicarea rutelor pe candidat și aplicarea candidatului pe placa sursă sunt pa
 - Windows x64 și Linux x64.
 - Un proiect cu reguli DRC personalizate (`.kicad_dru`) este refuzat, cu excepția cazului în care accepți rutarea fără ele; Freerouting nu le poate respecta, iar DRC-ul de după editare le verifică în continuare.
 - Când bugetul de timp se epuizează, Freerouting este oprit și nu se scrie nicio cerere.
-- Freerouting rulează complet offline: verificarea versiunii, analytics, interfața grafică și serverele lui sunt dezactivate.
+- Freerouting rulează cu verificarea versiunii, analytics, interfața grafică și serverele lui dezactivate; VERA nu îi blochează altfel accesul la rețea.
 - Referință: https://github.com/freerouting/freerouting

@@ -29,3 +29,4 @@ Jeder Befehl dieses Plugins ist sicher und läuft in jedem Berechtigungsmodus oh
 - Ein Ergebnis ist keine Kalibrierung und keine messtechnische Zertifizierung; lab-validate leitet keine Unsicherheit her.
 - Lücken, Clipping, offensichtliches Aliasing, unbekannte oder unzureichende Bandbreite sowie fehlende oder abweichende Bedingungen machen ein Kriterium unvollständig. Unvollständig ist kein Beinahe-Bestehen.
 - Die Uhren verschiedener Messgeräte werden nie über Dateizeiten synchronisiert; die Ausrichtung verwendet deklarierte Marker, Offsets oder Kreuzkorrelation.
+- Ein Urteil ist so vertrauenswürdig wie die Aufzeichnungs- und Laufordner, die es liest: Ihre Hashes stammen aus ihren eigenen Ergebnisdateien, und nichts ist signiert.

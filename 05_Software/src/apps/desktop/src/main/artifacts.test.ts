@@ -5,7 +5,7 @@ import { join } from "node:path";
 import type { SessionService } from "@vera/core";
 import { veraError } from "@vera/shared";
 import { afterEach, expect, it, vi } from "vitest";
-import { exportArtifact, publicArtifact, revealArtifact } from "./artifacts.js";
+import { exportArtifact, exportName, publicArtifact, revealArtifact } from "./artifacts.js";
 
 const cleanup: string[] = [];
 afterEach(async () => {
@@ -69,6 +69,15 @@ it("cancels without writing and verifies source again after dialog before export
     }),
   ).rejects.toMatchObject({ code: "CONFLICT" });
   expect(write).toHaveBeenCalledTimes(1);
+});
+it("offers the verified name to the save dialog and refuses a name that holds a secret", () => {
+  const service = {
+    verifiedArtifact: () => ({ path: "source", artifact: { name: "summary.md", content: "test" } }),
+  } as unknown as SessionService;
+  expect(exportName(service, "id", (s) => s)).toBe("summary.md");
+  expect(() => exportName(service, "id", (s) => s.replace("summary", "[redacted]"))).toThrow(
+    expect.objectContaining({ code: "INVALID" }),
+  );
 });
 it("refuses managed runtime destinations including redirected parents", async () => {
   const root = await mkdtemp(join(tmpdir(), "vera-export-"));

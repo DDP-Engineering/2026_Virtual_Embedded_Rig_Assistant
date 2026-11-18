@@ -13,7 +13,7 @@ in Git history.
 
 | File | Read it for |
 |---|---|
-| [00-overview.md](00-overview.md) | Romanian summary for people: concept, what VERA does today, decisions, milestones, what comes next |
+| [00-overview.md](00-overview.md) | summary for people: concept, what VERA does today, decisions, milestones, what comes next |
 | [architecture/01-system.md](architecture/01-system.md) | laws, stack, processes (main, renderer, VERA Indexer, workers), IPC channels, module map, source layout, data locations, security baseline, network egress |
 | [architecture/02-workbench.md](architecture/02-workbench.md) | workbench folder format, `.vera/` configuration and runtime, skills format, ignore and path rules, SQLite data model |
 | [architecture/03-agent-and-tools.md](architecture/03-agent-and-tools.md) | agent runtime, context budget, steering and compaction, system prompt, tools (including web), path guard, permission modes including bypass, approvals, write queue, events, citations |

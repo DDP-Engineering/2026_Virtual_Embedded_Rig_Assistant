@@ -467,11 +467,13 @@ export class Ingester {
     chunks?: Chunk[],
     derived?: DocumentDerived,
   ): DocumentRecord {
+    // Validation tokenizes every chunk: done here, it does not run inside the write transaction.
+    const valid = chunks && this.rows.validateChunks(chunks, derived);
     const row = this.mutation(() => {
       const old = this.rows.get(record.path);
       if (invalidate && old) this.rows.clearDerived(old.id);
       const saved = this.rows.save(record);
-      if (chunks) this.rows.replaceChunks(saved.id, chunks, derived);
+      if (valid) this.rows.writeChunks(saved.id, valid);
       return saved;
     });
     this.emit({ type: "index.document", path: row.path, document: row });

@@ -50,7 +50,7 @@ def read(alias: str) -> tuple[Probe, str]:
         raise Refused("request", "lab/resources.json is larger than 256 KiB.")
     digest = hashlib.sha256(data).hexdigest()
     approved = os.environ.get("VERA_REGISTRY_SHA256")
-    if approved and approved != digest:
+    if approved and approved.lower() != digest:
         raise Refused("request", "lab/resources.json changed after the approval; ask again.")
     try:
         document = json.loads(data.decode("utf-8"))

@@ -1,19 +1,19 @@
-# Organizarea testelor
+# Test layout
 
-Acest director conține verificările care folosesc mai multe componente, datele lor
-de intrare și infrastructura lor. Testele unitare și de componente aflate lângă
-implementare rămân în `src/apps/` și `src/libraries/`. Harness-urile care produc
-măsurători și scoruri sunt în [`../evaluators/`](../evaluators/README.md).
+This folder holds the checks that use several components, their input data and their
+infrastructure. Unit and component tests stay beside the implementation, in `src/apps/` and
+`src/libraries/`. The harnesses that produce measurements and scores are in
+[`../evaluators/`](../evaluators/README.md).
 
-| Director | Rol |
+| Folder | Role |
 |---|---|
-| `tooling/` | Configurație, compilare, reguli de import, traduceri, infrastructura testelor și uneltele de evaluare. |
-| `integration/` | CLI, procesarea documentelor, workeri, evaluarea căutării și sistemul de pluginuri cu pluginuri de test. |
+| `tooling/` | Configuration, build, import rules, translations, the test infrastructure and the evaluation tools. |
+| `integration/` | CLI, document processing, workers, retrieval evaluation and the plugin system with test plugins. |
 | `plugins/` | One suite per official plugin (`<id>.test.ts`), often with the plugin's real programs. Not part of `npm test`; run with `npm run test:plugins`. |
-| `packaging/` | Pregătirea distribuției, smoke-ul de pachet, proba de actualizare și actualizările. |
-| `e2e/` | Fluxuri complete în Electron și browser, rulate cu Playwright. |
-| [fixtures/](fixtures/README.md) | Date fictive și scenarii de intrare; nu sunt rezultate de teste și nu conțin cod de evaluare. |
-| `support/` | Rularea E2E, reporterul Playwright, protecția de rețea și generatoarele documentelor demo/Office. Programele simulate și generatoarele unei singure fixturi rămân lângă aceasta, în `fixtures/`. |
+| `packaging/` | Distribution preparation, the package smoke, the update probe and updates. |
+| `e2e/` | Complete flows in Electron and in the browser, run with Playwright. |
+| [fixtures/](fixtures/README.md) | Fictional data and input scenarios; they are not test results and hold no evaluation code. |
+| `support/` | The E2E runner, the Playwright reporter, the network guard and the generators of the demo and Office documents. Simulated programs and the generators of a single fixture stay beside it, in `fixtures/`. |
 
 Native `e2e/display-masking.spec.ts` verifies conditional Display masking with stored MQTT credentials,
 Files/Find UI selection, colliding labels, live settings/workbench choices and restart-safe tabs.
@@ -44,7 +44,7 @@ source-range placement, scalar Find counts/wrapping, Escape focus and live Displ
 `support/large-text-source-probe.ts` checks verified revision/date and same-size replacement with
 restored exact mtime on pinned Windows/WSL2 Node. Original proof stays in `evaluation-outputs/view03`.
 
-## Inventarul testelor Vitest
+## Vitest test inventory
 
 TERM-05 adds `packaging/terminal-runtime.test.ts` for native PTY architecture/helper closure,
 and `e2e/terminal.spec.ts` for actual typed input, resize/reflow, per-terminal agent consent,
@@ -55,22 +55,22 @@ evidence. `VERA_TERM05_SKIP_AGENT=1` limits release-artifact smoke to user termi
 
 ### Tooling
 
-| Fișier | Ce verifică |
+| File | What it checks |
 |---|---|
-| [boundaries.test.ts](tooling/boundaries.test.ts) | Separarea modulelor prin regulile de import. |
-| [build-mode.test.ts](tooling/build-mode.test.ts) | Identitatea și hook-urile compilate în modurile release/instrumentat. |
-| [delivery.test.ts](tooling/delivery.test.ts) | Versiunea, sumele SHA-256, înlocuirea părților și notele de release ale livrării. |
-| [demo-documents.test.ts](tooling/demo-documents.test.ts) | Generatorul PDF al fixturilor și concordanța inventarului cu fișierele. |
-| [help.test.ts](tooling/help.test.ts) | Verificatorul paginilor de ajutor: aceleași pagini în patru limbi și linkuri valide. |
-| [help-shortcuts.test.ts](tooling/help-shortcuts.test.ts) | Pagina de ajutor a scurtăturilor, generată din registrul de comenzi. |
-| [i18n.test.ts](tooling/i18n.test.ts) | Verificatorul cataloagelor de traducere. |
-| [network-guard.test.ts](tooling/network-guard.test.ts) | Blocarea conexiunilor externe în mediul de test. |
-| [plugin-license.test.ts](tooling/plugin-license.test.ts) | Licența declarată de fiecare plugin oficial. |
-| [release-version.test.ts](tooling/release-version.test.ts) | Ordinea versiunilor, `set-version` și verificarea notelor de release. |
-| [session-performance.test.ts](tooling/session-performance.test.ts) | Fixturile, raportul și comparația harness-ului de performanță. |
-| [session-performance-probe.test.ts](tooling/session-performance-probe.test.ts) | Sondele de performanță compilate în aplicație. |
-| [skeleton.test.ts](tooling/skeleton.test.ts) | Workspaces, configurația TypeScript și comenzile proiectului. |
-| [test-discovery.test.ts](tooling/test-discovery.test.ts) | Descoperirea fișierelor de test de către proiectele Vitest. |
+| [boundaries.test.ts](tooling/boundaries.test.ts) | Module separation through the import rules. |
+| [build-mode.test.ts](tooling/build-mode.test.ts) | The identity and the hooks compiled in release and instrumented modes. |
+| [delivery.test.ts](tooling/delivery.test.ts) | The version, SHA-256 sums, part replacement and release notes of a delivery. |
+| [demo-documents.test.ts](tooling/demo-documents.test.ts) | The fixture PDF generator and the match between the inventory and the files. |
+| [help.test.ts](tooling/help.test.ts) | The help page checker: the same pages in four languages and valid links. |
+| [help-shortcuts.test.ts](tooling/help-shortcuts.test.ts) | The shortcuts help page, generated from the command registry. |
+| [i18n.test.ts](tooling/i18n.test.ts) | The translation catalog checker. |
+| [network-guard.test.ts](tooling/network-guard.test.ts) | Blocking of outside connections in the test environment. |
+| [plugin-license.test.ts](tooling/plugin-license.test.ts) | The license declared by each official plugin. |
+| [release-version.test.ts](tooling/release-version.test.ts) | Version order, `set-version` and the release notes check. |
+| [session-performance.test.ts](tooling/session-performance.test.ts) | The fixtures, report and comparison of the performance harness. |
+| [session-performance-probe.test.ts](tooling/session-performance-probe.test.ts) | The performance probes compiled into the application. |
+| [skeleton.test.ts](tooling/skeleton.test.ts) | Workspaces, the TypeScript configuration and the project commands. |
+| [test-discovery.test.ts](tooling/test-discovery.test.ts) | Discovery of test files by the Vitest projects. |
 | [test-execution.test.ts](tooling/test-execution.test.ts) | Exact E2E selection, report isolation and desktop build-cache invalidation. |
 
 ### Integration
@@ -78,24 +78,24 @@ evidence. `VERA_TERM05_SKIP_AGENT=1` limits release-artifact smoke to user termi
 `commands.test.ts` runs actual shell acceptance through `support/command-platform-probe.ts`
 (foreground output, Unicode quoting, clean environment, closed stdin, readiness and tree cleanup).
 
-| Fișier | Ce verifică |
+| File | What it checks |
 |---|---|
-| [cli.test.ts](integration/cli.test.ts) | Procesul CLI, argumente, sesiuni, aprobări, ieșire și curățarea resurselor. |
-| [document-cli.test.ts](integration/document-cli.test.ts) | Indexarea și căutarea documentelor prin CLI. |
-| [document-hosts.test.ts](integration/document-hosts.test.ts) | Procesarea PDF și modelele locale pentru desktop/CLI, în layout de surse și de distribuție. |
-| [retrieval.test.ts](integration/retrieval.test.ts) | Evaluarea clasamentelor, întrebărilor fixe, FTS și fuziunii rezultatelor. |
-| [worker-hosts.test.ts](integration/worker-hosts.test.ts) | Worker-ele desktop/CLI, anularea, limitele de timp și înlocuirea worker-elor. |
+| [cli.test.ts](integration/cli.test.ts) | The CLI process, arguments, sessions, approvals, output and resource cleanup. |
+| [document-cli.test.ts](integration/document-cli.test.ts) | Document indexing and search through the CLI. |
+| [document-hosts.test.ts](integration/document-hosts.test.ts) | PDF processing and the local models for desktop and CLI, in the source and the distribution layout. |
+| [retrieval.test.ts](integration/retrieval.test.ts) | Evaluation of rankings, the fixed questions, FTS and result fusion. |
+| [worker-hosts.test.ts](integration/worker-hosts.test.ts) | The desktop and CLI workers, cancellation, time limits and worker replacement. |
 
 ### Packaging
 
-| Fișier | Ce verifică |
+| File | What it checks |
 |---|---|
-| [packaging.test.ts](packaging/packaging.test.ts) | Modele/DLL-uri, payload nativ, resurse, ASAR și limitele pachetelor. |
-| [package-smoke.test.ts](packaging/package-smoke.test.ts) | Uneltele smoke: extragere, identități, observarea rețelei și interpretarea dovezilor. |
-| [prepare-plugins.test.ts](packaging/prepare-plugins.test.ts) | Construirea și verificarea catalogului de pluginuri inclus. |
-| [updates.test.ts](packaging/updates.test.ts) | Configurația feed-ului de actualizare și serverul local folosit la verificări. |
+| [packaging.test.ts](packaging/packaging.test.ts) | Models and DLLs, the native payload, resources, ASAR and the package limits. |
+| [package-smoke.test.ts](packaging/package-smoke.test.ts) | The smoke tools: extraction, identities, network observation and reading of the evidence. |
+| [prepare-plugins.test.ts](packaging/prepare-plugins.test.ts) | Building and checking the bundled plugin catalog. |
+| [updates.test.ts](packaging/updates.test.ts) | The update feed configuration and the local server used in the checks. |
 
-## Rulare
+## Running
 
 ### Execution cost and shared resources
 
@@ -143,8 +143,8 @@ focused profiling receipts for this change are retained in `evaluation-outputs/t
 they measure a selected batch, not the complete suite. Full milestone verification remains governed
 by `02_Tools/verification-policy.md`.
 
-Din `05_Software`, se poate selecta unul dintre proiectele Vitest din `tests/` rulate de `npm test`
-(al patrulea, `plugins`, are comanda proprie de mai jos):
+From `05_Software`, select one of the Vitest projects in `tests/` that `npm test` runs (the fourth,
+`plugins`, has its own command below):
 
 ```powershell
 python ../02_Tools/environment/npmw.py npm test -- --project tooling
@@ -179,18 +179,18 @@ These match the helpers' declared dependency pins. Retain `pip freeze` with run 
 MQTT uses a local fixture broker; Raspberry Pi SSH tests use the local Linux shell, or the default
 WSL distribution on Windows. This is protocol/kernel evidence, not physical Raspberry Pi evidence.
 
-Pentru un singur fișier:
+For a single file:
 
 ```powershell
 python ../02_Tools/environment/npmw.py npx vitest run tests/integration/document-cli.test.ts
 ```
 
-`vitest.config.ts` și configurațiile workspace-urilor înregistrează aceleași reguli de
-izolare a rețelei prin `support/network-setup.ts` și `support/network-guard.ts`.
+`vitest.config.ts` and the workspace configurations register the same network isolation rules
+through `support/network-setup.ts` and `support/network-guard.ts`.
 
-În mod implicit, rezultatele verificărilor sunt afișate în terminal. Rapoartele de
-coverage necesită comanda explicită `npm run test:coverage`. Politica de selecție a
-verificărilor este în [02_Tools/verification-policy.md](../../02_Tools/verification-policy.md).
+By default the results are printed in the terminal. Coverage reports need the explicit command
+`npm run test:coverage`. The policy for choosing checks is in
+[02_Tools/verification-policy.md](../../02_Tools/verification-policy.md).
 
 ## E2E
 
@@ -202,19 +202,18 @@ Linux uses `xvfb-run -a`. Group flags are handled by the runner; other arguments
 python ../02_Tools/environment/npmw.py npm run test:e2e -- tests/e2e/workbench.spec.ts
 ```
 
-Testele care folosesc hook-uri de instrumentare cer un build cu `VERA_TEST=1`;
-scriptul de rulare nu activează singur această opțiune.
+Tests that use instrumentation hooks need a build made with `VERA_TEST=1`. The runner sets
+`VERA_TEST=1` unless the variable is already set.
 
-Build-ul E2E rescrie `src/apps/desktop/out`, folosit și de development. Închide
-instanța development înaintea acestor teste: modulele încă neîncărcate dintr-un
-proces deschis pot ajunge să folosească fișiere din alt build. După teste,
-pentru verificarea manuală, repornește `npm run dev` cu `VERA_TEST=0`, astfel
-încât procesul și toate modulele sale să provină din același build.
+The E2E build rewrites `src/apps/desktop/out`, which development also uses. Close the development
+instance before these tests: modules that an open process has not loaded yet can end up using
+files from another build. After the tests, for manual checking, restart `npm run dev` with
+`VERA_TEST=0`, so that the process and all its modules come from the same build.
 
-Output-ul E2E este un director temporar al sistemului, eliminat la final de
-reporterul [support/cleanup-e2e-output.mjs](support/cleanup-e2e-output.mjs), inclusiv
-după eșecuri. Configurația dezactivează trace/video/capturi automate. Înlocuirea
-reporterelor din CLI poate ocoli reporterul de curățare.
+The E2E output is a temporary system folder. The reporter
+[support/cleanup-e2e-output.mjs](support/cleanup-e2e-output.mjs) removes it at the end, also after
+failures. The configuration turns off automatic traces, videos and screenshots. Replacing the
+reporters from the CLI can bypass the cleanup reporter.
 
 Right-panel visibility coverage:
 - `e2e/right-panel-tabs-ui.spec.ts`: browser Save/Cancel, defaults, filtered keyboard navigation,
@@ -226,56 +225,52 @@ Right-panel visibility coverage:
 
 ## Support
 
-| Fișier | Ce face | Cum este folosit / rezultat |
+| File | What it does | How it is used / result |
 |---|---|---|
-| [test-e2e.mjs](support/test-e2e.mjs) | Compilează desktopul și pornește Playwright. | `npm run test:e2e`; vezi [E2E](#e2e). |
-| [cleanup-e2e-output.mjs](support/cleanup-e2e-output.mjs) | Reporter Playwright care șterge directorul temporar al rulării după scrierea metadatelor finale. | Încărcat de `playwright.config.ts`; nu se execută direct. |
-| [dev-test-server.mjs](support/dev-test-server.mjs) | Compilează main/preload în modul development și pornește serverul Vite, fără o instanță Electron suplimentară. | Folosit de testul HMR din `e2e/shell.spec.ts`, cu `--prepare` sau `--serve` și un `VERA_BUILD_ROOT` izolat. Afișează `VERA_DEV_READY`. |
-| [network-setup.ts](support/network-setup.ts), [network-guard.ts](support/network-guard.ts) | Blochează conexiunile non-loopback în testele Vitest și raportează tentativele. | `setupFiles` în configurațiile Vitest. |
-| [make-demo-pdfs.mjs](support/make-demo-pdfs.mjs) | Generează reproductibil cele trei PDF-uri fictive din Markdown-ul demo-ului. | `npm run make:demo-pdfs`; citește `fixtures/workbenches/demo-board/sources/` și rescrie PDF-urile din `fixtures/workbenches/demo-board/docs/`. |
-| [make-office-fixtures.mjs](support/make-office-fixtures.mjs) | Generează determinist documentele Office din `fixtures/documents/office/`. | `node tests/support/make-office-fixtures.mjs`. |
+| [test-e2e.mjs](support/test-e2e.mjs) | Builds the desktop and starts Playwright. | `npm run test:e2e`; see [E2E](#e2e). |
+| [cleanup-e2e-output.mjs](support/cleanup-e2e-output.mjs) | Playwright reporter that deletes the run's temporary folder after the final metadata is written. | Loaded by `playwright.config.ts`; not run directly. |
+| [dev-test-server.mjs](support/dev-test-server.mjs) | Builds main and preload in development mode and starts the Vite server, without an extra Electron instance. | Used by the HMR test in `e2e/shell.spec.ts`, with `--prepare` or `--serve` and an isolated `VERA_BUILD_ROOT`. Prints `VERA_DEV_READY`. |
+| [network-setup.ts](support/network-setup.ts), [network-guard.ts](support/network-guard.ts) | Block non-loopback connections in the Vitest tests and report the attempts. | `setupFiles` in the Vitest configurations. |
+| [make-demo-pdfs.mjs](support/make-demo-pdfs.mjs) | Generates the three fictional PDFs reproducibly from the demo's Markdown. | `npm run make:demo-pdfs`; reads `fixtures/workbenches/demo-board/sources/` and rewrites the PDFs in `fixtures/workbenches/demo-board/docs/`. |
+| [make-office-fixtures.mjs](support/make-office-fixtures.mjs) | Generates the Office documents in `fixtures/documents/office/` deterministically. | `node tests/support/make-office-fixtures.mjs`. |
 
-PDF-urile și documentele Office fictive sunt date de test versionate. Generarea lor
-poate modifica fișiere urmărite de Git.
+The fictional PDFs and Office documents are versioned test data. Generating them can change files
+tracked by Git.
 
-Serverul renderer-ului pentru specificațiile E2E de browser este comanda de
-dezvoltare [`02_Tools/environment/dev-renderer.mjs`](../../02_Tools/environment/dev-renderer.mjs).
-Bridge-ul simulat al interfeței rămâne în `src/apps/desktop/src/renderer/mocks/`: este
-selectat la compilare prin `VITE_API=mock` și eliminat din build-urile normale, iar
-mutarea lui sub `tests/` ar face ca sursa produsului să importe cod de test.
+The renderer server for the browser E2E specs is the development command
+[`02_Tools/environment/dev-renderer.mjs`](../../02_Tools/environment/dev-renderer.mjs).
+The simulated interface bridge stays in `src/apps/desktop/src/renderer/mocks/`: it is selected at
+build time with `VITE_API=mock` and removed from normal builds, and moving it under `tests/` would
+make the product source import test code.
 
 ## Packaging
 
-Smoke-ul de pachet și proba de actualizare verifică artefacte reale. Sunt diferite de
-testele E2E obișnuite: păstrează rapoarte și loguri în directoarele explicit alese
-pentru diagnosticare sau în directoare temporare.
+The package smoke and the update probe check real artifacts. They differ from the ordinary E2E
+tests: they keep reports and logs in the folders chosen for diagnosis, or in temporary folders.
 
-| Fișier | Ce face | Cum este folosit / rezultat |
+| File | What it does | How it is used / result |
 |---|---|---|
-| [smoke-package.mjs](packaging/smoke/smoke-package.mjs) | Verifică un artefact release deja construit: extragere/instalare, pornire, indexare, PDF, unelte, aprobare și persistență după restart, cu un furnizor simulat local pentru fluxul scriptat. | `npm run smoke:package -- --artifact <path>`; opțional `--scratch <new-directory>`, `--resume <failed-run>`, `--upgrade-proof <report>` (repetabil) și `--windows-evidence <json>`. Nu compilează. Păstrează `smoke-report.json`, extrageri, profiluri izolate și loguri. Poate instala NSIS dacă nu există deja o instalare VERA. |
-| [smoke-calibration.mjs](packaging/smoke/smoke-calibration.mjs) | Calibrează pe Linux observarea conexiunilor unui renderer instrumentat, folosind deliberat un endpoint care trebuie detectat de oracle-ul de rețea. | `node tests/packaging/smoke/smoke-calibration.mjs <built-test-app-directory> <new-scratch>`; cere build separat cu `VERA_TEST=1`, Electron local și `strace`. Generează `calibration-report.json`; nu reprezintă validarea unui release. |
-| [smoke-runtime.mjs](packaging/smoke/smoke-runtime.mjs) | Extrage artefacte, pregătește profiluri și copii demo, pornește/oprește aplicația și colectează identități de execuție și loguri. | Modul intern al smoke-ului și calibrării; include observarea externă Linux cu `strace`. |
-| [smoke-server.mjs](packaging/smoke/smoke-server.mjs) | Furnizor HTTP/SSE local și verificări ale bugetelor de cerere/context pentru fluxul scriptat. | Modul intern, fără CLI propriu. |
-| [smoke-egress.mjs](packaging/smoke/smoke-egress.mjs) | Analizează trace-urile de rețea, inclusiv tentativele eșuate, și verifică destinațiile permise exact. | Modul intern; furnizează și regula pentru endpoint-ul loopback permis. |
-| [smoke-report.mjs](packaging/smoke/smoke-report.mjs) | Parsează argumentele, calculează hash-uri și combină stările funcționale, de rețea și dovezile suplimentare. | Modul intern; interpretează dovezile Windows și raportul probei de actualizare (`--upgrade-proof`), clasificat ca dovadă instrumentată suplimentară WP31. |
-| [probe-upgrade.mjs](packaging/probe-upgrade.mjs) | Construiește build-uri instrumentate și verifică actualizarea: build-ul gestionat (deb) primește doar metadate, SHA-512 este obligatoriu și un hash corupt este refuzat, instalarea așteaptă terminarea aprobării și apoi instalează real, iar build-ul portabil primește un link de release. | `node tests/packaging/probe-upgrade.mjs <owned-scratch>`; `--reuse` reutilizează raportul existent în condițiile verificate de script. Păstrează `upgrade-report.json`, build-uri și loguri. |
+| [smoke-package.mjs](packaging/smoke/smoke-package.mjs) | Checks a release artifact that is already built: extraction or installation, start, indexing, PDF, tools, approval and persistence after restart, with a local simulated provider for the scripted flow. | `npm run smoke:package -- --artifact <path>`; optional `--scratch <new-directory>`, `--resume <failed-run>`, `--upgrade-proof <report>` (repeatable) and `--windows-evidence <json>`. Does not build. Keeps `smoke-report.json`, extractions, isolated profiles and logs. Can run the NSIS installer when no VERA installation exists yet. |
+| [smoke-calibration.mjs](packaging/smoke/smoke-calibration.mjs) | Calibrates, on Linux, the observation of an instrumented renderer's connections, deliberately using an endpoint that the network oracle must detect. | `node tests/packaging/smoke/smoke-calibration.mjs <built-test-app-directory> <new-scratch>`; needs a separate build with `VERA_TEST=1`, a local Electron and `strace`. Writes `calibration-report.json`; it does not validate a release. |
+| [smoke-runtime.mjs](packaging/smoke/smoke-runtime.mjs) | Extracts artifacts, prepares profiles and demo copies, starts and stops the application and collects execution identities and logs. | Internal module of the smoke and the calibration; includes the external Linux observation with `strace`. |
+| [smoke-server.mjs](packaging/smoke/smoke-server.mjs) | Local HTTP/SSE provider and checks of the request and context budgets for the scripted flow. | Internal module, no CLI of its own. |
+| [smoke-egress.mjs](packaging/smoke/smoke-egress.mjs) | Analyses the network traces, failed attempts included, and checks the destinations against the exact allowed ones. | Internal module; also provides the rule for the allowed loopback endpoint. |
+| [smoke-report.mjs](packaging/smoke/smoke-report.mjs) | Parses the arguments, computes hashes and combines the functional and network states with the additional evidence. | Internal module; reads the Windows evidence and the update probe report (`--upgrade-proof`), classified as additional instrumented evidence for WP31. |
+| [probe-upgrade.mjs](packaging/probe-upgrade.mjs) | Builds instrumented builds and checks the update: the managed build (deb) gets metadata only, SHA-512 is required and a corrupted hash is refused, installation waits for the approval to finish and then really installs, and the portable build gets a release link. | `node tests/packaging/probe-upgrade.mjs <owned-scratch>`; `--reuse` reuses the existing report under the conditions the script checks. Keeps `upgrade-report.json`, builds and logs. |
 
-Pentru `smoke-package.mjs`, codurile de ieșire sunt: `0` = PASS complet,
-`1` = eșec, `2` = flux funcțional trecut cu dovada de rețea a platformei încă
-în așteptare. Procedura completă este în
+The exit codes of `smoke-package.mjs` are: `0` = complete PASS, `1` = failure, `2` = functional
+flow passed with the platform's network evidence still pending. The full procedure is in
 [release-package-smoke.md](../../06_SoftwareDocu/release-package-smoke.md).
 
-`probe-upgrade.mjs` este un harness istoric cu versiuni și commit-uri de bază
-fixate în cod, nu un test generic de rulat după fiecare modificare. Necesită
-acele revizii Git, uneltele platformei și un director de lucru propriu; poate
-executa installer-e și dezinstalări pentru identitățile sale de test. Intrările
-sale de build includ `05_Software` și uneltele din `02_Tools/{environment,build,release}`.
-Proba nu verifică migrarea datelor și nici păstrarea setărilor, a istoricului sau a
-recuperării după actualizare; siguranța datelor la upgrade este amânată până la prima
-versiune publică.
+`probe-upgrade.mjs` is a historical harness with base versions and commits fixed in its code, not
+a general test to run after every change. It needs those Git revisions, the platform tools and a
+work folder of its own; it can run installers and uninstallers for its test identities. Its build
+inputs include `05_Software` and the tools in `02_Tools/{environment,build,release}`. The probe
+does not check data migration, nor that settings, history or recovery survive an update; data
+safety on upgrade is deferred until the first public release.
 
-Lansatoarele mediilor de release (VM Linux offline, Windows offline și Windows Sandbox)
-sunt în [02_Tools/release](../../02_Tools/README.md#release).
+The launchers of the release environments (offline Linux VM, offline Windows and Windows Sandbox)
+are in [02_Tools/release](../../02_Tools/README.md#release).
 
 `e2e/bookmarks.spec.ts` covers message/preview bookmark controls in four browser languages and native restart/archive guards.
 

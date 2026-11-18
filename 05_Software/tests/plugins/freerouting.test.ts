@@ -122,6 +122,12 @@ describe("freerouting plugin package", () => {
     expect(manifest.programs["freerouting-tool"]?.uses).toEqual(["java", "freerouting", "kicad-cli"]);
     expect(manifest.requires).toEqual(["kicad-layout"]);
   });
+
+  it("keeps the shared path module byte-identical to kicad-layout's", async () => {
+    const mine = await readFile(new URL("freerouting/scripts/freerouting_support/workspace.py", plugins));
+    const theirs = await readFile(new URL("kicad-layout/scripts/kicad_layout_support/workspace.py", plugins));
+    expect(sha256(mine)).toBe(sha256(theirs));
+  });
 });
 
 describe("freerouting-tool refusals", () => {
@@ -140,6 +146,22 @@ describe("freerouting-tool refusals", () => {
     expect(changed.code).toBe(2);
     expect(changed.doc.problems[0]?.kind).toBe("changed");
     expect(existsSync(join(run, "freerouting"))).toBe(false);
+  });
+
+  it("refuses a run folder inside .vera or on a network path", async () => {
+    const { run } = await handRun(dir, "moved");
+    await mkdir(join(dir, ".vera"), { recursive: true });
+    await cp(run, join(dir, ".vera", "moved"), { recursive: true });
+    const hidden = route(["--run", ".vera/moved"], dir);
+    expect(hidden.code).toBe(2);
+    expect(hidden.doc.problems[0]).toMatchObject({ kind: "run", message: expect.stringContaining(".vera") });
+    expect(existsSync(join(dir, ".vera", "moved", "freerouting"))).toBe(false);
+    const network = route(["--run", "//host.invalid/share/run"], dir);
+    expect(network.code).toBe(2);
+    expect(network.doc.problems[0]).toMatchObject({
+      kind: "run",
+      message: expect.stringContaining("network"),
+    });
   });
 
   // REQ-REL-140facf3

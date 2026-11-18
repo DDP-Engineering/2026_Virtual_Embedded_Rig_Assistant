@@ -1,6 +1,6 @@
 format: 1
 id: renode
-version: 0.3.0
+version: 0.3.1
 license: LicenseRef-PolyForm-Noncommercial-1.0.0
 name: Renode virtual boards
 summary: Run firmware on supported Renode virtual boards, capture the UART and run approved test sets.

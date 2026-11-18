@@ -110,6 +110,21 @@ it("reports source files, manifests and references that are missing or invalid",
   expect(codes(await checkCatalogSource(invalid))).toEqual(["catalog.yaml source"]);
 });
 
+it("reports each plugin of a requires cycle and no plugin outside it", async () => {
+  const root = await source({
+    plugins: {
+      alpha: plugin("alpha", { requires: ["gamma"] }),
+      beta: plugin("beta", { requires: ["alpha"] }),
+      delta: plugin("delta", { requires: ["beta"] }),
+      gamma: plugin("gamma", { requires: ["beta"] }),
+    },
+    packs: [],
+  });
+  const issues = await checkCatalogSource(root);
+  expect(codes(issues)).toEqual(["alpha reference", "beta reference", "gamma reference"]);
+  expect(issues[0]?.detail).toBe("requires gamma, which requires alpha again");
+});
+
 // REQ-SEC-dfc6a26d
 it("reports a program that no rule names", async () => {
   const programs = {

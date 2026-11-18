@@ -163,6 +163,27 @@ it("searches full persisted and pending messages literally and exports their ord
   hub.emit(s.id, { type: "message.delivered", messageIds: ["q"] });
   expect(service.exportSession(s.id).events.at(-1)?.event.type).toBe("message.delivered");
 });
+it("search reads only the rows SQLite keeps and loses no masked, case-folded or escaped hit", async () => {
+  const { service, handle } = await setup({ scrub: (text) => text.replaceAll("sk-key", "[REDACTED]") });
+  const s = service.create();
+  const other = service.create();
+  const hub = new core.SessionHub(handle.db, () => "2026-01-01T00:00:00.000Z");
+  hub.emit(s.id, {
+    type: "message.user",
+    messageId: "u",
+    text: 'Flash "boot\\loader" with sk-key at 4KHz',
+  });
+  hub.emit(other.id, { type: "message.user", messageId: "o", text: "Nothing 100% here" });
+  for (const query of ['"BOOT\\LOADER"', "khz", "4K", "redacted", "with [red", "WITH [REDACTED] AT"])
+    expect(service.search(query).map((r) => r.id)).toEqual([s.id]);
+  expect(service.search("sk-key")).toEqual([]);
+  expect(service.search("100%").map((r) => r.id)).toEqual([other.id]);
+  const events = new core.EventsRepository(handle.db);
+  expect(events.messageTexts(s.id, "flash")).toHaveLength(1);
+  for (const fragment of ["flash", "n_thing", "100_", "%%"])
+    expect(events.messageTexts(other.id, fragment)).toEqual([]);
+  expect(events.messageTexts(other.id, "100%")).toEqual(["Nothing 100% here"]);
+});
 afterEach(async () => {
   vi.restoreAllMocks();
   for (const close of cleanup.splice(0).reverse()) await close();
@@ -708,6 +729,14 @@ it("titles a session from its first message without cutting a surrogate pair", a
   service.send(s.id, `${"x".repeat(59)}\u{1F600} and more`);
   await service.waitIdle(s.id);
   expect(service.list()[0]?.title).toBe("x".repeat(59));
+});
+it("masks a secret in the title made from the first message", async () => {
+  const { service, handle } = await setup({ scrub: (text) => text.replaceAll("sk-key", "[REDACTED]") });
+  const s = service.create();
+  service.send(s.id, `Use sk-key ${"x".repeat(80)}`);
+  await service.waitIdle(s.id);
+  expect(service.list()[0]?.title).toBe(`Use [REDACTED] ${"x".repeat(45)}`);
+  expect(JSON.stringify(handle.db.prepare("SELECT title FROM sessions").all())).not.toContain("sk-key");
 });
 it("replay precedes reentrant live emission and callbacks cannot mutate persisted state", async () => {
   const { service } = await setup();

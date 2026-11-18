@@ -108,6 +108,12 @@ class Run:
         self.connection = connection
         self.document["client"] = {"id": connection.client_id, "protocol": self.profile.protocol, "cleanSession": True}
         self.document["status"] = "incomplete"
+        if self.credential is not None:
+            # The profile, a workbench file, picks the broker; the approved command line shows only the reference.
+            broker = self.document["broker"]
+            self.document["warnings"].append(
+                report.problem("credential-sent", f"The stored credential {self.credential.ref} goes to {broker['host']}:{broker['port']}, the broker the profile names.")
+            )
         self.save()
         connection.open()
         self.document["status"] = "pass"

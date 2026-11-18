@@ -173,7 +173,7 @@ def _open(args: argparse.Namespace, cwd: Path, spelled: Path, started: str) -> d
         raise refuse("path", "--run-id", f"The run folder {run_id} exists already.") from error
     process = None
     try:
-        inputs = candidates.copy(cwd, board, folder / "candidate")
+        inputs, copy_warnings = candidates.copy(cwd, board, folder / "candidate")
         candidate = folder / "candidate" / board.name
         process = kicad.launch(kicad_cli, candidate)
         seconds = kicad.wait_seconds(60)
@@ -203,7 +203,7 @@ def _open(args: argparse.Namespace, cwd: Path, spelled: Path, started: str) -> d
             "drc": {"before": drc.counts(before)},
             "unconnected": {"before": drc.unconnected(before)},
             "previews": previews,
-            "warnings": drc.warnings(before),
+            "warnings": [*copy_warnings, *drc.warnings(before)],
             "artifacts": reports.artifacts(folder, [f"candidate/{board.name}", "board.json", "board-open.json", "drc-before.json", *previews]),
             "ended": reports.now(),
         })

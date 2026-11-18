@@ -10,7 +10,11 @@ export const registerValueSchema = z
     (value) => /^(?:[0-9]+|0[xX][0-9a-fA-F]+)$/.exec(value)?.[0] === value,
     "Use an unsigned decimal or hexadecimal string.",
   );
-const name = z.string().min(1);
+// Generous bounds: real register and field names are a few dozen characters.
+const name = z.string().min(1).max(1024);
+const label = z.string().max(1024);
+const address = z.string().max(256);
+const digits = z.string().max(80);
 const device = z.strictObject({ id: name, revision: name });
 const widthBits = z.union([z.literal(8), z.literal(16), z.literal(32), z.literal(64)]);
 const lineRef = z.string().refine((ref) => !!parseLineRef(ref), "Use a workbench line reference.");
@@ -22,7 +26,7 @@ const field = z.strictObject({
   width: z.number().int().min(1).max(64),
   description: z.string().max(256).optional(),
   enum: z
-    .array(z.strictObject({ value: enumValue, label: z.string() }))
+    .array(z.strictObject({ value: enumValue, label }))
     .max(16)
     .optional(),
 });
@@ -36,7 +40,7 @@ export const decodeRegisterDefinitionSchema = z
         z.strictObject({
           name,
           widthBits,
-          address: z.string().optional(),
+          address: address.optional(),
           sourceRefs: sourceRefs.optional(),
           fields: z.array(field).max(64),
         }),
@@ -98,24 +102,24 @@ export const decodeRegisterResultSchema = z.strictObject({
   device,
   register: name,
   widthBits,
-  address: z.string().optional(),
-  valueHex: z.string(),
-  valueDec: z.string(),
+  address: address.optional(),
+  valueHex: digits,
+  valueDec: digits,
   fields: z
     .array(
       z.strictObject({
         name,
         lsb: z.number().int().nonnegative(),
         width: z.number().int().positive(),
-        valueHex: z.string(),
-        valueDec: z.string(),
-        label: z.string().nullable(),
+        valueHex: digits,
+        valueDec: digits,
+        label: label.nullable(),
         ref: lineRef.nullable(),
       }),
     )
     .max(64),
-  unmappedMaskHex: z.string(),
-  unmappedSetBitsHex: z.string(),
+  unmappedMaskHex: digits,
+  unmappedSetBitsHex: digits,
   source: z.strictObject({
     path: z.string(),
     sha256: z.string().regex(/^[a-f0-9]{64}$/),

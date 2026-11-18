@@ -33,7 +33,7 @@ export interface PartsHttpOptions {
   /** Waits before the single retry of a 429 answer; tests shorten it. */
   sleep?: (ms: number, signal: AbortSignal) => Promise<void>;
 }
-const sleep = (ms: number, signal: AbortSignal) =>
+export const sleep = (ms: number, signal: AbortSignal) =>
   new Promise<void>((resolve, reject) => {
     const timer = setTimeout(() => {
       signal.removeEventListener("abort", stop);

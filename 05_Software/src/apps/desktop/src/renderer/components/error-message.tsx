@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 export function ErrorMessage({ error }: { error: unknown }) {
   const { t } = useTranslation();
   const parsed = veraErrorSchema.safeParse(error);
-  const key = parsed.success ? parsed.data.messageKey : "errors.INTERNAL";
+  const sent = parsed.success ? parsed.data.messageKey : "errors.INTERNAL";
   const options = {
     operation: "",
     endpoint: "",
@@ -42,9 +42,15 @@ export function ErrorMessage({ error }: { error: unknown }) {
     "plugins.catalogError.downgrade": t("plugins.catalogError.downgrade"),
     "plugins.catalogError.download": t("plugins.catalogError.download"),
   };
+  // A key this list does not know still says what kind of error it is, by its code.
+  const key = Object.hasOwn(messages, sent)
+    ? sent
+    : parsed.success
+      ? `errors.${parsed.data.code}`
+      : "errors.INTERNAL";
   return (
-    <p role="alert" data-i18n={Object.hasOwn(messages, key) ? key : "errors.INTERNAL"}>
-      {Object.hasOwn(messages, key) ? messages[key] : messages["errors.INTERNAL"]}
+    <p role="alert" data-i18n={key}>
+      {messages[key]}
     </p>
   );
 }

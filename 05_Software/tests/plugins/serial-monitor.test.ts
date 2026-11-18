@@ -471,6 +471,8 @@ describe("failures", () => {
       ["flash"],
       ["capture", "--port", "COM7", "--duration", "0"],
       ["capture", "--port", "COM7", "--duration", "nan"],
+      ["capture", "--port", "COM7", "--duration", "604801"],
+      ["capture", "--port", "COM7", "--until", "a".repeat(1025)],
       ["capture", "--port", "COM7", "--max-bytes", "-1"],
       ["capture", "--port", "COM7", "--baud", "0"],
       ["capture", "--port", "COM7", "--until", "("],

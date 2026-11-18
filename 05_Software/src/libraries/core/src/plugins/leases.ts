@@ -1,5 +1,6 @@
 import { createHash, randomUUID } from "node:crypto";
 import { chmod, link, lstat, mkdir, readFile, rename, rm, unlink, writeFile } from "node:fs/promises";
+import { uptime } from "node:os";
 import { join, posix, win32 } from "node:path";
 import { veraError } from "@vera/shared";
 
@@ -52,6 +53,8 @@ export interface ResourceLeasesOptions {
   /** Whether a process still runs; a signal-0 probe by default. */
   alive?: (pid: number) => boolean;
   now?: () => Date;
+  /** Seconds since this machine started; the system's count by default. */
+  uptime?: () => number;
   platform?: NodeJS.Platform;
 }
 interface LeaseFile {
@@ -92,6 +95,8 @@ export function leaseFileName(key: string): string {
 }
 const stateFileName = (key: string) => leaseFileName(key).replace(/\.lease$/, ".state");
 const RUN_ID = /^[0-9A-Za-z_-]{1,64}$/;
+/** Slack between the clock and the uptime count when a lease is compared with the machine start. */
+const BOOT_MARGIN_MS = 60_000;
 
 function processAlive(pid: number): boolean {
   try {
@@ -123,6 +128,7 @@ export class ResourceLeases {
   private readonly pid: number;
   private readonly alive: (pid: number) => boolean;
   private readonly now: () => Date;
+  private readonly uptime: () => number;
   private readonly platform: NodeJS.Platform;
   private ready: Promise<void> | undefined;
 
@@ -130,6 +136,7 @@ export class ResourceLeases {
     this.pid = options.pid ?? process.pid;
     this.alive = options.alive ?? processAlive;
     this.now = options.now ?? (() => new Date());
+    this.uptime = options.uptime ?? uptime;
     this.platform = options.platform ?? process.platform;
   }
 
@@ -156,8 +163,9 @@ export class ResourceLeases {
 
   /**
    * Takes every key of the claims, in key order, or none: BUSY `{resource, holder}` when another live process or
-   * run holds one (an unreadable lease counts as held). A lease of a process that no longer runs is removed first,
-   * and when that run could actuate, the key's state becomes unknown (`holder-lost`).
+   * run holds one (an unreadable lease counts as held). A lease of a process that no longer runs, or taken before
+   * this machine started, is removed first, and when that run could actuate, the key's state becomes unknown
+   * (`holder-lost`).
    */
   async acquire(claims: readonly LeaseClaim[], owner: LeaseOwner): Promise<HeldLeases> {
     await this.folder();
@@ -258,7 +266,10 @@ export class ResourceLeases {
       if (!validLease(existing, key)) throw busy(claim.alias, "an unreadable lease");
       // A child run of a plan uses the plan's lease; `drop` never removes it (another run id owns it).
       if (owner.parent !== undefined && existing.runId === owner.parent && existing.pid === this.pid) return;
-      if (this.alive(existing.pid)) throw busy(claim.alias, `process ${existing.pid}`);
+      // A lease from before this machine started has no holder left: its PID now names some other process.
+      const started = this.now().getTime() - this.uptime() * 1000;
+      const beforeStart = Date.parse(String(existing.acquiredAt)) < started - BOOT_MARGIN_MS;
+      if (!beforeStart && this.alive(existing.pid)) throw busy(claim.alias, `process ${existing.pid}`);
       // Stale: moved aside atomically, and restored if what moved is no longer the stale lease.
       const tomb = `${path}.${randomUUID()}.stale`;
       try {

@@ -1,4 +1,4 @@
-import { type ReactNode, useEffect, useId, useRef, useState } from "react";
+import { createContext, type ReactNode, useContext, useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import { api } from "../../api/index.js";
@@ -14,8 +14,24 @@ function externalUrl(value: string) {
   return undefined;
 }
 
+const Scope = createContext<((url: string) => void) | undefined>(undefined);
+/**
+ * Holds the link confirmation above content that is re-created (a streamed message completing),
+ * so an open confirmation outlives the link that asked for it.
+ */
+export function ExternalSourceScope({ children }: { children: ReactNode }) {
+  const [url, setUrl] = useState<string>();
+  return (
+    <Scope.Provider value={setUrl}>
+      {children}
+      {url && <ExternalSourceConfirmation url={url} close={() => setUrl(undefined)} />}
+    </Scope.Provider>
+  );
+}
+
 /** Never navigate the renderer or load remote assets from generated Markdown. */
 export function ExternalSourceLink({ href, children }: { href: string; children: ReactNode }) {
+  const ask = useContext(Scope);
   const [open, setOpen] = useState(false);
   const url = externalUrl(href);
   if (!url) return <span className="markdown-link">{children}</span>;
@@ -26,7 +42,7 @@ export function ExternalSourceLink({ href, children }: { href: string; children:
         className="markdown-link"
         data-web-source={url}
         title={url}
-        onClick={() => setOpen(true)}
+        onClick={() => (ask ? ask(url) : setOpen(true))}
       >
         {children}
       </button>

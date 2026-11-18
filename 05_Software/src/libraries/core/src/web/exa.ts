@@ -57,11 +57,12 @@ export class ExaWebProvider implements WebProvider {
         malformed++;
         continue;
       }
+      const [, title = "", url = "", body = ""] = match;
       try {
-        const content = match[3]!.trim();
+        const content = body.trim();
         sources.push({
-          title: match[1]!.slice(0, 500),
-          url: publicWebUrl(match[2]!),
+          title: title.slice(0, 500),
+          url: publicWebUrl(url),
           content: content.slice(0, 3500),
         });
         truncated ||= content.length > 3500;
@@ -88,12 +89,13 @@ export class ExaWebProvider implements WebProvider {
     const match = /^#\s*([^\n]*)\nURL:\s*(\S+)\s*\n\s*\n([\s\S]*)$/.exec(text.trim());
     if (!match)
       throw new WebFailure("Web provider returned an invalid response. Try a different source URL.");
-    const content = match[3]!.trim();
+    const [, title = "", url = "", body = ""] = match;
+    const content = body.trim();
     return this.result(
       [
         {
-          title: match[1]!.slice(0, 500),
-          url: publicWebUrl(match[2]!),
+          title: title.slice(0, 500),
+          url: publicWebUrl(url),
           content: content.slice(0, args.maxCharacters),
         },
       ],

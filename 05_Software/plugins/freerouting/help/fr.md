@@ -1,6 +1,6 @@
 # Autorouteur Freerouting (local)
 
-L’autorouteur Freerouting permet à l’agent d’autorouter un candidat de carte KiCad 10 sur cet ordinateur avec Freerouting 2.5.0. Il exporte un DSN Specctra à partir du candidat enregistré d’une exécution kicad-layout, le route hors ligne avec un budget fini de passes et de temps en conservant le cuivre existant et verrouillé, et transforme les nouvelles pistes et vias en requête kicad-layout. kicad-layout applique ensuite cette requête au candidat et la vérifie par DRC. La carte ne quitte jamais l’ordinateur, et la carte source n’est modifiée que si vous approuvez l’application d’un candidat conforme.
+L’autorouteur Freerouting permet à l’agent d’autorouter un candidat de carte KiCad 10 sur cet ordinateur avec Freerouting 2.5.0. Il exporte un DSN Specctra à partir du candidat enregistré d’une exécution kicad-layout, le route hors ligne avec un budget fini de passes et de temps en conservant le cuivre existant et verrouillé, et transforme les nouvelles pistes et vias en requête kicad-layout. kicad-layout applique ensuite cette requête au candidat et la vérifie par DRC. Freerouting s’exécute avec ses fonctions en ligne désactivées, et la carte source n’est modifiée que si vous approuvez l’application d’un candidat conforme.
 
 ## Prérequis
 
@@ -33,5 +33,5 @@ L’application des routes au candidat et l’application du candidat à la cart
 - Windows x64 et Linux x64.
 - Un projet avec des règles DRC personnalisées (`.kicad_dru`) est refusé, sauf si vous acceptez de router sans elles ; Freerouting ne peut pas les suivre, et le DRC après la modification les vérifie toujours.
 - Quand le budget de temps est épuisé, Freerouting est arrêté et aucune requête n’est écrite.
-- Freerouting fonctionne entièrement hors ligne : sa vérification de version, ses statistiques d’utilisation, son interface graphique et ses serveurs sont désactivés.
+- Freerouting fonctionne avec sa vérification de version, ses statistiques d’utilisation, son interface graphique et ses serveurs désactivés ; VERA ne bloque pas autrement son accès au réseau.
 - Référence : https://github.com/freerouting/freerouting

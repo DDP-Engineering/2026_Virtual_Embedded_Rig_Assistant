@@ -11,7 +11,11 @@ export function Chatgpt({ disabled }: { disabled: boolean }) {
   const status = useQuery({
     queryKey: ["chatgpt.status"],
     queryFn: () => api.invoke("providers.chatgpt.status", {}),
-    refetchInterval: 1000,
+    // Polled only while a sign-in waits on the browser or a pasted code; otherwise read again when
+    // the card opens or the window is shown.
+    staleTime: 0,
+    refetchInterval: ({ state: { data } }) =>
+      data?.state === "pending" || data?.state === "manual" ? 1000 : false,
   });
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<unknown>();

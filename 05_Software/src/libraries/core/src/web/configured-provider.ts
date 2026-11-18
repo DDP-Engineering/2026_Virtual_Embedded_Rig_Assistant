@@ -145,7 +145,8 @@ export class ConfiguredWebProvider implements WebProvider {
           ? new ExaWebProvider(key ? { apiKey: key } : {})
           : providerId === "tavily"
             ? new TavilyWebProvider(key ? { apiKey: key } : {})
-            : new BraveWebProvider({ apiKey: key! }));
+            : // Brave has no anonymous mode, so the checks above leave a key here.
+              new BraveWebProvider({ apiKey: key ?? "" }));
       const result =
         kind === "search"
           ? await provider.search(args as WebSearchRequest, signal)

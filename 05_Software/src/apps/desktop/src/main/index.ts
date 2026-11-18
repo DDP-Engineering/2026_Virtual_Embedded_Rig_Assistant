@@ -48,6 +48,7 @@ import {
   nativeTheme,
   net,
   protocol,
+  type SaveDialogOptions,
   safeStorage,
   screen,
   session,
@@ -55,7 +56,7 @@ import {
   utilityProcess,
 } from "electron";
 import { getAppInfo } from "./app-info.js";
-import { exportArtifact, publicArtifact, revealArtifact } from "./artifacts.js";
+import { exportArtifact, exportName, publicArtifact, revealArtifact } from "./artifacts.js";
 import { CatalogChecks } from "./catalog-checks.js";
 import { ChatgptAuth } from "./chatgpt-auth.js";
 import { CredentialFile } from "./credentials.js";
@@ -132,13 +133,19 @@ declare const __VERA_PLUGIN_CATALOG_URL__: string;
 declare const __VERA_PLUGIN_CATALOG_KEY__: string;
 declare const __VERA_SIGNED__: boolean;
 app.setName(__VERA_TEST__ ? "VERA Test" : "VERA");
-// Datasheet CDNs can reject Chromium HTTP/2 streams. Keep its anonymous download transport on HTTP/1.1.
+// Datasheet CDNs can reject Chromium HTTP/2 streams, so downloads stay on HTTP/1.1. Chromium offers the
+// switch only for the whole process: catalog, plugin program and update requests lose HTTP/2 multiplexing
+// too, which costs a little speed and no function. Model calls use Node's network stack, not this one.
 app.commandLine.appendSwitch("disable-http2");
 installSessionPolicy(app);
 // pi-ai's public standalone entrypoint makes its variable OAuth imports available in bundles.
 registerBunOAuthFlows();
 const userData = app.commandLine.getSwitchValue("user-data-dir");
 const dataLocations = configureDataLocations(app, process.execPath, userData);
+// Electron keys the lock on the user data folder, so it follows the data locations. A second instance
+// leaves here, before it opens the first one's stores, key files, workers or native modules.
+const firstInstance = app.requestSingleInstanceLock();
+if (!firstInstance) app.exit(0);
 
 protocol.registerSchemesAsPrivileged([
   { scheme: "vera", privileges: { standard: true, secure: true, supportFetchAPI: true } },
@@ -422,6 +429,7 @@ function interfaceLanguage(): HelpLanguage {
     : (helpLanguages.find((code) => app.getLocale().startsWith(code)) ?? "en");
 }
 const sessions = new SessionsHost({
+  log: (message) => logger.log("error", "agent.turn.failed", { message }),
   terminals: (workbenchId) => terminals.reader(workbenchId),
   help: { app: help, language: interfaceLanguage },
   pluginBuilder: plugins,
@@ -517,6 +525,13 @@ const runPresentation = new RunPresentation({
   scrub: (text) => credentials.scrub(text),
   runner: programs,
 });
+/** A native save dialog. Exports open it outside the session queue: held inside, an open dialog stalls every session call and the quit drain. */
+async function chooseSavePath(options: SaveDialogOptions): Promise<string | null> {
+  if (__VERA_TEST__ && process.env.VERA_TEST_DIALOG_PATH) return process.env.VERA_TEST_DIALOG_PATH;
+  if (!window || window.isDestroyed()) return null;
+  const result = await dialog.showSaveDialog(window, options);
+  return result.canceled ? null : (result.filePath ?? null);
+}
 /** `id` limits the forgotten program resolutions to that plugin; found programs stay stored by file stamp. */
 function pluginsChanged(id?: string): void {
   provisioner.invalidate(id);
@@ -970,22 +985,22 @@ ipcMain.handle(
         ),
       "artifacts.reveal": ({ artifactId }) =>
         sessions.run((s) => revealArtifact(s, artifactId, (path) => shell.showItemInFolder(path))),
-      "artifacts.export": ({ artifactId }) =>
-        sessions.run((s) =>
-          exportArtifact(s, artifactId, {
+      "artifacts.export": async ({ artifactId }) => {
+        const owner = workbench.getSnapshot().config.id;
+        const name = await sessions.run((s) => exportName(s, artifactId, (text) => credentials.scrub(text)));
+        const path = await chooseSavePath({ defaultPath: name });
+        if (path === null) return { exported: false };
+        return sessions.run((s) => {
+          if (workbench.getSnapshot().config.id !== owner) throw veraError("CONFLICT");
+          return exportArtifact(s, artifactId, {
             masking: () => maskingFor(workbench.getSnapshot().config, "exports"),
             root: workbench.getSnapshot().folder,
-            choose: async (name) => {
-              if (__VERA_TEST__ && process.env.VERA_TEST_DIALOG_PATH)
-                return process.env.VERA_TEST_DIALOG_PATH;
-              if (!window || window.isDestroyed()) return null;
-              const result = await dialog.showSaveDialog(window, { defaultPath: name });
-              return result.canceled ? null : (result.filePath ?? null);
-            },
-            write: (path, content) => createFileAccess(systemClock).writeAtomic(path, content),
+            choose: async () => path,
+            write: (target, content) => createFileAccess(systemClock).writeAtomic(target, content),
             scrub: (text) => credentials.scrub(text),
-          }),
-        ),
+          });
+        });
+      },
       "changes.list": ({ sessionId }) =>
         sessions.run((s) => s.listChanges(sessionId).map((c) => ({ ...c, path: credentials.scrub(c.path) }))),
       "changes.get": ({ changeId }) =>
@@ -1040,25 +1055,28 @@ ipcMain.handle(
           if (workbenchId && workbench.getSnapshot().config.id !== workbenchId) throw veraError("CONFLICT");
           return s.search(query).map((item) => sanitizeSessionSummary(item, sessionContent));
         }),
-      "session.export": ({ sessionId, format }) =>
-        sessions.run((s) =>
-          exportSession(s, sessionId, format, {
+      "session.export": async ({ sessionId, format }) => {
+        const owner = workbench.getSnapshot().config.id;
+        // An unknown session is refused before the dialog opens.
+        await sessions.run((s) => {
+          s.get(sessionId);
+        });
+        const path = await chooseSavePath({
+          defaultPath: `${sessionId}.${format}`,
+          filters: [{ name: format === "md" ? "Markdown" : "JSON", extensions: [format] }],
+        });
+        if (path === null) return { exported: false };
+        return sessions.run((s) => {
+          if (workbench.getSnapshot().config.id !== owner) throw veraError("CONFLICT");
+          return exportSession(s, sessionId, format, {
             masking: () => maskingFor(workbench.getSnapshot().config, "exports"),
             root: workbench.getSnapshot().folder,
-            choose: async (name) => {
-              if (__VERA_TEST__ && process.env.VERA_TEST_DIALOG_PATH)
-                return process.env.VERA_TEST_DIALOG_PATH;
-              if (!window || window.isDestroyed()) return null;
-              const result = await dialog.showSaveDialog(window, {
-                defaultPath: name,
-                filters: [{ name: format === "md" ? "Markdown" : "JSON", extensions: [format] }],
-              });
-              return result.canceled ? null : (result.filePath ?? null);
-            },
-            write: (path, content) => createFileAccess(systemClock).writeAtomic(path, content),
+            choose: async () => path,
+            write: (target, content) => createFileAccess(systemClock).writeAtomic(target, content),
             scrub: (text) => credentials.scrub(text),
-          }),
-        ),
+          });
+        });
+      },
       "session.create": ({ modelRef, mode, workbenchId, reuseEmpty }) =>
         sessions.run((s) => {
           if (workbenchId && workbench.getSnapshot().config.id !== workbenchId) throw veraError("CONFLICT");
@@ -1358,7 +1376,7 @@ async function createWindow(state: WindowState): Promise<void> {
   }
 }
 
-if (!app.requestSingleInstanceLock()) {
+if (!firstInstance) {
   app.quit();
 } else {
   let draining = false;

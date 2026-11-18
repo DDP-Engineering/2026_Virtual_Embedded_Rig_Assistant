@@ -73,6 +73,8 @@ export class EmbeddingHost implements EmbeddingPort {
     private readonly models: string,
     model: unknown,
     private readonly deadlineMs = 120000,
+    /** How long release waits for a busy worker before returning to its caller. */
+    private readonly releaseWaitMs = 5000,
   ) {
     this.model = modelSchema.parse(model);
     if (!Number.isFinite(deadlineMs) || deadlineMs <= 0) throw Error("Invalid embedding deadline.");
@@ -228,7 +230,7 @@ export class EmbeddingHost implements EmbeddingPort {
   }
   /**
    * Terminates an idle worker now and a busy one once its current call replies (or after the
-   * deadline): ONNX Runtime brings the whole process down (0xE06D7363) when its worker thread is
+   * deadline; release stops waiting for it sooner): ONNX Runtime brings the whole process down (0xE06D7363) when its worker thread is
    * terminated inside a native call, for example while switching workbenches during indexing.
    */
   private retire(slot: Slot, worker: Worker): void {
@@ -257,8 +259,16 @@ export class EmbeddingHost implements EmbeddingPort {
     slot.closed = true;
     this.slots.delete(root);
     if (slot.worker) this.retire(slot, slot.worker);
-    await Promise.all(slot.retiring);
-    await slot.tail.catch(() => {});
+    // A workbench switch or close does not wait out a long native call. The worker is not
+    // terminated early (see retire): it still stops after its reply, without a caller waiting.
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    await Promise.race([
+      Promise.all(slot.retiring).then(() => slot.tail.catch(() => {})),
+      new Promise<void>((resolve) => {
+        timer = setTimeout(resolve, this.releaseWaitMs);
+      }),
+    ]);
+    clearTimeout(timer);
   }
   cached(root: string, epoch: string): boolean {
     return this.slots.get(root)?.epoch === epoch;

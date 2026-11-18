@@ -93,6 +93,8 @@ export interface SessionHost {
   /** Host ownership is checked before each accepted mutation and event persistence. */
   assertWritable?: () => void;
   scrub?: (text: string) => string;
+  /** Receives swallowed turn failures, already scrubbed. */
+  log?: (message: string) => void;
   masking?: (area: MaskingArea) => boolean;
   knownSecrets?: () => readonly string[];
   disabledTools?: readonly string[];
@@ -249,8 +251,15 @@ export class SessionService {
     const needle = parsed.data.toLowerCase();
     const matches = (text: string) => this.maskContent("agent", text).toLowerCase().includes(needle);
     const events = new EventsRepository(this.host.db);
+    // SQLite narrows the rows on the stored text only when that cannot lose a hit: an ASCII needle
+    // (other case folding is JavaScript's), and one that cannot match inside or across the
+    // "[REDACTED]" that masking puts in place of a stored secret.
+    const masked = !!this.host.scrub && this.host.masking?.("agent") !== false;
+    const narrow =
+      /^[\x20-\x7e]+$/.test(needle) && !(masked && (/[[\]]/.test(needle) || "redacted".includes(needle)));
     return this.list().filter(
-      (session) => matches(session.title) || events.messageTexts(session.id).some(matches),
+      (session) =>
+        matches(session.title) || events.messageTexts(session.id, narrow ? needle : undefined).some(matches),
     );
   }
   /** Synchronous read of one workbench-owned durable archival view. */
@@ -848,6 +857,7 @@ export class SessionService {
     const gateway = timedGateway(this.host.gateway, this.host.noOutputTimeoutMs ?? 300000);
     const self = this;
     const runtimeHost: RuntimeHost = {
+      log: (message) => this.host.log?.(this.host.scrub?.(message) ?? message),
       steering: () =>
         this.hub
           .get(id)
@@ -1102,8 +1112,11 @@ export class SessionService {
       if (event.type === "message.user") {
         this.sync(id, transcript);
         if (!this.row(id).title) {
-          // The cut must not leave half of a surrogate pair at the end.
-          const title = event.text.slice(0, 60).replace(/[\uD800-\uDBFF]$/, "");
+          // Masked before the cut, so a secret pasted into the chat never reaches the title, not even
+          // in part. The cut must not leave half of a surrogate pair at the end.
+          const title = this.maskContent("agent", event.text)
+            .slice(0, 60)
+            .replace(/[\uD800-\uDBFF]$/, "");
           this.host.db.prepare("UPDATE sessions SET title=? WHERE id=?").run(title, id);
         }
       }

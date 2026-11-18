@@ -1,5 +1,8 @@
 import { Socket } from "node:net";
 
+// Limit: the guard patches fetch and sockets of this Node process only. Child processes (the Python plugin
+// helpers, uv, Git, a CLI child without the guard preload) are not covered; they must be given loopback
+// endpoints by the test that starts them.
 let installed = false;
 const attempts: string[] = [];
 const loopback = (host: string) =>

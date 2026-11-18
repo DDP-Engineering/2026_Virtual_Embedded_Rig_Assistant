@@ -196,7 +196,10 @@ export default function PdfViewer({
     setError(false);
     setPdf(undefined);
     setSizes(undefined);
-    const data = Uint8Array.from(atob(content.data), (char) => char.charCodeAt(0));
+    // A plain loop: Uint8Array.from with a mapper walks the string through an iterator, far slower.
+    const binary = atob(content.data);
+    const data = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) data[i] = binary.charCodeAt(i);
     const base = new URL("./pdfjs/", document.baseURI).href;
     const loading = getDocument({
       data,
@@ -212,16 +215,22 @@ export default function PdfViewer({
     void loading.promise
       .then(async (doc) => {
         if (doc.numPages !== count) throw Error("Page count mismatch");
-        // Every page's box is known up front, so the scroll covers the whole document.
-        const all = await Promise.all(
-          Array.from({ length: count }, async (_, i) => {
-            const viewport = (await doc.getPage(i + 1)).getViewport({ scale: 1 });
-            return { width: viewport.width, height: viewport.height };
-          }),
-        );
+        const size = async (number: number): Promise<Size> => {
+          const viewport = (await doc.getPage(number)).getViewport({ scale: 1 });
+          return { width: viewport.width, height: viewport.height };
+        };
+        // Every page has a box from the start, so the scroll covers the whole document. The first
+        // page's box stands in for all, so a long document shows at once; the real boxes follow
+        // one page at a time and replace the stand-in only when a page differs.
+        const first = await size(1);
         if (!alive) return;
         setPdf(doc);
-        setSizes(all);
+        setSizes(Array.from({ length: count }, () => first));
+        const all = [first];
+        for (let number = 2; number <= count && alive; number++)
+          all.push(await size(number).catch(() => first));
+        if (alive && all.some((page) => page.width !== first.width || page.height !== first.height))
+          setSizes(all);
       })
       .catch(() => {
         if (alive) setError(true);

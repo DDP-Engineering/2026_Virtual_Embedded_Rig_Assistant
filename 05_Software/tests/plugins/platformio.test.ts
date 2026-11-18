@@ -47,6 +47,7 @@ const fakePio = join(standIns, "fake_pio.py");
 const renodeFirmware = fileURLToPath(new URL("../fixtures/renode/firmware/", import.meta.url));
 const windows = process.platform === "win32";
 const helperPython = process.env.VERA_PIO_PYTHON;
+const NO_HELPER = "no Python with the helper's pinned dependencies (set VERA_PIO_PYTHON to such a venv)";
 const realRoot = process.env.VERA_PIO_REAL;
 const realGcc = process.env.VERA_PIO_REAL_GCC;
 const realRenode = process.env.VERA_RENODE_REAL;
@@ -1071,6 +1072,8 @@ describe.skipIf(!helperPython)("platformio helper against stand-ins (offline)", 
       protocol: "stlink",
       physical: "unknown",
       probe: { alias: "stlink-a" },
+      // This run carries no VERA_REGISTRY_SHA256, so the registry was read unchecked.
+      registryVerified: false,
     });
     const call = calls().find((c) => c.tool === "upload") as Json;
     expect(call.argv).toEqual(["run", "-d", project, "-e", "disco", "-t", "nobuild", "-t", "upload"]);
@@ -1192,6 +1195,10 @@ describe.skipIf(!helperPython)("platformio helper against stand-ins (offline)", 
     );
     expect(sha256(readFileSync(join(project, "src", "main.c")))).toBe(sources);
   });
+});
+
+it.skipIf(helperPython)(`skips the helper tests: ${NO_HELPER}`, () => {
+  expect(helperPython).toBeUndefined();
 });
 
 function rmSyncCore(part?: string) {
@@ -1347,7 +1354,7 @@ describe.skipIf(!helperPython || !realRoot)(
       },
     );
 
-    it("builds the device test firmware only, and with the real Renode takes the verdict from its UART (L08-C/G)", async () => {
+    it("builds the device test firmware only, and with the real Renode takes the verdict from its UART (L08-C/G)", async (ctx) => {
       const built = real([
         "test-device",
         "--request",
@@ -1357,7 +1364,7 @@ describe.skipIf(!helperPython || !realRoot)(
         "incomplete",
         "build-only",
       ]);
-      if (!realRenode) return;
+      if (!realRenode) ctx.skip("built only: the Renode run needs VERA_RENODE_REAL");
       for (const [suite, expected] of [
         ["test_lines", "pass"],
         ["test_fail", "fail"],

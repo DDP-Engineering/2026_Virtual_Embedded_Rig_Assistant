@@ -19,7 +19,8 @@ from .errors import Refused
 LIMIT_BYTES = 256 * 1024
 ALIAS = re.compile(r"[a-z][a-z0-9-]{0,31}")
 # The serial reaches STM32_Programmer_CLI as `sn=<serial>` inside one --connect argument: no space or separator.
-PROBE = re.compile(r"([0-9A-Fa-f]{4}):([0-9A-Fa-f]{4}):([A-Za-z0-9._-]{1,64})")
+# It is also west's `--dev-id` value, an argument of its own: it starts with a letter or digit, never a dash.
+PROBE = re.compile(r"([0-9A-Fa-f]{4}):([0-9A-Fa-f]{4}):([A-Za-z0-9][A-Za-z0-9._-]{0,63})")
 
 
 @dataclass(frozen=True)
@@ -50,7 +51,7 @@ def read(alias: str) -> tuple[Probe, str]:
         raise Refused("request", "lab/resources.json is larger than 256 KiB.")
     digest = hashlib.sha256(data).hexdigest()
     approved = os.environ.get("VERA_REGISTRY_SHA256")
-    if approved and approved != digest:
+    if approved and approved.lower() != digest:
         raise Refused("request", "lab/resources.json changed after the approval; ask again.")
     try:
         document = json.loads(data.decode("utf-8"))
@@ -74,7 +75,7 @@ def _probe(entry: dict[str, object]) -> Probe:
     resource, profile = entry.get("resource"), entry.get("profile")
     found = PROBE.fullmatch(resource) if isinstance(resource, str) else None
     if not found:
-        raise Refused("request", f"lab/resources.json entry {alias} needs a resource VID:PID:SERIAL with the probe's serial.")
+        raise Refused("request", f"lab/resources.json entry {alias} needs a resource VID:PID:SERIAL with the probe's serial, which starts with a letter or digit.")
     if not isinstance(profile, str):
         raise Refused("request", f"lab/resources.json entry {alias} names no profile.")
     return Probe(alias, str(resource), found.group(1).lower(), found.group(2).lower(), found.group(3), profile)

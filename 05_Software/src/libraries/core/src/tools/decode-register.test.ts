@@ -156,6 +156,7 @@ it("rejects invalid strict arguments and unsigned value syntax", async () => {
   for (const overrides of [
     { extra: true },
     { definitionPath: "a".repeat(257) },
+    { register: "R".repeat(1025) },
     { expectedSha256: "x" },
     { device: { id: "x", extra: true } },
   ])
@@ -185,6 +186,8 @@ it("rejects malformed bounded definitions and duplicate keys at every level", as
       { name: "X", lsb: 1, width: 1 },
     ],
     [{ name: "X", lsb: 0, width: 1, description: "x".repeat(257) }],
+    [{ name: "X".repeat(1025), lsb: 0, width: 1 }],
+    [{ name: "X", lsb: 0, width: 1, enum: [{ value: 0, label: "x".repeat(1025) }] }],
     [
       {
         name: "X",
@@ -213,6 +216,7 @@ it("rejects malformed bounded definitions and duplicate keys at every level", as
     registers: Array.from({ length: 513 }, (_, i) => ({ ...d.registers[0], name: `R${i}` })),
   }));
   await mutate((d) => ({ ...d, registers: [{ ...d.registers[0], widthBits: 24 }] }));
+  await mutate((d) => ({ ...d, registers: [{ ...d.registers[0], address: "0".repeat(257) }] }));
   for (const text of [
     '{"schemaVersion":1,"schemaVersion":1}',
     '{"device":{"id":"x","id":"y"}}',

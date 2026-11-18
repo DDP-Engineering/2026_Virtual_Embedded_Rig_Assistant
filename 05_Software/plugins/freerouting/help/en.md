@@ -1,6 +1,6 @@
 # Freerouting autorouter (local)
 
-Freerouting autorouter lets the agent autoroute a KiCad 10 board candidate on this computer with Freerouting 2.5.0. It exports a Specctra DSN from the saved candidate of a kicad-layout run, routes it offline with a finite pass and time budget while keeping existing and locked copper, and turns the new tracks and vias into a kicad-layout request. kicad-layout then applies that request to the candidate and checks it with DRC. The board never leaves the computer, and the source board changes only when you approve applying a passing candidate.
+Freerouting autorouter lets the agent autoroute a KiCad 10 board candidate on this computer with Freerouting 2.5.0. It exports a Specctra DSN from the saved candidate of a kicad-layout run, routes it offline with a finite pass and time budget while keeping existing and locked copper, and turns the new tracks and vias into a kicad-layout request. kicad-layout then applies that request to the candidate and checks it with DRC. Freerouting runs with its online features switched off, and the source board changes only when you approve applying a passing candidate.
 
 ## What it needs
 
@@ -33,5 +33,5 @@ Applying the routes to the candidate and applying the candidate to the source bo
 - Windows x64 and Linux x64.
 - A project with custom DRC rules (`.kicad_dru`) is refused unless you accept routing without them; Freerouting cannot follow them, and DRC after the edit still checks them.
 - When the time budget runs out, Freerouting is stopped and no request is written.
-- Freerouting runs fully offline: its version check, analytics, GUI and servers are off.
+- Freerouting runs with its version check, analytics, GUI and servers switched off; VERA does not otherwise block its network access.
 - Reference: https://github.com/freerouting/freerouting

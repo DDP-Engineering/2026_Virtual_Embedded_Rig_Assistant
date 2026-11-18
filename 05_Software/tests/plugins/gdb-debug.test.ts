@@ -850,22 +850,24 @@ describe("gdb-debug sessions against the GDB and OpenOCD stand-ins (offline evid
   });
 
   it("refuses a registry that differs from the approved one", () => {
-    const run = debug(
-      [
-        "snapshot",
-        "--probe",
-        "stlink1",
-        "--elf",
-        "build/app.elf",
-        "--firmware-effect",
-        "none",
-        "--on-exit",
-        "halted",
-      ],
-      { VERA_REGISTRY_SHA256: "0".repeat(64) },
-    );
+    const args = [
+      "snapshot",
+      "--probe",
+      "stlink1",
+      "--elf",
+      "build/app.elf",
+      "--firmware-effect",
+      "none",
+      "--on-exit",
+      "halted",
+    ];
+    const run = debug(args, { VERA_REGISTRY_SHA256: "0".repeat(64) });
     expect(run.code).toBe(2);
     expect(run.json.problems[0].message).toMatch(/changed after the approval/);
+    // The approved hash is accepted in either letter case.
+    const approved = sha256(readFileSync(paths().registry)).toUpperCase();
+    const same = debug(args, { VERA_REGISTRY_SHA256: approved });
+    expect(same.code, JSON.stringify(same.json.problems)).toBe(0);
   });
 
   it("stops at the requested hardware breakpoint and removes it (L04-C, REQ-FUNC-e539c51f)", () => {

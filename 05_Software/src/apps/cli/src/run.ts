@@ -48,7 +48,7 @@ export async function runTurn(
   options: RunOptions,
   logger: ConsoleLogger,
   signal: AbortSignal,
-  key: string | undefined = process.env.OPENAI_API_KEY,
+  key?: string,
 ): Promise<number> {
   const resources: (() => Promise<unknown>)[] = [];
   let off: (() => void) | undefined;
@@ -254,6 +254,7 @@ export async function runTurn(
       model: () => model,
       assertWritable: () => workbench.assertSessionWritable(),
       scrub: (text) => logger.scrub(text),
+      log: (message) => logger.log("error", message),
       knownSecrets: () => logger.knownSecrets(),
       masking: (area) =>
         createMaskingResolver(() => settings.get().settings)(workbench.getSnapshot().config, area),

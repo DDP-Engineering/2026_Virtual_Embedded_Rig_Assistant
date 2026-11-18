@@ -1378,7 +1378,7 @@ ${help.slice(help.indexOf("A current is one of"))}`;
       expect(lying.doc?.errors?.[0]?.code, lying.stdout).toBe("path");
     });
 
-    it("refuses a request file whose name is not valid Unicode text (REQ-SEC-6c075f30)", async () => {
+    it("refuses a request file whose name is not valid Unicode text (REQ-SEC-6c075f30)", async (ctx) => {
       const dir = await folder();
       const helper = spawnSync(python, [join(fixtures, "odd_name.py"), script], {
         cwd: dir,
@@ -1392,7 +1392,7 @@ ${help.slice(help.indexOf("A current is one of"))}`;
         folders: string[];
       };
       // A file system that cannot hold such a name has nothing to refuse.
-      if (outcome.skipped) return;
+      if (outcome.skipped) ctx.skip(`the file system cannot hold such a name: ${outcome.skipped}`);
       for (const run of [outcome.dc, outcome.report]) {
         expect(run.code, run.stderr).toBe(2);
         expect(run.stdout.length).toBeLessThanOrEqual(STDOUT_LIMIT);

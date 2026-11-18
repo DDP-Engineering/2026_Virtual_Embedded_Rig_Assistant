@@ -73,7 +73,10 @@ export function Composer({
   const subscription = useQuery({
     queryKey: ["chatgpt.status"],
     queryFn: () => api.invoke("providers.chatgpt.status", {}),
-    refetchInterval: 1000,
+    // Same query as the sign-in card: polled only while a sign-in is in progress.
+    staleTime: 0,
+    refetchInterval: ({ state: { data } }) =>
+      data?.state === "pending" || data?.state === "manual" ? 1000 : false,
   });
   const subscriptionModels = useQuery({
     queryKey: ["chatgpt.models"],

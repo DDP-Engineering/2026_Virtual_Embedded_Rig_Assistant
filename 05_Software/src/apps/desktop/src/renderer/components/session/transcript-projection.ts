@@ -63,6 +63,8 @@ export function transcriptRows(state: SessionState, detail: ChatDetail): Row[] {
   return rows;
 }
 
+const LIST_ITEM = /^ {0,3}(?:[-*+]|\d{1,9}[.)])\s/;
+const INDENTED = /^(?: {2,}|\t)\S/;
 /**
  * Streaming text split at blank lines outside code fences (PERF-04). A completed block keeps its
  * string, so its memoized Markdown is not parsed again while the last block grows.
@@ -71,13 +73,27 @@ export function streamingBlocks(text: string): string[] {
   const blocks: string[] = [];
   let current: string[] = [];
   let fenced = false;
+  let list = false;
+  let gap = false;
   for (const line of text.split("\n")) {
     if (/^ {0,3}(```|~~~)/.test(line)) fenced = !fenced;
-    if (fenced || line.trim()) current.push(line);
-    else if (current.length) {
-      blocks.push(current.join("\n"));
-      current = [];
+    if (!fenced && !line.trim()) {
+      gap = current.length > 0;
+      continue;
     }
+    if (gap) {
+      // A list goes on past a blank line; split there and it renders as several lists, then
+      // reflows into one when the message completes.
+      if (list && (LIST_ITEM.test(line) || INDENTED.test(line))) current.push("");
+      else {
+        blocks.push(current.join("\n"));
+        current = [];
+        list = false;
+      }
+      gap = false;
+    }
+    list ||= LIST_ITEM.test(line);
+    current.push(line);
   }
   if (current.length) blocks.push(current.join("\n"));
   return blocks;

@@ -61,9 +61,11 @@ export function checkReleaseNotes(file, document) {
 
 /** True when CHANGELOG.md has uncommitted or staged changes but release-notes/ has none. */
 function changelogWithoutNotes(root) {
+  // Without Git (stdout is null) nothing counts as changed: the notes themselves are still checked.
   const changed = (path) =>
-    spawnSync("git", ["status", "--porcelain", "--", path], { cwd: root, encoding: "utf8" }).stdout.trim() !==
-    "";
+    (
+      spawnSync("git", ["status", "--porcelain", "--", path], { cwd: root, encoding: "utf8" }).stdout ?? ""
+    ).trim() !== "";
   return changed("../CHANGELOG.md") && !changed("release-notes");
 }
 

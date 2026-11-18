@@ -43,8 +43,12 @@ KEYS = {
     "memory", "uarts", "console", "peripherals", "stimuli", "observables", "unsupported", "slice",
 }
 # Constructs a workbench .repl may not contain: host-binding objects, scripts, monitor commands, host paths.
+# A word counts where it stands alone or as one word of a CamelCase name (`ServerSocketTerminal`, `Backends`), not
+# inside an ordinary word such as "empty" or "description".
 DENIED_WORDS = re.compile(
-    r"python|script|socket|pty|tap|switch|hostnetwork|usbip|gdb|terminal|backend|filename|filepath", re.IGNORECASE
+    r"(?:(?<![A-Za-z])|(?<=[a-z])(?=[A-Z]))"
+    r"(?i:python|script|socket|pty|tap|switch|hostnetwork|usbip|gdb|terminal|backend|filename|filepath)"
+    r"(?:e?s)?(?![a-z])"
 )
 QUOTED = re.compile(r'"([^"\\]*)"')
 # `@ sysbus <...>`, `@ gpioPortA`, `@ none` and `@ { ... }` register a peripheral; nothing else may follow an @.

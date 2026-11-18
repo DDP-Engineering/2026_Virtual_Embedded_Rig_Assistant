@@ -2,12 +2,16 @@
 # also runs); copy it to .github/workflows/catalog.yml there. The catalog source sits under plugins/.
 #
 # Open until the hosting is decided (PLG-07 open items): the VERA repository URL the CLI is built from
-# (repository variable VERA_REPOSITORY), and the step that publishes the release files.
+# (repository variable VERA_REPOSITORY) and the release tag to build it at (add `ref:` to its checkout), and the step
+# that publishes the release files.
 name: catalog
 on:
   pull_request:
   push:
     tags: ["v*"]
+# Checking and building only read the repositories; the publish step, once added, needs contents: write on its job.
+permissions:
+  contents: read
 jobs:
   catalog:
     runs-on: ubuntu-latest

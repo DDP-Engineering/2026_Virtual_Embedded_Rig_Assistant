@@ -923,6 +923,19 @@ describe("parts search review cases", () => {
     await expect(failing.provider.search({ query: "fs" }, signal())).rejects.toThrow("adapter defect");
     expect(sibling?.aborted).toBe(true);
   });
+  it("spaces parallel searches of one supplier and never waits for a lone search", async () => {
+    const waits: number[] = [];
+    const parts = new ConfiguredPartsProvider({
+      config: () => ({ parts: settings({ mouser: true }), webEnabled: true }),
+      getCredential: async () => ({ secret: KEY }),
+      http: { sleep: async (ms) => void waits.push(ms) },
+      adapters: { mouser: { search: async () => ({ items: [], partial: false, errors: [] }) } },
+    });
+    // The first of the three starts at once; the other two queue 250 ms apart.
+    await Promise.all([1, 2, 3].map(() => parts.search({ query: "fs" }, signal())));
+    expect(waits).toHaveLength(2);
+    expect(Math.max(...waits)).toBeLessThanOrEqual(500);
+  });
   it("fits a large result under the tool cap and keeps devices of every supplier", () => {
     const offer = (supplier: "mouser" | "rutronik", index: number) => ({
       supplier,

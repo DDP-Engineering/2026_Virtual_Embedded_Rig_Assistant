@@ -24,8 +24,8 @@ The program `serial` (plugin serial-monitor) has three commands. Run it only thr
      `--reset` pulses RTS with DTR released, which restarts ESP32-style boards into their application.
    - Without `--reset` opening the port does not restart the board, so a capture shows only what the
      running firmware prints from now on.
-   - Options: `--baud` (default 115200), `--duration` seconds (default 10), `--until` a Python regular
-     expression searched in each line, `--max-bytes` (default 1048576).
+   - Options: `--baud` (default 115200), `--duration` seconds (default 10, at most 604800), `--until` a Python regular
+     expression of at most 1024 characters searched in each line, `--max-bytes` (default 1048576).
    - Long or open-ended captures: start them with `background: true`, then read with `program_output`
      (`until`, `waitMs`) and end them with `program_stop`. While a background capture holds a port, VERA
      refuses any other run naming that port (BUSY); stop the capture first.

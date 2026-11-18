@@ -65,7 +65,8 @@ def summarize(runs: list[dict[str, Any]], title: str | None, run_id: str, starte
             "runId": run_id, "started": started, "title": title or "Validation report", "verdict": verdict, "status": verdict,
             "runs": runs,
             "note": "A run that is not a compare run counts as incomplete; the verdict is fail when a run fails, else "
-                    "incomplete when one is incomplete, else pass."}
+                    "incomplete when one is incomplete, else pass. Each run folder is checked against the hashes in "
+                    "its own result.json and nothing is signed: the verdict is as trustworthy as the run folders."}
 
 
 def _cell(text: Any) -> str:

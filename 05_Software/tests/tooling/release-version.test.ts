@@ -2,7 +2,7 @@ import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
-import { afterEach, expect, test } from "vitest";
+import { afterEach, expect, test, vi } from "vitest";
 
 const tool = (path: string) =>
   import(/* @vite-ignore */ pathToFileURL(`${process.cwd()}/../02_Tools/${path}`).href);
@@ -96,6 +96,24 @@ test("set-version updates packages, lockfile, changelog and release notes, and r
   expect(await readFile(join(root, "CHANGELOG.md"), "utf8")).toBe(
     await readFile(join(root, "CHANGELOG.before"), "utf8"),
   );
+});
+
+test("the release-notes audit still runs, without the changelog warning, when Git is missing", async () => {
+  const root = await mkdtemp(join(tmpdir(), "vera-notes-"));
+  scratch.push(root);
+  await mkdir(join(root, "release-notes"));
+  await writeFile(join(root, "release-notes/unreleased.yaml"), version.emptyReleaseNotes);
+  // A search path without Git: the status call cannot start.
+  vi.stubEnv("PATH", root);
+  try {
+    await expect(notes.auditReleaseNotes(root)).resolves.toEqual({
+      files: ["unreleased.yaml"],
+      errors: [],
+      warning: false,
+    });
+  } finally {
+    vi.unstubAllEnvs();
+  }
 });
 
 test("accepts complete release notes and refuses missing languages, long or technical texts and too many entries", () => {

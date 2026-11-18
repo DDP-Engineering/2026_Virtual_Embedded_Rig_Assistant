@@ -9,7 +9,7 @@ import {
   partsSupplierIds,
 } from "@vera/shared";
 import type { LoadedPlugin } from "../plugins/store.js";
-import { PartsHttpError, type PartsHttpOptions } from "./http.js";
+import { PartsHttpError, type PartsHttpOptions, sleep } from "./http.js";
 import {
   type AccessToken,
   fitResult,
@@ -55,6 +55,8 @@ const statusMessages = {
   timeout: "The supplier did not answer in time. Retry or narrow the search.",
   unavailable: "The supplier could not be reached or answered with an error. Retry later.",
 } as const;
+/** Searches of one supplier start at least this far apart, so a batch of parallel calls is not a burst. */
+const SUPPLIER_SPACING_MS = 250;
 const fingerprint = (credential: PartsCredential) =>
   createHash("sha256")
     .update(`${credential.id ?? ""}\u0000${credential.secret}`)
@@ -69,6 +71,7 @@ export class ConfiguredPartsProvider {
     { fingerprint: string; token?: { value: string; expiresAt: number }; request?: Promise<AccessToken> }
   >();
   private tokenController = new AbortController();
+  private readonly nextStart = new Map<PartsSupplierId, number>();
   private generation = 0;
   private closed = false;
   constructor(private readonly host: PartsHost) {}
@@ -221,6 +224,11 @@ export class ConfiguredPartsProvider {
     };
     const http = this.host.http ?? {};
     try {
+      const started = Date.now();
+      // The wait is capped: a very large batch degrades to a burst instead of stalling a search.
+      const start = Math.min(Math.max(started, this.nextStart.get(supplier) ?? 0), started + 2000);
+      this.nextStart.set(supplier, start + SUPPLIER_SPACING_MS);
+      if (start > started) await (http.sleep ?? sleep)(start - started, signal);
       const tokens = adapter.token ? { ...adapter, token: adapter.token } : undefined;
       let token = tokens ? await this.token(supplier, tokens, credential, signal, false) : undefined;
       if (token) secrets.push(token);

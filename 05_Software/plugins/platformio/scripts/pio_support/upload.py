@@ -12,6 +12,7 @@ is `unknown` from the moment the upload starts.
 from __future__ import annotations
 
 import argparse
+import os
 import sys
 import traceback
 from pathlib import Path
@@ -70,8 +71,10 @@ def upload(cwd: Path, spelled: Path, raw: str, build_raw: str, alias: str, effec
     run["environment"] = identity
     run["buildDir"] = str(request.build_dir)
     elf_sha = sha256(output / "firmware.elf")
+    # Outside VERA no approved hash exists and the registry is read unchecked; the result says which it was.
     run["upload"] = {"protocol": protocol, "probe": {"alias": probe.alias, "resource": probe.resource},
-                     "registrySha256": registry_sha, "build": build_doc.get("runId"),
+                     "registrySha256": registry_sha, "registryVerified": bool(os.environ.get("VERA_REGISTRY_SHA256")),
+                     "build": build_doc.get("runId"),
                      "image": {"path": str(output / "firmware.elf"), "sha256": elf_sha},
                      "firmwareEffect": effect, "physical": "unchanged"}
     run.create_folder(cwd, spelled, results)

@@ -36,6 +36,9 @@ function gitNeedsApproval(tokens: string[]): boolean {
       );
     }) ||
     (has("clone") && has("-u")) ||
+    // -p and -P prune remote-tracking refs and tags; branch -M overwrites the target branch.
+    ((has("fetch") || has("pull") || has("remote")) && (has("-p") || has("-P"))) ||
+    (has("branch") && has("-M")) ||
     (has("checkout") && (has("--") || has("."))) ||
     (has("stash") && (has("drop") || has("clear")))
   );
@@ -44,9 +47,9 @@ function gitNeedsApproval(tokens: string[]): boolean {
 function destructiveOption(word: string): boolean {
   if (!word.startsWith("-")) return false;
   const option = word.replace(/^--?/, "").split(/[=:]/)[0]?.toLowerCase() ?? "";
-  return (
-    !!option && destructiveOptions.some((name) => name.startsWith(option) || option.startsWith(`${name}-`))
-  );
+  // One letter after a single dash is an ordinary short option (-h, -p, -r, -m, -d), not an abbreviation.
+  if (!option || (option.length === 1 && !word.startsWith("--"))) return false;
+  return destructiveOptions.some((name) => name.startsWith(option) || option.startsWith(`${name}-`));
 }
 
 function words(command: string): string[] | undefined {

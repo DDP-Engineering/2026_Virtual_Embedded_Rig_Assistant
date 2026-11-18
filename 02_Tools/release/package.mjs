@@ -9,6 +9,7 @@ import {
   bundledPluginsFolder,
   checkBundledPlugins,
   prepareBundledPlugins,
+  unlistedBundledFiles,
 } from "../environment/prepare-plugins.mjs";
 import { checkUvBinary, prepareBundledUv, uvEntry, uvPlatform } from "../environment/prepare-uv.mjs";
 import { prepareBundledWindowsRuntime } from "../environment/prepare-windows-runtime.mjs";
@@ -173,6 +174,11 @@ export async function stageBundledPlugins(stage, source = bundledPluginsFolder) 
     if (error.code === "ENOENT") throw new Error("bundled plugins missing; run npm run prepare:plugins");
     throw error;
   }
+  const unlisted = await unlistedBundledFiles(source);
+  if (unlisted.length)
+    console.warn(
+      `WARNING: ${unlisted.length} file(s) in ${source} that no catalog index lists ship in the installer unchecked: ${unlisted.join(", ")}`,
+    );
   await cp(source, join(stage, "resources", "plugins"), { recursive: true });
 }
 

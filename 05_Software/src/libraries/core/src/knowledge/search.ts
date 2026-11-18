@@ -90,7 +90,7 @@ export const readDocSchema = z
       .int()
       .optional()
       .describe(
-        "Part of a long heading section, from 1, as a previous read's parts reports. Omit for the first part.",
+        "Part of a long heading section, or of one page, slide or line over 12000 characters, from 1, as a previous read's parts reports. Omit for the first part.",
       ),
   })
   .strict();
@@ -354,20 +354,15 @@ export class DocumentKnowledge {
               : [
                   `a ${extraction.kind === "html" ? "HTML" : extraction.kind}`,
                   'heading ("" for text before the first heading)',
-                  ["heading", "part"],
+                  ["heading"],
                 ];
-      const extra = (["page", "pageEnd", "heading", "lineStart", "lineEnd", "part"] as const).filter(
+      const extra = (["page", "pageEnd", "heading", "lineStart", "lineEnd"] as const).filter(
         (name) => args[name] !== undefined && !keep.includes(name),
       );
       throw Error(
         `Use one locator family. ${target.relative} is ${label} read by ${family}; remove ${extra.join(", ")}.`,
       );
     }
-    const sectioned = "sections" in extraction;
-    if (args.part !== undefined && (pages || lines || !sectioned))
-      throw Error(
-        'part applies only to heading reads of Markdown, HTML, document and spreadsheet sources; pass heading ("" for the start) without page or line arguments.',
-      );
     const bounded = (units: string[], separator: string) => {
       let text = "",
         count = 0;
@@ -377,8 +372,15 @@ export class DocumentKnowledge {
         text += (count ? separator : "") + unit;
         count++;
       }
-      if (!count) throw Error("A locator unit exceeds 12000 characters. Use a narrower source section.");
       return { text, count, truncated: count < units.length };
+    };
+    // A long section, or one page, slide or line over the read budget, is read in parts.
+    const inParts = (text: string, unit: string) => {
+      const parts = sectionParts(text);
+      const part = args.part ?? 1;
+      if (part < 1 || part > parts.length)
+        throw Error(`Part ${part} is outside this ${unit}'s parts 1-${parts.length}.`);
+      return { text: parts[part - 1], truncated: part < parts.length, part, parts: parts.length };
     };
     const path = target.relative;
     if (extraction.kind === "pdf" || extraction.kind === "presentation") {
@@ -389,6 +391,17 @@ export class DocumentKnowledge {
       const start = args.page ?? 1,
         end = args.pageEnd ?? start;
       if (end < start || end > units.length) throw Error("Page or slide range is outside the document.");
+      const first = units[start - 1] ?? "";
+      if (args.part !== undefined || !fits(first)) {
+        // Parts cover the first page of the range only; the ref names that page.
+        const result = inParts(first, extraction.kind === "pdf" ? "page" : "slide");
+        return {
+          path,
+          ...result,
+          truncated: result.truncated || end > start,
+          ref: formatRef({ kind: "page", path, page: start }),
+        };
+      }
       const result = bounded(units.slice(start - 1, end), "\n\n");
       const actualEnd = start + result.count - 1;
       return {
@@ -408,6 +421,16 @@ export class DocumentKnowledge {
       const start = args.lineStart ?? 1,
         end = args.lineEnd ?? extraction.lines.length;
       if (end < start || end > extraction.lines.length) throw Error("Line range is outside the document.");
+      const first = extraction.lines[start - 1] ?? "";
+      if (args.part !== undefined || !fits(first)) {
+        const result = inParts(first, "line");
+        return {
+          path,
+          ...result,
+          truncated: result.truncated || end > start,
+          ref: formatRef({ kind: "lines", path, start, end: start }),
+        };
+      }
       const result = bounded(extraction.lines.slice(start - 1, end), "\n");
       return {
         path,
@@ -422,17 +445,10 @@ export class DocumentKnowledge {
         ? extraction.sections[0]
         : extraction.sections.find((s) => s.slug === args.heading);
     if (!section) throw Error("Heading not found. Use a heading slug from search_docs.");
-    // Long sections are read in parts; every part cites the whole section.
-    const parts = sectionParts(section.text);
-    const part = args.part ?? 1;
-    if (part < 1 || part > parts.length)
-      throw Error(`Part ${part} is outside this section's parts 1-${parts.length}.`);
+    // Every part cites the whole section.
     return {
       path,
-      text: parts[part - 1],
-      truncated: part < parts.length,
-      part,
-      parts: parts.length,
+      ...inParts(section.text, "section"),
       ref:
         !section.slug && extraction.kind === "markdown"
           ? formatRef({ kind: "lines", path, start: section.start, end: section.end })

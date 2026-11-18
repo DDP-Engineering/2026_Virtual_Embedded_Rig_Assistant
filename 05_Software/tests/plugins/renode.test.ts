@@ -165,7 +165,7 @@ describe("package", { timeout: 60_000 }, () => {
     expect(validatePluginManifest(m).issues).toEqual([]);
     expect(m).toMatchObject({
       id: "renode",
-      version: "0.3.0",
+      version: "0.3.1",
       ecosystem: "lab",
       platforms: ["windows-x64", "linux-x64"],
     });
@@ -385,6 +385,20 @@ describe("profiles (REQ-FUNC-0000b585, REQ-SEC-1190bf53)", { timeout: 60_000 }, 
     expect(refusedRun.code).toBe(3);
     expect(refusedRun.json).toMatchObject({ status: "blocked", code: "profile-refused" });
     expect(sessions()).toEqual([]);
+  });
+
+  it("accepts ordinary words that only contain a denied word, and refuses the word in a CamelCase name", async () => {
+    const repl = (text: string) => ({ "platform.repl": `using "stm32f4.repl"\n${text}\n` });
+    await workbenchProfile(
+      "plain-words",
+      repl("emptyDescription: Memory.MappedMemory @ sysbus 0x60000000\n    size: 0x1000"),
+    );
+    await workbenchProfile("camel-word", repl("uartPtyBridge: Memory.MappedMemory @ sysbus 0x60000000"));
+    const run = sim(["profiles"]);
+    expect(run.json.profiles.map((p: Json) => p.id)).toContain("plain-words");
+    expect(run.json.refused).toEqual([
+      expect.objectContaining({ id: "camel-word", reason: expect.stringMatching(/'Pty' can bind/) }),
+    ]);
   });
 
   it("refuses a profile id defined by both the plugin and the workbench", async () => {

@@ -158,6 +158,31 @@ parentPort.on('message',()=>setTimeout(()=>{appendFileSync(${JSON.stringify(mark
     await rm(temporary, { recursive: true, force: true });
   }
 }, 20000);
+it("stops waiting for a busy worker after the release wait and still lets its call finish", async () => {
+  const temporary = await mkdtemp(join(tmpdir(), "vera-embedding-release-")),
+    entry = join(temporary, "worker.mjs"),
+    marker = join(temporary, "replied.txt");
+  const host = new EmbeddingHost(pathToFileURL(entry), "unused", manifest, 5000, 100);
+  try {
+    await writeFile(
+      entry,
+      `import {parentPort} from 'node:worker_threads'; import {appendFileSync} from 'node:fs';
+parentPort.on('message',()=>setTimeout(()=>{appendFileSync(${JSON.stringify(marker)},'x');parentPort.postMessage({ok:true,result:[Array.from({length:384},(_,n)=>Number(n===0))]});},1200));`,
+    );
+    const pending = host.embed(temporary, ["a"], new AbortController().signal);
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    const released = performance.now();
+    await host.release(temporary);
+    // The switch or close goes on; the worker was not terminated inside its call.
+    expect(performance.now() - released).toBeLessThan(600);
+    await expect(readFile(marker, "utf8")).rejects.toThrow();
+    expect(await pending).toHaveLength(1);
+    expect(await readFile(marker, "utf8")).toBe("x");
+  } finally {
+    await host.dispose();
+    await rm(temporary, { recursive: true, force: true });
+  }
+}, 20000);
 it("terminates deadline, abort, crash and premature exit jobs and replaces workers", async () => {
   const temporary = await mkdtemp(join(tmpdir(), "vera-embedding-failure-")),
     entry = join(temporary, "worker.mjs");

@@ -996,6 +996,32 @@ it("points uv at the dependency kit's wheels and Python only", async () => {
     expect(plain.host.programs[0]?.options.env).not.toHaveProperty(name);
 });
 
+it("refuses a kit wheel that differs from its kit.json hash, names it and runs no uv", async () => {
+  const root = await mkdtemp(join(tmpdir(), "vera-kit-"));
+  roots.push(root);
+  const kit = join(root, "kit");
+  const wheel = join(kit, "wheels", "esptool-5.6.0-py3-none-any.whl");
+  await mkdir(join(kit, "wheels"), { recursive: true });
+  await writeFile(wheel, "wheel");
+  const index = (bytes: string) =>
+    JSON.stringify({
+      format: 1,
+      wheels: [
+        { file: "wheels/esptool-5.6.0-py3-none-any.whl", sha256: sha(strToU8(bytes)), bytes: 5 },
+        { file: "wheels/not-copied-1.0-py3-none-any.whl", sha256: sha(strToU8("absent")), bytes: 6 },
+      ],
+    });
+  await writeFile(join(kit, "kit.json"), index("built"));
+  const s = await setup({ programs: { esptool: pip("esptool") }, settings: { kit } });
+  uvActs(s.host, s.uv, "esptool");
+  const [status] = await s.provisioner.install("tools");
+  expect(status).toMatchObject({ name: "esptool", state: "missing", problem: "install" });
+  expect(status?.detail).toContain(wheel);
+  expect(s.host.programs).toEqual([]);
+  await writeFile(join(kit, "kit.json"), index("wheel"));
+  expect((await s.provisioner.install("tools"))[0]).toMatchObject({ state: "ready" });
+});
+
 // REQ-FUNC-41582b95
 it("reports a failed CPython install from the dependency kit and runs no uv install", async () => {
   const root = await mkdtemp(join(tmpdir(), "vera-kit-"));

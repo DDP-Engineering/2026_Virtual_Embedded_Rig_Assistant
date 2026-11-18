@@ -131,7 +131,9 @@ def flash(cwd: Path, spelled: Path, raw: str, build_raw: str, alias: str, effect
     run = Run("flash", "hardware")
     run["board"] = build_doc.get("board")
     run["buildDir"] = str(request.build_dir)
+    # Outside VERA no approved hash exists and the registry is read unchecked; the result says which it was.
     run["flash"] = {"runner": RUNNER, "probe": {"alias": probe.alias, "resource": probe.resource}, "registrySha256": registry_sha,
+                    "registryVerified": bool(os.environ.get("VERA_REGISTRY_SHA256")),
                     "image": {"path": str(hex_file), "sha256": expected["sha256"], "region": [f"0x{base:08X}", size]},
                     "firmwareEffect": effect, "cli": str(cli), "physical": "unchanged"}
     run.create_folder(cwd, spelled, results)

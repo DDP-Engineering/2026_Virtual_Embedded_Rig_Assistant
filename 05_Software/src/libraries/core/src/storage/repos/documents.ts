@@ -8,6 +8,13 @@ export interface DocumentDerived {
   modelId?: string;
   vectors?: Float32Array[];
 }
+/** Chunks and derived data that passed validateChunks. */
+export interface ValidatedChunks {
+  chunks: Chunk[];
+  extraction: Extraction | undefined;
+  modelId: string | undefined;
+  vectors: Float32Array[] | undefined;
+}
 
 /** Chunk triggers maintain keyword indexes; embeddings are optional. */
 export class DocumentsRepository {
@@ -37,8 +44,11 @@ export class DocumentsRepository {
       .run(record);
     return this.get(record.path) as DocumentRecord;
   }
-  /** Chunk replacement and its trigger-maintained indexes commit together. */
-  replaceChunks(id: number, chunks: Chunk[], derived?: DocumentDerived): void {
+  /**
+   * Validates chunks and derived data for writeChunks. Validation runs the tokenizer on every
+   * chunk, so a caller with its own transaction calls this before opening it.
+   */
+  validateChunks(chunks: Chunk[], derived?: DocumentDerived): ValidatedChunks {
     const parsed = chunks.map((chunk) => chunkSchema.parse(chunk));
     const extraction = derived ? extractionSchema.parse(derived.extraction) : undefined;
     if (derived?.vectors) {
@@ -54,27 +64,35 @@ export class DocumentsRepository {
       )
         throw Error("Invalid normalized embeddings.");
     }
+    return { chunks: parsed, extraction, modelId: derived?.modelId, vectors: derived?.vectors };
+  }
+  /** Chunk replacement and its trigger-maintained indexes commit together. */
+  replaceChunks(id: number, chunks: Chunk[], derived?: DocumentDerived): void {
+    this.writeChunks(id, this.validateChunks(chunks, derived));
+  }
+  /** Stores the result of validateChunks; only database work, so it may run inside a transaction. */
+  writeChunks(id: number, valid: ValidatedChunks): void {
     this.db.transaction(() => {
       this.clearDerived(id);
       const insert = this.db.prepare(
         "INSERT INTO chunks(doc_id,ordinal,locator_json,text,chars) VALUES(?,?,?,?,?)",
       );
-      parsed.forEach((chunk, ordinal) => {
+      valid.chunks.forEach((chunk, ordinal) => {
         const result = insert.run(id, ordinal, JSON.stringify(chunk.locator), chunk.text, chunk.text.length);
-        const vector = derived?.vectors?.[ordinal];
+        const vector = valid.vectors?.[ordinal];
         if (vector)
           this.db
             .prepare("INSERT INTO embeddings(chunk_id,model_id,dim,vector) VALUES(?,?,384,?)")
             .run(
               result.lastInsertRowid,
-              derived?.modelId,
+              valid.modelId,
               Buffer.from(vector.buffer, vector.byteOffset, vector.byteLength),
             );
       });
-      if (extraction)
+      if (valid.extraction)
         this.db
           .prepare("INSERT INTO document_extractions(doc_id,extraction_json) VALUES(?,?)")
-          .run(id, JSON.stringify(extraction));
+          .run(id, JSON.stringify(valid.extraction));
     })();
   }
 

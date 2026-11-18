@@ -19,7 +19,8 @@ unconnected items, and apply it to your board only when you ask, through VERA's 
 
 - `open --board FILE.kicad_pcb` copies the board, its project file, design rules, footprint library table and the
   schematics of its folder into `electronics-results/<run-id>/candidate/`, opens the copy in KiCad's PCB editor,
-  saves it through KiCad and writes `state.json`, `board.json`, `drc-before.json` and layer previews.
+  saves it through KiCad and writes `state.json`, `board.json`, `drc-before.json` and layer previews. A library
+  table that names a network path is not copied, because KiCad would contact that host; a warning names the entry.
 - `edit --run DIR --json TEXT` (or `--request FILE` for a request beyond the 4096-character argument limit) checks a request (place, align, keepout, track, via; units mm) against the board the
   API has open: it must be this run's candidate, unchanged since the tool last saved it; footprints must exist and
   not be locked, nets and copper layers must exist, nothing may leave the outline. It runs the request in one KiCad

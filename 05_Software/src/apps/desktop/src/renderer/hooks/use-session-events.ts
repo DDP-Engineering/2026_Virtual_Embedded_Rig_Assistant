@@ -9,6 +9,11 @@ type View = {
   reasoning: Record<string, string>;
   updates: Record<string, string>;
 };
+/** Live reasoning and tool output are previews: only this many trailing characters of each are kept. */
+const LIVE_TAIL = 500_000;
+/** A reconcile whose IPC call has not settled after this long no longer holds back the next check. */
+const RECONCILE_TIMEOUT_MS = 30_000;
+const tail = (text: string) => (text.length > LIVE_TAIL ? text.slice(-LIVE_TAIL) : text);
 /** Folds a frame's events in arrival order; reasoning and updates are copied once per batch. */
 function applyBatch(old: View, batch: readonly SessionEvent[]): View {
   let { state, reasoning, updates } = old;
@@ -16,10 +21,10 @@ function applyBatch(old: View, batch: readonly SessionEvent[]): View {
     state = applySessionEvent(state, event);
     if (event.type === "reasoning.delta") {
       if (reasoning === old.reasoning) reasoning = { ...reasoning };
-      reasoning[event.messageId] = (reasoning[event.messageId] ?? "") + event.text;
+      reasoning[event.messageId] = tail((reasoning[event.messageId] ?? "") + event.text);
     } else if (event.type === "tool.update") {
       if (updates === old.updates) updates = { ...updates };
-      updates[event.callId] = (updates[event.callId] ?? "") + event.text;
+      updates[event.callId] = tail((updates[event.callId] ?? "") + event.text);
     }
   }
   return { ...old, state, reasoning, updates };
@@ -45,6 +50,9 @@ export function useSessionEvents(id: string | undefined, changed: () => void) {
     let loaded = false;
     let needsSnapshot = false;
     let checking = false;
+    let runs = 0;
+    let applied = 0;
+    let release: number | undefined; // The guard timer of the latest reconcile, cleared on unmount.
     let queue: SessionEvent[] = [];
     let frame = 0;
     const drop = () => {
@@ -62,7 +70,13 @@ export function useSessionEvents(id: string | undefined, changed: () => void) {
     async function reconcile() {
       if (!id || cancelled || checking) return;
       checking = true;
+      const run = ++runs;
       const version = eventVersion;
+      // An IPC call that never settles would keep the guard set and end every later check.
+      const guard = window.setTimeout(() => {
+        if (run === runs) checking = false;
+      }, RECONCILE_TIMEOUT_MS);
+      release = guard;
       try {
         // Checking the durable cursor avoids replaying a long transcript on every heartbeat.
         if (loaded) {
@@ -71,7 +85,9 @@ export function useSessionEvents(id: string | undefined, changed: () => void) {
         }
         const { snapshot, seq: cursor } = await api.invoke("session.get", { sessionId: id });
         // A live event received during IPC is newer than this snapshot. Try again next heartbeat.
-        if (cancelled || eventVersion !== version) return;
+        // A slow call still applies after its timeout, unless a later check answered first.
+        if (cancelled || eventVersion !== version || run < applied) return;
+        applied = run;
         seq = cursor;
         needsSnapshot = false;
         loaded = false;
@@ -106,7 +122,9 @@ export function useSessionEvents(id: string | undefined, changed: () => void) {
         // Preserve an existing transcript on a transient IPC failure; the next check retries.
         if (!cancelled && !loaded) setError(failure);
       } finally {
-        checking = false;
+        window.clearTimeout(guard);
+        // After a timeout the guard may belong to a later check.
+        if (run === runs) checking = false;
       }
     }
     const check = () => void reconcile();
@@ -116,6 +134,7 @@ export function useSessionEvents(id: string | undefined, changed: () => void) {
     return () => {
       cancelled = true;
       window.clearInterval(timer);
+      window.clearTimeout(release);
       window.removeEventListener("focus", check);
       off?.();
       drop();

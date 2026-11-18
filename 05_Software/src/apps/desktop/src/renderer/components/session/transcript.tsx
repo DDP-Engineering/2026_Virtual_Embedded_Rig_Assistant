@@ -20,6 +20,7 @@ import { HelpContext, helpCitationKey } from "../help.js";
 import { ApprovalCard } from "./approval-card.js";
 import { BookmarkButton } from "./bookmark-button.js";
 import { Disclosure } from "./disclosure.js";
+import { ExternalSourceScope } from "./external-source-link.js";
 import { Markdown } from "./markdown.js";
 import { PromptUsage } from "./prompt-usage.js";
 import { ToolDetails } from "./tool-details.js";
@@ -377,7 +378,7 @@ const MessageRow = memo(function MessageRow({
           {detail === "verbose" && item.usage && <PromptUsage usage={item.usage} />}
         </>
       ) : (
-        <>
+        <ExternalSourceScope>
           {item.streaming ? (
             // Only the growing last block is parsed again per frame; message.done renders it whole.
             streamingBlocks(item.text).map((block, index) => <Markdown key={String(index)} text={block} />)
@@ -385,7 +386,7 @@ const MessageRow = memo(function MessageRow({
             <Markdown text={item.text} citations={item.citations} onCitation={onCitation} />
           )}
           {item.streaming && <span role="status">{t("chat.streaming")}</span>}
-        </>
+        </ExternalSourceScope>
       )}
     </article>
   );

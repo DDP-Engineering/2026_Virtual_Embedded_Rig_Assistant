@@ -100,6 +100,14 @@ export class ReferenceRuntime implements AgentRuntime {
       }
     }
   }
+  /** The host log is the only place a swallowed exception is kept; a failing logger cannot change the turn. */
+  private report(where: string, error: unknown): void {
+    try {
+      this.host.log?.(`${where}: ${error instanceof Error ? (error.stack ?? error.message) : String(error)}`);
+    } catch {
+      /* Logging is best effort. */
+    }
+  }
   abort(): void {
     this.controller?.abort();
   }
@@ -121,9 +129,10 @@ export class ReferenceRuntime implements AgentRuntime {
       stopReason = await this.run(init, controller.signal, currentStart, recovered, messageId);
     } catch (error) {
       stopReason = controller.signal.aborted ? "aborted" : "error";
-      if (stopReason === "error")
+      if (stopReason === "error") {
+        this.report("Agent turn failed", error);
         this.emit({ type: "error", code: "INTERNAL", messageKey: "error.internal", retryable: false });
-      void error;
+      }
     } finally {
       this.emit({ type: "turn.done", turnId, stopReason });
       this.controller = undefined;
@@ -321,10 +330,11 @@ export class ReferenceRuntime implements AgentRuntime {
             return limit ? "limit" : "error";
           }
         }
-      } catch {
+      } catch (error) {
         retainPartial();
         reportUsage(final);
         if (signal.aborted) return "aborted";
+        this.report("Model stream failed", error);
         this.emit({ type: "error", code: "PROVIDER", messageKey: "error.provider", retryable: false });
         return "error";
       }

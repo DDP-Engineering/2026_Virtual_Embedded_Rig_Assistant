@@ -29,3 +29,4 @@ Every command of this plugin is safe and runs without asking in every permission
 - A result is not a calibration or a metrological certification; lab-validate does not derive uncertainty.
 - Gaps, clipping, evident aliasing, unknown or insufficient bandwidth and missing or differing conditions make a criterion incomplete. Incomplete is not a near-pass.
 - Clocks of different instruments are never synchronized by file times; alignment uses declared markers, offsets or cross-correlation.
+- A verdict is as trustworthy as the capture and run folders it reads: their hashes come from their own result files and nothing is signed.

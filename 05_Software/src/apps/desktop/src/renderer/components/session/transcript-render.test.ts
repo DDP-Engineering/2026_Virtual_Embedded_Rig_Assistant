@@ -130,6 +130,12 @@ it("re-parses only the growing last block of a streaming answer", async () => {
     "Two\n```c\nx\n\ny\n```",
     "Tail",
   ]);
+  // A list with blank lines between its items is one block, as it is once the message completes.
+  expect(streamingBlocks("Steps:\n1. One\n\n2. Two\n\n   more\n\n- Three\n\nAfter\n\n- New")).toEqual([
+    "Steps:\n1. One\n\n2. Two\n\n   more\n\n- Three",
+    "After",
+    "- New",
+  ]);
   let state = emptySessionState();
   state = applySessionEvent(state, { type: "message.delta", messageId: "live", text: "First block\n\nSec" });
   await render(state);

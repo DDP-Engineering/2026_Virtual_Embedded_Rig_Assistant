@@ -47,6 +47,12 @@ export function exportDestination(root: string, path: string): string {
     throw veraError("DENIED");
   return target;
 }
+/** The verified artifact name a save dialog offers; a name that holds a secret is refused. */
+export function exportName(service: SessionService, id: string, scrub: (text: string) => string): string {
+  const name = service.verifiedArtifact(id).artifact.name;
+  if (scrub(name) !== name) throw veraError("INVALID");
+  return name;
+}
 export async function exportArtifact(
   service: SessionService,
   id: string,
@@ -58,9 +64,7 @@ export async function exportArtifact(
     masking?(): boolean;
   },
 ): Promise<{ exported: boolean }> {
-  const name = service.verifiedArtifact(id).artifact.name;
-  if (options.scrub(name) !== name) throw veraError("INVALID");
-  const path = await options.choose(name);
+  const path = await options.choose(exportName(service, id, options.scrub));
   if (path === null) return { exported: false };
   const { artifact } = service.verifiedArtifact(id);
   await options.write(

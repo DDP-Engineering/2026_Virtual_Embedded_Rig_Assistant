@@ -38,9 +38,8 @@ def wait_seconds(default: float) -> float:
 
 
 def socket_path() -> str:
-    if WINDOWS:
-        return f"ipc://{Path(tempfile.gettempdir()) / 'kicad' / 'api.sock'}"
-    return "ipc:///tmp/kicad/api.sock"
+    """KiCad's API socket: `kicad/api.sock` in the user's temporary directory (TMPDIR on Linux, else /tmp)."""
+    return f"ipc://{Path(tempfile.gettempdir()) / 'kicad' / 'api.sock'}"
 
 
 def _same(a: Path | str, b: Path | str) -> bool:

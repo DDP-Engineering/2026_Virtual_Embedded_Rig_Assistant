@@ -1,4 +1,5 @@
 import { createHash, randomUUID } from "node:crypto";
+import { createReadStream } from "node:fs";
 import { mkdir, open, readdir, readFile, rename, rm, rmdir, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { isPluginRelativePath, type PluginProgram, pluginHintLink, urlParts } from "@vera/shared";
@@ -65,6 +66,35 @@ const segments = (url: string) => urlParts(url)?.path.split("/") ?? [];
  */
 export function dependencyKitFile(entry: { url: string; sha256: string }): string {
   return `files/${entry.sha256}/${plainName(segments(entry.url).at(-1) ?? "") ?? "download"}`;
+}
+
+/**
+ * The path of the first wheel whose bytes differ from the SHA-256 `kit.json` records for it. A kit without a
+ * readable `kit.json` or recorded wheels names nothing, and neither does a recorded wheel that is not there: uv
+ * reports what it then misses.
+ */
+export async function changedKitWheel(kit: string): Promise<string | undefined> {
+  let wheels: unknown;
+  try {
+    const index: Partial<DependencyKitIndex> = JSON.parse(await readFile(join(kit, "kit.json"), "utf8"));
+    wheels = index.wheels;
+  } catch {
+    return undefined;
+  }
+  if (!Array.isArray(wheels)) return undefined;
+  for (const entry of wheels as Partial<DependencyKitIndex["wheels"][number]>[]) {
+    if (typeof entry?.file !== "string" || typeof entry.sha256 !== "string") continue;
+    if (!/^wheels\/[^/\\]+$/.test(entry.file)) continue;
+    const path = join(kit, ...entry.file.split("/"));
+    const hash = createHash("sha256");
+    try {
+      for await (const chunk of createReadStream(path)) hash.update(chunk as Uint8Array);
+    } catch {
+      continue;
+    }
+    if (hash.digest("hex") !== entry.sha256) return path;
+  }
+  return undefined;
 }
 
 interface Plan {
@@ -195,8 +225,9 @@ function readme(index: DependencyKitIndex): string {
     "",
     "Download files are checked against the SHA-256 pinned in each plugin's manifest: a changed file is refused and",
     "named. One file can also be chosen with Install from dependency archive. While the setting is set, uv installs",
-    "pip and script programs only from `wheels/` and CPython only from `python/`, whose archive uv checks against",
-    "the SHA-256 built into it. Remove the setting to install from the network again.",
+    "pip and script programs only from `wheels/`, whose files VERA first checks against the SHA-256 in `kit.json`,",
+    "and CPython only from `python/`, whose archive uv checks against the SHA-256 built into it. Remove the setting",
+    "to install from the network again.",
     "",
     "## Vendor programs (not in the kit)",
     "",

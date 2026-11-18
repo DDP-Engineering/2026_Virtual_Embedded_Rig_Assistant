@@ -1344,6 +1344,7 @@ describe("results and report", { timeout: 180_000 }, () => {
       sha256: sha256(readFileSync(join(root, request))),
     });
     expect(result.limits.join(" ")).toContain("calibration");
+    expect(result.limits.join(" ")).toContain("as trustworthy as those folders");
     for (const artifact of result.artifacts)
       expect(sha256(readFileSync(join(root, artifact.path)))).toBe(artifact.sha256);
     const sources = Object.fromEntries(result.sources.map((s: Json) => [s.id, s]));
@@ -1407,6 +1408,8 @@ describe("results and report", { timeout: 180_000 }, () => {
     expect(document.runs.map((r: Json) => r.verdict)).toEqual(["pass", "fail", "incomplete"]);
     expect(document.runs[1].criteria).toMatchObject({ pass: 1, fail: 2, incomplete: 0 });
     expect(readFileSync(join(root, "embedded-lab-results/agg/report.md"), "utf8")).toContain("HIL step 3");
+    // Run folders vouch for themselves (unsigned hashes); the report says so.
+    expect(document.note).toContain("as trustworthy as the run folders");
     await writeFile(join(root, "embedded-lab-results/agg-pass/report.md"), "edited\n");
     const tampered = lv(root, ["report", "--run", "embedded-lab-results/agg-pass", "--run-id", "agg2"]);
     expect(tampered.code).toBe(2);

@@ -36,6 +36,7 @@ const standIns = join(fixtures, "stand-ins");
 const demoElf = fileURLToPath(new URL("../fixtures/renode/firmware/demo.elf", import.meta.url));
 const windows = process.platform === "win32";
 const helperPython = process.env.VERA_ZEPHYR_PYTHON;
+const NO_HELPER = "no Python with the helper's pinned dependencies (set VERA_ZEPHYR_PYTHON to such a venv)";
 const realRoot = process.env.VERA_ZEPHYR_REAL;
 const realRenode = process.env.VERA_RENODE_REAL;
 const realCli = process.env.VERA_ZEPHYR_REAL_CLI;
@@ -419,6 +420,8 @@ describe.skipIf(!helperPython)("zephyr helper against stand-ins (offline)", { ti
       [{ configs: ["missing.conf"] }, "input"],
       [{ overlays: ["missing.overlay"] }, "input"],
       [{ configs: ["../../outside.conf"] }, "request"],
+      // It would reach `west init -l` as an option.
+      [{ manifest: "-manifest" }, "request"],
       [{ sdk: posix(join(root, "nosdk")) }, "input"],
       [{ buildDir: "apps/board-demo/build" }, "build-dir"],
       [{ buildDir: ".vera/build" }, "build-dir"],
@@ -989,16 +992,14 @@ describe.skipIf(!helperPython)("zephyr helper against stand-ins (offline)", { ti
 
   it("flashes the owned HEX through the runner with the probe serial and refuses unverified images and arguments (L07-E/F, REQ-FUNC-62b1d407, REQ-SEC-a4ed8466)", async () => {
     await mkdir(join(wb, "lab"));
-    await writeFile(
-      join(wb, "lab", "resources.json"),
-      JSON.stringify({
-        format: 1,
-        resources: [
-          { alias: "stlink-a", kind: "probe", resource: PROBE, profile: "stm32f4-stlink" },
-          { alias: "dmm", kind: "visa", resource: "USB0::0x2A8D::0x1301::MY1::INSTR", profile: "x" },
-        ],
-      }),
-    );
+    const registryText = JSON.stringify({
+      format: 1,
+      resources: [
+        { alias: "stlink-a", kind: "probe", resource: PROBE, profile: "stm32f4-stlink" },
+        { alias: "dmm", kind: "visa", resource: "USB0::0x2A8D::0x1301::MY1::INSTR", profile: "x" },
+      ],
+    });
+    await writeFile(join(wb, "lab", "resources.json"), registryText);
     const flashEnv = {
       ZEPHYR_FLASH_REGISTRY: join(wb, "lab", "resources.json"),
       VERA_PROGRAM_STM32_PROGRAMMER_CLI: join(standIns, "fake_cli.py"),
@@ -1031,6 +1032,8 @@ describe.skipIf(!helperPython)("zephyr helper against stand-ins (offline)", { ti
       runner: "stm32cubeprogrammer",
       physical: "unknown",
       probe: { alias: "stlink-a" },
+      // This run carries no VERA_REGISTRY_SHA256, so the registry was read unchecked.
+      registryVerified: false,
     });
     const before = calls().length;
     // A runner argument outside the allowlist, a HEX outside flash, a HEX changed after the build, a non-probe alias.
@@ -1049,6 +1052,20 @@ describe.skipIf(!helperPython)("zephyr helper against stand-ins (offline)", { ti
     const goodRun = `embedded-lab-results/${good.json.runId}`;
     expect(refused(flash("zephyr/fl4.json", goodRun, "dmm"))).toEqual([2, "request"]);
     expect(refused(flash("zephyr/fl4.json", goodRun, "nobody"))).toEqual([2, "request"]);
+    // A serial that would read as an option of west flash is not a probe entry.
+    await writeFile(
+      join(wb, "lab", "resources.json"),
+      JSON.stringify({
+        format: 1,
+        resources: [
+          { alias: "stlink-a", kind: "probe", resource: "0483:374B:-066DFF", profile: "stm32f4-stlink" },
+        ],
+      }),
+    );
+    const dashed = flash("zephyr/fl4.json", goodRun);
+    expect(refused(dashed)).toEqual([2, "request"]);
+    expect(dashed.json.reason).toContain("starts with a letter or digit");
+    await writeFile(join(wb, "lab", "resources.json"), registryText);
     // A module that adds west runners after the build: west flash would import them.
     const moduleYml = join(ws, "modules", "hal", "fake", "zephyr", "module.yml");
     const moduleText = readFileSync(moduleYml, "utf8");
@@ -1174,6 +1191,10 @@ describe.skipIf(!helperPython)("zephyr helper against stand-ins (offline)", { ti
     expect(sha256(readFileSync(join(wb, "build", "other", "zephyr", "zephyr.hex")))).toBe(otherHex);
     expect(sha256(readFileSync(join(wb, "apps", "board-demo", "src", "main.c")))).toBe(sources);
   });
+});
+
+it.skipIf(helperPython)(`skips the helper tests: ${NO_HELPER}`, () => {
+  expect(helperPython).toBeUndefined();
 });
 
 describe.skipIf(!helperPython)(
@@ -1329,7 +1350,7 @@ describe.skipIf(!helperPython || !realRoot)(
       expect(resultOf(d).diagnostics.map((x: Json) => x.code)).toContain("devicetree");
     });
 
-    it("builds ztest scenarios build-only and, with the real Renode, takes pass/skip/fail from the UART (L07-D/H)", () => {
+    it("builds ztest scenarios build-only and, with the real Renode, takes pass/skip/fail from the UART (L07-D/H)", (ctx) => {
       const tests = {
         app: "tests/ztest-basic",
         overlays: [],
@@ -1343,7 +1364,7 @@ describe.skipIf(!helperPython || !realRoot)(
       expect([tb.code, tb.json.status, tb.json.code]).toEqual([0, "incomplete", "build-only"]);
       const suites = resultOf(tb).tests as Json[];
       expect(suites.map((s) => [s.status, s.twister])).toEqual(Array(3).fill(["built", "not run"]));
-      if (!realRenode) return;
+      if (!realRenode) ctx.skip("built only: the Renode run needs VERA_RENODE_REAL");
       const sim = join(plugins, "renode", "scripts", "renode_sim.py");
       const expected: Record<string, [string, number]> = {
         pass: ["pass", 0],

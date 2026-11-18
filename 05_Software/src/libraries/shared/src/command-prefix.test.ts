@@ -123,6 +123,17 @@ describe("conservative command prefix policy", () => {
     "git switch --discard-changes main",
     "git stash drop",
     "git stash clear",
+    "git push --for",
+    "git push --del main",
+    "git push -d origin main",
+    "git branch -D topic",
+    "git branch -M topic main",
+    "git fetch -p",
+    "git fetch -P origin",
+    "git remote update -p",
+    "Copy-Item a b -Rec",
+    "Move-Item a b -Fo",
+    "find . -delete",
     "npm test --script-shell=./x.sh",
     "tar -x --to-command=./x.sh",
     "tar -c --use-compress-program=./x.sh src",
@@ -164,7 +175,20 @@ describe("conservative command prefix policy", () => {
     "git grep -o word",
     "git stash list",
     "git stash pop",
+    "git log -p",
+    "git log -p -- src/main.c",
+    "git commit -m wip",
+    "git branch -r",
+    "git grep -h word",
   ])("keeps %s eligible under a saved git prefix", (command) => {
     expect(commandPrefixMatches(command, "git")).toBe(true);
+  });
+  it.each([
+    ["pip install -r requirements.txt", "pip install"],
+    ["mkdir -p out/logs", "mkdir"],
+    ["docker run -d image", "docker run"],
+    ["curl -H Accept:text/plain example.com", "curl"],
+  ])("does not read the one-letter option of %s as a destructive abbreviation", (command, prefix) => {
+    expect(commandPrefixMatches(command, prefix)).toBe(true);
   });
 });

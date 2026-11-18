@@ -1,6 +1,6 @@
 ---
 name: freerouting
-description: Autoroute the unrouted connections of a KiCad 10 board candidate with Freerouting, offline, then apply and verify the routes with kicad-layout. Use when the user wants a board, or some of its nets, routed automatically.
+description: Autoroute the unrouted connections of a KiCad 10 board candidate with Freerouting on this computer, then apply and verify the routes with kicad-layout. Use when the user wants a board, or some of its nets, routed automatically.
 ---
 
 # Autorouting with Freerouting

@@ -135,7 +135,7 @@ export class PluginCatalog {
     const bounded = AbortSignal.any([...(signal ? [signal] : []), AbortSignal.timeout(timeoutMs)]);
     try {
       response = await this.options.fetch(`${origin.url}${name}`, { signal: bounded });
-    } catch (error) {
+    } catch {
       signal?.throwIfAborted();
       throw new Unreachable();
     }

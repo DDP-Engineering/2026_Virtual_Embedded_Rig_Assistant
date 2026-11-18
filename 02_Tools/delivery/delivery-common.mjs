@@ -216,6 +216,26 @@ export async function recordPart(delivery, key, record) {
 }
 
 /**
+ * What `delivery.json` records that makes a delivery unfit for release without making it invalid: unsigned
+ * Windows installers, parts built from different commits and parts built from a tree with local changes.
+ * Developer deliveries have all three, so these are warnings, not failures.
+ */
+export function deliveryWarnings(manifest) {
+  const parts = Object.entries(manifest?.parts ?? {});
+  const warnings = [];
+  for (const [key, part] of parts)
+    if (part.signing === "unsigned") warnings.push(`${key}: the installers are not code-signed`);
+  const commits = [...new Set(parts.map(([, part]) => part.commit))];
+  if (commits.length > 1)
+    warnings.push(
+      `the parts were built from different commits: ${parts.map(([key, part]) => `${key} ${part.commit}`).join(", ")}`,
+    );
+  const dirty = parts.filter(([, part]) => part.dirty).map(([key]) => key);
+  if (dirty.length) warnings.push(`built from a tree with uncommitted changes: ${dirty.join(", ")}`);
+  return warnings;
+}
+
+/**
  * Writes a zip of `names` (files of `folder`, recursive paths allowed) under `prefix/`. Entries are stored, not
  * deflated: the inputs are archives already. No zip64, so every file and the whole zip stay below 4 GiB.
  */

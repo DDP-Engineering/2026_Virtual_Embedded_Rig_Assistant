@@ -4,7 +4,7 @@ import { z } from "zod";
 import type { LlmEvent, LlmGateway, LlmRequest } from "../llm/gateway.js";
 import { ContextPolicy } from "./context.js";
 import { buildContext, ReferenceRuntime, zeroUsage } from "./runtime.js";
-import type { RuntimeEvent, ToolDef } from "./types.js";
+import type { RuntimeEvent, RuntimeHost, ToolDef } from "./types.js";
 
 const message = (
   content: AssistantMessage["content"],
@@ -20,7 +20,7 @@ const message = (
   model: "scenario",
 });
 const call = { type: "toolCall" as const, id: "call", name: "read", arguments: { path: "a" } };
-function fixture(stream: LlmGateway["stream"], tools: ToolDef[] = []) {
+function fixture(stream: LlmGateway["stream"], tools: ToolDef[] = [], host: Partial<RuntimeHost> = {}) {
   let id = 0,
     output = 1000,
     window = 6000;
@@ -46,6 +46,7 @@ function fixture(stream: LlmGateway["stream"], tools: ToolDef[] = []) {
     now: () => 123,
     nextId: () => `id${++id}`,
     approve: async () => "approved",
+    ...host,
   });
   runtime.onEvent((e) => events.push(e));
   runtime.start({
@@ -293,4 +294,27 @@ it("empty terminal stream yields an error and tool cap closes all unexecuted pai
   expect((await cap.runtime.send("cap")).stopReason).toBe("limit");
   expect(executions).toBe(50);
   expect(cap.runtime.messages().filter((m) => m.role === "toolResult")).toHaveLength(51);
+});
+it("hands swallowed turn-loop exceptions to the host log and survives a failing logger", async () => {
+  const failing: LlmGateway["stream"] = async function* () {
+    yield { type: "text", delta: "partial" };
+    throw Error("socket closed");
+  };
+  const logged: string[] = [];
+  const stream = fixture(failing, [], { log: (text) => void logged.push(text) });
+  expect((await stream.runtime.send("go")).stopReason).toBe("error");
+  expect(logged).toHaveLength(1);
+  expect(logged[0]).toContain("Model stream failed: Error: socket closed");
+  let clockReads = 0;
+  const internal = fixture(failing, [], {
+    now: () => {
+      if (++clockReads > 1) throw Error("clock broke");
+      return 123;
+    },
+    log: () => {
+      throw Error("log broke");
+    },
+  });
+  expect((await internal.runtime.send("go")).stopReason).toBe("error");
+  expect(internal.events.some((e) => e.type === "error" && e.code === "INTERNAL")).toBe(true);
 });

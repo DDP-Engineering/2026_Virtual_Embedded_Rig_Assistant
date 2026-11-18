@@ -190,6 +190,31 @@ it("flushes queued live text at once on turn.done, error and session.updated", a
   );
   expect(latest.view?.reasoning).toEqual({ next: "thinking" });
 });
+it("keeps only the tail of live reasoning and tool output, and all of the message text", async () => {
+  await mount();
+  const long = "x".repeat(600_000);
+  await act(async () => {
+    on({ type: "message.delta", messageId: "answer", text: long });
+    on({ type: "reasoning.delta", messageId: "answer", text: `${long}end` });
+    on({ type: "tool.update", callId: "download", text: `${long}end` });
+  });
+  await act(async () => vi.advanceTimersByTimeAsync(20));
+  expect(latest.view?.reasoning.answer).toHaveLength(500_000);
+  expect(latest.view?.reasoning.answer?.endsWith("end")).toBe(true);
+  expect(latest.view?.updates.download).toHaveLength(500_000);
+  expect(latest.view?.state.items.at(-1)).toMatchObject({ text: long });
+});
+it("checks again after a reconcile call that never settles", async () => {
+  await mount();
+  events.push({ type: "turn.done", turnId: "turn", stopReason: "end" });
+  vi.mocked(api.invoke).mockImplementationOnce(() => new Promise<never>(() => {}));
+  await tick();
+  await tick();
+  expect(latest.view?.state.status).toBe("running");
+  await act(async () => vi.advanceTimersByTimeAsync(30_000));
+  await tick();
+  expect(latest.view?.state.status).toBe("idle");
+});
 it("cancels a pending frame on unmount and on session switch", async () => {
   await mount();
   await act(async () => on({ type: "message.delta", messageId: "answer", text: "Dropped" }));

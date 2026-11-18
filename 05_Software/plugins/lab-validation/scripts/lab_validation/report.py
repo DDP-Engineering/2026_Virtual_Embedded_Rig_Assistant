@@ -23,6 +23,8 @@ LIMITS = [
     "Instrument clocks are never assumed synchronized; signals of different sources are aligned only by the declared method.",
     "No sample is interpolated across a gap or invented for clipped data; every number is computed by lab-validate, "
     "offline, without a language model.",
+    "Capture and run folders are trusted as found: their hashes come from their own result files and nothing is "
+    "signed, so a verdict is as trustworthy as those folders.",
 ]
 
 

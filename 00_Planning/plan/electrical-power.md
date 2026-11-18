@@ -6,14 +6,14 @@ distribution: network and cable sizing, protection coordination, motor starting 
 power compensation and lighting.
 SPEC: Gitea epic [#122](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/122) and its children #126...#132 hold the specification of each work
 package (deliverables, Done criteria PWR-0x-A...D); the local copies are
-`F:\ProjectsDDP\VERA_Electrical_Automation_Plugins_Plan.md` and
-`F:\ProjectsDDP\VERA_Electrical_Automation_Plugins_Tickets\` (the tickets say `D:\ProjectsDDP`; the
-files are on `F:`). This page records only order, state and what was built, so the two never diverge.
+`<ticket-folder>\VERA_Electrical_Automation_Plugins_Plan.md` and
+`<ticket-folder>\VERA_Electrical_Automation_Plugins_Tickets\` (a folder outside the repository; the
+tickets name it on another drive). This page records only order, state and what was built, so the two never diverge.
 Where a ticket is wrong about the code, the code decides. The CAD, PLC and IND epics of the same plan
 are not part of this page.
 PROCESS: at the user's request (2026-11-15) every child is implemented with AEGIS, in order, on one
 branch `feature/122-electrical-power` cut from `master` at a8b26c1, in the sibling worktree
-`F:\2026_Virtual_Embedded_Rig_Assistant_pwr`. The implementer hands the candidate back without a
+`<repository>_pwr`. The implementer hands the candidate back without a
 commit; the coordinator checks the evidence and makes one local commit per ticket. Nothing is pushed.
 Each ticket runs only its focused tests; the complete suite runs once after PWR-06.
 STATE: PWR-00 implemented 2026-11-15 (AEGIS TASK-bdafefcf), native Ubuntu open. PWR-01 implemented

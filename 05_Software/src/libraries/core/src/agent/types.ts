@@ -31,6 +31,8 @@ export interface RuntimeHost {
   approve(call: Readonly<ToolCall>, signal: AbortSignal): Promise<"approved" | "denied" | "aborted">;
   /** Durable, undelivered user messages; detached FIFO snapshot, without consuming them. */
   steering?(): { messageId: string; text: string; timestamp: number }[];
+  /** An exception the turn loop reports only as a generic error; the host scrubs secrets before it writes the text. */
+  log?(message: string): void;
 }
 export type RuntimeEvent =
   | { type: "turn.started"; turnId: string }

@@ -1,7 +1,7 @@
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { mkdir, mkdtemp, readFile, rename, rm } from "node:fs/promises";
-import { join, resolve } from "node:path";
+import { mkdir, mkdtemp, readdir, readFile, rename, rm } from "node:fs/promises";
+import { join, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { importSoftware, software } from "./software.mjs";
 
@@ -19,6 +19,29 @@ export async function checkBundledPlugins(folder) {
       throw new Error(`bundled plugin integrity: ${entry.url}`);
   }
   return index;
+}
+
+/**
+ * The files below a bundled catalog release that none of its indexes lists, as sorted `/` paths. The folder
+ * is copied into the installer as a whole, so such a file would ship without any check.
+ */
+export async function unlistedBundledFiles(folder) {
+  const indexes = ["index.json", "index-stable.json", "index-pre-release.json"];
+  const listed = new Set([...indexes, ...indexes.map((name) => `${name}.sig`)]);
+  for (const name of indexes) {
+    let index;
+    try {
+      index = JSON.parse(await readFile(join(folder, name), "utf8"));
+    } catch {
+      continue;
+    }
+    for (const entry of index.plugins ?? []) listed.add(entry.url);
+  }
+  return (await readdir(folder, { recursive: true, withFileTypes: true }))
+    .filter((item) => !item.isDirectory())
+    .map((item) => relative(folder, join(item.parentPath, item.name)).replaceAll(sep, "/"))
+    .filter((path) => !listed.has(path))
+    .sort();
 }
 
 /**

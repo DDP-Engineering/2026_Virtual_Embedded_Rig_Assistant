@@ -33,6 +33,6 @@ Options of `route`:
 
 Freerouting runs with a hosts file that resolves only `localhost`, so its version check and analytics cannot reach
 the network. Its GUI, API and MCP servers are off, and its settings and logs stay in the run's `freerouting/NNN/home`
-folder. The board never leaves the computer.
+folder. This is Freerouting's own configuration, not a sandbox: VERA does not otherwise block its network access.
 
 Exit codes: 0 completed, 2 refused, 3 failed. The candidate and state.json are never written by freerouting-tool.

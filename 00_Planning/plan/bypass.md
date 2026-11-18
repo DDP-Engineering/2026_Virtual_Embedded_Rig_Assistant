@@ -22,7 +22,8 @@ BYP-03 is the prerequisite for both other packages. BYP-01 and BYP-02 are implem
 - Agent-supplied tool paths and working directories use `toolPathGuard`: filesystem scope only in
   Bypass; Read-only, Ask and Auto-edit remain confined to the workbench.
 - VERA's application data folder (settings, credentials, installed plugins and review records) is
-  refused in every mode. OS permissions remain authoritative.
+  refused in every mode, so the agent cannot rewrite its own permissions or plugin integrity. OS
+  permissions remain authoritative.
 - The document index, artifacts, run logs and `.vera/` remain workbench-owned.
 - Leaving Bypass revokes outside access, including running tools and background runs.
 - Outside paths are recorded as absolute paths in approvals and session exports.
@@ -41,6 +42,7 @@ BYP-03 is the prerequisite for both other packages. BYP-01 and BYP-02 are implem
 
 ## Out of scope
 
-Outside document indexing, a Bypass sandbox/container, and per-folder allow lists for other modes.
+Outside document indexing, a Bypass sandbox/container, and per-folder allow lists for other modes
+(the [terminal plan](terminal.md)'s additional folders cover Ask and Auto-edit).
 
 Full app and official-plugin suites remain user-deferred. WSL2 Linux proof does not establish native Ubuntu acceptance.

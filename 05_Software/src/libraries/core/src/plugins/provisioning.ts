@@ -35,7 +35,7 @@ import {
 } from "@vera/shared";
 import type { Clock, ProcessExit, ProcessHost } from "../ports.js";
 import { ArchiveError, bsdtarSkipsOnly, checkTree, extractZip, tarCommand } from "./archive.js";
-import { dependencyKitFile } from "./dependency-kit.js";
+import { changedKitWheel, dependencyKitFile } from "./dependency-kit.js";
 import { programInvocation } from "./launcher.js";
 import { hostVariable, killProcessTree } from "./process-tree.js";
 import type { ProgramResolver, ResolvedProgram } from "./program-tools.js";
@@ -1098,7 +1098,15 @@ export class Provisioner implements ProgramResolver {
     const installMs = this.options.timeouts?.installMs ?? INSTALL_MS;
     if ("pip" in install || "script" in install) {
       const uv = this.options.uv as ResolvedProgram;
-      if (this.options.settings()?.kit) {
+      const kit = this.options.settings()?.kit;
+      if (kit) {
+        // uv trusts every wheel in the kit folder, so a wheel that no longer is the one the kit build stored stops here.
+        const changed = await changedKitWheel(kit);
+        if (changed)
+          return failed(
+            "install",
+            `The kit file ${changed} does not match the SHA-256 recorded in kit.json.`,
+          );
         // Offline uv never downloads CPython on its own; this installs the kit's archive (once) after uv checks it.
         const python = await this.execute(
           uv.executable,

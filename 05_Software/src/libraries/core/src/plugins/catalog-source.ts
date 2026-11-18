@@ -132,6 +132,21 @@ async function examineSource(folder: string): Promise<Examined> {
       if (!known.has(required))
         issues.push({ where: name, code: "reference", detail: `requires ${required}` });
   }
+  // Plugins that require each other in a circle have no order in which they could be installed.
+  const reaches = (from: string, to: string, seen = new Set<string>()): boolean => {
+    if (from === to) return true;
+    if (seen.has(from)) return false;
+    seen.add(from);
+    return (packages.get(from)?.manifest?.requires ?? []).some((next) => reaches(next, to, seen));
+  };
+  for (const [name, pkg] of packages)
+    for (const required of pkg.manifest?.requires ?? [])
+      if (reaches(required, name))
+        issues.push({
+          where: name,
+          code: "reference",
+          detail: `requires ${required}, which requires ${name} again`,
+        });
   for (const pack of packs ?? [])
     for (const group of pack.groups)
       for (const id of group.plugins)

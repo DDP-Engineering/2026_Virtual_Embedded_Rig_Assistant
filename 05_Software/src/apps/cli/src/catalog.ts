@@ -52,6 +52,11 @@ export async function runCatalog(options: CatalogOptions): Promise<number> {
         options.publicKey === undefined ? undefined : await readFile(options.publicKey, "utf8"),
       );
       process.stdout.write(`signed ${signed.length} indexes in ${options.release}\n`);
+      // Signing with a development key stays possible, but a wrong key must not go unnoticed.
+      if (options.publicKey === undefined)
+        process.stderr.write(
+          "vera: warning: the signing key was not checked; pass --public <file> with the catalog public key that VERA pins\n",
+        );
       return 0;
     } catch (error) {
       return failed(error);

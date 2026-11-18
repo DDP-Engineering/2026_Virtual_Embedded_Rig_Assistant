@@ -4,6 +4,7 @@ import { act, createElement } from "react";
 import { createRoot } from "react-dom/client";
 import { expect, it, vi } from "vitest";
 import { api } from "../../api/index.js";
+import { ExternalSourceScope } from "./external-source-link.js";
 import { Markdown } from "./markdown.js";
 import "../../i18n.js";
 
@@ -43,6 +44,29 @@ it("opens source URLs only after confirmation and keeps non-web URLs inert", asy
       url: "https://example.com/doc",
       confirmed: true,
     });
+    expect(document.querySelector("dialog[open]")).toBeNull();
+  } finally {
+    await act(async () => root.unmount());
+    container.remove();
+  }
+});
+it("keeps an open link confirmation when the Markdown under its scope is re-created", async () => {
+  const container = document.createElement("div");
+  document.body.append(container);
+  const root = createRoot(container);
+  const text = "[Source](https://example.com/doc)";
+  const render = (key: string) =>
+    act(async () =>
+      root.render(createElement(ExternalSourceScope, null, createElement(Markdown, { key, text }))),
+    );
+  try {
+    await render("streaming");
+    const link = container.querySelector<HTMLButtonElement>("[data-web-source]");
+    await act(async () => link?.click());
+    await render("done");
+    expect(link?.isConnected).toBe(false);
+    expect(document.querySelector("dialog[open]")?.textContent).toContain("https://example.com/doc");
+    await act(async () => document.querySelector<HTMLButtonElement>("[data-web-cancel]")?.click());
     expect(document.querySelector("dialog[open]")).toBeNull();
   } finally {
     await act(async () => root.unmount());

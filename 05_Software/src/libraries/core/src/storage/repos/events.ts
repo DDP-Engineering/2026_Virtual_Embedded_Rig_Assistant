@@ -38,14 +38,30 @@ export class EventsRepository {
       .get(sessionId) as { reasoning: string | null } | undefined;
     return row?.reasoning ?? null;
   }
-  messageTexts(sessionId: string): string[] {
-    return (
-      this.db
-        .prepare(
-          "SELECT payload_json FROM events WHERE session_id=? AND type IN ('message.user','message.queued','message.done') ORDER BY seq",
-        )
-        .all(sessionId) as { payload_json: string }[]
-    ).map((row) => (JSON.parse(row.payload_json) as { text: string }).text);
+  /**
+   * The message texts of a session. With `fragment` (printable ASCII), only the rows whose text can
+   * contain it without regard to case are read and parsed: a superset the caller checks again.
+   */
+  messageTexts(sessionId: string, fragment?: string): string[] {
+    const messages =
+      "SELECT payload_json FROM events WHERE session_id=? AND type IN ('message.user','message.queued','message.done')";
+    // The fragment as the stored JSON spells it, with the LIKE wildcards taken literally.
+    const stored = JSON.stringify(fragment ?? "")
+      .slice(1, -1)
+      .replace(/[\\%_]/g, "\\$&");
+    const rows =
+      fragment === undefined
+        ? this.db.prepare(`${messages} ORDER BY seq`).all(sessionId)
+        : this.db
+            .prepare(
+              // LIKE folds ASCII case only; U+212A and U+0130 are the two other characters whose
+              // JavaScript lower case contains an ASCII letter, so their rows are always kept.
+              `${messages} AND (payload_json LIKE ? ESCAPE '\\' OR instr(payload_json,char(8490)) OR instr(payload_json,char(304))) ORDER BY seq`,
+            )
+            .all(sessionId, `%${stored}%`);
+    return (rows as { payload_json: string }[]).map(
+      (row) => (JSON.parse(row.payload_json) as { text: string }).text,
+    );
   }
   delete(sessionId: string, seq: number): boolean {
     return this.db.prepare("DELETE FROM events WHERE session_id=? AND seq=?").run(sessionId, seq).changes > 0;

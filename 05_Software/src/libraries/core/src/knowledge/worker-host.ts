@@ -65,10 +65,13 @@ const checkDeadline = (deadlineMs: number, label: string) => {
 export const pdfDeadline = (baseMs: number, bytes: number) =>
   Math.max(baseMs, Math.min(15 * 60_000, Math.round((bytes / (1024 * 1024)) * 30_000)));
 
+/** A heap ceiling makes a pathological file fail as a processing error, not exhaust the host. */
+export const DOCUMENT_WORKER_LIMITS: ResourceLimits = { maxOldGenerationSizeMb: 2048 };
+
 export function createPdfExtractor(
   entry: URL,
   deadlineMs = 120000,
-  resourceLimits?: ResourceLimits,
+  resourceLimits: ResourceLimits = DOCUMENT_WORKER_LIMITS,
 ): PdfExtractor {
   checkDeadline(deadlineMs, "PDF");
   return (bytes, signal) =>
@@ -87,13 +90,11 @@ export function createPdfExtractor(
     );
 }
 
-/** A heap ceiling makes a pathological workbook fail as a processing error, not exhaust the host. */
-export const OFFICE_WORKER_LIMITS: ResourceLimits = { maxOldGenerationSizeMb: 2048 };
 /** Office files are parsed in the same document worker entry as PDFs, so no build input is added. */
 export function createOfficeExtractor(
   entry: URL,
   deadlineMs = 120000,
-  resourceLimits: ResourceLimits = OFFICE_WORKER_LIMITS,
+  resourceLimits: ResourceLimits = DOCUMENT_WORKER_LIMITS,
 ): OfficeExtractor {
   checkDeadline(deadlineMs, "Office");
   return (format, bytes, signal) =>

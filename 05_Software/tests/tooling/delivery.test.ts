@@ -101,6 +101,32 @@ test("delivery.json keeps the other parts and refuses another version", async ()
   );
 });
 
+test("a delivery warns about unsigned installers, mixed commits and a dirty tree without failing", () => {
+  const part = (commit: string, extra = {}) => ({ version: "1.0.0", commit, dirty: false, ...extra });
+  expect(
+    common.deliveryWarnings({
+      parts: {
+        plugins: part("abc1234", { signed: true }),
+        "vera-linux-x64": part("abc1234", { signing: "not-applicable" }),
+        "vera-windows-x64": part("abc1234", { signing: "requested" }),
+      },
+    }),
+  ).toEqual([]);
+  expect(
+    common.deliveryWarnings({
+      parts: {
+        plugins: part("abc1234", { dirty: true }),
+        "vera-windows-x64": part("def5678", { signing: "unsigned" }),
+      },
+    }),
+  ).toEqual([
+    "vera-windows-x64: the installers are not code-signed",
+    "the parts were built from different commits: plugins abc1234, vera-windows-x64 def5678",
+    "built from a tree with uncommitted changes: plugins",
+  ]);
+  expect(common.deliveryWarnings(undefined)).toEqual([]);
+});
+
 test("zipFiles stores the files under the prefix", async () => {
   await mkdir(join(folder, "kit/files"), { recursive: true });
   await writeFile(join(folder, "kit/kit.json"), "{}");

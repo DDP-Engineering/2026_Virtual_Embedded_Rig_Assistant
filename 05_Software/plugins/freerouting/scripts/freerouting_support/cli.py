@@ -16,7 +16,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, NoReturn
 
-from . import TOOL, VERSION
+from . import TOOL, VERSION, workspace
 from . import ses as specctra
 
 SCRIPTS = Path(__file__).resolve().parent.parent
@@ -80,9 +80,12 @@ def _program(name: str) -> str:
 
 
 def _run_folder(cwd: Path, raw: str) -> tuple[Path, dict[str, Any], Path]:
-    folder = (cwd / raw).resolve()
-    if not folder.is_relative_to(cwd):
-        raise refuse("run", "--run", "--run must name a run folder inside the working directory.")
+    try:
+        folder = workspace.confined(cwd, raw, "--run", workspace.entered_directory())
+    except workspace.PathRefused as error:
+        raise refuse("run", "--run", str(error)) from error
+    if not workspace.allowed_output(cwd, folder):  # route writes below the run folder
+        raise refuse("run", "--run", "--run must not lie inside .vera; that folder belongs to VERA.")
     try:
         state = json.loads((folder / "state.json").read_text(encoding="utf-8"))
         if state.get("kind") != "kicad-layout-state":

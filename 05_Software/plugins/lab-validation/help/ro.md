@@ -29,3 +29,4 @@ Fiecare comandă a acestui plugin este sigură și rulează fără să întrebe 
 - Un rezultat nu este o calibrare sau o certificare metrologică; lab-validate nu derivă incertitudinea.
 - Golurile, saturarea, aliasingul evident, banda necunoscută sau insuficientă și condițiile lipsă sau diferite fac un criteriu incomplet. Incomplet nu înseamnă aproape trecut.
 - Ceasurile instrumentelor diferite nu sunt niciodată sincronizate după timpii fișierelor; alinierea folosește markeri declarați, offset-uri sau corelație încrucișată.
+- Un verdict este la fel de demn de încredere ca folderele de captură și de rulare pe care le citește: hash-urile lor provin din propriile fișiere de rezultat și nimic nu este semnat.

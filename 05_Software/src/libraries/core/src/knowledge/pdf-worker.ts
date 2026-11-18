@@ -5,6 +5,9 @@ import { getDocument } from "pdfjs-dist/legacy/build/pdf.mjs";
 import type { OfficeFormat } from "./office-format.js";
 
 const assets = dirname(createRequire(import.meta.url).resolve("pdfjs-dist/package.json"));
+// Far above a large manual (thousands of pages); the text stays within the 128 MiB extraction cache.
+const MAX_PAGES = 50_000;
+const MAX_CHARS = 32 * 1024 * 1024;
 
 /** pdf.js' Node parser executes solely in this host-owned dedicated thread. */
 async function extract(bytes: Uint8Array): Promise<void> {
@@ -20,7 +23,9 @@ async function extract(bytes: Uint8Array): Promise<void> {
   try {
     const pdf = await loading.promise;
     const pages: string[] = [];
-    for (let n = 1; n <= pdf.numPages; n++) {
+    // Past a cap the pages read so far are indexed; the later ones are absent, not an error.
+    const count = Math.min(pdf.numPages, MAX_PAGES);
+    for (let n = 1, chars = 0; n <= count && chars < MAX_CHARS; n++) {
       const page = await pdf.getPage(n);
       const content = await page.getTextContent();
       let text = "",
@@ -39,6 +44,7 @@ async function extract(bytes: Uint8Array): Promise<void> {
         previousHeight = item.height;
       }
       pages.push(text.trim());
+      chars += text.length;
       page.cleanup();
     }
     parentPort?.postMessage({ kind: "pdf", pages });

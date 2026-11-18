@@ -134,7 +134,7 @@ package version (`src/apps/desktop/package.json`); while it is `0.0.0` the folde
 | `build-plugin-packages.mjs` | Runs `prepare:plugins`, signs the channel indexes when a key is given, adds one archive of the whole catalog | `npm run delivery:plugins [-- --signing-key <pem>]`; writes `plugins/`. Without a key `delivery.json` records `signed: false`. Any host. |
 | `build-vera-installers.mjs` | Runs `npm run package` (release mode only) and copies the installers that `package-report.json` names | `npm run delivery:vera -- --platform windows-x64\|linux-x64`; writes `vera-<platform>/`. Only on that platform's host. |
 | `build-plugin-deps-kit.mjs` | Runs `vera catalog kit` into a temporary folder and zips it | `npm run delivery:plugin-deps -- --platform windows-x64\|linux-x64 [--skip <ids>]` (default `--skip sigrok`); writes `plugin-deps/vera-plugin-deps-<version>-<platform>.zip`. Needs network (~1 GB) and the pinned uv; only on that platform's host. |
-| `verify-delivery.mjs` | Checks every `SHA256SUMS` and `delivery.json` entry, one version throughout, the expected files per part, the plugin zips against the indexes and every index signature that is present. A missing signature is a mismatch only when `delivery.json` records the plugins as signed; an unsigned catalog passes with the note `channel indexes unsigned` | `npm run delivery:verify [-- <folder>]`, default the folder of this checkout. Lists present and missing parts; exit 1 on a mismatch. Publishes nothing. |
+| `verify-delivery.mjs` | Checks every `SHA256SUMS` and `delivery.json` entry, one version throughout, the expected files per part, the plugin zips against the indexes and every index signature that is present. A missing signature is a mismatch only when `delivery.json` records the plugins as signed; an unsigned catalog, unsigned Windows installers, parts built from different commits and parts built from a tree with local changes pass, each with a line under `WARNING` | `npm run delivery:verify [-- <folder>]`, default the folder of this checkout. Lists present and missing parts; exit 1 on a mismatch. Publishes nothing. |
 
 Every build script refuses an existing part; `--replace` rebuilds only that part. A part is built in
 `.staging-<part>` next to it and renamed at the end, so a failure leaves no half-written part. Each script
@@ -163,7 +163,7 @@ Everything below `07_Delivery/` except `README.md` is git-ignored. Installing fr
 - Packaging: `05_Software/release_tmp/`, staging and output separated by mode.
 - Deliveries: `07_Delivery/vera-<version>/`.
 - Environment, build and release caches: `02_Tools/cache/`. Evaluator scratch never goes here; see
-  [evaluators](../05_Software/evaluators/README.md#scratch-și-outputs).
+  [evaluators](../05_Software/evaluators/README.md#scratch-and-outputs).
 
 This README describes the existing commands; a tool being present does not mean its probe was run or
 that a release was validated.

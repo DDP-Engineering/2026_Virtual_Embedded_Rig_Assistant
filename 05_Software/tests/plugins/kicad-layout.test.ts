@@ -323,6 +323,57 @@ describe("kicad-layout-tool without KiCad", { timeout: 300_000 }, () => {
     expect(run.stdout.trim()).toBe("'kicad-cli drc failed (exit 3): ge\\xe4\\ufffdndert'");
   });
 
+  it("leaves a library table that names another host out of the candidate and says which entry", async () => {
+    const work = await bench();
+    const code = [
+      "import json, sys",
+      "from pathlib import Path",
+      "sys.path.insert(0, sys.argv[1])",
+      "from kicad_layout_support import candidate",
+      "cwd = Path(sys.argv[2])",
+      "inputs, warnings = candidate.copy(cwd, cwd / 'boards' / 'layout.kicad_pcb', cwd / sys.argv[3])",
+      "print(json.dumps({'copied': sorted(p.name for p in (cwd / sys.argv[3]).iterdir()), 'warnings': warnings}))",
+    ].join("\n");
+    const copy = (target: string): { copied: string[]; warnings: string[] } => {
+      const run = spawnSync(python, ["-c", code, join(source, "scripts"), work, target], {
+        encoding: "utf8",
+        env: baseEnv(),
+      });
+      expect(run.status, run.stderr).toBe(0);
+      return JSON.parse(run.stdout);
+    };
+    try {
+      expect(copy("local")).toEqual({
+        copied: ["fp-lib-table", "layout.kicad_pcb", "layout.kicad_pro"],
+        warnings: [],
+      });
+      const table = await readFile(join(work, "boards/fp-lib-table"), "utf8");
+      await writeFile(
+        join(work, "boards/fp-lib-table"),
+        table
+          .replace('"fixture"', '"corp"')
+          .replace(/\(uri "[^"]*"\)/, String.raw`(uri "\\host.invalid\share\corp.pretty")`),
+      );
+      const network = copy("network");
+      expect(network.copied).toEqual(["layout.kicad_pcb", "layout.kicad_pro"]);
+      expect(network.warnings).toEqual([
+        expect.stringMatching(/fp-lib-table.*library "corp".*host\.invalid/),
+      ]);
+      // A project text variable that a library path may use.
+      await writeFile(join(work, "boards/fp-lib-table"), table);
+      const project = await json(join(work, "boards/layout.kicad_pro"));
+      await writeFile(
+        join(work, "boards/layout.kicad_pro"),
+        JSON.stringify({ ...project, text_variables: { LIBS: "//host.invalid/share" } }),
+      );
+      const variable = copy("variable");
+      expect(variable.copied).toEqual(["layout.kicad_pcb", "layout.kicad_pro"]);
+      expect(variable.warnings).toEqual([expect.stringMatching(/text variable "LIBS"/)]);
+    } finally {
+      await rm(work, { recursive: true, force: true });
+    }
+  });
+
   it("refuses an open of anything but a workbench board before starting KiCad (REQ-REL-19ac705f)", async () => {
     const before = await hashes(dir);
     const outside = await mkdtemp(join(tmpdir(), "vera-kicad-layout-outside-"));

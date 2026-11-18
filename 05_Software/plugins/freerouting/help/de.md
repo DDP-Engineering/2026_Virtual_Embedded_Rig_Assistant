@@ -1,6 +1,6 @@
 # Freerouting-Autorouter (lokal)
 
-Freerouting-Autorouter ermöglicht dem Agenten, einen KiCad-10-Platinenkandidaten auf diesem Computer mit Freerouting 2.5.0 automatisch zu routen. Er exportiert ein Specctra-DSN aus dem gespeicherten Kandidaten eines kicad-layout-Laufs, routet es offline mit begrenzter Anzahl Durchgänge und begrenztem Zeitbudget, wobei vorhandenes und gesperrtes Kupfer erhalten bleibt, und macht aus den neuen Leiterbahnen und Vias eine kicad-layout-Anfrage. kicad-layout wendet diese Anfrage dann auf den Kandidaten an und prüft ihn mit DRC. Die Platine verlässt nie den Computer, und die Quellplatine ändert sich nur, wenn Sie das Übernehmen eines bestandenen Kandidaten freigeben.
+Freerouting-Autorouter ermöglicht dem Agenten, einen KiCad-10-Platinenkandidaten auf diesem Computer mit Freerouting 2.5.0 automatisch zu routen. Er exportiert ein Specctra-DSN aus dem gespeicherten Kandidaten eines kicad-layout-Laufs, routet es offline mit begrenzter Anzahl Durchgänge und begrenztem Zeitbudget, wobei vorhandenes und gesperrtes Kupfer erhalten bleibt, und macht aus den neuen Leiterbahnen und Vias eine kicad-layout-Anfrage. kicad-layout wendet diese Anfrage dann auf den Kandidaten an und prüft ihn mit DRC. Freerouting läuft mit ausgeschalteten Online-Funktionen, und die Quellplatine ändert sich nur, wenn Sie das Übernehmen eines bestandenen Kandidaten freigeben.
 
 ## Voraussetzungen
 
@@ -33,5 +33,5 @@ Das Anwenden der Routen auf den Kandidaten und das Übernehmen des Kandidaten in
 - Windows x64 und Linux x64.
 - Ein Projekt mit eigenen DRC-Regeln (`.kicad_dru`) wird abgelehnt, sofern Sie nicht akzeptieren, ohne sie zu routen; Freerouting kann sie nicht befolgen, und die DRC nach der Bearbeitung prüft sie trotzdem.
 - Wenn das Zeitbudget abläuft, wird Freerouting gestoppt und keine Anfrage geschrieben.
-- Freerouting läuft vollständig offline: Versionsprüfung, Analytics, GUI und Server sind ausgeschaltet.
+- Freerouting läuft mit ausgeschalteter Versionsprüfung, Analytics, GUI und Servern; darüber hinaus sperrt VERA seinen Netzwerkzugriff nicht.
 - Referenz: https://github.com/freerouting/freerouting

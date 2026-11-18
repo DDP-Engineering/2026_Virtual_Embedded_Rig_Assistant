@@ -1,64 +1,62 @@
-# Evaluatori
+# Evaluators
 
-Harness-uri independente care produc măsurători, scoruri și rapoarte despre produs.
-Un harness poate aplica și praguri documentate, dar nu este o suită unitară sau E2E:
-nu rulează la `npm test` și nici la `npm run test:e2e`. Testele funcționale sunt în
-[`../tests/`](../tests/README.md), iar uneltele de mediu, build și release în
-[`../../02_Tools/`](../../02_Tools/README.md).
+Independent harnesses that produce measurements, scores and reports about the product. A harness can
+also apply documented thresholds, but it is not a unit or E2E suite: it does not run with `npm test`
+or with `npm run test:e2e`. Functional tests are in [`../tests/`](../tests/README.md); the
+environment, build and release tools are in [`../../02_Tools/`](../../02_Tools/README.md).
 
-Fiecare harness își deține intrarea, implementarea și eventualele date sau module proprii.
-Datele comune de test, de exemplu demo-ul fictiv și întrebările de căutare, rămân în
-`tests/fixtures/`. Comenzile se rulează din `05_Software` cu Node.js local:
+Each harness owns its entry point, its implementation and any data or modules of its own. Shared
+test data, for example the fictional demo and the retrieval questions, stays in `tests/fixtures/`.
+Run the commands from `05_Software` with the local Node.js:
 `python ../02_Tools/environment/npmw.py …`.
 
-| Director | Familie | Intrare | Statut |
+| Folder | Family | Entry point | Status |
 |---|---|---|---|
-| [eval-performance-harness/](#performanță) | Încărcarea sesiunilor salvate | `npm run perf:sessions` | Măsurare curentă (PERF-01); calibrarea și gate-urile sunt amânate. |
-| [eval-retrieval-harness/](#căutare) | Căutarea reală a produsului | `npm run eval:retrieval` | Praguri hybrid documentate. |
-| [retrieval-support/](retrieval-support/README.md) | Module ale evaluării căutării | — | Importate de harness-ul de căutare. |
+| [eval-performance-harness/](#performance) | Loading of saved sessions | `npm run perf:sessions` | Current measurement (PERF-01); calibration and gates are deferred. |
+| [eval-retrieval-harness/](#retrieval) | The product's real search | `npm run eval:retrieval` | Documented hybrid thresholds. |
+| [retrieval-support/](retrieval-support/README.md) | Modules of the retrieval evaluation | — | Imported by the retrieval harness. |
 
-## Scratch și outputs
+## Scratch and outputs
 
-- **Scratch** (profiluri, baze de date, build-uri intermediare) este al fiecărui harness:
-  fie un director temporar propriu, șters la final, fie zona ignorată
-  `node_modules/.cache/evaluators/<familie>/`. Evaluatorii nu folosesc `02_Tools/cache/`,
-  care servește mediului, build-ului și release-ului.
-- **Outputs** salvate merg în [`../evaluation-outputs/<familie>/`](../evaluation-outputs/README.md),
-  cu un nume unic pentru fiecare rulare. Directorul familiei se creează înaintea primei rulări,
-  pentru că evaluatorii nu creează directoare părinte. Directorul este ignorat de Git; dovezile
-  păstrate se selectează explicit.
-- Zona `node_modules/.cache/evaluators/` poate fi ștearsă oricând nu rulează niciun evaluator;
-- Rapoartele istorice deja acceptate rămân în `06_SoftwareDocu/` cu hash-urile și proveniența
-  lor originale; ele nu au fost mutate. Mutarea harness-ului de performanță a schimbat însă
-  identitatea lui (`harnessHash`), iar `compare` și `calibrate` cer identități identice: rulările
-  noi nu pot folosi rularea reținută din 2026-11-12 ca referință compatibilă.
+- **Scratch** (profiles, databases, intermediate builds) belongs to each harness: either a temporary
+  folder of its own, deleted at the end, or the ignored area
+  `node_modules/.cache/evaluators/<family>/`. Evaluators do not use `02_Tools/cache/`, which serves
+  the environment, the build and the release.
+- Saved **outputs** go to [`../evaluation-outputs/<family>/`](../evaluation-outputs/README.md), with
+  a unique name for each run. Create the family folder before the first run, because the evaluators
+  do not create parent folders. The folder is ignored by Git; evidence to keep is selected
+  explicitly.
+- The area `node_modules/.cache/evaluators/` can be deleted whenever no evaluator is running.
+- Historical reports that were already accepted stay in `06_SoftwareDocu/` with their original
+  hashes and provenance; they were not moved. Moving the performance harness did change its identity
+  (`harnessHash`), and `compare` and `calibrate` need identical identities: new runs cannot use the
+  retained run of 2026-11-12 as a compatible reference.
 
-| Familie | Scratch | Output |
+| Family | Scratch | Output |
 |---|---|---|
-| performance | director temporar `vera-session-performance-*`, șters la final | `--output <fișier nou>`, obligatoriu |
-| retrieval | `node_modules/.cache/evaluators/retrieval/` sau `--scratch <părinte>`; directorul rulării este șters în `finally` | `--output <fișier nou>`, opțional |
+| performance | temporary folder `vera-session-performance-*`, deleted at the end | `--output <new file>`, required |
+| retrieval | `node_modules/.cache/evaluators/retrieval/` or `--scratch <parent>`; the run's folder is deleted in `finally` | `--output <new file>`, optional |
 
-## Performanță
+## Performance
 
-`perf:sessions run|calibrate|compare --output <fișier nou> [opțiuni]` măsoară
-încărcarea sesiunilor salvate într-un build instrumentat, compară o rulare cu o
-referință și calibrează referințe. Fișierele harness-ului sunt
-[perf-sessions.mjs](eval-performance-harness/perf-sessions.mjs) (intrarea),
+`perf:sessions run|calibrate|compare --output <new file> [options]` measures the loading of saved
+sessions in an instrumented build, compares a run with a reference and calibrates references. The
+harness files are [perf-sessions.mjs](eval-performance-harness/perf-sessions.mjs) (the entry point),
 [runner.mjs](eval-performance-harness/runner.mjs), [report.mjs](eval-performance-harness/report.mjs)
-și [fixtures.mjs](eval-performance-harness/fixtures.mjs), care generează sesiunile sintetice.
-Runner-ul folosește protecția de rețea a suitei E2E, `tests/e2e/network-guard.ts`.
-Metoda, rezultatele și limitele sunt în
+and [fixtures.mjs](eval-performance-harness/fixtures.mjs), which generates the synthetic sessions.
+The runner uses the network guard of the E2E suite, `tests/e2e/network-guard.ts`. The method, the
+results and the limits are in
 [06_SoftwareDocu/session-performance.md](../../06_SoftwareDocu/session-performance.md).
-Testele lor focalizate sunt `tests/tooling/session-performance*.test.ts`.
+Their focused tests are `tests/tooling/session-performance*.test.ts`.
 
-## Căutare
+## Retrieval
 
-[eval-retrieval.mjs](eval-retrieval-harness/eval-retrieval.mjs) împachetează
-[product-eval.mjs](eval-retrieval-harness/product-eval.mjs) și exercită serviciul
-real de căutare, cu baze de date și workeri izolați, pe demo și cele 28 de întrebări fixe,
-în modurile `keyword`, `semantic` și `hybrid`. Cere modelul local deja pregătit
-(`npm run prepare:model`) și nu îl descarcă. Pragurile hybrid sunt recall@5 de minimum
-`0.85` global, `0.95` pentru engleză și `0.75` pentru română.
+[eval-retrieval.mjs](eval-retrieval-harness/eval-retrieval.mjs) bundles
+[product-eval.mjs](eval-retrieval-harness/product-eval.mjs) and exercises the real search service,
+with isolated databases and workers, on the demo and the 28 fixed questions, in the `keyword`,
+`semantic` and `hybrid` modes. It needs the local model already prepared (`npm run prepare:model`)
+and does not download it. The hybrid thresholds are a recall@5 of at least `0.85` overall, `0.95`
+for English and `0.75` for Romanian.
 
 ```powershell
 python ../02_Tools/environment/npmw.py npm run eval:retrieval
@@ -66,5 +64,5 @@ mkdir evaluation-outputs/retrieval -Force
 python ../02_Tools/environment/npmw.py npm run eval:retrieval -- --output evaluation-outputs/retrieval/<run>.json
 ```
 
-`--scratch <părinte>` alege părintele directorului temporar; `--output <fișier nou>`
-salvează raportul complet și refuză un fișier existent.
+`--scratch <parent>` chooses the parent of the temporary folder; `--output <new file>` saves the
+complete report and refuses an existing file.

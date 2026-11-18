@@ -5,14 +5,14 @@ parameters, operations and state visible on its own entry in the Plugins page, a
 catalog deliverable as a signed release.
 SPEC: Gitea epic [#261](http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant/issues/261) and its children #262...#269 hold the specification of each work
 package (deliverables, Done criteria PLG-0x-A...E); the local copies are
-`F:\ProjectsDDP\VERA_Plugin_Management_Plan.md` and `F:\ProjectsDDP\VERA_Plugin_Management_Tickets\`.
+`<ticket-folder>\VERA_Plugin_Management_Plan.md` and `<ticket-folder>\VERA_Plugin_Management_Tickets\`.
 This page records only order, state and what was built, so the two never diverge. Where a ticket is
 wrong about the code, the code decides.
 IDS: the IDs PLG-01...PLG-18 were already used by the first plugin epic (#57...#74). In this initiative an ID
 always travels with its issue number: "PLG-01 #262" is this plan, "PLG-01 #57" is the plugin store.
 PROCESS: at the user's request (2026-11-14) every child is implemented with AEGIS, in order, on one
 branch `feature/261-plugin-management` cut from `master` at 920457e, in the sibling worktree
-`F:\2026_Virtual_Embedded_Rig_Assistant_plg`. The implementer hands the candidate back without a commit;
+`<repository>_plg`. The implementer hands the candidate back without a commit;
 the coordinator checks the evidence and makes one local commit per ticket. Nothing is pushed. Each ticket
 runs only its focused tests; the complete suite runs once after PLG-08.
 STATE: PLG-01 implemented 2026-11-15 (AEGIS TASK-1cebbbdd); PLG-02 implemented 2026-11-15 (AEGIS TASK-e937e9e6); PLG-03 implemented 2026-11-15 (AEGIS TASK-f1dfd67e); PLG-04 implemented 2026-11-15 (AEGIS TASK-f84206e4); PLG-05 implemented 2026-11-15 (AEGIS TASK-41f54714); PLG-06 implemented 2026-11-15 (AEGIS TASK-d4d70d39); PLG-07 implemented 2026-11-15 (AEGIS TASK-2b84817f), publishing open; PLG-08 implemented 2026-11-15 (AEGIS TASK-3b46b9a6, TASK-a793c9bd); kits built without sigrok.

@@ -21,6 +21,9 @@ it("materializes pinned app-local VC++ DLLs and refuses altered cache or untrust
     target = join(dir, "target");
   const bytes = Buffer.from("pinned-runtime-fixture");
   const manifest = {
+    version: "14.0.0.0",
+    redistribution: "https://example.invalid/redistribution",
+    license: "https://example.invalid/license",
     files: [
       {
         path: "vcruntime140.dll",
@@ -37,6 +40,10 @@ it("materializes pinned app-local VC++ DLLs and refuses altered cache or untrust
     ).rejects.toThrow(/signature/);
     await prepareWindowsRuntime(manifest, target, { sourceDir: source, verifySource: async () => true });
     expect(await readFile(join(target, "vcruntime140.dll"))).toEqual(bytes);
+    expect(await readFile(join(target, "NOTICE.txt"), "utf8")).toBe(
+      "Microsoft Visual C++ Runtime x64 14.0.0.0.\nUnmodified runtime files, copyright Microsoft Corporation.\n" +
+        "Redistribution: https://example.invalid/redistribution\nLicense terms: https://example.invalid/license\n",
+    );
     await writeFile(join(target, "vcruntime140.dll"), "altered");
     await expect(
       prepareWindowsRuntime(manifest, target, { sourceDir: source, verifySource: async () => true }),
@@ -285,6 +292,26 @@ it.each(["instrumented", "release", "missing-pdf-resource"] as const)(
     }
   },
 );
+
+it("names the files of a bundled catalog release that no index lists", async () => {
+  const { unlistedBundledFiles } = await import(
+    pathToFileURL(join(root, "../02_Tools/environment/prepare-plugins.mjs")).href
+  );
+  const dir = await mkdtemp(join(tmpdir(), "vera-bundled-extra-"));
+  try {
+    await writeFile(join(dir, "index.json"), JSON.stringify({ plugins: [{ url: "a-1.0.0.zip" }] }));
+    await writeFile(join(dir, "index-stable.json"), JSON.stringify({ plugins: [{ url: "a-0.9.0.zip" }] }));
+    for (const name of ["a-1.0.0.zip", "a-0.9.0.zip", "index-stable.json.sig"])
+      await writeFile(join(dir, name), "x");
+    expect(await unlistedBundledFiles(dir)).toEqual([]);
+    await mkdir(join(dir, "nested"));
+    await writeFile(join(dir, "nested/tool.bin"), "x");
+    await writeFile(join(dir, "stray.txt"), "x");
+    expect(await unlistedBundledFiles(dir)).toEqual(["nested/tool.bin", "stray.txt"]);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
 
 it("ships runtime resources without fictional workbench fixtures", async () => {
   const config = parse(await readFile(join(root, "src/apps/desktop/electron-builder.yml"), "utf8"));

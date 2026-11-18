@@ -23,10 +23,13 @@ import time
 import serial
 from serial.tools import list_ports
 
-VERSION = "0.2.0"
+VERSION = "0.2.1"
 BY_ID = "/dev/serial/by-id"
 # The partial line searched by --until keeps at most this many characters.
 LINE_CHARS = 4096
+# Generous bounds, so one call cannot hold a port without end or compile an arbitrarily large pattern.
+MAX_DURATION = 7 * 24 * 3600
+UNTIL_CHARS = 1024
 RESET_SECONDS = 0.2
 # (vendor ID, product ID or None for any product) -> board family
 FAMILIES = {
@@ -157,6 +160,13 @@ def positive_float(text):
     return value
 
 
+def duration(text):
+    value = positive_float(text)
+    if value > MAX_DURATION:
+        raise argparse.ArgumentTypeError(f"expected at most {MAX_DURATION} seconds (7 days), got {text!r}")
+    return value
+
+
 def positive_int(text):
     try:
         value = int(text)
@@ -168,6 +178,8 @@ def positive_int(text):
 
 
 def expression(text):
+    if len(text) > UNTIL_CHARS:
+        raise argparse.ArgumentTypeError(f"expected a regular expression of at most {UNTIL_CHARS} characters, got {len(text)}")
     try:
         return re.compile(text)
     except re.error as error:
@@ -182,10 +194,10 @@ def parser():
     commands = root.add_subparsers(dest="command", required=True)
     commands.add_parser("list", help="list the serial ports as JSON", allow_abbrev=False)
 
-    def port_options(command, duration):
+    def port_options(command, default_duration):
         command.add_argument("--port", required=True, help="COM7, /dev/ttyUSB0 or /dev/serial/by-id/...")
         command.add_argument("--baud", type=positive_int, default=115200)
-        command.add_argument("--duration", type=positive_float, default=duration, help="seconds to read")
+        command.add_argument("--duration", type=duration, default=default_duration, help="seconds to read")
         command.add_argument("--until", type=expression, help="stop when a line matches this regex")
         command.add_argument("--max-bytes", type=positive_int, default=1048576)
 

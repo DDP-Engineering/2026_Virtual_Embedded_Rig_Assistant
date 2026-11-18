@@ -23,6 +23,16 @@ export interface BridgeTransport {
 
 export function createBridge(transport: BridgeTransport): VeraBridge {
   let subscriptionNumber = 0;
+  // Every subscriber's listener receives the same payload object: validate it once per event, not per subscriber.
+  let parsedPayload: unknown;
+  let parsedEnvelope: ReturnType<typeof eventEnvelopeSchema.safeParse> | undefined;
+  const parseEnvelope = (payload: unknown) => {
+    if (!parsedEnvelope || payload !== parsedPayload) {
+      parsedPayload = payload;
+      parsedEnvelope = eventEnvelopeSchema.safeParse(payload);
+    }
+    return parsedEnvelope;
+  };
   function subscribe(topic: "app", on: (event: AppEvent) => void): () => void;
   function subscribe(topic: "workbench", id: string, on: (event: WorkbenchEvent) => void): () => void;
   function subscribe(
@@ -48,7 +58,7 @@ export function createBridge(transport: BridgeTransport): VeraBridge {
       let active = true;
       const listener = (_event: unknown, payload: unknown) => {
         if (!active) return;
-        const envelope = eventEnvelopeSchema.safeParse(payload);
+        const envelope = parseEnvelope(payload);
         if (
           envelope.success &&
           envelope.data.topic === "session" &&
@@ -92,7 +102,7 @@ export function createBridge(transport: BridgeTransport): VeraBridge {
     let active = true;
     const listener = (_event: unknown, payload: unknown) => {
       if (!active) return;
-      const envelope = eventEnvelopeSchema.safeParse(payload);
+      const envelope = parseEnvelope(payload);
       if (!envelope.success) return;
       if (topic === "app" && envelope.data.topic === "app" && typeof idOrOn === "function")
         idOrOn(envelope.data.event);

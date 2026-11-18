@@ -29,3 +29,4 @@ Toutes les commandes de ce plugin sont sûres et s’exécutent sans demander da
 - Un résultat n’est ni un étalonnage ni une certification métrologique ; lab-validate ne calcule pas l’incertitude.
 - Les trous, l’écrêtage, un repliement de spectre manifeste, une bande passante inconnue ou insuffisante et des conditions manquantes ou différentes rendent un critère incomplet. Incomplet ne signifie pas presque réussi.
 - Les horloges de différents instruments ne sont jamais synchronisées d’après les horodatages des fichiers ; l’alignement utilise des marqueurs, des décalages déclarés ou la corrélation croisée.
+- Un verdict est aussi fiable que les dossiers de capture et d’exécution qu’il lit : leurs empreintes proviennent de leurs propres fichiers de résultat et rien n’est signé.

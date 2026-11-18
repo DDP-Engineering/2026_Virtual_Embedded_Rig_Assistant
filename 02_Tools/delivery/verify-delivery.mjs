@@ -9,6 +9,7 @@ import {
   checkSums,
   currentDelivery,
   deliveryFolderName,
+  deliveryWarnings,
   formatBytes,
   licenseName,
   listFiles,
@@ -31,7 +32,7 @@ if (!existsSync(folder)) {
 }
 
 const problems = [];
-const notes = [];
+const warnings = [];
 const hashes = new Map();
 const hash = async (path) => {
   if (!hashes.has(path)) hashes.set(path, await sha256File(path));
@@ -99,10 +100,13 @@ if (pluginFiles) {
   }
   const signed = manifest?.parts?.plugins?.signed;
   const key = await readFile(catalogPublicKey, "utf8");
+  const unsigned = [];
   for (const name of indexes.slice(1)) {
     const sig = `${name}.sig`;
     if (!pluginFiles.includes(sig)) {
       if (signed) problem("plugins", `${sig}: missing`);
+      // Judged by the signature files, not by the flag that the folder under test records about itself.
+      else unsigned.push(name);
       continue;
     }
     const valid = verifySignature(
@@ -113,7 +117,8 @@ if (pluginFiles) {
     );
     if (!valid) problem("plugins", `${sig}: does not verify with ${basename(catalogPublicKey)}`);
   }
-  if (!signed) notes.push("plugins: channel indexes unsigned");
+  if (unsigned.length)
+    warnings.push(`plugins: the catalog is not signed (no signature for ${unsigned.join(", ")})`);
   const allowed = new Set([
     ...indexes,
     ...indexes.slice(1).map((name) => `${name}.sig`),
@@ -172,7 +177,11 @@ for (const [key, isPresent] of Object.entries(present)) {
     `  ${key.padEnd(24)} ${isPresent ? `present  ${formatBytes(bytes).padStart(10)}  ${part?.commit ?? ""}${part?.dirty ? " (dirty)" : ""}` : "missing"}`,
   );
 }
-for (const note of notes) console.log(`\n  ${note}`);
+warnings.push(...deliveryWarnings(manifest));
+if (warnings.length) {
+  console.warn(`\nWARNING: ${warnings.length} warning(s), not a delivery to release as it is:`);
+  for (const text of warnings) console.warn(`  ! ${text}`);
+}
 if (problems.length) {
   console.error(`\n${problems.length} problem(s):`);
   for (const text of problems) console.error(`  ${text}`);
@@ -182,4 +191,6 @@ if (!Object.values(present).some(Boolean)) {
   console.error("\nThe delivery has no parts.");
   process.exit(1);
 }
-console.log("\nDelivery verified.");
+console.log(
+  warnings.length ? `\nDelivery verified, with ${warnings.length} warning(s).` : "\nDelivery verified.",
+);

@@ -131,6 +131,9 @@ def load(cwd: Path, spelled: Path, raw: str, needs_tests: bool = False) -> Reque
     manifest = _text(document, "manifest", 256)
     if Path(manifest).is_absolute() or ".." in Path(manifest).parts:
         raise Refused("request", "manifest is the manifest folder relative to the workspace, without '..'.")
+    if manifest.startswith("-"):
+        # It reaches `west init -l <manifest>` as an argument of its own, where a leading dash reads as an option.
+        raise Refused("request", "manifest must not start with '-'; write ./<folder> for a folder with such a name.")
     projects_raw = document.get("projects")
     if not isinstance(projects_raw, list) or not projects_raw or len(projects_raw) > 64:
         raise Refused("request", "projects must list between 1 and 64 projects.")

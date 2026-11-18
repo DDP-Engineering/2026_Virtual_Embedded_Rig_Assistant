@@ -29,32 +29,37 @@ describe("file tool confinement", () => {
     expect((await g.resolve("Docs/new/deep.txt")).absolute).toBe(join(root, "Docs/new/deep.txt"));
     expect((await g.resolve(".")).absolute).toBe(root);
   });
+  const notRelative = "Use a workbench-relative path.";
+  const device = "Device names and ambiguous Windows paths are unavailable.";
+  const leaves = "Path leaves the workbench and additional folders.";
+  const ignored = "Path is ignored by the workbench.";
   it.each([
-    "/etc/passwd",
-    "C:\\Windows\\win.ini",
-    "C:relative",
-    "\\\\server\\share",
-    "\\\\?\\C:\\x",
-    "\\\\.\\pipe\\x",
-    "CON",
-    "nul.txt",
-    "Docs/aux.md",
-    "LPT1.log",
-    "COM9",
-    "../outside",
-    "Docs/../../outside",
-    "a\0b",
-    ".vera/cache",
-    "x/.GIT/config",
-    "node_modules/x",
-    "hidden/new.txt",
-    "secret.secret",
-    "Docs/file:stream",
-    "Docs/NUL .txt",
-    "Docs/trailing.",
-    "Docs/trailing ",
-  ])("rejects %s", async (path) => {
-    await expect((await guard()).resolve(path)).rejects.toThrow();
+    ["/etc/passwd", notRelative],
+    ["C:\\Windows\\win.ini", notRelative],
+    ["C:relative", notRelative],
+    ["\\\\server\\share", notRelative],
+    ["\\\\?\\C:\\x", notRelative],
+    ["\\\\.\\pipe\\x", notRelative],
+    ["CON", device],
+    ["nul.txt", device],
+    ["Docs/aux.md", device],
+    ["LPT1.log", device],
+    ["COM9", device],
+    ["../outside", leaves],
+    ["Docs/../../outside", leaves],
+    ["a\0b", notRelative],
+    [".vera/cache", ignored],
+    ["x/.GIT/config", ignored],
+    ["node_modules/x", ignored],
+    ["hidden/new.txt", ignored],
+    ["secret.secret", ignored],
+    ["Docs/file:stream", notRelative],
+    ["Docs/NUL .txt", device],
+    ["Docs/trailing.", device],
+    ["Docs/trailing ", device],
+  ])("rejects %s", async (path, message) => {
+    // The exact refusal: a path refused for another reason than its own would hide a lost check.
+    await expect((await guard()).resolve(path)).rejects.toThrow(new Error(message));
   });
   it("rejects external directory links including nonexistent descendants", async () => {
     await symlink(outside, join(root, "escape"), process.platform === "win32" ? "junction" : "dir");

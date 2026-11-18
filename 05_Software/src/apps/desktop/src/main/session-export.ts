@@ -4,7 +4,7 @@ import { type SessionExportFormat, sessionExportSchema } from "@vera/shared";
 import { exportDestination } from "./artifacts.js";
 import { sanitizeEvent, sanitizeSessionSummary } from "./events.js";
 
-/** Called within SessionsHost.run so dialog and write retain the same workbench lifecycle. */
+/** Called within SessionsHost.run; the desktop picks the path before it queues, so `choose` returns at once. */
 export async function exportSession(
   service: SessionService,
   id: string,

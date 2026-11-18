@@ -6,6 +6,7 @@ import { runCatalog } from "./catalog.js";
 import { runDocuments } from "./documents.js";
 import { ConsoleLogger } from "./host-ports.js";
 import { runPluginInstall, runScopedPlugin } from "./plugin.js";
+import { environmentKey } from "./provider-key.js";
 import { reportError, runTurn } from "./run.js";
 
 const logger = new ConsoleLogger((line) => {
@@ -62,7 +63,9 @@ try {
   else {
     const credential = options.keyFile ? loaded.get(options.keyFile) : undefined;
     if (credential?.error) throw credential.error;
-    const key = options.keyFile ? credential?.key : process.env.OPENAI_API_KEY;
+    const ambient = options.keyFile ? undefined : environmentKey(options.provider, process.env);
+    if (ambient?.note) process.stderr.write(`vera: ${ambient.note}\n`);
+    const key = options.keyFile ? credential?.key : ambient?.key;
     process.exitCode = await runTurn(options, logger, controller.signal, key);
   }
 } catch (error) {

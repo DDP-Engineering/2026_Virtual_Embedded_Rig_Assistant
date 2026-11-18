@@ -23,8 +23,9 @@ export const USAGE = `Usage: vera run --workbench <dir> --prompt <text>
   vera search --workbench <dir> --query <text> [--mode hybrid|keyword|semantic]
     [--k 1..20] [--path-glob <glob>] [--data <dir>]
 
-Provider defaults to openai; format defaults to jsonl. Keys: OPENAI_API_KEY or
-UTF-8 --key-file (takes precedence). Data defaults to an owned temporary folder.
+Provider defaults to openai; format defaults to jsonl. Keys: a UTF-8 --key-file
+for any provider; without it, OPENAI_API_KEY for openai only (never sent to a
+custom provider). Data defaults to an owned temporary folder.
 Exit codes: 0=end/help, 1=error/aborted/limit, 2=usage error.`;
 export class UsageError extends Error {}
 export interface RunOptions {

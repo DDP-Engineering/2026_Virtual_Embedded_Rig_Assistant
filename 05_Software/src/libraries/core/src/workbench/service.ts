@@ -56,7 +56,7 @@ import { acquireGuard } from "./guard.js";
 import { createIgnoreRules } from "./ignore.js";
 import { readBytes } from "./read-bytes.js";
 import { workbenchStorageBytes } from "./storage-size.js";
-import { findFiles, listFolder, locateEntry, readText, statEntry } from "./tree.js";
+import { FIND_WALK_LIMIT, findFiles, listFolder, locateEntry, readText, statEntry } from "./tree.js";
 import { WriteQueue } from "./write-queue.js";
 
 function requireJson(value: unknown, ancestors = new Set<object>()): void {
@@ -992,12 +992,14 @@ export class WorkbenchService {
       const ignored = createIgnoreRules((await this.host.files.read(path)) ?? "");
       const paths: string[] = [];
       const needle = query.toLowerCase();
+      let visited = 0;
       async function walk(relative: string): Promise<void> {
         if (!(await ordinary(join(folder, relative), true))) return;
         const entries = await readdir(join(folder, relative), { withFileTypes: true });
         entries.sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0));
         for (const entry of entries) {
-          if (paths.length >= 50) return;
+          // The Docs tree's bound: a query with few matches must not walk a huge folder to its end.
+          if (paths.length >= 50 || ++visited > FIND_WALK_LIMIT) return;
           const name = relative ? `${relative}/${entry.name}` : entry.name;
           if (entry.isSymbolicLink() || ignored(entry.isDirectory() ? `${name}/` : name)) continue;
           if (entry.isDirectory()) await walk(name);

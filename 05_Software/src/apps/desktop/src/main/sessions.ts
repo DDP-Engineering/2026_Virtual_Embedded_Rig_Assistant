@@ -71,6 +71,7 @@ export class SessionsHost {
       settings: SettingsService;
       gateway: () => ProviderGateway;
       credentials: CredentialFile;
+      log?: (message: string) => void;
       clock: Clock;
       workers: WorkerPool;
       embeddings?: EmbeddingPort;
@@ -269,6 +270,7 @@ export class SessionsHost {
             }).text,
           assertWritable: () => options.workbench.assertSessionWritable(),
           scrub: (text) => options.credentials.scrub(text),
+          ...(options.log ? { log: options.log } : {}),
           knownSecrets: () => options.credentials.knownSecrets(),
           masking: (area) => {
             const current = options.workbench.getSnapshot();

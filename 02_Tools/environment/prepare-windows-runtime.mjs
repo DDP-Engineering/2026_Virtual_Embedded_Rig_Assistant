@@ -16,7 +16,8 @@ function trustedMicrosoft(file) {
         "-NoProfile",
         "-NonInteractive",
         "-Command",
-        "$s=Get-AuthenticodeSignature -LiteralPath $env:VERA_SIGNATURE_FILE; if ($s.Status -eq 'Valid' -and $s.SignerCertificate.Subject -match 'O=Microsoft Corporation') { exit 0 } else { exit 1 }",
+        // The organisation must be one whole field of the subject, not text inside another (quoted) field.
+        "$s=Get-AuthenticodeSignature -LiteralPath $env:VERA_SIGNATURE_FILE; $n=$s.SignerCertificate.Subject; if ($s.Status -eq 'Valid' -and $n -notmatch [char]34 -and ($n -split ',\\s*') -ccontains 'O=Microsoft Corporation') { exit 0 } else { exit 1 }",
       ],
       { env, stdio: "ignore" },
     ).status === 0
@@ -65,7 +66,7 @@ export async function prepareWindowsRuntime(manifest, target, options = {}) {
   }
   await writeFile(
     join(target, "NOTICE.txt"),
-    `Microsoft Visual C++ Runtime x64 ${manifest.version ?? "fixture"}.\nUnmodified runtime files, copyright Microsoft Corporation.\nRedistribution: ${manifest.redistribution ?? "fixture"}\nLicense terms: ${manifest.license ?? "fixture"}\n`,
+    `Microsoft Visual C++ Runtime x64 ${manifest.version}.\nUnmodified runtime files, copyright Microsoft Corporation.\nRedistribution: ${manifest.redistribution}\nLicense terms: ${manifest.license}\n`,
   );
   return { version: manifest.version, files: manifest.files };
 }

@@ -1,5 +1,12 @@
 import { existsSync } from "node:fs";
-import { type AppEvent, type Channel, defaultSettings, type Request, type Response } from "@vera/shared";
+import {
+  type AppEvent,
+  type Channel,
+  defaultSettings,
+  eventEnvelopeSchema,
+  type Request,
+  type Response,
+} from "@vera/shared";
 import { beforeAll, expect, expectTypeOf, it, vi } from "vitest";
 
 let createBridge: typeof import("./bridge.js").createBridge;
@@ -304,6 +311,22 @@ it("delivers only app event data, validates envelopes and cleans independent sub
   expect(transport.removeListener).toHaveBeenCalledTimes(1);
   stopSecond();
   expect(listeners.size).toBe(0);
+});
+it("validates each event once for all of its subscribers", () => {
+  const { bridge, listeners } = fixture();
+  const parse = vi.spyOn(eventEnvelopeSchema, "safeParse");
+  try {
+    const subscribers = [vi.fn(), vi.fn(), vi.fn()];
+    for (const on of subscribers) bridge.subscribe("app", on);
+    for (let event = 0; event < 2; event++) {
+      const payload = { topic: "app", id: "app", event: { type: "settings.changed" } };
+      for (const listener of listeners) listener({}, payload);
+    }
+    expect(parse).toHaveBeenCalledTimes(2);
+    for (const on of subscribers) expect(on).toHaveBeenCalledTimes(2);
+  } finally {
+    parse.mockRestore();
+  }
 });
 it("workbench subscriptions filter id/schema and validate config/pinned/completion channel boundaries", async () => {
   const { bridge, transport, listeners } = fixture();

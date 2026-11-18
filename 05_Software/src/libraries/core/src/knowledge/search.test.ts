@@ -337,7 +337,21 @@ it("returns full extraction with exact reduced refs; rejects mixed/out-of-range/
     await h.add("docs/large.pdf", "other PDF source", ["x".repeat(13000)]);
     expect(await h.knowledge.validPdfRef("docs/large.pdf#p=1")).toBe(true);
     expect(await h.knowledge.validPdfRef("docs/large.pdf#p=2")).toBe(false);
-    await expect(h.knowledge.read({ path: "docs/large.pdf", page: 1 }, h.signal)).rejects.toThrow(/12000/);
+    // A page over the read budget is read in parts, each citing the page.
+    expect(await h.knowledge.read({ path: "docs/large.pdf", page: 1 }, h.signal)).toEqual({
+      path: "docs/large.pdf",
+      text: "x".repeat(12000),
+      truncated: true,
+      part: 1,
+      parts: 2,
+      ref: "docs/large.pdf#p=1",
+    });
+    expect(await h.knowledge.read({ path: "docs/large.pdf", page: 1, part: 2 }, h.signal)).toMatchObject({
+      text: "x".repeat(1000),
+      truncated: false,
+      part: 2,
+      parts: 2,
+    });
     const ctx = createToolContext(h.root);
     ctx.knowledge = h.knowledge;
     const registry = new ToolRegistry();
@@ -719,7 +733,7 @@ it("reads sections over the output budget in line-bounded parts that rebuild the
 });
 
 // REQ-FUNC-91405ce5
-it("rejects parts outside the section or outside heading reads with actionable errors", async () => {
+it("rejects parts outside the section, page or line with actionable errors", async () => {
   const h = await harness();
   try {
     await h.addOffice("docs/report.xlsx", timingWorkbook(1000));
@@ -734,12 +748,40 @@ it("rejects parts outside the section or outside heading reads with actionable e
       await expect(
         h.knowledge.read({ path: "docs/report.xlsx", heading: "timing", part }, h.signal),
       ).rejects.toThrow(`1-${parts}`);
-    for (const args of [
-      { path: "docs/a.pdf", page: 1, part: 1 },
-      { path: "docs/a.pdf", part: 1 },
-      { path: "docs/report.xlsx", lineStart: 1, part: 1 },
-    ])
-      await expect(h.knowledge.read(args, h.signal)).rejects.toThrow(/heading/);
+    // A page that fits is its own single part; the rest of the range is left to the next read.
+    expect(
+      await h.knowledge.read({ path: "docs/a.pdf", page: 1, pageEnd: 2, part: 1 }, h.signal),
+    ).toMatchObject({
+      text: "first page power supply text",
+      truncated: true,
+      part: 1,
+      parts: 1,
+      ref: "docs/a.pdf#p=1",
+    });
+    await expect(h.knowledge.read({ path: "docs/a.pdf", part: 2 }, h.signal)).rejects.toThrow(
+      "Part 2 is outside this page's parts 1-1.",
+    );
+    // A line over the read budget is read in parts too.
+    await h.add("docs/wide.log", `${"w".repeat(13000)}\nshort`);
+    expect(await h.knowledge.read({ path: "docs/wide.log" }, h.signal)).toMatchObject({
+      text: "w".repeat(12000),
+      truncated: true,
+      part: 1,
+      parts: 2,
+    });
+    expect(
+      await h.knowledge.read({ path: "docs/wide.log", lineStart: 1, lineEnd: 1, part: 2 }, h.signal),
+    ).toMatchObject({ text: "w".repeat(1000), truncated: false, part: 2, parts: 2 });
+    await expect(h.knowledge.read({ path: "docs/wide.log", part: 3 }, h.signal)).rejects.toThrow(
+      "Part 3 is outside this line's parts 1-2.",
+    );
+    expect(await h.knowledge.read({ path: "docs/wide.log", lineStart: 2 }, h.signal)).toMatchObject({
+      text: "short",
+      truncated: false,
+    });
+    await expect(
+      h.knowledge.read({ path: "docs/report.xlsx", lineStart: 1, part: 1 }, h.signal),
+    ).rejects.toThrow(/heading/);
   } finally {
     await h.close();
   }
@@ -794,7 +836,7 @@ it("guides models that fill every optional argument: per-field descriptions, kin
       'Use one locator family. docs/plain.docx is a document read by heading ("" for text before the first heading); remove page, pageEnd, lineStart, lineEnd.',
     );
     await expect(h.knowledge.read({ path: "docs/a.pdf", ...every }, h.signal)).rejects.toThrow(
-      "Use one locator family. docs/a.pdf is a PDF read by page; remove heading, lineStart, lineEnd, part.",
+      "Use one locator family. docs/a.pdf is a PDF read by page; remove heading, lineStart, lineEnd.",
     );
     expect(
       await h.knowledge.search({ query: "SWD clock", mode: "keyword", pathGlob: "*" }, h.signal),
