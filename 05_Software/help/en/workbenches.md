@@ -36,10 +36,10 @@ Select **Edit workbench** on the overview or in the row menu. Change the section
 | **Documents & RAG** | Which folders and files are indexed |
 | **Agent and chat** | Default model, default permission mode, **Detail level** |
 | **Instructions** | The text of `.vera/WORKBENCH.md`, which the agent reads in every session |
-| **Tools** | Which built-in tools the agent may use |
+| **Tools** | General VERA tools: files, search, documents, planning, skills/help, terminal and generic execution |
 | **Skills** | Workbench and user skills: enable, create and edit them |
 | **Indexing** | Embedding settings and the defaults of the agent's document search |
-| **Plugins** | Which installed plugins this workbench enables |
+| **Plugins** | Enabled plugins, their specialized tool allowances and programs, and shared electrical / automation tools |
 
 Keep the instructions short and factual: the board, the MCU, the toolchain, conventions. Only the first 16 KB are given to the agent; VERA warns when the text is longer.
 

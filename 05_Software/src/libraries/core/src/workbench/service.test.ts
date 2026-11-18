@@ -8,6 +8,7 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import Database from "better-sqlite3";
 import { afterEach, beforeAll, expect, it } from "vitest";
+import { electricalModelPlugin, electricalToolOffered } from "../electrical/tools.js";
 import { createDocumentProcessor } from "../knowledge/processor.js";
 import { PluginStore } from "../plugins/store.js";
 import { SettingsService } from "../settings/service.js";
@@ -1477,6 +1478,50 @@ it("loads the enabled, installed plugins and lists their skills", async () => {
       "skills.disabled.echo-guide",
       "plugins.enabled.ghost",
     ]);
+  } finally {
+    await h.service.close();
+  }
+});
+
+it("keeps saved capability restrictions and permission mode across plugin selection and reopening", async () => {
+  const h = await harness();
+  const disabled = [
+    "grep",
+    "electrical_network",
+    "electrical_model_change",
+    "apply_candidate",
+    "parts_search",
+  ];
+  try {
+    const wb = await h.service.create(h.folder, "Capabilities");
+    await h.service.updateConfig({
+      agent: { permission_mode: "read-only" },
+      tools: { disabled },
+      plugins: { enabled: ["electrical-network"] },
+    });
+    const offered = async () => {
+      const ids = (await h.service.loadPlugins(wb.config.id))
+        .filter(electricalModelPlugin)
+        .map((p) => p.manifest.id);
+      return electricalToolOffered("electrical_network", ids);
+    };
+    expect(await offered()).toBe(false);
+    const store = new PluginStore({ root: join(h.root, "plugins") });
+    await store.install(fileURLToPath(new URL("../../../../../plugins/electrical-network", import.meta.url)));
+    expect(await offered()).toBe(true);
+    await h.service.updateConfig({ plugins: { enabled: [] } });
+    expect(await offered()).toBe(false);
+    await h.service.updateConfig({ plugins: { enabled: ["electrical-network"] } });
+    await h.service.close();
+    const reopened = await h.service.open(h.folder);
+    expect(reopened.config.format).toBe(1);
+    expect(reopened.config.tools.disabled).toEqual(disabled);
+    expect(reopened.config.agent.permission_mode).toBe("read-only");
+    expect(await offered()).toBe(true);
+    const loaded = await store.load("electrical-network");
+    await writeFile(join(loaded.folder, "plugin.yaml"), "invalid manifest");
+    expect(await offered()).toBe(false);
+    expect((await h.service.getConfig()).config.tools.disabled).toEqual(disabled);
   } finally {
     await h.service.close();
   }

@@ -34,6 +34,7 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ### Changed
 
+- Workbench Tools keeps core capabilities; Plugins groups specialized allowances by provider and shared ecosystem.
 - Skills clarifies activation and scopes, opens new instructions immediately and supports read-only viewing and retries.
 - Electron 44.11.4, zod 4.6.7 and Vite 7.3.8; undici, hono and fast-uri are raised through the lock file.
 - The BenchPilot reference copy under 09_Others is removed; the planning documents no longer cite it.

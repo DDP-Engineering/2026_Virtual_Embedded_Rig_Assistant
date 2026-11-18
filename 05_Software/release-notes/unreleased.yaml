@@ -144,17 +144,17 @@ entries:
   - category: new
     topic: { en: Workbench, ro: Workbench, de: Workbench, fr: Banc de travail }
     text:
-      en: Indexing waits before an unusually large selection and shows its largest folders; index it anyway.
-      ro: Indexarea așteaptă la o selecție neobișnuit de mare, arată cele mai mari foldere; indexează oricum.
-      de: Indizierung wartet bei ungewöhnlich großer Auswahl, zeigt die größten Ordner; trotzdem indexieren.
-      fr: "Sélection anormalement grande : l’indexation attend, montre ses gros dossiers ; indexez quand même."
+      en: Counts match indexing; large selections wait and show largest folders, with Index anyway.
+      ro: Numărul corespunde indexării; selecțiile mari așteaptă, arată folderele mari și permit indexarea.
+      de: Anzahl stimmt mit dem Index; große Auswahl wartet, zeigt größte Ordner und erlaubt Indizierung.
+      fr: Comptage conforme à l’index ; grande sélection en attente, gros dossiers et indexation possible.
   - category: improved
     topic: { en: Workbench, ro: Workbench, de: Workbench, fr: Banc de travail }
     text:
-      en: The document count before saving matches indexing and warns about a too large selection.
-      ro: Numărul de documente dinainte de salvare corespunde indexării și avertizează la o selecție mare.
-      de: Die Dokumentanzahl vor dem Speichern entspricht der Indizierung und warnt bei zu großer Auswahl.
-      fr: Le nombre de documents avant enregistrement suit l’indexation et signale une sélection trop grande.
+      en: Plugin tools are grouped by provider, separate from core tools; saved restrictions stay effective.
+      ro: Instrumentele plugin-urilor sunt separate de cele de bază; restricțiile salvate rămân active.
+      de: Spezialisierte Werkzeuge stehen bei ihren Plugins, getrennt vom Kern; Einschränkungen bleiben.
+      fr: Outils spécialisés avec leurs plugins, séparés des outils de base ; restrictions conservées.
   - category: new
     topic: { en: Sessions, ro: Sesiuni, de: Sitzungen, fr: Sessions }
     text:

@@ -98,7 +98,13 @@ const toggle = (id = "echo-tools") =>
 it("isolates private filters between workbenches and restores each session view", async () => {
   stub(snapshot(), manyPlugins());
   const render = (workbenchId: string) =>
-    createElement(WorkbenchPlugins, { workbenchId, enabled: [], toggle: vi.fn() });
+    createElement(WorkbenchPlugins, {
+      workbenchId,
+      enabled: [],
+      toggle: vi.fn(),
+      disabledTools: [],
+      toggleTool: vi.fn(),
+    });
   await mount(render("bench-a"));
   await vi.waitFor(() => expect(toggle("tool-00")).not.toBeNull());
   await act(async () =>
@@ -177,6 +183,67 @@ it("places owner actions before the list and restores clean state after toggling
   expect(save.disabled).toBe(true);
   expect(calls("workbench.config.update")).toHaveLength(0);
 });
+
+it.each(["save", "cancel"])(
+  "keeps general and plugin tool restrictions in the same draft on %s",
+  async (action) => {
+    await i18n.changeLanguage("en");
+    const wb = snapshot(["electrical-network"]);
+    wb.config.tools.disabled = ["grep", "electrical_network", "electrical_model_change", "apply_candidate"];
+    stub(wb, [{ id: "electrical-network", ecosystem: "electrical", issues: [], enabled: true }]);
+    const saved = vi.fn();
+    const close = vi.fn();
+    await mount(createElement(WorkbenchEditor, { workbench: wb, saved, close }));
+    await click('[data-project-section="tools"]');
+    await click('[data-tool-toggle="write"]');
+    await click('[data-project-section="plugins"]');
+    await vi.waitFor(() => expect(toggle("electrical-network")).not.toBeNull());
+    const network = () =>
+      container.querySelector<HTMLInputElement>('[data-tool-toggle="electrical_network"]');
+    expect(network()?.checked).toBe(false);
+    await click('[data-workbench-plugin="electrical-network"] input');
+    await click('[data-workbench-plugin="electrical-network"] input');
+    expect(network()?.checked).toBe(false);
+    await click('[data-tool-toggle="electrical_network"]');
+    await click('[data-tool-toggle="electrical_model"]');
+    expect(calls("workbench.config.update")).toHaveLength(0);
+    expect(wb.config.tools.disabled).toEqual([
+      "grep",
+      "electrical_network",
+      "electrical_model_change",
+      "apply_candidate",
+    ]);
+    await click(`[data-project-${action}]`);
+    if (action === "cancel") {
+      expect(close).toHaveBeenCalledOnce();
+      expect(calls("workbench.config.update")).toHaveLength(0);
+      return;
+    }
+    const updated = saved.mock.calls[0]?.[0] as WorkbenchSnapshot;
+    expect(updated.config.tools.disabled).toEqual([
+      "grep",
+      "electrical_model_change",
+      "apply_candidate",
+      "write",
+      "electrical_model",
+    ]);
+    expect(updated.config.plugins.enabled).toEqual(["electrical-network"]);
+    await act(async () => root.unmount());
+    container.remove();
+    client.clear();
+    stub(updated, [{ id: "electrical-network", ecosystem: "electrical", issues: [], enabled: true }]);
+    await mount(createElement(WorkbenchEditor, { workbench: updated, saved: vi.fn(), close: vi.fn() }));
+    await click('[data-project-section="plugins"]');
+    await vi.waitFor(() => expect(network()).not.toBeNull());
+    expect(network()?.checked).toBe(true);
+    expect(
+      container.querySelector<HTMLInputElement>('[data-tool-toggle="electrical_model_change"]')?.checked,
+    ).toBe(false);
+    await click('[data-project-section="tools"]');
+    expect(container.querySelector<HTMLInputElement>('[data-tool-toggle="write"]')?.checked).toBe(false);
+    expect(container.querySelector<HTMLInputElement>('[data-tool-toggle="grep"]')?.checked).toBe(false);
+  },
+);
 
 const manyPlugins = (): PluginSummary[] =>
   Array.from({ length: 32 }, (_, index) => ({
@@ -631,7 +698,13 @@ it("refreshes checked workbench status and ignores a late archive presentation",
   }) as never);
   function PrivacyWorkbench() {
     useRunPresentation(wb.config.id);
-    return createElement(WorkbenchPlugins, { workbenchId: wb.config.id, enabled: [], toggle: vi.fn() });
+    return createElement(WorkbenchPlugins, {
+      workbenchId: wb.config.id,
+      enabled: [],
+      toggle: vi.fn(),
+      disabledTools: [],
+      toggleTool: vi.fn(),
+    });
   }
   await mount(createElement(PrivacyWorkbench));
   await vi.waitFor(() =>

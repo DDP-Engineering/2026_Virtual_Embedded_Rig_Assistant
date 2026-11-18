@@ -1,4 +1,4 @@
-import type { CommandPrefixDisplay, WorkbenchConfig } from "@vera/shared";
+import type { BuiltinToolName, CommandPrefixDisplay, WorkbenchConfig } from "@vera/shared";
 import { type Dispatch, type ReactNode, type SetStateAction, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ModelSelect } from "./model-select.js";
@@ -105,6 +105,16 @@ export function WorkbenchConfigForm({
   useEffect(() => {
     if (section === "instructions" && !disabled) instructionsInput.current?.focus();
   }, [section, disabled]);
+  const toggleTool = (name: BuiltinToolName, allowed: boolean) =>
+    setConfig((current) => ({
+      ...current,
+      tools: {
+        ...current.tools,
+        disabled: allowed
+          ? current.tools.disabled.filter((entry) => entry !== name)
+          : [...current.tools.disabled.filter((entry) => entry !== name), name],
+      },
+    }));
   return (
     <div className="workbench-editor-layout">
       <nav aria-label={label}>
@@ -242,22 +252,7 @@ export function WorkbenchConfigForm({
               </label>
             </>
           )}
-          {section === "tools" && (
-            <WorkbenchTools
-              disabled={config.tools.disabled}
-              toggle={(name, enabled) =>
-                setConfig((current) => ({
-                  ...current,
-                  tools: {
-                    ...current.tools,
-                    disabled: enabled
-                      ? current.tools.disabled.filter((entry) => entry !== name)
-                      : [...current.tools.disabled.filter((entry) => entry !== name), name],
-                  },
-                }))
-              }
-            />
-          )}
+          {section === "tools" && <WorkbenchTools disabled={config.tools.disabled} toggle={toggleTool} />}
           {section === "embeddings" && (
             <div className="index-columns">
               <div className="index-card">
@@ -348,6 +343,8 @@ export function WorkbenchConfigForm({
               readOnly={readOnly}
               disabled={disabled}
               enabled={config.plugins.enabled}
+              disabledTools={config.tools.disabled}
+              toggleTool={toggleTool}
               toggle={(id, selected) =>
                 setConfig((current) => ({
                   ...current,

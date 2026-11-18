@@ -3476,6 +3476,16 @@ legend {
 [data-workbench-plugins] .risk-badge {
   flex: 0 0 auto;
 }
+.workbench-capabilities {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+[data-workbench-plugins] .workbench-capabilities .workbench-tool-option > span {
+  display: grid;
+}
+[data-plugin-programs] {
+  overflow-wrap: anywhere;
+}
 
 /* Context tab: the workbench file is collapsible, wraps its text and scrolls when wider or longer. */
 .context-workbench > summary {

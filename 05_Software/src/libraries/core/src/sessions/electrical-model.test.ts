@@ -19,7 +19,10 @@ afterEach(async () => {
   for (const close of closes.splice(0).reverse()) await close();
 });
 
-async function setup(plugins: readonly string[] = ["electrical-network"]) {
+async function setup(
+  plugins: readonly string[] = ["electrical-network"],
+  disabledTools: readonly string[] = [],
+) {
   const root = await mkdtemp(join(tmpdir(), "vera-electrical-session-"));
   closes.push(() => rm(root, { recursive: true, force: true }));
   await mkdir(join(root, ".vera"));
@@ -54,6 +57,7 @@ async function setup(plugins: readonly string[] = ["electrical-network"]) {
     model: () => "replay/change",
     prompt: () => "Test",
     electricalPlugins: plugins,
+    disabledTools,
   };
   const service = new core.SessionService(host);
   closes.push(() => service.close());
@@ -159,6 +163,21 @@ it("offers no electrical tool without an electrical or automation plugin (REQ-SE
   }
   expect(await model()).toBe(fixture);
 });
+
+it.each(["ask", "auto-edit", "bypass", "read-only"] as const)(
+  "enforces explicit specialized tool restrictions even with enabled providers in %s",
+  async (mode) => {
+    const disabled = ["electrical_model", "electrical_model_change", "electrical_network"];
+    const { service, model, catalogs, fixture, handle } = await setup(["electrical-network"], disabled);
+    const session = service.create(null, mode);
+    service.send(session.id, "rename the pump");
+    expect(await service.waitIdle(session.id)).toEqual({ stopReason: "end" });
+    expect(catalogs.length).toBeGreaterThan(0);
+    for (const catalog of catalogs) for (const name of disabled) expect(catalog).not.toContain(name);
+    expect(await model()).toBe(fixture);
+    expect(handle.db.prepare("SELECT * FROM changes").all()).toEqual([]);
+  },
+);
 
 it("offers each plugin tool only while its own plugin is loaded (REQ-SEC-4dfa2a5b)", () => {
   const offered = (plugins: string[]) =>

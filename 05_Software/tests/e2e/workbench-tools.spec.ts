@@ -3,7 +3,7 @@ import { mkdir, mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { _electron, expect, type Page, test } from "@playwright/test";
-import { builtinToolNames, type VeraBridge } from "@vera/shared";
+import { coreToolNames, type VeraBridge } from "@vera/shared";
 import { parse } from "yaml";
 import { installNetworkGuard, outboundAttempts } from "./network-guard.js";
 
@@ -41,7 +41,7 @@ test("native tool checkbox configuration persists, cancels drafts and translates
     await page.locator('[data-action="choose-create"]').click();
     await page.locator('[data-action="create-workbench"]').click();
     await openTools(page);
-    await expect(page.locator("[data-tool-toggle]")).toHaveCount(builtinToolNames.length);
+    await expect(page.locator("[data-tool-toggle]")).toHaveCount(coreToolNames.length);
     await page.locator('[data-tool-toggle="grep"]').uncheck();
     await page.locator('[data-tool-toggle="write"]').uncheck();
     await page.locator('[data-tool-toggle="decode_register"]').uncheck();
@@ -52,8 +52,29 @@ test("native tool checkbox configuration persists, cancels drafts and translates
     );
     expect(saved.config.tools.disabled).toEqual(["grep", "write", "decode_register"]);
     expect(saved.warnings.filter((warning) => warning.code === "UNKNOWN_NAME")).toEqual([]);
+    await page.locator('[data-action="edit-workbench-overview"]').click();
+    await page.locator('[data-project-section="plugins"]').click();
+    await expect(page.locator("[data-shared-capabilities]")).toBeVisible();
+    await expect(page.locator("[data-shared-dependency]")).toContainText("Unavailable");
+    await page.locator('[data-tool-toggle="electrical_model_change"]').uncheck();
+    const missing = page.locator("[data-missing-capabilities]");
+    await missing.locator("summary").focus();
+    await page.keyboard.press("Enter");
+    const candidate = page.locator('[data-tool-toggle="apply_candidate"]');
+    await candidate.focus();
+    await page.keyboard.press("Space");
+    await expect(candidate).not.toBeChecked();
+    await expect(page.locator('[data-capability-dependency="kicad-layout"]')).toContainText("Unavailable");
+    await page.locator("[data-project-save]").click();
+    await expect(page.locator(".workbench-editor")).toBeHidden();
     const yaml = await readFile(join(folder, ".vera/workbench.yaml"), "utf8");
-    expect(parse(yaml).tools.disabled).toEqual(["grep", "write", "decode_register"]);
+    expect(parse(yaml).tools.disabled).toEqual([
+      "grep",
+      "write",
+      "decode_register",
+      "electrical_model_change",
+      "apply_candidate",
+    ]);
     await openTools(page);
     await expect(page.locator('[data-tool-toggle="grep"]')).not.toBeChecked();
     await page.locator('[data-tool-toggle="grep"]').check();
@@ -62,6 +83,7 @@ test("native tool checkbox configuration persists, cancels drafts and translates
     for (const [language, description] of [
       ["ro", "Caută în conținutul"],
       ["de", "Dateiinhalte durchsuchen"],
+      ["fr", "Rechercher dans le contenu"],
       ["en", "Search file contents"],
     ]) {
       await page.locator('[data-i18n="nav.settings"]').click();
@@ -75,7 +97,9 @@ test("native tool checkbox configuration persists, cancels drafts and translates
           ? "Decodează o valoare"
           : language === "de"
             ? "Registerwert"
-            : "Decode a captured register",
+            : language === "fr"
+              ? "registre"
+              : "Decode a captured register",
       );
       await expect(page.locator('[data-tool-toggle="decode_register"]')).not.toBeChecked();
       await expect(page.locator('[data-tool-toggle="grep"]')).not.toBeChecked();
@@ -87,6 +111,19 @@ test("native tool checkbox configuration persists, cancels drafts and translates
         expect(bounds).toBeTruthy();
         expect((bounds?.x ?? 0) + (bounds?.width ?? 0)).toBeLessThanOrEqual(viewport.width + 1);
         expect((bounds?.y ?? 0) + (bounds?.height ?? 0)).toBeLessThanOrEqual(viewport.height + 1);
+        await expect(page.locator("[data-project-save]")).toBeVisible();
+        await page.locator('[data-project-section="plugins"]').click();
+        await expect(page.locator('[data-tool-toggle="electrical_model_change"]')).not.toBeChecked();
+        await page.locator("[data-missing-capabilities] > summary").click();
+        const candidate = page.locator('[data-tool-toggle="apply_candidate"]');
+        await candidate.scrollIntoViewIfNeeded();
+        await candidate.focus();
+        await page.keyboard.press("Space");
+        await expect(candidate).toBeChecked();
+        const overflow = await page
+          .locator("[data-workbench-plugins]")
+          .evaluate((element) => element.scrollWidth - element.clientWidth);
+        expect(overflow).toBeLessThanOrEqual(1);
         await expect(page.locator("[data-project-save]")).toBeVisible();
       }
       if (process.env.VERA_TOOLS_SCREENSHOT && language === "ro")
@@ -108,6 +145,12 @@ test("native tool checkbox configuration persists, cancels drafts and translates
     await page.locator('[data-tool-toggle="grep"]').check();
     await page.locator('[data-tool-toggle="write"]').check();
     await page.locator('[data-tool-toggle="decode_register"]').check();
+    await page.locator('[data-project-section="plugins"]').click();
+    await expect(page.locator('[data-tool-toggle="electrical_model_change"]')).not.toBeChecked();
+    await page.locator('[data-tool-toggle="electrical_model_change"]').check();
+    await page.locator("[data-missing-capabilities] > summary").click();
+    await expect(page.locator('[data-tool-toggle="apply_candidate"]')).not.toBeChecked();
+    await page.locator('[data-tool-toggle="apply_candidate"]').check();
     await page.locator("[data-project-save]").click();
     await expect(page.locator(".workbench-editor")).toBeHidden();
     const enabled = await page.evaluate(() =>

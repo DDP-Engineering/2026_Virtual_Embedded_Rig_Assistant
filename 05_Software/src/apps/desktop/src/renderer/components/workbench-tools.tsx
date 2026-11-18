@@ -1,5 +1,5 @@
 // REQ-UX-0f1a32c4 REQ-FUNC-37261edc
-import { type BuiltinToolName, builtinToolNames } from "@vera/shared";
+import { type BuiltinToolName, coreToolNames } from "@vera/shared";
 import { useId } from "react";
 import { useTranslation } from "react-i18next";
 import { Pager, usePaged } from "./pager.js";
@@ -7,9 +7,13 @@ import { Pager, usePaged } from "./pager.js";
 export function WorkbenchTools({
   disabled,
   toggle,
+  names = coreToolNames,
+  locked = false,
 }: {
   disabled: readonly string[];
   toggle: (name: BuiltinToolName, enabled: boolean) => void;
+  names?: readonly BuiltinToolName[];
+  locked?: boolean;
 }) {
   const { t } = useTranslation();
   const id = useId();
@@ -49,8 +53,7 @@ export function WorkbenchTools({
     power_quality: t("workbenchTools.power_quality"),
     lighting_design: t("workbenchTools.lighting_design"),
   };
-  // All built-in tools fit on the first page by default; the Pager lets the user show fewer.
-  const { rows, pager } = usePaged(builtinToolNames, 50);
+  const { rows, pager } = usePaged(names, 50);
   return (
     <div className="workbench-tools">
       <ul>
@@ -62,6 +65,7 @@ export function WorkbenchTools({
                 data-tool-toggle={name}
                 aria-label={name}
                 aria-describedby={`${id}-${name}`}
+                disabled={locked}
                 checked={!disabled.includes(name)}
                 onChange={(event) => toggle(name, event.currentTarget.checked)}
               />

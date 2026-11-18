@@ -52,6 +52,13 @@ Unit and component tests remain beside the implementation in `src/`. Environment
 release tooling lives in [02_Tools](../02_Tools/README.md); it resolves packages from this
 folder's `node_modules/`, so there is a single dependency tree.
 
+Workbench Tools lists general harness capabilities; Plugins owns provider-specific allowances,
+shared electrical/automation model allowances and plugin-declared programs. Classification lives in
+`shared/src/tools.ts` and is reused by electrical runtime dependency checks. The editor keeps the
+same `tools.disabled` draft and version-1 configuration; plugin selection never clears restrictions.
+Focused checks: `workbench-tools.test.ts`, `workbench-plugins.test.ts`, `workbench-capabilities.test.ts`
+and shared `tools.test.ts`, with existing session permission/dependency regressions.
+
 The renderer's `components/session/tool-details.tsx` presents localized tool actions, readable results
 and lazy technical details. Its component tests cover status, command output and preserved raw data.
 Plan updates share the Plan tab's readable task rows. `tests/e2e/i18n-hmr.spec.ts` verifies that live
