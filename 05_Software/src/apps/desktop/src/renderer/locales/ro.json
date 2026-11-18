@@ -764,6 +764,25 @@
     "cancel": "Anulează",
     "openError": "Linkul nu a putut fi deschis. Încearcă din nou."
   },
+  "pluginCapabilities": {
+    "allowedTools": "Instrumente permise",
+    "allowanceHelp": "Permiterea unui instrument nu instalează și nu activează plugin-ul. Se aplică în continuare permisiunile sesiunii. Salvează sau Anulează se aplică împreună instrumentelor și selecției plugin-urilor.",
+    "provider": "Necesită plugin-ul: {{id}}",
+    "enabled": "Plugin-ul necesar este activat",
+    "disabled": "Indisponibil: plugin-ul nu este activat",
+    "unloadable": "Indisponibil: plugin-ul lipsește sau nu poate fi încărcat",
+    "officialOnly": "Indisponibil: necesită plugin-ul oficial",
+    "partsRequirements": "Necesită și Acces web și un furnizor activat, configurat în secțiunea Configurare a plugin-ului pe pagina Pluginuri.",
+    "shared": "Instrumente comune electrice / automatizări",
+    "ecosystemDependency": "Necesită un plugin activat, care poate fi încărcat, din ecosistemul electric sau de automatizări.",
+    "activeProviders": "Plugin-uri furnizoare activate: {{providers}}",
+    "noProvider": "Indisponibil: niciun plugin electric sau de automatizări activat nu poate fi încărcat",
+    "notInstalled": "Instrumente care necesită plugin-uri neinstalate",
+    "programs": "Programele plugin-ului",
+    "programHelp": "Aceste programe aparțin plugin-ului, inclusiv integrarea Git. Permisiunile generale de execuție și monitorizare rămân în Instrumente; se aplică regulile de risc și permisiunile sesiunii.",
+    "executionDisabled": "Execuția programelor este dezactivată în Instrumente",
+    "executionAllowed": "Necesită permisiunea run_program și regulile de aprobare ale sesiunii"
+  },
   "workbenchTools": {
     "read": "Citește fișiere text sau intervale de linii.",
     "list": "Listează fișierele și subfolderele unui director.",
@@ -785,7 +804,7 @@
     "program_stop": "Oprește o rulare de program în fundal.",
     "plugin_validate": "Validează un draft de plugin și raportează erori și avertismente. Căile externe cer Bypass; accesul la datele aplicației VERA este refuzat.",
     "plugin_install": "Cere verificarea și instalează un draft ca plugin de probă. Căile externe cer Bypass; accesul la datele aplicației VERA este refuzat.",
-    "apply_candidate": "Scrie un candidat kicad-layout verificat peste placa sursă după ce ceri aplicarea lui. Necesită pluginul kicad-layout; cere aprobare ca o scriere. Căile externe cer Bypass; accesul la datele aplicației VERA este refuzat.",
+    "apply_candidate": "Scrie un candidat kicad-layout verificat peste placa sursă după ce ceri aplicarea lui. Necesită plugin-ul oficial kicad-layout; cere aprobare ca o scriere. Căile externe cer Bypass; accesul la datele aplicației VERA este refuzat.",
     "electrical_model": "Citește modelul proiectului electric, problemele de completitudine și rezultatele pluginurilor cu actualitatea lor. Necesită un plugin de electrică sau automatizări.",
     "electrical_model_change": "Modifică modelul proiectului electric prin operații validate sau printr-un import cu mapare explicită a ID-urilor. Necesită un plugin de electrică sau automatizări; cere aprobare ca o scriere. Căile externe cer Bypass; accesul la datele aplicației VERA este refuzat.",
     "industrial_catalog": "Citește cataloagele industriale ale workbench-ului: găsește articole după codul de comandă sau SKU-ul distribuitorului, selectează după cerințe ferme cu valori citate și caută coordonarea pentru produse exacte. Necesită pluginul industrial-catalog. Căile externe cer Bypass; accesul la datele aplicației VERA este refuzat.",
@@ -795,7 +814,7 @@
     "power_quality": "Evaluează compensarea factorului de putere la un tablou dintr-un rezultat de rețea actual și un fișier de măsurători cu unități și convenții declarate: factorul de deplasare față de factorul de putere total, necesarul de kvar până la o țintă, o baterie fixă sau automată cu trepte, supracompensarea, verificări ale condensatoarelor, reactoarelor, contactoarelor și protecțiilor din date citate și rezonanța față de armonicile măsurate; salvează rezultatul după aprobare, ca o scriere, și nu comută nicio treaptă. Necesită pluginul power-quality-pfc. Căile externe cer Bypass; accesul la datele aplicației VERA este refuzat.",
     "lighting_design": "Proiectează iluminatul interior dintr-un proiect de iluminat cu fotometrii IES sau LDT: o estimare preliminară prin metoda fluxului cu factori de utilizare citați și componenta directă pe grila de calcul, diagnostic pentru scară, unități, orientare și fotometrie, iar verificarea iluminării menținute, a uniformității și a orbirii numai dintr-un raport potrivit al unui motor fotometric precum DIALux evo; salvează rezultatul după aprobare ca o scriere și nu rulează niciun motor. Necesită pluginul lighting-design. Căile externe cer Bypass; accesul la datele aplicației VERA este refuzat.",
     "decode_register": "Decodează o valoare de registru capturată folosind o definiție JSON locală, cu valori exacte ale câmpurilor și surse citabile. Nu citește dispozitive. Căile externe cer Bypass; accesul la datele aplicației VERA este refuzat.",
-    "parts_search": "Caută în cataloagele furnizorilor activați (Mouser, DigiKey, TME, Farnell, Rutronik) după cuvinte cheie sau cod de piesă. Necesită Acces web, pluginul parts-search și un furnizor configurat în secțiunea Configurare a pluginului, pe pagina Pluginuri.",
+    "parts_search": "Caută în cataloagele furnizorilor activați (Mouser, DigiKey, TME, Farnell, Rutronik) după cuvinte cheie sau cod de piesă. Necesită Acces web, plugin-ul oficial parts-search și un furnizor configurat în secțiunea Configurare a pluginului, pe pagina Pluginuri.",
     "help": "Citește paginile de ajutor ale VERA și ajutorul pluginurilor activate în workbench, pentru întrebări despre VERA. Doar citire.",
     "run_command": "Execută comenzi shell cu aprobare în Întreabă și Editare automată, sau direct în Bypass.",
     "terminal_read": "Citește ieșirea recentă a terminalului doar cu acord pentru acel terminal."

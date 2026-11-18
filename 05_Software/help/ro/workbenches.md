@@ -36,10 +36,10 @@ Selectează **Editează workbench-ul** în prezentare sau în meniul rândului. 
 | **Documente și RAG** | Ce foldere și fișiere sunt indexate |
 | **Agent și chat** | Modelul implicit, modul de permisiuni implicit, **Nivel de detaliu** |
 | **Instrucțiuni** | Textul din `.vera/WORKBENCH.md`, pe care agentul îl citește în fiecare sesiune |
-| **Instrumente** | Ce instrumente integrate poate folosi agentul |
+| **Instrumente** | Instrumente VERA generale: fișiere, căutare, documente, planificare, skill-uri/ajutor, terminal și execuție generală |
 | **Skill-uri** | Skill-urile workbench-ului și ale utilizatorului: activează-le, creează-le și editează-le |
 | **Indexare** | Setările de embedding și valorile implicite ale căutării agentului în documente |
-| **Pluginuri** | Ce pluginuri instalate activează acest workbench |
+| **Pluginuri** | Plugin-uri activate, instrumentele specializate permise și programele lor, instrumente comune electrice / automatizări |
 
 Păstrează instrucțiunile scurte și factuale: placa, microcontrolerul, toolchainul, convențiile. Doar primii 16 KB ajung la agent; VERA te avertizează când textul este mai lung.
 

@@ -22,15 +22,22 @@ import {
   pluginActivityLabels,
 } from "./plugin-library-controls.js";
 import { Issues, Programs } from "./plugins.js";
+import {
+  type CapabilityControls,
+  WorkbenchPluginCapabilities,
+  WorkbenchSharedCapabilities,
+} from "./workbench-capabilities.js";
 
 /** Selection edits only the configuration draft; its owner saves or cancels it. */
-export function WorkbenchPlugins(props: {
-  workbenchId?: string | undefined;
-  enabled: readonly string[];
-  toggle: (id: string, selected: boolean) => void;
-  readOnly?: boolean | undefined;
-  disabled?: boolean | undefined;
-}) {
+export function WorkbenchPlugins(
+  props: Omit<CapabilityControls, "locked"> & {
+    workbenchId?: string | undefined;
+    enabled: readonly string[];
+    toggle: (id: string, selected: boolean) => void;
+    readOnly?: boolean | undefined;
+    disabled?: boolean | undefined;
+  },
+) {
   return <WorkbenchPluginLibrary key={props.workbenchId ?? "new"} {...props} />;
 }
 function WorkbenchPluginLibrary({
@@ -39,7 +46,9 @@ function WorkbenchPluginLibrary({
   toggle,
   readOnly = false,
   disabled = false,
-}: {
+  disabledTools,
+  toggleTool,
+}: Omit<CapabilityControls, "locked"> & {
   workbenchId?: string | undefined;
   enabled: readonly string[];
   toggle: (id: string, selected: boolean) => void;
@@ -183,6 +192,13 @@ function WorkbenchPluginLibrary({
                     <p>{plugin.description}</p>
                   </details>
                 )}
+                <WorkbenchPluginCapabilities
+                  plugin={plugin}
+                  selected={selected}
+                  disabledTools={disabledTools}
+                  toggleTool={toggleTool}
+                  locked={readOnly || disabled}
+                />
                 {plugin.issues.length ? (
                   <Issues issues={plugin.issues} />
                 ) : (
@@ -196,6 +212,15 @@ function WorkbenchPluginLibrary({
             );
           })}
         </ul>
+        {query.data && (
+          <WorkbenchSharedCapabilities
+            plugins={entries}
+            enabled={enabled}
+            disabledTools={disabledTools}
+            toggleTool={toggleTool}
+            locked={readOnly || disabled}
+          />
+        )}
         <PluginLibraryPagination
           page={page}
           pageSize={state.pageSize}
