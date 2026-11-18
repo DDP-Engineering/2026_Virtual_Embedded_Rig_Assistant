@@ -2,13 +2,13 @@ schema = 1
 
 id = "REQ-FUNC-3b70651a"
 
-title = "Read long sections in parts"
+title = "Read long sections, pages and lines in parts"
 
 status = "active"
 
-requirement = "When read_doc reads a heading section whose text exceeds the 12000-character output budget, VERA shall return the requested 1-based part, the first by default, of consecutive line-bounded parts that each fit the budget, with part, parts and truncated fields and the section's own ref."
+requirement = "When read_doc reads a heading section, or a range that starts with a page, slide or line, whose text exceeds the 12000-character output budget, VERA shall return the requested 1-based part, the first by default, of consecutive line-bounded parts that each fit the budget, with part, parts and truncated fields and the ref of that section, page, slide or line."
 
-verification = "Core search test: a 40000-character sheet section read with no part, part 2 and the last part returns texts that concatenate to the section text, each within 12000 characters and the JSON budget, with parts constant, truncated true until the last part and ref #h=<slug>; a section under the budget returns part 1 of 1 with truncated false; a single line longer than the budget is cut inside its part."
+verification = "Core search test: a 40000-character sheet section read with no part, part 2 and the last part returns texts that concatenate to the section text, each within 12000 characters and the JSON budget, with parts constant, truncated true until the last part and ref #h=<slug>; a section under the budget returns part 1 of 1 with truncated false; a single line longer than the budget is cut inside its part; a 13000-character PDF page and a 13000-character text line are each read as part 1 of 2 with truncated true and a ref that names that page or line, and part 2 returns the rest."
 
 affected_paths = ["05_Software/src/libraries/core/src/knowledge/search.ts", "05_Software/src/libraries/core/src/tools/documents.ts"]
 
@@ -21,4 +21,4 @@ priority = "normal"   # low | normal | high
 rationale = ""        # why this behavior exists, if not obvious
 
 created = 2026-10-31
-updated = 2026-10-31
+updated = 2026-11-18

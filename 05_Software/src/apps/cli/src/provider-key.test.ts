@@ -1,6 +1,7 @@
 import { expect, it } from "vitest";
 import { environmentKey } from "./provider-key.js";
 
+// REQ-SEC-ac9095ec
 it("takes OPENAI_API_KEY for the OpenAI provider only and names --key-file otherwise", () => {
   const env = { OPENAI_API_KEY: "fictional-openai-key" };
   expect(environmentKey("openai", env)).toEqual({ key: "fictional-openai-key" });

@@ -2,13 +2,13 @@ schema = 1
 
 id = "REQ-FUNC-91405ce5"
 
-title = "Reject invalid section parts"
+title = "Reject parts outside the range"
 
 status = "active"
 
-requirement = "If read_doc receives a part outside the section's parts, or a part together with a page or line locator, then VERA shall reject the call with an actionable error naming the valid part range or the heading locator."
+requirement = "If read_doc receives a part outside the parts of the addressed heading section, page, slide or line, then VERA shall reject the call with an actionable error naming the valid part range."
 
-verification = "Core search test: part 0, part beyond parts and part with page or lineStart are rejected with an error that names the range or the heading locator; no text is returned."
+verification = "Core search test: part 0 and a part beyond parts of a sheet section, part 2 of a one-part PDF page and part 3 of a two-part line are rejected with an error that names the range; a part with lineStart on a spreadsheet is rejected with an error that names the heading locator; no text is returned."
 
 affected_paths = ["05_Software/src/libraries/core/src/knowledge/search.ts"]
 
@@ -21,4 +21,4 @@ priority = "normal"   # low | normal | high
 rationale = ""        # why this behavior exists, if not obvious
 
 created = 2026-10-31
-updated = 2026-10-31
+updated = 2026-11-18

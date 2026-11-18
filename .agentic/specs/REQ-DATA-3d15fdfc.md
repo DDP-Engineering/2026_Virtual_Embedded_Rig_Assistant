@@ -260,8 +260,11 @@ of 0 K and passes; a heatsink budget that is used up exactly gives 0 K/W and fai
   others nominal, the nominal output lies between the outputs at its two ends; `fail` names the
   parameters and outputs where it does not. A refusal of the target at a corner or at a sample is
   reported under `target.input` with a message that starts `At corner {...}:` or
-  `At Monte Carlo sample <n> {...}:`. A `distribution` without `monteCarlo` is not used and gives a
-  warning.
+  `At Monte Carlo sample <n> {...}:`. A Monte Carlo draw that the target refuses with `domain`
+  only (for example a resistance at or below zero) is replaced by a new draw; the request is
+  refused when one sample needs more than 100 redraws or more draws were replaced than samples
+  were asked for, and the message then gives the share of replaced draws and the range of that
+  input. A `distribution` without `monteCarlo` is not used and gives a warning.
 - Monte Carlo runs only with `monteCarlo` {`samples` 100..100000, `seed` integer 0..2^63-1}; then every
   parameter needs `distribution` (`uniform` over [min, max], or `normal` with required `sigmas` > 0,
   mean `(min + max)/2`, standard deviation `(max - min)/(2*sigmas)`, not truncated). A missing seed,
@@ -273,7 +276,7 @@ of 0 K and passes; a heatsink budget that is used up exactly gives 0 K/W and fai
   `.sampleMin`, `.sampleMax`, `.p01`, `.p05`, `.p50`, `.p95`, `.p99` (linear interpolation), and with
   `limits` `.fractionWithin`. The corners are always evaluated and returned as well.
 - The same request and seed give the same results on one runtime; `details.monteCarlo` records the
-  generator, seed, samples and Python version.
+  generator, seed, samples, the number of replaced draws (`rejected`) and Python version.
 
 ## 6 Limits every result states
 

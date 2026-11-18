@@ -39,9 +39,11 @@ use their own persistent host because their payloads, lifetimes and caches diffe
   `truncated`): each part fits 12000 characters and 28000 JSON characters, ends after its
   last fitting newline unless the next line cannot fit a part by itself (only such an
   over-budget line is cut, at the largest fitting length and never inside a surrogate pair), parts
-  concatenate to the section, and every part cites the whole section (REQ-FUNC-3b70651a).
-  A part outside 1..parts, or with page/line arguments or a non-section source, is an
-  error naming the range or the heading locator (REQ-FUNC-91405ce5).
+  concatenate to the section, and every part cites the whole section. A page, slide or line
+  over the budget is read in parts the same way: the parts cover the first unit of the
+  requested range, cite that unit, and `truncated` stays true while the range continues
+  (REQ-FUNC-3b70651a). A part outside 1..parts is an error naming the range
+  (REQ-FUNC-91405ce5).
   Presentations read slides through page/pageEnd; documents and spreadsheets read
   by heading slug (a sheet's slug for spreadsheets); line locators are refused for
   office kinds (REQ-FUNC-56b34eec).

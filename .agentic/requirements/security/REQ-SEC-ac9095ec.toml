@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-SEC-ac9095ec"
+
+title = "Send the environment key to OpenAI only"
+
+status = "active"
+
+requirement = "While a run has no key-file, the CLI shall take the provider key from OPENAI_API_KEY for the openai provider only, send no environment key to a custom provider, and name --key-file on stderr when a custom provider runs with OPENAI_API_KEY set or the openai provider has no key."
+
+verification = "CLI unit test with a fictional key: the openai provider receives the environment key; the custom provider receives none and gets a note that names --key-file and does not contain the key; openai without a key gets a note naming OPENAI_API_KEY and --key-file; a custom provider without the variable and a replay run get neither key nor note."
+
+affected_paths = ["05_Software/src/apps/cli/src/provider-key.ts", "05_Software/src/apps/cli/src/index.ts", "05_Software/src/apps/cli/src/args.ts", "05_Software/README.md"]
+
+linked_tests = ["05_Software/src/apps/cli/src/provider-key.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = "A key exported for OpenAI must not reach the host named by --base-url."
+
+created = 2026-11-18
+updated = 2026-11-18
