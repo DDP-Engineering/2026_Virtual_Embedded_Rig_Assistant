@@ -43,6 +43,14 @@ Selectează **Editează workbenchul** în prezentare sau în meniul rândului. M
 
 Păstrează instrucțiunile scurte și factuale: placa, microcontrolerul, toolchainul, convențiile. Doar primii 16 KB ajung la agent; VERA te avertizează când textul este mai lung.
 
+## Skills
+
+Skill-urile sunt instrucțiuni reutilizabile pentru agent, nu comenzi. Deschide **Editează workbench > Skills** sau **Skills** din fila **Instrucțiuni și skills** a sesiunii. **Activat** pune instrucțiunile la dispoziția agentului în acest workbench fără a le executa. Activarea se salvează imediat; închiderea panoului sau anularea altor modificări ale workbench-ului nu o anulează.
+
+Alege **Creează skill**, introdu un nume cu litere mici (a–z), cifre și cratime (1–64 de caractere), apoi alege **Acest workbench** sau **Toate workbench-urile mele**. A doua opțiune salvează skill-ul în profilul VERA curent; nu îl partajează automat cu alți utilizatori sau alte instalări. **Creează și editează** deschide un șablon: completează descrierea și procedura, apoi salvează. **Anulează** abandonează editările neterminate, nu skill-ul deja creat.
+
+Skill-urile workbench-ului și ale utilizatorului oferă **Editează instrucțiunile**. Cele oficiale și ale plugin-urilor oferă **Vezi instrucțiunile**, doar pentru citire. **Reîmprospătează lista** recitește lista; reîncercarea apare doar după un eșec și repetă operația respectivă. Într-un workbench doar pentru citire poți reîmprospăta și vedea instrucțiunile, dar nu le poți schimba. **Închide** sau Escape închide dialogul; Escape abandonează întâi un formular deschis de creare sau editare.
+
 ## Filele panoului din dreapta
 
 Deschide **Editează workbench > Interfață > Filele panoului din dreapta**. Alege filele vizibile: Instrucțiuni și skills, Fișiere, Modificări, Artefacte, Plan, Rulări și Terminal. Implicit sunt selectate toate. **Restabilește valorile implicite** le selectează în ciornă; **Salvează** aplică selecția, iar **Anulează** o abandonează.

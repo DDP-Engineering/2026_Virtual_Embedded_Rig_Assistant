@@ -43,6 +43,14 @@ Select **Edit workbench** on the overview or in the row menu. Change the section
 
 Keep the instructions short and factual: the board, the MCU, the toolchain, conventions. Only the first 16 KB are given to the agent; VERA warns when the text is longer.
 
+## Skills
+
+Skills are reusable agent instructions, not commands. Open **Edit workbench > Skills** or **Skills** in the session’s **Instructions and skills** tab. **Enabled** makes instructions available to the agent in this workbench without running them. Activation saves immediately; closing the panel or cancelling other workbench edits does not undo it.
+
+Select **Create skill**, enter a name using lowercase letters (a–z), digits and hyphens (1–64 characters), then choose **This workbench** or **All my workbenches**. The latter stores the skill in your current VERA user profile; it is not shared automatically with other users or installations. **Create and edit** opens a template: complete its description and procedure, then **Save**. **Cancel** abandons unfinished edits, not the already created skill.
+
+Workbench and user skills offer **Edit instructions**. Official and plugin skills offer read-only **View instructions**. **Refresh list** reads the list again; **Retry** appears only after a failed operation and retries that operation. In a read-only workbench you can refresh and view instructions but cannot change skills. **Close** or Escape closes the dialog; Escape first abandons an open creation or instruction form.
+
 ## Right panel tabs
 
 Open **Edit workbench > Interface > Right panel tabs**. Select which tabs to show: Instructions and skills, Files, Changes, Artifacts, Plan, Runs and Terminal. All are selected by default. **Restore defaults** selects all tabs in the draft; **Save** applies it and **Cancel** discards it.
