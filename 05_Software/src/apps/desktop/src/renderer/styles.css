@@ -4207,3 +4207,66 @@ legend {
 .terminal-surface .xterm {
   height: 100%;
 }
+.transcript-item.assistant,
+.chat-code-block {
+  position: relative;
+}
+.message-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0.35rem;
+  flex: 0 0 auto;
+}
+.message-action svg {
+  width: 1rem;
+  height: 1rem;
+}
+.copy-response {
+  position: absolute;
+  right: 0;
+  top: -0.5rem;
+  z-index: 1;
+  opacity: 0;
+}
+.transcript-item.assistant:hover > .copy-response,
+.transcript-item.assistant:focus-within > .copy-response {
+  opacity: 1;
+}
+.transcript-item.assistant > .markdown:first-of-type {
+  padding-right: 2.25rem;
+}
+.chat-code-block {
+  min-width: 0;
+}
+.chat-code-block pre {
+  padding-right: 4.75rem;
+}
+.code-block-actions {
+  position: absolute;
+  top: 0.15rem;
+  right: 0.15rem;
+  display: flex;
+  gap: 0.15rem;
+  z-index: 1;
+}
+.code-block-actions > [role="alert"] {
+  position: absolute;
+  right: 0;
+  top: 2rem;
+  width: min(20rem, 65vw);
+  background: var(--card);
+}
+.terminal-choice {
+  max-width: calc(100vw - 2rem);
+}
+.terminal-choice select {
+  max-width: 100%;
+}
+@media (hover: none) {
+  .copy-response {
+    opacity: 1;
+  }
+}

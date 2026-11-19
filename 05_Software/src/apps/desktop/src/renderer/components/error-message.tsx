@@ -18,6 +18,10 @@ export function ErrorMessage({ error }: { error: unknown }) {
     "chatgpt.loginFailed": t("chatgpt.loginFailed"),
     "chatgpt.browserFailed": t("chatgpt.browserFailed"),
 
+    "chatActions.clipboardFailed": t("chatActions.clipboardFailed"),
+    "chatActions.promptNotReady": t("chatActions.promptNotReady"),
+    "chatActions.shellMismatch": t("chatActions.shellMismatch"),
+    "chatActions.shellUnavailable": t("chatActions.shellUnavailable", options),
     "errors.INVALID": t("errors.INVALID", options),
     "errors.NOT_FOUND": t("errors.NOT_FOUND", options),
     "errors.CONFLICT": t("errors.CONFLICT", options),

@@ -28,6 +28,7 @@ import ddpLogoLight from "../assets/ddp-logo-light.png";
 import { defaultLayout, type Layout, readLayout, saveLayout } from "../lib/layout.js";
 import { ShortcutContext, shortcutCommand } from "../lib/shortcuts.js";
 import { rightPanelTabs } from "./right-panel-tabs.js";
+import { TerminalNavigation } from "./terminal-navigation.js";
 
 type Side = "sidebar" | "right";
 function initialLayout() {
@@ -103,6 +104,7 @@ export function Shell({
     blockedRequest !== undefined &&
     blockedRequest.workbenchId === workbenchId &&
     (blockedRequest.target === "terminal" ? !visibleTabs.includes("terminal") : tabs.length === 0);
+  const [terminalTarget, setTerminalTarget] = useState<{ owner: string; id: string }>();
   const panelHadFocus = useRef(false);
   const settingsLink = useRef<HTMLButtonElement>(null);
   useEffect(() => {
@@ -272,7 +274,7 @@ export function Shell({
     "--sidebar-width": `${layout.sidebar}rem`,
     "--right-width": `${layout.right}rem`,
   } as CSSProperties;
-  return (
+  const content = (
     <div className="app-shell" style={style}>
       <button
         type="button"
@@ -576,5 +578,25 @@ export function Shell({
         )}
       </div>
     </div>
+  );
+  return (
+    <TerminalNavigation.Provider
+      value={
+        workbenchId
+          ? {
+              workbenchId,
+              available: !settings && visibleTabs.includes("terminal"),
+              target: terminalTarget?.owner === workbenchId ? terminalTarget : undefined,
+              reveal: (id) => {
+                setTerminalTarget({ owner: workbenchId, id });
+                setLayout((value) => ({ ...value, rightCollapsed: false }));
+                setSelection({ workbenchId, tab: "terminal" });
+              },
+            }
+          : undefined
+      }
+    >
+      {content}
+    </TerminalNavigation.Provider>
   );
 }

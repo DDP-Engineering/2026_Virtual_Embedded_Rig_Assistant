@@ -15,6 +15,12 @@ infrastructure. Unit and component tests stay beside the implementation, in `src
 | [fixtures/](fixtures/README.md) | Fictional data and input scenarios; they are not test results and hold no evaluation code. |
 | `support/` | The E2E runner, the Playwright reporter, the network guard and the generators of the demo and Office documents. Simulated programs and the generators of a single fixture stay beside it, in `fixtures/`. |
 
+`e2e/chat-actions.spec.ts` checks per-reply and block copying, four-language compact keyboard/hover
+controls in Chromium, and exact-once multiline execution, terminal creation, destination selection and
+focus in sandboxed native Electron. Native coverage also refuses pending input/foreground readers and
+checks Cancel/Escape focus with a real modal. Execution uses Bash on Linux and PowerShell on Windows;
+`VERA_CHAT_ACTIONS_SHELL=powershell` additionally exercises installed PowerShell on Linux.
+
 Native `e2e/display-masking.spec.ts` verifies conditional Display masking with stored MQTT credentials,
 Files/Find UI selection, colliding labels, live settings/workbench choices and restart-safe tabs.
 

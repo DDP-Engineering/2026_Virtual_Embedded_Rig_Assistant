@@ -1,6 +1,13 @@
 version: Unreleased
 date: null
 entries:
+  - category: improved
+    topic: { en: Chat, ro: Chat, de: Chat, fr: Chat }
+    text:
+      en: Copy replies or code; Run skips stalled terminals and disables empty or oversized blocks.
+      ro: Copiază răspunsuri sau cod; Execută evită terminale blocate și blocuri goale sau prea mari.
+      de: Antworten und Code kopieren; Ausführen meidet hängende Terminals sowie leere oder zu lange Blöcke.
+      fr: Copiez réponses ou code ; Exécuter évite les terminaux bloqués et le code vide ou trop long.
   - category: fixed
     topic: { en: Skills, ro: Skills, de: Skills, fr: Compétences }
     text:
@@ -172,17 +179,10 @@ entries:
   - category: improved
     topic: { en: Permissions, ro: Permisiuni, de: Berechtigungen, fr: Autorisations }
     text:
-      en: Bypass runs declared programs in outside folders and stops them when you leave Bypass.
-      ro: Bypass rulează programe declarate în foldere externe și le oprește când ieși din Bypass.
-      de: Bypass führt deklarierte Programme in externen Ordnern aus und stoppt sie beim Verlassen.
-      fr: Contournement lance les programmes déclarés dans des dossiers externes et les arrête à sa sortie.
-  - category: improved
-    topic: { en: Permissions, ro: Permisiuni, de: Berechtigungen, fr: Autorisations }
-    text:
-      en: Bypass also reaches outside analysis, plugin drafts, HIL and electrical inputs.
-      ro: Bypass permite și intrări externe pentru analiză, ciorne de plugin, HIL și calcule electrice.
-      de: Bypass erlaubt auch externe Eingaben für Analysen, Plugin-Entwürfe, HIL und Elektrik.
-      fr: Contournement accepte aussi les entrées externes d’analyse, de plugins, HIL et d’électricité.
+      en: Bypass permits outside programs and analysis inputs; leaving it stops running programs.
+      ro: Bypass permite programe și intrări de analiză externe; ieșirea oprește programele active.
+      de: Bypass erlaubt externe Programme und Analyseeingaben; beim Verlassen werden Programme gestoppt.
+      fr: Contournement autorise programmes et analyses externes ; en sortir arrête les programmes.
   - category: new
     topic: { en: Commands, ro: Comenzi, de: Befehle, fr: Commandes }
     text:
