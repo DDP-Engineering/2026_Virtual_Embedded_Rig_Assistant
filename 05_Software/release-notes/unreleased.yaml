@@ -4,10 +4,10 @@ entries:
   - category: improved
     topic: { en: Chat, ro: Chat, de: Chat, fr: Chat }
     text:
-      en: Copy replies or blocks; run shell blocks at verified empty prompts or in a new clean terminal.
-      ro: Copiază răspunsuri sau cod; execută doar la un prompt gol verificat sau într-un terminal nou curat.
-      de: Antworten und Code kopieren; Befehle nur am geprüften leeren Prompt oder im neuen Terminal starten.
-      fr: Copiez réponses ou code ; exécutez à une invite vide vérifiée ou dans un nouveau terminal vierge.
+      en: Copy replies or code; Run uses clean terminals and disables empty or oversized blocks.
+      ro: Copiază răspunsuri sau cod; rulează în terminale curate, fără blocuri goale sau prea mari.
+      de: Antworten und Code kopieren; Ausführen nutzt saubere Terminals, keine leeren oder zu langen Blöcke.
+      fr: Copiez réponses ou code ; Exécuter choisit un terminal vierge et bloque le code vide ou trop long.
   - category: fixed
     topic: { en: Skills, ro: Skills, de: Skills, fr: Compétences }
     text:

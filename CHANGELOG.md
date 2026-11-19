@@ -93,6 +93,7 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ### Fixed
 
+- Chat Run skips ineligible terminals and disables invalid command blocks before creating a terminal.
 - Chat Run requires a verified empty shell prompt, preserves user input, and restores focus when selection is cancelled.
 - Open document tabs no longer reload when only theme, language, text size, shortcuts or session order change.
 - Opening a run log larger than 8 MiB shows its last 8 MiB instead of loading the whole file into memory.

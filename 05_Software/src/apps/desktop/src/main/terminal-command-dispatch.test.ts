@@ -5,6 +5,7 @@ import { TerminalService } from "./terminals.js";
 function fixture(kind: CommandBlockShell = "bash") {
   let owner = "bench-a";
   let output = (_text: string) => {};
+  let exited = (_event: { exitCode: number }) => {};
   const pty = {
     pid: 123,
     write: vi.fn(),
@@ -13,7 +14,10 @@ function fixture(kind: CommandBlockShell = "bash") {
       output = callback;
       return { dispose() {} };
     },
-    onExit: () => ({ dispose() {} }),
+    onExit: (callback: typeof exited) => {
+      exited = callback;
+      return { dispose() {} };
+    },
   };
   const spawn = vi.fn(
     (_executable: string, _args: string[], _options: { env: Record<string, string> }) => pty,
@@ -29,6 +33,7 @@ function fixture(kind: CommandBlockShell = "bash") {
   return {
     service,
     pty,
+    finish: () => exited({ exitCode: 0 }),
     ready: () => {
       const [, args, options] = spawn.mock.calls[0]!;
       const startup = options.env.PS1 ?? Buffer.from(args.at(-1)!, "base64").toString("utf16le");
@@ -47,11 +52,13 @@ it.each(["powershell", "bash"] as const)(
     const f = fixture(kind);
     const terminal = await f.service.create("bench-a", 80, 24, kind);
     expect(terminal.shell).toBe(kind);
+    expect(terminal.dispatchEligible).toBe(true);
     const text = "Get-Content README.MD -TotalCount 10\r\n'Știință 🧪'\n\n\\tail\tend";
     const execution = f.service.execute("bench-a", terminal.id, kind, text);
     expect(f.pty.write).not.toHaveBeenCalled();
     f.ready();
     await execution;
+    expect(f.service.list("bench-a")[0]?.dispatchEligible).toBe(false);
     expect(f.pty.write).toHaveBeenCalledTimes(1);
     const data = f.pty.write.mock.calls[0]![0] as string;
     expect(data).not.toContain("\u0015");
@@ -69,6 +76,8 @@ it.each(["powershell", "bash"] as const)(
 it("refuses ordinary terminals without touching their input", async () => {
   const f = fixture();
   const terminal = await f.service.create("bench-a", 80, 24);
+  expect(terminal.dispatchEligible).toBe(false);
+  expect(f.service.list("bench-a")[0]?.dispatchEligible).toBe(false);
   await expect(f.service.execute("bench-a", terminal.id, "bash", "pwd")).rejects.toMatchObject({
     messageKey: "chatActions.promptNotReady",
   });
@@ -83,6 +92,7 @@ it.each(["echo pending", "read answer\r"])(
     const terminal = await f.service.create("bench-a", 80, 24, "bash");
     f.ready();
     f.service.input("bench-a", terminal.id, input);
+    expect(f.service.list("bench-a")[0]?.dispatchEligible).toBe(false);
     await expect(f.service.execute("bench-a", terminal.id, "bash", "pwd")).rejects.toMatchObject({
       messageKey: "chatActions.promptNotReady",
     });
@@ -110,6 +120,19 @@ it.each(["switch", "input", "close", "suspend"] as const)(
     await f.service.closeAll();
   },
 );
+
+it("reports pristine startup/prompt eligibility and revokes it after shell exit", async () => {
+  const f = fixture();
+  const terminal = await f.service.create("bench-a", 80, 24, "bash");
+  expect(f.service.list("bench-a")[0]?.dispatchEligible).toBe(true);
+  f.ready();
+  expect(f.service.output("bench-a", terminal.id).dispatchEligible).toBe(true);
+  f.finish();
+  expect(f.service.list("bench-a")[0]).toMatchObject({ running: false, dispatchEligible: false });
+  await expect(f.service.execute("bench-a", terminal.id, "bash", "pwd")).rejects.toBeDefined();
+  expect(f.pty.write).not.toHaveBeenCalled();
+  await f.service.closeAll();
+});
 
 it("atomically consumes the initial prompt so concurrent or repeated dispatch cannot reuse it", async () => {
   const f = fixture();

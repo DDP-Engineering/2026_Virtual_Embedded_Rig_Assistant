@@ -103,6 +103,7 @@ export class TerminalService {
       shared: entry.shared,
       shell: entry.shell,
       running: entry.running,
+      dispatchEligible: entry.running && entry.commandPrompt?.dispatchEligible === true,
       ...(entry.exitCode === undefined ? {} : { exitCode: entry.exitCode }),
     };
   }

@@ -23,6 +23,8 @@ export const terminalSummarySchema = z.strictObject({
   shared: z.boolean(),
   shell: terminalShellSchema,
   running: z.boolean(),
+  /** Pristine chat shell; it may still be starting. Dispatch must recheck and wait for its prompt. */
+  dispatchEligible: z.boolean(),
   exitCode: z.number().int().optional(),
 });
 /** `start` counts the characters the host dropped before `output`; it only grows as the buffer trims its head. */

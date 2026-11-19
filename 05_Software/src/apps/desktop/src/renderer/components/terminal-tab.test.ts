@@ -75,6 +75,7 @@ it("updates the mounted terminal font and refits immediately when code text size
     number: 1,
     shared: false,
     shell: "bash",
+    dispatchEligible: false,
     running: true,
   };
   vi.mocked(api.invoke).mockImplementation(async (channel) => {
@@ -140,6 +141,7 @@ it.each(["en", "ro", "de", "fr"])(
           number: rows.length + 1,
           shared: false,
           shell: "bash" as const,
+          dispatchEligible: false,
           running: true,
         };
         rows.push(row);
@@ -220,6 +222,7 @@ it("renders restored and replaced history without resending terminal replies, wh
     number: 1,
     shared: false,
     shell: "bash",
+    dispatchEligible: false,
     running: true,
   };
   let output = "history\x1b[c";
@@ -264,6 +267,7 @@ it("appends only the new tail when the host trims the head of a full buffer", as
     number: 1,
     shared: false,
     shell: "bash",
+    dispatchEligible: false,
     running: true,
   };
   let snapshot = { output: "line 1\nline 2\n", start: 0 };
@@ -308,6 +312,7 @@ it.each(["panel", "chat"])(
       number: 2,
       shared: false,
       shell: "bash",
+      dispatchEligible: false,
       running: true,
     };
     let created = source === "chat";
@@ -362,6 +367,7 @@ it.each([true, false])(
       number: 1,
       shared: false,
       shell: "bash",
+      dispatchEligible: false,
       running: true,
     };
     let rows = [row],

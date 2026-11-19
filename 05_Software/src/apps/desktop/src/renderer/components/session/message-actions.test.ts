@@ -21,6 +21,7 @@ const terminal = (number: number, shell: TerminalSummary["shell"] = "powershell"
   shell,
   shared: false,
   running: true,
+  dispatchEligible: true,
 });
 const text = "Get-Content README.MD -TotalCount 10";
 const reveal = vi.fn();
@@ -116,13 +117,57 @@ it("recognizes only actual closing fences, including nested and longer tilde fen
     "- Commands\n\n  ```bash\n  echo ok\n  ```",
     "> ```bash\n> echo ok\n> ```",
     "~~~~bash\necho ok\n~~~~",
-    "```bash\n```",
     "```bash\necho ok\n\n```",
     "````bash\n```\n````",
   ]) {
     await render(markdown);
     expect(run().disabled).toBe(false);
   }
+});
+
+it.each([1, 2])(
+  "creates a clean terminal directly when all %s matching destinations are ineligible",
+  async (count) => {
+    vi.mocked(api.invoke).mockImplementation(async (channel) => {
+      if (channel === "terminal.list")
+        return Array.from({ length: count }, (_, index) => ({
+          ...terminal(index + 1),
+          dispatchEligible: false,
+        })) as never;
+      if (channel === "terminal.create") return terminal(3) as never;
+      return {} as never;
+    });
+    await render();
+    await act(async () => run().click());
+    expect(container.querySelector("dialog")).toBeNull();
+    expect(container.querySelector('[role="alert"]')).toBeNull();
+    expect(api.invoke).toHaveBeenCalledWith("terminal.create", {
+      workbenchId: owner,
+      cols: 80,
+      rows: 24,
+      shell: "powershell",
+    });
+    expect(executeCalls()).toEqual([
+      ["terminal.execute", { workbenchId: owner, id: terminal(3).id, shell: "powershell", text }],
+    ]);
+  },
+);
+
+it("automatically selects the only eligible matching terminal, excluding ordinary and used shells", async () => {
+  vi.mocked(api.invoke).mockImplementation(async (channel) =>
+    channel === "terminal.list"
+      ? ([
+          { ...terminal(1), dispatchEligible: false },
+          terminal(2),
+          { ...terminal(3), dispatchEligible: false },
+        ] as never)
+      : ({} as never),
+  );
+  await render();
+  await act(async () => run().click());
+  expect(container.querySelector("dialog")).toBeNull();
+  expect(api.invoke).not.toHaveBeenCalledWith("terminal.create", expect.anything());
+  expect(executeCalls()[0]?.[1]).toMatchObject({ id: terminal(2).id });
 });
 
 it("creates a compatible terminal rather than dispatching into an incompatible or exited shell", async () => {
@@ -145,7 +190,14 @@ it("creates a compatible terminal rather than dispatching into an incompatible o
 
 it("chooses a named destination when multiple compatible terminals exist, and cancels without executing", async () => {
   vi.mocked(api.invoke).mockImplementation(async (channel) =>
-    channel === "terminal.list" ? ([terminal(1), terminal(2), terminal(3, "bash")] as never) : ({} as never),
+    channel === "terminal.list"
+      ? ([
+          terminal(1),
+          terminal(2),
+          terminal(3, "bash"),
+          { ...terminal(4), dispatchEligible: false },
+        ] as never)
+      : ({} as never),
   );
   await render();
   run().focus();
@@ -260,8 +312,8 @@ it("prevents duplicate dispatch while a click is processing", async () => {
   expect(executeCalls()).toHaveLength(1);
 });
 
-it.each(["session", "workbench"])(
-  "does not dispatch a stale destination after switching %s",
+it.each(["session", "workbench", "block"])(
+  "does not dispatch a stale destination after changing %s",
   async (scope) => {
     let release: (() => void) | undefined;
     vi.mocked(api.invoke).mockImplementation(async (channel) => {
@@ -274,6 +326,7 @@ it.each(["session", "workbench"])(
     await render();
     await act(async () => run().click());
     if (scope === "session") await act(async () => root.render(null));
+    else if (scope === "block") await render("```powershell\n```", false);
     else await render(undefined, false, "another-workbench");
     await act(async () => release?.());
     expect(executeCalls()).toHaveLength(0);

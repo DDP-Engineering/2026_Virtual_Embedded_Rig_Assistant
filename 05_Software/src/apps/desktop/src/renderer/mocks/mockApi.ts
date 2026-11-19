@@ -191,7 +191,7 @@ export function createMockApi(
   const provisionedPlugins = new Set<string>();
   /** Program runs and their logs by workbench id, seeded with one running and one ended run. */
   const runs = new Map<string, { run: ProgramRunInfo; log: string }[]>();
-  const terminals = new Map<string, { owner: string; snapshot: TerminalSnapshot; clean: boolean }>();
+  const terminals = new Map<string, { owner: string; snapshot: TerminalSnapshot }>();
   const userTerminal = (owner: string, id: string) => {
     if (owner !== current().snapshot.config.id) throw veraError("CONFLICT");
     const entry = terminals.get(id);
@@ -555,12 +555,13 @@ export function createMockApi(
           id: crypto.randomUUID(),
           number: terminals.size + 1,
           shell: shell ?? "bash",
+          dispatchEligible: shell !== undefined,
           shared: false,
           running: true,
           output: "$ ",
           start: 0,
         };
-        terminals.set(snapshot.id, { owner: workbenchId, snapshot, clean: shell !== undefined });
+        terminals.set(snapshot.id, { owner: workbenchId, snapshot });
         const { output: _output, start: _start, ...summary } = snapshot;
         value = summary;
         break;
@@ -573,8 +574,7 @@ export function createMockApi(
       case "terminal.input": {
         const { workbenchId, id, data } = channels["terminal.input"].request.parse(input.data);
         const terminal = userTerminal(workbenchId, id);
-        const entry = terminals.get(id);
-        if (entry) entry.clean = false;
+        terminal.dispatchEligible = false;
         const output = terminal.output + data.replaceAll("\r", "\r\n$ ");
         terminal.start += Math.max(0, output.length - 262144);
         terminal.output = output.slice(-262144);
@@ -585,9 +585,9 @@ export function createMockApi(
         const { workbenchId, id, shell, text } = channels["terminal.execute"].request.parse(input.data);
         const terminal = userTerminal(workbenchId, id);
         if (!terminal.running || terminal.shell !== shell) throw veraError("CONFLICT");
-        const entry = terminals.get(id);
-        if (!entry?.clean) throw { ...veraError("CONFLICT"), messageKey: "chatActions.promptNotReady" };
-        entry.clean = false;
+        if (!terminal.dispatchEligible)
+          throw { ...veraError("CONFLICT"), messageKey: "chatActions.promptNotReady" };
+        terminal.dispatchEligible = false;
         terminal.output = `${terminal.output}${text}\r\n$ `.slice(-262144);
         value = {};
         break;

@@ -17,6 +17,11 @@ export class TerminalCommandPrompt {
   private carry = "";
   private listeners = new Set<() => void>();
 
+  /** Pristine shells can be selected during startup; wait()/consume() still verify the actual prompt. */
+  get dispatchEligible(): boolean {
+    return this.state !== "used";
+  }
+
   startup(
     shell: CommandBlockShell,
     env: Record<string, string>,

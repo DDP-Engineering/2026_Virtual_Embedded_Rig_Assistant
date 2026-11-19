@@ -108,6 +108,8 @@ test("native chat runs a multiline block exactly once, creates and selects termi
     : "head -n 10 README.MD\nprintf '%s\\n' 'Știință 🧪' >> result.txt\nprintf '%s\\n' 'second line' >> result.txt";
   const reply = `Run only on click.\n\n\`\`\`${shell}\n${command}\n\`\`\`\n`;
   await writeFile(join(scripts, "commands.jsonl"), JSON.stringify({ text: reply }));
+  const invalidReply = `\`\`\`${shell}\n\`\`\`\n\n\`\`\`${shell}\n${"x".repeat(16385)}\n\`\`\``;
+  await writeFile(join(scripts, "invalid.jsonl"), JSON.stringify({ text: invalidReply }));
   const env = Object.fromEntries(
     Object.entries(process.env).filter((entry): entry is [string, string] => typeof entry[1] === "string"),
   );
@@ -136,6 +138,12 @@ test("native chat runs a multiline block exactly once, creates and selects termi
     await expect.poll(() => app.evaluate(({ clipboard }) => clipboard.readText())).toBe(reply);
     await expect(page.locator("[data-run-block]")).toBeEnabled();
     expect(await invoke(page, "terminal.list", { workbenchId: workbench.config.id })).toEqual([]);
+    const ordinary = await invoke(page, "terminal.create", {
+      workbenchId: workbench.config.id,
+      cols: 80,
+      rows: 24,
+    });
+    expect(ordinary.dispatchEligible).toBe(false);
     await page.locator("[data-run-block]").click();
     await expect(page.locator("#tab-terminal")).toHaveAttribute("aria-selected", "true");
     await expect(page.locator(".terminal-surface textarea")).toBeFocused();
@@ -151,11 +159,15 @@ test("native chat runs a multiline block exactly once, creates and selects termi
       })
       .toBe("Știință 🧪\nsecond line\n");
     const workbenchId = workbench.config.id;
-    const first = (await invoke(page, "terminal.list", { workbenchId }))[0]!;
+    const first = (await invoke(page, "terminal.list", { workbenchId })).find(
+      (row) => row.id !== ordinary.id,
+    )!;
+    expect(first.dispatchEligible).toBe(false);
     await expect
       .poll(async () => (await invoke(page, "terminal.output", { workbenchId, id: first.id })).output)
       .toContain("README_HEAD_317");
-    await invoke(page, "terminal.create", { workbenchId, cols: 80, rows: 24, shell });
+    const candidate = await invoke(page, "terminal.create", { workbenchId, cols: 80, rows: 24, shell });
+    const alternate = await invoke(page, "terminal.create", { workbenchId, cols: 80, rows: 24, shell });
     await page.locator(".panel-close").click();
     const choice = page.getByRole("dialog", { name: "Destination terminal" });
     for (const cancel of ["button", "escape"]) {
@@ -170,16 +182,19 @@ test("native chat runs a multiline block exactly once, creates and selects termi
     }
     await page.keyboard.press("Enter");
     await expect(choice).toBeVisible();
-    const rows = await invoke(page, "terminal.list", { workbenchId: workbench.config.id });
-    await choice.locator("select").selectOption(rows[1]!.id);
+    await expect(choice.locator("option")).toHaveCount(3);
+    await expect(choice.locator(`option[value="${ordinary.id}"]`)).toHaveCount(0);
+    await expect(choice.locator(`option[value="${first.id}"]`)).toHaveCount(0);
+    await choice.locator("select").selectOption(candidate.id);
     await choice.getByRole("button", { name: "Run in terminal", exact: true }).click();
-    await expect(page.locator(`[data-terminal-id="${rows[1]!.id}"] textarea`)).toBeFocused();
+    await expect(page.locator(`[data-terminal-id="${candidate.id}"] textarea`)).toBeFocused();
+    await invoke(page, "terminal.close", { workbenchId, id: alternate.id });
     await expect
       .poll(async () =>
         (await readFile(join(folder, "result.txt"), "utf8")).replace(/^\uFEFF/, "").replaceAll("\r\n", "\n"),
       )
       .toBe("Știință 🧪\nsecond line\nȘtiință 🧪\nsecond line\n");
-    // Preserve a real unsubmitted line and offer a new destination rather than clearing/submitting it.
+    // All remaining shells are ineligible: create cleanly on the first click, preserving pending input.
     const pending = await invoke(page, "terminal.create", { workbenchId, cols: 80, rows: 24, shell });
     await expect(page.locator(`#terminal-${pending.id}`)).toBeVisible();
     await page.locator(`#terminal-${pending.id}`).click();
@@ -189,14 +204,13 @@ test("native chat runs a multiline block exactly once, creates and selects termi
       : "printf pending >> pending.txt";
     await page.keyboard.type(pendingCommand);
     await page.locator(".panel-close").click();
+    const beforeCleanRun = await invoke(page, "terminal.list", { workbenchId });
+    expect(beforeCleanRun.every((row) => !row.dispatchEligible)).toBe(true);
     await page.locator("[data-run-block]").click();
-    await expect(choice).toBeVisible();
-    await choice.locator("select").selectOption(pending.id);
-    await choice.getByRole("button", { name: "Run in terminal", exact: true }).click();
-    await expect(page.getByRole("alert")).toContainText("not verified at an empty prompt");
-    await expect(readFile(join(folder, "pending.txt"), "utf8")).rejects.toMatchObject({ code: "ENOENT" });
-    await page.getByRole("button", { name: "Run in a new clean terminal", exact: true }).click();
+    await expect(choice).toHaveCount(0);
+    await expect(page.getByRole("alert")).toHaveCount(0);
     await expect(page.locator(".terminal-surface textarea")).toBeFocused();
+    expect(await invoke(page, "terminal.list", { workbenchId })).toHaveLength(beforeCleanRun.length + 1);
     await expect(readFile(join(folder, "pending.txt"), "utf8")).rejects.toMatchObject({ code: "ENOENT" });
     await page.locator(`#terminal-${pending.id}`).click();
     await page.locator(`[data-terminal-id="${pending.id}"] textarea`).focus();
@@ -255,6 +269,20 @@ test("native chat runs a multiline block exactly once, creates and selects termi
     expect(
       (await readFile(join(folder, "result.txt"), "utf8")).replace(/^\uFEFF/, "").replaceAll("\r\n", "\n"),
     ).toBe("Știință 🧪\nsecond line\n".repeat(3));
+    const beforeInvalid = (await invoke(page, "terminal.list", { workbenchId })).map((row) => row.id);
+    await invoke(page, "session.model.set", { sessionId, modelRef: "replay/invalid" });
+    await invoke(page, "session.send", { sessionId, text: "Give invalid blocks" });
+    await expect(page.locator(".copy-response")).toHaveCount(2);
+    const blocks = page.locator("[data-run-block]");
+    await expect(blocks).toHaveCount(3);
+    for (const index of [1, 2]) {
+      await expect(blocks.nth(index)).toBeDisabled();
+      await blocks.nth(index).evaluate((button: HTMLButtonElement) => button.click());
+    }
+    expect((await invoke(page, "terminal.list", { workbenchId })).map((row) => row.id)).toEqual(
+      beforeInvalid,
+    );
+    await expect(page.getByRole("alert")).toHaveCount(0);
     expect(await outboundAttempts(app)).toEqual([]);
   } finally {
     await app.close();

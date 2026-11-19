@@ -1,4 +1,10 @@
-import { type CommandBlockShell, type TerminalSummary, veraError, veraErrorSchema } from "@vera/shared";
+import {
+  type CommandBlockShell,
+  commandBlockTextSchema,
+  type TerminalSummary,
+  veraError,
+  veraErrorSchema,
+} from "@vera/shared";
 import { Copy, Play } from "lucide-react";
 import { type ReactNode, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -124,6 +130,7 @@ export function CodeBlock({
   const { t } = useTranslation();
   const navigation = useContext(TerminalNavigation);
   const shell = blockShell(language);
+  const dispatchable = useMemo(() => commandBlockTextSchema.safeParse(text).success, [text]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<unknown>();
   const [choices, setChoices] = useState<TerminalSummary[]>();
@@ -144,8 +151,8 @@ export function CodeBlock({
       live.current = false;
     };
   }, []);
-  // An A → B → A switch must invalidate an earlier A request too.
-  const scope = useMemo(() => ({ owner }), [owner]);
+  // A source change or A → B → A switch must invalidate an earlier request too.
+  const scope = useMemo(() => ({ owner, text, streaming, shell }), [owner, text, streaming, shell]);
   const currentScope = useRef(scope);
   currentScope.current = scope;
   useEffect(() => {
@@ -165,7 +172,7 @@ export function CodeBlock({
     setChoices(undefined);
   }
   async function dispatch(id: string) {
-    if (!valid() || !shell || streaming || !pending.current || dispatching.current) return;
+    if (!valid() || !shell || !dispatchable || streaming || !pending.current || dispatching.current) return;
     dispatching.current = true;
     setChoices(undefined);
     try {
@@ -178,7 +185,7 @@ export function CodeBlock({
     }
   }
   async function createAndDispatch() {
-    if (!valid() || !shell || streaming || !pending.current || dispatching.current) return;
+    if (!valid() || !shell || !dispatchable || streaming || !pending.current || dispatching.current) return;
     dispatching.current = true;
     setChoices(undefined);
     try {
@@ -199,21 +206,21 @@ export function CodeBlock({
     }
   }
   async function runNew() {
-    if (!valid() || streaming || pending.current || !navigation?.available) return;
+    if (!valid() || !dispatchable || streaming || pending.current || !navigation?.available) return;
     pending.current = true;
     setBusy(true);
     setError(undefined);
     await createAndDispatch();
   }
   async function run() {
-    if (!valid() || !shell || streaming || pending.current || !navigation?.available) return;
+    if (!valid() || !shell || !dispatchable || streaming || pending.current || !navigation?.available) return;
     pending.current = true;
     setBusy(true);
     setError(undefined);
     try {
       const rows = await api.invoke("terminal.list", { workbenchId: owner as string });
       if (!valid()) return;
-      const compatible = rows.filter((row) => row.running && row.shell === shell);
+      const compatible = rows.filter((row) => row.dispatchEligible && row.running && row.shell === shell);
       if (compatible.length > 1) {
         setChoices(compatible);
         return;
@@ -241,7 +248,7 @@ export function CodeBlock({
             data-run-block
             aria-label={t("chatActions.runShell", { shell })}
             title={t("chatActions.runShell", { shell })}
-            disabled={streaming || busy || !navigation?.available}
+            disabled={!dispatchable || streaming || busy || !navigation?.available}
             onClick={() => {
               void run();
             }}
@@ -255,7 +262,7 @@ export function CodeBlock({
       {needsNew && (
         <button
           type="button"
-          disabled={busy || streaming || !navigation?.available}
+          disabled={!dispatchable || busy || streaming || !navigation?.available}
           onClick={() => {
             void runNew();
           }}

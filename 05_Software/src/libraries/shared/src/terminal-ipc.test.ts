@@ -25,6 +25,24 @@ describe("user terminal IPC", () => {
     ])
       expect(channels["terminal.execute"].request.safeParse(invalid).success).toBe(false);
   });
+  it("requires host-reported dispatch eligibility on terminal summaries and snapshots", () => {
+    const summary = {
+      id: "00000000-0000-4000-8000-000000000001",
+      number: 1,
+      shell: "bash",
+      shared: false,
+      running: true,
+    };
+    for (const dispatchEligible of [true, false]) {
+      const terminal = { ...summary, dispatchEligible };
+      expect(channels["terminal.list"].response.safeParse([terminal]).success).toBe(true);
+      expect(
+        channels["terminal.output"].response.safeParse({ ...terminal, output: "$ ", start: 0 }).success,
+      ).toBe(true);
+    }
+    for (const terminal of [summary, { ...summary, dispatchEligible: "yes" }])
+      expect(channels["terminal.list"].response.safeParse([terminal]).success).toBe(false);
+  });
   it("defines strict workbench-owned user commands and bounded PTY dimensions", () => {
     const all = channels as Record<
       string,
