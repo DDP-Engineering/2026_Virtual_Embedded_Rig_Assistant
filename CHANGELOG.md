@@ -34,6 +34,8 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ### Changed
 
+- Switch local embedding models per workbench while keyword search continues during the background rebuild.
+
 - Indexing and semantic search use the workbench model and its token budget. Idle embedding workers stop.
 
 - Workbench Tools keeps core capabilities; Plugins groups specialized allowances by provider and shared ecosystem.

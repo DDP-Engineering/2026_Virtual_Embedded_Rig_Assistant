@@ -1,5 +1,6 @@
 {
   "toolActivity": {
+    "embeddingRebuild": "Der semantische Index wird neu aufgebaut. Diese Treffer beruhen auf Stichwörtern.",
     "planSteps": "Planschritte: {{count}}",
     "planCleared": "Plan geleert",
     "operation": "Werkzeugaktion",
@@ -854,6 +855,12 @@
     "changed": "Der aktive Workbench wurde geändert. Öffnen Sie den Editor erneut.",
     "saving": "Wird gespeichert…",
     "embeddingModel": "Embedding-Modell",
+    "embeddingBge": "BGE Small EN v1.5 (Englisch)",
+    "embeddingE5": "Multilingual E5 Small (100 Sprachen)",
+    "embeddingSwitchTitle": "Embedding-Modell wechseln?",
+    "embeddingSwitchCount": "Indizierte Dokumente ({{count}})",
+    "embeddingSwitchBody": "VERA erstellt die Vektoren im Hintergrund neu. Die Stichwortsuche bleibt verfügbar.",
+    "embeddingSwitchConfirm": "Modell wechseln",
     "chunkSize": "Chunk-Größe (Zeichen)",
     "overlap": "Überlappung (Zeichen)",
     "partialSave": "Projekteinstellungen wurden gespeichert, Anweisungen jedoch nicht. Wiederholen Sie Speichern; beim Schließen bleiben gespeicherte Einstellungen erhalten.",

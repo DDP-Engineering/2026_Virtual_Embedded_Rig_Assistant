@@ -69,6 +69,12 @@ export const workbenchEmbeddingsSchema = z
     message: "Overlap must be smaller than chunk size",
     path: ["overlap"],
   });
+export const embeddingSwitchApprovalSchema = z.strictObject({
+  from: z.enum(embeddingModelIds),
+  count: z.number().int().nonnegative(),
+});
+export type EmbeddingSwitchApproval = z.infer<typeof embeddingSwitchApprovalSchema>;
+
 const disabled = z.looseObject({ disabled: z.array(z.string().min(1)).default([]) });
 /** Plugins run programs, so a workbench enables each one explicitly. */
 const plugins = z.looseObject({ enabled: z.array(z.string().min(1)).default([]) });

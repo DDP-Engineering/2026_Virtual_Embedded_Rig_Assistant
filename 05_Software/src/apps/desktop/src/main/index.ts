@@ -1273,14 +1273,21 @@ ipcMain.handle(
         patch,
         workbenchId,
         removeCommandPrefixes,
+        embeddingSwitch,
         addAdditionalFolders,
         removeAdditionalFolders,
       }) =>
         workbench
-          .updateConfig(workbenchPatchSchema.parse(patch), workbenchId, removeCommandPrefixes, {
-            ...(addAdditionalFolders ? { add: addAdditionalFolders } : {}),
-            ...(removeAdditionalFolders ? { remove: removeAdditionalFolders } : {}),
-          })
+          .updateConfig(
+            workbenchPatchSchema.parse(patch),
+            workbenchId,
+            removeCommandPrefixes,
+            {
+              ...(addAdditionalFolders ? { add: addAdditionalFolders } : {}),
+              ...(removeAdditionalFolders ? { remove: removeAdditionalFolders } : {}),
+            },
+            embeddingSwitch,
+          )
           .then((value) => publicWorkbenchFolders(value, (text) => credentials.scrub(text))),
       "workbench.additionalFolders.list": async ({ workbenchId }) =>
         (await workbench.listAdditionalFolders(workbenchId)).map(({ id, path }) => ({

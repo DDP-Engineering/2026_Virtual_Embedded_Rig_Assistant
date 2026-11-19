@@ -18,9 +18,11 @@ import { validateCitations } from "../agent/citations.js";
 import { ReplayGateway } from "../llm/replay.js";
 import { SessionService } from "../sessions/service.js";
 import { DocumentsRepository } from "../storage/repos/documents.js";
+import { beginEmbeddingRebuild } from "../storage/repos/embedding-rebuild.js";
 import { schemaSql } from "../storage/schema.js";
 import { createToolContext } from "../tools/context.js";
 import { ToolRegistry } from "../tools/registry.js";
+import { PathGuard } from "../workbench/path-guard.js";
 import type { EmbeddingPort } from "./embedding.js";
 import { documentKind } from "./ingest.js";
 import { createDocumentProcessor, verifyDocumentSource } from "./processor.js";
@@ -861,6 +863,53 @@ it("guides models that fill every optional argument: per-field descriptions, kin
         expect(field.description, `${name} description`).toMatch(/\w/);
     }
   } finally {
+    await h.close();
+  }
+});
+
+it("keeps an in-flight keyword result coherent while publishing new model chunk boundaries", async () => {
+  const h = await harness();
+  let release = () => {};
+  const released = new Promise<void>((done) => {
+    release = done;
+  });
+  try {
+    const doc = await h.add("docs/a.txt", "Coolant returns to the pump.");
+    h.db.transaction(() => beginEmbeddingRebuild(h.db))();
+    let enter = () => {};
+    const entered = new Promise<void>((done) => {
+      enter = done;
+    });
+    const createGuard = PathGuard.create;
+    vi.spyOn(PathGuard, "create").mockImplementationOnce(async (...args) => {
+      enter();
+      await released;
+      return createGuard(...args);
+    });
+    const waiting = h.knowledge.search({ query: "coolant", mode: "hybrid" }, h.signal);
+    await entered;
+    const rows = new DocumentsRepository(h.db);
+    const extraction = rows.extraction(doc.id)!;
+    const vector = new Float32Array(384);
+    vector[0] = 1;
+    rows.replaceEmbeddings(
+      doc.id,
+      rows.validateChunks(
+        [
+          { text: "Coolant returns", locator: { type: "lines", start: 1, end: 1 } },
+          { text: "to the pump.", locator: { type: "lines", start: 1, end: 1 } },
+        ],
+        { extraction, modelId: "replacement", vectors: [vector, vector] },
+      ),
+    );
+    release();
+    await expect(waiting).resolves.toMatchObject({
+      ranking: "embedding-rebuild",
+      results: [{ path: doc.path, snippet: "Coolant returns to the pump." }],
+    });
+  } finally {
+    release();
+    vi.restoreAllMocks();
     await h.close();
   }
 });

@@ -222,41 +222,25 @@ export function createDocumentProcessor(
 ): DocumentProcessor {
   const processor: DocumentProcessor = async (input) => {
     if (!/^[a-f0-9]{64}$/.test(input.sha256)) throw Error("Invalid extraction key.");
-    const bytes = await verifyDocumentSource(input);
-    let extraction = await readCache(input);
+    allowed(input);
+    let extraction = input.extraction;
+    if (extraction && extraction.kind !== input.kind)
+      throw Error("The stored extraction has a different document kind.");
     if (!extraction) {
-      if (input.kind === "pdf") extraction = await pdf(bytes, input.signal);
-      else if (isDocumentKindIn(input.kind, binaryDocumentKinds)) {
-        const format = officeFormat(input.path);
-        if (!format) throw Error("Unsupported office format.");
-        try {
-          extraction = await office(format, bytes, input.signal);
-        } catch (error) {
-          // An archive beyond the limits is a size failure, not a parser failure.
-          if (error instanceof OfficeLimitError) return { status: "failed", reason: "SIZE_LIMIT" };
-          throw error;
-        }
-      } else {
-        const text = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
-        extraction =
-          input.kind === "markdown"
-            ? extractMarkdown(text)
-            : input.kind === "html"
-              ? extractHtml(text)
-              : extractText(text);
-      }
-      allowed(input);
-      if (!extraction) throw Error("Extraction failed.");
-      saveCache(input, extraction);
+      const bytes = await verifyDocumentSource(input);
+      extraction = await readCache(input);
+      if (!extraction) extraction = await extract(input, bytes);
+      if (!extraction) return { status: "failed", reason: "SIZE_LIMIT" };
     }
     allowed(input);
+    const ocr = needsOcr(extraction);
     const pages =
       extraction.kind === "pdf"
         ? { pages: extraction.pages.length }
         : extraction.kind === "presentation"
           ? { pages: extraction.slides.length }
           : {};
-    const chunks = needsOcr(extraction)
+    const chunks = ocr
       ? []
       : chunkDocument(
           extraction,
@@ -274,7 +258,7 @@ export function createDocumentProcessor(
       }
     }
     allowed(input);
-    return needsOcr(extraction)
+    return ocr
       ? { status: "needs_ocr", reason: "NEEDS_OCR", ...pages, chunks: [] }
       : {
           status: "indexed",
@@ -283,6 +267,33 @@ export function createDocumentProcessor(
           derived: { extraction, ...(vectors && embeddings ? { vectors, modelId: embeddings.modelId } : {}) },
         };
   };
+  async function extract(input: DocumentInput, bytes: Uint8Array): Promise<Extraction | undefined> {
+    let extraction: Extraction;
+    if (input.kind === "pdf") extraction = await pdf(bytes, input.signal);
+    else if (isDocumentKindIn(input.kind, binaryDocumentKinds)) {
+      const format = officeFormat(input.path);
+      if (!format) throw Error("Unsupported office format.");
+      try {
+        extraction = await office(format, bytes, input.signal);
+      } catch (error) {
+        // An archive beyond the limits is a size failure, not a parser failure.
+        if (error instanceof OfficeLimitError) return undefined;
+        throw error;
+      }
+    } else {
+      const text = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+      extraction =
+        input.kind === "markdown"
+          ? extractMarkdown(text)
+          : input.kind === "html"
+            ? extractHtml(text)
+            : extractText(text);
+    }
+    allowed(input);
+    if (!extraction) throw Error("Extraction failed.");
+    saveCache(input, extraction);
+    return extraction;
+  }
   if (embeddings) {
     processor.modelId = () => embeddings.modelId;
     processor.release = (root) => embeddings.release(root);

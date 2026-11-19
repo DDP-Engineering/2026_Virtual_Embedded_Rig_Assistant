@@ -1,4 +1,10 @@
-import type { BuiltinToolName, CommandPrefixDisplay, WorkbenchConfig } from "@vera/shared";
+import {
+  type BuiltinToolName,
+  type CommandPrefixDisplay,
+  type EmbeddingModelId,
+  embeddingModelIds,
+  type WorkbenchConfig,
+} from "@vera/shared";
 import { type Dispatch, type ReactNode, type SetStateAction, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ModelSelect } from "./model-select.js";
@@ -82,6 +88,10 @@ export function WorkbenchConfigForm({
   removeCommandPrefix?: (id: string) => void;
 }) {
   const { t } = useTranslation();
+  const embeddingModelLabels: Record<EmbeddingModelId, string> = {
+    "Xenova/bge-small-en-v1.5": t("projects.embeddingBge"),
+    "Xenova/multilingual-e5-small": t("projects.embeddingE5"),
+  };
   const labels = {
     general: t("projects.general"),
     interface: t("projects.interface"),
@@ -259,8 +269,22 @@ export function WorkbenchConfigForm({
                 <h4>{t("projects.embeddingsGroup")}</h4>
                 <label>
                   {t("projects.embeddingModel")}
-                  <select value={config.embeddings.model} disabled>
-                    <option value="Xenova/bge-small-en-v1.5">BGE Small EN v1.5 (local)</option>
+                  <select
+                    value={config.embeddings.model}
+                    onChange={(event) => {
+                      const model = embeddingModelIds.find((id) => id === event.target.value);
+                      if (model)
+                        setConfig((current) => ({
+                          ...current,
+                          embeddings: { ...current.embeddings, model },
+                        }));
+                    }}
+                  >
+                    {embeddingModelIds.map((model) => (
+                      <option value={model} key={model}>
+                        {embeddingModelLabels[model]}
+                      </option>
+                    ))}
                   </select>
                 </label>
                 <label>

@@ -1,11 +1,12 @@
-import type {
-  DocumentProcessor,
-  EmbeddingPort,
-  InspectInput,
-  SelectInput,
-  Selection,
-  SourceInspection,
-  VectorRow,
+import {
+  type DocumentProcessor,
+  type EmbeddingPort,
+  extractionSchema,
+  type InspectInput,
+  type SelectInput,
+  type Selection,
+  type SourceInspection,
+  type VectorRow,
 } from "@vera/core";
 import { type EmbeddingModelId, embeddingModelIds, workbenchEmbeddingsSchema } from "@vera/shared";
 import { z } from "zod";
@@ -68,10 +69,12 @@ export function createIndexerHandler(services: IndexerServices, send: (message: 
       case "process":
         return answer(request.id, (signal) => {
           const embeddings = workbenchEmbeddingsSchema.optional().parse(input.embeddings);
+          const extraction = extractionSchema.optional().parse(input.extraction);
           // A cancelled request (workbench closed or switched) may not write its cache any more.
           return services.process({
             ...input,
             embeddings,
+            extraction,
             signal,
             assertWritable: () => signal.throwIfAborted(),
           } as never);

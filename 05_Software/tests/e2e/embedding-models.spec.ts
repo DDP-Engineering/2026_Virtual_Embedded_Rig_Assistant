@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { AutoTokenizer } from "@huggingface/transformers";
 import { _electron, expect, type Page, test } from "@playwright/test";
-import type { SessionEvent, VeraBridge } from "@vera/shared";
+import type { EmbeddingSwitchApproval, SessionEvent, VeraBridge } from "@vera/shared";
 import Database from "better-sqlite3";
 import { installNetworkGuard, outboundAttempts } from "./network-guard.js";
 
@@ -217,6 +217,114 @@ test("one native app session indexes and semantically searches two local embeddi
       join(root, "english"),
     );
     expect((await search(page, "english-power")).text).toContain("docs/supply.txt");
+    const vectors = (name: string) => {
+      const db = new Database(join(root, name, ".vera/vera.db"), { readonly: true });
+      try {
+        return db
+          .prepare("SELECT chunk_id,model_id,hex(vector) AS bytes FROM embeddings ORDER BY chunk_id")
+          .all();
+      } finally {
+        db.close();
+      }
+    };
+    const original = vectors("english");
+    const other = vectors("multilingual");
+    await page.locator("[data-workbench-entry] .workbench-group-name").filter({ hasText: "english" }).click();
+    await page.locator('[data-action="edit-workbench-overview"]').click();
+    await page.locator('[data-project-section="embeddings"]').click();
+    const model = page.locator(".workbench-editor").getByRole("combobox", { name: /Embedding model/ });
+    await expect(model.locator("option")).toHaveText(
+      ["BGE Small EN v1.5 (English)", "Multilingual E5 Small (100 languages)"],
+      { timeout: 4000 },
+    );
+    await expect(model).toHaveValue(bge);
+    const folder = join(root, "english");
+    const yaml = await readFile(join(folder, ".vera/workbench.yaml"), "utf8");
+    await model.selectOption(e5);
+    const save = page.locator("[data-project-save]");
+    await save.click();
+    const confirmation = page.getByRole("dialog", { name: "Change embedding model?" });
+    await expect(confirmation).toContainText("Indexed documents (5)");
+    expect(await readFile(join(folder, ".vera/workbench.yaml"), "utf8")).toBe(yaml);
+    await confirmation.getByRole("button", { name: "Cancel", exact: true }).click();
+    await expect(confirmation).toHaveCount(0);
+    expect(await readFile(join(folder, ".vera/workbench.yaml"), "utf8")).toBe(yaml);
+    expect(vectors("english")).toEqual(original);
+
+    const rejected = await page.evaluate(
+      async ({ bge: previous, e5: next }: { bge: typeof bge; e5: typeof e5 }) => {
+        const api = (window as unknown as { vera: VeraBridge }).vera;
+        const { config } = await api.invoke("workbench.config.get", {});
+        const errors: string[] = [];
+        const approvals: (EmbeddingSwitchApproval | undefined)[] = [
+          undefined,
+          { from: previous, count: 4 },
+          { from: next, count: 5 },
+        ];
+        for (const embeddingSwitch of approvals) {
+          try {
+            await api.invoke("workbench.config.update", {
+              workbenchId: config.id,
+              patch: { embeddings: { ...config.embeddings, model: next } },
+              ...(embeddingSwitch ? { embeddingSwitch } : {}),
+            });
+          } catch (error) {
+            errors.push((error as { code: string }).code);
+          }
+        }
+        return errors;
+      },
+      { bge, e5 } as const,
+    );
+    expect(rejected).toEqual(["CONFLICT", "CONFLICT", "CONFLICT"]);
+    expect(await readFile(join(folder, ".vera/workbench.yaml"), "utf8")).toBe(yaml);
+    expect(vectors("english")).toEqual(original);
+
+    const progress = await page.evaluateHandle(async (model) => {
+      const api = (window as unknown as { vera: VeraBridge }).vera;
+      const { config } = await api.invoke("workbench.config.get", {});
+      const pending: number[] = [];
+      let switched = false;
+      const unsubscribe = api.subscribe("workbench", config.id, (event) => {
+        if (event.type === "config.changed" && event.config.embeddings.model === model) switched = true;
+        if (switched && event.type === "index.progress") {
+          pending.push(event.pending);
+          if (event.pending === 0) unsubscribe();
+        }
+      });
+      return pending;
+    }, e5);
+    await save.click();
+    await confirmation.getByRole("button", { name: "Change model", exact: true }).click();
+    await expect(page.locator(".workbench-editor")).toBeHidden();
+    await expect
+      .poll(() => progress.evaluate((pending) => pending), { timeout: 55000 })
+      .toEqual([5, 4, 3, 2, 1, 0]);
+    await progress.dispose();
+    await expect
+      .poll(
+        () => {
+          const db = new Database(join(folder, ".vera/vera.db"), { readonly: true });
+          try {
+            return db
+              .prepare(`SELECT count(*) FROM chunks c LEFT JOIN embeddings e ON e.chunk_id=c.id
+          WHERE e.model_id IS NULL OR e.model_id NOT LIKE ?`)
+              .pluck()
+              .get(`${e5}@%`);
+          } finally {
+            db.close();
+          }
+        },
+        { timeout: 55000 },
+      )
+      .toBe(0);
+    expect(vectors("english").length).toBeGreaterThan(0);
+    expect(vectors("multilingual")).toEqual(other);
+    expect(await readFile(join(folder, ".vera/workbench.yaml"), "utf8")).toContain(e5);
+    const result = await search(page, "romanian");
+    expect(result.tool).toMatchObject({ ok: true });
+    expect(result.text).toContain("docs/ventilation.txt");
+    expect(result.text).not.toContain("keyword results");
     expect(await outboundAttempts(app)).toEqual([]);
   } finally {
     await app.close();

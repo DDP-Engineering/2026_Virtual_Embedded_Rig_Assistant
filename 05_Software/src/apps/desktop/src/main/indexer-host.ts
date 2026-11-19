@@ -66,6 +66,7 @@ export class IndexerHost {
             path: input.path,
             kind: input.kind,
             sha256: input.sha256,
+            ...(input.extraction ? { extraction: input.extraction } : {}),
             ...(input.embeddings ? { embeddings: input.embeddings } : {}),
           },
         },

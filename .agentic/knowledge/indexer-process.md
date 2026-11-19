@@ -39,14 +39,15 @@ ingest queue, ownership checks and every SQLite write; it reaches the indexer on
   effort (RULING-004): the cache is content-addressed and verified on read. Error replies carry
   errno `code`s, so ingest still retries a vanished source (ENOENT).
 - A crash rejects every call in flight with `retry: true, crashed: true`; ingest keeps such
-  documents pending and reconciles again, but stores a document as failed (PROCESSING) after two
-  crashes on the same content (RULING-006). A failed start counts as a crash (RULING-007). Three
+  documents pending and reconciles again. After two crashes on the same content (RULING-006),
+  ingest reports failed progress. New content stores PROCESSING and a vector rebuild retains the
+  existing indexed content. A different embedding configuration starts a separate crash budget. A failed start counts as a crash (RULING-007). Three
   within 60 s stop restarts until `restart()`; a reindex selects before clearing rows, and Docs
   disables Reindex while stopped. Search falls back to keyword results when ranking reports a
   retry error (RULING-005).
 - `release(root)` is posted without waiting and never starts an indexer; closing a workbench does
   not wait for the indexer.
-- Process requests carry the workbench embedding settings. Embed and rank requests carry a registered model ID.
+- Process requests carry the workbench embedding settings and, for an unchanged document being re-embedded, its persisted extraction. The utility process validates the extraction shape. Embed and rank requests carry a registered model ID.
 - Ranking sends vectors only after the indexer answers `needRows`: the handler passes lazy rows that
   the EmbeddingHost reads only when its epoch cache misses at execution time.
 - The e2e network guard patches the main process only; the indexer composes no network code

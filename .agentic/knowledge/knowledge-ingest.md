@@ -120,9 +120,8 @@ while .vera content stays permanently excluded from indexed documents.
 - Ownership is checked before synchronous SQLite mutations. Read-only workbenches
   keep private snapshots and run no watcher. Close/switch aborts and drains ingest
   before lock release/storage close; failed release restores observation.
-- The schema supplies embeddings and full extraction storage. Vector coverage for the workbench's configured model controls unchanged-file
-  reprocessing; atomic publication includes validated derived data. See
-  [document search](document-search.md) for model/worker/ranking contracts.
+- A confirmed workbench embedding model change deletes vectors in the owned database and persists a rebuild marker with the new indexing fingerprint. Startup and reconciliation recover the fingerprint and invalidate old vectors before background selection. A publication queue holds indexed document and vector writes across the count check and model save while worker inference continues. The count guard governs selected background work.
+- An unchanged indexed source retains its record, extraction and searchable chunks while the processor generates new vectors. The queue publishes completed vectors and any changed chunk boundaries together. Rebuild failures leave the indexed record and text searchable and count as failures in ordinary progress. The worker crash budget tracks the source hash and attempted embedding settings. Reconciliation clears the marker when persisted chunks have full vector coverage, even if another document failed without producing chunks. See [document search](document-search.md) for ranking during the rebuild.
 - Manual reindex admits work on the lifecycle queue and waits for completion
   outside that queue so close/switch can abort active processing.
 
@@ -133,6 +132,7 @@ while .vera content stays permanently excluded from indexed documents.
 | Selection/hash/limits/status/processing | Ingester | ingest.test.ts |
 | Count guard, approval margin, top folders | knowledge/guard.ts, Ingester.reconcile | guard.test.ts; ingest-guard.test.ts (generated 12,000-file workbench, ~2 min) |
 | Invalidation/publication/indexes | DocumentsRepository | real schema FTS/synthetic embedding cases and processor/watcher/search integration |
+| Embedding rebuild, restart and failure | Ingester, repos/embedding-rebuild.ts | embedding-ingest.test.ts; tests/e2e/embedding-models.spec.ts |
 | Lifecycle | WorkbenchService | ingest and workbench service tests |
 | IPC/event shape/redaction | shared contracts, main/events | documents-ipc and main events tests; native ingest |
 

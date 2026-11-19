@@ -24,7 +24,11 @@ use their own persistent host because their payloads, lifetimes and caches diffe
 - Core exports the registered IDs, the BGE default and `readEmbeddingModel` from the embedding API.
   A registered descriptor lives at `<models>/<model-id>/model-manifest.json`; the reader checks that
   it belongs to the requested directory. Desktop and CLI route each workbench to its configured model.
-  The retrieval evaluator uses the BGE default.
+  The retrieval evaluator uses the BGE default. During a workbench model rebuild,
+  hybrid and semantic searches return keyword hits and explain the temporary ranking mode.
+  The keyword revision tracks source-content changes. Search snapshots its candidates
+  before path verification so model-only publication preserves in-flight keyword results
+  (REQ-FUNC-12403e85).
 - EmbeddingHost(entry, models, manifest, deadlineMs=120000) embeds passages in
   batches32 and ranks normalized cosine top50. embed/rank accept root and signal;
   rank accepts vectors or a lazy vector provider evaluated at serialized admission;

@@ -74,10 +74,10 @@ entries:
   - category: new
     topic: { en: Files, ro: Fișiere, de: Dateien, fr: Fichiers }
     text:
-      en: With Multilingual E5 Small, find passages by meaning across languages.
-      ro: Cu Multilingual E5 Small, găsești pasaje după sens în mai multe limbi.
-      de: Mit Multilingual E5 Small finden Sie passende Textstellen über Sprachgrenzen hinweg.
-      fr: Avec Multilingual E5 Small, trouvez des passages par leur sens dans plusieurs langues.
+      en: Choose Multilingual E5 Small per workbench to search by meaning across languages.
+      ro: Alege Multilingual E5 Small pe workbench pentru căutare după sens în mai multe limbi.
+      de: Wählen Sie Multilingual E5 Small je Workbench für die sprachübergreifende semantische Suche.
+      fr: Choisissez Multilingual E5 Small par banc pour chercher par le sens dans plusieurs langues.
   - category: improved
     topic: { en: Files, ro: Fișiere, de: Dateien, fr: Fichiers }
     text:

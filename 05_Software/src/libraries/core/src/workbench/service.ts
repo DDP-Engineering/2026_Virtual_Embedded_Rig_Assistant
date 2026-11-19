@@ -15,6 +15,8 @@ import {
   type DocumentPreview,
   type DocumentScan,
   type DocumentVolume,
+  type EmbeddingSwitchApproval,
+  embeddingSwitchApprovalSchema,
   isDocumentKindIn,
   mergeWorkbench,
   moveRecentWorkbench,
@@ -50,7 +52,7 @@ import { type LoadedPlugin, PluginStore } from "../plugins/store.js";
 import type { WorkbenchHost } from "../ports.js";
 import { SkillCatalog } from "../skills/catalog.js";
 import { openDb, type WorkbenchDatabase } from "../storage/db.js";
-import { DocumentsRepository } from "../storage/repos/documents.js";
+import { DocumentsRepository, keywordEpoch } from "../storage/repos/documents.js";
 import { PREVIEW_TIME_LIMIT_MS, previewDocuments, relativeFolder, scanDocuments } from "./documents-scan.js";
 import { acquireGuard } from "./guard.js";
 import { createIgnoreRules } from "./ignore.js";
@@ -464,7 +466,7 @@ export class WorkbenchService {
   searchDocuments(id: string, query: string) {
     return this.readDocuments(id, async (root, db) => {
       try {
-        const epoch = () => db.prepare("SELECT value FROM meta WHERE key='embedding_epoch'").pluck().get();
+        const epoch = () => keywordEpoch(db);
         const initialEpoch = epoch();
         const result = await new DocumentKnowledge(root, db).search(
           { query, mode: "keyword", k: 20 },
@@ -798,6 +800,7 @@ export class WorkbenchService {
     expectedId?: string,
     removeCommandPrefixes: readonly string[] = [],
     folders: { add?: readonly string[]; remove?: readonly string[] } = {},
+    embeddingSwitch?: EmbeddingSwitchApproval,
   ): Promise<{ config: WorkbenchConfig; warnings: WorkbenchWarning[] }> {
     return this.run(() =>
       this.writes.run(async () => {
@@ -856,12 +859,33 @@ export class WorkbenchService {
             : parsed.data,
         );
         const warnings = await this.warnings(config, state.folder);
-        if (JSON.stringify(config) !== JSON.stringify(current)) {
-          await this.host.files.writeAtomic(join(state.folder, ".vera/workbench.yaml"), stringify(config));
-          this.state = { ...state, config, warnings };
-          this.emit(config.id, { type: "config.changed", config, warnings });
-          this.ingest?.request();
-        }
+        const changingModel = config.embeddings.model !== current.embeddings.model;
+        const saveConfig = async () => {
+          if (changingModel || embeddingSwitch !== undefined) {
+            const confirmation = embeddingSwitchApprovalSchema.safeParse(embeddingSwitch);
+            const indexed = this.getDatabase()
+              .prepare("SELECT count(*) FROM documents WHERE status='indexed'")
+              .pluck()
+              .get();
+            if (
+              !changingModel ||
+              !expectedId ||
+              !confirmation.success ||
+              confirmation.data.from !== current.embeddings.model ||
+              confirmation.data.count !== indexed
+            )
+              throw veraError("CONFLICT");
+          }
+          if (JSON.stringify(config) !== JSON.stringify(current)) {
+            await this.host.files.writeAtomic(join(state.folder, ".vera/workbench.yaml"), stringify(config));
+            this.state = { ...state, config, warnings };
+            if (changingModel) this.ingest?.embeddingModelChanged();
+            else this.ingest?.request();
+            this.emit(config.id, { type: "config.changed", config, warnings });
+          }
+        };
+        if (changingModel && this.ingest) await this.ingest.withStableDocuments(saveConfig);
+        else await saveConfig();
         const settings = this.host.settings.get();
         await this.host.settings.update({
           recentWorkbenches: settings.settings.recentWorkbenches.map((entry) =>

@@ -10,7 +10,8 @@ import {
 import type Database from "better-sqlite3";
 import picomatch from "picomatch";
 import { z } from "zod";
-import { DocumentsRepository } from "../storage/repos/documents.js";
+import { DocumentsRepository, keywordEpoch } from "../storage/repos/documents.js";
+import { rebuildingEmbeddings } from "../storage/repos/embedding-rebuild.js";
 import { validateGlob } from "../tools/discovery.js";
 import { PathGuard } from "../workbench/path-guard.js";
 import { type Chunk, locatorSchema } from "./chunk.js";
@@ -207,7 +208,7 @@ export class DocumentKnowledge {
     raw: SearchArgs,
     signal: AbortSignal,
     excludedRoots: readonly string[] = [],
-  ): Promise<{ results: SearchResult[]; message?: string }> {
+  ): Promise<{ results: SearchResult[]; message?: string; ranking?: "embedding-rebuild" }> {
     const parsed = searchDocsSchema.parse(raw);
     const configured = this.defaults();
     const args = {
@@ -234,14 +235,17 @@ export class DocumentKnowledge {
             message: `No indexed document matched pathGlob "${args.pathGlob}". Globs are relative to the workbench root, so "*" matches only top-level files; use a pattern such as "docs/**", or omit pathGlob to search every document.`,
           }
         : { results: [] };
-    const epoch = this.epoch();
+    const rebuilding = args.mode !== "keyword" && rebuildingEmbeddings(this.db);
+    const currentEpoch =
+      args.mode === "keyword" || rebuilding ? () => keywordEpoch(this.db) : () => this.epoch();
+    const epoch = currentEpoch();
     const lexical =
       args.mode === "semantic"
         ? []
         : new KeywordSearch(this.db).search(args.query, args.pathGlob ? accept : undefined);
     let semantic: { id: number; score: number }[] = [];
-    let fallback = false;
-    if (args.mode !== "keyword") {
+    let fallback = rebuilding;
+    if (args.mode !== "keyword" && !rebuilding) {
       const embeddings = this.embeddings?.();
       if (!embeddings) throw Error("Semantic index unavailable. Index documents or use keyword/grep.");
       const modelId = embeddings.modelId;
@@ -276,7 +280,7 @@ export class DocumentKnowledge {
         ? new KeywordSearch(this.db).search(args.query, args.pathGlob ? accept : undefined)
         : lexical;
     signal.throwIfAborted();
-    if (this.epoch() !== epoch) throw Error("Document index changed during search. Retry.");
+    if (currentEpoch() !== epoch) throw Error("Document index changed during search. Retry.");
     const ranked = fallback
       ? keyword.map((r) => ({ id: r.id, score: -r.bm25 }))
       : args.mode === "semantic"
@@ -284,16 +288,17 @@ export class DocumentKnowledge {
         : args.mode === "keyword"
           ? lexical.map((r) => ({ id: r.id, score: -r.bm25 }))
           : fuseRanks([lexical.map((r) => r.id), semantic.map((r) => r.id)]);
-    const byId = new Map(rows.map((r) => [r.id, r]));
+    const eligible = new Set(rows.map((row) => row.id));
+    const passage = this.db.prepare(`SELECT c.id,d.path,c.text,c.locator_json AS locatorJson FROM chunks c
+      JOIN documents d ON d.id=c.doc_id WHERE c.id=?`);
+    // Keep a coherent lexical result if model-only rechunking commits during path verification.
+    const candidates = ranked
+      .filter(({ id }) => eligible.has(id))
+      .map(({ id, score }) => ({ score, row: passage.get(id) as Row | undefined }));
     const guard = await PathGuard.create(this.root, this.root, "workbench", undefined, excludedRoots);
     const results: SearchResult[] = [];
-    for (const hit of ranked) {
+    for (const { score, row } of candidates) {
       signal.throwIfAborted();
-      if (!byId.has(hit.id)) continue;
-      const row = this.db
-        .prepare(`SELECT c.id,d.path,c.text,c.locator_json AS locatorJson FROM chunks c
-        JOIN documents d ON d.id=c.doc_id WHERE c.id=?`)
-        .get(hit.id) as Row | undefined;
       if (!row) continue;
       try {
         if (!(await lstat((await guard.resolve(row.path)).absolute)).isFile()) continue;
@@ -306,16 +311,18 @@ export class DocumentKnowledge {
         path: row.path,
         locator,
         snippet: snippet(row.text, args.query),
-        score: hit.score,
+        score,
       });
       if (results.length === args.k) break;
     }
-    if (this.epoch() !== epoch) throw Error("Document index changed during search. Retry.");
+    if (currentEpoch() !== epoch) throw Error("Document index changed during search. Retry.");
     return fallback
       ? {
           results,
-          message:
-            "Semantic ranking is unavailable while document indexing is stopped or restarting; these are keyword results.",
+          ...(rebuilding ? { ranking: "embedding-rebuild" as const } : {}),
+          message: rebuilding
+            ? "Embedding vectors are being rebuilt; these are keyword results."
+            : "Semantic ranking is unavailable while document indexing is stopped or restarting; these are keyword results.",
         }
       : { results };
   }

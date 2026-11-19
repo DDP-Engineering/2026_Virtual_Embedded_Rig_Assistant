@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-UX-4a792f34"
+
+title = "Confirm the affected document count before switching"
+
+status = "active"
+
+requirement = """
+When the user saves a different embedding model for a workbench, VERA shall require confirmation showing the current count of indexed documents.
+"""
+
+verification = "Select E5 on a workbench with five indexed documents, then assert that the native confirmation names five and that the saved model is still BGE before confirming."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/workbench-editor.tsx", "05_Software/src/apps/desktop/src/renderer/components/embedding-switch-dialog.tsx", "05_Software/src/apps/desktop/src/renderer/locales"]
+
+linked_tests = ["05_Software/tests/e2e/embedding-models.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-19
+updated = 2026-11-19

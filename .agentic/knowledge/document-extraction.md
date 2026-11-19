@@ -26,7 +26,8 @@ generation supplies fictional board documents for document and retrieval tests.
   current root/path/kind/hash, AbortSignal and ownership callback; returns typed
   status, `pages` (PDF pages or presentation slides) and chunks. It verifies the
   ordinary input, size, identity and hash before using the version1 extraction
-  cache. Without an `office` extractor (tests, tools) office files are parsed
+  cache. To rebuild vectors, the ingester first verifies the source and passes
+  its persisted extraction for chunking and embedding. Without an `office` extractor (tests, tools) office files are parsed
   in-process through a dynamic import of office.ts.
 - `createPdfExtractor(entry, deadlineMs=120000)` and
   `createOfficeExtractor(entry, deadlineMs=120000)` run one disposable Node thread

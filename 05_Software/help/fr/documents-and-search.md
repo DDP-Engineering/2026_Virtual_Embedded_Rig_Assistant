@@ -2,6 +2,8 @@
 
 VERA indexe la documentation d’un banc de travail sur votre ordinateur, afin que l’agent puisse y faire des recherches et citer exactement la page, la section ou la ligne qu’il a utilisée. L’indexation et la recherche sémantique utilisent le modèle local du banc de travail. BGE Small EN v1.5 est le modèle par défaut pour l’anglais. Avec Multilingual E5 Small, le banc peut trouver des passages par leur sens en roumain, en allemand, en français et dans d’autres langues, même si la requête est dans une autre langue. L’indexation fonctionne hors ligne. Lorsque l’agent lit un passage pour vous répondre, ce passage est transmis à votre fournisseur de modèles comme le reste de la conversation ; avec un serveur local comme LM Studio ou Ollama, il reste sur votre ordinateur.
 
+Ouvrez **Modifier le banc** → **Indexation**, choisissez le modèle et enregistrez. VERA affiche le nombre de documents indexés et demande une confirmation. Après confirmation, VERA conserve le texte extrait et recrée les vecteurs du banc en arrière-plan. La recherche par mots-clés reste disponible pendant cette opération.
+
 Le masquage de l’affichage est désactivé par défaut. Lorsqu’il est activé pour un banc, les secrets enregistrés dans les noms de fichiers et le texte du lecteur apparaissent sous la forme [REDACTED]. Les fichiers et résultats restent listés et ouvrent le même fichier, même si deux noms masqués sont identiques. Cela ne change ni l’indexation ni ce que l’agent peut envoyer à un modèle. Les images des pages PDF conservent leurs octets d’origine ; seul le texte extrait est masqué.
 
 ## Ce qui est indexé

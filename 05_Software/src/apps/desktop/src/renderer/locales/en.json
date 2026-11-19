@@ -1,5 +1,6 @@
 {
   "toolActivity": {
+    "embeddingRebuild": "The embedding index is rebuilding. These results match keywords.",
     "planSteps": "Plan steps: {{count}}",
     "planCleared": "Plan cleared",
     "operation": "Tool operation",
@@ -854,6 +855,12 @@
     "changed": "The active workbench changed. Reopen this editor.",
     "saving": "Saving…",
     "embeddingModel": "Embedding model",
+    "embeddingBge": "BGE Small EN v1.5 (English)",
+    "embeddingE5": "Multilingual E5 Small (100 languages)",
+    "embeddingSwitchTitle": "Change embedding model?",
+    "embeddingSwitchCount": "Indexed documents ({{count}})",
+    "embeddingSwitchBody": "VERA will rebuild the vectors in the background. Keyword search stays available.",
+    "embeddingSwitchConfirm": "Change model",
     "chunkSize": "Chunk size (characters)",
     "overlap": "Overlap (characters)",
     "partialSave": "Project settings were saved, but instructions could not be saved. Retry Save to finish; closing keeps the saved settings.",

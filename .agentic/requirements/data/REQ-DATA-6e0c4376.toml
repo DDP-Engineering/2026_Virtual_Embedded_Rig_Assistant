@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-DATA-6e0c4376"
+
+title = "Preserve the workbench index when switching is cancelled"
+
+status = "active"
+
+requirement = """
+When the user cancels the embedding model confirmation, VERA shall preserve the saved setting and all stored vectors.
+"""
+
+verification = "Cancel the native confirmation and compare the saved model and byte-identical vector rows against the snapshot before Save."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/workbench-editor.tsx", "05_Software/src/apps/desktop/src/renderer/components/embedding-switch-dialog.tsx"]
+
+linked_tests = ["05_Software/tests/e2e/embedding-models.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-19
+updated = 2026-11-19

@@ -2,6 +2,8 @@
 
 VERA indexează documentația unui workbench pe calculatorul tău, astfel încât agentul să poată căuta în ea și să citeze exact pagina, secțiunea sau linia pe care a folosit-o. Indexarea și căutarea semantică folosesc modelul local al workbench-ului. BGE Small EN v1.5 este modelul implicit pentru engleză. Un workbench configurat cu Multilingual E5 Small poate găsi pasaje după sens în română, germană, franceză și alte limbi, chiar dacă întrebarea este în altă limbă. Indexarea se face offline. Când agentul citește un pasaj pentru a-ți răspunde, acel pasaj ajunge la furnizorul tău de modele, la fel ca restul conversației; cu un server local precum LM Studio sau Ollama, rămâne pe calculatorul tău.
 
+Pentru a schimba modelul, deschide **Editează workbench-ul** → **Indexare**, alege modelul și salvează. VERA afișează numărul de documente indexate și îți cere confirmarea. După confirmare, păstrează textul extras și reconstruiește vectorii workbench-ului în fundal. În acest timp poți căuta în continuare după cuvinte-cheie.
+
 Mascarea afișării este dezactivată implicit. Când este activată pentru un workbench, secretele salvate din numele fișierelor și textul vizualizatorului apar ca [REDACTED]. Fișierele și rezultatele căutării rămân în listă și deschid același fișier, chiar dacă două nume mascate arată identic. Mascarea afișării nu schimbă indexarea sau ce poate trimite agentul unui model. Imaginile paginilor PDF păstrează octeții originali; se maschează doar textul extras.
 
 ## Ce se indexează
