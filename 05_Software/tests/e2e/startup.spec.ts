@@ -74,7 +74,8 @@ test("a credential file that fails to load still opens the window in the saved d
     const text = readdirSync(logs)
       .map((file) => readFileSync(join(logs, file), "utf8"))
       .join("\n");
-    expect(text).toContain("credentials.load.failed");
+    // A damaged file is reported and startup continues with no stored keys.
+    expect(text).toContain("credentials.file.damaged");
   } finally {
     await app?.close();
     await rm(userData, { recursive: true, force: true });

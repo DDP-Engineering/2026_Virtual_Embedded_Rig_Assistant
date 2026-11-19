@@ -1,23 +1,18 @@
 // REQ-UX-0f1a32c4 REQ-FUNC-37261edc
 import { useQuery } from "@tanstack/react-query";
-import { type BuiltinToolName, builtinToolNames, modelReferenceSchema } from "@vera/shared";
+import { type BuiltinToolName, coreToolNames, modelReferenceSchema } from "@vera/shared";
 import { useId } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../api/index.js";
 import { useSettingsSnapshot } from "../hooks/use-preferences.js";
 import { Pager, usePaged } from "./pager.js";
 
-export function WorkbenchTools({
-  disabled,
-  modelRef,
-  toggle,
-}: {
+type ToolControls = {
   disabled: readonly string[];
-  modelRef: string | null;
   toggle: (name: BuiltinToolName, enabled: boolean) => void;
-}) {
-  const { t } = useTranslation();
-  const id = useId();
+};
+
+export function WorkbenchCoreTools({ modelRef, ...controls }: ToolControls & { modelRef: string | null }) {
   const settings = useSettingsSnapshot();
   const capability = useQuery({
     queryKey: ["providers.image.capability", modelRef, settings.dataUpdatedAt],
@@ -26,6 +21,23 @@ export function WorkbenchTools({
     retry: false,
     networkMode: "always",
   });
+  const names = coreToolNames.filter(
+    (name) => name !== "view_image" || capability.data?.acceptsImages === true,
+  );
+  return <WorkbenchTools {...controls} names={names} />;
+}
+
+export function WorkbenchTools({
+  disabled,
+  toggle,
+  names,
+  locked = false,
+}: ToolControls & {
+  names: readonly BuiltinToolName[];
+  locked?: boolean;
+}) {
+  const { t } = useTranslation();
+  const id = useId();
   const descriptions: Record<BuiltinToolName, string> = {
     terminal_read: t("workbenchTools.terminal_read"),
     read: t("workbenchTools.read"),
@@ -63,11 +75,7 @@ export function WorkbenchTools({
     power_quality: t("workbenchTools.power_quality"),
     lighting_design: t("workbenchTools.lighting_design"),
   };
-  // All built-in tools fit on the first page by default; the Pager lets the user show fewer.
-  const available = builtinToolNames.filter(
-    (name) => name !== "view_image" || capability.data?.acceptsImages === true,
-  );
-  const { rows, pager } = usePaged(available, 50);
+  const { rows, pager } = usePaged(names, 50);
   return (
     <div className="workbench-tools">
       <ul>
@@ -79,6 +87,7 @@ export function WorkbenchTools({
                 data-tool-toggle={name}
                 aria-label={name}
                 aria-describedby={`${id}-${name}`}
+                disabled={locked}
                 checked={!disabled.includes(name)}
                 onChange={(event) => toggle(name, event.currentTarget.checked)}
               />

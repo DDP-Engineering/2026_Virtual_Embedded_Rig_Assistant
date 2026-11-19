@@ -773,6 +773,25 @@
     "cancel": "Annuler",
     "openError": "Impossible d’ouvrir le lien. Réessayez."
   },
+  "pluginCapabilities": {
+    "allowedTools": "Outils autorisés",
+    "allowanceHelp": "Autoriser un outil n’installe ni n’active son plugin. Les autorisations de session restent applicables. Enregistrer ou Annuler s’applique aux outils et à la sélection des plugins ensemble.",
+    "provider": "Plugin requis : {{id}}",
+    "enabled": "Plugin requis activé",
+    "disabled": "Indisponible : plugin non activé",
+    "unloadable": "Indisponible : plugin absent ou impossible à charger",
+    "officialOnly": "Indisponible : plugin officiel requis",
+    "partsRequirements": "Nécessite aussi l’accès web et un fournisseur activé dans la Configuration du plugin sur la page Plugins.",
+    "shared": "Outils partagés électricité / automatisation",
+    "ecosystemDependency": "Nécessite un plugin activé et chargeable de l’écosystème électrique ou d’automatisation.",
+    "activeProviders": "Plugins fournisseurs activés : {{providers}}",
+    "noProvider": "Indisponible : aucun plugin électrique ou d’automatisation activé et chargeable",
+    "notInstalled": "Outils nécessitant des plugins non installés",
+    "programs": "Programmes du plugin",
+    "programHelp": "Ces programmes appartiennent au plugin, y compris l’intégration Git. Les autorisations générales d’exécution et de suivi restent dans Outils ; les règles de risque et autorisations de session s’appliquent toujours.",
+    "executionDisabled": "Exécution des programmes désactivée dans Outils",
+    "executionAllowed": "Nécessite l’autorisation run_program et les règles d’approbation de la session"
+  },
   "workbenchTools": {
     "read": "Lire des fichiers texte ou des plages de lignes choisies.",
     "view_image": "Examiner une image du banc de travail avec un modèle compatible.",
@@ -795,7 +814,7 @@
     "program_stop": "Arrêter un programme exécuté en arrière-plan.",
     "plugin_validate": "Valider un brouillon de plugin et signaler les problèmes de schéma et les avertissements. Les chemins externes exigent le mode Contournement ; les données VERA sont interdites.",
     "plugin_install": "Demander un examen et installer un brouillon comme plugin d’essai. Les chemins externes exigent le mode Contournement ; les données VERA sont interdites.",
-    "apply_candidate": "Écrire un candidat kicad-layout vérifié sur sa carte source lorsque vous demandez de l’appliquer. Nécessite le plugin kicad-layout ; demande une approbation comme une écriture. Les chemins externes exigent le mode Contournement ; les données VERA sont interdites.",
+    "apply_candidate": "Écrire un candidat kicad-layout vérifié sur sa carte source lorsque vous demandez de l’appliquer. Nécessite le plugin officiel kicad-layout ; demande une approbation comme une écriture. Les chemins externes exigent le mode Contournement ; les données VERA sont interdites.",
     "electrical_model": "Lire le modèle de projet électrique, ses lacunes et les résultats des plugins avec leur actualité. Nécessite un plugin d’électricité ou d’automatisme.",
     "electrical_model_change": "Modifier le modèle de projet électrique par des opérations validées ou un import avec une correspondance explicite des ID. Nécessite un plugin d’électricité ou d’automatisme ; demande une approbation comme une écriture. Les chemins externes exigent le mode Contournement ; les données VERA sont interdites.",
     "industrial_catalog": "Lit les catalogues industriels du banc de travail : trouve des articles par référence de commande ou SKU du distributeur, sélectionne selon des exigences fermes avec des valeurs citées et recherche la coordination pour des produits exacts. Nécessite le plugin industrial-catalog. Les chemins externes exigent le mode Contournement ; les données VERA sont interdites.",
@@ -805,7 +824,7 @@
     "power_quality": "Évaluer la compensation du facteur de puissance à un tableau à partir d’un résultat de réseau à jour et d’un fichier de mesures aux unités et conventions déclarées : facteur de déplacement face au facteur de puissance total, besoin en kvar jusqu’à une cible, batterie fixe ou automatique à gradins, surcompensation, vérifications des condensateurs, selfs, contacteurs et protections à partir de données citées et résonance face aux harmoniques mesurées ; enregistre le résultat après approbation comme une écriture et ne commute aucun gradin. Nécessite le plugin power-quality-pfc. Les chemins externes exigent le mode Contournement ; les données VERA sont interdites.",
     "lighting_design": "Concevoir l’éclairage intérieur à partir d’un projet d’éclairage avec des photométries IES ou LDT : une estimation préliminaire par la méthode des flux avec des facteurs d’utilance cités et la composante directe sur la grille de calcul, des diagnostics d’échelle, d’unités, d’orientation et de photométrie, et la vérification de l’éclairement maintenu, de l’uniformité et de l’éblouissement uniquement à partir d’un rapport concordant d’un moteur photométrique comme DIALux evo ; enregistre le résultat après approbation comme une écriture et ne lance aucun moteur. Nécessite le plugin lighting-design. Les chemins externes exigent le mode Contournement ; les données VERA sont interdites.",
     "decode_register": "Décoder une valeur de registre capturée à l’aide d’une définition JSON locale, avec les valeurs exactes des champs et les sources citées. Ne lit aucun appareil. Les chemins externes exigent le mode Contournement ; les données VERA sont interdites.",
-    "parts_search": "Rechercher dans les catalogues des distributeurs activés (Mouser, DigiKey, TME, Farnell, Rutronik) par mot-clé ou référence. Nécessite l’accès web, le plugin parts-search et un distributeur configuré dans la Configuration du plugin sur la page Plugins.",
+    "parts_search": "Rechercher dans les catalogues des distributeurs activés (Mouser, DigiKey, TME, Farnell, Rutronik) par mot-clé ou référence. Nécessite l’accès web, le plugin officiel parts-search et un distributeur configuré dans la Configuration du plugin sur la page Plugins.",
     "help": "Lire les pages d’aide de VERA et l’aide des plugins activés dans le banc de travail, pour répondre aux questions sur VERA. Lecture seule.",
     "run_command": "Exécuter des commandes shell après accord en Demander et Modification auto, directement en Contournement.",
     "terminal_read": "Lit la sortie récente du terminal uniquement avec son autorisation."

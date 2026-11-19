@@ -34,6 +34,16 @@ Un banc de travail peut aussi contenir des paquets de plugins dans `.vera/plugin
 
 L’installation n’active pas un plugin. Ouvrez **Modifier le banc** → **Plugins**, cochez le plugin et sélectionnez **Enregistrer**. Seuls les plugins activés sont proposés à l’agent dans ce banc de travail.
 
+## Outils et capacités des plugins
+
+**Outils** contient les capacités VERA générales, dont `run_program`, `run_command`, `program_output`, `program_stop` et l’accès au terminal. Les programmes des plugins, y compris l’intégration dédiée Git, figurent avec leur plugin sous **Plugins**. Leur exécution nécessite toujours l’autorisation de l’outil général, les règles de risque des commandes et les autorisations de session.
+
+**Outils autorisés** sur une carte contrôle les capacités spécialisées indépendamment de la case du plugin. Les calculs électriques et le catalogue industriel nécessitent le plugin fournisseur indiqué. `apply_candidate` nécessite `kicad-layout` officiel ; `parts_search` nécessite `parts-search` officiel, l’accès web et un fournisseur activé dans la Configuration du plugin sur la page Plugins. L’état distingue un paquet désactivé, absent, non chargeable ou non officiel d’une dépendance activée ; activée ne garantit ni programmes externes prêts, ni identifiants fournisseur, ni autorisations de session. Vérifiez les dépendances des programmes sous **Configurer**.
+
+**Outils partagés électricité / automatisation** est le seul emplacement de `electrical_model` et `electrical_model_change`. Au moins un plugin activé et chargeable de l’un de ces écosystèmes est requis. Les autres écosystèmes ne les activent pas. **Outils nécessitant des plugins non installés** permet d’examiner les dépendances et de garder les restrictions sans le paquet.
+
+Autoriser un outil n’installe ni n’active un plugin. Activer un plugin ne retire aucune restriction explicite. Les deux listes restent des brouillons jusqu’à **Enregistrer** ; **Annuler** abandonne les deux. Les restrictions persistent à la réouverture, et les sessions en lecture seule masquent toujours les outils d’écriture et d’exécution. Utilisez Tab pour atteindre les cases et Espace pour les basculer ; Entrée ou Espace ouvre les groupes.
+
 ## Dépendances
 
 Le bloc **État** d’un plugin installé vérifie deux choses : **Dépendances** et **Configuration**. Il affiche **Prêt** uniquement lorsque les deux sont prêtes.

@@ -1,4 +1,4 @@
-import type { CommandPrefixDisplay, WorkbenchConfig } from "@vera/shared";
+import type { BuiltinToolName, CommandPrefixDisplay, WorkbenchConfig } from "@vera/shared";
 import { type Dispatch, type ReactNode, type SetStateAction, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ModelSelect } from "./model-select.js";
@@ -9,7 +9,7 @@ import { WorkbenchFolders } from "./workbench-folders.js";
 import { WorkbenchInterface } from "./workbench-interface.js";
 import { WorkbenchPlugins } from "./workbench-plugins.js";
 import { WorkbenchPrivacy } from "./workbench-privacy.js";
-import { WorkbenchTools } from "./workbench-tools.js";
+import { WorkbenchCoreTools } from "./workbench-tools.js";
 
 export const configSections = [
   "general",
@@ -105,6 +105,16 @@ export function WorkbenchConfigForm({
   useEffect(() => {
     if (section === "instructions" && !disabled) instructionsInput.current?.focus();
   }, [section, disabled]);
+  const toggleTool = (name: BuiltinToolName, allowed: boolean) =>
+    setConfig((current) => ({
+      ...current,
+      tools: {
+        ...current.tools,
+        disabled: allowed
+          ? current.tools.disabled.filter((entry) => entry !== name)
+          : [...current.tools.disabled.filter((entry) => entry !== name), name],
+      },
+    }));
   return (
     <div className="workbench-editor-layout">
       <nav aria-label={label}>
@@ -243,20 +253,10 @@ export function WorkbenchConfigForm({
             </>
           )}
           {section === "tools" && (
-            <WorkbenchTools
+            <WorkbenchCoreTools
               disabled={config.tools.disabled}
               modelRef={config.agent.model}
-              toggle={(name, enabled) =>
-                setConfig((current) => ({
-                  ...current,
-                  tools: {
-                    ...current.tools,
-                    disabled: enabled
-                      ? current.tools.disabled.filter((entry) => entry !== name)
-                      : [...current.tools.disabled.filter((entry) => entry !== name), name],
-                  },
-                }))
-              }
+              toggle={toggleTool}
             />
           )}
           {section === "embeddings" && (
@@ -349,6 +349,8 @@ export function WorkbenchConfigForm({
               readOnly={readOnly}
               disabled={disabled}
               enabled={config.plugins.enabled}
+              disabledTools={config.tools.disabled}
+              toggleTool={toggleTool}
               toggle={(id, selected) =>
                 setConfig((current) => ({
                   ...current,

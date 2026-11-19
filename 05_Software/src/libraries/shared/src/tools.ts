@@ -38,3 +38,29 @@ export const builtinToolNames = [
 ] as const;
 
 export type BuiltinToolName = (typeof builtinToolNames)[number];
+
+/** Shared configuration dependencies; runtime hosts still enforce loading, trust and permissions. */
+export const electricalModelToolNames = ["electrical_model", "electrical_model_change"] as const;
+export const electricalModelEcosystems: readonly string[] = ["electrical", "automation"];
+export const electricalPluginTools = {
+  industrial_catalog: "industrial-catalog",
+  electrical_network: "electrical-network",
+  protection_coordination: "protection-coordination",
+  motor_drives: "motor-drives",
+  power_quality: "power-quality-pfc",
+  lighting_design: "lighting-design",
+} as const;
+
+export const pluginToolProviders = {
+  ...electricalPluginTools,
+  apply_candidate: "kicad-layout",
+  parts_search: "parts-search",
+} as const;
+export type PluginToolName = keyof typeof pluginToolProviders;
+export const pluginToolNames = Object.keys(pluginToolProviders) as PluginToolName[];
+export const officialPluginToolNames: readonly PluginToolName[] = ["apply_candidate", "parts_search"];
+export const coreToolNames = builtinToolNames.filter(
+  (name) =>
+    !pluginToolNames.includes(name as PluginToolName) &&
+    !(electricalModelToolNames as readonly string[]).includes(name),
+);

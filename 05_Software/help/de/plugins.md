@@ -34,6 +34,16 @@ Ein Workbench kann auch Plugin-Pakete in `.vera/plugins/` mitbringen. Sie werden
 
 Durch die Installation wird ein Plugin nicht aktiviert. Öffnen Sie **Workbench bearbeiten** → **Plugins**, wählen Sie das Plugin aus und wählen Sie **Speichern**. Nur aktivierte Plugins werden dem Agenten in diesem Workbench angeboten.
 
+## Werkzeuge und Plugin-Funktionen
+
+**Werkzeuge** enthält allgemeine VERA-Funktionen, darunter `run_program`, `run_command`, `program_output`, `program_stop` und Terminalzugriff. Plugin-Programme einschließlich der eigenen Git-Integration stehen beim Plugin unter **Plugins**. Die Ausführung benötigt weiterhin die allgemeine Werkzeugfreigabe, Befehlsrisikoregeln und Sitzungsberechtigungen.
+
+**Erlaubte Werkzeuge** auf einer Plugin-Karte steuert spezialisierte Funktionen unabhängig vom Plugin-Kontrollkästchen. Elektroberechnungen und Industriekatalog benötigen das genannte Plugin. `apply_candidate` benötigt das offizielle `kicad-layout`; `parts_search` benötigt das offizielle `parts-search`, Webzugriff und einen aktivierten Anbieter in der Konfiguration des Plugins auf der Seite Plugins. Der Abhängigkeitsstatus unterscheidet deaktivierte, fehlende, nicht ladbare oder inoffizielle Pakete von aktivierten Abhängigkeiten; aktiviert garantiert keine einsatzbereiten externen Programme, Anbieter-Zugangsdaten oder Sitzungsberechtigungen. Prüfen Sie Programmabhängigkeiten unter **Konfigurieren**.
+
+**Gemeinsame Elektro- / Automatisierungswerkzeuge** ist der einzige Ort für `electrical_model` und `electrical_model_change`. Mindestens ein aktiviertes, ladbares Plugin aus einem dieser Ökosysteme ist erforderlich. Andere Ökosysteme aktivieren sie nicht. **Werkzeuge mit nicht installierten benötigten Plugins** zeigt Abhängigkeiten und erhält Einschränkungen auch ohne das Paket.
+
+Eine Werkzeugfreigabe installiert oder aktiviert kein Plugin. Plugin-Aktivierung entfernt keine ausdrückliche Werkzeugeinschränkung. Beide Listen sind Entwürfe bis **Speichern**; **Abbrechen** verwirft beide. Einschränkungen bleiben beim erneuten Öffnen bestehen; schreibgeschützte Sitzungen blenden Schreib- und Ausführungswerkzeuge weiterhin aus. Erreichen Sie Kontrollkästchen mit Tab und schalten Sie mit der Leertaste; Eingabe oder Leertaste öffnet Gruppen.
+
 ## Abhängigkeiten
 
 Der Block **Status** eines installierten Plugins prüft zwei Dinge: **Abhängigkeiten** und **Konfiguration**. Er zeigt **Bereit** nur, wenn beide bereit sind.

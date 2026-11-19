@@ -3,7 +3,7 @@
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import userEvent from "@testing-library/user-event";
-import { builtinToolNames, defaultSettings, workbenchSchema } from "@vera/shared";
+import { coreToolNames, defaultSettings, workbenchSchema } from "@vera/shared";
 import { act, createElement } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
@@ -68,8 +68,10 @@ it.each([false, true])("tool checkboxes retain configured state and honor readOn
     await user.click(container.querySelector('[data-project-section="tools"]') as HTMLElement);
   });
   const toggles = [...container.querySelectorAll<HTMLInputElement>("[data-tool-toggle]")];
-  expect(toggles).toHaveLength(builtinToolNames.length - 1);
-  for (const language of ["en", "ro", "de"]) {
+  expect(toggles.map((input) => input.dataset.toolToggle)).toEqual(
+    coreToolNames.filter((name) => name !== "view_image"),
+  );
+  for (const language of ["en", "ro", "de", "fr"]) {
     await act(async () => {
       await i18n.changeLanguage(language);
     });

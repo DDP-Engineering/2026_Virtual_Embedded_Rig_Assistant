@@ -36,10 +36,10 @@ Sélectionnez **Modifier le banc** dans la vue d’ensemble ou dans le menu de l
 | **Documents et RAG** | Les dossiers et fichiers indexés |
 | **Agent et conversation** | Modèle par défaut, mode d’autorisation par défaut, **Niveau de détail** |
 | **Instructions** | Le texte de `.vera/WORKBENCH.md`, que l’agent lit dans chaque session |
-| **Outils** | Les outils intégrés que l’agent peut utiliser |
+| **Outils** | Outils VERA généraux : fichiers, recherche, documents, planification, compétences/aide, terminal et exécution générale |
 | **Compétences** | Compétences du banc de travail et de l’utilisateur : les activer, les créer et les modifier |
 | **Indexation** | Paramètres d’embedding et valeurs par défaut de la recherche de documents de l’agent |
-| **Plugins** | Les plugins installés que ce banc de travail active |
+| **Plugins** | Plugins activés, autorisations de leurs outils spécialisés et programmes, outils partagés électricité / automatisation |
 
 Gardez des instructions courtes et factuelles : la carte, le microcontrôleur, la chaîne de compilation, les conventions. Seuls les 16 premiers Ko sont transmis à l’agent ; VERA vous avertit lorsque le texte est plus long.
 

@@ -773,6 +773,25 @@
     "cancel": "Abbrechen",
     "openError": "Der Link konnte nicht geöffnet werden. Erneut versuchen."
   },
+  "pluginCapabilities": {
+    "allowedTools": "Erlaubte Werkzeuge",
+    "allowanceHelp": "Ein erlaubtes Werkzeug installiert oder aktiviert kein Plugin. Sitzungsberechtigungen gelten weiterhin. Speichern oder Abbrechen gilt gemeinsam für Werkzeugfreigaben und Plugin-Auswahl.",
+    "provider": "Benötigtes Plugin: {{id}}",
+    "enabled": "Benötigtes Plugin aktiviert",
+    "disabled": "Nicht verfügbar: Plugin nicht aktiviert",
+    "unloadable": "Nicht verfügbar: Plugin fehlt oder kann nicht geladen werden",
+    "officialOnly": "Nicht verfügbar: offizielles Plugin erforderlich",
+    "partsRequirements": "Benötigt außerdem Webzugriff und einen aktivierten Anbieter in der Konfiguration des Plugins auf der Seite Plugins.",
+    "shared": "Gemeinsame Elektro- / Automatisierungswerkzeuge",
+    "ecosystemDependency": "Benötigt ein aktiviertes, ladbares Plugin des Elektro- oder Automatisierungsökosystems.",
+    "activeProviders": "Aktivierte bereitstellende Plugins: {{providers}}",
+    "noProvider": "Nicht verfügbar: kein aktiviertes, ladbares Elektro- oder Automatisierungsplugin",
+    "notInstalled": "Werkzeuge mit nicht installierten benötigten Plugins",
+    "programs": "Plugin-Programme",
+    "programHelp": "Diese Programme gehören zum Plugin, einschließlich der Git-Integration. Allgemeine Ausführungs- und Überwachungsfreigaben bleiben unter Werkzeuge; Risikoregeln und Sitzungsberechtigungen gelten weiterhin.",
+    "executionDisabled": "Programmausführung unter Werkzeuge deaktiviert",
+    "executionAllowed": "Benötigt run_program-Freigabe und die Genehmigungsregeln der Sitzung"
+  },
   "workbenchTools": {
     "read": "Textdateien oder ausgewählte Zeilenbereiche lesen.",
     "view_image": "Ein Workbench-Bild mit einem Modell betrachten, das Bilder akzeptiert.",
@@ -795,7 +814,7 @@
     "program_stop": "Einen Programmlauf im Hintergrund stoppen.",
     "plugin_validate": "Plugin-Entwurf prüfen und Schemafehler und Warnungen melden. Externe Eingabepfade erfordern Bypass; VERA-Anwendungsdaten sind gesperrt.",
     "plugin_install": "Prüfung anfordern und Entwurf als Test-Plugin installieren. Externe Eingabepfade erfordern Bypass; VERA-Anwendungsdaten sind gesperrt.",
-    "apply_candidate": "Schreibt einen geprüften kicad-layout-Kandidaten über seine Quellplatine, wenn Sie das Anwenden verlangen. Erfordert das Plugin kicad-layout; braucht eine Freigabe wie ein Schreibvorgang. Externe Eingabepfade erfordern Bypass; VERA-Anwendungsdaten sind gesperrt.",
+    "apply_candidate": "Schreibt einen geprüften kicad-layout-Kandidaten über seine Quellplatine, wenn Sie das Anwenden verlangen. Erfordert das offizielle Plugin kicad-layout; braucht eine Freigabe wie ein Schreibvorgang. Externe Eingabepfade erfordern Bypass; VERA-Anwendungsdaten sind gesperrt.",
     "electrical_model": "Liest das elektrische Projektmodell, seine Vollständigkeitsprobleme und Plugin-Ergebnisse mit ihrer Aktualität. Erfordert ein Elektro- oder Automatisierungs-Plugin.",
     "electrical_model_change": "Ändert das elektrische Projektmodell durch geprüfte Operationen oder einen Import mit expliziter ID-Zuordnung. Erfordert ein Elektro- oder Automatisierungs-Plugin; braucht eine Freigabe wie ein Schreibvorgang. Externe Eingabepfade erfordern Bypass; VERA-Anwendungsdaten sind gesperrt.",
     "industrial_catalog": "Liest die Industriekataloge des Workbenchs: findet Artikel nach Bestellnummer oder Händler-SKU, wählt nach festen Anforderungen mit belegten Werten aus und sucht die Koordination für genau diese Produkte. Erfordert das Plugin industrial-catalog. Externe Eingabepfade erfordern Bypass; VERA-Anwendungsdaten sind gesperrt.",
@@ -805,7 +824,7 @@
     "power_quality": "Bewertet die Blindleistungskompensation an einer Verteilung aus einem aktuellen Netzergebnis und einer Messdatei mit erklärten Einheiten und Konventionen: Verschiebungsfaktor gegenüber Gesamtleistungsfaktor, kvar-Bedarf bis zu einem Ziel, feste oder automatische Anlage mit Stufen, Überkompensation, Prüfungen von Kondensatoren, Drosseln, Schützen und Schutzgeräten aus belegten Daten sowie Resonanz gegenüber gemessenen Oberschwingungen; speichert das Ergebnis nach einer Freigabe wie ein Schreibvorgang und schaltet keine Stufe. Erfordert das Plugin power-quality-pfc. Externe Eingabepfade erfordern Bypass; VERA-Anwendungsdaten sind gesperrt.",
     "lighting_design": "Plant die Innenbeleuchtung aus einem Beleuchtungsprojekt mit IES- oder LDT-Photometrie: eine vorläufige Schätzung nach dem Wirkungsgradverfahren mit belegten Raumwirkungsgraden und der Direktanteil auf dem Berechnungsraster, Diagnosen für Maßstab, Einheiten, Ausrichtung und Photometrie sowie die Prüfung von Wartungswert, Gleichmäßigkeit und Blendung nur aus einem passenden Bericht eines photometrischen Rechenprogramms wie DIALux evo; speichert das Ergebnis nach einer Freigabe wie ein Schreibvorgang und startet kein Rechenprogramm. Erfordert das Plugin lighting-design. Externe Eingabepfade erfordern Bypass; VERA-Anwendungsdaten sind gesperrt.",
     "decode_register": "Erfasst einen aufgezeichneten Registerwert anhand einer lokalen JSON-Definition mit exakten Feldwerten und zitierbaren Quellen. Liest keine Geräte aus. Externe Eingabepfade erfordern Bypass; VERA-Anwendungsdaten sind gesperrt.",
-    "parts_search": "Durchsucht die aktivierten Lieferantenkataloge (Mouser, DigiKey, TME, Farnell, Rutronik) nach Stichwort oder Teilenummer. Erfordert Web access, das Plugin parts-search und einen in der Konfiguration des Plugins auf der Seite Plugins eingerichteten Lieferanten.",
+    "parts_search": "Durchsucht die aktivierten Lieferantenkataloge (Mouser, DigiKey, TME, Farnell, Rutronik) nach Stichwort oder Teilenummer. Erfordert Webzugriff, das offizielle Plugin parts-search und einen in der Konfiguration des Plugins auf der Seite Plugins eingerichteten Lieferanten.",
     "help": "Liest die Hilfeseiten von VERA und die Hilfe der im Workbench aktivierten Plugins, um Fragen zu VERA zu beantworten. Nur lesend.",
     "run_command": "Shell-Befehle in Fragen und Automatisch bearbeiten nach Freigabe ausführen, in Bypass direkt.",
     "terminal_read": "Liest die letzte Terminalausgabe nur mit Zustimmung für dieses Terminal."

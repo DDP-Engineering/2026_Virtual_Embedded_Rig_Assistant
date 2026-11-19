@@ -34,6 +34,16 @@ Un workbench poate conține și pachete de pluginuri în `.vera/plugins/`. Acest
 
 Instalarea nu activează un plugin. Deschide **Editează workbench-ul** → **Pluginuri**, bifează pluginul și selectează **Salvează**. Doar pluginurile activate îi sunt oferite agentului în acel workbench.
 
+## Instrumente și capabilități ale plugin-urilor
+
+**Instrumente** conține capabilitățile VERA generale, inclusiv `run_program`, `run_command`, `program_output`, `program_stop` și accesul la terminal. Programele plugin-urilor, inclusiv integrarea dedicată Git, apar lângă plugin în **Pluginuri**. Execuția necesită în continuare permisiunea instrumentului general, regulile de risc ale comenzilor și permisiunile sesiunii.
+
+**Instrumente permise** de pe card controlează capabilitățile specializate, separat de bifarea plugin-ului. Calculele electrice și catalogul industrial necesită plugin-ul furnizor indicat. `apply_candidate` necesită `kicad-layout` oficial; `parts_search` necesită `parts-search` oficial, acces web și un furnizor activat în secțiunea Configurare a plugin-ului pe pagina Pluginuri. Starea dependenței distinge un plugin dezactivat, lipsă, imposibil de încărcat sau neoficial de o dependență activată; activarea nu garantează programele externe, datele de autentificare ale furnizorului sau permisiunile sesiunii. Verifică dependențele programelor în **Configurează**.
+
+**Instrumente comune electrice / automatizări** este singurul loc pentru `electrical_model` și `electrical_model_change`. Necesită cel puțin un plugin activat, care poate fi încărcat, din unul dintre aceste ecosisteme. Alte ecosisteme nu le activează. **Instrumente care necesită plugin-uri neinstalate** permite verificarea dependențelor și păstrarea restricțiilor fără pachet.
+
+Permiterea unui instrument nu instalează și nu activează un plugin. Activarea unui plugin nu elimină restricțiile explicite. Ambele liste sunt ciorne până la **Salvează**; **Anulează** le abandonează pe ambele. Restricțiile rămân la redeschidere, iar sesiunile doar pentru citire ascund în continuare instrumentele de scriere și execuție. Folosește Tab pentru bifări și Spațiu pentru comutare; Enter sau Spațiu deschide grupurile.
+
 ## Dependențe
 
 Blocul **Stare** al unui plugin instalat verifică două lucruri: **Dependențe** și **Configurare**. Afișează **Gata** doar când ambele sunt pregătite.
