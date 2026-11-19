@@ -10,9 +10,9 @@ requirement = "When a session with saved draft plan comments is revisited or reo
 
 verification = "Save Unicode multiline drafts in two sessions, navigate between them, close service and real database and reopen both; compare text/anchors/staleness exactly and ensure neither session acquires the other's drafts."
 
-affected_paths = ["05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/libraries/shared/src/plan-review.ts", "05_Software/src/libraries/shared/src/events.ts", "05_Software/src/libraries/shared/src/session-state.ts"]
+affected_paths = ["05_Software/src/libraries/core/src/sessions/plan-review.test.ts", "05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/libraries/shared/src/plan-review.ts", "05_Software/src/libraries/shared/src/events.ts", "05_Software/src/libraries/shared/src/session-state.ts"]
 
-linked_tests = []
+linked_tests = ["05_Software/src/libraries/core/src/sessions/plan-review.test.ts"]
 
 
 spec = ""

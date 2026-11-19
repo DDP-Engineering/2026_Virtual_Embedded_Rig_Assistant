@@ -12,7 +12,7 @@ verification = "Replace a plan by changing/removing commented text and by reorde
 
 affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/session/plan-feedback.tsx", "05_Software/src/apps/desktop/src/renderer/components/session/plan-tab.tsx", "05_Software/src/apps/desktop/src/renderer/hooks/use-session-events.ts", "05_Software/src/libraries/shared/src/session-state.ts", "05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/libraries/core/src/sessions/plan-review.ts"]
 
-linked_tests = []
+linked_tests = ["05_Software/src/libraries/shared/src/plan-review.test.ts", "05_Software/src/libraries/core/src/sessions/plan-review.test.ts"]
 
 
 spec = "specs/REQ-DATA-fa8543aa.md"

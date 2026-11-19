@@ -12,7 +12,7 @@ verification = "Capture transcript rows, current todos and gateway requests whil
 
 affected_paths = ["05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/libraries/shared/src/events.ts", "05_Software/src/libraries/shared/src/session-state.ts", "05_Software/src/apps/desktop/src/renderer/components/session/plan-feedback.tsx", "05_Software/src/apps/desktop/src/renderer/mocks/sessions.ts"]
 
-linked_tests = []
+linked_tests = ["05_Software/src/libraries/core/src/sessions/plan-review.test.ts"]
 
 
 spec = ""

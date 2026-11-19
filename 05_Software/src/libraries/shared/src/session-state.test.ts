@@ -323,6 +323,33 @@ function oracleApply(state: shared.SessionState, input: shared.SessionEvent): sh
     }
     case "todo.updated":
       s.todos = event.items;
+      s.planRevision++;
+      for (const comment of s.planComments) comment.stale = true;
+      break;
+    case "plan.comments.saved":
+    case "plan.review.restored":
+      s.planFeedbackRevision++;
+      for (const comment of event.comments) {
+        const index = s.planComments.findIndex((c) => c.id === comment.id);
+        const previous = s.planComments[index];
+        const view = {
+          ...comment,
+          stale:
+            comment.target.revision !== s.planRevision ||
+            !!(previous?.stale && JSON.stringify(previous.target) === JSON.stringify(comment.target)),
+        };
+        if (index < 0) s.planComments.push(view);
+        else s.planComments[index] = view;
+      }
+      break;
+    case "plan.comment.removed":
+      s.planFeedbackRevision++;
+      s.planComments = s.planComments.filter((c) => c.id !== event.commentId);
+      break;
+    case "plan.review.submitted":
+      s.planFeedbackRevision++;
+      s.planComments = s.planComments.filter((c) => !event.review.comments.some((r) => r.id === c.id));
+      s.planReviews.push(event.review);
       break;
     case "usage.updated": {
       const input = Math.max(0, event.inputTokens - s.usage.inputTokens);
@@ -402,6 +429,49 @@ const mixed: shared.SessionEvent[] = [
   { type: "todo.updated", items: [{ text: "check", status: "in_progress" }] },
   { type: "todo.updated", items: [{ text: "check", status: "done" }] },
   {
+    type: "plan.comments.saved",
+    comments: [
+      {
+        id: "feedback",
+        text: "Check again",
+        target: { revision: 2, stepIndex: 0, stepText: "check", range: null },
+      },
+    ],
+  },
+  {
+    type: "plan.review.submitted",
+    review: {
+      id: "review",
+      expectedPlanRevision: 2,
+      expectedFeedbackRevision: 1,
+      plan: [{ text: "check", status: "done" }],
+      comments: [
+        {
+          id: "feedback",
+          text: "Check again",
+          target: { revision: 2, stepIndex: 0, stepText: "check", range: null },
+        },
+      ],
+      turnId: "review-turn",
+      messageId: "review-message",
+      submittedAt: "2026-11-19T00:00:00.000Z",
+      stopReason: null,
+    },
+  },
+  {
+    type: "plan.review.restored",
+    reviewId: "review",
+    expectedFeedbackRevision: 2,
+    comments: [
+      {
+        id: "retry-feedback",
+        text: "Check again",
+        target: { revision: 2, stepIndex: 0, stepText: "check", range: null },
+      },
+    ],
+  },
+  { type: "plan.comment.removed", commentId: "retry-feedback" },
+  {
     type: "usage.updated",
     inputTokens: 10,
     outputTokens: 2,
@@ -460,6 +530,10 @@ describe("PERF-02 reducer without full-state copies (REQ-FUNC-5e2438d5)", () => 
       "change.recorded": true,
       "artifact.saved": true,
       "todo.updated": true,
+      "plan.comments.saved": true,
+      "plan.comment.removed": true,
+      "plan.review.submitted": true,
+      "plan.review.restored": true,
       "usage.updated": true,
       error: true,
     };

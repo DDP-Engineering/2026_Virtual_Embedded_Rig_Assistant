@@ -7,9 +7,13 @@ import {
   isLiveSessionEvent,
   type MaskingArea,
   type PermissionMode,
+  type PlanComment,
+  type PlanCommentChange,
   type ProgramApproval,
   parseRef,
   permissionModeSchema,
+  planCommentChangeSchema,
+  planCommentDeleteSchema,
   type SessionEvent,
   type SessionItemDetailField,
   type SessionSummary,
@@ -57,6 +61,7 @@ import type { WebProvider } from "../web/provider.js";
 import { WriteQueue } from "../workbench/write-queue.js";
 import { SessionHub, type SessionListener } from "./hub.js";
 import { MaskingContextPolicy, maskMessages, maskModelStream, maskValue } from "./masking.js";
+import { projectPlanFeedback, validatePlanTarget } from "./plan-review.js";
 import { timedGateway } from "./timed-gateway.js";
 
 export interface SessionHost {
@@ -319,7 +324,59 @@ export class SessionService {
   }
   get(id: string) {
     this.row(id);
-    return this.hub.get(id);
+    const result = this.hub.get(id);
+    return {
+      ...result,
+      snapshot: projectPlanFeedback(result.snapshot, (text) => this.maskContent("agent", text)),
+    };
+  }
+  private feedbackWritable(id: string): void {
+    const row = this.row(id);
+    this.writable();
+    if (row.archived) throw veraError("DENIED");
+    if (this.closing || this.deleting.has(id)) throw veraError("BUSY");
+  }
+  /** Saves private feedback metadata; it never creates a chat message or a model request. */
+  savePlanComment(id: string, input: PlanCommentChange): void {
+    this.feedbackWritable(id);
+    const result = planCommentChangeSchema.safeParse(input);
+    if (!result.success) throw veraError("INVALID");
+    const change = result.data;
+    const value = this.host.db.transaction(() => {
+      this.feedbackWritable(id);
+      const state = this.hub.get(id).snapshot;
+      const old =
+        change.action === "create" ? undefined : state.planComments.find((c) => c.id === change.commentId);
+      if (change.action !== "create" && !old) throw veraError("NOT_FOUND");
+      if (state.planFeedbackRevision !== change.expectedFeedbackRevision) throw veraError("CONFLICT");
+      if (change.action !== "edit")
+        validatePlanTarget(state, change.target, (text) => this.maskContent("agent", text));
+      let comment: PlanComment;
+      if (change.action === "create")
+        comment = { id: `pc_${ulid()}`, text: change.text, target: change.target };
+      else {
+        if (!old) throw veraError("NOT_FOUND");
+        const { stale: _, ...record } = old;
+        comment =
+          change.action === "edit" ? { ...record, text: change.text } : { ...record, target: change.target };
+      }
+      return this.hub.record(id, { type: "plan.comments.saved", comments: [comment] });
+    })();
+    this.hub.publish(id, value);
+  }
+  deletePlanComment(id: string, input: { commentId: string; expectedFeedbackRevision: number }): void {
+    this.feedbackWritable(id);
+    const result = planCommentDeleteSchema.safeParse(input);
+    if (!result.success) throw veraError("INVALID");
+    const { commentId, expectedFeedbackRevision } = result.data;
+    const value = this.host.db.transaction(() => {
+      this.feedbackWritable(id);
+      const state = this.hub.get(id).snapshot;
+      if (!state.planComments.some((c) => c.id === commentId)) throw veraError("NOT_FOUND");
+      if (state.planFeedbackRevision !== expectedFeedbackRevision) throw veraError("CONFLICT");
+      return this.hub.record(id, { type: "plan.comment.removed", commentId });
+    })();
+    this.hub.publish(id, value);
   }
   /** The full stored text of one item's field; NOT_FOUND for a session of another workbench. */
   itemDetail(id: string, itemId: string, field: SessionItemDetailField): string {

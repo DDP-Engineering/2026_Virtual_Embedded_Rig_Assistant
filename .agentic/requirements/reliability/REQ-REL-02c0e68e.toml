@@ -12,7 +12,7 @@ verification = "Change the plan or a draft after the renderer captures a request
 
 affected_paths = ["05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/libraries/core/src/sessions/plan-review.ts", "05_Software/src/libraries/shared/src/plan-review.ts", "05_Software/src/libraries/shared/src/ipc.ts", "05_Software/src/apps/desktop/src/main/plan-review.ts"]
 
-linked_tests = []
+linked_tests = ["05_Software/src/libraries/core/src/sessions/plan-review.test.ts"]
 
 
 spec = "specs/REQ-DATA-fa8543aa.md"

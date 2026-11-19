@@ -20,6 +20,7 @@ export * from "./lab-resources.js";
 export * from "./lighting-project.js";
 export * from "./ordering.js";
 export * from "./parts-search.js";
+export * from "./plan-review.js";
 export * from "./plugin-catalog.js";
 export * from "./plugin-credentials.js";
 export * from "./plugin-settings.js";
