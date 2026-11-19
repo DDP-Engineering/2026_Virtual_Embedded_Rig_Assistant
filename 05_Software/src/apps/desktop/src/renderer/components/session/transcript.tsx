@@ -24,6 +24,7 @@ import { ExternalSourceScope } from "./external-source-link.js";
 import { Markdown } from "./markdown.js";
 import { PromptUsage } from "./prompt-usage.js";
 import { ToolDetails } from "./tool-details.js";
+import { TranscriptImages } from "./transcript-images.js";
 import { contentOffset, scrollTarget } from "./transcript-navigation.js";
 import { type NavigatorMessage, TranscriptNavigator } from "./transcript-navigator.js";
 import { searchMatch, streamingBlocks, type ToolItem, transcriptRows } from "./transcript-projection.js";
@@ -50,6 +51,7 @@ export function Transcript({
   updates,
   retry,
   search,
+  workbenchId,
   sessionId,
   disabled = false,
   detail = "normal",
@@ -60,6 +62,7 @@ export function Transcript({
   updates: Record<string, string>;
   retry: () => void;
   search: string;
+  workbenchId?: string | undefined;
   sessionId?: string | undefined;
   disabled?: boolean;
 }) {
@@ -273,6 +276,7 @@ export function Transcript({
                   }
                   sessionId={sessionId}
                   anchors={anchors}
+                  workbenchId={workbenchId}
                   detail={detail}
                   bookmarked={bookmarks.has(item.id)}
                   bookmarkDisabled={disabled || !sessionId || bookmarks.busy(item.id)}
@@ -309,6 +313,7 @@ const MessageRow = memo(function MessageRow({
   highlighted,
   sessionId,
   anchors,
+  workbenchId,
   detail,
   bookmarked,
   bookmarkDisabled,
@@ -319,6 +324,7 @@ const MessageRow = memo(function MessageRow({
   highlighted: boolean;
   sessionId: string | undefined;
   anchors: Map<string, HTMLElement>;
+  workbenchId: string | undefined;
   detail: ChatDetail;
   bookmarked: boolean;
   bookmarkDisabled: boolean;
@@ -374,6 +380,9 @@ const MessageRow = memo(function MessageRow({
             </span>
           )}
           <Markdown text={item.text} />
+          {!!item.images?.length && workbenchId && (
+            <TranscriptImages key={workbenchId} workbenchId={workbenchId} paths={item.images} />
+          )}
           {/* Per-question statistics only at the Verbose detail level. */}
           {detail === "verbose" && item.usage && <PromptUsage usage={item.usage} />}
         </>

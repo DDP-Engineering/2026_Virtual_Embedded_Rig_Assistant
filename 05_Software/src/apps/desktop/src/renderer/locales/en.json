@@ -241,6 +241,8 @@
     "attachImage": "Attach image",
     "imagesTextOnly": "This model only accepts text. It will receive the image file paths.",
     "imagesLimit": "You can attach up to {{count}} images.",
+    "openImage": "Open image {{path}}",
+    "imageUnavailable": "Image unavailable",
     "removeAttachment": "Remove attachment: {{path}}",
     "promptInput": "Input",
     "promptOutput": "Output",

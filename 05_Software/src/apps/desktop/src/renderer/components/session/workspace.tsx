@@ -202,6 +202,7 @@ export function SessionWorkspace({
       )}
       {view && (
         <Transcript
+          workbenchId={workbenchId}
           detail={detail}
           state={view.state}
           reasoning={view.reasoning}

@@ -123,6 +123,10 @@ test("browser composer bounds the draft, shows removable thumbnails and sends im
       }),
     )
     .toEqual(paths);
+  const sent = page.locator('[data-message-kind="user"] .transcript-image-preview').first();
+  await decoded(sent);
+  await sent.click();
+  await decoded(page.locator("[data-image-viewer]"));
 });
 
 test("native composer sends pasted and Files images, and refuses spoofed local files", async () => {

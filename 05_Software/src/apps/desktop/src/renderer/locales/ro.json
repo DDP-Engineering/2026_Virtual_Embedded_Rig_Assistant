@@ -241,6 +241,8 @@
     "attachImage": "Atașează imagine",
     "imagesTextOnly": "Acest model acceptă doar text. Va primi căile fișierelor de imagine.",
     "imagesLimit": "Poți atașa cel mult {{count}} imagini.",
+    "openImage": "Deschide imaginea {{path}}",
+    "imageUnavailable": "Imagine indisponibilă",
     "removeAttachment": "Elimină atașamentul: {{path}}",
     "promptInput": "Intrare",
     "promptOutput": "Ieșire",

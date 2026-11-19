@@ -241,6 +241,8 @@
     "attachImage": "Joindre une image",
     "imagesTextOnly": "Ce modèle accepte uniquement du texte. Il recevra les chemins des images.",
     "imagesLimit": "Vous pouvez joindre jusqu’à {{count}} images.",
+    "openImage": "Ouvrir l’image {{path}}",
+    "imageUnavailable": "Image indisponible",
     "removeAttachment": "Retirer la pièce jointe : {{path}}",
     "promptInput": "Entrée",
     "promptOutput": "Sortie",

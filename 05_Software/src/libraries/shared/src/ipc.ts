@@ -3,7 +3,7 @@ import { artifactContentSchema, artifactIdSchema, artifactSummarySchema } from "
 import { changeDetailSchema, changeIdSchema, changeSummarySchema } from "./changes.js";
 import { chatgptLoginSchema, chatgptStatusSchema } from "./chatgpt.js";
 import { commandPrefixDisplaySchema, commandPrefixIdsSchema, commandPrefixSchema } from "./command-prefix.js";
-import { composerImageSchema, composerImageSourceSchema } from "./composer-images.js";
+import { composerImageSchema, composerImageSourceSchema, rasterFormatSchema } from "./composer-images.js";
 import {
   docsByteReadSchema,
   docsByteWindowSchema,
@@ -445,6 +445,20 @@ export const channels = {
     "docs.stat",
     docsScopeSchema.extend({ path: z.string().min(1).max(262144) }),
     docsScopeSchema.extend({ properties: docsEntryPropertiesSchema }),
+  ),
+  "docs.imageThumbnail": defineChannel(
+    "docs.imageThumbnail",
+    docsScopeSchema.extend({ path: z.string().min(1).max(262144) }),
+    docsScopeSchema.extend({
+      path: z.string().min(1).max(262144),
+      displayPath: z.string(),
+      preview: z
+        .strictObject({
+          format: rasterFormatSchema,
+          thumbnail: composerImageSchema.shape.thumbnail,
+        })
+        .optional(),
+    }),
   ),
   "docs.readBytes": defineChannel(
     "docs.readBytes",

@@ -33,6 +33,7 @@ import {
   providerSlug,
   type Request,
   type Response,
+  rasterSignature,
   type SessionSummary,
   settingsChangedEvent,
   settingsPatchSchema,
@@ -79,6 +80,15 @@ export function createMockApi(
   let authSequence = 0;
   let indexerState: "running" | "stopped" = "running";
   // The mock workbench's files for the Docs tree: its documents plus a few files that are not.
+  const uploads = new Map<string, { data: string; thumbnail: string }>();
+  const scopeImage =
+    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aFqkAAAAASUVORK5CYII=";
+  const imageKey = (workbenchId: string, path: string) => `${workbenchId}/${path}`;
+  const storedImage = (workbenchId: string, path: string) =>
+    uploads.get(imageKey(workbenchId, path)) ??
+    (path === "manuals/scope-capture.png" && treeFiles().includes(path)
+      ? { data: scopeImage, thumbnail: scopeImage }
+      : undefined);
   const treeFiles = () =>
     scenario === "empty"
       ? []
@@ -556,16 +566,14 @@ export function createMockApi(
           value = {
             path: source.path,
             name: "scope-capture.png",
-            thumbnail:
-              "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aFqkAAAAASUVORK5CYII=",
+            thumbnail: scopeImage,
           };
         } else {
           const name = source.name || "image";
-          value = {
-            name,
-            path: `.vera/attachments/${args.sessionId}/${crypto.randomUUID()}-${name}`,
-            thumbnail: await mockImageThumbnail(name, source.data),
-          };
+          const path = `.vera/attachments/${args.sessionId}/${crypto.randomUUID()}-${name}`;
+          const thumbnail = await mockImageThumbnail(name, source.data);
+          uploads.set(imageKey(args.workbenchId, path), { data: source.data, thumbnail });
+          value = { name, path, thumbnail };
         }
       } else {
         const modelRef = session.modelRef ?? snapshot.config.agent.model ?? settings.defaultModel;
@@ -1097,11 +1105,28 @@ What this plugin does.
         };
         break;
       }
+      case "docs.imageThumbnail": {
+        const { workbenchId, path } = channels["docs.imageThumbnail"].request.parse(input.data);
+        if (workbenchId !== current().snapshot.config.id) throw veraError("CONFLICT");
+        const image = storedImage(workbenchId, path);
+        const format =
+          image && rasterSignature(Uint8Array.from(atob(image.data), (char) => char.charCodeAt(0)));
+        value = {
+          workbenchId,
+          path,
+          displayPath: path,
+          ...(image && format && { preview: { format, thumbnail: image.thumbnail } }),
+        };
+        break;
+      }
       case "docs.readBytes": {
         const { workbenchId, path, offset, length } = channels["docs.readBytes"].request.parse(input.data);
         if (workbenchId !== current().snapshot.config.id) throw veraError("CONFLICT");
-        if (!treeFiles().includes(path)) throw veraError("NOT_FOUND");
-        const bytes = mockTextBytes(path);
+        const image = storedImage(workbenchId, path);
+        if (!image && !treeFiles().includes(path)) throw veraError("NOT_FOUND");
+        const bytes = image
+          ? Uint8Array.from(atob(image.data), (char) => char.charCodeAt(0))
+          : mockTextBytes(path);
         const part = bytes.slice(offset, offset + length);
         let binary = "";
         for (const byte of part) binary += String.fromCharCode(byte);
@@ -1112,8 +1137,9 @@ What this plugin does.
         const { workbenchId, path } = channels["docs.stat"].request.parse(input.data);
         if (workbenchId !== current().snapshot.config.id) throw veraError("CONFLICT");
         const modified = "2026-10-13T00:00:00.000Z";
-        if (treeFiles().includes(path)) {
-          const size = mockTextBytes(path).length;
+        const image = storedImage(workbenchId, path);
+        if (image || treeFiles().includes(path)) {
+          const size = image ? atob(image.data).length : mockTextBytes(path).length;
           const extension = /\.[^/.]+$/.exec(path)?.[0].toLowerCase() ?? "";
           const doc = mockDocuments.find((doc) => doc.path === path);
           const rendered =

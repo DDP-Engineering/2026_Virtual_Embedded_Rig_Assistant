@@ -241,6 +241,8 @@
     "attachImage": "Bild anhängen",
     "imagesTextOnly": "Dieses Modell akzeptiert nur Text. Es erhält die Dateipfade der Bilder.",
     "imagesLimit": "Du kannst bis zu {{count}} Bilder anhängen.",
+    "openImage": "Bild {{path}} öffnen",
+    "imageUnavailable": "Bild nicht verfügbar",
     "removeAttachment": "Anhang entfernen: {{path}}",
     "promptInput": "Eingabe",
     "promptOutput": "Ausgabe",

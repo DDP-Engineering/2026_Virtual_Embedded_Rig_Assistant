@@ -73,7 +73,11 @@ async function storeOriginal(guard: PathGuard, sessionId: string, name: string, 
   }
 }
 
-async function preview(bytes: Buffer, format: NonNullable<ReturnType<typeof composerRasterFormat>>) {
+/** Decode a validated raster to a bounded, metadata-free PNG thumbnail. */
+export async function rasterThumbnail(
+  bytes: Buffer,
+  format: NonNullable<ReturnType<typeof composerRasterFormat>>,
+) {
   const { default: sharp } = await import("sharp");
   try {
     const image = sharp(bytes, { failOn: "warning" });
@@ -123,7 +127,7 @@ export async function attachComposerImage(
     const path = posix.normalize(source.path.replaceAll("\\", "/"));
     const format = composerRasterFormat(path, bytes, true);
     if (!format) throw veraError("IMAGE_FORMAT");
-    const thumbnail = await preview(bytes, format);
+    const thumbnail = await rasterThumbnail(bytes, format);
     authorize();
     return { path, name: posix.basename(path), thumbnail };
   }
@@ -132,7 +136,7 @@ export async function attachComposerImage(
   if (bytes.length > MAX_MESSAGE_IMAGE_BYTES) throw veraError("IMAGE_TOO_LARGE");
   const format = composerRasterFormat(source.name, bytes, false);
   if (!format) throw veraError("IMAGE_FORMAT");
-  const thumbnail = await preview(bytes, format);
+  const thumbnail = await rasterThumbnail(bytes, format);
   const extension = format === "jpeg" ? "jpg" : format;
   const stem = basename(source.name)
     .replace(/\.[^.]+$/, "")

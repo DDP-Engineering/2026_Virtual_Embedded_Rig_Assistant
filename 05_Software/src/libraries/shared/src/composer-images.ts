@@ -6,7 +6,8 @@ export const COMPOSER_IMAGE_ACCEPT = "image/png,image/jpeg,image/gif,image/webp,
 export const WORKBENCH_IMAGE_DRAG = "application/x-vera-workbench-image";
 
 const formats = ["png", "jpeg", "gif", "webp"] as const;
-type RasterFormat = (typeof formats)[number];
+export const rasterFormatSchema = z.enum(formats);
+export type RasterFormat = z.infer<typeof rasterFormatSchema>;
 
 export function rasterExtension(name: string): RasterFormat | undefined {
   const extension = /\.([^./\\]+)$/.exec(name)?.[1]?.toLowerCase();

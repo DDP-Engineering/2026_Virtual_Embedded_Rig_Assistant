@@ -221,6 +221,7 @@ export const emitAppEvent = createEventEmitter(
       envelope,
       (text) => (envelope.topic === "session" ? sessionContent(text) : credentials.scrub(text)),
       (text) => credentials.scrub(text),
+      sessionImageIdentity,
     );
   },
 );
@@ -271,6 +272,9 @@ const workbench = new WorkbenchService(
   indexer.processor,
 );
 const maskingFor = createMaskingResolver(() => settings.get().settings);
+function sessionImageIdentity(path: string): string {
+  return display.sessionImagePath(workbench.getSnapshot().config.id, path);
+}
 function sessionContent(text: string): string {
   return maskingFor(workbench.getSnapshot().config, "agent") ? credentials.scrub(text) : text;
 }
@@ -870,6 +874,7 @@ ipcMain.handle(
       "docs.readBytes": ({ workbenchId, path, offset, length, revision }) =>
         display.readBytes(workbenchId, path, offset, length, revision),
       "docs.stat": ({ workbenchId, path }) => display.stat(workbenchId, path),
+      "docs.imageThumbnail": ({ workbenchId, path }) => display.imageThumbnail(workbenchId, path),
       // The Docs tree's OS actions go through the tree's confinement first (TASK-eae3a69e).
       "docs.openers": () => ({ apps: [...openers().keys()] }),
       "docs.openWith": ({ workbenchId, path, app }) =>
@@ -1095,7 +1100,7 @@ ipcMain.handle(
           const value = s.get(sessionId);
           return {
             ...value,
-            snapshot: rendererSessionSnapshot(value.snapshot, sessionContent),
+            snapshot: rendererSessionSnapshot(value.snapshot, sessionContent, sessionImageIdentity),
           };
         }),
       "session.item.detail": ({ sessionId, itemId, field }) =>
@@ -1132,7 +1137,13 @@ ipcMain.handle(
         sessions.run(async (s) => {
           if (credentials.containsSecret(text)) throw { code: "INVALID", messageKey: "errors.INVALID" };
           const sent = images?.length
-            ? await s.sendWithImages(sessionId, text, images)
+            ? await s.sendWithImages(
+                sessionId,
+                text,
+                images.map((path) =>
+                  display.resolveSessionImagePath(workbench.getSnapshot().config.id, path),
+                ),
+              )
             : s.send(sessionId, text);
           embeddingWarmup.request(workbench.getSnapshot().config.id);
           return sent;

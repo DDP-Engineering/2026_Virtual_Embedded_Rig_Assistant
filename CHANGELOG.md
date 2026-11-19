@@ -8,6 +8,7 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ### Added
 
+- Sent chat images open from transcript thumbnails, and deleted images show their saved paths.
 - Paste, drop or attach images in chat, with removable previews and a warning for text-only models.
 - Chat can send workbench images to supported models and keeps their paths in history and exports.
 - Settings > Providers can save image input capability for each local or compatible model.

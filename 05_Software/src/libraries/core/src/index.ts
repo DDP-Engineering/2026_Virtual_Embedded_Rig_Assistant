@@ -67,6 +67,7 @@ export * from "./plugins/runner.js";
 export * from "./plugins/shell.js";
 export * from "./plugins/store.js";
 export * from "./ports.js";
+export { rasterThumbnail } from "./sessions/composer-images.js";
 export * from "./sessions/export.js";
 export * from "./sessions/hub.js";
 export * from "./sessions/service.js";

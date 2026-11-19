@@ -165,6 +165,7 @@ it("infers registry types and returns validated metadata", async () => {
     | "docs.read"
     | "docs.readBytes"
     | "docs.stat"
+    | "docs.imageThumbnail"
     | "docs.openers"
     | "docs.openWith"
     | "docs.reveal"

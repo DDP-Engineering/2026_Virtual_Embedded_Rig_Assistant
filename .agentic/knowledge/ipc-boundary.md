@@ -133,6 +133,8 @@ AppEvents use shared updates.ts; [updates](updates.md) owns their lifecycle/capa
 - app.settings.get({}) and app.settings.update(patch) return {settings}.
   [Application data](app-data.md) owns schema defaults, validation and persistence semantics.
 
+`docs.imageThumbnail` returns a Display-safe label and public path for the current workbench, plus an optional bounded PNG and detected raster format. Main reads confined byte windows at one file revision, caps the source at 20 MiB, and applies the active Display byte policy before decoding. A persisted lexical alias keeps its spelling in the label and uses the normalized workbench path for reading and viewer activation. Desktop snapshots and live events project image paths as workbench-scoped Display identities. A desktop resend resolves those identities back to the underlying paths used by durable rows, exports and provider projections.
+
 ## Invariants
 
 - Only the current live own WebContents main frame at the configured exact renderer URL dispatches.

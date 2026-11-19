@@ -55,6 +55,10 @@ budgets and abort. The browser mock seeds six selectable states and an edit appr
   import the original through main. The Files menu and drag attach an existing path. The composer displays up to
   eight removable Blob thumbnail chips. Image sends wait for the pending capability lookup so the composer can warn when the effective model receives only paths. Image-only drafts
   are sendable and use the same acknowledgment and retry behavior. See `composer-images.spec.ts`.
+- User-message image paths appear as bounded thumbnails in the visible transcript. Thumbnail buttons open the
+  file viewer in Rendered mode and the standard keyboard return restores the opener. A missing or unreadable
+  image shows its persisted workbench path under Display masking. Visible attachments refresh when Chat is
+  selected again or the window regains focus. Rows release thumbnail resources when they leave the viewport. See `transcript-images.spec.ts`.
 - ApprovalCard renders tool/path/bytes and coloured +/- patch lines inline beside the tool. Approve, Deny and Approve-and-switch invoke the exact stored digest. Focused A/D has no modifiers/repeat/composition; pending, decided and read-only cards lock actions and errors remain visible.
 - Program approval cards display canonical outside directory arguments under the localized Outside directories label without hashes; file hashes stay in their own list. `components/session/approval-card.test.ts` covers the metadata list.
 - Composer exposes the confirmed session mode during active turns; text/Enter/Send remain available while running, alongside Stop; approval waits lock text/sending and active turns lock model selection. Approval events invalidate sidebar summaries; new sessions inherit workbench defaults.
@@ -133,6 +137,7 @@ budgets and abort. The browser mock seeds six selectable states and an edit appr
 | Stream/resume/Stop | use-session-events, workspace | workspace.test.ts; chat-ui.spec.ts |
 | Markdown/citations/tools | markdown, transcript, disclosure; shared refs.ts | markdown.test.ts; workspace.test.ts; tests/e2e/citations.spec.ts |
 | Composer/models/paths | composer | workspace.test.ts |
+| Sent image previews, viewer activation and missing paths | transcript-images; main/display-documents | transcript-images.spec.ts; display-documents.test.ts |
 | Permission picker/approval cards/keys | composer,approval-card,transcript,use-session-events | workspace.test.ts; tests/e2e/approvals.spec.ts; run_program cards (risk badge, command, notes, file hashes, typed word): tests/e2e/program-approvals.spec.ts |
 | Plan task list | plan-tab;mock sessions | plan-tab.test.ts;tests/e2e/plan.spec.ts |
 | Usage/Context | usage-meter, context-tab | usage-meter.test.ts; workspace.test.ts |
@@ -140,6 +145,8 @@ budgets and abort. The browser mock seeds six selectable states and an edit appr
 | Progressive transcript mount (newest first, idle chunks) | transcript | transcript-progressive.test.ts; `npm run perf:sessions` (`firstScreenMs`) |
 
 ## Key behaviors
+
+- REQ-UX-9c6aa149, REQ-UX-482d2ced, REQ-UX-16e08c34 govern durable transcript thumbnails, viewer activation and unavailable path labels.
 
 - REQ-UX-52f83eb7 — contextual global shortcuts and accessible search feedback.
 - REQ-UX-4bea0001 — keyboard navigation and session mutations.

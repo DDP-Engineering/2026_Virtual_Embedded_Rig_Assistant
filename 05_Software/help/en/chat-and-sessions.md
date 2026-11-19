@@ -18,6 +18,8 @@ Next to the message box you choose the **Model**, the **Reasoning level** and th
 
 Paste or drop an image into the message box, or choose **Attach image** to pick a file. In Files, drag an image into the message box or choose **Attach image** from its menu. Remove an image with the button on its thumbnail. VERA keeps imported originals in the workbench. Images attached from Files stay at their existing paths.
 
+Select a thumbnail in a sent message to open the image in the file viewer. If the image is missing, the message shows its saved workbench path.
+
 A message can reference up to eight workbench images in PNG, JPEG, GIF or WebP, with a limit of 20 MiB per file. VERA scales the copy sent to an image-capable model to a maximum of 2048 pixels on its longest side and keeps the original file. A text-only model receives the paths. Compaction keeps older image paths as text notes. Session exports include those paths.
 
 See [Providers and models](providers.md) for how VERA determines image support for your chosen model.

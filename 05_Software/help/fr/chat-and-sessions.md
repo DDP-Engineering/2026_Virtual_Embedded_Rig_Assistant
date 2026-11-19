@@ -18,6 +18,8 @@ Saisissez votre texte dans la zone de message (**Interrogez VERA sur votre proje
 
 Collez ou déposez une image dans le champ de message, ou choisissez **Joindre une image** pour sélectionner un fichier. Dans Fichiers, faites glisser l’image vers le champ de message ou choisissez **Joindre une image** dans son menu. Retirez une image avec le bouton de sa vignette. VERA conserve les originaux importés dans le banc de travail. Les images jointes depuis Fichiers gardent leurs chemins.
 
+Sélectionnez la vignette d’un message envoyé pour ouvrir l’image dans la visionneuse de fichiers. Si l’image est introuvable, le message affiche son chemin enregistré dans le banc de travail.
+
 Un message peut référencer jusqu’à huit images PNG, JPEG, GIF ou WebP du banc de travail, dans la limite de 20 Mio par fichier. VERA réduit la copie envoyée au modèle à 2048 pixels au maximum sur le côté le plus long et conserve le fichier original. Un modèle qui accepte uniquement du texte reçoit les chemins. La synthèse des anciens messages conserve les chemins des images sous forme de notes textuelles. Les exports de session incluent ces chemins.
 
 Consultez [Fournisseurs et modèles](providers.md) pour savoir comment VERA détermine si le modèle choisi accepte les images.
