@@ -246,6 +246,19 @@
       "interrupted": "Întreruptă"
     }
   },
+  "chatActions": {
+    "copyResponse": "Copiază răspunsul",
+    "copyCode": "Copiază blocul de cod",
+    "run": "Execută în terminal",
+    "runShell": "Execută în terminal ({{shell}})",
+    "destination": "Terminal de destinație",
+    "newCleanTerminal": "Terminal nou curat (fără profil shell)",
+    "runNewTerminal": "Execută într-un terminal nou curat",
+    "promptNotReady": "Terminalul nu are un prompt gol verificat. Folosește un terminal nou curat.",
+    "clipboardFailed": "Nu s-a putut copia în clipboard. Încearcă din nou.",
+    "shellMismatch": "Shell-ul terminalului nu corespunde acestui bloc de comenzi.",
+    "shellUnavailable": "Nu este instalat un shell {{shell}} compatibil."
+  },
   "chat": {
     "bookmark": "Marchează",
     "removeBookmark": "Elimină marcajul",

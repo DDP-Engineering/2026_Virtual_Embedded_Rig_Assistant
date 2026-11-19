@@ -8,6 +8,7 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ### Added
 
+- Chat replies and code blocks offer exact copying; explicit Bash and PowerShell blocks run in compatible terminals.
 - Desktop links delegated sessions, shows their outcomes and lets users stop a running child.
 - Agents can launch, monitor, stop and collect results from delegated inspection sessions.
 - Core sessions can launch inspection-only children with durable ownership and bounded workbench concurrency.
@@ -102,6 +103,9 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ### Fixed
 
+- Chat Run skips terminals after startup timeout until their verified prompt arrives without intervening input.
+- Chat Run skips ineligible terminals and disables invalid command blocks before creating a terminal.
+- Chat Run requires a verified empty shell prompt, preserves user input, and restores focus when selection is cancelled.
 - Open document tabs no longer reload when only theme, language, text size, shortcuts or session order change.
 - Opening a run log larger than 8 MiB shows its last 8 MiB instead of loading the whole file into memory.
 - Saving a provider API key masks it in open document tabs at once.

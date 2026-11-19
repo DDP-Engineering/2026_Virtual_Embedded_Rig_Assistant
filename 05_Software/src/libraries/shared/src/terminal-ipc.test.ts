@@ -2,6 +2,47 @@ import { describe, expect, it } from "vitest";
 import { channels } from "./ipc.js";
 
 describe("user terminal IPC", () => {
+  it("bounds clipboard text and accepts only explicit shell blocks on owned terminal targets", () => {
+    expect(
+      channels["app.clipboard.write"].request.parse({ text: "Știință 🧪\r\n```bash\nls\n```" }).text,
+    ).toContain("🧪");
+    for (const input of [{ text: 3 }, { text: "x".repeat(10_000_001) }, { text: "x", read: true }])
+      expect(channels["app.clipboard.write"].request.safeParse(input).success).toBe(false);
+    const request = {
+      workbenchId: "wb_01JB8Z6Q4M7N2K5R9T3V8X1Y0C",
+      id: "00000000-0000-4000-8000-000000000001",
+      shell: "powershell",
+      text: "Get-Content README.MD -TotalCount 10",
+    };
+    expect(channels["terminal.execute"].request.safeParse(request).success).toBe(true);
+    for (const invalid of [
+      { ...request, shell: "typescript" },
+      { ...request, text: "" },
+      { ...request, text: "x".repeat(16385) },
+      { ...request, text: "\u001b[200~" },
+      { ...request, workbenchId: "../other" },
+      { ...request, cwd: "/outside" },
+    ])
+      expect(channels["terminal.execute"].request.safeParse(invalid).success).toBe(false);
+  });
+  it("requires host-reported dispatch eligibility on terminal summaries and snapshots", () => {
+    const summary = {
+      id: "00000000-0000-4000-8000-000000000001",
+      number: 1,
+      shell: "bash",
+      shared: false,
+      running: true,
+    };
+    for (const dispatchEligible of [true, false]) {
+      const terminal = { ...summary, dispatchEligible };
+      expect(channels["terminal.list"].response.safeParse([terminal]).success).toBe(true);
+      expect(
+        channels["terminal.output"].response.safeParse({ ...terminal, output: "$ ", start: 0 }).success,
+      ).toBe(true);
+    }
+    for (const terminal of [summary, { ...summary, dispatchEligible: "yes" }])
+      expect(channels["terminal.list"].response.safeParse([terminal]).success).toBe(false);
+  });
   it("defines strict workbench-owned user commands and bounded PTY dimensions", () => {
     const all = channels as Record<
       string,

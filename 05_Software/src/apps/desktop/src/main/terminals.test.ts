@@ -72,6 +72,40 @@ function fixture() {
 }
 
 describe("user terminal host", () => {
+  it("fails closed on shell mismatch, exited terminals, invalid text and foreign workbench destinations", async () => {
+    const f = fixture();
+    const terminal = await f.service.create("bench-a", 80, 24);
+    await expect(
+      f.service.execute("bench-a", terminal.id, "powershell", "Get-Content README.MD"),
+    ).rejects.toBeDefined();
+    for (const text of ["", "x".repeat(16385), "echo x\u001b[200~", "echo x\0"])
+      await expect(f.service.execute("bench-a", terminal.id, "bash", text)).rejects.toBeDefined();
+    await expect(f.service.execute("bench-b", terminal.id, "bash", "pwd")).rejects.toBeDefined();
+    f.processes[0]!.finish();
+    await expect(f.service.execute("bench-a", terminal.id, "bash", "pwd")).rejects.toBeDefined();
+    expect(f.processes[0]!.write).not.toHaveBeenCalled();
+    f.switch();
+    await expect(f.service.execute("bench-b", terminal.id, "bash", "pwd")).rejects.toBeDefined();
+    await f.service.closeAll();
+  });
+  it("does not create an incompatible terminal or finish creation after a workbench switch", async () => {
+    const f = fixture();
+    await expect(f.service.create("bench-a", 80, 24, "powershell")).rejects.toMatchObject({
+      messageKey: "chatActions.shellMismatch",
+    });
+    let release: ((shell: CommandShell) => void) | undefined;
+    f.shell.resolve.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          release = resolve;
+        }),
+    );
+    const pending = f.service.create("bench-a", 80, 24, "bash");
+    f.switch();
+    release!({ executable: "/bin/bash", kind: "bash" });
+    await expect(pending).rejects.toMatchObject({ code: "CONFLICT" });
+    expect(f.spawn).not.toHaveBeenCalled();
+  });
   it.each(["powershell", "cmd", "bash", "sh"] as const)(
     "starts new %s terminals with interactive arguments",
     async (kind) => {

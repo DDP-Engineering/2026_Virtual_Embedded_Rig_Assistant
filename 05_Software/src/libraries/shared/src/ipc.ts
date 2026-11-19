@@ -104,6 +104,8 @@ import {
   skillTargetSchema,
 } from "./skills.js";
 import {
+  commandBlockShellSchema,
+  commandBlockTextSchema,
   terminalOwnerSchema,
   terminalSizeSchema,
   terminalSnapshotSchema,
@@ -172,16 +174,26 @@ export const appInfoSchema = z.strictObject({
     .optional(),
 });
 export const channels = {
+  "app.clipboard.write": defineChannel(
+    "app.clipboard.write",
+    z.strictObject({ text: z.string().max(10_000_000) }),
+    z.strictObject({}),
+  ),
   "terminal.list": defineChannel("terminal.list", terminalOwnerSchema, z.array(terminalSummarySchema).max(8)),
   "terminal.create": defineChannel(
     "terminal.create",
-    terminalOwnerSchema.extend(terminalSizeSchema.shape),
+    terminalOwnerSchema.extend({ ...terminalSizeSchema.shape, shell: commandBlockShellSchema.optional() }),
     terminalSummarySchema,
   ),
   "terminal.output": defineChannel("terminal.output", terminalTargetSchema, terminalSnapshotSchema),
   "terminal.input": defineChannel(
     "terminal.input",
     terminalTargetSchema.extend({ data: z.string().min(1).max(16384) }),
+    z.strictObject({}),
+  ),
+  "terminal.execute": defineChannel(
+    "terminal.execute",
+    terminalTargetSchema.extend({ shell: commandBlockShellSchema, text: commandBlockTextSchema }),
     z.strictObject({}),
   ),
   "terminal.resize": defineChannel(

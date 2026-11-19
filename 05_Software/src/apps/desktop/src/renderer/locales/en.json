@@ -246,6 +246,19 @@
       "interrupted": "Interrupted"
     }
   },
+  "chatActions": {
+    "copyResponse": "Copy response",
+    "copyCode": "Copy code block",
+    "run": "Run in terminal",
+    "runShell": "Run in terminal ({{shell}})",
+    "destination": "Destination terminal",
+    "newCleanTerminal": "New clean terminal (no shell profile)",
+    "runNewTerminal": "Run in a new clean terminal",
+    "promptNotReady": "The terminal is not verified at an empty prompt. Use a new clean terminal.",
+    "clipboardFailed": "Could not copy to the clipboard. Try again.",
+    "shellMismatch": "The terminal shell does not match this command block.",
+    "shellUnavailable": "No compatible {{shell}} shell is installed."
+  },
   "chat": {
     "bookmark": "Bookmark",
     "removeBookmark": "Remove bookmark",

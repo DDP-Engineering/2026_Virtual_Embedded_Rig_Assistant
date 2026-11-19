@@ -84,6 +84,8 @@ Befehlsfreigaben und gespeicherte Präfixe sind unter [Berechtigungen](permissio
 
 Öffnen Sie **Terminal** rechts oder drücken Sie **Ctrl+Shift+T**. Die interaktive Shell startet im Workbench-Ordner gemäß Einstellungen → Befehle. **Neues Terminal** erstellt Tabs; **Terminal schließen** beendet sie. Größenänderungen brechen die Ausgabe neu um. Interaktive Programme nehmen Ihre Eingaben an. Das Ende einer Agentensitzung lässt Benutzerterminals weiterlaufen; Schließen oder Wechseln des Workbenchs und Beenden von VERA schließen sie. Native Terminalunterstützung ist enthalten.
 
+Antworten und Codeblöcke haben getrennte Kopieraktionen. Ausführen ist für vollständige, ausdrücklich als PowerShell oder Bash markierte Blöcke mit 1–16.384 Zeichen ohne Terminalsteuerzeichen verfügbar. Befehle gehen nur an eine unbenutzte saubere Shell, deren leere Anfangseingabezeile vor der Ausführung geprüft wird. Nur geeignete Ziele werden angeboten; gibt es keines, erstellt Ausführen sofort ein sauberes Terminal. Erhält das Ziel nach der Auswahl Eingaben oder führt einen Befehl aus, verweigert VERA das Einfügen und bietet **In einem neuen sauberen Terminal ausführen** an. Unabgesendeter Text und interaktive Programme bleiben unberührt. Saubere Terminals überspringen Shellprofile; **Neues Terminal** verwendet weiterhin den normalen Start der konfigurierten Shell. **Neues sauberes Terminal (ohne Shellprofil)** erstellt eine separate passende Shell. Abbrechen oder Escape setzt den Tastaturfokus auf Ausführen zurück.
+
 Jedes Terminal beginnt privat. Wie Sie dem Agenten das Lesen eines Terminals erlauben, steht unter [Berechtigungen](permissions.md).
 
 ## Geheimnismaskierung für Agent und Exporte
