@@ -1,20 +1,16 @@
 import type { ImageContent, Message } from "@earendil-works/pi-ai";
-import { messageImagesSchema, veraError, veraErrorSchema } from "@vera/shared";
+import {
+  MAX_MESSAGE_IMAGE_BYTES,
+  messageImagesSchema,
+  rasterSignature,
+  veraError,
+  veraErrorSchema,
+} from "@vera/shared";
 import { imagePaths, imageRequestMessage } from "../agent/message-images.js";
 import { FileReadLimitError, readGuardedFile } from "../tools/files.js";
 import { PathGuard } from "../workbench/path-guard.js";
 
-const maxBytes = 20 * 1024 * 1024;
 const maxSide = 2048;
-const pngSignature = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
-
-function rasterFormat(bytes: Buffer) {
-  if (bytes.subarray(0, 8).equals(pngSignature)) return "png";
-  if (bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) return "jpeg";
-  const gif = bytes.toString("latin1", 0, 6);
-  if (gif === "GIF87a" || gif === "GIF89a") return "gif";
-  if (bytes.toString("latin1", 0, 4) === "RIFF" && bytes.toString("latin1", 8, 12) === "WEBP") return "webp";
-}
 
 /** Validates and prepares ordinary raster files under primary-workbench authority. */
 export class SessionImages {
@@ -37,8 +33,10 @@ export class SessionImages {
   async read(path: string, signal: AbortSignal): Promise<ImageContent> {
     let bytes: Buffer;
     try {
-      this.guard ??= PathGuard.create(this.root, this.root, "workbench", undefined, this.managedRoots);
-      ({ bytes } = await readGuardedFile(await this.guard, path, maxBytes, signal));
+      this.guard ??= PathGuard.create(this.root, this.root, "workbench", undefined, this.managedRoots, [], {
+        allowSessionAttachments: true,
+      });
+      ({ bytes } = await readGuardedFile(await this.guard, path, MAX_MESSAGE_IMAGE_BYTES, signal));
     } catch (error) {
       signal.throwIfAborted();
       if (error instanceof FileReadLimitError) throw veraError("IMAGE_TOO_LARGE");
@@ -46,7 +44,7 @@ export class SessionImages {
       throw veraError("DENIED");
     }
     if (/\.svgz?$/i.test(path)) throw veraError("IMAGE_FORMAT");
-    const format = rasterFormat(bytes);
+    const format = rasterSignature(bytes);
     if (!format) throw veraError("IMAGE_FORMAT");
     const { default: sharp } = await import("sharp");
     try {

@@ -3,6 +3,7 @@ import { artifactContentSchema, artifactIdSchema, artifactSummarySchema } from "
 import { changeDetailSchema, changeIdSchema, changeSummarySchema } from "./changes.js";
 import { chatgptLoginSchema, chatgptStatusSchema } from "./chatgpt.js";
 import { commandPrefixDisplaySchema, commandPrefixIdsSchema, commandPrefixSchema } from "./command-prefix.js";
+import { composerImageSchema, composerImageSourceSchema } from "./composer-images.js";
 import {
   docsByteReadSchema,
   docsByteWindowSchema,
@@ -702,6 +703,20 @@ export const channels = {
     "session.delete",
     z.strictObject({ sessionId: sessionIdSchema }),
     z.strictObject({}),
+  ),
+  "session.image.attach": defineChannel(
+    "session.image.attach",
+    z.strictObject({
+      workbenchId: workbenchIdSchema,
+      sessionId: sessionIdSchema,
+      source: composerImageSourceSchema,
+    }),
+    composerImageSchema,
+  ),
+  "session.image.capability": defineChannel(
+    "session.image.capability",
+    z.strictObject({ workbenchId: workbenchIdSchema, sessionId: sessionIdSchema }),
+    z.strictObject({ acceptsImages: z.boolean() }),
   ),
   "session.send": defineChannel(
     "session.send",

@@ -4,6 +4,7 @@ import {
   acceptsImages,
   type ChangeDetail,
   type ChangeSummary,
+  type ComposerImageSource,
   changeIdSchema,
   isLiveSessionEvent,
   type MaskingArea,
@@ -57,6 +58,7 @@ import type { TerminalReader } from "../tools/terminal-read.js";
 import type { WebDownloads } from "../web/downloads.js";
 import type { WebProvider } from "../web/provider.js";
 import { WriteQueue } from "../workbench/write-queue.js";
+import { attachComposerImage } from "./composer-images.js";
 import { SessionHub, type SessionListener } from "./hub.js";
 import { MaskingContextPolicy, maskMessages, maskModelStream, maskValue } from "./masking.js";
 import { projectMessageImages, SessionImages } from "./session-images.js";
@@ -497,6 +499,20 @@ export class SessionService {
     return value !== null && this.host.gateway.capabilities(model).reasoningOptions?.includes(value)
       ? value
       : undefined;
+  }
+  async attachImage(id: string, source: ComposerImageSource) {
+    const authorize = () => {
+      const row = this.row(id);
+      this.writable();
+      if (row.archived) throw veraError("DENIED");
+      if (row.status === "awaiting_approval" || this.deleting.has(id)) throw veraError("BUSY");
+    };
+    return attachComposerImage(this.host.root, id, source, this.host.managedRoots, authorize);
+  }
+  async imageCapability(id: string) {
+    const modelRef = this.host.model(this.row(id).model_ref);
+    await this.host.gateway.prepareModel?.(modelRef);
+    return { acceptsImages: acceptsImages(this.host.gateway.capabilities(modelRef)) };
   }
   async reasoningOptions(id: string) {
     const row = this.row(id);

@@ -1117,6 +1117,17 @@ ipcMain.handle(
           await s.delete(sessionId);
           return {};
         }),
+      "session.image.attach": ({ workbenchId, sessionId, source }) =>
+        sessions.run((service) => {
+          openWorkbenchFolder(workbenchId);
+          if (credentials.containsSecret("path" in source ? source.path : source.name))
+            throw veraError("INVALID");
+          if ("path" in source && /__vera_display_[A-Za-z0-9_-]+\.(?:\/|$)/.test(source.path))
+            throw veraError("DENIED");
+          return service.attachImage(sessionId, source);
+        }, false),
+      "session.image.capability": ({ workbenchId, sessionId }) =>
+        sessions.imageCapability(workbenchId, sessionId),
       "session.send": ({ sessionId, text, images }) =>
         sessions.run(async (s) => {
           if (credentials.containsSecret(text)) throw { code: "INVALID", messageKey: "errors.INVALID" };

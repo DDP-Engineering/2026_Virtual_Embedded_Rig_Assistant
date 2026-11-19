@@ -40,6 +40,8 @@ Take the context window from the model's documentation or your server settings. 
 
 ## Image support
 
+The composer warns when the current model receives only image paths.
+
 VERA reads image support from the ChatGPT and OpenAI API model catalogs. For LM Studio, Ollama or another compatible endpoint, select or enter the model, turn on **Accepts images** if it supports image input, and select **Save**. The switch starts off for each model.
 
 An image sent to a model leaves your computer if the provider runs remotely. Text masking applies to image paths according to your settings. The model receives the image pixels directly.

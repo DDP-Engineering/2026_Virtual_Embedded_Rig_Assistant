@@ -112,6 +112,8 @@ Draft authoring elsewhere retains normal approval policy (tools/write-edit.test.
 
 ## Key behaviors
 
+- The ordinary path guard applies permanent ignore rules. Composer and message image reads opt into the narrow `.vera/attachments/<session>/` namespace and refuse redirected paths into or out of it.
+
 - REQ-DATA-ff592d7b — captured register decoding contract; see specs/decode-register.md.
 - REQ-FUNC-41a37137 — captured register decoding contract; see specs/decode-register.md.
 - REQ-FUNC-636e8efe — captured register decoding contract; see specs/decode-register.md.

@@ -4,10 +4,10 @@ entries:
   - category: new
     topic: { en: Chat, ro: Chat, de: Chat, fr: Chat }
     text:
-      en: Send workbench images to models that accept them. Text-only models receive the file paths.
-      ro: Trimite imagini din workbench modelelor compatibile. Modelele doar text primesc căile.
-      de: Bilder aus der Workbench an geeignete Modelle senden. Reine Textmodelle erhalten die Pfade.
-      fr: Envoyez des images du banc aux modèles compatibles. Les modèles texte reçoivent les chemins.
+      en: Paste, drop or attach images in chat. Text-only models receive the file paths.
+      ro: Lipește, trage sau atașează imagini în chat. Modelele doar text primesc căile.
+      de: Bilder im Chat einfügen, ablegen oder anhängen. Textmodelle erhalten die Dateipfade.
+      fr: Collez, déposez ou joignez des images dans le chat. Les modèles texte reçoivent les chemins.
   - category: new
     topic: { en: Providers, ro: Furnizori, de: Anbieter, fr: Fournisseurs }
     text:

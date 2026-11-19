@@ -40,6 +40,8 @@ Entnehmen Sie das Kontextfenster der Dokumentation des Modells oder Ihren Server
 
 ## Bildunterstützung
 
+Im Nachrichtenfeld erscheint eine Warnung, wenn das aktuelle Modell nur die Bildpfade erhält.
+
 VERA liest die Bildunterstützung aus den Modellkatalogen von ChatGPT und der OpenAI-API. Für LM Studio, Ollama oder einen anderen kompatiblen Endpunkt das Modell auswählen oder eingeben. Wenn es Bilder verarbeiten kann, **Akzeptiert Bilder** einschalten und **Speichern** wählen. Die Option ist für jedes Modell zunächst ausgeschaltet.
 
 Wenn der Anbieter auf einem entfernten Rechner läuft, verlässt das Bild beim Senden Ihren Computer. Die Textmaskierung erfasst die Bildpfade gemäß Ihren Einstellungen. Das Modell erhält die Bildpixel direkt.

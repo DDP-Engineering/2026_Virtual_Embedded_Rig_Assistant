@@ -50,8 +50,11 @@ budgets and abort. The browser mock seeds six selectable states and an edit appr
   message box as chips (name, path as title, "Remove attachment: <path>") and sends
   `withMentions(text, paths)` (lib/attachments.ts): the text, then `@path` mentions on a new line
   (`@"path"` with whitespace), or the mentions alone; at most 20, no duplicates; an accepted send
-  clears the sent chips, a failed one keeps text and chips. session.send stays text only
-  (REQ-UX-b5edf930, REQ-UX-f8ec3a43, REQ-FUNC-47287974).
+  clears the sent chips, a failed one keeps text and chips (REQ-UX-b5edf930, REQ-UX-f8ec3a43,
+  REQ-FUNC-47287974). Raster images use a separate per-workbench/session draft. Paste, external drop and Attach image
+  import the original through main. The Files menu and drag attach an existing path. The composer displays up to
+  eight removable Blob thumbnail chips. Image sends wait for the pending capability lookup so the composer can warn when the effective model receives only paths. Image-only drafts
+  are sendable and use the same acknowledgment and retry behavior. See `composer-images.spec.ts`.
 - ApprovalCard renders tool/path/bytes and coloured +/- patch lines inline beside the tool. Approve, Deny and Approve-and-switch invoke the exact stored digest. Focused A/D has no modifiers/repeat/composition; pending, decided and read-only cards lock actions and errors remain visible.
 - Program approval cards display canonical outside directory arguments under the localized Outside directories label without hashes; file hashes stay in their own list. `components/session/approval-card.test.ts` covers the metadata list.
 - Composer exposes the confirmed session mode during active turns; text/Enter/Send remain available while running, alongside Stop; approval waits lock text/sending and active turns lock model selection. Approval events invalidate sidebar summaries; new sessions inherit workbench defaults.

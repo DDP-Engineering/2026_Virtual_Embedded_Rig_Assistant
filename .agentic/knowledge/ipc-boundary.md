@@ -31,6 +31,8 @@ shortcut. Existing persisted event format remains 1.
 
 ## Public interface
 
+- `session.image.attach` accepts a workbench/session pair and either bounded base64 file bytes or an existing workbench path. It returns a durable relative path, a display name and a bounded PNG thumbnail. `session.image.capability` resolves image support for the same effective model as dispatch, with catalog I/O outside the session queue.
+
 Strict `terminal.*` user channels bind UUID terminal IDs to the current workbench, fix creation cwd
 in main and bound input/dimensions/output. Core receives only a read/publish port, never user IPC
 methods. [User terminals](terminals.md) owns consent, lifecycle and focused terminal IPC tests.

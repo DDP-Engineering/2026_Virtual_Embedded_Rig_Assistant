@@ -16,6 +16,8 @@ Scrie în caseta de mesaj (**Întreabă VERA despre proiect…**). Enter trimite
 
 Lângă caseta de mesaj alegi **Model**, **Nivel de reasoning** și **Mod de permisiuni** pentru această sesiune. Sesiunile noi preiau modelul și modul de permisiuni din setările workbench-ului.
 
+Lipește sau trage o imagine în caseta de mesaj sau alege **Atașează imagine** pentru a selecta un fișier. În Fișiere, trage imaginea în caseta de mesaj sau alege **Atașează imagine** din meniul ei. Elimină imaginea cu butonul de pe miniatură. VERA păstrează fișierele importate originale în workbench. Imaginile atașate din Fișiere își păstrează căile.
+
 Un mesaj poate indica până la opt imagini PNG, JPEG, GIF sau WebP din workbench, cu o limită de 20 MiB pe fișier. VERA redimensionează copia trimisă unui model care acceptă imagini la cel mult 2048 de pixeli pe latura lungă și păstrează fișierul original. Un model care acceptă doar text primește căile. Compactarea păstrează căile imaginilor mai vechi în note text. Exporturile sesiunii includ aceste căi.
 
 Vezi [Furnizori și modele](providers.md) pentru a afla cum stabilește VERA dacă modelul ales acceptă imagini.

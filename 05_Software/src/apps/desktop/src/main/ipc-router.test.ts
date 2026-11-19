@@ -124,6 +124,8 @@ const workbenchHandlers = {
   "session.archive.set": unused,
   "session.move": unused,
   "session.delete": unused,
+  "session.image.attach": unused,
+  "session.image.capability": unused,
   "session.send": unused,
   "session.stop": unused,
   "session.model.set": unused,

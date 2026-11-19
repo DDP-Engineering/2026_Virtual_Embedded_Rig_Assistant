@@ -28,6 +28,8 @@ progress travels through existing workbench events.
 
 ## Public interface
 
+- Files exposes Attach image on PNG, JPEG, GIF and WebP entries and lets users drag eligible image rows into the composer. Attachment admission still uses a guarded primary-workbench read. Attach as context continues to send path mentions.
+
 - docs.open accepts workbenchId with indexed path, document ref, or
   sessionId/messageId/ref. It returns scoped ViewerContent for PDF bytes/pages,
   presentation slides with the cited page/pageEnd, Markdown/HTML/document/

@@ -40,6 +40,8 @@ Ia fereastra de context din documentația modelului sau din setările serverului
 
 ## Suport pentru imagini
 
+Caseta de mesaj afișează un avertisment când modelul curent primește doar căile imaginilor.
+
 VERA citește suportul pentru imagini din cataloagele de modele ChatGPT și API OpenAI. Pentru LM Studio, Ollama sau alt endpoint compatibil, alege ori introdu modelul. Dacă acceptă imagini, activează **Acceptă imagini** și alege **Salvează**. Opțiunea este inițial dezactivată pentru fiecare model.
 
 O imagine trimisă unui model părăsește calculatorul dacă furnizorul rulează la distanță. Mascarea textului se aplică și căilor imaginilor, în funcție de setări. Modelul primește direct pixelii imaginii.

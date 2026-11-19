@@ -287,6 +287,14 @@ export class SessionsHost {
       this.pending--;
     });
   }
+  /** Resolve the session's model on the host queue. Catalog I/O may outlive this queue slot. */
+  async imageCapability(workbenchId: string, sessionId: string) {
+    const { completion } = await this.run((service) => {
+      if (this.options.workbench.getSnapshot().config.id !== workbenchId) throw veraError("CONFLICT");
+      return { completion: service.imageCapability(sessionId) };
+    }, false);
+    return completion;
+  }
   /** Polling only needs recovered current-DB summaries, never prompt/skill/program preparation. */
   async list(workbenchId?: string) {
     if (this.shutdown) throw veraError("BUSY");

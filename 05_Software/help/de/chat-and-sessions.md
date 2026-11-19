@@ -16,6 +16,8 @@ Schreiben Sie in das Nachrichtenfeld (**Fragen Sie VERA zu Ihrem Projekt…**). 
 
 Neben dem Nachrichtenfeld wählen Sie **Modell**, **Reasoning-Stufe** und **Berechtigungsmodus** dieser Sitzung. Neue Sitzungen übernehmen Modell und Berechtigungsmodus aus den Workbench-Einstellungen.
 
+Füge ein Bild aus der Zwischenablage in das Nachrichtenfeld ein, ziehe es dorthin oder wähle **Bild anhängen**, um eine Datei auszuwählen. Ziehe ein Bild aus Dateien in das Nachrichtenfeld oder wähle dort **Bild anhängen**. Entferne ein Bild über die Schaltfläche an seiner Vorschau. VERA speichert importierte Originale in der Workbench. Aus Dateien angehängte Bilder behalten ihre Pfade.
+
 Eine Nachricht kann bis zu acht PNG-, JPEG-, GIF- oder WebP-Bilder aus der Workbench enthalten. Pro Datei gilt ein Limit von 20 MiB. VERA verkleinert die zum Modell gesendete Kopie auf höchstens 2048 Pixel an der längsten Seite und behält das Original. Ein reines Textmodell erhält die Dateipfade. Bei der Zusammenfassung älterer Nachrichten bleiben Bildpfade als Textnotizen erhalten. Sitzungsexporte enthalten diese Pfade.
 
 Unter [Anbieter und Modelle](providers.md) steht, wie VERA die Bildunterstützung für das gewählte Modell ermittelt.

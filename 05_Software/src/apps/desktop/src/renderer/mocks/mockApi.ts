@@ -1,6 +1,7 @@
 import {
   type AppEvent,
   type AppInfo,
+  acceptsImages,
   appEventSchema,
   type CatalogEntry,
   type CatalogPack,
@@ -48,6 +49,7 @@ import {
 } from "@vera/shared";
 import type { VeraApi } from "../api/client.js";
 import { createSubscriptions } from "../api/subscriptions.js";
+import { mockImageThumbnail } from "./composer-images.js";
 import { mockDocument, mockDocuments } from "./documents.js";
 import { mockAppInfo } from "./fixtures.js";
 import { mockHelpList, mockHelpRead, mockPluginHelpLanguages, mockPluginHelpRead } from "./help.js";
@@ -531,6 +533,49 @@ export function createMockApi(
       const list = sessions.invoke(channel, input.data) as SessionSummary[];
       const order = settings.sessionOrder?.[current().snapshot.config.id];
       return channels[channel].response.parse(orderSessions(list, order)) as Response<C>;
+    }
+    if (channel === "session.image.attach" || channel === "session.image.capability") {
+      const upload =
+        channel === "session.image.attach"
+          ? channels["session.image.attach"].request.parse(input.data)
+          : undefined;
+      const args = upload ?? channels["session.image.capability"].request.parse(input.data);
+      const snapshot = current().snapshot;
+      if (snapshot.config.id !== args.workbenchId) throw veraError("CONFLICT");
+      const rows = sessions.invoke("session.list", {}) as SessionSummary[];
+      const session = rows.find((row) => row.id === args.sessionId);
+      if (!session) throw veraError("NOT_FOUND");
+      if (upload) {
+        if (snapshot.readOnly || session.archived) throw veraError("DENIED");
+        if (session.status === "awaiting_approval") throw veraError("BUSY");
+        const { source } = upload;
+        if ("path" in source) {
+          if (treeIgnored(source.path)) throw veraError("DENIED");
+          if (source.path !== "manuals/scope-capture.png" || !treeFiles().includes(source.path))
+            throw veraError("NOT_FOUND");
+          value = {
+            path: source.path,
+            name: "scope-capture.png",
+            thumbnail:
+              "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aFqkAAAAASUVORK5CYII=",
+          };
+        } else {
+          const name = source.name || "image";
+          value = {
+            name,
+            path: `.vera/attachments/${args.sessionId}/${crypto.randomUUID()}-${name}`,
+            thumbnail: await mockImageThumbnail(name, source.data),
+          };
+        }
+      } else {
+        const modelRef = session.modelRef ?? snapshot.config.agent.model ?? settings.defaultModel;
+        if (!modelRef) throw veraError("INVALID");
+        const provider = channels["providers.models"].request.shape.id.parse(modelRef.split("/")[0]);
+        const list = await invoke("providers.models", { id: provider });
+        const model = list.models.find((entry) => entry.reference === modelRef);
+        value = { acceptsImages: model !== undefined && acceptsImages(model) };
+      }
+      return channels[channel].response.parse(value) as Response<C>;
     }
     if (channel.startsWith("session.") || channel.startsWith("changes.") || channel.startsWith("artifacts."))
       return channels[channel].response.parse(sessions.invoke(channel, input.data)) as Response<C>;

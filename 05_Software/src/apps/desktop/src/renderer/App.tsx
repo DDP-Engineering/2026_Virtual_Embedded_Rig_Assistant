@@ -27,6 +27,7 @@ import type { ConfigSection } from "./components/workbench-config-form.js";
 import { WorkbenchCreate } from "./components/workbench-create.js";
 import { WorkbenchEditor } from "./components/workbench-editor.js";
 import { WorkbenchNavigation } from "./components/workbench-navigation.js";
+import { useImageDrafts } from "./hooks/image-drafts.js";
 import { SessionViewProvider } from "./hooks/session-view.js";
 import { usePreferences } from "./hooks/use-preferences.js";
 import { useRunPresentation } from "./hooks/use-run-presentation.js";
@@ -228,8 +229,31 @@ export function App() {
     [benchId, readOnly, sessionPending, openSession, operation, client, leaveEditor],
   );
   const create = useCallback(() => createWith(), [createWith]);
+  const { imageDraft, addImages, clearImages } = useImageDrafts();
+  const activeRow = sessions.data?.find((row) => row.id === activeSession);
+  const imageSessionLocked =
+    activeRow?.archived ||
+    activeRow?.status === "awaiting_approval" ||
+    (!!benchId && !!activeSession && imageDraft(benchId, activeSession).pending);
+  const attachToChat = useCallback(
+    (add: (id: string) => void) => {
+      if (!activeSession) return createWith(add);
+      if (!leaveEditor()) return;
+      add(activeSession);
+      openSession(activeSession);
+      setComposerFocus({ id: activeSession, request: ++composerFocusSequence.current });
+    },
+    [activeSession, createWith, leaveEditor, openSession],
+  );
   const attachments = useMemo<Attachments>(
     () => ({
+      imageDraft,
+      addImages,
+      clearImages,
+      attachImage:
+        benchId && !readOnly && !imageSessionLocked
+          ? (path) => attachToChat((id) => void addImages(benchId, id, [path]))
+          : undefined,
       list: (id) => attached[id] ?? [],
       remove: (id, path) =>
         setAttached((all) => ({ ...all, [id]: (all[id] ?? []).filter((p) => p !== path) })),
@@ -239,18 +263,23 @@ export function App() {
       // A chat opens to take the entry: the active session's, or a new or reused empty one.
       attach:
         benchId && !readOnly
-          ? (path) => {
-              const add = (id: string) =>
-                setAttached((all) => ({ ...all, [id]: addAttachment(all[id] ?? [], path) }));
-              if (!activeSession) return createWith(add);
-              if (!leaveEditor()) return;
-              add(activeSession);
-              openSession(activeSession);
-              setComposerFocus({ id: activeSession, request: ++composerFocusSequence.current });
-            }
+          ? (path) =>
+              attachToChat((id) =>
+                setAttached((all) => ({ ...all, [id]: addAttachment(all[id] ?? [], path) })),
+              )
           : undefined,
     }),
-    [attached, activeSession, benchId, readOnly, createWith, leaveEditor, openSession],
+    [
+      attached,
+      activeSession,
+      benchId,
+      readOnly,
+      attachToChat,
+      imageDraft,
+      addImages,
+      clearImages,
+      imageSessionLocked,
+    ],
   );
   const focusHeading = useCallback((node: HTMLHeadingElement | null) => node?.focus(), []);
   const info = useQuery({ queryKey: ["app.info"], queryFn: () => api.getAppInfo() });
