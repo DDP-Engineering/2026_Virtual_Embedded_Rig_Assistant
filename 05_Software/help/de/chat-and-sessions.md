@@ -16,6 +16,18 @@ Schreiben Sie in das Nachrichtenfeld (**Fragen Sie VERA zu Ihrem Projekt…**). 
 
 Neben dem Nachrichtenfeld wählen Sie **Modell**, **Reasoning-Stufe** und **Berechtigungsmodus** dieser Sitzung. Neue Sitzungen übernehmen Modell und Berechtigungsmodus aus den Workbench-Einstellungen.
 
+Füge ein Bild aus der Zwischenablage in das Nachrichtenfeld ein, ziehe es dorthin oder wähle **Bild anhängen**, um eine Datei auszuwählen. Ziehe ein Bild aus Dateien in das Nachrichtenfeld oder wähle dort **Bild anhängen**. Entferne ein Bild über die Schaltfläche an seiner Vorschau. VERA speichert importierte Originale in der Workbench. Aus Dateien angehängte Bilder behalten ihre Pfade.
+
+Wählen Sie die Miniaturansicht in einer gesendeten Nachricht aus, um das Bild in der Dateiansicht zu öffnen. Fehlt das Bild, zeigt die Nachricht den gespeicherten Workbench-Pfad.
+
+Eine Nachricht kann bis zu acht PNG-, JPEG-, GIF- oder WebP-Bilder aus der Workbench enthalten. Pro Datei gilt ein Limit von 20 MiB. VERA verkleinert die zum Modell gesendete Kopie auf höchstens 2048 Pixel an der längsten Seite und behält das Original. Ein reines Textmodell erhält die Dateipfade. Bei der Zusammenfassung älterer Nachrichten bleiben Bildpfade als Textnotizen erhalten. Sitzungsexporte enthalten diese Pfade.
+
+Unter [Anbieter und Modelle](providers.md) steht, wie VERA die Bildunterstützung für das gewählte Modell ermittelt.
+
+Geben Sie dem Agenten den relativen Pfad eines Bildes im Workbench, damit er es betrachten kann. Mit einem bildfähigen Modell kann der Agent über `view_image` PNG-, JPEG-, GIF- und WebP-Dateien bis 20 MiB lesen. Die längste Seite der an das Modell gesendeten Kopie ist höchstens 2048 Pixel lang. Das Werkzeug benötigt auch im Umgehungsmodus einen erlaubten Workbench-Pfad ohne Verknüpfungen. Das Ergebnis im Sitzungsverlauf enthält den Pfad. Unter **Workbench bearbeiten** → **Werkzeuge** erscheint der Schalter, wenn das Standardmodell des Workbenchs Bilder akzeptiert.
+
+Der Agent kann ein in dieser Sitzung gesendetes Bild über seinen gespeicherten Pfad erneut öffnen. Pro Schritt kann er bis zu acht Bilder betrachten. Die acht zuletzt mit dem Werkzeug geöffneten Bilder bleiben im aktuellen Durchlauf verfügbar.
+
 ## Einen laufenden Durchlauf steuern oder stoppen
 
 Während der Agent arbeitet, können Sie weiterschreiben und weitere Nachrichten senden, zum Beispiel „prüfe auch die Errata“. Sie zeigen **Zustellung ausstehend**, bis der Agent sie bei seinem nächsten Schritt aufnimmt. Solange eine Freigabekarte auf Ihre Entscheidung wartet, ist das Senden angehalten.
@@ -90,4 +102,4 @@ Jedes Terminal beginnt privat. Wie Sie dem Agenten das Lesen eines Terminals erl
 
 ## Geheimnismaskierung für Agent und Exporte
 
-Agent und Modell maskiert Werkzeugergebnisse für den Anbieter, gestreamte Antworten sowie Suche und Anzeige von Sitzungen. Artefakte und Exporte steuert unabhängig davon gespeicherte Artefaktinhalte und Beschreibungen, Artefaktexporte und JSON-/Markdown-Sitzungsexporte. Beide sind standardmäßig aktiv; eine ausdrückliche Workbench-Auswahl hat Vorrang vor dem aktuellen App-Standard. Ohne Agentenmaskierung können gespeicherte Geheimnisse aus Dateien oder Werkzeugausgaben den Anbieter erreichen. Programmläufe und Anzeige ändern diese Regeln nicht. Anbieterfehler, Verbindungstests und Diagnoseprotokolle maskieren gespeicherte Zugangsdaten immer. Terminalzugriffe benötigen weiterhin die Zustimmung für genau dieses Terminal. Bereits als [REDACTED] gespeicherter Text wird durch Ausschalten nicht wiederhergestellt; lesen Sie die Originalquelle neu oder erstellen Sie das Artefakt erneut.
+Agent und Modell maskiert Werkzeugergebnisse für den Anbieter, gestreamte Antworten sowie Suche und Anzeige von Sitzungen. Die Maskierung prüft den Dateipfad als Text. Bildpixel liegen außerhalb ihres Geltungsbereichs. Artefakte und Exporte steuert unabhängig davon gespeicherte Artefaktinhalte und Beschreibungen, Artefaktexporte und JSON-/Markdown-Sitzungsexporte. Beide sind standardmäßig aktiv; eine ausdrückliche Workbench-Auswahl hat Vorrang vor dem aktuellen App-Standard. Ohne Agentenmaskierung können gespeicherte Geheimnisse aus Dateien oder Werkzeugausgaben den Anbieter erreichen. Programmläufe und Anzeige ändern diese Regeln nicht. Anbieterfehler, Verbindungstests und Diagnoseprotokolle maskieren gespeicherte Zugangsdaten immer. Terminalzugriffe benötigen weiterhin die Zustimmung für genau dieses Terminal. Bereits als [REDACTED] gespeicherter Text wird durch Ausschalten nicht wiederhergestellt; lesen Sie die Originalquelle neu oder erstellen Sie das Artefakt erneut.

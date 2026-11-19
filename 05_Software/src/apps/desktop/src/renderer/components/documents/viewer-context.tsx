@@ -1,5 +1,12 @@
 // REQ-UX-28ad0002
-import { parseRef, referenceLabel, type ViewerContent, veraError, workbenchIdSchema } from "@vera/shared";
+import {
+  parseRef,
+  type RasterFormat,
+  referenceLabel,
+  type ViewerContent,
+  veraError,
+  workbenchIdSchema,
+} from "@vera/shared";
 import {
   createContext,
   lazy,
@@ -39,7 +46,9 @@ export type ViewerTarget =
    */
   | { textPath: string; ignored?: boolean; hex?: true }
   | { sessionId: string; messageId: string; ref: string };
-const ViewerContext = createContext<((target: ViewerTarget) => void) | undefined>(undefined);
+const ViewerContext = createContext<((target: ViewerTarget, imageFormat?: RasterFormat) => void) | undefined>(
+  undefined,
+);
 /** Opens a target in its document tab of the chat area (TASK-79f6ffd3). */
 export function useDocumentViewer() {
   return useContext(ViewerContext);
@@ -58,6 +67,7 @@ export interface DocumentTab {
   largeText?: LargeTextFile | undefined;
   hexFile?: HexFile | undefined;
   imageFile?: ImageFile | undefined;
+  imageFormat?: RasterFormat | undefined;
   modeInfo?: FileModeInfo | undefined;
   modeChoice?: FileMode | undefined;
   rememberMode?: boolean | undefined;
@@ -167,8 +177,9 @@ export function DocumentViewerProvider({
   );
   const download = t("downloads.title");
   const open = useCallback(
-    (target: ViewerTarget) => {
+    (target: ViewerTarget, imageFormat?: RasterFormat) => {
       const key = documentKey(target);
+      const modeChoice: FileMode | undefined = imageFormat && "path" in target ? "rendered" : undefined;
       // Reopening from inside a document keeps the control that first opened it.
       const active = document.activeElement as HTMLElement | null;
       if (!active?.closest("[data-source-current]")) openers.current.set(`${scope}\n${key}`, active);
@@ -192,7 +203,8 @@ export function DocumentViewerProvider({
                     hexFile: undefined,
                     imageFile: undefined,
                     modeInfo: undefined,
-                    modeChoice: undefined,
+                    modeChoice,
+                    imageFormat,
                     rememberMode: "textPath" in target && target.hex === true,
                     error: undefined,
                     attempt: ++attempts.current,
@@ -206,6 +218,8 @@ export function DocumentViewerProvider({
                 target,
                 label,
                 title,
+                modeChoice,
+                imageFormat,
                 rememberMode: "textPath" in target && target.hex === true,
                 attempt: ++attempts.current,
               },
@@ -542,6 +556,7 @@ export function DocumentViewerProvider({
                   }
                   settle({ modeInfo });
                 },
+                tab.imageFormat,
               )
             : "downloadId" in target
               ? api.invoke("downloads.open", { workbenchId, downloadId: target.downloadId })

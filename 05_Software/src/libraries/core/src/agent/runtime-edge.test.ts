@@ -33,6 +33,7 @@ function fixture(stream: LlmGateway["stream"], tools: ToolDef[] = [], host: Part
       contextWindow: window,
       maxOutputTokens: output,
       safetyMargin: 1024,
+      input: ["text" as const],
       inputBudget: window - output - 1024,
       supportsTools: true,
     }),

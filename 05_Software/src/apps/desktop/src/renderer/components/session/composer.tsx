@@ -1,19 +1,29 @@
 // REQ-UX-4bea0003 REQ-REL-4bea0004 REQ-UX-f8ec3a43 REQ-FUNC-47287974
+// REQ-UX-72b09d3a REQ-UX-c3961c76 REQ-UX-9427b929 REQ-FUNC-4436607c
 import { useQuery } from "@tanstack/react-query";
-import type { SessionState } from "@vera/shared";
-import { ArrowUp, Square, X } from "lucide-react";
+import {
+  COMPOSER_IMAGE_ACCEPT,
+  MAX_MESSAGE_IMAGES,
+  rasterExtension,
+  type SessionState,
+  WORKBENCH_IMAGE_DRAG,
+} from "@vera/shared";
+import { ArrowUp, ImagePlus, Square, X } from "lucide-react";
 import { type ReactNode, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../../api/index.js";
+import { useImageModelWarning } from "../../hooks/image-model-warning.js";
 import { withMentions } from "../../lib/attachments.js";
 import { ErrorMessage } from "../error-message.js";
 import { PermissionPicker } from "../permission-picker.js";
 import { useAttachments } from "./attachments.js";
+import { ImageAttachmentChip } from "./image-attachment-chip.js";
 import { ReasoningPicker } from "./reasoning-picker.js";
 
 export function Composer({
   state,
   disabled,
+  archived = false,
   permissionLocked = false,
   send,
   stop,
@@ -28,8 +38,9 @@ export function Composer({
   workbenchId?: string;
   state: SessionState;
   disabled: boolean;
+  archived?: boolean;
   permissionLocked?: boolean;
-  send: (text: string) => Promise<boolean>;
+  send: (text: string, images?: string[]) => Promise<boolean>;
   stop: () => void;
   setModel: (reference: string | null) => Promise<void>;
   setMode: (mode: SessionState["mode"]) => Promise<void>;
@@ -41,9 +52,12 @@ export function Composer({
   const [selected, setSelected] = useState(0);
   const [completionError, setCompletionError] = useState<unknown>();
   const input = useRef<HTMLTextAreaElement>(null);
+  const picker = useRef<HTMLInputElement>(null);
   // Docs tree entries attached to this session's next message, sent as @path mentions.
   const attachments = useAttachments();
   const attached = sessionId ? (attachments?.list(sessionId) ?? []) : [];
+  const imageDraft = sessionId && workbenchId ? attachments?.imageDraft?.(workbenchId, sessionId) : undefined;
+  const images = imageDraft?.images ?? [];
   useLayoutEffect(() => {
     const element = input.current;
     if (!element || element.value !== text) return;
@@ -68,6 +82,11 @@ export function Composer({
   const running = !!state.activeTurnId;
   const submitting = useRef(false);
   const locked = disabled || state.status === "awaiting_approval";
+  const imageLocked = locked || archived || !sessionId || !workbenchId || !attachments?.addImages;
+  function addImages(files: readonly (File | string)[]) {
+    if (!imageLocked && sessionId && workbenchId && !submitting.current)
+      void attachments?.addImages?.(workbenchId, sessionId, files);
+  }
   const providers = useQuery({
     queryKey: ["providers.list"],
     queryFn: () => api.invoke("providers.list", {}),
@@ -97,6 +116,23 @@ export function Composer({
       return results.flatMap((c) => c.models);
     },
   });
+  const { imageModelPending, warnTextOnly } = useImageModelWarning(
+    workbenchId,
+    sessionId,
+    state.modelRef,
+    images.length > 0,
+    [
+      providers.dataUpdatedAt,
+      catalog.dataUpdatedAt,
+      subscription.dataUpdatedAt,
+      subscriptionModels.dataUpdatedAt,
+    ],
+  );
+  const sendDisabled =
+    locked ||
+    imageDraft?.pending ||
+    imageModelPending ||
+    (!text.trim() && !attached.length && !images.length);
   useEffect(() => {
     let cancelled = false;
     setMatches([]);
@@ -134,14 +170,19 @@ export function Composer({
     });
   }
   async function submit() {
-    if (locked || (!text.trim() && !attached.length) || submitting.current) return;
+    if (sendDisabled || submitting.current) return;
+    if (sessionId && workbenchId && attachments?.imageDraft?.(workbenchId, sessionId).pending) return;
     submitting.current = true;
     const draft = text;
     const sent = [...attached];
+    const sentImages = images.map(({ path }) => path);
     try {
-      if (await send(withMentions(draft, sent))) {
+      const message = withMentions(draft, sent);
+      if (await (sentImages.length ? send(message, sentImages) : send(message))) {
         setText((current) => (current === draft ? "" : current));
         if (sessionId && sent.length) attachments?.clear(sessionId, sent);
+        if (sessionId && workbenchId && sentImages.length)
+          attachments?.clearImages?.(workbenchId, sessionId, sentImages);
         setToken(undefined);
         input.current?.focus();
       }
@@ -151,8 +192,18 @@ export function Composer({
   }
   return (
     <div className="composer">
-      {sessionId && attached.length > 0 && (
+      {sessionId && (attached.length > 0 || images.length > 0) && (
         <ul className="composer-attachments" aria-label={t("chat.attachments")}>
+          {images.map((image) => (
+            <ImageAttachmentChip
+              key={image.path}
+              image={image}
+              remove={() => {
+                if (workbenchId) attachments?.clearImages?.(workbenchId, sessionId, [image.path]);
+                input.current?.focus();
+              }}
+            />
+          ))}
           {attached.map((path) => (
             <li key={path} className="attachment-chip" data-attachment={path} title={path}>
               <span>{path.split("/").at(-1)}</span>
@@ -171,7 +222,33 @@ export function Composer({
           ))}
         </ul>
       )}
+      {warnTextOnly && (
+        <p className="composer-image-warning" role="status">
+          {t("chat.imagesTextOnly")}
+        </p>
+      )}
+      {imageDraft?.error !== undefined && <ErrorMessage error={imageDraft.error} />}
+      {imageDraft?.full && <p role="alert">{t("chat.imagesLimit", { count: MAX_MESSAGE_IMAGES })}</p>}
       <form
+        onDragOver={(event) => {
+          if (event.dataTransfer.types.some((type) => type === WORKBENCH_IMAGE_DRAG || type === "Files")) {
+            event.preventDefault();
+            event.dataTransfer.dropEffect = imageLocked || imageDraft?.pending ? "none" : "copy";
+          }
+        }}
+        onDrop={(event) => {
+          if (event.dataTransfer.types.includes(WORKBENCH_IMAGE_DRAG)) {
+            event.preventDefault();
+            const path = event.dataTransfer.getData(WORKBENCH_IMAGE_DRAG);
+            const owner = `${workbenchId}/`;
+            if (workbenchId && path.startsWith(owner)) addImages([path.slice(owner.length)]);
+            return;
+          }
+          const files = Array.from(event.dataTransfer.files);
+          if (!files.length) return;
+          event.preventDefault();
+          addImages(files);
+        }}
         onSubmit={(e) => {
           e.preventDefault();
           void submit();
@@ -196,6 +273,14 @@ export function Composer({
             detect(e.target.value, e.target.selectionStart);
           }}
           onClick={(e) => detect(text, e.currentTarget.selectionStart)}
+          onPaste={(event) => {
+            const files = Array.from(event.clipboardData.files).filter(
+              (file) => file.type.startsWith("image/") || rasterExtension(file.name),
+            );
+            if (!files.length) return;
+            event.preventDefault();
+            addImages(files);
+          }}
           onKeyUp={(e) => {
             if (["ArrowLeft", "ArrowRight", "Home", "End"].includes(e.key))
               detect(text, e.currentTarget.selectionStart);
@@ -289,12 +374,33 @@ export function Composer({
           />
           <div className="composer-tools">
             {inspectorControls}
-            <button
-              className="send-control"
-              type="submit"
-              data-action="send-message"
-              disabled={locked || (!text.trim() && !attached.length)}
-            >
+            {sessionId && workbenchId && attachments?.addImages && (
+              <>
+                <input
+                  ref={picker}
+                  type="file"
+                  accept={COMPOSER_IMAGE_ACCEPT}
+                  multiple
+                  hidden
+                  onChange={(event) => {
+                    const files = Array.from(event.currentTarget.files ?? []);
+                    event.currentTarget.value = "";
+                    addImages(files);
+                    input.current?.focus();
+                  }}
+                />
+                <button
+                  type="button"
+                  disabled={imageLocked || imageDraft?.pending}
+                  onClick={() => picker.current?.click()}
+                  title={t("chat.attachImage")}
+                  aria-label={t("chat.attachImage")}
+                >
+                  <ImagePlus aria-hidden="true" />
+                </button>
+              </>
+            )}
+            <button className="send-control" type="submit" data-action="send-message" disabled={sendDisabled}>
               <ArrowUp aria-hidden="true" />
               <span className="sr-only">{t("chat.send")}</span>
             </button>

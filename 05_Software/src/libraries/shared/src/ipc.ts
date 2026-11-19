@@ -3,6 +3,7 @@ import { artifactContentSchema, artifactIdSchema, artifactSummarySchema } from "
 import { changeDetailSchema, changeIdSchema, changeSummarySchema } from "./changes.js";
 import { chatgptLoginSchema, chatgptStatusSchema } from "./chatgpt.js";
 import { commandPrefixDisplaySchema, commandPrefixIdsSchema, commandPrefixSchema } from "./command-prefix.js";
+import { composerImageSchema, composerImageSourceSchema, rasterFormatSchema } from "./composer-images.js";
 import {
   docsByteReadSchema,
   docsByteWindowSchema,
@@ -86,7 +87,12 @@ import {
   providerTestRequestSchema,
   providerTestResultSchema,
 } from "./providers.js";
-import { permissionModeSchema, sessionIdSchema, sessionSummarySchema } from "./session.js";
+import {
+  messageImagesSchema,
+  permissionModeSchema,
+  sessionIdSchema,
+  sessionSummarySchema,
+} from "./session.js";
 import { sessionExportFormatSchema, sessionSearchQuerySchema } from "./session-export.js";
 import { sessionStateSchema } from "./session-state.js";
 import {
@@ -453,6 +459,20 @@ export const channels = {
     docsScopeSchema.extend({ path: z.string().min(1).max(262144) }),
     docsScopeSchema.extend({ properties: docsEntryPropertiesSchema }),
   ),
+  "docs.imageThumbnail": defineChannel(
+    "docs.imageThumbnail",
+    docsScopeSchema.extend({ path: z.string().min(1).max(262144) }),
+    docsScopeSchema.extend({
+      path: z.string().min(1).max(262144),
+      displayPath: z.string(),
+      preview: z
+        .strictObject({
+          format: rasterFormatSchema,
+          thumbnail: composerImageSchema.shape.thumbnail,
+        })
+        .optional(),
+    }),
+  ),
   "docs.readBytes": defineChannel(
     "docs.readBytes",
     docsByteWindowSchema.extend({ workbenchId: docsScopeSchema.shape.workbenchId }),
@@ -711,12 +731,29 @@ export const channels = {
     z.strictObject({ sessionId: sessionIdSchema }),
     z.strictObject({}),
   ),
+  "session.image.attach": defineChannel(
+    "session.image.attach",
+    z.strictObject({
+      workbenchId: workbenchIdSchema,
+      sessionId: sessionIdSchema,
+      source: composerImageSourceSchema,
+    }),
+    composerImageSchema,
+  ),
+  "session.image.capability": defineChannel(
+    "session.image.capability",
+    z.strictObject({ workbenchId: workbenchIdSchema, sessionId: sessionIdSchema }),
+    z.strictObject({ acceptsImages: z.boolean() }),
+  ),
   "session.send": defineChannel(
     "session.send",
-    z.strictObject({
-      sessionId: sessionIdSchema,
-      text: z.string().refine((value) => value.trim().length > 0),
-    }),
+    z
+      .strictObject({
+        sessionId: sessionIdSchema,
+        text: z.string(),
+        images: messageImagesSchema.optional(),
+      })
+      .refine(({ text, images }) => text.trim().length > 0 || !!images?.length),
     z.strictObject({ turnId: z.string().min(1), messageId: z.string().min(1) }),
   ),
   "session.stop": defineChannel(
@@ -760,6 +797,11 @@ export const channels = {
     "providers.discover",
     providerDiscoveryRequestSchema,
     providerDiscoverySchema,
+  ),
+  "providers.image.capability": defineChannel(
+    "providers.image.capability",
+    z.strictObject({ modelRef: modelReferenceSchema.nullable() }),
+    z.strictObject({ acceptsImages: z.boolean() }),
   ),
   "providers.models": defineChannel("providers.models", providerModelsRequestSchema, providerCatalogSchema),
   "providers.test": defineChannel("providers.test", providerTestRequestSchema, providerTestResultSchema),

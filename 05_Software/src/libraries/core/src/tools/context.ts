@@ -1,3 +1,4 @@
+import type { ImageContent } from "@earendil-works/pi-ai";
 import type { PermissionMode } from "@vera/shared";
 import type { z } from "zod";
 import type { ArtifactHost } from "../artifacts/store.js";
@@ -26,6 +27,7 @@ export interface ToolContext {
   delegation?: DelegatedSessionToolHost;
   terminals?: TerminalReader;
   root: string;
+  hasDeliveredImage?: (path: string) => boolean;
   permissionMode?: () => PermissionMode;
   bypassSignal?: () => AbortSignal;
   /** Live host-owned user grants; only ordinary file tools and command cwd use them. */
@@ -56,6 +58,7 @@ export interface ToolDefinition {
   /** `program` tools ask the approval gate per command line, in every permission mode. */
   class: "read" | "write" | "session" | "program";
   description: string;
+  requiresImages?: true;
   params: z.ZodType;
   prepare?(ctx: ToolContext, args: unknown, signal: AbortSignal): Promise<PreparedChange>;
   execute(
@@ -63,7 +66,7 @@ export interface ToolDefinition {
     args: unknown,
     signal: AbortSignal,
     callId?: string,
-  ): Promise<Record<string, unknown>>;
+  ): Promise<Record<string, unknown> & { image?: ImageContent }>;
 }
 export function createToolContext(root: string, workers?: WorkerPool): ToolContext {
   return { root, ...(workers ? { workers } : {}), lastReads: new Map() };

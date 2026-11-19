@@ -74,8 +74,13 @@ function sanitizeTodos(items: TodoItem[], scrub: (text: string) => string): Todo
   }));
 }
 type SessionItem = SessionState["items"][number];
-function sanitizeItem(item: SessionItem, scrub: (text: string) => string): SessionItem {
-  if (item.kind === "user") return { ...item, text: scrub(item.text) };
+function sanitizeItem(
+  item: SessionItem,
+  scrub: (text: string) => string,
+  imagePath: (path: string) => string,
+): SessionItem {
+  if (item.kind === "user")
+    return { ...item, text: scrub(item.text), ...(item.images && { images: item.images.map(imagePath) }) };
   if (item.kind === "assistant")
     return {
       ...item,
@@ -97,12 +102,13 @@ function sanitizeItem(item: SessionItem, scrub: (text: string) => string): Sessi
 export function sanitizeSessionSnapshot(
   snapshot: SessionState,
   scrub: (text: string) => string,
+  imagePath = scrub,
 ): SessionState {
   return {
     ...snapshot,
     title: scrub(snapshot.title).slice(0, 60),
     modelRef: scrubModel(snapshot.modelRef, scrub),
-    items: snapshot.items.map((item) => sanitizeItem(item, scrub)),
+    items: snapshot.items.map((item) => sanitizeItem(item, scrub, imagePath)),
     approvals: snapshot.approvals.map((a) => ({
       ...a,
       path: scrub(a.path),
@@ -119,8 +125,9 @@ export function sanitizeSessionSnapshot(
 export function rendererSessionSnapshot(
   snapshot: SessionState,
   scrub: (text: string) => string,
+  imagePath = scrub,
 ): SessionState {
-  return boundSessionState(sanitizeSessionSnapshot(snapshot, scrub));
+  return boundSessionState(sanitizeSessionSnapshot(snapshot, scrub, imagePath));
 }
 
 /** Preserve schema fields/identities; redact user text and arbitrary extension keys/values. */
@@ -128,6 +135,7 @@ export function sanitizeEvent(
   envelope: EventEnvelope,
   scrub: (text: string) => string,
   protect = scrub,
+  imagePath = scrub,
 ): EventEnvelope {
   const extra = (value: unknown): unknown => scrubExtra(value, scrub);
   const warnings = (items: WorkbenchWarning[]) =>
@@ -213,6 +221,8 @@ export function sanitizeEvent(
       if (event.title !== undefined) Reflect.set(result, "title", scrub(event.title).slice(0, 60));
       if (event.modelRef !== undefined) Reflect.set(result, "modelRef", scrubModel(event.modelRef, scrub));
     }
+    if ((event.type === "message.user" || event.type === "message.queued") && event.images)
+      Reflect.set(result, "images", event.images.map(imagePath));
     if (event.type === "tool.started") Reflect.set(result, "args", extra(event.args));
     if ((event.type === "approval.requested" || event.type === "tool.done") && event.program)
       Reflect.set(result, "program", scrubProgram(event.program, scrub));

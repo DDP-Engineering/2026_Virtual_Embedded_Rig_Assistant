@@ -15,7 +15,7 @@ import { WorkbenchFolders } from "./workbench-folders.js";
 import { WorkbenchInterface } from "./workbench-interface.js";
 import { WorkbenchPlugins } from "./workbench-plugins.js";
 import { WorkbenchPrivacy } from "./workbench-privacy.js";
-import { WorkbenchTools } from "./workbench-tools.js";
+import { WorkbenchCoreTools } from "./workbench-tools.js";
 
 export const configSections = [
   "general",
@@ -262,7 +262,13 @@ export function WorkbenchConfigForm({
               </label>
             </>
           )}
-          {section === "tools" && <WorkbenchTools disabled={config.tools.disabled} toggle={toggleTool} />}
+          {section === "tools" && (
+            <WorkbenchCoreTools
+              disabled={config.tools.disabled}
+              modelRef={config.agent.model}
+              toggle={toggleTool}
+            />
+          )}
           {section === "embeddings" && (
             <div className="index-columns">
               <div className="index-card">

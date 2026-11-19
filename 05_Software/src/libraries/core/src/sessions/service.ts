@@ -1,8 +1,10 @@
 import { isAbsolute } from "node:path";
 import type { Message, ToolCall, ToolResultMessage } from "@earendil-works/pi-ai";
 import {
+  acceptsImages,
   type ChangeDetail,
   type ChangeSummary,
+  type ComposerImageSource,
   changeIdSchema,
   isLiveSessionEvent,
   type MaskingArea,
@@ -29,6 +31,7 @@ import { type ApprovalDecision, ApprovalGate, requestSha256 } from "../agent/app
 import { issuedLogRefs, validateCitations } from "../agent/citations.js";
 import { ContextCompactor } from "../agent/compaction.js";
 import { ContextPolicy } from "../agent/context.js";
+import { imagePaths } from "../agent/message-images.js";
 import type { PermissionEngine } from "../agent/permissions.js";
 import { ReferenceRuntime, toolResult } from "../agent/runtime.js";
 import type { AgentRuntime, RuntimeEvent, RuntimeHost, StopReason } from "../agent/types.js";
@@ -57,6 +60,7 @@ import type { TerminalReader } from "../tools/terminal-read.js";
 import type { WebDownloads } from "../web/downloads.js";
 import type { WebProvider } from "../web/provider.js";
 import { WriteQueue } from "../workbench/write-queue.js";
+import { attachComposerImage } from "./composer-images.js";
 import {
   type DelegatedLaunch,
   type DelegatedLaunchRequest,
@@ -68,6 +72,7 @@ import {
 import { delegatedTurnStatus } from "./delegation-monitor.js";
 import { SessionHub, type SessionListener } from "./hub.js";
 import { MaskingContextPolicy, maskMessages, maskModelStream, maskValue } from "./masking.js";
+import { projectMessageImages, SessionImages } from "./session-images.js";
 import { timedGateway } from "./timed-gateway.js";
 
 export interface SessionHost {
@@ -703,6 +708,20 @@ export class SessionService {
       ? value
       : undefined;
   }
+  async attachImage(id: string, source: ComposerImageSource) {
+    const authorize = () => {
+      const row = this.row(id);
+      this.writable();
+      if (row.archived) throw veraError("DENIED");
+      if (row.status === "awaiting_approval" || this.deleting.has(id)) throw veraError("BUSY");
+    };
+    return attachComposerImage(this.host.root, id, source, this.host.managedRoots, authorize);
+  }
+  async imageCapability(id: string) {
+    const modelRef = this.host.model(this.row(id).model_ref);
+    await this.host.gateway.prepareModel?.(modelRef);
+    return { acceptsImages: acceptsImages(this.host.gateway.capabilities(modelRef)) };
+  }
   async reasoningOptions(id: string) {
     const row = this.row(id);
     const modelRef = this.host.model(row.model_ref);
@@ -873,9 +892,19 @@ export class SessionService {
     }
   }
   send(id: string, text: string): { turnId: string; messageId: string } {
+    return this.admitMessage(id, text);
+  }
+  /** Validate files before admitting the message to the current or next turn. */
+  async sendWithImages(id: string, text: string, images: string[]) {
+    this.row(id);
+    this.writable();
+    const paths = await new SessionImages(this.host.root, this.host.managedRoots).validate(images);
+    return this.admitMessage(id, text, paths.length ? paths : undefined);
+  }
+  private admitMessage(id: string, text: string, images?: string[]): { turnId: string; messageId: string } {
     const current = this.row(id);
     this.writable();
-    if (!text.trim()) throw veraError("INVALID");
+    if (!text.trim() && !images?.length) throw veraError("INVALID");
     if (this.closing || this.deleting.has(id)) throw veraError("BUSY");
     const active = this.active.get(id);
     if (active) {
@@ -897,6 +926,7 @@ export class SessionService {
           type: "message.queued",
           messageId,
           text,
+          ...(images && { images }),
           timestamp: this.host.clock.now().getTime(),
         });
       })();
@@ -904,10 +934,16 @@ export class SessionService {
       return { turnId: active.turnId, messageId };
     }
     const row = this.idle(id);
-    return this.startTurn(row, text, !!this.delegations.child(id));
+    return this.startTurn(row, text, !!this.delegations.child(id), undefined, images);
   }
 
-  private startTurn(row: SessionRow, text: string, delegated: boolean, staged?: StagedTurn) {
+  private startTurn(
+    row: SessionRow,
+    text: string,
+    delegated: boolean,
+    staged?: StagedTurn,
+    images?: string[],
+  ) {
     const id = row.id;
     if (
       delegated &&
@@ -931,6 +967,7 @@ export class SessionService {
     const mode = () => (delegated ? "read-only" : this.row(id).permission_mode);
     ctx.permissionMode = mode;
     ctx.additionalFolders = () => (delegated ? [] : (this.host.additionalFolders?.() ?? []));
+    ctx.hasDeliveredImage = (path) => this.messages.hasUserImage(id, path);
     ctx.bypassSignal = () => {
       if (this.row(id).permission_mode !== "bypass") return AbortSignal.abort();
       let scope = this.bypassScopes.get(id);
@@ -1074,6 +1111,12 @@ export class SessionService {
           if (permissions && !(await permissions.allow({ sessionId: id, mode: mode(), tool, args }, signal)))
             throw Error("Tool permission denied.");
           this.writable();
+          if (
+            tool.requiresImages &&
+            (!acceptsImages(this.host.gateway.capabilities(model)) ||
+              this.host.disabledTools?.includes(tool.name))
+          )
+            throw Error("Tool is unavailable.");
           try {
             const result = await tool.execute(args, signal, callId);
             return result;
@@ -1096,13 +1139,18 @@ export class SessionService {
     const runtimeHost: RuntimeHost = {
       log: (message) => this.host.log?.(this.host.scrub?.(message) ?? message),
       steering: () =>
-        this.hub
-          .get(id)
-          .snapshot.items.flatMap((item) =>
-            item.kind === "user" && item.pending
-              ? [{ messageId: item.id, text: item.text, timestamp: item.timestamp ?? 0 }]
-              : [],
-          ),
+        this.hub.get(id).snapshot.items.flatMap((item) =>
+          item.kind === "user" && item.pending
+            ? [
+                {
+                  messageId: item.id,
+                  text: item.text,
+                  ...(item.images && { images: item.images }),
+                  timestamp: item.timestamp ?? 0,
+                },
+              ]
+            : [],
+        ),
       gateway: {
         ...gateway,
         ...(delegated && gateway.prepareModel
@@ -1116,21 +1164,34 @@ export class SessionService {
         stream: async function* (request) {
           await durable();
           request.signal.throwIfAborted();
-          const tools = request.tools.filter((tool) =>
-            delegated
-              ? offeredToolNames.has(tool.name)
-              : mode() !== "read-only" || (!writeToolNames.has(tool.name) && tool.name !== "run_command"),
-          );
-          // Settings may change while durable events are published after runtime budgeting.
-          const capabilities = gateway.capabilities(request.model, request.maxOutputTokens);
+          // Settings may change while durable events are published or attachments are read.
+          const caps = () => gateway.capabilities(request.model, request.maxOutputTokens);
+          let capabilities = caps();
+          let messages = request.messages;
+          if (messages.some((message) => imagePaths(message).length)) {
+            const reader = acceptsImages(capabilities)
+              ? new SessionImages(self.host.root, self.host.managedRoots)
+              : undefined;
+            messages = await projectMessageImages(request.messages, request.signal, reader);
+            capabilities = caps();
+            if (reader && !acceptsImages(capabilities))
+              messages = await projectMessageImages(request.messages, request.signal);
+          }
+          request.signal.throwIfAborted();
           if (initialReasoning && !capabilities.reasoningOptions?.includes(initialReasoning)) {
             yield { type: "error", error: veraError("INVALID"), aborted: false };
             return;
           }
-          const view = contextPolicy.prepare(
-            { system: request.system, tools, messages: request.messages },
-            capabilities,
-          );
+          const readOnly = mode() === "read-only";
+          const tools = request.tools.filter((tool) => {
+            if (delegated) return offeredToolNames.has(tool.name);
+            if (readOnly && (writeToolNames.has(tool.name) || tool.name === "run_command")) return false;
+            return (
+              tool.name !== "view_image" ||
+              (acceptsImages(capabilities) && !self.host.disabledTools?.includes(tool.name))
+            );
+          });
+          const view = contextPolicy.prepare({ system: request.system, tools, messages }, capabilities);
           if (!view.fits) {
             yield { type: "error", error: veraError("CONTEXT_LIMIT"), aborted: false };
             return;
@@ -1323,7 +1384,7 @@ export class SessionService {
     if (staged) staged.discard = discard;
     try {
       turn.done = runtime
-        .send(text)
+        .send(text, images)
         .then(async (result) => {
           await processing;
           if (failed) result = { stopReason: "error" };

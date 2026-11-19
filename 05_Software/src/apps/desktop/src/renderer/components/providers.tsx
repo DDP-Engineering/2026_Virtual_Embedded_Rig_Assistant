@@ -7,6 +7,7 @@ import { Chatgpt } from "./chatgpt.js";
 import { ConsentDialog } from "./consent-dialog.js";
 import { ErrorMessage } from "./error-message.js";
 import { LmStudioEditor } from "./lmstudio-editor.js";
+import { ProviderImageSwitch } from "./provider-image-switch.js";
 import { ProviderTest } from "./provider-test.js";
 
 type Custom = ProviderList["custom"][number];
@@ -427,6 +428,7 @@ function CustomEditor({
   const [name, setName] = useState(initial?.name ?? presets[preset].name);
   const [url, setUrl] = useState(initial?.baseUrl ?? presets[preset].url);
   const [model, setModel] = useState(initial?.model ?? "");
+  const [imageModels, setImageModels] = useState(initial?.imageModels ?? []);
   const [context, setContext] = useState(String(initial?.contextWindow ?? 32768));
   const [output, setOutput] = useState(String(initial?.maxOutputTokens ?? 4096));
   const [key, setKey] = useState("");
@@ -452,6 +454,7 @@ function CustomEditor({
               model,
               contextWindow: Number(context),
               maxOutputTokens: Number(output),
+              imageModels,
             },
             ...(clear ? { apiKey: "" } : key ? { apiKey: key } : {}),
           },
@@ -490,6 +493,7 @@ function CustomEditor({
           required
           maxLength={200}
         />
+        <ProviderImageSwitch model={model.trim()} imageModels={imageModels} setImageModels={setImageModels} />
         <label htmlFor={`${prefix}-context`}>{t("providers.contextWindow")}</label>
         <input
           id={`${prefix}-context`}

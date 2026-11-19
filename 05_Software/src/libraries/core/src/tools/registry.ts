@@ -1,3 +1,4 @@
+import type { ImageContent } from "@earendil-works/pi-ai";
 import { type BuiltinToolName, builtinToolNames, delegatedSessionToolNames } from "@vera/shared";
 import { toolSpecs } from "../agent/tool.js";
 import type { ToolDef } from "../agent/types.js";
@@ -29,6 +30,7 @@ import { partsSearchTool } from "./parts.js";
 import { readTool } from "./read.js";
 import { terminalReadTool } from "./terminal-read.js";
 import { todoTool } from "./todo.js";
+import { viewImageTool } from "./view-image.js";
 import { webReadTool, webSearchTool } from "./web.js";
 import { webDownloadTool } from "./web-download.js";
 import { writeTool } from "./write.js";
@@ -36,6 +38,7 @@ import { writeTool } from "./write.js";
 const builtinDefinitions: Record<BuiltinToolName, ToolDefinition> = {
   terminal_read: terminalReadTool,
   read: readTool,
+  view_image: viewImageTool,
   list: listTool,
   glob: globTool,
   grep: grepTool,
@@ -158,6 +161,7 @@ export function capToolResult(value: Record<string, unknown>, protectedStrings: 
 
 export interface ToolOutcome {
   text: string;
+  image?: ImageContent;
   truncated: boolean;
   isError: boolean;
 }
@@ -217,7 +221,7 @@ export class ToolRegistry {
     disabled: readonly string[] = [],
     callId?: string,
   ): Promise<ToolOutcome> {
-    let result: Record<string, unknown>;
+    let result: Awaited<ReturnType<ToolDefinition["execute"]>>;
     let isError = false;
     let effectiveSignal = signal;
     try {
@@ -271,11 +275,10 @@ export class ToolRegistry {
       };
     }
     try {
-      const capped = this.capResult(ctx, name, result);
-      return {
-        ...capped,
-        isError: isError || result.isError === true || JSON.parse(capped.text).isError === true,
-      };
+      const { image, ...data } = result;
+      const capped = this.capResult(ctx, name, data);
+      const failed = isError || data.isError === true || JSON.parse(capped.text).isError === true;
+      return { ...capped, isError: failed, ...(!failed && image && { image }) };
     } catch {
       return {
         text: '{"isError":true,"error":"Tool result is not valid JSON. Retry or narrow the request."}',
@@ -310,6 +313,7 @@ export class ToolRegistry {
           ? `${tool.description} Bypass is active: agent input paths may be absolute or relative to the workbench, including outside and ignored locations.`
           : tool.description,
       params: tool.params,
+      ...(tool.requiresImages && { requiresImages: true as const }),
       ...(tool.publish
         ? {
             publish: (args: unknown, output: string) => {
@@ -323,7 +327,7 @@ export class ToolRegistry {
       execute: async (args, signal, callId) => {
         const outcome = await this.execute(ctx, tool.name, args, signal, blocked, callId);
         if (outcome.isError) throw Error(outcome.text);
-        return outcome.text;
+        return outcome.image ? { text: outcome.text, image: outcome.image } : outcome.text;
       },
     }));
   }

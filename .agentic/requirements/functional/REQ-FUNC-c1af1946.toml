@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-FUNC-c1af1946"
+title = "Import composer image files"
+status = "active"
+requirement = "When a user pastes, drops or picks a supported local image in the composer, VERA shall save the original bytes under .vera/attachments/<session>/ in the open primary workbench."
+verification = "Paste a screenshot, pick and drop local images, and compare each persisted file with the input bytes using its attachment path."
+affected_paths = ["05_Software/src/libraries/core/src/sessions/composer-images.ts","05_Software/src/apps/desktop/src/renderer/hooks/image-drafts.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/sessions/composer-images.test.ts","05_Software/tests/e2e/composer-images.spec.ts"]
+created = 2026-11-19
+updated = 2026-11-19

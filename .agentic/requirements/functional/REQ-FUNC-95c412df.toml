@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-95c412df"
+
+title = "Expose ChatGPT model input modalities"
+
+status = "active"
+
+requirement = """
+When VERA resolves a ChatGPT model from its account catalog, the gateway shall expose the model's supported input modalities in its capabilities and provider catalog, using text when the catalog supplies no recognized modality.
+"""
+
+verification = "Mock an authenticated catalog with image, explicit text and omitted modality metadata. Compare the model list and resolved capabilities after preparation."
+
+affected_paths = ["05_Software/src/libraries/core/src/llm/providers.ts", "05_Software/src/libraries/core/src/llm/chatgpt-catalog.ts", "05_Software/src/libraries/shared/src/providers.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/llm/subscription.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-19
+updated = 2026-11-19

@@ -66,6 +66,7 @@ export class ProviderSettings {
           supportsTools,
           protocol,
           models,
+          imageModels,
         } = config;
         return {
           id: `custom:${slug}`,
@@ -78,6 +79,7 @@ export class ProviderSettings {
           ...(supportsTools === undefined ? {} : { supportsTools }),
           ...(protocol ? { protocol } : {}),
           ...(models ? { models } : {}),
+          ...(imageModels ? { imageModels } : {}),
           ...(await metadata(`custom:${slug}`, true)),
         };
       }),

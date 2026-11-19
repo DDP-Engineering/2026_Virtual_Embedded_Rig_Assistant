@@ -109,7 +109,14 @@ async function setup(overrides: Partial<SessionHost> = {}) {
       const tool = offered.get(model)?.find((entry) => entry.name === name);
       expect(tool, `${name} is offered to ${model}`).toBeDefined();
       if (!tool) throw Error(`Missing ${name}`);
-      return tool;
+      return {
+        ...tool,
+        async execute(...args: Parameters<ToolDef["execute"]>) {
+          const output = await tool.execute(...args);
+          if (typeof output !== "string") throw Error("Delegation tools must return text only.");
+          return output;
+        },
+      };
     },
   };
 }

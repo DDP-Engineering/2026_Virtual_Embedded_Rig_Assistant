@@ -104,13 +104,19 @@ export function SessionWorkspace({
   }
   const stopDialog = useRef<HTMLDialogElement>(null);
   const stopOrigin = useRef<HTMLElement | null>(null);
-  async function send(text: string) {
-    if (!id || !text.trim() || pending || readOnly || view?.state.status === "awaiting_approval")
+  async function send(text: string, images?: string[]) {
+    if (
+      !id ||
+      (!text.trim() && !images?.length) ||
+      pending ||
+      readOnly ||
+      view?.state.status === "awaiting_approval"
+    )
       return false;
     setPending(true);
     setFailure(undefined);
     try {
-      await api.invoke("session.send", { sessionId: id, text });
+      await api.invoke("session.send", { sessionId: id, text, ...(images?.length && { images }) });
       changed();
       return true;
     } catch (e) {
@@ -235,13 +241,14 @@ export function SessionWorkspace({
       )}
       {view && (
         <Transcript
+          workbenchId={workbenchId}
           detail={detail}
           state={view.state}
           reasoning={view.reasoning}
           updates={view.updates}
           retry={() => {
             const last = [...view.state.items].reverse().find((i) => i.kind === "user");
-            if (last?.kind === "user") void send(last.text);
+            if (last?.kind === "user") void send(last.text, last.images);
           }}
           search={search}
           sessionId={id}
@@ -256,6 +263,7 @@ export function SessionWorkspace({
           state={view.state}
           inspectorControls={<ContextIndicator state={view.state} open={() => setInspector(true)} />}
           disabled={readOnly || pending}
+          archived={archived}
           permissionLocked={!!delegation}
           send={send}
           stop={() => void stop()}

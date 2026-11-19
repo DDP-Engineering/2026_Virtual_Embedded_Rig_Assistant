@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-b35c45ad"
+
+title = "Keep image notes through compaction"
+
+status = "active"
+
+requirement = """
+When compacting a completed historical exchange with an image attachment, VERA shall replace its image with a one-line path note in the summary request and derived context.
+"""
+
+verification = "Force compaction past the image budget threshold and inspect summary, normal and cached views for each path and its note while keeping current image references."
+
+affected_paths = ["05_Software/src/libraries/core/src/agent/compaction.ts", "05_Software/src/libraries/core/src/agent/message-images.ts", "05_Software/src/libraries/core/src/agent/context.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/agent/compaction.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-19
+updated = 2026-11-19

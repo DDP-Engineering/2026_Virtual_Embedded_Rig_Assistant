@@ -219,6 +219,7 @@ export const emitAppEvent = createEventEmitter(
       envelope,
       (text) => (envelope.topic === "session" ? sessionContent(text) : credentials.scrub(text)),
       (text) => credentials.scrub(text),
+      sessionImageIdentity,
     );
   },
 );
@@ -269,6 +270,9 @@ const workbench = new WorkbenchService(
   indexer.processor,
 );
 const maskingFor = createMaskingResolver(() => settings.get().settings);
+function sessionImageIdentity(path: string): string {
+  return display.sessionImagePath(workbench.getSnapshot().config.id, path);
+}
 function sessionContent(text: string): string {
   return maskingFor(workbench.getSnapshot().config, "agent") ? credentials.scrub(text) : text;
 }
@@ -892,6 +896,7 @@ ipcMain.handle(
       "docs.readBytes": ({ workbenchId, path, offset, length, revision }) =>
         display.readBytes(workbenchId, path, offset, length, revision),
       "docs.stat": ({ workbenchId, path }) => display.stat(workbenchId, path),
+      "docs.imageThumbnail": ({ workbenchId, path }) => display.imageThumbnail(workbenchId, path),
       // The Docs tree's OS actions go through the tree's confinement first (TASK-eae3a69e).
       "docs.openers": () => ({ apps: [...openers().keys()] }),
       "docs.openWith": ({ workbenchId, path, app }) =>
@@ -1117,7 +1122,7 @@ ipcMain.handle(
           const value = s.get(sessionId);
           return {
             ...value,
-            snapshot: rendererSessionSnapshot(value.snapshot, sessionContent),
+            snapshot: rendererSessionSnapshot(value.snapshot, sessionContent, sessionImageIdentity),
           };
         }),
       "session.item.detail": ({ sessionId, itemId, field }) =>
@@ -1139,10 +1144,29 @@ ipcMain.handle(
           await s.delete(sessionId);
           return {};
         }),
-      "session.send": ({ sessionId, text }) =>
-        sessions.run((s) => {
+      "session.image.attach": ({ workbenchId, sessionId, source }) =>
+        sessions.run((service) => {
+          openWorkbenchFolder(workbenchId);
+          if (credentials.containsSecret("path" in source ? source.path : source.name))
+            throw veraError("INVALID");
+          if ("path" in source && /__vera_display_[A-Za-z0-9_-]+\.(?:\/|$)/.test(source.path))
+            throw veraError("DENIED");
+          return service.attachImage(sessionId, source);
+        }, false),
+      "session.image.capability": ({ workbenchId, sessionId }) =>
+        sessions.imageCapability(workbenchId, sessionId),
+      "session.send": ({ sessionId, text, images }) =>
+        sessions.run(async (s) => {
           if (credentials.containsSecret(text)) throw { code: "INVALID", messageKey: "errors.INVALID" };
-          const sent = s.send(sessionId, text);
+          const sent = images?.length
+            ? await s.sendWithImages(
+                sessionId,
+                text,
+                images.map((path) =>
+                  display.resolveSessionImagePath(workbench.getSnapshot().config.id, path),
+                ),
+              )
+            : s.send(sessionId, text);
           embeddingWarmup.request(workbench.getSnapshot().config.id);
           return sent;
         }),
@@ -1184,6 +1208,7 @@ ipcMain.handle(
       "session.mode.set": ({ sessionId, mode }) =>
         sessions.run((s) => sanitizeSessionSummary(s.setMode(sessionId, mode), sessionContent)),
       "providers.discover": (request) => modelGateway.discover(request),
+      "providers.image.capability": ({ modelRef }) => modelGateway.imageCapability(modelRef),
       "providers.models": ({ id }) => modelGateway.models(id),
       "providers.test": ({ id, model }) => modelGateway.test(id, model),
       "providers.list": () => providers.list(),

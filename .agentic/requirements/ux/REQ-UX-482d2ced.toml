@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-UX-482d2ced"
+title = "Open transcript images in the file viewer"
+status = "active"
+requirement = "When a user activates a user-message image thumbnail, VERA shall open that image in the workbench file viewer."
+verification = "Activate the restored thumbnails by keyboard and pointer and verify the viewer decodes each selected source at its original dimensions."
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/session/transcript-images.tsx", "05_Software/src/apps/desktop/src/renderer/components/documents/viewer-context.tsx", "05_Software/src/apps/desktop/src/renderer/components/documents/file-mode.ts"]
+linked_tests = ["05_Software/tests/e2e/transcript-images.spec.ts", "05_Software/tests/e2e/composer-images.spec.ts"]
+created = 2026-11-19
+updated = 2026-11-19

@@ -13,6 +13,10 @@ export const modelReferenceSchema = z
   .max(288)
   .regex(/^(?:openai|chatgpt|replay|custom:[a-z0-9]+(?:-[a-z0-9]+)*)\/[^\s]+$/);
 export const modelCapabilitiesSchema = z.strictObject({
+  input: z
+    .array(z.enum(["text", "image"]))
+    .min(1)
+    .max(2),
   contextWindow: z.number().int().positive().max(Number.MAX_SAFE_INTEGER),
   maxOutputTokens: z.number().int().positive().max(Number.MAX_SAFE_INTEGER),
   safetyMargin: z.number().int().positive().max(Number.MAX_SAFE_INTEGER),
@@ -20,6 +24,9 @@ export const modelCapabilitiesSchema = z.strictObject({
   supportsTools: z.boolean().optional(),
   reasoningOptions: z.array(reasoningOptionSchema).max(16).optional(),
 });
+export function acceptsImages(model: { input: readonly ("text" | "image")[] }): boolean {
+  return model.input.includes("image");
+}
 export const gatewayProviderIdSchema = z.union([providerIdSchema, z.literal("chatgpt"), z.literal("replay")]);
 export const providerModelsRequestSchema = z.strictObject({ id: gatewayProviderIdSchema });
 export const providerTestRequestSchema = z.strictObject({
@@ -76,6 +83,11 @@ const configFields = {
   supportsTools: z.boolean().optional(),
   protocol: z.literal("lmstudio").optional(),
   models: z.array(modelProfileSchema).max(10000).optional(),
+  imageModels: z
+    .array(z.string().min(1).max(200).regex(/^\S+$/))
+    .max(10000)
+    .refine((ids) => new Set(ids).size === ids.length)
+    .optional(),
 };
 function budget(value: {
   contextWindow: number;

@@ -10,6 +10,7 @@ import type { RuntimeEvent } from "./types.js";
 const caps = {
   contextWindow: 6000,
   maxOutputTokens: 1000,
+  input: ["text" as const],
   inputBudget: 3976,
   safetyMargin: 1024,
   supportsTools: true,
@@ -342,4 +343,27 @@ it("settles running compaction usage after abort without dispatching a normal re
   expect(usage[0]).toMatchObject({ compactionStatus: "running" });
   expect(usage.at(-1)).toMatchObject({ compactionStatus: "failed" });
   expect(events.at(-1)).toMatchObject({ type: "turn.done", stopReason: "aborted" });
+});
+
+it("replaces compacted images with durable path notes in successive request views", async () => {
+  const historical = { role: "user" as const, content: "Earlier board", timestamp: 0, images: ["board.png"] };
+  const current = { role: "user" as const, content: "Current scope", timestamp: 2, images: ["scope.png"] };
+  const compactor = new ContextCompactor();
+  const vision = { ...caps, contextWindow: 10000, input: ["text", "image"] as const };
+  const input = request([historical, answer("a".repeat(3500)), current]);
+  const summarize = vi.fn(async (_input) => summary());
+  const result = await compactor.prepare(input, { ...vision, input: [...vision.input] }, policy, summarize);
+  expect(result.compactionStatus).toBe("completed");
+  const summaryRequest = JSON.stringify(summarize.mock.calls[0]?.[0].messages);
+  expect(summaryRequest).toContain("board.png");
+  expect(summaryRequest).toContain("Image omitted during compaction");
+  expect(summaryRequest).not.toContain('"images":');
+  expect(summaryRequest).not.toContain("scope.png");
+  expect(JSON.stringify(result.messages[0])).toContain("Image omitted during compaction");
+  expect(JSON.stringify(result.messages[0])).toContain("board.png");
+  expect(result.messages.at(-1)).toEqual(current);
+  expect(input.messages[0]).toEqual(historical);
+  const cached = await compactor.prepare(input, { ...vision, input: [...vision.input] }, policy, summarize);
+  expect(summarize).toHaveBeenCalledTimes(1);
+  expect(cached.messages).toEqual(result.messages);
 });

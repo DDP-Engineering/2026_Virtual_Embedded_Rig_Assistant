@@ -33,6 +33,8 @@ budgets and abort. The browser mock seeds six selectable states and an edit appr
 
 - The composer places a localized reasoning picker immediately after Model. It offers Default plus the model-declared native levels and hides for models without declared support. Its session-keyed metadata follows effective session/workbench/app model configuration; saves use an expected-model guard and confirmed responses. Read-only/pending saves disable editing; running or awaiting-approval turns can select the next request level. No polling or full-history replay is needed for reasoning metadata.
 
+- Image inspection activity shows a localized label and the path. The transcript and exports receive the text tool result.
+
 - App owns one confirmed workbench snapshot shared with Welcome, Welcome/Settings/session memory routes and per-workbench selected IDs in localStorage. Session chat shows workbench-scoped delegation links with the initial turn state from the session list. A one-time request selects and focuses the linked Chat transcript even when document tabs are restored. The child labels its own delegated turn status separately from the parent link. The child uses the ordinary Stop and approval actions and displays the locked read-only tool mode. Proof: tests/e2e/session-delegation.spec.ts.
 - SessionList offers workbench-scoped title/message search, localized empty/loading/error results, New/select/rename/confirmed delete/status; Ctrl+N creates when writable.
 - SessionList offers row-scoped native Markdown/JSON export with localized completion/cancel/errors in read-only or writable workbenches. SessionWorkspace composes transcript/composer/meter and Ctrl+F search with localized match count and per-message match text; closing search restores transcript focus. Plain Escape confirms Stop in a writable active turn; global actions yield to modal/handled/composing/repeated keys.
@@ -50,8 +52,15 @@ budgets and abort. The browser mock seeds six selectable states and an edit appr
   message box as chips (name, path as title, "Remove attachment: <path>") and sends
   `withMentions(text, paths)` (lib/attachments.ts): the text, then `@path` mentions on a new line
   (`@"path"` with whitespace), or the mentions alone; at most 20, no duplicates; an accepted send
-  clears the sent chips, a failed one keeps text and chips. session.send stays text only
-  (REQ-UX-b5edf930, REQ-UX-f8ec3a43, REQ-FUNC-47287974).
+  clears the sent chips, a failed one keeps text and chips (REQ-UX-b5edf930, REQ-UX-f8ec3a43,
+  REQ-FUNC-47287974). Raster images use a separate per-workbench/session draft. Paste, external drop and Attach image
+  import the original through main. The Files menu and drag attach an existing path. The composer displays up to
+  eight removable Blob thumbnail chips. Image sends wait for the pending capability lookup so the composer can warn when the effective model receives only paths. Image-only drafts
+  are sendable and use the same acknowledgment and retry behavior. See `composer-images.spec.ts`.
+- User-message image paths appear as bounded thumbnails in the visible transcript. Thumbnail buttons open the
+  file viewer in Rendered mode and the standard keyboard return restores the opener. A missing or unreadable
+  image shows its persisted workbench path under Display masking. Visible attachments refresh when Chat is
+  selected again or the window regains focus. Rows release thumbnail resources when they leave the viewport. See `transcript-images.spec.ts`.
 - ApprovalCard renders tool/path/bytes and coloured +/- patch lines inline beside the tool. Approve, Deny and Approve-and-switch invoke the exact stored digest. Focused A/D has no modifiers/repeat/composition; pending, decided and read-only cards lock actions and errors remain visible.
 - Program approval cards display canonical outside directory arguments under the localized Outside directories label without hashes; file hashes stay in their own list. `components/session/approval-card.test.ts` covers the metadata list.
 - Composer exposes the confirmed session mode during active turns; text/Enter/Send remain available while running, alongside Stop; approval waits lock text/sending and active turns lock model selection. Approval events invalidate sidebar summaries; new sessions inherit workbench defaults.
@@ -130,6 +139,7 @@ budgets and abort. The browser mock seeds six selectable states and an edit appr
 | Stream/resume/Stop | use-session-events, workspace | workspace.test.ts; chat-ui.spec.ts |
 | Markdown/citations/tools | markdown, transcript, disclosure; shared refs.ts | markdown.test.ts; workspace.test.ts; tests/e2e/citations.spec.ts |
 | Composer/models/paths | composer | workspace.test.ts |
+| Sent image previews, viewer activation and missing paths | transcript-images; main/display-documents | transcript-images.spec.ts; display-documents.test.ts |
 | Permission picker/approval cards/keys | composer,approval-card,transcript,use-session-events | workspace.test.ts; tests/e2e/approvals.spec.ts; run_program cards (risk badge, command, notes, file hashes, typed word): tests/e2e/program-approvals.spec.ts |
 | Plan task list | plan-tab;mock sessions | plan-tab.test.ts;tests/e2e/plan.spec.ts |
 | Usage/Context | usage-meter, context-tab | usage-meter.test.ts; workspace.test.ts |
@@ -137,6 +147,8 @@ budgets and abort. The browser mock seeds six selectable states and an edit appr
 | Progressive transcript mount (newest first, idle chunks) | transcript | transcript-progressive.test.ts; `npm run perf:sessions` (`firstScreenMs`) |
 
 ## Key behaviors
+
+- REQ-UX-9c6aa149, REQ-UX-482d2ced, REQ-UX-16e08c34 govern durable transcript thumbnails, viewer activation and unavailable path labels.
 
 - REQ-UX-52f83eb7 — contextual global shortcuts and accessible search feedback.
 - REQ-UX-4bea0001 — keyboard navigation and session mutations.

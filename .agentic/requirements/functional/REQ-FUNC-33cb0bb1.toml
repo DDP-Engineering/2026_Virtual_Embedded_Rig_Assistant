@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-33cb0bb1"
+
+title = "Refuse unsupported or oversized image tool inputs"
+
+status = "active"
+
+requirement = """
+If a view_image file exceeds 20 MiB or has an unsupported or malformed raster format, VERA shall return a tool error without image data.
+"""
+
+verification = "Request an oversized file, SVG, invalid raster and corrupt PNG. Verify the IMG-02 error codes and absence of image data."
+
+affected_paths = ["05_Software/src/libraries/core/src/tools/view-image.ts", "05_Software/src/libraries/core/src/tools/raster-file.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/sessions/view-image.test.ts", "05_Software/src/libraries/core/src/sessions/session-images.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-19
+updated = 2026-11-19

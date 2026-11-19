@@ -1,11 +1,13 @@
 // REQ-UX-b5edf930 REQ-UX-f8ec3a43
 import { createContext, useContext } from "react";
+import type { useImageDrafts } from "../../hooks/image-drafts.js";
 
 /**
  * Workbench entries attached to each session's next message (TASK-2fef1397). App owns them; the
  * Docs tree attaches, the composer shows them as chips and sends them as `@path` mentions.
  */
-export interface Attachments {
+export interface Attachments extends Partial<ReturnType<typeof useImageDrafts>> {
+  attachImage?: ((path: string) => void) | undefined;
   list(sessionId: string): readonly string[];
   remove(sessionId: string, path: string): void;
   /** Drops the paths a sent message carried. */

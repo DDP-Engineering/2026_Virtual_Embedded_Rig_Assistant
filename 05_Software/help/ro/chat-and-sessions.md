@@ -16,6 +16,18 @@ Scrie în caseta de mesaj (**Întreabă VERA despre proiect…**). Enter trimite
 
 Lângă caseta de mesaj alegi **Model**, **Nivel de reasoning** și **Mod de permisiuni** pentru această sesiune. Sesiunile noi preiau modelul și modul de permisiuni din setările workbench-ului.
 
+Lipește sau trage o imagine în caseta de mesaj sau alege **Atașează imagine** pentru a selecta un fișier. În Fișiere, trage imaginea în caseta de mesaj sau alege **Atașează imagine** din meniul ei. Elimină imaginea cu butonul de pe miniatură. VERA păstrează fișierele importate originale în workbench. Imaginile atașate din Fișiere își păstrează căile.
+
+Selectează miniatura dintr-un mesaj trimis pentru a deschide imaginea în vizualizatorul de fișiere. Dacă imaginea lipsește, mesajul afișează calea salvată în workbench.
+
+Un mesaj poate indica până la opt imagini PNG, JPEG, GIF sau WebP din workbench, cu o limită de 20 MiB pe fișier. VERA redimensionează copia trimisă unui model care acceptă imagini la cel mult 2048 de pixeli pe latura lungă și păstrează fișierul original. Un model care acceptă doar text primește căile. Compactarea păstrează căile imaginilor mai vechi în note text. Exporturile sesiunii includ aceste căi.
+
+Vezi [Furnizori și modele](providers.md) pentru a afla cum stabilește VERA dacă modelul ales acceptă imagini.
+
+Pentru ca agentul să examineze o imagine din workbench, indică-i calea relativă. Cu un model care acceptă imagini, agentul poate folosi `view_image` pentru fișiere PNG, JPEG, GIF sau WebP de până la 20 MiB. Latura cea mai lungă a copiei trimise modelului are cel mult 2048 de pixeli. Instrumentul cere o cale permisă din workbench, fără linkuri, inclusiv în modul Bypass. Rezultatul din istoricul sesiunii păstrează calea. Comutatorul apare în **Editează workbench-ul** → **Instrumente** dacă modelul implicit al workbench-ului acceptă imagini.
+
+Agentul poate redeschide o imagine trimisă din caseta de mesaj a acestei sesiuni folosind calea salvată. Poate examina până la opt imagini într-un pas și păstrează în turul curent ultimele opt imagini obținute cu instrumentul.
+
 ## Ghidează sau oprește o execuție în curs
 
 Cât timp agentul lucrează, poți continua să scrii și să trimiți mesaje, de exemplu „verifică și errata”. Acestea afișează **În așteptarea livrării** până când agentul le preia la pasul următor. Cât timp un card de aprobare așteaptă decizia ta, trimiterea este suspendată.
@@ -90,4 +102,4 @@ Fiecare terminal pornește privat. Pentru a permite agentului să citească unul
 
 ## Mascarea secretelor pentru agent și exporturi
 
-Mascarea Agent și model se aplică rezultatelor instrumentelor trimise furnizorului, răspunsurilor transmise, căutării și afișării sesiunilor. Artefacte și exporturi controlează separat conținutul și descrierile artefactelor salvate, exportul lor și exporturile JSON/Markdown ale sesiunilor. Ambele sunt implicit active; alegerea explicită a workbench-ului are prioritate față de setarea curentă a aplicației. Oprirea mascării Agent și model permite trimiterea către furnizor a secretelor stocate găsite în fișiere sau rezultate. Rulări și Afișare nu schimbă aceste reguli. Erorile furnizorului, testele conexiunii și jurnalele de diagnostic maschează mereu credențialele stocate. Citirea terminalului cere în continuare acordul pentru acel terminal. Textul deja salvat ca [REDACTED] nu poate fi recuperat prin oprirea mascării; citește din nou sursa originală sau recreează artefactul.
+Mascarea Agent și model se aplică rezultatelor instrumentelor trimise furnizorului, răspunsurilor transmise, căutării și afișării sesiunilor. Mascarea verifică textul căii fișierului. Pixelii imaginii sunt în afara domeniului ei. Artefacte și exporturi controlează separat conținutul și descrierile artefactelor salvate, exportul lor și exporturile JSON/Markdown ale sesiunilor. Ambele sunt implicit active; alegerea explicită a workbench-ului are prioritate față de setarea curentă a aplicației. Oprirea mascării Agent și model permite trimiterea către furnizor a secretelor stocate găsite în fișiere sau rezultate. Rulări și Afișare nu schimbă aceste reguli. Erorile furnizorului, testele conexiunii și jurnalele de diagnostic maschează mereu credențialele stocate. Citirea terminalului cere în continuare acordul pentru acel terminal. Textul deja salvat ca [REDACTED] nu poate fi recuperat prin oprirea mascării; citește din nou sursa originală sau recreează artefactul.

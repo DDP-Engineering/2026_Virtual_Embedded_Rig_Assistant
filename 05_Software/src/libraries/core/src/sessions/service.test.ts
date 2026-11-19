@@ -195,6 +195,7 @@ it("keeps full durable history and restart transcript while compacting only prov
   const caps = {
     contextWindow: 6000,
     maxOutputTokens: 1000,
+    input: ["text" as const],
     inputBudget: 3976,
     safetyMargin: 1024,
     supportsTools: true,
@@ -699,6 +700,7 @@ it("long mandatory first instruction makes no provider call; model switch recalc
     contextWindow: 100000,
     maxOutputTokens: 100,
     safetyMargin: 5000,
+    input: ["text" as const],
     inputBudget: 94900,
     supportsTools: true,
   });
@@ -866,6 +868,7 @@ it("retains large first-turn tool results while every gateway request fits a tra
     contextWindow: 6000,
     maxOutputTokens: 1000,
     safetyMargin: 1024,
+    input: ["text" as const],
     inputBudget: 3976,
     supportsTools: true,
   });

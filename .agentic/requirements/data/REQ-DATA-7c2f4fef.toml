@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-DATA-7c2f4fef"
+
+title = "Persist prompt attachment paths"
+
+status = "active"
+
+requirement = """
+When admitting an initial or queued image message, VERA shall persist its image references as paths in the durable transcript and events.
+"""
+
+verification = "Inspect the initial and queued events and reopen the session after a queued image is delivered, then check paths and absence of binary content in the database."
+
+affected_paths = ["05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/libraries/core/src/agent/runtime.ts", "05_Software/src/libraries/shared/src/events.ts", "05_Software/src/libraries/shared/src/session-state.ts", "05_Software/src/libraries/core/src/agent/types.ts", "05_Software/src/libraries/core/src/agent/message-images.ts", "05_Software/src/apps/desktop/src/renderer/mocks/sessions.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/sessions/session-images.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-19
+updated = 2026-11-19

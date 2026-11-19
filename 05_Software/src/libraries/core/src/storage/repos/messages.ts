@@ -30,6 +30,21 @@ export class MessagesRepository {
       .prepare("SELECT * FROM messages WHERE session_id=? ORDER BY seq")
       .all(sessionId) as MessageRow[];
   }
+  /** A user row exists only after its message is admitted to the runtime transcript. */
+  hasUserImage(sessionId: string, path: string): boolean {
+    return (
+      this.db
+        .prepare(
+          `SELECT 1 FROM messages AS message
+       JOIN json_each(message.content_json, '$.images') AS image
+       WHERE message.session_id = ? AND message.role = 'user'
+         AND json_type(message.content_json, '$.images') = 'array'
+         AND image.type = 'text' AND image.value = ?
+       LIMIT 1`,
+        )
+        .get(sessionId, path) !== undefined
+    );
+  }
   delete(sessionId: string, seq: number): boolean {
     return (
       this.db.prepare("DELETE FROM messages WHERE session_id=? AND seq=?").run(sessionId, seq).changes > 0

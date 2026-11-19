@@ -21,6 +21,45 @@ function store() {
   return { credentials, entries };
 }
 describe("ChatGPT subscription collection", () => {
+  it("exposes ChatGPT account catalog image modalities", async () => {
+    const { credentials, entries } = store();
+    entries.set("chatgpt", {
+      type: "oauth",
+      access: "fictional-catalog-access",
+      refresh: "fictional-catalog-refresh",
+      expires: Date.now() + 600000,
+    });
+    const settings = defaultSettings("1b9dc50c-d87d-484b-88e6-04cb5f7c5a19");
+    const profiles = [
+      { slug: "vision", input_modalities: ["text", "image", "audio", "image"] },
+      { slug: "text", input_modalities: ["text"] },
+      { slug: "unknown", input_modalities: ["audio"] },
+      { slug: "gpt-4.1" },
+    ];
+    const gateway = createPiAiGateway({
+      settings: () => settings,
+      credentials,
+      scrub: (text) => text,
+      now: () => 0,
+      fetch: async () =>
+        Response.json({
+          models: profiles.map((profile) => ({
+            display_name: profile.slug,
+            visibility: "list",
+            context_window: 128000,
+            ...profile,
+          })),
+        }),
+    });
+    const expected = [["text", "image"], ["text"], ["text"], ["text"]];
+    expect((await gateway.models("chatgpt")).models.map((model) => model.input)).toEqual(expected);
+    for (const [index, profile] of profiles.entries()) {
+      const reference = `chatgpt/${profile.slug}`;
+      await gateway.prepareModel?.(reference);
+      expect(gateway.capabilities(reference).input).toEqual(expected[index]);
+    }
+  });
+
   it("streams with subscription auth only and redacts access/refresh across deltas and failures", async () => {
     const h = store();
     const access = "fictional-WP21-access-private",

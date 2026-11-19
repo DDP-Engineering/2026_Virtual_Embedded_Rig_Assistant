@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-2af13bab"
+
+title = "Refuse oversized chat images"
+
+status = "active"
+
+requirement = """
+If an attached image exceeds 20 MiB, VERA shall refuse it with a typed size error.
+"""
+
+verification = "Write a raster exactly at 20 MiB and one at 20 MiB plus one byte and check admission and the typed size error respectively."
+
+affected_paths = ["05_Software/src/libraries/core/src/sessions/session-images.ts", "05_Software/src/libraries/core/src/tools/files.ts", "05_Software/src/libraries/shared/src/errors.ts", "05_Software/src/apps/desktop/src/renderer/components/error-message.tsx"]
+
+linked_tests = ["05_Software/src/libraries/core/src/sessions/session-images.test.ts", "05_Software/src/apps/desktop/src/renderer/components/error-message.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-19
+updated = 2026-11-19

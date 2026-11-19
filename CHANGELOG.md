@@ -14,6 +14,11 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 - Core sessions can launch inspection-only children with durable ownership and bounded workbench concurrency.
 - Windows and Linux packages ship both pinned local embedding models and their MIT licence notices.
 - The local embedding registry and model preparation now include pinned Multilingual E5 Small q8 assets.
+- The agent can inspect workbench images with image-capable models using the view_image tool.
+- Sent chat images open from transcript thumbnails, and deleted images show their saved paths.
+- Paste, drop or attach images in chat, with removable previews and a warning for text-only models.
+- Chat can send workbench images to supported models and keeps their paths in history and exports.
+- Settings > Providers can save image input capability for each local or compatible model.
 - CLI: --key-env <NAME> takes the provider key from the named environment variable, for any provider.
 - Workbenches can choose visible right-panel tabs, with saved preferences and draft default restoration.
 - Image previews fit PNG, JPEG, GIF, WebP, BMP and inert SVG, with original-image zoom through 400% and Hex.

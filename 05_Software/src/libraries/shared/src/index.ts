@@ -6,6 +6,7 @@ export * from "./cable-table.js";
 export * from "./changes.js";
 export * from "./chatgpt.js";
 export * from "./command-prefix.js";
+export * from "./composer-images.js";
 export * from "./documents.js";
 export * from "./downloads.js";
 export * from "./electrical-model.js";

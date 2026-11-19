@@ -1,4 +1,4 @@
-import { type DocsEntryProperties, veraError, viewerExtensionKind } from "@vera/shared";
+import { type DocsEntryProperties, type RasterFormat, veraError, viewerExtensionKind } from "@vera/shared";
 import { z } from "zod";
 import { api } from "../../api/index.js";
 import { readHexFile } from "./hex-source.js";
@@ -68,13 +68,17 @@ export async function readFileMode(
   requestId: string,
   deliberate?: FileMode,
   onInfo?: (info: FileModeInfo) => void,
+  imageFormat?: RasterFormat,
 ) {
   const stat = await api.invoke("docs.stat", { workbenchId, path });
   const properties: DocsEntryProperties = stat.properties;
   if (stat.workbenchId !== workbenchId) throw veraError("CONFLICT");
   if (properties.type !== "file" || properties.size === null || properties.extension === undefined)
     throw veraError("INVALID");
-  const extension = properties.extension;
+  const extension =
+    imageFormat && viewerExtensionKind(properties.extension) !== "image"
+      ? `.${imageFormat}`
+      : properties.extension;
   let binary = false;
   // Sniff only recognized text sources, with a fixed prefix; unknown files need no content to choose Hex.
   if (
@@ -108,7 +112,10 @@ export async function readFileMode(
   onInfo?.(modeInfo);
   if (modeInfo.mode === "rendered" && viewerExtensionKind(extension) === "image") {
     const result = await readHexFile(workbenchId, path);
-    const imageFile: ImageFile = { ...result.hexFile, mime: imageMime(extension) };
+    const imageFile: ImageFile = {
+      ...result.hexFile,
+      mime: imageMime(imageFormat ? `.${imageFormat}` : extension),
+    };
     return { workbenchId, content: result.content, imageFile, modeInfo };
   }
   let result =

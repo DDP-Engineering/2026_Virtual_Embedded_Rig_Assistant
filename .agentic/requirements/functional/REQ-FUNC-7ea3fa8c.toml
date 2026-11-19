@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-7ea3fa8c"
+
+title = "Report whether a model accepts images"
+
+status = "active"
+
+requirement = """
+When a model with an input modality list is passed to acceptsImages, the shared helper shall return true exactly when the list contains image.
+"""
+
+verification = "Call the helper for image-capable, text-only and empty input lists and compare the boolean results."
+
+affected_paths = ["05_Software/src/libraries/shared/src/providers.ts"]
+
+linked_tests = ["05_Software/src/libraries/shared/src/providers.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-19
+updated = 2026-11-19

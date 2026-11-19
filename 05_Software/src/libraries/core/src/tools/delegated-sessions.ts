@@ -20,6 +20,8 @@ const failureText = {
   BUSY: "The workbench or delegation capacity is busy.",
   DENIED: "The current session cannot perform this delegation operation.",
   CONTEXT_LIMIT: "The delegated task exceeds the available model context.",
+  IMAGE_FORMAT: "The delegated task contains an unsupported image.",
+  IMAGE_TOO_LARGE: "The delegated task contains an image that exceeds the size limit.",
   PROVIDER: "The delegated model provider is unavailable.",
   OFFLINE: "The delegated model provider is offline.",
   INTERNAL: "The delegated session operation failed.",

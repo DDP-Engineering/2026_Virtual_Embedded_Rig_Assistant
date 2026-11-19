@@ -1,18 +1,39 @@
 // REQ-UX-0f1a32c4 REQ-FUNC-37261edc
-import { type BuiltinToolName, coreToolNames } from "@vera/shared";
+import { useQuery } from "@tanstack/react-query";
+import { type BuiltinToolName, coreToolNames, modelReferenceSchema } from "@vera/shared";
 import { useId } from "react";
 import { useTranslation } from "react-i18next";
+import { api } from "../api/index.js";
+import { useSettingsSnapshot } from "../hooks/use-preferences.js";
 import { Pager, usePaged } from "./pager.js";
+
+type ToolControls = {
+  disabled: readonly string[];
+  toggle: (name: BuiltinToolName, enabled: boolean) => void;
+};
+
+export function WorkbenchCoreTools({ modelRef, ...controls }: ToolControls & { modelRef: string | null }) {
+  const settings = useSettingsSnapshot();
+  const capability = useQuery({
+    queryKey: ["providers.image.capability", modelRef, settings.dataUpdatedAt],
+    queryFn: () => api.invoke("providers.image.capability", { modelRef }),
+    enabled: modelRef === null ? settings.isSuccess : modelReferenceSchema.safeParse(modelRef).success,
+    retry: false,
+    networkMode: "always",
+  });
+  const names = coreToolNames.filter(
+    (name) => name !== "view_image" || capability.data?.acceptsImages === true,
+  );
+  return <WorkbenchTools {...controls} names={names} />;
+}
 
 export function WorkbenchTools({
   disabled,
   toggle,
-  names = coreToolNames,
+  names,
   locked = false,
-}: {
-  disabled: readonly string[];
-  toggle: (name: BuiltinToolName, enabled: boolean) => void;
-  names?: readonly BuiltinToolName[];
+}: ToolControls & {
+  names: readonly BuiltinToolName[];
   locked?: boolean;
 }) {
   const { t } = useTranslation();
@@ -20,6 +41,7 @@ export function WorkbenchTools({
   const descriptions: Record<BuiltinToolName, string> = {
     terminal_read: t("workbenchTools.terminal_read"),
     read: t("workbenchTools.read"),
+    view_image: t("workbenchTools.view_image"),
     list: t("workbenchTools.list"),
     glob: t("workbenchTools.glob"),
     grep: t("workbenchTools.grep"),

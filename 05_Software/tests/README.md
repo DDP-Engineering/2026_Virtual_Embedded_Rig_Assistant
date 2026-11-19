@@ -15,6 +15,9 @@ infrastructure. Unit and component tests stay beside the implementation, in `src
 | [fixtures/](fixtures/README.md) | Fictional data and input scenarios; they are not test results and hold no evaluation code. |
 | `support/` | The E2E runner, the Playwright reporter, the network guard and the generators of the demo and Office documents. Simulated programs and the generators of a single fixture stay beside it, in `fixtures/`. |
 
+`e2e/composer-images.spec.ts` covers composer paste, drop and picker, Files image references, previews, model warnings and format refusal.
+`e2e/transcript-images.spec.ts` covers native restart, keyboard and pointer viewer activation, and persisted path labels after deleting an attachment.
+
 `e2e/chat-actions.spec.ts` checks per-reply and block copying, four-language compact keyboard/hover
 controls in Chromium, and exact-once multiline execution, terminal creation, destination selection and
 focus in sandboxed native Electron. Native coverage also refuses pending input/foreground readers and

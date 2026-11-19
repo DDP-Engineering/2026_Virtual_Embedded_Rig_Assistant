@@ -13,6 +13,7 @@ it("converts every tool schema and validates samples while filtering disabled na
   const samples = {
     terminal_read: {},
     read: { path: "docs/a.txt" },
+    view_image: { path: "docs/board.png" },
     list: {},
     glob: { pattern: "**/*.md" },
     grep: { pattern: "hello" },
@@ -98,6 +99,7 @@ it("converts every tool schema and validates samples while filtering disabled na
     });
   }
   expect(registry.specs(["read"]).map((tool) => tool.name)).toEqual([
+    "view_image",
     "list",
     "glob",
     "grep",

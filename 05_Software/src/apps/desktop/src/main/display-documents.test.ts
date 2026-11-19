@@ -1,5 +1,13 @@
 import { createMaskingResolver, type WorkbenchService } from "@vera/core";
-import { channels, type Settings, type ViewerContent, workbenchSchema } from "@vera/shared";
+import {
+  channels,
+  DOCS_BYTE_WINDOW_LIMIT,
+  MAX_MESSAGE_IMAGE_BYTES,
+  type Settings,
+  type ViewerContent,
+  veraError,
+  workbenchSchema,
+} from "@vera/shared";
 import { describe, expect, it, vi } from "vitest";
 import { DisplayDocuments } from "./display-documents.js";
 import { DisplayIdentities } from "./display-identities.js";
@@ -376,5 +384,86 @@ it("seals verified text revisions to owner and path and retains original newline
   }));
   await expect(f.display.readBytes(id, shown.path, 0, 4, shown.byteSource.revision)).rejects.toMatchObject({
     code: "CONFLICT",
+  });
+});
+
+// REQ-UX-9c6aa149 REQ-UX-16e08c34
+describe("transcript image thumbnails", () => {
+  it("returns a bounded PNG through opaque Display identities and the current byte policy", async () => {
+    const f = fixture();
+    const { default: sharp } = await import("sharp");
+    const bytes = await sharp({
+      create: { width: 240, height: 120, channels: 3, background: "cornflowerblue" },
+    })
+      .png()
+      .toBuffer();
+    f.host.readBytes.mockImplementation(async (_id, path, offset) => ({
+      path,
+      offset,
+      start: 0,
+      size: bytes.length,
+      bytes,
+      revision: "image-version",
+    }));
+    const original = `docs/${secrets[0]}.png`;
+    const path = f.display.path(id, original);
+    f.app(true);
+    const reply = channels["docs.imageThumbnail"].response.parse(await f.display.imageThumbnail(id, path));
+    expect(reply).toMatchObject({
+      workbenchId: id,
+      path,
+      displayPath: "docs/[REDACTED].png",
+      preview: { format: "png" },
+    });
+    expect(JSON.stringify(reply)).not.toContain(secrets[0]);
+    const metadata = await sharp(Buffer.from(reply.preview?.thumbnail ?? "", "base64")).metadata();
+    expect(metadata).toMatchObject({ format: "png", width: 128, height: 64 });
+    f.register("PNG");
+    expect((await f.display.imageThumbnail(id, path)).preview).toBeUndefined();
+    await expect(f.display.imageThumbnail(otherId, path)).rejects.toMatchObject({ code: "CONFLICT" });
+  });
+
+  it("authenticates an alias while keeping its persisted spelling as the unavailable label", async () => {
+    const f = fixture();
+    const original = `./docs//../${secrets[0]}.png`;
+    const path = f.display.sessionImagePath(id, original);
+    expect(path).not.toContain(secrets[0]);
+    expect(f.display.resolveSessionImagePath(id, path)).toBe(original);
+    expect(() => f.display.resolveSessionImagePath(otherId, path)).toThrow();
+    f.app(true);
+    f.host.readBytes.mockRejectedValueOnce(veraError("NOT_FOUND"));
+    const missing = await f.display.imageThumbnail(id, path);
+    expect(missing).toEqual({
+      workbenchId: id,
+      path: f.display.path(id, `${secrets[0]}.png`),
+      displayPath: "./docs//../[REDACTED].png",
+    });
+    expect(f.host.readBytes).toHaveBeenLastCalledWith(id, `${secrets[0]}.png`, 0, DOCS_BYTE_WINDOW_LIMIT);
+  });
+
+  it("returns the label for missing, oversized and changed files", async () => {
+    const f = fixture();
+    const path = "scope.png";
+    f.host.readBytes.mockRejectedValueOnce(veraError("NOT_FOUND"));
+    expect(await f.display.imageThumbnail(id, path)).toEqual({ workbenchId: id, path, displayPath: path });
+    f.host.readBytes.mockImplementationOnce(async () => ({
+      path,
+      offset: 0,
+      start: 0,
+      size: MAX_MESSAGE_IMAGE_BYTES + 1,
+      bytes: Buffer.alloc(0),
+    }));
+    expect((await f.display.imageThumbnail(id, path)).preview).toBeUndefined();
+    expect(f.host.readBytes).toHaveBeenCalledTimes(2);
+    f.host.readBytes.mockImplementation(async (_id, path, offset) => ({
+      path,
+      offset,
+      start: offset,
+      size: DOCS_BYTE_WINDOW_LIMIT + 1,
+      bytes: Buffer.alloc(offset ? 1 : DOCS_BYTE_WINDOW_LIMIT),
+      revision: offset ? "changed" : "initial",
+    }));
+    expect(await f.display.imageThumbnail(id, path)).toEqual({ workbenchId: id, path, displayPath: path });
+    expect(f.host.readBytes).toHaveBeenLastCalledWith(id, path, DOCS_BYTE_WINDOW_LIMIT, 1);
   });
 });

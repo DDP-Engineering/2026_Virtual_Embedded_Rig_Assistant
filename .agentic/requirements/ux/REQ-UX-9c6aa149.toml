@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-UX-9c6aa149"
+title = "Show thumbnails on user messages"
+status = "active"
+requirement = "When a user message references an available supported workbench image, the transcript shall show its thumbnail in the message, including after an application restart."
+verification = "Send an imported PNG and a workbench JPEG, observe each decoded thumbnail, restart Electron with the same workbench and profile, and observe both again."
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/session/transcript-images.tsx", "05_Software/src/apps/desktop/src/renderer/components/session/transcript-images.css", "05_Software/src/apps/desktop/src/renderer/components/session/transcript.tsx", "05_Software/src/apps/desktop/src/renderer/components/session/workspace.tsx", "05_Software/src/apps/desktop/src/main/display-documents.ts", "05_Software/src/apps/desktop/src/main/events.ts", "05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/libraries/shared/src/ipc.ts", "05_Software/src/libraries/core/src/sessions/composer-images.ts", "05_Software/src/libraries/shared/src/composer-images.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/session/transcript-images.test.ts", "05_Software/tests/e2e/transcript-images.spec.ts", "05_Software/tests/e2e/composer-images.spec.ts", "05_Software/src/apps/desktop/src/main/display-documents.test.ts"]
+created = 2026-11-19
+updated = 2026-11-19

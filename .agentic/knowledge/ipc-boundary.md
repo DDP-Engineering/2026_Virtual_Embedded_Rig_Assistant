@@ -31,6 +31,8 @@ shortcut. Existing persisted event format remains 1.
 
 ## Public interface
 
+- `session.image.attach` accepts a workbench/session pair and either bounded base64 file bytes or an existing workbench path. It returns a durable relative path, a display name and a bounded PNG thumbnail. `session.image.capability` resolves image support for the same effective model as dispatch, with catalog I/O outside the session queue.
+
 Strict `terminal.*` user channels bind UUID terminal IDs to the current workbench, fix creation cwd
 in main and bound input/dimensions/output. Core receives only a read/publish port, never user IPC
 methods. [User terminals](terminals.md) owns consent, lifecycle and focused terminal IPC tests.
@@ -103,6 +105,7 @@ AppEvents use shared updates.ts; [updates](updates.md) owns their lifecycle/capa
 
 - Shared defineChannel, channels, Channel, Request, Response, VeraError and VeraBridge.
 - providers.list/save/remove/models/test use strict public projections and key-bearing write requests; [Providers](providers.md) owns main-only values, consent, configuration and bounded hints. Main scrubs known-secret error params and event user text before transport.
+- providers.models returns text and image input modalities as part of each model's capabilities. Custom providers.list/save carry the optional imageModels list of enabled IDs per connection. `providers.image.capability` resolves a validated workbench draft model reference (or the application default) and returns its image capability through the main gateway.
 - providers.chatgpt.login/cancel/status/logout use strict metadata and guarded manualCode/promptId requests. app.openExternal requires confirmed:true and HTTP(S); main further confines OAuth to the pinned auth page. [Providers](providers.md) owns secret isolation and lifecycle.
 - app.info accepts a strict empty object and returns name/version/platform/arch/portable/locale,
   compiled testBuild and signing (signed/unsigned/not-applicable). [Native packaging](native-packaging.md)
@@ -121,7 +124,7 @@ AppEvents use shared updates.ts; [updates](updates.md) owns their lifecycle/capa
 - todo.updated and session snapshot todos use shared bounded list validation; current known secrets redact optional todo IDs and text, with presentation text bounded at200 after redaction; Plan consumes the existing snapshot/subscription channels. [Plan](plan.md) owns whole replacement and icons.
 - Desktop session.list adds optional delegated-child parent identity and initial-turn status to the validated row. The workbench-scoped session.delegations.changed event refreshes the list after commit, with the list heartbeat recovering missed notifications.
 - session.list/create/get/rename/delete/send/stop/model.set/mode.set/approval.decide use strict shared contracts. subscribe('session',id,sinceSeq,on) registers its listener before vera:subscription control; control authorizes the same current main frame, validates requests and caps active subscriptions128. Replay/live envelopes bind subscriptionId; unsubscribe and navigation/window/lifecycle cleanup release core listener and transport timers. [Sessions](sessions.md) owns persistence/recovery.
-- Durable session events include message.queued {messageId,text,timestamp} and message.delivered {messageIds}; user snapshot pending/timestamp fields are optional. Existing sanitizer preserves IDs/numeric timestamps and scrubs queued user text.
+- `session.send` accepts an optional `images` path array of up to eight entries and requires text or at least one image. `message.user`, `message.queued` and user snapshot items carry the optional array. The session sanitizer projects paths and text while preserving IDs, pending state and timestamps. The service returns localized `IMAGE_FORMAT` and `IMAGE_TOO_LARGE` errors for invalid types and oversized sources.
 - session.approval.decide validates ses_/apv_ ULIDs, lowercase SHA256, approved/denied and approved-only switchToAutoEdit; main forwards to the live SessionService. session.mode.set stays available during active turns and read-only aborts waits. shared/approval-ipc.test.ts and tests/e2e/approvals.spec.ts cover strict values and real exact decisions.
 - Session list/get and mutation summaries redact user fields while preserving schema identities and enums. Titles remain bounded after redaction; known-secret text/title/model requests are refused. Mock sessions bind delayed responses to their originating workbench and drain aborted turns before switches/close.
 - session.search validates trimmed1..1000 character query; session.export validates session ID and md/json enum, returns exported boolean. Both dispatch through existing exact-frame authorization and serial SessionsHost; renderer supplies no filesystem path. Main shares schema-preserving session sanitizers and the existing native export destination guard.
@@ -130,6 +133,8 @@ AppEvents use shared updates.ts; [updates](updates.md) owns their lifecycle/capa
 - VeraApi adds getAppInfo/getSettings/updateSettings to VeraBridge; VITE_API=mock selects mockApi during compilation.
 - app.settings.get({}) and app.settings.update(patch) return {settings}.
   [Application data](app-data.md) owns schema defaults, validation and persistence semantics.
+
+`docs.imageThumbnail` returns a Display-safe label and public path for the current workbench, plus an optional bounded PNG and detected raster format. Main reads confined byte windows at one file revision, caps the source at 20 MiB, and applies the active Display byte policy before decoding. A persisted lexical alias keeps its spelling in the label and uses the normalized workbench path for reading and viewer activation. Desktop snapshots and live events project image paths as workbench-scoped Display identities. A desktop resend resolves those identities back to the underlying paths used by durable rows, exports and provider projections.
 
 ## Invariants
 

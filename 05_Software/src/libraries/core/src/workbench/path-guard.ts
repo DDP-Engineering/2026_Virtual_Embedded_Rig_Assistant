@@ -15,6 +15,10 @@ export interface PathRootBinding {
   readonly canonical: string;
 }
 
+// The session image channels may access only this managed namespace inside .vera.
+const sessionAttachmentLocation = (relative: string) =>
+  relative === ".vera" || /^\.vera\/attachments(?:\/ses_[0-9A-HJKMNP-TV-Z]{26}(?:\/[^/]+)?)?$/.test(relative);
+
 const pathIdentity = (path: string) => (process.platform === "win32" ? path.toLowerCase() : path);
 
 async function canonicalPath(path: string) {
@@ -63,6 +67,8 @@ export class PathGuard {
     private readonly authorize?: () => void,
     private readonly excludedRoots: readonly string[] = [],
     readonly additionalRoots: readonly PathRootBinding[] = [],
+    private readonly allowSessionAttachments = false,
+    private readonly refuseLinks = false,
   ) {}
 
   /** A separately confined skill root may use its owning project's ignore policy. */
@@ -73,6 +79,7 @@ export class PathGuard {
     authorize?: () => void,
     excludedRoots: readonly string[] = [],
     additionalRoots: readonly (string | PathRootBinding)[] = [],
+    options: { allowSessionAttachments?: boolean; refuseLinks?: boolean } = {},
   ): Promise<PathGuard> {
     if (!isAbsolute(root)) throw Error("Workbench root must be absolute.");
     const canonical = await realpath(root);
@@ -114,7 +121,16 @@ export class PathGuard {
       }
     }
     authorize?.();
-    return new PathGuard(canonical, createIgnoreRules(text), scope, authorize, excluded, additional);
+    return new PathGuard(
+      canonical,
+      createIgnoreRules(text),
+      scope,
+      authorize,
+      excluded,
+      additional,
+      options.allowSessionAttachments,
+      options.refuseLinks,
+    );
   }
 
   private contains(root: string, path: string): boolean {
@@ -152,6 +168,7 @@ export class PathGuard {
   }
 
   private allowed(path: string): void {
+    if (this.allowSessionAttachments && sessionAttachmentLocation(path)) return;
     if (path && (this.ignored(path) || this.ignored(`${path}/`)))
       throw Error("Path is ignored by the workbench.");
   }
@@ -214,6 +231,16 @@ export class PathGuard {
       );
     else this.allowed(this.confined(lexical));
     const { canonical, exists } = await canonicalPath(lexical);
+    if (this.refuseLinks && pathIdentity(lexical) !== pathIdentity(canonical))
+      throw Error("Use a path without symbolic links or junctions.");
+    if (
+      this.allowSessionAttachments &&
+      pathIdentity(lexical) !== pathIdentity(canonical) &&
+      [lexical, canonical].some((target) =>
+        sessionAttachmentLocation(relative(this.root, target).split(sep).join("/")),
+      )
+    )
+      throw Error("Managed image attachment paths may not be redirected.");
     this.authorize?.();
     if ((this.scope === "filesystem" || this.additionalRoots.length) && exists) {
       const info = await lstat(canonical);

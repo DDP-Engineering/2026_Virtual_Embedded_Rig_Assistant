@@ -9,6 +9,7 @@ import type { RuntimeEvent } from "./types.js";
 const caps = {
   contextWindow: 6000,
   maxOutputTokens: 1000,
+  input: ["text" as const],
   inputBudget: 3976,
   safetyMargin: 1024,
   supportsTools: true,

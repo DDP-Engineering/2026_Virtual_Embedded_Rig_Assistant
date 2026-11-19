@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-UX-9427b929"
+title = "Warn about text-only models for image drafts"
+status = "active"
+requirement = "While a draft contains images and the effective session model accepts only text, VERA shall show a localized warning that the model receives file paths before allowing the image draft to send."
+verification = "Attach an image with a text-only replay model and check the warning. In the browser, hold the capability lookup while offline, verify that Send is disabled, resolve it and check the warning before Send becomes enabled. Switch to image-capable metadata and check the warning is absent."
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/hooks/image-model-warning.ts","05_Software/src/apps/desktop/src/renderer/components/session/composer.tsx","05_Software/src/libraries/core/src/sessions/service.ts","05_Software/src/apps/desktop/src/main/sessions.ts"]
+linked_tests = ["05_Software/tests/e2e/composer-images.spec.ts","05_Software/src/apps/desktop/src/main/sessions.test.ts"]
+created = 2026-11-19
+updated = 2026-11-19

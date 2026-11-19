@@ -8,6 +8,13 @@ entries:
       ro: Copiază răspunsuri sau cod; Execută evită terminale blocate și blocuri goale sau prea mari.
       de: Antworten und Code kopieren; Ausführen meidet hängende Terminals sowie leere oder zu lange Blöcke.
       fr: Copiez réponses ou code ; Exécuter évite les terminaux bloqués et le code vide ou trop long.
+  - category: new
+    topic: { en: Images, ro: Imagini, de: Bilder, fr: Images }
+    text:
+      en: Attach and reopen chat images. Set image support per model so the agent can inspect them.
+      ro: Atașează și redeschide imagini în chat. Alege modelele cu care agentul le poate examina.
+      de: Chatbilder anhängen und öffnen. Wählen Sie die Modelle, mit denen der Agent Bilder prüfen kann.
+      fr: Joignez et rouvrez des images. Choisissez les modèles avec lesquels l’agent peut les examiner.
   - category: fixed
     topic: { en: Skills, ro: Skills, de: Skills, fr: Compétences }
     text:
@@ -130,17 +137,10 @@ entries:
   - category: new
     topic: { en: Workbench, ro: Workbench, de: Workbench, fr: Banc de travail }
     text:
-      en: Indexing skips what the repository's Git ignore rules exclude, such as build output.
-      ro: Indexarea omite ce exclud regulile Git ignore ale depozitului, de exemplu rezultatele build-ului.
-      de: Die Indizierung überspringt, was die Git-Ignore-Regeln des Repositorys ausschließen, etwa Builds.
-      fr: L’indexation ignore ce que les règles Git ignore du dépôt excluent, comme les sorties de build.
-  - category: new
-    topic: { en: Workbench, ro: Workbench, de: Workbench, fr: Banc de travail }
-    text:
-      en: A workbench can set a maximum file size for indexing; larger files show why they were skipped.
-      ro: Un workbench poate seta o dimensiune maximă pentru indexare; fișierele mai mari arată motivul.
-      de: Ein Workbench kann eine maximale Dateigröße zum Indizieren festlegen; größere zeigen den Grund.
-      fr: Un banc peut fixer une taille maximale à indexer ; les fichiers plus grands montrent pourquoi.
+      en: Indexing honors Git ignore and explains skips over a configurable file size limit.
+      ro: Indexarea respectă Git ignore și explică omiterile peste limita de mărime configurabilă.
+      de: Die Indizierung beachtet Git Ignore und begründet Auslassungen über dem einstellbaren Limit.
+      fr: L’indexation suit Git ignore et explique les exclusions au-delà de la taille configurable.
   - category: new
     topic: { en: Workbench, ro: Workbench, de: Workbench, fr: Banc de travail }
     text:
