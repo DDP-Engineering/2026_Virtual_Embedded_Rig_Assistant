@@ -2,7 +2,7 @@
 
 ## Behavior
 
-The build delivers pinned native CPU SQLite/ORT libraries and offline document assets for Windows/Linux x64. Distribution target/layout/hash/budget contracts are in [Desktop distribution contract](REQ-PLAT-03f3a066.md). Build-time preparation is permitted; runtime model loading uses real resources/models with allowRemoteModels=false and local_files_only=true. BGE-small-en-v1.5 q8 at Xenova revision ea104dacec62c0de699686887e3f920caeb4f3e3 is selected by ADR0015.
+The build delivers pinned native CPU SQLite/ORT libraries and offline document assets for Windows/Linux x64. Distribution target/layout/hash contracts are in [Desktop distribution contract](REQ-PLAT-03f3a066.md). Build-time preparation is permitted; runtime model loading uses real resources/models with allowRemoteModels=false and local_files_only=true. BGE Small EN v1.5 and Multilingual E5 Small ship as pinned Xenova q8 models with MIT notices.
 
 ## Interface and lifecycle
 
@@ -16,11 +16,11 @@ The embedding host starts one emitted ESM worker with the real model directory a
 
 ## Build asset verification
 
-A source manifest contains repository, immutable revision, model id, license attribution and path/URL/SHA256/bytes for each required model/config/tokenizer/license file. URL paths preserve the revision. The downloader checks path confinement, lengths and digests of cached and newly fetched bytes before atomic promotion; an altered existing file fails rather than silently replacing it. Packaging verifies assets independently. Downloads occur only during explicit build/preparation commands.
+A source manifest contains repository, immutable revision, model id, license attribution and path/URL/SHA256/bytes for each required model/config/tokenizer/license file. URL paths preserve the revision. The downloader checks path confinement, lengths and digests of cached and newly fetched bytes before atomic promotion; an altered existing file fails rather than silently replacing it. Packaging verifies both source manifests, every listed file and each separately tracked MIT notice in staging and builder output. Delivery verification checks the same members inside every desktop artifact. Downloads occur only during explicit build/preparation commands.
 
 ## Acceptance
 
-Package/unpacked bytes and native/model contributions are recorded per OS. The Windows installer limit is250000000bytes with persisted contributors; ZIP size is measured. Only target OS/x64 native runtimes ship. Linux CUDA/TensorRT binaries are excluded; Windows retains upstream ORT DirectML/dxcompiler/dxil companions and pinned app-local VC++ DLLs for loader compatibility. The worker selects CPU execution. External evidence binds OS/isolation, matching artifact hashes and actual process results. Current connected Windows execution demonstrates feasibility and loaded DLL paths; real clean/offlineWindows and VC++ self-containment acceptance remain pending until final release. Release app code excludes probes/switches/fixtures.
+Package and unpacked bytes and native/model contributions are recorded per OS. Only target OS/x64 native runtimes ship. Linux CUDA/TensorRT binaries are excluded; Windows retains upstream ORT DirectML/dxcompiler/dxil companions and pinned app-local VC++ DLLs for loader compatibility. The worker selects CPU execution. External evidence binds OS/isolation, matching artifact hashes and actual process results. Current connected Windows execution demonstrates feasibility and loaded DLL paths; real clean/offlineWindows and VC++ self-containment acceptance remain pending until final release. Release app code excludes probes/switches/fixtures.
 
 ## Release verification obligation
 

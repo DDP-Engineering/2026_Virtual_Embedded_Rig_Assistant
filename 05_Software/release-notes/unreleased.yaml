@@ -74,10 +74,10 @@ entries:
   - category: new
     topic: { en: Files, ro: Fișiere, de: Dateien, fr: Fichiers }
     text:
-      en: Choose Multilingual E5 Small per workbench to search by meaning across languages.
-      ro: Alege Multilingual E5 Small pe workbench pentru căutare după sens în mai multe limbi.
-      de: Wählen Sie Multilingual E5 Small je Workbench für die sprachübergreifende semantische Suche.
-      fr: Choisissez Multilingual E5 Small par banc pour chercher par le sens dans plusieurs langues.
+      en: Switch local models per workbench. Both models are included for offline search.
+      ro: Schimbă modelul local pe workbench. Ambele modele sunt incluse pentru căutare offline.
+      de: Wechseln Sie das Modell je Workbench. Beide Modelle sind für die Offline-Suche enthalten.
+      fr: Changez de modèle par banc. Les deux modèles sont inclus pour la recherche hors ligne.
   - category: improved
     topic: { en: Files, ro: Fișiere, de: Dateien, fr: Fichiers }
     text:

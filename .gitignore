@@ -16,6 +16,7 @@ __pycache__/
 !/05_Software/src/models/*/*/
 /05_Software/src/models/*/*/*
 !/05_Software/src/models/*/*/model-manifest.json
+!/05_Software/src/models/*/*/LICENSE.txt
 /05_Software/src/windows_runtime/*
 !/05_Software/src/windows_runtime/windows-runtime-manifest.json
 /05_Software/src/uv/*

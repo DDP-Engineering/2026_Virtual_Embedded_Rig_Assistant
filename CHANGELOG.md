@@ -8,6 +8,7 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ### Added
 
+- Windows and Linux packages ship both pinned local embedding models and their MIT licence notices.
 - The local embedding registry and model preparation now include pinned Multilingual E5 Small q8 assets.
 - CLI: --key-env <NAME> takes the provider key from the named environment variable, for any provider.
 - Workbenches can choose visible right-panel tabs, with saved preferences and draft default restoration.

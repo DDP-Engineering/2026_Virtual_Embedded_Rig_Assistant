@@ -9,3 +9,15 @@ path = "**"
 precedence = "closest"
 SPDX-FileCopyrightText = "2026 DDP Engineering"
 SPDX-License-Identifier = "LicenseRef-PolyForm-Noncommercial-1.0.0"
+
+[[annotations]]
+path = "05_Software/src/models/Xenova/bge-small-en-v1.5/LICENSE.txt"
+precedence = "closest"
+SPDX-FileCopyrightText = "2022 staoxiao"
+SPDX-License-Identifier = "MIT"
+
+[[annotations]]
+path = "05_Software/src/models/Xenova/multilingual-e5-small/LICENSE.txt"
+precedence = "closest"
+SPDX-FileCopyrightText = "Microsoft Corporation"
+SPDX-License-Identifier = "MIT"

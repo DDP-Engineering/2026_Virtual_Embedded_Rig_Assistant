@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-PLAT-ac20d6f5"
+title = "Ship both pinned embedding models with their licence notices"
+status = "active"
+requirement = "When building a Windows or Linux desktop package, VERA shall include both registered q8 embedding models with their pinned manifests, all listed assets and their MIT licence notices so either model can index a workbench offline."
+verification = "Check both models in staging and every release archive, then index fresh workbenches with both models through normal IPC in one isolated packaged app per OS."
+affected_paths = ["02_Tools/release/package.mjs", "02_Tools/release/package-checks.mjs", "02_Tools/release/embedding-payload.mjs", "05_Software/src/models/Xenova/bge-small-en-v1.5/LICENSE.txt", "05_Software/src/models/Xenova/multilingual-e5-small/LICENSE.txt"]
+linked_tests = ["05_Software/tests/packaging/packaging.test.ts"]
+priority = "high"
+created = 2026-11-19
+updated = 2026-11-19

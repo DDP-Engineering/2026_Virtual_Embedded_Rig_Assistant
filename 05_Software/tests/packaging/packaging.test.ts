@@ -156,7 +156,7 @@ it("rejects missing, empty or altered individual PDF resources despite intact si
         await writeFile(join(stage, "out/renderer/pdfjs", directory, name), "asset-fixture");
       }
     }
-    const check = () => checkStagedPayload(stage, "linux", { files: [] }, { pdfSource: source });
+    const check = () => checkStagedPayload(stage, "linux", { pdfSource: source });
     await expect(check()).resolves.toMatchObject({ status: "passed" });
     for (const directory of ["cmaps", "standard_fonts", "wasm"]) {
       const path = join(stage, "out/renderer/pdfjs", directory, "required.bin");
@@ -385,29 +385,34 @@ it("names the files of a model or Windows runtime folder that its manifest does 
   }
 });
 
-it("stages only the default model manifest and its pinned assets in the installed layout", async () => {
-  const { stageDefaultEmbeddingModel, unexpectedFiles } = await import(
+it("stages both pinned models with their licence notices in the installed layout", async () => {
+  const { stageEmbeddingModels, unexpectedFiles } = await import(
     pathToFileURL(join(root, "../02_Tools/release/package.mjs")).href
   );
   const stage = await mkdtemp(join(tmpdir(), "vera-staged-model-"));
   try {
-    await stageDefaultEmbeddingModel(stage);
+    await stageEmbeddingModels(stage);
     const models = join(stage, "resources/models");
-    const model = "Xenova/bge-small-en-v1.5";
-    const manifestPath = join(models, model, "model-manifest.json");
-    const manifest = JSON.parse(await readFile(manifestPath, "utf8"));
-    expect(manifest.modelId).toBe(model);
-    for (const file of manifest.files) {
-      const bytes = await readFile(join(models, model, file.path));
-      expect(bytes.length).toBe(file.bytes);
-      expect(createHash("sha256").update(bytes).digest("hex")).toBe(file.sha256);
+    const carried = [];
+    for (const model of ["Xenova/bge-small-en-v1.5", "Xenova/multilingual-e5-small"]) {
+      const manifestPath = join(model, "model-manifest.json");
+      const manifestBytes = await readFile(join(models, manifestPath));
+      expect(manifestBytes).toEqual(await readFile(join(root, "src/models", manifestPath)));
+      const manifest = JSON.parse(manifestBytes.toString("utf8"));
+      expect(manifest.modelId).toBe(model);
+      const noticePath = join(model, "LICENSE.txt");
+      const licence = await readFile(join(models, noticePath), "utf8");
+      expect(licence).toContain(model);
+      expect(licence).toContain("MIT License");
+      carried.push(`${model}/model-manifest.json`, `${model}/LICENSE.txt`);
+      for (const file of manifest.files) {
+        const bytes = await readFile(join(models, model, file.path));
+        expect(bytes.length).toBe(file.bytes);
+        expect(createHash("sha256").update(bytes).digest("hex")).toBe(file.sha256);
+        carried.push(`${model}/${file.path}`);
+      }
     }
-    expect(
-      await unexpectedFiles(models, [
-        `${model}/model-manifest.json`,
-        ...manifest.files.map((file: { path: string }) => `${model}/${file.path}`),
-      ]),
-    ).toEqual([]);
+    expect(await unexpectedFiles(models, carried)).toEqual([]);
   } finally {
     await rm(stage, { recursive: true, force: true });
   }

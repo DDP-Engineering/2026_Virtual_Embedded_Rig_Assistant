@@ -4,7 +4,7 @@ import { chmod, cp, mkdir, readdir, readFile, rm, stat, writeFile } from "node:f
 import { createRequire } from "node:module";
 import { dirname, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
-import { defaultEmbeddingModelId } from "../../05_Software/src/libraries/shared/src/embedding-models.ts";
+import { embeddingModelIds } from "../../05_Software/src/libraries/shared/src/embedding-models.ts";
 import { prepareModel, readBundledModel } from "../environment/prepare-model.mjs";
 import {
   bundledPluginsFolder,
@@ -15,6 +15,7 @@ import {
 import { checkUvBinary, prepareBundledUv, uvEntry, uvPlatform } from "../environment/prepare-uv.mjs";
 import { prepareBundledWindowsRuntime } from "../environment/prepare-windows-runtime.mjs";
 import { importSoftware, software, softwareRequire } from "../environment/software.mjs";
+import { checkEmbeddingPayload, embeddingPayload, modelSource } from "./embedding-payload.mjs";
 import {
   checkPdfResources,
   checkPtyJavaScript,
@@ -215,20 +216,25 @@ export async function stageHelp(stage, source = join(root, "help")) {
   await cp(source, join(stage, "resources", "help"), { recursive: true });
 }
 
-/** Copy the default model's verified payload to its installed model directory. */
-export async function stageDefaultEmbeddingModel(stage) {
-  const model = await readBundledModel(defaultEmbeddingModelId);
-  for (const path of ["model-manifest.json", ...model.files.map((file) => file.path)]) {
-    const target = join(stage, "resources/models", model.modelId, path);
+/** Copy the registered models to their installed directories and verify the copied bytes. */
+export async function stageEmbeddingModels(stage, files = undefined) {
+  const payload = files ?? (await embeddingPayload());
+  for (const { path } of payload) {
+    const target = join(stage, path);
     await mkdir(dirname(target), { recursive: true });
-    await cp(join(root, "src/models", model.modelId, path), target);
+    await cp(join(modelSource, path.slice("resources/models/".length)), target);
   }
+  await checkEmbeddingPayload(payload, (path) => readFile(join(stage, path)));
 }
 
 export async function stageRuntime(
   mode,
   outputRoot = resolve(root, "release_tmp"),
-  { bundledPlugins = bundledPluginsFolder, windowsRuntime = join(root, "src/windows_runtime") } = {},
+  {
+    bundledPlugins = bundledPluginsFolder,
+    windowsRuntime = join(root, "src/windows_runtime"),
+    modelFiles,
+  } = {},
 ) {
   const stage = resolve(outputRoot, `staging-${process.platform}-${mode}`);
   // Removal is confined to this build's generated staging directory.
@@ -237,7 +243,7 @@ export async function stageRuntime(
   await mkdir(stage, { recursive: true });
   await cp(join(root, "src/apps/desktop/out"), join(stage, "out"), { recursive: true });
   await mkdir(join(stage, "resources"), { recursive: true });
-  await stageDefaultEmbeddingModel(stage);
+  await stageEmbeddingModels(stage, modelFiles);
   const uvManifest = JSON.parse(await readFile(join(root, "src/uv/uv-manifest.json"), "utf8"));
   await stageUv(stage, uvEntry(uvManifest, uvPlatform()));
   await stageBundledPlugins(stage, bundledPlugins);
@@ -365,6 +371,7 @@ async function packageApp() {
   const inputPaths = [
     "../02_Tools/release/package.mjs",
     "../02_Tools/release/package-checks.mjs",
+    "../02_Tools/release/embedding-payload.mjs",
     "../02_Tools/environment/prepare-windows-runtime.mjs",
     "../02_Tools/environment/prepare-uv.mjs",
     "../02_Tools/environment/prepare-plugins.mjs",
@@ -377,7 +384,10 @@ async function packageApp() {
     "../02_Tools/environment/prepare-model.mjs",
     "src/libraries/shared/src/embedding-models.ts",
     "src/libraries/shared/src/embedding-model-manifest.ts",
-    `src/models/${defaultEmbeddingModelId}/model-manifest.json`,
+    ...embeddingModelIds.flatMap((id) => [
+      `src/models/${id}/model-manifest.json`,
+      `src/models/${id}/LICENSE.txt`,
+    ]),
     "src/windows_runtime/windows-runtime-manifest.json",
     "src/uv/uv-manifest.json",
   ];
@@ -401,8 +411,9 @@ async function packageApp() {
     VERA_TEST: testBuild ? "1" : "0",
     VERA_SIGNED_BUILD: distribution.forceCodeSigning ? "1" : "0",
   };
-  const manifest = await readBundledModel(defaultEmbeddingModelId);
-  await prepareModel(manifest, join(root, "src/models"));
+  const manifests = await Promise.all(embeddingModelIds.map(readBundledModel));
+  for (const manifest of manifests) await prepareModel(manifest, modelSource);
+  const modelFiles = await embeddingPayload(manifests);
   const bundledPlugins = resolve(
     process.argv.find((arg) => arg.startsWith("--bundled-plugins="))?.slice("--bundled-plugins=".length) ??
       bundledPluginsFolder,
@@ -439,10 +450,14 @@ async function packageApp() {
       join(root, "release_tmp"),
   );
   const output = join(outputRoot, mode);
-  const staged = await stageRuntime(mode, outputRoot, { bundledPlugins, windowsRuntime: windowsRuntimePath });
+  const staged = await stageRuntime(mode, outputRoot, {
+    bundledPlugins,
+    windowsRuntime: windowsRuntimePath,
+    modelFiles,
+  });
   await checkPtyNative((path) => readFile(join(staged.stage, path)), process.platform);
   await checkPtyJavaScript((path) => readFile(join(staged.stage, path)));
-  const prepack = await checkStagedPayload(staged.stage, process.platform, manifest);
+  const prepack = await checkStagedPayload(staged.stage, process.platform);
   // This mode's generated output is rebuilt from scratch, so stale artifacts cannot pass.
   if (!output.startsWith(`${outputRoot}${sep}`)) throw new Error("Unsafe output path");
   await rm(output, { recursive: true, force: true });
@@ -485,11 +500,7 @@ async function packageApp() {
     const unpacked = join(output, process.platform === "win32" ? "win-unpacked" : "linux-unpacked");
     const archive = join(unpacked, "resources/app.asar");
     await inspectAppArchive(archive, testBuild);
-    for (const file of manifest.files) {
-      const bytes = await readFile(join(unpacked, "resources/models", manifest.modelId, file.path));
-      if (bytes.length !== file.bytes || createHash("sha256").update(bytes).digest("hex") !== file.sha256)
-        throw new Error(`packaged model integrity: ${file.path}`);
-    }
+    await checkEmbeddingPayload(modelFiles, (path) => readFile(join(unpacked, path)));
     await checkUvBinary(join(unpacked, "resources/uv", uvBinary.binary), uvBinary);
     await checkBundledPlugins(join(unpacked, "resources/plugins"));
     await stat(join(unpacked, "resources/help/en/index.md"));
