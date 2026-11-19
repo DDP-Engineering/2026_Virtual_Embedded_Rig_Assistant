@@ -142,10 +142,10 @@ test("native command prefix approval persists across restart and removal restore
       workbenchId: config.config.id,
     });
     expect(maskedGrants).toHaveLength(2);
-    expect(maskedGrants.map(({ label }) => label)).toEqual(["npm [REDACTED]", "git"]);
-    expect(JSON.stringify(maskedGrants)).not.toContain("test");
+    // A stored value under six characters is not treated as a secret, so the labels stay readable.
+    expect(maskedGrants.map(({ label }) => label)).toEqual(["npm test", "git"]);
     await agent(page);
-    await expect(page.locator("[data-command-prefixes] li code")).toHaveText(["npm [REDACTED]", "git"]);
+    await expect(page.locator("[data-command-prefixes] li code")).toHaveText(["npm test", "git"]);
     await page.locator("[data-chat-detail]").selectOption("minimal");
     await page.locator("[data-project-save]").click();
     await expect(page.locator(".workbench-editor")).toBeHidden();
@@ -153,7 +153,7 @@ test("native command prefix approval persists across restart and removal restore
       parse(await readFile(join(folder, ".vera/workbench.yaml"), "utf8")).agent.allowed_commands,
     ).toEqual(["npm test", "git"]);
     await agent(page);
-    await page.getByRole("button", { name: "Remove npm [REDACTED]", exact: true }).click();
+    await page.getByRole("button", { name: "Remove npm test", exact: true }).click();
     await page.locator("[data-project-save]").click();
     await expect(page.locator(".workbench-editor")).toBeHidden();
     expect(

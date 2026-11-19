@@ -90,7 +90,7 @@ export const readDocSchema = z
       .int()
       .optional()
       .describe(
-        "Part of a long heading section, or of one page, slide or line over 12000 characters, from 1, as a previous read's parts reports. Omit for the first part.",
+        "Part of a long section, page or line, from 1, as a previous read's parts reports. Omit for part 1.",
       ),
   })
   .strict();
