@@ -13,7 +13,8 @@ export interface ToolDef {
   class: "read" | "write" | "session" | "program";
   description: string;
   params: z.ZodType;
-  execute(args: unknown, signal: AbortSignal): Promise<string>;
+  /** The runtime supplies callId separately from model arguments. */
+  execute(args: unknown, signal: AbortSignal, callId?: string): Promise<string>;
 }
 export interface RuntimeInit {
   systemPrompt: string;

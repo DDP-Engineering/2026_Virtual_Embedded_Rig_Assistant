@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-REL-479dab7f"
+title = "Use invocation identity for delegated launch retries"
+status = "active"
+requirement = "When the runtime retries the same parent tool invocation, the launch tool shall reuse its host-derived request identity."
+verification = "Call launch twice with the same runtime invocation and inspect identical receipts; verify a separate invocation can admit its own child and model-supplied request IDs fail schema validation."
+affected_paths = ["05_Software/src/libraries/core/src/sessions/service.ts","05_Software/src/libraries/core/src/tools/delegated-sessions.ts","05_Software/src/libraries/core/src/agent/runtime.ts", "05_Software/src/libraries/core/src/agent/types.ts","05_Software/src/libraries/core/src/tools/registry.ts","05_Software/src/libraries/core/src/tools/context.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/sessions/delegation-tools.test.ts"]
+created = 2026-11-19
+updated = 2026-11-19

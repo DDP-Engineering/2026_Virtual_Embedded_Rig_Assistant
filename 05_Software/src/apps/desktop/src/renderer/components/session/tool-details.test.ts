@@ -70,6 +70,25 @@ it.each(["en", "ro", "de", "fr"])(
   },
 );
 
+it.each(["en", "ro", "de", "fr"])("localizes the embedding rebuild notice in %s", async (language) => {
+  await i18n.changeLanguage(language);
+  await render(
+    tool({
+      name: "search_docs",
+      args: { query: "coolant" },
+      summary: JSON.stringify({
+        ranking: "embedding-rebuild",
+        message: "Embedding vectors are being rebuilt; these are keyword results.",
+        results: [{ path: "docs/coolant.txt" }],
+      }),
+    }),
+  );
+  await expand();
+  expect(container.querySelector(".tool-activity-body > pre")?.textContent).toBe(
+    i18n.t("toolActivity.embeddingRebuild"),
+  );
+});
+
 it("reports a cleared plan and leaves invalid or refused plan data in technical details", async () => {
   await render(tool({ name: "todo", args: { items: [] }, summary: '{"items":[]}' }));
   expect(container.querySelector(".tool-activity-title")?.textContent).toContain("Plan cleared");

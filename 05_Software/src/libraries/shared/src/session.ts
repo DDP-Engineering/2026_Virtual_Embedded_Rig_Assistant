@@ -5,6 +5,17 @@ export const sessionIdSchema = z.string().regex(/^ses_[0-9A-HJKMNP-TV-Z]{26}$/);
 export const permissionModeSchema = z.enum(["read-only", "ask", "auto-edit", "bypass"]);
 export const sessionStatusSchema = z.enum(["idle", "running", "awaiting_approval", "error"]);
 export const stopReasonSchema = z.enum(["end", "aborted", "error", "limit"]);
+export type StopReason = z.infer<typeof stopReasonSchema>;
+export const delegatedTurnStatusSchema = z.enum([
+  "running",
+  "awaiting_approval",
+  "completed",
+  "stopped",
+  "error",
+  "limit",
+  "interrupted",
+]);
+export type DelegatedTurnStatus = z.infer<typeof delegatedTurnStatusSchema>;
 export const todoItemSchema = z.strictObject({
   id: z.string().optional(),
   text: z.string().max(200),
@@ -20,6 +31,12 @@ export const sessionSummarySchema = z.strictObject({
   mode: permissionModeSchema,
   status: sessionStatusSchema,
   archived: z.boolean(),
+  delegation: z
+    .strictObject({
+      parentSessionId: sessionIdSchema,
+      status: delegatedTurnStatusSchema,
+    })
+    .optional(),
 });
 export type SessionSummary = z.infer<typeof sessionSummarySchema>;
 export type PermissionMode = z.infer<typeof permissionModeSchema>;

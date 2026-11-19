@@ -43,18 +43,29 @@ import { programApproval } from "../plugins/program-request.js";
 import { type ProgramHost, ProgramSession } from "../plugins/program-tools.js";
 import type { Clock, WorkerPool } from "../ports.js";
 import type { SkillCatalog } from "../skills/catalog.js";
+import { type DelegationChildRow, DelegationsRepository } from "../storage/repos/delegations.js";
 import { EventsRepository } from "../storage/repos/events.js";
 import { MessagesRepository } from "../storage/repos/messages.js";
 import { type SessionRow, SessionsRepository } from "../storage/repos/sessions.js";
 import { TodosRepository } from "../storage/repos/todos.js";
 import { type ChangeRequest, type PreparedChange, recoverChanges } from "../tools/changes.js";
 import { createToolContext, type ToolContext } from "../tools/context.js";
+import { bindDelegatedSessionHost } from "../tools/delegated-sessions.js";
 import type { HelpHost } from "../tools/help.js";
 import { capToolResult, programToolNames, ToolRegistry } from "../tools/registry.js";
 import type { TerminalReader } from "../tools/terminal-read.js";
 import type { WebDownloads } from "../web/downloads.js";
 import type { WebProvider } from "../web/provider.js";
 import { WriteQueue } from "../workbench/write-queue.js";
+import {
+  type DelegatedLaunch,
+  type DelegatedLaunchRequest,
+  delegatedLaunchRequestSchema,
+  delegatedRequestHash,
+  MAX_ACTIVE_DELEGATIONS,
+  prepareDelegatedModel,
+} from "./delegation.js";
+import { delegatedTurnStatus } from "./delegation-monitor.js";
 import { SessionHub, type SessionListener } from "./hub.js";
 import { MaskingContextPolicy, maskMessages, maskModelStream, maskValue } from "./masking.js";
 import { timedGateway } from "./timed-gateway.js";
@@ -72,7 +83,7 @@ export interface SessionHost {
   maxToolCallsPerTurn?: number;
   noOutputTimeoutMs?: number;
   workers?: WorkerPool;
-  embeddings?: EmbeddingPort;
+  embeddings?: EmbeddingPort | undefined;
   /** Workbench defaults for search_docs; read on every search so saved settings apply at once. */
   retrieval?: WorkbenchRetrieval | undefined;
   skills?: SkillCatalog | undefined;
@@ -92,6 +103,8 @@ export interface SessionHost {
   runtime?: (host: RuntimeHost) => AgentRuntime;
   /** Host ownership is checked before each accepted mutation and event persistence. */
   assertWritable?: () => void;
+  /** A committed change affects the linked sessions shown by the user host. */
+  onDelegationsChanged?: () => void;
   scrub?: (text: string) => string;
   /** Receives swallowed turn failures, already scrubbed. */
   log?: (message: string) => void;
@@ -110,6 +123,7 @@ export interface SessionHost {
 }
 interface ActiveTurn {
   runtime: AgentRuntime;
+  delegated: boolean;
   done: Promise<{ stopReason: StopReason }>;
   turnId: string;
   messageId: string;
@@ -117,6 +131,12 @@ interface ActiveTurn {
   accepting: boolean;
   approvalWait?: string;
 }
+interface StagedTurn {
+  reasoning: string | null;
+  events: ReturnType<SessionHub["record"]>[];
+  discard?: () => void;
+}
+
 interface RecordedChange {
   id: number;
   session_id: string;
@@ -126,6 +146,8 @@ interface RecordedChange {
 }
 export class SessionService {
   private readonly sessions: SessionsRepository;
+  private readonly delegations: DelegationsRepository;
+  private readonly delegationShutdown = new AbortController();
   private readonly messages: MessagesRepository;
   private readonly hub: SessionHub;
   private readonly active = new Map<string, ActiveTurn>();
@@ -145,8 +167,14 @@ export class SessionService {
   private readonly knowledge: DocumentKnowledge;
   constructor(private readonly host: SessionHost) {
     this.sessions = new SessionsRepository(host.db);
+    this.delegations = new DelegationsRepository(host.db);
     this.artifacts = new ArtifactStore(host.root, host.db);
-    this.knowledge = new DocumentKnowledge(host.root, host.db, host.embeddings, () => host.retrieval);
+    this.knowledge = new DocumentKnowledge(
+      host.root,
+      host.db,
+      () => host.embeddings,
+      () => host.retrieval,
+    );
     this.messages = new MessagesRepository(host.db);
     this.hub = new SessionHub(host.db, () => this.now());
     this.approvals = new ApprovalGate({
@@ -170,7 +198,11 @@ export class SessionService {
           .prepare("UPDATE sessions SET status=?,permission_mode=?,updated_at=? WHERE id=?")
           .run(status, mode, this.now(), id);
         const value = this.hub.record(id, event);
-        return () => this.hub.publish(id, value);
+        return () => {
+          this.hub.publish(id, value);
+          if (event.type === "approval.requested" || event.type === "approval.decided")
+            this.notifyDelegationsChanged(id);
+        };
       },
     });
     this.writeQueue = host.writeQueue ?? new WriteQueue();
@@ -235,9 +267,30 @@ export class SessionService {
       archived: !!row.archived,
     };
   }
-  list(): SessionSummary[] {
+  list(includeDelegations = false): SessionSummary[] {
     if (this.closed) throw veraError("CONFLICT");
-    return this.sessions.list().map((row) => this.summary(row));
+    const outcomes = includeDelegations ? this.delegations.outcomes() : undefined;
+    return this.sessions.list().map((row) => {
+      const child = outcomes?.get(row.id);
+      return {
+        ...this.summary(row),
+        ...(child && {
+          delegation: {
+            parentSessionId: child.parentSessionId,
+            status: delegatedTurnStatus(child.outcome, row.status === "awaiting_approval"),
+          },
+        }),
+      };
+    });
+  }
+
+  private notifyDelegationsChanged(childId?: string) {
+    if (!this.host.onDelegationsChanged) return;
+    try {
+      if (childId === undefined || this.delegations.child(childId)) this.host.onDelegationsChanged();
+    } catch {
+      // A disconnected observer cannot change an already committed launch or outcome.
+    }
   }
   /** Stored bytes per session of this workbench. */
   sizes(): Record<string, number> {
@@ -297,22 +350,177 @@ export class SessionService {
           .get() as { id: string } | undefined;
         if (empty) return this.summary(this.row(empty.id));
       }
-      const id = `ses_${ulid()}`;
-      const now = this.now();
-      this.sessions.create({
-        id,
-        title: "",
-        created_at: now,
-        updated_at: now,
-        model_ref: modelRef,
-        permission_mode: mode,
-        status: "idle",
-        archived: 0,
-      });
-      this.hub.record(id, { type: "session.updated", title: "", status: "idle", modelRef, mode });
+      const id = this.insertSession(modelRef, mode);
       return this.summary(this.row(id));
     })();
   }
+  private insertSession(modelRef: string | null, mode: PermissionMode, reasoning?: string): string {
+    const id = `ses_${ulid()}`;
+    const now = this.now();
+    this.sessions.create({
+      id,
+      title: "",
+      created_at: now,
+      updated_at: now,
+      model_ref: modelRef,
+      permission_mode: mode,
+      status: "idle",
+      archived: 0,
+    });
+    this.hub.record(id, {
+      type: "session.updated",
+      title: "",
+      status: "idle",
+      modelRef,
+      mode,
+      ...(reasoning === undefined ? {} : { reasoning }),
+    });
+    return id;
+  }
+
+  /** Validate and admit one durable request without waiting for its child's turn to finish. */
+  async launchDelegated(
+    parentId: string,
+    input: DelegatedLaunchRequest,
+    signal?: AbortSignal,
+  ): Promise<DelegatedLaunch> {
+    const parsed = delegatedLaunchRequestSchema.safeParse(input);
+    if (!parsed.success) throw veraError("INVALID");
+    const request = parsed.data;
+    const scrub = this.host.scrub;
+    if (
+      scrub &&
+      [request.instruction, request.requestId, request.modelRef, request.reasoning].some(
+        (value) => value !== undefined && scrub(value) !== value,
+      )
+    )
+      throw veraError("INVALID");
+
+    const admission = signal
+      ? AbortSignal.any([signal, this.delegationShutdown.signal])
+      : this.delegationShutdown.signal;
+    admission.throwIfAborted();
+    const parent = this.delegationOwner(parentId);
+    this.writable();
+    const hash = delegatedRequestHash(request);
+    const existing = () => {
+      const row = this.delegations.request(parentId, request.requestId);
+      if (!row) return undefined;
+      if (row.request_hash !== hash || !row.child_session_id) throw veraError("CONFLICT");
+      return { sessionId: row.child_session_id, turnId: row.turn_id, messageId: row.message_id };
+    };
+    const retry = existing();
+    if (retry) return retry;
+    if (parent.archived) throw veraError("DENIED");
+    if (this.deleting.has(parentId)) throw veraError("BUSY");
+
+    const model = resolveModelReference(request.modelRef ?? this.host.model(parent.model_ref));
+    await this.ready;
+    admission.throwIfAborted();
+    try {
+      await prepareDelegatedModel(this.host.gateway, model, admission);
+    } catch (error) {
+      admission.throwIfAborted();
+      const retry = existing();
+      if (retry) return retry;
+      throw error;
+    }
+    admission.throwIfAborted();
+
+    let childId: string | undefined;
+    // The runtime emits the initial user and turn events synchronously inside admission.
+    const staged: StagedTurn = { events: [], reasoning: request.reasoning ?? null };
+    let result: DelegatedLaunch;
+    try {
+      result = this.host.db
+        .transaction(() => {
+          const current = this.delegationOwner(parentId);
+          this.writable();
+          const retry = existing();
+          if (retry) return retry;
+          if (current.archived) throw veraError("DENIED");
+          if (this.deleting.has(parentId)) throw veraError("BUSY");
+          const capabilities = this.host.gateway.capabilities(model);
+          if (request.reasoning !== undefined && !capabilities.reasoningOptions?.includes(request.reasoning))
+            throw veraError("INVALID");
+          const id = this.insertSession(model, "read-only", request.reasoning);
+          childId = id;
+          const turn = this.startTurn(this.row(id), request.instruction, true, staged);
+          this.delegations.create(request.requestId, {
+            parent_session_id: parentId,
+            child_session_id: id,
+            request_hash: hash,
+            turn_id: turn.turnId,
+            message_id: turn.messageId,
+          });
+          return { sessionId: id, ...turn };
+        })
+        .immediate();
+    } catch (error) {
+      if (childId) {
+        staged.discard?.();
+        this.contexts.delete(childId);
+        this.compactors.delete(childId);
+        this.reasonings.delete(childId);
+      }
+      throw error;
+    }
+    this.hub.publishBatch(result.sessionId, staged.events);
+    if (childId) this.notifyDelegationsChanged();
+    return result;
+  }
+
+  /** Host-facing link for a session already addressed through the workbench. */
+  delegationParent(id: string): string | null {
+    this.row(id);
+    return this.delegations.child(id)?.parent_session_id ?? null;
+  }
+
+  private delegationOwner(parentId: string): SessionRow {
+    const parent = this.row(parentId);
+    if (this.delegations.child(parentId)) throw veraError("DENIED");
+    return parent;
+  }
+
+  private ownedDelegation(parentId: string, childId: string): DelegationChildRow {
+    this.delegationOwner(parentId);
+    this.row(childId);
+    const child = this.delegations.child(childId);
+    if (child?.parent_session_id !== parentId) throw veraError("NOT_FOUND");
+    return child;
+  }
+
+  /** List the caller's surviving children, including archived sessions. */
+  listDelegated(parentId: string): SessionSummary[] {
+    this.delegationOwner(parentId);
+    return this.delegations.children(parentId).map((child) => this.summary(this.row(child.child_session_id)));
+  }
+
+  /** Read the child's durable progress and history under its parent's authority. */
+  inspectDelegated(parentId: string, childId: string) {
+    const child = this.ownedDelegation(parentId, childId);
+    return {
+      launch: { sessionId: childId, turnId: child.turn_id, messageId: child.message_id },
+      session: this.summary(this.row(childId)),
+      ...this.hub.get(childId),
+    };
+  }
+
+  /** Replay and follow the existing child event stream under its parent's authority. */
+  subscribeDelegated(parentId: string, childId: string, sinceSeq: number, listener: SessionListener) {
+    this.ownedDelegation(parentId, childId);
+    return this.subscribe(childId, sinceSeq, listener);
+  }
+
+  stopDelegated(parentId: string, childId: string, scope?: "initial-turn"): boolean {
+    const child = this.ownedDelegation(parentId, childId);
+    if (scope === "initial-turn") {
+      const turn = this.active.get(childId);
+      if (!turn?.accepting || turn.turnId !== child.turn_id) return false;
+    }
+    return this.stop(childId);
+  }
+
   revision(id: string) {
     this.row(id);
     return this.hub.revision(id);
@@ -541,6 +749,7 @@ export class SessionService {
     this.writable();
     if (this.deleting.has(id)) throw veraError("BUSY");
     if (!permissionModeSchema.safeParse(mode).success) throw veraError("INVALID");
+    if (mode !== "read-only" && this.delegations.child(id)) throw veraError("DENIED");
     this.update(id, { type: "session.updated", mode });
     if (mode !== "bypass") {
       this.bypassScopes.get(id)?.abort();
@@ -591,6 +800,7 @@ export class SessionService {
   }
   async delete(id: string): Promise<void> {
     this.idle(id);
+    if (this.delegations.hasChildren(id)) throw veraError("CONFLICT");
     this.deleting.add(id);
     try {
       // Background runs of a deleted session would hold ports no session can stop any more.
@@ -599,7 +809,10 @@ export class SessionService {
         this.writable();
         this.artifacts.removeSession(id);
         this.writable();
-        this.sessions.delete(id);
+        this.host.db.transaction(() => {
+          this.delegations.forgetDeletedChildren(id);
+          this.sessions.delete(id);
+        })();
       });
       this.hub.clear(id);
       this.contexts.delete(id);
@@ -691,7 +904,16 @@ export class SessionService {
       return { turnId: active.turnId, messageId };
     }
     const row = this.idle(id);
-    if (!text.trim()) throw veraError("INVALID");
+    return this.startTurn(row, text, !!this.delegations.child(id));
+  }
+
+  private startTurn(row: SessionRow, text: string, delegated: boolean, staged?: StagedTurn) {
+    const id = row.id;
+    if (
+      delegated &&
+      [...this.active.values()].filter((turn) => turn.delegated).length >= MAX_ACTIVE_DELEGATIONS
+    )
+      throw veraError("BUSY");
     let processing = Promise.resolve();
     let failed = false;
     const durable = async () => {
@@ -700,12 +922,15 @@ export class SessionService {
       if (failed) throw veraError("INTERNAL");
       this.writable();
     };
-    const model = this.host.model(row.model_ref);
+    const model =
+      delegated && row.model_ref ? resolveModelReference(row.model_ref) : this.host.model(row.model_ref);
     if (!this.host.gateway.prepareModel) this.host.gateway.capabilities(model);
     const ctx = this.contexts.get(id) ?? createToolContext(this.host.root, this.host.workers);
     this.contexts.set(id, ctx);
-    ctx.permissionMode = () => this.row(id).permission_mode;
-    ctx.additionalFolders = () => this.host.additionalFolders?.() ?? [];
+    if (delegated) ctx.delegated = true;
+    const mode = () => (delegated ? "read-only" : this.row(id).permission_mode);
+    ctx.permissionMode = mode;
+    ctx.additionalFolders = () => (delegated ? [] : (this.host.additionalFolders?.() ?? []));
     ctx.bypassSignal = () => {
       if (this.row(id).permission_mode !== "bypass") return AbortSignal.abort();
       let scope = this.bypassScopes.get(id);
@@ -716,62 +941,78 @@ export class SessionService {
       return scope.signal;
     };
     ctx.knowledge = this.knowledge;
-    if (this.host.terminals) ctx.terminals = this.host.terminals;
-    else delete ctx.terminals;
-    if (this.host.pluginBuilder) ctx.pluginBuilder = this.host.pluginBuilder;
-    if (this.host.managedRoots) ctx.managedRoots = this.host.managedRoots;
-    if (this.host.web) ctx.web = this.host.web;
-    else delete ctx.web;
-    if (this.host.parts) ctx.parts = this.host.parts;
-    else delete ctx.parts;
-    if (this.host.help) ctx.help = this.host.help;
-    else delete ctx.help;
-    if (this.host.downloads) ctx.downloads = this.host.downloads;
-    else delete ctx.downloads;
-    if (this.host.skills) ctx.skills = this.host.skills;
-    else delete ctx.skills;
-    if (this.host.programs) {
-      let programSession = this.programSessions.get(id);
-      if (!programSession) {
-        programSession = new ProgramSession();
-        this.programSessions.set(id, programSession);
-      }
-      ctx.programs = { host: this.host.programs, session: programSession, sessionId: id };
-    } else delete ctx.programs;
-    ctx.todos = {
-      db: this.host.db,
-      repository: new TodosRepository(this.host.db),
-      sessionId: id,
-      now: () => this.now(),
-      assertWritable: () => {
-        this.row(id);
-        this.writable();
-        if (this.deleting.has(id)) throw veraError("BUSY");
-      },
-      record: (event) => {
-        const value = this.hub.record(id, event);
-        return () => this.hub.publish(id, value);
-      },
-      ...(this.host.scrub ? { scrub: this.host.scrub } : {}),
-    };
-    ctx.artifacts = {
-      store: this.artifacts,
-      sessionId: id,
-      queue: this.writeQueue,
-      now: () => this.now(),
-      assertWritable: () => {
-        this.row(id);
-        this.writable();
-        if (this.deleting.has(id)) throw veraError("BUSY");
-      },
-      record: (event) => {
-        const value = this.hub.record(id, event);
-        return () => this.hub.publish(id, value);
-      },
-      scrubContent: (text) => this.maskContent("exports", text),
-      ...(this.host.scrub ? { scrub: this.host.scrub } : {}),
-    };
-    const registry = this.host.registry ?? new ToolRegistry();
+    if (delegated) {
+      ctx.managedRoots = [
+        ...(this.host.managedRoots ?? []),
+        ...(this.host.pluginBuilder ? [this.host.pluginBuilder.root] : []),
+      ];
+    } else {
+      ctx.delegation = bindDelegatedSessionHost(
+        this,
+        id,
+        () => turn.turnId,
+        () => this.host.knownSecrets?.() ?? [],
+      );
+      if (this.host.help) ctx.help = this.host.help;
+      else delete ctx.help;
+      if (this.host.terminals) ctx.terminals = this.host.terminals;
+      else delete ctx.terminals;
+      if (this.host.pluginBuilder) ctx.pluginBuilder = this.host.pluginBuilder;
+      if (this.host.managedRoots) ctx.managedRoots = this.host.managedRoots;
+      if (this.host.web) ctx.web = this.host.web;
+      else delete ctx.web;
+      if (this.host.parts) ctx.parts = this.host.parts;
+      else delete ctx.parts;
+      if (this.host.downloads) ctx.downloads = this.host.downloads;
+      else delete ctx.downloads;
+      if (this.host.skills) ctx.skills = this.host.skills;
+      else delete ctx.skills;
+      if (this.host.programs) {
+        let programSession = this.programSessions.get(id);
+        if (!programSession) {
+          programSession = new ProgramSession();
+          this.programSessions.set(id, programSession);
+        }
+        ctx.programs = { host: this.host.programs, session: programSession, sessionId: id };
+      } else delete ctx.programs;
+      ctx.todos = {
+        db: this.host.db,
+        repository: new TodosRepository(this.host.db),
+        sessionId: id,
+        now: () => this.now(),
+        assertWritable: () => {
+          this.row(id);
+          this.writable();
+          if (this.deleting.has(id)) throw veraError("BUSY");
+        },
+        record: (event) => {
+          const value = this.hub.record(id, event);
+          return () => this.hub.publish(id, value);
+        },
+        ...(this.host.scrub ? { scrub: this.host.scrub } : {}),
+      };
+      ctx.artifacts = {
+        store: this.artifacts,
+        sessionId: id,
+        queue: this.writeQueue,
+        now: () => this.now(),
+        assertWritable: () => {
+          this.row(id);
+          this.writable();
+          if (this.deleting.has(id)) throw veraError("BUSY");
+        },
+        record: (event) => {
+          const value = this.hub.record(id, event);
+          return () => this.hub.publish(id, value);
+        },
+        scrubContent: (text) => this.maskContent("exports", text),
+        ...(this.host.scrub ? { scrub: this.host.scrub } : {}),
+      };
+    }
+    const configuredRegistry = this.host.registry;
+    const registry = delegated
+      ? new ToolRegistry(configuredRegistry?.available())
+      : (configuredRegistry ?? new ToolRegistry());
     const permissions = this.host.permissions;
     const prepared = new Map<string, PreparedChange>();
     const programPaths = new Map<string, ProgramApproval>();
@@ -795,7 +1036,7 @@ export class SessionService {
           const authorized = tool.publish?.(args, output) ?? output;
           return this.maskContent("agent", authorized);
         },
-        execute: async (args: unknown, signal: AbortSignal) => {
+        execute: async (args: unknown, signal: AbortSignal, callId?: string) => {
           await durable();
           if (tool.class === "program") {
             const run = prepared.get(tool.name);
@@ -830,17 +1071,11 @@ export class SessionService {
               );
             }
           }
-          if (
-            permissions &&
-            !(await permissions.allow(
-              { sessionId: id, mode: this.row(id).permission_mode, tool, args },
-              signal,
-            ))
-          )
+          if (permissions && !(await permissions.allow({ sessionId: id, mode: mode(), tool, args }, signal)))
             throw Error("Tool permission denied.");
           this.writable();
           try {
-            const result = await tool.execute(args, signal);
+            const result = await tool.execute(args, signal, callId);
             return result;
           } catch (error) {
             throw Error(
@@ -850,11 +1085,13 @@ export class SessionService {
           }
         },
       }));
+    const offeredToolNames = new Set(tools.map((tool) => tool.name));
     const writeToolNames = new Set(tools.filter((tool) => tool.class === "write").map((tool) => tool.name));
     const contextPolicy = new MaskingContextPolicy(this.host.contextPolicy ?? new ContextPolicy(), (text) =>
       this.maskContent("agent", text),
     );
     const gateway = timedGateway(this.host.gateway, this.host.noOutputTimeoutMs ?? 300000);
+    let initialReasoning = staged?.reasoning;
     const self = this;
     const runtimeHost: RuntimeHost = {
       log: (message) => this.host.log?.(this.host.scrub?.(message) ?? message),
@@ -868,30 +1105,48 @@ export class SessionService {
           ),
       gateway: {
         ...gateway,
+        ...(delegated && gateway.prepareModel
+          ? {
+              prepareModel: async (reference: string, signal = this.delegationShutdown.signal) => {
+                await durable();
+                await prepareDelegatedModel(gateway, reference, signal);
+              },
+            }
+          : {}),
         stream: async function* (request) {
           await durable();
           request.signal.throwIfAborted();
-          const tools = request.tools.filter(
-            (tool) =>
-              self.row(id).permission_mode !== "read-only" ||
-              (!writeToolNames.has(tool.name) && tool.name !== "run_command"),
+          const tools = request.tools.filter((tool) =>
+            delegated
+              ? offeredToolNames.has(tool.name)
+              : mode() !== "read-only" || (!writeToolNames.has(tool.name) && tool.name !== "run_command"),
           );
           // Settings may change while durable events are published after runtime budgeting.
+          const capabilities = gateway.capabilities(request.model, request.maxOutputTokens);
+          if (initialReasoning && !capabilities.reasoningOptions?.includes(initialReasoning)) {
+            yield { type: "error", error: veraError("INVALID"), aborted: false };
+            return;
+          }
           const view = contextPolicy.prepare(
             { system: request.system, tools, messages: request.messages },
-            gateway.capabilities(request.model, request.maxOutputTokens),
+            capabilities,
           );
           if (!view.fits) {
             yield { type: "error", error: veraError("CONTEXT_LIMIT"), aborted: false };
             return;
           }
+          const reasoning =
+            initialReasoning === undefined
+              ? (self.requestReasoning(id, request.model) ?? null)
+              : initialReasoning;
+          initialReasoning = undefined;
           yield* maskModelStream(
             gateway.stream({
               ...request,
               sessionId: id,
               maskOutput: () => self.host.masking?.("agent") !== false,
               messages: view.messages,
-              reasoning: self.requestReasoning(id, request.model) ?? null,
+              reasoning,
               tools,
             }),
             () => self.host.masking?.("agent") !== false,
@@ -903,6 +1158,7 @@ export class SessionService {
       now: () => this.host.clock.now().getTime(),
       nextId: () => ulid(),
       approve: async (call, signal) => {
+        if (delegated) return "denied";
         try {
           await durable();
           const tool = tools.find((candidate) => candidate.name === call.name);
@@ -1002,7 +1258,7 @@ export class SessionService {
     const contextCompactor = this.compactors.get(id) ?? new ContextCompactor();
     this.compactors.set(id, contextCompactor);
     runtime.start({
-      systemPrompt: this.host.prompt(row.permission_mode),
+      systemPrompt: this.host.prompt(mode()),
       model,
       tools,
       messages: this.transcript(id),
@@ -1012,12 +1268,14 @@ export class SessionService {
     });
     const turn: ActiveTurn = {
       runtime,
+      delegated,
       done: Promise.resolve({ stopReason: "error" }),
       turnId: "",
       messageId: "",
       accepting: true,
     };
-    this.active.set(id, turn);
+    let admitting = !!staged;
+    let admissionError: { cause: unknown } | undefined;
     const off = runtime.onEvent((event) => {
       if (event.type === "turn.started") turn.turnId = event.turnId;
       if (event.type === "message.user") turn.messageId = event.messageId;
@@ -1028,6 +1286,16 @@ export class SessionService {
         turn.approvalWait === event.callId
       )
         delete turn.approvalWait;
+      if (admitting && staged && (event.type === "message.user" || event.type === "turn.started")) {
+        if (admissionError) return;
+        try {
+          this.writable();
+          staged.events.push(...this.recordRuntimeEvent(id, event, event, runtime.messages(), turn));
+        } catch (cause) {
+          admissionError = { cause };
+        }
+        return;
+      }
       const transcript = runtime.messages();
       const program = event.type === "tool.done" ? programPaths.get(event.callId) : undefined;
       if (event.type === "tool.done") programPaths.delete(event.callId);
@@ -1041,19 +1309,41 @@ export class SessionService {
         runtime.abort();
       });
     });
-    turn.done = runtime
-      .send(text)
-      .then(async (result) => {
-        await processing;
-        if (failed) result = { stopReason: "error" };
-        this.last.set(id, result);
-        return result;
-      })
-      .finally(() => {
-        off();
-        this.active.delete(id);
-      });
-    return { turnId: turn.turnId, messageId: turn.messageId };
+    this.active.set(id, turn);
+    let discarded = false;
+    const discard = () => {
+      if (discarded) return;
+      discarded = true;
+      failed = true;
+      turn.failed = true;
+      this.active.delete(id);
+      off();
+      runtime.abort();
+    };
+    if (staged) staged.discard = discard;
+    try {
+      turn.done = runtime
+        .send(text)
+        .then(async (result) => {
+          await processing;
+          if (failed) result = { stopReason: "error" };
+          if (!discarded) this.last.set(id, result);
+          return result;
+        })
+        .finally(() => {
+          if (discarded) return;
+          off();
+          this.active.delete(id);
+        });
+      void turn.done.catch(() => {});
+      if (admissionError) throw admissionError.cause;
+      if (admitting && (!turn.turnId || !turn.messageId)) throw veraError("INTERNAL");
+      admitting = false;
+      return { turnId: turn.turnId, messageId: turn.messageId };
+    } catch (error) {
+      discard();
+      throw error;
+    }
   }
   private async process(
     id: string,
@@ -1107,7 +1397,18 @@ export class SessionService {
       this.hub.emit(id, publicEvent);
       return;
     }
-    const value = this.host.db.transaction(() => {
+    this.hub.publishBatch(id, this.recordRuntimeEvent(id, event, publicEvent, transcript, turn));
+    if (turn.delegated && event.type === "turn.done") this.notifyDelegationsChanged();
+  }
+
+  private recordRuntimeEvent(
+    id: string,
+    event: RuntimeEvent,
+    publicEvent: SessionEvent,
+    transcript: Message[],
+    turn: ActiveTurn,
+  ) {
+    return this.host.db.transaction(() => {
       if (event.type === "message.delivered") this.sync(id, transcript);
       if (event.type === "message.user") {
         this.sync(id, transcript);
@@ -1162,11 +1463,11 @@ export class SessionService {
       this.host.db
         .prepare("UPDATE sessions SET status=?,updated_at=? WHERE id=?")
         .run(status, this.now(), id);
-      return this.hub.record(id, publicEvent);
+      const result = [this.hub.record(id, publicEvent)];
+      if (event.type === "message.user")
+        result.push(this.hub.record(id, { type: "session.updated", title: this.row(id).title }));
+      return result;
     })();
-    this.hub.publish(id, value);
-    if (event.type === "message.user")
-      this.update(id, { type: "session.updated", title: this.row(id).title });
   }
   stop(id: string): boolean {
     this.row(id);
@@ -1192,6 +1493,7 @@ export class SessionService {
   async close(): Promise<void> {
     if (this.closed) return;
     this.closing = true;
+    this.delegationShutdown.abort();
     for (const turn of this.active.values()) turn.accepting = false;
     for (const turn of this.active.values()) turn.runtime.abort();
     for (const scope of this.bypassScopes.values()) scope.abort();

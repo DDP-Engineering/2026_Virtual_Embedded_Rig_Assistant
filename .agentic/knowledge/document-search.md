@@ -21,11 +21,20 @@ use their own persistent host because their payloads, lifetimes and caches diffe
 
 - Agent search_docs/read_doc pass host-only application-data exclusions as the final search/read argument. DocumentKnowledge keeps workbench scope, refuses protected raw/extracted reads and omits protected cached search snippets in keyword/semantic/hybrid results, including canonical aliases. The index and internal default readers are unchanged. knowledge/search.test.ts exercises all four session modes against an already indexed protected document and a replaced alias.
 
+- Core exports the registered IDs, the BGE default and `readEmbeddingModel` from the embedding API.
+  A registered descriptor lives at `<models>/<model-id>/model-manifest.json`; the reader checks that
+  it belongs to the requested directory. Desktop and CLI route each workbench to its configured model.
+  The retrieval evaluator uses the BGE default. During a workbench model rebuild,
+  hybrid and semantic searches return keyword hits and explain the temporary ranking mode.
+  The keyword revision tracks source-content changes. Search snapshots its candidates
+  before path verification so model-only publication preserves in-flight keyword results
+  (REQ-FUNC-12403e85).
 - EmbeddingHost(entry, models, manifest, deadlineMs=120000) embeds passages in
   batches32 and ranks normalized cosine top50. embed/rank accept root and signal;
   rank accepts vectors or a lazy vector provider evaluated at serialized admission;
-  cached tests an epoch/model/filter key; release(root)/dispose terminate/drain.
-- DocumentKnowledge(root,db,embeddingPort?,defaults?) supplies search(query,k?,mode?,
+  cached checks the current workbench lease and epoch/model/filter key. release(root) removes a
+  workbench's lease; dispose releases all leases.
+- DocumentKnowledge(root,db,embeddingsProvider?,defaults?) supplies search(query,k?,mode?,
   pathGlob?) and read(path,page/pageEnd,heading,lineStart/lineEnd). Omitted k/mode
   take the defaults provider (SessionHost.retrieval from workbench.yaml retrieval),
   else 8/hybrid; explicit arguments win (REQ-FUNC-724d3fcc). Strict schemas
@@ -70,8 +79,11 @@ use their own persistent host because their payloads, lifetimes and caches diffe
   initialization, covering desktop and CLI local inference.
 - Manifest identity includes model/revision/dtype/descriptor/assets. Local assets
   are hash/length verified in the worker; Transformers disables remote loading,
-  caches and inference fetch. Pinned q8 CPU ORT uses one thread, CLS/L2 float32
-  dim384. Full prefixed inputs including specials must remain below512 tokens.
+  caches and inference fetch. Pinned q8 CPU ORT runs with one thread and uses manifest-selected pooling and L2-normalized
+  float32 dim384. Query and passage prefixes come from the descriptor. Complete inputs, including
+  special tokens, must remain below 512 tokens. A missing model manifest or tokenizer fails a processing attempt.
+  Unchanged indexed documents keep their keyword chunks when the manifest is unavailable.
+  Source-file disappearance and indexer interruption can request a retry.
 - In the desktop app the EmbeddingHost lives in the [indexer process](indexer-process.md);
   search reaches it through the IndexerHost EmbeddingPort, which sends vectors only when the
   indexer reports the epoch as not cached (TASK-f09609fd). `embeddingModelId(model)` gives the
@@ -82,8 +94,9 @@ use their own persistent host because their payloads, lifetimes and caches diffe
   native ONNX call is retired, not terminated: it is terminated after its reply (or the
   deadline), and release/dispose wait for that, because terminating ONNX Runtime mid-call
   ends the whole process with 0xE06D7363 (seen when switching workbenches during indexing).
-  Serialized per-root workers cache vectors by epoch/model/filter. Root disposal
-  clears cache and drains queued operations before owned resources disappear.
+  Each used model has one serialized worker, started on the first embed or rank call.
+  Vector cache keys include a workbench lease and epoch/model/filter. Last-root release and
+  60 seconds without queued work both retire the worker. A new operation starts it again on demand.
 - The schema (schema_version 1) includes embeddings with FK cascade and full document_extractions.
   DocumentsRepository validates extraction/vector count/finite/dimension/norm and
   atomically replaces chunks, full extraction and vectors in ingest publication.
@@ -122,7 +135,8 @@ flowchart LR
 
 | Change | Start | Focused proof |
 |---|---|---|
-| local descriptor/batches/cache/termination | embedding.ts, embedding-worker.ts | embedding.test.ts; real eval |
+| local model registry, descriptor pins and preparation | shared embedding-models.ts, embedding-model-manifest.ts; prepare-model.mjs | workbench.test.ts, packaging.test.ts and actual cache preparation |
+| model selection, prefixes, cache and worker lifetime | document-services.ts, embedding.ts, embedding-worker.ts | embedding.test.ts, embedding-models.spec.ts |
 | atomic lifecycle/schema | storage/schema.ts, DocumentsRepository, processor/ingest | embedding-schema, embedding-ingest, ingest tests |
 | modes/RRF/glob/snippets/read bounds | search.ts, keyword.ts | search.test.ts, keyword.test.ts |
 | registry/replay/citations | tools/documents.ts, SessionService | registry/search replay and document-cli tests |
@@ -134,10 +148,12 @@ flowchart LR
 REQ-DATA-154fb0af atomic embedding lifecycle; REQ-FUNC-0e93fa45 deterministic
 bounded retrieval; REQ-FUNC-cc209d7e guarded document tools and owned CLI.
 REQ-FUNC-51165496 verifies issued document bounds against current source/extraction.
+REQ-FUNC-7c394cbe and REQ-FUNC-18573c94 bind indexing and semantic search to the configured model.
+REQ-NFR-ef69b1ff and REQ-NFR-d8ac1694 govern model worker startup, reuse and retirement.
 
 ## Files
 
-Under05_Software: core knowledge/{embedding,embedding-worker,embedding-ingest,
+Under `05_Software`: shared `embedding-models.ts` and `embedding-model-manifest.ts`, core knowledge/{document-services,embedding,embedding-worker,embedding-ingest,
 search,processor,ingest}; storage/{schema,repos/documents};
 tools/documents; CLI {args,documents,document-processor,embedding-worker}; desktop
 {document-processor,document-embedding-worker,index,sessions}; evaluators/eval-retrieval-harness/{eval-retrieval,

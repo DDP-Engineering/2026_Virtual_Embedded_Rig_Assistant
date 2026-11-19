@@ -18,9 +18,11 @@ import { validateCitations } from "../agent/citations.js";
 import { ReplayGateway } from "../llm/replay.js";
 import { SessionService } from "../sessions/service.js";
 import { DocumentsRepository } from "../storage/repos/documents.js";
+import { beginEmbeddingRebuild } from "../storage/repos/embedding-rebuild.js";
 import { schemaSql } from "../storage/schema.js";
 import { createToolContext } from "../tools/context.js";
 import { ToolRegistry } from "../tools/registry.js";
+import { PathGuard } from "../workbench/path-guard.js";
 import type { EmbeddingPort } from "./embedding.js";
 import { documentKind } from "./ingest.js";
 import { createDocumentProcessor, verifyDocumentSource } from "./processor.js";
@@ -51,7 +53,7 @@ async function harness() {
     release: async () => {},
   };
   const rows = new DocumentsRepository(db),
-    knowledge = new DocumentKnowledge(root, db, port),
+    knowledge = new DocumentKnowledge(root, db, () => port),
     signal = new AbortController().signal;
   const add = async (path: string, text: string, pages?: string[]) => {
     await writeFile(join(root, path), text);
@@ -503,7 +505,12 @@ it("uses the workbench retrieval defaults when search_docs omits k or mode", asy
       /Semantic/,
     );
     expect((await h.knowledge.search({ query: "I2C1_CR1" }, h.signal)).results).toHaveLength(3);
-    const unset = new DocumentKnowledge(h.root, h.db, h.port, () => undefined);
+    const unset = new DocumentKnowledge(
+      h.root,
+      h.db,
+      () => h.port,
+      () => undefined,
+    );
     expect((await unset.search({ query: "I2C1_CR1" }, h.signal)).results).toHaveLength(3);
   } finally {
     await h.close();
@@ -860,6 +867,53 @@ it("guides models that fill every optional argument: per-field descriptions, kin
   }
 });
 
+it("keeps an in-flight keyword result coherent while publishing new model chunk boundaries", async () => {
+  const h = await harness();
+  let release = () => {};
+  const released = new Promise<void>((done) => {
+    release = done;
+  });
+  try {
+    const doc = await h.add("docs/a.txt", "Coolant returns to the pump.");
+    h.db.transaction(() => beginEmbeddingRebuild(h.db))();
+    let enter = () => {};
+    const entered = new Promise<void>((done) => {
+      enter = done;
+    });
+    const createGuard = PathGuard.create;
+    vi.spyOn(PathGuard, "create").mockImplementationOnce(async (...args) => {
+      enter();
+      await released;
+      return createGuard(...args);
+    });
+    const waiting = h.knowledge.search({ query: "coolant", mode: "hybrid" }, h.signal);
+    await entered;
+    const rows = new DocumentsRepository(h.db);
+    const extraction = rows.extraction(doc.id)!;
+    const vector = new Float32Array(384);
+    vector[0] = 1;
+    rows.replaceEmbeddings(
+      doc.id,
+      rows.validateChunks(
+        [
+          { text: "Coolant returns", locator: { type: "lines", start: 1, end: 1 } },
+          { text: "to the pump.", locator: { type: "lines", start: 1, end: 1 } },
+        ],
+        { extraction, modelId: "replacement", vectors: [vector, vector] },
+      ),
+    );
+    release();
+    await expect(waiting).resolves.toMatchObject({
+      ranking: "embedding-rebuild",
+      results: [{ path: doc.path, snippet: "Coolant returns to the pump." }],
+    });
+  } finally {
+    release();
+    vi.restoreAllMocks();
+    await h.close();
+  }
+});
+
 // RULING-005 (TASK-f09609fd)
 it("falls back to keyword results when the indexer cannot rank, and still fails other ranking errors", async () => {
   const h = await harness();
@@ -873,9 +927,7 @@ it("falls back to keyword results when the indexer cannot rank, and still fails 
       },
       release: async () => {},
     });
-    const stopped = new DocumentKnowledge(
-      h.root,
-      h.db,
+    const stopped = new DocumentKnowledge(h.root, h.db, () =>
       failing(Object.assign(Error("Indexing stopped."), { retry: true })),
     );
     for (const mode of ["hybrid", "semantic"] as const) {
@@ -883,7 +935,7 @@ it("falls back to keyword results when the indexer cannot rank, and still fails 
       expect(found.results.map((r) => r.path)).toEqual(["docs/a.md"]);
       expect(found.message).toMatch(/semantic ranking is unavailable/i);
     }
-    const broken = new DocumentKnowledge(h.root, h.db, failing(Error("Embedding worker failed.")));
+    const broken = new DocumentKnowledge(h.root, h.db, () => failing(Error("Embedding worker failed.")));
     await expect(broken.search({ query: "supply", mode: "hybrid" }, h.signal)).rejects.toThrow(
       "Embedding worker failed.",
     );

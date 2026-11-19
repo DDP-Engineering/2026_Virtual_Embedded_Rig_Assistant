@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-FUNC-a66961fa"
+title = "Reject invalid delegated launch options"
+status = "active"
+requirement = "If the delegated input, configured model or requested reasoning is invalid, then the session service shall reject launch before creating a child."
+verification = "Request an invalid shape, a missing model and unsupported reasoning and check the workbench session count."
+affected_paths = ["05_Software/src/libraries/core/src/sessions/service.ts","05_Software/src/libraries/core/src/sessions/delegation.ts","05_Software/src/libraries/core/src/llm/replay.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/sessions/delegation.test.ts", "05_Software/src/libraries/core/src/llm/replay.test.ts"]
+created = 2026-11-19
+updated = 2026-11-19

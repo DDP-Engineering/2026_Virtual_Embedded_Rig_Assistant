@@ -1,23 +1,9 @@
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
-import {
-  createDocumentProcessor,
-  createOfficeExtractor,
-  createPdfExtractor,
-  EmbeddingHost,
-} from "@vera/core";
-export function createDocumentServices(models: string, manifestPath = join(models, "model-manifest.json")) {
-  const embeddings = new EmbeddingHost(
-    new URL("./document-embedding-worker.js", import.meta.url),
+import { createModelDocumentServices } from "@vera/core";
+
+export function createDocumentServices(models: string) {
+  return createModelDocumentServices(
     models,
-    JSON.parse(readFileSync(manifestPath, "utf8")),
+    new URL("./document-embedding-worker.js", import.meta.url),
+    new URL("./pdf-worker.js", import.meta.url),
   );
-  return {
-    embeddings,
-    processDocument: createDocumentProcessor(
-      createPdfExtractor(new URL("./pdf-worker.js", import.meta.url)),
-      embeddings,
-      createOfficeExtractor(new URL("./pdf-worker.js", import.meta.url)),
-    ),
-  };
 }

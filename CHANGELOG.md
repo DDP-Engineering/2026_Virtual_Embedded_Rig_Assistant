@@ -9,6 +9,11 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 ### Added
 
 - Chat replies and code blocks offer exact copying; explicit Bash and PowerShell blocks run in compatible terminals.
+- Desktop links delegated sessions, shows their outcomes and lets users stop a running child.
+- Agents can launch, monitor, stop and collect results from delegated inspection sessions.
+- Core sessions can launch inspection-only children with durable ownership and bounded workbench concurrency.
+- Windows and Linux packages ship both pinned local embedding models and their MIT licence notices.
+- The local embedding registry and model preparation now include pinned Multilingual E5 Small q8 assets.
 - CLI: --key-env <NAME> takes the provider key from the named environment variable, for any provider.
 - Workbenches can choose visible right-panel tabs, with saved preferences and draft default restoration.
 - Image previews fit PNG, JPEG, GIF, WebP, BMP and inert SVG, with original-image zoom through 400% and Hex.
@@ -33,6 +38,11 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 - The Documents preview says "at least" when its 5-second limit stops it and shows the count guard before saving.
 
 ### Changed
+
+- Close VERA and delete .vera/vera.db, .vera/vera.db-wal and .vera/vera.db-shm from earlier builds.
+- Switch local embedding models per workbench while keyword search continues during the background rebuild.
+
+- Indexing and semantic search use the workbench model and its token budget. Idle embedding workers stop.
 
 - Workbench Tools keeps core capabilities; Plugins groups specialized allowances by provider and shared ecosystem.
 - Skills clarifies activation and scopes, opens new instructions immediately and supports read-only viewing and retries.

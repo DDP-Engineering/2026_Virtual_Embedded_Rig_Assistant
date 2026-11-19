@@ -90,14 +90,15 @@ chokidar on the literal docs.include prefixes + .vera/workbench.yaml + .vera/.ve
 - Model `Xenova/bge-small-en-v1.5`, revision `ea104dac…`, q8 ONNX (`model_quantized.onnx`, 34 MB), 384
   dimensions, CLS pooling, normalised, 512 tokens. Query prefix `Represent this sentence for searching
   relevant passages: `; passage prefix empty. WP-24 chose it over `multilingual-e5-small`
-  (ADR-0015). The workbench `embeddings.model` accepts only this id.
+  (ADR-0015). Desktop and CLI inference use BGE. Format-1 `embeddings.model` defaults to BGE and
+  accepts either registered ID, including `Xenova/multilingual-e5-small`.
 - `@huggingface/transformers` 4.3.1 on onnxruntime-node 1.30.0, CPU, one thread, in a worker thread
   inside the indexer process; one persistent worker per workbench, requests serial with a 120 s
   deadline. `allowRemoteModels = false`, `local_files_only`, `fetch` replaced by a throwing stub,
   every model file checked against `model-manifest.json` (size and SHA-256) before loading, ORT
   telemetry off.
-- Models load from `<resources>/models/` with `<resources>/model-manifest.json` when packaged, from
-  `src/models/` in development (L5).
+- Models load their manifest and assets from `<resources>/models/<model-id>/` when packaged
+  and `src/models/<model-id>/` in development (L5).
 - An input of 512 tokens or more, prefix included, is rejected rather than truncated.
 - Vectors are L2-normalised float32 BLOBs stored with a model id
   `<modelId>@<revision>:<sha256 of dtype, descriptor and files>`; a document whose chunks lack vectors

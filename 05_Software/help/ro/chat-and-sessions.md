@@ -22,6 +22,12 @@ Cât timp agentul lucrează, poți continua să scrii și să trimiți mesaje, d
 
 **Oprește** încheie execuția curentă. Și Escape întreabă **Oprești execuția curentă?**. Lucrul deja finalizat, cum ar fi modificările de fișiere aplicate, rămâne.
 
+## Urmărește sesiunile delegate
+
+Când VERA deleagă o sarcină, **Sesiuni delegate** din chatul părinte afișează fiecare sesiune copil și starea sa. Selectează o sesiune copil pentru a-i deschide fila Chat și a-i urmări conversația. **Sesiune părinte** revine la sesiunea părinte.
+
+Pentru a opri o sesiune copil în curs, deschide-o și folosește **Oprește** lângă câmpul pentru mesaje. Sesiunea părinte poate continua. Dacă se cere aprobare, folosește cardul de aprobare din sesiunea respectivă. Când redeschizi oricare dintre sesiuni după repornirea VERA, legătura și rezultatul execuției delegate rămân disponibile.
+
 ## Niveluri de detaliu
 
 **Nivel de detaliu** se setează pentru fiecare workbench în **Editează workbench-ul** → **Agent și chat**:

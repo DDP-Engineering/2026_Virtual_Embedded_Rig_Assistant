@@ -1,7 +1,7 @@
 # Local workbench retrieval
 
-STATED: WP26 and architecture05§4–6/8 plus ADR0015 define local CPU BGE,
-384 float32 normalized values, batches32, top50 cosine, numeric chunk-id ties,
+STATED: WP26 and architecture05§4–6/8 plus ADR0015 define local CPU inference
+with BGE as the default, 384 float32 normalized values, batches32, top50 cosine, numeric chunk-id ties,
 one-based RRF60 and the frozen hybrid gates24/28,14/14 EN,11/14 RO.
 
 OBSERVED: KeywordSearch supplies persisted top50 lexical rows; Ingester owns
@@ -14,8 +14,9 @@ chunk locator/ref, snippet<=300 UTF16 characters and finite score. No indexed
 chunks yields a message suggesting grep. Empty/punctuation lexical queries
 return empty candidates. Semantic errors are actionable, with no remote fallback.
 
-Model identity covers model/revision/dtype and the embedding descriptor. Intake
-counts full prefixes and special tokens with the actual tokenizer, rejecting
+The workbench selects the model for indexing, semantic query encoding and vector lookup.
+Model identity covers model/revision/dtype, the embedding descriptor and its pinned files.
+Intake counts full prefixes and special tokens with the configured tokenizer, rejecting
 inputs>=512 before inference. Model changes cause unchanged indexed documents
 to be reprocessed; replacement commits chunks, extraction and vectors together.
 A database with any schema_version other than 1 is invalid and does not open.

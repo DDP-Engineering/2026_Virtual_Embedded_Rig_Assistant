@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-UX-15bcd8cc"
+
+title = "Stop delegated work from Desktop"
+
+status = "active"
+
+requirement = """
+While a delegated child is active in a writable workbench, Desktop shall let the user stop its turn through the child's existing session Stop control even if the parent is still active.
+"""
+
+verification = "Open the running child while its parent is active, click Stop and verify the child ends while the parent remains independently active."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/session/workspace.tsx","05_Software/src/apps/desktop/src/renderer/components/session/composer.tsx"]
+
+linked_tests = ["05_Software/tests/e2e/session-delegation.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-19
+updated = 2026-11-19

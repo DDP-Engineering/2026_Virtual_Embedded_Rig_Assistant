@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-38e40369"
+
+title = "Fail preparation when any pinned embedding asset cannot be verified"
+
+status = "active"
+
+requirement = """
+If an embedding asset is missing in offline mode or its bytes fail their pinned integrity check, model preparation shall fail.
+"""
+
+verification = "Test a missing offline asset, corrupt cached and fetched assets and an escaping path; assert rejection and no network in offline mode."
+
+affected_paths = ["02_Tools/environment/prepare-model.mjs"]
+
+linked_tests = ["05_Software/tests/packaging/packaging.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-19
+updated = 2026-11-19

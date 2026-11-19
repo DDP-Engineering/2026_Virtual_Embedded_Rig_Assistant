@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { existsSync } from "node:fs";
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -138,6 +139,38 @@ test("zipFiles stores the files under the prefix", async () => {
   const entries = unzipSync(new Uint8Array(await readFile(join(folder, "kit.zip"))));
   expect(Object.keys(entries).sort()).toEqual(["vera-kit/files/tool.bin", "vera-kit/kit.json"]);
   expect(Buffer.from(entries["vera-kit/files/tool.bin"] ?? []).toString()).toBe("binary");
+});
+
+test("delivery rejects altered or missing inner model members even when archive checksums match", async () => {
+  const { checkEmbeddingPayload } = await import(
+    /* @vite-ignore */ pathToFileURL(`${process.cwd()}/../02_Tools/release/embedding-payload.mjs`).href
+  );
+  const { unzipSync } = await import("fflate");
+  const asset = "resources/models/Xenova/multilingual-e5-small/tokenizer.json";
+  const original = Buffer.from("original");
+  const pinned = [
+    { path: asset, bytes: original.length, sha256: createHash("sha256").update(original).digest("hex") },
+  ];
+  const archive = join(folder, "models.zip");
+  const write = async (value: string) => {
+    await writeFile(join(folder, "asset"), value);
+    await common.zipFiles(folder, ["asset"], archive);
+    await rm(join(folder, "asset"));
+    await common.writeSums(folder, [await common.describeFile(folder, "models.zip")]);
+    expect(await common.checkSums(folder)).toEqual([]);
+  };
+  const check = async () => {
+    const entries = unzipSync(new Uint8Array(await readFile(archive)));
+    return checkEmbeddingPayload(pinned, (path: string) =>
+      entries.asset && path === asset ? Buffer.from(entries.asset) : Buffer.alloc(0),
+    );
+  };
+  await write("original");
+  await expect(check()).resolves.toBeUndefined();
+  await write("tampered");
+  await expect(check()).rejects.toThrow(asset);
+  await common.zipFiles(folder, [], archive);
+  await expect(check()).rejects.toThrow(asset);
 });
 
 test("release notes Markdown lists entries by category in English and says when there are none", () => {

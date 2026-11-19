@@ -22,6 +22,12 @@ Während der Agent arbeitet, können Sie weiterschreiben und weitere Nachrichten
 
 **Stoppen** beendet den laufenden Durchlauf. Auch Escape fragt **Laufenden Durchlauf stoppen?**. Bereits abgeschlossene Arbeit, etwa angewendete Dateiänderungen, bleibt erhalten.
 
+## Delegierte Sitzungen verfolgen
+
+Wenn VERA eine Aufgabe delegiert, zeigt **Delegierte Sitzungen** im übergeordneten Chat jede untergeordnete Sitzung mit ihrem Status an. Wähle eine Sitzung aus, um ihren Chat zu öffnen und den Verlauf zu verfolgen. **Übergeordnete Sitzung** führt zurück.
+
+Öffne eine laufende untergeordnete Sitzung und wähle **Stoppen** bei der Nachrichteneingabe, um sie anzuhalten. Die übergeordnete Sitzung kann weiterarbeiten. Wenn eine Genehmigung erforderlich ist, verwende die Genehmigungskarte in der jeweiligen Sitzung. Beim erneuten Öffnen nach einem Neustart von VERA bleiben der Link und das Ergebnis des delegierten Durchlaufs verfügbar.
+
 ## Detailgrade
 
 **Detailgrad** wird pro Workbench unter **Workbench bearbeiten** → **Agent und Chat** festgelegt:

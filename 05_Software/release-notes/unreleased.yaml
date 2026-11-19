@@ -18,10 +18,10 @@ entries:
   - category: new
     topic: { en: Workbench, ro: Workbench, de: Workbench, fr: Banc de travail }
     text:
-      en: Choose visible right-panel tabs per workbench and check its storage size on demand.
-      ro: Alege filele vizibile din dreapta pe workbench și verifică spațiul ocupat la cerere.
-      de: Rechte Tabs je Workbench wählen und bei Bedarf dessen Speicherbelegung prüfen.
-      fr: Choisissez les onglets droits par banc et consultez son espace utilisé à la demande.
+      en: Choose right-panel tabs and check storage size on demand. Recreate databases from earlier builds.
+      ro: Alege filele din dreapta și vezi spațiul la cerere. Recreează bazele din versiunile vechi.
+      de: Rechte Tabs wählen und Speicherbedarf abrufen. Datenbanken aus früheren Builds neu erstellen.
+      fr: Choisissez les onglets à droite et voyez l’espace à la demande. Recréez les anciennes bases.
   - category: fixed
     topic: { en: Chat, ro: Chat, de: Chat, fr: Chat }
     text:
@@ -74,17 +74,17 @@ entries:
   - category: new
     topic: { en: Files, ro: Fișiere, de: Dateien, fr: Fichiers }
     text:
-      en: Switch Rendered, Text or Hex; preview images with zoom to 400% and remember each extension.
-      ro: Alege Randat, Text sau Hex; vezi imagini cu zoom până la 400% și reține modul pe extensie.
-      de: Gerendert, Text oder Hex wählen; Bilder bis 400% zoomen und die Wahl pro Dateiendung merken.
-      fr: Choisissez Rendu, Texte ou Hex ; zoomez les images à 400% et mémorisez le mode par extension.
+      en: Rendered, Text or Hex per extension. Zoom to 400%. In Hex, jump, find and copy bytes or text.
+      ro: Randat, Text sau Hex pe extensie. Zoom 400%. În Hex, sari, caută și copiază octeți sau text.
+      de: Gerendert, Text, Hex je Endung. Zoom bis 400 %. In Hex springen, Text und Bytes suchen und kopieren.
+      fr: Rendu, Texte, Hex par extension. Zoom 400 %. En Hex, sauts, recherche et copie de texte ou d’octets.
   - category: new
     topic: { en: Files, ro: Fișiere, de: Dateien, fr: Fichiers }
     text:
-      en: Inspect bytes in Hex, jump to offsets, find text or bytes and copy selected hex or text.
-      ro: Inspectează octeți în Hex, sari la offset, caută text sau octeți și copiază selecția.
-      de: Bytes in Hex ansehen, zu Offsets springen, Text oder Bytes suchen und die Auswahl kopieren.
-      fr: Affichez les octets en Hex, allez à un décalage, cherchez et copiez la sélection.
+      en: Switch local models per workbench. Both models are included for offline search.
+      ro: Schimbă modelul local pe workbench. Ambele modele sunt incluse pentru căutare offline.
+      de: Wechseln Sie das Modell je Workbench. Beide Modelle sind für die Offline-Suche enthalten.
+      fr: Changez de modèle par banc. Les deux modèles sont inclus pour la recherche hors ligne.
   - category: improved
     topic: { en: Files, ro: Fișiere, de: Dateien, fr: Fichiers }
     text:
@@ -158,10 +158,10 @@ entries:
   - category: new
     topic: { en: Sessions, ro: Sesiuni, de: Sitzungen, fr: Sessions }
     text:
-      en: Bookmark your messages from the conversation or its title and reply preview.
-      ro: Marchează mesajele din conversație sau din previzualizarea cu titlu și răspuns.
-      de: Setzen Sie Lesezeichen an Nachrichten im Gespräch oder in der Titel- und Antwortvorschau.
-      fr: Ajoutez des signets aux messages dans la conversation ou l’aperçu du titre et de la réponse.
+      en: "Bookmark messages. Agents delegate inspections and use results. Follow or stop them in Desktop."
+      ro: "Marchează mesaje. Agenții deleagă verificări și folosesc rezultate. Urmărește-le sau oprește-le."
+      de: "Lesezeichen setzen. Agenten delegieren Prüfungen und werten sie aus. Läufe verfolgen oder stoppen."
+      fr: "Ajoutez des signets. Les agents délèguent et utilisent les résultats. Suivez ou arrêtez les tâches."
   - category: improved
     topic: { en: Sessions, ro: Sesiuni, de: Sitzungen, fr: Sessions }
     text:

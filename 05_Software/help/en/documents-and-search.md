@@ -1,6 +1,8 @@
 # Documents and search
 
-VERA indexes the documentation of a workbench on your computer, so the agent can search it and cite the exact page, section or line it used. Indexing uses a local model and sends nothing over the network. When the agent reads a passage to answer you, that passage goes to your model provider like the rest of the conversation; with a local server such as LM Studio or Ollama it stays on your computer.
+VERA indexes the documentation of a workbench on your computer, so the agent can search it and cite the exact page, section or line it used. Indexing and semantic search use the workbench’s local model. BGE Small EN v1.5 is the default for English. A workbench configured with Multilingual E5 Small can find passages by meaning in Romanian, German, French and other languages, including with a query in a different language. Windows and Linux packages include both models. You can index offline with either model as soon as you install VERA. When the agent reads a passage to answer you, that passage goes to your model provider like the rest of the conversation; with a local server such as LM Studio or Ollama it stays on your computer.
+
+To change the model, open **Edit workbench** → **Indexing**, choose the model, and save. VERA asks for confirmation with the indexed document count. When you confirm, it keeps the extracted text and rebuilds the workbench’s vectors in the background. You can still search by keyword during the rebuild.
 
 Display masking is off by default. When enabled for a workbench, stored secrets in file names and viewer text appear as [REDACTED]. Files and search results remain listed and open the same file, even when two masked names look alike. Display masking does not change indexing or what the agent may send to a model. PDF page images keep their original bytes; only extracted text is masked.
 

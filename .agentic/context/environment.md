@@ -8,7 +8,7 @@
 - Node.js 24.21.0 is pinned by version and SHA-256 and lives in `02_Tools/runtime/` (git-ignored). `05_Software/package.json` requires Node `>=24 <25`.
 - npm dependencies are pinned exactly in `05_Software/package.json` and its lockfile. Among them: Electron 44.7.0, electron-builder 26.17.0, electron-vite 5.0.0, TypeScript 6.0.3, Vitest 5.0.3, Playwright 1.64.0, Biome 2.5.15, esbuild 0.25.12, better-sqlite3 13.0.3 and node-pty 1.1.0.
 - Managed plugin Python uses the pinned uv 0.13.7 (`05_Software/src/uv/uv-manifest.json`). `npm run prepare:uv` fetches and verifies it.
-- The local embedding model is pinned by manifest. `npm run prepare:model` materializes it; `-- --offline` only verifies cached assets. Runtime assets never require a model download.
+- Local embedding assets are pinned in `src/models/<model-id>/model-manifest.json`. `npm run prepare:model` verifies BGE and E5 and fetches missing assets. `-- --offline` verifies the cache without downloading. Both models and their MIT notices ship in every Windows/Linux package. Installed model inference reads each manifest and its assets from the same directory under `resources/models/`. Delivery verification reads archive members with full 7-Zip.
 
 ## Setup
 
@@ -114,6 +114,9 @@ There is no upgrade-safety suite, because every stored format is version 1.
 - The e2e build rewrites `src/apps/desktop/out`, which `npm run dev` also uses. Stop the development app before native e2e. Restart it afterwards with `VERA_TEST=0`.
 - Traces, videos and screenshots are off. The output is a temporary system folder that the cleanup reporter removes, also after failures; read errors from the console. Replacing the reporters from the command line can bypass the cleanup.
 - Browser mock states are seeded through URL parameters such as `?mock=chat`.
+- Native `session-delegation.spec.ts` runs replay launch, reasoning, independent parent work and
+  result use, linked transcripts, Stop, missed notification recovery and restart. Set the optional
+  `VERA_DELEGATION_PROOF_DIR` to an existing owned folder to keep the two UI captures.
 - Optional outputs: `VERA_E2E_EVIDENCE_DIR` (ingest diagnostics on failure), `VERA_NAV_SCREENSHOT` and `VERA_PDF_SCREENSHOT` (screenshot path prefixes), `VERA_TERM02_EVIDENCE_DIR`, `VERA_TERM03_EVIDENCE_DIR`, `VERA_TERM05_EVIDENCE_DIR` and `VERA_BYP01_EVIDENCE_DIR` (native receipts). `VERA_TERM05_APP` points the terminal spec at an extracted packaged binary.
 
 ### Plugin suites

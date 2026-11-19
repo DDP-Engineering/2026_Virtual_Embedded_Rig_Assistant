@@ -1,7 +1,13 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
-import { DocumentKnowledge, DocumentsRepository, EmbeddingHost, schemaSql } from "@vera/core";
+import {
+  DocumentKnowledge,
+  DocumentsRepository,
+  EmbeddingHost,
+  readEmbeddingModel,
+  schemaSql,
+} from "@vera/core";
 import Database from "better-sqlite3";
 import { loadCorpus } from "../retrieval-support/corpus.mjs";
 import { summarize, validateFixture } from "../retrieval-support/evaluation.mjs";
@@ -13,11 +19,11 @@ export async function evaluate(software, scratch) {
     await readFile(join(software, "tests/fixtures/retrieval/demo-board.yaml"), "utf8"),
     corpus.chunks,
   );
-  const model = JSON.parse(await readFile(join(software, "src/models/model-manifest.json"), "utf8"));
+  const models = join(software, "src/models");
   const host = new EmbeddingHost(
     pathToFileURL(join(scratch, "embedding-worker.mjs")),
-    join(software, "src/models"),
-    model,
+    models,
+    readEmbeddingModel(models),
   );
   const db = new Database(":memory:");
   try {
@@ -52,7 +58,7 @@ export async function evaluate(software, scratch) {
         },
       );
     }
-    const knowledge = new DocumentKnowledge(workbench, db, host),
+    const knowledge = new DocumentKnowledge(workbench, db, () => host),
       metrics = {};
     const locatorKey = (row) => JSON.stringify([row.path, row.locator]);
     const byLocator = new Map(corpus.chunks.map((c) => [locatorKey(c), c.id]));

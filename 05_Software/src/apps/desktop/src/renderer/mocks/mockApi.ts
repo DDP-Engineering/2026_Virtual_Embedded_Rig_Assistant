@@ -1763,6 +1763,7 @@ What this plugin does.
         const {
           patch,
           workbenchId,
+          embeddingSwitch,
           removeCommandPrefixes = [],
           addAdditionalFolders = [],
           removeAdditionalFolders = [],
@@ -1770,6 +1771,19 @@ What this plugin does.
         const bench = current();
         if (bench.snapshot.readOnly) throw veraError("DENIED");
         if (workbenchId && bench.snapshot.config.id !== workbenchId) throw veraError("CONFLICT");
+        const currentModel = bench.snapshot.config.embeddings.model;
+        const changingModel = patch.embeddings !== undefined && patch.embeddings.model !== currentModel;
+        if (changingModel || embeddingSwitch) {
+          const indexed =
+            scenario === "empty" ? 0 : mockDocuments.filter(({ status }) => status === "indexed").length;
+          if (
+            !changingModel ||
+            !workbenchId ||
+            embeddingSwitch?.from !== currentModel ||
+            embeddingSwitch.count !== indexed
+          )
+            throw veraError("CONFLICT");
+        }
         const grants = await Promise.all(
           bench.snapshot.config.agent.allowed_commands.map(async (prefix) => ({
             prefix,

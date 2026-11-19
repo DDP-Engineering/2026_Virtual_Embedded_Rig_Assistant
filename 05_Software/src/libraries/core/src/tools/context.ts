@@ -11,6 +11,7 @@ import type { WebDownloads } from "../web/downloads.js";
 import type { WebProvider } from "../web/provider.js";
 import { PathGuard } from "../workbench/path-guard.js";
 import type { ChangeHost, PreparedChange } from "./changes.js";
+import type { DelegatedSessionToolHost } from "./delegated-sessions.js";
 import type { HelpHost } from "./help.js";
 import type { TerminalReader } from "./terminal-read.js";
 import type { TodoHost } from "./todo.js";
@@ -20,6 +21,9 @@ export interface ReadFingerprint {
   mtimeMs: number;
 }
 export interface ToolContext {
+  /** Delegated authority is assigned by SessionService for every turn of a child. */
+  delegated?: true;
+  delegation?: DelegatedSessionToolHost;
   terminals?: TerminalReader;
   root: string;
   permissionMode?: () => PermissionMode;
@@ -46,15 +50,20 @@ export interface ToolContext {
   managedRoots?: readonly string[];
 }
 export interface ToolDefinition {
-  /** Recheck a revocable read immediately before runtime disclosure. */
-  publish?(ctx: ToolContext, args: unknown, output: string): string;
+  /** Recheck a revocable result before disclosure. Structured replacements are capped by the registry. */
+  publish?(ctx: ToolContext, args: unknown, output: string): string | Record<string, unknown>;
   name: string;
   /** `program` tools ask the approval gate per command line, in every permission mode. */
   class: "read" | "write" | "session" | "program";
   description: string;
   params: z.ZodType;
   prepare?(ctx: ToolContext, args: unknown, signal: AbortSignal): Promise<PreparedChange>;
-  execute(ctx: ToolContext, args: unknown, signal: AbortSignal): Promise<Record<string, unknown>>;
+  execute(
+    ctx: ToolContext,
+    args: unknown,
+    signal: AbortSignal,
+    callId?: string,
+  ): Promise<Record<string, unknown>>;
 }
 export function createToolContext(root: string, workers?: WorkerPool): ToolContext {
   return { root, ...(workers ? { workers } : {}), lastReads: new Map() };
@@ -62,7 +71,7 @@ export function createToolContext(root: string, workers?: WorkerPool): ToolConte
 
 /** Scope comes from the host's current session mode, never from model arguments. */
 export function toolSignal(ctx: ToolContext, signal: AbortSignal): AbortSignal {
-  return ctx.permissionMode?.() === "bypass" && ctx.bypassSignal
+  return !ctx.delegated && ctx.permissionMode?.() === "bypass" && ctx.bypassSignal
     ? AbortSignal.any([signal, ctx.bypassSignal()])
     : signal;
 }
@@ -71,17 +80,18 @@ export function toolExcludedRoots(ctx: ToolContext): readonly string[] {
   return [...(ctx.managedRoots ?? []), ...(ctx.pluginBuilder ? [ctx.pluginBuilder.root] : [])];
 }
 export async function toolPathGuard(ctx: ToolContext, additional = false): Promise<PathGuard> {
-  const epoch = ctx.permissionMode?.() === "bypass" ? ctx.bypassSignal?.() : undefined;
+  const bypass = !ctx.delegated && ctx.permissionMode?.() === "bypass";
+  const grantedFolders = additional && !ctx.delegated;
   const excluded = toolExcludedRoots(ctx);
-  if (ctx.permissionMode?.() !== "bypass") {
-    const folders = additional ? [...(ctx.additionalFolders?.() ?? [])] : [];
+  if (!bypass) {
+    const folders = grantedFolders ? [...(ctx.additionalFolders?.() ?? [])] : [];
     const version = JSON.stringify(folders);
     return PathGuard.create(
       ctx.root,
       ctx.root,
       "workbench",
       () => {
-        if (additional && JSON.stringify(ctx.additionalFolders?.() ?? []) !== version)
+        if (grantedFolders && JSON.stringify(ctx.additionalFolders?.() ?? []) !== version)
           throw Error(
             "Additional folder access was revoked. Retry under the current workbench configuration.",
           );
@@ -90,6 +100,7 @@ export async function toolPathGuard(ctx: ToolContext, additional = false): Promi
       folders,
     );
   }
+  const epoch = ctx.bypassSignal?.();
   return PathGuard.create(
     ctx.root,
     ctx.root,

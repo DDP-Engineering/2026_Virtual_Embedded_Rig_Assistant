@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-c746b7e9"
+
+title = "Reject an unconfirmed or stale embedding model switch"
+
+status = "active"
+
+requirement = """
+If a workbench model change lacks confirmation for the current saved model and indexed document count, the configuration update shall reject the change without saving it.
+"""
+
+verification = "Submit a model change without confirmation, with a stale count and with a different source model through the native bridge; inspect persisted config and vectors before proceeding. Gate the configuration write to verify a concurrently completing document cannot change the confirmation count during the save."
+
+affected_paths = ["05_Software/src/libraries/shared/src/workbench.ts", "05_Software/src/libraries/shared/src/ipc.ts", "05_Software/src/libraries/core/src/workbench/service.ts", "05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/apps/desktop/src/renderer/mocks/mockApi.ts"]
+
+linked_tests = ["05_Software/tests/e2e/embedding-models.spec.ts", "05_Software/src/libraries/core/src/knowledge/ingest.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-19
+updated = 2026-11-19

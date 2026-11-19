@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-TEST-1c4ba3f0"
+
+title = "Prove delegation through native Desktop replay"
+
+status = "active"
+
+requirement = """
+When the native Desktop delegation replay runs, its assertions shall prove that the initial child request uses the chosen model and supported reasoning and that the parent continues while the child runs and uses its actual reply.
+"""
+
+verification = "Use a named reasoning-capable child replay with an effort expectation and a unique runtime reply, then verify parent work while running and the parent's final reply using the actual child result."
+
+affected_paths = ["05_Software/src/libraries/core/src/llm/replay.ts"]
+
+linked_tests = ["05_Software/tests/e2e/session-delegation.spec.ts","05_Software/src/libraries/core/src/llm/replay.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-19
+updated = 2026-11-19

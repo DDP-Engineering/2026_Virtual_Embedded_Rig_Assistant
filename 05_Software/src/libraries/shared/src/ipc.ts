@@ -125,6 +125,7 @@ import {
 import {
   configSnapshotSchema,
   documentScanSchema,
+  embeddingSwitchApprovalSchema,
   pinnedSchema,
   workbenchDocsSchema,
   workbenchIdSchema,
@@ -846,12 +847,15 @@ export const channels = {
       .strictObject({
         patch: workbenchPatchSchema,
         workbenchId: workbenchIdSchema.optional(),
+        embeddingSwitch: embeddingSwitchApprovalSchema.optional(),
         removeCommandPrefixes: commandPrefixIdsSchema.optional(),
         addAdditionalFolders: commandPrefixIdsSchema.optional(),
         removeAdditionalFolders: commandPrefixIdsSchema.optional(),
       })
       .refine(
         (value) =>
+          (!value.embeddingSwitch ||
+            (value.workbenchId !== undefined && value.patch.embeddings !== undefined)) &&
           (!value.removeCommandPrefixes?.length ||
             (value.workbenchId !== undefined && value.patch.agent?.allowed_commands === undefined)) &&
           (!(value.addAdditionalFolders?.length || value.removeAdditionalFolders?.length) ||

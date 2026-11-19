@@ -156,7 +156,7 @@ it("rejects missing, empty or altered individual PDF resources despite intact si
         await writeFile(join(stage, "out/renderer/pdfjs", directory, name), "asset-fixture");
       }
     }
-    const check = () => checkStagedPayload(stage, "linux", { files: [] }, { pdfSource: source });
+    const check = () => checkStagedPayload(stage, "linux", { pdfSource: source });
     await expect(check()).resolves.toMatchObject({ status: "passed" });
     for (const directory of ["cmaps", "standard_fonts", "wasm"]) {
       const path = join(stage, "out/renderer/pdfjs", directory, "required.bin");
@@ -191,6 +191,54 @@ it("rejects every release test hook including the audit environment name", async
   expect(() => verifyAppCode(commented.join("\n"), false)).not.toThrow();
 });
 
+it("loads the pinned q8 manifest for each registered model", async () => {
+  const script = join(root, "../02_Tools/environment/prepare-model.mjs");
+  const { readBundledModel } = await import(pathToFileURL(script).href);
+  const models = [
+    [
+      "Xenova/bge-small-en-v1.5",
+      "ea104dacec62c0de699686887e3f920caeb4f3e3",
+      "cls",
+      "Represent this sentence for searching relevant passages: ",
+      "",
+    ],
+    [
+      "Xenova/multilingual-e5-small",
+      "761b726dd34fb83930e26aab4e9ac3899aa1fa78",
+      "mean",
+      "query: ",
+      "passage: ",
+    ],
+  ] as const;
+  for (const [modelId, revision, pooling, queryPrefix, passagePrefix] of models) {
+    const manifest = await readBundledModel(modelId);
+    expect(manifest).toMatchObject({
+      schema: 1,
+      modelId,
+      revision,
+      dtype: "q8",
+      license: "MIT",
+      embedding: { pooling, queryPrefix, passagePrefix, dimensions: 384, maxTokens: 512, normalize: true },
+    });
+    const paths = manifest.files.map((file: { path: string }) => file.path);
+    expect(paths).toEqual(
+      expect.arrayContaining([
+        "config.json",
+        "tokenizer.json",
+        "tokenizer_config.json",
+        "onnx/model_quantized.onnx",
+        "README.md",
+      ]),
+    );
+    expect(
+      manifest.files.every(
+        (file: { url: string; path: string }) =>
+          file.url === `https://huggingface.co/${modelId}/resolve/${revision}/${file.path}`,
+      ),
+    ).toBe(true);
+  }
+});
+
 it("verifies immutable model assets and refuses altered cache/downloads or escaping paths", async () => {
   const script = join(root, "../02_Tools/environment/prepare-model.mjs");
   expect(existsSync(script), "verified model materializer is implemented").toBe(true);
@@ -199,7 +247,7 @@ it("verifies immutable model assets and refuses altered cache/downloads or escap
   const bytes = Buffer.from("model-fixture");
   const file = {
     path: "config.json",
-    url: `https://huggingface.co/test/resolve/${"a".repeat(40)}/config.json`,
+    url: `https://huggingface.co/fixture/resolve/${"a".repeat(40)}/config.json`,
     sha256: createHash("sha256").update(bytes).digest("hex"),
     bytes: bytes.length,
   };
@@ -228,7 +276,7 @@ it("verifies immutable model assets and refuses altered cache/downloads or escap
     ).rejects.toThrow(/path/);
     await expect(
       prepareModel(
-        { ...manifest, files: [{ ...file, url: "https://huggingface.co/test/resolve/main/config.json" }] },
+        { ...manifest, files: [{ ...file, url: "https://huggingface.co/fixture/resolve/main/config.json" }] },
         dir,
         { fetchImpl },
       ),
@@ -315,7 +363,9 @@ it("names the files of a bundled catalog release that no index lists", async () 
 
 it("names the files of a model or Windows runtime folder that its manifest does not name", async () => {
   const { unexpectedFiles } = await import(pathToFileURL(join(root, "../02_Tools/release/package.mjs")).href);
-  const manifest = JSON.parse(await readFile(join(root, "src/models/model-manifest.json"), "utf8"));
+  const manifest = JSON.parse(
+    await readFile(join(root, "src/models/Xenova/bge-small-en-v1.5/model-manifest.json"), "utf8"),
+  );
   const expected = manifest.files.map((file: { path: string }) => `${manifest.modelId}/${file.path}`);
   const dir = await mkdtemp(join(tmpdir(), "vera-model-extra-"));
   try {
@@ -335,11 +385,43 @@ it("names the files of a model or Windows runtime folder that its manifest does 
   }
 });
 
+it("stages both pinned models with their licence notices in the installed layout", async () => {
+  const { stageEmbeddingModels, unexpectedFiles } = await import(
+    pathToFileURL(join(root, "../02_Tools/release/package.mjs")).href
+  );
+  const stage = await mkdtemp(join(tmpdir(), "vera-staged-model-"));
+  try {
+    await stageEmbeddingModels(stage);
+    const models = join(stage, "resources/models");
+    const carried = [];
+    for (const model of ["Xenova/bge-small-en-v1.5", "Xenova/multilingual-e5-small"]) {
+      const manifestPath = join(model, "model-manifest.json");
+      const manifestBytes = await readFile(join(models, manifestPath));
+      expect(manifestBytes).toEqual(await readFile(join(root, "src/models", manifestPath)));
+      const manifest = JSON.parse(manifestBytes.toString("utf8"));
+      expect(manifest.modelId).toBe(model);
+      const noticePath = join(model, "LICENSE.txt");
+      const licence = await readFile(join(models, noticePath), "utf8");
+      expect(licence).toContain(model);
+      expect(licence).toContain("MIT License");
+      carried.push(`${model}/model-manifest.json`, `${model}/LICENSE.txt`);
+      for (const file of manifest.files) {
+        const bytes = await readFile(join(models, model, file.path));
+        expect(bytes.length).toBe(file.bytes);
+        expect(createHash("sha256").update(bytes).digest("hex")).toBe(file.sha256);
+        carried.push(`${model}/${file.path}`);
+      }
+    }
+    expect(await unexpectedFiles(models, carried)).toEqual([]);
+  } finally {
+    await rm(stage, { recursive: true, force: true });
+  }
+});
+
 it("ships runtime resources without fictional workbench fixtures", async () => {
   const config = parse(await readFile(join(root, "src/apps/desktop/electron-builder.yml"), "utf8"));
   const shipped = config.extraResources.map((resource: { from: string }) => resource.from);
   expect(shipped).toContain("resources/models");
-  expect(shipped).toContain("resources/model-manifest.json");
   expect(shipped.some((path: string) => /demo-board|fixtures/.test(path))).toBe(false);
 });
 

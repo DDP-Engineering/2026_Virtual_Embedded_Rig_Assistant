@@ -6,4 +6,4 @@ Explanatory software documentation and deliberately retained evidence:
   `02_Tools/release/set-version.mjs`.
 - `release-package-smoke.md`: how to smoke-test a packaged release artifact.
 - `session-performance.md`: the previous-session loading measurements and how to repeat them.
-- `eval-performance-outputs/`: the retained Windows session-loading run of 2026-11-12 (`.json` and `.md`).
+- `eval-performance-outputs/`: retained Windows session-loading and local embedding-model measurements.

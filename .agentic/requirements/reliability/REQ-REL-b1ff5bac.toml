@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-REL-b1ff5bac"
+title = "Settle delegated waits without a replay gap"
+status = "active"
+requirement = "When the parent waits on its child, VERA shall return the tracked terminal or approval state from the initial read or subsequent sequenced delivery."
+verification = "Complete a child before waiting, in the read-to-subscribe gap and after subscribing, including an error outcome; verify the correct result and subscriber disposal."
+affected_paths = ["05_Software/src/libraries/core/src/sessions/delegation-monitor.ts","05_Software/src/libraries/core/src/sessions/hub.ts","05_Software/src/libraries/core/src/tools/delegated-sessions.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/sessions/delegation-tools.test.ts", "05_Software/src/libraries/core/src/sessions/delegation-monitor.test.ts"]
+created = 2026-11-19
+updated = 2026-11-19

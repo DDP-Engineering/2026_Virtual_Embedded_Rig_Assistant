@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-NFR-d8ac1694"
+
+title = "Retire the embedding worker when idle"
+
+status = "active"
+
+requirement = """
+When an embedding worker becomes idle or its last workbench releases it, VERA shall retire the worker while allowing an in-progress native call to drain.
+"""
+
+verification = "Use a scripted worker to observe retirement after an injected idle interval and recreation on the next request; retain busy release and abort coverage."
+
+affected_paths = ["05_Software/src/libraries/core/src/knowledge/embedding.ts", "05_Software/src/libraries/core/src/knowledge/document-services.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/knowledge/embedding.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-19
+updated = 2026-11-19

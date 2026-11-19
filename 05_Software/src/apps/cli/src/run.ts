@@ -152,7 +152,7 @@ export async function runTurn(
     const workers = createCliWorkerPool();
     resources.push(() => workers.dispose());
     const documents = createDocumentServices();
-    resources.push(() => documents.embeddings.dispose());
+    resources.push(() => documents.dispose());
     const workbench = new WorkbenchService(
       {
         userData: location.paths.userData,
@@ -241,7 +241,9 @@ export async function runTurn(
       pluginBuilder: new PluginStore({ root: join(location.paths.userData, "plugins") }),
       managedRoots: [location.paths.userData],
       additionalFolders: () => workbench.getSnapshot().config.additional_folders,
-      embeddings: documents.embeddings,
+      get embeddings() {
+        return documents.embeddings(snapshot.config.embeddings.model);
+      },
       writeQueue: workbench.getWriteQueue(),
       mode: snapshot.config.agent.permission_mode,
       retrieval: snapshot.config.retrieval,

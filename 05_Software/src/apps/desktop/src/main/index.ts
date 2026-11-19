@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync } from "node:fs";
 import { writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, isAbsolute, join, sep } from "node:path";
@@ -14,13 +14,13 @@ import {
   HelpLibrary,
   type LlmGateway,
   leaseRoot,
-  modelSchema,
   PluginCatalog,
   PluginStore,
   ProgramRunner,
   Provisioner,
   pluginPlatform,
   ResourceLeases,
+  readEmbeddingModel,
   readPluginHelp,
   resolveCommandShell,
   SettingsService,
@@ -169,9 +169,6 @@ const downloadTransfer = createDesktopDownloadTransfer();
 const models = app.isPackaged
   ? join(process.resourcesPath, "models")
   : join(here, "../../../../../src/models");
-const manifest = app.isPackaged
-  ? join(process.resourcesPath, "model-manifest.json")
-  : join(models, "model-manifest.json");
 /** App help pages, read-only: <resources>/help when packaged, 05_Software/help in development. */
 const help = new HelpLibrary(
   app.isPackaged ? join(process.resourcesPath, "help") : join(here, "../../../../../help"),
@@ -182,10 +179,10 @@ const indexer = new IndexerHost({
   spawn: () =>
     utilityProcess.fork(
       fileURLToPath(new URL("./indexer-process.js", import.meta.url)),
-      [`--models=${models}`, `--manifest=${manifest}`],
+      [`--models=${models}`],
       { serviceName: "VERA Indexer" },
     ),
-  modelId: embeddingModelId(modelSchema.parse(JSON.parse(readFileSync(manifest, "utf8")))),
+  modelId: (model) => embeddingModelId(readEmbeddingModel(models, model)),
   status: (state) => {
     emitAppEvent({ topic: "app", id: "app", event: { type: "indexer.status", state } });
     if (state === "running") workbench.refreshDocuments();
@@ -470,7 +467,7 @@ const sessions = new SessionsHost({
   credentials,
   clock: systemClock,
   workers: fileWorkers,
-  embeddings: indexer.embeddings,
+  embeddings: (model) => indexer.embeddings(model),
   version: app.getVersion(),
   target: () =>
     window && !window.isDestroyed() ? { webContents: window.webContents, url: rendererUrl } : undefined,
@@ -570,12 +567,12 @@ function warmPrograms(snapshot: WorkbenchSnapshot): WorkbenchSnapshot {
 /** The first message of an open workbench loads its embedding model in the indexer (PERF-11). */
 const embeddingWarmup = createEmbeddingWarmup({
   hasVectors: (workbenchId) =>
-    workbench.readDocuments(workbenchId, async (root, db) =>
-      db.prepare("SELECT 1 FROM embeddings WHERE model_id=? LIMIT 1").get(indexer.embeddings.modelId)
-        ? root
-        : undefined,
-    ),
-  embed: (root, signal) => indexer.embeddings.embed(root, ["warm-up"], signal),
+    workbench.readDocuments(workbenchId, async (root, db) => {
+      const embeddings = indexer.embeddings(workbench.getSnapshot().config.embeddings.model);
+      if (db.prepare("SELECT 1 FROM embeddings WHERE model_id=? LIMIT 1").get(embeddings.modelId))
+        return { root, embeddings };
+    }),
+  embed: ({ root, embeddings }, signal) => embeddings.embed(root, ["warm-up"], signal),
 });
 
 // Programs that open Docs tree entries, detected once per start on first use (TASK-eae3a69e).
@@ -1301,14 +1298,21 @@ ipcMain.handle(
         patch,
         workbenchId,
         removeCommandPrefixes,
+        embeddingSwitch,
         addAdditionalFolders,
         removeAdditionalFolders,
       }) =>
         workbench
-          .updateConfig(workbenchPatchSchema.parse(patch), workbenchId, removeCommandPrefixes, {
-            ...(addAdditionalFolders ? { add: addAdditionalFolders } : {}),
-            ...(removeAdditionalFolders ? { remove: removeAdditionalFolders } : {}),
-          })
+          .updateConfig(
+            workbenchPatchSchema.parse(patch),
+            workbenchId,
+            removeCommandPrefixes,
+            {
+              ...(addAdditionalFolders ? { add: addAdditionalFolders } : {}),
+              ...(removeAdditionalFolders ? { remove: removeAdditionalFolders } : {}),
+            },
+            embeddingSwitch,
+          )
           .then((value) => publicWorkbenchFolders(value, (text) => credentials.scrub(text))),
       "workbench.additionalFolders.list": async ({ workbenchId }) =>
         (await workbench.listAdditionalFolders(workbenchId)).map(({ id, path }) => ({

@@ -8,11 +8,11 @@ import { build } from "esbuild";
 import { expect, it } from "vitest";
 import { DocumentsRepository } from "../storage/repos/documents.js";
 import { schemaSql } from "../storage/schema.js";
-import { EmbeddingHost } from "./embedding.js";
+import { EmbeddingHost, embeddingModelManifestPath } from "./embedding.js";
 import { DocumentKnowledge } from "./search.js";
 
 const software = fileURLToPath(new URL("../../../../../", import.meta.url));
-const manifest = JSON.parse(await readFile(join(software, "src/models/model-manifest.json"), "utf8"));
+const manifest = JSON.parse(await readFile(embeddingModelManifestPath(join(software, "src/models")), "utf8"));
 it("disables native telemetry in the parent before a worker initializes", async () => {
   const temporary = await mkdtemp(join(tmpdir(), "vera-embedding-privacy-"));
   const entry = join(temporary, "worker.mjs");
@@ -101,7 +101,7 @@ it("runs local CPU batches32, enforces full query budget and caches deterministi
           extraction: { kind: "text", lines: [text] },
         });
       }
-      const knowledge = new DocumentKnowledge(temporary, db, host);
+      const knowledge = new DocumentKnowledge(temporary, db, () => host);
       await knowledge.search({ query: "supply", mode: "semantic", pathGlob: "docs/0.txt" }, signal);
       const concurrent = await Promise.all([
         knowledge.search({ query: "register", mode: "semantic", pathGlob: "docs/1.txt" }, signal),
@@ -210,6 +210,109 @@ it("terminates deadline, abort, crash and premature exit jobs and replaces worke
     );
     expect(await host.embed(temporary, ["a"], new AbortController().signal)).toHaveLength(1);
     expect(getEventListeners(controller.signal, "abort")).toHaveLength(0);
+  } finally {
+    await host.dispose();
+    await rm(temporary, { recursive: true, force: true });
+  }
+});
+
+it("shares a model worker across workbenches, isolates rank caches and restarts after idle", async () => {
+  const temporary = await mkdtemp(join(tmpdir(), "vera-embedding-idle-"));
+  const entry = join(temporary, "worker.mjs");
+  const marker = join(temporary, "starts.txt");
+  const started = join(temporary, "ranking.txt");
+  const host = new EmbeddingHost(pathToFileURL(entry), "unused", manifest, 5000, 5000, 800);
+  try {
+    await writeFile(
+      entry,
+      `import {parentPort} from 'node:worker_threads'; import {appendFileSync} from 'node:fs';
+appendFileSync(${JSON.stringify(marker)},'x');
+let id;
+parentPort.on('message', ({rows, query}) => {
+  if (rows) id = rows[0].id;
+  const reply = () => parentPort.postMessage({ok:true,result:[{id,score:1}]});
+  if (query === 'pause') {
+    appendFileSync(${JSON.stringify(started)},'x');
+    setTimeout(reply, 200);
+  } else reply();
+});`,
+    );
+    await expect(readFile(marker, "utf8")).rejects.toThrow();
+    const signal = new AbortController().signal;
+    const vector = new Float32Array(384);
+    vector[0] = 1;
+    const hits = await Promise.all([
+      host.rank("first", "1", [{ id: 1, vector }], "term", signal),
+      host.rank("second", "1", [{ id: 2, vector }], "term", signal),
+    ]);
+    expect(hits.map((rows) => rows[0]?.id)).toEqual([1, 2]);
+    expect(await readFile(marker, "utf8")).toBe("x");
+    expect(host.cached("first", "1")).toBe(false);
+    await host.release("first");
+    expect(host.cached("second", "1")).toBe(true);
+    const pending = host.rank("first", "1", [{ id: 1, vector }], "pause", signal);
+    await expect.poll(() => readFile(started, "utf8").catch(() => "")).toBe("x");
+    await host.release("first");
+    await pending;
+    expect(await host.rank("second", "1", [{ id: 2, vector }], "term", signal)).toEqual([
+      { id: 2, score: 1 },
+    ]);
+    await expect.poll(() => host.cached("second", "1")).toBe(false);
+    await host.rank("second", "1", [{ id: 2, vector }], "term", signal);
+    expect(await readFile(marker, "utf8")).toBe("xx");
+  } finally {
+    await host.dispose();
+    await rm(temporary, { recursive: true, force: true });
+  }
+});
+
+it("applies the E5 passage and query prefixes before tokenization and inference", async () => {
+  const temporary = await mkdtemp(join(tmpdir(), "vera-embedding-prefixes-"));
+  const entry = join(temporary, "worker.mjs");
+  const transformers = join(temporary, "transformers.mjs");
+  const id = "Xenova/multilingual-e5-small";
+  const e5 = JSON.parse(await readFile(embeddingModelManifestPath(join(software, "src/models"), id), "utf8"));
+  const host = new EmbeddingHost(pathToFileURL(entry), "unused", { ...e5, files: [] });
+  try {
+    await symlink(
+      join(software, "node_modules"),
+      join(temporary, "node_modules"),
+      process.platform === "win32" ? "junction" : "dir",
+    );
+    await writeFile(
+      transformers,
+      `
+export const env = {};
+export async function pipeline() {
+  const expected = ['passage: Document text', 'query: Search text'];
+  const extractor = async ([text]) => {
+    if (text !== expected.shift()) throw Error('Wrong inference input');
+    return {data: Array.from({length: 384}, (_, index) => Number(index === 0))};
+  };
+  extractor.tokenizer = (text) => {
+    if (text !== expected[0]) throw Error('Wrong tokenizer input');
+    return {input_ids: {dims: [1, 4]}};
+  };
+  return extractor;
+}
+`,
+    );
+    await build({
+      entryPoints: [join(software, "src/libraries/core/src/knowledge/embedding-worker.ts")],
+      outfile: entry,
+      bundle: true,
+      platform: "node",
+      format: "esm",
+      packages: "external",
+      alias: { "@huggingface/transformers": transformers },
+      target: "node24",
+    });
+    const signal = new AbortController().signal;
+    const [vector] = await host.embed(temporary, ["Document text"], signal);
+    if (!vector) throw Error("Missing passage vector.");
+    expect(await host.rank(temporary, "1", [{ id: 1, vector }], "Search text", signal)).toEqual([
+      { id: 1, score: 1 },
+    ]);
   } finally {
     await host.dispose();
     await rm(temporary, { recursive: true, force: true });

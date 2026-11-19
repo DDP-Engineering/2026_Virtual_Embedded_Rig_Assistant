@@ -8,9 +8,8 @@ cache and demo PDFs. Start at core knowledge/processor.ts; pure extraction/chunk
 tests are extraction.test.ts and office.test.ts, real worker/cache/ingest tests
 processor.test.ts. Queue/discovery/ownership and extension-to-kind mapping route
 to [knowledge ingest](knowledge-ingest.md); SQLite to
-[workbench storage](workbench-storage.md). ADR-0015 selects the existing BGE
-tokenizer, with an empty passage prefix; query instructions live in the model
-descriptor.
+[workbench storage](workbench-storage.md). The workbench's registered model
+supplies the tokenizer and passage prefix. ADR-0015 documents the BGE default.
 
 ## Purpose and boundaries
 
@@ -23,11 +22,12 @@ generation supplies fictional board documents for document and retrieval tests.
 
 ## Public interface
 
-- `createDocumentProcessor(pdf, embeddings?, office?)` accepts DocumentInput with
+- `createDocumentProcessor(pdf, embeddings?, office?, fitsPassage?)` accepts DocumentInput with
   current root/path/kind/hash, AbortSignal and ownership callback; returns typed
   status, `pages` (PDF pages or presentation slides) and chunks. It verifies the
   ordinary input, size, identity and hash before using the version1 extraction
-  cache. Without an `office` extractor (tests, tools) office files are parsed
+  cache. To rebuild vectors, the ingester first verifies the source and passes
+  its persisted extraction for chunking and embedding. Without an `office` extractor (tests, tools) office files are parsed
   in-process through a dynamic import of office.ts.
 - `createPdfExtractor(entry, deadlineMs=120000)` and
   `createOfficeExtractor(entry, deadlineMs=120000)` run one disposable Node thread
@@ -62,11 +62,10 @@ generation supplies fictional board documents for document and retrieval tests.
 - PDF chunks stay within one page, presentation chunks within one slide, heading
   chunks within one section. Average trimmed PDF text below 20 characters/page
   yields needs_ocr/zero chunks.
-- Each chunk is at most 1400 UTF16 characters and below 512 tokens including
-  special tokens, measured with the packaged BGE tokenizer snapshot. Full heading
-  prefixes and verbatim CSV headers count toward both budgets; overflowing
-  prefixes fail processing. Any tokenizer/passage-prefix change requires
-  rechunking before embedding intake.
+- Each chunk is at most 1400 UTF16 characters. The verified model tokenizer counts
+  the full passage input including the model's prefix and special tokens against the
+  512-token window. Full heading prefixes and verbatim CSV headers count toward both
+  budgets. An overflowing heading or CSV header fails processing.
 - Office archives are refused before any entry is inflated, at the first central
   directory entry beyond 10000 entries or 500 MB uncompressed (a zip64 record may
   declare billions); that refusal is status failed/SIZE_LIMIT. Only XML,
@@ -111,6 +110,7 @@ generation supplies fictional board documents for document and retrieval tests.
 ## Key behaviors
 
 - REQ-FUNC-e78b18ad — supported extraction and precise chunks/OCR.
+- REQ-DATA-1ef1cbb5 — chunk budget uses the configured model's tokenizer and complete passage input.
 - REQ-DATA-3898aa21 — confined extraction cache and current-source atomic publication.
 - REQ-TEST-3ded3b59 — reproducible fictional board PDF documents.
 - REQ-FUNC-58cba7fd — Word and OpenDocument text extracted by heading.
@@ -130,7 +130,7 @@ generation supplies fictional board documents for document and retrieval tests.
 - tests/integration/document-hosts.test.ts, tests/tooling/demo-documents.test.ts; tests/e2e/{ingest,office-documents}.spec.ts — compiled/native proof.
 - tests/support/make-demo-pdfs.mjs, tests/support/make-office-fixtures.mjs; tests/fixtures/{documents,documents/office,workbenches/demo-board} — fixtures and demo assets.
 
-Tokenizer JSON/configuration are a semantic snapshot of the packaged
+Extraction-only consumers use tokenizer JSON/configuration from a semantic snapshot of the packaged
 Xenova/bge-small-en-v1.5 assets at revision
 `ea104dacec62c0de699686887e3f920caeb4f3e3`, MIT license, with original hashes in
-src/models/model-manifest.json. No ONNX/model runtime is used by chunking.
+src/models/Xenova/bge-small-en-v1.5/model-manifest.json. No ONNX/model runtime is used by chunking.

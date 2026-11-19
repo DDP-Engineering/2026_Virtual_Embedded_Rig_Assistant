@@ -236,7 +236,7 @@ it("persists the chunks and vectors a processor port returns", async () => {
   // The indexer's real processor output, returned through the port as the desktop host does.
   const real = createDocumentProcessor(async () => ({ kind: "pdf", pages: [] }), port);
   const process = Object.assign((input: Parameters<DocumentProcessor>[0]) => real(input), {
-    modelId: port.modelId,
+    modelId: () => port.modelId,
   }) as DocumentProcessor;
   const h = await harness(process);
   await writeFile(join(h.folder, "docs/a.md"), "# A\n\nThe board uses a 3.3 V supply.\n");

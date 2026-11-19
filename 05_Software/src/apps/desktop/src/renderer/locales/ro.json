@@ -1,5 +1,6 @@
 {
   "toolActivity": {
+    "embeddingRebuild": "Indexul semantic se reconstruiește. Aceste rezultate corespund cuvintelor-cheie.",
     "planSteps": "Pași în plan: {{count}}",
     "planCleared": "Plan golit",
     "operation": "Operație a agentului",
@@ -230,6 +231,20 @@
     "minimal": "Minimal",
     "stopped": "Execuție oprită sau întreruptă.",
     "operations": "Operații: {{count}}"
+  },
+  "delegation": {
+    "title": "Sesiuni delegate",
+    "outcome": "Execuție delegată: {{status}}",
+    "parent": "Sesiune părinte: {{title}}",
+    "status": {
+      "running": "În curs",
+      "awaiting_approval": "Așteaptă aprobarea",
+      "completed": "Finalizată",
+      "stopped": "Oprită",
+      "error": "Eșuată",
+      "limit": "Limită atinsă",
+      "interrupted": "Întreruptă"
+    }
   },
   "chatActions": {
     "copyResponse": "Copiază răspunsul",
@@ -867,6 +882,12 @@
     "changed": "Workbench-ul activ s-a schimbat. Redeschide editorul.",
     "saving": "Se salvează…",
     "embeddingModel": "Model embeddings",
+    "embeddingBge": "BGE Small EN v1.5 (engleză)",
+    "embeddingE5": "Multilingual E5 Small (100 de limbi)",
+    "embeddingSwitchTitle": "Schimbi modelul de embeddings?",
+    "embeddingSwitchCount": "Documente indexate ({{count}})",
+    "embeddingSwitchBody": "VERA va reconstrui vectorii în fundal. Căutarea după cuvinte-cheie rămâne disponibilă.",
+    "embeddingSwitchConfirm": "Schimbă modelul",
     "chunkSize": "Dimensiune fragment (caractere)",
     "overlap": "Suprapunere (caractere)",
     "partialSave": "Setările proiectului au fost salvate, dar instrucțiunile nu au putut fi salvate. Reîncearcă salvarea; închiderea păstrează setările deja salvate.",
