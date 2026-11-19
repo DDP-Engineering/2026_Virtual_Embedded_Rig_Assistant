@@ -4,15 +4,15 @@ id = "REQ-UX-1dcf2048"
 
 title = "Read plan comments through compact step indicators"
 
-status = "draft"
+status = "active"
 
 requirement = "While a plan step has comments, the Plan tab shall expose them through a compact step-adjacent indicator whose opened view identifies each comment's text, original target quote and draft or submitted state."
 
 verification = "Render step and fragment comments beside duplicate descriptions, open each indicator and compare the correct comment, quote and draft/submitted label; check a step without comments has no misleading comment indicator and removed targets remain readable as stale feedback."
 
-affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/session/plan-tab.tsx", "05_Software/src/apps/desktop/src/renderer/components/session/plan-feedback.tsx", "05_Software/src/apps/desktop/src/renderer/styles.css"]
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/session/plan-items.tsx", "05_Software/src/apps/desktop/src/renderer/components/session/plan-feedback-history.tsx", "05_Software/src/apps/desktop/src/renderer/components/session/plan-feedback.test.ts", "05_Software/src/apps/desktop/src/renderer/components/session/plan-tab.tsx", "05_Software/src/apps/desktop/src/renderer/components/session/plan-feedback.tsx", "05_Software/src/apps/desktop/src/renderer/styles.css"]
 
-linked_tests = []
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/session/plan-feedback.test.ts", "05_Software/tests/e2e/plan-review.spec.ts"]
 
 
 spec = ""

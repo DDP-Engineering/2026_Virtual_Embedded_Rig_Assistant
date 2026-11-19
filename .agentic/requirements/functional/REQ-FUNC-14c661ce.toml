@@ -4,15 +4,15 @@ id = "REQ-FUNC-14c661ce"
 
 title = "Explicitly re-anchor a draft plan comment"
 
-status = "draft"
+status = "active"
 
 requirement = "When a user explicitly re-anchors a draft plan comment to a chosen current step or fragment in its writable unarchived session, VERA shall replace that draft's target with the validated current revision, occurrence and quoted context while retaining its feedback text."
 
 verification = "Make a draft stale, choose a new whole-step or fragment target and confirm re-anchoring; assert current anchor and unchanged feedback, including repeated candidate descriptions and a plan replacement during confirmation that must not receive the obsolete target."
 
-affected_paths = ["05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/libraries/core/src/sessions/plan-review.ts", "05_Software/src/libraries/shared/src/plan-review.ts", "05_Software/src/libraries/shared/src/ipc.ts", "05_Software/src/apps/desktop/src/main/plan-review.ts", "05_Software/src/apps/desktop/src/renderer/components/session/plan-feedback.tsx"]
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/session/plan-comment-editor.tsx", "05_Software/src/apps/desktop/src/renderer/components/session/plan-target.ts", "05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/libraries/core/src/sessions/plan-review.ts", "05_Software/src/libraries/shared/src/plan-review.ts", "05_Software/src/libraries/shared/src/ipc.ts", "05_Software/src/apps/desktop/src/main/plan-review.ts", "05_Software/src/apps/desktop/src/renderer/components/session/plan-feedback.tsx"]
 
-linked_tests = ["05_Software/src/libraries/core/src/sessions/plan-review.test.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/session/plan-feedback.test.ts", "05_Software/tests/e2e/plan-review.spec.ts", "05_Software/src/libraries/core/src/sessions/plan-review.test.ts"]
 
 
 spec = "specs/REQ-DATA-fa8543aa.md"

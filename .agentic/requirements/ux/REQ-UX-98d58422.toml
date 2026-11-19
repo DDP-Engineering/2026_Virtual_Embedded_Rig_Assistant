@@ -4,7 +4,7 @@ id = "REQ-UX-98d58422"
 
 title = "Disable unavailable plan review actions"
 
-status = "draft"
+status = "active"
 
 requirement = "While there is no current plan, no pending feedback, unresolved stale feedback, an in-flight submission or a session that cannot accept review, the Plan tab shall disable Review plan."
 
@@ -12,7 +12,7 @@ verification = "Render each unavailable state and attempt pointer/keyboard activ
 
 affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/session/plan-tab.tsx", "05_Software/src/apps/desktop/src/renderer/components/session/plan-feedback.tsx", "05_Software/src/apps/desktop/src/renderer/App.tsx"]
 
-linked_tests = []
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/session/plan-feedback.test.ts", "05_Software/tests/e2e/plan-review.spec.ts"]
 
 
 spec = ""

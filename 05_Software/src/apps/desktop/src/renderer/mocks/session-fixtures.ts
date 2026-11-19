@@ -34,6 +34,20 @@ const tools: SessionEvent[] = [
 export const sessionFixtures: { title: string; events: SessionEvent[]; live?: SessionEvent[] }[] = [
   { title: "Empty session", events: [] },
   {
+    title: "Plan feedback targets",
+    events: [
+      {
+        type: "todo.updated",
+        items: [
+          { id: "repeated", text: "A😀B\n μC ", status: "pending" },
+          { id: "repeated", text: "A😀B\n μC ", status: "in_progress" },
+          { text: "", status: "done" },
+          { text: "A😀B\n μC ", status: "pending" },
+        ],
+      },
+    ],
+  },
+  {
     title: "Streaming answer",
     events: [user, { type: "turn.started", turnId: "stream-turn" }],
     live: [

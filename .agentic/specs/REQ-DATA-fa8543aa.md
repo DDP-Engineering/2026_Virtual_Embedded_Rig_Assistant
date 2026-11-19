@@ -1,6 +1,6 @@
 # REQ-DATA-fa8543aa — Plan comment anchoring and review protocol
 
-Status: draft
+Status: active
 
 ## Authority and scope
 
@@ -14,7 +14,7 @@ Status: draft
   are atomic. Existing todo limits and status values remain unchanged.
 - INFERRED technical contract (accepted safety/lifecycle outcomes): the protocol below defines
   target identity, atomic acceptance, idempotent retry and capability isolation, not a new
-  execution workflow. It is shared detail for the draft requirements linked to this spec.
+  execution workflow. It is shared detail for the requirements linked to this spec.
 
 ## Target identity and range semantics
 
@@ -350,7 +350,11 @@ current synchronous event store and existing host/runtime interfaces, not observ
   textarea, exact read-only step text selector, Entire step/Use selected text, Save draft and Cancel.
   Pointer selection on one live .plan-text prepopulates its fragment before action focus changes;
   keyboard users select in the named readonly textarea using standard Shift navigation. Capture
-  selectionStart/End, normalize backwards selections and validate against the full step text.
+  selectionStart/End, normalize backwards selections and map native textarea newline offsets back
+  to the unchanged original UTF16 step text before validating. Pointer offsets/quotes likewise use
+  the exact verified text span, not the selection API's rendered-text newline normalization.
+  Use aria-readonly with native beforeinput/paste/cut/drop guards and controlled-value restoration:
+  Chromium's HTML-readonly attribute disables the native caret navigation this selector requires.
 - Persist on explicit Save draft; until success the modal retains edited text and structured errors.
   Keep the editor mounted across shared-view refresh/error states. A privacy refresh invalidates
   and hides its captured quote/selection while retaining feedback text for explicit target recapture.
@@ -376,5 +380,6 @@ current synchronous event store and existing host/runtime interfaces, not observ
   uses the existing whole-request context-limit failure and retained-feedback retry behavior.
 - STATED (root AGENTS.md): every stored-format version remains 1; current contracts change in
   place without migration, backup or legacy compatibility. Review history follows session lifetime.
-- UNKNOWN (verification): actual dependency/browser readiness and platform results; this spec
-  is a proposed contract, not test execution evidence or proof that any model will comply.
+- OBSERVED (build journal): focused shared/core/main/component and real Chromium results are
+  recorded with their actual scope. Windows/native Electron and independent review results remain
+  separate validation obligations; this contract is not proof that a live model will comply.

@@ -1,15 +1,18 @@
 import {
   type ArtifactContent,
   type ChangeDetail,
+  channels,
   confirmationMatches,
   foldSessionEvents,
   isLiveSessionEvent,
+  type PlanReview,
   type ProgramApproval,
   programPolicy,
   type SessionEvent,
   type SessionSummary,
   veraError,
 } from "@vera/shared";
+import { isFeedbackChannel, mockPlanFeedback } from "./plan-feedback.js";
 import { sessionFixtures } from "./session-fixtures.js";
 
 /** Mock program commands: a prompt starting with "flash" or "burn" requests one of them. */
@@ -54,6 +57,7 @@ export class MockSessions {
       artifacts: ArtifactContent[];
       live?: SessionEvent[];
       active: boolean;
+      review?: boolean;
       stop: boolean;
       turnId?: string;
       done?: Promise<void>;
@@ -117,6 +121,58 @@ export class MockSessions {
       } catch {
         /* observer */
       }
+  }
+  private startReview(id: string, review: PlanReview) {
+    const row = this.row(id),
+      key = this.key(id);
+    row.active = true;
+    row.review = true;
+    row.stop = false;
+    row.turnId = review.turnId;
+    row.summary.status = "running";
+    this.emit(id, { type: "plan.review.submitted", review }, key);
+    this.emit(
+      id,
+      {
+        type: "message.user",
+        messageId: review.messageId,
+        text: `Revise the plan only; do not execute any steps.\n\n${JSON.stringify({ plan: review.plan, comments: review.comments })}`,
+      },
+      key,
+    );
+    this.emit(id, { type: "turn.started", turnId: review.turnId }, key);
+    row.done = (async () => {
+      await new Promise((done) => setTimeout(done, 100));
+      if (!row.stop) {
+        const items = [...review.plan].reverse(),
+          callId = `todo_${++this.number}`;
+        this.emit(id, { type: "tool.started", callId, name: "todo", args: { items } }, key);
+        this.emit(id, { type: "todo.updated", items }, key);
+        this.emit(
+          id,
+          { type: "tool.done", callId, ok: true, summary: "Mock plan revised.", durationMs: 0 },
+          key,
+        );
+        this.emit(
+          id,
+          {
+            type: "message.done",
+            messageId: `message_${++this.number}`,
+            text: "Revised the plan from the feedback. No steps were executed.",
+            citations: [],
+          },
+          key,
+        );
+      }
+      row.active = false;
+      delete row.review;
+      row.summary.status = "idle";
+      this.emit(
+        id,
+        { type: "turn.done", turnId: review.turnId, stopReason: row.stop ? "aborted" : "end" },
+        key,
+      );
+    })();
   }
   private idle(id: string) {
     this.writable();
@@ -236,8 +292,24 @@ export class MockSessions {
         }
       throw veraError("NOT_FOUND");
     }
+    if (isFeedbackChannel(channel)) {
+      const input = channels[channel].request.safeParse(raw);
+      if (!input.success) throw veraError("INVALID");
+      if (input.data.workbenchId !== this.current().id) throw veraError("CONFLICT");
+    }
     const id = request.sessionId;
     const row = this.row(id);
+    if (isFeedbackChannel(channel))
+      return mockPlanFeedback(channel, raw, {
+        workbenchId: this.current().id,
+        events: row.events,
+        active: row.active,
+        archived: row.summary.archived,
+        writable: () => this.writable(),
+        nextId: () => `feedback_${++this.number}`,
+        emit: (event) => this.emit(id, event),
+        start: (review) => this.startReview(id, review),
+      });
     if (channel === "session.bookmark") {
       this.writable();
       if (row.summary.archived) throw veraError("DENIED");
@@ -343,7 +415,7 @@ export class MockSessions {
     }
     if (channel === "session.send" && row.active) {
       this.writable();
-      if (row.stop || row.approval || !row.turnId) throw veraError("BUSY");
+      if (row.review || row.stop || row.approval || !row.turnId) throw veraError("BUSY");
       if (!request.text.trim()) throw veraError("INVALID");
       const messageId = `message_${++this.number}`;
       this.emit(id, { type: "message.queued", messageId, text: request.text, timestamp: Date.now() });

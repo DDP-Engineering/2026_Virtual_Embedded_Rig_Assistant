@@ -4,15 +4,15 @@ id = "REQ-FUNC-5536a651"
 
 title = "Submit current plan and pending feedback as one review request"
 
-status = "draft"
+status = "active"
 
 requirement = "When a user activates Review plan with a current plan and valid pending feedback in an accepting session, VERA shall submit one explicit revision request in that session containing exactly its current ordered plan and pending comments with revision, step-occurrence and quoted whole-step or fragment context for each target."
 
 verification = "Capture the admitted request and durable user message for two sessions with different plans, including repeated descriptions and Unicode fragment feedback; assert one request contains the selected session's complete current ordered plan and only its pending comments, with unambiguous quotes and occurrence context."
 
-affected_paths = ["05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/libraries/core/src/sessions/plan-review.ts", "05_Software/src/libraries/shared/src/ipc.ts", "05_Software/src/apps/desktop/src/main/plan-review.ts", "05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/apps/desktop/src/renderer/components/session/plan-feedback.tsx", "05_Software/src/apps/desktop/src/main/ipc-router.test.ts", "05_Software/src/apps/desktop/src/preload/bridge.test.ts"]
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/mocks/plan-feedback.ts", "05_Software/src/apps/desktop/src/renderer/mocks/plan-feedback.test.ts", "05_Software/src/apps/desktop/src/renderer/components/session/plan-feedback.test.ts", "05_Software/tests/e2e/plan-review.spec.ts", "05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/libraries/core/src/sessions/plan-review.ts", "05_Software/src/libraries/shared/src/ipc.ts", "05_Software/src/apps/desktop/src/main/plan-review.ts", "05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/apps/desktop/src/renderer/components/session/plan-feedback.tsx", "05_Software/src/apps/desktop/src/main/ipc-router.test.ts", "05_Software/src/apps/desktop/src/preload/bridge.test.ts"]
 
-linked_tests = ["05_Software/src/libraries/core/src/sessions/review-turn.test.ts", "05_Software/src/apps/desktop/src/main/plan-review.test.ts", "05_Software/src/apps/desktop/src/preload/bridge.test.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/session/plan-feedback.test.ts", "05_Software/src/apps/desktop/src/renderer/mocks/plan-feedback.test.ts", "05_Software/tests/e2e/plan-review.spec.ts", "05_Software/src/libraries/core/src/sessions/review-turn.test.ts", "05_Software/src/apps/desktop/src/main/plan-review.test.ts", "05_Software/src/apps/desktop/src/preload/bridge.test.ts"]
 
 
 spec = "specs/REQ-DATA-fa8543aa.md"

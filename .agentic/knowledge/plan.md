@@ -24,6 +24,13 @@ Core owns validated ordered session task lists and atomic database/event updates
 - reviewPlan atomically commits one envelope/user message/started turn and consumes only its captured drafts before publication or dispatch. The expected plan/feedback pair identifies an accepted receipt across reopen. Its fresh runtime offers at most the built-in todo, denies approval and rejects ordinary steering, regardless of permission mode; Stop affects that review runtime only.
 - An unsuccessful accepted review retains history. Explicit restore stages only missing source-linked retry drafts without overwriting edits; a subsequent review revalidates all anchors. Generic chat Retry uses this restore path rather than ordinary send, and active review sending is disabled while Stop stays available.
 
+## Live feedback interface
+
+- PlanFeedback owns live actions and the shared session projection; PlanItems is a separate readable list with an optional action slot, so historical tool results expose no mutations. Counts attach only to exact current targets; stale drafts and collapsed Previous reviews stay readable with an empty plan.
+- PlanCommentEditor retains unsaved feedback across refresh/error while invalidating captured quotes on projection epochs. The readonly selector uses aria-readonly, native beforeinput/paste/cut/drop guards and controlled-value restoration: HTML-readonly disables native caret navigation in Chromium. Standard Shift selection maps native textarea CRLF/CR offsets to exact original UTF16 bounds without normalizing stored strings; pointer capture verifies the exact DOM span and captures source quotes before action focus changes.
+- Save, delete, restore and review use strict scoped channels, synchronous duplicate guards and unmount generations. An unknown review acknowledgement retains its original pair and explicit Retry independently of later draft edits; it cannot silently submit a new batch. Successful restoration never starts a model request.
+- Native modal Escape owns its keys and restores the connected opener or stable toolbar fallback. Saved drafts come from events, never localStorage; en/ro/de/fr labels and wrapping/scrolling use existing theme/focus conventions.
+
 ## Invariants
 
 - Invalid bounds/status/shape, abort or authority loss cannot mutate the list/event. Failed event persistence rolls back the upsert. Observer errors are contained by SessionHub after persistence.
@@ -41,6 +48,7 @@ Core owns validated ordered session task lists and atomic database/event updates
 | CLI composition | same SessionService/registry | tooling/cli.test.ts Plan process case |
 | Drafts, admission, receipts and restore | shared/core plan-review; core service; main plan-review | shared/core plan-review.test.ts; core review-{turn,recovery,boundary}.test.ts; main plan-review{,-boundary}.test.ts |
 | Live privacy and safe generic Retry | session-view/use-session-events; workspace/composer | hooks/session-privacy.test.ts; components/session/plan-review-retry.test.ts |
+| Live feedback and exact selection | plan-feedback; plan-comment-editor; plan-target; plan-feedback-history; plan-items | components/session/plan-feedback.test.ts; mocks/plan-feedback.test.ts; browser plan-review.spec.ts and plan-fragments.spec.ts |
 
 ## Key behaviors
 
@@ -58,4 +66,4 @@ flowchart LR
 
 ## Files
 
-Under05_Software: shared session.ts/events.ts/session-state.ts/todos.test.ts;core tools/todo.ts/context.ts/registry.ts/registry.test.ts,storage/repos/todos.ts,sessions/service.ts/todos.test.ts,index.ts;renderer components/session/plan-tab.tsx/plan-tab.test.ts,App.tsx,components/shell.tsx,mocks/sessions.ts,styles.css,locales;tests/fixtures/llm-scripts/plan-updates.jsonl;tests/integration/cli.test.ts;tests/e2e/plan.spec.ts.
+Under05_Software: shared session.ts/events.ts/session-state.ts/todos.test.ts;core tools/todo.ts/context.ts/registry.ts/registry.test.ts,storage/repos/todos.ts,sessions/service.ts/todos.test.ts,index.ts;renderer components/session/{plan-tab,plan-feedback,plan-comment-editor,plan-feedback-history,plan-items}.tsx,plan-target.ts,plan-feedback.test.ts,plan-tab.test.ts,App.tsx,components/shell.tsx,mocks/{sessions,plan-feedback,session-fixtures}.ts,styles.css,locales;tests/fixtures/llm-scripts/plan-updates.jsonl;tests/integration/cli.test.ts;tests/e2e/plan.spec.ts.

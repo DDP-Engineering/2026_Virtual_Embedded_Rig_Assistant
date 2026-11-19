@@ -132,7 +132,7 @@ budgets and abort. The browser mock seeds six selectable states and an edit appr
 | Markdown/citations/tools | markdown, transcript, disclosure; shared refs.ts | markdown.test.ts; workspace.test.ts; tests/e2e/citations.spec.ts |
 | Composer/models/paths | composer | workspace.test.ts |
 | Permission picker/approval cards/keys | composer,approval-card,transcript,use-session-events | workspace.test.ts; tests/e2e/approvals.spec.ts; run_program cards (risk badge, command, notes, file hashes, typed word): tests/e2e/program-approvals.spec.ts |
-| Plan task list | plan-tab;mock sessions | plan-tab.test.ts;tests/e2e/plan.spec.ts |
+| Plan task list and feedback | plan-tab/plan-feedback/plan-items;mock sessions | plan-tab.test.ts;plan-feedback.test.ts;tests/e2e/{plan,plan-review}.spec.ts |
 | Usage/Context | usage-meter, context-tab | usage-meter.test.ts; workspace.test.ts |
 | Transcript render cost (lazy disclosures, memoized rows/Markdown) | disclosure, transcript, markdown, transcript-projection | transcript-render.test.ts; `npm run perf:sessions` |
 | Progressive transcript mount (newest first, idle chunks) | transcript | transcript-progressive.test.ts; `npm run perf:sessions` (`firstScreenMs`) |

@@ -116,6 +116,34 @@ it("saves distinct occurrence and empty-step drafts without changing transcript,
   expect(env.service.get(id).snapshot.planComments).toEqual(state.planComments);
 });
 
+it("reopens two independent Unicode draft sets with their exact anchors and stale state", async () => {
+  const env = await setup();
+  const first = env.service.create().id,
+    second = env.service.create().id;
+  env.replace(first);
+  env.replace(second);
+  env.service.savePlanComment(first, {
+    action: "create",
+    expectedFeedbackRevision: 0,
+    text: "First\n😀 μ",
+    target: target(),
+  });
+  env.service.savePlanComment(second, {
+    action: "create",
+    expectedFeedbackRevision: 0,
+    text: "Deuxième\nà 😀",
+    target: { ...target(0), range: null },
+  });
+  env.replace(first);
+  const expectedFirst = env.service.get(first).snapshot.planComments,
+    expectedSecond = env.service.get(second).snapshot.planComments;
+  expect(expectedFirst[0]?.stale).toBe(true);
+  expect(expectedSecond[0]?.stale).toBe(false);
+  await env.reopen();
+  expect(env.service.get(first).snapshot.planComments).toEqual(expectedFirst);
+  expect(env.service.get(second).snapshot.planComments).toEqual(expectedSecond);
+});
+
 it("edits and deletes only the selected draft, retaining stale anchors through a real database reopen", async () => {
   const env = await setup();
   const id = env.service.create().id,

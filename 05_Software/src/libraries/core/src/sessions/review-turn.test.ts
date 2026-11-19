@@ -85,6 +85,9 @@ it("atomically accepts one exact owned envelope and user turn, publishes after c
   expect(JSON.stringify(payload)).not.toContain("Foreign");
   const saved = env.service.get(env.id).snapshot;
   expect(saved.todos).toEqual(plan); // A prose-only clarification never changes structured data.
+  expect(saved.items.filter((item) => item.kind === "assistant").map((item) => item.text)).toEqual([
+    "Which GPIO should change?",
+  ]);
   expect(saved.planReviews[0]).toMatchObject({
     id: receipt.reviewId,
     turnId: receipt.turnId,
@@ -216,6 +219,12 @@ for (const mode of ["read-only", "ask", "auto-edit", "bypass"] as const)
     for (const [request] of requests.mock.calls)
       expect(request.tools.map((tool) => tool.name)).toEqual(["todo"]);
     expect(env.service.get(env.id).snapshot.todos).toEqual(revised);
+    expect(
+      env.service
+        .get(env.id)
+        .snapshot.items.filter((item) => item.kind === "assistant")
+        .map((item) => item.text),
+    ).toEqual(["", "Brief explanation: revised GPIO checks only."]);
     expect(env.service.get(env.id).snapshot.approvals).toEqual([]);
     expect(env.service.get(env.id).snapshot.mode).toBe(mode);
     expect(await readFile(join(env.root, "board.txt"), "utf8")).toBe("Original board");
@@ -270,6 +279,7 @@ it("respects disabled todo, blocks steering throughout review and Stop does not 
 it("refuses recovered queue and ordinary work, archived or lost authority before preparing a review", async () => {
   const env = await fixture();
   env.record(env.id, { type: "message.queued", messageId: "pending", text: "Execute", timestamp: 1 });
+  await env.reopen();
   expect(() => env.service.reviewPlan(env.id, input)).toThrow(expect.objectContaining({ code: "BUSY" }));
   env.record(env.id, { type: "message.delivered", messageIds: ["pending"] });
   env.service.setArchived(env.id, true);

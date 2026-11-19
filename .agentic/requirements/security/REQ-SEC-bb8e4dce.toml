@@ -4,7 +4,7 @@ id = "REQ-SEC-bb8e4dce"
 
 title = "Limit plan review effects to chat and session plan metadata"
 
-status = "draft"
+status = "active"
 
 requirement = "While processing a plan review in any session permission mode, VERA shall enforce an effect boundary limited to review metadata, chat and validated structured plan updates, excluding project-file changes, command or program execution, planned-step execution and additional execution permissions."
 

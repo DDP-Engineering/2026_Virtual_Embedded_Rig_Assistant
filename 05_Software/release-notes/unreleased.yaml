@@ -4,10 +4,10 @@ entries:
   - category: new
     topic: { en: Plan, ro: Plan, de: Plan, fr: Plan }
     text:
-      en: Plan review retries restore feedback without executing the plan.
-      ro: Reîncercările revizuirii planului restabilesc feedbackul fără a executa planul.
-      de: Erneute Planprüfung stellt Kommentare wieder her, ohne den Plan auszuführen.
-      fr: Réessayer une révision restaure les commentaires sans exécuter le plan.
+      en: Comment on steps or text, then request a plan-only revision; failed reviews keep feedback.
+      ro: Comentează pași sau fragmente și cere revizuirea fără execuție; feedbackul se păstrează.
+      de: Schritte oder Text kommentieren; nur den Plan prüfen, ohne Ausführung; Feedback bleibt.
+      fr: Commentez étapes ou texte, puis révisez le plan sans l’exécuter ; les commentaires restent.
   - category: improved
     topic: { en: Chat, ro: Chat, de: Chat, fr: Chat }
     text:

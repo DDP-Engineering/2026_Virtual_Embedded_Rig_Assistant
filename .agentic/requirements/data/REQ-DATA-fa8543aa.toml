@@ -4,15 +4,15 @@ id = "REQ-DATA-fa8543aa"
 
 title = "Anchor plan comments to revision and exact step occurrence"
 
-status = "draft"
+status = "active"
 
 requirement = "When a plan comment is created, VERA shall bind its target to the owning workbench and session, plan revision, exact ordered step occurrence and original step text, with an exact quoted range for fragment comments independent of display wrapping and optional step IDs."
 
 verification = "Create whole-step and fragment targets in a plan with absent/duplicate IDs and repeated Unicode multiline descriptions; compare stored revision/occurrence/quote after resize and text scaling, including two identical rows and a supplementary Unicode character."
 
-affected_paths = ["05_Software/src/libraries/shared/src/plan-review.test.ts", "05_Software/src/libraries/shared/src/session-state.test.ts", "05_Software/src/libraries/shared/src/plan-review.ts", "05_Software/src/libraries/shared/src/index.ts", "05_Software/src/libraries/shared/src/session-state.ts", "05_Software/src/libraries/core/src/sessions/plan-review.ts", "05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/apps/desktop/src/main/events.ts", "05_Software/src/apps/desktop/src/renderer/components/session/plan-feedback.tsx"]
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/session/plan-target.ts", "05_Software/src/apps/desktop/src/renderer/components/session/plan-items.tsx", "05_Software/src/apps/desktop/src/renderer/components/session/plan-comment-editor.tsx", "05_Software/src/apps/desktop/src/renderer/mocks/session-fixtures.ts", "05_Software/src/libraries/shared/src/plan-review.test.ts", "05_Software/src/libraries/shared/src/session-state.test.ts", "05_Software/src/libraries/shared/src/plan-review.ts", "05_Software/src/libraries/shared/src/index.ts", "05_Software/src/libraries/shared/src/session-state.ts", "05_Software/src/libraries/core/src/sessions/plan-review.ts", "05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/apps/desktop/src/main/events.ts", "05_Software/src/apps/desktop/src/renderer/components/session/plan-feedback.tsx"]
 
-linked_tests = ["05_Software/src/libraries/shared/src/plan-review.test.ts", "05_Software/src/libraries/core/src/sessions/plan-review.test.ts"]
+linked_tests = ["05_Software/tests/e2e/plan-fragments.spec.ts", "05_Software/src/apps/desktop/src/renderer/components/session/plan-feedback.test.ts", "05_Software/tests/e2e/plan-review.spec.ts", "05_Software/src/libraries/shared/src/plan-review.test.ts", "05_Software/src/libraries/core/src/sessions/plan-review.test.ts"]
 
 
 spec = "specs/REQ-DATA-fa8543aa.md"

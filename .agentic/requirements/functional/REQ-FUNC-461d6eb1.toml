@@ -4,7 +4,7 @@ id = "REQ-FUNC-461d6eb1"
 
 title = "Request a brief chat explanation or clarification for plan review"
 
-status = "draft"
+status = "active"
 
 requirement = "When preparing an accepted plan review for the agent, VERA shall instruct it to respond in the same session's chat with a brief explanation of changes made from the feedback or a clarification question when the feedback cannot be resolved."
 
@@ -12,7 +12,7 @@ verification = "Capture review model instructions with concrete and ambiguous fe
 
 affected_paths = ["05_Software/src/libraries/core/src/sessions/plan-review.ts", "05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/apps/desktop/src/main/sessions.ts"]
 
-linked_tests = []
+linked_tests = ["05_Software/src/libraries/core/src/sessions/review-turn.test.ts", "05_Software/tests/e2e/plan-review.spec.ts"]
 
 
 spec = ""

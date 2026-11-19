@@ -620,7 +620,14 @@ export function App() {
                 }
                 plan={
                   benchId && activeSession && chat && !settings ? (
-                    <PlanTab workbenchId={benchId} sessionId={activeSession} />
+                    <PlanTab
+                      workbenchId={benchId}
+                      sessionId={activeSession}
+                      readOnly={readOnly}
+                      archived={
+                        sessions.data?.find((session) => session.id === activeSession)?.archived ?? true
+                      }
+                    />
                   ) : undefined
                 }
                 runs={
