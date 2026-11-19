@@ -13,13 +13,13 @@ const startupReplies: Record<string, string> = {
 /** One-shot proof of an empty initial prompt in a profile-free shell; ordinary terminals are unverified. */
 export class TerminalCommandPrompt {
   readonly marker = `\u001b]633;VERA;${randomUUID()}\u0007`;
-  private state: "starting" | "ready" | "used" = "starting";
+  private state: "starting" | "timed-out" | "ready" | "used" = "starting";
   private carry = "";
   private listeners = new Set<() => void>();
 
-  /** Pristine shells can be selected during startup; wait()/consume() still verify the actual prompt. */
+  /** Pristine startup is selectable until it times out; only its expected prompt can restore eligibility. */
   get dispatchEligible(): boolean {
-    return this.state !== "used";
+    return this.state === "starting" || this.state === "ready";
   }
 
   startup(
@@ -69,9 +69,9 @@ export class TerminalCommandPrompt {
       visible += text.slice(0, found.offset);
       text = text.slice(found.offset + found.control.length);
       if (found.control === this.marker) {
-        if (this.state === "starting") this.state = "ready";
+        if (this.state === "starting" || this.state === "timed-out") this.state = "ready";
         for (const listener of this.listeners) listener();
-      } else if (this.state === "starting") {
+      } else if (this.state === "starting" || this.state === "timed-out") {
         // No profile/user code has run in this pristine shell; these replies contain no command input.
         reply(startupReplies[found.control] as string);
       } else visible += found.control;
@@ -95,6 +95,8 @@ export class TerminalCommandPrompt {
         };
         const timer = setTimeout(() => {
           this.listeners.delete(changed);
+          this.state = "timed-out";
+          for (const listener of this.listeners) listener();
           reject(notReady());
         }, 5000);
         this.listeners.add(changed);

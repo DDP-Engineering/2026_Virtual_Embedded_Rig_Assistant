@@ -1,6 +1,8 @@
 import type { CommandBlockShell } from "@vera/shared";
-import { expect, it, vi } from "vitest";
+import { afterEach, expect, it, vi } from "vitest";
 import { TerminalService } from "./terminals.js";
+
+afterEach(() => vi.useRealTimers());
 
 function fixture(kind: CommandBlockShell = "bash") {
   let owner = "bench-a";
@@ -133,6 +135,55 @@ it("reports pristine startup/prompt eligibility and revokes it after shell exit"
   expect(f.pty.write).not.toHaveBeenCalled();
   await f.service.closeAll();
 });
+
+it.each(["powershell", "bash"] as const)(
+  "excludes a timed-out %s destination until its pristine prompt arrives",
+  async (kind) => {
+    vi.useFakeTimers();
+    const f = fixture(kind);
+    const terminal = await f.service.create("bench-a", 80, 24, kind);
+    const pending = expect(f.service.execute("bench-a", terminal.id, kind, "pwd")).rejects.toMatchObject({
+      messageKey: "chatActions.promptNotReady",
+    });
+    await vi.advanceTimersByTimeAsync(5000);
+    await pending;
+    expect(f.service.list("bench-a")[0]?.dispatchEligible).toBe(false);
+    expect(f.service.output("bench-a", terminal.id).dispatchEligible).toBe(false);
+    await expect(f.service.execute("bench-a", terminal.id, kind, "pwd")).rejects.toMatchObject({
+      messageKey: "chatActions.promptNotReady",
+    });
+    expect(vi.getTimerCount()).toBe(0);
+    expect(f.pty.write).not.toHaveBeenCalled();
+    f.ready();
+    expect(f.service.list("bench-a")[0]?.dispatchEligible).toBe(true);
+    await f.service.execute("bench-a", terminal.id, kind, "pwd");
+    expect(f.pty.write).toHaveBeenCalledTimes(1);
+    expect(f.service.list("bench-a")[0]?.dispatchEligible).toBe(false);
+    await f.service.closeAll();
+  },
+);
+
+it.each(["input", "exit"] as const)(
+  "does not restore a timed-out destination after %s when its prompt arrives late",
+  async (action) => {
+    vi.useFakeTimers();
+    const f = fixture();
+    const terminal = await f.service.create("bench-a", 80, 24, "bash");
+    const pending = expect(f.service.execute("bench-a", terminal.id, "bash", "pwd")).rejects.toMatchObject({
+      messageKey: "chatActions.promptNotReady",
+    });
+    await vi.advanceTimersByTimeAsync(5000);
+    await pending;
+    if (action === "input") f.service.input("bench-a", terminal.id, "preserved input");
+    else f.finish();
+    f.ready();
+    expect(f.service.list("bench-a")[0]?.dispatchEligible).toBe(false);
+    await expect(f.service.execute("bench-a", terminal.id, "bash", "pwd")).rejects.toBeDefined();
+    expect(f.pty.write.mock.calls).toEqual(action === "input" ? [["preserved input"]] : []);
+    expect(vi.getTimerCount()).toBe(0);
+    await f.service.closeAll();
+  },
+);
 
 it("atomically consumes the initial prompt so concurrent or repeated dispatch cannot reuse it", async () => {
   const f = fixture();

@@ -75,10 +75,74 @@ it("does not send startup replies after any user input has invalidated readiness
   expect(reply).not.toHaveBeenCalled();
 });
 
-it("times out without claiming readiness when shell startup never produces the expected prompt", async () => {
+it("excludes a timed-out startup and refuses another wait immediately without a second timer", async () => {
+  vi.useFakeTimers();
+  const prompt = new TerminalCommandPrompt();
+  expect(prompt.dispatchEligible).toBe(true);
+  const pending = expect(prompt.wait()).rejects.toMatchObject({ messageKey: "chatActions.promptNotReady" });
+  await vi.advanceTimersByTimeAsync(5000);
+  await pending;
+  expect(prompt.dispatchEligible).toBe(false);
+  await expect(prompt.wait()).rejects.toMatchObject({ messageKey: "chatActions.promptNotReady" });
+  expect(vi.getTimerCount()).toBe(0);
+});
+
+it("recovers a pristine timed-out shell only after the entire expected marker arrives", async () => {
+  vi.useFakeTimers();
+  const prompt = new TerminalCommandPrompt();
+  const pending = expect(prompt.wait()).rejects.toMatchObject({ messageKey: "chatActions.promptNotReady" });
+  prompt.output(prompt.marker.slice(0, 13), vi.fn());
+  await vi.advanceTimersByTimeAsync(5000);
+  await pending;
+  const reply = vi.fn();
+  // The marker's prefix must survive the timeout without granting readiness for a partial marker.
+  expect(prompt.dispatchEligible).toBe(false);
+  prompt.output(prompt.marker.slice(13, -1), reply);
+  expect(prompt.dispatchEligible).toBe(false);
+  prompt.output(prompt.marker.slice(-1), reply);
+  expect(prompt.dispatchEligible).toBe(true);
+  await prompt.wait();
+  prompt.consume();
+  expect(prompt.dispatchEligible).toBe(false);
+});
+
+it("services late startup queries without granting eligibility before the expected prompt", async () => {
   vi.useFakeTimers();
   const prompt = new TerminalCommandPrompt();
   const pending = expect(prompt.wait()).rejects.toMatchObject({ messageKey: "chatActions.promptNotReady" });
   await vi.advanceTimersByTimeAsync(5000);
   await pending;
+  const reply = vi.fn();
+  prompt.output(`PS work> ${new TerminalCommandPrompt().marker}\u001b[6n`, reply);
+  expect(reply).toHaveBeenCalledExactlyOnceWith("\u001b[1;1R");
+  expect(prompt.dispatchEligible).toBe(false);
+  prompt.output(prompt.marker, reply);
+  expect(prompt.dispatchEligible).toBe(true);
+  await prompt.wait();
+});
+
+it("never restores timed-out eligibility after invalidation, even when the expected marker arrives", async () => {
+  vi.useFakeTimers();
+  const prompt = new TerminalCommandPrompt();
+  const pending = expect(prompt.wait()).rejects.toMatchObject({ messageKey: "chatActions.promptNotReady" });
+  await vi.advanceTimersByTimeAsync(5000);
+  await pending;
+  prompt.invalidate();
+  const reply = vi.fn();
+  prompt.output(`${prompt.marker}\u001b[6n`, reply);
+  expect(prompt.dispatchEligible).toBe(false);
+  expect(reply).not.toHaveBeenCalled();
+  await expect(prompt.wait()).rejects.toMatchObject({ messageKey: "chatActions.promptNotReady" });
+});
+
+it("rejects all startup waiters when the first timeout expires", async () => {
+  vi.useFakeTimers();
+  const prompt = new TerminalCommandPrompt();
+  const first = expect(prompt.wait()).rejects.toMatchObject({ messageKey: "chatActions.promptNotReady" });
+  await vi.advanceTimersByTimeAsync(1000);
+  const second = expect(prompt.wait()).rejects.toMatchObject({ messageKey: "chatActions.promptNotReady" });
+  await vi.advanceTimersByTimeAsync(4000);
+  await Promise.all([first, second]);
+  expect(prompt.dispatchEligible).toBe(false);
+  expect(vi.getTimerCount()).toBe(0);
 });
