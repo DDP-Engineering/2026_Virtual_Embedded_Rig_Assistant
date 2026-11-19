@@ -80,7 +80,7 @@ as the software. `runtime/` and `cache/` are never linted.
 | `setup.py` | Checks and installs the toolchain and npm packages | See [Setup](#setup). |
 | `npmw.py` | Runs npm, npx or node from the local toolchain in the current folder | `python ../02_Tools/environment/npmw.py npm run <script>` from `05_Software`. |
 | `software.mjs` | `05_Software` path and its pinned packages for the JavaScript tools here | Imported; no command of its own. |
-| `prepare-model.mjs` | Verifies the model files against the pinned manifest and downloads missing ones when allowed | `npm run prepare:model`; writes `05_Software/src/models/`. `-- --offline` only verifies the existing cache. |
+| `prepare-model.mjs` | Verifies every registered model's assets against its pinned manifest and downloads missing files when allowed | `npm run prepare:model`; writes `05_Software/src/models/`. `-- --offline` only verifies the existing cache. |
 | `prepare-uv.mjs` | Verifies or downloads the pinned uv binary for this platform | `npm run prepare:uv`; writes `05_Software/src/uv/`. `--offline` refuses a missing archive. |
 | `prepare-plugins.mjs` | Builds the official plugins into the bundled catalog release with a private CLI build | `npm run prepare:plugins`; replaces `07_Delivery/plugins/` (git-ignored). |
 | `prepare-windows-runtime.mjs` | Copies the Microsoft VC++ DLLs the manifest names, checking hashes and the Microsoft signature | `npm run prepare:windows-runtime` on Windows; writes `05_Software/src/windows_runtime/`. Default source is System32; `VERA_VC_REDIST_DIR` can point to a redistributable folder. |

@@ -69,7 +69,7 @@ Each component has a knowledge page that names its source files, tests, invarian
 | Indexer process | [indexer-process](../knowledge/indexer-process.md) | The VERA Indexer utility process; main keeps every SQLite write. |
 | Document extraction | [document-extraction](../knowledge/document-extraction.md) | PDF, text, heading and office extraction, chunks, OCR, document workers. |
 | Keyword search | [keyword-search](../knowledge/keyword-search.md) | Persisted word and identifier candidates with locators. |
-| Document search | [document-search](../knowledge/document-search.md) | Local embeddings, hybrid search, document tools, CLI index and search, the retrieval eval gate. |
+| Document search | [document-search](../knowledge/document-search.md) | Embedding registry and local inference, hybrid search, document tools, CLI index and search, the retrieval eval gate. |
 | Document viewer | [document-viewer](../knowledge/document-viewer.md) | Docs panel, `docs.readBytes` byte windows, Rendered, Text and Hex modes, large text, image preview, Display masking. |
 | Web search | [web-search](../knowledge/web-search.md) | `web_search` and `web_read`, the Exa, Tavily and Brave providers, Settings > Web access. |
 | PDF downloads | [pdf-downloads](../knowledge/pdf-downloads.md) | `web_download`, files and provenance under `.vera/downloads`. |

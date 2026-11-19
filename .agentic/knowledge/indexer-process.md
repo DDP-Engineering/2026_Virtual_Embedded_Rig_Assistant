@@ -28,7 +28,7 @@ ingest queue, ownership checks and every SQLite write; it reaches the indexer on
 - `createIndexerHandler(services, send)`: the in-process dispatch of `select`, `inspect`,
   `process`, `embed`, `rank`, `release` and `cancel`; replies `{id, ok, value}` or
   `{id, ok: false, error: {message, code?} | {aborted: true}}`.
-- `indexer-process.ts`: the utility entry; arguments `--models=` and `--manifest=`.
+- `indexer-process.ts`: the utility entry; argument `--models=`; main and the utility both resolve the BGE descriptor within that root.
 - Shared: app event `indexer.status {state: running|stopped}`; channels `indexer.status` and
   `indexer.restart`; Docs shows `[data-indexer-stopped]` with Restart.
 

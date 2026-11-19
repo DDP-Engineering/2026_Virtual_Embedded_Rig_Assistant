@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync } from "node:fs";
 import { writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, isAbsolute, join, sep } from "node:path";
@@ -14,13 +14,13 @@ import {
   HelpLibrary,
   type LlmGateway,
   leaseRoot,
-  modelSchema,
   PluginCatalog,
   PluginStore,
   ProgramRunner,
   Provisioner,
   pluginPlatform,
   ResourceLeases,
+  readEmbeddingModel,
   readPluginHelp,
   SettingsService,
   settingStates,
@@ -168,9 +168,6 @@ const downloadTransfer = createDesktopDownloadTransfer();
 const models = app.isPackaged
   ? join(process.resourcesPath, "models")
   : join(here, "../../../../../src/models");
-const manifest = app.isPackaged
-  ? join(process.resourcesPath, "model-manifest.json")
-  : join(models, "model-manifest.json");
 /** App help pages, read-only: <resources>/help when packaged, 05_Software/help in development. */
 const help = new HelpLibrary(
   app.isPackaged ? join(process.resourcesPath, "help") : join(here, "../../../../../help"),
@@ -181,10 +178,10 @@ const indexer = new IndexerHost({
   spawn: () =>
     utilityProcess.fork(
       fileURLToPath(new URL("./indexer-process.js", import.meta.url)),
-      [`--models=${models}`, `--manifest=${manifest}`],
+      [`--models=${models}`],
       { serviceName: "VERA Indexer" },
     ),
-  modelId: embeddingModelId(modelSchema.parse(JSON.parse(readFileSync(manifest, "utf8")))),
+  modelId: embeddingModelId(readEmbeddingModel(models)),
   status: (state) => {
     emitAppEvent({ topic: "app", id: "app", event: { type: "indexer.status", state } });
     if (state === "running") workbench.refreshDocuments();

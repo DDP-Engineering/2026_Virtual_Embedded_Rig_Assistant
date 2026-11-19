@@ -8,11 +8,11 @@ import { build } from "esbuild";
 import { expect, it } from "vitest";
 import { DocumentsRepository } from "../storage/repos/documents.js";
 import { schemaSql } from "../storage/schema.js";
-import { EmbeddingHost } from "./embedding.js";
+import { EmbeddingHost, embeddingModelManifestPath } from "./embedding.js";
 import { DocumentKnowledge } from "./search.js";
 
 const software = fileURLToPath(new URL("../../../../../", import.meta.url));
-const manifest = JSON.parse(await readFile(join(software, "src/models/model-manifest.json"), "utf8"));
+const manifest = JSON.parse(await readFile(embeddingModelManifestPath(join(software, "src/models")), "utf8"));
 it("disables native telemetry in the parent before a worker initializes", async () => {
   const temporary = await mkdtemp(join(tmpdir(), "vera-embedding-privacy-"));
   const entry = join(temporary, "worker.mjs");

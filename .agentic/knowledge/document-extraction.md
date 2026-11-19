@@ -133,4 +133,4 @@ generation supplies fictional board documents for document and retrieval tests.
 Tokenizer JSON/configuration are a semantic snapshot of the packaged
 Xenova/bge-small-en-v1.5 assets at revision
 `ea104dacec62c0de699686887e3f920caeb4f3e3`, MIT license, with original hashes in
-src/models/model-manifest.json. No ONNX/model runtime is used by chunking.
+src/models/Xenova/bge-small-en-v1.5/model-manifest.json. No ONNX/model runtime is used by chunking.

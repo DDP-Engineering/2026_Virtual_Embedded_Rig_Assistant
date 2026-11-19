@@ -290,7 +290,9 @@ try {
     await run([process.execPath, vite, "build", "src/apps/desktop"], software, env, "compile");
     await prepareBundledUv();
     const staged = await stageRuntime("test", scratch);
-    const manifest = JSON.parse(await readFile(join(software, "src/models/model-manifest.json"), "utf8"));
+    const manifest = JSON.parse(
+      await readFile(join(software, "src/models/Xenova/bge-small-en-v1.5/model-manifest.json"), "utf8"),
+    );
     report.prepack = await checkStagedPayload(staged.stage, process.platform, manifest);
     const distribution = distributionConfig(process.platform, true, env);
     distribution.appId = "engineering.ddp.vera.wp31.task4be77adc";

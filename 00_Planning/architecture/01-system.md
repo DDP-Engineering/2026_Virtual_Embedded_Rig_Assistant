@@ -228,7 +228,7 @@ The software root is `05_Software/`:
     apps/cli/                             # headless application
     libraries/shared/                     # validated contracts and data types
     libraries/core/                       # shared product logic
-    models/                               # manifest (tracked) and local BGE model assets (ignored, prepared)
+    models/                               # per-model manifests (tracked) and prepared local assets (ignored)
     windows_runtime/                      # manifest (tracked) and app-local VC++ runtime DLLs (ignored, prepared)
   tests/
     tooling/                              # configuration, build and test infrastructure
@@ -261,7 +261,7 @@ libraries' `dist/`. Model and runtime assets are fetched and verified by `npm ru
 | Logs, JSON lines, 7 daily files, secrets redacted | `<userData>/logs/vera-YYYY-MM-DD.log` |
 | Workbench content | the workbench folder the user chose |
 | Workbench metadata and runtime state | `<workbench>/.vera/` (02 §8) |
-| Bundled models | `<resources>/models/` and `<resources>/model-manifest.json`, read-only (`src/models/` in development) |
+| Bundled models | `<resources>/models/<model-id>/` holds the manifest and assets, read-only (`src/models/<model-id>/` in development) |
 
 `<userData>` is `%APPDATA%\VERA` on Windows and `~/.config/VERA` on Linux (`VERA Test` for test
 builds); a `--user-data-dir=<dir>` switch overrides it. In portable mode (a `vera.portable` file

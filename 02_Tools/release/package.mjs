@@ -4,7 +4,8 @@ import { chmod, cp, mkdir, readdir, readFile, rm, stat, writeFile } from "node:f
 import { createRequire } from "node:module";
 import { dirname, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
-import { prepareBundledModel } from "../environment/prepare-model.mjs";
+import { defaultEmbeddingModelId } from "../../05_Software/src/libraries/shared/src/embedding-models.ts";
+import { prepareModel, readBundledModel } from "../environment/prepare-model.mjs";
 import {
   bundledPluginsFolder,
   checkBundledPlugins,
@@ -89,8 +90,8 @@ export async function measureDirectory(directory) {
 }
 
 /**
- * The files below a folder that its manifest does not name, as sorted `/` paths. The model and Windows
- * runtime folders are copied into the installer as a whole, so such a file would ship without any check.
+ * The files below a folder that its manifest does not name, as sorted `/` paths. The Windows runtime
+ * folder is copied into the installer as a whole, so such a file would ship without any check.
  */
 export async function unexpectedFiles(folder, expected) {
   const known = new Set(expected);
@@ -214,6 +215,16 @@ export async function stageHelp(stage, source = join(root, "help")) {
   await cp(source, join(stage, "resources", "help"), { recursive: true });
 }
 
+/** Copy the default model's verified payload to its installed model directory. */
+export async function stageDefaultEmbeddingModel(stage) {
+  const model = await readBundledModel(defaultEmbeddingModelId);
+  for (const path of ["model-manifest.json", ...model.files.map((file) => file.path)]) {
+    const target = join(stage, "resources/models", model.modelId, path);
+    await mkdir(dirname(target), { recursive: true });
+    await cp(join(root, "src/models", model.modelId, path), target);
+  }
+}
+
 export async function stageRuntime(
   mode,
   outputRoot = resolve(root, "release_tmp"),
@@ -226,16 +237,7 @@ export async function stageRuntime(
   await mkdir(stage, { recursive: true });
   await cp(join(root, "src/apps/desktop/out"), join(stage, "out"), { recursive: true });
   await mkdir(join(stage, "resources"), { recursive: true });
-  const model = JSON.parse(await readFile(join(root, "src/models/model-manifest.json"), "utf8"));
-  await warnUnexpectedFiles(join(root, "src/models"), [
-    "model-manifest.json",
-    ...model.files.map((file) => `${model.modelId}/${file.path}`),
-  ]);
-  await cp(join(root, "src/models"), join(stage, "resources/models"), {
-    recursive: true,
-    filter: (source) => source !== join(root, "src/models/model-manifest.json"),
-  });
-  await cp(join(root, "src/models/model-manifest.json"), join(stage, "resources/model-manifest.json"));
+  await stageDefaultEmbeddingModel(stage);
   const uvManifest = JSON.parse(await readFile(join(root, "src/uv/uv-manifest.json"), "utf8"));
   await stageUv(stage, uvEntry(uvManifest, uvPlatform()));
   await stageBundledPlugins(stage, bundledPlugins);
@@ -372,7 +374,10 @@ async function packageApp() {
     "src/apps/desktop/electron-builder.yml",
     "src/apps/desktop/electron.vite.config.ts",
     "package-lock.json",
-    "src/models/model-manifest.json",
+    "../02_Tools/environment/prepare-model.mjs",
+    "src/libraries/shared/src/embedding-models.ts",
+    "src/libraries/shared/src/embedding-model-manifest.ts",
+    `src/models/${defaultEmbeddingModelId}/model-manifest.json`,
     "src/windows_runtime/windows-runtime-manifest.json",
     "src/uv/uv-manifest.json",
   ];
@@ -396,7 +401,8 @@ async function packageApp() {
     VERA_TEST: testBuild ? "1" : "0",
     VERA_SIGNED_BUILD: distribution.forceCodeSigning ? "1" : "0",
   };
-  await prepareBundledModel();
+  const manifest = await readBundledModel(defaultEmbeddingModelId);
+  await prepareModel(manifest, join(root, "src/models"));
   const bundledPlugins = resolve(
     process.argv.find((arg) => arg.startsWith("--bundled-plugins="))?.slice("--bundled-plugins=".length) ??
       bundledPluginsFolder,
@@ -436,7 +442,6 @@ async function packageApp() {
   const staged = await stageRuntime(mode, outputRoot, { bundledPlugins, windowsRuntime: windowsRuntimePath });
   await checkPtyNative((path) => readFile(join(staged.stage, path)), process.platform);
   await checkPtyJavaScript((path) => readFile(join(staged.stage, path)));
-  const manifest = JSON.parse(await readFile(join(root, "src/models/model-manifest.json"), "utf8"));
   const prepack = await checkStagedPayload(staged.stage, process.platform, manifest);
   // This mode's generated output is rebuilt from scratch, so stale artifacts cannot pass.
   if (!output.startsWith(`${outputRoot}${sep}`)) throw new Error("Unsafe output path");

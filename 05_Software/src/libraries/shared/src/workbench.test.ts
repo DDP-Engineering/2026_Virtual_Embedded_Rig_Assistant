@@ -66,6 +66,15 @@ it("validates format1, defaults and retains nested extensions with warning paths
     expect(schema.safeParse({ ...config, ...patch }).success).toBe(false);
 });
 
+it("validates both registered embedding models in format 1 and defaults to BGE", () => {
+  const base = { format: 1, id: "wb_01JB8Z6Q4M7N2K5R9T3V8X1Y0C", name: "Board" };
+  expect(schema.parse(base).embeddings.model).toBe("Xenova/bge-small-en-v1.5");
+  for (const model of ["Xenova/bge-small-en-v1.5", "Xenova/multilingual-e5-small"]) {
+    expect(schema.parse({ ...base, embeddings: { model } }).embeddings.model).toBe(model);
+    expect(workbenchPatchSchema.parse({ embeddings: { model } }).embeddings?.model).toBe(model);
+  }
+});
+
 // REQ-DATA-4992f40c
 it("holds bounded retrieval defaults that patches merge and validation rejects out of range", () => {
   const base = schema.parse({ format: 1, id: "wb_01JB8Z6Q4M7N2K5R9T3V8X1Y0C", name: "Board" });

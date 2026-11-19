@@ -1,29 +1,40 @@
 import { createHash } from "node:crypto";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { performance } from "node:perf_hooks";
 import { Worker } from "node:worker_threads";
+import {
+  defaultEmbeddingModelId,
+  type EmbeddingModelId,
+  embeddingModelDescriptorSchema,
+  embeddingModelManifestSchema,
+} from "@vera/shared";
 import { z } from "zod";
 
-export const modelSchema = z.object({
-  modelId: z.string().regex(/^[\w.-]+\/[\w.-]+$/),
-  revision: z.string().regex(/^[a-f0-9]{40}$/),
-  dtype: z.literal("q8"),
-  files: z.array(
-    z.object({
-      path: z.string().regex(/^[\w.-]+(?:\/[\w.-]+)*$/),
-      sha256: z.string().regex(/^[a-f0-9]{64}$/),
-      bytes: z.number().int().positive(),
-    }),
-  ),
-  embedding: z.object({
-    dimensions: z.literal(384),
-    maxTokens: z.literal(512),
-    pooling: z.enum(["cls", "mean"]),
-    normalize: z.literal(true),
-    queryPrefix: z.string(),
-    passagePrefix: z.string(),
-  }),
-});
+export { defaultEmbeddingModelId, type EmbeddingModelId, embeddingModelIds } from "@vera/shared";
+
+export const modelSchema = embeddingModelDescriptorSchema;
 export type EmbeddingModel = z.infer<typeof modelSchema>;
+
+/** The manifest sits beside its assets within either a development or an installed model root. */
+export function embeddingModelManifestPath(
+  models: string,
+  modelId: EmbeddingModelId = defaultEmbeddingModelId,
+) {
+  return join(models, modelId, "model-manifest.json");
+}
+
+/** Read the registered descriptor and bind its identity to the model directory. */
+export function readEmbeddingModel(
+  models: string,
+  modelId: EmbeddingModelId = defaultEmbeddingModelId,
+): EmbeddingModel {
+  const path = embeddingModelManifestPath(models, modelId);
+  const manifest = embeddingModelManifestSchema.parse(JSON.parse(readFileSync(path, "utf8")));
+  if (manifest.modelId !== modelId) throw Error(`Model manifest identity mismatch: ${path}`);
+  return modelSchema.parse(manifest);
+}
+
 export interface VectorRow {
   id: number;
   vector: Float32Array;

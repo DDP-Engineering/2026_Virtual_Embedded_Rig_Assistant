@@ -15,11 +15,8 @@ const cases = [
   ["desktop", "packaged"],
 ] as const;
 type Services = { processDocument: DocumentProcessor; embeddings: EmbeddingHost };
-type CreateServices = (models: string, manifestPath?: string) => Services;
-const fixtures = new Map<
-  string,
-  { createDocumentServices: CreateServices; models: string; manifestPath?: string }
->();
+type CreateServices = (models?: string) => Services;
+const fixtures = new Map<string, { createDocumentServices: CreateServices; models: string }>();
 let compiledRoot: string | undefined;
 
 beforeAll(async () => {
@@ -30,9 +27,7 @@ beforeAll(async () => {
     join(temporary, "node_modules"),
     process.platform === "win32" ? "junction" : "dir",
   );
-  const manifestBytes = await readFile(join(root, "src/models/model-manifest.json"));
-  const manifest = JSON.parse(manifestBytes.toString("utf8"));
-  const vendor = manifest.modelId.split("/")[0];
+  const vendor = "Xenova";
   for (const host of ["cli", "desktop"] as const) {
     const source = host === "cli" ? "src/apps/cli/src" : "src/apps/desktop/src/main";
     const outdir = join(temporary, host);
@@ -73,9 +68,7 @@ beforeAll(async () => {
       join(models, vendor),
       process.platform === "win32" ? "junction" : "dir",
     );
-    const manifestPath = join(resources, "model-manifest.json");
-    await writeFile(manifestPath, manifestBytes);
-    fixtures.set(`${host}:packaged`, { createDocumentServices, models, manifestPath });
+    fixtures.set(`${host}:packaged`, { createDocumentServices, models });
   }
 });
 
@@ -91,10 +84,9 @@ it.each(cases)(
     try {
       const fixture = fixtures.get(`${host}:${layout}`);
       if (!fixture) throw Error(`Document host fixture missing: ${host}:${layout}`);
-      // CLI also discovers the installed manifest beside the models directory.
+      // Let the bundled CLI discover the installed model directory beside its own resources.
       services = fixture.createDocumentServices(
-        fixture.models,
-        host === "cli" ? undefined : fixture.manifestPath,
+        host === "cli" && layout === "packaged" ? undefined : fixture.models,
       );
       if (!services) throw Error("Document services missing");
       const processor = services.processDocument;

@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-DATA-428ff836"
+
+title = "Reject unknown local embedding model IDs"
+
+status = "active"
+
+requirement = """
+If a format-1 workbench configuration supplies an unregistered embedding model ID, VERA shall reject the configuration as invalid.
+"""
+
+verification = "Open a workbench from YAML with a syntactically valid but unregistered model ID and assert INVALID."
+
+affected_paths = ["05_Software/src/libraries/shared/src/workbench.ts", "05_Software/src/libraries/shared/src/embedding-models.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/workbench/service.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-19
+updated = 2026-11-19

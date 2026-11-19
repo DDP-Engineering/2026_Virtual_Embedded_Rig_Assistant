@@ -11,7 +11,11 @@ __pycache__/
 **/out/
 **/release_tmp/
 /05_Software/src/models/*
-!/05_Software/src/models/model-manifest.json
+!/05_Software/src/models/*/
+/05_Software/src/models/*/*
+!/05_Software/src/models/*/*/
+/05_Software/src/models/*/*/*
+!/05_Software/src/models/*/*/model-manifest.json
 /05_Software/src/windows_runtime/*
 !/05_Software/src/windows_runtime/windows-runtime-manifest.json
 /05_Software/src/uv/*

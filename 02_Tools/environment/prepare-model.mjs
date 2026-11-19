@@ -2,9 +2,11 @@ import { createHash, randomUUID } from "node:crypto";
 import { mkdir, readFile, rename, rm, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { embeddingModelManifestSchema } from "../../05_Software/src/libraries/shared/src/embedding-model-manifest.ts";
+import { embeddingModelIds } from "../../05_Software/src/libraries/shared/src/embedding-models.ts";
 import { software } from "./software.mjs";
 
-const root = software;
+const bundledModels = join(software, "src/models");
 
 function confinedPath(path) {
   if (
@@ -23,25 +25,30 @@ function verify(bytes, file) {
   }
 }
 
-export async function prepareModel(manifest, destination, { fetchImpl = fetch, offline = false } = {}) {
-  const model = join(destination, confinedPath(manifest.modelId));
+function validateAssets(manifest) {
+  confinedPath(manifest.modelId);
+  const upstream = `https://huggingface.co/${manifest.modelId}/resolve/${manifest.revision}/`;
+  const seen = new Set();
   if (!/^[a-f0-9]{40}$/.test(manifest.revision)) throw new Error("Model revision must be immutable");
   // Validate the entire manifest before any download or filesystem mutation.
   for (const file of manifest.files) {
     confinedPath(file.path);
-    const url = new URL(file.url);
     if (
-      url.protocol !== "https:" ||
-      url.hostname !== "huggingface.co" ||
-      !url.pathname.includes(`/resolve/${manifest.revision}/`) ||
-      !url.pathname.endsWith(`/${file.path}`) ||
+      seen.has(file.path) ||
+      file.url !== upstream + file.path ||
       !/^[a-f0-9]{64}$/.test(file.sha256) ||
       !Number.isSafeInteger(file.bytes) ||
       file.bytes <= 0
     ) {
       throw new Error(`Invalid immutable asset descriptor: ${file.path}`);
     }
+    seen.add(file.path);
   }
+}
+
+export async function prepareModel(manifest, destination, { fetchImpl = fetch, offline = false } = {}) {
+  validateAssets(manifest);
+  const model = join(destination, manifest.modelId);
   for (const file of manifest.files) {
     const target = join(model, file.path);
     try {
@@ -67,13 +74,20 @@ export async function prepareModel(manifest, destination, { fetchImpl = fetch, o
   return model;
 }
 
-export async function prepareBundledModel(offline = false) {
-  const manifest = JSON.parse(await readFile(join(root, "src/models/model-manifest.json"), "utf8"));
-  await prepareModel(manifest, join(root, "src/models"), { offline });
+export async function readBundledModel(modelId) {
+  if (!embeddingModelIds.includes(modelId)) throw new Error(`Unknown embedding model: ${modelId}`);
+  const path = join(bundledModels, modelId, "model-manifest.json");
+  const manifest = embeddingModelManifestSchema.parse(JSON.parse(await readFile(path, "utf8")));
+  if (manifest.modelId !== modelId) throw new Error(`Model manifest identity mismatch: ${path}`);
+  validateAssets(manifest);
   return manifest;
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  await prepareBundledModel(process.argv.includes("--offline"));
-  console.log("Pinned model assets verified");
+  const offline = process.argv.includes("--offline");
+  for (const modelId of embeddingModelIds) {
+    const manifest = await readBundledModel(modelId);
+    await prepareModel(manifest, bundledModels, { offline });
+    console.log(`Verified ${modelId} (${manifest.files.length} pinned assets)`);
+  }
 }

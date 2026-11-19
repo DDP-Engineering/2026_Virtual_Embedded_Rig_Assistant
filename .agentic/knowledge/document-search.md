@@ -21,6 +21,9 @@ use their own persistent host because their payloads, lifetimes and caches diffe
 
 - Agent search_docs/read_doc pass host-only application-data exclusions as the final search/read argument. DocumentKnowledge keeps workbench scope, refuses protected raw/extracted reads and omits protected cached search snippets in keyword/semantic/hybrid results, including canonical aliases. The index and internal default readers are unchanged. knowledge/search.test.ts exercises all four session modes against an already indexed protected document and a replaced alias.
 
+- Core exports the registered IDs, the BGE default and `readEmbeddingModel` from the embedding API.
+  A registered descriptor lives at `<models>/<model-id>/model-manifest.json`; the reader checks that
+  it belongs to the requested directory. Desktop, CLI and the retrieval evaluator use BGE.
 - EmbeddingHost(entry, models, manifest, deadlineMs=120000) embeds passages in
   batches32 and ranks normalized cosine top50. embed/rank accept root and signal;
   rank accepts vectors or a lazy vector provider evaluated at serialized admission;
@@ -122,6 +125,7 @@ flowchart LR
 
 | Change | Start | Focused proof |
 |---|---|---|
+| local model registry, descriptor pins and preparation | shared embedding-models.ts, embedding-model-manifest.ts; prepare-model.mjs | workbench.test.ts, packaging.test.ts and actual cache preparation |
 | local descriptor/batches/cache/termination | embedding.ts, embedding-worker.ts | embedding.test.ts; real eval |
 | atomic lifecycle/schema | storage/schema.ts, DocumentsRepository, processor/ingest | embedding-schema, embedding-ingest, ingest tests |
 | modes/RRF/glob/snippets/read bounds | search.ts, keyword.ts | search.test.ts, keyword.test.ts |
@@ -137,7 +141,7 @@ REQ-FUNC-51165496 verifies issued document bounds against current source/extract
 
 ## Files
 
-Under05_Software: core knowledge/{embedding,embedding-worker,embedding-ingest,
+Under `05_Software`: shared `embedding-models.ts` and `embedding-model-manifest.ts`, core knowledge/{embedding,embedding-worker,embedding-ingest,
 search,processor,ingest}; storage/{schema,repos/documents};
 tools/documents; CLI {args,documents,document-processor,embedding-worker}; desktop
 {document-processor,document-embedding-worker,index,sessions}; evaluators/eval-retrieval-harness/{eval-retrieval,

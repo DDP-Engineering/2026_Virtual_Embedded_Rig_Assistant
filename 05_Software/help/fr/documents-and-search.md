@@ -1,6 +1,6 @@
 # Documents et recherche
 
-VERA indexe la documentation d’un banc de travail sur votre ordinateur, afin que l’agent puisse y faire des recherches et citer exactement la page, la section ou la ligne qu’il a utilisée. L’indexation utilise un modèle local et n’envoie rien sur le réseau. Lorsque l’agent lit un passage pour vous répondre, ce passage est transmis à votre fournisseur de modèles comme le reste de la conversation ; avec un serveur local comme LM Studio ou Ollama, il reste sur votre ordinateur.
+VERA indexe la documentation d’un banc de travail sur votre ordinateur, afin que l’agent puisse y faire des recherches et citer exactement la page, la section ou la ligne qu’il a utilisée. L’indexation utilise BGE Small EN v1.5, un modèle local de représentation vectorielle pour l’anglais, et n’envoie rien sur le réseau. Lorsque l’agent lit un passage pour vous répondre, ce passage est transmis à votre fournisseur de modèles comme le reste de la conversation ; avec un serveur local comme LM Studio ou Ollama, il reste sur votre ordinateur.
 
 Le masquage de l’affichage est désactivé par défaut. Lorsqu’il est activé pour un banc, les secrets enregistrés dans les noms de fichiers et le texte du lecteur apparaissent sous la forme [REDACTED]. Les fichiers et résultats restent listés et ouvrent le même fichier, même si deux noms masqués sont identiques. Cela ne change ni l’indexation ni ce que l’agent peut envoyer à un modèle. Les images des pages PDF conservent leurs octets d’origine ; seul le texte extrait est masqué.
 

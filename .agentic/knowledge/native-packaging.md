@@ -16,12 +16,15 @@ The package pipeline emits host Windows/Linux x64 artifacts with the pinned runt
 verified model files and size/hash reports. Compiled instrumented shells exercise temporary
 SQLite and real local CPU embeddings; external host evidence binds results to artifact hashes
 and records actual connectivity or isolation.
-The package delivers the BGE q8 assets selected in [ADR-0015](../../00_Planning/decisions/README.md). The model descriptor supplies dimensions, token limit, pooling, normalization and query/passage prefixes. production indexing consumes the selected descriptor.
+The package stages the BGE q8 assets selected in [ADR-0015](../../00_Planning/decisions/README.md).
+Its manifest and listed assets share the installed directory `resources/models/<model-id>/`. The
+descriptor supplies dimensions, token limit, pooling, normalization and query/passage prefixes.
+Development preparation processes both registered models.
 
 
 ```mermaid
 flowchart LR
-  manifest[(model-manifest.json)] --> prepare[prepare-model.mjs]
+  manifest[("src/models/<model-id>/model-manifest.json")] --> prepare[prepare-model.mjs]
   prepare --> models[(src/models)]
   command([package / package:test]) --> package[package.mjs]
   package --> prepare
@@ -98,7 +101,7 @@ runtime closure includes electron-updater and its pinned transitive dependencies
 
 | Change requested | Start with | Focused verification |
 |---|---|---|
-| Model delivery/pins | `src/models/model-manifest.json`, `prepare-model.mjs` | packaging asset integrity tests, actual offline cached verification |
+| Model delivery/pins | `src/models/<model-id>/model-manifest.json`, `prepare-model.mjs` | packaging manifest, asset and staging tests; actual online and offline verification |
 | uv delivery/pins | `src/uv/uv-manifest.json`, `prepare-uv.mjs`, `stageUv` in `package.mjs` | `tests/packaging/packaging.test.ts` (prepare and stage uv) |
 | Native collection/budget | `package.mjs`, `electron-builder.yml` | packaging budget/ASAR tests, native OS artifact inspections |
 | SQLite SQL/fallback | `main/packaging/sqlite-probe.ts` | real SQLite test, packaged probe |
@@ -124,7 +127,7 @@ Native acceptance exercises real SQLite, local CPU indexing/search and PDF throu
 - `02_Tools/release/{package,package-checks}.mjs`, `02_Tools/environment/{prepare-model,prepare-windows-runtime}.mjs` — collection, source/cache integrity, sanitized prepack, target isolation and reports.
 - `05_Software/src/windows_runtime/windows-runtime-manifest.json` — pinned Microsoft x64 app-local runtime provenance.
 - `main/app-info.ts`, shared ipc.ts, renderer Metadata/locales — immutable build/signature identity in About.
-- `05_Software/src/models/model-manifest.json` — immutable model provenance/pins.
+- `05_Software/src/models/<model-id>/model-manifest.json` — per-model immutable provenance/pins.
 - `05_Software/src/uv/uv-manifest.json`, `02_Tools/environment/prepare-uv.mjs` — pinned uv per platform; `package.mjs`
   prepares it, stages `resources/uv/` (extraResources `uv`) and re-checks the packaged binary hash; the package report
   records `uv {version, platform, bytes, sha256}`.
