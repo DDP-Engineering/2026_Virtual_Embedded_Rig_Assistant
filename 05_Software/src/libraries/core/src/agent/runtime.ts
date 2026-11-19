@@ -422,7 +422,7 @@ export class ReferenceRuntime implements AgentRuntime {
               throw Error(decision === "denied" ? "The user denied this change." : "Aborted.");
           }
           signal.throwIfAborted();
-          const result = await tool.execute(args, signal);
+          const result = await tool.execute(args, signal, call.id);
           output = typeof result === "string" ? result : result.text;
           if (typeof result !== "string") image = result.image;
           // A write or program that completed stays applied after a stop: the model must see its result.

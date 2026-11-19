@@ -602,6 +602,12 @@ export function createMockApi(
     if (channel.startsWith("session.") || channel.startsWith("changes.") || channel.startsWith("artifacts."))
       return channels[channel].response.parse(sessions.invoke(channel, input.data)) as Response<C>;
     switch (channel) {
+      case "app.clipboard.write": {
+        const { text } = channels["app.clipboard.write"].request.parse(input.data);
+        await navigator.clipboard.writeText(text);
+        value = {};
+        break;
+      }
       case "terminal.list": {
         const { workbenchId } = channels["terminal.list"].request.parse(input.data);
         if (workbenchId !== current().snapshot.config.id) throw veraError("CONFLICT");
@@ -611,12 +617,14 @@ export function createMockApi(
         break;
       }
       case "terminal.create": {
-        const { workbenchId } = channels["terminal.create"].request.parse(input.data);
+        const { workbenchId, shell } = channels["terminal.create"].request.parse(input.data);
         if (workbenchId !== current().snapshot.config.id) throw veraError("CONFLICT");
         if (terminals.size >= 8) throw veraError("BUSY");
         const snapshot: TerminalSnapshot = {
           id: crypto.randomUUID(),
           number: terminals.size + 1,
+          shell: shell ?? "bash",
+          dispatchEligible: shell !== undefined,
           shared: false,
           running: true,
           output: "$ ",
@@ -635,9 +643,21 @@ export function createMockApi(
       case "terminal.input": {
         const { workbenchId, id, data } = channels["terminal.input"].request.parse(input.data);
         const terminal = userTerminal(workbenchId, id);
+        terminal.dispatchEligible = false;
         const output = terminal.output + data.replaceAll("\r", "\r\n$ ");
         terminal.start += Math.max(0, output.length - 262144);
         terminal.output = output.slice(-262144);
+        value = {};
+        break;
+      }
+      case "terminal.execute": {
+        const { workbenchId, id, shell, text } = channels["terminal.execute"].request.parse(input.data);
+        const terminal = userTerminal(workbenchId, id);
+        if (!terminal.running || terminal.shell !== shell) throw veraError("CONFLICT");
+        if (!terminal.dispatchEligible)
+          throw { ...veraError("CONFLICT"), messageKey: "chatActions.promptNotReady" };
+        terminal.dispatchEligible = false;
+        terminal.output = `${terminal.output}${text}\r\n$ `.slice(-262144);
         value = {};
         break;
       }
@@ -1831,6 +1851,7 @@ What this plugin does.
         const {
           patch,
           workbenchId,
+          embeddingSwitch,
           removeCommandPrefixes = [],
           addAdditionalFolders = [],
           removeAdditionalFolders = [],
@@ -1838,6 +1859,19 @@ What this plugin does.
         const bench = current();
         if (bench.snapshot.readOnly) throw veraError("DENIED");
         if (workbenchId && bench.snapshot.config.id !== workbenchId) throw veraError("CONFLICT");
+        const currentModel = bench.snapshot.config.embeddings.model;
+        const changingModel = patch.embeddings !== undefined && patch.embeddings.model !== currentModel;
+        if (changingModel || embeddingSwitch) {
+          const indexed =
+            scenario === "empty" ? 0 : mockDocuments.filter(({ status }) => status === "indexed").length;
+          if (
+            !changingModel ||
+            !workbenchId ||
+            embeddingSwitch?.from !== currentModel ||
+            embeddingSwitch.count !== indexed
+          )
+            throw veraError("CONFLICT");
+        }
         const grants = await Promise.all(
           bench.snapshot.config.agent.allowed_commands.map(async (prefix) => ({
             prefix,

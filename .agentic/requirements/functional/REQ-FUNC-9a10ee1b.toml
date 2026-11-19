@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-FUNC-9a10ee1b"
+title = "Stop the tracked delegated turn without deleting history"
+status = "active"
+requirement = "When the owning parent requests stop, VERA shall apply normal stop semantics only to the active initial turn while retaining its transcript."
+verification = "Stop a held owned child and inspect its durable transcript, then attempt stop after a later turn starts and verify that it continues."
+affected_paths = ["05_Software/src/libraries/core/src/sessions/service.ts","05_Software/src/libraries/core/src/tools/delegated-sessions.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/sessions/delegation-tools.test.ts"]
+created = 2026-11-19
+updated = 2026-11-19

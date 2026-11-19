@@ -34,6 +34,12 @@ While the agent works, you can keep typing and send more messages, for example "
 
 **Stop** ends the running turn. Escape also asks **Stop the running turn?**. Work that was already completed, such as applied file changes, stays.
 
+## Follow delegated sessions
+
+When VERA delegates a task, **Delegated sessions** in the parent chat lists each child and its current outcome. Select a child to open its Chat tab and follow its transcript. **Parent session** returns to the parent.
+
+To stop a running child, open it and use **Stop** in its composer. The parent can keep working. If approval is requested, use the approval card in that session. When you reopen either session after restarting VERA, the link and the outcome of the delegated turn are still available.
+
 ## Detail levels
 
 **Detail level** is set per workbench in **Edit workbench** → **Agent and chat**:
@@ -89,6 +95,8 @@ Open **Runs** in the right panel to see the actual command, working folder, live
 ## User terminal
 
 Open **Terminal** in the right panel or press **Ctrl+Shift+T**. The interactive shell starts in the workbench folder, using Settings → Commands. Create and close tabs with **New terminal** and **Close terminal**; resize the panel to reflow output. Interactive programs accept your typing. Agent session stops leave user terminals running; closing or replacing the workbench, or quitting VERA, closes them. Native terminal support is bundled.
+
+Chat replies and code blocks have separate Copy actions. Run is available for completed, explicitly labelled PowerShell or Bash blocks with 1–16,384 characters and no terminal control characters. It dispatches only to an unused clean shell whose initial empty prompt is verified before execution. Only eligible destinations are offered; if none qualify, Run creates a clean terminal immediately. If a destination receives input or runs a command after selection, VERA refuses injection and offers **Run in a new clean terminal** instead. Your pending input and interactive programs stay untouched. Clean terminals skip shell profiles; normal terminals opened with **New terminal** still use your configured shell startup. When selecting a destination, **New clean terminal (no shell profile)** creates a separate compatible shell. Cancel or Escape returns keyboard focus to Run.
 
 Every terminal starts private. To let the agent read one, see [Permissions](permissions.md).
 

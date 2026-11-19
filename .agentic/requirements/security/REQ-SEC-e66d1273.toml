@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-SEC-e66d1273"
+title = "Bind delegation calls to workbench session authority"
+status = "active"
+requirement = "If an agent calls a delegation tool outside the owning parent session or without an enabled host binding, VERA shall refuse the operation under its existing core policy."
+verification = "Check offered tools and attempt status, wait and stop from another session and launch from a child, including strict argument rejection for forged identity."
+affected_paths = ["05_Software/src/libraries/core/src/sessions/service.ts","05_Software/src/libraries/core/src/tools/delegated-sessions.ts","05_Software/src/libraries/core/src/tools/registry.ts","05_Software/src/libraries/core/src/tools/context.ts","05_Software/src/libraries/shared/src/tools.ts","05_Software/src/libraries/core/src/workbench/service.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/sessions/delegation-tools.test.ts", "05_Software/src/libraries/core/src/tools/registry.test.ts", "05_Software/src/libraries/core/src/workbench/service.test.ts"]
+created = 2026-11-19
+updated = 2026-11-19

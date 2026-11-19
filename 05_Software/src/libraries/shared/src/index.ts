@@ -10,6 +10,8 @@ export * from "./composer-images.js";
 export * from "./documents.js";
 export * from "./downloads.js";
 export * from "./electrical-model.js";
+export * from "./embedding-model-manifest.js";
+export * from "./embedding-models.js";
 export * from "./events.js";
 export { gitExecutionArguments } from "./git-options.js";
 export * from "./help.js";

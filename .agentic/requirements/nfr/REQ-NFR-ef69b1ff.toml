@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-NFR-ef69b1ff"
+
+title = "Start a local embedding worker on demand per model"
+
+status = "active"
+
+requirement = """
+When a local embedding model receives work, VERA shall start its worker on demand and reuse that worker for queued calls to the same model.
+"""
+
+verification = "Observe no worker before use and one thread across two concurrent roots of one model; check that rank caches are scoped by root."
+
+affected_paths = ["05_Software/src/libraries/core/src/knowledge/embedding.ts", "05_Software/src/libraries/core/src/knowledge/document-services.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/knowledge/embedding.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-19
+updated = 2026-11-19

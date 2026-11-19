@@ -1,6 +1,6 @@
 // REQ-UX-4bea0001 REQ-REL-4bea0006 REQ-REL-4bea0004
 
-import type { ChatDetail } from "@vera/shared";
+import type { ChatDetail, SessionSummary } from "@vera/shared";
 import { useContext, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../../api/index.js";
@@ -9,6 +9,7 @@ import { globalShortcutBlocked, ShortcutContext, shortcutCommand } from "../../l
 import { CHAT, useDocumentTabs } from "../documents/viewer-context.js";
 import { ErrorMessage } from "../error-message.js";
 import { Composer } from "./composer.js";
+import { DelegationLinks } from "./delegation-links.js";
 import { SessionInspector } from "./session-inspector.js";
 import { Transcript } from "./transcript.js";
 import { searchMatch } from "./transcript-projection.js";
@@ -21,6 +22,12 @@ export function SessionWorkspace({
   readOnly,
   archived = false,
   detail = "normal",
+  delegation,
+  delegationParent,
+  delegationChildren = [],
+  selectLinkedSession,
+  focusTranscript = false,
+  transcriptOpened,
   composerFocusRequest = 0,
   composerFocused,
 }: {
@@ -30,6 +37,12 @@ export function SessionWorkspace({
   readOnly: boolean;
   archived?: boolean;
   detail?: ChatDetail;
+  delegation?: SessionSummary["delegation"];
+  delegationParent?: SessionSummary | undefined;
+  delegationChildren?: readonly SessionSummary[] | undefined;
+  selectLinkedSession?: (id: string) => void;
+  focusTranscript?: boolean;
+  transcriptOpened?: (id: string) => void;
   composerFocusRequest?: number;
   /** Called once a focus request is taken, so the app drops it and never replays it. */
   composerFocused?: () => void;
@@ -44,12 +57,28 @@ export function SessionWorkspace({
   const [inspector, setInspector] = useState(false);
   const searchInput = useRef<HTMLInputElement>(null);
   const workspace = useRef<HTMLElement>(null);
+  const heading = useRef<HTMLHeadingElement>(null);
   const lastComposerFocus = useRef(0);
   const composerReady = !!view && !readOnly && !pending;
   // Behind a document tab (TASK-79f6ffd3) the conversation is hidden: a composer focus request
   // (Attach as context) shows the Chat tab first; window shortcuts wait until it is shown.
   const tabs = useDocumentTabs();
   const shown = !tabs || tabs.active === CHAT;
+  const selectTab = tabs?.select;
+  const pendingTranscriptFocus = useRef(false);
+  useEffect(() => {
+    if (!id || !focusTranscript) return;
+    pendingTranscriptFocus.current = true;
+    selectTab?.(CHAT);
+    transcriptOpened?.(id);
+  }, [id, focusTranscript, selectTab, transcriptOpened]);
+  const snapshotReady = !!view;
+  useEffect(() => {
+    void focusTranscript;
+    if (!pendingTranscriptFocus.current || !snapshotReady || !shown) return;
+    heading.current?.focus();
+    pendingTranscriptFocus.current = false;
+  }, [focusTranscript, snapshotReady, shown]);
   // A request is taken once: it shows the Chat tab once and focuses the composer when it can.
   const pendingFocus = useRef(false);
   useEffect(() => {
@@ -156,8 +185,18 @@ export function SessionWorkspace({
     <section ref={workspace} className="session-workspace" aria-label={t("chat.conversation")}>
       {readOnly && <p role="status">{t("documents.readOnly")}</p>}
       <header className="session-heading">
-        <h2>{view?.state.title || t("chat.untitled")}</h2>
+        <h2 ref={heading} tabIndex={-1}>
+          {view?.state.title || t("chat.untitled")}
+        </h2>
       </header>
+      {selectLinkedSession && (
+        <DelegationLinks
+          parent={delegationParent}
+          child={delegation}
+          sessions={delegationChildren}
+          open={selectLinkedSession}
+        />
+      )}
       {error !== undefined && (
         <>
           <ErrorMessage error={error} />
@@ -225,6 +264,7 @@ export function SessionWorkspace({
           inspectorControls={<ContextIndicator state={view.state} open={() => setInspector(true)} />}
           disabled={readOnly || pending}
           archived={archived}
+          permissionLocked={!!delegation}
           send={send}
           stop={() => void stop()}
           setMode={async (mode) => {

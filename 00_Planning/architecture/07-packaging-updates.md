@@ -30,13 +30,13 @@ upgrade safety (L10, WP-32) are deferred until the first public release (§6).
   The app disables Chromium spell-check dictionary downloads and ONNX Runtime telemetry.
 - Native code is excluded from the asar archive (`asarUnpack`: better-sqlite3 prebuilds,
   `onnxruntime-node/bin`, `@img/**`, every `*.node`), because native code cannot read inside it. The
-  model is not in the archive at all: `extraResources` places it in `<resources>/models/` with
-  `<resources>/model-manifest.json`.
-- Model delivery: `src/models/model-manifest.json` pins Xenova/bge-small-en-v1.5 (q8) at an immutable
-  Hugging Face revision, with each file's HTTPS URL, size and SHA-256 (ADR-0013, ADR-0015).
-  `npm run prepare:model` (also run by `package`) downloads missing files at build time and verifies
-  cached ones; `-- --offline` only verifies. The model files are git-ignored. `package` verifies them
-  again in the unpacked output.
+  model lives outside the archive. `extraResources` places the manifest and assets together in
+  `<resources>/models/<model-id>/`.
+- Model delivery: each `src/models/<model-id>/model-manifest.json` pins the q8 assets for that model
+  to an immutable Hugging Face revision by HTTPS URL, size and SHA-256. `npm run prepare:model`
+  prepares both registered models and `-- --offline` verifies the local copies. Package staging
+  prepares BGE Small EN v1.5 (ADR-0013, ADR-0015) and copies its manifest and listed assets.
+  `package` verifies the BGE assets again in the unpacked output. Downloaded assets are ignored by Git.
 - Windows VC++ runtime: `src/windows_runtime/windows-runtime-manifest.json` pins five Microsoft VC++
   x64 DLLs (14.51.36247.0: `msvcp140`, `msvcp140_1`, `msvcp140_atomic_wait`, `vcruntime140`,
   `vcruntime140_1`) by size and SHA-256. `npm run prepare:windows-runtime` (also run by `package` on

@@ -1,5 +1,6 @@
 {
   "toolActivity": {
+    "embeddingRebuild": "L’index sémantique est en cours de reconstruction. Ces résultats correspondent aux mots-clés.",
     "planSteps": "Étapes du plan : {{count}}",
     "planCleared": "Plan vidé",
     "operation": "Opération de l’agent",
@@ -234,6 +235,33 @@
     "minimal": "Minimal",
     "stopped": "Tour arrêté ou interrompu.",
     "operations": "Opérations : {{count}}"
+  },
+  "delegation": {
+    "title": "Sessions déléguées",
+    "outcome": "État de la délégation : {{status}}",
+    "parent": "Session parente : {{title}}",
+    "status": {
+      "running": "En cours",
+      "awaiting_approval": "En attente d’approbation",
+      "completed": "Terminée",
+      "stopped": "Arrêtée",
+      "error": "Échec",
+      "limit": "Limite atteinte",
+      "interrupted": "Interrompue"
+    }
+  },
+  "chatActions": {
+    "copyResponse": "Copier la réponse",
+    "copyCode": "Copier le bloc de code",
+    "run": "Exécuter dans le terminal",
+    "runShell": "Exécuter dans le terminal ({{shell}})",
+    "destination": "Terminal de destination",
+    "newCleanTerminal": "Nouveau terminal vierge (sans profil shell)",
+    "runNewTerminal": "Exécuter dans un nouveau terminal vierge",
+    "promptNotReady": "L’invite vide du terminal n’est pas vérifiée. Utilisez un nouveau terminal vierge.",
+    "clipboardFailed": "Impossible de copier dans le presse-papiers. Réessayez.",
+    "shellMismatch": "Le shell du terminal ne correspond pas à ce bloc de commandes.",
+    "shellUnavailable": "Aucun shell {{shell}} compatible n’est installé."
   },
   "chat": {
     "bookmark": "Ajouter un signet",
@@ -864,6 +892,12 @@
     "changed": "Le banc de travail actif a changé. Rouvrez cet éditeur.",
     "saving": "Enregistrement…",
     "embeddingModel": "Modèle d’embedding",
+    "embeddingBge": "BGE Small EN v1.5 (anglais)",
+    "embeddingE5": "Multilingual E5 Small (100 langues)",
+    "embeddingSwitchTitle": "Changer de modèle d’embedding ?",
+    "embeddingSwitchCount": "Documents indexés ({{count}})",
+    "embeddingSwitchBody": "VERA recréera les vecteurs en arrière-plan. La recherche par mots-clés restera disponible.",
+    "embeddingSwitchConfirm": "Changer de modèle",
     "chunkSize": "Taille des segments (caractères)",
     "overlap": "Chevauchement (caractères)",
     "partialSave": "Les paramètres du projet ont été enregistrés, mais pas les instructions. Cliquez à nouveau sur Enregistrer pour terminer ; fermer conserve les paramètres enregistrés.",

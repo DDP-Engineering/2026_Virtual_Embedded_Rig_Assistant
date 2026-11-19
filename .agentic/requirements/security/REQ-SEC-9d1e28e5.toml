@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-SEC-9d1e28e5"
+title = "Enforce inspection-only delegation tools"
+status = "active"
+requirement = "When a child attempts to invoke a tool, the tool boundary shall permit only the explicitly allowed canonical inspection tools in read-only workbench scope."
+verification = "Replay inspection and forged mutation calls with permissive host policy, then directly exercise execute and prepare with blocked and custom tools."
+affected_paths = ["05_Software/src/libraries/core/src/sessions/service.ts","05_Software/src/libraries/core/src/tools/registry.ts","05_Software/src/libraries/core/src/tools/context.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/sessions/delegation.test.ts"]
+created = 2026-11-19
+updated = 2026-11-19

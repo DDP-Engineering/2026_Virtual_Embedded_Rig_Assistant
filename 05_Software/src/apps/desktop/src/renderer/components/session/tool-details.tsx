@@ -166,7 +166,9 @@ export const ToolDetails = memo(function ToolDetails({
             ? t("toolActivity.changedLines", { added: result?.added, removed: result?.removed })
             : undefined;
   const output =
-    string(result?.error) ?? string(result?.output) ?? string(result?.text) ?? string(result?.message);
+    item.name === "search_docs" && result?.ranking === "embedding-rebuild"
+      ? t("toolActivity.embeddingRebuild")
+      : (string(result?.error) ?? string(result?.output) ?? string(result?.text) ?? string(result?.message));
   const raw = item.preview ?? update ?? item.summary;
   return (
     <Disclosure

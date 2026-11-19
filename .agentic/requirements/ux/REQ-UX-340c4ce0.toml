@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-UX-340c4ce0"
+
+title = "Choose a registered embedding model"
+
+status = "active"
+
+requirement = """
+When a user edits workbench Indexing settings, the editor shall offer both registered local embedding models.
+"""
+
+verification = "Open native Indexing settings for a BGE workbench and assert the selector lists both choices with BGE selected."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/workbench-config-form.tsx", "05_Software/src/apps/desktop/src/renderer/locales"]
+
+linked_tests = ["05_Software/tests/e2e/embedding-models.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-19
+updated = 2026-11-19

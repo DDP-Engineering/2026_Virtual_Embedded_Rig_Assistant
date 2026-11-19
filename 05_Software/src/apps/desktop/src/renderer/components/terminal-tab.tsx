@@ -2,12 +2,16 @@ import { type TerminalSummary, typographyDefaults } from "@vera/shared";
 import { FitAddon } from "@xterm/addon-fit";
 import { Terminal } from "@xterm/xterm";
 import { Plus, X } from "lucide-react";
-import { type RefObject, useEffect, useRef, useState } from "react";
+import { type RefObject, useContext, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../api/index.js";
 import { terminalDocument } from "../lib/terminal-document.js";
 import { ErrorMessage } from "./error-message.js";
+import { TerminalNavigation } from "./terminal-navigation.js";
 import "@xterm/xterm/css/xterm.css";
+
+// A successful chat dispatch proves this is first use. Claim that live-output handoff once, not on panel replay.
+const openedCommandTargets = new WeakSet<object>();
 
 function TerminalSurface({
   workbenchId,
@@ -134,6 +138,10 @@ function TerminalSurface({
 /** User-owned terminals survive panel navigation; the host closes them with the workbench. */
 export function TerminalTab({ workbenchId }: { workbenchId: string }) {
   const { t } = useTranslation();
+  const navigation = useContext(TerminalNavigation);
+  const target = navigation?.workbenchId === workbenchId ? navigation.target : undefined;
+  const requested = useRef(target);
+  requested.current = target;
   const [terminals, setTerminals] = useState<TerminalSummary[]>([]);
   const [active, setActive] = useState<string>();
   const [error, setError] = useState<unknown>();
@@ -142,6 +150,20 @@ export function TerminalTab({ workbenchId }: { workbenchId: string }) {
   const freshTerminals = useRef(new Set<string>());
   const closingTerminal = useRef<string | undefined>(undefined);
   const selected = terminals.find((terminal) => terminal.id === active);
+  useEffect(() => {
+    if (!target) return;
+    if (!openedCommandTargets.has(target)) {
+      openedCommandTargets.add(target);
+      freshTerminals.current.add(target.id);
+    }
+    setActive(target.id);
+    const timer = window.setTimeout(
+      () =>
+        document.querySelector<HTMLTextAreaElement>(`[data-terminal-id="${target.id}"] textarea`)?.focus(),
+      0,
+    );
+    return () => window.clearTimeout(timer);
+  }, [target]);
   useEffect(() => {
     let live = true;
     let timer: ReturnType<typeof setTimeout>;
@@ -158,7 +180,11 @@ export function TerminalTab({ workbenchId }: { workbenchId: string }) {
         if (!live) return;
         if (version === revision.current) {
           setTerminals(rows);
-          setActive((current) => (rows.some((row) => row.id === current) ? current : rows[0]?.id));
+          setActive((current) =>
+            rows.some((row) => row.id === current)
+              ? current
+              : (rows.find((row) => row.id === requested.current?.id)?.id ?? rows[0]?.id),
+          );
         }
       } catch (failure) {
         if (live) setError(failure);

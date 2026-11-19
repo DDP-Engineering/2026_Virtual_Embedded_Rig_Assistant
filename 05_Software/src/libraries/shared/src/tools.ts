@@ -39,6 +39,14 @@ export const builtinToolNames = [
 
 export type BuiltinToolName = (typeof builtinToolNames)[number];
 
+/** Runtime built-ins bound to an owning parent session. */
+export const delegatedSessionToolNames = [
+  "session_launch",
+  "session_status",
+  "session_wait",
+  "session_stop",
+] as const;
+
 /** Shared configuration dependencies; runtime hosts still enforce loading, trust and permissions. */
 export const electricalModelToolNames = ["electrical_model", "electrical_model_change"] as const;
 export const electricalModelEcosystems: readonly string[] = ["electrical", "automation"];

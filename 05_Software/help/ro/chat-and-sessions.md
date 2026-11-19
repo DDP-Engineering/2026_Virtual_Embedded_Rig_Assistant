@@ -34,6 +34,12 @@ Cât timp agentul lucrează, poți continua să scrii și să trimiți mesaje, d
 
 **Oprește** încheie execuția curentă. Și Escape întreabă **Oprești execuția curentă?**. Lucrul deja finalizat, cum ar fi modificările de fișiere aplicate, rămâne.
 
+## Urmărește sesiunile delegate
+
+Când VERA deleagă o sarcină, **Sesiuni delegate** din chatul părinte afișează fiecare sesiune copil și starea sa. Selectează o sesiune copil pentru a-i deschide fila Chat și a-i urmări conversația. **Sesiune părinte** revine la sesiunea părinte.
+
+Pentru a opri o sesiune copil în curs, deschide-o și folosește **Oprește** lângă câmpul pentru mesaje. Sesiunea părinte poate continua. Dacă se cere aprobare, folosește cardul de aprobare din sesiunea respectivă. Când redeschizi oricare dintre sesiuni după repornirea VERA, legătura și rezultatul execuției delegate rămân disponibile.
+
 ## Niveluri de detaliu
 
 **Nivel de detaliu** se setează pentru fiecare workbench în **Editează workbench-ul** → **Agent și chat**:
@@ -89,6 +95,8 @@ Deschide **Rulări** în panoul din dreapta pentru comanda exactă, folder, ieș
 ## Terminalul utilizatorului
 
 Deschide **Terminal** în panoul din dreapta sau apasă **Ctrl+Shift+T**. Shell-ul interactiv pornește în folderul workbench-ului, folosind Setări → Comenzi. Creează și închide file cu **Terminal nou** și **Închide terminalul**; redimensionează panoul pentru a rearanja ieșirea. Programele interactive acceptă tastarea. Oprirea sesiunii agentului lasă terminalele active; închiderea sau înlocuirea workbench-ului și ieșirea din VERA le închid. Suportul nativ este inclus.
+
+Răspunsurile și blocurile de cod au acțiuni separate de copiere. Executarea este disponibilă pentru blocuri complete etichetate explicit PowerShell sau Bash, cu 1–16.384 de caractere și fără caractere de control ale terminalului. Comanda ajunge doar într-un shell curat nefolosit, al cărui prompt inițial gol este verificat înainte de execuție. Sunt oferite doar destinații eligibile; dacă nu există niciuna, Execută creează imediat un terminal curat. Dacă destinația primește intrare sau execută o comandă după selectare, VERA refuză injectarea și oferă **Execută într-un terminal nou curat**. Textul netrimis și programele interactive rămân neatinse. Terminalele curate omit profilurile shell; **Terminal nou** păstrează pornirea normală a shell-ului configurat. Opțiunea **Terminal nou curat (fără profil shell)** creează un shell compatibil separat. Anulare sau Escape readuce focalizarea pe Execută.
 
 Fiecare terminal pornește privat. Pentru a permite agentului să citească unul, vezi [Permisiuni](permissions.md).
 

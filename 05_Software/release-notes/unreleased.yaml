@@ -1,20 +1,20 @@
 version: Unreleased
 date: null
 entries:
-  - category: new
+  - category: improved
     topic: { en: Chat, ro: Chat, de: Chat, fr: Chat }
     text:
-      en: Paste, drop or attach images in chat and reopen them there. Text-only models receive the paths.
-      ro: Lipește, trage sau atașează imagini și redeschide-le în chat. Modelele text primesc căile.
-      de: Bilder einfügen, ablegen, anhängen und im Chat öffnen. Textmodelle erhalten die Dateipfade.
-      fr: Collez, déposez ou joignez des images et rouvrez-les. Les modèles texte reçoivent leurs chemins.
+      en: Copy replies or code; Run skips stalled terminals and disables empty or oversized blocks.
+      ro: Copiază răspunsuri sau cod; Execută evită terminale blocate și blocuri goale sau prea mari.
+      de: Antworten und Code kopieren; Ausführen meidet hängende Terminals sowie leere oder zu lange Blöcke.
+      fr: Copiez réponses ou code ; Exécuter évite les terminaux bloqués et le code vide ou trop long.
   - category: new
-    topic: { en: Providers, ro: Furnizori, de: Anbieter, fr: Fournisseurs }
+    topic: { en: Images, ro: Imagini, de: Bilder, fr: Images }
     text:
-      en: Set image support per local or compatible model. The agent can inspect workbench images.
-      ro: Alege ce modele locale sau compatibile acceptă imagini. Agentul le poate examina în workbench.
-      de: Bildunterstützung je lokalem oder kompatiblem Modell wählen. Der Agent kann Bilder ansehen.
-      fr: Choisissez les modèles locaux ou compatibles qui acceptent les images. L’agent peut les examiner.
+      en: Attach and reopen chat images. Set image support per model so the agent can inspect them.
+      ro: Atașează și redeschide imagini în chat. Alege modelele cu care agentul le poate examina.
+      de: Chatbilder anhängen und öffnen. Wählen Sie die Modelle, mit denen der Agent Bilder prüfen kann.
+      fr: Joignez et rouvrez des images. Choisissez les modèles avec lesquels l’agent peut les examiner.
   - category: fixed
     topic: { en: Skills, ro: Skills, de: Skills, fr: Compétences }
     text:
@@ -25,10 +25,10 @@ entries:
   - category: new
     topic: { en: Workbench, ro: Workbench, de: Workbench, fr: Banc de travail }
     text:
-      en: Choose visible right-panel tabs per workbench and check its storage size on demand.
-      ro: Alege filele vizibile din dreapta pe workbench și verifică spațiul ocupat la cerere.
-      de: Rechte Tabs je Workbench wählen und bei Bedarf dessen Speicherbelegung prüfen.
-      fr: Choisissez les onglets droits par banc et consultez son espace utilisé à la demande.
+      en: Choose right-panel tabs and check storage size on demand. Recreate databases from earlier builds.
+      ro: Alege filele din dreapta și vezi spațiul la cerere. Recreează bazele din versiunile vechi.
+      de: Rechte Tabs wählen und Speicherbedarf abrufen. Datenbanken aus früheren Builds neu erstellen.
+      fr: Choisissez les onglets à droite et voyez l’espace à la demande. Recréez les anciennes bases.
   - category: fixed
     topic: { en: Chat, ro: Chat, de: Chat, fr: Chat }
     text:
@@ -81,10 +81,17 @@ entries:
   - category: new
     topic: { en: Files, ro: Fișiere, de: Dateien, fr: Fichiers }
     text:
-      en: Remember views by extension. Zoom to 400%, jump to offsets, find bytes or text, and copy.
-      ro: Reține modul pe extensie, mărește la 400%, sari la offset, caută octeți sau text și copiază.
-      de: Modus je Endung merken, bis 400% zoomen, Offsets anspringen, Bytes oder Text suchen und kopieren.
-      fr: Mémorisez le mode par extension, zoomez à 400%, sautez au décalage, cherchez et copiez texte/octets.
+      en: Rendered, Text or Hex per extension. Zoom to 400%. In Hex, jump, find and copy bytes or text.
+      ro: Randat, Text sau Hex pe extensie. Zoom 400%. În Hex, sari, caută și copiază octeți sau text.
+      de: Gerendert, Text, Hex je Endung. Zoom bis 400 %. In Hex springen, Text und Bytes suchen und kopieren.
+      fr: Rendu, Texte, Hex par extension. Zoom 400 %. En Hex, sauts, recherche et copie de texte ou d’octets.
+  - category: new
+    topic: { en: Files, ro: Fișiere, de: Dateien, fr: Fichiers }
+    text:
+      en: Switch local models per workbench. Both models are included for offline search.
+      ro: Schimbă modelul local pe workbench. Ambele modele sunt incluse pentru căutare offline.
+      de: Wechseln Sie das Modell je Workbench. Beide Modelle sind für die Offline-Suche enthalten.
+      fr: Changez de modèle par banc. Les deux modèles sont inclus pour la recherche hors ligne.
   - category: improved
     topic: { en: Files, ro: Fișiere, de: Dateien, fr: Fichiers }
     text:
@@ -151,10 +158,10 @@ entries:
   - category: new
     topic: { en: Sessions, ro: Sesiuni, de: Sitzungen, fr: Sessions }
     text:
-      en: Bookmark your messages from the conversation or its title and reply preview.
-      ro: Marchează mesajele din conversație sau din previzualizarea cu titlu și răspuns.
-      de: Setzen Sie Lesezeichen an Nachrichten im Gespräch oder in der Titel- und Antwortvorschau.
-      fr: Ajoutez des signets aux messages dans la conversation ou l’aperçu du titre et de la réponse.
+      en: "Bookmark messages. Agents delegate inspections and use results. Follow or stop them in Desktop."
+      ro: "Marchează mesaje. Agenții deleagă verificări și folosesc rezultate. Urmărește-le sau oprește-le."
+      de: "Lesezeichen setzen. Agenten delegieren Prüfungen und werten sie aus. Läufe verfolgen oder stoppen."
+      fr: "Ajoutez des signets. Les agents délèguent et utilisent les résultats. Suivez ou arrêtez les tâches."
   - category: improved
     topic: { en: Sessions, ro: Sesiuni, de: Sitzungen, fr: Sessions }
     text:
@@ -172,17 +179,10 @@ entries:
   - category: improved
     topic: { en: Permissions, ro: Permisiuni, de: Berechtigungen, fr: Autorisations }
     text:
-      en: Bypass runs declared programs in outside folders and stops them when you leave Bypass.
-      ro: Bypass rulează programe declarate în foldere externe și le oprește când ieși din Bypass.
-      de: Bypass führt deklarierte Programme in externen Ordnern aus und stoppt sie beim Verlassen.
-      fr: Contournement lance les programmes déclarés dans des dossiers externes et les arrête à sa sortie.
-  - category: improved
-    topic: { en: Permissions, ro: Permisiuni, de: Berechtigungen, fr: Autorisations }
-    text:
-      en: Bypass also reaches outside analysis, plugin drafts, HIL and electrical inputs.
-      ro: Bypass permite și intrări externe pentru analiză, ciorne de plugin, HIL și calcule electrice.
-      de: Bypass erlaubt auch externe Eingaben für Analysen, Plugin-Entwürfe, HIL und Elektrik.
-      fr: Contournement accepte aussi les entrées externes d’analyse, de plugins, HIL et d’électricité.
+      en: Bypass permits outside programs and analysis inputs; leaving it stops running programs.
+      ro: Bypass permite programe și intrări de analiză externe; ieșirea oprește programele active.
+      de: Bypass erlaubt externe Programme und Analyseeingaben; beim Verlassen werden Programme gestoppt.
+      fr: Contournement autorise programmes et analyses externes ; en sortir arrête les programmes.
   - category: new
     topic: { en: Commands, ro: Comenzi, de: Befehle, fr: Commandes }
     text:

@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-DATA-372352ae"
+
+title = "Accept the registered local embedding model IDs"
+
+status = "active"
+
+requirement = """
+When a format-1 workbench configuration supplies an embedding model ID or omits it, VERA shall accept any registered ID or default an omitted ID to Xenova/bge-small-en-v1.5.
+"""
+
+verification = "Parse a format-1 workbench for each registered ID and with the field omitted; assert the selected ID and the BGE default."
+
+affected_paths = ["05_Software/src/libraries/shared/src/workbench.ts", "05_Software/src/libraries/shared/src/embedding-models.ts", "05_Software/src/libraries/core/src/knowledge/embedding.ts"]
+
+linked_tests = ["05_Software/src/libraries/shared/src/workbench.test.ts", "05_Software/src/libraries/core/src/workbench/service.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-19
+updated = 2026-11-19

@@ -28,11 +28,31 @@ async function stream(
   messages: Message[],
   model = "replay/echo",
   signal = new AbortController().signal,
+  reasoning?: string,
 ) {
   const out: LlmEvent[] = [];
-  for await (const e of gateway.stream({ model, system: "s", messages, tools: [], signal })) out.push(e);
+  for await (const e of gateway.stream({
+    model,
+    system: "s",
+    messages,
+    tools: [],
+    signal,
+    ...(reasoning && { reasoning }),
+  }))
+    out.push(e);
   return out;
 }
+it("prepares named replay models and auto selection, rejecting missing or cancelled references", async () => {
+  const dir = await fixture(JSON.stringify({ match: "inspect", text: "Done" }));
+  const gateway = new ReplayGateway({ dir, now: () => 0 });
+  await expect(gateway.prepareModel("replay/echo")).resolves.toBeUndefined();
+  await expect(gateway.prepareModel("replay/auto")).resolves.toBeUndefined();
+  await expect(gateway.prepareModel("replay/missing")).rejects.toMatchObject({ code: "NOT_FOUND" });
+  await expect(gateway.prepareModel("replay/echo", AbortSignal.abort())).rejects.toMatchObject({
+    name: "AbortError",
+  });
+});
+
 it("preserves declared replay token usage and rejects invalid fixture measurements", async () => {
   const dir = await fixture(JSON.stringify({ text: "Done", usage: { input: 100, output: 12 } }));
   const events = await stream(new ReplayGateway({ dir, now: () => 0 }), []);
@@ -42,6 +62,27 @@ it("preserves declared replay token usage and rejects invalid fixture measuremen
   await writeFile(join(dir, "echo.jsonl"), JSON.stringify({ text: "Done", usage: { input: -1, output: 2 } }));
   await expect(new ReplayGateway({ dir, now: () => 0 }).models("replay")).rejects.toThrow();
 });
+it("validates replay reasoning options and requires the declared request effort", async () => {
+  const dir = await fixture(
+    JSON.stringify({
+      reasoningOptions: ["low", "high"],
+      expectReasoning: "high",
+      text: "Verified effort",
+    }),
+  );
+  const gateway = new ReplayGateway({ dir, now: () => 0 });
+  expect(gateway.capabilities("replay/echo").reasoningOptions).toEqual(["low", "high"]);
+  expect((await gateway.models("replay")).models[0]?.reasoningOptions).toEqual(["low", "high"]);
+  expect(await stream(gateway, [], "replay/echo", undefined, "low")).toEqual([
+    expect.objectContaining({ type: "error", error: expect.objectContaining({ code: "INVALID" }) }),
+  ]);
+  expect(await stream(gateway, [], "replay/echo", undefined, "high")).toContainEqual(
+    expect.objectContaining({ type: "done" }),
+  );
+  await writeFile(join(dir, "echo.jsonl"), JSON.stringify({ reasoningOptions: ["BAD"] }));
+  await expect(gateway.models("replay")).rejects.toMatchObject({ code: "INVALID" });
+});
+
 it("passes every connection step for scripted tools and fails tools for text-only model", async () => {
   const dir = await fixture(
     `${JSON.stringify({

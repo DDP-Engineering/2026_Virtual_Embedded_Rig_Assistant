@@ -1,5 +1,6 @@
 {
   "toolActivity": {
+    "embeddingRebuild": "Der semantische Index wird neu aufgebaut. Diese Treffer beruhen auf Stichwörtern.",
     "planSteps": "Planschritte: {{count}}",
     "planCleared": "Plan geleert",
     "operation": "Werkzeugaktion",
@@ -234,6 +235,33 @@
     "minimal": "Minimal",
     "stopped": "Durchlauf gestoppt oder unterbrochen.",
     "operations": "Vorgänge: {{count}}"
+  },
+  "delegation": {
+    "title": "Delegierte Sitzungen",
+    "outcome": "Status der delegierten Aufgabe: {{status}}",
+    "parent": "Übergeordnete Sitzung: {{title}}",
+    "status": {
+      "running": "Läuft",
+      "awaiting_approval": "Wartet auf Genehmigung",
+      "completed": "Abgeschlossen",
+      "stopped": "Gestoppt",
+      "error": "Fehlgeschlagen",
+      "limit": "Limit erreicht",
+      "interrupted": "Unterbrochen"
+    }
+  },
+  "chatActions": {
+    "copyResponse": "Antwort kopieren",
+    "copyCode": "Codeblock kopieren",
+    "run": "Im Terminal ausführen",
+    "runShell": "Im Terminal ausführen ({{shell}})",
+    "destination": "Zielterminal",
+    "newCleanTerminal": "Neues sauberes Terminal (ohne Shellprofil)",
+    "runNewTerminal": "In einem neuen sauberen Terminal ausführen",
+    "promptNotReady": "Eine leere Eingabezeile ist nicht bestätigt. Verwenden Sie ein neues sauberes Terminal.",
+    "clipboardFailed": "Kopieren in die Zwischenablage fehlgeschlagen. Versuchen Sie es erneut.",
+    "shellMismatch": "Die Terminal-Shell passt nicht zu diesem Befehlsblock.",
+    "shellUnavailable": "Keine kompatible {{shell}}-Shell ist installiert."
   },
   "chat": {
     "bookmark": "Lesezeichen setzen",
@@ -864,6 +892,12 @@
     "changed": "Der aktive Workbench wurde geändert. Öffnen Sie den Editor erneut.",
     "saving": "Wird gespeichert…",
     "embeddingModel": "Embedding-Modell",
+    "embeddingBge": "BGE Small EN v1.5 (Englisch)",
+    "embeddingE5": "Multilingual E5 Small (100 Sprachen)",
+    "embeddingSwitchTitle": "Embedding-Modell wechseln?",
+    "embeddingSwitchCount": "Indizierte Dokumente ({{count}})",
+    "embeddingSwitchBody": "VERA erstellt die Vektoren im Hintergrund neu. Die Stichwortsuche bleibt verfügbar.",
+    "embeddingSwitchConfirm": "Modell wechseln",
     "chunkSize": "Chunk-Größe (Zeichen)",
     "overlap": "Überlappung (Zeichen)",
     "partialSave": "Projekteinstellungen wurden gespeichert, Anweisungen jedoch nicht. Wiederholen Sie Speichern; beim Schließen bleiben gespeicherte Einstellungen erhalten.",

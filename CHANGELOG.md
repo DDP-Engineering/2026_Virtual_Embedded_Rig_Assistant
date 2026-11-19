@@ -8,6 +8,12 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ### Added
 
+- Chat replies and code blocks offer exact copying; explicit Bash and PowerShell blocks run in compatible terminals.
+- Desktop links delegated sessions, shows their outcomes and lets users stop a running child.
+- Agents can launch, monitor, stop and collect results from delegated inspection sessions.
+- Core sessions can launch inspection-only children with durable ownership and bounded workbench concurrency.
+- Windows and Linux packages ship both pinned local embedding models and their MIT licence notices.
+- The local embedding registry and model preparation now include pinned Multilingual E5 Small q8 assets.
 - The agent can inspect workbench images with image-capable models using the view_image tool.
 - Sent chat images open from transcript thumbnails, and deleted images show their saved paths.
 - Paste, drop or attach images in chat, with removable previews and a warning for text-only models.
@@ -37,6 +43,11 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 - The Documents preview says "at least" when its 5-second limit stops it and shows the count guard before saving.
 
 ### Changed
+
+- Close VERA and delete .vera/vera.db, .vera/vera.db-wal and .vera/vera.db-shm from earlier builds.
+- Switch local embedding models per workbench while keyword search continues during the background rebuild.
+
+- Indexing and semantic search use the workbench model and its token budget. Idle embedding workers stop.
 
 - Workbench Tools keeps core capabilities; Plugins groups specialized allowances by provider and shared ecosystem.
 - Skills clarifies activation and scopes, opens new instructions immediately and supports read-only viewing and retries.
@@ -97,6 +108,9 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ### Fixed
 
+- Chat Run skips terminals after startup timeout until their verified prompt arrives without intervening input.
+- Chat Run skips ineligible terminals and disables invalid command blocks before creating a terminal.
+- Chat Run requires a verified empty shell prompt, preserves user input, and restores focus when selection is cancelled.
 - Open document tabs no longer reload when only theme, language, text size, shortcuts or session order change.
 - Opening a run log larger than 8 MiB shows its last 8 MiB instead of loading the whole file into memory.
 - Saving a provider API key masks it in open document tabs at once.

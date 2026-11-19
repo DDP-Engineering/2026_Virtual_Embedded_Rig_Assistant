@@ -12,6 +12,8 @@ Session-local user-message bookmarks persist as format-1 events, project into sn
 
 User messages retain workbench image paths across restarts. Desktop uses workbench-confined, Display-masked thumbnails for the visible transcript. Selecting a thumbnail opens the file viewer, and an unavailable file shows its saved path under Display masking.
 
+Core delegated turns use the same workbench session service, gateway and event history. The format-1 database retains parent ownership and request identity across interruption. Each workbench admits up to three active delegated turns with a fixed inspection-only tool scope. Parent agents can launch, observe, wait for and stop the initial turn through the core tool registry. Monitoring publishes bounded masked replies and status derived from the durable event sequence. Desktop uses the same workbench ownership and initial outcome for two-way Chat navigation, with refresh, reopen and normal Stop and approval controls.
+
 ## Supported operation
 
 Saved-session performance verification uses an isolated native Electron build, real persisted
@@ -71,7 +73,7 @@ Each component has a knowledge page that names its source files, tests, invarian
 | Indexer process | [indexer-process](../knowledge/indexer-process.md) | The VERA Indexer utility process; main keeps every SQLite write. |
 | Document extraction | [document-extraction](../knowledge/document-extraction.md) | PDF, text, heading and office extraction, chunks, OCR, document workers. |
 | Keyword search | [keyword-search](../knowledge/keyword-search.md) | Persisted word and identifier candidates with locators. |
-| Document search | [document-search](../knowledge/document-search.md) | Local embeddings, hybrid search, document tools, CLI index and search, the retrieval eval gate. |
+| Document search | [document-search](../knowledge/document-search.md) | Local embedding registry and inference, confirmed per-workbench model switching with keyword search during rebuild, hybrid search, document tools and CLI retrieval. |
 | Document viewer | [document-viewer](../knowledge/document-viewer.md) | Docs panel, `docs.readBytes` byte windows, Rendered, Text and Hex modes, large text, image preview, Display masking. |
 | Web search | [web-search](../knowledge/web-search.md) | `web_search` and `web_read`, the Exa, Tavily and Brave providers, Settings > Web access. |
 | PDF downloads | [pdf-downloads](../knowledge/pdf-downloads.md) | `web_download`, files and provenance under `.vera/downloads`. |

@@ -1,5 +1,6 @@
 // REQ-FUNC-f9d5ae8d REQ-FUNC-362ebed9 REQ-FUNC-276a5da8 REQ-REL-6a962d80 REQ-REL-08946818 REQ-REL-4761ac1e
 import { existsSync } from "node:fs";
+import { defaultEmbeddingModelId } from "@vera/shared";
 import { beforeAll, expect, it, vi } from "vitest";
 
 let IndexerHost: typeof import("./indexer-host.js").IndexerHost;
@@ -49,7 +50,7 @@ function harness(start = 0) {
       endpoints.push(next);
       return next;
     },
-    modelId: "model@1",
+    modelId: (model) => (model === defaultEmbeddingModelId ? "model@1" : "e5@1"),
     now: () => now,
     status: (state) => states.push(state),
   });
@@ -76,7 +77,7 @@ const input = (signal = new AbortController().signal) => ({
 
 it("runs document processing, selection and inspection in the indexer and returns its results", async () => {
   const h = harness();
-  expect(h.host.processor.modelId).toBe("model@1");
+  expect(h.host.processor.modelId?.(defaultEmbeddingModelId)).toBe("model@1");
   const pending = h.host.processor(input());
   await flush();
   const request = h.latest().sent.at(-1) as Message;
@@ -126,25 +127,29 @@ it("ranks through the indexer and sends vectors only when its cache misses the e
   const h = harness();
   const rows = vi.fn(() => [{ id: 1, vector: new Float32Array(384) }]);
   const signal = new AbortController().signal;
-  let ranking = h.host.embeddings.rank("/bench", "3", rows, "supply", signal);
+  const model = "Xenova/multilingual-e5-small";
+  const embeddings = h.host.embeddings(model);
+  expect(embeddings.modelId).toBe("e5@1");
+  let ranking = embeddings.rank("/bench", "3", rows, "supply", signal);
   await flush();
   let request = h.latest().sent.at(-1) as Message;
-  expect(request).toMatchObject({ type: "rank", root: "/bench", epoch: "3", query: "supply" });
+  expect(request).toMatchObject({ type: "rank", model, root: "/bench", epoch: "3", query: "supply" });
   expect(request.rows).toBeUndefined();
   h.latest().reply(request.id, { needRows: true });
   await flush();
   request = h.latest().sent.at(-1) as Message;
-  expect(request).toMatchObject({ type: "rank", epoch: "3", rows: [{ id: 1 }] });
+  expect(request).toMatchObject({ type: "rank", model, epoch: "3", rows: [{ id: 1 }] });
   h.latest().reply(request.id, { hits: [{ id: 1, score: 0.9 }] });
   expect(await ranking).toEqual([{ id: 1, score: 0.9 }]);
   expect(rows).toHaveBeenCalledTimes(1);
-  ranking = h.host.embeddings.rank("/bench", "3", rows, "supply", signal);
+  ranking = embeddings.rank("/bench", "3", rows, "supply", signal);
   await flush();
   h.latest().reply((h.latest().sent.at(-1) as Message).id, { hits: [] });
   expect(await ranking).toEqual([]);
   expect(rows).toHaveBeenCalledTimes(1);
-  const embedding = h.host.embeddings.embed("/bench", ["a"], signal);
+  const embedding = embeddings.embed("/bench", ["a"], signal);
   await flush();
+  expect(h.latest().sent.at(-1)).toMatchObject({ type: "embed", model, texts: ["a"] });
   h.latest().reply((h.latest().sent.at(-1) as Message).id, [new Float32Array([1])]);
   expect(await embedding).toEqual([new Float32Array([1])]);
 });
@@ -180,7 +185,7 @@ it("ends an aborted call even when the cancel cannot be posted", async () => {
 it("does not start an indexer only to release a workbench", async () => {
   const h = harness();
   await h.host.processor.release?.("/bench");
-  await h.host.embeddings.release("/bench");
+  await h.host.embeddings(defaultEmbeddingModelId).release("/bench");
   expect(h.endpoints).toHaveLength(0);
 });
 
@@ -280,7 +285,7 @@ it("counts a failed indexer start as a crash and stops after three", async () =>
       attempts++;
       throw Error("fork failed");
     },
-    modelId: "model@1",
+    modelId: (model) => (model === defaultEmbeddingModelId ? "model@1" : "e5@1"),
     now: () => 0,
     status: (state) => states.push(state),
   });

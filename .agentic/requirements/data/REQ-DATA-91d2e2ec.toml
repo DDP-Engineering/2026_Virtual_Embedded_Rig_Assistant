@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-DATA-91d2e2ec"
+title = "Preserve archived delegation history"
+status = "active"
+requirement = "When either idle session in a delegation is archived, the session service shall retain its relationship and transcript."
+verification = "Archive both sides and inspect the child through its owner before and after reopen."
+affected_paths = ["05_Software/src/libraries/core/src/sessions/service.ts","05_Software/src/libraries/core/src/storage/schema.ts","05_Software/src/libraries/core/src/storage/repos/delegations.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/sessions/delegation.test.ts"]
+created = 2026-11-19
+updated = 2026-11-19

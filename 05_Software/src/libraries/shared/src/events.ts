@@ -81,6 +81,7 @@ export const workbenchEventSchema = z.discriminatedUnion("type", [
   z.strictObject({ type: z.literal("index.guard"), guard: documentGuardSchema.nullable() }),
   z.strictObject({ type: z.literal("opened"), workbench: workbenchSnapshotSchema }),
   z.strictObject({ type: z.literal("closed") }),
+  z.strictObject({ type: z.literal("session.delegations.changed") }),
   z.strictObject({
     type: z.literal("config.changed"),
     config: workbenchSchema,

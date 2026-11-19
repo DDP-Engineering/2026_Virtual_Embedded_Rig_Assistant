@@ -24,6 +24,7 @@ export function Composer({
   state,
   disabled,
   archived = false,
+  permissionLocked = false,
   send,
   stop,
   setModel,
@@ -38,6 +39,7 @@ export function Composer({
   state: SessionState;
   disabled: boolean;
   archived?: boolean;
+  permissionLocked?: boolean;
   send: (text: string, images?: string[]) => Promise<boolean>;
   stop: () => void;
   setModel: (reference: string | null) => Promise<void>;
@@ -366,7 +368,7 @@ export function Composer({
           )}
           <PermissionPicker
             mode={state.mode}
-            disabled={disabled}
+            disabled={disabled || permissionLocked}
             change={setMode}
             workbenchId={workbenchId}
           />

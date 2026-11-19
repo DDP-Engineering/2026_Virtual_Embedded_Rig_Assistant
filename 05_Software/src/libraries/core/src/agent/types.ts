@@ -21,7 +21,8 @@ export interface ToolDef {
   description: string;
   requiresImages?: true;
   params: z.ZodType;
-  execute(args: unknown, signal: AbortSignal): Promise<ToolOutput>;
+  /** The runtime supplies callId separately from model arguments. */
+  execute(args: unknown, signal: AbortSignal, callId?: string): Promise<ToolOutput>;
 }
 export interface RuntimeInit {
   systemPrompt: string;

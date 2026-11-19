@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-REL-fee9f45e"
+title = "Roll back failed delegated turn admission"
+status = "active"
+requirement = "If child runtime startup fails before admission, then the session service shall roll back the child and leave its request available for retry."
+verification = "Fail runtime startup and initial persistence, check the workbench has no child or pending turn, then retry the same key."
+affected_paths = ["05_Software/src/libraries/core/src/sessions/service.ts","05_Software/src/libraries/core/src/storage/schema.ts","05_Software/src/libraries/core/src/storage/repos/delegations.ts","05_Software/src/libraries/core/src/sessions/hub.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/sessions/delegation.test.ts"]
+created = 2026-11-19
+updated = 2026-11-19

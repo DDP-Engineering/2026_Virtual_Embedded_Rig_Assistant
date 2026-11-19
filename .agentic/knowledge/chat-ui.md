@@ -35,7 +35,7 @@ budgets and abort. The browser mock seeds six selectable states and an edit appr
 
 - Image inspection activity shows a localized label and the path. The transcript and exports receive the text tool result.
 
-- App owns one confirmed workbench snapshot shared with Welcome, Welcome/Settings/session memory routes and per-workbench selected IDs in localStorage.
+- App owns one confirmed workbench snapshot shared with Welcome, Welcome/Settings/session memory routes and per-workbench selected IDs in localStorage. Session chat shows workbench-scoped delegation links with the initial turn state from the session list. A one-time request selects and focuses the linked Chat transcript even when document tabs are restored. The child labels its own delegated turn status separately from the parent link. The child uses the ordinary Stop and approval actions and displays the locked read-only tool mode. Proof: tests/e2e/session-delegation.spec.ts.
 - SessionList offers workbench-scoped title/message search, localized empty/loading/error results, New/select/rename/confirmed delete/status; Ctrl+N creates when writable.
 - SessionList offers row-scoped native Markdown/JSON export with localized completion/cancel/errors in read-only or writable workbenches. SessionWorkspace composes transcript/composer/meter and Ctrl+F search with localized match count and per-message match text; closing search restores transcript focus. Plain Escape confirms Stop in a writable active turn; global actions yield to modal/handled/composing/repeated keys.
 - useSessionEvents gets snapshot/seq, then subscribes from seq; cancellation detaches obsolete views.

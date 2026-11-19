@@ -3,10 +3,10 @@
  * first answer, so the first document search does not pay the model load (PERF-11). `cancel()` runs when
  * a workbench closes or another opens; closing also releases the worker in the indexer.
  */
-export function createEmbeddingWarmup(options: {
-  /** The workbench root when its database holds vectors of the current model; undefined otherwise. */
-  hasVectors: (workbenchId: string) => Promise<string | undefined>;
-  embed: (root: string, signal: AbortSignal) => Promise<unknown>;
+export function createEmbeddingWarmup<T>(options: {
+  /** The target when the workbench database holds vectors for it. */
+  hasVectors: (workbenchId: string) => Promise<T | undefined>;
+  embed: (target: T, signal: AbortSignal) => Promise<unknown>;
 }) {
   let current: { workbenchId: string; controller: AbortController } | undefined;
   return {
@@ -17,10 +17,10 @@ export function createEmbeddingWarmup(options: {
       current = { workbenchId, controller };
       void options
         .hasVectors(workbenchId)
-        .then((root) => {
+        .then((target) => {
           // An aborted request is no longer the current one.
           if (controller.signal.aborted) return;
-          if (root !== undefined) return options.embed(root, controller.signal);
+          if (target !== undefined) return options.embed(target, controller.signal);
           // Nothing is indexed yet: forget the request, so a message after the first indexing warms up.
           current = undefined;
         })

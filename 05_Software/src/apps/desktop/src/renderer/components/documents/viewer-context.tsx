@@ -456,12 +456,8 @@ export function DocumentViewerProvider({
           attempt: ++attempts.current,
         }));
         const restoredKeys = new Set(restoredTabs.map((tab) => tab.key));
-        // Once the engineer has opened something, their selection stands.
-        const active = live.tabs.length
-          ? live.active
-          : restoredKeys.has(stored.active)
-            ? stored.active
-            : CHAT;
+        // Keep an explicit Chat selection, including before the first document has restored.
+        const active = map.has(owned) ? live.active : restoredKeys.has(stored.active) ? stored.active : CHAT;
         return new Map(map).set(owned, { tabs: [...restoredTabs, ...live.tabs], active });
       });
       restored.current.add(owned);

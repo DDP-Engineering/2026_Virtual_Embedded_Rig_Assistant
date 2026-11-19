@@ -22,6 +22,7 @@ import { BookmarkButton } from "./bookmark-button.js";
 import { Disclosure } from "./disclosure.js";
 import { ExternalSourceScope } from "./external-source-link.js";
 import { Markdown } from "./markdown.js";
+import { CopyAction } from "./message-actions.js";
 import { PromptUsage } from "./prompt-usage.js";
 import { ToolDetails } from "./tool-details.js";
 import { TranscriptImages } from "./transcript-images.js";
@@ -388,11 +389,14 @@ const MessageRow = memo(function MessageRow({
         </>
       ) : (
         <ExternalSourceScope>
+          {!item.streaming && <CopyAction text={item.text} response />}
           {item.streaming ? (
             // Only the growing last block is parsed again per frame; message.done renders it whole.
-            streamingBlocks(item.text).map((block, index) => <Markdown key={String(index)} text={block} />)
+            streamingBlocks(item.text).map((block, index) => (
+              <Markdown key={String(index)} text={block} assistantActions streaming />
+            ))
           ) : (
-            <Markdown text={item.text} citations={item.citations} onCitation={onCitation} />
+            <Markdown text={item.text} citations={item.citations} onCitation={onCitation} assistantActions />
           )}
           {item.streaming && <span role="status">{t("chat.streaming")}</span>}
         </ExternalSourceScope>

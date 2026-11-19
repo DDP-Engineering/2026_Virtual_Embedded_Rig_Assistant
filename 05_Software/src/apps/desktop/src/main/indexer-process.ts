@@ -9,16 +9,16 @@ import { createIndexerHandler } from "./indexer-handler.js";
 const argument = (name: string) =>
   process.argv.find((value) => value.startsWith(`--${name}=`))?.slice(name.length + 3);
 const models = argument("models");
-const manifest = argument("manifest");
 const port = process.parentPort;
-if (!models || !manifest || !port) throw Error("The indexer needs its model paths and a parent port.");
-const services = createDocumentServices(models, manifest);
+if (!models || !port) throw Error("The indexer needs its model directory and a parent port.");
+const services = createDocumentServices(models);
 const handle = createIndexerHandler(
   {
     process: services.processDocument,
     select: selectDocuments,
     inspect: inspectSource,
     embeddings: services.embeddings,
+    release: services.release,
   },
   (message) => port.postMessage(message),
 );

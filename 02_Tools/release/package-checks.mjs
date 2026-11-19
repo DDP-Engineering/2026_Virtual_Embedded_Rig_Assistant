@@ -199,7 +199,7 @@ export async function payloadFiles(directory) {
   return files;
 }
 
-export async function checkStagedPayload(directory, platform, manifest, options = {}) {
+export async function checkStagedPayload(directory, platform, options = {}) {
   const files = await payloadFiles(directory);
   const problems = inspectPayloadFiles(
     await Promise.all(
@@ -214,9 +214,6 @@ export async function checkStagedPayload(directory, platform, manifest, options 
   if (problems.length) throw new Error(`prepack checks failed: ${problems.join("; ")}`);
   const paths = files.filter((file) => file.size > 0).map((file) => file.path);
   validateNativeFiles(paths, platform);
-  for (const asset of manifest.files)
-    if (!paths.includes(`resources/models/${manifest.modelId}/${asset.path}`))
-      throw new Error(`missing model: ${asset.path}`);
   const pdfResources = await checkPdfResources((path) => readFile(join(directory, path)), options.pdfSource);
   return {
     pdfResources,

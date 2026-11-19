@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-SEC-1f5f2586"
+title = "Scope delegated controls to the owning parent"
+status = "active"
+requirement = "If a caller is a delegated child or lacks the same-workbench parent relationship for a delegated control, then the session service shall reject the request."
+verification = "Call launch as a child and inspect, subscribe or stop from unrelated and foreign-workbench sessions."
+affected_paths = ["05_Software/src/libraries/core/src/sessions/service.ts","05_Software/src/libraries/core/src/storage/schema.ts","05_Software/src/libraries/core/src/storage/repos/delegations.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/sessions/delegation.test.ts"]
+created = 2026-11-19
+updated = 2026-11-19

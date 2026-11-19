@@ -1,5 +1,6 @@
 import {
   type CommandPrefixDisplay,
+  type EmbeddingSwitchApproval,
   type WorkbenchSnapshot,
   workbenchDocsSchema,
   workbenchPatchSchema,
@@ -7,6 +8,7 @@ import {
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../api/index.js";
+import { EmbeddingSwitchDialog } from "./embedding-switch-dialog.js";
 import { ErrorMessage } from "./error-message.js";
 import { SkillsPanel } from "./skills.js";
 import { type ConfigSection, WorkbenchConfigForm } from "./workbench-config-form.js";
@@ -31,12 +33,14 @@ export function WorkbenchEditor({
 }) {
   const { t } = useTranslation();
   const ref = useRef<HTMLElement>(null);
+  const saveButton = useRef<HTMLButtonElement>(null);
   const title = useId();
   const [config, setConfig] = useState(workbench.config);
   const [instructions, setInstructions] = useState("");
   const [original, setOriginal] = useState("");
   const [loaded, setLoaded] = useState(false);
   const [pending, setPending] = useState(false);
+  const [embeddingSwitch, setEmbeddingSwitch] = useState<EmbeddingSwitchApproval>();
   const [error, setError] = useState<unknown>();
   const [partial, setPartial] = useState(false);
   const [addedFolders, setAddedFolders] = useState<CommandPrefixDisplay[]>([]);
@@ -106,7 +110,7 @@ export function WorkbenchEditor({
       .split(/\r?\n/)
       .map((s) => s.trim())
       .filter(Boolean);
-  async function save() {
+  async function save(confirmedSwitch?: EmbeddingSwitchApproval) {
     if (pending || workbench.readOnly || !loaded || !dirty || !valid) return;
     setPending(true);
     setError(undefined);
@@ -116,6 +120,16 @@ export function WorkbenchEditor({
       const current = await api.invoke("workbench.config.get", {});
       if (current.config.id !== workbench.config.id || current.folder !== workbench.folder)
         throw new Error(t("projects.changed"));
+      if (config.embeddings.model !== current.config.embeddings.model && !confirmedSwitch) {
+        const { documents } = await api.invoke("docs.list", { workbenchId: workbench.config.id });
+        if (mounted.current)
+          setEmbeddingSwitch({
+            from: current.config.embeddings.model,
+            count: documents.filter(({ status }) => status === "indexed").length,
+          });
+        return;
+      }
+      if (!mounted.current) return;
       const patch = workbenchPatchSchema.parse({
         name: config.name,
         description: config.description ?? "",
@@ -141,6 +155,7 @@ export function WorkbenchEditor({
       const updated = await api.invoke("workbench.config.update", {
         patch,
         workbenchId: workbench.config.id,
+        ...(confirmedSwitch ? { embeddingSwitch: confirmedSwitch } : {}),
         ...(addedFolders.length ? { addAdditionalFolders: addedFolders.map(({ id }) => id) } : {}),
         ...(removedFolders.length ? { removeAdditionalFolders: removedFolders } : {}),
         ...(removedCommandPrefixes.length ? { removeCommandPrefixes: removedCommandPrefixes } : {}),
@@ -188,6 +203,7 @@ export function WorkbenchEditor({
           <button
             type="button"
             data-project-save
+            ref={saveButton}
             className="primary"
             disabled={pending || workbench.readOnly || !loaded || !config.name.trim() || !dirty || !valid}
             onClick={() => void save()}
@@ -234,6 +250,19 @@ export function WorkbenchEditor({
         }
         skills={<SkillsPanel workbenchId={workbench.config.id} readOnly={workbench.readOnly} />}
       />
+      {shown && embeddingSwitch && (
+        <EmbeddingSwitchDialog
+          count={embeddingSwitch.count}
+          cancel={() => {
+            setEmbeddingSwitch(undefined);
+            saveButton.current?.focus();
+          }}
+          confirm={() => {
+            setEmbeddingSwitch(undefined);
+            void save(embeddingSwitch);
+          }}
+        />
+      )}
     </section>
   );
 }

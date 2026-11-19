@@ -290,8 +290,7 @@ try {
     await run([process.execPath, vite, "build", "src/apps/desktop"], software, env, "compile");
     await prepareBundledUv();
     const staged = await stageRuntime("test", scratch);
-    const manifest = JSON.parse(await readFile(join(software, "src/models/model-manifest.json"), "utf8"));
-    report.prepack = await checkStagedPayload(staged.stage, process.platform, manifest);
+    report.prepack = await checkStagedPayload(staged.stage, process.platform);
     const distribution = distributionConfig(process.platform, true, env);
     distribution.appId = "engineering.ddp.vera.wp31.task4be77adc";
     distribution.productName = `VERA ${ticket} Test`;

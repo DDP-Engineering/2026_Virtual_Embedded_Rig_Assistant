@@ -1,5 +1,6 @@
 {
   "toolActivity": {
+    "embeddingRebuild": "The embedding index is rebuilding. These results match keywords.",
     "planSteps": "Plan steps: {{count}}",
     "planCleared": "Plan cleared",
     "operation": "Tool operation",
@@ -234,6 +235,33 @@
     "minimal": "Minimal",
     "stopped": "Stopped or interrupted turn.",
     "operations": "Operations: {{count}}"
+  },
+  "delegation": {
+    "title": "Delegated sessions",
+    "outcome": "Delegated turn: {{status}}",
+    "parent": "Parent session: {{title}}",
+    "status": {
+      "running": "Running",
+      "awaiting_approval": "Awaiting approval",
+      "completed": "Completed",
+      "stopped": "Stopped",
+      "error": "Failed",
+      "limit": "Limit reached",
+      "interrupted": "Interrupted"
+    }
+  },
+  "chatActions": {
+    "copyResponse": "Copy response",
+    "copyCode": "Copy code block",
+    "run": "Run in terminal",
+    "runShell": "Run in terminal ({{shell}})",
+    "destination": "Destination terminal",
+    "newCleanTerminal": "New clean terminal (no shell profile)",
+    "runNewTerminal": "Run in a new clean terminal",
+    "promptNotReady": "The terminal is not verified at an empty prompt. Use a new clean terminal.",
+    "clipboardFailed": "Could not copy to the clipboard. Try again.",
+    "shellMismatch": "The terminal shell does not match this command block.",
+    "shellUnavailable": "No compatible {{shell}} shell is installed."
   },
   "chat": {
     "bookmark": "Bookmark",
@@ -864,6 +892,12 @@
     "changed": "The active workbench changed. Reopen this editor.",
     "saving": "Saving…",
     "embeddingModel": "Embedding model",
+    "embeddingBge": "BGE Small EN v1.5 (English)",
+    "embeddingE5": "Multilingual E5 Small (100 languages)",
+    "embeddingSwitchTitle": "Change embedding model?",
+    "embeddingSwitchCount": "Indexed documents ({{count}})",
+    "embeddingSwitchBody": "VERA will rebuild the vectors in the background. Keyword search stays available.",
+    "embeddingSwitchConfirm": "Change model",
     "chunkSize": "Chunk size (characters)",
     "overlap": "Overlap (characters)",
     "partialSave": "Project settings were saved, but instructions could not be saved. Retry Save to finish; closing keeps the saved settings.",

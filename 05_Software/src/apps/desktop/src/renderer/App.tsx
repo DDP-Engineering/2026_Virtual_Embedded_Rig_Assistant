@@ -86,6 +86,7 @@ export function App() {
   const [activeSession, setActiveSession] = useState<string>();
   const operationBusy = useRef(false);
   const [sessionPending, setSessionPending] = useState(false);
+  const [linkedTranscript, setLinkedTranscript] = useState<string>();
   const [composerFocus, setComposerFocus] = useState<{ id: string; request: number }>();
   const composerFocusSequence = useRef(0);
   // Docs tree entries attached to each session's next message (TASK-2fef1397).
@@ -114,6 +115,18 @@ export function App() {
     void client.invalidateQueries({ queryKey: ["session.list"] });
     void client.invalidateQueries({ queryKey: ["session.search"] });
   }, [client]);
+  useEffect(() => {
+    if (!benchId) return;
+    return api.subscribe("workbench", benchId, (event) => {
+      if (event.type === "session.delegations.changed")
+        void client.invalidateQueries({ queryKey: ["session.list", benchId] });
+    });
+  }, [benchId, client]);
+  const selected = sessions.data?.find(({ id }) => id === activeSession);
+  const delegationParent = sessions.data?.find(({ id }) => id === selected?.delegation?.parentSessionId);
+  const delegationChildren = sessions.data?.filter(
+    ({ delegation }) => delegation && delegation.parentSessionId === activeSession,
+  );
   const benchChanged = useCallback(
     (active?: WorkbenchSnapshot, configOnly = false) => {
       if (!configOnly) {
@@ -155,7 +168,8 @@ export function App() {
   }, [bench.data, benchId, recent.data, readOnly]);
   /** Shows a session; callers have already confirmed leaving a dirty editor. */
   const openSession = useCallback(
-    (id: string) => {
+    (id: string, linked = false) => {
+      setLinkedTranscript(linked ? id : undefined);
       setComposerFocus(undefined);
       setActiveSession(id);
       setChat(true);
@@ -176,6 +190,15 @@ export function App() {
   const select = useCallback(
     (id: string) => {
       if (leaveEditor()) openSession(id);
+    },
+    [leaveEditor, openSession],
+  );
+  const clearLinkedTranscript = useCallback((id: string) => {
+    setLinkedTranscript((current) => (current === id ? undefined : current));
+  }, []);
+  const selectLinkedSession = useCallback(
+    (id: string) => {
+      if (leaveEditor()) openSession(id, true);
     },
     [leaveEditor, openSession],
   );
@@ -796,9 +819,13 @@ export function App() {
                         detail={bench.data?.config.chat.detail ?? "normal"}
                         changed={changed}
                         readOnly={readOnly}
-                        archived={
-                          sessions.data?.find((session) => session.id === activeSession)?.archived ?? true
-                        }
+                        archived={selected?.archived ?? true}
+                        delegation={selected?.delegation}
+                        delegationParent={delegationParent}
+                        delegationChildren={delegationChildren}
+                        selectLinkedSession={selectLinkedSession}
+                        focusTranscript={linkedTranscript === activeSession && !!activeSession}
+                        transcriptOpened={clearLinkedTranscript}
                         composerFocusRequest={
                           composerFocus && composerFocus.id === activeSession ? composerFocus.request : 0
                         }

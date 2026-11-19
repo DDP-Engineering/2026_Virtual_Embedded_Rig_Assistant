@@ -34,6 +34,12 @@ Pendant que l’agent travaille, vous pouvez continuer à écrire et envoyer d�
 
 **Arrêter** termine le tour en cours. Escape demande aussi **Arrêter le tour en cours ?**. Le travail déjà terminé, comme les modifications de fichiers appliquées, est conservé.
 
+## Suivre les sessions déléguées
+
+Lorsque VERA délègue une tâche, **Sessions déléguées** dans le chat parent affiche chaque session enfant et son état. Sélectionnez une session enfant pour ouvrir son onglet Chat et suivre la conversation. **Session parente** permet de revenir au chat parent.
+
+Pour arrêter une session enfant en cours, ouvrez-la et choisissez **Arrêter** près de la zone de saisie. La session parente peut continuer son travail. Si une approbation est demandée, utilisez la carte d’approbation de la session concernée. Quand vous rouvrez une session après avoir redémarré VERA, le lien et le résultat du tour délégué restent disponibles.
+
 ## Niveaux de détail
 
 **Niveau de détail** se règle par banc de travail dans **Modifier le banc** → **Agent et conversation** :
@@ -89,6 +95,8 @@ Ouvrez **Exécutions** dans le panneau droit pour voir la commande exacte, le do
 ## Terminal utilisateur
 
 Ouvrez **Terminal** à droite ou appuyez sur **Ctrl+Shift+T**. Le shell interactif démarre dans le dossier du banc selon Paramètres → Commandes. **Nouveau terminal** crée des onglets ; **Fermer le terminal** les termine. Redimensionnez le panneau pour réorganiser la sortie. Les programmes interactifs acceptent votre saisie. L’arrêt d’une session d’agent laisse les terminaux ouverts ; fermer ou remplacer le banc, ou quitter VERA, les ferme. Le support natif est inclus.
+
+Les réponses et blocs de code ont des actions de copie séparées. L’exécution est disponible pour les blocs complets explicitement marqués PowerShell ou Bash, de 1 à 16 384 caractères et sans caractères de contrôle du terminal. Elle vise uniquement un shell vierge inutilisé dont l’invite initiale vide est vérifiée avant exécution. Seules les destinations admissibles sont proposées ; sinon, Exécuter crée immédiatement un terminal vierge. Si la destination reçoit une saisie ou exécute une commande après sa sélection, VERA refuse l’injection et propose **Exécuter dans un nouveau terminal vierge**. Votre texte non envoyé et vos programmes interactifs restent intacts. Les terminaux vierges ignorent les profils shell ; **Nouveau terminal** conserve le démarrage normal du shell configuré. **Nouveau terminal vierge (sans profil shell)** crée un shell compatible séparé. Annuler ou Échap ramène le focus clavier sur Exécuter.
 
 Chaque terminal démarre en privé. Pour autoriser l’agent à en lire un, voir [Autorisations](permissions.md).
 

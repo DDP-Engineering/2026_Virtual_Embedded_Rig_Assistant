@@ -67,6 +67,15 @@ async function harness() {
   return { root, folder, host, events, settings, paths, service: new WorkbenchService(host) };
 }
 
+it("validates both registered embedding model IDs in workbench YAML", () => {
+  const yaml = "format: 1\nid: wb_01JB8Z6Q4M7N2K5R9T3V8X1Y0C\nname: Board\nembeddings:\n  model: ";
+  expect(parseConfig(`${yaml}Xenova/bge-small-en-v1.5`).embeddings.model).toBe("Xenova/bge-small-en-v1.5");
+  expect(parseConfig(`${yaml}Xenova/multilingual-e5-small`).embeddings.model).toBe(
+    "Xenova/multilingual-e5-small",
+  );
+  expect(() => parseConfig(`${yaml}Xenova/unknown`)).toThrow(expect.objectContaining({ code: "INVALID" }));
+});
+
 it("measures storage only for the open workbench", async () => {
   const h = await harness();
   try {
@@ -1039,11 +1048,13 @@ it("rejects YAML tagged non-JSON extensions without bytes or runtime changes", a
     expect(existsSync(join(h.folder, ".vera/lock"))).toBe(false);
   }
 });
-it("recognizes built-in checkbox tool selections while reporting unavailable names", async () => {
+it("recognizes built-in and delegated session tools while reporting unavailable names", async () => {
   const h = await harness();
   try {
     await h.service.create(h.folder, "Tools");
-    const saved = await h.service.updateConfig({ tools: { disabled: ["grep", "read", "unavailable_tool"] } });
+    const saved = await h.service.updateConfig({
+      tools: { disabled: ["grep", "read", "session_launch", "unavailable_tool"] },
+    });
     expect(saved.warnings.filter((warning) => warning.code === "UNKNOWN_NAME")).toEqual([
       { code: "UNKNOWN_NAME", path: "tools.disabled.unavailable_tool" },
     ]);

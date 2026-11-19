@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-9195e56a"
+
+title = "Prepare and verify the assets of every registered embedding model"
+
+status = "active"
+
+requirement = """
+When npm run prepare:model runs, it shall verify the byte count and SHA-256 of every asset for each registered embedding model, fetching missing assets when online mode is enabled.
+"""
+
+verification = "Run prepare:model in a clean model cache and repeat with --offline after the download; assert successful verification of both model IDs and every pinned asset."
+
+affected_paths = ["02_Tools/environment/prepare-model.mjs", "05_Software/src/libraries/shared/src/embedding-models.ts", "05_Software/src/models/Xenova/bge-small-en-v1.5/model-manifest.json", "05_Software/src/models/Xenova/multilingual-e5-small/model-manifest.json"]
+
+linked_tests = ["05_Software/tests/packaging/packaging.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-19
+updated = 2026-11-19

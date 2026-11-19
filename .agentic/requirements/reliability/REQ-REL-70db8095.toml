@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-REL-70db8095"
+title = "Refuse delivery artifacts with mismatched embedding payloads"
+status = "active"
+requirement = "When delivery:verify finds a missing or changed model manifest, listed file or model licence notice inside a desktop delivery artifact, it shall fail the delivery with the artifact and offending member identified."
+verification = "Run the verifier on both platform parts and check both manifests and every listed asset in every desktop archive. Alter a same-length model file and recompute outer archive checksums, then assert a nonzero exit with the artifact and member identified."
+affected_paths = ["02_Tools/delivery/verify-delivery.mjs", "02_Tools/delivery/verify-embedding-archive.mjs", "02_Tools/release/embedding-payload.mjs"]
+linked_tests = ["05_Software/tests/tooling/delivery.test.ts"]
+priority = "high"
+created = 2026-11-19
+updated = 2026-11-19
