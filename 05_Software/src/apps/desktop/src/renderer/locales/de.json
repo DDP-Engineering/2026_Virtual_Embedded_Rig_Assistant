@@ -232,6 +232,20 @@
     "stopped": "Durchlauf gestoppt oder unterbrochen.",
     "operations": "Vorgänge: {{count}}"
   },
+  "delegation": {
+    "title": "Delegierte Sitzungen",
+    "outcome": "Status der delegierten Aufgabe: {{status}}",
+    "parent": "Übergeordnete Sitzung: {{title}}",
+    "status": {
+      "running": "Läuft",
+      "awaiting_approval": "Wartet auf Genehmigung",
+      "completed": "Abgeschlossen",
+      "stopped": "Gestoppt",
+      "error": "Fehlgeschlagen",
+      "limit": "Limit erreicht",
+      "interrupted": "Unterbrochen"
+    }
+  },
   "chat": {
     "bookmark": "Lesezeichen setzen",
     "removeBookmark": "Lesezeichen entfernen",

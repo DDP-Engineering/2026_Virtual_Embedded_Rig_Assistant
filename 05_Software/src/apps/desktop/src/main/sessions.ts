@@ -168,6 +168,12 @@ export class SessionsHost {
         this.service = new SessionService({
           db,
           root: snapshot.folder,
+          onDelegationsChanged: () =>
+            options.emit({
+              topic: "workbench",
+              id: workbenchId,
+              event: { type: "session.delegations.changed" },
+            }),
           ...(options.terminals ? { terminals: options.terminals(workbenchId) } : {}),
           readOnly: snapshot.readOnly,
           additionalFolders: () => {
@@ -307,7 +313,7 @@ export class SessionsHost {
         this.options.workbench.getSnapshot().config.id !== snapshot.config.id
       )
         throw veraError("CONFLICT");
-      rows = service.list();
+      rows = service.list(true);
     } else {
       rows = await this.run((current) => {
         if (
@@ -315,7 +321,7 @@ export class SessionsHost {
           this.options.workbench.getSnapshot().config.id !== snapshot.config.id
         )
           throw veraError("CONFLICT");
-        return current.list();
+        return current.list(true);
       }, false);
     }
     return rows.map((row) => ({ ...row, title: this.service?.maskContent("agent", row.title) ?? row.title }));

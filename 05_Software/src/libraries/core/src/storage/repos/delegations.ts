@@ -1,3 +1,4 @@
+import { stopReasonSchema } from "@vera/shared";
 import type Database from "better-sqlite3";
 
 interface DelegationRequestRow {
@@ -52,6 +53,35 @@ export class DelegationsRepository {
          WHERE d.parent_session_id=? ORDER BY s.created_at DESC,s.id DESC`,
       )
       .all(parentId) as DelegationChildRow[];
+  }
+
+  /** Read initial outcomes in one query without replaying child transcripts on every Desktop poll. */
+  outcomes() {
+    const rows = this.db
+      .prepare(
+        `SELECT d.child_session_id, d.parent_session_id,
+        (SELECT CASE WHEN e.type='session.interrupted' THEN 'interrupted'
+          ELSE json_extract(e.payload_json,'$.stopReason') END
+         FROM events e WHERE e.session_id=d.child_session_id
+          AND e.type IN ('session.interrupted','turn.done')
+          AND json_extract(e.payload_json,'$.turnId')=d.turn_id
+         ORDER BY e.seq LIMIT 1) AS outcome
+       FROM session_delegations d WHERE d.child_session_id IS NOT NULL`,
+      )
+      .all() as { child_session_id: string; parent_session_id: string; outcome: unknown }[];
+    return new Map(
+      rows.map(
+        ({ child_session_id, parent_session_id, outcome }) =>
+          [
+            child_session_id,
+            {
+              parentSessionId: parent_session_id,
+              outcome:
+                outcome === null || outcome === "interrupted" ? outcome : stopReasonSchema.parse(outcome),
+            },
+          ] as const,
+      ),
+    );
   }
 
   hasChildren(parentId: string): boolean {

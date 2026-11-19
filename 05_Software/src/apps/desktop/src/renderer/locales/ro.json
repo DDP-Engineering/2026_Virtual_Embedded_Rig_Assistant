@@ -232,6 +232,20 @@
     "stopped": "Execuție oprită sau întreruptă.",
     "operations": "Operații: {{count}}"
   },
+  "delegation": {
+    "title": "Sesiuni delegate",
+    "outcome": "Execuție delegată: {{status}}",
+    "parent": "Sesiune părinte: {{title}}",
+    "status": {
+      "running": "În curs",
+      "awaiting_approval": "Așteaptă aprobarea",
+      "completed": "Finalizată",
+      "stopped": "Oprită",
+      "error": "Eșuată",
+      "limit": "Limită atinsă",
+      "interrupted": "Întreruptă"
+    }
+  },
   "chat": {
     "bookmark": "Marchează",
     "removeBookmark": "Elimină marcajul",

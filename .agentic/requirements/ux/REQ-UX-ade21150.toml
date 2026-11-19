@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-UX-ade21150"
+
+title = "Localize Desktop delegation controls and guidance"
+
+status = "active"
+
+requirement = """
+Desktop shall provide delegated session controls and help in English, Romanian, German and French.
+"""
+
+verification = "Inspection: review the translations and help in all four locales and run the repository locale, help and release-note audits."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/session/delegation-links.tsx","05_Software/src/apps/desktop/src/renderer/locales/en.json","05_Software/help/en/chat-and-sessions.md","05_Software/src/apps/desktop/src/renderer/locales/ro.json","05_Software/help/ro/chat-and-sessions.md","05_Software/src/apps/desktop/src/renderer/locales/de.json","05_Software/help/de/chat-and-sessions.md","05_Software/src/apps/desktop/src/renderer/locales/fr.json","05_Software/help/fr/chat-and-sessions.md","05_Software/release-notes/unreleased.yaml","CHANGELOG.md"]
+
+linked_tests = []
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-19
+updated = 2026-11-19

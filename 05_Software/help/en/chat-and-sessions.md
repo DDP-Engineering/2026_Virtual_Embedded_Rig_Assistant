@@ -22,6 +22,12 @@ While the agent works, you can keep typing and send more messages, for example "
 
 **Stop** ends the running turn. Escape also asks **Stop the running turn?**. Work that was already completed, such as applied file changes, stays.
 
+## Follow delegated sessions
+
+When VERA delegates a task, **Delegated sessions** in the parent chat lists each child and its current outcome. Select a child to open its Chat tab and follow its transcript. **Parent session** returns to the parent.
+
+To stop a running child, open it and use **Stop** in its composer. The parent can keep working. If approval is requested, use the approval card in that session. When you reopen either session after restarting VERA, the link and the outcome of the delegated turn are still available.
+
 ## Detail levels
 
 **Detail level** is set per workbench in **Edit workbench** → **Agent and chat**:

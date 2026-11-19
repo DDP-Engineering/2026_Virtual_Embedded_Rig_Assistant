@@ -232,6 +232,20 @@
     "stopped": "Tour arrêté ou interrompu.",
     "operations": "Opérations : {{count}}"
   },
+  "delegation": {
+    "title": "Sessions déléguées",
+    "outcome": "État de la délégation : {{status}}",
+    "parent": "Session parente : {{title}}",
+    "status": {
+      "running": "En cours",
+      "awaiting_approval": "En attente d’approbation",
+      "completed": "Terminée",
+      "stopped": "Arrêtée",
+      "error": "Échec",
+      "limit": "Limite atteinte",
+      "interrupted": "Interrompue"
+    }
+  },
   "chat": {
     "bookmark": "Ajouter un signet",
     "removeBookmark": "Retirer le signet",

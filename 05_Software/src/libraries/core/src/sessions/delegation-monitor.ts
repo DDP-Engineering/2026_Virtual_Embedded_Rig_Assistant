@@ -1,5 +1,5 @@
 import { addAbortListener } from "node:events";
-import { type SessionState, veraError } from "@vera/shared";
+import { type DelegatedTurnStatus, type SessionState, type StopReason, veraError } from "@vera/shared";
 import type { DelegatedLaunch } from "./delegation.js";
 import type { SessionListener } from "./hub.js";
 
@@ -9,12 +9,20 @@ interface DelegatedTurnView {
   seq: number;
 }
 
-type Status = "running" | "awaiting_approval" | "completed" | "stopped" | "error" | "limit" | "interrupted";
+/** Keep the Desktop link and agent monitoring labels tied to the same initial-turn outcome. */
+export function delegatedTurnStatus(
+  outcome: StopReason | "interrupted" | null,
+  awaitingApproval: boolean,
+): DelegatedTurnStatus {
+  if (outcome === "end") return "completed";
+  if (outcome === "aborted") return "stopped";
+  return outcome ?? (awaitingApproval ? "awaiting_approval" : "running");
+}
 
 interface DelegatedTurnResult {
   sessionId: string;
   turnId: string;
-  status: Status;
+  status: DelegatedTurnStatus;
   toolSteps: number;
   reply?: string;
   timedOut?: true;
@@ -39,8 +47,7 @@ export function projectDelegatedTurn(
       ...(final?.kind === "assistant" && final.text ? { reply: mask(final.text) } : {}),
     };
   }
-  if (turn.stopReason)
-    return { ...progress, status: turn.stopReason === "aborted" ? "stopped" : turn.stopReason };
+  if (turn.stopReason) return { ...progress, status: delegatedTurnStatus(turn.stopReason, false) };
 
   const approvalPending =
     snapshot.activeTurnId === turnId &&
@@ -51,7 +58,7 @@ export function projectDelegatedTurn(
           (item) => item.kind === "tool" && item.turnId === turnId && item.id === approval.callId,
         ),
     );
-  return { ...progress, status: approvalPending ? "awaiting_approval" : "running" };
+  return { ...progress, status: delegatedTurnStatus(null, approvalPending) };
 }
 
 /** Bridge a snapshot revision to the sequenced stream, including synchronous replay. */

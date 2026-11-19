@@ -114,6 +114,9 @@ There is no upgrade-safety suite, because every stored format is version 1.
 - The e2e build rewrites `src/apps/desktop/out`, which `npm run dev` also uses. Stop the development app before native e2e. Restart it afterwards with `VERA_TEST=0`.
 - Traces, videos and screenshots are off. The output is a temporary system folder that the cleanup reporter removes, also after failures; read errors from the console. Replacing the reporters from the command line can bypass the cleanup.
 - Browser mock states are seeded through URL parameters such as `?mock=chat`.
+- Native `session-delegation.spec.ts` runs replay launch, reasoning, independent parent work and
+  result use, linked transcripts, Stop, missed notification recovery and restart. Set the optional
+  `VERA_DELEGATION_PROOF_DIR` to an existing owned folder to keep the two UI captures.
 - Optional outputs: `VERA_E2E_EVIDENCE_DIR` (ingest diagnostics on failure), `VERA_NAV_SCREENSHOT` and `VERA_PDF_SCREENSHOT` (screenshot path prefixes), `VERA_TERM02_EVIDENCE_DIR`, `VERA_TERM03_EVIDENCE_DIR`, `VERA_TERM05_EVIDENCE_DIR` and `VERA_BYP01_EVIDENCE_DIR` (native receipts). `VERA_TERM05_APP` points the terminal spec at an extracted packaged binary.
 
 ### Plugin suites

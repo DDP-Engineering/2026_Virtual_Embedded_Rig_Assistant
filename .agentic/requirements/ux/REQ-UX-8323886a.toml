@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-UX-8323886a"
+
+title = "Use existing approval controls for delegated sessions"
+
+status = "active"
+
+requirement = """
+If a delegated session has an approval state, Desktop shall present its existing transcript approval controls to the user.
+"""
+
+verification = "Inspection: trace linked navigation into the normal SessionWorkspace and ApprovalCard, using existing approval coverage for the control behavior."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/session/workspace.tsx","05_Software/src/apps/desktop/src/renderer/components/session/composer.tsx"]
+
+linked_tests = []
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-19
+updated = 2026-11-19

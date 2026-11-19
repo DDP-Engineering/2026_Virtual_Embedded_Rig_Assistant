@@ -2411,6 +2411,34 @@ legend {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+.session-delegations {
+  flex-shrink: 0;
+  display: grid;
+  gap: 0.25rem;
+  max-height: min(12rem, 30vh);
+  overflow: auto;
+  font-size: 0.9rem;
+}
+.session-delegations h3 {
+  font-size: inherit;
+  margin: 0;
+}
+.session-delegations ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.delegation-row {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.75rem;
+  min-height: 1.75rem;
+}
+.delegation-row button {
+  overflow-wrap: anywhere;
+  text-align: start;
+}
 .session-workspace > .transcript-frame {
   --transcript-navigation-width: calc(1.25rem + max(1.5rem, 24px));
   position: relative;

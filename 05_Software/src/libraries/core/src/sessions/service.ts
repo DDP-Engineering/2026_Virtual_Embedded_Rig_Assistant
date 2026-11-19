@@ -65,6 +65,7 @@ import {
   MAX_ACTIVE_DELEGATIONS,
   prepareDelegatedModel,
 } from "./delegation.js";
+import { delegatedTurnStatus } from "./delegation-monitor.js";
 import { SessionHub, type SessionListener } from "./hub.js";
 import { MaskingContextPolicy, maskMessages, maskModelStream, maskValue } from "./masking.js";
 import { timedGateway } from "./timed-gateway.js";
@@ -102,6 +103,8 @@ export interface SessionHost {
   runtime?: (host: RuntimeHost) => AgentRuntime;
   /** Host ownership is checked before each accepted mutation and event persistence. */
   assertWritable?: () => void;
+  /** A committed change affects the linked sessions shown by the user host. */
+  onDelegationsChanged?: () => void;
   scrub?: (text: string) => string;
   /** Receives swallowed turn failures, already scrubbed. */
   log?: (message: string) => void;
@@ -195,7 +198,11 @@ export class SessionService {
           .prepare("UPDATE sessions SET status=?,permission_mode=?,updated_at=? WHERE id=?")
           .run(status, mode, this.now(), id);
         const value = this.hub.record(id, event);
-        return () => this.hub.publish(id, value);
+        return () => {
+          this.hub.publish(id, value);
+          if (event.type === "approval.requested" || event.type === "approval.decided")
+            this.notifyDelegationsChanged(id);
+        };
       },
     });
     this.writeQueue = host.writeQueue ?? new WriteQueue();
@@ -260,9 +267,30 @@ export class SessionService {
       archived: !!row.archived,
     };
   }
-  list(): SessionSummary[] {
+  list(includeDelegations = false): SessionSummary[] {
     if (this.closed) throw veraError("CONFLICT");
-    return this.sessions.list().map((row) => this.summary(row));
+    const outcomes = includeDelegations ? this.delegations.outcomes() : undefined;
+    return this.sessions.list().map((row) => {
+      const child = outcomes?.get(row.id);
+      return {
+        ...this.summary(row),
+        ...(child && {
+          delegation: {
+            parentSessionId: child.parentSessionId,
+            status: delegatedTurnStatus(child.outcome, row.status === "awaiting_approval"),
+          },
+        }),
+      };
+    });
+  }
+
+  private notifyDelegationsChanged(childId?: string) {
+    if (!this.host.onDelegationsChanged) return;
+    try {
+      if (childId === undefined || this.delegations.child(childId)) this.host.onDelegationsChanged();
+    } catch {
+      // A disconnected observer cannot change an already committed launch or outcome.
+    }
   }
   /** Stored bytes per session of this workbench. */
   sizes(): Record<string, number> {
@@ -438,6 +466,7 @@ export class SessionService {
       throw error;
     }
     this.hub.publishBatch(result.sessionId, staged.events);
+    if (childId) this.notifyDelegationsChanged();
     return result;
   }
 
@@ -1369,6 +1398,7 @@ export class SessionService {
       return;
     }
     this.hub.publishBatch(id, this.recordRuntimeEvent(id, event, publicEvent, transcript, turn));
+    if (turn.delegated && event.type === "turn.done") this.notifyDelegationsChanged();
   }
 
   private recordRuntimeEvent(

@@ -8,6 +8,7 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ### Added
 
+- Desktop links delegated sessions, shows their outcomes and lets users stop a running child.
 - Agents can launch, monitor, stop and collect results from delegated inspection sessions.
 - Core sessions can launch inspection-only children with durable ownership and bounded workbench concurrency.
 - Windows and Linux packages ship both pinned local embedding models and their MIT licence notices.

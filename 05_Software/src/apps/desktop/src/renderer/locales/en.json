@@ -232,6 +232,20 @@
     "stopped": "Stopped or interrupted turn.",
     "operations": "Operations: {{count}}"
   },
+  "delegation": {
+    "title": "Delegated sessions",
+    "outcome": "Delegated turn: {{status}}",
+    "parent": "Parent session: {{title}}",
+    "status": {
+      "running": "Running",
+      "awaiting_approval": "Awaiting approval",
+      "completed": "Completed",
+      "stopped": "Stopped",
+      "error": "Failed",
+      "limit": "Limit reached",
+      "interrupted": "Interrupted"
+    }
+  },
   "chat": {
     "bookmark": "Bookmark",
     "removeBookmark": "Remove bookmark",

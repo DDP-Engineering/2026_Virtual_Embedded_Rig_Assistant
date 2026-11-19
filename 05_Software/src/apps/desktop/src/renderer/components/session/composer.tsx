@@ -14,6 +14,7 @@ import { ReasoningPicker } from "./reasoning-picker.js";
 export function Composer({
   state,
   disabled,
+  permissionLocked = false,
   send,
   stop,
   setModel,
@@ -27,6 +28,7 @@ export function Composer({
   workbenchId?: string;
   state: SessionState;
   disabled: boolean;
+  permissionLocked?: boolean;
   send: (text: string) => Promise<boolean>;
   stop: () => void;
   setModel: (reference: string | null) => Promise<void>;
@@ -281,7 +283,7 @@ export function Composer({
           )}
           <PermissionPicker
             mode={state.mode}
-            disabled={disabled}
+            disabled={disabled || permissionLocked}
             change={setMode}
             workbenchId={workbenchId}
           />

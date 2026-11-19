@@ -244,7 +244,8 @@ export function sanitizeEvent(
       };
     return envelope;
   }
-  if (envelope.event.type === "closed") return envelope;
+  if (envelope.event.type === "closed" || envelope.event.type === "session.delegations.changed")
+    return envelope;
   const event = envelope.event;
   // Counters only: no paths or user text to scrub.
   if (event.type === "index.progress" || event.type === "index.volume") return envelope;

@@ -351,6 +351,42 @@ it("deduplicates concurrent retries and admits three active children across the 
   expect(await h.service.waitIdle(next.sessionId)).toEqual({ stopReason: "end" });
 });
 
+it("projects committed delegation outcomes even when the Desktop notification fails", async () => {
+  const statuses: (string | undefined)[] = [];
+  const observer = vi.fn(() => {
+    statuses.push(h.service.list(true).find((row) => row.delegation)?.delegation?.status);
+    throw Error("Renderer disconnected");
+  });
+  const h = await setup({ onDelegationsChanged: observer });
+  const parent = h.service.create();
+  const release = h.hold("replay/child");
+  const child = await h.service.launchDelegated(parent.id, { ...launch, modelRef: "replay/child" });
+  const linked = () => h.service.list(true).find((row) => row.id === child.sessionId)?.delegation;
+  expect(linked()).toEqual({ parentSessionId: parent.id, status: "running" });
+  expect(h.service.list().find((row) => row.id === child.sessionId)?.delegation).toBeUndefined();
+  release();
+  expect(await h.service.waitIdle(child.sessionId)).toEqual({ stopReason: "end" });
+  expect(linked()).toEqual({ parentSessionId: parent.id, status: "completed" });
+  expect(statuses).toEqual(["running", "completed"]);
+  expect(observer).toHaveBeenCalledTimes(2);
+  h.service.send(child.sessionId, "Follow up");
+  expect(linked()?.status).toBe("completed");
+  await h.service.waitIdle(child.sessionId);
+  await h.service.delete(child.sessionId);
+  expect(linked()).toBeUndefined();
+});
+
+it("reports the initial delegated tool limit in the Desktop list", async () => {
+  const h = await setup({ maxToolCallsPerTurn: 1 });
+  const parent = h.service.create();
+  const child = await h.service.launchDelegated(parent.id, { ...launch, modelRef: "replay/tools" });
+  expect(await h.service.waitIdle(child.sessionId)).toEqual({ stopReason: "limit" });
+  expect(h.service.list(true).find((row) => row.id === child.sessionId)?.delegation).toEqual({
+    parentSessionId: parent.id,
+    status: "limit",
+  });
+});
+
 it("scopes child controls to the same-workbench parent and denies recursive delegation", async () => {
   const h = await setup();
   const foreign = await setup();
@@ -486,6 +522,10 @@ it("reopens an interrupted replay child with the same request and recovered turn
   const recovered = new SessionService({ ...h.host, db: reopened.db });
   cleanup.push(() => recovered.close());
   expect(recovered.delegationParent(child.sessionId)).toBe(parent.id);
+  expect(recovered.list(true).find((row) => row.id === child.sessionId)?.delegation).toEqual({
+    parentSessionId: parent.id,
+    status: "interrupted",
+  });
   const view = recovered.inspectDelegated(parent.id, child.sessionId);
   expect(view).toMatchObject({
     launch: child,

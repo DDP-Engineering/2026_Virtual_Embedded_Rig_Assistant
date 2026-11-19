@@ -46,6 +46,8 @@ lifetime; [native packaging](native-packaging.md) owns addon delivery.
   and the first turn/message IDs. The child foreign key clears on deletion while the request
   remains reserved. The parent foreign key restricts deletion until SessionService confirms
   all children were deleted and removes their request rows in the same transaction.
+  The Desktop list joins surviving relations to the first matching interruption or terminal
+  event for each initial turn without folding the child transcript.
 - Document-derived rows cascade with their documents/chunks. Keyword and embedding triggers
   commit with changes. Message/event sequences remain nonnegative safe integers.
 - Row repositories preserve caller-supplied JSON. Session recovery repairs

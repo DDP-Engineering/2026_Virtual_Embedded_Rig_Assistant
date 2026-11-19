@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-716213c5"
+
+title = "Recover Desktop delegation links and outcomes"
+
+status = "active"
+
+requirement = """
+When a linked Desktop session is refreshed, reopened after restart, or misses a live notification, Desktop shall recover its persisted relationships and current delegated outcome.
+"""
+
+verification = "Suppress a live outcome notification, reload, and restart Electron with the same workbench, verifying the same navigable session pair and terminal outcome."
+
+affected_paths = ["05_Software/src/libraries/core/src/sessions/service.ts","05_Software/src/libraries/core/src/storage/repos/delegations.ts","05_Software/src/libraries/core/src/sessions/delegation-monitor.ts","05_Software/src/libraries/shared/src/session.ts","05_Software/src/apps/desktop/src/renderer/components/session/delegation-links.tsx","05_Software/src/apps/desktop/src/main/sessions.ts","05_Software/src/apps/desktop/src/main/events.ts","05_Software/src/libraries/shared/src/events.ts","05_Software/src/apps/desktop/src/renderer/App.tsx","05_Software/src/apps/desktop/src/renderer/components/session/workspace.tsx","05_Software/src/apps/desktop/src/renderer/components/documents/viewer-context.tsx","05_Software/src/apps/desktop/src/renderer/styles.css"]
+
+linked_tests = ["05_Software/tests/e2e/session-delegation.spec.ts","05_Software/src/libraries/core/src/sessions/delegation.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-19
+updated = 2026-11-19
