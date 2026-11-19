@@ -36,10 +36,10 @@ Wählen Sie **Workbench bearbeiten** in der Übersicht oder im Zeilenmenü. Änd
 | **Dokumente & RAG** | Welche Ordner und Dateien indiziert werden |
 | **Agent und Chat** | Standardmodell, Standard-Berechtigungsmodus, **Detailgrad** |
 | **Anweisungen** | Der Text von `.vera/WORKBENCH.md`, den der Agent in jeder Sitzung liest |
-| **Werkzeuge** | Welche integrierten Werkzeuge der Agent verwenden darf |
+| **Werkzeuge** | Allgemeine VERA-Werkzeuge: Dateien, Suche, Dokumente, Planung, Skills/Hilfe, Terminal und allgemeine Ausführung |
 | **Skills** | Skills des Workbenchs und des Benutzers: aktivieren, erstellen und bearbeiten |
 | **Indizierung** | Embedding-Einstellungen und die Standardwerte der Dokumentsuche des Agenten |
-| **Plugins** | Welche installierten Plugins dieser Workbench aktiviert |
+| **Plugins** | Aktivierte Plugins, ihre spezialisierten Werkzeugfreigaben und Programme sowie gemeinsame Elektro- / Automatisierungswerkzeuge |
 
 Halten Sie die Anweisungen kurz und sachlich: das Board, der Mikrocontroller, die Toolchain, Konventionen. Nur die ersten 16 KB werden an den Agenten übergeben; VERA warnt, wenn der Text länger ist.
 

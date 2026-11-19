@@ -764,6 +764,25 @@
     "cancel": "Cancel",
     "openError": "Could not open the link. Try again."
   },
+  "pluginCapabilities": {
+    "allowedTools": "Allowed tools",
+    "allowanceHelp": "Allowing a tool does not install or enable its plugin. Session permissions still apply. Save or Cancel applies to tool allowances and plugin selection together.",
+    "provider": "Requires plugin: {{id}}",
+    "enabled": "Plugin dependency enabled",
+    "disabled": "Unavailable: plugin not enabled",
+    "unloadable": "Unavailable: plugin missing or cannot be loaded",
+    "officialOnly": "Unavailable: requires the official plugin",
+    "partsRequirements": "Also requires Web access and an enabled supplier set up in the plugin’s Configuration on the Plugins page.",
+    "shared": "Shared electrical / automation tools",
+    "ecosystemDependency": "Requires an enabled, loadable plugin in the electrical or automation ecosystem.",
+    "activeProviders": "Enabled providers: {{providers}}",
+    "noProvider": "Unavailable: no enabled, loadable electrical or automation plugin",
+    "notInstalled": "Tools requiring plugins not installed",
+    "programs": "Plugin programs",
+    "programHelp": "These programs belong to this plugin, including Git integration. Generic execution and monitoring allowances stay in Tools; command risk rules and session permissions still apply.",
+    "executionDisabled": "Program execution disabled in Tools",
+    "executionAllowed": "Requires run_program allowance and session approval rules"
+  },
   "workbenchTools": {
     "read": "Read text files or selected line ranges.",
     "list": "List files and subfolders in a directory.",
@@ -785,7 +804,7 @@
     "program_stop": "Stop a background program run.",
     "plugin_validate": "Validate a plugin draft and report schema issues and warnings. Outside input paths require Bypass; VERA application data is refused.",
     "plugin_install": "Request review and install a draft as a trial plugin. Outside input paths require Bypass; VERA application data is refused.",
-    "apply_candidate": "Write a checked kicad-layout candidate over its source board after you ask to apply it. Needs the kicad-layout plugin; asks for approval like a write. Outside input paths require Bypass; VERA application data is refused.",
+    "apply_candidate": "Write a checked kicad-layout candidate over its source board after you ask to apply it. Needs the official kicad-layout plugin; asks for approval like a write. Outside input paths require Bypass; VERA application data is refused.",
     "electrical_model": "Read the electrical project model, its completeness issues and plugin results with their freshness. Needs an electrical or automation plugin.",
     "electrical_model_change": "Change the electrical project model through validated operations or an import with an explicit ID mapping. Needs an electrical or automation plugin; asks for approval like a write. Outside input paths require Bypass; VERA application data is refused.",
     "industrial_catalog": "Read the workbench's industrial catalogs: find items by order code or distributor SKU, select by firm requirements with cited values and look up coordination for exact products. Needs the industrial-catalog plugin. Outside input paths require Bypass; VERA application data is refused.",
@@ -795,7 +814,7 @@
     "power_quality": "Evaluate power factor correction at one board from a current network result and a measurement file with declared units and conventions: displacement versus total power factor, the kvar need to a target, a fixed or automatic bank with steps, overcompensation, capacitor, reactor, contactor and protection checks from cited data and resonance against measured harmonics; stores the result after approval like a write and switches no step. Needs the power-quality-pfc plugin. Outside input paths require Bypass; VERA application data is refused.",
     "lighting_design": "Design interior lighting from a lighting project with IES or LDT photometry: a preliminary lumen-method estimate with cited utilisation factors and the direct component on the calculation grid, diagnostics for scale, units, orientation and photometry, and verification of maintained illuminance, uniformity and glare only from a matched photometric engine report such as DIALux evo; stores the result after approval like a write and runs no engine. Needs the lighting-design plugin. Outside input paths require Bypass; VERA application data is refused.",
     "decode_register": "Decode a captured register value using a local JSON definition, with exact field values and cited sources. Reads no device. Outside input paths require Bypass; VERA application data is refused.",
-    "parts_search": "Search the enabled supplier catalogs (Mouser, DigiKey, TME, Farnell, Rutronik) by keyword or part number. Needs Web access, the parts-search plugin and a supplier set up in the plugin's Configuration on the Plugins page.",
+    "parts_search": "Search the enabled supplier catalogs (Mouser, DigiKey, TME, Farnell, Rutronik) by keyword or part number. Needs Web access, the official parts-search plugin and a supplier set up in the plugin's Configuration on the Plugins page.",
     "help": "Read VERA's own help pages and the help of the workbench's enabled plugins, to answer questions about VERA. Read-only.",
     "run_command": "Run shell commands with approval in Ask and Auto-edit, or without asking in Bypass.",
     "terminal_read": "Read recent user terminal output only with consent for that terminal."
