@@ -76,8 +76,13 @@ test("workbench tree, pinning, project editor and plugin section", { tag: "@para
   // The Skills section shows the skills panel inline in the workbench editor.
   const skillPanel = dialog.locator("[data-skills-panel]");
   await expect(skillPanel).toBeVisible();
+  await skillPanel.locator('[data-action="new-skill"]').click();
   await skillPanel.locator("[data-skill-name]").fill("test-reader");
   await skillPanel.locator('[data-action="create-skill"]').click();
+  // Creating a skill opens its instructions; this test only needs the list entry.
+  await expect(page.locator("[data-skill-content]")).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(page.locator("[data-skill-content]")).toHaveCount(0);
   await expect(skillPanel.locator(".skills-list li")).toHaveCount(2);
   await expect(skillPanel.locator(".skills-list li").filter({ hasText: "create-plugin" })).toHaveCount(1);
   const createdSkill = skillPanel.locator(".skills-list li").filter({ hasText: "test-reader" });
