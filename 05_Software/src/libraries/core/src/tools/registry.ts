@@ -68,6 +68,18 @@ const builtinDefinitions: Record<BuiltinToolName, ToolDefinition> = {
   lighting_design: lightingDesignTool,
   help: helpTool,
 };
+// Identity also excludes host-provided definitions reusing a built-in name.
+const delegatedInspectionTools: ReadonlySet<ToolDefinition> = new Set([
+  readTool,
+  listTool,
+  globTool,
+  grepTool,
+  parseLogTool,
+  decodeRegisterTool,
+  searchDocsTool,
+  readDocTool,
+]);
+
 /** Tools offered only when the host composes a program host. */
 export const programToolNames: readonly string[] = [
   "run_program",
@@ -140,6 +152,11 @@ export class ToolRegistry {
   available(disabled: readonly string[] = []): ToolDefinition[] {
     return this.definitions.filter((tool) => !disabled.includes(tool.name));
   }
+  private availableFor(ctx: ToolContext, disabled: readonly string[]): ToolDefinition[] {
+    return this.available(disabled).filter(
+      (tool) => !ctx.delegated || (tool.class === "read" && delegatedInspectionTools.has(tool)),
+    );
+  }
   specs(disabled: readonly string[] = []) {
     return toolSpecs(
       this.available(disabled).map(({ name, description, params, class: toolClass }) => ({
@@ -160,7 +177,7 @@ export class ToolRegistry {
   ) {
     signal.throwIfAborted();
     const tool = this.available(disabled).find((definition) => definition.name === name);
-    if (!tool?.prepare) throw Error("Prepared tool is unavailable.");
+    if (ctx.delegated || !tool?.prepare) throw Error("Prepared tool is unavailable.");
     return tool.prepare(ctx, tool.params.parse(raw), toolSignal(ctx, signal));
   }
   async execute(
@@ -175,7 +192,7 @@ export class ToolRegistry {
     let effectiveSignal = signal;
     try {
       signal.throwIfAborted();
-      const tool = this.available(disabled).find((definition) => definition.name === name);
+      const tool = this.availableFor(ctx, disabled).find((definition) => definition.name === name);
       if (!tool) {
         if (name === "parse_log" || name === "decode_register")
           return {
@@ -240,10 +257,11 @@ export class ToolRegistry {
   /** Existing WP10 runtime owns the error-result flag; its catch consumes this bounded JSON. */
   bind(ctx: ToolContext, disabled: readonly string[] = []): ToolDef[] {
     const blocked = [...disabled, ...(ctx.permissionMode?.() === "read-only" ? ["run_command"] : [])];
-    return this.available(blocked).map((tool) => ({
+    return this.availableFor(ctx, blocked).map((tool) => ({
       name: tool.name,
       class: tool.class,
       description:
+        !ctx.delegated &&
         ctx.permissionMode?.() === "bypass" &&
         [
           "read",

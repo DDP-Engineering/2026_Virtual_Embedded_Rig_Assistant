@@ -33,6 +33,17 @@ async function stream(
   for await (const e of gateway.stream({ model, system: "s", messages, tools: [], signal })) out.push(e);
   return out;
 }
+it("prepares named replay models and auto selection, rejecting missing or cancelled references", async () => {
+  const dir = await fixture(JSON.stringify({ match: "inspect", text: "Done" }));
+  const gateway = new ReplayGateway({ dir, now: () => 0 });
+  await expect(gateway.prepareModel("replay/echo")).resolves.toBeUndefined();
+  await expect(gateway.prepareModel("replay/auto")).resolves.toBeUndefined();
+  await expect(gateway.prepareModel("replay/missing")).rejects.toMatchObject({ code: "NOT_FOUND" });
+  await expect(gateway.prepareModel("replay/echo", AbortSignal.abort())).rejects.toMatchObject({
+    name: "AbortError",
+  });
+});
+
 it("preserves declared replay token usage and rejects invalid fixture measurements", async () => {
   const dir = await fixture(JSON.stringify({ text: "Done", usage: { input: 100, output: 12 } }));
   const events = await stream(new ReplayGateway({ dir, now: () => 0 }), []);

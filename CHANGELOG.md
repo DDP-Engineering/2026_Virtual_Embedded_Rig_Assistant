@@ -8,6 +8,7 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ### Added
 
+- Core sessions can launch inspection-only children with durable ownership and bounded workbench concurrency.
 - Windows and Linux packages ship both pinned local embedding models and their MIT licence notices.
 - The local embedding registry and model preparation now include pinned Multilingual E5 Small q8 assets.
 - CLI: --key-env <NAME> takes the provider key from the named environment variable, for any provider.
@@ -35,6 +36,7 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ### Changed
 
+- Close VERA and delete .vera/vera.db, .vera/vera.db-wal and .vera/vera.db-shm from earlier builds.
 - Switch local embedding models per workbench while keyword search continues during the background rebuild.
 
 - Indexing and semantic search use the workbench model and its token budget. Idle embedding workers stop.

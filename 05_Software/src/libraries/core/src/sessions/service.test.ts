@@ -1049,17 +1049,17 @@ it("retains compatible reasoning and resets incompatible model changes to Defaul
   const capabilities = gateway.capabilities.bind(gateway);
   gateway.capabilities = (model, output) => ({
     ...capabilities(model, output),
-    reasoningOptions: model === "replay/no-reasoning" ? [] : ["low", "high"],
+    reasoningOptions: model === "replay/ui-slow" ? [] : ["low", "high"],
   });
   const row = service.create();
   await service.setReasoning(row.id, "high", "replay/read-then-answer");
-  service.setModel(row.id, "replay/compatible");
+  service.setModel(row.id, "replay/read-then-edit");
   expect((await service.reasoningOptions(row.id)).selected).toBe("high");
-  service.setModel(row.id, "replay/no-reasoning");
+  service.setModel(row.id, "replay/ui-slow");
   expect(service.get(row.id).snapshot.reasoning).toBeNull();
   expect((await service.reasoningOptions(row.id)).selected).toBeNull();
-  service.setModel(row.id, "replay/compatible");
-  await service.setReasoning(row.id, "high", "replay/compatible");
+  service.setModel(row.id, "replay/read-then-edit");
+  await service.setReasoning(row.id, "high", "replay/read-then-edit");
   host.model = (reference) => {
     if (!reference) throw { code: "INVALID", messageKey: "errors.INVALID" };
     return reference;

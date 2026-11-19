@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-FUNC-5d37a301"
+title = "Start independent delegated turns"
+status = "active"
+requirement = "When a parent submits a valid delegated launch, the session service shall start a child with separate history, the explicit model or the parent's effective model, and provider-supported reasoning from the first request."
+verification = "Hold the replay child at dispatch, let the parent finish, and compare the child's first request and both transcripts."
+affected_paths = ["05_Software/src/libraries/core/src/sessions/service.ts","05_Software/src/libraries/core/src/sessions/delegation.ts","05_Software/src/libraries/core/src/sessions/hub.ts","05_Software/src/libraries/core/src/index.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/sessions/delegation.test.ts"]
+created = 2026-11-19
+updated = 2026-11-19

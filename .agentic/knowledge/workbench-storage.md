@@ -41,9 +41,13 @@ lifetime; [native packaging](native-packaging.md) owns addon delivery.
 - Writable connections use WAL, foreign_keys ON, busy_timeout 5000 and synchronous
   NORMAL. An auxiliary read-only connection preserves DB/WAL/SHM bytes on ownership
   loss; ordinary close permits normal SQLite checkpointing.
-- Session child rows cascade on session deletion; document-derived rows cascade
-  with their documents/chunks. Keyword and embedding triggers commit with changes.
-  Message/event sequences remain nonnegative safe integers.
+- Session-owned transcript and tool rows cascade on session deletion. Format-1
+  `session_delegations` holds the root ID, its unique request key and request digest, the child ID,
+  and the first turn/message IDs. The child foreign key clears on deletion while the request
+  remains reserved. The parent foreign key restricts deletion until SessionService confirms
+  all children were deleted and removes their request rows in the same transaction.
+- Document-derived rows cascade with their documents/chunks. Keyword and embedding triggers
+  commit with changes. Message/event sequences remain nonnegative safe integers.
 - Row repositories preserve caller-supplied JSON. Session recovery repairs
   interrupted runtime operations in the current schema; it is independent of
   schema initialization and is not a database migration.

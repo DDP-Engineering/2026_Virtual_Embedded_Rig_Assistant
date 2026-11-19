@@ -20,6 +20,8 @@ export interface ReadFingerprint {
   mtimeMs: number;
 }
 export interface ToolContext {
+  /** Delegated authority is assigned by SessionService for every turn of a child. */
+  delegated?: true;
   terminals?: TerminalReader;
   root: string;
   permissionMode?: () => PermissionMode;
@@ -62,7 +64,7 @@ export function createToolContext(root: string, workers?: WorkerPool): ToolConte
 
 /** Scope comes from the host's current session mode, never from model arguments. */
 export function toolSignal(ctx: ToolContext, signal: AbortSignal): AbortSignal {
-  return ctx.permissionMode?.() === "bypass" && ctx.bypassSignal
+  return !ctx.delegated && ctx.permissionMode?.() === "bypass" && ctx.bypassSignal
     ? AbortSignal.any([signal, ctx.bypassSignal()])
     : signal;
 }
@@ -71,17 +73,18 @@ export function toolExcludedRoots(ctx: ToolContext): readonly string[] {
   return [...(ctx.managedRoots ?? []), ...(ctx.pluginBuilder ? [ctx.pluginBuilder.root] : [])];
 }
 export async function toolPathGuard(ctx: ToolContext, additional = false): Promise<PathGuard> {
-  const epoch = ctx.permissionMode?.() === "bypass" ? ctx.bypassSignal?.() : undefined;
+  const bypass = !ctx.delegated && ctx.permissionMode?.() === "bypass";
+  const grantedFolders = additional && !ctx.delegated;
   const excluded = toolExcludedRoots(ctx);
-  if (ctx.permissionMode?.() !== "bypass") {
-    const folders = additional ? [...(ctx.additionalFolders?.() ?? [])] : [];
+  if (!bypass) {
+    const folders = grantedFolders ? [...(ctx.additionalFolders?.() ?? [])] : [];
     const version = JSON.stringify(folders);
     return PathGuard.create(
       ctx.root,
       ctx.root,
       "workbench",
       () => {
-        if (additional && JSON.stringify(ctx.additionalFolders?.() ?? []) !== version)
+        if (grantedFolders && JSON.stringify(ctx.additionalFolders?.() ?? []) !== version)
           throw Error(
             "Additional folder access was revoked. Retry under the current workbench configuration.",
           );
@@ -90,6 +93,7 @@ export async function toolPathGuard(ctx: ToolContext, additional = false): Promi
       folders,
     );
   }
+  const epoch = ctx.bypassSignal?.();
   return PathGuard.create(
     ctx.root,
     ctx.root,

@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-REL-2a7d075f"
+title = "Replay identical delegated launch requests"
+status = "active"
+requirement = "When a parent retries the identical admitted request, the session service shall return the original child and turn identifiers."
+verification = "Race several identical launch requests, inspect the transcript once and retry after reopening."
+affected_paths = ["05_Software/src/libraries/core/src/sessions/service.ts","05_Software/src/libraries/core/src/storage/schema.ts","05_Software/src/libraries/core/src/storage/repos/delegations.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/sessions/delegation.test.ts"]
+created = 2026-11-19
+updated = 2026-11-19

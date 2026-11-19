@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-REL-35d1f9d1"
+title = "Reject reused delegation keys with different input"
+status = "active"
+requirement = "If a parent reuses an admitted request key with changed input or after its child is deleted, then the session service shall return CONFLICT."
+verification = "Retry changed input while the original exists and retry the original input after its child is deleted."
+affected_paths = ["05_Software/src/libraries/core/src/sessions/service.ts","05_Software/src/libraries/core/src/storage/schema.ts","05_Software/src/libraries/core/src/storage/repos/delegations.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/sessions/delegation.test.ts"]
+created = 2026-11-19
+updated = 2026-11-19

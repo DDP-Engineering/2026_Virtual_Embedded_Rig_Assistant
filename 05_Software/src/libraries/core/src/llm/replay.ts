@@ -105,6 +105,15 @@ export class ReplayGateway implements LlmGateway {
       delay?: (signal: AbortSignal) => Promise<void>;
     },
   ) {}
+  async prepareModel(reference: string, signal?: AbortSignal): Promise<void> {
+    signal?.throwIfAborted();
+    const { provider, model } = splitModelReference(reference);
+    if (
+      provider !== "replay" ||
+      (model !== "auto" && !readdirSync(this.options.dir).includes(`${model}.jsonl`))
+    )
+      throw veraError("NOT_FOUND");
+  }
   selectedModel(provider: string): string {
     if (provider !== "replay") throw veraError("NOT_FOUND");
     return scenarios(this.options.dir)[0]?.name ?? "auto";

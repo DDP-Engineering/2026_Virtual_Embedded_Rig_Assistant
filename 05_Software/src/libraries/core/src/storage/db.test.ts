@@ -96,6 +96,7 @@ it("creates the complete current schema directly, with SQLite pragmas", async ()
     expect.arrayContaining([
       "meta",
       "sessions",
+      "session_delegations",
       "messages",
       "events",
       "tool_calls",

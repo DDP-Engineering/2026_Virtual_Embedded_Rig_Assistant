@@ -75,8 +75,13 @@ export class SessionHub {
     return { seq, event };
   }
   publish(id: string, value: { seq?: number; event: SessionEvent }): void {
+    this.publishBatch(id, [value]);
+  }
+  /** Queue all committed events before subscribers can emit a later sequence. */
+  publishBatch(id: string, values: readonly { seq?: number; event: SessionEvent }[]): void {
+    if (values.length === 0) return;
     const pending = this.pending.get(id) ?? [];
-    pending.push(structuredClone(value));
+    for (const value of values) pending.push(structuredClone(value));
     this.pending.set(id, pending);
     if (this.publishing.has(id)) return;
     this.publishing.add(id);

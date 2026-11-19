@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-REL-75fa183f"
+title = "Recover interrupted delegated turns"
+status = "active"
+requirement = "When a workbench reopens with an interrupted child, the session service shall recover it through the ordinary turn recovery while retaining the delegation and history."
+verification = "Reopen a database snapshot from a held replay child and verify the interruption event, launch identity, transcript and repeat recovery."
+affected_paths = ["05_Software/src/libraries/core/src/sessions/service.ts","05_Software/src/libraries/core/src/storage/schema.ts","05_Software/src/libraries/core/src/storage/repos/delegations.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/sessions/delegation.test.ts"]
+created = 2026-11-19
+updated = 2026-11-19

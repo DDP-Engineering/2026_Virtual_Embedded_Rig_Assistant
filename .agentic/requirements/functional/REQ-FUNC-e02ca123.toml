@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-FUNC-e02ca123"
+title = "Bound concurrent delegated turns"
+status = "active"
+requirement = "While three child turns are active in the workbench, the session service shall reject admission of another child turn as BUSY."
+verification = "Race distinct valid requests under multiple parents, abort one child, and verify a new slot becomes available."
+affected_paths = ["05_Software/src/libraries/core/src/sessions/service.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/sessions/delegation.test.ts"]
+created = 2026-11-19
+updated = 2026-11-19
