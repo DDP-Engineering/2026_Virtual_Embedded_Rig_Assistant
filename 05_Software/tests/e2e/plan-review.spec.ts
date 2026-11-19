@@ -98,6 +98,9 @@ test("Plan feedback preserves exact keyboard fragments and isolated explicit rev
   });
   const panel = page.locator("#panel-plan"),
     rows = panel.locator(".plan-tab > .plan-list > li");
+  const sessionId = await page.locator('[data-session][aria-current="page"]').getAttribute("data-session");
+  if (!sessionId) throw Error("missing Plan fixture session");
+  const initialUsers = (await snapshot(page, { sessionId })).items.filter((item) => item.kind === "user");
   let completed = 0;
   for (const language of ["en", "ro", "de", "fr"] as const) {
     const names = labels[language];
@@ -175,7 +178,9 @@ test("Plan feedback preserves exact keyboard fragments and isolated explicit rev
     });
     const scope = { workbenchId: request.workbenchId, sessionId: request.sessionId };
     const saved = await snapshot(page, scope);
-    expect(saved.items.filter((item) => item.kind === "user")).toHaveLength(completed);
+    const savedUsers = saved.items.filter((item) => item.kind === "user");
+    expect(savedUsers).toHaveLength(initialUsers.length + completed);
+    expect(savedUsers.slice(0, initialUsers.length)).toEqual(initialUsers);
     expect(saved.planComments).toHaveLength(1);
     await rows.nth(stepIndex).getByRole("button", { name: names.draft, exact: true }).click();
     await expect(rows.nth(stepIndex).locator(".plan-feedback-text")).toHaveText(feedback);
@@ -184,6 +189,9 @@ test("Plan feedback preserves exact keyboard fragments and isolated explicit rev
     const reviewed = await snapshot(page, scope);
     completed++;
     expect(reviewed.planReviews).toHaveLength(completed);
+    expect(reviewed.items.filter((item) => item.kind === "user")).toHaveLength(
+      initialUsers.length + completed,
+    );
     expect(reviewed.planReviews.at(-1)?.comments[0]?.text).toBe(feedback);
     expect(reviewed.planRevision).toBe(saved.planRevision + 1);
     expect(reviewed.planComments).toEqual([]);

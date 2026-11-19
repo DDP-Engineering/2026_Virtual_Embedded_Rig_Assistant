@@ -36,6 +36,7 @@ export const sessionFixtures: { title: string; events: SessionEvent[]; live?: Se
   {
     title: "Plan feedback targets",
     events: [
+      { type: "message.user", messageId: "plan-user", text: "Prepare a GPIO inspection plan" },
       {
         type: "todo.updated",
         items: [

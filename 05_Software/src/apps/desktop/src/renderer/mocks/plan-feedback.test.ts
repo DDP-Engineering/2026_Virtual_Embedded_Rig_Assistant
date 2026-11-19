@@ -25,6 +25,36 @@ async function fixture() {
   };
 }
 
+it("keeps seeded feedback targets separate from the empty session reused by New session", async () => {
+  const sessions = new MockSessions(() => ({ id: workbenchId, readOnly: false, model: null, mode: "ask" }));
+  try {
+    sessions.seedFixtures();
+    const list = sessions.invoke("session.list", {}) as SessionSummary[];
+    const empty = list.find((session) => session.title === "Empty session");
+    const planned = list.find((session) => session.title === "Plan feedback targets");
+    if (!empty || !planned) throw Error("missing seeded sessions");
+    const before = sessions.invoke("session.get", { sessionId: planned.id });
+    const selected = sessions.invoke("session.create", { reuseEmpty: true }) as SessionSummary;
+    expect(selected.id).toBe(empty.id);
+    expect(sessions.invoke("session.get", { sessionId: selected.id })).toMatchObject({
+      snapshot: { todos: [], planComments: [], planReviews: [] },
+    });
+    expect(sessions.invoke("session.create", { reuseEmpty: true })).toMatchObject({ id: selected.id });
+    expect(sessions.invoke("session.get", { sessionId: planned.id })).toEqual(before);
+    expect(before).toMatchObject({
+      snapshot: {
+        todos: expect.arrayContaining([
+          expect.objectContaining({ id: "repeated", text: "A😀B\n μC " }),
+          expect.objectContaining({ text: "" }),
+        ]),
+      },
+    });
+    expect(sessions.invoke("session.list", {})).toHaveLength(list.length);
+  } finally {
+    await sessions.close();
+  }
+});
+
 it("mirrors strict event-backed comment CRUD and original-pair receipts without execution or review steering", async () => {
   const { sessions, scope, snapshot } = await fixture();
   const state = snapshot();

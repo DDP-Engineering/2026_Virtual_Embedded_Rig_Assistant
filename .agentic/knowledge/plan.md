@@ -52,7 +52,7 @@ Core owns validated ordered session task lists and atomic database/event updates
 
 ## Key behaviors
 
-REQ-FUNC-2e8a54c7 bounded whole replacement;REQ-DATA-d968385c atomic durable list/event;REQ-UX-8d3039aa accessible live/restarted Plan. The plan-updates fixture has three distinct replacements in separate model steps; its anchored Update the plan matcher preserves existing automatic replay scenarios.
+REQ-FUNC-2e8a54c7 bounded whole replacement;REQ-DATA-d968385c atomic durable list/event;REQ-UX-8d3039aa accessible live/restarted Plan. The plan-updates fixture has three distinct replacements in separate model steps; its anchored Update the plan matcher preserves existing automatic replay scenarios. The Plan feedback targets mock fixture includes its initiating user message and exact duplicate/Unicode/empty steps, so New session reuses the empty fixture without inheriting a seeded plan; mocks/plan-feedback.test.ts covers that separation.
 
 ## Files
 
