@@ -124,7 +124,7 @@ it("lists recovered current-workbench sessions without awaiting pending program 
     expect(initial[0]?.status).not.toBe("running");
     expect(configCalls).toBe(0);
     hold = true;
-    const preparing = host.run(() => undefined);
+    const preparing = host.run(() => undefined, { purpose: "ordinary" });
     await started;
     const listed = await host.list(config.id);
     expect(listed[0]?.id).toBe(session.id);
@@ -285,18 +285,18 @@ it("computes the program prompt entries once until plugins or plugin skills chan
     },
   } as never);
   try {
-    for (let i = 0; i < 3; i++) await host.run(() => undefined);
+    for (let i = 0; i < 3; i++) await host.run(() => undefined, { purpose: "ordinary" });
     expect(resolved).toBe(1);
     host.invalidatePrograms();
-    await host.run(() => undefined);
+    await host.run(() => undefined, { purpose: "ordinary" });
     expect(resolved).toBe(2);
     skills.push({ name: "tool-more", description: "d", source: "plugin", plugin: "tools", enabled: true });
-    await host.run(() => undefined);
+    await host.run(() => undefined, { purpose: "ordinary" });
     expect(resolved).toBe(3);
-    await host.run(() => undefined);
+    await host.run(() => undefined, { purpose: "ordinary" });
     expect(resolved).toBe(3);
     plugin.record.sha256 = "b".repeat(64);
-    await host.run(() => undefined);
+    await host.run(() => undefined, { purpose: "ordinary" });
     expect(resolved).toBe(4);
   } finally {
     await host.close();
@@ -339,6 +339,7 @@ it("offers apply_candidate only while the official kicad-layout plugin is enable
     host.run(
       (service) =>
         (service as unknown as { host: { applyCandidate?: boolean } }).host.applyCandidate === true,
+      { purpose: "ordinary" },
     );
   try {
     expect(await offered()).toBe(false);
@@ -391,6 +392,7 @@ it("enables the electrical model tools only while an electrical or automation pl
     host.run(
       (service) =>
         (service as unknown as { host: { electricalPlugins?: readonly string[] } }).host.electricalPlugins,
+      { purpose: "ordinary" },
     );
   try {
     expect(await offered()).toEqual([]);

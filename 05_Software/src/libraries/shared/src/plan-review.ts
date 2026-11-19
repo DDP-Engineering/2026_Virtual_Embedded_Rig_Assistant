@@ -33,6 +33,16 @@ export const planReviewSchema = z.strictObject({
   stopReason: stopReasonSchema.nullable(),
 });
 export type PlanReview = z.infer<typeof planReviewSchema>;
+export const planReviewRequestSchema = z.strictObject({
+  expectedPlanRevision: planRevisionSchema,
+  expectedFeedbackRevision: planRevisionSchema,
+});
+export type PlanReviewRequest = z.infer<typeof planReviewRequestSchema>;
+export const planReviewRestoreSchema = z.strictObject({
+  reviewId: planFeedbackIdSchema,
+  expectedFeedbackRevision: planRevisionSchema,
+});
+export type PlanReviewRestore = z.infer<typeof planReviewRestoreSchema>;
 export const planCommentChangeSchema = z.discriminatedUnion("action", [
   z.strictObject({
     action: z.literal("create"),

@@ -38,6 +38,13 @@ import {
   partsAccessTestSchema,
 } from "./parts-search.js";
 import {
+  planCommentChangeSchema,
+  planCommentDeleteSchema,
+  planFeedbackIdSchema,
+  planReviewRequestSchema,
+  planReviewRestoreSchema,
+} from "./plan-review.js";
+import {
   pluginCatalogIdRequestSchema,
   pluginCatalogInstallRequestSchema,
   pluginCatalogRequestSchema,
@@ -172,6 +179,8 @@ export const appInfoSchema = z.strictObject({
     .strictObject({ electron: z.string(), chrome: z.string(), node: z.string(), v8: z.string() })
     .optional(),
 });
+const planScope = { workbenchId: workbenchIdSchema, sessionId: sessionIdSchema };
+
 export const channels = {
   "app.clipboard.write": defineChannel(
     "app.clipboard.write",
@@ -684,6 +693,34 @@ export const channels = {
       messageId: z.string().min(1).max(200),
       bookmarked: z.boolean(),
     }),
+    z.strictObject({}),
+  ),
+  "session.plan.comment.save": defineChannel(
+    "session.plan.comment.save",
+    z.discriminatedUnion("action", [
+      planCommentChangeSchema.options[0].extend(planScope),
+      planCommentChangeSchema.options[1].extend(planScope),
+      planCommentChangeSchema.options[2].extend(planScope),
+    ]),
+    z.strictObject({}),
+  ),
+  "session.plan.comment.delete": defineChannel(
+    "session.plan.comment.delete",
+    planCommentDeleteSchema.extend(planScope),
+    z.strictObject({}),
+  ),
+  "session.plan.review": defineChannel(
+    "session.plan.review",
+    planReviewRequestSchema.extend(planScope),
+    z.strictObject({
+      reviewId: planFeedbackIdSchema,
+      turnId: planFeedbackIdSchema,
+      messageId: planFeedbackIdSchema,
+    }),
+  ),
+  "session.plan.review.restore": defineChannel(
+    "session.plan.review.restore",
+    planReviewRestoreSchema.extend(planScope),
     z.strictObject({}),
   ),
   "session.rename": defineChannel(

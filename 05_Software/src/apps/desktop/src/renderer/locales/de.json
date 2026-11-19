@@ -409,6 +409,7 @@
     "exported": "Artefakt exportiert."
   },
   "plan": {
+    "feedbackRestored": "Das Feedback steht im Plan bereit.",
     "empty": "Keine Aufgaben in dieser Sitzung.",
     "pending": "Ausstehend",
     "inProgress": "In Bearbeitung",

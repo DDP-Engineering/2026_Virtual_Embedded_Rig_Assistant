@@ -1,6 +1,13 @@
 version: Unreleased
 date: null
 entries:
+  - category: new
+    topic: { en: Plan, ro: Plan, de: Plan, fr: Plan }
+    text:
+      en: Plan review retries restore feedback without executing the plan.
+      ro: Reîncercările revizuirii planului restabilesc feedbackul fără a executa planul.
+      de: Erneute Planprüfung stellt Kommentare wieder her, ohne den Plan auszuführen.
+      fr: Réessayer une révision restaure les commentaires sans exécuter le plan.
   - category: improved
     topic: { en: Chat, ro: Chat, de: Chat, fr: Chat }
     text:
@@ -74,17 +81,10 @@ entries:
   - category: new
     topic: { en: Files, ro: Fișiere, de: Dateien, fr: Fichiers }
     text:
-      en: Switch Rendered, Text or Hex; preview images with zoom to 400% and remember each extension.
-      ro: Alege Randat, Text sau Hex; vezi imagini cu zoom până la 400% și reține modul pe extensie.
-      de: Gerendert, Text oder Hex wählen; Bilder bis 400% zoomen und die Wahl pro Dateiendung merken.
-      fr: Choisissez Rendu, Texte ou Hex ; zoomez les images à 400% et mémorisez le mode par extension.
-  - category: new
-    topic: { en: Files, ro: Fișiere, de: Dateien, fr: Fichiers }
-    text:
-      en: Inspect bytes in Hex, jump to offsets, find text or bytes and copy selected hex or text.
-      ro: Inspectează octeți în Hex, sari la offset, caută text sau octeți și copiază selecția.
-      de: Bytes in Hex ansehen, zu Offsets springen, Text oder Bytes suchen und die Auswahl kopieren.
-      fr: Affichez les octets en Hex, allez à un décalage, cherchez et copiez la sélection.
+      en: Rendered, Text and Hex views; image zoom to 400%; byte jumps, search/copy and extension defaults.
+      ro: Moduri Randat, Text și Hex; zoom imagini la 400%; salt, căutare/copiere octeți și mod pe extensie.
+      de: Gerendert, Text, Hex; Bildzoom bis 400%; Bytes anspringen, suchen/kopieren; Vorgabe je Dateityp.
+      fr: Vues Rendu, Texte et Hex ; zoom à 400 %, sauts, recherche/copie d’octets et choix par extension.
   - category: improved
     topic: { en: Files, ro: Fișiere, de: Dateien, fr: Fichiers }
     text:

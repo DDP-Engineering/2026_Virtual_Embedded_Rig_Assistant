@@ -54,6 +54,36 @@ it("transports bounded document bytes and rejects invalid windows before transpo
   });
   expect(transport.invoke).toHaveBeenCalledTimes(1);
 });
+it("transports the four user-only Plan channels and rejects extra authority before transport", async () => {
+  const { bridge, transport } = fixture();
+  const scope = { workbenchId: "wb_01J00000000000000000000000", sessionId: "ses_01J00000000000000000000000" };
+  const requests = [
+    [
+      "session.plan.comment.save",
+      {
+        ...scope,
+        action: "create",
+        expectedFeedbackRevision: 0,
+        text: "Feedback 😀",
+        target: { revision: 1, stepIndex: 0, stepText: "A😀B", range: { start: 1, end: 3, quote: "😀" } },
+      },
+    ],
+    ["session.plan.comment.delete", { ...scope, expectedFeedbackRevision: 1, commentId: "pc_test" }],
+    ["session.plan.review", { ...scope, expectedPlanRevision: 1, expectedFeedbackRevision: 1 }],
+    ["session.plan.review.restore", { ...scope, expectedFeedbackRevision: 2, reviewId: "pr_test" }],
+  ] as const;
+  for (const [channel, request] of requests) {
+    const value =
+      channel === "session.plan.review" ? { reviewId: "pr_test", turnId: "turn", messageId: "message" } : {};
+    transport.invoke.mockResolvedValueOnce({ ok: true, value } as never);
+    expect(await bridge.invoke(channel, request)).toEqual(value);
+    await expect(bridge.invoke(channel, { ...request, command: "execute" } as never)).rejects.toMatchObject({
+      code: "INVALID",
+    });
+  }
+  expect(transport.invoke).toHaveBeenCalledTimes(4);
+});
+
 it("registers a session replay subscription before dispatch and filters its token with idempotent cleanup", async () => {
   const { bridge, transport, listeners } = fixture();
   transport.invoke.mockResolvedValue({ ok: true, value: {} } as never);
@@ -202,6 +232,10 @@ it("infers registry types and returns validated metadata", async () => {
     | "session.item.detail"
     | "session.rename"
     | "session.bookmark"
+    | "session.plan.comment.save"
+    | "session.plan.comment.delete"
+    | "session.plan.review"
+    | "session.plan.review.restore"
     | "session.archive.set"
     | "session.move"
     | "session.delete"

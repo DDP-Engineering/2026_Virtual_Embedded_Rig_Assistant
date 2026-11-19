@@ -12,7 +12,7 @@ verification = "Submit fragment and whole-step comments, replace or clear the pl
 
 affected_paths = ["05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/libraries/shared/src/plan-review.ts", "05_Software/src/libraries/shared/src/events.ts", "05_Software/src/libraries/shared/src/session-state.ts", "05_Software/src/apps/desktop/src/main/events.ts", "05_Software/src/apps/desktop/src/renderer/components/session/plan-feedback.tsx"]
 
-linked_tests = []
+linked_tests = ["05_Software/src/libraries/core/src/sessions/review-turn.test.ts", "05_Software/src/libraries/core/src/sessions/review-recovery.test.ts", "05_Software/src/libraries/shared/src/plan-review.test.ts"]
 
 
 spec = "specs/REQ-DATA-fa8543aa.md"

@@ -9,11 +9,16 @@ import {
   type PermissionMode,
   type PlanComment,
   type PlanCommentChange,
+  type PlanReview,
+  type PlanReviewRequest,
+  type PlanReviewRestore,
   type ProgramApproval,
   parseRef,
   permissionModeSchema,
   planCommentChangeSchema,
   planCommentDeleteSchema,
+  planReviewRequestSchema,
+  planReviewRestoreSchema,
   type SessionEvent,
   type SessionItemDetailField,
   type SessionSummary,
@@ -56,12 +61,19 @@ import { createToolContext, type ToolContext } from "../tools/context.js";
 import type { HelpHost } from "../tools/help.js";
 import { capToolResult, programToolNames, ToolRegistry } from "../tools/registry.js";
 import type { TerminalReader } from "../tools/terminal-read.js";
+import { todoTool } from "../tools/todo.js";
 import type { WebDownloads } from "../web/downloads.js";
 import type { WebProvider } from "../web/provider.js";
 import { WriteQueue } from "../workbench/write-queue.js";
 import { SessionHub, type SessionListener } from "./hub.js";
 import { MaskingContextPolicy, maskMessages, maskModelStream, maskValue } from "./masking.js";
-import { projectPlanFeedback, validatePlanTarget } from "./plan-review.js";
+import {
+  planReviewInstruction,
+  planReviewMessage,
+  projectPlanFeedback,
+  validatePlanReview,
+  validatePlanTarget,
+} from "./plan-review.js";
 import { timedGateway } from "./timed-gateway.js";
 
 export interface SessionHost {
@@ -72,6 +84,8 @@ export interface SessionHost {
   clock: Clock;
   model(session: string | null): string;
   prompt(mode: PermissionMode): string;
+  /** Pure revision-only canonical prompt, prepared without program/skill probes. */
+  reviewPrompt?(mode: PermissionMode): string;
   readOnly?: boolean;
   mode?: PermissionMode;
   maxToolCallsPerTurn?: number;
@@ -114,6 +128,7 @@ export interface SessionHost {
   managedRoots?: readonly string[];
 }
 interface ActiveTurn {
+  kind: "ordinary" | "plan-review";
   runtime: AgentRuntime;
   done: Promise<{ stopReason: StopReason }>;
   turnId: string;
@@ -330,10 +345,13 @@ export class SessionService {
       snapshot: projectPlanFeedback(result.snapshot, (text) => this.maskContent("agent", text)),
     };
   }
-  private feedbackWritable(id: string): void {
+  private feedbackAuthority(id: string): void {
     const row = this.row(id);
     this.writable();
     if (row.archived) throw veraError("DENIED");
+  }
+  private feedbackWritable(id: string): void {
+    this.feedbackAuthority(id);
     if (this.closing || this.deleting.has(id)) throw veraError("BUSY");
   }
   /** Saves private feedback metadata; it never creates a chat message or a model request. */
@@ -716,7 +734,99 @@ export class SessionService {
       });
     }
   }
+  /** Hosts preflight this before ordinary preparation, including while a review is finalizing. */
+  isPlanReviewActive(id: string): boolean {
+    this.row(id);
+    return this.active.get(id)?.kind === "plan-review";
+  }
+  reviewPlan(id: string, input: PlanReviewRequest): { reviewId: string; turnId: string; messageId: string } {
+    this.feedbackAuthority(id);
+    const parsed = planReviewRequestSchema.safeParse(input);
+    if (!parsed.success) throw veraError("INVALID");
+    const expected = parsed.data;
+    const state = this.hub.get(id).snapshot;
+    const accepted = state.planReviews.find(
+      (review) =>
+        review.expectedPlanRevision === expected.expectedPlanRevision &&
+        review.expectedFeedbackRevision === expected.expectedFeedbackRevision,
+    );
+    if (accepted) return { reviewId: accepted.id, turnId: accepted.turnId, messageId: accepted.messageId };
+    this.reviewWritable(id, expected);
+    const review: PlanReview = {
+      id: `pr_${ulid()}`,
+      ...expected,
+      plan: state.todos,
+      comments: state.planComments.map(({ stale: _, ...comment }) => comment),
+      turnId: ulid(),
+      messageId: ulid(),
+      submittedAt: this.now(),
+      stopReason: null,
+    };
+    const text = planReviewMessage(review, (value) => this.maskContent("agent", value));
+    this.startTurn(id, text, review);
+    return { reviewId: review.id, turnId: review.turnId, messageId: review.messageId };
+  }
+  /** Stage missing feedback only; a new model turn always requires an explicit Review action. */
+  restorePlanReview(id: string, input: PlanReviewRestore): void {
+    this.feedbackAuthority(id);
+    const parsed = planReviewRestoreSchema.safeParse(input);
+    if (!parsed.success) throw veraError("INVALID");
+    const { reviewId, expectedFeedbackRevision } = parsed.data;
+    const value = this.host.db.transaction(() => {
+      this.feedbackAuthority(id);
+      const state = this.hub.get(id).snapshot;
+      const review = state.planReviews.find((candidate) => candidate.id === reviewId);
+      if (!review) throw veraError("NOT_FOUND");
+      if (
+        this.host.db
+          .prepare(
+            "SELECT 1 FROM events WHERE session_id=? AND type='plan.review.restored' AND json_extract(payload_json,'$.reviewId')=? AND json_extract(payload_json,'$.expectedFeedbackRevision')=? LIMIT 1",
+          )
+          .get(id, reviewId, expectedFeedbackRevision)
+      )
+        return;
+      this.feedbackWritable(id);
+      if (state.planFeedbackRevision !== expectedFeedbackRevision) throw veraError("CONFLICT");
+      if (review.stopReason === null) throw veraError("BUSY");
+      if (review.stopReason === "end") throw veraError("CONFLICT");
+      const linked = new Set(
+        state.planComments
+          .filter((comment) => comment.restoredFrom?.reviewId === reviewId)
+          .map((comment) => comment.restoredFrom?.commentId),
+      );
+      const comments = review.comments
+        .filter((comment) => !linked.has(comment.id))
+        .map((comment) => ({
+          ...comment,
+          id: `pc_${ulid()}`,
+          restoredFrom: { reviewId, commentId: comment.id },
+        }));
+      if (!comments.length) return;
+      return this.hub.record(id, {
+        type: "plan.review.restored",
+        reviewId,
+        expectedFeedbackRevision,
+        comments,
+      });
+    })();
+    if (value) this.hub.publish(id, value);
+  }
+  private reviewWritable(id: string, expected: PlanReviewRequest): void {
+    this.feedbackWritable(id);
+    const row = this.row(id);
+    if (
+      this.active.has(id) ||
+      row.status === "running" ||
+      row.status === "awaiting_approval" ||
+      this.host.db.prepare("SELECT 1 FROM approvals WHERE session_id=? AND decision IS NULL LIMIT 1").get(id)
+    )
+      throw veraError("BUSY");
+    validatePlanReview(this.hub.get(id).snapshot, expected, (value) => this.maskContent("agent", value));
+  }
   send(id: string, text: string): { turnId: string; messageId: string } {
+    return this.startTurn(id, text);
+  }
+  private startTurn(id: string, text: string, review?: PlanReview): { turnId: string; messageId: string } {
     const current = this.row(id);
     this.writable();
     if (!text.trim()) throw veraError("INVALID");
@@ -724,6 +834,8 @@ export class SessionService {
     const active = this.active.get(id);
     if (active) {
       if (
+        review ||
+        active.kind === "plan-review" ||
         !active.accepting ||
         active.failed ||
         active.approvalWait ||
@@ -759,42 +871,46 @@ export class SessionService {
     };
     const model = this.host.model(row.model_ref);
     if (!this.host.gateway.prepareModel) this.host.gateway.capabilities(model);
-    const ctx = this.contexts.get(id) ?? createToolContext(this.host.root, this.host.workers);
-    this.contexts.set(id, ctx);
-    ctx.permissionMode = () => this.row(id).permission_mode;
-    ctx.additionalFolders = () => this.host.additionalFolders?.() ?? [];
-    ctx.bypassSignal = () => {
-      if (this.row(id).permission_mode !== "bypass") return AbortSignal.abort();
-      let scope = this.bypassScopes.get(id);
-      if (!scope) {
-        scope = new AbortController();
-        this.bypassScopes.set(id, scope);
-      }
-      return scope.signal;
-    };
-    ctx.knowledge = this.knowledge;
-    if (this.host.terminals) ctx.terminals = this.host.terminals;
-    else delete ctx.terminals;
-    if (this.host.pluginBuilder) ctx.pluginBuilder = this.host.pluginBuilder;
-    if (this.host.managedRoots) ctx.managedRoots = this.host.managedRoots;
-    if (this.host.web) ctx.web = this.host.web;
-    else delete ctx.web;
-    if (this.host.parts) ctx.parts = this.host.parts;
-    else delete ctx.parts;
-    if (this.host.help) ctx.help = this.host.help;
-    else delete ctx.help;
-    if (this.host.downloads) ctx.downloads = this.host.downloads;
-    else delete ctx.downloads;
-    if (this.host.skills) ctx.skills = this.host.skills;
-    else delete ctx.skills;
-    if (this.host.programs) {
-      let programSession = this.programSessions.get(id);
-      if (!programSession) {
-        programSession = new ProgramSession();
-        this.programSessions.set(id, programSession);
-      }
-      ctx.programs = { host: this.host.programs, session: programSession, sessionId: id };
-    } else delete ctx.programs;
+    const ctx = review
+      ? createToolContext(this.host.root)
+      : (this.contexts.get(id) ?? createToolContext(this.host.root, this.host.workers));
+    if (!review) {
+      this.contexts.set(id, ctx);
+      ctx.permissionMode = () => this.row(id).permission_mode;
+      ctx.additionalFolders = () => this.host.additionalFolders?.() ?? [];
+      ctx.bypassSignal = () => {
+        if (this.row(id).permission_mode !== "bypass") return AbortSignal.abort();
+        let scope = this.bypassScopes.get(id);
+        if (!scope) {
+          scope = new AbortController();
+          this.bypassScopes.set(id, scope);
+        }
+        return scope.signal;
+      };
+      ctx.knowledge = this.knowledge;
+      if (this.host.terminals) ctx.terminals = this.host.terminals;
+      else delete ctx.terminals;
+      if (this.host.pluginBuilder) ctx.pluginBuilder = this.host.pluginBuilder;
+      if (this.host.managedRoots) ctx.managedRoots = this.host.managedRoots;
+      if (this.host.web) ctx.web = this.host.web;
+      else delete ctx.web;
+      if (this.host.parts) ctx.parts = this.host.parts;
+      else delete ctx.parts;
+      if (this.host.help) ctx.help = this.host.help;
+      else delete ctx.help;
+      if (this.host.downloads) ctx.downloads = this.host.downloads;
+      else delete ctx.downloads;
+      if (this.host.skills) ctx.skills = this.host.skills;
+      else delete ctx.skills;
+      if (this.host.programs) {
+        let programSession = this.programSessions.get(id);
+        if (!programSession) {
+          programSession = new ProgramSession();
+          this.programSessions.set(id, programSession);
+        }
+        ctx.programs = { host: this.host.programs, session: programSession, sessionId: id };
+      } else delete ctx.programs;
+    }
     ctx.todos = {
       db: this.host.db,
       repository: new TodosRepository(this.host.db),
@@ -804,6 +920,7 @@ export class SessionService {
         this.row(id);
         this.writable();
         if (this.deleting.has(id)) throw veraError("BUSY");
+        if (review && this.host.disabledTools?.includes("todo")) throw veraError("DENIED");
       },
       record: (event) => {
         const value = this.hub.record(id, event);
@@ -811,24 +928,25 @@ export class SessionService {
       },
       ...(this.host.scrub ? { scrub: this.host.scrub } : {}),
     };
-    ctx.artifacts = {
-      store: this.artifacts,
-      sessionId: id,
-      queue: this.writeQueue,
-      now: () => this.now(),
-      assertWritable: () => {
-        this.row(id);
-        this.writable();
-        if (this.deleting.has(id)) throw veraError("BUSY");
-      },
-      record: (event) => {
-        const value = this.hub.record(id, event);
-        return () => this.hub.publish(id, value);
-      },
-      scrubContent: (text) => this.maskContent("exports", text),
-      ...(this.host.scrub ? { scrub: this.host.scrub } : {}),
-    };
-    const registry = this.host.registry ?? new ToolRegistry();
+    if (!review)
+      ctx.artifacts = {
+        store: this.artifacts,
+        sessionId: id,
+        queue: this.writeQueue,
+        now: () => this.now(),
+        assertWritable: () => {
+          this.row(id);
+          this.writable();
+          if (this.deleting.has(id)) throw veraError("BUSY");
+        },
+        record: (event) => {
+          const value = this.hub.record(id, event);
+          return () => this.hub.publish(id, value);
+        },
+        scrubContent: (text) => this.maskContent("exports", text),
+        ...(this.host.scrub ? { scrub: this.host.scrub } : {}),
+      };
+    const registry = review ? new ToolRegistry([todoTool]) : (this.host.registry ?? new ToolRegistry());
     const permissions = this.host.permissions;
     const prepared = new Map<string, PreparedChange>();
     const programPaths = new Map<string, ProgramApproval>();
@@ -854,6 +972,8 @@ export class SessionService {
         },
         execute: async (args: unknown, signal: AbortSignal) => {
           await durable();
+          if (review && (tool.name !== "todo" || this.host.disabledTools?.includes("todo")))
+            throw veraError("DENIED");
           if (tool.class === "program") {
             const run = prepared.get(tool.name);
             prepared.delete(tool.name);
@@ -908,6 +1028,7 @@ export class SessionService {
         },
       }));
     const writeToolNames = new Set(tools.filter((tool) => tool.class === "write").map((tool) => tool.name));
+    const reviewToolNames = new Set(tools.map((tool) => tool.name));
     const contextPolicy = new MaskingContextPolicy(this.host.contextPolicy ?? new ContextPolicy(), (text) =>
       this.maskContent("agent", text),
     );
@@ -916,13 +1037,15 @@ export class SessionService {
     const runtimeHost: RuntimeHost = {
       log: (message) => this.host.log?.(this.host.scrub?.(message) ?? message),
       steering: () =>
-        this.hub
-          .get(id)
-          .snapshot.items.flatMap((item) =>
-            item.kind === "user" && item.pending
-              ? [{ messageId: item.id, text: item.text, timestamp: item.timestamp ?? 0 }]
-              : [],
-          ),
+        review
+          ? []
+          : this.hub
+              .get(id)
+              .snapshot.items.flatMap((item) =>
+                item.kind === "user" && item.pending
+                  ? [{ messageId: item.id, text: item.text, timestamp: item.timestamp ?? 0 }]
+                  : [],
+              ),
       gateway: {
         ...gateway,
         stream: async function* (request) {
@@ -930,8 +1053,12 @@ export class SessionService {
           request.signal.throwIfAborted();
           const tools = request.tools.filter(
             (tool) =>
-              self.row(id).permission_mode !== "read-only" ||
-              (!writeToolNames.has(tool.name) && tool.name !== "run_command"),
+              (!review ||
+                (tool.name === "todo" &&
+                  reviewToolNames.has(tool.name) &&
+                  !self.host.disabledTools?.includes(tool.name))) &&
+              (self.row(id).permission_mode !== "read-only" ||
+                (!writeToolNames.has(tool.name) && tool.name !== "run_command")),
           );
           // Settings may change while durable events are published after runtime budgeting.
           const view = contextPolicy.prepare(
@@ -960,6 +1087,7 @@ export class SessionService {
       now: () => this.host.clock.now().getTime(),
       nextId: () => ulid(),
       approve: async (call, signal) => {
+        if (review) return "denied";
         try {
           await durable();
           const tool = tools.find((candidate) => candidate.name === call.name);
@@ -1059,23 +1187,62 @@ export class SessionService {
     const contextCompactor = this.compactors.get(id) ?? new ContextCompactor();
     this.compactors.set(id, contextCompactor);
     runtime.start({
-      systemPrompt: this.host.prompt(row.permission_mode),
+      systemPrompt: review
+        ? `${this.host.reviewPrompt?.(row.permission_mode) ?? this.host.prompt(row.permission_mode)}\n\n${planReviewInstruction}`
+        : this.host.prompt(row.permission_mode),
       model,
       tools,
       messages: this.transcript(id),
       contextPolicy,
       contextCompactor,
       maxToolCallsPerTurn: this.host.maxToolCallsPerTurn ?? 50,
+      ...(review ? { requestIdentity: { turnId: review.turnId, messageId: review.messageId } } : {}),
     });
+    const seed = review
+      ? this.host.db.transaction(() => {
+          this.reviewWritable(id, review);
+          const values = [this.hub.record(id, { type: "plan.review.submitted", review })];
+          this.sync(id, [
+            ...this.transcript(id),
+            { role: "user", content: text, timestamp: this.host.clock.now().getTime() },
+          ]);
+          values.push(this.hub.record(id, { type: "message.user", messageId: review.messageId, text }));
+          values.push(this.hub.record(id, { type: "turn.started", turnId: review.turnId }));
+          this.host.db
+            .prepare("UPDATE sessions SET status='running',updated_at=? WHERE id=?")
+            .run(this.now(), id);
+          return values;
+        })()
+      : [];
     const turn: ActiveTurn = {
+      kind: review ? "plan-review" : "ordinary",
       runtime,
       done: Promise.resolve({ stopReason: "error" }),
-      turnId: "",
-      messageId: "",
+      turnId: review?.turnId ?? "",
+      messageId: review?.messageId ?? "",
       accepting: true,
     };
     this.active.set(id, turn);
+    const echoes = new Set(["message.user", "turn.started"]);
     const off = runtime.onEvent((event) => {
+      if (review && (event.type === "message.user" || event.type === "turn.started")) {
+        if (
+          !echoes.delete(event.type) ||
+          (event.type === "message.user"
+            ? event.messageId !== review.messageId || event.text !== text
+            : event.turnId !== review.turnId)
+        ) {
+          failed = true;
+          turn.failed = true;
+          runtime.abort();
+        }
+        return;
+      }
+      if (review && event.type === "turn.done" && event.turnId !== review.turnId) {
+        failed = true;
+        turn.failed = true;
+        event = { ...event, turnId: review.turnId };
+      }
       if (event.type === "turn.started") turn.turnId = event.turnId;
       if (event.type === "message.user") turn.messageId = event.messageId;
       if (event.type === "turn.done") turn.accepting = false;
@@ -1098,10 +1265,43 @@ export class SessionService {
         runtime.abort();
       });
     });
-    turn.done = runtime
-      .send(text)
+    let execution: Promise<{ stopReason: StopReason }>;
+    try {
+      execution = runtime.send(text);
+    } catch (error) {
+      execution = Promise.reject(error);
+    }
+    turn.done = execution
+      .catch((error) => {
+        if (!review) throw error;
+        failed = true;
+        turn.failed = true;
+        try {
+          this.host.log?.(this.host.scrub?.(String(error)) ?? String(error));
+        } catch {
+          /* Diagnostics cannot strand an accepted review. */
+        }
+        return { stopReason: "error" as const };
+      })
       .then(async (result) => {
         await processing;
+        if (
+          review &&
+          this.hub.get(id).snapshot.planReviews.find((value) => value.id === review.id)?.stopReason === null
+        ) {
+          failed = true;
+          turn.failed = true;
+          try {
+            await this.process(
+              id,
+              { type: "turn.done", turnId: review.turnId, stopReason: "error" },
+              runtime.messages(),
+              turn,
+            );
+          } catch {
+            /* Lost ownership leaves the accepted turn for writable startup recovery. */
+          }
+        }
         if (failed) result = { stopReason: "error" };
         this.last.set(id, result);
         return result;
@@ -1110,6 +1310,7 @@ export class SessionService {
         off();
         this.active.delete(id);
       });
+    for (const value of seed) this.hub.publish(id, value);
     return { turnId: turn.turnId, messageId: turn.messageId };
   }
   private async process(
@@ -1232,7 +1433,7 @@ export class SessionService {
     if (turn) turn.accepting = false;
     turn?.runtime.abort();
     // Background program runs of the session end with it; the foreground run ends with the turn's abort.
-    void this.host.programs?.runner.stopSession(id);
+    if (turn?.kind !== "plan-review") void this.host.programs?.runner.stopSession(id);
     return !!turn;
   }
   async waitIdle(id: string): Promise<{ stopReason: StopReason } | null> {

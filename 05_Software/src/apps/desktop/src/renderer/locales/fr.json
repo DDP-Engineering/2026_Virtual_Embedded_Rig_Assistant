@@ -409,6 +409,7 @@
     "exported": "Artefact exporté."
   },
   "plan": {
+    "feedbackRestored": "Les commentaires sont prêts dans Plan.",
     "empty": "Aucune tâche dans cette session.",
     "pending": "En attente",
     "inProgress": "En cours",

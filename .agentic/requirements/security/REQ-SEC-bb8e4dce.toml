@@ -10,9 +10,9 @@ requirement = "While processing a plan review in any session permission mode, VE
 
 verification = "In read-only, Ask, Auto-edit and Bypass modes capture offered capabilities and fabricate write/edit/run_command/run_program/permission-change calls from hostile feedback or model output; assert zero host execution (including preparation-time program probes), file changes, approvals or grants and permit the structured plan update."
 
-affected_paths = ["05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/libraries/core/src/sessions/plan-review.ts", "05_Software/src/libraries/core/src/agent/runtime.ts", "05_Software/src/libraries/core/src/agent/types.ts", "05_Software/src/apps/desktop/src/main/sessions.ts", "05_Software/src/apps/desktop/src/main/plan-review.ts"]
+affected_paths = ["05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/libraries/core/src/sessions/plan-review.ts", "05_Software/src/libraries/core/src/agent/runtime.ts", "05_Software/src/libraries/core/src/agent/types.ts", "05_Software/src/apps/desktop/src/main/sessions.ts", "05_Software/src/apps/desktop/src/main/plan-review.ts", "05_Software/src/libraries/core/src/sessions/review-boundary.test.ts"]
 
-linked_tests = []
+linked_tests = ["05_Software/src/libraries/core/src/sessions/review-turn.test.ts", "05_Software/src/libraries/core/src/sessions/review-boundary.test.ts", "05_Software/src/apps/desktop/src/main/plan-review.test.ts", "05_Software/src/apps/desktop/src/main/plan-review-boundary.test.ts"]
 
 
 spec = "specs/REQ-DATA-fa8543aa.md"

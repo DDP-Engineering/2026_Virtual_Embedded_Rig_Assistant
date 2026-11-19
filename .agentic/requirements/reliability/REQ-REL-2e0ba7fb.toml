@@ -4,15 +4,15 @@ id = "REQ-REL-2e0ba7fb"
 
 title = "Reject review without a current plan"
 
-status = "draft"
+status = "active"
 
 requirement = "If a user requests plan review in a session with no current plan steps, VERA shall reject the request with INVALID without admitting a chat request or consuming pending feedback."
 
 verification = "Clear a previously commented plan and directly invoke review despite the disabled control; assert INVALID, unchanged draft text and zero new user messages or gateway dispatches, including a newly created empty session."
 
-affected_paths = ["05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/apps/desktop/src/main/plan-review.ts"]
+affected_paths = ["05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/apps/desktop/src/main/plan-review.ts", "05_Software/src/apps/desktop/src/main/plan-review.test.ts"]
 
-linked_tests = []
+linked_tests = ["05_Software/src/apps/desktop/src/main/plan-review.test.ts", "05_Software/src/libraries/core/src/sessions/review-turn.test.ts"]
 
 
 spec = ""

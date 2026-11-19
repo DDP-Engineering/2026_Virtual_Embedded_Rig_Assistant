@@ -409,6 +409,7 @@
     "exported": "Artifact exported."
   },
   "plan": {
+    "feedbackRestored": "Feedback is ready in Plan.",
     "empty": "No tasks in this session.",
     "pending": "Pending",
     "inProgress": "In progress",

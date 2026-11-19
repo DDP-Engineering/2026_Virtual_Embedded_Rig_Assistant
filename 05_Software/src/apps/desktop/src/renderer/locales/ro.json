@@ -409,6 +409,7 @@
     "exported": "Artefact exportat."
   },
   "plan": {
+    "feedbackRestored": "Feedbackul este pregătit în Plan.",
     "empty": "Nicio sarcină în această sesiune.",
     "pending": "În așteptare",
     "inProgress": "În curs",

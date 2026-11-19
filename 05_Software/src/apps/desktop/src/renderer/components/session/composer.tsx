@@ -11,9 +11,12 @@ import { PermissionPicker } from "../permission-picker.js";
 import { useAttachments } from "./attachments.js";
 import { ReasoningPicker } from "./reasoning-picker.js";
 
+export type ComposerState = Pick<SessionState, "mode" | "modelRef" | "status" | "activeTurnId" | "reasoning">;
+
 export function Composer({
   state,
   disabled,
+  sendDisabled = false,
   send,
   stop,
   setModel,
@@ -25,8 +28,9 @@ export function Composer({
   inspectorControls?: ReactNode;
   sessionId?: string;
   workbenchId?: string;
-  state: SessionState;
+  state: ComposerState;
   disabled: boolean;
+  sendDisabled?: boolean;
   send: (text: string) => Promise<boolean>;
   stop: () => void;
   setModel: (reference: string | null) => Promise<void>;
@@ -65,7 +69,7 @@ export function Composer({
   }, [text]);
   const running = !!state.activeTurnId;
   const submitting = useRef(false);
-  const locked = disabled || state.status === "awaiting_approval";
+  const locked = disabled || sendDisabled || state.status === "awaiting_approval";
   const providers = useQuery({
     queryKey: ["providers.list"],
     queryFn: () => api.invoke("providers.list", {}),

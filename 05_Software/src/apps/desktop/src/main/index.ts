@@ -112,7 +112,7 @@ import { bundledResponse, installSessionPolicy, secureSession, secureWindow } fr
 import { exportSession } from "./session-export.js";
 import { createSessionOrder } from "./session-order.js";
 import { installSessionPerformance } from "./session-performance.js";
-import { SessionsHost } from "./sessions.js";
+import { planReviewHandlers, SessionsHost } from "./sessions.js";
 import { drainShutdown } from "./shutdown.js";
 import { createPtyFactory } from "./terminal-pty.js";
 import { TerminalService } from "./terminals.js";
@@ -1125,11 +1125,15 @@ ipcMain.handle(
         }),
       "session.item.detail": ({ sessionId, itemId, field }) =>
         sessions.run((s) => ({ text: sessionContent(s.itemDetail(sessionId, itemId, field)) })),
+      ...planReviewHandlers(sessions, (value) => credentials.containsSecret(value)),
       "session.bookmark": ({ sessionId, messageId, bookmarked }) =>
-        sessions.run((s) => {
-          s.bookmark(sessionId, messageId, bookmarked);
-          return {};
-        }, false),
+        sessions.run(
+          (s) => {
+            s.bookmark(sessionId, messageId, bookmarked);
+            return {};
+          },
+          { purpose: "metadata" },
+        ),
       "session.rename": ({ sessionId, title }) =>
         sessions.run((s) => {
           if (credentials.containsSecret(title)) throw { code: "INVALID", messageKey: "errors.INVALID" };
@@ -1143,22 +1147,28 @@ ipcMain.handle(
           return {};
         }),
       "session.send": ({ sessionId, text }) =>
-        sessions.run((s) => {
-          if (credentials.containsSecret(text)) throw { code: "INVALID", messageKey: "errors.INVALID" };
-          const sent = s.send(sessionId, text);
-          embeddingWarmup.request(workbench.getSnapshot().config.id);
-          return sent;
-        }),
+        sessions.run(
+          (s) => {
+            if (credentials.containsSecret(text)) throw { code: "INVALID", messageKey: "errors.INVALID" };
+            const sent = s.send(sessionId, text);
+            embeddingWarmup.request(workbench.getSnapshot().config.id);
+            return sent;
+          },
+          { purpose: "ordinary", ordinarySessionId: sessionId },
+        ),
       // Stop and approval decisions must not wait for plugin loading and program probing.
       "session.stop": ({ sessionId }) => {
-        return sessions.run((s) => ({ stopped: s.stop(sessionId) }), false);
+        return sessions.run((s) => ({ stopped: s.stop(sessionId) }), { purpose: "metadata" });
       },
       "session.approval.decide": (request) =>
-        sessions.run(async (s) => {
-          if (request.commandPrefix !== undefined) await s.allowCommandApproval(request);
-          else s.decideApproval(request);
-          return {};
-        }, false),
+        sessions.run(
+          async (s) => {
+            if (request.commandPrefix !== undefined) await s.allowCommandApproval(request);
+            else s.decideApproval(request);
+            return {};
+          },
+          { purpose: "metadata" },
+        ),
       "session.reasoning.get": ({ sessionId }) =>
         sessions.run(async (s) => {
           const value = await s.reasoningOptions(sessionId);

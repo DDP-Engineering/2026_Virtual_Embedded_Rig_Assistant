@@ -12,7 +12,7 @@ verification = "Attempt create/edit/delete/re-anchor/review after archival, in a
 
 affected_paths = ["05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/apps/desktop/src/main/plan-review.ts", "05_Software/src/apps/desktop/src/main/sessions.ts", "05_Software/src/apps/desktop/src/renderer/App.tsx", "05_Software/src/apps/desktop/src/renderer/components/session/plan-tab.tsx", "05_Software/src/apps/desktop/src/renderer/components/session/plan-feedback.tsx"]
 
-linked_tests = ["05_Software/src/libraries/core/src/sessions/plan-review.test.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/sessions/plan-review.test.ts", "05_Software/src/libraries/core/src/sessions/review-turn.test.ts", "05_Software/src/libraries/core/src/sessions/review-recovery.test.ts", "05_Software/src/apps/desktop/src/renderer/components/session/plan-review-retry.test.ts"]
 
 
 spec = ""

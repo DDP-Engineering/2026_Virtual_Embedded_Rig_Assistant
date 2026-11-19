@@ -4,7 +4,7 @@ id = "REQ-REL-239f8647"
 
 title = "Reject review without pending feedback"
 
-status = "draft"
+status = "active"
 
 requirement = "If a user requests plan review without pending comments, VERA shall reject the request with INVALID without admitting a chat request."
 
@@ -12,7 +12,7 @@ verification = "Invoke review with a nonempty plan but no comments, after deleti
 
 affected_paths = ["05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/apps/desktop/src/main/plan-review.ts"]
 
-linked_tests = []
+linked_tests = ["05_Software/src/apps/desktop/src/main/plan-review.test.ts", "05_Software/src/libraries/core/src/sessions/review-turn.test.ts"]
 
 
 spec = ""

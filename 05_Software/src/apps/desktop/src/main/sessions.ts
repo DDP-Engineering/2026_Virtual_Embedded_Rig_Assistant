@@ -30,6 +30,7 @@ import {
 import {
   type EventEnvelope,
   type HelpLanguage,
+  type PermissionMode,
   partsSearchDefaults,
   sessionSubscriptionSchema,
   sessionUnsubscriptionSchema,
@@ -41,6 +42,13 @@ import type { CredentialFile } from "./credentials.js";
 import { authorizedSender, type InvokeSender, type RendererTarget } from "./ipc-router.js";
 import type { ProviderGateway } from "./provider-gateway.js";
 import { createSessionTransport } from "./session-events.js";
+
+export { planReviewHandlers } from "./plan-review.js";
+
+export interface SessionScope {
+  workbenchId: string;
+  db: ReturnType<WorkbenchService["getDatabase"]>;
+}
 
 export class SessionsHost {
   private service: SessionService | undefined;
@@ -104,17 +112,55 @@ export class SessionsHost {
     );
     return next;
   }
-  run<T>(operation: (service: SessionService) => T | Promise<T>, preparePrograms = true): Promise<T> {
+  /** Capture before enqueue: a later workbench with the same IDs is still a different owner. */
+  captureScope(workbenchId: string): SessionScope {
+    const scope = { workbenchId, db: this.options.workbench.getDatabase() };
+    this.assertScope(scope);
+    return scope;
+  }
+  private assertScope(scope: SessionScope): void {
+    try {
+      if (
+        this.options.workbench.getSnapshot().config.id !== scope.workbenchId ||
+        this.options.workbench.getDatabase() !== scope.db
+      )
+        throw veraError("CONFLICT");
+    } catch {
+      throw veraError("CONFLICT");
+    }
+  }
+  /** Metadata is probe-free by default; only ordinary sends opt into execution preparation. */
+  run<T>(
+    operation: (service: SessionService) => T | Promise<T>,
+    preparation: {
+      purpose?: "metadata" | "review" | "ordinary";
+      scope?: SessionScope;
+      ordinarySessionId?: string;
+    } = {},
+  ): Promise<T> {
     if (this.shutdown) return Promise.reject(veraError("BUSY"));
+    const { purpose = "metadata", ordinarySessionId } = preparation;
+    const requestedScope = preparation.scope ? { ...preparation.scope } : undefined;
     this.pending++;
     return this.serial(async () => {
+      if (requestedScope) this.assertScope(requestedScope);
       const snapshot = this.options.workbench.getSnapshot();
       const db = this.options.workbench.getDatabase();
-      this.config = preparePrograms ? (await this.options.workbench.getConfig()).config : snapshot.config;
-      if (preparePrograms) {
+      const scope = { workbenchId: snapshot.config.id, db };
+      const assertCurrent = () => this.assertScope(scope);
+      if (ordinarySessionId && this.db === db && this.service?.isPlanReviewActive(ordinarySessionId))
+        throw veraError("BUSY");
+      this.config =
+        purpose === "metadata" ? snapshot.config : (await this.options.workbench.getConfig()).config;
+      assertCurrent();
+      if (purpose !== "metadata") {
         this.pinned = (await this.options.workbench.getPinned()).content;
+        assertCurrent();
+      }
+      if (purpose === "ordinary") {
         this.skills = this.options.workbench.skillCatalog(snapshot.config.id);
         const skills = await this.skills.list();
+        assertCurrent();
         this.skillMetadata = skills
           .filter((skill) => skill.enabled && !skill.error)
           .map(({ name, description }) => ({ name, description }));
@@ -130,6 +176,7 @@ export class SessionsHost {
           this.programHost || this.options.parts
             ? await this.options.workbench.loadPlugins(snapshot.config.id)
             : [];
+        assertCurrent();
         this.partsPlugin = loaded.some(officialPartsPlugin);
         this.layoutPlugin = loaded.some(officialLayoutPlugin);
         this.electricalPlugins = loaded.filter(electricalModelPlugin).map((plugin) => plugin.manifest.id);
@@ -144,6 +191,7 @@ export class SessionsHost {
         ]);
         if (key !== this.programKey) {
           this.programEntries = this.programHost ? await programPromptEntries(this.programHost, skills) : [];
+          assertCurrent();
           this.programKey = key;
         }
       }
@@ -155,6 +203,7 @@ export class SessionsHost {
         };
       if (this.db !== db) {
         await this.drain();
+        assertCurrent();
         const options = this.options;
         this.programHost = options.programs && {
           ...options.programs,
@@ -164,20 +213,41 @@ export class SessionsHost {
         const self = this;
         const partsProvider = options.parts;
         const workbenchId = snapshot.config.id;
+        const prompt = (mode: PermissionMode, review: boolean) =>
+          buildSystemPrompt({
+            workbench: this.config ?? snapshot.config,
+            pinned: this.pinned,
+            skills: review ? [] : this.skillMetadata,
+            programs: review ? [] : this.programEntries,
+            commands:
+              !review &&
+              !!this.programHost?.shell &&
+              !(this.config?.tools.disabled ?? []).includes("run_command"),
+            help: !review && !!options.help && !(this.config?.tools.disabled ?? []).includes("help"),
+            env: {
+              clock: options.clock,
+              osFamily: process.platform === "win32" ? "windows" : "linux",
+              veraVersion: options.version,
+              permissionMode: mode,
+              indexedDocuments: (
+                db.prepare("SELECT count(*) AS n FROM documents WHERE status='indexed'").get() as {
+                  n: number;
+                }
+              ).n,
+            },
+          }).text;
         this.service = new SessionService({
           db,
           root: snapshot.folder,
           ...(options.terminals ? { terminals: options.terminals(workbenchId) } : {}),
           readOnly: snapshot.readOnly,
           additionalFolders: () => {
-            const current = options.workbench.getSnapshot();
-            if (current.config.id !== workbenchId) throw veraError("CONFLICT");
-            return current.config.additional_folders;
+            assertCurrent();
+            return options.workbench.getSnapshot().config.additional_folders;
           },
           commandPrefixes: () => {
-            const current = options.workbench.getSnapshot();
-            if (current.config.id !== workbenchId) throw veraError("CONFLICT");
-            return current.config.agent.allowed_commands;
+            assertCurrent();
+            return options.workbench.getSnapshot().config.agent.allowed_commands;
           },
           saveCommandPrefix: async (prefix) => {
             await options.workbench.allowCommandPrefix(prefix, workbenchId);
@@ -246,35 +316,18 @@ export class SessionsHost {
             ];
           },
           model: (ref) => options.gateway().modelReference(ref, this.config?.agent.model),
-          prompt: (mode) =>
-            buildSystemPrompt({
-              workbench: this.config ?? snapshot.config,
-              pinned: this.pinned,
-              skills: this.skillMetadata,
-              programs: this.programEntries,
-              commands:
-                !!this.programHost?.shell && !(this.config?.tools.disabled ?? []).includes("run_command"),
-              // The rule names the tool only while the workbench offers it (REQ-FUNC-4fa3e396).
-              help: !!options.help && !(this.config?.tools.disabled ?? []).includes("help"),
-              env: {
-                clock: options.clock,
-                osFamily: process.platform === "win32" ? "windows" : "linux",
-                veraVersion: options.version,
-                permissionMode: mode,
-                indexedDocuments: (
-                  db.prepare("SELECT count(*) AS n FROM documents WHERE status='indexed'").get() as {
-                    n: number;
-                  }
-                ).n,
-              },
-            }).text,
-          assertWritable: () => options.workbench.assertSessionWritable(),
+          prompt: (mode) => prompt(mode, false),
+          reviewPrompt: (mode) => prompt(mode, true),
+          assertWritable: () => {
+            assertCurrent();
+            options.workbench.assertSessionWritable();
+          },
           scrub: (text) => options.credentials.scrub(text),
           ...(options.log ? { log: options.log } : {}),
           knownSecrets: () => options.credentials.knownSecrets(),
           masking: (area) => {
+            assertCurrent();
             const current = options.workbench.getSnapshot();
-            if (current.config.id !== workbenchId) throw veraError("CONFLICT");
             return createMaskingResolver(() => options.settings.get().settings)(current.config, area);
           },
         });
@@ -282,7 +335,10 @@ export class SessionsHost {
       }
       if (!this.service) throw veraError("INTERNAL");
       await this.service.waitReady();
-      return operation(this.service);
+      assertCurrent();
+      const result = await operation(this.service);
+      assertCurrent();
+      return result;
     }).finally(() => {
       this.pending--;
     });
@@ -306,18 +362,21 @@ export class SessionsHost {
         throw veraError("CONFLICT");
       rows = service.list();
     } else {
-      rows = await this.run((current) => {
-        if (
-          this.options.workbench.getDatabase() !== db ||
-          this.options.workbench.getSnapshot().config.id !== snapshot.config.id
-        )
-          throw veraError("CONFLICT");
-        return current.list();
-      }, false);
+      rows = await this.run(
+        (current) => {
+          if (
+            this.options.workbench.getDatabase() !== db ||
+            this.options.workbench.getSnapshot().config.id !== snapshot.config.id
+          )
+            throw veraError("CONFLICT");
+          return current.list();
+        },
+        { purpose: "metadata" },
+      );
     }
     return rows.map((row) => ({ ...row, title: this.service?.maskContent("agent", row.title) ?? row.title }));
   }
-  /** Recomputes the program prompt entries on the next session call: a plugin was installed, removed, toggled or provisioned. */
+  /** Recomputes entries on the next ordinary preparation after a plugin change. */
   invalidatePrograms(): void {
     this.programGeneration++;
   }

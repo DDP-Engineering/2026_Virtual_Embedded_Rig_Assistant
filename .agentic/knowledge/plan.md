@@ -16,6 +16,14 @@ Core owns validated ordered session task lists and atomic database/event updates
 - SessionService binds TodoHost database/repository/session/Clock/ownership/scrub/hub callbacks; todo validates scrubbed fields, checks abort/authority and upserts+records one event within a synchronous transaction, publishing after commit.
 - PlanTab keys workbench/session identity and consumes the shared session view (useSessionView over useSessionEvents). List text is escaped, order is authoritative; Circle/CircleDot/CircleCheck expose localized status image names and visible status labels. Empty/loading/retry states share application conventions.
 
+## Feedback and review backend
+
+- Shared plan-review.ts defines exact revision/occurrence/full-text targets with whole-step or scalar-safe UTF16 ranges. Each todo.updated increments planRevision, including identical replacements, conservatively making old draft targets stale. Shared projection validates against the displayed agent-masked text before disclosure.
+- SessionService.savePlanComment/deletePlanComment record scoped draft metadata with feedback-revision CAS, without transcript rows, model requests or todo changes. Existing format-1 events retain drafts and immutable submitted plan/comment snapshots across database reopen; no separate store or migration is used.
+- The four strict user-only channels session.plan.comment.save, session.plan.comment.delete, session.plan.review and session.plan.review.restore carry workbench/session scope. Desktop captures the original database before enqueue and guards it across preparation and durable effects; metadata and review never prepare programs or skills.
+- reviewPlan atomically commits one envelope/user message/started turn and consumes only its captured drafts before publication or dispatch. The expected plan/feedback pair identifies an accepted receipt across reopen. Its fresh runtime offers at most the built-in todo, denies approval and rejects ordinary steering, regardless of permission mode; Stop affects that review runtime only.
+- An unsuccessful accepted review retains history. Explicit restore stages only missing source-linked retry drafts without overwriting edits; a subsequent review revalidates all anchors. Generic chat Retry uses this restore path rather than ordinary send, and active review sending is disabled while Stop stays available.
+
 ## Invariants
 
 - Invalid bounds/status/shape, abort or authority loss cannot mutate the list/event. Failed event persistence rolls back the upsert. Observer errors are contained by SessionHub after persistence.
@@ -31,6 +39,8 @@ Core owns validated ordered session task lists and atomic database/event updates
 | Atomic storage/events/authority | TodosRepository;SessionService TodoHost | core sessions/todos.test.ts;native plan.spec.ts |
 | Snapshot/live/status/navigation | PlanTab;useSessionView;mock sessions | plan-tab.test.ts;native/browser plan.spec.ts |
 | CLI composition | same SessionService/registry | tooling/cli.test.ts Plan process case |
+| Drafts, admission, receipts and restore | shared/core plan-review; core service; main plan-review | shared/core plan-review.test.ts; core review-{turn,recovery,boundary}.test.ts; main plan-review{,-boundary}.test.ts |
+| Live privacy and safe generic Retry | session-view/use-session-events; workspace/composer | hooks/session-privacy.test.ts; components/session/plan-review-retry.test.ts |
 
 ## Key behaviors
 

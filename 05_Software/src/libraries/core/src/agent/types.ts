@@ -23,6 +23,8 @@ export interface RuntimeInit {
   contextPolicy: ContextPolicy;
   contextCompactor?: ContextCompactor;
   maxToolCallsPerTurn?: number;
+  /** One-shot identity already accepted durably by the session owner. */
+  requestIdentity?: { turnId: string; messageId: string };
 }
 export interface RuntimeHost {
   gateway: LlmGateway;

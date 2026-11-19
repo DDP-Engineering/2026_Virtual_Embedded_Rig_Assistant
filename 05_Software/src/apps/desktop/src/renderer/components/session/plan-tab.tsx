@@ -6,11 +6,11 @@ import { useSessionView } from "../../hooks/session-view.js";
 import { ErrorMessage } from "../error-message.js";
 
 export function PlanTab({ workbenchId, sessionId }: { workbenchId: string; sessionId: string }) {
-  return <PlanView key={`${workbenchId}/${sessionId}`} sessionId={sessionId} />;
+  return <PlanView key={`${workbenchId}/${sessionId}`} workbenchId={workbenchId} sessionId={sessionId} />;
 }
-function PlanView({ sessionId }: { sessionId: string }) {
+function PlanView({ sessionId, workbenchId }: { sessionId: string; workbenchId: string }) {
   const { t } = useTranslation();
-  const { view, error, retry } = useSessionView(sessionId);
+  const { view, error, retry } = useSessionView(sessionId, undefined, workbenchId);
   return (
     <section className="plan-tab" aria-label={t("panel.plan")}>
       {error !== undefined ? (

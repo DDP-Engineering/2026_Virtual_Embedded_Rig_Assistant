@@ -4,15 +4,15 @@ id = "REQ-REL-02c0e68e"
 
 title = "Reject stale plan review targets"
 
-status = "draft"
+status = "active"
 
 requirement = "If a plan feedback mutation or review submission depends on a superseded revision, changed target or obsolete pending-comment snapshot, VERA shall reject it with CONFLICT while preserving existing feedback for explicit re-anchoring, removal or retry."
 
 verification = "Change the plan or a draft after the renderer captures a request and before host admission; assert CONFLICT, no admitted review and unchanged surviving feedback, including target removal, duplicate-row ambiguity and re-anchor confirmation racing another replacement."
 
-affected_paths = ["05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/libraries/core/src/sessions/plan-review.ts", "05_Software/src/libraries/shared/src/plan-review.ts", "05_Software/src/libraries/shared/src/ipc.ts", "05_Software/src/apps/desktop/src/main/plan-review.ts"]
+affected_paths = ["05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/libraries/core/src/sessions/plan-review.ts", "05_Software/src/libraries/shared/src/plan-review.ts", "05_Software/src/libraries/shared/src/ipc.ts", "05_Software/src/apps/desktop/src/main/plan-review.ts", "05_Software/src/apps/desktop/src/main/plan-review-boundary.test.ts"]
 
-linked_tests = ["05_Software/src/libraries/core/src/sessions/plan-review.test.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/sessions/plan-review.test.ts", "05_Software/src/libraries/core/src/sessions/review-turn.test.ts", "05_Software/src/libraries/core/src/sessions/review-recovery.test.ts", "05_Software/src/apps/desktop/src/main/plan-review-boundary.test.ts"]
 
 
 spec = "specs/REQ-DATA-fa8543aa.md"

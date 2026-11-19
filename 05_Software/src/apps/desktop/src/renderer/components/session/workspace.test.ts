@@ -1027,7 +1027,10 @@ test("obsolete snapshots and detached session callbacks cannot replace the selec
       : invoke(channel, request),
   );
   const off = vi.fn();
-  const subscription = vi.spyOn(api, "subscribe").mockReturnValue(off);
+  const subscription = vi
+    .spyOn(api, "subscribe")
+    .mockImplementation(((...args: unknown[]) =>
+      args[0] === "session" ? off : () => {}) as typeof api.subscribe);
   const changed = () => {};
   function Projection({ id }: { id: string }) {
     const { view } = useSessionEvents(id, changed);
@@ -1040,8 +1043,9 @@ test("obsolete snapshots and detached session callbacks cannot replace the selec
   expect(subscription).toHaveBeenCalledWith("session", b.id, second.seq, expect.any(Function));
   await act(async () => release(first));
   expect(container.textContent).toBe(b.id);
-  expect(subscription).toHaveBeenCalledTimes(1);
-  const detached = subscription.mock.calls[0]?.[3];
+  const sessionSubscriptions = subscription.mock.calls.filter(([topic]) => topic === "session");
+  expect(sessionSubscriptions).toHaveLength(1);
+  const detached = sessionSubscriptions[0]?.[3];
   if (typeof detached !== "function") throw new Error("Session callback required");
   await act(async () => root.render(createElement(Projection, { id: a.id })));
   await settle();
