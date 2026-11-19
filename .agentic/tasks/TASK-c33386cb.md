@@ -1,6 +1,6 @@
 # TASK-c33386cb - Plan: add comments and Review plan to request an agent revision
 
-stage: validate
+stage: done
 type: feature
 interaction: autopilot
 requirements: REQ-FUNC-2e8a54c7, REQ-DATA-d968385c, REQ-UX-8d3039aa, REQ-REL-4bea0006, REQ-DATA-fa8543aa, REQ-FUNC-dfa01734, REQ-UX-1dcf2048, REQ-FUNC-566e4205, REQ-FUNC-10533e00, REQ-SEC-9467cfbc, REQ-DATA-a71d1aac, REQ-UX-e86663cb, REQ-FUNC-14c661ce, REQ-DATA-cb383f59, REQ-FUNC-5536a651, REQ-DATA-0f69ffdd, REQ-REL-e048aed0, REQ-REL-ce1e5319, REQ-REL-02c0e68e, REQ-REL-2e0ba7fb, REQ-REL-239f8647, REQ-REL-5b02ea0b, REQ-SEC-4a5e9261, REQ-SEC-e412df5e, REQ-SEC-292daffe, REQ-REL-e50514e6, REQ-REL-0dca1c44, REQ-FUNC-461d6eb1, REQ-FUNC-bf4758a4, REQ-SEC-bb8e4dce, REQ-SEC-5f675c2f, REQ-UX-98d58422, REQ-UX-f205aabf, REQ-UX-4a040005, REQ-UX-4a040007, REQ-UX-4bea0002, REQ-FUNC-a1040002
@@ -15,16 +15,16 @@ end each session with `advance` or `pause`.
 
 ## Done checklist (current stage)
 
-- [ ] diff reviewed against scope, requirements, design, error paths,
+- [x] diff reviewed against scope, requirements, design, error paths,
       portability, security and unrequested work
-- [ ] knowledge pages of changed components current with the reviewed code
-- [ ] project and environment context reconciled with the candidate
-- [ ] requirements re-read: status, prose, verification, paths and links true
-- [ ] manual or inspection verification recorded where applicable
-- [ ] explicit review approved, when enabled
-- [ ] final `check --strict --run` result logged truthfully after the last edit
-- [ ] remaining warnings and pre-existing failures explained
-- [ ] `report` appended
+- [x] knowledge pages of changed components current with the reviewed code
+- [x] project and environment context reconciled with the candidate
+- [x] requirements re-read: status, prose, verification, paths and links true
+- [x] manual or inspection verification recorded where applicable
+- [x] explicit review approved, when enabled
+- [x] final `check --strict --run` result logged truthfully after the last edit
+- [x] remaining warnings and pre-existing failures explained
+- [x] `report` appended
 
 ## Frame
 
@@ -434,6 +434,13 @@ Diagrams: [diagram_TASK-c33386cb.md](diagram_TASK-c33386cb.md)
 - 2026-11-19 build: Evolution refreshed against the original preimplementation anchor: 227 non-.agentic paths (67 added/159 modified/one removed). Reviewed ownership against D1-D6 and current checkpoint: all paths already occur in integrated checkpoint cd8ff0e2; this correction only changes the existing Plan fixture, colocated mock feedback test and Plan review browser test. Other expanded paths belong to retained target image/delegation/provider/embedding integration, not this correction; no new unplanned path. Git rename detection was disabled for the inventory comparison so the target's old manifest removal is explicit. Original anchor was not replaced.
 - 2026-11-19 build: DEVIATION build: integrated target expands scoped strict AEGIS to 0 errors/136 warnings/40 notes (exit 0, promoted=0, passed=true), rather than preintegration 31 warnings - accepted for this focused correction without rewriting unrelated target requirements or configuration. All warnings concern retained checkpoint files, not newly uncovered correction paths: 93 source paths fall outside this task's requirement coverage because they belong to integrated image/delegation/embedding/provider work; 15 outside-layout paths are mandated help/release/CHANGELOG and target REUSE locations; 12 ticket-ref and 13 journal-header baseline findings remain; two inherited knowledge pages file-tools/sessions exceed the 24 KB target (25/26 KB), left for knowledge reconciliation in validate; one secret-in-diff is the explicit fake img04-private MQTT credential in target transcript-images.spec.ts:84, not a live secret. No stale-path/uncovered correction finding, suppression, payload edit or broadened scope. Cost: validate must account for this inherited warning inventory and reconcile materially touched knowledge, not claim the old 31-warning report still describes the integrated candidate.
 - 2026-11-19 build: completed; next validate
+- 2026-11-19 validate: Validate reconciliation at HEAD 432cc177 on the recorded branch: reviewed the complete feature against all 37 active requirements, D1-D6 and current tests, including integrated image/delegation seams, scoped/probe-free host preparation, atomic receipts/recovery, exact UTF16/CRLF targets, privacy, Retry and authority failures. Inline TOML/path audit exit 0: every affected path, linked test and spec exists; git diff --check exit 0. Reconciled sessions knowledge in place (24,219 bytes), retaining ordinary lifecycle behavior and documenting built-in-todo-only review, image no-read/no-steering and no delegation capabilities. Plan/chat/runtime knowledge and project/environment context agree with the current code; no environment contract change. No production/test/config edit during this validate attempt, so the recorded integrated focused Vitest, Chromium, sandboxed container Electron restart, import-boundary and release-note results are reused under verification-policy.md; no routine full suite or plugin suite. Existing evolution covers all 227 integrated paths; the original anchor is unchanged.
+- 2026-11-19 validate: Inspection verification: read current schemas/reducer, transactional service admission/restore/runtime, captured-DB IPC, editor/selection/history and privacy/Retry implementations with concrete rollback/reopen, hostile capability, navigation, lost-ack and real-browser assertions; observed no unfulfilled requirement or unexplained unrequested feature path. No explicit Manual:/Inspection: requirement remained. For REQ-UX-4a040007, inspected unchanged shared control/focus styles and new Plan CSS (no new color/opacity); inline WCAG relative-luminance calculation on current themes.css exit 0: relevant normal/secondary/muted/primary/error text pairs all >=4.5 (minimum 6.02 light, 8.60 dark). Recorded browser Tab/ring/reduced-motion/minimum-size/six-scale proof supplies the interaction/geometry observations; this calculation is not a new browser run. Windows/native Ubuntu and live-model quality remain unestablished; the coordinator owns any applicable full multi-platform milestone gate and publication, not this app-only ticket attempt.
+- 2026-11-19 validate: Independent review round 1 completed in separate read-only pi contexts (PIDs 4153 specification, 4154 quality; no shared conversation/tools permitting mutation). Both returned APPROVED, no findings or requested changes, after inspecting current contracts/code/test assertions; full verdicts retained in /tmp/TASK-c33386cb-validate-{spec,quality}.log. Recorded both approvals through verdict CLI. Neither reviewer ran tests or claimed native Windows/Ubuntu/live-model proof; the pending final strict check is intentionally last. No candidate edit followed their approvals.
+- 2026-11-19 validate: DEVIATION validate: retain explained inherited integration warnings rather than refactor unrelated target components or weaken checks - advisory inventory has 93 uncovered-source paths, none intersecting the complete feature diff versus locally cached origin/master; 15 mandated/outside-layout help/release/CHANGELOG/REUSE paths; 13 journal-header and 12 ticket-ref baseline findings; one unrelated file-tools knowledge size warning; and one explicit fake MQTT test password img04-private in transcript-images.spec.ts. The materially touched sessions knowledge size warning is resolved. Temporary review-state warning is settled by both approvals; final counts will be reported from the actual final command. No suppression, payload/config edit or live secret involved. Cost: unrelated target traceability/page-size debt remains visible; Windows/native Ubuntu milestone coverage is coordinator-owned, not claimed from container proof.
+- 2026-11-19 validate: final: python .agentic/aegis.py check --task TASK-c33386cb --strict --run --json exit 0 after the last candidate edit and both round-1 approvals; strict.passed=true, promoted_warnings=0, errors=0/warnings=135/notes=40. Configured lint/typecheck/i18n/help commands all exited 0; lint retains seven baseline warnings/23 infos. This is static/strict proof, not a fresh product-suite run; [check].run deliberately skips test under verification-policy.md, with focused integration/browser/native-container/import-boundary proof reused as logged. Remaining 135 warnings: 93 inherited uncovered-source paths (zero feature-diff intersection), 15 mandated outside-layout paths, 13 baseline journal-header, 12 baseline ticket-ref, one unrelated file-tools context-size, one known fake credential fixture. No failing check, newly uncovered feature path, stale path, suppression or live secret. Windows/native Ubuntu, live-provider quality and full milestone gate remain unrun here; coordinator owns that gate. Full command JSON retained at /tmp/TASK-c33386cb-validate-final.json.
+- 2026-11-19 validate: Delivery report appended and read: all 37 contracts listed, both round-1 approvals and actual final 0/135/40 strict inventory retained. Its 7/9 checklist line is the pre-final-record snapshot; the final-proof/report items are now truthfully checked, completing 9/9. Temporary design/build stale-path warnings are historical resolved deviations, not current failures; retained D6 test-order and inherited-integration/platform limitations remain explicit. Review contexts finished; temporary briefs/requirement extracts/advisory JSON removed, useful verdict/final-proof logs retained. No production/test edit after review/proof, no staging, commit, publication or sandbox weakening.
+- 2026-11-19 validate: completed; next done
 
 ## Rulings
 
@@ -447,13 +454,66 @@ Diagrams: [diagram_TASK-c33386cb.md](diagram_TASK-c33386cb.md)
 
 ## State
 
-status: ready
-reported: build - completed
-next: start validate: read .agentic/steps/5_validate.md
-must_read: .agentic/tasks/TASK-c33386cb.md, .agentic/steps/5_validate.md
-changed: Corrected populated Plan mock fixture eligibility with one initiating user event, preserving production reuse rules; added regression, baseline-aware exact no-send/+1-review browser assertions and current requirement/Plan knowledge links.
-evidence: Focused Vitest 4 files/34 tests and import boundaries 17 tests pass; affected Chromium feedback and formerly failing translated Plan case both pass; lint/typecheck/i18n/help/release-notes/diff checks pass. Evolution reviewed; strict AEGIS passes with 0 errors/136 explained inherited warnings/40 notes.
-issues: Validate next: independent spec/quality reviews and final strict proof/report; reconcile inherited integration warning inventory and oversized knowledge. Native Electron restart proof reused, not rerun for mock-only fix. Windows/native Ubuntu, full/plugin suites and live-model quality not established here. No commit/staging/publication or sandbox changes.
-spec_compliance:
-implementation_quality:
-review_round:
+status: done
+reported: validate - completed
+next: implementation guidance complete; commit, push and integration belong to the developer
+must_read: .agentic/tasks/TASK-c33386cb.md
+changed: Validated Plan comments/revision-only review; reconciled sessions knowledge and completed journal/report.
+evidence: Final check --strict --run exit 0: 0 errors/135 explained warnings; statics pass; both independent reviews approved round 1; focused proof reused.
+issues: No ticket blocker. Inherited warnings retained; Windows/native Ubuntu and full milestone gate remain coordinator-owned; live-model quality unclaimed. No staging/commit/publication.
+spec_compliance: approved
+implementation_quality: approved
+review_round: 1
+
+## Delivery report (2026-11-19)
+
+- stage: validate; type: feature; branch: adore/gitea-dpasare-2026_Virtual_Embedded_Rig_Assistant-318-p9fda84577701
+- requirements:
+  - REQ-FUNC-2e8a54c7 - Replace the bounded session todo list
+  - REQ-DATA-d968385c - Persist todo replacements and events atomically
+  - REQ-UX-8d3039aa - Present the live session Plan with accessible statuses
+  - REQ-REL-4bea0006 - Resume renderer session streams
+  - REQ-DATA-fa8543aa - Anchor plan comments to revision and exact step occurrence
+  - REQ-FUNC-dfa01734 - Create draft comments on plan steps and text fragments
+  - REQ-UX-1dcf2048 - Read plan comments through compact step indicators
+  - REQ-FUNC-566e4205 - Edit a draft plan comment
+  - REQ-FUNC-10533e00 - Delete a draft plan comment
+  - REQ-SEC-9467cfbc - Keep unsubmitted plan feedback outside chat and agent requests
+  - REQ-DATA-a71d1aac - Persist session plan comment drafts across reopening
+  - REQ-UX-e86663cb - Flag stale plan comment targets
+  - REQ-FUNC-14c661ce - Explicitly re-anchor a draft plan comment
+  - REQ-DATA-cb383f59 - Retain reviewed plan text and submitted feedback
+  - REQ-FUNC-5536a651 - Submit current plan and pending feedback as one review request
+  - REQ-DATA-0f69ffdd - Record submitted plan comments separately from drafts
+  - REQ-REL-e048aed0 - Deduplicate repeated plan review submissions
+  - REQ-REL-ce1e5319 - Reject malformed plan comment targets
+  - REQ-REL-02c0e68e - Reject stale plan review targets
+  - REQ-REL-2e0ba7fb - Reject review without a current plan
+  - REQ-REL-239f8647 - Reject review without pending feedback
+  - REQ-REL-5b02ea0b - Reject plan review while the session is busy
+  - REQ-SEC-4a5e9261 - Deny plan feedback mutations in unwritable or archived sessions
+  - REQ-SEC-e412df5e - Reject plan feedback identifiers outside their owning session
+  - REQ-SEC-292daffe - Bind asynchronous plan feedback operations to the originating workbench
+  - REQ-REL-e50514e6 - Preserve drafts after plan review submission failure
+  - REQ-REL-0dca1c44 - Retain retryable feedback after an unsuccessful review turn
+  - REQ-FUNC-461d6eb1 - Request a brief chat explanation or clarification for plan review
+  - REQ-FUNC-bf4758a4 - Request a structured revised plan from review feedback
+  - REQ-SEC-bb8e4dce - Limit plan review effects to chat and session plan metadata
+  - REQ-SEC-5f675c2f - Isolate plan review from ordinary queued steering
+  - REQ-UX-98d58422 - Disable unavailable plan review actions
+  - REQ-UX-f205aabf - Provide keyboard selection and accessible plan feedback controls
+  - REQ-UX-4a040005 - Translate UI language and errors
+  - REQ-UX-4a040007 - Keep foundation controls accessible
+  - REQ-UX-4bea0002 - Streamed transcript
+  - REQ-FUNC-a1040002 - Session search and presentation follow live agent masking
+- deviations: 6 recorded
+  - design: accept stale-paths warnings for four explicitly planned new source modules - design must name the future files before build creates them; build must clear those warnings rather than suppress them.
+  - build: strict check still reports 36 stale-paths findings for the planned desktop main/plan-review.ts and renderer/components/session/plan-feedback.tsx modules - temporary only in this incomplete checkpoint; both modules and their tests remain required before build can advance. python .agentic/aegis.py check --task TASK-c33386cb --strict --json exited 0: errors=0, warnings=61, notes=39, no promoted warnings. Remaining 25 warnings are the unchanged 12 ticket-ref and 13 journal-header baseline findings; repo-evolution is pending until all requirements are green, as required by build step 7.
+  - build: accept 19 remaining stale-paths findings only for the still-unimplemented renderer plan-feedback.tsx at this bounded incomplete checkpoint - editor/selection/indicators/history, mocks, complete locales/help/notes and browser acceptance must be completed before build advances. Final strict AEGIS JSON exits 0 (errors=0, warnings=46, notes=39, no uncovered-source/context-size findings); other warnings are 12 baseline ticket-ref, 13 baseline journal-header and two outside-layout findings for root-mandated CHANGELOG/release-notes files not covered by existing AEGIS globs. No suppression/config/payload changes. Evolution waits until all requirements are green; both independent reviews remain unrecorded. Scratch JSON was removed. No commits/publication, human decision or sandbox weakening.
+  - build: D6 history/indicator/restore presentation branch assertions were completed after the initial six missing-controls/editor red tests, rather than each having an isolated preimplementation red - accepted as a test-order limitation, not missing functional proof; current component, real-browser and earlier durable-history/restore core tests pass. No historical red/green events were fabricated or rewritten. Both independent reviews and native/platform validation remain separate next-stage obligations.
+  - build: integrated target expands scoped strict AEGIS to 0 errors/136 warnings/40 notes (exit 0, promoted=0, passed=true), rather than preintegration 31 warnings - accepted for this focused correction without rewriting unrelated target requirements or configuration. All warnings concern retained checkpoint files, not newly uncovered correction paths: 93 source paths fall outside this task's requirement coverage because they belong to integrated image/delegation/embedding/provider work; 15 outside-layout paths are mandated help/release/CHANGELOG and target REUSE locations; 12 ticket-ref and 13 journal-header baseline findings remain; two inherited knowledge pages file-tools/sessions exceed the 24 KB target (25/26 KB), left for knowledge reconciliation in validate; one secret-in-diff is the explicit fake img04-private MQTT credential in target transcript-images.spec.ts:84, not a live secret. No stale-path/uncovered correction finding, suppression, payload edit or broadened scope. Cost: validate must account for this inherited warning inventory and reconcile materially touched knowledge, not claim the old 31-warning report still describes the integrated candidate.
+  - validate: retain explained inherited integration warnings rather than refactor unrelated target components or weaken checks - advisory inventory has 93 uncovered-source paths, none intersecting the complete feature diff versus locally cached origin/master; 15 mandated/outside-layout help/release/CHANGELOG/REUSE paths; 13 journal-header and 12 ticket-ref baseline findings; one unrelated file-tools knowledge size warning; and one explicit fake MQTT test password img04-private in transcript-images.spec.ts. The materially touched sessions knowledge size warning is resolved. Temporary review-state warning is settled by both approvals; final counts will be reported from the actual final command. No suppression, payload/config edit or live secret involved. Cost: unrelated target traceability/page-size debt remains visible; Windows/native Ubuntu milestone coverage is coordinator-owned, not claimed from container proof.
+- explicit review: enabled; spec_compliance=approved; implementation_quality=approved; review_round=1
+- diff vs task base 52cf2a5: 402 file(s) changed, 21021 line(s) added
+- checks: errors=0 warnings=135 notes=40
+- checklist: 7/9 done; open: final `check --strict --run` result logged truthfully after the last edit; `report` appended
