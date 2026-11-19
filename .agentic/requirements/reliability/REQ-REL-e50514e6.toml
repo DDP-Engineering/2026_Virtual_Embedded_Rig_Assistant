@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-REL-e50514e6"
+
+title = "Preserve drafts after plan review submission failure"
+
+status = "draft"
+
+requirement = "If a plan review submission fails before durable acceptance, VERA shall preserve the pending feedback and its anchors as unsent drafts with a visible recoverable error and retry."
+
+verification = "Inject validation, persistence and pre-acceptance dispatch failures; compare exact draft text/anchors and zero admitted request, then retry successfully from the visible error, including after navigating away and reopening the session."
+
+affected_paths = ["05_Software/src/libraries/core/src/sessions/", "05_Software/src/apps/desktop/src/renderer/components/session/plan-tab.tsx"]
+
+linked_tests = []
+
+
+spec = "specs/REQ-DATA-fa8543aa.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-19
+updated = 2026-11-19

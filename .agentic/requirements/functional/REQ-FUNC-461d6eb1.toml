@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-FUNC-461d6eb1"
+
+title = "Request a brief chat explanation or clarification for plan review"
+
+status = "draft"
+
+requirement = "When preparing an accepted plan review for the agent, VERA shall instruct it to respond in the same session's chat with a brief explanation of changes made from the feedback or a clarification question when the feedback cannot be resolved."
+
+verification = "Capture review model instructions with concrete and ambiguous feedback, then run deterministic explanation and clarification responses; assert required response guidance and the corresponding chat text in the originating session, including clarification without a plan replacement."
+
+affected_paths = ["05_Software/src/libraries/core/src/sessions/", "05_Software/src/libraries/core/src/agent/"]
+
+linked_tests = []
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-19
+updated = 2026-11-19

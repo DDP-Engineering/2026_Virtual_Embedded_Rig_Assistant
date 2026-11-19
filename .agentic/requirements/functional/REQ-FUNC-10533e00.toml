@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-FUNC-10533e00"
+
+title = "Delete a draft plan comment"
+
+status = "draft"
+
+requirement = "When a user deletes an existing draft plan comment in its writable unarchived session, VERA shall remove only that draft from the session's pending feedback."
+
+verification = "Create two drafts, delete one and reopen the session; assert only the selected draft disappears, including deletion of a stale draft and deletion of the last pending comment."
+
+affected_paths = ["05_Software/src/libraries/core/src/sessions/", "05_Software/src/apps/desktop/src/renderer/components/session/plan-tab.tsx"]
+
+linked_tests = []
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-19
+updated = 2026-11-19

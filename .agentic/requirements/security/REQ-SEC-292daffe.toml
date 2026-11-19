@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-SEC-292daffe"
+
+title = "Bind asynchronous plan feedback operations to the originating workbench"
+
+status = "draft"
+
+requirement = "When a plan feedback operation spans asynchronous workbench or session navigation, VERA shall keep its request, completion and revised plan bound to the captured owning workbench and session, rejecting a replaced workbench context with CONFLICT rather than dispatching into the replacement."
+
+verification = "Delay draft save, review preparation, acknowledgement and model completion across session and workbench switches; include colliding session IDs in separate databases and assert either originating-session effects or CONFLICT with zero replacement-session changes or gateway routing."
+
+affected_paths = ["05_Software/src/apps/desktop/src/main/sessions.ts", "05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/apps/desktop/src/renderer/components/session/plan-tab.tsx", "05_Software/src/libraries/core/src/sessions/"]
+
+linked_tests = []
+
+
+spec = "specs/REQ-DATA-fa8543aa.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-19
+updated = 2026-11-19

@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-SEC-bb8e4dce"
+
+title = "Limit plan review effects to chat and session plan metadata"
+
+status = "draft"
+
+requirement = "While processing a plan review in any session permission mode, VERA shall enforce an effect boundary limited to review metadata, chat and validated structured plan updates, excluding project-file changes, command or program execution, planned-step execution and additional execution permissions."
+
+verification = "In read-only, Ask, Auto-edit and Bypass modes capture offered capabilities and fabricate write/edit/run_command/run_program/permission-change calls from hostile feedback or model output; assert zero host execution (including preparation-time program probes), file changes, approvals or grants and permit the structured plan update."
+
+affected_paths = ["05_Software/src/libraries/core/src/sessions/", "05_Software/src/libraries/core/src/agent/", "05_Software/src/apps/desktop/src/main/sessions.ts"]
+
+linked_tests = []
+
+
+spec = "specs/REQ-DATA-fa8543aa.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-19
+updated = 2026-11-19

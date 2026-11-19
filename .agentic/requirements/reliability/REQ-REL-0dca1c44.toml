@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-REL-0dca1c44"
+
+title = "Retain retryable feedback after an unsuccessful review turn"
+
+status = "draft"
+
+requirement = "If an accepted plan review ends in provider failure, context limit, interruption or cancellation before completing its response, VERA shall retain its captured feedback as distinguishable submitted history with an explicit retry path subject to current-plan anchor validation."
+
+verification = "Fail, exhaust the context budget, stop and restart an admitted review before a completed response; inspect retained submitted quotes and feedback, exercise explicit retry and assert no automatic resubmission, including a partial plan update that makes the retry targets stale."
+
+affected_paths = ["05_Software/src/libraries/core/src/sessions/", "05_Software/src/libraries/shared/src/", "05_Software/src/apps/desktop/src/renderer/components/session/plan-tab.tsx"]
+
+linked_tests = []
+
+
+spec = "specs/REQ-DATA-fa8543aa.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-19
+updated = 2026-11-19

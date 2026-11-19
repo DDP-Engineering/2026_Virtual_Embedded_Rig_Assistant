@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-FUNC-bf4758a4"
+
+title = "Request a structured revised plan from review feedback"
+
+status = "draft"
+
+requirement = "When preparing a plan review that can be resolved from its feedback, VERA shall request publication of the revised structured session plan through the validated plan-update flow rather than treating chat prose as a replacement plan."
+
+verification = "Capture revision instructions and replay a response with a changed structured list plus chat explanation; assert the existing bounded atomic plan publication updates the selected Plan tab, including reordered/removed steps and a prose-only response that cannot mutate todos."
+
+affected_paths = ["05_Software/src/libraries/core/src/sessions/", "05_Software/src/libraries/core/src/tools/todo.ts", "05_Software/src/apps/desktop/src/renderer/components/session/plan-tab.tsx"]
+
+linked_tests = []
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-19
+updated = 2026-11-19

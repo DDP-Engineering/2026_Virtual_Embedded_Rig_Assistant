@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-FUNC-566e4205"
+
+title = "Edit a draft plan comment"
+
+status = "draft"
+
+requirement = "When a user saves an edit to an existing draft plan comment in its writable unarchived session, VERA shall replace that draft's feedback text without changing its anchored target."
+
+verification = "Create drafts on different repeated steps, edit one to Unicode multiline text and reopen it; compare exact updated text and unchanged target/other draft, including editing a stale draft without implicitly re-anchoring it."
+
+affected_paths = ["05_Software/src/libraries/core/src/sessions/", "05_Software/src/apps/desktop/src/renderer/components/session/plan-tab.tsx"]
+
+linked_tests = []
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-19
+updated = 2026-11-19

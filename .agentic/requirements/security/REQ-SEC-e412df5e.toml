@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-SEC-e412df5e"
+
+title = "Reject plan feedback identifiers outside their owning session"
+
+status = "draft"
+
+requirement = "If a plan feedback operation names a comment or review that does not belong to its specified session, VERA shall reject the operation with NOT_FOUND without disclosing or changing another session's feedback."
+
+verification = "Use real comments and review identifiers from session A in reads, edits, deletion, re-anchor and retry requests for session B; assert NOT_FOUND and byte-identical foreign records, including unknown identifiers and repeated plan text across both sessions."
+
+affected_paths = ["05_Software/src/libraries/core/src/sessions/", "05_Software/src/libraries/shared/src/", "05_Software/src/apps/desktop/src/main/index.ts"]
+
+linked_tests = []
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-19
+updated = 2026-11-19

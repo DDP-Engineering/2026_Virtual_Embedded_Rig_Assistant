@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-REL-239f8647"
+
+title = "Reject review without pending feedback"
+
+status = "draft"
+
+requirement = "If a user requests plan review without pending comments, VERA shall reject the request with INVALID without admitting a chat request."
+
+verification = "Invoke review with a nonempty plan but no comments, after deleting the last draft and with only successfully submitted comments; assert INVALID, no new durable user message and no gateway dispatch."
+
+affected_paths = ["05_Software/src/libraries/core/src/sessions/", "05_Software/src/apps/desktop/src/main/index.ts"]
+
+linked_tests = []
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-19
+updated = 2026-11-19

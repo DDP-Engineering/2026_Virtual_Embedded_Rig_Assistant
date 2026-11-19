@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-UX-1dcf2048"
+
+title = "Read plan comments through compact step indicators"
+
+status = "draft"
+
+requirement = "While a plan step has comments, the Plan tab shall expose them through a compact step-adjacent indicator whose opened view identifies each comment's text, original target quote and draft or submitted state."
+
+verification = "Render step and fragment comments beside duplicate descriptions, open each indicator and compare the correct comment, quote and draft/submitted label; check a step without comments has no misleading comment indicator and removed targets remain readable as stale feedback."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/session/plan-tab.tsx", "05_Software/src/apps/desktop/src/renderer/styles.css"]
+
+linked_tests = []
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-19
+updated = 2026-11-19

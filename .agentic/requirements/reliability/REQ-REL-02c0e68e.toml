@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-REL-02c0e68e"
+
+title = "Reject stale plan review targets"
+
+status = "draft"
+
+requirement = "If a plan feedback mutation or review submission depends on a superseded revision, changed target or obsolete pending-comment snapshot, VERA shall reject it with CONFLICT while preserving existing feedback for explicit re-anchoring, removal or retry."
+
+verification = "Change the plan or a draft after the renderer captures a request and before host admission; assert CONFLICT, no admitted review and unchanged surviving feedback, including target removal, duplicate-row ambiguity and re-anchor confirmation racing another replacement."
+
+affected_paths = ["05_Software/src/libraries/core/src/sessions/", "05_Software/src/libraries/shared/src/", "05_Software/src/apps/desktop/src/main/index.ts"]
+
+linked_tests = []
+
+
+spec = "specs/REQ-DATA-fa8543aa.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-19
+updated = 2026-11-19

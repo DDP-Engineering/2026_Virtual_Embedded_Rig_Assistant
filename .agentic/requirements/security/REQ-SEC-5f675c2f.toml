@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-SEC-5f675c2f"
+
+title = "Isolate plan review from ordinary queued steering"
+
+status = "draft"
+
+requirement = "If an ordinary send attempts to join an active plan review, VERA shall reject it with BUSY instead of admitting steering that could mix revision-only and execution-capable work."
+
+verification = "Hold a review before and after a plan tool call and attempt ordinary sends asking to execute steps; assert BUSY and no queued/delivered message, including sends during historical compaction and review finalization."
+
+affected_paths = ["05_Software/src/libraries/core/src/sessions/", "05_Software/src/libraries/core/src/agent/"]
+
+linked_tests = []
+
+
+spec = "specs/REQ-DATA-fa8543aa.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-19
+updated = 2026-11-19

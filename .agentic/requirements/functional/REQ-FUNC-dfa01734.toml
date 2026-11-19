@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-FUNC-dfa01734"
+
+title = "Create draft comments on plan steps and text fragments"
+
+status = "draft"
+
+requirement = "When a user adds feedback to a current plan step or a nonempty selected fragment inside that step in a writable unarchived session, VERA shall create a draft comment containing the entered Unicode and multiline text on that exact target."
+
+verification = "With two identically described steps, add a whole-step draft and a selected-fragment draft containing accents, emoji and newlines; inspect distinct target associations and exact comment text, including selection at the start and end of a step."
+
+affected_paths = ["05_Software/src/libraries/core/src/sessions/", "05_Software/src/apps/desktop/src/renderer/components/session/plan-tab.tsx", "05_Software/src/libraries/shared/src/"]
+
+linked_tests = []
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-19
+updated = 2026-11-19
