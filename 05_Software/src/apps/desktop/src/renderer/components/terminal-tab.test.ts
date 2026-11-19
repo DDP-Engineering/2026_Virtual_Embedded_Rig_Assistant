@@ -5,6 +5,7 @@ import { createRoot } from "react-dom/client";
 import { afterEach, expect, it, vi } from "vitest";
 import { api } from "../api/index.js";
 import i18n from "../i18n.js";
+import { TerminalNavigation } from "./terminal-navigation.js";
 import { TerminalTab } from "./terminal-tab.js";
 
 const native = vi.hoisted(() => ({
@@ -297,45 +298,59 @@ it("appends only the new tail when the host trims the head of a full buffer", as
   }
 });
 
-it("answers fresh terminal startup queries once and does not answer them again after remount", async () => {
-  vi.useFakeTimers();
-  const owner = "wb_01JB8Z6Q4M7N2K5R9T3V8X1Y0C";
-  const row: TerminalSummary = {
-    id: "00000000-0000-4000-8000-000000000002",
-    number: 2,
-    shared: false,
-    shell: "bash",
-    running: true,
-  };
-  let created = false;
-  vi.mocked(api.invoke).mockImplementation(async (channel) => {
-    if (channel === "terminal.list") return (created ? [row] : []) as never;
-    if (channel === "terminal.create") {
-      created = true;
-      return row as never;
+it.each(["panel", "chat"])(
+  "answers %s startup queries once and does not answer them again after remount",
+  async (source) => {
+    vi.useFakeTimers();
+    const owner = "wb_01JB8Z6Q4M7N2K5R9T3V8X1Y0C";
+    const row: TerminalSummary = {
+      id: "00000000-0000-4000-8000-000000000002",
+      number: 2,
+      shared: false,
+      shell: "bash",
+      running: true,
+    };
+    let created = source === "chat";
+    const terminalView = createElement(TerminalTab, { workbenchId: owner });
+    const view =
+      source === "chat"
+        ? createElement(
+            TerminalNavigation.Provider,
+            {
+              value: { workbenchId: owner, available: true, target: { id: row.id }, reveal() {} },
+            },
+            terminalView,
+          )
+        : terminalView;
+    vi.mocked(api.invoke).mockImplementation(async (channel) => {
+      if (channel === "terminal.list") return (created ? [row] : []) as never;
+      if (channel === "terminal.create") {
+        created = true;
+        return row as never;
+      }
+      if (channel === "terminal.output") return { ...row, output: "startup\x1b[c" } as never;
+      return {} as never;
+    });
+    const container = document.createElement("div");
+    document.body.append(container);
+    const root = createRoot(container);
+    const inputs = () => vi.mocked(api.invoke).mock.calls.filter(([channel]) => channel === "terminal.input");
+    try {
+      await act(async () => root.render(view));
+      expect(inputs()).toHaveLength(1);
+      expect(inputs()[0]?.[1]).toMatchObject({ data: "\x1b[?1;2c" });
+      await act(async () => root.render(null));
+      await act(async () => root.render(view));
+      expect(inputs()).toHaveLength(1);
+      expect(
+        vi.mocked(api.invoke).mock.calls.filter(([channel]) => channel === "terminal.create"),
+      ).toHaveLength(source === "chat" ? 0 : 1);
+    } finally {
+      await act(async () => root.unmount());
+      container.remove();
     }
-    if (channel === "terminal.output") return { ...row, output: "startup\x1b[c" } as never;
-    return {} as never;
-  });
-  const container = document.createElement("div");
-  document.body.append(container);
-  const root = createRoot(container);
-  const inputs = () => vi.mocked(api.invoke).mock.calls.filter(([channel]) => channel === "terminal.input");
-  try {
-    await act(async () => root.render(createElement(TerminalTab, { workbenchId: owner })));
-    expect(inputs()).toHaveLength(1);
-    expect(inputs()[0]?.[1]).toMatchObject({ data: "\x1b[?1;2c" });
-    await act(async () => root.render(null));
-    await act(async () => root.render(createElement(TerminalTab, { workbenchId: owner })));
-    expect(inputs()).toHaveLength(1);
-    expect(
-      vi.mocked(api.invoke).mock.calls.filter(([channel]) => channel === "terminal.create"),
-    ).toHaveLength(1);
-  } finally {
-    await act(async () => root.unmount());
-    container.remove();
-  }
-});
+  },
+);
 
 it.each([true, false])(
   "suspends terminal I/O during close and recovers correctly (success: %s)",

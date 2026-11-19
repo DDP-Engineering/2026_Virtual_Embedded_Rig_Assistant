@@ -237,6 +237,9 @@
     "run": "Exécuter dans le terminal",
     "runShell": "Exécuter dans le terminal ({{shell}})",
     "destination": "Terminal de destination",
+    "newCleanTerminal": "Nouveau terminal vierge (sans profil shell)",
+    "runNewTerminal": "Exécuter dans un nouveau terminal vierge",
+    "promptNotReady": "L’invite vide du terminal n’est pas vérifiée. Utilisez un nouveau terminal vierge.",
     "clipboardFailed": "Impossible de copier dans le presse-papiers. Réessayez.",
     "shellMismatch": "Le shell du terminal ne correspond pas à ce bloc de commandes.",
     "shellUnavailable": "Aucun shell {{shell}} compatible n’est installé."

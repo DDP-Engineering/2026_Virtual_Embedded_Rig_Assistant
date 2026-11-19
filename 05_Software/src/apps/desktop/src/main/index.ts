@@ -610,8 +610,8 @@ ipcMain.handle(
       },
       "terminal.create": ({ workbenchId, cols, rows, shell }) =>
         terminals.create(workbenchId, cols, rows, shell),
-      "terminal.execute": ({ workbenchId, id, shell, text }) => {
-        terminals.execute(workbenchId, id, shell, text);
+      "terminal.execute": async ({ workbenchId, id, shell, text }) => {
+        await terminals.execute(workbenchId, id, shell, text);
         return {};
       },
       "terminal.output": ({ workbenchId, id }) => terminals.output(workbenchId, id),

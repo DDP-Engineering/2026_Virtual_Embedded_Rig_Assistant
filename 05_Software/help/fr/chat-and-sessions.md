@@ -78,6 +78,8 @@ Ouvrez **Exécutions** dans le panneau droit pour voir la commande exacte, le do
 
 Ouvrez **Terminal** à droite ou appuyez sur **Ctrl+Shift+T**. Le shell interactif démarre dans le dossier du banc selon Paramètres → Commandes. **Nouveau terminal** crée des onglets ; **Fermer le terminal** les termine. Redimensionnez le panneau pour réorganiser la sortie. Les programmes interactifs acceptent votre saisie. L’arrêt d’une session d’agent laisse les terminaux ouverts ; fermer ou remplacer le banc, ou quitter VERA, les ferme. Le support natif est inclus.
 
+Les réponses et blocs de code ont des actions de copie séparées. L’exécution est disponible pour les blocs complets explicitement marqués PowerShell ou Bash. Elle vise uniquement un nouveau shell vierge dont l’invite initiale vide est vérifiée et qui n’a reçu aucune saisie. Après toute saisie ou exécution, VERA ne peut plus confirmer une invite vide : l’injection est refusée et **Exécuter dans un nouveau terminal vierge** est proposé. Votre texte non envoyé et vos programmes interactifs restent intacts. Les terminaux vierges ignorent les profils shell ; **Nouveau terminal** conserve le démarrage normal du shell configuré. **Nouveau terminal vierge (sans profil shell)** crée un shell compatible séparé. Annuler ou Échap ramène le focus clavier sur Exécuter.
+
 Chaque terminal démarre en privé. Pour autoriser l’agent à en lire un, voir [Autorisations](permissions.md).
 
 ## Masquage des secrets pour l’agent et les exports

@@ -1,6 +1,6 @@
-import { type CommandBlockShell, type TerminalSummary, veraError } from "@vera/shared";
+import { type CommandBlockShell, type TerminalSummary, veraError, veraErrorSchema } from "@vera/shared";
 import { Copy, Play } from "lucide-react";
-import { type ReactNode, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { type ReactNode, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../../api/index.js";
 import { ErrorMessage } from "../error-message.js";
@@ -88,6 +88,7 @@ function TerminalChoice({
         <label>
           {t("chatActions.destination")}
           <select value={id} onChange={(event) => setId(event.target.value)}>
+            <option value="">{t("chatActions.newCleanTerminal")}</option>
             {terminals.map((terminal) => (
               <option key={terminal.id} value={terminal.id}>
                 {t("terminal.name", { number: terminal.number })} — {shell}
@@ -130,6 +131,12 @@ export function CodeBlock({
   const live = useRef(true);
   const dispatching = useRef(false);
   const origin = useRef<HTMLButtonElement>(null);
+  const restoreFocus = useRef(false);
+  useLayoutEffect(() => {
+    if (busy || choices || !restoreFocus.current) return;
+    restoreFocus.current = false;
+    origin.current?.focus();
+  }, [busy, choices]);
   const owner = navigation?.workbenchId;
   useEffect(() => {
     live.current = true;
@@ -148,6 +155,7 @@ export function CodeBlock({
     setBusy(false);
     setChoices(undefined);
     setError(undefined);
+    restoreFocus.current = false;
   }, [scope]);
   const valid = () => live.current && owner !== undefined && currentScope.current === scope;
   function finish() {
@@ -169,6 +177,34 @@ export function CodeBlock({
       if (valid()) finish();
     }
   }
+  async function createAndDispatch() {
+    if (!valid() || !shell || streaming || !pending.current || dispatching.current) return;
+    dispatching.current = true;
+    setChoices(undefined);
+    try {
+      const terminal = await api.invoke("terminal.create", {
+        workbenchId: owner as string,
+        cols: 80,
+        rows: 24,
+        shell,
+      });
+      if (!valid()) return;
+      dispatching.current = false;
+      await dispatch(terminal.id);
+    } catch (failure) {
+      if (valid()) {
+        setError(failure);
+        finish();
+      }
+    }
+  }
+  async function runNew() {
+    if (!valid() || streaming || pending.current || !navigation?.available) return;
+    pending.current = true;
+    setBusy(true);
+    setError(undefined);
+    await createAndDispatch();
+  }
   async function run() {
     if (!valid() || !shell || streaming || pending.current || !navigation?.available) return;
     pending.current = true;
@@ -182,15 +218,8 @@ export function CodeBlock({
         setChoices(compatible);
         return;
       }
-      const terminal =
-        compatible[0] ??
-        (await api.invoke("terminal.create", {
-          workbenchId: owner as string,
-          cols: 80,
-          rows: 24,
-          shell,
-        }));
-      if (valid()) await dispatch(terminal.id);
+      if (compatible[0]) await dispatch(compatible[0].id);
+      else await createAndDispatch();
     } catch (failure) {
       if (valid()) {
         setError(failure);
@@ -198,6 +227,8 @@ export function CodeBlock({
       }
     }
   }
+  const failure = veraErrorSchema.safeParse(error);
+  const needsNew = failure.success && failure.data.messageKey === "chatActions.promptNotReady";
   return (
     <div className="chat-code-block">
       <div className="code-block-actions">
@@ -221,16 +252,28 @@ export function CodeBlock({
       </div>
       <pre>{children}</pre>
       {error !== undefined && <ErrorMessage error={error} />}
+      {needsNew && (
+        <button
+          type="button"
+          disabled={busy || streaming || !navigation?.available}
+          onClick={() => {
+            void runNew();
+          }}
+        >
+          {t("chatActions.runNewTerminal")}
+        </button>
+      )}
       {choices && shell && (
         <TerminalChoice
           terminals={choices}
           shell={shell}
           choose={(id) => {
-            void dispatch(id);
+            if (id) void dispatch(id);
+            else void createAndDispatch();
           }}
           cancel={() => {
+            restoreFocus.current = true;
             finish();
-            origin.current?.focus();
           }}
         />
       )}

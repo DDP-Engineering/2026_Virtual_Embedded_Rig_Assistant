@@ -18,6 +18,7 @@ import {
   veraError,
 } from "@vera/shared";
 import { z } from "zod";
+import { TerminalCommandPrompt } from "./terminal-command-prompt.js";
 
 export interface UserPty {
   pid: number;
@@ -40,6 +41,7 @@ type Entry = {
   owner: string;
   pty: UserPty;
   shell: CommandShell["kind"];
+  commandPrompt?: TerminalCommandPrompt;
   shared: boolean;
   grant: number;
   running: boolean;
@@ -131,9 +133,14 @@ export class TerminalService {
         throw { ...veraError("CONFLICT"), messageKey: "chatActions.shellMismatch" };
       this.owner(owner);
       if (generation !== this.generation) throw veraError("CONFLICT");
-      const pty = this.host.pty.spawn(shell.executable, interactiveShellArguments(shell), {
+      const commandPrompt = requestedShell ? new TerminalCommandPrompt() : undefined;
+      const startup =
+        commandPrompt && requestedShell
+          ? commandPrompt.startup(requestedShell, this.host.shell.environment())
+          : { args: interactiveShellArguments(shell), env: this.host.shell.environment() };
+      const pty = this.host.pty.spawn(shell.executable, startup.args, {
         cwd: current.folder,
-        env: this.host.shell.environment(),
+        env: startup.env,
         cols,
         rows,
       });
@@ -143,6 +150,7 @@ export class TerminalService {
         owner,
         pty,
         shell: shell.kind,
+        ...(commandPrompt ? { commandPrompt } : {}),
         shared: false,
         grant: 0,
         running: true,
@@ -154,7 +162,9 @@ export class TerminalService {
       entry.listeners.push(
         pty.onData((data) => {
           if (this.entries.get(entry.id) !== entry) return;
-          entry.output += data;
+          entry.output += entry.commandPrompt
+            ? entry.commandPrompt.output(data, (reply) => pty.write(reply))
+            : data;
           if (entry.output.length > BUFFER) {
             const length = entry.output.length;
             const tail = entry.output.slice(-BUFFER);
@@ -164,6 +174,7 @@ export class TerminalService {
           }
         }),
         pty.onExit(({ exitCode }) => {
+          entry.commandPrompt?.invalidate();
           entry.running = false;
           entry.exitCode = exitCode;
         }),
@@ -210,21 +221,29 @@ export class TerminalService {
     z.string().min(1).max(16384).parse(data);
     const entry = this.entry(owner, id);
     if (!entry.running) throw veraError("CONFLICT");
+    entry.commandPrompt?.invalidate();
     entry.pty.write(data);
   }
   /** Executes original block text inside its declared shell, never as a line-by-line paste. */
-  execute(owner: string, id: string, shell: CommandBlockShell, text: string): void {
+  async execute(owner: string, id: string, shell: CommandBlockShell, text: string): Promise<void> {
     commandBlockShellSchema.parse(shell);
     commandBlockTextSchema.parse(text);
     const entry = this.entry(owner, id);
     if (!entry.running) throw veraError("CONFLICT");
     if (entry.shell !== shell) throw { ...veraError("CONFLICT"), messageKey: "chatActions.shellMismatch" };
-    // One physical input line avoids readline/PSReadLine interpreting pasted newlines as separate submissions.
+    if (!entry.commandPrompt) throw { ...veraError("CONFLICT"), messageKey: "chatActions.promptNotReady" };
+    const generation = this.generation;
+    await entry.commandPrompt.wait();
+    // Input or workbench replacement may have happened while the initial prompt was starting.
+    if (generation !== this.generation || this.entry(owner, id) !== entry || !entry.running)
+      throw veraError("CONFLICT");
+    entry.commandPrompt.consume();
+    // Never clear or submit existing input. This one-shot pristine shell is the only proven clean destination.
     const command =
       shell === "powershell"
         ? `. ([scriptblock]::Create([Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('${Buffer.from(text, "utf8").toString("base64")}'))))`
         : `eval -- $'${text.replaceAll("\\", "\\\\").replaceAll("'", "\\'").replaceAll("\r", "\\r").replaceAll("\n", "\\n").replaceAll("\t", "\\t")}'`;
-    entry.pty.write(`\u0015${command}\r`);
+    entry.pty.write(`${command}\r`);
   }
   resize(owner: string, id: string, cols: number, rows: number): void {
     terminalSizeSchema.parse({ cols, rows });
@@ -241,6 +260,7 @@ export class TerminalService {
   async close(owner: string, id: string): Promise<void> {
     const entry = this.entry(owner, id);
     this.entries.delete(id);
+    entry.commandPrompt?.invalidate();
     for (const listener of entry.listeners) listener.dispose();
     await this.host.pty.stop(entry.pty);
   }
@@ -248,7 +268,10 @@ export class TerminalService {
     this.generation++;
     const entries = [...this.entries.values()];
     this.entries.clear();
-    for (const entry of entries) for (const listener of entry.listeners) listener.dispose();
+    for (const entry of entries) {
+      entry.commandPrompt?.invalidate();
+      for (const listener of entry.listeners) listener.dispose();
+    }
     await Promise.all(entries.map((entry) => this.host.pty.stop(entry.pty)));
   }
   suspend(): void {

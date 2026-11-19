@@ -10,6 +10,9 @@ import { ErrorMessage } from "./error-message.js";
 import { TerminalNavigation } from "./terminal-navigation.js";
 import "@xterm/xterm/css/xterm.css";
 
+// A successful chat dispatch proves this is first use. Claim that live-output handoff once, not on panel replay.
+const openedCommandTargets = new WeakSet<object>();
+
 function TerminalSurface({
   workbenchId,
   terminal,
@@ -149,6 +152,10 @@ export function TerminalTab({ workbenchId }: { workbenchId: string }) {
   const selected = terminals.find((terminal) => terminal.id === active);
   useEffect(() => {
     if (!target) return;
+    if (!openedCommandTargets.has(target)) {
+      openedCommandTargets.add(target);
+      freshTerminals.current.add(target.id);
+    }
     setActive(target.id);
     const timer = window.setTimeout(
       () =>

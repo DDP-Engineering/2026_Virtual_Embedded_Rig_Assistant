@@ -237,6 +237,9 @@
     "run": "Im Terminal ausführen",
     "runShell": "Im Terminal ausführen ({{shell}})",
     "destination": "Zielterminal",
+    "newCleanTerminal": "Neues sauberes Terminal (ohne Shellprofil)",
+    "runNewTerminal": "In einem neuen sauberen Terminal ausführen",
+    "promptNotReady": "Eine leere Eingabezeile ist nicht bestätigt. Verwenden Sie ein neues sauberes Terminal.",
     "clipboardFailed": "Kopieren in die Zwischenablage fehlgeschlagen. Versuchen Sie es erneut.",
     "shellMismatch": "Die Terminal-Shell passt nicht zu diesem Befehlsblock.",
     "shellUnavailable": "Keine kompatible {{shell}}-Shell ist installiert."

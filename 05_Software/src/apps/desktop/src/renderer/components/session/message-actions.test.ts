@@ -152,6 +152,7 @@ it("chooses a named destination when multiple compatible terminals exist, and ca
   await act(async () => run().click());
   const select = container.querySelector("select")!;
   expect([...select.options].map((option) => option.text)).toEqual([
+    "New clean terminal (no shell profile)",
     "Terminal 1 — powershell",
     "Terminal 2 — powershell",
   ]);
@@ -170,6 +171,58 @@ it("chooses a named destination when multiple compatible terminals exist, and ca
   });
   await act(async () => container.querySelector<HTMLButtonElement>('dialog button[type="submit"]')!.click());
   expect(executeCalls()[0]?.[1]).toMatchObject({ id: terminal(2).id });
+});
+
+it.each(["cancel", "escape"])(
+  "restores Run focus after %s has removed the dialog and enabled its origin",
+  async (action) => {
+    vi.mocked(api.invoke).mockImplementation(async (channel) =>
+      channel === "terminal.list" ? ([terminal(1), terminal(2)] as never) : ({} as never),
+    );
+    await render();
+    run().focus();
+    await act(async () => run().click());
+    expect(run().disabled).toBe(true);
+    const dialog = container.querySelector("dialog")!;
+    if (action === "escape")
+      await act(async () => dialog.dispatchEvent(new Event("cancel", { bubbles: false, cancelable: true })));
+    else
+      await act(async () =>
+        [...dialog.querySelectorAll("button")].find((button) => button.textContent === "Cancel")!.click(),
+      );
+    expect(container.querySelector("dialog")).toBeNull();
+    expect(run().disabled).toBe(false);
+    expect(document.activeElement).toBe(run());
+  },
+);
+
+it("offers explicit clean-terminal creation after refusing a destination and dispatches only after that click", async () => {
+  vi.mocked(api.invoke).mockImplementation(async (channel, request) => {
+    if (channel === "terminal.list") return [terminal(1)] as never;
+    if (channel === "terminal.execute" && (request as { id: string }).id === terminal(1).id)
+      throw { ...veraError("CONFLICT"), messageKey: "chatActions.promptNotReady" };
+    if (channel === "terminal.create") return terminal(2) as never;
+    return {} as never;
+  });
+  await render();
+  await act(async () => run().click());
+  expect(container.querySelector('[role="alert"]')?.textContent).toContain("empty prompt");
+  expect(api.invoke).not.toHaveBeenCalledWith("terminal.create", expect.anything());
+  const fresh = [...container.querySelectorAll("button")].find(
+    (button) => button.textContent === "Run in a new clean terminal",
+  )!;
+  await act(async () => {
+    fresh.click();
+    fresh.click();
+  });
+  expect(vi.mocked(api.invoke).mock.calls.filter(([channel]) => channel === "terminal.create")).toHaveLength(
+    1,
+  );
+  expect(executeCalls().map(([, request]) => (request as { id: string }).id)).toEqual([
+    terminal(1).id,
+    terminal(2).id,
+  ]);
+  expect(reveal).toHaveBeenCalledExactlyOnceWith(terminal(2).id);
 });
 
 it.each(["terminal.create", "terminal.execute"])(

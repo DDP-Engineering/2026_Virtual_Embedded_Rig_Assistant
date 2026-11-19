@@ -4,10 +4,10 @@ entries:
   - category: improved
     topic: { en: Chat, ro: Chat, de: Chat, fr: Chat }
     text:
-      en: Copy replies or code blocks and run shell blocks in a compatible terminal with one click.
-      ro: Copiază răspunsuri sau blocuri de cod și execută comenzile într-un terminal compatibil.
-      de: Antworten oder Codeblöcke kopieren und Shellblöcke per Klick im passenden Terminal ausführen.
-      fr: Copiez réponses ou blocs de code et exécutez les commandes dans un terminal compatible.
+      en: Copy replies or blocks; run shell blocks at verified empty prompts or in a new clean terminal.
+      ro: Copiază răspunsuri sau cod; execută doar la un prompt gol verificat sau într-un terminal nou curat.
+      de: Antworten und Code kopieren; Befehle nur am geprüften leeren Prompt oder im neuen Terminal starten.
+      fr: Copiez réponses ou code ; exécutez à une invite vide vérifiée ou dans un nouveau terminal vierge.
   - category: fixed
     topic: { en: Skills, ro: Skills, de: Skills, fr: Compétences }
     text:

@@ -100,10 +100,13 @@ test("native chat runs a multiline block exactly once, creates and selects termi
   await mkdir(folder);
   await mkdir(scripts);
   const windows = process.platform === "win32";
-  const command = windows
-    ? "Add-Content -LiteralPath result.txt -Value 'Știință 🧪' -Encoding utf8\nAdd-Content -LiteralPath result.txt -Value 'second line' -Encoding utf8"
-    : "printf '%s\\n' 'Știință 🧪' >> result.txt\nprintf '%s\\n' 'second line' >> result.txt";
-  const reply = `Run only on click.\n\n\`\`\`${windows ? "powershell" : "bash"}\n${command}\n\`\`\`\n`;
+  const shell = windows || process.env.VERA_CHAT_ACTIONS_SHELL === "powershell" ? "powershell" : "bash";
+  const powershell = shell === "powershell";
+  await writeFile(join(folder, "README.MD"), "README_HEAD_317\nSecond line\n");
+  const command = powershell
+    ? "Get-Content README.MD -TotalCount 10\nAdd-Content -LiteralPath result.txt -Value 'Știință 🧪' -Encoding utf8\nAdd-Content -LiteralPath result.txt -Value 'second line' -Encoding utf8"
+    : "head -n 10 README.MD\nprintf '%s\\n' 'Știință 🧪' >> result.txt\nprintf '%s\\n' 'second line' >> result.txt";
+  const reply = `Run only on click.\n\n\`\`\`${shell}\n${command}\n\`\`\`\n`;
   await writeFile(join(scripts, "commands.jsonl"), JSON.stringify({ text: reply }));
   const env = Object.fromEntries(
     Object.entries(process.env).filter((entry): entry is [string, string] => typeof entry[1] === "string"),
@@ -147,10 +150,25 @@ test("native chat runs a multiline block exactly once, creates and selects termi
         }
       })
       .toBe("Știință 🧪\nsecond line\n");
-    await invoke(page, "terminal.create", { workbenchId: workbench.config.id, cols: 80, rows: 24 });
+    const workbenchId = workbench.config.id;
+    const first = (await invoke(page, "terminal.list", { workbenchId }))[0]!;
+    await expect
+      .poll(async () => (await invoke(page, "terminal.output", { workbenchId, id: first.id })).output)
+      .toContain("README_HEAD_317");
+    await invoke(page, "terminal.create", { workbenchId, cols: 80, rows: 24, shell });
     await page.locator(".panel-close").click();
-    await page.locator("[data-run-block]").click();
     const choice = page.getByRole("dialog", { name: "Destination terminal" });
+    for (const cancel of ["button", "escape"]) {
+      await page.locator("[data-run-block]").focus();
+      await page.keyboard.press("Enter");
+      await expect(choice).toBeVisible();
+      if (cancel === "escape") await page.keyboard.press("Escape");
+      else await choice.getByRole("button", { name: "Cancel", exact: true }).click();
+      await expect(choice).toHaveCount(0);
+      await expect(page.locator("[data-run-block]")).toBeEnabled();
+      await expect(page.locator("[data-run-block]")).toBeFocused();
+    }
+    await page.keyboard.press("Enter");
     await expect(choice).toBeVisible();
     const rows = await invoke(page, "terminal.list", { workbenchId: workbench.config.id });
     await choice.locator("select").selectOption(rows[1]!.id);
@@ -161,6 +179,82 @@ test("native chat runs a multiline block exactly once, creates and selects termi
         (await readFile(join(folder, "result.txt"), "utf8")).replace(/^\uFEFF/, "").replaceAll("\r\n", "\n"),
       )
       .toBe("Știință 🧪\nsecond line\nȘtiință 🧪\nsecond line\n");
+    // Preserve a real unsubmitted line and offer a new destination rather than clearing/submitting it.
+    const pending = await invoke(page, "terminal.create", { workbenchId, cols: 80, rows: 24, shell });
+    await expect(page.locator(`#terminal-${pending.id}`)).toBeVisible();
+    await page.locator(`#terminal-${pending.id}`).click();
+    await expect(page.locator(`[data-terminal-id="${pending.id}"] textarea`)).toBeFocused();
+    const pendingCommand = powershell
+      ? "Add-Content -LiteralPath pending.txt -Value pending"
+      : "printf pending >> pending.txt";
+    await page.keyboard.type(pendingCommand);
+    await page.locator(".panel-close").click();
+    await page.locator("[data-run-block]").click();
+    await expect(choice).toBeVisible();
+    await choice.locator("select").selectOption(pending.id);
+    await choice.getByRole("button", { name: "Run in terminal", exact: true }).click();
+    await expect(page.getByRole("alert")).toContainText("not verified at an empty prompt");
+    await expect(readFile(join(folder, "pending.txt"), "utf8")).rejects.toMatchObject({ code: "ENOENT" });
+    await page.getByRole("button", { name: "Run in a new clean terminal", exact: true }).click();
+    await expect(page.locator(".terminal-surface textarea")).toBeFocused();
+    await expect(readFile(join(folder, "pending.txt"), "utf8")).rejects.toMatchObject({ code: "ENOENT" });
+    await page.locator(`#terminal-${pending.id}`).click();
+    await page.locator(`[data-terminal-id="${pending.id}"] textarea`).focus();
+    await page.keyboard.press("Enter");
+    await expect
+      .poll(async () => {
+        try {
+          return await readFile(join(folder, "pending.txt"), "utf8");
+        } catch {
+          return "";
+        }
+      })
+      .toContain("pending");
+
+    // A foreground stdin reader must receive only the user's later input, never the dispatch wrapper.
+    const reader = await invoke(page, "terminal.create", { workbenchId, cols: 80, rows: 24, shell });
+    await expect(page.locator(`#terminal-${reader.id}`)).toBeVisible();
+    await page.locator(`#terminal-${reader.id}`).click();
+    await page.locator(`[data-terminal-id="${reader.id}"] textarea`).focus();
+    const readCommand = powershell
+      ? "Set-Content reader-ready.txt ready; $answer = Read-Host 'READER_READY'; Set-Content -LiteralPath reader.txt -Value $answer -Encoding utf8"
+      : "printf ready > reader-ready.txt; IFS= read -r answer; printf '%s\\n' \"$answer\" > reader.txt";
+    await page.keyboard.type(readCommand);
+    await page.keyboard.press("Enter");
+    await expect
+      .poll(async () => {
+        try {
+          return await readFile(join(folder, "reader-ready.txt"), "utf8");
+        } catch {
+          return "";
+        }
+      })
+      .toContain("ready");
+    const dispatchRequest: Request<"terminal.execute"> = { workbenchId, id: reader.id, shell, text: command };
+    const refused = await page.evaluate(async (request) => {
+      try {
+        await (window as unknown as { vera: VeraBridge }).vera.invoke("terminal.execute", request);
+        return undefined;
+      } catch (error) {
+        return error;
+      }
+    }, dispatchRequest);
+    expect(refused).toMatchObject({ messageKey: "chatActions.promptNotReady" });
+    await expect(readFile(join(folder, "reader.txt"), "utf8")).rejects.toMatchObject({ code: "ENOENT" });
+    await page.keyboard.type("foreground intact");
+    await page.keyboard.press("Enter");
+    await expect
+      .poll(async () => {
+        try {
+          return (await readFile(join(folder, "reader.txt"), "utf8")).replace(/^\uFEFF/, "").trim();
+        } catch {
+          return "";
+        }
+      })
+      .toBe("foreground intact");
+    expect(
+      (await readFile(join(folder, "result.txt"), "utf8")).replace(/^\uFEFF/, "").replaceAll("\r\n", "\n"),
+    ).toBe("Știință 🧪\nsecond line\n".repeat(3));
     expect(await outboundAttempts(app)).toEqual([]);
   } finally {
     await app.close();
