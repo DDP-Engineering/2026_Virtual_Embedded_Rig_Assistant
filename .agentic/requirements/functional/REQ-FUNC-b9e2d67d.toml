@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-FUNC-b9e2d67d"
+title = "Launch delegated sessions from the parent turn"
+status = "active"
+requirement = "When a parent agent calls the enabled launch tool with a valid instruction and optional model and reasoning, VERA shall return the new session and initial turn identifiers as soon as core admits the independent turn."
+verification = "Replay a parent launch, confirm model and reasoning on the held child request and verify the parent reads a fixture before releasing the child."
+affected_paths = ["05_Software/src/libraries/core/src/sessions/service.ts","05_Software/src/libraries/core/src/tools/delegated-sessions.ts","05_Software/src/libraries/core/src/agent/runtime.ts", "05_Software/src/libraries/core/src/agent/types.ts","05_Software/src/libraries/core/src/tools/registry.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/sessions/delegation-tools.test.ts"]
+created = 2026-11-19
+updated = 2026-11-19

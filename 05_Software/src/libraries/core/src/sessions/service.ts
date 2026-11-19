@@ -50,6 +50,7 @@ import { type SessionRow, SessionsRepository } from "../storage/repos/sessions.j
 import { TodosRepository } from "../storage/repos/todos.js";
 import { type ChangeRequest, type PreparedChange, recoverChanges } from "../tools/changes.js";
 import { createToolContext, type ToolContext } from "../tools/context.js";
+import { bindDelegatedSessionHost } from "../tools/delegated-sessions.js";
 import type { HelpHost } from "../tools/help.js";
 import { capToolResult, programToolNames, ToolRegistry } from "../tools/registry.js";
 import type { TerminalReader } from "../tools/terminal-read.js";
@@ -482,8 +483,12 @@ export class SessionService {
     return this.subscribe(childId, sinceSeq, listener);
   }
 
-  stopDelegated(parentId: string, childId: string): boolean {
-    this.ownedDelegation(parentId, childId);
+  stopDelegated(parentId: string, childId: string, scope?: "initial-turn"): boolean {
+    const child = this.ownedDelegation(parentId, childId);
+    if (scope === "initial-turn") {
+      const turn = this.active.get(childId);
+      if (!turn?.accepting || turn.turnId !== child.turn_id) return false;
+    }
     return this.stop(childId);
   }
 
@@ -913,6 +918,12 @@ export class SessionService {
         ...(this.host.pluginBuilder ? [this.host.pluginBuilder.root] : []),
       ];
     } else {
+      ctx.delegation = bindDelegatedSessionHost(
+        this,
+        id,
+        () => turn.turnId,
+        () => this.host.knownSecrets?.() ?? [],
+      );
       if (this.host.help) ctx.help = this.host.help;
       else delete ctx.help;
       if (this.host.terminals) ctx.terminals = this.host.terminals;
@@ -996,7 +1007,7 @@ export class SessionService {
           const authorized = tool.publish?.(args, output) ?? output;
           return this.maskContent("agent", authorized);
         },
-        execute: async (args: unknown, signal: AbortSignal) => {
+        execute: async (args: unknown, signal: AbortSignal, callId?: string) => {
           await durable();
           if (tool.class === "program") {
             const run = prepared.get(tool.name);
@@ -1035,7 +1046,7 @@ export class SessionService {
             throw Error("Tool permission denied.");
           this.writable();
           try {
-            const result = await tool.execute(args, signal);
+            const result = await tool.execute(args, signal, callId);
             return result;
           } catch (error) {
             throw Error(

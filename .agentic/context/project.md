@@ -10,7 +10,7 @@ The software root contains four ESM workspaces and strict TypeScript tooling wit
 
 Session-local user-message bookmarks persist as format-1 events, project into snapshot bookmarkedMessageIds and remain in JSON/Markdown exports. Core and IPC enforce user/session ownership and writable unarchived mutations; read-only/archived reads remain available. Bookmark metadata never enters agent transcript/model requests. Message and single-marker preview controls share optimistic bookmark state with rollback and localized errors, locking read-only/archived mutations. Preview cards show the first prompt line and reply start, with derived reply ownership preserved through queued delivery and replay. Bookmarked rail markers are filled in the primary color and longer; groups indicate any bookmarked member. Configurable next/previous bookmark commands (Mod+Alt+N/P by default) reuse rail scroll, highlight, announcement and lane focus, stopping at directional boundaries.
 
-Core delegated turns use the same workbench session service, gateway and event history. The format-1 database retains parent ownership and request identity across interruption. Each workbench admits up to three active delegated turns with a fixed inspection-only tool scope.
+Core delegated turns use the same workbench session service, gateway and event history. The format-1 database retains parent ownership and request identity across interruption. Each workbench admits up to three active delegated turns with a fixed inspection-only tool scope. Parent agents can launch, observe, wait for and stop the initial turn through the core tool registry. Monitoring publishes bounded masked replies and status derived from the durable event sequence.
 
 ## Supported operation
 

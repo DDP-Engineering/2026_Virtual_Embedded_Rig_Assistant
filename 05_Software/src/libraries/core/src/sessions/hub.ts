@@ -129,17 +129,23 @@ export class SessionHub {
     const listeners = this.listeners.get(id) ?? new Set();
     listeners.add(deliver);
     this.listeners.set(id, listeners);
-    for (const row of rows) notify(row.seq, sessionEventSchema.parse(JSON.parse(row.payload_json)));
-    while (queued.length) {
-      const value = queued.shift();
-      if (value) notify(value.seq, value.event);
-    }
-    replay = false;
-    return () => {
+    const off = () => {
       active = false;
       listeners.delete(deliver);
-      if (!listeners.size) this.listeners.delete(id);
+      if (!listeners.size && this.listeners.get(id) === listeners) this.listeners.delete(id);
     };
+    try {
+      for (const row of rows) notify(row.seq, sessionEventSchema.parse(JSON.parse(row.payload_json)));
+      while (queued.length) {
+        const value = queued.shift();
+        if (value) notify(value.seq, value.event);
+      }
+      replay = false;
+      return off;
+    } catch (error) {
+      off();
+      throw error;
+    }
   }
   clear(id?: string): void {
     if (id) this.listeners.delete(id);

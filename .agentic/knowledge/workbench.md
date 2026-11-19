@@ -38,7 +38,7 @@ sidebar are described in [workbench editor](workbench-editor.md).
 
 - `agent.allowed_commands` is a bounded unique list of conservative literal prefixes in format1. User approval IPC routes explicit prefix actions to async SessionService.allowCommandApproval (ordinary decideApproval stays synchronous), validates the pending exact command, persists a chosen matching eligible prefix through WorkbenchService.allowCommandPrefix, then rechecks the pending decision. Failed disk writes retain the pending approval. Edit workbench > Agent loads complete authoritative grant identities with masked labels and removes selected IDs with normal Save/Cancel. Config update applies removal IDs atomically against current exact grants, rejecting stale/mismatched IDs. Unrelated Save preserves all grants rather than echoing sanitized event strings. Shared command-prefix schemas reject unsupported/destructive grants; agent tools cannot add them. ApprovalGate uses the live workbench snapshot at consumption. Tests: tests/e2e/command-prefixes.spec.ts, workbench/service.test.ts.
 
-- WorkbenchService recognizes shared built-ins by default when reporting unknown disabled names; injected host catalogs retain their existing authority.
+- WorkbenchService recognizes shared built-ins and runtime delegation tools by default when reporting unknown disabled names. Injected host catalogs retain their existing authority.
 
 - plugins.enabled (default []) is the opt-in list of [plugins](plugins-store.md) for this workbench; togglePlugin writes it
   on the write queue like toggleSkill, enabledPlugins reads the current config, and ids that are not installed under

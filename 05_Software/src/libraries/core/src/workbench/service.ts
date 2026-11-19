@@ -15,6 +15,7 @@ import {
   type DocumentPreview,
   type DocumentScan,
   type DocumentVolume,
+  delegatedSessionToolNames,
   type EmbeddingSwitchApproval,
   embeddingSwitchApprovalSchema,
   isDocumentKindIn,
@@ -201,7 +202,7 @@ export class WorkbenchService {
     }).names();
     return configWarnings(config, {
       skills: [...skills, ...(this.host.catalogs?.skills ?? [])],
-      tools: this.host.catalogs?.tools ?? builtinToolNames,
+      tools: this.host.catalogs?.tools ?? [...builtinToolNames, ...delegatedSessionToolNames],
       plugins: this.host.userData
         ? await new PluginStore({ root: join(this.host.userData, "plugins"), workbench: root }).ids()
         : [],

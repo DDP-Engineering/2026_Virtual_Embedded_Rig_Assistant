@@ -151,10 +151,10 @@ entries:
   - category: new
     topic: { en: Sessions, ro: Sesiuni, de: Sitzungen, fr: Sessions }
     text:
-      en: Bookmark your messages from the conversation or its title and reply preview.
-      ro: Marchează mesajele din conversație sau din previzualizarea cu titlu și răspuns.
-      de: Setzen Sie Lesezeichen an Nachrichten im Gespräch oder in der Titel- und Antwortvorschau.
-      fr: Ajoutez des signets aux messages dans la conversation ou l’aperçu du titre et de la réponse.
+      en: "Bookmark messages in chat or previews. Agents can delegate inspections and collect results."
+      ro: "Marchează mesaje în chat sau în previzualizări. Agenții pot delega verificări și prelua rezultate."
+      de: "Lesezeichen im Chat oder in der Vorschau. Agenten können Prüfaufgaben delegieren und auswerten."
+      fr: "Signets dans le chat ou l’aperçu. Les agents peuvent déléguer des tâches et lire les résultats."
   - category: improved
     topic: { en: Sessions, ro: Sesiuni, de: Sitzungen, fr: Sessions }
     text:

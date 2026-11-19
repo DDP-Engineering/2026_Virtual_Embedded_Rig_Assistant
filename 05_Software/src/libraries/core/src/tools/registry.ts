@@ -1,4 +1,4 @@
-import { type BuiltinToolName, builtinToolNames } from "@vera/shared";
+import { type BuiltinToolName, builtinToolNames, delegatedSessionToolNames } from "@vera/shared";
 import { toolSpecs } from "../agent/tool.js";
 import type { ToolDef } from "../agent/types.js";
 import { industrialCatalogTool } from "../electrical/catalog-tool.js";
@@ -16,6 +16,7 @@ import { artifactSaveTool } from "./artifact-save.js";
 import type { ToolContext, ToolDefinition } from "./context.js";
 import { toolSignal } from "./context.js";
 import { decodeRegisterTool } from "./decode-register.js";
+import { delegatedSessionTools } from "./delegated-sessions.js";
 import { readDocTool, searchDocsTool } from "./documents.js";
 import { editTool } from "./edit.js";
 import { globTool } from "./glob.js";
@@ -88,14 +89,34 @@ export const programToolNames: readonly string[] = [
   "program_stop",
 ];
 
+const delegationNames = new Set<string>(delegatedSessionToolNames);
+
 export const TOOL_RESULT_CAP = 32000;
-export function capToolResult(value: Record<string, unknown>) {
+
+// Leave visible credentials whole so a later masking policy can still recognize them.
+function resultPrefix(text: string, limit: number, tokens: readonly string[]): string {
+  let cut = limit;
+  let previous: number;
+  do {
+    previous = cut;
+    for (const token of tokens) {
+      const at = text.indexOf(token, Math.max(0, cut - token.length + 1));
+      if (at >= 0 && at < cut) cut = at;
+    }
+  } while (cut < previous);
+  return text.slice(0, cut);
+}
+
+export function capToolResult(value: Record<string, unknown>, protectedStrings: readonly string[] = []) {
   const result = JSON.parse(JSON.stringify(value)) as Record<string, unknown>;
   let text = JSON.stringify(result);
   let truncated = result.truncated === true;
   if (text.length > TOOL_RESULT_CAP) {
     truncated = true;
     result.truncated = true;
+    const tokens = protectedStrings
+      .flatMap((token) => [token, JSON.stringify(token).slice(1, -1)])
+      .filter((token) => token.length > 1);
     for (let round = 0; text.length > TOOL_RESULT_CAP && round < 100; round++) {
       let best: { owner: Record<string, unknown>; key: string; size: number } | undefined;
       const visit = (owner: Record<string, unknown>) => {
@@ -121,7 +142,7 @@ export function capToolResult(value: Record<string, unknown>) {
       const item = best.owner[best.key];
       best.owner[best.key] = Array.isArray(item)
         ? item.slice(0, Math.floor(item.length / 2))
-        : `${String(item).slice(0, Math.floor(String(item).length / 2))}\n[truncated]`;
+        : `${resultPrefix(String(item), Math.floor(String(item).length / 2), tokens)}\n[truncated]`;
       if (typeof result.ref === "string" && typeof result.text === "string") {
         const ref = parseLineRef(result.ref);
         const last = [...result.text.matchAll(/(?:^|\n)(\d+): /g)].at(-1);
@@ -143,7 +164,10 @@ export interface ToolOutcome {
 export class ToolRegistry {
   private readonly definitions: readonly ToolDefinition[];
   constructor(
-    definitions: readonly ToolDefinition[] = builtinToolNames.map((name) => builtinDefinitions[name]),
+    definitions: readonly ToolDefinition[] = [
+      ...builtinToolNames.map((name) => builtinDefinitions[name]),
+      ...delegatedSessionTools,
+    ],
   ) {
     const names = definitions.map((tool) => tool.name);
     if (new Set(names).size !== names.length) throw Error("Duplicate tool name.");
@@ -153,9 +177,14 @@ export class ToolRegistry {
     return this.definitions.filter((tool) => !disabled.includes(tool.name));
   }
   private availableFor(ctx: ToolContext, disabled: readonly string[]): ToolDefinition[] {
-    return this.available(disabled).filter(
-      (tool) => !ctx.delegated || (tool.class === "read" && delegatedInspectionTools.has(tool)),
-    );
+    return this.available(disabled).filter((tool) => {
+      if (ctx.delegated) return tool.class === "read" && delegatedInspectionTools.has(tool);
+      if (delegationNames.has(tool.name)) return !!ctx.delegation && delegatedSessionTools.includes(tool);
+      return true;
+    });
+  }
+  private capResult(ctx: ToolContext, name: string, value: Record<string, unknown>) {
+    return capToolResult(value, delegationNames.has(name) ? ctx.delegation?.resultSecrets() : undefined);
   }
   specs(disabled: readonly string[] = []) {
     return toolSpecs(
@@ -176,7 +205,7 @@ export class ToolRegistry {
     disabled: readonly string[] = [],
   ) {
     signal.throwIfAborted();
-    const tool = this.available(disabled).find((definition) => definition.name === name);
+    const tool = this.availableFor(ctx, disabled).find((definition) => definition.name === name);
     if (ctx.delegated || !tool?.prepare) throw Error("Prepared tool is unavailable.");
     return tool.prepare(ctx, tool.params.parse(raw), toolSignal(ctx, signal));
   }
@@ -186,6 +215,7 @@ export class ToolRegistry {
     raw: unknown,
     signal: AbortSignal,
     disabled: readonly string[] = [],
+    callId?: string,
   ): Promise<ToolOutcome> {
     let result: Record<string, unknown>;
     let isError = false;
@@ -227,7 +257,7 @@ export class ToolRegistry {
           `Invalid arguments for ${name}: ${parsed.error.issues.map((issue) => `${issue.path.join(".") || "arguments"}: ${issue.message}`).join("; ")}`,
         );
       effectiveSignal = toolSignal(ctx, signal);
-      result = await tool.execute(ctx, parsed.data, effectiveSignal);
+      result = await tool.execute(ctx, parsed.data, effectiveSignal, callId);
       effectiveSignal.throwIfAborted();
     } catch (error) {
       isError = true;
@@ -241,7 +271,7 @@ export class ToolRegistry {
       };
     }
     try {
-      const capped = capToolResult(result);
+      const capped = this.capResult(ctx, name, result);
       return {
         ...capped,
         isError: isError || result.isError === true || JSON.parse(capped.text).isError === true,
@@ -281,10 +311,17 @@ export class ToolRegistry {
           : tool.description,
       params: tool.params,
       ...(tool.publish
-        ? { publish: (args: unknown, output: string) => tool.publish?.(ctx, args, output) ?? output }
+        ? {
+            publish: (args: unknown, output: string) => {
+              const refreshed = tool.publish?.(ctx, args, output) ?? output;
+              return typeof refreshed === "string"
+                ? refreshed
+                : this.capResult(ctx, tool.name, refreshed).text;
+            },
+          }
         : {}),
-      execute: async (args, signal) => {
-        const outcome = await this.execute(ctx, tool.name, args, signal, blocked);
+      execute: async (args, signal, callId) => {
+        const outcome = await this.execute(ctx, tool.name, args, signal, blocked, callId);
         if (outcome.isError) throw Error(outcome.text);
         return outcome.text;
       },
