@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-DATA-ff418cb1"
+title = "Limit delegated results to masked initial-turn content"
+status = "active"
+requirement = "When VERA returns a delegated turn's result to the parent agent, it shall disclose only fixed status metadata and the bounded initial-turn final reply under the Agent masking choice effective at publication."
+verification = "Read a large reply before and after a later child turn and check the cap and field allowlist. Toggle Agent masking on after both status and wait have executed, then assert publication remasks the complete reply and a prior unmasked cap preserves the credential boundary."
+affected_paths = ["05_Software/src/libraries/core/src/sessions/delegation-monitor.ts", "05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/libraries/core/src/tools/context.ts", "05_Software/src/libraries/core/src/tools/delegated-sessions.ts", "05_Software/src/libraries/core/src/tools/registry.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/sessions/delegation-tools.test.ts", "05_Software/src/libraries/core/src/sessions/delegation-monitor.test.ts"]
+created = 2026-11-19
+updated = 2026-11-19

@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-UX-c3961c76"
+title = "Show removable composer image drafts"
+status = "active"
+requirement = "When a composer image validates, VERA shall show its thumbnail in a removable draft chip, up to eight images per message."
+verification = "Check each image chip decodes, remove one and assert it disappears and is excluded from the next send, and verify the eight-image boundary."
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/session/composer.tsx","05_Software/src/apps/desktop/src/renderer/components/session/image-attachment-chip.tsx","05_Software/src/apps/desktop/src/renderer/hooks/image-drafts.ts"]
+linked_tests = ["05_Software/tests/e2e/composer-images.spec.ts"]
+created = 2026-11-19
+updated = 2026-11-19

@@ -1,5 +1,5 @@
 import { expect } from "@playwright/test";
-import { builtinToolNames } from "@vera/shared";
+import { coreToolNames } from "@vera/shared";
 import { test } from "./fixtures.js";
 
 test("workbench tree, pinning, project editor and plugin section", { tag: "@parallel-browser" }, async ({
@@ -50,8 +50,8 @@ test("workbench tree, pinning, project editor and plugin section", { tag: "@para
   await dialog.locator("[data-project-name]").fill("ESP32 revised");
   await dialog.locator('[data-project-section="tools"]').click();
   const tools = dialog.locator("[data-tool-toggle]");
-  await expect(tools).toHaveCount(builtinToolNames.length);
-  await expect(dialog.locator("[data-tool-description]")).toHaveCount(builtinToolNames.length);
+  await expect(tools).toHaveCount(coreToolNames.length - 1);
+  await expect(dialog.locator("[data-tool-description]")).toHaveCount(coreToolNames.length - 1);
   for (const tool of [
     "read",
     "list",
@@ -79,9 +79,8 @@ test("workbench tree, pinning, project editor and plugin section", { tag: "@para
   await skillPanel.locator('[data-action="new-skill"]').click();
   await skillPanel.locator("[data-skill-name]").fill("test-reader");
   await skillPanel.locator('[data-action="create-skill"]').click();
-  // Creating a skill opens its instructions; this test only needs the list entry.
   await expect(page.locator("[data-skill-content]")).toBeVisible();
-  await page.keyboard.press("Escape");
+  await page.locator('[data-action="save-skill"]').click();
   await expect(page.locator("[data-skill-content]")).toHaveCount(0);
   await expect(skillPanel.locator(".skills-list li")).toHaveCount(2);
   await expect(skillPanel.locator(".skills-list li").filter({ hasText: "create-plugin" })).toHaveCount(1);

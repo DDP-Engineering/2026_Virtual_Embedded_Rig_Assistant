@@ -1,9 +1,11 @@
 {
   "toolActivity": {
+    "embeddingRebuild": "L’index sémantique est en cours de reconstruction. Ces résultats correspondent aux mots-clés.",
     "planSteps": "Étapes du plan : {{count}}",
     "planCleared": "Plan vidé",
     "operation": "Opération de l’agent",
     "readFile": "Lecture d’un fichier",
+    "viewImage": "Examiner l’image",
     "listFiles": "Liste du contenu d’un dossier",
     "findFiles": "Recherche de fichiers",
     "searchFiles": "Recherche dans les fichiers",
@@ -52,6 +54,8 @@
     "no": "Non"
   },
   "errors": {
+    "IMAGE_FORMAT": "Choisissez une image PNG, JPEG, GIF ou WebP valide. Le format SVG est incompatible.",
+    "IMAGE_TOO_LARGE": "Une image peut faire au maximum 20 Mio.",
     "INVALID": "La requête n’est pas valide.",
     "NOT_FOUND": "L’opération demandée {{operation}} est introuvable.",
     "CONFLICT": "L’opération est en conflit avec l’état actuel.",
@@ -173,6 +177,7 @@
     "name": "Nom du point de terminaison",
     "baseUrl": "URL de base",
     "model": "Modèle",
+    "acceptsImages": "Accepte les images",
     "contextWindow": "Fenêtre de contexte (jetons)",
     "maxOutput": "Sortie maximale (jetons)",
     "endpointKey": "Clé API du point de terminaison",
@@ -231,6 +236,20 @@
     "stopped": "Tour arrêté ou interrompu.",
     "operations": "Opérations : {{count}}"
   },
+  "delegation": {
+    "title": "Sessions déléguées",
+    "outcome": "État de la délégation : {{status}}",
+    "parent": "Session parente : {{title}}",
+    "status": {
+      "running": "En cours",
+      "awaiting_approval": "En attente d’approbation",
+      "completed": "Terminée",
+      "stopped": "Arrêtée",
+      "error": "Échec",
+      "limit": "Limite atteinte",
+      "interrupted": "Interrompue"
+    }
+  },
   "chatActions": {
     "copyResponse": "Copier la réponse",
     "copyCode": "Copier le bloc de code",
@@ -248,6 +267,11 @@
     "bookmark": "Ajouter un signet",
     "removeBookmark": "Retirer le signet",
     "attachments": "Fichiers joints",
+    "attachImage": "Joindre une image",
+    "imagesTextOnly": "Ce modèle accepte uniquement du texte. Il recevra les chemins des images.",
+    "imagesLimit": "Vous pouvez joindre jusqu’à {{count}} images.",
+    "openImage": "Ouvrir l’image {{path}}",
+    "imageUnavailable": "Image indisponible",
     "removeAttachment": "Retirer la pièce jointe : {{path}}",
     "promptInput": "Entrée",
     "promptOutput": "Sortie",
@@ -829,6 +853,7 @@
   },
   "workbenchTools": {
     "read": "Lire des fichiers texte ou des plages de lignes choisies.",
+    "view_image": "Examiner une image du banc de travail avec un modèle compatible.",
     "list": "Lister les fichiers et sous-dossiers d’un répertoire.",
     "glob": "Trouver des fichiers par motifs de nom ou de chemin, comme **/*.cpp.",
     "grep": "Rechercher dans le contenu des fichiers, y compris par expressions régulières.",
@@ -898,6 +923,12 @@
     "changed": "Le banc de travail actif a changé. Rouvrez cet éditeur.",
     "saving": "Enregistrement…",
     "embeddingModel": "Modèle d’embedding",
+    "embeddingBge": "BGE Small EN v1.5 (anglais)",
+    "embeddingE5": "Multilingual E5 Small (100 langues)",
+    "embeddingSwitchTitle": "Changer de modèle d’embedding ?",
+    "embeddingSwitchCount": "Documents indexés ({{count}})",
+    "embeddingSwitchBody": "VERA recréera les vecteurs en arrière-plan. La recherche par mots-clés restera disponible.",
+    "embeddingSwitchConfirm": "Changer de modèle",
     "chunkSize": "Taille des segments (caractères)",
     "overlap": "Chevauchement (caractères)",
     "partialSave": "Les paramètres du projet ont été enregistrés, mais pas les instructions. Cliquez à nouveau sur Enregistrer pour terminer ; fermer conserve les paramètres enregistrés.",

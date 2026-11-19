@@ -4,6 +4,7 @@ import { readFile, stat } from "node:fs/promises";
 import { basename, join, resolve } from "node:path";
 import { parseArgs } from "node:util";
 import { importSoftware } from "../environment/software.mjs";
+import { embeddingPayload } from "../release/embedding-payload.mjs";
 import {
   catalogPublicKey,
   checkSums,
@@ -20,11 +21,15 @@ import {
   sha256File,
   sumsName,
 } from "./delivery-common.mjs";
+import { verifyEmbeddingArchive } from "./verify-embedding-archive.mjs";
 
 // Checks a delivery folder (default: the one this checkout builds) without changing or publishing anything:
-// every SHA256SUMS and delivery.json entry against the files, one version throughout, the expected files per
-// part and the plugin zips against the catalog indexes. Exit 1 on any mismatch.
-const { positionals } = parseArgs({ allowPositionals: true });
+// every SHA256SUMS and delivery.json entry, pinned desktop model members, the expected files per part
+// and the plugin zips against the catalog indexes. Exit 1 on any mismatch.
+const { positionals, values } = parseArgs({
+  allowPositionals: true,
+  options: { "7zip": { type: "string", default: process.platform === "win32" ? "7z" : "7zz" } },
+});
 const folder = positionals[0] ? resolve(positionals[0]) : (await currentDelivery()).folder;
 if (!existsSync(folder)) {
   console.error(`No delivery folder: ${folder}`);
@@ -60,6 +65,7 @@ function expectOne(part, files, pattern, what) {
 }
 
 const present = {};
+let modelFiles;
 for (const platform of platforms) {
   const part = `vera-${platform}`;
   const files = await partFiles(part);
@@ -74,6 +80,14 @@ for (const platform of platforms) {
     if (name === releaseNotesName) continue;
     if (!first.test(name) && !second.test(name)) problem(part, `${name}: unexpected file`);
     else if (!name.startsWith(`VERA-${desktop}-`)) problem(part, `${name}: not desktop version ${desktop}`);
+    else {
+      try {
+        modelFiles ??= await embeddingPayload();
+        await verifyEmbeddingArchive(join(folder, part, name), modelFiles, values["7zip"]);
+      } catch (error) {
+        problem(part, `${name}: ${error.message}`);
+      }
+    }
   }
 }
 

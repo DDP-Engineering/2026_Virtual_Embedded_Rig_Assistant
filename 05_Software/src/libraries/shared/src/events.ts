@@ -16,6 +16,7 @@ import {
 import { programApprovalSchema, validProgramApproval } from "./program-rules.js";
 import { reasoningOptionSchema } from "./provider-discovery.js";
 import {
+  messageImagesSchema,
   permissionModeSchema,
   sessionIdSchema,
   sessionStatusSchema,
@@ -86,6 +87,7 @@ export const workbenchEventSchema = z.discriminatedUnion("type", [
   z.strictObject({ type: z.literal("index.guard"), guard: documentGuardSchema.nullable() }),
   z.strictObject({ type: z.literal("opened"), workbench: workbenchSnapshotSchema }),
   z.strictObject({ type: z.literal("closed") }),
+  z.strictObject({ type: z.literal("session.delegations.changed") }),
   z.strictObject({
     type: z.literal("config.changed"),
     config: workbenchSchema,
@@ -121,7 +123,12 @@ export const sessionEventSchema = z.discriminatedUnion("type", [
   z.strictObject({ type: z.literal("session.interrupted"), turnId: z.string() }),
   z.strictObject({ type: z.literal("turn.started"), turnId: z.string() }),
   z.strictObject({ type: z.literal("turn.done"), turnId: z.string(), stopReason: stopReasonSchema }),
-  z.strictObject({ type: z.literal("message.user"), messageId: z.string(), text: z.string() }),
+  z.strictObject({
+    type: z.literal("message.user"),
+    messageId: z.string(),
+    text: z.string(),
+    images: messageImagesSchema.optional(),
+  }),
   z.strictObject({
     type: z.literal("message.bookmarked"),
     messageId: z.string().min(1).max(200),
@@ -131,6 +138,7 @@ export const sessionEventSchema = z.discriminatedUnion("type", [
     type: z.literal("message.queued"),
     messageId: z.string(),
     text: z.string(),
+    images: messageImagesSchema.optional(),
     timestamp: count,
   }),
   z.strictObject({ type: z.literal("message.delivered"), messageIds: z.array(z.string()).min(1) }),

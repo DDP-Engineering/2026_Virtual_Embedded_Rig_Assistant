@@ -3,6 +3,7 @@ import { expect, it, vi } from "vitest";
 import { ReferenceRuntime, zeroUsage } from "../agent/runtime.js";
 import { MessagesRepository } from "../storage/repos/messages.js";
 import { fixture, input, plan } from "./review-turn.test-support.js";
+import { SessionImages } from "./session-images.js";
 
 const answer = (text: string): AssistantMessage => ({
   role: "assistant",
@@ -57,6 +58,7 @@ it("keeps every summary and finalization boundary review-only, including fabrica
     });
   }
   env.host.gateway.capabilities = () => ({
+    input: ["text"],
     contextWindow: 6000,
     maxOutputTokens: 1000,
     inputBudget: 3976,
@@ -118,6 +120,62 @@ it("keeps every summary and finalization boundary review-only, including fabrica
   expect(env.service.get(env.id).snapshot.items.some((item) => item.kind === "user" && item.pending)).toBe(
     false,
   );
+});
+
+it("keeps historical image references text-only during review without reading project images", async () => {
+  const env = await fixture();
+  const capabilities = env.host.gateway.capabilities.bind(env.host.gateway);
+  env.host.gateway.capabilities = (...args) => ({ ...capabilities(...args), input: ["text", "image"] });
+  new MessagesRepository(env.host.db).create({
+    session_id: env.id,
+    seq: 1,
+    role: "user",
+    content_json: JSON.stringify({
+      role: "user",
+      content: "Inspect image",
+      images: ["board.png"],
+      timestamp: 1,
+    }),
+    created_at: new Date(1).toISOString(),
+  });
+  const read = vi.spyOn(SessionImages.prototype, "read");
+  const stream = vi.spyOn(env.host.gateway, "stream");
+  try {
+    env.service.reviewPlan(env.id, input);
+    expect(await env.service.waitIdle(env.id)).toEqual({ stopReason: "end" });
+    expect(read).not.toHaveBeenCalled();
+    expect(stream).toHaveBeenCalled();
+    for (const [request] of stream.mock.calls) {
+      expect(JSON.stringify(request.messages)).toContain("Image attachment: board.png");
+      expect(
+        request.messages.some(
+          (message) =>
+            Array.isArray(message.content) && message.content.some((part) => part.type === "image"),
+        ),
+      ).toBe(false);
+      expect(request.tools.map((tool) => tool.name)).toEqual(["todo"]);
+    }
+  } finally {
+    read.mockRestore();
+  }
+});
+
+it("rejects image steering during review before attachment validation can probe files", async () => {
+  const env = await fixture();
+  const validate = vi.spyOn(SessionImages.prototype, "validate");
+  try {
+    env.service.reviewPlan(env.id, input);
+    await expect(env.service.sendWithImages(env.id, "Execute", ["missing.png"])).rejects.toMatchObject({
+      code: "BUSY",
+    });
+    expect(validate).not.toHaveBeenCalled();
+    expect(await env.service.waitIdle(env.id)).toEqual({ stopReason: "end" });
+    expect(env.service.get(env.id).snapshot.items.some((item) => item.kind === "user" && item.pending)).toBe(
+      false,
+    );
+  } finally {
+    validate.mockRestore();
+  }
 });
 
 it("does not bypass an injected host permission policy for the built-in todo tool", async () => {

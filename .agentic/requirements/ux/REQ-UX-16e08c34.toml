@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-UX-16e08c34"
+title = "Show unavailable transcript image paths"
+status = "active"
+requirement = "If a user-message image is unavailable, the transcript shall show its persisted workbench path in place of a thumbnail, subject to Display masking."
+verification = "Delete the imported file after observing it following a restart, revisit the chat, and verify its original path appears while the surviving image still decodes. Delete a file attached with a lexical path alias and verify the exact alias label, then enable Display masking and verify only the secret-bearing component is redacted."
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/session/transcript-images.tsx", "05_Software/src/apps/desktop/src/main/display-documents.ts", "05_Software/src/apps/desktop/src/main/events.ts", "05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/libraries/shared/src/ipc.ts"]
+linked_tests = ["05_Software/tests/e2e/transcript-images.spec.ts", "05_Software/src/apps/desktop/src/main/display-documents.test.ts"]
+created = 2026-11-19
+updated = 2026-11-19

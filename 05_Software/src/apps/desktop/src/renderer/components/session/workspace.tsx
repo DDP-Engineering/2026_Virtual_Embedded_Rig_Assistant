@@ -1,6 +1,6 @@
 // REQ-UX-4bea0001 REQ-REL-4bea0006 REQ-REL-4bea0004
 
-import { type ChatDetail, veraErrorSchema } from "@vera/shared";
+import { type ChatDetail, type SessionSummary, veraErrorSchema } from "@vera/shared";
 import { useContext, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../../api/index.js";
@@ -9,6 +9,7 @@ import { globalShortcutBlocked, ShortcutContext, shortcutCommand } from "../../l
 import { CHAT, useDocumentTabs } from "../documents/viewer-context.js";
 import { ErrorMessage } from "../error-message.js";
 import { Composer, type ComposerState } from "./composer.js";
+import { DelegationLinks } from "./delegation-links.js";
 import { SessionInspector } from "./session-inspector.js";
 import { Transcript } from "./transcript.js";
 import { searchMatch } from "./transcript-projection.js";
@@ -21,6 +22,12 @@ export function SessionWorkspace({
   readOnly,
   archived = false,
   detail = "normal",
+  delegation,
+  delegationParent,
+  delegationChildren = [],
+  selectLinkedSession,
+  focusTranscript = false,
+  transcriptOpened,
   composerFocusRequest = 0,
   composerFocused,
 }: {
@@ -30,6 +37,12 @@ export function SessionWorkspace({
   readOnly: boolean;
   archived?: boolean;
   detail?: ChatDetail;
+  delegation?: SessionSummary["delegation"];
+  delegationParent?: SessionSummary | undefined;
+  delegationChildren?: readonly SessionSummary[] | undefined;
+  selectLinkedSession?: (id: string) => void;
+  focusTranscript?: boolean;
+  transcriptOpened?: (id: string) => void;
   composerFocusRequest?: number;
   /** Called once a focus request is taken, so the app drops it and never replays it. */
   composerFocused?: () => void;
@@ -59,6 +72,7 @@ export function SessionWorkspace({
   const [inspector, setInspector] = useState(false);
   const searchInput = useRef<HTMLInputElement>(null);
   const workspace = useRef<HTMLElement>(null);
+  const heading = useRef<HTMLHeadingElement>(null);
   const lastComposerFocus = useRef(0);
   const composerView = useRef<
     { id: string; workbenchId: string; state: ComposerState; reviewing: boolean } | undefined
@@ -84,6 +98,21 @@ export function SessionWorkspace({
   // (Attach as context) shows the Chat tab first; window shortcuts wait until it is shown.
   const tabs = useDocumentTabs();
   const shown = !tabs || tabs.active === CHAT;
+  const selectTab = tabs?.select;
+  const pendingTranscriptFocus = useRef(false);
+  useEffect(() => {
+    if (!id || !focusTranscript) return;
+    pendingTranscriptFocus.current = true;
+    selectTab?.(CHAT);
+    transcriptOpened?.(id);
+  }, [id, focusTranscript, selectTab, transcriptOpened]);
+  const snapshotReady = !!view;
+  useEffect(() => {
+    void focusTranscript;
+    if (!pendingTranscriptFocus.current || !snapshotReady || !shown) return;
+    heading.current?.focus();
+    pendingTranscriptFocus.current = false;
+  }, [focusTranscript, snapshotReady, shown]);
   // A request is taken once: it shows the Chat tab once and focuses the composer when it can.
   const pendingFocus = useRef(false);
   useEffect(() => {
@@ -109,11 +138,11 @@ export function SessionWorkspace({
   }
   const stopDialog = useRef<HTMLDialogElement>(null);
   const stopOrigin = useRef<HTMLElement | null>(null);
-  async function send(text: string) {
+  async function send(text: string, images?: string[]) {
     if (
       !id ||
       !view ||
-      !text.trim() ||
+      (!text.trim() && !images?.length) ||
       pending ||
       restoring.current ||
       readOnly ||
@@ -124,7 +153,7 @@ export function SessionWorkspace({
     setPending(true);
     setFailure(undefined);
     try {
-      await api.invoke("session.send", { sessionId: id, text });
+      await api.invoke("session.send", { sessionId: id, text, ...(images?.length && { images }) });
       changed();
       return true;
     } catch (e) {
@@ -139,7 +168,7 @@ export function SessionWorkspace({
     const last = view.state.items.findLast((item) => item.kind === "user");
     if (last?.kind !== "user") return;
     if (!last.reviewId) {
-      void send(last.text);
+      void send(last.text, last.images);
       return;
     }
     const generation = scopeGeneration.current;
@@ -228,8 +257,18 @@ export function SessionWorkspace({
     <section ref={workspace} className="session-workspace" aria-label={t("chat.conversation")}>
       {readOnly && <p role="status">{t("documents.readOnly")}</p>}
       <header className="session-heading">
-        <h2>{view?.state.title || t("chat.untitled")}</h2>
+        <h2 ref={heading} tabIndex={-1}>
+          {view?.state.title || t("chat.untitled")}
+        </h2>
       </header>
+      {selectLinkedSession && (
+        <DelegationLinks
+          parent={delegationParent}
+          child={delegation}
+          sessions={delegationChildren}
+          open={selectLinkedSession}
+        />
+      )}
       {error !== undefined && (
         <>
           <ErrorMessage error={error} />
@@ -274,6 +313,7 @@ export function SessionWorkspace({
       )}
       {view && (
         <Transcript
+          workbenchId={workbenchId}
           detail={detail}
           state={view.state}
           reasoning={view.reasoning}
@@ -296,6 +336,8 @@ export function SessionWorkspace({
           }
           disabled={readOnly || pending}
           sendDisabled={!view || activeReview}
+          archived={archived}
+          permissionLocked={!!delegation}
           send={send}
           stop={() => void stop()}
           setMode={async (mode) => {

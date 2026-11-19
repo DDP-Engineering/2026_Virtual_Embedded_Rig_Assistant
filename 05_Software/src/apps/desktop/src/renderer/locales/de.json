@@ -1,9 +1,11 @@
 {
   "toolActivity": {
+    "embeddingRebuild": "Der semantische Index wird neu aufgebaut. Diese Treffer beruhen auf Stichwörtern.",
     "planSteps": "Planschritte: {{count}}",
     "planCleared": "Plan geleert",
     "operation": "Werkzeugaktion",
     "readFile": "Datei lesen",
+    "viewImage": "Bild betrachten",
     "listFiles": "Ordnerinhalt auflisten",
     "findFiles": "Dateien finden",
     "searchFiles": "In Dateien suchen",
@@ -52,6 +54,8 @@
     "no": "Nein"
   },
   "errors": {
+    "IMAGE_FORMAT": "Wählen Sie ein gültiges PNG-, JPEG-, GIF- oder WebP-Bild. SVG wird nicht unterstützt.",
+    "IMAGE_TOO_LARGE": "Ein Bild darf höchstens 20 MiB groß sein.",
     "INVALID": "Die Anfrage ist ungültig.",
     "NOT_FOUND": "Der angeforderte Vorgang {{operation}} wurde nicht gefunden.",
     "CONFLICT": "Der Vorgang steht im Konflikt mit dem aktuellen Zustand.",
@@ -173,6 +177,7 @@
     "name": "Name des Endpunkts",
     "baseUrl": "Basis-URL",
     "model": "Modell",
+    "acceptsImages": "Akzeptiert Bilder",
     "contextWindow": "Kontextfenster (Tokens)",
     "maxOutput": "Maximale Ausgabe (Tokens)",
     "endpointKey": "API-Schlüssel des Endpunkts",
@@ -231,6 +236,20 @@
     "stopped": "Durchlauf gestoppt oder unterbrochen.",
     "operations": "Vorgänge: {{count}}"
   },
+  "delegation": {
+    "title": "Delegierte Sitzungen",
+    "outcome": "Status der delegierten Aufgabe: {{status}}",
+    "parent": "Übergeordnete Sitzung: {{title}}",
+    "status": {
+      "running": "Läuft",
+      "awaiting_approval": "Wartet auf Genehmigung",
+      "completed": "Abgeschlossen",
+      "stopped": "Gestoppt",
+      "error": "Fehlgeschlagen",
+      "limit": "Limit erreicht",
+      "interrupted": "Unterbrochen"
+    }
+  },
   "chatActions": {
     "copyResponse": "Antwort kopieren",
     "copyCode": "Codeblock kopieren",
@@ -248,6 +267,11 @@
     "bookmark": "Lesezeichen setzen",
     "removeBookmark": "Lesezeichen entfernen",
     "attachments": "Angehängte Dateien",
+    "attachImage": "Bild anhängen",
+    "imagesTextOnly": "Dieses Modell akzeptiert nur Text. Es erhält die Dateipfade der Bilder.",
+    "imagesLimit": "Du kannst bis zu {{count}} Bilder anhängen.",
+    "openImage": "Bild {{path}} öffnen",
+    "imageUnavailable": "Bild nicht verfügbar",
     "removeAttachment": "Anhang entfernen: {{path}}",
     "promptInput": "Eingabe",
     "promptOutput": "Ausgabe",
@@ -829,6 +853,7 @@
   },
   "workbenchTools": {
     "read": "Textdateien oder ausgewählte Zeilenbereiche lesen.",
+    "view_image": "Ein Workbench-Bild mit einem Modell betrachten, das Bilder akzeptiert.",
     "list": "Dateien und Unterordner eines Verzeichnisses auflisten.",
     "glob": "Dateien anhand von Namens- oder Pfadmustern wie **/*.cpp finden.",
     "grep": "Dateiinhalte durchsuchen, auch mit regulären Ausdrücken.",
@@ -898,6 +923,12 @@
     "changed": "Der aktive Workbench wurde geändert. Öffnen Sie den Editor erneut.",
     "saving": "Wird gespeichert…",
     "embeddingModel": "Embedding-Modell",
+    "embeddingBge": "BGE Small EN v1.5 (Englisch)",
+    "embeddingE5": "Multilingual E5 Small (100 Sprachen)",
+    "embeddingSwitchTitle": "Embedding-Modell wechseln?",
+    "embeddingSwitchCount": "Indizierte Dokumente ({{count}})",
+    "embeddingSwitchBody": "VERA erstellt die Vektoren im Hintergrund neu. Die Stichwortsuche bleibt verfügbar.",
+    "embeddingSwitchConfirm": "Modell wechseln",
     "chunkSize": "Chunk-Größe (Zeichen)",
     "overlap": "Überlappung (Zeichen)",
     "partialSave": "Projekteinstellungen wurden gespeichert, Anweisungen jedoch nicht. Wiederholen Sie Speichern; beim Schließen bleiben gespeicherte Einstellungen erhalten.",

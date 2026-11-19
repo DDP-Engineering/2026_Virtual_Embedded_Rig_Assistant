@@ -21,7 +21,7 @@ Core owns validated ordered session task lists and atomic database/event updates
 - Shared plan-review.ts defines exact revision/occurrence/full-text targets with whole-step or scalar-safe UTF16 ranges. Each todo.updated increments planRevision, including identical replacements, conservatively making old draft targets stale. Shared projection validates against the displayed agent-masked text before disclosure.
 - SessionService.savePlanComment/deletePlanComment record scoped draft metadata with feedback-revision CAS, without transcript rows, model requests or todo changes. Existing format-1 events retain drafts and immutable submitted plan/comment snapshots across database reopen; no separate store or migration is used.
 - The four strict user-only channels session.plan.comment.save, session.plan.comment.delete, session.plan.review and session.plan.review.restore carry workbench/session scope. Desktop captures the original database before enqueue and guards it across preparation and durable effects; metadata and review never prepare programs or skills.
-- reviewPlan atomically commits one envelope/user message/started turn and consumes only its captured drafts before publication or dispatch. The expected plan/feedback pair identifies an accepted receipt across reopen. Its fresh runtime offers at most the built-in todo, denies approval and rejects ordinary steering, regardless of permission mode; Stop affects that review runtime only.
+- reviewPlan atomically commits one envelope/user message/started turn and consumes only its captured drafts before publication or dispatch. The expected plan/feedback pair identifies an accepted receipt across reopen. Its fresh runtime offers at most the built-in todo, denies approval and rejects ordinary text/image steering before attachment validation, regardless of permission mode; Stop affects that review runtime only. Historical image references remain text-only without reading project images; review-boundary.test.ts covers both image seams.
 - An unsuccessful accepted review retains history. Explicit restore stages only missing source-linked retry drafts without overwriting edits; a subsequent review revalidates all anchors. Generic chat Retry uses this restore path rather than ordinary send, and active review sending is disabled while Stop stays available.
 
 ## Live feedback interface
@@ -53,16 +53,6 @@ Core owns validated ordered session task lists and atomic database/event updates
 ## Key behaviors
 
 REQ-FUNC-2e8a54c7 bounded whole replacement;REQ-DATA-d968385c atomic durable list/event;REQ-UX-8d3039aa accessible live/restarted Plan. The plan-updates fixture has three distinct replacements in separate model steps; its anchored Update the plan matcher preserves existing automatic replay scenarios.
-
-## Architecture
-
-```mermaid
-flowchart LR
- Runtime --> ToolRegistry --> todoTool --> TodosRepository --> SQLite
- SessionService --> TodoHost --> todoTool
- todoTool --> SessionHub --> events[(events)]
- SessionHub --> bridge --> useSessionEvents --> PlanTab
-```
 
 ## Files
 

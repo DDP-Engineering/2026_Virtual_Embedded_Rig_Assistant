@@ -74,7 +74,9 @@ test("native detected shell choices start compatible terminals and preserve exis
     ? resolve(process.env.VERA_BUILD_ROOT, "main/index.js")
     : resolve("src/apps/desktop/out/main/index.js");
   // Development resources are relative to the desktop build. Reject a misplaced test build before Electron opens.
-  await access(resolve(dirname(entry), "../../../../../src/models/model-manifest.json"));
+  await access(
+    resolve(dirname(entry), "../../../../../src/models/Xenova/bge-small-en-v1.5/model-manifest.json"),
+  );
   const evidence = resolve("evaluation-outputs/shell-selector");
   await mkdir(evidence, { recursive: true });
   const root = await mkdtemp(join(evidence, "native-"));

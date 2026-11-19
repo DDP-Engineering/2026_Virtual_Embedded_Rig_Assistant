@@ -19,7 +19,7 @@ src/
   apps/cli/           Command-line application
   libraries/core/     Shared product logic
   libraries/shared/   Validated contracts and data types
-  models/             BGE manifest and local model assets
+  models/             Per-model manifests and local embedding assets
   windows_runtime/    Microsoft runtime manifest and local DLLs
 tests/
   e2e/                Playwright Electron and browser acceptance
@@ -215,11 +215,12 @@ including ONNX optional CUDA downloads; packaging retains host x64 runtime files
 CUDA/TensorRT binaries and uses the CPU execution provider. Windows keeps upstream ORT companion DLLs.
 
 Packaging uses electron-builder 26.17.0, better-sqlite3 13.0.3, transformers 4.3.1 and
-onnxruntime-node 1.30.0. `src/models/model-manifest.json` pins all seven q8
-bge-small-en-v1.5 assets to an immutable upstream revision, with bytes and SHA256.
-Downloaded assets under `src/models/` are ignored and reverified before packaging.
-The runtime uses local files with remote models disabled. ADR0015 selects this BGE model after
-the retrieval evaluation; packaging preserves its descriptor and fingerprints.
+onnxruntime-node 1.30.0. Each `src/models/<model-id>/model-manifest.json` pins the q8 assets
+for that model to an immutable upstream revision by size and SHA-256. `npm run prepare:model`
+verifies the BGE Small EN v1.5 and Multilingual E5 Small assets. Downloaded assets are ignored
+by Git. The package prepares and includes the BGE model used for local inference, with its
+manifest beside its assets under `resources/models/<model-id>/`. ADR0015 records the BGE
+retrieval evaluation. The runtime disables remote model loading.
 
 Generated artifacts and `package-report.json` reside in `release_tmp/{test,release}/`.
 `release_tmp/` is an ignored, rebuildable packaging workspace, including staging directories;
@@ -336,8 +337,8 @@ Review prints the exact hash and manifest; trust refuses stale hashes and never 
 operational errors exit 1, usage errors 2. provision exits 0 only when every program is ready.
 
 Each workbench uses one root with user-owned subfolders. The `embeddings` block in
-`.vera/workbench.yaml` selects the installed `Xenova/bge-small-en-v1.5` model and
-sets `chunkSize` (200–1400 characters, default 1400) and `overlap` (0–600 characters,
+format-1 `.vera/workbench.yaml` validates the model against the local registry and defaults to
+`Xenova/bge-small-en-v1.5`, which desktop and CLI use for inference. The block also sets `chunkSize` (200–1400 characters, default 1400) and `overlap` (0–600 characters,
 smaller than chunkSize, default 200). Token limits can shorten chunks; effective
 overlap is capped at half the actual fragment to preserve bounded progress.
 Overlap stays within each PDF page or Markdown/HTML section and runs across text

@@ -38,9 +38,11 @@ const actionKeys = defineTranslationKeys([
   "toolActivity.analyseLog",
   "toolActivity.decodeRegister",
   "toolActivity.electrical",
+  "toolActivity.viewImage",
 ]);
 const actionIndex = {
   read: 1,
+  view_image: 26,
   list: 2,
   glob: 3,
   grep: 4,
@@ -164,7 +166,9 @@ export const ToolDetails = memo(function ToolDetails({
             ? t("toolActivity.changedLines", { added: result?.added, removed: result?.removed })
             : undefined;
   const output =
-    string(result?.error) ?? string(result?.output) ?? string(result?.text) ?? string(result?.message);
+    item.name === "search_docs" && result?.ranking === "embedding-rebuild"
+      ? t("toolActivity.embeddingRebuild")
+      : (string(result?.error) ?? string(result?.output) ?? string(result?.text) ?? string(result?.message));
   const raw = item.preview ?? update ?? item.summary;
   return (
     <Disclosure

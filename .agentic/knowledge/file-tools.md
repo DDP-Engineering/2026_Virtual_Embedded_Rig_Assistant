@@ -2,7 +2,7 @@
 
 ## Routing
 
-Select for PathGuard, binary detection, read/list/glob/grep/parse_log/decode_register/write/edit, prepared changes, shared write admission/recovery, line refs, ToolRegistry, tools.disabled, last-read fingerprints and WorkerPool deadline/abort/replacement. Start at core/src/tools/registry.ts and workbench/path-guard.ts under05_Software. Focused tests: tools/{read,discovery,grep,registry,binary}.test.ts,workbench/path-guard.test.ts,workers/node-host.test.ts,shared/refs.test.ts. [Agent runtime](agent-runtime.md) owns orchestration/schema projection; [Workbench](workbench.md) owns lifecycle/ignore rules; [sessions](sessions.md) owns active-turn Stop, per-session contexts and exact permission modes/approvals.
+Select for PathGuard, binary detection, read/view_image/list/glob/grep/parse_log/decode_register/write/edit, prepared changes, shared write admission/recovery, line refs, ToolRegistry, tools.disabled, last-read fingerprints and WorkerPool deadline/abort/replacement. Start at core/src/tools/registry.ts and workbench/path-guard.ts under05_Software. Focused tests: tools/{read,discovery,grep,registry,binary}.test.ts,workbench/path-guard.test.ts,workers/node-host.test.ts,shared/refs.test.ts. [Agent runtime](agent-runtime.md) owns orchestration/schema projection; [Workbench](workbench.md) owns lifecycle/ignore rules; [sessions](sessions.md) owns active-turn Stop, per-session contexts and exact permission modes/approvals.
 
 ## Purpose and boundaries
 
@@ -56,6 +56,9 @@ The registry also exposes web_download as a prepared write operation with its ow
 
 - ToolContext carries absolute root, optional WorkerPool, per-session lastReads Map and optional ChangeHost (SQLite, shared queue, session/turn/call identity, ownership check and transactional recorded-event callback). Product ToolDefinition execute(ctx,args,signal) returns JSON; ToolRegistry.bind supplies established runtime ToolDef execute(args,signal), propagating error outcomes through runtime's error-result handling.
 - Registry.available/specs/bind/execute apply disabled names, validate zod args, use toolSpecs JSON projection and cap valid JSON at32000 characters with truncated. Failures have isError and actionable text; malformed serialized outputs are contained.
+- `tools/files.ts` supplies the bounded guarded file read used for session images, grep and document inspection. It checks the ordinary-file identity before reading and revalidates the path before releasing bytes. `FileReadLimitError` lets callers map the limit to their typed response.
+- The registry binds `session_launch`, `session_status`, `session_wait` and `session_stop` to the owning parent and respects disabled names. Launch keys hash runtime turn and tool call IDs. Status and wait report initial-turn progress or outcome. Wait follows the durable event sequence, defaults to 10 seconds, caps at 30 seconds and releases its listener on exit. A timeout leaves the child running. Completed replies apply the live Agent setting before the cap, which keeps registered credential strings whole for later masking. Stop cancels the initial turn. See [Sessions](sessions.md).
+- A delegated context binds and executes only the canonical read, list, glob, grep, parse_log, decode_register, search_docs and read_doc definitions, subject to the host's configured restrictions. Tool preparation is unavailable for that context. Path guards apply the workbench scope and protected-root exclusions regardless of host mode or additional-folder grants. Direct execution and a replay turn are covered in sessions/delegation.test.ts.
 - PathGuard.create(root)/resolve(relative) return absolute/canonical relative/key. Root is realpath; Windows keys and ignore-metadata identity fold case. Deepest existing ancestors support new paths. Guard applies common ignore policy to lexical and canonical targets and refuses redirected ignore metadata. Its optional host-only excludedRoots reject lexical/canonical application-data descendants in either scope, including absent descendants resolved through existing ancestors and Windows case/junction aliases. toolPathGuard and grep worker metadata carry the host roots; parse_log/decode_register/plugin drafts, candidate inputs, electrical helpers and program/HIL inputs receive the same host mode-aware scope and exclusions. Guard admission captures its original Bypass epoch before awaits; isolated workers terminate on its abort. ApplicationDataAccessError preserves the refusal across program argument binding. PathGuard.assertAuthorized synchronously rechecks current host authority immediately before spawn or another side effect. PathGuard.assertNotExcluded checks lexical/canonical exclusions without granting filesystem scope or outside binding, so absolute application-data arguments cannot take the unbound fallback. Agent document adapters pass exclusions into the still-confined knowledge read/search guards. Candidate apply and program spawn/file checks reapply host exclusions. Internal host storage callers omit agent exclusions.
 - read accepts offset>=1 and limit<=2000, numbers selected lines, returns totalLines/truncated/ref and records full-file SHA256/mtime only after stable successful read. Source retention is bounded256KiB, preview30000 characters; complete metadata scans in64KiB chunks so large files support offsets past256KiB. PDFs direct to read_doc; binaries fail.
 - list defaults root/depth1 with depths1..3 and name/type/bytes entries; glob uses tinyglobby, relative base, newest-mtime order and500-path cap. Discovery omits links and ignored entries.
@@ -98,6 +101,7 @@ Draft authoring elsewhere retains normal approval policy (tools/write-edit.test.
 |---|---|---|
 | Confinement/ignore/binary | PathGuard,isBinary | path-guard/binary tests, native Windows aliases |
 | Read/fingerprint/line semantics | readTool,readWindow,refs | read/shared refs tests |
+| Agent image inspection | tools/view-image.ts, tools/raster-file.ts, PathGuard | sessions/view-image.test.ts |
 | Ignored sorted discovery | discoverFiles,listTool,globTool | discovery tests |
 | Regex/options/worker protocol | grepTool,grep-worker.ts | grep/node-host tests |
 | Captured register definitions/decoding/citations | shared/tools/decode-register.ts; tools/decode-register.ts,decode-register/{definition,decode}.ts; agent/citations.ts | decode-register.test.ts; citation tests; real CLI parity; native workbench-tools |
@@ -111,6 +115,8 @@ Draft authoring elsewhere retains normal approval policy (tools/write-edit.test.
 
 ## Key behaviors
 
+- The ordinary path guard applies permanent ignore rules. Composer and message image reads opt into the narrow `.vera/attachments/<session>/` namespace and refuse redirected paths into or out of it.
+
 - REQ-DATA-ff592d7b — captured register decoding contract; see specs/decode-register.md.
 - REQ-FUNC-41a37137 — captured register decoding contract; see specs/decode-register.md.
 - REQ-FUNC-636e8efe — captured register decoding contract; see specs/decode-register.md.
@@ -122,6 +128,7 @@ Draft authoring elsewhere retains normal approval policy (tools/write-edit.test.
 - REQ-SEC-b86a7502 — captured register decoding contract; see specs/decode-register.md.
 - REQ-UX-c3aceaf8 — captured register decoding contract; see specs/decode-register.md.
 
+- `view_image {path}` reads an ordinary primary-workbench raster through the shared file guard and IMG-02 transform (PNG, JPEG, GIF, WebP; 20 MiB; longest side 2048 px). Relative paths honor ignore rules and protected application roots, and symbolic links and junctions are refused even in Bypass. The tool can reopen managed attachment paths found in the current session's durable user messages after delivery (REQ-FUNC-19936eec, REQ-SEC-1d25462f, REQ-FUNC-33cb0bb1).
 - REQ-SEC-c370e45b — Confine tool paths.
 - REQ-FUNC-f558632e — Detect binary samples.
 - REQ-FUNC-091ba439 — Read numbered bounded text.

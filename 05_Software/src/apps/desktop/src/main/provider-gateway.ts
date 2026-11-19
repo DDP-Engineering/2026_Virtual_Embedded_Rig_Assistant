@@ -1,6 +1,7 @@
 import type { Clock, SettingsService } from "@vera/core";
 import { createPiAiGateway, type LlmGateway, resolveModelReference, testConnection } from "@vera/core";
 import {
+  acceptsImages,
   type ProviderCatalog,
   type ProviderDiscoveryRequest,
   type ProviderTestResult,
@@ -58,6 +59,13 @@ export class ProviderGateway {
     return this.track(() =>
       discoverProvider(request, { settings: this.settings, credentials: this.credentials }),
     );
+  }
+  imageCapability(draftModel: string | null) {
+    return this.track(async () => {
+      const reference = this.modelReference(null, draftModel);
+      await this.api.prepareModel?.(reference);
+      return { acceptsImages: acceptsImages(this.api.capabilities(reference)) };
+    });
   }
   models(id: string): Promise<ProviderCatalog> {
     return this.track(async () => providerCatalogSchema.parse(await this.api.models(id)));

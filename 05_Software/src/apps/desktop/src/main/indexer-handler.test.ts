@@ -23,15 +23,16 @@ function services() {
     select: vi.fn(async () => ({ paths: [{ path: "docs/a.md", size: 1 }], skipped: [], retry: false })),
     inspect: vi.fn(async () => ({ status: "ok", sha256: "b".repeat(64), binary: false })),
     cached: false,
-    embeddings: {
+    worker: {
       embed: vi.fn(async () => [new Float32Array([1])]),
       // Like EmbeddingHost: rows are read only when the worker's epoch cache misses.
       rank: vi.fn(async function (this: unknown, _root: string, _epoch: string, rows: unknown) {
         if (!self.cached) typeof rows === "function" ? rows() : rows;
         return [{ id: 1, score: 0.5 }];
       }),
-      release: vi.fn(async () => {}),
     },
+    embeddings: vi.fn(() => self.worker),
+    release: vi.fn(async () => {}),
     finish: () => release?.(),
   };
   return self;
@@ -97,25 +98,31 @@ it("asks for vectors only when the epoch is not cached, embeds queries and relea
   const s = services();
   const sent: unknown[] = [];
   const handle = createIndexerHandler(s as never, (message) => sent.push(message));
-  handle({ id: 1, type: "rank", root: "/b", epoch: "3", query: "supply" });
+  const model = "Xenova/multilingual-e5-small";
+  handle({ id: 1, type: "rank", model, root: "/b", epoch: "3", query: "supply" });
   await flush();
   expect(sent).toContainEqual({ id: 1, ok: true, value: { needRows: true } });
+  expect(s.embeddings).toHaveBeenCalledWith(model);
   const rows = [{ id: 1, vector: new Float32Array(384) }];
-  handle({ id: 2, type: "rank", root: "/b", epoch: "3", query: "supply", rows });
+  handle({ id: 2, type: "rank", model, root: "/b", epoch: "3", query: "supply", rows });
   await flush();
-  expect(s.embeddings.rank).toHaveBeenLastCalledWith("/b", "3", rows, "supply", expect.any(AbortSignal));
+  expect(s.worker.rank).toHaveBeenLastCalledWith("/b", "3", rows, "supply", expect.any(AbortSignal));
   expect(sent).toContainEqual({ id: 2, ok: true, value: { hits: [{ id: 1, score: 0.5 }] } });
   // A cached epoch never asks for vectors: the lazy rows are not read.
   s.cached = true;
-  handle({ id: 3, type: "rank", root: "/b", epoch: "3", query: "supply" });
+  handle({ id: 3, type: "rank", model, root: "/b", epoch: "3", query: "supply" });
   await flush();
   expect(sent).toContainEqual({ id: 3, ok: true, value: { hits: [{ id: 1, score: 0.5 }] } });
-  handle({ id: 4, type: "embed", root: "/b", texts: ["a"] });
+  handle({ id: 4, type: "embed", model, root: "/b", texts: ["a"] });
   handle({ id: 5, type: "release", root: "/b" });
   await flush();
   expect(sent).toContainEqual({ id: 4, ok: true, value: [new Float32Array([1])] });
-  expect(s.embeddings.release).toHaveBeenCalledWith("/b");
+  expect(s.release).toHaveBeenCalledWith("/b");
   expect(sent).toContainEqual({ id: 5, ok: true, value: null });
+  handle({ id: 6, type: "embed", model: "../unknown", root: "/b", texts: ["a"] });
+  await flush();
+  expect(sent).toContainEqual(expect.objectContaining({ id: 6, ok: false }));
+  expect(s.worker.embed).toHaveBeenCalledTimes(1);
 });
 
 it("passes a failure's error code, such as ENOENT, back to main", async () => {

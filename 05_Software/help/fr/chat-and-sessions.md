@@ -16,11 +16,29 @@ Saisissez votre texte dans la zone de message (**Interrogez VERA sur votre proje
 
 À côté de la zone de message, vous choisissez le **Modèle**, le **Niveau de raisonnement** et le **Mode d’autorisation** de cette session. Les nouvelles sessions reprennent le modèle et le mode d’autorisation des paramètres du banc de travail.
 
+Collez ou déposez une image dans le champ de message, ou choisissez **Joindre une image** pour sélectionner un fichier. Dans Fichiers, faites glisser l’image vers le champ de message ou choisissez **Joindre une image** dans son menu. Retirez une image avec le bouton de sa vignette. VERA conserve les originaux importés dans le banc de travail. Les images jointes depuis Fichiers gardent leurs chemins.
+
+Sélectionnez la vignette d’un message envoyé pour ouvrir l’image dans la visionneuse de fichiers. Si l’image est introuvable, le message affiche son chemin enregistré dans le banc de travail.
+
+Un message peut référencer jusqu’à huit images PNG, JPEG, GIF ou WebP du banc de travail, dans la limite de 20 Mio par fichier. VERA réduit la copie envoyée au modèle à 2048 pixels au maximum sur le côté le plus long et conserve le fichier original. Un modèle qui accepte uniquement du texte reçoit les chemins. La synthèse des anciens messages conserve les chemins des images sous forme de notes textuelles. Les exports de session incluent ces chemins.
+
+Consultez [Fournisseurs et modèles](providers.md) pour savoir comment VERA détermine si le modèle choisi accepte les images.
+
+Indiquez à l’agent le chemin relatif d’une image du banc de travail pour qu’il l’examine. Avec un modèle compatible, il peut utiliser `view_image` pour lire des fichiers PNG, JPEG, GIF ou WebP de 20 Mio maximum. Le côté le plus long de la copie envoyée au modèle mesure au plus 2048 pixels. L’outil exige un chemin autorisé du banc, sans lien, même en mode Contournement. Le résultat dans l’historique de la session conserve le chemin. **Modifier le banc** → **Outils** affiche l’option si le modèle par défaut du banc accepte les images.
+
+L’agent peut rouvrir une image envoyée dans cette session en utilisant son chemin enregistré. Il peut examiner jusqu’à huit images par étape et conserve pendant le tour les huit dernières images ouvertes par l’outil.
+
 ## Orienter ou arrêter un tour en cours
 
 Pendant que l’agent travaille, vous pouvez continuer à écrire et envoyer d’autres messages, par exemple « vérifie aussi l’errata ». Ils affichent **En attente d’envoi** jusqu’à ce que l’agent les prenne en compte à son étape suivante. Tant qu’une carte d’approbation attend votre décision, l’envoi est suspendu.
 
 **Arrêter** termine le tour en cours. Escape demande aussi **Arrêter le tour en cours ?**. Le travail déjà terminé, comme les modifications de fichiers appliquées, est conservé.
+
+## Suivre les sessions déléguées
+
+Lorsque VERA délègue une tâche, **Sessions déléguées** dans le chat parent affiche chaque session enfant et son état. Sélectionnez une session enfant pour ouvrir son onglet Chat et suivre la conversation. **Session parente** permet de revenir au chat parent.
+
+Pour arrêter une session enfant en cours, ouvrez-la et choisissez **Arrêter** près de la zone de saisie. La session parente peut continuer son travail. Si une approbation est demandée, utilisez la carte d’approbation de la session concernée. Quand vous rouvrez une session après avoir redémarré VERA, le lien et le résultat du tour délégué restent disponibles.
 
 ## Niveaux de détail
 
@@ -96,4 +114,4 @@ Chaque terminal démarre en privé. Pour autoriser l’agent à en lire un, voir
 
 ## Masquage des secrets pour l’agent et les exports
 
-Agent et modèle masque les résultats d’outils envoyés au fournisseur, les réponses en direct ainsi que la recherche et l’affichage des sessions. Artefacts et exports contrôle indépendamment les contenus et descriptions enregistrés, les exports d’artefacts et les exports JSON/Markdown des sessions. Les deux sont activés par défaut ; un choix explicite du banc prime sur le réglage courant de l’application. Désactiver le masquage de l’agent permet aux secrets stockés trouvés dans des fichiers ou sorties d’outils d’atteindre le fournisseur. Exécutions et Affichage ne changent pas ces règles. Erreurs du fournisseur, tests de connexion et journaux de diagnostic masquent toujours les identifiants stockés. La lecture exige toujours l’accord propre à ce terminal. Un texte déjà enregistré comme [REDACTED] reste irrécupérable par désactivation ; relisez la source originale ou recréez l’artefact.
+Agent et modèle masque les résultats d’outils envoyés au fournisseur, les réponses en direct ainsi que la recherche et l’affichage des sessions. Le masquage vérifie le texte du chemin du fichier. Les pixels de l’image sont hors de son champ. Artefacts et exports contrôle indépendamment les contenus et descriptions enregistrés, les exports d’artefacts et les exports JSON/Markdown des sessions. Les deux sont activés par défaut ; un choix explicite du banc prime sur le réglage courant de l’application. Désactiver le masquage de l’agent permet aux secrets stockés trouvés dans des fichiers ou sorties d’outils d’atteindre le fournisseur. Exécutions et Affichage ne changent pas ces règles. Erreurs du fournisseur, tests de connexion et journaux de diagnostic masquent toujours les identifiants stockés. La lecture exige toujours l’accord propre à ce terminal. Un texte déjà enregistré comme [REDACTED] reste irrécupérable par désactivation ; relisez la source originale ou recréez l’artefact.

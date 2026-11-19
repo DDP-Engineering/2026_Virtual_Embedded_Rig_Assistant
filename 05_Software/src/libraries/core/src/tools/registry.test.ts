@@ -1,4 +1,4 @@
-import { builtinToolNames } from "@vera/shared";
+import { builtinToolNames, delegatedSessionToolNames } from "@vera/shared";
 import { expect, it } from "vitest";
 import { z } from "zod";
 import * as api from "../index.js";
@@ -6,10 +6,14 @@ import * as api from "../index.js";
 it("converts every tool schema and validates samples while filtering disabled names", () => {
   expect(api.ToolRegistry).toBeTypeOf("function");
   const registry = new api.ToolRegistry();
-  expect(registry.available().map((tool) => tool.name)).toEqual(builtinToolNames);
+  expect(registry.available().map((tool) => tool.name)).toEqual([
+    ...builtinToolNames,
+    ...delegatedSessionToolNames,
+  ]);
   const samples = {
     terminal_read: {},
     read: { path: "docs/a.txt" },
+    view_image: { path: "docs/board.png" },
     list: {},
     glob: { pattern: "**/*.md" },
     grep: { pattern: "hello" },
@@ -81,6 +85,10 @@ it("converts every tool schema and validates samples while filtering disabled na
       catalog: "cat-lighting",
     },
     help: { page: "permissions" },
+    session_launch: { instruction: "Inspect a file.", modelRef: "replay/child", reasoning: "high" },
+    session_status: { sessionId: "ses_01JB8Z6Q4M7N2K5R9T3V8X1Y0C" },
+    session_wait: { sessionId: "ses_01JB8Z6Q4M7N2K5R9T3V8X1Y0C", waitMs: 30000 },
+    session_stop: { sessionId: "ses_01JB8Z6Q4M7N2K5R9T3V8X1Y0C" },
   };
   for (const tool of registry.available()) {
     const sample = samples[tool.name as keyof typeof samples];
@@ -91,6 +99,7 @@ it("converts every tool schema and validates samples while filtering disabled na
     });
   }
   expect(registry.specs(["read"]).map((tool) => tool.name)).toEqual([
+    "view_image",
     "list",
     "glob",
     "grep",
@@ -124,6 +133,7 @@ it("converts every tool schema and validates samples while filtering disabled na
     "power_quality",
     "lighting_design",
     "help",
+    ...delegatedSessionToolNames,
   ]);
   expect(registry.available(["read"]).map((tool) => tool.name)).not.toContain("read");
 });
@@ -195,4 +205,14 @@ it("exposes parse_log as a read tool and excludes it when disabled", () => {
   const registry = new api.ToolRegistry();
   expect(registry.available().find((tool) => tool.name === "parse_log")?.class).toBe("read");
   expect(registry.specs(["parse_log"]).map((tool) => tool.name)).not.toContain("parse_log");
+});
+
+it("keeps delegated session tools unavailable without a host authority", async () => {
+  const registry = new api.ToolRegistry();
+  const ctx = api.createToolContext("unused");
+  const signal = new AbortController().signal;
+  for (const name of delegatedSessionToolNames) {
+    expect(registry.bind(ctx).map((tool) => tool.name)).not.toContain(name);
+    expect(await registry.execute(ctx, name, {}, signal)).toMatchObject({ isError: true });
+  }
 });

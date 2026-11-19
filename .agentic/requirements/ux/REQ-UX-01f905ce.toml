@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-UX-01f905ce"
+
+title = "Show delegated turn completion"
+
+status = "active"
+
+requirement = """
+When an initial delegated turn completes, Desktop shall display its completed outcome on the linked session views.
+"""
+
+verification = "Run an active replay child through completion and observe Completed on the parent and child views."
+
+affected_paths = ["05_Software/src/libraries/core/src/sessions/service.ts","05_Software/src/libraries/core/src/storage/repos/delegations.ts","05_Software/src/libraries/core/src/sessions/delegation-monitor.ts","05_Software/src/libraries/shared/src/session.ts","05_Software/src/apps/desktop/src/renderer/components/session/delegation-links.tsx"]
+
+linked_tests = ["05_Software/tests/e2e/session-delegation.spec.ts","05_Software/src/libraries/core/src/sessions/delegation.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-19
+updated = 2026-11-19

@@ -40,6 +40,7 @@ export async function fixture(sameWorkbenchId = false) {
   let current = a;
   const gateway: LlmGateway = {
     capabilities: () => ({
+      input: ["text"],
       contextWindow: 32768,
       maxOutputTokens: 4096,
       safetyMargin: 1639,

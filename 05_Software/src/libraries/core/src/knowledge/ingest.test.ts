@@ -96,8 +96,72 @@ async function harness(
     db.prepare("SELECT * FROM documents WHERE path='docs/board.md'").get() as
       | { sha256: string; status: string }
       | undefined;
-  return { root, folder, service, db, events, row };
+  return { root, folder, service, db, events, row, files };
 }
+
+it.each(["completes", "fails"] as const)(
+  "keeps the confirmed count stable when the previous model %s during save",
+  async (outcome) => {
+    const gate = () => {
+      let resolve = () => {};
+      const promise = new Promise<void>((done) => {
+        resolve = done;
+      });
+      return { resolve, promise };
+    };
+    const processStarted = gate();
+    const processReleased = gate();
+    const configWriteStarted = gate();
+    const configWriteReleased = gate();
+    const h = await harness(async ({ embeddings }) => {
+      if (embeddings?.model === "Xenova/bge-small-en-v1.5") {
+        processStarted.resolve();
+        await processReleased.promise;
+        if (outcome === "fails") throw Error("Superseded model failed.");
+      }
+      return { status: "indexed", chunks: [] };
+    });
+    const writeAtomic = h.files.writeAtomic;
+    vi.spyOn(h.files, "writeAtomic").mockImplementation(async (path, content) => {
+      if (path.endsWith("workbench.yaml")) {
+        configWriteStarted.resolve();
+        await configWriteReleased.promise;
+      }
+      await writeAtomic(path, content);
+    });
+    try {
+      await writeFile(join(h.folder, "docs/board.md"), "# Board");
+      await processStarted.promise;
+      const config = h.service.getSnapshot().config;
+      const saved = h.service.updateConfig(
+        { embeddings: { ...config.embeddings, model: "Xenova/multilingual-e5-small" } },
+        config.id,
+        [],
+        {},
+        { from: config.embeddings.model, count: 0 },
+      );
+      await configWriteStarted.promise;
+      processReleased.resolve();
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      expect(h.row()?.status).toBe("pending");
+      configWriteReleased.resolve();
+      await saved;
+      await expect.poll(h.row, { timeout: 3500 }).toMatchObject({ status: "indexed" });
+      expect(
+        h.events.some(
+          (item) =>
+            item.topic === "workbench" &&
+            item.event.type === "index.document" &&
+            item.event.document?.status === "failed",
+        ),
+      ).toBe(false);
+    } finally {
+      processReleased.resolve();
+      configWriteReleased.resolve();
+    }
+  },
+  15000,
+);
 
 it("publishes processor chunks and locators atomically with indexed status", async () => {
   const h = await harness(async () => ({

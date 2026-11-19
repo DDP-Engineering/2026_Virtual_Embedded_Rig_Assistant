@@ -12,6 +12,7 @@ const caps = {
   contextWindow: 6000,
   maxOutputTokens: 1000,
   safetyMargin: 1024,
+  input: ["text" as const],
   inputBudget: 3976,
   supportsTools: true,
 };

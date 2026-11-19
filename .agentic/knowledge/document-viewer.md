@@ -28,6 +28,8 @@ progress travels through existing workbench events.
 
 ## Public interface
 
+- Files exposes Attach image on PNG, JPEG, GIF and WebP entries and lets users drag eligible image rows into the composer. Attachment admission still uses a guarded primary-workbench read. Attach as context continues to send path mentions.
+
 - docs.open accepts workbenchId with indexed path, document ref, or
   sessionId/messageId/ref. It returns scoped ViewerContent for PDF bytes/pages,
   presentation slides with the cited page/pageEnd, Markdown/HTML/document/
@@ -135,7 +137,8 @@ progress travels through existing workbench events.
   session the first time it is shown in a run: it checks downloads (`downloads.list`), artifacts
   (`artifacts.list`) and files (`docs.stat`, only NOT_FOUND drops a tab; other failures keep the
   tab with its load error), puts the restored tabs before tabs opened meanwhile and keeps their
-  places (REQ-FUNC-8a061992, REQ-REL-4622d972). Only restored sessions are saved: 500 ms after a
+  places (REQ-FUNC-8a061992, REQ-REL-4622d972). A delegation link explicitly selects Chat, even
+  when stored document tabs are still being restored. Only restored sessions are saved: 500 ms after a
   change and at once on `pagehide`. Deleting a session removes its record (REQ-FUNC-d9d16533).
 
 ## Invariants

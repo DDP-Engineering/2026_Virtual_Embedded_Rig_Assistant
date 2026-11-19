@@ -16,12 +16,15 @@ The package pipeline emits host Windows/Linux x64 artifacts with the pinned runt
 verified model files and size/hash reports. Compiled instrumented shells exercise temporary
 SQLite and real local CPU embeddings; external host evidence binds results to artifact hashes
 and records actual connectivity or isolation.
-The package delivers the BGE q8 assets selected in [ADR-0015](../../00_Planning/decisions/README.md). The model descriptor supplies dimensions, token limit, pooling, normalization and query/passage prefixes. production indexing consumes the selected descriptor.
+The package stages BGE Small EN and Multilingual E5 Small q8. Each manifest, its listed assets and its
+MIT licence notice share `resources/models/<model-id>/`. The descriptor supplies dimensions, token limit,
+pooling, normalization and query/passage prefixes. Staging and builder output are checked against the source
+pins. `delivery:verify` uses full 7-Zip to check the same pins inside each desktop archive.
 
 
 ```mermaid
 flowchart LR
-  manifest[(model-manifest.json)] --> prepare[prepare-model.mjs]
+  manifest[("src/models/<model-id>/model-manifest.json")] --> prepare[prepare-model.mjs]
   prepare --> models[(src/models)]
   command([package / package:test]) --> package[package.mjs]
   package --> prepare
@@ -74,7 +77,7 @@ test user in a dedicated VM. Measurements/status live in `06_SoftwareDocu/wp05-p
 The prepack and final ASAR checks compare every non-license CMap/font/WASM resource against the exact-pinned pdfjs-dist source bytes. Certificate SHA1 and subject selectors are preserved together when both are configured.
 
 VERA_UPDATE_URL configures generic update metadata and the compiled main feed. The staged
-runtime closure includes electron-updater and its pinned transitive dependencies.
+runtime closure includes electron-updater and its pinned transitive dependencies. The main bundle externalizes sharp, and staging explicitly collects its pinned x64 native runtime alongside its JavaScript loader.
 [Updates](updates.md) owns channels, mode controls, distribution capabilities and safe installation.
 
 ## Invariants
@@ -85,7 +88,7 @@ runtime closure includes electron-updater and its pinned transitive dependencies
 - Model URLs contain the immutable revision; every cached/downloaded asset must match bytes and SHA256.
   Corruption fails; downloads occur only in explicit preparation/build commands.
 - Native CPU libraries and models are real files outside ASAR. Foreign native OS/architecture fails inspection.
-- Windows NSIS budget is250000000bytes; overflow persists a FAIL report with contributors before throwing. ZIP size is recorded.
+- Archive sizes and their largest unpacked contributors are recorded for all desktop targets.
 - Prepack rejects secret files/material, relative paths longer than160, and missing native/model/pdf assets, with sanitized diagnostics.
 - Microsoft VC++14.51.36247.0 source/catalog signatures and committed SHA256/byte pins materialize five unmodified app-local DLLs; caches and each packaged target are verified. Linux excludes Windows resources.
 - Explicit signing credentials/selectors force Windows signing and valid Authenticode verification; missing credentials permit localized unsigned About. app.info exposes immutable test/signing identity.
@@ -98,7 +101,7 @@ runtime closure includes electron-updater and its pinned transitive dependencies
 
 | Change requested | Start with | Focused verification |
 |---|---|---|
-| Model delivery/pins | `src/models/model-manifest.json`, `prepare-model.mjs` | packaging asset integrity tests, actual offline cached verification |
+| Model delivery/pins | `src/models/<model-id>/model-manifest.json`, `prepare-model.mjs` | packaging manifest, asset and staging tests; actual online and offline verification |
 | uv delivery/pins | `src/uv/uv-manifest.json`, `prepare-uv.mjs`, `stageUv` in `package.mjs` | `tests/packaging/packaging.test.ts` (prepare and stage uv) |
 | Native collection/budget | `package.mjs`, `electron-builder.yml` | packaging budget/ASAR tests, native OS artifact inspections |
 | SQLite SQL/fallback | `main/packaging/sqlite-probe.ts` | real SQLite test, packaged probe |
@@ -112,7 +115,9 @@ runtime closure includes electron-updater and its pinned transitive dependencies
 - `REQ-SEC-c11e9859` — safe complete prepack payload and sanitized failures.
 - `REQ-PLAT-a68b2d5b` — conditional signing and immutable localized identity.
 - `REQ-TEST-0b2884f2` — complete release hook exclusion and actual hostile-env launch boundary.
-- `REQ-PLAT-96cd589b` — immutable verified model delivery.
+- `REQ-PLAT-96cd589b` — immutable verified model preparation.
+- `REQ-PLAT-ac20d6f5` — both pinned models and MIT notices in every offline desktop package.
+- `REQ-REL-70db8095` — delivery verification refuses missing or changed model members.
 - `REQ-TEST-d05765be` — WAL/unicode61/trigram/reopen and observed node:sqlite fallback.
 - `REQ-TEST-ec62ad71` — real CPU worker model load and three normalized 384-vector timings.
 - `REQ-TEST-7fea1dd0` — complete release app-code exclusion of probes.
@@ -124,7 +129,8 @@ Native acceptance exercises real SQLite, local CPU indexing/search and PDF throu
 - `02_Tools/release/{package,package-checks}.mjs`, `02_Tools/environment/{prepare-model,prepare-windows-runtime}.mjs` — collection, source/cache integrity, sanitized prepack, target isolation and reports.
 - `05_Software/src/windows_runtime/windows-runtime-manifest.json` — pinned Microsoft x64 app-local runtime provenance.
 - `main/app-info.ts`, shared ipc.ts, renderer Metadata/locales — immutable build/signature identity in About.
-- `05_Software/src/models/model-manifest.json` — immutable model provenance/pins.
+- `05_Software/src/models/<model-id>/{model-manifest.json,LICENSE.txt}` — per-model pins and MIT notice.
+- `02_Tools/release/embedding-payload.mjs`, `02_Tools/delivery/verify-embedding-archive.mjs` — package member pins and archive verification.
 - `05_Software/src/uv/uv-manifest.json`, `02_Tools/environment/prepare-uv.mjs` — pinned uv per platform; `package.mjs`
   prepares it, stages `resources/uv/` (extraResources `uv`) and re-checks the packaged binary hash; the package report
   records `uv {version, platform, bytes, sha256}`.

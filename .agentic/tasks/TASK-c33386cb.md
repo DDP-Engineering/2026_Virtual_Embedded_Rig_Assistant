@@ -1,6 +1,6 @@
 # TASK-c33386cb - Plan: add comments and Review plan to request an agent revision
 
-stage: validate
+stage: build
 type: feature
 interaction: autopilot
 requirements: REQ-FUNC-2e8a54c7, REQ-DATA-d968385c, REQ-UX-8d3039aa, REQ-REL-4bea0006, REQ-DATA-fa8543aa, REQ-FUNC-dfa01734, REQ-UX-1dcf2048, REQ-FUNC-566e4205, REQ-FUNC-10533e00, REQ-SEC-9467cfbc, REQ-DATA-a71d1aac, REQ-UX-e86663cb, REQ-FUNC-14c661ce, REQ-DATA-cb383f59, REQ-FUNC-5536a651, REQ-DATA-0f69ffdd, REQ-REL-e048aed0, REQ-REL-ce1e5319, REQ-REL-02c0e68e, REQ-REL-2e0ba7fb, REQ-REL-239f8647, REQ-REL-5b02ea0b, REQ-SEC-4a5e9261, REQ-SEC-e412df5e, REQ-SEC-292daffe, REQ-REL-e50514e6, REQ-REL-0dca1c44, REQ-FUNC-461d6eb1, REQ-FUNC-bf4758a4, REQ-SEC-bb8e4dce, REQ-SEC-5f675c2f, REQ-UX-98d58422, REQ-UX-f205aabf, REQ-UX-4a040005, REQ-UX-4a040007, REQ-UX-4bea0002, REQ-FUNC-a1040002
@@ -15,16 +15,14 @@ end each session with `advance` or `pause`.
 
 ## Done checklist (current stage)
 
-- [ ] diff reviewed against scope, requirements, design, error paths,
-      portability, security and unrequested work
-- [ ] knowledge pages of changed components current with the reviewed code
-- [ ] project and environment context reconciled with the candidate
-- [ ] requirements re-read: status, prose, verification, paths and links true
-- [ ] manual or inspection verification recorded where applicable
-- [ ] explicit review approved, when enabled
-- [ ] final `check --strict --run` result logged truthfully after the last edit
-- [ ] remaining warnings and pre-existing failures explained
-- [ ] `report` appended
+- [ ] each automated increment has a red line before its implementation and a
+      green line after; each manual one a logged observation
+- [ ] anchor recorded before implementation; evolution reviewed after
+- [ ] focused tests green, with the command and its scope logged
+- [ ] `affected_paths`, `linked_tests` and `status = "active"` current on every
+      requirement, or `retired` with its reason
+- [ ] affected docstrings, usage examples and setup instructions updated
+- [ ] `check` clean, or each remaining warning explained in the Log
 
 ## Frame
 
@@ -423,6 +421,10 @@ Diagrams: [diagram_TASK-c33386cb.md](diagram_TASK-c33386cb.md)
 - 2026-11-19 build: Build traceability/evolution complete: all 37 header requirements (29 new plus eight reused) are active with current existing affected paths and linked tests; inline TOML/path audit exit 0. Updated the active protocol and baseline Plan spec to remove the superseded display-only limitation, document guarded native selection/source-newline mapping, and retain bounded todo/atomicity/privacy contracts. Updated Plan/chat knowledge, README inventory, four-language help and one complete four-language release entry; existing CHANGELOG line retained. Final evolution --task TASK-c33386cb reports 67 paths (24 added/43 modified/0 removed); reviewed every path against D1-D6: shared events/targets, core review/runtime, captured/probe-free main IPC, keyed renderer/editor/privacy/Retry, private mock/selection/history helpers, focused tests and feature docs. No unplanned product area, dependency/lockfile, plugin/version, migration or schema change. Original anchor retained; refreshed evolution includes the CRLF refinement and extra browser scenario.
 - 2026-11-19 build: Final strict check --task TASK-c33386cb --strict --json exit 0: errors=0 warnings=31 notes=38, promoted=0; no uncovered-source, stale-paths or context-size findings. Warnings explained: 12 pre-existing ticket-ref and 13 pre-existing journal-header findings outside this task; six outside-layout findings are mandated CHANGELOG/release-notes plus four existing app help pages, accepted in their responsibility-owned locations without weakening AEGIS globs. git diff --check exit 0. Prior backend/core/main/preload proof remains valid; focused new/refined component/core/real-browser proof and statics are logged above. Full/plugin suites, native Electron/Windows acceptance, live-model quality and both independent review verdicts were not run/claimed in build; carry relevant platform checks and separate-context reviews into validate under verification-policy.md, without routine full-suite retesting. No commit/publication or sandbox weakening.
 - 2026-11-19 build: completed; next validate
+- 2026-11-19 validate: Validate integration recovery: HEAD d2ea268766d62bc6911198849cd90e78c94fb9f4 on the recorded branch contains an in-progress origin/master integration. Reconciled all nine conflicted worktree files, retaining Plan review admission/receipt/Stop/privacy safeguards together with target delegation staging and image support. Updated new input-capability test fixtures and metadata run callsites; added image-review no-file-read/no-steering and ordinary image-Retry regressions. Updated project/Plan knowledge and consolidated related indexing release notes to retain the ten-new-entry limit. Conflict markers absent and git diff --check exit 0. Index deliberately not staged under repository handover policy; conductor owns integration index/checkpoint. No commit/publication or sandbox change.
+- 2026-11-19 validate: Integration evidence: setup.py --check initially reported dependencies older than the integrated lockfile; setup.py ran pinned npm ci successfully (exit 0; eight moderate audit advisories unchanged/out of scope). Pinned npm run typecheck exit 0 after input/callsite reconciliation. Focused integrated Vitest run exit 0: 19 files/234 tests covering shared state/anchors, core review/restore/delegation/images/service, main review/host and renderer feedback/Retry/mocks. Added seam regressions then passed 2 files/13 tests (review-boundary and plan-review-retry); release-note check exit 0. No full or plugin suite run.
+- 2026-11-19 validate: Validate finding: pinned npm run test:e2e -- tests/e2e/plan.spec.ts tests/e2e/plan-review.spec.ts tests/e2e/plan-fragments.spec.ts exit 1. All three real Chromium feedback/fragment cases passed; sandboxed native Electron live replacement and real restart case passed in this Linux container (not Windows/native Ubuntu acceptance). Existing browser Plan translated-status case failed at plan.spec.ts:349: an extra initial Plan feedback targets list precedes the three expected replacements. Inspection of mocks/sessions.ts session.create reuseEmpty and session-fixtures.ts shows the new feedback fixture has todo metadata but no user event and is eligible as an unused session, so New session reuses a nonempty Plan fixture. This is a ticket-introduced fixture/admission assumption defect, not a test to weaken. Return to build for a focused mock fixture/reuse correction and regression, then rerun affected browser Plan proof. Two separate read-only reviewer contexts were started but stopped when this failure required backrouting; neither returned a verdict, so none is recorded. Final strict proof/report/closure were not performed.
+- 2026-11-19 validate: returned to build - Existing browser Plan acceptance fails because the new Plan feedback targets mock fixture is eligible for unused-session reuse despite its seeded todo list; correct fixture/reuse behavior with a focused regression, preserve the nine prepared integration resolutions, and rerun affected Plan acceptance before returning to validate.
 
 ## Rulings
 
@@ -436,13 +438,13 @@ Diagrams: [diagram_TASK-c33386cb.md](diagram_TASK-c33386cb.md)
 
 ## State
 
-status: ready
-reported: build - completed
-next: start validate: read .agentic/steps/5_validate.md
-must_read: .agentic/tasks/TASK-c33386cb.md, .agentic/steps/5_validate.md
-changed: Completed persistent Plan feedback UI, exact whole-step/Unicode/CRLF fragment selection, draft CRUD/re-anchor, immutable review history/restore, strict mock flow and four-language help/notes; all 37 requirements active, original anchor retained and 67-path evolution reviewed.
-evidence: Focused renderer/mock/import-boundary run 9 files/128 tests; later core/component refinement 3 files/40 tests; final affected UI 2 files/27 tests; real Chromium 3 tests pass. Prior core 120-test and main/preload 46-test proofs reused. Typecheck/lint/i18n/help/release-notes/diff checks pass; strict AEGIS 0 errors/31 explained warnings/38 notes.
-issues: Validate next: separate-context specification and quality reviews, relevant native Electron/Windows/platform acceptance. No full/plugin suite or live-model proof claimed. Baseline/layout warnings and D6 presentation red-granularity deviation are logged. No commits, publication or sandbox changes.
+status: waiting
+reported: build - paused
+next: continue build: Existing browser Plan acceptance fails because the new Plan feedback targets mock fixture is eligible for unused-session reuse despite its seeded todo list; correct fixture/reuse behavior with a focused regression, preserve the nine prepared integration resolutions, and rerun affected Plan acceptance before returning to validate.
+must_read: .agentic/tasks/TASK-c33386cb.md, .agentic/steps/4_build.md
+changed: Prepared nine integration conflict resolutions plus scoped image/delegation seam tests, capability fixtures, metadata run callsites, Plan/project knowledge and release-note reconciliation; preserved all target changes without staging or committing.
+evidence: Typecheck exit 0; integrated focused Vitest 19 files/234 tests exit 0; new seam regressions 2 files/13 tests exit 0; release-note check exit 0; E2E exit 1: three Chromium feedback cases and native Electron restart passed, existing browser Plan status case failed.
+issues: Build must correct seeded Plan fixture unused-session reuse and rerun affected browser Plan acceptance. Unmerged index awaits conductor staging of prepared resolutions. Both independent verdicts, final strict proof/report and Windows/native Ubuntu acceptance remain unperformed; no full/plugin/live-model proof claimed.
 spec_compliance:
 implementation_quality:
 review_round:

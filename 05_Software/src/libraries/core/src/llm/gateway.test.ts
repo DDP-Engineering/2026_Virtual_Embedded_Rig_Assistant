@@ -84,6 +84,57 @@ async function events(
   return results;
 }
 describe("model gateway", () => {
+  it("exposes the pinned OpenAI model list's input modalities", async () => {
+    const { gateway } = setup("http://127.0.0.1:1/v1");
+    const { models } = await gateway.models("openai");
+    for (const [id, input] of [
+      ["gpt-4.1", ["text", "image"]],
+      ["gpt-4", ["text"]],
+    ] as const) {
+      expect(models.find((model) => model.id === id)?.input).toEqual(input);
+      expect(gateway.capabilities(`openai/${id}`).input).toEqual(input);
+    }
+  });
+
+  it.each(["lmstudio", "ollama", "compatible"] as const)(
+    "opts in to image input by exact model ID on a %s connection",
+    async (provider) => {
+      const modelIds = ["org/model", "org/model-text"];
+      const { url } = await endpoint((_req, res) => {
+        res.writeHead(200, { "content-type": "application/json" });
+        res.end(JSON.stringify({ data: modelIds.map((id) => ({ id })) }));
+      });
+      const { settings, gateway } = setup(url);
+      const connection = settings.providers.custom[0];
+      if (!connection) throw Error("custom configuration");
+      connection.slug = provider;
+      if (provider === "lmstudio") {
+        connection.protocol = "lmstudio";
+        connection.models = modelIds.map((id) => ({
+          id,
+          name: id,
+          contextWindow: 32768,
+          maxOutputTokens: 4096,
+          reasoningOptions: [],
+        }));
+      }
+      const slot = `custom:${provider}`;
+      const vision = `${slot}/org/model`;
+      const text = `${slot}/org/model-text`;
+      expect(gateway.capabilities(vision).input).toEqual(["text"]);
+      settings.providers.custom.push({ ...connection, slug: "second", name: "Second" });
+      connection.imageModels = ["org/model"];
+      expect(gateway.capabilities(vision).input).toEqual(["text", "image"]);
+      expect(gateway.collections.api.getModel(slot, "org/model")?.input).toEqual(["text", "image"]);
+      expect(gateway.capabilities(text).input).toEqual(["text"]);
+      expect(gateway.capabilities("custom:second/org/model").input).toEqual(["text"]);
+      expect((await gateway.models(slot)).models).toEqual([
+        expect.objectContaining({ reference: vision, input: ["text", "image"] }),
+        expect.objectContaining({ reference: text, input: ["text"] }),
+      ]);
+    },
+  );
+
   it.each(["stop", secret])("scrubs all assistant metadata on terminal reason %s", async (finish) => {
     const retained = "fictional-retained-key-do-not-return";
     const { url } = await endpoint((_req, res) => {

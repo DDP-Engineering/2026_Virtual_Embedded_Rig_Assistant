@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-REL-d387e52f"
+title = "Release bounded delegation waits on every exit"
+status = "active"
+requirement = "When a delegated wait expires, is cancelled or encounters an observation failure, VERA shall release its resources and leave the child lifecycle in core."
+verification = "Assert timer/listener disposal after timeout, cancellation and read/replay failure, verify that the child keeps running, and reject a target deleted before subscription."
+affected_paths = ["05_Software/src/libraries/core/src/sessions/delegation-monitor.ts","05_Software/src/libraries/core/src/sessions/hub.ts","05_Software/src/libraries/core/src/tools/delegated-sessions.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/sessions/delegation-tools.test.ts", "05_Software/src/libraries/core/src/sessions/delegation-monitor.test.ts"]
+created = 2026-11-19
+updated = 2026-11-19

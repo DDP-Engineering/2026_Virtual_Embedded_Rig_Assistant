@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-f8f95254"
+
+title = "Refuse unsupported image content"
+
+status = "active"
+
+requirement = """
+If an attachment uses SVG or unsupported or invalid raster content, VERA shall refuse it with a typed format error.
+"""
+
+verification = "Attempt SVG, SVG renamed to PNG, and a truncated raster and check the typed format error without events."
+
+affected_paths = ["05_Software/src/libraries/core/src/sessions/session-images.ts", "05_Software/src/libraries/shared/src/errors.ts", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json", "05_Software/src/apps/desktop/src/renderer/locales/fr.json", "05_Software/src/apps/desktop/src/renderer/components/error-message.tsx"]
+
+linked_tests = ["05_Software/src/libraries/core/src/sessions/session-images.test.ts", "05_Software/src/apps/desktop/src/renderer/components/error-message.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-19
+updated = 2026-11-19

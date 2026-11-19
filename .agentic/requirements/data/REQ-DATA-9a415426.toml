@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-DATA-9a415426"
+
+title = "Export image references as paths"
+
+status = "active"
+
+requirement = """
+When exporting a session, VERA shall include each delivered or pending image attachment as a path subject to the export masking policy.
+"""
+
+verification = "Export a session with queued and initial images to Markdown and JSON under masking and check references without image data."
+
+affected_paths = ["05_Software/src/libraries/core/src/sessions/export.ts", "05_Software/src/libraries/shared/src/events.ts", "05_Software/src/apps/desktop/src/main/events.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/sessions/session-images.test.ts", "05_Software/src/apps/desktop/src/main/session-export.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-19
+updated = 2026-11-19

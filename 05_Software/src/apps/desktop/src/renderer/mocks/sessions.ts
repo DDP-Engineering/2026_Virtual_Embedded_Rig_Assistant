@@ -185,6 +185,7 @@ export class MockSessions {
       sessionId: string;
       reuseEmpty?: boolean;
       text: string;
+      images?: string[];
       title: string;
       modelRef: string | null;
       mode: SessionSummary["mode"];
@@ -416,9 +417,15 @@ export class MockSessions {
     if (channel === "session.send" && row.active) {
       this.writable();
       if (row.review || row.stop || row.approval || !row.turnId) throw veraError("BUSY");
-      if (!request.text.trim()) throw veraError("INVALID");
+      if (!request.text.trim() && !request.images?.length) throw veraError("INVALID");
       const messageId = `message_${++this.number}`;
-      this.emit(id, { type: "message.queued", messageId, text: request.text, timestamp: Date.now() });
+      this.emit(id, {
+        type: "message.queued",
+        messageId,
+        text: request.text,
+        ...(request.images?.length && { images: request.images }),
+        timestamp: Date.now(),
+      });
       return { turnId: row.turnId, messageId };
     }
     this.idle(id);
@@ -460,7 +467,12 @@ export class MockSessions {
         row.summary.title = request.text.slice(0, 60);
         this.emit(id, { type: "session.updated", title: row.summary.title });
       }
-      this.emit(id, { type: "message.user", messageId, text: request.text });
+      this.emit(id, {
+        type: "message.user",
+        messageId,
+        text: request.text,
+        ...(request.images?.length && { images: request.images }),
+      });
       row.summary.status = "running";
       this.emit(id, { type: "turn.started", turnId });
       row.done = Promise.resolve()

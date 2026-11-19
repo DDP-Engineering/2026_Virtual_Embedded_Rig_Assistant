@@ -1,6 +1,6 @@
 // REQ-UX-f261c988 REQ-UX-f5d6e9e4
 import { useQuery } from "@tanstack/react-query";
-import type { DocsOpener, DocsTreeEntry, DocumentRecord } from "@vera/shared";
+import { type DocsOpener, type DocsTreeEntry, type DocumentRecord, rasterExtension } from "@vera/shared";
 import { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../../api/index.js";
@@ -102,6 +102,7 @@ export function useFileActions(workbenchId: string, menuFor: string | undefined)
         ? t("documents.revealFinder")
         : t("documents.revealFolder");
   const items = (entry: FileTarget, properties: () => void): TreeMenuItem[] => {
+    const safeAttachment = !entry.ignored && !/__vera_display_[A-Za-z0-9_-]+\.(?:\/|$)/.test(entry.path);
     const openIn: TreeMenuItem[] = [
       // The default application is reached through PathGuard, which refuses what VERA ignores.
       ...(entry.type === "file" && !entry.ignored && canOpenExternally(entry.displayPath ?? entry.path)
@@ -154,13 +155,19 @@ export function useFileActions(workbenchId: string, menuFor: string | undefined)
             {
               action: "attach",
               label: t("documents.attach"),
-              disabled:
-                entry.ignored ||
-                /__vera_display_[A-Za-z0-9_-]+\.(?:\/|$)/.test(entry.path) ||
-                !attachments.attach ||
-                attachments.full,
+              disabled: !safeAttachment || !attachments.attach || attachments.full,
               run: () => attachments.attach?.(entry.path),
             },
+            ...(entry.type === "file" && rasterExtension(entry.displayPath ?? entry.path)
+              ? [
+                  {
+                    action: "attach-image",
+                    label: t("chat.attachImage"),
+                    disabled: !safeAttachment || !attachments.attachImage,
+                    run: () => attachments.attachImage?.(entry.path),
+                  },
+                ]
+              : []),
           ]
         : []),
       ...(openIn.length ? [{ action: "open-in", label: t("documents.openIn"), items: openIn }] : []),

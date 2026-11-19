@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-cf1ce2bd"
+
+title = "Retain searchable text on embedding rebuild failure"
+
+status = "active"
+
+requirement = """
+If rebuilding vectors for an unchanged indexed document fails, VERA shall report failed indexing progress and retain its extracted text and keyword index.
+"""
+
+verification = "Force the new embedding port to fail, assert failed progress and the intact database rows and lexical hit, and reopen to retry the pending rebuild. Exercise inspection failure, a guarded reopen and switching to a healthy model after two worker crashes."
+
+affected_paths = ["05_Software/src/libraries/core/src/knowledge/ingest.ts", "05_Software/src/libraries/core/src/storage/repos/embedding-rebuild.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/knowledge/embedding-ingest.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-19
+updated = 2026-11-19

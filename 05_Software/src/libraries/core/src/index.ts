@@ -31,7 +31,9 @@ export * from "./electrical/results.js";
 export * from "./electrical/tools.js";
 export * from "./electrical/units.js";
 export * from "./help/library.js";
+export * from "./knowledge/document-services.js";
 export * from "./knowledge/embedding.js";
+export { extractionSchema } from "./knowledge/extraction.js";
 export * from "./knowledge/ingest.js";
 export * from "./knowledge/inspect.js";
 export * from "./knowledge/keyword.js";
@@ -67,6 +69,13 @@ export * from "./plugins/runner.js";
 export * from "./plugins/shell.js";
 export * from "./plugins/store.js";
 export * from "./ports.js";
+export { rasterThumbnail } from "./sessions/composer-images.js";
+export {
+  type DelegatedLaunch,
+  type DelegatedLaunchRequest,
+  delegatedLaunchRequestSchema,
+  MAX_ACTIVE_DELEGATIONS,
+} from "./sessions/delegation.js";
 export * from "./sessions/export.js";
 export * from "./sessions/hub.js";
 export * from "./sessions/service.js";

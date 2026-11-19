@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { commandPrefixListSchema, storedCommandPrefixesSchema } from "./command-prefix.js";
+import { defaultEmbeddingModelId, embeddingModelIds } from "./embedding-models.js";
 import { workbenchPrivacySchema } from "./privacy.js";
 import { permissionModeSchema } from "./session.js";
 
@@ -60,7 +61,7 @@ const docs = z.looseObject({
 export const workbenchDocsSchema = docs;
 export const workbenchEmbeddingsSchema = z
   .strictObject({
-    model: z.literal("Xenova/bge-small-en-v1.5").default("Xenova/bge-small-en-v1.5"),
+    model: z.enum(embeddingModelIds).default(defaultEmbeddingModelId),
     chunkSize: z.number().int().min(200).max(1400).default(1400),
     overlap: z.number().int().min(0).max(600).default(200),
   })
@@ -68,6 +69,12 @@ export const workbenchEmbeddingsSchema = z
     message: "Overlap must be smaller than chunk size",
     path: ["overlap"],
   });
+export const embeddingSwitchApprovalSchema = z.strictObject({
+  from: z.enum(embeddingModelIds),
+  count: z.number().int().nonnegative(),
+});
+export type EmbeddingSwitchApproval = z.infer<typeof embeddingSwitchApprovalSchema>;
+
 const disabled = z.looseObject({ disabled: z.array(z.string().min(1)).default([]) });
 /** Plugins run programs, so a workbench enables each one explicitly. */
 const plugins = z.looseObject({ enabled: z.array(z.string().min(1)).default([]) });
@@ -116,7 +123,7 @@ export const workbenchSchema = z.looseObject({
   name: z.string().trim().min(1).max(80),
   description: z.string().optional(),
   embeddings: workbenchEmbeddingsSchema.default({
-    model: "Xenova/bge-small-en-v1.5",
+    model: defaultEmbeddingModelId,
     chunkSize: 1400,
     overlap: 200,
   }),

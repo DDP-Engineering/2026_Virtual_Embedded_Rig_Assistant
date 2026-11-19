@@ -21,11 +21,12 @@ LlmRequest.maskOutput is a host-owned live callback; omitted means on, including
 - resolveModelReference(session,workbench,app), splitModelReference; LlmGateway selectedModel/capabilities/models/stream. Model IDs retain slashes; session wins over workbench over app.
 - createPiAiGateway(host) exposes current OpenAI/custom API collection and OAuth-only subscription collection, mapping pi-ai openai to credential slot chatgpt. Host supplies settings, CredentialStore, scrub, now and optional fetch/knownSecrets.
 - ChatGPT models carry chatgpt/<model> references and the same fresh budgets. Subscription requests resolve only stored OAuth, with locked refresh; API requests remain API-key-only. ChatGPT catalogs come from the authenticated live account catalog, while pi-ai owns subscription inference and refresh.
-- capabilities expose contextWindow/maxOutputTokens/safetyMargin/inputBudget/supportsTools; custom configured limits are authoritative. OpenAI effective output is capped16384 and context-margin-1.
+- capabilities expose input, contextWindow, maxOutputTokens, safetyMargin, inputBudget and optional tool and reasoning support. Custom configured limits are authoritative. OpenAI effective output is capped16384 and context-margin-1.
+- Input modalities come from the ChatGPT account catalog and the pinned OpenAI model list. ChatGPT uses text when its catalog supplies no recognized modality. Custom models add image to text only for an exact enabled model ID in that connection's settings. Replay uses text. Both capabilities and providers.models expose the input list, and the shared acceptsImages helper checks it for image. The main provider gateway applies the same capability to a workbench draft through `providers.image.capability`.
 - providers.models({id}) returns scrubbed catalog metadata. OpenAI default is offline static metadata; connection Test explicitly probes the endpoint. Custom catalogs validate discovered IDs against reference syntax and attach configured capabilities and fall back on404/405/501 only.
 - providers.test({id,model?}) returns reachability/authentication/tools/streaming ordered pass/fail/skipped rows. Authentication failure skips downstream probes. Streaming requests a complete multiword sentence and requires multiple nonempty source text chunks; a single-token OK is sufficient for authentication, while one coalesced text chunk fails streaming. Tools requires an offered echo call with exactly the required string text and no extra properties.
 - ProviderGateway tracks models/test, denies new calls after close and drains accepted work. ProviderSettings records tool support only for an unchanged writable configuration.
-- ReplayGateway is an explicit core/replay test subpath: deterministic JSONL, filename or regex selection, transcript-derived steps, text and tool-argument deltas, artifact bindings and injected Clock. Optional request.sessionId isolates deterministic tool-call IDs across sessions; callers without it retain transcript-based IDs.
+- ReplayGateway is an explicit core/replay test subpath: deterministic JSONL, filename or regex selection, transcript-derived steps, text and tool-argument deltas, artifact bindings and injected Clock. A named fixture can declare validated reasoningOptions on its first step and expectReasoning on a request step. A mismatch fails the replay before it emits a response. Model preparation validates named scenarios and preserves prompt matching for replay/auto. Optional request.sessionId isolates deterministic tool-call IDs across sessions; callers without it retain transcript-based IDs.
 - smoke:live builds release and manually tests a stored real configuration through main; all required steps must pass, with unsupported listing optionally skipped. [Software README](../../05_Software/README.md) gives usage.
 
 ## Invariants
@@ -42,6 +43,7 @@ LlmRequest.maskOutput is a host-owned live callback; omitted means on, including
 | Change | Start | Focused verification |
 |---|---|---|
 | Model precedence/capabilities/catalog/auth/streams/errors | core llm gateway/providers/errors/stream-scrub | gateway.test.ts |
+| Model input modalities | core llm providers/chatgpt-catalog and shared providers | gateway.test.ts, subscription.test.ts and shared providers.test.ts |
 | Four-step results and host lifecycle | core llm connection; main provider-gateway/provider-settings | gateway.test.ts; provider-test.spec.ts |
 | Replay transcript and release seam | core llm replay; main index; Vite alias | replay.test.ts; tooling/build-mode.test.ts |
 | IPC/schema | shared providers/ipc/errors/settings; core settings/service | bridge/router and service tests |
@@ -53,6 +55,7 @@ LlmRequest.maskOutput is a host-owned live callback; omitted means on, including
 - REQ-FUNC-790a052e — separate subscription catalog, fresh budgets and OAuth streams/refresh.
 
 - REQ-FUNC-05ee1ae5/f3e5db81/5f2220ee/762c3864/29854976 — configured collections, selection, fresh budgets, safe catalogs and measured connection steps.
+- REQ-FUNC-95c412df, REQ-FUNC-4dbd29dd, REQ-FUNC-59607b77 and REQ-FUNC-7ea3fa8c — model input modalities and the shared image capability query.
 - REQ-SEC-647da472 — scrubbed structured failures and streamed/final output.
 - REQ-TEST-38b20a35/771b99be/c986438f — deterministic replay, release seam elimination and automated egress rejection.
 - REQ-UX-53628854 — localized accessible per-step results.
@@ -62,7 +65,7 @@ LlmRequest.maskOutput is a host-owned live callback; omitted means on, including
 
 All paths are under05_Software.
 
-- src/libraries/core/src/llm/{gateway,providers,connection,errors,stream-scrub,replay}.ts and {gateway,subscription,replay}.test.ts.
+- src/libraries/core/src/llm/{gateway,providers,chatgpt-catalog,connection,errors,stream-scrub,replay}.ts and {gateway,subscription,replay}.test.ts.
 - src/libraries/core/{package.json,src/index.ts}; src/libraries/shared/src/{providers,ipc,errors,settings}.ts — dependency/export and strict contracts.
 - src/apps/desktop/src/main/{provider-gateway,provider-settings,credentials,index}.ts — current-config host, capability persistence, secret registry and test composition.
 - src/apps/desktop/electron.vite.config.ts — explicit replay source alias and compile-time test flag.

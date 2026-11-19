@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-SEC-2beadc98"
+title = "Confine composer image access"
+status = "active"
+requirement = "If an attachment request has no writable session in the stated active workbench or its file target escapes the primary workbench, VERA shall refuse the request without reading or writing the target."
+verification = "Exercise wrong workbench and archived session requests through IPC and a redirected attachments directory and escaping paths against the real filesystem."
+affected_paths = ["05_Software/src/libraries/core/src/sessions/composer-images.ts","05_Software/src/libraries/core/src/sessions/service.ts","05_Software/src/libraries/core/src/workbench/path-guard.ts","05_Software/src/apps/desktop/src/main/index.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/sessions/composer-images.test.ts","05_Software/tests/e2e/composer-images.spec.ts"]
+created = 2026-11-19
+updated = 2026-11-19

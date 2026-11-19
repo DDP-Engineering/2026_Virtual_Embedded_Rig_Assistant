@@ -1,3 +1,4 @@
+import { constants } from "node:fs";
 import { lstat, open } from "node:fs/promises";
 import type { PathGuard } from "../workbench/path-guard.js";
 
@@ -8,17 +9,27 @@ export async function assertNotSpecialFile(path: string): Promise<void> {
     throw Error("Read an ordinary file.");
 }
 
+export class FileReadLimitError extends Error {
+  constructor(maxBytes: number) {
+    super(`File exceeds ${maxBytes / 1024} KiB read limit. Use grep or read_doc.`);
+  }
+}
+
 /** Bound allocation/I/O and verify the opened ordinary file stayed at the guarded path. */
 export async function readGuardedFile(guard: PathGuard, path: string, maxBytes: number, signal: AbortSignal) {
   signal.throwIfAborted();
   const target = await guard.resolve(path);
-  await assertNotSpecialFile(target.absolute);
-  const handle = await open(target.absolute, "r");
+  const seen = await lstat(target.absolute);
+  if (!seen.isFile()) throw Error("Read an ordinary file.");
+  const handle = await open(
+    target.absolute,
+    constants.O_RDONLY | (constants.O_NOFOLLOW ?? 0) | (constants.O_NONBLOCK ?? 0),
+  );
   try {
     const before = await handle.stat();
-    if (!before.isFile()) throw Error("Read an ordinary file.");
-    if (before.size > maxBytes)
-      throw Error(`File exceeds ${maxBytes / 1024} KiB read limit. Use grep or read_doc.`);
+    if (!before.isFile() || before.dev !== seen.dev || before.ino !== seen.ino)
+      throw Error("Read an ordinary file.");
+    if (before.size > maxBytes) throw new FileReadLimitError(maxBytes);
     const bytes = Buffer.alloc(before.size);
     let offset = 0;
     while (offset < bytes.length) {

@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-UX-72b09d3a"
+title = "Attach workbench images from Files"
+status = "active"
+requirement = "When a user chooses Attach image for a supported workbench file or drags it from Files to the composer, VERA shall attach it by its existing workbench path."
+verification = "Drag a Files row and use its Attach image menu action, then assert the original path in the draft and the sent user event."
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/documents/docs-tree.tsx","05_Software/src/apps/desktop/src/renderer/components/documents/file-actions.tsx","05_Software/src/apps/desktop/src/renderer/App.tsx","05_Software/src/apps/desktop/src/renderer/components/session/composer.tsx"]
+linked_tests = ["05_Software/tests/e2e/composer-images.spec.ts"]
+created = 2026-11-19
+updated = 2026-11-19

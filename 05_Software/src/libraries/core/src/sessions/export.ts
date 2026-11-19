@@ -38,6 +38,8 @@ export function buildSessionMarkdown(data: SessionExport, changes: ChangeDetail[
         "",
         block(item.text),
       );
+      if (item.kind === "user" && item.images?.length)
+        out.push("", "Image attachments:", "", block(item.images.join("\n")));
       if (item.kind === "assistant" && item.citations.length) {
         out.push("", "Citations:");
         for (const citation of item.citations)

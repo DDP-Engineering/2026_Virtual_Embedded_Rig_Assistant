@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-FUNC-4436607c"
+title = "Send composer image references"
+status = "active"
+requirement = "When a user sends a composer draft with images, VERA shall submit the image paths in session.send and clear the submitted chips after acceptance."
+verification = "Send an image-only draft containing pasted and Files images, assert both paths on the durable user message and assert the chips clear."
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/session/composer.tsx","05_Software/src/apps/desktop/src/renderer/components/session/workspace.tsx","05_Software/src/libraries/shared/src/ipc.ts"]
+linked_tests = ["05_Software/tests/e2e/composer-images.spec.ts","05_Software/src/apps/desktop/src/renderer/components/session/workspace.test.ts"]
+created = 2026-11-19
+updated = 2026-11-19

@@ -4,7 +4,7 @@ export const searchDocsTool: ToolDefinition = {
   name: "search_docs",
   class: "read",
   description:
-    "Search indexed workbench documents. Use English terms over English documents; returns precise refs, snippets and scores. Omit k and mode to use the workbench's retrieval settings.",
+    "Search indexed workbench documents. Returns precise refs, snippets and scores. A multilingual model can match across languages. Omit k and mode to use the workbench's retrieval settings.",
   params: searchDocsSchema,
   execute: async (ctx, args, signal) => {
     if (!ctx.knowledge)

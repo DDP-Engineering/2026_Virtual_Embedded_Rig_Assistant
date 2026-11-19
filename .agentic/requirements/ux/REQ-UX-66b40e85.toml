@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-UX-66b40e85"
+
+title = "Navigate between linked Desktop sessions"
+
+status = "active"
+
+requirement = """
+When a Desktop user follows a linked session, VERA shall open that session's existing transcript and show the reciprocal parent or child navigation.
+"""
+
+verification = "Follow the child and parent links in Electron while the parent is active and verify the selected transcript changes in both directions. After a separate Help detour, verify a newly opened document remains selected."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/App.tsx","05_Software/src/apps/desktop/src/renderer/components/session/workspace.tsx","05_Software/src/apps/desktop/src/renderer/components/session/delegation-links.tsx","05_Software/src/apps/desktop/src/renderer/components/documents/viewer-context.tsx","05_Software/src/apps/desktop/src/renderer/styles.css"]
+
+linked_tests = ["05_Software/tests/e2e/session-delegation.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-19
+updated = 2026-11-19

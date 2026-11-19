@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync } from "node:fs";
 import { writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, isAbsolute, join, sep } from "node:path";
@@ -14,13 +14,13 @@ import {
   HelpLibrary,
   type LlmGateway,
   leaseRoot,
-  modelSchema,
   PluginCatalog,
   PluginStore,
   ProgramRunner,
   Provisioner,
   pluginPlatform,
   ResourceLeases,
+  readEmbeddingModel,
   readPluginHelp,
   resolveCommandShell,
   SettingsService,
@@ -169,9 +169,6 @@ const downloadTransfer = createDesktopDownloadTransfer();
 const models = app.isPackaged
   ? join(process.resourcesPath, "models")
   : join(here, "../../../../../src/models");
-const manifest = app.isPackaged
-  ? join(process.resourcesPath, "model-manifest.json")
-  : join(models, "model-manifest.json");
 /** App help pages, read-only: <resources>/help when packaged, 05_Software/help in development. */
 const help = new HelpLibrary(
   app.isPackaged ? join(process.resourcesPath, "help") : join(here, "../../../../../help"),
@@ -182,10 +179,10 @@ const indexer = new IndexerHost({
   spawn: () =>
     utilityProcess.fork(
       fileURLToPath(new URL("./indexer-process.js", import.meta.url)),
-      [`--models=${models}`, `--manifest=${manifest}`],
+      [`--models=${models}`],
       { serviceName: "VERA Indexer" },
     ),
-  modelId: embeddingModelId(modelSchema.parse(JSON.parse(readFileSync(manifest, "utf8")))),
+  modelId: (model) => embeddingModelId(readEmbeddingModel(models, model)),
   status: (state) => {
     emitAppEvent({ topic: "app", id: "app", event: { type: "indexer.status", state } });
     if (state === "running") workbench.refreshDocuments();
@@ -222,6 +219,7 @@ export const emitAppEvent = createEventEmitter(
       envelope,
       (text) => (envelope.topic === "session" ? sessionContent(text) : credentials.scrub(text)),
       (text) => credentials.scrub(text),
+      sessionImageIdentity,
     );
   },
 );
@@ -272,6 +270,9 @@ const workbench = new WorkbenchService(
   indexer.processor,
 );
 const maskingFor = createMaskingResolver(() => settings.get().settings);
+function sessionImageIdentity(path: string): string {
+  return display.sessionImagePath(workbench.getSnapshot().config.id, path);
+}
 function sessionContent(text: string): string {
   return maskingFor(workbench.getSnapshot().config, "agent") ? credentials.scrub(text) : text;
 }
@@ -470,7 +471,7 @@ const sessions = new SessionsHost({
   credentials,
   clock: systemClock,
   workers: fileWorkers,
-  embeddings: indexer.embeddings,
+  embeddings: (model) => indexer.embeddings(model),
   version: app.getVersion(),
   target: () =>
     window && !window.isDestroyed() ? { webContents: window.webContents, url: rendererUrl } : undefined,
@@ -570,12 +571,12 @@ function warmPrograms(snapshot: WorkbenchSnapshot): WorkbenchSnapshot {
 /** The first message of an open workbench loads its embedding model in the indexer (PERF-11). */
 const embeddingWarmup = createEmbeddingWarmup({
   hasVectors: (workbenchId) =>
-    workbench.readDocuments(workbenchId, async (root, db) =>
-      db.prepare("SELECT 1 FROM embeddings WHERE model_id=? LIMIT 1").get(indexer.embeddings.modelId)
-        ? root
-        : undefined,
-    ),
-  embed: (root, signal) => indexer.embeddings.embed(root, ["warm-up"], signal),
+    workbench.readDocuments(workbenchId, async (root, db) => {
+      const embeddings = indexer.embeddings(workbench.getSnapshot().config.embeddings.model);
+      if (db.prepare("SELECT 1 FROM embeddings WHERE model_id=? LIMIT 1").get(embeddings.modelId))
+        return { root, embeddings };
+    }),
+  embed: ({ root, embeddings }, signal) => embeddings.embed(root, ["warm-up"], signal),
 });
 
 // Programs that open Docs tree entries, detected once per start on first use (TASK-eae3a69e).
@@ -895,6 +896,7 @@ ipcMain.handle(
       "docs.readBytes": ({ workbenchId, path, offset, length, revision }) =>
         display.readBytes(workbenchId, path, offset, length, revision),
       "docs.stat": ({ workbenchId, path }) => display.stat(workbenchId, path),
+      "docs.imageThumbnail": ({ workbenchId, path }) => display.imageThumbnail(workbenchId, path),
       // The Docs tree's OS actions go through the tree's confinement first (TASK-eae3a69e).
       "docs.openers": () => ({ apps: [...openers().keys()] }),
       "docs.openWith": ({ workbenchId, path, app }) =>
@@ -1120,7 +1122,7 @@ ipcMain.handle(
           const value = s.get(sessionId);
           return {
             ...value,
-            snapshot: rendererSessionSnapshot(value.snapshot, sessionContent),
+            snapshot: rendererSessionSnapshot(value.snapshot, sessionContent, sessionImageIdentity),
           };
         }),
       "session.item.detail": ({ sessionId, itemId, field }) =>
@@ -1146,11 +1148,33 @@ ipcMain.handle(
           await s.delete(sessionId);
           return {};
         }),
-      "session.send": ({ sessionId, text }) =>
+      "session.image.attach": ({ workbenchId, sessionId, source }) =>
         sessions.run(
-          (s) => {
+          (service) => {
+            openWorkbenchFolder(workbenchId);
+            if (credentials.containsSecret("path" in source ? source.path : source.name))
+              throw veraError("INVALID");
+            if ("path" in source && /__vera_display_[A-Za-z0-9_-]+\.(?:\/|$)/.test(source.path))
+              throw veraError("DENIED");
+            return service.attachImage(sessionId, source);
+          },
+          { purpose: "metadata" },
+        ),
+      "session.image.capability": ({ workbenchId, sessionId }) =>
+        sessions.imageCapability(workbenchId, sessionId),
+      "session.send": ({ sessionId, text, images }) =>
+        sessions.run(
+          async (s) => {
             if (credentials.containsSecret(text)) throw { code: "INVALID", messageKey: "errors.INVALID" };
-            const sent = s.send(sessionId, text);
+            const sent = images?.length
+              ? await s.sendWithImages(
+                  sessionId,
+                  text,
+                  images.map((path) =>
+                    display.resolveSessionImagePath(workbench.getSnapshot().config.id, path),
+                  ),
+                )
+              : s.send(sessionId, text);
             embeddingWarmup.request(workbench.getSnapshot().config.id);
             return sent;
           },
@@ -1197,6 +1221,7 @@ ipcMain.handle(
       "session.mode.set": ({ sessionId, mode }) =>
         sessions.run((s) => sanitizeSessionSummary(s.setMode(sessionId, mode), sessionContent)),
       "providers.discover": (request) => modelGateway.discover(request),
+      "providers.image.capability": ({ modelRef }) => modelGateway.imageCapability(modelRef),
       "providers.models": ({ id }) => modelGateway.models(id),
       "providers.test": ({ id, model }) => modelGateway.test(id, model),
       "providers.list": () => providers.list(),
@@ -1311,14 +1336,21 @@ ipcMain.handle(
         patch,
         workbenchId,
         removeCommandPrefixes,
+        embeddingSwitch,
         addAdditionalFolders,
         removeAdditionalFolders,
       }) =>
         workbench
-          .updateConfig(workbenchPatchSchema.parse(patch), workbenchId, removeCommandPrefixes, {
-            ...(addAdditionalFolders ? { add: addAdditionalFolders } : {}),
-            ...(removeAdditionalFolders ? { remove: removeAdditionalFolders } : {}),
-          })
+          .updateConfig(
+            workbenchPatchSchema.parse(patch),
+            workbenchId,
+            removeCommandPrefixes,
+            {
+              ...(addAdditionalFolders ? { add: addAdditionalFolders } : {}),
+              ...(removeAdditionalFolders ? { remove: removeAdditionalFolders } : {}),
+            },
+            embeddingSwitch,
+          )
           .then((value) => publicWorkbenchFolders(value, (text) => credentials.scrub(text))),
       "workbench.additionalFolders.list": async ({ workbenchId }) =>
         (await workbench.listAdditionalFolders(workbenchId)).map(({ id, path }) => ({

@@ -77,6 +77,7 @@ export function runtimeMatrix(
           contextWindow: window,
           maxOutputTokens: output ?? 1000,
           safetyMargin: Math.max(1024, Math.ceil(window * 0.05)),
+          input: ["text" as const],
           inputBudget: window - (output ?? 1000) - Math.max(1024, Math.ceil(window * 0.05)),
           supportsTools: true,
         }),

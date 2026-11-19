@@ -1,11 +1,16 @@
-import { extname } from "node:path";
-import type { WorkbenchService } from "@vera/core";
+import { extname, posix } from "node:path";
+import { rasterThumbnail, validateRelativePath, type WorkbenchService } from "@vera/core";
 import {
+  DOCS_BYTE_WINDOW_LIMIT,
   type DocumentRecord,
   formatRef,
+  MAX_MESSAGE_IMAGE_BYTES,
   parseRef,
+  type Response,
+  rasterSignature,
   type ViewerContent,
   veraError,
+  veraErrorSchema,
   viewerExtensionKind,
   type WorkbenchConfig,
 } from "@vera/shared";
@@ -13,6 +18,9 @@ import { maskByteWindow } from "./display-bytes.js";
 import type { DisplayIdentities } from "./display-identities.js";
 import { publicDocument, publicDocumentHit, publicViewer } from "./document-viewer.js";
 import { publicGuard } from "./events.js";
+
+const imageAliasPrefix = "__vera_image_alias_";
+const imageReadPath = (path: string) => posix.normalize(path).replace(/\/$/, "");
 
 function originalRef(ref: string): string {
   if (ref.length > 8192) throw veraError("INVALID");
@@ -55,6 +63,31 @@ export class DisplayDocuments {
     this.current(id);
     const original = this.identities.decode(this.owner, path);
     if (original.length > 4096) throw veraError("INVALID");
+    return original;
+  }
+  /** Alias tokens preserve the saved spelling even when it contains dot or empty segments. */
+  sessionImagePath(id: string, path: string): string {
+    if (imageReadPath(path) === path) return this.path(id, path);
+    this.current(id);
+    const payload = Buffer.from(path, "utf8").toString("base64url");
+    return this.identities
+      .encode(`${this.owner}\nimage-alias`, payload)
+      .replace(/^__vera_display_/, imageAliasPrefix);
+  }
+  resolveSessionImagePath(id: string, path: string): string {
+    if (!path.startsWith(imageAliasPrefix) || !path.endsWith(".")) return this.resolve(id, path);
+    this.current(id);
+    const payload = this.identities.decode(
+      `${this.owner}\nimage-alias`,
+      path.replace(imageAliasPrefix, "__vera_display_"),
+    );
+    const original = Buffer.from(payload, "base64url").toString("utf8");
+    if (
+      !original ||
+      original.length > 4096 ||
+      Buffer.from(original, "utf8").toString("base64url") !== payload
+    )
+      throw veraError("INVALID");
     return original;
   }
   ref(id: string, ref: string): string {
@@ -220,6 +253,61 @@ export class DisplayDocuments {
       data: bytes.toString("base64"),
       ...(revision === undefined ? {} : { revision, lineEnds }),
     };
+  }
+  /** Read a small preview through the same workbench ownership and Display policy as the file viewer. */
+  async imageThumbnail(id: string, path: string): Promise<Response<"docs.imageThumbnail">> {
+    const original = this.resolveSessionImagePath(id, path);
+    let sourcePath: string;
+    try {
+      sourcePath = imageReadPath(validateRelativePath(original));
+    } catch {
+      throw veraError("DENIED");
+    }
+    return this.run(id, async () => {
+      let preview: Response<"docs.imageThumbnail">["preview"];
+      try {
+        const first = await this.workbench.readBytes(id, sourcePath, 0, DOCS_BYTE_WINDOW_LIMIT);
+        const { size } = first;
+        if (size > MAX_MESSAGE_IMAGE_BYTES) throw veraError("IMAGE_TOO_LARGE");
+        if (first.path !== sourcePath || first.offset !== 0 || first.revision === undefined)
+          throw veraError("CONFLICT");
+        const bytes = Buffer.alloc(size);
+        for (let offset = 0; offset < size; offset += DOCS_BYTE_WINDOW_LIMIT) {
+          const length = Math.min(DOCS_BYTE_WINDOW_LIMIT, size - offset);
+          const part = offset === 0 ? first : await this.workbench.readBytes(id, sourcePath, offset, length);
+          const start = offset - part.start;
+          if (
+            part.path !== sourcePath ||
+            part.offset !== offset ||
+            part.size !== size ||
+            part.revision !== first.revision ||
+            start < 0 ||
+            start + length > part.bytes.length
+          )
+            throw veraError("CONFLICT");
+          part.bytes.copy(bytes, offset, start, start + length);
+        }
+        const secretsForPreview = () =>
+          this.maskingFor(this.current(id).config, "display") ? this.secrets() : [];
+        const secrets = [...secretsForPreview()];
+        const image = secrets.length ? maskByteWindow({ ...first, bytes }, size, secrets) : bytes;
+        const format = rasterSignature(image);
+        if (format && !/\.svgz?$/i.test(original)) {
+          const thumbnail = await rasterThumbnail(image, format);
+          const latest = secretsForPreview();
+          if (latest.length === secrets.length && latest.every((secret, index) => secret === secrets[index]))
+            preview = { format, thumbnail };
+        }
+      } catch (error) {
+        if (!veraErrorSchema.safeParse(error).success) throw error;
+      }
+      return {
+        workbenchId: id,
+        path: this.path(id, sourcePath),
+        displayPath: this.scrub(id, original),
+        ...(preview && { preview }),
+      };
+    });
   }
   async search(id: string, query: string) {
     const results = await this.run(id, () => this.workbench.searchDocuments(id, query));

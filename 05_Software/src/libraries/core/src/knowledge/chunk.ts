@@ -1,6 +1,6 @@
 import { z } from "zod";
 import type { Extraction } from "./extraction.js";
-import { CHUNK_TOKEN_LIMIT, countChunkTokens } from "./token-budget.js";
+import { defaultPassageBudget, type PassageBudget } from "./token-budget.js";
 
 export const CHUNK_CHARS = 1400;
 export const locatorSchema = z.discriminatedUnion("type", [
@@ -24,10 +24,7 @@ export const locatorSchema = z.discriminatedUnion("type", [
 ]);
 export const chunkSchema = z
   .object({
-    text: z
-      .string()
-      .max(CHUNK_CHARS)
-      .refine((text) => countChunkTokens(text) < CHUNK_TOKEN_LIMIT),
+    text: z.string().max(CHUNK_CHARS),
     locator: locatorSchema,
   })
   .strict();
@@ -37,22 +34,22 @@ export type Chunk = z.infer<typeof chunkSchema>;
 function split(
   text: string,
   limit: number,
-  prefix = "",
-  overlap = 0,
+  fits: PassageBudget,
+  prefix: string,
+  overlap: number,
 ): { part: string; offset: number; lineOffset: number }[] {
-  if (limit < 2 || countChunkTokens(prefix) >= CHUNK_TOKEN_LIMIT)
-    throw Error("Heading or CSV prefix exceeds chunk budget.");
+  if (limit < 2 || !fits(prefix)) throw Error("Heading or CSV prefix exceeds chunk budget.");
   const result: { part: string; offset: number; lineOffset: number }[] = [];
   let offset = 0;
   let lineOffset = 0;
   while (text) {
     let ceiling = Math.min(limit, text.length);
-    if (countChunkTokens(prefix + text.slice(0, ceiling)) >= CHUNK_TOKEN_LIMIT) {
+    if (!fits(prefix + text.slice(0, ceiling))) {
       let low = 0,
         high = ceiling;
       while (low < high) {
         const middle = Math.ceil((low + high) / 2);
-        if (countChunkTokens(prefix + text.slice(0, middle)) < CHUNK_TOKEN_LIMIT) low = middle;
+        if (fits(prefix + text.slice(0, middle))) low = middle;
         else high = middle - 1;
       }
       ceiling = low;
@@ -67,7 +64,7 @@ function split(
     // Do not split a UTF16 surrogate pair.
     if (end > 0 && /[\uD800-\uDBFF]/.test(text[end - 1] ?? "")) end--;
     // WordPiece boundaries are not monotonic (long words can become UNK).
-    while (end > 0 && countChunkTokens(prefix + text.slice(0, end)) >= CHUNK_TOKEN_LIMIT) {
+    while (end > 0 && !fits(prefix + text.slice(0, end))) {
       end = Math.floor(end / 2);
       if (end > 0 && /[\uD800-\uDBFF]/.test(text[end - 1] ?? "")) end--;
     }
@@ -92,6 +89,7 @@ export function chunkDocument(
   extraction: Extraction,
   csv = false,
   settings?: { chunkSize: number; overlap: number },
+  fits: PassageBudget = defaultPassageBudget,
 ): Chunk[] {
   const maxChars = settings?.chunkSize ?? CHUNK_CHARS;
   const overlap = settings?.overlap ?? 0;
@@ -108,7 +106,7 @@ export function chunkDocument(
   if (extraction.kind === "pdf") {
     if (needsOcr(extraction)) return result;
     extraction.pages.forEach((text, index) => {
-      for (const { part } of split(text, maxChars, "", overlap))
+      for (const { part } of split(text, maxChars, fits, "", overlap))
         if (part.trim()) result.push({ text: part, locator: { type: "page", page: index + 1 } });
     });
   } else if (extraction.kind === "text") {
@@ -117,13 +115,14 @@ export function chunkDocument(
     const prefix = csv && lines.length ? `${lines[0]}\n` : "";
     // A header is repeated verbatim; a header wider than the budget is an extraction failure.
     if (prefix.length > maxChars - 2) throw Error("CSV header exceeds chunk budget.");
-    if (countChunkTokens(prefix) >= CHUNK_TOKEN_LIMIT) throw Error("CSV header exceeds token budget.");
+    if (!fits(csv && lines.length === 1 ? (lines[0] ?? "") : prefix))
+      throw Error("CSV header exceeds token budget.");
     if (csv && lines.length === 1)
       result.push({ text: lines[0] ?? "", locator: { type: "lines", start: 1, end: 1 } });
     for (let start = first; start < lines.length; start += settings ? 60 : 50) {
       const end = settings ? lines.length : Math.min(start + 60, lines.length);
       const text = lines.slice(start, end).join("\n");
-      for (const { part, lineOffset } of split(text, maxChars - prefix.length, prefix, overlap)) {
+      for (const { part, lineOffset } of split(text, maxChars - prefix.length, fits, prefix, overlap)) {
         const lineStart = start + 1 + lineOffset;
         const lineEnd = lineStart + (part.replace(/\n$/, "").match(/\n/g)?.length ?? 0);
         if (part.trim())
@@ -134,14 +133,20 @@ export function chunkDocument(
   } else if (extraction.kind === "presentation") {
     // A slide is the presentation's page: citations and reads address slides by number.
     extraction.slides.forEach((text, index) => {
-      for (const { part } of split(text, maxChars, "", overlap))
+      for (const { part } of split(text, maxChars, fits, "", overlap))
         if (part.trim()) result.push({ text: part, locator: { type: "page", page: index + 1 } });
     });
   } else {
     for (const section of extraction.sections) {
       const heading = section.path.join(" > ");
       const prefix = heading ? `${heading}\n` : "";
-      for (const { part, lineOffset } of split(section.text, maxChars - prefix.length, prefix, overlap)) {
+      for (const { part, lineOffset } of split(
+        section.text,
+        maxChars - prefix.length,
+        fits,
+        prefix,
+        overlap,
+      )) {
         const start = section.start + lineOffset;
         const end = start + (part.replace(/\n$/, "").match(/\n/g)?.length ?? 0);
         if (part.trim())

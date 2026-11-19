@@ -27,6 +27,7 @@ import type { ConfigSection } from "./components/workbench-config-form.js";
 import { WorkbenchCreate } from "./components/workbench-create.js";
 import { WorkbenchEditor } from "./components/workbench-editor.js";
 import { WorkbenchNavigation } from "./components/workbench-navigation.js";
+import { useImageDrafts } from "./hooks/image-drafts.js";
 import { SessionViewProvider } from "./hooks/session-view.js";
 import { usePreferences } from "./hooks/use-preferences.js";
 import { useRunPresentation } from "./hooks/use-run-presentation.js";
@@ -85,6 +86,7 @@ export function App() {
   const [activeSession, setActiveSession] = useState<string>();
   const operationBusy = useRef(false);
   const [sessionPending, setSessionPending] = useState(false);
+  const [linkedTranscript, setLinkedTranscript] = useState<string>();
   const [composerFocus, setComposerFocus] = useState<{ id: string; request: number }>();
   const composerFocusSequence = useRef(0);
   // Docs tree entries attached to each session's next message (TASK-2fef1397).
@@ -113,6 +115,18 @@ export function App() {
     void client.invalidateQueries({ queryKey: ["session.list"] });
     void client.invalidateQueries({ queryKey: ["session.search"] });
   }, [client]);
+  useEffect(() => {
+    if (!benchId) return;
+    return api.subscribe("workbench", benchId, (event) => {
+      if (event.type === "session.delegations.changed")
+        void client.invalidateQueries({ queryKey: ["session.list", benchId] });
+    });
+  }, [benchId, client]);
+  const selected = sessions.data?.find(({ id }) => id === activeSession);
+  const delegationParent = sessions.data?.find(({ id }) => id === selected?.delegation?.parentSessionId);
+  const delegationChildren = sessions.data?.filter(
+    ({ delegation }) => delegation && delegation.parentSessionId === activeSession,
+  );
   const benchChanged = useCallback(
     (active?: WorkbenchSnapshot, configOnly = false) => {
       if (!configOnly) {
@@ -154,7 +168,8 @@ export function App() {
   }, [bench.data, benchId, recent.data, readOnly]);
   /** Shows a session; callers have already confirmed leaving a dirty editor. */
   const openSession = useCallback(
-    (id: string) => {
+    (id: string, linked = false) => {
+      setLinkedTranscript(linked ? id : undefined);
       setComposerFocus(undefined);
       setActiveSession(id);
       setChat(true);
@@ -175,6 +190,15 @@ export function App() {
   const select = useCallback(
     (id: string) => {
       if (leaveEditor()) openSession(id);
+    },
+    [leaveEditor, openSession],
+  );
+  const clearLinkedTranscript = useCallback((id: string) => {
+    setLinkedTranscript((current) => (current === id ? undefined : current));
+  }, []);
+  const selectLinkedSession = useCallback(
+    (id: string) => {
+      if (leaveEditor()) openSession(id, true);
     },
     [leaveEditor, openSession],
   );
@@ -228,8 +252,31 @@ export function App() {
     [benchId, readOnly, sessionPending, openSession, operation, client, leaveEditor],
   );
   const create = useCallback(() => createWith(), [createWith]);
+  const { imageDraft, addImages, clearImages } = useImageDrafts();
+  const activeRow = sessions.data?.find((row) => row.id === activeSession);
+  const imageSessionLocked =
+    activeRow?.archived ||
+    activeRow?.status === "awaiting_approval" ||
+    (!!benchId && !!activeSession && imageDraft(benchId, activeSession).pending);
+  const attachToChat = useCallback(
+    (add: (id: string) => void) => {
+      if (!activeSession) return createWith(add);
+      if (!leaveEditor()) return;
+      add(activeSession);
+      openSession(activeSession);
+      setComposerFocus({ id: activeSession, request: ++composerFocusSequence.current });
+    },
+    [activeSession, createWith, leaveEditor, openSession],
+  );
   const attachments = useMemo<Attachments>(
     () => ({
+      imageDraft,
+      addImages,
+      clearImages,
+      attachImage:
+        benchId && !readOnly && !imageSessionLocked
+          ? (path) => attachToChat((id) => void addImages(benchId, id, [path]))
+          : undefined,
       list: (id) => attached[id] ?? [],
       remove: (id, path) =>
         setAttached((all) => ({ ...all, [id]: (all[id] ?? []).filter((p) => p !== path) })),
@@ -239,18 +286,23 @@ export function App() {
       // A chat opens to take the entry: the active session's, or a new or reused empty one.
       attach:
         benchId && !readOnly
-          ? (path) => {
-              const add = (id: string) =>
-                setAttached((all) => ({ ...all, [id]: addAttachment(all[id] ?? [], path) }));
-              if (!activeSession) return createWith(add);
-              if (!leaveEditor()) return;
-              add(activeSession);
-              openSession(activeSession);
-              setComposerFocus({ id: activeSession, request: ++composerFocusSequence.current });
-            }
+          ? (path) =>
+              attachToChat((id) =>
+                setAttached((all) => ({ ...all, [id]: addAttachment(all[id] ?? [], path) })),
+              )
           : undefined,
     }),
-    [attached, activeSession, benchId, readOnly, createWith, leaveEditor, openSession],
+    [
+      attached,
+      activeSession,
+      benchId,
+      readOnly,
+      attachToChat,
+      imageDraft,
+      addImages,
+      clearImages,
+      imageSessionLocked,
+    ],
   );
   const focusHeading = useCallback((node: HTMLHeadingElement | null) => node?.focus(), []);
   const info = useQuery({ queryKey: ["app.info"], queryFn: () => api.getAppInfo() });
@@ -776,9 +828,13 @@ export function App() {
                         detail={bench.data?.config.chat.detail ?? "normal"}
                         changed={changed}
                         readOnly={readOnly}
-                        archived={
-                          sessions.data?.find((session) => session.id === activeSession)?.archived ?? true
-                        }
+                        archived={selected?.archived ?? true}
+                        delegation={selected?.delegation}
+                        delegationParent={delegationParent}
+                        delegationChildren={delegationChildren}
+                        selectLinkedSession={selectLinkedSession}
+                        focusTranscript={linkedTranscript === activeSession && !!activeSession}
+                        transcriptOpened={clearLinkedTranscript}
                         composerFocusRequest={
                           composerFocus && composerFocus.id === activeSession ? composerFocus.request : 0
                         }

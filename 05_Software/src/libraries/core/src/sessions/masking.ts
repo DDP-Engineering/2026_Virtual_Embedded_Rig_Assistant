@@ -61,6 +61,7 @@ export class MaskingContextPolicy extends ContextPolicy {
       { ...input, messages: maskMessages(input.messages, this.scrub) },
       capabilities,
       reduce,
+      this.scrub,
     );
   }
 }

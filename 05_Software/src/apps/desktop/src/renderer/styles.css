@@ -1087,6 +1087,17 @@ legend {
   color: var(--accent-foreground);
   font-size: 0.85em;
 }
+.attachment-preview {
+  inline-size: 1.6rem;
+  block-size: 1.6rem;
+  flex: none;
+  object-fit: contain;
+}
+
+.composer-image-warning {
+  margin: 0 0 0.25rem;
+}
+
 .attachment-chip span {
   overflow: hidden;
   text-overflow: ellipsis;
@@ -2466,6 +2477,34 @@ legend {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+.session-delegations {
+  flex-shrink: 0;
+  display: grid;
+  gap: 0.25rem;
+  max-height: min(12rem, 30vh);
+  overflow: auto;
+  font-size: 0.9rem;
+}
+.session-delegations h3 {
+  font-size: inherit;
+  margin: 0;
+}
+.session-delegations ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.delegation-row {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.75rem;
+  min-height: 1.75rem;
+}
+.delegation-row button {
+  overflow-wrap: anywhere;
+  text-align: start;
+}
 .session-workspace > .transcript-frame {
   --transcript-navigation-width: calc(1.25rem + max(1.5rem, 24px));
   position: relative;
@@ -2681,6 +2720,7 @@ legend {
   clip-path: inset(50%);
 }
 .session-workspace > .composer {
+  container: composer / inline-size;
   width: 100%;
   max-width: 58rem;
   margin-inline: auto;
@@ -2719,11 +2759,11 @@ legend {
   border-color: transparent;
   background: transparent;
   padding: 0.3rem;
-  max-width: 18rem;
+  max-width: min(18rem, 100%);
   font-size: 0.9rem;
 }
 .composer-controls label + label select {
-  max-width: 9rem;
+  max-width: min(9rem, 100%);
 }
 .composer-controls .composer-reasoning {
   display: inline-flex;
@@ -2732,7 +2772,13 @@ legend {
   gap: 0.1rem;
 }
 .composer-controls .permission-field select {
-  max-width: 16rem;
+  max-width: min(16rem, 100%);
+}
+@container composer (width >= 26rem) {
+  .composer-controls {
+    flex-wrap: nowrap;
+    min-width: 0;
+  }
 }
 .permission-field select.bypass-selected {
   color: var(--destructive);
@@ -3007,7 +3053,7 @@ legend {
     max-width: 100%;
   }
   .composer-controls select {
-    max-width: min(15rem, 55vw);
+    max-width: min(15rem, 55vw, 100%);
   }
   .composer-tools {
     flex-wrap: wrap;

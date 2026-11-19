@@ -9,7 +9,13 @@ import {
 } from "./plan-review.js";
 import { programApprovalSchema, validProgramApproval } from "./program-rules.js";
 import { reasoningOptionSchema } from "./provider-discovery.js";
-import { permissionModeSchema, sessionStatusSchema, stopReasonSchema, todoItemsSchema } from "./session.js";
+import {
+  messageImagesSchema,
+  permissionModeSchema,
+  sessionStatusSchema,
+  stopReasonSchema,
+  todoItemsSchema,
+} from "./session.js";
 
 const assistant = z.strictObject({
   kind: z.literal("assistant"),
@@ -53,6 +59,7 @@ export const sessionStateSchema = z.strictObject({
         kind: z.literal("user"),
         id: z.string(),
         text: z.string(),
+        images: messageImagesSchema.optional(),
         pending: z.boolean().optional(),
         reviewId: z.string().optional(),
         timestamp: z.number().int().nonnegative().optional(),
@@ -299,6 +306,7 @@ function reduce(d: Draft, event: SessionEvent): void {
           id: event.messageId,
           text: event.text,
           ...(review ? { reviewId: review.id } : {}),
+          ...(event.images && { images: event.images }),
         });
       break;
     }
@@ -315,6 +323,7 @@ function reduce(d: Draft, event: SessionEvent): void {
           kind: "user",
           id: event.messageId,
           text: event.text,
+          ...(event.images && { images: event.images }),
           pending: true,
           timestamp: event.timestamp,
         });

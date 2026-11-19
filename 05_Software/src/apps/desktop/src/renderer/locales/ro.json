@@ -1,9 +1,11 @@
 {
   "toolActivity": {
+    "embeddingRebuild": "Indexul semantic se reconstruiește. Aceste rezultate corespund cuvintelor-cheie.",
     "planSteps": "Pași în plan: {{count}}",
     "planCleared": "Plan golit",
     "operation": "Operație a agentului",
     "readFile": "Citire fișier",
+    "viewImage": "Examinează imaginea",
     "listFiles": "Listare conținut folder",
     "findFiles": "Căutare fișiere",
     "searchFiles": "Căutare în fișiere",
@@ -52,6 +54,8 @@
     "no": "Nu"
   },
   "errors": {
+    "IMAGE_FORMAT": "Alege o imagine PNG, JPEG, GIF sau WebP validă. Formatul SVG nu este acceptat.",
+    "IMAGE_TOO_LARGE": "O imagine poate avea cel mult 20 MiB.",
     "INVALID": "Cererea nu este validă.",
     "NOT_FOUND": "Operația solicitată {{operation}} nu a fost găsită.",
     "CONFLICT": "Operația intră în conflict cu starea curentă.",
@@ -173,6 +177,7 @@
     "name": "Numele endpoint-ului",
     "baseUrl": "URL de bază",
     "model": "Model",
+    "acceptsImages": "Acceptă imagini",
     "contextWindow": "Fereastră de context (tokenuri)",
     "maxOutput": "Ieșire maximă (tokenuri)",
     "endpointKey": "Cheia API a endpoint-ului",
@@ -231,6 +236,20 @@
     "stopped": "Execuție oprită sau întreruptă.",
     "operations": "Operații: {{count}}"
   },
+  "delegation": {
+    "title": "Sesiuni delegate",
+    "outcome": "Execuție delegată: {{status}}",
+    "parent": "Sesiune părinte: {{title}}",
+    "status": {
+      "running": "În curs",
+      "awaiting_approval": "Așteaptă aprobarea",
+      "completed": "Finalizată",
+      "stopped": "Oprită",
+      "error": "Eșuată",
+      "limit": "Limită atinsă",
+      "interrupted": "Întreruptă"
+    }
+  },
   "chatActions": {
     "copyResponse": "Copiază răspunsul",
     "copyCode": "Copiază blocul de cod",
@@ -248,6 +267,11 @@
     "bookmark": "Marchează",
     "removeBookmark": "Elimină marcajul",
     "attachments": "Fișiere atașate",
+    "attachImage": "Atașează imagine",
+    "imagesTextOnly": "Acest model acceptă doar text. Va primi căile fișierelor de imagine.",
+    "imagesLimit": "Poți atașa cel mult {{count}} imagini.",
+    "openImage": "Deschide imaginea {{path}}",
+    "imageUnavailable": "Imagine indisponibilă",
     "removeAttachment": "Elimină atașamentul: {{path}}",
     "promptInput": "Intrare",
     "promptOutput": "Ieșire",
@@ -829,6 +853,7 @@
   },
   "workbenchTools": {
     "read": "Citește fișiere text sau intervale de linii.",
+    "view_image": "Vezi o imagine din workbench cu un model care acceptă imagini.",
     "list": "Listează fișierele și subfolderele unui director.",
     "glob": "Găsește fișiere după tipare de nume sau cale, precum **/*.cpp.",
     "grep": "Caută în conținutul fișierelor, inclusiv cu expresii regulate.",
@@ -898,6 +923,12 @@
     "changed": "Workbench-ul activ s-a schimbat. Redeschide editorul.",
     "saving": "Se salvează…",
     "embeddingModel": "Model embeddings",
+    "embeddingBge": "BGE Small EN v1.5 (engleză)",
+    "embeddingE5": "Multilingual E5 Small (100 de limbi)",
+    "embeddingSwitchTitle": "Schimbi modelul de embeddings?",
+    "embeddingSwitchCount": "Documente indexate ({{count}})",
+    "embeddingSwitchBody": "VERA va reconstrui vectorii în fundal. Căutarea după cuvinte-cheie rămâne disponibilă.",
+    "embeddingSwitchConfirm": "Schimbă modelul",
     "chunkSize": "Dimensiune fragment (caractere)",
     "overlap": "Suprapunere (caractere)",
     "partialSave": "Setările proiectului au fost salvate, dar instrucțiunile nu au putut fi salvate. Reîncearcă salvarea; închiderea păstrează setările deja salvate.",

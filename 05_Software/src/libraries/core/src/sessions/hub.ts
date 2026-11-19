@@ -75,8 +75,13 @@ export class SessionHub {
     return { seq, event };
   }
   publish(id: string, value: { seq?: number; event: SessionEvent }): void {
+    this.publishBatch(id, [value]);
+  }
+  /** Queue all committed events before subscribers can emit a later sequence. */
+  publishBatch(id: string, values: readonly { seq?: number; event: SessionEvent }[]): void {
+    if (values.length === 0) return;
     const pending = this.pending.get(id) ?? [];
-    pending.push(structuredClone(value));
+    for (const value of values) pending.push(structuredClone(value));
     this.pending.set(id, pending);
     if (this.publishing.has(id)) return;
     this.publishing.add(id);
@@ -124,17 +129,23 @@ export class SessionHub {
     const listeners = this.listeners.get(id) ?? new Set();
     listeners.add(deliver);
     this.listeners.set(id, listeners);
-    for (const row of rows) notify(row.seq, sessionEventSchema.parse(JSON.parse(row.payload_json)));
-    while (queued.length) {
-      const value = queued.shift();
-      if (value) notify(value.seq, value.event);
-    }
-    replay = false;
-    return () => {
+    const off = () => {
       active = false;
       listeners.delete(deliver);
-      if (!listeners.size) this.listeners.delete(id);
+      if (!listeners.size && this.listeners.get(id) === listeners) this.listeners.delete(id);
     };
+    try {
+      for (const row of rows) notify(row.seq, sessionEventSchema.parse(JSON.parse(row.payload_json)));
+      while (queued.length) {
+        const value = queued.shift();
+        if (value) notify(value.seq, value.event);
+      }
+      replay = false;
+      return off;
+    } catch (error) {
+      off();
+      throw error;
+    }
   }
   clear(id?: string): void {
     if (id) this.listeners.delete(id);

@@ -56,6 +56,22 @@ function harness(secure = true) {
 }
 const custom = { name: "Local model", baseUrl: "http://localhost:11434/v1", model: "fake-model" };
 describe("safe provider settings", () => {
+  it("rejects invalid image model IDs without changing saved capability", async () => {
+    const h = harness();
+    await h.settings.load();
+    const config = { ...custom, imageModels: ["org/vision"] };
+    await expect(h.service.save({ provider: "custom", config })).resolves.toEqual({ status: "saved" });
+    const before = h.disk.get("/data/settings.json");
+    const id = "custom:local-model";
+    for (const imageModels of [["bad id"], ["org/vision", "org/vision"]]) {
+      await expect(
+        h.service.save({ provider: "custom", id, config: { ...config, imageModels } }),
+      ).rejects.toMatchObject({ code: "INVALID" });
+      expect(h.disk.get("/data/settings.json")).toBe(before);
+    }
+    expect((await h.service.list()).custom[0]?.imageModels).toEqual(["org/vision"]);
+  });
+
   it("clears an optional OpenAI model independently and removes the key while retaining the model", async () => {
     const h = harness();
     await h.settings.load();

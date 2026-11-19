@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-SEC-a40a6fbc"
+
+title = "Confine chat image reads"
+
+status = "active"
+
+requirement = """
+When resolving a chat image attachment, VERA shall restrict reads to ordinary files in the primary workbench within its path and protected-data boundaries.
+"""
+
+verification = "Try a relative escape, absolute input, directory, and a workbench link to an outside image and verify refusal before a user event."
+
+affected_paths = ["05_Software/src/libraries/core/src/sessions/session-images.ts", "05_Software/src/libraries/core/src/tools/files.ts", "05_Software/src/libraries/core/src/sessions/service.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/sessions/session-images.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-19
+updated = 2026-11-19

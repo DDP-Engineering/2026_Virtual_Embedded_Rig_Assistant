@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-27505fa1"
+
+title = "Admit bounded image references"
+
+status = "active"
+
+requirement = """
+When a user sends a chat message, VERA shall accept optional workbench-relative image paths with text or as the only message content.
+"""
+
+verification = "Send with eight paths and no text, then send an ordinary text-only message, and verify both are admitted."
+
+affected_paths = ["05_Software/src/libraries/shared/src/ipc.ts", "05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/libraries/shared/src/session.ts", "05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/apps/desktop/src/renderer/mocks/sessions.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/sessions/session-images.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-19
+updated = 2026-11-19

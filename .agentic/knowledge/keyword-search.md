@@ -11,7 +11,10 @@ owns publication; [extraction](document-extraction.md) owns text/locators.
 
 Core supplies synchronous persisted lexical candidates for subsequent search
 composition. SQLite triggers maintain both indexes in the chunk transaction.
-The workbench owns database lifetime; the processor/ingester owns chunk content.
+The workbench owns database lifetime and the processor/ingester owns chunk content.
+The repository records a keyword revision when searchable source content changes.
+Rebuilding vectors and adjusting chunk boundaries for the same extraction preserves
+that revision. DocumentKnowledge snapshots candidates before asynchronous verification.
 
 ## Public interface
 

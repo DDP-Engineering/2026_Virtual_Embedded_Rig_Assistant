@@ -7,6 +7,8 @@ export const veraErrorSchema = z.strictObject({
     "BUSY",
     "DENIED",
     "CONTEXT_LIMIT",
+    "IMAGE_FORMAT",
+    "IMAGE_TOO_LARGE",
     "PROVIDER",
     "OFFLINE",
     "INTERNAL",

@@ -1,12 +1,14 @@
 import { readdirSync, readFileSync } from "node:fs";
 import { basename, join } from "node:path";
 import type { AssistantMessage, Message, ToolCall } from "@earendil-works/pi-ai";
-import { type ProviderCatalog, veraError } from "@vera/shared";
+import { type ModelCapabilities, type ProviderCatalog, reasoningOptionSchema, veraError } from "@vera/shared";
 import { z } from "zod";
 import { type LlmEvent, type LlmGateway, type LlmRequest, splitModelReference } from "./gateway.js";
 
 interface ReplayStep {
   usage?: { input: number; output: number };
+  reasoningOptions?: string[];
+  expectReasoning?: string;
   match?: string;
   prompt?: string;
   text?: string;
@@ -16,6 +18,7 @@ const declaredUsage = z.strictObject({
   input: z.number().int().nonnegative(),
   output: z.number().int().nonnegative(),
 });
+const replayReasoningOptions = z.array(reasoningOptionSchema).max(16);
 interface Scenario {
   name: string;
   match: RegExp | null;
@@ -29,44 +32,64 @@ const textOf = (message: Message): string =>
         ? message.content
         : message.content.map((c) => (c.type === "text" ? c.text : "")).join("")
       : "";
+function readScenario(dir: string, name: string): Scenario {
+  const steps: ReplayStep[] = readFileSync(join(dir, name), "utf8")
+    .split(/\r?\n/)
+    .filter((line) => line.trim() && !line.trim().startsWith("//"))
+    .map((line) => JSON.parse(line));
+  if (
+    !steps.length ||
+    steps.some(
+      (step, index) =>
+        !step ||
+        typeof step !== "object" ||
+        (step.usage !== undefined && !declaredUsage.safeParse(step.usage).success) ||
+        (step.reasoningOptions !== undefined &&
+          (index !== 0 ||
+            !replayReasoningOptions.safeParse(step.reasoningOptions).success ||
+            new Set(step.reasoningOptions).size !== step.reasoningOptions.length)) ||
+        (step.expectReasoning !== undefined &&
+          !reasoningOptionSchema.safeParse(step.expectReasoning).success) ||
+        (step.text !== undefined && typeof step.text !== "string") ||
+        (step.toolCalls !== undefined &&
+          (!Array.isArray(step.toolCalls) ||
+            step.toolCalls.some(
+              (c) =>
+                !c ||
+                typeof c.name !== "string" ||
+                !c.args ||
+                typeof c.args !== "object" ||
+                Array.isArray(c.args),
+            ))),
+    )
+  )
+    throw veraError("INVALID");
+  const pattern = steps[0]?.match;
+  let match: RegExp | null = null;
+  if (pattern) {
+    const flags = /^\(\?([imsu]+)\)/.exec(pattern);
+    match = new RegExp(flags ? pattern.slice(flags[0].length) : pattern, flags?.[1]);
+  }
+  return { name: basename(name, ".jsonl"), match, steps };
+}
 function scenarios(dir: string): Scenario[] {
   return readdirSync(dir)
     .filter((name) => name.endsWith(".jsonl"))
     .sort()
-    .map((name) => {
-      const steps: ReplayStep[] = readFileSync(join(dir, name), "utf8")
-        .split(/\r?\n/)
-        .filter((line) => line.trim() && !line.trim().startsWith("//"))
-        .map((line) => JSON.parse(line));
-      if (
-        !steps.length ||
-        steps.some(
-          (step) =>
-            !step ||
-            typeof step !== "object" ||
-            (step.usage !== undefined && !declaredUsage.safeParse(step.usage).success) ||
-            (step.text !== undefined && typeof step.text !== "string") ||
-            (step.toolCalls !== undefined &&
-              (!Array.isArray(step.toolCalls) ||
-                step.toolCalls.some(
-                  (c) =>
-                    !c ||
-                    typeof c.name !== "string" ||
-                    !c.args ||
-                    typeof c.args !== "object" ||
-                    Array.isArray(c.args),
-                ))),
-        )
-      )
-        throw veraError("INVALID");
-      const pattern = steps[0]?.match;
-      let match: RegExp | null = null;
-      if (pattern) {
-        const flags = /^\(\?([imsu]+)\)/.exec(pattern);
-        match = new RegExp(flags ? pattern.slice(flags[0].length) : pattern, flags?.[1]);
-      }
-      return { name: basename(name, ".jsonl"), match, steps };
-    });
+    .map((name) => readScenario(dir, name));
+}
+function replayCapabilities(output?: number, reasoningOptions?: string[]): ModelCapabilities {
+  if (output !== undefined && (!Number.isSafeInteger(output) || output <= 0)) throw veraError("INVALID");
+  const maxOutputTokens = Math.min(output ?? 4096, 4096);
+  return {
+    input: ["text"],
+    contextWindow: 32768,
+    maxOutputTokens,
+    safetyMargin: 1639,
+    inputBudget: 32768 - maxOutputTokens - 1639,
+    supportsTools: true,
+    ...(reasoningOptions?.length ? { reasoningOptions } : {}),
+  };
 }
 function bindings(messages: Message[]): Map<string, string> {
   const result = new Map<string, string>();
@@ -105,21 +128,27 @@ export class ReplayGateway implements LlmGateway {
       delay?: (signal: AbortSignal) => Promise<void>;
     },
   ) {}
+  async prepareModel(reference: string, signal?: AbortSignal): Promise<void> {
+    signal?.throwIfAborted();
+    const { provider, model } = splitModelReference(reference);
+    if (
+      provider !== "replay" ||
+      (model !== "auto" && !readdirSync(this.options.dir).includes(`${model}.jsonl`))
+    )
+      throw veraError("NOT_FOUND");
+  }
   selectedModel(provider: string): string {
     if (provider !== "replay") throw veraError("NOT_FOUND");
     return scenarios(this.options.dir)[0]?.name ?? "auto";
   }
-  capabilities(reference: string, output?: number) {
-    if (splitModelReference(reference).provider !== "replay") throw veraError("NOT_FOUND");
-    if (output !== undefined && (!Number.isSafeInteger(output) || output <= 0)) throw veraError("INVALID");
-    const maxOutputTokens = Math.min(output ?? 4096, 4096);
-    return {
-      contextWindow: 32768,
-      maxOutputTokens,
-      safetyMargin: 1639,
-      inputBudget: 32768 - maxOutputTokens - 1639,
-      supportsTools: true,
-    };
+  capabilities(reference: string, output?: number): ModelCapabilities {
+    const { provider, model } = splitModelReference(reference);
+    if (provider !== "replay") throw veraError("NOT_FOUND");
+    const file = `${model}.jsonl`;
+    const scenario = readdirSync(this.options.dir).includes(file)
+      ? readScenario(this.options.dir, file)
+      : undefined;
+    return replayCapabilities(output, scenario?.steps[0]?.reasoningOptions);
   }
   async models(provider: string, signal?: AbortSignal): Promise<ProviderCatalog> {
     signal?.throwIfAborted();
@@ -130,14 +159,15 @@ export class ReplayGateway implements LlmGateway {
         id: s.name,
         name: s.name,
         reference: `replay/${s.name}`,
-        ...this.capabilities(`replay/${s.name}`),
+        ...replayCapabilities(undefined, s.steps[0]?.reasoningOptions),
       })),
     };
   }
   async *stream(request: LlmRequest): AsyncIterable<LlmEvent> {
     try {
       request.signal.throwIfAborted();
-      this.capabilities(request.model, request.maxOutputTokens);
+      const { provider, model } = splitModelReference(request.model);
+      if (provider !== "replay") throw veraError("NOT_FOUND");
       let at = -1;
       for (let i = request.messages.length - 1; i >= 0; i--)
         if (request.messages[i]?.role === "user") {
@@ -146,15 +176,17 @@ export class ReplayGateway implements LlmGateway {
         }
       const user = at >= 0 ? request.messages[at] : undefined;
       const text = user ? textOf(user) : "";
-      const model = splitModelReference(request.model).model;
       const all = scenarios(this.options.dir);
       const scenario =
         all.find((s) => s.name === model) ??
         (model === "auto" ? all.find((s) => s.match?.test(text)) : undefined);
       if (!scenario) throw veraError("NOT_FOUND");
+      replayCapabilities(request.maxOutputTokens);
       const stepNo = request.messages.slice(at + 1).filter((m) => m.role === "assistant").length;
       const step = scenario.steps[stepNo];
       if (!step) throw veraError("NOT_FOUND");
+      if (step.expectReasoning !== undefined && request.reasoning !== step.expectReasoning)
+        throw veraError("INVALID");
       const selected = fill(step, bindings(request.messages));
       const response = selected.text ?? "";
       for (let i = 0; i < response.length; i += 40) {

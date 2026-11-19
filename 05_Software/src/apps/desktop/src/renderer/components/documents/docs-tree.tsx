@@ -2,7 +2,13 @@
 // REQ-UX-541a5bee REQ-UX-4d1b3324 REQ-UX-ed65cbbc REQ-UX-d455531b
 // REQ-UX-25c814e1 REQ-UX-3a3d67c1 REQ-UX-ef3e2304 REQ-UX-b5edf930
 import { useQueries, useQuery } from "@tanstack/react-query";
-import { type DocsTreeEntry, type DocumentRecord, veraError } from "@vera/shared";
+import {
+  type DocsTreeEntry,
+  type DocumentRecord,
+  rasterExtension,
+  veraError,
+  WORKBENCH_IMAGE_DRAG,
+} from "@vera/shared";
 import { Ban, ChevronDown, ChevronRight, CircleCheck, CircleX, Clock, ScanText } from "lucide-react";
 import { type KeyboardEvent, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -284,6 +290,7 @@ export function DocsTree({
           const summary = row.type === "folder" ? summaries.get(row.path) : undefined;
           const status = doc ? describe(doc) : undefined;
           const StatusIcon = doc ? statusIcons[doc.status] : undefined;
+          const draggable = row.type === "file" && !row.ignored && !!rasterExtension(row.path);
           return (
             <div
               key={row.path}
@@ -300,6 +307,15 @@ export function DocsTree({
               data-status={doc?.status}
               data-indexed={row.type === "file" ? String(!!doc) : undefined}
               data-ignored={row.ignored ? "true" : undefined}
+              draggable={draggable || undefined}
+              onDragStart={
+                draggable
+                  ? (event) => {
+                      event.dataTransfer.effectAllowed = "copy";
+                      event.dataTransfer.setData(WORKBENCH_IMAGE_DRAG, `${workbenchId}/${row.path}`);
+                    }
+                  : undefined
+              }
               onFocus={() => setActive(row.path)}
               onClick={() => {
                 setActive(row.path);

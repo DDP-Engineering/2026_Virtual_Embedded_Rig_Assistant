@@ -1,7 +1,14 @@
 // Derived from BenchPilot's gateway loop: contiguous parallel reads, ordered writes and source-order results.
-import type { AssistantMessage, Message, ToolCall, ToolResultMessage } from "@earendil-works/pi-ai";
-import { veraError } from "@vera/shared";
+import type {
+  AssistantMessage,
+  ImageContent,
+  Message,
+  ToolCall,
+  ToolResultMessage,
+} from "@earendil-works/pi-ai";
+import { acceptsImages, MAX_MESSAGE_IMAGES, type ModelCapabilities, veraError } from "@vera/shared";
 import { ContextCompactor } from "./compaction.js";
+import type { UserImageMessage } from "./message-images.js";
 import { toolSpecs } from "./tool.js";
 import type { AgentRuntime, RuntimeEvent, RuntimeHost, RuntimeInit, StopReason } from "./types.js";
 
@@ -65,6 +72,15 @@ export function buildContext(stored: Message[], _now: number, currentStart = sto
   }
   return out;
 }
+function userMessage(message: { text: string; images?: string[]; timestamp: number }): UserImageMessage {
+  return {
+    role: "user",
+    content: message.text,
+    ...(message.images?.length && { images: [...message.images] }),
+    timestamp: message.timestamp,
+  };
+}
+
 export class ReferenceRuntime implements AgentRuntime {
   private init: RuntimeInit | undefined;
   private transcript: Message[] = [];
@@ -111,7 +127,7 @@ export class ReferenceRuntime implements AgentRuntime {
   abort(): void {
     this.controller?.abort();
   }
-  async send(text: string): Promise<{ stopReason: StopReason }> {
+  async send(text: string, images?: string[]): Promise<{ stopReason: StopReason }> {
     if (this.controller) throw veraError("BUSY");
     const init = this.init;
     if (!init) throw veraError("INVALID");
@@ -123,8 +139,9 @@ export class ReferenceRuntime implements AgentRuntime {
     const messageId = identity?.messageId ?? this.host.nextId();
     const currentStart = this.transcript.length;
     const recovered = new Set(this.host.steering?.().map((message) => message.messageId));
-    this.transcript.push({ role: "user", content: text, timestamp: this.host.now() });
-    this.emit({ type: "message.user", messageId, text });
+    const prompt = userMessage({ text, ...(images && { images }), timestamp: this.host.now() });
+    this.transcript.push(prompt);
+    this.emit({ type: "message.user", messageId, text, ...(prompt.images && { images: prompt.images }) });
     this.emit({ type: "turn.started", turnId });
     let stopReason: StopReason = "error";
     try {
@@ -157,18 +174,21 @@ export class ReferenceRuntime implements AgentRuntime {
       inputTokens += message.usage.input + message.usage.cacheRead + message.usage.cacheWrite;
       outputTokens += message.usage.output;
     };
+    // Keep pixels for model continuations in this turn, outside replay and persistence.
+    const resultImages = new Map<ToolResultMessage, ImageContent>();
+    const withResultImages = (message: Message): Message => {
+      if (message.role !== "toolResult") return message;
+      const image = resultImages.get(message);
+      return image ? { ...message, content: [...message.content, image] } : message;
+    };
+    const toolsFor = (capabilities: ModelCapabilities) =>
+      init.tools.filter((tool) => !tool.requiresImages || acceptsImages(capabilities));
     const delivered = new Set<string>();
     const recoveredPositions = new Set<number>();
     const pending = () =>
       (this.host.steering?.() ?? []).filter((message) => !delivered.has(message.messageId));
-    const userMessage = (message: { text: string; timestamp: number }): Message => ({
-      role: "user",
-      content: message.text,
-      timestamp: message.timestamp,
-    });
     for (;;) {
       if (signal.aborted) return "aborted";
-      const tools = toolSpecs(init.tools);
       await this.host.gateway.prepareModel?.(init.model, signal);
       signal.throwIfAborted();
       const capabilities = this.host.gateway.capabilities(init.model);
@@ -187,8 +207,8 @@ export class ReferenceRuntime implements AgentRuntime {
       const compacted = await this.compactor.prepare(
         {
           system: init.systemPrompt,
-          tools,
-          messages: buildContext(requestMessages, this.host.now(), currentStart),
+          tools: toolSpecs(toolsFor(capabilities)),
+          messages: buildContext(requestMessages.map(withResultImages), this.host.now(), currentStart),
         },
         capabilities,
         init.contextPolicy,
@@ -232,6 +252,9 @@ export class ReferenceRuntime implements AgentRuntime {
       const arrivals = pending().filter((message) => !included.has(message.messageId));
       queued = [...queued, ...arrivals];
       // The summary is itself a model dispatch; resolve capabilities again for the normal call.
+      const currentCapabilities = this.host.gateway.capabilities(init.model);
+      const offered = toolsFor(currentCapabilities);
+      const tools = toolSpecs(offered);
       const view = {
         ...init.contextPolicy.prepare(
           {
@@ -239,7 +262,7 @@ export class ReferenceRuntime implements AgentRuntime {
             tools,
             messages: [...compacted.messages, ...arrivals.map(userMessage)],
           },
-          this.host.gateway.capabilities(init.model),
+          currentCapabilities,
         ),
         compactionStatus: compacted.compactionStatus,
         requestViewTokens: 0,
@@ -371,15 +394,21 @@ export class ReferenceRuntime implements AgentRuntime {
         return "end";
       }
       const results = new Map<string, ToolResultMessage>();
+      let imagesInStep = 0;
       const runOne = async (call: ToolCall) => {
         if (signal.aborted) return;
         this.emit({ type: "tool.started", callId: call.id, name: call.name, args: call.arguments });
         const started = this.host.now();
         let output: string;
+        let image: ImageContent | undefined;
         let failed = false;
         try {
-          const tool = init.tools.find((t) => t.name === call.name);
+          const tool = offered.find((t) => t.name === call.name);
           if (!tool) throw Error("Unknown tool");
+          if (tool.requiresImages && imagesInStep >= MAX_MESSAGE_IMAGES)
+            throw Error(
+              `At most ${MAX_MESSAGE_IMAGES} images can be inspected in one step. Try the remaining files in a later step.`,
+            );
           const args = tool.params.parse(call.arguments);
           // Program commands ask the gate per command line, like file changes.
           if (tool.class === "write" || tool.class === "program") {
@@ -395,7 +424,9 @@ export class ReferenceRuntime implements AgentRuntime {
               throw Error(decision === "denied" ? "The user denied this change." : "Aborted.");
           }
           signal.throwIfAborted();
-          output = await tool.execute(args, signal);
+          const result = await tool.execute(args, signal, call.id);
+          output = typeof result === "string" ? result : result.text;
+          if (typeof result !== "string") image = result.image;
           // A write or program that completed stays applied after a stop: the model must see its result.
           if (signal.aborted && tool.class !== "write" && tool.class !== "program") throw Error("Aborted.");
           if (tool.publish) output = tool.publish(args, output);
@@ -405,6 +436,14 @@ export class ReferenceRuntime implements AgentRuntime {
         }
         if (output.length > 32000) output = `${output.slice(0, 31960)}\n[truncated: tool result limit]`;
         const result = toolResult(call, output, failed, this.host.now());
+        if (!failed && image) {
+          imagesInStep++;
+          if (resultImages.size === MAX_MESSAGE_IMAGES) {
+            const oldest = resultImages.keys().next();
+            if (!oldest.done) resultImages.delete(oldest.value);
+          }
+          resultImages.set(result, image);
+        }
         results.set(call.id, result);
         this.emit({
           type: "tool.done",
@@ -424,7 +463,9 @@ export class ReferenceRuntime implements AgentRuntime {
       for (const call of calls) {
         if (callsUsed >= (init.maxToolCallsPerTurn ?? 50) || signal.aborted) break;
         callsUsed++;
-        if (init.tools.find((t) => t.name === call.name)?.class === "read") batch.push(call);
+        const tool = offered.find((candidate) => candidate.name === call.name);
+        // A raster decode can expand a bounded input substantially.
+        if (tool?.class === "read" && !tool.requiresImages) batch.push(call);
         else {
           await flush();
           if (!signal.aborted) await runOne(call);

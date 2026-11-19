@@ -7,6 +7,7 @@ import {
   type DocumentReason,
   type DocumentRecord,
   type DocumentVolume,
+  type EmbeddingModelId,
   veraError,
   type WorkbenchConfig,
   type WorkbenchEvent,
@@ -16,11 +17,17 @@ import { type FSWatcher, watch } from "chokidar";
 import picomatch from "picomatch";
 import type { DocumentDerived } from "../storage/repos/documents.js";
 import { DocumentsRepository } from "../storage/repos/documents.js";
+import {
+  beginEmbeddingRebuild,
+  finishEmbeddingRebuild,
+  rebuildingEmbeddings,
+} from "../storage/repos/embedding-rebuild.js";
 import { createIgnoreRules } from "../workbench/ignore.js";
 import { PathGuard } from "../workbench/path-guard.js";
 import { WriteQueue } from "../workbench/write-queue.js";
 import { pruneExtractionCache } from "./cache-prune.js";
 import type { Chunk } from "./chunk.js";
+import type { Extraction } from "./extraction.js";
 import { documentGuard } from "./guard.js";
 import { type InspectInput, inspectSource, type SourceInspection } from "./inspect.js";
 import { documentKind, documentSelection, missing, sizeLimit } from "./kinds.js";
@@ -42,6 +49,7 @@ export interface DocumentInput {
   kind: Exclude<DocumentKind, "other">;
   sha256: string;
   embeddings?: WorkbenchConfig["embeddings"];
+  extraction?: Extraction;
   signal: AbortSignal;
   assertWritable: () => void;
 }
@@ -53,7 +61,7 @@ export interface DocumentResult {
   derived?: DocumentDerived;
 }
 export type DocumentProcessor = ((input: DocumentInput) => Promise<DocumentResult>) & {
-  modelId?: string;
+  modelId?(model: EmbeddingModelId): string;
   release?(root: string): Promise<void>;
   /** Document selection; the desktop app runs it in its indexer process (TASK-f09609fd). */
   select?(input: SelectInput): Promise<Selection>;
@@ -112,6 +120,7 @@ const RACY_MS = 2000;
 export class Ingester {
   private readonly rows: DocumentsRepository;
   private readonly queue = new WriteQueue();
+  private readonly publications = new WriteQueue();
   private readonly abort = new AbortController();
   private watcher: FSWatcher;
   private ready: Promise<void>;
@@ -168,6 +177,7 @@ export class Ingester {
 
   constructor(private readonly options: IngestOptions) {
     this.rows = new DocumentsRepository(options.db);
+    this.syncIndexingConfig(false);
     this.refreshPolicy();
     this.targets = watchTargets(options.root, options.config().docs);
     this.watchKey = this.watcherKey(this.targets);
@@ -315,6 +325,46 @@ export class Ingester {
       }
     });
   }
+  /** Keep the indexed document count stable during confirmation validation and saving. */
+  withStableDocuments<T>(action: () => Promise<T>): Promise<T> {
+    return this.publications.run(action);
+  }
+
+  /** Discard this workbench's old vectors and admit replacement work in the background. */
+  embeddingModelChanged(): void {
+    try {
+      this.mutation(() => {
+        beginEmbeddingRebuild(this.options.db);
+        this.saveIndexingConfig(JSON.stringify(this.options.config().embeddings));
+      });
+    } finally {
+      this.request();
+    }
+  }
+
+  private saveIndexingConfig(fingerprint: string): void {
+    this.options.db
+      .prepare("INSERT OR REPLACE INTO meta(key,value) VALUES('indexing_config',?)")
+      .run(fingerprint);
+  }
+
+  private syncIndexingConfig(resetChunks: boolean): void {
+    const settings = this.options.config().embeddings;
+    const fingerprint = JSON.stringify(settings);
+    const previous = this.options.db
+      .prepare("SELECT value FROM meta WHERE key='indexing_config'")
+      .pluck()
+      .get();
+    if (previous === fingerprint) return;
+    const changedModel = typeof previous === "string" && JSON.parse(previous).model !== settings.model;
+    if (!changedModel && !resetChunks) return;
+    this.mutation(() => {
+      if (changedModel) beginEmbeddingRebuild(this.options.db);
+      else if (previous !== undefined) for (const row of this.rows.list()) this.rows.remove(row.path);
+      this.saveIndexingConfig(fingerprint);
+    });
+  }
+
   /** Explicit reindex executes in the same queue as background batches. */
   reindex(): Promise<void> {
     if (this.closed) return Promise.reject(veraError("DENIED"));
@@ -397,6 +447,9 @@ export class Ingester {
     clear = false,
   ): Promise<void> {
     this.options.assertWritable();
+    await this.publications.run(async () => {
+      if (!this.closed) this.syncIndexingConfig(false);
+    });
     const { guard, paths, skipped, bytes } = selection ?? (await this.selected());
     if (this.closed) return;
     this.selectedVolume = { files: paths.length, bytes };
@@ -406,33 +459,17 @@ export class Ingester {
     this.selectedGuard = documentGuard(paths, this.options.config().docs.maxFiles, this.approved());
     this.emit({ type: "index.guard", guard: this.selectedGuard });
     if (this.selectedGuard) return;
-    if (clear) {
-      const cleared = this.rows.list();
-      this.mutation(() => {
-        for (const row of cleared) this.rows.remove(row.path);
-      });
-      for (const row of cleared) this.emit({ type: "index.document", path: row.path, document: null });
-    }
-    const fingerprint = JSON.stringify(this.options.config().embeddings);
-    const previous = this.options.db
-      .prepare("SELECT value FROM meta WHERE key='indexing_config'")
-      .pluck()
-      .get();
-    if (previous !== fingerprint) {
-      this.mutation(() => {
-        for (const row of this.rows.list()) this.rows.remove(row.path);
-        this.options.db
-          .prepare("INSERT OR REPLACE INTO meta(key,value) VALUES('indexing_config',?)")
-          .run(fingerprint);
-      });
-    }
     // Skipped documents keep a row, so the Files tab shows them with their reason.
     const selected = new Set([...paths, ...skipped]);
-    const removed = this.rows.list().filter((row) => !selected.has(row.path));
-    this.mutation(() => {
-      for (const row of removed) this.rows.remove(row.path);
+    await this.publications.run(async () => {
+      if (this.closed) return;
+      const removed = this.rows.list().filter((row) => clear || !selected.has(row.path));
+      this.mutation(() => {
+        for (const row of removed) this.rows.remove(row.path);
+      });
+      for (const row of removed) this.emit({ type: "index.document", path: row.path, document: null });
+      this.syncIndexingConfig(true);
     });
-    for (const row of removed) this.emit({ type: "index.document", path: row.path, document: null });
     let pending = selected.size,
       done = 0,
       failed = 0;
@@ -445,6 +482,10 @@ export class Ingester {
       pending--;
       progress();
     }
+    await this.publications.run(async () => {
+      if (!this.closed && rebuildingEmbeddings(this.options.db))
+        this.mutation(() => finishEmbeddingRebuild(this.options.db));
+    });
     // A quiet moment: every selected document has its row and no further run is queued.
     if (!this.closed && !this.requested) await this.pruneCache();
   }
@@ -467,7 +508,6 @@ export class Ingester {
     chunks?: Chunk[],
     derived?: DocumentDerived,
   ): DocumentRecord {
-    // Validation tokenizes every chunk: done here, it does not run inside the write transaction.
     const valid = chunks && this.rows.validateChunks(chunks, derived);
     const row = this.mutation(() => {
       const old = this.rows.get(record.path);
@@ -479,19 +519,29 @@ export class Ingester {
     this.emit({ type: "index.document", path: row.path, document: row });
     return row;
   }
-  /** False when chunks of the document lack a vector of the current embedding model. */
-  private embedded(doc: DocumentRecord): boolean {
-    const modelId = this.options.process?.modelId;
-    if (!modelId) return true;
+  private publishStatus(record: Omit<DocumentRecord, "id">): Promise<DocumentRecord> {
+    return this.publications.run(async () => this.publish(record, true));
+  }
+
+  /** Whether the unchanged document lacks vectors for a model the processor can identify. */
+  private needsEmbedding(doc: DocumentRecord): boolean {
+    const model = this.options.config().embeddings.model;
+    let modelId: string | undefined;
+    try {
+      modelId = this.options.process?.modelId?.(model);
+    } catch {
+      // Keep the existing index. An explicit rebuild still reports the unavailable model in progress.
+    }
     const db = this.options.db;
+    if (!modelId && !rebuildingEmbeddings(db)) return false;
     return (
-      db.prepare("SELECT count(*) FROM chunks WHERE doc_id=?").pluck().get(doc.id) ===
+      db.prepare("SELECT count(*) FROM chunks WHERE doc_id=?").pluck().get(doc.id) !==
       db
         .prepare(
           "SELECT count(*) FROM embeddings e JOIN chunks c ON c.id=e.chunk_id WHERE c.doc_id=? AND e.model_id=?",
         )
         .pluck()
-        .get(doc.id, modelId)
+        .get(doc.id, modelId ?? null)
     );
   }
   private async ingest(guard: PathGuard, path: string): Promise<string> {
@@ -511,13 +561,22 @@ export class Ingester {
     // The path guard refuses this name on every platform; the row says why and the file is not opened.
     if (!portablePath(path)) {
       if (old?.status !== "unsupported" || old.error !== "NAME_UNSUPPORTED")
-        this.publish({ ...record, status: "unsupported", error: "NAME_UNSUPPORTED" }, true);
+        await this.publishStatus({ ...record, status: "unsupported", error: "NAME_UNSUPPORTED" });
       return "unsupported";
     }
+    let retainIndex = false;
+    let preserveOnInspectionFailure = false;
+    let attemptedSettings = this.options.config().embeddings;
+    const attemptKey = (hash: string) => JSON.stringify([path, hash, attemptedSettings]);
     try {
       const target = await this.ordinary(guard, path);
       const before = await lstat(target.absolute);
       record = { ...record, bytes: before.size, mtime: before.mtime.toISOString() };
+      preserveOnInspectionFailure =
+        old?.status === "indexed" &&
+        old.kind === kind &&
+        old.bytes === record.bytes &&
+        old.mtime === record.mtime;
       if (before.size > sizeLimit(kind, this.options.config().docs)) {
         if (
           old?.status !== "unsupported" ||
@@ -525,12 +584,12 @@ export class Ingester {
           old.bytes !== before.size ||
           old.mtime !== record.mtime
         )
-          this.publish({ ...record, status: "unsupported", error: "SIZE_LIMIT" }, true);
+          await this.publishStatus({ ...record, status: "unsupported", error: "SIZE_LIMIT" });
         return "unsupported";
       }
       // Selection admits documents only; a stray other path is recorded without being read.
       if (kind === "other") {
-        this.publish({ ...record, status: "unsupported", error: "TYPE_UNSUPPORTED" }, true);
+        await this.publishStatus({ ...record, status: "unsupported", error: "TYPE_UNSUPPORTED" });
         return "unsupported";
       }
       // An indexed file with the same size and time is not read again. A time too close to the
@@ -542,7 +601,7 @@ export class Ingester {
         old.mtime === record.mtime &&
         old.indexedAt !== null &&
         Date.parse(old.indexedAt) - before.mtimeMs > RACY_MS &&
-        this.embedded(old)
+        !this.needsEmbedding(old)
       )
         return "indexed";
       const inspect = this.options.process?.inspect ?? inspectSource;
@@ -570,97 +629,130 @@ export class Ingester {
         return "pending";
       }
       record.sha256 = inspection.sha256;
+      const unchanged = old?.sha256 === record.sha256 && old.kind === kind;
+      preserveOnInspectionFailure = false;
+      retainIndex = unchanged && old.status === "indexed" && this.needsEmbedding(old);
+      attemptedSettings = this.options.config().embeddings;
       // A document that crashed the indexer twice stays failed until its content changes.
-      if ((this.crashes.get(`${path}\n${record.sha256}`) ?? 0) >= 2) {
-        if (old?.status !== "failed" || old.sha256 !== record.sha256)
-          this.publish({ ...record, status: "failed", error: "PROCESSING" }, true);
+      if ((this.crashes.get(attemptKey(record.sha256)) ?? 0) >= 2) {
+        if (!retainIndex && (old?.status !== "failed" || old.sha256 !== record.sha256))
+          await this.publishStatus({ ...record, status: "failed", error: "PROCESSING" });
         return "failed";
       }
       // Unchanged content keeps its result. That includes a failure, once it was tried since the
       // workbench opened: after that it waits for a content change or Reindex, which clears the rows.
-      const attempt = `${path}\n${record.sha256}`;
+      const attempt = attemptKey(record.sha256);
       if (
-        old?.sha256 === record.sha256 &&
-        old.kind === kind &&
+        unchanged &&
         !(old.status === "pending" && this.options.process) &&
-        !(old.status === "indexed" && !this.embedded(old)) &&
+        !retainIndex &&
         !(old.status === "failed" && !this.attempted.has(attempt))
       )
         return old.status;
       if (inspection.binary) {
-        this.publish({ ...record, status: "unsupported", error: "BINARY" }, true);
+        await this.publishStatus({ ...record, status: "unsupported", error: "BINARY" });
         return "unsupported";
       }
-      const pending = this.publish(record, true);
+      const pending = retainIndex && old ? old : await this.publishStatus(record);
       if (!this.options.process) return "pending";
+      const extraction = retainIndex ? this.rows.extraction(pending.id) : undefined;
       const embeddings = this.options.config().embeddings;
-      this.attempted.add(attempt);
+      attemptedSettings = embeddings;
+      this.attempted.add(attemptKey(record.sha256));
       const result = await this.options.process({
         embeddings,
         root: this.options.root,
         path,
         kind,
         sha256: record.sha256,
+        ...(extraction ? { extraction } : {}),
         signal: this.abort.signal,
         assertWritable: () => {
           if (this.closed) throw veraError("DENIED");
           this.options.assertWritable();
         },
       });
-      if (this.closed) return "pending";
-      if (JSON.stringify(embeddings) !== JSON.stringify(this.options.config().embeddings)) {
-        this.request();
-        return "pending";
-      }
-      const current = await lstat((await this.ordinary(guard, path)).absolute);
-      if (
-        current.ino !== before.ino ||
-        current.dev !== before.dev ||
-        current.size !== before.size ||
-        current.mtimeMs !== before.mtimeMs ||
-        current.ctimeMs !== before.ctimeMs
-      ) {
-        this.request();
-        return "pending";
-      }
-      if (this.rows.get(path)?.sha256 !== pending.sha256) {
-        this.request();
-        return "pending";
-      }
-      this.publish(
-        {
-          ...record,
-          status: result.status,
-          pages: result.pages ?? null,
-          error:
-            result.reason ??
-            (result.status === "needs_ocr" ? "NEEDS_OCR" : result.status === "failed" ? "PROCESSING" : null),
-          indexedAt: result.status === "indexed" ? this.options.now().toISOString() : null,
-        },
-        false,
-        result.status === "indexed" ? result.chunks : [],
-        result.status === "indexed" ? result.derived : undefined,
-      );
-      return result.status;
-    } catch (error) {
-      if (this.closed) return "pending";
-      // A lost indexer process is retried by the next reconciliation (TASK-f09609fd).
-      const lost = error as { retry?: unknown; crashed?: unknown } | null;
-      if (lost?.crashed === true && record.sha256) {
-        const key = `${path}\n${record.sha256}`;
-        const count = (this.crashes.get(key) ?? 0) + 1;
-        this.crashes.set(key, count);
-        if (count >= 2) {
-          this.publish({ ...record, status: "failed", error: "PROCESSING" }, true);
-          return "failed";
+      return await this.publications.run(async () => {
+        if (this.closed) return "pending";
+        const current = await lstat((await this.ordinary(guard, path)).absolute);
+        if (
+          current.ino !== before.ino ||
+          current.dev !== before.dev ||
+          current.size !== before.size ||
+          current.mtimeMs !== before.mtimeMs ||
+          current.ctimeMs !== before.ctimeMs
+        ) {
+          this.request();
+          return "pending";
         }
-      }
-      if (missing(error) || lost?.retry === true) {
-        this.request();
-        return "pending";
-      }
-      this.publish({ ...record, status: "failed", error: record.sha256 ? "PROCESSING" : "IO" }, true);
-      return "failed";
+        if (this.closed) return "pending";
+        if (
+          JSON.stringify(embeddings) !== JSON.stringify(this.options.config().embeddings) ||
+          this.rows.get(path)?.sha256 !== pending.sha256
+        ) {
+          this.request();
+          return "pending";
+        }
+        if (retainIndex) {
+          if (
+            result.status !== "indexed" ||
+            !result.chunks ||
+            (result.chunks.length > 0 && !result.derived?.vectors)
+          )
+            return "failed";
+          const valid = this.rows.validateChunks(result.chunks, result.derived);
+          this.mutation(() => this.rows.replaceEmbeddings(pending.id, valid));
+          return "indexed";
+        }
+        this.publish(
+          {
+            ...record,
+            status: result.status,
+            pages: result.pages ?? null,
+            error:
+              result.reason ??
+              (result.status === "needs_ocr"
+                ? "NEEDS_OCR"
+                : result.status === "failed"
+                  ? "PROCESSING"
+                  : null),
+            indexedAt: result.status === "indexed" ? this.options.now().toISOString() : null,
+          },
+          false,
+          result.status === "indexed" ? result.chunks : [],
+          result.status === "indexed" ? result.derived : undefined,
+        );
+        return result.status;
+      });
+    } catch (error) {
+      return this.publications.run(async () => {
+        if (this.closed) return "pending";
+        if (JSON.stringify(attemptedSettings) !== JSON.stringify(this.options.config().embeddings)) {
+          this.request();
+          return "pending";
+        }
+        // A lost indexer process is retried by the next reconciliation (TASK-f09609fd).
+        const lost = error as { retry?: unknown; crashed?: unknown } | null;
+        const preserve =
+          retainIndex || (preserveOnInspectionFailure && rebuildingEmbeddings(this.options.db));
+        const crashHash = record.sha256 ?? (preserve ? old?.sha256 : undefined);
+        if (lost?.crashed === true && crashHash) {
+          const key = attemptKey(crashHash);
+          const count = (this.crashes.get(key) ?? 0) + 1;
+          this.crashes.set(key, count);
+          if (count >= 2) {
+            if (!preserve) this.publish({ ...record, status: "failed", error: "PROCESSING" }, true);
+            return "failed";
+          }
+        }
+        if (missing(error) || lost?.retry === true) {
+          this.request();
+          return "pending";
+        }
+        if (!preserve)
+          this.publish({ ...record, status: "failed", error: record.sha256 ? "PROCESSING" : "IO" }, true);
+        return "failed";
+      });
     }
   }
   close(): Promise<void> {

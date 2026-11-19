@@ -16,11 +16,29 @@ Type in the message box (**Ask VERA about your project…**). Enter sends, Shift
 
 Next to the message box you choose the **Model**, the **Reasoning level** and the **Permission mode** of this session. New sessions take the model and permission mode from the workbench settings.
 
+Paste or drop an image into the message box, or choose **Attach image** to pick a file. In Files, drag an image into the message box or choose **Attach image** from its menu. Remove an image with the button on its thumbnail. VERA keeps imported originals in the workbench. Images attached from Files stay at their existing paths.
+
+Select a thumbnail in a sent message to open the image in the file viewer. If the image is missing, the message shows its saved workbench path.
+
+A message can reference up to eight workbench images in PNG, JPEG, GIF or WebP, with a limit of 20 MiB per file. VERA scales the copy sent to an image-capable model to a maximum of 2048 pixels on its longest side and keeps the original file. A text-only model receives the paths. Compaction keeps older image paths as text notes. Session exports include those paths.
+
+See [Providers and models](providers.md) for how VERA determines image support for your chosen model.
+
+Ask the agent to inspect a workbench image by giving its relative path. With an image-capable model, the agent can use `view_image` to read PNG, JPEG, GIF or WebP files up to 20 MiB. The copy sent to the model is at most 2048 pixels on its longest side. The tool requires an allowed workbench path without links, including in Bypass. The result in session history records the path. **Edit workbench** → **Tools** shows the switch when the workbench’s default model accepts images.
+
+The agent can reopen a composer image from this session using its saved path after you send it. It can inspect up to eight images in one step and keeps the eight most recent tool images in the current turn.
+
 ## Steer or stop a running turn
 
 While the agent works, you can keep typing and send more messages, for example "also check the errata". They show **Pending delivery** until the agent takes them in at its next step. While an approval card waits for your decision, sending is paused.
 
 **Stop** ends the running turn. Escape also asks **Stop the running turn?**. Work that was already completed, such as applied file changes, stays.
+
+## Follow delegated sessions
+
+When VERA delegates a task, **Delegated sessions** in the parent chat lists each child and its current outcome. Select a child to open its Chat tab and follow its transcript. **Parent session** returns to the parent.
+
+To stop a running child, open it and use **Stop** in its composer. The parent can keep working. If approval is requested, use the approval card in that session. When you reopen either session after restarting VERA, the link and the outcome of the delegated turn are still available.
 
 ## Detail levels
 
@@ -96,4 +114,4 @@ Every terminal starts private. To let the agent read one, see [Permissions](perm
 
 ## Secret masking for the agent and exports
 
-Agent and model masking applies to tool results sent to the provider, streamed answers, session search and session presentation. Artifacts and exports independently controls saved artifact content and descriptions, artifact exports and JSON/Markdown session exports. Both default on; an explicit workbench choice overrides the live app default. Turning Agent and model off permits stored secrets found in files or tool output to reach the provider. Program runs and Display choices do not change these rules. Provider errors, connection tests and diagnostic logs always mask stored credentials. Terminal reads still require consent for that specific terminal. Masking cannot recover text already saved as [REDACTED]; use a new read or recreate the artifact from its original source.
+Agent and model masking applies to tool results sent to the provider, streamed answers, session search and session presentation. Masking checks the file path as text. Image pixels are outside its scope. Artifacts and exports independently controls saved artifact content and descriptions, artifact exports and JSON/Markdown session exports. Both default on; an explicit workbench choice overrides the live app default. Turning Agent and model off permits stored secrets found in files or tool output to reach the provider. Program runs and Display choices do not change these rules. Provider errors, connection tests and diagnostic logs always mask stored credentials. Terminal reads still require consent for that specific terminal. Masking cannot recover text already saved as [REDACTED]; use a new read or recreate the artifact from its original source.

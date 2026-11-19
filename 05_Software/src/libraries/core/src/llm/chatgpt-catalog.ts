@@ -30,9 +30,9 @@ export function parseChatGptCatalog(value: unknown, known: (id: string) => Model
         item.supported_reasoning_levels?.map((r) => r.effort).filter((effort) => effort !== "ultra") ?? [],
       ),
     ];
-    const input = item.input_modalities?.filter(
-      (m): m is "text" | "image" => m === "text" || m === "image",
-    ) ?? ["text"];
+    const input = [
+      ...new Set(item.input_modalities?.filter((m): m is "text" | "image" => m === "text" || m === "image")),
+    ];
     models.set(item.slug, {
       reasoningOptions: options,
       model: {

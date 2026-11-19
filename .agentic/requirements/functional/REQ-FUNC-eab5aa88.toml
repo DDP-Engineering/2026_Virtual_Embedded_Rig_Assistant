@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-eab5aa88"
+
+title = "Dispatch images to vision models"
+
+status = "active"
+
+requirement = """
+When the chosen model accepts images, VERA shall send raster image parts with a maximum 2048-pixel long side while preserving the original files.
+"""
+
+verification = "Record a fake compatible endpoint request, decode the image parts and assert both resize orientations and an unchanged original."
+
+affected_paths = ["05_Software/src/libraries/core/src/sessions/session-images.ts", "05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/libraries/core/package.json", "05_Software/package-lock.json", "05_Software/src/apps/desktop/electron.vite.config.ts", "05_Software/src/apps/desktop/package.json", "02_Tools/release/package.mjs"]
+
+linked_tests = ["05_Software/src/libraries/core/src/sessions/session-images.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-19
+updated = 2026-11-19

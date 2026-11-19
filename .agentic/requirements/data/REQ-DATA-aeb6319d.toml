@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-DATA-aeb6319d"
+title = "Protect delegation links at deletion"
+status = "active"
+requirement = "When a parent is deleted while it has surviving children, the session service shall return CONFLICT and preserve their relationships."
+verification = "Attempt parent deletion with an archived child, check the durable relation, then remove the child and parent in order."
+affected_paths = ["05_Software/src/libraries/core/src/sessions/service.ts","05_Software/src/libraries/core/src/storage/schema.ts","05_Software/src/libraries/core/src/storage/repos/delegations.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/sessions/delegation.test.ts"]
+created = 2026-11-19
+updated = 2026-11-19

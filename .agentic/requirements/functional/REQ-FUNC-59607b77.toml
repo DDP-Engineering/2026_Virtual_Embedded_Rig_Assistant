@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-59607b77"
+
+title = "Resolve custom model image input from settings"
+
+status = "active"
+
+requirement = """
+When VERA resolves a model of a custom endpoint, the gateway shall expose text and image input for that exact provider and model ID if enabled in settings, with text input for all other models.
+"""
+
+verification = "Mock LM Studio profiles and Ollama and generic endpoint model lists. Verify enabled and default-off IDs through both catalog and model resolution, including two endpoints with the same ID."
+
+affected_paths = ["05_Software/src/libraries/core/src/llm/providers.ts", "05_Software/src/libraries/shared/src/providers.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/llm/gateway.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-19
+updated = 2026-11-19

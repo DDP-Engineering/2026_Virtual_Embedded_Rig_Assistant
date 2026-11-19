@@ -12,7 +12,13 @@ Core SessionService owns one workbench's durable sessions over injected AgentRun
 
 ## Public interface
 
+- `launchDelegated` admits up to three active child turns per workbench, with atomic initial history and durable request IDs. Parent-scoped `listDelegated`, `inspectDelegated`, `subscribeDelegated` and `stopDelegated` use the regular session lifecycle. `delegationParent` gives the trusted host the link. See [Workbenches](workbench-storage.md) for link retention and [File tools](file-tools.md) for child authority. Proof: sessions/delegation.test.ts.
+- Agent tools and the [Desktop links](chat-ui.md) track the initial delegated turn. See [File tools](file-tools.md).
+
 SessionHost.masking(area) resolves live validated app/workbench choices. Tool publication invokes its authority hook before applying agent masking; MaskingContextPolicy projects before compaction and counting; each provider dispatch rechecks the projected budget after async durable publication, returning CONTEXT_LIMIT without dispatch when mandatory content cannot fit. sessions/masking.ts also protects fake/replay streams and errors. Artifact content uses exports in the write queue. Tests: sessions/masking.test.ts, native agent-masking.spec.ts.
+
+- SessionService admits composer imports for writable, unarchived sessions in the active workbench, stages the original under `.vera/attachments/<session>/` and returns a bounded PNG thumbnail. Session image reads allow that managed namespace and refuse redirects. Model capability uses the effective session/workbench/application model.
+- SessionService.sendWithImages validates primary-workbench files before admission. SQLite user rows and initial/queued events keep paths through recovery. Agent dispatch applies the model capability and [context policy](agent-runtime.md). Tests: sessions/session-images.test.ts, view-image.test.ts.
 
 - SessionHost.additionalFolders reads the active workbench's live user configuration for ordinary file tools and shell cwd. Desktop validates captured workbench identity and CLI uses its current WorkbenchService snapshot. Model parameters and sanitized renderer configuration do not supply grants. Pending operations resolve current authority at execution; outside paths remain canonical absolute without local source citations.
 

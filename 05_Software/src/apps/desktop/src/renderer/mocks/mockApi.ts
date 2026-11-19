@@ -1,6 +1,7 @@
 import {
   type AppEvent,
   type AppInfo,
+  acceptsImages,
   appEventSchema,
   type CatalogEntry,
   type CatalogPack,
@@ -26,11 +27,13 @@ import {
   type PluginManifest,
   type PluginReview,
   type ProgramRunInfo,
+  type ProviderCatalog,
   partsSearchDefaults,
   partsSupplierIds,
   providerSlug,
   type Request,
   type Response,
+  rasterSignature,
   type SessionSummary,
   settingsChangedEvent,
   settingsPatchSchema,
@@ -47,16 +50,18 @@ import {
 } from "@vera/shared";
 import type { VeraApi } from "../api/client.js";
 import { createSubscriptions } from "../api/subscriptions.js";
+import { mockImageThumbnail } from "./composer-images.js";
 import { mockDocument, mockDocuments } from "./documents.js";
 import { mockAppInfo } from "./fixtures.js";
 import { mockHelpList, mockHelpRead, mockPluginHelpLanguages, mockPluginHelpRead } from "./help.js";
 import { MockSessions } from "./sessions.js";
 import { mockTextBytes, mockTextPaths } from "./text-files.js";
 
-const openAiFixture = {
+const openAiFixture: ProviderCatalog["models"][number] = {
   id: "mock-openai",
   name: "Mock OpenAI model",
   reference: "openai/mock-openai",
+  input: ["text", "image"],
   contextWindow: 32768,
   maxOutputTokens: 4096,
   safetyMargin: 1639,
@@ -75,6 +80,16 @@ export function createMockApi(
   let authSequence = 0;
   let indexerState: "running" | "stopped" = "running";
   // The mock workbench's files for the Docs tree: its documents plus a few files that are not.
+  const uploads = new Map<string, { data: string; thumbnail: string }>();
+  const scopeImagePath = "manuals/chat-scope.png";
+  const scopeImage =
+    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aFqkAAAAASUVORK5CYII=";
+  const imageKey = (workbenchId: string, path: string) => `${workbenchId}/${path}`;
+  const storedImage = (workbenchId: string, path: string) =>
+    uploads.get(imageKey(workbenchId, path)) ??
+    (path === scopeImagePath && treeFiles().includes(path)
+      ? { data: scopeImage, thumbnail: scopeImage }
+      : undefined);
   const treeFiles = () =>
     scenario === "empty"
       ? []
@@ -85,6 +100,7 @@ export function createMockApi(
           "firmware/drivers/i2c.c",
           "manuals/rm0440-reference.txt",
           "manuals/scope-capture.png",
+          scopeImagePath,
           ".git/config",
           ".vera/workbench.yaml",
           "node_modules/pkg/index.js",
@@ -529,6 +545,59 @@ export function createMockApi(
       const list = sessions.invoke(channel, input.data) as SessionSummary[];
       const order = settings.sessionOrder?.[current().snapshot.config.id];
       return channels[channel].response.parse(orderSessions(list, order)) as Response<C>;
+    }
+    if (channel === "providers.image.capability") {
+      const { modelRef } = channels["providers.image.capability"].request.parse(input.data);
+      const reference = modelRef ?? settings.defaultModel;
+      const result = { acceptsImages: false };
+      if (reference) {
+        const provider = channels["providers.models"].request.shape.id.parse(reference.split("/")[0]);
+        const list = await invoke("providers.models", { id: provider });
+        const model = list.models.find((entry) => entry.reference === reference);
+        result.acceptsImages = model !== undefined && acceptsImages(model);
+      }
+      return channels[channel].response.parse(result) as Response<C>;
+    }
+    if (channel === "session.image.attach" || channel === "session.image.capability") {
+      const upload =
+        channel === "session.image.attach"
+          ? channels["session.image.attach"].request.parse(input.data)
+          : undefined;
+      const args = upload ?? channels["session.image.capability"].request.parse(input.data);
+      const snapshot = current().snapshot;
+      if (snapshot.config.id !== args.workbenchId) throw veraError("CONFLICT");
+      const rows = sessions.invoke("session.list", {}) as SessionSummary[];
+      const session = rows.find((row) => row.id === args.sessionId);
+      if (!session) throw veraError("NOT_FOUND");
+      if (upload) {
+        if (snapshot.readOnly || session.archived) throw veraError("DENIED");
+        if (session.status === "awaiting_approval") throw veraError("BUSY");
+        const { source } = upload;
+        if ("path" in source) {
+          if (treeIgnored(source.path)) throw veraError("DENIED");
+          if (source.path !== scopeImagePath || !treeFiles().includes(source.path))
+            throw veraError("NOT_FOUND");
+          value = {
+            path: source.path,
+            name: "chat-scope.png",
+            thumbnail: scopeImage,
+          };
+        } else {
+          const name = source.name || "image";
+          const path = `.vera/attachments/${args.sessionId}/${crypto.randomUUID()}-${name}`;
+          const thumbnail = await mockImageThumbnail(name, source.data);
+          uploads.set(imageKey(args.workbenchId, path), { data: source.data, thumbnail });
+          value = { name, path, thumbnail };
+        }
+      } else {
+        const modelRef = session.modelRef ?? snapshot.config.agent.model ?? settings.defaultModel;
+        if (!modelRef) throw veraError("INVALID");
+        const provider = channels["providers.models"].request.shape.id.parse(modelRef.split("/")[0]);
+        const list = await invoke("providers.models", { id: provider });
+        const model = list.models.find((entry) => entry.reference === modelRef);
+        value = { acceptsImages: model !== undefined && acceptsImages(model) };
+      }
+      return channels[channel].response.parse(value) as Response<C>;
     }
     if (channel.startsWith("session.") || channel.startsWith("changes.") || channel.startsWith("artifacts."))
       return channels[channel].response.parse(sessions.invoke(channel, input.data)) as Response<C>;
@@ -1070,11 +1139,28 @@ What this plugin does.
         };
         break;
       }
+      case "docs.imageThumbnail": {
+        const { workbenchId, path } = channels["docs.imageThumbnail"].request.parse(input.data);
+        if (workbenchId !== current().snapshot.config.id) throw veraError("CONFLICT");
+        const image = storedImage(workbenchId, path);
+        const format =
+          image && rasterSignature(Uint8Array.from(atob(image.data), (char) => char.charCodeAt(0)));
+        value = {
+          workbenchId,
+          path,
+          displayPath: path,
+          ...(image && format && { preview: { format, thumbnail: image.thumbnail } }),
+        };
+        break;
+      }
       case "docs.readBytes": {
         const { workbenchId, path, offset, length } = channels["docs.readBytes"].request.parse(input.data);
         if (workbenchId !== current().snapshot.config.id) throw veraError("CONFLICT");
-        if (!treeFiles().includes(path)) throw veraError("NOT_FOUND");
-        const bytes = mockTextBytes(path);
+        const image = storedImage(workbenchId, path);
+        if (!image && !treeFiles().includes(path)) throw veraError("NOT_FOUND");
+        const bytes = image
+          ? Uint8Array.from(atob(image.data), (char) => char.charCodeAt(0))
+          : mockTextBytes(path);
         const part = bytes.slice(offset, offset + length);
         let binary = "";
         for (const byte of part) binary += String.fromCharCode(byte);
@@ -1085,8 +1171,9 @@ What this plugin does.
         const { workbenchId, path } = channels["docs.stat"].request.parse(input.data);
         if (workbenchId !== current().snapshot.config.id) throw veraError("CONFLICT");
         const modified = "2026-10-13T00:00:00.000Z";
-        if (treeFiles().includes(path)) {
-          const size = mockTextBytes(path).length;
+        const image = storedImage(workbenchId, path);
+        if (image || treeFiles().includes(path)) {
+          const size = image ? atob(image.data).length : mockTextBytes(path).length;
           const extension = /\.[^/.]+$/.exec(path)?.[0].toLowerCase() ?? "";
           const doc = mockDocuments.find((doc) => doc.path === path);
           const rendered =
@@ -1475,6 +1562,7 @@ What this plugin does.
                 id: profile.id,
                 name: profile.name,
                 reference: `${id}/${profile.id}`,
+                input: config.imageModels?.includes(profile.id) ? ["text", "image"] : ["text"],
                 contextWindow: profile.contextWindow,
                 maxOutputTokens: profile.maxOutputTokens,
                 safetyMargin,
@@ -1763,6 +1851,7 @@ What this plugin does.
         const {
           patch,
           workbenchId,
+          embeddingSwitch,
           removeCommandPrefixes = [],
           addAdditionalFolders = [],
           removeAdditionalFolders = [],
@@ -1770,6 +1859,19 @@ What this plugin does.
         const bench = current();
         if (bench.snapshot.readOnly) throw veraError("DENIED");
         if (workbenchId && bench.snapshot.config.id !== workbenchId) throw veraError("CONFLICT");
+        const currentModel = bench.snapshot.config.embeddings.model;
+        const changingModel = patch.embeddings !== undefined && patch.embeddings.model !== currentModel;
+        if (changingModel || embeddingSwitch) {
+          const indexed =
+            scenario === "empty" ? 0 : mockDocuments.filter(({ status }) => status === "indexed").length;
+          if (
+            !changingModel ||
+            !workbenchId ||
+            embeddingSwitch?.from !== currentModel ||
+            embeddingSwitch.count !== indexed
+          )
+            throw veraError("CONFLICT");
+        }
         const grants = await Promise.all(
           bench.snapshot.config.agent.allowed_commands.map(async (prefix) => ({
             prefix,

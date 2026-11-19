@@ -1,22 +1,27 @@
-import type {
-  DocumentProcessor,
-  EmbeddingPort,
-  InspectInput,
-  SelectInput,
-  Selection,
-  SourceInspection,
-  VectorRow,
+import {
+  type DocumentProcessor,
+  type EmbeddingPort,
+  extractionSchema,
+  type InspectInput,
+  type SelectInput,
+  type Selection,
+  type SourceInspection,
+  type VectorRow,
 } from "@vera/core";
+import { type EmbeddingModelId, embeddingModelIds, workbenchEmbeddingsSchema } from "@vera/shared";
+import { z } from "zod";
 
 export interface IndexerServices {
   process: DocumentProcessor;
   select: (input: SelectInput) => Promise<Selection>;
   inspect: (input: InspectInput) => Promise<SourceInspection>;
-  embeddings: Pick<EmbeddingPort, "embed" | "rank" | "release">;
+  embeddings: (model: EmbeddingModelId) => Pick<EmbeddingPort, "embed" | "rank">;
+  release: (root: string) => Promise<void>;
 }
 type Request = { id?: unknown; type?: unknown; [key: string]: unknown };
 /** Thrown by the lazy rows of a rank request when the worker's epoch cache misses. */
 class NeedRows extends Error {}
+const requestModel = z.enum(embeddingModelIds);
 
 /**
  * The indexer protocol inside the utility process (TASK-f09609fd). Every request with an id gets
@@ -62,17 +67,27 @@ export function createIndexerHandler(services: IndexerServices, send: (message: 
     const input = (request.input ?? {}) as Record<string, unknown>;
     switch (request.type) {
       case "process":
-        return answer(request.id, (signal) =>
+        return answer(request.id, (signal) => {
+          const embeddings = workbenchEmbeddingsSchema.optional().parse(input.embeddings);
+          const extraction = extractionSchema.optional().parse(input.extraction);
           // A cancelled request (workbench closed or switched) may not write its cache any more.
-          services.process({ ...input, signal, assertWritable: () => signal.throwIfAborted() } as never),
-        );
+          return services.process({
+            ...input,
+            embeddings,
+            extraction,
+            signal,
+            assertWritable: () => signal.throwIfAborted(),
+          } as never);
+        });
       case "select":
         return answer(request.id, (signal) => services.select({ ...input, signal } as never));
       case "inspect":
         return answer(request.id, (signal) => services.inspect({ ...input, signal } as never));
       case "embed":
         return answer(request.id, (signal) =>
-          services.embeddings.embed(String(request.root), request.texts as string[], signal),
+          services
+            .embeddings(requestModel.parse(request.model))
+            .embed(String(request.root), request.texts as string[], signal),
         );
       case "rank": {
         const root = String(request.root),
@@ -84,9 +99,10 @@ export function createIndexerHandler(services: IndexerServices, send: (message: 
           const lazy = () => {
             throw new NeedRows();
           };
+          const embeddings = services.embeddings(requestModel.parse(request.model));
           try {
             return {
-              hits: await services.embeddings.rank(root, epoch, rows ?? lazy, String(request.query), signal),
+              hits: await embeddings.rank(root, epoch, rows ?? lazy, String(request.query), signal),
             };
           } catch (error) {
             if (error instanceof NeedRows) return { needRows: true };
@@ -96,7 +112,7 @@ export function createIndexerHandler(services: IndexerServices, send: (message: 
       }
       case "release":
         return answer(request.id, async () => {
-          await services.embeddings.release(String(request.root));
+          await services.release(String(request.root));
           return null;
         });
       default:

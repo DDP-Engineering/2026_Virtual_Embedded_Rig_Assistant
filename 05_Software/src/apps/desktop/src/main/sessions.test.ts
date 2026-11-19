@@ -141,6 +141,62 @@ it("lists recovered current-workbench sessions without awaiting pending program 
   }
 });
 
+it("keeps session commands responsive while the image capability catalog is pending", async () => {
+  const root = await mkdtemp(join(tmpdir(), "vera-host-image-capability-"));
+  const storage = await openDb(join(root, "vera.db"), { workbenchId: "wb_test", appVersion: "0" });
+  const config = workbenchSchema.parse({ format: 1, id: "wb_01J00000000000000000000000", name: "Board" });
+  let entered = () => {};
+  let release = () => {};
+  const started = new Promise<void>((resolve) => {
+    entered = resolve;
+  });
+  const held = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  const gateway = {
+    capabilities: () => ({ input: ["text"] }),
+    prepareModel: (reference: string) => {
+      expect(reference).toBe("chatgpt/text-fixture");
+      entered();
+      return held;
+    },
+  };
+  const host = new SessionsHost({
+    workbench: {
+      getSnapshot: () => ({ folder: root, config, readOnly: false }),
+      getDatabase: () => storage.db,
+      getWriteQueue: () => new WriteQueue(),
+      skillCatalog: () => new SkillCatalog({ root, disabled: () => [] }),
+      assertSessionWritable: () => {},
+    },
+    settings: { get: () => ({ settings: { limits: { maxToolCallsPerTurn: 50 } } }) },
+    gateway: () => ({ api: gateway, modelReference: () => "chatgpt/text-fixture" }),
+    clock: { now: () => new Date(), sleep: async () => {} },
+    credentials: { scrub: (value: string) => value },
+  } as never);
+  try {
+    const session = await host.run((service) => service.create(), { purpose: "metadata" });
+    const capability = host.imageCapability(config.id, session.id);
+    await started;
+    let stopped: boolean | undefined;
+    const stop = host.run(
+      (service) => {
+        stopped = service.stop(session.id);
+      },
+      { purpose: "metadata" },
+    );
+    await expect.poll(() => stopped, { timeout: 2000 }).toBe(false);
+    release();
+    await stop;
+    await expect(capability).resolves.toEqual({ acceptsImages: false });
+  } finally {
+    release();
+    await host.close();
+    storage.close();
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
 it("locks update shutdown admission only after already accepted host work completes", async () => {
   const host = new SessionsHost({} as never);
   let release: () => void = () => {};

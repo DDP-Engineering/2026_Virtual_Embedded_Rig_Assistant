@@ -28,6 +28,7 @@ import {
   type WorkerPool,
 } from "@vera/core";
 import {
+  type EmbeddingModelId,
   type EventEnvelope,
   type HelpLanguage,
   type PermissionMode,
@@ -82,7 +83,7 @@ export class SessionsHost {
       log?: (message: string) => void;
       clock: Clock;
       workers: WorkerPool;
-      embeddings?: EmbeddingPort;
+      embeddings?: (model: EmbeddingModelId) => EmbeddingPort;
       version: string;
       target: () => RendererTarget | undefined;
       emit: (event: EventEnvelope) => unknown;
@@ -239,6 +240,12 @@ export class SessionsHost {
         this.service = new SessionService({
           db,
           root: snapshot.folder,
+          onDelegationsChanged: () =>
+            options.emit({
+              topic: "workbench",
+              id: workbenchId,
+              event: { type: "session.delegations.changed" },
+            }),
           ...(options.terminals ? { terminals: options.terminals(workbenchId) } : {}),
           readOnly: snapshot.readOnly,
           additionalFolders: () => {
@@ -294,7 +301,9 @@ export class SessionsHost {
           get skills() {
             return self.skills;
           },
-          ...(options.embeddings ? { embeddings: options.embeddings } : {}),
+          get embeddings() {
+            return options.embeddings?.((self.config ?? snapshot.config).embeddings.model);
+          },
           get retrieval() {
             return self.config?.retrieval;
           },
@@ -343,6 +352,17 @@ export class SessionsHost {
       this.pending--;
     });
   }
+  /** Resolve the session's model on the host queue. Catalog I/O may outlive this queue slot. */
+  async imageCapability(workbenchId: string, sessionId: string) {
+    const { completion } = await this.run(
+      (service) => {
+        if (this.options.workbench.getSnapshot().config.id !== workbenchId) throw veraError("CONFLICT");
+        return { completion: service.imageCapability(sessionId) };
+      },
+      { purpose: "metadata" },
+    );
+    return completion;
+  }
   /** Polling only needs recovered current-DB summaries, never prompt/skill/program preparation. */
   async list(workbenchId?: string) {
     if (this.shutdown) throw veraError("BUSY");
@@ -360,7 +380,7 @@ export class SessionsHost {
         this.options.workbench.getSnapshot().config.id !== snapshot.config.id
       )
         throw veraError("CONFLICT");
-      rows = service.list();
+      rows = service.list(true);
     } else {
       rows = await this.run(
         (current) => {
@@ -369,7 +389,7 @@ export class SessionsHost {
             this.options.workbench.getSnapshot().config.id !== snapshot.config.id
           )
             throw veraError("CONFLICT");
-          return current.list();
+          return current.list(true);
         },
         { purpose: "metadata" },
       );

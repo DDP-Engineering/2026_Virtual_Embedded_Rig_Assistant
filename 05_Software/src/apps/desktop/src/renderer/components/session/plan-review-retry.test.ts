@@ -207,6 +207,27 @@ it("retains the unsent composer through a hidden privacy projection without reta
   expect(input.disabled).toBe(false);
 });
 
+it("preserves ordinary Retry image attachments instead of restoring Plan feedback", async () => {
+  await mount(false);
+  const user = shared.state?.items.find((item) => item.kind === "user");
+  if (user?.kind !== "user") throw Error("missing user");
+  user.images = ["board.png"];
+  await render();
+  const original = api.invoke.bind(api);
+  const invoke = vi
+    .spyOn(api, "invoke")
+    .mockImplementation(async (channel, request) =>
+      channel === "session.send" ? ({ messageId: "ordinary" } as never) : original(channel, request),
+    );
+  await act(async () => retryButton().click());
+  expect(invoke).toHaveBeenCalledWith("session.send", {
+    sessionId: id,
+    text: user.text,
+    images: ["board.png"],
+  });
+  expect(invoke.mock.calls.some(([channel]) => channel === "session.plan.review.restore")).toBe(false);
+});
+
 it("locks review text and Send but retains Stop without changing ordinary Retry", async () => {
   await mount();
   if (!shared.state) throw Error("missing fixture");
