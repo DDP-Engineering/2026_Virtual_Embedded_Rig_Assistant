@@ -10,7 +10,7 @@ requirement = "When an accepted review's plan is later replaced, VERA shall reta
 
 verification = "Submit fragment and whole-step comments, replace or clear the plan, close/reopen the database and read review history; compare the original ordered plan, quoted targets and feedback rather than revised text, including a removed commented step."
 
-affected_paths = ["05_Software/src/libraries/core/src/sessions/", "05_Software/src/libraries/shared/src/", "05_Software/src/apps/desktop/src/renderer/components/session/plan-tab.tsx"]
+affected_paths = ["05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/libraries/shared/src/plan-review.ts", "05_Software/src/libraries/shared/src/events.ts", "05_Software/src/libraries/shared/src/session-state.ts", "05_Software/src/apps/desktop/src/main/events.ts", "05_Software/src/apps/desktop/src/renderer/components/session/plan-feedback.tsx"]
 
 linked_tests = []
 

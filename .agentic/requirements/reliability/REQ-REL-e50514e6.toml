@@ -10,7 +10,7 @@ requirement = "If a plan review submission fails before durable acceptance, VERA
 
 verification = "Inject validation, persistence and pre-acceptance dispatch failures; compare exact draft text/anchors and zero admitted request, then retry successfully from the visible error, including after navigating away and reopening the session."
 
-affected_paths = ["05_Software/src/libraries/core/src/sessions/", "05_Software/src/apps/desktop/src/renderer/components/session/plan-tab.tsx"]
+affected_paths = ["05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/apps/desktop/src/main/plan-review.ts", "05_Software/src/apps/desktop/src/renderer/components/session/plan-feedback.tsx"]
 
 linked_tests = []
 

@@ -10,7 +10,7 @@ requirement = "If a plan feedback mutation or review submission depends on a sup
 
 verification = "Change the plan or a draft after the renderer captures a request and before host admission; assert CONFLICT, no admitted review and unchanged surviving feedback, including target removal, duplicate-row ambiguity and re-anchor confirmation racing another replacement."
 
-affected_paths = ["05_Software/src/libraries/core/src/sessions/", "05_Software/src/libraries/shared/src/", "05_Software/src/apps/desktop/src/main/index.ts"]
+affected_paths = ["05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/libraries/core/src/sessions/plan-review.ts", "05_Software/src/libraries/shared/src/plan-review.ts", "05_Software/src/libraries/shared/src/ipc.ts", "05_Software/src/apps/desktop/src/main/plan-review.ts"]
 
 linked_tests = []
 

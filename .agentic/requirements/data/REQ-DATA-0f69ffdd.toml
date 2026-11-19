@@ -10,7 +10,7 @@ requirement = "When a plan review is durably accepted, VERA shall atomically rec
 
 verification = "Submit a real SQLite review, inspect committed request/comment states from a publication observer and reopen the database; inject failure during acceptance and assert no partial submitted state or admitted request, including two pending comments captured together."
 
-affected_paths = ["05_Software/src/libraries/core/src/sessions/", "05_Software/src/libraries/core/src/storage/", "05_Software/src/libraries/shared/src/"]
+affected_paths = ["05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/libraries/core/src/agent/runtime.ts", "05_Software/src/libraries/core/src/agent/types.ts", "05_Software/src/libraries/shared/src/plan-review.ts", "05_Software/src/libraries/shared/src/events.ts", "05_Software/src/libraries/shared/src/session-state.ts"]
 
 linked_tests = []
 

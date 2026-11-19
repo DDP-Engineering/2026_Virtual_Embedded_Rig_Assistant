@@ -10,7 +10,7 @@ requirement = "If the same logical plan review submission is invoked repeatedly 
 
 verification = "Double-click before rendering a pending state, invoke concurrent copies and lose the first acknowledgement after commit; retry the same submission before and after service/database reopen and count exactly one durable request/turn and one captured comment batch."
 
-affected_paths = ["05_Software/src/libraries/core/src/sessions/", "05_Software/src/libraries/shared/src/", "05_Software/src/apps/desktop/src/renderer/components/session/plan-tab.tsx"]
+affected_paths = ["05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/libraries/shared/src/plan-review.ts", "05_Software/src/libraries/shared/src/ipc.ts", "05_Software/src/apps/desktop/src/main/plan-review.ts", "05_Software/src/apps/desktop/src/renderer/components/session/plan-feedback.tsx"]
 
 linked_tests = []
 

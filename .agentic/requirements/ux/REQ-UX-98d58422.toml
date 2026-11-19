@@ -10,7 +10,7 @@ requirement = "While there is no current plan, no pending feedback, unresolved s
 
 verification = "Render each unavailable state and attempt pointer/keyboard activation; assert the control is disabled and sends nothing, including read-only workbench, archived session, active turn, queued work and rapid repeated activation before a render."
 
-affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/session/plan-tab.tsx", "05_Software/src/apps/desktop/src/renderer/components/shell.tsx", "05_Software/src/apps/desktop/src/renderer/App.tsx"]
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/session/plan-tab.tsx", "05_Software/src/apps/desktop/src/renderer/components/session/plan-feedback.tsx", "05_Software/src/apps/desktop/src/renderer/App.tsx"]
 
 linked_tests = []
 

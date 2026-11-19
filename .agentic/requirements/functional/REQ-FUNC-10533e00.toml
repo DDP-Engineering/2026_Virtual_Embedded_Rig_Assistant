@@ -10,7 +10,7 @@ requirement = "When a user deletes an existing draft plan comment in its writabl
 
 verification = "Create two drafts, delete one and reopen the session; assert only the selected draft disappears, including deletion of a stale draft and deletion of the last pending comment."
 
-affected_paths = ["05_Software/src/libraries/core/src/sessions/", "05_Software/src/apps/desktop/src/renderer/components/session/plan-tab.tsx"]
+affected_paths = ["05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/libraries/shared/src/ipc.ts", "05_Software/src/libraries/shared/src/events.ts", "05_Software/src/libraries/shared/src/session-state.ts", "05_Software/src/apps/desktop/src/main/plan-review.ts", "05_Software/src/apps/desktop/src/renderer/components/session/plan-feedback.tsx"]
 
 linked_tests = []
 

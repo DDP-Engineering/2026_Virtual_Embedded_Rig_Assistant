@@ -10,7 +10,7 @@ requirement = "When a user activates Review plan with a current plan and valid p
 
 verification = "Capture the admitted request and durable user message for two sessions with different plans, including repeated descriptions and Unicode fragment feedback; assert one request contains the selected session's complete current ordered plan and only its pending comments, with unambiguous quotes and occurrence context."
 
-affected_paths = ["05_Software/src/libraries/core/src/sessions/", "05_Software/src/libraries/shared/src/", "05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/apps/desktop/src/renderer/components/session/plan-tab.tsx"]
+affected_paths = ["05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/libraries/core/src/sessions/plan-review.ts", "05_Software/src/libraries/shared/src/ipc.ts", "05_Software/src/apps/desktop/src/main/plan-review.ts", "05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/apps/desktop/src/renderer/components/session/plan-feedback.tsx"]
 
 linked_tests = []
 

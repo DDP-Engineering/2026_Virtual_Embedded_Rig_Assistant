@@ -10,7 +10,7 @@ requirement = "When preparing a plan review that can be resolved from its feedba
 
 verification = "Capture revision instructions and replay a response with a changed structured list plus chat explanation; assert the existing bounded atomic plan publication updates the selected Plan tab, including reordered/removed steps and a prose-only response that cannot mutate todos."
 
-affected_paths = ["05_Software/src/libraries/core/src/sessions/", "05_Software/src/libraries/core/src/tools/todo.ts", "05_Software/src/apps/desktop/src/renderer/components/session/plan-tab.tsx"]
+affected_paths = ["05_Software/src/libraries/core/src/sessions/plan-review.ts", "05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/apps/desktop/src/renderer/components/session/plan-tab.tsx", "05_Software/src/apps/desktop/src/renderer/mocks/sessions.ts", "05_Software/src/apps/desktop/src/renderer/mocks/mockApi.ts"]
 
 linked_tests = []
 

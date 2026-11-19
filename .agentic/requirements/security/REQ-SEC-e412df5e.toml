@@ -8,9 +8,9 @@ status = "draft"
 
 requirement = "If a plan feedback operation names a comment or review that does not belong to its specified session, VERA shall reject the operation with NOT_FOUND without disclosing or changing another session's feedback."
 
-verification = "Use real comments and review identifiers from session A in reads, edits, deletion, re-anchor and retry requests for session B; assert NOT_FOUND and byte-identical foreign records, including unknown identifiers and repeated plan text across both sessions."
+verification = "Use real comments and review identifiers from session A in edits, deletion, re-anchor and retry requests for session B; assert NOT_FOUND and byte-identical foreign records, including unknown identifiers and repeated plan text, and confirm session B snapshot reads exclude A's feedback."
 
-affected_paths = ["05_Software/src/libraries/core/src/sessions/", "05_Software/src/libraries/shared/src/", "05_Software/src/apps/desktop/src/main/index.ts"]
+affected_paths = ["05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/libraries/shared/src/ipc.ts", "05_Software/src/apps/desktop/src/main/plan-review.ts"]
 
 linked_tests = []
 

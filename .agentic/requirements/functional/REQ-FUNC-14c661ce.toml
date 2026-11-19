@@ -10,7 +10,7 @@ requirement = "When a user explicitly re-anchors a draft plan comment to a chose
 
 verification = "Make a draft stale, choose a new whole-step or fragment target and confirm re-anchoring; assert current anchor and unchanged feedback, including repeated candidate descriptions and a plan replacement during confirmation that must not receive the obsolete target."
 
-affected_paths = ["05_Software/src/libraries/core/src/sessions/", "05_Software/src/apps/desktop/src/renderer/components/session/plan-tab.tsx", "05_Software/src/libraries/shared/src/"]
+affected_paths = ["05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/libraries/core/src/sessions/plan-review.ts", "05_Software/src/libraries/shared/src/plan-review.ts", "05_Software/src/libraries/shared/src/ipc.ts", "05_Software/src/apps/desktop/src/main/plan-review.ts", "05_Software/src/apps/desktop/src/renderer/components/session/plan-feedback.tsx"]
 
 linked_tests = []
 

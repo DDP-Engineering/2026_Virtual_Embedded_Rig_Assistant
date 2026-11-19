@@ -10,7 +10,7 @@ requirement = "When preparing an accepted plan review for the agent, VERA shall 
 
 verification = "Capture review model instructions with concrete and ambiguous feedback, then run deterministic explanation and clarification responses; assert required response guidance and the corresponding chat text in the originating session, including clarification without a plan replacement."
 
-affected_paths = ["05_Software/src/libraries/core/src/sessions/", "05_Software/src/libraries/core/src/agent/"]
+affected_paths = ["05_Software/src/libraries/core/src/sessions/plan-review.ts", "05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/apps/desktop/src/main/sessions.ts"]
 
 linked_tests = []
 

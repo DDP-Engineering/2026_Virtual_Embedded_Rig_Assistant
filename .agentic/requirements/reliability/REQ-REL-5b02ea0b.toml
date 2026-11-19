@@ -10,7 +10,7 @@ requirement = "If plan review is requested while its session has active or queue
 
 verification = "Hold each admission boundary in turn, directly request a distinct review and assert BUSY, unchanged drafts and no queued review message or second turn; include durable undelivered steering after restart and a held review submission."
 
-affected_paths = ["05_Software/src/libraries/core/src/sessions/", "05_Software/src/apps/desktop/src/main/sessions.ts", "05_Software/src/apps/desktop/src/main/index.ts"]
+affected_paths = ["05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/apps/desktop/src/main/sessions.ts", "05_Software/src/apps/desktop/src/main/plan-review.ts"]
 
 linked_tests = []
 

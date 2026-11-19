@@ -10,7 +10,7 @@ requirement = "If a user requests plan review without pending comments, VERA sha
 
 verification = "Invoke review with a nonempty plan but no comments, after deleting the last draft and with only successfully submitted comments; assert INVALID, no new durable user message and no gateway dispatch."
 
-affected_paths = ["05_Software/src/libraries/core/src/sessions/", "05_Software/src/apps/desktop/src/main/index.ts"]
+affected_paths = ["05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/apps/desktop/src/main/plan-review.ts"]
 
 linked_tests = []
 

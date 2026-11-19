@@ -10,7 +10,7 @@ requirement = "If a user requests plan review in a session with no current plan 
 
 verification = "Clear a previously commented plan and directly invoke review despite the disabled control; assert INVALID, unchanged draft text and zero new user messages or gateway dispatches, including a newly created empty session."
 
-affected_paths = ["05_Software/src/libraries/core/src/sessions/", "05_Software/src/apps/desktop/src/main/index.ts"]
+affected_paths = ["05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/apps/desktop/src/main/plan-review.ts"]
 
 linked_tests = []
 

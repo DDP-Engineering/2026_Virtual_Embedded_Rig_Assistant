@@ -10,7 +10,7 @@ requirement = "While plan comments are unsubmitted drafts, VERA shall keep comme
 
 verification = "Capture transcript rows, current todos and gateway requests while creating/editing/deleting/re-anchoring drafts; assert none changes or receives feedback before Review plan, including an ordinary chat request while unrelated draft feedback exists."
 
-affected_paths = ["05_Software/src/libraries/core/src/sessions/", "05_Software/src/apps/desktop/src/renderer/components/session/plan-tab.tsx"]
+affected_paths = ["05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/libraries/shared/src/events.ts", "05_Software/src/libraries/shared/src/session-state.ts", "05_Software/src/apps/desktop/src/renderer/components/session/plan-feedback.tsx", "05_Software/src/apps/desktop/src/renderer/mocks/sessions.ts"]
 
 linked_tests = []
 

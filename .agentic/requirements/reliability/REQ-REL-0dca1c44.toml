@@ -10,7 +10,7 @@ requirement = "If an accepted plan review ends in provider failure, context limi
 
 verification = "Fail, exhaust the context budget, stop and restart an admitted review before a completed response; inspect retained submitted quotes and feedback, exercise explicit retry and assert no automatic resubmission, including a partial plan update that makes the retry targets stale."
 
-affected_paths = ["05_Software/src/libraries/core/src/sessions/", "05_Software/src/libraries/shared/src/", "05_Software/src/apps/desktop/src/renderer/components/session/plan-tab.tsx"]
+affected_paths = ["05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/libraries/shared/src/plan-review.ts", "05_Software/src/libraries/shared/src/events.ts", "05_Software/src/libraries/shared/src/session-state.ts", "05_Software/src/apps/desktop/src/main/plan-review.ts", "05_Software/src/apps/desktop/src/renderer/components/session/plan-feedback.tsx", "05_Software/src/apps/desktop/src/renderer/components/session/workspace.tsx"]
 
 linked_tests = []
 

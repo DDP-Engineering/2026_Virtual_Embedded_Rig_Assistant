@@ -10,7 +10,7 @@ requirement = "If a plan replacement changes a draft comment's target or leaves 
 
 verification = "Replace a plan by changing/removing commented text and by reordering indistinguishable duplicate rows; assert stale labels and original quotes remain reachable with re-anchor/remove actions, including a replacement with no remaining steps and replay after reopen."
 
-affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/session/plan-tab.tsx", "05_Software/src/libraries/shared/src/", "05_Software/src/libraries/core/src/sessions/"]
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/session/plan-feedback.tsx", "05_Software/src/apps/desktop/src/renderer/components/session/plan-tab.tsx", "05_Software/src/apps/desktop/src/renderer/hooks/use-session-events.ts", "05_Software/src/libraries/shared/src/session-state.ts", "05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/libraries/core/src/sessions/plan-review.ts"]
 
 linked_tests = []
 

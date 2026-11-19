@@ -10,7 +10,7 @@ requirement = "While a plan step has comments, the Plan tab shall expose them th
 
 verification = "Render step and fragment comments beside duplicate descriptions, open each indicator and compare the correct comment, quote and draft/submitted label; check a step without comments has no misleading comment indicator and removed targets remain readable as stale feedback."
 
-affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/session/plan-tab.tsx", "05_Software/src/apps/desktop/src/renderer/styles.css"]
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/session/plan-tab.tsx", "05_Software/src/apps/desktop/src/renderer/components/session/plan-feedback.tsx", "05_Software/src/apps/desktop/src/renderer/styles.css"]
 
 linked_tests = []
 

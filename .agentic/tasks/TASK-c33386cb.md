@@ -1,6 +1,6 @@
 # TASK-c33386cb - Plan: add comments and Review plan to request an agent revision
 
-stage: design
+stage: build
 type: feature
 interaction: autopilot
 requirements: REQ-FUNC-2e8a54c7, REQ-DATA-d968385c, REQ-UX-8d3039aa, REQ-REL-4bea0006, REQ-DATA-fa8543aa, REQ-FUNC-dfa01734, REQ-UX-1dcf2048, REQ-FUNC-566e4205, REQ-FUNC-10533e00, REQ-SEC-9467cfbc, REQ-DATA-a71d1aac, REQ-UX-e86663cb, REQ-FUNC-14c661ce, REQ-DATA-cb383f59, REQ-FUNC-5536a651, REQ-DATA-0f69ffdd, REQ-REL-e048aed0, REQ-REL-ce1e5319, REQ-REL-02c0e68e, REQ-REL-2e0ba7fb, REQ-REL-239f8647, REQ-REL-5b02ea0b, REQ-SEC-4a5e9261, REQ-SEC-e412df5e, REQ-SEC-292daffe, REQ-REL-e50514e6, REQ-REL-0dca1c44, REQ-FUNC-461d6eb1, REQ-FUNC-bf4758a4, REQ-SEC-bb8e4dce, REQ-SEC-5f675c2f, REQ-UX-98d58422, REQ-UX-f205aabf, REQ-UX-4a040005, REQ-UX-4a040007, REQ-UX-4bea0002, REQ-FUNC-a1040002
@@ -15,12 +15,14 @@ end each session with `advance` or `pause`.
 
 ## Done checklist (current stage)
 
-- [ ] design note written under the five headings, or its skip justified
-- [ ] each decision cites a requirement ID or a named technical constraint
-- [ ] every requirement maps to a decision and test seam, or no design impact
-- [ ] risks and open decisions recorded
-- [ ] `affected_paths` match the expected files
-- [ ] knowledge pages unchanged
+- [ ] each automated increment has a red line before its implementation and a
+      green line after; each manual one a logged observation
+- [ ] anchor recorded before implementation; evolution reviewed after
+- [ ] focused tests green, with the command and its scope logged
+- [ ] `affected_paths`, `linked_tests` and `status = "active"` current on every
+      requirement, or `retired` with its reason
+- [ ] affected docstrings, usage examples and setup instructions updated
+- [ ] `check` clean, or each remaining warning explained in the Log
 
 ## Frame
 
@@ -204,47 +206,47 @@ STATED: scope and success signals come from the accepted Frame and ticket #318. 
 existing requirements below remain active and unchanged; new records are draft. INFERRED:
 new atomic contracts and their exact refusal codes refine that scope under conductor-authorized
 autopilot; the shared draft spec records the required identity/protocol detail without choosing
-storage or IPC names. Each row has exactly one requirement. Design decisions are not yet filled.
+storage or IPC names at specify. Each row has exactly one requirement; D1-D6 below now select its implementation and test seam.
 
 | Frame outcome | Atomic behavior | Requirement | Verification | Design decision or no impact |
 |---|---|---|---|---|
-| Preserve structured Plan | Existing bounded ordered whole-list replacement | REQ-FUNC-2e8a54c7 | Existing shared/core boundary and invalid-input regression tests | Pending design |
-| Preserve structured Plan | Existing atomic plan/event persistence and restart | REQ-DATA-d968385c | Existing real SQLite rollback/restart and Plan acceptance | Pending design |
-| Live revised Plan | Existing live ordered/status/empty/error projection | REQ-UX-8d3039aa | Plan component and browser/native replacement cases | Pending design |
-| Session view isolation | Existing one shared snapshot/subscription for chat and Plan | REQ-REL-4bea0006 | Shared-view consumer count and late-event regressions | Pending design |
-| Stable target association | Revision/session/occurrence/full-text/range anchor independent of wrapping or IDs | REQ-DATA-fa8543aa | Duplicate/missing-ID Unicode fixtures and resize/scale anchor equality | Pending design |
-| Comment creation | Add a draft on a whole step or selected nonempty fragment | REQ-FUNC-dfa01734 | Exact Unicode/multiline text and independent duplicate-row targets | Pending design |
-| Read compact comments | Step indicator opens correct text, quote and draft/submitted state | REQ-UX-1dcf2048 | Step/fragment, no-comment and removed-target presentation | Pending design |
-| Edit drafts | Replace one draft's feedback without retargeting | REQ-FUNC-566e4205 | Edit/reopen Unicode text; stale target unchanged | Pending design |
-| Delete drafts | Remove only the selected pending draft | REQ-FUNC-10533e00 | Delete/reopen, last-draft and stale-draft cases | Pending design |
-| No immediate send | Draft operations do not change chat/model requests or the plan | REQ-SEC-9467cfbc | Capture gateway/transcript/todos around all draft operations | Pending design |
-| Durable drafts | Restore text/anchors/staleness across navigation and database reopen | REQ-DATA-a71d1aac | Real SQLite reopen and two independent sessions | Pending design |
-| Stale feedback | Changed/unprovable target gets stale label, old quote and resolution actions | REQ-UX-e86663cb | Removed/changed/ambiguous duplicate targets including cleared plan | Pending design |
-| Explicit resolution | Re-anchor updates only the chosen current target and preserves feedback | REQ-FUNC-14c661ce | Confirm current target and race confirmation with replacement | Pending design |
-| Understand old review | Retain submitted ordered plan and original quotes/feedback after replacements | REQ-DATA-cb383f59 | Clear/replace/reopen and compare review history | Pending design |
-| One explicit review | Submit exact current plan plus current pending feedback and identifying quotes | REQ-FUNC-5536a651 | Capture one same-session envelope/message with repeated descriptions | Pending design |
-| Submitted distinction | Atomic acceptance changes captured drafts to submitted with one admitted request | REQ-DATA-0f69ffdd | Observer committed visibility, rollback injection and reopen | Pending design |
-| Double activation/lost acknowledgement | Same logical submission admits at most once, including restart retry | REQ-REL-e048aed0 | Concurrent UI/direct calls and lost post-commit acknowledgement | Pending design |
-| Invalid selection error | Malformed/forged/cross-step target refuses INVALID with no mutation | REQ-REL-ce1e5319 | Invalid ranges, overflow, split surrogate, quote mismatch | Pending design |
-| Stale/racing request error | Superseded plan or pending snapshot refuses CONFLICT, retaining feedback | REQ-REL-02c0e68e | Host admission races and stale re-anchor confirmation | Pending design |
-| No-plan error | Review without steps refuses INVALID without consuming drafts | REQ-REL-2e0ba7fb | New empty and cleared commented plans; no request/dispatch | Pending design |
-| No-feedback error | Review without pending comments refuses INVALID | REQ-REL-239f8647 | None/deleted-last/submitted-only cases | Pending design |
-| Busy-session error | Active/queued/approval/lifecycle work refuses new review with BUSY | REQ-REL-5b02ea0b | Held turn, queue, approval, review and shutdown boundaries | Pending design |
-| Read-only/archive authority error | Unwritable/archived feedback mutations refuse DENIED; reads preserved | REQ-SEC-4a5e9261 | All mutations under lost ownership/read-only/archive; permission-mode control | Pending design |
-| Foreign feedback error | Foreign/unknown comment or review refuses NOT_FOUND without disclosure | REQ-SEC-e412df5e | Real foreign identifiers used across every operation | Pending design |
-| Navigation race isolation | Captured workbench/session owns asynchronous effects; replacement context conflicts | REQ-SEC-292daffe | Delayed save/admission/response; same session ID in different databases | Pending design |
-| Pre-acceptance failure/retry | Submission failure retains unsent drafts, visible error and retry | REQ-REL-e50514e6 | Inject validation/persistence/admission failure and retry after reopen | Pending design |
-| Post-acceptance failure/retry | Failed/interrupted review retains submitted history and explicit validated retry | REQ-REL-0dca1c44 | Fail/stop/restart, partial plan update and stale retry | Pending design |
-| Agent explanation/clarification | Review instructions request brief changes explanation or needed clarification in chat | REQ-FUNC-461d6eb1 | Capture instructions; deterministic explanation and clarification responses | Pending design |
-| Agent structured revision | Review instructions request validated structured plan publication | REQ-FUNC-bf4758a4 | Capture instructions; scripted update vs prose-only response | Pending design |
-| Revision only | Enforce chat/plan/metadata-only effects in every permission mode | REQ-SEC-bb8e4dce | Host spies plus fabricated execution/grant calls under all four modes | Pending design |
-| No mixed execution | Ordinary send during review refuses BUSY instead of steering | REQ-SEC-5f675c2f | Sends during tools, compaction and finalization; no queue/delivery | Pending design |
-| Disabled control states | Disable review for absent plan/feedback, stale feedback and unavailable submission | REQ-UX-98d58422 | Pointer/keyboard attempts in each state, including same-tick double activation | Pending design |
-| Keyboard/accessible names | Exact fragment selection and all comment/review controls usable without pointer | REQ-UX-f205aabf | Real keyboard-only browser Unicode/reversed-range flow | Pending design |
-| Four interface languages | Existing resolved en/ro/de/fr labels and structured errors | REQ-UX-4a040005 | Four-language comment/stale/retry labels and names; i18n audit | Pending design |
-| Narrow-panel usability | Existing keyboard/focus/contrast/scaling and no-overflow contract | REQ-UX-4a040007 | Minimum viewport, narrow panel, both themes, all supported text scales | Pending design |
-| Chat response visibility | Existing ordered transcript shows explanation/clarification/errors | REQ-UX-4bea0002 | Review response fixture visible only in originating chat | Pending design |
-| Retained text privacy | Existing live session disclosure projection preserves identities | REQ-FUNC-a1040002 | Secret/projection change with comment/quote/history; no canonical-text leak | Pending design |
+| Preserve structured Plan | Existing bounded ordered whole-list replacement | REQ-FUNC-2e8a54c7 | Existing shared/core boundary and invalid-input regression tests | D1/D5: reuse bounded built-in todo; todos.test.ts and registry.test.ts |
+| Preserve structured Plan | Existing atomic plan/event persistence and restart | REQ-DATA-d968385c | Existing real SQLite rollback/restart and Plan acceptance | D2/D4: retain todo transaction and add separate atomic review seed; todos.test.ts and plan-review.test.ts |
+| Live revised Plan | Existing live ordered/status/empty/error projection | REQ-UX-8d3039aa | Plan component and browser/native replacement cases | D6: live actions only; historical PlanItems stays read-only; plan-tab.test.ts and plan.spec.ts |
+| Session view isolation | Existing one shared snapshot/subscription for chat and Plan | REQ-REL-4bea0006 | Shared-view consumer count and late-event regressions | D1/D6: extend shared view, no second session query/subscription; hook and changes-tab tests |
+| Stable target association | Revision/session/occurrence/full-text/range anchor independent of wrapping or IDs | REQ-DATA-fa8543aa | Duplicate/missing-ID Unicode fixtures and resize/scale anchor equality | D1: event-count revision plus index/full projected text/range; shared/core plan-review.test.ts |
+| Comment creation | Add a draft on a whole step or selected nonempty fragment | REQ-FUNC-dfa01734 | Exact Unicode/multiline text and independent duplicate-row targets | D2/D3/D6: create draft event through Save draft; core/component plan-review tests |
+| Read compact comments | Step indicator opens correct text, quote and draft/submitted state | REQ-UX-1dcf2048 | Step/fragment, no-comment and removed-target presentation | D6: count indicator, stale section and collapsed review history; plan-feedback.test.ts |
+| Edit drafts | Replace one draft's feedback without retargeting | REQ-FUNC-566e4205 | Edit/reopen Unicode text; stale target unchanged | D3: strict edit action cannot carry target; core plan-review.test.ts |
+| Delete drafts | Remove only the selected pending draft | REQ-FUNC-10533e00 | Delete/reopen, last-draft and stale-draft cases | D2/D3: scoped draft removal event with feedback CAS; core/component tests |
+| No immediate send | Draft operations do not change chat/model requests or the plan | REQ-SEC-9467cfbc | Capture gateway/transcript/todos around all draft operations | D2: metadata events never enter transcript; core plan-review.test.ts |
+| Durable drafts | Restore text/anchors/staleness across navigation and database reopen | REQ-DATA-a71d1aac | Real SQLite reopen and two independent sessions | D2: existing session events cascade/replay, no schema change; real DB reopen tests |
+| Stale feedback | Changed/unprovable target gets stale label, old quote and resolution actions | REQ-UX-e86663cb | Removed/changed/ambiguous duplicate targets including cleared plan | D1/D6: every new plan revision invalidates old targets; shared/component/browser tests |
+| Explicit resolution | Re-anchor updates only the chosen current target and preserves feedback | REQ-FUNC-14c661ce | Confirm current target and race confirmation with replacement | D1/D3/D6: explicit current target dialog, host revision/CAS validation; core/browser tests |
+| Understand old review | Retain submitted ordered plan and original quotes/feedback after replacements | REQ-DATA-cb383f59 | Clear/replace/reopen and compare review history | D2/D6: immutable submitted snapshots in events and history disclosure; real DB/component tests |
+| One explicit review | Submit exact current plan plus current pending feedback and identifying quotes | REQ-FUNC-5536a651 | Capture one same-session envelope/message with repeated descriptions | D3/D4: host builds JSON envelope from CAS snapshot, no renderer payload; core/main tests |
+| Submitted distinction | Atomic acceptance changes captured drafts to submitted with one admitted request | REQ-DATA-0f69ffdd | Observer committed visibility, rollback injection and reopen | D4: one transaction for envelope/user/turn/status, then publication; real DB failure-injection tests |
+| Double activation/lost acknowledgement | Same logical submission admits at most once, including restart retry | REQ-REL-e048aed0 | Concurrent UI/direct calls and lost post-commit acknowledgement | D4: durable scoped revision-pair receipt lookup and synchronous UI guard; core/main/component tests |
+| Invalid selection error | Malformed/forged/cross-step target refuses INVALID with no mutation | REQ-REL-ce1e5319 | Invalid ranges, overflow, split surrogate, quote mismatch | D1/D3: strict range schemas plus exact host-projection validator; shared/core tests |
+| Stale/racing request error | Superseded plan or pending snapshot refuses CONFLICT, retaining feedback | REQ-REL-02c0e68e | Host admission races and stale re-anchor confirmation | D1/D4: plan and feedback counters checked at commit; core/main tests |
+| No-plan error | Review without steps refuses INVALID without consuming drafts | REQ-REL-2e0ba7fb | New empty and cleared commented plans; no request/dispatch | D4: fresh-admission nonempty plan guard before seed; core tests |
+| No-feedback error | Review without pending comments refuses INVALID | REQ-REL-239f8647 | None/deleted-last/submitted-only cases | D4: fresh-admission pending-feedback guard before seed; core tests |
+| Busy-session error | Active/queued/approval/lifecycle work refuses new review with BUSY | REQ-REL-5b02ea0b | Held turn, queue, approval, review and shutdown boundaries | D4/D5: active/pending/approval/lifecycle guard; core/main held-boundary tests |
+| Read-only/archive authority error | Unwritable/archived feedback mutations refuse DENIED; reads preserved | REQ-SEC-4a5e9261 | All mutations under lost ownership/read-only/archive; permission-mode control | D3/D4: writable/unarchived owner guard; App passes restrictions; core/main/component tests |
+| Foreign feedback error | Foreign/unknown comment or review refuses NOT_FOUND without disclosure | REQ-SEC-e412df5e | Real foreign identifiers used across every operation | D3: session-scoped lookup and snapshot-only reads; core/main isolation tests |
+| Navigation race isolation | Captured workbench/session owns asynchronous effects; replacement context conflicts | REQ-SEC-292daffe | Delayed save/admission/response; same session ID in different databases | D3/D6: expected workbench/DB in serial host plus keyed UI generations; main/component tests |
+| Pre-acceptance failure/retry | Submission failure retains unsent drafts, visible error and retry | REQ-REL-e50514e6 | Inject validation/persistence/admission failure and retry after reopen | D4/D6: no consumption before commit, modal/local error retains text; core/component tests |
+| Post-acceptance failure/retry | Failed/interrupted review retains submitted history and explicit validated retry | REQ-REL-0dca1c44 | Fail/stop/restart, partial plan update and stale retry | D2/D4/D5: outcome from turn events, explicit restore then review; core/workspace tests |
+| Agent explanation/clarification | Review instructions request brief changes explanation or needed clarification in chat | REQ-FUNC-461d6eb1 | Capture instructions; deterministic explanation and clarification responses | D5: review-only canonical prompt suffix; core replay plus browser response tests |
+| Agent structured revision | Review instructions request validated structured plan publication | REQ-FUNC-bf4758a4 | Capture instructions; scripted update vs prose-only response | D5: request built-in todo publication and retain chat-only clarification; core/browser flow tests |
+| Revision only | Enforce chat/plan/metadata-only effects in every permission mode | REQ-SEC-bb8e4dce | Host spies plus fabricated execution/grant calls under all four modes | D3/D5: probe-free prep, built-in-only registry, deny approval, dispatch/execution guards; main/core tests |
+| No mixed execution | Ordinary send during review refuses BUSY instead of steering | REQ-SEC-5f675c2f | Sends during tools, compaction and finalization; no queue/delivery | D5: ActiveTurn kind and early desktop send preflight; core/main boundary tests |
+| Disabled control states | Disable review for absent plan/feedback, stale feedback and unavailable submission | REQ-UX-98d58422 | Pointer/keyboard attempts in each state, including same-tick double activation | D6: state-derived disable plus ref guard, shared session restrictions; component/browser tests |
+| Keyboard/accessible names | Exact fragment selection and all comment/review controls usable without pointer | REQ-UX-f205aabf | Real keyboard-only browser Unicode/reversed-range flow | D6: native modal and named read-only selector with standard Shift keys; real browser tests |
+| Four interface languages | Existing resolved en/ro/de/fr labels and structured errors | REQ-UX-4a040005 | Four-language comment/stale/retry labels and names; i18n audit | D6: literal catalog keys in four locales and existing ErrorMessage; locale/browser tests |
+| Narrow-panel usability | Existing keyboard/focus/contrast/scaling and no-overflow contract | REQ-UX-4a040007 | Minimum viewport, narrow panel, both themes, all supported text scales | D6: rem wrapping/scrolling, visible focus and modal key ownership; browser bounds/focus tests |
+| Chat response visibility | Existing ordered transcript shows explanation/clarification/errors | REQ-UX-4bea0002 | Review response fixture visible only in originating chat | D5: ordinary transcript projection plus review-aware generic Retry; workspace/replay tests |
+| Retained text privacy | Existing live session disclosure projection preserves identities | REQ-FUNC-a1040002 | Secret/projection change with comment/quote/history; no canonical-text leak | D1/D2: identical todo projection, typed nested sanitization and forced shared-view remask; core/main/CLI/hook tests |
 
 ### Specify evidence and audit
 
@@ -295,6 +297,66 @@ storage or IPC names. Each row has exactly one requirement. Design decisions are
 
 ## Design
 
+### Approach
+
+- INFERRED D1 (REQ-DATA-fa8543aa, REQ-UX-e86663cb): anchor by replayed plan-replacement counter,
+  occurrence and exact projected text/range; every new revision conservatively stales older drafts.
+- INFERRED D2 (REQ-DATA-a71d1aac, REQ-DATA-cb383f59): store drafts and immutable review envelopes
+  in existing session events; extend the shared reducer, not the SQLite schema or a second store.
+- INFERRED D4/D5 (REQ-DATA-0f69ffdd, REQ-SEC-bb8e4dce): preaccept one user/turn/envelope transaction,
+  then reuse the turn pipeline with a fixed built-in-todo capability set; reject ordinary steering.
+  Rejected: prompt-only safety, ordinary send/retry, text/ID matching, localStorage-only drafts.
+
+### Interfaces and data
+
+- INFERRED D1/D3: exact PlanTarget, event/snapshot fields, four strict workbench/session-scoped
+  channels and error contracts are in specs/REQ-DATA-fa8543aa.md, Concrete design contract D1-D6.
+- INFERRED D4 (REQ-REL-e048aed0, REQ-REL-e50514e6, REQ-REL-0dca1c44): scoped expected plan/feedback
+  counters provide durable idempotency/CAS; failure before commit retains drafts, failure after
+  commit retains submitted history. Explicit restore stages retry drafts, then Review submits.
+- INFERRED D5 (REQ-SEC-5f675c2f, REQ-FUNC-461d6eb1, REQ-FUNC-bf4758a4): optional runtime requestIdentity
+  binds precommitted IDs; review-only prompt suffix, probe-free host purpose and review-aware generic
+  Retry prevent escalation. Stop aborts review runtime without stopping unrelated background runs.
+
+### Files and test seams
+
+- INFERRED D1-D6: shared plan-review.ts (new), events/session-state/ipc/index; core sessions/
+  plan-review.ts (new) and service.ts, agent/runtime.ts/types.ts; no change to todo/storage algorithms.
+- INFERRED D3/D5: desktop main plan-review.ts (new), index.ts, sessions.ts, events.ts; renderer
+  plan-feedback.tsx (new), plan-tab.tsx, workspace.tsx, composer.tsx, use-session-events.ts, App.tsx,
+  hooks/session-view.tsx, mocks/{sessions,mockApi}.ts, styles.css and four locale files; CLI
+  session-output.ts uses the typed nested-content mapper without new CLI commands. Existing prompt builder,
+  SessionHub, event repository, TodosRepository, todoTool, preload and export formatter are reused.
+- INFERRED verification plan: new shared/core/main plan-review.test.ts and renderer plan-feedback.test.ts;
+  extend runtime identity, state reducer, todos, session lifecycle/steering, masking/sanitizer/export,
+  shared-view/workspace and mock tests; focused browser plan-review.spec.ts plus existing Plan acceptance.
+  Tests attach to every row above. Read 02_Tools/verification-policy.md before build checks; no full suite.
+
+### Risks and open decisions
+
+- OBSERVED (service.ts/runtime.ts): message.user normally persists synchronously and observers can
+  reenter before later events; D4 precommits seed events and installs an abortable active review before
+  publication. Never wrap existing send in an outer transaction with premature inner publication.
+- OBSERVED (main/sessions.ts; workspace.tsx): normal preparation may probe programs and generic Retry
+  uses session.send(last.text); D3/D5 explicitly change those two seams and test both for no escalation.
+- INFERRED D1 (REQ-FUNC-a1040002): core validates unsanitized saved anchors against the current shared
+  projection before presentation; privacy notifications force shared-view refresh without extra polling.
+- STATED (root policy): format stays 1, no migrations/backups/dependencies. INFERRED (existing budgets):
+  no new numeric feedback quota or silent truncation; oversize requests keep existing CONTEXT_LIMIT.
+- OBSERVED (artifact audit; design writes only .agentic): four explicitly planned source modules do
+  not exist yet; their affected_paths warnings must clear when build creates them, not be suppressed.
+- UNKNOWN verification only: dependency/browser readiness, actual platform results and live model reply
+  quality. No blocking product/mechanism decision remains; build proves the specified guards and fixtures.
+  Both independent reviews remain validate obligations in separate contexts, not claimed design proof.
+
+### Requirement map
+
+- INFERRED traceability: every requirement ID maps to D1-D6 and its test seam in the coverage table's
+  final column; the shared spec supplies the exact protocol/interaction, while active baseline behavior
+  remains authoritative. Design details close the earlier specify unknowns, without changing its scope.
+- OBSERVED: resume HEAD 2a9d5e80 contains only ADORE checkpointed .agentic artifacts since the recorded
+  base; source/test assumptions were reconfirmed at the named seams. Knowledge pages remain unchanged.
+Diagrams: [diagram_TASK-c33386cb.md](diagram_TASK-c33386cb.md)
 
 ## Log
 
@@ -303,23 +365,30 @@ storage or IPC names. Each row has exactly one requirement. Design decisions are
 - 2026-11-19 frame: completed; next specify - Frame completed and scope recorded under conductor-authorized autopilot; no decision-blocking question; stop at this stage boundary.
 - 2026-11-19 specify: Specify complete: 29 draft requirements plus eight unchanged baseline contracts mapped in 37 one-requirement coverage rows; one shared draft anchoring/review protocol spec. Concrete IPC/storage/UI mechanisms remain recorded design decisions. Inline TOML/coverage audit passed (exit 0); git diff --check passed (exit 0); scoped strict AEGIS passed (exit 0, zero errors, 25 existing warnings and 39 notes). No product tests/statics or independent implementation reviews run in specify; no product/source changes or commits.
 - 2026-11-19 specify: completed; next design - Specify completed under conductor-authorized autopilot; all accepted outcomes mapped and format checks passed; stop at this stage boundary.
+- 2026-11-19 design: Design D1-D6 completed in the journal and draft protocol spec, with 37 one-to-one decision/test mappings and structure/sequence/state diagrams. Updated affected_paths in 29 draft and three active records without changing any requirement prose; clarified foreign-ID verification to use snapshot-only reads. No product, test, knowledge or payload changes; no commit/publication.
+- 2026-11-19 design: DEVIATION design: accept stale-paths warnings for four explicitly planned new source modules - design must name the future files before build creates them; build must clear those warnings rather than suppress them.
+- 2026-11-19 design: Design verification: inline TOML/coverage/prologue/history/diagram/affected-path audit exit 0; git diff --check exit 0; aegis.py check --task TASK-c33386cb --strict exit 0 (errors=0 warnings=82 notes=39; 57 planned-module path warnings and 25 pre-existing warnings). Product tests/statics/browser/platform proof and separate-context spec/quality reviews remain later-stage obligations, not claimed evidence.
+- 2026-11-19 design: completed; next build
 
 ## Rulings
 
 - RULING-001 | date=2026-11-19 | decision=Review admission excludes active and recovered queued work; ordinary sends during a review return BUSY, and all review phases including preparation are revision-only. | reason=The requested no-execution guarantee cannot be enforced by sending review text through ordinary execution-capable steering; observed SessionsHost preparation may also probe programs. | source=technical | supersedes=none
 - RULING-002 | date=2026-11-19 | decision=Use revision/occurrence/quoted-context anchors with exact validated-projection UTF16 ranges; invalid targets use INVALID, stale snapshots CONFLICT, busy admission BUSY, unwritable/archive DENIED and foreign feedback NOT_FOUND. | reason=Optional and repeated IDs are not identity, renderer text may be projected, and the existing shared error vocabulary supports explicit testable refusals without a new transport. | source=technical | supersedes=none
 - RULING-003 | date=2026-11-19 | decision=Distinguish unsent drafts, atomic submitted acceptance and retained unsuccessful review history; reconcile acknowledgement retries idempotently and revalidate explicit failed-turn retries against the current plan. | reason=Ticket lifecycle requires failure retention, a visible submitted/draft distinction, no duplicates and preservation of previously reviewed text; acceptance failure and post-acceptance model failure are different durable states. | source=technical | supersedes=none
+- RULING-004 | date=2026-11-19 | decision=D1-D2 use replayed plan/feedback counters and existing format-1 session events; all later whole-plan replacements stale old anchors, and host validation shares the exact projected todo text with desktop presentation. | reason=Whole-list todo updates provide no reliable occurrence continuity, duplicate or absent item IDs cannot identify steps, and the existing event store already supplies durable scoped snapshots without schema changes. | source=technical | supersedes=none
+- RULING-005 | date=2026-11-19 | decision=D3-D5 introduce scoped metadata/review IPC, capture the originating DB before serial enqueue, and use probe-free review preparation plus a built-in-todo-only runtime; generic review Retry restores feedback instead of calling ordinary send. | reason=Observed SessionsHost ordinary preparation can probe programs, queued operations otherwise acquire a later workbench, and Workspace Retry currently resends last.text through execution-capable send; all three seams need explicit guards. | source=technical | supersedes=none
+- RULING-006 | date=2026-11-19 | decision=D4 atomically records the submitted envelope, one user message and the started turn before dispatch; scoped expected plan/feedback counter pairs are durable receipts, with optional runtime requestIdentity preventing duplicate initial persistence. | reason=Acceptance changes the feedback counter, making an accepted pair unique across reopen; precommitted identities avoid replaying model requests after lost acknowledgements or exposing partial submission state to reentrant observers. | source=technical | supersedes=none
 
 
 ## State
 
 status: ready
-reported: specify - completed
-next: start design: read .agentic/steps/3_design.md
-must_read: .agentic/tasks/TASK-c33386cb.md, .agentic/steps/3_design.md
-changed: Created 29 draft requirements and one protocol spec; mapped 37 coverage rows including eight unchanged baseline contracts; recorded three technical rulings.
-evidence: Inline TOML/coverage audit: exit 0; git diff --check: exit 0; scoped AEGIS check --strict: exit 0, errors=0 warnings=25 notes=39.
-issues: Existing warnings unchanged. No product tests/statics/reviews run; design must resolve recorded IPC/storage/UI and revision/projection mechanisms.
+reported: design - completed
+next: Conductor resumes the build stage from design D1-D6; this attempt stops before implementation.
+must_read: .agentic/tasks/TASK-c33386cb.md, .agentic/steps/4_build.md, .agentic/specs/REQ-DATA-fa8543aa.md, 02_Tools/verification-policy.md, 01_Documentation/Code_Style.md
+changed: Completed journal Design and 37 requirement mappings; refined the draft protocol spec and 32 affected_paths records; added .agentic/tasks/diagram_TASK-c33386cb.md (structure, sequence, state); recorded RULING-004 through RULING-006. Only 35 owned .agentic artifacts changed.
+evidence: Final inline TOML/coverage/history/paths/diagram audit exit 0; design checklist 6/6; git diff --check exit 0; aegis.py check --task TASK-c33386cb --strict exit 0 (errors=0 warnings=82 notes=39).
+issues: No blocking design decision. Accepted 57 stale-paths warnings for four planned modules plus 25 pre-existing warnings; build must clear planned-path warnings. Product tests/statics, browser/platform proof and both separate-context independent reviews remain outstanding. No product changes, commits or publication.
 spec_compliance:
 implementation_quality:
 review_round:
