@@ -1,6 +1,7 @@
 /** Built-in execution catalog shared by the runtime and workbench editor. */
 export const builtinToolNames = [
   "read",
+  "view_image",
   "list",
   "glob",
   "grep",

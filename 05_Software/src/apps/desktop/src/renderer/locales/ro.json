@@ -4,6 +4,7 @@
     "planCleared": "Plan golit",
     "operation": "Operație a agentului",
     "readFile": "Citire fișier",
+    "viewImage": "Examinează imaginea",
     "listFiles": "Listare conținut folder",
     "findFiles": "Căutare fișiere",
     "searchFiles": "Căutare în fișiere",
@@ -774,6 +775,7 @@
   },
   "workbenchTools": {
     "read": "Citește fișiere text sau intervale de linii.",
+    "view_image": "Vezi o imagine din workbench cu un model care acceptă imagini.",
     "list": "Listează fișierele și subfolderele unui director.",
     "glob": "Găsește fișiere după tipare de nume sau cale, precum **/*.cpp.",
     "grep": "Caută în conținutul fișierelor, inclusiv cu expresii regulate.",

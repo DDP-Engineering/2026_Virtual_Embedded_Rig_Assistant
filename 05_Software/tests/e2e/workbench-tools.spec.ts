@@ -41,7 +41,18 @@ test("native tool checkbox configuration persists, cancels drafts and translates
     await page.locator('[data-action="choose-create"]').click();
     await page.locator('[data-action="create-workbench"]').click();
     await openTools(page);
+    await expect(page.locator("[data-tool-toggle]")).toHaveCount(builtinToolNames.length - 1);
+    const viewImage = page.locator('[data-tool-toggle="view_image"]');
+    await expect(viewImage).toHaveCount(0);
+    await page.locator('[data-project-section="agent"]').click();
+    await page.locator("[data-project-model]").fill("openai/gpt-4o");
+    await page.locator('[data-project-section="tools"]').click();
+    await expect(viewImage).toBeChecked();
     await expect(page.locator("[data-tool-toggle]")).toHaveCount(builtinToolNames.length);
+    await page.locator('[data-project-section="agent"]').click();
+    await page.locator("[data-project-model]").clear();
+    await page.locator('[data-project-section="tools"]').click();
+    await expect(viewImage).toHaveCount(0);
     await page.locator('[data-tool-toggle="grep"]').uncheck();
     await page.locator('[data-tool-toggle="write"]').uncheck();
     await page.locator('[data-tool-toggle="decode_register"]').uncheck();

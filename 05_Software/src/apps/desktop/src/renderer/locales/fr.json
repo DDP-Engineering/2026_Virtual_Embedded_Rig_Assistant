@@ -4,6 +4,7 @@
     "planCleared": "Plan vidé",
     "operation": "Opération de l’agent",
     "readFile": "Lecture d’un fichier",
+    "viewImage": "Examiner l’image",
     "listFiles": "Liste du contenu d’un dossier",
     "findFiles": "Recherche de fichiers",
     "searchFiles": "Recherche dans les fichiers",
@@ -774,6 +775,7 @@
   },
   "workbenchTools": {
     "read": "Lire des fichiers texte ou des plages de lignes choisies.",
+    "view_image": "Examiner une image du banc de travail avec un modèle compatible.",
     "list": "Lister les fichiers et sous-dossiers d’un répertoire.",
     "glob": "Trouver des fichiers par motifs de nom ou de chemin, comme **/*.cpp.",
     "grep": "Rechercher dans le contenu des fichiers, y compris par expressions régulières.",

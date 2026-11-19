@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-SEC-1d25462f"
+
+title = "Confine agent image inspection to ordinary workbench paths"
+
+status = "active"
+
+requirement = """
+If a view_image path leaves the primary workbench, traverses a symbolic link or junction, or is excluded by workbench or application-data policy, including a managed attachment path never delivered to the current session, VERA shall return a tool error without image data.
+"""
+
+verification = "Use temporary workbench and sibling images, a folder junction or symbolic link and refused paths. Attempt inspection including in Bypass and verify failure without image content. Reopen a delivered composer image after restarting the service, then try an unsent attachment and request the delivered path from a different session. Queue an attachment during an active turn and verify refusal before delivery and success after delivery."
+
+affected_paths = ["05_Software/src/libraries/core/src/tools/view-image.ts", "05_Software/src/libraries/core/src/workbench/path-guard.ts", "05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/libraries/core/src/tools/context.ts", "05_Software/src/libraries/core/src/storage/repos/messages.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/sessions/view-image.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-19
+updated = 2026-11-19

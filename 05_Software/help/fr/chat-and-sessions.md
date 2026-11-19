@@ -24,6 +24,10 @@ Un message peut référencer jusqu’à huit images PNG, JPEG, GIF ou WebP du ba
 
 Consultez [Fournisseurs et modèles](providers.md) pour savoir comment VERA détermine si le modèle choisi accepte les images.
 
+Indiquez à l’agent le chemin relatif d’une image du banc de travail pour qu’il l’examine. Avec un modèle compatible, il peut utiliser `view_image` pour lire des fichiers PNG, JPEG, GIF ou WebP de 20 Mio maximum. Le côté le plus long de la copie envoyée au modèle mesure au plus 2048 pixels. L’outil exige un chemin autorisé du banc, sans lien, même en mode Contournement. Le résultat dans l’historique de la session conserve le chemin. **Modifier le banc** → **Outils** affiche l’option si le modèle par défaut du banc accepte les images.
+
+L’agent peut rouvrir une image envoyée dans cette session en utilisant son chemin enregistré. Il peut examiner jusqu’à huit images par étape et conserve pendant le tour les huit dernières images ouvertes par l’outil.
+
 ## Orienter ou arrêter un tour en cours
 
 Pendant que l’agent travaille, vous pouvez continuer à écrire et envoyer d’autres messages, par exemple « vérifie aussi l’errata ». Ils affichent **En attente d’envoi** jusqu’à ce que l’agent les prenne en compte à son étape suivante. Tant qu’une carte d’approbation attend votre décision, l’envoi est suspendu.

@@ -8,6 +8,7 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ### Added
 
+- The agent can inspect workbench images with image-capable models using the view_image tool.
 - Sent chat images open from transcript thumbnails, and deleted images show their saved paths.
 - Paste, drop or attach images in chat, with removable previews and a warning for text-only models.
 - Chat can send workbench images to supported models and keeps their paths in history and exports.

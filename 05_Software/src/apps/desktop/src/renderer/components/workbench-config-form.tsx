@@ -245,6 +245,7 @@ export function WorkbenchConfigForm({
           {section === "tools" && (
             <WorkbenchTools
               disabled={config.tools.disabled}
+              modelRef={config.agent.model}
               toggle={(name, enabled) =>
                 setConfig((current) => ({
                   ...current,

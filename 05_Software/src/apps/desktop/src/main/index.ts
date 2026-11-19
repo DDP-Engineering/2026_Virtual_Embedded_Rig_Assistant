@@ -1186,6 +1186,7 @@ ipcMain.handle(
       "session.mode.set": ({ sessionId, mode }) =>
         sessions.run((s) => sanitizeSessionSummary(s.setMode(sessionId, mode), sessionContent)),
       "providers.discover": (request) => modelGateway.discover(request),
+      "providers.image.capability": ({ modelRef }) => modelGateway.imageCapability(modelRef),
       "providers.models": ({ id }) => modelGateway.models(id),
       "providers.test": ({ id, model }) => modelGateway.test(id, model),
       "providers.list": () => providers.list(),

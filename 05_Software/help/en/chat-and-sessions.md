@@ -24,6 +24,10 @@ A message can reference up to eight workbench images in PNG, JPEG, GIF or WebP, 
 
 See [Providers and models](providers.md) for how VERA determines image support for your chosen model.
 
+Ask the agent to inspect a workbench image by giving its relative path. With an image-capable model, the agent can use `view_image` to read PNG, JPEG, GIF or WebP files up to 20 MiB. The copy sent to the model is at most 2048 pixels on its longest side. The tool requires an allowed workbench path without links, including in Bypass. The result in session history records the path. **Edit workbench** → **Tools** shows the switch when the workbench’s default model accepts images.
+
+The agent can reopen a composer image from this session using its saved path after you send it. It can inspect up to eight images in one step and keeps the eight most recent tool images in the current turn.
+
 ## Steer or stop a running turn
 
 While the agent works, you can keep typing and send more messages, for example "also check the errata". They show **Pending delivery** until the agent takes them in at its next step. While an approval card waits for your decision, sending is paused.

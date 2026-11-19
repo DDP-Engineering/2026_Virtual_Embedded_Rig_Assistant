@@ -81,12 +81,13 @@ export function createMockApi(
   let indexerState: "running" | "stopped" = "running";
   // The mock workbench's files for the Docs tree: its documents plus a few files that are not.
   const uploads = new Map<string, { data: string; thumbnail: string }>();
+  const scopeImagePath = "manuals/chat-scope.png";
   const scopeImage =
     "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aFqkAAAAASUVORK5CYII=";
   const imageKey = (workbenchId: string, path: string) => `${workbenchId}/${path}`;
   const storedImage = (workbenchId: string, path: string) =>
     uploads.get(imageKey(workbenchId, path)) ??
-    (path === "manuals/scope-capture.png" && treeFiles().includes(path)
+    (path === scopeImagePath && treeFiles().includes(path)
       ? { data: scopeImage, thumbnail: scopeImage }
       : undefined);
   const treeFiles = () =>
@@ -99,6 +100,7 @@ export function createMockApi(
           "firmware/drivers/i2c.c",
           "manuals/rm0440-reference.txt",
           "manuals/scope-capture.png",
+          scopeImagePath,
           ".git/config",
           ".vera/workbench.yaml",
           "node_modules/pkg/index.js",
@@ -544,6 +546,18 @@ export function createMockApi(
       const order = settings.sessionOrder?.[current().snapshot.config.id];
       return channels[channel].response.parse(orderSessions(list, order)) as Response<C>;
     }
+    if (channel === "providers.image.capability") {
+      const { modelRef } = channels["providers.image.capability"].request.parse(input.data);
+      const reference = modelRef ?? settings.defaultModel;
+      const result = { acceptsImages: false };
+      if (reference) {
+        const provider = channels["providers.models"].request.shape.id.parse(reference.split("/")[0]);
+        const list = await invoke("providers.models", { id: provider });
+        const model = list.models.find((entry) => entry.reference === reference);
+        result.acceptsImages = model !== undefined && acceptsImages(model);
+      }
+      return channels[channel].response.parse(result) as Response<C>;
+    }
     if (channel === "session.image.attach" || channel === "session.image.capability") {
       const upload =
         channel === "session.image.attach"
@@ -561,11 +575,11 @@ export function createMockApi(
         const { source } = upload;
         if ("path" in source) {
           if (treeIgnored(source.path)) throw veraError("DENIED");
-          if (source.path !== "manuals/scope-capture.png" || !treeFiles().includes(source.path))
+          if (source.path !== scopeImagePath || !treeFiles().includes(source.path))
             throw veraError("NOT_FOUND");
           value = {
             path: source.path,
-            name: "scope-capture.png",
+            name: "chat-scope.png",
             thumbnail: scopeImage,
           };
         } else {

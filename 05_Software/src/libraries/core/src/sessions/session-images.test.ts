@@ -1,116 +1,20 @@
-import { once } from "node:events";
 import { mkdtemp, readFile, rm, symlink, truncate, writeFile } from "node:fs/promises";
-import { createServer } from "node:http";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { channels, defaultSettings } from "@vera/shared";
+import { channels } from "@vera/shared";
 import sharp from "sharp";
-import { afterEach, expect, it } from "vitest";
+import { expect, it } from "vitest";
 import { ContextPolicy, conservativeCounter } from "../agent/context.js";
-import { createPiAiGateway } from "../llm/providers.js";
-import { openDb } from "../storage/db.js";
 import { buildSessionMarkdown } from "./export.js";
-import { SessionService } from "./service.js";
-
-const maxBytes = 20 * 1024 * 1024;
-const cleanups: (() => Promise<void>)[] = [];
-afterEach(async () => {
-  for (const close of cleanups.splice(0).reverse()) await close();
-});
-const raster = (width = 4, height = 3) =>
-  sharp({ create: { width, height, channels: 3, background: "#336699" } })
-    .png()
-    .toBuffer();
-
-type Part = { type: "text"; text: string } | { type: "image_url"; image_url: { url: string } };
-type WireMessage = { role: string; content: string | Part[] };
-type Request = { model: string; messages: WireMessage[] };
-function userParts(request: Request | undefined) {
-  return (request?.messages ?? [])
-    .filter(({ role }) => role === "user")
-    .flatMap(({ content }) =>
-      typeof content === "string" ? [{ type: "text" as const, text: content }] : content,
-    );
-}
-const contextWindow = 32768;
-const maxOutputTokens = 4096;
-
-async function setup(contextPolicy?: ContextPolicy) {
-  const root = await mkdtemp(join(tmpdir(), "vera-session-images-"));
-  cleanups.push(() => rm(root, { recursive: true, force: true }));
-  const requests: Request[] = [];
-  let hold: Promise<void> | undefined;
-  const server = createServer(async (req, res) => {
-    const chunks: Buffer[] = [];
-    for await (const chunk of req) chunks.push(chunk);
-    const body = JSON.parse(Buffer.concat(chunks).toString()) as Request;
-    requests.push(body);
-    await hold;
-    res.writeHead(200, { "content-type": "text/event-stream" });
-    const event = {
-      id: "fake",
-      model: body.model,
-      choices: [{ index: 0, delta: { content: "OK" }, finish_reason: "stop" }],
-    };
-    res.end(`data: ${JSON.stringify(event)}\n\ndata: [DONE]\n\n`);
-  });
-  server.listen(0, "127.0.0.1");
-  await once(server, "listening");
-  cleanups.push(() => {
-    server.closeAllConnections();
-    return new Promise<void>((resolve) => server.close(() => resolve()));
-  });
-  const address = server.address();
-  if (!address || typeof address === "string") throw Error("missing loopback address");
-  const settings = defaultSettings("00000000-0000-4000-8000-000000000001");
-  settings.providers.custom = [
-    {
-      slug: "local",
-      name: "Local",
-      model: "vision",
-      baseUrl: `http://127.0.0.1:${address.port}/v1`,
-      contextWindow,
-      maxOutputTokens,
-      imageModels: ["vision"],
-    },
-  ];
-  const gateway = createPiAiGateway({
-    settings: () => settings,
-    credentials: {
-      read: async () => undefined,
-      list: async () => [],
-      modify: async (_slot, apply) => apply(undefined),
-      delete: async () => {},
-    },
-    scrub: (text) => text,
-    now: () => 0,
-  });
-  const db = await openDb(join(root, "session.db"), { workbenchId: "wb_test", appVersion: "0" });
-  cleanups.push(async () => db.close());
-  const open = () => {
-    const session = new SessionService({
-      db: db.db,
-      root,
-      gateway,
-      clock: { now: () => new Date(0), sleep: async () => {} },
-      model: (model) => model ?? "custom:local/vision",
-      prompt: () => "Explain the image.",
-      mode: "read-only",
-      ...(contextPolicy && { contextPolicy }),
-    });
-    cleanups.push(() => session.close());
-    return session;
-  };
-  return {
-    root,
-    requests,
-    open,
-    db: db.db,
-    holdResponse: (pending: Promise<void>) => {
-      hold = pending;
-    },
-  };
-}
+import {
+  cleanups,
+  contextWindow,
+  maxBytes,
+  maxOutputTokens,
+  raster,
+  setup,
+  userParts,
+} from "./session-images.test-support.js";
 
 // IMG-02-A
 it("sends resized pi-ai image parts to a vision model and only paths to a text model", async () => {
@@ -145,7 +49,7 @@ it("sends resized pi-ai image parts to a vision model and only paths to a text m
 });
 
 it("persists only paths for initial and queued images, replays the queue and keeps paths in exports", async () => {
-  const { root, requests, open, db, holdResponse } = await setup();
+  const { root, requests, open, storedRows, holdResponse } = await setup();
   for (const path of ["initial.png", "queued.png"]) await writeFile(join(root, path), await raster());
   const service = open();
   const { id } = service.create();
@@ -193,7 +97,7 @@ it("persists only paths for initial and queued images, replays the queue and kee
   expect(
     items.find((item) => item.kind === "user" && item.images?.includes("queued.png")),
   ).not.toHaveProperty("pending");
-  const stored = JSON.stringify(db.prepare("SELECT content_json FROM messages").all());
+  const stored = JSON.stringify(storedRows("SELECT content_json FROM messages"));
   expect(stored).toContain("queued.png");
   expect(stored).not.toMatch(/base64|image\/png/);
 });

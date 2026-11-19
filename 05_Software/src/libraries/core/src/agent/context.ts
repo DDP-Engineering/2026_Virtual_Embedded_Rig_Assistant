@@ -98,10 +98,14 @@ export class ContextPolicy {
     reduce = true,
     scrubAttachmentText?: (text: string) => string,
   ): ContextView {
-    const messages = structuredClone(input.messages);
+    const vision = acceptsImages(capabilities);
+    const messages = structuredClone(input.messages).map((message) =>
+      !vision && message.role === "toolResult"
+        ? { ...message, content: message.content.filter((part) => part.type !== "image") }
+        : message,
+    );
     const safetyMarginTokens = Math.max(1024, Math.ceil(capabilities.contextWindow * 0.05));
     const inputBudgetTokens = capabilities.contextWindow - capabilities.maxOutputTokens - safetyMarginTokens;
-    const vision = acceptsImages(capabilities);
     const measure = () => {
       const projected = messages.map((message) => {
         const paths = imagePaths(message);

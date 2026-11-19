@@ -2,7 +2,7 @@
 
 ## Routing
 
-Select for PathGuard, binary detection, read/list/glob/grep/parse_log/decode_register/write/edit, prepared changes, shared write admission/recovery, line refs, ToolRegistry, tools.disabled, last-read fingerprints and WorkerPool deadline/abort/replacement. Start at core/src/tools/registry.ts and workbench/path-guard.ts under05_Software. Focused tests: tools/{read,discovery,grep,registry,binary}.test.ts,workbench/path-guard.test.ts,workers/node-host.test.ts,shared/refs.test.ts. [Agent runtime](agent-runtime.md) owns orchestration/schema projection; [Workbench](workbench.md) owns lifecycle/ignore rules; [sessions](sessions.md) owns active-turn Stop, per-session contexts and exact permission modes/approvals.
+Select for PathGuard, binary detection, read/view_image/list/glob/grep/parse_log/decode_register/write/edit, prepared changes, shared write admission/recovery, line refs, ToolRegistry, tools.disabled, last-read fingerprints and WorkerPool deadline/abort/replacement. Start at core/src/tools/registry.ts and workbench/path-guard.ts under05_Software. Focused tests: tools/{read,discovery,grep,registry,binary}.test.ts,workbench/path-guard.test.ts,workers/node-host.test.ts,shared/refs.test.ts. [Agent runtime](agent-runtime.md) owns orchestration/schema projection; [Workbench](workbench.md) owns lifecycle/ignore rules; [sessions](sessions.md) owns active-turn Stop, per-session contexts and exact permission modes/approvals.
 
 ## Purpose and boundaries
 
@@ -99,6 +99,7 @@ Draft authoring elsewhere retains normal approval policy (tools/write-edit.test.
 |---|---|---|
 | Confinement/ignore/binary | PathGuard,isBinary | path-guard/binary tests, native Windows aliases |
 | Read/fingerprint/line semantics | readTool,readWindow,refs | read/shared refs tests |
+| Agent image inspection | tools/view-image.ts, tools/raster-file.ts, PathGuard | sessions/view-image.test.ts |
 | Ignored sorted discovery | discoverFiles,listTool,globTool | discovery tests |
 | Regex/options/worker protocol | grepTool,grep-worker.ts | grep/node-host tests |
 | Captured register definitions/decoding/citations | shared/tools/decode-register.ts; tools/decode-register.ts,decode-register/{definition,decode}.ts; agent/citations.ts | decode-register.test.ts; citation tests; real CLI parity; native workbench-tools |
@@ -125,6 +126,7 @@ Draft authoring elsewhere retains normal approval policy (tools/write-edit.test.
 - REQ-SEC-b86a7502 — captured register decoding contract; see specs/decode-register.md.
 - REQ-UX-c3aceaf8 — captured register decoding contract; see specs/decode-register.md.
 
+- `view_image {path}` reads an ordinary primary-workbench raster through the shared file guard and IMG-02 transform (PNG, JPEG, GIF, WebP; 20 MiB; longest side 2048 px). Relative paths honor ignore rules and protected application roots, and symbolic links and junctions are refused even in Bypass. The tool can reopen managed attachment paths found in the current session's durable user messages after delivery (REQ-FUNC-19936eec, REQ-SEC-1d25462f, REQ-FUNC-33cb0bb1).
 - REQ-SEC-c370e45b — Confine tool paths.
 - REQ-FUNC-f558632e — Detect binary samples.
 - REQ-FUNC-091ba439 — Read numbered bounded text.

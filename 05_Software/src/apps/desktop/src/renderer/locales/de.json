@@ -4,6 +4,7 @@
     "planCleared": "Plan geleert",
     "operation": "Werkzeugaktion",
     "readFile": "Datei lesen",
+    "viewImage": "Bild betrachten",
     "listFiles": "Ordnerinhalt auflisten",
     "findFiles": "Dateien finden",
     "searchFiles": "In Dateien suchen",
@@ -774,6 +775,7 @@
   },
   "workbenchTools": {
     "read": "Textdateien oder ausgewählte Zeilenbereiche lesen.",
+    "view_image": "Ein Workbench-Bild mit einem Modell betrachten, das Bilder akzeptiert.",
     "list": "Dateien und Unterordner eines Verzeichnisses auflisten.",
     "glob": "Dateien anhand von Namens- oder Pfadmustern wie **/*.cpp finden.",
     "grep": "Dateiinhalte durchsuchen, auch mit regulären Ausdrücken.",

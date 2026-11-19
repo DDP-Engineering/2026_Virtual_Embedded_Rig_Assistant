@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-ac4610c1"
+
+title = "Offer image inspection only to models that accept images"
+
+status = "active"
+
+requirement = """
+While the session model lacks image capability, VERA shall exclude view_image from the model tool schema and refuse its execution.
+"""
+
+verification = "Send a text-only model a normal turn, capture the tool list and force an unsolicited view_image call. Verify the unavailable result and absence of image parts."
+
+affected_paths = ["05_Software/src/libraries/core/src/agent/runtime.ts", "05_Software/src/libraries/core/src/agent/context.ts", "05_Software/src/libraries/core/src/sessions/service.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/sessions/view-image.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-19
+updated = 2026-11-19

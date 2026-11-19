@@ -785,6 +785,11 @@ export const channels = {
     providerDiscoveryRequestSchema,
     providerDiscoverySchema,
   ),
+  "providers.image.capability": defineChannel(
+    "providers.image.capability",
+    z.strictObject({ modelRef: modelReferenceSchema.nullable() }),
+    z.strictObject({ acceptsImages: z.boolean() }),
+  ),
   "providers.models": defineChannel("providers.models", providerModelsRequestSchema, providerCatalogSchema),
   "providers.test": defineChannel("providers.test", providerTestRequestSchema, providerTestResultSchema),
   "providers.list": defineChannel("providers.list", z.strictObject({}), providerListSchema),

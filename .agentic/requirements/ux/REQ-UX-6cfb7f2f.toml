@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-UX-6cfb7f2f"
+
+title = "List image inspection for image-capable workbench models"
+
+status = "active"
+
+requirement = """
+While the effective default model of a workbench draft accepts images, the Tools editor shall show the localized view_image checkbox.
+"""
+
+verification = "Render the workbench editor with an inherited text model, select an image-capable draft model and return to Tools, then select a text model and verify the checkbox disappears while other tools remain available. Compare explicit model visibility with app settings reads succeeding and failing."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/workbench-tools.tsx", "05_Software/src/apps/desktop/src/main/provider-gateway.ts", "05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/apps/desktop/src/renderer/components/workbench-config-form.tsx", "05_Software/src/apps/desktop/src/renderer/mocks/mockApi.ts", "05_Software/src/libraries/shared/src/ipc.ts", "05_Software/src/libraries/shared/src/tools.ts"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/workbench-tools.test.ts", "05_Software/tests/e2e/workbench-tools.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-19
+updated = 2026-11-19

@@ -38,9 +38,11 @@ const actionKeys = defineTranslationKeys([
   "toolActivity.analyseLog",
   "toolActivity.decodeRegister",
   "toolActivity.electrical",
+  "toolActivity.viewImage",
 ]);
 const actionIndex = {
   read: 1,
+  view_image: 26,
   list: 2,
   glob: 3,
   grep: 4,

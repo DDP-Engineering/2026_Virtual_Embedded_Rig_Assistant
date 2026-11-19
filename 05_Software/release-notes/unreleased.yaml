@@ -11,10 +11,10 @@ entries:
   - category: new
     topic: { en: Providers, ro: Furnizori, de: Anbieter, fr: Fournisseurs }
     text:
-      en: Set whether individual models on local and compatible connections accept images.
-      ro: Alege ce modele ale conexiunilor locale și compatibile acceptă imagini.
-      de: Für jedes Modell einer lokalen oder kompatiblen Verbindung die Bildunterstützung festlegen.
-      fr: Choisissez les modèles des connexions locales ou compatibles qui acceptent les images.
+      en: Set image support per local or compatible model. The agent can inspect workbench images.
+      ro: Alege ce modele locale sau compatibile acceptă imagini. Agentul le poate examina în workbench.
+      de: Bildunterstützung je lokalem oder kompatiblem Modell wählen. Der Agent kann Bilder ansehen.
+      fr: Choisissez les modèles locaux ou compatibles qui acceptent les images. L’agent peut les examiner.
   - category: fixed
     topic: { en: Skills, ro: Skills, de: Skills, fr: Compétences }
     text:

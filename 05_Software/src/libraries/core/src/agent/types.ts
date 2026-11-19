@@ -1,4 +1,10 @@
-import type { AssistantMessage, Message, ToolCall, ToolResultMessage } from "@earendil-works/pi-ai";
+import type {
+  AssistantMessage,
+  ImageContent,
+  Message,
+  ToolCall,
+  ToolResultMessage,
+} from "@earendil-works/pi-ai";
 import type { VeraError } from "@vera/shared";
 import type { z } from "zod";
 import type { LlmGateway } from "../llm/gateway.js";
@@ -6,14 +12,16 @@ import type { ContextCompactor } from "./compaction.js";
 import type { ContextPolicy, ContextView } from "./context.js";
 
 export type StopReason = "end" | "aborted" | "error" | "limit";
+export type ToolOutput = string | { text: string; image: ImageContent };
 export interface ToolDef {
   /** Synchronous final authorization and projection before tool result publication. */
   publish?(args: unknown, output: string): string;
   name: string;
   class: "read" | "write" | "session" | "program";
   description: string;
+  requiresImages?: true;
   params: z.ZodType;
-  execute(args: unknown, signal: AbortSignal): Promise<string>;
+  execute(args: unknown, signal: AbortSignal): Promise<ToolOutput>;
 }
 export interface RuntimeInit {
   systemPrompt: string;

@@ -735,6 +735,7 @@ export class SessionService {
     this.contexts.set(id, ctx);
     ctx.permissionMode = () => this.row(id).permission_mode;
     ctx.additionalFolders = () => this.host.additionalFolders?.() ?? [];
+    ctx.hasDeliveredImage = (path) => this.messages.hasUserImage(id, path);
     ctx.bypassSignal = () => {
       if (this.row(id).permission_mode !== "bypass") return AbortSignal.abort();
       let scope = this.bypassScopes.get(id);
@@ -868,6 +869,12 @@ export class SessionService {
           )
             throw Error("Tool permission denied.");
           this.writable();
+          if (
+            tool.requiresImages &&
+            (!acceptsImages(this.host.gateway.capabilities(model)) ||
+              this.host.disabledTools?.includes(tool.name))
+          )
+            throw Error("Tool is unavailable.");
           try {
             const result = await tool.execute(args, signal);
             return result;
@@ -920,9 +927,12 @@ export class SessionService {
           }
           request.signal.throwIfAborted();
           const readOnly = self.row(id).permission_mode === "read-only";
-          const tools = readOnly
-            ? request.tools.filter((tool) => !writeToolNames.has(tool.name) && tool.name !== "run_command")
-            : request.tools;
+          const tools = request.tools.filter(
+            (tool) =>
+              (!readOnly || (!writeToolNames.has(tool.name) && tool.name !== "run_command")) &&
+              (tool.name !== "view_image" ||
+                (acceptsImages(capabilities) && !self.host.disabledTools?.includes(tool.name))),
+          );
           const view = contextPolicy.prepare({ system: request.system, tools, messages }, capabilities);
           if (!view.fits) {
             yield { type: "error", error: veraError("CONTEXT_LIMIT"), aborted: false };

@@ -4,6 +4,7 @@
     "planCleared": "Plan cleared",
     "operation": "Tool operation",
     "readFile": "Read file",
+    "viewImage": "View image",
     "listFiles": "List folder contents",
     "findFiles": "Find files",
     "searchFiles": "Search in files",
@@ -774,6 +775,7 @@
   },
   "workbenchTools": {
     "read": "Read text files or selected line ranges.",
+    "view_image": "View a workbench image with a model that accepts images.",
     "list": "List files and subfolders in a directory.",
     "glob": "Find files by name or path patterns, such as **/*.cpp.",
     "grep": "Search file contents, including regular expressions.",

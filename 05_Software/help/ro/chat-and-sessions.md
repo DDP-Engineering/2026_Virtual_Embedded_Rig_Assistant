@@ -24,6 +24,10 @@ Un mesaj poate indica până la opt imagini PNG, JPEG, GIF sau WebP din workbenc
 
 Vezi [Furnizori și modele](providers.md) pentru a afla cum stabilește VERA dacă modelul ales acceptă imagini.
 
+Pentru ca agentul să examineze o imagine din workbench, indică-i calea relativă. Cu un model care acceptă imagini, agentul poate folosi `view_image` pentru fișiere PNG, JPEG, GIF sau WebP de până la 20 MiB. Latura cea mai lungă a copiei trimise modelului are cel mult 2048 de pixeli. Instrumentul cere o cale permisă din workbench, fără linkuri, inclusiv în modul Bypass. Rezultatul din istoricul sesiunii păstrează calea. Comutatorul apare în **Editează workbench-ul** → **Instrumente** dacă modelul implicit al workbench-ului acceptă imagini.
+
+Agentul poate redeschide o imagine trimisă din caseta de mesaj a acestei sesiuni folosind calea salvată. Poate examina până la opt imagini într-un pas și păstrează în turul curent ultimele opt imagini obținute cu instrumentul.
+
 ## Ghidează sau oprește o execuție în curs
 
 Cât timp agentul lucrează, poți continua să scrii și să trimiți mesaje, de exemplu „verifică și errata”. Acestea afișează **În așteptarea livrării** până când agentul le preia la pasul următor. Cât timp un card de aprobare așteaptă decizia ta, trimiterea este suspendată.

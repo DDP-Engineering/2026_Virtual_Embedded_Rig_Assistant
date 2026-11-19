@@ -68,6 +68,7 @@ export class PathGuard {
     private readonly excludedRoots: readonly string[] = [],
     readonly additionalRoots: readonly PathRootBinding[] = [],
     private readonly allowSessionAttachments = false,
+    private readonly refuseLinks = false,
   ) {}
 
   /** A separately confined skill root may use its owning project's ignore policy. */
@@ -78,7 +79,7 @@ export class PathGuard {
     authorize?: () => void,
     excludedRoots: readonly string[] = [],
     additionalRoots: readonly (string | PathRootBinding)[] = [],
-    options: { allowSessionAttachments?: boolean } = {},
+    options: { allowSessionAttachments?: boolean; refuseLinks?: boolean } = {},
   ): Promise<PathGuard> {
     if (!isAbsolute(root)) throw Error("Workbench root must be absolute.");
     const canonical = await realpath(root);
@@ -128,6 +129,7 @@ export class PathGuard {
       excluded,
       additional,
       options.allowSessionAttachments,
+      options.refuseLinks,
     );
   }
 
@@ -229,6 +231,8 @@ export class PathGuard {
       );
     else this.allowed(this.confined(lexical));
     const { canonical, exists } = await canonicalPath(lexical);
+    if (this.refuseLinks && pathIdentity(lexical) !== pathIdentity(canonical))
+      throw Error("Use a path without symbolic links or junctions.");
     if (
       this.allowSessionAttachments &&
       pathIdentity(lexical) !== pathIdentity(canonical) &&
