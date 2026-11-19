@@ -13,6 +13,7 @@
 | **Actualizări** | Cum se actualizează VERA |
 | **Date și confidențialitate** | Valorile implicite de mascare pentru patru zone |
 | **Despre** | Versiunea, runtime-ul, licența și componentele terțe |
+| **Dictare** | Modele Whisper locale și limba vorbită |
 
 ## Date și confidențialitate
 
@@ -70,3 +71,11 @@ Dezactivarea accesului web oprește și căutările și descărcările în curs.
 ## Comenzi shell
 
 În Setări → Comenzi, alege Automat, PowerShell 7, Windows PowerShell, Cmd, Bash sau Personalizat, apoi Salvare. Variantele instalate sunt detectate în căile de căutare și în directoarele standard; cele indisponibile sunt dezactivate. Personalizat acceptă un nume de executabil sau o cale absolută. Automat preferă PowerShell 7, Windows PowerShell, apoi Cmd pe Windows; Linux preferă Bash, apoi sh. PowerShell rulează neinteractiv, fără profil și cu ieșire UTF-8. Bash folosește `-lc`; profilurile pot modifica mediul. Pe Windows, Bash înseamnă Bash nativ, de exemplu Git Bash; launcherul WSL vechi nu este selectat. Comenzile Cmd folosesc `/d /s /c`, acceptă o singură linie cu `&` sau `&&` între comenzi, iar ieșirea comenzilor interne folosește pagina de cod Windows. Pentru ieșire UTF-8, folosește PowerShell sau Bash. Setarea se aplică următoarelor comenzi ale agentului și terminalelor noi; terminalele existente păstrează shell-ul curent. Un shell ales explicit, dar indisponibil produce o eroare.
+
+## Dictare
+
+Alege **Whisper Small** (recomandat) sau **Whisper Base** (compact). Pagina afișează dimensiunea descărcării și starea instalării pentru fiecare model. Alege **Descarcă** și urmărește progresul. **Anulează** șterge descărcarea parțială. Dacă VERA raportează o descărcare eșuată sau fișiere deteriorate, alege **Reîncearcă**. Eliberează spațiu pe disc dacă este necesar.
+
+După instalare, alege **Folosește modelul**. VERA păstrează selecția la repornire. **Elimină** șterge fișierele modelului și golește selecția dacă modelul era activ. Dacă eliminarea eșuează, închide aplicațiile care folosesc fișierele modelului și alege **Reîncearcă**. Modelele se află în datele aplicației VERA și sunt comune tuturor workbench-urilor.
+
+La **Limba vorbită**, alege **Detectare automată** sau selectează limba în care vei vorbi.

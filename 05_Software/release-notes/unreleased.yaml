@@ -1,6 +1,13 @@
 version: Unreleased
 date: null
 entries:
+  - category: new
+    topic: { en: Dictation, ro: Dictare, de: Diktat, fr: Dictée }
+    text:
+      en: Download a local Whisper model in Settings and choose your spoken language.
+      ro: Descarcă un model Whisper local din Setări și alege limba vorbită.
+      de: In den Einstellungen ein lokales Whisper-Modell laden und die gesprochene Sprache wählen.
+      fr: Téléchargez un modèle Whisper local dans les paramètres et choisissez la langue parlée.
   - category: improved
     topic: { en: Chat, ro: Chat, de: Chat, fr: Chat }
     text:
@@ -134,7 +141,7 @@ entries:
       ro: Folosește terminale interactive; permite citirea de către agent separat pentru fiecare.
       de: Interaktive Terminal-Tabs nutzen; Agentenlesezugriff für jedes Terminal separat erlauben.
       fr: Utilisez des terminaux interactifs ; autorisez la lecture par l’agent pour chacun.
-  - category: new
+  - category: improved
     topic: { en: Workbench, ro: Workbench, de: Workbench, fr: Banc de travail }
     text:
       en: Indexing honors Git ignore and explains skips over a configurable file size limit.
@@ -172,17 +179,10 @@ entries:
   - category: improved
     topic: { en: Permissions, ro: Permisiuni, de: Berechtigungen, fr: Autorisations }
     text:
-      en: Each Bypass change asks for confirmation; agent file tools refuse VERA application data.
-      ro: Fiecare trecere la Bypass cere confirmare; instrumentele de fișiere refuză datele VERA.
-      de: Jeder Bypass-Wechsel fragt nach; Dateiwerkzeuge sperren die VERA-Anwendungsdaten.
-      fr: Chaque passage à Contournement est à confirmer ; les outils de fichiers refusent les données VERA.
-  - category: improved
-    topic: { en: Permissions, ro: Permisiuni, de: Berechtigungen, fr: Autorisations }
-    text:
-      en: Bypass permits outside programs and analysis inputs; leaving it stops running programs.
-      ro: Bypass permite programe și intrări de analiză externe; ieșirea oprește programele active.
-      de: Bypass erlaubt externe Programme und Analyseeingaben; beim Verlassen werden Programme gestoppt.
-      fr: Contournement autorise programmes et analyses externes ; en sortir arrête les programmes.
+      en: Confirm each Bypass. External programs/analysis inputs. Exit stops runs. File tools block VERA data.
+      ro: Confirmă orice Bypass. Programe/intrări ext. Ieșirea oprește rulări. Unelte fișiere fără date VERA.
+      de: Bypass immer bestätigen. Programme/Eingaben ext. Ausstieg stoppt Läufe. Dateitools ohne VERA-Daten.
+      fr: Tout Contournement à valider. Tâches/entrées ext. Sortir arrête. Outils fichiers sans données VERA.
   - category: new
     topic: { en: Commands, ro: Comenzi, de: Befehle, fr: Commandes }
     text:

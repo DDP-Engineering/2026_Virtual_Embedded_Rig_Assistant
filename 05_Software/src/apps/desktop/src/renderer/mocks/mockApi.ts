@@ -10,7 +10,10 @@ import {
   channels,
   compareVersions,
   configWarnings,
+  type DictationModelId,
+  type DictationSnapshot,
   defaultSettings,
+  dictationDefaults,
   documentPatternFolder,
   type EventEnvelope,
   eventEnvelopeSchema,
@@ -118,6 +121,8 @@ export function createMockApi(
     progress: null,
     errorCode: null,
   };
+  const installedDictationModels = new Set<DictationModelId>();
+  let dictationDownload: { id: DictationModelId; start: number } | undefined;
   let settings = defaultSettings("1b9dc50c-d87d-484b-88e6-04cb5f7c5a19");
   const folderSelections = new Map<string, string>();
   const benches = new Map<string, { snapshot: WorkbenchSnapshot; pinned: string }>();
@@ -513,6 +518,28 @@ export function createMockApi(
     });
     emitAppEvent({ type: "settings.changed" });
   }
+  function dictationSnapshot(): DictationSnapshot {
+    const download = dictationDownload;
+    const elapsed = download ? Date.now() - download.start : 0;
+    if (download && elapsed >= 1600) {
+      installedDictationModels.add(download.id);
+      dictationDownload = undefined;
+    }
+    return {
+      ...(settings.dictation ?? dictationDefaults),
+      models: (
+        [
+          { id: "whisper-base", bytes: 79_677_901 },
+          { id: "whisper-small", bytes: 251_875_316 },
+        ] as const
+      ).map(({ id, bytes }) =>
+        dictationDownload?.id === id
+          ? { id, bytes, status: "downloading", receivedBytes: Math.floor((bytes * elapsed) / 1600) }
+          : { id, bytes, status: installedDictationModels.has(id) ? "installed" : "missing" },
+      ),
+    };
+  }
+
   async function invoke<C extends Channel>(channel: C, request: Request<C>): Promise<Response<C>> {
     if (!isChannel(channel)) throw veraError("NOT_FOUND");
     const input = channels[channel].request.safeParse(request);
@@ -1733,6 +1760,35 @@ What this plugin does.
           },
         ];
         break;
+      case "dictation.get":
+        value = dictationSnapshot();
+        break;
+      case "dictation.change": {
+        const choice = channels["dictation.change"].request.parse(input.data);
+        dictationSnapshot();
+        const before = settings;
+        if (choice.action === "language") {
+          settings = mergeSettings(settings, { dictation: { language: choice.language } });
+        } else if (choice.action === "cancel") {
+          if (dictationDownload?.id === choice.id) dictationDownload = undefined;
+        } else {
+          if (dictationDownload) throw veraError("BUSY");
+          if (choice.action === "download" && !installedDictationModels.has(choice.id)) {
+            dictationDownload = { id: choice.id, start: Date.now() };
+          } else if (choice.action === "select") {
+            if (!installedDictationModels.has(choice.id)) throw veraError("NOT_FOUND");
+            settings = mergeSettings(settings, { dictation: { selectedModel: choice.id } });
+          } else if (choice.action === "remove") {
+            installedDictationModels.delete(choice.id);
+            if (settings.dictation?.selectedModel === choice.id) {
+              settings = mergeSettings(settings, { dictation: { selectedModel: null } });
+            }
+          }
+        }
+        if (before !== settings) emitAppEvent(settingsChangedEvent(before, settings));
+        value = dictationSnapshot();
+        break;
+      }
       case "app.settings.get":
         value = { settings };
         break;

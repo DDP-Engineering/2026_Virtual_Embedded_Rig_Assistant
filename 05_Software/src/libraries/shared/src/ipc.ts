@@ -4,6 +4,7 @@ import { changeDetailSchema, changeIdSchema, changeSummarySchema } from "./chang
 import { chatgptLoginSchema, chatgptStatusSchema } from "./chatgpt.js";
 import { commandPrefixDisplaySchema, commandPrefixIdsSchema, commandPrefixSchema } from "./command-prefix.js";
 import { composerImageSchema, composerImageSourceSchema, rasterFormatSchema } from "./composer-images.js";
+import { dictationChangeSchema, dictationSnapshotSchema } from "./dictation.js";
 import {
   docsByteReadSchema,
   docsByteWindowSchema,
@@ -811,6 +812,8 @@ export const channels = {
   "app.info": defineChannel("app.info", z.strictObject({}), appInfoSchema),
   "help.list": defineChannel("help.list", helpListRequestSchema, z.array(helpPageSummarySchema).max(256)),
   "help.read": defineChannel("help.read", helpReadRequestSchema, helpPageSchema),
+  "dictation.get": defineChannel("dictation.get", z.strictObject({}), dictationSnapshotSchema),
+  "dictation.change": defineChannel("dictation.change", dictationChangeSchema, dictationSnapshotSchema),
   "app.settings.get": defineChannel("app.settings.get", z.strictObject({}), settingsSnapshotSchema),
   "commands.shells": defineChannel(
     "commands.shells",

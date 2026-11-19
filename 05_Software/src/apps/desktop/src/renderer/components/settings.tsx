@@ -1,8 +1,9 @@
 import { type AppInfo, type SettingsPatch, type SettingsSnapshot, typographyDefaults } from "@vera/shared";
-import { Bell, Globe, Info, Keyboard, Palette, RefreshCw, Server, Shield } from "lucide-react";
+import { Bell, Globe, Info, Keyboard, Mic, Palette, RefreshCw, Server, Shield } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { About } from "./about.js";
 import { CommandSettings } from "./command-settings.js";
+import { DictationSettings } from "./dictation-settings.js";
 import { ErrorMessage } from "./error-message.js";
 import { KeyboardShortcuts } from "./keyboard-shortcuts.js";
 import { PrivacySettings } from "./privacy-settings.js";
@@ -11,7 +12,16 @@ import { UpdatesPanel } from "./updates.js";
 import { WebAccessPanel } from "./web-access.js";
 
 /** Settings pages with their own panel; every other page shows the generic section below. */
-const OWN_PANELS = new Set(["providers", "web", "appearance", "updates", "shortcuts", "commands", "data"]);
+const OWN_PANELS = new Set([
+  "providers",
+  "web",
+  "appearance",
+  "updates",
+  "shortcuts",
+  "commands",
+  "data",
+  "dictation",
+]);
 
 export function useSettingsSections() {
   const { t } = useTranslation();
@@ -21,6 +31,7 @@ export function useSettingsSections() {
     { id: "appearance", icon: Palette, label: t("settings.appearance") },
     { id: "commands", icon: Server, label: t("settings.commands") },
     { id: "notifications", icon: Bell, label: t("settings.notifications") },
+    { id: "dictation", icon: Mic, label: t("settings.dictation") },
     { id: "shortcuts", icon: Keyboard, label: t("settings.shortcuts") },
     { id: "updates", icon: RefreshCw, label: t("settings.updates") },
     { id: "data", icon: Shield, label: t("settings.data") },
@@ -79,6 +90,7 @@ export function Settings({
       <div hidden={section !== "providers"}>
         <Providers />
       </div>
+      {section === "dictation" && <DictationSettings />}
       {section === "web" && <WebAccessPanel />}
       {section === "commands" && (
         <CommandSettings shell={snapshot.settings.shell} saving={saving} update={update} />

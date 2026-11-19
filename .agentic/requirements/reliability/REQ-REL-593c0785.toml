@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-REL-593c0785"
+title = "Retry locked dictation model removal"
+status = "active"
+requirement = "If pending dictation model files cannot be deleted, VERA shall present a removal retry while keeping the model unavailable."
+verification = "Simulate a permission error when deleting a moved model directory, assert the selected state is empty and downloading is blocked, then remove the directory on retry."
+affected_paths = ["05_Software/src/apps/desktop/src/main/dictation/models.ts", "05_Software/src/libraries/shared/src/dictation.ts", "05_Software/src/apps/desktop/src/renderer/components/dictation-settings.tsx"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/dictation/models.test.ts", "05_Software/src/apps/desktop/src/renderer/components/dictation-settings.test.ts"]
+created = 2026-11-20
+updated = 2026-11-20

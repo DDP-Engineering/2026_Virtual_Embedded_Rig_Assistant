@@ -40,7 +40,9 @@ Offline dependency kits: `npm run vera -- catalog kit --source plugins --platfor
 
 Stored formats: every format is version 1 during development and any other version is invalid data (root AGENTS.md). Current-format fixtures live in `05_Software/tests/fixtures/app-data/`. Project metadata lives under `<workbench>/.vera`; test workbenches are created in the current form.
 
-No external service is required. Tests use loopback fixtures and replay; live providers are reached only by the manual commands marked below.
+Automated tests use loopback fixtures and replay. Starting a model download in Settings > Dictation
+reaches fixed Hugging Face artifact hosts. Focused model tests stream local synthetic files.
+Live provider checks run through the manual commands marked below.
 
 ## Readiness checks
 

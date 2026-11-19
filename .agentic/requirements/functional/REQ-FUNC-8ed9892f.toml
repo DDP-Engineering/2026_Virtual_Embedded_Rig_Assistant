@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-FUNC-8ed9892f"
+title = "Install verified dictation models"
+status = "active"
+requirement = "When the user downloads a dictation model, VERA shall report streamed byte progress and publish the complete verified files atomically under its application data directory."
+verification = "Stream a staged fixture and check intermediate progress, final verified state and the absence of published files until completion."
+affected_paths = ["05_Software/src/apps/desktop/src/main/dictation/models.ts", "05_Software/src/apps/desktop/src/main/dictation/integrity.ts", "05_Software/src/apps/desktop/src/main/dictation/transfer.ts", "05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/libraries/shared/src/dictation.ts", "05_Software/src/libraries/shared/src/ipc.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/dictation/models.test.ts", "05_Software/src/apps/desktop/src/preload/bridge.test.ts"]
+created = 2026-11-20
+updated = 2026-11-20
+spec = "specs/REQ-FUNC-8ed9892f.md"

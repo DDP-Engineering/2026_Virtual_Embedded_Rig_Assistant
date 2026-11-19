@@ -31,6 +31,11 @@ shortcut. Existing persisted event format remains 1.
 
 ## Public interface
 
+- `dictation.get` and `dictation.change` return verified installation summaries, progress and
+  effective selection. Requests carry a catalog model id or spoken-language code. The trust
+  boundary and mock operate on schemas in `shared/src/dictation.ts`. [Dictation](dictation.md)
+  owns model paths and storage.
+
 - `session.image.attach` accepts a workbench/session pair and either bounded base64 file bytes or an existing workbench path. It returns a durable relative path, a display name and a bounded PNG thumbnail. `session.image.capability` resolves image support for the same effective model as dispatch, with catalog I/O outside the session queue.
 
 Strict `terminal.*` user channels bind UUID terminal IDs to the current workbench, fix creation cwd

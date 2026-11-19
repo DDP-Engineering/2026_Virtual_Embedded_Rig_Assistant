@@ -47,6 +47,9 @@ plugins/shell.test.ts and renderer components/command-settings.test.ts.
   model/provider/update/recent/limit defaults. Optional sessionOrder (session ids per workbench
   id, TASK-c99ca08c) is main-owned: only the internal service patch writes it, the IPC settings
   patch rejects it. Exact contract: [data spec](../specs/REQ-DATA-4a030001.md).
+- Optional `dictation` stores a selected installed-model id or null and a spoken-language code or
+  `auto`. Writes enter the internal settings patch through dedicated dictation IPC.
+  [Dictation models](dictation.md) owns verification and effective selection.
 - app.settings.get({}) and app.settings.update(patch) use validated schemas.
   VeraApi exposes getSettings/updateSettings; mockApi uses the same schemas and event behavior.
 - PathProvider supplies userData/settings/logs; Clock supplies now/sleep; FileAccess supplies

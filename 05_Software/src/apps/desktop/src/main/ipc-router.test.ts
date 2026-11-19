@@ -18,6 +18,8 @@ const unused = () => {
 };
 const workbenchHandlers = {
   "commands.shells": unused,
+  "dictation.get": unused,
+  "dictation.change": unused,
   "terminal.list": unused,
   "terminal.create": unused,
   "terminal.output": unused,

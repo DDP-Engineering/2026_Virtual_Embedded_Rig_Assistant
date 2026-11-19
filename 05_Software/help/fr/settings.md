@@ -13,6 +13,7 @@
 | **Mises à jour** | La façon dont VERA se met à jour |
 | **Données et confidentialité** | Valeurs de masquage par défaut pour quatre domaines |
 | **À propos** | Version, environnement d’exécution, licence et composants tiers |
+| **Dictée** | Modèles Whisper locaux et langue parlée |
 
 ## Données et confidentialité
 
@@ -70,3 +71,11 @@ La désactivation de l’accès web arrête aussi les recherches et télécharge
 ## Commandes shell
 
 Dans Paramètres → Commandes, choisissez Automatique, PowerShell 7, Windows PowerShell, Cmd, Bash ou Personnalisé, puis Enregistrer. Les variantes installées sont détectées dans les chemins de recherche et dossiers standards ; les variantes absentes sont désactivées. Personnalisé accepte un nom d’exécutable ou un chemin absolu. Automatique préfère PowerShell 7, Windows PowerShell puis Cmd sous Windows ; Linux préfère Bash puis sh. PowerShell exécute les commandes UTF-8 sans profil et sans interaction. Bash utilise `-lc` ; les profils peuvent modifier l’environnement. Sous Windows, Bash désigne une version native comme Git Bash ; l’ancien lanceur WSL n’est pas choisi. Cmd utilise `/d /s /c` et une ligne avec `&` ou `&&` entre commandes ; les commandes internes emploient la page de codes Windows. Pour une sortie UTF-8, utilisez PowerShell ou Bash. Le choix s’applique aux prochaines commandes de l’agent et aux nouveaux terminaux ; les terminaux existants conservent leur shell. Un shell choisi explicitement mais absent produit une erreur.
+
+## Dictée
+
+Choisissez **Whisper Small** (recommandé) ou **Whisper Base** (compact). La page indique la taille du téléchargement et l’état d’installation de chaque modèle. Cliquez sur **Télécharger** et suivez la progression. **Annuler** efface le téléchargement partiel. Si VERA signale un échec ou des fichiers endommagés, cliquez sur **Réessayer**. Libérez de l’espace sur le disque si nécessaire.
+
+Après l’installation, cliquez sur **Utiliser le modèle**. VERA mémorise votre choix après redémarrage. **Supprimer** efface les fichiers du modèle et annule sa sélection s’il était actif. Si la suppression échoue, fermez les applications qui utilisent les fichiers du modèle, puis cliquez sur **Réessayer**. Les modèles sont stockés dans les données de l’application VERA et partagés entre les bancs de travail.
+
+Sous **Langue parlée**, choisissez **Détection automatique** ou la langue que vous allez parler.

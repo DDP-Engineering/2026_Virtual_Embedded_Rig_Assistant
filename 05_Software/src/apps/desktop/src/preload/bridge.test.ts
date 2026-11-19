@@ -95,6 +95,8 @@ it("registers a session replay subscription before dispatch and filters its toke
 it("infers registry types and returns validated metadata", async () => {
   expectTypeOf<Channel>().toEqualTypeOf<
     | "commands.shells"
+    | "dictation.get"
+    | "dictation.change"
     | "terminal.list"
     | "terminal.create"
     | "terminal.output"
@@ -355,4 +357,38 @@ it("workbench subscriptions filter id/schema and validate config/pinned/completi
   await expect(
     bridge.invoke("workbench.config.update", { patch: { id: "bad" } } as never),
   ).rejects.toMatchObject({ code: "INVALID" });
+});
+
+it("accepts typed dictation actions and keeps model paths out of the bridge", async () => {
+  const { bridge, transport } = fixture();
+  const snapshot: Response<"dictation.change"> = {
+    selectedModel: "whisper-base",
+    language: "fr",
+    models: [
+      { id: "whisper-base", bytes: 79_677_901, status: "installed" },
+      { id: "whisper-small", bytes: 251_875_316, status: "missing" },
+    ],
+  };
+  const action = { action: "language", language: "fr" } as const;
+  transport.invoke.mockResolvedValueOnce({ ok: true, value: snapshot } as never);
+  expect(await bridge.invoke("dictation.change", action)).toEqual(snapshot);
+  expect(transport.invoke).toHaveBeenCalledExactlyOnceWith("vera:invoke", "dictation.change", action);
+  for (const request of [
+    { action: "download", id: "../whisper-base" },
+    { action: "download", id: "whisper-base", url: "https://invalid.example" },
+    { action: "language", language: "unsupported" },
+  ]) {
+    await expect(bridge.invoke("dictation.change", request as never)).rejects.toMatchObject({
+      code: "INVALID",
+    });
+  }
+  await expect(
+    bridge.invoke("app.settings.update", { dictation: { selectedModel: "whisper-small" } } as never),
+  ).rejects.toMatchObject({ code: "INVALID" });
+  expect(transport.invoke).toHaveBeenCalledTimes(1);
+  transport.invoke.mockResolvedValueOnce({
+    ok: true,
+    value: { ...snapshot, models: [{ ...snapshot.models[0], directory: "/hidden" }, snapshot.models[1]] },
+  } as never);
+  await expect(bridge.invoke("dictation.get", {})).rejects.toMatchObject({ code: "INTERNAL" });
 });

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { dictationDefaults, dictationPreferencesSchema } from "./dictation.js";
 import { shortcutOverridesSchema } from "./keyboard-shortcuts.js";
 import { partsSearchSettingsSchema } from "./parts-search.js";
 import { catalogChannelSchema, catalogUrlSchema } from "./plugin-catalog.js";
@@ -68,6 +69,7 @@ const fontSizeSchema = z.union([
   z.literal(24),
 ]);
 const mutable = {
+  dictation: dictationPreferencesSchema.optional(),
   privacy: appPrivacySchema.optional(),
   /** Empty selects the platform default; an explicit name/path must resolve on this machine. */
   shell: z
@@ -134,6 +136,7 @@ export const settingsSnapshotSchema = z.strictObject({ settings: settingsSchema 
 export type Settings = z.infer<typeof settingsSchema>;
 /** Internal service patch; provider writes enter through their dedicated IPC boundary. */
 export const settingsServicePatchSchema = settingsPatchSchema.extend({
+  dictation: dictationPreferencesSchema.partial().optional(),
   webAccess: webAccessSettingsSchema.optional(),
   partsSearch: partsSearchSettingsSchema.optional(),
   providers: providerSettingsSchema.optional(),
@@ -150,6 +153,9 @@ export function mergeSettings(current: Settings, patch: SettingsServicePatch): S
     ...clean,
     updates: { ...current.updates, ...clean.updates },
     limits: { ...current.limits, ...clean.limits },
+    ...(clean.dictation
+      ? { dictation: { ...dictationDefaults, ...current.dictation, ...clean.dictation } }
+      : {}),
     ...(current.privacy || clean.privacy
       ? {
           privacy: {

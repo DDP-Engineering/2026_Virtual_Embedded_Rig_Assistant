@@ -50,6 +50,7 @@ const presentationSettings = [
   "chatFontSize",
   "codeFontSize",
   "keyboardShortcuts",
+  "dictation",
   "recentWorkbenches",
   "sessionOrder",
 ];

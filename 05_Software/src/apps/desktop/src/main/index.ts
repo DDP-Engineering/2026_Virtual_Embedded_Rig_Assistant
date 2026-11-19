@@ -64,6 +64,7 @@ import { CatalogChecks } from "./catalog-checks.js";
 import { ChatgptAuth } from "./chatgpt-auth.js";
 import { CredentialFile } from "./credentials.js";
 import { configureDataLocations } from "./data-locations.js";
+import { DictationModels } from "./dictation/models.js";
 import { DisplayDocuments } from "./display-documents.js";
 import { DisplayIdentities, loadDisplayIdentityKey } from "./display-identities.js";
 import { publicViewer, publicWebDownload } from "./document-viewer.js";
@@ -244,6 +245,7 @@ const settings = new SettingsService({
     updates?.settingsChanged();
   },
 });
+const dictation = new DictationModels(dataLocations.paths.userData, settings);
 const sessionOrder = createSessionOrder(settings);
 const workbench = new WorkbenchService(
   {
@@ -1231,6 +1233,8 @@ ipcMain.handle(
           : help.read(request.page, request.language),
       "window.menu": (request) => popupWindowMenu(window, request, app.isPackaged),
       "commands.shells": () => detectCommandShells(processHost),
+      "dictation.get": () => dictation.get(),
+      "dictation.change": (change) => dictation.change(change),
       "app.settings.get": () => {
         const snapshot = settings.get();
         if (credentials.containsSecret(snapshot)) throw { code: "INVALID", messageKey: "errors.INVALID" };
@@ -1479,6 +1483,7 @@ if (!firstInstance) {
         ["webAccess", () => webAccess.close()],
         ["partsAccess", () => partsAccess.close()],
         ["credentials", () => credentials.close()],
+        ["dictation", () => dictation.close()],
         ["settings", () => settings.close()],
         ["log", () => logger.flush()],
       ],
@@ -1539,6 +1544,7 @@ if (!firstInstance) {
         ),
       ]);
       announcedSettings = settings.get().settings;
+      void dictation.recover().catch(() => logger.log("error", "dictation.recovery.failed"));
       updates = new Updates({
         distribution: updateDistribution(dataLocations.portable),
         configured: Boolean(__VERA_UPDATE_URL__),

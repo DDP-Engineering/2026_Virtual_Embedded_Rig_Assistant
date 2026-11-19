@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-FUNC-e74a09bb"
+title = "Remove local model files"
+status = "active"
+requirement = "When the user removes a dictation model, VERA shall remove its managed files and show it as available to download."
+verification = "Remove a verified model and check its directory is absent and the other model remains installed."
+affected_paths = ["05_Software/src/apps/desktop/src/main/dictation/models.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/dictation/models.test.ts"]
+created = 2026-11-20
+updated = 2026-11-20

@@ -13,6 +13,7 @@
 | **Updates** | How VERA updates itself |
 | **Data & privacy** | Masking defaults for four areas |
 | **About** | Version, runtime, license and third-party components |
+| **Dictation** | Local Whisper models and spoken language |
 
 ## Data & privacy
 
@@ -70,3 +71,11 @@ Turning web access off also stops searches and downloads in progress. Individual
 ## Shell commands
 
 In Settings → Commands, choose Automatic, PowerShell 7, Windows PowerShell, Cmd, Bash or Custom, then Save. Installed variants are detected from executable search paths and standard installation folders; unavailable variants are disabled. Custom accepts an executable name or absolute path. Automatic prefers PowerShell 7, Windows PowerShell, then Cmd on Windows; Linux prefers Bash, then sh. PowerShell uses noninteractive UTF-8 commands without profiles. Bash uses `-lc`; login profiles may adjust the environment. On Windows, Bash means native Bash such as Git Bash; the old WSL launcher is not selected. Cmd commands use `/d /s /c`, accept one line with `&` or `&&` to join commands, and built-in output uses the Windows code page. Use PowerShell or Bash when UTF-8 output is required. The setting applies to future agent commands and newly opened terminals; existing terminals keep their current shell. An explicitly selected unavailable shell reports an error.
+
+## Dictation
+
+Choose **Whisper Small** (recommended) or **Whisper Base** (compact). The page shows the download size and installation status for each model. Choose **Download** and follow the progress. **Cancel** discards the partial download. If VERA reports a failed download or damaged files, choose **Retry**. Free disk space if the download needs more room.
+
+Choose **Use model** after installation. VERA remembers your selection across restarts. **Remove** deletes that model’s files and clears the selection if it was active. If removal fails, close apps using the model files and choose **Retry**. Models are stored in VERA’s application data and shared across workbenches.
+
+Under **Spoken language**, choose **Automatic detection** or select the language you plan to speak.

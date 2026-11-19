@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-DATA-dfe09857"
+title = "Clear removed selection"
+status = "active"
+requirement = "When the user removes the selected dictation model, VERA shall persist an empty model selection."
+verification = "Remove the selected model and assert the effective selection and reopened settings both hold null."
+affected_paths = ["05_Software/src/apps/desktop/src/main/dictation/models.ts", "05_Software/src/libraries/shared/src/settings.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/dictation/models.test.ts"]
+created = 2026-11-20
+updated = 2026-11-20
