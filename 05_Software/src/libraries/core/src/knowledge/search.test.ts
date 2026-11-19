@@ -51,7 +51,7 @@ async function harness() {
     release: async () => {},
   };
   const rows = new DocumentsRepository(db),
-    knowledge = new DocumentKnowledge(root, db, port),
+    knowledge = new DocumentKnowledge(root, db, () => port),
     signal = new AbortController().signal;
   const add = async (path: string, text: string, pages?: string[]) => {
     await writeFile(join(root, path), text);
@@ -503,7 +503,12 @@ it("uses the workbench retrieval defaults when search_docs omits k or mode", asy
       /Semantic/,
     );
     expect((await h.knowledge.search({ query: "I2C1_CR1" }, h.signal)).results).toHaveLength(3);
-    const unset = new DocumentKnowledge(h.root, h.db, h.port, () => undefined);
+    const unset = new DocumentKnowledge(
+      h.root,
+      h.db,
+      () => h.port,
+      () => undefined,
+    );
     expect((await unset.search({ query: "I2C1_CR1" }, h.signal)).results).toHaveLength(3);
   } finally {
     await h.close();
@@ -873,9 +878,7 @@ it("falls back to keyword results when the indexer cannot rank, and still fails 
       },
       release: async () => {},
     });
-    const stopped = new DocumentKnowledge(
-      h.root,
-      h.db,
+    const stopped = new DocumentKnowledge(h.root, h.db, () =>
       failing(Object.assign(Error("Indexing stopped."), { retry: true })),
     );
     for (const mode of ["hybrid", "semantic"] as const) {
@@ -883,7 +886,7 @@ it("falls back to keyword results when the indexer cannot rank, and still fails 
       expect(found.results.map((r) => r.path)).toEqual(["docs/a.md"]);
       expect(found.message).toMatch(/semantic ranking is unavailable/i);
     }
-    const broken = new DocumentKnowledge(h.root, h.db, failing(Error("Embedding worker failed.")));
+    const broken = new DocumentKnowledge(h.root, h.db, () => failing(Error("Embedding worker failed.")));
     await expect(broken.search({ query: "supply", mode: "hybrid" }, h.signal)).rejects.toThrow(
       "Embedding worker failed.",
     );

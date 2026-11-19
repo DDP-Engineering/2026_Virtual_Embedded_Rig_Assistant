@@ -30,7 +30,14 @@ export function readEmbeddingModel(
   modelId: EmbeddingModelId = defaultEmbeddingModelId,
 ): EmbeddingModel {
   const path = embeddingModelManifestPath(models, modelId);
-  const manifest = embeddingModelManifestSchema.parse(JSON.parse(readFileSync(path, "utf8")));
+  let contents: string;
+  try {
+    contents = readFileSync(path, "utf8");
+  } catch (cause) {
+    // Only source file errors should trigger the ingest rescan.
+    throw Error(`Local embedding model manifest unavailable for ${modelId}.`, { cause });
+  }
+  const manifest = embeddingModelManifestSchema.parse(JSON.parse(contents));
   if (manifest.modelId !== modelId) throw Error(`Model manifest identity mismatch: ${path}`);
   return modelSchema.parse(manifest);
 }
@@ -57,11 +64,15 @@ export interface EmbeddingPort {
   release(root: string): Promise<void>;
   cached?(root: string, epoch: string): boolean;
 }
+interface WorkbenchLease {
+  id: number;
+  tail?: Promise<void>;
+}
 interface Slot {
   worker?: Worker | undefined;
-  tail: Promise<unknown>;
-  closed: boolean;
-  epoch?: string | undefined;
+  tail: Promise<void>;
+  idle?: ReturnType<typeof setTimeout> | undefined;
+  epoch?: { owner: number; key: string } | undefined;
   /** Workers detached from this slot that are still finishing a native call. */
   retiring: Set<Promise<void>>;
 }
@@ -72,11 +83,13 @@ export function embeddingModelId(model: EmbeddingModel): string {
     .update(JSON.stringify({ dtype: model.dtype, embedding: model.embedding, files: model.files }))
     .digest("hex")}`;
 }
-/** Host-selected local resources; serial persistent worker/cache per workbench, including queue deadlines. */
+/** Host-selected local resources; serial worker per model with a workbench-scoped cache, including queue deadlines. */
 export class EmbeddingHost implements EmbeddingPort {
   readonly modelId: string;
   readonly model: EmbeddingModel;
-  private readonly slots = new Map<string, Slot>();
+  private readonly slot: Slot = { tail: Promise.resolve(), retiring: new Set() };
+  private readonly roots = new Map<string, WorkbenchLease>();
+  private nextRoot = 0;
   /** Workers inside a request, from postMessage until their reply or exit. */
   private readonly busy = new Set<Worker>();
   constructor(
@@ -86,6 +99,7 @@ export class EmbeddingHost implements EmbeddingPort {
     private readonly deadlineMs = 120000,
     /** How long release waits for a busy worker before returning to its caller. */
     private readonly releaseWaitMs = 5000,
+    private readonly idleTimeoutMs = 60000,
   ) {
     this.model = modelSchema.parse(model);
     if (!Number.isFinite(deadlineMs) || deadlineMs <= 0) throw Error("Invalid embedding deadline.");
@@ -102,99 +116,108 @@ export class EmbeddingHost implements EmbeddingPort {
   }
   private call(root: string, args: Record<string, unknown>, signal: AbortSignal): Promise<unknown> {
     signal.throwIfAborted();
-    let slot = this.slots.get(root);
-    if (!slot) {
-      slot = { tail: Promise.resolve(), closed: false, retiring: new Set() };
-      this.slots.set(root, slot);
-    }
-    const owned = slot;
+    const owned = this.slot;
+    clearTimeout(owned.idle);
+    const owner: WorkbenchLease = this.roots.get(root) ?? { id: ++this.nextRoot };
+    this.roots.set(root, owner);
+    const epoch =
+      args.type === "rank" ? { owner: owner.id, key: JSON.stringify([owner.id, args.epoch]) } : undefined;
     const deadline = performance.now() + this.deadlineMs;
     let started = false,
       cancelled = false;
     let queuedCleanup = () => {};
-    const task = owned.tail
-      .catch(() => {})
-      .then(async () => {
-        started = true;
-        queuedCleanup();
-        if (cancelled) throw Error("Embedding queued request cancelled.");
-        signal.throwIfAborted();
-        if (owned.closed || performance.now() >= deadline) throw Error("Embedding request expired. Retry.");
-        const payload =
-          args.type === "rank"
-            ? {
-                ...args,
-                rows:
-                  owned.epoch === args.epoch
-                    ? undefined
-                    : typeof args.rows === "function"
-                      ? args.rows()
-                      : args.rows,
-              }
-            : args;
-        const worker =
-          owned.worker ?? new Worker(this.entry, { workerData: { models: this.models, model: this.model } });
-        if (!owned.worker) {
-          worker.on("error", () => {});
-          worker.on("message", () => this.busy.delete(worker));
-          worker.on("exit", () => {
-            this.busy.delete(worker);
-            if (owned.worker === worker) {
-              owned.worker = undefined;
-              owned.epoch = undefined;
-            }
-          });
-        }
-        owned.worker = worker;
-        return new Promise((resolve, reject) => {
-          let ended = false;
-          const finish = (value?: unknown, error?: Error) => {
-            if (ended) return;
-            ended = true;
-            clearTimeout(timer);
-            signal.removeEventListener("abort", abort);
-            worker.removeListener("message", message);
-            worker.removeListener("error", crash);
-            worker.removeListener("exit", exited);
-            if (error) {
-              owned.worker = undefined;
-              owned.epoch = undefined;
-              // The caller is released now; a worker still inside its native call stops after it.
-              this.retire(owned, worker);
-              reject(error);
-            } else {
-              if (args.type === "rank") owned.epoch = String(args.epoch);
-              resolve(value);
-            }
-          };
-          const abort = () => finish(undefined, Error("Embedding aborted."));
-          const message = (value: { ok?: boolean; result?: unknown }) =>
-            value?.ok
-              ? finish(value.result)
-              : finish(
-                  undefined,
-                  Error("Local embedding failed. Check model assets and input token budget."),
-                );
-          const crash = () => finish(undefined, Error("Embedding worker failed. Retry."));
-          const exited = () => finish(undefined, Error("Embedding worker exited. Retry."));
-          const timer = setTimeout(
-            () => finish(undefined, Error("Embedding deadline exceeded. Retry.")),
-            Math.max(1, deadline - performance.now()),
-          );
-          signal.addEventListener("abort", abort, { once: true });
-          worker.once("message", message);
-          worker.once("error", crash);
-          worker.once("exit", exited);
-          try {
-            worker.postMessage(payload);
-            this.busy.add(worker);
-          } catch {
-            crash();
+    const task = owned.tail.then(async () => {
+      while (owned.retiring.size) await Promise.all(owned.retiring);
+      started = true;
+      queuedCleanup();
+      if (cancelled) throw Error("Embedding queued request cancelled.");
+      signal.throwIfAborted();
+      if (this.roots.get(root) !== owner || performance.now() >= deadline)
+        throw Error("Embedding request expired. Retry.");
+      const payload = epoch
+        ? {
+            ...args,
+            epoch: epoch.key,
+            rows:
+              owned.epoch?.key === epoch.key
+                ? undefined
+                : typeof args.rows === "function"
+                  ? args.rows()
+                  : args.rows,
           }
-          if (signal.aborted) abort();
+        : args;
+      // A released workbench's in-flight rank can replace the worker cache before replying.
+      if (epoch && owned.epoch?.key !== epoch.key) owned.epoch = undefined;
+      const worker =
+        owned.worker ?? new Worker(this.entry, { workerData: { models: this.models, model: this.model } });
+      if (!owned.worker) {
+        worker.on("error", () => {});
+        worker.on("message", () => this.busy.delete(worker));
+        worker.on("exit", () => {
+          this.busy.delete(worker);
+          if (owned.worker === worker) {
+            owned.worker = undefined;
+            owned.epoch = undefined;
+          }
         });
+      }
+      owned.worker = worker;
+      return new Promise((resolve, reject) => {
+        let ended = false;
+        const finish = (value?: unknown, error?: Error) => {
+          if (ended) return;
+          ended = true;
+          clearTimeout(timer);
+          signal.removeEventListener("abort", abort);
+          worker.removeListener("message", message);
+          worker.removeListener("error", crash);
+          worker.removeListener("exit", exited);
+          if (error) {
+            // The caller is released now; a worker still inside its native call stops after it.
+            if (owned.worker === worker) this.retireWorker();
+            reject(error);
+          } else {
+            if (epoch && owned.worker === worker && this.roots.get(root) === owner) owned.epoch = epoch;
+            resolve(value);
+          }
+        };
+        const abort = () => finish(undefined, Error("Embedding aborted."));
+        const message = (value: { ok?: boolean; result?: unknown }) =>
+          value?.ok
+            ? finish(value.result)
+            : finish(undefined, Error("Local embedding failed. Check model assets and input token budget."));
+        const crash = () => finish(undefined, Error("Embedding worker failed. Retry."));
+        const exited = () => finish(undefined, Error("Embedding worker exited. Retry."));
+        const timer = setTimeout(
+          () => finish(undefined, Error("Embedding deadline exceeded. Retry.")),
+          Math.max(1, deadline - performance.now()),
+        );
+        signal.addEventListener("abort", abort, { once: true });
+        worker.once("message", message);
+        worker.once("error", crash);
+        worker.once("exit", exited);
+        try {
+          worker.postMessage(payload);
+          this.busy.add(worker);
+        } catch {
+          crash();
+        }
+        if (signal.aborted) abort();
       });
-    owned.tail = task;
+    });
+    const tail = task.then(
+      () => {},
+      () => {},
+    );
+    owned.tail = tail;
+    owner.tail = tail;
+    void tail.then(() => {
+      if (owned.tail !== tail || !owned.worker) return;
+      owned.idle = setTimeout(() => {
+        this.roots.clear();
+        this.retireWorker();
+      }, this.idleTimeoutMs).unref();
+    });
     // Queued requests settle at their own deadline; active requests settle when aborted or answered.
     return new Promise((resolve, reject) => {
       const cancel = (error: Error) => {
@@ -244,9 +267,18 @@ export class EmbeddingHost implements EmbeddingPort {
    * deadline; release stops waiting for it sooner): ONNX Runtime brings the whole process down (0xE06D7363) when its worker thread is
    * terminated inside a native call, for example while switching workbenches during indexing.
    */
-  private retire(slot: Slot, worker: Worker): void {
+  private retireWorker(): void {
+    const slot = this.slot;
+    const worker = slot.worker;
+    if (!worker) return;
+    clearTimeout(slot.idle);
+    slot.worker = undefined;
+    slot.epoch = undefined;
     const retired = new Promise<void>((resolve) => {
+      let stopping = false;
       const stop = () => {
+        if (stopping) return;
+        stopping = true;
         clearTimeout(timer);
         worker.off("message", stop);
         worker.off("exit", stop);
@@ -265,16 +297,19 @@ export class EmbeddingHost implements EmbeddingPort {
     void retired.then(() => slot.retiring.delete(retired));
   }
   async release(root: string): Promise<void> {
-    const slot = this.slots.get(root);
-    if (!slot) return;
-    slot.closed = true;
-    this.slots.delete(root);
-    if (slot.worker) this.retire(slot, slot.worker);
+    const owner = this.roots.get(root);
+    if (!owner) return;
+    this.roots.delete(root);
+    const slot = this.slot;
+    if (slot.epoch?.owner === owner.id) slot.epoch = undefined;
+    const last = this.roots.size === 0;
+    if (last) this.retireWorker();
+    const draining = last ? Promise.all([...slot.retiring, owner.tail]) : owner.tail;
     // A workbench switch or close does not wait out a long native call. The worker is not
     // terminated early (see retire): it still stops after its reply, without a caller waiting.
     let timer: ReturnType<typeof setTimeout> | undefined;
     await Promise.race([
-      Promise.all(slot.retiring).then(() => slot.tail.catch(() => {})),
+      draining,
       new Promise<void>((resolve) => {
         timer = setTimeout(resolve, this.releaseWaitMs);
       }),
@@ -282,9 +317,10 @@ export class EmbeddingHost implements EmbeddingPort {
     clearTimeout(timer);
   }
   cached(root: string, epoch: string): boolean {
-    return this.slots.get(root)?.epoch === epoch;
+    const owner = this.roots.get(root);
+    return owner !== undefined && this.slot.epoch?.key === JSON.stringify([owner.id, epoch]);
   }
   async dispose(): Promise<void> {
-    await Promise.all([...this.slots.keys()].map((root) => this.release(root)));
+    await Promise.all([...this.roots.keys()].map((root) => this.release(root)));
   }
 }

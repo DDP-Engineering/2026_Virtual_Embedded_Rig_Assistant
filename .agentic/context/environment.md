@@ -8,7 +8,7 @@
 - Node.js 24.21.0 is pinned by version and SHA-256 and lives in `02_Tools/runtime/` (git-ignored). `05_Software/package.json` requires Node `>=24 <25`.
 - npm dependencies are pinned exactly in `05_Software/package.json` and its lockfile. Among them: Electron 44.7.0, electron-builder 26.17.0, electron-vite 5.0.0, TypeScript 6.0.3, Vitest 5.0.3, Playwright 1.64.0, Biome 2.5.15, esbuild 0.25.12, better-sqlite3 13.0.3 and node-pty 1.1.0.
 - Managed plugin Python uses the pinned uv 0.13.7 (`05_Software/src/uv/uv-manifest.json`). `npm run prepare:uv` fetches and verifies it.
-- Local embedding assets are pinned in `src/models/<model-id>/model-manifest.json`. `npm run prepare:model` verifies BGE and E5 and fetches missing assets. `-- --offline` verifies the cache without downloading. Installed BGE inference reads the manifest and assets from the same directory under `resources/models/`.
+- Local embedding assets are pinned in `src/models/<model-id>/model-manifest.json`. `npm run prepare:model` verifies BGE and E5 and fetches missing assets. `-- --offline` verifies the cache without downloading. Installed model inference reads the manifest and assets from the same directory under `resources/models/`.
 
 ## Setup
 

@@ -67,17 +67,17 @@ entries:
   - category: new
     topic: { en: Files, ro: Fișiere, de: Dateien, fr: Fichiers }
     text:
-      en: Switch Rendered, Text or Hex; preview images with zoom to 400% and remember each extension.
-      ro: Alege Randat, Text sau Hex; vezi imagini cu zoom până la 400% și reține modul pe extensie.
-      de: Gerendert, Text oder Hex wählen; Bilder bis 400% zoomen und die Wahl pro Dateiendung merken.
-      fr: Choisissez Rendu, Texte ou Hex ; zoomez les images à 400% et mémorisez le mode par extension.
+      en: Rendered, Text or Hex per extension. Zoom to 400%. In Hex, jump, find and copy bytes or text.
+      ro: Randat, Text sau Hex pe extensie. Zoom 400%. În Hex, sari, caută și copiază octeți sau text.
+      de: Gerendert, Text, Hex je Endung. Zoom bis 400 %. In Hex springen, Text und Bytes suchen und kopieren.
+      fr: Rendu, Texte, Hex par extension. Zoom 400 %. En Hex, sauts, recherche et copie de texte ou d’octets.
   - category: new
     topic: { en: Files, ro: Fișiere, de: Dateien, fr: Fichiers }
     text:
-      en: Inspect bytes in Hex, jump to offsets, find text or bytes and copy selected hex or text.
-      ro: Inspectează octeți în Hex, sari la offset, caută text sau octeți și copiază selecția.
-      de: Bytes in Hex ansehen, zu Offsets springen, Text oder Bytes suchen und die Auswahl kopieren.
-      fr: Affichez les octets en Hex, allez à un décalage, cherchez et copiez la sélection.
+      en: With Multilingual E5 Small, find passages by meaning across languages.
+      ro: Cu Multilingual E5 Small, găsești pasaje după sens în mai multe limbi.
+      de: Mit Multilingual E5 Small finden Sie passende Textstellen über Sprachgrenzen hinweg.
+      fr: Avec Multilingual E5 Small, trouvez des passages par leur sens dans plusieurs langues.
   - category: improved
     topic: { en: Files, ro: Fișiere, de: Dateien, fr: Fichiers }
     text:

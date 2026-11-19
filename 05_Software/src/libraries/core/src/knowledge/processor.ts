@@ -26,6 +26,7 @@ import {
 } from "./extraction.js";
 import { type DocumentInput, type DocumentProcessor, PDF_LIMIT, TEXT_LIMIT } from "./ingest.js";
 import { OfficeLimitError, officeFormat } from "./office-format.js";
+import type { PassageBudget } from "./token-budget.js";
 import type { OfficeExtractor, PdfExtractor } from "./worker-host.js";
 
 const cacheSchema = z
@@ -217,6 +218,7 @@ export function createDocumentProcessor(
   embeddings?: EmbeddingPort,
   office: OfficeExtractor = async (format, bytes) =>
     (await import("./office.js")).extractOffice(format, bytes),
+  fitsPassage?: PassageBudget,
 ): DocumentProcessor {
   const processor: DocumentProcessor = async (input) => {
     if (!/^[a-f0-9]{64}$/.test(input.sha256)) throw Error("Invalid extraction key.");
@@ -256,7 +258,12 @@ export function createDocumentProcessor(
           : {};
     const chunks = needsOcr(extraction)
       ? []
-      : chunkDocument(extraction, extname(input.path).toLowerCase() === ".csv", input.embeddings);
+      : chunkDocument(
+          extraction,
+          extname(input.path).toLowerCase() === ".csv",
+          input.embeddings,
+          fitsPassage,
+        );
     let vectors: Float32Array[] | undefined;
     if (embeddings && chunks.length) {
       vectors = [];
@@ -277,7 +284,7 @@ export function createDocumentProcessor(
         };
   };
   if (embeddings) {
-    processor.modelId = embeddings.modelId;
+    processor.modelId = () => embeddings.modelId;
     processor.release = (root) => embeddings.release(root);
   }
   return processor;

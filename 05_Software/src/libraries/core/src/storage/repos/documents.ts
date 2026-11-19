@@ -44,10 +44,7 @@ export class DocumentsRepository {
       .run(record);
     return this.get(record.path) as DocumentRecord;
   }
-  /**
-   * Validates chunks and derived data for writeChunks. Validation runs the tokenizer on every
-   * chunk, so a caller with its own transaction calls this before opening it.
-   */
+  /** Validates persisted chunk shape and derived data before the write transaction. */
   validateChunks(chunks: Chunk[], derived?: DocumentDerived): ValidatedChunks {
     const parsed = chunks.map((chunk) => chunkSchema.parse(chunk));
     const extraction = derived ? extractionSchema.parse(derived.extraction) : undefined;

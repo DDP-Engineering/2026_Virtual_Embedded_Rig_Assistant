@@ -58,7 +58,7 @@ export async function evaluate(software, scratch) {
         },
       );
     }
-    const knowledge = new DocumentKnowledge(workbench, db, host),
+    const knowledge = new DocumentKnowledge(workbench, db, () => host),
       metrics = {};
     const locatorKey = (row) => JSON.stringify([row.path, row.locator]);
     const byLocator = new Map(corpus.chunks.map((c) => [locatorKey(c), c.id]));

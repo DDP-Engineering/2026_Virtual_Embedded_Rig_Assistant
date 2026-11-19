@@ -9,6 +9,7 @@ import type {
   SemanticHit,
   SourceInspection,
 } from "@vera/core";
+import type { EmbeddingModelId } from "@vera/shared";
 
 /** The parts of an Electron UtilityProcess the host uses; tests script it. */
 export interface IndexerEndpoint {
@@ -21,7 +22,7 @@ export interface IndexerEndpoint {
 export type IndexerState = "running" | "stopped";
 export interface IndexerHostOptions {
   spawn: () => IndexerEndpoint;
-  modelId: string;
+  modelId: (model: EmbeddingModelId) => string;
   now?: () => number;
   /** Reports "stopped" after repeated crashes and "running" after every (re)start. */
   status?: (state: IndexerState) => void;
@@ -44,7 +45,7 @@ type Reply = {
  */
 export class IndexerHost {
   readonly processor: DocumentProcessor;
-  readonly embeddings: EmbeddingPort;
+  private readonly embeddingPorts = new Map<EmbeddingModelId, EmbeddingPort>();
   private endpoint: IndexerEndpoint | undefined;
   private next = 1;
   private readonly pending = new Map<
@@ -70,7 +71,7 @@ export class IndexerHost {
         },
         input.signal,
       )) as DocumentProcessor;
-    processor.modelId = options.modelId;
+    processor.modelId = (model) => this.embeddings(model).modelId;
     processor.release = async (root) => this.release(root);
     processor.select = (input: SelectInput) =>
       this.call<Selection>({ type: "select", input: { root: input.root, docs: input.docs } }, input.signal);
@@ -83,20 +84,30 @@ export class IndexerHost {
         input.signal,
       );
     this.processor = processor;
-    this.embeddings = {
-      modelId: options.modelId,
-      embed: (root, texts, signal) => this.call<Float32Array[]>({ type: "embed", root, texts }, signal),
+  }
+
+  /** Bind the protocol calls and stored identity to one registered model. */
+  embeddings(model: EmbeddingModelId): EmbeddingPort {
+    const existing = this.embeddingPorts.get(model);
+    if (existing) return existing;
+    const port: EmbeddingPort = {
+      modelId: this.options.modelId(model),
+      embed: (root, texts, signal) =>
+        this.call<Float32Array[]>({ type: "embed", model, root, texts }, signal),
       rank: async (root, epoch, rows, query, signal) => {
         type Ranked = { needRows?: boolean; hits?: SemanticHit[] };
-        const first = await this.call<Ranked>({ type: "rank", root, epoch, query }, signal);
+        const first = await this.call<Ranked>({ type: "rank", model, root, epoch, query }, signal);
         if (!first.needRows) return first.hits ?? [];
         const vectors = typeof rows === "function" ? rows() : rows;
         return (
-          (await this.call<Ranked>({ type: "rank", root, epoch, query, rows: vectors }, signal)).hits ?? []
+          (await this.call<Ranked>({ type: "rank", model, root, epoch, query, rows: vectors }, signal))
+            .hits ?? []
         );
       },
       release: async (root) => this.release(root),
     };
+    this.embeddingPorts.set(model, port);
+    return port;
   }
   state(): IndexerState {
     return this.stopped ? "stopped" : "running";

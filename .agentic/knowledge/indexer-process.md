@@ -23,12 +23,12 @@ ingest queue, ownership checks and every SQLite write; it reaches the indexer on
 ## Public interface
 
 - `IndexerHost({spawn, modelId, now?, status?})`: `processor` (a `DocumentProcessor` with
-  `select`/`inspect`/`release`/`modelId`), `embeddings` (`EmbeddingPort`), `state()`, `pid()`,
+  `select`/`inspect`/`release`/`modelId(model)`), `embeddings(model)` (a model-bound `EmbeddingPort`), `state()`, `pid()`,
   `restart()`, `close()`. The process starts on the first call (utilityProcess needs a ready app).
 - `createIndexerHandler(services, send)`: the in-process dispatch of `select`, `inspect`,
   `process`, `embed`, `rank`, `release` and `cancel`; replies `{id, ok, value}` or
   `{id, ok: false, error: {message, code?} | {aborted: true}}`.
-- `indexer-process.ts`: the utility entry; argument `--models=`; main and the utility both resolve the BGE descriptor within that root.
+- `indexer-process.ts`: the utility entry; argument `--models=`; main and the utility both resolve the configured descriptor within that root.
 - Shared: app event `indexer.status {state: running|stopped}`; channels `indexer.status` and
   `indexer.restart`; Docs shows `[data-indexer-stopped]` with Restart.
 
@@ -46,6 +46,7 @@ ingest queue, ownership checks and every SQLite write; it reaches the indexer on
   retry error (RULING-005).
 - `release(root)` is posted without waiting and never starts an indexer; closing a workbench does
   not wait for the indexer.
+- Process requests carry the workbench embedding settings. Embed and rank requests carry a registered model ID.
 - Ranking sends vectors only after the indexer answers `needRows`: the handler passes lazy rows that
   the EmbeddingHost reads only when its epoch cache misses at execution time.
 - The e2e network guard patches the main process only; the indexer composes no network code
@@ -57,7 +58,7 @@ ingest queue, ownership checks and every SQLite write; it reaches the indexer on
 |---|---|---|
 | protocol message or reply shape | `createIndexerHandler`, `IndexerHost.call` | indexer-handler.test.ts, indexer-host.test.ts |
 | crash/restart policy | `IndexerHost.exited`, `restart` | indexer-host.test.ts "stops after three crashes…" |
-| process composition or arguments | main/index.ts `new IndexerHost`, indexer-process.ts | tests/e2e/indexer.spec.ts |
+| process composition or arguments | main/index.ts `new IndexerHost`, indexer-process.ts | tests/e2e/indexer.spec.ts, tests/e2e/embedding-models.spec.ts |
 | stopped status UI | docs-tab.tsx `indexer.status` query | documents.test.ts "shows stopped indexing…" |
 
 ## Key behaviors

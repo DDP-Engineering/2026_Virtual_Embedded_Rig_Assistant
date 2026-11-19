@@ -120,7 +120,7 @@ while .vera content stays permanently excluded from indexed documents.
 - Ownership is checked before synchronous SQLite mutations. Read-only workbenches
   keep private snapshots and run no watcher. Close/switch aborts and drains ingest
   before lock release/storage close; failed release restores observation.
-- The schema supplies embeddings and full extraction storage. Current-model vector coverage controls unchanged-file
+- The schema supplies embeddings and full extraction storage. Vector coverage for the workbench's configured model controls unchanged-file
   reprocessing; atomic publication includes validated derived data. See
   [document search](document-search.md) for model/worker/ranking contracts.
 - Manual reindex admits work on the lifecycle queue and waits for completion

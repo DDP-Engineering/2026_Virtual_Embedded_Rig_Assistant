@@ -18,6 +18,7 @@ const handle = createIndexerHandler(
     select: selectDocuments,
     inspect: inspectSource,
     embeddings: services.embeddings,
+    release: services.release,
   },
   (message) => port.postMessage(message),
 );

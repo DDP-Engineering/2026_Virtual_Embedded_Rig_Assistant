@@ -25,7 +25,7 @@ export async function runDocuments(
     cleanup.push(() => settings.close());
     await settings.load();
     const documents = createDocumentServices();
-    cleanup.push(() => documents.embeddings.dispose());
+    cleanup.push(() => documents.dispose());
     const workbench = new WorkbenchService(
       {
         files,
@@ -61,10 +61,8 @@ export async function runDocuments(
       process.stdout.write(`${logger.scrub(JSON.stringify({ documents: rows }))}\n`);
       resultCode = rows.some((r) => r.status === "failed") ? 1 : 0;
     } else {
-      const result = await new DocumentKnowledge(
-        snapshot.folder,
-        workbench.getDatabase(),
-        documents.embeddings,
+      const result = await new DocumentKnowledge(snapshot.folder, workbench.getDatabase(), () =>
+        documents.embeddings(snapshot.config.embeddings.model),
       ).search(
         {
           query: options.query ?? "",

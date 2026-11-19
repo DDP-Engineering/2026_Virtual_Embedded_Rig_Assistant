@@ -22,14 +22,11 @@ chunk. Text windows span60 physical lines and advance50 (overlap10); oversized
 windows may split into smaller chunks with exact line ranges. CSV uses60 data
 lines/advance50 and repeats the original header in every chunk. Empty text
 produces no chunks. Chunk text targets1400 characters and remains below512 tokens including special
-tokens, measured with the existing package's pinned BGE tokenizer snapshot.
-The zero-dependency tokenizer library is bundled locally; no model execution or
-selection occurs. Full heading paths and repeated CSV headers count against both
+tokens, measured with the configured model's verified tokenizer. The model's passage
+prefix is part of the token count. Chunking uses the local tokenizer without model execution. Full heading paths and repeated CSV headers count against both
 budgets; an overflowing prefix fails processing explicitly. Heading paths stay
 complete in text and locator. Paragraph/whitespace boundaries are preferred;
 arbitrary identifiers and Unicode are checked after choosing each split.
-WP24 owns model selection; a tokenizer change updates this budget contract along
-with rechunking before a different model consumes the persisted text.
 
 Cache .vera/cache/extract/<sha256>.json is versioned, kind/hash-bound and schema
 validated. Reads/writes are bounded and refuse redirected ancestors/files.

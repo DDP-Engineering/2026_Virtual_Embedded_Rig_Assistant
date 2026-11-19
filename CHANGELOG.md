@@ -34,6 +34,8 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ### Changed
 
+- Indexing and semantic search use the workbench model and its token budget. Idle embedding workers stop.
+
 - Workbench Tools keeps core capabilities; Plugins groups specialized allowances by provider and shared ecosystem.
 - Skills clarifies activation and scopes, opens new instructions immediately and supports read-only viewing and retries.
 - Electron 44.11.4, zod 4.6.7 and Vite 7.3.8; undici, hono and fast-uri are raised through the lock file.

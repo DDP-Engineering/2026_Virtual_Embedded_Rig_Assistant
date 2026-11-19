@@ -22,7 +22,12 @@ import { verifyDocumentSource } from "./processor.js";
 // Field descriptions steer models that otherwise fill every optional argument with a guess.
 export const searchDocsSchema = z
   .object({
-    query: z.string().trim().min(1).max(1000).describe("What to look for, in the documents' language."),
+    query: z
+      .string()
+      .trim()
+      .min(1)
+      .max(1000)
+      .describe("What to look for. A multilingual model can also match passages in other languages."),
     // Omitted k or mode follow the workbench retrieval settings (8 results, hybrid by default).
     k: z
       .number()
@@ -190,7 +195,7 @@ export class DocumentKnowledge {
   constructor(
     private readonly root: string,
     private readonly db: Database.Database,
-    private readonly embeddings?: EmbeddingPort,
+    private readonly embeddings?: () => EmbeddingPort | undefined,
     private readonly defaults: () => WorkbenchRetrieval | undefined = () => undefined,
   ) {}
   private epoch(): string {
@@ -237,9 +242,10 @@ export class DocumentKnowledge {
     let semantic: { id: number; score: number }[] = [];
     let fallback = false;
     if (args.mode !== "keyword") {
-      if (!this.embeddings) throw Error("Semantic index unavailable. Index documents or use keyword/grep.");
-      const key = `${epoch}:${this.embeddings.modelId}:${args.pathGlob ?? ""}`;
-      const modelId = this.embeddings.modelId;
+      const embeddings = this.embeddings?.();
+      if (!embeddings) throw Error("Semantic index unavailable. Index documents or use keyword/grep.");
+      const modelId = embeddings.modelId;
+      const key = `${epoch}:${modelId}:${args.pathGlob ?? ""}`;
       const loadVectors = (): VectorRow[] => {
         if (this.epoch() !== epoch) throw Error("Document index changed while search was queued. Retry.");
         const eligible = new Set(rows.map((r) => r.id));
@@ -258,7 +264,7 @@ export class DocumentKnowledge {
         return vectors;
       };
       try {
-        semantic = await this.embeddings.rank(this.root, key, loadVectors, args.query, signal);
+        semantic = await embeddings.rank(this.root, key, loadVectors, args.query, signal);
       } catch (error) {
         // The desktop indexer may be stopped or restarting: keyword results stay available.
         if ((error as { retry?: unknown } | null)?.retry !== true) throw error;

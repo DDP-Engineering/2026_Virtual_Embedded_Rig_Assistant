@@ -7,6 +7,7 @@ import {
   type DocumentReason,
   type DocumentRecord,
   type DocumentVolume,
+  type EmbeddingModelId,
   veraError,
   type WorkbenchConfig,
   type WorkbenchEvent,
@@ -53,7 +54,7 @@ export interface DocumentResult {
   derived?: DocumentDerived;
 }
 export type DocumentProcessor = ((input: DocumentInput) => Promise<DocumentResult>) & {
-  modelId?: string;
+  modelId?(model: EmbeddingModelId): string;
   release?(root: string): Promise<void>;
   /** Document selection; the desktop app runs it in its indexer process (TASK-f09609fd). */
   select?(input: SelectInput): Promise<Selection>;
@@ -467,7 +468,6 @@ export class Ingester {
     chunks?: Chunk[],
     derived?: DocumentDerived,
   ): DocumentRecord {
-    // Validation tokenizes every chunk: done here, it does not run inside the write transaction.
     const valid = chunks && this.rows.validateChunks(chunks, derived);
     const row = this.mutation(() => {
       const old = this.rows.get(record.path);
@@ -479,13 +479,20 @@ export class Ingester {
     this.emit({ type: "index.document", path: row.path, document: row });
     return row;
   }
-  /** False when chunks of the document lack a vector of the current embedding model. */
-  private embedded(doc: DocumentRecord): boolean {
-    const modelId = this.options.process?.modelId;
-    if (!modelId) return true;
+  /** Whether the unchanged document lacks vectors for a model the processor can identify. */
+  private needsEmbedding(doc: DocumentRecord): boolean {
+    const model = this.options.config().embeddings.model;
+    let modelId: string | undefined;
+    try {
+      modelId = this.options.process?.modelId?.(model);
+    } catch {
+      // Existing keyword chunks remain searchable while the model descriptor is unavailable.
+      return false;
+    }
+    if (!modelId) return false;
     const db = this.options.db;
     return (
-      db.prepare("SELECT count(*) FROM chunks WHERE doc_id=?").pluck().get(doc.id) ===
+      db.prepare("SELECT count(*) FROM chunks WHERE doc_id=?").pluck().get(doc.id) !==
       db
         .prepare(
           "SELECT count(*) FROM embeddings e JOIN chunks c ON c.id=e.chunk_id WHERE c.doc_id=? AND e.model_id=?",
@@ -542,7 +549,7 @@ export class Ingester {
         old.mtime === record.mtime &&
         old.indexedAt !== null &&
         Date.parse(old.indexedAt) - before.mtimeMs > RACY_MS &&
-        this.embedded(old)
+        !this.needsEmbedding(old)
       )
         return "indexed";
       const inspect = this.options.process?.inspect ?? inspectSource;
@@ -583,7 +590,7 @@ export class Ingester {
         old?.sha256 === record.sha256 &&
         old.kind === kind &&
         !(old.status === "pending" && this.options.process) &&
-        !(old.status === "indexed" && !this.embedded(old)) &&
+        !(old.status === "indexed" && this.needsEmbedding(old)) &&
         !(old.status === "failed" && !this.attempted.has(attempt))
       )
         return old.status;

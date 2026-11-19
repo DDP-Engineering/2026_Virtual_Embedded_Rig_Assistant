@@ -28,6 +28,7 @@ import {
   type WorkerPool,
 } from "@vera/core";
 import {
+  type EmbeddingModelId,
   type EventEnvelope,
   type HelpLanguage,
   partsSearchDefaults,
@@ -74,7 +75,7 @@ export class SessionsHost {
       log?: (message: string) => void;
       clock: Clock;
       workers: WorkerPool;
-      embeddings?: EmbeddingPort;
+      embeddings?: (model: EmbeddingModelId) => EmbeddingPort;
       version: string;
       target: () => RendererTarget | undefined;
       emit: (event: EventEnvelope) => unknown;
@@ -224,7 +225,9 @@ export class SessionsHost {
           get skills() {
             return self.skills;
           },
-          ...(options.embeddings ? { embeddings: options.embeddings } : {}),
+          get embeddings() {
+            return options.embeddings?.((self.config ?? snapshot.config).embeddings.model);
+          },
           get retrieval() {
             return self.config?.retrieval;
           },

@@ -3,18 +3,20 @@ import { mkdir, mkdtemp, readFile, rm, symlink, writeFile } from "node:fs/promis
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
-import type { DocumentProcessor, EmbeddingHost } from "@vera/core";
+import type { DocumentProcessor } from "@vera/core";
 import { buildSync } from "esbuild";
 import { afterAll, beforeAll, expect, it } from "vitest";
 
 const root = fileURLToPath(new URL("../../", import.meta.url));
+const e5 = "Xenova/multilingual-e5-small";
 const cases = [
-  ["cli", "source"],
-  ["desktop", "source"],
-  ["cli", "packaged"],
-  ["desktop", "packaged"],
+  ["cli", "source", undefined],
+  ["desktop", "source", undefined],
+  ["cli", "packaged", undefined],
+  ["desktop", "packaged", undefined],
+  ["cli", "packaged", e5],
 ] as const;
-type Services = { processDocument: DocumentProcessor; embeddings: EmbeddingHost };
+type Services = { processDocument: DocumentProcessor; dispose(): Promise<void> };
 type CreateServices = (models?: string) => Services;
 const fixtures = new Map<string, { createDocumentServices: CreateServices; models: string }>();
 let compiledRoot: string | undefined;
@@ -77,8 +79,8 @@ afterAll(async () => {
 });
 
 it.each(cases)(
-  "%s composes a compiled PDF worker with %s models and persisted extraction cache",
-  async (host, layout) => {
+  "%s composes a compiled PDF worker with %s model assets (%s) and a persisted extraction cache",
+  async (host, layout, model) => {
     const temporary = await mkdtemp(join(tmpdir(), "vera-doc-host-"));
     let services: Services | undefined;
     try {
@@ -101,11 +103,16 @@ it.each(cases)(
         path: "docs/board.pdf",
         kind: "pdf",
         sha256,
+        ...(model ? { embeddings: { model, chunkSize: 1400, overlap: 200 } } : {}),
         signal: new AbortController().signal,
         assertWritable: () => {},
       });
       expect(result).toMatchObject({ status: "indexed", pages: 2 });
-      expect(result.derived?.modelId).toContain("ea104dacec62c0de699686887e3f920caeb4f3e3");
+      expect(result.derived?.modelId).toContain(
+        model
+          ? `${model}@761b726dd34fb83930e26aab4e9ac3899aa1fa78`
+          : "ea104dacec62c0de699686887e3f920caeb4f3e3",
+      );
       expect(result.derived?.vectors).toHaveLength(result.chunks?.length ?? 0);
       expect(
         result.chunks?.some(
@@ -116,8 +123,9 @@ it.each(cases)(
         JSON.parse(await readFile(join(bench, `.vera/cache/extract/${sha256}.json`), "utf8")),
       ).toMatchObject({ version: 1, sha256 });
     } finally {
-      await services?.embeddings.dispose();
+      await services?.dispose();
       await rm(temporary, { recursive: true, force: true });
     }
   },
+  30000,
 );

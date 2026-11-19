@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-7c394cbe"
+
+title = "Use the workbench model for document indexing"
+
+status = "active"
+
+requirement = """
+When VERA indexes a workbench document, VERA shall derive its vectors with the configured model and its manifest passage prefix, storing that model's identity with the vectors.
+"""
+
+verification = "Index BGE and E5 workbenches in one Electron launch and assert complete model-identified vectors; verify a missing manifest or tokenizer reports a terminal processing failure for a new document. Reopen unchanged indexed documents with no manifest and verify that both keyword results remain."
+
+affected_paths = ["05_Software/src/libraries/core/src/knowledge/processor.ts", "05_Software/src/libraries/core/src/knowledge/ingest.ts", "05_Software/src/libraries/core/src/knowledge/document-services.ts", "05_Software/src/apps/desktop/src/main/indexer-host.ts", "05_Software/src/libraries/core/src/index.ts", "05_Software/src/apps/cli/src/document-processor.ts", "05_Software/src/apps/desktop/src/main/document-processor.ts", "05_Software/src/apps/desktop/src/main/indexer-process.ts", "05_Software/src/libraries/core/src/knowledge/ingest-ports.test.ts"]
+
+linked_tests = ["05_Software/tests/e2e/embedding-models.spec.ts", "05_Software/src/libraries/core/src/knowledge/embedding.test.ts", "05_Software/tests/integration/document-hosts.test.ts", "05_Software/src/libraries/core/src/knowledge/embedding-ingest.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-19
+updated = 2026-11-19

@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-DATA-1ef1cbb5"
+
+title = "Budget chunks with the selected passage tokenizer"
+
+status = "active"
+
+requirement = """
+When VERA chunks a document for embedding, VERA shall bound each chunk's complete passage input, including the model prefix and special tokens, to the configured model's tokenizer window of 512 tokens.
+"""
+
+verification = "Index mixed-script texts with both models and independently tokenize every persisted chunk using the pinned tokenizer and its prefix. Include input whose unsplit text exceeds the window."
+
+affected_paths = ["05_Software/src/libraries/core/src/knowledge/token-budget.ts", "05_Software/src/libraries/core/src/knowledge/chunk.ts", "05_Software/src/libraries/core/src/knowledge/processor.ts", "05_Software/src/libraries/core/src/storage/repos/documents.ts"]
+
+linked_tests = ["05_Software/tests/e2e/embedding-models.spec.ts", "05_Software/src/libraries/core/src/knowledge/extraction.test.ts", "05_Software/src/libraries/core/src/knowledge/chunk-settings.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-19
+updated = 2026-11-19

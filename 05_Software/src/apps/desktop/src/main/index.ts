@@ -181,7 +181,7 @@ const indexer = new IndexerHost({
       [`--models=${models}`],
       { serviceName: "VERA Indexer" },
     ),
-  modelId: embeddingModelId(readEmbeddingModel(models)),
+  modelId: (model) => embeddingModelId(readEmbeddingModel(models, model)),
   status: (state) => {
     emitAppEvent({ topic: "app", id: "app", event: { type: "indexer.status", state } });
     if (state === "running") workbench.refreshDocuments();
@@ -451,7 +451,7 @@ const sessions = new SessionsHost({
   credentials,
   clock: systemClock,
   workers: fileWorkers,
-  embeddings: indexer.embeddings,
+  embeddings: (model) => indexer.embeddings(model),
   version: app.getVersion(),
   target: () =>
     window && !window.isDestroyed() ? { webContents: window.webContents, url: rendererUrl } : undefined,
@@ -551,12 +551,12 @@ function warmPrograms(snapshot: WorkbenchSnapshot): WorkbenchSnapshot {
 /** The first message of an open workbench loads its embedding model in the indexer (PERF-11). */
 const embeddingWarmup = createEmbeddingWarmup({
   hasVectors: (workbenchId) =>
-    workbench.readDocuments(workbenchId, async (root, db) =>
-      db.prepare("SELECT 1 FROM embeddings WHERE model_id=? LIMIT 1").get(indexer.embeddings.modelId)
-        ? root
-        : undefined,
-    ),
-  embed: (root, signal) => indexer.embeddings.embed(root, ["warm-up"], signal),
+    workbench.readDocuments(workbenchId, async (root, db) => {
+      const embeddings = indexer.embeddings(workbench.getSnapshot().config.embeddings.model);
+      if (db.prepare("SELECT 1 FROM embeddings WHERE model_id=? LIMIT 1").get(embeddings.modelId))
+        return { root, embeddings };
+    }),
+  embed: ({ root, embeddings }, signal) => embeddings.embed(root, ["warm-up"], signal),
 });
 
 // Programs that open Docs tree entries, detected once per start on first use (TASK-eae3a69e).

@@ -72,7 +72,7 @@ export interface SessionHost {
   maxToolCallsPerTurn?: number;
   noOutputTimeoutMs?: number;
   workers?: WorkerPool;
-  embeddings?: EmbeddingPort;
+  embeddings?: EmbeddingPort | undefined;
   /** Workbench defaults for search_docs; read on every search so saved settings apply at once. */
   retrieval?: WorkbenchRetrieval | undefined;
   skills?: SkillCatalog | undefined;
@@ -146,7 +146,12 @@ export class SessionService {
   constructor(private readonly host: SessionHost) {
     this.sessions = new SessionsRepository(host.db);
     this.artifacts = new ArtifactStore(host.root, host.db);
-    this.knowledge = new DocumentKnowledge(host.root, host.db, host.embeddings, () => host.retrieval);
+    this.knowledge = new DocumentKnowledge(
+      host.root,
+      host.db,
+      () => host.embeddings,
+      () => host.retrieval,
+    );
     this.messages = new MessagesRepository(host.db);
     this.hub = new SessionHub(host.db, () => this.now());
     this.approvals = new ApprovalGate({

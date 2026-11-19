@@ -31,6 +31,7 @@ export * from "./electrical/results.js";
 export * from "./electrical/tools.js";
 export * from "./electrical/units.js";
 export * from "./help/library.js";
+export * from "./knowledge/document-services.js";
 export * from "./knowledge/embedding.js";
 export * from "./knowledge/ingest.js";
 export * from "./knowledge/inspect.js";
