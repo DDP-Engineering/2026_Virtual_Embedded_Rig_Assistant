@@ -64,6 +64,14 @@ Doar textul căutării și adresele cerute de agent părăsesc calculatorul tău
 
 Dezactivarea accesului web oprește și căutările și descărcările în curs. Workbench-urile individuale pot dezactiva instrumentele web la **Editează workbench-ul** → **Instrumente**.
 
+### Browser interactiv
+
+În **Setări → Acces web**, selectează **Instalează browserul** pentru a descărca și verifica Chromium. Poți anula instalarea sau elimina browserul. Bifează **Activează browserul interactiv în VERA** și **Permite browserul interactiv în acest workbench**. Ambele opțiuni sunt inițial dezactivate.
+
+În chat, introdu la **Origine publică** originea exactă, de exemplu `https://example.com`, apoi selectează **Acordă acces**. Include protocolul și portul dacă diferă de cel implicit. Fiecare chat are propriile autorizări și propria fereastră. Autorizează individual originile suplimentare pentru redirecționări sau resurse.
+
+Cere agentului să deschidă și să citească o pagină sau să urmeze un link. Chatul arată activitatea și pagina autorizată. **Arată browserul** aduce fila în prim-plan. **Oprește navigarea** oprește tura și anulează operația în curs. **Revocă accesul** și **Închide browserul** închid sesiunea temporară și șterg autorizările. Închiderea ferestrei, dezactivarea oricărei opțiuni sau eliminarea browserului revocă accesul. Pentru fișierele acceptate, folosește descărcarea gestionată.
+
 ## Despre
 
 **Despre** afișează versiunea aplicației, platforma, arhitectura, dacă VERA rulează ca versiune portabilă, setările regionale ale sistemului, versiunile runtime, licența și lista componentelor terțe cu licențele lor.

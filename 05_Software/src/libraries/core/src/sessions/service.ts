@@ -536,6 +536,12 @@ export class SessionService {
     this.row(id);
     return this.hub.get(id);
   }
+  /** Read owned browser context without constructing or replaying the transcript. */
+  browserSession(id: string) {
+    const row = this.row(id);
+    if (this.deleting.has(id)) throw veraError("BUSY");
+    return { archived: Boolean(row.archived), browser: this.contexts.get(id)?.browser };
+  }
   /** The full stored text of one item's field; NOT_FOUND for a session of another workbench. */
   itemDetail(id: string, itemId: string, field: SessionItemDetailField): string {
     this.row(id);

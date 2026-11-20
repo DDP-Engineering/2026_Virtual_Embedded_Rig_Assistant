@@ -213,6 +213,12 @@ Contracts the tests pin down:
   untrusted and cited with Markdown links. Disabling or changing access revokes active calls;
   service limits and failures are recoverable tool errors, without automatic fallback. Links open in
   the system browser after confirmation.
+- Settings > Web access manages the pinned browser runtime (install, cancel and remove) and the
+  independent app and current-workbench opt-ins. Chat grants exact public HTTP(S) origins to its
+  owned session through trusted main-frame IPC. The browser panel displays current authorized
+  location and operation activity from main across renderer reload. Show brings the selected
+  authorized tab forward. Stop uses the normal turn cancellation path. Revoke, Close, external
+  window exit, removal and either opt-out release the corresponding grants and browser resources.
 - The Desktop browser session tools use both browser opt-ins, the workbench tool restrictions and
   an exact-origin grant. They use the isolated Chromium runtime and its public-only proxy to open,
   snapshot, follow, scroll, list or switch tabs and close. Rendered snapshots give bounded untrusted

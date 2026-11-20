@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { artifactContentSchema, artifactIdSchema, artifactSummarySchema } from "./artifacts.js";
+import { browserRuntimeViewSchema, browserSessionViewSchema, browserSettingsSchema } from "./browser.js";
 import { changeDetailSchema, changeIdSchema, changeSummarySchema } from "./changes.js";
 import { chatgptLoginSchema, chatgptStatusSchema } from "./chatgpt.js";
 import { commandPrefixDisplaySchema, commandPrefixIdsSchema, commandPrefixSchema } from "./command-prefix.js";
@@ -221,6 +222,46 @@ export const channels = {
     "terminal.consent",
     terminalTargetSchema.extend({ shared: z.boolean() }),
     terminalSummarySchema,
+  ),
+  "browser.settings.get": defineChannel("browser.settings.get", z.strictObject({}), browserSettingsSchema),
+  "browser.runtime.install": defineChannel(
+    "browser.runtime.install",
+    z.strictObject({}),
+    browserRuntimeViewSchema,
+  ),
+  "browser.runtime.cancel": defineChannel(
+    "browser.runtime.cancel",
+    z.strictObject({}),
+    browserRuntimeViewSchema,
+  ),
+  "browser.runtime.remove": defineChannel(
+    "browser.runtime.remove",
+    z.strictObject({}),
+    browserRuntimeViewSchema,
+  ),
+  "browser.session.get": defineChannel(
+    "browser.session.get",
+    z.strictObject({ workbenchId: workbenchIdSchema, sessionId: sessionIdSchema }),
+    browserSessionViewSchema,
+  ),
+  "browser.session.grant": defineChannel(
+    "browser.session.grant",
+    z.strictObject({
+      workbenchId: workbenchIdSchema,
+      sessionId: sessionIdSchema,
+      origin: z.string().trim().min(1).max(4096),
+    }),
+    z.strictObject({}),
+  ),
+  "browser.session.show": defineChannel(
+    "browser.session.show",
+    z.strictObject({ workbenchId: workbenchIdSchema, sessionId: sessionIdSchema }),
+    z.strictObject({}),
+  ),
+  "browser.session.close": defineChannel(
+    "browser.session.close",
+    z.strictObject({ workbenchId: workbenchIdSchema, sessionId: sessionIdSchema }),
+    z.strictObject({}),
   ),
   "web.access.get": defineChannel("web.access.get", z.strictObject({}), webAccessSnapshotSchema),
   "web.access.save": defineChannel("web.access.save", webAccessSaveSchema, webAccessSaveResultSchema),

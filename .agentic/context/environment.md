@@ -29,6 +29,12 @@ Native `browser-agent.spec.ts` exercises the Desktop replay gateway and browser 
 archive, isolated Chromium and public-only proxy. The browser fixture grants the test origin through
 Desktop main. `VERA_BROWSER_AGENT_EVIDENCE` optionally writes the focused acceptance receipt.
 
+Native `browser-controls.spec.ts` drives the real Web access settings and Chat
+controls with replay. It reuses `VERA_TEST_BROWSER_ARCHIVE`,
+`VERA_BROWSER_PACKAGED_APP` and `VERA_BROWSER_EVIDENCE` from runtime acceptance.
+Provisioning, grants and navigation use the instrumented Desktop network fixture.
+On WSL2, record the platform and use Xvfb with Chromium sandboxing enabled.
+
 Install the pinned Playwright Chromium once with `npx playwright install chromium` from `05_Software` before browser acceptance.
 
 ## Configuration and services

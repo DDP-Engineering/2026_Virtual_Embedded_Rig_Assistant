@@ -1,7 +1,8 @@
-import { todoItemsSchema } from "@vera/shared";
+import { browserFailureCodeSchema, todoItemsSchema } from "@vera/shared";
 import { Check, ChevronRight, CircleAlert, LoaderCircle } from "lucide-react";
 import { memo } from "react";
 import { useTranslation } from "react-i18next";
+import { browserFailureText } from "../../lib/browser-failure.js";
 import { Pager, usePaged } from "../pager.js";
 import { BoundedText, ToolOutput } from "./bounded-text.js";
 import { Disclosure } from "./disclosure.js";
@@ -39,6 +40,13 @@ const actionKeys = defineTranslationKeys([
   "toolActivity.decodeRegister",
   "toolActivity.electrical",
   "toolActivity.viewImage",
+  "browser.tool.open",
+  "browser.tool.snapshot",
+  "browser.tool.follow",
+  "browser.tool.scroll",
+  "browser.tool.tabs",
+  "browser.tool.switch",
+  "browser.tool.close",
 ]);
 const actionIndex = {
   read: 1,
@@ -76,6 +84,13 @@ const actionIndex = {
   motor_drives: 25,
   power_quality: 25,
   lighting_design: 25,
+  browser_open: 27,
+  browser_snapshot: 28,
+  browser_follow: 29,
+  browser_scroll: 30,
+  browser_tabs: 31,
+  browser_switch: 32,
+  browser_close: 33,
 } as const;
 const record = (value: unknown): Record<string, unknown> | undefined =>
   value !== null && typeof value === "object" && !Array.isArray(value)
@@ -165,8 +180,10 @@ export const ToolDetails = memo(function ToolDetails({
           : number(result?.added) !== undefined && number(result?.removed) !== undefined
             ? t("toolActivity.changedLines", { added: result?.added, removed: result?.removed })
             : undefined;
-  const output =
-    item.name === "search_docs" && result?.ranking === "embedding-rebuild"
+  const browserFailure = action >= 27 ? browserFailureCodeSchema.safeParse(result?.code).data : undefined;
+  const output = browserFailure
+    ? browserFailureText(t, browserFailure)
+    : item.name === "search_docs" && result?.ranking === "embedding-rebuild"
       ? t("toolActivity.embeddingRebuild")
       : (string(result?.error) ?? string(result?.output) ?? string(result?.text) ?? string(result?.message));
   const raw = item.preview ?? update ?? item.summary;

@@ -64,6 +64,14 @@ Only the search text and the addresses the agent asks for leave your computer; V
 
 Turning web access off also stops searches and downloads in progress. Individual workbenches can disable the web tools under **Edit workbench** → **Tools**.
 
+### Interactive Browser
+
+In **Settings → Web access**, select **Install browser runtime** to download and verify Chromium. You can cancel during installation or remove the installed runtime. Enable **Interactive Browser in VERA** and **Allow Interactive Browser in this workbench**. Both switches start off.
+
+In Chat, enter the exact public origin, such as `https://example.com`, under **Public origin** and select **Grant access**. Include the scheme and any non-default port. Each chat owns its grants and browser window. Grant extra origins for redirects or resources individually.
+
+Ask the agent to open and read a page or follow a link. Chat displays activity and the current authorized page. **Show browser** brings the tab forward. **Stop browsing** stops the active turn and cancels its outstanding browser operation. **Revoke access** and **Close browser** both release the temporary browser session and its grants. Closing the window, switching either setting off or removing the runtime also revokes access. Use the managed download tool for supported files.
+
 ## About
 
 **About** shows the application version, platform, architecture, whether VERA runs as a portable version, the system locale, the runtime versions, the license and the list of third-party components with their licenses.

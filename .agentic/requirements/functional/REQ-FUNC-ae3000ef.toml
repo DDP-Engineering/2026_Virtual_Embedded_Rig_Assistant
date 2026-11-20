@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-FUNC-ae3000ef"
+title = "Stop an active browser turn"
+status = "active"
+requirement = "When the user selects Stop in an actively browsing chat, Desktop shall abort that chat turn through the normal session Stop path."
+verification = "Stop a delayed browser operation and verify turn abort and browser cleanup."
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/session/workspace.tsx", "05_Software/src/apps/desktop/src/renderer/components/session/browser-controls.tsx"]
+linked_tests = ["05_Software/tests/e2e/browser-controls.spec.ts"]
+created = 2026-11-20
+updated = 2026-11-20

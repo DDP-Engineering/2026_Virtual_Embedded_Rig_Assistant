@@ -2,6 +2,7 @@
 
 export * from "./artifacts.js";
 export * from "./bounded.js";
+export * from "./browser.js";
 export * from "./cable-table.js";
 export * from "./changes.js";
 export * from "./chatgpt.js";

@@ -1,5 +1,6 @@
 import { createReadStream } from "node:fs";
 import { Readable } from "node:stream";
+import type { Page } from "playwright-core";
 import { BrowserError } from "./failure.js";
 import type { BrowserHost } from "./host.js";
 import type { BrowserNetworkPorts } from "./network.js";
@@ -31,8 +32,20 @@ const agentHtml = `<!doctype html>
 
 /** The instrumented app serves official archive bytes and deterministic DNS/upstream responses. */
 export function createBrowserFixture(archive: string) {
+  let nextTransfer: "fail" | "hold" | undefined;
   const transfer: typeof fetch = async (input, options) => {
     if (input !== browserRelease()?.url) throw new BrowserError("download");
+    const mode = nextTransfer;
+    nextTransfer = undefined;
+    if (mode === "fail") return new Response(null, { status: 503 });
+    if (mode === "hold") {
+      const signal = options?.signal;
+      if (!signal) throw new Error("Expected provisioning signal");
+      signal.throwIfAborted();
+      await new Promise<never>((_resolve, reject) =>
+        signal.addEventListener("abort", () => reject(signal.reason), { once: true }),
+      );
+    }
     const stream = createReadStream(archive, { signal: options?.signal ?? undefined });
     return new Response(Readable.toWeb(stream) as unknown as ReadableStream<Uint8Array>);
   };
@@ -67,7 +80,14 @@ export function createBrowserFixture(archive: string) {
       };
     },
   };
-  return { transfer, network, receipts: () => ({ requests: requests.slice(), aborted }) };
+  return {
+    transfer,
+    network,
+    receipts: () => ({ requests: requests.slice(), aborted }),
+    setNextTransfer: (value: typeof nextTransfer) => {
+      nextTransfer = value;
+    },
+  };
 }
 
 function fixtureResponse(url: URL) {
@@ -129,7 +149,57 @@ export function browserFixtureApi(
   optIn: () => Promise<void>,
 ) {
   const owner = (sessionId: string): BrowserOwner => ({ workbenchId: workbenchId(), sessionId });
+  const existing = (sessionId: string) => host.current(owner(sessionId));
+  const showCalls = new WeakMap<Page, number>();
   return {
+    setNextTransfer: fixture.setNextTransfer,
+    async inspectUiBrowser(sessionId: string, sandbox = false) {
+      const session = await existing(sessionId);
+      const tab = session?.tabs().find((page) => page.url().startsWith(fixtureOrigin));
+      if (!session || !tab) return null;
+      const cdp = await tab.context().browser()?.newBrowserCDPSession();
+      if (!cdp) throw new Error("Expected an owned Chromium browser");
+      try {
+        const observedShows = showCalls.get(tab) ?? 0;
+        const { product } = await cdp.send("Browser.getVersion");
+        const { processInfo } = await cdp.send("SystemInfo.getProcessInfo");
+        const pid = processInfo.find(({ type }) => type === "browser")?.id;
+        const visibility = await tab.evaluate(
+          () => Reflect.get(globalThis, "document").visibilityState as string,
+        );
+        let sandboxStatus: string | undefined;
+        if (sandbox && process.platform === "linux") {
+          const probe = await session.newTab();
+          try {
+            sandboxStatus = await readLinuxSandbox(probe);
+          } finally {
+            await probe.close();
+            await tab.bringToFront();
+          }
+        }
+        return { product, pid, visibility, url: tab.url(), sandbox: sandboxStatus, showCalls: observedShows };
+      } finally {
+        await cdp.detach();
+      }
+    },
+    async observeUiShow(sessionId: string, url: string) {
+      const session = await existing(sessionId);
+      const tab = session?.tabs().find((page) => page.url() === url);
+      if (!tab || showCalls.has(tab)) throw new Error("Expected an unobserved owned browser tab");
+      showCalls.set(tab, 0);
+      const bringToFront = tab.bringToFront.bind(tab);
+      tab.bringToFront = async () => {
+        await bringToFront();
+        showCalls.set(tab, (showCalls.get(tab) ?? 0) + 1);
+      };
+    },
+    async closeUiWindow(sessionId: string) {
+      const session = await existing(sessionId);
+      const tabs = session?.tabs() ?? [];
+      const page = tabs[0];
+      if (!page || tabs.length !== 1) throw new Error("Expected one remaining visible browser tab");
+      await page.close({ runBeforeUnload: true });
+    },
     install: () => runtime.provision(),
     status: () => runtime.inspect(),
     close: (sessionId: string) => host.closeSession(owner(sessionId)),

@@ -236,7 +236,7 @@ test("native Web access controls anonymous/key use, revokes calls, persists and 
     await page.locator("#web-provider").selectOption("exa");
     await page.locator("#web-authentication").selectOption("api-key");
     await page.locator("[data-web-save]").click();
-    await expect(page.locator('.web-access [role="status"]')).toContainText("saved");
+    await expect(page.locator('.web-access form > [role="status"]')).toContainText("saved");
 
     expect(await readFile(join(profile, "settings.json"), "utf8")).not.toContain(key);
     expect(await readFile(join(profile, "credentials.json"), "utf8")).not.toContain(key);
@@ -246,7 +246,7 @@ test("native Web access controls anonymous/key use, revokes calls, persists and 
     await page.locator("[data-web-close]").click();
     await page.locator("#web-authentication").selectOption("anonymous");
     await page.locator("[data-web-save]").click();
-    await expect(page.locator('.web-access [role="status"]')).toContainText("saved");
+    await expect(page.locator('.web-access form > [role="status"]')).toContainText("saved");
     hold = true;
     let count = calls.length;
     await page.locator("[data-web-test]").click();

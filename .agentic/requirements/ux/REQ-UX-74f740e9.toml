@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-UX-74f740e9"
+title = "Show the selected browser tab"
+status = "active"
+requirement = "When the user selects Show browser in a chat with an owned authorized page, Desktop shall bring that page to the front."
+verification = "Select Show browser on a live replay page and observe the owned page becoming visible."
+affected_paths = ["05_Software/src/apps/desktop/src/main/browser/agent-browser.ts", "05_Software/src/apps/desktop/src/renderer/components/session/browser-controls.tsx"]
+linked_tests = ["05_Software/tests/e2e/browser-controls.spec.ts"]
+created = 2026-11-20
+updated = 2026-11-20

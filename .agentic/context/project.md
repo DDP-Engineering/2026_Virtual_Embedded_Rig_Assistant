@@ -81,7 +81,7 @@ Each component has a knowledge page that names its source files, tests, invarian
 | Keyword search | [keyword-search](../knowledge/keyword-search.md) | Persisted word and identifier candidates with locators. |
 | Document search | [document-search](../knowledge/document-search.md) | Local embedding registry and inference, confirmed per-workbench model switching with keyword search during rebuild, hybrid search, document tools and CLI retrieval. |
 | Document viewer | [document-viewer](../knowledge/document-viewer.md) | Docs panel, `docs.readBytes` byte windows, Rendered, Text and Hex modes, large text, image preview, Display masking. |
-| Desktop browser runtime | [browser-runtime](../knowledge/browser-runtime.md) | Verified Chromium provisioning, sandbox launch, temporary session ownership, public-only grants, pinned connections and bounded browser tools for Desktop agents. |
+| Desktop browser runtime | [browser-runtime](../knowledge/browser-runtime.md) | Web access browser settings, Chat controls, verified Chromium provisioning, sandbox launch, temporary session ownership, public-only grants, pinned connections and bounded browser tools. |
 | Web search | [web-search](../knowledge/web-search.md) | `web_search` and `web_read`, the Exa, Tavily and Brave providers, Settings > Web access. |
 | PDF downloads | [pdf-downloads](../knowledge/pdf-downloads.md) | `web_download`, files and provenance under `.vera/downloads`. |
 | Parts search | [parts-search](../knowledge/parts-search.md) | `parts_search`, supplier switches, credentials and region, set in the parts-search plugin's Configuration section. |

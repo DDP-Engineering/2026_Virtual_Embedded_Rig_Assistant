@@ -820,6 +820,10 @@ export function App() {
                         detail={bench.data?.config.chat.detail ?? "normal"}
                         changed={changed}
                         readOnly={readOnly}
+                        browserEnabled={
+                          snapshot.data?.settings.interactiveBrowser === true &&
+                          bench.data?.config.interactive_browser === true
+                        }
                         archived={selected?.archived ?? true}
                         delegation={selected?.delegation}
                         delegationParent={delegationParent}

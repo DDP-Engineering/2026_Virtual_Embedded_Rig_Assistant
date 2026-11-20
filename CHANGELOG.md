@@ -8,6 +8,7 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ### Added
 
+- Manage Interactive Browser in Web access and grant, show, stop, revoke or close it from Chat.
 - Authorized Desktop agents can read rendered public pages, follow links, and cite the final URL.
 
 - Interactive browsing requires app and workbench opt-in and limits each session to approved public origins.

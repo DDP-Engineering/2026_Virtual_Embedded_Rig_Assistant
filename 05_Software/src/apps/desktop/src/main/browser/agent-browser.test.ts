@@ -3,6 +3,7 @@ import type { BrowserCall } from "@vera/core";
 import type { Page } from "playwright-core";
 import { afterEach, expect, it, vi } from "vitest";
 import { AgentBrowser, browserAgentLimits } from "./agent-browser.js";
+import { BrowserError } from "./failure.js";
 import type { BrowserSession } from "./host.js";
 import { inspectPage } from "./page-reading.js";
 
@@ -44,6 +45,7 @@ function harness(disabled = () => false) {
     open: vi.fn(
       async (): Promise<BrowserSession> => ({
         closed: closed.signal,
+        discardTab: (page) => page.close(),
         tabs: () => all.filter((page) => !page.closed) as unknown as Page[],
         async newTab() {
           const page = new FakePage();
@@ -68,7 +70,7 @@ function harness(disabled = () => false) {
   const browser = new AgentBrowser(owner, host, access, disabled);
   const run = (name: BrowserCall["name"], args = {}, signal = new AbortController().signal) =>
     browser.execute({ name, args } as BrowserCall, signal);
-  return { host, run, all };
+  return { host, run, all, browser, grant, closed };
 }
 
 afterEach(() => {
@@ -102,6 +104,29 @@ it("serializes tabs and invalidates stale, crossed and navigated snapshot refere
   await expect(a.run("browser_follow", next)).resolves.toMatchObject({ code: "stale-reference" });
   await a.all[0]?.close();
   await expect(a.run("browser_snapshot")).resolves.toMatchObject({ code: "page-closed" });
+});
+
+it("presents a closed-window notice only to the current renderer after authority ends", async () => {
+  const a = harness();
+  await a.run("browser_open", { url });
+  expect(a.browser.view(0)).toMatchObject({ open: true, currentUrl: url });
+  a.closed.abort(new BrowserError("window-closed"));
+  a.grant.abort();
+  expect(a.browser.view(0)).toMatchObject({ open: false, currentUrl: null, failure: "window-closed" });
+  expect(a.browser.view(performance.now() + 1)).toMatchObject({
+    open: false,
+    currentUrl: null,
+    failure: null,
+  });
+});
+
+it("stops waiting for the browser to show when its lease is revoked", async () => {
+  const a = harness();
+  await a.run("browser_open", { url });
+  a.all[0]?.bringToFront.mockReturnValueOnce(new Promise(() => {}));
+  const show = a.browser.show();
+  a.grant.abort();
+  await expect(show).rejects.toMatchObject({ code: "policy-denied" });
 });
 
 it("rechecks the tool gate after startup before navigating the new tab", async () => {

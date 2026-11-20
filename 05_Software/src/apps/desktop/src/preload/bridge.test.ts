@@ -24,7 +24,7 @@ const info: Response<"app.info"> = {
   signing: "unsigned" as const,
   locale: "en",
 };
-function fixture() {
+function fixture(hasUserActivation?: () => boolean) {
   const listeners = new Set<(event: unknown, payload: unknown) => void>();
   const transport = {
     invoke: vi.fn(async (_channel: string, _name: string, _request: unknown) => ({ ok: true, value: info })),
@@ -35,7 +35,7 @@ function fixture() {
       listeners.delete(listener);
     }),
   };
-  return { transport, listeners, bridge: createBridge(transport) };
+  return { transport, listeners, bridge: createBridge(transport, hasUserActivation) };
 }
 it("transports bounded document bytes and rejects invalid windows before transport", async () => {
   const { bridge, transport } = fixture();
@@ -54,6 +54,33 @@ it("transports bounded document bytes and rejects invalid windows before transpo
   });
   expect(transport.invoke).toHaveBeenCalledTimes(1);
 });
+it("requires live trusted input for a valid browser grant and validates status responses", async () => {
+  const activated = vi.fn(() => false);
+  const { bridge, transport } = fixture(activated);
+  const owner = {
+    workbenchId: "wb_01JB8Z6Q4M7N2K5R9T3V8X1Y0C",
+    sessionId: "ses_01J00000000000000000000000",
+  };
+  await expect(
+    bridge.invoke("browser.session.grant", { ...owner, origin: "https://example.com" }),
+  ).rejects.toMatchObject({ code: "DENIED" });
+  expect(transport.invoke).not.toHaveBeenCalled();
+  activated.mockReturnValueOnce(true);
+  transport.invoke.mockResolvedValueOnce({ ok: true, value: {} } as never);
+  await expect(
+    bridge.invoke("browser.session.grant", { ...owner, origin: " https://example.com " }),
+  ).resolves.toEqual({});
+  expect(transport.invoke).toHaveBeenCalledWith("vera:invoke", "browser.session.grant", {
+    ...owner,
+    origin: "https://example.com",
+  });
+  await expect(
+    bridge.invoke("browser.session.grant", { ...owner, workbenchId: "other", origin: "https://example.com" }),
+  ).rejects.toMatchObject({ code: "INVALID" });
+  expect(transport.invoke).toHaveBeenCalledTimes(1);
+  await expect(bridge.invoke("browser.session.get", owner)).rejects.toMatchObject({ code: "INTERNAL" });
+});
+
 it("registers a session replay subscription before dispatch and filters its token with idempotent cleanup", async () => {
   const { bridge, transport, listeners } = fixture();
   transport.invoke.mockResolvedValue({ ok: true, value: {} } as never);
@@ -112,6 +139,14 @@ it("infers registry types and returns validated metadata", async () => {
     | "terminal.consent"
     | "help.list"
     | "help.read"
+    | "browser.settings.get"
+    | "browser.runtime.install"
+    | "browser.runtime.cancel"
+    | "browser.runtime.remove"
+    | "browser.session.get"
+    | "browser.session.grant"
+    | "browser.session.show"
+    | "browser.session.close"
     | "web.access.get"
     | "web.access.save"
     | "web.access.removeKey"

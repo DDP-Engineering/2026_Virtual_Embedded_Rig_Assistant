@@ -165,10 +165,10 @@ entries:
   - category: new
     topic: { en: Sessions, ro: Sesiuni, de: Sitzungen, fr: Sessions }
     text:
-      en: "Bookmark messages. Agents delegate inspections and can cite approved public pages in Desktop."
-      ro: "Marchează mesaje. În Desktop, agenții deleagă verificări și citează pagini publice aprobate."
-      de: "Lesezeichen setzen. Desktop-Agenten delegieren Prüfungen und zitieren freigegebene Webseiten."
-      fr: "Ajoutez des signets. Les agents Desktop délèguent les vérifications et citent les pages autorisées."
+      en: "Bookmark and delegate. Grant or stop visible browsing. Agents cite authorized public pages."
+      ro: "Marchează și deleagă. Permite sau oprește navigarea vizibilă. Agenții citează pagini autorizate."
+      de: "Lesezeichen setzen, delegieren, sichtbares Surfen erlauben oder stoppen. Agenten zitieren Seiten."
+      fr: "Ajoutez des signets, déléguez, autorisez ou arrêtez la navigation. Les agents citent les pages."
   - category: improved
     topic: { en: Sessions, ro: Sesiuni, de: Sitzungen, fr: Sessions }
     text:

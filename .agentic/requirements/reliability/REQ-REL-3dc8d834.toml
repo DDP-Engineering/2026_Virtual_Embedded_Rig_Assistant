@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-REL-3dc8d834"
+title = "Report external browser closure"
+status = "active"
+requirement = "If the owned browser window closes externally, then Desktop shall show localized closed state and clear its location and window controls."
+verification = "Close the external window and check closed state, revoked grants and missing Show control."
+affected_paths = ["05_Software/src/apps/desktop/src/main/browser/host.ts", "05_Software/src/apps/desktop/src/main/browser/agent-browser.ts", "05_Software/src/apps/desktop/src/renderer/components/session/browser-controls.tsx", "05_Software/src/apps/desktop/src/main/browser/failure.ts"]
+linked_tests = ["05_Software/tests/e2e/browser-controls.spec.ts", "05_Software/src/apps/desktop/src/main/browser/host.test.ts"]
+created = 2026-11-20
+updated = 2026-11-20

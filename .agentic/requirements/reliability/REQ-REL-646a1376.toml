@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-REL-646a1376"
+title = "Report denied browser navigation"
+status = "active"
+requirement = "If browser navigation is denied, then Desktop shall show the denial in the owning chat and withhold any unauthorized location."
+verification = "Replay a denied link and verify the denial and retained authorized URL."
+affected_paths = ["05_Software/src/apps/desktop/src/main/browser/agent-browser.ts", "05_Software/src/apps/desktop/src/renderer/components/session/browser-controls.tsx", "05_Software/src/apps/desktop/src/renderer/components/error-message.tsx", "05_Software/src/apps/desktop/src/renderer/components/session/tool-details.tsx", "05_Software/src/apps/desktop/src/main/browser/failure.ts"]
+linked_tests = ["05_Software/tests/e2e/browser-controls.spec.ts", "05_Software/src/apps/desktop/src/main/browser/agent-browser.test.ts"]
+created = 2026-11-20
+updated = 2026-11-20

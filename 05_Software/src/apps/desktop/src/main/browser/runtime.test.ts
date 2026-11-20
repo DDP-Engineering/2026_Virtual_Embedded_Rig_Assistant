@@ -64,6 +64,7 @@ it("rejects corrupt downloads and modifications to the installed files", async (
   const path = await runtime.executable();
   await writeFile(path, "modified");
   await expect(runtime.executable()).rejects.toMatchObject({ code: "integrity" });
+  expect(runtime.view()).toEqual({ phase: "failed", failure: "integrity" });
   await expect(runtime.provision()).resolves.toMatchObject({ phase: "ready" });
   expect(await readFile(path, "utf8")).toBe("executable");
 });
@@ -91,6 +92,36 @@ it("reports download progress and drains a shared cancelled transfer before retr
   expect(await readdir(root)).toEqual([]);
   transfer.mockResolvedValueOnce(new Response(archive.slice()));
   await expect(runtime.provision()).resolves.toMatchObject({ phase: "ready" });
+});
+
+it("drains browser resources before removal and blocks overlapping installation", async () => {
+  const { runtime, root, transfer } = await setup();
+  await runtime.provision();
+  let finishDrain = () => {};
+  const drain = new Promise<void>((resolve) => {
+    finishDrain = resolve;
+  });
+  const removal = runtime.remove(() => drain);
+  expect(runtime.remove(async () => {})).toBe(removal);
+  expect(runtime.view()).toEqual({ phase: "removing" });
+  await expect(runtime.provision()).resolves.toEqual({ phase: "removing" });
+  await expect(runtime.executable()).rejects.toMatchObject({ code: "cancelled" });
+  expect(await readdir(root)).toEqual([spec.version]);
+  finishDrain();
+  await expect(removal).resolves.toEqual({ phase: "missing" });
+  expect(await readdir(root)).toEqual([]);
+  expect(transfer).toHaveBeenCalledTimes(1);
+});
+
+it("keeps the runtime when owned browser cleanup fails and allows removal to be retried", async () => {
+  const { runtime, root } = await setup();
+  await runtime.provision();
+  await runtime.remove(async () => {
+    throw new Error("Owned browser cleanup failed");
+  });
+  expect(runtime.view()).toEqual({ phase: "failed", failure: "cleanup" });
+  expect(await readdir(root)).toEqual([spec.version]);
+  await expect(runtime.remove(async () => {})).resolves.toEqual({ phase: "missing" });
 });
 
 it("reports an interrupted transfer with recovery instructions and no published files", async () => {

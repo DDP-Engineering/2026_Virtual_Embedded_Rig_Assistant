@@ -38,6 +38,8 @@ shortcut. Existing persisted event format remains 1.
   validates packed PCM before dispatch. [Dictation](dictation.md)
   owns model paths and storage.
 
+- Browser settings and runtime IPC expose typed availability, installation progress, cancellation and removal. Session browser channels take a strict workbench/session pair. Main rechecks the current owner and opt-ins and accepts origin grants only through trusted renderer IPC. Snapshots and errors are structured browser state and codes. [Desktop browser runtime](browser-runtime.md) owns the policy.
+
 - `session.image.attach` accepts a workbench/session pair and either bounded base64 file bytes or an existing workbench path. It returns a durable relative path, a display name and a bounded PNG thumbnail. `session.image.capability` resolves image support for the same effective model as dispatch, with catalog I/O outside the session queue.
 
 Strict `terminal.*` user channels bind UUID terminal IDs to the current workbench, fix creation cwd

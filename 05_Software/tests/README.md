@@ -65,6 +65,14 @@ Set `VERA_TEST_BROWSER_ARCHIVE` to the verified archive for the host. The contro
 fixture covers dynamic reading, citation URLs, tab ownership, denied and stale references, budgets,
 Stop and close. Set `VERA_BROWSER_AGENT_EVIDENCE` to keep the JSON receipt.
 
+Native `e2e/browser-controls.spec.ts` exercises the actual Settings and Chat
+controls with a replay agent and the pinned Chromium archive. It checks grants,
+rendered navigation, isolation across refresh, Stop and native process cleanup.
+Set `VERA_BROWSER_PACKAGED_APP` to the unpacked instrumented executable and
+`VERA_BROWSER_EVIDENCE` to keep the JSON receipt. Use a fresh disposable
+application data location for each run. A Windows portable package stores its
+data beside the executable.
+
 ## Vitest test inventory
 
 TERM-05 adds `packaging/terminal-runtime.test.ts` for native PTY architecture/helper closure,

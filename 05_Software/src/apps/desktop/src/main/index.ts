@@ -30,6 +30,7 @@ import {
   WorkbenchService,
 } from "@vera/core";
 import {
+  type BrowserSessionView,
   eventEnvelopeSchema,
   type HelpLanguage,
   type HelpPage,
@@ -38,6 +39,7 @@ import {
   type Settings,
   settingsChangedEvent,
   veraError,
+  veraErrorSchema,
   type WorkbenchSnapshot,
   workbenchPatchSchema,
 } from "@vera/shared";
@@ -61,8 +63,9 @@ import {
 import { getAppInfo } from "./app-info.js";
 import { exportArtifact, exportName, publicArtifact, revealArtifact } from "./artifacts.js";
 import { AgentBrowser } from "./browser/agent-browser.js";
+import { BrowserError } from "./browser/failure.js";
 import { BrowserHost } from "./browser/host.js";
-import { BrowserAccessPolicy } from "./browser/policy.js";
+import { BrowserAccessPolicy, type BrowserOwner } from "./browser/policy.js";
 import { BrowserRuntime } from "./browser/runtime.js";
 import { CatalogChecks } from "./catalog-checks.js";
 import { ChatgptAuth } from "./chatgpt-auth.js";
@@ -182,14 +185,17 @@ const browserRuntime = new BrowserRuntime(
   browserFixture ? { transfer: browserFixture.transfer } : {},
 );
 const browserAccess = new BrowserAccessPolicy((workbenchId) => {
-  const config = workbench.getSnapshot().config;
+  const snapshot = workbench.getSnapshot();
   return (
     settings.get().settings.interactiveBrowser === true &&
-    config.id === workbenchId &&
-    config.interactive_browser === true
+    browserRuntime.status().phase !== "removing" &&
+    !snapshot.readOnly &&
+    snapshot.config.id === workbenchId &&
+    snapshot.config.interactive_browser === true
   );
 }, browserFixture?.network);
 const browserHost = new BrowserHost(browserRuntime, { policy: browserAccess });
+let browserNoticeSince = performance.now();
 const models = app.isPackaged
   ? join(process.resourcesPath, "models")
   : join(here, "../../../../../src/models");
@@ -263,6 +269,8 @@ const settings = new SettingsService({
   changed: () => {
     // Compared with the settings last announced, so a theme or layout change keeps open documents.
     const next = settings.get().settings;
+    if ((announcedSettings?.interactiveBrowser === true) !== (next.interactiveBrowser === true))
+      browserNoticeSince = performance.now();
     browserAccess.reconcile();
     emitAppEvent({ topic: "app", id: "app", event: settingsChangedEvent(announcedSettings, next) });
     announcedSettings = next;
@@ -299,7 +307,10 @@ const workbench = new WorkbenchService(
     },
     changed: (event) => {
       if (event.event.type === "closed") display.close();
-      if (event.event.type === "closed" || event.event.type === "config.changed") browserAccess.reconcile();
+      if (event.event.type === "closed" || event.event.type === "config.changed") {
+        browserNoticeSince = performance.now();
+        browserAccess.reconcile();
+      }
       emitAppEvent(eventEnvelopeSchema.parse(event));
     },
   },
@@ -549,6 +560,55 @@ ipcMain.handle("vera:subscription", async (event, action, payload) => {
   await credentialsReady;
   return sessions.subscription(event, action, payload);
 });
+let initialBrowserInspection: ReturnType<BrowserRuntime["inspect"]> | undefined;
+
+async function browserSettings() {
+  if (browserRuntime.status().phase === "unknown") {
+    initialBrowserInspection ??= browserRuntime.inspect();
+    await initialBrowserInspection;
+  }
+  let current: WorkbenchSnapshot | undefined;
+  try {
+    current = workbench.getSnapshot();
+  } catch (error) {
+    if (veraErrorSchema.safeParse(error).data?.code !== "NOT_FOUND") throw error;
+  }
+  return {
+    runtime: browserRuntime.view(),
+    appEnabled: settings.get().settings.interactiveBrowser === true,
+    workbench: current
+      ? {
+          id: current.config.id,
+          enabled: current.config.interactive_browser === true,
+          readOnly: current.readOnly,
+        }
+      : null,
+  };
+}
+
+/** Resolve a BrowserOwner against the serialized active workbench and session store. */
+function ownedBrowser<T>(
+  owner: BrowserOwner,
+  act: (browser: AgentBrowser | undefined, canGrant: boolean) => T | Promise<T>,
+): Promise<T> {
+  return sessions.run((service) => {
+    openWorkbenchFolder(owner.workbenchId);
+    const { archived, browser } = service.browserSession(owner.sessionId);
+    const canGrant = !archived && browserAccess.isEnabled(owner.workbenchId);
+    return act(browser instanceof AgentBrowser ? browser : undefined, canGrant);
+  }, false);
+}
+
+function browserIpcError(error: unknown): never {
+  if (!(error instanceof BrowserError)) throw error;
+  throw {
+    code: "DENIED",
+    messageKey: `browser.failure.${error.code}`,
+  };
+}
+
+const emptyBrowserView = { busy: false, open: false, currentUrl: null, failure: null };
+
 /** The folder of the open workbench when `workbenchId` names it; CONFLICT otherwise. */
 function openWorkbenchFolder(workbenchId: string): string {
   const snapshot = workbench.getSnapshot();
@@ -677,6 +737,74 @@ ipcMain.handle(
       "terminal.consent": ({ workbenchId, id, shared }) => terminals.consent(workbenchId, id, shared),
       "terminal.close": async ({ workbenchId, id }) => {
         await terminals.close(workbenchId, id);
+        return {};
+      },
+      "browser.settings.get": browserSettings,
+      "browser.runtime.install": async () => {
+        await browserRuntime.provision();
+        return browserRuntime.view();
+      },
+      "browser.runtime.cancel": async () => {
+        try {
+          await browserRuntime.cancel();
+        } catch (error) {
+          browserIpcError(error);
+        }
+        return browserRuntime.view();
+      },
+      "browser.runtime.remove": async () => {
+        await browserRuntime.remove(() => {
+          browserNoticeSince = performance.now();
+          return browserHost.closeAll();
+        });
+        return browserRuntime.view();
+      },
+      "browser.session.get": (owner): Promise<BrowserSessionView> =>
+        ownedBrowser(owner, (browser, canGrant) => {
+          const enabled = browserAccess.isEnabled(owner.workbenchId);
+          const view = (canGrant && browser?.view(browserNoticeSince)) || emptyBrowserView;
+          return {
+            ...view,
+            enabled,
+            canGrant,
+            origins: canGrant
+              ? browserAccess.origins(owner).filter((origin) => !credentials.containsSecret(origin))
+              : [],
+            currentUrl:
+              view.currentUrl && !credentials.containsSecret(view.currentUrl) ? view.currentUrl : null,
+          };
+        }),
+      "browser.session.grant": ({ origin, ...owner }) =>
+        ownedBrowser(owner, (browser, canGrant) => {
+          if (!canGrant) throw veraError("DENIED");
+          if (credentials.containsSecret(origin)) throw veraError("INVALID");
+          try {
+            browserAccess.grant(owner, origin);
+          } catch (error) {
+            browserIpcError(error);
+          }
+          browser?.clearPresentation();
+          return {};
+        }),
+      "browser.session.show": async (owner) => {
+        const browser = await ownedBrowser(owner, (browser, canGrant) => {
+          if (!canGrant) throw veraError("DENIED");
+          return browser;
+        });
+        try {
+          if (!browser) throw new BrowserError("page-closed");
+          await browser.show();
+        } catch (error) {
+          browserIpcError(error);
+        }
+        return {};
+      },
+      "browser.session.close": async (owner) => {
+        const { completion } = await ownedBrowser(owner, (browser) => {
+          browser?.clearPresentation();
+          return { completion: browserHost.closeSession(owner) };
+        });
+        await completion;
         return {};
       },
       "web.access.get": () => webAccess.get(),
@@ -1188,7 +1316,16 @@ ipcMain.handle(
           return sanitizeSessionSummary(s.rename(sessionId, title), sessionContent);
         }),
       "session.archive.set": ({ sessionId, archived }) =>
-        sessions.run((s) => sanitizeSessionSummary(s.setArchived(sessionId, archived), sessionContent)),
+        sessions.run(async (s) => {
+          const summary = s.setArchived(sessionId, archived);
+          if (archived) {
+            const owner = { workbenchId: workbench.getSnapshot().config.id, sessionId };
+            const { browser } = s.browserSession(sessionId);
+            if (browser instanceof AgentBrowser) browser.clearPresentation();
+            await browserHost.closeSession(owner);
+          }
+          return sanitizeSessionSummary(summary, sessionContent);
+        }),
       "session.delete": ({ sessionId }) =>
         sessions.run(async (s) => {
           await s.delete(sessionId);
@@ -1467,6 +1604,7 @@ async function createWindow(state: WindowState): Promise<void> {
   const created = window;
   created.webContents.on("did-start-navigation", (_event, _url, isInPlace, isMainFrame) => {
     if (isMainFrame && !isInPlace) {
+      browserNoticeSince = performance.now();
       capture.interrupt();
       sessions.clearSubscriptions();
     }

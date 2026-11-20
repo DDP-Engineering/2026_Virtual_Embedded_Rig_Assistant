@@ -5,7 +5,9 @@
 Select for browser runtime provisioning, the Playwright/Chromium pin, visible
 sandboxed Chromium, or isolation and disposal of VERA browser sessions. Start
 in `05_Software/src/apps/desktop/src/main/browser/` and its adjacent tests.
-For model-facing browsing, start with `agent-browser.ts`, `page-reading.ts` and
+For Settings > Web access and Chat, start with `browser-settings.tsx` and
+`session/browser-controls.tsx` in the Desktop renderer components. For
+model-facing browsing, start with `agent-browser.ts`, `page-reading.ts` and
 `05_Software/src/libraries/core/src/tools/browser.ts`.
 Existing search, reading, and managed downloads are covered by
 [web search](web-search.md) and [PDF downloads](pdf-downloads.md).
@@ -21,7 +23,7 @@ separate lifetimes and policies.
 ## Public interface
 
 `BrowserRuntime` provides provisioning, a status snapshot, inspection,
-cancellation, and the verified executable. `BrowserHost` owns sessions by
+cancellation, removal, and the verified executable. `BrowserHost` owns sessions by
 workbench and session identity and exposes main-process tab ownership.
 `BrowserAccessPolicy` owns in-memory, exact-origin grants by workbench and
 session. Trusted Desktop main calls `grant`, `origins` and `release`. The
@@ -32,6 +34,11 @@ The Desktop session host assigns an `AgentBrowser` port to the trusted owner.
 Its seven typed tools require the current opt-ins, an owner grant and individual
 workbench tool enablement. The model receives opaque tab IDs, scoped link
 references, and public citation URLs. The host retains grant and tab control.
+Trusted renderer IPC manages runtime installation and scopes grant, state,
+Show and Close requests to a verified workbench/session pair. The preload
+accepts a grant only during live trusted input. Show observes the live grant
+and a deadline outside the session queue. Close and Revoke
+both release the grant and window. Chat Stop uses the existing turn abort.
 
 ## Invariants
 
@@ -53,6 +60,13 @@ references, and public citation URLs. The host retains grant and tab control.
   provisioning. Process disconnect and session close use the same disposal.
   Disabling either opt-in synchronously revokes affected grants and aborts
   downstream and upstream connections before asynchronous browser cleanup.
+  Runtime removal blocks acquisition and drains all owners before deleting the
+  installed runtime. Chat resolves its current authorized location and activity
+  from main, so renderer reload preserves the live window of its owner and
+  cannot transfer grants or tabs between conversations. Closing the last
+  visible tab externally also disposes the lease, including during navigation.
+  The adapter marks its own failed-navigation tab cleanup separately.
+  Terminal browser notices are scoped to the current renderer and opt-ins.
 - The loopback proxy rechecks the exact HTTP(S) origin at every request and
   redirect. Every A and AAAA answer must be public. The request signal
   cancels both queries. Connections dial one validated numeric address and
@@ -81,6 +95,7 @@ references, and public citation URLs. The host retains grant and tab control.
 | Ownership, gates and grants | `host.ts`, `policy.ts`, Desktop main | `host.test.ts`, `browser-policy.test.ts` |
 | Public destinations, request limits and alternate paths | `network.ts`, `proxy.ts`, `restrictions.ts` | `browser-policy.test.ts`, `network.test.ts`, `browser-runtime.spec.ts` |
 | Agent browser tools, budgets and refs | `agent-browser.ts`, `page-reading.ts`, core `tools/browser.ts` | `agent-browser.test.ts`, `browser.test.ts`, `browser-agent.spec.ts` |
+| Settings and Chat controls | `browser-settings.tsx`, `session/browser-controls.tsx`, shared `browser.ts`, Desktop main | `browser-controls.spec.ts` |
 | Packaged fixture | `fixture.ts`, `02_Tools/release/package.mjs` | `browser-runtime.spec.ts` |
 
 ## Key behaviors
@@ -101,6 +116,10 @@ references, and public citation URLs. The host retains grant and tab control.
 - `REQ-FUNC-072acfac`, `REQ-FUNC-d219825f` — rendered reading, citations and tab operations.
 - `REQ-SEC-a3c7aa38`, `REQ-SEC-2a1b6fb6`, `REQ-SEC-fcab766f`, `REQ-SEC-ad60d613` — live authority, scoped refs, denied destinations and untrusted data.
 - `REQ-REL-48dddd59`, `REQ-REL-7274a3e9`, `REQ-REL-d97264a7`, `REQ-NFR-2661da07`, `REQ-REL-fff52da3`, `REQ-REL-c8d7898f` — supported documents, closed pages, deadlines, bounded results, cancellation and close.
+
+- `REQ-UX-4c16a20f`, `REQ-UX-8c54a766`, `REQ-SEC-39c979a5` — runtime settings, opt-ins and trusted chat grants.
+- `REQ-UX-59086d40`, `REQ-UX-74f740e9`, `REQ-FUNC-ae3000ef`, `REQ-SEC-1f3fba00` — current owned state, Show, Stop, Revoke and Close.
+- `REQ-REL-df91d9fe`, `REQ-REL-6fecfe63`, `REQ-REL-646a1376`, `REQ-REL-3dc8d834`, `REQ-UX-da941b4d` — localized missing runtime, transfer failure, denied destination and window closure.
 
 ## Files
 

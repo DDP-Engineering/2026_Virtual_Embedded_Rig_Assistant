@@ -1,8 +1,9 @@
 import { randomUUID } from "node:crypto";
 import type { AgentBrowserPort, BrowserCall, BrowserToolName, BrowserToolResult } from "@vera/core";
+import type { BrowserFailureCode, BrowserSessionView } from "@vera/shared";
 import type { Page } from "playwright-core";
 import { BrowserError } from "./failure.js";
-import type { BrowserHost, BrowserSession } from "./host.js";
+import { type BrowserHost, type BrowserSession, untilAborted } from "./host.js";
 import { browserUrl } from "./network.js";
 import { inspectPage, navigatePage, scrollPage } from "./page-reading.js";
 import type { BrowserAccessPolicy, BrowserOwner } from "./policy.js";
@@ -10,6 +11,7 @@ import type { BrowserAccessPolicy, BrowserOwner } from "./policy.js";
 export const browserAgentLimits = {
   openMs: 35_000,
   operationMs: 12_000,
+  showMs: 5_000,
   operations: 80,
   pending: 8,
   resultBytes: 24_000,
@@ -32,6 +34,8 @@ export class AgentBrowser implements AgentBrowserPort {
   private queued = Promise.resolve();
   private budget?: { grant: AbortSignal; used: number };
   private pending = 0;
+  private viewGeneration = 0;
+  private failure: { code: BrowserFailureCode; at: number } | null = null;
 
   constructor(
     private readonly owner: BrowserOwner,
@@ -44,7 +48,46 @@ export class AgentBrowser implements AgentBrowserPort {
     return !this.disabled(tool) && this.policy.authorization(this.owner) !== undefined;
   }
 
+  view(noticeSince: number): Pick<BrowserSessionView, "busy" | "open" | "currentUrl" | "failure"> {
+    const page = this.visiblePage();
+    const failure = this.failure;
+    return {
+      busy: this.pending > 0,
+      open: !!this.browser && !this.browser.closed.aborted,
+      currentUrl: page ? this.pageUrl(page) : null,
+      failure:
+        failure && (failure.at >= noticeSince || this.policy.authorization(this.owner)) ? failure.code : null,
+    };
+  }
+
+  clearPresentation(): void {
+    this.viewGeneration++;
+    this.failure = null;
+  }
+
+  async show(): Promise<void> {
+    const grant = this.policy.authorization(this.owner);
+    if (!grant) throw new BrowserError("policy-denied");
+    const page = this.visiblePage();
+    if (!page) throw new BrowserError("page-closed");
+    const timeout = AbortSignal.timeout(browserAgentLimits.showMs);
+    const signal = AbortSignal.any([grant, timeout]);
+    try {
+      signal.throwIfAborted();
+      await untilAborted(page.bringToFront(), signal);
+      if (page.isClosed()) throw new BrowserError("window-closed");
+      if (this.policy.authorization(this.owner) !== grant || !this.pageUrl(page))
+        throw new BrowserError("policy-denied");
+    } catch (error) {
+      if (page.isClosed()) throw new BrowserError("window-closed", { cause: error });
+      if (timeout.aborted) throw new BrowserError("operation-timeout", { cause: error });
+      if (grant.aborted) throw new BrowserError("policy-denied", { cause: error });
+      throw error instanceof BrowserError ? error : new BrowserError("operation-failed", { cause: error });
+    }
+  }
+
   async execute(call: BrowserCall, caller: AbortSignal): Promise<BrowserToolResult> {
+    const presentation = this.viewGeneration;
     try {
       if (caller.aborted) throw new BrowserError("cancelled");
       const grant = this.policy.authorization(this.owner);
@@ -57,9 +100,18 @@ export class AgentBrowser implements AgentBrowserPort {
       if (!closing && ++this.budget.used > browserAgentLimits.operations)
         throw new BrowserError("operation-limit");
 
-      return await this.enqueue(call, caller, grant);
+      const result = await this.enqueue(call, caller, grant);
+      if (
+        presentation === this.viewGeneration &&
+        (call.name === "browser_open" || call.name === "browser_follow" || call.name === "browser_close")
+      ) {
+        this.failure = null;
+      }
+      return result;
     } catch (error) {
       const { code, recovery } = error instanceof BrowserError ? error : new BrowserError("operation-failed");
+      if (presentation === this.viewGeneration && code !== "cancelled" && code !== "policy-denied")
+        this.failure = { code, at: performance.now() };
       return { isError: true, code, error: recovery };
     }
   }
@@ -168,6 +220,13 @@ export class AgentBrowser implements AgentBrowserPort {
       browser.closed.addEventListener(
         "abort",
         () => {
+          if (
+            browser.closed.reason instanceof BrowserError &&
+            browser.closed.reason.code === "window-closed"
+          ) {
+            this.clearPresentation();
+            this.failure = { code: "window-closed", at: performance.now() };
+          }
           this.browser = undefined;
           this.active = undefined;
           this.tabs.clear();
@@ -184,7 +243,7 @@ export class AgentBrowser implements AgentBrowserPort {
       this.select(tab);
       return location;
     } catch (error) {
-      if (!signal.aborted) await page.close();
+      if (!signal.aborted) await browser.discardTab(page);
       throw error;
     }
   }
@@ -241,6 +300,12 @@ export class AgentBrowser implements AgentBrowserPort {
     )
       throw new BrowserError("destination-denied");
     return allowed.href;
+  }
+
+  private visiblePage(): Page | undefined {
+    const selected = this.active?.page;
+    if (selected && !selected.isClosed() && this.pageUrl(selected)) return selected;
+    return this.browser?.tabs().find((page) => !page.isClosed() && this.pageUrl(page));
   }
 
   private pageUrl(page: Page): string | null {

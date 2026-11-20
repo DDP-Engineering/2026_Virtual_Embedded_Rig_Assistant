@@ -8,6 +8,7 @@ import { useSessionView } from "../../hooks/session-view.js";
 import { globalShortcutBlocked, ShortcutContext, shortcutCommand } from "../../lib/shortcuts.js";
 import { CHAT, useDocumentTabs } from "../documents/viewer-context.js";
 import { ErrorMessage } from "../error-message.js";
+import { BrowserControls } from "./browser-controls.js";
 import { Composer } from "./composer.js";
 import { DelegationLinks } from "./delegation-links.js";
 import { SessionInspector } from "./session-inspector.js";
@@ -21,6 +22,7 @@ export function SessionWorkspace({
   workbenchId,
   changed,
   readOnly,
+  browserEnabled = false,
   archived = false,
   detail = "normal",
   delegation,
@@ -37,6 +39,7 @@ export function SessionWorkspace({
   workbenchId: string;
   changed: () => void;
   readOnly: boolean;
+  browserEnabled?: boolean;
   archived?: boolean;
   detail?: ChatDetail;
   delegation?: SessionSummary["delegation"];
@@ -191,6 +194,16 @@ export function SessionWorkspace({
           {view?.state.title || t("chat.untitled")}
         </h2>
       </header>
+      {view && shown && browserEnabled && !readOnly && !archived && (
+        <BrowserControls
+          key={`browser/${workbenchId}/${id}`}
+          sessionId={id}
+          workbenchId={workbenchId}
+          stop={() => void stop()}
+          stopPending={pending}
+          turnActive={!!view.state.activeTurnId}
+        />
+      )}
       {selectLinkedSession && (
         <DelegationLinks
           parent={delegationParent}

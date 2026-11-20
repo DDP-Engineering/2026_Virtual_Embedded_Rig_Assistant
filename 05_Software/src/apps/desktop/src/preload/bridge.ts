@@ -124,7 +124,8 @@ export function createBridge(
       if (!isChannel(channel)) throw veraError("NOT_FOUND");
       const parsed = channels[channel].request.safeParse(request);
       if (!parsed.success) throw veraError("INVALID");
-      if (channel === "dictation.begin" && !hasUserActivation()) throw veraError("DENIED");
+      if ((channel === "dictation.begin" || channel === "browser.session.grant") && !hasUserActivation())
+        throw veraError("DENIED");
       let result: unknown;
       try {
         result = await transport.invoke("vera:invoke", channel, parsed.data);

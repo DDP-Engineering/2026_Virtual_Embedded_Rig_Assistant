@@ -32,6 +32,11 @@ The right panel also has [Terminal](terminals.md), with multiple interactive use
 agent-read consent. Shell owns configurable openTerminal (Ctrl+Shift+T); terminal input retains shell
 keystrokes. xterm/FitAddon views use strict user IPC and CSSOM-generated styles under the existing CSP.
 
+Settings → Web access hosts the existing web-provider configuration and
+Interactive Browser installation, progress, cancellation, removal, and the
+app and current-workbench switches. [Desktop browser runtime](browser-runtime.md)
+owns the browser policy and focused UI acceptance.
+
 Settings → Commands uses `components/command-settings.tsx` and the shared shell setting. Save and
 Cancel control a local draft; clearing the field selects automatic resolution. Localized labels,
 placeholder and built-in tool description exist in en/ro/de/fr. Shell approvals show literal command,

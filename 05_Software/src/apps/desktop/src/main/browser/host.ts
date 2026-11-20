@@ -21,6 +21,7 @@ export interface BrowserSession {
   readonly closed: AbortSignal;
   newTab(): Promise<Page>;
   tabs(): readonly Page[];
+  discardTab(page: Page): Promise<void>;
   close(): Promise<void>;
 }
 
@@ -76,6 +77,12 @@ export class BrowserHost {
     return entry.ready;
   }
 
+  /** Read an existing lease without giving the caller a way to create a browser. */
+  current(owner: BrowserOwner): Promise<BrowserSession> | undefined {
+    const entry = this.entries.get(keyFor(owner));
+    return entry?.controller.signal.aborted === false ? entry.ready : undefined;
+  }
+
   suspend(): void {
     this.suspended = true;
   }
@@ -97,9 +104,13 @@ export class BrowserHost {
     );
   }
 
-  shutdown(): Promise<void> {
+  closeAll(): Promise<void> {
     this.policy.releaseAll?.();
-    this.shutdownPromise ??= this.closeEntries(Array.from(this.entries.values()));
+    return this.closeEntries(Array.from(this.entries.values()));
+  }
+
+  shutdown(): Promise<void> {
+    this.shutdownPromise ??= this.closeAll();
     return this.shutdownPromise;
   }
 
@@ -124,35 +135,42 @@ export class BrowserHost {
         entry.lease = lease;
         return lease;
       });
-      const lease = await duringStartup(acquiring, signal);
+      const lease = await untilAborted(acquiring, signal);
       if (!lease.proxyServer) throw new BrowserError("policy-denied");
       const revoke = () => {
-        if (!entry.disposal) void this.closeEntry(entry).catch(() => {});
+        if (!entry.disposal && !entry.controller.signal.aborted) void this.closeEntry(entry).catch(() => {});
       };
       lease.revoked?.addEventListener("abort", revoke, { once: true });
       if (lease.revoked?.aborted) revoke();
       signal.throwIfAborted();
-      const executable = await duringStartup(this.runtime.executable(signal), signal);
+      const executable = await untilAborted(this.runtime.executable(signal), signal);
       signal.throwIfAborted();
       const remaining = Math.ceil(deadline - performance.now());
       if (remaining <= 0) timer.abort();
       signal.throwIfAborted();
       entry.child = await this.launch(executable, signal, lease.proxyServer, remaining, lease.certificatePin);
       entry.child.onExit(() => {
-        void this.closeEntry(entry).catch(() => {});
+        void this.closeEntry(entry, new BrowserError("window-closed")).catch(() => {});
       });
       signal.throwIfAborted();
       const { context } = entry.child;
-      await duringStartup(Promise.resolve(lease.attach(context, signal)), signal);
+      await untilAborted(Promise.resolve(lease.attach(context, signal)), signal);
       signal.throwIfAborted();
 
       // Keep rejected popups off the agent surface while Chromium closes them.
       const rejected = new WeakSet<Page>();
+      const discarded = new WeakSet<Page>();
       context.on("page", (page) => {
         if (context.pages().indexOf(page) >= browserLimits.tabs) {
           rejected.add(page);
           void page.close().catch(() => {});
+          return;
         }
+        page.once("close", () => {
+          if (discarded.has(page) || entry.controller.signal.aborted) return;
+          if (context.pages().some((tab) => tab !== page && !tab.isClosed() && !rejected.has(tab))) return;
+          void this.closeEntry(entry, new BrowserError("window-closed")).catch(() => {});
+        });
       });
       let queued: Promise<unknown> = Promise.resolve();
       entry.expires = setTimeout(() => void this.closeEntry(entry).catch(() => {}), browserLimits.lifetimeMs);
@@ -178,6 +196,15 @@ export class BrowserHost {
                 .pages()
                 .filter((page) => !rejected.has(page))
                 .slice(0, browserLimits.tabs),
+        discardTab: async (page) => {
+          discarded.add(page);
+          try {
+            await page.close();
+          } catch (error) {
+            discarded.delete(page);
+            throw error;
+          }
+        },
         close: () => this.closeEntry(entry),
       };
     } catch (error) {
@@ -190,8 +217,11 @@ export class BrowserHost {
     }
   }
 
-  private async closeEntry(entry: Entry): Promise<void> {
-    entry.controller.abort();
+  private async closeEntry(entry: Entry, reason?: BrowserError): Promise<void> {
+    if (!entry.controller.signal.aborted) {
+      entry.controller.abort(reason);
+      if (reason?.code === "window-closed") this.policy.release?.(entry.owner);
+    }
     await entry.ready.catch(() => {});
     await this.dispose(entry);
   }
@@ -223,8 +253,8 @@ export class BrowserHost {
   }
 }
 
-/** Stop waiting on hooks at the startup deadline, even if a hook omits cancellation handling. */
-async function duringStartup<T>(operation: Promise<T>, signal: AbortSignal): Promise<T> {
+/** Stop waiting for browser I/O at the caller's deadline or lease revocation. */
+export async function untilAborted<T>(operation: Promise<T>, signal: AbortSignal): Promise<T> {
   let abort: () => void = () => {};
   const cancelled = new Promise<never>((_resolve, reject) => {
     abort = () => reject(signal.reason);

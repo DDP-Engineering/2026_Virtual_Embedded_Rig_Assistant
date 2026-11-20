@@ -1,10 +1,15 @@
-import { veraErrorSchema } from "@vera/shared";
+import { browserFailureCodeSchema, veraErrorSchema } from "@vera/shared";
 import { useTranslation } from "react-i18next";
+import { browserFailureText } from "../lib/browser-failure.js";
 
 export function ErrorMessage({ error }: { error: unknown }) {
   const { t } = useTranslation();
   const parsed = veraErrorSchema.safeParse(error);
   const sent = parsed.success ? parsed.data.messageKey : "errors.INTERNAL";
+  if (sent.startsWith("browser.failure.")) {
+    const browserFailure = browserFailureCodeSchema.safeParse(sent.slice("browser.failure.".length));
+    if (browserFailure.success) return <p role="alert">{browserFailureText(t, browserFailure.data)}</p>;
+  }
   const options = {
     operation: "",
     endpoint: "",

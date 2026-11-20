@@ -1,5 +1,6 @@
 import type { BrowserContext, Page } from "playwright-core";
 import { afterEach, expect, it, vi } from "vitest";
+import { BrowserError } from "./failure.js";
 import { BrowserHost, browserLimits } from "./host.js";
 import type { BrowserProcess } from "./launcher.js";
 import type { BrowserNetworkPolicy, BrowserOwner } from "./policy.js";
@@ -15,10 +16,16 @@ function fakeBrowser() {
   let reportExit: () => void = () => {};
   let reportPage: (page: Page) => void = () => {};
   const createPage = (beforeClose?: Promise<void>) => {
+    let onClose = () => {};
     const page = {
+      isClosed: () => !pages.has(page),
+      once: (_event: string, listener: () => void) => {
+        onClose = listener;
+      },
       close: vi.fn(async () => {
         if (beforeClose) await beforeClose;
-        pages.delete(page as unknown as Page);
+        pages.delete(page);
+        onClose();
       }),
     } as unknown as Page;
     pages.add(page);
@@ -68,6 +75,16 @@ it("refuses product access before checking or launching the runtime", async () =
   expect(launch).not.toHaveBeenCalled();
 });
 
+it("preserves a missing runtime error when failed startup discards its network grant", async () => {
+  const revoked = new AbortController();
+  const lease = { ...networkLease(), revoked: revoked.signal, close: () => revoked.abort() };
+  const { host, executable, launch } = create({ acquire: async () => lease });
+  executable.mockRejectedValueOnce(new BrowserError("runtime-missing"));
+  await expect(host.open(owner())).rejects.toMatchObject({ code: "runtime-missing" });
+  expect(revoked.signal.aborted).toBe(true);
+  expect(launch).not.toHaveBeenCalled();
+});
+
 it("bounds sessions and tabs including concurrently requested tabs and unsolicited tabs", async () => {
   const { host, launch } = create();
   const first = fakeBrowser();
@@ -94,6 +111,25 @@ it("bounds sessions and tabs including concurrently requested tabs and unsolicit
     releaseOverflow();
   }
   await vi.waitFor(() => expect(first.child.context.pages()).toHaveLength(browserLimits.tabs - 1));
+});
+
+it("drains a browser when its last visible tab closes, even without completed navigation", async () => {
+  const release = vi.fn();
+  const { host, launch } = create({ acquire: async () => networkLease(), release });
+  const process = fakeBrowser();
+  launch.mockResolvedValueOnce(process.child);
+  const session = await host.open(owner());
+  await session.discardTab(await session.newTab());
+  expect(session.closed.aborted).toBe(false);
+  const first = await session.newTab();
+  const second = await session.newTab();
+  await first.close();
+  expect(session.closed.aborted).toBe(false);
+  await second.close();
+  expect(session.closed.reason).toMatchObject({ code: "window-closed" });
+  expect(host.current(owner())).toBeUndefined();
+  expect(release).toHaveBeenCalledExactlyOnceWith(owner());
+  await vi.waitFor(() => expect(process.child.close).toHaveBeenCalledOnce());
 });
 
 it("drains cancelled startup, child exit, workbench close and host shutdown", async () => {

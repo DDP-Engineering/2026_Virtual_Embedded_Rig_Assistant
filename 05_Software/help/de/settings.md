@@ -64,6 +64,14 @@ Nur der Suchtext und die Adressen, die der Agent anfordert, verlassen Ihren Comp
 
 Das Ausschalten des Webzugriffs stoppt auch laufende Suchen und Downloads. Einzelne Workbenches können die Webwerkzeuge unter **Workbench bearbeiten** → **Werkzeuge** deaktivieren.
 
+### Interaktiver Browser
+
+Wählen Sie unter **Einstellungen → Webzugriff** die Aktion **Browser-Laufzeit installieren**, um Chromium herunterzuladen und zu prüfen. Sie können die Installation abbrechen oder die Laufzeit entfernen. Wählen Sie **Interaktiven Browser in VERA aktivieren** und **Interaktiven Browser in dieser Workbench erlauben**. Beide Schalter sind anfangs aus.
+
+Geben Sie im Chat unter **Öffentlicher Ursprung** den genauen Ursprung ein, etwa `https://example.com`, und wählen Sie **Zugriff gewähren**. Geben Sie das Protokoll und gegebenenfalls einen abweichenden Port an. Jeder Chat hat eigene Freigaben und ein eigenes Fenster. Geben Sie weitere Ursprünge für Weiterleitungen oder Ressourcen einzeln frei.
+
+Bitten Sie den Agenten, eine Seite zu lesen oder einem Link zu folgen. Der Chat zeigt die Aktivität und die freigegebene Seite. **Browser anzeigen** bringt den Tab nach vorn. **Surfen stoppen** beendet den laufenden Agentenvorgang und bricht den Browser-Vorgang ab. **Zugriff widerrufen** und **Browser schließen** beenden die temporäre Sitzung und löschen die Freigaben. Das Schließen des Fensters, das Ausschalten eines Schalters oder das Entfernen der Laufzeit widerruft den Zugriff. Verwenden Sie den verwalteten Download für unterstützte Dateien.
+
 ## Über
 
 **Über** zeigt die Anwendungsversion, Plattform, Architektur, ob VERA als portable Version läuft, das Gebietsschema des Systems, die Laufzeitversionen, die Lizenz und die Liste der Drittanbieterkomponenten mit ihren Lizenzen.

@@ -3,6 +3,7 @@ import {
   type AppInfo,
   acceptsImages,
   appEventSchema,
+  type BrowserRuntimeView,
   type CatalogEntry,
   type CatalogPack,
   type Channel,
@@ -123,6 +124,8 @@ export function createMockApi(
   };
   const installedDictationModels = new Set<DictationModelId>();
   let dictationDownload: { id: DictationModelId; start: number } | undefined;
+  let browserRuntime: BrowserRuntimeView = { phase: "missing" };
+  const browserGrants = new Map<string, string[]>();
   let settings = defaultSettings("1b9dc50c-d87d-484b-88e6-04cb5f7c5a19");
   const folderSelections = new Map<string, string>();
   const benches = new Map<string, { snapshot: WorkbenchSnapshot; pinned: string }>();
@@ -1326,6 +1329,89 @@ What this plugin does.
       case "app.openExternal":
         value = {};
         break;
+      case "browser.settings.get": {
+        const bench = active ? benches.get(active)?.snapshot : undefined;
+        value = {
+          runtime: browserRuntime,
+          appEnabled: settings.interactiveBrowser === true,
+          workbench: bench
+            ? {
+                id: bench.config.id,
+                enabled: bench.config.interactive_browser === true,
+                readOnly: bench.readOnly,
+              }
+            : null,
+        };
+        break;
+      }
+      case "browser.runtime.install":
+        browserRuntime = { phase: "ready", version: "156.0.8078.4" };
+        value = browserRuntime;
+        break;
+      case "browser.runtime.cancel":
+        browserRuntime = { phase: "cancelled" };
+        value = browserRuntime;
+        break;
+      case "browser.runtime.remove":
+        browserGrants.clear();
+        browserRuntime = { phase: "missing" };
+        value = browserRuntime;
+        break;
+      case "browser.session.get":
+      case "browser.session.grant":
+      case "browser.session.show":
+      case "browser.session.close": {
+        const request =
+          channel === "browser.session.grant"
+            ? channels["browser.session.grant"].request.parse(input.data)
+            : channels["browser.session.get"].request.parse(input.data);
+        const bench = current().snapshot;
+        if (bench.config.id !== request.workbenchId) throw veraError("CONFLICT");
+        const row = (sessions.invoke("session.list", {}) as SessionSummary[]).find(
+          ({ id }) => id === request.sessionId,
+        );
+        if (!row) throw veraError("NOT_FOUND");
+        const enabled = settings.interactiveBrowser === true && bench.config.interactive_browser === true;
+        const canGrant = enabled && !bench.readOnly && !row.archived;
+        const key = JSON.stringify([request.workbenchId, request.sessionId]);
+        if (channel === "browser.session.get") {
+          value = {
+            enabled,
+            canGrant,
+            origins: canGrant ? (browserGrants.get(key) ?? []) : [],
+            busy: false,
+            open: false,
+            currentUrl: null,
+            failure: null,
+          };
+          break;
+        }
+        if (channel === "browser.session.show") throw veraError("NOT_FOUND");
+        if (
+          channel === "browser.session.grant" &&
+          "origin" in request &&
+          typeof request.origin === "string"
+        ) {
+          if (!canGrant) throw veraError("DENIED");
+          const url = URL.parse(request.origin);
+          if (
+            !url ||
+            !["http:", "https:"].includes(url.protocol) ||
+            url.username ||
+            url.password ||
+            url.pathname !== "/" ||
+            url.search ||
+            url.hash
+          ) {
+            throw { code: "DENIED", messageKey: "browser.failure.destination-denied" };
+          }
+          const origins = [...new Set([...(browserGrants.get(key) ?? []), url.origin])];
+          if (origins.length > 32) throw { code: "DENIED", messageKey: "browser.failure.resource-limit" };
+          browserGrants.set(key, origins);
+        } else browserGrants.delete(key);
+        value = {};
+        break;
+      }
       case "web.access.get":
         value = {
           preferences: settings.webAccess,
@@ -1803,7 +1889,9 @@ What this plugin does.
         value = { settings };
         break;
       case "app.settings.update": {
-        const next = mergeSettings(settings, settingsPatchSchema.parse(input.data));
+        const patch = settingsPatchSchema.parse(input.data);
+        if (patch.interactiveBrowser === false) browserGrants.clear();
+        const next = mergeSettings(settings, patch);
         if (JSON.stringify(next) !== JSON.stringify(settings)) {
           const event = settingsChangedEvent(settings, next);
           settings = next;
@@ -1926,6 +2014,7 @@ What this plugin does.
         if (bench.snapshot.readOnly) throw veraError("DENIED");
         if (workbenchId && bench.snapshot.config.id !== workbenchId) throw veraError("CONFLICT");
         const currentModel = bench.snapshot.config.embeddings.model;
+        if (patch.interactive_browser === false) browserGrants.clear();
         const changingModel = patch.embeddings !== undefined && patch.embeddings.model !== currentModel;
         if (changingModel || embeddingSwitch) {
           const indexed =

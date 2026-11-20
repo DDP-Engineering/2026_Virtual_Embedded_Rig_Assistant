@@ -64,6 +64,14 @@ Seuls le texte de la recherche et les adresses demandées par l’agent quittent
 
 La désactivation de l’accès web arrête aussi les recherches et téléchargements en cours. Chaque banc de travail peut désactiver les outils web dans **Modifier le banc** → **Outils**.
 
+### Navigateur interactif
+
+Dans **Paramètres → Accès web**, sélectionnez **Installer le navigateur** pour télécharger et vérifier Chromium. Vous pouvez annuler l’installation ou supprimer le navigateur. Cochez **Activer le navigateur interactif dans VERA** et **Autoriser le navigateur interactif dans ce banc de travail**. Les deux réglages sont désactivés par défaut.
+
+Dans le chat, saisissez l’origine exacte, par exemple `https://example.com`, sous **Origine publique**, puis sélectionnez **Accorder l’accès**. Indiquez le protocole et tout port non standard. Chaque chat a ses autorisations et sa fenêtre. Autorisez séparément les origines supplémentaires utilisées pour les redirections ou les ressources.
+
+Demandez à l’agent de lire une page ou de suivre un lien. Le chat affiche l’activité et la page autorisée. **Afficher le navigateur** place l’onglet au premier plan. **Arrêter la navigation** arrête le tour et annule l’opération en cours. **Révoquer l’accès** et **Fermer le navigateur** mettent fin à la session temporaire et effacent les autorisations. Fermer la fenêtre, désactiver l’un des réglages ou supprimer le navigateur révoque aussi l’accès. Pour les fichiers pris en charge, utilisez le téléchargement géré.
+
 ## À propos
 
 **À propos** affiche la version de l’application, la plateforme, l’architecture, si VERA s’exécute en version portable, les paramètres régionaux du système, les versions des environnements d’exécution, la licence et la liste des composants tiers avec leurs licences.

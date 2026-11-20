@@ -23,6 +23,8 @@ budgets and abort. The browser mock seeds six selectable states and an edit appr
 
 - Shell approval cards show exact command/cwd/shell and, for eligible literal syntax, a chosen-prefix selector with Always allow. session.approval.decide carries the prefix only on that explicit user action. The [workbench editor](workbench-editor.md) owns the Agent editor list of saved prefixes. The card has four locales. Tests: tests/e2e/command-prefixes.spec.ts.
 
+- Interactive Browser presents the selected chat's grants, operation activity and current authorized URL. Show, Stop, Revoke and Close act on that chat. Localized browser errors are rendered from typed codes. [Desktop browser runtime](browser-runtime.md) owns authority and lifecycle. Proof: `tests/e2e/browser-controls.spec.ts`.
+
 - Markdown HTTP(S) source buttons use translated confirmation before system-browser IPC; cancel/Escape restore focus. A body portal preserves valid Markdown nesting; stable source components survive transcript refresh. [Web search](web-search.md) owns source handling.
 
 - WorkbenchNavigation coordinates session/workbench action details through one sidebar scope. Opening a trigger closes others; outside pointer/focus dismisses and Escape restores trigger focus. Archived expansion is independent. New session/shortcut opts into server-side unused-session reuse, retains the synchronous operationBusy guard, deduplicates the cache and focuses the selected composer through a consumed session-scoped request; same-session unsent drafts remain intact. Tests: workspace.test.ts, native navigation-actions.spec.ts.

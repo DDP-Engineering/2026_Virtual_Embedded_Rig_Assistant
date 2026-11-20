@@ -5,12 +5,13 @@ import { join } from "node:path";
 import { Readable, Transform } from "node:stream";
 import { pipeline } from "node:stream/promises";
 import { extractZip } from "@vera/core";
+import type { BrowserRuntimeView } from "@vera/shared";
 import { BrowserError, type BrowserFailure } from "./failure.js";
 import { browserTreeLimits, verifyBrowserTree } from "./integrity.js";
 import { type BrowserRelease, browserRelease } from "./release.js";
 
 export type BrowserRuntimeStatus =
-  | { phase: "unknown" | "missing" | "verifying" | "installing" | "cancelled" }
+  | { phase: "unknown" | "missing" | "verifying" | "installing" | "cancelled" | "removing" }
   | { phase: "downloading"; received: number; total: number }
   | { phase: "ready"; version: string }
   | { phase: "failed"; failure: BrowserFailure };
@@ -24,6 +25,7 @@ export class BrowserRuntime {
   private readonly transfer: typeof fetch;
   private current: BrowserRuntimeStatus = { phase: "unknown" };
   private job: { controller: AbortController; done: Promise<BrowserRuntimeStatus> } | undefined;
+  private removal: Promise<BrowserRuntimeStatus> | undefined;
   private closed = false;
 
   constructor(
@@ -38,9 +40,15 @@ export class BrowserRuntime {
     return this.current;
   }
 
+  view(): BrowserRuntimeView {
+    const status = this.status();
+    return status.phase === "failed" ? { phase: "failed", failure: status.failure.code } : status;
+  }
+
   /** Check disk readiness without creating anything or touching the network. */
   async inspect(): Promise<BrowserRuntimeStatus> {
     if (
+      this.removal ||
       this.job ||
       this.current.phase === "cancelled" ||
       (this.current.phase === "failed" && this.current.failure.code === "cleanup")
@@ -54,6 +62,7 @@ export class BrowserRuntime {
 
   provision(): Promise<BrowserRuntimeStatus> {
     if (this.closed) return Promise.resolve({ phase: "cancelled" });
+    if (this.removal) return Promise.resolve(this.current);
     if (this.job) return this.job.done;
     const controller = new AbortController();
     this.current = { phase: "verifying" };
@@ -74,15 +83,61 @@ export class BrowserRuntime {
     if (result.phase === "failed" && result.failure.code === "cleanup") throw new BrowserError("cleanup");
   }
 
+  /** Drain browser owners before deleting files, and block provisioning until removal settles. */
+  remove(beforeRemove: () => Promise<void>): Promise<BrowserRuntimeStatus> {
+    if (this.removal) return this.removal;
+    if (this.closed || this.job) return Promise.resolve(this.current);
+    this.current = { phase: "removing" };
+    this.removal = Promise.resolve()
+      .then(async (): Promise<BrowserRuntimeStatus> => {
+        try {
+          const release = this.getRelease();
+          try {
+            await beforeRemove();
+          } catch (cause) {
+            throw new BrowserError("cleanup", { cause });
+          }
+          await this.cleanStaging(join(this.root, ".installing"));
+          await this.cleanStaging(join(this.root, release.version));
+          return { phase: "missing" };
+        } catch (error) {
+          return this.failed(error);
+        }
+      })
+      .then((status) => {
+        this.removal = undefined;
+        this.current = status;
+        return status;
+      });
+    return this.removal;
+  }
+
   async shutdown(): Promise<void> {
     this.closed = true;
     await this.cancel();
+    await this.removal;
     if (this.current.phase === "failed" && this.current.failure.code === "cleanup")
       await this.cleanStaging(join(this.root, ".installing"));
   }
 
-  executable(signal: AbortSignal = new AbortController().signal): Promise<string> {
-    return this.verify(signal);
+  async executable(signal: AbortSignal = new AbortController().signal): Promise<string> {
+    if (this.removal) throw new BrowserError("cancelled");
+    const previous = this.current;
+    try {
+      return await this.verify(signal);
+    } catch (error) {
+      if (
+        !signal.aborted &&
+        this.current === previous &&
+        !this.job &&
+        !this.removal &&
+        error instanceof BrowserError
+      ) {
+        if (error.code === "runtime-missing") this.current = { phase: "missing" };
+        if (error.code === "integrity") this.current = this.failed(error);
+      }
+      throw error;
+    }
   }
 
   private async verify(signal: AbortSignal): Promise<string> {
