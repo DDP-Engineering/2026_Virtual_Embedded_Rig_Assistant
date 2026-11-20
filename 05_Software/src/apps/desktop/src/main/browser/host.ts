@@ -18,6 +18,7 @@ export const browserLimits = {
 
 /** Main-process operations for an owned session; page handles stay in the main process. */
 export interface BrowserSession {
+  readonly closed: AbortSignal;
   newTab(): Promise<Page>;
   tabs(): readonly Page[];
   close(): Promise<void>;
@@ -145,9 +146,11 @@ export class BrowserHost {
       await duringStartup(Promise.resolve(lease.attach(context, signal)), signal);
       signal.throwIfAborted();
 
-      // The slot includes tabs opened from the visible browser, not just API requests.
+      // Keep rejected popups off the agent surface while Chromium closes them.
+      const rejected = new WeakSet<Page>();
       context.on("page", (page) => {
         if (context.pages().indexOf(page) >= browserLimits.tabs) {
+          rejected.add(page);
           void page.close().catch(() => {});
         }
       });
@@ -155,18 +158,26 @@ export class BrowserHost {
       entry.expires = setTimeout(() => void this.closeEntry(entry).catch(() => {}), browserLimits.lifetimeMs);
       entry.expires.unref();
       return {
+        closed: entry.controller.signal,
         newTab: () => {
           const open = queued.then(async () => {
             if (entry.controller.signal.aborted) throw new BrowserError("cancelled");
             if (context.pages().length >= browserLimits.tabs) throw new BrowserError("tab-limit");
             const page = await context.newPage();
             if (entry.controller.signal.aborted) throw new BrowserError("cancelled");
+            if (rejected.has(page)) throw new BrowserError("tab-limit");
             return page;
           });
           queued = open.catch(() => {});
           return open;
         },
-        tabs: () => (entry.controller.signal.aborted ? [] : context.pages()),
+        tabs: () =>
+          entry.controller.signal.aborted
+            ? []
+            : context
+                .pages()
+                .filter((page) => !rejected.has(page))
+                .slice(0, browserLimits.tabs),
         close: () => this.closeEntry(entry),
       };
     } catch (error) {

@@ -11,6 +11,7 @@ import type { SkillCatalog } from "../skills/catalog.js";
 import type { WebDownloads } from "../web/downloads.js";
 import type { WebProvider } from "../web/provider.js";
 import { PathGuard } from "../workbench/path-guard.js";
+import type { AgentBrowserPort } from "./browser.js";
 import type { ChangeHost, PreparedChange } from "./changes.js";
 import type { DelegatedSessionToolHost } from "./delegated-sessions.js";
 import type { HelpHost } from "./help.js";
@@ -39,6 +40,7 @@ export interface ToolContext {
   todos?: TodoHost;
   knowledge?: DocumentKnowledge;
   web?: WebProvider;
+  browser?: AgentBrowserPort;
   downloads?: WebDownloads;
   /** Supplier catalog search of the official parts-search plugin; the host keeps every credential. */
   parts?: PartsSearcher;
@@ -52,6 +54,8 @@ export interface ToolContext {
   managedRoots?: readonly string[];
 }
 export interface ToolDefinition {
+  /** Live host policy shared by tool binding, dispatch and execution. */
+  available?(ctx: ToolContext): boolean;
   /** Recheck a revocable result before disclosure. Structured replacements are capped by the registry. */
   publish?(ctx: ToolContext, args: unknown, output: string): string | Record<string, unknown>;
   name: string;

@@ -419,7 +419,9 @@ export function createPiAiGateway(
           {
             systemPrompt: request.system,
             messages: request.messages,
-            tools: request.tools.map((t) => ({ ...t, parameters: t.parameters as unknown as TSchema })),
+            tools: request.tools
+              .filter(({ name }) => request.toolAvailable?.(name) !== false)
+              .map((t) => ({ ...t, parameters: t.parameters as unknown as TSchema })),
           },
           {
             signal: request.signal,

@@ -8,6 +8,8 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ### Added
 
+- Authorized Desktop agents can read rendered public pages, follow links, and cite the final URL.
+
 - Interactive browsing requires app and workbench opt-in and limits each session to approved public origins.
 - Desktop has an on-demand, verified Chromium runtime and isolated browser sessions for interactive browsing.
 

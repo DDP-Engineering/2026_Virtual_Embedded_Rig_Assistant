@@ -25,6 +25,10 @@ Chromium process requires a graphical session, system libraries and a working OS
 The instrumented build uses controlled resolver and upstream responses through the same
 browser proxy and settings gates as production.
 
+Native `browser-agent.spec.ts` exercises the Desktop replay gateway and browser tools using the same
+archive, isolated Chromium and public-only proxy. The browser fixture grants the test origin through
+Desktop main. `VERA_BROWSER_AGENT_EVIDENCE` optionally writes the focused acceptance receipt.
+
 Install the pinned Playwright Chromium once with `npx playwright install chromium` from `05_Software` before browser acceptance.
 
 ## Configuration and services

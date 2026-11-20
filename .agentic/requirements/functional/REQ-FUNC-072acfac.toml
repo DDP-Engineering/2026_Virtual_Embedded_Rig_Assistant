@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-FUNC-072acfac"
+
+title = "Read and cite rendered browser pages"
+
+status = "active"
+
+requirement = "When an opted-in Desktop agent opens an authorized public page, Desktop shall provide typed operations to navigate and return the rendered page title, visible text, accessible links and final citation URL."
+
+verification = "Replay a text-only Desktop agent from a public-origin redirect through a JavaScript-rendered snapshot and a link to its final cited URL."
+
+affected_paths = ["05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/libraries/core/src/tools/browser.ts", "05_Software/src/apps/desktop/src/main/browser/agent-browser.ts", "05_Software/src/apps/desktop/src/main/browser/page-reading.ts", "05_Software/src/apps/desktop/src/main/sessions.ts", "05_Software/src/apps/desktop/src/main/browser/proxy.ts"]
+
+linked_tests = ["05_Software/tests/e2e/browser-agent.spec.ts"]
+
+
+spec = "specs/REQ-FUNC-072acfac.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-20
+updated = 2026-11-20

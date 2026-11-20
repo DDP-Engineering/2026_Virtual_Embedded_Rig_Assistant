@@ -74,6 +74,11 @@ export class BrowserAccessPolicy implements BrowserNetworkPolicy {
     return url.origin;
   }
 
+  authorization(owner: BrowserOwner): AbortSignal | undefined {
+    if (!this.isEnabled(owner.workbenchId)) return undefined;
+    return this.grants.get(keyFor(owner))?.revoked.signal;
+  }
+
   origins(owner: BrowserOwner): readonly string[] {
     if (!this.isEnabled(owner.workbenchId)) return [];
     return Array.from(this.grants.get(keyFor(owner))?.origins ?? []);

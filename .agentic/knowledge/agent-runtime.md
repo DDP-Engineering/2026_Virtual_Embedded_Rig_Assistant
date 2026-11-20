@@ -14,7 +14,10 @@ The synchronous prompt builder consumes workbench name, decoded pinned text, res
 
 ToolDef optionally supplies synchronous `publish(args, output)`. After awaited execution and abort
 checking, ReferenceRuntime invokes it before tool.done or transcript disclosure; a rejection becomes
-an ordinary failed result. The registry caps structured replacements from delegated tool publication. [User terminals](terminals.md) uses it to recheck revocable read leases.
+an ordinary failed result. ToolDef can also supply a live availability predicate,
+which ReferenceRuntime rechecks before model dispatch and tool execution. The
+Desktop browser uses it for current grants and opt-ins. Model dispatch rechecks
+this predicate after session preparation and after credential resolution. The registry caps structured replacements from delegated tool publication. [User terminals](terminals.md) uses it to recheck revocable read leases.
 
 When the host offers commands, `SystemPromptInput.commands` adds instructions for run_command,
 closed stdin/noninteractive flags, background program_output polling with waitMs/until and program_stop.

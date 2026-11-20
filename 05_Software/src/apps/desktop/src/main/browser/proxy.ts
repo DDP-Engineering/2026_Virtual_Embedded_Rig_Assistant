@@ -6,7 +6,9 @@ import { BrowserError } from "./failure.js";
 import {
   type BrowserNetworkPorts,
   type BrowserUpstream,
+  browserNavigationErrorHeader,
   browserUrl,
+  readableBrowserType,
   resolveBrowserAddress,
 } from "./network.js";
 import { createProxyIdentity } from "./proxy-identity.js";
@@ -44,6 +46,7 @@ const requestHeaders = [
 ] as const;
 
 const responseHeaderExclusions = new Set([
+  browserNavigationErrorHeader,
   "alt-svc",
   "clear-site-data",
   "connection",
@@ -79,6 +82,13 @@ export async function createBrowserProxy(
   async function serve(request: IncomingMessage, response: ServerResponse) {
     const tunnelOrigin = origins.get(request.socket);
     const raw = request.url ?? "";
+    const document = request.headers["sec-fetch-dest"] === "document";
+    const reject = (status: number, code: string) => {
+      // A no-content navigation keeps the currently visible document on policy failures.
+      if (document)
+        response.writeHead(204, { [browserNavigationErrorHeader]: code, "cache-control": "no-store" }).end();
+      else response.writeHead(status).end();
+    };
     let url: URL;
     try {
       if (tunnelOrigin && (!raw.startsWith("/") || /^\/[/\\]/.test(raw))) throw Error("Invalid target");
@@ -92,7 +102,7 @@ export async function createBrowserProxy(
         throw Error("Invalid authority");
       authorize(url);
     } catch {
-      response.writeHead(403).end();
+      reject(403, "destination-denied");
       return;
     }
     if (request.headers["service-worker"] || request.headers["sec-fetch-dest"] === "serviceworker") {
@@ -109,7 +119,7 @@ export async function createBrowserProxy(
       return;
     }
     if (requests >= maxRequests || inFlight >= parallel || bytes >= sessionBytes) {
-      response.writeHead(429).end();
+      reject(429, "resource-limit");
       return;
     }
     requests++;
@@ -132,13 +142,23 @@ export async function createBrowserProxy(
       upstream = await ports.request(url, address, method, headers, signal);
       signal.throwIfAborted();
       const coding = upstream.headers["content-encoding"];
-      if (upstream.headers["content-disposition"] || (coding && coding.toLowerCase() !== "identity")) {
-        response.writeHead(415).end();
+      const contentType = upstream.headers["content-type"];
+      const status = upstream.status;
+      const redirect = [301, 302, 303, 307, 308].includes(status) && !!upstream.headers.location;
+      const documentBody = status >= 200 && ![204, 205, 304].includes(status) && !redirect;
+      if (
+        upstream.headers["content-disposition"] ||
+        (coding && coding.toLowerCase() !== "identity") ||
+        (document &&
+          documentBody &&
+          !readableBrowserType(typeof contentType === "string" ? contentType : undefined))
+      ) {
+        reject(415, "unsupported-content");
         return;
       }
       const size = Number(upstream.headers["content-length"] ?? 0);
       if (method === "GET" && (size > resourceBytes || bytes + size > sessionBytes)) {
-        response.writeHead(413).end();
+        reject(413, "resource-limit");
         return;
       }
       const output = responseHeaders(upstream.headers);
@@ -159,7 +179,9 @@ export async function createBrowserProxy(
       response.end();
     } catch (error) {
       if (response.headersSent || lifetime.aborted || disconnect.signal.aborted) response.destroy();
-      else response.writeHead(deadline.aborted ? 504 : error instanceof BrowserError ? 403 : 502).end();
+      else if (deadline.aborted) reject(504, "operation-timeout");
+      else if (error instanceof BrowserError) reject(403, error.code);
+      else response.writeHead(502).end();
     } finally {
       upstream?.close();
       inFlight--;

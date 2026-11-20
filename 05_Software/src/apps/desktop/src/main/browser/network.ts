@@ -6,6 +6,13 @@ import { checkServerIdentity } from "node:tls";
 import { type PublicAddress, publicDownloadAddress, publicWebUrl } from "@vera/core";
 import { BrowserError } from "./failure.js";
 
+export const browserNavigationErrorHeader = "x-vera-browser-navigation-error";
+
+export function readableBrowserType(value: string | undefined): boolean {
+  const type = value?.split(";", 1)[0]?.trim().toLowerCase();
+  return type === "text/html" || type === "text/plain" || type === "application/xhtml+xml";
+}
+
 const special = new BlockList();
 // The existing download check handles private, non-global and tunneled addresses.
 // This browser also excludes the remaining IANA special-purpose ranges.

@@ -60,6 +60,7 @@ import {
 } from "electron";
 import { getAppInfo } from "./app-info.js";
 import { exportArtifact, exportName, publicArtifact, revealArtifact } from "./artifacts.js";
+import { AgentBrowser } from "./browser/agent-browser.js";
 import { BrowserHost } from "./browser/host.js";
 import { BrowserAccessPolicy } from "./browser/policy.js";
 import { BrowserRuntime } from "./browser/runtime.js";
@@ -498,6 +499,15 @@ const sessions = new SessionsHost({
   pluginBuilder: plugins,
   managedRoots: [dataLocations.paths.userData],
   web: webAccess.provider,
+  browser: (workbenchId, sessionId) =>
+    new AgentBrowser({ workbenchId, sessionId }, browserHost, browserAccess, (tool) => {
+      try {
+        const config = workbench.getSnapshot().config;
+        return config.id !== workbenchId || config.tools.disabled.includes(tool);
+      } catch {
+        return true;
+      }
+    }),
   parts: partsAccess.provider,
   downloads: (root) =>
     new WebDownloads(root, {

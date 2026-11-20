@@ -386,6 +386,38 @@ async function setup(extra: Partial<core.SessionHost> = {}) {
   });
   return { root, handle, host, service, gateway };
 }
+it("withholds browser tools if access changes before the session gateway sends the request", async () => {
+  let granted = true;
+  let wasOffered = false;
+  const { service, gateway } = await setup({
+    browser: () => ({ available: () => granted, execute: async () => ({ closed: true }) }),
+    runtime: (host) =>
+      new core.ReferenceRuntime({
+        ...host,
+        gateway: {
+          ...host.gateway,
+          stream(request) {
+            wasOffered ||= request.tools.some(({ name }) => name === "browser_open");
+            granted = false;
+            return host.gateway.stream(request);
+          },
+        },
+      }),
+  });
+  const dispatched: string[][] = [];
+  const original = gateway.stream.bind(gateway);
+  gateway.stream = (request) => {
+    dispatched.push(request.tools.map(({ name }) => name));
+    return original(request);
+  };
+  const session = service.create();
+  service.send(session.id, "Read the board");
+  expect(await service.waitIdle(session.id)).toEqual({ stopReason: "end" });
+  expect(wasOffered).toBe(true);
+  expect(dispatched[0]).toContain("web_read");
+  expect(dispatched.flat().filter((name) => name.startsWith("browser_"))).toEqual([]);
+});
+
 it("read-then-answer persists two tool pairs, valid citation and same live/durable snapshot then resumes", async () => {
   const { service, handle, host } = await setup();
   const session = service.create();

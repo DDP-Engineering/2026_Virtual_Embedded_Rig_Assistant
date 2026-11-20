@@ -1,4 +1,5 @@
 import {
+  type AgentBrowserPort,
   buildSystemPrompt,
   type Clock,
   type ConfiguredPartsProvider,
@@ -81,6 +82,7 @@ export class SessionsHost {
       emit: (event: EventEnvelope) => unknown;
       permissions?: PermissionEngine;
       web?: WebProvider;
+      browser?: (workbenchId: string, sessionId: string) => AgentBrowserPort;
       /** Supplier catalog search; offered only with the official parts-search plugin of the workbench. */
       parts?: ConfiguredPartsProvider;
       downloads?: (root: string) => WebDownloads;
@@ -164,6 +166,7 @@ export class SessionsHost {
         };
         const self = this;
         const partsProvider = options.parts;
+        const browser = options.browser;
         const workbenchId = snapshot.config.id;
         this.service = new SessionService({
           db,
@@ -194,6 +197,7 @@ export class SessionsHost {
           },
           gateway: options.gateway().api,
           ...(options.web ? { web: options.web } : {}),
+          ...(browser ? { browser: (sessionId: string) => browser(workbenchId, sessionId) } : {}),
           ...(partsProvider
             ? {
                 parts: {

@@ -180,7 +180,9 @@ export class ReferenceRuntime implements AgentRuntime {
       return image ? { ...message, content: [...message.content, image] } : message;
     };
     const toolsFor = (capabilities: ModelCapabilities) =>
-      init.tools.filter((tool) => !tool.requiresImages || acceptsImages(capabilities));
+      init.tools.filter(
+        (tool) => (tool.available?.() ?? true) && (!tool.requiresImages || acceptsImages(capabilities)),
+      );
     const delivered = new Set<string>();
     const recoveredPositions = new Set<number>();
     const pending = () =>
@@ -253,6 +255,7 @@ export class ReferenceRuntime implements AgentRuntime {
       const currentCapabilities = this.host.gateway.capabilities(init.model);
       const offered = toolsFor(currentCapabilities);
       const tools = toolSpecs(offered);
+      const revocableTools = offered.filter((tool) => tool.available);
       const view = {
         ...init.contextPolicy.prepare(
           {
@@ -327,6 +330,10 @@ export class ReferenceRuntime implements AgentRuntime {
           model: init.model,
           system: init.systemPrompt,
           tools,
+          ...(revocableTools.length > 0 && {
+            toolAvailable: (name: string) =>
+              revocableTools.find((tool) => tool.name === name)?.available?.() !== false,
+          }),
           messages,
           signal,
           maxOutputTokens: view.reservedOutputTokens,
@@ -403,6 +410,7 @@ export class ReferenceRuntime implements AgentRuntime {
         try {
           const tool = offered.find((t) => t.name === call.name);
           if (!tool) throw Error("Unknown tool");
+          if (tool.available?.() === false) throw Error("Tool is unavailable.");
           if (tool.requiresImages && imagesInStep >= MAX_MESSAGE_IMAGES)
             throw Error(
               `At most ${MAX_MESSAGE_IMAGES} images can be inspected in one step. Try the remaining files in a later step.`,

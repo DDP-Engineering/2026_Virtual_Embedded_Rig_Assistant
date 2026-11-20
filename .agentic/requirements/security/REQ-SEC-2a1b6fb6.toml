@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-SEC-2a1b6fb6"
+
+title = "Keep browser handles local to their owner"
+
+status = "active"
+
+requirement = "If a browser reference belongs to another Desktop session or to a stale snapshot or tab, Desktop shall refuse it before navigating."
+
+verification = "Use a real link reference from a different session, after a new snapshot and after navigation; verify stale errors and the lack of destination requests."
+
+affected_paths = ["05_Software/src/apps/desktop/src/main/browser/agent-browser.ts", "05_Software/src/libraries/core/src/tools/browser.ts"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/main/browser/agent-browser.test.ts", "05_Software/tests/e2e/browser-agent.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-20
+updated = 2026-11-20

@@ -213,6 +213,11 @@ Contracts the tests pin down:
   untrusted and cited with Markdown links. Disabling or changing access revokes active calls;
   service limits and failures are recoverable tool errors, without automatic fallback. Links open in
   the system browser after confirmation.
+- The Desktop browser session tools use both browser opt-ins, the workbench tool restrictions and
+  an exact-origin grant. They use the isolated Chromium runtime and its public-only proxy to open,
+  snapshot, follow, scroll, list or switch tabs and close. Rendered snapshots give bounded untrusted
+  text and links with snapshot-scoped references, plus the final citation URL. See the
+  [browser tool contract](../../.agentic/specs/REQ-FUNC-072acfac.md).
 - `web_download` (`.agentic/specs/pdf-downloads.md`) needs Web access enabled but no provider key.
   It is a write tool: its prepared request (§6) is always `protected`, so it asks even in `auto-edit`. VERA fetches
   the URL directly, without cookies, credentials or proxy: every resolved address must be public

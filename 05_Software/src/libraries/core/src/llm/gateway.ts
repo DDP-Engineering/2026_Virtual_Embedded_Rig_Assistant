@@ -31,6 +31,8 @@ export interface LlmRequest {
   system: string;
   messages: Message[];
   tools: ToolSpec[];
+  /** Recheck live tool authority after any provider preparation and before dispatch. */
+  toolAvailable?: (name: string) => boolean;
   signal: AbortSignal;
   maxOutputTokens?: number;
   sessionId?: string;

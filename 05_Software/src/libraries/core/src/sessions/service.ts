@@ -51,6 +51,7 @@ import { EventsRepository } from "../storage/repos/events.js";
 import { MessagesRepository } from "../storage/repos/messages.js";
 import { type SessionRow, SessionsRepository } from "../storage/repos/sessions.js";
 import { TodosRepository } from "../storage/repos/todos.js";
+import type { AgentBrowserPort } from "../tools/browser.js";
 import { type ChangeRequest, type PreparedChange, recoverChanges } from "../tools/changes.js";
 import { createToolContext, type ToolContext } from "../tools/context.js";
 import { bindDelegatedSessionHost } from "../tools/delegated-sessions.js";
@@ -94,6 +95,7 @@ export interface SessionHost {
   skills?: SkillCatalog | undefined;
   registry?: ToolRegistry;
   web?: WebProvider;
+  browser?: (sessionId: string) => AgentBrowserPort;
   /** Supplier catalog search; absent hosts never offer parts_search. */
   parts?: PartsSearcher;
   /** VERA's own help; absent hosts never offer the help tool. */
@@ -996,6 +998,7 @@ export class SessionService {
       else delete ctx.terminals;
       if (this.host.pluginBuilder) ctx.pluginBuilder = this.host.pluginBuilder;
       if (this.host.managedRoots) ctx.managedRoots = this.host.managedRoots;
+      if (this.host.browser) ctx.browser ??= this.host.browser(id);
       if (this.host.web) ctx.web = this.host.web;
       else delete ctx.web;
       if (this.host.parts) ctx.parts = this.host.parts;
@@ -1184,6 +1187,7 @@ export class SessionService {
           }
           const readOnly = mode() === "read-only";
           const tools = request.tools.filter((tool) => {
+            if (request.toolAvailable?.(tool.name) === false) return false;
             if (delegated) return offeredToolNames.has(tool.name);
             if (readOnly && (writeToolNames.has(tool.name) || tool.name === "run_command")) return false;
             return (

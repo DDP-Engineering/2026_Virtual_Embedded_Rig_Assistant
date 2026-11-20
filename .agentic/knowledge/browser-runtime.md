@@ -5,6 +5,8 @@
 Select for browser runtime provisioning, the Playwright/Chromium pin, visible
 sandboxed Chromium, or isolation and disposal of VERA browser sessions. Start
 in `05_Software/src/apps/desktop/src/main/browser/` and its adjacent tests.
+For model-facing browsing, start with `agent-browser.ts`, `page-reading.ts` and
+`05_Software/src/libraries/core/src/tools/browser.ts`.
 Existing search, reading, and managed downloads are covered by
 [web search](web-search.md) and [PDF downloads](pdf-downloads.md).
 
@@ -26,6 +28,10 @@ session. Trusted Desktop main calls `grant`, `origins` and `release`. The
 browser host acquires a proxy lease before reading the runtime. App setting
 `interactiveBrowser` and workbench option `interactive_browser` both default
 to disabled when omitted. They are independent of file permission mode.
+The Desktop session host assigns an `AgentBrowser` port to the trusted owner.
+Its seven typed tools require the current opt-ins, an owner grant and individual
+workbench tool enablement. The model receives opaque tab IDs, scoped link
+references, and public citation URLs. The host retains grant and tab control.
 
 ## Invariants
 
@@ -40,7 +46,8 @@ to disabled when omitted. They are independent of file permission mode.
   navigation, file selection and browser-owned downloads.
 - Desktop keeps one process per VERA browser session, with three concurrent
   sessions, four tabs per context, a 30-second startup budget and a 30-minute
-  lifetime. The Playwright process launch has a 15-second timeout.
+  lifetime. The Playwright process launch has a 15-second timeout. Cap-rejected
+  popups stay outside the model's tab list while Chromium closes them.
 - Workbench transitions suspend browser acquisition and drain the outgoing
   workbench. Desktop shutdown drains all browser sessions and cancels
   provisioning. Process disconnect and session close use the same disposal.
@@ -55,6 +62,15 @@ to disabled when omitted. They are independent of file permission mode.
   in-flight requests, 2,000 requests per session, 16 MiB per resource,
   128 MiB per session and a 15-second request deadline. Service-worker
   scripts, protocol upgrades, attachments and encoded responses are denied.
+- Agent browser calls serialize by VERA session. Close has a reserved queue slot.
+  The lease admits 80 other calls with 35 seconds for open and 12 for other
+  calls including queue time. Active cancellation or timeout closes the owned
+  browser. A snapshot uses a fixed isolated-world reader for bounded top-level
+  viewport text and links. The 24,000-byte result marks page content untrusted.
+  Navigation, tab selection, scroll and a new snapshot retire prior references.
+- Policy refusals and unsupported document responses produce a proxy-owned
+  marker and preserve the currently displayed page. Upstream pages cannot set
+  the marker. Search, provider reading and managed downloads remain separate.
 
 ## Change map
 
@@ -64,6 +80,7 @@ to disabled when omitted. They are independent of file permission mode.
 | Sandbox and runtime errors | `launcher.ts`, `failure.ts` | `launcher.test.ts`, `browser-runtime.spec.ts` |
 | Ownership, gates and grants | `host.ts`, `policy.ts`, Desktop main | `host.test.ts`, `browser-policy.test.ts` |
 | Public destinations, request limits and alternate paths | `network.ts`, `proxy.ts`, `restrictions.ts` | `browser-policy.test.ts`, `network.test.ts`, `browser-runtime.spec.ts` |
+| Agent browser tools, budgets and refs | `agent-browser.ts`, `page-reading.ts`, core `tools/browser.ts` | `agent-browser.test.ts`, `browser.test.ts`, `browser-agent.spec.ts` |
 | Packaged fixture | `fixture.ts`, `02_Tools/release/package.mjs` | `browser-runtime.spec.ts` |
 
 ## Key behaviors
@@ -80,6 +97,10 @@ to disabled when omitted. They are independent of file permission mode.
   ownership, exact origins and revocation.
 - `REQ-SEC-1ae1db7c`, `REQ-SEC-f03f9d4e`, `REQ-SEC-b90a7966`, `REQ-NFR-e4b04da4` —
   pinned network requests, isolated browser surfaces and bounded reads.
+
+- `REQ-FUNC-072acfac`, `REQ-FUNC-d219825f` — rendered reading, citations and tab operations.
+- `REQ-SEC-a3c7aa38`, `REQ-SEC-2a1b6fb6`, `REQ-SEC-fcab766f`, `REQ-SEC-ad60d613` — live authority, scoped refs, denied destinations and untrusted data.
+- `REQ-REL-48dddd59`, `REQ-REL-7274a3e9`, `REQ-REL-d97264a7`, `REQ-NFR-2661da07`, `REQ-REL-fff52da3`, `REQ-REL-c8d7898f` — supported documents, closed pages, deadlines, bounded results, cancellation and close.
 
 ## Files
 

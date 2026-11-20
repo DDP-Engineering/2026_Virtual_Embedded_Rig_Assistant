@@ -84,6 +84,52 @@ async function events(
   return results;
 }
 describe("model gateway", () => {
+  it("filters a browser tool revoked during credential resolution from the actual provider request", async () => {
+    let browserAllowed = true;
+    const received: string[] = [];
+    const { url } = await endpoint(async (req, res) => {
+      const parts: Buffer[] = [];
+      for await (const chunk of req) parts.push(chunk);
+      const body = JSON.parse(Buffer.concat(parts).toString("utf8"));
+      received.push(...body.tools.map((tool: { function: { name: string } }) => tool.function.name));
+      res.writeHead(200, { "content-type": "text/event-stream" });
+      res.write(
+        'data: {"id":"fixture","choices":[{"index":0,"delta":{"content":"OK"},"finish_reason":"stop"}]}\n\n',
+      );
+      res.end("data: [DONE]\n\n");
+    });
+    const { settings } = setup(url);
+    const gateway = createPiAiGateway({
+      settings: () => settings,
+      credentials: {
+        ...credentials,
+        async read(id, options) {
+          await Promise.resolve();
+          browserAllowed = false;
+          return credentials.read(id, options);
+        },
+      },
+      scrub: (text) => text,
+      now: () => 0,
+    });
+    const emitted: LlmEvent[] = [];
+    for await (const event of gateway.stream({
+      model: "custom:local/org/model",
+      system: "system",
+      messages: [{ role: "user", content: "hi", timestamp: 0 }],
+      tools: ["browser_open", "web_read"].map((name) => ({
+        name,
+        description: name,
+        parameters: { type: "object", properties: {} },
+      })),
+      toolAvailable: (name) => name !== "browser_open" || browserAllowed,
+      signal: new AbortController().signal,
+    }))
+      emitted.push(event);
+    expect(received).toEqual(["web_read"]);
+    expect(emitted.at(-1)?.type).toBe("done");
+  });
+
   it("exposes the pinned OpenAI model list's input modalities", async () => {
     const { gateway } = setup("http://127.0.0.1:1/v1");
     const { models } = await gateway.models("openai");

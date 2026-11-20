@@ -93,6 +93,7 @@ export * from "./storage/schema.js";
 export * from "./tools/apply-candidate.js";
 export * from "./tools/artifact-save.js";
 export * from "./tools/binary.js";
+export * from "./tools/browser.js";
 export * from "./tools/changes.js";
 export * from "./tools/context.js";
 export * from "./tools/edit.js";

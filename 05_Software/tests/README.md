@@ -60,6 +60,11 @@ Run test:e2e with tests/e2e/dictation.spec.ts for bounded capture, permission an
 in an instrumented Electron build. Set VERA_DICTATION_PACKAGED_APP to run that spec directly
 through Playwright against an unpacked instrumented executable using an isolated nonportable profile.
 
+Native `e2e/browser-agent.spec.ts` drives a text-only replay agent through the Desktop browser tools.
+Set `VERA_TEST_BROWSER_ARCHIVE` to the verified archive for the host. The controlled public-origin
+fixture covers dynamic reading, citation URLs, tab ownership, denied and stale references, budgets,
+Stop and close. Set `VERA_BROWSER_AGENT_EVIDENCE` to keep the JSON receipt.
+
 ## Vitest test inventory
 
 TERM-05 adds `packaging/terminal-runtime.test.ts` for native PTY architecture/helper closure,

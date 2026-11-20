@@ -1,0 +1,186 @@
+import { EventEmitter } from "node:events";
+import type { BrowserCall } from "@vera/core";
+import type { Page } from "playwright-core";
+import { afterEach, expect, it, vi } from "vitest";
+import { AgentBrowser, browserAgentLimits } from "./agent-browser.js";
+import type { BrowserSession } from "./host.js";
+import { inspectPage } from "./page-reading.js";
+
+vi.mock("./page-reading.js", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("./page-reading.js")>()),
+  inspectPage: vi.fn(),
+}));
+
+const url = "https://example.com/";
+const nextUrl = `${url}next`;
+const owner = { workbenchId: "bench", sessionId: "session" };
+class FakePage extends EventEmitter {
+  current = "about:blank";
+  url = () => this.current;
+  mainFrame = () => this;
+  goto = vi.fn(async (destination: string) => {
+    this.current = destination;
+    this.emit("framenavigated", this);
+    return {
+      url: () => destination,
+      headers: () => ({ "content-type": "text/html" }),
+      status: () => 200,
+    };
+  });
+  isClosed = () => this.closed;
+  closed = false;
+  close = async () => {
+    this.closed = true;
+    this.emit("close");
+  };
+  bringToFront = vi.fn(async () => {});
+}
+
+function harness(disabled = () => false) {
+  const grant = new AbortController();
+  const closed = new AbortController();
+  const all: FakePage[] = [];
+  const host = {
+    open: vi.fn(
+      async (): Promise<BrowserSession> => ({
+        closed: closed.signal,
+        tabs: () => all.filter((page) => !page.closed) as unknown as Page[],
+        async newTab() {
+          const page = new FakePage();
+          all.push(page);
+          return page as unknown as Page;
+        },
+        async close() {
+          await host.closeSession(owner);
+        },
+      }),
+    ),
+    closeSession: vi.fn(async (_owner: typeof owner) => {
+      grant.abort();
+      closed.abort();
+      await Promise.all(all.map((page) => page.close()));
+    }),
+  };
+  const access = {
+    authorization: () => (grant.signal.aborted ? undefined : grant.signal),
+    origins: () => [new URL(url).origin],
+  };
+  const browser = new AgentBrowser(owner, host, access, disabled);
+  const run = (name: BrowserCall["name"], args = {}, signal = new AbortController().signal) =>
+    browser.execute({ name, args } as BrowserCall, signal);
+  return { host, run, all };
+}
+
+afterEach(() => {
+  vi.resetAllMocks();
+  vi.useRealTimers();
+});
+
+it("serializes tabs and invalidates stale, crossed and navigated snapshot references", async () => {
+  const a = harness();
+  const b = harness();
+  await expect(a.run("browser_open", { url })).resolves.toMatchObject({ url });
+  await b.run("browser_open", { url });
+  vi.mocked(inspectPage).mockResolvedValue({
+    url,
+    title: "Fixture",
+    text: "Untrusted rendered text",
+    links: [{ url: nextUrl, label: "Next" }],
+    truncated: false,
+  });
+  const first = await a.run("browser_snapshot");
+  if (!("links" in first)) throw Error("Missing snapshot");
+  expect(first).toMatchObject({ contentTrust: "untrusted-web-content", text: "Untrusted rendered text" });
+  const ref = first.links[0]?.ref;
+  await expect(b.run("browser_follow", { ref })).resolves.toMatchObject({ code: "stale-reference" });
+  expect(b.all[0]?.goto).toHaveBeenCalledTimes(1);
+  const second = await a.run("browser_snapshot");
+  if (!("links" in second)) throw Error("Missing replacement snapshot");
+  await expect(a.run("browser_follow", { ref })).resolves.toMatchObject({ code: "stale-reference" });
+  const next = { ref: second.links[0]?.ref };
+  await expect(a.run("browser_follow", next)).resolves.toMatchObject({ url: nextUrl });
+  await expect(a.run("browser_follow", next)).resolves.toMatchObject({ code: "stale-reference" });
+  await a.all[0]?.close();
+  await expect(a.run("browser_snapshot")).resolves.toMatchObject({ code: "page-closed" });
+});
+
+it("rechecks the tool gate after startup before navigating the new tab", async () => {
+  let disabled = false;
+  const a = harness(() => disabled);
+  const start = a.host.open.getMockImplementation();
+  if (!start) throw Error("Missing mock startup");
+  a.host.open.mockImplementationOnce(async () => {
+    const browser = await start();
+    disabled = true;
+    return browser;
+  });
+  await expect(a.run("browser_open", { url })).resolves.toMatchObject({ code: "policy-denied" });
+  expect(a.all[0]?.goto).not.toHaveBeenCalled();
+  expect(a.all[0]?.closed).toBe(true);
+});
+
+it("reports a page that closes halfway through switching tabs", async () => {
+  const a = harness();
+  const opened = await a.run("browser_open", { url });
+  if (!("tabId" in opened) || !a.all[0]) throw Error("Missing tab");
+  const page = a.all[0];
+  page.bringToFront.mockImplementationOnce(async () => {
+    await page.close();
+    throw Error("Page closed during switch");
+  });
+  await expect(a.run("browser_switch", { tabId: opened.tabId })).resolves.toMatchObject({
+    code: "page-closed",
+  });
+});
+
+it("returns a deadline error and releases the owned session during stalled browser work", async () => {
+  vi.useFakeTimers();
+  const a = harness();
+  await a.run("browser_open", { url });
+  vi.mocked(inspectPage).mockReturnValue(new Promise(() => {}));
+  const snapshot = a.run("browser_snapshot");
+  await vi.advanceTimersByTimeAsync(browserAgentLimits.operationMs);
+  await expect(snapshot).resolves.toMatchObject({ code: "operation-timeout" });
+  expect(a.host.closeSession).toHaveBeenCalledWith(owner);
+});
+
+it("cancels queued calls without interrupting an active call and disposes actively aborted work", async () => {
+  const a = harness();
+  await a.run("browser_open", { url });
+  vi.mocked(inspectPage).mockReturnValue(new Promise(() => {}));
+  const active = new AbortController();
+  const queued = new AbortController();
+  const snapshot = a.run("browser_snapshot", {}, active.signal);
+  await vi.waitFor(() => expect(inspectPage).toHaveBeenCalledOnce());
+  const tabs = a.run("browser_tabs", {}, queued.signal);
+  queued.abort();
+  await expect(tabs).resolves.toMatchObject({ code: "cancelled" });
+  expect(a.host.closeSession).not.toHaveBeenCalled();
+  active.abort();
+  await expect(snapshot).resolves.toMatchObject({ code: "cancelled" });
+  expect(a.host.closeSession).toHaveBeenCalledOnce();
+});
+
+it("caps result text and total admission per grant while preserving close", async () => {
+  const a = harness();
+  const b = harness();
+  await a.run("browser_open", { url });
+  await b.run("browser_open", { url });
+  vi.mocked(inspectPage).mockResolvedValue({
+    url,
+    title: "\uD800".repeat(4000),
+    text: "\uD800".repeat(30000),
+    links: Array.from({ length: 100 }, () => ({ label: '"'.repeat(300), url: nextUrl })),
+    truncated: false,
+  });
+  const snapshot = await a.run("browser_snapshot");
+  expect(snapshot).toMatchObject({ truncated: true, url });
+  expect(Buffer.byteLength(JSON.stringify(snapshot))).toBeLessThanOrEqual(browserAgentLimits.resultBytes);
+  for (let index = 2; index < browserAgentLimits.operations; index++) {
+    await expect(a.run("browser_tabs")).resolves.toHaveProperty("tabs");
+  }
+  await expect(a.run("browser_tabs")).resolves.toMatchObject({ code: "operation-limit" });
+  await expect(a.run("browser_close")).resolves.toEqual({ closed: true });
+  expect(a.all[0]?.closed).toBe(true);
+  expect(b.all[0]?.closed).toBe(false);
+});

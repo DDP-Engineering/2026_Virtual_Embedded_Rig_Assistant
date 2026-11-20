@@ -2,6 +2,7 @@ import { builtinToolNames, delegatedSessionToolNames } from "@vera/shared";
 import { expect, it } from "vitest";
 import { z } from "zod";
 import * as api from "../index.js";
+import { browserToolNames } from "./browser.js";
 
 it("converts every tool schema and validates samples while filtering disabled names", () => {
   expect(api.ToolRegistry).toBeTypeOf("function");
@@ -9,6 +10,7 @@ it("converts every tool schema and validates samples while filtering disabled na
   expect(registry.available().map((tool) => tool.name)).toEqual([
     ...builtinToolNames,
     ...delegatedSessionToolNames,
+    ...browserToolNames,
   ]);
   const samples = {
     terminal_read: {},
@@ -89,6 +91,13 @@ it("converts every tool schema and validates samples while filtering disabled na
     session_status: { sessionId: "ses_01JB8Z6Q4M7N2K5R9T3V8X1Y0C" },
     session_wait: { sessionId: "ses_01JB8Z6Q4M7N2K5R9T3V8X1Y0C", waitMs: 30000 },
     session_stop: { sessionId: "ses_01JB8Z6Q4M7N2K5R9T3V8X1Y0C" },
+    browser_open: { url: "https://example.com/" },
+    browser_snapshot: {},
+    browser_follow: { ref: "277cb64b-ca1a-42dc-9a35-c4520992b846:1" },
+    browser_scroll: { direction: "up" },
+    browser_tabs: {},
+    browser_switch: { tabId: "277cb64b-ca1a-42dc-9a35-c4520992b846" },
+    browser_close: {},
   };
   for (const tool of registry.available()) {
     const sample = samples[tool.name as keyof typeof samples];
@@ -134,6 +143,7 @@ it("converts every tool schema and validates samples while filtering disabled na
     "lighting_design",
     "help",
     ...delegatedSessionToolNames,
+    ...browserToolNames,
   ]);
   expect(registry.available(["read"]).map((tool) => tool.name)).not.toContain("read");
 });

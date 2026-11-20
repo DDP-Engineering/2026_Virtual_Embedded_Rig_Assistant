@@ -14,9 +14,10 @@ function fakeBrowser() {
   const pages = new Set<Page>();
   let reportExit: () => void = () => {};
   let reportPage: (page: Page) => void = () => {};
-  const createPage = () => {
+  const createPage = (beforeClose?: Promise<void>) => {
     const page = {
       close: vi.fn(async () => {
+        if (beforeClose) await beforeClose;
         pages.delete(page as unknown as Page);
       }),
     } as unknown as Page;
@@ -78,9 +79,21 @@ it("bounds sessions and tabs including concurrently requested tabs and unsolicit
   const tabs = await Promise.all(Array.from({ length: browserLimits.tabs }, () => session.newTab()));
   expect(new Set(tabs).size).toBe(browserLimits.tabs);
   await expect(session.newTab()).rejects.toMatchObject({ code: "tab-limit" });
-  const overflow = first.createPage();
-  await vi.waitFor(() => expect(overflow.close).toHaveBeenCalled());
-  expect(first.child.context.pages()).toHaveLength(browserLimits.tabs);
+  let releaseOverflow: () => void = () => {};
+  const closePending = new Promise<void>((resolve) => {
+    releaseOverflow = resolve;
+  });
+  const overflow = first.createPage(closePending);
+  try {
+    expect(overflow.close).toHaveBeenCalledOnce();
+    expect(first.child.context.pages()).toHaveLength(browserLimits.tabs + 1);
+    expect(session.tabs()).toEqual(tabs);
+    await tabs[0]?.close();
+    expect(session.tabs()).toEqual(tabs.slice(1));
+  } finally {
+    releaseOverflow();
+  }
+  await vi.waitFor(() => expect(first.child.context.pages()).toHaveLength(browserLimits.tabs - 1));
 });
 
 it("drains cancelled startup, child exit, workbench close and host shutdown", async () => {

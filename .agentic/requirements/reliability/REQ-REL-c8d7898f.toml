@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-REL-c8d7898f"
+
+title = "Release the closed agent browser"
+
+status = "active"
+
+requirement = "When the agent closes its browser, Desktop shall release the owning browser session, tabs and grants."
+
+verification = "Close through Desktop replay and verify the origin grant is gone and another session retains its own tab."
+
+affected_paths = ["05_Software/src/apps/desktop/src/main/browser/agent-browser.ts", "05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/apps/desktop/src/main/browser/host.ts", "05_Software/src/apps/desktop/src/main/browser/policy.ts"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/main/browser/agent-browser.test.ts", "05_Software/src/libraries/core/src/tools/browser.test.ts", "05_Software/tests/e2e/browser-agent.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-20
+updated = 2026-11-20

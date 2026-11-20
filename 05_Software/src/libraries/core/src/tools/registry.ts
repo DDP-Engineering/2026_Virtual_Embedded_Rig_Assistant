@@ -14,6 +14,7 @@ import { runCommandTool } from "../plugins/command-tools.js";
 import { programOutputTool, programStopTool, runProgramTool } from "../plugins/program-tools.js";
 import { applyCandidateTool } from "./apply-candidate.js";
 import { artifactSaveTool } from "./artifact-save.js";
+import { browserTools } from "./browser.js";
 import type { ToolContext, ToolDefinition } from "./context.js";
 import { toolSignal } from "./context.js";
 import { decodeRegisterTool } from "./decode-register.js";
@@ -171,6 +172,7 @@ export class ToolRegistry {
     definitions: readonly ToolDefinition[] = [
       ...builtinToolNames.map((name) => builtinDefinitions[name]),
       ...delegatedSessionTools,
+      ...browserTools,
     ],
   ) {
     const names = definitions.map((tool) => tool.name);
@@ -184,7 +186,7 @@ export class ToolRegistry {
     return this.available(disabled).filter((tool) => {
       if (ctx.delegated) return tool.class === "read" && delegatedInspectionTools.has(tool);
       if (delegationNames.has(tool.name)) return !!ctx.delegation && delegatedSessionTools.includes(tool);
-      return true;
+      return tool.available?.(ctx) ?? true;
     });
   }
   private capResult(ctx: ToolContext, name: string, value: Record<string, unknown>) {
@@ -313,6 +315,7 @@ export class ToolRegistry {
           ? `${tool.description} Bypass is active: agent input paths may be absolute or relative to the workbench, including outside and ignored locations.`
           : tool.description,
       params: tool.params,
+      ...(tool.available ? { available: () => tool.available?.(ctx) === true } : {}),
       ...(tool.requiresImages && { requiresImages: true as const }),
       ...(tool.publish
         ? {

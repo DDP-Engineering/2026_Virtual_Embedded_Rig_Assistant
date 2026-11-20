@@ -54,6 +54,7 @@ import type { WorkbenchHost } from "../ports.js";
 import { SkillCatalog } from "../skills/catalog.js";
 import { openDb, type WorkbenchDatabase } from "../storage/db.js";
 import { DocumentsRepository, keywordEpoch } from "../storage/repos/documents.js";
+import { browserToolNames } from "../tools/browser.js";
 import { PREVIEW_TIME_LIMIT_MS, previewDocuments, relativeFolder, scanDocuments } from "./documents-scan.js";
 import { acquireGuard } from "./guard.js";
 import { createIgnoreRules } from "./ignore.js";
@@ -202,7 +203,11 @@ export class WorkbenchService {
     }).names();
     return configWarnings(config, {
       skills: [...skills, ...(this.host.catalogs?.skills ?? [])],
-      tools: this.host.catalogs?.tools ?? [...builtinToolNames, ...delegatedSessionToolNames],
+      tools: this.host.catalogs?.tools ?? [
+        ...builtinToolNames,
+        ...delegatedSessionToolNames,
+        ...browserToolNames,
+      ],
       plugins: this.host.userData
         ? await new PluginStore({ root: join(this.host.userData, "plugins"), workbench: root }).ids()
         : [],

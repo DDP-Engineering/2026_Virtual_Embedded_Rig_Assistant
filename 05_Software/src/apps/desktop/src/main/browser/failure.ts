@@ -17,6 +17,13 @@ const recovery = {
   "destination-denied": "Authorize a public HTTP or HTTPS origin for this session.",
   "resource-limit": "The browser session reached its resource limit.",
   "session-limit": "Close another VERA browser session before opening a new one.",
+  "stale-reference": "Read a fresh snapshot of the selected tab and use one of its link references.",
+  "page-closed": "Open a public page or switch to an existing tab in this session.",
+  "unsupported-content": "Open a public HTML or text page. Use web_download for supported files.",
+  "operation-timeout": "Browser operation timed out. Check the session’s browser access and retry.",
+  "operation-limit": "The browser operation budget was reached. Close the browser to start a new session.",
+  "navigation-failed": "The public page could not be loaded. Verify the URL and try again.",
+  "operation-failed": "The browser operation failed. Inspect the owned tabs or open a new page.",
   "tab-limit": "Close a browser tab before opening another.",
   cancelled: "Open a new browser session to continue browsing.",
 } as const;

@@ -33,6 +33,10 @@ SessionHost.masking(area) resolves live validated app/workbench choices. Tool pu
 
 SessionHost may own a WebDownloads instance, exposed as listDownloads/openDownload and ctx.downloads. Prepared web_download requests use the write approval gate; close cancels/drains downloads before releasing storage. Download files remain workbench-owned after deleting their session. See [PDF downloads](pdf-downloads.md).
 
+- Desktop composes a browser port per trusted workbench and session. Provider dispatch rechecks
+  browser authorization after durable-event handling and attachment hydration. Session Stop routes
+  its normal abort signal through browser operations. See [Desktop browser runtime](browser-runtime.md).
+
 - Optional SessionHost.web supplies the provider to session context; desktop/CLI compose anonymous Exa without startup requests. Web tools use the read execution/permissions/activity path. [Web search](web-search.md) owns the network boundary.
 
 - SessionService.create(modelRef?,mode?,reuseEmpty=false) keeps explicit creation separate. Opt-in New session selects the most recently updated idle/unarchived row with no user transcript row or submitted/queued event, or creates within the same synchronous transaction. Reuse preserves name, model, mode and history. Separate workbench databases and main ownership checks prevent cross-workbench reuse. Tests: service.test.ts, navigation-actions.spec.ts.
