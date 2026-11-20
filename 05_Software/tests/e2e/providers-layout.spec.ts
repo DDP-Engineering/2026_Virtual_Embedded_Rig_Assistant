@@ -49,7 +49,20 @@ test("provider categories support concurrent connections, presets and aligned ac
   await expect(choices).toHaveCount(0);
   await expect(section.getByText("No matching providers")).toBeVisible();
   await search.clear();
-  await expect(choices).toHaveCount(4);
+  await expect(choices).toHaveCount(6);
+  await search.fill("OpenCode");
+  await expect(choices).toHaveText(["OpenCode Console", "OpenCode Go"]);
+  for (const [preset, label, baseUrl] of [
+    ["opencode-console", "OpenCode Console", "https://opencode.ai/inference/openai/v1"],
+    ["opencode-go", "OpenCode Go", "https://opencode.ai/inference/go/openai/v1"],
+  ]) {
+    await section.locator("[data-provider-preset]").selectOption(preset!);
+    await expect(section.locator("[data-provider-editor]").getByText(label!, { exact: true })).toBeVisible();
+    await expect(section.getByLabel("Base URL", { exact: true })).toHaveValue(baseUrl!);
+    await expect(section.getByLabel("Base URL", { exact: true })).not.toBeEditable();
+  }
+  await search.clear();
+  await section.locator("[data-provider-preset]").selectOption("openai");
   const secret = "fak-ui-only-private-9Zx4";
   await section.getByLabel("OpenAI API key", { exact: true }).fill(secret);
   await section.getByLabel("OpenAI model (optional)", { exact: true }).fill("mock-openai");

@@ -3,7 +3,7 @@
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import userEvent from "@testing-library/user-event";
-import { emptySessionState, type SessionState } from "@vera/shared";
+import { emptySessionState, foldSessionEvents, type SessionState } from "@vera/shared";
 import { act, createElement } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, expect, it, vi } from "vitest";
@@ -305,4 +305,19 @@ it("shows a cut tool output as an excerpt and loads the full text on request", a
   });
   expect(container.textContent).toContain(full);
   expect(buttons()).toHaveLength(0);
+});
+
+it("renders rate-limit errors with and without a Retry-After hint", async () => {
+  const error = {
+    type: "error",
+    code: "PROVIDER",
+    messageKey: "provider.rateLimit",
+    retryable: false,
+  } as const;
+  const state = foldSessionEvents([error, { ...error, retryAfter: "12" }]);
+  await render(state, "normal");
+  expect([...container.querySelectorAll('[role="alert"]')].map((node) => node.textContent)).toEqual([
+    "Provider rate limit.",
+    "Provider rate limit. Retry after: 12.",
+  ]);
 });

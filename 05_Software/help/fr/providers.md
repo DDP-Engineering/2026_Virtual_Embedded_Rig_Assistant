@@ -21,6 +21,19 @@ Le jeton est renouvelé automatiquement. **Se déconnecter** le supprime.
 2. Saisissez la **Clé API OpenAI** et, si vous le souhaitez, un **Modèle OpenAI**.
 3. Sélectionnez **Enregistrer**.
 
+## OpenCode Console et OpenCode Go
+
+1. Dans OpenCode Console, créez une clé API pour l’espace de travail. Donnez-lui les droits de lecture des modèles et d’inférence.
+2. Dans VERA, choisissez **Ajouter une connexion**, puis **OpenCode Console** pour le paiement à l’usage ou **OpenCode Go** pour l’abonnement Go.
+3. Saisissez la clé et lancez la recherche de modèles. Choisissez un modèle dans la liste de l’offre ou saisissez son identifiant exact et ses limites pour une configuration manuelle.
+4. Enregistrez et testez la connexion. Choisissez le modèle pour votre session ou votre banc de travail.
+
+VERA stocke séparément la clé de chaque connexion. Vous pouvez réutiliser la même clé si l’espace de travail dispose de crédits et d’un abonnement Go. Les modèles Console gratuits sont réservés à OpenCode. Consultez les limites de l’espace et l’option Go Extra Usage pour savoir quand OpenCode peut débiter le solde.
+
+Le catalogue indique les fonctions des modèles. Testez la connexion pour vérifier l’appel d’outils et les réponses en flux du modèle choisi.
+
+Consultez la [configuration d’OpenCode](https://opencode.ai/docs/console/harnesses) et le [guide de l’offre Go](https://opencode.ai/docs/console/go/).
+
 ## LM Studio
 
 1. Démarrez le serveur LM Studio et chargez un modèle.

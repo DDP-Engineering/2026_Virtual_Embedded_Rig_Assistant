@@ -285,7 +285,11 @@
   },
   "provider": {
     "auth": "Échec de l’authentification. Vérifiez l’identifiant enregistré dans les paramètres Fournisseurs.",
-    "rateLimit": "Limite de débit du fournisseur. Réessayer après : {{retryAfter}}.",
+    "openCodePlan": "Ce modèle ou cet espace de travail ne peut pas utiliser cette offre OpenCode. Vérifiez le modèle et les droits d’accès.",
+    "openCodeCatalog": "OpenCode a refusé l’accès à la liste des modèles. Vérifiez le droit de lecture des modèles associé à la clé.",
+    "openCodeBudget": "Le solde ou le quota OpenCode est épuisé. Vérifiez la facturation et les limites de l’espace de travail.",
+    "rateLimit": "Limite de débit du fournisseur.",
+    "rateLimitWithRetry": "Limite de débit du fournisseur. Réessayer après : {{retryAfter}}.",
     "context": "Le fournisseur a refusé la taille du contexte. Réduisez l’entrée ou vérifiez la fenêtre configurée.",
     "failure": "Erreur du fournisseur : {{message}}"
   },

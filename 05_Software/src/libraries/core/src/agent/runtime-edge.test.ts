@@ -331,3 +331,24 @@ it("hands swallowed turn-loop exceptions to the host log and survives a failing 
     retryable: false,
   });
 });
+
+it.each(["12", "invalid provider header"])(
+  "publishes only a valid rate-limit retry hint (%s)",
+  async (hint) => {
+    const f = fixture(async function* () {
+      yield {
+        type: "error",
+        error: { code: "PROVIDER", messageKey: "provider.rateLimit", params: { retryAfter: hint } },
+        aborted: false,
+      };
+    });
+    expect((await f.runtime.send("start")).stopReason).toBe("error");
+    expect(f.events.find(({ type }) => type === "error")).toEqual({
+      type: "error",
+      code: "PROVIDER",
+      messageKey: "provider.rateLimit",
+      retryable: false,
+      ...(hint === "12" ? { retryAfter: hint } : {}),
+    });
+  },
+);

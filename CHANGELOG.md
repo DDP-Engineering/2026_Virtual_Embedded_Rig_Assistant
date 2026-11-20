@@ -8,6 +8,8 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ### Added
 
+- Connect OpenCode Console and OpenCode Go and choose models from each plan.
+
 - Search provider presets and see provider identity, model limits and capabilities when choosing a model.
 
 - Manage Interactive Browser in Web access and grant, show, stop, revoke or close it from Chat.

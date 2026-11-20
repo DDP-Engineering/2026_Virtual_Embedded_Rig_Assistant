@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { veraErrorSchema } from "./errors.js";
-import type { reasoningOptionSchema } from "./provider-discovery.js";
+import { reasoningOptionSchema } from "./provider-discovery.js";
 
 const presetId = z
   .string()
@@ -18,20 +18,23 @@ export const curatedInferenceSchema = z
   });
 
 export type PresetBinding = z.infer<typeof presetBindingSchema>;
-export interface CuratedModel {
+export type CuratedModel = {
   readonly id: string;
   readonly name: string;
-  readonly input?: readonly ("text" | "image")[];
-  readonly contextWindow?: number;
-  readonly maxOutputTokens?: number;
-  readonly supportsTools?: boolean;
-  readonly reasoningOptions?: readonly z.infer<typeof reasoningOptionSchema>[];
-}
+  readonly input?: readonly ("text" | "image")[] | undefined;
+  readonly contextWindow?: number | undefined;
+  readonly maxInputTokens?: number | undefined;
+  readonly maxOutputTokens?: number | undefined;
+  readonly supportsTools?: boolean | undefined;
+  readonly reasoningOptions?: readonly z.infer<typeof reasoningOptionSchema>[] | undefined;
+};
 export interface ProviderBinding {
   readonly id: string;
   readonly label?: string;
   readonly inference: string;
-  readonly catalog: { readonly kind: "manual" } | { readonly kind: "openai-models"; readonly url: string };
+  readonly catalog:
+    | { readonly kind: "manual" }
+    | { readonly kind: "openai-models"; readonly url: string; readonly opencode?: "console" | "go" };
   readonly models?: readonly CuratedModel[];
 }
 export interface CuratedProviderPreset {
@@ -43,7 +46,38 @@ export interface CuratedProviderPreset {
 }
 
 /** Curated network services enter this list after their VERA acceptance. */
-export const curatedProviderPresets: readonly CuratedProviderPreset[] = [];
+export const curatedProviderPresets: readonly CuratedProviderPreset[] = [
+  {
+    id: "opencode-console",
+    label: "OpenCode Console",
+    protocol: "openai-completions",
+    authentication: "bearer",
+    bindings: [
+      {
+        id: "default",
+        inference: "https://opencode.ai/inference/openai/v1",
+        catalog: {
+          kind: "openai-models",
+          url: "https://opencode.ai/inference/v1/models",
+          opencode: "console",
+        },
+      },
+    ],
+  },
+  {
+    id: "opencode-go",
+    label: "OpenCode Go",
+    protocol: "openai-completions",
+    authentication: "bearer",
+    bindings: [
+      {
+        id: "default",
+        inference: "https://opencode.ai/inference/go/openai/v1",
+        catalog: { kind: "openai-models", url: "https://opencode.ai/inference/go/v1/models", opencode: "go" },
+      },
+    ],
+  },
+];
 
 export const providerChoices = {
   lmstudio: { label: "LM Studio" },
@@ -65,10 +99,26 @@ export const curatedDiscoveryRequestSchema = z.strictObject({
     .max(87)
     .optional(),
 });
+const tokenCount = z.number().int().positive().max(Number.MAX_SAFE_INTEGER);
+const curatedCatalogProfile = z.strictObject({
+  id: curatedModelIdSchema,
+  name: z.string().min(1).max(240),
+  input: z
+    .array(z.enum(["text", "image"]))
+    .min(1)
+    .max(2)
+    .optional(),
+  contextWindow: tokenCount.optional(),
+  maxInputTokens: tokenCount.optional(),
+  maxOutputTokens: tokenCount.optional(),
+  supportsTools: z.boolean().optional(),
+  reasoningOptions: z.array(reasoningOptionSchema).max(16).optional(),
+});
 export const curatedDiscoverySchema = z.discriminatedUnion("status", [
   z.strictObject({
     status: z.literal("discovered"),
     models: z.array(curatedModelIdSchema).min(1).max(10000),
+    profiles: z.array(curatedCatalogProfile).max(10000).optional(),
   }),
   z.strictObject({ status: z.literal("manual"), reason: z.enum(["configured", "unavailable", "empty"]) }),
   z.strictObject({ status: z.literal("failed"), error: veraErrorSchema }),

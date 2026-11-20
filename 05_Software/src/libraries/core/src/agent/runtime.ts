@@ -6,11 +6,33 @@ import type {
   ToolCall,
   ToolResultMessage,
 } from "@earendil-works/pi-ai";
-import { acceptsImages, MAX_MESSAGE_IMAGES, type ModelCapabilities, veraError } from "@vera/shared";
+import {
+  acceptsImages,
+  MAX_MESSAGE_IMAGES,
+  type ModelCapabilities,
+  providerRetryAfterSchema,
+  type VeraError,
+  veraError,
+  veraErrorSchema,
+} from "@vera/shared";
 import { ContextCompactor } from "./compaction.js";
 import type { UserImageMessage } from "./message-images.js";
 import { toolSpecs } from "./tool.js";
 import type { AgentRuntime, RuntimeEvent, RuntimeHost, RuntimeInit, StopReason } from "./types.js";
+
+function providerErrorEvent(error: VeraError, limit = false): Extract<RuntimeEvent, { type: "error" }> {
+  const retryAfter =
+    error.messageKey === "provider.rateLimit"
+      ? providerRetryAfterSchema.safeParse(error.params?.retryAfter).data
+      : undefined;
+  return {
+    type: "error",
+    code: limit ? "CONTEXT_LIMIT" : error.code,
+    messageKey: limit ? "context.budget_exceeded" : error.messageKey,
+    retryable: false,
+    ...(retryAfter ? { retryAfter } : {}),
+  };
+}
 
 export function zeroUsage(): AssistantMessage["usage"] {
   return {
@@ -148,7 +170,12 @@ export class ReferenceRuntime implements AgentRuntime {
       stopReason = controller.signal.aborted ? "aborted" : "error";
       if (stopReason === "error") {
         this.report("Agent turn failed", error);
-        this.emit({ type: "error", code: "INTERNAL", messageKey: "errors.INTERNAL", retryable: false });
+        const providerError = veraErrorSchema.safeParse(error);
+        this.emit(
+          providerError.success && providerError.data.messageKey.startsWith("provider.")
+            ? providerErrorEvent(providerError.data)
+            : { type: "error", code: "INTERNAL", messageKey: "errors.INTERNAL", retryable: false },
+        );
       }
     } finally {
       this.emit({ type: "turn.done", turnId, stopReason });
@@ -351,12 +378,7 @@ export class ReferenceRuntime implements AgentRuntime {
             const limit =
               event.error.code === "CONTEXT_LIMIT" ||
               (event.error.code === "PROVIDER" && event.error.params?.reason === "context");
-            this.emit({
-              type: "error",
-              code: limit ? "CONTEXT_LIMIT" : event.error.code,
-              messageKey: limit ? "context.budget_exceeded" : event.error.messageKey,
-              retryable: false,
-            });
+            this.emit(providerErrorEvent(event.error, limit));
             return limit ? "limit" : "error";
           }
         }

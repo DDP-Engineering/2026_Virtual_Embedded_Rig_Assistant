@@ -20,6 +20,8 @@ export const modelCapabilitiesSchema = z.strictObject({
     .max(2),
   contextWindow: z.number().int().positive().max(Number.MAX_SAFE_INTEGER),
   maxOutputTokens: z.number().int().positive().max(Number.MAX_SAFE_INTEGER),
+  providerMaxOutputTokens: z.number().int().positive().max(Number.MAX_SAFE_INTEGER).optional(),
+  maxInputTokens: z.number().int().positive().max(Number.MAX_SAFE_INTEGER).optional(),
   safetyMargin: z.number().int().positive().max(Number.MAX_SAFE_INTEGER),
   inputBudget: z.number().int().positive().max(Number.MAX_SAFE_INTEGER),
   supportsTools: z.boolean().optional(),

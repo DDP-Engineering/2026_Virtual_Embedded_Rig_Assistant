@@ -14,6 +14,7 @@ export * from "./downloads.js";
 export * from "./electrical-model.js";
 export * from "./embedding-model-manifest.js";
 export * from "./embedding-models.js";
+export { providerRetryAfterSchema } from "./errors.js";
 export * from "./events.js";
 export { gitExecutionArguments } from "./git-options.js";
 export * from "./help.js";

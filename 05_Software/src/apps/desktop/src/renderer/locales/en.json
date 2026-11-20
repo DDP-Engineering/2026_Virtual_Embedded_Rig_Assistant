@@ -285,7 +285,11 @@
   },
   "provider": {
     "auth": "Authentication failed. Check the saved credential in Providers settings.",
-    "rateLimit": "Provider rate limit. Retry after: {{retryAfter}}.",
+    "openCodePlan": "This model or workspace cannot use this OpenCode plan. Check the selected model and workspace access.",
+    "openCodeCatalog": "OpenCode denied access to the model list. Check the key’s Models → Read permission.",
+    "openCodeBudget": "OpenCode’s balance or plan allowance is exhausted. Check the workspace’s billing and usage limits.",
+    "rateLimit": "Provider rate limit.",
+    "rateLimitWithRetry": "Provider rate limit. Retry after: {{retryAfter}}.",
     "context": "The provider rejected the context size. Reduce input or check the configured window.",
     "failure": "Provider error: {{message}}"
   },

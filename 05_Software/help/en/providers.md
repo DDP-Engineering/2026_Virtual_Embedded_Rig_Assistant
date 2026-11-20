@@ -21,6 +21,19 @@ The token renews automatically. **Sign out** removes it.
 2. Enter the **OpenAI API key** and, optionally, an **OpenAI model**.
 3. Select **Save**.
 
+## OpenCode Console and OpenCode Go
+
+1. In OpenCode Console, create a workspace API key. Give the key permission to read models and run inference.
+2. In VERA, choose **Add connection**, then **OpenCode Console** for pay-as-you-go or **OpenCode Go** for a Go subscription.
+3. Enter the key and select **Discover models**. Choose a model from the plan’s list, or enter its exact ID and limits if you are configuring it manually.
+4. Select **Save**, then **Test**. Choose the model for your session or workbench.
+
+VERA stores each connection’s key separately. You can use the same key in both connections if the workspace has credits and a Go subscription. Free Console models are available only in OpenCode. Check your workspace’s limits and the Go Extra Usage setting to see when OpenCode can bill your workspace balance.
+
+The catalog reports model capabilities. Use **Test** to check tool calling and streaming for your selected model.
+
+See [OpenCode harness setup](https://opencode.ai/docs/console/harnesses) and the [Go plan guide](https://opencode.ai/docs/console/go/).
+
 ## LM Studio
 
 1. Start the LM Studio server and load a model.

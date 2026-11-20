@@ -442,3 +442,26 @@ it("keeps validated privacy protocol choices when a stored secret equals an enum
   ).not.toThrow();
   expect(send.mock.calls[0]?.[1].event.config.privacy).toEqual(config.privacy);
 });
+
+it("keeps safe retry hints in live and restored rate errors", () => {
+  const error = {
+    type: "error",
+    code: "PROVIDER",
+    messageKey: "provider.rateLimit",
+    retryable: false,
+    retryAfter: "12",
+  } as const;
+  const envelope = { topic: "session", id: "session-1", event: error } as const;
+  const identity = (text: string) => text;
+  const redact = (text: string) => scrub(text, ["12"]);
+  const live = sessionOutput.sanitizeEvent(envelope, identity);
+  expect(live).toMatchObject({ event: { retryAfter: "12" } });
+  expect(sessionOutput.sanitizeEvent(envelope, identity, redact)).not.toHaveProperty("event.retryAfter");
+  const state = emptySessionState();
+  const { type: _, ...fields } = error;
+  state.items.push({ kind: "error", id: "error-0", ...fields });
+  expect(sessionOutput.sanitizeSessionSnapshot(state, identity).items[0]).toHaveProperty("retryAfter", "12");
+  expect(
+    sessionOutput.rendererSessionSnapshot(state, identity, identity, redact).items[0],
+  ).not.toHaveProperty("retryAfter");
+});

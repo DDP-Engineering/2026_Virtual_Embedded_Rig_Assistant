@@ -1300,7 +1300,9 @@ ipcMain.handle(
           const value = s.get(sessionId);
           return {
             ...value,
-            snapshot: rendererSessionSnapshot(value.snapshot, sessionContent, sessionImageIdentity),
+            snapshot: rendererSessionSnapshot(value.snapshot, sessionContent, sessionImageIdentity, (text) =>
+              credentials.scrub(text),
+            ),
           };
         }),
       "session.item.detail": ({ sessionId, itemId, field }) =>

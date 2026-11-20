@@ -41,7 +41,12 @@ export function ErrorMessage({ error }: { error: unknown }) {
     "errors.YAML_INVALID": t("errors.YAML_INVALID", options),
     "errors.CONFIG_INVALID": t("errors.CONFIG_INVALID", options),
     "provider.auth": t("provider.auth", options),
-    "provider.rateLimit": t("provider.rateLimit", options),
+    "provider.openCodePlan": t("provider.openCodePlan"),
+    "provider.openCodeCatalog": t("provider.openCodeCatalog"),
+    "provider.openCodeBudget": t("provider.openCodeBudget"),
+    "provider.rateLimit": options.retryAfter
+      ? t("provider.rateLimitWithRetry", options)
+      : t("provider.rateLimit"),
     "provider.context": t("provider.context", options),
     "provider.failure": t("provider.failure", options),
     "context.budget_exceeded": t("context.budget_exceeded", options),

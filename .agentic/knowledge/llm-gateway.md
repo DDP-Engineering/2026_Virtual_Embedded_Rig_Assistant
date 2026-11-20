@@ -13,6 +13,19 @@ Core resolves models and wraps exact-pinned pi-ai1.1.0. Desktop main supplies cu
 - Curated connections resolve their registered HTTPS catalog URL independently of the inference base.
   Public models include the saved manual or discovered selection and registry profiles. Chat and workbench
   share option labels with provider identity, context, input, tools and reasoning metadata.
+- OpenCode Console and Go use `https://opencode.ai/inference[/go]/v1/models` for the scoped catalog
+  and `https://opencode.ai/inference[/go]/openai/v1/chat/completions` for inference. OpenCode’s
+  catalog supplies eligible IDs, names, input modalities, limits and declared tool and compatible
+  reasoning support. Non-chat models and known free Console models are excluded from discovery.
+  Sparse entries retain their IDs and unknown capabilities. Saved catalogs cache per scoped key.
+  Preflight enforces any advertised input ceiling. OpenCode reserves the configured or default
+  output budget, capped by the advertised maximum and available context.
+  A configured manual model can use the bound inference route when catalog permission is absent.
+- OpenCode inference identifies VERA in its User-Agent and sends `x-opencode-session` from the VERA
+  conversation ID, with a fresh ID for a probe outside a session. The gateway rechecks the binding
+  and scoped key after catalog I/O before using them for inference. OpenCode key, model or plan, billing and rate-limit errors
+  stay on the configured plan. Diagnostics distinguish catalog permission and budget exhaustion.
+  OpenCode may use balance for Go Extra Usage according to the workspace’s billing settings.
 LlmRequest.maskOutput is a host-owned live callback; omitted means on, including connection tests. SessionService supplies the agent choice, projects before context counting/compaction and revalidates the actual request budget after durable publication. Stream scrubbers hold split-secret tails while on; off passes content literally. message-scrub.ts preserves execution tool-call arguments at provider completion, and the session projects stored/request views separately. Provider errors and errorMessage diagnostics always use the unconditional scrubber. gateway.test.ts checks every agent/exports pair and live output policy.
 
 - Replay steps optionally declare validated nonnegative integer usage.input and usage.output for deterministic numeric statistics acceptance. Omitted usage stays zero/unreported; totals sum the supplied counts, costs stay zero. Replay fixture parsing validates on scenario use, and replay.test.ts covers invalid measurements. Native prompt-usage.spec.ts exercises real model/tool steps, per-prompt projection and restart without live egress.
@@ -46,7 +59,8 @@ LlmRequest.maskOutput is a host-owned live callback; omitted means on, including
 - Provider errors map to OFFLINE or PROVIDER with auth/rate_limit/context/provider reasons, safe messages and optional Retry-After. With agent masking on, retained raw/escaped secrets are scrubbed across stream chunk boundaries and in final presentation messages; actual usage and protocol discriminants are preserved. Execution tool-call arguments remain raw authority while stored/request views project them; other assistant metadata/signatures follow agent masking, and successful/partial timestamps use host Clock at terminal emission.
 - Shared strict projections and the existing authorized sandbox bridge guard catalog/result IPC. Renderer keeps no credential-bearing query mutation cache.
 - Test registration and dynamic replay import reside entirely inside compiled __VERA_TEST__; release emission excludes their code. Automated Node and acceptance transports block non-loopback traffic before dispatch.
-- The default model reference lives in settings schemaVersion 1. Live smoke is a distinct mandatory manual acceptance observation.
+- The default model reference lives in settings schemaVersion 1. Authenticated OpenCode smoke is
+  deferred by user ruling. OpenCode acceptance uses official catalog and scripted transport evidence.
 
 ## Change map
 
@@ -54,6 +68,7 @@ LlmRequest.maskOutput is a host-owned live callback; omitted means on, including
 |---|---|---|
 | Model precedence/capabilities/catalog/auth/streams/errors | core llm gateway/providers/errors/stream-scrub | gateway.test.ts |
 | Model input modalities | core llm providers/chatgpt-catalog and shared providers | gateway.test.ts, subscription.test.ts and shared providers.test.ts |
+| OpenCode catalogs, scoped streams and diagnostics | core llm opencode and opencode-catalog-cache | desktop main opencode-presets.test.ts |
 | Four-step results and host lifecycle | core llm connection; main provider-gateway/provider-settings | gateway.test.ts; provider-test.spec.ts |
 | Replay transcript and release seam | core llm replay; main index; Vite alias | replay.test.ts; tooling/build-mode.test.ts |
 | IPC/schema | shared providers/ipc/errors/settings; core settings/service | bridge/router and service tests |

@@ -68,6 +68,9 @@ export function CustomEditor({
   const [discovery, setDiscovery] = useState<CuratedDiscovery>();
   const [discovering, setDiscovering] = useState(false);
   const profile = binding?.models?.find(({ id }) => id === model.trim());
+  const discoveredNames = new Map(
+    discovery?.status === "discovered" ? discovery.profiles?.map(({ id, name }) => [id, name]) : [],
+  );
   const modelChoices = new Set([
     ...(binding?.models?.map(({ id }) => id) ?? []),
     ...(discovery?.status === "discovered" ? discovery.models : []),
@@ -187,7 +190,7 @@ export function CustomEditor({
         {modelChoices.size > 0 && (
           <datalist id={`${prefix}-catalog`}>
             {[...modelChoices].map((id) => (
-              <option key={id} value={id} />
+              <option key={id} value={id} label={discoveredNames.get(id)} />
             ))}
           </datalist>
         )}
@@ -246,6 +249,7 @@ export function CustomEditor({
               checked={clear}
               onChange={(event) => {
                 setClear(event.target.checked);
+                setDiscovery(undefined);
                 setKey("");
               }}
             />

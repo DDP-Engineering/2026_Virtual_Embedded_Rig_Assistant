@@ -68,7 +68,7 @@ export type RuntimeEvent =
   | ({ type: "usage.updated"; inputTokens: number; outputTokens: number; promptIds?: string[] } & Partial<
       Omit<ContextView, "messages" | "fits">
     >)
-  | { type: "error"; code: VeraError["code"]; messageKey: string; retryable: boolean };
+  | { type: "error"; code: VeraError["code"]; messageKey: string; retryable: boolean; retryAfter?: string };
 export interface AgentRuntime {
   start(init: RuntimeInit): void;
   send(text: string, images?: string[]): Promise<{ stopReason: StopReason }>;

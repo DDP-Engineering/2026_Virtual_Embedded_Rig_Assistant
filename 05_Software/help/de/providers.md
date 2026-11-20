@@ -21,6 +21,19 @@ Das Token wird automatisch erneuert. **Abmelden** entfernt es.
 2. Geben Sie den **OpenAI-API-Schlüssel** und optional ein **OpenAI-Modell** ein.
 3. Wählen Sie **Speichern**.
 
+## OpenCode Console und OpenCode Go
+
+1. Erstelle in OpenCode Console einen API-Schlüssel für den Workspace. Erteile ihm Leserechte für Modelle und die Berechtigung zur Inferenz.
+2. Wähle in VERA **Verbindung hinzufügen** und dann **OpenCode Console** für die nutzungsabhängige Abrechnung oder **OpenCode Go** für das Go-Abo.
+3. Gib den Schlüssel ein und suche nach Modellen. Wähle ein Modell aus der Liste des Tarifs oder gib für eine manuelle Einrichtung die genaue ID und die Limits ein.
+4. Speichere und teste die Verbindung. Wähle das Modell für deine Sitzung oder Workbench.
+
+VERA speichert den Schlüssel jeder Verbindung separat. Du kannst denselben Schlüssel für beide Verbindungen verwenden, wenn der Workspace über Guthaben und ein Go-Abo verfügt. Kostenlose Console-Modelle sind nur in OpenCode verfügbar. Die Workspace-Limits und die Go-Option Extra Usage bestimmen, wann OpenCode das Guthaben belasten kann.
+
+Der Katalog zeigt die Modellfunktionen. Mit dem Verbindungstest kannst du Werkzeugaufrufe und Streaming für das ausgewählte Modell prüfen.
+
+Siehe [OpenCode-Einrichtung](https://opencode.ai/docs/console/harnesses) und [Anleitung zum Go-Tarif](https://opencode.ai/docs/console/go/).
+
 ## LM Studio
 
 1. Starten Sie den LM-Studio-Server und laden Sie ein Modell.

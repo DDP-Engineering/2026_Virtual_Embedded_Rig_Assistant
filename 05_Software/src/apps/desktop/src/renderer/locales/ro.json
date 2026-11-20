@@ -285,7 +285,11 @@
   },
   "provider": {
     "auth": "Autentificare eșuată. Verifică datele salvate în setările furnizorilor.",
-    "rateLimit": "Limita de cereri a furnizorului a fost atinsă. Reîncearcă după: {{retryAfter}}.",
+    "openCodePlan": "Modelul sau spațiul de lucru nu are acces la acest plan OpenCode. Verifică modelul și accesul spațiului de lucru.",
+    "openCodeCatalog": "OpenCode a refuzat accesul la lista de modele. Verifică permisiunea de citire a modelelor pentru cheie.",
+    "openCodeBudget": "Soldul sau cota planului OpenCode s-a epuizat. Verifică facturarea și limitele spațiului de lucru.",
+    "rateLimit": "Limita de cereri a furnizorului a fost atinsă.",
+    "rateLimitWithRetry": "Limita de cereri a furnizorului a fost atinsă. Reîncearcă după: {{retryAfter}}.",
     "context": "Furnizorul a respins dimensiunea contextului. Redu intrarea sau verifică fereastra configurată.",
     "failure": "Eroare furnizor: {{message}}"
   },

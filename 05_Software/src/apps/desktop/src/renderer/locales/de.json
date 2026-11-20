@@ -285,7 +285,11 @@
   },
   "provider": {
     "auth": "Authentifizierung fehlgeschlagen. Gespeicherte Zugangsdaten in den Anbietereinstellungen prüfen.",
-    "rateLimit": "Anbieterlimit erreicht. Erneut versuchen nach: {{retryAfter}}.",
+    "openCodePlan": "Dieses Modell oder dieser Workspace kann den OpenCode-Tarif nicht nutzen. Prüfe das Modell und den Workspace-Zugriff.",
+    "openCodeCatalog": "OpenCode verweigert den Zugriff auf die Modellliste. Prüfe die Leseberechtigung des Schlüssels für Modelle.",
+    "openCodeBudget": "Das OpenCode-Guthaben oder Tarifkontingent ist ausgeschöpft. Prüfe die Abrechnung und Limits des Workspace.",
+    "rateLimit": "Anbieterlimit erreicht.",
+    "rateLimitWithRetry": "Anbieterlimit erreicht. Erneut versuchen nach: {{retryAfter}}.",
     "context": "Der Anbieter hat die Kontextgröße abgelehnt. Eingabe reduzieren oder das konfigurierte Fenster prüfen.",
     "failure": "Anbieterfehler: {{message}}"
   },

@@ -7,6 +7,7 @@ import {
   indexerStateSchema,
 } from "./documents.js";
 import { downloadApprovalSchema, validDownloadApproval } from "./downloads.js";
+import { providerRetryAfterSchema } from "./errors.js";
 import type { Channel, Request, Response } from "./ipc.js";
 import { programApprovalSchema, validProgramApproval } from "./program-rules.js";
 import { reasoningOptionSchema } from "./provider-discovery.js";
@@ -225,6 +226,7 @@ export const sessionEventSchema = z.discriminatedUnion("type", [
     code: z.string(),
     messageKey: z.string(),
     retryable: z.boolean(),
+    retryAfter: providerRetryAfterSchema.optional(),
   }),
 ]);
 export type SessionEvent = z.infer<typeof sessionEventSchema>;

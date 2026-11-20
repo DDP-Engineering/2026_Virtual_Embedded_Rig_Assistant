@@ -450,7 +450,13 @@ const ErrorRow = memo(function ErrorRow({
   const { t } = useTranslation();
   return (
     <article data-message-kind="error" className="transcript-item error">
-      <ErrorMessage error={{ code: item.code, messageKey: item.messageKey }} />
+      <ErrorMessage
+        error={{
+          code: item.code,
+          messageKey: item.messageKey,
+          ...(item.retryAfter ? { params: { retryAfter: item.retryAfter } } : {}),
+        }}
+      />
       {item.code === "CONTEXT_LIMIT" && <p role="alert">{t("chat.contextAdvice")}</p>}
       {canRetry && (
         <button type="button" onClick={retry}>

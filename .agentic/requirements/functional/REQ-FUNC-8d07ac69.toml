@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-FUNC-8d07ac69"
+title = "List eligible OpenCode model profiles"
+status = "active"
+requirement = "When a user discovers models for an OpenCode connection, VERA shall return the selected plan's eligible chat model IDs and supported metadata from its inference catalog."
+verification = "Serve both plan catalogs with named chat models, a free Console model, a non-chat model and incomplete metadata; verify the returned choices, capabilities and route."
+affected_paths = ["05_Software/src/libraries/shared/src/provider-presets.ts", "05_Software/src/libraries/core/src/llm/preset-connection.ts", "05_Software/src/libraries/core/src/llm/providers.ts", "05_Software/src/libraries/core/src/llm/opencode.ts", "05_Software/src/libraries/core/src/llm/opencode-catalog-cache.ts", "05_Software/src/apps/desktop/src/renderer/components/custom-provider-editor.tsx", "05_Software/src/libraries/shared/src/providers.ts", "05_Software/src/libraries/core/src/agent/context.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/opencode-presets.test.ts", "05_Software/src/libraries/core/src/agent/context.test.ts"]
+created = 2026-11-20
+updated = 2026-11-20

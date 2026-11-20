@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import type { Model, TSchema } from "@earendil-works/pi-ai";
 import { openAICompletionsApi } from "@earendil-works/pi-ai/api/openai-completions.lazy";
 import { createModels, createProvider, type MutableModels } from "@earendil-works/pi-ai/models";
@@ -18,7 +19,15 @@ import { parseChatGptCatalog } from "./chatgpt-catalog.js";
 import { mapProviderError, type ProviderFailure } from "./errors.js";
 import { type LlmEvent, type LlmGateway, type LlmRequest, splitModelReference } from "./gateway.js";
 import { scrubAssistantMessage } from "./message-scrub.js";
-import { curatedTokenLimits, discoverPresetModels, resolveCuratedConnection } from "./preset-connection.js";
+import { openCodeCompatibility } from "./opencode.js";
+import { OpenCodeCatalogCache } from "./opencode-catalog-cache.js";
+import {
+  curatedTokenLimits,
+  discoverPresetModels,
+  openCodePlan,
+  readProviderJson,
+  resolveCuratedConnection,
+} from "./preset-connection.js";
 import { scrub } from "./scrub.js";
 import { createStreamScrubber } from "./stream-scrub.js";
 
@@ -36,6 +45,7 @@ export interface GatewayHost {
   presets?: readonly CuratedProviderPreset[];
 }
 type Custom = Settings["providers"]["custom"][number];
+type CuratedConnection = ReturnType<typeof resolveCuratedConnection>;
 function customModel(
   config: Custom,
   provider: string,
@@ -85,6 +95,7 @@ function limits(
   supportsTools?: boolean,
   output?: number,
   reasoningOptions: string[] = [],
+  advertised?: Pick<CuratedModel, "maxInputTokens" | "maxOutputTokens">,
 ): ModelCapabilities {
   if (output !== undefined && (!Number.isSafeInteger(output) || output <= 0)) throw veraError("INVALID");
   const safetyMargin = Math.max(1024, Math.ceil(model.contextWindow * 0.05));
@@ -93,7 +104,10 @@ function limits(
       ? Math.min(16384, model.maxTokens, model.contextWindow - safetyMargin - 1)
       : model.maxTokens;
   const maxOutputTokens = Math.min(output ?? effectiveMaximum, effectiveMaximum);
-  const inputBudget = model.contextWindow - maxOutputTokens - safetyMargin;
+  const inputBudget = Math.min(
+    model.contextWindow - maxOutputTokens - safetyMargin,
+    advertised?.maxInputTokens ?? Infinity,
+  );
   if (
     !Number.isSafeInteger(model.contextWindow) ||
     model.contextWindow <= 0 ||
@@ -106,6 +120,10 @@ function limits(
     input: [...model.input],
     contextWindow: model.contextWindow,
     maxOutputTokens,
+    ...(advertised?.maxInputTokens === undefined ? {} : { maxInputTokens: advertised.maxInputTokens }),
+    ...(advertised?.maxOutputTokens === undefined
+      ? {}
+      : { providerMaxOutputTokens: advertised.maxOutputTokens }),
     safetyMargin,
     inputBudget,
     ...(supportsTools !== undefined ? { supportsTools } : {}),
@@ -251,25 +269,33 @@ export function createPiAiGateway(
     if (!parsed.success) throw veraError("INVALID");
     return parsed.data;
   };
+  const openCodeCatalogs = new OpenCodeCatalogCache(host);
   function curatedTarget(
     custom: Custom,
     provider: string,
     id: string,
     connection = resolveCuratedConnection(custom, presets),
+    profiles = openCodeCatalogs.profiles(connection.slot),
   ) {
-    const profile = connection.binding.models?.find((m) => m.id === id);
+    const plan = openCodePlan(connection.binding);
+    const profile = profiles?.get(id) ?? connection.binding.models?.find((m) => m.id === id);
     const selected = id === custom.model;
     if (!selected && !profile) throw veraError("NOT_FOUND");
-    const { contextWindow, maxOutputTokens } = curatedTokenLimits(custom, profile, selected);
+    const { contextWindow, maxOutputTokens } = curatedTokenLimits(custom, profile, selected, !!plan);
+    const model = customModel(custom, provider, id, profile);
+    if (plan) model.compat = openCodeCompatibility(plan, id);
     return {
       ...connection,
       profile,
       supportsTools: profile?.supportsTools ?? (selected ? custom.supportsTools : undefined),
-      model: { ...customModel(custom, provider, id, profile), contextWindow, maxTokens: maxOutputTokens },
+      model: { ...model, contextWindow, maxTokens: maxOutputTokens },
       reasoningOptions: [...(profile?.reasoningOptions ?? [])],
     };
   }
-  const target = (reference: string) => {
+  const target = (
+    reference: string,
+    openCode?: { connection: CuratedConnection; custom: Custom; profiles: Map<string, CuratedModel> },
+  ) => {
     const { provider, model: id } = splitModelReference(reference);
     if (provider === "openai" || provider === "chatgpt") {
       const models = provider === "chatgpt" ? collections.subscription : collections.api;
@@ -288,8 +314,10 @@ export function createPiAiGateway(
         profile: undefined,
       };
     }
-    const custom = config(provider);
-    const curated = custom.preset ? curatedTarget(custom, provider, id) : undefined;
+    const custom = openCode?.custom ?? config(provider);
+    const curated = custom.preset
+      ? curatedTarget(custom, provider, id, openCode?.connection, openCode?.profiles)
+      : undefined;
     const model = curated?.model ?? customModel(custom, provider, id);
     const models = createModels(curated ? undefined : { credentials: host.credentials });
     models.setProvider(customProvider(custom, provider, model));
@@ -322,7 +350,8 @@ export function createPiAiGateway(
     },
     async prepareModel(reference, signal) {
       if (reference.startsWith("chatgpt/")) await chatgptModels(signal);
-      target(reference);
+      const candidate = await prepareOpenCode(reference, signal);
+      target(reference, candidate);
     },
     selectedModel(provider) {
       if (provider === "chatgpt") {
@@ -340,7 +369,13 @@ export function createPiAiGateway(
     capabilities(reference, output) {
       const resolved = target(reference);
       return {
-        ...limits(resolved.model, resolved.supportsTools, output, resolved.reasoningOptions),
+        ...limits(
+          resolved.model,
+          resolved.supportsTools,
+          output,
+          resolved.reasoningOptions,
+          resolved.curated?.profile,
+        ),
         ...(resolved.curated
           ? {
               inputVerified: !!resolved.curated.profile?.input,
@@ -384,7 +419,17 @@ export function createPiAiGateway(
         if (custom.preset) {
           const connection = resolveCuratedConnection(custom, presets);
           let reachability: ProviderCatalog["reachability"] = "skipped";
-          if (probe) {
+          let profiles: Map<string, CuratedModel> | undefined;
+          if (openCodePlan(connection.binding)) {
+            const credential = await host.credentials.read(connection.slot, signal ? { signal } : {});
+            const key = credential?.type === "api_key" ? credential.key : undefined;
+            const snapshot = await openCodeCatalogs.load(connection, key, signal, probe);
+            const discovery = snapshot?.result;
+            if (probe && !key) throw mapProviderError("", host.scrub, endpoint, { status: 401 });
+            if (probe && discovery?.status === "failed") throw discovery.error;
+            if (discovery?.status === "discovered" || discovery?.status === "manual") reachability = "pass";
+            profiles = snapshot?.profiles ?? new Map();
+          } else if (probe) {
             const credential = await host.credentials.read(connection.slot, signal ? { signal } : {});
             const discovery = await discoverPresetModels(
               connection.binding,
@@ -395,7 +440,11 @@ export function createPiAiGateway(
             if (discovery.status === "failed") throw discovery.error;
             if (discovery.status === "discovered" || discovery.reason === "empty") reachability = "pass";
           }
-          const ids = new Set([custom.model, ...(connection.binding.models?.map(({ id }) => id) ?? [])]);
+          const ids = new Set([
+            custom.model,
+            ...(profiles?.keys() ?? []),
+            ...(connection.binding.models?.map(({ id }) => id) ?? []),
+          ]);
           return {
             reachability,
             models: [...ids].map((id) => {
@@ -404,6 +453,7 @@ export function createPiAiGateway(
                 provider,
                 id,
                 connection,
+                profiles,
               );
               if (host.scrub(id) !== id) throw veraError("INVALID");
               const service = [connection.preset.label, connection.binding.label].filter(Boolean).join(" · ");
@@ -416,7 +466,7 @@ export function createPiAiGateway(
                 curated: true,
                 inputVerified: !!profile?.input,
                 contextVerified: profile?.contextWindow !== undefined,
-                ...limits(model, supportsTools, undefined, reasoningOptions),
+                ...limits(model, supportsTools, undefined, reasoningOptions, profile),
                 ...(profile?.reasoningOptions ? { reasoningOptions } : {}),
               };
             }),
@@ -459,7 +509,8 @@ export function createPiAiGateway(
       let redact = host.scrub;
       try {
         if (request.model.startsWith("chatgpt/")) await chatgptModels(request.signal);
-        const resolved = target(request.model);
+        const openCode = await prepareOpenCode(request.model, request.signal);
+        const resolved = target(request.model, openCode);
         let selectedReasoning = request.reasoning;
         if (selectedReasoning != null && !resolved.reasoningOptions.includes(selectedReasoning)) {
           if (request.sessionId) selectedReasoning = undefined;
@@ -469,8 +520,16 @@ export function createPiAiGateway(
           }
         }
         endpoint = resolved.endpoint;
-        const capabilities = limits(resolved.model, resolved.supportsTools, request.maxOutputTokens);
-        const key = await host.credentials.read(resolved.slot, { signal: request.signal });
+        const capabilities = limits(
+          resolved.model,
+          resolved.supportsTools,
+          request.maxOutputTokens,
+          [],
+          resolved.curated?.profile,
+        );
+        const key = openCode
+          ? openCode.credential
+          : await host.credentials.read(resolved.slot, { signal: request.signal });
         const curatedKey = resolved.curated && key?.type === "api_key" ? key.key : undefined;
         if (curatedKey) redact = (text) => host.scrub(scrub(text, [curatedKey]));
         const locallyMaskedKey = curatedKey && host.scrub(curatedKey) === curatedKey ? curatedKey : undefined;
@@ -501,9 +560,18 @@ export function createPiAiGateway(
             if (!response.ok) {
               failure.status = response.status;
               failure.retryAfter = response.headers.get("retry-after") ?? undefined;
-              const body = await response.clone().text();
-              failure.context =
-                /context[_ -]?(length|window)|maximum context|too many tokens|token limit/i.test(body);
+              if (openCode) {
+                const copy = response.clone();
+                const signal = AbortSignal.any([request.signal, AbortSignal.timeout(1000)]);
+                failure.openCode = {
+                  operation: "inference",
+                  body: await readProviderJson(copy, signal, 16384).catch(() => undefined),
+                };
+              } else {
+                const body = await response.clone().text();
+                failure.context =
+                  /context[_ -]?(length|window)|maximum context|too many tokens|token limit/i.test(body);
+              }
             }
             return response;
           } catch (error) {
@@ -534,6 +602,9 @@ export function createPiAiGateway(
           {
             signal: request.signal,
             ...(curatedKey ? { apiKey: curatedKey } : {}),
+            ...(openCode
+              ? { headers: { "User-Agent": "VERA", "x-opencode-session": request.sessionId ?? randomUUID() } }
+              : {}),
             maxTokens: capabilities.maxOutputTokens,
             timeoutMs: 30000,
             maxRetries: 0,
@@ -626,6 +697,31 @@ export function createPiAiGateway(
       }
     },
   };
+  async function prepareOpenCode(reference: string, signal?: AbortSignal) {
+    const { provider, model } = splitModelReference(reference);
+    if (!provider.startsWith("custom:")) return;
+    const custom = config(provider);
+    if (!custom.preset) return;
+    const connection = resolveCuratedConnection(custom, presets);
+    if (!openCodePlan(connection.binding)) return;
+    const credential = await host.credentials.read(connection.slot, signal ? { signal } : {});
+    const key = credential?.type === "api_key" ? credential.key : undefined;
+    const snapshot = await openCodeCatalogs.load(connection, key, signal);
+    const current = config(provider);
+    if (resolveCuratedConnection(current, presets).slot !== connection.slot) throw veraError("CONFLICT");
+    const latest = await host.credentials.read(connection.slot, signal ? { signal } : {});
+    if ((latest?.type === "api_key" ? latest.key : undefined) !== key) {
+      openCodeCatalogs.invalidate(connection.slot, key);
+      throw veraError("CONFLICT");
+    }
+    const profiles = snapshot?.profiles ?? new Map<string, CuratedModel>();
+    if (model !== current.model && !profiles.has(model)) {
+      if (snapshot?.result.status === "failed") throw snapshot.result.error;
+      if (!key) throw mapProviderError("", host.scrub, connection.binding.inference, { status: 401 });
+      throw { ...veraError("PROVIDER"), messageKey: "provider.openCodePlan" };
+    }
+    return { credential: latest, profiles, connection, custom: current };
+  }
   async function list(endpoint: string, provider: string, signal?: AbortSignal): Promise<string[] | null> {
     const key = await host.credentials.read(provider, signal ? { signal } : {});
     if (provider === "openai" && (key?.type !== "api_key" || !key.key))

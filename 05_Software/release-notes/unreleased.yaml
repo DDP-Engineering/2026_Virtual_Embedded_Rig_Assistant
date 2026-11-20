@@ -25,10 +25,10 @@ entries:
   - category: new
     topic: { en: Models and images, ro: Modele și imagini, de: Modelle und Bilder, fr: Modèles et images }
     text:
-      en: Search providers and see model details. Attach, reopen and enable images per model.
-      ro: Caută furnizori și vezi detalii. Atașează, redeschide și activează imagini per model.
-      de: Anbieter suchen und Modelldetails sehen. Bilder anhängen, öffnen und pro Modell erlauben.
-      fr: Trouvez un fournisseur et les détails du modèle. Joignez, ouvrez et autorisez les images par modèle.
+      en: Find OpenCode Console and Go, browse model details and manage images per model.
+      ro: Găsește OpenCode Console și Go, vezi detaliile modelelor și gestionează imaginile per model.
+      de: OpenCode Console und Go finden, Modelldetails sehen und Bilder pro Modell verwalten.
+      fr: Trouvez OpenCode Console et Go, consultez les modèles et gérez leurs options d’image.
   - category: fixed
     topic: { en: Skills, ro: Skills, de: Skills, fr: Compétences }
     text:

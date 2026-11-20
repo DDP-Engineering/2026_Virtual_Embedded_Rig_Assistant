@@ -21,6 +21,19 @@ Tokenul se reînnoiește automat. **Deconectare** îl elimină.
 2. Introdu **Cheie API OpenAI** și, opțional, **Model OpenAI**.
 3. Selectează **Salvează**.
 
+## OpenCode Console și OpenCode Go
+
+1. Creează o cheie API pentru spațiul de lucru în OpenCode Console. Acordă-i permisiuni de citire a modelelor și de inferență.
+2. În VERA, selectează **Adaugă conexiune**, apoi **OpenCode Console** pentru plata în funcție de consum sau **OpenCode Go** pentru abonamentul Go.
+3. Introdu cheia și selectează **Descoperă modele**. Alege un model din lista planului sau introdu ID-ul exact și limitele pentru configurare manuală.
+4. Salvează și testează conexiunea. Alege modelul pentru sesiune sau pentru workbench.
+
+VERA stochează separat cheia fiecărei conexiuni. Poți folosi aceeași cheie pentru ambele conexiuni dacă spațiul de lucru are credit și un abonament Go. Modelele gratuite Console sunt disponibile numai în OpenCode. Verifică limitele spațiului de lucru și opțiunea Go Extra Usage pentru a afla când OpenCode poate folosi soldul.
+
+Catalogul indică funcțiile modelelor. Folosește **Testează** pentru a verifica apelurile de instrumente și răspunsurile în flux pentru modelul selectat.
+
+Consultă [configurarea OpenCode](https://opencode.ai/docs/console/harnesses) și [ghidul planului Go](https://opencode.ai/docs/console/go/).
+
 ## LM Studio
 
 1. Pornește serverul LM Studio și încarcă un model.

@@ -13,9 +13,13 @@ import {
 } from "@vera/shared";
 import { z } from "zod";
 import { mapProviderError } from "./errors.js";
+import { parseOpenCodeCatalog } from "./opencode.js";
 import { scrub } from "./scrub.js";
 
 const MAX_CATALOG_BYTES = 2 * 1024 * 1024;
+export const openCodePlan = (binding: ProviderBinding) =>
+  binding.catalog.kind === "openai-models" ? binding.catalog.opencode : undefined;
+
 const catalogSchema = z.object({ data: z.array(z.object({ id: curatedModelIdSchema })).max(10000) });
 
 export function resolveProviderBinding(presets: readonly CuratedProviderPreset[], selection: PresetBinding) {
@@ -59,12 +63,15 @@ export function curatedTokenLimits(
   configured: { contextWindow: number; maxOutputTokens: number },
   profile: CuratedModel | undefined,
   selected: boolean,
+  live = false,
 ) {
   const fallback = selected ? configured : providerTokenDefaults;
   const contextWindow = profile?.contextWindow ?? fallback.contextWindow;
-  const requestedOutput = profile?.maxOutputTokens ?? fallback.maxOutputTokens;
+  const requestedOutput = live
+    ? Math.min(fallback.maxOutputTokens, profile?.maxOutputTokens ?? Infinity)
+    : (profile?.maxOutputTokens ?? fallback.maxOutputTokens);
   const ceiling = contextWindow - Math.max(1024, Math.ceil(contextWindow * 0.05)) - 1;
-  const maxOutputTokens = selected ? requestedOutput : Math.min(requestedOutput, ceiling);
+  const maxOutputTokens = selected && !live ? requestedOutput : Math.min(requestedOutput, ceiling);
   if (
     !Number.isSafeInteger(contextWindow) ||
     !Number.isSafeInteger(maxOutputTokens) ||
@@ -84,7 +91,7 @@ export async function discoverPresetModels(
 ): Promise<CuratedDiscovery> {
   if (signal?.aborted) return { status: "failed", error: veraError("DENIED") };
   if (binding.catalog.kind === "manual") return { status: "manual", reason: "configured" };
-  const endpoint = binding.catalog.url;
+  const { url: endpoint, opencode } = binding.catalog;
   const redact = (text: string) => host.scrub(key ? scrub(text, [key]) : text);
   if (!key) return { status: "failed", error: mapProviderError("", redact, endpoint, { status: 401 }) };
   const timeout = AbortSignal.timeout(10000);
@@ -107,27 +114,50 @@ export async function discoverPresetModels(
   try {
     signal?.throwIfAborted();
     if (!response.ok) {
-      await response.body?.cancel();
-      if ([404, 405, 501].includes(response.status)) return { status: "manual", reason: "unavailable" };
+      if (!opencode && [404, 405, 501].includes(response.status)) {
+        await response.body?.cancel();
+        return { status: "manual", reason: "unavailable" };
+      }
+      const error = opencode
+        ? await readProviderJson(response, requestSignal, 16384).catch(() => undefined)
+        : undefined;
+      if (!opencode) await response.body?.cancel();
+      signal?.throwIfAborted();
       return {
         status: "failed",
         error: mapProviderError("", redact, endpoint, {
           status: response.status,
+          ...(opencode ? { openCode: { operation: "catalog", body: error } } : {}),
           retryAfter: response.headers.get("retry-after") ?? undefined,
         }),
       };
     }
-    const models = catalogSchema.parse(await readCatalog(response, requestSignal)).data.map(({ id }) => id);
+    const body = await readProviderJson(response, requestSignal);
+    const profiles = opencode ? parseOpenCodeCatalog(body, opencode) : undefined;
+    const models = (profiles ?? catalogSchema.parse(body).data).map(({ id }) => id);
     signal?.throwIfAborted();
-    if (models.some((id) => redact(id) !== id)) return { status: "failed", error: veraError("INVALID") };
+    if (
+      models.some((id) => redact(id) !== id) ||
+      profiles?.some(
+        (profile) =>
+          redact(profile.name) !== profile.name ||
+          profile.reasoningOptions?.some((option) => redact(option) !== option),
+      )
+    )
+      return { status: "failed", error: veraError("INVALID") };
     if (!models.length) return { status: "manual", reason: "empty" };
-    return { status: "discovered", models: [...new Set(models)] };
+    if (profiles && new Set(models).size !== models.length) throw veraError("PROVIDER");
+    return { status: "discovered", models: [...new Set(models)], ...(profiles ? { profiles } : {}) };
   } catch {
     return { status: "failed", error: veraError(signal?.aborted ? "DENIED" : "PROVIDER") };
   }
 }
 
-async function readCatalog(response: Response, signal: AbortSignal): Promise<unknown> {
+export async function readProviderJson(
+  response: Response,
+  signal: AbortSignal,
+  maxBytes = MAX_CATALOG_BYTES,
+): Promise<unknown> {
   signal.throwIfAborted();
   if (!response.body) throw veraError("PROVIDER");
   const reader = response.body.getReader();
@@ -142,16 +172,13 @@ async function readCatalog(response: Response, signal: AbortSignal): Promise<unk
       signal.throwIfAborted();
       if (chunk.done) break;
       size += chunk.value.byteLength;
-      if (size > MAX_CATALOG_BYTES) throw veraError("PROVIDER");
+      if (size > maxBytes) throw veraError("PROVIDER");
       text += decoder.decode(chunk.value, { stream: true });
     }
     return JSON.parse(text + decoder.decode());
   } finally {
     signal.removeEventListener("abort", cancel);
-    try {
-      await reader.cancel();
-    } finally {
-      reader.releaseLock();
-    }
+    void reader.cancel().catch(() => {});
+    reader.releaseLock();
   }
 }

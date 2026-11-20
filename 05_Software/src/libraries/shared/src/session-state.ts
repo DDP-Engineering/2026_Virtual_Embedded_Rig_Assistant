@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { downloadApprovalSchema, validDownloadApproval } from "./downloads.js";
+import { providerRetryAfterSchema } from "./errors.js";
 import { type SessionEvent, usageEventSchema } from "./events.js";
 import { programApprovalSchema, validProgramApproval } from "./program-rules.js";
 import { reasoningOptionSchema } from "./provider-discovery.js";
@@ -75,6 +76,7 @@ export const sessionStateSchema = z.strictObject({
         code: z.string(),
         messageKey: z.string(),
         retryable: z.boolean(),
+        retryAfter: providerRetryAfterSchema.optional(),
       }),
     ]),
   ),

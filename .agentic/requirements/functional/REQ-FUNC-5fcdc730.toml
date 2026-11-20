@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-FUNC-5fcdc730"
+title = "Route OpenCode requests by plan"
+status = "active"
+requirement = "When an OpenCode Console or Go connection makes an inference request, VERA shall use that connection's scoped key, exact model ID and Chat Completions route."
+verification = "Save both presets, observe exact authorization, URL and body for each, then reject a wrong-plan key or model and observe no request to the other plan."
+affected_paths = ["05_Software/src/libraries/shared/src/provider-presets.ts", "05_Software/src/libraries/core/src/llm/providers.ts", "05_Software/src/libraries/core/src/llm/opencode-catalog-cache.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/opencode-presets.test.ts"]
+created = 2026-11-20
+updated = 2026-11-20
