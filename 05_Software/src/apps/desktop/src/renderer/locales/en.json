@@ -424,7 +424,8 @@
   "changes": {
     "empty": "No changes in this session.",
     "history": "Change history",
-    "reveal": "Reveal in folder"
+    "reveal": "Reveal in folder",
+    "resize": "Resize the file list and the diff"
   },
   "artifacts": {
     "empty": "No artifacts in this session.",

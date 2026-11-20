@@ -424,7 +424,8 @@
   "changes": {
     "empty": "Nu există modificări în această sesiune.",
     "history": "Istoricul modificărilor",
-    "reveal": "Arată în folder"
+    "reveal": "Arată în folder",
+    "resize": "Redimensionează lista de fișiere și diferențele"
   },
   "artifacts": {
     "empty": "Nu există artefacte în această sesiune.",

@@ -846,11 +846,16 @@ legend {
     width: 1.5rem;
   }
 }
+/* Tabs with their own scroll areas take the panel's height instead of scrolling the whole panel. */
+.right-panel[data-tab="changes"],
+.right-panel[data-tab="bookmarks"],
 .right-panel[data-tab="terminal"] {
   display: flex;
   flex-direction: column;
   overflow: hidden;
 }
+.right-panel[data-tab="changes"] > #panel-changes,
+.right-panel[data-tab="bookmarks"] > #panel-bookmarks,
 .right-panel[data-tab="terminal"] > #panel-terminal {
   display: flex;
   flex: 1;
@@ -1229,9 +1234,57 @@ legend {
 .provider-test-results li {
   margin-block: 0.5rem;
 }
+/* The file list and the selected diff scroll separately; the list takes at most half the panel. */
+.changes-tab {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: 0;
+  min-height: 0;
+}
+/* The splitter sets the file pane's share (25-75%); each pane scrolls on its own. */
+.changes-files {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 0;
+  flex-shrink: 0;
+  gap: 0.5rem;
+  min-height: 0;
+}
 .changes-list {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  margin: 0;
   padding: 0;
   list-style: none;
+}
+.changes-tab .pager {
+  flex-shrink: 0;
+  margin-top: 0;
+}
+.changes-splitter {
+  flex-shrink: 0;
+  height: 0.45rem;
+  margin: 0;
+  border: 0;
+  border-radius: 0.2rem;
+  background: var(--border);
+  cursor: row-resize;
+  touch-action: none;
+}
+.changes-splitter:hover,
+.changes-splitter:focus-visible {
+  background: var(--primary);
+}
+.changes-detail {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow: auto;
+}
+.changes-detail .approval-diff {
+  max-height: none;
 }
 .changes-list button {
   display: grid;
@@ -1243,6 +1296,13 @@ legend {
 }
 .changes-list button[aria-pressed="true"] {
   border-color: var(--ring);
+}
+.changes-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.25rem 0.75rem;
 }
 .changes-list time {
   font-size: 0.85rem;
@@ -1327,6 +1387,7 @@ legend {
 }
 /* Bookmarks tab: fixed controls above a list that scrolls on its own. */
 .bookmarks-tab {
+  flex: 1;
   /* The trash column's width, which the action row leaves free so Remove selected ends with the cards. */
   --bookmark-remove-width: 2.75rem;
   display: flex;

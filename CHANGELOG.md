@@ -45,6 +45,7 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ### Changed
 
+- Changes separates the file history and diff into independently scrolling, resizable panes.
 - Changes paginates long session histories and retains the selected diff across pages.
 - Chat shows one working indicator below the composer at every detail level.
 - Long chats use calibrated token estimates and compact in the background; context summaries survive restarts.

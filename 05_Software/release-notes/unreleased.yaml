@@ -172,10 +172,10 @@ entries:
   - category: improved
     topic: { en: Sessions, ro: Sesiuni, de: Sitzungen, fr: Sessions }
     text:
-      en: Changes has pages for long lists; chat shows one working indicator below the message box.
-      ro: Listele lungi din Modificări au pagini; indicatorul de lucru apare o singură dată, sub mesaj.
-      de: Änderungen hat Seiten für lange Listen; nur eine Aktivitätsanzeige unter dem Eingabefeld.
-      fr: Modifications pagine les longues listes ; un seul indicateur sous le champ de saisie.
+      en: "Changes: paged list and resizable diff pane. Chat: one working indicator below the input."
+      ro: "Modificări: listă paginată și diff redimensionabil. Chat: un singur indicator sub câmp."
+      de: "Änderungen: Seiten und skalierbare Diff-Ansicht. Chat: eine Statusanzeige unter der Eingabe."
+      fr: "Modifications : liste paginée, diff ajustable. Chat : un seul indicateur sous la saisie."
   - category: improved
     topic: { en: Permissions, ro: Permisiuni, de: Berechtigungen, fr: Autorisations }
     text:
