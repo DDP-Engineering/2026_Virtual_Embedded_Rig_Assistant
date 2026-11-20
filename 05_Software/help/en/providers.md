@@ -79,6 +79,14 @@ See [Model Studio](https://www.alibabacloud.com/help/en/model-studio/qwen-api-vi
 
 Use Alibaba Coding Plan in supported interactive coding tools under Alibaba’s usage policy. Use MiMo Token Plan for coding workflows under Xiaomi’s usage policy.
 
+## Fireworks AI, Together AI, Groq and Cerebras
+
+1. Under **Add connection**, select the service and enter an API key from its own console. VERA fills in the service address and stores each connection’s key separately.
+2. Select **Discover models**, or enter a full model ID and its limits. Keep the account prefix for Fireworks, such as `accounts/fireworks/models/glm-5p3-flash`. For a dedicated endpoint, copy its exact inference ID from the service.
+3. Save and select **Test** to check your key and chosen model. Tool and image support appear when the catalog or the provider’s model documentation supplies them. Check the provider’s limits and model access for your account.
+
+See the model lists for [Fireworks AI](https://fireworks.ai/models), [Together AI](https://docs.together.ai/docs/serverless/models), [Groq](https://console.groq.com/docs/models) and [Cerebras](https://inference-docs.cerebras.ai/models/overview).
+
 ## LM Studio
 
 1. Start the LM Studio server and load a model.

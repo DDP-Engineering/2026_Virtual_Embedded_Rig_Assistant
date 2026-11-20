@@ -33,6 +33,10 @@ strict public projections. Renderer holds a password draft until save/cancel and
   Alibaba Coding Plan has a fixed Singapore binding. Xiaomi MiMo has a global API binding and
   separate China, Singapore and Europe Token Plan bindings. Main checks documented key classes.
   Editing and saved-key discovery preserve the region and workspace as well as the plan.
+- Fireworks AI, Together AI, Groq and Cerebras are separately bound API-key presets. Each
+  accepts a full manual model ID and has its own registered catalog and inference routes.
+  Hosted connection tests exercise the saved model and report the observed steps. Persistent
+  model capability metadata comes from catalog attributes and documented exact IDs.
 - providers.presets.discover accepts a preset/binding, optional local draft key and optional matching
   saved connection. It returns discovered IDs and available catalog profiles, a manual-entry outcome or
   a structured failure. The key

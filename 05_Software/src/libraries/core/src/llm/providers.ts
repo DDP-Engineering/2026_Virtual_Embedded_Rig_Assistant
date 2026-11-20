@@ -9,6 +9,7 @@ import {
   type CuratedProviderPreset,
   curatedProviderPresets,
   customSettingsSchema,
+  isHostedCatalog,
   isMiMoKeyScope,
   type ModelCapabilities,
   modelReferenceSchema,
@@ -20,6 +21,7 @@ import type { CredentialStore } from "../ports.js";
 import { parseChatGptCatalog } from "./chatgpt-catalog.js";
 import {
   directCompletionsCompatibility,
+  hostedCompletionsCompatibility,
   isMiniMaxPreset,
   isZaiPreset,
   kimiMessagesCompatibility,
@@ -310,11 +312,12 @@ export function createPiAiGateway(
     }
     const directCatalog =
       connection.binding.catalog.kind === "openai-models" && connection.binding.catalog.metadata;
+    const hosted = isHostedCatalog(connection.binding.catalog);
     const { contextWindow, maxOutputTokens } = curatedTokenLimits(
       custom,
       profile,
       selected,
-      !!plan || !!(directCatalog && catalogProfile),
+      hosted || !!plan || !!(directCatalog && catalogProfile),
     );
     const model = customModel(custom, provider, id, profile);
     const modelCompatibility = directCompletionsCompatibility(connection.preset.id, id);
@@ -329,6 +332,7 @@ export function createPiAiGateway(
       };
       if (connection.preset.id === "deepseek") model.thinkingLevelMap = { off: null };
     }
+    if (hosted) model.compat = { ...model.compat, ...hostedCompletionsCompatibility(connection.preset.id) };
     if (qwenCloud && !profile?.reasoningOptions)
       model.compat = { ...model.compat, maxTokensField: "max_tokens" };
     if (keyScope) {
@@ -351,7 +355,7 @@ export function createPiAiGateway(
     return {
       ...connection,
       profile,
-      supportsTools: profile?.supportsTools ?? (selected ? custom.supportsTools : undefined),
+      supportsTools: profile?.supportsTools ?? (selected && !hosted ? custom.supportsTools : undefined),
       model: inferenceModel,
       reasoningOptions: [...(profile?.reasoningOptions ?? [])],
     };

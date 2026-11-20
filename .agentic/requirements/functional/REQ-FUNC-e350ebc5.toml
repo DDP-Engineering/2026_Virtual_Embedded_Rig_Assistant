@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-FUNC-e350ebc5"
+title = "Normalize hosted model discovery"
+status = "active"
+requirement = "When a hosted inference service returns a valid catalog, VERA shall expose usable catalog entries by their complete service model IDs."
+verification = "Discover each service's native fixture, including Fireworks pagination and non-chat filtering where the provider identifies the type, then assert exact IDs and that empty catalogs allow manual entry."
+affected_paths = ["05_Software/src/libraries/shared/src/hosted-provider-presets.ts", "05_Software/src/libraries/shared/src/provider-presets.ts", "05_Software/src/libraries/core/src/llm/hosted-catalog.ts", "05_Software/src/libraries/core/src/llm/preset-connection.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/hosted-provider-presets.test.ts"]
+spec = "specs/REQ-FUNC-e350ebc5.md"
+created = 2026-11-20
+updated = 2026-11-20

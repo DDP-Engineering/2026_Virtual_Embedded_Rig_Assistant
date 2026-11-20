@@ -77,6 +77,16 @@ The gateway preserves thinking across tool continuation using the provider's Cha
 schema. Authentication and unavailable-model failures stay on the chosen binding. The epic's
 no-account ruling supplies scripted validation for every binding.
 
+Fireworks AI, Together AI, Groq and Cerebras use separate bearer-key bindings.
+Fireworks sends inference to `https://api.fireworks.ai/inference/v1` and reads the paginated public-account
+model resources at `https://api.fireworks.ai/v1/accounts/fireworks/models` using the scoped key.
+Together sends requests to `https://api.together.ai/v1`, Groq to `https://api.groq.com/openai/v1`,
+and Cerebras to `https://api.cerebras.ai/v1`. Each of those three lists models at its base plus `/models`.
+The gateway preserves full IDs, projects documented catalog attributes, and uses exact published model
+profiles where the listing is sparse. Cerebras uses configured token limits because they vary by tier.
+Other capabilities remain unverified. Explicit IDs can be saved
+for models missing from discovery. Acceptance uses scripted VERA requests under the epic’s no-account ruling.
+
 A curated connection uses a reserved random slug under the existing `custom:<slug>` identity and
 keeps the selected preset and binding in format-1 settings. The credential slot includes the slug
 and a digest of the registered routes and authentication contract. Main rejects changes to a saved
@@ -148,7 +158,8 @@ Each step reports pass, fail or skipped (`core/llm/connection.ts`):
 
 Steps 2–4 request at most 256 output tokens by default. The documented Moonshot K3, Kimi For
 Coding, MiniMax M3.1 Flash and GLM-5.3 profiles use low effort and up to 4,096 tokens for reasoning
-and the probe reply. MiniMax M3 tests with thinking off. Steps 3 and 4 are skipped when 2 fails.
+and the probe reply. The hosted presets allow up to 4,096 tokens for a documented reasoning model
+with provider-default reasoning. MiniMax M3 tests with thinking off. Steps 3 and 4 are skipped when 2 fails.
 The UI has a Test
 button per saved connection that opens a step list with localized errors; it is disabled while the
 form holds unsaved edits (`renderer/components/provider-test.tsx`). The ChatGPT card has no Test

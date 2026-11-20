@@ -66,7 +66,12 @@ export function answer(service: StreamTarget) {
     : completions([{ content: "Echo " }, { content: "received." }]);
 }
 
-export function toolCall(service: StreamTarget, signature?: string) {
+export function toolCall(
+  service: StreamTarget & { reasoningField?: "reasoning" | "reasoning_content" | null },
+  signature?: string,
+) {
+  const field = service.reasoningField === undefined ? "reasoning_content" : service.reasoningField;
+  const reasoningDeltas = field ? [{ [field]: "Prepare " }, { [field]: "the echo." }] : [];
   return service.messages
     ? messages(
         [
@@ -84,8 +89,7 @@ export function toolCall(service: StreamTarget, signature?: string) {
       )
     : completions(
         [
-          { reasoning_content: "Prepare " },
-          { reasoning_content: "the echo." },
+          ...reasoningDeltas,
           {
             tool_calls: [
               {

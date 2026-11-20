@@ -49,7 +49,7 @@ test("provider categories support concurrent connections, presets and aligned ac
   await expect(choices).toHaveCount(0);
   await expect(section.getByText("No matching providers")).toBeVisible();
   await search.clear();
-  await expect(choices).toHaveCount(19);
+  await expect(choices).toHaveCount(23);
   await search.fill("OpenCode");
   await expect(choices).toHaveText(["OpenCode Console", "OpenCode Go"]);
   for (const [preset, label, baseUrl] of [
@@ -84,6 +84,27 @@ test("provider categories support concurrent connections, presets and aligned ac
     await expect(section.getByLabel("Base URL", { exact: true })).not.toBeEditable();
     await expect(section.getByLabel("Model", { exact: true })).toBeEditable();
     await expect(section.locator('[data-action="discover-models"]')).toHaveCount(discovery ? 1 : 0);
+  }
+  for (const [preset, label, baseUrl] of [
+    ["fireworks", "Fireworks AI", "https://api.fireworks.ai/inference/v1"],
+    ["together", "Together AI", "https://api.together.ai/v1"],
+    ["groq", "Groq", "https://api.groq.com/openai/v1"],
+    ["cerebras", "Cerebras", "https://api.cerebras.ai/v1"],
+  ] as const) {
+    await search.fill(label);
+    await expect(choices).toHaveText([label]);
+    await section.locator("[data-provider-preset]").selectOption(preset);
+    const base = section.getByLabel("Base URL", { exact: true });
+    await expect(base).toHaveValue(baseUrl);
+    await expect(base).not.toBeEditable();
+    const key = section.getByLabel("Endpoint API key", { exact: true });
+    await expect(key).toHaveValue("");
+    await key.fill(`fixture-draft-${preset}`);
+    await expect(section.locator('[data-action="discover-models"]')).toBeEnabled();
+    const model = section.getByLabel("Model", { exact: true });
+    await model.fill("owner/Example-Chat");
+    await expect(model).toHaveValue("owner/Example-Chat");
+    await expect(section.locator('[data-provider-action="save-custom"]')).toBeEnabled();
   }
   await search.clear();
   await section.locator("[data-provider-preset]").selectOption("openai");

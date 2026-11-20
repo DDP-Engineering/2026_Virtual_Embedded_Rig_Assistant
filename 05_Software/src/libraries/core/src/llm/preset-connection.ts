@@ -16,6 +16,7 @@ import {
 import { z } from "zod";
 import { parseDirectCatalog } from "./direct-catalog.js";
 import { mapProviderError } from "./errors.js";
+import { parseFireworksPage, parseHostedCatalog } from "./hosted-catalog.js";
 import { parseOpenCodeCatalog } from "./opencode.js";
 import { scrub } from "./scrub.js";
 
@@ -193,71 +194,99 @@ export async function discoverPresetModels(
   }
   const timeout = AbortSignal.timeout(10000);
   const requestSignal = signal ? AbortSignal.any([signal, timeout]) : timeout;
-  let response: Response;
+  const url = new URL(endpoint);
+  if (nativeStudio) url.search = "page_size=100&capabilities=TG";
+  if (metadata === "fireworks") url.searchParams.set("pageSize", "200");
+  type CatalogProfiles = NonNullable<Extract<CuratedDiscovery, { status: "discovered" }>["profiles"]>;
+  const fireworksProfiles: CatalogProfiles = [];
+  const seenTokens = new Set<string>();
   try {
-    const url = nativeStudio ? `${endpoint}?page_size=100&capabilities=TG` : endpoint;
-    response = await (host.fetch ?? globalThis.fetch)(url, {
-      signal: requestSignal,
-      redirect: "error",
-      headers: { Authorization: `Bearer ${key}` },
-    });
-  } catch {
-    return {
-      status: "failed",
-      error: signal?.aborted
-        ? veraError("DENIED")
-        : mapProviderError("", redact, endpoint, { offline: true }),
-    };
-  }
-  try {
-    signal?.throwIfAborted();
-    if (!response.ok) {
-      const body =
-        opencode || qwenCloud || keyScope
-          ? await readProviderJson(response, requestSignal, 16384).catch(() => undefined)
-          : undefined;
-      if (!opencode && !qwenCloud && !keyScope) await response.body?.cancel();
+    for (;;) {
+      let response: Response;
+      try {
+        response = await (host.fetch ?? globalThis.fetch)(url.href, {
+          signal: requestSignal,
+          redirect: "error",
+          headers: { Authorization: `Bearer ${key}` },
+        });
+      } catch {
+        return {
+          status: "failed",
+          error: signal?.aborted
+            ? veraError("DENIED")
+            : mapProviderError("", redact, endpoint, { offline: true }),
+        };
+      }
       signal?.throwIfAborted();
-      const error = mapProviderError("", redact, endpoint, {
-        status: response.status,
-        ...(keyScope ? { scoped: { operation: "catalog", body } } : {}),
-        ...(opencode ? { openCode: { operation: "catalog", body } } : {}),
-        ...(qwenCloud ? { qwenCloud: { plan: qwenCloud, operation: "catalog", body } } : {}),
-        retryAfter: response.headers.get("retry-after") ?? undefined,
-      });
-      // QwenCloud documents both 401 and 404 when a model listing is unavailable.
+      if (!response.ok) {
+        const body =
+          opencode || qwenCloud || keyScope
+            ? await readProviderJson(response, requestSignal, 16384).catch(() => undefined)
+            : undefined;
+        if (!opencode && !qwenCloud && !keyScope) await response.body?.cancel();
+        signal?.throwIfAborted();
+        const error = mapProviderError("", redact, endpoint, {
+          status: response.status,
+          ...(keyScope ? { scoped: { operation: "catalog", body } } : {}),
+          ...(opencode ? { openCode: { operation: "catalog", body } } : {}),
+          ...(qwenCloud ? { qwenCloud: { plan: qwenCloud, operation: "catalog", body } } : {}),
+          retryAfter: response.headers.get("retry-after") ?? undefined,
+        });
+        // QwenCloud documents both 401 and 404 when a model listing is unavailable.
+        if (
+          !opencode &&
+          !seenTokens.size &&
+          error.messageKey !== "provider.workspaceUnavailable" &&
+          ([404, 405, 501].includes(response.status) || (qwenCloud && response.status === 401))
+        )
+          return { status: "manual", reason: "unavailable" };
+        return { status: "failed", error };
+      }
+
+      const body = await readProviderJson(response, requestSignal);
+      let profiles: CatalogProfiles | undefined;
+      if (metadata === "fireworks") {
+        const page = parseFireworksPage(body, binding.models);
+        fireworksProfiles.push(...page.profiles);
+        if (page.nextPageToken) {
+          if (
+            seenTokens.size >= 19 ||
+            seenTokens.has(page.nextPageToken) ||
+            redact(page.nextPageToken) !== page.nextPageToken
+          )
+            throw veraError("PROVIDER");
+          seenTokens.add(page.nextPageToken);
+          url.searchParams.set("pageToken", page.nextPageToken);
+          continue;
+        }
+        profiles = fireworksProfiles;
+      } else if (opencode) profiles = parseOpenCodeCatalog(body, opencode);
+      else if (metadata === "deepseek" || metadata === "moonshot")
+        profiles = parseDirectCatalog(body, metadata);
+      else if (metadata) profiles = parseHostedCatalog(body, metadata);
+      if (metadata && metadata !== "deepseek" && metadata !== "moonshot")
+        profiles = profiles?.filter(
+          ({ contextWindow }) => contextWindow === undefined || contextWindow > 1025,
+        );
+      const ids = nativeStudio
+        ? studioModelIds(body)
+        : (profiles ?? catalogSchema.parse(body).data).map(({ id }) => id);
+      const models =
+        keyScope === "mimo-api" ? ids.filter((id) => binding.models?.some((model) => model.id === id)) : ids;
+      signal?.throwIfAborted();
       if (
-        !opencode &&
-        error.messageKey !== "provider.workspaceUnavailable" &&
-        ([404, 405, 501].includes(response.status) || (qwenCloud && response.status === 401))
+        models.some((id) => redact(id) !== id) ||
+        profiles?.some(
+          (profile) =>
+            redact(profile.name) !== profile.name ||
+            profile.reasoningOptions?.some((option) => redact(option) !== option),
+        )
       )
-        return { status: "manual", reason: "unavailable" };
-      return { status: "failed", error };
+        return { status: "failed", error: veraError("INVALID") };
+      if (!models.length) return { status: "manual", reason: "empty" };
+      if (profiles && new Set(models).size !== models.length) throw veraError("PROVIDER");
+      return { status: "discovered", models: [...new Set(models)], ...(profiles ? { profiles } : {}) };
     }
-    const body = await readProviderJson(response, requestSignal);
-    const profiles = opencode
-      ? parseOpenCodeCatalog(body, opencode)
-      : metadata
-        ? parseDirectCatalog(body, metadata)
-        : undefined;
-    const ids = nativeStudio
-      ? studioModelIds(body)
-      : (profiles ?? catalogSchema.parse(body).data).map(({ id }) => id);
-    const models =
-      keyScope === "mimo-api" ? ids.filter((id) => binding.models?.some((model) => model.id === id)) : ids;
-    signal?.throwIfAborted();
-    if (
-      models.some((id) => redact(id) !== id) ||
-      profiles?.some(
-        (profile) =>
-          redact(profile.name) !== profile.name ||
-          profile.reasoningOptions?.some((option) => redact(option) !== option),
-      )
-    )
-      return { status: "failed", error: veraError("INVALID") };
-    if (!models.length) return { status: "manual", reason: "empty" };
-    if (profiles && new Set(models).size !== models.length) throw veraError("PROVIDER");
-    return { status: "discovered", models: [...new Set(models)], ...(profiles ? { profiles } : {}) };
   } catch {
     return { status: "failed", error: veraError(signal?.aborted ? "DENIED" : "PROVIDER") };
   }

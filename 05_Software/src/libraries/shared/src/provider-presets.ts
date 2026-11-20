@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { veraErrorSchema } from "./errors.js";
+import { hostedProviderPresets } from "./hosted-provider-presets.js";
 import { reasoningOptionSchema } from "./provider-discovery.js";
 
 const presetId = z
@@ -75,6 +76,16 @@ export function samePresetBinding(left: PresetBinding | undefined, right: Preset
   );
 }
 
+export type HostedCatalogMetadata = "fireworks" | "together" | "groq" | "cerebras";
+
+export function isHostedCatalog(catalog: ProviderBinding["catalog"] | undefined): boolean {
+  if (catalog?.kind !== "openai-models") return false;
+  const { metadata } = catalog;
+  return (
+    metadata === "fireworks" || metadata === "together" || metadata === "groq" || metadata === "cerebras"
+  );
+}
+
 export interface ProviderBinding {
   readonly workspace?: true;
   readonly region?: ProviderRegion;
@@ -91,7 +102,7 @@ export interface ProviderBinding {
         readonly kind: "openai-models";
         readonly url: string;
         readonly opencode?: "console" | "go";
-        readonly metadata?: "deepseek" | "moonshot";
+        readonly metadata?: "deepseek" | "moonshot" | HostedCatalogMetadata;
       };
   readonly models?: readonly CuratedModel[];
 }
@@ -485,6 +496,7 @@ export const curatedProviderPresets: readonly CuratedProviderPreset[] = [
     ],
   },
   ...regionalPresets,
+  ...hostedProviderPresets,
 ];
 
 export const providerChoices = {

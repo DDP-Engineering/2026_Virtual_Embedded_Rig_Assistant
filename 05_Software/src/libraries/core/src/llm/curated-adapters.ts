@@ -41,3 +41,17 @@ export function kimiMessagesCompatibility(model: string) {
   const pinned = kimiModels.find(({ id }) => id === model) as Model<"anthropic-messages"> | undefined;
   return pinned?.compat ?? {};
 }
+
+/** Options documented by the hosted Chat Completions service. */
+export function hostedCompletionsCompatibility(preset: string): Model<"openai-completions">["compat"] {
+  switch (preset) {
+    case "fireworks":
+      return { maxTokensField: "max_tokens" };
+    case "together":
+      return { maxTokensField: "max_tokens", supportsUsageInStreaming: false, thinkingFormat: "openai" };
+    case "cerebras":
+      return { maxTokensField: "max_completion_tokens", supportsUsageInStreaming: false };
+    case "groq":
+      return { maxTokensField: "max_completion_tokens" };
+  }
+}

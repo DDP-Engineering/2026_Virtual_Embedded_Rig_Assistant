@@ -41,6 +41,14 @@ Core resolves models and wraps exact-pinned pi-ai1.1.0. Desktop main supplies cu
   and reasoning content. The gateway pins this traffic to the selected route and reports scoped
   authentication or model availability errors. Model Studio reports missing workspaces separately.
   A Coding Plan Qwen3.7 Plus probe requests thinking on and uses a bounded reasoning budget.
+- Fireworks AI selects serverless chat from a bounded, paginated native catalog and preserves
+  account-qualified IDs. Together AI accepts its model array and the OpenAI list envelope.
+  Groq uses active catalog rows and their token limits, excluding documented audio and
+  moderation-only IDs. Cerebras lists IDs with its authenticated catalog and uses configured
+  token budgets because published limits vary by account tier and deployment. Catalog fields
+  and exact published model profiles supply tool and input capability labels. Missing
+  metadata stays unverified. Hosted Chat Completions preserves scoped keys, streams and tool
+  result IDs. Connection tests allow a 4096-token budget for documented reasoning models.
 - OpenCode Console and Go use `https://opencode.ai/inference[/go]/v1/models` for the scoped catalog
   and `https://opencode.ai/inference[/go]/openai/v1/chat/completions` for inference. OpenCode’s
   catalog supplies eligible IDs, names, input modalities, limits and declared tool and compatible
@@ -96,6 +104,7 @@ LlmRequest.maskOutput is a host-owned live callback; omitted means on, including
 |---|---|---|
 | Model precedence/capabilities/catalog/auth/streams/errors | core llm gateway/providers/errors/stream-scrub | gateway.test.ts |
 | Model input modalities | core llm providers/chatgpt-catalog and shared providers | gateway.test.ts, subscription.test.ts and shared providers.test.ts |
+| Hosted model catalogs, isolated keys and tool continuation | shared hosted-provider-presets, core llm hosted-catalog and curated-adapters | desktop main hosted-provider-presets.test.ts |
 | OpenCode and QwenCloud catalogs, scoped streams and diagnostics | core llm opencode, preset-catalog-cache, preset-connection and errors | desktop main opencode-presets.test.ts and qwencloud-presets.test.ts |
 | Alibaba and Xiaomi route, workspace and protocol behavior | provider-presets, preset-connection, providers and errors | main regional-provider-presets.test.ts; tests/e2e/providers-layout.spec.ts |
 | Four-step results and host lifecycle | core llm connection; main provider-gateway/provider-settings | gateway.test.ts; provider-test.spec.ts |

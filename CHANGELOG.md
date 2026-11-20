@@ -8,6 +8,8 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ### Added
 
+- Connect Fireworks AI, Together AI, Groq and Cerebras with catalog discovery and manual model IDs.
+
 - Connect Alibaba Cloud and Xiaomi MiMo APIs and plans using their region and workspace settings.
 
 - Connect international MiniMax and Z.AI through separate API and subscription presets.

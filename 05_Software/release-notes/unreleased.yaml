@@ -25,10 +25,10 @@ entries:
   - category: new
     topic: { en: Models and images, ro: Modele și imagini, de: Modelle und Bilder, fr: Modèles et images }
     text:
-      en: OpenCode, QwenCloud, DeepSeek, Kimi, MiniMax, Z.AI, Alibaba and Xiaomi MiMo. Images per model.
-      ro: OpenCode, QwenCloud, DeepSeek, Kimi, MiniMax, Z.AI, Alibaba și Xiaomi MiMo. Imagini per model.
-      de: OpenCode, QwenCloud, DeepSeek, Kimi, MiniMax, Z.AI, Alibaba und Xiaomi MiMo. Bilder je Modell.
-      fr: OpenCode, QwenCloud, DeepSeek, Kimi, MiniMax, Z.AI, Alibaba et Xiaomi MiMo. Images par modèle.
+      en: More API and plan presets, including Fireworks, Together, Groq and Cerebras. Images per model.
+      ro: Mai multe servicii și planuri, inclusiv Fireworks, Together, Groq și Cerebras. Imagini per model.
+      de: Mehr Dienste und Tarife, auch Fireworks, Together, Groq und Cerebras. Bilder je Modell.
+      fr: Plus de services et d’offres, dont Fireworks, Together, Groq et Cerebras. Images par modèle.
   - category: fixed
     topic: { en: Skills, ro: Skills, de: Skills, fr: Compétences }
     text:

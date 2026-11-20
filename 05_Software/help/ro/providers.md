@@ -79,6 +79,14 @@ Consultă [Model Studio](https://www.alibabacloud.com/help/en/model-studio/qwen-
 
 Folosește Alibaba Coding Plan în instrumente interactive de programare acceptate, conform politicii Alibaba. Folosește MiMo Token Plan pentru programare, conform politicii de utilizare Xiaomi.
 
+## Fireworks AI, Together AI, Groq și Cerebras
+
+1. În **Adaugă conexiune**, selectează serviciul și introdu o cheie API din consola acestuia. VERA completează adresa serviciului și stochează separat cheia fiecărei conexiuni.
+2. Alege **Descoperă modele** sau introdu ID-ul complet al modelului și limitele sale. Păstrează prefixul contului pentru Fireworks, de exemplu `accounts/fireworks/models/glm-5p3-flash`. Pentru un punct de acces dedicat, copiază ID-ul exact de inferență din serviciu.
+3. Salvează și alege **Testează** pentru a verifica cheia și modelul ales. Suportul pentru instrumente și imagini apare când este specificat în catalog sau în documentația modelului. Verifică limitele serviciului și accesul la modele pentru contul tău.
+
+Consultă listele de modele pentru [Fireworks AI](https://fireworks.ai/models), [Together AI](https://docs.together.ai/docs/serverless/models), [Groq](https://console.groq.com/docs/models) și [Cerebras](https://inference-docs.cerebras.ai/models/overview).
+
 ## LM Studio
 
 1. Pornește serverul LM Studio și încarcă un model.
