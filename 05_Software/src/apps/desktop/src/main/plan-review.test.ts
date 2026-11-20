@@ -110,7 +110,8 @@ it("routes metadata and review with no skill/plugin/program preparation and uses
   expect(env.skills).not.toHaveBeenCalled();
   expect(env.loadPlugins).not.toHaveBeenCalled();
   expect(env.resolve).not.toHaveBeenCalled();
-  expect(env.getConfig).toHaveBeenCalledOnce();
+  expect(env.getConfig).not.toHaveBeenCalled();
+  expect(env.readConfig).toHaveBeenCalledOnce();
   expect(env.getPinned).toHaveBeenCalledOnce();
 });
 
@@ -264,25 +265,32 @@ for (const sameWorkbenchId of [false, true])
     expect(env.loadPlugins).not.toHaveBeenCalled();
   });
 
-it("rechecks captured DB after awaited review preparation and leaves feedback pending in its owner", async () => {
-  const env = await fixture(true),
-    handlers = mainSessions.planReviewHandlers(env.host, env.containsSecret);
-  await handlers["session.plan.comment.save"]({
-    ...env.scope,
-    action: "create",
-    expectedFeedbackRevision: 0,
-    text: "Retained",
-    target: env.target,
-  });
-  env.holdPinned(async () => {
-    env.switchToB();
-  });
-  await expect(
-    handlers["session.plan.review"]({ ...env.scope, expectedPlanRevision: 1, expectedFeedbackRevision: 1 }),
-  ).rejects.toMatchObject({ code: "CONFLICT" });
-  expect(new SessionHub(env.a.db, () => "").get(env.id).snapshot.planComments).toHaveLength(1);
-  expect(new SessionHub(env.b.db, () => "").get(env.id).snapshot.planReviews).toEqual([]);
-});
+it.each(["config", "pinned"] as const)(
+  "rechecks captured DB after awaited review %s and leaves feedback pending in its owner",
+  async (held) => {
+    const env = await fixture(true),
+      handlers = mainSessions.planReviewHandlers(env.host, env.containsSecret);
+    await handlers["session.plan.comment.save"]({
+      ...env.scope,
+      action: "create",
+      expectedFeedbackRevision: 0,
+      text: "Retained",
+      target: env.target,
+    });
+    const hold = held === "config" ? env.holdConfig : env.holdPinned;
+    hold(async () => {
+      env.switchToB();
+    });
+    await expect(
+      handlers["session.plan.review"]({ ...env.scope, expectedPlanRevision: 1, expectedFeedbackRevision: 1 }),
+    ).rejects.toMatchObject({ code: "CONFLICT" });
+    expect(new SessionHub(env.a.db, () => "").get(env.id).snapshot.planComments).toHaveLength(1);
+    expect(new SessionHub(env.b.db, () => "").get(env.id).snapshot.planReviews).toEqual([]);
+    expect(env.readConfig).toHaveBeenCalledOnce();
+    expect(env.getConfig).not.toHaveBeenCalled();
+    expect(env.getPinned).toHaveBeenCalledTimes(held === "config" ? 0 : 1);
+  },
+);
 
 it("rejects ordinary preparation before it can probe programs while a review is active", async () => {
   const env = await fixture(),
@@ -323,7 +331,8 @@ it("rejects ordinary preparation before it can probe programs while a review is 
     ).rejects.toMatchObject({ code: "BUSY" });
     expect(env.skills).not.toHaveBeenCalled();
     expect(env.loadPlugins).not.toHaveBeenCalled();
-    expect(env.getConfig).toHaveBeenCalledOnce();
+    expect(env.getConfig).not.toHaveBeenCalled();
+    expect(env.readConfig).toHaveBeenCalledOnce();
     const core = await env.host.run((service) => service);
     core.stop(env.id);
     release();

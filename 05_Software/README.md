@@ -66,6 +66,10 @@ adds scoped draft/comment actions, with `plan-comment-editor.tsx` owning the nat
 keyboard selector, `plan-target.ts` mapping native newline offsets to exact source UTF16 targets, and
 `plan-feedback-history.tsx` presenting paged immutable reviews and explicit restore. Saved feedback
 uses the shared session view and strict `session.plan.*` channels, not another store or polling loop.
+Open Edit/Re-anchor dialogs derive saved text from that live projection while retaining actual user
+edits separately. A fragment invalidated before the dialog opens requires explicit recapture, not
+an implicit whole-step replacement. Review preparation uses host-only `WorkbenchService.readConfig`
+for current validated disk data without skill/plugin warning discovery; `getConfig` retains warnings.
 Browser mocks mirror those events; the **Plan feedback targets** fixture includes duplicate IDs,
 repeated Unicode/multiline descriptions and an empty step. `tests/e2e/plan-review.spec.ts` exercises
 the live browser feedback workflow; `plan-fragments.spec.ts` proves exact source CRLF/CR ranges.

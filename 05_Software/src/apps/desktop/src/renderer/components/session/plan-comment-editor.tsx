@@ -5,7 +5,6 @@ import { ErrorMessage } from "../error-message.js";
 import { currentPlanTarget, textareaPlanTarget, wholePlanTarget } from "./plan-target.js";
 
 interface PlanEditorContext {
-  text: string;
   stepIndex: number;
   target?: PlanTarget;
   projection: number;
@@ -36,7 +35,7 @@ export function PlanCommentEditor({
     id = useId();
   const dialog = useRef<HTMLDialogElement>(null),
     selector = useRef<HTMLTextAreaElement>(null);
-  const [text, setText] = useState(initial.text),
+  const [draft, setDraft] = useState<string>(),
     [stepIndex, setStepIndex] = useState(initial.stepIndex);
   const [capture, setCapture] = useState({ target: initial.target, projection: initial.projection });
   const [failure, setFailure] = useState<unknown>();
@@ -49,6 +48,12 @@ export function PlanCommentEditor({
       (initial.opener.isConnected ? initial.opener : fallback.current)?.focus();
     };
   }, [initial.opener, fallback]);
+  const comment =
+    initial.action === "create"
+      ? undefined
+      : state?.planComments.find((item) => item.id === initial.commentId);
+  const text = initial.action === "reanchor" ? (comment?.text ?? "") : (draft ?? comment?.text ?? "");
+  const missing = initial.action !== "create" && !comment;
   const target = capture.projection === projection ? capture.target : undefined;
   const valid = !!state && !!target && currentPlanTarget(state, target);
   useEffect(() => {
@@ -62,7 +67,7 @@ export function PlanCommentEditor({
   const steps =
     state?.todos.map((_item, index) => ({ identity: `${state.planRevision}/${index}`, index })) ?? [];
   async function submit() {
-    if (!state || disabled || saving.current || (initial.action !== "edit" && !valid)) return;
+    if (!state || disabled || missing || saving.current || (initial.action !== "edit" && !valid)) return;
     saving.current = true;
     const current = generation.current;
     const expectedFeedbackRevision =
@@ -143,7 +148,7 @@ export function PlanCommentEditor({
             <button
               className="primary"
               type="submit"
-              disabled={disabled || !state || (initial.action !== "edit" && !valid)}
+              disabled={disabled || !state || missing || (initial.action !== "edit" && !valid)}
             >
               {initial.action === "reanchor" ? t("plan.saveAnchor") : t("plan.saveDraft")}
             </button>
@@ -206,7 +211,7 @@ export function PlanCommentEditor({
               value={text}
               readOnly={saving.current}
               onChange={(event) => {
-                if (!saving.current) setText(event.target.value);
+                if (!saving.current) setDraft(event.target.value);
               }}
             />
           </label>

@@ -1,6 +1,13 @@
 version: Unreleased
 date: null
 entries:
+  - category: fixed
+    topic: { en: Plan, ro: Plan, de: Plan, fr: Plan }
+    text:
+      en: Saved feedback follows masking; changed selections require explicit recapture.
+      ro: Feedbackul salvat urmează mascarea; selecțiile schimbate cer o nouă confirmare.
+      de: Gespeichertes Feedback folgt der Maskierung; geänderte Auswahlen sind neu zu bestätigen.
+      fr: Les commentaires suivent le masquage ; une sélection périmée doit être reconfirmée.
   - category: new
     topic: { en: Plan, ro: Plan, de: Plan, fr: Plan }
     text:
@@ -116,17 +123,10 @@ entries:
   - category: fixed
     topic: { en: Privacy, ro: Confidențialitate, de: Datenschutz, fr: Confidentialité }
     text:
-      en: Agent and export masking now follow their own app and workbench choices.
-      ro: Mascarea agentului și a exporturilor respectă alegerile aplicației și ale workbench-ului.
-      de: Agenten- und Exportmaskierung folgen nun ihren eigenen App- und Workbench-Einstellungen.
-      fr: Le masquage de l’agent et des exports suit leurs choix propres dans l’application et le banc.
-  - category: fixed
-    topic: { en: Files, ro: Fișiere, de: Dateien, fr: Fichiers }
-    text:
-      en: Display masking keeps secret-named files visible and opens their original contents.
-      ro: Mascarea afișării păstrează fișierele cu nume secrete vizibile și le deschide corect.
-      de: Die Anzeigemaskierung lässt Dateien mit geheimen Namen sichtbar und öffnet sie korrekt.
-      fr: Le masquage garde visibles les fichiers aux noms secrets et ouvre leur contenu correct.
+      en: Masking follows each area's choices; secret-named files stay visible and open correctly.
+      ro: Mascarea respectă alegerile fiecărei zone; fișierele cu nume secrete rămân vizibile și se deschid.
+      de: Maskierung folgt der Wahl je Bereich; Dateien mit geheimen Namen bleiben sichtbar und öffnen sich.
+      fr: Le masquage suit chaque zone ; les fichiers aux noms secrets restent visibles et s’ouvrent bien.
   - category: fixed
     topic: { en: Commands, ro: Comenzi, de: Befehle, fr: Commandes }
     text:

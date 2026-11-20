@@ -90,7 +90,9 @@ export function PlanFeedback({
         : undefined;
     const target =
       action === "create"
-        ? (selected ?? wholePlanTarget(state, index))
+        ? pointer?.target
+          ? selected
+          : wholePlanTarget(state, index)
         : action === "edit"
           ? comment?.target
           : undefined;
@@ -99,7 +101,6 @@ export function PlanFeedback({
     const opener = activeElement instanceof HTMLElement ? activeElement : toolbar.current;
     if (!opener) return;
     const context = {
-      text: comment?.text ?? "",
       stepIndex: index,
       ...(target ? { target } : {}),
       projection,

@@ -1,7 +1,125 @@
-import { SessionHub, zeroUsage } from "@vera/core";
+import { randomUUID } from "node:crypto";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { join } from "node:path";
+import {
+  PluginStore,
+  SessionHub,
+  SettingsService,
+  SkillCatalog,
+  WorkbenchService,
+  zeroUsage,
+} from "@vera/core";
 import { expect, it, vi } from "vitest";
 import { fixture } from "./plan-review.test-support.js";
 import * as mainSessions from "./sessions.js";
+
+it("prepares review through real current configuration without warning-driven discovery", async () => {
+  const env = await fixture();
+  const files = {
+    read: async (path: string) => {
+      try {
+        return await readFile(path, "utf8");
+      } catch (error) {
+        if ((error as NodeJS.ErrnoException).code === "ENOENT") return undefined;
+        throw error;
+      }
+    },
+    writeAtomic: async (path: string, text: string) => {
+      await writeFile(path, text);
+    },
+    backup: async () => true,
+  };
+  const settings = new SettingsService({
+    files,
+    paths: { userData: env.root, settings: join(env.root, "settings.json"), logs: join(env.root, "logs") },
+    uuid: randomUUID,
+    changed: () => {},
+  });
+  await settings.load();
+  const workbench = new WorkbenchService({
+    userData: env.root,
+    files,
+    settings,
+    appVersion: "0",
+    now: () => new Date(123),
+    pid: process.pid,
+    isProcessAlive: (pid: number) => pid === process.pid,
+    token: randomUUID,
+    changed: () => {},
+  });
+  const folder = join(env.root, "real");
+  await mkdir(folder);
+  const host = new mainSessions.SessionsHost({
+    workbench,
+    settings,
+    gateway: () => ({ api: env.gateway, modelReference: () => "replay/chat" }),
+    clock: { now: () => new Date(123), sleep: async () => {} },
+    version: "0",
+    target: () => undefined,
+    emit: () => {},
+    credentials: { scrub: (text: string) => text, knownSecrets: () => [] },
+  } as never);
+  try {
+    const { config } = await workbench.create(folder, "Before disk edit");
+    const core = await host.run((service) => service);
+    const id = core.create().id;
+    const db = workbench.getDatabase();
+    new SessionHub(db, () => new Date(123).toISOString()).record(id, {
+      type: "todo.updated",
+      items: [{ text: "Review only", status: "pending" }],
+    });
+    const handlers = mainSessions.planReviewHandlers(host, () => false);
+    const scope = { workbenchId: config.id, sessionId: id };
+    await handlers["session.plan.comment.save"]({
+      ...scope,
+      action: "create",
+      expectedFeedbackRevision: 0,
+      text: "Feedback",
+      target: { revision: 1, stepIndex: 0, stepText: "Review only", range: null },
+    });
+    await writeFile(
+      join(folder, ".vera/workbench.yaml"),
+      JSON.stringify({ ...config, name: "Fresh disk name", plugins: { enabled: ["ghost"] } }),
+    );
+    await writeFile(join(folder, ".vera/WORKBENCH.md"), "Fresh pinned context");
+    // Normal opening legitimately computes warnings. Observe the real chain only after it.
+    const names = vi.spyOn(SkillCatalog.prototype, "names"),
+      ids = vi.spyOn(PluginStore.prototype, "ids"),
+      load = vi.spyOn(PluginStore.prototype, "load"),
+      ordinary = vi.spyOn(workbench, "getConfig"),
+      pinned = vi.spyOn(workbench, "getPinned"),
+      stream = vi.spyOn(env.gateway, "stream");
+    try {
+      await handlers["session.plan.review"]({
+        ...scope,
+        expectedPlanRevision: 1,
+        expectedFeedbackRevision: 1,
+      });
+      expect(await core.waitIdle(id)).toEqual({ stopReason: "end" });
+      expect(stream.mock.calls[0]?.[0].system).toContain("Fresh disk name");
+      expect(stream.mock.calls[0]?.[0].system).toContain("Fresh pinned context");
+      expect(workbench.getSnapshot().config.name).toBe("Fresh disk name");
+      expect(pinned).toHaveBeenCalledOnce();
+      expect(names).not.toHaveBeenCalled();
+      expect(ids).not.toHaveBeenCalled();
+      expect(load).not.toHaveBeenCalled();
+      expect(ordinary).not.toHaveBeenCalled();
+      // Preserve normal configuration warnings and all indirect discovery edges.
+      expect((await workbench.getConfig()).warnings).toContainEqual({
+        code: "UNKNOWN_NAME",
+        path: "plugins.enabled.ghost",
+      });
+      expect(names).toHaveBeenCalledOnce();
+      expect(ids).toHaveBeenCalled();
+      expect(load).toHaveBeenCalled();
+    } finally {
+      for (const spy of [names, ids, load, ordinary, pinned, stream]) spy.mockRestore();
+    }
+  } finally {
+    await host.close();
+    await workbench.close();
+  }
+});
 
 it("revalidates plan and feedback counters changed during awaited review preparation", async () => {
   for (const change of ["plan", "feedback"] as const) {

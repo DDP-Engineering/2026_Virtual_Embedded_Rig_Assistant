@@ -299,6 +299,119 @@ it("keeps editor feedback through privacy refresh but hides its old capture unti
   expect(button("Save draft").disabled).toBe(false);
 });
 
+async function savedEditor(action: "Edit feedback" | "Re-anchor") {
+  state = {
+    ...state,
+    planFeedbackRevision: 1,
+    planComments: [
+      {
+        id: "saved",
+        stale: false,
+        text: "fake-secret\n Vérifier 😀 ",
+        target: { revision: 1, stepIndex: 1, stepText: state.todos[1]!.text, range: null },
+      },
+    ],
+  };
+  await render();
+  await act(async () => button("Drafts: 1").click());
+  await act(async () => button(action).click());
+}
+
+it.each(["Edit feedback", "Re-anchor"] as const)(
+  "refreshes untouched saved text in %s, hiding it during a held privacy refresh",
+  async (action) => {
+    await savedEditor(action);
+    const dialog = container.querySelector("dialog");
+    const base = vi.mocked(api.invoke).getMockImplementation()!;
+    let release = () => {};
+    const held = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    vi.mocked(api.invoke).mockImplementation(async (channel, raw) => {
+      if (channel === "session.get") await held;
+      return base(channel, raw);
+    });
+    await act(async () => privacy({ type: "settings.changed" }));
+    expect(container.querySelector("dialog")).toBe(dialog);
+    expect(dialog?.textContent).not.toContain("fake-secret");
+    if (action === "Edit feedback") expect(field("Feedback").value).toBe("");
+    expect(button(action === "Re-anchor" ? "Save re-anchor" : "Save draft").disabled).toBe(true);
+    state = {
+      ...state,
+      planComments: state.planComments.map((comment) => ({ ...comment, text: "[REDACTED]\n Vérifier 😀 " })),
+    };
+    await act(async () => {
+      release();
+      await held;
+    });
+    expect(dialog?.textContent).not.toContain("fake-secret");
+    if (action === "Edit feedback") {
+      expect(field("Feedback").value).toBe("[REDACTED]\n Vérifier 😀 ");
+      await act(async () => button("Save draft").click());
+      expect(saves()[0]?.[1]).toMatchObject({
+        action: "edit",
+        commentId: "saved",
+        text: "[REDACTED]\n Vérifier 😀 ",
+      });
+    } else {
+      expect(dialog?.querySelector(".plan-feedback-text")?.textContent).toBe("[REDACTED]\n Vérifier 😀 ");
+      await act(async () => button("Entire step").click());
+      await act(async () => button("Save re-anchor").click());
+      expect(saves()[0]?.[1]).toEqual({
+        workbenchId,
+        sessionId,
+        action: "reanchor",
+        commentId: "saved",
+        expectedFeedbackRevision: 1,
+        target: state.planComments[0]?.target,
+      });
+    }
+  },
+);
+
+it.each(["", "Unsaved\n 😀 μC "])(
+  "retains the actual edit %j through privacy refresh and failed save",
+  async (input) => {
+    await savedEditor("Edit feedback");
+    await act(async () => userEvent.setup().clear(field("Feedback")));
+    if (input) await feedback(input);
+    state = {
+      ...state,
+      planComments: state.planComments.map((comment) => ({ ...comment, text: "[REDACTED]" })),
+    };
+    await act(async () => privacy({ type: "settings.changed" }));
+    expect(field("Feedback").value).toBe(input);
+    const base = vi.mocked(api.invoke).getMockImplementation()!;
+    vi.mocked(api.invoke).mockImplementation(async (channel, raw) => {
+      if (channel === "session.plan.comment.save") throw veraError("OFFLINE");
+      return base(channel, raw);
+    });
+    await act(async () => button("Save draft").click());
+    expect(field("Feedback").value).toBe(input);
+    expect(saves()[0]?.[1]).toMatchObject({ action: "edit", commentId: "saved", text: input });
+    expect(container.querySelector('dialog [role="alert"]')).toBeTruthy();
+  },
+);
+
+it.each(["Edit feedback", "Re-anchor"] as const)(
+  "disables %s when its saved record disappears without turning it into a create",
+  async (action) => {
+    await savedEditor(action);
+    await act(async () => emit({ type: "plan.comment.removed", commentId: "saved" }));
+    if (action === "Edit feedback") expect(field("Feedback").value).toBe("");
+    else await act(async () => button("Entire step").click());
+    expect(container.querySelector("dialog")?.textContent).not.toContain("fake-secret");
+    const saveButton = button(action === "Edit feedback" ? "Save draft" : "Save re-anchor");
+    expect(saveButton.disabled).toBe(true);
+    await act(async () =>
+      container
+        .querySelector("form")
+        ?.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true })),
+    );
+    expect(saves()).toHaveLength(0);
+  },
+);
+
 it("locks all mutations for archived/read-only contexts and review for absent feedback", async () => {
   await render();
   expect(button("Review plan").disabled).toBe(true);
@@ -344,6 +457,67 @@ it("captures pointer text before focus changes, rejecting ranges spanning distin
   await act(async () => button("Save draft").click());
   expect(state.planComments[1]?.target.range).toBeNull();
   selection?.removeAllRanges();
+});
+
+it.each(["identical replacement", "privacy projection"])(
+  "requires explicit recapture after pointer-down then %s then click",
+  async (invalidation) => {
+    await render();
+    const node = container.querySelectorAll(".plan-text")[1]?.firstChild;
+    if (!node) throw Error("missing second occurrence");
+    const selection = window.getSelection();
+    selection?.setBaseAndExtent(node, 3, node, 1);
+    await act(async () =>
+      button("Add comment to step 2").dispatchEvent(new MouseEvent("pointerdown", { bubbles: true })),
+    );
+    selection?.removeAllRanges();
+    if (invalidation === "identical replacement")
+      await act(async () => emit({ type: "todo.updated", items: [...state.todos] }));
+    else await act(async () => privacy({ type: "settings.changed" }));
+    await open();
+    await feedback("Keep exact\n 😀 μC ");
+    expect(container.querySelector("dialog blockquote")).toBeNull();
+    expect(button("Save draft").disabled).toBe(true);
+    await act(async () =>
+      container
+        .querySelector("form")
+        ?.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true })),
+    );
+    expect(saves()).toHaveLength(0);
+    if (invalidation === "identical replacement") {
+      field("Step text").setSelectionRange(1, 3);
+      await act(async () => button("Use selected text").click());
+    } else await act(async () => button("Entire step").click());
+    expect(button("Save draft").disabled).toBe(false);
+    await act(async () => button("Save draft").click());
+    expect(saves()[0]?.[1]).toMatchObject({
+      action: "create",
+      text: "Keep exact\n 😀 μC ",
+      target: {
+        revision: state.planRevision,
+        stepIndex: 1,
+        stepText: "A😀B\nμC",
+        range: invalidation === "identical replacement" ? { start: 1, end: 3, quote: "😀" } : null,
+      },
+    });
+    // The consumed pointer capture must not poison the next ordinary no-fragment click.
+    await open(1);
+    expect(button("Save draft").disabled).toBe(false);
+    expect(container.querySelector("dialog blockquote")?.textContent).toBe("A😀B\nμC");
+  },
+);
+
+it("invalidates a newly chosen re-anchor during confirmation without rewriting saved feedback", async () => {
+  await savedEditor("Re-anchor");
+  await act(async () => button("Entire step").click());
+  expect(button("Save re-anchor").disabled).toBe(false);
+  await act(async () => emit({ type: "todo.updated", items: [...state.todos] }));
+  expect(button("Save re-anchor").disabled).toBe(true);
+  await act(async () => button("Entire step").click());
+  await act(async () => button("Save re-anchor").click());
+  expect(saves()[0]?.[1]).toMatchObject({ action: "reanchor", target: { revision: 2, stepIndex: 1 } });
+  expect(saves()[0]?.[1]).not.toHaveProperty("text");
+  expect(state.planComments[0]?.text).toBe("fake-secret\n Vérifier 😀 ");
 });
 
 it("retains text on conflict, reconciles and requires explicit target recapture before retry", async () => {

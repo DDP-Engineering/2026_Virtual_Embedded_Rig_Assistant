@@ -109,6 +109,7 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ### Fixed
 
+- Keep saved Plan feedback live-masked, require stale-fragment recapture and skip discovery during review preparation.
 - Chat Run skips terminals after startup timeout until their verified prompt arrives without intervening input.
 - Chat Run skips ineligible terminals and disables invalid command blocks before creating a terminal.
 - Chat Run requires a verified empty shell prompt, preserves user input, and restores focus when selection is cancelled.

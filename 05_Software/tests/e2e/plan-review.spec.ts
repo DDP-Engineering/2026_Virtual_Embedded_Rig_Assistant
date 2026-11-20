@@ -393,3 +393,146 @@ test("Plan comment read/edit/re-anchor/delete and review work with keyboard-only
   await expect.poll(async () => (await snapshot(page, { sessionId })).planComments.length).toBe(0);
   expect((await snapshot(page, { sessionId })).planReviews).toHaveLength(1);
 });
+
+test("Plan saved dialogs follow projection refresh and stale pointer capture requires explicit recapture", {
+  tag: "@parallel-browser",
+}, async ({ page, rendererUrl }) => {
+  test.setTimeout(90000);
+  const errors: string[] = [];
+  page.on("pageerror", (error) => errors.push(error.message));
+  await page.setViewportSize({ width: 1024, height: 640 });
+  await page.goto(`${rendererUrl}/?mock=chat`);
+  await page.locator('[data-i18n="nav.welcome"]').click();
+  await page.locator('[data-action="choose-create"]').click();
+  await page.locator('[data-action="create-workbench"]').click();
+  await page.locator("[data-session]").filter({ hasText: "Plan feedback targets" }).click();
+  await page.locator('[data-toggle="right"]').click();
+  await page.locator("#tab-plan").click();
+  await page.locator('[data-resize="right"]').focus();
+  await page.keyboard.press("Home");
+  // Supply a projected response and held refresh at the API seam. This proves browser
+  // disclosure/interaction, not native host credential masking (covered separately).
+  await page.evaluate(async () => {
+    const module = "/api/index.ts",
+      { api } = await import(/* @vite-ignore */ module);
+    await api.updateSettings({ privacy: { mask: { agent: false } } });
+    const invoke = api.invoke.bind(api),
+      planAudit: Audit = [];
+    let masked = false,
+      held = Promise.resolve(),
+      release = () => {};
+    Object.assign(window, {
+      planAudit,
+      planRelease: () => release(),
+      planRefresh: async (next: boolean, hold: boolean) => {
+        masked = next;
+        held = hold
+          ? new Promise<void>((resolve) => {
+              release = resolve;
+            })
+          : Promise.resolve();
+        await api.updateSettings({ privacy: { mask: { agent: next } } });
+      },
+    });
+    api.invoke = async (channel: string, request: unknown) => {
+      planAudit.push({ channel, request: structuredClone(request) });
+      if (channel === "session.get") {
+        await held;
+        const response = await invoke(channel, request);
+        if (masked)
+          response.snapshot.planComments = response.snapshot.planComments.map(
+            (comment: { text: string }) => ({
+              ...comment,
+              text: comment.text.replaceAll("fake-secret", "[REDACTED]"),
+            }),
+          );
+        return response;
+      }
+      return invoke(channel, request);
+    };
+  });
+  const panel = page.locator("#panel-plan"),
+    dialog = page.locator("dialog[open]"),
+    input = dialog.getByRole("textbox", { name: "Feedback", exact: true });
+  const refresh = (masked: boolean, hold = false) =>
+    page.evaluate(
+      async ({ masked, hold }) => {
+        await (
+          window as unknown as { planRefresh(masked: boolean, hold: boolean): Promise<void> }
+        ).planRefresh(masked, hold);
+      },
+      { masked, hold },
+    );
+  const release = () => page.evaluate(() => (window as unknown as { planRelease(): void }).planRelease());
+  await panel.getByRole("button", { name: "Add comment to step 2", exact: true }).click();
+  await input.fill("fake-secret\n Vérifier 😀 ");
+  await dialog.getByRole("button", { name: "Save draft", exact: true }).click();
+  for (const action of ["Edit feedback", "Re-anchor"] as const) {
+    if (action === "Re-anchor") {
+      await refresh(false);
+      await expect(panel.getByRole("button", { name: "Drafts: 1", exact: true })).toBeEnabled();
+    }
+    await panel.getByRole("button", { name: "Drafts: 1", exact: true }).click();
+    await panel.getByRole("button", { name: action, exact: true }).click();
+    await refresh(true, true);
+    const save = dialog.getByRole("button", {
+      name: action === "Re-anchor" ? "Save re-anchor" : "Save draft",
+      exact: true,
+    });
+    await expect(save).toBeDisabled();
+    await expect(dialog).not.toContainText("fake-secret");
+    if (action === "Edit feedback") await expect(input).toHaveValue("");
+    await release();
+    if (action === "Edit feedback") {
+      await expect(input).toHaveValue("[REDACTED]\n Vérifier 😀 ");
+      await input.fill("Actual edit\n 😀 μC ");
+      await refresh(false);
+      await expect(input).toHaveValue("Actual edit\n 😀 μC ");
+      await dialog.getByRole("button", { name: "Cancel", exact: true }).click();
+    } else {
+      await expect(dialog.locator(".plan-feedback-text")).toHaveText("[REDACTED]\n Vérifier 😀 ");
+      await dialog.getByRole("button", { name: "Entire step", exact: true }).click();
+      await save.click();
+      const change = (await audit(page))
+        .filter((entry) => entry.channel === "session.plan.comment.save")
+        .at(-1)?.request;
+      expect(change).toMatchObject({ action: "reanchor" });
+      expect(change).not.toHaveProperty("text");
+    }
+  }
+  await refresh(false);
+  const row = panel.locator('.plan-tab > .plan-list > li[data-plan-step="1"]');
+  await expect(row.locator(".plan-text")).toContainText("A😀B");
+  await row.evaluate((node) => {
+    const text = node.querySelector(".plan-text")?.firstChild;
+    if (!text) throw Error("missing exact step text");
+    window.getSelection()?.setBaseAndExtent(text, 3, text, 1);
+    node.querySelector("button")?.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true }));
+    window.getSelection()?.removeAllRanges();
+  });
+  await refresh(true);
+  const opener = panel.getByRole("button", { name: "Add comment to step 2", exact: true });
+  await expect(opener).toBeEnabled();
+  // No second pointer-down: click is the continuation of the captured activation.
+  await opener.evaluate((node: HTMLButtonElement) => node.click());
+  await input.fill("Pointer race\n 😀 ");
+  await expect(dialog.locator("blockquote")).toHaveCount(0);
+  await expect(dialog.getByRole("button", { name: "Save draft", exact: true })).toBeDisabled();
+  const selector = dialog.getByRole("textbox", { name: "Step text", exact: true });
+  await selector.focus();
+  await page.keyboard.press("Control+Home");
+  await page.keyboard.press("ArrowRight");
+  await page.keyboard.press("Shift+ArrowRight");
+  await dialog.getByRole("button", { name: "Use selected text", exact: true }).click();
+  await expect(dialog.locator("blockquote")).toHaveText("😀");
+  await dialog.getByRole("button", { name: "Save draft", exact: true }).click();
+  const change = (await audit(page))
+    .filter((entry) => entry.channel === "session.plan.comment.save")
+    .at(-1)?.request;
+  expect(change).toMatchObject({
+    action: "create",
+    text: "Pointer race\n 😀 ",
+    target: { stepIndex: 1, range: { start: 1, end: 3, quote: "😀" } },
+  });
+  expect(errors).toEqual([]);
+});

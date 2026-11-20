@@ -101,6 +101,10 @@ export async function fixture(sameWorkbenchId = false) {
     await configWait();
     return { config: current.config };
   });
+  const readConfig = vi.fn(async () => {
+    await configWait();
+    return current.config;
+  });
   const getPinned = vi.fn(async () => {
     await pinnedWait();
     return { content: "Pinned board context" };
@@ -111,6 +115,7 @@ export async function fixture(sameWorkbenchId = false) {
       getSnapshot: () => ({ folder: current.folder, config: current.config, readOnly: false }),
       getDatabase: () => current.db,
       getConfig,
+      readConfig,
       getPinned,
       getWriteQueue: () => new WriteQueue(),
       skillCatalog: () => ({ list: skills }),
@@ -146,6 +151,7 @@ export async function fixture(sameWorkbenchId = false) {
     loadPlugins,
     resolve,
     getConfig,
+    readConfig,
     getPinned,
     record,
     get current() {

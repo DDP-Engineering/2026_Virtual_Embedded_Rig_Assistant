@@ -152,7 +152,11 @@ export class SessionsHost {
       if (ordinarySessionId && this.db === db && this.service?.isPlanReviewActive(ordinarySessionId))
         throw veraError("BUSY");
       this.config =
-        purpose === "metadata" ? snapshot.config : (await this.options.workbench.getConfig()).config;
+        purpose === "metadata"
+          ? snapshot.config
+          : purpose === "review"
+            ? await this.options.workbench.readConfig()
+            : (await this.options.workbench.getConfig()).config;
       assertCurrent();
       if (purpose !== "metadata") {
         this.pinned = (await this.options.workbench.getPinned()).content;
