@@ -386,6 +386,26 @@ async function setup(extra: Partial<core.SessionHost> = {}) {
   });
   return { root, handle, host, service, gateway };
 }
+// REQ-FUNC-2e1261c2
+it("validates and opens a cited line range inside the read window", async () => {
+  const { service } = await setup({ model: () => "replay/read-then-cite-range" });
+  const session = service.create();
+  service.send(session.id, "Read the board");
+  expect(await service.waitIdle(session.id)).toEqual({ stopReason: "end" });
+  const answer = service.get(session.id).snapshot.items.findLast((i) => i.kind === "assistant");
+  expect(answer).toMatchObject({
+    citations: [
+      { ref: "board.txt#L2-L2", valid: true },
+      { ref: "board.txt#L2-L3", valid: false },
+    ],
+  });
+  expect(await service.openCitation(session.id, answer?.id ?? "", "board.txt#L2-L2")).toMatchObject({
+    ref: "board.txt#L2-L2",
+  });
+  await expect(service.openCitation(session.id, answer?.id ?? "", "board.txt#L2-L3")).rejects.toMatchObject({
+    code: "NOT_FOUND",
+  });
+});
 it("read-then-answer persists two tool pairs, valid citation and same live/durable snapshot then resumes", async () => {
   const { service, handle, host } = await setup();
   const session = service.create();

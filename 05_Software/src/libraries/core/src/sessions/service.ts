@@ -28,7 +28,7 @@ import type Database from "better-sqlite3";
 import { parsePatch } from "diff";
 import { ulid } from "ulid";
 import { type ApprovalDecision, ApprovalGate, requestSha256 } from "../agent/approvals.js";
-import { issuedLogRefs, validateCitations } from "../agent/citations.js";
+import { issuedLogRefs, validateCitations, withinIssued } from "../agent/citations.js";
 import { ContextCompactor } from "../agent/compaction.js";
 import { ContextPolicy } from "../agent/context.js";
 import { imagePaths } from "../agent/message-images.js";
@@ -603,7 +603,7 @@ export class SessionService {
       ref,
       snippet,
       false,
-      issuedLogRefs(messages).has(ref),
+      withinIssued(ref, issuedLogRefs(messages)),
     );
     this.row(id);
     return content;

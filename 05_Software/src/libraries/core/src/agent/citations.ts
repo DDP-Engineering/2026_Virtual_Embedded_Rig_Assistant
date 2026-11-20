@@ -11,6 +11,26 @@ function refs(value: unknown, out: Set<string>): void {
       refs(child, out);
     }
 }
+/**
+ * A tool issued `ref` itself, or `ref` is a line range inside a line window issued for the same file: the
+ * model read those lines and may cite only the part it used.
+ */
+export function withinIssued(ref: string, issued: ReadonlySet<string>): boolean {
+  if (issued.has(ref)) return true;
+  const cited = parseRef(ref);
+  if (cited?.kind !== "lines") return false;
+  for (const candidate of issued) {
+    const window = parseRef(candidate);
+    if (
+      window?.kind === "lines" &&
+      window.path === cited.path &&
+      window.start <= cited.start &&
+      cited.end <= window.end
+    )
+      return true;
+  }
+  return false;
+}
 /** Only successful parse_log provenance admits UTF8 logs containing control bytes. */
 export function issuedLogRefs(messages: readonly Message[]): Set<string> {
   const issued = new Set<string>();
@@ -72,7 +92,7 @@ export async function validateCitations(
     found.map(async (ref) => {
       const parsed = parseRef(ref);
       let valid = false;
-      if (parsed && issued.has(ref))
+      if (parsed && withinIssued(ref, issued))
         try {
           if (parsed.kind === "artifact") valid = !!artifactExists?.(parsed.name);
           // Help pages ship with the application; the help tool issued this ref.
@@ -84,7 +104,7 @@ export async function validateCitations(
               parsed.start,
               1,
               new AbortController().signal,
-              { utf8Log: logs.has(ref) },
+              { utf8Log: withinIssued(ref, logs) },
             );
             valid = parsed.end <= window.totalLines;
           } else valid = !!(await validDocumentRef?.(ref));
