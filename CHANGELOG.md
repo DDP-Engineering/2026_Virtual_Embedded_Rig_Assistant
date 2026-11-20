@@ -45,6 +45,7 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ### Changed
 
+- Long chats use calibrated token estimates and compact in the background; context summaries survive restarts.
 - Close VERA and delete .vera/vera.db, .vera/vera.db-wal and .vera/vera.db-shm from earlier builds.
 - Switch local embedding models per workbench while keyword search continues during the background rebuild.
 

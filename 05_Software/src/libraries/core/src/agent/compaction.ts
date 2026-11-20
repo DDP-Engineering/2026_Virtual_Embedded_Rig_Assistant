@@ -16,7 +16,25 @@ const fingerprint = (messages: Message[]) =>
 /** Local models often wrap the JSON reply in one Markdown code fence. */
 const withoutFence = (text: string) => /^```(?:json)?\s*([\s\S]*?)\s*```$/i.exec(text.trim())?.[1] ?? text;
 
+/** Characters of each tool result a summary request carries (REQ-FUNC-bd5e5e8d). */
+const SUMMARY_TOOL_RESULT_CHARS = 2000;
+/** Most recent history kept verbatim: 20k tokens, at most a fifth of the input budget (REQ-FUNC-e5b6a1c9). */
+const RECENT_TAIL_TOKENS = 20_000;
+const RECENT_TAIL_SHARE = 0.2;
+
 function summarizeMessage(message: Message): Message {
+  if (message.role === "toolResult")
+    return {
+      ...message,
+      content: message.content.map((block) =>
+        block.type === "text" && block.text.length > SUMMARY_TOOL_RESULT_CHARS
+          ? {
+              ...block,
+              text: `${block.text.slice(0, SUMMARY_TOOL_RESULT_CHARS)}\n[tool result truncated: ${block.text.length - SUMMARY_TOOL_RESULT_CHARS} characters omitted]`,
+            }
+          : block,
+      ),
+    };
   const paths = imagePaths(message);
   if (message.role !== "user" || !paths.length) return message;
   const { images: _, ...user }: UserImageMessage = message;
@@ -28,45 +46,37 @@ function summarizeMessage(message: Message): Message {
   return { ...user, content };
 }
 
-/** Only whole successful exchanges before the current user instruction are eligible. */
-function completedExchanges(messages: Message[], current: number): { start: number; end: number }[] {
-  const exchanges: { start: number; end: number }[] = [];
-  let start = messages.findIndex((m) => m.role === "user");
-  if (start < 0) return exchanges;
-  while (start < current) {
-    if (messages[start]?.role !== "user") break;
-    const next = messages.findIndex((m, i) => i > start && m.role === "user");
-    if (next < 0 || next > current) break;
-    const pending = new Set<string>();
-    let valid = true;
-    for (const message of messages.slice(start + 1, next)) {
-      if (message.role === "assistant") {
-        if (pending.size || (message.stopReason !== "stop" && message.stopReason !== "toolUse"))
-          valid = false;
-        for (const block of message.content)
-          if (block.type === "toolCall") {
-            if (pending.has(block.id)) valid = false;
-            pending.add(block.id);
-          }
-      } else if (message.role === "toolResult") {
-        if (!pending.delete(message.toolCallId)) valid = false;
-      } else valid = false;
-    }
-    const final = messages[next - 1];
-    if (!valid || pending.size || final?.role !== "assistant" || final.stopReason !== "stop") valid = false;
-    if (
-      final?.role === "assistant" &&
-      final.content.some(
-        (block) =>
-          block.type === "toolCall" ||
-          (block.type === "text" && block.text === "(Previous turn interrupted before reply.)"),
-      )
-    )
-      valid = false;
-    if (valid) exchanges.push({ start, end: next });
-    start = next;
+/**
+ * Indices where history may be cut: every earlier tool call has its result earlier, and the message at
+ * the index is not a tool result. Turns split by steering, aborted and limit turns qualify like any other.
+ */
+function validCuts(messages: Message[], end: number): number[] {
+  const cuts: number[] = [];
+  const pending = new Set<string>();
+  for (let index = 0; index <= end; index++) {
+    const message = messages[index];
+    if (!pending.size && message?.role !== "toolResult") cuts.push(index);
+    if (message?.role === "assistant")
+      for (const block of message.content) if (block.type === "toolCall") pending.add(block.id);
+    if (message?.role === "toolResult") pending.delete(message.toolCallId);
   }
-  return exchanges;
+  return cuts;
+}
+
+/** The first index of the most recent history that reaches the tail size, counted like the request. */
+function tailStart(
+  messages: Message[],
+  end: number,
+  budget: number,
+  measure: (message: Message) => number,
+): number {
+  const limit = Math.min(RECENT_TAIL_TOKENS, Math.floor(budget * RECENT_TAIL_SHARE));
+  let size = 0;
+  for (let index = end - 1; index >= 0; index--) {
+    size += measure(messages[index] as Message);
+    if (size >= limit) return index;
+  }
+  return 0;
 }
 
 export type SummarizeHistory = (
@@ -77,6 +87,8 @@ type CompactionView = ContextView & {
   compactionStatus: NonNullable<ContextView["compactionStatus"]>;
   requestViewTokens: number;
 };
+/** The compaction trigger: strictly above 80% of the input budget, counted before M1 reduction. */
+const TRIGGER = 0.8;
 
 /**
  * Summary passes for one request. A running session compacts a little each turn; a restarted one
@@ -86,7 +98,85 @@ type CompactionView = ContextView & {
  */
 const MAX_PASSES = 5;
 
+/** Margin over the calibrated count for content the provider has not counted yet (REQ-NFR-4721c12f). */
+const CALIBRATION_MARGIN = 1.1;
+/**
+ * The lowest plausible ratio: about 8 bytes per token. Below it a report counts only part of the
+ * prompt (prefix caching servers report newly evaluated tokens), so it is not used.
+ */
+const MIN_CALIBRATION_RATIO = 0.12;
+
+/** The durable form of an adopted summary (REQ-DATA-d9ca38e5). */
+export interface CompactionRecord {
+  covered: number;
+  fingerprint: string;
+  note: string;
+  refs: string[];
+  images: string[];
+}
+
 export class ContextCompactor {
+  /** An adopted summary not yet handed to the owner for durable recording. */
+  private unsaved: CompactionRecord | undefined;
+  /** A background compaction in flight; every other caller waits for it. */
+  private running: { promise: Promise<unknown>; abort: () => void } | undefined;
+  /** Take the latest adopted summary once, for recording. */
+  takeRecord(): CompactionRecord | undefined {
+    const record = this.unsaved;
+    this.unsaved = undefined;
+    return record;
+  }
+  /** Reuse a recorded summary; `prepare` still checks its fingerprint against the history. */
+  restore(record: CompactionRecord): void {
+    this.cached = {
+      covered: record.covered,
+      fingerprint: record.fingerprint,
+      note: { role: "user", content: record.note, timestamp: 0 },
+      refs: [...record.refs],
+      images: [...record.images],
+    };
+  }
+  /** Run a background compaction; later `prepare` calls wait for it. */
+  background(task: (signal: AbortSignal) => Promise<unknown>): Promise<void> {
+    const controller = new AbortController();
+    const promise = task(controller.signal).then(
+      () => undefined,
+      () => undefined,
+    );
+    const running = { promise, abort: () => controller.abort() };
+    this.running = running;
+    return promise.finally(() => {
+      if (this.running === running) this.running = undefined;
+    });
+  }
+  /** Abort a background compaction in flight. */
+  abort(): void {
+    this.running?.abort();
+  }
+  /** Settles when no background compaction is in flight. */
+  async settled(): Promise<void> {
+    while (this.running) await this.running.promise;
+  }
+  /** Reported input tokens per estimated token of the latest answered normal request. */
+  calibration: { modelRef: string; ratio: number } | undefined;
+  /** The count scale for a model, when its calibration is known. */
+  scale(modelRef: string): number | undefined {
+    return this.calibration?.modelRef === modelRef ? this.calibration.ratio * CALIBRATION_MARGIN : undefined;
+  }
+  /** Keep the ratio of a reported input count to the estimate it answered; returns what was kept. */
+  calibrate(
+    modelRef: string,
+    reported: number,
+    estimated: number,
+  ): { modelRef: string; ratio: number } | undefined {
+    if (!(reported > 0) || !(estimated > 0)) return undefined;
+    const ratio = Math.min(1, reported / estimated);
+    if (ratio < MIN_CALIBRATION_RATIO) return undefined;
+    this.calibration = { modelRef, ratio };
+    return this.calibration;
+  }
+  /** Whether the latest pass left a raw view above the trigger. */
+  private above = false;
   private cached:
     | {
         covered: number;
@@ -94,7 +184,6 @@ export class ContextCompactor {
         note: Message;
         refs: string[];
         images: string[];
-        retained: Message[];
       }
     | undefined;
 
@@ -108,10 +197,18 @@ export class ContextCompactor {
     policy: ContextPolicy,
     summarize: SummarizeHistory,
     currentStart = input.messages.findLastIndex((message) => message.role === "user"),
+    scale?: number,
+    background = false,
   ): Promise<CompactionView> {
-    let view = await this.pass(input, capabilities, policy, summarize, currentStart);
-    for (let pass = 1; pass < MAX_PASSES && view.compactionStatus === "completed" && !view.fits; pass++)
-      view = await this.pass(input, capabilities, policy, summarize, currentStart);
+    if (!background) await this.settled();
+    let view = await this.pass(input, capabilities, policy, summarize, currentStart, scale);
+    // Continue while the view does not fit, or still sits above the trigger and more history can be
+    // summarized: a view left above the trigger would compact again at the very next request.
+    for (let pass = 1; pass < MAX_PASSES && view.compactionStatus === "completed" && this.above; pass++) {
+      const next = await this.pass(input, capabilities, policy, summarize, currentStart, scale);
+      if (!view.fits || next.compactionStatus === "completed") view = next;
+      else break;
+    }
     return view;
   }
 
@@ -121,7 +218,10 @@ export class ContextCompactor {
     policy: ContextPolicy,
     summarize: SummarizeHistory,
     currentStart: number,
+    scale: number | undefined,
   ): Promise<CompactionView> {
+    const count = (request: ContextInput, reduce = true) =>
+      policy.prepare(request, capabilities, reduce, undefined, scale);
     let cached = this.cached;
     if (cached && fingerprint(input.messages.slice(0, cached.covered)) !== cached.fingerprint) {
       this.cached = undefined;
@@ -129,42 +229,42 @@ export class ContextCompactor {
     }
     const covered = cached?.covered ?? 0;
     const previous = cached ? [cached.note] : [];
-    const retained = cached?.retained ?? [];
-    const base = { ...input, messages: [...previous, ...retained, ...input.messages.slice(covered)] };
-    const raw = policy.prepare(base, capabilities, false);
+    const base = { ...input, messages: [...previous, ...input.messages.slice(covered)] };
+    const raw = count(base, false);
+    this.above = raw.contextTokens > raw.inputBudgetTokens * TRIGGER;
     const finish = (request: ContextInput, status: CompactionView["compactionStatus"]): CompactionView => {
-      const view = policy.prepare(request, capabilities);
+      const view = count(request);
       return { ...view, compactionStatus: status, requestViewTokens: view.contextTokens };
     };
-    if (raw.contextTokens <= raw.inputBudgetTokens * 0.8) return finish(base, cached ? "completed" : "none");
+    if (!this.above) return finish(base, cached ? "completed" : "none");
     const current = currentStart;
-    if (
-      !policy.prepare({ ...input, messages: input.messages.slice(Math.max(0, current)) }, capabilities).fits
-    )
+    if (!count({ ...input, messages: input.messages.slice(Math.max(0, current)) }).fits)
       return finish(base, "unavailable");
 
-    let candidate:
-      | { end: number; input: ContextInput; view: ContextView; history: Message[]; retained: Message[] }
-      | undefined;
-    const history: Message[] = [];
-    const keep: Message[] = [...retained];
-    let cursor = covered;
-    for (const { start, end } of completedExchanges(input.messages, current)) {
-      if (start < covered) continue;
-      keep.push(...input.messages.slice(cursor, start));
-      history.push(...input.messages.slice(start, end));
-      cursor = end;
+    let candidate: { end: number; input: ContextInput; view: ContextView; history: Message[] } | undefined;
+    // The recent tail is kept verbatim only while the view fits; a view over budget may summarize into it.
+    const last = raw.fits
+      ? tailStart(
+          input.messages,
+          Math.max(0, current),
+          raw.inputBudgetTokens,
+          (message) => count({ system: "", tools: [], messages: [message] }, false).contextTokens,
+        )
+      : Math.max(0, current);
+    for (const cut of validCuts(input.messages, Math.max(0, current))) {
+      if (cut <= covered || cut > last) continue;
+      const history = input.messages.slice(covered, cut);
       const request: ContextInput = {
         system: `${input.system}\n\n${instruction}`,
         tools: [],
         messages: [
           ...previous,
           ...history.map(summarizeMessage),
-          { role: "user", content: instruction, timestamp: input.messages[end]?.timestamp ?? 0 },
+          { role: "user", content: instruction, timestamp: input.messages[cut]?.timestamp ?? 0 },
         ],
       };
-      const view = policy.prepare(request, capabilities);
-      if (view.fits) candidate = { end, input: request, view, history: [...history], retained: [...keep] };
+      const view = count(request);
+      if (view.fits) candidate = { end: cut, input: request, view, history };
     }
     if (!candidate) return finish(base, "unavailable");
     let response: AssistantMessage | undefined;
@@ -216,21 +316,26 @@ export class ContextCompactor {
         outstandingWork: summary.outstandingWork,
         sourceRefs: [...refs].sort(),
       })}${images.length ? `\n${images.map(compactedImageNote).join("\n")}` : ""}`,
-      timestamp: input.messages[0]?.timestamp ?? 0,
+      // A fixed timestamp: the note must be identical when restored from its durable record.
+      timestamp: 0,
     };
-    const compacted = {
-      ...input,
-      messages: [note, ...candidate.retained, ...input.messages.slice(candidate.end)],
-    };
-    if (policy.prepare(compacted, capabilities, false).contextTokens >= raw.contextTokens)
-      return finish(base, "failed");
+    const compacted = { ...input, messages: [note, ...input.messages.slice(candidate.end)] };
+    const after = count(compacted, false).contextTokens;
+    if (after >= raw.contextTokens) return finish(base, "failed");
+    this.above = after > raw.inputBudgetTokens * TRIGGER;
     this.cached = {
       covered: candidate.end,
       fingerprint: fingerprint(input.messages.slice(0, candidate.end)),
       note,
       refs: [...refs],
       images,
-      retained: structuredClone(candidate.retained),
+    };
+    this.unsaved = {
+      covered: this.cached.covered,
+      fingerprint: this.cached.fingerprint,
+      note: typeof note.content === "string" ? note.content : "",
+      refs: [...refs].sort(),
+      images: [...images],
     };
     return finish(compacted, "completed");
   }

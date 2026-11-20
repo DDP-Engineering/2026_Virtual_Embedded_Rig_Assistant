@@ -19,6 +19,7 @@ import {
   sessionExportSchema,
   sessionIdSchema,
   sessionSearchQuerySchema,
+  usageEventSchema,
   type ViewerContent,
   veraError,
   veraErrorSchema,
@@ -162,6 +163,8 @@ export class SessionService {
   private readonly bypassScopes = new Map<string, AbortController>();
   private readonly reasonings = new Map<string, string | null>();
   private readonly compactors = new Map<string, ContextCompactor>();
+  /** Background compactions started after a turn (REQ-FUNC-99acfc19). */
+  private readonly compacting = new Map<string, Promise<void>>();
   private readonly deleting = new Set<string>();
   private closed = false;
   private closing = false;
@@ -851,6 +854,9 @@ export class SessionService {
     if (this.delegations.hasChildren(id)) throw veraError("CONFLICT");
     this.deleting.add(id);
     try {
+      // A background summary still sending this history to the provider ends before the rows do.
+      this.compactors.get(id)?.abort();
+      await this.compacting.get(id);
       // Background runs of a deleted session would hold ports no session can stop any more.
       await this.host.programs?.runner.stopSession(id);
       await this.writeQueue.run(async () => {
@@ -867,6 +873,7 @@ export class SessionService {
       this.programSessions.delete(id);
       this.bypassScopes.get(id)?.abort();
       this.bypassScopes.delete(id);
+      this.compactors.get(id)?.abort();
       this.compactors.delete(id);
       this.reasonings.delete(id);
       this.last.delete(id);
@@ -966,6 +973,35 @@ export class SessionService {
     return this.startTurn(row, text, !!this.delegations.child(id), undefined, images);
   }
 
+  /**
+   * The session's compactor. A new one (first turn after open or restart) takes the latest saved
+   * calibration and summary record, one indexed query each; nothing is read while a session merely opens.
+   */
+  private compactor(id: string): ContextCompactor {
+    const existing = this.compactors.get(id);
+    if (existing) return existing;
+    const compactor = new ContextCompactor();
+    const row = this.host.db
+      .prepare(
+        "SELECT payload_json FROM events WHERE session_id=? AND type='usage.updated' AND json_type(payload_json,'$.calibration')='object' ORDER BY seq DESC LIMIT 1",
+      )
+      .get(id) as { payload_json: string } | undefined;
+    if (row) {
+      const parsed = usageEventSchema.safeParse(JSON.parse(row.payload_json));
+      if (parsed.success && parsed.data.calibration) compactor.calibration = { ...parsed.data.calibration };
+    }
+    const saved = this.host.db
+      .prepare(
+        "SELECT payload_json FROM events WHERE session_id=? AND type='context.compacted' ORDER BY seq DESC LIMIT 1",
+      )
+      .get(id) as { payload_json: string } | undefined;
+    if (saved) {
+      const parsed = sessionEventSchema.safeParse(JSON.parse(saved.payload_json));
+      if (parsed.success && parsed.data.type === "context.compacted") compactor.restore(parsed.data);
+    }
+    this.compactors.set(id, compactor);
+    return compactor;
+  }
   private startTurn(
     row: SessionRow,
     text: string,
@@ -1162,6 +1198,7 @@ export class SessionService {
     const contextPolicy = new MaskingContextPolicy(this.host.contextPolicy ?? new ContextPolicy(), (text) =>
       this.maskContent("agent", text),
     );
+    const contextCompactor = this.compactor(id);
     const gateway = timedGateway(this.host.gateway, this.host.noOutputTimeoutMs ?? 300000);
     let initialReasoning = staged?.reasoning;
     const self = this;
@@ -1220,7 +1257,13 @@ export class SessionService {
               (acceptsImages(capabilities) && !self.host.disabledTools?.includes(tool.name))
             );
           });
-          const view = contextPolicy.prepare({ system: request.system, tools, messages }, capabilities);
+          const view = contextPolicy.prepare(
+            { system: request.system, tools, messages },
+            capabilities,
+            true,
+            undefined,
+            contextCompactor.scale(request.model),
+          );
           if (!view.fits) {
             yield { type: "error", error: veraError("CONTEXT_LIMIT"), aborted: false };
             return;
@@ -1345,8 +1388,6 @@ export class SessionService {
       },
     };
     const runtime = this.host.runtime?.(runtimeHost) ?? new ReferenceRuntime(runtimeHost);
-    const contextCompactor = this.compactors.get(id) ?? new ContextCompactor();
-    this.compactors.set(id, contextCompactor);
     runtime.start({
       systemPrompt: this.host.prompt(mode()),
       model,
@@ -1422,8 +1463,24 @@ export class SessionService {
         })
         .finally(() => {
           if (discarded) return;
-          off();
           this.active.delete(id);
+          const result = this.last.get(id);
+          const compact =
+            !failed && !this.closing && (result?.stopReason === "end" || result?.stopReason === "limit")
+              ? runtime.compact?.(this.transcript(id))
+              : undefined;
+          if (!compact) {
+            off();
+            return;
+          }
+          const background = compact
+            .then(() => processing)
+            .catch(() => {})
+            .finally(() => {
+              off();
+              if (this.compacting.get(id) === background) this.compacting.delete(id);
+            });
+          this.compacting.set(id, background);
         });
       void turn.done.catch(() => {});
       if (admissionError) throw admissionError.cause;
@@ -1453,6 +1510,24 @@ export class SessionService {
     if (turn.failed && event.type === "turn.done") {
       event = { ...event, stopReason: "error" };
       this.hub.emit(id, { type: "error", code: "INTERNAL", messageKey: "errors.INTERNAL", retryable: false });
+    }
+    if (event.type === "context.compacted") {
+      try {
+        // Masked like the stored transcript it was derived from.
+        const mask = (text: string) => this.maskContent("agent", text);
+        const record: SessionEvent = {
+          ...event,
+          note: mask(event.note),
+          refs: event.refs.map(mask),
+          images: event.images.map(mask),
+        };
+        this.hub.publishBatch(id, this.host.db.transaction(() => [this.hub.record(id, record)])());
+      } catch (error) {
+        this.host.log?.(
+          `Compaction record not saved: ${error instanceof Error ? error.message : String(error)}`,
+        );
+      }
+      return;
     }
     let publicEvent: SessionEvent;
     if (event.type === "message.done") {
@@ -1565,9 +1640,15 @@ export class SessionService {
     const turn = this.active.get(id);
     if (turn) turn.accepting = false;
     turn?.runtime.abort();
+    this.compactors.get(id)?.abort();
     // Background program runs of the session end with it; the foreground run ends with the turn's abort.
     void this.host.programs?.runner.stopSession(id);
     return !!turn;
+  }
+  /** Settles when the session's background compaction, if any, has finished. */
+  async waitCompaction(id: string): Promise<void> {
+    this.row(id);
+    await this.compacting.get(id);
   }
   async waitIdle(id: string): Promise<{ stopReason: StopReason } | null> {
     this.row(id);
@@ -1587,8 +1668,10 @@ export class SessionService {
     for (const turn of this.active.values()) turn.accepting = false;
     for (const turn of this.active.values()) turn.runtime.abort();
     for (const scope of this.bypassScopes.values()) scope.abort();
+    for (const compactor of this.compactors.values()) compactor.abort();
     const downloadsClosed = this.host.downloads?.close();
     await Promise.allSettled([...this.active.values()].map((turn) => turn.done));
+    await Promise.allSettled([...this.compacting.values()]);
     await downloadsClosed;
     await this.ready;
     await this.writeQueue.drain();

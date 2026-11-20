@@ -234,6 +234,8 @@ it("keeps full durable history and restart transcript while compacting only prov
   for (let turn = 0; turn < 5; turn++) {
     service.send(session.id, `Use 3.3V; measure reset ${"u".repeat(850)}`);
     expect(await service.waitIdle(session.id)).toEqual({ stopReason: "end" });
+    // A turn ending above the trigger compacts in the background (REQ-FUNC-99acfc19).
+    await service.waitCompaction(session.id);
   }
   expect(requests.some((r) => r.system.includes("Return only JSON:"))).toBe(true);
   for (const request of requests)

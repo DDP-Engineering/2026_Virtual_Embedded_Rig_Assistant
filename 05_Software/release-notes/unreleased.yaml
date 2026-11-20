@@ -165,10 +165,10 @@ entries:
   - category: improved
     topic: { en: Sessions, ro: Sesiuni, de: Sitzungen, fr: Sessions }
     text:
-      en: Bookmark shortcuts and exports; Verbose chat shows when you sent each message.
-      ro: Marcaje cu scurtături și export; în modul Verbose vezi când ai trimis mesajele.
-      de: Lesezeichen per Kürzel und im Export; der ausführliche Chat zeigt die Sendezeit.
-      fr: Signets avec raccourcis et export ; le chat détaillé affiche l’heure d’envoi des messages.
+      en: Bookmark shortcuts and exports; Verbose shows send time. Context summaries survive restarts.
+      ro: Scurtături și export de marcaje; Verbose arată ora trimiterii. Rezumatele rămân după repornire.
+      de: Lesezeichenkürzel und -export; Sendezeit im Detailchat. Zusammenfassungen bleiben nach Neustart.
+      fr: Raccourcis et export de signets ; heure d’envoi en mode détaillé ; résumés gardés au redémarrage.
   - category: improved
     topic: { en: Permissions, ro: Permisiuni, de: Berechtigungen, fr: Autorisations }
     text:

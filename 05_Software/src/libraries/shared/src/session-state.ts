@@ -331,6 +331,9 @@ function reduce(d: Draft, event: SessionEvent): void {
           ...(event.timestamp !== undefined && { timestamp: event.timestamp }),
         });
       break;
+    case "context.compacted":
+      // Agent-side derived context; the transcript projection has nothing to show.
+      break;
     case "message.bookmarked": {
       if (d.find(event.messageId, "user") < 0) break;
       const index = s.bookmarkedMessageIds.indexOf(event.messageId);

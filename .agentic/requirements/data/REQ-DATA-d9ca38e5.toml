@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-DATA-d9ca38e5"
+
+title = "Persist and reuse the compaction summary across restart"
+
+status = "active"
+
+requirement = """
+When a summary pass succeeds, VERA shall record in one durable write an internal session event holding the summary note, the covered-prefix fingerprint, the source refs and the image notes, masked like the stored transcript, and at the first turn after a restart shall reuse the latest such record whose fingerprint matches the current history prefix without a summary call, reading no compaction record while a session opens; the record shall not appear in the chat transcript or the Markdown export and shall appear in the JSON export.
+"""
+
+verification = "Compact a session, close the database and reopen it: opening the session makes no summary call and returns the same transcript; the first send reuses the saved summary with no summary call; a record whose fingerprint no longer matches is ignored and a new summary runs; a failing durable write leaves the in-memory summary in use and no partial record; with masking that rewrites the stored transcript the record holds no unmasked secret and the next turn reuses the summary; the transcript projection and Markdown export omit the record and the JSON export contains it. Inspection: the record and calibration are read only in SessionService.compactor(id), which runs at a turn start."
+
+affected_paths = ["05_Software/src/libraries/core/src/agent/compaction.ts", "05_Software/src/libraries/core/src/agent/runtime.ts", "05_Software/src/libraries/core/src/agent/types.ts", "05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/libraries/shared/src/events.ts", "05_Software/src/libraries/shared/src/session-state.ts", "05_Software/src/apps/cli/src/session-output.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/sessions/compaction-durable.test.ts", "05_Software/src/libraries/shared/src/session-state.test.ts", "05_Software/src/apps/cli/src/session-output.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-20
+updated = 2026-11-20

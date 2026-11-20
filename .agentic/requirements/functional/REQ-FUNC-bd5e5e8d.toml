@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-bd5e5e8d"
+
+title = "Cut tool results in summary requests"
+
+status = "active"
+
+requirement = """
+When building a summary request, the runtime shall include each tool result text cut to its first 2,000 characters followed by a truncation marker, keeping tool call IDs, outcomes and the exact source refs collected from the full results.
+"""
+
+verification = "Summarize a history whose tool result holds 90,000 characters with a source ref beyond the first 2,000: the summary request carries 2,000 characters plus the marker for that result, the call ID and outcome, and the derived note still lists the ref; a result under 2,000 characters is unchanged; the durable transcript is unchanged."
+
+affected_paths = ["05_Software/src/libraries/core/src/agent/compaction.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/agent/compaction.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-20
+updated = 2026-11-20
