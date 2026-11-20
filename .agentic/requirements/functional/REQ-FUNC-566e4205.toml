@@ -10,7 +10,7 @@ requirement = "When a user saves an edit to an existing draft plan comment in it
 
 verification = "Create drafts on different repeated steps, edit one to Unicode multiline text and reopen it; compare exact updated text and unchanged target/other draft, including editing a stale draft without implicitly re-anchoring it."
 
-affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/session/plan-comment-editor.tsx", "05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/libraries/shared/src/plan-review.ts", "05_Software/src/libraries/shared/src/ipc.ts", "05_Software/src/apps/desktop/src/main/plan-review.ts", "05_Software/src/apps/desktop/src/renderer/components/session/plan-feedback.tsx"]
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/session/plan-feedback.test.ts", "05_Software/tests/e2e/plan-review.spec.ts", "05_Software/src/apps/desktop/src/renderer/components/session/plan-comment-editor.tsx", "05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/libraries/shared/src/plan-review.ts", "05_Software/src/libraries/shared/src/ipc.ts", "05_Software/src/apps/desktop/src/main/plan-review.ts", "05_Software/src/apps/desktop/src/renderer/components/session/plan-feedback.tsx"]
 
 linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/session/plan-feedback.test.ts", "05_Software/tests/e2e/plan-review.spec.ts", "05_Software/src/libraries/core/src/sessions/plan-review.test.ts"]
 
@@ -21,4 +21,4 @@ priority = "normal"   # low | normal | high
 rationale = ""        # why this behavior exists, if not obvious
 
 created = 2026-11-19
-updated = 2026-11-19
+updated = 2026-11-20
