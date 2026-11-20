@@ -28,7 +28,9 @@ export type CuratedModel = {
   readonly supportsTools?: boolean | undefined;
   readonly reasoningOptions?: readonly z.infer<typeof reasoningOptionSchema>[] | undefined;
 };
+export type QwenCloudPlan = "standard" | "token-plan";
 export interface ProviderBinding {
+  readonly qwenCloud?: QwenCloudPlan;
   readonly id: string;
   readonly label?: string;
   readonly inference: string;
@@ -44,6 +46,31 @@ export interface CuratedProviderPreset {
   readonly authentication: "bearer";
   readonly bindings: readonly ProviderBinding[];
 }
+
+// Both QwenCloud plans document these exact chat IDs in Singapore.
+const qwenCloudModels: readonly CuratedModel[] = [
+  {
+    id: "qwen3.8-flash",
+    name: "Qwen3.8 Flash",
+    input: ["text", "image"],
+    contextWindow: 1_000_000,
+    maxOutputTokens: 131_072,
+    supportsTools: true,
+    reasoningOptions: ["off", "on"],
+  },
+  {
+    id: "qwen3.7-max",
+    name: "Qwen3.7 Max",
+    input: ["text"],
+    contextWindow: 1_000_000,
+    maxOutputTokens: 65_536,
+    supportsTools: true,
+    reasoningOptions: ["off", "on"],
+  },
+];
+
+const qwenCloudBase = "https://maas.qwencloudapi.com/compatible-mode/v1";
+const qwenCloudTokenBase = "https://token-plan.maas.qwencloudapi.com/compatible-mode/v1";
 
 /** Curated network services enter this list after their VERA acceptance. */
 export const curatedProviderPresets: readonly CuratedProviderPreset[] = [
@@ -74,6 +101,36 @@ export const curatedProviderPresets: readonly CuratedProviderPreset[] = [
         id: "default",
         inference: "https://opencode.ai/inference/go/openai/v1",
         catalog: { kind: "openai-models", url: "https://opencode.ai/inference/go/v1/models", opencode: "go" },
+      },
+    ],
+  },
+  {
+    id: "qwencloud-standard",
+    label: "QwenCloud Standard",
+    protocol: "openai-completions",
+    authentication: "bearer",
+    bindings: [
+      {
+        id: "default",
+        qwenCloud: "standard",
+        inference: qwenCloudBase,
+        catalog: { kind: "openai-models", url: `${qwenCloudBase}/models` },
+        models: qwenCloudModels,
+      },
+    ],
+  },
+  {
+    id: "qwencloud-token-plan",
+    label: "QwenCloud Token Plan",
+    protocol: "openai-completions",
+    authentication: "bearer",
+    bindings: [
+      {
+        id: "default",
+        qwenCloud: "token-plan",
+        inference: qwenCloudTokenBase,
+        catalog: { kind: "openai-models", url: `${qwenCloudTokenBase}/models` },
+        models: qwenCloudModels,
       },
     ],
   },

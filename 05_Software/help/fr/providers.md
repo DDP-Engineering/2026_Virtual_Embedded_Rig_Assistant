@@ -34,6 +34,16 @@ Le catalogue indique les fonctions des modèles. Testez la connexion pour vérif
 
 Consultez la [configuration d’OpenCode](https://opencode.ai/docs/console/harnesses) et le [guide de l’offre Go](https://opencode.ai/docs/console/go/).
 
+## QwenCloud Standard et QwenCloud Token Plan
+
+1. Sous **Ajouter une connexion**, sélectionnez **QwenCloud Standard** pour une clé API de Singapour avec paiement à l’usage, ou **QwenCloud Token Plan** pour la clé dédiée à cette offre (`sk-sp-`). VERA renseigne l’URL de base de l’offre sélectionnée.
+2. Saisissez la clé correspondante et sélectionnez **Rechercher des modèles**. Si la liste est indisponible, saisissez l’identifiant exact du modèle proposé par votre région ou votre offre. Par exemple, `qwen3.8-flash` accepte le texte et les images, peut appeler des outils et propose un mode de raisonnement désactivable. `qwen3.7-max` propose les appels d’outils et le même mode avec une entrée texte. Les capacités des autres modèles peuvent être non vérifiées.
+3. Sélectionnez **Enregistrer**, puis **Tester**. Si l’étape de disponibilité du catalogue est ignorée, l’étape d’authentification et de modèle vérifie la clé et le modèle par une requête de chat. Choisissez le modèle pour votre session ou votre banc de travail.
+
+Utilisez Token Plan pour les sessions d’agent interactives dans le cadre de la [politique d’utilisation](https://docs.qwencloud.com/token-plan/token-plan-permissions-and-usage). Si les crédits sont épuisés, consultez la consommation et le quota de l’offre. Si la limite de fréquence est atteinte, patientez avant de réessayer.
+
+Consultez [les clés API QwenCloud](https://docs.qwencloud.com/developer-guides/administration/api-keys) et [les modèles et erreurs Token Plan](https://docs.qwencloud.com/token-plan/token-plan-faq).
+
 ## LM Studio
 
 1. Démarrez le serveur LM Studio et chargez un modèle.

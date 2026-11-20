@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-FUNC-2c4c12cf"
+title = "Report QwenCloud rate limits"
+status = "active"
+requirement = "When QwenCloud throttles requests, VERA shall emit the rate-limit diagnostic with any safe Retry-After value."
+verification = "Script 429 limit_requests with a retry hint for each plan and assert the generic throttling key and hint."
+affected_paths = ["05_Software/src/libraries/core/src/llm/preset-connection.ts","05_Software/src/libraries/core/src/llm/providers.ts","05_Software/src/libraries/core/src/llm/errors.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/qwencloud-presets.test.ts"]
+created = 2026-11-20
+updated = 2026-11-20

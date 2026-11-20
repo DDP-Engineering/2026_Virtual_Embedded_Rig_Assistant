@@ -39,7 +39,12 @@ replay or a scripted loopback endpoint, never a real model (L11, 08 §3).
 Settings offers a searchable set of connection presets. The built-in OpenAI and local choices
 retain their existing connection workflows. The shared curated registry defines service and binding
 IDs, authentication, protocol, exact HTTPS inference and catalog routes, and per-model metadata.
-The shipped curated registry is empty until the provider integrations pass their own live acceptance.
+The curated registry includes OpenCode Console, OpenCode Go, QwenCloud Standard and QwenCloud Token Plan.
+QwenCloud uses the two international Singapore Chat Completions bases with a separate credential scope
+per plan. The model picker combines an explicitly saved ID with results from an available plan catalog.
+An unavailable catalog leaves the saved model usable and the inference test checks the key. Exact model
+profiles declare input, tools and thinking options. Token Plan credit exhaustion has its own diagnostic.
+User-authorized scripted acceptance covers the two QwenCloud presets while authenticated smoke is deferred.
 
 A curated connection uses a reserved random slug under the existing `custom:<slug>` identity and
 keeps the selected preset and binding in format-1 settings. The credential slot includes the slug

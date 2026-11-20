@@ -72,7 +72,9 @@ export function CustomEditor({
     discovery?.status === "discovered" ? discovery.profiles?.map(({ id, name }) => [id, name]) : [],
   );
   const modelChoices = new Set([
-    ...(binding?.models?.map(({ id }) => id) ?? []),
+    ...(binding?.qwenCloud && discovery?.status === "discovered"
+      ? []
+      : (binding?.models?.map(({ id }) => id) ?? [])),
     ...(discovery?.status === "discovered" ? discovery.models : []),
   ]);
   async function discover() {

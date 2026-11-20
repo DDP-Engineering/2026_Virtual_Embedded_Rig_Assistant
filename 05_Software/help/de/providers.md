@@ -34,6 +34,16 @@ Der Katalog zeigt die Modellfunktionen. Mit dem Verbindungstest kannst du Werkze
 
 Siehe [OpenCode-Einrichtung](https://opencode.ai/docs/console/harnesses) und [Anleitung zum Go-Tarif](https://opencode.ai/docs/console/go/).
 
+## QwenCloud Standard und QwenCloud Token Plan
+
+1. Wähle unter **Verbindung hinzufügen** **QwenCloud Standard** für einen nutzungsabhängig abgerechneten API-Schlüssel aus Singapur oder **QwenCloud Token Plan** für den zugehörigen Aboschlüssel (`sk-sp-`). VERA trägt die Basis-URL des gewählten Tarifs ein.
+2. Gib den passenden Schlüssel ein und wähle **Modelle suchen**. Ist die Liste nicht verfügbar, gib die genaue Modell-ID für deine Region oder deinen Tarif ein. `qwen3.8-flash` akzeptiert beispielsweise Text und Bilder, kann Werkzeuge aufrufen und bietet einen ein- und ausschaltbaren Denkmodus. `qwen3.7-max` bietet Werkzeugaufrufe und denselben Denkmodus mit Texteingabe. Bei anderen Modell-IDs können die Fähigkeiten ungeprüft sein.
+3. Wähle **Speichern** und dann **Testen**. Wird die Katalogerreichbarkeit übersprungen, prüft der Schritt für Authentifizierung und Modell den Schlüssel und das Modell mit einer Chat-Anfrage. Wähle das Modell für deine Sitzung oder Workbench.
+
+Nutze Token Plan für interaktive Agenssitzungen gemäß der [Nutzungsrichtlinie für Token Plan](https://docs.qwencloud.com/token-plan/token-plan-permissions-and-usage). Ist das Guthaben aufgebraucht, prüfe Verbrauch und Kontingent des Tarifs. Bei zu vielen Anfragen warte vor dem nächsten Versuch.
+
+Siehe [QwenCloud-API-Schlüssel](https://docs.qwencloud.com/developer-guides/administration/api-keys) und [Token-Plan-Modelle und Fehler](https://docs.qwencloud.com/token-plan/token-plan-faq).
+
 ## LM Studio
 
 1. Starten Sie den LM-Studio-Server und laden Sie ein Modell.

@@ -6,13 +6,19 @@ Select for LlmGateway, model reference precedence, capabilities/budgets, provide
 
 ## Purpose and boundaries
 
-Core resolves models and wraps exact-pinned pi-ai1.1.0. Desktop main supplies current settings, stored credentials, Clock and process-lifetime scrubbing, owns accepted-operation drain and records observed custom tool support. Shared projects strict non-secret catalogs and four-step results; renderer renders imperative local test state with en/ro/de presentation. The mock exposes a small offline mock-openai fixture catalog and honors explicit model overrides/auth failure semantics.
+Core resolves models and wraps exact-pinned pi-ai1.1.0. Desktop main supplies current settings, stored credentials, Clock and process-lifetime scrubbing, owns accepted-operation drain and records observed custom tool support. Shared projects strict non-secret catalogs and four-step results; renderer renders imperative local test state with en/ro/de/fr presentation. The mock exposes a small offline mock-openai fixture catalog and honors explicit model overrides/auth failure semantics.
 
 ## Public interface
 
 - Curated connections resolve their registered HTTPS catalog URL independently of the inference base.
-  Public models include the saved manual or discovered selection and registry profiles. Chat and workbench
-  share option labels with provider identity, context, input, tools and reasoning metadata.
+  Public models include the saved selection and plan-scoped catalog or registry entries as applicable.
+  Chat and workbench share provider identity, context, input, tools and reasoning labels.
+- QwenCloud Standard and Token Plan use fixed international HTTPS Chat Completions routes and
+  scoped keys. A usable authenticated catalog adds that connection's IDs to the saved model.
+  A catalog 401 or unsupported route permits manual entry while the inference test verifies the key.
+  Qwen3.8 Flash and Qwen3.7 Max expose their documented inputs, tools and binary thinking options.
+  Thinking-enabled tool continuations preserve the assistant's reasoning_content and call ID.
+  Token Plan credit exhaustion is distinct from request throttling.
 - OpenCode Console and Go use `https://opencode.ai/inference[/go]/v1/models` for the scoped catalog
   and `https://opencode.ai/inference[/go]/openai/v1/chat/completions` for inference. OpenCode’s
   catalog supplies eligible IDs, names, input modalities, limits and declared tool and compatible
@@ -32,7 +38,7 @@ LlmRequest.maskOutput is a host-owned live callback; omitted means on, including
 
 - prepareModel(reference,signal?) resolves live metadata before synchronous capabilities and budgeting. ChatGPT catalog discovery uses authenticated https://api.openai.com/v1/models; inference retains the pinned SDK public Responses route. Catalog IDs, context and native reasoning levels come from the server, including SDK-unknown models; no local model-specific reasoning allowlist or name heuristic. Codex Ultra is excluded as client subagent orchestration, not a public Responses effort. Unknown model prices have no SDK estimate. Live catalog models advertise strict-flag support so pi emits strict:false explicitly; optional VERA tool parameters remain optional instead of Responses normalizing an omitted strict flag.
 - Account-scoped catalog memory is refreshed after five minutes (or the response's shorter Cache-Control) and on
-  token/account changes, so per-iteration prepareModel calls reuse it without a request (REQ-NFR-4d0324ed), with superseded-publication protection. Individual caller abort detaches from a shared fetch. Optional reasoningOptions project declared levels; LM Studio uses discovered profiles, ordinary API-key catalogs with no declared levels expose none. LlmRequest.reasoning overrides the profile only when supported; Default leaves the provider/profile default. Responses use reasoning.effort, completions use reasoning_effort; LM Studio off/on mapping remains.
+  token/account changes, so per-iteration prepareModel calls reuse it without a request (REQ-NFR-4d0324ed), with superseded-publication protection. Individual caller abort detaches from a shared fetch. Optional reasoningOptions project declared levels; LM Studio uses discovered profiles, ordinary API-key catalogs with no declared levels expose none. LlmRequest.reasoning overrides the profile only when supported; Default leaves the provider/profile default. Responses use reasoning.effort. QwenCloud Chat Completions uses enable_thinking for the two documented profiles. Other Completions reasoning options use reasoning_effort.
 
 - resolveModelReference(session,workbench,app), splitModelReference; LlmGateway selectedModel/capabilities/models/stream. Model IDs retain slashes; session wins over workbench over app.
 - createPiAiGateway(host) exposes current OpenAI/custom API collection and OAuth-only subscription collection, mapping pi-ai openai to credential slot chatgpt. Host supplies settings, CredentialStore, scrub, now and optional fetch/knownSecrets.
@@ -59,8 +65,8 @@ LlmRequest.maskOutput is a host-owned live callback; omitted means on, including
 - Provider errors map to OFFLINE or PROVIDER with auth/rate_limit/context/provider reasons, safe messages and optional Retry-After. With agent masking on, retained raw/escaped secrets are scrubbed across stream chunk boundaries and in final presentation messages; actual usage and protocol discriminants are preserved. Execution tool-call arguments remain raw authority while stored/request views project them; other assistant metadata/signatures follow agent masking, and successful/partial timestamps use host Clock at terminal emission.
 - Shared strict projections and the existing authorized sandbox bridge guard catalog/result IPC. Renderer keeps no credential-bearing query mutation cache.
 - Test registration and dynamic replay import reside entirely inside compiled __VERA_TEST__; release emission excludes their code. Automated Node and acceptance transports block non-loopback traffic before dispatch.
-- The default model reference lives in settings schemaVersion 1. Authenticated OpenCode smoke is
-  deferred by user ruling. OpenCode acceptance uses official catalog and scripted transport evidence.
+- The default model reference lives in settings schemaVersion 1. OpenCode and QwenCloud authenticated
+  smoke is deferred by user ruling. Acceptance uses official documentation and scripted transport.
 
 ## Change map
 
@@ -68,7 +74,7 @@ LlmRequest.maskOutput is a host-owned live callback; omitted means on, including
 |---|---|---|
 | Model precedence/capabilities/catalog/auth/streams/errors | core llm gateway/providers/errors/stream-scrub | gateway.test.ts |
 | Model input modalities | core llm providers/chatgpt-catalog and shared providers | gateway.test.ts, subscription.test.ts and shared providers.test.ts |
-| OpenCode catalogs, scoped streams and diagnostics | core llm opencode and opencode-catalog-cache | desktop main opencode-presets.test.ts |
+| OpenCode and QwenCloud catalogs, scoped streams and diagnostics | core llm opencode, preset-catalog-cache, preset-connection and errors | desktop main opencode-presets.test.ts and qwencloud-presets.test.ts |
 | Four-step results and host lifecycle | core llm connection; main provider-gateway/provider-settings | gateway.test.ts; provider-test.spec.ts |
 | Replay transcript and release seam | core llm replay; main index; Vite alias | replay.test.ts; tooling/build-mode.test.ts |
 | IPC/schema | shared providers/ipc/errors/settings; core settings/service | bridge/router and service tests |
@@ -94,6 +100,6 @@ All paths are under05_Software.
 - src/libraries/core/{package.json,src/index.ts}; src/libraries/shared/src/{providers,ipc,errors,settings}.ts — dependency/export and strict contracts.
 - src/apps/desktop/src/main/{provider-gateway,provider-settings,credentials,index}.ts — current-config host, capability persistence, secret registry and test composition.
 - src/apps/desktop/electron.vite.config.ts — explicit replay source alias and compile-time test flag.
-- src/apps/desktop/src/renderer/components/{provider-test,providers,error-message}.tsx; locales/{en,ro,de}.json; styles.css; mocks/mockApi.ts and mockApi.test.ts.
+- src/apps/desktop/src/renderer/components/{provider-test,providers,error-message}.tsx; locales/{en,ro,de,fr}.json; styles.css; mocks/mockApi.ts and mockApi.test.ts.
 - tests/support/network-{guard,setup}.ts; tests/tooling/{network-guard,build-mode}.test.ts; tests/e2e/{provider-test,mock}.spec.ts.
 - 02_Tools/release/smoke-live.mjs; package.json/lockfile; core/desktop/root Vitest configs and tooling tsconfig — command, pinned dependency and guarded test wiring.

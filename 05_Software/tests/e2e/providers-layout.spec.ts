@@ -49,7 +49,7 @@ test("provider categories support concurrent connections, presets and aligned ac
   await expect(choices).toHaveCount(0);
   await expect(section.getByText("No matching providers")).toBeVisible();
   await search.clear();
-  await expect(choices).toHaveCount(6);
+  await expect(choices).toHaveCount(8);
   await search.fill("OpenCode");
   await expect(choices).toHaveText(["OpenCode Console", "OpenCode Go"]);
   for (const [preset, label, baseUrl] of [
@@ -60,6 +60,17 @@ test("provider categories support concurrent connections, presets and aligned ac
     await expect(section.locator("[data-provider-editor]").getByText(label!, { exact: true })).toBeVisible();
     await expect(section.getByLabel("Base URL", { exact: true })).toHaveValue(baseUrl!);
     await expect(section.getByLabel("Base URL", { exact: true })).not.toBeEditable();
+  }
+  await search.fill("QwenCloud");
+  await expect(choices).toHaveText(["QwenCloud Standard", "QwenCloud Token Plan"]);
+  for (const [preset, baseUrl] of [
+    ["qwencloud-standard", "https://maas.qwencloudapi.com/compatible-mode/v1"],
+    ["qwencloud-token-plan", "https://token-plan.maas.qwencloudapi.com/compatible-mode/v1"],
+  ]) {
+    await section.locator("[data-provider-preset]").selectOption(preset!);
+    await expect(section.getByLabel("Base URL", { exact: true })).toHaveValue(baseUrl!);
+    await expect(section.getByLabel("Base URL", { exact: true })).not.toBeEditable();
+    await expect(section.getByLabel("Model", { exact: true })).toBeEditable();
   }
   await search.clear();
   await section.locator("[data-provider-preset]").selectOption("openai");

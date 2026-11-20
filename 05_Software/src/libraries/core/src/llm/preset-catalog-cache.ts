@@ -8,7 +8,7 @@ const credentialFingerprint = (key: string) => createHash("sha256").update(key).
 type Entry = { fingerprint: string; started: number; published: number; snapshot?: CatalogSnapshot };
 
 /** Cache the authenticated catalog per scoped connection and key inside one gateway. */
-export class OpenCodeCatalogCache {
+export class PresetCatalogCache {
   private readonly entries = new Map<string, Entry>();
 
   constructor(private readonly host: { fetch?: typeof fetch; scrub(text: string): string; now(): number }) {}
@@ -45,14 +45,22 @@ export class OpenCodeCatalogCache {
     const request = ++entry.started;
     const result = await discoverPresetModels(binding, key, this.host, signal);
     signal?.throwIfAborted();
+    const profiles = new Map<string, CuratedModel>();
+    if (result.status === "discovered") {
+      for (const profile of result.profiles ?? []) profiles.set(profile.id, profile);
+      if (binding.qwenCloud) {
+        for (const id of result.models) {
+          profiles.set(id, binding.models?.find((model) => model.id === id) ?? { id, name: id });
+        }
+      }
+    }
     const snapshot = {
       result,
-      profiles: new Map(
-        result.status === "discovered" ? result.profiles?.map((profile) => [profile.id, profile]) : [],
-      ),
+      profiles,
       expires: this.host.now() + (result.status === "failed" ? 10000 : 300000),
     };
-    if (this.entries.get(slot) === entry && request >= entry.published) {
+    if (this.entries.get(slot) === entry) {
+      if (request < entry.published) return entry.snapshot;
       entry.published = request;
       entry.snapshot = snapshot;
     }

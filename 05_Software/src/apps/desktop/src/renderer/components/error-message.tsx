@@ -44,6 +44,9 @@ export function ErrorMessage({ error }: { error: unknown }) {
     "provider.openCodePlan": t("provider.openCodePlan"),
     "provider.openCodeCatalog": t("provider.openCodeCatalog"),
     "provider.openCodeBudget": t("provider.openCodeBudget"),
+    "provider.qwenCloudAuth": t("provider.qwenCloudAuth"),
+    "provider.qwenCloudModel": t("provider.qwenCloudModel"),
+    "provider.qwenCloudQuota": t("provider.qwenCloudQuota"),
     "provider.rateLimit": options.retryAfter
       ? t("provider.rateLimitWithRetry", options)
       : t("provider.rateLimit"),

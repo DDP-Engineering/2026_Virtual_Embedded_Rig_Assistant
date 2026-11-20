@@ -138,7 +138,11 @@ export class ProviderGateway {
   test(id: string, model?: string): Promise<ProviderTestResult> {
     return this.track(async () => {
       const before = this.settings.get().settings.providers.custom.find((c) => `custom:${c.slug}` === id);
-      const slot = before?.preset ? resolveCuratedConnection(before, this.providers.presets).slot : undefined;
+      const resolved = before?.preset ? resolveCuratedConnection(before, this.providers.presets) : undefined;
+      const slot = resolved?.slot;
+      const profile = resolved?.binding.qwenCloud
+        ? resolved.binding.models?.find(({ id }) => id === (model ?? before?.model))
+        : undefined;
       const testKey = slot ? await this.credentials.read(slot, { signal: this.lifetime.signal }) : undefined;
       const result = providerTestResultSchema.parse(
         await testConnection(
@@ -148,6 +152,7 @@ export class ProviderGateway {
           this.lifetime.signal,
           () => this.clock.now().getTime(),
           (text) => this.credentials.scrub(text),
+          profile?.reasoningOptions?.includes("off") ? "off" : undefined,
         ),
       );
       const tools = result.steps.find((s) => s.step === "tools");

@@ -34,6 +34,16 @@ Catalogul indică funcțiile modelelor. Folosește **Testează** pentru a verifi
 
 Consultă [configurarea OpenCode](https://opencode.ai/docs/console/harnesses) și [ghidul planului Go](https://opencode.ai/docs/console/go/).
 
+## QwenCloud Standard și QwenCloud Token Plan
+
+1. În **Adaugă conexiune**, selectează **QwenCloud Standard** pentru o cheie API din Singapore cu plată în funcție de consum sau **QwenCloud Token Plan** pentru cheia dedicată planului (`sk-sp-`). VERA completează URL-ul de bază al planului selectat.
+2. Introdu cheia corespunzătoare și selectează **Descoperă modele**. Dacă lista nu este disponibilă, introdu ID-ul exact al modelului pentru regiunea sau planul tău. De exemplu, `qwen3.8-flash` acceptă text și imagini, apeluri de instrumente și activarea sau dezactivarea raționamentului. `qwen3.7-max` acceptă text, apeluri de instrumente și aceeași opțiune de raționament. Capabilitățile altor modele pot fi neverificate.
+3. Selectează **Salvează**, apoi **Testează**. Dacă verificarea disponibilității catalogului este omisă, pasul de autentificare și model verifică cheia și modelul printr-un apel de chat. Alege modelul pentru sesiune sau workbench.
+
+Folosește Token Plan pentru sesiuni interactive ale agentului, conform [politicii de utilizare](https://docs.qwencloud.com/token-plan/token-plan-permissions-and-usage). Dacă se epuizează creditele, consultă utilizarea și cota planului. Dacă ai atins limita de frecvență a cererilor, așteaptă înainte să încerci din nou.
+
+Consultă [cheile API QwenCloud](https://docs.qwencloud.com/developer-guides/administration/api-keys) și [modelele și erorile Token Plan](https://docs.qwencloud.com/token-plan/token-plan-faq).
+
 ## LM Studio
 
 1. Pornește serverul LM Studio și încarcă un model.

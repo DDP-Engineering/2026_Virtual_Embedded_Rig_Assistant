@@ -1,4 +1,11 @@
-import { providerRetryAfterSchema, type VeraError, veraError, veraErrorSchema } from "@vera/shared";
+import {
+  providerRetryAfterSchema,
+  type QwenCloudPlan,
+  type VeraError,
+  veraError,
+  veraErrorSchema,
+} from "@vera/shared";
+import { z } from "zod";
 
 export interface ProviderFailure {
   status?: number;
@@ -6,6 +13,7 @@ export interface ProviderFailure {
   offline?: boolean;
   context?: boolean;
   openCode?: { operation: "catalog" | "inference"; body?: unknown };
+  qwenCloud?: { plan: QwenCloudPlan; operation: "catalog" | "inference"; body?: unknown };
 }
 function openCodeError(failure: ProviderFailure, raw: string): VeraError | undefined {
   const source = failure.openCode;
@@ -41,6 +49,47 @@ function openCodeError(failure: ProviderFailure, raw: string): VeraError | undef
   return undefined;
 }
 
+const qwenCloudErrorFields = z.object({
+  code: z.string().nullish(),
+  type: z.string().nullish(),
+  message: z.string().nullish(),
+});
+const qwenCloudErrorSchema = qwenCloudErrorFields.extend({ error: qwenCloudErrorFields.nullish() });
+const qwenCloudModelAccessCodes = new Set([
+  "access_denied",
+  "accessdenied",
+  "accessdenied.unpurchased",
+  "model.accessdenied",
+  "app.accessdenied",
+  "workspace.accessdenied",
+  "endpoint.accessdenied",
+]);
+
+function qwenCloudError(failure: ProviderFailure): VeraError | undefined {
+  const source = failure.qwenCloud;
+  if (!source) return;
+  if (failure.status === 401) return { ...veraError("PROVIDER"), messageKey: "provider.qwenCloudAuth" };
+  const parsed = qwenCloudErrorSchema.safeParse(source.body).data;
+  const code = (parsed?.error?.code ?? parsed?.code ?? parsed?.error?.type ?? parsed?.type)?.toLowerCase();
+  const message = parsed?.error?.message ?? parsed?.message ?? "";
+  if (
+    source.plan === "token-plan" &&
+    failure.status === 429 &&
+    (code === "insufficient_quota" || /^your token-plan quota has been exhausted[.!]?$/i.test(message))
+  )
+    return { ...veraError("PROVIDER"), messageKey: "provider.qwenCloudQuota" };
+  if (
+    source.operation === "inference" &&
+    (failure.status === 404 ||
+      (failure.status === 403 && code !== undefined && qwenCloudModelAccessCodes.has(code)) ||
+      (failure.status === 400 &&
+        (code === "invalid_parameter_error" || code === "invalidparameter") &&
+        /^(?:the product is not activated\b|model not exist[.!]?\s*$)/i.test(message)))
+  )
+    return { ...veraError("PROVIDER"), messageKey: "provider.qwenCloudModel" };
+  if (failure.status === 403) return { ...veraError("PROVIDER"), messageKey: "provider.qwenCloudAuth" };
+}
+
 export function mapProviderError(
   error: unknown,
   scrub: (text: string) => string,
@@ -67,6 +116,8 @@ export function mapProviderError(
   }
   const raw = error instanceof Error ? error.message : typeof error === "string" ? error : "";
   const message = scrub(raw);
+  const qwenCloud = qwenCloudError(failure);
+  if (qwenCloud) return qwenCloud;
   if (
     failure.offline ||
     /ECONNREFUSED|ENOTFOUND|EAI_AGAIN|fetch failed|connection error|network error/i.test(raw)

@@ -8,6 +8,7 @@ import {
   type PresetBinding,
   type ProviderBinding,
   providerTokenDefaults,
+  type QwenCloudPlan,
   type Settings,
   veraError,
 } from "@vera/shared";
@@ -19,6 +20,11 @@ import { scrub } from "./scrub.js";
 const MAX_CATALOG_BYTES = 2 * 1024 * 1024;
 export const openCodePlan = (binding: ProviderBinding) =>
   binding.catalog.kind === "openai-models" ? binding.catalog.opencode : undefined;
+
+/** A dedicated Token Plan key cannot be used as a Standard key or vice versa. */
+export function qwenCloudKeyMatches(plan: QwenCloudPlan, key: string): boolean {
+  return key.startsWith("sk-sp-") === (plan === "token-plan");
+}
 
 const catalogSchema = z.object({ data: z.array(z.object({ id: curatedModelIdSchema })).max(10000) });
 
@@ -92,8 +98,17 @@ export async function discoverPresetModels(
   if (signal?.aborted) return { status: "failed", error: veraError("DENIED") };
   if (binding.catalog.kind === "manual") return { status: "manual", reason: "configured" };
   const { url: endpoint, opencode } = binding.catalog;
+  const { qwenCloud } = binding;
   const redact = (text: string) => host.scrub(key ? scrub(text, [key]) : text);
-  if (!key) return { status: "failed", error: mapProviderError("", redact, endpoint, { status: 401 }) };
+  if (!key || (qwenCloud && !qwenCloudKeyMatches(qwenCloud, key))) {
+    return {
+      status: "failed",
+      error: mapProviderError("", redact, endpoint, {
+        status: 401,
+        ...(qwenCloud ? { qwenCloud: { plan: qwenCloud, operation: "catalog" } } : {}),
+      }),
+    };
+  }
   const timeout = AbortSignal.timeout(10000);
   const requestSignal = signal ? AbortSignal.any([signal, timeout]) : timeout;
   let response: Response;
@@ -114,20 +129,26 @@ export async function discoverPresetModels(
   try {
     signal?.throwIfAborted();
     if (!response.ok) {
-      if (!opencode && [404, 405, 501].includes(response.status)) {
+      // QwenCloud documents both 401 and 404 when a model listing is unavailable.
+      if (
+        !opencode &&
+        ([404, 405, 501].includes(response.status) || (qwenCloud && response.status === 401))
+      ) {
         await response.body?.cancel();
         return { status: "manual", reason: "unavailable" };
       }
-      const error = opencode
-        ? await readProviderJson(response, requestSignal, 16384).catch(() => undefined)
-        : undefined;
-      if (!opencode) await response.body?.cancel();
+      const error =
+        opencode || qwenCloud
+          ? await readProviderJson(response, requestSignal, 16384).catch(() => undefined)
+          : undefined;
+      if (!opencode && !qwenCloud) await response.body?.cancel();
       signal?.throwIfAborted();
       return {
         status: "failed",
         error: mapProviderError("", redact, endpoint, {
           status: response.status,
           ...(opencode ? { openCode: { operation: "catalog", body: error } } : {}),
+          ...(qwenCloud ? { qwenCloud: { plan: qwenCloud, operation: "catalog", body: error } } : {}),
           retryAfter: response.headers.get("retry-after") ?? undefined,
         }),
       };

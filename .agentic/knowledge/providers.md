@@ -4,7 +4,7 @@
 
 Select for credentials.json, CredentialStore, safeStorage, weak-storage consent, known-secret scrub,
 providers.list/save/remove and Settings Providers. Connection tests route to [LLM gateway](llm-gateway.md). Start with main credentials.ts and
-provider-settings.ts under05_Software/src/apps/desktop/src. Configuration schemas live in shared providers.ts.
+provider-settings.ts under `05_Software/src/apps/desktop/src`. Configuration schemas live in shared providers.ts.
 [Application data](app-data.md) owns settings validation/atomic ports; [IPC boundary](ipc-boundary.md)
 owns sender/schema transport; [renderer foundation](renderer-foundation.md) owns shell/accessibility.
 [LLM gateway](llm-gateway.md) owns model requests, capabilities and connection tests. ChatgptAuth owns OAuth lifecycle; subscription-store preserves its storage choice through refresh.
@@ -21,7 +21,8 @@ strict public projections. Renderer holds a password draft until save/cancel and
   definitions. A saved curated connection keeps its preset and binding, reserves a fresh model-reference
   slug, and gives the key a separate route-scoped slot. OpenCode Console and OpenCode Go are
   separate presets. A Console workspace key can be saved in both if the workspace has both
-  billing entitlements.
+  billing entitlements. QwenCloud Standard and Token Plan use separate international routes,
+  store their keys separately, and accept explicit model IDs.
 - providers.presets.discover accepts a preset/binding, optional local draft key and optional matching
   saved connection. It returns discovered IDs and available OpenCode model profiles, a manual-entry outcome or
   a structured failure. The key
@@ -76,7 +77,7 @@ strict public projections. Renderer holds a password draft until save/cancel and
 | Change | Start | Focused tests |
 |---|---|---|
 | Crypto/mutex/consent | main credentials.ts | credentials.test.ts |
-| OpenCode preset and scoped discovery | shared provider-presets.ts, core llm preset-connection.ts | opencode-presets.test.ts; tests/e2e/providers-layout.spec.ts |
+| Curated presets and scoped discovery | shared provider-presets.ts, core llm preset-connection.ts | opencode-presets.test.ts; qwencloud-presets.test.ts; tests/e2e/providers-layout.spec.ts |
 | CRUD/rollback/hints | main provider-settings.ts | provider-settings.test.ts |
 | Configuration/IPC shape | shared providers.ts/ipc.ts | provider-settings and bridge/router tests |
 | Settings format | shared settings.ts; core settings/service.ts | service.test.ts |
@@ -101,29 +102,9 @@ strict public projections. Renderer holds a password draft until save/cancel and
 - REQ-UX-fb4b9424 — masked localized and accessible provider editor.
 - REQ-UX-1eb152b7 and REQ-FUNC-8446181d — localized per-model image opt-in, settings persistence and invalid ID rejection.
 
-## Architecture
-
-```mermaid
-flowchart LR
- UI[Providers form + Chatgpt] --> API[typed invoke + metadata Query]
- API --> IPC[shared strict schemas + authorized router]
- IPC --> Auth[ChatgptAuth]
- Auth --> Subscription[core subscription Models]
- Subscription --> View[subscription-store / chatgpt slot]
- View --> Store
- Auth --> External[validated app.openExternal / system browser]
- IPC --> Main[ProviderSettings]
- Main --> Settings[core SettingsService schemaVersion 1]
- Main --> Store[main CredentialFile mutex]
- Store --> Crypto[safeStorage]
- Store --> Files[atomic credentials.json]
- Store --> Registry[known-secret set and logger hook]
- Registry --> Scrub[core scrub / error and event sanitization]
-```
-
 ## Files
 
-Paths relative to05_Software.
+Paths relative to `05_Software`.
 
 - src/libraries/core/src/ports.ts and llm/scrub.ts — structural store contract and pure redaction.
 - src/libraries/shared/src/{providers,settings,ipc,index}.ts — config formats and transport.
@@ -134,7 +115,7 @@ Paths relative to05_Software.
 - src/apps/desktop/src/main/{index,ipc-router,events}.ts — startup/drain, handlers, known-secret response guards.
 - src/apps/desktop/src/renderer/components/{providers,settings}.tsx — masked forms and consent modal.
 - src/apps/desktop/src/renderer/mocks/mockApi.ts — metadata-only provider fixtures.
-- src/apps/desktop/src/renderer/locales/{en,ro,de}.json and styles.css — translations and rem/layout.
+- src/apps/desktop/src/renderer/locales/{en,ro,de,fr}.json and styles.css — translations and rem/layout.
 - Main credentials/provider-settings tests, core scrub/settings tests, bridge/router/mock regressions,
   tests/e2e/{providers,mock,shell}.spec.ts — deterministic fictional secrets and native/browser regressions.
 

@@ -25,10 +25,10 @@ entries:
   - category: new
     topic: { en: Models and images, ro: Modele și imagini, de: Modelle und Bilder, fr: Modèles et images }
     text:
-      en: Find OpenCode Console and Go, browse model details and manage images per model.
-      ro: Găsește OpenCode Console și Go, vezi detaliile modelelor și gestionează imaginile per model.
-      de: OpenCode Console und Go finden, Modelldetails sehen und Bilder pro Modell verwalten.
-      fr: Trouvez OpenCode Console et Go, consultez les modèles et gérez leurs options d’image.
+      en: Connect OpenCode and QwenCloud plans, see model details, and manage image input per model.
+      ro: Conectează planuri OpenCode și QwenCloud, vezi detalii și gestionează imaginile per model.
+      de: OpenCode- und QwenCloud-Tarife verbinden, Modelldetails sehen und Bildeingabe verwalten.
+      fr: Connectez les offres OpenCode et QwenCloud, voyez les modèles et gérez l’entrée d’images.
   - category: fixed
     topic: { en: Skills, ro: Skills, de: Skills, fr: Compétences }
     text:

@@ -34,6 +34,16 @@ The catalog reports model capabilities. Use **Test** to check tool calling and s
 
 See [OpenCode harness setup](https://opencode.ai/docs/console/harnesses) and the [Go plan guide](https://opencode.ai/docs/console/go/).
 
+## QwenCloud Standard and QwenCloud Token Plan
+
+1. Under **Add connection**, select **QwenCloud Standard** for a Singapore pay-as-you-go API key or **QwenCloud Token Plan** for the dedicated Token Plan key (`sk-sp-`). VERA fills the Base URL for the selected plan.
+2. Enter the matching key and select **Discover models**. If the list is unavailable, enter the exact model ID for your region or plan. For example, `qwen3.8-flash` accepts text and images and supports tool calling and a thinking toggle. `qwen3.7-max` supports tool calling and the thinking toggle with text input. Capabilities for other model IDs may be unverified.
+3. Select **Save**, then **Test**. If catalog reachability is skipped, **Authentication and model** checks the key and model using chat inference. Choose the model for your session or workbench.
+
+Use Token Plan for interactive agent sessions under the [Token Plan usage policy](https://docs.qwencloud.com/token-plan/token-plan-permissions-and-usage). If the plan runs out of credits, check its usage and quota. For a request rate limit, wait before retrying.
+
+See [QwenCloud API keys](https://docs.qwencloud.com/developer-guides/administration/api-keys) and [Token Plan models and errors](https://docs.qwencloud.com/token-plan/token-plan-faq).
+
 ## LM Studio
 
 1. Start the LM Studio server and load a model.

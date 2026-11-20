@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-REL-10a5e0fb"
+title = "Cancel QwenCloud requests"
+status = "active"
+requirement = "When a QwenCloud stream is cancelled, VERA shall abort the active transport and accept a subsequent request on the same connection."
+verification = "Hold a scripted inference response open on each plan, cancel the request, observe abort at the transport and complete another stream."
+affected_paths = ["05_Software/src/libraries/core/src/llm/providers.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/qwencloud-presets.test.ts"]
+created = 2026-11-20
+updated = 2026-11-20
