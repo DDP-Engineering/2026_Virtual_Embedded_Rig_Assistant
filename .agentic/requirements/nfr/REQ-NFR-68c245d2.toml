@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-NFR-68c245d2"
+title = "Bound interactive browser sessions"
+status = "active"
+requirement = "While the browser host is active, Desktop shall enforce limits on concurrent contexts, open tabs per context, session lifetime and startup time."
+verification = "Exercise the connection and tab limits, expire a session with a controlled clock and assert the Chromium startup timeout."
+affected_paths = ["05_Software/src/apps/desktop/src/main/browser/host.ts","05_Software/src/apps/desktop/src/main/browser/launcher.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/browser/host.test.ts","05_Software/src/apps/desktop/src/main/browser/launcher.test.ts"]
+priority = "normal"
+created = 2026-11-20
+updated = 2026-11-20

@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-SEC-92a60a12"
+title = "Reject an invalid browser runtime"
+status = "active"
+requirement = "If an archive or executable tree fails verification against the browser release pin, Desktop shall report integrity failure and keep the invalid runtime unavailable for launch."
+verification = "Inject bad archive bytes and mutate an installed fixture file. Assert integrity and refuse the executable path in both cases."
+affected_paths = ["05_Software/src/apps/desktop/src/main/browser/runtime.ts","05_Software/src/apps/desktop/src/main/browser/release.ts","05_Software/src/apps/desktop/src/main/browser/integrity.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/browser/runtime.test.ts"]
+priority = "normal"
+created = 2026-11-20
+updated = 2026-11-20

@@ -20,6 +20,7 @@ remain active, then drains persistence before explicit installation.
 Main composes [ChatGPT authentication](providers.md), confirmed system-browser opening and the
 subscription credential host; shutdown drains OAuth cancellation before closing the credential store.
 Main supplies the [workbench](workbench.md) lifecycle host and native folder picker.
+Workbench replacement and shutdown drain the [browser runtime](browser-runtime.md) host.
 Main composes [file-tool](file-tools.md) worker capacity and drains it during shutdown; grep-worker is a separate production entry.
 The sandboxed preload exposes the typed invoke/subscribe bridge; React displays Welcome/App Settings and application metadata
 through its API. [IPC boundary](ipc-boundary.md) owns shared contracts, dispatch and event behavior.

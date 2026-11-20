@@ -16,6 +16,13 @@ Run the setup script from the repository root: `python 02_Tools/environment/setu
 
 `npm ci` installs the pinned Electron binary through `install-electron`. `allowScripts` in `05_Software/package.json` permits the install scripts of the pinned esbuild and node-pty and denies those of better-sqlite3, onnxruntime-node, protobufjs and electron-winstaller, which use their platform prebuilds.
 
+Desktop browser runtime acceptance uses the official Chrome for Testing archive pinned by
+`main/browser/release.ts`. Provide the absolute archive path as `VERA_TEST_BROWSER_ARCHIVE`
+and run `npm run test:e2e -- browser-runtime.spec.ts` on the host. Use
+`VERA_BROWSER_PACKAGED_APP` to exercise the unpacked executable of an instrumented package
+and `VERA_BROWSER_EVIDENCE` for an optional JSON receipt in owned scratch. On Ubuntu the
+Chromium process requires a graphical session, system libraries and a working OS sandbox.
+
 Install the pinned Playwright Chromium once with `npx playwright install chromium` from `05_Software` before browser acceptance.
 
 ## Configuration and services

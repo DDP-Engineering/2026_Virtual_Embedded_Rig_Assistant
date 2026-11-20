@@ -32,7 +32,7 @@ import { updatePublish } from "./update-config.mjs";
 
 const root = software;
 const require = softwareRequire;
-export const probeMarkers = ["packaging-probe", "I2C1_CR1", "veraTestDictation"];
+export const probeMarkers = ["packaging-probe", "I2C1_CR1", "veraTestDictation", "veraTestBrowser"];
 export const documentWorkerMarkers = ["allowRemoteModels", "document-embedding-worker"];
 
 export function distributionConfig(platform, testBuild, env) {
@@ -282,6 +282,7 @@ export async function stageRuntime(
     "pdfjs-dist",
     "electron-updater",
     "node-pty",
+    "playwright-core",
   ];
   const seen = new Set();
   const packages = [];

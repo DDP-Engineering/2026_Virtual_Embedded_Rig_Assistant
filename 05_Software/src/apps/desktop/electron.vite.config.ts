@@ -143,6 +143,7 @@ export default defineConfig(({ command }) => ({
           "sharp",
           "pdfjs-dist/legacy/build/pdf.mjs",
           "electron-updater",
+          "playwright-core",
         ],
         input: {
           index: resolve(root, "src/main/index.ts"),

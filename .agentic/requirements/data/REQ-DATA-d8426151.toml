@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-DATA-d8426151"
+title = "Isolate browser sessions and their ephemeral state"
+status = "active"
+requirement = "For each VERA session, Desktop shall own a fresh non-persistent browser context and dedicated temporary browser process state."
+verification = "Use the controlled document to set cookies and local storage, then verify independence in parallel contexts and after close and reopen."
+affected_paths = ["05_Software/src/apps/desktop/src/main/browser/host.ts","05_Software/src/apps/desktop/src/main/browser/launcher.ts"]
+linked_tests = ["05_Software/tests/e2e/browser-runtime.spec.ts"]
+priority = "normal"
+created = 2026-11-20
+updated = 2026-11-20

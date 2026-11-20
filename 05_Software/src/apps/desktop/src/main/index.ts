@@ -60,6 +60,8 @@ import {
 } from "electron";
 import { getAppInfo } from "./app-info.js";
 import { exportArtifact, exportName, publicArtifact, revealArtifact } from "./artifacts.js";
+import { BrowserHost } from "./browser/host.js";
+import { BrowserRuntime } from "./browser/runtime.js";
 import { CatalogChecks } from "./catalog-checks.js";
 import { ChatgptAuth } from "./chatgpt-auth.js";
 import { CredentialFile } from "./credentials.js";
@@ -169,6 +171,15 @@ let credentialsReady: Promise<void> = Promise.resolve();
 const fileWorkers = createDesktopWorkerPool();
 const pluginListings = new PluginListingHost(join(dataLocations.paths.userData, "plugins"));
 const downloadTransfer = createDesktopDownloadTransfer();
+const browserFixture =
+  __VERA_TEST__ && process.env.VERA_TEST_BROWSER_ARCHIVE
+    ? (await import("./browser/fixture.js")).createBrowserFixture(process.env.VERA_TEST_BROWSER_ARCHIVE)
+    : undefined;
+const browserRuntime = new BrowserRuntime(
+  join(dataLocations.paths.userData, "browser-runtime"),
+  browserFixture ? { transfer: browserFixture.transfer } : {},
+);
+const browserHost = new BrowserHost(browserRuntime, browserFixture ? { policy: browserFixture.policy } : {});
 const models = app.isPackaged
   ? join(process.resourcesPath, "models")
   : join(here, "../../../../../src/models");
@@ -406,24 +417,29 @@ const catalogChecks = new CatalogChecks({
     emitAppEvent({ topic: "app", id: "app", event: { type: "plugins.catalog" } });
   },
 });
-/** Runs of the open workbench stop before it closes or another workbench replaces it. */
-async function stopWorkbenchPrograms(): Promise<void> {
+/** Drain the open workbench resources before closing or replacing it. */
+async function stopWorkbenchResources(): Promise<void> {
   await terminals.closeAll();
-  let folder: string;
+  let snapshot: ReturnType<typeof workbench.getSnapshot>;
   try {
-    folder = workbench.getSnapshot().folder;
+    snapshot = workbench.getSnapshot();
   } catch {
     return;
   }
-  await programs.stopWorkbench(folder);
+  await Promise.all([
+    browserHost.closeWorkbench(snapshot.config.id),
+    programs.stopWorkbench(snapshot.folder),
+  ]);
 }
-/** Refuse terminal authority while asynchronous workbench replacement still owns the old snapshot. */
-async function terminalTransition<T>(operation: () => Promise<T>): Promise<T> {
+/** Suspend new resource ownership while replacing the current workbench. */
+async function workbenchTransition<T>(operation: () => Promise<T>): Promise<T> {
+  browserHost.suspend();
   terminals.suspend();
   try {
     return await operation();
   } finally {
     terminals.resume();
+    browserHost.resume();
   }
 }
 const providers = new ProviderSettings(settings, credentials);
@@ -1155,6 +1171,7 @@ ipcMain.handle(
       "session.delete": ({ sessionId }) =>
         sessions.run(async (s) => {
           await s.delete(sessionId);
+          await browserHost.closeSession({ workbenchId: workbench.getSnapshot().config.id, sessionId });
           return {};
         }),
       "session.image.attach": ({ workbenchId, sessionId, source }) =>
@@ -1291,9 +1308,9 @@ ipcMain.handle(
       }),
       "workbench.create": ({ folder, name, config, instructions }) =>
         sessions.lifecycle(() =>
-          terminalTransition(async () => {
+          workbenchTransition(async () => {
             embeddingWarmup.cancel();
-            await stopWorkbenchPrograms();
+            await stopWorkbenchResources();
             return publicWorkbenchFolders(
               warmPrograms(
                 await workbench.create(folder, name, {
@@ -1307,9 +1324,9 @@ ipcMain.handle(
         ),
       "workbench.open": ({ folder }) =>
         sessions.lifecycle(() =>
-          terminalTransition(async () => {
+          workbenchTransition(async () => {
             embeddingWarmup.cancel();
-            await stopWorkbenchPrograms();
+            await stopWorkbenchResources();
             return publicWorkbenchFolders(warmPrograms(await workbench.open(folder)), (text) =>
               credentials.scrub(text),
             );
@@ -1317,9 +1334,9 @@ ipcMain.handle(
         ),
       "workbench.close": async () => {
         await sessions.lifecycle(() =>
-          terminalTransition(async () => {
+          workbenchTransition(async () => {
             embeddingWarmup.cancel();
-            await stopWorkbenchPrograms();
+            await stopWorkbenchResources();
             await workbench.close();
           }),
         );
@@ -1500,6 +1517,8 @@ if (!firstInstance) {
         ["pluginListings", () => pluginListings.close()],
         ["programs", () => programs.stopAll()],
         ["terminals", () => terminals.closeAll()],
+        ["browserHost", () => browserHost.shutdown()],
+        ["browserRuntime", () => browserRuntime.shutdown()],
       ],
       [
         ["sessions", () => sessions.close()],
@@ -1623,6 +1642,16 @@ if (!firstInstance) {
           openExternal: async (url) => {
             await openExternal({ url, confirmed: true }, async () => {}, true);
           },
+        });
+      }
+      if (__VERA_TEST__ && browserFixture) {
+        const { browserFixtureApi } = await import("./browser/fixture.js");
+        Object.assign(globalThis, {
+          veraTestBrowser: browserFixtureApi(
+            browserRuntime,
+            browserHost,
+            () => workbench.getSnapshot().config.id,
+          ),
         });
       }
       if (__VERA_TEST__) {
