@@ -3,20 +3,25 @@
 import { useQuery } from "@tanstack/react-query";
 import {
   COMPOSER_IMAGE_ACCEPT,
+  type DictationRecordingMode,
+  defaultDictationRecordingMode,
   MAX_MESSAGE_IMAGES,
   rasterExtension,
   type SessionState,
   WORKBENCH_IMAGE_DRAG,
 } from "@vera/shared";
 import { ArrowUp, ImagePlus, Square, X } from "lucide-react";
-import { type ReactNode, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { type ReactNode, useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../../api/index.js";
+import { insertDictation } from "../../dictation/draft-insertion.js";
+import { useComposerDictation } from "../../dictation/use-composer-dictation.js";
 import { useImageModelWarning } from "../../hooks/image-model-warning.js";
 import { withMentions } from "../../lib/attachments.js";
 import { ErrorMessage } from "../error-message.js";
 import { PermissionPicker } from "../permission-picker.js";
 import { useAttachments } from "./attachments.js";
+import { DictationButton, DictationStatus } from "./dictation-button.js";
 import { ImageAttachmentChip } from "./image-attachment-chip.js";
 import { ReasoningPicker } from "./reasoning-picker.js";
 
@@ -30,10 +35,14 @@ export function Composer({
   setModel,
   setMode,
   inspectorControls,
+  dictationMode = defaultDictationRecordingMode,
+  chatVisible = true,
   sessionId,
   workbenchId,
 }: {
   inspectorControls?: ReactNode;
+  dictationMode?: DictationRecordingMode | undefined;
+  chatVisible?: boolean;
   sessionId?: string;
   workbenchId?: string;
   state: SessionState;
@@ -47,12 +56,25 @@ export function Composer({
 }) {
   const { t } = useTranslation();
   const [text, setText] = useState("");
+  const draft = useRef({ text: "", revision: 0 });
+  const updateDraft = useCallback((value: string) => {
+    if (draft.current.text === value) return;
+    draft.current = { text: value, revision: draft.current.revision + 1 };
+    setText(value);
+  }, []);
   const [token, setToken] = useState<{ start: number; end: number; query: string }>();
   const [matches, setMatches] = useState<string[]>([]);
   const [selected, setSelected] = useState(0);
   const [completionError, setCompletionError] = useState<unknown>();
   const input = useRef<HTMLTextAreaElement>(null);
   const picker = useRef<HTMLInputElement>(null);
+  const selection = useRef<{ revision: number; caret: number }>(undefined);
+  useLayoutEffect(() => {
+    const pending = selection.current;
+    selection.current = undefined;
+    if (pending && draft.current.revision === pending.revision && input.current?.value === text)
+      input.current?.setSelectionRange(pending.caret, pending.caret);
+  }, [text]);
   // Docs tree entries attached to this session's next message, sent as @path mentions.
   const attachments = useAttachments();
   const attached = sessionId ? (attachments?.list(sessionId) ?? []) : [];
@@ -83,6 +105,34 @@ export function Composer({
   const submitting = useRef(false);
   const locked = disabled || state.status === "awaiting_approval";
   const imageLocked = locked || archived || !sessionId || !workbenchId || !attachments?.addImages;
+  const dictationEnabled = chatVisible && !locked && !archived;
+  const readDraft = useCallback(
+    () => ({ revision: draft.current.revision, caret: input.current?.selectionEnd ?? null }),
+    [],
+  );
+  const insert = useCallback(
+    (start: ReturnType<typeof readDraft>, transcript: string) => {
+      const current = draft.current;
+      const next = insertDictation(
+        current.text,
+        current.revision === start.revision ? start.caret : null,
+        transcript,
+      );
+      if (next.text === current.text) return;
+      selection.current = { revision: current.revision + 1, caret: next.caret };
+      updateDraft(next.text);
+      setToken(undefined);
+      setMatches([]);
+    },
+    [updateDraft],
+  );
+  const dictation = useComposerDictation({
+    sessionId,
+    enabled: dictationEnabled,
+    mode: dictationMode,
+    readDraft,
+    insert,
+  });
   function addImages(files: readonly (File | string)[]) {
     if (!imageLocked && sessionId && workbenchId && !submitting.current)
       void attachments?.addImages?.(workbenchId, sessionId, files);
@@ -161,7 +211,7 @@ export function Composer({
     if (!token) return;
     const value = `${text.slice(0, token.start)}${path} ${text.slice(token.end)}`;
     const caret = token.start + path.length + 1;
-    setText(value);
+    updateDraft(value);
     setToken(undefined);
     setMatches([]);
     requestAnimationFrame(() => {
@@ -173,13 +223,14 @@ export function Composer({
     if (sendDisabled || submitting.current) return;
     if (sessionId && workbenchId && attachments?.imageDraft?.(workbenchId, sessionId).pending) return;
     submitting.current = true;
-    const draft = text;
+    dictation.cancel();
+    const submitted = draft.current;
     const sent = [...attached];
     const sentImages = images.map(({ path }) => path);
     try {
-      const message = withMentions(draft, sent);
+      const message = withMentions(submitted.text, sent);
       if (await (sentImages.length ? send(message, sentImages) : send(message))) {
-        setText((current) => (current === draft ? "" : current));
+        if (draft.current === submitted) updateDraft("");
         if (sessionId && sent.length) attachments?.clear(sessionId, sent);
         if (sessionId && workbenchId && sentImages.length)
           attachments?.clearImages?.(workbenchId, sessionId, sentImages);
@@ -269,7 +320,7 @@ export function Composer({
           value={text}
           disabled={locked}
           onChange={(e) => {
-            setText(e.target.value);
+            updateDraft(e.target.value);
             detect(e.target.value, e.target.selectionStart);
           }}
           onClick={(e) => detect(text, e.currentTarget.selectionStart)}
@@ -374,6 +425,9 @@ export function Composer({
           />
           <div className="composer-tools">
             {inspectorControls}
+            {sessionId && (
+              <DictationButton dictation={dictation} disabled={!dictationEnabled} mode={dictationMode} />
+            )}
             {sessionId && workbenchId && attachments?.addImages && (
               <>
                 <input
@@ -427,7 +481,7 @@ export function Composer({
           </button>
         </>
       )}
-      <p className="muted composer-hint">{running ? t("chat.working") : t("chat.enterHint")}</p>
+      <DictationStatus dictation={dictation} hint={running ? t("chat.working") : t("chat.enterHint")} />
     </div>
   );
 }

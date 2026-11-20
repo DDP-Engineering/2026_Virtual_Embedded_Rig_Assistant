@@ -90,7 +90,14 @@ export function Settings({
       <div hidden={section !== "providers"}>
         <Providers />
       </div>
-      {section === "dictation" && <DictationSettings />}
+      {section === "dictation" && (
+        <DictationSettings
+          mode={snapshot.settings.dictationRecordingMode}
+          bindings={snapshot.settings.keyboardShortcuts}
+          saving={saving}
+          update={update}
+        />
+      )}
       {section === "web" && <WebAccessPanel />}
       {section === "commands" && (
         <CommandSettings shell={snapshot.settings.shell} saving={saving} update={update} />

@@ -2792,6 +2792,10 @@ legend {
   width: 1.15rem;
   height: 1.15rem;
 }
+.composer-tools button[data-listening] {
+  color: var(--destructive);
+  border-color: var(--destructive);
+}
 .composer-tools .send-control {
   color: var(--background);
   background: var(--foreground);

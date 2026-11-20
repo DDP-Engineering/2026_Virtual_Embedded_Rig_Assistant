@@ -83,6 +83,24 @@
     "create": "Créer un banc de travail"
   },
   "dictation": {
+    "recordingMode": "Mode d’enregistrement",
+    "holdMode": "Maintenir pour parler",
+    "toggleMode": "Appuyer pour démarrer ou arrêter",
+    "holdToTalk": "Maintenir pour dicter",
+    "toggleMicrophone": "Démarrer ou arrêter la dictée",
+    "cancelCapture": "Annuler la dictée",
+    "opening": "Ouverture du microphone…",
+    "recording": "Enregistrement en cours…",
+    "transcribing": "Transcription en cours…",
+    "inserted": "Dictée ajoutée au brouillon.",
+    "cancelled": "Dictée annulée.",
+    "busy": "Une autre dictée est déjà en cours.",
+    "missingModel": "Sélectionnez un modèle installé dans Paramètres > Dictée.",
+    "permissionDenied": "Accès au microphone refusé. Vérifiez les autorisations du système.",
+    "microphoneUnavailable": "Aucun microphone disponible. Vérifiez l’appareil et réessayez.",
+    "microphoneDisconnected": "Le microphone a été déconnecté. Reconnectez-le et réessayez.",
+    "noSpeech": "Aucune parole détectée. Réessayez.",
+    "transcriptionFailed": "La transcription a échoué. Vérifiez le modèle sélectionné et réessayez.",
     "base": "Whisper Base",
     "small": "Whisper Small",
     "compact": "Compact",
@@ -955,6 +973,8 @@
     "size": "Taille"
   },
   "keyboard": {
+    "dictate": "Dicter",
+    "dictateDesc": "Maintenez le raccourci pour parler ou appuyez dessus pour démarrer et arrêter la dictée.",
     "newSession": "Nouvelle session",
     "newSessionDesc": "Démarrer une conversation dans le banc de travail actif.",
     "newWorkbench": "Nouveau banc de travail",

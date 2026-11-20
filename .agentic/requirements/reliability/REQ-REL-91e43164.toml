@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-REL-91e43164"
+title = "Reject conflicting dictation shortcuts"
+status = "active"
+requirement = "If a proposed dictation shortcut conflicts with a reserved chord or active command, then VERA shall leave the confirmed binding in place and show the shortcut editor error."
+verification = "Try a reserved chord and the active New session binding in the Dictation editor, observe the error and then save an unused chord."
+affected_paths = ["05_Software/src/libraries/shared/src/keyboard-shortcuts.ts","05_Software/src/apps/desktop/src/renderer/components/keyboard-shortcuts.tsx","05_Software/src/apps/desktop/src/renderer/components/settings.tsx"]
+linked_tests = ["05_Software/src/libraries/shared/src/keyboard-shortcuts.test.ts","05_Software/tests/e2e/dictation-composer.spec.ts"]
+priority = "normal"
+created = 2026-11-20
+updated = 2026-11-20

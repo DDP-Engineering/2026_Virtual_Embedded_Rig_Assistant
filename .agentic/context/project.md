@@ -15,8 +15,9 @@ User messages retain workbench image paths across restarts. Desktop uses workben
 Core delegated turns use the same workbench session service, gateway and event history. The format-1 database retains parent ownership and request identity across interruption. Each workbench admits up to three active delegated turns with a fixed inspection-only tool scope. Parent agents can launch, observe, wait for and stop the initial turn through the core tool registry. Monitoring publishes bounded masked replies and status derived from the durable event sequence. Desktop uses the same workbench ownership and initial outcome for two-way Chat navigation, with refresh, reopen and normal Stop and approval controls.
 
 Desktop dictation manages two pinned Whisper models in application data. The desktop stack supplies
-a session-bound capture seam, gesture-scoped microphone permission, bounded mono PCM and single-job
-offline inference with automatic or explicit language.
+session-bound capture, gesture-scoped microphone permission, bounded mono PCM and single-job
+offline inference with automatic or explicit language. The chat composer uses configurable hold or
+toggle gestures and inserts editable text into the initiating draft for explicit Send.
 
 ## Supported operation
 
@@ -61,7 +62,7 @@ Each component has a knowledge page that names its source files, tests, invarian
 | IPC boundary | [ipc-boundary](../knowledge/ipc-boundary.md) | Channels, errors, events, subscriptions, API and mock metadata. |
 | Renderer foundation | [renderer-foundation](../knowledge/renderer-foundation.md) | Layout, appearance, languages, accessibility, Settings pages, keyboard shortcut bindings. |
 | Application data | [app-data](../knowledge/app-data.md) | Settings, validation, portable locations, atomic saves, redacting logs, privacy masking choices. |
-| Dictation models | [dictation](../knowledge/dictation.md) | Pinned local Whisper downloads, model lifecycle and spoken language Settings. |
+| Dictation models | [dictation](../knowledge/dictation.md) | Pinned local Whisper models, microphone capture, composer shortcuts and owned draft insertion. |
 | Providers | [providers](../knowledge/providers.md) | Credential encryption, consent, redaction, endpoint configuration, masked forms, ChatGPT sign-in. |
 | LLM gateway | [llm-gateway](../knowledge/llm-gateway.md) | Model selection, capabilities and catalogs, connection tests, replay, manual live smoke. |
 | Agent runtime | [agent-runtime](../knowledge/agent-runtime.md) | Turn behavior, steering, context policy and compaction, tool-schema conversion, event mapping. |

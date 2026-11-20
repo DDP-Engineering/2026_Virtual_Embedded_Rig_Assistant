@@ -1,6 +1,6 @@
 // REQ-UX-4bea0001 REQ-REL-4bea0006 REQ-REL-4bea0004
 
-import type { ChatDetail, SessionSummary } from "@vera/shared";
+import type { ChatDetail, DictationRecordingMode, SessionSummary } from "@vera/shared";
 import { useContext, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../../api/index.js";
@@ -17,6 +17,7 @@ import { ContextIndicator } from "./usage-meter.js";
 
 export function SessionWorkspace({
   id,
+  dictationMode,
   workbenchId,
   changed,
   readOnly,
@@ -32,6 +33,7 @@ export function SessionWorkspace({
   composerFocused,
 }: {
   id?: string | undefined;
+  dictationMode?: DictationRecordingMode | undefined;
   workbenchId: string;
   changed: () => void;
   readOnly: boolean;
@@ -258,7 +260,10 @@ export function SessionWorkspace({
       {failure !== undefined && <ErrorMessage error={failure} />}
       {view && (
         <Composer
+          key={`${workbenchId}/${id}`}
           sessionId={id}
+          dictationMode={dictationMode}
+          chatVisible={shown}
           workbenchId={workbenchId}
           state={view.state}
           inspectorControls={<ContextIndicator state={view.state} open={() => setInspector(true)} />}

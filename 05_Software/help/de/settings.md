@@ -79,3 +79,5 @@ Wählen Sie **Whisper Small** (empfohlen) oder **Whisper Base** (kompakt). Für 
 Wählen Sie nach der Installation **Modell verwenden**. VERA speichert die Auswahl über Neustarts hinweg. **Entfernen** löscht die Dateien des Modells und hebt die Auswahl auf, wenn dieses Modell aktiv war. Falls das Entfernen fehlschlägt, schließen Sie Apps, die die Modelldateien nutzen, und wählen Sie **Erneut versuchen**. Die Modelle liegen in den VERA-Anwendungsdaten und stehen allen Workbenches zur Verfügung.
 
 Unter **Gesprochene Sprache** wählen Sie **Automatische Erkennung** oder die Sprache, die Sie sprechen möchten.
+
+Wählen Sie **Zum Sprechen gedrückt halten** (Standard) und halten Sie beim Sprechen die Mikrofontaste oder deren Tastenkombination gedrückt. Im Modus **Zum Starten oder Stoppen drücken** beenden Sie die Aufnahme durch erneutes Drücken. Über **Tastenkombination hinzufügen** im Tab Diktat weisen Sie eine Kombination für VERA zu. Reservierte und bereits belegte Kombinationen werden abgelehnt. Die Mikrofontaste funktioniert auch ohne Tastenkombination.

@@ -68,8 +68,13 @@ const fontSizeSchema = z.union([
   z.literal(20),
   z.literal(24),
 ]);
+export const dictationRecordingModeSchema = z.enum(["hold", "toggle"]);
+export type DictationRecordingMode = z.infer<typeof dictationRecordingModeSchema>;
+export const defaultDictationRecordingMode: DictationRecordingMode = "hold";
+
 const mutable = {
   dictation: dictationPreferencesSchema.optional(),
+  dictationRecordingMode: dictationRecordingModeSchema.optional(),
   privacy: appPrivacySchema.optional(),
   /** Empty selects the platform default; an explicit name/path must resolve on this machine. */
   shell: z
@@ -111,6 +116,7 @@ export const settingsSchema = z.strictObject({
   ...mutable,
 });
 export const settingsPatchSchema = z.strictObject({
+  dictationRecordingMode: mutable.dictationRecordingMode,
   privacy: mutable.privacy,
   shell: mutable.shell,
   keyboardShortcuts: mutable.keyboardShortcuts,

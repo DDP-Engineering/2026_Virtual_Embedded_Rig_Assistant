@@ -101,8 +101,9 @@ There is no upgrade-safety suite, because every stored format is version 1.
 
 - Vitest installs a non-loopback fetch and socket guard before application modules. E2e blocks non-loopback traffic, keeps Chromium sandboxing and uses temporary `userData`.
 - Runtime, session and UI suites use deterministic replay and loopback transports. Focused dictation
-  acceptance opts in with VERA_DICTATION_MODEL_ROOT to exercise the verified local Whisper worker and
-  sandboxed native capture from fixture audio. Real subscription sign-in, live web providers and live
+  acceptance opts in with VERA_DICTATION_MODEL_ROOT to exercise verified Whisper download responses,
+  the local worker, sandboxed capture from fixture audio, draft insertion and cancellation.
+  VERA_DICTATION_PACKAGED_APP selects the unpacked executable from the platform package. Real subscription sign-in, live web providers and live
   supplier keys are separate manual checks.
 - No test reaches real hardware. Boards, probes, instruments, adapters and meters are simulated by stand-ins; real-device acceptance is pending for every hardware plugin.
 - Linux in WSL2 is Linux execution. It is not native Ubuntu acceptance; say which one a result comes from. linux-arm64 execution is not established.

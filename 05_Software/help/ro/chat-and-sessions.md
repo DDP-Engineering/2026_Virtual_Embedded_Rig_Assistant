@@ -28,6 +28,12 @@ Pentru ca agentul să examineze o imagine din workbench, indică-i calea relativ
 
 Agentul poate redeschide o imagine trimisă din caseta de mesaj a acestei sesiuni folosind calea salvată. Poate examina până la opt imagini într-un pas și păstrează în turul curent ultimele opt imagini obținute cu instrumentul.
 
+## Dictează un mesaj
+
+Alege un model din [Setări > Dictare](settings.md). În modul cu apăsare continuă, ține apăsat butonul microfonului sau comanda configurată. Cu butonul focalizat, ține apăsată tasta Spațiu sau Enter. Eliberează pentru transcriere. În modul pornire/oprire, apasă o dată pentru înregistrare și din nou pentru transcriere. Escape sau Anulează dictarea renunță la înregistrare ori transcriere și lasă agentul să continue. Dacă părăsești chatul sau fereastra pierde focalizarea, dictarea se anulează.
+
+Rezultatul apare la cursorul inițial sau după textul selectat. Dacă ai editat mesajul în timpul dictării, rezultatul se adaugă la final. Textul și atașamentele se păstrează. Verifică textul și trimite-l cu Enter sau Trimite.
+
 ## Ghidează sau oprește o execuție în curs
 
 Cât timp agentul lucrează, poți continua să scrii și să trimiți mesaje, de exemplu „verifică și errata”. Acestea afișează **În așteptarea livrării** până când agentul le preia la pasul următor. Cât timp un card de aprobare așteaptă decizia ta, trimiterea este suspendată.

@@ -1478,6 +1478,7 @@ test("Settings selects one page with vertical tabs, including placeholders and k
     "appearance",
     "commands",
     "notifications",
+    "dictation",
     "shortcuts",
     "updates",
     "data",

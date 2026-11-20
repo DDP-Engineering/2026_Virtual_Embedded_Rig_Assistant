@@ -28,7 +28,13 @@ it.each(["en", "ro", "de", "fr"])(
     } as never);
     try {
       await act(async () =>
-        root.render(createElement(QueryClientProvider, { client }, createElement(DictationSettings))),
+        root.render(
+          createElement(
+            QueryClientProvider,
+            { client },
+            createElement(DictationSettings, { saving: false, update: () => {} }),
+          ),
+        ),
       );
       await act(async () => {
         await new Promise((resolve) => setTimeout(resolve, 20));
@@ -52,7 +58,7 @@ it.each(["en", "ro", "de", "fr"])(
           new Intl.NumberFormat(language, { maximumFractionDigits: 1 }).format(bytes / 1e6),
         );
       }
-      const select = container.querySelector("select");
+      const select = container.querySelector<HTMLSelectElement>("#dictation-language");
       expect(select?.value).toBe("auto");
       expect(select?.querySelector('option[value="ro"]')?.textContent).toBe(
         new Intl.DisplayNames(language, { type: "language" }).of("ro"),
@@ -106,7 +112,13 @@ it("sends retry, cancel, language, selection and removal actions from the tab", 
   };
   try {
     await act(async () =>
-      root.render(createElement(QueryClientProvider, { client }, createElement(DictationSettings))),
+      root.render(
+        createElement(
+          QueryClientProvider,
+          { client },
+          createElement(DictationSettings, { saving: false, update: () => {} }),
+        ),
+      ),
     );
     await settle();
     expect(container.textContent).toContain(i18n.t("dictation.integrity"));
@@ -118,7 +130,7 @@ it("sends retry, cancel, language, selection and removal actions from the tab", 
     await click(i18n.t("dictation.cancel"));
     expect(mock).toHaveBeenLastCalledWith("dictation.change", { action: "cancel", id: base.id });
     expect(container.querySelector("progress")).toBeNull();
-    const select = container.querySelector("select");
+    const select = container.querySelector<HTMLSelectElement>("#dictation-language");
     if (!select) throw new Error("Missing spoken language");
     mock.mockResolvedValueOnce(french as never);
     await act(async () => user.selectOptions(select, "fr"));

@@ -14,6 +14,7 @@ Acestea sunt comenzile rapide implicite ale VERA. Le poți schimba, adăuga sau 
 | Deschide terminalul | Ctrl+Shift+T | Deschide și focalizează terminalul utilizatorului. |
 | Caută în conversație | Ctrl+F | Caută în mesajele sesiunii curente. |
 | Activează câmpul mesajului | Neatribuită | Mută cursorul în câmpul mesajului curent. |
+| Dictează | Neatribuită | Ține apăsată comanda rapidă ca să dictezi sau apasă pe ea pentru a porni și opri dictarea în chat. |
 | Activează selectorul de model | Ctrl+Shift+M | Mută focalizarea pe modelul conversației. |
 | Marcajul următor | Ctrl+Alt+N | Sari la următorul mesaj marcat din această conversație. |
 | Marcajul anterior | Ctrl+Alt+P | Sari la mesajul marcat anterior din această conversație. |

@@ -79,3 +79,5 @@ Alege **Whisper Small** (recomandat) sau **Whisper Base** (compact). Pagina afi�
 După instalare, alege **Folosește modelul**. VERA păstrează selecția la repornire. **Elimină** șterge fișierele modelului și golește selecția dacă modelul era activ. Dacă eliminarea eșuează, închide aplicațiile care folosesc fișierele modelului și alege **Reîncearcă**. Modelele se află în datele aplicației VERA și sunt comune tuturor workbench-urilor.
 
 La **Limba vorbită**, alege **Detectare automată** sau selectează limba în care vei vorbi.
+
+Alege **Ține apăsat pentru a vorbi** (modul implicit) ca să ții apăsat butonul microfonului sau comanda lui cât timp vorbești. Alege **Apasă pentru a porni sau a opri** pentru două apăsări separate. Selectează **Adaugă comandă rapidă** în fila Dictare pentru a atribui o combinație valabilă în VERA. Editorul respinge combinațiile rezervate și pe cele deja folosite. Poți folosi butonul microfonului și fără comandă rapidă.

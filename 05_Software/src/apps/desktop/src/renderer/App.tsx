@@ -815,6 +815,7 @@ export function App() {
                       <SessionWorkspace
                         key={`${benchId}/${activeSession}`}
                         id={activeSession}
+                        dictationMode={snapshot.data?.settings.dictationRecordingMode}
                         workbenchId={benchId}
                         detail={bench.data?.config.chat.detail ?? "normal"}
                         changed={changed}

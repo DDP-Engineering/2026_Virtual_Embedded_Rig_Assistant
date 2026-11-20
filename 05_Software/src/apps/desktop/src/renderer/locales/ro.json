@@ -83,6 +83,24 @@
     "create": "Creează un workbench"
   },
   "dictation": {
+    "recordingMode": "Mod de înregistrare",
+    "holdMode": "Ține apăsat pentru a vorbi",
+    "toggleMode": "Apasă pentru a porni sau a opri",
+    "holdToTalk": "Ține apăsat pentru a dicta",
+    "toggleMicrophone": "Pornește sau oprește dictarea",
+    "cancelCapture": "Anulează dictarea",
+    "opening": "Se deschide microfonul…",
+    "recording": "Se înregistrează…",
+    "transcribing": "Se transcrie…",
+    "inserted": "Dictarea a fost adăugată în mesaj.",
+    "cancelled": "Dictarea a fost anulată.",
+    "busy": "O altă dictare este deja în desfășurare.",
+    "missingModel": "Alege un model instalat din Setări > Dictare.",
+    "permissionDenied": "Accesul la microfon a fost refuzat. Verifică permisiunile sistemului.",
+    "microphoneUnavailable": "Nu este disponibil niciun microfon. Verifică dispozitivul și încearcă din nou.",
+    "microphoneDisconnected": "Microfonul a fost deconectat. Reconectează-l și încearcă din nou.",
+    "noSpeech": "Nu s-a detectat vorbire. Încearcă din nou.",
+    "transcriptionFailed": "Transcrierea a eșuat. Verifică modelul ales și încearcă din nou.",
     "base": "Whisper Base",
     "small": "Whisper Small",
     "compact": "Compact",
@@ -955,6 +973,8 @@
     "size": "Dimensiune"
   },
   "keyboard": {
+    "dictate": "Dictează",
+    "dictateDesc": "Ține apăsată comanda rapidă ca să dictezi sau apasă pe ea pentru a porni și opri dictarea în chat.",
     "newSession": "Sesiune nouă",
     "newSessionDesc": "Începe o conversație în workbench-ul activ.",
     "newWorkbench": "Workbench nou",

@@ -1,14 +1,34 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { type DictationChange, type DictationModelState, dictationLanguageSchema } from "@vera/shared";
+import {
+  type DictationChange,
+  type DictationModelState,
+  type DictationRecordingMode,
+  defaultDictationRecordingMode,
+  dictationLanguageSchema,
+  dictationRecordingModeSchema,
+  type SettingsPatch,
+  type ShortcutOverrides,
+} from "@vera/shared";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../api/index.js";
 import { ErrorMessage } from "./error-message.js";
+import { KeyboardShortcuts } from "./keyboard-shortcuts.js";
 import "./dictation-settings.css";
 
 const queryKey = ["dictation.get"] as const;
 
-export function DictationSettings() {
+export function DictationSettings({
+  mode = defaultDictationRecordingMode,
+  bindings,
+  saving,
+  update,
+}: {
+  mode?: DictationRecordingMode | undefined;
+  bindings?: ShortcutOverrides | undefined;
+  saving: boolean;
+  update: (patch: SettingsPatch) => void;
+}) {
   const { t, i18n } = useTranslation();
   const locale = i18n.resolvedLanguage;
   const options = useMemo(() => {
@@ -43,6 +63,26 @@ export function DictationSettings() {
   return (
     <section id="section-dictation" className="surface" data-settings-section="dictation">
       <h2>{t("settings.dictation")}</h2>
+      <div className="language-field">
+        <label htmlFor="dictation-recording-mode">{t("dictation.recordingMode")}</label>
+        <select
+          id="dictation-recording-mode"
+          value={mode}
+          disabled={saving}
+          onChange={(event) =>
+            update({ dictationRecordingMode: dictationRecordingModeSchema.parse(event.currentTarget.value) })
+          }
+        >
+          <option value="hold">{t("dictation.holdMode")}</option>
+          <option value="toggle">{t("dictation.toggleMode")}</option>
+        </select>
+      </div>
+      <KeyboardShortcuts
+        only="dictate"
+        bindings={bindings}
+        disabled={saving}
+        update={(keyboardShortcuts) => update({ keyboardShortcuts })}
+      />
       {query.isPending && <p role="status">{t("dictation.loading")}</p>}
       {query.error && <ErrorMessage error={query.error} />}
       {change.error && <ErrorMessage error={change.error} />}

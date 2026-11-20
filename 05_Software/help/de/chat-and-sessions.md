@@ -28,6 +28,12 @@ Geben Sie dem Agenten den relativen Pfad eines Bildes im Workbench, damit er es 
 
 Der Agent kann ein in dieser Sitzung gesendetes Bild über seinen gespeicherten Pfad erneut öffnen. Pro Schritt kann er bis zu acht Bilder betrachten. Die acht zuletzt mit dem Werkzeug geöffneten Bilder bleiben im aktuellen Durchlauf verfügbar.
 
+## Eine Nachricht diktieren
+
+Wählen Sie ein Modell unter [Einstellungen > Diktat](settings.md). Halten Sie zum Diktieren die Mikrofontaste oder ihre Tastenkombination gedrückt. Wenn die Mikrofontaste fokussiert ist, halten Sie Leertaste oder Eingabetaste gedrückt. Lassen Sie zum Transkribieren los. Im Start/Stopp-Modus drücken Sie einmal für die Aufnahme und erneut für die Transkription. Mit Esc oder Diktat abbrechen verwerfen Sie die Aufnahme oder Transkription. Der Agent kann weiterarbeiten. Das Diktat wird abgebrochen, wenn Sie den Chat verlassen oder das Fenster den Fokus verliert.
+
+Der Text erscheint an der ursprünglichen Cursorposition oder nach der Auswahl. Wenn Sie den Entwurf beim Diktieren bearbeitet haben, wird das Diktat am Ende eingefügt. Text und Anhänge bleiben erhalten. Prüfen Sie den Entwurf und senden Sie ihn mit der Eingabetaste oder mit Senden.
+
 ## Einen laufenden Durchlauf steuern oder stoppen
 
 Während der Agent arbeitet, können Sie weiterschreiben und weitere Nachrichten senden, zum Beispiel „prüfe auch die Errata“. Sie zeigen **Zustellung ausstehend**, bis der Agent sie bei seinem nächsten Schritt aufnimmt. Solange eine Freigabekarte auf Ihre Entscheidung wartet, ist das Senden angehalten.

@@ -4,10 +4,10 @@ entries:
   - category: new
     topic: { en: Dictation, ro: Dictare, de: Diktat, fr: Dictée }
     text:
-      en: Download a local Whisper model in Settings and choose your spoken language.
-      ro: Descarcă un model Whisper local din Setări și alege limba vorbită.
-      de: In den Einstellungen ein lokales Whisper-Modell laden und die gesprochene Sprache wählen.
-      fr: Téléchargez un modèle Whisper local dans les paramètres et choisissez la langue parlée.
+      en: Download a Whisper model and dictate offline into your chat draft with the mic or a shortcut.
+      ro: Descarcă un model Whisper și dictează offline în chat cu microfonul sau o comandă rapidă.
+      de: Whisper-Modell laden und offline per Mikrofon oder Tastenkombination in den Chat diktieren.
+      fr: Téléchargez un modèle Whisper et dictez hors ligne dans le chat avec le micro ou un raccourci.
   - category: improved
     topic: { en: Chat, ro: Chat, de: Chat, fr: Chat }
     text:

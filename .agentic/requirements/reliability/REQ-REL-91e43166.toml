@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-REL-91e43166"
+title = "Cancel dictation ahead of turn stop"
+status = "active"
+requirement = "When the user presses Escape during a chat dictation, VERA shall cancel the capture or transcription without opening the agent Stop confirmation."
+verification = "Record and transcribe during an active turn; press Escape, assert no Stop confirmation or late insertion, and verify that a subsequent idle Escape still opens Stop. With a native modal open during dictation, verify that one Escape cancels capture and dismisses the modal."
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/dictation/use-composer-dictation.ts","05_Software/src/apps/desktop/src/renderer/components/session/workspace.tsx"]
+linked_tests = ["05_Software/tests/e2e/dictation-composer.spec.ts"]
+priority = "normal"
+created = 2026-11-20
+updated = 2026-11-20

@@ -79,3 +79,5 @@ Choisissez **Whisper Small** (recommandé) ou **Whisper Base** (compact). La pag
 Après l’installation, cliquez sur **Utiliser le modèle**. VERA mémorise votre choix après redémarrage. **Supprimer** efface les fichiers du modèle et annule sa sélection s’il était actif. Si la suppression échoue, fermez les applications qui utilisent les fichiers du modèle, puis cliquez sur **Réessayer**. Les modèles sont stockés dans les données de l’application VERA et partagés entre les bancs de travail.
 
 Sous **Langue parlée**, choisissez **Détection automatique** ou la langue que vous allez parler.
+
+Choisissez **Maintenir pour parler** (par défaut) pour maintenir le bouton du microphone ou son raccourci en parlant. Choisissez **Appuyer pour démarrer ou arrêter** pour utiliser deux pressions séparées. Sélectionnez **Ajouter un raccourci** dans l’onglet Dictée pour définir une combinaison active dans VERA. Les combinaisons réservées ou déjà utilisées sont refusées. Le microphone reste utilisable sans raccourci.

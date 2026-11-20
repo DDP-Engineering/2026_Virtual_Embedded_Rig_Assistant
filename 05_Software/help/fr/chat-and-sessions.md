@@ -28,6 +28,12 @@ Indiquez à l’agent le chemin relatif d’une image du banc de travail pour qu
 
 L’agent peut rouvrir une image envoyée dans cette session en utilisant son chemin enregistré. Il peut examiner jusqu’à huit images par étape et conserve pendant le tour les huit dernières images ouvertes par l’outil.
 
+## Dicter un message
+
+Sélectionnez un modèle dans [Paramètres > Dictée](settings.md). En mode maintien, maintenez le bouton du microphone ou son raccourci. Lorsque le bouton a le focus, maintenez Espace ou Entrée. Relâchez pour transcrire. En mode démarrage et arrêt, appuyez une fois pour enregistrer et une seconde fois pour transcrire. Échap ou Annuler la dictée abandonne l’enregistrement ou la transcription et laisse l’agent poursuivre son travail. La dictée est annulée si vous quittez le chat ou si la fenêtre perd le focus.
+
+Le résultat apparaît à la position initiale du curseur ou après le texte sélectionné. Si vous avez modifié le brouillon pendant la dictée, le résultat s’ajoute à la fin. Le texte et les pièces jointes restent dans le brouillon. Relisez le texte et envoyez-le avec Entrée ou Envoyer.
+
 ## Orienter ou arrêter un tour en cours
 
 Pendant que l’agent travaille, vous pouvez continuer à écrire et envoyer d’autres messages, par exemple « vérifie aussi l’errata ». Ils affichent **En attente d’envoi** jusqu’à ce que l’agent les prenne en compte à son étape suivante. Tant qu’une carte d’approbation attend votre décision, l’envoi est suspendu.

@@ -28,6 +28,12 @@ Ask the agent to inspect a workbench image by giving its relative path. With an 
 
 The agent can reopen a composer image from this session using its saved path after you send it. It can inspect up to eight images in one step and keeps the eight most recent tool images in the current turn.
 
+## Dictate a message
+
+Choose a model in [Settings > Dictation](settings.md). In push-to-talk mode, hold the microphone button or its configured shortcut. With the button focused, hold Space or Enter. Release to transcribe. In start/stop mode, press the button or shortcut once to record and again to transcribe. Escape or Cancel dictation discards the recording or transcription and lets a running agent turn continue. Leaving the chat or losing window focus cancels dictation.
+
+The result appears at the original caret or after the selected text. If you edited the draft while dictating, the result goes at the end. Existing text and attachments stay in the draft. Review the text and send it with Enter or Send.
+
 ## Steer or stop a running turn
 
 While the agent works, you can keep typing and send more messages, for example "also check the errata". They show **Pending delivery** until the agent takes them in at its next step. While an approval card waits for your decision, sending is paused.

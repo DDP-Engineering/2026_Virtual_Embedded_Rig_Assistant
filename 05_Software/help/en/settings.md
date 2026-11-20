@@ -79,3 +79,5 @@ Choose **Whisper Small** (recommended) or **Whisper Base** (compact). The page s
 Choose **Use model** after installation. VERA remembers your selection across restarts. **Remove** deletes that model’s files and clears the selection if it was active. If removal fails, close apps using the model files and choose **Retry**. Models are stored in VERA’s application data and shared across workbenches.
 
 Under **Spoken language**, choose **Automatic detection** or select the language you plan to speak.
+
+Choose **Push-to-talk** (the default) to hold the microphone button or its shortcut while you speak. Choose **Press to start or stop** to start and end recording with separate presses. Select **Add shortcut** in the Dictation tab to assign an app-local chord. The editor rejects reserved combinations and shortcuts already in use. You can use the microphone button with the shortcut unassigned.

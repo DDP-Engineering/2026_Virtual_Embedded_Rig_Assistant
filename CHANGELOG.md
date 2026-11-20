@@ -8,6 +8,7 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ### Added
 
+- Dictate into the chat draft with the microphone or a configurable shortcut, then review and send.
 - Desktop dictation captures bounded microphone audio and transcribes offline with multilingual Whisper.
 - Dictation Settings downloads and manages local Whisper models and remembers the spoken language.
 - Chat replies and code blocks offer exact copying; explicit Bash and PowerShell blocks run in compatible terminals.

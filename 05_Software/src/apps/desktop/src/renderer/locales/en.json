@@ -83,6 +83,24 @@
     "create": "Create a workbench"
   },
   "dictation": {
+    "recordingMode": "Recording mode",
+    "holdMode": "Push-to-talk",
+    "toggleMode": "Press to start or stop",
+    "holdToTalk": "Hold to dictate",
+    "toggleMicrophone": "Start or stop dictation",
+    "cancelCapture": "Cancel dictation",
+    "opening": "Opening microphone…",
+    "recording": "Recording…",
+    "transcribing": "Transcribing…",
+    "inserted": "Dictation added to draft.",
+    "cancelled": "Dictation cancelled.",
+    "busy": "Another dictation is already active.",
+    "missingModel": "Select an installed model in Settings > Dictation.",
+    "permissionDenied": "Microphone access was denied. Check your system microphone permissions.",
+    "microphoneUnavailable": "No microphone is available. Check the device and try again.",
+    "microphoneDisconnected": "The microphone was disconnected. Reconnect it and try again.",
+    "noSpeech": "No speech was detected. Try again.",
+    "transcriptionFailed": "Transcription failed. Check the selected model and try again.",
     "base": "Whisper Base",
     "small": "Whisper Small",
     "compact": "Compact",
@@ -955,6 +973,8 @@
     "size": "Size"
   },
   "keyboard": {
+    "dictate": "Dictate",
+    "dictateDesc": "Hold the shortcut to talk or press it to start and stop dictation in chat.",
     "newSession": "New session",
     "newSessionDesc": "Start a conversation in the active workbench.",
     "newWorkbench": "New workbench",

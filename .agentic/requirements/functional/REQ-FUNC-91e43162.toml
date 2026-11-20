@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-FUNC-91e43162"
+title = "Apply the configured dictation recording mode"
+status = "active"
+requirement = "When the user selects a recording mode in Dictation settings, VERA shall use that saved mode in subsequent chat captures."
+verification = "Save each mode, reopen Settings and restart with the same profile; compare persisted mode and resulting recording gesture."
+affected_paths = ["05_Software/src/libraries/shared/src/settings.ts","05_Software/src/apps/desktop/src/renderer/components/dictation-settings.tsx","05_Software/src/apps/desktop/src/renderer/App.tsx","05_Software/src/apps/desktop/src/renderer/components/session/workspace.tsx"]
+linked_tests = ["05_Software/src/libraries/shared/src/keyboard-shortcuts.test.ts","05_Software/tests/e2e/dictation-composer.spec.ts","05_Software/tests/e2e/dictation-packaged-composer.spec.ts"]
+priority = "normal"
+created = 2026-11-20
+updated = 2026-11-20

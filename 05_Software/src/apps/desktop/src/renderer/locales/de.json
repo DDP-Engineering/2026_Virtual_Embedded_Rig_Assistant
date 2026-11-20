@@ -83,6 +83,24 @@
     "create": "Workbench erstellen"
   },
   "dictation": {
+    "recordingMode": "Aufnahmemodus",
+    "holdMode": "Zum Sprechen gedrückt halten",
+    "toggleMode": "Zum Starten oder Stoppen drücken",
+    "holdToTalk": "Zum Diktieren gedrückt halten",
+    "toggleMicrophone": "Diktat starten oder stoppen",
+    "cancelCapture": "Diktat abbrechen",
+    "opening": "Mikrofon wird geöffnet…",
+    "recording": "Aufnahme läuft…",
+    "transcribing": "Transkription läuft…",
+    "inserted": "Diktat in Entwurf eingefügt.",
+    "cancelled": "Diktat abgebrochen.",
+    "busy": "Ein anderes Diktat läuft bereits.",
+    "missingModel": "Wählen Sie ein installiertes Modell unter Einstellungen > Diktat.",
+    "permissionDenied": "Mikrofonzugriff verweigert. Prüfen Sie die Mikrofonberechtigungen des Systems.",
+    "microphoneUnavailable": "Kein Mikrofon verfügbar. Prüfen Sie das Gerät und versuchen Sie es erneut.",
+    "microphoneDisconnected": "Die Mikrofonverbindung wurde getrennt. Schließen Sie es erneut an.",
+    "noSpeech": "Keine Sprache erkannt. Versuchen Sie es erneut.",
+    "transcriptionFailed": "Transkription fehlgeschlagen. Prüfen Sie das gewählte Modell und versuchen Sie es erneut.",
     "base": "Whisper Base",
     "small": "Whisper Small",
     "compact": "Kompakt",
@@ -955,6 +973,8 @@
     "size": "Größe"
   },
   "keyboard": {
+    "dictate": "Diktieren",
+    "dictateDesc": "Halten Sie die Tastenkombination zum Sprechen oder drücken Sie sie zum Starten und Stoppen.",
     "newSession": "Neue Sitzung",
     "newSessionDesc": "Eine Unterhaltung im aktiven Workbench starten.",
     "newWorkbench": "Neuer Workbench",
