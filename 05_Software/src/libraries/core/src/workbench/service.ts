@@ -1134,6 +1134,8 @@ export class WorkbenchService {
   close(): Promise<void> {
     return this.run(async () => {
       await this.writes.drain();
+      if (this.owned && (await ordinary(this.owned.folder, true)))
+        await ordinary(join(this.owned.folder, ".vera"), true);
       await this.stopIngest();
       try {
         if (this.owned)

@@ -90,6 +90,7 @@ sidebar are described in [workbench editor](workbench-editor.md).
   the lock (or falls back to read-only), then openDb checks the schema before any database or recents
   write; an INVALID/CONFLICT database releases the newly taken lock. Failed replacement preparation closes its handle
   and releases the new token while retaining the previous workbench. Close/successful switches dispose handles.
+  Closing an owned workbench rejects redirected runtime directories before draining the ingester.
   Owned release checkpoints under the token guard before unlink; failed unlink retains usable storage.
   Disposal after release or ownership loss preserves source bytes through writer-first/read-only-last close.
 - Config get/update deep-merges known mutable fields with current disk data, retains unknown keys,

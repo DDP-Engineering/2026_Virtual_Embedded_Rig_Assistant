@@ -1,6 +1,13 @@
 version: Unreleased
 date: null
 entries:
+  - category: fixed
+    topic: { en: Workbench, ro: Workbench, de: Workbench, fr: Banc de travail }
+    text:
+      en: Closing a workbench reports when its internal folder has been redirected.
+      ro: La închidere, VERA semnalează dacă folderul intern al workbench-ului a fost redirecționat.
+      de: Beim Schließen meldet VERA, wenn der interne Ordner der Workbench umgeleitet wurde.
+      fr: À la fermeture, VERA signale si le dossier interne du banc de travail a été redirigé.
   - category: new
     topic: { en: Dictation, ro: Dictare, de: Diktat, fr: Dictée }
     text:
@@ -53,10 +60,10 @@ entries:
   - category: fixed
     topic: { en: Terminal, ro: Terminal, de: Terminal, fr: Terminal }
     text:
-      en: Terminal text follows the code/output text size setting immediately and refits the terminal.
-      ro: Textul terminalului urmează imediat dimensiunea pentru cod/ieșire și recalculează rândurile.
-      de: Terminaltext folgt sofort der Schriftgröße für Code/Ausgabe und passt Zeilen und Spalten an.
-      fr: Le terminal suit immédiatement la taille du texte de code/sortie et ajuste lignes et colonnes.
+      en: Terminal refits with text size, shows clean history and closes without spurious errors.
+      ro: Terminalul se adaptează la mărimea textului, arată istoricul curat și se închide fără erori false.
+      de: Terminal passt sich der Textgröße an, zeigt sauberen Verlauf und schließt ohne Fehlalarm.
+      fr: Le terminal suit la taille du texte, affiche un historique propre et se ferme sans fausse erreur.
   - category: fixed
     topic: { en: Files, ro: Fișiere, de: Dateien, fr: Fichiers }
     text:
@@ -71,13 +78,6 @@ entries:
       ro: Panouri compacte, carduri de rulare clare, chat centrat și tabul Instrucțiuni și skill-uri.
       de: Kompakte Panels, klare Laufkarten, zentrierter Chat und der Tab Anweisungen und Skills.
       fr: Panneaux compacts, exécutions lisibles, chat centré et onglet Instructions et compétences.
-  - category: fixed
-    topic: { en: Terminal, ro: Terminal, de: Terminal, fr: Terminal }
-    text:
-      en: Terminal history avoids control characters; closing no longer shows a missing-operation error.
-      ro: Istoricul nu mai introduce caractere de control; închiderea terminalului nu mai afișează erori.
-      de: Keine Steuerzeichen beim Anzeigen des Verlaufs und keine Fehlermeldung beim Schließen.
-      fr: Plus de caractères de contrôle dans l’historique ni d’erreur à la fermeture du terminal.
   - category: fixed
     topic: { en: Commands, ro: Comenzi, de: Befehle, fr: Commandes }
     text:
