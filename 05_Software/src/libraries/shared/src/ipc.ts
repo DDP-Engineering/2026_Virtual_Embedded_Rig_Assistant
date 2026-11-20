@@ -86,6 +86,7 @@ import {
   providerDiscoverySchema,
   reasoningOptionSchema,
 } from "./provider-discovery.js";
+import { curatedDiscoveryRequestSchema, curatedDiscoverySchema } from "./provider-presets.js";
 import {
   modelReferenceSchema,
   providerCatalogSchema,
@@ -847,6 +848,11 @@ export const channels = {
     "providers.discover",
     providerDiscoveryRequestSchema,
     providerDiscoverySchema,
+  ),
+  "providers.presets.discover": defineChannel(
+    "providers.presets.discover",
+    curatedDiscoveryRequestSchema,
+    curatedDiscoverySchema,
   ),
   "providers.image.capability": defineChannel(
     "providers.image.capability",

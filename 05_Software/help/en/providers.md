@@ -2,6 +2,8 @@
 
 A provider gives VERA access to a language model. You need at least one. Set providers up in **Settings** → **Providers**, which has two parts: **Subscriptions** and **API / local connections**.
 
+Under **Add connection**, use **Search providers** to find a provider by name.
+
 ## ChatGPT subscription
 
 1. Under **ChatGPT subscription**, select **Sign in with ChatGPT**. Your system browser opens the sign-in page.
@@ -60,6 +62,8 @@ Keys are stored encrypted with your operating system's secure storage. When that
 - For a workbench: **Edit workbench** → **Agent and chat** → **Default model**, written as `provider/model`. Leave it empty to use the application default.
 
 The session choice wins over the workbench default, and the workbench default over the application default.
+
+The model choices show the provider, context limit, input types and available tool or reasoning information. **Tools unverified** means tool calling has not been confirmed for that model.
 
 ## Common errors
 

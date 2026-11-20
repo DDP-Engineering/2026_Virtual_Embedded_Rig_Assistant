@@ -36,6 +36,21 @@ replay or a scripted loopback endpoint, never a real model (L11, 08 §3).
 
 ## 2. Custom endpoints
 
+Settings offers a searchable set of connection presets. The built-in OpenAI and local choices
+retain their existing connection workflows. The shared curated registry defines service and binding
+IDs, authentication, protocol, exact HTTPS inference and catalog routes, and per-model metadata.
+The shipped curated registry is empty until the provider integrations pass their own live acceptance.
+
+A curated connection uses a reserved random slug under the existing `custom:<slug>` identity and
+keeps the selected preset and binding in format-1 settings. The credential slot includes the slug
+and a digest of the registered routes and authentication contract. Main rejects changes to a saved
+binding. Catalog discovery takes registry IDs, can use a draft key or that connection's saved slot,
+and returns discovered model IDs, a manual-entry result or a structured error. Catalog and inference
+reject redirects. Chat Completions inference requires the exact registered POST route.
+The saved model ID and the registry's model entries are selectable, including IDs with slashes.
+Model options show service identity, context, input and known tools and reasoning. Unknown input and
+reasoning remain unverified, and manual context limits are identified as configured.
+
 | Field | Rule or default |
 |---|---|
 | `name` | required, at most 80 characters, unique ignoring case; the slug (NFKD, lower case, `[a-z0-9-]`) is derived on creation and kept on rename |

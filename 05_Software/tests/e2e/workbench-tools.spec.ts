@@ -44,7 +44,30 @@ test("native tool checkbox configuration persists, cancels drafts and translates
     await expect(page.locator("[data-tool-toggle]")).toHaveCount(coreToolNames.length - 1);
     const viewImage = page.locator('[data-tool-toggle="view_image"]');
     await expect(viewImage).toHaveCount(0);
+    await page.evaluate(() =>
+      (window as unknown as { vera: VeraBridge }).vera.invoke("providers.save", {
+        provider: "custom",
+        config: {
+          name: "Workbench model fixture",
+          baseUrl: "http://127.0.0.1:1/v1",
+          model: "org/manual/model",
+          protocol: "lmstudio",
+          models: [
+            {
+              id: "org/manual/model",
+              name: "Manual fixture",
+              contextWindow: 32768,
+              maxOutputTokens: 4096,
+              reasoningOptions: [],
+            },
+          ],
+        },
+      }),
+    );
     await page.locator('[data-project-section="agent"]').click();
+    await expect(
+      page.locator('datalist option[value="custom:workbench-model-fixture/org/manual/model"]'),
+    ).toHaveAttribute("label", /Workbench model fixture.*32,768 tokens.*Tools unverified/);
     await page.locator("[data-project-model]").fill("openai/gpt-4o");
     await page.locator('[data-project-section="tools"]').click();
     await expect(viewImage).toBeChecked();

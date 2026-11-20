@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-SEC-c8d0ae29"
+title = "Bind curated keys to the connection and service routes"
+status = "active"
+requirement = "When VERA authenticates a curated catalog or inference request, VERA shall use only the credential for that saved connection and its exact registered binding."
+verification = "Capture separate catalog and inference requests for two plans, try to edit the binding or borrow a saved ID, and assert no wrong-route request."
+affected_paths = ["05_Software/src/libraries/core/src/llm/preset-connection.ts", "05_Software/src/libraries/core/src/llm/providers.ts", "05_Software/src/apps/desktop/src/main/provider-settings.ts", "05_Software/src/apps/desktop/src/main/provider-discovery.ts", "05_Software/src/libraries/shared/src/providers.ts", "05_Software/src/libraries/shared/src/ipc.ts", "05_Software/src/apps/desktop/src/main/ipc-router.test.ts", "05_Software/src/apps/desktop/src/main/provider-presets.test.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/provider-presets.test.ts", "05_Software/src/apps/desktop/src/main/ipc-router.test.ts"]
+created = 2026-11-20
+updated = 2026-11-20
+spec = "specs/REQ-SEC-c8d0ae29.md"

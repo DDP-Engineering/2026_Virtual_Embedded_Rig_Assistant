@@ -256,6 +256,7 @@ it("infers registry types and returns validated metadata", async () => {
     | "session.reasoning.set"
     | "session.mode.set"
     | "providers.discover"
+    | "providers.presets.discover"
     | "providers.image.capability"
     | "providers.models"
     | "providers.test"

@@ -1637,6 +1637,9 @@ What this plugin does.
         };
         break;
       }
+      case "providers.presets.discover":
+        value = { status: "failed", error: veraError("NOT_FOUND") };
+        break;
       case "providers.models": {
         const { id } = input.data as Request<"providers.models">;
         if (id === "chatgpt") {

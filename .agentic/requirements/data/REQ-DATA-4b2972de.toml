@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-DATA-4b2972de"
+title = "Store independent curated provider connections"
+status = "active"
+requirement = "When a user saves a curated provider connection, VERA shall assign a stable model-reference identity scoped to that connection."
+verification = "Save two test plans, rename one, reload settings, remove and recreate it, and assert unique immutable references for surviving connections."
+affected_paths = ["05_Software/src/libraries/shared/src/providers.ts", "05_Software/src/apps/desktop/src/main/provider-settings.ts", "05_Software/src/libraries/shared/src/provider-presets.ts", "05_Software/src/apps/desktop/src/main/provider-settings.test.ts", "05_Software/src/apps/desktop/src/main/provider-settings.test-support.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/provider-presets.test.ts", "05_Software/src/apps/desktop/src/main/provider-settings.test.ts", "05_Software/src/libraries/shared/src/providers.test.ts"]
+created = 2026-11-20
+updated = 2026-11-20

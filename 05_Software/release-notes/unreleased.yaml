@@ -23,12 +23,12 @@ entries:
       de: Antworten und Code kopieren; Ausführen meidet hängende Terminals sowie leere oder zu lange Blöcke.
       fr: Copiez réponses ou code ; Exécuter évite les terminaux bloqués et le code vide ou trop long.
   - category: new
-    topic: { en: Images, ro: Imagini, de: Bilder, fr: Images }
+    topic: { en: Models and images, ro: Modele și imagini, de: Modelle und Bilder, fr: Modèles et images }
     text:
-      en: Attach and reopen chat images. Set image support per model so the agent can inspect them.
-      ro: Atașează și redeschide imagini în chat. Alege modelele cu care agentul le poate examina.
-      de: Chatbilder anhängen und öffnen. Wählen Sie die Modelle, mit denen der Agent Bilder prüfen kann.
-      fr: Joignez et rouvrez des images. Choisissez les modèles avec lesquels l’agent peut les examiner.
+      en: Search providers and see model details. Attach, reopen and enable images per model.
+      ro: Caută furnizori și vezi detalii. Atașează, redeschide și activează imagini per model.
+      de: Anbieter suchen und Modelldetails sehen. Bilder anhängen, öffnen und pro Modell erlauben.
+      fr: Trouvez un fournisseur et les détails du modèle. Joignez, ouvrez et autorisez les images par modèle.
   - category: fixed
     topic: { en: Skills, ro: Skills, de: Skills, fr: Compétences }
     text:

@@ -17,6 +17,12 @@ strict public projections. Renderer holds a password draft until save/cancel and
 
 ## Public interface
 
+- Shared provider-presets.ts supplies the searchable picker choices and curated service and endpoint
+  definitions. A saved curated connection keeps its preset and binding, reserves a fresh model-reference
+  slug, and gives the key a separate route-scoped slot. The production curated catalog is empty.
+- providers.presets.discover accepts a preset/binding, optional local draft key and optional matching
+  saved connection. It returns discovered IDs, a manual-entry outcome or a structured failure. The key
+  stays in main or the editor draft. Editing keeps the saved service binding immutable.
 - ChatgptAuth login/cancel/status/logout owns one ten-minute OAuth attempt, prompt identity and callback/manual cleanup. Login uses VERA and the installationId; success selects a subscription only when the serialized current app default is null. Cancellation drains the underlying OAuth method and releases its callback port before another attempt. Stale browser failures/prompts are ignored. Logout drains pending login, removes chatgpt and clears only subscription defaults.
 - providers.chatgpt.login accepts start/storageConsent or manualCode/promptId; status projects connected, ISO expiry, idle/pending/manual/error/consent-required and stable localized errors. Busy1455 names the Codex CLI. The Sign in click authorizes the pinned OpenAI auth page through validated app.openExternal; the auth URL stays in main.
 - Weak-storage login requests an explicit memory/disk choice before OAuth. subscription-store retains that choice for serialized token refresh. Renderer uses imperative invoke for redirect drafts and clears them on submission, cancellation, callback and unmount; Query holds metadata only.

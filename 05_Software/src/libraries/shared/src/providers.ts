@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { veraErrorSchema } from "./errors.js";
 import { modelProfileSchema, reasoningOptionSchema } from "./provider-discovery.js";
+import { curatedInferenceSchema, curatedModelIdSchema, presetBindingSchema } from "./provider-presets.js";
 
 export const customProviderIdSchema = z
   .string()
@@ -23,6 +24,8 @@ export const modelCapabilitiesSchema = z.strictObject({
   inputBudget: z.number().int().positive().max(Number.MAX_SAFE_INTEGER),
   supportsTools: z.boolean().optional(),
   reasoningOptions: z.array(reasoningOptionSchema).max(16).optional(),
+  inputVerified: z.boolean().optional(),
+  contextVerified: z.boolean().optional(),
 });
 export function acceptsImages(model: { input: readonly ("text" | "image")[] }): boolean {
   return model.input.includes("image");
@@ -41,6 +44,8 @@ export const providerCatalogSchema = z.strictObject({
         id: z.string().min(1).max(200),
         name: z.string().min(1),
         reference: modelReferenceSchema,
+        providerName: z.string().min(1).max(240).optional(),
+        curated: z.literal(true).optional(),
       }),
     )
     .max(10001),
@@ -74,12 +79,14 @@ export function providerSlug(text: string): string {
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-|-$/g, "");
 }
+export const providerTokenDefaults = { contextWindow: 32768, maxOutputTokens: 4096 } as const;
 const configFields = {
   name,
-  baseUrl,
+  baseUrl: z.union([baseUrl, curatedInferenceSchema]),
+  preset: presetBindingSchema.optional(),
   model,
-  contextWindow: positive.default(32768),
-  maxOutputTokens: positive.default(4096),
+  contextWindow: positive.default(providerTokenDefaults.contextWindow),
+  maxOutputTokens: positive.default(providerTokenDefaults.maxOutputTokens),
   supportsTools: z.boolean().optional(),
   protocol: z.literal("lmstudio").optional(),
   models: z.array(modelProfileSchema).max(10000).optional(),
@@ -103,7 +110,22 @@ function budget(value: {
   );
 }
 
-export const customConfigSchema = z.strictObject(configFields).refine(budget);
+function providerConfig(value: z.output<z.ZodObject<typeof configFields>>): boolean {
+  if (value.preset) {
+    return (
+      curatedInferenceSchema.safeParse(value.baseUrl).success &&
+      curatedModelIdSchema.safeParse(value.model).success &&
+      !value.protocol &&
+      !value.models &&
+      !value.imageModels
+    );
+  }
+  return baseUrl.safeParse(value.baseUrl).success;
+}
+const curatedSlug = /^preset-[a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12}$/;
+export const customConfigSchema = z
+  .strictObject(configFields)
+  .refine((value) => (!!value.preset || budget(value)) && providerConfig(value));
 function noSecretFields(value: unknown): boolean {
   if (Array.isArray(value)) return value.every(noSecretFields);
   if (value && typeof value === "object")
@@ -124,6 +146,8 @@ export const customSettingsSchema = z
       .max(80),
   })
   .refine(budget)
+  .refine(providerConfig)
+  .refine((value) => curatedSlug.test(value.slug) === !!value.preset)
   .refine(noSecretFields);
 export const providerSettingsSchema = z
   .strictObject({ openai: openaiSettingsSchema, custom: z.array(customSettingsSchema).max(100) })

@@ -40,6 +40,16 @@ test("provider categories support concurrent connections, presets and aligned ac
   await expect(subscription).not.toContainText("port 1455");
   await section.locator('[data-action="add-provider"]').click();
   await expect(section.locator("[data-provider-preset]")).toHaveValue("openai");
+  const search = section.getByRole("searchbox", { name: "Search providers" });
+  await expect(search).toBeVisible();
+  await search.fill("OLLAMA");
+  const choices = section.locator("[data-provider-preset] option:not([hidden])");
+  await expect(choices).toHaveText(["Ollama"]);
+  await search.fill("no matching service");
+  await expect(choices).toHaveCount(0);
+  await expect(section.getByText("No matching providers")).toBeVisible();
+  await search.clear();
+  await expect(choices).toHaveCount(4);
   const secret = "fak-ui-only-private-9Zx4";
   await section.getByLabel("OpenAI API key", { exact: true }).fill(secret);
   await section.getByLabel("OpenAI model (optional)", { exact: true }).fill("mock-openai");

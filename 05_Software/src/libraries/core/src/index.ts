@@ -44,6 +44,7 @@ export * from "./knowledge/viewer.js";
 export * from "./knowledge/worker-host.js";
 export * from "./llm/connection.js";
 export * from "./llm/gateway.js";
+export * from "./llm/preset-connection.js";
 export * from "./llm/providers.js";
 export * from "./llm/scrub.js";
 export * from "./parts/configured.js";

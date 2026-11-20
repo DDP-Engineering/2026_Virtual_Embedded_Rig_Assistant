@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-UX-bfbeca0c"
+title = "Show model capabilities alongside provider identity"
+status = "active"
+requirement = "When a model appears in the session or workbench selector, VERA shall present its provider identity, context and available input, tools and reasoning metadata including unknown curated capabilities."
+verification = "Assert known and unverified catalog metadata and localized labels while preserving references, and check a partial profile budget at save and in the catalog."
+affected_paths = ["05_Software/src/libraries/core/src/llm/providers.ts", "05_Software/src/apps/desktop/src/renderer/components/model-select.tsx", "05_Software/src/apps/desktop/src/renderer/components/model-catalog.ts", "05_Software/src/apps/desktop/src/renderer/components/session/composer.tsx", "05_Software/src/libraries/shared/src/providers.ts", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json", "05_Software/src/apps/desktop/src/renderer/locales/fr.json"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/provider-presets.test.ts", "05_Software/tests/e2e/session-reasoning.spec.ts", "05_Software/tests/e2e/workbench-tools.spec.ts"]
+created = 2026-11-20
+updated = 2026-11-20

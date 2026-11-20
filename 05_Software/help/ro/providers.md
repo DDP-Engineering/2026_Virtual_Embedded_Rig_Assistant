@@ -2,6 +2,8 @@
 
 Un furnizor îi oferă lui VERA acces la un model de limbaj. Ai nevoie de cel puțin unul. Configurezi furnizorii în **Setări** → **Furnizori**, care are două părți: **Abonamente** și **Conexiuni API / locale**.
 
+Sub **Adaugă conexiune**, folosește **Caută furnizori** pentru a găsi un furnizor după nume.
+
 ## Abonament ChatGPT
 
 1. La **Abonament ChatGPT**, selectează **Autentificare cu ChatGPT**. Browserul sistemului deschide pagina de autentificare.
@@ -60,6 +62,8 @@ Cheile sunt stocate criptat cu stocarea securizată a sistemului de operare. Câ
 - Pentru un workbench: **Editează workbench-ul** → **Agent și chat** → **Model implicit**, scris ca `provider/model`. Lasă câmpul gol pentru a folosi valoarea implicită a aplicației.
 
 Alegerea din sesiune are prioritate față de valoarea implicită a workbench-ului, iar valoarea implicită a workbench-ului față de cea a aplicației.
+
+Lista de modele afișează furnizorul, limita de context, tipurile de intrare și informațiile disponibile despre instrumente și raționare. **Instrumente neverificate** indică faptul că apelarea instrumentelor nu a fost confirmată pentru acel model.
 
 ## Erori frecvente
 

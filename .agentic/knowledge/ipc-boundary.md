@@ -31,6 +31,9 @@ shortcut. Existing persisted event format remains 1.
 
 ## Public interface
 
+- `providers.presets.discover` accepts registry IDs and optional draft or matching saved connection
+  identity. Its strict result carries IDs, a manual-entry reason or a structured provider error.
+  Provider writes enter through the dedicated save and remove channels.
 - `dictation.get` and `dictation.change` return verified installation summaries, progress and
   effective selection. Requests carry a catalog model id or spoken-language code. The trust
   boundary and mock operate on schemas in shared/src/dictation.ts. The capture channels admit,

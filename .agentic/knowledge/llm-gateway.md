@@ -10,6 +10,9 @@ Core resolves models and wraps exact-pinned pi-ai1.1.0. Desktop main supplies cu
 
 ## Public interface
 
+- Curated connections resolve their registered HTTPS catalog URL independently of the inference base.
+  Public models include the saved manual or discovered selection and registry profiles. Chat and workbench
+  share option labels with provider identity, context, input, tools and reasoning metadata.
 LlmRequest.maskOutput is a host-owned live callback; omitted means on, including connection tests. SessionService supplies the agent choice, projects before context counting/compaction and revalidates the actual request budget after durable publication. Stream scrubbers hold split-secret tails while on; off passes content literally. message-scrub.ts preserves execution tool-call arguments at provider completion, and the session projects stored/request views separately. Provider errors and errorMessage diagnostics always use the unconditional scrubber. gateway.test.ts checks every agent/exports pair and live output policy.
 
 - Replay steps optionally declare validated nonnegative integer usage.input and usage.output for deterministic numeric statistics acceptance. Omitted usage stays zero/unreported; totals sum the supplied counts, costs stay zero. Replay fixture parsing validates on scenario use, and replay.test.ts covers invalid measurements. Native prompt-usage.spec.ts exercises real model/tool steps, per-prompt projection and restart without live egress.
@@ -31,6 +34,13 @@ LlmRequest.maskOutput is a host-owned live callback; omitted means on, including
 
 ## Invariants
 
+- Curated inference uses the pinned Chat Completions adapter and a request-local scoped key. It accepts
+  the exact registered POST path. Curated catalog requests refuse redirects, bound response size,
+  scrub the public result and honor cancellation. Request-local secrets are masked in text and tool
+  deltas. With agent masking enabled, a terminal tool call containing a request-only key is refused
+  before it reaches session processing. A successful tool probe can establish support for the saved
+  model while its configuration and credential remain current. Curated limits merge the selected
+  model's draft and known metadata at save. Other profiles use independent budgets.
 - Main owns stored secrets; API OpenAI ignores ambient environment/OAuth keys, and subscription ignores API-key fallback. Custom requests use conservative compatibility and an optional-key placeholder.
 - Per-request provider snapshots prevent concurrent requests crossing endpoints. Redirects are rejected; configured origin is enforced for stream fetches. Timeout30s, retry0, cancellation propagation.
 - Provider errors map to OFFLINE or PROVIDER with auth/rate_limit/context/provider reasons, safe messages and optional Retry-After. With agent masking on, retained raw/escaped secrets are scrubbed across stream chunk boundaries and in final presentation messages; actual usage and protocol discriminants are preserved. Execution tool-call arguments remain raw authority while stored/request views project them; other assistant metadata/signatures follow agent masking, and successful/partial timestamps use host Clock at terminal emission.

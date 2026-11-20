@@ -1,13 +1,26 @@
 import type { Clock, SettingsService } from "@vera/core";
-import { createPiAiGateway, type LlmGateway, resolveModelReference, testConnection } from "@vera/core";
+import {
+  createPiAiGateway,
+  discoverPresetModels,
+  type LlmGateway,
+  resolveCuratedConnection,
+  resolveModelReference,
+  resolveProviderBinding,
+  testConnection,
+} from "@vera/core";
 import {
   acceptsImages,
+  type CuratedDiscovery,
+  type CuratedDiscoveryRequest,
+  curatedDiscoveryRequestSchema,
+  curatedDiscoverySchema,
   type ProviderCatalog,
   type ProviderDiscoveryRequest,
   type ProviderTestResult,
   providerCatalogSchema,
   providerTestResultSchema,
   veraError,
+  veraErrorSchema,
 } from "@vera/shared";
 import type { CredentialFile } from "./credentials.js";
 import { discoverProvider } from "./provider-discovery.js";
@@ -18,6 +31,7 @@ import { subscriptionStore } from "./subscription-store.js";
 export class ProviderGateway {
   readonly api: LlmGateway;
   private closed = false;
+  private readonly lifetime = new AbortController();
   private readonly active = new Set<Promise<unknown>>();
   constructor(
     private readonly settings: SettingsService,
@@ -26,6 +40,7 @@ export class ProviderGateway {
     private readonly clock: Clock,
     gateway?: LlmGateway,
     private readonly defaultReference?: () => string,
+    private readonly fetcher?: typeof fetch,
   ) {
     this.api =
       gateway ??
@@ -36,6 +51,8 @@ export class ProviderGateway {
         scrub: (text) => credentials.scrub(text),
         knownSecrets: () => credentials.knownSecrets(),
         now: () => clock.now().getTime(),
+        presets: providers.presets,
+        ...(fetcher ? { fetch: fetcher } : {}),
       });
   }
   modelReference(session?: string | null, workbench?: string | null): string {
@@ -60,6 +77,52 @@ export class ProviderGateway {
       discoverProvider(request, { settings: this.settings, credentials: this.credentials }),
     );
   }
+  discoverPreset(input: CuratedDiscoveryRequest): Promise<CuratedDiscovery> {
+    // The key is a local draft until providers.save. Register it for masking even if validation fails.
+    if (typeof input?.apiKey === "string") this.credentials.registerSecret(input.apiKey);
+    return this.track(async () => {
+      const parsed = curatedDiscoveryRequestSchema.safeParse(input);
+      if (!parsed.success) return { status: "failed", error: veraError("INVALID") };
+      const request = parsed.data;
+      const signal = this.lifetime.signal;
+      try {
+        const { binding } = resolveProviderBinding(this.providers.presets, request.preset);
+        let key = request.apiKey;
+        if (request.savedId) {
+          const saved = this.settings
+            .get()
+            .settings.providers.custom.find((p) => `custom:${p.slug}` === request.savedId);
+          if (
+            !saved?.preset ||
+            saved.preset.id !== request.preset.id ||
+            saved.preset.binding !== request.preset.binding
+          )
+            throw veraError("DENIED");
+          const { slot } = resolveCuratedConnection(saved, this.providers.presets);
+          if (key === undefined) {
+            const credential = await this.credentials.read(slot, { signal });
+            if (credential?.type === "api_key") key = credential.key;
+          }
+        }
+        const result = await discoverPresetModels(
+          binding,
+          key,
+          {
+            scrub: (text) => this.credentials.scrub(text),
+            ...(this.fetcher ? { fetch: this.fetcher } : {}),
+          },
+          signal,
+        );
+        return curatedDiscoverySchema.parse(result);
+      } catch (failure) {
+        const error = veraErrorSchema.safeParse(failure);
+        return {
+          status: "failed",
+          error: error.success ? error.data : veraError(signal.aborted ? "DENIED" : "PROVIDER"),
+        };
+      }
+    });
+  }
   imageCapability(draftModel: string | null) {
     return this.track(async () => {
       const reference = this.modelReference(null, draftModel);
@@ -68,29 +131,37 @@ export class ProviderGateway {
     });
   }
   models(id: string): Promise<ProviderCatalog> {
-    return this.track(async () => providerCatalogSchema.parse(await this.api.models(id)));
+    return this.track(async () =>
+      providerCatalogSchema.parse(await this.api.models(id, this.lifetime.signal)),
+    );
   }
   test(id: string, model?: string): Promise<ProviderTestResult> {
     return this.track(async () => {
       const before = this.settings.get().settings.providers.custom.find((c) => `custom:${c.slug}` === id);
+      const slot = before?.preset ? resolveCuratedConnection(before, this.providers.presets).slot : undefined;
+      const testKey = slot ? await this.credentials.read(slot, { signal: this.lifetime.signal }) : undefined;
       const result = providerTestResultSchema.parse(
         await testConnection(
           this.api,
           id,
           model,
-          undefined,
+          this.lifetime.signal,
           () => this.clock.now().getTime(),
           (text) => this.credentials.scrub(text),
         ),
       );
       const tools = result.steps.find((s) => s.step === "tools");
-      if (before && (!model || model === before.model) && tools?.status !== "skipped")
-        await this.providers.recordToolSupport(before, tools?.status === "pass");
+      if (before && (!model || model === before.model) && tools?.status !== "skipped") {
+        if (!before.preset) await this.providers.recordToolSupport(before, tools?.status === "pass");
+        else if (tools?.status === "pass" && testKey?.type === "api_key" && testKey.key)
+          await this.providers.recordToolSupport(before, true, testKey.key);
+      }
       return result;
     });
   }
   async close(): Promise<void> {
     this.closed = true;
+    this.lifetime.abort();
     await Promise.allSettled([...this.active]);
   }
 }

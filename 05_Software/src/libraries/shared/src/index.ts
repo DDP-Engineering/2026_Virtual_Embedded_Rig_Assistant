@@ -33,6 +33,7 @@ export * from "./power-measurements.js";
 export * from "./privacy.js";
 export * from "./program-rules.js";
 export * from "./provider-discovery.js";
+export * from "./provider-presets.js";
 export * from "./providers.js";
 export * from "./refs.js";
 export * from "./session.js";

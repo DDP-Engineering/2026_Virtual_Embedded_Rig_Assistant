@@ -8,6 +8,8 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ### Added
 
+- Search provider presets and see provider identity, model limits and capabilities when choosing a model.
+
 - Manage Interactive Browser in Web access and grant, show, stop, revoke or close it from Chat.
 - Authorized Desktop agents can read rendered public pages, follow links, and cite the final URL.
 

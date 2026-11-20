@@ -2,6 +2,8 @@
 
 Ein Anbieter gibt VERA Zugang zu einem Sprachmodell. Sie benötigen mindestens einen. Anbieter richten Sie unter **Einstellungen** → **Anbieter** ein; die Seite hat zwei Teile: **Abonnements** und **API- / lokale Verbindungen**.
 
+Wählen Sie **Verbindung hinzufügen** und nutzen Sie **Anbieter suchen**, um einen Anbieter nach Namen zu finden.
+
 ## ChatGPT-Abonnement
 
 1. Wählen Sie unter **ChatGPT-Abonnement** die Option **Mit ChatGPT anmelden**. Ihr Systembrowser öffnet die Anmeldeseite.
@@ -60,6 +62,8 @@ Schlüssel werden mit dem sicheren Speicher Ihres Betriebssystems verschlüsselt
 - Für einen Workbench: **Workbench bearbeiten** → **Agent und Chat** → **Standardmodell**, geschrieben als `provider/model`. Lassen Sie das Feld leer, um den Standard der Anwendung zu verwenden.
 
 Die Auswahl in der Sitzung hat Vorrang vor dem Standard des Workbenchs und dieser vor dem Standard der Anwendung.
+
+Die Modellauswahl zeigt Anbieter, Kontextlimit, Eingabetypen und bekannte Informationen zu Werkzeugen und Schlussfolgern. **Werkzeuge ungeprüft** bedeutet, dass Werkzeugaufrufe für das Modell noch nicht bestätigt sind.
 
 ## Häufige Fehler
 

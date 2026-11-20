@@ -3,9 +3,13 @@ import { openAICompletionsApi } from "@earendil-works/pi-ai/api/openai-completio
 import { createModels, createProvider, type MutableModels } from "@earendil-works/pi-ai/models";
 import { openaiProvider } from "@earendil-works/pi-ai/providers/openai";
 import {
+  type CuratedModel,
+  type CuratedProviderPreset,
+  curatedProviderPresets,
   customSettingsSchema,
   type ModelCapabilities,
   modelReferenceSchema,
+  type ProviderCatalog,
   type Settings,
   veraError,
 } from "@vera/shared";
@@ -14,6 +18,8 @@ import { parseChatGptCatalog } from "./chatgpt-catalog.js";
 import { mapProviderError, type ProviderFailure } from "./errors.js";
 import { type LlmEvent, type LlmGateway, type LlmRequest, splitModelReference } from "./gateway.js";
 import { scrubAssistantMessage } from "./message-scrub.js";
+import { curatedTokenLimits, discoverPresetModels, resolveCuratedConnection } from "./preset-connection.js";
+import { scrub } from "./scrub.js";
 import { createStreamScrubber } from "./stream-scrub.js";
 
 export type { AuthInteraction, Models } from "@earendil-works/pi-ai";
@@ -27,19 +33,29 @@ export interface GatewayHost {
   fetch?: typeof fetch;
   knownSecrets?: () => readonly string[];
   subscriptionCredentials?: CredentialStore;
+  presets?: readonly CuratedProviderPreset[];
 }
 type Custom = Settings["providers"]["custom"][number];
-function customModel(config: Custom, provider: string, id = config.model): Model<"openai-completions"> {
+function customModel(
+  config: Custom,
+  provider: string,
+  id = config.model,
+  curated?: CuratedModel,
+): Model<"openai-completions"> {
   const profile = config.models?.find((m) => m.id === id);
   if (config.protocol === "lmstudio" && !profile) throw veraError("NOT_FOUND");
   return {
     id,
-    name: profile?.name ?? id,
+    name: curated?.name ?? profile?.name ?? id,
     api: "openai-completions",
     provider,
     baseUrl: config.baseUrl.replace(/\/+$/, ""),
-    reasoning: !!profile?.reasoningOptions.length,
-    input: config.imageModels?.includes(id) ? ["text", "image"] : ["text"],
+    reasoning: !!(curated?.reasoningOptions ?? profile?.reasoningOptions)?.length,
+    input: curated?.input
+      ? [...curated.input]
+      : config.imageModels?.includes(id)
+        ? ["text", "image"]
+        : ["text"],
     cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
     contextWindow: profile?.contextWindow ?? config.contextWindow,
     maxTokens: profile?.maxOutputTokens ?? config.maxOutputTokens,
@@ -54,19 +70,18 @@ function customProvider(custom: Custom, provider: string, model = customModel(cu
     auth: {
       apiKey: {
         name: custom.name,
-        resolve: async ({ credential }) => ({
-          auth: {
-            apiKey: credential?.type === "api_key" && credential.key ? credential.key : "not-needed",
-          },
-          source: "credential",
-        }),
+        resolve: async ({ credential }) => {
+          const key = credential?.type === "api_key" && credential.key;
+          if (custom.preset && !key) throw veraError("DENIED");
+          return { auth: { apiKey: key || "not-needed" }, source: "credential" };
+        },
       },
     },
     api: openAICompletionsApi(),
   });
 }
 function limits(
-  model: Model<string>,
+  model: Pick<Model<string>, "provider" | "input" | "contextWindow" | "maxTokens">,
   supportsTools?: boolean,
   output?: number,
   reasoningOptions: string[] = [],
@@ -96,6 +111,16 @@ function limits(
     ...(supportsTools !== undefined ? { supportsTools } : {}),
     ...(reasoningOptions.length ? { reasoningOptions: [...reasoningOptions] } : {}),
   };
+}
+function containsCredential(value: unknown, key: string): boolean {
+  if (typeof value === "string") return value.includes(key);
+  if (Array.isArray(value)) return value.some((item) => containsCredential(item, key));
+  if (value !== null && typeof value === "object")
+    return Object.entries(value).some(([name, item]) => name.includes(key) || containsCredential(item, key));
+  return (
+    (value === null || typeof value === "boolean" || (typeof value === "number" && Number.isFinite(value))) &&
+    String(value) === key
+  );
 }
 export function createCollections(
   credentials: CredentialStore,
@@ -138,6 +163,7 @@ export function createPiAiGateway(
   host: GatewayHost,
 ): LlmGateway & { collections: ReturnType<typeof createCollections> } {
   const collections = createCollections(host.credentials, host.subscriptionCredentials);
+  const presets = host.presets ?? curatedProviderPresets;
   type Catalog = ReturnType<typeof parseChatGptCatalog>;
   let live: { token: string; until: number; models: Catalog } | undefined;
   let pending: { token: string; promise: Promise<Catalog> } | undefined;
@@ -225,6 +251,24 @@ export function createPiAiGateway(
     if (!parsed.success) throw veraError("INVALID");
     return parsed.data;
   };
+  function curatedTarget(
+    custom: Custom,
+    provider: string,
+    id: string,
+    connection = resolveCuratedConnection(custom, presets),
+  ) {
+    const profile = connection.binding.models?.find((m) => m.id === id);
+    const selected = id === custom.model;
+    if (!selected && !profile) throw veraError("NOT_FOUND");
+    const { contextWindow, maxOutputTokens } = curatedTokenLimits(custom, profile, selected);
+    return {
+      ...connection,
+      profile,
+      supportsTools: profile?.supportsTools ?? (selected ? custom.supportsTools : undefined),
+      model: { ...customModel(custom, provider, id, profile), contextWindow, maxTokens: maxOutputTokens },
+      reasoningOptions: [...(profile?.reasoningOptions ?? [])],
+    };
+  }
   const target = (reference: string) => {
     const { provider, model: id } = splitModelReference(reference);
     if (provider === "openai" || provider === "chatgpt") {
@@ -240,22 +284,30 @@ export function createPiAiGateway(
         supportsTools: undefined,
         slot: provider,
         reasoningOptions: current?.reasoningOptions ?? [],
+        curated: undefined,
+        profile: undefined,
       };
     }
     const custom = config(provider);
-    const model = customModel(custom, provider, id);
-    const models = createModels({ credentials: host.credentials });
+    const curated = custom.preset ? curatedTarget(custom, provider, id) : undefined;
+    const model = curated?.model ?? customModel(custom, provider, id);
+    const models = createModels(curated ? undefined : { credentials: host.credentials });
     models.setProvider(customProvider(custom, provider, model));
     return {
       models,
       model,
       endpoint: custom.baseUrl,
-      supportsTools: custom.models?.find((m) => m.id === id)?.supportsTools ?? custom.supportsTools,
-      slot: provider,
+      supportsTools: curated
+        ? curated.supportsTools
+        : (custom.models?.find((m) => m.id === id)?.supportsTools ?? custom.supportsTools),
+      slot: curated?.slot ?? provider,
+      curated,
+      profile: custom.protocol === "lmstudio" ? custom.models?.find((m) => m.id === id) : undefined,
       reasoningOptions:
-        custom.protocol === "lmstudio"
+        curated?.reasoningOptions ??
+        (custom.protocol === "lmstudio"
           ? (custom.models?.find((m) => m.id === id)?.reasoningOptions ?? [])
-          : [],
+          : []),
     };
   };
   const gateway: LlmGateway & { collections: typeof collections } = {
@@ -263,6 +315,7 @@ export function createPiAiGateway(
       const snapshot = createCollections(host.credentials, host.subscriptionCredentials);
       for (const custom of host.settings().providers.custom) {
         const parsed = customSettingsSchema.parse(custom);
+        if (parsed.preset) continue;
         snapshot.api.setProvider(customProvider(parsed, `custom:${parsed.slug}`));
       }
       return snapshot;
@@ -286,7 +339,15 @@ export function createPiAiGateway(
     },
     capabilities(reference, output) {
       const resolved = target(reference);
-      return limits(resolved.model, resolved.supportsTools, output, resolved.reasoningOptions);
+      return {
+        ...limits(resolved.model, resolved.supportsTools, output, resolved.reasoningOptions),
+        ...(resolved.curated
+          ? {
+              inputVerified: !!resolved.curated.profile?.input,
+              contextVerified: resolved.curated.profile?.contextWindow !== undefined,
+            }
+          : {}),
+      };
     },
     async models(provider, signal, probe = false) {
       let endpoint = "";
@@ -320,6 +381,47 @@ export function createPiAiGateway(
         const custom = config(provider);
         endpoint = custom.baseUrl;
         splitModelReference(`${provider}/${custom.model}`);
+        if (custom.preset) {
+          const connection = resolveCuratedConnection(custom, presets);
+          let reachability: ProviderCatalog["reachability"] = "skipped";
+          if (probe) {
+            const credential = await host.credentials.read(connection.slot, signal ? { signal } : {});
+            const discovery = await discoverPresetModels(
+              connection.binding,
+              credential?.type === "api_key" ? credential.key : undefined,
+              host,
+              signal,
+            );
+            if (discovery.status === "failed") throw discovery.error;
+            if (discovery.status === "discovered" || discovery.reason === "empty") reachability = "pass";
+          }
+          const ids = new Set([custom.model, ...(connection.binding.models?.map(({ id }) => id) ?? [])]);
+          return {
+            reachability,
+            models: [...ids].map((id) => {
+              const { model, profile, supportsTools, reasoningOptions } = curatedTarget(
+                custom,
+                provider,
+                id,
+                connection,
+              );
+              if (host.scrub(id) !== id) throw veraError("INVALID");
+              const service = [connection.preset.label, connection.binding.label].filter(Boolean).join(" · ");
+              const label = custom.name === connection.preset.label ? service : `${service} · ${custom.name}`;
+              return {
+                id,
+                name: host.scrub(model.name),
+                reference: host.scrub(`${provider}/${id}`),
+                providerName: host.scrub(label),
+                curated: true,
+                inputVerified: !!profile?.input,
+                contextVerified: profile?.contextWindow !== undefined,
+                ...limits(model, supportsTools, undefined, reasoningOptions),
+                ...(profile?.reasoningOptions ? { reasoningOptions } : {}),
+              };
+            }),
+          };
+        }
         if (custom.protocol === "lmstudio" && custom.models) {
           const listed = probe ? await list(endpoint, provider, signal) : null;
           return {
@@ -354,6 +456,7 @@ export function createPiAiGateway(
     async *stream(request: LlmRequest): AsyncIterable<LlmEvent> {
       let endpoint = "";
       const failure: ProviderFailure = {};
+      let redact = host.scrub;
       try {
         if (request.model.startsWith("chatgpt/")) await chatgptModels(request.signal);
         const resolved = target(request.model);
@@ -368,7 +471,12 @@ export function createPiAiGateway(
         endpoint = resolved.endpoint;
         const capabilities = limits(resolved.model, resolved.supportsTools, request.maxOutputTokens);
         const key = await host.credentials.read(resolved.slot, { signal: request.signal });
+        const curatedKey = resolved.curated && key?.type === "api_key" ? key.key : undefined;
+        if (curatedKey) redact = (text) => host.scrub(scrub(text, [curatedKey]));
+        const locallyMaskedKey = curatedKey && host.scrub(curatedKey) === curatedKey ? curatedKey : undefined;
+        request.signal.throwIfAborted();
         if (
+          (resolved.curated && !curatedKey) ||
           (resolved.slot === "openai" && (key?.type !== "api_key" || !key.key)) ||
           (resolved.slot === "chatgpt" && key?.type !== "oauth")
         ) {
@@ -383,7 +491,11 @@ export function createPiAiGateway(
           const url = new URL(
             typeof input === "string" ? input : input instanceof URL ? input.href : input.url,
           );
-          if (url.origin !== new URL(endpoint).origin) throw veraError("DENIED");
+          if (resolved.curated) {
+            const method = init?.method ?? (input instanceof Request ? input.method : "GET");
+            if (method !== "POST" || url.href !== `${endpoint}/chat/completions`) throw veraError("DENIED");
+          } else if (url.origin !== new URL(endpoint).origin) throw veraError("DENIED");
+          request.signal.throwIfAborted();
           try {
             const response = await (host.fetch ?? globalThis.fetch)(input, { ...init, redirect: "error" });
             if (!response.ok) {
@@ -399,11 +511,7 @@ export function createPiAiGateway(
             throw error;
           }
         };
-        const custom = resolved.slot.startsWith("custom:") ? config(resolved.slot) : undefined;
-        const profile =
-          custom?.protocol === "lmstudio"
-            ? custom.models?.find((m) => m.id === resolved.model.id)
-            : undefined;
+        const profile = resolved.profile;
         const chosenReasoning = selectedReasoning ?? profile?.reasoning;
         // LM Studio's OpenAI-compatible route uses "none" for native "off".
         const reasoningEffort =
@@ -425,6 +533,7 @@ export function createPiAiGateway(
           },
           {
             signal: request.signal,
+            ...(curatedKey ? { apiKey: curatedKey } : {}),
             maxTokens: capabilities.maxOutputTokens,
             timeoutMs: 30000,
             maxRetries: 0,
@@ -454,8 +563,8 @@ export function createPiAiGateway(
           ...(key?.type === "api_key" && key.key ? [key.key] : []),
           ...(key?.type === "oauth" ? [key.access, key.refresh] : []),
         ];
-        const outputScrub = (text: string) => (request.maskOutput?.() === false ? text : host.scrub(text));
-        const textScrubber = createStreamScrubber(secrets, host.scrub, request.maskOutput);
+        const outputScrub = (text: string) => (request.maskOutput?.() === false ? text : redact(text));
+        const textScrubber = createStreamScrubber(secrets, redact, request.maskOutput);
         let sourceDeltas = 0;
         const toolScrubbers = new Map<number, ReturnType<typeof createStreamScrubber>>();
         for await (const event of stream) {
@@ -466,7 +575,7 @@ export function createPiAiGateway(
           } else if (event.type === "toolcall_delta") {
             let redactor = toolScrubbers.get(event.contentIndex);
             if (!redactor) {
-              redactor = createStreamScrubber(secrets, host.scrub, request.maskOutput);
+              redactor = createStreamScrubber(secrets, redact, request.maskOutput);
               toolScrubbers.set(event.contentIndex, redactor);
             }
             const delta = redactor.push(event.delta);
@@ -478,19 +587,32 @@ export function createPiAiGateway(
               const delta = redactor.flush();
               if (delta) yield { type: "tool", index, delta };
             }
+            // Raw tool calls reach the runtime. A key known only to this request cannot be masked there.
+            if (locallyMaskedKey && request.maskOutput?.() !== false) {
+              const terminal = event.type === "done" ? event.message : event.error;
+              const keyInCall = terminal.content.some(
+                (content) =>
+                  content.type === "toolCall" &&
+                  containsCredential([content.id, content.name, content.arguments], locallyMaskedKey),
+              );
+              if (keyInCall) {
+                yield { type: "error", error: veraError("INVALID"), aborted: request.signal.aborted };
+                return;
+              }
+            }
             if (event.type === "done")
               yield {
                 type: "done",
-                message: scrubAssistantMessage(event.message, outputScrub, host.now(), true, host.scrub),
+                message: scrubAssistantMessage(event.message, outputScrub, host.now(), true, redact),
               };
             else
               yield {
                 type: "error",
-                error: mapProviderError(event.error.errorMessage ?? "", host.scrub, endpoint, failure),
+                error: mapProviderError(event.error.errorMessage ?? "", redact, endpoint, failure),
                 aborted: event.reason === "aborted",
                 partial: {
-                  ...scrubAssistantMessage(event.error, outputScrub, host.now(), true, host.scrub),
-                  errorMessage: host.scrub(event.error.errorMessage ?? ""),
+                  ...scrubAssistantMessage(event.error, outputScrub, host.now(), true, redact),
+                  errorMessage: redact(event.error.errorMessage ?? ""),
                 },
               };
           }
@@ -498,7 +620,7 @@ export function createPiAiGateway(
       } catch (error) {
         yield {
           type: "error",
-          error: mapProviderError(error, host.scrub, endpoint, failure),
+          error: mapProviderError(error, redact, endpoint, failure),
           aborted: request.signal.aborted,
         };
       }

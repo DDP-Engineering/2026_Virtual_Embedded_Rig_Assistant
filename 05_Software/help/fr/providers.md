@@ -2,6 +2,8 @@
 
 Un fournisseur donne à VERA l’accès à un modèle de langage. Il vous en faut au moins un. Configurez les fournisseurs dans **Paramètres** → **Fournisseurs**, qui comporte deux parties : **Abonnements** et **Connexions API / locales**.
 
+Sous **Ajouter une connexion**, utilisez **Rechercher des fournisseurs** pour trouver un fournisseur par son nom.
+
 ## Abonnement ChatGPT
 
 1. Sous **Abonnement ChatGPT**, sélectionnez **Se connecter avec ChatGPT**. Le navigateur de votre système ouvre la page de connexion.
@@ -60,6 +62,8 @@ Les clés sont stockées chiffrées dans le stockage sécurisé de votre systèm
 - Pour un banc de travail : **Modifier le banc** → **Agent et conversation** → **Modèle par défaut**, sous la forme `provider/model`. Laissez le champ vide pour utiliser la valeur par défaut de l’application.
 
 Le choix de la session l’emporte sur la valeur par défaut du banc de travail, et celle du banc de travail sur celle de l’application.
+
+La liste affiche le fournisseur, la limite de contexte, les types d’entrée et les informations connues sur les outils et le raisonnement. **Outils non vérifiés** indique que les appels d’outils n’ont pas été confirmés pour ce modèle.
 
 ## Erreurs courantes
 

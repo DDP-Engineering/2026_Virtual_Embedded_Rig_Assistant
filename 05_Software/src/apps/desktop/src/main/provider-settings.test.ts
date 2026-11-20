@@ -2,8 +2,8 @@ import { existsSync } from "node:fs";
 import { SettingsService } from "@vera/core";
 import { channels, defaultSettings } from "@vera/shared";
 import { beforeAll, describe, expect, it, vi } from "vitest";
-import { CredentialFile } from "./credentials.js";
 import { createInvokeRouter } from "./ipc-router.js";
+import { providerSettingsHarness as harness } from "./provider-settings.test-support.js";
 
 let ProviderSettings: typeof import("./provider-settings.js").ProviderSettings;
 beforeAll(async () => {
@@ -14,46 +14,6 @@ beforeAll(async () => {
   ({ ProviderSettings } = await import("./provider-settings.js"));
 });
 const key = "fake-private-WP08-do-not-echo-8Zx4";
-function harness(secure = true) {
-  const disk = new Map<string, string>();
-  const changed = vi.fn();
-  const files = {
-    read: vi.fn(async (p: string) => disk.get(p)),
-    writeAtomic: vi.fn(async (p: string, v: string) => {
-      disk.set(p, v);
-    }),
-  };
-  const settings = new SettingsService({
-    files,
-    paths: { userData: "/data", settings: "/data/settings.json", logs: "/data/logs" },
-    uuid: () => "1b9dc50c-d87d-484b-88e6-04cb5f7c5a19",
-    changed,
-  });
-  const credentials = new CredentialFile({
-    file: "/data/credentials.json",
-    files,
-    platform: "win32",
-    crypto: {
-      isEncryptionAvailable: () => secure,
-      getSelectedStorageBackend: () => "unknown",
-      encryptString: (text) => Buffer.from(Buffer.from(text).map((b) => b ^ 0x5a)),
-      decryptString: (bytes) => Buffer.from(bytes.map((b) => b ^ 0x5a)).toString(),
-    },
-    logger: { log: vi.fn(), registerSecret: vi.fn(() => () => {}), flush: vi.fn(async () => {}) },
-  });
-  const service = new ProviderSettings(settings, credentials);
-  return {
-    disk,
-    files,
-    settings,
-    credentials,
-    service,
-    changed,
-    setSecure: (value: boolean) => {
-      secure = value;
-    },
-  };
-}
 const custom = { name: "Local model", baseUrl: "http://localhost:11434/v1", model: "fake-model" };
 describe("safe provider settings", () => {
   it("rejects invalid image model IDs without changing saved capability", async () => {

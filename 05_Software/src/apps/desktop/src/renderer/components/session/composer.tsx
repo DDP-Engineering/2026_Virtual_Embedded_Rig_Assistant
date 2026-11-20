@@ -1,6 +1,5 @@
 // REQ-UX-4bea0003 REQ-REL-4bea0004 REQ-UX-f8ec3a43 REQ-FUNC-47287974
 // REQ-UX-72b09d3a REQ-UX-c3961c76 REQ-UX-9427b929 REQ-FUNC-4436607c
-import { useQuery } from "@tanstack/react-query";
 import {
   COMPOSER_IMAGE_ACCEPT,
   type DictationRecordingMode,
@@ -19,6 +18,7 @@ import { useComposerDictation } from "../../dictation/use-composer-dictation.js"
 import { useImageModelWarning } from "../../hooks/image-model-warning.js";
 import { withMentions } from "../../lib/attachments.js";
 import { ErrorMessage } from "../error-message.js";
+import { modelOptionLabel, useModelCatalog } from "../model-catalog.js";
 import { PermissionPicker } from "../permission-picker.js";
 import { useAttachments } from "./attachments.js";
 import { DictationButton, DictationStatus } from "./dictation-button.js";
@@ -54,7 +54,7 @@ export function Composer({
   setModel: (reference: string | null) => Promise<void>;
   setMode: (mode: SessionState["mode"]) => Promise<void>;
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [text, setText] = useState("");
   const draft = useRef({ text: "", revision: 0 });
   const updateDraft = useCallback((value: string) => {
@@ -137,35 +137,7 @@ export function Composer({
     if (!imageLocked && sessionId && workbenchId && !submitting.current)
       void attachments?.addImages?.(workbenchId, sessionId, files);
   }
-  const providers = useQuery({
-    queryKey: ["providers.list"],
-    queryFn: () => api.invoke("providers.list", {}),
-  });
-  const subscription = useQuery({
-    queryKey: ["chatgpt.status"],
-    queryFn: () => api.invoke("providers.chatgpt.status", {}),
-    // Same query as the sign-in card: polled only while a sign-in is in progress.
-    staleTime: 0,
-    refetchInterval: ({ state: { data } }) =>
-      data?.state === "pending" || data?.state === "manual" ? 1000 : false,
-  });
-  const subscriptionModels = useQuery({
-    queryKey: ["chatgpt.models"],
-    enabled: subscription.data?.connected === true,
-    queryFn: () => api.invoke("providers.models", { id: "chatgpt" }),
-  });
-  const catalog = useQuery({
-    queryKey: ["chat.models", providers.data],
-    enabled: !!providers.data,
-    queryFn: async () => {
-      const ids = [
-        ...(providers.data?.openai.configured ? ["openai" as const] : []),
-        ...(providers.data?.custom.map((p) => p.id) ?? []),
-      ];
-      const results = await Promise.all(ids.map((id) => api.invoke("providers.models", { id })));
-      return results.flatMap((c) => c.models);
-    },
-  });
+  const { providers, subscription, subscriptionModels, catalog, models, connections } = useModelCatalog();
   const { imageModelPending, warnTextOnly } = useImageModelWarning(
     workbenchId,
     sessionId,
@@ -390,23 +362,14 @@ export function Composer({
               onChange={(e) => void setModel(e.target.value || null)}
             >
               <option value="">{t("chat.defaultModelShort")}</option>
-              {state.modelRef &&
-                !catalog.data?.some((m) => m.reference === state.modelRef) &&
-                !(
-                  subscription.data?.connected &&
-                  subscriptionModels.data?.models.some((m) => m.reference === state.modelRef)
-                ) && <option value={state.modelRef}>{state.modelRef}</option>}
-              {catalog.data?.map((m) => (
-                <option key={m.reference} value={m.reference}>
-                  {m.reference}
+              {state.modelRef && !models.some((m) => m.reference === state.modelRef) && (
+                <option value={state.modelRef}>{state.modelRef}</option>
+              )}
+              {models.map((model) => (
+                <option key={model.reference} value={model.reference}>
+                  {modelOptionLabel(model, connections, t, i18n.language)}
                 </option>
               ))}
-              {subscription.data?.connected &&
-                subscriptionModels.data?.models.map((m) => (
-                  <option key={m.reference} value={m.reference}>
-                    {m.reference}
-                  </option>
-                ))}
             </select>
           </label>
           {sessionId && (
