@@ -45,6 +45,8 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ### Changed
 
+- Changes paginates long session histories and retains the selected diff across pages.
+- Chat shows one working indicator below the composer at every detail level.
 - Long chats use calibrated token estimates and compact in the background; context summaries survive restarts.
 - Close VERA and delete .vera/vera.db, .vera/vera.db-wal and .vera/vera.db-shm from earlier builds.
 - Switch local embedding models per workbench while keyword search continues during the background rebuild.

@@ -427,7 +427,10 @@ export function Composer({
           </button>
         </>
       )}
-      <p className="muted composer-hint">{running ? t("chat.working") : t("chat.enterHint")}</p>
+      {/* The one working status of a running turn, at every chat detail level. */}
+      <p className="muted composer-hint" role="status" data-chat-working={running ? "" : undefined}>
+        {running ? t("chat.working") : t("chat.enterHint")}
+      </p>
     </div>
   );
 }

@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 import { api } from "../../api/index.js";
 import { useSessionView } from "../../hooks/session-view.js";
 import { ErrorMessage } from "../error-message.js";
+import { Pager, usePaged } from "../pager.js";
 import { DiffViewer } from "./diff-viewer.js";
 
 export function ChangesTab({ workbenchId, sessionId }: { workbenchId: string; sessionId: string }) {
@@ -33,6 +34,7 @@ function ChangesView({ workbenchId, sessionId }: { workbenchId: string; sessionI
     enabled: !!view,
   });
   const selectedId = list.data?.some((c) => c.changeId === selected) ? selected : list.data?.[0]?.changeId;
+  const { rows, pager } = usePaged(list.data ?? []);
   const detail = useQuery({
     queryKey: ["changes.get", workbenchId, sessionId, selectedId],
     queryFn: async () => {
@@ -72,7 +74,7 @@ function ChangesView({ workbenchId, sessionId }: { workbenchId: string; sessionI
       ) : (
         <>
           <ol className="changes-list" aria-label={t("changes.history")}>
-            {list.data.map((change) => (
+            {rows.map((change) => (
               <li key={change.changeId}>
                 <button
                   type="button"
@@ -95,6 +97,7 @@ function ChangesView({ workbenchId, sessionId }: { workbenchId: string; sessionI
               </li>
             ))}
           </ol>
+          <Pager {...pager} />
           {detail.isError ? (
             <>
               <ErrorMessage error={detail.error} />

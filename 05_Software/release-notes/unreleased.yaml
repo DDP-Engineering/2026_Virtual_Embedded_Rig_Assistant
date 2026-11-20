@@ -170,19 +170,19 @@ entries:
       de: Lesezeichenkürzel und -export; Sendezeit im Detailchat. Zusammenfassungen bleiben nach Neustart.
       fr: Raccourcis et export de signets ; heure d’envoi en mode détaillé ; résumés gardés au redémarrage.
   - category: improved
-    topic: { en: Permissions, ro: Permisiuni, de: Berechtigungen, fr: Autorisations }
+    topic: { en: Sessions, ro: Sesiuni, de: Sitzungen, fr: Sessions }
     text:
-      en: Each Bypass change asks for confirmation; agent file tools refuse VERA application data.
-      ro: Fiecare trecere la Bypass cere confirmare; instrumentele de fișiere refuză datele VERA.
-      de: Jeder Bypass-Wechsel fragt nach; Dateiwerkzeuge sperren die VERA-Anwendungsdaten.
-      fr: Chaque passage à Contournement est à confirmer ; les outils de fichiers refusent les données VERA.
+      en: Changes has pages for long lists; chat shows one working indicator below the message box.
+      ro: Listele lungi din Modificări au pagini; indicatorul de lucru apare o singură dată, sub mesaj.
+      de: Änderungen hat Seiten für lange Listen; nur eine Aktivitätsanzeige unter dem Eingabefeld.
+      fr: Modifications pagine les longues listes ; un seul indicateur sous le champ de saisie.
   - category: improved
     topic: { en: Permissions, ro: Permisiuni, de: Berechtigungen, fr: Autorisations }
     text:
-      en: Bypass permits outside programs and analysis inputs; leaving it stops running programs.
-      ro: Bypass permite programe și intrări de analiză externe; ieșirea oprește programele active.
-      de: Bypass erlaubt externe Programme und Analyseeingaben; beim Verlassen werden Programme gestoppt.
-      fr: Contournement autorise programmes et analyses externes ; en sortir arrête les programmes.
+      en: "Confirm Bypass: external tools and inputs; exit stops runs. File tools still block VERA data."
+      ro: "Confirmă Bypass: programe și intrări externe; ieșirea oprește rulările. Datele VERA rămân blocate."
+      de: "Bypass bestätigen: externe Tools und Eingaben; Ende stoppt Läufe. VERA-Daten bleiben gesperrt."
+      fr: "Confirmez le contournement : accès externe ; quitter arrête les tâches. Données VERA bloquées."
   - category: new
     topic: { en: Commands, ro: Comenzi, de: Befehle, fr: Commandes }
     text:

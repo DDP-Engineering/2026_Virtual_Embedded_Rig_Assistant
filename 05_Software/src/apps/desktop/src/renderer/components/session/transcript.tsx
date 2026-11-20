@@ -292,11 +292,6 @@ export function Transcript({
                 {t("chatDetail.stopped")}
               </p>
             )}
-            {detail === "minimal" && state.activeTurnId && state.status === "running" && (
-              <p className="muted" data-chat-working role="status">
-                {t("chat.working")}
-              </p>
-            )}
           </div>
         </div>
       </div>

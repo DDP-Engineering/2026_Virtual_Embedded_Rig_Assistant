@@ -268,17 +268,6 @@ it.each(["minimal", "normal", "verbose"] as const)(
     ]);
   },
 );
-it("minimal shows one working status only while active, including before any tool starts", async () => {
-  const state = emptySessionState();
-  state.status = "running";
-  state.activeTurnId = "turn";
-  await render(state, "minimal");
-  expect(container.querySelector("[data-chat-working]")?.textContent).toContain("VERA is working");
-  state.status = "idle";
-  state.activeTurnId = null;
-  await render(state, "minimal");
-  expect(container.querySelector("[data-chat-working]")).toBeNull();
-});
 it.each(["minimal", "normal"] as const)("keeps downloads directly actionable in %s", async (detail) => {
   const state = fixture();
   state.items.push({

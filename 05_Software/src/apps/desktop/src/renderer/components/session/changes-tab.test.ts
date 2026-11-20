@@ -299,3 +299,23 @@ test("shows list, detail and reveal failures with actionable retries", async () 
   await settle();
   expect(container.querySelector("[role=alert]")).toBeTruthy();
 });
+
+test("pages a long change list and keeps the selected diff below it", async () => {
+  const s = await session();
+  const rows = Array.from({ length: 12 }, (_, index) => row(index + 1, s.id, `file${index + 1}.txt`));
+  reads(rows);
+  await mountTab(s.id);
+  await settle();
+  const shown = () =>
+    [...container.querySelectorAll("[data-change]")].map((b) => b.getAttribute("data-change"));
+  expect(shown()).toEqual(["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"]);
+  expect(container.querySelector("[data-pager]")).not.toBeNull();
+  await act(async () => container.querySelector<HTMLButtonElement>("[data-pager-next]")?.click());
+  await settle();
+  expect(shown()).toEqual(["11", "12"]);
+  // The first change stays selected; its diff is shown under the list.
+  expect(container.querySelector("pre")?.textContent).toContain("+new1");
+  await act(async () => container.querySelector<HTMLButtonElement>("[data-change='12']")?.click());
+  await settle();
+  expect(container.querySelector("pre")?.textContent).toContain("+new12");
+});
