@@ -116,6 +116,7 @@ const agent = z.looseObject({
     .default(null),
 });
 export const workbenchSchema = z.looseObject({
+  interactive_browser: z.boolean().optional(),
   privacy: workbenchPrivacySchema.optional(),
   format: z.literal(1),
   additional_folders: additionalFoldersSchema.default([]),
@@ -142,6 +143,7 @@ export function workbenchTemplate(name: string): string {
   return `# ${name}\n\n## Device under test\nBoard, MCU, revision, key parts.\n\n## Bench setup\nPower, probes, programmers, interfaces and where they connect.\n\n## Conventions\nHow results, logs and notes are named and where they go.\n\n## Known issues\nLab or hardware quirks the agent should check first.\n`;
 }
 export const workbenchPatchSchema = z.strictObject({
+  interactive_browser: workbenchSchema.shape.interactive_browser,
   privacy: workbenchPrivacySchema.optional(),
   additional_folders: additionalFoldersSchema.optional(),
   chat: z.strictObject({ detail: chatDetailSchema.optional() }).optional(),

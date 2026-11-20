@@ -8,6 +8,7 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ### Added
 
+- Interactive browsing requires app and workbench opt-in and limits each session to approved public origins.
 - Desktop has an on-demand, verified Chromium runtime and isolated browser sessions for interactive browsing.
 
 - Dictate into the chat draft with the microphone or a configurable shortcut, then review and send.

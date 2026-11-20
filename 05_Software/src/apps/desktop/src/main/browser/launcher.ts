@@ -1,5 +1,9 @@
+import { mkdtemp, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { type BrowserContext, chromium, type LaunchOptions } from "playwright-core";
 import { BrowserError } from "./failure.js";
+import { checkBrowserProfile, prepareBrowserProfile } from "./restrictions.js";
 
 export const chromiumStartupMs = 15_000;
 
@@ -16,17 +20,29 @@ export function browserLaunchOptions(
   executablePath: string,
   proxyServer: string,
   remainingMs = chromiumStartupMs,
+  certificatePin?: string,
+  configuration?: string,
 ): LaunchOptions {
   return {
     executablePath,
     headless: false,
     chromiumSandbox: true,
     timeout: Math.max(1, Math.min(remainingMs, chromiumStartupMs)),
+    ignoreDefaultArgs: [
+      "--disable-ipc-flooding-protection",
+      "--enable-unsafe-swiftshader",
+      "--unsafely-disable-devtools-self-xss-warnings",
+    ],
     env: Object.fromEntries(Object.entries(process.env).filter(([name]) => browserEnv.test(name))),
     proxy: { server: proxyServer, bypass: "<-loopback>" },
     args: [
       "--disable-component-update",
       "--disable-quic",
+      "--host-resolver-rules=MAP * ~NOTFOUND, EXCLUDE 127.0.0.1",
+      "--deny-permission-prompts",
+      "--disable-blink-features=WebTransport,DirectSockets,FileSystemAccessLocal,WebBluetooth,WebUSB,Serial,Hid,PaymentRequest,WebShare",
+      ...(certificatePin ? [`--ignore-certificate-errors-spki-list=${certificatePin}`] : []),
+      ...(configuration ? [`--chrome-for-testing-config=${configuration}`] : []),
       "--force-webrtc-ip-handling-policy=disable_non_proxied_udp",
     ],
   };
@@ -56,41 +72,69 @@ export async function launchBrowser(
   signal: AbortSignal,
   proxyServer: string,
   remainingMs: number,
+  certificatePin?: string,
 ): Promise<BrowserProcess> {
   signal.throwIfAborted();
   if (process.env.SELENIUM_REMOTE_URL) throw new BrowserError("remote-launch-configured");
+  const deadline = performance.now() + remainingMs;
+  const remaining = () => Math.max(1, Math.ceil(deadline - performance.now()));
+  const profile = await mkdtemp(join(tmpdir(), "vera-browser-"));
+  let profileContext: BrowserContext | undefined;
+  let closing: Promise<void> | undefined;
+  const close = () =>
+    (closing ??= (async () => {
+      try {
+        await profileContext?.close();
+      } finally {
+        await rm(profile, { recursive: true, force: true, maxRetries: 3 });
+      }
+    })());
+  const cancel = () => void close().catch(() => {});
   try {
-    // The local Playwright pipe avoids a listening automation port. Playwright owns and deletes
-    // its scratch user-data and artifact directories on process close.
-    const browser = await chromium.launch(browserLaunchOptions(executable, proxyServer, remainingMs));
-    let closing: Promise<void> | undefined;
-    const close = () => (closing ??= browser.close());
-    const cancel = () => void close().catch(() => {});
-    signal.addEventListener("abort", cancel, { once: true });
-    try {
-      signal.throwIfAborted();
-      const context = await browser.newContext({
-        acceptDownloads: false,
-        serviceWorkers: "block",
-        viewport: null,
-      });
-      signal.throwIfAborted();
-      return {
-        context,
-        onExit(listener) {
-          if (browser.isConnected()) browser.once("disconnected", listener);
-          else listener();
-        },
-        close,
-      };
-    } catch (error) {
-      await close();
-      throw error;
-    } finally {
-      signal.removeEventListener("abort", cancel);
-    }
-  } catch (error) {
+    const configuration = await prepareBrowserProfile(profile, proxyServer);
     signal.throwIfAborted();
-    throw classifyLaunchFailure(error);
+    // Playwright uses the local debugging pipe. Only a fresh non-persistent context is exposed.
+    profileContext = await chromium.launchPersistentContext(profile, {
+      ...browserLaunchOptions(executable, proxyServer, remaining(), certificatePin, configuration),
+      acceptDownloads: false,
+      serviceWorkers: "block",
+      viewport: null,
+    });
+    signal.addEventListener("abort", cancel, { once: true });
+    signal.throwIfAborted();
+    const browser = profileContext.browser();
+    const initialPage = profileContext.pages()[0];
+    if (!browser || !initialPage) throw new BrowserError("policy-unavailable");
+    const policyPage = await profileContext.newPage();
+    try {
+      await checkBrowserProfile(policyPage, profile, remaining());
+    } finally {
+      await policyPage.close();
+    }
+    await profileContext.route("**/*", (route) => route.abort());
+    profileContext.on("page", (page) => void page.close().catch(cancel));
+    signal.throwIfAborted();
+    const context = await browser.newContext({
+      acceptDownloads: false,
+      serviceWorkers: "block",
+      viewport: null,
+    });
+    // Linux Chromium can stop creating tabs when the only visible window closes.
+    context.once("page", () => void initialPage.close().catch(cancel));
+    signal.throwIfAborted();
+    return {
+      context,
+      onExit(listener) {
+        if (browser.isConnected()) browser.once("disconnected", listener);
+        else listener();
+      },
+      close,
+    };
+  } catch (error) {
+    await close();
+    signal.throwIfAborted();
+    throw error instanceof BrowserError ? error : classifyLaunchFailure(error);
+  } finally {
+    signal.removeEventListener("abort", cancel);
   }
 }

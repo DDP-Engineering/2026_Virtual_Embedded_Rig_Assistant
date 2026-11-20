@@ -85,16 +85,19 @@ export class BrowserHost {
 
   async closeSession(owner: BrowserOwner): Promise<void> {
     const entry = this.entries.get(keyFor(owner));
+    this.policy.release?.(owner);
     if (entry) await this.closeEntry(entry);
   }
 
   async closeWorkbench(workbenchId: string): Promise<void> {
+    this.policy.releaseWorkbench?.(workbenchId);
     await this.closeEntries(
       Array.from(this.entries.values()).filter((entry) => entry.owner.workbenchId === workbenchId),
     );
   }
 
   shutdown(): Promise<void> {
+    this.policy.releaseAll?.();
     this.shutdownPromise ??= this.closeEntries(Array.from(this.entries.values()));
     return this.shutdownPromise;
   }
@@ -122,13 +125,18 @@ export class BrowserHost {
       });
       const lease = await duringStartup(acquiring, signal);
       if (!lease.proxyServer) throw new BrowserError("policy-denied");
+      const revoke = () => {
+        if (!entry.disposal) void this.closeEntry(entry).catch(() => {});
+      };
+      lease.revoked?.addEventListener("abort", revoke, { once: true });
+      if (lease.revoked?.aborted) revoke();
       signal.throwIfAborted();
       const executable = await duringStartup(this.runtime.executable(signal), signal);
       signal.throwIfAborted();
       const remaining = Math.ceil(deadline - performance.now());
       if (remaining <= 0) timer.abort();
       signal.throwIfAborted();
-      entry.child = await this.launch(executable, signal, lease.proxyServer, remaining);
+      entry.child = await this.launch(executable, signal, lease.proxyServer, remaining, lease.certificatePin);
       entry.child.onExit(() => {
         void this.closeEntry(entry).catch(() => {});
       });
@@ -158,7 +166,7 @@ export class BrowserHost {
           queued = open.catch(() => {});
           return open;
         },
-        tabs: () => context.pages(),
+        tabs: () => (entry.controller.signal.aborted ? [] : context.pages()),
         close: () => this.closeEntry(entry),
       };
     } catch (error) {
@@ -188,13 +196,16 @@ export class BrowserHost {
     entry.disposal ??= Promise.resolve().then(async () => {
       clearTimeout(entry.expires);
       try {
-        await entry.child?.close();
+        const results = await Promise.allSettled([
+          Promise.resolve().then(() => entry.lease?.close()),
+          Promise.resolve().then(() => entry.child?.close()),
+        ]);
+        const failures = results
+          .filter((result) => result.status === "rejected")
+          .map((result) => result.reason);
+        if (failures.length) throw new AggregateError(failures, "Browser resource cleanup failed");
       } finally {
-        try {
-          await entry.lease?.close();
-        } finally {
-          this.entries.delete(keyFor(entry.owner));
-        }
+        this.entries.delete(keyFor(entry.owner));
       }
     });
     return entry.disposal;

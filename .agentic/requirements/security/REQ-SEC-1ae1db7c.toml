@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-SEC-1ae1db7c"
+title = "Pin browser requests to public addresses"
+status = "active"
+requirement = "For each browser network request, Desktop shall contact only a granted public HTTP or HTTPS origin at a vetted address bound to the actual upstream connection."
+verification = "Use synthetic resolver answers and inspect the address supplied to the transport, including rejection of mixed public and denied answers and literal special-use addresses."
+affected_paths = ["05_Software/src/apps/desktop/src/main/browser/proxy-identity.ts", "05_Software/src/apps/desktop/src/main/browser/policy.ts", "05_Software/src/apps/desktop/src/main/browser/network.ts", "05_Software/src/apps/desktop/src/main/browser/proxy.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/browser/browser-policy.test.ts", "05_Software/src/apps/desktop/src/main/browser/network.test.ts", "05_Software/tests/e2e/browser-runtime.spec.ts"]
+priority = "normal"
+created = 2026-11-20
+updated = 2026-11-20

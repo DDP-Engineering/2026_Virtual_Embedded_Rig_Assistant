@@ -22,6 +22,8 @@ and run `npm run test:e2e -- browser-runtime.spec.ts` on the host. Use
 `VERA_BROWSER_PACKAGED_APP` to exercise the unpacked executable of an instrumented package
 and `VERA_BROWSER_EVIDENCE` for an optional JSON receipt in owned scratch. On Ubuntu the
 Chromium process requires a graphical session, system libraries and a working OS sandbox.
+The instrumented build uses controlled resolver and upstream responses through the same
+browser proxy and settings gates as production.
 
 Install the pinned Playwright Chromium once with `npx playwright install chromium` from `05_Software` before browser acceptance.
 

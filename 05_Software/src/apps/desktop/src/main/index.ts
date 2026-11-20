@@ -61,6 +61,7 @@ import {
 import { getAppInfo } from "./app-info.js";
 import { exportArtifact, exportName, publicArtifact, revealArtifact } from "./artifacts.js";
 import { BrowserHost } from "./browser/host.js";
+import { BrowserAccessPolicy } from "./browser/policy.js";
 import { BrowserRuntime } from "./browser/runtime.js";
 import { CatalogChecks } from "./catalog-checks.js";
 import { ChatgptAuth } from "./chatgpt-auth.js";
@@ -179,7 +180,15 @@ const browserRuntime = new BrowserRuntime(
   join(dataLocations.paths.userData, "browser-runtime"),
   browserFixture ? { transfer: browserFixture.transfer } : {},
 );
-const browserHost = new BrowserHost(browserRuntime, browserFixture ? { policy: browserFixture.policy } : {});
+const browserAccess = new BrowserAccessPolicy((workbenchId) => {
+  const config = workbench.getSnapshot().config;
+  return (
+    settings.get().settings.interactiveBrowser === true &&
+    config.id === workbenchId &&
+    config.interactive_browser === true
+  );
+}, browserFixture?.network);
+const browserHost = new BrowserHost(browserRuntime, { policy: browserAccess });
 const models = app.isPackaged
   ? join(process.resourcesPath, "models")
   : join(here, "../../../../../src/models");
@@ -253,6 +262,7 @@ const settings = new SettingsService({
   changed: () => {
     // Compared with the settings last announced, so a theme or layout change keeps open documents.
     const next = settings.get().settings;
+    browserAccess.reconcile();
     emitAppEvent({ topic: "app", id: "app", event: settingsChangedEvent(announcedSettings, next) });
     announcedSettings = next;
     updates?.settingsChanged();
@@ -288,6 +298,7 @@ const workbench = new WorkbenchService(
     },
     changed: (event) => {
       if (event.event.type === "closed") display.close();
+      if (event.event.type === "closed" || event.event.type === "config.changed") browserAccess.reconcile();
       emitAppEvent(eventEnvelopeSchema.parse(event));
     },
   },
@@ -1650,7 +1661,15 @@ if (!firstInstance) {
           veraTestBrowser: browserFixtureApi(
             browserRuntime,
             browserHost,
+            browserAccess,
+            browserFixture,
             () => workbench.getSnapshot().config.id,
+            async () => {
+              await settings.update({ interactiveBrowser: true });
+              const { config } = workbench.getSnapshot();
+              if (!config.interactive_browser)
+                await workbench.updateConfig({ interactive_browser: true }, config.id);
+            },
           ),
         });
       }

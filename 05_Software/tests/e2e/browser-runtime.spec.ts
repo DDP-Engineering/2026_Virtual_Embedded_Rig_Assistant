@@ -1,7 +1,10 @@
 import { execFile } from "node:child_process";
+import { once } from "node:events";
 import { access, mkdir, mkdtemp, readFile, realpath, rm, writeFile } from "node:fs/promises";
+import { createServer } from "node:http";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
+import { pathToFileURL } from "node:url";
 import { promisify } from "node:util";
 import { _electron, type ElectronApplication, expect, test } from "@playwright/test";
 import type { VeraBridge } from "@vera/shared";
@@ -55,12 +58,19 @@ async function openFixture(instance: ElectronApplication, sessionId: string, see
 
 test("verified visible Chromium keeps session state isolated and releases its process and profile", async () => {
   test.skip(!archive, "Set VERA_TEST_BROWSER_ARCHIVE to the pinned official archive for this platform");
-  test.setTimeout(155_000);
+  test.setTimeout(180_000);
 
   const scratch = await realpath(await mkdtemp(join(tmpdir(), "vera-browser-acceptance-")));
   const userData = join(scratch, "data");
   const folder = join(scratch, "bench");
   let app: ElectronApplication | undefined;
+  let loopbackConnections = 0;
+  const loopback = createServer((_request, response) => {
+    response.end("The browser must never reach this fixture directly.");
+  });
+  loopback.on("connection", () => {
+    loopbackConnections++;
+  });
 
   async function start(restart = false) {
     const instance = await _electron.launch({
@@ -137,6 +147,82 @@ test("verified visible Chromium keeps session state isolated and releases its pr
       phase: "ready",
       version: browserRelease()?.version,
     });
+    async function setApp(enabled: boolean) {
+      await page.evaluate(async (interactiveBrowser) => {
+        const { vera } = window as unknown as { vera: VeraBridge };
+        await vera.invoke("app.settings.update", { interactiveBrowser });
+      }, enabled);
+    }
+    async function setWorkbench(enabled: boolean) {
+      await page.evaluate(async (interactive_browser) => {
+        const { vera } = window as unknown as { vera: VeraBridge };
+        await vera.invoke("workbench.config.update", {
+          patch: { interactive_browser },
+          removeCommandPrefixes: [],
+        });
+      }, enabled);
+    }
+    const acquire = () => instance.evaluate(() => globalThis.veraTestBrowser.acquire("policy"));
+    expect(await acquire()).toBe("policy-denied");
+    await setApp(true);
+    for (const mode of ["read-only", "ask", "auto-edit", "bypass"] as const) {
+      await page.evaluate(async (permission_mode) => {
+        const { vera } = window as unknown as { vera: VeraBridge };
+        await vera.invoke("workbench.config.update", { patch: { agent: { permission_mode } } });
+      }, mode);
+      expect(await acquire()).toBe("policy-denied");
+    }
+    await setWorkbench(true);
+    expect(await acquire()).toBe("policy-denied");
+    const localPath = join(folder, "local-marker.html");
+    await writeFile(localPath, "<title>Private VERA workbench marker</title>");
+    loopback.listen(0, "127.0.0.1");
+    await once(loopback, "listening");
+    const bound = loopback.address();
+    if (!bound || typeof bound === "string") throw Error("Missing loopback fixture endpoint");
+    const policy = await instance.evaluate(
+      (_electron, { localUrl, loopbackUrl }) =>
+        globalThis.veraTestBrowser.probe("policy", localUrl, loopbackUrl),
+      { localUrl: pathToFileURL(localPath).href, loopbackUrl: `http://127.0.0.1:${bound.port}/` },
+    );
+    expect(loopbackConnections).toBe(0);
+    expect(policy).toMatchObject({
+      pageText: "Rendered by JavaScript",
+      finalUrl: "https://docs.vera-browser.example.com/fixture",
+      frameTitle: "Allowed frame",
+      popupTitle: "Allowed frame",
+      deniedRedirect: 403,
+      fileRedirect: 403,
+      localFile: "blocked",
+      loopbackNavigation: "blocked",
+      attachment: 415,
+      resources: {
+        authorized: { status: 200, text: "allowed asset" },
+        xhr: null,
+        privateAddress: null,
+        privateDns: null,
+        serviceWorker: "blocked",
+        webSocket: "blocked",
+        webTransport: "blocked",
+        geolocation: "denied",
+        picker: false,
+      },
+    });
+    const receipts = () => instance.evaluate(() => globalThis.veraTestBrowser.receipts());
+    await expect
+      .poll(async () => (await receipts()).requests)
+      .toContain("https://docs.vera-browser.example.com/pending");
+    expect(
+      (await receipts()).requests.filter((value) =>
+        /other\.|internal\.|192\.168|worker\.js|\/socket/.test(value),
+      ),
+    ).toEqual([]);
+    await setApp(false);
+    await expect.poll(async () => (await receipts()).aborted).toBe(1);
+    await setApp(true);
+    expect(await instance.evaluate(() => globalThis.veraTestBrowser.allowed("policy"))).toEqual([]);
+    await expect.poll(acquire).toBe("policy-denied");
+
     const first = await openFixture(instance, "first", "synthetic");
     const second = await openFixture(instance, "second");
     expect(first.initialTabs).toBe(0);
@@ -157,7 +243,7 @@ test("verified visible Chromium keeps session state isolated and releases its pr
     expect(first.childPids.length).toBeGreaterThan(0);
     expect(second.childPids.length).toBeGreaterThan(0);
     expect(second.profile).not.toBe(first.profile);
-    expect(first.profile).toContain("playwright_chromiumdev_profile");
+    expect(first.profile).toContain("vera-browser-");
     expect(first.product).toContain(browserRelease()?.version ?? "unknown pinned version");
     expect(first.flags.filter((flag) => /^--(?:headless|no-sandbox|disable-.*sandbox)/.test(flag))).toEqual(
       [],
@@ -205,6 +291,8 @@ test("verified visible Chromium keeps session state isolated and releases its pr
             platform: process.platform,
             packaged: Boolean(packaged),
             chromium: first.product,
+            publicPolicy: policy,
+            policyRevocation: true,
             profileIsolation: true,
             stateIsolation: true,
             processExitAndCleanup: true,
@@ -219,6 +307,8 @@ test("verified visible Chromium keeps session state isolated and releases its pr
     }
   } finally {
     await app?.close();
+    loopback.closeAllConnections();
+    await new Promise<void>((resolve) => loopback.close(() => resolve()));
     await rm(scratch, { force: true, recursive: true, maxRetries: 5, retryDelay: 250 });
   }
 });

@@ -84,6 +84,7 @@ const mutable = {
     .refine((value) => !/\p{Cc}/u.test(value), "Use a shell name or absolute path.")
     .optional(),
   webAccess: webAccessSettingsSchema,
+  interactiveBrowser: z.boolean().optional(),
   /** Absent until the user first saves Settings > Parts search; readers apply partsSearchDefaults. */
   partsSearch: partsSearchSettingsSchema.optional(),
   keyboardShortcuts: shortcutOverridesSchema.optional(),
@@ -116,6 +117,7 @@ export const settingsSchema = z.strictObject({
   ...mutable,
 });
 export const settingsPatchSchema = z.strictObject({
+  interactiveBrowser: mutable.interactiveBrowser,
   dictationRecordingMode: mutable.dictationRecordingMode,
   privacy: mutable.privacy,
   shell: mutable.shell,

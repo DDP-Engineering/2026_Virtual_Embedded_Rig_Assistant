@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-SEC-b90a7966"
+title = "Disable unsafe browser surfaces"
+status = "active"
+requirement = "While a managed browser context is open, Desktop shall prevent site permission grants, native file chooser access, local file navigation and browser-owned downloads."
+verification = "Exercise permissions, file navigation, picker and attachment requests in sandboxed Chromium and verify no protected read or browser download occurs."
+affected_paths = ["05_Software/src/apps/desktop/src/main/browser/restrictions.ts", "05_Software/src/apps/desktop/src/main/browser/launcher.ts", "05_Software/src/apps/desktop/src/main/browser/proxy.ts"]
+linked_tests = ["05_Software/tests/e2e/browser-runtime.spec.ts"]
+priority = "normal"
+created = 2026-11-20
+updated = 2026-11-20
