@@ -53,6 +53,20 @@ it("prepares named replay models and auto selection, rejecting missing or cancel
   });
 });
 
+it("keeps the default replay budget and advertises an explicit fixture window consistently", async () => {
+  const dir = await fixture(JSON.stringify({ text: "Done" }));
+  const fallback = new ReplayGateway({ dir, now: () => 0 });
+  expect(fallback.capabilities("replay/echo").contextWindow).toBe(32768);
+
+  const gateway = new ReplayGateway({ dir, now: () => 0, contextWindow: 131072 });
+  const capabilities = gateway.capabilities("replay/echo");
+  expect(capabilities).toMatchObject({ contextWindow: 131072, inputBudget: 120422 });
+  expect((await gateway.models("replay")).models[0]).toMatchObject(capabilities);
+  expect(() =>
+    new ReplayGateway({ dir, now: () => 0, contextWindow: 100 }).capabilities("replay/echo"),
+  ).toThrow(expect.objectContaining({ code: "INVALID" }));
+});
+
 it("preserves declared replay token usage and rejects invalid fixture measurements", async () => {
   const dir = await fixture(JSON.stringify({ text: "Done", usage: { input: 100, output: 12 } }));
   const events = await stream(new ReplayGateway({ dir, now: () => 0 }), []);

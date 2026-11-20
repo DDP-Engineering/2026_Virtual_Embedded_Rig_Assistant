@@ -309,7 +309,7 @@ it("runs real Git history without approval, suppresses marker helpers, and commi
         .map((step) => JSON.stringify(step))
         .join("\n"),
     );
-    const gateway = new ReplayGateway({ dir: join(root, "scripts"), now: Date.now });
+    const gateway = new ReplayGateway({ dir: join(root, "scripts"), now: Date.now, contextWindow: 131072 });
     await gateway.models("replay", new AbortController().signal);
     database = await core.openDb(join(bench, ".vera/vera.db"), { workbenchId: "wb_test", appVersion: "0" });
     const skills = new core.SkillCatalog({

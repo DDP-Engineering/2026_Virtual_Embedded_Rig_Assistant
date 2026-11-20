@@ -1660,6 +1660,7 @@ if (!firstInstance) {
         const replayDelay = Math.max(0, Math.min(1000, Number(process.env.VERA_REPLAY_DELAY_MS) || 0));
         const replay = new ReplayGateway({
           dir: process.env.VERA_REPLAY_DIR,
+          contextWindow: 131072,
           now: () => systemClock.now().getTime(),
           delay: async (signal) => {
             if (replayDelay) await replayWait(replayDelay, undefined, { signal });

@@ -10,7 +10,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import { promisify } from "node:util";
 import { NodeWorkerPool, openDb, PluginStore, SessionService } from "@vera/core";
 import { ReplayGateway } from "@vera/core/replay";
-import type { SessionEvent } from "@vera/shared";
+import { builtinToolNames, type SessionEvent } from "@vera/shared";
 import Database from "better-sqlite3";
 import { afterAll, afterEach, beforeAll, expect, inject, it } from "vitest";
 
@@ -1234,10 +1234,11 @@ it("scoped CLI local Git clone and pulled helper require explicit machine hash r
     recursive: true,
   });
   const config = join(source, ".vera/workbench.yaml");
-  await writeFile(
-    config,
-    `${(await readFile(config, "utf8")).replace("permission_mode: ask", "permission_mode: bypass")}plugins:\n  enabled: [echo-tools]\n`,
-  );
+  const unrelatedTools = builtinToolNames.filter((tool) => tool !== "load_skill" && tool !== "run_program");
+  const configText = (await readFile(config, "utf8"))
+    .replace("permission_mode: ask", "permission_mode: bypass")
+    .replace("tools:\n  disabled: []", `tools:\n  disabled: [${unrelatedTools.join(", ")}]`);
+  await writeFile(config, `${configText}plugins:\n  enabled: [echo-tools]\n`);
   const script = join(dir, "scoped.jsonl");
   await writeFile(
     script,

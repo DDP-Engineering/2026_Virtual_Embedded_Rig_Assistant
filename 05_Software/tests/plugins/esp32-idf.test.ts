@@ -198,7 +198,7 @@ async function rig(mode: PermissionMode, steps: object[]) {
   const scripts = join(dir, "replay");
   await mkdir(scripts);
   await writeFile(join(scripts, "idf.jsonl"), steps.map((s) => JSON.stringify(s)).join("\n"));
-  const gateway = new ReplayGateway({ dir: scripts, now: Date.now });
+  const gateway = new ReplayGateway({ dir: scripts, now: Date.now, contextWindow: 131072 });
   await gateway.models("replay", new AbortController().signal);
   const service = new core.SessionService({
     root,

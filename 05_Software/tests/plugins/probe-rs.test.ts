@@ -321,7 +321,7 @@ async function replay(steps: object[]) {
   });
   await mkdir(join(root, "scripts"));
   await writeFile(join(root, "scripts/probe.jsonl"), steps.map((s) => JSON.stringify(s)).join("\n"));
-  const gateway = new ReplayGateway({ dir: join(root, "scripts"), now: Date.now });
+  const gateway = new ReplayGateway({ dir: join(root, "scripts"), now: Date.now, contextWindow: 131072 });
   await gateway.models("replay", new AbortController().signal);
   const db = await core.openDb(join(bench, ".vera/vera.db"), { workbenchId: "wb_test", appVersion: "0" });
   const service = new core.SessionService({

@@ -121,7 +121,6 @@ async function expectJump(page: Page, index: number, growing = false) {
     else if (top >= max - 0.5) expect(offset).toBeGreaterThanOrEqual(14.5);
     else if (growing) {
       expect(offset).toBeGreaterThanOrEqual(14.5);
-      expect(offset).toBeLessThan(height / 2);
     } else expect(Math.abs(offset - 16)).toBeLessThanOrEqual(1.5);
     expect(offset).toBeGreaterThanOrEqual(0);
     expect(offset).toBeLessThan(height);

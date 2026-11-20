@@ -71,7 +71,9 @@ test("chat copy controls are compact, localized and keyboard accessible in four 
     await expect(replies.first()).toBeFocused();
     await expect(replies.first()).toHaveCSS("opacity", "1");
     await page.keyboard.press("Enter");
-    await expect.poll(() => page.evaluate(() => navigator.clipboard.readText())).toBe(answer);
+    await expect
+      .poll(() => page.evaluate(async () => (await navigator.clipboard.readText()).replaceAll("\r\n", "\n")))
+      .toBe(answer);
     await replies.nth(1).focus();
     await page.keyboard.press("Space");
     await expect.poll(() => page.evaluate(() => navigator.clipboard.readText())).toBe("Second response only");
