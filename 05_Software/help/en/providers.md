@@ -87,6 +87,14 @@ Use Alibaba Coding Plan in supported interactive coding tools under Alibaba’s 
 
 See the model lists for [Fireworks AI](https://fireworks.ai/models), [Together AI](https://docs.together.ai/docs/serverless/models), [Groq](https://console.groq.com/docs/models) and [Cerebras](https://inference-docs.cerebras.ai/models/overview).
 
+## Hugging Face Inference Providers, NVIDIA NIM and Vercel AI Gateway
+
+1. Under **Add connection**, select the service and enter its key. Hugging Face requires a user access token with Inference Providers permission. NVIDIA NIM uses a key with NVIDIA Public API Endpoints access. Vercel uses an AI Gateway key.
+2. Select **Discover models** and choose a model, or enter its complete ID and limits for a gated or account-specific model. Keep the namespace and slashes. For Hugging Face, keep a route suffix such as `owner/model:novita` if you choose an upstream explicitly.
+3. Save and select **Test** to check the chosen model with your key. A catalog entry does not guarantee account access. If access fails, check the exact ID and grant or plan in the service before changing the connection.
+
+VERA sends prompts to the service named in the model picker. [Hugging Face](https://huggingface.co/docs/inference-providers/index) and [Vercel](https://vercel.com/docs/ai-gateway/models-and-providers) route requests upstream. [NVIDIA NIM](https://docs.api.nvidia.com/nim/reference/llm-apis) runs the selected hosted model. The picker shows documented input and tool capabilities when available.
+
 ## LM Studio
 
 1. Start the LM Studio server and load a model.

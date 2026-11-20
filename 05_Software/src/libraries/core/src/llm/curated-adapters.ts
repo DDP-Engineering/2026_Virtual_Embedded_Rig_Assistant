@@ -45,6 +45,9 @@ export function kimiMessagesCompatibility(model: string) {
 /** Options documented by the hosted Chat Completions service. */
 export function hostedCompletionsCompatibility(preset: string): Model<"openai-completions">["compat"] {
   switch (preset) {
+    case "huggingface":
+    case "nvidia":
+    case "vercel-ai-gateway":
     case "fireworks":
       return { maxTokensField: "max_tokens" };
     case "together":

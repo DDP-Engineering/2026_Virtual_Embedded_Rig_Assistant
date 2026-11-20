@@ -1,6 +1,15 @@
 import type { CuratedProviderPreset, HostedCatalogMetadata } from "./provider-presets.js";
 
-const services = [
+type HostedService = {
+  id: HostedCatalogMetadata;
+  label: string;
+  inference: string;
+  catalog: string;
+  models?: NonNullable<CuratedProviderPreset["bindings"][number]["models"]>;
+  testOutputBudget?: number;
+};
+
+const services: readonly HostedService[] = [
   {
     id: "fireworks",
     label: "Fireworks AI",
@@ -130,22 +139,43 @@ const services = [
       },
     ],
   },
-] as const satisfies readonly {
-  id: HostedCatalogMetadata;
-  label: string;
-  inference: string;
-  catalog: string;
-  models: NonNullable<CuratedProviderPreset["bindings"][number]["models"]>;
-}[];
+  {
+    id: "huggingface",
+    label: "Hugging Face Inference Providers",
+    inference: "https://router.huggingface.co/v1",
+    catalog: "https://router.huggingface.co/v1/models",
+    testOutputBudget: 4096,
+  },
+  {
+    id: "nvidia",
+    label: "NVIDIA NIM",
+    inference: "https://integrate.api.nvidia.com/v1",
+    catalog: "https://integrate.api.nvidia.com/v1/models",
+    testOutputBudget: 4096,
+  },
+  {
+    id: "vercel-ai-gateway",
+    label: "Vercel AI Gateway",
+    inference: "https://ai-gateway.vercel.sh/v1",
+    catalog: "https://ai-gateway.vercel.sh/v1/models",
+    testOutputBudget: 4096,
+  },
+];
 
 export const hostedProviderPresets: readonly CuratedProviderPreset[] = services.map(
-  ({ id, label, inference, catalog, models }) => ({
+  ({ id, label, inference, catalog, models, testOutputBudget }) => ({
     id,
     label,
     protocol: "openai-completions",
     authentication: "bearer",
+    ...(testOutputBudget === undefined ? {} : { testOutputBudget }),
     bindings: [
-      { id: "global", inference, catalog: { kind: "openai-models", url: catalog, metadata: id }, models },
+      {
+        id: "global",
+        inference,
+        catalog: { kind: "openai-models", url: catalog, metadata: id },
+        ...(models === undefined ? {} : { models }),
+      },
     ],
   }),
 );

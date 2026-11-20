@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-FUNC-5e200114"
+title = "Connect to Hugging Face, NVIDIA NIM and Vercel AI Gateway"
+status = "active"
+requirement = "When a user chooses Hugging Face Inference Providers, NVIDIA NIM or Vercel AI Gateway, VERA shall use the chosen service's registered bearer-key routes."
+verification = "Save the three bindings together and assert their scopes, initial and continuation request destinations, picker service labels and rejection of a cross-binding saved key."
+affected_paths = ["05_Software/src/libraries/shared/src/hosted-provider-presets.ts", "05_Software/src/libraries/shared/src/provider-presets.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/gateway-provider-presets.test.ts", "05_Software/tests/e2e/providers-layout.spec.ts"]
+created = 2026-11-20
+updated = 2026-11-20

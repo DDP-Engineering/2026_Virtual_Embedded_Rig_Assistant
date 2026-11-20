@@ -76,14 +76,19 @@ export function samePresetBinding(left: PresetBinding | undefined, right: Preset
   );
 }
 
-export type HostedCatalogMetadata = "fireworks" | "together" | "groq" | "cerebras";
+export type HostedCatalogMetadata =
+  | "fireworks"
+  | "together"
+  | "groq"
+  | "cerebras"
+  | "huggingface"
+  | "nvidia"
+  | "vercel-ai-gateway";
 
 export function isHostedCatalog(catalog: ProviderBinding["catalog"] | undefined): boolean {
   if (catalog?.kind !== "openai-models") return false;
   const { metadata } = catalog;
-  return (
-    metadata === "fireworks" || metadata === "together" || metadata === "groq" || metadata === "cerebras"
-  );
+  return metadata !== undefined && metadata !== "deepseek" && metadata !== "moonshot";
 }
 
 export interface ProviderBinding {
@@ -110,6 +115,7 @@ export type CuratedProviderPreset = {
   readonly id: string;
   readonly label: string;
   readonly bindings: readonly ProviderBinding[];
+  readonly testOutputBudget?: number;
 } & (
   | { readonly protocol: "openai-completions"; readonly authentication: "bearer" }
   | { readonly protocol: "anthropic-messages"; readonly authentication: "x-api-key" }

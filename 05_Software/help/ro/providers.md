@@ -87,6 +87,14 @@ Folosește Alibaba Coding Plan în instrumente interactive de programare accepta
 
 Consultă listele de modele pentru [Fireworks AI](https://fireworks.ai/models), [Together AI](https://docs.together.ai/docs/serverless/models), [Groq](https://console.groq.com/docs/models) și [Cerebras](https://inference-docs.cerebras.ai/models/overview).
 
+## Hugging Face Inference Providers, NVIDIA NIM și Vercel AI Gateway
+
+1. În **Adaugă conexiune**, alege serviciul și introdu cheia lui. Pentru Hugging Face, folosește un token de acces cu permisiunea Inference Providers. Pentru NVIDIA NIM, folosește o cheie cu acces la NVIDIA Public API Endpoints. Pentru Vercel, folosește o cheie AI Gateway.
+2. Alege **Descoperă modele** și selectează un model sau introdu ID-ul complet și limitele unui model cu acces restricționat sau specific contului. Păstrează prefixul și barele oblice. În Hugging Face, păstrează un sufix precum `owner/model:novita` dacă alegi explicit furnizorul din spatele serviciului.
+3. Salvează și alege **Testează** pentru a verifica modelul ales cu cheia ta. Prezența în catalog nu garantează accesul contului. Dacă accesul eșuează, verifică în serviciu ID-ul exact și permisiunile sau planul înainte de a schimba conexiunea.
+
+VERA trimite solicitările către serviciul indicat în selectorul de modele. [Hugging Face](https://huggingface.co/docs/inference-providers/index) și [Vercel](https://vercel.com/docs/ai-gateway/models-and-providers) direcționează solicitările mai departe. [NVIDIA NIM](https://docs.api.nvidia.com/nim/reference/llm-apis) rulează modelul găzduit selectat. Selectorul afișează tipurile de intrare și suportul pentru instrumente când sunt documentate.
+
 ## LM Studio
 
 1. Pornește serverul LM Studio și încarcă un model.

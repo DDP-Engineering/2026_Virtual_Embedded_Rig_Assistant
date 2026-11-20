@@ -87,6 +87,14 @@ Verwende Alibaba Coding Plan gemäß Alibabas Nutzungsrichtlinie in unterstützt
 
 Siehe die Modelllisten für [Fireworks AI](https://fireworks.ai/models), [Together AI](https://docs.together.ai/docs/serverless/models), [Groq](https://console.groq.com/docs/models) und [Cerebras](https://inference-docs.cerebras.ai/models/overview).
 
+## Hugging Face Inference Providers, NVIDIA NIM und Vercel AI Gateway
+
+1. Wähle unter **Verbindung hinzufügen** den Dienst aus und gib seinen Schlüssel ein. Hugging Face benötigt ein Zugriffstoken mit der Berechtigung für Inference Providers. NVIDIA NIM benötigt einen Schlüssel mit Zugriff auf die NVIDIA Public API Endpoints. Vercel benötigt einen AI-Gateway-Schlüssel.
+2. Wähle **Modelle suchen** und dann ein Modell aus. Bei Modellen mit eingeschränktem oder kontospezifischem Zugriff kannst du die vollständige Modell-ID und die Modellgrenzen eingeben. Behalte das Präfix und die Schrägstriche bei. Wenn du bei Hugging Face einen nachgelagerten Anbieter ausdrücklich auswählst, behalte auch den Suffix wie in `owner/model:novita` bei.
+3. Speichere die Verbindung und wähle **Testen**, um das Modell mit deinem Schlüssel zu prüfen. Ein Katalogeintrag garantiert keinen Zugriff. Prüfe bei einem Zugriffsfehler die genaue Modell-ID und deine Berechtigung oder deinen Tarif beim Dienst, bevor du die Verbindung änderst.
+
+VERA sendet Anfragen an den in der Modellauswahl genannten Dienst. [Hugging Face](https://huggingface.co/docs/inference-providers/index) und [Vercel](https://vercel.com/docs/ai-gateway/models-and-providers) leiten die Anfragen weiter. [NVIDIA NIM](https://docs.api.nvidia.com/nim/reference/llm-apis) führt das ausgewählte gehostete Modell aus. Die Modellauswahl zeigt dokumentierte Eingabetypen und Werkzeugunterstützung an.
+
 ## LM Studio
 
 1. Starten Sie den LM-Studio-Server und laden Sie ein Modell.

@@ -49,7 +49,7 @@ test("provider categories support concurrent connections, presets and aligned ac
   await expect(choices).toHaveCount(0);
   await expect(section.getByText("No matching providers")).toBeVisible();
   await search.clear();
-  await expect(choices).toHaveCount(23);
+  await expect(choices).toHaveCount(26);
   await search.fill("OpenCode");
   await expect(choices).toHaveText(["OpenCode Console", "OpenCode Go"]);
   for (const [preset, label, baseUrl] of [
@@ -90,6 +90,9 @@ test("provider categories support concurrent connections, presets and aligned ac
     ["together", "Together AI", "https://api.together.ai/v1"],
     ["groq", "Groq", "https://api.groq.com/openai/v1"],
     ["cerebras", "Cerebras", "https://api.cerebras.ai/v1"],
+    ["huggingface", "Hugging Face Inference Providers", "https://router.huggingface.co/v1"],
+    ["nvidia", "NVIDIA NIM", "https://integrate.api.nvidia.com/v1"],
+    ["vercel-ai-gateway", "Vercel AI Gateway", "https://ai-gateway.vercel.sh/v1"],
   ] as const) {
     await search.fill(label);
     await expect(choices).toHaveText([label]);

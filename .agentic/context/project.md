@@ -113,7 +113,9 @@ Facts that span components:
   and credentials, with explicit model entry when catalog discovery is unavailable. Session and workbench
   model pickers share plan and capability labels. Fireworks AI, Together AI, Groq and Cerebras offer
   separate key scopes, service catalogs and manual model entry. Hosted capabilities use documented
-  catalog fields or exact published model profiles.
+  catalog fields or exact published model profiles. Hugging Face Inference Providers and Vercel
+  AI Gateway route requests upstream. NVIDIA NIM runs hosted models. The three services have
+  separate model catalogs and credential scopes.
 - The composer takes pasted, dropped and picked raster images, retains imported originals in the workbench and attaches existing Files images by reference. Chat messages keep primary-workbench image paths in the transcript. Session dispatch loads bounded raster parts for image-capable models, and exports and compacted history retain the paths. The model-gated `view_image` tool uses a strictly confined workbench path and sends the image as a current-turn tool result. The workbench Tools editor resolves support for its draft default model.
 - Plugin selection is per workbench and defaults to none. Global plugin installation is separate from workbench enablement.
 - Plugin secrets (MQTT passwords, Wokwi tokens, parts search keys) stay in VERA's credential store and are edited in the plugin's Configuration section on the Plugins page; App settings has no page for them. MQTT and Wokwi secrets reach only an approved run of the enabled official plugin, on its stdin. See plugins and parts-search.

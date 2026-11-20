@@ -8,6 +8,8 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ### Added
 
+- Connect Hugging Face Inference Providers, NVIDIA NIM and Vercel AI Gateway with full model IDs.
+
 - Connect Fireworks AI, Together AI, Groq and Cerebras with catalog discovery and manual model IDs.
 
 - Connect Alibaba Cloud and Xiaomi MiMo APIs and plans using their region and workspace settings.

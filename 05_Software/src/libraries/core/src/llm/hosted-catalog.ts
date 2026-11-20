@@ -5,6 +5,7 @@ import {
   type HostedCatalogMetadata,
 } from "@vera/shared";
 import { z } from "zod";
+import { parseHuggingFaceCatalog, parseNvidiaCatalog, parseVercelCatalog } from "./gateway-catalogs.js";
 
 type CatalogProfiles = NonNullable<Extract<CuratedDiscovery, { status: "discovered" }>["profiles"]>;
 
@@ -106,6 +107,12 @@ export function parseHostedCatalog(
   metadata: Exclude<HostedCatalogMetadata, "fireworks">,
 ): CatalogProfiles {
   switch (metadata) {
+    case "huggingface":
+      return parseHuggingFaceCatalog(body);
+    case "nvidia":
+      return parseNvidiaCatalog(body);
+    case "vercel-ai-gateway":
+      return parseVercelCatalog(body);
     case "together": {
       const list = togetherList.parse(body);
       return (Array.isArray(list) ? list : list.data)

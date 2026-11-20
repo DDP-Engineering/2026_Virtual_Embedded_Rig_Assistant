@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-FUNC-5711221e"
+title = "Discover chat models for inference routers and NVIDIA NIM"
+status = "active"
+requirement = "When the selected service returns its model catalog, VERA shall offer its usable chat IDs verbatim."
+verification = "Return native catalog fixtures with namespaced chat IDs and non-chat or unavailable rows and compare the exact discovered IDs."
+affected_paths = ["05_Software/src/libraries/core/src/llm/hosted-catalog.ts", "05_Software/src/libraries/core/src/llm/gateway-catalogs.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/gateway-provider-presets.test.ts"]
+spec = "specs/REQ-FUNC-5711221e.md"
+created = 2026-11-20
+updated = 2026-11-20

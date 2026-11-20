@@ -25,10 +25,10 @@ entries:
   - category: new
     topic: { en: Models and images, ro: Modele și imagini, de: Modelle und Bilder, fr: Modèles et images }
     text:
-      en: More API and plan presets, including Fireworks, Together, Groq and Cerebras. Images per model.
-      ro: Mai multe servicii și planuri, inclusiv Fireworks, Together, Groq și Cerebras. Imagini per model.
-      de: Mehr Dienste und Tarife, auch Fireworks, Together, Groq und Cerebras. Bilder je Modell.
-      fr: Plus de services et d’offres, dont Fireworks, Together, Groq et Cerebras. Images par modèle.
+      en: More APIs and plans, including Hugging Face, NVIDIA NIM and Vercel AI Gateway. Images per model.
+      ro: Noi servicii și planuri, cu Hugging Face, NVIDIA NIM și Vercel AI Gateway. Imagini per model.
+      de: Mehr Dienste und Tarife, auch Hugging Face, NVIDIA NIM und Vercel AI Gateway. Bilder je Modell.
+      fr: Plus de services et d’offres, dont Hugging Face, NVIDIA NIM et Vercel AI Gateway. Images par modèle.
   - category: fixed
     topic: { en: Skills, ro: Skills, de: Skills, fr: Compétences }
     text:

@@ -139,6 +139,7 @@ export class ProviderGateway {
       const slot = resolved?.slot;
       const profile = resolved?.binding.models?.find(({ id }) => id === (model ?? before?.model));
       const hosted = isHostedCatalog(resolved?.binding.catalog);
+      const testOutputBudget = resolved?.preset.testOutputBudget;
       const testKey = slot ? await this.credentials.read(slot, { signal: this.lifetime.signal }) : undefined;
       const result = providerTestResultSchema.parse(
         await testConnection(
@@ -154,8 +155,8 @@ export class ProviderGateway {
               ? { reasoning: "low", maxOutputTokens: 4096 }
               : profile?.reasoningOptions?.includes("on")
                 ? { reasoning: "on", maxOutputTokens: 4096 }
-                : hosted && profile?.reasoning
-                  ? { maxOutputTokens: 4096 }
+                : hosted && (testOutputBudget || profile?.reasoning)
+                  ? { maxOutputTokens: testOutputBudget ?? 4096 }
                   : {},
         ),
       );

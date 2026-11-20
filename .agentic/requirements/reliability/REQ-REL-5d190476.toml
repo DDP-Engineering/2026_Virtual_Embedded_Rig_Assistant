@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-REL-5d190476"
+title = "Keep a saved hosted model when its catalog is unavailable"
+status = "active"
+requirement = "If a hosted catalog cannot supply the requested model, VERA shall retain the explicitly configured model and use its registered inference route."
+verification = "Exercise unavailable, empty and malformed catalog responses and an explicitly entered gated ID. Verify the saved reference, probe destination and lack of other model requests."
+affected_paths = ["05_Software/src/libraries/shared/src/hosted-provider-presets.ts", "05_Software/src/libraries/core/src/llm/preset-connection.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/gateway-provider-presets.test.ts"]
+created = 2026-11-20
+updated = 2026-11-20

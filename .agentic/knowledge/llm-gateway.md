@@ -49,6 +49,12 @@ Core resolves models and wraps exact-pinned pi-ai1.1.0. Desktop main supplies cu
   and exact published model profiles supply tool and input capability labels. Missing
   metadata stays unverified. Hosted Chat Completions preserves scoped keys, streams and tool
   result IDs. Connection tests allow a 4096-token budget for documented reasoning models.
+- Hugging Face, NVIDIA NIM and Vercel AI Gateway use separate hosted Chat Completions bindings.
+  Hugging Face keeps full router IDs and only projects tool support when all eligible routes
+  are confirmed live and agree. NVIDIA projects native catalog capabilities for typed chat
+  rows and matches sparse IDs to pinned NVIDIA chat metadata. Vercel
+  AI Gateway lists language models and documented catalog capabilities. The model picker names
+  the receiving service. Explicit IDs stay selectable through missing or invalid discovery.
 - OpenCode Console and Go use `https://opencode.ai/inference[/go]/v1/models` for the scoped catalog
   and `https://opencode.ai/inference[/go]/openai/v1/chat/completions` for inference. OpenCode’s
   catalog supplies eligible IDs, names, input modalities, limits and declared tool and compatible

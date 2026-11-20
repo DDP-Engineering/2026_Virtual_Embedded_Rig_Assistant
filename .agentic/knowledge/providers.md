@@ -37,6 +37,9 @@ strict public projections. Renderer holds a password draft until save/cancel and
   accepts a full manual model ID and has its own registered catalog and inference routes.
   Hosted connection tests exercise the saved model and report the observed steps. Persistent
   model capability metadata comes from catalog attributes and documented exact IDs.
+- Hugging Face Inference Providers, NVIDIA NIM and Vercel AI Gateway have separate fixed
+  bearer-key bindings. The Settings editor accepts complete model IDs including a manually
+  chosen Hugging Face route suffix or gated model. Discovery does not change the saved ID.
 - providers.presets.discover accepts a preset/binding, optional local draft key and optional matching
   saved connection. It returns discovered IDs and available catalog profiles, a manual-entry outcome or
   a structured failure. The key
