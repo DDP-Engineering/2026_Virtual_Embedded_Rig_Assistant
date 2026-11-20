@@ -678,6 +678,35 @@ export class SessionService {
     })();
     this.hub.publish(id, value);
   }
+  /**
+   * Removes the named bookmarks, or all of the session's, in one transaction: an unknown target refuses the
+   * whole request. Messages stay; only the user-only preference changes.
+   */
+  removeBookmarks(id: string, target: { messageIds: readonly string[] } | { all: true }): void {
+    const row = this.row(id);
+    this.writable();
+    if (row.archived) throw veraError("DENIED");
+    if (this.deleting.has(id)) throw veraError("BUSY");
+    const ids =
+      "all" in target ? [...this.hub.get(id).snapshot.bookmarkedMessageIds] : [...new Set(target.messageIds)];
+    const events = ids.map((messageId) => {
+      const input = sessionEventSchema.safeParse({
+        type: "message.bookmarked",
+        messageId,
+        bookmarked: false,
+      });
+      if (!input.success) throw veraError("INVALID");
+      return input.data;
+    });
+    const values = this.host.db.transaction(() => {
+      const user = this.host.db.prepare(
+        "SELECT 1 FROM events WHERE session_id=? AND type IN ('message.user','message.queued') AND json_extract(payload_json,'$.messageId')=? LIMIT 1",
+      );
+      for (const messageId of ids) if (!user.get(id, messageId)) throw veraError("INVALID");
+      return events.map((event) => this.hub.record(id, event));
+    })();
+    this.hub.publishBatch(id, values);
+  }
   rename(id: string, title: string): SessionSummary {
     this.idle(id);
     if (!title.trim() || title.length > 60) throw veraError("INVALID");

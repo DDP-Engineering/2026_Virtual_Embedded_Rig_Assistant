@@ -1323,6 +1323,69 @@ legend {
   font-size: 0.875rem;
   color: var(--muted-foreground);
 }
+/* Bookmarks tab: fixed controls above a list that scrolls on its own. */
+.bookmarks-tab {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  height: 100%;
+  min-height: 0;
+  min-width: 0;
+}
+.bookmarks-controls,
+.bookmarks-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+.bookmarks-controls input[type="search"] {
+  flex: 1;
+  min-width: 8rem;
+}
+.bookmarks-controls p {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--muted-foreground);
+}
+.bookmarks-actions label {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-right: auto;
+}
+.bookmarks-list {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  align-content: start;
+  gap: 0.4rem;
+}
+.bookmarks-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.4rem;
+  min-width: 0;
+}
+.bookmarks-list li > input {
+  margin-top: 0.6rem;
+}
+.bookmark-row {
+  flex: 1;
+  display: grid;
+  gap: 0.2rem;
+  min-width: 0;
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+.bookmark-reply {
+  font-size: 0.875rem;
+  color: var(--muted-foreground);
+}
 /* The chat area's tabs: Chat and the open documents (TASK-79f6ffd3). */
 /* Tab panels share one grid cell, so the hidden conversation keeps its size and scroll. */
 .document-tabs {

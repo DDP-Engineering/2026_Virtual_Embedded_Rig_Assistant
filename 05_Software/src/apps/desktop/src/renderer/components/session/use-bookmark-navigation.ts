@@ -18,22 +18,25 @@ export function useBookmarkNavigation({
   bookmarked: (id: string) => boolean;
   layout: { ids: string[]; starts: number[]; height: number };
   onNavigate: (id: string) => boolean;
-  onArrive: (id: string, ordinal: number) => void;
+  /** `quiet` arrivals come from the Bookmarks tab, which keeps focus. */
+  onArrive: (id: string, ordinal: number, quiet: boolean) => void;
 }) {
   const bindings = useContext(ShortcutContext);
   const tabs = useDocumentTabs();
   const shown = !tabs || tabs.active === CHAT;
-  const [pending, setPending] = useState<string | null>(null);
+  const [target, setTarget] = useState<{ id: string; quiet: boolean } | null>(null);
+  const pending = target?.id ?? null;
+  const setPending = (id: string | null, quiet = false) => setTarget(id === null ? null : { id, quiet });
   // Near neighbours and end-clamped jumps can share the reading line or scroll position.
   const last = useRef<{ id: string; top: number } | null>(null);
   const remember = (id: string) => {
     last.current = { id, top: viewport.current?.scrollTop ?? 0 };
     setPending(null);
   };
-  const arrive = (id: string) => {
+  const arrive = (id: string, quiet = false) => {
     if (!onNavigate(id)) return false;
     remember(id);
-    onArrive(id, messages.findIndex((message) => message.id === id) + 1);
+    onArrive(id, messages.findIndex((message) => message.id === id) + 1, quiet);
     return true;
   };
   useEffect(() => {
@@ -42,7 +45,7 @@ export function useBookmarkNavigation({
       setPending(null);
       return;
     }
-    if (layout.ids.includes(pending) && arrive(pending)) setPending(null);
+    if (layout.ids.includes(pending) && arrive(pending, target?.quiet)) setPending(null);
   });
   useEffect(() => {
     const key = (event: KeyboardEvent) => {
@@ -70,5 +73,10 @@ export function useBookmarkNavigation({
     window.addEventListener("keydown", key);
     return () => window.removeEventListener("keydown", key);
   });
-  return remember;
+  /** Jump to a bookmarked message, mounting older history first when needed. */
+  const go = (id: string, quiet: boolean) => {
+    if (arrive(id, quiet)) setPending(null);
+    else setPending(id, quiet);
+  };
+  return { remember, go };
 }

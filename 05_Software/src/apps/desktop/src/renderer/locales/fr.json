@@ -151,6 +151,7 @@
     "changes": "Modifications",
     "artifacts": "Artefacts",
     "plan": "Plan",
+    "bookmarks": "Signets",
     "placeholder": "Le contenu du panneau s’affichera ici.",
     "runs": "Exécutions",
     "terminal": "Terminal"
@@ -1406,5 +1407,19 @@
     "warning": "Les secrets enregistrés trouvés dans les fichiers ou les résultats des outils peuvent être envoyés au fournisseur du modèle lorsque le masquage pour l’agent et le modèle est désactivé.",
     "confirm": "Désactiver le masquage",
     "loading": "Chargement des paramètres de confidentialité…"
+  },
+  "bookmarks": {
+    "filter": "Filtrer les signets",
+    "count": "Signets : {{count}}",
+    "countFiltered": "Signets : {{shown}} sur {{total}}",
+    "empty": "Aucun signet dans cette conversation.",
+    "noMatches": "Aucun signet ne correspond au filtre.",
+    "selectAll": "Tout sélectionner",
+    "removeSelected": "Retirer la sélection",
+    "clearAll": "Tout effacer",
+    "clearConfirm": "Retirer tous les signets de cette conversation ({{count}}) ? Les messages restent.",
+    "open": "Aller au message {{ordinal}} : {{text}}",
+    "select": "Sélectionner le message {{ordinal}}",
+    "remove": "Retirer le signet du message {{ordinal}}"
   }
 }

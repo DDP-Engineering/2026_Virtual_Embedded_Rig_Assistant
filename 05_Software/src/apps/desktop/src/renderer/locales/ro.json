@@ -151,6 +151,7 @@
     "changes": "Modificări",
     "artifacts": "Artefacte",
     "plan": "Plan",
+    "bookmarks": "Marcaje",
     "placeholder": "Conținutul panoului va fi disponibil aici.",
     "runs": "Rulări",
     "terminal": "Terminal"
@@ -1406,5 +1407,19 @@
     "warning": "Secretele stocate găsite în fișiere sau în rezultatele instrumentelor pot fi trimise furnizorului modelului când mascarea pentru agent și model este dezactivată.",
     "confirm": "Dezactivează mascarea",
     "loading": "Se încarcă setările de confidențialitate…"
+  },
+  "bookmarks": {
+    "filter": "Filtrează marcajele",
+    "count": "Marcaje: {{count}}",
+    "countFiltered": "Marcaje: {{shown}} din {{total}}",
+    "empty": "Nu există marcaje în această conversație.",
+    "noMatches": "Niciun marcaj nu se potrivește filtrului.",
+    "selectAll": "Selectează tot",
+    "removeSelected": "Elimină selecția",
+    "clearAll": "Șterge toate",
+    "clearConfirm": "Elimini toate marcajele din această conversație ({{count}})? Mesajele rămân.",
+    "open": "Mergi la mesajul {{ordinal}}: {{text}}",
+    "select": "Selectează mesajul {{ordinal}}",
+    "remove": "Elimină marcajul de la mesajul {{ordinal}}"
   }
 }

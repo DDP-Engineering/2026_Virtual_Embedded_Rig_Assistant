@@ -1132,6 +1132,14 @@ ipcMain.handle(
           s.bookmark(sessionId, messageId, bookmarked);
           return {};
         }, false),
+      "session.bookmarks.remove": (request) =>
+        sessions.run((s) => {
+          s.removeBookmarks(
+            request.sessionId,
+            "all" in request ? { all: true } : { messageIds: request.messageIds },
+          );
+          return {};
+        }, false),
       "session.rename": ({ sessionId, title }) =>
         sessions.run((s) => {
           if (credentials.containsSecret(title)) throw { code: "INVALID", messageKey: "errors.INVALID" };

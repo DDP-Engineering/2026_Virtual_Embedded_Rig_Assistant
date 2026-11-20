@@ -151,6 +151,7 @@
     "changes": "Changes",
     "artifacts": "Artifacts",
     "plan": "Plan",
+    "bookmarks": "Bookmarks",
     "placeholder": "Panel content will be available here.",
     "runs": "Runs",
     "terminal": "Terminal"
@@ -1406,5 +1407,19 @@
     "warning": "Stored secrets found in files or tool output can be sent to the model provider when Agent and model masking is off.",
     "confirm": "Turn off masking",
     "loading": "Loading privacy settings…"
+  },
+  "bookmarks": {
+    "filter": "Filter bookmarks",
+    "count": "Bookmarks: {{count}}",
+    "countFiltered": "Bookmarks: {{shown}} of {{total}}",
+    "empty": "No bookmarks in this conversation.",
+    "noMatches": "No bookmarks match the filter.",
+    "selectAll": "Select all",
+    "removeSelected": "Remove selected",
+    "clearAll": "Clear all",
+    "clearConfirm": "Remove every bookmark from this conversation ({{count}})? The messages stay.",
+    "open": "Go to message {{ordinal}}: {{text}}",
+    "select": "Select message {{ordinal}}",
+    "remove": "Remove bookmark from message {{ordinal}}"
   }
 }

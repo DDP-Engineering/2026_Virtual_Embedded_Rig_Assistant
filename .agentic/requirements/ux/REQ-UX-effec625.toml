@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-UX-effec625"
+
+title = "Offer the Bookmarks tab as an opt-in right-panel tab"
+
+status = "active"
+
+requirement = """
+When the engineer edits a workbench's Interface > Right-panel tabs, the workbench editor shall offer a localized Bookmarks option after Plan that is unchecked for a new workbench and after Restore defaults, save it per workbench and show the tab in that workbench's sessions only while it is checked.
+"""
+
+verification = "Shared schema test: a parsed workbench without interface lists the seven earlier tabs and not bookmarks, and bookmarks sits right after plan in the tab ids. Renderer test (en/ro/de/fr): the editor shows Bookmarks unchecked with its localized label, Restore defaults leaves it unchecked, and checking it saves bookmarks after plan. Mock e2e: the tab is absent in a new workbench, appears after Plan once checked and saved, and unchecking hides it while the message bookmark stays set."
+
+affected_paths = ["05_Software/src/libraries/shared/src/workbench.ts", "05_Software/src/apps/desktop/src/renderer/components/right-panel-tabs.ts", "05_Software/src/apps/desktop/src/renderer/components/workbench-interface.tsx", "05_Software/src/apps/desktop/src/renderer/components/shell.tsx", "05_Software/src/apps/desktop/src/renderer/App.tsx", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json", "05_Software/src/apps/desktop/src/renderer/locales/fr.json", "05_Software/help/en/workbenches.md", "05_Software/help/ro/workbenches.md", "05_Software/help/de/workbenches.md", "05_Software/help/fr/workbenches.md", "05_Software/src/apps/desktop/src/renderer/components/workbench-interface.test.ts", "05_Software/src/apps/desktop/src/renderer/components/shell.test.ts", "05_Software/src/libraries/shared/src/workbench.test.ts", "05_Software/tests/e2e/bookmarks-tab.spec.ts"]
+
+linked_tests = ["05_Software/src/libraries/shared/src/workbench.test.ts", "05_Software/src/apps/desktop/src/renderer/components/workbench-interface.test.ts", "05_Software/tests/e2e/bookmarks-tab.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-20
+updated = 2026-11-20

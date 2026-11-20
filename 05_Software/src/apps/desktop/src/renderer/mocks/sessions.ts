@@ -255,6 +255,20 @@ export class MockSessions {
       });
       return {};
     }
+    if (channel === "session.bookmarks.remove") {
+      this.writable();
+      if (row.summary.archived) throw veraError("DENIED");
+      const state = foldSessionEvents(row.events);
+      const target = request as { all?: true; messageIds?: string[] };
+      const ids = target.all ? [...state.bookmarkedMessageIds] : [...new Set(target.messageIds ?? [])];
+      if (
+        !ids.every((messageId) => state.items.some((item) => item.kind === "user" && item.id === messageId))
+      )
+        throw veraError("INVALID");
+      for (const messageId of ids)
+        this.emit(id, { type: "message.bookmarked", messageId, bookmarked: false });
+      return {};
+    }
     if (channel === "session.reasoning.get" || channel === "session.reasoning.set") {
       const modelRef = row.summary.modelRef ?? this.current().model;
       if (!modelRef) throw veraError("INVALID");

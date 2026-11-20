@@ -89,16 +89,21 @@ export const rightPanelTabIds = [
   "changes",
   "artifacts",
   "plan",
+  "bookmarks",
   "runs",
   "terminal",
 ] as const;
 export type RightPanelTab = (typeof rightPanelTabIds)[number];
+/** Shown for a new workbench and after Restore defaults; Bookmarks is opt-in. */
+export const defaultRightPanelTabs: readonly RightPanelTab[] = rightPanelTabIds.filter(
+  (id) => id !== "bookmarks",
+);
 const rightPanelTabsSchema = z
   .array(z.enum(rightPanelTabIds))
   .max(rightPanelTabIds.length)
   .refine((tabs) => new Set(tabs).size === tabs.length, "Right panel tabs must be unique.");
 const workbenchInterface = z.looseObject({
-  right_panel_tabs: rightPanelTabsSchema.default([...rightPanelTabIds]),
+  right_panel_tabs: rightPanelTabsSchema.default([...defaultRightPanelTabs]),
 });
 /** Defaults for the agent's search_docs when it passes no k or mode of its own. */
 export const workbenchRetrievalSchema = z.looseObject({
@@ -133,7 +138,7 @@ export const workbenchSchema = z.looseObject({
   tools: disabled.default({ disabled: [] }),
   plugins: plugins.default({ enabled: [] }),
   chat: chat.default({ detail: "normal" }),
-  interface: workbenchInterface.default({ right_panel_tabs: [...rightPanelTabIds] }),
+  interface: workbenchInterface.default({ right_panel_tabs: [...defaultRightPanelTabs] }),
   agent: agent.default({ permission_mode: "ask", model: null, allowed_commands: [] }),
 });
 export type WorkbenchConfig = z.infer<typeof workbenchSchema>;

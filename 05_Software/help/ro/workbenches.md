@@ -53,7 +53,7 @@ Skill-urile workbench-ului și ale utilizatorului oferă **Editează instrucțiu
 
 ## Filele panoului din dreapta
 
-Deschide **Editează workbench-ul > Interfață > Filele panoului din dreapta**. Alege filele vizibile: Instrucțiuni și skill-uri, Fișiere, Modificări, Artefacte, Plan, Rulări și Terminal. Implicit sunt selectate toate. **Restabilește valorile implicite** le selectează în ciornă; **Salvează** aplică selecția, iar **Anulează** o abandonează.
+Deschide **Editează workbench-ul > Interfață > Filele panoului din dreapta**. Alege filele vizibile: Instrucțiuni și skill-uri, Fișiere, Modificări, Artefacte, Plan, Marcaje, Rulări și Terminal. Implicit sunt selectate toate, mai puțin **Marcaje**, pe care o activezi tu. **Restabilește valorile implicite** le selectează în ciornă pe toate, mai puțin Marcaje; **Salvează** aplică selecția, iar **Anulează** o abandonează.
 
 Salvarea actualizează imediat toate sesiunile acestui workbench, inclusiv după redeschidere sau repornirea VERA. Alte workbench-uri își păstrează propriile selecții. Dacă ascunzi fila activă, este selectată prima filă rămasă în ordinea obișnuită. Dacă le ascunzi pe toate, panoul se închide și butonul obișnuit de deschidere dispare. **Filele panoului din dreapta** rămâne accesibil pe pagina principală, iar editorul rămâne disponibil din prezentarea workbench-ului și meniul lateral.
 

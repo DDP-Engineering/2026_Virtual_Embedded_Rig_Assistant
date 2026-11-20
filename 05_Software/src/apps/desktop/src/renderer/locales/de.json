@@ -151,6 +151,7 @@
     "changes": "Änderungen",
     "artifacts": "Artefakte",
     "plan": "Plan",
+    "bookmarks": "Lesezeichen",
     "placeholder": "Der Inhalt dieses Bereichs wird hier verfügbar sein.",
     "runs": "Läufe",
     "terminal": "Terminal"
@@ -1406,5 +1407,19 @@
     "warning": "Gespeicherte Geheimnisse aus Dateien oder Werkzeugausgaben können bei ausgeschalteter Maskierung für Agent und Modell an den Modellanbieter gesendet werden.",
     "confirm": "Maskierung ausschalten",
     "loading": "Datenschutzeinstellungen werden geladen…"
+  },
+  "bookmarks": {
+    "filter": "Lesezeichen filtern",
+    "count": "Lesezeichen: {{count}}",
+    "countFiltered": "Lesezeichen: {{shown}} von {{total}}",
+    "empty": "Keine Lesezeichen in dieser Unterhaltung.",
+    "noMatches": "Keine Lesezeichen passen zum Filter.",
+    "selectAll": "Alle auswählen",
+    "removeSelected": "Auswahl entfernen",
+    "clearAll": "Alle entfernen",
+    "clearConfirm": "Alle Lesezeichen dieser Unterhaltung entfernen ({{count}})? Die Nachrichten bleiben erhalten.",
+    "open": "Zu Nachricht {{ordinal}} springen: {{text}}",
+    "select": "Nachricht {{ordinal}} auswählen",
+    "remove": "Lesezeichen von Nachricht {{ordinal}} entfernen"
   }
 }

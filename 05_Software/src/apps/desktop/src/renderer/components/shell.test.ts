@@ -135,7 +135,7 @@ it("refuses hidden shortcut targets and keeps settings reachable with every tab 
     await shortcut("T");
     expect(container.querySelector('[data-panel="right"]')).toBeNull();
     await render(rightPanelTabIds);
-    expect(container.querySelectorAll('[role="tab"]')).toHaveLength(7);
+    expect(container.querySelectorAll('[role="tab"]')).toHaveLength(rightPanelTabIds.length);
     expect(container.querySelector("#tab-context")?.getAttribute("aria-selected")).toBe("true");
   } finally {
     await act(async () => root.unmount());

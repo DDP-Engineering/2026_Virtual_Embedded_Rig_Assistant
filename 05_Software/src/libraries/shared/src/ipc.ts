@@ -707,6 +707,18 @@ export const channels = {
     }),
     z.strictObject({}),
   ),
+  /** Removes the named bookmarks, or every bookmark of the session, atomically; messages stay. */
+  "session.bookmarks.remove": defineChannel(
+    "session.bookmarks.remove",
+    z.union([
+      z.strictObject({
+        sessionId: sessionIdSchema,
+        messageIds: z.array(z.string().min(1).max(200)).min(1).max(10000),
+      }),
+      z.strictObject({ sessionId: sessionIdSchema, all: z.literal(true) }),
+    ]),
+    z.strictObject({}),
+  ),
   "session.rename": defineChannel(
     "session.rename",
     z.strictObject({ sessionId: sessionIdSchema, title: z.string().trim().min(1).max(60) }),

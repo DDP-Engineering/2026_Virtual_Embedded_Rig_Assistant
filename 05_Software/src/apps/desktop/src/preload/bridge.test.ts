@@ -203,6 +203,7 @@ it("infers registry types and returns validated metadata", async () => {
     | "session.item.detail"
     | "session.rename"
     | "session.bookmark"
+    | "session.bookmarks.remove"
     | "session.archive.set"
     | "session.move"
     | "session.delete"

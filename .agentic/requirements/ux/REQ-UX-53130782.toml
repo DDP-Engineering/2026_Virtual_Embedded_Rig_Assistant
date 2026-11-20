@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-UX-53130782"
+
+title = "Jump from a bookmark row to its message"
+
+status = "active"
+
+requirement = """
+When the engineer activates a Bookmarks row by click or Enter, the desktop app shall show Chat, scroll to and highlight that message, mounting older unmounted history first, and keep the Bookmarks tab open, with arrow-key navigation between rows and localized accessible names.
+"""
+
+verification = "Mock e2e on a 61-message session: from the end of the conversation, Enter on the first bookmark row scrolls the second user message into view with the jump outline, the Bookmarks tab stays selected and keeps focus, and ArrowDown moves to the next row. Renderer test: rows are named Go to message N with the preview, and ArrowDown, End and Home move focus between rows. Mounting older history before the jump reuses the bookmark-navigation path covered by the existing navigation tests."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/session/bookmarks-tab.tsx", "05_Software/src/apps/desktop/src/renderer/components/session/transcript.tsx", "05_Software/src/apps/desktop/src/renderer/components/session/use-bookmark-navigation.ts", "05_Software/src/apps/desktop/src/renderer/components/session/transcript-navigator.tsx", "05_Software/src/apps/desktop/src/renderer/components/session/session-bookmarks.tsx", "05_Software/src/apps/desktop/src/renderer/components/session/bookmarks-tab.test.ts", "05_Software/tests/e2e/bookmarks-tab.spec.ts"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/session/bookmarks-tab.test.ts", "05_Software/tests/e2e/bookmarks-tab.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-20
+updated = 2026-11-20
