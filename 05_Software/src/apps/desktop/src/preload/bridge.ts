@@ -21,7 +21,10 @@ export interface BridgeTransport {
   removeListener(channel: string, listener: (event: unknown, payload: unknown) => void): void;
 }
 
-export function createBridge(transport: BridgeTransport): VeraBridge {
+export function createBridge(
+  transport: BridgeTransport,
+  hasUserActivation: () => boolean = () => false,
+): VeraBridge {
   let subscriptionNumber = 0;
   // Every subscriber's listener receives the same payload object: validate it once per event, not per subscriber.
   let parsedPayload: unknown;
@@ -121,6 +124,7 @@ export function createBridge(transport: BridgeTransport): VeraBridge {
       if (!isChannel(channel)) throw veraError("NOT_FOUND");
       const parsed = channels[channel].request.safeParse(request);
       if (!parsed.success) throw veraError("INVALID");
+      if (channel === "dictation.begin" && !hasUserActivation()) throw veraError("DENIED");
       let result: unknown;
       try {
         result = await transport.invoke("vera:invoke", channel, parsed.data);

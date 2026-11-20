@@ -100,7 +100,10 @@ There is no upgrade-safety suite, because every stored format is version 1.
 ### Rules and limits common to all suites
 
 - Vitest installs a non-loopback fetch and socket guard before application modules. E2e blocks non-loopback traffic, keeps Chromium sandboxing and uses temporary `userData`.
-- No live model is needed. Runtime, session and UI acceptance use deterministic replay and loopback transports. Real subscription sign-in, live web providers and live supplier keys are separate manual checks.
+- Runtime, session and UI suites use deterministic replay and loopback transports. Focused dictation
+  acceptance opts in with VERA_DICTATION_MODEL_ROOT to exercise the verified local Whisper worker and
+  sandboxed native capture from fixture audio. Real subscription sign-in, live web providers and live
+  supplier keys are separate manual checks.
 - No test reaches real hardware. Boards, probes, instruments, adapters and meters are simulated by stand-ins; real-device acceptance is pending for every hardware plugin.
 - Linux in WSL2 is Linux execution. It is not native Ubuntu acceptance; say which one a result comes from. linux-arm64 execution is not established.
 - Some cases run on one platform only: SIGTERM stop branches, the `script` PTY cases of the CLI and POSIX file symlinks run on Linux; junction and case-alias cases and LTspice run on Windows.

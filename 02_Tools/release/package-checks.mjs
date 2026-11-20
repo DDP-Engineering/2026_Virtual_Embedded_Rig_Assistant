@@ -46,6 +46,7 @@ const releaseHookMarkers = [
   "fictional-native-access-WP21",
   "registerReplay",
   "veraTestFileTools",
+  "veraTestDictation",
 ];
 
 /** The test hooks left in bundle code: the listed markers and every `VERA_TEST_` environment name. */

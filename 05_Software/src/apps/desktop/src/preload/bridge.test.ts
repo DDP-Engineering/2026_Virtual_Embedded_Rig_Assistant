@@ -97,6 +97,10 @@ it("infers registry types and returns validated metadata", async () => {
     | "commands.shells"
     | "dictation.get"
     | "dictation.change"
+    | "dictation.begin"
+    | "dictation.recording"
+    | "dictation.finish"
+    | "dictation.cancel"
     | "terminal.list"
     | "terminal.create"
     | "terminal.output"
@@ -391,4 +395,19 @@ it("accepts typed dictation actions and keeps model paths out of the bridge", as
     value: { ...snapshot, models: [{ ...snapshot.models[0], directory: "/hidden" }, snapshot.models[1]] },
   } as never);
   await expect(bridge.invoke("dictation.get", {})).rejects.toMatchObject({ code: "INTERNAL" });
+});
+
+it("requires activation to open a microphone grant and validates the bounded PCM", async () => {
+  const { bridge, transport } = fixture();
+  const id = "73059b83-6c74-488a-b24e-e515720ed472";
+  await expect(bridge.invoke("dictation.begin", { id })).rejects.toMatchObject({ code: "DENIED" });
+  await expect(
+    bridge.invoke("dictation.finish", { id, pcm: new Float32Array(480001) }),
+  ).rejects.toMatchObject({
+    code: "INVALID",
+  });
+  expect(transport.invoke).not.toHaveBeenCalled();
+  const activated = createBridge(transport, () => true);
+  transport.invoke.mockResolvedValueOnce({ ok: true, value: { status: "opening" } } as never);
+  await expect(activated.invoke("dictation.begin", { id })).resolves.toEqual({ status: "opening" });
 });

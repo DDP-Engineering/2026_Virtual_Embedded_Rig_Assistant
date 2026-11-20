@@ -20,6 +20,10 @@ const workbenchHandlers = {
   "commands.shells": unused,
   "dictation.get": unused,
   "dictation.change": unused,
+  "dictation.begin": unused,
+  "dictation.recording": unused,
+  "dictation.finish": unused,
+  "dictation.cancel": unused,
   "terminal.list": unused,
   "terminal.create": unused,
   "terminal.output": unused,
@@ -372,6 +376,28 @@ describe("validated invoke router", () => {
     await expect(
       invoke({ sender: detachedContents, senderFrame: detached }, "app.info", {}),
     ).resolves.toMatchObject({ ok: false, error: { code: "DENIED" } });
+    expect(handler).not.toHaveBeenCalled();
+  });
+  it("rechecks a trusted sender after the readiness wait", async () => {
+    let release!: () => void;
+    const ready = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    const invoke = createInvokeRouter({
+      target: () => ({ webContents: contents, url: "vera://app/index.html" }),
+      handlers: {
+        ...workbenchHandlers,
+        "app.info": handler,
+        "app.settings.get": unused,
+        "app.settings.update": unused,
+      },
+      log,
+      ready: () => ready,
+    });
+    const result = invoke(event, "app.info", {});
+    frame.url = "https://different.invalid/";
+    release();
+    await expect(result).resolves.toMatchObject({ ok: false, error: { code: "DENIED" } });
     expect(handler).not.toHaveBeenCalled();
   });
   it("maps an invalid response to logged INTERNAL and remains usable", async () => {

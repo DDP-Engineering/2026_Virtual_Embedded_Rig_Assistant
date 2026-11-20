@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { dictationJobIdSchema } from "./dictation.js";
 import {
   documentGuardSchema,
   documentSchema,
@@ -40,6 +41,7 @@ export const appEventSchema = z.discriminatedUnion("type", [
   z.strictObject({ type: z.literal("indexer.status"), state: indexerStateSchema }),
   /** The plugin catalog was read again (an update check); the Plugins page reloads its view. */
   z.strictObject({ type: z.literal("plugins.catalog") }),
+  z.strictObject({ type: z.literal("dictation.interrupted"), id: dictationJobIdSchema }),
 ]);
 export type AppEvent = z.infer<typeof appEventSchema>;
 /** Settings with no masking policy and no credential behind them. */

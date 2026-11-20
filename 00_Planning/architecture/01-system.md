@@ -288,9 +288,10 @@ architecture decision.
 - `will-navigate` and `will-frame-navigate` blocked; `setWindowOpenHandler` denies every window;
   `will-attach-webview` prevented. External links go through `app.openExternal` after a UI
   confirmation; ChatGPT sign-in may open only `https://auth.openai.com/api/accounts/authorize`.
-- Every session, from `session-created`, denies all permission requests and permission checks. Spell
-  checking is off and the dictionary download URL points at `vera://`, so Chromium fetches no
-  dictionaries. (Voice will later allow `media` for the app's own origin only.)
+- Every session starts with default permission denial. The VERA window's focused main frame can
+  request audio-only media once during a gesture-initiated dictation grant. Electron denies all
+  other requests and permission checks. Spell checking is off and the dictionary download URL
+  points at the local app protocol.
 - One app instance (`requestSingleInstanceLock`); one writing VERA process per workbench
   (`.vera/lock`); another process opens that workbench read-only (02 §8).
 - No application menu; the window uses a hidden title bar with a title-bar overlay, and

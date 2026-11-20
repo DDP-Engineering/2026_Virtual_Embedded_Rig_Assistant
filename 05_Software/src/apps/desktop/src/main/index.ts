@@ -64,7 +64,9 @@ import { CatalogChecks } from "./catalog-checks.js";
 import { ChatgptAuth } from "./chatgpt-auth.js";
 import { CredentialFile } from "./credentials.js";
 import { configureDataLocations } from "./data-locations.js";
+import { CaptureJobs } from "./dictation/capture-jobs.js";
 import { DictationModels } from "./dictation/models.js";
+import { transcribeInWorker } from "./dictation/worker-host.js";
 import { DisplayDocuments } from "./display-documents.js";
 import { DisplayIdentities, loadDisplayIdentityKey } from "./display-identities.js";
 import { publicViewer, publicWebDownload } from "./document-viewer.js";
@@ -246,6 +248,15 @@ const settings = new SettingsService({
   },
 });
 const dictation = new DictationModels(dataLocations.paths.userData, settings);
+const capture = new CaptureJobs(
+  () => dictation.resolveSelected(),
+  transcribeInWorker,
+  (id) => emitAppEvent({ topic: "app", id: "app", event: { type: "dictation.interrupted", id } }),
+);
+const focusedRenderer = () =>
+  window && !window.isDestroyed() && window.isFocused()
+    ? { webContents: window.webContents, url: rendererUrl }
+    : undefined;
 const sessionOrder = createSessionOrder(settings);
 const workbench = new WorkbenchService(
   {
@@ -1234,7 +1245,18 @@ ipcMain.handle(
       "window.menu": (request) => popupWindowMenu(window, request, app.isPackaged),
       "commands.shells": () => detectCommandShells(processHost),
       "dictation.get": () => dictation.get(),
-      "dictation.change": (change) => dictation.change(change),
+      "dictation.change": (change) => {
+        if (change.action === "remove" && capture.busy) throw veraError("BUSY");
+        return dictation.change(change);
+      },
+      "dictation.begin": ({ id }) =>
+        focusedRenderer() ? capture.begin(id) : { status: "permission-denied" },
+      "dictation.recording": ({ id }) => capture.recording(id),
+      "dictation.finish": ({ id, pcm }) => capture.finish(id, pcm),
+      "dictation.cancel": ({ id }) => {
+        capture.cancel(id);
+        return {};
+      },
       "app.settings.get": () => {
         const snapshot = settings.get();
         if (credentials.containsSecret(snapshot)) throw { code: "INVALID", messageKey: "errors.INVALID" };
@@ -1406,14 +1428,20 @@ async function createWindow(state: WindowState): Promise<void> {
   restoreWindowBounds(window, state.bounds);
   const created = window;
   created.webContents.on("did-start-navigation", (_event, _url, isInPlace, isMainFrame) => {
-    if (isMainFrame && !isInPlace) sessions.clearSubscriptions();
+    if (isMainFrame && !isInPlace) {
+      capture.interrupt();
+      sessions.clearSubscriptions();
+    }
   });
+  created.on("blur", () => capture.interrupt());
   recoverRenderer(created, (reason, reloading) => {
+    capture.interrupt();
     logger.log("error", "window.renderer.gone", { reason, reloading });
     sessions.clearSubscriptions();
   });
   let closing = false;
   created.on("close", (event) => {
+    capture.interrupt();
     if (updates?.hasDownloaded && !updates.shuttingDown) {
       event.preventDefault();
       updates.requestQuit();
@@ -1427,6 +1455,7 @@ async function createWindow(state: WindowState): Promise<void> {
       .finally(() => created.destroy());
   });
   window.on("closed", () => {
+    capture.interrupt();
     sessions.clearSubscriptions();
     window = undefined;
   });
@@ -1460,6 +1489,7 @@ if (!firstInstance) {
     }
     if (draining) return;
     draining = true;
+    const captureClosed = capture.close();
     terminals.suspend();
     catalogChecks.close();
     void drainShutdown(
@@ -1483,6 +1513,7 @@ if (!firstInstance) {
         ["webAccess", () => webAccess.close()],
         ["partsAccess", () => partsAccess.close()],
         ["credentials", () => credentials.close()],
+        ["dictation capture", () => captureClosed],
         ["dictation", () => dictation.close()],
         ["settings", () => settings.close()],
         ["log", () => logger.flush()],
@@ -1529,7 +1560,10 @@ if (!firstInstance) {
     .whenReady()
     .then(async () => {
       if (draining) return;
-      secureSession(session.defaultSession);
+      secureSession(session.defaultSession, {
+        target: focusedRenderer,
+        permit: (request) => capture.permitAudio(request),
+      });
       // Credentials decrypt through safeStorage (the desktop keyring on Linux) while settings and the window
       // state load; the window does not wait for them, IPC does (credentialsReady).
       credentialsReady = credentials.load().then(

@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-REL-47f336ff"
+
+title = "Invalidate ended dictation jobs"
+
+status = "active"
+
+requirement = "When capture is cancelled or its session, focus or renderer lifetime ends, VERA shall release its tracks and suppress pending jobs and transcripts."
+
+verification = "Cancel work during acquisition and inference, then simulate context change, blur and shutdown and check stale work cannot complete for the next owner."
+
+affected_paths = ["05_Software/src/apps/desktop/src/main/dictation/capture-jobs.ts", "05_Software/src/apps/desktop/src/renderer/dictation/capture.ts", "05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/libraries/shared/src/events.ts", "05_Software/src/libraries/shared/src/ipc.ts", "05_Software/src/apps/desktop/src/renderer/dictation/microphone.ts"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/main/dictation/capture-jobs.test.ts", "05_Software/src/apps/desktop/src/renderer/dictation/capture.test.ts", "05_Software/tests/e2e/dictation.spec.ts", "05_Software/src/apps/desktop/src/main/dictation/worker-host.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-20
+updated = 2026-11-20

@@ -3,6 +3,16 @@
 These fictional inputs support tests, retrieval evaluation and package smoke checks.
 They are not application resources and are not included in installers.
 
+The WAV files in dictation/ contain fictional utterances synthesized offline and resampled to mono
+signed 16-bit PCM at 16 kHz. English uses eSpeak NG 1.51 at 145 words per minute. German, French
+and Romanian use Piper 2023.11.14-2 with the v1.0.0 Thorsten, SIWIS and Mihai voices, respectively.
+The runtime tests read the WAV files directly. Electron derives stereo 32 kHz microphone input
+from the English clip.
+
+Voice provenance: [German Thorsten](https://huggingface.co/rhasspy/piper-voices/blob/v1.0.0/de/de_DE/thorsten/medium/MODEL_CARD),
+[French SIWIS](https://huggingface.co/rhasspy/piper-voices/blob/v1.0.0/fr/fr_FR/siwis/medium/MODEL_CARD),
+[Romanian Mihai](https://huggingface.co/rhasspy/piper-voices/blob/v1.0.0/ro/ro_RO/mihai/medium/MODEL_CARD).
+
 `workbenches/demo-board/` is the fictional VERA-DEMO-01 verification project, including
 PDF/Markdown documents, notes, pinout, boot log and replay input. Tests copy it
 into isolated workspaces before opening or modifying it.

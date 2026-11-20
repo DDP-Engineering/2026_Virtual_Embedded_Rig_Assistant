@@ -4,7 +4,15 @@ import { changeDetailSchema, changeIdSchema, changeSummarySchema } from "./chang
 import { chatgptLoginSchema, chatgptStatusSchema } from "./chatgpt.js";
 import { commandPrefixDisplaySchema, commandPrefixIdsSchema, commandPrefixSchema } from "./command-prefix.js";
 import { composerImageSchema, composerImageSourceSchema, rasterFormatSchema } from "./composer-images.js";
-import { dictationChangeSchema, dictationSnapshotSchema } from "./dictation.js";
+import {
+  dictationBeginSchema,
+  dictationChangeSchema,
+  dictationJobSchema,
+  dictationOutcomeSchema,
+  dictationRecordingSchema,
+  dictationSnapshotSchema,
+  dictationSubmitSchema,
+} from "./dictation.js";
 import {
   docsByteReadSchema,
   docsByteWindowSchema,
@@ -814,6 +822,10 @@ export const channels = {
   "help.read": defineChannel("help.read", helpReadRequestSchema, helpPageSchema),
   "dictation.get": defineChannel("dictation.get", z.strictObject({}), dictationSnapshotSchema),
   "dictation.change": defineChannel("dictation.change", dictationChangeSchema, dictationSnapshotSchema),
+  "dictation.begin": defineChannel("dictation.begin", dictationJobSchema, dictationBeginSchema),
+  "dictation.recording": defineChannel("dictation.recording", dictationJobSchema, dictationRecordingSchema),
+  "dictation.finish": defineChannel("dictation.finish", dictationSubmitSchema, dictationOutcomeSchema),
+  "dictation.cancel": defineChannel("dictation.cancel", dictationJobSchema, z.strictObject({})),
   "app.settings.get": defineChannel("app.settings.get", z.strictObject({}), settingsSnapshotSchema),
   "commands.shells": defineChannel(
     "commands.shells",

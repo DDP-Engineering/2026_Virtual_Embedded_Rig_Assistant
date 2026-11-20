@@ -33,7 +33,9 @@ shortcut. Existing persisted event format remains 1.
 
 - `dictation.get` and `dictation.change` return verified installation summaries, progress and
   effective selection. Requests carry a catalog model id or spoken-language code. The trust
-  boundary and mock operate on schemas in `shared/src/dictation.ts`. [Dictation](dictation.md)
+  boundary and mock operate on schemas in shared/src/dictation.ts. The capture channels admit,
+  acknowledge, submit and cancel a UUID-scoped job. The preload checks the opening gesture and
+  validates packed PCM before dispatch. [Dictation](dictation.md)
   owns model paths and storage.
 
 - `session.image.attach` accepts a workbench/session pair and either bounded base64 file bytes or an existing workbench path. It returns a durable relative path, a display name and a bounded PNG thumbnail. `session.image.capability` resolves image support for the same effective model as dispatch, with catalog I/O outside the session queue.

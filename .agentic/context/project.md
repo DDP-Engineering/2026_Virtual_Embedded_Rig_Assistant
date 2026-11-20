@@ -14,6 +14,10 @@ User messages retain workbench image paths across restarts. Desktop uses workben
 
 Core delegated turns use the same workbench session service, gateway and event history. The format-1 database retains parent ownership and request identity across interruption. Each workbench admits up to three active delegated turns with a fixed inspection-only tool scope. Parent agents can launch, observe, wait for and stop the initial turn through the core tool registry. Monitoring publishes bounded masked replies and status derived from the durable event sequence. Desktop uses the same workbench ownership and initial outcome for two-way Chat navigation, with refresh, reopen and normal Stop and approval controls.
 
+Desktop dictation manages two pinned Whisper models in application data. The desktop stack supplies
+a session-bound capture seam, gesture-scoped microphone permission, bounded mono PCM and single-job
+offline inference with automatic or explicit language.
+
 ## Supported operation
 
 Saved-session performance verification uses an isolated native Electron build, real persisted

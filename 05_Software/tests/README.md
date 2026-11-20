@@ -53,6 +53,13 @@ source-range placement, scalar Find counts/wrapping, Escape focus and live Displ
 `support/large-text-source-probe.ts` checks verified revision/date and same-size replacement with
 restored exact mtime on pinned Windows/WSL2 Node. Original proof stays in `evaluation-outputs/view03`.
 
+Dictation acceptance sets VERA_DICTATION_MODEL_ROOT to a directory containing the verified
+whisper-base and whisper-small installs. Build the desktop to run
+integration/whisper-runtime.test.ts against both workers and all four speech fixtures.
+Run test:e2e with tests/e2e/dictation.spec.ts for bounded capture, permission and lifecycle
+in an instrumented Electron build. Set VERA_DICTATION_PACKAGED_APP to run that spec directly
+through Playwright against an unpacked instrumented executable using an isolated nonportable profile.
+
 ## Vitest test inventory
 
 TERM-05 adds `packaging/terminal-runtime.test.ts` for native PTY architecture/helper closure,

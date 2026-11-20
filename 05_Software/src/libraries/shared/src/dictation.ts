@@ -136,3 +136,51 @@ export const dictationChangeSchema = z.discriminatedUnion("action", [
   z.strictObject({ action: z.literal("language"), language: dictationLanguageSchema }),
 ]);
 export type DictationChange = z.infer<typeof dictationChangeSchema>;
+
+export const dictationSampleRate = 16_000;
+export const dictationMaxSeconds = 30;
+export const dictationMaxSamples = dictationSampleRate * dictationMaxSeconds;
+export const dictationConnectionMs = 15_000;
+export const dictationJobIdSchema = z.uuidv4();
+export const dictationJobSchema = z.strictObject({ id: dictationJobIdSchema });
+
+/** Bounded, packed mono PCM. Validate before it crosses each process boundary. */
+export const dictationPcmSchema = z.custom<Float32Array>(
+  (value) =>
+    value instanceof Float32Array &&
+    value.length <= dictationMaxSamples &&
+    value.byteOffset === 0 &&
+    value.buffer instanceof ArrayBuffer &&
+    value.byteLength === value.buffer.byteLength &&
+    value.every((sample) => Number.isFinite(sample) && Math.abs(sample) <= 1),
+);
+export const dictationSubmitSchema = dictationJobSchema.extend({ pcm: dictationPcmSchema });
+export const dictationBeginSchema = z.strictObject({
+  status: z.enum(["opening", "busy", "missing-model", "permission-denied", "cancelled"]),
+});
+export type DictationBegin = z.infer<typeof dictationBeginSchema>;
+export const dictationRecordingSchema = z.strictObject({ status: z.enum(["recording", "cancelled"]) });
+export type DictationRecording = z.infer<typeof dictationRecordingSchema>;
+
+export const dictationTranscriptSchema = z.strictObject({
+  text: z.string().max(16_000),
+  language: dictationLanguageSchema.exclude(["auto"]),
+});
+export type DictationTranscript = z.infer<typeof dictationTranscriptSchema>;
+
+export const dictationOutcomeSchema = z.discriminatedUnion("status", [
+  dictationTranscriptSchema.extend({ status: z.literal("complete") }),
+  z.strictObject({
+    status: z.enum([
+      "busy",
+      "cancelled",
+      "missing-model",
+      "permission-denied",
+      "microphone-unavailable",
+      "microphone-disconnected",
+      "no-speech",
+      "transcription-failed",
+    ]),
+  }),
+]);
+export type DictationOutcome = z.infer<typeof dictationOutcomeSchema>;

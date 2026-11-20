@@ -136,6 +136,13 @@ it.each([
     }
     expect(code).toContain("allowRemoteModels");
     expect(existsSync(join(mainDir, "document-embedding-worker.js"))).toBe(true);
+    expect(existsSync(join(mainDir, "whisper-worker.js"))).toBe(true);
+    const rendererDir = join(output, "renderer/assets");
+    const renderer = readdirSync(rendererDir)
+      .filter((name) => name.endsWith(".js"))
+      .map((name) => readFileSync(join(rendererDir, name), "utf8"))
+      .join("\n");
+    expect(renderer.includes("veraTestDictation")).toBe(flag === "1");
     const assets = join(output, "renderer/assets");
     const entry = readdirSync(assets).find((name) => /^index-.*\.js$/.test(name));
     expect(entry, "renderer entry chunk emitted").toBeDefined();

@@ -1760,6 +1760,16 @@ What this plugin does.
           },
         ];
         break;
+      case "dictation.begin":
+        value = { status: "permission-denied" };
+        break;
+      case "dictation.recording":
+      case "dictation.finish":
+        value = { status: "cancelled" };
+        break;
+      case "dictation.cancel":
+        value = {};
+        break;
       case "dictation.get":
         value = dictationSnapshot();
         break;
