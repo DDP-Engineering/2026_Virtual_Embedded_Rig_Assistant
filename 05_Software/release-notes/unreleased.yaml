@@ -25,10 +25,10 @@ entries:
   - category: new
     topic: { en: Models and images, ro: Modele și imagini, de: Modelle und Bilder, fr: Modèles et images }
     text:
-      en: Connect OpenCode, QwenCloud, DeepSeek, Moonshot AI and Kimi For Coding. Set images per model.
-      ro: Conectează OpenCode, QwenCloud, DeepSeek, Moonshot AI și Kimi For Coding. Imagini per model.
-      de: OpenCode, QwenCloud, DeepSeek, Moonshot AI und Kimi For Coding verbinden. Bilder je Modell.
-      fr: Connectez OpenCode, QwenCloud, DeepSeek, Moonshot AI et Kimi For Coding. Images par modèle.
+      en: OpenCode, QwenCloud, DeepSeek, Moonshot AI, Kimi For Coding, MiniMax and Z.AI. Images per model.
+      ro: OpenCode, QwenCloud, DeepSeek, Moonshot AI, Kimi For Coding, MiniMax și Z.AI. Imagini per model.
+      de: OpenCode, QwenCloud, DeepSeek, Moonshot AI, Kimi For Coding, MiniMax und Z.AI. Bilder je Modell.
+      fr: OpenCode, QwenCloud, DeepSeek, Moonshot AI, Kimi For Coding, MiniMax et Z.AI. Images par modèle.
   - category: fixed
     topic: { en: Skills, ro: Skills, de: Skills, fr: Compétences }
     text:

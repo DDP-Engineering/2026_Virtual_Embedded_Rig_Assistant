@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-FUNC-9ce3dff0"
+title = "Preserve provider thinking and tool results on continuation"
+status = "active"
+requirement = "When an international MiniMax or Z.AI preset streams a tool call, VERA shall preserve the provider reasoning, tool identity and tool result in the continuation and stream the final answer."
+verification = "Use the production gateway with scripted SSE for each preset, assert the original reasoning and tool call replay plus tool result, and observe multiple final text deltas."
+affected_paths = ["05_Software/src/libraries/core/src/llm/providers.ts","05_Software/src/libraries/core/src/llm/curated-adapters.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/international-plan-presets.test.ts"]
+created = 2026-11-20
+updated = 2026-11-20

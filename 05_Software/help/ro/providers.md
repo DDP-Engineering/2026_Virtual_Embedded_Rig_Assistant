@@ -56,6 +56,16 @@ DeepSeek Flash, Kimi K3 de la Moonshot AI și cele două modele Kimi Code din ex
 
 Vezi [limitele modelelor DeepSeek](https://api-docs.deepseek.com/api/list-models/), [ghidul Moonshot Kimi K3](https://platform.kimi.ai/docs/guide/kimi-k3-quickstart) și [configurarea modelelor Kimi Code](https://www.kimi.com/code/docs/en/kimi-code/models).
 
+## MiniMax și Z.AI
+
+1. În **Adaugă conexiune**, alege **MiniMax API** pentru o cheie cu plată în funcție de consum (`sk-api-`) sau **MiniMax M Plan** pentru o cheie de abonament MiniMax (`sk-cp-`). Ambele folosesc serviciul internațional Messages.
+2. Alege **Z.AI API** pentru o cheie API standard. **Z.AI GLM Coding Plan** folosește adresa internațională dedicată planului. Folosește o cheie Personal Coding Plan sau Team Plan numai dacă Z.AI a autorizat accesul din VERA. Z.AI limitează utilizarea planului la instrumentele acceptate, iar VERA nu apare în lista publicată. Verifică tipul cheii în cont, deoarece unele chei funcționează la mai multe adrese, iar facturarea depinde de cheie și de adresă.
+3. Alege un model sugerat sau introdu ID-ul exact activat pentru contul tău. Selectează **Salvează**, apoi **Testează**. Verificarea cheii și a modelului trimite cereri de inferență, care pot consuma din cotă. Alege modelul salvat pentru sesiune sau workbench.
+
+`MiniMax-M3.1-Flash` și `glm-5.3-flash` acceptă text și imagini, apeluri de instrumente și niveluri de raționament. În MiniMax API, `MiniMax-M3` acceptă text și imagini și permite activarea sau dezactivarea raționamentului. `glm-5.3` acceptă text, apeluri de instrumente și niveluri de raționament. Capabilitățile altor ID-uri introduse manual rămân neverificate.
+
+Consultă [configurarea cheilor MiniMax](https://platform.minimax.io/docs/guides/quickstart-preparation), [gestionarea cheilor Z.AI](https://docs.z.ai/devpack/notice/api-key-management) și [instrumentele acceptate de Z.AI](https://docs.z.ai/devpack/tool/others#supported-tools).
+
 ## LM Studio
 
 1. Pornește serverul LM Studio și încarcă un model.

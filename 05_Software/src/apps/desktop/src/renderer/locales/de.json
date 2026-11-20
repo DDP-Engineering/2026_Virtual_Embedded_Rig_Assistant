@@ -221,6 +221,7 @@
     "serviceEndpoint": "Dienstendpunkt",
     "discover": "Modelle suchen",
     "discovering": "Modelle werden gesucht…",
+    "zaiCodingPlanEligibility": "Z.AI beschränkt den Coding Plan auf unterstützte Werkzeuge. VERA steht nicht auf der veröffentlichten Liste. Verwende hier einen Tarifschlüssel nur, wenn Z.AI den Zugriff aus VERA genehmigt hat.",
     "manualModel": "Geben Sie die Modell-ID manuell ein.",
     "modelContext": "{{tokens}} Tokens",
     "modelContextConfigured": "{{tokens}} Tokens (eingestellt)",

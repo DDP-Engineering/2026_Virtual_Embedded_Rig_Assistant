@@ -56,6 +56,16 @@ DeepSeek Flash, Kimi K3 de Moonshot AI et les deux modèles Kimi Code cités acc
 
 Consultez les [limites des modèles DeepSeek](https://api-docs.deepseek.com/api/list-models/), le [guide Moonshot Kimi K3](https://platform.kimi.ai/docs/guide/kimi-k3-quickstart) et la [configuration des modèles Kimi Code](https://www.kimi.com/code/docs/en/kimi-code/models).
 
+## MiniMax et Z.AI
+
+1. Dans **Ajouter une connexion**, choisissez **MiniMax API** pour une clé de paiement à l’usage (`sk-api-`) ou **MiniMax M Plan** pour une clé d’abonnement MiniMax (`sk-cp-`). Les deux utilisent le service international Messages.
+2. Choisissez **Z.AI API** pour une clé API standard. **Z.AI GLM Coding Plan** utilise l’adresse internationale dédiée à l’abonnement. Utilisez une clé Personal Coding Plan ou Team Plan uniquement si Z.AI a autorisé l’accès depuis VERA. Z.AI limite l’abonnement aux outils pris en charge et sa liste publiée ne mentionne pas VERA. Vérifiez le type de clé dans votre compte, car certaines clés fonctionnent à plusieurs adresses et la facturation dépend de la clé et de l’adresse.
+3. Choisissez un modèle suggéré ou saisissez l’identifiant exact activé pour votre compte. Sélectionnez **Enregistrer**, puis **Tester**. Le test envoie des requêtes au modèle qui peuvent consommer du quota. Choisissez le modèle enregistré pour votre session ou votre banc de travail.
+
+`MiniMax-M3.1-Flash` et `glm-5.3-flash` acceptent le texte et les images, prennent en charge les appels d’outils et proposent des niveaux de raisonnement. Avec MiniMax API, `MiniMax-M3` accepte le texte et les images et permet d’activer ou de désactiver le raisonnement. `glm-5.3` accepte le texte et prend en charge les appels d’outils et les niveaux de raisonnement. Les capacités des autres identifiants saisis manuellement restent non vérifiées.
+
+Consultez la [configuration des clés MiniMax](https://platform.minimax.io/docs/guides/quickstart-preparation), la [gestion des clés Z.AI](https://docs.z.ai/devpack/notice/api-key-management) et les [outils pris en charge par Z.AI](https://docs.z.ai/devpack/tool/others#supported-tools).
+
 ## LM Studio
 
 1. Démarrez le serveur LM Studio et chargez un modèle.

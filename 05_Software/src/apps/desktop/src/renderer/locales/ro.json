@@ -221,6 +221,7 @@
     "serviceEndpoint": "Endpointul serviciului",
     "discover": "Descoperă modele",
     "discovering": "Se caută modele…",
+    "zaiCodingPlanEligibility": "Z.AI limitează utilizarea Coding Plan la instrumentele acceptate. VERA nu apare în lista publicată. Folosește aici o cheie a planului numai dacă Z.AI a autorizat accesul din VERA.",
     "manualModel": "Introdu manual identificatorul modelului.",
     "modelContext": "{{tokens}} tokenuri",
     "modelContextConfigured": "{{tokens}} tokenuri (configurat)",

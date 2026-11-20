@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-FUNC-34a1e459"
+title = "Expose documented MiniMax and GLM model capabilities"
+status = "active"
+requirement = "When a MiniMax or Z.AI model is selected through its preset, VERA shall expose the plan-specific documented model profiles and report unverified manual model capabilities as unknown."
+verification = "Compare documented models and an unprofiled manual model for selection, input, limits, tools and reasoning; verify the plan catalog does not inherit the standard catalog."
+affected_paths = ["05_Software/src/libraries/shared/src/provider-presets.ts","05_Software/src/libraries/core/src/llm/providers.ts","05_Software/src/apps/desktop/src/main/provider-gateway.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/international-plan-presets.test.ts"]
+created = 2026-11-20
+updated = 2026-11-20

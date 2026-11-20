@@ -66,13 +66,14 @@ export function answer(service: StreamTarget) {
     : completions([{ content: "Echo " }, { content: "received." }]);
 }
 
-export function toolCall(service: StreamTarget) {
+export function toolCall(service: StreamTarget, signature?: string) {
   return service.messages
     ? messages(
         [
           blockStart(0, { type: "thinking", thinking: "", signature: "" }),
           blockDelta(0, { type: "thinking_delta", thinking: "Prepare " }),
           blockDelta(0, { type: "thinking_delta", thinking: "the echo." }),
+          ...(signature ? [blockDelta(0, { type: "signature_delta", signature })] : []),
           blockStop(0),
           blockStart(1, { type: "tool_use", id: "call_echo", name: "echo", input: {} }),
           blockDelta(1, { type: "input_json_delta", partial_json: '{"text":"OK"}' }),

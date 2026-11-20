@@ -221,6 +221,7 @@
     "serviceEndpoint": "Service endpoint",
     "discover": "Discover models",
     "discovering": "Discovering models…",
+    "zaiCodingPlanEligibility": "Z.AI limits Coding Plan use to supported tools. Its published list does not include VERA. Use a plan key here only if Z.AI has authorized access from VERA.",
     "manualModel": "Enter a model ID manually.",
     "modelContext": "{{tokens}} tokens",
     "modelContextConfigured": "{{tokens}} tokens (configured)",

@@ -8,6 +8,8 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ### Added
 
+- Connect international MiniMax and Z.AI through separate API and subscription presets.
+
 - Connect DeepSeek, international Moonshot AI and Kimi For Coding with separate API keys and model profiles.
 
 - Connect QwenCloud Standard and Token Plan with scoped keys, model setup and connection diagnostics.

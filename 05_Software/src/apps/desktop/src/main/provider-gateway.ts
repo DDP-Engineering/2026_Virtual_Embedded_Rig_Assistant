@@ -160,9 +160,9 @@ export class ProviderGateway {
       const tools = result.steps.find((s) => s.step === "tools");
       if (before && (!model || model === before.model) && tools?.status !== "skipped") {
         if (!before.preset) await this.providers.recordToolSupport(before, tools?.status === "pass");
-        // Kimi Code may answer an unknown model ID with a fallback model.
+        // A manual entry without a profile can receive a fallback model response.
         else if (
-          (resolved?.preset.protocol !== "anthropic-messages" || profile) &&
+          (resolved?.binding.catalog.kind !== "manual" || profile) &&
           tools?.status === "pass" &&
           testKey?.type === "api_key" &&
           testKey.key

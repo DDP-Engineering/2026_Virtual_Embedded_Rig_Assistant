@@ -17,7 +17,14 @@ import {
 } from "@vera/shared";
 import type { CredentialStore } from "../ports.js";
 import { parseChatGptCatalog } from "./chatgpt-catalog.js";
-import { directCompletionsCompatibility, kimiMessagesCompatibility } from "./curated-adapters.js";
+import {
+  directCompletionsCompatibility,
+  isMiniMaxPreset,
+  isZaiPreset,
+  kimiMessagesCompatibility,
+  miniMaxThinking,
+  zaiCompletionsCompatibility,
+} from "./curated-adapters.js";
 import { mapProviderError, type ProviderFailure } from "./errors.js";
 import { type LlmEvent, type LlmGateway, type LlmRequest, splitModelReference } from "./gateway.js";
 import { scrubAssistantMessage } from "./message-scrub.js";
@@ -307,7 +314,9 @@ export function createPiAiGateway(
     const model = customModel(custom, provider, id, profile);
     const modelCompatibility = directCompletionsCompatibility(connection.preset.id, id);
     if (plan) model.compat = openCodeCompatibility(plan, id);
-    else if (modelCompatibility) {
+    else if (isZaiPreset(connection.preset.id)) {
+      model.compat = { ...model.compat, ...zaiCompletionsCompatibility(id) };
+    } else if (modelCompatibility) {
       model.compat = {
         ...model.compat,
         ...modelCompatibility,
@@ -320,7 +329,11 @@ export function createPiAiGateway(
     const configuredModel = { ...model, contextWindow, maxTokens: maxOutputTokens };
     const inferenceModel: Model<"openai-completions" | "anthropic-messages"> =
       connection.preset.protocol === "anthropic-messages"
-        ? { ...configuredModel, api: "anthropic-messages", compat: kimiMessagesCompatibility(id) }
+        ? {
+            ...configuredModel,
+            api: "anthropic-messages",
+            compat: isMiniMaxPreset(connection.preset.id) ? {} : kimiMessagesCompatibility(id),
+          }
         : configuredModel;
     return {
       ...connection,
@@ -571,7 +584,10 @@ export function createPiAiGateway(
         const openCode = binding && openCodePlan(binding);
         const qwenCloud = binding?.qwenCloud;
         const messages = resolved.curated?.preset.protocol === "anthropic-messages";
-        const deepSeek = resolved.curated?.preset.id === "deepseek";
+        const presetId = resolved.curated?.preset.id;
+        const deepSeek = presetId === "deepseek";
+        const miniMax = isMiniMaxPreset(presetId);
+        const zai = isZaiPreset(presetId);
         if (qwenCloud) failure.qwenCloud = { plan: qwenCloud, operation: "inference" };
         let selectedReasoning = request.reasoning;
         if (selectedReasoning != null && !resolved.reasoningOptions.includes(selectedReasoning)) {
@@ -598,6 +614,7 @@ export function createPiAiGateway(
         request.signal.throwIfAborted();
         if (
           (resolved.curated && !curatedKey) ||
+          (binding?.apiKeyPrefix && curatedKey && !curatedKey.startsWith(binding.apiKeyPrefix)) ||
           (qwenCloud && curatedKey && !qwenCloudKeyMatches(qwenCloud, curatedKey)) ||
           (resolved.slot === "openai" && (key?.type !== "api_key" || !key.key)) ||
           (resolved.slot === "chatgpt" && key?.type !== "oauth")
@@ -619,9 +636,15 @@ export function createPiAiGateway(
             const route = messages ? "/v1/messages?beta=true" : "/chat/completions";
             if (method !== "POST" || url.href !== endpoint + route) throw veraError("DENIED");
           } else if (url.origin !== new URL(endpoint).origin) throw veraError("DENIED");
+          const fetcher = host.fetch ?? globalThis.fetch;
+          if (miniMax) {
+            // Forward the fixed MiniMax Messages path without the SDK's beta query marker.
+            url.search = "";
+            input = input instanceof Request ? new Request(url, input) : url;
+          }
           request.signal.throwIfAborted();
           try {
-            const response = await (host.fetch ?? globalThis.fetch)(input, { ...init, redirect: "error" });
+            const response = await fetcher(input, { ...init, redirect: "error" });
             if (!response.ok) {
               failure.status = response.status;
               failure.retryAfter = response.headers.get("retry-after") ?? undefined;
@@ -654,6 +677,12 @@ export function createPiAiGateway(
                 ? profile.reasoningDefault
                 : "medium"
               : chosenReasoning;
+        const zaiEffort =
+          zai && resolved.model.reasoning
+            ? chosenReasoning === "low" || chosenReasoning === "high"
+              ? chosenReasoning
+              : "max"
+            : undefined;
         const stream = resolved.models.stream(
           resolved.model,
           {
@@ -670,7 +699,9 @@ export function createPiAiGateway(
               ? {
                   headers: { "x-api-key": curatedKey, "User-Agent": "VERA", "anthropic-beta": null },
                   cacheRetention: "none",
-                  ...(resolved.model.reasoning ? { thinkingEnabled: true, effort: chosenReasoning } : {}),
+                  ...(!miniMax && resolved.model.reasoning
+                    ? { thinkingEnabled: true, effort: chosenReasoning }
+                    : {}),
                 }
               : {}),
             ...(openCode
@@ -682,7 +713,16 @@ export function createPiAiGateway(
             fetch: transport,
             transport: "sse",
             ...(profile?.temperature === undefined ? {} : { temperature: profile.temperature }),
-            ...(messages || chosenReasoning === undefined
+            ...(zaiEffort ? { reasoningEffort: zaiEffort } : {}),
+            ...(miniMax && chosenReasoning !== undefined
+              ? {
+                  onPayload: (payload: unknown) => ({
+                    ...(payload as Record<string, unknown>),
+                    ...miniMaxThinking(resolved.model.id, chosenReasoning),
+                  }),
+                }
+              : {}),
+            ...(messages || zai || chosenReasoning === undefined
               ? {}
               : {
                   onPayload: (payload: unknown) => ({

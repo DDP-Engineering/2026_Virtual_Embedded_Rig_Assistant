@@ -46,6 +46,17 @@ separate model listings. Kimi For Coding uses a Kimi Code Console key, an explic
 Anthropic Messages at https://api.kimi.ai/coding. DeepSeek and Moonshot continue tool calls with
 reasoning_content. Kimi For Coding preserves Anthropic thinking blocks and tool-result IDs.
 Authenticated smoke for these three presets was waived under the epic's no-account ruling.
+
+MiniMax API and MiniMax M Plan keep separate credential slots and use the same international
+Anthropic Messages base, `https://api.minimax.io/anthropic`. Save and inference validate the
+`sk-api-` pay-as-you-go prefix for API and the `sk-cp-` subscription prefix for M Plan. Z.AI API uses `https://api.z.ai/api/paas/v4` and Z.AI GLM
+Coding Plan uses `https://api.z.ai/api/coding/paas/v4`, both with Bearer authentication and
+Chat Completions. The selected route never changes on error. Provider key type and account eligibility
+are determined by the provider. Z.AI limits use of the Coding Plan to eligible tools. VERA is absent
+from the [published list](https://docs.z.ai/devpack/tool/others#supported-tools).
+These presets offer documented profiles and explicit model IDs. MiniMax preserves signed reasoning
+blocks and GLM preserves `reasoning_content` across tool results. Validation uses scripted requests
+under the epic's no-account ruling.
 QwenCloud uses the two international Singapore Chat Completions bases with a separate credential scope
 per plan. The model picker combines an explicitly saved ID with results from an available plan catalog.
 An unavailable catalog leaves the saved model usable and the inference test checks the key. Exact model
@@ -121,8 +132,10 @@ Each step reports pass, fail or skipped (`core/llm/connection.ts`):
    `{ text: string }`.
 4. Streaming: asks for one sentence; passes when the text arrived in more than one provider delta.
 
-Steps 2–4 request at most 256 output tokens by default. The documented Moonshot K3 and Kimi For
-Coding profiles use low effort and up to 4,096 tokens for reasoning and the probe reply. Steps 3 and 4 are skipped when 2 fails. The UI has a Test
+Steps 2–4 request at most 256 output tokens by default. The documented Moonshot K3, Kimi For
+Coding, MiniMax M3.1 Flash and GLM-5.3 profiles use low effort and up to 4,096 tokens for reasoning
+and the probe reply. MiniMax M3 tests with thinking off. Steps 3 and 4 are skipped when 2 fails.
+The UI has a Test
 button per saved connection that opens a step list with localized errors; it is disabled while the
 form holds unsaved edits (`renderer/components/provider-test.tsx`). The ChatGPT card has no Test
 button. Smoke run: `--vera-smoke-provider <id>` prints the result and exits 0 when every step passes,

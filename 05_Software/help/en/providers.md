@@ -56,6 +56,16 @@ DeepSeek Flash, Moonshot AI's Kimi K3 and the two Kimi Code examples accept text
 
 See [DeepSeek model limits](https://api-docs.deepseek.com/api/list-models/), the [Moonshot Kimi K3 guide](https://platform.kimi.ai/docs/guide/kimi-k3-quickstart) and [Kimi Code model configuration](https://www.kimi.com/code/docs/en/kimi-code/models).
 
+## MiniMax and Z.AI
+
+1. In **Add connection**, choose **MiniMax API** for a pay-as-you-go key (`sk-api-`) or **MiniMax M Plan** for a subscription key (`sk-cp-`) from MiniMax. Both use the international Messages service.
+2. Choose **Z.AI API** for a Standard API Key. The **Z.AI GLM Coding Plan** preset uses the dedicated international Coding Plan address. Use a Personal Coding Plan or Team Plan key only if Z.AI has authorized access from VERA. Z.AI limits plan use to supported tools, and VERA is absent from its published list. Check the key type in your account because some keys can use more than one address and billing depends on the key and route.
+3. Pick a suggested model or enter the exact ID enabled for your account. Select **Save**, then **Test**. These presets check the key and model through inference, which can consume quota. Choose the saved model for your session or workbench.
+
+`MiniMax-M3.1-Flash` and `glm-5.3-flash` handle text and images, support tool calls and offer reasoning levels. On MiniMax API, `MiniMax-M3` handles text and images and lets you turn reasoning on or off. `glm-5.3` handles text, supports tool calls and offers reasoning levels. Capabilities for other manually entered IDs remain unverified.
+
+See [MiniMax key setup](https://platform.minimax.io/docs/guides/quickstart-preparation), [Z.AI key management](https://docs.z.ai/devpack/notice/api-key-management) and [Z.AI's supported tools](https://docs.z.ai/devpack/tool/others#supported-tools).
+
 ## LM Studio
 
 1. Start the LM Studio server and load a model.

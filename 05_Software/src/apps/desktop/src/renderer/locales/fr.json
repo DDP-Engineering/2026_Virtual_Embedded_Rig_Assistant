@@ -221,6 +221,7 @@
     "serviceEndpoint": "Point de terminaison du service",
     "discover": "Rechercher des modèles",
     "discovering": "Recherche de modèles…",
+    "zaiCodingPlanEligibility": "Z.AI limite l’usage du Coding Plan aux outils pris en charge. Sa liste publiée ne mentionne pas VERA. Utilisez ici une clé de l’abonnement uniquement si Z.AI a autorisé l’accès depuis VERA.",
     "manualModel": "Saisissez l’identifiant du modèle manuellement.",
     "modelContext": "{{tokens}} jetons",
     "modelContextConfigured": "{{tokens}} jetons (configuré)",

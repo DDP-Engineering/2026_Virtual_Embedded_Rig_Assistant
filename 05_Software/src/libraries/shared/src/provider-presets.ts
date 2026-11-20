@@ -36,6 +36,7 @@ export interface ProviderBinding {
   readonly id: string;
   readonly label?: string;
   readonly inference: string;
+  readonly apiKeyPrefix?: string;
   readonly catalog:
     | { readonly kind: "manual" }
     | {
@@ -90,6 +91,32 @@ const kimiEfforts = ["low", "high", "max"] as const;
 
 const qwenCloudBase = "https://maas.qwencloudapi.com/compatible-mode/v1";
 const qwenCloudTokenBase = "https://token-plan.maas.qwencloudapi.com/compatible-mode/v1";
+
+const miniMaxBase = "https://api.minimax.io/anthropic";
+const miniMaxModel = {
+  input: ["text", "image"],
+  contextWindow: 1_000_000,
+  maxOutputTokens: 524_288,
+  outputBudget: 131_072,
+  supportsTools: true,
+} as const;
+const miniMaxFlash = {
+  ...miniMaxModel,
+  id: "MiniMax-M3.1-Flash",
+  name: "MiniMax M3.1 Flash",
+  reasoningOptions: ["low", "medium", "high", "xhigh", "max"],
+} as const;
+
+const glmModel = {
+  contextWindow: 1_000_000,
+  maxOutputTokens: 131_072,
+  supportsTools: true,
+  reasoningOptions: ["low", "high", "max"],
+} as const;
+const glmModels: readonly CuratedModel[] = [
+  { ...glmModel, id: "glm-5.3", name: "GLM-5.3", input: ["text"] },
+  { ...glmModel, id: "glm-5.3-flash", name: "GLM-5.3-Flash", input: ["text", "image"] },
+];
 
 /** Curated network services enter this list after their VERA acceptance. */
 export const curatedProviderPresets: readonly CuratedProviderPreset[] = [
@@ -225,6 +252,67 @@ export const curatedProviderPresets: readonly CuratedProviderPreset[] = [
             reasoningOptions: kimiEfforts,
           },
         ],
+      },
+    ],
+  },
+  {
+    id: "minimax-api",
+    label: "MiniMax API",
+    protocol: "anthropic-messages",
+    authentication: "x-api-key",
+    bindings: [
+      {
+        id: "international",
+        inference: miniMaxBase,
+        catalog: { kind: "manual" },
+        apiKeyPrefix: "sk-api-",
+        models: [
+          miniMaxFlash,
+          { ...miniMaxModel, id: "MiniMax-M3", name: "MiniMax M3", reasoningOptions: ["off", "on"] },
+        ],
+      },
+    ],
+  },
+  {
+    id: "minimax-m-plan",
+    label: "MiniMax M Plan",
+    protocol: "anthropic-messages",
+    authentication: "x-api-key",
+    bindings: [
+      {
+        id: "international",
+        inference: miniMaxBase,
+        catalog: { kind: "manual" },
+        apiKeyPrefix: "sk-cp-",
+        models: [miniMaxFlash],
+      },
+    ],
+  },
+  {
+    id: "zai-api",
+    label: "Z.AI API",
+    protocol: "openai-completions",
+    authentication: "bearer",
+    bindings: [
+      {
+        id: "international",
+        inference: "https://api.z.ai/api/paas/v4",
+        catalog: { kind: "manual" },
+        models: glmModels,
+      },
+    ],
+  },
+  {
+    id: "zai-coding-plan",
+    label: "Z.AI GLM Coding Plan",
+    protocol: "openai-completions",
+    authentication: "bearer",
+    bindings: [
+      {
+        id: "international",
+        inference: "https://api.z.ai/api/coding/paas/v4",
+        catalog: { kind: "manual" },
+        models: glmModels,
       },
     ],
   },

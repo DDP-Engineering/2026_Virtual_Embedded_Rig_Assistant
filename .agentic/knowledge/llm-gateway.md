@@ -27,7 +27,13 @@ Core resolves models and wraps exact-pinned pi-ai1.1.0. Desktop main supplies cu
   Anthropic Messages with x-api-key, VERA client identity, explicit model IDs and adaptive
   thinking. Thinking blocks and matching tool results survive continuation. DeepSeek tests
   with thinking off. Documented Moonshot and Kimi profiles test at low effort. The gateway leaves
-  tool capabilities unverified when a Kimi probe uses a manually entered ID without a profile.
+  tool capabilities unverified when a manual preset probe uses an ID without a profile.
+- The international MiniMax API and M Plan use the Messages adapter and scoped keys. M3.1 Flash
+  leaves thinking enabled at the provider and sends selected effort. M3 supports the thinking
+  toggle. Both replay signed thinking and the matching tool use. International Z.AI API and
+  GLM Coding Plan use fixed Chat Completions paths. Documented GLM-5.3 profiles use preserved
+  thinking and stream tools, and replay reasoning_content with matching tool results. Flash and
+  GLM-5.3 presets probe with low effort and up to 4096 output tokens.
 - OpenCode Console and Go use `https://opencode.ai/inference[/go]/v1/models` for the scoped catalog
   and `https://opencode.ai/inference[/go]/openai/v1/chat/completions` for inference. OpenCode’s
   catalog supplies eligible IDs, names, input modalities, limits and declared tool and compatible

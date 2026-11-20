@@ -49,7 +49,7 @@ test("provider categories support concurrent connections, presets and aligned ac
   await expect(choices).toHaveCount(0);
   await expect(section.getByText("No matching providers")).toBeVisible();
   await search.clear();
-  await expect(choices).toHaveCount(11);
+  await expect(choices).toHaveCount(15);
   await search.fill("OpenCode");
   await expect(choices).toHaveText(["OpenCode Console", "OpenCode Go"]);
   for (const [preset, label, baseUrl] of [
@@ -225,4 +225,60 @@ test("a saved Moonshot connection can Test with its VERA output budget", {
   await editor.getByLabel("Model", { exact: true }).fill("kimi-k3");
   await testConnection.click();
   await expect(editor.getByRole("dialog").locator('[data-test-status="pass"]')).toHaveCount(4);
+});
+
+test("international MiniMax and Z.AI plans use fixed routes and independent key drafts", {
+  tag: "@parallel-browser",
+}, async ({ page, rendererUrl }) => {
+  await page.goto(rendererUrl);
+  await page.locator('[data-i18n="nav.settings"]').click();
+  await page.locator('[data-section="providers"]').click();
+  const section = page.locator('[data-settings-section="providers"]');
+  await section.locator('[data-action="add-provider"]').click();
+  const search = section.getByRole("searchbox", { name: "Search providers" });
+  const choices = section.locator("[data-provider-preset] option:not([hidden])");
+  const key = section.getByLabel("Endpoint API key", { exact: true });
+  const eligibility = section.getByRole("note").filter({ hasText: "Z.AI limits Coding Plan" });
+  for (const [brand, standard, plan, standardUrl, planUrl, model] of [
+    [
+      "MiniMax",
+      "MiniMax API",
+      "MiniMax M Plan",
+      "https://api.minimax.io/anthropic",
+      "https://api.minimax.io/anthropic",
+      "MiniMax-M3.1-Flash",
+    ],
+    [
+      "Z.AI",
+      "Z.AI API",
+      "Z.AI GLM Coding Plan",
+      "https://api.z.ai/api/paas/v4",
+      "https://api.z.ai/api/coding/paas/v4",
+      "glm-5.3",
+    ],
+  ] as const) {
+    await search.fill(brand);
+    await expect(choices).toHaveText([standard, plan]);
+    const preset = section.locator("[data-provider-preset]");
+    await preset.selectOption({ label: standard });
+    const base = section.getByLabel("Base URL", { exact: true });
+    await expect(base).toHaveValue(standardUrl);
+    await expect(eligibility).toHaveCount(0);
+    await expect(base).not.toBeEditable();
+    await key.fill("private-plan-draft");
+    await preset.selectOption({ label: plan });
+    await expect(key).toHaveValue("");
+    await expect(base).toHaveValue(planUrl);
+    await expect(base).not.toBeEditable();
+    await expect(section.getByLabel("Model", { exact: true })).toBeEditable();
+    await expect(section.locator(`datalist option[value="${model}"]`)).toHaveCount(1);
+    await expect(eligibility).toHaveCount(brand === "Z.AI" ? 1 : 0);
+  }
+  await expect(eligibility).toBeVisible();
+  await expect(eligibility).toContainText("Its published list does not include VERA");
+  await section.getByLabel("Model", { exact: true }).fill("glm-5.3");
+  await key.fill("fictional-zai-plan-key");
+  await section.locator('[data-provider-action="save-custom"]').click();
+  await section.getByRole("button", { name: "Edit Z.AI GLM Coding Plan", exact: true }).click();
+  await expect(eligibility).toBeVisible();
 });

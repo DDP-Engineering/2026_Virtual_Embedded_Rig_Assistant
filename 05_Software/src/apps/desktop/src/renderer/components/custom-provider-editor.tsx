@@ -47,6 +47,7 @@ export function CustomEditor({
   close: () => void;
 }) {
   const { t } = useTranslation();
+  const hasCodingPlanNotice = curated?.id === "zai-coding-plan";
   const prefix = useId();
   const [name, setName] = useState(
     initial?.name ?? curated?.label ?? (preset === "ollama" ? providerChoices.ollama.label : ""),
@@ -110,6 +111,7 @@ export function CustomEditor({
   return (
     <form
       aria-label={t("providers.custom")}
+      aria-describedby={hasCodingPlanNotice ? `${prefix}-coding-plan` : undefined}
       className="workbench-form provider-editor"
       data-provider-editor="custom"
       onSubmit={(event) => {
@@ -136,6 +138,11 @@ export function CustomEditor({
         <h4>
           {t("providers.edit")} — {initial.name}
         </h4>
+      )}
+      {hasCodingPlanNotice && (
+        <p id={`${prefix}-coding-plan`} role="note">
+          {t("providers.zaiCodingPlanEligibility")}
+        </p>
       )}
       <fieldset disabled={disabled || discovering} className="provider-fields" aria-busy={discovering}>
         {curated && <p>{curated.label}</p>}

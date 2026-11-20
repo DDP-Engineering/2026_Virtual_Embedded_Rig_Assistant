@@ -116,6 +116,9 @@ export class ProviderSettings {
           const profile = connection.binding.models?.find((m) => m.id === config.model);
           Object.assign(config, curatedTokenLimits(config, profile, true));
           if (!previous && !input.apiKey) throw veraError("INVALID");
+          const { apiKeyPrefix } = connection.binding;
+          if (input.apiKey && apiKeyPrefix && !input.apiKey.startsWith(apiKeyPrefix))
+            throw { ...veraError("PROVIDER"), messageKey: "provider.auth" };
           if (input.apiKey !== undefined || previous?.model !== config.model) delete config.supportsTools;
         }
         if (found >= 0) providers.custom[found] = config;

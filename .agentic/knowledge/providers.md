@@ -24,7 +24,10 @@ strict public projections. Renderer holds a password draft until save/cancel and
   billing entitlements. QwenCloud Standard and Token Plan use separate international routes,
   store their keys separately, and accept explicit model IDs. DeepSeek, Moonshot AI and Kimi
   For Coding have separate fixed routes and key slots. The first two support catalog discovery.
-  Kimi For Coding uses explicit model entry and the Kimi Code Console key.
+  Kimi For Coding uses explicit model entry and the Kimi Code Console key. International MiniMax API
+  and M Plan use separate keys on one Messages base. VERA validates the documented MiniMax key class
+  before saving or inference. Z.AI API and GLM Coding Plan use separate
+  keys and Chat Completions routes. Their bindings offer explicit model selection and documented profiles.
 - providers.presets.discover accepts a preset/binding, optional local draft key and optional matching
   saved connection. It returns discovered IDs and available OpenCode model profiles, a manual-entry outcome or
   a structured failure. The key

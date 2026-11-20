@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-REL-18b120db"
+title = "Cancel MiniMax and Z.AI inference"
+status = "active"
+requirement = "When a caller cancels an in-flight international MiniMax or Z.AI request, VERA shall abort the request and report cancellation to the caller."
+verification = "Hold the response for each preset, cancel the request and assert the Fetch signal and the gateway's aborted event."
+affected_paths = ["05_Software/src/libraries/core/src/llm/providers.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/international-plan-presets.test.ts"]
+created = 2026-11-20
+updated = 2026-11-20
