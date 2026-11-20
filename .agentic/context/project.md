@@ -105,7 +105,8 @@ Facts that span components:
 - The interface, help and approval texts exist in en, ro, de and fr.
 - Provider model capabilities include input modalities. Settings > Providers stores the image opt-in for each custom model within its connection.
 - Settings Provider presets are searchable. Curated service bindings separate catalog and inference routes
-  and scope each saved credential to its connection. OpenCode Console and Go have separate presets
+  and scope each saved credential to its connection. Direct DeepSeek and Moonshot catalogs
+  and the explicit Kimi For Coding model IDs use independent international endpoints. OpenCode Console and Go have separate presets
   and authenticated catalogs. International QwenCloud Standard and Token Plan also have separate bindings
   and credentials, with explicit model entry when catalog discovery is unavailable. Session and workbench
   model pickers share plan and capability labels.

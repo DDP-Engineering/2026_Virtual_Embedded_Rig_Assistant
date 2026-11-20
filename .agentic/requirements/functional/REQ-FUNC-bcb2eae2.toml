@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-FUNC-bcb2eae2"
+title = "Discover models for DeepSeek and Moonshot AI"
+status = "active"
+requirement = "When an authenticated DeepSeek or Moonshot AI catalog returns model IDs, VERA shall make those IDs available for selection in their own connection alongside the explicitly saved model."
+verification = "Script distinct lists with a sparse entry and verify separate saved catalogs, model resolution and no catalog call for Kimi For Coding, plus an empty list with the saved model still available."
+affected_paths = ["05_Software/src/libraries/core/src/llm/direct-catalog.ts", "05_Software/src/libraries/core/src/llm/preset-connection.ts", "05_Software/src/libraries/shared/src/provider-presets.ts", "05_Software/src/libraries/core/src/llm/providers.ts", "05_Software/src/libraries/core/src/llm/preset-catalog-cache.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/direct-provider-presets.test.ts"]
+created = 2026-11-20
+updated = 2026-11-20

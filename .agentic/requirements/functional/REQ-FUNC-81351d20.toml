@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-FUNC-81351d20"
+title = "Publish verified model capabilities"
+status = "active"
+requirement = "When a VERA user selects a DeepSeek, Moonshot AI or Kimi For Coding model, VERA shall publish verified metadata from the scoped catalog or documented exact profile and leave missing capabilities unverified."
+verification = "Check text versus image, context, provider output ceiling, tool support and effort options against exact profiles, rich and sparse entries, and a Kimi Code probe served by a fallback model."
+affected_paths = ["05_Software/src/libraries/core/src/llm/direct-catalog.ts", "05_Software/src/apps/desktop/src/main/provider-gateway.ts", "05_Software/src/libraries/shared/src/provider-presets.ts", "05_Software/src/libraries/core/src/llm/providers.ts", "05_Software/src/libraries/core/src/llm/preset-connection.ts", "05_Software/src/apps/desktop/src/renderer/components/custom-provider-editor.tsx"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/direct-provider-presets.test.ts"]
+created = 2026-11-20
+updated = 2026-11-20

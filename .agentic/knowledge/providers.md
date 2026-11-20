@@ -22,7 +22,9 @@ strict public projections. Renderer holds a password draft until save/cancel and
   slug, and gives the key a separate route-scoped slot. OpenCode Console and OpenCode Go are
   separate presets. A Console workspace key can be saved in both if the workspace has both
   billing entitlements. QwenCloud Standard and Token Plan use separate international routes,
-  store their keys separately, and accept explicit model IDs.
+  store their keys separately, and accept explicit model IDs. DeepSeek, Moonshot AI and Kimi
+  For Coding have separate fixed routes and key slots. The first two support catalog discovery.
+  Kimi For Coding uses explicit model entry and the Kimi Code Console key.
 - providers.presets.discover accepts a preset/binding, optional local draft key and optional matching
   saved connection. It returns discovered IDs and available OpenCode model profiles, a manual-entry outcome or
   a structured failure. The key

@@ -25,7 +25,9 @@ export type CuratedModel = {
   readonly contextWindow?: number | undefined;
   readonly maxInputTokens?: number | undefined;
   readonly maxOutputTokens?: number | undefined;
+  readonly outputBudget?: number | undefined;
   readonly supportsTools?: boolean | undefined;
+  readonly reasoning?: boolean | undefined;
   readonly reasoningOptions?: readonly z.infer<typeof reasoningOptionSchema>[] | undefined;
 };
 export type QwenCloudPlan = "standard" | "token-plan";
@@ -36,16 +38,22 @@ export interface ProviderBinding {
   readonly inference: string;
   readonly catalog:
     | { readonly kind: "manual" }
-    | { readonly kind: "openai-models"; readonly url: string; readonly opencode?: "console" | "go" };
+    | {
+        readonly kind: "openai-models";
+        readonly url: string;
+        readonly opencode?: "console" | "go";
+        readonly metadata?: "deepseek" | "moonshot";
+      };
   readonly models?: readonly CuratedModel[];
 }
-export interface CuratedProviderPreset {
+export type CuratedProviderPreset = {
   readonly id: string;
   readonly label: string;
-  readonly protocol: "openai-completions";
-  readonly authentication: "bearer";
   readonly bindings: readonly ProviderBinding[];
-}
+} & (
+  | { readonly protocol: "openai-completions"; readonly authentication: "bearer" }
+  | { readonly protocol: "anthropic-messages"; readonly authentication: "x-api-key" }
+);
 
 // Both QwenCloud plans document these exact chat IDs in Singapore.
 const qwenCloudModels: readonly CuratedModel[] = [
@@ -68,6 +76,17 @@ const qwenCloudModels: readonly CuratedModel[] = [
     reasoningOptions: ["off", "on"],
   },
 ];
+
+const deepSeekBase = "https://api.deepseek.com";
+const moonshotBase = "https://api.moonshot.ai/v1";
+
+const deepSeekModel = {
+  contextWindow: 1_048_576,
+  maxOutputTokens: 393_216,
+  supportsTools: true,
+  reasoningOptions: ["off", "low", "high", "max"],
+} as const;
+const kimiEfforts = ["low", "high", "max"] as const;
 
 const qwenCloudBase = "https://maas.qwencloudapi.com/compatible-mode/v1";
 const qwenCloudTokenBase = "https://token-plan.maas.qwencloudapi.com/compatible-mode/v1";
@@ -134,6 +153,81 @@ export const curatedProviderPresets: readonly CuratedProviderPreset[] = [
       },
     ],
   },
+  {
+    id: "deepseek",
+    label: "DeepSeek",
+    protocol: "openai-completions",
+    authentication: "bearer",
+    bindings: [
+      {
+        id: "default",
+        inference: deepSeekBase,
+        catalog: { kind: "openai-models", url: `${deepSeekBase}/models`, metadata: "deepseek" },
+        models: [
+          { ...deepSeekModel, id: "deepseek-flash", name: "DeepSeek V4.1 Flash", input: ["text", "image"] },
+          { ...deepSeekModel, id: "deepseek-v4-pro", name: "DeepSeek V4 Pro", input: ["text"] },
+        ],
+      },
+    ],
+  },
+  {
+    id: "moonshot-ai",
+    label: "Moonshot AI",
+    protocol: "openai-completions",
+    authentication: "bearer",
+    bindings: [
+      {
+        id: "default",
+        inference: moonshotBase,
+        catalog: { kind: "openai-models", url: `${moonshotBase}/models`, metadata: "moonshot" },
+        models: [
+          {
+            id: "kimi-k3",
+            name: "Kimi K3",
+            input: ["text", "image"],
+            contextWindow: 1_048_576,
+            maxOutputTokens: 1_048_576,
+            outputBudget: 16_384,
+            supportsTools: true,
+            reasoningOptions: kimiEfforts,
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "kimi-coding",
+    label: "Kimi For Coding",
+    protocol: "anthropic-messages",
+    authentication: "x-api-key",
+    bindings: [
+      {
+        id: "default",
+        inference: "https://api.kimi.ai/coding",
+        catalog: { kind: "manual" },
+        models: [
+          {
+            id: "kimi-for-coding",
+            name: "Kimi K2.8 Preview",
+            input: ["text", "image"],
+            contextWindow: 1_048_576,
+            maxOutputTokens: 32_768,
+            supportsTools: true,
+            reasoningOptions: kimiEfforts,
+          },
+          {
+            id: "k3-256k",
+            name: "Kimi K3 256K",
+            input: ["text", "image"],
+            contextWindow: 262_144,
+            maxOutputTokens: 131_072,
+            supportsTools: true,
+            reasoningOptions: kimiEfforts,
+          },
+        ],
+      },
+    ],
+  },
 ];
 
 export const providerChoices = {
@@ -169,6 +263,7 @@ const curatedCatalogProfile = z.strictObject({
   maxInputTokens: tokenCount.optional(),
   maxOutputTokens: tokenCount.optional(),
   supportsTools: z.boolean().optional(),
+  reasoning: z.boolean().optional(),
   reasoningOptions: z.array(reasoningOptionSchema).max(16).optional(),
 });
 export const curatedDiscoverySchema = z.discriminatedUnion("status", [

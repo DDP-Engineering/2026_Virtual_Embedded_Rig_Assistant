@@ -156,6 +156,8 @@ describe("QwenCloud presets through the production provider gateway", () => {
       expect(request.url).toBe(`${plans[0].base}/chat/completions`);
       expect(body).toHaveProperty("model", model);
       expect(body).not.toHaveProperty("enable_thinking");
+      expect(body).toHaveProperty("max_tokens", 256);
+      expect(body).not.toHaveProperty("max_completion_tokens");
       ps(body);
       return body.tools
         ? streamResponse(

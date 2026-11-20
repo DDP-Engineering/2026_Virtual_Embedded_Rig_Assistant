@@ -19,6 +19,15 @@ Core resolves models and wraps exact-pinned pi-ai1.1.0. Desktop main supplies cu
   Qwen3.8 Flash and Qwen3.7 Max expose their documented inputs, tools and binary thinking options.
   Thinking-enabled tool continuations preserve the assistant's reasoning_content and call ID.
   Token Plan credit exhaustion is distinct from request throttling.
+- DeepSeek and Moonshot AI use international Chat Completions with separate authenticated
+  catalogs. Authenticated listings carry documented context and image fields, with maximum output
+  and eligible effort levels where documented. A successful list governs unsaved model choices.
+  DeepSeek passes its thinking toggle, and Moonshot K3 passes its effort level.
+  Both preserve reasoning_content on tool continuations. Kimi For Coding uses overseas
+  Anthropic Messages with x-api-key, VERA client identity, explicit model IDs and adaptive
+  thinking. Thinking blocks and matching tool results survive continuation. DeepSeek tests
+  with thinking off. Documented Moonshot and Kimi profiles test at low effort. The gateway leaves
+  tool capabilities unverified when a Kimi probe uses a manually entered ID without a profile.
 - OpenCode Console and Go use `https://opencode.ai/inference[/go]/v1/models` for the scoped catalog
   and `https://opencode.ai/inference[/go]/openai/v1/chat/completions` for inference. OpenCode’s
   catalog supplies eligible IDs, names, input modalities, limits and declared tool and compatible

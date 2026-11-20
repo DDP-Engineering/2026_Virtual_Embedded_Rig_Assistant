@@ -39,7 +39,13 @@ replay or a scripted loopback endpoint, never a real model (L11, 08 §3).
 Settings offers a searchable set of connection presets. The built-in OpenAI and local choices
 retain their existing connection workflows. The shared curated registry defines service and binding
 IDs, authentication, protocol, exact HTTPS inference and catalog routes, and per-model metadata.
-The curated registry includes OpenCode Console, OpenCode Go, QwenCloud Standard and QwenCloud Token Plan.
+The curated registry includes OpenCode Console, OpenCode Go, QwenCloud Standard, QwenCloud Token Plan,
+DeepSeek, international Moonshot AI and Kimi For Coding. DeepSeek and Moonshot use bearer keys and
+Chat Completions at https://api.deepseek.com and https://api.moonshot.ai/v1 respectively, with
+separate model listings. Kimi For Coding uses a Kimi Code Console key, an explicit model ID and
+Anthropic Messages at https://api.kimi.ai/coding. DeepSeek and Moonshot continue tool calls with
+reasoning_content. Kimi For Coding preserves Anthropic thinking blocks and tool-result IDs.
+Authenticated smoke for these three presets was waived under the epic's no-account ruling.
 QwenCloud uses the two international Singapore Chat Completions bases with a separate credential scope
 per plan. The model picker combines an explicitly saved ID with results from an available plan catalog.
 An unavailable catalog leaves the saved model usable and the inference test checks the key. Exact model
@@ -51,7 +57,7 @@ keeps the selected preset and binding in format-1 settings. The credential slot 
 and a digest of the registered routes and authentication contract. Main rejects changes to a saved
 binding. Catalog discovery takes registry IDs, can use a draft key or that connection's saved slot,
 and returns discovered model IDs, a manual-entry result or a structured error. Catalog and inference
-reject redirects. Chat Completions inference requires the exact registered POST route.
+reject redirects. Inference requires the exact registered POST route for each preset protocol.
 The saved model ID and the registry's model entries are selectable, including IDs with slashes.
 Model options show service identity, context, input and known tools and reasoning. Unknown input and
 reasoning remain unverified, and manual context limits are identified as configured.
@@ -115,7 +121,8 @@ Each step reports pass, fail or skipped (`core/llm/connection.ts`):
    `{ text: string }`.
 4. Streaming: asks for one sentence; passes when the text arrived in more than one provider delta.
 
-Steps 2–4 request at most 256 output tokens; 3 and 4 are skipped when 2 fails. The UI has a Test
+Steps 2–4 request at most 256 output tokens by default. The documented Moonshot K3 and Kimi For
+Coding profiles use low effort and up to 4,096 tokens for reasoning and the probe reply. Steps 3 and 4 are skipped when 2 fails. The UI has a Test
 button per saved connection that opens a step list with localized errors; it is disabled while the
 form holds unsaved edits (`renderer/components/provider-test.tsx`). The ChatGPT card has no Test
 button. Smoke run: `--vera-smoke-provider <id>` prints the result and exits 0 when every step passes,

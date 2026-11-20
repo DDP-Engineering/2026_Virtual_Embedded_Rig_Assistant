@@ -44,6 +44,18 @@ Folosește Token Plan pentru sesiuni interactive ale agentului, conform [politic
 
 Consultă [cheile API QwenCloud](https://docs.qwencloud.com/developer-guides/administration/api-keys) și [modelele și erorile Token Plan](https://docs.qwencloud.com/token-plan/token-plan-faq).
 
+## DeepSeek, Moonshot AI și Kimi For Coding
+
+1. În **Adaugă conexiune**, alege **DeepSeek** pentru o cheie API DeepSeek, **Moonshot AI** pentru o cheie de pe platforma internațională Kimi API sau **Kimi For Coding** pentru o cheie din consola Kimi Code. VERA completează adresa de bază a serviciului.
+2. Introdu cheia serviciului. Pentru DeepSeek și Moonshot AI, alege **Descoperă modele** sau introdu ID-ul exact al modelului. Pentru Kimi For Coding, introdu un ID precum `kimi-for-coding` sau `k3-256k`, în funcție de abonament.
+3. Alege **Salvează**, apoi **Testează**. Pentru Kimi For Coding, verificarea accesibilității este omisă, iar verificarea autentificării și a modelului trimite o cerere către model.
+
+Folosește ID-ul exact al modelului Kimi For Coding. Dacă ID-ul este greșit, Kimi Code poate răspunde cu un alt model. Un test reușit lasă capabilitățile ID-urilor Kimi neverificate.
+
+DeepSeek Flash, Kimi K3 de la Moonshot AI și cele două modele Kimi Code din exemple acceptă text și imagini în VERA. DeepSeek V4 Pro acceptă text. Capabilitățile altor modele pot fi neverificate.
+
+Vezi [limitele modelelor DeepSeek](https://api-docs.deepseek.com/api/list-models/), [ghidul Moonshot Kimi K3](https://platform.kimi.ai/docs/guide/kimi-k3-quickstart) și [configurarea modelelor Kimi Code](https://www.kimi.com/code/docs/en/kimi-code/models).
+
 ## LM Studio
 
 1. Pornește serverul LM Studio și încarcă un model.

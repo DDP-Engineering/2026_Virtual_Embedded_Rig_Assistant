@@ -140,9 +140,7 @@ export class ProviderGateway {
       const before = this.settings.get().settings.providers.custom.find((c) => `custom:${c.slug}` === id);
       const resolved = before?.preset ? resolveCuratedConnection(before, this.providers.presets) : undefined;
       const slot = resolved?.slot;
-      const profile = resolved?.binding.qwenCloud
-        ? resolved.binding.models?.find(({ id }) => id === (model ?? before?.model))
-        : undefined;
+      const profile = resolved?.binding.models?.find(({ id }) => id === (model ?? before?.model));
       const testKey = slot ? await this.credentials.read(slot, { signal: this.lifetime.signal }) : undefined;
       const result = providerTestResultSchema.parse(
         await testConnection(
@@ -152,13 +150,23 @@ export class ProviderGateway {
           this.lifetime.signal,
           () => this.clock.now().getTime(),
           (text) => this.credentials.scrub(text),
-          profile?.reasoningOptions?.includes("off") ? "off" : undefined,
+          profile?.reasoningOptions?.includes("off")
+            ? { reasoning: "off" }
+            : profile?.reasoningOptions?.includes("low")
+              ? { reasoning: "low", maxOutputTokens: 4096 }
+              : {},
         ),
       );
       const tools = result.steps.find((s) => s.step === "tools");
       if (before && (!model || model === before.model) && tools?.status !== "skipped") {
         if (!before.preset) await this.providers.recordToolSupport(before, tools?.status === "pass");
-        else if (tools?.status === "pass" && testKey?.type === "api_key" && testKey.key)
+        // Kimi Code may answer an unknown model ID with a fallback model.
+        else if (
+          (resolved?.preset.protocol !== "anthropic-messages" || profile) &&
+          tools?.status === "pass" &&
+          testKey?.type === "api_key" &&
+          testKey.key
+        )
           await this.providers.recordToolSupport(before, true, testKey.key);
       }
       return result;

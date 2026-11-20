@@ -1758,7 +1758,12 @@ What this plugin does.
             ? providers.custom.findIndex((c) => `custom:${c.slug}` === request.id)
             : -1;
           if (request.id && found < 0) throw veraError("NOT_FOUND");
-          const slug = found >= 0 ? providers.custom[found]?.slug : providerSlug(request.config.name);
+          const slug =
+            found >= 0
+              ? providers.custom[found]?.slug
+              : request.config.preset
+                ? `preset-${crypto.randomUUID()}`
+                : providerSlug(request.config.name);
           if (!slug) throw veraError("INVALID");
           if (
             providers.custom.some(

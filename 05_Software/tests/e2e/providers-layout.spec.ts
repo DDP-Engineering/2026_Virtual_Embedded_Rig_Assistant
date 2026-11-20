@@ -49,7 +49,7 @@ test("provider categories support concurrent connections, presets and aligned ac
   await expect(choices).toHaveCount(0);
   await expect(section.getByText("No matching providers")).toBeVisible();
   await search.clear();
-  await expect(choices).toHaveCount(8);
+  await expect(choices).toHaveCount(11);
   await search.fill("OpenCode");
   await expect(choices).toHaveText(["OpenCode Console", "OpenCode Go"]);
   for (const [preset, label, baseUrl] of [
@@ -71,6 +71,19 @@ test("provider categories support concurrent connections, presets and aligned ac
     await expect(section.getByLabel("Base URL", { exact: true })).toHaveValue(baseUrl!);
     await expect(section.getByLabel("Base URL", { exact: true })).not.toBeEditable();
     await expect(section.getByLabel("Model", { exact: true })).toBeEditable();
+  }
+  for (const [preset, label, baseUrl, discovery] of [
+    ["deepseek", "DeepSeek", "https://api.deepseek.com", true],
+    ["moonshot-ai", "Moonshot AI", "https://api.moonshot.ai/v1", true],
+    ["kimi-coding", "Kimi For Coding", "https://api.kimi.ai/coding", false],
+  ] as const) {
+    await search.fill(label);
+    await expect(choices).toHaveText([label]);
+    await section.locator("[data-provider-preset]").selectOption(preset);
+    await expect(section.getByLabel("Base URL", { exact: true })).toHaveValue(baseUrl);
+    await expect(section.getByLabel("Base URL", { exact: true })).not.toBeEditable();
+    await expect(section.getByLabel("Model", { exact: true })).toBeEditable();
+    await expect(section.locator('[data-action="discover-models"]')).toHaveCount(discovery ? 1 : 0);
   }
   await search.clear();
   await section.locator("[data-provider-preset]").selectOption("openai");
@@ -187,4 +200,29 @@ test("provider categories support concurrent connections, presets and aligned ac
   await expect(section.locator("[data-provider-editor]")).toHaveCount(0);
   expect(errors).toEqual([]);
   expect(outbound).toEqual([]);
+});
+
+test("a saved Moonshot connection can Test with its VERA output budget", {
+  tag: "@parallel-browser",
+}, async ({ page, rendererUrl }) => {
+  await page.goto(rendererUrl);
+  await page.locator('[data-i18n="nav.settings"]').click();
+  await page.locator('[data-section="providers"]').click();
+  const section = page.locator('[data-settings-section="providers"]');
+  await section.locator('[data-action="add-provider"]').click();
+  await section.locator("[data-provider-preset]").selectOption("moonshot-ai");
+  await section.getByLabel("Model", { exact: true }).fill("kimi-k3");
+  await section.getByLabel("Endpoint API key", { exact: true }).fill("fixture-moonshot-browser");
+  await expect(section.getByLabel("Maximum output (tokens)")).toHaveValue("16384");
+  await section.locator('[data-provider-action="save-custom"]').click();
+  await section.getByRole("button", { name: "Edit Moonshot AI", exact: true }).click();
+  const editor = section.locator("[data-provider-editor]");
+  const testConnection = editor.getByRole("button", { name: "Test Moonshot AI", exact: true });
+  await expect(editor.getByLabel("Maximum output (tokens)")).toHaveValue("16384");
+  await expect(testConnection).toBeEnabled();
+  await editor.getByLabel("Model", { exact: true }).fill("unsaved-model");
+  await expect(testConnection).toBeDisabled();
+  await editor.getByLabel("Model", { exact: true }).fill("kimi-k3");
+  await testConnection.click();
+  await expect(editor.getByRole("dialog").locator('[data-test-status="pass"]')).toHaveCount(4);
 });

@@ -44,6 +44,18 @@ Utilisez Token Plan pour les sessions d’agent interactives dans le cadre de la
 
 Consultez [les clés API QwenCloud](https://docs.qwencloud.com/developer-guides/administration/api-keys) et [les modèles et erreurs Token Plan](https://docs.qwencloud.com/token-plan/token-plan-faq).
 
+## DeepSeek, Moonshot AI et Kimi For Coding
+
+1. Dans **Ajouter une connexion**, choisissez **DeepSeek** pour une clé API DeepSeek, **Moonshot AI** pour une clé de la plateforme internationale Kimi API ou **Kimi For Coding** pour une clé de la console Kimi Code. VERA renseigne l’URL de base du service.
+2. Saisissez la clé du service. Pour DeepSeek et Moonshot AI, choisissez **Rechercher des modèles** ou saisissez l’identifiant exact du modèle. Pour Kimi For Coding, saisissez un identifiant comme `kimi-for-coding` ou `k3-256k`, selon votre abonnement.
+3. Sélectionnez **Enregistrer**, puis **Tester**. Pour Kimi For Coding, le contrôle d’accessibilité est ignoré. Le contrôle d’authentification et du modèle envoie une requête au modèle.
+
+Saisissez l’identifiant exact du modèle Kimi For Coding. En cas d’erreur de saisie, Kimi Code peut répondre avec un modèle de repli. Un test réussi laisse les capacités des identifiants Kimi inconnus sans confirmation.
+
+DeepSeek Flash, Kimi K3 de Moonshot AI et les deux modèles Kimi Code cités acceptent le texte et les images dans VERA. DeepSeek V4 Pro accepte le texte. Les capacités des autres modèles peuvent être non vérifiées.
+
+Consultez les [limites des modèles DeepSeek](https://api-docs.deepseek.com/api/list-models/), le [guide Moonshot Kimi K3](https://platform.kimi.ai/docs/guide/kimi-k3-quickstart) et la [configuration des modèles Kimi Code](https://www.kimi.com/code/docs/en/kimi-code/models).
+
 ## LM Studio
 
 1. Démarrez le serveur LM Studio et chargez un modèle.

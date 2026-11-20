@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import type { Model, TSchema } from "@earendil-works/pi-ai";
+import { anthropicMessagesApi } from "@earendil-works/pi-ai/api/anthropic-messages.lazy";
 import { openAICompletionsApi } from "@earendil-works/pi-ai/api/openai-completions.lazy";
 import { createModels, createProvider, type MutableModels } from "@earendil-works/pi-ai/models";
 import { openaiProvider } from "@earendil-works/pi-ai/providers/openai";
@@ -16,18 +17,21 @@ import {
 } from "@vera/shared";
 import type { CredentialStore } from "../ports.js";
 import { parseChatGptCatalog } from "./chatgpt-catalog.js";
+import { directCompletionsCompatibility, kimiMessagesCompatibility } from "./curated-adapters.js";
 import { mapProviderError, type ProviderFailure } from "./errors.js";
 import { type LlmEvent, type LlmGateway, type LlmRequest, splitModelReference } from "./gateway.js";
 import { scrubAssistantMessage } from "./message-scrub.js";
 import { openCodeCompatibility } from "./opencode.js";
 import { PresetCatalogCache } from "./preset-catalog-cache.js";
 import {
+  catalogListedModels,
   curatedTokenLimits,
   discoverPresetModels,
   openCodePlan,
   qwenCloudKeyMatches,
   readProviderJson,
   resolveCuratedConnection,
+  usesPresetCatalog,
 } from "./preset-connection.js";
 import { scrub } from "./scrub.js";
 import { createStreamScrubber } from "./stream-scrub.js";
@@ -61,7 +65,7 @@ function customModel(
     api: "openai-completions",
     provider,
     baseUrl: config.baseUrl.replace(/\/+$/, ""),
-    reasoning: !!(curated?.reasoningOptions ?? profile?.reasoningOptions)?.length,
+    reasoning: curated?.reasoning ?? !!(curated?.reasoningOptions ?? profile?.reasoningOptions)?.length,
     input: curated?.input
       ? [...curated.input]
       : config.imageModels?.includes(id)
@@ -73,7 +77,12 @@ function customModel(
     compat: { supportsStore: false, supportsDeveloperRole: false, supportsReasoningEffort: false },
   };
 }
-function customProvider(custom: Custom, provider: string, model = customModel(custom, provider)) {
+function customProvider(
+  custom: Custom,
+  provider: string,
+  model: Model<"openai-completions" | "anthropic-messages"> = customModel(custom, provider),
+) {
+  const messages = model.api === "anthropic-messages";
   return createProvider({
     id: provider,
     name: custom.name,
@@ -82,13 +91,15 @@ function customProvider(custom: Custom, provider: string, model = customModel(cu
       apiKey: {
         name: custom.name,
         resolve: async ({ credential }) => {
+          // The Messages request supplies the scoped key as a header, avoiding SDK OAuth inference.
+          if (messages) return { auth: {}, source: "credential" };
           const key = credential?.type === "api_key" && credential.key;
           if (custom.preset && !key) throw veraError("DENIED");
           return { auth: { apiKey: key || "not-needed" }, source: "credential" };
         },
       },
     },
-    api: openAICompletionsApi(),
+    api: messages ? anthropicMessagesApi() : openAICompletionsApi(),
   });
 }
 function limits(
@@ -281,19 +292,41 @@ export function createPiAiGateway(
     const plan = openCodePlan(connection.binding);
     const { qwenCloud } = connection.binding;
     const catalogProfile = profiles?.get(id);
-    const profile = catalogProfile ?? connection.binding.models?.find((m) => m.id === id);
+    const documented = connection.binding.models?.find((m) => m.id === id);
+    const profile = catalogProfile ?? documented;
     const selected = id === custom.model;
     if (!selected && !(qwenCloud ? catalogProfile : profile)) throw veraError("NOT_FOUND");
-    const { contextWindow, maxOutputTokens } = curatedTokenLimits(custom, profile, selected, !!plan);
+    const directCatalog =
+      connection.binding.catalog.kind === "openai-models" && connection.binding.catalog.metadata;
+    const { contextWindow, maxOutputTokens } = curatedTokenLimits(
+      custom,
+      profile,
+      selected,
+      !!plan || !!(directCatalog && catalogProfile),
+    );
     const model = customModel(custom, provider, id, profile);
+    const modelCompatibility = directCompletionsCompatibility(connection.preset.id, id);
     if (plan) model.compat = openCodeCompatibility(plan, id);
+    else if (modelCompatibility) {
+      model.compat = {
+        ...model.compat,
+        ...modelCompatibility,
+        ...(model.reasoning ? { requiresReasoningContentOnAssistantMessages: true } : {}),
+      };
+      if (connection.preset.id === "deepseek") model.thinkingLevelMap = { off: null };
+    }
     if (qwenCloud && !profile?.reasoningOptions)
       model.compat = { ...model.compat, maxTokensField: "max_tokens" };
+    const configuredModel = { ...model, contextWindow, maxTokens: maxOutputTokens };
+    const inferenceModel: Model<"openai-completions" | "anthropic-messages"> =
+      connection.preset.protocol === "anthropic-messages"
+        ? { ...configuredModel, api: "anthropic-messages", compat: kimiMessagesCompatibility(id) }
+        : configuredModel;
     return {
       ...connection,
       profile,
       supportsTools: profile?.supportsTools ?? (selected ? custom.supportsTools : undefined),
-      model: { ...model, contextWindow, maxTokens: maxOutputTokens },
+      model: inferenceModel,
       reasoningOptions: [...(profile?.reasoningOptions ?? [])],
     };
   }
@@ -425,12 +458,14 @@ export function createPiAiGateway(
           const connection = resolveCuratedConnection(custom, presets);
           let reachability: ProviderCatalog["reachability"] = "skipped";
           let profiles: Map<string, CuratedModel> | undefined;
+          let listed = false;
           const { qwenCloud } = connection.binding;
-          if (openCodePlan(connection.binding) || qwenCloud) {
+          if (usesPresetCatalog(connection.binding)) {
             const credential = await host.credentials.read(connection.slot, signal ? { signal } : {});
             const key = credential?.type === "api_key" ? credential.key : undefined;
             const snapshot = await presetCatalogs.load(connection, key, signal, probe);
-            if (qwenCloud) await verifyCatalogCredential(provider, connection, key, signal);
+            if (!openCodePlan(connection.binding))
+              await verifyCatalogCredential(provider, connection, key, signal);
             const discovery = snapshot?.result;
             if (probe && !key)
               throw mapProviderError("", host.scrub, endpoint, {
@@ -440,10 +475,12 @@ export function createPiAiGateway(
             if (probe && discovery?.status === "failed") throw discovery.error;
             if (
               discovery?.status === "discovered" ||
-              (discovery?.status === "manual" && (!qwenCloud || discovery.reason === "empty"))
+              (discovery?.status === "manual" &&
+                (openCodePlan(connection.binding) || discovery.reason === "empty"))
             )
               reachability = "pass";
             profiles = snapshot?.profiles ?? new Map();
+            listed = catalogListedModels(discovery);
           } else if (probe) {
             const credential = await host.credentials.read(connection.slot, signal ? { signal } : {});
             const discovery = await discoverPresetModels(
@@ -455,14 +492,18 @@ export function createPiAiGateway(
             if (discovery.status === "failed") throw discovery.error;
             if (discovery.status === "discovered" || discovery.reason === "empty") reachability = "pass";
           }
+          const directCatalog =
+            connection.binding.catalog.kind === "openai-models" && connection.binding.catalog.metadata;
           const ids = new Set([
             custom.model,
             ...(profiles?.keys() ?? []),
-            ...(qwenCloud ? [] : (connection.binding.models?.map(({ id }) => id) ?? [])),
+            ...(qwenCloud || (directCatalog && listed)
+              ? []
+              : (connection.binding.models?.map(({ id }) => id) ?? [])),
           ]);
           return {
             reachability,
-            models: [...ids].map((id) => {
+            models: [...ids].slice(0, 10001).map((id) => {
               const { model, profile, supportsTools, reasoningOptions } = curatedTarget(
                 custom,
                 provider,
@@ -529,6 +570,8 @@ export function createPiAiGateway(
         const binding = resolved.curated?.binding;
         const openCode = binding && openCodePlan(binding);
         const qwenCloud = binding?.qwenCloud;
+        const messages = resolved.curated?.preset.protocol === "anthropic-messages";
+        const deepSeek = resolved.curated?.preset.id === "deepseek";
         if (qwenCloud) failure.qwenCloud = { plan: qwenCloud, operation: "inference" };
         let selectedReasoning = request.reasoning;
         if (selectedReasoning != null && !resolved.reasoningOptions.includes(selectedReasoning)) {
@@ -572,7 +615,9 @@ export function createPiAiGateway(
           );
           if (resolved.curated) {
             const method = init?.method ?? (input instanceof Request ? input.method : "GET");
-            if (method !== "POST" || url.href !== `${endpoint}/chat/completions`) throw veraError("DENIED");
+            // The pinned Messages SDK uses its beta resource for streaming.
+            const route = messages ? "/v1/messages?beta=true" : "/chat/completions";
+            if (method !== "POST" || url.href !== endpoint + route) throw veraError("DENIED");
           } else if (url.origin !== new URL(endpoint).origin) throw veraError("DENIED");
           request.signal.throwIfAborted();
           try {
@@ -620,7 +665,14 @@ export function createPiAiGateway(
           },
           {
             signal: request.signal,
-            ...(curatedKey ? { apiKey: curatedKey } : {}),
+            ...(curatedKey && !messages ? { apiKey: curatedKey } : {}),
+            ...(messages && curatedKey
+              ? {
+                  headers: { "x-api-key": curatedKey, "User-Agent": "VERA", "anthropic-beta": null },
+                  cacheRetention: "none",
+                  ...(resolved.model.reasoning ? { thinkingEnabled: true, effort: chosenReasoning } : {}),
+                }
+              : {}),
             ...(openCode
               ? { headers: { "User-Agent": "VERA", "x-opencode-session": request.sessionId ?? randomUUID() } }
               : {}),
@@ -630,21 +682,25 @@ export function createPiAiGateway(
             fetch: transport,
             transport: "sse",
             ...(profile?.temperature === undefined ? {} : { temperature: profile.temperature }),
-            ...(chosenReasoning === undefined
+            ...(messages || chosenReasoning === undefined
               ? {}
               : {
                   onPayload: (payload: unknown) => ({
                     ...(payload as Record<string, unknown>),
                     ...(qwenCloud
                       ? { enable_thinking: chosenReasoning === "on" }
-                      : resolved.model.api === "openai-completions"
-                        ? { reasoning_effort: reasoningEffort }
-                        : {
-                            reasoning: {
-                              ...((payload as { reasoning?: object }).reasoning ?? {}),
-                              effort: reasoningEffort,
-                            },
-                          }),
+                      : deepSeek
+                        ? chosenReasoning === "off"
+                          ? { thinking: { type: "disabled" } }
+                          : { thinking: { type: "enabled" }, reasoning_effort: reasoningEffort }
+                        : resolved.model.api === "openai-completions"
+                          ? { reasoning_effort: reasoningEffort }
+                          : {
+                              reasoning: {
+                                ...((payload as { reasoning?: object }).reasoning ?? {}),
+                                effort: reasoningEffort,
+                              },
+                            }),
                   }),
                 }),
             ...(request.sessionId ? { sessionId: request.sessionId } : {}),
@@ -725,19 +781,25 @@ export function createPiAiGateway(
     if (!custom.preset) return;
     const connection = resolveCuratedConnection(custom, presets);
     const { qwenCloud } = connection.binding;
-    if (!openCodePlan(connection.binding) && !qwenCloud) return;
+    if (!usesPresetCatalog(connection.binding)) return;
     const credential = await host.credentials.read(connection.slot, signal ? { signal } : {});
     const key = credential?.type === "api_key" ? credential.key : undefined;
     const snapshot = await presetCatalogs.load(connection, key, signal);
     const { current, latest } = await verifyCatalogCredential(provider, connection, key, signal);
     const profiles = snapshot?.profiles ?? new Map<string, CuratedModel>();
-    if (model !== current.model && !profiles.has(model)) {
+    const documentedModel =
+      connection.binding.catalog.kind === "openai-models" &&
+      connection.binding.catalog.metadata &&
+      !catalogListedModels(snapshot?.result) &&
+      connection.binding.models?.some(({ id }) => id === model);
+    if (model !== current.model && !profiles.has(model) && !documentedModel) {
       if (snapshot?.result.status === "failed") throw snapshot.result.error;
       if (!key)
         throw mapProviderError("", host.scrub, connection.binding.inference, {
           status: 401,
           ...(qwenCloud ? { qwenCloud: { plan: qwenCloud, operation: "inference" } } : {}),
         });
+      if (!qwenCloud && !openCodePlan(connection.binding)) throw veraError("NOT_FOUND");
       throw {
         ...veraError("PROVIDER"),
         messageKey: qwenCloud ? "provider.qwenCloudModel" : "provider.openCodePlan",

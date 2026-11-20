@@ -47,8 +47,24 @@ export class PresetCatalogCache {
     signal?.throwIfAborted();
     const profiles = new Map<string, CuratedModel>();
     if (result.status === "discovered") {
-      for (const profile of result.profiles ?? []) profiles.set(profile.id, profile);
-      if (binding.qwenCloud) {
+      for (const profile of result.profiles ?? []) {
+        const documented = binding.models?.find(({ id }) => id === profile.id);
+        if (!documented || binding.catalog.kind !== "openai-models" || !binding.catalog.metadata) {
+          profiles.set(profile.id, profile);
+          continue;
+        }
+        const options =
+          profile.reasoningOptions && documented.reasoningOptions?.includes("off")
+            ? ["off", ...profile.reasoningOptions]
+            : (profile.reasoningOptions ?? documented.reasoningOptions);
+        profiles.set(profile.id, {
+          ...documented,
+          ...profile,
+          name: profile.name === profile.id ? documented.name : profile.name,
+          reasoningOptions: profile.reasoning === false ? [] : options,
+        });
+      }
+      if (binding.catalog.kind === "openai-models" && binding.qwenCloud) {
         for (const id of result.models) {
           profiles.set(id, binding.models?.find((model) => model.id === id) ?? { id, name: id });
         }

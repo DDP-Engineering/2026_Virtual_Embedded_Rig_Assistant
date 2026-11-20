@@ -68,11 +68,19 @@ export function CustomEditor({
   const [discovery, setDiscovery] = useState<CuratedDiscovery>();
   const [discovering, setDiscovering] = useState(false);
   const profile = binding?.models?.find(({ id }) => id === model.trim());
+  const profileOutput = profile?.outputBudget ?? profile?.maxOutputTokens;
+  const directCatalog = binding?.catalog.kind === "openai-models" && binding.catalog.metadata;
+  const discoveredProfile =
+    directCatalog && discovery?.status === "discovered"
+      ? discovery.profiles?.find(({ id }) => id === model.trim())
+      : undefined;
+  const profileContext = discoveredProfile?.contextWindow ?? profile?.contextWindow;
   const discoveredNames = new Map(
     discovery?.status === "discovered" ? discovery.profiles?.map(({ id, name }) => [id, name]) : [],
   );
   const modelChoices = new Set([
-    ...(binding?.qwenCloud && discovery?.status === "discovered"
+    ...((discovery?.status === "discovered" && (binding?.qwenCloud || directCatalog)) ||
+    (directCatalog && discovery?.status === "manual" && discovery.reason === "empty")
       ? []
       : (binding?.models?.map(({ id }) => id) ?? [])),
     ...(discovery?.status === "discovered" ? discovery.models : []),
@@ -114,8 +122,8 @@ export function CustomEditor({
               name,
               baseUrl: binding?.inference ?? url,
               model,
-              contextWindow: profile?.contextWindow ?? Number(context),
-              maxOutputTokens: profile?.maxOutputTokens ?? Number(output),
+              contextWindow: profileContext ?? Number(context),
+              maxOutputTokens: profileOutput ?? Number(output),
               ...(selection ? { preset: selection } : { imageModels }),
             },
             ...(clear ? { apiKey: "" } : key ? { apiKey: key } : {}),
@@ -211,8 +219,8 @@ export function CustomEditor({
           type="number"
           min={1}
           step={1}
-          value={profile?.contextWindow ?? context}
-          readOnly={profile?.contextWindow !== undefined}
+          value={profileContext ?? context}
+          readOnly={profileContext !== undefined}
           onChange={(event) => setContext(event.target.value)}
           required
         />
@@ -222,8 +230,8 @@ export function CustomEditor({
           type="number"
           min={1}
           step={1}
-          value={profile?.maxOutputTokens ?? output}
-          readOnly={profile?.maxOutputTokens !== undefined}
+          value={profileOutput ?? output}
+          readOnly={profileOutput !== undefined}
           onChange={(event) => setOutput(event.target.value)}
           required
         />
@@ -269,8 +277,8 @@ export function CustomEditor({
               name !== initial.name ||
               url !== initial.baseUrl ||
               model !== initial.model ||
-              (profile?.contextWindow ?? Number(context)) !== initial.contextWindow ||
-              (profile?.maxOutputTokens ?? Number(output)) !== initial.maxOutputTokens ||
+              (profileContext ?? Number(context)) !== initial.contextWindow ||
+              (profileOutput ?? Number(output)) !== initial.maxOutputTokens ||
               !!key ||
               clear
             }

@@ -8,6 +8,8 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ### Added
 
+- Connect DeepSeek, international Moonshot AI and Kimi For Coding with separate API keys and model profiles.
+
 - Connect QwenCloud Standard and Token Plan with scoped keys, model setup and connection diagnostics.
 
 - Connect OpenCode Console and OpenCode Go and choose models from each plan.

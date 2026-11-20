@@ -13,6 +13,7 @@ import {
   veraError,
 } from "@vera/shared";
 import { z } from "zod";
+import { parseDirectCatalog } from "./direct-catalog.js";
 import { mapProviderError } from "./errors.js";
 import { parseOpenCodeCatalog } from "./opencode.js";
 import { scrub } from "./scrub.js";
@@ -21,10 +22,17 @@ const MAX_CATALOG_BYTES = 2 * 1024 * 1024;
 export const openCodePlan = (binding: ProviderBinding) =>
   binding.catalog.kind === "openai-models" ? binding.catalog.opencode : undefined;
 
+export const usesPresetCatalog = (binding: ProviderBinding) =>
+  binding.catalog.kind === "openai-models" &&
+  !!(binding.catalog.opencode || binding.catalog.metadata || binding.qwenCloud);
+
 /** A dedicated Token Plan key cannot be used as a Standard key or vice versa. */
 export function qwenCloudKeyMatches(plan: QwenCloudPlan, key: string): boolean {
   return key.startsWith("sk-sp-") === (plan === "token-plan");
 }
+
+export const catalogListedModels = (discovery: CuratedDiscovery | undefined) =>
+  discovery?.status === "discovered" || (discovery?.status === "manual" && discovery.reason === "empty");
 
 const catalogSchema = z.object({ data: z.array(z.object({ id: curatedModelIdSchema })).max(10000) });
 
@@ -73,9 +81,13 @@ export function curatedTokenLimits(
 ) {
   const fallback = selected ? configured : providerTokenDefaults;
   const contextWindow = profile?.contextWindow ?? fallback.contextWindow;
+  const profileOutput =
+    profile?.outputBudget === undefined
+      ? profile?.maxOutputTokens
+      : Math.min(profile.outputBudget, profile.maxOutputTokens ?? Infinity);
   const requestedOutput = live
-    ? Math.min(fallback.maxOutputTokens, profile?.maxOutputTokens ?? Infinity)
-    : (profile?.maxOutputTokens ?? fallback.maxOutputTokens);
+    ? Math.min(fallback.maxOutputTokens, profileOutput ?? Infinity)
+    : (profileOutput ?? fallback.maxOutputTokens);
   const ceiling = contextWindow - Math.max(1024, Math.ceil(contextWindow * 0.05)) - 1;
   const maxOutputTokens = selected && !live ? requestedOutput : Math.min(requestedOutput, ceiling);
   if (
@@ -97,7 +109,7 @@ export async function discoverPresetModels(
 ): Promise<CuratedDiscovery> {
   if (signal?.aborted) return { status: "failed", error: veraError("DENIED") };
   if (binding.catalog.kind === "manual") return { status: "manual", reason: "configured" };
-  const { url: endpoint, opencode } = binding.catalog;
+  const { url: endpoint, opencode, metadata } = binding.catalog;
   const { qwenCloud } = binding;
   const redact = (text: string) => host.scrub(key ? scrub(text, [key]) : text);
   if (!key || (qwenCloud && !qwenCloudKeyMatches(qwenCloud, key))) {
@@ -154,7 +166,11 @@ export async function discoverPresetModels(
       };
     }
     const body = await readProviderJson(response, requestSignal);
-    const profiles = opencode ? parseOpenCodeCatalog(body, opencode) : undefined;
+    const profiles = opencode
+      ? parseOpenCodeCatalog(body, opencode)
+      : metadata
+        ? parseDirectCatalog(body, metadata)
+        : undefined;
     const models = (profiles ?? catalogSchema.parse(body).data).map(({ id }) => id);
     signal?.throwIfAborted();
     if (

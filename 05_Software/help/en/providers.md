@@ -44,6 +44,18 @@ Use Token Plan for interactive agent sessions under the [Token Plan usage policy
 
 See [QwenCloud API keys](https://docs.qwencloud.com/developer-guides/administration/api-keys) and [Token Plan models and errors](https://docs.qwencloud.com/token-plan/token-plan-faq).
 
+## DeepSeek, Moonshot AI and Kimi For Coding
+
+1. In **Add connection**, choose **DeepSeek** for a DeepSeek API key, **Moonshot AI** for an international Kimi API Platform key, or **Kimi For Coding** for a key from the Kimi Code Console. VERA fills in the matching base URL.
+2. Enter the service's key. For DeepSeek and Moonshot AI, select **Discover models** or enter the exact model ID. For Kimi For Coding, enter an ID such as `kimi-for-coding` or `k3-256k`, depending on your membership.
+3. Select **Save**, then **Test**. For Kimi For Coding, **Reachability** is skipped and **Authentication and model** checks the key and model through inference.
+
+Use the exact Kimi For Coding model ID. Kimi Code may answer a mistyped ID with a fallback model. A passing probe leaves capabilities for unverified Kimi IDs unknown.
+
+DeepSeek Flash, Moonshot AI's Kimi K3 and the two Kimi Code examples accept text and images in VERA. DeepSeek V4 Pro accepts text. Capabilities for other model IDs may be unverified.
+
+See [DeepSeek model limits](https://api-docs.deepseek.com/api/list-models/), the [Moonshot Kimi K3 guide](https://platform.kimi.ai/docs/guide/kimi-k3-quickstart) and [Kimi Code model configuration](https://www.kimi.com/code/docs/en/kimi-code/models).
+
 ## LM Studio
 
 1. Start the LM Studio server and load a model.
