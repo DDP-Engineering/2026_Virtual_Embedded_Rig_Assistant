@@ -8,6 +8,8 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ### Added
 
+- Connect Alibaba Cloud and Xiaomi MiMo APIs and plans using their region and workspace settings.
+
 - Connect international MiniMax and Z.AI through separate API and subscription presets.
 
 - Connect DeepSeek, international Moonshot AI and Kimi For Coding with separate API keys and model profiles.

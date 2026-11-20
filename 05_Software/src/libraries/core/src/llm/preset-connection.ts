@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import {
+  bindProviderWorkspace,
   type CuratedDiscovery,
   type CuratedModel,
   type CuratedProviderPreset,
@@ -22,9 +23,30 @@ const MAX_CATALOG_BYTES = 2 * 1024 * 1024;
 export const openCodePlan = (binding: ProviderBinding) =>
   binding.catalog.kind === "openai-models" ? binding.catalog.opencode : undefined;
 
+export const usesRegionalCatalog = (binding: ProviderBinding) =>
+  binding.catalog.kind !== "manual" && binding.keyScope !== undefined;
+
 export const usesPresetCatalog = (binding: ProviderBinding) =>
-  binding.catalog.kind === "openai-models" &&
-  !!(binding.catalog.opencode || binding.catalog.metadata || binding.qwenCloud);
+  usesRegionalCatalog(binding) ||
+  (binding.catalog.kind === "openai-models" &&
+    !!(binding.catalog.opencode || binding.catalog.metadata || binding.qwenCloud));
+
+export function providerKeyMatches(binding: ProviderBinding, key: string): boolean {
+  if (binding.apiKeyPrefix && !key.startsWith(binding.apiKeyPrefix)) return false;
+  if (binding.qwenCloud && !qwenCloudKeyMatches(binding.qwenCloud, key)) return false;
+  switch (binding.keyScope) {
+    case "model-studio":
+      return key.startsWith("sk-") && !key.startsWith("sk-sp-");
+    case "alibaba-coding":
+      return key.startsWith("sk-sp-");
+    case "mimo-api":
+      return key.startsWith("sk-");
+    case "mimo-token":
+      return key.startsWith("tp-") || key.startsWith("ttp-");
+    default:
+      return true;
+  }
+}
 
 /** A dedicated Token Plan key cannot be used as a Standard key or vice versa. */
 export function qwenCloudKeyMatches(plan: QwenCloudPlan, key: string): boolean {
@@ -35,13 +57,53 @@ export const catalogListedModels = (discovery: CuratedDiscovery | undefined) =>
   discovery?.status === "discovered" || (discovery?.status === "manual" && discovery.reason === "empty");
 
 const catalogSchema = z.object({ data: z.array(z.object({ id: curatedModelIdSchema })).max(10000) });
+const studioCatalogSchema = z.object({
+  success: z.literal(true),
+  output: z.object({
+    models: z
+      .array(
+        z.object({
+          model: curatedModelIdSchema,
+          capabilities: z.array(z.string()).nullish(),
+          inference_metadata: z
+            .object({
+              request_modality: z.array(z.string()).nullish(),
+              response_modality: z.array(z.string()).nullish(),
+            })
+            .nullish(),
+        }),
+      )
+      .max(100),
+  }),
+});
+
+function studioModelIds(body: unknown) {
+  return studioCatalogSchema
+    .parse(body)
+    .output.models.filter(
+      ({ capabilities, inference_metadata: modalities }) =>
+        capabilities?.includes("TG") ||
+        (modalities?.request_modality?.includes("Text") && modalities.response_modality?.includes("Text")),
+    )
+    .map(({ model }) => model);
+}
 
 export function resolveProviderBinding(presets: readonly CuratedProviderPreset[], selection: PresetBinding) {
   const preset = presets.find(({ id }) => id === selection.id);
-  const binding = preset?.bindings.find(({ id }) => id === selection.binding);
-  if (!preset || !binding) throw veraError("NOT_FOUND");
+  const definition = preset?.bindings.find(({ id }) => id === selection.binding);
+  if (!preset || !definition) {
+    if (preset?.bindings.some(({ region }) => region !== undefined))
+      throw { ...veraError("NOT_FOUND"), messageKey: "provider.serviceBindingInvalid" };
+    throw veraError("NOT_FOUND");
+  }
+  const binding = bindProviderWorkspace(definition, selection.workspaceId);
+  if (!binding) {
+    if (definition.workspace) throw { ...veraError("INVALID"), messageKey: "provider.workspaceInvalid" };
+    if (definition.keyScope) throw { ...veraError("DENIED"), messageKey: "provider.serviceBindingInvalid" };
+    throw veraError("DENIED");
+  }
   if (!curatedInferenceSchema.safeParse(binding.inference).success) throw veraError("INVALID");
-  if (binding.catalog.kind === "openai-models") {
+  if (binding.catalog.kind !== "manual") {
     const { url } = binding.catalog;
     if (!curatedInferenceSchema.safeParse(url).success) throw veraError("INVALID");
   }
@@ -55,7 +117,10 @@ export function resolveCuratedConnection(
 ) {
   if (!config.preset) throw veraError("INVALID");
   const { preset, binding } = resolveProviderBinding(presets, config.preset);
-  if (binding.inference !== config.baseUrl) throw veraError("DENIED");
+  if (binding.inference !== config.baseUrl) {
+    if (binding.keyScope) throw { ...veraError("DENIED"), messageKey: "provider.serviceBindingInvalid" };
+    throw veraError("DENIED");
+  }
   const scope = createHash("sha256")
     .update(
       JSON.stringify([
@@ -65,7 +130,7 @@ export function resolveCuratedConnection(
         preset.authentication,
         binding.inference,
         binding.catalog.kind,
-        binding.catalog.kind === "openai-models" ? binding.catalog.url : null,
+        binding.catalog.kind === "manual" ? null : binding.catalog.url,
       ]),
     )
     .digest("hex");
@@ -108,15 +173,20 @@ export async function discoverPresetModels(
   signal?: AbortSignal,
 ): Promise<CuratedDiscovery> {
   if (signal?.aborted) return { status: "failed", error: veraError("DENIED") };
-  if (binding.catalog.kind === "manual") return { status: "manual", reason: "configured" };
-  const { url: endpoint, opencode, metadata } = binding.catalog;
-  const { qwenCloud } = binding;
+  const { catalog, keyScope, qwenCloud } = binding;
+  if (catalog.kind === "manual" && (!key || !keyScope || providerKeyMatches(binding, key)))
+    return { status: "manual", reason: "configured" };
+  const nativeStudio = catalog.kind === "alibaba-models";
+  const opencode = catalog.kind === "openai-models" ? catalog.opencode : undefined;
+  const metadata = catalog.kind === "openai-models" ? catalog.metadata : undefined;
+  const endpoint = catalog.kind === "manual" ? binding.inference : catalog.url;
   const redact = (text: string) => host.scrub(key ? scrub(text, [key]) : text);
-  if (!key || (qwenCloud && !qwenCloudKeyMatches(qwenCloud, key))) {
+  if (!key || !providerKeyMatches(binding, key)) {
     return {
       status: "failed",
       error: mapProviderError("", redact, endpoint, {
         status: 401,
+        ...(keyScope ? { scoped: { operation: "catalog" } } : {}),
         ...(qwenCloud ? { qwenCloud: { plan: qwenCloud, operation: "catalog" } } : {}),
       }),
     };
@@ -125,7 +195,8 @@ export async function discoverPresetModels(
   const requestSignal = signal ? AbortSignal.any([signal, timeout]) : timeout;
   let response: Response;
   try {
-    response = await (host.fetch ?? globalThis.fetch)(endpoint, {
+    const url = nativeStudio ? `${endpoint}?page_size=100&capabilities=TG` : endpoint;
+    response = await (host.fetch ?? globalThis.fetch)(url, {
       signal: requestSignal,
       redirect: "error",
       headers: { Authorization: `Bearer ${key}` },
@@ -141,29 +212,27 @@ export async function discoverPresetModels(
   try {
     signal?.throwIfAborted();
     if (!response.ok) {
+      const body =
+        opencode || qwenCloud || keyScope
+          ? await readProviderJson(response, requestSignal, 16384).catch(() => undefined)
+          : undefined;
+      if (!opencode && !qwenCloud && !keyScope) await response.body?.cancel();
+      signal?.throwIfAborted();
+      const error = mapProviderError("", redact, endpoint, {
+        status: response.status,
+        ...(keyScope ? { scoped: { operation: "catalog", body } } : {}),
+        ...(opencode ? { openCode: { operation: "catalog", body } } : {}),
+        ...(qwenCloud ? { qwenCloud: { plan: qwenCloud, operation: "catalog", body } } : {}),
+        retryAfter: response.headers.get("retry-after") ?? undefined,
+      });
       // QwenCloud documents both 401 and 404 when a model listing is unavailable.
       if (
         !opencode &&
+        error.messageKey !== "provider.workspaceUnavailable" &&
         ([404, 405, 501].includes(response.status) || (qwenCloud && response.status === 401))
-      ) {
-        await response.body?.cancel();
+      )
         return { status: "manual", reason: "unavailable" };
-      }
-      const error =
-        opencode || qwenCloud
-          ? await readProviderJson(response, requestSignal, 16384).catch(() => undefined)
-          : undefined;
-      if (!opencode && !qwenCloud) await response.body?.cancel();
-      signal?.throwIfAborted();
-      return {
-        status: "failed",
-        error: mapProviderError("", redact, endpoint, {
-          status: response.status,
-          ...(opencode ? { openCode: { operation: "catalog", body: error } } : {}),
-          ...(qwenCloud ? { qwenCloud: { plan: qwenCloud, operation: "catalog", body: error } } : {}),
-          retryAfter: response.headers.get("retry-after") ?? undefined,
-        }),
-      };
+      return { status: "failed", error };
     }
     const body = await readProviderJson(response, requestSignal);
     const profiles = opencode
@@ -171,7 +240,11 @@ export async function discoverPresetModels(
       : metadata
         ? parseDirectCatalog(body, metadata)
         : undefined;
-    const models = (profiles ?? catalogSchema.parse(body).data).map(({ id }) => id);
+    const ids = nativeStudio
+      ? studioModelIds(body)
+      : (profiles ?? catalogSchema.parse(body).data).map(({ id }) => id);
+    const models =
+      keyScope === "mimo-api" ? ids.filter((id) => binding.models?.some((model) => model.id === id)) : ids;
     signal?.throwIfAborted();
     if (
       models.some((id) => redact(id) !== id) ||

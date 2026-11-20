@@ -28,8 +28,13 @@ strict public projections. Renderer holds a password draft until save/cancel and
   and M Plan use separate keys on one Messages base. VERA validates the documented MiniMax key class
   before saving or inference. Z.AI API and GLM Coding Plan use separate
   keys and Chat Completions routes. Their bindings offer explicit model selection and documented profiles.
+- Alibaba Cloud Model Studio and Coding Plan are distinct from QwenCloud Standard and Token Plan.
+  Model Studio derives the host from a valid console workspace ID and one of six regional bindings.
+  Alibaba Coding Plan has a fixed Singapore binding. Xiaomi MiMo has a global API binding and
+  separate China, Singapore and Europe Token Plan bindings. Main checks documented key classes.
+  Editing and saved-key discovery preserve the region and workspace as well as the plan.
 - providers.presets.discover accepts a preset/binding, optional local draft key and optional matching
-  saved connection. It returns discovered IDs and available OpenCode model profiles, a manual-entry outcome or
+  saved connection. It returns discovered IDs and available catalog profiles, a manual-entry outcome or
   a structured failure. The key
   stays in main or the editor draft. Editing keeps the saved service binding immutable.
 - ChatgptAuth login/cancel/status/logout owns one ten-minute OAuth attempt, prompt identity and callback/manual cleanup. Login uses VERA and the installationId; success selects a subscription only when the serialized current app default is null. Cancellation drains the underlying OAuth method and releases its callback port before another attempt. Stale browser failures/prompts are ignored. Logout drains pending login, removes chatgpt and clears only subscription defaults.

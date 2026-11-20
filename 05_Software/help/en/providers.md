@@ -66,6 +66,19 @@ See [DeepSeek model limits](https://api-docs.deepseek.com/api/list-models/), the
 
 See [MiniMax key setup](https://platform.minimax.io/docs/guides/quickstart-preparation), [Z.AI key management](https://docs.z.ai/devpack/notice/api-key-management) and [Z.AI's supported tools](https://docs.z.ai/devpack/tool/others#supported-tools).
 
+## Alibaba Cloud and Xiaomi MiMo
+
+1. Choose **Alibaba Cloud Model Studio** for pay-as-you-go. Select the region from the Model Studio console, copy its **Workspace ID** (starting with `llm-`) and enter a key for that workspace.
+2. Choose **Alibaba Cloud Coding Plan** for an international Coding Plan key (`sk-sp-`). Use its Singapore connection. QwenCloud Standard and Token Plan have their own presets and account keys.
+3. Choose **Xiaomi MiMo API** for a real-time API key (`sk-`) on the global API endpoint. For **Xiaomi MiMo Token Plan**, use the China, Singapore or Europe region shown on your Token Plan page and its individual (`tp-`) or team (`ttp-`) key.
+4. Select **Discover models** where available, or enter the exact chat model ID from your provider console. Select **Save**, then **Test**. The test uses the selected route and may consume quota. Choose a model in your session or workbench.
+
+Try `qwen3.7-flash` on Model Studio, `qwen3.7-plus` on Coding Plan, or `mimo-v2.6-flash` on MiMo when enabled for your account. A catalog entry alone does not confirm account access. Capabilities for other manually entered IDs may be unverified. To switch regions or workspaces, add a connection with the new scope.
+
+See [Model Studio](https://www.alibabacloud.com/help/en/model-studio/qwen-api-via-openai-chat-completions), [Coding Plan](https://www.alibabacloud.com/help/en/model-studio/coding-plan-faq), [MiMo API](https://mimo.mi.com/docs/en-US/api/chat/openai-api-post), [MiMo Token Plan](https://mimo.mi.com/docs/tokenplan/subscription).
+
+Use Alibaba Coding Plan in supported interactive coding tools under Alibaba’s usage policy. Use MiMo Token Plan for coding workflows under Xiaomi’s usage policy.
+
 ## LM Studio
 
 1. Start the LM Studio server and load a model.

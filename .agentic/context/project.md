@@ -63,7 +63,7 @@ Each component has a knowledge page that names its source files, tests, invarian
 | Renderer foundation | [renderer-foundation](../knowledge/renderer-foundation.md) | Layout, appearance, languages, accessibility, Settings pages, keyboard shortcut bindings. |
 | Application data | [app-data](../knowledge/app-data.md) | Settings, validation, portable locations, atomic saves, redacting logs, privacy masking choices. |
 | Dictation models | [dictation](../knowledge/dictation.md) | Pinned local Whisper models, microphone capture, composer shortcuts and owned draft insertion. |
-| Providers | [providers](../knowledge/providers.md) | Credential encryption, consent, redaction, endpoint configuration, masked forms, ChatGPT sign-in. |
+| Providers | [providers](../knowledge/providers.md) | Credential encryption, consent, redaction, curated plan, region and workspace bindings, masked forms, ChatGPT sign-in. |
 | LLM gateway | [llm-gateway](../knowledge/llm-gateway.md) | Model selection, capabilities and catalogs, connection tests, replay, manual live smoke. |
 | Agent runtime | [agent-runtime](../knowledge/agent-runtime.md) | Turn behavior, steering, context policy and compaction, tool-schema conversion, event mapping. |
 | Sessions | [sessions](../knowledge/sessions.md) | Durable lifecycle, snapshots, subscriptions, recovery, citations, approvals, bookmarks. |

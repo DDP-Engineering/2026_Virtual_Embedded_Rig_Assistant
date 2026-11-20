@@ -34,6 +34,13 @@ Core resolves models and wraps exact-pinned pi-ai1.1.0. Desktop main supplies cu
   GLM Coding Plan use fixed Chat Completions paths. Documented GLM-5.3 profiles use preserved
   thinking and stream tools, and replay reasoning_content with matching tool results. Flash and
   GLM-5.3 presets probe with low effort and up to 4096 output tokens.
+- Model Studio uses workspace-specific Chat Completions. Five listed regions also use their native
+  workspace catalogs and Virginia offers explicit entry. Alibaba Cloud Coding Plan and MiMo Token
+  Plan offer documented model suggestions and explicit entry. MiMo API lists documented chat IDs
+  from its own authenticated model catalog. The Alibaba Qwen and MiMo profiles preserve tool results
+  and reasoning content. The gateway pins this traffic to the selected route and reports scoped
+  authentication or model availability errors. Model Studio reports missing workspaces separately.
+  A Coding Plan Qwen3.7 Plus probe requests thinking on and uses a bounded reasoning budget.
 - OpenCode Console and Go use `https://opencode.ai/inference[/go]/v1/models` for the scoped catalog
   and `https://opencode.ai/inference[/go]/openai/v1/chat/completions` for inference. OpenCode’s
   catalog supplies eligible IDs, names, input modalities, limits and declared tool and compatible
@@ -90,6 +97,7 @@ LlmRequest.maskOutput is a host-owned live callback; omitted means on, including
 | Model precedence/capabilities/catalog/auth/streams/errors | core llm gateway/providers/errors/stream-scrub | gateway.test.ts |
 | Model input modalities | core llm providers/chatgpt-catalog and shared providers | gateway.test.ts, subscription.test.ts and shared providers.test.ts |
 | OpenCode and QwenCloud catalogs, scoped streams and diagnostics | core llm opencode, preset-catalog-cache, preset-connection and errors | desktop main opencode-presets.test.ts and qwencloud-presets.test.ts |
+| Alibaba and Xiaomi route, workspace and protocol behavior | provider-presets, preset-connection, providers and errors | main regional-provider-presets.test.ts; tests/e2e/providers-layout.spec.ts |
 | Four-step results and host lifecycle | core llm connection; main provider-gateway/provider-settings | gateway.test.ts; provider-test.spec.ts |
 | Replay transcript and release seam | core llm replay; main index; Vite alias | replay.test.ts; tooling/build-mode.test.ts |
 | IPC/schema | shared providers/ipc/errors/settings; core settings/service | bridge/router and service tests |

@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import type { CuratedDiscovery, CuratedModel, ProviderBinding } from "@vera/shared";
-import { discoverPresetModels } from "./preset-connection.js";
+import { discoverPresetModels, usesRegionalCatalog } from "./preset-connection.js";
 
 type CatalogSnapshot = { result: CuratedDiscovery; profiles: Map<string, CuratedModel>; expires: number };
 const credentialFingerprint = (key: string) => createHash("sha256").update(key).digest("hex");
@@ -64,7 +64,7 @@ export class PresetCatalogCache {
           reasoningOptions: profile.reasoning === false ? [] : options,
         });
       }
-      if (binding.catalog.kind === "openai-models" && binding.qwenCloud) {
+      if ((binding.catalog.kind === "openai-models" && binding.qwenCloud) || usesRegionalCatalog(binding)) {
         for (const id of result.models) {
           profiles.set(id, binding.models?.find((model) => model.id === id) ?? { id, name: id });
         }

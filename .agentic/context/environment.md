@@ -61,7 +61,7 @@ Stored formats: every format is version 1 during development and any other versi
 
 Automated tests use loopback fixtures and replay. Starting a model download in Settings > Dictation
 reaches fixed Hugging Face artifact hosts. Focused model tests stream local synthetic files.
-Live provider checks run through the manual commands marked below.
+Live provider checks run through the manual commands marked below. The provider catalog epic's no-account ruling substitutes documented configuration and scripted transport for authenticated smokes on its presets.
 
 ## Readiness checks
 

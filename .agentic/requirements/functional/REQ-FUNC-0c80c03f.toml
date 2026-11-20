@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-FUNC-0c80c03f"
+title = "Probe Qwen3.7 Plus in Coding Plan thinking mode"
+status = "active"
+requirement = "When testing the documented Alibaba Coding Plan Qwen3.7 Plus model, VERA shall send thinking enabled with a 4,096-token output budget."
+verification = "Use a scripted Coding Plan service that rejects requests with thinking disabled or a different probe budget; assert the connection test passes and the model exposes only the on option and its conservative 65,536-token output budget."
+affected_paths = ["05_Software/src/libraries/shared/src/provider-presets.ts", "05_Software/src/libraries/core/src/llm/providers.ts", "05_Software/src/apps/desktop/src/main/provider-gateway.ts", "05_Software/src/libraries/core/src/llm/connection.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/regional-provider-presets.test.ts"]
+created = 2026-11-20
+updated = 2026-11-20

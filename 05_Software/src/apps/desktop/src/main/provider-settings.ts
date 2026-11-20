@@ -1,5 +1,10 @@
 import { randomUUID } from "node:crypto";
-import { curatedTokenLimits, resolveCuratedConnection, type SettingsService } from "@vera/core";
+import {
+  curatedTokenLimits,
+  providerKeyMatches,
+  resolveCuratedConnection,
+  type SettingsService,
+} from "@vera/core";
 import {
   type CuratedProviderPreset,
   curatedProviderPresets,
@@ -10,6 +15,7 @@ import {
   providerRemoveSchema,
   providerSaveSchema,
   providerSlug,
+  samePresetBinding,
   veraError,
 } from "@vera/shared";
 import type { CredentialFile } from "./credentials.js";
@@ -89,12 +95,7 @@ export class ProviderSettings {
         const found = input.id ? providers.custom.findIndex((c) => `custom:${c.slug}` === input.id) : -1;
         if (input.id && found < 0) throw veraError("NOT_FOUND");
         const previous = providers.custom[found];
-        if (
-          previous &&
-          (previous.preset?.id !== input.config.preset?.id ||
-            previous.preset?.binding !== input.config.preset?.binding)
-        )
-          throw veraError("DENIED");
+        if (previous && !samePresetBinding(previous.preset, input.config.preset)) throw veraError("DENIED");
         if (input.config.preset && input.config.supportsTools !== undefined) throw veraError("INVALID");
         const slug =
           previous?.slug ??
@@ -116,9 +117,15 @@ export class ProviderSettings {
           const profile = connection.binding.models?.find((m) => m.id === config.model);
           Object.assign(config, curatedTokenLimits(config, profile, true));
           if (!previous && !input.apiKey) throw veraError("INVALID");
-          const { apiKeyPrefix } = connection.binding;
-          if (input.apiKey && apiKeyPrefix && !input.apiKey.startsWith(apiKeyPrefix))
-            throw { ...veraError("PROVIDER"), messageKey: "provider.auth" };
+          if (
+            input.apiKey &&
+            (connection.binding.apiKeyPrefix || connection.binding.keyScope) &&
+            !providerKeyMatches(connection.binding, input.apiKey)
+          )
+            throw {
+              ...veraError("PROVIDER"),
+              messageKey: connection.binding.keyScope ? "provider.serviceBindingAuth" : "provider.auth",
+            };
           if (input.apiKey !== undefined || previous?.model !== config.model) delete config.supportsTools;
         }
         if (found >= 0) providers.custom[found] = config;

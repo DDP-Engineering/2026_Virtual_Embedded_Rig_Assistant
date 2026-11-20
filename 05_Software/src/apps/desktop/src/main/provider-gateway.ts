@@ -19,6 +19,7 @@ import {
   type ProviderTestResult,
   providerCatalogSchema,
   providerTestResultSchema,
+  samePresetBinding,
   veraError,
   veraErrorSchema,
 } from "@vera/shared";
@@ -92,12 +93,7 @@ export class ProviderGateway {
           const saved = this.settings
             .get()
             .settings.providers.custom.find((p) => `custom:${p.slug}` === request.savedId);
-          if (
-            !saved?.preset ||
-            saved.preset.id !== request.preset.id ||
-            saved.preset.binding !== request.preset.binding
-          )
-            throw veraError("DENIED");
+          if (!saved || !samePresetBinding(saved.preset, request.preset)) throw veraError("DENIED");
           const { slot } = resolveCuratedConnection(saved, this.providers.presets);
           if (key === undefined) {
             const credential = await this.credentials.read(slot, { signal });
@@ -154,7 +150,9 @@ export class ProviderGateway {
             ? { reasoning: "off" }
             : profile?.reasoningOptions?.includes("low")
               ? { reasoning: "low", maxOutputTokens: 4096 }
-              : {},
+              : profile?.reasoningOptions?.includes("on")
+                ? { reasoning: "on", maxOutputTokens: 4096 }
+                : {},
         ),
       );
       const tools = result.steps.find((s) => s.step === "tools");
@@ -162,7 +160,7 @@ export class ProviderGateway {
         if (!before.preset) await this.providers.recordToolSupport(before, tools?.status === "pass");
         // A manual entry without a profile can receive a fallback model response.
         else if (
-          (resolved?.binding.catalog.kind !== "manual" || profile) &&
+          ((!resolved?.binding.keyScope && resolved?.binding.catalog.kind !== "manual") || profile) &&
           tools?.status === "pass" &&
           testKey?.type === "api_key" &&
           testKey.key

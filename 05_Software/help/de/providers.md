@@ -66,6 +66,19 @@ Siehe [DeepSeek-Modellgrenzen](https://api-docs.deepseek.com/api/list-models/), 
 
 Siehe [Einrichtung der MiniMax-Schlüssel](https://platform.minimax.io/docs/guides/quickstart-preparation), [Schlüsselverwaltung bei Z.AI](https://docs.z.ai/devpack/notice/api-key-management) und [von Z.AI unterstützte Werkzeuge](https://docs.z.ai/devpack/tool/others#supported-tools).
 
+## Alibaba Cloud und Xiaomi MiMo
+
+1. Wähle **Alibaba Cloud Model Studio** für nutzungsbasierte Abrechnung. Wähle die Region aus der Model Studio-Konsole, kopiere die **Arbeitsbereichs-ID** (beginnt mit `llm-`) und gib einen Schlüssel für diesen Arbeitsbereich ein.
+2. Wähle **Alibaba Cloud Coding Plan** für einen internationalen Coding-Plan-Schlüssel (`sk-sp-`). Verwende die Verbindung für Singapur. QwenCloud Standard und Token Plan haben eigene Voreinstellungen und Kontoschlüssel.
+3. Wähle **Xiaomi MiMo API** für einen Echtzeit-API-Schlüssel (`sk-`) am globalen Endpunkt. Wähle für **Xiaomi MiMo Token Plan** die Region deiner Token-Plan-Seite (China, Singapur oder Europa) und verwende den Einzel- (`tp-`) oder Teamschlüssel (`ttp-`).
+4. Wähle **Modelle suchen**, falls verfügbar, oder gib die genaue Chatmodell-ID aus der Konsole des Anbieters ein. Wähle **Speichern** und danach **Testen**. Der Test verwendet den gewählten Endpunkt und kann Kontingent verbrauchen. Wähle ein Modell für die Sitzung oder Workbench.
+
+Probiere `qwen3.7-flash` in Model Studio, `qwen3.7-plus` im Coding Plan oder `mimo-v2.6-flash` in MiMo, sofern das Konto Zugriff hat. Ein Katalogeintrag allein bestätigt den Kontozugriff nicht. Bei weiteren manuell eingegebenen IDs können Modellfähigkeiten ungeprüft bleiben. Füge für eine andere Region oder einen anderen Arbeitsbereich eine Verbindung hinzu.
+
+Siehe [Model Studio](https://www.alibabacloud.com/help/en/model-studio/qwen-api-via-openai-chat-completions), [Coding Plan](https://www.alibabacloud.com/help/en/model-studio/coding-plan-faq), [MiMo API](https://mimo.mi.com/docs/en-US/api/chat/openai-api-post), [MiMo Token Plan](https://mimo.mi.com/docs/tokenplan/subscription).
+
+Verwende Alibaba Coding Plan gemäß Alibabas Nutzungsrichtlinie in unterstützten interaktiven Programmierwerkzeugen. Verwende MiMo Token Plan gemäß Xiaomis Nutzungsrichtlinie für Programmieraufgaben.
+
 ## LM Studio
 
 1. Starten Sie den LM-Studio-Server und laden Sie ein Modell.

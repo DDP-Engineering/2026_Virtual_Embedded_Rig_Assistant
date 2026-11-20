@@ -63,6 +63,20 @@ An unavailable catalog leaves the saved model usable and the inference test chec
 profiles declare input, tools and thinking options. Token Plan credit exhaustion has its own diagnostic.
 User-authorized scripted acceptance covers the two QwenCloud presets while authenticated smoke is deferred.
 
+Alibaba Cloud Model Studio derives its Chat Completions base from the validated console workspace ID
+and one of six documented regions. Its native model list uses the same workspace host in the five
+regions with an explicit catalog URL. The catalog requests the first 100 text-generation models.
+Model Studio in Virginia and the international Alibaba Coding Plan use explicit model entry. Coding
+Plan uses the fixed Singapore DashScope base with a subscription key. The Qwen3.7 Plus profile
+exposes thinking on and follows the official Coding Plan example's output budget. The gateway
+reports a missing workspace separately from missing models and stops on a workspace error.
+QwenCloud service IDs and
+hosts are separate. Xiaomi MiMo API uses a global base and its documented chat-model list. Xiaomi
+MiMo Token Plan uses the selected China, Singapore or Europe cluster and explicit model entry.
+The gateway preserves thinking across tool continuation using the provider's Chat Completions
+schema. Authentication and unavailable-model failures stay on the chosen binding. The epic's
+no-account ruling supplies scripted validation for every binding.
+
 A curated connection uses a reserved random slug under the existing `custom:<slug>` identity and
 keeps the selected preset and binding in format-1 settings. The credential slot includes the slug
 and a digest of the registered routes and authentication contract. Main rejects changes to a saved

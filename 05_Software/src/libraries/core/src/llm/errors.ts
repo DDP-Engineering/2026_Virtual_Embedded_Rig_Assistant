@@ -14,6 +14,7 @@ export interface ProviderFailure {
   context?: boolean;
   openCode?: { operation: "catalog" | "inference"; body?: unknown };
   qwenCloud?: { plan: QwenCloudPlan; operation: "catalog" | "inference"; body?: unknown };
+  scoped?: { operation: "catalog" | "inference"; body?: unknown };
 }
 function openCodeError(failure: ProviderFailure, raw: string): VeraError | undefined {
   const source = failure.openCode;
@@ -49,12 +50,12 @@ function openCodeError(failure: ProviderFailure, raw: string): VeraError | undef
   return undefined;
 }
 
-const qwenCloudErrorFields = z.object({
+const providerErrorFields = z.object({
   code: z.string().nullish(),
   type: z.string().nullish(),
   message: z.string().nullish(),
 });
-const qwenCloudErrorSchema = qwenCloudErrorFields.extend({ error: qwenCloudErrorFields.nullish() });
+const providerErrorSchema = providerErrorFields.extend({ error: providerErrorFields.nullish() });
 const qwenCloudModelAccessCodes = new Set([
   "access_denied",
   "accessdenied",
@@ -69,7 +70,7 @@ function qwenCloudError(failure: ProviderFailure): VeraError | undefined {
   const source = failure.qwenCloud;
   if (!source) return;
   if (failure.status === 401) return { ...veraError("PROVIDER"), messageKey: "provider.qwenCloudAuth" };
-  const parsed = qwenCloudErrorSchema.safeParse(source.body).data;
+  const parsed = providerErrorSchema.safeParse(source.body).data;
   const code = (parsed?.error?.code ?? parsed?.code ?? parsed?.error?.type ?? parsed?.type)?.toLowerCase();
   const message = parsed?.error?.message ?? parsed?.message ?? "";
   if (
@@ -88,6 +89,38 @@ function qwenCloudError(failure: ProviderFailure): VeraError | undefined {
   )
     return { ...veraError("PROVIDER"), messageKey: "provider.qwenCloudModel" };
   if (failure.status === 403) return { ...veraError("PROVIDER"), messageKey: "provider.qwenCloudAuth" };
+}
+
+function scopedProviderError(failure: ProviderFailure): VeraError | undefined {
+  const source = failure.scoped;
+  if (!source) return;
+  const parsed = providerErrorSchema.safeParse(source.body).data;
+  const code = (parsed?.error?.code ?? parsed?.code ?? parsed?.error?.type ?? parsed?.type)?.toLowerCase();
+  const message = parsed?.error?.message ?? parsed?.message ?? "";
+  if (failure.status === 404 && code === "workspacenotfound")
+    return { ...veraError("PROVIDER"), messageKey: "provider.workspaceUnavailable" };
+  if (
+    source.operation === "inference" &&
+    (failure.status === 404 ||
+      code === "modelnotfound" ||
+      code === "model_not_found" ||
+      code === "model_not_supported" ||
+      code === "accessdenied.unpurchased" ||
+      code === "model.accessdenied" ||
+      (failure.status === 400 &&
+        /^(?:the product is not activated\b|model\b.*(?:not exist|not found|not supported|not available))/i.test(
+          message,
+        )))
+  )
+    return { ...veraError("PROVIDER"), messageKey: "provider.scopedModelUnavailable" };
+  if (failure.status === 401 || failure.status === 403)
+    return { ...veraError("PROVIDER"), messageKey: "provider.serviceBindingAuth" };
+  if (
+    /context[_ -]?(length|window)|maximum context|too many tokens|token limit|range of input length/i.test(
+      message,
+    )
+  )
+    return { ...veraError("PROVIDER"), messageKey: "provider.context" };
 }
 
 export function mapProviderError(
@@ -116,6 +149,8 @@ export function mapProviderError(
   }
   const raw = error instanceof Error ? error.message : typeof error === "string" ? error : "";
   const message = scrub(raw);
+  const scopedError = scopedProviderError(failure);
+  if (scopedError) return scopedError;
   const qwenCloud = qwenCloudError(failure);
   if (qwenCloud) return qwenCloud;
   if (

@@ -49,7 +49,7 @@ test("provider categories support concurrent connections, presets and aligned ac
   await expect(choices).toHaveCount(0);
   await expect(section.getByText("No matching providers")).toBeVisible();
   await search.clear();
-  await expect(choices).toHaveCount(15);
+  await expect(choices).toHaveCount(19);
   await search.fill("OpenCode");
   await expect(choices).toHaveText(["OpenCode Console", "OpenCode Go"]);
   for (const [preset, label, baseUrl] of [
@@ -281,4 +281,54 @@ test("international MiniMax and Z.AI plans use fixed routes and independent key 
   await section.locator('[data-provider-action="save-custom"]').click();
   await section.getByRole("button", { name: "Edit Z.AI GLM Coding Plan", exact: true }).click();
   await expect(eligibility).toBeVisible();
+});
+
+test("Alibaba and Xiaomi presets expose scoped region and workspace controls", {
+  tag: "@parallel-browser",
+}, async ({ page, rendererUrl }) => {
+  await page.goto(rendererUrl);
+  await page.locator('[data-i18n="nav.settings"]').click();
+  await page.locator('[data-section="providers"]').click();
+  const section = page.locator('[data-settings-section="providers"]');
+  await section.locator('[data-action="add-provider"]').click();
+  const preset = section.locator("[data-provider-preset]");
+  const region = section.getByLabel("Region", { exact: true });
+  const workspaceId = section.getByLabel("Workspace ID", { exact: true });
+  const base = section.getByLabel("Base URL", { exact: true });
+  const key = section.getByLabel("Endpoint API key", { exact: true });
+  await preset.selectOption("xiaomi-mimo-api");
+  await expect(region.locator("option:checked")).toHaveText("Global");
+  await expect(base).toHaveValue("https://api.xiaomimimo.com/v1");
+  await preset.selectOption("xiaomi-mimo-token-plan");
+  await expect(region.locator("option")).toHaveText(["China", "Singapore", "Europe"]);
+  await key.fill("tp-fixture-china");
+  await region.selectOption("europe");
+  await expect(base).toHaveValue("https://token-plan-ams.xiaomimimo.com/v1");
+  await expect(key).toHaveValue("");
+  await preset.selectOption("alibaba-coding-plan");
+  await expect(region.locator("option:checked")).toHaveText("Singapore");
+  await expect(base).toHaveValue("https://coding-intl.dashscope.aliyuncs.com/v1");
+  await preset.selectOption("alibaba-model-studio");
+  await expect(base).toHaveValue("");
+  await expect(base).not.toBeEditable();
+  await expect(region.locator("option")).toHaveCount(6);
+  await workspaceId.fill("token-plan");
+  await expect(section.getByRole("alert")).toContainText("Workspace ID");
+  await expect(section.locator('[data-provider-action="save-custom"]')).toBeDisabled();
+  await workspaceId.fill("llm-browser353");
+  await region.selectOption("eu-central-1");
+  await expect(base).toHaveValue("https://llm-browser353.eu-central-1.maas.aliyuncs.com/compatible-mode/v1");
+  await key.fill("sk-fixture-model-studio");
+  await workspaceId.fill("llm-otherbrowser");
+  await expect(key).toHaveValue("");
+  await key.fill("sk-fixture-other-workspace");
+  await section.getByLabel("Model", { exact: true }).fill("qwen3.7-flash");
+  await section.locator('[data-provider-action="save-custom"]').click();
+  await section.getByRole("button", { name: "Edit Alibaba Cloud Model Studio", exact: true }).click();
+  await expect(workspaceId).toHaveValue("llm-otherbrowser");
+  await expect(workspaceId).not.toBeEditable();
+  await expect(region).toBeDisabled();
+  await expect(
+    section.getByRole("button", { name: "Test Alibaba Cloud Model Studio", exact: true }),
+  ).toBeEnabled();
 });

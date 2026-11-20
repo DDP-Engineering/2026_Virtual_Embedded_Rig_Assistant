@@ -6,7 +6,11 @@ const presetId = z
   .string()
   .regex(/^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/)
   .max(48);
-export const presetBindingSchema = z.strictObject({ id: presetId, binding: presetId });
+export const presetBindingSchema = z.strictObject({
+  id: presetId,
+  binding: presetId,
+  workspaceId: z.string().max(2048).optional(),
+});
 const normalizedHttpsUrl = z.url({ protocol: /^https$/, normalize: true });
 export const curatedInferenceSchema = z
   .string()
@@ -31,7 +35,50 @@ export type CuratedModel = {
   readonly reasoningOptions?: readonly z.infer<typeof reasoningOptionSchema>[] | undefined;
 };
 export type QwenCloudPlan = "standard" | "token-plan";
+export type ProviderRegion =
+  | "global"
+  | "china"
+  | "singapore"
+  | "europe"
+  | "beijing"
+  | "hongKong"
+  | "frankfurt"
+  | "tokyo"
+  | "virginia";
+export type ProviderKeyScope = "model-studio" | "alibaba-coding" | "mimo-api" | "mimo-token";
+export const isMiMoKeyScope = (scope: ProviderKeyScope | undefined) =>
+  scope === "mimo-api" || scope === "mimo-token";
+
+// Only a single namespace label from the workspace console is allowed into a host.
+export const validWorkspaceId = (id: string) => /^llm-[a-z0-9]{1,59}$/.test(id);
+
+export function bindProviderWorkspace(
+  binding: ProviderBinding,
+  workspaceId: string | undefined,
+): ProviderBinding | undefined {
+  if (!binding.workspace) return workspaceId === undefined ? binding : undefined;
+  if (!workspaceId || !validWorkspaceId(workspaceId)) return;
+  const apply = (url: string) => url.replace("{workspace}", workspaceId);
+  return {
+    ...binding,
+    inference: apply(binding.inference),
+    catalog:
+      binding.catalog.kind === "manual"
+        ? binding.catalog
+        : { ...binding.catalog, url: apply(binding.catalog.url) },
+  };
+}
+
+export function samePresetBinding(left: PresetBinding | undefined, right: PresetBinding | undefined) {
+  return (
+    left?.id === right?.id && left?.binding === right?.binding && left?.workspaceId === right?.workspaceId
+  );
+}
+
 export interface ProviderBinding {
+  readonly workspace?: true;
+  readonly region?: ProviderRegion;
+  readonly keyScope?: ProviderKeyScope;
   readonly qwenCloud?: QwenCloudPlan;
   readonly id: string;
   readonly label?: string;
@@ -39,6 +86,7 @@ export interface ProviderBinding {
   readonly apiKeyPrefix?: string;
   readonly catalog:
     | { readonly kind: "manual" }
+    | { readonly kind: "alibaba-models"; readonly url: string }
     | {
         readonly kind: "openai-models";
         readonly url: string;
@@ -116,6 +164,126 @@ const glmModel = {
 const glmModels: readonly CuratedModel[] = [
   { ...glmModel, id: "glm-5.3", name: "GLM-5.3", input: ["text"] },
   { ...glmModel, id: "glm-5.3-flash", name: "GLM-5.3-Flash", input: ["text", "image"] },
+];
+
+const qwenStudioProfile = {
+  input: ["text", "image"],
+  contextWindow: 1_000_000,
+  maxOutputTokens: 131_072,
+  supportsTools: true,
+  reasoningOptions: ["off", "on"],
+} as const;
+
+const studioRegions = [
+  ["ap-southeast-1", "singapore"],
+  ["cn-beijing", "beijing"],
+  ["cn-hongkong", "hongKong"],
+  ["eu-central-1", "frankfurt"],
+  ["ap-northeast-1", "tokyo"],
+  ["us-east-1", "virginia"],
+] as const;
+
+const mimoChatProfile = {
+  input: ["text", "image"],
+  contextWindow: 1_048_576,
+  maxOutputTokens: 131_072,
+  supportsTools: true,
+  reasoningOptions: ["off", "on"],
+} as const;
+
+const mimoChatModels = [
+  { id: "mimo-v2.6-flash", name: "MiMo V2.6 Flash" },
+  { id: "mimo-v2.6-pro", name: "MiMo V2.6 Pro" },
+].map((model) => ({ ...mimoChatProfile, ...model }));
+
+const regionalPresets: readonly CuratedProviderPreset[] = [
+  {
+    id: "alibaba-model-studio",
+    label: "Alibaba Cloud Model Studio",
+    protocol: "openai-completions",
+    authentication: "bearer",
+    bindings: studioRegions.map(([id, region]) => {
+      const base = `https://{workspace}.${id}.maas.aliyuncs.com`;
+      return {
+        id,
+        region,
+        workspace: true,
+        keyScope: "model-studio",
+        inference: `${base}/compatible-mode/v1`,
+        catalog:
+          id === "us-east-1" ? { kind: "manual" } : { kind: "alibaba-models", url: `${base}/api/v1/models` },
+        models: [{ ...qwenStudioProfile, id: "qwen3.7-flash", name: "Qwen3.7 Flash" }],
+      };
+    }),
+  },
+  {
+    id: "alibaba-coding-plan",
+    label: "Alibaba Cloud Coding Plan",
+    protocol: "openai-completions",
+    authentication: "bearer",
+    bindings: [
+      {
+        id: "singapore",
+        region: "singapore",
+        keyScope: "alibaba-coding",
+        inference: "https://coding-intl.dashscope.aliyuncs.com/v1",
+        catalog: { kind: "manual" },
+        models: [
+          {
+            ...qwenStudioProfile,
+            id: "qwen3.7-plus",
+            name: "Qwen3.7 Plus",
+            maxOutputTokens: undefined,
+            outputBudget: 65_536,
+            reasoningOptions: ["on"],
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "xiaomi-mimo-api",
+    label: "Xiaomi MiMo API",
+    protocol: "openai-completions",
+    authentication: "bearer",
+    bindings: [
+      {
+        id: "global",
+        region: "global",
+        keyScope: "mimo-api",
+        inference: "https://api.xiaomimimo.com/v1",
+        catalog: { kind: "openai-models", url: "https://api.xiaomimimo.com/v1/models" },
+        models: [
+          ...mimoChatModels,
+          {
+            ...mimoChatProfile,
+            id: "mimo-v2.6-pro-ultraspeed",
+            name: "MiMo V2.6 Pro UltraSpeed",
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "xiaomi-mimo-token-plan",
+    label: "Xiaomi MiMo Token Plan",
+    protocol: "openai-completions",
+    authentication: "bearer",
+    bindings: (
+      [
+        ["china", "cn"],
+        ["singapore", "sgp"],
+        ["europe", "ams"],
+      ] as const
+    ).map(([region, endpoint]) => ({
+      id: region,
+      region,
+      keyScope: "mimo-token",
+      inference: `https://token-plan-${endpoint}.xiaomimimo.com/v1`,
+      catalog: { kind: "manual" },
+      models: mimoChatModels,
+    })),
+  },
 ];
 
 /** Curated network services enter this list after their VERA acceptance. */
@@ -316,6 +484,7 @@ export const curatedProviderPresets: readonly CuratedProviderPreset[] = [
       },
     ],
   },
+  ...regionalPresets,
 ];
 
 export const providerChoices = {

@@ -1,7 +1,12 @@
 import { z } from "zod";
 import { veraErrorSchema } from "./errors.js";
 import { modelProfileSchema, reasoningOptionSchema } from "./provider-discovery.js";
-import { curatedInferenceSchema, curatedModelIdSchema, presetBindingSchema } from "./provider-presets.js";
+import {
+  curatedInferenceSchema,
+  curatedModelIdSchema,
+  presetBindingSchema,
+  validWorkspaceId,
+} from "./provider-presets.js";
 
 export const customProviderIdSchema = z
   .string()
@@ -142,6 +147,9 @@ export const openaiSettingsSchema = z.strictObject({ model: model.optional() }).
 export const customSettingsSchema = z
   .strictObject({
     ...configFields,
+    preset: presetBindingSchema
+      .extend({ workspaceId: z.string().refine(validWorkspaceId).optional() })
+      .optional(),
     slug: z
       .string()
       .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)

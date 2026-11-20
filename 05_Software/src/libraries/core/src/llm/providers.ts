@@ -9,6 +9,7 @@ import {
   type CuratedProviderPreset,
   curatedProviderPresets,
   customSettingsSchema,
+  isMiMoKeyScope,
   type ModelCapabilities,
   modelReferenceSchema,
   type ProviderCatalog,
@@ -35,10 +36,11 @@ import {
   curatedTokenLimits,
   discoverPresetModels,
   openCodePlan,
-  qwenCloudKeyMatches,
+  providerKeyMatches,
   readProviderJson,
   resolveCuratedConnection,
   usesPresetCatalog,
+  usesRegionalCatalog,
 } from "./preset-connection.js";
 import { scrub } from "./scrub.js";
 import { createStreamScrubber } from "./stream-scrub.js";
@@ -297,12 +299,15 @@ export function createPiAiGateway(
     profiles = presetCatalogs.profiles(connection.slot),
   ) {
     const plan = openCodePlan(connection.binding);
-    const { qwenCloud } = connection.binding;
+    const { qwenCloud, keyScope } = connection.binding;
     const catalogProfile = profiles?.get(id);
     const documented = connection.binding.models?.find((m) => m.id === id);
     const profile = catalogProfile ?? documented;
     const selected = id === custom.model;
-    if (!selected && !(qwenCloud ? catalogProfile : profile)) throw veraError("NOT_FOUND");
+    if (!selected && !(qwenCloud ? catalogProfile : profile)) {
+      if (keyScope) throw { ...veraError("PROVIDER"), messageKey: "provider.scopedModelUnavailable" };
+      throw veraError("NOT_FOUND");
+    }
     const directCatalog =
       connection.binding.catalog.kind === "openai-models" && connection.binding.catalog.metadata;
     const { contextWindow, maxOutputTokens } = curatedTokenLimits(
@@ -326,6 +331,14 @@ export function createPiAiGateway(
     }
     if (qwenCloud && !profile?.reasoningOptions)
       model.compat = { ...model.compat, maxTokensField: "max_tokens" };
+    if (keyScope) {
+      const mimo = isMiMoKeyScope(keyScope);
+      model.compat = {
+        ...model.compat,
+        maxTokensField: mimo ? "max_completion_tokens" : "max_tokens",
+        requiresReasoningContentOnAssistantMessages: model.reasoning,
+      };
+    }
     const configuredModel = { ...model, contextWindow, maxTokens: maxOutputTokens };
     const inferenceModel: Model<"openai-completions" | "anthropic-messages"> =
       connection.preset.protocol === "anthropic-messages"
@@ -472,7 +485,7 @@ export function createPiAiGateway(
           let reachability: ProviderCatalog["reachability"] = "skipped";
           let profiles: Map<string, CuratedModel> | undefined;
           let listed = false;
-          const { qwenCloud } = connection.binding;
+          const { qwenCloud, keyScope } = connection.binding;
           if (usesPresetCatalog(connection.binding)) {
             const credential = await host.credentials.read(connection.slot, signal ? { signal } : {});
             const key = credential?.type === "api_key" ? credential.key : undefined;
@@ -483,6 +496,7 @@ export function createPiAiGateway(
             if (probe && !key)
               throw mapProviderError("", host.scrub, endpoint, {
                 status: 401,
+                ...(keyScope ? { scoped: { operation: "catalog" } } : {}),
                 ...(qwenCloud ? { qwenCloud: { plan: qwenCloud, operation: "catalog" } } : {}),
               });
             if (probe && discovery?.status === "failed") throw discovery.error;
@@ -510,7 +524,7 @@ export function createPiAiGateway(
           const ids = new Set([
             custom.model,
             ...(profiles?.keys() ?? []),
-            ...(qwenCloud || (directCatalog && listed)
+            ...(qwenCloud || ((directCatalog || usesRegionalCatalog(connection.binding)) && listed)
               ? []
               : (connection.binding.models?.map(({ id }) => id) ?? [])),
           ]);
@@ -525,7 +539,12 @@ export function createPiAiGateway(
                 profiles,
               );
               if (host.scrub(id) !== id) throw veraError("INVALID");
-              const service = [connection.preset.label, connection.binding.label].filter(Boolean).join(" · ");
+              const service = [
+                connection.preset.label,
+                connection.binding.label ?? (keyScope ? connection.binding.id : undefined),
+              ]
+                .filter(Boolean)
+                .join(" · ");
               const label = custom.name === connection.preset.label ? service : `${service} · ${custom.name}`;
               return {
                 id,
@@ -583,11 +602,15 @@ export function createPiAiGateway(
         const binding = resolved.curated?.binding;
         const openCode = binding && openCodePlan(binding);
         const qwenCloud = binding?.qwenCloud;
+        const keyScope = binding?.keyScope;
+        const mimo = isMiMoKeyScope(keyScope);
+        const alibaba = keyScope === "model-studio" || keyScope === "alibaba-coding";
         const messages = resolved.curated?.preset.protocol === "anthropic-messages";
         const presetId = resolved.curated?.preset.id;
         const deepSeek = presetId === "deepseek";
         const miniMax = isMiniMaxPreset(presetId);
         const zai = isZaiPreset(presetId);
+        if (keyScope) failure.scoped = { operation: "inference" };
         if (qwenCloud) failure.qwenCloud = { plan: qwenCloud, operation: "inference" };
         let selectedReasoning = request.reasoning;
         if (selectedReasoning != null && !resolved.reasoningOptions.includes(selectedReasoning)) {
@@ -614,8 +637,7 @@ export function createPiAiGateway(
         request.signal.throwIfAborted();
         if (
           (resolved.curated && !curatedKey) ||
-          (binding?.apiKeyPrefix && curatedKey && !curatedKey.startsWith(binding.apiKeyPrefix)) ||
-          (qwenCloud && curatedKey && !qwenCloudKeyMatches(qwenCloud, curatedKey)) ||
+          (binding && curatedKey && !providerKeyMatches(binding, curatedKey)) ||
           (resolved.slot === "openai" && (key?.type !== "api_key" || !key.key)) ||
           (resolved.slot === "chatgpt" && key?.type !== "oauth")
         ) {
@@ -648,10 +670,11 @@ export function createPiAiGateway(
             if (!response.ok) {
               failure.status = response.status;
               failure.retryAfter = response.headers.get("retry-after") ?? undefined;
-              if (openCode || qwenCloud) {
+              if (openCode || qwenCloud || keyScope) {
                 const copy = response.clone();
                 const signal = AbortSignal.any([request.signal, AbortSignal.timeout(1000)]);
                 const body = await readProviderJson(copy, signal, 16384).catch(() => undefined);
+                if (keyScope) failure.scoped = { operation: "inference", body };
                 if (openCode) failure.openCode = { operation: "inference", body };
                 if (qwenCloud) failure.qwenCloud = { plan: qwenCloud, operation: "inference", body };
               } else {
@@ -727,20 +750,22 @@ export function createPiAiGateway(
               : {
                   onPayload: (payload: unknown) => ({
                     ...(payload as Record<string, unknown>),
-                    ...(qwenCloud
+                    ...(qwenCloud || alibaba
                       ? { enable_thinking: chosenReasoning === "on" }
-                      : deepSeek
-                        ? chosenReasoning === "off"
-                          ? { thinking: { type: "disabled" } }
-                          : { thinking: { type: "enabled" }, reasoning_effort: reasoningEffort }
-                        : resolved.model.api === "openai-completions"
-                          ? { reasoning_effort: reasoningEffort }
-                          : {
-                              reasoning: {
-                                ...((payload as { reasoning?: object }).reasoning ?? {}),
-                                effort: reasoningEffort,
-                              },
-                            }),
+                      : mimo
+                        ? { thinking: { type: chosenReasoning === "on" ? "enabled" : "disabled" } }
+                        : deepSeek
+                          ? chosenReasoning === "off"
+                            ? { thinking: { type: "disabled" } }
+                            : { thinking: { type: "enabled" }, reasoning_effort: reasoningEffort }
+                          : resolved.model.api === "openai-completions"
+                            ? { reasoning_effort: reasoningEffort }
+                            : {
+                                reasoning: {
+                                  ...((payload as { reasoning?: object }).reasoning ?? {}),
+                                  effort: reasoningEffort,
+                                },
+                              }),
                   }),
                 }),
             ...(request.sessionId ? { sessionId: request.sessionId } : {}),
@@ -820,16 +845,21 @@ export function createPiAiGateway(
     const custom = config(provider);
     if (!custom.preset) return;
     const connection = resolveCuratedConnection(custom, presets);
-    const { qwenCloud } = connection.binding;
+    const { qwenCloud, keyScope } = connection.binding;
     if (!usesPresetCatalog(connection.binding)) return;
     const credential = await host.credentials.read(connection.slot, signal ? { signal } : {});
     const key = credential?.type === "api_key" ? credential.key : undefined;
     const snapshot = await presetCatalogs.load(connection, key, signal);
     const { current, latest } = await verifyCatalogCredential(provider, connection, key, signal);
+    if (
+      snapshot?.result.status === "failed" &&
+      snapshot.result.error.messageKey === "provider.workspaceUnavailable"
+    )
+      throw snapshot.result.error;
     const profiles = snapshot?.profiles ?? new Map<string, CuratedModel>();
     const documentedModel =
-      connection.binding.catalog.kind === "openai-models" &&
-      connection.binding.catalog.metadata &&
+      ((connection.binding.catalog.kind === "openai-models" && connection.binding.catalog.metadata) ||
+        usesRegionalCatalog(connection.binding)) &&
       !catalogListedModels(snapshot?.result) &&
       connection.binding.models?.some(({ id }) => id === model);
     if (model !== current.model && !profiles.has(model) && !documentedModel) {
@@ -837,8 +867,10 @@ export function createPiAiGateway(
       if (!key)
         throw mapProviderError("", host.scrub, connection.binding.inference, {
           status: 401,
+          ...(keyScope ? { scoped: { operation: "inference" } } : {}),
           ...(qwenCloud ? { qwenCloud: { plan: qwenCloud, operation: "inference" } } : {}),
         });
+      if (keyScope) throw { ...veraError("PROVIDER"), messageKey: "provider.scopedModelUnavailable" };
       if (!qwenCloud && !openCodePlan(connection.binding)) throw veraError("NOT_FOUND");
       throw {
         ...veraError("PROVIDER"),

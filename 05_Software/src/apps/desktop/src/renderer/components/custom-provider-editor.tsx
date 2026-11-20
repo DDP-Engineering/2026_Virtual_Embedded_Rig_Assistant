@@ -1,10 +1,12 @@
 import {
+  bindProviderWorkspace,
   type CuratedDiscovery,
   type CuratedProviderPreset,
   type ProviderList,
   type ProviderSave,
   providerChoices,
   providerTokenDefaults,
+  validWorkspaceId,
   veraError,
 } from "@vera/shared";
 import { useId, useState } from "react";
@@ -53,8 +55,26 @@ export function CustomEditor({
     initial?.name ?? curated?.label ?? (preset === "ollama" ? providerChoices.ollama.label : ""),
   );
   const [bindingId, setBindingId] = useState(initial?.preset?.binding ?? curated?.bindings[0]?.id);
-  const binding = curated?.bindings.find(({ id }) => id === bindingId);
-  const selection = curated && binding ? { id: curated.id, binding: binding.id } : undefined;
+  const definition = curated?.bindings.find(({ id }) => id === bindingId);
+  const [workspaceId, setWorkspaceId] = useState(initial?.preset?.workspaceId ?? "");
+  const binding =
+    definition && bindProviderWorkspace(definition, definition.workspace ? workspaceId : undefined);
+  const selection =
+    curated && binding
+      ? { id: curated.id, binding: binding.id, ...(definition?.workspace ? { workspaceId } : {}) }
+      : undefined;
+  const regionLabels = {
+    global: t("providers.regions.global"),
+    china: t("providers.regions.china"),
+    singapore: t("providers.regions.singapore"),
+    europe: t("providers.regions.europe"),
+    beijing: t("providers.regions.beijing"),
+    hongKong: t("providers.regions.hongKong"),
+    frankfurt: t("providers.regions.frankfurt"),
+    tokyo: t("providers.regions.tokyo"),
+    virginia: t("providers.regions.virginia"),
+  };
+  const invalidWorkspace = !!definition?.workspace && !!workspaceId && !validWorkspaceId(workspaceId);
   const [url, setUrl] = useState(initial?.baseUrl ?? providerChoices[preset].baseUrl);
   const [model, setModel] = useState(initial?.model ?? "");
   const [imageModels, setImageModels] = useState(initial?.imageModels ?? []);
@@ -80,8 +100,8 @@ export function CustomEditor({
     discovery?.status === "discovered" ? discovery.profiles?.map(({ id, name }) => [id, name]) : [],
   );
   const modelChoices = new Set([
-    ...((discovery?.status === "discovered" && (binding?.qwenCloud || directCatalog)) ||
-    (directCatalog && discovery?.status === "manual" && discovery.reason === "empty")
+    ...((discovery?.status === "discovered" && (binding?.qwenCloud || directCatalog || binding?.keyScope)) ||
+    ((directCatalog || binding?.keyScope) && discovery?.status === "manual" && discovery.reason === "empty")
       ? []
       : (binding?.models?.map(({ id }) => id) ?? [])),
     ...(discovery?.status === "discovered" ? discovery.models : []),
@@ -116,6 +136,7 @@ export function CustomEditor({
       data-provider-editor="custom"
       onSubmit={(event) => {
         event.preventDefault();
+        if (curated && !selection) return;
         void save(
           {
             provider: "custom",
@@ -146,13 +167,15 @@ export function CustomEditor({
       )}
       <fieldset disabled={disabled || discovering} className="provider-fields" aria-busy={discovering}>
         {curated && <p>{curated.label}</p>}
-        {curated && binding && (curated.bindings.length > 1 || binding.label) && (
+        {curated && definition && (curated.bindings.length > 1 || definition.label || definition.region) && (
           <>
-            <label htmlFor={`${prefix}-binding`}>{t("providers.serviceEndpoint")}</label>
+            <label htmlFor={`${prefix}-binding`}>
+              {definition.region ? t("providers.region") : t("providers.serviceEndpoint")}
+            </label>
             <select
               id={`${prefix}-binding`}
-              value={binding.id}
-              disabled={!!initial}
+              value={definition.id}
+              disabled={!!initial || curated.bindings.length === 1}
               onChange={(event) => {
                 setBindingId(event.target.value);
                 setKey("");
@@ -161,10 +184,37 @@ export function CustomEditor({
             >
               {curated.bindings.map((entry) => (
                 <option key={entry.id} value={entry.id}>
-                  {entry.label ?? entry.id}
+                  {entry.region ? regionLabels[entry.region] : (entry.label ?? entry.id)}
                 </option>
               ))}
             </select>
+          </>
+        )}
+        {definition?.workspace && (
+          <>
+            <label htmlFor={`${prefix}-workspace`}>{t("providers.workspaceId")}</label>
+            <input
+              id={`${prefix}-workspace`}
+              value={workspaceId}
+              spellCheck={false}
+              autoCapitalize="none"
+              autoComplete="off"
+              required
+              maxLength={63}
+              aria-invalid={invalidWorkspace}
+              aria-describedby={invalidWorkspace ? `${prefix}-workspace-error` : undefined}
+              readOnly={!!initial}
+              onChange={(event) => {
+                setWorkspaceId(event.target.value);
+                setKey("");
+                setDiscovery(undefined);
+              }}
+            />
+            {invalidWorkspace && (
+              <p id={`${prefix}-workspace-error`} role="alert">
+                {t("provider.workspaceInvalid")}
+              </p>
+            )}
           </>
         )}
         <label htmlFor={`${prefix}-name`}>{t("providers.name")}</label>
@@ -179,8 +229,8 @@ export function CustomEditor({
         <input
           id={`${prefix}-url`}
           type="url"
-          value={binding?.inference ?? url}
-          readOnly={!!binding}
+          value={curated ? (binding?.inference ?? "") : url}
+          readOnly={!!curated}
           onChange={(event) => setUrl(event.target.value)}
           required
           maxLength={2048}
@@ -194,7 +244,7 @@ export function CustomEditor({
           required
           maxLength={200}
         />
-        {binding?.catalog.kind === "openai-models" && (
+        {binding && binding.catalog.kind !== "manual" && (
           <button
             type="button"
             data-action="discover-models"
@@ -313,7 +363,7 @@ export function CustomEditor({
           />
         ) : (
           <div className="workbench-actions">
-            <button type="submit" data-provider-action="save-custom">
+            <button type="submit" data-provider-action="save-custom" disabled={!!curated && !selection}>
               {t("providers.save")}
             </button>
             <button type="button" onClick={done}>
