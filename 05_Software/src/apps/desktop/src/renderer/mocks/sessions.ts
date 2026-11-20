@@ -413,6 +413,7 @@ export class MockSessions {
         messageId,
         text: request.text,
         ...(request.images?.length && { images: request.images }),
+        timestamp: Date.now(),
       });
       row.summary.status = "running";
       this.emit(id, { type: "turn.started", turnId });

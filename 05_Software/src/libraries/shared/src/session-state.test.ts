@@ -738,3 +738,25 @@ it("keeps admitted reply ownership after an interrupted streaming row is removed
   expect(replay).toEqual(live);
   expect(replay.items.at(-1)).toMatchObject({ replyToMessageIds: ["q"] });
 });
+
+// REQ-DATA-22f13161
+it("carries the send time of a user prompt and keeps the queue time of a delivered queued prompt", () => {
+  const sent = shared.sessionEventSchema.parse({
+    type: "message.user",
+    messageId: "u",
+    text: "Read the board",
+    timestamp: 1_763_657_640_000,
+  });
+  const state = shared.foldSessionEvents([
+    sent,
+    { type: "message.queued", messageId: "q", text: "Next", timestamp: 5 },
+    { type: "message.delivered", messageIds: ["q"] },
+    { type: "message.user", messageId: "q", text: "Next", timestamp: 9 },
+    { type: "message.user", messageId: "old", text: "Recorded before send times" },
+  ]);
+  expect(shared.sessionStateSchema.parse(state).items).toEqual([
+    { kind: "user", id: "u", text: "Read the board", timestamp: 1_763_657_640_000 },
+    { kind: "user", id: "q", text: "Next", timestamp: 5 },
+    { kind: "user", id: "old", text: "Recorded before send times" },
+  ]);
+});

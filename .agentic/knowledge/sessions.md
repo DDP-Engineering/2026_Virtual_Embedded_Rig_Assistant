@@ -85,7 +85,7 @@ SessionHost may own a WebDownloads instance, exposed as listDownloads/openDownlo
 
 - SessionService supplies one ephemeral ContextCompactor per session across recreated runtimes, clearing it on delete/close. Full SQLite message rows and transcript snapshots remain verbatim; restart regenerates derived historical summaries. Summary calls share the durable dispatch barrier, timeout/abort and scrubbed gateway. Optional usage compactionStatus/requestViewTokens replay through the shared reducer.
 
-- Pending queue lives in durable message.queued events with user timestamp/text/ID. Optional user pending/timestamp fields replay through shared state; message.delivered atomically persists the admitted transcript batch and clears its markers before gateway dispatch. Stop/limits/recovery retain unapplied pending messages for the next request. Closing refuses new sends while draining accepted work.
+- Pending queue lives in durable message.queued events with user timestamp/text/ID. Optional user pending/timestamp fields replay through shared state; a directly sent prompt's message.user event carries its send time (runtime clock, epoch ms) as optional `timestamp`, a delivered queued item keeps its queue time, and events recorded without one fold to a user item without a time; message.delivered atomically persists the admitted transcript batch and clears its markers before gateway dispatch. Stop/limits/recovery retain unapplied pending messages for the next request. Closing refuses new sends while draining accepted work.
 
 ## Change map
 

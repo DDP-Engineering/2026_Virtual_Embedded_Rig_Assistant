@@ -46,7 +46,7 @@ export interface RuntimeHost {
 export type RuntimeEvent =
   | { type: "turn.started"; turnId: string }
   | { type: "turn.done"; turnId: string; stopReason: StopReason }
-  | { type: "message.user"; messageId: string; text: string; images?: string[] }
+  | { type: "message.user"; messageId: string; text: string; images?: string[]; timestamp?: number }
   | { type: "message.delivered"; messageIds: string[] }
   | { type: "message.delta"; messageId: string; text: string }
   | { type: "tool.delta"; messageId: string; index: number; text: string }

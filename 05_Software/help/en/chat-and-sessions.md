@@ -46,7 +46,7 @@ To stop a running child, open it and use **Stop** in its composer. The parent ca
 
 | Level | What the conversation shows |
 |---|---|
-| **Verbose** | Every tool call with its arguments and output, the model's reasoning, and token statistics under each of your messages |
+| **Verbose** | Every tool call with its arguments and output, the model's reasoning, and, under each of your messages, the date and time you sent it and its token statistics |
 | **Normal** | Routine tool calls grouped into an expandable **Operations** line |
 | **Minimal** | Only the conversation; routine tool calls are hidden and a working indicator shows while the agent works |
 

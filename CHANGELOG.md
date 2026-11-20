@@ -8,6 +8,7 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ### Added
 
+- Verbose chat shows the send date and time beneath user messages, alongside token usage.
 - Chat replies and code blocks offer exact copying; explicit Bash and PowerShell blocks run in compatible terminals.
 - Desktop links delegated sessions, shows their outcomes and lets users stop a running child.
 - Agents can launch, monitor, stop and collect results from delegated inspection sessions.

@@ -328,6 +328,7 @@ function reduce(d: Draft, event: SessionEvent): void {
           id: event.messageId,
           text: event.text,
           ...(event.images && { images: event.images }),
+          ...(event.timestamp !== undefined && { timestamp: event.timestamp }),
         });
       break;
     case "message.bookmarked": {

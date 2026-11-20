@@ -46,7 +46,7 @@ Wenn VERA eine Aufgabe delegiert, zeigt **Delegierte Sitzungen** im übergeordne
 
 | Stufe | Was die Unterhaltung zeigt |
 |---|---|
-| **Ausführlich** | Jeden Werkzeugaufruf mit Argumenten und Ausgabe, das Reasoning des Modells und Token-Statistiken unter jeder Ihrer Nachrichten |
+| **Ausführlich** | Jeden Werkzeugaufruf mit Argumenten und Ausgabe, das Reasoning des Modells und unter jeder Ihrer Nachrichten Sendedatum, Uhrzeit und Token-Statistiken |
 | **Normal** | Routinemäßige Werkzeugaufrufe, gruppiert in einer aufklappbaren Zeile **Vorgänge** |
 | **Minimal** | Nur die Unterhaltung; routinemäßige Werkzeugaufrufe sind ausgeblendet, und eine Arbeitsanzeige ist zu sehen, solange der Agent arbeitet |
 

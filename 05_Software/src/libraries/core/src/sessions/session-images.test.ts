@@ -67,7 +67,13 @@ it("persists only paths for initial and queued images, replays the queue and kee
     const events = service.exportSession(id);
     expect(events.events.map(({ event }) => event)).toEqual(
       expect.arrayContaining([
-        { type: "message.user", messageId: first.messageId, text: "Initial", images: ["initial.png"] },
+        {
+          type: "message.user",
+          messageId: first.messageId,
+          text: "Initial",
+          images: ["initial.png"],
+          timestamp: expect.any(Number),
+        },
         expect.objectContaining({
           type: "message.queued",
           messageId: queued.messageId,

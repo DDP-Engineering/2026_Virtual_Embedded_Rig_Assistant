@@ -46,7 +46,7 @@ Pentru a opri o sesiune copil în curs, deschide-o și folosește **Oprește** l
 
 | Nivel | Ce afișează conversația |
 |---|---|
-| **Verbose** | Fiecare apel de instrument cu argumentele și rezultatul său, raționamentul modelului și statistici de tokenuri sub fiecare mesaj al tău |
+| **Verbose** | Fiecare apel de instrument cu argumentele și rezultatul său, raționamentul modelului și, sub fiecare mesaj al tău, data și ora trimiterii și statisticile de tokenuri |
 | **Normal** | Apelurile de rutină ale instrumentelor, grupate într-o linie extensibilă **Operații** |
 | **Minimal** | Doar conversația; apelurile de rutină ale instrumentelor sunt ascunse, iar un indicator de lucru este afișat cât timp agentul lucrează |
 

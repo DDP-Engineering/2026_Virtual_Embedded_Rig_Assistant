@@ -122,6 +122,8 @@ export const sessionEventSchema = z.discriminatedUnion("type", [
     messageId: z.string(),
     text: z.string(),
     images: messageImagesSchema.optional(),
+    /** Send time in epoch milliseconds; absent on events recorded before send times existed. */
+    timestamp: count.optional(),
   }),
   z.strictObject({
     type: z.literal("message.bookmarked"),

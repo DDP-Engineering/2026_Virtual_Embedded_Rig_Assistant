@@ -387,7 +387,9 @@ const MessageRow = memo(function MessageRow({
             <TranscriptImages key={workbenchId} workbenchId={workbenchId} paths={item.images} />
           )}
           {/* Per-question statistics only at the Verbose detail level. */}
-          {detail === "verbose" && item.usage && <PromptUsage usage={item.usage} />}
+          {detail === "verbose" && (item.usage || item.timestamp !== undefined) && (
+            <PromptUsage usage={item.usage} timestamp={item.timestamp} />
+          )}
         </>
       ) : (
         <ExternalSourceScope>

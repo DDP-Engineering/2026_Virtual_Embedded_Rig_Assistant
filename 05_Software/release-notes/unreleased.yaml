@@ -165,10 +165,10 @@ entries:
   - category: improved
     topic: { en: Sessions, ro: Sesiuni, de: Sitzungen, fr: Sessions }
     text:
-      en: Find bookmarks on the rail, navigate with editable shortcuts and keep them in session exports.
-      ro: Găsește marcaje pe margine, navighează cu taste configurabile și păstrează-le în exporturi.
-      de: Lesezeichen auf der Leiste finden, mit anpassbaren Kürzeln ansteuern und in Exporten behalten.
-      fr: Repérez les signets sur la barre, utilisez des raccourcis modifiables et gardez-les à l’export.
+      en: Bookmark shortcuts and exports; Verbose chat shows when you sent each message.
+      ro: Marcaje cu scurtături și export; în modul Verbose vezi când ai trimis mesajele.
+      de: Lesezeichen per Kürzel und im Export; der ausführliche Chat zeigt die Sendezeit.
+      fr: Signets avec raccourcis et export ; le chat détaillé affiche l’heure d’envoi des messages.
   - category: improved
     topic: { en: Permissions, ro: Permisiuni, de: Berechtigungen, fr: Autorisations }
     text:

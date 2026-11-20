@@ -174,6 +174,38 @@ it("shows per-question usage only at the verbose detail level", async () => {
   expect(container.querySelectorAll("[data-prompt-usage]")).toHaveLength(1);
   expect(container.querySelector("[data-prompt-usage]")?.textContent).toContain("7,077");
 });
+// REQ-UX-8ec4dc82
+it.each(["en", "ro"])("shows the send date and time to the minute at verbose in %s", async (language) => {
+  // 2026-11-20 17:54:37 local time; the seconds must not show.
+  const sent = new Date(2026, 10, 20, 17, 54, 37).getTime();
+  const state = fixture();
+  state.items = [
+    { kind: "user", id: "u1", text: "Timed", timestamp: sent, usage: { inputTokens: 10, outputTokens: 2 } },
+    { kind: "user", id: "u2", text: "Just sent", timestamp: sent + 60_000 },
+    { kind: "user", id: "u3", text: "Recorded before send times", usage: { inputTokens: 5 } },
+  ];
+  for (const detail of ["minimal", "normal"] as const) {
+    await render(state, detail);
+    expect(container.querySelector("[data-prompt-usage]")).toBeNull();
+    expect(container.querySelector("[data-prompt-time]")).toBeNull();
+  }
+  await render(state, "verbose");
+  // The render helper starts in English; the line follows a language switch.
+  await act(async () => {
+    await i18n.changeLanguage(language);
+  });
+  const format = new Intl.DateTimeFormat(language, { dateStyle: "short", timeStyle: "short" });
+  const users = [...container.querySelectorAll('[data-message-kind="user"]')];
+  const time = (id: string) => users[Number(id.slice(1)) - 1]?.querySelector("[data-prompt-time]");
+  expect(users).toHaveLength(3);
+  expect(time("u1")?.textContent).toBe(format.format(sent));
+  expect(time("u1")?.getAttribute("datetime")).toBe(new Date(sent).toISOString());
+  expect(time("u1")?.textContent).not.toContain("37");
+  expect(time("u2")?.textContent).toBe(format.format(sent + 60_000));
+  expect(time("u3")).toBeNull();
+  expect(container.querySelectorAll("[data-prompt-usage]")).toHaveLength(3);
+  await i18n.changeLanguage("en");
+});
 it("switches levels reversibly without mutating history", async () => {
   const state = fixture(),
     before = JSON.stringify(state);

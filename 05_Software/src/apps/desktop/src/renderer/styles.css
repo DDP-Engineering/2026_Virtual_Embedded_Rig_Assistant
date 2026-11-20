@@ -3915,7 +3915,7 @@ legend {
   color: var(--muted-foreground);
   font-variant-numeric: tabular-nums;
 }
-.prompt-usage span + span::before {
+.prompt-usage > * + *::before {
   content: "·";
   margin: 0 0.5rem;
 }

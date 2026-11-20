@@ -139,7 +139,13 @@ export class ReferenceRuntime implements AgentRuntime {
     const recovered = new Set(this.host.steering?.().map((message) => message.messageId));
     const prompt = userMessage({ text, ...(images && { images }), timestamp: this.host.now() });
     this.transcript.push(prompt);
-    this.emit({ type: "message.user", messageId, text, ...(prompt.images && { images: prompt.images }) });
+    this.emit({
+      type: "message.user",
+      messageId,
+      text,
+      ...(prompt.images && { images: prompt.images }),
+      timestamp: prompt.timestamp,
+    });
     this.emit({ type: "turn.started", turnId });
     let stopReason: StopReason = "error";
     try {

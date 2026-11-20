@@ -46,7 +46,7 @@ Pour arrêter une session enfant en cours, ouvrez-la et choisissez **Arrêter** 
 
 | Niveau | Ce que la conversation affiche |
 |---|---|
-| **Détaillé** | Chaque appel d’outil avec ses arguments et sa sortie, le raisonnement du modèle et les statistiques de jetons sous chacun de vos messages |
+| **Détaillé** | Chaque appel d’outil avec ses arguments et sa sortie, le raisonnement du modèle et, sous chacun de vos messages, sa date et son heure d’envoi et ses statistiques de jetons |
 | **Normal** | Les appels d’outils de routine, regroupés dans une ligne dépliable **Opérations** |
 | **Minimal** | Uniquement la conversation ; les appels d’outils de routine sont masqués et un indicateur d’activité s’affiche pendant que l’agent travaille |
 
