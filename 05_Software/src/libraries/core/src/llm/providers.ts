@@ -292,6 +292,9 @@ export function createPiAiGateway(
     if (!parsed.success) throw veraError("INVALID");
     return parsed.data;
   };
+  // Local servers may load the model and read the whole prompt before they answer, so a custom
+  // connection sets its own wait, 300 s by default; hosted OpenAI endpoints keep 30 s for headers.
+  const customWaitMs = (custom: Custom) => (custom.responseTimeoutSeconds ?? 300) * 1000;
   const presetCatalogs = new PresetCatalogCache(host);
   function curatedTarget(
     custom: Custom,
@@ -377,6 +380,7 @@ export function createPiAiGateway(
         endpoint: model.baseUrl,
         supportsTools: undefined,
         slot: provider,
+        headerWaitMs: 30000,
         reasoningOptions: current?.reasoningOptions ?? [],
         curated: undefined,
         profile: undefined,
@@ -397,6 +401,7 @@ export function createPiAiGateway(
         ? curated.supportsTools
         : (custom.models?.find((m) => m.id === id)?.supportsTools ?? custom.supportsTools),
       slot: curated?.slot ?? provider,
+      headerWaitMs: customWaitMs(custom),
       curated,
       profile: custom.protocol === "lmstudio" ? custom.models?.find((m) => m.id === id) : undefined,
       reasoningOptions:
@@ -451,6 +456,15 @@ export function createPiAiGateway(
             }
           : {}),
       };
+    },
+    responseTimeoutMs(reference) {
+      const { provider } = splitModelReference(reference);
+      if (!provider.startsWith("custom:")) return undefined;
+      try {
+        return customWaitMs(config(provider));
+      } catch {
+        return undefined;
+      }
     },
     async models(provider, signal, probe = false) {
       let endpoint = "";
@@ -652,6 +666,7 @@ export function createPiAiGateway(
           };
           return;
         }
+        const { headerWaitMs } = resolved;
         const transport: typeof fetch = async (input, init) => {
           const url = new URL(
             typeof input === "string" ? input : input instanceof URL ? input.href : input.url,
@@ -689,7 +704,11 @@ export function createPiAiGateway(
             }
             return response;
           } catch (error) {
-            if (!request.signal.aborted) failure.offline = true;
+            // The SDK aborts its own signal when the header wait runs out, while the caller's stays live.
+            if (!request.signal.aborted) {
+              if (init?.signal?.aborted) failure.timeout = headerWaitMs / 1000;
+              else failure.offline = true;
+            }
             throw error;
           }
         };
@@ -735,7 +754,7 @@ export function createPiAiGateway(
               ? { headers: { "User-Agent": "VERA", "x-opencode-session": request.sessionId ?? randomUUID() } }
               : {}),
             maxTokens: capabilities.maxOutputTokens,
-            timeoutMs: 30000,
+            timeoutMs: headerWaitMs,
             maxRetries: 0,
             fetch: transport,
             transport: "sse",
@@ -785,6 +804,7 @@ export function createPiAiGateway(
         let sourceDeltas = 0;
         const toolScrubbers = new Map<number, ReturnType<typeof createStreamScrubber>>();
         for await (const event of stream) {
+          request.onActivity?.();
           if (event.type === "text_delta") {
             if (event.delta) sourceDeltas++;
             const delta = textScrubber.push(event.delta);

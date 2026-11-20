@@ -124,3 +124,48 @@ describe("context budget", () => {
     ).toBe(false);
   });
 });
+
+// REQ-NFR-4721c12f
+describe("calibrated counting", () => {
+  const big = (id: string): ToolResultMessage => ({
+    role: "toolResult",
+    toolCallId: id,
+    toolName: "read",
+    content: [{ type: "text", text: "x".repeat(3000) }],
+    isError: false,
+    timestamp: 1,
+  });
+  it("scales an estimated count, keeps the raw count and avoids reduction that the scaled count does not need", () => {
+    const request = input([{ role: "user", content: "q", timestamp: 1 }, assistant(["a"]), big("a")]);
+    const raw = new policy.ContextPolicy().prepare(request, caps);
+    expect(raw.fits).toBe(true);
+    const unscaled = new policy.ContextPolicy().prepare(
+      input([...request.messages, assistant(["b"]), big("b")]),
+      caps,
+    );
+    // Over budget raw: M1 reduces a result.
+    expect(JSON.stringify(unscaled.messages)).toContain("[context truncated]");
+    const scaled = new policy.ContextPolicy().prepare(
+      input([...request.messages, assistant(["b"]), big("b")]),
+      caps,
+      true,
+      undefined,
+      0.25,
+    );
+    expect(scaled.rawTokens).toBeGreaterThan(caps.inputBudget);
+    expect(scaled.contextTokens).toBe(Math.ceil(scaled.rawTokens * 0.25));
+    expect(scaled.fits).toBe(true);
+    expect(JSON.stringify(scaled.messages)).not.toContain("[context truncated]");
+  });
+  it("never counts above the conservative estimate and leaves exact counts unscaled", () => {
+    const request = input([{ role: "user", content: "q", timestamp: 1 }]);
+    const conservative = new policy.ContextPolicy().prepare(request, caps);
+    expect(new policy.ContextPolicy().prepare(request, caps, true, undefined, 3).contextTokens).toBe(
+      conservative.contextTokens,
+    );
+    const exact = new policy.ContextPolicy(() => ({ tokens: 1000, estimated: false }));
+    const view = exact.prepare(request, caps, true, undefined, 0.25);
+    expect(view.contextTokens).toBe(1000);
+    expect(view.rawTokens).toBe(1000);
+  });
+});

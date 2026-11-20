@@ -385,6 +385,7 @@ test("an ordinary composer starts empty and accepts user text without sending au
   );
   const input = container.querySelector<HTMLTextAreaElement>("textarea") as HTMLTextAreaElement;
   expect(input.value).toBe("");
+  expect(container.querySelector("[data-chat-working]")).toBeNull();
   await typeText(input, "My project question");
   expect(input.value).toBe("My project question");
   expect(send).not.toHaveBeenCalled();
@@ -408,6 +409,9 @@ test("running composer accepts Enter and Send while retaining Stop and locking t
   );
   const input = container.querySelector<HTMLTextAreaElement>("textarea") as HTMLTextAreaElement;
   expect(input.disabled).toBe(false);
+  // REQ-UX-0165dafe: the one working status of a running turn, under the composer.
+  expect(container.querySelectorAll("[data-chat-working]")).toHaveLength(1);
+  expect(container.querySelector("[data-chat-working]")?.textContent).toContain("VERA is working");
   expect(container.querySelector<HTMLSelectElement>('select[aria-label="Model"]')?.disabled).toBe(true);
   expect(button("Stop").disabled).toBe(false);
   await typeText(input, "Steer with Enter");

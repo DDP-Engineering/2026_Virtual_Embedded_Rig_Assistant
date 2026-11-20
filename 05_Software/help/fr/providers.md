@@ -114,6 +114,10 @@ Pour LM Studio, une clé API est facultative.
 
 Reprenez la fenêtre de contexte de la documentation du modèle ou des paramètres de votre serveur. Une valeur trop grande provoque des erreurs du serveur ; une valeur trop petite amène VERA à résumer l’historique plus tôt que nécessaire.
 
+## Modèles locaux lents
+
+Un modèle local peut mettre plusieurs minutes à se charger ou à lire une longue invite. **Délai de réponse (s)** fixe combien de temps VERA attend la première réponse, puis entre les parties de la réponse, de 10 à 3600 secondes ; la valeur initiale est 300. Le raisonnement que le serveur diffuse compte comme une réponse : un modèle qui réfléchit encore n’est pas arrêté.
+
 ## Prise en charge des images
 
 Le champ de message affiche un avertissement lorsque le modèle actuel reçoit uniquement les chemins des images.
@@ -147,5 +151,6 @@ La liste affiche le fournisseur, la limite de contexte, les types d’entrée et
 | **Limite de débit du fournisseur.** | Attendez le délai affiché, puis réessayez |
 | **Le fournisseur a refusé la taille du contexte.** | Raccourcissez l’entrée ou corrigez **Fenêtre de contexte (jetons)** |
 | **Impossible de joindre …** | Démarrez le serveur local ou vérifiez le réseau et l’**URL de base** |
+| **Le modèle n’a pas répondu dans un délai de … s.** | Augmentez **Délai de réponse (s)** pour la connexion ou vérifiez que le serveur fonctionne |
 
 Consultez aussi [Dépannage](troubleshooting.md).

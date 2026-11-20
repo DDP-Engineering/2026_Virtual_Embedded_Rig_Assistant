@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-UX-8a37ed29"
+
+title = "List and filter the current session's bookmarks"
+
+status = "active"
+
+requirement = """
+While the Bookmarks tab is open, the desktop app shall list the current session's bookmarked user messages in conversation order in an independently scrolling list, each with a message preview and the reply excerpt when one exists, with a text filter over message and reply excerpt, a count that shows matches out of the total while filtering, and distinct messages for no bookmarks and no matches.
+"""
+
+verification = "Renderer test with three bookmarks made out of conversation order: rows follow conversation order and show previews and reply excerpts; the filter is case-insensitive over message and reply, the count reads 1 of 3, an unmatched filter shows the no-matches message and an empty session the no-bookmarks message. Switching to another session with its own bookmark shows only that row, an empty filter and nothing selected."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/session/bookmarks-tab.tsx", "05_Software/src/apps/desktop/src/renderer/components/session/bookmarks-tab.test.ts"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/session/bookmarks-tab.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-20
+updated = 2026-11-20

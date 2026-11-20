@@ -114,6 +114,10 @@ An API key is optional for LM Studio.
 
 Take the context window from the model's documentation or your server settings. A value that is too large leads to errors from the server; one that is too small makes VERA summarize history earlier than needed.
 
+## Slow local models
+
+A local model can take minutes to load or to read a long prompt. **Response timeout (s)** sets how long VERA waits for the first answer and then between parts of the answer, from 10 to 3600 seconds; it starts at 300. Reasoning that the server streams counts as an answer, so a model that keeps thinking is not stopped.
+
 ## Image support
 
 The composer warns when the current model receives only image paths.
@@ -147,5 +151,6 @@ The model choices show the provider, context limit, input types and available to
 | **Provider rate limit.** | Wait the time shown, then retry |
 | **The provider rejected the context size.** | Shorten the input, or correct **Context window (tokens)** |
 | **Cannot reach …** | Start the local server, or check the network and the **Base URL** |
+| **The model did not respond within … s.** | Raise **Response timeout (s)** for the connection, or check that the server is running |
 
 See also [Troubleshooting](troubleshooting.md).

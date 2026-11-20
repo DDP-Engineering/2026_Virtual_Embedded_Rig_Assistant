@@ -53,7 +53,7 @@ Workbench and user skills offer **Edit instructions**. Official and plugin skill
 
 ## Right panel tabs
 
-Open **Edit workbench > Interface > Right panel tabs**. Select which tabs to show: Instructions and skills, Files, Changes, Artifacts, Plan, Runs and Terminal. All are selected by default. **Restore defaults** selects all tabs in the draft; **Save** applies it and **Cancel** discards it.
+Open **Edit workbench > Interface > Right panel tabs**. Select which tabs to show: Instructions and skills, Files, Changes, Artifacts, Plan, Bookmarks, Runs and Terminal. All are selected by default except **Bookmarks**, which you turn on yourself. **Restore defaults** selects all tabs except Bookmarks in the draft; **Save** applies it and **Cancel** discards it.
 
 Saving updates every session of this workbench immediately, including after reopening or restarting VERA. Other workbenches keep their own selection. Hiding the active tab selects the first remaining tab in the normal order. Hiding every tab closes the right panel and removes its usual open button. **Right panel tabs** remains available on the main page, and **Edit workbench** stays accessible from the overview and sidebar menu.
 

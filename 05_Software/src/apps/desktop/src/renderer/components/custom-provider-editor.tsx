@@ -24,6 +24,7 @@ export function customVersion(provider: Custom) {
     provider.model,
     provider.contextWindow,
     provider.maxOutputTokens,
+    provider.responseTimeoutSeconds,
     provider.hint,
     provider.storage,
     provider.configured,
@@ -84,6 +85,7 @@ export function CustomEditor({
   const [output, setOutput] = useState(
     String(initial?.maxOutputTokens ?? providerTokenDefaults.maxOutputTokens),
   );
+  const [waitSeconds, setWaitSeconds] = useState(String(initial?.responseTimeoutSeconds ?? 300));
   const [key, setKey] = useState("");
   const [clear, setClear] = useState(false);
   const [discovery, setDiscovery] = useState<CuratedDiscovery>();
@@ -147,6 +149,7 @@ export function CustomEditor({
               model,
               contextWindow: profileContext ?? Number(context),
               maxOutputTokens: profileOutput ?? Number(output),
+              responseTimeoutSeconds: Number(waitSeconds),
               ...(selection ? { preset: selection } : { imageModels }),
             },
             ...(clear ? { apiKey: "" } : key ? { apiKey: key } : {}),
@@ -292,6 +295,17 @@ export function CustomEditor({
           onChange={(event) => setOutput(event.target.value)}
           required
         />
+        <label htmlFor={`${prefix}-timeout`}>{t("providers.responseTimeout")}</label>
+        <input
+          id={`${prefix}-timeout`}
+          type="number"
+          min={10}
+          max={3600}
+          step={1}
+          value={waitSeconds}
+          onChange={(event) => setWaitSeconds(event.target.value)}
+          required
+        />
         <label htmlFor={`${prefix}-key`}>{t("providers.endpointKey")}</label>
         <input
           id={`${prefix}-key`}
@@ -336,6 +350,7 @@ export function CustomEditor({
               model !== initial.model ||
               (profileContext ?? Number(context)) !== initial.contextWindow ||
               (profileOutput ?? Number(output)) !== initial.maxOutputTokens ||
+              Number(waitSeconds) !== (initial.responseTimeoutSeconds ?? 300) ||
               !!key ||
               clear
             }

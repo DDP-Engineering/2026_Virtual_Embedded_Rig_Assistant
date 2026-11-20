@@ -52,7 +52,7 @@ Wenn VERA eine Aufgabe delegiert, zeigt **Delegierte Sitzungen** im übergeordne
 
 | Stufe | Was die Unterhaltung zeigt |
 |---|---|
-| **Ausführlich** | Jeden Werkzeugaufruf mit Argumenten und Ausgabe, das Reasoning des Modells und Token-Statistiken unter jeder Ihrer Nachrichten |
+| **Ausführlich** | Jeden Werkzeugaufruf mit Argumenten und Ausgabe, das Reasoning des Modells und unter jeder Ihrer Nachrichten Sendedatum, Uhrzeit und Token-Statistiken |
 | **Normal** | Routinemäßige Werkzeugaufrufe, gruppiert in einer aufklappbaren Zeile **Vorgänge** |
 | **Minimal** | Nur die Unterhaltung; routinemäßige Werkzeugaufrufe sind ausgeblendet, und eine Arbeitsanzeige ist zu sehen, solange der Agent arbeitet |
 
@@ -66,7 +66,7 @@ Bei Modellen, die es unterstützen, bietet **Reasoning-Stufe** die Option **Stan
 
 ## Lange Sitzungen und Kontext
 
-Die Kontextanzeige zeigt **Kontextnutzung** als Prozentsatz des Kontextfensters des Modells; wählen Sie sie aus, um Nutzung und Limits zu sehen. Wird eine Sitzung für das Modell zu lang, fasst VERA den älteren Verlauf zusammen (**Verlauf wird zusammengefasst…**). Das vollständige Transkript bleibt gespeichert und sichtbar.
+Die Kontextanzeige zeigt **Kontextnutzung** als Prozentsatz des Kontextfensters des Modells; wählen Sie sie aus, um Nutzung und Limits zu sehen. Wird eine Sitzung für das Modell zu lang, fasst VERA den älteren Verlauf zusammen (**Verlauf wird zusammengefasst…**). Währenddessen dreht sich die Anzeige und behält den letzten Prozentsatz, der sich aktualisiert, sobald die nächste Anfrage bereit ist. Das vollständige Transkript bleibt gespeichert und sichtbar.
 
 **In Unterhaltung suchen** durchsucht die aktuelle Sitzung. Die Markierungsleiste am linken Rand der Unterhaltung hat eine Markierung pro Nachricht von Ihnen; zeigen Sie auf eine Markierung, um eine Vorschau der Nachricht zu sehen, und wählen Sie sie aus, um dorthin zu springen.
 
@@ -87,6 +87,8 @@ Gespeicherte Nachrichtenlesezeichen bleiben im JSON-Export erhalten; Markdown ke
 Bewegen Sie den Zeiger über eine eigene Nachricht oder erreichen Sie ihr Lesezeichensymbol mit Tab. **Lesezeichen setzen** markiert sie; das gefüllte Symbol bietet **Lesezeichen entfernen**. Die Vorschau an der Leiste zeigt die erste Nachrichtenzeile und den Anfang der Agentenantwort mit derselben Lesezeichenaktion. Änderungen erscheinen sofort; bei einem Speicherfehler wird der vorherige Zustand wiederhergestellt und ein Fehler angezeigt. Archivierte Sitzungen und schreibgeschützte Workbenches erlauben nur das Anzeigen.
 
 Markierte Positionen auf der Leiste sind gefüllt, in der Primärfarbe und etwas länger. Eine Gruppe ist markiert, sobald eine ihrer Nachrichten ein Lesezeichen hat. Mit **Nächstes Lesezeichen** (**Ctrl+Alt+N**) und **Vorheriges Lesezeichen** (**Ctrl+Alt+P**) springen Sie zwischen markierten Nachrichten; am ersten oder letzten Lesezeichen endet die Navigation. Ändern Sie die Tasten unter **Einstellungen → Tastenkombinationen**.
+
+Der Tab **Lesezeichen** im rechten Bereich listet die Lesezeichen dieser Unterhaltung der Reihe nach, jeweils mit dem Anfang Ihrer Nachricht und der Antwort. Schalten Sie ihn unter **Workbench bearbeiten > Oberfläche > Tabs im rechten Bereich** ein. Tippen Sie in **Lesezeichen filtern**, um Nachrichten- oder Antworttext zu finden; die Anzahl zeigt dann Treffer von der Gesamtzahl. Wählen Sie eine Zeile oder drücken Sie die Eingabetaste, um im Chat zu dieser Nachricht zu springen; die Pfeiltasten wechseln zwischen Zeilen. Markieren Sie Zeilen (oder **Alle auswählen** für die gefilterten Zeilen) und wählen Sie **Auswahl entfernen**, oder entfernen Sie eine Zeile mit ihrem Papierkorbsymbol. **Alle entfernen** entfernt nach Bestätigung alle Lesezeichen der Unterhaltung, unabhängig vom Filter. Das Entfernen eines Lesezeichens löscht nie eine Nachricht; schlägt es fehl, ändert sich nichts und ein Fehler erscheint. Archivierte Sitzungen und schreibgeschützte Workbenches erlauben nur Filtern und Springen.
 
 ## Shell-Befehle
 

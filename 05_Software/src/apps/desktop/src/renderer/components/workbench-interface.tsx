@@ -1,4 +1,4 @@
-import { rightPanelTabIds, type WorkbenchConfig } from "@vera/shared";
+import { defaultRightPanelTabs, rightPanelTabIds, type WorkbenchConfig } from "@vera/shared";
 import type { Dispatch, SetStateAction } from "react";
 import { useTranslation } from "react-i18next";
 import { rightPanelTabs } from "./right-panel-tabs.js";
@@ -21,7 +21,7 @@ export function WorkbenchInterface({
         onClick={() =>
           setConfig((current) => ({
             ...current,
-            interface: { ...current.interface, right_panel_tabs: [...rightPanelTabIds] },
+            interface: { ...current.interface, right_panel_tabs: [...defaultRightPanelTabs] },
           }))
         }
       >

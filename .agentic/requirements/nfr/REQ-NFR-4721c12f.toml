@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-NFR-4721c12f"
+
+title = "Calibrate the request token count from provider-reported usage"
+
+status = "active"
+
+requirement = """
+When the provider has reported input usage for an earlier normal request of the session with the same model, the context policy shall count each request as its conservative byte estimate scaled by the ratio of reported input tokens to the conservative estimate of the most recent such request whose ratio is at least 0.12, increased by 10% and never above the conservative estimate, and shall keep that ratio across application restart; without such a report it shall use the conservative estimate.
+"""
+
+verification = "Replay a session whose first request is reported at a quarter of its conservative estimate: the next request counts ceil(estimate x ratio x 1.1); a ratio above 1 is capped at the conservative estimate; a report below 0.12 of the estimate (a partial count from a prefix-caching server) leaves the earlier ratio in place; a model change or a session without reports counts the conservative estimate; after a database restart the first request counts with the saved ratio and no summary call runs."
+
+affected_paths = ["05_Software/src/libraries/core/src/agent/context.ts", "05_Software/src/libraries/core/src/agent/compaction.ts", "05_Software/src/libraries/core/src/agent/runtime.ts", "05_Software/src/libraries/core/src/agent/types.ts", "05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/libraries/core/src/sessions/masking.ts", "05_Software/src/libraries/shared/src/events.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/agent/context.test.ts", "05_Software/src/libraries/core/src/agent/runtime-calibration.test.ts", "05_Software/src/libraries/core/src/sessions/compaction-durable.test.ts", "05_Software/src/libraries/core/src/agent/prompt-usage.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-20
+updated = 2026-11-20

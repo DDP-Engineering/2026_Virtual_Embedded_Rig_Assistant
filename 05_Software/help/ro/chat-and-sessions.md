@@ -52,7 +52,7 @@ Pentru a opri o sesiune copil în curs, deschide-o și folosește **Oprește** l
 
 | Nivel | Ce afișează conversația |
 |---|---|
-| **Verbose** | Fiecare apel de instrument cu argumentele și rezultatul său, raționamentul modelului și statistici de tokenuri sub fiecare mesaj al tău |
+| **Verbose** | Fiecare apel de instrument cu argumentele și rezultatul său, raționamentul modelului și, sub fiecare mesaj al tău, data și ora trimiterii și statisticile de tokenuri |
 | **Normal** | Apelurile de rutină ale instrumentelor, grupate într-o linie extensibilă **Operații** |
 | **Minimal** | Doar conversația; apelurile de rutină ale instrumentelor sunt ascunse, iar un indicator de lucru este afișat cât timp agentul lucrează |
 
@@ -66,7 +66,7 @@ Pentru modelele care îl acceptă, **Nivel de reasoning** oferă **Implicit** ș
 
 ## Sesiuni lungi și context
 
-Indicatorul de context afișează **Context utilizat** ca procent din fereastra de context a modelului; selectează-l pentru utilizare și limite. Când o sesiune devine prea lungă pentru model, VERA rezumă istoricul mai vechi (**Se rezumă istoricul…**). Transcriptul complet rămâne salvat și vizibil.
+Indicatorul de context afișează **Context utilizat** ca procent din fereastra de context a modelului; selectează-l pentru utilizare și limite. Când o sesiune devine prea lungă pentru model, VERA rezumă istoricul mai vechi (**Se rezumă istoricul…**). Între timp indicatorul se rotește și păstrează ultimul procent, care se actualizează când următoarea cerere este pregătită. Transcriptul complet rămâne salvat și vizibil.
 
 **Caută în conversație** caută în sesiunea curentă. Banda de marcaje de la marginea stângă a conversației are câte un marcaj pentru fiecare mesaj al tău; indică un marcaj pentru a previzualiza mesajul și selectează-l pentru a sări la el.
 
@@ -87,6 +87,8 @@ Marcajele salvate ale mesajelor rămân în exporturile JSON; Markdown indică m
 Treci cu indicatorul peste un mesaj propriu sau folosește Tab pentru a ajunge la pictograma de marcaj. Alege **Marchează**; pictograma plină oferă **Elimină marcajul**. Previzualizarea de pe margine arată primul rând al mesajului și începutul răspunsului agentului, cu aceeași acțiune de marcaj. Modificarea apare imediat; dacă salvarea eșuează, starea anterioară revine și apare o eroare. În sesiunile arhivate și workbench-urile doar pentru citire poți doar consulta marcajele.
 
 Marcajele de pe margine sunt pline, în culoarea principală și puțin mai lungi. Un grup este marcat dacă oricare mesaj din el are un marcaj. Folosește **Marcajul următor** (**Ctrl+Alt+N**) sau **Marcajul anterior** (**Ctrl+Alt+P**) pentru a sări între mesaje; navigarea se oprește la primul sau ultimul marcaj. Modifică tastele în **Setări → Comenzi rapide**.
+
+Fila **Marcaje** din panoul din dreapta listează în ordine marcajele acestei conversații, fiecare cu începutul mesajului tău și al răspunsului. Activeaz-o din **Editează workbench-ul > Interfață > Filele panoului din dreapta**. Scrie în **Filtrează marcajele** ca să cauți în textul mesajului sau al răspunsului; numărul arată atunci potrivirile din total. Alege un rând sau apasă Enter ca să sari la mesaj în Chat; săgețile mută între rânduri. Bifează rânduri (sau **Selectează tot** pentru rândurile filtrate) și alege **Elimină selecția**, ori elimină un singur rând cu iconița de coș. **Șterge toate** elimină, după confirmare, toate marcajele conversației, indiferent de filtru. Eliminarea unui marcaj nu șterge niciodată mesajul; dacă eliminarea eșuează, nu se schimbă nimic și apare o eroare. Sesiunile arhivate și workbench-urile doar-citire permit doar filtrarea și saltul.
 
 ## Comenzi shell
 

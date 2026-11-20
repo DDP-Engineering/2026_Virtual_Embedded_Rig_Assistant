@@ -114,6 +114,10 @@ Für LM Studio ist ein API-Schlüssel optional.
 
 Entnehmen Sie das Kontextfenster der Dokumentation des Modells oder Ihren Servereinstellungen. Ein zu großer Wert führt zu Fehlern des Servers; ein zu kleiner lässt VERA den Verlauf früher als nötig zusammenfassen.
 
+## Langsame lokale Modelle
+
+Ein lokales Modell kann Minuten brauchen, um zu laden oder einen langen Prompt zu lesen. **Antwort-Timeout (s)** legt fest, wie lange VERA auf die erste Antwort und danach zwischen den Teilen der Antwort wartet, von 10 bis 3600 Sekunden; voreingestellt sind 300. Vom Server gestreamtes Reasoning zählt als Antwort, sodass ein Modell, das noch nachdenkt, nicht gestoppt wird.
+
 ## Bildunterstützung
 
 Im Nachrichtenfeld erscheint eine Warnung, wenn das aktuelle Modell nur die Bildpfade erhält.
@@ -147,5 +151,6 @@ Die Modellauswahl zeigt Anbieter, Kontextlimit, Eingabetypen und bekannte Inform
 | **Anbieterlimit erreicht.** | Warten Sie die angezeigte Zeit ab und versuchen Sie es dann erneut |
 | **Der Anbieter hat die Kontextgröße abgelehnt.** | Kürzen Sie die Eingabe oder korrigieren Sie **Kontextfenster (Tokens)** |
 | **… ist nicht erreichbar** | Starten Sie den lokalen Server oder prüfen Sie das Netzwerk und die **Basis-URL** |
+| **Das Modell hat nicht innerhalb von … s geantwortet.** | Erhöhen Sie **Antwort-Timeout (s)** für die Verbindung oder prüfen Sie, ob der Server läuft |
 
 Siehe auch [Fehlerbehebung](troubleshooting.md).

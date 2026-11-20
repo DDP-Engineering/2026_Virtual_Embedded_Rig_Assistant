@@ -1,0 +1,2 @@
+{"match":"(?i)read.*board","toolCalls":[{"name":"read","args":{"path":"board.txt","offset":1,"limit":2}}]}
+{"text":"The second line is a source line [[board.txt#L2-L2]]; line three is not [[board.txt#L2-L3]]."}

@@ -39,6 +39,8 @@ export interface LlmRequest {
   reasoning?: string | null;
   /** Live session output policy; connection tests omit it and always mask. */
   maskOutput?: () => boolean;
+  /** Called for every provider stream event, reasoning included, so callers can tell a working model from a silent one. */
+  onActivity?: () => void;
 }
 export type LlmEvent =
   | { type: "text"; delta: string; sourceDeltas?: number }
@@ -51,5 +53,7 @@ export interface LlmGateway {
   selectedModel(provider: string): string;
   capabilities(reference: string, output?: number): ModelCapabilities;
   models(provider: string, signal?: AbortSignal, probe?: boolean): Promise<ProviderCatalog>;
+  /** The model's own no-output limit in milliseconds; undefined uses the session default. */
+  responseTimeoutMs?(reference: string): number | undefined;
   stream(request: LlmRequest): AsyncIterable<LlmEvent>;
 }

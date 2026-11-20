@@ -60,6 +60,7 @@ export function TranscriptNavigator({
   bookmarked = () => false,
   bookmarkDisabled = () => true,
   onBookmark,
+  jump,
 }: {
   viewport: RefObject<HTMLDivElement | null>;
   content: RefObject<HTMLDivElement | null>;
@@ -72,6 +73,8 @@ export function TranscriptNavigator({
   bookmarked?: (id: string) => boolean;
   bookmarkDisabled?: (id: string) => boolean;
   onBookmark?: (id: string, value: boolean) => void;
+  /** Latest jump request from the Bookmarks tab; a new `seq` starts one jump. */
+  jump?: { id: string; seq: number } | null | undefined;
 }) {
   const { t } = useTranslation();
   const id = useId();
@@ -277,22 +280,32 @@ export function TranscriptNavigator({
     const text = t("chat.navigator.moved", { ordinal });
     setStatus((previous) => (previous === text ? `${text}${NO_BREAK_SPACE}` : text));
   };
-  const rememberDestination = useBookmarkNavigation({
+  const bookmarkNavigation = useBookmarkNavigation({
     viewport,
     messages,
     bookmarked,
     layout,
     onNavigate,
-    onArrive: (messageId, ordinal) => {
+    onArrive: (messageId, ordinal, quiet) => {
       setSelector(null);
       setPreview(null);
       setFocusId(messageId);
-      const group = groups.find((entry) => holds(entry, messageId));
-      const button = group && buttons.current.get(group.key);
-      if (button) button.focus();
-      else viewport.current?.focus();
+      if (!quiet) {
+        const group = groups.find((entry) => holds(entry, messageId));
+        const button = group && buttons.current.get(group.key);
+        if (button) button.focus();
+        else viewport.current?.focus();
+      }
       announce(ordinal);
     },
+  });
+  const rememberDestination = bookmarkNavigation.remember;
+  // A Bookmarks tab request: jump without taking focus from the tab.
+  const handledJump = useRef(jump?.seq);
+  useEffect(() => {
+    if (!jump || handledJump.current === jump.seq) return;
+    handledJump.current = jump.seq;
+    bookmarkNavigation.go(jump.id, true);
   });
   const go = (entry: Entry) => {
     if (onNavigate(entry.message.id)) {

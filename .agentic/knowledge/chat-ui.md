@@ -29,7 +29,7 @@ budgets and abort. The browser mock seeds six selectable states and an edit appr
 
 - WorkbenchNavigation coordinates session/workbench action details through one sidebar scope. Opening a trigger closes others; outside pointer/focus dismisses and Escape restores trigger focus. Archived expansion is independent. New session/shortcut opts into server-side unused-session reuse, retains the synchronous operationBusy guard, deduplicates the cache and focuses the selected composer through a consumed session-scoped request; same-session unsent drafts remain intact. Tests: workspace.test.ts, native navigation-actions.spec.ts.
 
-- Each user message shows, only at the Verbose chat detail level, a muted, wrapping statistics line (`PromptUsage`, session/prompt-usage.tsx) per user prompt: reported input/output, frozen initial normal-request context (estimated when applicable), unavailable dashes and explicitly shared batch consumption. Locale-aware formatters are memoized per language. Source is the shared user-item usage projection, not the changing global meter; strings are en/ro/de. Tests: activity-usage.test.ts, native prompt-usage.spec.ts.
+- Each user message shows, only at the Verbose chat detail level, a muted, wrapping statistics line (`PromptUsage`, session/prompt-usage.tsx) per user prompt: the send date and time to the minute (`Intl.DateTimeFormat` short date and time, a `<time>` element, omitted when the item has no valid timestamp; the line also shows for a timed prompt before usage arrives), reported input/output, frozen initial normal-request context (estimated when applicable), unavailable dashes and explicitly shared batch consumption. Locale-aware formatters are memoized per language. Source is the shared user-item usage and timestamp projection, not the changing global meter; strings are en/ro/de/fr. Tests: activity-usage.test.ts, transcript-detail.test.ts, native prompt-usage.spec.ts.
 
 - PermissionPicker offers read-only, Ask, Auto-edit and marked Bypass. Each Bypass change first opens one localized confirmation naming read/change/run in any OS-accessible folder. Confirm saves the mode; Cancel/Escape keeps the prior mode and restores focus. Save errors retain the dialog for retry/cancel and pending saves prevent duplicates. Bypass remains red/bold, and its enabled ordinary file tools can use outside paths; application data is excluded. Other mode changes remain available during active turns, with core revocation on downgrade.
 
@@ -109,6 +109,8 @@ budgets and abort. The browser mock seeds six selectable states and an edit appr
   active Stop uses the real session.stop channel and leaves a usable composer at completion.
 - Markdown skips HTML and renders links/images inert; verified message citations alone enable chips.
 - Tool disclosures expose full arguments and preview/update/summary; errors and estimates are labelled.
+- `ErrorRow` passes the stored error item's optional `params` to `ErrorMessage`, so `provider.timeout`
+  names the limit ("The model did not respond within N s.") in en/ro/de/fr (REQ-FUNC-25254fe8).
 - `Disclosure` mounts its content only while open (transcript, groups and reasoning); its empty
   hidden container keeps `aria-controls` resolvable. Collapsed content is not in the DOM, so find-in-page
   and copy-all skip it.

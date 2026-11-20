@@ -9,17 +9,19 @@ schema = 1
 
 id = "REQ-FUNC-e5b6a1c9"
 
-title = "Bounded completed-exchange compaction"
+title = "Bounded whole-history compaction with a verbatim recent tail"
 
 status = "active"
 
-requirement = "Above 80% of the input budget, the runtime shall attempt at most five model summaries per normal request, each covering the previous summary and the next budget-fitting whole completed historical exchanges, until the derived view fits, preserving decisions, outstanding work, exact source refs and current instructions in that view while retaining the full durable transcript; all requests use current context/output limits and safety margin, and unavailable or failed summaries fall back to M1 reduction and explicit context-limit semantics."
+requirement = """
+Above 80% of the input budget, the runtime shall summarize the history before the current user instruction from the earliest unsummarized message up to a cut index where every earlier tool call has its result and the message at the index is not a tool result, including turns split by queued steering, aborted turns and limit turns, keeping verbatim the most recent history of min(20,000 tokens, 20% of the input budget) counted like the request while the unreduced view fits the budget, with at most five summary passes per request, each covering the previous summary and the next history that fits, continuing while the view does not fit or remains above the trigger, preserving decisions, outstanding work, exact source refs and current instructions in the derived view while retaining the full durable transcript; all requests use current context/output limits and safety margin, and unavailable or failed summaries fall back to M1 reduction and explicit context-limit semantics.
+"""
 
-verification = "Replay multiple completed turns in a small window and inspect every normal/summary request budget, preserved decisions/refs/current input and full transcript; first-turn, oversized input, smaller model, invalid/failed summary and abort verify the M1 outcomes; a fresh compactor over five long exchanges needs four passes, includes the earlier summary in later passes and then fits; thirty exchanges stop after five passes; a session restarted after compaction continues (sessions/service.test)."
+verification = "Replay many turns in a small window, including a turn split by a delivered queued message, an aborted turn and a limit turn: the passes summarize them, never separate a tool call from its result and leave the view at or below the trigger; in a 200,000-token window with an exact counter the verbatim tail holds 20,000 tokens, within per-message framing, and less than one more exchange; inspect every summary/normal request budget, preserved decisions/refs/current input and the unchanged full transcript; first-turn, oversized input, smaller model, invalid/failed summary and abort keep the M1 outcomes; thirty long exchanges stop after five passes."
 
-affected_paths = ["05_Software/src/libraries/core/src/agent/compaction.ts", "05_Software/src/libraries/core/src/agent/context.ts", "05_Software/src/libraries/core/src/agent/runtime.ts", "05_Software/src/libraries/core/src/agent/types.ts", "05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/libraries/core/src/agent/compaction.test.ts", "05_Software/src/libraries/core/src/sessions/service.test.ts"]
+affected_paths = ["05_Software/src/libraries/core/src/agent/compaction.ts", "05_Software/src/libraries/core/src/agent/context.ts", "05_Software/src/libraries/core/src/agent/runtime.ts", "05_Software/src/libraries/core/src/agent/types.ts", "05_Software/src/libraries/core/src/sessions/service.ts"]
 
-linked_tests = ["05_Software/src/libraries/core/src/agent/compaction.test.ts", "05_Software/src/libraries/core/src/sessions/service.test.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/agent/compaction.test.ts", "05_Software/src/libraries/core/src/sessions/service.test.ts", "05_Software/src/libraries/core/src/sessions/compaction-durable.test.ts"]
 
 
 spec = "specs/REQ-FUNC-e5b6a1c9.md"
@@ -28,4 +30,4 @@ priority = "normal"   # low | normal | high
 rationale = ""        # why this behavior exists, if not obvious
 
 created = 2026-10-13
-updated = 2026-11-01
+updated = 2026-11-20

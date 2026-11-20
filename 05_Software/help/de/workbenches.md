@@ -53,7 +53,7 @@ Workbench- und Benutzer-Skills bieten **Anweisungen bearbeiten**. Offizielle und
 
 ## Tabs im rechten Bereich
 
-Öffnen Sie **Workbench bearbeiten > Oberfläche > Tabs im rechten Bereich**. Wählen Sie die sichtbaren Tabs: Anweisungen und Skills, Dateien, Änderungen, Artefakte, Plan, Läufe und Terminal. Standardmäßig sind alle ausgewählt. **Standard wiederherstellen** wählt alle im Entwurf aus; **Speichern** übernimmt den Entwurf, **Abbrechen** verwirft ihn.
+Öffnen Sie **Workbench bearbeiten > Oberfläche > Tabs im rechten Bereich**. Wählen Sie die sichtbaren Tabs: Anweisungen und Skills, Dateien, Änderungen, Artefakte, Plan, Lesezeichen, Läufe und Terminal. Standardmäßig sind alle außer **Lesezeichen** ausgewählt; diesen Tab schalten Sie selbst ein. **Standard wiederherstellen** wählt im Entwurf alle außer Lesezeichen aus; **Speichern** übernimmt den Entwurf, **Abbrechen** verwirft ihn.
 
 Speichern aktualisiert sofort alle Sitzungen dieses Workbenchs, auch nach erneutem Öffnen oder einem Neustart von VERA. Andere Workbenches behalten ihre eigene Auswahl. Wird der aktive Tab ausgeblendet, wird der erste verbleibende Tab in der üblichen Reihenfolge ausgewählt. Sind alle ausgeblendet, schließt sich der rechte Bereich und die übliche Öffnen-Schaltfläche entfällt. **Tabs im rechten Bereich** bleibt auf der Hauptseite erreichbar; der Editor ist auch über Übersicht und Seitenleistenmenü zugänglich.
 

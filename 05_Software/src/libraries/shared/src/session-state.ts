@@ -75,6 +75,7 @@ export const sessionStateSchema = z.strictObject({
         id: z.string(),
         code: z.string(),
         messageKey: z.string(),
+        params: z.record(z.string(), z.union([z.string(), z.number().finite()])).optional(),
         retryable: z.boolean(),
         retryAfter: providerRetryAfterSchema.optional(),
       }),
@@ -245,6 +246,46 @@ function replyOwners(d: Draft): string[] {
   return id === null ? [] : [id];
 }
 
+type Usage = SessionState["usage"];
+
+/**
+ * A new turn restarts its consumption counters, owners and compaction status, but keeps the latest
+ * request's context figures: they describe the conversation until the turn prepares its own request.
+ */
+function nextTurnUsage(usage: Usage): Usage {
+  const {
+    inputTokens: _input,
+    outputTokens: _output,
+    promptIds: _owners,
+    compactionStatus: _status,
+    ...context
+  } = usage;
+  return { inputTokens: 0, outputTokens: 0, ...context };
+}
+
+/** A turn that stops while the historical summary runs leaves no running status behind. */
+function settledUsage(usage: Usage): Usage {
+  if (usage.compactionStatus !== "running") return usage;
+  const { compactionStatus: _, ...rest } = usage;
+  return rest;
+}
+
+/**
+ * The historical summary is a separate request, not the chat request: while it runs only consumption
+ * and the status change, and the context figures stay those of the last chat request until the next.
+ */
+function foldUsage(usage: Usage, event: z.infer<typeof usageEventSchema>): Usage {
+  if (event.compactionStatus === "running")
+    return {
+      ...usage,
+      inputTokens: event.inputTokens,
+      outputTokens: event.outputTokens,
+      compactionStatus: "running",
+    };
+  const { type: _, ...u } = event;
+  return { ...usage, ...u };
+}
+
 /** The single event switch shared by the fold and the live update. It never writes to `event`. */
 function reduce(d: Draft, event: SessionEvent): void {
   const s = d.s;
@@ -260,13 +301,14 @@ function reduce(d: Draft, event: SessionEvent): void {
       break;
     case "turn.started":
       s.activeTurnId = event.turnId;
-      s.usage = { inputTokens: 0, outputTokens: 0 };
+      s.usage = nextTurnUsage(s.usage);
       s.status = "running";
       d.list("turns").push({ turnId: event.turnId, steps: 0, stopReason: null });
       break;
     case "turn.done": {
       s.activeTurnId = null;
       s.status = event.stopReason === "error" ? "error" : "idle";
+      s.usage = settledUsage(s.usage);
       for (let i = 0; i < s.turns.length; i++)
         if (s.turns[i]?.turnId === event.turnId) d.at("turns", i).stopReason = event.stopReason;
       // Unfinalized live text is dropped; every remaining assistant item is therefore finalized.
@@ -288,7 +330,11 @@ function reduce(d: Draft, event: SessionEvent): void {
           id: event.messageId,
           text: event.text,
           ...(event.images && { images: event.images }),
+          ...(event.timestamp !== undefined && { timestamp: event.timestamp }),
         });
+      break;
+    case "context.compacted":
+      // Agent-side derived context; the transcript projection has nothing to show.
       break;
     case "message.bookmarked": {
       if (d.find(event.messageId, "user") < 0) break;
@@ -429,8 +475,7 @@ function reduce(d: Draft, event: SessionEvent): void {
         if (owners.size > 1) usage.shared = true;
         user.usage = usage;
       }
-      const { type: _, ...u } = event;
-      s.usage = { ...s.usage, ...u };
+      s.usage = foldUsage(s.usage, event);
       break;
     }
     case "error": {

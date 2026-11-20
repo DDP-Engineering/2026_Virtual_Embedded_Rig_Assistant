@@ -172,17 +172,17 @@ entries:
   - category: improved
     topic: { en: Sessions, ro: Sesiuni, de: Sitzungen, fr: Sessions }
     text:
-      en: Find bookmarks on the rail, navigate with editable shortcuts and keep them in session exports.
-      ro: Găsește marcaje pe margine, navighează cu taste configurabile și păstrează-le în exporturi.
-      de: Lesezeichen auf der Leiste finden, mit anpassbaren Kürzeln ansteuern und in Exporten behalten.
-      fr: Repérez les signets sur la barre, utilisez des raccourcis modifiables et gardez-les à l’export.
+      en: "Bookmark keys/export, send times, saved summaries, paged Changes, split diff and one chat status."
+      ro: "Taste/export marcaje, ora trimiterii, rezumate salvate, Modificări paginate, diff separat, o stare."
+      de: "Lesezeichentasten, Export, Sendezeit, Kurzfassungen, Änderungsseiten, geteilte Diff-Ansicht, Status."
+      fr: "Raccourcis/export signets, heure d’envoi, résumés, modifs paginées, diff séparé, un état de chat."
   - category: improved
     topic: { en: Permissions, ro: Permisiuni, de: Berechtigungen, fr: Autorisations }
     text:
-      en: Confirm each Bypass. External programs/analysis inputs. Exit stops runs. File tools block VERA data.
-      ro: Confirmă orice Bypass. Programe/intrări ext. Ieșirea oprește rulări. Unelte fișiere fără date VERA.
-      de: Bypass immer bestätigen. Programme/Eingaben ext. Ausstieg stoppt Läufe. Dateitools ohne VERA-Daten.
-      fr: Tout Contournement à valider. Tâches/entrées ext. Sortir arrête. Outils fichiers sans données VERA.
+      en: "Confirm Bypass: external tools and inputs; exit stops runs. File tools still block VERA data."
+      ro: "Confirmă Bypass: programe și intrări externe; ieșirea oprește rulările. Datele VERA rămân blocate."
+      de: "Bypass bestätigen: externe Tools und Eingaben; Ende stoppt Läufe. VERA-Daten bleiben gesperrt."
+      fr: "Confirmez le contournement : accès externe ; quitter arrête les tâches. Données VERA bloquées."
   - category: new
     topic: { en: Commands, ro: Comenzi, de: Befehle, fr: Commandes }
     text:

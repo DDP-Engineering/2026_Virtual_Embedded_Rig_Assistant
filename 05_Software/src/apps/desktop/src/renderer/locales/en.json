@@ -197,6 +197,7 @@
     "changes": "Changes",
     "artifacts": "Artifacts",
     "plan": "Plan",
+    "bookmarks": "Bookmarks",
     "placeholder": "Panel content will be available here.",
     "runs": "Runs",
     "terminal": "Terminal"
@@ -255,6 +256,7 @@
     "acceptsImages": "Accepts images",
     "contextWindow": "Context window (tokens)",
     "maxOutput": "Maximum output (tokens)",
+    "responseTimeout": "Response timeout (s)",
     "endpointKey": "Endpoint API key",
     "optionalKey": "Optional. Leave empty to keep the saved key; a new key replaces it.",
     "clearKey": "Remove the saved key",
@@ -313,7 +315,8 @@
     "rateLimit": "Provider rate limit.",
     "rateLimitWithRetry": "Provider rate limit. Retry after: {{retryAfter}}.",
     "context": "The provider rejected the context size. Reduce input or check the configured window.",
-    "failure": "Provider error: {{message}}"
+    "failure": "Provider error: {{message}}",
+    "timeout": "The model did not respond within {{seconds}} s."
   },
   "chatDetail": {
     "label": "Detail level",
@@ -508,7 +511,8 @@
   "changes": {
     "empty": "No changes in this session.",
     "history": "Change history",
-    "reveal": "Reveal in folder"
+    "reveal": "Reveal in folder",
+    "resize": "Resize the file list and the diff"
   },
   "artifacts": {
     "empty": "No artifacts in this session.",
@@ -1561,5 +1565,20 @@
     "warning": "Stored secrets found in files or tool output can be sent to the model provider when Agent and model masking is off.",
     "confirm": "Turn off masking",
     "loading": "Loading privacy settings…"
+  },
+  "bookmarks": {
+    "filter": "Filter bookmarks",
+    "count": "Bookmarks: {{count}}",
+    "countFiltered": "Bookmarks: {{shown}} of {{total}}",
+    "empty": "No bookmarks in this conversation.",
+    "noMatches": "No bookmarks match the filter.",
+    "selectAll": "Select all",
+    "deselectAll": "Deselect all",
+    "removeSelected": "Remove selected",
+    "clearAll": "Clear all",
+    "clearConfirm": "Remove every bookmark from this conversation ({{count}})? The messages stay.",
+    "open": "Go to message {{ordinal}}: {{text}}",
+    "select": "Select message {{ordinal}}",
+    "remove": "Remove bookmark from message {{ordinal}}"
   }
 }

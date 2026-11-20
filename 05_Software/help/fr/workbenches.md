@@ -53,7 +53,7 @@ Les compétences du banc et de l’utilisateur proposent **Modifier les instruct
 
 ## Onglets du panneau droit
 
-Ouvrez **Modifier le banc > Interface > Onglets du panneau droit**. Sélectionnez les onglets visibles : Instructions et compétences, Fichiers, Modifications, Artefacts, Plan, Exécutions et Terminal. Tous sont sélectionnés par défaut. **Rétablir les valeurs par défaut** les sélectionne dans le brouillon ; **Enregistrer** applique le choix et **Annuler** l’abandonne.
+Ouvrez **Modifier le banc > Interface > Onglets du panneau droit**. Sélectionnez les onglets visibles : Instructions et compétences, Fichiers, Modifications, Artefacts, Plan, Signets, Exécutions et Terminal. Tous sont sélectionnés par défaut sauf **Signets**, que vous activez vous-même. **Rétablir les valeurs par défaut** les sélectionne tous sauf Signets dans le brouillon ; **Enregistrer** applique le choix et **Annuler** l’abandonne.
 
 L’enregistrement actualise immédiatement toutes les sessions de ce banc, même après réouverture ou redémarrage de VERA. Les autres bancs conservent leur propre sélection. Masquer l’onglet actif sélectionne le premier onglet restant dans l’ordre habituel. Tous les masquer ferme le panneau et supprime son bouton d’ouverture habituel. **Onglets du panneau droit** reste accessible sur la page principale ; l’éditeur reste disponible depuis la vue d’ensemble et le menu latéral.
 

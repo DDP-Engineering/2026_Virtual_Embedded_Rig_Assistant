@@ -1,4 +1,4 @@
-import { type RightPanelTab, rightPanelTabIds } from "@vera/shared";
+import { defaultRightPanelTabs, type RightPanelTab } from "@vera/shared";
 import {
   Activity,
   ArrowLeft,
@@ -53,11 +53,12 @@ export function Shell({
   changes,
   artifacts,
   plan,
+  bookmarks,
   docs,
   runs,
   terminal,
   workbenchId,
-  visibleTabs = rightPanelTabIds,
+  visibleTabs = defaultRightPanelTabs,
   configurePanelTabs,
 }: {
   workbenchId?: string | undefined;
@@ -77,6 +78,7 @@ export function Shell({
   changes?: ReactNode;
   artifacts?: ReactNode;
   plan?: ReactNode;
+  bookmarks?: ReactNode;
   docs?: ReactNode;
   runs?: ReactNode;
   terminal?: ReactNode;
@@ -569,9 +571,11 @@ export function Shell({
                           ? artifacts
                           : id === "plan"
                             ? plan
-                            : id === "runs"
-                              ? runs
-                              : terminal) ?? <p className="muted">{t("panel.placeholder")}</p>)}
+                            : id === "bookmarks"
+                              ? bookmarks
+                              : id === "runs"
+                                ? runs
+                                : terminal) ?? <p className="muted">{t("panel.placeholder")}</p>)}
               </div>
             ))}
           </aside>

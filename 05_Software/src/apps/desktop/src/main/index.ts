@@ -1312,6 +1312,14 @@ ipcMain.handle(
           s.bookmark(sessionId, messageId, bookmarked);
           return {};
         }, false),
+      "session.bookmarks.remove": (request) =>
+        sessions.run((s) => {
+          s.removeBookmarks(
+            request.sessionId,
+            "all" in request ? { all: true } : { messageIds: request.messageIds },
+          );
+          return {};
+        }, false),
       "session.rename": ({ sessionId, title }) =>
         sessions.run((s) => {
           if (credentials.containsSecret(title)) throw { code: "INVALID", messageKey: "errors.INVALID" };
@@ -1872,6 +1880,7 @@ if (!firstInstance) {
             select(splitModelReference(ref).provider).prepareModel?.(ref, signal) ?? Promise.resolve(),
           selectedModel: (id) => select(id).selectedModel(id),
           capabilities: (ref, output) => select(splitModelReference(ref).provider).capabilities(ref, output),
+          responseTimeoutMs: (ref) => select(splitModelReference(ref).provider).responseTimeoutMs?.(ref),
           models: (id, signal, probe) => select(id).models(id, signal, probe),
           stream: (request) => select(splitModelReference(request.model).provider).stream(request),
         };

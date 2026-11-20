@@ -32,6 +32,7 @@ export function LmStudioEditor({
   const [selected, setSelected] = useState(initial?.model ?? "");
   const [imageModels, setImageModels] = useState(initial?.imageModels ?? []);
   const [baseUrl, setBaseUrl] = useState(initial?.baseUrl ?? "");
+  const [waitSeconds, setWaitSeconds] = useState(String(initial?.responseTimeoutSeconds ?? 300));
   const [testing, setTesting] = useState(false);
   const [error, setError] = useState<unknown>();
   const generation = useRef(0);
@@ -126,6 +127,7 @@ export function LmStudioEditor({
               model: selected,
               contextWindow: current.contextWindow,
               maxOutputTokens: current.maxOutputTokens,
+              responseTimeoutSeconds: Number(waitSeconds),
               protocol: "lmstudio",
               models,
               imageModels,
@@ -201,6 +203,17 @@ export function LmStudioEditor({
               required
               maxLength={80}
               onChange={(event) => setName(event.target.value)}
+            />
+            <label htmlFor={`${prefix}-timeout`}>{t("providers.responseTimeout")}</label>
+            <input
+              id={`${prefix}-timeout`}
+              type="number"
+              min={10}
+              max={3600}
+              step={1}
+              value={waitSeconds}
+              onChange={(event) => setWaitSeconds(event.target.value)}
+              required
             />
             <label htmlFor={`${prefix}-model`}>{t("providers.model")}</label>
             <select

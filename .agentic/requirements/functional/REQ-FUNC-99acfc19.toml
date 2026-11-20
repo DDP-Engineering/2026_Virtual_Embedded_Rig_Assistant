@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-99acfc19"
+
+title = "Compact in the background after a turn"
+
+status = "active"
+
+requirement = """
+When a turn ends with the next request view above the compaction trigger, VERA shall run the compaction in the background before the next message, and a message sent while it runs shall wait for that compaction and then start without another summary call; stopping the session or closing the workbench shall abort the background compaction.
+"""
+
+verification = "Replay a turn that ends above the trigger: a summary call starts after turn.done with a running compaction status; a send during it is admitted at once and its normal request starts only after the summary finished, with no second summary call; a send after it makes no summary call; stop and workbench close abort the background summary and leave no record; a turn ending below the trigger starts no summary."
+
+affected_paths = ["05_Software/src/libraries/core/src/agent/runtime.ts", "05_Software/src/libraries/core/src/agent/compaction.ts", "05_Software/src/libraries/core/src/agent/types.ts", "05_Software/src/libraries/core/src/sessions/service.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/sessions/compaction-durable.test.ts", "05_Software/src/libraries/core/src/sessions/service.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-20
+updated = 2026-11-20

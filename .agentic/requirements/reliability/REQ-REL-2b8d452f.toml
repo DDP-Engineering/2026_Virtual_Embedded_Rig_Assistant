@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-2b8d452f"
+
+title = "Keep the Bookmarks tab, message controls and rail on one bookmark state"
+
+status = "active"
+
+requirement = """
+While a session is open, the desktop app shall derive the Bookmarks tab, message bookmark buttons and rail markers from one shared bookmark state, so a change made in any of them shows in all without a second store.
+"""
+
+verification = "Mock e2e: removing a row in the Bookmarks tab clears that message's bookmark button, and bookmarking another message from its button adds a row to the open tab. Renderer test: the tab and a second reader of the provider see the same pending removal and the same restore."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/session/use-bookmarks.ts", "05_Software/src/apps/desktop/src/renderer/components/session/transcript.tsx", "05_Software/src/apps/desktop/src/renderer/App.tsx", "05_Software/src/apps/desktop/src/renderer/components/session/session-bookmarks.tsx", "05_Software/tests/e2e/bookmarks-tab.spec.ts"]
+
+linked_tests = ["05_Software/tests/e2e/bookmarks-tab.spec.ts", "05_Software/src/apps/desktop/src/renderer/components/session/bookmarks-tab.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-20
+updated = 2026-11-20

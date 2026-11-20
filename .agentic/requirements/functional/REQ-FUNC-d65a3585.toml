@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-d65a3585"
+
+title = "Clear every bookmark of the session after confirmation"
+
+status = "active"
+
+requirement = """
+When the engineer confirms Clear all in the Bookmarks tab, the desktop app shall remove every bookmark of the current session in one request, whatever the filter shows, and shall remove none when the confirmation is cancelled.
+"""
+
+verification = "Renderer test: with a filter showing one of three rows, Clear all opens a confirmation; Cancel keeps all three, Confirm sends one request that removes all three. Core test: clearing all removes every bookmark and no message."
+
+affected_paths = ["05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/apps/desktop/src/renderer/components/session/bookmarks-tab.tsx", "05_Software/src/libraries/core/src/sessions/bookmarks.test.ts", "05_Software/src/apps/desktop/src/renderer/components/session/bookmarks-tab.test.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/sessions/bookmarks.test.ts", "05_Software/src/apps/desktop/src/renderer/components/session/bookmarks-tab.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-20
+updated = 2026-11-20

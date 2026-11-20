@@ -1,0 +1,15 @@
+schema = 1
+id = "REQ-REL-25ceaa1d"
+title = "Count reasoning deltas as model output"
+status = "active"
+requirement = """
+While a model request streams only reasoning, the session engine shall count each reasoning delta as model output for the no-model-output timeout.
+"""
+verification = "Timed gateway test with an injected short limit: a stream that reports activity at intervals shorter than the limit, for longer than the limit, completes with its done event; the same stream without activity reports ends with the timeout error. Gateway test: three streamed reasoning deltas add at least three activity reports over the same answer without them."
+affected_paths = ["05_Software/src/libraries/core/src/llm/gateway.ts", "05_Software/src/libraries/core/src/llm/providers.ts", "05_Software/src/libraries/core/src/sessions/timed-gateway.ts", "05_Software/src/libraries/core/src/sessions/timed-gateway.test.ts", "05_Software/src/libraries/core/src/llm/gateway.test.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/sessions/timed-gateway.test.ts", "05_Software/src/libraries/core/src/llm/gateway.test.ts"]
+spec = ""
+priority = "normal"
+rationale = "Local models can load and process a long prompt for minutes before they respond."
+created = 2026-11-20
+updated = 2026-11-20

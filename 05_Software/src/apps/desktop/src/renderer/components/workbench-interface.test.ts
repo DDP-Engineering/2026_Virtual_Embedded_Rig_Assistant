@@ -1,7 +1,13 @@
 // @vitest-environment jsdom
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import userEvent from "@testing-library/user-event";
-import { mergeWorkbench, rightPanelTabIds, workbenchPatchSchema, workbenchSchema } from "@vera/shared";
+import {
+  defaultRightPanelTabs,
+  mergeWorkbench,
+  rightPanelTabIds,
+  workbenchPatchSchema,
+  workbenchSchema,
+} from "@vera/shared";
 import { act, createElement } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, expect, it, vi } from "vitest";
@@ -70,29 +76,32 @@ it.each(["en", "ro", "de", "fr"])(
       saved = vi.fn();
     await mount(createElement(WorkbenchEditor, { workbench: wb, saved, close: vi.fn() }));
     await click('[data-project-section="interface"]');
-    expect(checked()).toEqual(rightPanelTabIds);
+    // REQ-UX-effec625: Bookmarks is offered after Plan, unchecked by default.
+    expect(checked()).toEqual(defaultRightPanelTabs);
     for (const id of rightPanelTabIds) {
       const input = container.querySelector<HTMLInputElement>(`[data-panel-tab-toggle="${id}"]`);
       expect(input?.closest("label")?.textContent).toContain(i18n.t(`panel.${id}`));
       await click(`[data-panel-tab-toggle="${id}"]`);
     }
-    expect(checked()).toEqual([]);
+    expect(checked()).toEqual(["bookmarks"]);
     expect(updates()).toHaveLength(0);
     await click("[data-restore-panel-tabs]");
-    expect(checked()).toEqual(rightPanelTabIds);
+    expect(checked()).toEqual(defaultRightPanelTabs);
     expect(updates()).toHaveLength(0);
     expect(container.querySelector<HTMLButtonElement>("[data-project-save]")?.disabled).toBe(true);
     await click('[data-panel-tab-toggle="terminal"]');
     await click('[data-panel-tab-toggle="context"]');
+    await click('[data-panel-tab-toggle="bookmarks"]');
     await click("[data-project-save]");
     expect(saved.mock.calls[0]?.[0].config.interface.right_panel_tabs).toEqual([
       "docs",
       "changes",
       "artifacts",
       "plan",
+      "bookmarks",
       "runs",
     ]);
-    expect(wb.config.interface.right_panel_tabs).toEqual(rightPanelTabIds);
+    expect(wb.config.interface.right_panel_tabs).toEqual(defaultRightPanelTabs);
   },
 );
 
@@ -130,6 +139,6 @@ it("includes visibility in a new workbench configuration", async () => {
   await click('[data-action="create-workbench"]');
   const request = vi.mocked(api.invoke).mock.calls.find(([channel]) => channel === "workbench.create")?.[1];
   expect(request).toMatchObject({
-    config: { interface: { right_panel_tabs: rightPanelTabIds.filter((id) => id !== "terminal") } },
+    config: { interface: { right_panel_tabs: defaultRightPanelTabs.filter((id) => id !== "terminal") } },
   });
 });

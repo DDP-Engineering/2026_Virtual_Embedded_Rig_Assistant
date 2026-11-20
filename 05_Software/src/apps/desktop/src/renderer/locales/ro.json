@@ -197,6 +197,7 @@
     "changes": "Modificări",
     "artifacts": "Artefacte",
     "plan": "Plan",
+    "bookmarks": "Marcaje",
     "placeholder": "Conținutul panoului va fi disponibil aici.",
     "runs": "Rulări",
     "terminal": "Terminal"
@@ -255,6 +256,7 @@
     "acceptsImages": "Acceptă imagini",
     "contextWindow": "Fereastră de context (tokenuri)",
     "maxOutput": "Ieșire maximă (tokenuri)",
+    "responseTimeout": "Timp de așteptare a răspunsului (s)",
     "endpointKey": "Cheia API a endpoint-ului",
     "optionalKey": "Opțional. Lasă gol pentru a păstra cheia salvată; o cheie nouă o înlocuiește.",
     "clearKey": "Elimină cheia salvată",
@@ -313,7 +315,8 @@
     "rateLimit": "Limita de cereri a furnizorului a fost atinsă.",
     "rateLimitWithRetry": "Limita de cereri a furnizorului a fost atinsă. Reîncearcă după: {{retryAfter}}.",
     "context": "Furnizorul a respins dimensiunea contextului. Redu intrarea sau verifică fereastra configurată.",
-    "failure": "Eroare furnizor: {{message}}"
+    "failure": "Eroare furnizor: {{message}}",
+    "timeout": "Modelul nu a răspuns în {{seconds}} s."
   },
   "chatDetail": {
     "label": "Nivel de detaliu",
@@ -508,7 +511,8 @@
   "changes": {
     "empty": "Nu există modificări în această sesiune.",
     "history": "Istoricul modificărilor",
-    "reveal": "Arată în folder"
+    "reveal": "Arată în folder",
+    "resize": "Redimensionează lista de fișiere și diferențele"
   },
   "artifacts": {
     "empty": "Nu există artefacte în această sesiune.",
@@ -1561,5 +1565,20 @@
     "warning": "Secretele stocate găsite în fișiere sau în rezultatele instrumentelor pot fi trimise furnizorului modelului când mascarea pentru agent și model este dezactivată.",
     "confirm": "Dezactivează mascarea",
     "loading": "Se încarcă setările de confidențialitate…"
+  },
+  "bookmarks": {
+    "filter": "Filtrează marcajele",
+    "count": "Marcaje: {{count}}",
+    "countFiltered": "Marcaje: {{shown}} din {{total}}",
+    "empty": "Nu există marcaje în această conversație.",
+    "noMatches": "Niciun marcaj nu se potrivește filtrului.",
+    "selectAll": "Selectează tot",
+    "deselectAll": "Deselectează tot",
+    "removeSelected": "Elimină selecția",
+    "clearAll": "Șterge toate",
+    "clearConfirm": "Elimini toate marcajele din această conversație ({{count}})? Mesajele rămân.",
+    "open": "Mergi la mesajul {{ordinal}}: {{text}}",
+    "select": "Selectează mesajul {{ordinal}}",
+    "remove": "Elimină marcajul de la mesajul {{ordinal}}"
   }
 }

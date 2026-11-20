@@ -24,13 +24,13 @@ import { ExternalSourceScope } from "./external-source-link.js";
 import { Markdown } from "./markdown.js";
 import { CopyAction } from "./message-actions.js";
 import { PromptUsage } from "./prompt-usage.js";
+import { useBookmarkJump, useSessionBookmarks } from "./session-bookmarks.js";
 import { ToolDetails } from "./tool-details.js";
 import { TranscriptImages } from "./transcript-images.js";
 import { contentOffset, scrollTarget } from "./transcript-navigation.js";
 import { type NavigatorMessage, TranscriptNavigator } from "./transcript-navigator.js";
 import { searchMatch, streamingBlocks, type ToolItem, transcriptRows } from "./transcript-projection.js";
 import { TranscriptScroll } from "./transcript-scroll.js";
-import { useBookmarks } from "./use-bookmarks.js";
 
 /** PERF-07: rows of the first commit, newest first; older rows are prepended in idle chunks. */
 const INITIAL_ROWS = 40;
@@ -68,7 +68,8 @@ export function Transcript({
   disabled?: boolean;
 }) {
   const { t } = useTranslation();
-  const bookmarks = useBookmarks(sessionId, state.bookmarkedMessageIds, disabled || !sessionId);
+  const bookmarks = useSessionBookmarks(sessionId, state.bookmarkedMessageIds, disabled || !sessionId);
+  const { jump } = useBookmarkJump(sessionId);
   const scroll = useRef<HTMLDivElement>(null);
   const content = useRef<HTMLDivElement>(null);
   const transcriptId = useId();
@@ -200,6 +201,7 @@ export function Transcript({
           bookmarked={bookmarks.has}
           bookmarkDisabled={(id) => disabled || !sessionId || bookmarks.busy(id)}
           onBookmark={bookmarks.toggle}
+          jump={jump}
         />
         <div
           className="transcript"
@@ -288,11 +290,6 @@ export function Transcript({
             {stopped && (
               <p className="muted" data-chat-stopped role="status">
                 {t("chatDetail.stopped")}
-              </p>
-            )}
-            {detail === "minimal" && state.activeTurnId && state.status === "running" && (
-              <p className="muted" data-chat-working role="status">
-                {t("chat.working")}
               </p>
             )}
           </div>
@@ -385,7 +382,9 @@ const MessageRow = memo(function MessageRow({
             <TranscriptImages key={workbenchId} workbenchId={workbenchId} paths={item.images} />
           )}
           {/* Per-question statistics only at the Verbose detail level. */}
-          {detail === "verbose" && item.usage && <PromptUsage usage={item.usage} />}
+          {detail === "verbose" && (item.usage || item.timestamp !== undefined) && (
+            <PromptUsage usage={item.usage} timestamp={item.timestamp} />
+          )}
         </>
       ) : (
         <ExternalSourceScope>
@@ -454,7 +453,7 @@ const ErrorRow = memo(function ErrorRow({
         error={{
           code: item.code,
           messageKey: item.messageKey,
-          ...(item.retryAfter ? { params: { retryAfter: item.retryAfter } } : {}),
+          params: { ...item.params, ...(item.retryAfter ? { retryAfter: item.retryAfter } : {}) },
         }}
       />
       {item.code === "CONTEXT_LIMIT" && <p role="alert">{t("chat.contextAdvice")}</p>}

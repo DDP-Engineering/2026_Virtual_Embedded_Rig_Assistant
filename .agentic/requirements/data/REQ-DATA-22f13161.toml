@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-DATA-22f13161"
+
+title = "Record the send time of each user prompt"
+
+status = "active"
+
+requirement = """
+When a user prompt is admitted to a session, VERA shall record its send time in milliseconds since the epoch in the durable message.user event and on the user transcript item, keeping the queue time for a queued prompt after delivery, retaining the time across session restart, and leaving the model request without the time.
+"""
+
+verification = "Replay a directly sent prompt with an injected clock and a prompt queued during a held turn: the message.user event and the folded user item carry the clock time, the delivered queued item keeps its queue time, a database restart folds the same times, and the recorded model request contains no added time; a message.user event without a time folds to a user item without a time."
+
+affected_paths = ["05_Software/src/libraries/shared/src/events.ts", "05_Software/src/libraries/shared/src/session-state.ts", "05_Software/src/libraries/core/src/agent/runtime.ts", "05_Software/src/libraries/core/src/agent/types.ts", "05_Software/src/apps/desktop/src/renderer/mocks/sessions.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/sessions/prompt-time.test.ts", "05_Software/src/libraries/shared/src/session-state.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-20
+updated = 2026-11-20

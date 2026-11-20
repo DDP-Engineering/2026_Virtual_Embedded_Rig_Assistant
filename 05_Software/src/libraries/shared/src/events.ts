@@ -108,6 +108,10 @@ export const usageEventSchema = z.strictObject({
   estimated: z.boolean().optional(),
   compactionStatus: z.enum(["none", "running", "completed", "unavailable", "failed"]).optional(),
   requestViewTokens: count.optional(),
+  /** Reported input tokens per conservatively estimated token of the request just answered. */
+  calibration: z
+    .strictObject({ modelRef: z.string().min(1), ratio: z.number().positive().max(1) })
+    .optional(),
 });
 export const sessionEventSchema = z.discriminatedUnion("type", [
   z.strictObject({
@@ -126,6 +130,17 @@ export const sessionEventSchema = z.discriminatedUnion("type", [
     messageId: z.string(),
     text: z.string(),
     images: messageImagesSchema.optional(),
+    /** Send time in epoch milliseconds; absent on events recorded before send times existed. */
+    timestamp: count.optional(),
+  }),
+  /** A derived history summary the agent request uses instead of the covered messages; not chat content. */
+  z.strictObject({
+    type: z.literal("context.compacted"),
+    covered: count,
+    fingerprint: z.string().min(1),
+    note: z.string(),
+    refs: z.array(z.string()),
+    images: z.array(z.string()),
   }),
   z.strictObject({
     type: z.literal("message.bookmarked"),
@@ -225,6 +240,7 @@ export const sessionEventSchema = z.discriminatedUnion("type", [
     type: z.literal("error"),
     code: z.string(),
     messageKey: z.string(),
+    params: z.record(z.string(), z.union([z.string(), z.number().finite()])).optional(),
     retryable: z.boolean(),
     retryAfter: providerRetryAfterSchema.optional(),
   }),

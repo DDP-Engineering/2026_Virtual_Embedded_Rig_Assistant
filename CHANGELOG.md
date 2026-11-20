@@ -8,6 +8,7 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ### Added
 
+- Verbose chat shows the send date and time beneath user messages, alongside token usage.
 - Connect Hugging Face Inference Providers, NVIDIA NIM and Vercel AI Gateway with full model IDs.
 
 - Connect Fireworks AI, Together AI, Groq and Cerebras with catalog discovery and manual model IDs.
@@ -69,6 +70,10 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ### Changed
 
+- Changes separates the file history and diff into independently scrolling, resizable panes.
+- Changes paginates long session histories and retains the selected diff across pages.
+- Chat shows one working indicator below the composer at every detail level.
+- Long chats use calibrated token estimates and compact in the background; context summaries survive restarts.
 - Close VERA and delete .vera/vera.db, .vera/vera.db-wal and .vera/vera.db-shm from earlier builds.
 - Switch local embedding models per workbench while keyword search continues during the background rebuild.
 

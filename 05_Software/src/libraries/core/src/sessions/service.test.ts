@@ -234,6 +234,8 @@ it("keeps full durable history and restart transcript while compacting only prov
   for (let turn = 0; turn < 5; turn++) {
     service.send(session.id, `Use 3.3V; measure reset ${"u".repeat(850)}`);
     expect(await service.waitIdle(session.id)).toEqual({ stopReason: "end" });
+    // A turn ending above the trigger compacts in the background (REQ-FUNC-99acfc19).
+    await service.waitCompaction(session.id);
   }
   expect(requests.some((r) => r.system.includes("Return only JSON:"))).toBe(true);
   for (const request of requests)
@@ -418,6 +420,26 @@ it("withholds browser tools if access changes before the session gateway sends t
   expect(dispatched.flat().filter((name) => name.startsWith("browser_"))).toEqual([]);
 });
 
+// REQ-FUNC-2e1261c2
+it("validates and opens a cited line range inside the read window", async () => {
+  const { service } = await setup({ model: () => "replay/read-then-cite-range" });
+  const session = service.create();
+  service.send(session.id, "Read the board");
+  expect(await service.waitIdle(session.id)).toEqual({ stopReason: "end" });
+  const answer = service.get(session.id).snapshot.items.findLast((i) => i.kind === "assistant");
+  expect(answer).toMatchObject({
+    citations: [
+      { ref: "board.txt#L2-L2", valid: true },
+      { ref: "board.txt#L2-L3", valid: false },
+    ],
+  });
+  expect(await service.openCitation(session.id, answer?.id ?? "", "board.txt#L2-L2")).toMatchObject({
+    ref: "board.txt#L2-L2",
+  });
+  await expect(service.openCitation(session.id, answer?.id ?? "", "board.txt#L2-L3")).rejects.toMatchObject({
+    code: "NOT_FOUND",
+  });
+});
 it("read-then-answer persists two tool pairs, valid citation and same live/durable snapshot then resumes", async () => {
   const { service, handle, host } = await setup();
   const session = service.create();
@@ -877,6 +899,11 @@ it("permission port denies execution and no-output timeout terminates stalled st
   const s2 = next.service.create();
   next.service.send(s2.id, "Read");
   expect(await next.service.waitIdle(s2.id)).toEqual({ stopReason: "error" });
+  // REQ-FUNC-25254fe8: the stored error names the limit, here the injected 10 ms rounded up to 1 s.
+  const stored = next.service.get(s2.id).snapshot.items.findLast((i) => i.kind === "error");
+  expect(stored).toMatchObject({ code: "PROVIDER", messageKey: "provider.timeout" });
+  // Only the limit is kept: no reason, provider text or endpoint reaches the stored event.
+  expect(stored && "params" in stored ? stored.params : undefined).toEqual({ seconds: 1 });
 });
 it("retains large first-turn tool results while every gateway request fits a transient input view", async () => {
   const registry = new core.ToolRegistry([
@@ -904,10 +931,10 @@ it("retains large first-turn tool results while every gateway request fits a tra
     inputBudget: 3976,
     supportsTools: true,
   });
-  const requests: Omit<core.LlmRequest, "signal" | "maskOutput">[] = [];
+  const requests: Omit<core.LlmRequest, "signal" | "maskOutput" | "onActivity">[] = [];
   const original = gateway.stream.bind(gateway);
   gateway.stream = (request) => {
-    const { signal: _, maskOutput: _maskOutput, ...data } = request;
+    const { signal: _, maskOutput: _maskOutput, onActivity: _onActivity, ...data } = request;
     requests.push(structuredClone(data));
     return original(request);
   };

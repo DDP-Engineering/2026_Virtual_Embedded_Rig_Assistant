@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 // REQ-UX-18000003 REQ-REL-18000004 REQ-REL-18000006 REQ-SEC-18000005
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import userEvent from "@testing-library/user-event";
 import type { ChangeDetail, Channel, Request, SessionEvent } from "@vera/shared";
 import { act, createElement } from "react";
 import { createRoot, type Root } from "react-dom/client";
@@ -146,6 +147,11 @@ test("presents multiple ordered counts, selects diff and reveals the selected re
     "2",
   ]);
   expect(container.querySelector("[data-change='2']")?.textContent).toContain("+2 −1");
+  // Counts and time share one line under the path.
+  expect(container.querySelector("[data-change='2'] .changes-meta time")).not.toBeNull();
+  expect(container.querySelector("[data-change='2'] .changes-meta .changes-counts")?.textContent).toBe(
+    "+2 −1",
+  );
   expect(container.querySelector("pre")?.textContent).toContain("+new1");
   await act(async () => container.querySelector<HTMLButtonElement>("[data-change='2']")?.click());
   await settle();
@@ -298,4 +304,45 @@ test("shows list, detail and reveal failures with actionable retries", async () 
   await act(async () => button("Reveal in folder").click());
   await settle();
   expect(container.querySelector("[role=alert]")).toBeTruthy();
+});
+
+test("pages a long change list and keeps the selected diff below it", async () => {
+  const s = await session();
+  const rows = Array.from({ length: 12 }, (_, index) => row(index + 1, s.id, `file${index + 1}.txt`));
+  reads(rows);
+  await mountTab(s.id);
+  await settle();
+  const shown = () =>
+    [...container.querySelectorAll("[data-change]")].map((b) => b.getAttribute("data-change"));
+  expect(shown()).toEqual(["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"]);
+  expect(container.querySelector("[data-pager]")).not.toBeNull();
+  await act(async () => container.querySelector<HTMLButtonElement>("[data-pager-next]")?.click());
+  await settle();
+  expect(shown()).toEqual(["11", "12"]);
+  // The first change stays selected; its diff is shown under the list.
+  expect(container.querySelector("pre")?.textContent).toContain("+new1");
+  await act(async () => container.querySelector<HTMLButtonElement>("[data-change='12']")?.click());
+  await settle();
+  expect(container.querySelector("pre")?.textContent).toContain("+new12");
+});
+
+test("resizes the file list and the diff from the keyboard within a quarter on each side", async () => {
+  const s = await session();
+  reads([row(1, s.id, "first.txt"), row(2, s.id, "second.txt")]);
+  await mountTab(s.id);
+  await settle();
+  const splitter = container.querySelector<HTMLElement>("[data-changes-splitter]") as HTMLElement;
+  const files = () => container.querySelector<HTMLElement>(".changes-files")?.style.flexBasis;
+  expect(splitter.getAttribute("aria-label")).toBe("Resize the file list and the diff");
+  splitter.focus();
+  await act(async () => userEvent.setup().keyboard("{Home}"));
+  expect(splitter.getAttribute("aria-valuenow")).toBe("25");
+  expect(files()).toBe("25%");
+  await act(async () => userEvent.setup().keyboard("{ArrowUp}"));
+  expect(splitter.getAttribute("aria-valuenow")).toBe("25");
+  await act(async () => userEvent.setup().keyboard("{ArrowDown}"));
+  expect(files()).toBe("30%");
+  await act(async () => userEvent.setup().keyboard("{End}{ArrowDown}"));
+  expect(splitter.getAttribute("aria-valuenow")).toBe("75");
+  expect(files()).toBe("75%");
 });

@@ -197,6 +197,7 @@
     "changes": "Änderungen",
     "artifacts": "Artefakte",
     "plan": "Plan",
+    "bookmarks": "Lesezeichen",
     "placeholder": "Der Inhalt dieses Bereichs wird hier verfügbar sein.",
     "runs": "Läufe",
     "terminal": "Terminal"
@@ -255,6 +256,7 @@
     "acceptsImages": "Akzeptiert Bilder",
     "contextWindow": "Kontextfenster (Tokens)",
     "maxOutput": "Maximale Ausgabe (Tokens)",
+    "responseTimeout": "Antwort-Timeout (s)",
     "endpointKey": "API-Schlüssel des Endpunkts",
     "optionalKey": "Optional. Leer lassen, um den gespeicherten Schlüssel zu behalten; ein neuer Schlüssel ersetzt ihn.",
     "clearKey": "Gespeicherten Schlüssel entfernen",
@@ -313,7 +315,8 @@
     "rateLimit": "Anbieterlimit erreicht.",
     "rateLimitWithRetry": "Anbieterlimit erreicht. Erneut versuchen nach: {{retryAfter}}.",
     "context": "Der Anbieter hat die Kontextgröße abgelehnt. Eingabe reduzieren oder das konfigurierte Fenster prüfen.",
-    "failure": "Anbieterfehler: {{message}}"
+    "failure": "Anbieterfehler: {{message}}",
+    "timeout": "Das Modell hat nicht innerhalb von {{seconds}} s geantwortet."
   },
   "chatDetail": {
     "label": "Detailgrad",
@@ -508,7 +511,8 @@
   "changes": {
     "empty": "Keine Änderungen in dieser Sitzung.",
     "history": "Änderungsverlauf",
-    "reveal": "Im Ordner anzeigen"
+    "reveal": "Im Ordner anzeigen",
+    "resize": "Dateiliste und Diff in der Größe ändern"
   },
   "artifacts": {
     "empty": "Keine Artefakte in dieser Sitzung.",
@@ -1561,5 +1565,20 @@
     "warning": "Gespeicherte Geheimnisse aus Dateien oder Werkzeugausgaben können bei ausgeschalteter Maskierung für Agent und Modell an den Modellanbieter gesendet werden.",
     "confirm": "Maskierung ausschalten",
     "loading": "Datenschutzeinstellungen werden geladen…"
+  },
+  "bookmarks": {
+    "filter": "Lesezeichen filtern",
+    "count": "Lesezeichen: {{count}}",
+    "countFiltered": "Lesezeichen: {{shown}} von {{total}}",
+    "empty": "Keine Lesezeichen in dieser Unterhaltung.",
+    "noMatches": "Keine Lesezeichen passen zum Filter.",
+    "selectAll": "Alle auswählen",
+    "deselectAll": "Auswahl aufheben",
+    "removeSelected": "Auswahl entfernen",
+    "clearAll": "Alle entfernen",
+    "clearConfirm": "Alle Lesezeichen dieser Unterhaltung entfernen ({{count}})? Die Nachrichten bleiben erhalten.",
+    "open": "Zu Nachricht {{ordinal}} springen: {{text}}",
+    "select": "Nachricht {{ordinal}} auswählen",
+    "remove": "Lesezeichen von Nachricht {{ordinal}} entfernen"
   }
 }

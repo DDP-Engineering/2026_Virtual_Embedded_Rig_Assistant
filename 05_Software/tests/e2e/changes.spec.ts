@@ -316,6 +316,43 @@ test.describe("browser changes", () => {
       expect(attempts).toEqual([]);
       expect(errors).toEqual([]);
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+      // The file list and the diff scroll on their own; the panel itself does not scroll.
+      const layout = await page.evaluate(() => {
+        const box = (selector: string) => document.querySelector(selector)?.getBoundingClientRect();
+        const right = document.querySelector<HTMLElement>(".right-panel");
+        const list = document.querySelector<HTMLElement>(".changes-list");
+        return {
+          panelScrolls: !!right && right.scrollHeight > right.clientHeight + 1,
+          listOverflow: list ? getComputedStyle(list).overflowY : "",
+          detailBottom: box(".changes-detail")?.bottom ?? Number.POSITIVE_INFINITY,
+          panelBottom: box(".right-panel")?.bottom ?? 0,
+        };
+      });
+      expect(layout.panelScrolls).toBe(false);
+      expect(layout.listOverflow).toBe("auto");
+      expect(layout.detailBottom).toBeLessThanOrEqual(layout.panelBottom + 1);
+      // Counts and time sit on one line.
+      const counts = await panel.locator("[data-change] .changes-counts").first().boundingBox();
+      const time = await panel.locator("[data-change] time").first().boundingBox();
+      expect(Math.abs((counts?.y ?? 0) - (time?.y ?? 100))).toBeLessThan(8);
+      // Dragging the splitter resizes the file pane, never below a quarter of the tab.
+      const splitter = panel.locator("[data-changes-splitter]");
+      const tabBox = await panel.locator(".changes-tab").boundingBox();
+      const handle = await splitter.boundingBox();
+      if (!tabBox || !handle) throw Error("Changes layout missing");
+      const middle = handle.x + handle.width / 2;
+      await page.mouse.move(middle, handle.y + handle.height / 2);
+      await page.mouse.down();
+      await page.mouse.move(middle, tabBox.y + tabBox.height * 0.7, { steps: 5 });
+      await page.mouse.up();
+      await expect(splitter).toHaveAttribute("aria-valuenow", "70");
+      await page.mouse.move(middle, (await splitter.boundingBox())?.y ?? 0);
+      await page.mouse.down();
+      await page.mouse.move(middle, tabBox.y + 2, { steps: 5 });
+      await page.mouse.up();
+      await expect(splitter).toHaveAttribute("aria-valuenow", "25");
+      const files = await panel.locator(".changes-files").boundingBox();
+      expect(Math.abs((files?.height ?? 0) - tabBox.height * 0.25)).toBeLessThan(12);
       await page.screenshot({ path: test.info().outputPath("changes-browser-minimum.png") });
     } finally {
       if (server.exitCode === null) {

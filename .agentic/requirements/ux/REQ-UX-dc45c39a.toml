@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-UX-dc45c39a"
+
+title = "Report a failed bookmark removal without changing bookmarks"
+
+status = "active"
+
+requirement = """
+If a bookmark removal from the Bookmarks tab fails, then the desktop app shall show the localized error and keep every bookmark as it was before the request.
+"""
+
+verification = "Renderer test with the shared bookmark provider and a failing session.bookmarks.remove: after Remove selected, the tab rows and a second reader of the shared state (standing in for the message buttons and rail markers) hide the bookmarks while the request runs and show all of them bookmarked again after the failure, and the error is shown."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/session/use-bookmarks.ts", "05_Software/src/apps/desktop/src/renderer/components/session/bookmarks-tab.tsx", "05_Software/src/apps/desktop/src/renderer/components/session/bookmarks-tab.test.ts"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/session/bookmarks-tab.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-20
+updated = 2026-11-20

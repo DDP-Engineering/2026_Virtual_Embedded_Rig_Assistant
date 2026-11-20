@@ -52,7 +52,7 @@ To stop a running child, open it and use **Stop** in its composer. The parent ca
 
 | Level | What the conversation shows |
 |---|---|
-| **Verbose** | Every tool call with its arguments and output, the model's reasoning, and token statistics under each of your messages |
+| **Verbose** | Every tool call with its arguments and output, the model's reasoning, and, under each of your messages, the date and time you sent it and its token statistics |
 | **Normal** | Routine tool calls grouped into an expandable **Operations** line |
 | **Minimal** | Only the conversation; routine tool calls are hidden and a working indicator shows while the agent works |
 
@@ -66,7 +66,7 @@ For models that support it, **Reasoning level** offers **Default** and the level
 
 ## Long sessions and context
 
-The context indicator shows **Context used** as a percentage of the model's context window; select it for usage and limits. When a session grows too long for the model, VERA summarizes older history (**Summarizing history…**). The full transcript stays saved and visible.
+The context indicator shows **Context used** as a percentage of the model's context window; select it for usage and limits. When a session grows too long for the model, VERA summarizes older history (**Summarizing history…**). Meanwhile the indicator spins and keeps the last percentage, which updates when the next request is ready. The full transcript stays saved and visible.
 
 **Find in conversation** searches the current session. The marker lane at the left edge of the conversation has one marker per message of yours; point at a marker to preview the message and select it to jump there.
 
@@ -87,6 +87,8 @@ Saved message bookmarks stay in JSON exports; Markdown marks bookmarked user mes
 Hover over one of your messages or use Tab to reach its bookmark icon. Select **Bookmark** to mark it; the filled icon uses **Remove bookmark** to clear it. The rail preview shows the first line of your message and the start of the agent reply, with the same bookmark action. Changes appear immediately; a failed save restores the previous state and shows an error. Archived sessions and read-only workbenches allow viewing only.
 
 Bookmarked rail markers are filled in the primary color and slightly longer. A grouped marker is marked when any message in it has a bookmark. Use **Next bookmark** (**Ctrl+Alt+N**) or **Previous bookmark** (**Ctrl+Alt+P**) to jump between marked messages; navigation stops at the first or last bookmark. Change these keys in **Settings → Keyboard shortcuts**.
+
+The **Bookmarks** tab of the right panel lists this conversation's bookmarks in order, each with the start of your message and of the reply. Turn it on in **Edit workbench > Interface > Right panel tabs**. Type in **Filter bookmarks** to match message or reply text; the count then shows matches out of the total. Select a row or press Enter to jump to that message in Chat; the arrow keys move between rows. Select rows (or **Select all** for the filtered rows) and choose **Remove selected**, or remove one row with its trash icon. **Clear all** removes every bookmark of the conversation after you confirm, whatever the filter shows. Removing a bookmark never deletes a message; if removal fails, nothing changes and an error appears. Archived sessions and read-only workbenches allow filtering and jumping only.
 
 ## Shell commands
 

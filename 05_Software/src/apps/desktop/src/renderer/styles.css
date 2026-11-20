@@ -808,11 +808,13 @@ legend {
   flex-shrink: 0;
   width: 2rem;
 }
+/* One row whatever the number of enabled tabs: each tab takes an equal column. */
 .panel-tabs {
   display: grid;
   flex: 1;
   min-width: 0;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
   gap: 0.25rem;
 }
 .panel-tabs button,
@@ -844,11 +846,16 @@ legend {
     width: 1.5rem;
   }
 }
+/* Tabs with their own scroll areas take the panel's height instead of scrolling the whole panel. */
+.right-panel[data-tab="changes"],
+.right-panel[data-tab="bookmarks"],
 .right-panel[data-tab="terminal"] {
   display: flex;
   flex-direction: column;
   overflow: hidden;
 }
+.right-panel[data-tab="changes"] > #panel-changes,
+.right-panel[data-tab="bookmarks"] > #panel-bookmarks,
 .right-panel[data-tab="terminal"] > #panel-terminal {
   display: flex;
   flex: 1;
@@ -1227,9 +1234,57 @@ legend {
 .provider-test-results li {
   margin-block: 0.5rem;
 }
+/* The file list and the selected diff scroll separately; the list takes at most half the panel. */
+.changes-tab {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: 0;
+  min-height: 0;
+}
+/* The splitter sets the file pane's share (25-75%); each pane scrolls on its own. */
+.changes-files {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 0;
+  flex-shrink: 0;
+  gap: 0.5rem;
+  min-height: 0;
+}
 .changes-list {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  margin: 0;
   padding: 0;
   list-style: none;
+}
+.changes-tab .pager {
+  flex-shrink: 0;
+  margin-top: 0;
+}
+.changes-splitter {
+  flex-shrink: 0;
+  height: 0.45rem;
+  margin: 0;
+  border: 0;
+  border-radius: 0.2rem;
+  background: var(--border);
+  cursor: row-resize;
+  touch-action: none;
+}
+.changes-splitter:hover,
+.changes-splitter:focus-visible {
+  background: var(--primary);
+}
+.changes-detail {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow: auto;
+}
+.changes-detail .approval-diff {
+  max-height: none;
 }
 .changes-list button {
   display: grid;
@@ -1241,6 +1296,13 @@ legend {
 }
 .changes-list button[aria-pressed="true"] {
   border-color: var(--ring);
+}
+.changes-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.25rem 0.75rem;
 }
 .changes-list time {
   font-size: 0.85rem;
@@ -1320,6 +1382,85 @@ legend {
 }
 .plan-status {
   display: block;
+  font-size: 0.875rem;
+  color: var(--muted-foreground);
+}
+/* Bookmarks tab: fixed controls above a list that scrolls on its own. */
+.bookmarks-tab {
+  flex: 1;
+  /* The trash column's width, which the action row leaves free so Remove selected ends with the cards. */
+  --bookmark-remove-width: 2.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  height: 100%;
+  min-height: 0;
+  min-width: 0;
+}
+.bookmarks-controls,
+.bookmarks-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+.bookmarks-controls input[type="search"] {
+  flex: 1;
+  min-width: 8rem;
+}
+.bookmarks-count {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+.bookmarks-actions {
+  padding-right: calc(var(--bookmark-remove-width) + 0.4rem);
+}
+.bookmarks-remove-selected {
+  margin-left: auto;
+}
+.bookmarks-list {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  align-content: start;
+  gap: 0.4rem;
+}
+.bookmarks-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.4rem;
+  min-width: 0;
+}
+.bookmarks-list li > input {
+  margin-top: 0.6rem;
+}
+.bookmarks-list li > .icon-button {
+  flex-shrink: 0;
+  width: var(--bookmark-remove-width);
+  display: grid;
+  place-items: center;
+  padding-inline: 0;
+}
+.bookmark-row {
+  flex: 1;
+  display: grid;
+  gap: 0.2rem;
+  min-width: 0;
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+.bookmarks-tab .pager {
+  flex-shrink: 0;
+  margin-top: 0;
+}
+.bookmark-reply {
   font-size: 0.875rem;
   color: var(--muted-foreground);
 }
@@ -1719,6 +1860,7 @@ legend {
 }
 @media (prefers-reduced-motion: reduce) {
   .docs-indexing,
+  .context-indicator[data-compacting] > svg,
   .tool-activity-title[data-tool-status="running"] > svg:first-child {
     animation: none;
   }
@@ -2808,6 +2950,12 @@ legend {
 .context-indicator span {
   font-size: 0.75rem;
 }
+.context-indicator[data-compacting] {
+  color: var(--primary);
+}
+.context-indicator[data-compacting] > svg {
+  animation: activity-spin 1.2s linear infinite;
+}
 .session-inspector[open] {
   display: flex;
   flex-direction: column;
@@ -3832,7 +3980,7 @@ legend {
   color: var(--muted-foreground);
   font-variant-numeric: tabular-nums;
 }
-.prompt-usage span + span::before {
+.prompt-usage > * + *::before {
   content: "·";
   margin: 0 0.5rem;
 }
