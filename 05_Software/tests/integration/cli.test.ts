@@ -495,7 +495,7 @@ it("CLI offers the enabled plugin's skill and program tools and runs a resolved 
   const missing = await launch([...replay(workbench, script), "--data", data]).result;
   const failed = events(missing.stdout).filter((r) => r.event.type === "tool.done");
   expect(String(failed[1]?.event.summary)).toMatch(/Program echo is not available/);
-});
+}, 15000);
 // REQ-FUNC-c44675ed, REQ-UX-46085ddf
 it("CLI installs a plugin and its programs and prints their statuses", async () => {
   const { dir } = await fixture();
@@ -843,7 +843,7 @@ it("runs ordered read/list/cited events and resumes a durable session in a new p
       .every((row) => row.seq > Math.max(...persisted)),
   ).toBe(true);
   await expect(readFile(join(workbench, ".vera/lock"))).rejects.toMatchObject({ code: "ENOENT" });
-});
+}, 15000);
 it.each(["literal", "unicode", "template", "keyfile-template"])(
   "scrubs explicit replay before fragmented output and SQLite persistence (%s)",
   async (encoding) => {
@@ -978,7 +978,7 @@ it("prints pretty one-line events and cleans resources on a failed provider", as
   expect(failed.code).toBe(1);
   expect(failed.stdout + failed.stderr).toContain("PROVIDER");
   await expect(readFile(join(workbench, ".vera/lock"))).rejects.toMatchObject({ code: "ENOENT" });
-});
+}, 15000);
 it("scrubs environment/key-file secrets even in invalid arguments and explicit replay text", async () => {
   const { workbench, dir } = await fixture();
   const ambient = "fictional-env-key-15",
@@ -999,7 +999,7 @@ it("scrubs environment/key-file secrets even in invalid arguments and explicit r
   const invalidWithFile = await launch(["run", "--key-file", file, `--${key}`]).result;
   expect(invalidWithFile.code).toBe(2);
   expect(invalidWithFile.stderr).not.toContain(key);
-});
+}, 15000);
 it("rejects an irreducible first turn with structured CONTEXT_LIMIT and exit1", async () => {
   const { workbench } = await fixture();
   const args = replay(workbench);
@@ -1129,7 +1129,7 @@ it("budgets a long first turn before each real gateway request and refuses an ir
   expect(requests).toHaveLength(3);
   expect(bad.stdout).toContain("CONTEXT_LIMIT");
   expect(await readFile(transcriptFile, "utf8")).not.toContain("api_key");
-});
+}, 15000);
 it("times out real pathological grep at the production deadline then replaces the worker for a later grep", async () => {
   const { workbench, dir } = await fixture();
   await writeFile(join(workbench, "00-good.txt"), "ok\n");

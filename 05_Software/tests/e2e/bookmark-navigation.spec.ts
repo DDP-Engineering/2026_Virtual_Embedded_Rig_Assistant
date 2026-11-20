@@ -64,12 +64,12 @@ async function localizedNavigation(page: Page, id: string, indices: number[]) {
     }
     await page.locator('[data-action="leave-settings"]').click();
     await page.locator(`[data-session="${id}"]`).click();
-    await expect(marked(page)).toHaveCount(3);
     await expect(page.locator("[data-nav-bookmarked]").first()).toBeVisible();
     await page.locator("[data-transcript]").evaluate((node) => {
       node.scrollTop = 0;
       node.dispatchEvent(new Event("scroll"));
     });
+    await expect(marked(page)).toHaveCount(3);
     await page.locator(".composer textarea").focus();
     for (const index of indices) await navigate(page, index, "Control+Alt+n");
     for (const index of indices.slice(0, -1).reverse()) await navigate(page, index, "Control+Alt+p");
