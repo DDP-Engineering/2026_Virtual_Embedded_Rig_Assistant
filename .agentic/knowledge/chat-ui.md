@@ -106,6 +106,8 @@ budgets and abort. The browser mock seeds six selectable states and an edit appr
   active Stop uses the real session.stop channel and leaves a usable composer at completion.
 - Markdown skips HTML and renders links/images inert; verified message citations alone enable chips.
 - Tool disclosures expose full arguments and preview/update/summary; errors and estimates are labelled.
+- `ErrorRow` passes the stored error item's optional `params` to `ErrorMessage`, so `provider.timeout`
+  names the limit ("The model did not respond within N s.") in en/ro/de/fr (REQ-FUNC-25254fe8).
 - `Disclosure` mounts its content only while open (transcript, groups and reasoning); its empty
   hidden container keeps `aria-controls` resolvable. Collapsed content is not in the DOM, so find-in-page
   and copy-all skip it.

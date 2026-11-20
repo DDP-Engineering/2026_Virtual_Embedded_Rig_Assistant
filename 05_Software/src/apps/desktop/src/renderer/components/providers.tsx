@@ -431,6 +431,7 @@ function CustomEditor({
   const [imageModels, setImageModels] = useState(initial?.imageModels ?? []);
   const [context, setContext] = useState(String(initial?.contextWindow ?? 32768));
   const [output, setOutput] = useState(String(initial?.maxOutputTokens ?? 4096));
+  const [waitSeconds, setWaitSeconds] = useState(String(initial?.responseTimeoutSeconds ?? 300));
   const [key, setKey] = useState("");
   const [clear, setClear] = useState(false);
   function done() {
@@ -454,6 +455,7 @@ function CustomEditor({
               model,
               contextWindow: Number(context),
               maxOutputTokens: Number(output),
+              responseTimeoutSeconds: Number(waitSeconds),
               imageModels,
             },
             ...(clear ? { apiKey: "" } : key ? { apiKey: key } : {}),
@@ -514,6 +516,17 @@ function CustomEditor({
           onChange={(event) => setOutput(event.target.value)}
           required
         />
+        <label htmlFor={`${prefix}-timeout`}>{t("providers.responseTimeout")}</label>
+        <input
+          id={`${prefix}-timeout`}
+          type="number"
+          min={10}
+          max={3600}
+          step={1}
+          value={waitSeconds}
+          onChange={(event) => setWaitSeconds(event.target.value)}
+          required
+        />
         <label htmlFor={`${prefix}-key`}>{t("providers.endpointKey")}</label>
         <input
           id={`${prefix}-key`}
@@ -554,6 +567,7 @@ function CustomEditor({
               model !== initial.model ||
               Number(context) !== initial.contextWindow ||
               Number(output) !== initial.maxOutputTokens ||
+              Number(waitSeconds) !== (initial.responseTimeoutSeconds ?? 300) ||
               !!key ||
               clear
             }

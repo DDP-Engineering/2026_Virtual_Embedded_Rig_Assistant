@@ -180,6 +180,7 @@
     "acceptsImages": "Accepte les images",
     "contextWindow": "Fenêtre de contexte (jetons)",
     "maxOutput": "Sortie maximale (jetons)",
+    "responseTimeout": "Délai de réponse (s)",
     "endpointKey": "Clé API du point de terminaison",
     "optionalKey": "Facultatif. Laissez vide pour conserver la clé enregistrée ; une nouvelle clé la remplace.",
     "clearKey": "Supprimer la clé enregistrée",
@@ -226,7 +227,8 @@
     "auth": "Échec de l’authentification. Vérifiez l’identifiant enregistré dans les paramètres Fournisseurs.",
     "rateLimit": "Limite de débit du fournisseur. Réessayer après : {{retryAfter}}.",
     "context": "Le fournisseur a refusé la taille du contexte. Réduisez l’entrée ou vérifiez la fenêtre configurée.",
-    "failure": "Erreur du fournisseur : {{message}}"
+    "failure": "Erreur du fournisseur : {{message}}",
+    "timeout": "Le modèle n’a pas répondu dans un délai de {{seconds}} s."
   },
   "chatDetail": {
     "label": "Niveau de détail",

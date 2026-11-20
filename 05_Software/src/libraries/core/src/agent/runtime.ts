@@ -344,10 +344,13 @@ export class ReferenceRuntime implements AgentRuntime {
             const limit =
               event.error.code === "CONTEXT_LIMIT" ||
               (event.error.code === "PROVIDER" && event.error.params?.reason === "context");
+            // Only a timeout's limit is kept with the stored event; provider text and endpoints stay out.
+            const seconds = event.error.params?.reason === "timeout" ? event.error.params.seconds : undefined;
             this.emit({
               type: "error",
               code: limit ? "CONTEXT_LIMIT" : event.error.code,
               messageKey: limit ? "context.budget_exceeded" : event.error.messageKey,
+              ...(typeof seconds === "number" ? { params: { seconds } } : {}),
               retryable: false,
             });
             return limit ? "limit" : "error";

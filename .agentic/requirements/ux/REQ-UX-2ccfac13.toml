@@ -1,0 +1,15 @@
+schema = 1
+id = "REQ-UX-2ccfac13"
+title = "Edit the response timeout of custom connections"
+status = "active"
+requirement = """
+When the engineer edits a custom or LM Studio connection in Settings > Providers, the editor shall offer a localized response timeout field in seconds, filled with the saved value or 300, and save the entered value with the connection.
+"""
+verification = "Mock-mode e2e: adding a custom connection with response timeout 600 lists the connection and reopening the editor shows 600; a new LM Studio connection shows 300. The field has an accessible label in en, ro, de and fr."
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/providers.tsx", "05_Software/src/apps/desktop/src/renderer/components/lmstudio-editor.tsx", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/tests/e2e/providers.spec.ts", "05_Software/help/en/providers.md", "05_Software/help/ro/providers.md", "05_Software/help/de/providers.md", "05_Software/help/fr/providers.md", "05_Software/src/apps/desktop/src/main/provider-settings.ts", "05_Software/tests/e2e/lmstudio.spec.ts", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json", "05_Software/src/apps/desktop/src/renderer/locales/fr.json"]
+linked_tests = ["05_Software/tests/e2e/providers.spec.ts", "05_Software/tests/e2e/lmstudio.spec.ts"]
+spec = ""
+priority = "normal"
+rationale = "Local models can load and process a long prompt for minutes before they respond."
+created = 2026-11-20
+updated = 2026-11-20

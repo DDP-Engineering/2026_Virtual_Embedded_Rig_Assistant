@@ -1,0 +1,15 @@
+schema = 1
+id = "REQ-NFR-543124b7"
+title = "Wait for custom connection response headers per connection"
+status = "active"
+requirement = """
+For a model request to a custom connection, the gateway shall wait for the response headers up to the connection's response timeout, or 300 seconds when the connection sets none, and for an OpenAI or ChatGPT model up to 30 seconds.
+"""
+verification = "Gateway test with a captured stream options call: a custom connection with responseTimeoutSeconds 45 passes timeoutMs 45000, one without it passes 300000, and an OpenAI model passes 30000."
+affected_paths = ["05_Software/src/libraries/core/src/llm/providers.ts", "05_Software/src/libraries/core/src/llm/gateway.test.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/llm/gateway.test.ts"]
+spec = ""
+priority = "normal"
+rationale = "Local models can load and process a long prompt for minutes before they respond."
+created = 2026-11-20
+updated = 2026-11-20

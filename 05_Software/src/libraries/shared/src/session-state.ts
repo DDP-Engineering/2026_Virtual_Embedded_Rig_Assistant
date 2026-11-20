@@ -74,6 +74,7 @@ export const sessionStateSchema = z.strictObject({
         id: z.string(),
         code: z.string(),
         messageKey: z.string(),
+        params: z.record(z.string(), z.union([z.string(), z.number().finite()])).optional(),
         retryable: z.boolean(),
       }),
     ]),

@@ -180,6 +180,7 @@
     "acceptsImages": "Accepts images",
     "contextWindow": "Context window (tokens)",
     "maxOutput": "Maximum output (tokens)",
+    "responseTimeout": "Response timeout (s)",
     "endpointKey": "Endpoint API key",
     "optionalKey": "Optional. Leave empty to keep the saved key; a new key replaces it.",
     "clearKey": "Remove the saved key",
@@ -226,7 +227,8 @@
     "auth": "Authentication failed. Check the saved credential in Providers settings.",
     "rateLimit": "Provider rate limit. Retry after: {{retryAfter}}.",
     "context": "The provider rejected the context size. Reduce input or check the configured window.",
-    "failure": "Provider error: {{message}}"
+    "failure": "Provider error: {{message}}",
+    "timeout": "The model did not respond within {{seconds}} s."
   },
   "chatDetail": {
     "label": "Detail level",

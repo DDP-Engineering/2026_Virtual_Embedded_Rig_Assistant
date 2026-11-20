@@ -180,6 +180,7 @@
     "acceptsImages": "Acceptă imagini",
     "contextWindow": "Fereastră de context (tokenuri)",
     "maxOutput": "Ieșire maximă (tokenuri)",
+    "responseTimeout": "Timp de așteptare a răspunsului (s)",
     "endpointKey": "Cheia API a endpoint-ului",
     "optionalKey": "Opțional. Lasă gol pentru a păstra cheia salvată; o cheie nouă o înlocuiește.",
     "clearKey": "Elimină cheia salvată",
@@ -226,7 +227,8 @@
     "auth": "Autentificare eșuată. Verifică datele salvate în setările furnizorilor.",
     "rateLimit": "Limita de cereri a furnizorului a fost atinsă. Reîncearcă după: {{retryAfter}}.",
     "context": "Furnizorul a respins dimensiunea contextului. Redu intrarea sau verifică fereastra configurată.",
-    "failure": "Eroare furnizor: {{message}}"
+    "failure": "Eroare furnizor: {{message}}",
+    "timeout": "Modelul nu a răspuns în {{seconds}} s."
   },
   "chatDetail": {
     "label": "Nivel de detaliu",

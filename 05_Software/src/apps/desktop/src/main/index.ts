@@ -1632,6 +1632,7 @@ if (!firstInstance) {
             select(splitModelReference(ref).provider).prepareModel?.(ref, signal) ?? Promise.resolve(),
           selectedModel: (id) => select(id).selectedModel(id),
           capabilities: (ref, output) => select(splitModelReference(ref).provider).capabilities(ref, output),
+          responseTimeoutMs: (ref) => select(splitModelReference(ref).provider).responseTimeoutMs?.(ref),
           models: (id, signal, probe) => select(id).models(id, signal, probe),
           stream: (request) => select(splitModelReference(request.model).provider).stream(request),
         };

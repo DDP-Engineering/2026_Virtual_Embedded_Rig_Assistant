@@ -845,6 +845,11 @@ it("permission port denies execution and no-output timeout terminates stalled st
   const s2 = next.service.create();
   next.service.send(s2.id, "Read");
   expect(await next.service.waitIdle(s2.id)).toEqual({ stopReason: "error" });
+  // REQ-FUNC-25254fe8: the stored error names the limit, here the injected 10 ms rounded up to 1 s.
+  const stored = next.service.get(s2.id).snapshot.items.findLast((i) => i.kind === "error");
+  expect(stored).toMatchObject({ code: "PROVIDER", messageKey: "provider.timeout" });
+  // Only the limit is kept: no reason, provider text or endpoint reaches the stored event.
+  expect(stored && "params" in stored ? stored.params : undefined).toEqual({ seconds: 1 });
 });
 it("retains large first-turn tool results while every gateway request fits a transient input view", async () => {
   const registry = new core.ToolRegistry([
@@ -872,10 +877,10 @@ it("retains large first-turn tool results while every gateway request fits a tra
     inputBudget: 3976,
     supportsTools: true,
   });
-  const requests: Omit<core.LlmRequest, "signal" | "maskOutput">[] = [];
+  const requests: Omit<core.LlmRequest, "signal" | "maskOutput" | "onActivity">[] = [];
   const original = gateway.stream.bind(gateway);
   gateway.stream = (request) => {
-    const { signal: _, maskOutput: _maskOutput, ...data } = request;
+    const { signal: _, maskOutput: _maskOutput, onActivity: _onActivity, ...data } = request;
     requests.push(structuredClone(data));
     return original(request);
   };

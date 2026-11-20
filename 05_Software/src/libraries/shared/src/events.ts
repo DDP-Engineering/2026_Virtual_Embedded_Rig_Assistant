@@ -221,6 +221,7 @@ export const sessionEventSchema = z.discriminatedUnion("type", [
     type: z.literal("error"),
     code: z.string(),
     messageKey: z.string(),
+    params: z.record(z.string(), z.union([z.string(), z.number().finite()])).optional(),
     retryable: z.boolean(),
   }),
 ]);
