@@ -98,7 +98,7 @@ it("reads fresh validated config without catalog discovery while getConfig retai
   }
 });
 
-it("rejects invalid, changed-identity and redirected current config without changing the snapshot", async () => {
+it("rejects invalid and changed-identity current config without changing the snapshot", async () => {
   const h = await harness();
   await expect(h.service.readConfig()).rejects.toMatchObject({ code: "NOT_FOUND" });
   try {
@@ -113,17 +113,31 @@ it("rejects invalid, changed-identity and redirected current config without chan
       await expect(h.service.readConfig()).rejects.toMatchObject({ code });
       expect(h.service.getSnapshot()).toEqual(snapshot);
     }
-    const outside = join(h.root, "outside.yaml");
-    await writeFile(outside, JSON.stringify(snapshot.config));
-    await rm(path);
-    await symlink(outside, path);
-    await expect(h.service.readConfig()).rejects.toMatchObject({ code: "DENIED" });
-    expect(h.service.getSnapshot()).toEqual(snapshot);
   } finally {
     await h.service.close();
   }
   await expect(h.service.readConfig()).rejects.toMatchObject({ code: "NOT_FOUND" });
 });
+
+// The Windows development host lacks the privilege needed for file symlinks.
+it.skipIf(process.platform === "win32")(
+  "rejects file-symlink current config without changing the snapshot",
+  async () => {
+    const h = await harness();
+    try {
+      const snapshot = await h.service.create(h.folder, "Valid");
+      const path = join(h.folder, ".vera/workbench.yaml");
+      const outside = join(h.root, "outside.yaml");
+      await writeFile(outside, JSON.stringify(snapshot.config));
+      await rm(path);
+      await symlink(outside, path);
+      await expect(h.service.readConfig()).rejects.toMatchObject({ code: "DENIED" });
+      expect(h.service.getSnapshot()).toEqual(snapshot);
+    } finally {
+      await h.service.close();
+    }
+  },
+);
 
 it("validates both registered embedding model IDs in workbench YAML", () => {
   const yaml = "format: 1\nid: wb_01JB8Z6Q4M7N2K5R9T3V8X1Y0C\nname: Board\nembeddings:\n  model: ";
