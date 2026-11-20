@@ -60,7 +60,7 @@ Pour les modèles qui le prennent en charge, **Niveau de raisonnement** propose 
 
 ## Sessions longues et contexte
 
-L’indicateur de contexte affiche **Contexte utilisé** en pourcentage de la fenêtre de contexte du modèle ; sélectionnez-le pour voir l’utilisation et les limites. Lorsqu’une session devient trop longue pour le modèle, VERA résume l’historique ancien (**Résumé de l’historique…**). La transcription complète reste enregistrée et visible.
+L’indicateur de contexte affiche **Contexte utilisé** en pourcentage de la fenêtre de contexte du modèle ; sélectionnez-le pour voir l’utilisation et les limites. Lorsqu’une session devient trop longue pour le modèle, VERA résume l’historique ancien (**Résumé de l’historique…**). Pendant ce temps, l’indicateur tourne et garde le dernier pourcentage, mis à jour dès que la requête suivante est prête. La transcription complète reste enregistrée et visible.
 
 **Rechercher dans la conversation** effectue une recherche dans la session en cours. La bande de repères au bord gauche de la conversation comporte un repère par message que vous avez envoyé ; survolez un repère pour avoir un aperçu du message et sélectionnez-le pour y accéder.
 

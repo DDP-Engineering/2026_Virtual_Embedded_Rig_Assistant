@@ -1719,6 +1719,7 @@ legend {
 }
 @media (prefers-reduced-motion: reduce) {
   .docs-indexing,
+  .context-indicator[data-compacting] > svg,
   .tool-activity-title[data-tool-status="running"] > svg:first-child {
     animation: none;
   }
@@ -2803,6 +2804,12 @@ legend {
 }
 .context-indicator span {
   font-size: 0.75rem;
+}
+.context-indicator[data-compacting] {
+  color: var(--primary);
+}
+.context-indicator[data-compacting] > svg {
+  animation: activity-spin 1.2s linear infinite;
 }
 .session-inspector[open] {
   display: flex;

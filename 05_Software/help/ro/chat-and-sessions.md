@@ -60,7 +60,7 @@ Pentru modelele care îl acceptă, **Nivel de reasoning** oferă **Implicit** ș
 
 ## Sesiuni lungi și context
 
-Indicatorul de context afișează **Context utilizat** ca procent din fereastra de context a modelului; selectează-l pentru utilizare și limite. Când o sesiune devine prea lungă pentru model, VERA rezumă istoricul mai vechi (**Se rezumă istoricul…**). Transcriptul complet rămâne salvat și vizibil.
+Indicatorul de context afișează **Context utilizat** ca procent din fereastra de context a modelului; selectează-l pentru utilizare și limite. Când o sesiune devine prea lungă pentru model, VERA rezumă istoricul mai vechi (**Se rezumă istoricul…**). Între timp indicatorul se rotește și păstrează ultimul procent, care se actualizează când următoarea cerere este pregătită. Transcriptul complet rămâne salvat și vizibil.
 
 **Caută în conversație** caută în sesiunea curentă. Banda de marcaje de la marginea stângă a conversației are câte un marcaj pentru fiecare mesaj al tău; indică un marcaj pentru a previzualiza mesajul și selectează-l pentru a sări la el.
 

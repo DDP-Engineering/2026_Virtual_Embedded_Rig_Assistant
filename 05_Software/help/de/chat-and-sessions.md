@@ -60,7 +60,7 @@ Bei Modellen, die es unterstützen, bietet **Reasoning-Stufe** die Option **Stan
 
 ## Lange Sitzungen und Kontext
 
-Die Kontextanzeige zeigt **Kontextnutzung** als Prozentsatz des Kontextfensters des Modells; wählen Sie sie aus, um Nutzung und Limits zu sehen. Wird eine Sitzung für das Modell zu lang, fasst VERA den älteren Verlauf zusammen (**Verlauf wird zusammengefasst…**). Das vollständige Transkript bleibt gespeichert und sichtbar.
+Die Kontextanzeige zeigt **Kontextnutzung** als Prozentsatz des Kontextfensters des Modells; wählen Sie sie aus, um Nutzung und Limits zu sehen. Wird eine Sitzung für das Modell zu lang, fasst VERA den älteren Verlauf zusammen (**Verlauf wird zusammengefasst…**). Währenddessen dreht sich die Anzeige und behält den letzten Prozentsatz, der sich aktualisiert, sobald die nächste Anfrage bereit ist. Das vollständige Transkript bleibt gespeichert und sichtbar.
 
 **In Unterhaltung suchen** durchsucht die aktuelle Sitzung. Die Markierungsleiste am linken Rand der Unterhaltung hat eine Markierung pro Nachricht von Ihnen; zeigen Sie auf eine Markierung, um eine Vorschau der Nachricht zu sehen, und wählen Sie sie aus, um dorthin zu springen.
 

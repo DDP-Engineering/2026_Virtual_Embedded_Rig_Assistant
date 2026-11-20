@@ -1,7 +1,7 @@
 // REQ-UX-4bea0005
 
 import type { SessionState } from "@vera/shared";
-import { Gauge } from "lucide-react";
+import { Gauge, LoaderCircle } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 function defineTranslationKeys<const T extends readonly string[]>(keys: T): T {
@@ -88,17 +88,21 @@ export function ContextIndicator({ state, open }: { state: SessionState; open: (
   const { t } = useTranslation();
   const percent = contextOccupancy(state);
   const label = percent === undefined ? t("chat.contextUnknown") : t("chat.contextPercent", { percent });
+  // While the history summary runs, the gauge turns into a spinner and the tooltip names the step.
+  const compacting = state.usage.compactionStatus === "running";
+  const Icon = compacting ? LoaderCircle : Gauge;
   return (
     <button
       type="button"
       className="context-indicator"
       data-action="show-context"
+      data-compacting={compacting ? "" : undefined}
       aria-label={t("chat.contextWindow")}
       aria-haspopup="dialog"
-      title={`${label}${state.usage.estimated ? ` (${t("chat.estimated")})` : ""}`}
+      title={`${label}${state.usage.estimated ? ` (${t("chat.estimated")})` : ""}${compacting ? `\n${t("chat.compaction.running")}` : ""}`}
       onClick={open}
     >
-      <Gauge aria-hidden="true" />
+      <Icon aria-hidden="true" />
       <span>{percent === undefined ? "—" : `${percent}%`}</span>
     </button>
   );

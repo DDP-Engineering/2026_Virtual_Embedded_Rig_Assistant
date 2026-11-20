@@ -60,7 +60,7 @@ For models that support it, **Reasoning level** offers **Default** and the level
 
 ## Long sessions and context
 
-The context indicator shows **Context used** as a percentage of the model's context window; select it for usage and limits. When a session grows too long for the model, VERA summarizes older history (**Summarizing history…**). The full transcript stays saved and visible.
+The context indicator shows **Context used** as a percentage of the model's context window; select it for usage and limits. When a session grows too long for the model, VERA summarizes older history (**Summarizing history…**). Meanwhile the indicator spins and keeps the last percentage, which updates when the next request is ready. The full transcript stays saved and visible.
 
 **Find in conversation** searches the current session. The marker lane at the left edge of the conversation has one marker per message of yours; point at a marker to preview the message and select it to jump there.
 
