@@ -1415,6 +1415,7 @@
     "empty": "Keine Lesezeichen in dieser Unterhaltung.",
     "noMatches": "Keine Lesezeichen passen zum Filter.",
     "selectAll": "Alle auswählen",
+    "deselectAll": "Auswahl aufheben",
     "removeSelected": "Auswahl entfernen",
     "clearAll": "Alle entfernen",
     "clearConfirm": "Alle Lesezeichen dieser Unterhaltung entfernen ({{count}})? Die Nachrichten bleiben erhalten.",

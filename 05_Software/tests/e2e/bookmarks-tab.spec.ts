@@ -53,6 +53,11 @@ test("opt-in Bookmarks tab jumps to messages and stays in sync with message butt
   await page.locator(`[data-session="${sessionId}"]`).click();
   const ids = await page.locator('.panel-tabs [role="tab"]').evaluateAll((tabs) => tabs.map((tab) => tab.id));
   expect(ids.indexOf("tab-bookmarks")).toBe(ids.indexOf("tab-plan") + 1);
+  // All eight tabs share one row.
+  const tops = await page
+    .locator('.panel-tabs [role="tab"]')
+    .evaluateAll((tabs) => tabs.map((tab) => Math.round(tab.getBoundingClientRect().top)));
+  expect(new Set(tops).size).toBe(1);
   await page.locator("#tab-bookmarks").click();
   await expect(rows(page)).toHaveCount(2);
   await expect(rows(page).first()).toContainText("Seeded question 1.");

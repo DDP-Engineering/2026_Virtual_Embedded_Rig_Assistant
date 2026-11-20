@@ -808,11 +808,13 @@ legend {
   flex-shrink: 0;
   width: 2rem;
 }
+/* One row whatever the number of enabled tabs: each tab takes an equal column. */
 .panel-tabs {
   display: grid;
   flex: 1;
   min-width: 0;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
   gap: 0.25rem;
 }
 .panel-tabs button,
@@ -1325,6 +1327,8 @@ legend {
 }
 /* Bookmarks tab: fixed controls above a list that scrolls on its own. */
 .bookmarks-tab {
+  /* The trash column's width, which the action row leaves free so Remove selected ends with the cards. */
+  --bookmark-remove-width: 2.75rem;
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
@@ -1343,16 +1347,18 @@ legend {
   flex: 1;
   min-width: 8rem;
 }
-.bookmarks-controls p {
-  margin: 0;
-  font-size: 0.875rem;
-  color: var(--muted-foreground);
-}
-.bookmarks-actions label {
+.bookmarks-count {
   display: flex;
   align-items: center;
-  gap: 0.35rem;
-  margin-right: auto;
+  gap: 0.25rem;
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+.bookmarks-actions {
+  padding-right: calc(var(--bookmark-remove-width) + 0.4rem);
+}
+.bookmarks-remove-selected {
+  margin-left: auto;
 }
 .bookmarks-list {
   flex: 1;
@@ -1374,6 +1380,13 @@ legend {
 .bookmarks-list li > input {
   margin-top: 0.6rem;
 }
+.bookmarks-list li > .icon-button {
+  flex-shrink: 0;
+  width: var(--bookmark-remove-width);
+  display: grid;
+  place-items: center;
+  padding-inline: 0;
+}
 .bookmark-row {
   flex: 1;
   display: grid;
@@ -1381,6 +1394,10 @@ legend {
   min-width: 0;
   text-align: left;
   overflow-wrap: anywhere;
+}
+.bookmarks-tab .pager {
+  flex-shrink: 0;
+  margin-top: 0;
 }
 .bookmark-reply {
   font-size: 0.875rem;

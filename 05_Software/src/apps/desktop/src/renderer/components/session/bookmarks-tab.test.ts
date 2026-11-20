@@ -16,6 +16,7 @@ vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
 
 const A = "ses_00000000000000000000000001";
 const B = "ses_00000000000000000000000002";
+const C = "ses_00000000000000000000000003";
 const events: SessionEvent[] = [
   { type: "message.user", messageId: "u1", text: "How is the UART wired?" },
   { type: "message.done", messageId: "a1", text: "TX goes to PA9 and RX to PA10.", citations: [] },
@@ -31,6 +32,15 @@ const other: SessionEvent[] = [
   { type: "message.user", messageId: "b1", text: "Another session question" },
   { type: "message.bookmarked", messageId: "b1", bookmarked: true },
 ];
+// Twelve bookmarks, more than one page of ten.
+const many: SessionEvent[] = Array.from({ length: 12 }, (_, i) => [
+  {
+    type: "message.user" as const,
+    messageId: `m${i + 1}`,
+    text: i === 11 ? "Last question" : `Question ${i + 1}`,
+  },
+  { type: "message.bookmarked" as const, messageId: `m${i + 1}`, bookmarked: true },
+]).flat();
 let root: Root;
 let container: HTMLDivElement;
 let notify: ((event: SessionEvent) => void) | undefined;
@@ -44,7 +54,7 @@ beforeEach(async () => {
   vi.mocked(api.invoke).mockImplementation((async (channel: string, input: unknown) => {
     if (channel === "session.bookmarks.remove") return removal(input);
     const id = (input as { sessionId: string }).sessionId;
-    return { snapshot: foldSessionEvents(id === A ? events : other), seq: 10 };
+    return { snapshot: foldSessionEvents(id === A ? events : id === C ? many : other), seq: 10 };
   }) as typeof api.invoke);
   vi.mocked(api.subscribe).mockImplementation(((...args: unknown[]) => {
     notify = args[3] as (event: SessionEvent) => void;
@@ -107,7 +117,8 @@ async function renderShared(locked = false) {
 const probe = () => container.querySelector("[data-probe]")?.textContent;
 const rows = () =>
   [...container.querySelectorAll<HTMLButtonElement>("[data-bookmark-row]")].map((b) => b.dataset.bookmarkRow);
-const count = () => container.querySelector("[data-bookmarks-count]")?.textContent;
+const count = () => container.querySelector("[data-bookmarks-count] .sr-only")?.textContent;
+const badge = () => container.querySelector("[data-bookmarks-count] [aria-hidden]:not(svg)")?.textContent;
 const filter = async (text: string) => {
   const input = container.querySelector<HTMLInputElement>("[data-bookmarks-filter]") as HTMLInputElement;
   await act(async () => {
@@ -132,10 +143,12 @@ it("lists bookmarks in conversation order with previews, filters message and rep
   );
   expect(container.querySelector('[data-bookmark-id="u3"] .bookmark-reply')).toBeNull();
   expect(count()).toBe("Bookmarks: 3");
+  expect(badge()).toBe("3");
   // RULING-001: the reply excerpt is searched too, case-insensitively.
   await filter("hse");
   expect(rows()).toEqual(["u2"]);
   expect(count()).toBe("Bookmarks: 1 of 3");
+  expect(badge()).toBe("1/3");
   await filter("BROWN");
   expect(rows()).toEqual(["u3"]);
   await filter("nothing like this");
@@ -178,6 +191,37 @@ it("selects all filtered rows and removes exactly those in one request", async (
   expect(rows()).toEqual(["u1"]);
   await click('[data-bookmark-remove="u1"]');
   expect(removals().at(-1)).toEqual(["session.bookmarks.remove", { sessionId: A, messageIds: ["u1"] }]);
+});
+
+it("toggles the selection of every shown row from one button", async () => {
+  await render();
+  const selectAll = () => container.querySelector('[data-action="bookmarks-select-all"]');
+  const checked = () =>
+    [...container.querySelectorAll<HTMLInputElement>("[data-bookmark-select]")].filter((box) => box.checked)
+      .length;
+  expect(selectAll()?.textContent).toBe("Select all");
+  await click('[data-action="bookmarks-select-all"]');
+  expect(checked()).toBe(3);
+  expect(selectAll()?.textContent).toBe("Deselect all");
+  await click('[data-action="bookmarks-select-all"]');
+  expect(checked()).toBe(0);
+  expect(selectAll()?.textContent).toBe("Select all");
+});
+
+it("pages long lists and returns to the first page when the filter changes", async () => {
+  await render(A);
+  expect(container.querySelector("[data-pager]")).toBeNull();
+  await render(C);
+  expect(rows()).toHaveLength(10);
+  expect(rows()[0]).toBe("m1");
+  await click("[data-pager-next]");
+  expect(rows()).toEqual(["m11", "m12"]);
+  await filter("question");
+  expect(rows()).toHaveLength(10);
+  expect(rows()[0]).toBe("m1");
+  await filter("last");
+  expect(rows()).toEqual(["m12"]);
+  expect(container.querySelector("[data-pager]")).toBeNull();
 });
 
 it("restores every row and shows the error when a removal fails", async () => {
@@ -264,8 +308,6 @@ it("keeps no rows, filter or selection from another session", async () => {
   await render(B);
   expect(rows()).toEqual(["b1"]);
   expect(container.querySelector<HTMLInputElement>("[data-bookmarks-filter]")?.value).toBe("");
-  expect(container.querySelector<HTMLInputElement>('[data-action="bookmarks-select-all"]')?.checked).toBe(
-    false,
-  );
+  expect(container.querySelector('[data-action="bookmarks-select-all"]')?.textContent).toBe("Select all");
   expect(container.querySelector<HTMLInputElement>('[data-bookmark-select="b1"]')?.checked).toBe(false);
 });

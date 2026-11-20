@@ -1,11 +1,12 @@
 // REQ-UX-8a37ed29 REQ-UX-53130782 REQ-FUNC-10d85a47 REQ-UX-dc45c39a REQ-FUNC-d65a3585 REQ-SEC-8c0cc59a
 import type { SessionState } from "@vera/shared";
-import { Trash2 } from "lucide-react";
+import { Bookmark, Trash2 } from "lucide-react";
 import { type KeyboardEvent, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useSessionView } from "../../hooks/session-view.js";
 import { CHAT, useDocumentTabs } from "../documents/viewer-context.js";
 import { ErrorMessage } from "../error-message.js";
+import { Pager, usePaged } from "../pager.js";
 import { useBookmarkJump, useSessionBookmarks } from "./session-bookmarks.js";
 import { previewText } from "./transcript-navigation.js";
 
@@ -59,8 +60,12 @@ function BookmarksView({ sessionId, locked }: { sessionId: string; locked: boole
           row.text.toLocaleLowerCase().includes(needle) || !!row.reply?.toLocaleLowerCase().includes(needle),
       )
     : all;
+  const { rows: page, pager } = usePaged(shown);
   const chosen = all.filter((row) => selected.has(row.id)).map((row) => row.id);
   const allShownSelected = shown.length > 0 && shown.every((row) => selected.has(row.id));
+  const countText = needle
+    ? t("bookmarks.countFiltered", { shown: shown.length, total: all.length })
+    : t("bookmarks.count", { count: all.length });
   useEffect(() => {
     if (!confirming) return;
     dialog.current?.showModal();
@@ -121,46 +126,47 @@ function BookmarksView({ sessionId, locked }: { sessionId: string; locked: boole
           aria-label={t("bookmarks.filter")}
           placeholder={t("bookmarks.filter")}
           value={filter}
-          onChange={(event) => setFilter(event.target.value)}
+          onChange={(event) => {
+            setFilter(event.target.value);
+            pager.setPage(1);
+          }}
         />
-        <p role="status" data-bookmarks-count>
-          {needle
-            ? t("bookmarks.countFiltered", { shown: shown.length, total: all.length })
-            : t("bookmarks.count", { count: all.length })}
+        <p role="status" className="bookmarks-count" data-bookmarks-count title={countText}>
+          <Bookmark aria-hidden="true" size={16} />
+          <span aria-hidden="true">{needle ? `${shown.length}/${all.length}` : all.length}</span>
+          <span className="sr-only">{countText}</span>
         </p>
       </div>
       {!locked && all.length > 0 && (
         <div className="bookmarks-actions">
-          <label>
-            <input
-              type="checkbox"
-              data-action="bookmarks-select-all"
-              checked={allShownSelected}
-              disabled={shown.length === 0}
-              onChange={(event) => {
-                const checked = event.target.checked;
-                setSelected((current) => {
-                  const next = new Set(current);
-                  for (const row of shown) {
-                    if (checked) next.add(row.id);
-                    else next.delete(row.id);
-                  }
-                  return next;
-                });
-              }}
-            />
-            <span>{t("bookmarks.selectAll")}</span>
-          </label>
           <button
             type="button"
+            data-action="bookmarks-select-all"
+            disabled={shown.length === 0}
+            onClick={() =>
+              setSelected((current) => {
+                const next = new Set(current);
+                for (const row of shown) {
+                  if (allShownSelected) next.delete(row.id);
+                  else next.add(row.id);
+                }
+                return next;
+              })
+            }
+          >
+            {allShownSelected ? t("bookmarks.deselectAll") : t("bookmarks.selectAll")}
+          </button>
+          <button type="button" data-action="bookmarks-clear-all" onClick={() => setConfirming(true)}>
+            {t("bookmarks.clearAll")}
+          </button>
+          <button
+            type="button"
+            className="bookmarks-remove-selected"
             data-action="bookmarks-remove-selected"
             disabled={chosen.length === 0}
             onClick={() => remove(chosen)}
           >
             {t("bookmarks.removeSelected")}
-          </button>
-          <button type="button" data-action="bookmarks-clear-all" onClick={() => setConfirming(true)}>
-            {t("bookmarks.clearAll")}
           </button>
         </div>
       )}
@@ -175,7 +181,7 @@ function BookmarksView({ sessionId, locked }: { sessionId: string; locked: boole
         </p>
       ) : (
         <ul className="bookmarks-list" ref={list} aria-label={t("panel.bookmarks")}>
-          {shown.map((row) => {
+          {page.map((row) => {
             const text = previewText(row.text) || t("chat.navigator.empty");
             const reply = row.reply ? previewText(row.reply) : "";
             return (
@@ -226,6 +232,7 @@ function BookmarksView({ sessionId, locked }: { sessionId: string; locked: boole
           })}
         </ul>
       )}
+      <Pager {...pager} />
       {confirming && (
         <dialog
           ref={dialog}

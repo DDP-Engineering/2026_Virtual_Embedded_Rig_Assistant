@@ -1415,6 +1415,7 @@
     "empty": "Nu există marcaje în această conversație.",
     "noMatches": "Niciun marcaj nu se potrivește filtrului.",
     "selectAll": "Selectează tot",
+    "deselectAll": "Deselectează tot",
     "removeSelected": "Elimină selecția",
     "clearAll": "Șterge toate",
     "clearConfirm": "Elimini toate marcajele din această conversație ({{count}})? Mesajele rămân.",

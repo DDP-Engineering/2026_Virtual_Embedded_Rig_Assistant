@@ -1415,6 +1415,7 @@
     "empty": "No bookmarks in this conversation.",
     "noMatches": "No bookmarks match the filter.",
     "selectAll": "Select all",
+    "deselectAll": "Deselect all",
     "removeSelected": "Remove selected",
     "clearAll": "Clear all",
     "clearConfirm": "Remove every bookmark from this conversation ({{count}})? The messages stay.",

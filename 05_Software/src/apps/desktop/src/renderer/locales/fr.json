@@ -1415,6 +1415,7 @@
     "empty": "Aucun signet dans cette conversation.",
     "noMatches": "Aucun signet ne correspond au filtre.",
     "selectAll": "Tout sélectionner",
+    "deselectAll": "Tout désélectionner",
     "removeSelected": "Retirer la sélection",
     "clearAll": "Tout effacer",
     "clearConfirm": "Retirer tous les signets de cette conversation ({{count}}) ? Les messages restent.",
