@@ -494,6 +494,10 @@ export function createMockApi(
         ? (connection.models?.find((m) => m.id === id)?.reasoningOptions ?? [])
         : [];
     },
+    {
+      limit: () => resolveAdvanced("concurrentTurns", { app: settings.advanced }).value,
+      changed: () => emitAppEvent({ type: "session.capacity", ...sessions.capacity() }),
+    },
   );
   function pinned(content: string) {
     return { content, oversized: new TextEncoder().encode(content).byteLength > 16384 };
@@ -600,6 +604,8 @@ export function createMockApi(
       }
       return channels[channel].response.parse(value) as Response<C>;
     }
+    if (channel === "session.capacity")
+      return channels[channel].response.parse(sessions.capacity()) as Response<C>;
     if (channel === "session.activity") {
       // The browser mock keeps one workbench open: the shown one, with its running and waiting sessions.
       const shown = active ? benches.get(active) : undefined;

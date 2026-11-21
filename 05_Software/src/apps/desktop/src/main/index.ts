@@ -26,6 +26,7 @@ import {
   SettingsService,
   settingStates,
   splitModelReference,
+  TurnLimit,
   WebDownloads,
   type WorkbenchHost,
   WorkbenchService,
@@ -257,6 +258,15 @@ function runtimeEvents(owner: WorkbenchService) {
 function announceActivity(): void {
   emitAppEvent({ topic: "app", id: "app", event: { type: "session.activity" } });
 }
+/**
+ * One count of active turns over every open workbench, bounded by the Concurrent turns setting read at each
+ * admission (REQ-FUNC-52e97b95, REQ-FUNC-56f63014); every change is announced to the renderer (REQ-FUNC-33cd5f9f).
+ */
+const turnLimit = new TurnLimit({
+  limit: () => appAdvanced("concurrentTurns"),
+  changed: (state) =>
+    emitAppEvent({ topic: "app", id: "app", event: { type: "session.capacity", ...state } }),
+});
 // The logger exists before the settings service: until they load, its Log retention getter throws and nothing is pruned.
 const logger = createLogger(dataLocations.paths.logs, systemClock, () => appAdvanced("logDays"));
 const credentials = new CredentialFile({
@@ -276,6 +286,7 @@ const settings = new SettingsService({
     const next = settings.get().settings;
     emitAppEvent({ topic: "app", id: "app", event: settingsChangedEvent(announcedSettings, next) });
     announcedSettings = next;
+    turnLimit.refresh();
     updates?.settingsChanged();
     // Settings change only after load, inside app.whenReady, when the catalog checks exist.
     catalogChecks.settingsChanged();
@@ -524,6 +535,7 @@ const sessionOptions: Omit<
   "workbench" | "settled" | "emit" | "activity"
 > = {
   log: (message) => logger.log("error", "agent.turn.failed", { message }),
+  admission: turnLimit,
   terminals: (workbenchId) => terminals.reader(workbenchId),
   help: { app: help, language: interfaceLanguage },
   pluginBuilder: plugins,
@@ -1181,6 +1193,7 @@ ipcMain.handle(
         router.inWorkbench(workbenchId, (s, owner) =>
           s.search(query).map((item) => sanitizeSessionSummary(item, sessionContent(owner))),
         ),
+      "session.capacity": () => turnLimit.state(),
       "session.activity": async () =>
         (await router.activity()).map(({ snapshot, foreground, sessions }) => ({
           workbenchId: snapshot.config.id,

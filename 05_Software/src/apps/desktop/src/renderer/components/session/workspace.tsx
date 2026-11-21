@@ -1,10 +1,11 @@
-// REQ-UX-4bea0001 REQ-REL-4bea0006 REQ-REL-4bea0004
+// REQ-UX-4bea0001 REQ-REL-4bea0006 REQ-REL-4bea0004 REQ-UX-f20cb322
 
-import type { ChatDetail, SessionSummary } from "@vera/shared";
+import { type ChatDetail, type SessionSummary, veraErrorSchema } from "@vera/shared";
 import { useContext, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../../api/index.js";
 import { useSessionView } from "../../hooks/session-view.js";
+import { useTurnCapacity } from "../../hooks/use-turn-capacity.js";
 import { globalShortcutBlocked, ShortcutContext, shortcutCommand } from "../../lib/shortcuts.js";
 import { CHAT, useDocumentTabs } from "../documents/viewer-context.js";
 import { ErrorMessage } from "../error-message.js";
@@ -51,6 +52,12 @@ export function SessionWorkspace({
   const bindings = useContext(ShortcutContext);
   const { view, error, retry } = useSessionView(id, changed);
   const [failure, setFailure] = useState<unknown>();
+  const turns = useTurnCapacity();
+  // A send refused at the turn limit shows the limit until capacity frees, then that a turn can start.
+  const turnSlotFree =
+    veraErrorSchema.safeParse(failure).data?.code === "TURN_LIMIT" &&
+    !!turns.capacity &&
+    turns.capacity.active < turns.capacity.limit;
   const [pending, setPending] = useState(false);
   const [search, setSearch] = useState("");
   const [searching, setSearching] = useState(false);
@@ -120,6 +127,10 @@ export function SessionWorkspace({
       changed();
       return true;
     } catch (e) {
+      // At the Concurrent turns limit the message stays unsent in the composer (REQ-UX-f20cb322).
+      const refusal = veraErrorSchema.safeParse(e);
+      if (refusal.success && refusal.data.code === "TURN_LIMIT")
+        turns.refused(Number(refusal.data.params?.limit) || 1);
       setFailure(e);
       return false;
     } finally {
@@ -255,7 +266,12 @@ export function SessionWorkspace({
           disabled={readOnly || archived}
         />
       )}
-      {failure !== undefined && <ErrorMessage error={failure} />}
+      {failure !== undefined && !turnSlotFree && <ErrorMessage error={failure} />}
+      {turnSlotFree && (
+        <p role="status" data-i18n="chat.turnSlotFree">
+          {t("chat.turnSlotFree")}
+        </p>
+      )}
       {view && (
         <Composer
           sessionId={id}

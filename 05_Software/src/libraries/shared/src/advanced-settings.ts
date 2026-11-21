@@ -70,6 +70,8 @@ export const advancedSettings = {
   providerTokenCounts: toggle(true, ["app"]),
   /** Delegated sessions that may run at once. */
   delegations: int(1, 8, 3, ["app"]),
+  /** Turns that may run at once across every open workbench, delegated ones included (REQ-DATA-84718b36). */
+  concurrentTurns: int(1, 16, 3, ["app"]),
   /** Percent of the input budget above which history is compacted. */
   compactionTrigger: int(50, 95, 80, ["app", "workbench"]),
   /** Tokens of the most recent history kept verbatim (at most a fifth of the input budget). */

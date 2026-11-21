@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-56f63014"
+
+title = "Apply a changed turn limit only to later admissions"
+
+status = "active"
+
+requirement = """
+When the Concurrent turns limit changes, VERA shall apply the new value to later admissions only and let turns already admitted run to their end.
+"""
+
+verification = "Core test: three turns run at limit 3, the limit becomes 1: the three keep running and finish, a new send is refused until no turn is active, then admitted."
+
+affected_paths = ["05_Software/src/libraries/core/src/sessions/admission.ts", "05_Software/src/apps/desktop/src/main/index.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/sessions/admission.test.ts", "05_Software/src/libraries/core/src/sessions/turn-limit.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-21
+updated = 2026-11-21

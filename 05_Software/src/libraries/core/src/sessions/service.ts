@@ -72,6 +72,7 @@ import type { TerminalReader } from "../tools/terminal-read.js";
 import type { WebDownloads } from "../web/downloads.js";
 import type { WebProvider } from "../web/provider.js";
 import { WriteQueue } from "../workbench/write-queue.js";
+import { type TurnAdmission, type TurnSlot, turnLimitError } from "./admission.js";
 import { attachComposerImage } from "./composer-images.js";
 import {
   type DelegatedLaunch,
@@ -132,6 +133,11 @@ export interface SessionHost {
   assertWritable?: () => void;
   /** A committed change affects the linked sessions shown by the user host. */
   onDelegationsChanged?: () => void;
+  /**
+   * The host's bound on concurrent turns, shared with its other workbenches' services; each new top-level
+   * or delegated turn holds one slot until it ends (REQ-FUNC-52e97b95). Absent, turns are not bounded here.
+   */
+  admission?: TurnAdmission;
   /** A turn or a compaction finished; isSettled() tells whether any owned work remains. */
   onWorkSettled?: () => void;
   /**
@@ -164,6 +170,8 @@ interface ActiveTurn {
   failed?: boolean;
   accepting: boolean;
   approvalWait?: string;
+  /** Its place under the host's concurrent-turn limit, released when the turn leaves `active`. */
+  slot?: TurnSlot | undefined;
 }
 interface StagedTurn {
   reasoning: string | null;
@@ -468,6 +476,10 @@ export class SessionService {
     if (retry) return retry;
     if (parent.archived) throw veraError("DENIED");
     if (this.deleting.has(parentId)) throw veraError("BUSY");
+    // At the Concurrent turns limit the launch returns at once, before its model is prepared; the slot
+    // itself is taken when the child's turn starts (REQ-FUNC-74c5be27).
+    const capacity = this.host.admission?.state();
+    if (capacity && capacity.active >= capacity.limit) throw turnLimitError(capacity.limit);
 
     const model = resolveModelReference(request.modelRef ?? this.host.model(parent.model_ref));
     await this.ready;
@@ -1114,6 +1126,27 @@ export class SessionService {
         this.resolveAdvanced(id, "delegations")
     )
       throw veraError("BUSY");
+    // One slot under the host's Concurrent turns limit, taken before anything of the turn exists
+    // (REQ-FUNC-52e97b95); a turn that cannot be created gives it back (REQ-REL-11f00fcd).
+    const admission = this.host.admission;
+    const slot = admission?.acquire();
+    if (admission && !slot) throw turnLimitError(admission.state().limit);
+    try {
+      return this.runTurn(row, text, delegated, slot, staged, images);
+    } catch (error) {
+      slot?.release();
+      throw error;
+    }
+  }
+  private runTurn(
+    row: SessionRow,
+    text: string,
+    delegated: boolean,
+    slot: TurnSlot | undefined,
+    staged?: StagedTurn,
+    images?: string[],
+  ) {
+    const id = row.id;
     let processing = Promise.resolve();
     let failed = false;
     const durable = async () => {
@@ -1511,6 +1544,7 @@ export class SessionService {
       turnId: "",
       messageId: "",
       accepting: true,
+      slot,
     };
     let admitting = !!staged;
     let admissionError: { cause: unknown } | undefined;
@@ -1555,6 +1589,7 @@ export class SessionService {
       failed = true;
       turn.failed = true;
       this.active.delete(id);
+      turn.slot?.release();
       off();
       runtime.abort();
     };
@@ -1571,6 +1606,8 @@ export class SessionService {
         .finally(() => {
           if (discarded) return;
           this.active.delete(id);
+          // The turn has ended; a background compaction after it takes no slot (RULING-005 of TASK-d3a3049f).
+          turn.slot?.release();
           const result = this.last.get(id);
           // Background compaction off leaves the summary to the next request (REQ-FUNC-cae0533c).
           const compacts =
@@ -1885,7 +1922,10 @@ export class SessionService {
     for (const scope of this.bypassScopes.values()) scope.abort();
     for (const compactor of this.compactors.values()) compactor.abort();
     const downloadsClosed = this.host.downloads?.close();
-    await Promise.allSettled([...this.active.values()].map((turn) => turn.done));
+    const turns = [...this.active.values()];
+    await Promise.allSettled(turns.map((turn) => turn.done));
+    // Each turn released its slot as it ended; this only covers one that left no end behind (REQ-REL-11f00fcd).
+    for (const turn of turns) turn.slot?.release();
     await Promise.allSettled([...this.compacting.values()]);
     await downloadsClosed;
     await this.ready;

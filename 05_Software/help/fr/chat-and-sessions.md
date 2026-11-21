@@ -1,6 +1,6 @@
 # Discussion et sessions
 
-Une session est une conversation avec l’agent au sein d’un banc de travail. VERA enregistre chaque session dans le banc de travail : vous pouvez donc fermer l’application et reprendre plus tard. Plusieurs sessions peuvent s’exécuter en même temps.
+Une session est une conversation avec l’agent au sein d’un banc de travail. VERA enregistre chaque session dans le banc de travail : vous pouvez donc fermer l’application et reprendre plus tard. Plusieurs sessions peuvent s’exécuter en même temps. Au plus trois tours s’exécutent en même temps dans tous les bancs de travail ouverts, ou le nombre défini par **Tours simultanés** dans [Paramètres avancés](advanced-settings.md) ; un message envoyé à la limite reste non envoyé dans la zone de saisie jusqu’à la fin d’un tour.
 
 ## Démarrer et gérer des sessions
 

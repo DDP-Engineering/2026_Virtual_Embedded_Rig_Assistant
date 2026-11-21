@@ -35,6 +35,7 @@ Fiecare setare apare doar la nivelurile enumerate. Un comutator oferă **Moșten
 | Marjă de calibrare (%) | aplicație | 100–150 | 110 | Imediat |
 | Folosește numărarea tokenilor de la furnizor | aplicație | Activat / Dezactivat | Activat | Imediat |
 | Sesiuni delegate simultan | aplicație | 1–8 | 3 | Imediat |
+| Ture simultane | aplicație | 1–16 | 3 | Imediat |
 | Compactare automată | sesiune | Activat / Dezactivat | Activat | Imediat |
 | Mărimea rezultatului unui instrument (caractere) | aplicație | 8000–128000 | 32000 | Imediat |
 | Fereastra de citire (linii) | aplicație | 500–10000 | 2000 | Imediat |
@@ -80,6 +81,8 @@ Fiecare setare apare doar la nivelurile enumerate. Un comutator oferă **Moșten
 **Numărarea tokenilor.** VERA numără o cerere cu raportul raportat de furnizor pentru cererile anterioare, plus **Marja de calibrare**: 110 numără de 1,1 ori. Mărește marja când apar erori de limită de context. Dezactivează **Folosește numărarea tokenilor de la furnizor** când un furnizor raportează greșit consumul; VERA numără atunci cu estimarea sa conservatoare.
 
 **Sesiuni delegate simultan** este câte sesiuni delegate pot rula în același timp. O sesiune în plus este refuzată până se termină una.
+
+**Ture simultane** este câte ture ale agentului pot rula în același timp în toate workbench-urile deschise, inclusiv sesiunile delegate. O tură care așteaptă aprobarea ta contează până se termină. La limită, un mesaj nou nu este trimis și rămâne în caseta de mesaj, cu atașamentele lui; după ce se termină o tură, VERA arată că poate începe o tură și îl trimiți din nou. Un mesaj către o sesiune a cărei tură rulează se alătură acelei ture și este acceptat întotdeauna. O sesiune delegată pornită la limită este refuzată imediat. Micșorarea valorii nu oprește nicio tură în curs; se aplică de la mesajul următor.
 
 **Documente.** **Mărimea maximă a fișierelor text** limitează documentele text; PDF-urile și fișierele Office folosesc **Dimensiune maximă fișier** din **Documente și RAG**, care le crește sau le coboară limita până la 500 MB. Modificarea oricăreia reindexează documentele afectate. **Avertismentul de volum** stabilește când previzualizarea Documentelor avertizează despre o selecție mare. **Rezultate în panoul Docs** este câte rezultate listează o căutare din panoul Docs. **Limita de timp pentru extragerea documentelor** este timpul de bază pentru citirea unui PDF sau document Office (PDF-urile mari primesc mai mult), inclusiv pentru PDF-urile descărcate. **Pauza de indexare** este cât așteaptă indexarea după o modificare, iar **Timpul de inactivitate al procesului de embedding** cât timp este păstrat un proces de embedding nefolosit.
 

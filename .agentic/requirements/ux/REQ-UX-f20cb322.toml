@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-UX-f20cb322"
+
+title = "Keep the composer draft and show capacity at the turn limit"
+
+status = "active"
+
+requirement = """
+When a send is refused with TURN_LIMIT, the chat composer shall keep its text and attachments and show that the turn limit is reached, and when capacity becomes available it shall show that a turn can start.
+"""
+
+verification = "Renderer test: a TURN_LIMIT send returns false, the alert names the limit, the composer text remains and the session gains no item (attachments are cleared only on the same successful-send path as the text); a session.capacity event with active below the limit replaces the alert with the capacity-free status."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/session/workspace.tsx", "05_Software/src/apps/desktop/src/renderer/hooks/use-turn-capacity.ts", "05_Software/src/apps/desktop/src/renderer/components/error-message.tsx", "05_Software/src/apps/desktop/src/renderer/mocks/sessions.ts", "05_Software/src/apps/desktop/src/renderer/mocks/mockApi.ts"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/session/turn-limit.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-21
+updated = 2026-11-21

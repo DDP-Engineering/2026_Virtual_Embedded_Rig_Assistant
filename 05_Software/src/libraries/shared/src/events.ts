@@ -16,6 +16,7 @@ import {
   sessionStatusSchema,
   stopReasonSchema,
   todoItemsSchema,
+  turnCapacitySchema,
 } from "./session.js";
 import type { Settings } from "./settings.js";
 import { updateOfferSchema, updateSnapshotSchema } from "./updates.js";
@@ -42,6 +43,8 @@ export const appEventSchema = z.discriminatedUnion("type", [
   z.strictObject({ type: z.literal("plugins.catalog") }),
   /** A session's turn, approval, title or status, or the set of open workbenches changed: read session.activity. */
   z.strictObject({ type: z.literal("session.activity") }),
+  /** A turn was admitted or ended, or the Concurrent turns limit changed (REQ-FUNC-33cd5f9f). */
+  z.strictObject({ type: z.literal("session.capacity"), ...turnCapacitySchema.shape }),
 ]);
 export type AppEvent = z.infer<typeof appEventSchema>;
 /** Settings with no masking policy and no credential behind them. */

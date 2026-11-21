@@ -343,3 +343,29 @@ describe("Agent and context settings", () => {
     });
   });
 });
+
+// REQ-DATA-84718b36
+describe("Concurrent turns setting", () => {
+  it("registers concurrentTurns at application scope only, 1 to 16, default 3, applied live", () => {
+    expect(advancedSettings.concurrentTurns).toMatchObject({
+      kind: "int",
+      min: 1,
+      max: 16,
+      default: 3,
+      scopes: ["app"],
+      applies: "live",
+    });
+    const app = advancedPatchSchema("app");
+    for (const value of [1, 16]) expect(app.safeParse({ concurrentTurns: value }).success).toBe(true);
+    for (const value of [0, 17, 2.5, "3"])
+      expect(app.safeParse({ concurrentTurns: value }).success).toBe(false);
+    for (const scope of ["workbench", "session"] as const)
+      expect(advancedPatchSchema(scope).safeParse({ concurrentTurns: 3 }).success).toBe(false);
+    expect(resolveAdvanced("concurrentTurns", {})).toEqual({ value: 3, source: "default" });
+    expect(resolveAdvanced("concurrentTurns", { app: { concurrentTurns: 5 } })).toEqual({
+      value: 5,
+      source: "app",
+    });
+    expect(parseAdvancedFlag("concurrentTurns=2")).toBeUndefined();
+  });
+});

@@ -35,6 +35,7 @@ Each setting appears only at the levels listed. A switch offers **Inherit**, **O
 | Calibration margin (%) | application | 100–150 | 110 | Right away |
 | Use provider token counts | application | On / Off | On | Right away |
 | Delegated sessions at once | application | 1–8 | 3 | Right away |
+| Concurrent turns | application | 1–16 | 3 | Right away |
 | Automatic compaction | session | On / Off | On | Right away |
 | Tool result size (characters) | application | 8000–128000 | 32000 | Right away |
 | Read window (lines) | application | 500–10000 | 2000 | Right away |
@@ -80,6 +81,8 @@ Each setting appears only at the levels listed. A switch offers **Inherit**, **O
 **Token counting.** VERA counts a request with the ratio the provider reported for earlier requests, plus the **Calibration margin**: 110 counts 1.1 times. Raise the margin when context-limit errors appear. Turn **Use provider token counts** off when a provider reports wrong usage; VERA then counts with its conservative estimate.
 
 **Delegated sessions at once** is how many delegated sessions may run at the same time. A further one is refused until one finishes.
+
+**Concurrent turns** is how many agent turns may run at the same time across all open workbenches, delegated sessions included. A turn waiting for your approval counts until it ends. At the limit, a new message is not sent and stays in the message box with its attachments; once a turn ends, VERA shows that a turn can start and you send it again. A message to a session whose turn is running joins that turn and is always accepted. A delegated session started at the limit is refused at once. Lowering the value stops no running turn; it applies to the next message.
 
 **Documents.** **Maximum text file size** limits text documents; PDF and Office files use **Maximum file size** in **Documents & RAG**, which raises or lowers their limit up to 500 MB. Changing either indexes the affected documents again. **Volume warning** sets when the Documents preview warns about a large selection. **Docs panel results** is how many hits a Docs panel search lists. **Document extraction time limit** is the base time to read a PDF or Office document (large PDFs get more), downloaded PDFs included. **Indexing pause** is how long indexing waits after a change, and **Embedding worker idle time** how long an unused embedding worker is kept.
 

@@ -60,6 +60,7 @@
     "NOT_FOUND": "L’opération demandée {{operation}} est introuvable.",
     "CONFLICT": "L’opération est en conflit avec l’état actuel.",
     "BUSY": "L’application est occupée.",
+    "TURN_LIMIT": "La limite de tours simultanés ({{limit}}) est atteinte. Votre message n’a pas été envoyé et reste dans la zone de saisie.",
     "DENIED": "L’opération n’est pas autorisée.",
     "CONTEXT_LIMIT": "La limite de contexte a été atteinte.",
     "PROVIDER": "Le fournisseur n’a pas pu traiter la requête.",
@@ -375,7 +376,8 @@
     "moveDown": "Descendre",
     "restore": "Restaurer",
     "archived": "Sessions archivées",
-    "lastActivity": "Dernière activité : {{date}}"
+    "lastActivity": "Dernière activité : {{date}}",
+    "turnSlotFree": "Un tour peut démarrer maintenant. Envoyez à nouveau votre message."
   },
   "context": {
     "budget_exceeded": "L’entrée dépasse le budget de contexte du modèle."
@@ -1453,6 +1455,7 @@
       "calibrationMargin": "Marge de calibrage (%)",
       "providerTokenCounts": "Utiliser le décompte de jetons du fournisseur",
       "delegations": "Sessions déléguées simultanées",
+      "concurrentTurns": "Tours simultanés",
       "compactionTrigger": "Seuil de compactage (%)",
       "recentTailTokens": "Historique récent conservé tel quel (jetons)",
       "autoCompaction": "Compactage automatique",
@@ -1501,6 +1504,7 @@
       "calibrationMargin": "Marge au-dessus du décompte calibré d’après le fournisseur : 110 compte 1,1 fois. Une valeur plus élevée évite les erreurs de limite de contexte.",
       "providerTokenCounts": "Compter les requêtes avec le rapport indiqué par le fournisseur. Désactivé utilise l’estimation prudente.",
       "delegations": "Sessions déléguées pouvant s’exécuter en même temps.",
+      "concurrentTurns": "Tours de l’agent pouvant s’exécuter en même temps dans tous les bancs ouverts, sessions déléguées comprises.",
       "compactionTrigger": "Pourcentage du budget d’entrée au-delà duquel l’historique antérieur est résumé.",
       "recentTailTokens": "Jetons de l’historique le plus récent conservés tels quels tant que la requête tient, au plus un cinquième du budget d’entrée.",
       "autoCompaction": "Résumer cette conversation quand elle s’allonge. Désactivé garde tous les détails jusqu’à la limite de contexte.",

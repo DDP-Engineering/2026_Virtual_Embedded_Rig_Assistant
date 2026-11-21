@@ -93,6 +93,7 @@ import {
   permissionModeSchema,
   sessionIdSchema,
   sessionSummarySchema,
+  turnCapacitySchema,
 } from "./session.js";
 import { sessionExportFormatSchema, sessionSearchQuerySchema } from "./session-export.js";
 import { sessionStateSchema } from "./session-state.js";
@@ -685,6 +686,8 @@ export const channels = {
   ),
   /** Every open workbench, the shown one first, with its sessions running or awaiting approval. */
   "session.activity": defineChannel("session.activity", z.strictObject({}), z.array(sessionActivitySchema)),
+  /** Active turns across every open workbench and the Concurrent turns limit (REQ-FUNC-33cd5f9f). */
+  "session.capacity": defineChannel("session.capacity", z.strictObject({}), turnCapacitySchema),
   "session.export": defineChannel(
     "session.export",
     z.strictObject({ sessionId: sessionIdSchema, format: sessionExportFormatSchema }),

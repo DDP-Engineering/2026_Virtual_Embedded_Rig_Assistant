@@ -83,6 +83,10 @@ export function AdvancedField({
       about: t("advanced.about.providerTokenCounts"),
     },
     delegations: { name: t("advanced.settings.delegations"), about: t("advanced.about.delegations") },
+    concurrentTurns: {
+      name: t("advanced.settings.concurrentTurns"),
+      about: t("advanced.about.concurrentTurns"),
+    },
     compactionTrigger: {
       name: t("advanced.settings.compactionTrigger"),
       about: t("advanced.about.compactionTrigger"),

@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-1b33797f"
+
+title = "Never admit more concurrent turns than the limit"
+
+status = "active"
+
+requirement = """
+VERA shall never admit more concurrent turns than the resolved Concurrent turns limit, also when several starts across workbenches arrive at once.
+"""
+
+verification = "Core test: with limit 2, five sends to five idle sessions over two services issued in the same tick admit exactly two and refuse three with TURN_LIMIT; the admission unit test refuses acquire at the limit and never reports more active slots than the limit."
+
+affected_paths = ["05_Software/src/libraries/core/src/sessions/admission.ts", "05_Software/src/libraries/core/src/sessions/service.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/sessions/admission.test.ts", "05_Software/src/libraries/core/src/sessions/turn-limit.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-21
+updated = 2026-11-21

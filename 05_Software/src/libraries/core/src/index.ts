@@ -69,6 +69,7 @@ export * from "./plugins/runner.js";
 export * from "./plugins/shell.js";
 export * from "./plugins/store.js";
 export * from "./ports.js";
+export * from "./sessions/admission.js";
 export { rasterThumbnail } from "./sessions/composer-images.js";
 export {
   type DelegatedLaunch,

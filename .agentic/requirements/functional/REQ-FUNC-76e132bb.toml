@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-76e132bb"
+
+title = "Admit steering into an active turn without a new slot"
+
+status = "active"
+
+requirement = """
+When a message is sent to a session whose turn is active and accepting steering, VERA shall queue it into that turn without taking a turn slot, also while the Concurrent turns limit is reached.
+"""
+
+verification = "Core test at limit 1 with one running turn: a second send to the same session returns that turn's ID and a message.queued event, and the admission still counts one active turn."
+
+affected_paths = ["05_Software/src/libraries/core/src/sessions/service.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/sessions/turn-limit.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-21
+updated = 2026-11-21

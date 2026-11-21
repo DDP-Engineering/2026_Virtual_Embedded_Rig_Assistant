@@ -60,6 +60,7 @@
     "NOT_FOUND": "Operația solicitată {{operation}} nu a fost găsită.",
     "CONFLICT": "Operația intră în conflict cu starea curentă.",
     "BUSY": "Aplicația este ocupată.",
+    "TURN_LIMIT": "Limita de ture simultane ({{limit}}) a fost atinsă. Mesajul nu a fost trimis și rămâne în caseta de mesaj.",
     "DENIED": "Operația nu este permisă.",
     "CONTEXT_LIMIT": "Limita contextului a fost atinsă.",
     "PROVIDER": "Furnizorul nu a putut finaliza cererea.",
@@ -375,7 +376,8 @@
     "moveDown": "Mută mai jos",
     "restore": "Restaurează",
     "archived": "Sesiuni arhivate",
-    "lastActivity": "Ultima activitate: {{date}}"
+    "lastActivity": "Ultima activitate: {{date}}",
+    "turnSlotFree": "Acum poate începe o tură. Trimite mesajul din nou."
   },
   "context": {
     "budget_exceeded": "Textul depășește bugetul de context al modelului."
@@ -1453,6 +1455,7 @@
       "calibrationMargin": "Marjă de calibrare (%)",
       "providerTokenCounts": "Folosește numărarea tokenilor de la furnizor",
       "delegations": "Sesiuni delegate simultan",
+      "concurrentTurns": "Ture simultane",
       "compactionTrigger": "Prag de compactare (%)",
       "recentTailTokens": "Istoric recent păstrat întocmai (tokeni)",
       "autoCompaction": "Compactare automată",
@@ -1501,6 +1504,7 @@
       "calibrationMargin": "Rezervă peste numărarea calibrată din raportările furnizorului: 110 numără de 1,1 ori. O valoare mai mare evită erorile de limită de context.",
       "providerTokenCounts": "Numără cererile cu raportul raportat de furnizor. Dezactivat folosește estimarea conservatoare.",
       "delegations": "Câte sesiuni delegate pot rula în același timp.",
+      "concurrentTurns": "Câte ture ale agentului pot rula în același timp în toate workbench-urile deschise, inclusiv sesiunile delegate.",
       "compactionTrigger": "Procentul din bugetul de intrare peste care istoricul anterior este rezumat.",
       "recentTailTokens": "Tokenii celui mai recent istoric păstrați întocmai cât timp cererea încape, cel mult o cincime din bugetul de intrare.",
       "autoCompaction": "Rezumă această conversație când crește. Dezactivat păstrează toate detaliile până la limita de context.",

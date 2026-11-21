@@ -9,6 +9,7 @@ import {
   programPolicy,
   type SessionEvent,
   type SessionSummary,
+  type TurnCapacity,
   veraError,
 } from "@vera/shared";
 import { sessionFixtures } from "./session-fixtures.js";
@@ -76,7 +77,22 @@ export class MockSessions {
       mode: SessionSummary["mode"];
     },
     private readonly reasoningLevels: (model: string) => string[] = () => [],
+    /** The Concurrent turns limit across every mock workbench and the capacity announcement, like main. */
+    private readonly turns: { limit: () => number; changed: () => void } = {
+      limit: () => Number.MAX_SAFE_INTEGER,
+      changed: () => {},
+    },
   ) {}
+  /**
+   * Turns started by session.send over every mock workbench and the limit that admits new ones; the seeded
+   * streaming fixture only displays a live answer and holds no slot.
+   */
+  capacity(): TurnCapacity {
+    return {
+      active: [...this.sessions.values()].filter((row) => row.active && !row.live).length,
+      limit: this.turns.limit(),
+    };
+  }
   seedFixtures() {
     if ([...this.sessions.keys()].some((key) => key.startsWith(`${this.current().id}/`))) return;
     for (const fixture of sessionFixtures) {
@@ -329,6 +345,7 @@ export class MockSessions {
         delete row.live;
         row.summary.status = "idle";
         this.emit(id, { type: "turn.done", turnId: "stream-turn", stopReason: "aborted" });
+        this.turns.changed();
         return { stopped: true };
       }
       return { stopped: row.active };
@@ -388,6 +405,11 @@ export class MockSessions {
       return { turnId: row.turnId, messageId };
     }
     this.idle(id);
+    if (channel === "session.send") {
+      // A new turn at the Concurrent turns limit is refused before anything changes, like main.
+      const { active, limit } = this.capacity();
+      if (active >= limit) throw { code: "TURN_LIMIT", messageKey: "errors.TURN_LIMIT", params: { limit } };
+    }
     row.summary.updatedAt = new Date().toISOString();
     if (channel === "session.archive.set") {
       row.summary.archived = request.archived;
@@ -418,6 +440,7 @@ export class MockSessions {
     if (channel === "session.send") {
       const key = this.key(id);
       row.active = true;
+      this.turns.changed();
       row.stop = false;
       const turnId = `turn_${++this.number}`,
         messageId = `message_${++this.number}`;
@@ -663,6 +686,7 @@ export class MockSessions {
           row.active = false;
           row.summary.status = "idle";
           this.emit(id, { type: "turn.done", turnId, stopReason: row.stop ? "aborted" : "end" }, key);
+          this.turns.changed();
         });
       return { turnId, messageId };
     }

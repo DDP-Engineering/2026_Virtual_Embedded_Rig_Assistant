@@ -1,6 +1,6 @@
 # Chat und Sitzungen
 
-Eine Sitzung ist eine Unterhaltung mit dem Agenten innerhalb eines Workbenchs. VERA speichert jede Sitzung im Workbench, sodass Sie die App schließen und später weitermachen können. Mehrere Sitzungen können gleichzeitig laufen.
+Eine Sitzung ist eine Unterhaltung mit dem Agenten innerhalb eines Workbenchs. VERA speichert jede Sitzung im Workbench, sodass Sie die App schließen und später weitermachen können. Mehrere Sitzungen können gleichzeitig laufen. Höchstens drei Durchläufe laufen gleichzeitig in allen geöffneten Workbenches, oder so viele, wie unter **Gleichzeitige Durchläufe** in [Erweiterte Einstellungen](advanced-settings.md) eingestellt; eine am Limit gesendete Nachricht bleibt ungesendet im Eingabefeld, bis ein Durchlauf endet.
 
 ## Sitzungen starten und verwalten
 

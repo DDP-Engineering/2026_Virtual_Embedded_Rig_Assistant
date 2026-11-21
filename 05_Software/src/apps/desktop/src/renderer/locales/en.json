@@ -60,6 +60,7 @@
     "NOT_FOUND": "The requested operation {{operation}} was not found.",
     "CONFLICT": "The operation conflicts with the current state.",
     "BUSY": "The application is busy.",
+    "TURN_LIMIT": "The limit of concurrent turns ({{limit}}) is reached. Your message was not sent and stays in the message box.",
     "DENIED": "The operation is not allowed.",
     "CONTEXT_LIMIT": "The context limit was reached.",
     "PROVIDER": "The provider could not complete the request.",
@@ -375,7 +376,8 @@
     "moveDown": "Move down",
     "restore": "Restore",
     "archived": "Archived sessions",
-    "lastActivity": "Last activity: {{date}}"
+    "lastActivity": "Last activity: {{date}}",
+    "turnSlotFree": "A turn can start now. Send your message again."
   },
   "context": {
     "budget_exceeded": "The input exceeds the model context budget."
@@ -1453,6 +1455,7 @@
       "calibrationMargin": "Calibration margin (%)",
       "providerTokenCounts": "Use provider token counts",
       "delegations": "Delegated sessions at once",
+      "concurrentTurns": "Concurrent turns",
       "compactionTrigger": "Compaction trigger (%)",
       "recentTailTokens": "Recent history kept verbatim (tokens)",
       "autoCompaction": "Automatic compaction",
@@ -1501,6 +1504,7 @@
       "calibrationMargin": "Headroom over the count calibrated from provider reports: 110 counts 1.1 times. A higher value avoids context-limit errors.",
       "providerTokenCounts": "Count requests with the ratio the provider reported. Off uses the conservative estimate.",
       "delegations": "Delegated sessions that may run at the same time.",
+      "concurrentTurns": "Agent turns that may run at the same time across all open workbenches, delegated sessions included.",
       "compactionTrigger": "Percent of the input budget above which earlier history is summarized.",
       "recentTailTokens": "Tokens of the most recent history kept word for word while the request fits, at most a fifth of the input budget.",
       "autoCompaction": "Summarize this conversation when it grows. Off keeps full detail until the context limit is reached.",

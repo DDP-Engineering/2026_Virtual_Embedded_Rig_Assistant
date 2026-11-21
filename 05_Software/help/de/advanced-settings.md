@@ -35,6 +35,7 @@ Jede Einstellung erscheint nur auf den genannten Ebenen. Ein Schalter bietet **�
 | Kalibrierungsreserve (%) | Anwendung | 100–150 | 110 | Sofort |
 | Token-Zählung des Anbieters verwenden | Anwendung | Ein / Aus | Ein | Sofort |
 | Gleichzeitige delegierte Sitzungen | Anwendung | 1–8 | 3 | Sofort |
+| Gleichzeitige Durchläufe | Anwendung | 1–16 | 3 | Sofort |
 | Automatische Kompaktierung | Sitzung | Ein / Aus | Ein | Sofort |
 | Größe eines Werkzeugergebnisses (Zeichen) | Anwendung | 8000–128000 | 32000 | Sofort |
 | Lesefenster (Zeilen) | Anwendung | 500–10000 | 2000 | Sofort |
@@ -80,6 +81,8 @@ Jede Einstellung erscheint nur auf den genannten Ebenen. Ein Schalter bietet **�
 **Token-Zählung.** VERA zählt eine Anfrage mit dem Verhältnis, das der Anbieter für frühere Anfragen gemeldet hat, plus der **Kalibrierungsreserve**: 110 zählt 1,1-fach. Erhöhen Sie die Reserve, wenn Kontextlimit-Fehler auftreten. Schalten Sie **Token-Zählung des Anbieters verwenden** aus, wenn ein Anbieter einen falschen Verbrauch meldet; VERA zählt dann mit seiner konservativen Schätzung.
 
 **Gleichzeitige delegierte Sitzungen** gibt an, wie viele delegierte Sitzungen gleichzeitig laufen dürfen. Eine weitere wird abgelehnt, bis eine endet.
+
+**Gleichzeitige Durchläufe** gibt an, wie viele Agentendurchläufe in allen geöffneten Workbenches gleichzeitig laufen dürfen, delegierte Sitzungen eingeschlossen. Ein Durchlauf, der auf Ihre Genehmigung wartet, zählt, bis er endet. Am Limit wird eine neue Nachricht nicht gesendet und bleibt mit ihren Anhängen im Eingabefeld; sobald ein Durchlauf endet, zeigt VERA an, dass ein Durchlauf starten kann, und Sie senden sie erneut. Eine Nachricht an eine Sitzung, deren Durchlauf läuft, schließt sich diesem Durchlauf an und wird immer angenommen. Eine delegierte Sitzung, die am Limit gestartet wird, wird sofort abgelehnt. Ein kleinerer Wert beendet keinen laufenden Durchlauf; er gilt ab der nächsten Nachricht.
 
 **Dokumente.** **Maximale Textdateigröße** begrenzt Textdokumente; PDF- und Office-Dateien verwenden **Maximale Dateigröße** unter **Dokumente & RAG**, die ihr Limit bis 500 MB erhöht oder senkt. Eine Änderung indiziert die betroffenen Dokumente erneut. **Volumenwarnung** legt fest, wann die Dokumentvorschau vor einer großen Auswahl warnt. **Ergebnisse im Docs-Bereich** gibt an, wie viele Treffer eine Suche im Docs-Bereich auflistet. **Zeitlimit für die Dokumentextraktion** ist die Grundzeit zum Lesen eines PDF- oder Office-Dokuments (große PDFs erhalten mehr), heruntergeladene PDFs eingeschlossen. **Indizierungspause** gibt an, wie lange die Indizierung nach einer Änderung wartet, und **Leerlaufzeit des Embedding-Workers**, wie lange ein unbenutzter Embedding-Worker behalten wird.
 

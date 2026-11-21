@@ -1,6 +1,6 @@
 # Chat și sesiuni
 
-O sesiune este o conversație cu agentul în cadrul unui workbench. VERA salvează fiecare sesiune în workbench, așa că poți închide aplicația și continua mai târziu. Mai multe sesiuni pot rula în același timp.
+O sesiune este o conversație cu agentul în cadrul unui workbench. VERA salvează fiecare sesiune în workbench, așa că poți închide aplicația și continua mai târziu. Mai multe sesiuni pot rula în același timp. Cel mult trei ture rulează simultan în toate workbench-urile deschise, sau câte sunt setate la **Ture simultane** în [Setări avansate](advanced-settings.md); un mesaj trimis la limită rămâne netrimis în caseta de mesaj până se termină o tură.
 
 ## Pornește și gestionează sesiuni
 

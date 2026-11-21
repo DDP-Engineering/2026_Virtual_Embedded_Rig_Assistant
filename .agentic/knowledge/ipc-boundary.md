@@ -113,6 +113,7 @@ AppEvents use shared updates.ts; [updates](updates.md) owns their lifecycle/capa
   owns the immutable identity and signature acceptance; transport/preload/mock retain the strict schema.
 - vera:invoke returns a validated success/error envelope; window.vera.invoke resolves the value
   or rejects a plain VeraError. Plain error objects retain fields across contextBridge.
+- `session.capacity {}` returns `{active, limit}`: turns running across every open workbench and the Concurrent turns limit (`active` may exceed a lowered limit). AppEvent `session.capacity {active, limit}` follows every admission, release and changed limit. A send refused at the limit fails with VeraError `TURN_LIMIT` (`params.limit`); the browser mock mirrors the count, the refusal and the event, ignoring its seeded streaming fixture.
 - subscribe('app', on) receives AppEvent settings.changed and returns idempotent unsubscribe. AppEvent `session.activity` (no payload) tells the renderer to read `session.activity {}`, which returns every open workbench runtime `{workbenchId,name,folder,foreground,sessions:[{id,title,status running|awaiting_approval}]}`, the shown one first, titles masked per that workbench ([Sessions](sessions.md) owns routing and activity).
 - subscribe('workbench', wbId, on) filters validated opened/closed/config.changed events by id.
 - app.chooseFolder and workbench.create/open/close/recent/config.get/config.update/pinned.get/

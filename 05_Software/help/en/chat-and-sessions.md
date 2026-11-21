@@ -1,6 +1,6 @@
 # Chat and sessions
 
-A session is one conversation with the agent inside a workbench. VERA saves every session in the workbench, so you can close the app and continue later. Several sessions can run at the same time.
+A session is one conversation with the agent inside a workbench. VERA saves every session in the workbench, so you can close the app and continue later. Several sessions can run at the same time. At most three turns run at once across all open workbenches, or the **Concurrent turns** set in [Advanced settings](advanced-settings.md); a message sent at the limit stays unsent in the message box until a turn ends.
 
 ## Start and manage sessions
 

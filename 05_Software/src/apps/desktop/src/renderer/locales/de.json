@@ -60,6 +60,7 @@
     "NOT_FOUND": "Der angeforderte Vorgang {{operation}} wurde nicht gefunden.",
     "CONFLICT": "Der Vorgang steht im Konflikt mit dem aktuellen Zustand.",
     "BUSY": "Die Anwendung ist beschäftigt.",
+    "TURN_LIMIT": "Das Limit gleichzeitiger Durchläufe ({{limit}}) ist erreicht. Ihre Nachricht wurde nicht gesendet und bleibt im Eingabefeld.",
     "DENIED": "Der Vorgang ist nicht erlaubt.",
     "CONTEXT_LIMIT": "Das Kontextlimit wurde erreicht.",
     "PROVIDER": "Der Anbieter konnte die Anfrage nicht abschließen.",
@@ -375,7 +376,8 @@
     "moveDown": "Nach unten verschieben",
     "restore": "Wiederherstellen",
     "archived": "Archivierte Sitzungen",
-    "lastActivity": "Letzte Aktivität: {{date}}"
+    "lastActivity": "Letzte Aktivität: {{date}}",
+    "turnSlotFree": "Ein Durchlauf kann jetzt starten. Senden Sie Ihre Nachricht erneut."
   },
   "context": {
     "budget_exceeded": "Die Eingabe überschreitet das Kontextbudget des Modells."
@@ -1453,6 +1455,7 @@
       "calibrationMargin": "Kalibrierungsreserve (%)",
       "providerTokenCounts": "Token-Zählung des Anbieters verwenden",
       "delegations": "Gleichzeitige delegierte Sitzungen",
+      "concurrentTurns": "Gleichzeitige Durchläufe",
       "compactionTrigger": "Kompaktierungsschwelle (%)",
       "recentTailTokens": "Wörtlich behaltener jüngster Verlauf (Token)",
       "autoCompaction": "Automatische Kompaktierung",
@@ -1501,6 +1504,7 @@
       "calibrationMargin": "Reserve über der aus Anbieterangaben kalibrierten Zählung: 110 zählt 1,1-fach. Ein höherer Wert vermeidet Kontextlimit-Fehler.",
       "providerTokenCounts": "Anfragen mit dem vom Anbieter gemeldeten Verhältnis zählen. Aus verwendet die konservative Schätzung.",
       "delegations": "Delegierte Sitzungen, die gleichzeitig laufen dürfen.",
+      "concurrentTurns": "Agentendurchläufe, die in allen geöffneten Workbenches gleichzeitig laufen dürfen, delegierte Sitzungen eingeschlossen.",
       "compactionTrigger": "Prozent des Eingabebudgets, ab dem der frühere Verlauf zusammengefasst wird.",
       "recentTailTokens": "Token des jüngsten Verlaufs, die wörtlich erhalten bleiben, solange die Anfrage passt, höchstens ein Fünftel des Eingabebudgets.",
       "autoCompaction": "Diese Unterhaltung zusammenfassen, wenn sie wächst. Aus behält alle Details bis zum Kontextlimit.",

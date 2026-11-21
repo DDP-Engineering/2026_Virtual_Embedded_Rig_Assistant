@@ -35,6 +35,7 @@ Chaque paramètre n’apparaît qu’aux niveaux indiqués. Un interrupteur prop
 | Marge de calibrage (%) | application | 100–150 | 110 | Immédiatement |
 | Utiliser le décompte de jetons du fournisseur | application | Activé / Désactivé | Activé | Immédiatement |
 | Sessions déléguées simultanées | application | 1–8 | 3 | Immédiatement |
+| Tours simultanés | application | 1–16 | 3 | Immédiatement |
 | Compactage automatique | session | Activé / Désactivé | Activé | Immédiatement |
 | Taille d’un résultat d’outil (caractères) | application | 8000–128000 | 32000 | Immédiatement |
 | Fenêtre de lecture (lignes) | application | 500–10000 | 2000 | Immédiatement |
@@ -80,6 +81,8 @@ Chaque paramètre n’apparaît qu’aux niveaux indiqués. Un interrupteur prop
 **Décompte des jetons.** VERA compte une requête avec le rapport indiqué par le fournisseur pour les requêtes précédentes, plus la **Marge de calibrage** : 110 compte 1,1 fois. Augmentez la marge quand des erreurs de limite de contexte apparaissent. Désactivez **Utiliser le décompte de jetons du fournisseur** quand un fournisseur indique une consommation erronée ; VERA compte alors avec son estimation prudente.
 
 **Sessions déléguées simultanées** est le nombre de sessions déléguées pouvant s’exécuter en même temps. Une session supplémentaire est refusée jusqu’à ce qu’une autre se termine.
+
+**Tours simultanés** est le nombre de tours de l’agent pouvant s’exécuter en même temps dans tous les bancs de travail ouverts, sessions déléguées comprises. Un tour qui attend votre approbation compte jusqu’à sa fin. À la limite, un nouveau message n’est pas envoyé et reste dans la zone de saisie avec ses pièces jointes ; dès qu’un tour se termine, VERA indique qu’un tour peut démarrer et vous l’envoyez à nouveau. Un message adressé à une session dont le tour est en cours rejoint ce tour et est toujours accepté. Une session déléguée lancée à la limite est refusée immédiatement. Une valeur plus basse n’arrête aucun tour en cours ; elle s’applique au message suivant.
 
 **Documents.** **Taille maximale des fichiers texte** limite les documents texte ; les fichiers PDF et Office utilisent **Taille maximale des fichiers** dans **Documents et RAG**, qui relève ou abaisse leur limite jusqu’à 500 Mo. Une modification réindexe les documents concernés. **Avertissement de volume** fixe quand l’aperçu des Documents avertit d’une grande sélection. **Résultats du panneau Docs** est le nombre de résultats qu’une recherche du panneau Docs affiche. **Durée limite d’extraction des documents** est la durée de base pour lire un PDF ou un document Office (les grands PDF obtiennent davantage), PDF téléchargés compris. **Pause d’indexation** est la durée d’attente de l’indexation après une modification, et **Inactivité du worker d’embedding** la durée de conservation d’un worker d’embedding inutilisé.
 
