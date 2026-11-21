@@ -28,7 +28,7 @@ import {
   validateNativeFiles,
 } from "./package-checks.mjs";
 import { thirdPartyNotices } from "./third-party.mjs";
-import { updatePublish } from "./update-config.mjs";
+import { publicRepository, updateFilePattern, updatePublish } from "./update-config.mjs";
 
 const root = software;
 const require = softwareRequire;
@@ -475,7 +475,7 @@ async function packageApp() {
       extraMetadata: {
         description: "Virtual Embedded Rig Assistant",
         author: "DDP Engineering",
-        homepage: "https://github.com/DDP-Engineering/2026_Virtual_Embedded_Rig_Assistant",
+        homepage: `https://github.com/${publicRepository}`,
       },
       files: [
         "out/**",
@@ -586,7 +586,18 @@ async function packageApp() {
     }
   }
   const artifacts = [];
+  // The feed metadata and blockmaps that the update feed serves next to the installers.
+  const updateFiles = [];
   for (const file of await readdir(output)) {
+    if (updateFilePattern.test(file)) {
+      const bytes = await readFile(join(output, file));
+      updateFiles.push({
+        path: file,
+        bytes: bytes.length,
+        sha256: createHash("sha256").update(bytes).digest("hex"),
+      });
+      continue;
+    }
     if (!/\.(zip|exe|AppImage|deb)$/.test(file)) continue;
     const bytes = await readFile(join(output, file));
     artifacts.push({
@@ -606,6 +617,9 @@ async function packageApp() {
     expectedTargets.some((target) => !artifacts.some((artifact) => artifact.target === target))
   )
     throw new Error("Expected both current native targets");
+  const updateFeed = distribution.publish?.[0]?.url ?? "";
+  if (updateFeed && !updateFiles.some((file) => file.path.endsWith(".yml")))
+    throw new Error("Update feed set but electron-builder wrote no channel metadata");
   const sum = (needle) =>
     measured.files
       .filter((file) => file.path.includes(needle))
@@ -624,6 +638,8 @@ async function packageApp() {
         : "not-applicable",
     prepack,
     artifacts,
+    updateFeed,
+    updateFiles,
     unpackedBytes: measured.bytes,
     onnxruntimeBytes,
     modelBytes: sum("resources/models/"),

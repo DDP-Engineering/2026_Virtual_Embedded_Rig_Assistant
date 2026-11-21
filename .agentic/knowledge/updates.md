@@ -21,6 +21,8 @@ update.get/check/restart use empty strict requests. update.download requires con
 update.openRelease requires confirmed:true and the current offer version. Shared updates.ts
 defines snapshots; AppEvents update.available/update.changed deliver state.
 VERA_UPDATE_URL fixes generic feed at compilation and builder metadata; empty is unconfigured.
+Release deliveries set it to the public repository's latest GitHub release (`releaseFeed`); publishing a
+release with `delivery:release -- --publish` is what offers a version to installed builds.
 
 ## Invariants
 
@@ -54,6 +56,7 @@ VERA_UPDATE_URL fixes generic feed at compilation and builder metadata; empty is
 | admission | core sessions/service.ts, main/sessions.ts/index.ts | approvals.test.ts, sessions.test.ts |
 | UI/IPC | shared updates/ipc/events, renderer updates.tsx | shared/UI tests, tests/e2e/updates.spec.ts |
 | build/feed | update-config.mjs, package.mjs, update-feed.mjs | tooling/updates.test.ts, packaging.test.ts |
+| release feed/publishing | update-config.mjs releaseFeed, delivery/build-vera-installers.mjs, delivery/publish-github-release.mjs | tooling/github-release.test.ts, delivery.test.ts |
 
 ## Key behaviors
 

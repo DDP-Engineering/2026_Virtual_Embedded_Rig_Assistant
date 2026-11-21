@@ -8,10 +8,12 @@ import { embeddingPayload } from "../release/embedding-payload.mjs";
 import {
   catalogPublicKey,
   checkSums,
+  checkUpdateFiles,
   currentDelivery,
   deliveryFolderName,
   deliveryWarnings,
   formatBytes,
+  isUpdateFile,
   licenseName,
   listFiles,
   manifestName,
@@ -76,8 +78,15 @@ for (const platform of platforms) {
   expectOne(part, files, first, `${first.source} installer`);
   expectOne(part, files, second, `${second.source} package`);
   if (!files.includes(releaseNotesName)) problem(part, `${releaseNotesName}: missing`);
+  const updateFiles = files.filter(isUpdateFile);
+  for (const text of await checkUpdateFiles(join(folder, part), updateFiles, desktop, platform))
+    problem(part, text);
+  const feed = manifest?.parts?.[part]?.updateFeed ?? "";
+  const channels = updateFiles.filter((name) => name.endsWith(".yml"));
+  if (feed && !channels.length) problem(part, `built for update feed ${feed} but has no channel file`);
+  if (!feed && channels.length) problem(part, "has channel files but no update feed in delivery.json");
   for (const name of files) {
-    if (name === releaseNotesName) continue;
+    if (name === releaseNotesName || isUpdateFile(name)) continue;
     if (!first.test(name) && !second.test(name)) problem(part, `${name}: unexpected file`);
     else if (!name.startsWith(`VERA-${desktop}-`)) problem(part, `${name}: not desktop version ${desktop}`);
     else {

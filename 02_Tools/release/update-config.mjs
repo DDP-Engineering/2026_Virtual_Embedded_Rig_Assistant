@@ -2,6 +2,20 @@ import { createPublicKey } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
+/** The public GitHub repository whose releases carry the installers and the update feed. */
+export const publicRepository = "DDP-Engineering/2026_Virtual_Embedded_Rig_Assistant";
+/**
+ * The update feed of the release builds: GitHub redirects `releases/latest/download/<file>` to that file of the
+ * newest published release that is not a pre-release, so this folder always holds the current `latest.yml`.
+ */
+export function releaseFeed(repository = publicRepository) {
+  if (!/^[A-Za-z0-9-]+\/[A-Za-z0-9._-]+$/.test(repository)) throw new Error("Invalid GitHub repository");
+  return `https://github.com/${repository}/releases/latest/download/`;
+}
+
+/** The update files electron-builder writes beside the installers when a feed is set: channel metadata and blockmaps. */
+export const updateFilePattern = /^(?:(?:latest|beta|alpha)(?:-linux)?\.yml|.+\.blockmap)$/;
+
 /** Build input only. Production feeds are HTTPS; instrumented probes may use loopback HTTP. */
 export function updateFeed(value = "", testBuild = false) {
   if (!value) return "";

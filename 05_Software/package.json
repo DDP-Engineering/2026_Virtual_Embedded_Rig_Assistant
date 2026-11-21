@@ -40,6 +40,7 @@
     "delivery:plugins": "node ../02_Tools/delivery/build-plugin-packages.mjs",
     "delivery:plugin-deps": "node ../02_Tools/delivery/build-plugin-deps-kit.mjs",
     "delivery:verify": "node ../02_Tools/delivery/verify-delivery.mjs",
+    "delivery:release": "node ../02_Tools/delivery/publish-github-release.mjs",
     "smoke:live": "node ../02_Tools/release/smoke-live.mjs",
     "smoke:package": "node tests/packaging/smoke/smoke-package.mjs",
     "build:cli": "node ../02_Tools/build/build-cli.mjs",

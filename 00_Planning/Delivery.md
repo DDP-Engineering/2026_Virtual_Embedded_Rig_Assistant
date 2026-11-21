@@ -78,8 +78,21 @@ The update feed is a build input, `VERA_UPDATE_URL`, compiled into the main proc
 accept loopback HTTP. A build without a feed checks nothing, and "Check now" reports "This build has
 no update feed configured."
 
+- Release builds (`delivery:vera`) use the public GitHub releases as the feed:
+  `https://github.com/DDP-Engineering/2026_Virtual_Embedded_Rig_Assistant/releases/latest/download/`
+  (`update-config.mjs` `releaseFeed`). GitHub redirects every file below it to that file of the newest
+  published release not marked pre-release, also with electron-updater's `?noCache=` query. A plain
+  `npm run package` or `npm run dev` build has no feed unless `VERA_UPDATE_URL` is set.
 - The feed is an electron-updater 6.8.10 generic feed folder: `latest.yml`, `beta.yml`,
-  `latest-linux.yml`, `beta-linux.yml`, the installers and their `.blockmap` files.
+  `latest-linux.yml`, `beta-linux.yml`, the installers and their `.blockmap` files. `latest-linux.yml`
+  lists both the AppImage and the deb. electron-builder also writes `alpha*.yml`, which VERA never reads.
+- Publishing: `delivery:release` uploads a verified delivery into a draft release `v<version>` (invisible
+  to the feed); `delivery:release -- --publish` makes it the latest release, which offers it to every
+  installed VERA. A semver pre-release version (`1.3.0-beta.1`) becomes a GitHub pre-release, which this
+  feed does not serve: the Beta channel receives nothing until beta releases get a feed of their own.
+- Differential download: electron-updater takes the running version's blockmap from its update cache,
+  which an earlier update left there. After an install by hand there is none; the feed folder names only the
+  newest release, so the old blockmap is not found there either, and that first update downloads in full.
 - Settings: mode Off, Notify (default) or Download automatically; channel Stable (`latest`) or
   Beta (includes stable). Stable reads only `latest` and ignores pre-release versions. Beta reads
   `latest` and `beta` and offers the highest version. Only versions newer than the running one are
@@ -152,10 +165,11 @@ The npm scripts run the scripts in `02_Tools/delivery/`:
 
 | npm script | Does |
 |---|---|
-| `delivery:vera -- --platform windows-x64\|linux-x64` | `npm run package` (release mode only), then copies the artifacts of `package-report.json` |
+| `delivery:vera -- --platform windows-x64\|linux-x64` | `npm run package` (release mode only) with the public update feed, then copies the installers and update feed files of `package-report.json` |
 | `delivery:plugins [-- --signing-key <pem>]` | `prepare:plugins`, signs the channel indexes when a key is given, zips the catalog |
 | `delivery:plugin-deps -- --platform …` | `vera catalog kit` (default `--skip sigrok`), zipped; needs network |
 | `delivery:verify [-- <folder>]` | checks a delivery without changing or publishing anything |
+| `delivery:release [-- <folder>] [--publish]` | creates or completes the GitHub draft release of a verified delivery; `--publish` publishes it as the latest release |
 
 - A platform part is built only on its own host. An existing part is refused; `--replace` rebuilds
   only that part. A part is built in a staging folder and moved into place at the end.
