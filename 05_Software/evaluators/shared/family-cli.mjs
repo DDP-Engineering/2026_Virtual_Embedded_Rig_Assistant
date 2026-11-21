@@ -53,8 +53,15 @@ async function rescore(spec, values) {
   const folder = dirname(input);
   const run = JSON.parse(await readFile(input, "utf8"));
   const cases = await loadCases(spec.casesFile, spec.expect);
-  if (cases.sha256 !== run.identity.casesSha256)
-    throw Error("The case file changed since this run; rescore needs the same cases.");
+  // Only the expectations may change: with another prompt the saved events answer another question.
+  // (A run keeps each case's prompt; setup, history and plugin changes are the author's to judge.)
+  let expectationsChanged = false;
+  if (cases.sha256 !== run.identity.casesSha256) {
+    const current = new Map(cases.cases.map((item) => [item.id, item]));
+    if (run.cases.some((c) => current.get(c.id)?.prompt !== c.prompt))
+      throw Error("The case file changed beyond expectations since this run; run the cases again.");
+    expectationsChanged = true;
+  }
   const byId = new Map(cases.cases.map((item) => [item.id, item]));
   for (const result of run.cases) {
     const item = byId.get(result.id);
@@ -89,7 +96,9 @@ async function rescore(spec, values) {
     from: basename(input),
     at: new Date().toISOString(),
     originalHarnessHash: run.identity.harnessHash,
+    ...(expectationsChanged ? { originalCasesSha256: run.identity.casesSha256 } : {}),
   };
+  for (const target of [run.identity, run.compatibility]) target.casesSha256 = cases.sha256;
   run.identity.harnessHash = hash;
   run.compatibility.harnessHash = hash;
   const output = resolve(values.output ?? join(folder, "run-rescored.json"));
