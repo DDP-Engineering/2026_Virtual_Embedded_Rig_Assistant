@@ -2,6 +2,28 @@ import { createServer, request as httpRequest } from "node:http";
 import { request as httpsRequest } from "node:https";
 
 /**
+ * What an LM Studio server reports about a model (architecture, quantization, loaded context), or
+ * null for any other server. Read once at the start of a run, directly from the endpoint's origin.
+ */
+export async function describeServerModel(baseUrl, model) {
+  try {
+    const url = new URL(`/api/v0/models/${model.split("/").map(encodeURIComponent).join("/")}`, baseUrl);
+    const response = await fetch(url, { signal: AbortSignal.timeout(3000) });
+    if (!response.ok) return null;
+    const data = await response.json();
+    return {
+      arch: data.arch ?? null,
+      quantization: data.quantization ?? null,
+      state: data.state ?? null,
+      loadedContextLength: data.loaded_context_length ?? null,
+      maxContextLength: data.max_context_length ?? null,
+    };
+  } catch {
+    return null;
+  }
+}
+
+/**
  * A loopback proxy in front of an OpenAI-compatible endpoint, used as the `custom` base URL of a run.
  * It forwards every request to `target` and only to its origin. With `reasoning` it sets
  * `reasoning_effort` on chat completions the way VERA does for a custom endpoint ("off" becomes

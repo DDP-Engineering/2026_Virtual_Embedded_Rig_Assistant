@@ -40,11 +40,13 @@ function repeatBlocks(repeat, units) {
     ["First event", formatValue(repeat.timing.firstEventMs, "ms")],
     ["First token", formatValue(repeat.timing.firstTokenMs, "ms")],
     ["Total", formatValue(repeat.timing.totalMs, "ms")],
+    ...(repeat.egress?.length ? [["Blocked network attempts", repeat.egress.join(", ")]] : []),
     ["Tokens in / out", `${s.usage.input} / ${s.usage.output}`],
     ...(repeat.invalidLines ? [["Invalid event lines", String(repeat.invalidLines)]] : []),
   ];
   return [
     { title: "Answer", text: s.answer },
+    ...(repeat.notes ? [{ title: "Notes", json: repeat.notes }] : []),
     {
       title: "Metrics",
       table: {
@@ -86,8 +88,26 @@ export function agentReportModel(run, spec = {}, runPath = "run.json") {
       ["Family", id.family],
       ["Model", `${id.provider}/${id.model}`],
       ["Provider origin", id.providerOrigin],
+      ...(id.server
+        ? [
+            [
+              "Server model",
+              [
+                id.server.arch,
+                id.server.quantization,
+                id.server.loadedContextLength && `context ${id.server.loadedContextLength}`,
+              ]
+                .filter(Boolean)
+                .join(", "),
+            ],
+          ]
+        : []),
       ["Reasoning", id.reasoning],
       ["Approvals", id.approve],
+      [
+        "Web tools",
+        { off: "off", blocked: "offered, network blocked", on: "on (real network)" }[id.webTools] ?? "on",
+      ],
       ["Repeats", String(id.repeats)],
       ["Cases", `${run.cases.length} from ${id.cases}`],
       ["Cases SHA-256", id.casesSha256],

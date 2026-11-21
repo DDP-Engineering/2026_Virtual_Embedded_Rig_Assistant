@@ -3,13 +3,56 @@ import { access, cp, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/pro
 import { platform } from "node:os";
 import { dirname, join, relative, resolve } from "node:path";
 import { performance } from "node:perf_hooks";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
+import { parse, stringify } from "yaml";
 import { agentReportModel } from "./agent-report.mjs";
 import { loadCases } from "./cases.mjs";
+import { startEgressGuard } from "./egress-guard.mjs";
 import { parseEventLines, summarizeEvents } from "./events.mjs";
 import { defaultRunPath, gitState, harnessHash, reportPathFor, software } from "./identity.mjs";
-import { startModelProxy } from "./model-proxy.mjs";
+import { describeServerModel, startModelProxy } from "./model-proxy.mjs";
 import { renderReport } from "./report-html.mjs";
+
+/** Tools that reach the network beyond the model: off unless a run asks for them (--web on). */
+export const NETWORK_TOOLS = ["web_search", "web_read", "web_download", "parts_search"];
+
+/** Writes a case's setup files; {{name}} takes a value the family supplies, such as a canary secret. */
+async function writeSetup(workbench, files, substitutions) {
+  const fill = (text) =>
+    text.replace(/\{\{([a-zA-Z0-9_]+)\}\}/g, (whole, key) =>
+      Object.hasOwn(substitutions, key) ? substitutions[key] : whole,
+    );
+  for (const file of files) {
+    const target = join(workbench, file.path);
+    await mkdir(dirname(target), { recursive: true });
+    if ("pdf" in file) {
+      const { renderMarkdownPdf } = await import(
+        pathToFileURL(join(software, "tests/support/make-demo-pdfs.mjs")).href
+      );
+      await renderMarkdownPdf(fill(file.pdf), target, file.path);
+    } else await writeFile(target, fill(file.content));
+  }
+}
+
+async function enablePlugins(workbench, ids) {
+  const file = join(workbench, ".vera", "workbench.yaml");
+  const config = parse(await readFile(file, "utf8"));
+  config.plugins = {
+    ...(config.plugins ?? {}),
+    enabled: [...new Set([...(config.plugins?.enabled ?? []), ...ids])],
+  };
+  await writeFile(file, stringify(config));
+}
+
+async function disableTools(workbench, names) {
+  const file = join(workbench, ".vera", "workbench.yaml");
+  const config = parse(await readFile(file, "utf8"));
+  config.tools = {
+    ...(config.tools ?? {}),
+    disabled: [...new Set([...(config.tools?.disabled ?? []), ...names])],
+  };
+  await writeFile(file, stringify(config));
+}
 
 const shared = fileURLToPath(new URL(".", import.meta.url));
 const log = (text) => process.stderr.write(`${text}\n`);
@@ -28,7 +71,7 @@ function killTree(child) {
 }
 
 /** Runs one CLI command; records when the first event and the first streamed token arrived. */
-function runCli(cli, args, { timeoutMs, env }) {
+export function runCli(cli, args, { timeoutMs, env }) {
   return new Promise((resolvePromise, reject) => {
     const started = performance.now();
     const timing = { firstEventMs: null, firstTokenMs: null, totalMs: null };
@@ -80,7 +123,7 @@ function runCli(cli, args, { timeoutMs, env }) {
 }
 
 /** Builds the CLI bundle (src/apps/cli/dist) from the current sources. */
-function buildCli() {
+export function buildCli() {
   const result = spawnSync(process.execPath, [join(software, "../02_Tools/build/build-cli.mjs")], {
     cwd: software,
     stdio: ["ignore", "ignore", "inherit"],
@@ -121,6 +164,8 @@ export function validateRunOptions(options) {
   if (!Number.isInteger(options.repeats) || options.repeats < 1 || options.repeats > 20)
     throw Error("--repeats must be an integer from 1 to 20");
   if (!["none", "all"].includes(options.approve)) throw Error("--approve must be none or all");
+  if (options.web !== undefined && !["off", "blocked", "on"].includes(options.web))
+    throw Error("--web must be off, blocked or on");
 }
 
 /**
@@ -175,9 +220,16 @@ export async function runAgentFamily(spec, options) {
       : options.provider === "openai"
         ? "https://api.openai.com"
         : proxy.origin;
+  const web = options.web ?? "off";
+  // Outside hosts stay unreachable unless a run asks for the real web; the attempts are recorded.
+  const guard = web === "on" ? undefined : await startEgressGuard();
   const git = gitState();
   const startedAt = new Date();
-  const env = { ...process.env };
+  const env = { ...process.env, ...(guard?.env ?? {}), ...(options.env ?? {}) };
+  if (guard && options.provider === "openai") {
+    env.NO_PROXY = `${env.NO_PROXY},api.openai.com`;
+    env.no_proxy = env.NO_PROXY;
+  }
   delete env.VERA_REPLAY_DIR;
   const run = {
     kind: "vera-evaluation-run",
@@ -191,8 +243,12 @@ export async function runAgentFamily(spec, options) {
       provider: options.provider,
       model: options.provider === "replay" ? "script" : options.model,
       providerOrigin,
+      server:
+        options.provider === "custom" ? await describeServerModel(options.baseUrl, options.model) : null,
       reasoning: options.reasoning ?? "server default",
       approve: options.approve,
+      webTools: web,
+      plugins: options.plugins ?? [],
       repeats: options.repeats,
       commit: git.commit,
       dirty: git.dirty,
@@ -213,19 +269,55 @@ export async function runAgentFamily(spec, options) {
     cases: run.options.caseIds,
   };
   try {
-    // Index each fixture once; every run starts from its own copy of the indexed workbench.
+    // Index each fixture once, and once more for each case with its own setup files, so planted
+    // documents are searchable; every run starts from its own copy of the indexed workbench.
     const prepared = new Map();
-    for (const path of new Set(selected.map((c) => c.workbenchPath))) {
+    // Plugins install once, behind the egress guard (their programs stay unprovisioned), into one
+    // data folder that every run shares; each prepared workbench enables them.
+    const sharedData = options.plugins?.length ? join(scratch, "shared-data") : undefined;
+    for (const id of options.plugins ?? []) {
+      let installed;
+      // The plugin store answers BUSY while a previous install still settles; wait and try again.
+      for (let attempt = 1; attempt <= 6; attempt++) {
+        installed = await runCli(
+          cli,
+          ["plugin", "install", "--path", join(software, "plugins", id), "--data", sharedData],
+          { timeoutMs: 600_000, env },
+        );
+        if (!/errors\.BUSY/.test(installed.stdout + installed.stderr)) break;
+        await new Promise((done) => setTimeout(done, 5000));
+      }
+      // Exit code 1 only says that some programs are missing; the plugin itself must be installed.
+      try {
+        await access(join(sharedData, "plugins", "installed", id));
+      } catch {
+        throw Error(`Installing plugin ${id} failed: ${(installed.stderr || installed.stdout).slice(-2000)}`);
+      }
+    }
+    const keyOf = (item) =>
+      item.setup?.length || item.plugins ? `${item.workbenchPath}#${item.id}` : item.workbenchPath;
+    for (const item of selected) {
+      const key = keyOf(item);
+      if (prepared.has(key)) continue;
       const target = join(scratch, "prepared", String(prepared.size));
-      await cp(path, target, { recursive: true });
+      await cp(item.workbenchPath, target, { recursive: true });
+      if (web === "off") await disableTools(target, NETWORK_TOOLS);
+      const enabled = item.plugins ?? options.plugins ?? [];
+      const missing = enabled.filter((id) => !(options.plugins ?? []).includes(id));
+      if (missing.length)
+        throw Error(`Case ${item.id} enables plugins the run does not install: ${missing.join(", ")}`);
+      if (enabled.length) await enablePlugins(target, enabled);
+      await writeSetup(target, item.setup ?? [], options.substitutions ?? {});
       const indexed = await runCli(
         cli,
         ["index", "--workbench", target, "--data", join(scratch, "prepared-data", String(prepared.size))],
         { timeoutMs: 300_000, env },
       );
       if (indexed.exitCode !== 0)
-        throw Error(`Indexing ${relative(software, path)} failed: ${indexed.stderr.slice(-2000)}`);
-      prepared.set(path, target);
+        throw Error(
+          `Indexing ${relative(software, item.workbenchPath)} failed: ${indexed.stderr.slice(-2000)}`,
+        );
+      prepared.set(key, target);
     }
     for (const item of selected) {
       const result = {
@@ -238,17 +330,13 @@ export async function runAgentFamily(spec, options) {
       for (let repeat = 1; repeat <= options.repeats; repeat++) {
         const place = join(scratch, "runs", `${item.id}.${repeat}`);
         const workbench = join(place, "workbench");
-        await cp(prepared.get(item.workbenchPath), workbench, { recursive: true });
-        for (const file of item.setup ?? []) {
-          await mkdir(dirname(join(workbench, file.path)), { recursive: true });
-          await writeFile(join(workbench, file.path), file.content);
-        }
+        await cp(prepared.get(keyOf(item)), workbench, { recursive: true });
         const args = [
           "run",
           "--workbench",
           workbench,
           "--data",
-          join(place, "data"),
+          sharedData ?? join(place, "data"),
           "--prompt",
           item.prompt,
           "--format",
@@ -259,6 +347,9 @@ export async function runAgentFamily(spec, options) {
         ];
         const seconds = options.timeoutSeconds ?? item.timeoutSeconds;
         const outcome = await runCli(cli, args, { timeoutMs: seconds * 1000, env });
+        outcome.egress = guard?.take() ?? [];
+        outcome.modelRequests = proxy?.requests.splice(0) ?? [];
+        outcome.workbench = workbench;
         const eventsPath = `events/${item.id}.${repeat}.jsonl`;
         const stderrPath = `events/${item.id}.${repeat}.stderr.txt`;
         await writeFile(join(folder, eventsPath), outcome.stdout, { flag: "wx" });
@@ -274,8 +365,10 @@ export async function runAgentFamily(spec, options) {
           stderrPath,
           invalidLines: invalid,
           timing: outcome.timing,
+          egress: outcome.egress,
           summary,
           metrics: scored.metrics,
+          ...(scored.notes ? { notes: scored.notes } : {}),
           pass: scored.pass,
         });
         log(
@@ -288,9 +381,9 @@ export async function runAgentFamily(spec, options) {
     }
   } finally {
     await proxy?.close();
+    await guard?.close();
     await rm(scratch, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
   }
-  if (proxy && options.record) run.recordedRequests = proxy.requests;
   run.aggregate = spec.aggregate(run.cases);
   run.status = run.aggregate.thresholds.length
     ? run.aggregate.thresholds.every((t) => t.pass)

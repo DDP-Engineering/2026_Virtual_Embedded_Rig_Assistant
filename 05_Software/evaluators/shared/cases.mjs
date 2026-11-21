@@ -26,8 +26,19 @@ export function caseFileSchema(expect) {
     workbench: relativePath.optional(),
     replay: relativePath.optional(),
     timeoutSeconds: z.number().int().min(10).max(3600).optional(),
+    /** Plugins enabled in this case's workbench (installed by the family); default: all installed. */
+    plugins: z
+      .array(z.string().regex(/^[a-z0-9][a-z0-9-]{0,63}$/))
+      .max(40)
+      .optional(),
+    // A text file, or a PDF rendered from Markdown (`<!-- page -->` breaks pages) like the demo PDFs.
     setup: z
-      .array(z.strictObject({ path: relativePath, content: z.string().max(1_000_000) }))
+      .array(
+        z.union([
+          z.strictObject({ path: relativePath, content: z.string().max(1_000_000) }),
+          z.strictObject({ path: relativePath, pdf: z.string().max(200_000) }),
+        ]),
+      )
       .max(50)
       .optional(),
     expect,
