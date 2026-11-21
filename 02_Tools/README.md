@@ -102,7 +102,7 @@ as the software. `runtime/` and `cache/` are never linted.
 
 | File | Purpose | Invocation and result |
 |---|---|---|
-| `package.mjs` | Prepares resources, builds the desktop, assembles native dependencies and produces the platform installers; checks payload and build separation and reports sizes without a limit (ADR-0017) | `npm run package` for release, `npm run package:test` for the instrumented build. Staging in `05_Software/release_tmp/`, artifacts and `package-report.json` in `release_tmp/{release,test}/`. Publishes nothing. |
+| `package.mjs` | Prepares resources, builds the desktop, assembles native dependencies and produces the platform installers; checks payload and build separation and reports sizes without a limit | `npm run package` for release, `npm run package:test` for the instrumented build. Staging in `05_Software/release_tmp/`, artifacts and `package-report.json` in `release_tmp/{release,test}/`. Publishes nothing. |
 | `package-checks.mjs` | Reusable checks for PDF.js resources, native files, test hooks and payload content | Imported by packaging, the update probe and packaging tests. |
 | `update-config.mjs` | Validates the update-feed URL and builds the electron-builder publish configuration | Imported by the desktop Vite configuration and `package.mjs`. Release requires HTTPS; the instrumented build also allows loopback HTTP. |
 | [catalog-release.md](release/catalog-release.md) | Plugin catalog release per VERA version: channel indexes, Ed25519 index signing, where the private key lives, publishing | Read before publishing a catalog; `catalog-signing-key.pub.pem` is the public key the desktop build pins (`pluginCatalogKey` in `update-config.mjs`). |

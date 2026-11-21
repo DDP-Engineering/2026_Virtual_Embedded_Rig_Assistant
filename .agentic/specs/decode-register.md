@@ -1,6 +1,6 @@
 # Register decoding contract
 
-STATED: authoritative sources are 00_Planning/capabilities/tools/decode_register/SPEC.md sections2-5, shared contracts sections1-5 and live issue77 (read2026-11-04).
+STATED: authoritative sources are the `decode_register` row and limits in 00_Planning/Agent.md and live issue77 (read2026-11-04).
 
 Definition: linear structural preflight bounds depth<=8, object keys<=8 and array entries<=512 before any YAML processing (valid definitions need at most7 containers and5 keys per object). Strict JSON object parsed with yaml parseDocument uniqueKeys:true plus JSON grammar validation. schemaVersion1; device{id,revision}; sourceRefs1..8 valid workbench line refs; registers1..512 unique names, widthBits8/16/32/64, optional address and sourceRefs; fields0..64 unique names, integer lsb/width bounded by the register, nonoverlapping masks; optional description<=256 and enum0..16 unique integral values fitting the field. Enum values can be unsigned decimal/hex strings (precision-safe at64bits) or safe unsigned JSON integers. No numbers exceeding safe integer precision are admitted.
 

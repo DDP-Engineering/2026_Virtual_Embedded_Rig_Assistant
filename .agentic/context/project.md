@@ -2,7 +2,7 @@
 
 ## Purpose and users
 
-VERA is the Virtual Embedded Rig Assistant desktop product for embedded engineering work. Product scope and users are defined by [planning](../../00_Planning/plan/README.md).
+VERA is the Virtual Embedded Rig Assistant desktop product for embedded engineering work. Product scope and users are defined by the [overview](../../00_Planning/Overview.md).
 
 ## Product responsibilities
 
@@ -28,13 +28,13 @@ calibration and feature/milestone usage. Diagnostic measurements alone do not es
 The reference results per platform are the newest `session-full-*.json` files in
 `05_Software/evaluation-outputs/performance/`.
 
-The target platforms are Windows x64 and Linux x64 (01-system section 9).
+The target platforms are Windows x64 and Linux x64 (`00_Planning/System.md`).
 
 The desktop shell occupies a fixed viewport without document scrolling; long pages/panels scroll internally, and conversations use an independent segmented left scroll rail while the composer remains visible.
 
 ## Established constraints
 
-The architecture laws in [01-system](../../00_Planning/architecture/01-system.md) govern process boundaries, local assets, credentials and test isolation. Versions are pinned exactly. Core remains independent of Electron; renderer access to main uses shared contracts.
+The architecture laws in [System.md](../../00_Planning/System.md) govern process boundaries, local assets, credentials and test isolation. Versions are pinned exactly. Core remains independent of Electron; renderer access to main uses shared contracts.
 
 Plugin management uses compact package rows and explicit dependency checks; selection remains per workbench and defaults to none. Verified local dependency archives support offline provisioning without publishing a release. Desktop listing performs integrity work off main; session-list polling avoids program initialization while retaining recovery and current-workbench ownership.
 
@@ -127,9 +127,9 @@ Facts that span components:
 
 ## Authoritative references
 
-- [Planning and work packages](../../00_Planning/plan/README.md)
-- [System architecture](../../00_Planning/architecture/01-system.md)
-- [Quality](../../00_Planning/architecture/08-quality.md)
+- [Product overview](../../00_Planning/Overview.md)
+- [System architecture](../../00_Planning/System.md)
+- [Packaging, delivery and quality](../../00_Planning/Delivery.md)
 - [Software README](../../05_Software/README.md): setup, source layout, commands
 - [Root AGENTS.md](../../AGENTS.md): master implementation, local commits, AEGIS scope
 - [Environment guide](environment.md): toolchain, build and verification commands

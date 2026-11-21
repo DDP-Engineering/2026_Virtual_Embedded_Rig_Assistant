@@ -478,7 +478,7 @@ async function packageApp() {
       extraMetadata: {
         description: "Virtual Embedded Rig Assistant",
         author: "DDP Engineering",
-        homepage: "http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant",
+        homepage: "https://github.com/DDP-Engineering/2026_Virtual_Embedded_Rig_Assistant",
       },
       files: [
         "out/**",

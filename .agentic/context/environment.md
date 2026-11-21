@@ -189,5 +189,5 @@ Opt-in variables enable cases that use a real tool. Without them those cases are
 - [AEGIS commands and layout](../aegis.toml)
 - [Software README](../../05_Software/README.md): commands and source layout
 - [Test inventory](../../05_Software/tests/README.md): test folders, execution cost, e2e runner
-- [Quality](../../00_Planning/architecture/08-quality.md): verification routes
+- [Quality](../../00_Planning/Delivery.md): verification routes
 - [Software tooling](../knowledge/software-tooling.md), [native packaging](../knowledge/native-packaging.md), [release smoke](../knowledge/release-smoke.md): component detail

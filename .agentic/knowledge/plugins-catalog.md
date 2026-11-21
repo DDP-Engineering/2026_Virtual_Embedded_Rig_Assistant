@@ -16,7 +16,7 @@ reader and install. [Plugins](plugins.md) is the index of the plugin pages.
 
 ## Purpose and boundaries
 
-The plugin catalog (spec `.agentic/specs/REQ-DATA-b40d3f9b.md`, ADR-0019): core `catalog-source.ts` checks a catalog
+The plugin catalog (spec `.agentic/specs/REQ-DATA-b40d3f9b.md`, mechanism in `00_Planning/Plugins.md`): core `catalog-source.ts` checks a catalog
 source (plugin folders, `packs.yaml`, `catalog.yaml`) with the store's own package reader and builds its release
 (`<id>-<version>.zip` per plugin, `index.json` format 1 and the channel indexes `index-stable.json`, version 1.0.0
 and higher, and `index-pre-release.json`, every plugin), and signs a release's channel indexes with a detached Ed25519

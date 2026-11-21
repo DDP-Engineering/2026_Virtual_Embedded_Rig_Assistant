@@ -6,7 +6,7 @@ Select for AgentRuntime, system prompt composition, turn orchestration, read/wri
 
 ## Purpose and boundaries
 
-Core ReferenceRuntime implements AgentRuntime over injected LlmGateway, Clock/IDs and approval host. ContextPolicy creates detached provider request views. [ADR-0003](../../00_Planning/decisions/README.md) records why this loop was kept over pi-agent-core.
+Core ReferenceRuntime implements AgentRuntime over injected LlmGateway, Clock/IDs and approval host. ContextPolicy creates detached provider request views. [Overview.md](../../00_Planning/Overview.md) records why this loop was kept over pi-agent-core.
 
 The synchronous prompt builder consumes workbench name, decoded pinned text, resolved available skill metadata and host environment. WorkbenchService owns the complete stored text; host/session callers supply Clock and environment. The builder exposes text and size without I/O or state.
 

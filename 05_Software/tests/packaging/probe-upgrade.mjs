@@ -334,7 +334,7 @@ try {
           version,
           description: `${ticket} local update test`,
           author: "DDP Engineering",
-          homepage: "http://192.168.1.15:3001/dpasare/2026_Virtual_Embedded_Rig_Assistant",
+          homepage: "https://github.com/DDP-Engineering/2026_Virtual_Embedded_Rig_Assistant",
         },
         releaseInfo: { releaseNotes: `${ticket} local update release ${version}` },
         nsis: { ...distribution.nsis, include: nsisIsolation },
