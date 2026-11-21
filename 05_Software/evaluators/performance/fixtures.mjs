@@ -118,6 +118,10 @@ export function fixtures() {
           artifacts: [{ artifactId: `art_${tier}_${side}`, name: "capture.md", bytes: 16 }],
           todos: [],
           usage: { inputTokens: 0, outputTokens: 0 },
+          planRevision: 0,
+          planFeedbackRevision: 0,
+          planComments: [],
+          planReviews: [],
         },
         seq: events.length,
       };

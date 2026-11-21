@@ -114,6 +114,26 @@ result regresses or approaches a budget. At existing milestone gates, one owner 
 implemented matrix once per native platform. No extra complete functional suite or handover retest
 is added. Existing slow cases require measured follow-up; this harness does not optimize the loader.
 
+## Indexing and per-call agent overhead
+
+`eval:performance agent-load [--repeats 3] [--steps 4] [--output <run.json>]` measures, behind the
+egress guard and without Electron:
+
+| Case | Measures |
+|---|---|
+| `indexing/demo`, `indexing/hard` | `vera index` of the demo workbench and the generated hard-layout corpus from scratch: time, documents and chunks per second, peak resident memory of the CLI process with its worker threads (`--import rss-preload.mjs`, `process.resourceUsage().maxRSS`) |
+| `calls/replay` | a turn of `--steps` tool calls on the `replay` model, which answers at once: the gap between a tool result and the next call (VERA's own work per model call: prompt, budget, scrubbing, persistence, events), the turn and process time, peak memory |
+
+Each measure is reported as median, nearest-rank p95 and spread over the repeats. In
+`report --reference`, two runs compare on the same host, harness and corpora (the CLI may differ:
+that is what is measured), and a change smaller than the larger of 10 % and twice the spread is
+"same". This noise band replaces a separate calibration for these measures.
+
+Replay reports no token counts, so VERA's first-call estimate is never calibrated: on the demo
+workbench a turn reaches the 32 K budget after about five small tool calls, hence four steps.
+First run, 2026-11-21 (Windows 11, Intel Core Ultra 9 275HX, 63 GiB): demo indexing 2.6 s and 431 MiB peak, hard corpus
+3.3 s; 17 ms per model call (14 ms for the first, 18 ms for the fourth); 0.86 s per CLI process.
+
 ## Files
 
 | File | Role |
@@ -122,6 +142,7 @@ is added. Existing slow cases require measured follow-up; this harness does not 
 | [runner.mjs](runner.mjs) | Builds the instrumented application, prepares profiles and workbenches, drives the measurement. Uses the network guard of the E2E suite, `tests/e2e/network-guard.ts`. |
 | [report.mjs](report.mjs) | Validation, statistics, calibration, comparison and saving of reports. |
 | [fixtures.mjs](fixtures.mjs) | Generates the synthetic saved sessions. |
+| [agent-load.mjs](agent-load.mjs), [rss-preload.mjs](rss-preload.mjs) | The `agent-load` measures and their report; the preload that reports peak memory. |
 | [report-model.mjs](report-model.mjs) | The HTML report model of a measurement: medians per case, all metrics per case. |
 | [baselines/](baselines/) | Retained runs: `2026-11-12-windows-session-loading` (session loading) and `2026-11-19-windows-embedding-models` (a separate CLI measurement of the two embedding models). |
 

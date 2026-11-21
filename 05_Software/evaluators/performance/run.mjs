@@ -7,6 +7,7 @@ import { parseArgs } from "node:util";
 import { writeReport } from "../shared/family-cli.mjs";
 import { reportPathFor } from "../shared/identity.mjs";
 import { renderReport } from "../shared/report-html.mjs";
+import { runAgentLoad, toAgentLoadReportModel } from "./agent-load.mjs";
 import { calibrate, compare, saveReport } from "./report.mjs";
 import { toReportModel } from "./report-model.mjs";
 
@@ -27,16 +28,21 @@ export async function main(args) {
         "timeout",
         "inject-stall-ms",
         "input",
+        "repeats",
+        "steps",
       ].map((key) => [key, { type: "string" }]),
     ),
   });
   const json = async (path) => JSON.parse(await readFile(path, "utf8"));
-  if (positionals.length !== 1 || !["run", "calibrate", "compare", "report"].includes(positionals[0]))
+  const commands = ["run", "calibrate", "compare", "report", "agent-load"];
+  if (positionals.length !== 1 || !commands.includes(positionals[0]))
     throw Error(
       "usage: eval:performance run|calibrate|compare --output <new file> [options]\n" +
+        "       eval:performance agent-load [--repeats <n>] [--steps <n>] [--output <run.json>]\n" +
         "       eval:performance report --input <run.json> [--reference <run.json>] [--output <report.html>]",
     );
   const command = positionals[0];
+  if (command === "agent-load") return runAgentLoad(values);
   if (command === "report") {
     if (!values.input) throw Error("--input is required");
     const target = await writeReport(
@@ -45,7 +51,10 @@ export async function main(args) {
         reference: values.reference && resolve(values.reference),
         output: values.output,
       },
-      toReportModel,
+      (data, path) =>
+        data.kind === "vera-performance-agent-load"
+          ? toAgentLoadReportModel(data, path)
+          : toReportModel(data, path),
     );
     console.log(target);
     return 0;
