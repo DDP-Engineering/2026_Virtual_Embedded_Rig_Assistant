@@ -1,4 +1,21 @@
 {
+  "gitDiff": {
+    "menu": "Git",
+    "viewUnstaged": "Voir les modifications hors index",
+    "viewStaged": "Voir les modifications indexées",
+    "tabUnstaged": "Hors index : {{path}}",
+    "tabStaged": "Indexé : {{path}}",
+    "index": "Arbre de travail comparé à l’index",
+    "head": "Index comparé à HEAD",
+    "stagedUnknown": "Comparaison des modifications indexées",
+    "emptyTree": "Index comparé à une base vide (branche sans commit)",
+    "rename": "Renommé de {{from}} en {{to}}",
+    "empty": "Cette comparaison ne contient aucune modification de texte.",
+    "binary": "Fichier binaire. La comparaison de texte est indisponible.",
+    "tooLarge": "Cette modification dépasse la limite de prévisualisation.",
+    "conflict": "Résolvez le conflit de fusion pour afficher cette comparaison.",
+    "unavailable": "Cette comparaison Git n’a pas pu être lue."
+  },
   "gitStatus": {
     "preference": "Afficher l’état Git dans Fichiers",
     "changesOnly": "Modifications Git uniquement",

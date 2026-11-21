@@ -5,7 +5,7 @@
 Select for citation opening, the document tabs of the chat area (open, select, close, kept places,
 per-session sets saved per session), continuous PDF scrolling with zoom/find/snippet, Markdown/HTML/office
 anchors, presentation slides, numbered lines of verified refs, run-log and download tabs, and
-conditional Display masking of document names, refs and content.
+Git comparison tabs, and conditional Display masking of document names, refs and content.
 Start under05_Software at main/display-documents.ts and display-identities.ts for conditional
 Display masking, shared/documents.ts, core/knowledge/viewer.ts and
 renderer/components/documents (viewer-context, document-tabs, pdf-viewer). Focused tests are viewer.test.ts, search.test.ts,
@@ -75,6 +75,7 @@ progress travels through existing workbench events.
   in that tab only (REQ-REL-6fc27952). `useDocumentTabs()` exposes select/close/retry, the kept
   place (`{page}`, `{line, scroll?}` or `{scroll}`, held in a ref so scrolling never re-renders), the opener
   and a one-shot focus request.
+- Git comparison targets use a distinct key per path and comparison. They share tab operations and keep Chat mounted. The provider holds results for the enabled workbench activation, verifies the response owner, lease, path and comparison, and clears the content on Display refresh. A retired activation drops Git tabs, their results and their opener references. The provider stores ordinary targets in the existing version-1 record and keeps Git comparisons transient. PatchDocument presents masked source context and hunks through DiffViewer.
 - `DocumentTabs({chat})` (documents/document-tabs.tsx) renders the tablist: Chat first without a
   close button, document tabs labelled by file (artifact) name and titled by path (REQ-UX-388cf31a);
   close button, Delete on a focused tab or middle click removes a tab and selects its right, else
@@ -86,7 +87,7 @@ progress travels through existing workbench events.
   opener when it is still shown, else the Chat tab. In the panel Ctrl+F asks a PDF or text body for its
   find field (or focuses an open one) and Ctrl+G asks a text body for its go-to-line field, by
   bumping `findRequest` / `gotoRequest` (REQ-UX-d64f086f, REQ-UX-58cf59b2).
-- The document panel shows its applicable Rendered/Text/Hex toolbar ([file viewing modes](document-viewer-file-modes.md)) and the document (or its load error with Retry), without a path line or file-action buttons; the path is the tab's tooltip (REQ-UX-968b89b0). A tab menu action's error or notice
+- The document panel shows its applicable Rendered/Text/Hex toolbar ([file viewing modes](document-viewer-file-modes.md)) and the document (or its load error with Retry), without a path line or file-action buttons for ordinary documents; the path is the tab's tooltip (REQ-UX-968b89b0). Patch documents show a source heading and comparison context. A tab menu action's error or notice
   shows in `[data-tab-notices]`, the row between the tab strip and the panels, also while Chat is
   selected, and clears when another tab is selected. Tab keys and stale menus: the window listener
   is idle while any `[data-tree-menu]` is open, and a menu whose tab closed goes away.

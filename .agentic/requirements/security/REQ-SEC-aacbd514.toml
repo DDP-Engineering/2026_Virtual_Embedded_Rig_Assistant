@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-SEC-aacbd514"
+title = "Confine unattended file comparisons"
+status = "active"
+requirement = "When Desktop reads a Git file comparison, it shall run only isolated bounded local Git operations for a revalidated literal workbench path and keep both endpoints of every disclosed rename inside that workbench."
+verification = "Try literal metacharacters, embedded repositories, gitlinks, cross-scope renames and hostile Git configuration, then inspect the results and verify repository state is unchanged."
+affected_paths = ["05_Software/src/apps/desktop/src/main/git/diff.ts","05_Software/src/apps/desktop/src/main/git/read.ts","05_Software/src/apps/desktop/src/main/git/index-scope.ts","05_Software/src/libraries/shared/src/git-diff.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/git/safe-diff.test.ts", "05_Software/src/apps/desktop/src/main/git/safe-status.test.ts", "05_Software/src/libraries/shared/src/git-diff.test.ts"]
+created = 2026-11-21
+updated = 2026-11-21

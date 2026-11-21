@@ -16,6 +16,7 @@ import { useTranslation } from "react-i18next";
 import { api } from "../../api/index.js";
 import { ErrorMessage } from "../error-message.js";
 import { useFileActions } from "./file-actions.js";
+import { gitDiffMenu } from "./git-diff-menu.js";
 import { GitBadges } from "./git-status.js";
 import { byTreeName, type FileTreeEntry, gitFolders, gitTree } from "./git-tree.js";
 import { TreeMenu, type TreeMenuItem } from "./tree-menu.js";
@@ -119,6 +120,7 @@ export function DocsTree({
   query,
   expansion,
   gitEntries,
+  gitLease,
   gitChangesOnly = false,
 }: {
   workbenchId: string;
@@ -129,6 +131,7 @@ export function DocsTree({
   query: string;
   expansion: TreeExpansion;
   gitEntries?: GitStatusEntry[] | undefined;
+  gitLease?: number | undefined;
   gitChangesOnly?: boolean;
 }) {
   const { t } = useTranslation();
@@ -220,9 +223,14 @@ export function DocsTree({
     if (path === undefined) return;
     tree.current?.querySelector<HTMLElement>(`[data-tree-path="${CSS_ESCAPE(path)}"]`)?.focus();
   };
+  const gitItems = (row: Row) => {
+    const entry = git?.byPath.get(row.path);
+    return row.type === "file" || entry?.virtual ? gitDiffMenu(entry, gitLease, open, t) : [];
+  };
+  const canOpenMenu = (row: Row) => canActOnDisk(row) || gitItems(row).length > 0;
   const openMenu = (row: Row, x: number, y: number) => {
     // A keyboard-opened menu may be followed by the browser's own contextmenu event on the row.
-    if (menu?.row.path === row.path || !canActOnDisk(row)) return;
+    if (menu?.row.path === row.path || !canOpenMenu(row)) return;
     setActive(row.path);
     setMenu({ row, x, y });
   };
@@ -232,7 +240,7 @@ export function DocsTree({
     workbenchId,
     menuRow?.type === "file" && canActOnDisk(menuRow) ? menuRow.path : undefined,
   );
-  const menuItems = (row: Row): TreeMenuItem[] => [
+  const ordinaryItems = (row: Row): TreeMenuItem[] => [
     {
       action: "open",
       label: t("documents.open"),
@@ -401,12 +409,12 @@ export function DocsTree({
           );
         })}
       </div>
-      {menu && menuRow && canActOnDisk(menuRow) && (
+      {menu && menuRow && canOpenMenu(menuRow) && (
         <TreeMenu
-          label={t("documents.rowActions", { name: menu.row.name })}
+          label={t("documents.rowActions", { name: menuRow.name })}
           x={menu.x}
           y={menu.y}
-          items={menuItems(menuRow)}
+          items={[...(canActOnDisk(menuRow) ? ordinaryItems(menuRow) : []), ...gitItems(menuRow)]}
           close={(restore) => {
             setMenu(undefined);
             if (restore) focusRow(menu.row.path);

@@ -54,6 +54,10 @@ Activez **Afficher l’état Git dans Fichiers** dans **Modifier le banc de trav
 
 L’état applique les règles d’exclusion de Git, même si l’indexation des documents suit d’autres règles. Il s’actualise quand les fichiers surveillés changent. Utilisez **Actualiser l’état Git** après une erreur ou pour les dossiers qui ne peuvent pas être surveillés. Cette vue en lecture seule nécessite une installation système de Git 2.40 ou ultérieur et un arbre de travail local ordinaire. Les arbres de travail liés, les sous-modules utilisés comme racine du banc, les formats de métadonnées non pris en charge et les dépôts dont la configuration contient des inclusions ou des filtres affichent un état indisponible. La navigation dans Fichiers reste disponible.
 
+Ouvrez le menu contextuel d’un fichier modifié (clic droit ou **Maj+F10**), puis choisissez **Git → Voir les modifications hors index** ou **Voir les modifications indexées**. La première option compare l’arbre de travail à l’index. La seconde compare l’index à HEAD, ou à une base vide si la branche n’a aucun commit. Chaque comparaison s’ouvre dans son propre onglet à côté du Chat. Changez d’onglet avec **Ctrl+Page précédente/suivante** et fermez la comparaison active avec **Ctrl+W**. Le brouillon et la position dans la conversation sont conservés.
+
+Ces comparaisons en lecture seule sont disponibles pour les chemins supprimés et les renommages à l’intérieur du banc de travail. Un message signale un conflit, un fichier binaire, une comparaison trop volumineuse ou un contenu indisponible. Ouvrez les fichiers non suivis dans la visionneuse habituelle.
+
 ## Citations
 
 Dans une réponse, chaque puce de citation indique la source et l’emplacement : page, plage de pages, diapositive, titre ou plage de lignes. Sélectionnez une puce pour ouvrir le document à cet endroit. Une puce marquée **La citation n’a pas pu être vérifiée** désigne un élément que VERA n’a pas pu confirmer, par exemple une page qui n’existe pas ou un fichier modifié depuis ; considérez cette affirmation avec prudence.

@@ -622,6 +622,7 @@ export function App() {
             scope={`${benchId}/${activeSession ?? ""}`}
             sessionId={activeSession}
             workbenchId={benchId ?? ""}
+            gitLease={bench.data?.config.interface.git_status ? indexLease : undefined}
             reveal={revealChat}
           >
             {/* One session view per window (PERF-05): the chat and its side tabs share one read. */}

@@ -95,7 +95,7 @@ Clean, offline Windows execution and real VC++ self-containment are required bef
 
 [Verification policy](../../02_Tools/verification-policy.md) rules: a ticket runs the smallest sufficient tests for the changed behavior and its immediate consumers, plus the static checks. Complete suites run once per milestone, on Windows and native Ubuntu. Static checks are not test results. Per-component test files are named in each [knowledge page](../knowledge/) and in the [test inventory](../../05_Software/tests/README.md); this section holds only what is common.
 
-- Desktop Files Git fixtures use Git 2.40+ from the system installation. They create disposable local repos and run without network or credentials. See [Files Git status](../knowledge/files-git-status.md).
+- Desktop Files Git fixtures use Git 2.40+ from the system installation. They create disposable local repos and run without network or credentials. The native Git tab scenario uses the bundled replay provider to populate a scrollable transcript. See [Files Git status](../knowledge/files-git-status.md).
 
 ### Commands
 

@@ -54,6 +54,10 @@ Badges show **S** for staged and **U** for unstaged changes. The codes are M (mo
 
 The status uses Git's ignore rules even when document indexing uses different rules. It refreshes as watched files change. Use **Refresh Git status** to retry or update folders that can't be watched. This read-only view needs a system installation of Git 2.40 or later and an ordinary local working tree. Linked worktrees, submodule workbench roots, unsupported metadata layouts and repositories with config includes or filters show an unavailable status. Files browsing remains available.
 
+Open a changed file’s context menu (right-click or **Shift+F10**) and choose **Git → View unstaged diff** or **View staged diff**. Unstaged compares the working tree with the index. Staged compares the index with HEAD, or with an empty base on a branch without commits. Each comparison opens in its own tab beside Chat. Use **Ctrl+Page Up/Down** to switch tabs and **Ctrl+W** to close the current comparison. The chat draft and transcript position stay in place.
+
+These read-only comparisons are available for deleted paths and for renames within the workbench. You’ll see a notice for a conflict, a binary file, a comparison that exceeds the preview limit, or unavailable content. Open untracked files with the usual file viewer.
+
 ## Citations
 
 In an answer, each citation chip names the source and the place: page, page range, slide, heading or line range. Select a chip to open the document at that place. A chip marked **Citation could not be verified** points to something VERA could not confirm, for example a page that does not exist or a file that changed since; treat that statement with care.

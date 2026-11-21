@@ -144,10 +144,10 @@ entries:
   - category: improved
     topic: { en: Files, ro: Fișiere, de: Dateien, fr: Fichiers }
     text:
-      en: Opt in to Git status. Indexing follows Git ignore and explains skips above the size limit.
-      ro: Activează starea Git. Indexarea aplică Git ignore și explică omiterile peste limita de mărime.
-      de: Git-Status einschalten. Die Indizierung beachtet Git-Ignore und erklärt Größe als Ausschluss.
-      fr: Activez l’état Git. L’index suit les exclusions Git et explique les sauts dus à la taille.
+      en: Git status and diff tabs. Indexing follows Git ignore rules and explains size limits.
+      ro: Stare Git și file de comparație. Indexarea aplică Git ignore și explică limitele de mărime.
+      de: Git-Status und Diff-Tabs. Die Indizierung beachtet Git-Ignore und erklärt Größenlimits.
+      fr: État Git et onglets de comparaison. L’index suit les exclusions Git et explique les limites.
   - category: new
     topic: { en: Workbench, ro: Workbench, de: Workbench, fr: Banc de travail }
     text:

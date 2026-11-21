@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-FUNC-da6632e8"
+title = "Read staged and unstaged file comparisons"
+status = "active"
+requirement = "When a tracked file changes, Desktop shall read the requested index-to-working-tree or HEAD-to-index comparison, using the empty base when HEAD is unborn."
+verification = "Create real Git repositories with combined changes, unborn HEAD, in-scope renames and deleted paths, and check each requested comparison for its own hunks."
+affected_paths = ["05_Software/src/apps/desktop/src/main/git/diff.ts","05_Software/src/apps/desktop/src/main/git/read.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/git/safe-diff.test.ts"]
+created = 2026-11-21
+updated = 2026-11-21

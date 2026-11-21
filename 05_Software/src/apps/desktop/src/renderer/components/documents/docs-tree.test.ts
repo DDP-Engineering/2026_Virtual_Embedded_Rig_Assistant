@@ -5,7 +5,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { getByRole, queryByRole } from "@testing-library/dom";
 import userEvent from "@testing-library/user-event";
-import type { GitStatus, Request, WorkbenchEvent } from "@vera/shared";
+import type { GitDiffResult, GitStatus, Request, WorkbenchEvent } from "@vera/shared";
 import { act, createElement } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
@@ -15,6 +15,7 @@ import { type Attachments, AttachmentsContext } from "../session/attachments.js"
 import { DocsTab } from "./docs-tab.js";
 import { folderSummaries } from "./docs-tree.js";
 import { DocumentTabs } from "./document-tabs.js";
+import { GitDiffView } from "./git-diff-view.js";
 import { DocumentViewerProvider } from "./viewer-context.js";
 import "../../i18n.js";
 
@@ -51,7 +52,7 @@ async function mount(workbenchId = id, attachments?: Attachments, gitEnabled = f
         { client },
         createElement(
           DocumentViewerProvider,
-          { workbenchId },
+          { workbenchId, gitLease: gitEnabled ? indexLease : undefined },
           attachments
             ? createElement(
                 AttachmentsContext.Provider,
@@ -111,7 +112,10 @@ const menuItems = () =>
 const submenu = (action: string) =>
   menu()?.querySelector<HTMLElement>(`[role="menu"][data-submenu="${action}"]`);
 
-function mockGit(read: () => GitStatus) {
+function mockGit(
+  read: () => GitStatus,
+  diff?: (comparison: Request<"git.diff">["comparison"]) => GitDiffResult,
+) {
   const listeners = new Set<(event: WorkbenchEvent) => void>();
   const originalSubscription = api.subscribe.bind(api);
   vi.spyOn(api, "subscribe").mockImplementation(((...args: unknown[]) => {
@@ -126,6 +130,10 @@ function mockGit(read: () => GitStatus) {
   }) as typeof api.subscribe);
   const original = api.invoke.bind(api);
   return vi.spyOn(api, "invoke").mockImplementation((async (channel: string, input: unknown) => {
+    if (channel === "git.diff" && diff) {
+      const request = input as Request<"git.diff">;
+      return { ...request, displayPath: request.path, result: diff(request.comparison) };
+    }
     if (channel !== "git.status") return original(channel as never, input as never);
     const { action, ...owner } = input as Request<"git.status">;
     if (action !== "close")
@@ -136,7 +144,7 @@ function mockGit(read: () => GitStatus) {
 }
 
 // REQ-UX-d3f4505a REQ-UX-7656913e
-it("voices both comparisons and collapsed counts and makes virtual deletion rows inert by keyboard", async () => {
+it("voices comparison and folder counts and gives virtual deletions only Git actions", async () => {
   const invoke = mockGit(() => ({
     state: "ready",
     branch: { kind: "named", name: "main" },
@@ -171,13 +179,126 @@ it("voices both comparisons and collapsed counts and makes virtual deletion rows
   await act(async () => deleted.focus());
   await key(deleted, "Enter");
   await key(deleted, "F10", { shiftKey: true });
-  expect(menu()).toBeNull();
+  expect(menuItems()).toEqual(["git"]);
+  await key(menuItem("git"), "ArrowRight");
+  expect(subItems("git")).toEqual(["git-diff-staged"]);
+  await key(document.activeElement, "Escape");
+  await key(document.activeElement, "Escape");
   expect(container.querySelector("[data-document-tab]")).toBeNull();
   expect(invoke.mock.calls.some(([channel]) => channel === "docs.open" || channel === "docs.stat")).toBe(
     false,
   );
   await click(getByRole(container, "button", { name: "Refresh Git status" }));
   expect(invoke.mock.calls).toContainEqual(["git.status", expect.objectContaining({ action: "refresh" })]);
+});
+
+it("opens applicable Git comparisons by keyboard as distinct reusable central tabs", async () => {
+  const invoke = mockGit(
+    () => ({
+      state: "ready",
+      branch: { kind: "named", name: "main" },
+      changed: 2,
+      conflicts: 1,
+      entries: [
+        { path: "board.txt", staged: "M", unstaged: "M", conflict: false, virtual: false },
+        { path: "docs/a.pdf", staged: null, unstaged: null, conflict: true, virtual: false },
+      ],
+    }),
+    (comparison) =>
+      comparison === "staged"
+        ? { base: "head", state: "patch", patch: "@@ -1 +1 @@\\n-old\\n+<img src=x onerror=alert(1)>\\n" }
+        : { base: "index", state: "binary" },
+  );
+  await mount(id, undefined, true);
+  const selected = () => container.querySelector('[data-document-tabs] [aria-selected="true"]');
+  async function compare(action: string) {
+    await key(row("board.txt"), "F10", { shiftKey: true });
+    expect(menuItems()).toContain("open");
+    await key(document.activeElement, "End");
+    await key(document.activeElement, "ArrowRight");
+    expect(subItems("git")).toEqual(["git-diff-unstaged", "git-diff-staged"]);
+    expect(document.activeElement).toBe(menuItem("git-diff-unstaged"));
+    if (action === "git-diff-staged") await key(document.activeElement, "ArrowDown");
+    await key(document.activeElement, "Enter");
+    await settle();
+  }
+  await key(row("board.txt"), "Enter");
+  await settle();
+  await compare("git-diff-staged");
+  expect(selected()?.textContent).toContain("Staged");
+  const patch = getByRole(container, "region", { name: "Unified diff" });
+  expect(patch.textContent).toContain("<img src=x onerror=alert(1)>");
+  expect(patch.querySelector("img")).toBeNull();
+  await compare("git-diff-unstaged");
+  expect(selected()?.textContent).toContain("Unstaged");
+  expect(container.textContent).toContain("Binary file");
+  await compare("git-diff-staged");
+  expect(container.querySelectorAll('[data-document-tabs] [role="tab"]')).toHaveLength(4);
+  expect(invoke).toHaveBeenCalledWith(
+    "git.diff",
+    expect.objectContaining({
+      workbenchId: id,
+      path: "board.txt",
+      comparison: "staged",
+      indexLease: expect.any(Number),
+    }),
+  );
+  await key(row("docs"), "ArrowRight");
+  await settle();
+  await key(row("docs/a.pdf"), "F10", { shiftKey: true });
+  await key(document.activeElement, "End");
+  await key(document.activeElement, "ArrowRight");
+  expect(subItems("git")).toEqual(["git-diff-unstaged", "git-diff-staged"]);
+});
+
+it("keeps a Git deletion action when a tracked file is replaced by a folder", async () => {
+  mockGit(() => ({
+    state: "ready",
+    branch: { kind: "named", name: "main" },
+    changed: 1,
+    conflicts: 0,
+    entries: [{ path: "docs", staged: "D", unstaged: null, conflict: false, virtual: true }],
+  }));
+  await mount(id, undefined, true);
+  await key(row("docs"), "F10", { shiftKey: true });
+  expect(menuItems()).toContain("open");
+  expect(menuItems()).toContain("git");
+  await key(document.activeElement, "End");
+  await key(document.activeElement, "ArrowRight");
+  expect(subItems("git")).toEqual(["git-diff-staged"]);
+});
+
+it("displays content-free notices with the selected comparison context", async () => {
+  container = document.createElement("div");
+  document.body.append(container);
+  root = createRoot(container);
+  const notices = [
+    ["empty", "No text changes in this comparison."],
+    ["binary", "Binary file. A text diff is unavailable."],
+    ["too-large", "This change exceeds the preview limit."],
+    ["conflict", "Resolve the merge conflict to view this comparison."],
+    ["unavailable", "This Git comparison could not be read."],
+  ] as const;
+  for (const [state, notice] of notices) {
+    await act(async () =>
+      root.render(
+        createElement(GitDiffView, {
+          identity: "staged:example",
+          response: {
+            workbenchId: id,
+            indexLease: 1,
+            path: "example",
+            comparison: "staged",
+            displayPath: "example",
+            result: { state, base: "empty-tree" },
+          },
+        }),
+      ),
+    );
+    expect(getByRole(container, "status").textContent).toBe(notice);
+    expect(container.textContent).toContain("index vs empty base");
+    expect(container.querySelector("pre")).toBeNull();
+  }
 });
 
 it("keeps Git-visible ignored search matches inert until ordinary Files metadata is known", async () => {

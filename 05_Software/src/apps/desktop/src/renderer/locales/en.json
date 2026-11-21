@@ -1,4 +1,21 @@
 {
+  "gitDiff": {
+    "menu": "Git",
+    "viewUnstaged": "View unstaged diff",
+    "viewStaged": "View staged diff",
+    "tabUnstaged": "Unstaged: {{path}}",
+    "tabStaged": "Staged: {{path}}",
+    "index": "Unstaged · working tree vs index",
+    "head": "Staged · index vs HEAD",
+    "stagedUnknown": "Staged · index comparison",
+    "emptyTree": "Staged · index vs empty base (unborn branch)",
+    "rename": "Renamed from {{from}} to {{to}}",
+    "empty": "No text changes in this comparison.",
+    "binary": "Binary file. A text diff is unavailable.",
+    "tooLarge": "This change exceeds the preview limit.",
+    "conflict": "Resolve the merge conflict to view this comparison.",
+    "unavailable": "This Git comparison could not be read."
+  },
   "gitStatus": {
     "preference": "Show Git status in Files",
     "changesOnly": "Git changes only",

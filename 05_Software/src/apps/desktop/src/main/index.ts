@@ -87,7 +87,9 @@ import {
   sanitizeSessionSummary,
 } from "./events.js";
 import { createFileAccess } from "./file-access.js";
+import { GitDiffService } from "./git/diff-service.js";
 import { GitReader } from "./git/read.js";
+import { containingRepository } from "./git/repository.js";
 import { readStatus } from "./git/status.js";
 import { GitStatusService } from "./git/status-service.js";
 import { GitWatch } from "./git/watch.js";
@@ -325,7 +327,14 @@ const workbench = new WorkbenchService(
     },
     changed: (event) => {
       if (event.event.type === "closed") display.close();
-      if (event.event.type === "closed" || event.event.type === "config.changed") gitStatus.reconcile();
+      if (
+        event.event.type === "closed" ||
+        event.event.type === "config.changed" ||
+        event.event.type === "opened"
+      ) {
+        gitStatus.reconcile();
+        gitDiff.reconcile();
+      }
       if (event.event.type === "closed" || event.event.type === "config.changed") {
         browserNoticeSince = performance.now();
         browserAccess.reconcile();
@@ -354,15 +363,27 @@ const display = new DisplayDocuments(
   () => credentials.knownSecrets(),
 );
 const gitReader = new GitReader(dataLocations.paths.userData);
-const gitStatus = new GitStatusService({
-  scope: () => {
-    try {
-      const { config, indexLease, folder } = workbench.getSnapshot();
-      return { workbenchId: config.id, indexLease, folder, enabled: config.interface.git_status };
-    } catch {
-      return undefined;
-    }
+const gitScope = () => {
+  try {
+    const { config, indexLease, folder } = workbench.getSnapshot();
+    return { workbenchId: config.id, indexLease, folder, enabled: config.interface.git_status };
+  } catch {
+    return undefined;
+  }
+};
+const gitDiff = new GitDiffService({
+  scope: gitScope,
+  resolve: (id, path) => display.resolve(id, path),
+  read: async (folder, path, comparison, signal) => {
+    const repository = await containingRepository(folder, signal);
+    return repository?.scope === folder
+      ? gitReader.diff(repository, path, comparison, signal)
+      : { state: "unavailable", base: comparison === "staged" ? "unknown" : "index" };
   },
+  project: (id, path, result) => display.gitDiff(id, path, result),
+});
+const gitStatus = new GitStatusService({
+  scope: gitScope,
   read: (folder, signal) => readStatus(gitReader, folder, signal),
   project: (id, status) => display.gitStatus(id, status),
   watch: (folder, changed, fault) => new GitWatch(folder, changed, fault),
@@ -1151,6 +1172,7 @@ ipcMain.handle(
           (text) => clipboard.writeText(text),
           sep,
         ),
+      "git.diff": (request) => gitDiff.request(request),
       "git.status": (request) => {
         gitStatus.request(request);
         return {};
@@ -1681,9 +1703,13 @@ async function createWindow(state: WindowState): Promise<void> {
       .catch(() => logger.log("error", "window.state.save.failed"))
       .finally(() => created.destroy());
   });
-  window.webContents.on("render-process-gone", () => gitStatus.stop());
+  window.webContents.on("render-process-gone", () => {
+    gitStatus.stop();
+    gitDiff.stop();
+  });
   window.on("closed", () => {
     gitStatus.stop();
+    gitDiff.stop();
     capture.interrupt();
     sessions.clearSubscriptions();
     window = undefined;

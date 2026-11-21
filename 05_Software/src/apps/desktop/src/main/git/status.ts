@@ -200,7 +200,9 @@ export async function readStatus(reader: GitReader, scope: string, signal: Abort
   } catch (error) {
     signal.throwIfAborted();
     return {
-      status: { state: error instanceof GitReadError ? error.reason : "failed" },
+      status: {
+        state: error instanceof GitReadError && error.reason !== "output-limit" ? error.reason : "failed",
+      },
       ...(repository ? { repository } : {}),
     };
   }

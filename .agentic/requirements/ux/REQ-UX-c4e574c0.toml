@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-UX-c4e574c0"
+title = "Open comparison tabs beside Chat"
+status = "active"
+requirement = "When a staged or unstaged comparison is opened, Desktop shall reuse its own central document tab and preserve Chat and the shared tab controls."
+verification = "In native Desktop, open both comparisons and TXT/PDF tabs, reorder and close with the keyboard, reopen and assert the same draft and scroll offset after returning to Chat."
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/documents/viewer-context.tsx","05_Software/src/apps/desktop/src/renderer/components/documents/document-tabs.tsx"]
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/documents/document-tabs.test.ts", "05_Software/src/apps/desktop/src/renderer/components/documents/docs-tree.test.ts","05_Software/tests/e2e/git-diff-tabs.spec.ts"]
+created = 2026-11-21
+updated = 2026-11-21

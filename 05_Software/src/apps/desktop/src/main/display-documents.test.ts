@@ -97,6 +97,29 @@ function fixture() {
   };
 }
 describe("Display boundary", () => {
+  it("masks Git source and rename labels and secret fragments inside patch lines", () => {
+    const f = fixture();
+    f.app(true);
+    f.register("private key first\nprivate key second");
+    const [from, to] = rawPaths as [string, string];
+    const result = f.display.gitDiff(id, from, {
+      state: "patch",
+      base: "head",
+      rename: { from, to },
+      patch: `@@ -1 +1 @@\n-${secrets[0]}\n+private key second\n`,
+    });
+    expect(result).toEqual({
+      displayPath: "docs/[REDACTED].txt",
+      result: {
+        state: "patch",
+        base: "head",
+        rename: { from: "docs/[REDACTED].txt", to: "docs/[REDACTED].txt" },
+        patch: "@@ -1 +1 @@\n-[REDACTED]\n+[REDACTED]\n",
+      },
+    });
+    f.choice("off");
+    expect(f.display.gitDiff(id, from, { state: "empty", base: "index" }).displayPath).toBe(from);
+  });
   it("projects Git status with the same opaque identities and masked rename labels as Files", async () => {
     const f = fixture();
     f.app(true);
@@ -360,7 +383,7 @@ it("bounds ordinary and session original references before host access", async (
   const head = "notes.md#h=";
   const within = head + "x".repeat(8192 - head.length);
   expect(f.display.resolveRef(id, within)).toBe(within);
-  const ref = within + "x";
+  const ref = `${within}x`;
   const read = vi.fn(async () => ({ ...f.content("notes.md"), ref }));
   await expect(f.display.open(id, read, { ref })).rejects.toMatchObject({ code: "INVALID" });
   await expect(

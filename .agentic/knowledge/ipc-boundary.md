@@ -31,6 +31,8 @@ shortcut. Existing persisted event format remains 1.
 
 ## Public interface
 
+- `git.diff` accepts the active workbench ID and index lease, a Files Display identity, and a staged or unstaged comparison. Main validates ownership and scope before projecting a bounded patch or content-free notice. See [Files Git status](files-git-status.md).
+
 - `docs.status` validates a workbench id and process-local activation lease. Snapshot and
   `index.status` events carry the same scope, ordered revision and measured counts.
   Display masking applies to count-guard folder paths on both delivery routes.

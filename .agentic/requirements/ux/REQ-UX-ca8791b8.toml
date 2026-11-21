@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-UX-ca8791b8"
+title = "Offer applicable Git comparisons in the Files menu"
+status = "active"
+requirement = "When a Git change is selected in Files, Desktop shall offer its applicable comparisons in a keyboard-accessible Git submenu while preserving ordinary file actions."
+verification = "Use Shift+F10 and submenu arrows on combined, virtual, untracked and conflict rows and assert the applicable action set."
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/documents/docs-tree.tsx","05_Software/src/apps/desktop/src/renderer/components/documents/git-diff-menu.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/documents/docs-tree.test.ts"]
+created = 2026-11-21
+updated = 2026-11-21

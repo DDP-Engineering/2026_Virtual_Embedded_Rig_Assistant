@@ -54,6 +54,10 @@ Aktivieren und speichern Sie **Git-Status in Dateien anzeigen** unter **Workbenc
 
 Der Status verwendet die Git-Ignore-Regeln auch dann, wenn die Dokumentindizierung anderen Regeln folgt. Änderungen an überwachten Dateien aktualisieren die Anzeige. Verwenden Sie **Git-Status aktualisieren** bei einem Fehler oder für Ordner, die nicht überwacht werden können. Die schreibgeschützte Ansicht benötigt eine Systeminstallation von Git 2.40 oder neuer und einen gewöhnlichen lokalen Arbeitsbaum. Verknüpfte Arbeitsbäume, Submodule als Workbench-Wurzel, nicht unterstützte Metadatenlayouts und Repositorys mit Includes oder Filtern in der Konfiguration melden einen nicht verfügbaren Status. Die Dateiansicht bleibt benutzbar.
 
+Öffnen Sie das Kontextmenü einer geänderten Datei (Rechtsklick oder **Umschalt+F10**) und wählen Sie **Git → Arbeitsbaumänderungen anzeigen** oder **Indexänderungen anzeigen**. Die erste Option vergleicht den Arbeitsbaum mit dem Index. Die zweite vergleicht den Index mit HEAD oder bei einem Branch ohne Commit mit einer leeren Basis. Jeder Vergleich öffnet sich in einem eigenen Tab neben Chat. Wechseln Sie Tabs mit **Strg+Bild auf/ab** und schließen Sie den aktuellen Vergleich mit **Strg+W**. Chatentwurf und Scrollposition bleiben erhalten.
+
+Die schreibgeschützten Vergleiche sind auch für gelöschte Pfade und Umbenennungen innerhalb der Workbench verfügbar. Ein Hinweis erscheint bei einem Konflikt, einer Binärdatei, einem zu großen Vergleich oder nicht verfügbaren Inhalten. Öffnen Sie nicht verfolgte Dateien in der normalen Dateiansicht.
+
 ## Quellenverweise
 
 In einer Antwort nennt jeder Quellen-Chip die Quelle und die Stelle: Seite, Seitenbereich, Folie, Überschrift oder Zeilenbereich. Wählen Sie einen Chip, um das Dokument an dieser Stelle zu öffnen. Ein Chip mit der Markierung **Quellenverweis konnte nicht überprüft werden** verweist auf etwas, das VERA nicht bestätigen konnte, zum Beispiel eine Seite, die es nicht gibt, oder eine Datei, die sich inzwischen geändert hat; behandeln Sie diese Aussage mit Vorsicht.

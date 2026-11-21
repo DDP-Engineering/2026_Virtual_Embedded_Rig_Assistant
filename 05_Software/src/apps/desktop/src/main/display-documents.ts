@@ -1,9 +1,11 @@
 import { extname, posix } from "node:path";
-import { rasterThumbnail, validateRelativePath, type WorkbenchService } from "@vera/core";
+import { rasterThumbnail, scrub, validateRelativePath, type WorkbenchService } from "@vera/core";
 import {
   DOCS_BYTE_WINDOW_LIMIT,
   type DocumentRecord,
   formatRef,
+  GIT_DIFF_PATCH_LIMIT,
+  type GitDiffResult,
   type GitStatus,
   MAX_MESSAGE_IMAGE_BYTES,
   parseRef,
@@ -77,6 +79,33 @@ export class DisplayDocuments {
         ...(rename ? { rename: { ...rename, path: identity(rename.path) } } : {}),
       })),
     };
+  }
+
+  /** Applies the current Display policy to path labels and literal patch text. */
+  gitDiff(
+    id: string,
+    path: string,
+    value: GitDiffResult,
+  ): Pick<Response<"git.diff">, "displayPath" | "result"> {
+    const masked = this.maskingFor(this.current(id).config, "display");
+    const label = (original: string) => {
+      const text = masked ? this.redact(original) : original;
+      return text.length > 8192 ? "[REDACTED]" : text;
+    };
+    const rename = value.rename && { from: label(value.rename.from), to: label(value.rename.to) };
+    let result: GitDiffResult = { ...value, ...(rename ? { rename } : {}) };
+    if (masked && value.state === "patch") {
+      // A patch adds prefixes to each line, breaking any multiline credential into fragments.
+      const fragments = this.secrets()
+        .filter((secret) => secret.includes("\n"))
+        .flatMap((secret) => secret.split(/\r?\n/));
+      const patch = scrub(this.redact(value.patch), fragments);
+      result =
+        Buffer.byteLength(patch) > GIT_DIFF_PATCH_LIMIT
+          ? { state: "too-large", base: value.base, ...(rename ? { rename } : {}) }
+          : { ...value, patch, ...(rename ? { rename } : {}) };
+    }
+    return { displayPath: label(path), result };
   }
 
   resolve(id: string, path: string): string {

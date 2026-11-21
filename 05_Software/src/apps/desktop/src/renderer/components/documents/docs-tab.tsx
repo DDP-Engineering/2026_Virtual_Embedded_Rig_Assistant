@@ -156,6 +156,7 @@ export function DocsTab({
             describe={describe}
             query={search}
             expansion={expansion}
+            gitLease={gitEnabled ? indexLease : undefined}
             gitEntries={gitSnapshot?.state === "ready" ? gitSnapshot.entries : undefined}
             gitChangesOnly={gitSnapshot?.state === "ready" && git.filtered}
           />

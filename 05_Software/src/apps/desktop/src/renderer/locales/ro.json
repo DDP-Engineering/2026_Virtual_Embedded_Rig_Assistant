@@ -1,4 +1,21 @@
 {
+  "gitDiff": {
+    "menu": "Git",
+    "viewUnstaged": "Vezi diferențele din arborele de lucru",
+    "viewStaged": "Vezi diferențele din index",
+    "tabUnstaged": "Arbore de lucru: {{path}}",
+    "tabStaged": "Index: {{path}}",
+    "index": "Arborele de lucru față de index",
+    "head": "Indexul față de HEAD",
+    "stagedUnknown": "Comparație pentru index",
+    "emptyTree": "Indexul față de baza goală (ramură fără commituri)",
+    "rename": "Redenumit din {{from}} în {{to}}",
+    "empty": "Această comparație nu conține modificări de text.",
+    "binary": "Fișier binar. Diferențele de text nu sunt disponibile.",
+    "tooLarge": "Modificarea depășește limita de previzualizare.",
+    "conflict": "Rezolvă conflictul de îmbinare pentru a vedea comparația.",
+    "unavailable": "Această comparație Git nu a putut fi citită."
+  },
   "gitStatus": {
     "preference": "Arată starea Git în Fișiere",
     "changesOnly": "Doar modificările Git",

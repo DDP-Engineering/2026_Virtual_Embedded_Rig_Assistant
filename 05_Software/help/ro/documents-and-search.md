@@ -54,6 +54,10 @@ Marcajele **I** și **L** indică modificările din index și din arborele de lu
 
 Starea folosește regulile de ignorare Git chiar dacă indexarea documentelor folosește alte reguli. Se actualizează când se schimbă fișierele monitorizate. Folosește **Actualizează starea Git** pentru a reîncerca sau pentru a actualiza dosarele care nu pot fi monitorizate. Vizualizarea este doar pentru citire și necesită Git 2.40 sau mai nou instalat în sistem și un arbore de lucru local obișnuit. Arborii de lucru legați, rădăcinile workbench din submodule, structurile de metadate neacceptate și depozitele cu includeri sau filtre în configurare afișează o stare indisponibilă. Navigarea în Fișiere rămâne disponibilă.
 
+Deschide meniul contextual al fișierului modificat (clic dreapta sau **Shift+F10**) și alege **Git → Vezi diferențele din arborele de lucru** sau **Vezi diferențele din index**. Prima opțiune compară arborele de lucru cu indexul. A doua compară indexul cu HEAD sau cu o bază goală dacă ramura nu are commituri. Fiecare comparație se deschide într-o filă proprie lângă Chat. Folosește **Ctrl+Page Up/Down** ca să schimbi fila și **Ctrl+W** ca să închizi comparația curentă. Ciorna și poziția în conversație se păstrează.
+
+Comparațiile sunt doar pentru citire și sunt disponibile pentru căi șterse și redenumiri din workbench. Apare un mesaj când există un conflict, un fișier binar, o comparație prea mare sau conținut indisponibil. Deschide fișierele neurmărite cu vizualizatorul obișnuit.
+
 ## Citări
 
 Într-un răspuns, fiecare etichetă de citare numește sursa și locul: pagina, intervalul de pagini, slide-ul, titlul sau intervalul de linii. Selectează o etichetă pentru a deschide documentul în acel loc. O etichetă marcată **Citarea nu a putut fi verificată** indică ceva ce VERA nu a putut confirma, de exemplu o pagină care nu există sau un fișier care s-a modificat între timp; tratează acea afirmație cu precauție.

@@ -1,4 +1,21 @@
 {
+  "gitDiff": {
+    "menu": "Git",
+    "viewUnstaged": "Arbeitsbaumänderungen anzeigen",
+    "viewStaged": "Indexänderungen anzeigen",
+    "tabUnstaged": "Arbeitsbaum: {{path}}",
+    "tabStaged": "Index: {{path}}",
+    "index": "Arbeitsbaum im Vergleich zum Index",
+    "head": "Index im Vergleich zu HEAD",
+    "stagedUnknown": "Vergleich der Indexänderungen",
+    "emptyTree": "Index im Vergleich zur leeren Basis (Branch ohne Commit)",
+    "rename": "Von {{from}} in {{to}} umbenannt",
+    "empty": "Dieser Vergleich enthält keine Textänderungen.",
+    "binary": "Binärdatei. Ein Textvergleich ist nicht verfügbar.",
+    "tooLarge": "Die Änderung überschreitet die Vorschaugrenze.",
+    "conflict": "Lösen Sie den Merge-Konflikt, um den Vergleich anzuzeigen.",
+    "unavailable": "Dieser Git-Vergleich konnte nicht gelesen werden."
+  },
   "gitStatus": {
     "preference": "Git-Status in Dateien anzeigen",
     "changesOnly": "Nur Git-Änderungen",

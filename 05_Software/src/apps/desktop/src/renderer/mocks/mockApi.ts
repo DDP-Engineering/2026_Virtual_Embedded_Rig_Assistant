@@ -1299,6 +1299,19 @@ What this plugin does.
         value = {};
         break;
       }
+      case "git.diff": {
+        const request = channels["git.diff"].request.parse(input.data);
+        const wb = current().snapshot;
+        if (request.workbenchId !== wb.config.id || request.indexLease !== wb.indexLease)
+          throw veraError("CONFLICT");
+        if (!wb.config.interface.git_status) throw veraError("DENIED");
+        value = {
+          ...request,
+          displayPath: request.path,
+          result: { state: "unavailable", base: request.comparison === "staged" ? "unknown" : "index" },
+        };
+        break;
+      }
       case "git.status": {
         const { action, ...owner } = channels["git.status"].request.parse(input.data);
         const wb = current().snapshot;

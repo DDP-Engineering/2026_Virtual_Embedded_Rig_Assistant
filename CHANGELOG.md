@@ -8,6 +8,7 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ### Added
 
+- Open staged and unstaged Git diffs from Files in tabs beside Chat.
 - Opt in to read-only Git status, changed-file badges and a changes filter in Files.
 
 - See workbench indexing status in the sidebar and document search limitations on the affected chat turns.

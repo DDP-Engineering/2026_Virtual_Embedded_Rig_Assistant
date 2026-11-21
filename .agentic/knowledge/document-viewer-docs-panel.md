@@ -9,7 +9,7 @@ Start under05_Software at renderer/components/documents (docs-tab.tsx, docs-tree
 tree-properties.tsx, file-actions.tsx), core/workbench/tree.ts and main/openers.ts. Focused tests are
 docs-tree.test.ts, documents.test.ts, core workbench/tree.test.ts, openers.test.ts and
 tests/e2e/{documents,docs-tree}.spec.ts.
-[Files Git status](files-git-status.md) owns the opt-in Git overlay, Git refresh and virtual rows.
+[Files Git status](files-git-status.md) owns the opt-in overlay, Git refresh, virtual rows and scoped file comparisons through a Git submenu.
 [Document viewer](document-viewer.md) owns the tabs and bodies that rows and hits open;
 [file viewing modes](document-viewer-file-modes.md) owns the mode a file row opens in;
 [Document search](document-search.md) owns retrieval/extraction validity; [ingest](knowledge-ingest.md)

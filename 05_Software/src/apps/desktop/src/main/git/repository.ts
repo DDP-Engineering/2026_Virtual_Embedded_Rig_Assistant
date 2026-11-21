@@ -4,7 +4,7 @@ import { lstat, mkdir, open, opendir, realpath, symlink, utimes, writeFile } fro
 import { dirname, isAbsolute, join, relative, sep } from "node:path";
 
 export class GitReadError extends Error {
-  constructor(readonly reason: "missing-git" | "unsupported" | "failed") {
+  constructor(readonly reason: "missing-git" | "unsupported" | "failed" | "output-limit") {
     super(reason);
   }
 }
@@ -47,7 +47,7 @@ export async function containingRepository(
   }
 }
 
-async function boundedFile(path: string, limit: number): Promise<Buffer | undefined> {
+export async function boundedFile(path: string, limit: number): Promise<Buffer | undefined> {
   const before = await gitEntry(path);
   if (!before) return undefined;
   if (!before.isFile() || before.size > limit) throw new GitReadError("unsupported");
