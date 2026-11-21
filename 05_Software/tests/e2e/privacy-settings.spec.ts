@@ -68,7 +68,7 @@ test("browser privacy drafts and localized controls fit the compact layout in al
     expect(bounds).toBeTruthy();
     expect((bounds?.x ?? 0) + (bounds?.width ?? 0)).toBeLessThanOrEqual(1025);
     await page.screenshot({
-      path: resolve(`evaluation-outputs/mask05/native/${language}-browser-compact.png`),
+      path: resolve(`test-outputs/mask05/native/${language}-browser-compact.png`),
     });
     await page.locator("[data-project-cancel]").click();
   }
@@ -79,7 +79,7 @@ test("browser privacy drafts and localized controls fit the compact layout in al
 for (const language of ["en", "ro", "de", "fr"] as const) {
   test(`native privacy pages save independent choices, inherited labels and confirmed drafts (${language})`, async () => {
     test.setTimeout(120000);
-    const evidence = resolve("evaluation-outputs/mask05/native");
+    const evidence = resolve("test-outputs/mask05/native");
     await mkdir(evidence, { recursive: true });
     const scratch = await realpath(await mkdtemp(join(evidence, `${language}-owned-`)));
     const folder = join(scratch, "first"),

@@ -4,7 +4,7 @@
 
 Select for the fictional board corpus, PDF regeneration and fixture-only
 retrieval/CLI/smoke inputs. Start at `05_Software/tests/fixtures/README.md`,
-`tests/support/make-demo-pdfs.mjs`, `evaluators/eval-retrieval-harness/product-eval.mjs` and `02_Tools/release/package.mjs`.
+`tests/support/make-demo-pdfs.mjs`, `evaluators/retrieval/product-eval.mjs` and `02_Tools/release/package.mjs`.
 [Workbench](workbench.md) owns explicit user folder creation/opening and the normal lifecycle;
 [chat UI](chat-ui.md) owns user-composed sessions; [native packaging](native-packaging.md)
 owns application and real model/runtime resource delivery.
@@ -40,7 +40,7 @@ starts with ordinary user-selected workbenches and explicit session input.
 | Welcome and normal composition | renderer workbench/App/session components | workspace.test.ts; native workbench acceptance |
 | Runtime contract and payload | shared ipc/index; main index; builder and package.mjs | packaging.test.ts; real staging |
 | Fixture documents and PDF generation | tests/fixtures/workbenches; make-demo-pdfs.mjs | inventory/hash checks; demo-documents.test.ts |
-| Retrieval and CLI inputs | evaluators/retrieval-support; tests/packaging/smoke/smoke-runtime; tooling tests | focused retrieval/CLI/PDF consumers |
+| Retrieval and CLI inputs | evaluators/retrieval; tests/packaging/smoke/smoke-runtime; tooling tests | focused retrieval/CLI/PDF consumers |
 
 ## Key behaviors
 
@@ -51,4 +51,4 @@ starts with ordinary user-selected workbenches and explicit session input.
 
 `tests/fixtures/workbenches/demo-board/`, `demo-board.json`; renderer App/Workbench/Composer;
 shared ipc/index; main index; electron-builder.yml; 02_Tools/release/package.mjs, make-demo-pdfs.mjs,
-evaluators/eval-retrieval-harness/product-eval.mjs, compare-embeddings.mjs and smoke-runtime.mjs.
+evaluators/retrieval/product-eval.mjs, compare-embeddings.mjs and smoke-runtime.mjs.

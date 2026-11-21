@@ -76,8 +76,9 @@ fictional UF table; `rep-office-a.json` is a fictional DIALux report record (`or
 `model-office-a.json` is a minimal electrical model with the lighting load; `cat-lighting.json` a fictional luminaire
 catalog item.
 
-The remaining folders contain document extraction samples, replay scripts,
-translation checker cases and retrieval questions/model manifests.
+The remaining folders contain document extraction samples, replay scripts
+and translation checker cases. The retrieval questions live with their evaluator in
+`evaluators/retrieval/cases/`.
 Existing user workbenches and profiles are never part of this directory.
 
 `app-data/` holds current-format application data: `credentials.json`, `workbench.yaml`

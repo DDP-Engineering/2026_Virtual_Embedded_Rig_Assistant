@@ -40,20 +40,20 @@ plugin suite. The Raspberry Pi SSH fixture additionally uses the default WSL Lin
 
 Native `e2e/privacy-settings.spec.ts` covers both privacy pages in en/ro/de/fr, unsaved confirmation,
 live inherited defaults, new-workbench choices, independent owners and process restart persistence.
-Original screenshots/receipts use `evaluation-outputs/mask05/native`.
+Original screenshots/receipts use `test-outputs/mask05/native`.
 
 `e2e/text-encodings.spec.ts` verifies Latin-1/UTF16 BOM decoding, encoding changes,
 explicit replacement and measured distant wrapped Find/Go to line in browser and native Electron.
-Owned receipts/screenshots and original logs live under `evaluation-outputs/view02`.
+Owned receipts/screenshots and original logs live under `test-outputs/view02`.
 
 `e2e/large-text.spec.ts` uses `support/large-text-fixture.ts` to generate genuine 200 MiB variable-row
 logs for browser and native byte scrolling, late Find, exact Go to line, cancellation, heap/pulse
-measurements and native live Display refresh. Original evidence lives in `evaluation-outputs/view03`.
+measurements and native live Display refresh. Original evidence lives in `test-outputs/view03`.
 
 `e2e/large-text-citations.spec.ts` proves compact indexed and actual issued large-text citations,
 source-range placement, scalar Find counts/wrapping, Escape focus and live Display. The standalone
 `support/large-text-source-probe.ts` checks verified revision/date and same-size replacement with
-restored exact mtime on pinned Windows/WSL2 Node. Original proof stays in `evaluation-outputs/view03`.
+restored exact mtime on pinned Windows/WSL2 Node. Original proof stays in `test-outputs/view03`.
 
 Dictation acceptance sets VERA_DICTATION_MODEL_ROOT to a directory containing the verified
 whisper-base and whisper-small installs. Build the desktop to run
@@ -179,7 +179,7 @@ requires the caller to prepare the appropriate native build. Avoid running a des
 development instance against the same output directory during native acceptance.
 
 `tooling/test-execution.test.ts` checks exact test partitioning and build invalidation. Original
-focused profiling receipts for this change are retained in `evaluation-outputs/test-suite-speed/`;
+focused profiling receipts for this change are retained in `test-outputs/test-suite-speed/`;
 they measure a selected batch, not the complete suite. Full milestone verification remains governed
 by `02_Tools/verification-policy.md`.
 
@@ -209,9 +209,9 @@ to its Python executable; the suites otherwise use `python` on Windows or `pytho
 For example, from `05_Software` in PowerShell:
 
 ```powershell
-python -m venv evaluation-outputs/plugin-test-python
-./evaluation-outputs/plugin-test-python/Scripts/python.exe -m pip install paho-mqtt==2.1.0 asyncssh==2.24.1 cryptography==49.0.0
-$env:VERA_TEST_PYTHON = (Resolve-Path evaluation-outputs/plugin-test-python/Scripts/python.exe).Path
+python -m venv test-outputs/plugin-test-python
+./test-outputs/plugin-test-python/Scripts/python.exe -m pip install paho-mqtt==2.1.0 asyncssh==2.24.1 cryptography==49.0.0
+$env:VERA_TEST_PYTHON = (Resolve-Path test-outputs/plugin-test-python/Scripts/python.exe).Path
 python ../02_Tools/environment/npmw.py npm run test:plugins
 ```
 
@@ -304,7 +304,7 @@ tests: they keep reports and logs in the folders chosen for diagnosis, or in tem
 
 The exit codes of `smoke-package.mjs` are: `0` = complete PASS, `1` = failure, `2` = functional
 flow passed with the platform's network evidence still pending. The full procedure is in
-[release-package-smoke.md](../../06_SoftwareDocu/release-package-smoke.md).
+[packaging/smoke/README.md](packaging/smoke/README.md).
 
 `probe-upgrade.mjs` is a historical harness with base versions and commits fixed in its code, not
 a general test to run after every change. It needs those Git revisions, the platform tools and a
@@ -341,26 +341,26 @@ four-locale browser controls. VERA_TERM03_EVIDENCE_DIR retains native proof. Cor
 
 `support/command-runs-platform-probe.ts` bundles current source for pinned Linux Node: real sibling command server, scoped run identity, short-read-safe full/tail logs, Stop and next agent output.
 
-`e2e/run-masking.spec.ts` proves native stored MQTT credentials in actual command output, run arguments/canonical cwd, provisioning statuses, tail/full logs and terminal snapshots with live app/workbench overrides and two-workbench isolation. Original receipts/logs use evaluation-outputs/mask03; no delivery artifacts are rebuilt.
+`e2e/run-masking.spec.ts` proves native stored MQTT credentials in actual command output, run arguments/canonical cwd, provisioning statuses, tail/full logs and terminal snapshots with live app/workbench overrides and two-workbench isolation. Original receipts/logs use test-outputs/mask03; no delivery artifacts are rebuilt.
 
-`e2e/agent-masking.spec.ts` proves stored MQTT credential masking with live independent agent/exports choices, snapshot/detail/search, native JSON/Markdown and artifact exports, and irreversible saved redaction. Original logs/receipt use evaluation-outputs/mask04. Focused CLI process cases share the same contracts without external providers.
+`e2e/agent-masking.spec.ts` proves stored MQTT credential masking with live independent agent/exports choices, snapshot/detail/search, native JSON/Markdown and artifact exports, and irreversible saved redaction. Original logs/receipt use test-outputs/mask04. Focused CLI process cases share the same contracts without external providers.
 
 `e2e/hex-viewer.spec.ts` exercises native Hex border Find, partial rows/nonprintables, bounded DOM,
 keyboard selection, actual clipboard and live stored-credential Display masking in four locales.
-Original logs/screenshots/receipt stay in `evaluation-outputs/view04`.
+Original logs/screenshots/receipt stay in `test-outputs/view04`.
 
 `e2e/viewer-modes.spec.ts` checks automatic binary/unknown Hex, explicit replacement Text,
 Markdown Rendered/Text/Hex and remembered real-extension mode in browser and native Electron.
 Native acceptance uses two Markdown files, an opaque secret-named source and a full process restart.
-Original logs, screenshots and receipts remain under ignored `evaluation-outputs/view05`.
+Original logs, screenshots and receipts remain under ignored `test-outputs/view05`.
 
 `e2e/image-preview.spec.ts` checks all six unindexed image formats, Hex for each, inert scripted SVG,
 fit/resize/400%/zoom-back geometry, original resource identity, live Display and corrupt-image Retry
 in browser and Windows Electron. `support/image-preview-fixtures.ts` generates the fixtures.
-Original logs/screenshots/receipts live in ignored `evaluation-outputs/view06`.
+Original logs/screenshots/receipts live in ignored `test-outputs/view06`.
 
 `e2e/terminal-replay.spec.ts` couples the real TerminalService/node-pty backend to the real xterm
 surface through a local test bridge. It checks shell protocol queries, tab reselection and renderer
 reload without submitting commands through the user's terminal. Historical queries must not send
 replies again; a new query must still receive its reply. Evidence stays in
-`evaluation-outputs/terminal-input-fix/`.
+`test-outputs/terminal-input-fix/`.

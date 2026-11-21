@@ -1,6 +1,6 @@
 # Local embedding model indexing on Windows
 
-Measured on 2026-11-19 on the [recorded Windows session-performance host](session-loading-2026-11-12-windows.md).
+Measured on 2026-11-19 on the [recorded Windows session-performance host](../2026-11-12-windows-session-loading/NOTES.md).
 Windows 10.0.26300, Intel Core i5-10210U, 8 logical processors and 31.8 GiB RAM. Node.js 24.21.0,
 local q8 models and CPU inference.
 

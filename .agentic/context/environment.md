@@ -110,7 +110,7 @@ Clean, offline Windows execution and real VC++ self-containment are required bef
 | `npm run verify:all` | `verify` plus `test:plugins`. The milestone gate also adds the complete e2e suite, the CLI regressions and strict AEGIS. |
 | `npm run test:e2e [-- <spec> <Playwright args>]` | Playwright acceptance: sandboxed native Electron and Chromium against the mock renderer. |
 | `npm run eval:retrieval` | Retrieval evaluation on the frozen corpus with the real local CPU worker, persisted search and the ADR 0015 floors. See [document search](../knowledge/document-search.md). |
-| `npm run perf:sessions -- run\|calibrate\|compare` | Saved-session performance on an isolated instrumented build. See [session performance](../../06_SoftwareDocu/session-performance.md). |
+| `npm run eval:performance -- run\|calibrate\|compare` | Saved-session performance on an isolated instrumented build. See [session performance](../../05_Software/evaluators/performance/README.md). |
 | `npm run smoke:package -- --artifact <built native release>` | Release smoke on an already built artifact. See [release smoke](../knowledge/release-smoke.md). |
 | `npm run smoke:live -- --provider <openai\|custom:slug> [--data <userData>]` | Manual. Builds release and runs the four-step real-provider test through the stored credentials. It may send real requests. It exits non-zero when a required step is incomplete. |
 | `node tests/packaging/probe-upgrade.mjs <owned scratch folder>` | Update probe. Builds local instrumented artifacts and installs vN, then vN+1; it checks the SHA-512 refusal of a corrupt hash and turn/approval deferral, and publishes nothing. It does not check that settings, history or recovery survive an update. |
@@ -130,8 +130,8 @@ There is no upgrade-safety suite, because every stored format is version 1.
 - Linux in WSL2 is Linux execution. It is not native Ubuntu acceptance; say which one a result comes from. linux-arm64 execution is not established.
 - Some cases run on one platform only: SIGTERM stop branches, the `script` PTY cases of the CLI and POSIX file symlinks run on Linux; junction and case-alias cases and LTspice run on Windows.
 - `tests/integration/commands.test.ts` runs its Windows probe only where PowerShell 7 (`pwsh`) is installed; Windows PowerShell 5.1 drops double quotes from native arguments.
-- Vitest runs at most four workers. `tooling`, `integration`, `packaging` and `plugins` run one file at a time, because they share CLI and build outputs. Stop the normal app and other builds or suites during `perf:sessions` measurements.
-- Keep original logs, receipts and screenshots in the git-ignored `05_Software/evaluation-outputs/` or in a task-owned scratch folder, never in the repository.
+- Vitest runs at most four workers. `tooling`, `integration`, `packaging` and `plugins` run one file at a time, because they share CLI and build outputs. Stop the normal app and other builds or suites during `eval:performance` measurements.
+- Keep original logs, receipts and screenshots in the git-ignored `05_Software/test-outputs/` or in a task-owned scratch folder, never in the repository.
 
 ### E2e
 

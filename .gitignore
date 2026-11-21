@@ -30,9 +30,12 @@ __pycache__/
 /07_Delivery/vera-*/
 *.tsbuildinfo
 
-# Generated evaluator runs. Retained evidence is selected deliberately (git add -f).
+# Generated evaluator runs; accepted runs are promoted to 05_Software/evaluators/<family>/baselines/.
 /05_Software/evaluation-outputs/*
 !/05_Software/evaluation-outputs/README.md
+# Evidence of functional tests and work packages. Retained evidence is selected deliberately (git add -f).
+/05_Software/test-outputs/*
+!/05_Software/test-outputs/README.md
 
 # Ignore explicitly requested coverage/reports and any legacy Playwright output.
 **/coverage/

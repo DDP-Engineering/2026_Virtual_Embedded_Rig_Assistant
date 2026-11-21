@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import { mkdir, mkdtemp, readFile, rm, symlink, writeFile } from "node:fs/promises";
-import { isAbsolute, join, relative, resolve } from "node:path";
+import { dirname, isAbsolute, join, relative, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { parseArgs } from "node:util";
 import { build } from "esbuild";
@@ -22,7 +22,7 @@ try {
     );
   await build({
     entryPoints: {
-      runtime: join(software, "evaluators/eval-retrieval-harness/product-eval.mjs"),
+      runtime: join(software, "evaluators/retrieval/product-eval.mjs"),
       "pdf-worker": join(software, "src/libraries/core/src/knowledge/pdf-worker.ts"),
       "embedding-worker": join(software, "src/libraries/core/src/knowledge/embedding-worker.ts"),
     },
@@ -41,10 +41,13 @@ try {
   const { evaluate } = await import(pathToFileURL(join(scratch, "runtime.mjs")).href);
   const result = await evaluate(software, scratch);
   result.fixtureSha256 = createHash("sha256")
-    .update(await readFile(join(software, "tests/fixtures/retrieval/demo-board.yaml")))
+    .update(await readFile(join(software, "evaluators/retrieval/cases/demo-board.yaml")))
     .digest("hex");
-  if (values.output)
+  if (values.output) {
+    // A run gets its own folder under evaluation-outputs/retrieval/; the harness creates it.
+    await mkdir(dirname(resolve(values.output)), { recursive: true });
     await writeFile(resolve(values.output), `${JSON.stringify(result, null, 2)}\n`, { flag: "wx" });
+  }
   process.stdout.write(
     `${JSON.stringify({ pass: result.pass, modelId: result.modelId, metrics: Object.fromEntries(Object.entries(result.metrics).map(([mode, m]) => [mode, { overall: m.overall, en: m.en, ro: m.ro }])) })}\n`,
   );

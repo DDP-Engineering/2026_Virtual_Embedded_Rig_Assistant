@@ -125,11 +125,11 @@ workspace paths.
   help/                 # help pages: en, de, fr, ro
   release-notes/        # per-version release notes
   tests/                # tooling, integration, packaging, plugins, e2e, fixtures, support
-  evaluators/           # measurement harnesses (retrieval, performance)
+  evaluators/           # one folder per evaluation family: code, method, cases, baselines
 ```
 
 Build output (`apps/desktop/out/`, `apps/cli/dist/`, the libraries' `dist/`), `release_tmp/`,
-`evaluation-outputs/` and `node_modules/` are ignored. Environment, build, release and delivery
+`evaluation-outputs/` (evaluator runs), `test-outputs/` (test evidence) and `node_modules/` are ignored. Environment, build, release and delivery
 scripts are in `02_Tools/` and resolve packages from `05_Software/node_modules/`.
 
 ## Data locations

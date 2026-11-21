@@ -13,7 +13,7 @@ const invoke = <C extends Channel>(page: Page, channel: C, request: Request<C>):
 
 test("Agent and exports choices independently govern stored-secret replay disclosure and native exports", async () => {
   test.setTimeout(120000);
-  const evidence = resolve("evaluation-outputs/mask04/native");
+  const evidence = resolve("test-outputs/mask04/native");
   await mkdir(evidence, { recursive: true });
   const scratch = await realpath(await mkdtemp(join(evidence, "owned-")));
   const secret = "mask04-native-mqtt-secret";

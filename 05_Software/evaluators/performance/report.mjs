@@ -1,6 +1,7 @@
 // REQ-TEST-58d27601 REQ-TEST-c0e68f23 REQ-TEST-7cc7bf91
 import { createHash } from "node:crypto";
-import { writeFile } from "node:fs/promises";
+import { mkdir, writeFile } from "node:fs/promises";
+import { dirname } from "node:path";
 
 export const metrics = [
   "loadMs",
@@ -269,6 +270,8 @@ export function compare(report, reference) {
 }
 export async function saveReport(path, report) {
   const summary = report.kind ? report.summary : summarize(report);
+  // A run gets its own folder under evaluation-outputs/performance/; the harness creates it.
+  await mkdir(dirname(path), { recursive: true });
   await writeFile(path, `${JSON.stringify({ ...report, ...(summary ? { summary } : {}) }, null, 2)}\n`, {
     flag: "wx",
   });

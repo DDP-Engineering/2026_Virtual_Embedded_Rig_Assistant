@@ -9,14 +9,14 @@ import {
   schemaSql,
 } from "@vera/core";
 import Database from "better-sqlite3";
-import { loadCorpus } from "../retrieval-support/corpus.mjs";
-import { summarize, validateFixture } from "../retrieval-support/evaluation.mjs";
+import { loadCorpus } from "./corpus.mjs";
+import { summarize, validateFixture } from "./evaluation.mjs";
 
 export async function evaluate(software, scratch) {
   const workbench = join(software, "tests/fixtures/workbenches/demo-board");
   const corpus = await loadCorpus(workbench, pathToFileURL(join(scratch, "pdf-worker.mjs")));
   const fixture = validateFixture(
-    await readFile(join(software, "tests/fixtures/retrieval/demo-board.yaml"), "utf8"),
+    await readFile(join(software, "evaluators/retrieval/cases/demo-board.yaml"), "utf8"),
     corpus.chunks,
   );
   const models = join(software, "src/models");

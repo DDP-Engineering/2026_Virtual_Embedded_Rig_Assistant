@@ -7,7 +7,7 @@ import { imagePreviewFixtures } from "../support/image-preview-fixtures.js";
 import { test } from "./fixtures.js";
 import { installNetworkGuard, outboundAttempts } from "./network-guard.js";
 
-const evidence = resolve("evaluation-outputs/view06");
+const evidence = resolve("test-outputs/view06");
 const panel = (page: Page) => page.locator("[data-source-current]");
 const invoke = <C extends Channel>(page: Page, channel: C, request: Request<C>): Promise<Response<C>> =>
   page.evaluate(

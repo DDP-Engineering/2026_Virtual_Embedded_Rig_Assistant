@@ -101,7 +101,7 @@ async function sourceIdentity() {
     candidateHash: hash({ patch: hash(patch), files }),
   };
 }
-async function treeHash(root) {
+async function treeHash(root, include = () => true) {
   const result = [];
   async function walk(folder) {
     for (const entry of (await readdir(folder, { withFileTypes: true })).sort((a, b) =>
@@ -109,7 +109,8 @@ async function treeHash(root) {
     )) {
       const path = join(folder, entry.name);
       if (entry.isDirectory()) await walk(path);
-      else result.push([path.slice(root.length + 1).replaceAll("\\", "/"), hash(await readFile(path))]);
+      else if (include(path.slice(root.length + 1).replaceAll("\\", "/")))
+        result.push([path.slice(root.length + 1).replaceAll("\\", "/"), hash(await readFile(path))]);
     }
   }
   await walk(root);
@@ -364,8 +365,11 @@ export async function run(options) {
     report.identity = {
       fixtureHash: fixture.fixtureHash,
       harnessHash: hash({
-        scripts: await treeHash(resolve(software, "evaluators/eval-performance-harness")),
-        cli: hash(await readFile(join(software, "evaluators/eval-performance-harness/perf-sessions.mjs"))),
+        // Only the harness code: README.md and baselines/ live in the same folder and must not change it.
+        scripts: await treeHash(resolve(software, "evaluators/performance"), (path) =>
+          /^[^/]+\.mjs$/.test(path),
+        ),
+        cli: hash(await readFile(join(software, "evaluators/performance/run.mjs"))),
         probes: await Promise.all(
           ["main/session-performance.ts", "renderer/api/session-performance.ts"].map((p) =>
             readFile(join(software, "src/apps/desktop/src", p), "utf8"),

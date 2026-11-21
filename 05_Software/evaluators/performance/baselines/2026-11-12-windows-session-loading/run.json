@@ -49,10 +49,7 @@
       "codeFontSize": 14
     },
     "buildMode": "compiled-test-session-performance",
-    "viewport": [
-      1440,
-      900
-    ],
+    "viewport": [1440, 900],
     "scale": 1
   },
   "fixture": {
@@ -15696,10 +15693,7 @@
   ],
   "method": {
     "heartbeatMs": 20,
-    "viewport": [
-      1440,
-      900
-    ],
+    "viewport": [1440, 900],
     "textScale": 1,
     "clock": "independent monotonic durations; no cross-process subtraction",
     "overhead": "load includes Playwright click dispatch/readiness/draft/scroll; presentation includes driver checks after API receipt",

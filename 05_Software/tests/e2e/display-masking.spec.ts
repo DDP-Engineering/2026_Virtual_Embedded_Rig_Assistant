@@ -13,7 +13,7 @@ const invoke = <C extends Channel>(page: Page, channel: C, request: Request<C>):
 
 test("Display masking preserves MQTT-named Files, Find identity, live choices and persisted tabs", async () => {
   test.setTimeout(180000);
-  const evidence = resolve("evaluation-outputs/mask02/native");
+  const evidence = resolve("test-outputs/mask02/native");
   await mkdir(evidence, { recursive: true });
   const scratch = await realpath(await mkdtemp(join(evidence, "owned-")));
   const scripts = join(scratch, "scripts");

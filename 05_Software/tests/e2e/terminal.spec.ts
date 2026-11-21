@@ -15,7 +15,7 @@ const quote = (value: string) =>
 
 test("user terminal types interactively, reflows, isolates consent and ships a working native PTY", async () => {
   test.setTimeout(150000);
-  const evidence = resolve(process.env.VERA_TERM05_EVIDENCE_DIR ?? "evaluation-outputs/term05/native");
+  const evidence = resolve(process.env.VERA_TERM05_EVIDENCE_DIR ?? "test-outputs/term05/native");
   await mkdir(evidence, { recursive: true });
   const scratch = await realpath(await mkdtemp(join(evidence, "owned-")));
   const bench = join(scratch, "bench"),

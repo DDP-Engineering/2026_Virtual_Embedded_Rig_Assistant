@@ -27,7 +27,7 @@ export async function main(args) {
   });
   const json = async (path) => JSON.parse(await readFile(path, "utf8"));
   if (positionals.length !== 1 || !["run", "calibrate", "compare"].includes(positionals[0]))
-    throw Error("usage: perf:sessions run|calibrate|compare --output <new file> [options]");
+    throw Error("usage: eval:performance run|calibrate|compare --output <new file> [options]");
   const command = positionals[0];
   if (!values.output) throw Error("--output is required");
   for (const path of [values.output, `${values.output}.md`]) {

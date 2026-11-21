@@ -1,10 +1,18 @@
-# Previous-session performance checks
+# Performance evaluation: loading of saved sessions
+
+Measures the selection of saved sessions in the real compiled Electron application. Layout and
+shared rules: [evaluators README](../README.md).
 
 Status 2026-11-12: the user requested only a descriptive measurement of existing behavior for now.
-The [completed Windows evaluation](eval-performance-outputs/session-loading-2026-11-12-windows.md) contains 360
+The [completed Windows evaluation](baselines/2026-11-12-windows-session-loading/NOTES.md) contains 360
 valid samples. Calibration/comparison commands below remain experimental and have no completed
 native acceptance or established reference. Feature/milestone usage below is a deferred proposal,
 not an active verification gate. No loader/rendering optimization was made.
+
+The harness has moved twice since that run (to `evaluators/eval-performance-harness/`, then to
+`evaluators/performance/`), which changed its `harnessHash`. The 2026-11-12 baseline is kept as
+historical evidence; `compare` and `calibrate` cannot use it as a compatible reference. The first
+complete runs after a move become the new reference.
 
 PERF-01 / Gitea #91 measures saved-session selection in the real compiled Electron application.
 Run from `05_Software`, with pinned dependencies and prepared local model resources already present.
@@ -13,23 +21,23 @@ downloaded. The runner owns a temporary build/profile/workbench and leaves deskt
 
 ## Commands
 
-The output parent directory must exist. Choose a new filename for every run: JSON and adjacent
-`.json.md` summaries are exclusive-create and never overwritten.
+Give every run its own folder, `evaluation-outputs/performance/<run-id>/`; the harness creates it.
+`run.json` and the adjacent `run.json.md` summary are exclusive-create and never overwritten.
 
 ```powershell
 # Five measured samples per selected case; diagnostic without an explicit reference.
-python ../02_Tools/environment/npmw.py npm run perf:sessions -- run --mode quick --cases small,medium --scenarios first,warm --output evaluation-outputs/performance/session-quick.json
+python ../02_Tools/environment/npmw.py npm run eval:performance -- run --mode quick --cases small,medium --scenarios first,warm --output evaluation-outputs/performance/session-quick/run.json
 
 # Thirty measured samples per case. Repeat the same candidate on the same idle host.
-python ../02_Tools/environment/npmw.py npm run perf:sessions -- run --mode full --output evaluation-outputs/performance/session-full-a.json
-python ../02_Tools/environment/npmw.py npm run perf:sessions -- run --mode full --output evaluation-outputs/performance/session-full-b.json
+python ../02_Tools/environment/npmw.py npm run eval:performance -- run --mode full --output evaluation-outputs/performance/session-full-a/run.json
+python ../02_Tools/environment/npmw.py npm run eval:performance -- run --mode full --output evaluation-outputs/performance/session-full-b/run.json
 
 # Explicit calibration, with separately justified positive absolute budgets.
-python ../02_Tools/environment/npmw.py npm run perf:sessions -- calibrate --runs evaluation-outputs/performance/session-full-a.json,evaluation-outputs/performance/session-full-b.json --budgets evaluation-outputs/performance/session-budgets.json --output evaluation-outputs/performance/session-reference.json
+python ../02_Tools/environment/npmw.py npm run eval:performance -- calibrate --runs evaluation-outputs/performance/session-full-a/run.json,evaluation-outputs/performance/session-full-b/run.json --budgets evaluation-outputs/performance/session-budgets.json --output evaluation-outputs/performance/session-reference/run.json
 
 # New feature: measure and compare, or compare an existing report.
-python ../02_Tools/environment/npmw.py npm run perf:sessions -- run --mode quick --reference evaluation-outputs/performance/session-reference.json --output evaluation-outputs/performance/session-candidate.json
-python ../02_Tools/environment/npmw.py npm run perf:sessions -- compare --report evaluation-outputs/performance/session-candidate.json --reference evaluation-outputs/performance/session-reference.json --output evaluation-outputs/performance/session-comparison.json
+python ../02_Tools/environment/npmw.py npm run eval:performance -- run --mode quick --reference evaluation-outputs/performance/session-reference/run.json --output evaluation-outputs/performance/session-candidate/run.json
+python ../02_Tools/environment/npmw.py npm run eval:performance -- compare --report evaluation-outputs/performance/session-candidate/run.json --reference evaluation-outputs/performance/session-reference/run.json --output evaluation-outputs/performance/session-comparison/run.json
 ```
 
 Cases: `small` (20 messages), `medium` (200), `large` (2,000), `payload` (200 with 64 KiB completed
@@ -102,3 +110,16 @@ affected quick cases against an explicit compatible reference. Escalate affected
 result regresses or approaches a budget. At existing milestone gates, one owner runs the complete
 implemented matrix once per native platform. No extra complete functional suite or handover retest
 is added. Existing slow cases require measured follow-up; this harness does not optimize the loader.
+
+## Files
+
+| File | Role |
+|---|---|
+| [run.mjs](run.mjs) | Entry point: `run`, `calibrate` and `compare`. |
+| [runner.mjs](runner.mjs) | Builds the instrumented application, prepares profiles and workbenches, drives the measurement. Uses the network guard of the E2E suite, `tests/e2e/network-guard.ts`. |
+| [report.mjs](report.mjs) | Validation, statistics, calibration, comparison and saving of reports. |
+| [fixtures.mjs](fixtures.mjs) | Generates the synthetic saved sessions. |
+| [baselines/](baselines/) | Retained runs: `2026-11-12-windows-session-loading` (session loading) and `2026-11-19-windows-embedding-models` (a separate CLI measurement of the two embedding models). |
+
+The focused tests are `tests/tooling/session-performance*.test.ts`. Scratch is a temporary folder
+`vera-session-performance-*`, deleted at the end.
