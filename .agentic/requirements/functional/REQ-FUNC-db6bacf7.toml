@@ -1,0 +1,21 @@
+schema = 1
+
+id = "REQ-FUNC-db6bacf7"
+
+title = "Retain a busy workbench in the background during navigation"
+
+status = "active"
+
+requirement = "When the user opens or creates another workbench while the current workbench has owned work (queued session operations, active turns, undecided approvals or background compaction), the desktop app shall keep the previous workbench open in the background with its own session service, database handle, write queue, lock, indexing and plugin program runs, so that its turns continue and complete in that workbench."
+verification = "Main test with real WorkbenchService and SessionsHost runtimes and a replay gateway held at a gate: start a turn in A, open B, observe A's lock file and session service still in place and its program runs not stopped, release the gate and observe A's turn end with stopReason end and its final assistant reply persisted in A's database; boundary: the registry keeps A only while its host reports owned work."
+affected_paths = ["05_Software/src/apps/desktop/src/main/workbench-runtimes.ts", "05_Software/src/apps/desktop/src/main/sessions.ts", "05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/libraries/core/src/workbench/service.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/workbench-runtimes.test.ts::keeps a busy workbench in the background and releases it once its work settles", "05_Software/src/apps/desktop/src/main/workbench-runtimes.test.ts::creates a workbench in a fresh runtime and keeps the busy previous one", "05_Software/src/apps/desktop/src/main/workbench-runtimes.replay.test.ts::continues a replay turn in A after B opens while B runs its own turn, then releases A", "05_Software/tests/e2e/workbench-runtimes.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-21
+updated = 2026-11-21

@@ -1,0 +1,21 @@
+schema = 1
+
+id = "REQ-FUNC-4747d310"
+
+title = "Run turns in the current workbench while a background workbench runs"
+
+status = "active"
+
+requirement = "While a background workbench runs a turn, the desktop app shall run turns of the current workbench in the current workbench's own session service and database."
+verification = "Main test with real runtimes and a replay gateway: while A's turn is held in the background, send a turn in B and observe it complete with stopReason end and its reply stored only in B's database, then release A and observe A complete too; boundary: no session of B appears in A's database and vice versa."
+affected_paths = ["05_Software/src/apps/desktop/src/main/workbench-runtimes.ts", "05_Software/src/apps/desktop/src/main/sessions.ts", "05_Software/src/apps/desktop/src/main/index.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/workbench-runtimes.replay.test.ts::continues a replay turn in A after B opens while B runs its own turn, then releases A", "05_Software/tests/e2e/workbench-runtimes.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-21
+updated = 2026-11-21

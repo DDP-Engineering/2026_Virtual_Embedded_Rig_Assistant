@@ -675,6 +675,10 @@ export class WorkbenchService {
   open(input: string): Promise<WorkbenchSnapshot> {
     return this.run(async () => this.openFolder(await this.folder(input), input));
   }
+  /** The canonical folder that open uses for `input` (INVALID relative, NOT_FOUND missing); reads nothing inside it. */
+  locate(input: string): Promise<string> {
+    return this.folder(input);
+  }
   private async openFolder(folder: string, input: string): Promise<WorkbenchSnapshot> {
     await this.writes.drain();
     const config = await this.config(folder);

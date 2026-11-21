@@ -5,6 +5,8 @@ export default defineConfig({
   resolve: {
     alias: {
       "@vera/shared": fileURLToPath(new URL("../../libraries/shared/src/index.ts", import.meta.url)),
+      // Before "@vera/core", which would otherwise claim the subpath: the replay gateway of instrumented builds.
+      "@vera/core/replay": fileURLToPath(new URL("../../libraries/core/src/llm/replay.ts", import.meta.url)),
       "@vera/core": fileURLToPath(new URL("../../libraries/core/src/index.ts", import.meta.url)),
     },
   },

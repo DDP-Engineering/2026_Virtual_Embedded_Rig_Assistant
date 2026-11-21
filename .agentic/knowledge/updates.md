@@ -11,7 +11,7 @@ owns preferences and [sessions](sessions.md) owns actual session work.
 
 Main owns scheduling/capabilities and payload lifecycle. ElectronUpdateBackend delegates
 metadata, downloads, SHA512/publisher verification and installation to electron-updater.
-SessionsHost closes admission atomically at core quiescence. Main drains persistence before
+WorkbenchRuntimes closes admission atomically once every open workbench runtime, background ones included, is quiescent. Main drains persistence before
 installation. Renderer presents strict snapshots, plain text notes and portable confirmation. The native confirmation closes on disposal and restores its connected opener.
 The update mode also gates the plugin catalog's periodic checks ([Plugin catalog](plugins-catalog.md)): mode Off stops them.
 
@@ -40,7 +40,8 @@ VERA_UPDATE_URL fixes generic feed at compilation and builder metadata; empty is
   managed Linux checks DebUpdater metadata without APPIMAGE and directs to its package manager.
 - Downloaded metadata/backend stay pinned. Deferred requests keep windows and turns alive.
   Core activity includes active promises and pending approvals, independently of UI subscriptions.
-- SessionsHost synchronously checks queued operations/core activity and locks new admission.
+- WorkbenchRuntimes synchronously checks pending lifecycle changes and each runtime SessionsHost's queued
+  operations/core activity, then locks new admission on all of them.
   Main drains session/workbench/settings/log persistence before explicit quitAndInstall.
 - Errors/logs expose bounded categories. Notes are bounded React text and scrubbed at transport.
 
@@ -67,7 +68,7 @@ flowchart LR
  UI[UpdatesPanel + UpdateBanner] --> IPC[shared update IPC]
  IPC --> U[main Updates]
  U --> B[ElectronUpdateBackend] --> F[generic feed]
- U --> G[SessionsHost admission gate] --> C[SessionService hasActiveWork]
+ U --> G[WorkbenchRuntimes admission gate over every SessionsHost] --> C[SessionService hasActiveWork]
  U --> Q[main persistence drain] --> I[explicit verified quitAndInstall]
  U --> E[AppEvents] --> UI
 ```

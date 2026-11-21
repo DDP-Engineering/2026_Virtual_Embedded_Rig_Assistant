@@ -1,0 +1,21 @@
+schema = 1
+
+id = "REQ-REL-436f00da"
+
+title = "Release every workbench runtime on app exit"
+
+status = "active"
+
+requirement = "When the application exits, the desktop app shall close the sessions of every open workbench, current and background, and then release each workbench's lock and database."
+verification = "Registry test: with a foreground and a retained runtime, closeSessions closes both session hosts and closeWorkbenches closes both workbenches, a failure of one still closes the other and is reported, and later lifecycle operations return BUSY."
+affected_paths = ["05_Software/src/apps/desktop/src/main/workbench-runtimes.ts", "05_Software/src/apps/desktop/src/main/sessions.ts", "05_Software/src/apps/desktop/src/main/index.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/workbench-runtimes.test.ts::closes the sessions and then the workbench of every runtime on exit, past a failure", "05_Software/src/apps/desktop/src/main/workbench-runtimes.replay.test.ts::closes the sessions of every runtime and releases every lock on exit"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-21
+updated = 2026-11-21

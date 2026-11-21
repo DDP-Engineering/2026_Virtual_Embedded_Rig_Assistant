@@ -17,6 +17,7 @@ infrastructure. Unit and component tests stay beside the implementation, in `src
 
 `e2e/composer-images.spec.ts` covers composer paste, drop and picker, Files image references, previews, model warnings and format refusal.
 `e2e/transcript-images.spec.ts` covers native restart, keyboard and pointer viewer activation, and persisted path labels after deleting an attachment.
+Native `e2e/workbench-runtimes.spec.ts` runs a slow replay turn in workbench A, opens B and runs a turn there, and checks that A's turn completes in A before A is released.
 
 `e2e/chat-actions.spec.ts` checks per-reply and block copying, four-language compact keyboard/hover
 controls in Chromium, and exact-once multiline execution, terminal creation, destination selection and

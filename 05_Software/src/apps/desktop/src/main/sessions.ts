@@ -95,8 +95,28 @@ export class SessionsHost {
       managedRoots?: readonly string[];
       /** VERA's help for the agent's help tool: the app help and the interface language. */
       help?: { app: HelpLibrary; language: () => HelpLanguage };
+      /** Owned work may have settled: a turn or compaction ended, or the queued operations ran out (see idle()). */
+      settled?: () => void;
     },
   ) {}
+  /** One queued operation finished; the last one may leave the host idle. */
+  private finished(): void {
+    this.pending--;
+    if (this.pending) return;
+    try {
+      this.options.settled?.();
+    } catch {
+      /* an observer never fails the operation that finished */
+    }
+  }
+  /** No queued operation, active turn, undecided approval or compaction: the workbench may be released. */
+  idle(): boolean {
+    return !this.pending && (this.service?.isSettled() ?? true);
+  }
+  /** Work a safe update waits for: a queued operation, an active turn or an undecided approval. */
+  busy(): boolean {
+    return this.pending > 0 || !!this.service?.hasActiveWork();
+  }
   private serial<T>(operation: () => Promise<T>): Promise<T> {
     const next = this.queue.then(operation);
     this.queue = next.then(
@@ -168,6 +188,7 @@ export class SessionsHost {
         this.service = new SessionService({
           db,
           root: snapshot.folder,
+          ...(options.settled ? { onWorkSettled: options.settled } : {}),
           onDelegationsChanged: () =>
             options.emit({
               topic: "workbench",
@@ -294,9 +315,7 @@ export class SessionsHost {
       if (!this.service) throw veraError("INTERNAL");
       await this.service.waitReady();
       return operation(this.service);
-    }).finally(() => {
-      this.pending--;
-    });
+    }).finally(() => this.finished());
   }
   /** Resolve the session's model on the host queue. Catalog I/O may outlive this queue slot. */
   async imageCapability(workbenchId: string, sessionId: string) {
@@ -340,19 +359,26 @@ export class SessionsHost {
   invalidatePrograms(): void {
     this.programGeneration++;
   }
-  async lifecycle<T>(operation: () => Promise<T>): Promise<T> {
+  /**
+   * Runs a workbench lifecycle change between queued session operations. `drain` first closes the
+   * session service, ending its turns; a reopen in place passes false and keeps it, unless the reopen
+   * replaced the database (a read-only snapshot is copied again), whose closed handle the service held.
+   */
+  async lifecycle<T>(operation: () => Promise<T>, drain = true): Promise<T> {
     if (this.shutdown) throw veraError("BUSY");
     this.pending++;
     return this.serial(async () => {
-      await this.drain();
-      return operation();
-    }).finally(() => {
-      this.pending--;
-    });
+      if (drain) await this.drain();
+      try {
+        return await operation();
+      } finally {
+        if (this.db && !this.db.open) await this.drain();
+      }
+    }).finally(() => this.finished());
   }
   /** Synchronous check-and-lock: accepted queued sends cannot race a safe update quit. */
   beginShutdown(): boolean {
-    if (this.pending || this.service?.hasActiveWork()) return false;
+    if (this.busy()) return false;
     this.shutdown = true;
     return true;
   }

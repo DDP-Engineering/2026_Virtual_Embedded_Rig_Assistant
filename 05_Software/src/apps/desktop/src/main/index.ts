@@ -27,6 +27,7 @@ import {
   settingStates,
   splitModelReference,
   WebDownloads,
+  type WorkbenchHost,
   WorkbenchService,
 } from "@vera/core";
 import type { AdvancedKey } from "@vera/shared";
@@ -124,6 +125,7 @@ import { WebAccessService } from "./web-access.js";
 import { popupWindowMenu, restoreWindowBounds, titleBarOverlay, windowBackground } from "./window-chrome.js";
 import { loadWindowState, saveWindowState, type WindowState } from "./window-state.js";
 import { publicWorkbenchFolders } from "./workbench-folders.js";
+import { WorkbenchRuntimes } from "./workbench-runtimes.js";
 import { createDesktopWorkerPool } from "./worker-pool.js";
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -192,7 +194,7 @@ const indexer = new IndexerHost({
   modelId: (model) => embeddingModelId(readEmbeddingModel(models, model)),
   status: (state) => {
     emitAppEvent({ topic: "app", id: "app", event: { type: "indexer.status", state } });
-    if (state === "running") workbench.refreshDocuments();
+    if (state === "running") for (const runtime of runtimes.all()) runtime.workbench.refreshDocuments();
   },
   // The application's extraction time limit and embedding idle time travel with each message.
   limits: () => ({
@@ -260,36 +262,42 @@ const settings = new SettingsService({
   },
 });
 const sessionOrder = createSessionOrder(settings);
-const workbench = new WorkbenchService(
-  {
-    userData: dataLocations.paths.userData,
-    files: createFileAccess(systemClock),
-    settings,
-    pid: process.pid,
-    appVersion: app.getVersion(),
-    now: () => systemClock.now(),
-    token: randomUUID,
-    isProcessAlive: (pid) => {
-      try {
-        process.kill(pid, 0);
-        return true;
-      } catch (error) {
-        return !(typeof error === "object" && error !== null && "code" in error && error.code === "ESRCH");
-      }
-    },
-    changed: (event) => {
-      if (event.event.type === "closed") display.close();
-      emitAppEvent(eventEnvelopeSchema.parse(event));
-    },
+/** Shared by every workbench runtime; each WorkbenchService owns one workbench's lock, database and indexing. */
+const workbenchHost: WorkbenchHost = {
+  userData: dataLocations.paths.userData,
+  files: createFileAccess(systemClock),
+  settings,
+  pid: process.pid,
+  appVersion: app.getVersion(),
+  now: () => systemClock.now(),
+  token: randomUUID,
+  isProcessAlive: (pid) => {
+    try {
+      process.kill(pid, 0);
+      return true;
+    } catch (error) {
+      return !(typeof error === "object" && error !== null && "code" in error && error.code === "ESRCH");
+    }
   },
-  indexer.processor,
-);
+  changed: (event) => {
+    if (event.event.type === "closed") display.closed(event.id);
+    emitAppEvent(eventEnvelopeSchema.parse(event));
+  },
+};
+/** The workbench service of the foreground runtime: the workbench the window shows. */
+function workbench(): WorkbenchService {
+  return runtimes.foreground.workbench;
+}
+/** The session host of the foreground runtime. */
+function sessions(): SessionsHost {
+  return runtimes.foreground.sessions;
+}
 const maskingFor = createMaskingResolver(() => settings.get().settings);
 function sessionImageIdentity(path: string): string {
-  return display.sessionImagePath(workbench.getSnapshot().config.id, path);
+  return display.sessionImagePath(workbench().getSnapshot().config.id, path);
 }
 function sessionContent(text: string): string {
-  return maskingFor(workbench.getSnapshot().config, "agent") ? credentials.scrub(text) : text;
+  return maskingFor(workbench().getSnapshot().config, "agent") ? credentials.scrub(text) : text;
 }
 const display = new DisplayDocuments(
   workbench,
@@ -307,7 +315,7 @@ const plugins = new PluginStore({ root: join(dataLocations.paths.userData, "plug
 const processHost = createDesktopProcessHost();
 const terminals = new TerminalService({
   current: () => {
-    const snapshot = workbench.getSnapshot();
+    const snapshot = workbench().getSnapshot();
     return { id: snapshot.config.id, folder: snapshot.folder };
   },
   shell: createCommandShellHost(
@@ -336,8 +344,8 @@ const terminals = new TerminalService({
   ),
   scrub: (text) => credentials.scrub(text),
   secrets: () => credentials.knownSecrets(),
-  maskUserOutput: () => maskingFor(workbench.getSnapshot().config, "runs"),
-  maskAgentOutput: () => maskingFor(workbench.getSnapshot().config, "agent"),
+  maskUserOutput: () => maskingFor(workbench().getSnapshot().config, "runs"),
+  maskAgentOutput: () => maskingFor(workbench().getSnapshot().config, "agent"),
   // Read as a terminal opens (count, buffer) and as the agent reads one (output size).
   limits: () => ({
     terminals: appAdvanced("terminals"),
@@ -421,16 +429,25 @@ const catalogChecks = new CatalogChecks({
     emitAppEvent({ topic: "app", id: "app", event: { type: "plugins.catalog" } });
   },
 });
-/** Runs of the open workbench stop before it closes or another workbench replaces it. */
-async function stopWorkbenchPrograms(): Promise<void> {
-  await terminals.closeAll();
-  let folder: string;
+/** The workbench a snapshot names: its ID and folder, since clones of one folder share the ID. */
+const workbenchKey = (snapshot: WorkbenchSnapshot) => `${snapshot.config.id}\n${snapshot.folder}`;
+/** The workbench the window shows; undefined while none is open. */
+function foregroundKey(): string | undefined {
   try {
-    folder = workbench.getSnapshot().folder;
+    return workbenchKey(workbench().getSnapshot());
   } catch {
-    return;
+    return undefined;
   }
-  await programs.stopWorkbench(folder);
+}
+/**
+ * Opens or creates a workbench. User terminals belong to the shown workbench: they close only when another
+ * workbench takes its place, so a failed open or a reopen in place keeps them.
+ */
+async function replaceForeground(operation: () => Promise<WorkbenchSnapshot>): Promise<WorkbenchSnapshot> {
+  const before = foregroundKey();
+  const snapshot = await operation();
+  if (workbenchKey(snapshot) !== before) await terminals.closeAll();
+  return snapshot;
 }
 /** Refuse terminal authority while asynchronous workbench replacement still owns the old snapshot. */
 async function terminalTransition<T>(operation: () => Promise<T>): Promise<T> {
@@ -479,7 +496,8 @@ function interfaceLanguage(): HelpLanguage {
     ? language
     : (helpLanguages.find((code) => app.getLocale().startsWith(code)) ?? "en");
 }
-const sessions = new SessionsHost({
+/** What every workbench runtime's session host shares; each runtime adds its own WorkbenchService. */
+const sessionOptions: Omit<ConstructorParameters<typeof SessionsHost>[0], "workbench" | "settled"> = {
   log: (message) => logger.log("error", "agent.turn.failed", { message }),
   terminals: (workbenchId) => terminals.reader(workbenchId),
   help: { app: help, language: interfaceLanguage },
@@ -493,7 +511,6 @@ const sessions = new SessionsHost({
       transfer: downloadTransfer,
       pdf: createDownloadPdfExtractor(new URL("./pdf-worker.js", import.meta.url)),
     }),
-  workbench,
   settings,
   gateway: () => modelGateway,
   credentials,
@@ -522,14 +539,29 @@ const sessions = new SessionsHost({
   ...(__VERA_TEST__ && process.env.VERA_TEST_ALLOW_WRITES === "1"
     ? { permissions: { allow: () => true } }
     : {}),
+};
+/**
+ * The open workbench runtimes: the foreground one the window shows and the previous ones that still
+ * finish their turns in the background. Releasing a runtime stops its program runs (REQ-FUNC-39d5e6d9).
+ */
+const runtimes = new WorkbenchRuntimes({
+  create: (settled) => {
+    const service = new WorkbenchService(workbenchHost, indexer.processor);
+    return {
+      workbench: service,
+      sessions: new SessionsHost({ ...sessionOptions, workbench: service, settled }),
+    };
+  },
+  stopPrograms: (folder) => programs.stopWorkbench(folder),
+  log: (event) => logger.log("error", event),
 });
 ipcMain.handle("vera:subscription", async (event, action, payload) => {
   await credentialsReady;
-  return sessions.subscription(event, action, payload);
+  return sessions().subscription(event, action, payload);
 });
 /** The folder of the open workbench when `workbenchId` names it; CONFLICT otherwise. */
 function openWorkbenchFolder(workbenchId: string): string {
-  const snapshot = workbench.getSnapshot();
+  const snapshot = workbench().getSnapshot();
   if (snapshot.config.id !== workbenchId) throw veraError("CONFLICT");
   return snapshot.folder;
 }
@@ -565,13 +597,13 @@ async function pluginHelpPage(
 function activePluginStore(workbenchId?: string): PluginStore {
   if (workbenchId) return plugins.forWorkbench(openWorkbenchFolder(workbenchId));
   try {
-    return plugins.forWorkbench(workbench.getSnapshot().folder);
+    return plugins.forWorkbench(workbench().getSnapshot().folder);
   } catch {
     return plugins;
   }
 }
 const runPresentation = new RunPresentation({
-  current: () => workbench.getSnapshot(),
+  current: () => workbench().getSnapshot(),
   maskingFor,
   scrub: (text) => credentials.scrub(text),
   runner: programs,
@@ -586,7 +618,11 @@ async function chooseSavePath(options: SaveDialogOptions): Promise<string | null
 /** `id` limits the forgotten program resolutions to that plugin; found programs stay stored by file stamp. */
 function pluginsChanged(id?: string): void {
   provisioner.invalidate(id);
-  sessions.invalidatePrograms();
+  invalidatePrograms();
+}
+/** Every open workbench, background ones included, recomputes its program prompt entries on its next session call. */
+function invalidatePrograms(): void {
+  for (const runtime of runtimes.all()) runtime.sessions.invalidatePrograms();
 }
 /** Reads the enabled plugins' program statuses in the background, so later reads and runs find a warm cache. */
 function warmPrograms(snapshot: WorkbenchSnapshot): WorkbenchSnapshot {
@@ -599,8 +635,8 @@ function warmPrograms(snapshot: WorkbenchSnapshot): WorkbenchSnapshot {
 /** The first message of an open workbench loads its embedding model in the indexer (PERF-11). */
 const embeddingWarmup = createEmbeddingWarmup({
   hasVectors: (workbenchId) =>
-    workbench.readDocuments(workbenchId, async (root, db) => {
-      const embeddings = indexer.embeddings(workbench.getSnapshot().config.embeddings.model);
+    workbench().readDocuments(workbenchId, async (root, db) => {
+      const embeddings = indexer.embeddings(workbench().getSnapshot().config.embeddings.model);
       if (db.prepare("SELECT 1 FROM embeddings WHERE model_id=? LIMIT 1").get(embeddings.modelId))
         return { root, embeddings };
     }),
@@ -693,25 +729,26 @@ ipcMain.handle(
         if (!updates) throw { code: "BUSY", messageKey: "errors.BUSY" };
         return updates.openRelease(version);
       },
-      "skills.list": ({ workbenchId }) => workbench.listSkills(workbenchId),
-      "skills.open": ({ workbenchId, source, name }) => workbench.openSkill(workbenchId, source, name),
-      "skills.create": ({ workbenchId, source, name }) => workbench.saveSkill(workbenchId, source, name),
+      "skills.list": ({ workbenchId }) => workbench().listSkills(workbenchId),
+      "skills.open": ({ workbenchId, source, name }) => workbench().openSkill(workbenchId, source, name),
+      "skills.create": ({ workbenchId, source, name }) => workbench().saveSkill(workbenchId, source, name),
       "skills.save": ({ workbenchId, source, name, content, sha256 }) =>
-        workbench.saveSkill(workbenchId, source, name, content, sha256),
-      "skills.toggle": ({ workbenchId, name, enabled }) => workbench.toggleSkill(workbenchId, name, enabled),
+        workbench().saveSkill(workbenchId, source, name, content, sha256),
+      "skills.toggle": ({ workbenchId, name, enabled }) =>
+        workbench().toggleSkill(workbenchId, name, enabled),
       "plugins.list": async ({ workbenchId }) => {
-        const snapshot = workbenchId ? workbench.getSnapshot() : undefined;
+        const snapshot = workbenchId ? workbench().getSnapshot() : undefined;
         if (workbenchId && snapshot?.config.id !== workbenchId) throw veraError("CONFLICT");
-        const database = snapshot ? workbench.getDatabase() : undefined;
+        const database = snapshot ? workbench().getDatabase() : undefined;
         const list = await pluginListings.list(snapshot?.folder);
         if (
           snapshot &&
-          (workbench.getSnapshot().config.id !== snapshot.config.id ||
-            workbench.getSnapshot().folder !== snapshot.folder ||
-            workbench.getDatabase() !== database)
+          (workbench().getSnapshot().config.id !== snapshot.config.id ||
+            workbench().getSnapshot().folder !== snapshot.folder ||
+            workbench().getDatabase() !== database)
         )
           throw veraError("CONFLICT");
-        const enabled = workbenchId ? workbench.enabledPlugins(workbenchId) : [];
+        const enabled = workbenchId ? workbench().enabledPlugins(workbenchId) : [];
         return list.map((plugin) => ({ ...plugin, enabled: enabled.includes(plugin.id) }));
       },
       "plugins.choose": async ({ kind }) => {
@@ -760,7 +797,7 @@ ipcMain.handle(
         return {};
       },
       "plugins.toggle": async ({ workbenchId, id, enabled }) => {
-        const result = await workbench.togglePlugin(workbenchId, id, enabled);
+        const result = await workbench().togglePlugin(workbenchId, id, enabled);
         pluginsChanged(id);
         return result;
       },
@@ -792,19 +829,19 @@ ipcMain.handle(
               : provisioner.check(id),
           workbenchId,
         );
-        sessions.invalidatePrograms();
+        invalidatePrograms();
         return statuses;
       },
       "plugins.installArchive": async ({ id, program, sha256, workbenchId }) => {
-        const before = workbenchId ? workbench.getSnapshot() : undefined;
-        const beforeDb = workbenchId ? workbench.getDatabase() : undefined;
+        const before = workbenchId ? workbench().getSnapshot() : undefined;
+        const beforeDb = workbenchId ? workbench().getDatabase() : undefined;
         const store = workbenchId ? activePluginStore(workbenchId) : plugins;
         const validate = async () => {
           if (
             before &&
-            (workbench.getSnapshot().config.id !== before.config.id ||
-              workbench.getSnapshot().folder !== before.folder ||
-              workbench.getDatabase() !== beforeDb)
+            (workbench().getSnapshot().config.id !== before.config.id ||
+              workbench().getSnapshot().folder !== before.folder ||
+              workbench().getDatabase() !== beforeDb)
           )
             throw veraError("CONFLICT");
           const current = await store.load(id).catch(() => {
@@ -882,7 +919,7 @@ ipcMain.handle(
       // Parameter states from the stores behind the moved Settings pages: references and supplier ids, never a
       // secret (REQ-FUNC-cbdb46ac). Workbench files are checked in the open workbench only.
       "plugins.configuration": async ({ workbenchId, plugins: declared }) => {
-        const snapshot = workbenchId ? workbench.getSnapshot() : undefined;
+        const snapshot = workbenchId ? workbench().getSnapshot() : undefined;
         if (workbenchId && snapshot?.config.id !== workbenchId) throw veraError("CONFLICT");
         const scopes = new Map<string, Promise<readonly string[]>>();
         const secrets = (scope: "mqtt" | "wokwi" | "parts") => {
@@ -929,7 +966,7 @@ ipcMain.handle(
       "docs.openers": () => ({ apps: [...openers().keys()] }),
       "docs.openWith": ({ workbenchId, path, app }) =>
         openWith(
-          () => workbench.locateEntry(workbenchId, display.resolve(workbenchId, path)),
+          () => workbench().locateEntry(workbenchId, display.resolve(workbenchId, path)),
           app,
           openers(),
           launchDetached,
@@ -937,26 +974,26 @@ ipcMain.handle(
       "docs.systemApps": async ({ workbenchId, path }) => ({
         apps: (
           await systemApps(
-            () => workbench.locateEntry(workbenchId, display.resolve(workbenchId, path)),
+            () => workbench().locateEntry(workbenchId, display.resolve(workbenchId, path)),
             systemAppDeps(),
           )
         ).map(({ id, name }) => ({ id, name })),
       }),
       "docs.openSystemApp": ({ workbenchId, path, app }) =>
         openSystemApp(
-          () => workbench.locateEntry(workbenchId, display.resolve(workbenchId, path)),
+          () => workbench().locateEntry(workbenchId, display.resolve(workbenchId, path)),
           app,
           systemAppDeps(),
           launchDetached,
         ),
       "docs.reveal": ({ workbenchId, path }) =>
         revealEntry(
-          () => workbench.locateEntry(workbenchId, display.resolve(workbenchId, path)),
+          () => workbench().locateEntry(workbenchId, display.resolve(workbenchId, path)),
           (absolute) => shell.showItemInFolder(absolute),
         ),
       "docs.copyPath": ({ workbenchId, path, form }) =>
         copyEntry(
-          () => workbench.locateEntry(workbenchId, display.resolve(workbenchId, path)),
+          () => workbench().locateEntry(workbenchId, display.resolve(workbenchId, path)),
           display.resolve(workbenchId, path),
           form,
           (text) => clipboard.writeText(text),
@@ -964,11 +1001,11 @@ ipcMain.handle(
         ),
       "docs.volume": async ({ workbenchId }) => ({
         workbenchId,
-        volume: workbench.documentVolume(workbenchId),
+        volume: workbench().documentVolume(workbenchId),
         guard: display.guard(workbenchId),
       }),
       "docs.approve": async ({ workbenchId, files }) => {
-        await workbench.approveDocuments(workbenchId, files);
+        await workbench().approveDocuments(workbenchId, files);
         return {};
       },
       "docs.search": ({ workbenchId, query }) => display.search(workbenchId, query),
@@ -977,12 +1014,12 @@ ipcMain.handle(
           request.workbenchId,
           () =>
             "sessionId" in request
-              ? sessions.run((service) =>
-                  workbench.readDocuments(request.workbenchId, () =>
+              ? sessions().run((service) =>
+                  workbench().readDocuments(request.workbenchId, () =>
                     service.openCitation(request.sessionId, request.messageId, request.ref),
                   ),
                 )
-              : workbench.openDocument(
+              : workbench().openDocument(
                   request.workbenchId,
                   "path" in request
                     ? display.resolve(request.workbenchId, request.path)
@@ -998,12 +1035,12 @@ ipcMain.handle(
         return {};
       },
       "docs.reindex": async ({ workbenchId }) => {
-        await workbench.reindexDocuments(workbenchId);
+        await workbench().reindexDocuments(workbenchId);
         return {};
       },
       "downloads.list": ({ workbenchId }) =>
-        sessions.run((service) =>
-          workbench.readDocuments(workbenchId, async () => ({
+        sessions().run((service) =>
+          workbench().readDocuments(workbenchId, async () => ({
             workbenchId,
             downloads: (await service.listDownloads())
               .map((record) => publicWebDownload(record, (text) => credentials.scrub(text)))
@@ -1011,15 +1048,15 @@ ipcMain.handle(
           })),
         ),
       "downloads.open": ({ workbenchId, downloadId }) =>
-        sessions.run((service) =>
-          workbench.readDocuments(workbenchId, async () => ({
+        sessions().run((service) =>
+          workbench().readDocuments(workbenchId, async () => ({
             workbenchId,
             downloadId,
             content: publicViewer(await service.openDownload(downloadId), (text) => credentials.scrub(text)),
           })),
         ),
       "downloads.reveal": ({ downloadId }) =>
-        sessions.run(async (service) => {
+        sessions().run(async (service) => {
           shell.showItemInFolder(await service.locateDownload(downloadId));
           return {};
         }),
@@ -1029,33 +1066,35 @@ ipcMain.handle(
       "providers.chatgpt.status": () => chatgpt.status(),
       "providers.chatgpt.logout": () => chatgpt.logout(),
       "artifacts.list": ({ sessionId }) =>
-        sessions.run((s) =>
+        sessions().run((s) =>
           s
             .listArtifacts(sessionId)
             .map((a) =>
               publicArtifact(a, (text) =>
-                maskingFor(workbench.getSnapshot().config, "exports") ? credentials.scrub(text) : text,
+                maskingFor(workbench().getSnapshot().config, "exports") ? credentials.scrub(text) : text,
               ),
             ),
         ),
       "artifacts.open": ({ artifactId }) =>
-        sessions.run(async (s) =>
+        sessions().run(async (s) =>
           publicArtifact(await s.openArtifact(artifactId), (text) =>
-            maskingFor(workbench.getSnapshot().config, "exports") ? credentials.scrub(text) : text,
+            maskingFor(workbench().getSnapshot().config, "exports") ? credentials.scrub(text) : text,
           ),
         ),
       "artifacts.reveal": ({ artifactId }) =>
-        sessions.run((s) => revealArtifact(s, artifactId, (path) => shell.showItemInFolder(path))),
+        sessions().run((s) => revealArtifact(s, artifactId, (path) => shell.showItemInFolder(path))),
       "artifacts.export": async ({ artifactId }) => {
-        const owner = workbench.getSnapshot().config.id;
-        const name = await sessions.run((s) => exportName(s, artifactId, (text) => credentials.scrub(text)));
+        const owner = workbench().getSnapshot().config.id;
+        const name = await sessions().run((s) =>
+          exportName(s, artifactId, (text) => credentials.scrub(text)),
+        );
         const path = await chooseSavePath({ defaultPath: name });
         if (path === null) return { exported: false };
-        return sessions.run((s) => {
-          if (workbench.getSnapshot().config.id !== owner) throw veraError("CONFLICT");
+        return sessions().run((s) => {
+          if (workbench().getSnapshot().config.id !== owner) throw veraError("CONFLICT");
           return exportArtifact(s, artifactId, {
-            masking: () => maskingFor(workbench.getSnapshot().config, "exports"),
-            root: workbench.getSnapshot().folder,
+            masking: () => maskingFor(workbench().getSnapshot().config, "exports"),
+            root: workbench().getSnapshot().folder,
             choose: async () => path,
             write: (target, content) => createFileAccess(systemClock).writeAtomic(target, content),
             scrub: (text) => credentials.scrub(text),
@@ -1063,36 +1102,38 @@ ipcMain.handle(
         });
       },
       "changes.list": ({ sessionId }) =>
-        sessions.run((s) => s.listChanges(sessionId).map((c) => ({ ...c, path: credentials.scrub(c.path) }))),
+        sessions().run((s) =>
+          s.listChanges(sessionId).map((c) => ({ ...c, path: credentials.scrub(c.path) })),
+        ),
       "changes.get": ({ changeId }) =>
-        sessions.run((s) => {
+        sessions().run((s) => {
           const c = s.getChange(changeId);
           return { ...c, path: credentials.scrub(c.path), diff: credentials.scrub(c.diff) };
         }),
       "app.revealPath": ({ path }) =>
-        sessions.run(() =>
+        sessions().run(() =>
           revealPath(
-            workbench.getSnapshot().folder,
-            display.resolve(workbench.getSnapshot().config.id, path),
+            workbench().getSnapshot().folder,
+            display.resolve(workbench().getSnapshot().config.id, path),
             (absolute) => shell.showItemInFolder(absolute),
           ),
         ),
       "app.openPath": ({ path }) =>
-        sessions.run(() =>
+        sessions().run(() =>
           openPath(
-            workbench.getSnapshot().folder,
-            display.resolve(workbench.getSnapshot().config.id, path),
+            workbench().getSnapshot().folder,
+            display.resolve(workbench().getSnapshot().config.id, path),
             (absolute) => shell.openPath(absolute),
           ),
         ),
       "session.list": async ({ workbenchId }) => {
-        const current = workbench.getSnapshot(),
-          db = workbench.getDatabase();
-        const rows = await sessions.list(workbenchId);
+        const current = workbench().getSnapshot(),
+          db = workbench().getDatabase();
+        const rows = await sessions().list(workbenchId);
         if (
-          workbench.getSnapshot().config.id !== current.config.id ||
-          workbench.getSnapshot().folder !== current.folder ||
-          workbench.getDatabase() !== db
+          workbench().getSnapshot().config.id !== current.config.id ||
+          workbench().getSnapshot().folder !== current.folder ||
+          workbench().getDatabase() !== db
         )
           throw veraError("CONFLICT");
         return sessionOrder.list(
@@ -1101,25 +1142,25 @@ ipcMain.handle(
         );
       },
       "session.move": ({ workbenchId, sessionId, offset }) =>
-        sessions.run(async (s) => {
-          if (workbench.getSnapshot().config.id !== workbenchId) throw veraError("CONFLICT");
+        sessions().run(async (s) => {
+          if (workbench().getSnapshot().config.id !== workbenchId) throw veraError("CONFLICT");
           await sessionOrder.move(workbenchId, s.list(), sessionId, offset);
           return {};
         }),
       "session.sizes": ({ workbenchId }) =>
-        sessions.run((s) => {
-          if (workbench.getSnapshot().config.id !== workbenchId) throw veraError("CONFLICT");
+        sessions().run((s) => {
+          if (workbench().getSnapshot().config.id !== workbenchId) throw veraError("CONFLICT");
           return s.sizes();
         }),
       "session.search": ({ query, workbenchId }) =>
-        sessions.run((s) => {
-          if (workbenchId && workbench.getSnapshot().config.id !== workbenchId) throw veraError("CONFLICT");
+        sessions().run((s) => {
+          if (workbenchId && workbench().getSnapshot().config.id !== workbenchId) throw veraError("CONFLICT");
           return s.search(query).map((item) => sanitizeSessionSummary(item, sessionContent));
         }),
       "session.export": async ({ sessionId, format }) => {
-        const owner = workbench.getSnapshot().config.id;
+        const owner = workbench().getSnapshot().config.id;
         // An unknown session is refused before the dialog opens.
-        await sessions.run((s) => {
+        await sessions().run((s) => {
           s.get(sessionId);
         });
         const path = await chooseSavePath({
@@ -1127,11 +1168,11 @@ ipcMain.handle(
           filters: [{ name: format === "md" ? "Markdown" : "JSON", extensions: [format] }],
         });
         if (path === null) return { exported: false };
-        return sessions.run((s) => {
-          if (workbench.getSnapshot().config.id !== owner) throw veraError("CONFLICT");
+        return sessions().run((s) => {
+          if (workbench().getSnapshot().config.id !== owner) throw veraError("CONFLICT");
           return exportSession(s, sessionId, format, {
-            masking: () => maskingFor(workbench.getSnapshot().config, "exports"),
-            root: workbench.getSnapshot().folder,
+            masking: () => maskingFor(workbench().getSnapshot().config, "exports"),
+            root: workbench().getSnapshot().folder,
             choose: async () => path,
             write: (target, content) => createFileAccess(systemClock).writeAtomic(target, content),
             scrub: (text) => credentials.scrub(text),
@@ -1139,14 +1180,14 @@ ipcMain.handle(
         });
       },
       "session.create": ({ modelRef, mode, workbenchId, reuseEmpty }) =>
-        sessions.run((s) => {
-          if (workbenchId && workbench.getSnapshot().config.id !== workbenchId) throw veraError("CONFLICT");
+        sessions().run((s) => {
+          if (workbenchId && workbench().getSnapshot().config.id !== workbenchId) throw veraError("CONFLICT");
           if (credentials.containsSecret(modelRef)) throw { code: "INVALID", messageKey: "errors.INVALID" };
           return sanitizeSessionSummary(s.create(modelRef, mode, reuseEmpty), (text) => sessionContent(text));
         }),
-      "session.revision": ({ sessionId }) => sessions.run((service) => service.revision(sessionId)),
+      "session.revision": ({ sessionId }) => sessions().run((service) => service.revision(sessionId)),
       "session.get": ({ sessionId }) =>
-        sessions.run((s) => {
+        sessions().run((s) => {
           const value = s.get(sessionId);
           return {
             ...value,
@@ -1154,14 +1195,14 @@ ipcMain.handle(
           };
         }),
       "session.item.detail": ({ sessionId, itemId, field }) =>
-        sessions.run((s) => ({ text: sessionContent(s.itemDetail(sessionId, itemId, field)) })),
+        sessions().run((s) => ({ text: sessionContent(s.itemDetail(sessionId, itemId, field)) })),
       "session.bookmark": ({ sessionId, messageId, bookmarked }) =>
-        sessions.run((s) => {
+        sessions().run((s) => {
           s.bookmark(sessionId, messageId, bookmarked);
           return {};
         }, false),
       "session.bookmarks.remove": (request) =>
-        sessions.run((s) => {
+        sessions().run((s) => {
           s.removeBookmarks(
             request.sessionId,
             "all" in request ? { all: true } : { messageIds: request.messageIds },
@@ -1169,29 +1210,29 @@ ipcMain.handle(
           return {};
         }, false),
       "session.advanced.set": ({ sessionId, key, value }) =>
-        sessions.run((s) => {
+        sessions().run((s) => {
           s.setAdvanced(sessionId, key as AdvancedKey, value);
           return {};
         }, false),
       "session.compact": async ({ sessionId }) => {
         // Only the admission runs on the host queue: a summary may take minutes and must not hold other calls.
-        const { completion } = await sessions.run((s) => ({ completion: s.compactNow(sessionId) }), false);
+        const { completion } = await sessions().run((s) => ({ completion: s.compactNow(sessionId) }), false);
         return { status: await completion };
       },
       "session.rename": ({ sessionId, title }) =>
-        sessions.run((s) => {
+        sessions().run((s) => {
           if (credentials.containsSecret(title)) throw { code: "INVALID", messageKey: "errors.INVALID" };
           return sanitizeSessionSummary(s.rename(sessionId, title), sessionContent);
         }),
       "session.archive.set": ({ sessionId, archived }) =>
-        sessions.run((s) => sanitizeSessionSummary(s.setArchived(sessionId, archived), sessionContent)),
+        sessions().run((s) => sanitizeSessionSummary(s.setArchived(sessionId, archived), sessionContent)),
       "session.delete": ({ sessionId }) =>
-        sessions.run(async (s) => {
+        sessions().run(async (s) => {
           await s.delete(sessionId);
           return {};
         }),
       "session.image.attach": ({ workbenchId, sessionId, source }) =>
-        sessions.run((service) => {
+        sessions().run((service) => {
           openWorkbenchFolder(workbenchId);
           if (credentials.containsSecret("path" in source ? source.path : source.name))
             throw veraError("INVALID");
@@ -1200,34 +1241,34 @@ ipcMain.handle(
           return service.attachImage(sessionId, source);
         }, false),
       "session.image.capability": ({ workbenchId, sessionId }) =>
-        sessions.imageCapability(workbenchId, sessionId),
+        sessions().imageCapability(workbenchId, sessionId),
       "session.send": ({ sessionId, text, images }) =>
-        sessions.run(async (s) => {
+        sessions().run(async (s) => {
           if (credentials.containsSecret(text)) throw { code: "INVALID", messageKey: "errors.INVALID" };
           const sent = images?.length
             ? await s.sendWithImages(
                 sessionId,
                 text,
                 images.map((path) =>
-                  display.resolveSessionImagePath(workbench.getSnapshot().config.id, path),
+                  display.resolveSessionImagePath(workbench().getSnapshot().config.id, path),
                 ),
               )
             : s.send(sessionId, text);
-          embeddingWarmup.request(workbench.getSnapshot().config.id);
+          embeddingWarmup.request(workbench().getSnapshot().config.id);
           return sent;
         }),
       // Stop and approval decisions must not wait for plugin loading and program probing.
       "session.stop": ({ sessionId }) => {
-        return sessions.run((s) => ({ stopped: s.stop(sessionId) }), false);
+        return sessions().run((s) => ({ stopped: s.stop(sessionId) }), false);
       },
       "session.approval.decide": (request) =>
-        sessions.run(async (s) => {
+        sessions().run(async (s) => {
           if (request.commandPrefix !== undefined) await s.allowCommandApproval(request);
           else s.decideApproval(request);
           return {};
         }, false),
       "session.reasoning.get": ({ sessionId }) =>
-        sessions.run(async (s) => {
+        sessions().run(async (s) => {
           const value = await s.reasoningOptions(sessionId);
           return {
             modelRef: credentials.scrub(value.modelRef),
@@ -1236,7 +1277,7 @@ ipcMain.handle(
           };
         }),
       "session.reasoning.set": ({ sessionId, modelRef, reasoning }) =>
-        sessions.run(async (s) => {
+        sessions().run(async (s) => {
           if (credentials.containsSecret(modelRef) || credentials.containsSecret(reasoning))
             throw { code: "INVALID", messageKey: "errors.INVALID" };
           const value = await s.setReasoning(sessionId, reasoning, modelRef);
@@ -1247,12 +1288,12 @@ ipcMain.handle(
           };
         }),
       "session.model.set": ({ sessionId, modelRef }) =>
-        sessions.run((s) => {
+        sessions().run((s) => {
           if (credentials.containsSecret(modelRef)) throw { code: "INVALID", messageKey: "errors.INVALID" };
           return sanitizeSessionSummary(s.setModel(sessionId, modelRef), sessionContent);
         }),
       "session.mode.set": ({ sessionId, mode }) =>
-        sessions.run((s) => sanitizeSessionSummary(s.setMode(sessionId, mode), sessionContent)),
+        sessions().run((s) => sanitizeSessionSummary(s.setMode(sessionId, mode), sessionContent)),
       "providers.discover": (request) => modelGateway.discover(request),
       "providers.image.capability": ({ modelRef }) => modelGateway.imageCapability(modelRef),
       "providers.models": ({ id }) => modelGateway.models(id),
@@ -1300,53 +1341,49 @@ ipcMain.handle(
         });
         return { folder: result.canceled ? null : (result.filePaths[0] ?? null) };
       },
-      "workbench.inspect": ({ folder }) => workbench.inspect(folder),
-      "workbench.scanDocs": ({ folder, gitignore }) => workbench.scanDocuments(folder, gitignore),
+      "workbench.inspect": ({ folder }) => workbench().inspect(folder),
+      "workbench.scanDocs": ({ folder, gitignore }) => workbench().scanDocuments(folder, gitignore),
       "workbench.previewDocs": async ({ folder, ...docs }) => {
-        const preview = await workbench.previewDocuments(folder, docs);
+        const preview = await workbench().previewDocuments(folder, docs);
         return { ...preview, guard: publicGuard(preview.guard, (text) => credentials.scrub(text)) };
       },
       "workbench.relativeFolder": async ({ root, folder }) => ({
-        path: await workbench.relativeFolder(root, folder),
+        path: await workbench().relativeFolder(root, folder),
       }),
+      // A previous workbench with turns still running stays open in the background (WorkbenchRuntimes).
       "workbench.create": ({ folder, name, config, instructions }) =>
-        sessions.lifecycle(() =>
-          terminalTransition(async () => {
-            embeddingWarmup.cancel();
-            await stopWorkbenchPrograms();
-            return publicWorkbenchFolders(
-              warmPrograms(
-                await workbench.create(folder, name, {
+        terminalTransition(async () => {
+          embeddingWarmup.cancel();
+          return publicWorkbenchFolders(
+            warmPrograms(
+              await replaceForeground(() =>
+                runtimes.create(folder, name, {
                   ...(config ? { config } : {}),
                   ...(instructions !== undefined ? { instructions } : {}),
                 }),
               ),
-              (text) => credentials.scrub(text),
-            );
-          }),
-        ),
+            ),
+            (text) => credentials.scrub(text),
+          );
+        }),
       "workbench.open": ({ folder }) =>
-        sessions.lifecycle(() =>
-          terminalTransition(async () => {
-            embeddingWarmup.cancel();
-            await stopWorkbenchPrograms();
-            return publicWorkbenchFolders(warmPrograms(await workbench.open(folder)), (text) =>
-              credentials.scrub(text),
-            );
-          }),
-        ),
+        terminalTransition(async () => {
+          embeddingWarmup.cancel();
+          return publicWorkbenchFolders(
+            warmPrograms(await replaceForeground(() => runtimes.open(folder))),
+            (text) => credentials.scrub(text),
+          );
+        }),
       "workbench.close": async () => {
-        await sessions.lifecycle(() =>
-          terminalTransition(async () => {
-            embeddingWarmup.cancel();
-            await stopWorkbenchPrograms();
-            await workbench.close();
-          }),
-        );
+        await terminalTransition(async () => {
+          embeddingWarmup.cancel();
+          await terminals.closeAll();
+          await runtimes.close();
+        });
         return {};
       },
       "workbench.recent": async ({ remove, pin, move, reveal }) => {
-        const entries = await workbench.recent(remove, pin, move);
+        const entries = await workbench().recent(remove, pin, move);
         if (reveal !== undefined) {
           const entry = entries.find((item) => item.folder === reveal && !item.missing);
           if (!entry) throw veraError("NOT_FOUND");
@@ -1358,13 +1395,13 @@ ipcMain.handle(
       "workbench.config.get": async () =>
         publicWorkbenchFolders(
           {
-            ...(await workbench.getConfig()),
-            readOnly: workbench.getSnapshot().readOnly,
-            folder: workbench.getSnapshot().folder,
+            ...(await workbench().getConfig()),
+            readOnly: workbench().getSnapshot().readOnly,
+            folder: workbench().getSnapshot().folder,
           },
           (text) => credentials.scrub(text),
         ),
-      "workbench.storage": ({ workbenchId }) => workbench.storageSize(workbenchId),
+      "workbench.storage": ({ workbenchId }) => workbench().storageSize(workbenchId),
       "workbench.config.update": ({
         patch,
         workbenchId,
@@ -1373,7 +1410,7 @@ ipcMain.handle(
         addAdditionalFolders,
         removeAdditionalFolders,
       }) =>
-        workbench
+        workbench()
           .updateConfig(
             workbenchPatchSchema.parse(patch),
             workbenchId,
@@ -1386,7 +1423,7 @@ ipcMain.handle(
           )
           .then((value) => publicWorkbenchFolders(value, (text) => credentials.scrub(text))),
       "workbench.additionalFolders.list": async ({ workbenchId }) =>
-        (await workbench.listAdditionalFolders(workbenchId)).map(({ id, path }) => ({
+        (await workbench().listAdditionalFolders(workbenchId)).map(({ id, path }) => ({
           id,
           label: credentials.scrub(path),
         })),
@@ -1400,17 +1437,17 @@ ipcMain.handle(
           path = result.filePaths[0];
         }
         if (!path) return null;
-        const chosen = await workbench.chooseAdditionalFolder(path, workbenchId);
+        const chosen = await workbench().chooseAdditionalFolder(path, workbenchId);
         return { id: chosen.id, label: credentials.scrub(chosen.path) };
       },
       "workbench.commandPrefixes.list": async ({ workbenchId }) =>
-        (await workbench.listCommandPrefixes(workbenchId)).map(({ id, prefix }) => ({
+        (await workbench().listCommandPrefixes(workbenchId)).map(({ id, prefix }) => ({
           id,
           label: credentials.scrub(prefix),
         })),
-      "workbench.pinned.get": () => workbench.getPinned(),
-      "workbench.pinned.update": ({ content, workbenchId }) => workbench.updatePinned(content, workbenchId),
-      "workbench.files": ({ query }) => workbench.files(query),
+      "workbench.pinned.get": () => workbench().getPinned(),
+      "workbench.pinned.update": ({ content, workbenchId }) => workbench().updatePinned(content, workbenchId),
+      "workbench.files": ({ query }) => workbench().files(query),
     },
     log: (failure) => logger.log("error", "ipc.internal", failure),
     sanitize: (value) => credentials.sanitize(value),
@@ -1418,6 +1455,10 @@ ipcMain.handle(
   }),
 );
 
+/** The window's session subscriptions end with its document, in every workbench runtime. */
+function clearSubscriptions(): void {
+  for (const runtime of runtimes.all()) runtime.sessions.clearSubscriptions();
+}
 const windowStateFile = () => join(app.getPath("userData"), "window-state.json");
 async function createWindow(state: WindowState): Promise<void> {
   Menu.setApplicationMenu(null);
@@ -1448,11 +1489,11 @@ async function createWindow(state: WindowState): Promise<void> {
   restoreWindowBounds(window, state.bounds);
   const created = window;
   created.webContents.on("did-start-navigation", (_event, _url, isInPlace, isMainFrame) => {
-    if (isMainFrame && !isInPlace) sessions.clearSubscriptions();
+    if (isMainFrame && !isInPlace) clearSubscriptions();
   });
   recoverRenderer(created, (reason, reloading) => {
     logger.log("error", "window.renderer.gone", { reason, reloading });
-    sessions.clearSubscriptions();
+    clearSubscriptions();
   });
   let closing = false;
   created.on("close", (event) => {
@@ -1469,7 +1510,7 @@ async function createWindow(state: WindowState): Promise<void> {
       .finally(() => created.destroy());
   });
   window.on("closed", () => {
-    sessions.clearSubscriptions();
+    clearSubscriptions();
     window = undefined;
   });
   window.once("ready-to-show", () => window?.show());
@@ -1514,8 +1555,9 @@ if (!firstInstance) {
         ["terminals", () => terminals.closeAll()],
       ],
       [
-        ["sessions", () => sessions.close()],
-        ["workbench", () => workbench.close()],
+        // Every workbench runtime, the background ones included (REQ-REL-436f00da).
+        ["sessions", () => runtimes.closeSessions()],
+        ["workbench", () => runtimes.closeWorkbenches()],
         ["fileWorkers", () => fileWorkers.dispose()],
         ["indexer", () => indexer.close()],
         ["fileProbe", () => closeFileProbe?.()],
@@ -1601,7 +1643,7 @@ if (!firstInstance) {
           intervalHours: appAdvanced("updateInterval"),
         }),
         emit: (event) => emitAppEvent({ topic: "app", id: "app", event }),
-        beginShutdown: () => sessions.beginShutdown(),
+        beginShutdown: () => runtimes.beginShutdown(),
         quit: () => app.quit(),
         openExternal: async (url) => {
           await openExternal({ url, confirmed: true }, (link) => shell.openExternal(link));

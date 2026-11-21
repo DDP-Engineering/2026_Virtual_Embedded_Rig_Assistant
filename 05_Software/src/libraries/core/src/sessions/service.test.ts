@@ -1131,3 +1131,27 @@ it("restores reasoning on a cold gateway before budgeting and sending, without o
   expect(seen.length).toBeGreaterThan(0);
   expect(seen.every((level) => level === "high")).toBe(true);
 });
+// REQ-FUNC-0dfa01fd: a host releasing an idle workbench learns when its owned work settles.
+it("reports active work as unsettled and signals the host once the turn settles", async () => {
+  let signalSettled = () => {};
+  const signalled = new Promise<void>((resolve) => {
+    signalSettled = resolve;
+  });
+  const observed: boolean[] = [];
+  const { service } = await setup({
+    onWorkSettled: () => {
+      observed.push(service.isSettled());
+      if (service.isSettled()) signalSettled();
+    },
+  });
+  expect(service.isSettled()).toBe(true);
+  const session = service.create();
+  service.send(session.id, "Read the board");
+  expect(service.isSettled()).toBe(false);
+  expect(await service.waitIdle(session.id)).toEqual({ stopReason: "end" });
+  await signalled;
+  expect(service.isSettled()).toBe(true);
+  expect(observed.at(-1)).toBe(true);
+  await service.close();
+  expect(service.isSettled()).toBe(true);
+});

@@ -118,7 +118,7 @@ serial-port guard.
 - `REQ-FUNC-2871462b` — UTF-8 decoding and ANSI removal across chunks.
 - `REQ-FUNC-85bf8a14` / `REQ-DATA-6491c211` / `REQ-DATA-49ebfb15` — 12 000-character tail, full ULID log, newest 200 kept.
 - `REQ-FUNC-b7e0b968` / `REQ-FUNC-f678fbd7` — background runs, incremental reads, at most 4 per session.
-- `REQ-FUNC-39d5e6d9` — session stop, workbench close and app exit stop runs.
+- `REQ-FUNC-39d5e6d9` — session stop, workbench release (Close, idle or settled background workbench) and app exit stop runs.
 - `REQ-SEC-016c9aad` / `REQ-FUNC-868fc8ab` — serial-port guard for foreground and background holders; Linux links resolved.
 - `REQ-FUNC-b9a25608` — serial-port leases across VERA processes (identity kind `serial`).
 - `REQ-FUNC-96c2f1de` — volume leases across VERA processes (identity kind `volume`).

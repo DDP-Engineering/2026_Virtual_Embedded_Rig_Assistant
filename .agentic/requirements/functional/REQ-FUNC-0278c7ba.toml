@@ -1,0 +1,21 @@
+schema = 1
+
+id = "REQ-FUNC-0278c7ba"
+
+title = "Reopen the current workbench in place"
+
+status = "active"
+
+requirement = "When the user opens the workbench that is already current, the desktop app shall reopen it in place without closing its sessions or user terminals, so that its active turns, program runs, terminals and session service continue."
+verification = "Registry test: opening the current folder calls open on the same runtime without draining its sessions, creates no new runtime and releases nothing; repeated navigation A, B, A, B reuses the retained runtime of each folder. Main test with real runtimes: reopening A while its turn is held keeps the same session service and the turn completes. SessionsHost test: the service is kept unless the reopen replaced the database handle. Native e2e: A's terminal is still listed after reopening A."
+affected_paths = ["05_Software/src/apps/desktop/src/main/workbench-runtimes.ts", "05_Software/src/apps/desktop/src/main/sessions.ts", "05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/libraries/core/src/workbench/service.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/workbench-runtimes.test.ts::reopens the current workbench in place without draining its sessions", "05_Software/src/apps/desktop/src/main/workbench-runtimes.test.ts::reuses each retained runtime across repeated navigation", "05_Software/src/apps/desktop/src/main/workbench-runtimes.replay.test.ts::keeps a held turn through failed opens, a return to its workbench and a reopen in place", "05_Software/src/libraries/core/src/workbench/service.test.ts::locates the canonical folder open uses without opening it", "05_Software/src/apps/desktop/src/main/sessions.test.ts::keeps the session service through a reopen in place and rebinds it when the database was replaced", "05_Software/tests/e2e/workbench-runtimes.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-21
+updated = 2026-11-21

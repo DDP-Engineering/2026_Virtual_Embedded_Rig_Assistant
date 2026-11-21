@@ -32,7 +32,8 @@ export class DisplayDocuments {
   private generation = 0;
   private owner = "";
   constructor(
-    private workbench: WorkbenchService,
+    /** The workbench the window shows; Desktop keeps other workbenches open in the background. */
+    private workbench: () => WorkbenchService,
     private maskingFor: (config: WorkbenchConfig, area: "display") => boolean,
     private redact: (text: string) => string,
     private identities: DisplayIdentities,
@@ -42,8 +43,12 @@ export class DisplayDocuments {
     this.generation++;
     this.owner = "";
   }
+  /** A workbench closed: its identities end, while a background workbench closing leaves the shown one's. */
+  closed(id: string) {
+    if (!this.owner || this.owner.startsWith(`${id}\n`)) this.close();
+  }
   private current(id: string) {
-    const snapshot = this.workbench.getSnapshot();
+    const snapshot = this.workbench().getSnapshot();
     if (snapshot.config.id !== id) throw veraError("CONFLICT");
     const owner = `${id}\n${snapshot.folder}`;
     if (owner !== this.owner) {
@@ -159,11 +164,11 @@ export class DisplayDocuments {
     return value;
   }
   async list(id: string) {
-    const documents = await this.run(id, () => this.workbench.listDocuments(id));
+    const documents = await this.run(id, () => this.workbench().listDocuments(id));
     return { workbenchId: id, documents: documents.map((doc) => this.document(id, doc)) };
   }
   async tree(id: string, path: string) {
-    const listed = await this.run(id, () => this.workbench.listFolder(id, this.resolve(id, path)));
+    const listed = await this.run(id, () => this.workbench().listFolder(id, this.resolve(id, path)));
     return {
       workbenchId: id,
       path: this.path(id, this.resolve(id, path)),
@@ -177,7 +182,7 @@ export class DisplayDocuments {
     };
   }
   async find(id: string, query: string) {
-    const found = await this.run(id, () => this.workbench.findFiles(id, query));
+    const found = await this.run(id, () => this.workbench().findFiles(id, query));
     const paths = found.paths.map((path) => this.path(id, path));
     const labels: Record<string, string> = {};
     found.paths.forEach((path, i) => {
@@ -191,7 +196,7 @@ export class DisplayDocuments {
   }
   async read(id: string, path: string, requestId?: string) {
     const original = this.resolve(id, path);
-    const content = await this.run(id, () => this.workbench.readText(id, original));
+    const content = await this.run(id, () => this.workbench().readText(id, original));
     if (content.path !== original) throw veraError("NOT_FOUND");
     return {
       workbenchId: id,
@@ -201,7 +206,7 @@ export class DisplayDocuments {
   }
   async stat(id: string, path: string) {
     const original = this.resolve(id, path);
-    const properties = await this.run(id, () => this.workbench.statEntry(id, original));
+    const properties = await this.run(id, () => this.workbench().statEntry(id, original));
     if (properties.path !== original) throw veraError("NOT_FOUND");
     const extension = extname(original).toLowerCase();
     return {
@@ -221,7 +226,7 @@ export class DisplayDocuments {
     const original = this.resolve(id, path);
     if (revision !== undefined && !/^__vera_display_[A-Za-z0-9_-]+\.$/.test(revision))
       throw veraError("DENIED");
-    const source = await this.run(id, () => this.workbench.readBytes(id, original, offset, length));
+    const source = await this.run(id, () => this.workbench().readBytes(id, original, offset, length));
     if (source.path !== original || source.offset !== offset) throw veraError("NOT_FOUND");
     if (
       revision !== undefined &&
@@ -266,7 +271,7 @@ export class DisplayDocuments {
     return this.run(id, async () => {
       let preview: Response<"docs.imageThumbnail">["preview"];
       try {
-        const first = await this.workbench.readBytes(id, sourcePath, 0, DOCS_BYTE_WINDOW_LIMIT);
+        const first = await this.workbench().readBytes(id, sourcePath, 0, DOCS_BYTE_WINDOW_LIMIT);
         const { size } = first;
         if (size > MAX_MESSAGE_IMAGE_BYTES) throw veraError("IMAGE_TOO_LARGE");
         if (first.path !== sourcePath || first.offset !== 0 || first.revision === undefined)
@@ -274,7 +279,8 @@ export class DisplayDocuments {
         const bytes = Buffer.alloc(size);
         for (let offset = 0; offset < size; offset += DOCS_BYTE_WINDOW_LIMIT) {
           const length = Math.min(DOCS_BYTE_WINDOW_LIMIT, size - offset);
-          const part = offset === 0 ? first : await this.workbench.readBytes(id, sourcePath, offset, length);
+          const part =
+            offset === 0 ? first : await this.workbench().readBytes(id, sourcePath, offset, length);
           const start = offset - part.start;
           if (
             part.path !== sourcePath ||
@@ -310,7 +316,7 @@ export class DisplayDocuments {
     });
   }
   async search(id: string, query: string) {
-    const results = await this.run(id, () => this.workbench.searchDocuments(id, query));
+    const results = await this.run(id, () => this.workbench().searchDocuments(id, query));
     return {
       workbenchId: id,
       results: results.map((hit) =>
@@ -344,6 +350,6 @@ export class DisplayDocuments {
     };
   }
   guard(id: string) {
-    return publicGuard(this.workbench.documentGuard(id), (text) => this.scrub(id, text));
+    return publicGuard(this.workbench().documentGuard(id), (text) => this.scrub(id, text));
   }
 }

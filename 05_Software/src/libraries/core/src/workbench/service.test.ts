@@ -93,6 +93,18 @@ it("measures storage only for the open workbench", async () => {
   }
 });
 
+// REQ-FUNC-0278c7ba: Desktop matches an open request to a runtime by the folder open would use.
+it("locates the canonical folder open uses without opening it", async () => {
+  const h = await harness();
+  const { folder } = await h.service.create(h.folder, "Locate");
+  await h.service.close();
+  expect(await h.service.locate(join(h.folder, "..", "bench"))).toBe(folder);
+  await expect(h.service.locate("relative/bench")).rejects.toMatchObject({ code: "INVALID" });
+  await expect(h.service.locate(join(h.root, "missing"))).rejects.toMatchObject({ code: "NOT_FOUND" });
+  await expect(h.service.getConfig()).rejects.toMatchObject({ code: "NOT_FOUND" });
+  expect(existsSync(join(h.folder, ".vera/lock"))).toBe(false);
+});
+
 it("keeps viewer byte reads confined in Bypass even with an additional-folder grant", async () => {
   const h = await harness();
   try {

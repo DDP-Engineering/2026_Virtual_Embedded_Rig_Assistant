@@ -132,6 +132,8 @@ export interface SessionHost {
   assertWritable?: () => void;
   /** A committed change affects the linked sessions shown by the user host. */
   onDelegationsChanged?: () => void;
+  /** A turn or a compaction finished; isSettled() tells whether any owned work remains. */
+  onWorkSettled?: () => void;
   scrub?: (text: string) => string;
   /** Receives swallowed turn failures, already scrubbed. */
   log?: (message: string) => void;
@@ -1556,6 +1558,7 @@ export class SessionService {
           const compact = compacts ? runtime.compact?.(this.transcript(id)) : undefined;
           if (!compact) {
             off();
+            this.workSettled();
             return;
           }
           const background = compact
@@ -1564,6 +1567,7 @@ export class SessionService {
             .finally(() => {
               off();
               if (this.compacting.get(id) === background) this.compacting.delete(id);
+              this.workSettled();
             });
           this.compacting.set(id, background);
         });
@@ -1821,6 +1825,7 @@ export class SessionService {
       .finally(() => {
         off();
         if (this.compacting.get(id) === settled) this.compacting.delete(id);
+        this.workSettled();
       });
     this.compacting.set(id, settled);
     return compaction;
@@ -1835,6 +1840,17 @@ export class SessionService {
       this.active.size > 0 ||
       !!this.host.db.prepare("SELECT 1 FROM approvals WHERE decision IS NULL LIMIT 1").get()
     );
+  }
+  /** No turn, undecided approval or compaction remains; a host may then release the workbench. */
+  isSettled(): boolean {
+    return this.closed || (!this.hasActiveWork() && this.compacting.size === 0);
+  }
+  private workSettled(): void {
+    try {
+      this.host.onWorkSettled?.();
+    } catch {
+      /* a host observer never fails the turn */
+    }
   }
   async close(): Promise<void> {
     if (this.closed) return;
