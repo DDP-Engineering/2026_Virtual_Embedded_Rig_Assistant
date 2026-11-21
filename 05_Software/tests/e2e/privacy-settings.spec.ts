@@ -135,13 +135,15 @@ for (const language of ["en", "ro", "de", "fr"] as const) {
       await page.locator('[data-action="confirm-mask-off"]').click();
       expect((await invoke(page, "app.settings.get", {})).settings.privacy?.mask?.agent).toBe(true);
       await page.locator("[data-privacy-save]").click();
+      await expect
+        .poll(async () => (await invoke(page, "app.settings.get", {})).settings.privacy?.mask)
+        .toEqual({
+          display: true,
+          runs: true,
+          agent: false,
+          exports: false,
+        });
       await expect(page.locator("[data-privacy-save]")).toBeDisabled();
-      expect((await invoke(page, "app.settings.get", {})).settings.privacy?.mask).toEqual({
-        display: true,
-        runs: true,
-        agent: false,
-        exports: false,
-      });
       await page.screenshot({ path: join(evidence, `${language}-app.png`) });
       await page.locator('[data-action="leave-settings"]').click();
       await page.locator('[data-i18n="nav.welcome"]').click();
