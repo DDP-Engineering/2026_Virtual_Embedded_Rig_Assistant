@@ -4468,3 +4468,45 @@ legend {
     opacity: 1;
   }
 }
+
+.workbench-group-heading > .workbench-index-status {
+  position: relative;
+  flex: 0 0 auto;
+  padding: 0.25rem;
+  color: var(--muted-foreground);
+}
+.workbench-index-status svg,
+.retrieval-notice svg {
+  width: 1rem;
+  height: 1rem;
+}
+.workbench-index-tooltip {
+  display: none;
+  position: fixed;
+  z-index: 15;
+  width: max-content;
+  max-width: min(15rem, 42vw);
+  padding: 0.4rem 0.55rem;
+  border: 1px solid var(--border);
+  border-radius: 0.4rem;
+  background: var(--popover);
+  color: var(--popover-foreground);
+  white-space: normal;
+  text-align: start;
+}
+.workbench-index-status:is(:hover, :focus-visible) .workbench-index-tooltip {
+  display: block;
+}
+.docs-index-status p {
+  margin: 0 0 0.25rem;
+}
+.retrieval-notice {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  color: var(--muted-foreground);
+}
+.retrieval-notice svg {
+  flex: 0 0 auto;
+  align-self: center;
+}

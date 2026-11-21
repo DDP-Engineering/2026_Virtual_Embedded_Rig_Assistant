@@ -1,26 +1,25 @@
 // REQ-UX-28ad0003 REQ-UX-2504362b REQ-UX-d455531b REQ-UX-0c1aea14 REQ-UX-597b7c82
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { type DocumentGuard, type DocumentVolume, veraError, type WorkbenchEvent } from "@vera/shared";
-import { ListCollapse, RefreshCw, TriangleAlert } from "lucide-react";
+import { veraError } from "@vera/shared";
+import { ListCollapse } from "lucide-react";
 import { useEffect, useId, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../../api/index.js";
 import { ErrorMessage } from "../error-message.js";
-import { Pager, usePaged } from "../pager.js";
 import { DocsTree, useTreeExpansion } from "./docs-tree.js";
 import { DownloadsList } from "./downloads.js";
 import { useDescribeDocument } from "./file-actions.js";
-import { IndexGuard } from "./index-guard.js";
+import { FilesIndexControls } from "./files-index-controls.js";
 import { useDocumentViewer } from "./viewer-context.js";
-
-type VolumeState = { volume: DocumentVolume | null; guard: DocumentGuard | null };
 
 export function DocsTab({
   workbenchId,
+  indexLease,
   readOnly,
   editExclusions,
 }: {
   workbenchId: string;
+  indexLease: number;
   readOnly: boolean;
   /** Opens Edit workbench > Documents & RAG, from the count guard's "Edit exclusions". */
   editExclusions?: () => void;
@@ -33,9 +32,6 @@ export function DocsTab({
     [search, setSearch] = useState("");
   const expansion = useTreeExpansion(workbenchId);
   const hitsTitle = useId();
-  const [progress, setProgress] = useState<Extract<WorkbenchEvent, { type: "index.progress" }>>();
-  const [pending, setPending] = useState(false),
-    [failure, setFailure] = useState<unknown>();
   const list = useQuery({
     queryKey: ["docs.list", workbenchId],
     queryFn: async () => {
@@ -44,40 +40,6 @@ export function DocsTab({
       return result.documents;
     },
   });
-  const volume = useQuery({
-    queryKey: ["docs.volume", workbenchId],
-    // Events reach only a mounted Docs tab, so a remount reads the current volume again.
-    refetchOnMount: "always",
-    queryFn: async (): Promise<VolumeState> => {
-      const result = await api.invoke("docs.volume", { workbenchId });
-      if (result.workbenchId !== workbenchId) throw veraError("CONFLICT");
-      return { volume: result.volume, guard: result.guard };
-    },
-  });
-  const guard = volume.data?.guard ?? null;
-  const indexer = useQuery({
-    queryKey: ["indexer.status"],
-    refetchOnMount: "always",
-    queryFn: async () => (await api.invoke("indexer.status", {})).state,
-  });
-  useEffect(
-    () =>
-      api.subscribe("app", (event) => {
-        if (event.type === "indexer.status") client.setQueryData(["indexer.status"], event.state);
-      }),
-    [client],
-  );
-  const [restarting, setRestarting] = useState(false);
-  async function restartIndexer() {
-    setRestarting(true);
-    try {
-      await api.invoke("indexer.restart", {});
-    } catch (error) {
-      setFailure(error);
-    } finally {
-      setRestarting(false);
-    }
-  }
   const results = useQuery({
     queryKey: ["docs.search", workbenchId, search],
     enabled: !!search,
@@ -104,31 +66,10 @@ export function DocsTab({
       }, 300);
     };
     const resetDisplay = (owner?: string) => {
-      for (const channel of [
-        "docs.list",
-        "docs.search",
-        "docs.tree",
-        "docs.find",
-        "docs.stat",
-        "docs.volume",
-      ])
+      for (const channel of ["docs.list", "docs.search", "docs.tree", "docs.find", "docs.stat"])
         void client.resetQueries({ queryKey: owner === undefined ? [channel] : [channel, owner] });
     };
     const off = api.subscribe("workbench", workbenchId, (event) => {
-      if (event.type === "index.progress") setProgress(event);
-      if (event.type === "index.volume")
-        client.setQueryData<VolumeState>(["docs.volume", workbenchId], (state) => ({
-          guard: state?.guard ?? null,
-          volume: { files: event.files, bytes: event.bytes },
-        }));
-      if (event.type === "index.guard") {
-        client.setQueryData<VolumeState>(["docs.volume", workbenchId], (state) => ({
-          volume: state?.volume ?? null,
-          guard: event.guard,
-        }));
-        // A stopped selection reports no progress; an earlier run's counts would mislead.
-        if (event.guard) setProgress(undefined);
-      }
       if (event.type === "index.document") refreshSoon();
       if (event.type === "config.changed") resetDisplay(workbenchId);
     });
@@ -147,132 +88,45 @@ export function DocsTab({
     const timer = setTimeout(() => setSearch(query.trim()), 250);
     return () => clearTimeout(timer);
   }, [query]);
-  async function reindex() {
-    setPending(true);
-    setFailure(undefined);
-    try {
-      await api.invoke("docs.reindex", { workbenchId });
-    } catch (error) {
-      setFailure(error);
-    } finally {
-      setPending(false);
-      void list.refetch();
-      if (search) void results.refetch();
-    }
-  }
-  const failedDocuments = list.data?.filter((doc) => doc.status === "failed") ?? [];
-  const { rows, pager } = usePaged(failedDocuments);
-  const counts = progress ?? {
-    done: list.data?.filter((doc) => doc.status !== "pending" && doc.status !== "failed").length ?? 0,
-    pending: list.data?.filter((doc) => doc.status === "pending").length ?? 0,
-    failed: failedDocuments.length,
-  };
-  const indexing = !guard && indexer.data === "running" && (pending || counts.pending > 0);
-  const canReindex = !readOnly && !pending && indexer.data === "running";
-  const reindexTitle =
-    progress || list.data
-      ? `${t("documents.reindex")} · ${t("documents.indexSummary", {
-          count: counts.done + counts.pending + counts.failed,
-          failed: counts.failed,
-        })}`
-      : t("documents.reindex");
   return (
     <section className="docs-tab" aria-label={t("panel.docs")}>
       <DownloadsList workbenchId={workbenchId} />
-      <div className="docs-toolbar">
-        <input
-          type="search"
-          data-docs-search
-          aria-label={t("documents.search")}
-          placeholder={t("documents.search")}
-          // The name filter accepts 200 characters; document search would take more.
-          maxLength={200}
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-        />
-        <button
-          type="button"
-          data-action="reindex"
-          aria-label={t("documents.reindex")}
-          title={reindexTitle}
-          aria-busy={indexing}
-          // A reindex needs a running indexer to select documents, so it waits for a restart.
-          disabled={!canReindex}
-          onClick={() => void reindex()}
-        >
-          <RefreshCw aria-hidden="true" className={indexing ? "docs-indexing" : undefined} />
-        </button>
-        <button
-          type="button"
-          data-action="collapse-all"
-          aria-label={t("documents.collapseAll")}
-          title={t("documents.collapseAll")}
-          // A search shows its matches expanded; collapsing applies to the browsing tree only.
-          disabled={!expansion.expanded.size || !!query.trim()}
-          onClick={() => expansion.save(new Set())}
-        >
-          <ListCollapse aria-hidden="true" />
-        </button>
-      </div>
-      {guard ? (
-        <IndexGuard
-          workbenchId={workbenchId}
-          guard={guard}
-          readOnly={readOnly}
-          editExclusions={editExclusions}
-        />
-      ) : (
-        indexer.data === "running" &&
-        (indexing || counts.failed > 0) && (
-          <div className="docs-index-status">
-            {indexing && <p role="status">{t("documents.progress", counts)}</p>}
-            {counts.failed > 0 && (
-              <details className="docs-index-failures">
-                <summary>
-                  <TriangleAlert aria-hidden="true" />
-                  <span role="status">
-                    {counts.failed === 1
-                      ? t("documents.indexFailure", { count: counts.failed })
-                      : t("documents.indexFailures", { count: counts.failed })}
-                  </span>
-                </summary>
-                {rows.length ? (
-                  <>
-                    <ul>
-                      {rows.map((doc) => (
-                        <li key={doc.id}>
-                          <strong>{doc.displayPath ?? doc.path}</strong> — {describe(doc)}
-                        </li>
-                      ))}
-                    </ul>
-                    <Pager {...pager} />
-                  </>
-                ) : (
-                  <p>{t("documents.indexFailureDetailsUnavailable")}</p>
-                )}
-                <button type="button" disabled={!canReindex} onClick={() => void reindex()}>
-                  {t("documents.reindex")}
-                </button>
-              </details>
-            )}
-          </div>
-        )
-      )}
-      {indexer.data === "stopped" && (
-        <div className="indexer-stopped" role="alert" data-indexer-stopped>
-          <p>{t("documents.indexerStopped")}</p>
+      <FilesIndexControls
+        workbenchId={workbenchId}
+        indexLease={indexLease}
+        readOnly={readOnly}
+        editExclusions={editExclusions}
+        documents={list.data}
+        refreshed={() => {
+          void list.refetch();
+          if (search) void results.refetch();
+        }}
+        search={
+          <input
+            type="search"
+            data-docs-search
+            aria-label={t("documents.search")}
+            placeholder={t("documents.search")}
+            // The name filter accepts 200 characters; document search would take more.
+            maxLength={200}
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+          />
+        }
+        collapse={
           <button
             type="button"
-            data-action="restart-indexer"
-            disabled={restarting}
-            onClick={() => void restartIndexer()}
+            data-action="collapse-all"
+            aria-label={t("documents.collapseAll")}
+            title={t("documents.collapseAll")}
+            // A search shows its matches expanded; collapsing applies to the browsing tree only.
+            disabled={!expansion.expanded.size || !!query.trim()}
+            onClick={() => expansion.save(new Set())}
           >
-            {t("documents.indexerRestart")}
+            <ListCollapse aria-hidden="true" />
           </button>
-        </div>
-      )}
-      {readOnly && <p className="muted">{t("documents.readOnly")}</p>}
-      {failure !== undefined && <ErrorMessage error={failure} />}
+        }
+      />
       {list.isError ? (
         <>
           <ErrorMessage error={list.error} />

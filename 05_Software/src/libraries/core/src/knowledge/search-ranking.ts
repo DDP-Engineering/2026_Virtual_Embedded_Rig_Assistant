@@ -53,7 +53,16 @@ const fallbackMessages: Record<FallbackReason, string> = {
   "semantic-unavailable": "Semantic ranking is unavailable; these are keyword results.",
   "revision-conflict": "The index changed during semantic ranking; these are keyword results.",
 };
-class SearchRevisionChanged extends Error {}
+const SEMANTIC_RETRY_BUDGET_MS = 150;
+
+class SearchRevisionChanged extends Error {
+  constructor(readonly preferKeyword: boolean) {
+    super();
+  }
+}
+function publishing(phase: DocumentIndexPhase | undefined): boolean {
+  return phase === "scanning" || phase === "indexing";
+}
 class SemanticUnavailable extends Error {}
 
 export function documentRef(path: string, locator: Chunk["locator"]): string {
@@ -175,7 +184,8 @@ async function attemptSearch(
   forcedFallback: FallbackReason | undefined,
 ): Promise<DocumentSearchResponse> {
   const { db, query, pathGlob, acceptPath, signal, phase } = options;
-  const initialCoverage = coverage(phase?.());
+  const initialPhase = phase?.();
+  const initialCoverage = coverage(initialPhase);
   const rows = db
     .prepare(`SELECT c.id,d.path FROM chunks c
       JOIN documents d ON d.id=c.doc_id WHERE d.status='indexed' ORDER BY c.id`)
@@ -189,9 +199,16 @@ async function attemptSearch(
   const semanticEpoch = mode === "keyword" ? undefined : embeddingEpoch(db);
   const revision = semanticEpoch === undefined ? () => keywordEpoch(db) : () => embeddingEpoch(db);
   const epoch = semanticEpoch ?? keywordEpoch(db);
+  const started = semanticEpoch === undefined ? undefined : performance.now();
   const assertCurrent = () => {
     signal.throwIfAborted();
-    if (revision() !== epoch) throw new SearchRevisionChanged();
+    if (revision() === epoch) return;
+    // A semantic retry at a new revision may reload the entire vector cache.
+    const preferKeyword =
+      started !== undefined &&
+      performance.now() - started >= SEMANTIC_RETRY_BUDGET_MS &&
+      (publishing(initialPhase) || publishing(phase?.()));
+    throw new SearchRevisionChanged(preferKeyword);
   };
   const lexical = mode === "semantic" ? [] : new KeywordSearch(db).search(query, acceptPath);
   const semantic =
@@ -268,7 +285,8 @@ export async function searchPublishedDocuments(options: SearchOptions): Promise<
       options.signal.throwIfAborted();
       if (error instanceof SemanticUnavailable) fallback = "semantic-unavailable";
       else if (!(error instanceof SearchRevisionChanged)) throw error;
-      else if (attempt === 2 && options.mode !== "keyword") fallback ??= "revision-conflict";
+      else if (error.preferKeyword || (attempt === 2 && options.mode !== "keyword"))
+        fallback ??= "revision-conflict";
     }
   }
   return {

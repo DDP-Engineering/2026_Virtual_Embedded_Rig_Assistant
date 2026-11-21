@@ -269,6 +269,17 @@ export function sanitizeEvent(
   const event = envelope.event;
   // Counters only: no paths or user text to scrub.
   if (event.type === "index.progress" || event.type === "index.volume") return envelope;
+  if (event.type === "index.status")
+    return {
+      ...envelope,
+      event: {
+        ...event,
+        status: {
+          ...event.status,
+          guard: publicGuard(event.status.guard, scrub),
+        },
+      },
+    };
   if (event.type === "index.guard")
     return { ...envelope, event: { ...event, guard: publicGuard(event.guard, scrub) } };
   if (event.type === "index.document")

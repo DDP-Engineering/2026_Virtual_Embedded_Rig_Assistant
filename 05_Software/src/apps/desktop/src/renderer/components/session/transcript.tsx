@@ -24,6 +24,7 @@ import { ExternalSourceScope } from "./external-source-link.js";
 import { Markdown } from "./markdown.js";
 import { CopyAction } from "./message-actions.js";
 import { PromptUsage } from "./prompt-usage.js";
+import { RetrievalNotice } from "./retrieval-notice.js";
 import { useBookmarkJump, useSessionBookmarks } from "./session-bookmarks.js";
 import { ToolDetails } from "./tool-details.js";
 import { TranscriptImages } from "./transcript-images.js";
@@ -237,6 +238,14 @@ export function Transcript({
                 </Disclosure>
               ))}
             {shown.map((row) => {
+              if (row.kind === "retrieval-notice")
+                return (
+                  <RetrievalNotice
+                    key={`retrieval/${row.id}`}
+                    turnId={row.turnId}
+                    limitations={row.limitations}
+                  />
+                );
               if (row.kind === "group")
                 return (
                   <ToolGroupRow

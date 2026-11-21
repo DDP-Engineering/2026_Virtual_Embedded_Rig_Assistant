@@ -51,6 +51,26 @@ it("transports ingest progress and redacts document paths while preserving statu
     folders: [{ path: "docs/[REDACTED]", files: 12 }],
   });
   expect(send.mock.calls[3]?.[1].event).toEqual({ type: "index.guard", guard: null });
+  const workbenchId = "wb_01JB8Z6Q4M7N2K5R9T3V8X1Y0C";
+  const status = {
+    workbenchId,
+    indexLease: 42,
+    revision: 7,
+    state: "count-guard" as const,
+    searchable: 5,
+    progress: null,
+    volume: { files: 12, bytes: 100 },
+    guard: { files: 12, limit: 10, folders: [{ path: "docs/secret", files: 12 }] },
+  };
+  emit({ topic: "workbench", id: workbenchId, event: { type: "index.status", status } });
+  expect(send.mock.calls[4]?.[1].event).toEqual({
+    type: "index.status",
+    status: {
+      ...status,
+      guard: { ...status.guard, folders: [{ path: "docs/[REDACTED]", files: 12 }] },
+    },
+  });
+
   for (const call of send.mock.calls) expect(eventEnvelopeSchema.safeParse(call[1]).success).toBe(true);
 });
 // REQ-FUNC-2e8a54c7 REQ-DATA-d968385c
@@ -269,7 +289,7 @@ it("scrubs event user text while short secrets preserve protocol fields and disc
       },
       {
         type: "opened" as const,
-        workbench: { config, folder: `/data/${privateKey}`, readOnly: false, warnings: [] },
+        workbench: { config, indexLease: 1, folder: `/data/${privateKey}`, readOnly: false, warnings: [] },
       },
     ])
       expect(emit({ topic: "workbench", id: config.id, event })).toBe(true);

@@ -215,6 +215,7 @@ const indexer = new IndexerHost({
   modelId: (model) => embeddingModelId(readEmbeddingModel(models, model)),
   status: (state) => {
     emitAppEvent({ topic: "app", id: "app", event: { type: "indexer.status", state } });
+    workbench.setDocumentIndexerStopped(state === "stopped");
     if (state === "running") workbench.refreshDocuments();
   },
 });
@@ -234,6 +235,19 @@ export const emitAppEvent = createEventEmitter(
           ...event,
           path: display.path(envelope.id, event.path),
           document: event.document ? display.document(envelope.id, event.document) : null,
+        },
+      };
+    }
+    if (envelope.topic === "workbench" && envelope.event.type === "index.status") {
+      const { status } = envelope.event;
+      return {
+        ...envelope,
+        event: {
+          type: "index.status",
+          status: {
+            ...status,
+            guard: publicGuard(status.guard, (text) => display.scrub(envelope.id, text)),
+          },
         },
       };
     }
@@ -1112,6 +1126,10 @@ ipcMain.handle(
           (text) => clipboard.writeText(text),
           sep,
         ),
+      "docs.status": async ({ workbenchId, indexLease }) => {
+        const status = workbench.documentIndexStatus(workbenchId, indexLease);
+        return { ...status, guard: publicGuard(status.guard, (text) => display.scrub(workbenchId, text)) };
+      },
       "docs.volume": async ({ workbenchId }) => ({
         workbenchId,
         volume: workbench.documentVolume(workbenchId),
@@ -1522,14 +1540,7 @@ ipcMain.handle(
         return entries;
       },
       "workbench.config.get": async () =>
-        publicWorkbenchFolders(
-          {
-            ...(await workbench.getConfig()),
-            readOnly: workbench.getSnapshot().readOnly,
-            folder: workbench.getSnapshot().folder,
-          },
-          (text) => credentials.scrub(text),
-        ),
+        publicWorkbenchFolders(await workbench.getConfig(), (text) => credentials.scrub(text)),
       "workbench.storage": ({ workbenchId }) => workbench.storageSize(workbenchId),
       "workbench.config.update": ({
         patch,

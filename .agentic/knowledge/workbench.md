@@ -27,6 +27,9 @@ sidebar are described in [workbench editor](workbench-editor.md).
 
 ## Public interface
 
+- The live workbench snapshot includes a process-local `indexLease` for its activation. Status
+  requests validate that identifier with the workbench id before reading the current Ingester.
+
 - statEntry retains confined physical metadata and supplies a compact rendered capability for recognized document formats from a direct indexed-record lookup: current size/mtime, extraction presence (or needs-OCR PDF pages), status and ignore rules. It reads no complete file and the viewer still verifies source content when opening. [File viewing modes](document-viewer-file-modes.md) owns the mode defaults.
 - Optional strict `privacy.mask` accepts display/runs/agent/exports choices default/on/off. Omitted
   areas follow live app defaults through core settings/masking.ts. Unknown privacy keys, areas and

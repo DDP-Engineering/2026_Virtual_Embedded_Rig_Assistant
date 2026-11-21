@@ -285,21 +285,27 @@ test("one native app session indexes and semantically searches two local embeddi
       const { config } = await api.invoke("workbench.config.get", {});
       const pending: number[] = [];
       let switched = false;
+      const rebuild = { observed: false, searchable: null as number | null };
       const unsubscribe = api.subscribe("workbench", config.id, (event) => {
         if (event.type === "config.changed" && event.config.embeddings.model === model) switched = true;
+        if (event.type === "index.status" && event.status.state === "rebuilding") {
+          rebuild.observed = true;
+          rebuild.searchable = event.status.searchable;
+        }
         if (switched && event.type === "index.progress") {
           pending.push(event.pending);
           if (event.pending === 0) unsubscribe();
         }
       });
-      return pending;
+      return { pending, rebuild };
     }, e5);
     await save.click();
     await confirmation.getByRole("button", { name: "Change model", exact: true }).click();
     await expect(page.locator(".workbench-editor")).toBeHidden();
     await expect
-      .poll(() => progress.evaluate((pending) => pending), { timeout: 55000 })
+      .poll(() => progress.evaluate(({ pending }) => pending), { timeout: 55000 })
       .toEqual([5, 4, 3, 2, 1, 0]);
+    expect(await progress.evaluate(({ rebuild }) => rebuild)).toEqual({ observed: true, searchable: 5 });
     await progress.dispose();
     await expect
       .poll(

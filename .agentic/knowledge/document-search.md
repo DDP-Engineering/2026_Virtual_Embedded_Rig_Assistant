@@ -19,6 +19,10 @@ use their own persistent host because their payloads, lifetimes and caches diffe
 
 ## Public interface
 
+- A semantic revision conflict during active publication switches to validated keyword after
+  the current semantic attempt spends 150 ms. Cheap conflicts keep their requested-mode retry.
+  All retries share the existing three-attempt cap and revision/cancellation checks.
+
 - Agent search_docs/read_doc pass host-only application-data exclusions as the final search/read argument. DocumentKnowledge keeps workbench scope, refuses protected raw/extracted reads and omits protected cached search snippets in keyword/semantic/hybrid results, including canonical aliases. The index and internal default readers are unchanged. knowledge/search.test.ts exercises all four session modes against an already indexed protected document and a replaced alias.
 
 - Core exports the registered IDs, the BGE default and `readEmbeddingModel` from the embedding API.

@@ -71,6 +71,7 @@ const workbenchHandlers = {
   "downloads.list": unused,
   "downloads.open": unused,
   "downloads.reveal": unused,
+  "docs.status": unused,
   "docs.volume": unused,
   "docs.approve": unused,
   "docs.tree": unused,

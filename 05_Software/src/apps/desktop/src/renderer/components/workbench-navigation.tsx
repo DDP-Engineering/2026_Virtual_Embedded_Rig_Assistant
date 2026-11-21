@@ -8,6 +8,8 @@ import { reorderOffset } from "../lib/shortcuts.js";
 export function WorkbenchNavigation({
   entries,
   activeId,
+  activeFolder,
+  indexingStatus,
   disabled,
   settingsLoading,
   open,
@@ -21,6 +23,8 @@ export function WorkbenchNavigation({
 }: {
   entries: RecentWorkbenchState[];
   activeId: string | undefined;
+  activeFolder?: string | undefined;
+  indexingStatus?: ReactNode;
   disabled: boolean;
   settingsLoading: boolean;
   open: (folder: string) => Promise<boolean>;
@@ -132,7 +136,7 @@ export function WorkbenchNavigation({
       <strong>{t("welcome.workbenches")}</strong>
       {!entries.length && <p>{t("projects.empty")}</p>}
       {sorted.map((entry) => {
-        const active = entry.id === activeId;
+        const active = entry.id === activeId && (!activeFolder || entry.folder === activeFolder);
         const shown = active && (expanded[entry.folder] ?? true);
         return (
           <div
@@ -181,6 +185,7 @@ export function WorkbenchNavigation({
                 )}
                 {entry.name}
               </button>
+              {active && indexingStatus}
               <details
                 className="workbench-menu"
                 onClickCapture={(event) => {

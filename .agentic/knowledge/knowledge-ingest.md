@@ -47,6 +47,17 @@ createPdfExtractor accepts optional Node worker resourceLimits; existing ingest 
   indexed/failed/unsupported/needs_ocr with optional pages/stable reason and ordered chunks. The
   processor must settle on abort; publication checks file identity and ownership,
   then atomically persists status and validated chunks before emitting events.
+- WorkbenchService.documentIndexStatus requires the active workbench id and activation
+  lease. Its ordered snapshot and index.status updates share one status calculation.
+  Selection is indeterminate until measured. Processed paths include terminal failures
+  and skips, while searchable documents are indexed rows with passages. One background
+  seed reads published ids, with incremental updates after commits. Progress notifications
+  coalesce over 250 ms. Requests during a pass keep its successor unsettled. Stopped,
+  read-only, rebuild, count guard, other blocking, exceptions, ready and empty states
+  have explicit representations (REQ-FUNC-310efe8f, REQ-FUNC-de6ba478).
+  Watcher errors mark monitoring blocked for that watcher generation. Reindex retries
+  the registration. A healthy replacement and successful pass can settle. Rebuild preserves the current marker until every retained
+  chunk has a replacement embedding.
 - index.document carries path and a typed record, null for removal;
   index.progress carries pending/done/failed counters for the reconciliation
   batch, including skipped paths. Main redacts paths and preserves protocol fields.
@@ -61,12 +72,9 @@ createPdfExtractor accepts optional Node worker resourceLimits; existing ingest 
 - index.volume {files, bytes} follows every selection and counts only the selected (not
   skipped) documents; Ingester.volume() and
   WorkbenchService.documentVolume() return the last one (null before the first) and
-  docs.volume exposes it with the guard. The renderer warns above shared documentVolumeLimit (more
-  than 2,000 files or 2 GiB) in Docs and the Documents section; indexing continues
-  (TASK-e5310cdb). Docs reads docs.volume again on every mount, since events reach only
-  a mounted tab. The Documents section preview, which runs before indexing, has its own
-  wording and also warns when its bounded scan stopped early, as "at least N files"
-  (RULING-004).
+  docs.volume exposes it with the guard. The Documents section preview warns above the
+  shared limit and when its bounded scan stops early, as "at least N files" (RULING-004).
+  The status snapshot carries the measured volume alongside selection progress and the guard.
 - DocumentsRepository list/get/save/remove/clearDerived/replaceChunks uses the current schema (schema_version 1).
   Invalidation clears associated embeddings and chunks before source deletion
   or replacement. Schema chunk triggers atomically maintain chunks_fts/chunks_tri;

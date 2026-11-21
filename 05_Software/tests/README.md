@@ -253,6 +253,10 @@ The E2E output is a temporary system folder. The reporter
 failures. The configuration turns off automatic traces, videos and screenshots. Replacing the
 reporters from the CLI can bypass the cleanup reporter.
 
+[index-status.spec.ts](e2e/index-status.spec.ts) holds real Desktop selection, extraction and
+ranking at the utility process boundary to verify live sidebar and Files status, keyboard and
+reduced-motion behavior, partial retrieval during publication, and saved transcript notices.
+
 Right-panel visibility coverage:
 - `e2e/right-panel-tabs-ui.spec.ts`: browser Save/Cancel, defaults, filtered keyboard navigation,
   workbench isolation and all-hidden settings recovery.

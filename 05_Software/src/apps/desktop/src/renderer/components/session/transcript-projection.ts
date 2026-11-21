@@ -16,7 +16,21 @@ export function searchMatch(item: Item, needle: string): boolean {
   }
   return text.includes(needle);
 }
-type Row = { kind: "item"; item: Item } | { kind: "group"; id: string; tools: ToolItem[] };
+export type RetrievalLimitation =
+  | "partial"
+  | "unknown"
+  | "embedding-rebuild"
+  | "semantic-unavailable"
+  | "revision-conflict"
+  | "unavailable"
+  | "index-not-ready";
+type NoticeRow = {
+  kind: "retrieval-notice";
+  id: string;
+  turnId: string | null;
+  limitations: Set<RetrievalLimitation>;
+};
+type Row = { kind: "item"; item: Item } | { kind: "group"; id: string; tools: ToolItem[] } | NoticeRow;
 
 /** A presentation projection only. Essential interactions split groups and never disappear. */
 export function transcriptRows(state: SessionState, detail: ChatDetail): Row[] {
@@ -33,6 +47,7 @@ export function transcriptRows(state: SessionState, detail: ChatDetail): Row[] {
     a.program?.risk !== "irreversible";
   const approvals = new Set(state.approvals.filter((a) => !routineByMode(a)).map((a) => a.callId));
   let group: Extract<Row, { kind: "group" }> | undefined;
+  let turnNotices: Map<string, NoticeRow> | undefined;
   for (const item of state.items) {
     // Tool-only model steps can persist an empty final assistant message. It has no text to present.
     if (
@@ -59,6 +74,23 @@ export function transcriptRows(state: SessionState, detail: ChatDetail): Row[] {
         rows.push(group);
       }
     }
+    if (item.kind !== "tool" || item.name !== "search_docs" || !item.documentSearch) continue;
+    const { coverage, usage } = item.documentSearch;
+    const fallback = usage.mode === "keyword" ? usage.fallbackReason : undefined;
+    const unavailable = usage.mode === null && usage.reason !== "no-candidates" ? usage.reason : undefined;
+    if (coverage === "complete" && !fallback && !unavailable) continue;
+    const key = item.turnId === null ? `call/${item.id}` : `turn/${item.turnId}`;
+    turnNotices ??= new Map();
+    let notice = turnNotices.get(key);
+    if (!notice) {
+      notice = { kind: "retrieval-notice", id: item.id, turnId: item.turnId, limitations: new Set() };
+      turnNotices.set(key, notice);
+      rows.push(notice);
+    }
+    if (coverage !== "complete" && (coverage !== "unknown" || !unavailable)) notice.limitations.add(coverage);
+    if (fallback) notice.limitations.add(fallback);
+    if (unavailable)
+      notice.limitations.add(unavailable === "revision-conflict" ? "unavailable" : unavailable);
   }
   return rows;
 }

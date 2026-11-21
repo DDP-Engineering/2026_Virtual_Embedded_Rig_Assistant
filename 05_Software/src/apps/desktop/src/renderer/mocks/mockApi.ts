@@ -13,6 +13,7 @@ import {
   configWarnings,
   type DictationModelId,
   type DictationSnapshot,
+  type DocumentIndexStatus,
   defaultSettings,
   dictationDefaults,
   documentPatternFolder,
@@ -432,6 +433,9 @@ export function createMockApi(
     return `${source === "user" ? "user" : current().snapshot.config.id}:${name}`;
   }
   let sequence = 0;
+  let indexLease = 0;
+  let indexRevision = 0;
+  let reindexingLease: number | undefined;
   const webKeyConfigured: Record<WebProviderId, boolean> = { exa: false, tavily: false, brave: false };
   const mqttCredentialRefs = new Set<string>();
   const wokwiCredentialRefs = new Set<string>();
@@ -453,6 +457,7 @@ export function createMockApi(
     });
     const snapshot: WorkbenchSnapshot = {
       folder: "/mock/demo-board",
+      indexLease: ++indexLease,
       config,
       readOnly: scenario === "read-only",
       warnings:
@@ -502,6 +507,46 @@ export function createMockApi(
         : [];
     },
   );
+  function indexStatus(wb: WorkbenchSnapshot): DocumentIndexStatus {
+    const documents = scenario === "empty" ? [] : mockDocuments;
+    const searchable = documents.filter(({ status }) => status === "indexed").length;
+    const exceptions = documents.filter(
+      ({ status }) => status === "failed" || status === "needs_ocr" || status === "unsupported",
+    ).length;
+    const state = wb.readOnly
+      ? "read-only"
+      : indexerState === "stopped"
+        ? "stopped"
+        : reindexingLease === wb.indexLease
+          ? "indexing"
+          : exceptions
+            ? "exceptions"
+            : searchable
+              ? "ready"
+              : "empty";
+    return {
+      workbenchId: wb.config.id,
+      indexLease: wb.indexLease,
+      revision: ++indexRevision,
+      state,
+      searchable: wb.readOnly ? null : searchable,
+      progress:
+        state === "read-only" || state === "stopped"
+          ? null
+          : {
+              total: documents.length,
+              processed:
+                state === "indexing" ? 0 : documents.filter(({ status }) => status !== "pending").length,
+              exceptions: state === "indexing" ? 0 : exceptions,
+            },
+      volume: { files: documents.length, bytes: documents.reduce((sum, doc) => sum + doc.bytes, 0) },
+      guard: null,
+    };
+  }
+  function emitIndexStatus(wb: WorkbenchSnapshot) {
+    if (active !== wb.folder || current().snapshot.indexLease !== wb.indexLease) return;
+    emit({ topic: "workbench", id: wb.config.id, event: { type: "index.status", status: indexStatus(wb) } });
+  }
   function pinned(content: string) {
     return { content, oversized: new TextEncoder().encode(content).byteLength > 16384 };
   }
@@ -1084,17 +1129,12 @@ What this plugin does.
         if (current().snapshot.readOnly) throw veraError("DENIED");
         const { workbenchId } = channels["docs.reindex"].request.parse(input.data);
         if (workbenchId && workbenchId !== current().snapshot.config.id) throw veraError("CONFLICT");
-        emit({
-          topic: "workbench",
-          id: current().snapshot.config.id,
-          event: { type: "index.progress", pending: 2, done: 0, failed: 0 },
-        });
+        const wb = current().snapshot;
+        reindexingLease = wb.indexLease;
+        emitIndexStatus(wb);
         await new Promise((resolve) => setTimeout(resolve, 20));
-        emit({
-          topic: "workbench",
-          id: current().snapshot.config.id,
-          event: { type: "index.progress", pending: 0, done: 8, failed: 1 },
-        });
+        if (reindexingLease === wb.indexLease) reindexingLease = undefined;
+        emitIndexStatus(wb);
         value = {};
         break;
       }
@@ -1110,6 +1150,7 @@ What this plugin does.
       case "indexer.restart":
         indexerState = "running";
         emitAppEvent({ type: "indexer.status", state: indexerState });
+        if (active) emitIndexStatus(current().snapshot);
         value = {};
         break;
       case "docs.tree": {
@@ -1256,6 +1297,14 @@ What this plugin does.
         if (!treeFiles().some((file) => file === path || file.startsWith(`${path}/`)))
           throw veraError("NOT_FOUND");
         value = {};
+        break;
+      }
+      case "docs.status": {
+        const request = channels["docs.status"].request.parse(input.data);
+        const wb = current().snapshot;
+        if (request.workbenchId !== wb.config.id || request.indexLease !== wb.indexLease)
+          throw veraError("CONFLICT");
+        value = indexStatus(wb);
         break;
       }
       case "docs.volume": {
@@ -1930,7 +1979,7 @@ What this plugin does.
           }),
           initial ?? {},
         );
-        const snapshot = { folder, config, readOnly: false, warnings: [] };
+        const snapshot = { folder, config, readOnly: false, warnings: [], indexLease: ++indexLease };
         benches.set(folder, {
           snapshot,
           pinned: folderNotes.get(folder) ?? instructions ?? workbenchTemplate(name),
@@ -1948,6 +1997,7 @@ What this plugin does.
         if (!bench) throw veraError("NOT_FOUND");
         await sessions.close();
         active = folder;
+        bench.snapshot = { ...bench.snapshot, indexLease: ++indexLease };
         remember(bench.snapshot);
         value = bench.snapshot;
         emit({
@@ -2004,12 +2054,7 @@ What this plugin does.
         break;
       }
       case "workbench.config.get":
-        value = {
-          config: current().snapshot.config,
-          warnings: current().snapshot.warnings,
-          readOnly: current().snapshot.readOnly,
-          folder: current().snapshot.folder,
-        };
+        value = current().snapshot;
         break;
       case "workbench.config.update": {
         const {

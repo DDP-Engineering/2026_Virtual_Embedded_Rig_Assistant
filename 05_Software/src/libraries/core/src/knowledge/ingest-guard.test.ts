@@ -139,6 +139,8 @@ it("stops an oversized selection before indexing anything and indexes after Inde
       ...[0, 1, 2, 3, 4, 5].map((n) => ({ path: `docs/n0${n}`, files: 10 })),
     ],
   };
+  const status = () => h.service.documentIndexStatus(h.id, h.service.getSnapshot().indexLease);
+  expect(status()).toMatchObject({ state: "count-guard", guard: stopped, progress: null, searchable: 0 });
   // IDX-03-A and C: the guard reports the count and top folders; nothing is recorded or indexed.
   expect(h.guards().at(-1)).toEqual(stopped);
   expect(h.service.documentGuard()).toEqual(stopped);
@@ -185,6 +187,7 @@ it("stops an oversized selection before indexing anything and indexes after Inde
   await ingester().waitIdle();
   expect(h.guards().at(-1)).toBeNull();
   expect(h.rows()).toHaveLength(120);
+  expect(status()).toMatchObject({ state: "empty", progress: { total: 120, processed: 120, exceptions: 0 } });
 
   // 5 more keep indexing.
   await add("extra", [9], () => 5);

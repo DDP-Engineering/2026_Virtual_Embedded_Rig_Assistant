@@ -84,3 +84,9 @@ Choose **Rendered**, **Text** or **Hex** in the file toolbar. Rendered is availa
 PNG, JPEG, GIF, WebP, BMP and SVG files open as **Rendered** without indexing. **Image zoom** starts at **Fit**, shrinking the image to the available space without enlarging small images; Fit follows panel size changes. Choose 25% through 400% to scale the original decoded image, then choose Fit again. SVG stays an image: scripts, links and external resources are inactive. **Text** and **Hex** stay available and your deliberate mode is remembered per extension.
 
 Image bytes follow the current Display masking choice. Masking can make an encoded image undecodable; an unsupported or corrupt image also shows a safe error with **Retry**. Use Hex to inspect the returned bytes. Preview assembles bounded byte windows into a complete browser image resource, so encoded and decoded images still need memory proportional to their size and remain subject to browser decoder resources. No file-size cutoff is imposed.
+
+## Indexing status
+
+The status icon next to the active workbench name shows the current scan, indexing, rebuild or final state. Focus or hover over it for measured counts, then activate it to open Files. Processed files can include skipped files, files that need OCR and failures. Searchable documents have text passages in the index. A scan has no progress total until the selection is known. In a read-only workbench VERA can use the saved index without verifying it again. Files shows exception reasons, count-limit controls and the option to restart a stopped indexer.
+
+Chat marks the turn that used partial document search, keyword fallback or an unavailable index. An empty partial search can miss sources that are still pending or were excluded. You can continue chatting or open a known file while the index updates.

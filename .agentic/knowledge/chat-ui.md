@@ -21,6 +21,11 @@ budgets and abort. The browser mock seeds six selectable states and an edit appr
 
 ## Public interface
 
+- The memoized transcript projection shows one notice per affected turn in all chat detail
+  modes. It uses saved `search_docs` coverage and actual ranking metadata. Ordinary chat
+  and fully covered retrieval remain quiet. Live Files/sidebar progress updates use separate
+  query data and do not reload the transcript (REQ-UX-1c0aac4b, REQ-NFR-3a560b62).
+
 - Shell approval cards show exact command/cwd/shell and, for eligible literal syntax, a chosen-prefix selector with Always allow. session.approval.decide carries the prefix only on that explicit user action. The [workbench editor](workbench-editor.md) owns the Agent editor list of saved prefixes. The card has four locales. Tests: tests/e2e/command-prefixes.spec.ts.
 
 - Interactive Browser presents the selected chat's grants, operation activity and current authorized URL. Show, Stop, Revoke and Close act on that chat. Localized browser errors are rendered from typed codes. [Desktop browser runtime](browser-runtime.md) owns authority and lifecycle. Proof: `tests/e2e/browser-controls.spec.ts`.

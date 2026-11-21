@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-UX-db99cdfe"
+
+title = "Open Files from accessible workbench indexing status"
+
+status = "active"
+
+requirement = """
+When a workbench is active, its sidebar row shall provide a separate keyboard-accessible status control with a localized summary and an action leading to Files details or the existing panel configuration.
+"""
+
+verification = "Tab to and activate the indicator with reduced motion enabled. Check its accessible label, existing row name behavior, hidden Files configuration, focus target and stopped or blocked recovery details."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/App.tsx", "05_Software/src/apps/desktop/src/renderer/components/workbench-navigation.tsx", "05_Software/src/apps/desktop/src/renderer/components/documents/docs-tab.tsx", "05_Software/src/apps/desktop/src/renderer/components/documents/index-status.tsx", "05_Software/src/apps/desktop/src/renderer/components/shell.tsx", "05_Software/src/apps/desktop/src/renderer/styles.css", "05_Software/src/apps/desktop/src/renderer/locales", "05_Software/help"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/documents/documents.test.ts", "05_Software/src/apps/desktop/src/renderer/components/session/workspace.test.ts", "05_Software/tests/e2e/index-status.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-21
+updated = 2026-11-21

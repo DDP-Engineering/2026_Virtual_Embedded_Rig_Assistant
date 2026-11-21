@@ -299,6 +299,44 @@ it("retries ranking after a concurrent publication and discards the old candidat
   }
 });
 
+it.each([5, 250])("limits expensive semantic retries during active publication (%d ms)", async (elapsed) => {
+  const h = await harness();
+  const clock = vi.spyOn(performance, "now");
+  let time = 1000;
+  clock.mockImplementation(() => time);
+  try {
+    await h.add("docs/old.txt", "coolant old");
+    const knowledge = new DocumentKnowledge(
+      h.root,
+      h.db,
+      () => h.port,
+      undefined,
+      () => "indexing",
+    );
+    const rank = h.port.rank.bind(h.port);
+    const ranked = vi.spyOn(h.port, "rank").mockImplementationOnce(async (...args) => {
+      const hits = await rank(...args);
+      h.rows.remove("docs/old.txt");
+      await h.add("docs/new.txt", "coolant new");
+      time += elapsed;
+      return hits;
+    });
+    const result = await knowledge.search({ query: "coolant", mode: "hybrid" }, h.signal);
+    expect(result.coverage).toBe("partial");
+    expect(result.results.map(({ path }) => path)).toEqual(["docs/new.txt"]);
+    if (elapsed === 250) {
+      expect(ranked).toHaveBeenCalledTimes(1);
+      expect(result.usage).toEqual({ mode: "keyword", fallbackReason: "revision-conflict" });
+    } else {
+      expect(ranked).toHaveBeenCalledTimes(2);
+      expect(result.usage).toEqual({ mode: "hybrid" });
+    }
+  } finally {
+    clock.mockRestore();
+    await h.close();
+  }
+});
+
 it.each([false, true])("bounds revision conflicts during hit validation (cancelled: %s)", async (cancel) => {
   const h = await harness();
   try {

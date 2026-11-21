@@ -6,6 +6,7 @@ import {
   type DocumentKind,
   type DocumentReason,
   type DocumentRecord,
+  type DocumentStatus,
   type DocumentVolume,
   type EmbeddingModelId,
   veraError,
@@ -29,6 +30,7 @@ import { pruneExtractionCache } from "./cache-prune.js";
 import type { Chunk } from "./chunk.js";
 import type { Extraction } from "./extraction.js";
 import { documentGuard } from "./guard.js";
+import { IndexStatus, type IndexStatusFields } from "./index-status.js";
 import { type InspectInput, inspectSource, type SourceInspection } from "./inspect.js";
 import { documentKind, documentSelection, missing, sizeLimit } from "./kinds.js";
 import {
@@ -85,6 +87,8 @@ export interface IngestOptions {
   assertWritable: () => void;
   now: () => Date;
   emit: (event: WorkbenchEvent) => void;
+  statusChanged?: () => void;
+  indexerStopped?: boolean;
   process?: DocumentProcessor;
 }
 /** Literal include prefixes bound recursive monitoring; policy files stay live independently. */
@@ -137,12 +141,16 @@ export class Ingester {
   private cancelReady: () => void;
   private targets: string[];
   private watcherUpdates: Promise<void> = Promise.resolve();
+  private watcherFailed = false;
   private timer: ReturnType<typeof setTimeout> | undefined;
   private closed = false;
   private active = false;
   private requested = false;
   private reindexRuns = 0;
   private passPhase: DocumentIndexPhase = "scanning";
+  private readonly status: IndexStatus;
+  private stopped: boolean;
+  private rebuilding = false;
   private closePromise: Promise<void> | undefined;
   private ignored = createIgnoreRules();
   private ignoreText = "";
@@ -189,7 +197,10 @@ export class Ingester {
 
   constructor(private readonly options: IngestOptions) {
     this.rows = new DocumentsRepository(options.db);
+    this.stopped = options.indexerStopped ?? false;
+    this.status = new IndexStatus(() => this.indexStatus(), options.statusChanged ?? (() => {}));
     this.syncIndexingConfig(false);
+    this.rebuilding = rebuildingEmbeddings(options.db);
     this.refreshPolicy();
     this.targets = watchTargets(options.root, options.config().docs);
     this.watchKey = this.watcherKey(this.targets);
@@ -227,12 +238,20 @@ export class Ingester {
     });
     let settleReady = () => {};
     let cancelled = false;
+    let failed = false;
     const ready = new Promise<void>((resolve) => {
       settleReady = resolve;
-      watcher.once("ready", resolve);
+      watcher.once("ready", () => {
+        resolve();
+        // Chokidar can report ready after an error from the same registration.
+        if (cancelled || failed || this.watcher !== watcher) return;
+        this.watcherFailed = false;
+        this.request();
+      });
       watcher.once("error", () => resolve());
     });
     watcher.on("all", (event, path) => {
+      if (cancelled || failed || this.watcher !== watcher) return;
       const rel = relative(this.options.root, path).split(sep).join("/");
       const policyPath = process.platform === "win32" ? rel.toLowerCase() : rel;
       if (policyPath === ".vera/.veraignore" || policyPath === ".vera/workbench.yaml") {
@@ -248,9 +267,10 @@ export class Ingester {
       )
         this.request();
     });
-    watcher.on("error", () => this.emit({ type: "index.progress", pending: 0, done: 0, failed: 1 }));
-    void ready.then(() => {
-      if (!cancelled) this.request();
+    watcher.on("error", () => {
+      if (cancelled || failed || this.watcher !== watcher) return;
+      failed = true;
+      this.watcherFailure();
     });
     const cancelReady = () => {
       cancelled = true;
@@ -291,7 +311,14 @@ export class Ingester {
         this.ready = current.ready;
         this.cancelReady = current.cancelReady;
       })
-      .catch(() => this.emit({ type: "index.progress", pending: 0, done: 0, failed: 1 }));
+      .catch(() => this.watcherFailure());
+  }
+  private watcherFailure(): void {
+    if (this.closed) return;
+    this.watcherFailed = true;
+    this.watchKey = "";
+    this.status.notify();
+    this.emit({ type: "index.progress", pending: 0, done: 0, failed: 1 });
   }
   private emit(event: WorkbenchEvent): void {
     if (this.closed) return;
@@ -311,7 +338,9 @@ export class Ingester {
     const docs = this.options.config().docs;
     if (this.patterns !== JSON.stringify([docs.include, docs.exclude, docs.gitignore])) this.refreshPolicy();
     this.refreshWatcher();
+    const alreadyRequested = this.requested;
     this.requested = true;
+    if (!alreadyRequested) this.status.notify();
     if (this.timer) clearTimeout(this.timer);
     this.timer = setTimeout(() => {
       this.timer = undefined;
@@ -335,6 +364,7 @@ export class Ingester {
       } finally {
         this.active = false;
         if (this.requested && !this.timer) this.request();
+        if (!this.closed) this.status.notify();
       }
     });
   }
@@ -350,8 +380,10 @@ export class Ingester {
         beginEmbeddingRebuild(this.options.db);
         this.saveIndexingConfig(JSON.stringify(this.options.config().embeddings));
       });
+      this.rebuilding = true;
     } finally {
       this.request();
+      this.status.notify();
     }
   }
 
@@ -376,17 +408,25 @@ export class Ingester {
       else if (previous !== undefined) for (const row of this.rows.list()) this.rows.remove(row.path);
       this.saveIndexingConfig(fingerprint);
     });
+    if (changedModel) this.rebuilding = true;
+    else if (previous !== undefined) this.status.clearPublished();
   }
 
   /** Explicit reindex executes in the same queue as background batches. */
   reindex(): Promise<void> {
     if (this.closed) return Promise.reject(veraError("DENIED"));
     this.reindexRuns++;
+    this.status.notify();
     return this.queue.run(async () => {
       try {
+        if (this.watcherFailed) {
+          this.refreshWatcher();
+          await this.waitForWatcher();
+        }
         await this.runPass(true);
       } finally {
         this.reindexRuns--;
+        if (!this.closed) this.status.notify();
       }
     });
   }
@@ -394,12 +434,34 @@ export class Ingester {
   /** Initial watcher readiness and queued reconciliation are unsettled selection states. */
   phase(): DocumentIndexPhase {
     if (this.closed) return "unknown";
+    if (this.stopped || this.watcherFailed) return "blocked";
     if (this.passPhase === "indexing") return "indexing";
     return this.requested || this.reindexRuns > 0 || this.active ? "scanning" : this.passPhase;
   }
 
+  indexStatus(): IndexStatusFields {
+    return this.status.snapshot(
+      this.phase(),
+      this.selectedVolume,
+      this.selectedGuard,
+      this.stopped,
+      this.rebuilding,
+    );
+  }
+
+  setIndexerStopped(stopped: boolean): void {
+    if (this.closed || this.stopped === stopped) return;
+    this.stopped = stopped;
+    if (!stopped) this.request();
+    this.status.notify();
+  }
+
   private async runPass(clear: boolean): Promise<void> {
+    if (this.closed) return;
     this.passPhase = "scanning";
+    // A prior guard describes its own selection, not a failed attempt to measure a new one.
+    this.selectedGuard = null;
+    this.status.notify();
     try {
       // Select before a full reindex so an unavailable indexer or guard leaves the old index intact.
       await this.reconcile(clear ? await this.selected() : undefined, clear);
@@ -487,6 +549,7 @@ export class Ingester {
     });
     const { guard, paths, skipped, bytes } = selection ?? (await this.selected());
     if (this.closed) return;
+    this.status.seed(this.options.db);
     this.selectedVolume = { files: paths.length, bytes };
     this.emit({ type: "index.volume", files: paths.length, bytes });
     // Above the file limit nothing is indexed, changed or removed until the user decides; the
@@ -497,7 +560,6 @@ export class Ingester {
       this.passPhase = "blocked";
       return;
     }
-    this.passPhase = "indexing";
     // Skipped documents keep a row, so the Files tab shows them with their reason.
     const selected = new Set([...paths, ...skipped]);
     await this.publications.run(async () => {
@@ -506,9 +568,16 @@ export class Ingester {
       this.mutation(() => {
         for (const row of removed) this.rows.remove(row.path);
       });
-      for (const row of removed) this.emit({ type: "index.document", path: row.path, document: null });
+      for (const row of removed) {
+        this.status.published(row.id, false);
+        this.emit({ type: "index.document", path: row.path, document: null });
+      }
       this.syncIndexingConfig(true);
     });
+    if (this.closed) return;
+    this.status.select(selected.size);
+    this.passPhase = "indexing";
+    this.status.notify();
     let pending = selected.size,
       done = 0,
       failed = 0,
@@ -519,6 +588,9 @@ export class Ingester {
     for (const path of [...selected].sort()) {
       if (this.closed) return;
       const status = await this.ingest(guard, path);
+      if (this.closed) return;
+      this.status.finish(status);
+      this.status.notifySoon();
       if (status === "failed") failed++;
       else done++;
       incomplete ||= status === "pending";
@@ -527,8 +599,10 @@ export class Ingester {
       progress();
     }
     await this.publications.run(async () => {
-      if (!this.closed && rebuildingEmbeddings(this.options.db))
+      if (!this.closed && !this.stopped && !this.requested && !incomplete && this.rebuilding) {
         this.mutation(() => finishEmbeddingRebuild(this.options.db));
+        this.rebuilding = rebuildingEmbeddings(this.options.db);
+      }
     });
     // A quiet moment: every selected document has its row and no further run is queued.
     if (!this.closed && !this.requested) await this.pruneCache();
@@ -561,6 +635,8 @@ export class Ingester {
       if (valid) this.rows.writeChunks(saved.id, valid);
       return saved;
     });
+    this.status.published(row.id, row.status === "indexed" && (valid?.chunks.length ?? 0) > 0);
+    this.status.notifySoon();
     this.emit({ type: "index.document", path: row.path, document: row });
     return row;
   }
@@ -589,7 +665,7 @@ export class Ingester {
         .get(doc.id, modelId ?? null)
     );
   }
-  private async ingest(guard: PathGuard, path: string): Promise<string> {
+  private async ingest(guard: PathGuard, path: string): Promise<DocumentStatus> {
     const old = this.rows.get(path);
     const kind = documentKind(path);
     let record: Omit<DocumentRecord, "id"> = {
@@ -747,6 +823,7 @@ export class Ingester {
             return "failed";
           const valid = this.rows.validateChunks(result.chunks, result.derived);
           this.mutation(() => this.rows.replaceEmbeddings(pending.id, valid));
+          this.status.published(pending.id, valid.chunks.length > 0);
           return "indexed";
         }
         this.publish(
@@ -803,6 +880,7 @@ export class Ingester {
   close(): Promise<void> {
     this.closePromise ??= (async () => {
       this.closed = true;
+      this.status.cancel();
       if (this.timer) clearTimeout(this.timer);
       this.abort.abort();
       this.cancelReady();

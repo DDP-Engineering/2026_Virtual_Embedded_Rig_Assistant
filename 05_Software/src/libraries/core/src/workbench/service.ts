@@ -12,6 +12,7 @@ import {
   commandPrefixSchema,
   configWarnings,
   type DocumentGuard,
+  type DocumentIndexStatus,
   type DocumentPreview,
   type DocumentScan,
   type DocumentVolume,
@@ -147,6 +148,9 @@ export class WorkbenchService {
   private owned: { folder: string; token: string } | undefined;
   private database: WorkbenchDatabase | undefined;
   private ingest: Ingester | undefined;
+  private indexLease = 0;
+  private indexRevision = 0;
+  private documentIndexerStopped = false;
   private queue: Promise<void> = Promise.resolve();
   private readonly writes = new WriteQueue();
   getWriteQueue(): WriteQueue {
@@ -363,6 +367,12 @@ export class WorkbenchService {
       assertWritable: () => this.assertSessionWritable(),
       now: () => this.host.now(),
       emit: (event) => this.emit(state.config.id, event),
+      indexerStopped: this.documentIndexerStopped,
+      statusChanged: () => {
+        if (this.state?.indexLease !== state.indexLease) return;
+        const status = this.documentIndexStatus(state.config.id, state.indexLease);
+        this.emit(state.config.id, { type: "index.status", status });
+      },
       ...(this.processDocument ? { process: this.processDocument } : {}),
     });
   }
@@ -456,6 +466,30 @@ export class WorkbenchService {
   refreshDocuments(): void {
     this.ingest?.request();
   }
+  /** Reflects the host indexer's state in the active lease and resumes reconciliation on restart. */
+  setDocumentIndexerStopped(stopped: boolean): void {
+    this.documentIndexerStopped = stopped;
+    this.ingest?.setIndexerStopped(stopped);
+  }
+
+  /** Current indexing state for one active lease, independent of document search. */
+  documentIndexStatus(workbenchId: string, indexLease: number): DocumentIndexStatus {
+    const state = this.current();
+    if (state.config.id !== workbenchId || state.indexLease !== indexLease) throw veraError("CONFLICT");
+    return {
+      workbenchId,
+      indexLease,
+      revision: ++this.indexRevision,
+      ...(this.ingest?.indexStatus() ?? {
+        state: state.readOnly ? "read-only" : this.documentIndexerStopped ? "stopped" : "scanning",
+        progress: null,
+        searchable: null,
+        volume: null,
+        guard: null,
+      }),
+    };
+  }
+
   /** The active workbench's last document selection volume; null before its first selection. */
   documentVolume(workbenchId?: string): DocumentVolume | null {
     if (workbenchId && this.current().config.id !== workbenchId) throw veraError("CONFLICT");
@@ -686,7 +720,7 @@ export class WorkbenchService {
     // An owned database opens in place and is checked before writes; a read-only one is copied first.
     const acquired = await this.acquire(folder, warnings);
     const newlyOwned = acquired.owned !== undefined && acquired.owned !== this.owned;
-    const next = { folder, config, warnings, readOnly: acquired.readOnly };
+    const next = { folder, config, warnings, readOnly: acquired.readOnly, indexLease: ++this.indexLease };
     let database: WorkbenchDatabase | undefined;
     try {
       database =
@@ -803,13 +837,13 @@ export class WorkbenchService {
     if (lock?.token !== this.owned.token || lock.pid !== this.host.pid) throw veraError("DENIED");
     return state;
   }
-  getConfig(): Promise<{ config: WorkbenchConfig; warnings: WorkbenchWarning[] }> {
+  getConfig(): Promise<WorkbenchSnapshot> {
     return this.run(async () => {
       const state = this.current();
       const config = await this.config(state.folder);
       if (config.id !== state.config.id) throw veraError("CONFLICT");
       this.state = { ...state, config };
-      return { config, warnings: await this.warnings(config, state.folder) };
+      return { ...state, config, warnings: await this.warnings(config, state.folder) };
     });
   }
   updateConfig(

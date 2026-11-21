@@ -32,6 +32,7 @@ function stub(readOnly = false) {
   const wb = {
     config: workbenchSchema.parse({ format: 1, id: "wb_01JB8Z6Q4M7N2K5R9T3V8X1Y0C", name: "Bench" }),
     folder: "/bench",
+    indexLease: 1,
     readOnly,
     warnings: [],
   };

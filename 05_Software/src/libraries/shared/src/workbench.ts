@@ -193,9 +193,11 @@ export const configSnapshotSchema = z.strictObject({
   config: workbenchSchema,
   warnings: z.array(workbenchWarningSchema),
 });
+export const indexLeaseSchema = z.number().int().positive();
 export const workbenchSnapshotSchema = configSnapshotSchema.extend({
   folder: z.string().min(1),
   readOnly: z.boolean(),
+  indexLease: indexLeaseSchema,
 });
 export type WorkbenchSnapshot = z.infer<typeof workbenchSnapshotSchema>;
 export const pinnedSchema = z.strictObject({ content: z.string(), oversized: z.boolean() });

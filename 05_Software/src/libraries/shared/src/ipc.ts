@@ -23,6 +23,8 @@ import {
   docsSystemAppSchema,
   docsTreeEntrySchema,
   documentGuardSchema,
+  documentIndexScopeSchema,
+  documentIndexStatusSchema,
   documentOpenSchema,
   documentPreviewSchema,
   documentSchema,
@@ -563,6 +565,7 @@ export const channels = {
     }),
     z.strictObject({}),
   ),
+  "docs.status": defineChannel("docs.status", documentIndexScopeSchema, documentIndexStatusSchema),
   "docs.volume": defineChannel(
     "docs.volume",
     docsScopeSchema,
@@ -955,11 +958,7 @@ export const channels = {
     }),
     z.array(recentWorkbenchStateSchema),
   ),
-  "workbench.config.get": defineChannel(
-    "workbench.config.get",
-    z.strictObject({}),
-    configSnapshotSchema.extend({ readOnly: z.boolean().optional(), folder: z.string().min(1).optional() }),
-  ),
+  "workbench.config.get": defineChannel("workbench.config.get", z.strictObject({}), workbenchSnapshotSchema),
   "workbench.config.update": defineChannel(
     "workbench.config.update",
     z

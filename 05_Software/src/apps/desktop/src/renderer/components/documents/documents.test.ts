@@ -51,7 +51,7 @@ const settle = () =>
   });
 
 it("opens live Docs heading/search refs, renders statuses and progress, restores focus and prevents read-only reindex", async () => {
-  await api.invoke("workbench.open", { folder: "/mock/demo-board" });
+  const { indexLease } = await api.invoke("workbench.open", { folder: "/mock/demo-board" });
   const container = document.createElement("div");
   document.body.append(container);
   const root = createRoot(container);
@@ -65,7 +65,7 @@ it("opens live Docs heading/search refs, renders statuses and progress, restores
           createElement(
             DocumentViewerProvider,
             { workbenchId: id },
-            createElement(DocsTab, { workbenchId: id, readOnly }),
+            createElement(DocsTab, { workbenchId: id, indexLease, readOnly }),
             createElement(DocumentTabs, { chat: null }),
           ),
         ),
@@ -76,9 +76,9 @@ it("opens live Docs heading/search refs, renders statuses and progress, restores
     await settle();
     const failures = container.querySelector<HTMLDetailsElement>(".docs-index-failures");
     expect(failures?.open).toBe(false);
-    expect(failures?.querySelector("summary")?.textContent).toContain("1 file could not be indexed");
-    expect(failures?.querySelector("li")?.textContent).toContain("docs/failed.pdf");
-    expect(failures?.querySelector("li")?.textContent).toContain("Processing failed");
+    expect(failures?.querySelector("summary")?.textContent).toContain("View skipped, OCR and failed files");
+    expect(failures?.textContent).toContain("docs/failed.pdf");
+    expect(failures?.textContent).toContain("Processing failed");
     await expandDocs(container);
     expect(container.querySelectorAll("[data-document]")).toHaveLength(10);
     expect(container.textContent).toContain("Needs OCR");
@@ -95,9 +95,9 @@ it("opens live Docs heading/search refs, renders statuses and progress, restores
     await act(async () => reindex?.click());
     await settle();
     expect(container.querySelector(".docs-index-failures summary")?.textContent).toContain(
-      "1 file could not be indexed",
+      "View skipped, OCR and failed files",
     );
-    expect(reindex?.title).toContain("9 documents · 1 failed");
+    expect(container.querySelector(".docs-index-status")?.textContent).toContain("with exceptions");
     const retry = container.querySelector<HTMLButtonElement>(".docs-index-failures button");
     const invoke = vi.spyOn(api, "invoke");
     try {
@@ -440,7 +440,7 @@ it("shows office extractions as numbered slides and sections with the cited unit
 
 // REQ-UX-f5d6e9e4 REQ-REL-85ae1f66 REQ-UX-541a5bee
 it("offers Open in default app for allowlisted workbench documents only and shows its errors in place", async () => {
-  await api.invoke("workbench.open", { folder: "/mock/demo-board" });
+  const { indexLease } = await api.invoke("workbench.open", { folder: "/mock/demo-board" });
   const container = document.createElement("div");
   document.body.append(container);
   const root = createRoot(container);
@@ -510,7 +510,7 @@ it("offers Open in default app for allowlisted workbench documents only and show
             DocumentViewerProvider,
             { workbenchId: id },
             createElement(Open),
-            createElement(DocsTab, { workbenchId: id, readOnly: false }),
+            createElement(DocsTab, { workbenchId: id, indexLease, readOnly: false }),
             createElement(DocumentTabs, { chat: null }),
           ),
         ),
@@ -715,7 +715,7 @@ it("keeps the source open when Escape only ends an IME composition", async () =>
 
 // REQ-UX-05c5b146 REQ-UX-d64e808a
 it("reports active indexing in Files and warns about large selections before saving", async () => {
-  await api.invoke("workbench.open", { folder: "/mock/demo-board" });
+  const { indexLease } = await api.invoke("workbench.open", { folder: "/mock/demo-board" });
   const GiB = 1024 ** 3;
   const previews: Record<string, { files: number; bytes: number; truncated?: boolean }> = {
     "big/**": { files: 2001, bytes: 5 },
@@ -725,8 +725,6 @@ it("reports active indexing in Files and warns about large selections before sav
   };
   const original = api.invoke.bind(api);
   const invoke = vi.spyOn(api, "invoke").mockImplementation((async (channel: string, request: unknown) => {
-    if (channel === "docs.volume")
-      return { workbenchId: id, volume: { files: 2001, bytes: 10 }, guard: null };
     if (channel === "workbench.previewDocs") {
       const include = (request as { include: string[] }).include[0] ?? "";
       return {
@@ -765,7 +763,7 @@ it("reports active indexing in Files and warns about large selections before sav
           createElement(
             DocumentViewerProvider,
             { workbenchId: id },
-            createElement(DocsTab, { workbenchId: id, readOnly: false }),
+            createElement(DocsTab, { workbenchId: id, indexLease, readOnly: false }),
           ),
         ),
       ),
@@ -775,24 +773,34 @@ it("reports active indexing in Files and warns about large selections before sav
     await settle();
     await expandDocs(container);
     expect(container.querySelectorAll("[data-document]")).toHaveLength(10);
-    await act(async () => deliver({ type: "index.progress", pending: 4, done: 1, failed: 0 }));
+    const publish = (state: string, processed: number, exceptions: number, revision: number) =>
+      act(async () =>
+        deliver({
+          type: "index.status",
+          status: {
+            workbenchId: id,
+            indexLease,
+            revision,
+            state,
+            guard: null,
+            volume: null,
+            searchable: Math.max(0, processed - exceptions),
+            progress: { total: 5, processed, exceptions },
+          },
+        }),
+      );
+    await publish("indexing", 1, 0, 100);
     await settle();
-    expect(container.querySelector(".docs-index-status")?.textContent).toContain(
-      "Indexing… 1 done · 4 remaining",
-    );
+    expect(container.querySelector(".docs-index-status")?.textContent).toContain("1 of 5 processed");
     expect(container.querySelector('[data-action="reindex"]')?.getAttribute("aria-busy")).toBe("true");
-    await act(async () => deliver({ type: "index.progress", pending: 0, done: 5, failed: 0 }));
+    await publish("ready", 5, 0, 102);
+    // A late indexing update cannot roll back the ready status.
+    await publish("indexing", 2, 0, 101);
     await settle();
-    expect(container.querySelector(".docs-index-status")).toBeNull();
-    expect(container.querySelector('[data-action="reindex"]')?.getAttribute("title")).toContain(
-      "5 documents · 0 failed",
-    );
-    // Failed documents remain actionable after a run ends.
-    await act(async () => deliver({ type: "index.progress", pending: 0, done: 4, failed: 1 }));
+    expect(container.querySelector(".docs-index-status")?.textContent).toContain("Document index ready");
+    await publish("exceptions", 5, 1, 103);
     await settle();
-    expect(container.querySelector(".docs-index-failures summary")?.textContent).toContain(
-      "1 file could not be indexed",
-    );
+    expect(container.querySelector(".docs-index-status")?.textContent).toContain("1 with exceptions");
     expect(container.querySelector('[data-action="reindex"]')?.getAttribute("aria-busy")).toBe("false");
     // The Documents section warns beside its preview statement while the preview is too large.
     const section = (include: string) =>
@@ -880,18 +888,16 @@ it("offers Use .gitignore, changes the draft and sends the switch with the scan 
 
 // REQ-UX-f6c347b8
 it("shows stopped indexing with a Restart action that restarts the indexer", async () => {
-  await api.invoke("workbench.open", { folder: "/mock/demo-board" });
-  let state: "running" | "stopped" = "running";
+  const { indexLease } = await api.invoke("workbench.open", { folder: "/mock/demo-board" });
   const original = api.invoke.bind(api);
   const invoke = vi.spyOn(api, "invoke").mockImplementation((async (channel: string, request: unknown) => {
-    if (channel === "indexer.status") return { state };
     if (channel === "indexer.restart") return {};
     return original(channel as never, request as never);
   }) as typeof api.invoke);
   const handlers: ((event: unknown) => void)[] = [];
   const subscribe = api.subscribe.bind(api);
   const spy = vi.spyOn(api, "subscribe").mockImplementation(((topic: string, ...rest: unknown[]) => {
-    if (topic === "app") handlers.push(rest.at(-1) as (event: unknown) => void);
+    if (topic === "workbench") handlers.push(rest.at(-1) as (event: unknown) => void);
     return (subscribe as (...args: unknown[]) => () => void)(topic, ...rest);
   }) as typeof api.subscribe);
   const container = document.createElement("div");
@@ -909,7 +915,7 @@ it("shows stopped indexing with a Restart action that restarts the indexer", asy
           createElement(
             DocumentViewerProvider,
             { workbenchId: id },
-            createElement(DocsTab, { workbenchId: id, readOnly: false }),
+            createElement(DocsTab, { workbenchId: id, indexLease, readOnly: false }),
           ),
         ),
       ),
@@ -919,10 +925,24 @@ it("shows stopped indexing with a Restart action that restarts the indexer", asy
     const reindex = () => container.querySelector<HTMLButtonElement>('[data-action="reindex"]');
     expect(stopped()).toBeNull();
     // A stopped status event shows the message; Reindex waits, since it would empty the index first.
-    state = "stopped";
-    await act(async () => {
-      for (const on of handlers) on({ type: "indexer.status", state: "stopped" });
-    });
+    const deliver = (state: string, revision: number) =>
+      act(async () => {
+        for (const on of handlers)
+          on({
+            type: "index.status",
+            status: {
+              workbenchId: id,
+              indexLease,
+              revision,
+              state,
+              searchable: 5,
+              progress: null,
+              volume: null,
+              guard: null,
+            },
+          });
+      });
+    await deliver("stopped", 101);
     await settle();
     expect(stopped()?.textContent).toContain("Indexing stopped");
     expect(reindex()?.disabled).toBe(true);
@@ -930,10 +950,7 @@ it("shows stopped indexing with a Restart action that restarts the indexer", asy
     expect(restart?.textContent).toBe("Restart indexing");
     await act(async () => restart?.click());
     expect(invoke).toHaveBeenCalledWith("indexer.restart", {});
-    state = "running";
-    await act(async () => {
-      for (const on of handlers) on({ type: "indexer.status", state: "running" });
-    });
+    await deliver("scanning", 102);
     await settle();
     expect(stopped()).toBeNull();
     expect(reindex()?.disabled).toBe(false);
@@ -1013,7 +1030,7 @@ it("edits the maximum file size and indexed files and marks invalid values", asy
 
 // REQ-UX-b333a5d6
 it("shows a document skipped for its size with its status and reason in every language", async () => {
-  await api.invoke("workbench.open", { folder: "/mock/demo-board" });
+  const { indexLease } = await api.invoke("workbench.open", { folder: "/mock/demo-board" });
   const container = document.createElement("div");
   document.body.append(container);
   const root = createRoot(container);
@@ -1029,7 +1046,7 @@ it("shows a document skipped for its size with its status and reason in every la
         withQueries(
           DocumentViewerProvider,
           { workbenchId: id },
-          createElement(DocsTab, { workbenchId: id, readOnly: false }),
+          createElement(DocsTab, { workbenchId: id, indexLease, readOnly: false }),
         ),
       ),
     );
@@ -1056,7 +1073,7 @@ it("shows a document skipped for its size with its status and reason in every la
 
 // REQ-UX-0c1aea14 REQ-UX-597b7c82
 it("shows the count guard with its top folders, Index anyway and Edit exclusions in every language", async () => {
-  await api.invoke("workbench.open", { folder: "/mock/demo-board" });
+  const { indexLease } = await api.invoke("workbench.open", { folder: "/mock/demo-board" });
   const guard = {
     files: 12000,
     limit: 10000,
@@ -1067,7 +1084,17 @@ it("shows the count guard with its top folders, Index anyway and Edit exclusions
   };
   const original = api.invoke.bind(api);
   const invoke = vi.spyOn(api, "invoke").mockImplementation((async (channel: string, request: unknown) => {
-    if (channel === "docs.volume") return { workbenchId: id, volume: { files: 12000, bytes: 5 }, guard };
+    if (channel === "docs.status")
+      return {
+        workbenchId: id,
+        indexLease,
+        revision: 1,
+        state: "count-guard",
+        progress: null,
+        searchable: 4,
+        volume: { files: 12000, bytes: 5 },
+        guard,
+      };
     if (channel === "docs.approve") return {};
     return original(channel as never, request as never);
   }) as typeof api.invoke);
@@ -1093,7 +1120,7 @@ it("shows the count guard with its top folders, Index anyway and Edit exclusions
           createElement(
             DocumentViewerProvider,
             { workbenchId: id },
-            createElement(DocsTab, { workbenchId: id, readOnly, editExclusions }),
+            createElement(DocsTab, { workbenchId: id, indexLease, readOnly, editExclusions }),
           ),
         ),
       ),
@@ -1151,13 +1178,39 @@ it("shows the count guard with its top folders, Index anyway and Edit exclusions
     expect(invoke).toHaveBeenCalledWith("docs.approve", { workbenchId: id, files: 12000 });
     // Indexing starts: the next selection reports no guard and the block goes away.
     await act(async () => {
-      for (const on of handlers) on({ type: "index.guard", guard: null });
+      for (const on of handlers)
+        on({
+          type: "index.status",
+          status: {
+            workbenchId: id,
+            indexLease,
+            revision: 2,
+            state: "scanning",
+            progress: null,
+            searchable: 4,
+            guard: null,
+            volume: null,
+          },
+        });
     });
     await settle();
     expect(block()).toBeNull();
     // A read-only workbench cannot approve.
     await act(async () => {
-      for (const on of handlers) on({ type: "index.guard", guard });
+      for (const on of handlers)
+        on({
+          type: "index.status",
+          status: {
+            workbenchId: id,
+            indexLease,
+            revision: 3,
+            state: "count-guard",
+            progress: null,
+            searchable: 4,
+            guard,
+            volume: { files: 12000, bytes: 5 },
+          },
+        });
     });
     await render(true);
     await settle();

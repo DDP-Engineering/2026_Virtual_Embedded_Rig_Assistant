@@ -34,6 +34,7 @@ const settle = () =>
 let root: Root;
 let container: HTMLDivElement;
 async function mount(workbenchId = id, attachments?: Attachments) {
+  const { indexLease } = await api.invoke("workbench.config.get", {});
   container = document.createElement("div");
   document.body.append(container);
   root = createRoot(container);
@@ -52,9 +53,9 @@ async function mount(workbenchId = id, attachments?: Attachments) {
             ? createElement(
                 AttachmentsContext.Provider,
                 { value: attachments },
-                createElement(DocsTab, { workbenchId, readOnly: false }),
+                createElement(DocsTab, { workbenchId, indexLease, readOnly: false }),
               )
-            : createElement(DocsTab, { workbenchId, readOnly: false }),
+            : createElement(DocsTab, { workbenchId, indexLease, readOnly: false }),
           createElement(DocumentTabs, { chat: null }),
         ),
       ),

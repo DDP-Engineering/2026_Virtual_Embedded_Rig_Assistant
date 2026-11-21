@@ -1123,6 +1123,11 @@ it("live owner opens a WAL snapshot readonly and leaves source bytes intact, abs
   const snapshot = await reader.open(h.folder);
   expect(snapshot.readOnly).toBe(true);
   expect(reader.documentIndexPhase(snapshot.config.id, reader.getDatabase())).toBe("read-only");
+  expect(reader.documentIndexStatus(snapshot.config.id, reader.getSnapshot().indexLease)).toMatchObject({
+    state: "read-only",
+    progress: null,
+  });
+
   expect(await reader.searchDocuments(snapshot.config.id, "missing")).toEqual({
     coverage: "unknown",
     usage: { mode: null, reason: "index-not-ready" },

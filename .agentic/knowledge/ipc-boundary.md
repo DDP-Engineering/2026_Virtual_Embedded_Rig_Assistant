@@ -31,6 +31,10 @@ shortcut. Existing persisted event format remains 1.
 
 ## Public interface
 
+- `docs.status` validates a workbench id and process-local activation lease. Snapshot and
+  `index.status` events carry the same scope, ordered revision and measured counts.
+  Display masking applies to count-guard folder paths on both delivery routes.
+
 - `providers.presets.discover` accepts registry IDs and optional draft or matching saved connection
   identity. Its strict result carries IDs, a manual-entry reason or a structured provider error.
   Provider writes enter through the dedicated save and remove channels.

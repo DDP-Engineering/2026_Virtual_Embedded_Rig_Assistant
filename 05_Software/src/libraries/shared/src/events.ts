@@ -2,6 +2,7 @@ import { z } from "zod";
 import { dictationJobIdSchema } from "./dictation.js";
 import {
   documentGuardSchema,
+  documentIndexStatusSchema,
   documentSchema,
   documentSearchMetadataSchema,
   documentVolumeSchema,
@@ -70,6 +71,7 @@ export function settingsChangedEvent(previous: Settings | undefined, next: Setti
     : { type: "settings.changed" };
 }
 export const workbenchEventSchema = z.discriminatedUnion("type", [
+  z.strictObject({ type: z.literal("index.status"), status: documentIndexStatusSchema }),
   z.strictObject({
     type: z.literal("index.document"),
     path: z.string().min(1),
@@ -265,7 +267,9 @@ export const eventEnvelopeSchema = z.discriminatedUnion("topic", [
     seq: z.number().int().nonnegative().optional(),
     event: appEventSchema,
   }),
-  z.strictObject({ topic: z.literal("workbench"), id: workbenchIdSchema, event: workbenchEventSchema }),
+  z
+    .strictObject({ topic: z.literal("workbench"), id: workbenchIdSchema, event: workbenchEventSchema })
+    .refine(({ id, event }) => event.type !== "index.status" || id === event.status.workbenchId),
 ]);
 export type EventEnvelope = z.infer<typeof eventEnvelopeSchema>;
 export const sessionSubscriptionSchema = z.strictObject({

@@ -151,10 +151,10 @@ entries:
   - category: new
     topic: { en: Workbench, ro: Workbench, de: Workbench, fr: Banc de travail }
     text:
-      en: Counts match indexing; large selections wait and show largest folders, with Index anyway.
-      ro: Numărul corespunde indexării; selecțiile mari așteaptă, arată folderele mari și permit indexarea.
-      de: Anzahl stimmt mit dem Index; große Auswahl wartet, zeigt größte Ordner und erlaubt Indizierung.
-      fr: Comptage conforme à l’index ; grande sélection en attente, gros dossiers et indexation possible.
+      en: Indexing in the sidebar, limit approval and largest folders in Files, search limits in chat.
+      ro: Indexare în bara laterală, aprobare și foldere mari în Fișiere, limite de căutare în chat.
+      de: Indexstatus in der Seitenleiste, Freigabe und größte Ordner in Dateien, Suchgrenzen im Chat.
+      fr: Indexation dans la barre latérale, limite et gros dossiers dans Fichiers, recherche dans le chat.
   - category: improved
     topic: { en: Workbench, ro: Workbench, de: Workbench, fr: Banc de travail }
     text:

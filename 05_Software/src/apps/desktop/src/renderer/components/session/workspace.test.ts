@@ -2,7 +2,12 @@
 // REQ-UX-4bea0001 REQ-UX-4bea0002 REQ-UX-4bea0003 REQ-REL-4bea0004 REQ-UX-4bea0005 REQ-REL-4bea0006 REQ-UX-4bea0007 REQ-TEST-4bea0008
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import userEvent from "@testing-library/user-event";
-import { applySessionEvent, emptySessionState } from "@vera/shared";
+import {
+  applySessionEvent,
+  type DocumentIndexStatus,
+  emptySessionState,
+  type WorkbenchEvent,
+} from "@vera/shared";
 import { act, createElement, type ReactElement } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, expect, test, vi } from "vitest";
@@ -52,19 +57,14 @@ function button(text: string) {
   expect(node, text).toBeTruthy();
   return node as HTMLButtonElement;
 }
-async function mount(child: ReactElement = createElement(App)) {
+async function mount(
+  child: ReactElement = createElement(App),
+  client = new QueryClient({ defaultOptions: { queries: { retry: false } } }),
+) {
   container = document.createElement("div");
   document.body.append(container);
   root = createRoot(container);
-  await act(async () =>
-    root.render(
-      createElement(
-        QueryClientProvider,
-        { client: new QueryClient({ defaultOptions: { queries: { retry: false } } }) },
-        child,
-      ),
-    ),
-  );
+  await act(async () => root.render(createElement(QueryClientProvider, { client }, child)));
   await settle();
 }
 afterEach(async () => {
@@ -1788,4 +1788,153 @@ test("each session keeps its own document tabs while the user moves between sess
   expect(
     container.querySelector('[data-document-tabs] [role="tab"][aria-selected="true"]')?.textContent,
   ).toBe("board.txt");
+});
+
+test("index updates and late snapshots stay inside the live Files and sidebar status consumers", async () => {
+  const { config, indexLease } = await api.invoke("workbench.create", {
+    folder: "/mock/status-lease",
+    name: "Status lease",
+  });
+  const { id } = await api.invoke("session.create", {});
+  const scope = { workbenchId: config.id, indexLease };
+  const delegates = new Set<(event: WorkbenchEvent) => void>();
+  const subscribe = api.subscribe.bind(api);
+  vi.spyOn(api, "subscribe").mockImplementation(((topic: string, ...args: unknown[]) => {
+    const off = (subscribe as (...args: unknown[]) => () => void)(topic, ...args);
+    if (topic !== "workbench" || args[0] !== config.id) return off;
+    const handler = args[1] as (event: WorkbenchEvent) => void;
+    delegates.add(handler);
+    return () => {
+      delegates.delete(handler);
+      off();
+    };
+  }) as typeof api.subscribe);
+  const indexing = (revision: number, processed: number): DocumentIndexStatus => ({
+    ...scope,
+    revision,
+    state: "indexing",
+    searchable: processed,
+    progress: { total: 250, processed, exceptions: 0 },
+    guard: null,
+    volume: null,
+  });
+  let late: (status: DocumentIndexStatus) => void = () => {};
+  const response = new Promise<DocumentIndexStatus>((resolve) => {
+    late = resolve;
+  });
+  const original = api.invoke.bind(api);
+  const invoke = vi
+    .spyOn(api, "invoke")
+    .mockImplementation(((channel: string, request: unknown) =>
+      channel === "docs.status"
+        ? response
+        : original(channel as never, request as never)) as typeof api.invoke);
+  await mount();
+  await act(async () => container.querySelector<HTMLButtonElement>(`[data-session="${id}"]`)?.click());
+  await vi.waitFor(() => expect(container.querySelector("[data-transcript]")).toBeTruthy());
+  const reads = invoke.mock.calls.filter(([key]) => key === "session.get").length;
+  expect(reads).toBeGreaterThan(0);
+  const transcript = container.querySelector("[data-transcript]");
+  const badge = () => container.querySelector<HTMLButtonElement>(".workbench-index-status");
+  await act(async () => {
+    for (let revision = 1; revision <= 120; revision++) {
+      for (const on of delegates) on({ type: "index.status", status: indexing(revision, revision) });
+    }
+    for (const on of delegates)
+      on({
+        type: "index.status",
+        status: {
+          ...indexing(240, 240),
+          indexLease: indexLease + 1,
+        },
+      });
+    late(indexing(1, 1));
+  });
+  await settle();
+  expect(badge()?.querySelector(".workbench-index-tooltip")?.textContent).toContain("120 of 250 processed");
+  expect(container.querySelector("[data-transcript]")).toBe(transcript);
+  expect(invoke.mock.calls.filter(([key]) => key === "session.get")).toHaveLength(reads);
+  await act(async () => badge()?.click());
+  await settle();
+  expect(container.querySelector(".docs-index-status")?.textContent).toContain("120 of 250 processed");
+  expect(container.querySelector("[data-transcript]")).toBe(transcript);
+  expect(invoke.mock.calls.filter(([key]) => key === "session.get")).toHaveLength(reads);
+});
+
+test("index status leads to panel settings when the workbench has hidden Files", async () => {
+  await api.invoke("workbench.create", {
+    folder: "/mock/status-with-files-hidden",
+    name: "Files hidden",
+    config: { interface: { right_panel_tabs: ["context"] } },
+  });
+  await mount();
+  const badge = container.querySelector<HTMLButtonElement>(".workbench-index-status");
+  expect(badge).toBeTruthy();
+  badge?.focus();
+  await act(async () => userEvent.setup().keyboard("{Enter}"));
+  await settle();
+  expect(container.querySelector("#tab-docs")).toBeNull();
+  expect(document.activeElement).toBe(container.querySelector("[data-configure-panel-tabs]"));
+});
+
+test("adopts the edited folder lease and discards Files results from a copied workbench ID", async () => {
+  const first = await api.invoke("workbench.create", {
+    folder: "/mock/index-original",
+    name: "Original index",
+  });
+  const clone = {
+    ...first,
+    folder: "/mock/index-clone",
+    indexLease: first.indexLease + 1,
+    config: { ...first.config, name: "Copied index" },
+  };
+  const entries = [first, clone].map(({ folder, config: { id, name } }) => ({
+    folder,
+    id,
+    name,
+    lastOpened: "2026-11-21T00:00:00Z",
+    missing: false,
+  }));
+  const original = api.invoke.bind(api);
+  vi.spyOn(api, "invoke").mockImplementation((async (channel: string, request: unknown) => {
+    if (channel === "workbench.recent") return entries;
+    if (channel === "workbench.open") return clone;
+    if (channel === "docs.status") {
+      const { indexLease } = request as { indexLease: number };
+      return {
+        workbenchId: first.config.id,
+        indexLease,
+        revision: 1,
+        searchable: 0,
+        volume: null,
+        guard: null,
+        state: indexLease === first.indexLease ? "empty" : "scanning",
+        progress: indexLease === first.indexLease ? { total: 0, processed: 0, exceptions: 0 } : null,
+      };
+    }
+    return original(channel as never, request as never);
+  }) as typeof api.invoke);
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false, staleTime: Infinity } } });
+  const search = ["docs.search", first.config.id, "private result"];
+  const tree = ["docs.tree", first.config.id, "private folder"];
+  client.setQueryData(search, { results: [{ path: "original.txt" }] });
+  client.setQueryData(tree, { entries: [{ path: "original.txt" }] });
+  await mount(createElement(App), client);
+  const activeRow = () => container.querySelector('.workbench-group-name[aria-current="page"]');
+  expect(activeRow()?.textContent).toBe("Original index");
+  const group = [...container.querySelectorAll(".workbench-group")].find(
+    (row) => row.querySelector(".workbench-group-name")?.textContent === "Copied index",
+  );
+  const edit = [...(group?.querySelectorAll("button") ?? [])].find(
+    (button) => button.textContent === i18n.t("projects.edit"),
+  );
+  expect(edit).toBeTruthy();
+  await act(async () => edit?.click());
+  await settle();
+  expect(activeRow()?.textContent).toBe("Copied index");
+  expect(container.querySelector(".workbench-index-status")?.getAttribute("data-index-state")).toBe(
+    "scanning",
+  );
+  expect(client.getQueryData(search)).toBeUndefined();
+  expect(client.getQueryData(tree)).toBeUndefined();
 });

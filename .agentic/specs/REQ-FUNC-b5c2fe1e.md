@@ -18,4 +18,7 @@ A ranked search can return an empty `results` array at any coverage. Pending sou
 
 ## Live scope
 
-`WorkbenchService.documentIndexPhase(id, db?)` returns the current phase for the live workbench. Supplying the database used by a session also validates that lease. Initial scan and queued reconciliation are unsettled. The phase and the existing volume, guard, indexer state and stored embedding rebuild signal can be composed by the current-status consumer.
+`WorkbenchService.documentIndexPhase(id, db?)` returns the current phase for the live workbench. Supplying the database used by a session also validates that lease. Initial scan and queued reconciliation are unsettled. The Files and sidebar status snapshot adds
+measured progress and independent searchable counts for the current activation. The transcript uses
+stored per-search metadata. During active publication, an invalidated semantic attempt that spent at
+least 150 ms moves directly to a fresh keyword attempt. Cheap conflicts retain the requested-mode retry.

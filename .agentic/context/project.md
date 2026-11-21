@@ -99,6 +99,8 @@ Each component has a knowledge page that names its source files, tests, invarian
 
 Facts that span components:
 
+- The active workbench's live indexing snapshot and coalesced updates feed the sidebar and Files.
+  The chat transcript shows saved retrieval limitations from the corresponding turn.
 - Stored formats follow the root [AGENTS.md](../../AGENTS.md) development policy: every format version is 1, any other version is invalid data, and there is no migration code.
 - Permission modes are Read-only, Ask, Auto-edit and Bypass, per session with a workbench default. Bypass gives file tools, commands and declared program runs the full OS-account filesystem scope after one explicit confirmation per change. Host-configured application data is refused for reads and writes in every mode, including through aliases. Commands and programs run with OS-account permissions and are not sandboxed. See file-tools, plugins and sessions.
 - Privacy masking has four areas: agent, exports, Display and Program runs. Settings hold the app defaults and each workbench may override them. See app-data.
