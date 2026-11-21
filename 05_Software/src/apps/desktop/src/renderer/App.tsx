@@ -191,9 +191,12 @@ export function App() {
     const folder = bench.data?.folder ?? recent.data?.find((entry) => entry.id === benchId)?.folder;
     return bench.data && folder ? { ...bench.data, folder, readOnly } : undefined;
   }, [bench.data, benchId, recent.data, readOnly]);
-  /** Shows a session; callers have already confirmed leaving a dirty editor. */
+  /**
+   * Shows a session of the shown workbench, or of `workbenchId` when the caller has just brought that one
+   * forward; callers have already confirmed leaving a dirty editor.
+   */
   const openSession = useCallback(
-    (id: string, linked = false) => {
+    (id: string, linked = false, workbenchId = benchId) => {
       setLinkedTranscript(linked ? id : undefined);
       setComposerFocus(undefined);
       setActiveSession(id);
@@ -203,9 +206,9 @@ export function App() {
       setNewWorkbench(false);
       setSettings(false);
       setEditor(undefined);
-      if (benchId)
+      if (workbenchId)
         try {
-          localStorage.setItem(`vera.session.${benchId}`, id);
+          localStorage.setItem(`vera.session.${workbenchId}`, id);
         } catch {
           /* Disabled storage. */
         }
@@ -230,6 +233,8 @@ export function App() {
   useEffect(() => {
     if (!benchId || !sessions.data) return;
     if (activeSession && sessions.data.some((s) => s.id === activeSession)) return;
+    // A session opened in a workbench just brought forward may be newer than its cached list.
+    if (activeSession && sessions.isFetching) return;
     let remembered: string | null = null;
     try {
       remembered = localStorage.getItem(`vera.session.${benchId}`);
@@ -238,7 +243,7 @@ export function App() {
     }
     const id = sessions.data.find((s) => s.id === remembered)?.id ?? sessions.data[0]?.id;
     setActiveSession(id);
-  }, [benchId, sessions.data, activeSession]);
+  }, [benchId, sessions.data, sessions.isFetching, activeSession]);
   const operation = useCallback(
     async (action: () => Promise<void>) => {
       if (operationBusy.current) return false;
@@ -562,6 +567,27 @@ export function App() {
             benchClosed();
           })
         }
+        openSession={async (folder, id) => {
+          if (!leaveEditor()) return false;
+          if (folder === activeWorkbench?.folder) {
+            openSession(id, true);
+            return true;
+          }
+          return operation(async () => {
+            const snapshot = await api.invoke("workbench.open", { folder });
+            benchChanged(snapshot);
+            openSession(id, true, snapshot.config.id);
+            await recent.refetch();
+          });
+        }}
+        stopSession={(id) => {
+          // Stop leaves the sidebar usable and the shown workbench and session as they are.
+          setSessionError(undefined);
+          api.invoke("session.stop", { sessionId: id }).then(() => {
+            changed();
+            void client.invalidateQueries({ queryKey: ["session.activity"] });
+          }, setSessionError);
+        }}
         remove={(folder) =>
           (folder !== activeWorkbench?.folder || leaveEditor()) &&
           void operation(async () => {

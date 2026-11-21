@@ -1,4 +1,4 @@
-// REQ-UX-4bea0001
+// REQ-UX-4bea0001 REQ-UX-9a0489f1
 
 import type { SessionSummary } from "@vera/shared";
 import { Ellipsis } from "lucide-react";
@@ -8,6 +8,7 @@ import { api } from "../../api/index.js";
 import { useSettingsSnapshot } from "../../hooks/use-preferences.js";
 import { reorderOffset } from "../../lib/shortcuts.js";
 import { ErrorMessage } from "../error-message.js";
+import { ActivityIcon } from "../workbench-activity.js";
 import { SessionAdvancedDialog } from "./session-advanced.js";
 
 export function SessionList({
@@ -169,6 +170,16 @@ export function SessionList({
         >
           <strong>{s.title || t("chat.untitled")}</strong>
           <small>
+            {(s.status === "running" || s.status === "awaiting_approval") && (
+              <span
+                className="session-activity"
+                data-session-activity={s.status}
+                title={status[s.status]}
+                aria-hidden="true"
+              >
+                <ActivityIcon status={s.status} />
+              </span>
+            )}
             <time data-session-updated dateTime={s.updatedAt} title={t("chat.lastActivity", { date })}>
               {date}
             </time>

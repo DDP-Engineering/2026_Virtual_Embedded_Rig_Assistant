@@ -8,7 +8,11 @@ A session is one conversation with the agent inside a workbench. VERA saves ever
 - The first message becomes the title. **Rename** sets your own title.
 - **Search sessions** finds sessions by title and message text.
 - Each session row shows the time of its last activity and has a menu with **Export Markdown**, **Export JSON**, **Rename**, **Move up**, **Move down**, **Archive** and **Delete**.
-- A session shows its state: **Idle**, **Running**, **Awaiting approval** or **Error**.
+- A session shows its state: **Idle**, **Running**, **Awaiting approval** or **Error**. A running session has a turning mark beside its time, and a session awaiting approval a shield.
+
+## Sessions in other workbenches
+
+Turns keep running when you open another workbench. A workbench row in the sidebar shows a mark with the number of its running and waiting sessions, also when the row is collapsed; a shield means a session awaits your approval. Select the mark (or focus it and press Enter) to list those sessions. Choose a session to open it in its workbench, where you can review its approval, or **Stop** to end only that turn. While turns run, **Workbenches** shows how many run and the **Concurrent turns** limit. At the limit, a new message stays in the message box: wait for a turn to finish or stop one in the sidebar, then send it again.
 
 ## Write a message
 

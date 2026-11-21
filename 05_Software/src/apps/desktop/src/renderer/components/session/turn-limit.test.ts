@@ -70,6 +70,7 @@ test("a send at the turn limit stays in the composer and says when a turn can st
 
   const alert = view.querySelector('[role="alert"][data-i18n="errors.TURN_LIMIT"]');
   expect(alert?.textContent).toContain("(1)");
+  expect(alert?.textContent).toContain("Wait for a running turn to finish, or stop one in the sidebar.");
   expect(input.value).toBe("Second question");
   expect(view.querySelector('[data-i18n="chat.turnSlotFree"]')).toBeNull();
   expect((await api.invoke("session.get", { sessionId: waiting.id })).snapshot.items).toHaveLength(0);

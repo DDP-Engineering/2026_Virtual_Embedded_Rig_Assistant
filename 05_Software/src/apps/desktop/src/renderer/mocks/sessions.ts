@@ -77,8 +77,11 @@ export class MockSessions {
       mode: SessionSummary["mode"];
     },
     private readonly reasoningLevels: (model: string) => string[] = () => [],
-    /** The Concurrent turns limit across every mock workbench and the capacity announcement, like main. */
-    private readonly turns: { limit: () => number; changed: () => void } = {
+    /**
+     * The Concurrent turns limit across every mock workbench and the capacity announcement, and the session
+     * activity announcement (a turn started or ended, an approval was requested or decided), like main.
+     */
+    private readonly turns: { limit: () => number; changed: () => void; activity?: () => void } = {
       limit: () => Number.MAX_SAFE_INTEGER,
       changed: () => {},
     },
@@ -134,6 +137,13 @@ export class MockSessions {
       } catch {
         /* observer */
       }
+    if (
+      ["turn.started", "turn.done", "session.interrupted", "approval.requested", "approval.decided"].includes(
+        event.type,
+      ) ||
+      (event.type === "session.updated" && (event.title !== undefined || event.status !== undefined))
+    )
+      this.turns.activity?.();
   }
   private idle(id: string) {
     this.writable();

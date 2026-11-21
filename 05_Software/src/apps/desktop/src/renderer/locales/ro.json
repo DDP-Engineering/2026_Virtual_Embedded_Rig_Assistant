@@ -60,7 +60,7 @@
     "NOT_FOUND": "Operația solicitată {{operation}} nu a fost găsită.",
     "CONFLICT": "Operația intră în conflict cu starea curentă.",
     "BUSY": "Aplicația este ocupată.",
-    "TURN_LIMIT": "Limita de ture simultane ({{limit}}) a fost atinsă. Mesajul nu a fost trimis și rămâne în caseta de mesaj.",
+    "TURN_LIMIT": "Limita de ture simultane ({{limit}}) a fost atinsă. Mesajul nu a fost trimis și rămâne în caseta de mesaj. Așteaptă să se termine o tură sau oprește una din bara laterală.",
     "DENIED": "Operația nu este permisă.",
     "CONTEXT_LIMIT": "Limita contextului a fost atinsă.",
     "PROVIDER": "Furnizorul nu a putut finaliza cererea.",
@@ -378,6 +378,12 @@
     "archived": "Sesiuni arhivate",
     "lastActivity": "Ultima activitate: {{date}}",
     "turnSlotFree": "Acum poate începe o tură. Trimite mesajul din nou."
+  },
+  "sessionActivity": {
+    "summary": "Sesiuni active în {{name}}: în lucru {{running}}, așteaptă aprobare {{awaiting}}",
+    "stopNamed": "Oprește: {{title}}",
+    "capacity": "Ture simultane: {{active}} din {{limit}} în lucru",
+    "capacityReached": "Limita de ture simultane atinsă: {{active}} din {{limit}} în lucru"
   },
   "context": {
     "budget_exceeded": "Textul depășește bugetul de context al modelului."

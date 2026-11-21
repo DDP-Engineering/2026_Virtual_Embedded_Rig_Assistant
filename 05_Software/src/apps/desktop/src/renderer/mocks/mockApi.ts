@@ -497,6 +497,7 @@ export function createMockApi(
     {
       limit: () => resolveAdvanced("concurrentTurns", { app: settings.advanced }).value,
       changed: () => emitAppEvent({ type: "session.capacity", ...sessions.capacity() }),
+      activity: () => emitAppEvent({ type: "session.activity" }),
     },
   );
   function pinned(content: string) {

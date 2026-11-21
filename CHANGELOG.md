@@ -8,6 +8,7 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ### Added
 
+- Sessions keep running in background workbenches, within Concurrent turns; the sidebar shows, opens and stops them.
 - Verbose chat shows the send date and time beneath user messages, alongside token usage.
 - Chat replies and code blocks offer exact copying; explicit Bash and PowerShell blocks run in compatible terminals.
 - Desktop links delegated sessions, shows their outcomes and lets users stop a running child.

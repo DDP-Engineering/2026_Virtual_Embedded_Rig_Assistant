@@ -82,6 +82,15 @@ export function Composer({
   const running = !!state.activeTurnId;
   const submitting = useRef(false);
   const locked = disabled || state.status === "awaiting_approval";
+  // The message box is disabled while a send is pending, which drops its focus; once it is enabled again
+  // focus returns there (a refused send keeps the draft to edit or resend, REQ-UX-f20cb322), unless the
+  // user has focused something else meanwhile.
+  const refocus = useRef(false);
+  useEffect(() => {
+    if (locked || !refocus.current) return;
+    refocus.current = false;
+    if (!document.activeElement || document.activeElement === document.body) input.current?.focus();
+  }, [locked]);
   const imageLocked = locked || archived || !sessionId || !workbenchId || !attachments?.addImages;
   function addImages(files: readonly (File | string)[]) {
     if (!imageLocked && sessionId && workbenchId && !submitting.current)
@@ -173,6 +182,7 @@ export function Composer({
     if (sendDisabled || submitting.current) return;
     if (sessionId && workbenchId && attachments?.imageDraft?.(workbenchId, sessionId).pending) return;
     submitting.current = true;
+    refocus.current = document.activeElement === input.current;
     const draft = text;
     const sent = [...attached];
     const sentImages = images.map(({ path }) => path);
@@ -188,6 +198,8 @@ export function Composer({
       }
     } finally {
       submitting.current = false;
+      // Never disabled meanwhile, so focus was never lost.
+      if (!input.current?.disabled) refocus.current = false;
     }
   }
   return (

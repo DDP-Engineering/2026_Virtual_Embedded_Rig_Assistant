@@ -60,7 +60,7 @@
     "NOT_FOUND": "L’opération demandée {{operation}} est introuvable.",
     "CONFLICT": "L’opération est en conflit avec l’état actuel.",
     "BUSY": "L’application est occupée.",
-    "TURN_LIMIT": "La limite de tours simultanés ({{limit}}) est atteinte. Votre message n’a pas été envoyé et reste dans la zone de saisie.",
+    "TURN_LIMIT": "La limite de tours simultanés ({{limit}}) est atteinte. Votre message n’a pas été envoyé et reste dans la zone de saisie. Attendez la fin d’un tour ou arrêtez-en un dans la barre latérale.",
     "DENIED": "L’opération n’est pas autorisée.",
     "CONTEXT_LIMIT": "La limite de contexte a été atteinte.",
     "PROVIDER": "Le fournisseur n’a pas pu traiter la requête.",
@@ -378,6 +378,12 @@
     "archived": "Sessions archivées",
     "lastActivity": "Dernière activité : {{date}}",
     "turnSlotFree": "Un tour peut démarrer maintenant. Envoyez à nouveau votre message."
+  },
+  "sessionActivity": {
+    "summary": "Sessions actives dans {{name}} : en cours {{running}}, en attente d’approbation {{awaiting}}",
+    "stopNamed": "Arrêter : {{title}}",
+    "capacity": "Tours simultanés : {{active}} sur {{limit}} en cours",
+    "capacityReached": "Limite de tours simultanés atteinte : {{active}} sur {{limit}} en cours"
   },
   "context": {
     "budget_exceeded": "L’entrée dépasse le budget de contexte du modèle."

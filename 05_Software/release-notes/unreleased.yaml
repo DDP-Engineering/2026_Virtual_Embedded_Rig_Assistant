@@ -137,17 +137,17 @@ entries:
   - category: new
     topic: { en: Workbench, ro: Workbench, de: Workbench, fr: Banc de travail }
     text:
-      en: Indexing honors Git ignore and explains skips over a configurable file size limit.
-      ro: Indexarea respectă Git ignore și explică omiterile peste limita de mărime configurabilă.
-      de: Die Indizierung beachtet Git Ignore und begründet Auslassungen über dem einstellbaren Limit.
-      fr: L’indexation suit Git ignore et explique les exclusions au-delà de la taille configurable.
+      en: Indexing honors Git ignore, explains size skips and holds large selections until you confirm.
+      ro: Indexarea respectă Git ignore, explică omiterile de mărime și cere confirmare la selecții mari.
+      de: Indizierung beachtet Git Ignore, begründet Größen-Auslassungen und fragt bei großer Auswahl.
+      fr: L’indexation suit Git ignore, explique les exclusions de taille et confirme les grandes sélections.
   - category: new
-    topic: { en: Workbench, ro: Workbench, de: Workbench, fr: Banc de travail }
+    topic: { en: Sessions, ro: Sesiuni, de: Sitzungen, fr: Sessions }
     text:
-      en: Counts match indexing; large selections wait and show largest folders, with Index anyway.
-      ro: Numărul corespunde indexării; selecțiile mari așteaptă, arată folderele mari și permit indexarea.
-      de: Anzahl stimmt mit dem Index; große Auswahl wartet, zeigt größte Ordner und erlaubt Indizierung.
-      fr: Comptage conforme à l’index ; grande sélection en attente, gros dossiers et indexation possible.
+      en: Sessions run on in other workbenches, up to a turn limit; see, open or stop them in the sidebar.
+      ro: Sesiunile rulează și în alte workbench-uri, cu limită; vezi, deschide sau oprește din bara laterală.
+      de: Sitzungen laufen in anderen Workbenches weiter, mit Limit; Seitenleiste zeigt, öffnet, stoppt sie.
+      fr: Les sessions continuent dans d’autres bancs, avec limite ; voyez, ouvrez ou arrêtez-les sur le côté.
   - category: improved
     topic: { en: Workbench, ro: Workbench, de: Workbench, fr: Banc de travail }
     text:

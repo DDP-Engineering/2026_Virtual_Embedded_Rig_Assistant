@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-UX-c2a9fe24"
+
+title = "Show concurrent turn use beside the Workbenches title"
+
+status = "active"
+
+requirement = """
+While at least one agent turn runs in any open workbench, the sidebar shall show beside the Workbenches title the number of active turns and the Concurrent turns limit, marked as reached when the active count is at or above the limit.
+"""
+
+verification = "Renderer test: with session.capacity {active 1, limit 3} the title shows 1/3 with the accessible text naming both; with {active 1, limit 1} it is marked as reached and says so; with {active 0} nothing is shown. Native e2e: the count follows replay turns and shows the limit reached at capacity."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/workbench-navigation.tsx", "05_Software/src/apps/desktop/src/renderer/hooks/use-turn-capacity.ts", "05_Software/src/apps/desktop/src/renderer/styles.css", "05_Software/src/apps/desktop/src/renderer/locales/"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/workbench-activity.test.ts", "05_Software/tests/e2e/background-sessions.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-21
+updated = 2026-11-21

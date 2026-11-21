@@ -60,7 +60,7 @@
     "NOT_FOUND": "The requested operation {{operation}} was not found.",
     "CONFLICT": "The operation conflicts with the current state.",
     "BUSY": "The application is busy.",
-    "TURN_LIMIT": "The limit of concurrent turns ({{limit}}) is reached. Your message was not sent and stays in the message box.",
+    "TURN_LIMIT": "The limit of concurrent turns ({{limit}}) is reached. Your message was not sent and stays in the message box. Wait for a running turn to finish, or stop one in the sidebar.",
     "DENIED": "The operation is not allowed.",
     "CONTEXT_LIMIT": "The context limit was reached.",
     "PROVIDER": "The provider could not complete the request.",
@@ -378,6 +378,12 @@
     "archived": "Archived sessions",
     "lastActivity": "Last activity: {{date}}",
     "turnSlotFree": "A turn can start now. Send your message again."
+  },
+  "sessionActivity": {
+    "summary": "Active sessions in {{name}}: running {{running}}, awaiting approval {{awaiting}}",
+    "stopNamed": "Stop: {{title}}",
+    "capacity": "Concurrent turns: {{active}} of {{limit}} running",
+    "capacityReached": "Concurrent turns limit reached: {{active}} of {{limit}} running"
   },
   "context": {
     "budget_exceeded": "The input exceeds the model context budget."

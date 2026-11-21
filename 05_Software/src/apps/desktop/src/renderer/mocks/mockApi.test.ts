@@ -43,6 +43,38 @@ it("mock session activity lists the shown workbench, or nothing while none is op
     },
   ]);
 });
+// REQ-UX-ec37f55b
+it("mock announces session activity when a turn starts, waits for and receives an approval, and ends", async () => {
+  const { api } = createMockApi();
+  const workbench = await api.invoke("workbench.create", { folder: "/mock/activity-events", name: "Events" });
+  await api.invoke("workbench.config.update", { patch: { agent: { permission_mode: "ask" } } });
+  const session = await api.invoke("session.create", { workbenchId: workbench.config.id });
+  const seen: string[] = [];
+  const off = api.subscribe("app", (event) => {
+    if (event.type === "session.activity") seen.push(event.type);
+  });
+  const wait = () => vi.waitFor(() => expect(seen.length).toBeGreaterThan(0));
+  await api.invoke("session.send", { sessionId: session.id, text: "edit the notes" });
+  await wait();
+  await vi.waitFor(async () =>
+    expect((await api.invoke("session.activity", {}))[0]?.sessions).toEqual([
+      { id: session.id, title: "edit the notes", status: "awaiting_approval" },
+    ]),
+  );
+  seen.length = 0;
+  const approval = (await api.invoke("session.get", { sessionId: session.id })).snapshot.approvals[0];
+  if (!approval) throw Error("approval missing");
+  await api.invoke("session.approval.decide", {
+    sessionId: session.id,
+    approvalId: approval.approvalId,
+    requestSha256: approval.requestSha256,
+    decision: "denied",
+  });
+  await wait();
+  await vi.waitFor(async () => expect((await api.invoke("session.activity", {}))[0]?.sessions).toEqual([]));
+  expect(seen.length).toBeGreaterThan(1);
+  off();
+});
 it("mock skills create/edit/toggle isolate workbenches and reject stale or read-only mutations", async () => {
   const { api } = createMockApi();
   const wb = await api.invoke("workbench.create", { folder: "C:/mock/skills", name: "Skills" });

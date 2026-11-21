@@ -60,7 +60,7 @@
     "NOT_FOUND": "Der angeforderte Vorgang {{operation}} wurde nicht gefunden.",
     "CONFLICT": "Der Vorgang steht im Konflikt mit dem aktuellen Zustand.",
     "BUSY": "Die Anwendung ist beschäftigt.",
-    "TURN_LIMIT": "Das Limit gleichzeitiger Durchläufe ({{limit}}) ist erreicht. Ihre Nachricht wurde nicht gesendet und bleibt im Eingabefeld.",
+    "TURN_LIMIT": "Das Limit gleichzeitiger Durchläufe ({{limit}}) ist erreicht. Ihre Nachricht wurde nicht gesendet und bleibt im Eingabefeld. Warten Sie, bis ein Durchlauf endet, oder stoppen Sie einen in der Seitenleiste.",
     "DENIED": "Der Vorgang ist nicht erlaubt.",
     "CONTEXT_LIMIT": "Das Kontextlimit wurde erreicht.",
     "PROVIDER": "Der Anbieter konnte die Anfrage nicht abschließen.",
@@ -378,6 +378,12 @@
     "archived": "Archivierte Sitzungen",
     "lastActivity": "Letzte Aktivität: {{date}}",
     "turnSlotFree": "Ein Durchlauf kann jetzt starten. Senden Sie Ihre Nachricht erneut."
+  },
+  "sessionActivity": {
+    "summary": "Aktive Sitzungen in {{name}}: laufend {{running}}, wartet auf Freigabe {{awaiting}}",
+    "stopNamed": "Stoppen: {{title}}",
+    "capacity": "Gleichzeitige Durchläufe: {{active}} von {{limit}} laufen",
+    "capacityReached": "Limit gleichzeitiger Durchläufe erreicht: {{active}} von {{limit}} laufen"
   },
   "context": {
     "budget_exceeded": "Die Eingabe überschreitet das Kontextbudget des Modells."

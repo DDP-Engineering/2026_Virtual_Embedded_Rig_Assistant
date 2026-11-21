@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-UX-4bb04608"
+
+title = "Operate the sidebar activity menu by keyboard"
+
+status = "active"
+
+requirement = """
+The sidebar activity control shall open its menu with Enter or Space, reach each Open and Stop item with Tab, and close on Escape with focus returned to the control.
+"""
+
+verification = "Renderer test: with the menu open, its Open and Stop items follow the control in Tab order, Tab moves from Open to Stop, and Escape closes the menu and focuses the control. Native e2e: Enter on the focused control opens the menu, Tab reaches Open and Enter opens a background approval; Space opens it and Tab then Enter stops a session."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/workbench-navigation.tsx", "05_Software/src/apps/desktop/src/renderer/components/workbench-activity.tsx"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/workbench-activity.test.ts", "05_Software/tests/e2e/background-sessions.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-21
+updated = 2026-11-21
