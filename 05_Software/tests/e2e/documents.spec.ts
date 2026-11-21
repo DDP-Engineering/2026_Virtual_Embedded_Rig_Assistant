@@ -176,8 +176,10 @@ for (const lang of ["en", "ro", "de"])
             await expect(docs.locator(`[data-document="${path}"]`)).toBeFocused();
           }
         }
-        await docs.locator("button").first().click();
-        await expect(docs.locator('[role="status"]')).not.toHaveCount(0);
+        const reindex = docs.locator('[data-action="reindex"]');
+        await reindex.click();
+        await expect(reindex).toBeEnabled();
+        await expect(docs.locator(".docs-index-status")).toHaveAttribute("data-index-state", "exceptions");
         await page.screenshot({ path: test.info().outputPath(`documents-${lang}.png`) });
         await page.locator('[data-toggle="right"]').click();
         expect(errors).toEqual([]);

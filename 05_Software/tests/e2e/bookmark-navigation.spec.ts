@@ -84,12 +84,7 @@ test("browser mock restart retains three long-session marks and localized bookma
   const url = `${rendererUrl}/?mock=chat`;
   await host.goto(url);
   // Keep the mock backend alive in its own window while the tested renderer restarts.
-  const moduleUrl = await host.evaluate(() =>
-    [...performance.getEntriesByType("resource")]
-      .map((entry) => entry.name)
-      .find((name) => /mocks\/mockApi\.ts/.test(name)),
-  );
-  if (!moduleUrl) throw Error("Missing mock module");
+  const moduleUrl = new URL("/mocks/mockApi.ts", rendererUrl).href;
   await host.evaluate(async (url) => {
     const module = await import(/* @vite-ignore */ url);
     (window as unknown as { bookmarkBackend: unknown }).bookmarkBackend = module.createMockApi().api;
