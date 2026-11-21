@@ -30,6 +30,7 @@ Nu instala un fișier al cărui hash diferă; copiază-l din nou.
 - Programul de instalare pentru Windows: rulează `VERA-<v>-win-x64.exe`. Instalează pentru utilizatorul tău și nu necesită drepturi de administrator.
 - Versiunea portabilă pentru Windows: extrage `VERA-<v>-win-x64.zip` și pornește `vera.exe`. Setările și datele sale rămân în folderul `data` de lângă el.
 - Linux: `sudo apt install ./VERA-<v>-linux-amd64.deb` sau fă AppImage-ul executabil cu `chmod +x` și rulează-l.
+- Cu rețea, adaugă depozitul apt VERA, ca `sudo apt upgrade` să actualizeze și o instalare `.deb`: vezi [Setări](settings.md), **Actualizări**.
 
 ## 3. Instalează pluginuri
 

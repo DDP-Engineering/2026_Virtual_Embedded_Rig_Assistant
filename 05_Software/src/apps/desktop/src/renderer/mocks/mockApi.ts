@@ -749,7 +749,7 @@ export function createMockApi(
         break;
       case "update.openRelease":
         if (
-          updateState.distribution !== "portable" ||
+          updateState.distribution === "installed" ||
           !updateState.offer ||
           channels["update.openRelease"].request.parse(input.data).version !== updateState.offer.version
         )

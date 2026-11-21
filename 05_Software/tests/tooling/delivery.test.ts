@@ -102,14 +102,18 @@ test("delivery.json keeps the other parts and refuses another version", async ()
   );
 });
 
-test("a delivery warns about unsigned or feedless installers, mixed commits and a dirty tree without failing", () => {
+test("a delivery warns about unsigned or feedless installers, a deb without apt repository, mixed commits and a dirty tree", () => {
   const feed = "https://github.com/o/r/releases/latest/download/";
   const part = (commit: string, extra = {}) => ({ version: "1.0.0", commit, dirty: false, ...extra });
   expect(
     common.deliveryWarnings({
       parts: {
         plugins: part("abc1234", { signed: true }),
-        "vera-linux-x64": part("abc1234", { signing: "not-applicable", updateFeed: feed }),
+        "vera-linux-x64": part("abc1234", {
+          signing: "not-applicable",
+          updateFeed: feed,
+          aptKey: "A".repeat(40),
+        }),
         "vera-windows-x64": part("abc1234", { signing: "requested", updateFeed: feed }),
       },
     }),
@@ -118,13 +122,15 @@ test("a delivery warns about unsigned or feedless installers, mixed commits and 
     common.deliveryWarnings({
       parts: {
         plugins: part("abc1234", { dirty: true }),
+        "vera-linux-x64": part("abc1234", { signing: "not-applicable", updateFeed: feed }),
         "vera-windows-x64": part("def5678", { signing: "unsigned" }),
       },
     }),
   ).toEqual([
+    "vera-linux-x64: no apt repository (VERA_APT_KEY was not set), so deb installs only get the download link",
     "vera-windows-x64: the installers are not code-signed",
     "vera-windows-x64: the installers have no update feed and never find a newer version",
-    "the parts were built from different commits: plugins abc1234, vera-windows-x64 def5678",
+    "the parts were built from different commits: plugins abc1234, vera-linux-x64 abc1234, vera-windows-x64 def5678",
     "built from a tree with uncommitted changes: plugins",
   ]);
   expect(common.deliveryWarnings(undefined)).toEqual([]);

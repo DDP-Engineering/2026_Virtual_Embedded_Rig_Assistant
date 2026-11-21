@@ -46,7 +46,13 @@ Pagina listează fiecare comandă cu combinația sa de taste. Poți adăuga, sch
 
 Când o actualizare este descărcată, selectează **Repornește pentru actualizare**. VERA așteaptă până când toate execuțiile în curs și aprobările în așteptare s-au încheiat. Fiecare actualizare este verificată înainte de instalare, iar VERA nu instalează niciodată o versiune mai veche.
 
-Versiunea portabilă doar anunță actualizările: deschide linkul de descărcare, apoi înlocuiește folderul aplicației. O instalare Linux `.deb` se actualizează prin managerul de pachete.
+Versiunea portabilă doar anunță actualizările: deschide linkul de descărcare, apoi înlocuiește folderul aplicației. O instalare Linux `.deb` se actualizează cu apt. Adaugă o singură dată depozitul VERA:
+
+1. Instalează cheia lui de semnare: `wget -qO- https://github.com/DDP-Engineering/2026_Virtual_Embedded_Rig_Assistant/releases/latest/download/vera-archive-keyring.gpg | sudo tee /usr/share/keyrings/vera-archive-keyring.gpg > /dev/null`
+2. Adaugă depozitul: `echo "deb [signed-by=/usr/share/keyrings/vera-archive-keyring.gpg] https://github.com/DDP-Engineering/2026_Virtual_Embedded_Rig_Assistant/releases/latest/download/ /" | sudo tee /etc/apt/sources.list.d/vera.list`
+3. Actualizează VERA odată cu sistemul: `sudo apt update && sudo apt upgrade`
+
+Fără depozit, selectează **Deschide linkul de descărcare** pe pagina **Actualizări** și instalează fișierul descărcat cu `sudo apt install ./VERA-<v>-linux-amd64.deb`.
 
 **Oprit** oprește și verificarea zilnică a catalogului de pluginuri; **Caută actualizări** de pe pagina **Pluginuri** funcționează în continuare.
 

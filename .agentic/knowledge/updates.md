@@ -9,10 +9,11 @@ owns preferences and [sessions](sessions.md) owns actual session work.
 
 ## Purpose and boundaries
 
-Main owns scheduling/capabilities and payload lifecycle. ElectronUpdateBackend delegates
+Main owns scheduling/capabilities and payload lifecycle; the backend owns download bytes and main owns
+installation timing. ElectronUpdateBackend delegates
 metadata, downloads, SHA512/publisher verification and installation to electron-updater.
 WorkbenchRuntimes closes admission atomically once every open workbench runtime, background ones included, is quiescent. Main drains persistence before
-installation. Renderer presents strict snapshots, plain text notes and portable confirmation. The native confirmation closes on disposal and restores its connected opener.
+installation. Renderer presents strict snapshots, plain text notes and the confirmed download link of portable and deb installs. The native confirmation closes on disposal and restores its connected opener.
 The update mode also gates the plugin catalog's periodic checks ([Plugin catalog](plugins-catalog.md)): mode Off stops them.
 
 ## Public interface
@@ -22,7 +23,9 @@ update.openRelease requires confirmed:true and the current offer version. Shared
 defines snapshots; AppEvents update.available/update.changed deliver state.
 VERA_UPDATE_URL fixes generic feed at compilation and builder metadata; empty is unconfigured.
 Release deliveries set it to the public repository's latest GitHub release (`releaseFeed`); publishing a
-release with `delivery:release -- --publish` is what offers a version to installed builds.
+release with `delivery:release -- --publish` is what offers a version to installed builds. With `VERA_APT_KEY`
+the Linux part also carries a signed flat apt repository (`apt-repository.mjs`), so the same feed folder is
+the apt source `deb [signed-by=...] <feed> /` of deb installs.
 
 ## Invariants
 
@@ -38,8 +41,11 @@ release with `delivery:release -- --publish` is what offers a version to install
 - electron-updater verifies SHA512 and the configured Windows publisher; signed Windows
   requires nonempty publisher configuration before download. Candidate metadata requires
   canonical SHA512; SHA256-only feeds are refused.
-- Portable/managed reject download/install; portable confirms a current feed-derived link;
-  managed Linux checks DebUpdater metadata without APPIMAGE and directs to its package manager.
+- Portable/managed reject download/install and open only a confirmed feed-derived link of the current offer:
+  the `.exe` for portable, the `.deb` for managed Linux (DebUpdater metadata without APPIMAGE), whose text
+  names apt upgrade from the VERA repository and installing the downloaded .deb.
+- The apt repository is complete, signed by the key `delivery.json` records as `aptKey`, and lists exactly the
+  part's deb by name, size and SHA-256; `delivery:verify` checks it with gpgv and warns when a Linux part has none.
 - Downloaded metadata/backend stay pinned. Deferred requests keep windows and turns alive.
   Core activity includes active promises and pending approvals, independently of UI subscriptions.
 - WorkbenchRuntimes synchronously checks pending lifecycle changes and each runtime SessionsHost's queued
@@ -57,26 +63,14 @@ release with `delivery:release -- --publish` is what offers a version to install
 | UI/IPC | shared updates/ipc/events, renderer updates.tsx | shared/UI tests, tests/e2e/updates.spec.ts |
 | build/feed | update-config.mjs, package.mjs, update-feed.mjs | tooling/updates.test.ts, packaging.test.ts |
 | release feed/publishing | update-config.mjs releaseFeed, delivery/build-vera-installers.mjs, delivery/publish-github-release.mjs | tooling/github-release.test.ts, delivery.test.ts |
+| deb apt repository | delivery/apt-repository.mjs, build-vera-installers.mjs, verify-delivery.mjs | tooling/apt-repository.test.ts (apt end to end on Linux) |
 
 ## Key behaviors
 
 REQ-FUNC-a16121c6 discovery; REQ-FUNC-d11a1f5c downloads; REQ-REL-61e5471c safe install;
-REQ-PLAT-f905ba1a distribution limits; REQ-UX-a809496e controls/events.
+REQ-PLAT-f905ba1a distribution limits; REQ-UX-a809496e controls/events; REQ-PLAT-b4057998 apt repository;
+REQ-PLAT-be9e76a2 apt repository verification.
 [Exact contract](../specs/REQ-FUNC-a16121c6.md).
-
-## Architecture
-
-```mermaid
-flowchart LR
- UI[UpdatesPanel + UpdateBanner] --> IPC[shared update IPC]
- IPC --> U[main Updates]
- U --> B[ElectronUpdateBackend] --> F[generic feed]
- U --> G[WorkbenchRuntimes admission gate over every SessionsHost] --> C[SessionService hasActiveWork]
- U --> Q[main persistence drain] --> I[explicit verified quitAndInstall]
- U --> E[AppEvents] --> UI
-```
-
-The backend owns download bytes; main owns installation timing.
 
 ## Files
 
@@ -87,6 +81,8 @@ Paths relative to05_Software:
 - src/libraries/core/src/sessions/service.ts — actual activity.
 - renderer components/updates.tsx/settings.tsx, App.tsx, mocks/mockApi.ts/locales — presentation.
 - 02_Tools/release/{update-config,package,update-feed}.mjs — build/feed.
+- 02_Tools/delivery/{apt-repository,build-vera-installers,verify-delivery,publish-github-release}.mjs — release
+  feed, deb apt repository and publishing.
 - tests/packaging/probe-upgrade.mjs — actual artifact updater probe: a managed (deb) build gets metadata only,
   SHA-512 is required and a corrupt hash is refused, install waits for a pending approval and then
   really installs, and a portable build gets a release link. It does not check data migration;

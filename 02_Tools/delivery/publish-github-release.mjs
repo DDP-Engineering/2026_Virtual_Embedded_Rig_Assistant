@@ -118,6 +118,10 @@ export function releaseBody({ version, notes, names, plugins, commit, unsigned, 
       "the programs the plugins need, for a computer without network; extract and set `plugins.kit` to the folder",
     ],
     [/\.(?:yml|blockmap)$/, "the update feed: VERA reads it to find this version and verify the download"],
+    [
+      /^(?:InRelease|Packages(?:\.gz)?|Release(?:\.gpg)?|vera-archive-keyring\.gpg)$/,
+      "the apt repository of the deb and its signing key; the Linux install help shows how to add it",
+    ],
     [/^LICENSE\.txt$/, "VERA's license"],
     [/^SHA256SUMS$/, "checksums of every file"],
   ];
@@ -213,6 +217,7 @@ async function main() {
       repo: { type: "string", default: publicRepository },
       publish: { type: "boolean", default: false },
       "7zip": { type: "string" },
+      gpgv: { type: "string" },
     },
   });
   const folder = positionals[0] ? resolve(positionals[0]) : (await currentDelivery()).folder;
@@ -224,6 +229,7 @@ async function main() {
       join(repository, "02_Tools/delivery/verify-delivery.mjs"),
       folder,
       ...(values["7zip"] ? ["--7zip", values["7zip"]] : []),
+      ...(values.gpgv ? ["--gpgv", values.gpgv] : []),
     ],
     { stdio: "inherit" },
   );

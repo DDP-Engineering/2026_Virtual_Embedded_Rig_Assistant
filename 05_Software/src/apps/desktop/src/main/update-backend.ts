@@ -105,11 +105,14 @@ export class ElectronUpdateBackend implements UpdateBackend {
             : Array.isArray(info.releaseNotes)
               ? info.releaseNotes.map((v) => `${v.version}\n${v.note ?? ""}`).join("\n\n")
               : "";
-        const file = info.files.find((f) =>
+        // The release link names the package of this install: the Windows installer, the deb or the AppImage.
+        const extension =
           this.options.platform === "win32"
-            ? f.url.toLowerCase().endsWith(".exe")
-            : f.url.toLowerCase().endsWith(".appimage"),
-        );
+            ? ".exe"
+            : this.options.distribution === "managed"
+              ? ".deb"
+              : ".appimage";
+        const file = info.files.find((f) => f.url.toLowerCase().endsWith(extension));
         const link = file ? new URL(file.url, this.options.url) : null;
         const base = new URL(this.options.url);
         // Compared as a folder, so /vera never admits a sibling such as /vera-evil/.

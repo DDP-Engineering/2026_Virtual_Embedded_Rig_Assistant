@@ -127,6 +127,8 @@ export function UpdatesPanel({
     INSTALL: t("updates.installFailed"),
   };
   const busy = action.isPending || snapshot?.phase === "checking" || snapshot?.phase === "downloading";
+  // Portable and deb builds get the confirmed download link instead of an in-app download.
+  const linked = snapshot?.distribution === "portable" || snapshot?.distribution === "managed";
   return (
     <section className="surface" id="section-updates" data-settings-section="updates">
       <SettingsPageHeader
@@ -190,7 +192,7 @@ export function UpdatesPanel({
               {t("updates.download")}
             </button>
           )}
-          {snapshot?.distribution === "portable" && offer.link && (
+          {linked && offer.link && (
             <button
               type="button"
               data-i18n="updates.openRelease"
@@ -200,7 +202,7 @@ export function UpdatesPanel({
               {t("updates.openRelease")}
             </button>
           )}
-          {confirm && snapshot?.distribution === "portable" && offer.link && (
+          {confirm && linked && offer.link && (
             <ReleaseConfirmation
               version={offer.version}
               link={offer.link}

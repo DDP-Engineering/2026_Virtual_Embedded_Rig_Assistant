@@ -46,7 +46,13 @@ Die Seite listet jeden Befehl mit seiner Tastenkombination auf. Sie können Komb
 
 Wenn ein Update heruntergeladen wurde, wählen Sie **Zum Aktualisieren neu starten**. VERA wartet, bis alle laufenden Durchläufe und ausstehenden Freigaben abgeschlossen sind. Jedes Update wird vor der Installation überprüft, und VERA installiert nie eine ältere Version.
 
-Die portable Version kündigt Updates nur an: Öffnen Sie den Download-Link und ersetzen Sie dann den Anwendungsordner. Eine Linux-Installation per `.deb` wird über Ihren Paketmanager aktualisiert.
+Die portable Version kündigt Updates nur an: Öffnen Sie den Download-Link und ersetzen Sie dann den Anwendungsordner. Eine Linux-Installation per `.deb` wird mit apt aktualisiert. Fügen Sie das VERA-Repository einmal hinzu:
+
+1. Installieren Sie seinen Signaturschlüssel: `wget -qO- https://github.com/DDP-Engineering/2026_Virtual_Embedded_Rig_Assistant/releases/latest/download/vera-archive-keyring.gpg | sudo tee /usr/share/keyrings/vera-archive-keyring.gpg > /dev/null`
+2. Fügen Sie das Repository hinzu: `echo "deb [signed-by=/usr/share/keyrings/vera-archive-keyring.gpg] https://github.com/DDP-Engineering/2026_Virtual_Embedded_Rig_Assistant/releases/latest/download/ /" | sudo tee /etc/apt/sources.list.d/vera.list`
+3. Aktualisieren Sie VERA mit dem System: `sudo apt update && sudo apt upgrade`
+
+Ohne das Repository wählen Sie auf der Seite **Aktualisierungen** **Download-Link öffnen** und installieren die heruntergeladene Datei mit `sudo apt install ./VERA-<v>-linux-amd64.deb`.
 
 **Aus** stoppt auch die tägliche Prüfung des Plugin-Katalogs; **Nach Updates suchen** auf der Seite **Plugins** funktioniert weiterhin.
 

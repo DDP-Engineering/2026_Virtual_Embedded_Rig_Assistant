@@ -14,6 +14,12 @@ vi.mock("../api/index.js", async () => {
   return { api: createMockApi().api };
 });
 vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
+HTMLDialogElement.prototype.showModal = function () {
+  this.setAttribute("open", "");
+};
+HTMLDialogElement.prototype.close = function () {
+  this.removeAttribute("open");
+};
 let root: Root | undefined, container: HTMLDivElement, client: QueryClient;
 afterEach(async () => {
   if (root) await act(async () => root?.unmount());
@@ -74,4 +80,50 @@ it("shows persisted Off controls, checks manually, renders text notes and ready 
   await settle();
   expect(invoke).toHaveBeenCalledWith("update.download", { confirmed: true });
   expect(container.querySelector("[data-update-banner]")).not.toBeNull();
+});
+it("a deb install names apt upgrade and the downloaded .deb and opens its link after confirmation", async () => {
+  container = document.createElement("div");
+  document.body.append(container);
+  root = createRoot(container);
+  client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  const link = "https://updates.example.test/VERA-0.0.1-linux-amd64.deb";
+  const managed = {
+    distribution: "managed" as const,
+    configured: true,
+    phase: "available" as const,
+    offer: { version: "0.0.1", notes: "Deb notes", link },
+    progress: null,
+    errorCode: null,
+  };
+  const original = api.invoke.bind(api);
+  const invoke = vi
+    .spyOn(api, "invoke")
+    .mockImplementation((async (channel: string, data: unknown) =>
+      channel === "update.get" || channel === "update.openRelease"
+        ? managed
+        : original(channel as never, data as never)) as never);
+  const settings = defaultSettings("1b9dc50c-d87d-484b-88e6-04cb5f7c5a19");
+  await act(async () =>
+    root?.render(
+      createElement(
+        QueryClientProvider,
+        { client },
+        createElement(UpdatesPanel, { preferences: settings.updates, disabled: false, update: vi.fn() }),
+      ),
+    ),
+  );
+  await settle();
+  expect(container.textContent).toContain("sudo apt update && sudo apt upgrade");
+  expect(container.textContent).toContain(".deb");
+  expect(container.querySelector('[data-i18n="updates.download"]')).toBeNull();
+  const user = userEvent.setup();
+  const open = container.querySelector<HTMLButtonElement>('[data-i18n="updates.openRelease"]');
+  if (!open) throw Error("Missing download link button");
+  await act(async () => user.click(open));
+  expect(document.querySelector(".update-link")?.textContent).toBe(link);
+  await act(async () =>
+    user.click(document.querySelector('[data-i18n="updates.confirm"]') as HTMLButtonElement),
+  );
+  await settle();
+  expect(invoke).toHaveBeenCalledWith("update.openRelease", { confirmed: true, version: "0.0.1" });
 });

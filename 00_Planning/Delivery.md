@@ -90,6 +90,12 @@ no update feed configured."
   to the feed); `delivery:release -- --publish` makes it the latest release, which offers it to every
   installed VERA. A semver pre-release version (`1.3.0-beta.1`) becomes a GitHub pre-release, which this
   feed does not serve: the Beta channel receives nothing until beta releases get a feed of their own.
+- deb: electron-updater only reads the metadata, so a deb install offers the `.deb` link of
+  `latest-linux.yml` after confirmation. The feed folder is also a flat apt repository (suite `/`):
+  `apt-repository.mjs` writes Packages, Packages.gz, Release, InRelease, Release.gpg and
+  `vera-archive-keyring.gpg` next to the deb when `VERA_APT_KEY` names the signing key on the Linux build
+  host, and `delivery:verify` checks the signature and hashes. A release published while apt reads the
+  folder can give one hash mismatch, which the next `apt update` resolves.
 - Differential download: electron-updater takes the running version's blockmap from its update cache,
   which an earlier update left there. After an install by hand there is none; the feed folder names only the
   newest release, so the old blockmap is not found there either, and that first update downloads in full.
@@ -133,8 +139,9 @@ no update feed configured."
   the delivery's `SHA256SUMS`.
 - `package-report.json` and `delivery.json` record `requested`, `unsigned` or `not-applicable`. The
   `app.info` IPC reports `signed`, `unsigned` or `not-applicable`; About shows no signing label.
-- `delivery:verify` warns "the installers are not code-signed" for an unsigned part and "the catalog
-  is not signed" when the channel indexes have no `.sig` files, and also for parts built from
+- `delivery:verify` warns "the installers are not code-signed" for an unsigned part, "the catalog
+  is not signed" when the channel indexes have no `.sig` files, "no apt repository" for a Linux part
+  built without `VERA_APT_KEY`, and also for parts built from
   different commits or an uncommitted tree. Warnings do not fail the check; they mark the delivery
   as not ready to release.
 - Remote plugin catalog indexes are signed with Ed25519; the build pins the public key
@@ -168,7 +175,7 @@ The npm scripts run the scripts in `02_Tools/delivery/`:
 | `delivery:vera -- --platform windows-x64\|linux-x64` | `npm run package` (release mode only) with the public update feed, then copies the installers and update feed files of `package-report.json` |
 | `delivery:plugins [-- --signing-key <pem>]` | `prepare:plugins`, signs the channel indexes when a key is given, zips the catalog |
 | `delivery:plugin-deps -- --platform …` | `vera catalog kit` (default `--skip sigrok`), zipped; needs network |
-| `delivery:verify [-- <folder>]` | checks a delivery without changing or publishing anything |
+| `delivery:verify [-- <folder>]` | checks a delivery without changing or publishing anything, the apt repository included |
 | `delivery:release [-- <folder>] [--publish]` | creates or completes the GitHub draft release of a verified delivery; `--publish` publishes it as the latest release |
 
 - A platform part is built only on its own host. An existing part is refused; `--replace` rebuilds

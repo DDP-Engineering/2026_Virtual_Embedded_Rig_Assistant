@@ -105,13 +105,19 @@ test("the release text keeps the notes' sections and describes every download", 
     version: "0.3.0",
     notes,
     names: [
+      "InRelease",
       "LICENSE.txt",
+      "Packages",
+      "Packages.gz",
+      "Release",
+      "Release.gpg",
       "SHA256SUMS",
       "VERA-0.3.0-linux-amd64.deb",
       "VERA-0.3.0-win-x64.exe",
       "VERA-0.3.0-win-x64.exe.blockmap",
       "latest-linux.yml",
       "latest.yml",
+      "vera-archive-keyring.gpg",
       "vera-plugins-0.3.0.zip",
     ],
     plugins: 43,
@@ -125,6 +131,9 @@ test("the release text keeps the notes' sections and describes every download", 
   expect(body).toContain("| `vera-plugins-0.3.0.zip` | the 43 official plugins as a catalog release");
   expect(body).toContain(
     "| `VERA-0.3.0-win-x64.exe.blockmap`, `latest-linux.yml`, `latest.yml` | the update feed:",
+  );
+  expect(body).toContain(
+    "| `InRelease`, `Packages`, `Packages.gz`, `Release`, `Release.gpg`, `vera-archive-keyring.gpg` | the apt repository",
   );
   expect(body).toContain(
     "Windows binaries are not code-signed (SmartScreen warns). Built from commit abc1234.",

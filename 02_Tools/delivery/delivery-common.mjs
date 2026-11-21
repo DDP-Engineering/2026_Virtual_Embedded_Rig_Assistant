@@ -268,13 +268,17 @@ export async function recordPart(delivery, key, record) {
 
 /**
  * What `delivery.json` records that makes a delivery unfit for release without making it invalid: unsigned
- * Windows installers, installers without an update feed, parts built from different commits and parts built
- * from a tree with local changes. Developer deliveries have these, so they are warnings, not failures.
+ * Windows installers, installers without an update feed, a deb without apt repository, parts built from different
+ * commits and parts built from a tree with local changes. Developer deliveries have these, so they are warnings.
  */
 export function deliveryWarnings(manifest) {
   const parts = Object.entries(manifest?.parts ?? {});
   const warnings = [];
   for (const [key, part] of parts) {
+    if (key === "vera-linux-x64" && !part.aptKey)
+      warnings.push(
+        `${key}: no apt repository (VERA_APT_KEY was not set), so deb installs only get the download link`,
+      );
     if (part.signing === "unsigned") warnings.push(`${key}: the installers are not code-signed`);
     if (key.startsWith("vera-") && !part.updateFeed)
       warnings.push(`${key}: the installers have no update feed and never find a newer version`);

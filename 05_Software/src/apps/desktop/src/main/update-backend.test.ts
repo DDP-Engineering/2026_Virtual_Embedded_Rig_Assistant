@@ -9,6 +9,8 @@ vi.mock("electron", () => ({ app: { getVersion: () => "1.0.0", isPackaged: true 
 class FakeUpdater extends EventEmitter {
   sha512: string | undefined = Buffer.alloc(64).toString("base64");
   url = "update.exe";
+  /** Every file of the channel metadata; the single `url` when unset. */
+  urls: string[] | undefined;
   autoDownload = true;
   autoInstallOnAppQuit = true;
   allowDowngrade = true;
@@ -29,7 +31,7 @@ class FakeUpdater extends EventEmitter {
       isUpdateAvailable: this.available,
       updateInfo: {
         version: this.version,
-        files: [{ url: this.url, sha512: this.sha512, sha2: "a".repeat(64) }],
+        files: (this.urls ?? [this.url]).map((url) => ({ url, sha512: this.sha512, sha2: "a".repeat(64) })),
         releaseDate: "2026-10-13",
         releaseNotes: "Notes",
       },
@@ -39,14 +41,15 @@ class FakeUpdater extends EventEmitter {
 function setup(
   stable: string,
   beta: string,
-  distribution: "installed" | "portable" = "installed",
+  distribution: "installed" | "portable" | "managed" = "installed",
   url = "https://updates.test/vera/",
+  platform = "win32",
 ) {
   const updaters = { latest: new FakeUpdater(stable), beta: new FakeUpdater(beta) };
   const backend = new ElectronUpdateBackend({
     url,
     version: "1.0.0",
-    platform: "win32",
+    platform,
     distribution,
     signed: false,
     resources: "/unused",
@@ -79,6 +82,20 @@ it("offers a release link only inside the update folder, not in a sibling with t
   expect(await h.backend.check("latest")).toMatchObject({ link: "https://updates.test/vera/update.exe" });
   h.updaters.latest.url = "https://updates.test/vera-evil/update.exe";
   expect(await h.backend.check("latest")).toMatchObject({ version: "1.1.0", link: null });
+});
+it("links the package of the running Linux distribution: the .deb for a deb install, else the AppImage", async () => {
+  const urls = ["VERA-1.1.0-linux-x86_64.AppImage", "VERA-1.1.0-linux-amd64.deb"];
+  for (const [distribution, file] of [
+    ["managed", "VERA-1.1.0-linux-amd64.deb"],
+    ["installed", "VERA-1.1.0-linux-x86_64.AppImage"],
+  ] as const) {
+    const h = setup("1.1.0", "1.0.0", distribution, "https://updates.test/vera/", "linux");
+    h.updaters.latest.urls = urls;
+    expect(await h.backend.check("latest")).toMatchObject({ link: `https://updates.test/vera/${file}` });
+  }
+  const deb = setup("1.1.0", "1.0.0", "managed", "https://updates.test/vera/", "linux");
+  deb.updaters.latest.urls = ["VERA-1.1.0-linux-x86_64.AppImage"];
+  expect(await deb.backend.check("latest")).toMatchObject({ version: "1.1.0", link: null });
 });
 it("uses an active native managed updater when APPIMAGE is absent", async () => {
   const select = Reflect.get(backendModule, "nativeUpdaterClass");

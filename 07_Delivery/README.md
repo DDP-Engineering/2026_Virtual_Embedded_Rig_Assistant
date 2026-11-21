@@ -11,10 +11,12 @@ dependency kits. A plugin fix never needs a new installer. Everything here excep
                              update feed files (latest.yml, beta.yml, alpha.yml, VERA-<v>-win-x64.exe.blockmap)
     vera-linux-x64/          VERA-<v>-linux-*.AppImage, VERA-<v>-linux-*.deb, RELEASE-NOTES.md, SHA256SUMS,
                              update feed files (latest-linux.yml, beta-linux.yml, alpha-linux.yml)
+                             apt repository with VERA_APT_KEY (Packages, Packages.gz, Release, InRelease,
+                             Release.gpg, vera-archive-keyring.gpg)
     plugins/                 <id>-<version>.zip, index.json, index-stable.json, index-pre-release.json,
                              (*.sig when signed), vera-plugins-<version>.zip, LICENSE.txt, SHA256SUMS
     plugin-deps/             vera-plugin-deps-<version>-windows-x64.zip, …-linux-x64.zip, SHA256SUMS
-    delivery.json            version, commit, host and update feed per part, files with SHA-256 and size
+    delivery.json            version, commit, host, update feed and apt key per part, files with SHA-256 and size
 ```
 
 `<version>` is the desktop package version; while it is `0.0.0` the folder is `vera-0.0.0-<short commit>`.
@@ -62,6 +64,22 @@ therefore offers it to every installed VERA.
 
 A version with a pre-release part (`1.3.0-beta.1`) is published as a GitHub pre-release, which the feed does not
 serve, so the Beta channel gets no updates yet.
+
+### The apt repository of the deb
+
+The same feed folder is a flat apt repository for the deb: users add
+`deb [signed-by=/usr/share/keyrings/vera-archive-keyring.gpg] <feed> /` and its key, as the help page
+Settings > Updates shows, and `apt upgrade` installs each published release. The Linux part carries the
+repository only when `VERA_APT_KEY` names the signing key while `delivery:vera -- --platform linux-x64` runs;
+without it `delivery:verify` warns that deb installs only get the download link.
+
+- Create the key once on the Linux build host and keep the secret key safe; every release must be signed by it:
+  `gpg --quick-gen-key "VERA archive <address>" ed25519 sign never`, then
+  `export VERA_APT_KEY=<fingerprint>` before `delivery:vera`.
+- `delivery:verify` checks the signature with `gpgv` (on PATH, Git for Windows' `usr/bin/gpgv.exe`, or
+  `--gpgv <path>`), that it is by the key recorded in `delivery.json`, and the Packages and Release hashes
+  against the deb.
+- Changing the key breaks `apt update` for every user who installed the old one; they must install the new key.
 
 ## INSTALL on a bench without network
 

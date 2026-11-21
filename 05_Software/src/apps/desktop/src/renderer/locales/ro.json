@@ -658,7 +658,7 @@
     "unconfigured": "Această versiune nu are o sursă de actualizări configurată.",
     "installFailed": "Actualizarea nu a putut fi instalată.",
     "portable": "Versiunile portabile doar anunță actualizările. Descarcă noua versiune în browser și înlocuiește folderul aplicației.",
-    "managed": "Instalează actualizările prin managerul de pachete.",
+    "managed": "Pachetul deb se actualizează cu apt. Dacă ai adăugat depozitul VERA, rulează sudo apt update && sudo apt upgrade. Altfel deschide linkul de descărcare și instalează fișierul .deb descărcat cu managerul de pachete.",
     "notes": "Note de versiune",
     "noNotes": "Nu au fost furnizate note de versiune.",
     "download": "Descarcă actualizarea",
