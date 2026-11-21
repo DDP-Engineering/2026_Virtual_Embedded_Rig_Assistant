@@ -1116,7 +1116,11 @@ it("budgets a long first turn before each real gateway request and refuses an ir
   const good = await launch(custom(workbench, url)).result;
   expect(good.code).toBe(0);
   expect(requests).toHaveLength(3);
-  const usages = events(good.stdout)
+  const rows = events(good.stdout);
+  const turnEnd = rows.findIndex(({ event }) => event.type === "turn.done");
+  expect(rows[turnEnd]?.event).toMatchObject({ type: "turn.done", stopReason: "end" });
+  const usages = rows
+    .slice(0, turnEnd)
     .filter((row) => row.event.type === "usage.updated" && row.event.contextTokens !== undefined)
     .map((row) => row.event);
   expect(usages).toHaveLength(3);

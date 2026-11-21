@@ -80,10 +80,10 @@ export function DictationButton({
 
 export function DictationStatus({
   dictation,
-  hint,
+  running,
 }: {
   dictation: ReturnType<typeof useComposerDictation>;
-  hint: string;
+  running: boolean;
 }) {
   const { t } = useTranslation();
   const errors = {
@@ -105,16 +105,27 @@ export function DictationStatus({
     phase === "idle" && notice && notice !== "complete" && notice !== "cancelled"
       ? errors[notice]
       : undefined;
-  let message = hint;
+  let message = running ? "" : t("chat.enterHint");
   if (phase !== "idle") message = phases[phase];
   else if (notice === "complete") message = t("dictation.inserted");
   else if (notice === "cancelled") message = t("dictation.cancelled");
 
   return (
     <p className="composer-hint">
-      <span role="status" data-dictation-status className={phase === "idle" && !notice ? "muted" : undefined}>
-        {error ? "" : message}
-      </span>
+      {running && (
+        <span className="muted" role="status" data-chat-working="">
+          {t("chat.working")}{" "}
+        </span>
+      )}
+      {message && !error && (
+        <span
+          role="status"
+          data-dictation-status
+          className={phase === "idle" && !notice ? "muted" : undefined}
+        >
+          {message}
+        </span>
+      )}
       {error && <span role="alert">{error}</span>}
     </p>
   );

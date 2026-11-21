@@ -444,13 +444,7 @@ export function Composer({
           </button>
         </>
       )}
-      {running ? (
-        <p className="muted composer-hint" role="status" data-chat-working="">
-          {t("chat.working")}
-        </p>
-      ) : (
-        <DictationStatus dictation={dictation} hint={t("chat.enterHint")} />
-      )}
+      <DictationStatus dictation={dictation} running={running} />
     </div>
   );
 }

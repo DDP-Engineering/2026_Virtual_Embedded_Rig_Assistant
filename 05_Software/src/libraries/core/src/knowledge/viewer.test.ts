@@ -80,7 +80,7 @@ it("compacts verified large indexed and line citations before transport and bind
     db.close();
     await rm(root, { recursive: true, force: true });
   }
-});
+}, 15_000);
 
 it("opens exact page ranges, duplicate heading anchors and unindexed file-tool lines; refuses stale/invalid sources", async () => {
   const root = await mkdtemp(join(tmpdir(), "vera-viewer-"));

@@ -1,12 +1,7 @@
 // REQ-FUNC-f9d5ae8d REQ-FUNC-362ebed9 REQ-FUNC-276a5da8 REQ-REL-4761ac1e
-import { existsSync } from "node:fs";
-import { beforeAll, expect, it, vi } from "vitest";
+import { expect, it, vi } from "vitest";
+import { createIndexerHandler } from "./indexer-handler.js";
 
-let createIndexerHandler: typeof import("./indexer-handler.js").createIndexerHandler;
-beforeAll(async () => {
-  expect(existsSync(new URL("./indexer-handler.ts", import.meta.url)), "indexer handler exists").toBe(true);
-  ({ createIndexerHandler } = await import("./indexer-handler.js"));
-});
 const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
 
 function services() {

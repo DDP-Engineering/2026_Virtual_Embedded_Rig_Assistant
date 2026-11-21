@@ -165,6 +165,7 @@ test("toggle mode supports the mic and shortcut, and Escape owns an active dicta
   await expect(page.locator("[data-action=stop-session]")).toBeVisible();
   await page.keyboard.press(shortcut);
   await expect(status(page)).toHaveText(en.dictation.recording);
+  await expect(page.locator("[data-chat-working]")).toBeVisible();
   await page.keyboard.press("Escape");
   await expect(status(page)).toHaveText(en.dictation.cancelled);
   await expect(page.getByRole("dialog")).toHaveCount(0);
