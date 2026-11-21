@@ -44,6 +44,9 @@ coordinates clamp to content bounds. Browser mock acknowledges the native-only o
 
 ## Invariants
 
+- `main/index.ts` imports `main/inference-telemetry.ts` first; it sets ORT_DISABLE_TELEMETRY=1 while the main
+  module loads (in the bundle after the hoisted chunk imports, none of which starts a worker), before any
+  inference host or worker exists, so embedding and Whisper workers never start ONNX Runtime telemetry (REQ-SEC-b4170ade).
 - Identity and userData precede the instance lock; the losing process exits before creating a window.
 - Portable/explicit override directories are created before Electron setPath, readiness and the
   instance lock; real creation failures propagate. At ready, the credential load starts and settings and the

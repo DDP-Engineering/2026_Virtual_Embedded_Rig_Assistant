@@ -1,3 +1,5 @@
+// First import, so the opt-out is set while the main module loads, before any inference host or worker exists.
+import "./inference-telemetry.js";
 import { randomUUID } from "node:crypto";
 import { existsSync } from "node:fs";
 import { writeFile } from "node:fs/promises";
