@@ -52,7 +52,7 @@ instruments.
 
 VERA is **pre-release**. The current release is 0.2.0 (2026-11-15). Stored formats can still change
 between versions, and no migrations are provided yet. See the [changelog](CHANGELOG.md) for what
-changed and [00_Planning](00_Planning/README.md) for open and delivered plans.
+changed and [00_Planning](00_Planning/Overview.md) for the product definition.
 
 ## Quick start
 
@@ -68,8 +68,8 @@ Node.js does not have to be installed. The setup script installs the pinned Node
 ### Set up
 
 ```bash
-git clone <repository-url> vera
-cd vera
+git clone https://github.com/DDP-Engineering/2026_Virtual_Embedded_Rig_Assistant.git
+cd 2026_Virtual_Embedded_Rig_Assistant
 python 02_Tools/environment/setup.py
 ```
 
@@ -127,7 +127,7 @@ better-sqlite3, Vitest, Playwright and Biome.
 
 | Folder | Content |
 |---|---|
-| [00_Planning](00_Planning/README.md) | Architecture, decisions and implementation plans |
+| [00_Planning](00_Planning/Overview.md) | Product definition: overview, architecture and decisions |
 | [01_Documentation](01_Documentation/README.md) | Project-wide rules: code style, releases |
 | [02_Tools](02_Tools/README.md) | Environment, build, release and delivery tooling |
 | [03_Hardware](03_Hardware/README.md) | Hardware profiles and bench setups |
@@ -164,7 +164,7 @@ To write or change a plugin, read
 - **User help:** [05_Software/help/en](05_Software/help/en/index.md), also shown in the application
   (F1).
 - **Developer guide:** [05_Software/README.md](05_Software/README.md).
-- **Architecture:** [00_Planning/architecture](00_Planning/architecture/01-system.md).
+- **Architecture:** [00_Planning/Overview.md](00_Planning/Overview.md) and the documents it lists.
 - **Code style:** [01_Documentation/Code_Style.md](01_Documentation/Code_Style.md).
 - **Releases and changelog:** [01_Documentation/Releases.md](01_Documentation/Releases.md) and
   [CHANGELOG.md](CHANGELOG.md).

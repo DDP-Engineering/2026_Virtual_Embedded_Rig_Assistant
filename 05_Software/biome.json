@@ -54,15 +54,15 @@
               "level": "error",
               "options": {
                 "paths": {
-                  "electron": "src/libraries/core never imports electron (01 §1 L1); use a port from ports.ts.",
-                  "react": "src/libraries/core never imports react (01 §4).",
+                  "electron": "src/libraries/core never imports electron (System.md L1); use a port from ports.ts.",
+                  "react": "src/libraries/core never imports react (System.md, Module boundaries).",
                   "node:child_process": "src/libraries/core never starts processes itself; use the ProcessHost port from ports.ts.",
                   "child_process": "src/libraries/core never starts processes itself; use the ProcessHost port from ports.ts."
                 },
                 "patterns": [
                   {
                     "group": ["@vera/desktop*", "@vera/cli*", "**/apps/**"],
-                    "message": "src/libraries/core never imports src/apps/* (01 §4)."
+                    "message": "src/libraries/core never imports src/apps/* (System.md, Module boundaries)."
                   }
                 ]
               }
@@ -80,13 +80,13 @@
               "level": "error",
               "options": {
                 "paths": {
-                  "electron": "src/libraries/core never imports electron (01 §1 L1); use a port from ports.ts.",
-                  "react": "src/libraries/core never imports react (01 §4)."
+                  "electron": "src/libraries/core never imports electron (System.md L1); use a port from ports.ts.",
+                  "react": "src/libraries/core never imports react (System.md, Module boundaries)."
                 },
                 "patterns": [
                   {
                     "group": ["@vera/desktop*", "@vera/cli*", "**/apps/**"],
-                    "message": "src/libraries/core never imports src/apps/* (01 §4)."
+                    "message": "src/libraries/core never imports src/apps/* (System.md, Module boundaries)."
                   }
                 ]
               }
@@ -106,7 +106,7 @@
                 "patterns": [
                   {
                     "group": ["electron", "react", "node:*", "@vera/core*", "@vera/desktop*", "@vera/cli*"],
-                    "message": "src/libraries/shared depends only on zod (01 §4)."
+                    "message": "src/libraries/shared depends only on zod (System.md, Module boundaries)."
                   }
                 ]
               }
@@ -126,7 +126,7 @@
                 "patterns": [
                   {
                     "group": ["electron", "node:*", "@vera/core*", "**/libraries/core/**"],
-                    "message": "The renderer imports only @vera/shared and UI libraries; use window.vera (01 §1 L2, §4)."
+                    "message": "The renderer imports only @vera/shared and UI libraries; use window.vera (System.md L2, Module boundaries)."
                   }
                 ]
               }
@@ -146,7 +146,7 @@
                 "patterns": [
                   {
                     "group": ["@vera/core*", "**/libraries/core/**", "react"],
-                    "message": "The preload imports only @vera/shared and electron's contextBridge/ipcRenderer (01 §4)."
+                    "message": "The preload imports only @vera/shared and electron's contextBridge/ipcRenderer (System.md, Module boundaries)."
                   }
                 ]
               }

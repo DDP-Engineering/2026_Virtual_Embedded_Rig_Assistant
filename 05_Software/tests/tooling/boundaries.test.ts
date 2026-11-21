@@ -33,7 +33,7 @@ function lint(path: string, source: string): string {
   return `${run.stdout}${run.stderr}`;
 }
 
-describe("import boundaries (01-system.md §4)", () => {
+describe("import boundaries (System.md, Module boundaries)", () => {
   it.each([
     ["src/libraries/core/src/x.ts", 'import { app } from "electron";\nexport const a = app;\n'],
     ["src/libraries/core/src/x.ts", 'import { useState } from "react";\nexport const s = useState;\n'],
