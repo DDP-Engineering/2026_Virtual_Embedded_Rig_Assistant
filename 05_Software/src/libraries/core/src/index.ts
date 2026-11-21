@@ -74,7 +74,6 @@ export {
   type DelegatedLaunch,
   type DelegatedLaunchRequest,
   delegatedLaunchRequestSchema,
-  MAX_ACTIVE_DELEGATIONS,
 } from "./sessions/delegation.js";
 export * from "./sessions/export.js";
 export * from "./sessions/hub.js";

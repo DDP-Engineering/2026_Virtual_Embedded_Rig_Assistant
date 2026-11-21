@@ -1,7 +1,7 @@
 import { spawn } from "node:child_process";
 import { expect, test } from "@playwright/test";
 import { rendererUrlFromOutput } from "./fixtures.js";
-import { changeSetting } from "./settings-navigation.js";
+import { changeSetting, saveSettings } from "./settings-navigation.js";
 
 test("Updates controls/notes/banner are usable in en/ro/de at minimum size", async ({ page, context }) => {
   test.setTimeout(120000);
@@ -49,6 +49,7 @@ test("Updates controls/notes/banner are usable in en/ro/de at minimum size", asy
           );
           await panel.locator("#update-mode").selectOption("off");
           await panel.locator("#update-channel").selectOption("beta");
+          await saveSettings(page);
           await panel.locator('[data-i18n="updates.check"]').click();
           await expect(panel).toContainText("Update release notes");
           await expect(panel).toContainText("0.0.1");

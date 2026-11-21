@@ -24,6 +24,7 @@ import {
   pagedDocumentKinds,
   parseRef,
   type RecentWorkbenchState,
+  resolveAdvanced,
   SKILL_BYTES,
   type SkillSource,
   sectionDocumentKinds,
@@ -46,6 +47,7 @@ import type Database from "better-sqlite3";
 import { ulid } from "ulid";
 import { LineCounter, parseDocument, stringify } from "yaml";
 import { type DocumentProcessor, Ingester } from "../knowledge/ingest.js";
+import { selectionDocs } from "../knowledge/kinds.js";
 import { DocumentKnowledge } from "../knowledge/search.js";
 import { readGitignores } from "../knowledge/selection.js";
 import { DocumentViewer } from "../knowledge/viewer.js";
@@ -359,6 +361,8 @@ export class WorkbenchService {
       now: () => this.host.now(),
       emit: (event) => this.emit(state.config.id, event),
       ...(this.processDocument ? { process: this.processDocument } : {}),
+      pauseMs: () =>
+        resolveAdvanced("indexingPause", { app: this.host.settings.get().settings.advanced }).value,
     });
   }
   private async stopIngest(): Promise<void> {
@@ -469,9 +473,16 @@ export class WorkbenchService {
       try {
         const epoch = () => keywordEpoch(db);
         const initialEpoch = epoch();
+        // The Docs panel lists up to its resolved results count (REQ-FUNC-4b36dede).
+        const listed = resolveAdvanced("docsResults", {
+          workbench: this.state?.config.advanced,
+          app: this.host.settings.get().settings.advanced,
+        }).value;
         const result = await new DocumentKnowledge(root, db).search(
-          { query, mode: "keyword", k: 20 },
+          { query, mode: "keyword" },
           new AbortController().signal,
+          [],
+          listed,
         );
         const viewer = new DocumentViewer(root, db);
         const checked = new Map<string, Awaited<ReturnType<DocumentViewer["currentBounds"]>>>();
@@ -582,8 +593,14 @@ export class WorkbenchService {
   ): Promise<DocumentPreview> {
     const folder = await this.folder(input);
     // Read synchronously, so a workbench closing meanwhile cannot interleave.
-    const approved = this.state?.folder === folder ? (this.ingest?.approved() ?? null) : null;
-    return previewDocuments(folder, docs, { signal: AbortSignal.timeout(PREVIEW_TIME_LIMIT_MS), approved });
+    const open = this.state?.folder === folder ? this.state : undefined;
+    const approved = open ? (this.ingest?.approved() ?? null) : null;
+    // The preview request carries only docs: the open workbench's saved text size applies (RULING-001).
+    const selection = selectionDocs({ docs, ...(open ? { advanced: open.config.advanced } : {}) });
+    return previewDocuments(folder, selection, {
+      signal: AbortSignal.timeout(PREVIEW_TIME_LIMIT_MS),
+      approved,
+    });
   }
   /** A picked folder as a path relative to a workbench folder; ignored folders are refused. */
   async relativeFolder(rootInput: string, input: string): Promise<string> {

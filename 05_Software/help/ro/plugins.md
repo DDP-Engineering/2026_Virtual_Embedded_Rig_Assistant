@@ -64,6 +64,6 @@ Fiecare comandă rulată de agent trece prin modul tău de permisiuni (vezi [Per
 
 ## Actualizări și catalogul
 
-**Caută actualizări** caută versiuni noi ale pluginurilor; o actualizare afișează **Actualizează la …**. VERA verifică și o dată pe zi, cu excepția cazului în care actualizările sunt dezactivate în [Setări](settings.md). La **Setările catalogului** alegi **Canal** (**Stabil** sau **Pre-lansare**) și, opțional, **URL-ul catalogului**, de exemplu oglinda companiei tale. VERA folosește un catalog doar când semnătura lui se potrivește; altfel afișează pluginurile incluse în VERA.
+**Caută actualizări** caută versiuni noi ale pluginurilor; o actualizare afișează **Actualizează la …**. VERA verifică și o dată pe zi sau la **Intervalul verificării catalogului de pluginuri** din [Setări avansate](advanced-settings.md), cu excepția cazului în care actualizările sunt dezactivate în [Setări](settings.md). La **Setările catalogului** alegi **Canal** (**Stabil** sau **Pre-lansare**) și, opțional, **URL-ul catalogului**, de exemplu oglinda companiei tale. VERA folosește un catalog doar când semnătura lui se potrivește; altfel afișează pluginurile incluse în VERA.
 
 **Dezinstalează** și **Exportă zip** se află la **Mai multe acțiuni** pe cardul unui plugin instalat. Fără rețea, vezi [Instalare offline](offline-install.md).

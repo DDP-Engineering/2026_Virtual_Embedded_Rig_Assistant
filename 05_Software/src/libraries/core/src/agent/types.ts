@@ -32,6 +32,8 @@ export interface RuntimeInit {
   contextPolicy: ContextPolicy;
   contextCompactor?: ContextCompactor;
   maxToolCallsPerTurn?: number;
+  /** Characters of one tool result the model receives at most; 32000 when absent (REQ-FUNC-f6f79cd2). */
+  maxToolResultChars?: number;
 }
 export interface RuntimeHost {
   gateway: LlmGateway;
@@ -94,6 +96,9 @@ export interface AgentRuntime {
   /**
    * Compact the finished conversation when it is above the trigger (REQ-FUNC-99acfc19). `messages`
    * is the stored transcript the next turn starts from, so the summary's fingerprint matches it.
+   * `force` summarizes once regardless of the trigger (Compact now, REQ-FUNC-eeaf29bd).
    */
-  compact?(messages?: Message[]): Promise<void>;
+  compact?(messages?: Message[], force?: boolean): Promise<CompactionOutcome>;
 }
+/** What one compaction did: nothing to do, a summary recorded, no room for one, or a failed summary. */
+export type CompactionOutcome = "none" | "completed" | "unavailable" | "failed";

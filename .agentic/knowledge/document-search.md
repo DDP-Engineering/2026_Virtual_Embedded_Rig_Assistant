@@ -33,7 +33,13 @@ use their own persistent host because their payloads, lifetimes and caches diffe
   batches32 and ranks normalized cosine top50. embed/rank accept root and signal;
   rank accepts vectors or a lazy vector provider evaluated at serialized admission;
   cached checks the current workbench lease and epoch/model/filter key. release(root) removes a
-  workbench's lease; dispose releases all leases.
+  workbench's lease; dispose releases all leases. The idle time (6th argument) may be a getter read as each
+  idle period starts; `createModelDocumentServices(..., limits)` passes the application Embedding worker idle
+  time and Document extraction time limit, which the desktop indexer receives with every IndexerHost message
+  (`limits`) and the CLI resolves in-process (REQ-FUNC-bfbd70b6, REQ-FUNC-aa35b135).
+- The Docs panel search passes `panelK` (its resolved Docs panel results, 10-100, default 20) to
+  `DocumentKnowledge.search`; the agent's search_docs k stays 1-20 and KeywordSearch reads max(50, k) per index
+  (REQ-FUNC-4b36dede).
 - DocumentKnowledge(root,db,embeddingsProvider?,defaults?) supplies search(query,k?,mode?,
   pathGlob?) and read(path,page/pageEnd,heading,lineStart/lineEnd). Omitted k/mode
   take the defaults provider (SessionHost.retrieval from workbench.yaml retrieval),

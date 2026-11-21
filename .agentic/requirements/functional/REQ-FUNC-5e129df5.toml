@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-5e129df5"
+
+title = "End web provider requests at the resolved web request timeout"
+
+status = "active"
+
+requirement = """
+When a web search or read request to the configured provider gets no complete response within the resolved Web request timeout, an integer from 5 to 120 seconds with default 30 set for the application, VERA shall end it with the timeout error.
+"""
+
+verification = "With a host timeout of 90000 ms and then 20000 ms, the provider client is created with exactly that timeoutMs at each request, and desktop creates it with the application default of 30000 ms. Inspection: configured-provider.ts passes the same value to the Tavily, Brave and Exa constructors, whose requests use it as their deadline."
+
+affected_paths = ["05_Software/src/libraries/shared/src/advanced-settings.ts", "05_Software/src/libraries/core/src/web/configured-provider.ts", "05_Software/src/apps/desktop/src/main/web-access.ts", "05_Software/src/apps/cli/src/run.ts"]
+
+linked_tests = ["05_Software/src/libraries/shared/src/advanced-settings.test.ts", "05_Software/src/libraries/core/src/tools/web-limits.test.ts", "05_Software/src/apps/desktop/src/main/web-access.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-21
+updated = 2026-11-21

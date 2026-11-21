@@ -4,6 +4,7 @@ import { act, createElement } from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, expect, it, vi } from "vitest";
 import { api } from "../api/index.js";
+import { setAppAdvanced } from "../hooks/app-advanced.js";
 import i18n from "../i18n.js";
 import { TerminalNavigation } from "./terminal-navigation.js";
 import { TerminalTab } from "./terminal-tab.js";
@@ -450,3 +451,46 @@ it.each([true, false])(
     }
   },
 );
+// REQ-UX-996ae06e REQ-FUNC-7509bd1e
+it("opens a view with the resolved scrollback and disables New at the resolved count", async () => {
+  const owner = "wb_01JB8Z6Q4M7N2K5R9T3V8X1Y0C";
+  const row: TerminalSummary = {
+    id: "00000000-0000-4000-8000-000000000001",
+    number: 1,
+    shared: false,
+    shell: "bash",
+    dispatchEligible: false,
+    running: true,
+  };
+  vi.mocked(api.invoke).mockImplementation(async (channel) => {
+    if (channel === "terminal.list") return [row] as never;
+    if (channel === "terminal.output") return { ...row, output: "", start: 0 } as never;
+    return {} as never;
+  });
+  const newButton = (container: HTMLElement) =>
+    [...container.querySelectorAll("button")].find(
+      (button) => button.getAttribute("aria-label") === i18n.t("terminal.new"),
+    ) as HTMLButtonElement;
+  const open = async () => {
+    const container = document.createElement("div");
+    document.body.append(container);
+    const root = createRoot(container);
+    await act(async () => root.render(createElement(TerminalTab, { workbenchId: owner })));
+    return { container, root };
+  };
+  try {
+    let view = await open();
+    expect(native.created.mock.calls[0]?.[0]).toMatchObject({ options: { scrollback: 3000 } });
+    expect(newButton(view.container).disabled).toBe(false);
+    await act(async () => view.root.unmount());
+    view.container.remove();
+    setAppAdvanced({ terminalScrollback: 10000, terminals: 1 });
+    view = await open();
+    expect(native.created.mock.calls[1]?.[0]).toMatchObject({ options: { scrollback: 10000 } });
+    expect(newButton(view.container).disabled).toBe(true);
+    await act(async () => view.root.unmount());
+    view.container.remove();
+  } finally {
+    setAppAdvanced(undefined);
+  }
+});

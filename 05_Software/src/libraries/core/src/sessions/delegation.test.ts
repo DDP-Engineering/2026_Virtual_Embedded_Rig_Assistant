@@ -351,6 +351,23 @@ it("deduplicates concurrent retries and admits three active children across the 
   expect(await h.service.waitIdle(next.sessionId)).toEqual({ stopReason: "end" });
 });
 
+// REQ-FUNC-261cdc27
+it("admits only the resolved Delegated sessions at once", async () => {
+  const h = await setup({ advanced: { app: () => ({ delegations: 1 }), workbench: () => ({}) } });
+  const release = h.hold("replay/child");
+  const parent = h.service.create();
+  const request = { ...launch, modelRef: "replay/child" };
+  const first = await h.service.launchDelegated(parent.id, request);
+  await expect(
+    h.service.launchDelegated(parent.id, { ...request, requestId: "second" }),
+  ).rejects.toMatchObject(failure("BUSY"));
+  release();
+  expect(await h.service.waitIdle(first.sessionId)).toEqual({ stopReason: "end" });
+  // A slot freed by a finished delegation admits the next one.
+  const third = await h.service.launchDelegated(parent.id, { ...request, requestId: "third" });
+  expect(await h.service.waitIdle(third.sessionId)).toEqual({ stopReason: "end" });
+});
+
 it("projects committed delegation outcomes even when the Desktop notification fails", async () => {
   const statuses: (string | undefined)[] = [];
   const observer = vi.fn(() => {

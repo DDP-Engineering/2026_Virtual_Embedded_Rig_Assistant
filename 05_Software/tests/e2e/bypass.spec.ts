@@ -7,6 +7,7 @@ import { join, resolve } from "node:path";
 import { _electron, expect } from "@playwright/test";
 import { builtinToolNames, type VeraBridge } from "@vera/shared";
 import { installNetworkGuard, outboundAttempts } from "./network-guard.js";
+import { saveSettings } from "./settings-navigation.js";
 
 test("marked Bypass selectors confirm each change and cancellation retains the previous mode", {
   tag: "@parallel-browser",
@@ -30,11 +31,13 @@ test("marked Bypass selectors confirm each change and cancellation retains the p
     await page.locator('[data-i18n="nav.settings"]').click();
     await page.locator('[data-section="appearance"]').click();
     await page.locator("#language").selectOption(language as string);
+    await saveSettings(page);
     if (language === "de") {
       await page.setViewportSize({ width: 1024, height: 640 });
       await page.locator('[data-section="appearance"]').click();
       await page.locator('[data-theme-option="dark"]').click();
       await page.locator("#interface-font-size").selectOption("1.5");
+      await saveSettings(page);
     }
     await page.locator('[data-action="leave-settings"]').click();
     await page.locator(`[data-session="${sessionId}"]`).click();

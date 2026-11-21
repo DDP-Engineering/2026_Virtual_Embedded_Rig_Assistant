@@ -6,6 +6,7 @@ import { _electron, expect, type Page, test } from "@playwright/test";
 import { coreToolNames, type VeraBridge } from "@vera/shared";
 import { parse } from "yaml";
 import { installNetworkGuard, outboundAttempts } from "./network-guard.js";
+import { saveSettings } from "./settings-navigation.js";
 
 async function openTools(page: Page) {
   await page.locator('[data-action="edit-workbench-overview"]').click();
@@ -100,6 +101,7 @@ test("native tool checkbox configuration persists, cancels drafts and translates
       await page.locator('[data-i18n="nav.settings"]').click();
       await page.locator('[data-section="appearance"]').click();
       await page.locator("#language").selectOption(language as string);
+      await saveSettings(page);
       await page.locator('[data-action="leave-settings"]').click();
       await openTools(page);
       await expect(page.locator('[data-tool-description="grep"]')).toContainText(description as string);

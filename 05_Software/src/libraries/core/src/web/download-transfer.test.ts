@@ -1,4 +1,4 @@
-// REQ-SEC-6c43bda5, REQ-REL-45112294
+// REQ-SEC-6c43bda5, REQ-REL-45112294, REQ-FUNC-17f34e4b
 import { describe, expect, it, vi } from "vitest";
 import {
   type DownloadHttpResponse,

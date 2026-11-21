@@ -24,7 +24,8 @@ import {
   extractMarkdown,
   extractText,
 } from "./extraction.js";
-import { type DocumentInput, type DocumentProcessor, PDF_LIMIT, TEXT_LIMIT } from "./ingest.js";
+import type { DocumentInput, DocumentProcessor } from "./ingest.js";
+import { sourceLimit } from "./kinds.js";
 import { OfficeLimitError, officeFormat } from "./office-format.js";
 import type { PassageBudget } from "./token-budget.js";
 import type { OfficeExtractor, PdfExtractor } from "./worker-host.js";
@@ -168,8 +169,8 @@ export async function verifyDocumentSource(input: DocumentInput): Promise<Uint8A
     return lstat(target.absolute);
   };
   const before = await ordinary();
-  const limit = isDocumentKindIn(input.kind, binaryDocumentKinds) ? PDF_LIMIT : TEXT_LIMIT;
-  if (before.size > limit) throw Error("Source exceeds budget.");
+  // Up to the largest allowed size: a document a raised setting selected stays readable (REQ-FUNC-486d6a86).
+  if (before.size > sourceLimit(input.kind)) throw Error("Source exceeds budget.");
   const handle = await open(target.absolute, constants.O_RDONLY | (constants.O_NOFOLLOW ?? 0));
   try {
     const opened = await handle.stat();

@@ -65,7 +65,7 @@ Focused proof: `plugins/{command-tools,shell}.test.ts`, `agent/program-approvals
   `{exitCode, stopped, timedOut, durationMs, output, truncated, log}`. `ProgramResolver.resolve(plugin,
   program)` -> `{executable, prefix?, launcher?, env?, version?}` or undefined; `unresolvedPrograms`; `ProgramHost`;
   `ProgramSession` (per-session handles); `programTimeout`; `programError`; `programPromptEntries(host,
-  skills)` -> `{name, version, plugin, description, skills}[]`; `DEFAULT_PROGRAM_TIMEOUT` 600.
+  skills)` -> `{name, version, plugin, description, skills}[]`; `DEFAULT_PROGRAM_TIMEOUT` 600 is the default of the Program timeout ceiling (workbench or application, REQ-FUNC-e1d2f670): `programTimeout(..., ceiling)` and `timeoutCap(current, ceiling)` use rule ?? program ?? ceiling; run_program and HIL read `toolLimit(ctx, "programTimeout")`; run_command binds min(requested, Shell command timeout ceiling) into its approval at prepare (REQ-FUNC-ae2806b9).
 - `verifyProgramFiles(request, signal?)` re-hashes a request's files (CONFLICT on any difference);
   `RunRequest.beforeSpawn` runs it after the log opens, right before spawn.
 - `ResolvedProgram` carries `env` (applied after the manifest env by run_program) and `version` (prompt).
@@ -111,7 +111,7 @@ Focused proof: `plugins/{command-tools,shell}.test.ts`, `agent/program-approvals
   and Node cannot hold share-deny handles on Windows; during a run the agent's own tools wait, so only
   the user, another session or a background run can write in that window.
 - Timeout: the agent's value clamped to the cap (largest timeout of the matching rules, else the
-  program's, else 600 s); foreground default is the cap; background runs have none unless given.
+  program's, else the Program timeout ceiling, default 600 s); foreground default is the cap; background runs have none unless given.
 - Handles are session-scoped; at most 32 are kept, oldest finished first dropped; program_stop removes
   one. program_output polls every 50 ms up to waitMs and tests `until` (flag `m`) against the output
   gathered in the call (its last 12 000 characters), in one node:vm context per call with a 100 ms limit

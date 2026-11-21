@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-4b36dede"
+
+title = "List up to the resolved Docs panel results"
+
+status = "active"
+
+requirement = """
+When the Docs panel searches documents, VERA shall return up to the resolved Docs panel results, an integer from 10 to 100 with default 20 set per workbench or application.
+"""
+
+verification = "Core workbench service test: with 30 matching sections the Docs panel search returns 20 hits by default and 30 after the workbench docsResults is set to 60. Inspection: the IPC response schema allows 100 hits and the agent's search_docs k stays 1-20."
+
+affected_paths = ["05_Software/src/libraries/shared/src/advanced-settings.ts", "05_Software/src/libraries/core/src/workbench/service.ts", "05_Software/src/libraries/core/src/knowledge/search.ts", "05_Software/src/libraries/shared/src/ipc.ts", "05_Software/src/libraries/core/src/knowledge/keyword.ts"]
+
+linked_tests = ["05_Software/src/libraries/shared/src/advanced-settings.test.ts", "05_Software/src/libraries/core/src/workbench/service.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-21
+updated = 2026-11-21

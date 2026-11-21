@@ -1,5 +1,6 @@
 import type {
   DocumentInput,
+  DocumentLimits,
   DocumentProcessor,
   DocumentResult,
   EmbeddingPort,
@@ -26,6 +27,11 @@ export interface IndexerHostOptions {
   now?: () => number;
   /** Reports "stopped" after repeated crashes and "running" after every (re)start. */
   status?: (state: IndexerState) => void;
+  /**
+   * The application's document limits, sent with every message: the indexer process has no settings of its
+   * own (REQ-FUNC-aa35b135, REQ-FUNC-bfbd70b6). Read when a message is sent, never at construction.
+   */
+  limits?: () => DocumentLimits;
 }
 const CRASH_LIMIT = 3;
 const CRASH_WINDOW_MS = 60_000;
@@ -230,7 +236,8 @@ export class IndexerHost {
       });
       signal?.addEventListener("abort", abort, { once: true });
       try {
-        endpoint.postMessage({ id, ...message });
+        const limits = this.options.limits?.();
+        endpoint.postMessage({ id, ...message, ...(limits ? { limits } : {}) });
       } catch {
         this.pending.get(id)?.reject(interrupted("The indexer process is unavailable."));
         this.pending.delete(id);

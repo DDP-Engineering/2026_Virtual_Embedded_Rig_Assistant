@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-e1d2f670"
+
+title = "Cap program timeouts at the resolved program timeout ceiling"
+
+status = "active"
+
+requirement = """
+When run_program or a hardware run uses a program for which neither a plugin rule nor the program declares a timeout, VERA shall cap its timeout at the resolved Program timeout ceiling, an integer from 60 to 3600 seconds with default 600 set per workbench or application.
+"""
+
+verification = "With a workbench value of 1800, a foreground run requesting 3600 s gets a 1800 s timeout and one requesting 100 s gets 100 s; a plugin rule of 30 s still caps at 30 s; with no value the cap is 600 s."
+
+affected_paths = ["05_Software/src/libraries/shared/src/advanced-settings.ts", "05_Software/src/libraries/core/src/tools/context.ts", "05_Software/src/libraries/core/src/plugins/program-tools.ts"]
+
+linked_tests = ["05_Software/src/libraries/shared/src/advanced-settings.test.ts", "05_Software/src/libraries/core/src/plugins/program-tools.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-21
+updated = 2026-11-21

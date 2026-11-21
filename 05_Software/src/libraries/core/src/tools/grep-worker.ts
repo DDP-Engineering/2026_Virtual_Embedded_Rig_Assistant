@@ -48,11 +48,12 @@ async function execute(task: WorkerTask) {
     let truncated = false;
     let limitReached = false;
     const content = !args.output || args.output === "content";
+    const maxFileBytes = task.maxFileBytes ?? 5 * 1024 * 1024;
     for (const file of files) {
-      if (file.size > 5 * 1024 * 1024) continue;
+      if (file.size > maxFileBytes) continue;
       let bytes: Buffer;
       try {
-        bytes = (await readGuardedFile(guard, file.path, 5 * 1024 * 1024, signal)).bytes;
+        bytes = (await readGuardedFile(guard, file.path, maxFileBytes, signal)).bytes;
       } catch {
         continue;
       }

@@ -103,7 +103,7 @@ sidebar are described in [workbench editor](workbench-editor.md).
   (REQ-FUNC-2336bfd2). Shared docs.gitignore (default true, format 1) switches the .gitignore part for indexing, the documentation
   scan/preview (workbench.scanDocs/previewDocs carry `gitignore`) and the Files tab; the agent PathGuard, files(query) and
   relativeFolder keep .veraignore only (REQ-FUNC-eade110e, REQ-UX-adae0c2f).
-- Shared docs.maxFileMB (optional positive MB, 1 MB = 1 MiB) and docs.maxFiles (positive integer,
+- Shared docs.maxFileMB (optional positive MB of at most 500, 1 MB = 1 MiB; the PDF/Office size limit, 100 MiB when unset) and docs.maxFiles (positive integer,
   default 10000) stay at format 1; a patch maxFileMB null removes it, and invalid values fail
   workbenchSchema/workbenchPatchSchema (REQ-DATA-9fd427f1, REQ-DATA-3bae7e69). maxFiles is stored
   and validated only; nothing enforces it yet. Documents & RAG shows "Maximum file size (MB)" and

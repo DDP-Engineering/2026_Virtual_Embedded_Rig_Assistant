@@ -117,6 +117,8 @@ export const sessionEventSchema = z.discriminatedUnion("type", [
     modelRef: z.string().nullable().optional(),
     mode: permissionModeSchema.optional(),
     reasoning: reasoningOptionSchema.nullable().optional(),
+    /** Session-scope Advanced values; null clears one (REQ-DATA-96ef3dd6). */
+    advanced: z.record(z.string().max(64), z.union([z.number(), z.boolean(), z.null()])).optional(),
   }),
   z.strictObject({ type: z.literal("session.interrupted"), turnId: z.string() }),
   z.strictObject({ type: z.literal("turn.started"), turnId: z.string() }),

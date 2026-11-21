@@ -16,21 +16,49 @@ const fingerprint = (messages: Message[]) =>
 /** Local models often wrap the JSON reply in one Markdown code fence. */
 const withoutFence = (text: string) => /^```(?:json)?\s*([\s\S]*?)\s*```$/i.exec(text.trim())?.[1] ?? text;
 
-/** Characters of each tool result a summary request carries (REQ-FUNC-bd5e5e8d). */
-const SUMMARY_TOOL_RESULT_CHARS = 2000;
-/** Most recent history kept verbatim: 20k tokens, at most a fifth of the input budget (REQ-FUNC-e5b6a1c9). */
-const RECENT_TAIL_TOKENS = 20_000;
+/**
+ * The tunable compaction values, from the resolved Advanced settings (REQ-FUNC-1cec8616, REQ-FUNC-8ac5ec27,
+ * REQ-FUNC-4e63e8d4, REQ-FUNC-28f652c7, REQ-FUNC-e816fc22, REQ-FUNC-a786b11d, REQ-FUNC-5983a9e0).
+ */
+export interface CompactionSettings {
+  /** Fraction of the input budget above which history is compacted. */
+  trigger: number;
+  /** Tokens of the most recent history kept verbatim, capped at a fifth of the input budget. */
+  tailTokens: number;
+  /** Characters of each tool result a summary request carries (REQ-FUNC-bd5e5e8d). */
+  toolResultChars: number;
+  /**
+   * Summary passes for one request. A running session compacts a little each turn; a restarted one meets its
+   * whole history at once, and one summary request holds only about a budget of history.
+   */
+  maxPasses: number;
+  /** Factor over the calibrated count for content the provider has not counted yet (REQ-NFR-4721c12f). */
+  margin: number;
+  /** Use the provider-calibrated ratio; off counts with the conservative estimate. */
+  calibrated: boolean;
+  /** Make new summaries; off keeps an adopted one and sends full history otherwise. */
+  automatic: boolean;
+}
+export const defaultCompactionSettings: Readonly<CompactionSettings> = {
+  trigger: 0.8,
+  tailTokens: 20_000,
+  toolResultChars: 2000,
+  maxPasses: 5,
+  margin: 1.1,
+  calibrated: true,
+  automatic: true,
+};
 const RECENT_TAIL_SHARE = 0.2;
 
-function summarizeMessage(message: Message): Message {
+function summarizeMessage(message: Message, chars: number): Message {
   if (message.role === "toolResult")
     return {
       ...message,
       content: message.content.map((block) =>
-        block.type === "text" && block.text.length > SUMMARY_TOOL_RESULT_CHARS
+        block.type === "text" && block.text.length > chars
           ? {
               ...block,
-              text: `${block.text.slice(0, SUMMARY_TOOL_RESULT_CHARS)}\n[tool result truncated: ${block.text.length - SUMMARY_TOOL_RESULT_CHARS} characters omitted]`,
+              text: `${block.text.slice(0, chars)}\n[tool result truncated: ${block.text.length - chars} characters omitted]`,
             }
           : block,
       ),
@@ -68,9 +96,11 @@ function tailStart(
   messages: Message[],
   end: number,
   budget: number,
+  tailTokens: number,
   measure: (message: Message) => number,
 ): number {
-  const limit = Math.min(RECENT_TAIL_TOKENS, Math.floor(budget * RECENT_TAIL_SHARE));
+  const limit = Math.min(tailTokens, Math.floor(budget * RECENT_TAIL_SHARE));
+  if (limit <= 0) return end;
   let size = 0;
   for (let index = end - 1; index >= 0; index--) {
     size += measure(messages[index] as Message);
@@ -87,19 +117,6 @@ type CompactionView = ContextView & {
   compactionStatus: NonNullable<ContextView["compactionStatus"]>;
   requestViewTokens: number;
 };
-/** The compaction trigger: strictly above 80% of the input budget, counted before M1 reduction. */
-const TRIGGER = 0.8;
-
-/**
- * Summary passes for one request. A running session compacts a little each turn; a restarted one
- * meets its whole history at once (the summary is not durable), and one summary request holds only
- * about a budget of history. Five passes cover a history of roughly five budgets; the bound keeps a
- * very long session from sending a summary request per exchange.
- */
-const MAX_PASSES = 5;
-
-/** Margin over the calibrated count for content the provider has not counted yet (REQ-NFR-4721c12f). */
-const CALIBRATION_MARGIN = 1.1;
 /**
  * The lowest plausible ratio: about 8 bytes per token. Below it a report counts only part of the
  * prompt (prefix caching servers report newly evaluated tokens), so it is not used.
@@ -116,6 +133,8 @@ export interface CompactionRecord {
 }
 
 export class ContextCompactor {
+  /** The values the owner resolved for the next compaction; read at each pass, so changes apply live. */
+  settings: CompactionSettings = { ...defaultCompactionSettings };
   /** An adopted summary not yet handed to the owner for durable recording. */
   private unsaved: CompactionRecord | undefined;
   /** A background compaction in flight; every other caller waits for it. */
@@ -161,7 +180,9 @@ export class ContextCompactor {
   calibration: { modelRef: string; ratio: number } | undefined;
   /** The count scale for a model, when its calibration is known. */
   scale(modelRef: string): number | undefined {
-    return this.calibration?.modelRef === modelRef ? this.calibration.ratio * CALIBRATION_MARGIN : undefined;
+    return this.settings.calibrated && this.calibration?.modelRef === modelRef
+      ? this.calibration.ratio * this.settings.margin
+      : undefined;
   }
   /** Keep the ratio of a reported input count to the estimate it answered; returns what was kept. */
   calibrate(
@@ -188,8 +209,9 @@ export class ContextCompactor {
     | undefined;
 
   /**
-   * The request view, compacted when needed: each pass summarizes the previous summary with the
-   * next completed exchanges that fit, until the view fits or five passes have run.
+   * The request view, compacted when needed: each pass summarizes the previous summary with the next
+   * completed exchanges that fit, until the view fits or the configured passes have run. `force` makes one
+   * pass regardless of the trigger and of automatic compaction (Compact now, REQ-FUNC-eeaf29bd).
    */
   async prepare(
     input: ContextInput,
@@ -199,12 +221,15 @@ export class ContextCompactor {
     currentStart = input.messages.findLastIndex((message) => message.role === "user"),
     scale?: number,
     background = false,
+    force = false,
   ): Promise<CompactionView> {
     if (!background) await this.settled();
-    let view = await this.pass(input, capabilities, policy, summarize, currentStart, scale);
+    let view = await this.pass(input, capabilities, policy, summarize, currentStart, scale, force);
+    if (force) return view;
     // Continue while the view does not fit, or still sits above the trigger and more history can be
     // summarized: a view left above the trigger would compact again at the very next request.
-    for (let pass = 1; pass < MAX_PASSES && view.compactionStatus === "completed" && this.above; pass++) {
+    const passes = this.settings.maxPasses;
+    for (let pass = 1; pass < passes && view.compactionStatus === "completed" && this.above; pass++) {
       const next = await this.pass(input, capabilities, policy, summarize, currentStart, scale);
       if (!view.fits || next.compactionStatus === "completed") view = next;
       else break;
@@ -219,7 +244,9 @@ export class ContextCompactor {
     summarize: SummarizeHistory,
     currentStart: number,
     scale: number | undefined,
+    force = false,
   ): Promise<CompactionView> {
+    const settings = this.settings;
     const count = (request: ContextInput, reduce = true) =>
       policy.prepare(request, capabilities, reduce, undefined, scale);
     let cached = this.cached;
@@ -231,7 +258,9 @@ export class ContextCompactor {
     const previous = cached ? [cached.note] : [];
     const base = { ...input, messages: [...previous, ...input.messages.slice(covered)] };
     const raw = count(base, false);
-    this.above = raw.contextTokens > raw.inputBudgetTokens * TRIGGER;
+    // Automatic compaction off keeps an adopted summary and makes no new one (REQ-FUNC-5983a9e0).
+    this.above =
+      force || (settings.automatic && raw.contextTokens > raw.inputBudgetTokens * settings.trigger);
     const finish = (request: ContextInput, status: CompactionView["compactionStatus"]): CompactionView => {
       const view = count(request);
       return { ...view, compactionStatus: status, requestViewTokens: view.contextTokens };
@@ -248,6 +277,7 @@ export class ContextCompactor {
           input.messages,
           Math.max(0, current),
           raw.inputBudgetTokens,
+          settings.tailTokens,
           (message) => count({ system: "", tools: [], messages: [message] }, false).contextTokens,
         )
       : Math.max(0, current);
@@ -259,7 +289,7 @@ export class ContextCompactor {
         tools: [],
         messages: [
           ...previous,
-          ...history.map(summarizeMessage),
+          ...history.map((message) => summarizeMessage(message, settings.toolResultChars)),
           { role: "user", content: instruction, timestamp: input.messages[cut]?.timestamp ?? 0 },
         ],
       };
@@ -322,7 +352,7 @@ export class ContextCompactor {
     const compacted = { ...input, messages: [note, ...input.messages.slice(candidate.end)] };
     const after = count(compacted, false).contextTokens;
     if (after >= raw.contextTokens) return finish(base, "failed");
-    this.above = after > raw.inputBudgetTokens * TRIGGER;
+    this.above = settings.automatic && after > raw.inputBudgetTokens * settings.trigger;
     this.cached = {
       covered: candidate.end,
       fingerprint: fingerprint(input.messages.slice(0, candidate.end)),

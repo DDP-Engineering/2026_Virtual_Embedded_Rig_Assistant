@@ -4,6 +4,8 @@ import { useEffect, useLayoutEffect } from "react";
 import { api } from "../api/index.js";
 import i18next from "../i18n.js";
 import { resolveLanguage } from "../lib/language.js";
+import { setAppAdvanced } from "./app-advanced.js";
+import { useAppearancePreview } from "./appearance-preview.js";
 
 const settingsKey = ["app.settings"];
 /** Shared confirmed snapshot; a late read cannot replace a newer confirmed update. */
@@ -38,11 +40,15 @@ export function usePreferences(locale: string) {
       }),
     [client],
   );
-  const theme = snapshot.data?.settings.theme ?? "system";
-  const scale = snapshot.data?.settings.textScale ?? 1;
-  const chatFontSize = snapshot.data?.settings.chatFontSize ?? typographyDefaults.chatFontSize;
-  const codeFontSize = snapshot.data?.settings.codeFontSize ?? typographyDefaults.codeFontSize;
-  const language = resolveLanguage(snapshot.data?.settings.language ?? "system", locale);
+  // An unsaved Appearance draft is shown over the saved values (REQ-UX-58a693f3).
+  const preview = useAppearancePreview();
+  const theme = preview?.theme ?? snapshot.data?.settings.theme ?? "system";
+  const scale = preview?.textScale ?? snapshot.data?.settings.textScale ?? 1;
+  const chatFontSize =
+    preview?.chatFontSize ?? snapshot.data?.settings.chatFontSize ?? typographyDefaults.chatFontSize;
+  const codeFontSize =
+    preview?.codeFontSize ?? snapshot.data?.settings.codeFontSize ?? typographyDefaults.codeFontSize;
+  const language = resolveLanguage(preview?.language ?? snapshot.data?.settings.language ?? "system", locale);
   useLayoutEffect(() => {
     const media = matchMedia("(prefers-color-scheme: dark)");
     const apply = () => {
@@ -60,6 +66,9 @@ export function usePreferences(locale: string) {
     document.documentElement.style.setProperty("--chat-font-size", `${chatFontSize}px`);
     document.documentElement.style.setProperty("--code-font-size", `${codeFontSize}px`);
   }, [chatFontSize, codeFontSize]);
+  const advanced = snapshot.data?.settings.advanced;
+  // Lists, transcripts and terminal views read the saved application Advanced values from this store.
+  useLayoutEffect(() => setAppAdvanced(advanced), [advanced]);
   useLayoutEffect(() => {
     document.documentElement.lang = language;
     void i18next.changeLanguage(language);

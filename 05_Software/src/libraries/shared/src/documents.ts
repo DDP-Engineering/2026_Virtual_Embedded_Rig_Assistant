@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { type AdvancedSources, advancedSettings, resolveAdvanced } from "./advanced-settings.js";
 import { parseRef } from "./refs.js";
 import { sessionIdSchema } from "./session.js";
 import { workbenchIdSchema } from "./workbench.js";
@@ -254,10 +255,20 @@ export const documentPreviewSchema = z.strictObject({
   guard: documentGuardSchema.nullable(),
 });
 export type DocumentPreview = z.infer<typeof documentPreviewSchema>;
-/** Above either value the Docs panel and the Documents section warn; indexing continues. */
-export const documentVolumeLimit = { files: 2000, bytes: 2 * 1024 ** 3 } as const;
-export const exceedsDocumentVolume = (volume: DocumentVolume): boolean =>
-  volume.files > documentVolumeLimit.files || volume.bytes > documentVolumeLimit.bytes;
+/** The default Document volume warning: above either value the Documents section warns; indexing continues. */
+export const documentVolumeLimit: DocumentVolume = {
+  files: advancedSettings.docVolumeFiles.default,
+  bytes: advancedSettings.docVolumeMB.default * 1024 ** 2,
+};
+/** The resolved Document volume warning (REQ-UX-d64e808a): workbench over application over the default. */
+export function documentVolumeLimitFor(sources: Pick<AdvancedSources, "workbench" | "app">): DocumentVolume {
+  return {
+    files: resolveAdvanced("docVolumeFiles", sources).value,
+    bytes: resolveAdvanced("docVolumeMB", sources).value * 1024 ** 2,
+  };
+}
+export const exceedsDocumentVolume = (volume: DocumentVolume, limit: DocumentVolume = documentVolumeLimit) =>
+  volume.files > limit.files || volume.bytes > limit.bytes;
 export const documentOpenSchema = z.union([
   docsScopeSchema.extend({ path, requestId: z.string().min(1).max(256).optional() }),
   docsScopeSchema.extend({ ref: documentRef, requestId: z.string().min(1).max(256).optional() }),

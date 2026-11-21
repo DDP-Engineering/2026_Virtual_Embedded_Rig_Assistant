@@ -21,6 +21,18 @@ budgets and abort. The browser mock seeds six selectable states and an edit appr
 
 ## Public interface
 
+- Advanced settings UI (ADV-01):
+  - **Settings > Advanced** (`advanced-settings-panel.tsx`) always holds the Show advanced settings switch. When the switch is on, it also shows the application fields, which save at once.
+  - **Edit workbench > Advanced** (`workbench-advanced.tsx`) is a config section shown only when the switch is on. Its draft fields save with the workbench Save, and an out-of-range value keeps Save off. The patch comes from `advancedEditPatch`.
+  - **Session menu > Advanced settings** (`session/session-advanced.tsx`) is a dialog that calls `session.advanced.set`.
+  - **Shared `AdvancedField`:**
+    - an empty value inherits, and the placeholder shows the inherited value and its source;
+    - Reset clears the value;
+    - a Zap icon carries the apply-timing tooltip;
+    - an out-of-range value shows a localized message (`role=alert`).
+  - Texts are in en/ro/de/fr. The help page is `advanced-settings`.
+  - Tests: `advanced-settings.test.ts`, `workbench-advanced.test.ts`, `tests/e2e/advanced-settings.spec.ts`.
+
 - Shell approval cards show exact command/cwd/shell and, for eligible literal syntax, a chosen-prefix selector with Always allow. session.approval.decide carries the prefix only on that explicit user action. The [workbench editor](workbench-editor.md) owns the Agent editor list of saved prefixes. The card has four locales. Tests: tests/e2e/command-prefixes.spec.ts.
 
 - Markdown HTTP(S) source buttons use translated confirmation before system-browser IPC; cancel/Escape restore focus. A body portal preserves valid Markdown nesting; stable source components survive transcript refresh. [Web search](web-search.md) owns source handling.
@@ -122,7 +134,9 @@ budgets and abort. The browser mock seeds six selectable states and an edit appr
 - A streaming assistant message renders as blocks (`streamingBlocks`: split at blank lines outside code
   fences), each through memoized `Markdown`, so only the growing last block is parsed again per frame;
   `message.done` renders the whole text once.
-- The transcript mounts the newest 40 rows in its first commit and prepends older rows in chunks of 100,
+- The transcript mounts the newest Transcript rows first shown (application Advanced, default 40) in its first
+  commit and prepends older rows in chunks of Transcript rows per load (default 100), both read when the session
+  is shown (REQ-UX-a4cf0527),
   one per `requestIdleCallback` (250 ms timeout) inside `startTransition`, until all are mounted; the window
   start is pinned once rows exist, so later rows never unmount older ones, and resets on session change.
   A search mounts every row (matches are outlined in all of them). Scrolling within one screen of the oldest

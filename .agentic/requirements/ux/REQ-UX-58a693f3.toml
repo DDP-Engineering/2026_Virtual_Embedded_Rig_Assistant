@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-UX-58a693f3"
+
+title = "Preview Appearance changes before saving"
+
+status = "active"
+
+requirement = """
+While the user edits theme, text size, chat font size, code font size or language on the Appearance page, VERA shall apply the draft values to the interface at once as a preview and restore the saved values when the draft is cancelled or discarded.
+"""
+
+verification = "Pick Dark, 125% and Romanian: the root data-theme, font size and language change at once; Cancel restores the saved theme, size and language; leaving Settings with Discard restores them too; Save keeps them across restart."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/hooks/appearance-preview.ts", "05_Software/src/apps/desktop/src/renderer/hooks/use-preferences.ts", "05_Software/src/apps/desktop/src/renderer/components/appearance-settings.tsx"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/settings-save.test.ts", "05_Software/tests/e2e/typography.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-20
+updated = 2026-11-20

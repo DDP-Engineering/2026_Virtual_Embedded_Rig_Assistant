@@ -62,6 +62,9 @@ it("shows persisted Off controls, checks manually, renders text notes and ready 
   const channel = container.querySelector<HTMLSelectElement>("#update-channel");
   if (!channel) throw Error("Missing channel control");
   await act(async () => user.selectOptions(channel, "beta"));
+  // The channel is a draft until the header Save; Check for updates stays an immediate action.
+  expect(update).not.toHaveBeenCalled();
+  await act(async () => user.click(container.querySelector("[data-settings-save]") as HTMLButtonElement));
   expect(update).toHaveBeenCalledWith({ updates: { channel: "beta" } });
   await act(async () => user.click(button("updates.check")));
   await settle();

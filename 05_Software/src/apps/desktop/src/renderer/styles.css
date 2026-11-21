@@ -4464,3 +4464,42 @@ legend {
     opacity: 1;
   }
 }
+/* Advanced settings: label, timing icon, value with the inherited placeholder, Reset (ADV-01). */
+.advanced-settings {
+  display: grid;
+  gap: 0.75rem;
+}
+.advanced-switch {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.advanced-field {
+  display: grid;
+  grid-template-columns: minmax(10rem, 1fr) auto minmax(8rem, 14rem) auto;
+  align-items: center;
+  gap: 0.25rem 0.5rem;
+}
+/* A switch: Inherit (with the inherited state), On, Off (ADV-02). */
+.advanced-field select {
+  width: 100%;
+  min-width: 0;
+}
+.advanced-timing {
+  display: inline-flex;
+  color: var(--muted-foreground);
+}
+.advanced-range {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: var(--destructive);
+}
+.session-advanced {
+  min-width: min(36rem, 90vw);
+}
+.session-compact {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}

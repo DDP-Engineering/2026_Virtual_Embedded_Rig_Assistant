@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-13068fbb"
+
+title = "Refuse Compact now while a session is busy or locked"
+
+status = "active"
+
+requirement = """
+If Compact now is requested while the session has a turn or a compaction running, VERA shall refuse it with BUSY, and if the session is archived or the workbench is read-only, with DENIED, without changing the session.
+"""
+
+verification = "Compact now during a running turn returns BUSY; on an archived session it returns DENIED; neither records an event."
+
+affected_paths = ["05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/apps/desktop/src/renderer/mocks/sessions.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/sessions/compaction-advanced.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-20
+updated = 2026-11-20

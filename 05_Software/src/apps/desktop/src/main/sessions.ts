@@ -240,8 +240,10 @@ export class SessionsHost {
           writeQueue: options.workbench.getWriteQueue(),
           ...(options.permissions ? { permissions: options.permissions } : {}),
           ...(this.programHost ? { programs: this.programHost } : {}),
-          get maxToolCallsPerTurn() {
-            return options.settings.get().settings.limits.maxToolCallsPerTurn;
+          // Read at each turn, so saved Advanced values apply from the next turn (REQ-FUNC-902313e0).
+          advanced: {
+            app: () => options.settings.get().settings.advanced,
+            workbench: () => options.workbench.getSnapshot().config.advanced,
           },
           get disabledTools() {
             return [

@@ -5,6 +5,7 @@ import { join, resolve } from "node:path";
 import { _electron, expect, test } from "@playwright/test";
 import { builtinToolNames, type VeraBridge } from "@vera/shared";
 import { installNetworkGuard, outboundAttempts } from "./network-guard.js";
+import { saveSettings } from "./settings-navigation.js";
 
 test("native chat retains per-prompt tokens and initial context through tools, later prompts and restart", async () => {
   test.setTimeout(60000);
@@ -123,6 +124,7 @@ test("native chat retains per-prompt tokens and initial context through tools, l
       await page.locator('[data-i18n="nav.settings"]').click();
       await page.locator('[data-section="appearance"]').click();
       await page.locator("#language").selectOption(language as string);
+      await saveSettings(page);
       await page.locator('[data-action="leave-settings"]').click();
       await page.locator(`[data-session="${id}"]`).click();
       await expect(lines.first()).toContainText(label as string);

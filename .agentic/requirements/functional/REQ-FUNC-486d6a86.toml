@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-486d6a86"
+
+title = "Accept indexed documents up to the largest allowed sizes in later checks"
+
+status = "active"
+
+requirement = """
+When an indexed document is inspected, opened in the viewer, read with read_doc or checked for a citation, VERA shall accept a source of up to the largest allowed size (500 MiB for PDF and Office, 64 MiB for text) instead of the size its selection used.
+"""
+
+verification = "Core tests: the size ceilings are 500 MiB for PDF and Office and 64 MiB for text; verifyDocumentSource refuses a 500 MiB + 1 byte PDF and a 64 MiB + 1 byte text source with the budget error and lets a 100 MiB + 1 byte PDF past the size check; with maxFileMB 150 a 100 MiB + 1 byte PDF that selection admits is indexed once and the ingest settles without reindexing it again."
+
+affected_paths = ["05_Software/src/libraries/core/src/knowledge/kinds.ts", "05_Software/src/libraries/core/src/knowledge/inspect.ts", "05_Software/src/libraries/core/src/knowledge/processor.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/knowledge/ingest-selection.test.ts", "05_Software/src/libraries/core/src/knowledge/processor.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-21
+updated = 2026-11-21

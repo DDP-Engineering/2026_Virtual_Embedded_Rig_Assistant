@@ -59,6 +59,38 @@ it("runs all grep options inside a worker with ignored/binary/oversized skips an
   await expect(call({ pattern: "[" })).rejects.toThrow(/regex|regular expression/i);
 });
 
+// REQ-FUNC-0df8e905 REQ-FUNC-820e2701
+it("returns up to the session's Grep results and skips files above its Grep file size", async () => {
+  root = await mkdtemp(join(tmpdir(), "vera-grep-limits-"));
+  await mkdir(join(root, "docs"));
+  await writeFile(join(root, "docs/many.txt"), Array.from({ length: 80 }, () => "needle").join("\n"));
+  await writeFile(join(root, "docs/two-mib.txt"), `marker\n${"z".repeat(2 * 1024 * 1024)}`);
+  await writeFile(join(root, "docs/half-mib.txt"), `marker\n${"z".repeat(512 * 1024)}`);
+  bundle = workerFixture();
+  pool = new api.NodeWorkerPool(bundle.url);
+  const limits: Record<string, number> = { grepResults: 50, grepFileMB: 1 };
+  const ctx = { ...api.createToolContext(root, pool), advanced: ((key: string) => limits[key]) as never };
+  const count = async (args: Record<string, unknown>) =>
+    (
+      (await api.grepTool.execute(ctx, { pattern: "needle", ...args }, new AbortController().signal))
+        .matches as unknown[]
+    ).length;
+  expect(await count({})).toBe(50);
+  expect(
+    (await api.grepTool.execute(ctx, { pattern: "needle" }, new AbortController().signal)).truncated,
+  ).toBe(true);
+  expect(await count({ maxResults: 60 })).toBe(50);
+  expect(await count({ maxResults: 10 })).toBe(10);
+  const files = async () =>
+    (await api.grepTool.execute(ctx, { pattern: "marker", output: "files" }, new AbortController().signal))
+      .paths;
+  expect(await files()).toEqual(["docs/half-mib.txt"]);
+  limits.grepFileMB = 3;
+  expect(await files()).toEqual(["docs/half-mib.txt", "docs/two-mib.txt"]);
+  // The schema accepts up to the setting's largest value.
+  expect(api.grepParams.safeParse({ pattern: "x", maxResults: 2000 }).success).toBe(true);
+});
+
 it.each(["content", "files", "count"] as const)(
   "continues searching after a long matching preview for %s output",
   async (output) => {

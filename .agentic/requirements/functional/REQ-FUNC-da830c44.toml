@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-da830c44"
+
+title = "Return up to the resolved glob results"
+
+status = "active"
+
+requirement = """
+When the glob tool runs, VERA shall return at most the resolved Glob results, an integer from 100 to 5000 with default 500 set for the application, newest first, and mark the result truncated when more files match.
+"""
+
+verification = "With 100, 150 matching files return 100 paths marked truncated and 80 matching files return 80 unmarked; with no value 501 files return 500 marked truncated."
+
+affected_paths = ["05_Software/src/libraries/shared/src/advanced-settings.ts", "05_Software/src/libraries/core/src/tools/glob.ts"]
+
+linked_tests = ["05_Software/src/libraries/shared/src/advanced-settings.test.ts", "05_Software/src/libraries/core/src/tools/discovery.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-21
+updated = 2026-11-21

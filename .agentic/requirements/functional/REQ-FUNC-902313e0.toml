@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-902313e0"
+
+title = "Resolve Advanced settings by scope precedence"
+
+status = "active"
+
+requirement = """
+When VERA resolves an Advanced setting for a session, it shall use the session value if set, else the workbench value if set, else the application value if set, else the registry default, where a workbench or session value may be higher or lower than the application value within the setting's allowed range.
+"""
+
+verification = "For the pilot setting, resolve with every combination of unset and set values at the three scopes, including a workbench value above and a session value below the application value: each result is the most specific set value or the default 50."
+
+affected_paths = ["05_Software/src/libraries/shared/src/advanced-settings.ts", "05_Software/src/libraries/core/src/sessions/service.ts"]
+
+linked_tests = ["05_Software/src/libraries/shared/src/advanced-settings.test.ts", "05_Software/src/libraries/core/src/sessions/advanced.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-20
+updated = 2026-11-20

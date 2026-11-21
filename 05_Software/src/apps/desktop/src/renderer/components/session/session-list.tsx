@@ -5,8 +5,10 @@ import { Ellipsis } from "lucide-react";
 import { type KeyboardEvent, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../../api/index.js";
+import { useSettingsSnapshot } from "../../hooks/use-preferences.js";
 import { reorderOffset } from "../../lib/shortcuts.js";
 import { ErrorMessage } from "../error-message.js";
+import { SessionAdvancedDialog } from "./session-advanced.js";
 
 export function SessionList({
   sessions,
@@ -56,6 +58,8 @@ export function SessionList({
   const [editing, setEditing] = useState<SessionSummary>();
   const [title, setTitle] = useState("");
   const [deleting, setDeleting] = useState<SessionSummary>();
+  const [advancedFor, setAdvancedFor] = useState<string>();
+  const showAdvanced = useSettingsSnapshot().data?.settings.showAdvanced === true;
   const dialog = useRef<HTMLDialogElement>(null);
   const origin = useRef<HTMLElement | null>(null);
   const editOrigin = useRef<HTMLElement | null>(null);
@@ -264,6 +268,18 @@ export function SessionList({
             >
               {t("chat.rename")}
             </button>
+            {showAdvanced && (
+              <button
+                type="button"
+                data-action="session-advanced"
+                onClick={(event) => {
+                  origin.current = closeMenu(event.currentTarget);
+                  setAdvancedFor(s.id);
+                }}
+              >
+                {t("advanced.session")}
+              </button>
+            )}
             <button
               type="button"
               aria-label={t("chat.deleteNamed", { title: s.title || t("chat.untitled") })}
@@ -277,6 +293,15 @@ export function SessionList({
             </button>
           </div>
         </details>
+        {advancedFor === s.id && showAdvanced && (
+          <SessionAdvancedDialog
+            sessionId={s.id}
+            onClose={() => {
+              setAdvancedFor(undefined);
+              origin.current?.focus();
+            }}
+          />
+        )}
         {editing?.id === s.id && (
           <form
             onSubmit={(e) => {

@@ -1,6 +1,7 @@
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { advancedSettings } from "@vera/shared";
 import { describe, expect, it, vi } from "vitest";
 import { ContextPolicy } from "../agent/context.js";
 import { ReferenceRuntime } from "../agent/runtime.js";
@@ -27,6 +28,16 @@ describe("terminal_read", () => {
     expect(await bound?.execute({ terminalId: id }, new AbortController().signal)).toContain("allowed");
     expect(read).toHaveBeenCalledWith(id);
     expect(() => ctx.terminals?.read()).not.toThrow();
+  });
+  // REQ-FUNC-ef931b1f
+  it("publishes with the session's resolved Tool result size", async () => {
+    const ctx = createToolContext("/workbench");
+    ctx.advanced = (key) => (key === "toolResultChars" ? 64000 : advancedSettings[key].default) as never;
+    const publish = vi.fn((text: string) => text);
+    ctx.terminals = { read: () => ({ text: "allowed" }), publish };
+    const bound = new ToolRegistry().bind(ctx).find((item) => item.name === "terminal_read");
+    bound?.publish?.({ terminalId: id }, '{"text":"allowed"}');
+    expect(publish).toHaveBeenCalledWith('{"text":"allowed"}', 64000);
   });
   it("rechecks a revoked lease at actual runtime publication before events and model transcript", async () => {
     const dir = await mkdtemp(join(tmpdir(), "vera-terminal-runtime-"));

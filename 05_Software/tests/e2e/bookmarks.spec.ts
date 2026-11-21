@@ -6,6 +6,7 @@ import { _electron, expect, type Page } from "@playwright/test";
 import type { VeraBridge } from "@vera/shared";
 import { test } from "./fixtures.js";
 import { installNetworkGuard, outboundAttempts } from "./network-guard.js";
+import { saveSettings } from "./settings-navigation.js";
 
 const users = (page: Page) => page.locator('[data-message-kind="user"]');
 const card = (page: Page) => page.locator("[data-nav-preview]");
@@ -46,6 +47,7 @@ test("browser bookmark controls reveal on hover/focus and localize the title/rep
     await page.locator('[data-i18n="nav.settings"]').click();
     await page.locator('[data-section="appearance"]').click();
     await page.locator("#language").selectOption(language as string);
+    await saveSettings(page);
     await page.locator('[data-action="leave-settings"]').click();
     await page.locator(`[data-session="${sessionId}"]`).click();
     const action = users(page).first().locator("[data-bookmark]");

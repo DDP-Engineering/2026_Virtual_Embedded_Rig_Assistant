@@ -146,7 +146,8 @@ it("validates calls, returns actionable errors and preserves the runtime error o
     isError: true,
   });
   expect(await registry.execute(ctx, "missing", {}, signal)).toMatchObject({ isError: true });
-  expect(await registry.execute(ctx, "read", { path: "x", limit: 2001 }, signal)).toMatchObject({
+  // The schema accepts up to the Read window lines setting's largest value (REQ-FUNC-150dcb0b).
+  expect(await registry.execute(ctx, "read", { path: "x", limit: 10001 }, signal)).toMatchObject({
     isError: true,
     text: expect.stringMatching(/Invalid arguments/),
   });
@@ -214,5 +215,17 @@ it("keeps delegated session tools unavailable without a host authority", async (
   for (const name of delegatedSessionToolNames) {
     expect(registry.bind(ctx).map((tool) => tool.name)).not.toContain(name);
     expect(await registry.execute(ctx, name, {}, signal)).toMatchObject({ isError: true });
+  }
+});
+
+// REQ-FUNC-19554499
+it("describes tools without a limit number that an Advanced setting changes", () => {
+  const descriptions = new Map(
+    new api.ToolRegistry().available().map((tool) => [tool.name, tool.description]),
+  );
+  for (const name of ["read", "grep", "glob", "parse_log", "run_command"]) {
+    const text = descriptions.get(name) ?? "";
+    expect(text, name).not.toBe("");
+    expect(text, name).not.toMatch(/\b(500|600|2000)\b|10 second|256\s?KiB/);
   }
 });

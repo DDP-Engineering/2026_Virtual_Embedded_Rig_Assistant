@@ -1,4 +1,5 @@
 import {
+  type DocumentLimits,
   type DocumentProcessor,
   type EmbeddingPort,
   extractionSchema,
@@ -28,7 +29,12 @@ const requestModel = z.enum(embeddingModelIds);
  * one reply, `{id, ok: true, value}` or `{id, ok: false, error}`; `cancel` aborts a running one.
  * Only data crosses the boundary: signals are made here and ownership stays checked in main.
  */
-export function createIndexerHandler(services: IndexerServices, send: (message: unknown) => void) {
+export function createIndexerHandler(
+  services: IndexerServices,
+  send: (message: unknown) => void,
+  /** Receives the application's document limits each message carries, before the message runs. */
+  limits?: (next: DocumentLimits) => void,
+) {
   const running = new Map<number, AbortController>();
   const answer = (id: number, task: (signal: AbortSignal) => Promise<unknown>) => {
     const controller = new AbortController();
@@ -64,6 +70,17 @@ export function createIndexerHandler(services: IndexerServices, send: (message: 
       return;
     }
     if (typeof request.id !== "number") return;
+    if (request.limits && typeof request.limits === "object") {
+      const next = request.limits as Record<string, unknown>;
+      const ms = (value: unknown) =>
+        typeof value === "number" && Number.isFinite(value) && value > 0 ? value : undefined;
+      const extractionMs = ms(next.extractionMs),
+        embeddingIdleMs = ms(next.embeddingIdleMs);
+      limits?.({
+        ...(extractionMs ? { extractionMs } : {}),
+        ...(embeddingIdleMs ? { embeddingIdleMs } : {}),
+      });
+    }
     const input = (request.input ?? {}) as Record<string, unknown>;
     switch (request.type) {
       case "process":

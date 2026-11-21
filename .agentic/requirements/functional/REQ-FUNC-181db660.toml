@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-181db660"
+
+title = "Accept Advanced settings as CLI flags"
+
+status = "active"
+
+requirement = """
+When the CLI receives one or more --advanced key=value flags, it shall validate each against the shared registry and apply them for that run only, above the stored session value and without recording them in the session, and shall exit with the usage error code 2 for an unknown key, a key that is not a session setting, an out-of-range value or a switch value other than on, off, true or false.
+"""
+
+verification = "Parse repeated --advanced toolCallsPerTurn flags (last wins) and refused ones (0, 501, unknown key, missing value) as usage errors; a session host with run-level value 11 and a stored session value 30 caps a turn at 11 and records no new session.updated advanced event. Inspection: run.ts passes options.advanced as the host run values."
+
+affected_paths = ["05_Software/src/apps/cli/src/args.ts", "05_Software/src/apps/cli/src/run.ts", "05_Software/src/libraries/shared/src/advanced-settings.ts"]
+
+linked_tests = ["05_Software/src/apps/cli/src/run-args.test.ts", "05_Software/src/libraries/core/src/sessions/advanced.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-20
+updated = 2026-11-20

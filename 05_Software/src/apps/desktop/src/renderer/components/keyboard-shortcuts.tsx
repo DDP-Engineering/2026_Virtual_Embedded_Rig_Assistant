@@ -10,15 +10,41 @@ import { Keyboard, Pencil, Plus, Search, Trash2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { bindingFromEvent, displayBinding } from "../lib/shortcuts.js";
+import { SettingsPageHeader, useSettingsDraft } from "./settings-page-header.js";
+
+/** Settings > Keyboard shortcuts: the bindings are a draft written by Save (REQ-UX-032aab57). */
+export function ShortcutsSettings({
+  bindings,
+  disabled,
+  save,
+  dirtyChanged,
+}: {
+  bindings?: ShortcutOverrides | undefined;
+  disabled: boolean;
+  save: (bindings: ShortcutOverrides) => void;
+  dirtyChanged?: ((dirty: boolean) => void) | undefined;
+}) {
+  const { draft, dirty, set, reset } = useSettingsDraft({ bindings: bindings ?? {} }, dirtyChanged);
+  return (
+    <KeyboardShortcuts
+      bindings={draft.bindings}
+      disabled={disabled}
+      update={(next) => set({ bindings: next })}
+      header={{ dirty, onCancel: reset, onSave: () => save(draft.bindings) }}
+    />
+  );
+}
 
 export function KeyboardShortcuts({
   bindings,
   disabled,
   update,
+  header,
 }: {
   bindings?: ShortcutOverrides | undefined;
   disabled: boolean;
   update: (bindings: ShortcutOverrides) => void;
+  header: { dirty: boolean; onCancel: () => void; onSave: () => void };
 }) {
   const { t } = useTranslation();
   const labels = {
@@ -80,7 +106,12 @@ export function KeyboardShortcuts({
   }
   return (
     <section data-settings-section="shortcuts" className="surface shortcut-settings">
-      <h2>{t("settings.shortcuts")}</h2>
+      <SettingsPageHeader
+        title={t("settings.shortcuts")}
+        i18n="settings.shortcuts"
+        saving={disabled}
+        {...header}
+      />
       <div className="shortcut-toolbar">
         <div className="shortcut-search">
           <Search aria-hidden="true" />

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { advancedSettings } from "./advanced-settings.js";
 import { artifactContentSchema, artifactIdSchema, artifactSummarySchema } from "./artifacts.js";
 import { changeDetailSchema, changeIdSchema, changeSummarySchema } from "./changes.js";
 import { chatgptLoginSchema, chatgptStatusSchema } from "./chatgpt.js";
@@ -185,7 +186,11 @@ export const channels = {
     z.strictObject({ text: z.string().max(10_000_000) }),
     z.strictObject({}),
   ),
-  "terminal.list": defineChannel("terminal.list", terminalOwnerSchema, z.array(terminalSummarySchema).max(8)),
+  "terminal.list": defineChannel(
+    "terminal.list",
+    terminalOwnerSchema,
+    z.array(terminalSummarySchema).max(advancedSettings.terminals.max),
+  ),
   "terminal.create": defineChannel(
     "terminal.create",
     terminalOwnerSchema.extend({ ...terminalSizeSchema.shape, shell: commandBlockShellSchema.optional() }),
@@ -528,7 +533,7 @@ export const channels = {
   "docs.search": defineChannel(
     "docs.search",
     docsScopeSchema.extend({ query: z.string().trim().min(1).max(1000) }),
-    docsScopeSchema.extend({ results: z.array(documentSearchHitSchema).max(20) }),
+    docsScopeSchema.extend({ results: z.array(documentSearchHitSchema).max(100) }),
   ),
   "docs.open": defineChannel(
     "docs.open",
@@ -718,6 +723,22 @@ export const channels = {
       z.strictObject({ sessionId: sessionIdSchema, all: z.literal(true) }),
     ]),
     z.strictObject({}),
+  ),
+  /** Sets (or clears with null) a session-scope Advanced value (REQ-DATA-96ef3dd6). */
+  "session.advanced.set": defineChannel(
+    "session.advanced.set",
+    z.strictObject({
+      sessionId: sessionIdSchema,
+      key: z.string().min(1).max(64),
+      value: z.union([z.number(), z.boolean()]).nullable(),
+    }),
+    z.strictObject({}),
+  ),
+  /** Summarize an idle session's history now, regardless of the trigger. */
+  "session.compact": defineChannel(
+    "session.compact",
+    z.strictObject({ sessionId: sessionIdSchema }),
+    z.strictObject({ status: z.enum(["none", "completed", "unavailable", "failed"]) }),
   ),
   "session.rename": defineChannel(
     "session.rename",

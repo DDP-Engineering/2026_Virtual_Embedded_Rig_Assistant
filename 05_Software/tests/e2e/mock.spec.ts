@@ -84,7 +84,8 @@ test("browser mock displays the same metadata screen through dev:renderer", asyn
     };
     for (const language of ["ro", "de", "fr", "en"] as const) {
       await changeSetting(page, "appearance", () => page.locator("#language").selectOption(language));
-      await expect(page.locator('[data-i18n="settings.appearance"]')).toHaveText(appearance[language]);
+      // Only the selected Settings page is mounted; the Appearance tab carries the same localized title.
+      await expect(page.locator('[data-section="appearance"]')).toContainText(appearance[language]);
     }
     await page.emulateMedia({ colorScheme: "dark", reducedMotion: "reduce" });
     await changeSetting(page, "appearance", () => page.locator('[data-theme-option="system"]').click());
@@ -483,11 +484,14 @@ test("browser mock displays the same metadata screen through dev:renderer", asyn
     );
     await page.reload();
     await page.locator('[data-i18n="nav.settings"]').click();
-    await changeSetting(page, "appearance", () => page.locator('[data-theme-option="dark"]').click());
+    await page.locator('[data-section="appearance"]').click();
+    await page.locator('[data-theme-option="dark"]').click();
+    await page.locator("[data-settings-save]").click();
+    // A failed save keeps the draft and its preview, with the error shown (REQ-UX-032aab57, REQ-UX-58a693f3).
     await expect(page.getByRole("alert")).toHaveText("Operația solicitată probe nu a fost găsită.");
-    await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
-    await expect(page.locator('[data-theme-option="light"]')).toHaveAttribute("aria-pressed", "true");
-    await expect(page.locator('[data-theme-option="dark"]')).toBeEnabled();
+    await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
+    await expect(page.locator('[data-theme-option="dark"]')).toHaveAttribute("aria-pressed", "true");
+    await expect(page.locator("[data-settings-save]")).toBeEnabled();
     expect(errors).toEqual([]);
     // Chat fixtures use the ordinary browser bridge, across localized minimum-size presentation.
     await context.unroute("**/api/index.*");

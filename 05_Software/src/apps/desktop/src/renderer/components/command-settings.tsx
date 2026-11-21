@@ -1,18 +1,22 @@
+// REQ-UX-032aab57
 import { useQuery } from "@tanstack/react-query";
 import { type SettingsPatch, settingsPatchSchema } from "@vera/shared";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../api/index.js";
 import { ErrorMessage } from "./error-message.js";
+import { SettingsPageHeader } from "./settings-page-header.js";
 
 export function CommandSettings({
   shell,
   saving,
   update,
+  dirtyChanged,
 }: {
   shell: string | undefined;
   saving: boolean;
   update: (patch: SettingsPatch) => void;
+  dirtyChanged?: ((dirty: boolean) => void) | undefined;
 }) {
   const { t } = useTranslation();
   const [value, setValue] = useState(shell ?? "");
@@ -42,31 +46,27 @@ export function CommandSettings({
   );
   const selected = custom ? "custom" : !value ? "" : (match?.id ?? "custom");
   const dirty = value.trim() !== (shell ?? "");
+  useEffect(() => dirtyChanged?.(dirty || custom), [dirty, custom, dirtyChanged]);
+  useEffect(() => () => dirtyChanged?.(false), [dirtyChanged]);
   const reset = () => {
     setValue(shell ?? "");
     setCustom(false);
   };
   return (
     <section className="surface" data-settings-section="commands">
-      <header className="workbench-actions">
-        <h2>{t("settings.commands")}</h2>
-        <button type="button" disabled={saving || (!dirty && !custom)} onClick={reset}>
-          {t("workbench.cancel")}
-        </button>
-        <button
-          type="button"
-          className="primary"
-          disabled={
-            saving ||
-            !dirty ||
-            (selected === "custom" && !value.trim()) ||
-            !settingsPatchSchema.safeParse({ shell: value }).success
-          }
-          onClick={() => update({ shell: value.trim() })}
-        >
-          {t("workbench.save")}
-        </button>
-      </header>
+      <SettingsPageHeader
+        title={t("settings.commands")}
+        i18n="settings.commands"
+        dirty={dirty || custom}
+        valid={
+          dirty &&
+          !(selected === "custom" && !value.trim()) &&
+          settingsPatchSchema.safeParse({ shell: value }).success
+        }
+        saving={saving}
+        onCancel={reset}
+        onSave={() => update({ shell: value.trim() })}
+      />
       <label htmlFor="command-shell">{t("settings.commandShell")}</label>
       <select
         id="command-shell"

@@ -27,6 +27,8 @@ export interface GatewayHost {
   fetch?: typeof fetch;
   knownSecrets?: () => readonly string[];
   subscriptionCredentials?: CredentialStore;
+  /** Milliseconds to wait for hosted response headers, read at each request; 30 s when absent (REQ-FUNC-73ca575e). */
+  headerWaitMs?: () => number;
 }
 type Custom = Settings["providers"]["custom"][number];
 function customModel(config: Custom, provider: string, id = config.model): Model<"openai-completions"> {
@@ -226,8 +228,9 @@ export function createPiAiGateway(
     return parsed.data;
   };
   // Local servers may load the model and read the whole prompt before they answer, so a custom
-  // connection sets its own wait, 300 s by default; hosted OpenAI endpoints keep 30 s for headers.
+  // connection sets its own wait, 300 s by default; hosted endpoints use the host's header wait.
   const customWaitMs = (custom: Custom) => (custom.responseTimeoutSeconds ?? 300) * 1000;
+  const hostedWaitMs = () => host.headerWaitMs?.() ?? 30000;
   const target = (reference: string) => {
     const { provider, model: id } = splitModelReference(reference);
     if (provider === "openai" || provider === "chatgpt") {
@@ -392,7 +395,7 @@ export function createPiAiGateway(
           return;
         }
         const custom = resolved.slot.startsWith("custom:") ? config(resolved.slot) : undefined;
-        const headerWaitMs = custom ? customWaitMs(custom) : 30000;
+        const headerWaitMs = custom ? customWaitMs(custom) : hostedWaitMs();
         const transport: typeof fetch = async (input, init) => {
           const url = new URL(
             typeof input === "string" ? input : input instanceof URL ? input.href : input.url,

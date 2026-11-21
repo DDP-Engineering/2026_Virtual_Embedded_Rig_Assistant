@@ -13,7 +13,7 @@ Main owns scheduling/capabilities and payload lifecycle. ElectronUpdateBackend d
 metadata, downloads, SHA512/publisher verification and installation to electron-updater.
 SessionsHost closes admission atomically at core quiescence. Main drains persistence before
 installation. Renderer presents strict snapshots, plain text notes and portable confirmation. The native confirmation closes on disposal and restores its connected opener.
-The update mode also gates the plugin catalog's 24 h checks ([Plugin catalog](plugins-catalog.md)): mode Off stops them.
+The update mode also gates the plugin catalog's periodic checks ([Plugin catalog](plugins-catalog.md)): mode Off stops them.
 
 ## Public interface
 
@@ -26,8 +26,10 @@ VERA_UPDATE_URL fixes generic feed at compilation and builder metadata; empty is
 
 - Release feeds require HTTPS without credentials/query/fragment. Instrumented builds also
   permit compile-time loopback HTTP. Runtime settings/environment cannot replace the feed.
-- Off disables scheduling; Check now works. Enabled checks run at startup and every6hours.
-  Unchanged update preferences preserve the scheduled deadline through other settings writes.
+- Off disables scheduling; Check now works. Enabled checks run at startup and every resolved Update check
+  interval (application Advanced, 1-168 h, default 6; `preferences().intervalHours`). A saved interval change
+  restarts the wait without a check (REQ-FUNC-a16121c6); unchanged preferences preserve the scheduled deadline
+  through other settings writes.
 - Latest excludes prereleases; beta chooses the greatest compatible newer stable/beta.
   Downgrade, implicit download and implicit on-quit installation are disabled.
 - Notify/Off download after consent; automatic mode downloads installable offers.

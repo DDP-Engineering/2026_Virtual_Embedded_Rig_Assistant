@@ -31,6 +31,7 @@ Fiecare plugin instalat are propria pagină de ajutor: ce face pluginul, de ce a
 | [Furnizori și modele](providers.md) | OpenAI, abonament ChatGPT, LM Studio, Ollama și alte endpointuri |
 | [Pluginuri](plugins.md) | Catalog, instalare, revizuire și încredere, dependențe, configurare, pachete |
 | [Setări](settings.md) | Aspect, limbă, actualizări, acces web, comenzi rapide |
+| [Setări avansate](advanced-settings.md) | Limite reglabile per aplicație, workbench sau sesiune |
 | [Comenzi rapide](shortcuts.md) | Toate comenzile rapide din VERA |
 | [Instalare offline](offline-install.md) | Instalarea VERA și a pluginurilor pe un calculator fără rețea |
 | [Depanare](troubleshooting.md) | Probleme frecvente, jurnale și locul unde VERA își păstrează datele |

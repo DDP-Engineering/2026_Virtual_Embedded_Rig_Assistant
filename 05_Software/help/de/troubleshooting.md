@@ -52,7 +52,7 @@ VERA startet nicht, wenn seine `settings.json` beschädigt ist oder von Hand in 
 
 ## Protokolle
 
-VERA schreibt eine Protokolldatei pro Tag, `vera-YYYY-MM-DD.log`, in den Ordner `logs` seines Datenordners und behält die neuesten sieben. Schlüssel und andere bekannte Geheimnisse werden aus den Protokollen entfernt. Die Programmausgabe von Plugins steht nicht in diesen Protokollen, sondern in `.vera/runs/` des Workbenchs.
+VERA schreibt eine Protokolldatei pro Tag, `vera-YYYY-MM-DD.log`, in den Ordner `logs` seines Datenordners und behält die neuesten sieben oder die unter **Aufbewahrung der Logs** in den [erweiterten Einstellungen](advanced-settings.md) gesetzte Zahl. Schlüssel und andere bekannte Geheimnisse werden aus den Protokollen entfernt. Die Programmausgabe von Plugins steht nicht in diesen Protokollen, sondern in `.vera/runs/` des Workbenchs.
 
 ## Wo VERA seine Daten ablegt
 

@@ -29,12 +29,14 @@ import {
   WebDownloads,
   WorkbenchService,
 } from "@vera/core";
+import type { AdvancedKey } from "@vera/shared";
 import {
   eventEnvelopeSchema,
   type HelpLanguage,
   type HelpPage,
   type HelpPageSummary,
   helpLanguages,
+  resolveAdvanced,
   type Settings,
   settingsChangedEvent,
   veraError,
@@ -163,7 +165,12 @@ nativeTheme.on("updated", () => {
 // IPC waits for this before dispatch: responses are redacted with every stored secret. It never rejects;
 // a credential file that fails to load leaves credential operations failing, not the window (PERF-11).
 let credentialsReady: Promise<void> = Promise.resolve();
-const fileWorkers = createDesktopWorkerPool();
+/** An application Advanced value for the app-wide services (worker pool, program runner, web provider). */
+function appAdvanced<K extends AdvancedKey>(key: K) {
+  return resolveAdvanced(key, { app: settings.get().settings.advanced }).value;
+}
+// The application's Worker deadline, read as each grep or parse_log task starts (REQ-FUNC-5eacaf9f).
+const fileWorkers = createDesktopWorkerPool({ deadlineMs: () => appAdvanced("workerDeadline") * 1000 });
 const pluginListings = new PluginListingHost(join(dataLocations.paths.userData, "plugins"));
 const downloadTransfer = createDesktopDownloadTransfer();
 const models = app.isPackaged
@@ -187,6 +194,11 @@ const indexer = new IndexerHost({
     emitAppEvent({ topic: "app", id: "app", event: { type: "indexer.status", state } });
     if (state === "running") workbench.refreshDocuments();
   },
+  // The application's extraction time limit and embedding idle time travel with each message.
+  limits: () => ({
+    extractionMs: appAdvanced("extractionTimeout") * 1000,
+    embeddingIdleMs: appAdvanced("embeddingIdle") * 1000,
+  }),
 });
 if (__VERA_TEST__) Object.assign(globalThis, { veraTestIndexerPid: () => indexer.pid() });
 let closeFileProbe: (() => Promise<void>) | undefined;
@@ -223,7 +235,8 @@ export const emitAppEvent = createEventEmitter(
     );
   },
 );
-const logger = createLogger(dataLocations.paths.logs, systemClock);
+// The logger exists before the settings service: until they load, its Log retention getter throws and nothing is pruned.
+const logger = createLogger(dataLocations.paths.logs, systemClock, () => appAdvanced("logDays"));
 const credentials = new CredentialFile({
   file: join(dataLocations.paths.userData, "credentials.json"),
   files: createFileAccess(systemClock),
@@ -242,6 +255,8 @@ const settings = new SettingsService({
     emitAppEvent({ topic: "app", id: "app", event: settingsChangedEvent(announcedSettings, next) });
     announcedSettings = next;
     updates?.settingsChanged();
+    // Settings change only after load, inside app.whenReady, when the catalog checks exist.
+    catalogChecks.settingsChanged();
   },
 });
 const sessionOrder = createSessionOrder(settings);
@@ -323,6 +338,12 @@ const terminals = new TerminalService({
   secrets: () => credentials.knownSecrets(),
   maskUserOutput: () => maskingFor(workbench.getSnapshot().config, "runs"),
   maskAgentOutput: () => maskingFor(workbench.getSnapshot().config, "agent"),
+  // Read as a terminal opens (count, buffer) and as the agent reads one (output size).
+  limits: () => ({
+    terminals: appAdvanced("terminals"),
+    bufferChars: appAdvanced("terminalBufferK") * 1024,
+    agentChars: appAdvanced("terminalAgentChars"),
+  }),
 });
 /** Plugin program runs; session stop, workbench close and app exit kill their process trees. */
 const programs = new ProgramRunner({
@@ -337,6 +358,12 @@ const programs = new ProgramRunner({
       uid: process.getuid?.(),
     }),
     app: "desktop",
+  }),
+  // The application's run limits, read at each start, hold and prune (REQ-FUNC-dd50ebed).
+  limits: () => ({
+    maxBackground: appAdvanced("backgroundPrograms"),
+    logsKept: appAdvanced("runLogsKept"),
+    logBytes: appAdvanced("runLogMB") * 1024 * 1024,
   }),
 });
 /** The pinned uv of the package, or the one prepare:uv placed in the source tree for development. */
@@ -385,9 +412,10 @@ const catalog = new PluginCatalog({
   ...(bundledPlugins ? { bundled: bundledPlugins } : {}),
   fetch: (url, { signal }) => net.fetch(url, signal ? { signal } : {}),
 });
-/** Update checks at start and every 24 h read the index only, while the update mode is not Off. */
+/** Catalog checks at start and every Plugin catalog check interval read the index only, while updates are not Off. */
 const catalogChecks = new CatalogChecks({
   enabled: () => settings.get().settings.updates.mode !== "off" && Boolean(catalogLocation()),
+  intervalMs: () => appAdvanced("catalogInterval") * 60 * 60 * 1000,
   check: async () => {
     await catalog.view({ refresh: true });
     emitAppEvent({ topic: "app", id: "app", event: { type: "plugins.catalog" } });
@@ -1140,6 +1168,16 @@ ipcMain.handle(
           );
           return {};
         }, false),
+      "session.advanced.set": ({ sessionId, key, value }) =>
+        sessions.run((s) => {
+          s.setAdvanced(sessionId, key as AdvancedKey, value);
+          return {};
+        }, false),
+      "session.compact": async ({ sessionId }) => {
+        // Only the admission runs on the host queue: a summary may take minutes and must not hold other calls.
+        const { completion } = await sessions.run((s) => ({ completion: s.compactNow(sessionId) }), false);
+        return { status: await completion };
+      },
       "session.rename": ({ sessionId, title }) =>
         sessions.run((s) => {
           if (credentials.containsSecret(title)) throw { code: "INVALID", messageKey: "errors.INVALID" };
@@ -1558,7 +1596,10 @@ if (!firstInstance) {
               (kind, event) => logger.log(kind, event),
             )
           : { check: async () => null, download: async () => {}, install: () => {} },
-        preferences: () => settings.get().settings.updates,
+        preferences: () => ({
+          ...settings.get().settings.updates,
+          intervalHours: appAdvanced("updateInterval"),
+        }),
         emit: (event) => emitAppEvent({ topic: "app", id: "app", event }),
         beginShutdown: () => sessions.beginShutdown(),
         quit: () => app.quit(),

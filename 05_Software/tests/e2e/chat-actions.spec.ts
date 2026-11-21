@@ -5,6 +5,7 @@ import { _electron, type Page } from "@playwright/test";
 import type { Channel, Request, Response, VeraBridge } from "@vera/shared";
 import { expect, test } from "./fixtures.js";
 import { installNetworkGuard, outboundAttempts } from "./network-guard.js";
+import { saveSettings } from "./settings-navigation.js";
 
 const answer =
   "# Știință 🧪\n\n- First\n  - Nested\n\n[[board.txt#L1-L2]]\n\n```powershell\nGet-Content README.MD -TotalCount 10\n```\n\n```text\nMissing type name after '['.\n```\n\n```ts\nconst source = 'λ';\n```\n";
@@ -51,6 +52,7 @@ test("chat copy controls are compact, localized and keyboard accessible in four 
     await page.locator('[data-i18n="nav.settings"]').click();
     await page.locator('[data-section="appearance"]').click();
     await page.locator("#language").selectOption(language);
+    await saveSettings(page);
     await page.locator('[data-action="leave-settings"]').click();
     await page.locator("[data-session]").filter({ hasText: "Chat actions" }).click();
     const replies = page.locator(".copy-response");

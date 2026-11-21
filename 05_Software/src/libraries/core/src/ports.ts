@@ -15,6 +15,8 @@ export interface WorkerTask {
   kind: "grep" | "parse_log";
   root: string;
   args: unknown;
+  /** Grep skips files larger than this (the session's Grep file size, REQ-FUNC-820e2701); 5 MiB when absent. */
+  maxFileBytes?: number;
   scope?: "filesystem";
   /** Host-owned application-data exclusions; never model arguments. */
   excludedRoots?: readonly string[];

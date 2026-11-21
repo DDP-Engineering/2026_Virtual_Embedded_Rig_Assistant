@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-2fba7b9c"
+
+title = "Wait the resolved Indexing pause before indexing changes"
+
+status = "active"
+
+requirement = """
+When the ingest service is asked to index after a change, VERA shall wait the resolved Indexing pause, an integer from 250 to 10000 milliseconds with default 1000 set for the application, before it starts, each request reading the current value.
+"""
+
+verification = "Core ingest test over a real settings service: a config save asks the timer for the default 1000 ms; after the application Indexing pause is set to 300, the next save asks for 300 ms."
+
+affected_paths = ["05_Software/src/libraries/shared/src/advanced-settings.ts", "05_Software/src/libraries/core/src/knowledge/ingest.ts", "05_Software/src/libraries/core/src/workbench/service.ts"]
+
+linked_tests = ["05_Software/src/libraries/shared/src/advanced-settings.test.ts", "05_Software/src/libraries/core/src/knowledge/ingest.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-21
+updated = 2026-11-21

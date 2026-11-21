@@ -23,9 +23,13 @@ serial-port guard.
 
 ## Public interface
 
+- Limits (ADV-03): `limits?()` returns the host's application Background programs per session, Run logs kept and
+  Run log size; the runner refreshes them into its shared settings at each start, hold and prune, so a change
+  applies to the next run and to running runs' next log write (REQ-FUNC-dd50ebed, REQ-FUNC-ddcd96b8,
+  REQ-FUNC-1e7d6449). Desktop main and the CLI pass it.
 - Runner: `ProcessHost {platform, env, spawn(executable, args, {cwd, env, group, output}) ->
   {pid, exit}, signal(pid, name)}`; `new NodeProcessHost(spawn)`; `new ProgramRunner({host, clock,
-  toolPaths?, tailChars=12000, maxBackground=4, logsKept=200, killGraceMs=3000, id?, now?})` with
+  toolPaths?, tailChars=12000, maxBackground=4, logsKept=200, logBytes=64 MiB, killGraceMs=3000, id?, now?, limits?})` with
   `start(request)` -> `ProgramRun {id, done, read(), stop()}`, `run(request)` -> `RunResult
   {runId, exitCode, signal, error?, durationMs, output, truncated, log, timedOut, stopped}`,
   `get(handle)`, `stopSession(id)`, `stopWorkbench(root)`, `stopAll()`, `list(root)` → `ProgramRunInfo[]`

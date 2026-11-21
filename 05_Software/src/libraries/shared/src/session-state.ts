@@ -43,6 +43,8 @@ export const sessionStateSchema = z.strictObject({
   status: sessionStatusSchema,
   modelRef: z.string().nullable(),
   reasoning: reasoningOptionSchema.nullable().optional(),
+  /** Session-scope Advanced values; validated when resolved (REQ-DATA-33a90ef2). */
+  advanced: z.record(z.string(), z.union([z.number(), z.boolean()])).optional(),
   mode: permissionModeSchema,
   activeTurnId: z.string().nullable(),
   interrupted: z.array(z.string()),
@@ -290,8 +292,15 @@ function reduce(d: Draft, event: SessionEvent): void {
   const turnId = s.activeTurnId;
   switch (event.type) {
     case "session.updated": {
-      const { type: _, ...fields } = event;
+      const { type: _, advanced, ...fields } = event;
       Object.assign(s, fields);
+      if (advanced) {
+        const next: Record<string, number | boolean> = { ...s.advanced };
+        for (const [key, value] of Object.entries(advanced))
+          if (value === null) delete next[key];
+          else next[key] = value;
+        s.advanced = next;
+      }
       break;
     }
     case "session.interrupted":

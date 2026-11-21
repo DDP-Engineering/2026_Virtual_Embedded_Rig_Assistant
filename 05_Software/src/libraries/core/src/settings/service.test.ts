@@ -129,7 +129,6 @@ describe("application settings persistence", () => {
       providers: { openai: {}, custom: [] },
       updates: { mode: "notify", channel: "latest" },
       recentWorkbenches: [],
-      limits: { maxToolCallsPerTurn: 50 },
     });
     expect(first.settings.installationId).not.toBe(b.service.get().settings.installationId);
     const persisted = a.files.get("/data/settings.json");
@@ -143,7 +142,7 @@ describe("application settings persistence", () => {
   it("undefined patch values mean omission and failed observers do not undo committed saves", async () => {
     const h = harness();
     await h.service.load();
-    await h.service.update({ theme: undefined, limits: { maxToolCallsPerTurn: undefined } });
+    await h.service.update({ theme: undefined, advanced: undefined });
     expect(h.changed).not.toHaveBeenCalled();
     h.changed.mockImplementation(() => {
       throw new Error("observer failed");
@@ -158,13 +157,15 @@ describe("application settings persistence", () => {
     });
     await Promise.all([
       h.service.update({ theme: "dark" }),
-      h.service.update({ language: "de", limits: { maxToolCallsPerTurn: 3 } }),
+      h.service.update({ language: "de", advanced: { toolCallsPerTurn: 30 } }),
     ]);
     expect(h.service.get().settings).toMatchObject({
       theme: "dark",
       language: "de",
-      limits: { maxToolCallsPerTurn: 3 },
+      advanced: { toolCallsPerTurn: 30 },
     });
+    // REQ-DATA-96ef3dd6: the stored file carries the app value across a reload.
+    expect(JSON.parse(h.files.get("/data/settings.json") ?? "").advanced).toEqual({ toolCallsPerTurn: 30 });
     expect(h.changed).toHaveBeenCalledTimes(2);
     const detached = h.service.get();
     detached.settings.theme = "light";
@@ -181,8 +182,8 @@ describe("application settings persistence", () => {
     { theme: "invalid" },
     { textScale: 2 },
     { providers: { apiKey: "secret" } },
-    { limits: { maxToolCallsPerTurn: 0 } },
-    { limits: { maxToolCallsPerTurn: 1.5 } },
+    { advanced: { toolCallsPerTurn: 0 } },
+    { advanced: { toolCallsPerTurn: 1.5 } },
     { updates: { token: "secret" } },
     null,
     [],

@@ -10,7 +10,14 @@ import { acceptsImages, MAX_MESSAGE_IMAGES, type ModelCapabilities, veraError } 
 import { ContextCompactor, type SummarizeHistory } from "./compaction.js";
 import type { UserImageMessage } from "./message-images.js";
 import { toolSpecs } from "./tool.js";
-import type { AgentRuntime, RuntimeEvent, RuntimeHost, RuntimeInit, StopReason } from "./types.js";
+import type {
+  AgentRuntime,
+  CompactionOutcome,
+  RuntimeEvent,
+  RuntimeHost,
+  RuntimeInit,
+  StopReason,
+} from "./types.js";
 
 export function zeroUsage(): AssistantMessage["usage"] {
   return {
@@ -212,12 +219,16 @@ export class ReferenceRuntime implements AgentRuntime {
   /**
    * After a turn, compact the finished conversation in the background when it is above the trigger;
    * the next request waits for it (REQ-FUNC-99acfc19). Below the trigger it makes no model call.
+   * `force` makes one summary pass regardless of the trigger (Compact now, REQ-FUNC-eeaf29bd).
    */
-  async compact(transcript?: Message[]): Promise<void> {
+  async compact(transcript?: Message[], force = false): Promise<CompactionOutcome> {
     const init = this.init;
-    if (!init || this.controller) return;
+    if (!init || this.controller) return "none";
     const totals = { ...this.lastTotals };
+    let outcome: CompactionOutcome = "none";
     await this.compactor.background(async (signal) => {
+      // A provider failure before the summary leaves this outcome; `background` swallows the error itself.
+      outcome = "failed";
       await this.host.gateway.prepareModel?.(init.model, signal);
       signal.throwIfAborted();
       const capabilities = this.host.gateway.capabilities(init.model);
@@ -246,19 +257,21 @@ export class ReferenceRuntime implements AgentRuntime {
         messages.length,
         this.compactor.scale(init.model),
         true,
+        force,
       );
-      if (!started) return;
+      if (!started) {
+        outcome = view.compactionStatus === "unavailable" ? "unavailable" : "none";
+        return;
+      }
       // A completed summary is recorded only when the compaction was not stopped.
       if (!signal.aborted) this.recordCompaction();
       else this.compactor.takeRecord();
       const { messages: _messages, fits: _fits, rawTokens: _raw, ...budget } = view;
-      this.emit({
-        type: "usage.updated",
-        ...totals,
-        ...budget,
-        compactionStatus: signal.aborted ? "failed" : view.compactionStatus,
-      });
+      const status = signal.aborted ? "failed" : view.compactionStatus;
+      outcome = status === "completed" || status === "unavailable" ? status : "failed";
+      this.emit({ type: "usage.updated", ...totals, ...budget, compactionStatus: status });
     });
+    return outcome;
   }
   private async run(
     init: RuntimeInit,
@@ -526,7 +539,10 @@ export class ReferenceRuntime implements AgentRuntime {
           failed = true;
           output = signal.aborted ? "Aborted." : error instanceof Error ? error.message : "Tool failed.";
         }
-        if (output.length > 32000) output = `${output.slice(0, 31960)}\n[truncated: tool result limit]`;
+        // The final cut follows the session's Tool result size, so a raised size reaches the model.
+        const resultLimit = init.maxToolResultChars ?? 32000;
+        if (output.length > resultLimit)
+          output = `${output.slice(0, resultLimit - 40)}\n[truncated: tool result limit]`;
         const result = toolResult(call, output, failed, this.host.now());
         if (!failed && image) {
           imagesInStep++;

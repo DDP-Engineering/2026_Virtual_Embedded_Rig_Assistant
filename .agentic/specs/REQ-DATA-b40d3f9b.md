@@ -213,6 +213,7 @@ both remote and bundled views, including when installed state/update markers are
   (CONFLICT when it is missing or differs), installs it bound to the reviewed integrity `sha256`
   (existing CONFLICT) with `tier` from the entry and `source {kind: catalog, path: <zip URL, or the bundled zip's file path>}`, then
   removes the kept zip.
-- **Checks.** Desktop main reads the remote index after the window opens and every 24 h while a remote location
+- **Checks.** Desktop main reads the remote index after the window opens and every resolved Plugin catalog check interval
+  (default 24 h, REQ-FUNC-ce542246) while a remote location
   is set and the VERA update mode is not `off`; it never installs. Each finished read emits the app event
   `plugins.catalog`. Changing the channel changes the location key, so the next view reads the new channel's index. A failed scheduled read changes nothing visible but the view's `problem`.

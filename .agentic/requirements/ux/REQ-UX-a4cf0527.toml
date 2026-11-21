@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-UX-a4cf0527"
+
+title = "Mount transcript rows in the resolved first and later counts"
+
+status = "active"
+
+requirement = """
+When a session transcript is shown, VERA shall first mount its newest rows up to the resolved Transcript rows first shown (an integer from 20 to 200, default 40) and then prepend older rows in idle chunks of the resolved Transcript rows per load (an integer from 50 to 500, default 100), both set for the application and read when the session is shown.
+"""
+
+verification = "Renderer test: a 300-row transcript first mounts 40 rows and then grows by 100; with the values 20 and 50 set before the session is shown it first mounts 20 rows and then grows by 50."
+
+affected_paths = ["05_Software/src/libraries/shared/src/advanced-settings.ts", "05_Software/src/apps/desktop/src/renderer/components/session/transcript.tsx", "05_Software/src/apps/desktop/src/renderer/hooks/app-advanced.ts", "05_Software/src/apps/desktop/src/renderer/hooks/use-preferences.ts", "05_Software/src/apps/desktop/src/renderer/components/session/transcript-progressive.test.ts", "05_Software/src/libraries/shared/src/advanced-settings.test.ts"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/session/transcript-progressive.test.ts::mounts the resolved first rows and chunk size, read when the session is shown", "05_Software/src/libraries/shared/src/advanced-settings.test.ts::registers the desktop ranges, defaults, scopes and timing"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-21
+updated = 2026-11-21

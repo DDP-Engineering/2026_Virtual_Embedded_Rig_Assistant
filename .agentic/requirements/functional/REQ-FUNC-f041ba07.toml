@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-f041ba07"
+
+title = "Bound read output at the resolved read output size"
+
+status = "active"
+
+requirement = """
+When the text a read selects is longer than the resolved Read output size, an integer from 10000 to 120000 characters with default 30000 set for the application, VERA shall cut it to that size and mark the result truncated.
+"""
+
+verification = "With 10000, reading a 20000-character line returns at most 10000 characters marked truncated; with 60000 the same line returns whole; citations and the document viewer keep the 30000 default."
+
+affected_paths = ["05_Software/src/libraries/shared/src/advanced-settings.ts", "05_Software/src/libraries/core/src/tools/read.ts", "05_Software/src/libraries/core/src/tools/read-window.ts"]
+
+linked_tests = ["05_Software/src/libraries/shared/src/advanced-settings.test.ts", "05_Software/src/libraries/core/src/tools/read.test.ts", "05_Software/src/libraries/core/src/sessions/tool-limits.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-21
+updated = 2026-11-21

@@ -34,6 +34,7 @@ import {
   type Request,
   type Response,
   rasterSignature,
+  resolveAdvanced,
   type SessionSummary,
   settingsChangedEvent,
   settingsPatchSchema,
@@ -619,7 +620,8 @@ export function createMockApi(
       case "terminal.create": {
         const { workbenchId, shell } = channels["terminal.create"].request.parse(input.data);
         if (workbenchId !== current().snapshot.config.id) throw veraError("CONFLICT");
-        if (terminals.size >= 8) throw veraError("BUSY");
+        if (terminals.size >= resolveAdvanced("terminals", { app: settings.advanced }).value)
+          throw veraError("BUSY");
         const snapshot: TerminalSnapshot = {
           id: crypto.randomUUID(),
           number: terminals.size + 1,

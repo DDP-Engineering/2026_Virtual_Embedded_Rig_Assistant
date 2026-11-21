@@ -10,6 +10,8 @@ CLI runs one durable SessionService turn over core/shared with Node-only host ad
 
 ## Public interface
 
+`vera run --advanced key=value` can be repeated, and the last value for a key wins. Each value is validated against the shared Advanced registry for the session scope; an unknown key or an out-of-range value is a usage error (exit 2). `run.ts` passes them as the host's run values (`advanced.run`): they win over stored session values for that run and are never recorded in the session. The host also reads `settings.advanced` and the workbench `advanced` map. Session keys are `toolCallsPerTurn`, `noOutputTimeout` and the switch `autoCompaction`, which takes on/off/true/false; the gateway's hosted header wait is the resolved application `headerWait`. Proof: `src/apps/cli/src/run-args.test.ts`.
+
 `run.ts` composes `createCommandShellHost` with the live settings.shell and logger scrubber, reusing
 its ProgramRunner/session cleanup. The durable approval path handles run_command and reads saved workbench prefixes for Auto-edit; the TTY prompt
 shows the literal command, cwd and shell. Existing approval flags apply. Command output follows the live agent choice; diagnostics retain logger scrubbing and commands use closed stdin. `tests/integration/commands.test.ts` exercises the

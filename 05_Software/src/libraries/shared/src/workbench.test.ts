@@ -152,7 +152,8 @@ it("holds an optional file size limit and a file count that defaults to 10,000",
 // REQ-DATA-3bae7e69
 it("rejects a zero, negative or non-numeric file size limit and a file count that is no positive integer", () => {
   const config = schema.parse({ format: 1, id: "wb_01JB8Z6Q4M7N2K5R9T3V8X1Y0C", name: "Board" });
-  for (const maxFileMB of [0, -5, Number.NaN, Number.POSITIVE_INFINITY, "25"]) {
+  // Above 500 MB is refused too: the largest PDF/Office size (REQ-DATA-3bae7e69).
+  for (const maxFileMB of [0, -5, 500.5, Number.NaN, Number.POSITIVE_INFINITY, "25"]) {
     expect(schema.safeParse({ ...config, docs: { ...config.docs, maxFileMB } }).success).toBe(false);
     expect(workbenchPatchSchema.safeParse({ docs: { maxFileMB } }).success).toBe(false);
   }

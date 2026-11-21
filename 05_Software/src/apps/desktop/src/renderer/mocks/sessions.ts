@@ -1,5 +1,6 @@
 import {
   type ArtifactContent,
+  advancedPatchSchema,
   type ChangeDetail,
   confirmationMatches,
   foldSessionEvents,
@@ -254,6 +255,23 @@ export class MockSessions {
         bookmarked: request.bookmarked,
       });
       return {};
+    }
+    if (channel === "session.advanced.set") {
+      this.writable();
+      if (row.summary.archived) throw veraError("DENIED");
+      const { key, value } = request as unknown as { key: string; value: number | boolean | null };
+      const patch = advancedPatchSchema("session").safeParse({ [key]: value });
+      if (!patch.success || !Object.hasOwn(patch.data, key)) throw veraError("INVALID");
+      this.emit(id, { type: "session.updated", advanced: { [key]: value } });
+      return {};
+    }
+    if (channel === "session.compact") {
+      this.writable();
+      if (row.summary.archived) throw veraError("DENIED");
+      if (foldSessionEvents(row.events).activeTurnId) throw veraError("BUSY");
+      // The mock has no model: a session with history counts as summarized.
+      const history = foldSessionEvents(row.events).items.some((item) => item.kind === "assistant");
+      return { status: history ? "completed" : "unavailable" };
     }
     if (channel === "session.bookmarks.remove") {
       this.writable();

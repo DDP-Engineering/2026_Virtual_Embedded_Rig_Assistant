@@ -52,7 +52,7 @@ VERA ne démarre pas lorsque son fichier `settings.json` est endommagé ou a ét
 
 ## Journaux
 
-VERA écrit un fichier journal par jour, `vera-YYYY-MM-DD.log`, dans le dossier `logs` de son dossier de données, et conserve les sept plus récents. Les clés et les autres secrets connus sont retirés des journaux. La sortie des programmes des plugins ne figure pas dans ces journaux, mais dans `.vera/runs/` du banc de travail.
+VERA écrit un fichier journal par jour, `vera-YYYY-MM-DD.log`, dans le dossier `logs` de son dossier de données, et conserve les sept plus récents, ou le nombre fixé par **Conservation des journaux** dans les [paramètres avancés](advanced-settings.md). Les clés et les autres secrets connus sont retirés des journaux. La sortie des programmes des plugins ne figure pas dans ces journaux, mais dans `.vera/runs/` du banc de travail.
 
 ## Où VERA conserve ses données
 

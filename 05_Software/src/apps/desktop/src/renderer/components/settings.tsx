@@ -1,17 +1,38 @@
-import { type AppInfo, type SettingsPatch, type SettingsSnapshot, typographyDefaults } from "@vera/shared";
-import { Bell, Globe, Info, Keyboard, Palette, RefreshCw, Server, Shield } from "lucide-react";
+import type { AppInfo, SettingsPatch, SettingsSnapshot } from "@vera/shared";
+import {
+  Bell,
+  Globe,
+  Info,
+  Keyboard,
+  Palette,
+  RefreshCw,
+  Server,
+  Shield,
+  SlidersHorizontal,
+} from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { About } from "./about.js";
+import { AdvancedSettingsPanel } from "./advanced-settings-panel.js";
+import { AppearanceSettings } from "./appearance-settings.js";
 import { CommandSettings } from "./command-settings.js";
 import { ErrorMessage } from "./error-message.js";
-import { KeyboardShortcuts } from "./keyboard-shortcuts.js";
+import { ShortcutsSettings } from "./keyboard-shortcuts.js";
 import { PrivacySettings } from "./privacy-settings.js";
 import { Providers } from "./providers.js";
 import { UpdatesPanel } from "./updates.js";
 import { WebAccessPanel } from "./web-access.js";
 
 /** Settings pages with their own panel; every other page shows the generic section below. */
-const OWN_PANELS = new Set(["providers", "web", "appearance", "updates", "shortcuts", "commands", "data"]);
+const OWN_PANELS = new Set([
+  "providers",
+  "web",
+  "appearance",
+  "updates",
+  "shortcuts",
+  "commands",
+  "data",
+  "advanced",
+]);
 
 export function useSettingsSections() {
   const { t } = useTranslation();
@@ -24,6 +45,7 @@ export function useSettingsSections() {
     { id: "shortcuts", icon: Keyboard, label: t("settings.shortcuts") },
     { id: "updates", icon: RefreshCw, label: t("settings.updates") },
     { id: "data", icon: Shield, label: t("settings.data") },
+    { id: "advanced", icon: SlidersHorizontal, label: t("settings.advanced") },
     { id: "about", icon: Info, label: t("settings.about") },
   ];
 }
@@ -35,6 +57,7 @@ export function Settings({
   saving,
   error,
   update,
+  dirtyChanged,
 }: {
   section?: string;
   snapshot: SettingsSnapshot;
@@ -42,25 +65,14 @@ export function Settings({
   saving: boolean;
   error: unknown;
   update: (patch: SettingsPatch) => void;
+  /** Whether the open page has unsaved changes, for the leave guard (REQ-UX-6a1c936e). */
+  dirtyChanged?: (dirty: boolean) => void;
 }) {
   const { t } = useTranslation();
   const sections = useSettingsSections();
   const disabled = saving;
-  const chatFontSize = snapshot.settings.chatFontSize ?? typographyDefaults.chatFontSize;
-  const codeFontSize = snapshot.settings.codeFontSize ?? typographyDefaults.codeFontSize;
-  const sizes = [
-    { label: t("appearance.extraSmall"), scale: 0.75, size: 10 },
-    { label: t("appearance.small"), scale: 0.875, size: 12 },
-    { label: t("appearance.normal"), scale: 1, size: 14 },
-    { label: t("appearance.large"), scale: 1.125, size: 16 },
-    { label: t("appearance.extraLarge"), scale: 1.25, size: 20 },
-    { label: t("appearance.largest"), scale: 1.5, size: 24 },
-  ] as const;
-  const themes = [
-    { value: "light", label: t("appearance.light") },
-    { value: "dark", label: t("appearance.dark") },
-    { value: "system", label: t("appearance.system") },
-  ] as const;
+  // Each editable page keeps its own draft and is rendered only while selected, so a discarded draft
+  // leaves with its page (REQ-UX-032aab57).
   return (
     <div
       className="settings-page"
@@ -81,137 +93,51 @@ export function Settings({
       </div>
       {section === "web" && <WebAccessPanel />}
       {section === "commands" && (
-        <CommandSettings shell={snapshot.settings.shell} saving={saving} update={update} />
+        <CommandSettings
+          shell={snapshot.settings.shell}
+          saving={saving}
+          update={update}
+          dirtyChanged={dirtyChanged}
+        />
       )}
       {section === "data" && (
-        <PrivacySettings privacy={snapshot.settings.privacy} saving={saving} update={update} />
+        <PrivacySettings
+          privacy={snapshot.settings.privacy}
+          saving={saving}
+          update={update}
+          dirtyChanged={dirtyChanged}
+        />
       )}
-      <section
-        hidden={section !== "appearance"}
-        className="surface"
-        id="section-appearance"
-        data-settings-section="appearance"
-      >
-        <h2 data-i18n="settings.appearance" tabIndex={-1}>
-          {t("settings.appearance")}
-        </h2>
-        <div className="language-field">
-          <label htmlFor="language">{t("language.label")}</label>
-          <select
-            id="language"
-            disabled={disabled}
-            value={snapshot.settings.language}
-            onChange={(event) => update({ language: event.target.value as SettingsPatch["language"] })}
-          >
-            <option value="system">{t("language.system")}</option>
-            <option value="en">{t("language.en")}</option>
-            <option value="ro">{t("language.ro")}</option>
-            <option value="de">{t("language.de")}</option>
-            <option value="fr">{t("language.fr")}</option>
-          </select>
-        </div>
-        <fieldset disabled={disabled}>
-          <legend>{t("appearance.theme")}</legend>
-          <div className="theme-options">
-            {themes.map(({ value, label }) => (
-              <button
-                key={value}
-                type="button"
-                data-theme-option={value}
-                aria-pressed={snapshot.settings.theme === value}
-                onClick={() => update({ theme: value })}
-              >
-                <span className={`theme-preview preview-${value}`} aria-hidden="true">
-                  <span />
-                  <span />
-                </span>
-                {label}
-              </button>
-            ))}
-          </div>
-        </fieldset>
-        <div className="typography-grid">
-          <fieldset disabled={disabled} className="typography-control">
-            <legend>{t("appearance.textSize")}</legend>
-            <label className="sr-only" htmlFor="interface-font-size">
-              {t("appearance.textSize")}
-            </label>
-            <select
-              id="interface-font-size"
-              value={snapshot.settings.textScale}
-              onChange={(event) =>
-                update({ textScale: Number(event.target.value) as SettingsPatch["textScale"] })
-              }
-            >
-              {sizes.map(({ scale, label }) => (
-                <option key={scale} value={scale}>
-                  {label}
-                </option>
-              ))}
-            </select>
-            <p className="typography-interface-preview">{t("appearance.interfacePreview")}</p>
-          </fieldset>
-          <fieldset disabled={disabled} className="typography-control">
-            <legend>{t("appearance.chatSize")}</legend>
-            <label className="sr-only" htmlFor="chat-font-size">
-              {t("appearance.chatSize")}
-            </label>
-            <select
-              id="chat-font-size"
-              value={chatFontSize}
-              onChange={(event) =>
-                update({ chatFontSize: Number(event.target.value) as SettingsPatch["chatFontSize"] })
-              }
-            >
-              {sizes.map(({ size, label }) => (
-                <option key={size} value={size}>
-                  {label}
-                </option>
-              ))}
-            </select>
-            <p className="typography-chat-preview">{t("appearance.chatPreview")}</p>
-          </fieldset>
-          <fieldset disabled={disabled} className="typography-control">
-            <legend>{t("appearance.codeSize")}</legend>
-            <label className="sr-only" htmlFor="code-font-size">
-              {t("appearance.codeSize")}
-            </label>
-            <select
-              id="code-font-size"
-              value={codeFontSize}
-              onChange={(event) =>
-                update({ codeFontSize: Number(event.target.value) as SettingsPatch["codeFontSize"] })
-              }
-            >
-              {sizes.map(({ size, label }) => (
-                <option key={size} value={size}>
-                  {label}
-                </option>
-              ))}
-            </select>
-            <pre className="typography-code-preview">
-              <code>{t("appearance.codePreview")}</code>
-            </pre>
-          </fieldset>
-        </div>
-        <button
-          type="button"
+      {section === "appearance" && (
+        <AppearanceSettings
+          settings={snapshot.settings}
           disabled={disabled}
-          data-action="reset-typography"
-          className="typography-reset"
-          onClick={() => update({ textScale: 1, ...typographyDefaults })}
-        >
-          {t("appearance.resetSizes")}
-        </button>
-      </section>
-      <div hidden={section !== "updates"}>
-        <UpdatesPanel preferences={snapshot.settings.updates} disabled={disabled} update={update} />
-      </div>
+          update={update}
+          dirtyChanged={dirtyChanged}
+        />
+      )}
+      {section === "updates" && (
+        <UpdatesPanel
+          preferences={snapshot.settings.updates}
+          disabled={disabled}
+          update={update}
+          dirtyChanged={dirtyChanged}
+        />
+      )}
+      {section === "advanced" && (
+        <AdvancedSettingsPanel
+          settings={snapshot.settings}
+          disabled={disabled}
+          update={update}
+          dirtyChanged={dirtyChanged}
+        />
+      )}
       {section === "shortcuts" && (
-        <KeyboardShortcuts
+        <ShortcutsSettings
           bindings={snapshot.settings.keyboardShortcuts}
           disabled={disabled}
-          update={(keyboardShortcuts) => update({ keyboardShortcuts })}
+          save={(keyboardShortcuts) => update({ keyboardShortcuts })}
+          dirtyChanged={dirtyChanged}
         />
       )}
       {sections

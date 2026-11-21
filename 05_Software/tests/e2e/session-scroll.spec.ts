@@ -6,6 +6,7 @@ import { _electron, expect, type Page } from "@playwright/test";
 import type { VeraBridge } from "@vera/shared";
 import { test } from "./fixtures.js";
 import { installNetworkGuard, outboundAttempts } from "./network-guard.js";
+import { saveSettings } from "./settings-navigation.js";
 
 async function contained(page: Page, composer = true) {
   expect(
@@ -169,6 +170,7 @@ test("fixed viewport and independent left conversation rail retain composer and 
     await page.locator("#interface-font-size").selectOption(String(scale));
     await page.locator('[data-action="reset-typography"]').scrollIntoViewIfNeeded();
     await contained(page, false);
+    await saveSettings(page);
     await page.locator('[data-action="leave-settings"]').click();
     await page.locator(`[data-session="${sessionId}"]`).click();
     await input.fill("Multiline composer\n".repeat(80));

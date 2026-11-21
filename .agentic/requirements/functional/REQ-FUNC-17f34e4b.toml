@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-17f34e4b"
+
+title = "Refuse a download above its approved size"
+
+status = "active"
+
+requirement = """
+If a download's response is larger than the size bound in its approval, VERA shall stop the transfer with the size error and save no file.
+"""
+
+verification = "Approved at 10 MiB, a 12 MiB response ends with the size error and leaves no file, and the transfer receives the approved budget; approved at 20 MiB, the same response is saved; a transfer port budget of 64 bytes refuses a larger body."
+
+affected_paths = ["05_Software/src/libraries/core/src/web/downloads.ts", "05_Software/src/libraries/core/src/web/download-transfer.ts", "05_Software/src/apps/desktop/src/main/download-transfer.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/web/downloads.test.ts", "05_Software/src/libraries/core/src/web/download-transfer.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-21
+updated = 2026-11-21

@@ -1,7 +1,11 @@
 import { isAbsolute } from "node:path";
 import type { Message, ToolCall, ToolResultMessage } from "@earendil-works/pi-ai";
 import {
+  type AdvancedKey,
+  type AdvancedValue,
+  type AdvancedValueOf,
   acceptsImages,
+  advancedPatchSchema,
   type ChangeDetail,
   type ChangeSummary,
   type ComposerImageSource,
@@ -12,6 +16,7 @@ import {
   type ProgramApproval,
   parseRef,
   permissionModeSchema,
+  resolveAdvanced,
   type SessionEvent,
   type SessionItemDetailField,
   type SessionSummary,
@@ -30,12 +35,18 @@ import { parsePatch } from "diff";
 import { ulid } from "ulid";
 import { type ApprovalDecision, ApprovalGate, requestSha256 } from "../agent/approvals.js";
 import { issuedLogRefs, validateCitations, withinIssued } from "../agent/citations.js";
-import { ContextCompactor } from "../agent/compaction.js";
+import { type CompactionSettings, ContextCompactor } from "../agent/compaction.js";
 import { ContextPolicy } from "../agent/context.js";
 import { imagePaths } from "../agent/message-images.js";
 import type { PermissionEngine } from "../agent/permissions.js";
 import { ReferenceRuntime, toolResult } from "../agent/runtime.js";
-import type { AgentRuntime, RuntimeEvent, RuntimeHost, StopReason } from "../agent/types.js";
+import type {
+  AgentRuntime,
+  CompactionOutcome,
+  RuntimeEvent,
+  RuntimeHost,
+  StopReason,
+} from "../agent/types.js";
 import { ArtifactStore } from "../artifacts/store.js";
 import { electricalToolOffered } from "../electrical/tools.js";
 import type { EmbeddingPort } from "../knowledge/embedding.js";
@@ -67,7 +78,6 @@ import {
   type DelegatedLaunchRequest,
   delegatedLaunchRequestSchema,
   delegatedRequestHash,
-  MAX_ACTIVE_DELEGATIONS,
   prepareDelegatedModel,
 } from "./delegation.js";
 import { delegatedTurnStatus } from "./delegation-monitor.js";
@@ -86,7 +96,18 @@ export interface SessionHost {
   prompt(mode: PermissionMode): string;
   readOnly?: boolean;
   mode?: PermissionMode;
+  /**
+   * A fixed tool-call cap that replaces the Advanced resolution, for embedding hosts and tests that need
+   * a cap below the setting's range.
+   */
   maxToolCallsPerTurn?: number;
+  /** Application and workbench Advanced values, resolved under the session's own (REQ-FUNC-902313e0). */
+  advanced?: {
+    app(): Readonly<Record<string, unknown>> | undefined;
+    workbench(): Readonly<Record<string, unknown>> | undefined;
+    /** Values for this host's runs only (CLI --advanced): they win over stored session values, unrecorded. */
+    run?(): Readonly<Record<string, unknown>> | undefined;
+  };
   noOutputTimeoutMs?: number;
   workers?: WorkerPool;
   embeddings?: EmbeddingPort | undefined;
@@ -682,6 +703,56 @@ export class SessionService {
     this.hub.publish(id, value);
   }
   /**
+   * Sets or clears (null) a session-scope Advanced value as a durable session event (REQ-DATA-96ef3dd6).
+   * The value is checked against the shared registry; archived sessions and read-only workbenches refuse it.
+   */
+  setAdvanced(id: string, key: AdvancedKey, value: AdvancedValue | null): void {
+    const row = this.row(id);
+    this.writable();
+    if (row.archived) throw veraError("DENIED");
+    if (this.deleting.has(id)) throw veraError("BUSY");
+    const patch = advancedPatchSchema("session").safeParse({ [key]: value });
+    if (!patch.success || !Object.hasOwn(patch.data, key)) throw veraError("INVALID");
+    const event = sessionEventSchema.parse({ type: "session.updated", advanced: { [key]: value } });
+    const recorded = this.host.db.transaction(() => this.hub.record(id, event))();
+    this.hub.publish(id, recorded);
+  }
+  /** The Advanced value that applies to a session: session, workbench, application, then the default. */
+  private resolveAdvanced<K extends AdvancedKey>(id: string, key: K): AdvancedValueOf<K> {
+    return resolveAdvanced(
+      key,
+      {
+        session: { ...this.hub.get(id).snapshot.advanced, ...this.host.advanced?.run?.() },
+        workbench: this.host.advanced?.workbench(),
+        app: this.host.advanced?.app(),
+      },
+      (scope, ignored) => {
+        // Each ignored key is logged once per scope while the service runs, not at every turn.
+        const note = `${scope}:${ignored}`;
+        if (this.ignoredAdvanced.has(note)) return;
+        this.ignoredAdvanced.add(note);
+        this.host.log?.(`Ignored invalid ${scope} Advanced setting: ${ignored}`);
+      },
+    ).value;
+  }
+  private readonly ignoredAdvanced = new Set<string>();
+  /** How long a model stream may stay silent; a host's fixed value wins (REQ-FUNC-3e78ae47). */
+  private noOutputTimeoutMs(id: string): number {
+    return this.host.noOutputTimeoutMs ?? this.resolveAdvanced(id, "noOutputTimeout") * 1000;
+  }
+  /** The compaction values that apply to a session now, from its resolved Advanced settings. */
+  private compactionSettings(id: string): CompactionSettings {
+    return {
+      trigger: this.resolveAdvanced(id, "compactionTrigger") / 100,
+      tailTokens: this.resolveAdvanced(id, "recentTailTokens"),
+      toolResultChars: this.resolveAdvanced(id, "summaryToolResultChars"),
+      maxPasses: this.resolveAdvanced(id, "summaryPasses"),
+      margin: this.resolveAdvanced(id, "calibrationMargin") / 100,
+      calibrated: this.resolveAdvanced(id, "providerTokenCounts"),
+      automatic: this.resolveAdvanced(id, "autoCompaction"),
+    };
+  }
+  /**
    * Removes the named bookmarks, or all of the session's, in one transaction: an unknown target refuses the
    * whole request. Messages stay; only the user-only preference changes.
    */
@@ -1010,9 +1081,11 @@ export class SessionService {
     images?: string[],
   ) {
     const id = row.id;
+    // Delegated sessions that may run at once in this workbench (REQ-FUNC-261cdc27).
     if (
       delegated &&
-      [...this.active.values()].filter((turn) => turn.delegated).length >= MAX_ACTIVE_DELEGATIONS
+      [...this.active.values()].filter((turn) => turn.delegated).length >=
+        this.resolveAdvanced(id, "delegations")
     )
       throw veraError("BUSY");
     let processing = Promise.resolve();
@@ -1031,6 +1104,8 @@ export class SessionService {
     if (delegated) ctx.delegated = true;
     const mode = () => (delegated ? "read-only" : this.row(id).permission_mode);
     ctx.permissionMode = mode;
+    // Tool limits resolve at each call, so a saved change applies to the next call (ADV-03).
+    ctx.advanced = (key) => this.resolveAdvanced(id, key);
     ctx.additionalFolders = () => (delegated ? [] : (this.host.additionalFolders?.() ?? []));
     ctx.hasDeliveredImage = (path) => this.messages.hasUserImage(id, path);
     ctx.bypassSignal = () => {
@@ -1147,7 +1222,11 @@ export class SessionService {
             try {
               // The run consumes its approval itself, with the request prepared again right before it starts.
               if (run.request.tool === "plugin_install") this.approvals.consume(run.request);
-              const { text } = capToolResult(await run.apply(signal));
+              const { text } = capToolResult(
+                await run.apply(signal),
+                [],
+                this.resolveAdvanced(id, "toolResultChars"),
+              );
               return text;
             } catch (error) {
               throw Error(
@@ -1199,7 +1278,8 @@ export class SessionService {
       this.maskContent("agent", text),
     );
     const contextCompactor = this.compactor(id);
-    const gateway = timedGateway(this.host.gateway, this.host.noOutputTimeoutMs ?? 300000);
+    contextCompactor.settings = this.compactionSettings(id);
+    const gateway = timedGateway(this.host.gateway, this.noOutputTimeoutMs(id));
     let initialReasoning = staged?.reasoning;
     const self = this;
     const runtimeHost: RuntimeHost = {
@@ -1395,7 +1475,8 @@ export class SessionService {
       messages: this.transcript(id),
       contextPolicy,
       contextCompactor,
-      maxToolCallsPerTurn: this.host.maxToolCallsPerTurn ?? 50,
+      maxToolCallsPerTurn: this.host.maxToolCallsPerTurn ?? this.resolveAdvanced(id, "toolCallsPerTurn"),
+      maxToolResultChars: this.resolveAdvanced(id, "toolResultChars"),
     });
     const turn: ActiveTurn = {
       runtime,
@@ -1465,10 +1546,14 @@ export class SessionService {
           if (discarded) return;
           this.active.delete(id);
           const result = this.last.get(id);
-          const compact =
-            !failed && !this.closing && (result?.stopReason === "end" || result?.stopReason === "limit")
-              ? runtime.compact?.(this.transcript(id))
-              : undefined;
+          // Background compaction off leaves the summary to the next request (REQ-FUNC-cae0533c).
+          const compacts =
+            !failed &&
+            !this.closing &&
+            (result?.stopReason === "end" || result?.stopReason === "limit") &&
+            this.resolveAdvanced(id, "backgroundCompaction");
+          if (compacts) contextCompactor.settings = this.compactionSettings(id);
+          const compact = compacts ? runtime.compact?.(this.transcript(id)) : undefined;
           if (!compact) {
             off();
             return;
@@ -1649,6 +1734,96 @@ export class SessionService {
   async waitCompaction(id: string): Promise<void> {
     this.row(id);
     await this.compacting.get(id);
+  }
+  /**
+   * Summarize an idle session's history once, regardless of the trigger and of automatic compaction, and
+   * record the summary (REQ-FUNC-eeaf29bd). Refused on archived or read-only sessions and while a turn,
+   * compaction, delete or shutdown runs (REQ-FUNC-13068fbb).
+   */
+  async compactNow(id: string): Promise<CompactionOutcome> {
+    const row = this.row(id);
+    this.writable();
+    if (row.archived) throw veraError("DENIED");
+    if (this.active.has(id) || this.deleting.has(id) || this.compacting.has(id) || this.closing)
+      throw veraError("BUSY");
+    const model = this.host.model(row.model_ref);
+    const gateway = timedGateway(this.host.gateway, this.noOutputTimeoutMs(id));
+    const self = this;
+    const runtimeHost: RuntimeHost = {
+      log: (message) => this.host.log?.(this.host.scrub?.(message) ?? message),
+      gateway: {
+        ...gateway,
+        // The summary request leaves like a turn's: images as notes, the session's reasoning, output masked.
+        stream: async function* (request) {
+          request.signal.throwIfAborted();
+          const messages = request.messages.some((message) => imagePaths(message).length)
+            ? await projectMessageImages(request.messages, request.signal)
+            : request.messages;
+          yield* maskModelStream(
+            gateway.stream({
+              ...request,
+              sessionId: id,
+              maskOutput: () => self.host.masking?.("agent") !== false,
+              messages,
+              reasoning: self.requestReasoning(id, request.model) ?? null,
+            }),
+            () => self.host.masking?.("agent") !== false,
+            self.host.knownSecrets ?? (() => []),
+            (text) => self.host.scrub?.(text) ?? text,
+          );
+        },
+      },
+      now: () => this.host.clock.now().getTime(),
+      nextId: () => ulid(),
+      approve: async () => "denied",
+    };
+    const runtime = this.host.runtime?.(runtimeHost) ?? new ReferenceRuntime(runtimeHost);
+    if (!runtime.compact) return "unavailable";
+    const contextCompactor = this.compactor(id);
+    contextCompactor.settings = this.compactionSettings(id);
+    runtime.start({
+      systemPrompt: this.host.prompt(row.permission_mode),
+      model,
+      tools: [],
+      messages: this.transcript(id),
+      contextPolicy: new MaskingContextPolicy(this.host.contextPolicy ?? new ContextPolicy(), (text) =>
+        this.maskContent("agent", text),
+      ),
+      contextCompactor,
+    });
+    // Usage and the summary record are kept like a background compaction's; no turn is recorded.
+    const standIn: ActiveTurn = {
+      runtime,
+      delegated: false,
+      done: Promise.resolve({ stopReason: "end" }),
+      turnId: "",
+      messageId: "",
+      accepting: false,
+    };
+    let processing = Promise.resolve();
+    const off = runtime.onEvent((event) => {
+      const transcript = runtime.messages();
+      processing = processing
+        .then(() => this.process(id, event, transcript, standIn))
+        .catch((error) =>
+          this.host.log?.(
+            `Compaction event not saved: ${error instanceof Error ? error.message : String(error)}`,
+          ),
+        );
+    });
+    const compaction = runtime.compact(this.transcript(id), true).then(async (outcome) => {
+      await processing;
+      return outcome;
+    });
+    const settled = compaction
+      .then(() => undefined)
+      .catch(() => undefined)
+      .finally(() => {
+        off();
+        if (this.compacting.get(id) === settled) this.compacting.delete(id);
+      });
+    this.compacting.set(id, settled);
+    return compaction;
   }
   async waitIdle(id: string): Promise<{ stopReason: StopReason } | null> {
     this.row(id);

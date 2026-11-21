@@ -38,7 +38,7 @@ export function WorkbenchPluginCapabilities({
           ? t("pluginCapabilities.disabled")
           : t("pluginCapabilities.enabled");
   const programs = Object.keys(plugin.manifest?.programs ?? {});
-  const { rows, pager } = usePaged(programs, 10);
+  const { rows, pager } = usePaged(programs);
   return (
     <>
       {names.length > 0 && (

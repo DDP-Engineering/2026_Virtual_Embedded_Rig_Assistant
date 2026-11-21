@@ -125,6 +125,8 @@ const workbenchHandlers = {
   "session.rename": unused,
   "session.bookmark": unused,
   "session.bookmarks.remove": unused,
+  "session.advanced.set": unused,
+  "session.compact": unused,
   "session.archive.set": unused,
   "session.move": unused,
   "session.delete": unused,

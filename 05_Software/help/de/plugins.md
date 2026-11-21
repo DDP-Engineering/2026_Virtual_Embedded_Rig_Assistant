@@ -64,6 +64,6 @@ Jeder Befehl, den der Agent ausführt, durchläuft Ihren Berechtigungsmodus (sie
 
 ## Updates und der Katalog
 
-**Nach Updates suchen** sucht nach neuen Plugin-Versionen; ein Update zeigt **Auf … aktualisieren**. VERA prüft außerdem einmal täglich, sofern Aktualisierungen nicht in den [Einstellungen](settings.md) ausgeschaltet sind. Unter **Katalogeinstellungen** wählen Sie den **Kanal** (**Stabil** oder **Vorabversion**) und optional eine **Katalog-URL**, zum Beispiel den Spiegel Ihres Unternehmens. VERA verwendet einen Katalog nur, wenn seine Signatur übereinstimmt; andernfalls zeigt es die mit VERA ausgelieferten Plugins.
+**Nach Updates suchen** sucht nach neuen Plugin-Versionen; ein Update zeigt **Auf … aktualisieren**. VERA prüft außerdem einmal täglich oder im **Intervall der Plugin-Katalogprüfung** aus den [erweiterten Einstellungen](advanced-settings.md), sofern Aktualisierungen nicht in den [Einstellungen](settings.md) ausgeschaltet sind. Unter **Katalogeinstellungen** wählen Sie den **Kanal** (**Stabil** oder **Vorabversion**) und optional eine **Katalog-URL**, zum Beispiel den Spiegel Ihres Unternehmens. VERA verwendet einen Katalog nur, wenn seine Signatur übereinstimmt; andernfalls zeigt es die mit VERA ausgelieferten Plugins.
 
 **Deinstallieren** und **Zip exportieren** befinden sich unter **Weitere Aktionen** auf der Karte eines installierten Plugins. Ohne Netzwerk siehe [Offline-Installation](offline-install.md).

@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-240f4e02"
+
+title = "Keep the resolved terminal buffer of each terminal"
+
+status = "active"
+
+requirement = """
+While a terminal runs, VERA shall keep its most recent output up to the resolved Terminal buffer (an integer from 64 to 1024 Ki characters, default 256 Ki, set for the application) read when the terminal opens, trimming older output at a line boundary.
+"""
+
+verification = "Desktop main test: with the application value 64, a terminal fed more than 64 Ki characters keeps at most 64 Ki characters starting after a newline and reports the dropped count; a terminal opened before the value changed keeps its own buffer. Inspection: the terminal snapshot IPC schema allows 1024 Ki characters."
+
+affected_paths = ["05_Software/src/libraries/shared/src/advanced-settings.ts", "05_Software/src/libraries/shared/src/terminals.ts", "05_Software/src/apps/desktop/src/main/terminals.ts", "05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/apps/desktop/src/main/terminals.test.ts", "05_Software/src/libraries/shared/src/advanced-settings.test.ts"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/main/terminals.test.ts::keeps the buffer each terminal had when it opened, trimmed at a line", "05_Software/src/libraries/shared/src/advanced-settings.test.ts::registers the desktop ranges, defaults, scopes and timing"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-21
+updated = 2026-11-21

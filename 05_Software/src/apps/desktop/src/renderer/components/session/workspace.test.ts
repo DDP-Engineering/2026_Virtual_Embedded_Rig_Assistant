@@ -1485,6 +1485,7 @@ test("Settings selects one page with vertical tabs, including placeholders and k
     "shortcuts",
     "updates",
     "data",
+    "advanced",
     "about",
   ]);
   function visibleSections() {
@@ -1787,4 +1788,85 @@ test("each session keeps its own document tabs while the user moves between sess
   expect(
     container.querySelector('[data-document-tabs] [role="tab"][aria-selected="true"]')?.textContent,
   ).toBe("board.txt");
+});
+
+// REQ-UX-6a1c936e
+test("keeps the Settings guard after a confirmed leave that does not happen, and on keyboard tab moves", async () => {
+  await mount();
+  await act(async () => container.querySelector<HTMLButtonElement>('[data-i18n="nav.settings"]')?.click());
+  await settle();
+  const confirm = vi.spyOn(window, "confirm");
+  const tab = (id: string) =>
+    container.querySelector<HTMLButtonElement>(`[data-section="${id}"]`) as HTMLButtonElement;
+  await act(async () => tab("updates").click());
+  await settle();
+  const channel = container.querySelector<HTMLSelectElement>("#update-channel") as HTMLSelectElement;
+  const other = [...channel.options].find((option) => option.value !== channel.value) as HTMLOptionElement;
+  await act(async () => userEvent.setup().selectOptions(channel, other.value));
+  // Discard, then cancel the folder picker: Settings stays with its draft, so the guard stays.
+  pickFolders();
+  confirm.mockReturnValueOnce(true);
+  await act(async () => {
+    window.dispatchEvent(
+      new KeyboardEvent("keydown", { key: "o", code: "KeyO", ctrlKey: true, bubbles: true }),
+    );
+  });
+  await settle();
+  expect(confirm).toHaveBeenCalledTimes(1);
+  expect(tab("updates").getAttribute("aria-selected")).toBe("true");
+  // Stay on an arrow-key tab move keeps the page and the focus on its tab.
+  tab("updates").focus();
+  confirm.mockReturnValueOnce(false);
+  await act(async () => {
+    tab("updates").dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowDown", bubbles: true }));
+  });
+  expect(confirm).toHaveBeenCalledTimes(2);
+  expect(tab("updates").getAttribute("aria-selected")).toBe("true");
+  expect(document.activeElement).toBe(tab("updates"));
+  expect((container.querySelector("#update-channel") as HTMLSelectElement).value).toBe(other.value);
+  confirm.mockRestore();
+});
+
+test("asks before leaving a Settings page with unsaved changes and keeps the draft on Stay", async () => {
+  await mount();
+  await act(async () => container.querySelector<HTMLButtonElement>('[data-i18n="nav.settings"]')?.click());
+  await settle();
+  const confirm = vi.spyOn(window, "confirm");
+  const tab = (id: string) =>
+    container.querySelector<HTMLButtonElement>(`[data-section="${id}"]`) as HTMLButtonElement;
+  // Without changes no prompt appears.
+  await act(async () => tab("updates").click());
+  await act(async () => tab("appearance").click());
+  expect(confirm).not.toHaveBeenCalled();
+  await act(async () => container.querySelector<HTMLButtonElement>('[data-theme-option="dark"]')?.click());
+  confirm.mockReturnValueOnce(false);
+  await act(async () => tab("updates").click());
+  expect(confirm).toHaveBeenCalledTimes(1);
+  expect(tab("appearance").getAttribute("aria-selected")).toBe("true");
+  expect(container.querySelector('[data-theme-option="dark"]')?.getAttribute("aria-pressed")).toBe("true");
+  // The draft is previewed on the whole window before Save (REQ-UX-58a693f3).
+  expect(document.documentElement.dataset.theme).toBe("dark");
+  // Opening Settings again leaves nothing, so it does not ask.
+  await act(async () => container.querySelector<HTMLButtonElement>('[data-i18n="nav.settings"]')?.click());
+  expect(confirm).toHaveBeenCalledTimes(1);
+  // Help unmounts the page, so it asks too; Stay keeps Settings open.
+  confirm.mockReturnValueOnce(false);
+  await act(async () => container.querySelector<HTMLButtonElement>('[data-action="show-help"]')?.click());
+  expect(confirm).toHaveBeenCalledTimes(2);
+  expect(container.querySelector('[data-action="leave-settings"]')).not.toBeNull();
+  confirm.mockReturnValueOnce(false);
+  await act(async () =>
+    container.querySelector<HTMLButtonElement>('[data-action="leave-settings"]')?.click(),
+  );
+  expect(confirm).toHaveBeenCalledTimes(3);
+  expect(container.querySelector('[data-action="leave-settings"]')).not.toBeNull();
+  confirm.mockReturnValueOnce(true);
+  await act(async () => tab("updates").click());
+  expect(tab("updates").getAttribute("aria-selected")).toBe("true");
+  await act(async () => tab("appearance").click());
+  // Discarded: the saved theme is back and no further prompt appears.
+  expect(container.querySelector('[data-theme-option="system"]')?.getAttribute("aria-pressed")).toBe("true");
+  expect(document.documentElement.dataset.theme).toBe("light");
+  expect(confirm).toHaveBeenCalledTimes(4);
+  confirm.mockRestore();
 });

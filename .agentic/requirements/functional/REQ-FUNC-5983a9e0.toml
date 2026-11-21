@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-5983a9e0"
+
+title = "Pause automatic compaction for a session"
+
+status = "active"
+
+requirement = """
+While a session's Automatic compaction switch is off, VERA shall make no new summary for that session's requests, keep using a summary already adopted, and fail a request that no longer fits with the context-limit error.
+"""
+
+verification = "Turn the switch off in a session above the trigger: the next request sends full history without a summary request; a request over the budget ends with CONTEXT_LIMIT; turning the switch on compacts at the next request."
+
+affected_paths = ["05_Software/src/libraries/shared/src/advanced-settings.ts", "05_Software/src/libraries/core/src/agent/compaction.ts", "05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/apps/cli/src/args.ts"]
+
+linked_tests = ["05_Software/src/libraries/shared/src/advanced-settings.test.ts", "05_Software/src/libraries/core/src/agent/compaction-settings.test.ts", "05_Software/src/libraries/core/src/sessions/compaction-advanced.test.ts", "05_Software/src/apps/cli/src/run-args.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-20
+updated = 2026-11-20

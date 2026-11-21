@@ -102,6 +102,22 @@ it("records explicit command identity and canonical cwd, and shares UI Stop with
   ]);
 });
 
+// REQ-FUNC-ae2806b9
+it("binds the smaller of the requested timeout and the Shell command timeout ceiling into the approval", async () => {
+  const limits: Record<string, number> = { commandTimeout: 1200 };
+  ctx = { ...ctx, advanced: ((key: string) => limits[key]) as never };
+  const timeoutOf = async (args: Record<string, unknown>) =>
+    ((await prepare({ command: "echo ok", ...args })).request as { command: { timeoutMs: number } }).command
+      .timeoutMs;
+  expect(await timeoutOf({ timeout: 3000 })).toBe(1_200_000);
+  expect(await timeoutOf({})).toBe(1_200_000);
+  expect(await timeoutOf({ timeout: 90 })).toBe(90_000);
+  // Without a session's value the built-in 600 s applies.
+  const { advanced: _resolved, ...plain } = ctx;
+  ctx = plain;
+  expect(await timeoutOf({})).toBe(600_000);
+});
+
 it("keeps the longest accepted command in the run list and refuses commands exceeding its record limit", async () => {
   const command = "x".repeat(4096);
   const call = await prepare({ command, background: true });

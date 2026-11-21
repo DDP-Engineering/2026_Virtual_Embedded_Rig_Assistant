@@ -22,8 +22,11 @@ async function fixture() {
   const getKey = vi.fn(async () => undefined);
   const access = new ConfiguredWebProvider({ config: () => settings, getKey });
   cleanups.push(() => access.close());
-  const pdf = vi.fn(async () => ({ kind: "pdf" as const, pages: ["Page one", "Page two"] }));
-  const transfer = vi.fn(async (_url: string, _signal: AbortSignal) => ({
+  const pdf = vi.fn(async (_bytes: Uint8Array, _signal: AbortSignal, _options?: unknown) => ({
+    kind: "pdf" as const,
+    pages: ["Page one", "Page two"],
+  }));
+  const transfer = vi.fn(async (_url: string, _signal: AbortSignal, _budget?: unknown) => ({
     data: bytes,
     finalUrl: "https://cdn.example.org/chip.pdf",
     mime: "application/pdf",
@@ -62,6 +65,57 @@ it("stores exact immutable binary/provenance, reopens offline, and never creates
   const second = new WebDownloads(f.root, { access: f.access, pdf: f.pdf, transfer: f.transfer });
   cleanups.push(() => second.close());
   expect(await second.list()).toEqual([record]);
+});
+// REQ-FUNC-17f34e4b
+it("refuses a response above the approved size and saves no file", async () => {
+  const f = await fixture();
+  f.transfer.mockResolvedValueOnce({
+    data: Buffer.alloc(12 * 1024 * 1024, 0x61),
+    finalUrl: "https://cdn.example.org/big.bin",
+    mime: "application/octet-stream",
+  });
+  const target = f.store.allocate("https://datasheets.example.org/big.bin");
+  const budget = { maxBytes: 10 * 1024 * 1024, deadlineMs: 120_000 };
+  await expect(f.store.save(target, f.context, new AbortController().signal, budget)).rejects.toThrow(
+    "Download exceeds the size limit.",
+  );
+  expect(existsSync(join(f.root, target.path))).toBe(false);
+  expect(f.transfer.mock.calls[0]?.[2]).toEqual(budget);
+  // Within a larger approved size the same response is saved.
+  f.transfer.mockResolvedValueOnce({
+    data: Buffer.alloc(12 * 1024 * 1024, 0x61),
+    finalUrl: "https://cdn.example.org/big.bin",
+    mime: "application/octet-stream",
+  });
+  const wider = f.store.allocate("https://datasheets.example.org/big.bin");
+  const saved = await f.store.save(wider, f.context, new AbortController().signal, {
+    maxBytes: 20 * 1024 * 1024,
+    deadlineMs: 120_000,
+  });
+  expect(saved.bytes).toBe(12 * 1024 * 1024);
+});
+// REQ-FUNC-aa35b135
+it("parses a downloaded PDF with the session's Document extraction time limit", async () => {
+  const f = await fixture();
+  await f.store.save(f.target, f.context, new AbortController().signal, {
+    maxBytes: 100 * 1024 * 1024,
+    deadlineMs: 120_000,
+    extractionMs: 900_000,
+  });
+  expect(f.pdf.mock.calls[0]?.[2]).toEqual({ baseMs: 900_000 });
+});
+// REQ-FUNC-dfe84577
+it("ends a stalled download at its time limit and saves no file", async () => {
+  const f = await fixture();
+  f.transfer.mockImplementationOnce(
+    (_url: string, signal: AbortSignal) =>
+      new Promise((_resolve, reject) => signal.addEventListener("abort", () => reject(signal.reason))),
+  );
+  const target = f.store.allocate("https://datasheets.example.org/slow.pdf");
+  await expect(
+    f.store.save(target, f.context, new AbortController().signal, { maxBytes: 1024, deadlineMs: 50 }),
+  ).rejects.toThrow();
+  expect(existsSync(join(f.root, target.path))).toBe(false);
 });
 it("uses fresh identities for repeated names and refuses overwriting an existing identity", async () => {
   const f = await fixture();

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { advancedSettings } from "./advanced-settings.js";
 import { workbenchIdSchema } from "./workbench.js";
 
 export const terminalIdSchema = z.uuid();
@@ -29,7 +30,7 @@ export const terminalSummarySchema = z.strictObject({
 });
 /** `start` counts the characters the host dropped before `output`; it only grows as the buffer trims its head. */
 export const terminalSnapshotSchema = terminalSummarySchema.extend({
-  output: z.string().max(262144),
+  output: z.string().max(advancedSettings.terminalBufferK.max * 1024),
   start: z.number().int().nonnegative(),
 });
 export type TerminalSummary = z.infer<typeof terminalSummarySchema>;

@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-DATA-33a90ef2"
+
+title = "Ignore invalid stored Advanced values"
+
+status = "active"
+
+requirement = """
+If a stored Advanced value is unknown, outside its allowed range or stored at a scope the setting does not list, VERA shall ignore that value and use the next scope or the default, keep loading the rest of the settings, workbench or session, and log the ignored key.
+"""
+
+verification = "Write an out-of-range pilot value and an unknown key into settings.json, workbench.yaml and a session event: the settings, workbench and session still load, the pilot resolves from the next valid scope, and the log names each ignored key without its value. An application-only value in workbench.yaml (delegations 8 over an application 2) and a workbench key in a session event are ignored and named the same way."
+
+affected_paths = ["05_Software/src/libraries/shared/src/advanced-settings.ts", "05_Software/src/libraries/shared/src/settings.ts", "05_Software/src/libraries/shared/src/workbench.ts", "05_Software/src/libraries/core/src/sessions/service.ts"]
+
+linked_tests = ["05_Software/src/libraries/shared/src/advanced-settings.test.ts", "05_Software/src/libraries/core/src/sessions/advanced.test.ts", "05_Software/src/libraries/core/src/workbench/service.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-20
+updated = 2026-11-20
