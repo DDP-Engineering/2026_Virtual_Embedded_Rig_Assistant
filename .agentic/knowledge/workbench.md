@@ -96,6 +96,7 @@ sidebar are described in [workbench editor](workbench-editor.md).
   and releases the new token while retaining the previous workbench. Close/successful switches dispose handles.
   Owned release checkpoints under the token guard before unlink; failed unlink retains usable storage.
   Disposal after release or ownership loss preserves source bytes through writer-first/read-only-last close.
+- Host-only readConfig queues one confined current disk read/parse, validates format/schema and unchanged identity, and refreshes snapshot config without recomputing catalog warnings. getConfig shares that refresh and retains ordinary skill/plugin warnings. Invalid data, changed identity, redirected paths and closed state retain INVALID/CONFLICT/DENIED/NOT_FOUND errors and leave the snapshot unchanged. Review uses readConfig before pinned context; metadata uses the snapshot. Tests: service.test.ts and desktop main/plan-review-boundary.test.ts (real service composition); only the file-symlink confinement probe is Linux-only on the documented unprivileged Windows host.
 - Config get/update deep-merges known mutable fields with current disk data, retains unknown keys,
   and fixes id/format. Pinned get/update saves full UTF8 text; oversized counts bytes above16384.
 - Registry retrieval/removal/pinning retains application settings entries until explicit removal; folder existence derives missing state.
@@ -146,6 +147,7 @@ sidebar are described in [workbench editor](workbench-editor.md).
 | Change requested | Start with | Focused verification |
 |---|---|---|
 | Format/extensions/validation | shared workbench.ts, core parseConfig | shared/core workbench tests |
+| Warning-free review config versus ordinary warnings | WorkbenchService.readConfig/getConfig; desktop SessionsHost.run | service.test.ts; main/plan-review{,-boundary}.test.ts |
 | Lifecycle/ownership/failure | core WorkbenchService | service.test.ts, native live lock acceptance |
 | Desktop runtime retention/release | main/workbench-runtimes.ts, main/sessions.ts | workbench-runtimes.test.ts, workbench-runtimes.replay.test.ts, tests/e2e/workbench-runtimes.spec.ts |
 | Recents/order | WorkbenchService, SettingsService, shared ordering.ts, workbench-navigation.tsx | service/settings/ordering tests, workspace.test.ts, deleted-recent and sidebar-order E2E |

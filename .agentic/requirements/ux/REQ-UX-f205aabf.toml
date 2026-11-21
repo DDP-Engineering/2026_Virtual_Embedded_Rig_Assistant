@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-UX-f205aabf"
+
+title = "Provide keyboard selection and accessible plan feedback controls"
+
+status = "active"
+
+requirement = "When a user operates Plan feedback without a pointer, VERA shall provide keyboard selection of an exact fragment within a step and named focusable controls for comment creation, reading, editing, deletion, re-anchoring and review."
+
+verification = "Using real browser keys only, select a repeated Unicode multiline fragment, add/read/edit/delete a comment, re-anchor stale feedback and activate review; assert accessible names and focusable actions, including reversed selection and a narrow enlarged-text panel."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/session/plan-comment-editor.tsx", "05_Software/src/apps/desktop/src/renderer/components/session/plan-feedback-history.tsx", "05_Software/src/apps/desktop/src/renderer/components/session/plan-items.tsx", "05_Software/src/apps/desktop/src/renderer/components/session/plan-target.ts", "05_Software/src/apps/desktop/src/renderer/components/session/plan-tab.tsx", "05_Software/src/apps/desktop/src/renderer/components/session/plan-feedback.tsx", "05_Software/src/apps/desktop/src/renderer/styles.css", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json", "05_Software/src/apps/desktop/src/renderer/locales/fr.json"]
+
+linked_tests = ["05_Software/tests/e2e/plan-fragments.spec.ts", "05_Software/src/apps/desktop/src/renderer/components/session/plan-feedback.test.ts", "05_Software/tests/e2e/plan-review.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-19
+updated = 2026-11-19

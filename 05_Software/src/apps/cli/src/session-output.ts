@@ -1,4 +1,4 @@
-import { modelReferenceSchema, type SessionEvent } from "@vera/shared";
+import { mapPlanFeedbackEventContent, modelReferenceSchema, type SessionEvent } from "@vera/shared";
 
 /** Session content follows agent policy; diagnostics always use the protected scrubber. */
 export function sessionOutput(
@@ -73,5 +73,5 @@ export function sessionOutput(
       ...(p.directories ? { directories: p.directories.map((d) => ({ ...d, path: content(d.path) })) } : {}),
     });
   }
-  return result;
+  return mapPlanFeedbackEventContent(result, content);
 }

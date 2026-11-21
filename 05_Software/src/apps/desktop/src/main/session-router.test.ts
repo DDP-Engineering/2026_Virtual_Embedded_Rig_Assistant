@@ -45,7 +45,7 @@ class Runtime implements RoutedRuntime {
   readonly sessions = {
     run: async <T>(
       operation: (service: SessionService) => T | Promise<T>,
-      _prepare?: boolean,
+      _prepare?: unknown,
       guard?: () => void,
     ) => {
       await this.hold;
@@ -73,7 +73,7 @@ function harness() {
   const runtimes = [b, a];
   const router = new SessionRouter(() => runtimes);
   const owner = (sessionId: string, workbenchId?: string) =>
-    router.inSession(sessionId, (_service, snapshot) => snapshot.folder, false, workbenchId);
+    router.inSession(sessionId, (_service, snapshot) => snapshot.folder, {}, workbenchId);
   return { a, b, runtimes, router, owner };
 }
 

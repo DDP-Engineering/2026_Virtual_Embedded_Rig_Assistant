@@ -142,8 +142,10 @@ export class ReferenceRuntime implements AgentRuntime {
     if (!init) throw veraError("INVALID");
     const controller = new AbortController();
     this.controller = controller;
-    const turnId = this.host.nextId();
-    const messageId = this.host.nextId();
+    const identity = init.requestIdentity;
+    delete init.requestIdentity;
+    const turnId = identity?.turnId ?? this.host.nextId();
+    const messageId = identity?.messageId ?? this.host.nextId();
     const currentStart = this.transcript.length;
     const recovered = new Set(this.host.steering?.().map((message) => message.messageId));
     const prompt = userMessage({ text, ...(images && { images }), timestamp: this.host.now() });

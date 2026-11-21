@@ -80,6 +80,18 @@ Marcajele salvate ale mesajelor rămân în exporturile JSON; Markdown indică m
 
 **Arată sau ascunde panoul din dreapta** afișează file pentru sesiunea deschisă: **Instrucțiuni și skill-uri** (instrucțiunile workbench-ului și skill-urile disponibile), **Fișiere**, **Modificări**, **Artefacte** (rezultatele text salvate de agent, cu **Exportă** și **Arată în folder**), **Plan** (lista de sarcini a agentului) și **Rulări** (rulările de programe ale pluginurilor).
 
+## Feedback și revizuirea planului
+
+În **Plan**, alege **Adaugă comentariu** pentru un pas întreg sau selectează mai întâi text dintr-un singur pas pentru a cita fragmentul. Cu tastatura, selectează cu Shift și săgețile în **Textul pasului**, apoi alege **Folosește textul selectat**; **Întregul pas** elimină fragmentul. Pașii goi acceptă doar comentarii pentru întregul pas. Scrie feedback pe mai multe rânduri, de exemplu „Verifică tensiunea înainte de programare”, și alege **Salvează schița**. Salvarea nu trimite mesaje și nu pornește agentul. Anulare sau Escape renunță la editările nesalvate și readuce focalizarea în Plan.
+
+Numărul schițelor și al comentariilor trimise deschide comentariile acelui pas exact. **Editează feedbackul** schimbă doar textul; **Șterge feedbackul** elimină o schiță. Fiecare înlocuire a planului invalidează ancorele anterioare, chiar dacă unele texte sunt identice. **Necesită reancorare** păstrează schițele lizibile: alege **Reancorează**, selectează un pas curent numerotat, alege explicit întregul text sau un fragment, apoi **Salvează reancorarea**. Schițele salvate rămân după închiderea sau schimbarea sesiunii.
+
+**Revizuiește planul** trimite întregul plan curent și toate schițele valide într-o singură cerere în același chat. Agentul poate revizui planul structurat sau cere lămuriri, dar nu poate executa pași, modifica fișierele proiectului, rula programe sau comenzi ori acorda permisiuni în timpul revizuirii. Mesajele obișnuite sunt suspendate până la încheiere; **Oprește** încheie doar revizuirea, nu și programele independente din fundal. Modul de permisiuni doar pentru citire permite revizuirea planului; sesiunile arhivate și workbench-urile doar pentru citire permit numai consultarea.
+
+**Revizuiri anterioare** păstrează comentariile trimise, contextul citat și rezultatele, inclusiv după golirea planului. Dacă trimiterea eșuează, schițele rămân disponibile. **Reîncearcă revizuirea** confirmă o trimitere cu răspuns necunoscut folosind cererea originală, fără a crea o a doua revizuire. După o revizuire acceptată dar eșuată, oprită sau limitată de context, **Restaurează feedbackul** pregătește schițele lipsă fără a suprascrie editările sau istoricul. Reîncercarea din chat face același lucru. Reancorează schițele învechite și alege din nou explicit **Revizuiește planul**; restaurarea nu trimite cereri automat. Limitele existente ale contextului conversației rămân valabile.
+
+Schimbările de confidențialitate sau model actualizează afișarea. Editorul deschis păstrează feedbackul nesalvat, dar ascunde citatul capturat anterior; selectează explicit o țintă curentă înainte de a salva un comentariu nou sau o reancorare.
+
 ## Marcaje
 
 Treci cu indicatorul peste un mesaj propriu sau folosește Tab pentru a ajunge la pictograma de marcaj. Alege **Marchează**; pictograma plină oferă **Elimină marcajul**. Previzualizarea de pe margine arată primul rând al mesajului și începutul răspunsului agentului, cu aceeași acțiune de marcaj. Modificarea apare imediat; dacă salvarea eșuează, starea anterioară revine și apare o eroare. În sesiunile arhivate și workbench-urile doar pentru citire poți doar consulta marcajele.

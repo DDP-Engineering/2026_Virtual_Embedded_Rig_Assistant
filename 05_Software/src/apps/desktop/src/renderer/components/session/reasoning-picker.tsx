@@ -14,7 +14,7 @@ export function ReasoningPicker({
   catalogVersion,
 }: {
   sessionId: string;
-  state: SessionState;
+  state: Pick<SessionState, "modelRef" | "reasoning">;
   disabled: boolean;
   catalogVersion: number;
 }) {

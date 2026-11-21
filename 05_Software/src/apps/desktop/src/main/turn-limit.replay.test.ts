@@ -110,7 +110,7 @@ async function harness(delays: ((signal: AbortSignal) => Promise<void>)[]) {
       return id;
     });
   const done = async (id: string) =>
-    (await router.inSession(id, (service) => ({ done: service.waitIdle(id) }), false)).done;
+    (await router.inSession(id, (service) => ({ done: service.waitIdle(id) }), { purpose: "metadata" })).done;
   return { root, paths, files, folders, settings, limit, announced, runtimes, router, start, done };
 }
 

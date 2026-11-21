@@ -32,6 +32,8 @@ export interface RuntimeInit {
   contextPolicy: ContextPolicy;
   contextCompactor?: ContextCompactor;
   maxToolCallsPerTurn?: number;
+  /** One-shot identity already accepted durably by the session owner. */
+  requestIdentity?: { turnId: string; messageId: string };
   /** Characters of one tool result the model receives at most; 32000 when absent (REQ-FUNC-f6f79cd2). */
   maxToolResultChars?: number;
 }

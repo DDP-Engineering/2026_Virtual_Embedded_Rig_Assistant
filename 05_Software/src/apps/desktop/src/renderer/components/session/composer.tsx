@@ -20,9 +20,12 @@ import { useAttachments } from "./attachments.js";
 import { ImageAttachmentChip } from "./image-attachment-chip.js";
 import { ReasoningPicker } from "./reasoning-picker.js";
 
+export type ComposerState = Pick<SessionState, "mode" | "modelRef" | "status" | "activeTurnId" | "reasoning">;
+
 export function Composer({
   state,
   disabled,
+  sendDisabled: sendingLocked = false,
   archived = false,
   permissionLocked = false,
   send,
@@ -36,8 +39,9 @@ export function Composer({
   inspectorControls?: ReactNode;
   sessionId?: string;
   workbenchId?: string;
-  state: SessionState;
+  state: ComposerState;
   disabled: boolean;
+  sendDisabled?: boolean;
   archived?: boolean;
   permissionLocked?: boolean;
   send: (text: string, images?: string[]) => Promise<boolean>;
@@ -81,7 +85,7 @@ export function Composer({
   }, [text]);
   const running = !!state.activeTurnId;
   const submitting = useRef(false);
-  const locked = disabled || state.status === "awaiting_approval";
+  const locked = disabled || sendingLocked || state.status === "awaiting_approval";
   // The message box is disabled while a send is pending, which drops its focus; once it is enabled again
   // focus returns there (a refused send keeps the draft to edit or resend, REQ-UX-f20cb322), unless the
   // user has focused something else meanwhile.

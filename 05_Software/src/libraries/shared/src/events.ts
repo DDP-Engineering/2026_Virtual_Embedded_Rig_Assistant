@@ -7,6 +7,12 @@ import {
 } from "./documents.js";
 import { downloadApprovalSchema, validDownloadApproval } from "./downloads.js";
 import type { Channel, Request, Response } from "./ipc.js";
+import {
+  planCommentSchema,
+  planFeedbackIdSchema,
+  planReviewSchema,
+  planRevisionSchema,
+} from "./plan-review.js";
 import { programApprovalSchema, validProgramApproval } from "./program-rules.js";
 import { reasoningOptionSchema } from "./provider-discovery.js";
 import {
@@ -238,6 +244,15 @@ export const sessionEventSchema = z.discriminatedUnion("type", [
     bytes: count,
   }),
   z.strictObject({ type: z.literal("todo.updated"), items: todoItemsSchema }),
+  z.strictObject({ type: z.literal("plan.comments.saved"), comments: z.array(planCommentSchema) }),
+  z.strictObject({ type: z.literal("plan.comment.removed"), commentId: planFeedbackIdSchema }),
+  z.strictObject({ type: z.literal("plan.review.submitted"), review: planReviewSchema }),
+  z.strictObject({
+    type: z.literal("plan.review.restored"),
+    reviewId: planFeedbackIdSchema,
+    expectedFeedbackRevision: planRevisionSchema,
+    comments: z.array(planCommentSchema),
+  }),
   usageEventSchema,
   z.strictObject({
     type: z.literal("error"),

@@ -1361,7 +1361,7 @@ legend {
   display: grid;
   gap: 0.75rem;
 }
-.plan-list li {
+.plan-list > li {
   display: flex;
   align-items: flex-start;
   gap: 0.5rem;
@@ -1373,7 +1373,7 @@ legend {
   flex-shrink: 0;
   margin-top: 0.1rem;
 }
-.plan-list li > div {
+.plan-list > li > div {
   min-width: 0;
 }
 .plan-text {
@@ -1384,6 +1384,61 @@ legend {
   display: block;
   font-size: 0.875rem;
   color: var(--muted-foreground);
+}
+.plan-actions,
+.plan-live-actions {
+  display: flex;
+  align-items: start;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-block: 0.5rem;
+}
+.plan-comments {
+  padding-inline-start: 1rem;
+}
+.plan-comments li {
+  margin-block: 1rem;
+}
+.plan-feedback-text,
+.plan-comments blockquote,
+.plan-comment-dialog blockquote {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.plan-comments blockquote,
+.plan-comment-dialog blockquote {
+  margin-inline: 0;
+  border-inline-start: 0.2rem solid var(--muted-foreground);
+  padding-inline-start: 0.5rem;
+}
+.plan-comment-dialog {
+  width: min(40rem, calc(100vw - 2rem));
+  max-height: calc(100dvh - 2rem);
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+.plan-editor-heading {
+  position: sticky;
+  top: 0;
+  background: var(--background);
+  z-index: 1;
+}
+.plan-comment-dialog textarea {
+  width: 100%;
+  min-height: 6rem;
+  max-height: 40dvh;
+  resize: vertical;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.plan-comment-dialog label {
+  display: grid;
+  min-width: 0;
+  gap: 0.4rem;
+  margin-block: 0.75rem;
+}
+.plan-review-history {
+  margin-block: 1rem;
 }
 /* Bookmarks tab: fixed controls above a list that scrolls on its own. */
 .bookmarks-tab {

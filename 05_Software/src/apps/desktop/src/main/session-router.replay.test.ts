@@ -133,9 +133,10 @@ async function harness(delays: ((signal: AbortSignal) => Promise<void>)[] = []) 
       service.send(id, text);
       return id;
     });
-  const snapshot = (id: string) => router.inSession(id, (service) => service.get(id), false);
+  const snapshot = (id: string) =>
+    router.inSession(id, (service) => service.get(id), { purpose: "metadata" });
   const done = async (id: string) =>
-    (await router.inSession(id, (service) => ({ done: service.waitIdle(id) }), false)).done;
+    (await router.inSession(id, (service) => ({ done: service.waitIdle(id) }), { purpose: "metadata" })).done;
   return { root, folders, runtimes, router, emitted, activity, start, snapshot, done };
 }
 
@@ -169,8 +170,12 @@ it("decides a background workbench's approval in that workbench while another ru
   // A's session is A's: B's identity does not reach it, and B's session is not in A.
   const idA = activity[1]?.snapshot.config.id as string;
   const idB = activity[0]?.snapshot.config.id as string;
-  await expect(h.router.inSession(sessionA, () => 0, false, idB)).rejects.toMatchObject({ code: "CONFLICT" });
-  await expect(h.router.inSession(sessionB, () => 0, false, idA)).rejects.toMatchObject({ code: "CONFLICT" });
+  await expect(h.router.inSession(sessionA, () => 0, { purpose: "metadata" }, idB)).rejects.toMatchObject({
+    code: "CONFLICT",
+  });
+  await expect(h.router.inSession(sessionB, () => 0, { purpose: "metadata" }, idA)).rejects.toMatchObject({
+    code: "CONFLICT",
+  });
   // The approval is reviewed and decided while B is shown; the edit lands in A's folder only.
   const approval = (await h.snapshot(sessionA)).snapshot.approvals[0];
   if (!approval) throw Error("approval missing");
@@ -185,7 +190,7 @@ it("decides a background workbench's approval in that workbench while another ru
         requestSha256: approval.requestSha256,
         decision: "approved",
       }),
-    false,
+    { purpose: "metadata" },
     idA,
   );
   expect(await finished).toEqual({ stopReason: "end" });
@@ -213,7 +218,9 @@ it("stops a background session while the foreground workbench's turn runs on", a
   await heldB.reached;
   const doneA = h.done(sessionA);
   const doneB = h.done(sessionB);
-  expect(await h.router.inSession(sessionA, (service) => service.stop(sessionA), false)).toBe(true);
+  expect(
+    await h.router.inSession(sessionA, (service) => service.stop(sessionA), { purpose: "metadata" }),
+  ).toBe(true);
   expect(await doneA).toEqual({ stopReason: "aborted" });
   expect((await h.snapshot(sessionB)).snapshot.activeTurnId).not.toBeNull();
   heldB.release();

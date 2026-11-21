@@ -118,7 +118,7 @@ import { exportSession } from "./session-export.js";
 import { createSessionOrder } from "./session-order.js";
 import { installSessionPerformance } from "./session-performance.js";
 import { SessionRouter } from "./session-router.js";
-import { SessionsHost } from "./sessions.js";
+import { planReviewHandlers, SessionsHost } from "./sessions.js";
 import { drainShutdown } from "./shutdown.js";
 import { createPtyFactory } from "./terminal-pty.js";
 import { TerminalService } from "./terminals.js";
@@ -1249,6 +1249,11 @@ ipcMain.handle(
         router.inSession(sessionId, (s, owner) => ({
           text: sessionContent(owner)(s.itemDetail(sessionId, itemId, field)),
         })),
+      // Plan feedback and review reach the runtime holding the session in the named workbench.
+      ...planReviewHandlers(
+        (workbenchId, sessionId) => router.session(sessionId, workbenchId).runtime.sessions,
+        (value) => credentials.containsSecret(value),
+      ),
       "session.bookmark": ({ sessionId, messageId, bookmarked }) =>
         router.inSession(
           sessionId,
@@ -1256,7 +1261,7 @@ ipcMain.handle(
             s.bookmark(sessionId, messageId, bookmarked);
             return {};
           },
-          false,
+          { purpose: "metadata" },
         ),
       "session.bookmarks.remove": (request) =>
         router.inSession(
@@ -1268,7 +1273,7 @@ ipcMain.handle(
             );
             return {};
           },
-          false,
+          { purpose: "metadata" },
         ),
       "session.advanced.set": ({ sessionId, key, value }) =>
         router.inSession(
@@ -1277,14 +1282,14 @@ ipcMain.handle(
             s.setAdvanced(sessionId, key as AdvancedKey, value);
             return {};
           },
-          false,
+          { purpose: "metadata" },
         ),
       "session.compact": async ({ sessionId }) => {
         // Only the admission runs on the host queue: a summary may take minutes and must not hold other calls.
         const { completion } = await router.inSession(
           sessionId,
           (s) => ({ completion: s.compactNow(sessionId) }),
-          false,
+          { purpose: "metadata" },
         );
         return { status: await completion };
       },
@@ -1312,7 +1317,7 @@ ipcMain.handle(
               throw veraError("DENIED");
             return service.attachImage(sessionId, source);
           },
-          false,
+          { purpose: "metadata" },
           workbenchId,
         ),
       "session.image.capability": async ({ workbenchId, sessionId }) => {
@@ -1322,22 +1327,26 @@ ipcMain.handle(
         });
       },
       "session.send": ({ sessionId, text, images }) =>
-        router.inSession(sessionId, async (s, owner) => {
-          if (credentials.containsSecret(text)) throw { code: "INVALID", messageKey: "errors.INVALID" };
-          // Image identities resolve only while the session's workbench is shown (Display identities).
-          const sent = images?.length
-            ? await s.sendWithImages(
-                sessionId,
-                text,
-                images.map((path) => display.resolveSessionImagePath(owner.config.id, path)),
-              )
-            : s.send(sessionId, text);
-          embeddingWarmup.request(owner.config.id);
-          return sent;
-        }),
+        router.inSession(
+          sessionId,
+          async (s, owner) => {
+            if (credentials.containsSecret(text)) throw { code: "INVALID", messageKey: "errors.INVALID" };
+            // Image identities resolve only while the session's workbench is shown (Display identities).
+            const sent = images?.length
+              ? await s.sendWithImages(
+                  sessionId,
+                  text,
+                  images.map((path) => display.resolveSessionImagePath(owner.config.id, path)),
+                )
+              : s.send(sessionId, text);
+            embeddingWarmup.request(owner.config.id);
+            return sent;
+          },
+          { purpose: "ordinary", ordinarySessionId: sessionId },
+        ),
       // Stop and approval decisions must not wait for plugin loading and program probing.
       "session.stop": ({ sessionId }) =>
-        router.inSession(sessionId, (s) => ({ stopped: s.stop(sessionId) }), false),
+        router.inSession(sessionId, (s) => ({ stopped: s.stop(sessionId) }), { purpose: "metadata" }),
       "session.approval.decide": (request) =>
         router.inSession(
           request.sessionId,
@@ -1346,7 +1355,7 @@ ipcMain.handle(
             else s.decideApproval(request);
             return {};
           },
-          false,
+          { purpose: "metadata" },
         ),
       "session.reasoning.get": ({ sessionId }) =>
         router.inSession(sessionId, async (s) => {

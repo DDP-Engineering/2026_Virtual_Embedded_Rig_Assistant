@@ -809,13 +809,21 @@ export class WorkbenchService {
     if (lock?.token !== this.owned.token || lock.pid !== this.host.pid) throw veraError("DENIED");
     return state;
   }
+  private async refreshConfig(): Promise<WorkbenchConfig> {
+    const state = this.current();
+    const config = await this.config(state.folder);
+    if (config.id !== state.config.id) throw veraError("CONFLICT");
+    this.state = { ...state, config };
+    return config;
+  }
+  /** Read current validated configuration without skill/plugin warning discovery. Host-only. */
+  readConfig(): Promise<WorkbenchConfig> {
+    return this.run(() => this.refreshConfig());
+  }
   getConfig(): Promise<{ config: WorkbenchConfig; warnings: WorkbenchWarning[] }> {
     return this.run(async () => {
-      const state = this.current();
-      const config = await this.config(state.folder);
-      if (config.id !== state.config.id) throw veraError("CONFLICT");
-      this.state = { ...state, config };
-      return { config, warnings: await this.warnings(config, state.folder) };
+      const config = await this.refreshConfig();
+      return { config, warnings: await this.warnings(config, this.current().folder) };
     });
   }
   updateConfig(

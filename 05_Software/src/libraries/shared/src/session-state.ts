@@ -1,6 +1,12 @@
 import { z } from "zod";
 import { downloadApprovalSchema, validDownloadApproval } from "./downloads.js";
 import { type SessionEvent, usageEventSchema } from "./events.js";
+import {
+  equalPlanTarget,
+  planCommentViewSchema,
+  planReviewSchema,
+  planRevisionSchema,
+} from "./plan-review.js";
 import { programApprovalSchema, validProgramApproval } from "./program-rules.js";
 import { reasoningOptionSchema } from "./provider-discovery.js";
 import {
@@ -57,6 +63,7 @@ export const sessionStateSchema = z.strictObject({
         text: z.string(),
         images: messageImagesSchema.optional(),
         pending: z.boolean().optional(),
+        reviewId: z.string().optional(),
         timestamp: z.number().int().nonnegative().optional(),
         usage: z
           .strictObject({
@@ -122,6 +129,10 @@ export const sessionStateSchema = z.strictObject({
   ),
   artifacts: z.array(z.strictObject({ artifactId: z.string(), name: z.string(), bytes: z.number() })),
   todos: todoItemsSchema,
+  planRevision: planRevisionSchema,
+  planFeedbackRevision: planRevisionSchema,
+  planComments: z.array(planCommentViewSchema),
+  planReviews: z.array(planReviewSchema),
   usage: usageEventSchema.omit({ type: true }),
 });
 export type SessionState = z.infer<typeof sessionStateSchema>;
@@ -140,6 +151,10 @@ export function emptySessionState(): SessionState {
     changes: [],
     artifacts: [],
     todos: [],
+    planRevision: 0,
+    planFeedbackRevision: 0,
+    planComments: [],
+    planReviews: [],
     usage: { inputTokens: 0, outputTokens: 0 },
   };
 }
@@ -151,8 +166,10 @@ type Collection =
   | "turns"
   | "approvals"
   | "changes"
-  | "artifacts";
-type Records = "items" | "turns" | "approvals";
+  | "artifacts"
+  | "planComments"
+  | "planReviews";
+type Records = "items" | "turns" | "approvals" | "planComments" | "planReviews";
 
 /**
  * Write access to one state for the shared reducer. A fold owns the whole state and mutates it in
@@ -318,6 +335,8 @@ function reduce(d: Draft, event: SessionEvent): void {
       s.usage = settledUsage(s.usage);
       for (let i = 0; i < s.turns.length; i++)
         if (s.turns[i]?.turnId === event.turnId) d.at("turns", i).stopReason = event.stopReason;
+      for (let i = 0; i < s.planReviews.length; i++)
+        if (s.planReviews[i]?.turnId === event.turnId) d.at("planReviews", i).stopReason = event.stopReason;
       // Unfinalized live text is dropped; every remaining assistant item is therefore finalized.
       const kept = s.items.filter((i) => i.kind !== "assistant" || !i.streaming);
       if (kept.length !== s.items.length) d.replaceItems(kept);
@@ -330,16 +349,19 @@ function reduce(d: Draft, event: SessionEvent): void {
       }
       break;
     }
-    case "message.user":
+    case "message.user": {
+      const review = s.planReviews.find((r) => r.messageId === event.messageId);
       if (d.find(event.messageId) < 0)
         d.push({
           kind: "user",
           id: event.messageId,
           text: event.text,
+          ...(review ? { reviewId: review.id } : {}),
           ...(event.images && { images: event.images }),
           ...(event.timestamp !== undefined && { timestamp: event.timestamp }),
         });
       break;
+    }
     case "context.compacted":
       // Agent-side derived context; the transcript projection has nothing to show.
       break;
@@ -456,7 +478,36 @@ function reduce(d: Draft, event: SessionEvent): void {
     }
     case "todo.updated":
       s.todos = event.items;
+      s.planRevision++;
+      for (let i = 0; i < s.planComments.length; i++) d.at("planComments", i).stale = true;
       break;
+    case "plan.comments.saved":
+    case "plan.review.restored":
+      s.planFeedbackRevision++;
+      for (const comment of event.comments) {
+        const index = s.planComments.findIndex((c) => c.id === comment.id);
+        const previous = s.planComments[index];
+        const next = {
+          ...comment,
+          stale:
+            comment.target.revision !== s.planRevision ||
+            !!(previous?.stale && equalPlanTarget(previous.target, comment.target)),
+        };
+        if (index < 0) d.list("planComments").push(next);
+        else d.list("planComments")[index] = next;
+      }
+      break;
+    case "plan.comment.removed":
+      s.planFeedbackRevision++;
+      s.planComments = s.planComments.filter((c) => c.id !== event.commentId);
+      break;
+    case "plan.review.submitted": {
+      s.planFeedbackRevision++;
+      const captured = new Set(event.review.comments.map((c) => c.id));
+      s.planComments = s.planComments.filter((c) => !captured.has(c.id));
+      d.list("planReviews").push(event.review);
+      break;
+    }
     case "usage.updated": {
       const input = Math.max(0, event.inputTokens - s.usage.inputTokens);
       const output = Math.max(0, event.outputTokens - s.usage.outputTokens);

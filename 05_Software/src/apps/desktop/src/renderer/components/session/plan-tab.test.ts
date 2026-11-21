@@ -70,6 +70,7 @@ it("uses snapshot sequence, follows each replacement and clear, and treats text 
   let notify: ((event: SessionEvent) => void) | undefined;
   const off = vi.fn();
   const subscribe = vi.spyOn(api, "subscribe").mockImplementation(((...args: unknown[]) => {
+    if (args[0] !== "session") return () => {};
     notify = args[3] as (event: SessionEvent) => void;
     return off;
   }) as typeof api.subscribe);
@@ -115,6 +116,7 @@ it("isolates late snapshots/events across session and workbench changes", async 
   );
   const callbacks: ((e: SessionEvent) => void)[] = [];
   vi.spyOn(api, "subscribe").mockImplementation(((...args: unknown[]) => {
+    if (args[0] !== "session") return () => {};
     callbacks.push(args[3] as (e: SessionEvent) => void);
     return () => {};
   }) as typeof api.subscribe);

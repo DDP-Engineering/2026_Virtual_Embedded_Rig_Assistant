@@ -664,6 +664,8 @@ export function App() {
           >
             {/* One session view per window (PERF-05): the chat and its side tabs share one read. */}
             <SessionViewProvider
+              key={`${bench.data?.folder ?? ""}/${benchId ?? ""}`}
+              workbenchId={benchId}
               id={benchId && chat && !settings && !plugins && help === undefined ? activeSession : undefined}
               changed={changed}
             >
@@ -737,7 +739,12 @@ export function App() {
                   }
                   plan={
                     benchId && activeSession && chat && !settings ? (
-                      <PlanTab workbenchId={benchId} sessionId={activeSession} />
+                      <PlanTab
+                        workbenchId={benchId}
+                        sessionId={activeSession}
+                        readOnly={readOnly}
+                        archived={selected?.archived ?? true}
+                      />
                     ) : undefined
                   }
                   bookmarks={
