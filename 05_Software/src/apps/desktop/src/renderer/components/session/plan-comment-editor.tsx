@@ -56,6 +56,8 @@ export function PlanCommentEditor({
   const missing = initial.action !== "create" && !comment;
   const target = capture.projection === projection ? capture.target : undefined;
   const valid = !!state && !!target && currentPlanTarget(state, target);
+  // Re-anchoring keeps the saved text; creating or editing needs some non-space feedback.
+  const blank = initial.action !== "reanchor" && !text.trim();
   useEffect(() => {
     // Chromium disables caret navigation on HTML-readonly textareas; block edits without replacing native selection.
     const node = selector.current;
@@ -67,7 +69,8 @@ export function PlanCommentEditor({
   const steps =
     state?.todos.map((_item, index) => ({ identity: `${state.planRevision}/${index}`, index })) ?? [];
   async function submit() {
-    if (!state || disabled || missing || saving.current || (initial.action !== "edit" && !valid)) return;
+    if (!state || disabled || missing || blank || saving.current || (initial.action !== "edit" && !valid))
+      return;
     saving.current = true;
     const current = generation.current;
     const expectedFeedbackRevision =
@@ -148,7 +151,7 @@ export function PlanCommentEditor({
             <button
               className="primary"
               type="submit"
-              disabled={disabled || !state || missing || (initial.action !== "edit" && !valid)}
+              disabled={disabled || !state || missing || blank || (initial.action !== "edit" && !valid)}
             >
               {initial.action === "reanchor" ? t("plan.saveAnchor") : t("plan.saveDraft")}
             </button>

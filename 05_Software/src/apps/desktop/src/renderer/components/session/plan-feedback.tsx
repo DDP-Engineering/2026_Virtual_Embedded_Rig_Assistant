@@ -64,9 +64,8 @@ export function PlanFeedback({
     const current = generation.current;
     try {
       await operation();
-      if (current !== generation.current) return false;
-      retry();
-      return true;
+      // The live plan events update the shared view; a reload here would blank a streaming chat.
+      return current === generation.current;
     } catch (error) {
       if (current !== generation.current) return false;
       setFailure(error);
@@ -152,6 +151,7 @@ export function PlanFeedback({
         code === "CONFLICT" ||
         code === "INVALID" ||
         code === "BUSY" ||
+        code === "TURN_LIMIT" ||
         code === "DENIED" ||
         code === "NOT_FOUND"
       )

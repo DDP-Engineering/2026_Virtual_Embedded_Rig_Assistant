@@ -316,8 +316,8 @@ test("Plan comment read/edit/re-anchor/delete and review work with keyboard-only
   await activate("Add comment to step 2");
   const selector = dialog.getByRole("textbox", { name: "Step text", exact: true });
   await expect(dialog.getByRole("button", { name: "Cancel", exact: true })).toBeFocused();
-  await page.keyboard.press("Tab");
-  await expect(dialog.getByRole("button", { name: "Save draft", exact: true })).toBeFocused();
+  // Save draft stays disabled, so out of the Tab order, until the feedback has some text.
+  await expect(dialog.getByRole("button", { name: "Save draft", exact: true })).toBeDisabled();
   await page.keyboard.press("Tab");
   await expect(dialog.getByRole("combobox", { name: "Step", exact: true })).toBeFocused();
   await page.keyboard.press("Tab");

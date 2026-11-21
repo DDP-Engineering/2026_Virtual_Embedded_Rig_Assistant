@@ -153,11 +153,30 @@ it("saves exact multiline feedback on one duplicate occurrence, edits without re
     commentId: "pc_1",
     text: "Changed\n😀",
   });
-  await act(async () => button("Drafts: 1").click());
+  // No reload after the save: the drafts list stays open where the user left it.
   await act(async () => button("Delete feedback").click());
   expect(state.planComments).toEqual([]);
   expect(state.todos).toHaveLength(3);
   expect(vi.mocked(api.invoke).mock.calls.some(([channel]) => channel === "session.send")).toBe(false);
+});
+
+it("keeps Save off for blank feedback and saves without reloading the shared session view", async () => {
+  await render();
+  await open();
+  const save = button("Save draft");
+  expect(save.disabled).toBe(true);
+  await feedback("  ");
+  expect(save.disabled).toBe(true);
+  await feedback("x");
+  expect(save.disabled).toBe(false);
+  const reads = () =>
+    vi.mocked(api.invoke).mock.calls.filter(([channel]) => channel === "session.get").length;
+  const before = reads();
+  await act(async () => save.click());
+  expect(state.planComments).toHaveLength(1);
+  // The live plan event updates the view; a reload would blank a chat that is streaming meanwhile.
+  expect(reads()).toBe(before);
+  expect(button("Drafts: 1")).toBeTruthy();
 });
 
 it("captures a backwards keyboard UTF16 fragment and permits an empty whole step", async () => {
@@ -381,6 +400,11 @@ it.each(["", "Unsaved\n 😀 μC "])(
     };
     await act(async () => privacy({ type: "settings.changed" }));
     expect(field("Feedback").value).toBe(input);
+    if (!input) {
+      // Blank feedback is never saved (Delete removes a draft); the empty input still stays as typed.
+      expect(button("Save draft").disabled).toBe(true);
+      return;
+    }
     const base = vi.mocked(api.invoke).getMockImplementation()!;
     vi.mocked(api.invoke).mockImplementation(async (channel, raw) => {
       if (channel === "session.plan.comment.save") throw veraError("OFFLINE");
@@ -502,6 +526,7 @@ it.each(["identical replacement", "privacy projection"])(
     });
     // The consumed pointer capture must not poison the next ordinary no-fragment click.
     await open(1);
+    await feedback("Next");
     expect(button("Save draft").disabled).toBe(false);
     expect(container.querySelector("dialog blockquote")?.textContent).toBe("A😀B\nμC");
   },

@@ -40,6 +40,18 @@ it("accepts strict feedback metadata without losing Unicode, ranges, empty steps
   ).toBe(false);
 });
 
+it("refuses blank feedback text but keeps written text verbatim", () => {
+  const change = (text: string) => [
+    { action: "create", expectedFeedbackRevision: 0, text, target },
+    { action: "edit", expectedFeedbackRevision: 1, commentId: "pc_1", text },
+  ];
+  for (const text of ["", " ", "\n\t "])
+    for (const value of change(text))
+      expect(shared.planCommentChangeSchema.safeParse(value).success).toBe(false);
+  for (const value of change(" μC 😀\n"))
+    expect(shared.planCommentChangeSchema.parse(value)).toMatchObject({ text: " μC 😀\n" });
+});
+
 it("validates exact UTF16 targets without trimming, normalization or surrogate splitting", () => {
   expect(shared.validPlanTarget(target)).toBe(true);
   expect(shared.validPlanTarget({ ...target, range: null, stepText: "" })).toBe(true);

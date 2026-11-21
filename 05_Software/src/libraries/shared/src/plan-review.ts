@@ -43,18 +43,20 @@ export const planReviewRestoreSchema = z.strictObject({
   expectedFeedbackRevision: planRevisionSchema,
 });
 export type PlanReviewRestore = z.infer<typeof planReviewRestoreSchema>;
+/** Feedback text as written (never trimmed), with at least one non-space character. */
+const planCommentTextSchema = z.string().refine((text) => text.trim().length > 0);
 export const planCommentChangeSchema = z.discriminatedUnion("action", [
   z.strictObject({
     action: z.literal("create"),
     expectedFeedbackRevision: planRevisionSchema,
-    text: z.string(),
+    text: planCommentTextSchema,
     target: planTargetSchema,
   }),
   z.strictObject({
     action: z.literal("edit"),
     expectedFeedbackRevision: planRevisionSchema,
     commentId: planFeedbackIdSchema,
-    text: z.string(),
+    text: planCommentTextSchema,
   }),
   z.strictObject({
     action: z.literal("reanchor"),
