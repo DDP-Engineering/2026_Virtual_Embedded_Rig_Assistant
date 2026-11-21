@@ -51,7 +51,8 @@ export async function discoverProvider(
       .get()
       .settings.providers.custom.find((p) => `custom:${p.slug}` === request.savedId);
     // A saved key may only return to the exact configured origin and path.
-    if (!saved || saved.baseUrl.replace(/\/$/, "") !== `${origin}/v1`) throw veraError("DENIED");
+    if (!saved || saved.preset || saved.baseUrl.replace(/\/$/, "") !== `${origin}/v1`)
+      throw veraError("DENIED");
     const credential = await host.credentials.read(request.savedId);
     if (credential?.type === "api_key") key = credential.key;
   }

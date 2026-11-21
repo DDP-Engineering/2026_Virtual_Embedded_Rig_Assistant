@@ -32,6 +32,18 @@ it("defaults to every content tab, preserves presentation settings and validates
   expect(workbenchPatchSchema.safeParse({ interface: { extra: true } }).success).toBe(false);
 });
 
+// REQ-DATA-7521ac37
+it("opts in to Git per workbench through the format-1 interface patch", () => {
+  const seed = { format: 1, id: "wb_01JB8Z6Q4M7N2K5R9T3V8X1Y0C", name: "Board" };
+  const base = schema.parse(seed);
+  expect(base.interface.git_status).toBe(false);
+  const enabled = mergeWorkbench(base, workbenchPatchSchema.parse({ interface: { git_status: true } }));
+  expect(schema.parse(enabled).interface.git_status).toBe(true);
+  expect(mergeWorkbench(enabled, { interface: { right_panel_tabs: [] } }).interface.git_status).toBe(true);
+  expect(schema.parse({ ...seed, name: "Another board" }).interface.git_status).toBe(false);
+  expect(workbenchPatchSchema.safeParse({ interface: { git_status: "true" } }).success).toBe(false);
+});
+
 // REQ-DATA-4a830b9a
 it("defaults chat detail to normal, merges independently and rejects invalid levels", () => {
   const base = schema.parse({ format: 1, id: "wb_01JB8Z6Q4M7N2K5R9T3V8X1Y0C", name: "Board" });

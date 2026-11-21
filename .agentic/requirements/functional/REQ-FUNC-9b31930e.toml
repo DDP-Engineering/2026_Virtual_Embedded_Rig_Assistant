@@ -1,0 +1,14 @@
+schema = 1
+id = "REQ-FUNC-9b31930e"
+title = "Report actual retrieval and use keyword fallback"
+status = "active"
+requirement = """
+When a document search is requested, the system shall report the ranking mode actually used, its fallback reason when keyword replaced semantic or hybrid ranking, or a reason no ranking was available.
+"""
+verification = "Exercise keyword, hybrid and semantic, hold rebuild, stop the ranking port, exhaust an embedding deadline, or make vectors unavailable, and check usage, model isolation, and preserved unexpected failures."
+affected_paths = ["05_Software/src/libraries/core/src/knowledge/search-ranking.ts", "05_Software/src/libraries/core/src/knowledge/embedding.ts", "05_Software/src/libraries/shared/src/documents.ts", "05_Software/src/libraries/core/src/tools/documents.ts", "05_Software/src/apps/desktop/src/renderer/components/session/tool-details.tsx", "05_Software/src/apps/desktop/src/renderer/locales"]
+linked_tests = ["05_Software/src/libraries/core/src/knowledge/embedding.test.ts", "05_Software/src/apps/desktop/src/main/indexer-handler.test.ts", "05_Software/src/libraries/core/src/knowledge/search.test.ts", "05_Software/src/libraries/core/src/knowledge/embedding-ingest.test.ts", "05_Software/src/apps/desktop/src/renderer/components/session/tool-details.test.ts", "05_Software/src/libraries/shared/src/documents-ipc.test.ts"]
+spec = ""
+priority = "normal"
+created = 2026-11-21
+updated = 2026-11-21

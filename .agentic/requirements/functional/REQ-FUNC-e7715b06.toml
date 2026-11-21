@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-FUNC-e7715b06"
+title = "Discover QwenCloud models by connection"
+status = "active"
+requirement = "When a QwenCloud plan returns a usable model list, VERA shall offer the IDs returned for that connection with documented capabilities for exact matching IDs."
+verification = "Return separate catalogs for the two saved plans and compare their model references and capability projections, including an ID with no documented capabilities."
+affected_paths = ["05_Software/src/libraries/shared/src/provider-presets.ts","05_Software/src/libraries/core/src/llm/preset-connection.ts","05_Software/src/libraries/core/src/llm/providers.ts","05_Software/src/libraries/core/src/llm/preset-catalog-cache.ts","05_Software/src/apps/desktop/src/renderer/components/custom-provider-editor.tsx"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/qwencloud-presets.test.ts"]
+created = 2026-11-20
+updated = 2026-11-20

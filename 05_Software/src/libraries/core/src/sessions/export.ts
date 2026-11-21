@@ -34,7 +34,7 @@ export function buildSessionMarkdown(data: SessionExport, changes: ChangeDetail[
     if (item.kind === "user" || item.kind === "assistant") {
       out.push(
         "",
-        `### ${item.kind === "user" ? `User${item.pending ? " (pending)" : ""}${bookmarks.has(item.id) ? " (bookmarked)" : ""}` : "Assistant"}`,
+        `### ${item.kind === "user" ? `${item.parentSessionId ? "Parent agent instruction" : "User"}${item.pending ? " (pending)" : ""}${bookmarks.has(item.id) ? " (bookmarked)" : ""}` : "Assistant"}`,
         "",
         block(item.text),
       );

@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-REL-fffacb83"
+title = "Stop when a selected hosted model is unavailable"
+status = "active"
+requirement = "If the selected hosted model is unavailable, VERA shall report failure on that selection."
+verification = "Remove an alternate model from discovery and return HTTP 404 for an explicitly configured model. Assert the failure and no request to another model or binding."
+affected_paths = ["05_Software/src/libraries/shared/src/hosted-provider-presets.ts", "05_Software/src/libraries/core/src/llm/providers.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/gateway-provider-presets.test.ts"]
+created = 2026-11-20
+updated = 2026-11-20

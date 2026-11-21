@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-UX-69c26603"
+title = "Offer international API and plan choices in Providers"
+status = "active"
+requirement = "When a user searches for MiniMax or Z.AI under Settings Providers, VERA shall offer separate API and plan choices with fixed international routes and explicit model selection."
+verification = "Search by both brand names in the browser suite, select each choice and verify the model field and read-only registered URL."
+affected_paths = ["05_Software/src/libraries/shared/src/provider-presets.ts","05_Software/src/apps/desktop/src/renderer/components/custom-provider-editor.tsx"]
+linked_tests = ["05_Software/tests/e2e/providers-layout.spec.ts"]
+created = 2026-11-20
+updated = 2026-11-20

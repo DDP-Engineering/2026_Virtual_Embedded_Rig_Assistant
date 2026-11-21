@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-UX-91e43161"
+title = "Operate the composer microphone"
+status = "active"
+requirement = "When a user operates the microphone control in a writable chat, VERA shall record for the held gesture in push-to-talk mode or between activations in start/stop mode."
+verification = "Using pointer and keyboard on the microphone, observe recording begin/end on the configured gestures and verify release after focus loss."
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/session/dictation-button.tsx","05_Software/src/apps/desktop/src/renderer/dictation/use-composer-dictation.ts"]
+linked_tests = ["05_Software/tests/e2e/dictation-composer.spec.ts","05_Software/tests/e2e/dictation-packaged-composer.spec.ts"]
+priority = "normal"
+created = 2026-11-20
+updated = 2026-11-20

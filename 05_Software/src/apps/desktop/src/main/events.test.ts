@@ -108,6 +108,26 @@ it("transports ingest progress and redacts document paths while preserving statu
     folders: [{ path: "docs/[REDACTED]", files: 12 }],
   });
   expect(send.mock.calls[3]?.[1].event).toEqual({ type: "index.guard", guard: null });
+  const workbenchId = "wb_01JB8Z6Q4M7N2K5R9T3V8X1Y0C";
+  const status = {
+    workbenchId,
+    indexLease: 42,
+    revision: 7,
+    state: "count-guard" as const,
+    searchable: 5,
+    progress: null,
+    volume: { files: 12, bytes: 100 },
+    guard: { files: 12, limit: 10, folders: [{ path: "docs/secret", files: 12 }] },
+  };
+  emit({ topic: "workbench", id: workbenchId, event: { type: "index.status", status } });
+  expect(send.mock.calls[4]?.[1].event).toEqual({
+    type: "index.status",
+    status: {
+      ...status,
+      guard: { ...status.guard, folders: [{ path: "docs/[REDACTED]", files: 12 }] },
+    },
+  });
+
   for (const call of send.mock.calls) expect(eventEnvelopeSchema.safeParse(call[1]).success).toBe(true);
 });
 // REQ-FUNC-2e8a54c7 REQ-DATA-d968385c
@@ -326,7 +346,7 @@ it("scrubs event user text while short secrets preserve protocol fields and disc
       },
       {
         type: "opened" as const,
-        workbench: { config, folder: `/data/${privateKey}`, readOnly: false, warnings: [] },
+        workbench: { config, indexLease: 1, folder: `/data/${privateKey}`, readOnly: false, warnings: [] },
       },
     ])
       expect(emit({ topic: "workbench", id: config.id, event })).toBe(true);
@@ -482,6 +502,34 @@ it("sends large session events to the renderer bounded", () => {
   });
 });
 
+it("keeps original document search metadata in live events and restored items after redaction", () => {
+  const state = emptySessionState();
+  const documentSearch = { coverage: "partial", usage: { mode: "keyword" } } as const;
+  const summary = JSON.stringify({ ...documentSearch, results: [{ snippet: "fake-search-secret" }] });
+  const redact = (text: string) => scrub(text, ["usage", "partial", "keyword", "fake-search-secret"]);
+  const send = vi.fn();
+  const emit = createEventEmitter(() => ({ isDestroyed: () => false, send }), redact);
+  emit({
+    topic: "session",
+    id: "ses_00000000000000000000000001",
+    event: { type: "tool.done", callId: "call", ok: true, summary, durationMs: 1, documentSearch },
+  });
+  expect(send.mock.calls[0]?.[1].event.documentSearch).toEqual(documentSearch);
+  expect(send.mock.calls[0]?.[1].event.summary).not.toContain("fake-search-secret");
+  state.items.push({
+    kind: "tool",
+    id: "call",
+    turnId: null,
+    name: "search_docs",
+    args: {},
+    status: "ok",
+    summary,
+    documentSearch,
+  });
+  const snapshot = sessionStateSchema.parse(sessionOutput.rendererSessionSnapshot(state, redact));
+  expect(snapshot.items[0]).toMatchObject({ documentSearch, summary: redact(summary) });
+});
+
 it("keeps validated privacy protocol choices when a stored secret equals an enum spelling", () => {
   const send = vi.fn();
   const emit = createEventEmitter(
@@ -498,4 +546,27 @@ it("keeps validated privacy protocol choices when a stored secret equals an enum
     emit({ topic: "workbench", id: config.id, event: { type: "config.changed", config, warnings: [] } }),
   ).not.toThrow();
   expect(send.mock.calls[0]?.[1].event.config.privacy).toEqual(config.privacy);
+});
+
+it("keeps safe retry hints in live and restored rate errors", () => {
+  const error = {
+    type: "error",
+    code: "PROVIDER",
+    messageKey: "provider.rateLimit",
+    retryable: false,
+    retryAfter: "12",
+  } as const;
+  const envelope = { topic: "session", id: "session-1", event: error } as const;
+  const identity = (text: string) => text;
+  const redact = (text: string) => scrub(text, ["12"]);
+  const live = sessionOutput.sanitizeEvent(envelope, identity);
+  expect(live).toMatchObject({ event: { retryAfter: "12" } });
+  expect(sessionOutput.sanitizeEvent(envelope, identity, redact)).not.toHaveProperty("event.retryAfter");
+  const state = emptySessionState();
+  const { type: _, ...fields } = error;
+  state.items.push({ kind: "error", id: "error-0", ...fields });
+  expect(sessionOutput.sanitizeSessionSnapshot(state, identity).items[0]).toHaveProperty("retryAfter", "12");
+  expect(
+    sessionOutput.rendererSessionSnapshot(state, identity, identity, redact).items[0],
+  ).not.toHaveProperty("retryAfter");
 });

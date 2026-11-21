@@ -1,10 +1,15 @@
-import { veraErrorSchema } from "@vera/shared";
+import { browserFailureCodeSchema, veraErrorSchema } from "@vera/shared";
 import { useTranslation } from "react-i18next";
+import { browserFailureText } from "../lib/browser-failure.js";
 
 export function ErrorMessage({ error }: { error: unknown }) {
   const { t } = useTranslation();
   const parsed = veraErrorSchema.safeParse(error);
   const sent = parsed.success ? parsed.data.messageKey : "errors.INTERNAL";
+  if (sent.startsWith("browser.failure.")) {
+    const browserFailure = browserFailureCodeSchema.safeParse(sent.slice("browser.failure.".length));
+    if (browserFailure.success) return <p role="alert">{browserFailureText(t, browserFailure.data)}</p>;
+  }
   const options = {
     operation: "",
     endpoint: "",
@@ -37,7 +42,20 @@ export function ErrorMessage({ error }: { error: unknown }) {
     "errors.YAML_INVALID": t("errors.YAML_INVALID", options),
     "errors.CONFIG_INVALID": t("errors.CONFIG_INVALID", options),
     "provider.auth": t("provider.auth", options),
-    "provider.rateLimit": t("provider.rateLimit", options),
+    "provider.openCodePlan": t("provider.openCodePlan"),
+    "provider.openCodeCatalog": t("provider.openCodeCatalog"),
+    "provider.openCodeBudget": t("provider.openCodeBudget"),
+    "provider.workspaceInvalid": t("provider.workspaceInvalid"),
+    "provider.workspaceUnavailable": t("provider.workspaceUnavailable"),
+    "provider.serviceBindingInvalid": t("provider.serviceBindingInvalid"),
+    "provider.serviceBindingAuth": t("provider.serviceBindingAuth"),
+    "provider.scopedModelUnavailable": t("provider.scopedModelUnavailable"),
+    "provider.qwenCloudAuth": t("provider.qwenCloudAuth"),
+    "provider.qwenCloudModel": t("provider.qwenCloudModel"),
+    "provider.qwenCloudQuota": t("provider.qwenCloudQuota"),
+    "provider.rateLimit": options.retryAfter
+      ? t("provider.rateLimitWithRetry", options)
+      : t("provider.rateLimit"),
     "provider.context": t("provider.context", options),
     "provider.failure": t("provider.failure", options),
     "provider.timeout": t("provider.timeout", options),

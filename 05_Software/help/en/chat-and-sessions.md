@@ -32,6 +32,12 @@ Ask the agent to inspect a workbench image by giving its relative path. With an 
 
 The agent can reopen a composer image from this session using its saved path after you send it. It can inspect up to eight images in one step and keeps the eight most recent tool images in the current turn.
 
+## Dictate a message
+
+Choose a model in [Settings > Dictation](settings.md). In push-to-talk mode, hold the microphone button or its configured shortcut. With the button focused, hold Space or Enter. Release to transcribe. In start/stop mode, press the button or shortcut once to record and again to transcribe. Escape or Cancel dictation discards the recording or transcription and lets a running agent turn continue. Leaving the chat or losing window focus cancels dictation.
+
+The result appears at the original caret or after the selected text. If you edited the draft while dictating, the result goes at the end. Existing text and attachments stay in the draft. Review the text and send it with Enter or Send.
+
 ## Steer or stop a running turn
 
 While the agent works, you can keep typing and send more messages, for example "also check the errata". They show **Pending delivery** until the agent takes them in at its next step. While an approval card waits for your decision, sending is paused.
@@ -43,6 +49,14 @@ While the agent works, you can keep typing and send more messages, for example "
 When VERA delegates a task, **Delegated sessions** in the parent chat lists each child and its current outcome. Select a child to open its Chat tab and follow its transcript. **Parent session** returns to the parent.
 
 To stop a running child, open it and use **Stop** in its composer. The parent can keep working. If approval is requested, use the approval card in that session. When you reopen either session after restarting VERA, the link and the outcome of the delegated turn are still available.
+
+The parent agent can send follow-up instructions in the same child conversation and choose its model and reasoning for later turns. The transcript labels these messages **Parent agent instruction**. If the child is already working, an eligible follow-up waits for its next model request. Use the child’s approval card when a user decision is required.
+
+A new child starts in the parent’s current permission mode. After launch, choose each session’s mode separately in its composer. For a parent in Bypass, choose **Allow Full Access for new child sessions** and confirm to authorize future eligible launches. To end that authorization, choose **Revoke Full Access for future child launches**. Existing children keep their modes. To reduce a child’s access, change its mode in its own chat. Publishing remotely requires separate permission.
+
+In a shared checkout, let one implementation child finish and verify its handover before starting the next.
+
+In a delegated Bypass session, shell commands run automatically when they match a user-saved workbench command prefix. Other shell commands ask for your approval.
 
 ## Detail levels
 

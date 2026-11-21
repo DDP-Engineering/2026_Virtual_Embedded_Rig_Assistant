@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-REL-fe7e398d"
+title = "Report insufficient model space"
+status = "active"
+requirement = "If the download volume cannot fit a dictation model, VERA shall report insufficient space and leave the model available to retry."
+verification = "Simulate a low-space check and an ENOSPC error during transfer; assert the failure reason and clean staging."
+affected_paths = ["05_Software/src/apps/desktop/src/main/dictation/models.ts", "05_Software/src/apps/desktop/src/main/dictation/integrity.ts", "05_Software/src/apps/desktop/src/main/dictation/transfer.ts", "05_Software/src/apps/desktop/src/main/index.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/dictation/models.test.ts"]
+created = 2026-11-20
+updated = 2026-11-20

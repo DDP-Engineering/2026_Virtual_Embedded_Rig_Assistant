@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-REL-ff7bba69"
+
+title = "Report an unavailable dictation model"
+
+status = "active"
+
+requirement = "If a job cannot resolve a verified local model, VERA shall return the missing-model outcome."
+
+verification = "Start against a null model resolution and verify a later installed selection can start a fresh job."
+
+affected_paths = ["05_Software/src/apps/desktop/src/main/dictation/capture-jobs.ts"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/main/dictation/capture-jobs.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-20
+updated = 2026-11-20

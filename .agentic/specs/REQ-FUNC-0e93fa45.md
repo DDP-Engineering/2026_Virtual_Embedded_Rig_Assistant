@@ -10,9 +10,10 @@ retains full extraction in a verified content-addressed cache.
 
 Search defaults hybrid/k8; k1..20. pathGlob is validated with the file-tool
 glob policy and filters candidates before top50 ranking. Results carry exact
-chunk locator/ref, snippet<=300 UTF16 characters and finite score. No indexed
-chunks yields a message suggesting grep. Empty/punctuation lexical queries
-return empty candidates. Semantic errors are actionable, with no remote fallback.
+chunk locator/ref, snippet<=300 UTF16 characters and finite score. An unsettled
+index without published chunks suggests grep. Empty/punctuation lexical queries
+return empty candidates. Search-time coverage, bounded revision conflicts and local
+keyword fallback follow [the retrieval metadata contract](REQ-FUNC-b5c2fe1e.md).
 
 The workbench selects the model for indexing, semantic query encoding and vector lookup.
 Model identity covers model/revision/dtype, the embedding descriptor and its pinned files.

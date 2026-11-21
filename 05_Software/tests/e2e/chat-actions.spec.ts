@@ -218,14 +218,18 @@ test("native chat runs a multiline block exactly once, creates and selects termi
     await page.locator(`#terminal-${pending.id}`).click();
     await page.locator(`[data-terminal-id="${pending.id}"] textarea`).focus();
     await page.keyboard.press("Enter");
+    // The first Add-Content in a fresh Windows PowerShell loads its module, which can take several seconds.
     await expect
-      .poll(async () => {
-        try {
-          return await readFile(join(folder, "pending.txt"), "utf8");
-        } catch {
-          return "";
-        }
-      })
+      .poll(
+        async () => {
+          try {
+            return await readFile(join(folder, "pending.txt"), "utf8");
+          } catch {
+            return "";
+          }
+        },
+        { timeout: 15_000 },
+      )
       .toContain("pending");
 
     // A foreground stdin reader must receive only the user's later input, never the dispatch wrapper.

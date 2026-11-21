@@ -24,7 +24,7 @@ const info: Response<"app.info"> = {
   signing: "unsigned" as const,
   locale: "en",
 };
-function fixture() {
+function fixture(hasUserActivation?: () => boolean) {
   const listeners = new Set<(event: unknown, payload: unknown) => void>();
   const transport = {
     invoke: vi.fn(async (_channel: string, _name: string, _request: unknown) => ({ ok: true, value: info })),
@@ -35,7 +35,7 @@ function fixture() {
       listeners.delete(listener);
     }),
   };
-  return { transport, listeners, bridge: createBridge(transport) };
+  return { transport, listeners, bridge: createBridge(transport, hasUserActivation) };
 }
 it("transports bounded document bytes and rejects invalid windows before transport", async () => {
   const { bridge, transport } = fixture();
@@ -54,6 +54,33 @@ it("transports bounded document bytes and rejects invalid windows before transpo
   });
   expect(transport.invoke).toHaveBeenCalledTimes(1);
 });
+it("requires live trusted input for a valid browser grant and validates status responses", async () => {
+  const activated = vi.fn(() => false);
+  const { bridge, transport } = fixture(activated);
+  const owner = {
+    workbenchId: "wb_01JB8Z6Q4M7N2K5R9T3V8X1Y0C",
+    sessionId: "ses_01J00000000000000000000000",
+  };
+  await expect(
+    bridge.invoke("browser.session.grant", { ...owner, origin: "https://example.com" }),
+  ).rejects.toMatchObject({ code: "DENIED" });
+  expect(transport.invoke).not.toHaveBeenCalled();
+  activated.mockReturnValueOnce(true);
+  transport.invoke.mockResolvedValueOnce({ ok: true, value: {} } as never);
+  await expect(
+    bridge.invoke("browser.session.grant", { ...owner, origin: " https://example.com " }),
+  ).resolves.toEqual({});
+  expect(transport.invoke).toHaveBeenCalledWith("vera:invoke", "browser.session.grant", {
+    ...owner,
+    origin: "https://example.com",
+  });
+  await expect(
+    bridge.invoke("browser.session.grant", { ...owner, workbenchId: "other", origin: "https://example.com" }),
+  ).rejects.toMatchObject({ code: "INVALID" });
+  expect(transport.invoke).toHaveBeenCalledTimes(1);
+  await expect(bridge.invoke("browser.session.get", owner)).rejects.toMatchObject({ code: "INTERNAL" });
+});
+
 it("transports the four user-only Plan channels and rejects extra authority before transport", async () => {
   const { bridge, transport } = fixture();
   const scope = { workbenchId: "wb_01J00000000000000000000000", sessionId: "ses_01J00000000000000000000000" };
@@ -125,6 +152,12 @@ it("registers a session replay subscription before dispatch and filters its toke
 it("infers registry types and returns validated metadata", async () => {
   expectTypeOf<Channel>().toEqualTypeOf<
     | "commands.shells"
+    | "dictation.get"
+    | "dictation.change"
+    | "dictation.begin"
+    | "dictation.recording"
+    | "dictation.finish"
+    | "dictation.cancel"
     | "terminal.list"
     | "terminal.create"
     | "terminal.output"
@@ -136,6 +169,14 @@ it("infers registry types and returns validated metadata", async () => {
     | "terminal.consent"
     | "help.list"
     | "help.read"
+    | "browser.settings.get"
+    | "browser.runtime.install"
+    | "browser.runtime.cancel"
+    | "browser.runtime.remove"
+    | "browser.session.get"
+    | "browser.session.grant"
+    | "browser.session.show"
+    | "browser.session.close"
     | "web.access.get"
     | "web.access.save"
     | "web.access.removeKey"
@@ -190,6 +231,11 @@ it("infers registry types and returns validated metadata", async () => {
     | "downloads.list"
     | "downloads.open"
     | "downloads.reveal"
+    | "docs.status"
+    | "git.diff"
+    | "git.history"
+    | "git.historyEligibility"
+    | "git.status"
     | "docs.volume"
     | "docs.approve"
     | "docs.tree"
@@ -253,7 +299,9 @@ it("infers registry types and returns validated metadata", async () => {
     | "session.reasoning.get"
     | "session.reasoning.set"
     | "session.mode.set"
+    | "session.delegation.bypass.set"
     | "providers.discover"
+    | "providers.presets.discover"
     | "providers.image.capability"
     | "providers.models"
     | "providers.test"
@@ -394,4 +442,53 @@ it("workbench subscriptions filter id/schema and validate config/pinned/completi
   await expect(
     bridge.invoke("workbench.config.update", { patch: { id: "bad" } } as never),
   ).rejects.toMatchObject({ code: "INVALID" });
+});
+
+it("accepts typed dictation actions and keeps model paths out of the bridge", async () => {
+  const { bridge, transport } = fixture();
+  const snapshot: Response<"dictation.change"> = {
+    selectedModel: "whisper-base",
+    language: "fr",
+    models: [
+      { id: "whisper-base", bytes: 79_677_901, status: "installed" },
+      { id: "whisper-small", bytes: 251_875_316, status: "missing" },
+    ],
+  };
+  const action = { action: "language", language: "fr" } as const;
+  transport.invoke.mockResolvedValueOnce({ ok: true, value: snapshot } as never);
+  expect(await bridge.invoke("dictation.change", action)).toEqual(snapshot);
+  expect(transport.invoke).toHaveBeenCalledExactlyOnceWith("vera:invoke", "dictation.change", action);
+  for (const request of [
+    { action: "download", id: "../whisper-base" },
+    { action: "download", id: "whisper-base", url: "https://invalid.example" },
+    { action: "language", language: "unsupported" },
+  ]) {
+    await expect(bridge.invoke("dictation.change", request as never)).rejects.toMatchObject({
+      code: "INVALID",
+    });
+  }
+  await expect(
+    bridge.invoke("app.settings.update", { dictation: { selectedModel: "whisper-small" } } as never),
+  ).rejects.toMatchObject({ code: "INVALID" });
+  expect(transport.invoke).toHaveBeenCalledTimes(1);
+  transport.invoke.mockResolvedValueOnce({
+    ok: true,
+    value: { ...snapshot, models: [{ ...snapshot.models[0], directory: "/hidden" }, snapshot.models[1]] },
+  } as never);
+  await expect(bridge.invoke("dictation.get", {})).rejects.toMatchObject({ code: "INTERNAL" });
+});
+
+it("requires activation to open a microphone grant and validates the bounded PCM", async () => {
+  const { bridge, transport } = fixture();
+  const id = "73059b83-6c74-488a-b24e-e515720ed472";
+  await expect(bridge.invoke("dictation.begin", { id })).rejects.toMatchObject({ code: "DENIED" });
+  await expect(
+    bridge.invoke("dictation.finish", { id, pcm: new Float32Array(480001) }),
+  ).rejects.toMatchObject({
+    code: "INVALID",
+  });
+  expect(transport.invoke).not.toHaveBeenCalled();
+  const activated = createBridge(transport, () => true);
+  transport.invoke.mockResolvedValueOnce({ ok: true, value: { status: "opening" } } as never);
+  await expect(activated.invoke("dictation.begin", { id })).resolves.toEqual({ status: "opening" });
 });

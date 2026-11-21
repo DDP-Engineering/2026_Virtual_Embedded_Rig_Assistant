@@ -32,6 +32,12 @@ Pentru ca agentul să examineze o imagine din workbench, indică-i calea relativ
 
 Agentul poate redeschide o imagine trimisă din caseta de mesaj a acestei sesiuni folosind calea salvată. Poate examina până la opt imagini într-un pas și păstrează în turul curent ultimele opt imagini obținute cu instrumentul.
 
+## Dictează un mesaj
+
+Alege un model din [Setări > Dictare](settings.md). În modul cu apăsare continuă, ține apăsat butonul microfonului sau comanda configurată. Cu butonul focalizat, ține apăsată tasta Spațiu sau Enter. Eliberează pentru transcriere. În modul pornire/oprire, apasă o dată pentru înregistrare și din nou pentru transcriere. Escape sau Anulează dictarea renunță la înregistrare ori transcriere și lasă agentul să continue. Dacă părăsești chatul sau fereastra pierde focalizarea, dictarea se anulează.
+
+Rezultatul apare la cursorul inițial sau după textul selectat. Dacă ai editat mesajul în timpul dictării, rezultatul se adaugă la final. Textul și atașamentele se păstrează. Verifică textul și trimite-l cu Enter sau Trimite.
+
 ## Ghidează sau oprește o execuție în curs
 
 Cât timp agentul lucrează, poți continua să scrii și să trimiți mesaje, de exemplu „verifică și errata”. Acestea afișează **În așteptarea livrării** până când agentul le preia la pasul următor. Cât timp un card de aprobare așteaptă decizia ta, trimiterea este suspendată.
@@ -43,6 +49,14 @@ Cât timp agentul lucrează, poți continua să scrii și să trimiți mesaje, d
 Când VERA deleagă o sarcină, **Sesiuni delegate** din chatul părinte afișează fiecare sesiune copil și starea sa. Selectează o sesiune copil pentru a-i deschide fila Chat și a-i urmări conversația. **Sesiune părinte** revine la sesiunea părinte.
 
 Pentru a opri o sesiune copil în curs, deschide-o și folosește **Oprește** lângă câmpul pentru mesaje. Sesiunea părinte poate continua. Dacă se cere aprobare, folosește cardul de aprobare din sesiunea respectivă. Când redeschizi oricare dintre sesiuni după repornirea VERA, legătura și rezultatul execuției delegate rămân disponibile.
+
+Agentul părinte poate trimite instrucțiuni noi în aceeași conversație copil și îi poate alege modelul și nivelul de raționament pentru rundele următoare. Mesajele sunt etichetate **Instrucțiune de la agentul părinte**. Dacă sesiunea copil este activă, o instrucțiune eligibilă așteaptă următoarea cerere către model. Folosește cardul de aprobare din sesiunea copil când este necesară o decizie a utilizatorului.
+
+O sesiune copil nouă pornește în modul de permisiuni curent al sesiunii părinte. După lansare, alege separat modul fiecărei sesiuni în câmpul ei de compunere. Pentru un părinte în Bypass, alege **Permite acces complet pentru noile sesiuni copil** și confirmă lansările eligibile viitoare. Pentru a retrage autorizarea, alege **Revocă accesul complet la lansările viitoare**. Sesiunile copil existente își păstrează modul. Pentru a limita accesul unei sesiuni copil, schimbă modul în chatul ei. Publicarea la distanță necesită permisiune separată.
+
+Într-o copie de lucru partajată, lasă o sesiune copil să termine implementarea și verifică predarea înainte de a porni următoarea.
+
+Într-o sesiune delegată în Bypass, comenzile shell rulează automat dacă se potrivesc unui prefix salvat de utilizator în workbench. Pentru celelalte comenzi, ți se cere aprobarea.
 
 ## Niveluri de detaliu
 

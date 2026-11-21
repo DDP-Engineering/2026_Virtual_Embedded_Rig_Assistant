@@ -4,6 +4,7 @@ import {
   Globe,
   Info,
   Keyboard,
+  Mic,
   Palette,
   RefreshCw,
   Server,
@@ -15,6 +16,7 @@ import { About } from "./about.js";
 import { AdvancedSettingsPanel } from "./advanced-settings-panel.js";
 import { AppearanceSettings } from "./appearance-settings.js";
 import { CommandSettings } from "./command-settings.js";
+import { DictationSettings } from "./dictation-settings.js";
 import { ErrorMessage } from "./error-message.js";
 import { ShortcutsSettings } from "./keyboard-shortcuts.js";
 import { PrivacySettings } from "./privacy-settings.js";
@@ -31,6 +33,7 @@ const OWN_PANELS = new Set([
   "shortcuts",
   "commands",
   "data",
+  "dictation",
   "advanced",
 ]);
 
@@ -42,6 +45,7 @@ export function useSettingsSections() {
     { id: "appearance", icon: Palette, label: t("settings.appearance") },
     { id: "commands", icon: Server, label: t("settings.commands") },
     { id: "notifications", icon: Bell, label: t("settings.notifications") },
+    { id: "dictation", icon: Mic, label: t("settings.dictation") },
     { id: "shortcuts", icon: Keyboard, label: t("settings.shortcuts") },
     { id: "updates", icon: RefreshCw, label: t("settings.updates") },
     { id: "data", icon: Shield, label: t("settings.data") },
@@ -91,6 +95,14 @@ export function Settings({
       <div hidden={section !== "providers"}>
         <Providers />
       </div>
+      {section === "dictation" && (
+        <DictationSettings
+          mode={snapshot.settings.dictationRecordingMode}
+          bindings={snapshot.settings.keyboardShortcuts}
+          saving={saving}
+          update={update}
+        />
+      )}
       {section === "web" && <WebAccessPanel />}
       {section === "commands" && (
         <CommandSettings

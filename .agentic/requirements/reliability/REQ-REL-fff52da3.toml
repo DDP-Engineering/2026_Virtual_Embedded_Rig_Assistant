@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-REL-fff52da3"
+
+title = "Cancel active agent browser work"
+
+status = "active"
+
+requirement = "When a Desktop turn stops during a browser operation, Desktop shall abort the work before it can publish browser data."
+
+verification = "Abort a held browser call and verify that the session is disposed and that the call returns no page result."
+
+affected_paths = ["05_Software/src/apps/desktop/src/main/browser/agent-browser.ts", "05_Software/src/apps/desktop/src/main/browser/host.ts"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/main/browser/agent-browser.test.ts", "05_Software/tests/e2e/browser-agent.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-20
+updated = 2026-11-20

@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-REL-1bfbce29"
+title = "Reject invalid hosted catalogs"
+status = "active"
+requirement = "If hosted discovery receives an invalid response envelope, invalid model identity or invalid pagination, VERA shall report a typed catalog failure."
+verification = "Script a malformed envelope for each service and a repeated Fireworks continuation token and assert a provider failure with bounded requests."
+affected_paths = ["05_Software/src/libraries/core/src/llm/hosted-catalog.ts", "05_Software/src/libraries/core/src/llm/preset-connection.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/hosted-provider-presets.test.ts"]
+created = 2026-11-20
+updated = 2026-11-20

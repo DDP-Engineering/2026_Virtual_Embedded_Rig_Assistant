@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-REL-c097dfac"
+title = "Explain unavailable Git comparison content"
+status = "active"
+requirement = "If a Git comparison has binary, oversized, unreadable, or unmerged content, Desktop shall show a localized notice for the applicable failure instead of presenting it as a readable patch."
+verification = "Create binary, oversized, changed-away and unmerged fixture paths and assert bounded result states and their displayed notices."
+affected_paths = ["05_Software/src/apps/desktop/src/main/git/diff.ts","05_Software/src/apps/desktop/src/renderer/components/documents/git-diff-view.tsx"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/git/diff-service.test.ts","05_Software/src/apps/desktop/src/main/git/safe-diff.test.ts","05_Software/src/apps/desktop/src/renderer/components/documents/docs-tree.test.ts"]
+created = 2026-11-21
+updated = 2026-11-21

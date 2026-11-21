@@ -25,6 +25,7 @@ export async function testConnection(
   signal: AbortSignal = new AbortController().signal,
   now: () => number = Date.now,
   scrub: (text: string) => string = (text) => text,
+  options: { reasoning?: "off" | "low" | "on"; maxOutputTokens?: number } = {},
 ): Promise<ProviderTestResult> {
   const steps: ProviderTestStep[] = [];
   try {
@@ -83,7 +84,11 @@ export async function testConnection(
               ]
             : [],
         signal,
-        maxOutputTokens: Math.min(256, gateway.capabilities(reference).maxOutputTokens),
+        ...(options.reasoning ? { reasoning: options.reasoning } : {}),
+        maxOutputTokens: Math.min(
+          options.maxOutputTokens ?? 256,
+          gateway.capabilities(reference).maxOutputTokens,
+        ),
       })) {
         if (event.type === "text" && event.delta)
           deltas = event.sourceDeltas === undefined ? deltas + 1 : Math.max(deltas, event.sourceDeltas);

@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-FUNC-6df147f9"
+title = "Connect to the four hosted inference services"
+status = "active"
+requirement = "When a configured Fireworks AI, Together AI, Groq or Cerebras connection streams a chat request, VERA shall send Chat Completions to its registered HTTPS inference route."
+verification = "Save all four preset connections, stream a request per connection and assert the exact POST URL, model ID and documented output limit parameter."
+affected_paths = ["05_Software/src/libraries/shared/src/hosted-provider-presets.ts", "05_Software/src/libraries/shared/src/provider-presets.ts", "05_Software/src/libraries/core/src/llm/providers.ts", "05_Software/src/libraries/core/src/llm/curated-adapters.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/hosted-provider-presets.test.ts"]
+created = 2026-11-20
+updated = 2026-11-20

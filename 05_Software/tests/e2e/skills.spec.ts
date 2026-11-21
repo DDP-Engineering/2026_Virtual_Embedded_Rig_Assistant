@@ -68,7 +68,7 @@ test("native UI skill creation/edit/disable changes the NEXT turn system prompt"
             name: "Skills",
             baseUrl,
             model: "skills",
-            contextWindow: 32768,
+            contextWindow: 131072,
             maxOutputTokens: 4096,
             supportsTools: true,
           },

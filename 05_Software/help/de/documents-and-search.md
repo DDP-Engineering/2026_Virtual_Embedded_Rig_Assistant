@@ -46,6 +46,20 @@ Der Tab **Dateien** zeigt den gesamten Workbench-Ordner als Baum. Von VERA ignor
 
 Das Menü einer Datei bietet **Öffnen**, **Als Kontext anhängen**, **Öffnen in** (die Standard-App oder eine andere App), **Im Explorer anzeigen** (Finder bzw. Ordner auf anderen Systemen), **Kopieren** (absoluter Pfad, relativer Pfad oder Dateiname) und **Eigenschaften**, einschließlich des Indexstatus.
 
+## Git-Status in Dateien
+
+Aktivieren und speichern Sie **Git-Status in Dateien anzeigen** unter **Workbench bearbeiten → Oberfläche**. Die Option ist pro Workbench standardmäßig aus. Dateien zeigt den Branch und zählt geänderte Pfade und Konflikte in der Workbench. Bei einer Umbenennung zählen beide Pfade, wenn sie in der Workbench liegen. Liegt ein Pfad außerhalb, erscheint auf der sichtbaren Seite eine Hinzufügung oder Löschung.
+
+**I** und **A** kennzeichnen Änderungen im Index bzw. im Arbeitsbaum. Die Codes lauten M (geändert), ? (nicht verfolgt), A (hinzugefügt), R (umbenannt), D (gelöscht) und ! (Konflikt). Eine Datei kann beide Markierungen haben. Ein eingeklappter Ordner zeigt die Anzahl geänderter Pfade. **Nur Git-Änderungen** filtert den Baum. Gelöschte Dateien und fehlende Umbenennungsquellen bleiben als Einträge ohne Datei zum Öffnen sichtbar.
+
+Der Status verwendet die Git-Ignore-Regeln auch dann, wenn die Dokumentindizierung anderen Regeln folgt. Änderungen an überwachten Dateien aktualisieren die Anzeige. Verwenden Sie **Git-Status aktualisieren** bei einem Fehler oder für Ordner, die nicht überwacht werden können. Die schreibgeschützte Ansicht benötigt eine Systeminstallation von Git 2.40 oder neuer und einen gewöhnlichen lokalen Arbeitsbaum. Verknüpfte Arbeitsbäume, Submodule als Workbench-Wurzel, nicht unterstützte Metadatenlayouts und Repositorys mit Includes oder Filtern in der Konfiguration melden einen nicht verfügbaren Status. Die Dateiansicht bleibt benutzbar.
+
+Öffnen Sie das Kontextmenü einer geänderten Datei (Rechtsklick oder **Umschalt+F10**) und wählen Sie **Git → Arbeitsbaumänderungen anzeigen** oder **Indexänderungen anzeigen**. Die erste Option vergleicht den Arbeitsbaum mit dem Index. Die zweite vergleicht den Index mit HEAD oder bei einem Branch ohne Commit mit einer leeren Basis. Jeder Vergleich öffnet sich in einem eigenen Tab neben Chat. Wechseln Sie Tabs mit **Strg+Bild auf/ab** und schließen Sie den aktuellen Vergleich mit **Strg+W**. Chatentwurf und Scrollposition bleiben erhalten.
+
+Wählen Sie im Kontextmenü einer verfolgten Datei **Git → Dateiverlauf anzeigen**. Das gilt auch für unveränderte Dateien und verfolgte Löschungen, die unter Dateien erscheinen. Der zentrale Tab zeigt bis zu 50 vom lokalen HEAD erreichbare Commits, beginnend mit dem neuesten, mit Kurz-Hash, Autor, Datum und Betreff. Git verfolgt erkannte Umbenennungen innerhalb der Workbench. Verschiebungen über ihre Grenze hinweg werden ausgelassen. Die Ansicht verwendet lokale Daten und berücksichtigt die Maskierung für die Anzeige.
+
+Die schreibgeschützten Vergleiche sind auch für gelöschte Pfade und Umbenennungen innerhalb der Workbench verfügbar. Ein Hinweis erscheint bei einem Konflikt, einer Binärdatei, einem zu großen Vergleich oder nicht verfügbaren Inhalten. Öffnen Sie nicht verfolgte Dateien in der normalen Dateiansicht.
+
 ## Quellenverweise
 
 In einer Antwort nennt jeder Quellen-Chip die Quelle und die Stelle: Seite, Seitenbereich, Folie, Überschrift oder Zeilenbereich. Wählen Sie einen Chip, um das Dokument an dieser Stelle zu öffnen. Ein Chip mit der Markierung **Quellenverweis konnte nicht überprüft werden** verweist auf etwas, das VERA nicht bestätigen konnte, zum Beispiel eine Seite, die es nicht gibt, oder eine Datei, die sich inzwischen geändert hat; behandeln Sie diese Aussage mit Vorsicht.
@@ -84,3 +98,9 @@ Wählen Sie **Gerendert**, **Text** oder **Hex** in der Dateileiste. Die gerende
 PNG, JPEG, GIF, WebP, BMP und SVG öffnen ohne Indizierung als **Gerendert**. **Bildzoom** beginnt mit **Einpassen**: Große Bilder werden an den verfügbaren Platz angepasst, kleine nicht vergrößert. Einpassen folgt Änderungen der Panelgröße. Wählen Sie 25% bis 400%, um das ursprünglich dekodierte Bild zu skalieren, und kehren Sie dann zu Einpassen zurück. SVG bleibt ein Bild; Skripte, Links und externe Ressourcen sind inaktiv. **Text** und **Hex** bleiben verfügbar; die bewusste Moduswahl wird je Dateiendung gespeichert.
 
 Die Bildbytes folgen der aktuellen Anzeigemaskierung. Maskierung kann die Dekodierung verhindern; auch ungültige oder beschädigte Bilder zeigen einen sicheren Fehler mit **Erneut versuchen**. Hex zeigt die zurückgegebenen Bytes. Die Vorschau setzt begrenzte Bytefenster zu einer vollständigen Browser-Bildressource zusammen. Kodierte und dekodierte Bilder benötigen daher Speicher entsprechend ihrer Größe und unterliegen den Ressourcen des Browserdekoders. Es gibt keine feste Dateigrößengrenze.
+
+## Indizierungsstatus
+
+Das Symbol neben dem Namen der aktiven Workbench zeigt den Stand der Erfassung, Indizierung oder Neuerstellung. Fokussieren Sie das Symbol oder zeigen Sie darauf, um die gemessenen Anzahlen zu sehen. Aktivieren Sie es, um Dateien zu öffnen. Zu den verarbeiteten Dateien zählen auch übersprungene, OCR-pflichtige und fehlgeschlagene Dateien. Durchsuchbare Dokumente haben Textstellen im Index. Während der Erfassung erscheint erst nach Abschluss der Auswahl eine Gesamtzahl. In einer schreibgeschützten Workbench kann VERA den gespeicherten Index ohne erneute Prüfung nutzen. Unter Dateien finden Sie die Gründe für Ausnahmen, die Einstellung zum Dateilimit und die Option zum Neustart des Indexers.
+
+Der Chat kennzeichnet Antworten mit teilweiser Dokumentensuche, Stichwortsuche als Ersatz oder nicht verfügbarer Suche. Eine Teilsuche ohne Treffer kann ausstehende oder ausgeschlossene Quellen übersehen. Sie können während der Aktualisierung weiter chatten oder eine bekannte Datei öffnen.

@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-SEC-84b7927e"
+title = "Scope browser grants to one session"
+status = "active"
+requirement = "When the user grants a public HTTP or HTTPS origin, Desktop shall authorize only that exact scheme, host and port for the owning workbench and session."
+verification = "Grant a canonical origin to one owner and observe denial for another owner, a different port, a different scheme and an invalid origin."
+affected_paths = ["05_Software/src/apps/desktop/src/main/browser/policy.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/browser/browser-policy.test.ts", "05_Software/tests/e2e/browser-runtime.spec.ts"]
+priority = "normal"
+created = 2026-11-20
+updated = 2026-11-20

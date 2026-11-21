@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-REL-b48a282e"
+title = "Report and clean up cancelled browser provisioning"
+status = "active"
+requirement = "When browser runtime provisioning is cancelled, Desktop shall report cancellation and remove the unfinished runtime files."
+verification = "Abort an in-flight controlled download and assert cancellation and absence of staging and installation files."
+affected_paths = ["05_Software/src/apps/desktop/src/main/browser/runtime.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/browser/runtime.test.ts"]
+priority = "normal"
+created = 2026-11-20
+updated = 2026-11-20

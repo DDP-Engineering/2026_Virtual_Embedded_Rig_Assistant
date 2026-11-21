@@ -12,6 +12,7 @@ import { DocumentTabs } from "./document-tabs.js";
 import {
   DocumentViewerProvider,
   documentKey,
+  useDocumentTabs,
   useDocumentViewer,
   type ViewerTarget,
 } from "./viewer-context.js";
@@ -304,6 +305,42 @@ it("keeps open documents on a theme change and loads them again on a masking cha
   });
   await settle();
   expect(loads()).toBe(2);
+});
+
+it("retires a comparison opener when the workbench lease changes", async () => {
+  container = document.createElement("div");
+  document.body.append(container);
+  root = createRoot(container);
+  const target = { gitDiff: { path: "board.txt", indexLease: 1, comparison: "staged" } } as const;
+  const key = documentKey(target);
+  const observe = vi.fn<(state: ReturnType<typeof useDocumentTabs>) => void>();
+  function Inspect() {
+    observe(useDocumentTabs());
+    return null;
+  }
+  const render = (gitLease: number) =>
+    act(async () =>
+      root?.render(
+        createElement(
+          DocumentViewerProvider,
+          { workbenchId: id, gitLease },
+          createElement(Openers, { targets: { comparison: target } }),
+          createElement(Inspect),
+        ),
+      ),
+    );
+  await render(1);
+  const opener = container.querySelector<HTMLButtonElement>("button");
+  await act(async () => {
+    opener?.focus();
+    opener?.click();
+  });
+  const latest = () => observe.mock.lastCall?.[0];
+  expect(latest()?.tabs.map((t) => t.key)).toEqual([key]);
+  expect(latest()?.opener(key)).toBe(opener);
+  await render(2);
+  expect(latest()?.tabs).toEqual([]);
+  expect(latest()?.opener(key)).toBeNull();
 });
 
 async function mount(scope = `${id}/session-a`, sessionId?: string) {

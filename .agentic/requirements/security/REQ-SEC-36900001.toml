@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-SEC-36900001"
+title = "Keep parent instructions distinct from user decisions"
+status = "active"
+requirement = "When a delegated parent message is stored and sent to the model, VERA shall mark its parent origin as an instruction without approval authority."
+verification = "Compare stored, rendered and model-visible provenance for launch, direct and queued follow-ups, even when their body resembles an approval."
+affected_paths = ["05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/libraries/core/src/agent/runtime.ts", "05_Software/src/libraries/shared/src/events.ts", "05_Software/src/libraries/shared/src/session-state.ts", "05_Software/src/apps/desktop/src/renderer/components/session/transcript.tsx", "05_Software/src/libraries/core/src/sessions/export.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/sessions/delegation.test.ts", "05_Software/tests/e2e/session-delegation.spec.ts"]
+created = 2026-11-21
+updated = 2026-11-21

@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-FUNC-19e50545"
+title = "Report provider key rejection"
+status = "active"
+requirement = "If one of the three services rejects its stored API key as unauthorized, VERA shall report a provider authentication error."
+verification = "Return HTTP 401 from inference and assert authentication failure, skipped later probes, and no requests to another service."
+affected_paths = ["05_Software/src/libraries/core/src/llm/providers.ts", "05_Software/src/libraries/core/src/llm/connection.ts", "05_Software/src/apps/desktop/src/main/provider-gateway.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/direct-provider-presets.test.ts"]
+created = 2026-11-20
+updated = 2026-11-20

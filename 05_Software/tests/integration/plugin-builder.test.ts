@@ -53,14 +53,11 @@ it("drafts from CLI help, reviews a trial, approves bypass runs and promotes onl
     ],
   };
   const draft = "plugins/fixture-cli";
-  // The test checks plugin authority, not context budgets: a window that holds the whole session's prompt.
-  const WINDOW = 65536;
   await writeFile(
     join(base, "replay/build.jsonl"),
     [
       {
         match: "build",
-        contextWindow: WINDOW,
         toolCalls: [
           { name: "load_skill", args: { name: "create-plugin" } },
           { name: "read", args: { path: "manual.txt" } },
@@ -93,7 +90,6 @@ it("drafts from CLI help, reviews a trial, approves bypass runs and promotes onl
     [
       {
         match: "inspect",
-        contextWindow: WINDOW,
         toolCalls: [{ name: "run_program", args: { program: "fixture-cli", args: ["inspect"] } }],
       },
       { text: "Inspected." },
@@ -106,7 +102,6 @@ it("drafts from CLI help, reviews a trial, approves bypass runs and promotes onl
     [
       {
         match: "attack",
-        contextWindow: WINDOW,
         toolCalls: [
           { name: "plugin_promote", args: { id: "fixture-cli" } },
           { name: "plugins.toggle", args: { id: "fixture-cli", enabled: true } },
@@ -136,7 +131,11 @@ it("drafts from CLI help, reviews a trial, approves bypass runs and promotes onl
   });
   closes.push(() => runner.stopAll());
   const enabled: string[] = [];
-  const gateway = new ReplayGateway({ dir: join(base, "replay"), now: () => Date.now() });
+  const gateway = new ReplayGateway({
+    dir: join(base, "replay"),
+    now: () => Date.now(),
+    contextWindow: 131072,
+  });
   await gateway.models("replay", new AbortController().signal);
   let model = "build";
   const service = new SessionService({

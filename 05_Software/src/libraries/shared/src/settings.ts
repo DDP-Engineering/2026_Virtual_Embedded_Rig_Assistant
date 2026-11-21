@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { advancedPatchSchema, mergeAdvanced } from "./advanced-settings.js";
+import { dictationDefaults, dictationPreferencesSchema } from "./dictation.js";
 import { shortcutOverridesSchema } from "./keyboard-shortcuts.js";
 import { partsSearchSettingsSchema } from "./parts-search.js";
 import { catalogChannelSchema, catalogUrlSchema } from "./plugin-catalog.js";
@@ -68,7 +69,13 @@ const fontSizeSchema = z.union([
   z.literal(20),
   z.literal(24),
 ]);
+export const dictationRecordingModeSchema = z.enum(["hold", "toggle"]);
+export type DictationRecordingMode = z.infer<typeof dictationRecordingModeSchema>;
+export const defaultDictationRecordingMode: DictationRecordingMode = "hold";
+
 const mutable = {
+  dictation: dictationPreferencesSchema.optional(),
+  dictationRecordingMode: dictationRecordingModeSchema.optional(),
   privacy: appPrivacySchema.optional(),
   /** Empty selects the platform default; an explicit name/path must resolve on this machine. */
   shell: z
@@ -78,6 +85,7 @@ const mutable = {
     .refine((value) => !/\p{Cc}/u.test(value), "Use a shell name or absolute path.")
     .optional(),
   webAccess: webAccessSettingsSchema,
+  interactiveBrowser: z.boolean().optional(),
   /** Absent until the user first saves Settings > Parts search; readers apply partsSearchDefaults. */
   partsSearch: partsSearchSettingsSchema.optional(),
   keyboardShortcuts: shortcutOverridesSchema.optional(),
@@ -113,6 +121,8 @@ export const settingsSchema = z.strictObject({
   ...mutable,
 });
 export const settingsPatchSchema = z.strictObject({
+  interactiveBrowser: mutable.interactiveBrowser,
+  dictationRecordingMode: mutable.dictationRecordingMode,
   privacy: mutable.privacy,
   shell: mutable.shell,
   keyboardShortcuts: mutable.keyboardShortcuts,
@@ -137,6 +147,7 @@ export const settingsSnapshotSchema = z.strictObject({ settings: settingsSchema 
 export type Settings = z.infer<typeof settingsSchema>;
 /** Internal service patch; provider writes enter through their dedicated IPC boundary. */
 export const settingsServicePatchSchema = settingsPatchSchema.extend({
+  dictation: dictationPreferencesSchema.partial().optional(),
   webAccess: webAccessSettingsSchema.optional(),
   partsSearch: partsSearchSettingsSchema.optional(),
   providers: providerSettingsSchema.optional(),
@@ -152,6 +163,9 @@ export function mergeSettings(current: Settings, patch: SettingsServicePatch): S
     ...current,
     ...clean,
     updates: { ...current.updates, ...clean.updates },
+    ...(clean.dictation
+      ? { dictation: { ...dictationDefaults, ...current.dictation, ...clean.dictation } }
+      : {}),
     ...(current.advanced || clean.advanced
       ? { advanced: mergeAdvanced(current.advanced, clean.advanced ?? {}) }
       : {}),

@@ -14,6 +14,7 @@ Dies sind die Standard-Tastenkombinationen von VERA. Ändern, ergänzen oder ent
 | Terminal öffnen | Ctrl+Shift+T | Öffnet und fokussiert das Benutzerterminal. |
 | In Unterhaltung suchen | Ctrl+F | Die Nachrichten der aktuellen Sitzung durchsuchen. |
 | Nachrichteneingabe fokussieren | Nicht zugewiesen | Den Cursor in die aktuelle Nachrichteneingabe bewegen. |
+| Diktieren | Nicht zugewiesen | Halten Sie die Tastenkombination zum Sprechen oder drücken Sie sie zum Starten und Stoppen. |
 | Modellauswahl fokussieren | Ctrl+Shift+M | Die Modellauswahl der Unterhaltung fokussieren. |
 | Nächstes Lesezeichen | Ctrl+Alt+N | Zur nächsten markierten Nachricht in diesem Gespräch springen. |
 | Vorheriges Lesezeichen | Ctrl+Alt+P | Zur vorherigen markierten Nachricht in diesem Gespräch springen. |

@@ -1,5 +1,8 @@
 // REQ-UX-28ad0002
 import {
+  type GitComparison,
+  type GitDiffResponse,
+  type GitHistoryResponse,
   parseRef,
   type RasterFormat,
   referenceLabel,
@@ -36,6 +39,8 @@ import { TextViewer } from "./text-viewer.js";
 const PdfViewer = lazy(() => import("./pdf-viewer.js"));
 // Retain exact portable target variants without workbench identity supplied by callers.
 export type ViewerTarget =
+  | { gitHistory: { path: string; indexLease: number } }
+  | { gitDiff: { path: string; indexLease: number; comparison: GitComparison } }
   | { runId: string }
   | { path: string }
   | { ref: string }
@@ -62,6 +67,8 @@ export interface DocumentTab {
   label: string;
   title: string;
   content?: ViewerContent | undefined;
+  gitDiff?: GitDiffResponse | undefined;
+  gitHistory?: GitHistoryResponse | undefined;
   /** Display-masked small-file bytes, transient and invalidated with the content attempt. */
   textBytes?: Uint8Array | undefined;
   largeText?: LargeTextFile | undefined;
@@ -83,12 +90,25 @@ interface TabSet {
 }
 const EMPTY: TabSet = { tabs: [], active: CHAT };
 
+function retiredGitTarget(target: ViewerTarget, lease: number | undefined) {
+  if ("gitHistory" in target) return target.gitHistory.indexLease !== lease;
+  return "gitDiff" in target && target.gitDiff.indexLease !== lease;
+}
+
+function currentGitTabs(set: TabSet, lease: number | undefined): TabSet {
+  const tabs = set.tabs.filter(({ target }) => !retiredGitTarget(target, lease));
+  if (tabs.length === set.tabs.length) return set;
+  return { tabs, active: tabs.some((tab) => tab.key === set.active) ? set.active : CHAT };
+}
+
 const displayName = (path: string) =>
   path.replace(/__vera_(?:display|reference)_[A-Za-z0-9_-]+\.?/g, "[REDACTED]");
 const sourcePath = (path: string) => path.replace(/\/__vera_reference_[A-Za-z0-9_-]+\.$/, "");
 const fileName = (path: string) => path.split("/").at(-1) || path;
 /** One tab per document: the workbench path, the artifact or the download (REQ-FUNC-89161a95). */
 export function documentKey(target: ViewerTarget): string {
+  if ("gitHistory" in target) return `git-history:${target.gitHistory.path}`;
+  if ("gitDiff" in target) return `git-diff:${target.gitDiff.comparison}:${target.gitDiff.path}`;
   if ("runId" in target) return `run:${target.runId}`;
   if ("downloadId" in target) return `download:${target.downloadId}`;
   if ("textPath" in target) return `file:${target.textPath}`;
@@ -98,6 +118,10 @@ export function documentKey(target: ViewerTarget): string {
   return parsed.kind === "artifact" ? `artifact:${parsed.name}` : `file:${sourcePath(parsed.path)}`;
 }
 function describe(target: ViewerTarget, download: string): { label: string; title: string } {
+  if ("gitDiff" in target || "gitHistory" in target) {
+    const path = displayName("gitDiff" in target ? target.gitDiff.path : target.gitHistory.path);
+    return { label: fileName(path), title: path };
+  }
   if ("runId" in target) return { label: `${target.runId}.log`, title: `.vera/runs/${target.runId}.log` };
   if ("downloadId" in target) return { label: download, title: download };
   if ("textPath" in target)
@@ -144,6 +168,7 @@ export function DocumentViewerProvider({
   workbenchId,
   scope: contextScope,
   sessionId,
+  gitLease,
   reveal,
   children,
 }: {
@@ -151,6 +176,7 @@ export function DocumentViewerProvider({
   scope?: string;
   /** The session whose tabs are saved and restored (TASK-061fe00e); none keeps them for the run only. */
   sessionId?: string | undefined;
+  gitLease?: number | undefined;
   reveal?: () => void;
   children?: ReactNode;
 }) {
@@ -161,12 +187,32 @@ export function DocumentViewerProvider({
     scopeOwners.current.set(scope, workbenchId);
   }, [scope, workbenchId]);
   const [sets, setSets] = useState<ReadonlyMap<string, TabSet>>(new Map());
-  const current = sets.get(scope) ?? EMPTY;
+  const selectedSet = sets.get(scope) ?? EMPTY;
+  const current = useMemo(() => currentGitTabs(selectedSet, gitLease), [selectedSet, gitLease]);
   // Attempts come from one counter, so a closed and reopened tab never takes an older answer.
   const attempts = useRef(0);
   const places = useRef(new Map<string, DocumentPlace>()),
     openers = useRef(new Map<string, HTMLElement | null>()),
     focusRequest = useRef(false);
+  const latestSets = useRef(sets);
+  const seen = useRef(new Map<string, TabSet>());
+  latestSets.current = sets;
+  useEffect(() => {
+    for (const [owner, set] of latestSets.current) {
+      for (const tab of set.tabs) {
+        if (!retiredGitTarget(tab.target, gitLease)) continue;
+        const key = `${owner}\n${tab.key}`;
+        openers.current.delete(key);
+        places.current.delete(key);
+      }
+    }
+    for (const [owner, set] of seen.current) seen.current.set(owner, currentGitTabs(set, gitLease));
+    setSets((map) => {
+      const next = new Map(map);
+      for (const [owner, set] of map) next.set(owner, currentGitTabs(set, gitLease));
+      return [...next].every(([owner, set]) => map.get(owner) === set) ? map : next;
+    });
+  }, [gitLease]);
   const change = useCallback(
     (update: (set: TabSet) => TabSet) =>
       setSets((map) => {
@@ -178,6 +224,7 @@ export function DocumentViewerProvider({
   const download = t("downloads.title");
   const open = useCallback(
     (target: ViewerTarget, imageFormat?: RasterFormat) => {
+      if (retiredGitTarget(target, gitLease)) return;
       const key = documentKey(target);
       const modeChoice: FileMode | undefined = imageFormat && "path" in target ? "rendered" : undefined;
       // Reopening from inside a document keeps the control that first opened it.
@@ -198,6 +245,8 @@ export function DocumentViewerProvider({
                     label: "downloadId" in target ? tab.label : label,
                     title: "downloadId" in target ? tab.title : title,
                     content: undefined,
+                    gitDiff: undefined,
+                    gitHistory: undefined,
                     textBytes: undefined,
                     largeText: undefined,
                     hexFile: undefined,
@@ -228,7 +277,7 @@ export function DocumentViewerProvider({
       });
       reveal?.();
     },
-    [scope, change, download, reveal],
+    [scope, change, download, reveal, gitLease],
   );
   const select = useCallback((key: string) => change((set) => ({ ...set, active: key })), [change]);
   const close = useCallback(
@@ -282,6 +331,8 @@ export function DocumentViewerProvider({
             ? {
                 ...tab,
                 content: undefined,
+                gitDiff: undefined,
+                gitHistory: undefined,
                 textBytes: undefined,
                 largeText: undefined,
                 hexFile: undefined,
@@ -325,6 +376,8 @@ export function DocumentViewerProvider({
                 ...(switching
                   ? {
                       content: undefined,
+                      gitDiff: undefined,
+                      gitHistory: undefined,
                       textBytes: undefined,
                       largeText: undefined,
                       hexFile: undefined,
@@ -346,8 +399,6 @@ export function DocumentViewerProvider({
   const owners = useRef(new Map<string, { workbenchId: string; sessionId: string }>());
   const pending = useRef(new Set<string>());
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-  const latestSets = useRef(sets);
-  latestSets.current = sets;
   const flush = useCallback(() => {
     clearTimeout(timer.current);
     timer.current = undefined;
@@ -355,13 +406,15 @@ export function DocumentViewerProvider({
       const owner = owners.current.get(owned);
       if (!owner) continue;
       const set = latestSets.current.get(owned) ?? EMPTY;
+      const persistable = set.tabs.flatMap((tab) => {
+        if ("gitDiff" in tab.target || "gitHistory" in tab.target) return [];
+        const place = places.current.get(`${owned}\n${tab.key}`);
+        return [{ key: tab.key, target: tab.target, ...(place ? { place } : {}) }];
+      });
       const record: StoredTabs = {
         version: 1,
-        active: set.active,
-        tabs: set.tabs.map((tab) => {
-          const place = places.current.get(`${owned}\n${tab.key}`);
-          return place ? { target: tab.target, place } : { target: tab.target };
-        }),
+        active: persistable.some((tab) => tab.key === set.active) ? set.active : CHAT,
+        tabs: persistable.map(({ key: _key, ...tab }) => tab),
       };
       writeTabs(localStorage, owner.workbenchId, owner.sessionId, record);
     }
@@ -383,7 +436,6 @@ export function DocumentViewerProvider({
     };
   }, [flush]);
   // Every change of the shown session's tab set is saved; merely showing a session writes nothing.
-  const seen = useRef(new Map<string, TabSet>());
   useEffect(() => {
     if (seen.current.get(scope) === current) return;
     const first = !seen.current.has(scope);
@@ -475,14 +527,29 @@ export function DocumentViewerProvider({
     for (const tab of current.tabs) {
       if (tab.key !== current.active) continue;
       const request = `${scope}\n${tab.key}\n${tab.attempt}`;
-      if (tab.content || tab.error !== undefined || loading.current.has(request)) continue;
+      if (
+        tab.content ||
+        tab.gitDiff ||
+        tab.gitHistory ||
+        tab.error !== undefined ||
+        loading.current.has(request)
+      )
+        continue;
       loading.current.add(request);
       const { target, key, attempt } = tab;
       const requestId = `display:${attempt}`;
       const settle = (
         result: Pick<
           DocumentTab,
-          "content" | "textBytes" | "largeText" | "hexFile" | "imageFile" | "modeInfo" | "error"
+          | "content"
+          | "gitDiff"
+          | "gitHistory"
+          | "textBytes"
+          | "largeText"
+          | "hexFile"
+          | "imageFile"
+          | "modeInfo"
+          | "error"
         >,
       ) =>
         setSets((map) => {
@@ -491,9 +558,11 @@ export function DocumentViewerProvider({
           // A closed, reopened or retried tab ignores this late answer.
           if (!set || !found || found.attempt !== attempt) return map;
           const title =
-            result.content && !("runId" in target)
+            result.gitHistory?.displayPath ??
+            result.gitDiff?.displayPath ??
+            (result.content && !("runId" in target)
               ? (result.content.displayPath ?? displayName(result.content.path))
-              : undefined;
+              : undefined);
           const name = title === undefined ? undefined : fileName(title);
           return new Map(map).set(scope, {
             ...set,
@@ -508,6 +577,41 @@ export function DocumentViewerProvider({
             ),
           });
         });
+      if ("gitHistory" in target) {
+        const query = { workbenchId, ...target.gitHistory };
+        void api
+          .invoke("git.history", query)
+          .then((result) => {
+            if (
+              result.workbenchId !== workbenchId ||
+              result.indexLease !== query.indexLease ||
+              result.path !== query.path
+            )
+              throw veraError("CONFLICT");
+            settle({ gitHistory: result });
+          })
+          .catch((failure: unknown) => settle({ error: failure ?? veraError("INTERNAL") }))
+          .finally(() => loading.current.delete(request));
+        continue;
+      }
+      if ("gitDiff" in target) {
+        const query = { workbenchId, ...target.gitDiff };
+        void api
+          .invoke("git.diff", query)
+          .then((result) => {
+            if (
+              result.workbenchId !== workbenchId ||
+              result.indexLease !== query.indexLease ||
+              result.path !== query.path ||
+              result.comparison !== query.comparison
+            )
+              throw veraError("CONFLICT");
+            settle({ gitDiff: result });
+          })
+          .catch((failure: unknown) => settle({ error: failure ?? veraError("INTERNAL") }))
+          .finally(() => loading.current.delete(request));
+        continue;
+      }
       const call =
         "runId" in target
           ? api.invoke("runs.log", { workbenchId, id: target.runId, full: true }).then((log) => {
@@ -625,6 +729,8 @@ export function DocumentViewerProvider({
                           label: "runId" in tab.target ? tab.label : "[REDACTED]",
                           title: "runId" in tab.target ? tab.title : "[REDACTED]",
                           content: undefined,
+                          gitDiff: undefined,
+                          gitHistory: undefined,
                           textBytes: undefined,
                           largeText: undefined,
                           hexFile: undefined,

@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-UX-1c0aac4b"
+
+title = "Show saved retrieval limitations on affected turns"
+
+status = "active"
+
+requirement = """
+When a turn contains saved document search metadata for limited coverage, fallback or temporary unavailability, the transcript shall display that limitation on the affected turn in every chat detail mode.
+"""
+
+verification = "Fold and reopen recorded turns with partial coverage and zero hits, fallback and unavailable ranking alongside ordinary and fully covered turns. Verify the matching localized notices stay attached to their turns through later indexing changes."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/session/transcript-projection.ts", "05_Software/src/apps/desktop/src/renderer/components/session/transcript.tsx", "05_Software/src/apps/desktop/src/renderer/components/session/retrieval-notice.tsx", "05_Software/src/apps/desktop/src/renderer/locales", "05_Software/help"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/session/transcript-detail.test.ts", "05_Software/tests/e2e/index-status.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-21
+updated = 2026-11-21

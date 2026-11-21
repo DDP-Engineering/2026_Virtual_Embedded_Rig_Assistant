@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-REL-3dbf3b83"
+title = "Cancel dictation transfer"
+status = "active"
+requirement = "When the user cancels an active dictation download, VERA shall discard the staged files and make that model available to retry."
+verification = "Hold a fixture download in progress, cancel it and check cleanup followed by a successful retry."
+affected_paths = ["05_Software/src/apps/desktop/src/main/dictation/models.ts", "05_Software/src/apps/desktop/src/main/dictation/integrity.ts", "05_Software/src/apps/desktop/src/main/dictation/transfer.ts", "05_Software/src/apps/desktop/src/main/index.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/dictation/models.test.ts"]
+created = 2026-11-20
+updated = 2026-11-20

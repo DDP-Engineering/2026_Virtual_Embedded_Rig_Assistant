@@ -181,10 +181,12 @@ to the OS user account and do not decrypt on another machine.
 - Navigation (`will-navigate`, `will-frame-navigate`), new windows and webviews are blocked. Links
   open in the system browser through `app.openExternal` (http and https only) after a confirmation;
   ChatGPT sign-in may open only the `auth.openai.com` authorize URL.
-- Every Electron session, from creation, denies all permission requests and checks. Spell checking is
-  off and the dictionary download URL points at `vera://`. ONNX Runtime telemetry is disabled.
+- Electron denies permissions by default. The focused VERA window's main frame can make one
+  audio-only request under a gesture-initiated dictation grant. Spell checking is off and the
+  dictionary download URL points at `vera://`. ONNX Runtime telemetry is disabled.
 - No listening sockets except on loopback: pi-ai's OAuth callback on `127.0.0.1:1455` during a
-  ChatGPT sign-in, and an ephemeral `127.0.0.1` CONNECT tunnel for each HTTPS `web_download` transfer.
+  ChatGPT sign-in, an ephemeral `127.0.0.1` CONNECT tunnel for each HTTPS `web_download` transfer,
+  and the public-only proxy for an owned Desktop browser session.
 - Single-user app: no accounts, roles or app login; the OS account is the boundary.
 
 ## Network egress
@@ -197,11 +199,15 @@ datasheet CDNs reject its HTTP/2 streams; model calls use Node's network stack.
 | OpenAI API (`api.openai.com`) | A session, model list or connection test uses the OpenAI provider |
 | `auth.openai.com` and `api.openai.com` with ChatGPT tokens | ChatGPT sign-in, token refresh, model catalog and requests |
 | A custom endpoint base URL (often localhost; ends in `/v1`) | A session, model list or connection test uses it; LM Studio discovery reads `<origin>/api/v1/models` |
+| The HTTPS routes in the [curated provider registry](../05_Software/src/libraries/shared/src/provider-presets.ts) | The selected preset's catalog, connection test or inference uses its saved binding |
 | Update feed (HTTPS, compiled in from `VERA_UPDATE_URL`; none when unset) | After the window opens and every 6 h while updates are not Off, and on "Check now"; downloads per the update mode ([Delivery.md](Delivery.md)) |
 | Plugin catalog (`index.json` and plugin zips) | At start and every 24 h (index only) while updates are not Off and a catalog is set; browsing and installs on a user action |
 | PyPI or the configured package index; uv's CPython host; URLs in a plugin's `download` entries (SHA-256 verified) | The user installs or provisions a plugin |
 | Exa MCP (`mcp.exa.ai`, default, anonymous), Tavily (`api.tavily.com`), Brave Search (`api.search.brave.com`) | Web access is on (default on, Exa), the tool is not disabled in the workbench, and `web_search` or `web_read` runs, or the user tests the provider; only the selected provider |
 | Any public http or https URL given to `web_download`, up to 5 redirects | Web access and the tool are on and the user approves (automatic only in `bypass`); public-address DNS check, at most 100 MiB; HTTPS through an anonymous in-memory Chromium session pinned to the checked address |
+| Chrome for Testing (`storage.googleapis.com`) | The user installs the pinned Desktop browser runtime in Settings > Web access |
+| Public HTTP(S) origins granted to a Desktop browser session | Both browser opt-ins and the exact-origin grant are active; the owned proxy validates DNS and redirects |
+| Hugging Face (`huggingface.co`, `us.aws.cdn.hf.co`, `cas-bridge.xethub.hf.co`) | The user downloads pinned Whisper artifacts in Settings > Dictation |
 | Parts suppliers: Mouser, DigiKey, TME, Farnell (`api.element14.com`), Rutronik | The `parts-search` plugin is installed and enabled, web access is on, and the supplier is enabled with the user's own key |
 | Any http or https link | The user clicks it and confirms; it opens in the system browser |
 | Whatever a plugin program or command contacts | That program runs; outside VERA's control |

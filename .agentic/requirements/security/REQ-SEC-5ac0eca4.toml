@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-SEC-5ac0eca4"
+
+title = "Admit and mask Files history responses"
+
+status = "active"
+
+requirement = """
+When Desktop receives a Files history request, VERA shall admit the current enabled workbench activation and resolve its Files identity in main before a safe local read, returning only bounded metadata subject to the current Display policy.
+"""
+
+verification = "Hold a read through a lease change, then attempt stale and current requests with an opaque path and masked author and subject; verify denial, cancellation, masked current output, and inert rendering."
+
+affected_paths = ["05_Software/src/apps/desktop/src/main/git/history-service.ts", "05_Software/src/apps/desktop/src/main/display-documents.ts", "05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/libraries/shared/src/ipc.ts", "05_Software/src/libraries/shared/src/git-history.ts"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/main/git/history-service.test.ts", "05_Software/src/apps/desktop/src/main/display-documents.test.ts", "05_Software/src/libraries/shared/src/git-history.test.ts", "05_Software/src/apps/desktop/src/renderer/components/documents/docs-tree.test.ts", "05_Software/tests/e2e/git-diff-tabs.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-21
+updated = 2026-11-21

@@ -1,22 +1,27 @@
 // REQ-UX-4bea0003 REQ-REL-4bea0004 REQ-UX-f8ec3a43 REQ-FUNC-47287974
 // REQ-UX-72b09d3a REQ-UX-c3961c76 REQ-UX-9427b929 REQ-FUNC-4436607c
-import { useQuery } from "@tanstack/react-query";
 import {
   COMPOSER_IMAGE_ACCEPT,
+  type DictationRecordingMode,
+  defaultDictationRecordingMode,
   MAX_MESSAGE_IMAGES,
   rasterExtension,
   type SessionState,
   WORKBENCH_IMAGE_DRAG,
 } from "@vera/shared";
 import { ArrowUp, ImagePlus, Square, X } from "lucide-react";
-import { type ReactNode, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { type ReactNode, useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../../api/index.js";
+import { insertDictation } from "../../dictation/draft-insertion.js";
+import { useComposerDictation } from "../../dictation/use-composer-dictation.js";
 import { useImageModelWarning } from "../../hooks/image-model-warning.js";
 import { withMentions } from "../../lib/attachments.js";
 import { ErrorMessage } from "../error-message.js";
+import { modelOptionLabel, useModelCatalog } from "../model-catalog.js";
 import { PermissionPicker } from "../permission-picker.js";
 import { useAttachments } from "./attachments.js";
+import { DictationButton, DictationStatus } from "./dictation-button.js";
 import { ImageAttachmentChip } from "./image-attachment-chip.js";
 import { ReasoningPicker } from "./reasoning-picker.js";
 
@@ -27,36 +32,51 @@ export function Composer({
   disabled,
   sendDisabled: sendingLocked = false,
   archived = false,
-  permissionLocked = false,
   send,
   stop,
   setModel,
   setMode,
   inspectorControls,
+  dictationMode = defaultDictationRecordingMode,
+  chatVisible = true,
   sessionId,
   workbenchId,
 }: {
   inspectorControls?: ReactNode;
+  dictationMode?: DictationRecordingMode | undefined;
+  chatVisible?: boolean;
   sessionId?: string;
   workbenchId?: string;
   state: ComposerState;
   disabled: boolean;
   sendDisabled?: boolean;
   archived?: boolean;
-  permissionLocked?: boolean;
   send: (text: string, images?: string[]) => Promise<boolean>;
   stop: () => void;
   setModel: (reference: string | null) => Promise<void>;
   setMode: (mode: SessionState["mode"]) => Promise<void>;
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [text, setText] = useState("");
+  const draft = useRef({ text: "", revision: 0 });
+  const updateDraft = useCallback((value: string) => {
+    if (draft.current.text === value) return;
+    draft.current = { text: value, revision: draft.current.revision + 1 };
+    setText(value);
+  }, []);
   const [token, setToken] = useState<{ start: number; end: number; query: string }>();
   const [matches, setMatches] = useState<string[]>([]);
   const [selected, setSelected] = useState(0);
   const [completionError, setCompletionError] = useState<unknown>();
   const input = useRef<HTMLTextAreaElement>(null);
   const picker = useRef<HTMLInputElement>(null);
+  const selection = useRef<{ revision: number; caret: number }>(undefined);
+  useLayoutEffect(() => {
+    const pending = selection.current;
+    selection.current = undefined;
+    if (pending && draft.current.revision === pending.revision && input.current?.value === text)
+      input.current?.setSelectionRange(pending.caret, pending.caret);
+  }, [text]);
   // Docs tree entries attached to this session's next message, sent as @path mentions.
   const attachments = useAttachments();
   const attached = sessionId ? (attachments?.list(sessionId) ?? []) : [];
@@ -96,39 +116,39 @@ export function Composer({
     if (!document.activeElement || document.activeElement === document.body) input.current?.focus();
   }, [locked]);
   const imageLocked = locked || archived || !sessionId || !workbenchId || !attachments?.addImages;
+  const dictationEnabled = chatVisible && !locked && !archived;
+  const readDraft = useCallback(
+    () => ({ revision: draft.current.revision, caret: input.current?.selectionEnd ?? null }),
+    [],
+  );
+  const insert = useCallback(
+    (start: ReturnType<typeof readDraft>, transcript: string) => {
+      const current = draft.current;
+      const next = insertDictation(
+        current.text,
+        current.revision === start.revision ? start.caret : null,
+        transcript,
+      );
+      if (next.text === current.text) return;
+      selection.current = { revision: current.revision + 1, caret: next.caret };
+      updateDraft(next.text);
+      setToken(undefined);
+      setMatches([]);
+    },
+    [updateDraft],
+  );
+  const dictation = useComposerDictation({
+    sessionId,
+    enabled: dictationEnabled,
+    mode: dictationMode,
+    readDraft,
+    insert,
+  });
   function addImages(files: readonly (File | string)[]) {
     if (!imageLocked && sessionId && workbenchId && !submitting.current)
       void attachments?.addImages?.(workbenchId, sessionId, files);
   }
-  const providers = useQuery({
-    queryKey: ["providers.list"],
-    queryFn: () => api.invoke("providers.list", {}),
-  });
-  const subscription = useQuery({
-    queryKey: ["chatgpt.status"],
-    queryFn: () => api.invoke("providers.chatgpt.status", {}),
-    // Same query as the sign-in card: polled only while a sign-in is in progress.
-    staleTime: 0,
-    refetchInterval: ({ state: { data } }) =>
-      data?.state === "pending" || data?.state === "manual" ? 1000 : false,
-  });
-  const subscriptionModels = useQuery({
-    queryKey: ["chatgpt.models"],
-    enabled: subscription.data?.connected === true,
-    queryFn: () => api.invoke("providers.models", { id: "chatgpt" }),
-  });
-  const catalog = useQuery({
-    queryKey: ["chat.models", providers.data],
-    enabled: !!providers.data,
-    queryFn: async () => {
-      const ids = [
-        ...(providers.data?.openai.configured ? ["openai" as const] : []),
-        ...(providers.data?.custom.map((p) => p.id) ?? []),
-      ];
-      const results = await Promise.all(ids.map((id) => api.invoke("providers.models", { id })));
-      return results.flatMap((c) => c.models);
-    },
-  });
+  const { providers, subscription, subscriptionModels, catalog, models, connections } = useModelCatalog();
   const { imageModelPending, warnTextOnly } = useImageModelWarning(
     workbenchId,
     sessionId,
@@ -174,7 +194,7 @@ export function Composer({
     if (!token) return;
     const value = `${text.slice(0, token.start)}${path} ${text.slice(token.end)}`;
     const caret = token.start + path.length + 1;
-    setText(value);
+    updateDraft(value);
     setToken(undefined);
     setMatches([]);
     requestAnimationFrame(() => {
@@ -186,14 +206,15 @@ export function Composer({
     if (sendDisabled || submitting.current) return;
     if (sessionId && workbenchId && attachments?.imageDraft?.(workbenchId, sessionId).pending) return;
     submitting.current = true;
+    dictation.cancel();
     refocus.current = document.activeElement === input.current;
-    const draft = text;
+    const submitted = draft.current;
     const sent = [...attached];
     const sentImages = images.map(({ path }) => path);
     try {
-      const message = withMentions(draft, sent);
+      const message = withMentions(submitted.text, sent);
       if (await (sentImages.length ? send(message, sentImages) : send(message))) {
-        setText((current) => (current === draft ? "" : current));
+        if (draft.current === submitted) updateDraft("");
         if (sessionId && sent.length) attachments?.clear(sessionId, sent);
         if (sessionId && workbenchId && sentImages.length)
           attachments?.clearImages?.(workbenchId, sessionId, sentImages);
@@ -285,7 +306,7 @@ export function Composer({
           value={text}
           disabled={locked}
           onChange={(e) => {
-            setText(e.target.value);
+            updateDraft(e.target.value);
             detect(e.target.value, e.target.selectionStart);
           }}
           onClick={(e) => detect(text, e.currentTarget.selectionStart)}
@@ -355,23 +376,14 @@ export function Composer({
               onChange={(e) => void setModel(e.target.value || null)}
             >
               <option value="">{t("chat.defaultModelShort")}</option>
-              {state.modelRef &&
-                !catalog.data?.some((m) => m.reference === state.modelRef) &&
-                !(
-                  subscription.data?.connected &&
-                  subscriptionModels.data?.models.some((m) => m.reference === state.modelRef)
-                ) && <option value={state.modelRef}>{state.modelRef}</option>}
-              {catalog.data?.map((m) => (
-                <option key={m.reference} value={m.reference}>
-                  {m.reference}
+              {state.modelRef && !models.some((m) => m.reference === state.modelRef) && (
+                <option value={state.modelRef}>{state.modelRef}</option>
+              )}
+              {models.map((model) => (
+                <option key={model.reference} value={model.reference}>
+                  {modelOptionLabel(model, connections, t, i18n.language)}
                 </option>
               ))}
-              {subscription.data?.connected &&
-                subscriptionModels.data?.models.map((m) => (
-                  <option key={m.reference} value={m.reference}>
-                    {m.reference}
-                  </option>
-                ))}
             </select>
           </label>
           {sessionId && (
@@ -384,12 +396,15 @@ export function Composer({
           )}
           <PermissionPicker
             mode={state.mode}
-            disabled={disabled || permissionLocked}
+            disabled={disabled}
             change={setMode}
             workbenchId={workbenchId}
           />
           <div className="composer-tools">
             {inspectorControls}
+            {sessionId && (
+              <DictationButton dictation={dictation} disabled={!dictationEnabled} mode={dictationMode} />
+            )}
             {sessionId && workbenchId && attachments?.addImages && (
               <>
                 <input
@@ -443,10 +458,7 @@ export function Composer({
           </button>
         </>
       )}
-      {/* The one working status of a running turn, at every chat detail level. */}
-      <p className="muted composer-hint" role="status" data-chat-working={running ? "" : undefined}>
-        {running ? t("chat.working") : t("chat.enterHint")}
-      </p>
+      <DictationStatus dictation={dictation} running={running} />
     </div>
   );
 }

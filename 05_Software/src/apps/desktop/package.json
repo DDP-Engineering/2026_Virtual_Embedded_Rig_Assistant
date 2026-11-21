@@ -21,6 +21,7 @@
     "node-pty": "1.1.0",
     "onnxruntime-node": "1.30.0",
     "pdfjs-dist": "6.4.299",
+    "playwright-core": "1.64.0",
     "react": "19.3.0",
     "react-dom": "19.3.0",
     "react-i18next": "17.0.16",

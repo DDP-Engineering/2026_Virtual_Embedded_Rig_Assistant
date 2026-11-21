@@ -32,6 +32,12 @@ Geben Sie dem Agenten den relativen Pfad eines Bildes im Workbench, damit er es 
 
 Der Agent kann ein in dieser Sitzung gesendetes Bild über seinen gespeicherten Pfad erneut öffnen. Pro Schritt kann er bis zu acht Bilder betrachten. Die acht zuletzt mit dem Werkzeug geöffneten Bilder bleiben im aktuellen Durchlauf verfügbar.
 
+## Eine Nachricht diktieren
+
+Wählen Sie ein Modell unter [Einstellungen > Diktat](settings.md). Halten Sie zum Diktieren die Mikrofontaste oder ihre Tastenkombination gedrückt. Wenn die Mikrofontaste fokussiert ist, halten Sie Leertaste oder Eingabetaste gedrückt. Lassen Sie zum Transkribieren los. Im Start/Stopp-Modus drücken Sie einmal für die Aufnahme und erneut für die Transkription. Mit Esc oder Diktat abbrechen verwerfen Sie die Aufnahme oder Transkription. Der Agent kann weiterarbeiten. Das Diktat wird abgebrochen, wenn Sie den Chat verlassen oder das Fenster den Fokus verliert.
+
+Der Text erscheint an der ursprünglichen Cursorposition oder nach der Auswahl. Wenn Sie den Entwurf beim Diktieren bearbeitet haben, wird das Diktat am Ende eingefügt. Text und Anhänge bleiben erhalten. Prüfen Sie den Entwurf und senden Sie ihn mit der Eingabetaste oder mit Senden.
+
 ## Einen laufenden Durchlauf steuern oder stoppen
 
 Während der Agent arbeitet, können Sie weiterschreiben und weitere Nachrichten senden, zum Beispiel „prüfe auch die Errata“. Sie zeigen **Zustellung ausstehend**, bis der Agent sie bei seinem nächsten Schritt aufnimmt. Solange eine Freigabekarte auf Ihre Entscheidung wartet, ist das Senden angehalten.
@@ -43,6 +49,14 @@ Während der Agent arbeitet, können Sie weiterschreiben und weitere Nachrichten
 Wenn VERA eine Aufgabe delegiert, zeigt **Delegierte Sitzungen** im übergeordneten Chat jede untergeordnete Sitzung mit ihrem Status an. Wähle eine Sitzung aus, um ihren Chat zu öffnen und den Verlauf zu verfolgen. **Übergeordnete Sitzung** führt zurück.
 
 Öffne eine laufende untergeordnete Sitzung und wähle **Stoppen** bei der Nachrichteneingabe, um sie anzuhalten. Die übergeordnete Sitzung kann weiterarbeiten. Wenn eine Genehmigung erforderlich ist, verwende die Genehmigungskarte in der jeweiligen Sitzung. Beim erneuten Öffnen nach einem Neustart von VERA bleiben der Link und das Ergebnis des delegierten Durchlaufs verfügbar.
+
+Der übergeordnete Agent kann weitere Anweisungen im selben untergeordneten Chat senden und Modell sowie Denkstufe für spätere Durchläufe wählen. Der Verlauf kennzeichnet diese Nachrichten als **Anweisung des übergeordneten Agenten**. Während die untergeordnete Sitzung arbeitet, wartet eine zulässige Nachricht auf die nächste Modellanfrage. Ist eine Entscheidung erforderlich, nutze die Genehmigungskarte der untergeordneten Sitzung.
+
+Eine neue untergeordnete Sitzung startet im aktuellen Berechtigungsmodus der übergeordneten Sitzung. Danach wählst du den Modus in jeder Nachrichteneingabe separat. Wähle im Bypass-Modus **Vollzugriff für neue untergeordnete Sitzungen erlauben** und bestätige die Erlaubnis für künftige berechtigte Starts. Mit **Vollzugriff für künftige Starts widerrufen** hebst du sie auf. Bestehende Sitzungen behalten ihren Modus. Verringere den Zugriff einer untergeordneten Sitzung in ihrem eigenen Chat. Eine Veröffentlichung auf einem entfernten System erfordert eine separate Erlaubnis.
+
+Lass in einer gemeinsam genutzten Arbeitskopie jeweils eine untergeordnete Sitzung fertig werden und überprüfe ihre Übergabe vor dem nächsten Start.
+
+In einer delegierten Bypass-Sitzung laufen Shell-Befehle automatisch, wenn sie mit einem von dir gespeicherten Workbench-Befehlspräfix übereinstimmen. Andere Shell-Befehle benötigen deine Genehmigung.
 
 ## Detailgrade
 

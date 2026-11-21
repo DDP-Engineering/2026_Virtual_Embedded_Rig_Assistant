@@ -12,7 +12,12 @@ Session-local user-message bookmarks persist as format-1 events, project into sn
 
 User messages retain workbench image paths across restarts. Desktop uses workbench-confined, Display-masked thumbnails for the visible transcript. Selecting a thumbnail opens the file viewer, and an unavailable file shows its saved path under Display masking.
 
-Core delegated turns use the same workbench session service, gateway and event history. The format-1 database retains parent ownership and request identity across interruption. Each workbench admits up to three active delegated turns with a fixed inspection-only tool scope. Parent agents can launch, observe, wait for and stop the initial turn through the core tool registry. Monitoring publishes bounded masked replies and status derived from the durable event sequence. Desktop uses the same workbench ownership and initial outcome for two-way Chat navigation, with refresh, reopen and normal Stop and approval controls.
+Core delegated turns use the same workbench session service, gateway and event history. The format-1 database retains parent ownership, launch authorization and request acknowledgements. Parents launch, configure and send or queue instructions to owned children, then observe, wait for or stop an addressed turn. Each workbench admits up to three active child turns. Children copy the parent's effective mode at creation and use canonical local tools under their independent live mode. Desktop requires explicit confirmation for Full Access mode changes and parent-level launch authorization, and shows the latest child outcome alongside its durable Chat link. Monitoring publishes bounded masked replies, and parent instructions have distinct transcript provenance.
+
+Desktop dictation manages two pinned Whisper models in application data. The desktop stack supplies
+session-bound capture, gesture-scoped microphone permission, bounded mono PCM and single-job
+offline inference with automatic or explicit language. The chat composer uses configurable hold or
+toggle gestures and inserts editable text into the initiating draft for explicit Send.
 
 ## Supported operation
 
@@ -57,7 +62,8 @@ Each component has a knowledge page that names its source files, tests, invarian
 | IPC boundary | [ipc-boundary](../knowledge/ipc-boundary.md) | Channels, errors, events, subscriptions, API and mock metadata. |
 | Renderer foundation | [renderer-foundation](../knowledge/renderer-foundation.md) | Layout, appearance, languages, accessibility, Settings pages, keyboard shortcut bindings. |
 | Application data | [app-data](../knowledge/app-data.md) | Settings, validation, portable locations, atomic saves, redacting logs, privacy masking choices. |
-| Providers | [providers](../knowledge/providers.md) | Credential encryption, consent, redaction, endpoint configuration, masked forms, ChatGPT sign-in. |
+| Dictation models | [dictation](../knowledge/dictation.md) | Pinned local Whisper models, microphone capture, composer shortcuts and owned draft insertion. |
+| Providers | [providers](../knowledge/providers.md) | Credential encryption, consent, redaction, curated plan, region and workspace bindings, masked forms, ChatGPT sign-in. |
 | LLM gateway | [llm-gateway](../knowledge/llm-gateway.md) | Model selection, capabilities and catalogs, connection tests, replay, manual live smoke. |
 | Agent runtime | [agent-runtime](../knowledge/agent-runtime.md) | Turn behavior, steering, context policy and compaction, tool-schema conversion, event mapping. |
 | Sessions | [sessions](../knowledge/sessions.md) | Durable lifecycle, snapshots, subscriptions, recovery, citations, approvals, bookmarks. |
@@ -68,13 +74,15 @@ Each component has a knowledge page that names its source files, tests, invarian
 | Changes | [changes](../knowledge/changes.md) | Completed change history, diff presentation, confined reveal. |
 | File tools | [file-tools](../knowledge/file-tools.md) | Path confinement, read, list, glob, grep, `decode_register`, `parse_log`, prepared write and edit, fingerprints, line refs, tool registry, worker hosts, `apply_candidate`. |
 | Workbench | [workbench](../knowledge/workbench.md) | Format 1, create, open, close, ownership, recents, Welcome and New Workbench pages, the workbench editor and its sections, additional folders, saved command prefixes. |
+| Files Git status | [Files Git status](../knowledge/files-git-status.md) | Opt-in status overlay, scoped refresh, confined local Git reads, staged and unstaged comparisons and per-file HEAD history in central tabs. |
 | Workbench storage | [workbench-storage](../knowledge/workbench-storage.md) | Per-folder SQLite, current-schema validation, session, message and event rows. |
 | Knowledge ingest | [knowledge-ingest](../knowledge/knowledge-ingest.md) | Background document selection, hashing, limits, status events, reindex. |
 | Indexer process | [indexer-process](../knowledge/indexer-process.md) | The VERA Indexer utility process; main keeps every SQLite write. |
 | Document extraction | [document-extraction](../knowledge/document-extraction.md) | PDF, text, heading and office extraction, chunks, OCR, document workers. |
 | Keyword search | [keyword-search](../knowledge/keyword-search.md) | Persisted word and identifier candidates with locators. |
-| Document search | [document-search](../knowledge/document-search.md) | Local embedding registry and inference, confirmed per-workbench model switching with keyword search during rebuild, hybrid search, document tools and CLI retrieval. |
+| Document search | [document-search](../knowledge/document-search.md) | Local model selection, hybrid and keyword search during ingest, scoped search coverage and fallback, document tools and CLI retrieval. |
 | Document viewer | [document-viewer](../knowledge/document-viewer.md) | Docs panel, `docs.readBytes` byte windows, Rendered, Text and Hex modes, large text, image preview, Display masking. |
+| Desktop browser runtime | [browser-runtime](../knowledge/browser-runtime.md) | Web access browser settings, Chat controls, verified Chromium provisioning, sandbox launch, temporary session ownership, public-only grants, pinned connections and bounded browser tools. |
 | Web search | [web-search](../knowledge/web-search.md) | `web_search` and `web_read`, the Exa, Tavily and Brave providers, Settings > Web access. |
 | PDF downloads | [pdf-downloads](../knowledge/pdf-downloads.md) | `web_download`, files and provenance under `.vera/downloads`. |
 | Parts search | [parts-search](../knowledge/parts-search.md) | `parts_search`, supplier switches, credentials and region, set in the parts-search plugin's Configuration section. |
@@ -92,11 +100,25 @@ Each component has a knowledge page that names its source files, tests, invarian
 
 Facts that span components:
 
+- The active workbench's live indexing snapshot and coalesced updates feed the sidebar and Files.
+  The chat transcript shows saved retrieval limitations from the corresponding turn.
 - Stored formats follow the root [AGENTS.md](../../AGENTS.md) development policy: every format version is 1, any other version is invalid data, and there is no migration code.
 - Permission modes are Read-only, Ask, Auto-edit and Bypass, per session with a workbench default. Bypass gives file tools, commands and declared program runs the full OS-account filesystem scope after one explicit confirmation per change. Host-configured application data is refused for reads and writes in every mode, including through aliases. Commands and programs run with OS-account permissions and are not sandboxed. See file-tools, plugins and sessions.
 - Privacy masking has four areas: agent, exports, Display and Program runs. Settings hold the app defaults and each workbench may override them. See app-data.
 - The interface, help and approval texts exist in en, ro, de and fr.
 - Provider model capabilities include input modalities. Settings > Providers stores the image opt-in for each custom model within its connection.
+- Settings Provider presets are searchable. Curated service bindings separate catalog and inference routes
+  and scope each saved credential to its connection. Direct DeepSeek and Moonshot catalogs
+  and the explicit Kimi For Coding model IDs use independent international endpoints. MiniMax API
+  and M Plan, and Z.AI API and GLM Coding Plan, provide separate international connection presets
+  with documented model profiles. OpenCode Console and Go have separate presets
+  and authenticated catalogs. International QwenCloud Standard and Token Plan also have separate bindings
+  and credentials, with explicit model entry when catalog discovery is unavailable. Session and workbench
+  model pickers share plan and capability labels. Fireworks AI, Together AI, Groq and Cerebras offer
+  separate key scopes, service catalogs and manual model entry. Hosted capabilities use documented
+  catalog fields or exact published model profiles. Hugging Face Inference Providers and Vercel
+  AI Gateway route requests upstream. NVIDIA NIM runs hosted models. The three services have
+  separate model catalogs and credential scopes.
 - The composer takes pasted, dropped and picked raster images, retains imported originals in the workbench and attaches existing Files images by reference. Chat messages keep primary-workbench image paths in the transcript. Session dispatch loads bounded raster parts for image-capable models, and exports and compacted history retain the paths. The model-gated `view_image` tool uses a strictly confined workbench path and sends the image as a current-turn tool result. The workbench Tools editor resolves support for its draft default model.
 - Plugin selection is per workbench and defaults to none. Global plugin installation is separate from workbench enablement.
 - Plugin secrets (MQTT passwords, Wokwi tokens, parts search keys) stay in VERA's credential store and are edited in the plugin's Configuration section on the Plugins page; App settings has no page for them. MQTT and Wokwi secrets reach only an approved run of the enabled official plugin, on its stdin. See plugins and parts-search.

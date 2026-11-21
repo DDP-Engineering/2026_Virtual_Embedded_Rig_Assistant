@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-REL-2ee08eaf"
+title = "Report hosted authentication failures"
+status = "active"
+requirement = "If a hosted inference service rejects the connection key with a 401 or 403 response, VERA shall return the existing provider authentication diagnostic."
+verification = "Script catalog and streaming key rejection including 401 and 403, and assert provider.auth-equivalent diagnostics for the selected service."
+affected_paths = ["05_Software/src/libraries/core/src/llm/preset-connection.ts", "05_Software/src/libraries/core/src/llm/providers.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/hosted-provider-presets.test.ts"]
+created = 2026-11-20
+updated = 2026-11-20

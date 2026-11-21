@@ -28,6 +28,14 @@ import { documentKind } from "./ingest.js";
 import { createDocumentProcessor, verifyDocumentSource } from "./processor.js";
 import { DocumentKnowledge, fuseRanks, sectionParts } from "./search.js";
 
+function deferred() {
+  let resolve = () => {};
+  const promise = new Promise<void>((done) => {
+    resolve = done;
+  });
+  return { promise, resolve };
+}
+
 const software = fileURLToPath(new URL("../../../../../", import.meta.url));
 async function harness() {
   const root = await mkdtemp(join(tmpdir(), "vera-search-")),
@@ -259,6 +267,169 @@ it("reads and hashes a cited source once for all citations of one finished messa
     await h.close();
   }
 });
+it("retries ranking after a concurrent publication and discards the old candidate refs", async () => {
+  const h = await harness();
+  const entered = deferred();
+  const resume = deferred();
+  let waiting: ReturnType<DocumentKnowledge["search"]> | undefined;
+  try {
+    await h.add("docs/old.txt", "coolant old");
+    const rank = h.port.rank.bind(h.port);
+    const ranked = vi.spyOn(h.port, "rank").mockImplementationOnce(async (...args) => {
+      const hits = await rank(...args);
+      entered.resolve();
+      await resume.promise;
+      return hits;
+    });
+    waiting = h.knowledge.search({ query: "coolant", mode: "hybrid" }, h.signal);
+    await entered.promise;
+    h.rows.remove("docs/old.txt");
+    await h.add("docs/new.txt", "coolant new");
+    resume.resolve();
+    await expect(waiting).resolves.toMatchObject({
+      coverage: "unknown",
+      usage: { mode: "hybrid" },
+      results: [{ path: "docs/new.txt", snippet: "coolant new" }],
+    });
+    expect(ranked).toHaveBeenCalledTimes(2);
+  } finally {
+    resume.resolve();
+    await waiting?.catch(() => {});
+    await h.close();
+  }
+});
+
+it.each([5, 250])("limits expensive semantic retries during active publication (%d ms)", async (elapsed) => {
+  const h = await harness();
+  const clock = vi.spyOn(performance, "now");
+  let time = 1000;
+  clock.mockImplementation(() => time);
+  try {
+    await h.add("docs/old.txt", "coolant old");
+    const knowledge = new DocumentKnowledge(
+      h.root,
+      h.db,
+      () => h.port,
+      undefined,
+      () => "indexing",
+    );
+    const rank = h.port.rank.bind(h.port);
+    const ranked = vi.spyOn(h.port, "rank").mockImplementationOnce(async (...args) => {
+      const hits = await rank(...args);
+      h.rows.remove("docs/old.txt");
+      await h.add("docs/new.txt", "coolant new");
+      time += elapsed;
+      return hits;
+    });
+    const result = await knowledge.search({ query: "coolant", mode: "hybrid" }, h.signal);
+    expect(result.coverage).toBe("partial");
+    expect(result.results.map(({ path }) => path)).toEqual(["docs/new.txt"]);
+    if (elapsed === 250) {
+      expect(ranked).toHaveBeenCalledTimes(1);
+      expect(result.usage).toEqual({ mode: "keyword", fallbackReason: "revision-conflict" });
+    } else {
+      expect(ranked).toHaveBeenCalledTimes(2);
+      expect(result.usage).toEqual({ mode: "hybrid" });
+    }
+  } finally {
+    clock.mockRestore();
+    await h.close();
+  }
+});
+
+it.each([false, true])("bounds revision conflicts during hit validation (cancelled: %s)", async (cancel) => {
+  const h = await harness();
+  try {
+    const first = await h.add("docs/a.txt", "coolant old");
+    const controller = new AbortController();
+    const reason = Error("Search cancelled");
+    const createGuard = PathGuard.create.bind(PathGuard);
+    const guard = vi.spyOn(PathGuard, "create").mockImplementation(async (...args) => {
+      const original = await createGuard(...args);
+      h.rows.replaceChunks(first.id, [
+        { text: "coolant changed", locator: { type: "lines", start: 1, end: 1 } },
+      ]);
+      if (cancel) controller.abort(reason);
+      return original;
+    });
+    const waiting = h.knowledge.search({ query: "coolant", mode: "keyword" }, controller.signal);
+    if (cancel) await expect(waiting).rejects.toBe(reason);
+    else
+      await expect(waiting).resolves.toMatchObject({
+        coverage: "unknown",
+        usage: { mode: null, reason: "revision-conflict" },
+        results: [],
+      });
+    expect(guard).toHaveBeenCalledTimes(cancel ? 1 : 3);
+  } finally {
+    vi.restoreAllMocks();
+    await h.close();
+  }
+});
+
+it("uses only current-model vectors and falls back after two transient semantic conflicts", async () => {
+  const h = await harness();
+  try {
+    const first = await h.add("docs/a.txt", "coolant");
+    const foreign = await h.add("docs/foreign.txt", "coolant foreign");
+    h.db
+      .prepare(
+        "UPDATE embeddings SET model_id='old' WHERE chunk_id IN (SELECT id FROM chunks WHERE doc_id=?)",
+      )
+      .run(foreign.id);
+    const rank = vi.spyOn(h.port, "rank").mockImplementation(async (_root, _epoch, input) => {
+      const vectors = typeof input === "function" ? input() : input;
+      expect(vectors).toHaveLength(1);
+      h.db
+        .prepare(
+          "UPDATE embeddings SET vector=vector WHERE chunk_id IN (SELECT id FROM chunks WHERE doc_id=?)",
+        )
+        .run(first.id);
+      return (vectors ?? []).map(({ id }) => ({ id, score: 1 }));
+    });
+    const result = await h.knowledge.search({ query: "coolant", mode: "semantic" }, h.signal);
+    expect(rank).toHaveBeenCalledTimes(2);
+    expect(result).toMatchObject({ usage: { mode: "keyword", fallbackReason: "revision-conflict" } });
+    expect(result.results.map((hit) => hit.path).sort()).toEqual(["docs/a.txt", "docs/foreign.txt"]);
+    rank.mockRestore();
+    h.db.prepare("DELETE FROM embeddings WHERE model_id='fixture'").run();
+    await expect(h.knowledge.search({ query: "coolant", mode: "semantic" }, h.signal)).resolves.toMatchObject(
+      {
+        usage: { mode: "keyword", fallbackReason: "semantic-unavailable" },
+      },
+    );
+  } finally {
+    await h.close();
+  }
+});
+
+it("cancels blocked ranking without retrying or falling back", async () => {
+  const h = await harness();
+  const entered = deferred();
+  const resume = deferred();
+  let waiting: ReturnType<DocumentKnowledge["search"]> | undefined;
+  try {
+    await h.add("docs/a.txt", "coolant");
+    const rank = vi.spyOn(h.port, "rank").mockImplementation(async () => {
+      entered.resolve();
+      await resume.promise;
+      throw Object.assign(Error("Indexer stopped"), { retry: true });
+    });
+    const controller = new AbortController();
+    const reason = Error("Search cancelled");
+    waiting = h.knowledge.search({ query: "coolant", mode: "semantic" }, controller.signal);
+    await entered.promise;
+    controller.abort(reason);
+    resume.resolve();
+    await expect(waiting).rejects.toBe(reason);
+    expect(rank).toHaveBeenCalledTimes(1);
+  } finally {
+    resume.resolve();
+    await waiting?.catch(() => {});
+    await h.close();
+  }
+});
+
 it("pins one-based fusion ties/dedup, modes, pre-top50 glob filtering and bounded snippets", async () => {
   expect(
     fuseRanks([
@@ -287,8 +458,10 @@ it("pins one-based fusion ties/dedup, modes, pre-top50 glob filtering and bounde
       ).toBe("docs/b.txt");
     await expect(h.knowledge.search({ query: "x", k: 21 }, h.signal)).rejects.toThrow();
     await expect(h.knowledge.search({ query: "x", pathGlob: "../**" }, h.signal)).rejects.toThrow();
-    await expect(new DocumentKnowledge(h.root, h.db).search({ query: "x" }, h.signal)).rejects.toThrow(
-      /Semantic/,
+    await expect(new DocumentKnowledge(h.root, h.db).search({ query: "x" }, h.signal)).resolves.toMatchObject(
+      {
+        usage: { mode: "keyword", fallbackReason: "semantic-unavailable" },
+      },
     );
     for (let n = 0; n < 55; n++) await h.add(`docs/extra${n}.txt`, "I2C1_CR1 defining register");
     await h.add("docs/last.txt", "I2C1_CR1 defining register");
@@ -497,13 +670,19 @@ it("uses the workbench retrieval defaults when search_docs omits k or mode", asy
   const h = await harness();
   try {
     for (const name of ["a", "b", "c"]) await h.add(`docs/${name}.txt`, `I2C1_CR1 register ${name}`);
-    const defaults = new DocumentKnowledge(h.root, h.db, undefined, () => ({ results: 2, mode: "keyword" }));
-    // Keyword mode needs no embeddings, so this only succeeds when the default mode applies.
-    expect((await defaults.search({ query: "I2C1_CR1" }, h.signal)).results).toHaveLength(2);
-    expect((await defaults.search({ query: "I2C1_CR1", k: 1 }, h.signal)).results).toHaveLength(1);
-    await expect(defaults.search({ query: "I2C1_CR1", mode: "semantic" }, h.signal)).rejects.toThrow(
-      /Semantic/,
+    const defaults = new DocumentKnowledge(
+      h.root,
+      h.db,
+      () => h.port,
+      () => ({ results: 2, mode: "keyword" }),
     );
+    const configured = await defaults.search({ query: "I2C1_CR1" }, h.signal);
+    expect(configured.usage).toEqual({ mode: "keyword" });
+    expect(configured.results).toHaveLength(2);
+    expect((await defaults.search({ query: "I2C1_CR1", k: 1 }, h.signal)).results).toHaveLength(1);
+    await expect(defaults.search({ query: "I2C1_CR1", mode: "semantic" }, h.signal)).resolves.toMatchObject({
+      usage: { mode: "semantic" },
+    });
     expect((await h.knowledge.search({ query: "I2C1_CR1" }, h.signal)).results).toHaveLength(3);
     const unset = new DocumentKnowledge(
       h.root,
@@ -511,7 +690,9 @@ it("uses the workbench retrieval defaults when search_docs omits k or mode", asy
       () => h.port,
       () => undefined,
     );
-    expect((await unset.search({ query: "I2C1_CR1" }, h.signal)).results).toHaveLength(3);
+    const inferred = await unset.search({ query: "I2C1_CR1" }, h.signal);
+    expect(inferred.usage).toEqual({ mode: "hybrid" });
+    expect(inferred.results).toHaveLength(3);
   } finally {
     await h.close();
   }
@@ -849,6 +1030,8 @@ it("guides models that fill every optional argument: per-field descriptions, kin
       await h.knowledge.search({ query: "SWD clock", mode: "keyword", pathGlob: "*" }, h.signal),
     ).toEqual({
       results: [],
+      coverage: "unknown",
+      usage: { mode: null, reason: "no-candidates" },
       message:
         'No indexed document matched pathGlob "*". Globs are relative to the workbench root, so "*" matches only top-level files; use a pattern such as "docs/**", or omit pathGlob to search every document.',
     });
@@ -904,7 +1087,7 @@ it("keeps an in-flight keyword result coherent while publishing new model chunk 
     );
     release();
     await expect(waiting).resolves.toMatchObject({
-      ranking: "embedding-rebuild",
+      usage: { mode: "keyword", fallbackReason: "embedding-rebuild" },
       results: [{ path: doc.path, snippet: "Coolant returns to the pump." }],
     });
   } finally {
@@ -933,8 +1116,16 @@ it("falls back to keyword results when the indexer cannot rank, and still fails 
     for (const mode of ["hybrid", "semantic"] as const) {
       const found = await stopped.search({ query: "supply", mode }, h.signal);
       expect(found.results.map((r) => r.path)).toEqual(["docs/a.md"]);
+      expect(found.usage).toEqual({ mode: "keyword", fallbackReason: "semantic-unavailable" });
       expect(found.message).toMatch(/semantic ranking is unavailable/i);
     }
+    const deadline = new DocumentKnowledge(h.root, h.db, () =>
+      failing(Object.assign(Error("Embedding queue deadline exceeded."), { code: "EMBEDDING_DEADLINE" })),
+    );
+    await expect(deadline.search({ query: "supply", mode: "hybrid" }, h.signal)).resolves.toMatchObject({
+      usage: { mode: "keyword", fallbackReason: "semantic-unavailable" },
+      results: [{ path: "docs/a.md" }],
+    });
     const broken = new DocumentKnowledge(h.root, h.db, () => failing(Error("Embedding worker failed.")));
     await expect(broken.search({ query: "supply", mode: "hybrid" }, h.signal)).rejects.toThrow(
       "Embedding worker failed.",

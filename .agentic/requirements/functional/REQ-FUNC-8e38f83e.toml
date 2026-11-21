@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-FUNC-8e38f83e"
+title = "Preserve reasoning in provider tool continuations"
+status = "active"
+requirement = "When one of the three services emits reasoning and a tool call, VERA shall continue the stream exchange with the reasoning and matching tool result serialized in that service's protocol."
+verification = "Script thinking and tool calls in Chat Completions and Messages, then assert the next request's effort, reasoning representation and tool-result ID and the resumed text deltas."
+affected_paths = ["05_Software/src/apps/desktop/src/main/direct-provider-streams.test-support.ts", "05_Software/src/libraries/core/src/llm/providers.ts", "05_Software/src/libraries/core/src/llm/curated-adapters.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/direct-provider-presets.test.ts"]
+spec = "specs/REQ-FUNC-1ce2090f.md"
+created = 2026-11-20
+updated = 2026-11-20

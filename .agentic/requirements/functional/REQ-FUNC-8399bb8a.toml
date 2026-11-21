@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-FUNC-8399bb8a"
+title = "Continue Alibaba and Xiaomi streamed tool calls"
+status = "active"
+requirement = "When a supported Alibaba Cloud or Xiaomi model calls a tool during a stream, VERA shall send its matching tool result and reasoning content back to that binding."
+verification = "Use a scripted first response with reasoning and tool deltas and verify the second request and streamed text in every shipped binding."
+affected_paths = ["05_Software/src/libraries/shared/src/provider-presets.ts","05_Software/src/libraries/core/src/llm/providers.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/regional-provider-presets.test.ts"]
+created = 2026-11-20
+updated = 2026-11-20

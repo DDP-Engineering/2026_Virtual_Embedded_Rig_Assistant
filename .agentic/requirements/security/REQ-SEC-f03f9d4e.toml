@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-SEC-f03f9d4e"
+title = "Enforce the browser boundary across request contexts"
+status = "active"
+requirement = "When a redirect, frame, popup, subresource or background path tries to reach an ungranted or unsupported destination, Desktop shall prevent any upstream request."
+verification = "Use controlled Chromium resources and upstream receipts for allowed and denied routes, plus service-worker, WebSocket and alternate transport attempts."
+affected_paths = ["05_Software/src/apps/desktop/src/main/browser/proxy.ts", "05_Software/src/apps/desktop/src/main/browser/launcher.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/browser/browser-policy.test.ts", "05_Software/tests/e2e/browser-runtime.spec.ts"]
+priority = "normal"
+created = 2026-11-20
+updated = 2026-11-20

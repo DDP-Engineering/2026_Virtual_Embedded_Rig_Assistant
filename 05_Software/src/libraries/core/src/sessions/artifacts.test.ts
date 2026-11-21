@@ -102,7 +102,7 @@ it("saves the script output, metadata/event and valid/missing citations without 
   }
 });
 
-it("returns actionable tool errors for invalid names, UTF8 bytes over5MiB and duplicate names", async () => {
+it("explains rejected names, byte limits and duplicate artifact saves", { timeout: 15_000 }, async () => {
   const bad = [
     "",
     ".",

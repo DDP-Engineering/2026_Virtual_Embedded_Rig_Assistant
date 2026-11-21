@@ -49,6 +49,21 @@ export function WorkbenchInterface({
           <span>{label}</span>
         </label>
       ))}
+      <label className="workbench-tool-option">
+        <input
+          type="checkbox"
+          data-git-status-toggle
+          checked={config.interface.git_status}
+          onChange={(event) => {
+            const checked = event.target.checked;
+            setConfig((current) => ({
+              ...current,
+              interface: { ...current.interface, git_status: checked },
+            }));
+          }}
+        />
+        <span>{t("gitStatus.preference")}</span>
+      </label>
     </fieldset>
   );
 }

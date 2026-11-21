@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-FUNC-0a099f39"
+title = "Use a stable OpenCode conversation header"
+status = "active"
+requirement = "When VERA streams a conversation through OpenCode Console or Go, VERA shall identify VERA in the request and send a stable OpenCode session header across tool continuation and later turns in that session."
+verification = "Script two SSE requests through each plan, feed the tool result into the second, and assert the VERA user agent, identical session headers and matching assistant and result tool IDs."
+affected_paths = ["05_Software/src/libraries/shared/src/provider-presets.ts", "05_Software/src/libraries/core/src/llm/providers.ts", "05_Software/src/libraries/core/src/llm/opencode.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/opencode-presets.test.ts"]
+created = 2026-11-20
+updated = 2026-11-20

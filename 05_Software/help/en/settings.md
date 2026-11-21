@@ -13,6 +13,7 @@
 | **Updates** | How VERA updates itself |
 | **Data & privacy** | Masking defaults for four areas |
 | **About** | Version, runtime, license and third-party components |
+| **Dictation** | Local Whisper models and spoken language |
 
 ## Data & privacy
 
@@ -63,6 +64,14 @@ Only the search text and the addresses the agent asks for leave your computer; V
 
 Turning web access off also stops searches and downloads in progress. Individual workbenches can disable the web tools under **Edit workbench** → **Tools**.
 
+### Interactive Browser
+
+In **Settings → Web access**, select **Install browser runtime** to download and verify Chromium. You can cancel during installation or remove the installed runtime. Enable **Interactive Browser in VERA** and **Allow Interactive Browser in this workbench**. Both switches start off.
+
+In Chat, enter the exact public origin, such as `https://example.com`, under **Public origin** and select **Grant access**. Include the scheme and any non-default port. Each chat owns its grants and browser window. Grant extra origins for redirects or resources individually.
+
+Ask the agent to open and read a page or follow a link. Chat displays activity and the current authorized page. **Show browser** brings the tab forward. **Stop browsing** stops the active turn and cancels its outstanding browser operation. **Revoke access** and **Close browser** both release the temporary browser session and its grants. Closing the window, switching either setting off or removing the runtime also revokes access. Use the managed download tool for supported files.
+
 ## About
 
 **About** shows the application version, platform, architecture, whether VERA runs as a portable version, the system locale, the runtime versions, the license and the list of third-party components with their licenses.
@@ -70,3 +79,13 @@ Turning web access off also stops searches and downloads in progress. Individual
 ## Shell commands
 
 In Settings → Commands, choose Automatic, PowerShell 7, Windows PowerShell, Cmd, Bash or Custom, then Save. Installed variants are detected from executable search paths and standard installation folders; unavailable variants are disabled. Custom accepts an executable name or absolute path. Automatic prefers PowerShell 7, Windows PowerShell, then Cmd on Windows; Linux prefers Bash, then sh. PowerShell uses noninteractive UTF-8 commands without profiles. Bash uses `-lc`; login profiles may adjust the environment. On Windows, Bash means native Bash such as Git Bash; the old WSL launcher is not selected. Cmd commands use `/d /s /c`, accept one line with `&` or `&&` to join commands, and built-in output uses the Windows code page. Use PowerShell or Bash when UTF-8 output is required. The setting applies to future agent commands and newly opened terminals; existing terminals keep their current shell. An explicitly selected unavailable shell reports an error.
+
+## Dictation
+
+Choose **Whisper Small** (recommended) or **Whisper Base** (compact). The page shows the download size and installation status for each model. Choose **Download** and follow the progress. **Cancel** discards the partial download. If VERA reports a failed download or damaged files, choose **Retry**. Free disk space if the download needs more room.
+
+Choose **Use model** after installation. VERA remembers your selection across restarts. **Remove** deletes that model’s files and clears the selection if it was active. If removal fails, close apps using the model files and choose **Retry**. Models are stored in VERA’s application data and shared across workbenches.
+
+Under **Spoken language**, choose **Automatic detection** or select the language you plan to speak.
+
+Choose **Push-to-talk** (the default) to hold the microphone button or its shortcut while you speak. Choose **Press to start or stop** to start and end recording with separate presses. Select **Add shortcut** in the Dictation tab to assign an app-local chord. The editor rejects reserved combinations and shortcuts already in use. You can use the microphone button with the shortcut unassigned.

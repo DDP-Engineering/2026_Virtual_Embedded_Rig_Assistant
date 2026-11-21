@@ -1,8 +1,9 @@
 import { realpath } from "node:fs/promises";
 import { isAbsolute, relative, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
-import { type BrowserWindow, net, type Session } from "electron";
+import { type BrowserWindow, net, type Session, type WebContents } from "electron";
 import { productionCsp } from "./content-policy.js";
+import { authorizedSender, type RendererTarget } from "./ipc-router.js";
 
 const mime: Record<string, string> = {
   html: "text/html; charset=utf-8",
@@ -56,20 +57,54 @@ export async function bundledResponse(root: string, request: Request): Promise<R
   }
 }
 
-export function secureSession(session: Session): void {
+interface MicrophonePolicy {
+  target(): RendererTarget | undefined;
+  permit(request: boolean): boolean;
+}
+
+export function secureSession(session: Session, microphone?: MicrophonePolicy): void {
   // Chromium can initialize dictionaries even when spelling is disabled. Route
   // that downloader to local application resources before it schedules work.
   session.setSpellCheckerDictionaryDownloadURL("vera://app/dictionaries/");
   session.setSpellCheckerEnabled(false);
-  session.setPermissionRequestHandler((_contents, _permission, callback) => callback(false));
-  session.setPermissionCheckHandler(() => false);
+  function permits(
+    contents: WebContents | null,
+    details: { isMainFrame: boolean; requestingUrl?: string },
+    request: boolean,
+  ): boolean {
+    if (!microphone || !contents || !details.isMainFrame) return false;
+    try {
+      const target = microphone.target();
+      return (
+        !!target &&
+        details.requestingUrl === target.url &&
+        authorizedSender({ sender: contents, senderFrame: contents.mainFrame }, target) &&
+        microphone.permit(request)
+      );
+    } catch {
+      return false;
+    }
+  }
+  session.setPermissionRequestHandler((contents, permission, callback, details) =>
+    callback(
+      permission === "media" &&
+        "mediaTypes" in details &&
+        details.mediaTypes?.length === 1 &&
+        details.mediaTypes[0] === "audio" &&
+        permits(contents, details, true),
+    ),
+  );
+  session.setPermissionCheckHandler(
+    (contents, permission, _origin, details) =>
+      permission === "media" && details.mediaType === "audio" && permits(contents, details, false),
+  );
 }
 
 /** Protect sessions at creation, before asynchronous startup or window access. */
 export function installSessionPolicy(app: {
   on(event: "session-created", listener: (session: Session) => void): unknown;
 }): void {
-  app.on("session-created", secureSession);
+  app.on("session-created", (session) => secureSession(session));
 }
 
 export function secureWindow(window: BrowserWindow): void {

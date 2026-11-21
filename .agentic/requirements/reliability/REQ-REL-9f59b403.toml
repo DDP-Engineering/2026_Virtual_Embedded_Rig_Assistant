@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-REL-9f59b403"
+title = "Recover an OpenCode session after cancellation"
+status = "active"
+requirement = "When the user cancels OpenCode inference, VERA shall abort the request and allow a subsequent turn on the same connection and session."
+verification = "Abort a hanging scripted inference for each plan and verify the transport signal, the terminal cancellation and a later successful reply."
+affected_paths = ["05_Software/src/libraries/core/src/llm/providers.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/opencode-presets.test.ts"]
+created = 2026-11-20
+updated = 2026-11-20

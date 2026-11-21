@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-UX-f01e59f6"
+title = "Show dictation model choices"
+status = "active"
+requirement = "When the user opens Dictation Settings, VERA shall show both multilingual models with their download sizes and current state, identifying Small as recommended and Base as compact in the active interface language."
+verification = "Render the Dictation tab in each interface language with both model records and check their labels, sizes and distinct states."
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/dictation-settings.tsx", "05_Software/src/apps/desktop/src/renderer/components/settings.tsx", "05_Software/src/apps/desktop/src/renderer/components/dictation-settings.css", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json", "05_Software/src/apps/desktop/src/renderer/locales/fr.json"]
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/dictation-settings.test.ts"]
+created = 2026-11-20
+updated = 2026-11-20

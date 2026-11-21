@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-FUNC-5d93e37f"
+title = "Show supported hosted model capabilities"
+status = "active"
+requirement = "When VERA lists a hosted inference model, VERA shall report tool and input capabilities from supported catalog fields or exact documented model profiles, with missing capabilities unverified."
+verification = "Check dynamic capability booleans and verified named profiles, then assert a sparse or malformed optional field does not give an unsupported capability."
+affected_paths = ["05_Software/src/apps/desktop/src/main/provider-gateway.ts", "05_Software/src/libraries/shared/src/hosted-provider-presets.ts", "05_Software/src/libraries/shared/src/provider-presets.ts", "05_Software/src/libraries/core/src/llm/hosted-catalog.ts", "05_Software/src/libraries/core/src/llm/preset-catalog-cache.ts", "05_Software/src/libraries/core/src/llm/providers.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/hosted-provider-presets.test.ts"]
+created = 2026-11-20
+updated = 2026-11-20

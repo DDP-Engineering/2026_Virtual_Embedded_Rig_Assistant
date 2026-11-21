@@ -22,6 +22,9 @@ ingest queue, ownership checks and every SQLite write; it reaches the indexer on
 
 ## Public interface
 
+- The Desktop host mirrors stopped and restart transitions to the active workbench's indexing
+  status. Files and the sidebar show the same stopped state. Restart schedules active reconciliation.
+
 - `IndexerHost({spawn, modelId, now?, status?})`: `processor` (a `DocumentProcessor` with
   `select`/`inspect`/`release`/`modelId(model)`), `embeddings(model)` (a model-bound `EmbeddingPort`), `state()`, `pid()`,
   `restart()`, `close()`. The process starts on the first call (utilityProcess needs a ready app).

@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-FUNC-3c53af08"
+title = "Project documented router and NIM model capabilities"
+status = "active"
+requirement = "When showing a discovered hosted model, VERA shall project service-specific input, tools and token metadata supported by catalog fields or exact documented model evidence."
+verification = "Assert supported text and image inputs and tool support where documented, and unknown support for absent or conflicting evidence."
+affected_paths = ["05_Software/src/libraries/core/src/llm/gateway-catalogs.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/gateway-provider-presets.test.ts"]
+created = 2026-11-20
+updated = 2026-11-20

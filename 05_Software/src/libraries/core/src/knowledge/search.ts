@@ -1,4 +1,3 @@
-import { lstat } from "node:fs/promises";
 import {
   formatRef,
   isDocumentKindIn,
@@ -10,15 +9,25 @@ import {
 import type Database from "better-sqlite3";
 import picomatch from "picomatch";
 import { z } from "zod";
-import { DocumentsRepository, keywordEpoch } from "../storage/repos/documents.js";
-import { rebuildingEmbeddings } from "../storage/repos/embedding-rebuild.js";
+import { DocumentsRepository } from "../storage/repos/documents.js";
 import { validateGlob } from "../tools/discovery.js";
 import { PathGuard } from "../workbench/path-guard.js";
-import { type Chunk, locatorSchema } from "./chunk.js";
-import type { EmbeddingPort, VectorRow } from "./embedding.js";
+import type { EmbeddingPort } from "./embedding.js";
 import { extractionSchema } from "./extraction.js";
-import { KeywordSearch } from "./keyword.js";
+import type { DocumentIndexPhase } from "./ingest.js";
 import { verifyDocumentSource } from "./processor.js";
+import {
+  type DocumentSearchResponse,
+  type SearchHitValidator,
+  searchPublishedDocuments,
+} from "./search-ranking.js";
+
+export {
+  type DocumentSearchResponse,
+  documentRef,
+  fuseRanks,
+  type SearchResult,
+} from "./search-ranking.js";
 
 // Field descriptions steer models that otherwise fill every optional argument with a guess.
 export const searchDocsSchema = z
@@ -102,29 +111,6 @@ export const readDocSchema = z
   .strict();
 export type SearchArgs = z.input<typeof searchDocsSchema>;
 export type ReadDocArgs = z.input<typeof readDocSchema>;
-export interface SearchResult {
-  ref: string;
-  path: string;
-  locator: Chunk["locator"];
-  snippet: string;
-  score: number;
-}
-interface Row {
-  id: number;
-  path: string;
-  text: string;
-  locatorJson: string;
-}
-export function documentRef(path: string, locator: Chunk["locator"]): string {
-  if (locator.type === "page") return formatRef({ kind: "page", path, page: locator.page });
-  if (locator.type === "lines")
-    return formatRef({ kind: "lines", path, start: locator.start, end: locator.end });
-  // Only Markdown sections carry line ranges, so its untitled preamble stays a line citation;
-  // other section kinds cite their untitled leading section with an empty slug.
-  return !locator.slug && locator.start && locator.end
-    ? formatRef({ kind: "lines", path, start: locator.start, end: locator.end })
-    : formatRef({ kind: "heading", path, slug: locator.slug });
-}
 const READ_CHARS = 12000;
 const READ_JSON = 28000;
 const fits = (text: string) => text.length <= READ_CHARS && JSON.stringify({ text }).length <= READ_JSON;
@@ -164,33 +150,6 @@ export function sectionParts(text: string): string[] {
   }
   return parts;
 }
-export function fuseRanks(lists: readonly (readonly number[])[]): { id: number; score: number }[] {
-  const scores = new Map<number, number>();
-  for (const list of lists) {
-    const seen = new Set<number>();
-    list.forEach((id, at) => {
-      if (!seen.has(id)) {
-        seen.add(id);
-        scores.set(id, (scores.get(id) ?? 0) + 1 / (60 + at + 1));
-      }
-    });
-  }
-  return [...scores]
-    .map(([id, score]) => ({ id, score }))
-    .sort((a, b) => b.score - a.score || a.id - b.id)
-    .slice(0, 50);
-}
-function snippet(text: string, query: string): string {
-  const lower = text.toLowerCase();
-  const offsets = (query.match(/[\p{L}\p{N}_]+/gu) ?? [])
-    .map((t) => lower.indexOf(t.toLowerCase()))
-    .filter((at) => at >= 0);
-  const at = Math.max(0, (offsets.length ? Math.min(...offsets) : 0) - 80);
-  let value = text.slice(at, at + 300);
-  if (/[\uD800-\uDBFF]$/.test(value)) value = value.slice(0, -1);
-  return value;
-}
-
 /** Read-only persisted search and full-extraction reads over one owned workbench connection. */
 export class DocumentKnowledge {
   constructor(
@@ -198,142 +157,36 @@ export class DocumentKnowledge {
     private readonly db: Database.Database,
     private readonly embeddings?: () => EmbeddingPort | undefined,
     private readonly defaults: () => WorkbenchRetrieval | undefined = () => undefined,
+    private readonly phase?: () => DocumentIndexPhase,
   ) {}
-  private epoch(): string {
-    const epoch = this.db.prepare("SELECT value FROM meta WHERE key='embedding_epoch'").pluck().get();
-    if (typeof epoch !== "string") throw Error("Missing current embedding epoch.");
-    return epoch;
-  }
-  /**
-   * `panelK` is the Docs panel's own result count (its Docs panel results setting, 1-100,
-   * REQ-FUNC-4b36dede); the agent's k stays within the tool schema's 1-20.
-   */
+
   async search(
     raw: SearchArgs,
     signal: AbortSignal,
     excludedRoots: readonly string[] = [],
+    createHitValidator?: () => SearchHitValidator,
     panelK?: number,
-  ): Promise<{ results: SearchResult[]; message?: string; ranking?: "embedding-rebuild" }> {
+  ): Promise<DocumentSearchResponse> {
+    signal.throwIfAborted();
     const parsed = searchDocsSchema.parse(raw);
     const configured = this.defaults();
-    const args = {
-      ...parsed,
-      k:
-        panelK !== undefined && Number.isSafeInteger(panelK) && panelK >= 1 && panelK <= 100
-          ? panelK
-          : (parsed.k ?? configured?.results ?? 8),
+    if (parsed.pathGlob) validateGlob(parsed.pathGlob);
+    return searchPublishedDocuments({
+      root: this.root,
+      db: this.db,
+      query: parsed.query,
+      k: panelK ?? parsed.k ?? configured?.results ?? 8,
       mode: parsed.mode ?? configured?.mode ?? "hybrid",
-    };
-    signal.throwIfAborted();
-    if (args.pathGlob) validateGlob(args.pathGlob);
-    const accept = args.pathGlob ? picomatch(args.pathGlob, { dot: true, posix: true }) : () => true;
-    const rows = (
-      this.db
-        .prepare(`SELECT c.id,d.path FROM chunks c
-      JOIN documents d ON d.id=c.doc_id WHERE d.status='indexed' ORDER BY c.id`)
-        .all() as Pick<Row, "id" | "path">[]
-    ).filter((r) => accept(r.path));
-    if (!this.db.prepare("SELECT 1 FROM chunks LIMIT 1").get())
-      return { results: [], message: "No documents indexed yet. Use grep to search text files." };
-    // Chunks exist but none passed the glob: say so, since models often pass "*" meaning "everything".
-    if (!rows.length)
-      return args.pathGlob
-        ? {
-            results: [],
-            message: `No indexed document matched pathGlob "${args.pathGlob}". Globs are relative to the workbench root, so "*" matches only top-level files; use a pattern such as "docs/**", or omit pathGlob to search every document.`,
-          }
-        : { results: [] };
-    const rebuilding = args.mode !== "keyword" && rebuildingEmbeddings(this.db);
-    const currentEpoch =
-      args.mode === "keyword" || rebuilding ? () => keywordEpoch(this.db) : () => this.epoch();
-    const epoch = currentEpoch();
-    const lexical =
-      args.mode === "semantic"
-        ? []
-        : new KeywordSearch(this.db).search(args.query, args.pathGlob ? accept : undefined, args.k);
-    let semantic: { id: number; score: number }[] = [];
-    let fallback = rebuilding;
-    if (args.mode !== "keyword" && !rebuilding) {
-      const embeddings = this.embeddings?.();
-      if (!embeddings) throw Error("Semantic index unavailable. Index documents or use keyword/grep.");
-      const modelId = embeddings.modelId;
-      const key = `${epoch}:${modelId}:${args.pathGlob ?? ""}`;
-      const loadVectors = (): VectorRow[] => {
-        if (this.epoch() !== epoch) throw Error("Document index changed while search was queued. Retry.");
-        const eligible = new Set(rows.map((r) => r.id));
-        const vectors = (
-          this.db
-            .prepare("SELECT chunk_id AS id,vector FROM embeddings WHERE model_id=? ORDER BY chunk_id")
-            .all(modelId) as { id: number; vector: Buffer }[]
-        )
-          .filter((r) => eligible.has(r.id))
-          .map((r) => {
-            const buffer = new Uint8Array(r.vector).buffer;
-            return { id: r.id, vector: new Float32Array(buffer) };
-          });
-        if (!vectors.length)
-          throw Error("Current model vectors unavailable. Reindex documents or use keyword/grep.");
-        return vectors;
-      };
-      try {
-        semantic = await embeddings.rank(this.root, key, loadVectors, args.query, signal);
-      } catch (error) {
-        // The desktop indexer may be stopped or restarting: keyword results stay available.
-        if ((error as { retry?: unknown } | null)?.retry !== true) throw error;
-        fallback = true;
-      }
-    }
-    const keyword =
-      fallback && args.mode === "semantic"
-        ? new KeywordSearch(this.db).search(args.query, args.pathGlob ? accept : undefined, args.k)
-        : lexical;
-    signal.throwIfAborted();
-    if (currentEpoch() !== epoch) throw Error("Document index changed during search. Retry.");
-    const ranked = fallback
-      ? keyword.map((r) => ({ id: r.id, score: -r.bm25 }))
-      : args.mode === "semantic"
-        ? semantic
-        : args.mode === "keyword"
-          ? lexical.map((r) => ({ id: r.id, score: -r.bm25 }))
-          : fuseRanks([lexical.map((r) => r.id), semantic.map((r) => r.id)]);
-    const eligible = new Set(rows.map((row) => row.id));
-    const passage = this.db.prepare(`SELECT c.id,d.path,c.text,c.locator_json AS locatorJson FROM chunks c
-      JOIN documents d ON d.id=c.doc_id WHERE c.id=?`);
-    // Keep a coherent lexical result if model-only rechunking commits during path verification.
-    const candidates = ranked
-      .filter(({ id }) => eligible.has(id))
-      .map(({ id, score }) => ({ score, row: passage.get(id) as Row | undefined }));
-    const guard = await PathGuard.create(this.root, this.root, "workbench", undefined, excludedRoots);
-    const results: SearchResult[] = [];
-    for (const { score, row } of candidates) {
-      signal.throwIfAborted();
-      if (!row) continue;
-      try {
-        if (!(await lstat((await guard.resolve(row.path)).absolute)).isFile()) continue;
-      } catch {
-        continue;
-      }
-      const locator = locatorSchema.parse(JSON.parse(row.locatorJson));
-      results.push({
-        ref: documentRef(row.path, locator),
-        path: row.path,
-        locator,
-        snippet: snippet(row.text, args.query),
-        score,
-      });
-      if (results.length === args.k) break;
-    }
-    if (currentEpoch() !== epoch) throw Error("Document index changed during search. Retry.");
-    return fallback
-      ? {
-          results,
-          ...(rebuilding ? { ranking: "embedding-rebuild" as const } : {}),
-          message: rebuilding
-            ? "Embedding vectors are being rebuilt; these are keyword results."
-            : "Semantic ranking is unavailable while document indexing is stopped or restarting; these are keyword results.",
-        }
-      : { results };
+      pathGlob: parsed.pathGlob,
+      acceptPath: parsed.pathGlob ? picomatch(parsed.pathGlob, { dot: true, posix: true }) : undefined,
+      signal,
+      excludedRoots,
+      embeddings: this.embeddings,
+      phase: this.phase,
+      createHitValidator,
+    });
   }
+
   async read(
     raw: ReadDocArgs,
     signal: AbortSignal,

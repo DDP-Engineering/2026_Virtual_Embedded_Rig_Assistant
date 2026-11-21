@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-FUNC-74eac91c"
+title = "Explain OpenCode budget exhaustion"
+status = "active"
+requirement = "If OpenCode rejects a request for insufficient balance or exhausted plan allowance, VERA shall show an OpenCode budget diagnostic."
+verification = "Script exhaustion on each route and observe the budget message key instead of a rate-limit or authentication key."
+affected_paths = ["05_Software/src/libraries/core/src/llm/providers.ts", "05_Software/src/libraries/core/src/llm/errors.ts", "05_Software/src/apps/desktop/src/renderer/components/error-message.tsx", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json", "05_Software/src/apps/desktop/src/renderer/locales/fr.json"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/opencode-presets.test.ts"]
+created = 2026-11-20
+updated = 2026-11-20

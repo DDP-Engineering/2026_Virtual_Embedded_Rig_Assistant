@@ -74,6 +74,7 @@ function sanitizeItem(
   item: SessionItem,
   scrub: (text: string) => string,
   imagePath: (path: string) => string,
+  protect: (text: string) => string,
 ): SessionItem {
   if (item.kind === "user")
     return { ...item, text: scrub(item.text), ...(item.images && { images: item.images.map(imagePath) }) };
@@ -89,6 +90,10 @@ function sanitizeItem(
     if (tool.preview !== undefined) tool.preview = scrub(tool.preview);
     return tool;
   }
+  if (item.kind === "error" && item.retryAfter && protect(item.retryAfter) !== item.retryAfter) {
+    const { retryAfter: _, ...error } = item;
+    return error;
+  }
   return item;
 }
 /**
@@ -99,12 +104,13 @@ export function sanitizeSessionSnapshot(
   snapshot: SessionState,
   scrub: (text: string) => string,
   imagePath = scrub,
+  protect = scrub,
 ): SessionState {
   return {
     ...snapshot,
     title: scrub(snapshot.title).slice(0, 60),
     modelRef: scrubModel(snapshot.modelRef, scrub),
-    items: snapshot.items.map((item) => sanitizeItem(item, scrub, imagePath)),
+    items: snapshot.items.map((item) => sanitizeItem(item, scrub, imagePath, protect)),
     approvals: snapshot.approvals.map((a) => ({
       ...a,
       path: scrub(a.path),
@@ -124,8 +130,9 @@ export function rendererSessionSnapshot(
   snapshot: SessionState,
   scrub: (text: string) => string,
   imagePath = scrub,
+  protect = scrub,
 ): SessionState {
-  return boundSessionState(sanitizeSessionSnapshot(snapshot, scrub, imagePath));
+  return boundSessionState(sanitizeSessionSnapshot(snapshot, scrub, imagePath, protect));
 }
 
 /** Preserve schema fields/identities; redact user text and arbitrary extension keys/values. */
@@ -163,7 +170,7 @@ export function sanitizeEvent(
     const { disabled: disabledTools, ...toolExtensions } = tools;
     const { enabled: enabledPlugins, ...pluginExtensions } = plugins;
     const { detail, ...chatExtensions } = chat;
-    const { right_panel_tabs, ...interfaceExtensions } = panelInterface;
+    const { right_panel_tabs, git_status, ...interfaceExtensions } = panelInterface;
     const { permission_mode, model, allowed_commands, ...agentExtensions } = agent;
     const scrubbedModel = model === null ? null : scrub(model);
     return {
@@ -188,7 +195,7 @@ export function sanitizeEvent(
       tools: { ...(extra(toolExtensions) as object), disabled: disabledTools.map(scrub) },
       plugins: { ...(extra(pluginExtensions) as object), enabled: enabledPlugins.map(scrub) },
       chat: { ...(extra(chatExtensions) as object), detail },
-      interface: { ...(extra(interfaceExtensions) as object), right_panel_tabs },
+      interface: { ...(extra(interfaceExtensions) as object), right_panel_tabs, git_status },
       agent: {
         ...(extra(agentExtensions) as object),
         permission_mode,
@@ -205,12 +212,15 @@ export function sanitizeEvent(
   if (envelope.topic === "session") {
     const event = envelope.event;
     const result = { ...event };
-    if (event.type === "error")
+    if (event.type === "error") {
+      if (event.retryAfter && protect(event.retryAfter) !== event.retryAfter)
+        Reflect.deleteProperty(result, "retryAfter");
       Reflect.set(
         result,
         "messageKey",
         protect(event.messageKey) === event.messageKey ? event.messageKey : `errors.${event.code}`,
       );
+    }
     for (const key of ["text", "title", "summary", "preview", "diff", "path", "name"]) {
       if (key in result && typeof Reflect.get(result, key) === "string")
         Reflect.set(result, key, scrub(Reflect.get(result, key)));
@@ -257,6 +267,18 @@ export function sanitizeEvent(
   const event = envelope.event;
   // Counters only: no paths or user text to scrub.
   if (event.type === "index.progress" || event.type === "index.volume") return envelope;
+  if (event.type === "git.status") return envelope; // The Files presentation already owns its masked identities.
+  if (event.type === "index.status")
+    return {
+      ...envelope,
+      event: {
+        ...event,
+        status: {
+          ...event.status,
+          guard: publicGuard(event.status.guard, scrub),
+        },
+      },
+    };
   if (event.type === "index.guard")
     return { ...envelope, event: { ...event, guard: publicGuard(event.guard, scrub) } };
   if (event.type === "index.document")

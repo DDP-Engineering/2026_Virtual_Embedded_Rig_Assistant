@@ -51,12 +51,14 @@ test("shows the Changes empty state for an empty selected session", async () => 
       ),
     ),
   );
-  await settle();
-  await act(async () => button("Empty session").click());
+  const emptySession = await vi.waitFor(() => button("Empty session"));
+  await act(async () => emptySession.click());
   await act(async () => container.querySelector<HTMLButtonElement>("[data-toggle=right]")?.click());
-  await act(async () => button("Changes").click());
-  await settle();
-  expect(container.querySelector("#panel-changes")?.textContent).toContain("No changes in this session.");
+  const changes = await vi.waitFor(() => button("Changes"));
+  await act(async () => changes.click());
+  await vi.waitFor(() =>
+    expect(container.querySelector("#panel-changes")?.textContent).toContain("No changes in this session."),
+  );
 });
 // REQ-REL-4bea0006 (PERF-05: one session view per window)
 test("opening side tabs reuses the chat's session view instead of reading the session again", async () => {

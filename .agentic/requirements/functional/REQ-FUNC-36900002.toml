@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-FUNC-36900002"
+title = "Queue owned child follow-ups"
+status = "active"
+requirement = "When an owning parent sends an instruction to an active child eligible for steering, the session service shall acknowledge one durable queued message with its admission turn ID."
+verification = "Hold a provider step, send and retry the instruction, then verify pending, delivery, and recovery on the same and later turns."
+affected_paths = ["05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/libraries/core/src/storage/repos/delegations.ts", "05_Software/src/libraries/core/src/tools/delegated-sessions.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/sessions/delegation.test.ts"]
+created = 2026-11-21
+updated = 2026-11-21

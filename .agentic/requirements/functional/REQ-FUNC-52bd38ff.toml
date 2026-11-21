@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-52bd38ff"
+
+title = "List local file commits from HEAD"
+
+status = "active"
+
+requirement = """
+When file history is requested for a tracked path, VERA shall list recent commits for the exact file reachable from local HEAD, with short hash, author, date and subject.
+"""
+
+verification = "Commit two edits with distinct authors and dates, then put another change on a branch outside current HEAD; verify ordered fields and omission of the other branch, including a subject from a Git-declared legacy encoding."
+
+affected_paths = ["05_Software/src/apps/desktop/src/main/git/history.ts", "05_Software/src/apps/desktop/src/main/git/read.ts"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/main/git/safe-history.test.ts", "05_Software/tests/e2e/git-diff-tabs.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-21
+updated = 2026-11-21

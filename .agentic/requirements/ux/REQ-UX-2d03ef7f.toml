@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-UX-2d03ef7f"
+title = "Offer manual model IDs for hosted inference"
+status = "active"
+requirement = "When adding a hosted inference connection, VERA shall allow a user to save and use an explicitly entered model ID."
+verification = "Search for the four presets in Settings and save a full manual ID, then verify the runtime uses the ID when the catalog lacks it or is unavailable."
+affected_paths = ["05_Software/src/libraries/shared/src/hosted-provider-presets.ts", "05_Software/src/libraries/shared/src/provider-presets.ts", "05_Software/src/libraries/core/src/llm/providers.ts", "05_Software/src/apps/desktop/src/renderer/components/custom-provider-editor.tsx"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/hosted-provider-presets.test.ts", "05_Software/tests/e2e/providers-layout.spec.ts"]
+created = 2026-11-20
+updated = 2026-11-20

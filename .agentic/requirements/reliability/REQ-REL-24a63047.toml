@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-REL-24a63047"
+title = "Report an unavailable Model Studio workspace"
+status = "active"
+requirement = "If Model Studio reports WorkSpaceNotFound, VERA shall surface a workspace availability error for the configured workspace without attempting another route."
+verification = "Return 404 WorkSpaceNotFound from the pinned native catalog and a manual-region inference endpoint. Check the localized error classification, fixed request paths, no follow-on inference after the catalog error, and secret-free results."
+affected_paths = ["05_Software/src/libraries/core/src/llm/preset-connection.ts","05_Software/src/libraries/core/src/llm/providers.ts","05_Software/src/libraries/core/src/llm/errors.ts","05_Software/src/apps/desktop/src/renderer/components/error-message.tsx"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/regional-provider-presets.test.ts"]
+created = 2026-11-20
+updated = 2026-11-20

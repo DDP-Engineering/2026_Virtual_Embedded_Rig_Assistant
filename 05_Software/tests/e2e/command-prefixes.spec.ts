@@ -58,11 +58,7 @@ test("native command prefix approval persists across restart and removal restore
   ]) {
     await writeFile(
       join(scripts, `${name}.jsonl`),
-      // The replay window holds the session's prompt and history; this test checks approvals, not budgets.
-      [
-        { toolCalls: [{ name: "run_command", args: { command } }], contextWindow: 65536 },
-        { text: `Finished ${name}` },
-      ]
+      [{ toolCalls: [{ name: "run_command", args: { command } }] }, { text: `Finished ${name}` }]
         .map((row) => JSON.stringify(row))
         .join("\n"),
     );

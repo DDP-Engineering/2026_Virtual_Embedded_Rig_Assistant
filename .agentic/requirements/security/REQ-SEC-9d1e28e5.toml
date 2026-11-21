@@ -1,10 +1,10 @@
 schema = 1
 id = "REQ-SEC-9d1e28e5"
-title = "Enforce inspection-only delegation tools"
+title = "Enforce delegated child tool authority"
 status = "active"
-requirement = "When a child attempts to invoke a tool, the tool boundary shall permit only the explicitly allowed canonical inspection tools in read-only workbench scope."
-verification = "Replay inspection and forged mutation calls with permissive host policy, then directly exercise execute and prepare with blocked and custom tools."
-affected_paths = ["05_Software/src/libraries/core/src/sessions/service.ts","05_Software/src/libraries/core/src/tools/registry.ts","05_Software/src/libraries/core/src/tools/context.ts"]
-linked_tests = ["05_Software/src/libraries/core/src/sessions/delegation.test.ts"]
+requirement = "When a delegated child invokes a tool, the host shall enforce the canonical child tool catalog, current session mode and ordinary workbench permission, path and approval rules."
+verification = "Replay safe local reads, writes and checks under independent modes; assert forged or unavailable tools cannot run and protected data and mandatory approvals retain their normal restrictions."
+affected_paths = ["05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/libraries/core/src/tools/registry.ts", "05_Software/src/libraries/core/src/tools/context.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/sessions/delegation.test.ts", "05_Software/src/libraries/core/src/sessions/programs.test.ts", "05_Software/tests/e2e/session-delegation.spec.ts"]
 created = 2026-11-19
-updated = 2026-11-19
+updated = 2026-11-21

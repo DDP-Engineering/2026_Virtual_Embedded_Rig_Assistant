@@ -1,10 +1,12 @@
 import type { Message } from "@earendil-works/pi-ai";
-import type { ModelCapabilities } from "@vera/shared";
+import { documentSearchMetadataSchema, type ModelCapabilities } from "@vera/shared";
+import { z } from "zod";
 import { type ContextInput, ContextPolicy } from "../agent/context.js";
 import { mapProviderError } from "../llm/errors.js";
 import type { LlmEvent } from "../llm/gateway.js";
 import { scrubAssistantMessage } from "../llm/message-scrub.js";
 import { createStreamScrubber } from "../llm/stream-scrub.js";
+import { capToolResult } from "../tools/registry.js";
 
 /** Project arbitrary tool data while retaining enclosing protocol fields. */
 export function maskValue(value: unknown, scrub: (text: string) => string): unknown {
@@ -15,6 +17,31 @@ export function maskValue(value: unknown, scrub: (text: string) => string): unkn
       : value && typeof value === "object"
         ? Object.fromEntries(Object.entries(value).map(([key, item]) => [scrub(key), maskValue(item, scrub)]))
         : value;
+}
+
+const searchToolResult = z.looseObject(documentSearchMetadataSchema.shape);
+
+function parseSearchToolResult(text: string) {
+  try {
+    return searchToolResult.safeParse(JSON.parse(text)).data;
+  } catch {
+    return undefined;
+  }
+}
+
+/** Extract validated search-time metadata before the renderer masks the summary text. */
+export function documentSearchToolMetadata(text: string) {
+  const result = parseSearchToolResult(text);
+  return result && { coverage: result.coverage, usage: result.usage };
+}
+
+/** Redact tool data while keeping the search coverage and usage protocol readable to the model. */
+export function maskToolOutput(name: string, text: string, scrub: (text: string) => string): string {
+  const result = name === "search_docs" ? parseSearchToolResult(text) : undefined;
+  if (!result) return scrub(text);
+  const { coverage, usage, ...rest } = result;
+  const masked = maskValue(rest, scrub) as Record<string, unknown>;
+  return capToolResult({ ...masked, coverage, usage }).text;
 }
 
 /** Retained transcript messages are projected again at each model dispatch. */
@@ -33,7 +60,7 @@ export function maskMessages(messages: Message[], scrub: (text: string) => strin
       return {
         ...message,
         content: message.content.map((part) =>
-          part.type === "text" ? { ...part, text: scrub(part.text) } : part,
+          part.type === "text" ? { ...part, text: maskToolOutput(message.toolName, part.text, scrub) } : part,
         ),
       };
     return {

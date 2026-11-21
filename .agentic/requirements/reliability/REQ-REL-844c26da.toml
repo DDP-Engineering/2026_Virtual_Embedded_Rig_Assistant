@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-REL-844c26da"
+title = "Report failed model transfer"
+status = "active"
+requirement = "If the model source cannot deliver a required file, VERA shall report a download failure and permit retry."
+verification = "Fail a synthetic network response and assert failure state followed by a verified retry."
+affected_paths = ["05_Software/src/apps/desktop/src/main/dictation/models.ts", "05_Software/src/apps/desktop/src/main/dictation/integrity.ts", "05_Software/src/apps/desktop/src/main/dictation/transfer.ts", "05_Software/src/apps/desktop/src/main/index.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/dictation/models.test.ts"]
+created = 2026-11-20
+updated = 2026-11-20

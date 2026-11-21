@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-REL-92f883f5"
+title = "Refresh only the current Files Git view"
+status = "active"
+requirement = "While the opted-in Files view is active, Desktop shall coalesce relevant disk changes into bounded current-activation refreshes and offer a manual refresh."
+verification = "Burst watched updates and switch to a copied workbench with the same ID while an earlier read is in flight; check debounce, refresh and ownership."
+affected_paths = ["05_Software/src/apps/desktop/src/main/git/status-service.ts", "05_Software/src/apps/desktop/src/main/git/watch.ts", "05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/apps/desktop/src/renderer/components/documents/git-status.tsx", "05_Software/src/apps/desktop/src/renderer/App.tsx", "05_Software/src/apps/desktop/src/renderer/components/documents/docs-tab.tsx", "05_Software/src/libraries/shared/src/events.ts", "05_Software/src/libraries/shared/src/ipc.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/git/status-service.test.ts","05_Software/src/apps/desktop/src/main/git/safe-status.test.ts"]
+created = 2026-11-21
+updated = 2026-11-21

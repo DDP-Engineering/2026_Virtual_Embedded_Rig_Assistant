@@ -37,14 +37,16 @@ export function ShortcutsSettings({
 
 export function KeyboardShortcuts({
   bindings,
+  only,
   disabled,
   update,
   header,
 }: {
   bindings?: ShortcutOverrides | undefined;
+  only?: ShortcutCommand;
   disabled: boolean;
   update: (bindings: ShortcutOverrides) => void;
-  header: { dirty: boolean; onCancel: () => void; onSave: () => void };
+  header?: { dirty: boolean; onCancel: () => void; onSave: () => void };
 }) {
   const { t } = useTranslation();
   const labels = {
@@ -58,12 +60,14 @@ export function KeyboardShortcuts({
     openTerminal: [t("keyboard.openTerminal"), t("keyboard.openTerminalDesc")],
     find: [t("keyboard.find"), t("keyboard.findDesc")],
     focusComposer: [t("keyboard.focusComposer"), t("keyboard.focusComposerDesc")],
+    dictate: [t("keyboard.dictate"), t("keyboard.dictateDesc")],
     focusModel: [t("keyboard.focusModel"), t("keyboard.focusModelDesc")],
     nextBookmark: [t("keyboard.nextBookmark"), t("keyboard.nextBookmarkDesc")],
     previousBookmark: [t("keyboard.previousBookmark"), t("keyboard.previousBookmarkDesc")],
   };
   const [search, setSearch] = useState("");
   const searchInput = useRef<HTMLInputElement>(null);
+  const heading = useRef<HTMLHeadingElement>(null);
   const [keySearch, setKeySearch] = useState(false);
   const [record, setRecord] = useState<{ command: ShortcutCommand; index?: number | undefined }>();
   const [draft, setDraft] = useState("");
@@ -84,7 +88,7 @@ export function KeyboardShortcuts({
     return () => {
       node?.close();
       if (origin.current?.isConnected && !origin.current.matches(":disabled")) origin.current.focus();
-      else document.querySelector<HTMLInputElement>(".shortcut-search input")?.focus();
+      else (heading.current ?? searchInput.current)?.focus();
     };
   }, [record]);
   function save() {
@@ -101,68 +105,79 @@ export function KeyboardShortcuts({
       setError(t("keyboard.conflict"));
       return;
     }
+    if (only) origin.current = null;
     update(next);
     setRecord(undefined);
   }
+  const Panel = only ? "div" : "section";
   return (
-    <section data-settings-section="shortcuts" className="surface shortcut-settings">
-      <SettingsPageHeader
-        title={t("settings.shortcuts")}
-        i18n="settings.shortcuts"
-        saving={disabled}
-        {...header}
-      />
-      <div className="shortcut-toolbar">
-        <div className="shortcut-search">
-          <Search aria-hidden="true" />
-          <input
-            type="search"
-            ref={searchInput}
-            value={search}
-            aria-label={keySearch ? t("keyboard.searchKeys") : t("keyboard.search")}
-            placeholder={keySearch ? t("keyboard.searchKeys") : t("keyboard.search")}
-            data-shortcut-capture={keySearch || undefined}
-            onChange={(event) => setSearch(event.target.value)}
-            onKeyDown={(event) => {
-              if (!keySearch) return;
-              event.stopPropagation();
-              if (event.key === "Escape") {
-                event.preventDefault();
-                setSearch("");
-                return;
-              }
-              if (event.ctrlKey || event.metaKey) {
-                event.preventDefault();
-                const value = bindingFromEvent(event.nativeEvent);
-                if (value) setSearch(displayBinding(value));
-              }
-            }}
-          />
-          <button
-            type="button"
-            aria-label={t("keyboard.searchKeys")}
-            title={t("keyboard.searchKeys")}
-            aria-pressed={keySearch}
-            onClick={() => {
-              setKeySearch((value) => !value);
-              setSearch("");
-              searchInput.current?.focus();
-            }}
-          >
-            <Keyboard aria-hidden="true" />
-          </button>
-        </div>
-        <button
-          type="button"
-          className="shortcut-restore"
-          disabled={disabled || !Object.keys(bindings ?? {}).length}
-          onClick={() => update({})}
-        >
-          {t("keyboard.resetAll")}
-        </button>
-      </div>
+    <Panel
+      data-settings-section={only ? undefined : "shortcuts"}
+      className={only ? undefined : "surface shortcut-settings"}
+    >
+      {!only && (
+        <>
+          {header && (
+            <SettingsPageHeader
+              title={t("settings.shortcuts")}
+              i18n="settings.shortcuts"
+              saving={disabled}
+              {...header}
+            />
+          )}
+          <div className="shortcut-toolbar">
+            <div className="shortcut-search">
+              <Search aria-hidden="true" />
+              <input
+                type="search"
+                ref={searchInput}
+                value={search}
+                aria-label={keySearch ? t("keyboard.searchKeys") : t("keyboard.search")}
+                placeholder={keySearch ? t("keyboard.searchKeys") : t("keyboard.search")}
+                data-shortcut-capture={keySearch || undefined}
+                onChange={(event) => setSearch(event.target.value)}
+                onKeyDown={(event) => {
+                  if (!keySearch) return;
+                  event.stopPropagation();
+                  if (event.key === "Escape") {
+                    event.preventDefault();
+                    setSearch("");
+                    return;
+                  }
+                  if (event.ctrlKey || event.metaKey) {
+                    event.preventDefault();
+                    const value = bindingFromEvent(event.nativeEvent);
+                    if (value) setSearch(displayBinding(value));
+                  }
+                }}
+              />
+              <button
+                type="button"
+                aria-label={t("keyboard.searchKeys")}
+                title={t("keyboard.searchKeys")}
+                aria-pressed={keySearch}
+                onClick={() => {
+                  setKeySearch((value) => !value);
+                  setSearch("");
+                  searchInput.current?.focus();
+                }}
+              >
+                <Keyboard aria-hidden="true" />
+              </button>
+            </div>
+            <button
+              type="button"
+              className="shortcut-restore"
+              disabled={disabled || !Object.keys(bindings ?? {}).length}
+              onClick={() => update({})}
+            >
+              {t("keyboard.resetAll")}
+            </button>
+          </div>
+        </>
+      )}
       <div className="shortcut-list">
-        {shortcutCommands
+        {(only ? [only] : shortcutCommands)
           .filter((command) => {
             const text = keySearch
               ? commandBindings(command, bindings).map(displayBinding).join(" ")
@@ -172,7 +187,9 @@ export function KeyboardShortcuts({
           .map((command) => (
             <article className="shortcut-row" key={command} data-shortcut={command}>
               <div className="shortcut-description">
-                <h3>{labels[command][0]}</h3>
+                <h3 ref={only ? heading : undefined} tabIndex={only ? -1 : undefined}>
+                  {labels[command][0]}
+                </h3>
                 <p className="muted">{labels[command][1]}</p>
               </div>
               <div className="shortcut-bindings">
@@ -294,6 +311,6 @@ export function KeyboardShortcuts({
           </footer>
         </dialog>
       )}
-    </section>
+    </Panel>
   );
 }

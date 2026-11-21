@@ -1,9 +1,15 @@
 import { extname, posix } from "node:path";
-import { rasterThumbnail, validateRelativePath, type WorkbenchService } from "@vera/core";
+import { rasterThumbnail, scrub, validateRelativePath, type WorkbenchService } from "@vera/core";
 import {
   DOCS_BYTE_WINDOW_LIMIT,
   type DocumentRecord,
   formatRef,
+  GIT_DIFF_PATCH_LIMIT,
+  GIT_HISTORY_AUTHOR_LIMIT,
+  GIT_HISTORY_SUBJECT_LIMIT,
+  type GitDiffResult,
+  type GitHistoryResult,
+  type GitStatus,
   MAX_MESSAGE_IMAGE_BYTES,
   parseRef,
   type Response,
@@ -64,6 +70,89 @@ export class DisplayDocuments {
     this.current(id);
     return this.identities.encode(this.owner, path, (value) => this.redact(value) !== value);
   }
+  /** Projects Git labels with the same identities that ordinary Files rows use. */
+  gitStatus(id: string, status: GitStatus): GitStatus {
+    if (status.state !== "ready") return status;
+    const masked = this.maskingFor(this.current(id).config, "display");
+    const identity = (path: string) =>
+      this.identities.encode(this.owner, path, (value) => this.redact(value) !== value);
+    const label = (value: string) => (masked ? this.redact(value) : value);
+    return {
+      ...status,
+      branch: { ...status.branch, name: label(status.branch.name) },
+      entries: status.entries.map(({ path, rename, ...entry }) => ({
+        ...entry,
+        path: identity(path),
+        displayPath: label(path),
+        ...(rename ? { rename: { ...rename, path: identity(rename.path) } } : {}),
+      })),
+    };
+  }
+
+  /** Applies the current Display policy to path labels and literal patch text. */
+  gitDiff(
+    id: string,
+    path: string,
+    value: GitDiffResult,
+  ): Pick<Response<"git.diff">, "displayPath" | "result"> {
+    const masked = this.maskingFor(this.current(id).config, "display");
+    const label = (original: string) => {
+      const text = masked ? this.redact(original) : original;
+      return text.length > 8192 ? "[REDACTED]" : text;
+    };
+    const rename = value.rename && { from: label(value.rename.from), to: label(value.rename.to) };
+    let result: GitDiffResult = { ...value, ...(rename ? { rename } : {}) };
+    if (masked && value.state === "patch") {
+      // A patch adds prefixes to each line, breaking any multiline credential into fragments.
+      const fragments = this.secrets()
+        .filter((secret) => secret.includes("\n"))
+        .flatMap((secret) => secret.split(/\r?\n/));
+      const patch = scrub(this.redact(value.patch), fragments);
+      result =
+        Buffer.byteLength(patch) > GIT_DIFF_PATCH_LIMIT
+          ? { state: "too-large", base: value.base, ...(rename ? { rename } : {}) }
+          : { ...value, patch, ...(rename ? { rename } : {}) };
+    }
+    return { displayPath: label(path), result };
+  }
+
+  /** Applies the live Display policy before shortening Git commit metadata. */
+  gitHistory(
+    id: string,
+    path: string,
+    result: GitHistoryResult,
+  ): Pick<Response<"git.history">, "displayPath" | "result"> {
+    const masked = this.maskingFor(this.current(id).config, "display");
+    const fragments = masked
+      ? this.secrets()
+          .filter((secret) => secret.includes("\n"))
+          .flatMap((secret) => secret.split(/\r?\n/))
+      : [];
+    const redact = (value: string) => (masked ? scrub(this.redact(value), fragments) : value);
+    const label = redact(path);
+    const shorten = (value: string, limit: number) => {
+      const text = redact(value)
+        .replace(/\p{Cc}/gu, " ")
+        .trim();
+      if (text.length <= limit) return text;
+      return text.slice(0, limit - 1).replace(/[\uD800-\uDBFF]$/, "") + "…";
+    };
+    return {
+      displayPath: label.length > 8192 ? "[REDACTED]" : label,
+      result:
+        result.state === "ready"
+          ? {
+              ...result,
+              commits: result.commits.map((commit) => ({
+                ...commit,
+                author: shorten(commit.author, GIT_HISTORY_AUTHOR_LIMIT),
+                subject: shorten(commit.subject, GIT_HISTORY_SUBJECT_LIMIT),
+              })),
+            }
+          : result,
+    };
+  }
+
   resolve(id: string, path: string): string {
     this.current(id);
     const original = this.identities.decode(this.owner, path);
@@ -321,9 +410,13 @@ export class DisplayDocuments {
     });
   }
   async search(id: string, query: string) {
-    const results = await this.run(id, () => this.workbench().searchDocuments(id, query));
+    const { coverage, usage, results } = await this.run(id, () =>
+      this.workbench().searchDocuments(id, query),
+    );
     return {
       workbenchId: id,
+      coverage,
+      usage,
       results: results.map((hit) =>
         publicDocumentHit(
           hit,

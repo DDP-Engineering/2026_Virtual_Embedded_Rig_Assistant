@@ -61,7 +61,7 @@ it("shows session sizes and refreshes local workbench storage in the overview", 
         QueryClientProvider,
         { client: new QueryClient({ defaultOptions: { queries: { retry: false } } }) },
         createElement(Workbench, {
-          active: { folder: "/bench", config, readOnly: false, warnings: [] },
+          active: { folder: "/bench", indexLease: 1, config, readOnly: false, warnings: [] },
           changed: vi.fn(),
           closed: vi.fn(),
           sessions,

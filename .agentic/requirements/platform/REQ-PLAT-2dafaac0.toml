@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-PLAT-2dafaac0"
+title = "Launch Chromium visibly with OS sandboxing"
+status = "active"
+requirement = "When Desktop opens a browser session on Windows or Ubuntu, it shall launch the verified Chromium executable visibly in a separate process with Chromium sandboxing enabled."
+verification = "Use a packaged Desktop fixture with the pinned Chromium runtime, verify process and visible launch, and inspect Chromium sandbox evidence."
+affected_paths = ["05_Software/src/apps/desktop/src/main/browser/launcher.ts","02_Tools/release/package.mjs","05_Software/src/apps/desktop/electron.vite.config.ts"]
+linked_tests = ["05_Software/tests/e2e/browser-runtime.spec.ts"]
+priority = "normal"
+created = 2026-11-20
+updated = 2026-11-20

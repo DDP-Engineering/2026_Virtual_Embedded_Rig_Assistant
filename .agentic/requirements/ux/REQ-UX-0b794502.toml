@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-UX-0b794502"
+title = "Show Alibaba and Xiaomi plan and region controls"
+status = "active"
+requirement = "When the user edits an Alibaba Cloud or Xiaomi connection, VERA shall show its service and plan, selected region and applicable workspace ID."
+verification = "Open the presets in Chromium, change a documented region, inspect the derived URL and the workspace validation and verify the saved scope is immutable."
+affected_paths = ["05_Software/src/libraries/shared/src/provider-presets.ts", "05_Software/src/apps/desktop/src/renderer/components/custom-provider-editor.tsx", "05_Software/src/apps/desktop/src/renderer/components/error-message.tsx", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json", "05_Software/src/apps/desktop/src/renderer/locales/fr.json"]
+linked_tests = ["05_Software/tests/e2e/providers-layout.spec.ts"]
+created = 2026-11-20
+updated = 2026-11-20

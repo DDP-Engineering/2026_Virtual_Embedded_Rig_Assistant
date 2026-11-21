@@ -40,6 +40,77 @@ test("provider categories support concurrent connections, presets and aligned ac
   await expect(subscription).not.toContainText("port 1455");
   await section.locator('[data-action="add-provider"]').click();
   await expect(section.locator("[data-provider-preset]")).toHaveValue("openai");
+  const search = section.getByRole("searchbox", { name: "Search providers" });
+  await expect(search).toBeVisible();
+  await search.fill("OLLAMA");
+  const choices = section.locator("[data-provider-preset] option:not([hidden])");
+  await expect(choices).toHaveText(["Ollama"]);
+  await search.fill("no matching service");
+  await expect(choices).toHaveCount(0);
+  await expect(section.getByText("No matching providers")).toBeVisible();
+  await search.clear();
+  await expect(choices).toHaveCount(26);
+  await search.fill("OpenCode");
+  await expect(choices).toHaveText(["OpenCode Console", "OpenCode Go"]);
+  for (const [preset, label, baseUrl] of [
+    ["opencode-console", "OpenCode Console", "https://opencode.ai/inference/openai/v1"],
+    ["opencode-go", "OpenCode Go", "https://opencode.ai/inference/go/openai/v1"],
+  ]) {
+    await section.locator("[data-provider-preset]").selectOption(preset!);
+    await expect(section.locator("[data-provider-editor]").getByText(label!, { exact: true })).toBeVisible();
+    await expect(section.getByLabel("Base URL", { exact: true })).toHaveValue(baseUrl!);
+    await expect(section.getByLabel("Base URL", { exact: true })).not.toBeEditable();
+  }
+  await search.fill("QwenCloud");
+  await expect(choices).toHaveText(["QwenCloud Standard", "QwenCloud Token Plan"]);
+  for (const [preset, baseUrl] of [
+    ["qwencloud-standard", "https://maas.qwencloudapi.com/compatible-mode/v1"],
+    ["qwencloud-token-plan", "https://token-plan.maas.qwencloudapi.com/compatible-mode/v1"],
+  ]) {
+    await section.locator("[data-provider-preset]").selectOption(preset!);
+    await expect(section.getByLabel("Base URL", { exact: true })).toHaveValue(baseUrl!);
+    await expect(section.getByLabel("Base URL", { exact: true })).not.toBeEditable();
+    await expect(section.getByLabel("Model", { exact: true })).toBeEditable();
+  }
+  for (const [preset, label, baseUrl, discovery] of [
+    ["deepseek", "DeepSeek", "https://api.deepseek.com", true],
+    ["moonshot-ai", "Moonshot AI", "https://api.moonshot.ai/v1", true],
+    ["kimi-coding", "Kimi For Coding", "https://api.kimi.ai/coding", false],
+  ] as const) {
+    await search.fill(label);
+    await expect(choices).toHaveText([label]);
+    await section.locator("[data-provider-preset]").selectOption(preset);
+    await expect(section.getByLabel("Base URL", { exact: true })).toHaveValue(baseUrl);
+    await expect(section.getByLabel("Base URL", { exact: true })).not.toBeEditable();
+    await expect(section.getByLabel("Model", { exact: true })).toBeEditable();
+    await expect(section.locator('[data-action="discover-models"]')).toHaveCount(discovery ? 1 : 0);
+  }
+  for (const [preset, label, baseUrl] of [
+    ["fireworks", "Fireworks AI", "https://api.fireworks.ai/inference/v1"],
+    ["together", "Together AI", "https://api.together.ai/v1"],
+    ["groq", "Groq", "https://api.groq.com/openai/v1"],
+    ["cerebras", "Cerebras", "https://api.cerebras.ai/v1"],
+    ["huggingface", "Hugging Face Inference Providers", "https://router.huggingface.co/v1"],
+    ["nvidia", "NVIDIA NIM", "https://integrate.api.nvidia.com/v1"],
+    ["vercel-ai-gateway", "Vercel AI Gateway", "https://ai-gateway.vercel.sh/v1"],
+  ] as const) {
+    await search.fill(label);
+    await expect(choices).toHaveText([label]);
+    await section.locator("[data-provider-preset]").selectOption(preset);
+    const base = section.getByLabel("Base URL", { exact: true });
+    await expect(base).toHaveValue(baseUrl);
+    await expect(base).not.toBeEditable();
+    const key = section.getByLabel("Endpoint API key", { exact: true });
+    await expect(key).toHaveValue("");
+    await key.fill(`fixture-draft-${preset}`);
+    await expect(section.locator('[data-action="discover-models"]')).toBeEnabled();
+    const model = section.getByLabel("Model", { exact: true });
+    await model.fill("owner/Example-Chat");
+    await expect(model).toHaveValue("owner/Example-Chat");
+    await expect(section.locator('[data-provider-action="save-custom"]')).toBeEnabled();
+  }
+  await search.clear();
+  await section.locator("[data-provider-preset]").selectOption("openai");
   const secret = "fak-ui-only-private-9Zx4";
   await section.getByLabel("OpenAI API key", { exact: true }).fill(secret);
   await section.getByLabel("OpenAI model (optional)", { exact: true }).fill("mock-openai");
@@ -153,4 +224,135 @@ test("provider categories support concurrent connections, presets and aligned ac
   await expect(section.locator("[data-provider-editor]")).toHaveCount(0);
   expect(errors).toEqual([]);
   expect(outbound).toEqual([]);
+});
+
+test("a saved Moonshot connection can Test with its VERA output budget", {
+  tag: "@parallel-browser",
+}, async ({ page, rendererUrl }) => {
+  await page.goto(rendererUrl);
+  await page.locator('[data-i18n="nav.settings"]').click();
+  await page.locator('[data-section="providers"]').click();
+  const section = page.locator('[data-settings-section="providers"]');
+  await section.locator('[data-action="add-provider"]').click();
+  await section.locator("[data-provider-preset]").selectOption("moonshot-ai");
+  await section.getByLabel("Model", { exact: true }).fill("kimi-k3");
+  await section.getByLabel("Endpoint API key", { exact: true }).fill("fixture-moonshot-browser");
+  await expect(section.getByLabel("Maximum output (tokens)")).toHaveValue("16384");
+  await section.locator('[data-provider-action="save-custom"]').click();
+  await section.getByRole("button", { name: "Edit Moonshot AI", exact: true }).click();
+  const editor = section.locator("[data-provider-editor]");
+  const testConnection = editor.getByRole("button", { name: "Test Moonshot AI", exact: true });
+  await expect(editor.getByLabel("Maximum output (tokens)")).toHaveValue("16384");
+  await expect(testConnection).toBeEnabled();
+  await editor.getByLabel("Model", { exact: true }).fill("unsaved-model");
+  await expect(testConnection).toBeDisabled();
+  await editor.getByLabel("Model", { exact: true }).fill("kimi-k3");
+  await testConnection.click();
+  await expect(editor.getByRole("dialog").locator('[data-test-status="pass"]')).toHaveCount(4);
+});
+
+test("international MiniMax and Z.AI plans use fixed routes and independent key drafts", {
+  tag: "@parallel-browser",
+}, async ({ page, rendererUrl }) => {
+  await page.goto(rendererUrl);
+  await page.locator('[data-i18n="nav.settings"]').click();
+  await page.locator('[data-section="providers"]').click();
+  const section = page.locator('[data-settings-section="providers"]');
+  await section.locator('[data-action="add-provider"]').click();
+  const search = section.getByRole("searchbox", { name: "Search providers" });
+  const choices = section.locator("[data-provider-preset] option:not([hidden])");
+  const key = section.getByLabel("Endpoint API key", { exact: true });
+  const eligibility = section.getByRole("note").filter({ hasText: "Z.AI limits Coding Plan" });
+  for (const [brand, standard, plan, standardUrl, planUrl, model] of [
+    [
+      "MiniMax",
+      "MiniMax API",
+      "MiniMax M Plan",
+      "https://api.minimax.io/anthropic",
+      "https://api.minimax.io/anthropic",
+      "MiniMax-M3.1-Flash",
+    ],
+    [
+      "Z.AI",
+      "Z.AI API",
+      "Z.AI GLM Coding Plan",
+      "https://api.z.ai/api/paas/v4",
+      "https://api.z.ai/api/coding/paas/v4",
+      "glm-5.3",
+    ],
+  ] as const) {
+    await search.fill(brand);
+    await expect(choices).toHaveText([standard, plan]);
+    const preset = section.locator("[data-provider-preset]");
+    await preset.selectOption({ label: standard });
+    const base = section.getByLabel("Base URL", { exact: true });
+    await expect(base).toHaveValue(standardUrl);
+    await expect(eligibility).toHaveCount(0);
+    await expect(base).not.toBeEditable();
+    await key.fill("private-plan-draft");
+    await preset.selectOption({ label: plan });
+    await expect(key).toHaveValue("");
+    await expect(base).toHaveValue(planUrl);
+    await expect(base).not.toBeEditable();
+    await expect(section.getByLabel("Model", { exact: true })).toBeEditable();
+    await expect(section.locator(`datalist option[value="${model}"]`)).toHaveCount(1);
+    await expect(eligibility).toHaveCount(brand === "Z.AI" ? 1 : 0);
+  }
+  await expect(eligibility).toBeVisible();
+  await expect(eligibility).toContainText("Its published list does not include VERA");
+  await section.getByLabel("Model", { exact: true }).fill("glm-5.3");
+  await key.fill("fictional-zai-plan-key");
+  await section.locator('[data-provider-action="save-custom"]').click();
+  await section.getByRole("button", { name: "Edit Z.AI GLM Coding Plan", exact: true }).click();
+  await expect(eligibility).toBeVisible();
+});
+
+test("Alibaba and Xiaomi presets expose scoped region and workspace controls", {
+  tag: "@parallel-browser",
+}, async ({ page, rendererUrl }) => {
+  await page.goto(rendererUrl);
+  await page.locator('[data-i18n="nav.settings"]').click();
+  await page.locator('[data-section="providers"]').click();
+  const section = page.locator('[data-settings-section="providers"]');
+  await section.locator('[data-action="add-provider"]').click();
+  const preset = section.locator("[data-provider-preset]");
+  const region = section.getByLabel("Region", { exact: true });
+  const workspaceId = section.getByLabel("Workspace ID", { exact: true });
+  const base = section.getByLabel("Base URL", { exact: true });
+  const key = section.getByLabel("Endpoint API key", { exact: true });
+  await preset.selectOption("xiaomi-mimo-api");
+  await expect(region.locator("option:checked")).toHaveText("Global");
+  await expect(base).toHaveValue("https://api.xiaomimimo.com/v1");
+  await preset.selectOption("xiaomi-mimo-token-plan");
+  await expect(region.locator("option")).toHaveText(["China", "Singapore", "Europe"]);
+  await key.fill("tp-fixture-china");
+  await region.selectOption("europe");
+  await expect(base).toHaveValue("https://token-plan-ams.xiaomimimo.com/v1");
+  await expect(key).toHaveValue("");
+  await preset.selectOption("alibaba-coding-plan");
+  await expect(region.locator("option:checked")).toHaveText("Singapore");
+  await expect(base).toHaveValue("https://coding-intl.dashscope.aliyuncs.com/v1");
+  await preset.selectOption("alibaba-model-studio");
+  await expect(base).toHaveValue("");
+  await expect(base).not.toBeEditable();
+  await expect(region.locator("option")).toHaveCount(6);
+  await workspaceId.fill("token-plan");
+  await expect(section.getByRole("alert")).toContainText("Workspace ID");
+  await expect(section.locator('[data-provider-action="save-custom"]')).toBeDisabled();
+  await workspaceId.fill("llm-browser353");
+  await region.selectOption("eu-central-1");
+  await expect(base).toHaveValue("https://llm-browser353.eu-central-1.maas.aliyuncs.com/compatible-mode/v1");
+  await key.fill("sk-fixture-model-studio");
+  await workspaceId.fill("llm-otherbrowser");
+  await expect(key).toHaveValue("");
+  await key.fill("sk-fixture-other-workspace");
+  await section.getByLabel("Model", { exact: true }).fill("qwen3.7-flash");
+  await section.locator('[data-provider-action="save-custom"]').click();
+  await section.getByRole("button", { name: "Edit Alibaba Cloud Model Studio", exact: true }).click();
+  await expect(workspaceId).toHaveValue("llm-otherbrowser");
+  await expect(workspaceId).not.toBeEditable();
+  await expect(region).toBeDisabled();
+  await expect(
+    section.getByRole("button", { name: "Test Alibaba Cloud Model Studio", exact: true }),
+  ).toBeEnabled();
 });

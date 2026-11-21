@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-FUNC-facf03ca"
+title = "Provision a pinned browser on explicit request"
+status = "active"
+requirement = "When Desktop receives an explicit browser runtime provisioning request, it shall install the pinned Chromium revision for the supported host to VERA's application data."
+verification = "Use a controlled response containing the pinned fixture archive and verify the runtime becomes ready only on provisioning."
+affected_paths = ["05_Software/src/apps/desktop/src/main/browser/runtime.ts","05_Software/src/apps/desktop/src/main/browser/release.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/browser/runtime.test.ts"]
+priority = "normal"
+created = 2026-11-20
+updated = 2026-11-20

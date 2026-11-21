@@ -55,6 +55,26 @@ source-range placement, scalar Find counts/wrapping, Escape focus and live Displ
 `support/large-text-source-probe.ts` checks verified revision/date and same-size replacement with
 restored exact mtime on pinned Windows/WSL2 Node. Original proof stays in `evaluation-outputs/view03`.
 
+Dictation acceptance sets VERA_DICTATION_MODEL_ROOT to a directory containing the verified
+whisper-base and whisper-small installs. Build the desktop to run
+integration/whisper-runtime.test.ts against both workers and all four speech fixtures.
+Run test:e2e with tests/e2e/dictation.spec.ts for bounded capture, permission and lifecycle
+in an instrumented Electron build. Set VERA_DICTATION_PACKAGED_APP to run that spec directly
+through Playwright against an unpacked instrumented executable using an isolated nonportable profile.
+
+Native `e2e/browser-agent.spec.ts` drives a text-only replay agent through the Desktop browser tools.
+Set `VERA_TEST_BROWSER_ARCHIVE` to the verified archive for the host. The controlled public-origin
+fixture covers dynamic reading, citation URLs, tab ownership, denied and stale references, budgets,
+Stop and close. Set `VERA_BROWSER_AGENT_EVIDENCE` to keep the JSON receipt.
+
+Native `e2e/browser-controls.spec.ts` exercises the actual Settings and Chat
+controls with a replay agent and the pinned Chromium archive. It checks grants,
+rendered navigation, isolation across refresh, Stop and native process cleanup.
+Set `VERA_BROWSER_PACKAGED_APP` to the unpacked instrumented executable and
+`VERA_BROWSER_EVIDENCE` to keep the JSON receipt. Use a fresh disposable
+application data location for each run. A Windows portable package stores its
+data beside the executable.
+
 ## Vitest test inventory
 
 TERM-05 adds `packaging/terminal-runtime.test.ts` for native PTY architecture/helper closure,
@@ -234,6 +254,10 @@ The E2E output is a temporary system folder. The reporter
 [support/cleanup-e2e-output.mjs](support/cleanup-e2e-output.mjs) removes it at the end, also after
 failures. The configuration turns off automatic traces, videos and screenshots. Replacing the
 reporters from the CLI can bypass the cleanup reporter.
+
+[index-status.spec.ts](e2e/index-status.spec.ts) holds real Desktop selection, extraction and
+ranking at the utility process boundary to verify live sidebar and Files status, keyboard and
+reduced-motion behavior, partial retrieval during publication, and saved transcript notices.
 
 Right-panel visibility coverage:
 - `e2e/right-panel-tabs-ui.spec.ts`: browser Save/Cancel, defaults, filtered keyboard navigation,

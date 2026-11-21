@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-SEC-36900005"
+title = "Confirm switching an individual session to Full Access"
+status = "active"
+requirement = "If an IPC request switches a session to Bypass without explicit user acknowledgement, the host shall deny it."
+verification = "Invoke the validated mode handler without acknowledgement, cancel the Desktop warning, then confirm and verify only the chosen session changes."
+affected_paths = ["05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/libraries/shared/src/ipc.ts", "05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/apps/desktop/src/renderer/components/session/workspace.tsx"]
+linked_tests = ["05_Software/src/libraries/core/src/sessions/delegation.test.ts", "05_Software/tests/e2e/session-delegation.spec.ts"]
+created = 2026-11-21
+updated = 2026-11-21

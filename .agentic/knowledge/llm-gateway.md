@@ -6,17 +6,75 @@ Select for LlmGateway, model reference precedence, capabilities/budgets, provide
 
 ## Purpose and boundaries
 
-Core resolves models and wraps exact-pinned pi-ai1.1.0. Desktop main supplies current settings, stored credentials, Clock and process-lifetime scrubbing, owns accepted-operation drain and records observed custom tool support. Shared projects strict non-secret catalogs and four-step results; renderer renders imperative local test state with en/ro/de presentation. The mock exposes a small offline mock-openai fixture catalog and honors explicit model overrides/auth failure semantics.
+Core resolves models and wraps exact-pinned pi-ai1.1.0. Desktop main supplies current settings, stored credentials, Clock and process-lifetime scrubbing, owns accepted-operation drain and records observed custom tool support. Shared projects strict non-secret catalogs and four-step results; renderer renders imperative local test state with en/ro/de/fr presentation. The mock exposes a small offline mock-openai fixture catalog and honors explicit model overrides/auth failure semantics.
 
 ## Public interface
 
+- Curated connections resolve their registered HTTPS catalog URL independently of the inference base.
+  Public models include the saved selection and plan-scoped catalog or registry entries as applicable.
+  Chat and workbench share provider identity, context, input, tools and reasoning labels.
+- QwenCloud Standard and Token Plan use fixed international HTTPS Chat Completions routes and
+  scoped keys. A usable authenticated catalog adds that connection's IDs to the saved model.
+  A catalog 401 or unsupported route permits manual entry while the inference test verifies the key.
+  Qwen3.8 Flash and Qwen3.7 Max expose their documented inputs, tools and binary thinking options.
+  Thinking-enabled tool continuations preserve the assistant's reasoning_content and call ID.
+  Token Plan credit exhaustion is distinct from request throttling.
+- DeepSeek and Moonshot AI use international Chat Completions with separate authenticated
+  catalogs. Authenticated listings carry documented context and image fields, with maximum output
+  and eligible effort levels where documented. A successful list governs unsaved model choices.
+  DeepSeek passes its thinking toggle, and Moonshot K3 passes its effort level.
+  Both preserve reasoning_content on tool continuations. Kimi For Coding uses overseas
+  Anthropic Messages with x-api-key, VERA client identity, explicit model IDs and adaptive
+  thinking. Thinking blocks and matching tool results survive continuation. DeepSeek tests
+  with thinking off. Documented Moonshot and Kimi profiles test at low effort. The gateway leaves
+  tool capabilities unverified when a manual preset probe uses an ID without a profile.
+- The international MiniMax API and M Plan use the Messages adapter and scoped keys. M3.1 Flash
+  leaves thinking enabled at the provider and sends selected effort. M3 supports the thinking
+  toggle. Both replay signed thinking and the matching tool use. International Z.AI API and
+  GLM Coding Plan use fixed Chat Completions paths. Documented GLM-5.3 profiles use preserved
+  thinking and stream tools, and replay reasoning_content with matching tool results. Flash and
+  GLM-5.3 presets probe with low effort and up to 4096 output tokens.
+- Model Studio uses workspace-specific Chat Completions. Five listed regions also use their native
+  workspace catalogs and Virginia offers explicit entry. Alibaba Cloud Coding Plan and MiMo Token
+  Plan offer documented model suggestions and explicit entry. MiMo API lists documented chat IDs
+  from its own authenticated model catalog. The Alibaba Qwen and MiMo profiles preserve tool results
+  and reasoning content. The gateway pins this traffic to the selected route and reports scoped
+  authentication or model availability errors. Model Studio reports missing workspaces separately.
+  A Coding Plan Qwen3.7 Plus probe requests thinking on and uses a bounded reasoning budget.
+- Fireworks AI selects serverless chat from a bounded, paginated native catalog and preserves
+  account-qualified IDs. Together AI accepts its model array and the OpenAI list envelope.
+  Groq uses active catalog rows and their token limits, excluding documented audio and
+  moderation-only IDs. Cerebras lists IDs with its authenticated catalog and uses configured
+  token budgets because published limits vary by account tier and deployment. Catalog fields
+  and exact published model profiles supply tool and input capability labels. Missing
+  metadata stays unverified. Hosted Chat Completions preserves scoped keys, streams and tool
+  result IDs. Connection tests allow a 4096-token budget for documented reasoning models.
+- Hugging Face, NVIDIA NIM and Vercel AI Gateway use separate hosted Chat Completions bindings.
+  Hugging Face keeps full router IDs and only projects tool support when all eligible routes
+  are confirmed live and agree. NVIDIA projects native catalog capabilities for typed chat
+  rows and matches sparse IDs to pinned NVIDIA chat metadata. Vercel
+  AI Gateway lists language models and documented catalog capabilities. The model picker names
+  the receiving service. Explicit IDs stay selectable through missing or invalid discovery.
+- OpenCode Console and Go use `https://opencode.ai/inference[/go]/v1/models` for the scoped catalog
+  and `https://opencode.ai/inference[/go]/openai/v1/chat/completions` for inference. OpenCode’s
+  catalog supplies eligible IDs, names, input modalities, limits and declared tool and compatible
+  reasoning support. Non-chat models and known free Console models are excluded from discovery.
+  Sparse entries retain their IDs and unknown capabilities. Saved catalogs cache per scoped key.
+  Preflight enforces any advertised input ceiling. OpenCode reserves the configured or default
+  output budget, capped by the advertised maximum and available context.
+  A configured manual model can use the bound inference route when catalog permission is absent.
+- OpenCode inference identifies VERA in its User-Agent and sends `x-opencode-session` from the VERA
+  conversation ID, with a fresh ID for a probe outside a session. The gateway rechecks the binding
+  and scoped key after catalog I/O before using them for inference. OpenCode key, model or plan, billing and rate-limit errors
+  stay on the configured plan. Diagnostics distinguish catalog permission and budget exhaustion.
+  OpenCode may use balance for Go Extra Usage according to the workspace’s billing settings.
 LlmRequest.maskOutput is a host-owned live callback; omitted means on, including connection tests. SessionService supplies the agent choice, projects before context counting/compaction and revalidates the actual request budget after durable publication. Stream scrubbers hold split-secret tails while on; off passes content literally. message-scrub.ts preserves execution tool-call arguments at provider completion, and the session projects stored/request views separately. Provider errors and errorMessage diagnostics always use the unconditional scrubber. gateway.test.ts checks every agent/exports pair and live output policy.
 
 - Replay steps optionally declare validated nonnegative integer usage.input and usage.output for deterministic numeric statistics acceptance. Omitted usage stays zero/unreported; totals sum the supplied counts, costs stay zero. Replay fixture parsing validates on scenario use, and replay.test.ts covers invalid measurements. Native prompt-usage.spec.ts exercises real model/tool steps, per-prompt projection and restart without live egress.
 
 - prepareModel(reference,signal?) resolves live metadata before synchronous capabilities and budgeting. ChatGPT catalog discovery uses authenticated https://api.openai.com/v1/models; inference retains the pinned SDK public Responses route. Catalog IDs, context and native reasoning levels come from the server, including SDK-unknown models; no local model-specific reasoning allowlist or name heuristic. Codex Ultra is excluded as client subagent orchestration, not a public Responses effort. Unknown model prices have no SDK estimate. Live catalog models advertise strict-flag support so pi emits strict:false explicitly; optional VERA tool parameters remain optional instead of Responses normalizing an omitted strict flag.
 - Account-scoped catalog memory is refreshed after five minutes (or the response's shorter Cache-Control) and on
-  token/account changes, so per-iteration prepareModel calls reuse it without a request (REQ-NFR-4d0324ed), with superseded-publication protection. Individual caller abort detaches from a shared fetch. Optional reasoningOptions project declared levels; LM Studio uses discovered profiles, ordinary API-key catalogs with no declared levels expose none. LlmRequest.reasoning overrides the profile only when supported; Default leaves the provider/profile default. Responses use reasoning.effort, completions use reasoning_effort; LM Studio off/on mapping remains.
+  token/account changes, so per-iteration prepareModel calls reuse it without a request (REQ-NFR-4d0324ed), with superseded-publication protection. Individual caller abort detaches from a shared fetch. Optional reasoningOptions project declared levels; LM Studio uses discovered profiles, ordinary API-key catalogs with no declared levels expose none. LlmRequest.reasoning overrides the profile only when supported; Default leaves the provider/profile default. Responses use reasoning.effort. QwenCloud Chat Completions uses enable_thinking for the two documented profiles. Other Completions reasoning options use reasoning_effort.
 
 - resolveModelReference(session,workbench,app), splitModelReference; LlmGateway selectedModel/capabilities/models/stream. Model IDs retain slashes; session wins over workbench over app.
 - createPiAiGateway(host) exposes current OpenAI/custom API collection and OAuth-only subscription collection, mapping pi-ai openai to credential slot chatgpt. Host supplies settings, CredentialStore, scrub, now and optional fetch/knownSecrets.
@@ -31,13 +89,21 @@ LlmRequest.maskOutput is a host-owned live callback; omitted means on, including
 
 ## Invariants
 
+- Curated inference uses the pinned Chat Completions adapter and a request-local scoped key. It accepts
+  the exact registered POST path. Curated catalog requests refuse redirects, bound response size,
+  scrub the public result and honor cancellation. Request-local secrets are masked in text and tool
+  deltas. With agent masking enabled, a terminal tool call containing a request-only key is refused
+  before it reaches session processing. A successful tool probe can establish support for the saved
+  model while its configuration and credential remain current. Curated limits merge the selected
+  model's draft and known metadata at save. Other profiles use independent budgets.
 - Main owns stored secrets; API OpenAI ignores ambient environment/OAuth keys, and subscription ignores API-key fallback. Custom requests use conservative compatibility and an optional-key placeholder.
 - Per-request provider snapshots prevent concurrent requests crossing endpoints. Redirects are rejected; configured origin is enforced for stream fetches. Retry0, cancellation propagation. The response-header wait for OpenAI and ChatGPT is `GatewayHost.headerWaitMs()` read at each request, 30 s when absent; the desktop provider gateway and the CLI pass the resolved application Advanced value `headerWait` (REQ-FUNC-73ca575e, proof llm/gateway.test.ts). A custom connection uses its responseTimeoutSeconds (10-3600, 300 when unset, REQ-NFR-543124b7). responseTimeoutMs(reference) returns that same custom limit for the session silence timer and undefined for other providers.
 - Every pi-ai stream event, reasoning deltas included, calls LlmRequest.onActivity before projection, for every provider (REQ-REL-25ceaa1d).
 - Provider errors map to OFFLINE or PROVIDER with auth/rate_limit/context/provider/timeout reasons, safe messages and optional Retry-After. A header wait that runs out while the caller's signal is live maps to timeoutError: PROVIDER, provider.timeout, params {reason: timeout, seconds}, never OFFLINE, for every provider including OpenAI and ChatGPT; a caller abort stays aborted (REQ-FUNC-25254fe8). With agent masking on, retained raw/escaped secrets are scrubbed across stream chunk boundaries and in final presentation messages; actual usage and protocol discriminants are preserved. Execution tool-call arguments remain raw authority while stored/request views project them; other assistant metadata/signatures follow agent masking, and successful/partial timestamps use host Clock at terminal emission.
 - Shared strict projections and the existing authorized sandbox bridge guard catalog/result IPC. Renderer keeps no credential-bearing query mutation cache.
 - Test registration and dynamic replay import reside entirely inside compiled __VERA_TEST__; release emission excludes their code. Automated Node and acceptance transports block non-loopback traffic before dispatch.
-- The default model reference lives in settings schemaVersion 1. Live smoke is a distinct mandatory manual acceptance observation.
+- The default model reference lives in settings schemaVersion 1. OpenCode and QwenCloud authenticated
+  smoke is deferred by user ruling. Acceptance uses official documentation and scripted transport.
 
 ## Change map
 
@@ -45,6 +111,9 @@ LlmRequest.maskOutput is a host-owned live callback; omitted means on, including
 |---|---|---|
 | Model precedence/capabilities/catalog/auth/streams/errors | core llm gateway/providers/errors/stream-scrub | gateway.test.ts |
 | Model input modalities | core llm providers/chatgpt-catalog and shared providers | gateway.test.ts, subscription.test.ts and shared providers.test.ts |
+| Hosted model catalogs, isolated keys and tool continuation | shared hosted-provider-presets, core llm hosted-catalog and curated-adapters | desktop main hosted-provider-presets.test.ts |
+| OpenCode and QwenCloud catalogs, scoped streams and diagnostics | core llm opencode, preset-catalog-cache, preset-connection and errors | desktop main opencode-presets.test.ts and qwencloud-presets.test.ts |
+| Alibaba and Xiaomi route, workspace and protocol behavior | provider-presets, preset-connection, providers and errors | main regional-provider-presets.test.ts; tests/e2e/providers-layout.spec.ts |
 | Four-step results and host lifecycle | core llm connection; main provider-gateway/provider-settings | gateway.test.ts; provider-test.spec.ts |
 | Replay transcript and release seam | core llm replay; main index; Vite alias | replay.test.ts; tooling/build-mode.test.ts |
 | IPC/schema | shared providers/ipc/errors/settings; core settings/service | bridge/router and service tests |
@@ -70,6 +139,6 @@ All paths are under05_Software.
 - src/libraries/core/{package.json,src/index.ts}; src/libraries/shared/src/{providers,ipc,errors,settings}.ts — dependency/export and strict contracts.
 - src/apps/desktop/src/main/{provider-gateway,provider-settings,credentials,index}.ts — current-config host, capability persistence, secret registry and test composition.
 - src/apps/desktop/electron.vite.config.ts — explicit replay source alias and compile-time test flag.
-- src/apps/desktop/src/renderer/components/{provider-test,providers,error-message}.tsx; locales/{en,ro,de}.json; styles.css; mocks/mockApi.ts and mockApi.test.ts.
+- src/apps/desktop/src/renderer/components/{provider-test,providers,error-message}.tsx; locales/{en,ro,de,fr}.json; styles.css; mocks/mockApi.ts and mockApi.test.ts.
 - tests/support/network-{guard,setup}.ts; tests/tooling/{network-guard,build-mode}.test.ts; tests/e2e/{provider-test,mock}.spec.ts.
 - 02_Tools/release/smoke-live.mjs; package.json/lockfile; core/desktop/root Vitest configs and tooling tsconfig — command, pinned dependency and guarded test wiring.

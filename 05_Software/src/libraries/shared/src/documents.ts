@@ -2,9 +2,10 @@ import { z } from "zod";
 import { type AdvancedSources, advancedSettings, resolveAdvanced } from "./advanced-settings.js";
 import { parseRef } from "./refs.js";
 import { sessionIdSchema } from "./session.js";
-import { workbenchIdSchema } from "./workbench.js";
+import { indexLeaseSchema, workbenchIdSchema } from "./workbench.js";
 
 export const documentStatusSchema = z.enum(["pending", "indexed", "failed", "unsupported", "needs_ocr"]);
+export type DocumentStatus = z.infer<typeof documentStatusSchema>;
 export const documentKindSchema = z.enum([
   "pdf",
   "markdown",
@@ -242,6 +243,46 @@ export const documentGuardSchema = z.strictObject({
   folders: z.array(z.strictObject({ path: z.string().min(1).max(262144), files: count })).max(10),
 });
 export type DocumentGuard = z.infer<typeof documentGuardSchema>;
+
+export const documentIndexScopeSchema = z.strictObject({
+  workbenchId: workbenchIdSchema,
+  indexLease: indexLeaseSchema,
+});
+const documentIndexProgressSchema = z
+  .strictObject({
+    total: count,
+    processed: count,
+    exceptions: count,
+  })
+  .refine(({ total, processed, exceptions }) => exceptions <= processed && processed <= total);
+
+export const documentIndexStatusSchema = documentIndexScopeSchema
+  .extend({
+    revision: count,
+    state: z.enum([
+      "scanning",
+      "indexing",
+      "rebuilding",
+      "ready",
+      "exceptions",
+      "count-guard",
+      "blocked",
+      "stopped",
+      "empty",
+      "read-only",
+    ]),
+    progress: documentIndexProgressSchema.nullable(),
+    searchable: count.nullable(),
+    volume: documentVolumeSchema.nullable(),
+    guard: documentGuardSchema.nullable(),
+  })
+  .refine(({ state, progress, guard }) => {
+    if (state === "count-guard" && !guard) return false;
+    if (state === "indexing" || state === "ready" || state === "exceptions" || state === "empty")
+      return progress !== null;
+    return state === "rebuilding" || progress === null;
+  });
+export type DocumentIndexStatus = z.infer<typeof documentIndexStatusSchema>;
 /**
  * What the indexer's document selection admits for a folder and its documentation settings, counted
  * before anything is indexed: `truncated` when the preview's time limit stopped the count, so the
@@ -365,3 +406,22 @@ export const documentSearchHitSchema = z.strictObject({
   snippet: z.string().max(300),
   score: z.number().finite(),
 });
+
+export const documentSearchUsageSchema = z.discriminatedUnion("mode", [
+  z.strictObject({
+    mode: z.literal("keyword"),
+    fallbackReason: z.enum(["embedding-rebuild", "semantic-unavailable", "revision-conflict"]).optional(),
+  }),
+  z.strictObject({ mode: z.enum(["semantic", "hybrid"]) }),
+  z.strictObject({
+    mode: z.null(),
+    reason: z.enum(["no-candidates", "index-not-ready", "revision-conflict"]),
+  }),
+]);
+
+/** Search-time metadata shared by Files, CLI and each search_docs tool result. */
+export const documentSearchMetadataSchema = z.strictObject({
+  coverage: z.enum(["complete", "partial", "unknown"]),
+  usage: documentSearchUsageSchema,
+});
+export type DocumentSearchMetadata = z.infer<typeof documentSearchMetadataSchema>;

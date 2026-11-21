@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-FUNC-ba09d076"
+title = "Use the registered MiniMax and Z.AI inference routes"
+status = "active"
+requirement = "When a configured international MiniMax API, MiniMax M Plan, Z.AI API or Z.AI GLM Coding Plan connection sends inference, VERA shall send one request on its registered authenticated protocol and route."
+verification = "Capture POST URL, method, headers and redirect policy for all four presets and verify no second request when the selected service rejects one."
+affected_paths = ["05_Software/src/libraries/shared/src/provider-presets.ts","05_Software/src/libraries/core/src/llm/providers.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/international-plan-presets.test.ts"]
+spec = "specs/REQ-FUNC-ba09d076.md"
+created = 2026-11-20
+updated = 2026-11-20

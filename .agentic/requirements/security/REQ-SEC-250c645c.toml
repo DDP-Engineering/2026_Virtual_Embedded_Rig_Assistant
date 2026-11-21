@@ -14,14 +14,14 @@ title = "Deny renderer permissions"
 status = "active"
 
 requirement = """
-When renderer content requests a permission, VERA shall deny the request and permission checks.
+When renderer content requests or checks a permission outside the focused main-frame audio-only dictation grant, VERA shall deny it.
 """
 
-verification = "Request notifications and query navigator.permissions for notifications; both results are denied. Inspect the session request and check handlers returning false."
+verification = "Request notifications, camera and audio outside an authorized capture and observe denial. Check that the session handlers deny off-origin, subframe and non-audio requests."
 
 affected_paths = ["05_Software/src/apps/desktop/src/main/security.ts"]
 
-linked_tests = ["05_Software/tests/e2e/shell.spec.ts"]
+linked_tests = ["05_Software/tests/e2e/shell.spec.ts", "05_Software/tests/e2e/dictation.spec.ts", "05_Software/src/apps/desktop/src/main/security-policy.test.ts"]
 
 
 spec = ""
@@ -30,4 +30,4 @@ priority = "normal"   # low | normal | high
 rationale = ""        # why this behavior exists, if not obvious
 
 created = 2026-10-10
-updated = 2026-10-10
+updated = 2026-11-20

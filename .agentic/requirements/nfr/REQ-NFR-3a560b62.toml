@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-NFR-3a560b62"
+
+title = "Keep indexing presentation independent of session and search work"
+
+status = "active"
+
+requirement = """
+While indexing or loading saved sessions, VERA shall deliver bounded UI status updates independently of session loading, chat execution and agent document search, with retrieval notices folded into the existing transcript projection.
+"""
+
+verification = "Compare existing instrumented large and payload session opens against the base. Hold indexing open and send ordinary chat while checking for session reloads or waits. Inspect update rate, indexing tally mutations and search scope lookup. Simulate cheap and expensive publishing conflicts and verify at most one semantic attempt for the expensive case."
+
+affected_paths = ["05_Software/src/libraries/core/src/knowledge/index-status.ts", "05_Software/src/libraries/core/src/knowledge/ingest.ts", "05_Software/src/apps/desktop/src/renderer/components/documents/index-status.tsx", "05_Software/src/apps/desktop/src/renderer/components/session/transcript-projection.ts", "05_Software/src/apps/desktop/src/renderer/App.tsx", "05_Software/src/libraries/core/src/knowledge/search-ranking.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/knowledge/search.test.ts", "05_Software/src/apps/desktop/src/renderer/components/session/workspace.test.ts", "05_Software/tests/e2e/index-status.spec.ts", "05_Software/tests/tooling/session-performance.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-21
+updated = 2026-11-21

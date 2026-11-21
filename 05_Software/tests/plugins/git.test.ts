@@ -272,18 +272,11 @@ it("runs real Git history without approval, suppresses marker helpers, and commi
         text: `Since v1, ${releaseHash} (Fixture release change) adds the second line to file.txt. The reviewed change is committed.`,
       },
     ];
-    // The replay window holds the plugin prompt; this test checks tools, not context budgets.
-    await writeFile(
-      join(root, "scripts/git.jsonl"),
-      steps.map((step, i) => JSON.stringify(i ? step : { ...step, contextWindow: 65536 })).join("\n"),
-    );
+    await writeFile(join(root, "scripts/git.jsonl"), steps.map((step) => JSON.stringify(step)).join("\n"));
     await writeFile(
       join(root, "scripts/blocked.jsonl"),
       [
-        {
-          toolCalls: [{ name: "run_program", args: { program: "git", args: ["fixture-alias"] } }],
-          contextWindow: 65536,
-        },
+        { toolCalls: [{ name: "run_program", args: { program: "git", args: ["fixture-alias"] } }] },
         {
           toolCalls: [
             {
@@ -316,7 +309,7 @@ it("runs real Git history without approval, suppresses marker helpers, and commi
         .map((step) => JSON.stringify(step))
         .join("\n"),
     );
-    const gateway = new ReplayGateway({ dir: join(root, "scripts"), now: Date.now });
+    const gateway = new ReplayGateway({ dir: join(root, "scripts"), now: Date.now, contextWindow: 131072 });
     await gateway.models("replay", new AbortController().signal);
     database = await core.openDb(join(bench, ".vera/vera.db"), { workbenchId: "wb_test", appVersion: "0" });
     const skills = new core.SkillCatalog({

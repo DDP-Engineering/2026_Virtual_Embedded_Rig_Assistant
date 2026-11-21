@@ -1,12 +1,7 @@
 // REQ-FUNC-f9d5ae8d REQ-FUNC-362ebed9 REQ-FUNC-276a5da8 REQ-REL-4761ac1e
-import { existsSync } from "node:fs";
-import { beforeAll, expect, it, vi } from "vitest";
+import { expect, it, vi } from "vitest";
+import { createIndexerHandler } from "./indexer-handler.js";
 
-let createIndexerHandler: typeof import("./indexer-handler.js").createIndexerHandler;
-beforeAll(async () => {
-  expect(existsSync(new URL("./indexer-handler.ts", import.meta.url)), "indexer handler exists").toBe(true);
-  ({ createIndexerHandler } = await import("./indexer-handler.js"));
-});
 const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
 
 function services() {
@@ -133,6 +128,19 @@ it("passes a failure's error code, such as ENOENT, back to main", async () => {
   handle({ id: 9, type: "select", input: { root: "/b", docs: { include: ["docs/**"], exclude: [] } } });
   await flush();
   expect(sent).toContainEqual({ id: 9, ok: false, error: { message: "gone", code: "ENOENT" } });
+  const failure = { message: "Embedding queue deadline exceeded.", code: "EMBEDDING_DEADLINE" };
+  s.worker.rank.mockRejectedValueOnce(Object.assign(Error(failure.message), { code: failure.code }));
+  handle({
+    id: 10,
+    type: "rank",
+    model: "Xenova/bge-small-en-v1.5",
+    root: "/b",
+    epoch: "e",
+    query: "q",
+    rows: [],
+  });
+  await flush();
+  expect(sent).toContainEqual({ id: 10, ok: false, error: failure });
 });
 
 // REQ-FUNC-aa35b135 REQ-FUNC-bfbd70b6

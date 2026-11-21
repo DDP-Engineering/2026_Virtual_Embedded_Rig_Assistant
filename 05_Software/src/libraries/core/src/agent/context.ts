@@ -109,7 +109,10 @@ export class ContextPolicy {
         : message,
     );
     const safetyMarginTokens = Math.max(1024, Math.ceil(capabilities.contextWindow * 0.05));
-    const inputBudgetTokens = capabilities.contextWindow - capabilities.maxOutputTokens - safetyMarginTokens;
+    const inputBudgetTokens = Math.min(
+      capabilities.contextWindow - capabilities.maxOutputTokens - safetyMarginTokens,
+      capabilities.maxInputTokens ?? Infinity,
+    );
     const measure = () => {
       const projected = messages.map((message) => {
         const paths = imagePaths(message);

@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-SEC-dc8304bd"
+
+title = "Permit gesture-scoped microphone access"
+
+status = "active"
+
+requirement = "When a focused trusted VERA main frame starts dictation under transient user activation, VERA shall allow its audio-only media request during a single expiring grant."
+
+verification = "Initiate capture from a real click and assert audio acquisition, then probe the expired grant, an alternate window and an unactivated attempt."
+
+affected_paths = ["05_Software/src/apps/desktop/src/main/security.ts", "05_Software/src/apps/desktop/src/main/dictation/capture-jobs.ts", "05_Software/src/apps/desktop/src/preload/bridge.ts", "05_Software/src/apps/desktop/src/preload/index.ts", "05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/apps/desktop/src/main/ipc-router.ts"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/main/security-policy.test.ts", "05_Software/src/apps/desktop/src/main/dictation/capture-jobs.test.ts", "05_Software/src/apps/desktop/src/preload/bridge.test.ts", "05_Software/tests/e2e/dictation.spec.ts", "05_Software/src/apps/desktop/src/main/ipc-router.test.ts"]
+
+
+spec = "specs/REQ-SEC-dc8304bd.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-20
+updated = 2026-11-20

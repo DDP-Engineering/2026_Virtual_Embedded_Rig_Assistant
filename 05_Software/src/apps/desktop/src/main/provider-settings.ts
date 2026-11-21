@@ -1,5 +1,13 @@
-import type { SettingsService } from "@vera/core";
+import { randomUUID } from "node:crypto";
 import {
+  curatedTokenLimits,
+  providerKeyMatches,
+  resolveCuratedConnection,
+  type SettingsService,
+} from "@vera/core";
+import {
+  type CuratedProviderPreset,
+  curatedProviderPresets,
   type ProviderList,
   type ProviderRemove,
   type ProviderSave,
@@ -7,6 +15,7 @@ import {
   providerRemoveSchema,
   providerSaveSchema,
   providerSlug,
+  samePresetBinding,
   veraError,
 } from "@vera/shared";
 import type { CredentialFile } from "./credentials.js";
@@ -26,6 +35,7 @@ export class ProviderSettings {
   constructor(
     private readonly settings: SettingsService,
     private readonly credentials: CredentialFile,
+    readonly presets: readonly CuratedProviderPreset[] = curatedProviderPresets,
   ) {}
   private enqueue<T>(operation: () => Promise<T>): Promise<T> {
     if (this.closed) return Promise.reject(veraError("DENIED"));
@@ -56,34 +66,9 @@ export class ProviderSettings {
     };
     const custom = await Promise.all(
       settings.providers.custom.map(async (config) => {
-        const {
-          name,
-          slug,
-          baseUrl,
-          model,
-          contextWindow,
-          maxOutputTokens,
-          responseTimeoutSeconds,
-          supportsTools,
-          protocol,
-          models,
-          imageModels,
-        } = config;
-        return {
-          id: `custom:${slug}`,
-          name,
-          slug,
-          baseUrl,
-          model,
-          contextWindow,
-          maxOutputTokens,
-          ...(responseTimeoutSeconds === undefined ? {} : { responseTimeoutSeconds }),
-          ...(supportsTools === undefined ? {} : { supportsTools }),
-          ...(protocol ? { protocol } : {}),
-          ...(models ? { models } : {}),
-          ...(imageModels ? { imageModels } : {}),
-          ...(await metadata(`custom:${slug}`, true)),
-        };
+        const id = `custom:${config.slug}`;
+        const slot = config.preset ? resolveCuratedConnection(config, this.presets).slot : id;
+        return { ...config, id, ...(await metadata(slot, !config.preset)) };
       }),
     );
     return providerListSchema.parse({
@@ -109,7 +94,12 @@ export class ProviderSettings {
       } else {
         const found = input.id ? providers.custom.findIndex((c) => `custom:${c.slug}` === input.id) : -1;
         if (input.id && found < 0) throw veraError("NOT_FOUND");
-        const slug = found >= 0 ? providers.custom[found]?.slug : providerSlug(input.config.name);
+        const previous = providers.custom[found];
+        if (previous && !samePresetBinding(previous.preset, input.config.preset)) throw veraError("DENIED");
+        if (input.config.preset && input.config.supportsTools !== undefined) throw veraError("INVALID");
+        const slug =
+          previous?.slug ??
+          (input.config.preset ? `preset-${randomUUID()}` : providerSlug(input.config.name));
         if (!slug || slug.length > 80) throw veraError("INVALID");
         if (
           providers.custom.some(
@@ -119,11 +109,25 @@ export class ProviderSettings {
         )
           throw veraError("CONFLICT");
         id = `custom:${slug}`;
-        const config = {
-          ...(found >= 0 ? providers.custom[found] : {}),
-          ...JSON.parse(JSON.stringify(input.config)),
-          slug,
-        };
+        const changes = JSON.parse(JSON.stringify(input.config)) as typeof input.config;
+        const config = { ...previous, ...changes, slug };
+        if (config.preset) {
+          const connection = resolveCuratedConnection(config, this.presets);
+          id = connection.slot;
+          const profile = connection.binding.models?.find((m) => m.id === config.model);
+          Object.assign(config, curatedTokenLimits(config, profile, true));
+          if (!previous && !input.apiKey) throw veraError("INVALID");
+          if (
+            input.apiKey &&
+            (connection.binding.apiKeyPrefix || connection.binding.keyScope) &&
+            !providerKeyMatches(connection.binding, input.apiKey)
+          )
+            throw {
+              ...veraError("PROVIDER"),
+              messageKey: connection.binding.keyScope ? "provider.serviceBindingAuth" : "provider.auth",
+            };
+          if (input.apiKey !== undefined || previous?.model !== config.model) delete config.supportsTools;
+        }
         if (found >= 0) providers.custom[found] = config;
         else providers.custom.push(config);
       }
@@ -159,13 +163,16 @@ export class ProviderSettings {
       await this.credentials.load();
       const state = this.settings.get();
       const { id } = parsed.data;
+      let slot = id;
       const providers = structuredClone(state.settings.providers);
       if (id !== "openai") {
-        if (!providers.custom.some((c) => `custom:${c.slug}` === id)) throw veraError("NOT_FOUND");
-        providers.custom = providers.custom.filter((c) => `custom:${c.slug}` !== id);
+        const config = providers.custom.find((c) => `custom:${c.slug}` === id);
+        if (!config) throw veraError("NOT_FOUND");
+        if (config.preset) slot = resolveCuratedConnection(config, this.presets).slot;
+        providers.custom = providers.custom.filter((c) => c.slug !== config.slug);
       }
-      const restore = await this.credentials.checkpoint(id);
-      await this.credentials.delete(id);
+      const restore = await this.credentials.checkpoint(slot);
+      await this.credentials.delete(slot);
       try {
         await this.settings.update({ providers });
       } catch {
@@ -184,11 +191,17 @@ export class ProviderSettings {
       | ProviderList["custom"][number]
       | ReturnType<SettingsService["get"]>["settings"]["providers"]["custom"][number],
     supportsTools: boolean,
+    expectedKey?: string,
   ): Promise<void> {
     return this.enqueue(async () => {
       const state = this.settings.get();
       const current = state.settings.providers.custom.find((c) => c.slug === config.slug);
       if (!current || JSON.stringify(current) !== JSON.stringify(config)) return;
+      if (current.preset) {
+        const { slot } = resolveCuratedConnection(current, this.presets);
+        const key = await this.credentials.read(slot);
+        if (!expectedKey || key?.type !== "api_key" || key.key !== expectedKey) return;
+      }
       const custom = state.settings.providers.custom.map((c) =>
         c.slug === config.slug ? { ...c, supportsTools } : c,
       );

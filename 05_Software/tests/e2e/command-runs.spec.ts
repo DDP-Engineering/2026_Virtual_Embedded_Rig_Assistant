@@ -40,12 +40,8 @@ setInterval(() => console.log('heartbeat ${secret}'), 200);
 `,
   );
   const command = `${process.platform === "win32" ? "& " : ""}${quote(process.execPath)} server.cjs ${secret}`;
-  // The replay window holds the full tool prompt; this test checks Runs, not context budgets.
-  const script = async (name: string, rows: object[]) =>
-    writeFile(
-      join(scripts, `${name}.jsonl`),
-      rows.map((row, i) => JSON.stringify(i ? row : { ...row, contextWindow: 65536 })).join("\n"),
-    );
+  const script = async (name: string, rows: unknown[]) =>
+    writeFile(join(scripts, `${name}.jsonl`), rows.map((row) => JSON.stringify(row)).join("\n"));
   await script("start", [
     { toolCalls: [{ name: "run_command", args: { command, cwd: sibling, background: true } }] },
     { text: "Server launched" },

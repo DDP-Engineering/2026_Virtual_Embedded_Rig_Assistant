@@ -1,11 +1,16 @@
 import { z } from "zod";
+import { dictationJobIdSchema } from "./dictation.js";
 import {
   documentGuardSchema,
+  documentIndexStatusSchema,
   documentSchema,
+  documentSearchMetadataSchema,
   documentVolumeSchema,
   indexerStateSchema,
 } from "./documents.js";
 import { downloadApprovalSchema, validDownloadApproval } from "./downloads.js";
+import { providerRetryAfterSchema } from "./errors.js";
+import { gitStatusUpdateSchema } from "./git-status.js";
 import type { Channel, Request, Response } from "./ipc.js";
 import {
   planCommentSchema,
@@ -47,6 +52,7 @@ export const appEventSchema = z.discriminatedUnion("type", [
   z.strictObject({ type: z.literal("indexer.status"), state: indexerStateSchema }),
   /** The plugin catalog was read again (an update check); the Plugins page reloads its view. */
   z.strictObject({ type: z.literal("plugins.catalog") }),
+  z.strictObject({ type: z.literal("dictation.interrupted"), id: dictationJobIdSchema }),
   /** A session's turn, approval, title or status, or the set of open workbenches changed: read session.activity. */
   z.strictObject({ type: z.literal("session.activity") }),
   /** A turn was admitted or ended, or the Concurrent turns limit changed (REQ-FUNC-33cd5f9f). */
@@ -61,6 +67,7 @@ const presentationSettings = [
   "chatFontSize",
   "codeFontSize",
   "keyboardShortcuts",
+  "dictation",
   "recentWorkbenches",
   "sessionOrder",
 ];
@@ -76,6 +83,8 @@ export function settingsChangedEvent(previous: Settings | undefined, next: Setti
     : { type: "settings.changed" };
 }
 export const workbenchEventSchema = z.discriminatedUnion("type", [
+  z.strictObject({ type: z.literal("index.status"), status: documentIndexStatusSchema }),
+  z.strictObject({ type: z.literal("git.status"), update: gitStatusUpdateSchema }),
   z.strictObject({
     type: z.literal("index.document"),
     path: z.string().min(1),
@@ -132,12 +141,13 @@ export const sessionEventSchema = z.discriminatedUnion("type", [
     advanced: z.record(z.string().max(64), z.union([z.number(), z.boolean(), z.null()])).optional(),
   }),
   z.strictObject({ type: z.literal("session.interrupted"), turnId: z.string() }),
-  z.strictObject({ type: z.literal("turn.started"), turnId: z.string() }),
+  z.strictObject({ type: z.literal("turn.started"), turnId: z.string(), messageId: z.string().optional() }),
   z.strictObject({ type: z.literal("turn.done"), turnId: z.string(), stopReason: stopReasonSchema }),
   z.strictObject({
     type: z.literal("message.user"),
     messageId: z.string(),
     text: z.string(),
+    parentSessionId: sessionIdSchema.optional(),
     images: messageImagesSchema.optional(),
     /** Send time in epoch milliseconds; absent on events recorded before send times existed. */
     timestamp: count.optional(),
@@ -160,6 +170,7 @@ export const sessionEventSchema = z.discriminatedUnion("type", [
     type: z.literal("message.queued"),
     messageId: z.string(),
     text: z.string(),
+    parentSessionId: sessionIdSchema.optional(),
     images: messageImagesSchema.optional(),
     timestamp: count,
   }),
@@ -188,6 +199,7 @@ export const sessionEventSchema = z.discriminatedUnion("type", [
     summary: z.string(),
     /** Canonical paths of an outside program call, independent of approval policy and output truncation. */
     program: programApprovalSchema.optional(),
+    documentSearch: documentSearchMetadataSchema.optional(),
     preview: z.string().optional(),
     durationMs: count,
     /** Set only on events sent to the renderer (PERF-06): full UTF-8 size of the cut preview. */
@@ -260,6 +272,7 @@ export const sessionEventSchema = z.discriminatedUnion("type", [
     messageKey: z.string(),
     params: z.record(z.string(), z.union([z.string(), z.number().finite()])).optional(),
     retryable: z.boolean(),
+    retryAfter: providerRetryAfterSchema.optional(),
   }),
 ]);
 export type SessionEvent = z.infer<typeof sessionEventSchema>;
@@ -280,7 +293,13 @@ export const eventEnvelopeSchema = z.discriminatedUnion("topic", [
     seq: z.number().int().nonnegative().optional(),
     event: appEventSchema,
   }),
-  z.strictObject({ topic: z.literal("workbench"), id: workbenchIdSchema, event: workbenchEventSchema }),
+  z
+    .strictObject({ topic: z.literal("workbench"), id: workbenchIdSchema, event: workbenchEventSchema })
+    .refine(({ id, event }) =>
+      event.type === "index.status"
+        ? id === event.status.workbenchId
+        : event.type !== "git.status" || id === event.update.workbenchId,
+    ),
 ]);
 export type EventEnvelope = z.infer<typeof eventEnvelopeSchema>;
 export const sessionSubscriptionSchema = z.strictObject({

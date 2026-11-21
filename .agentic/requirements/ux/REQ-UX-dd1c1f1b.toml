@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-UX-dd1c1f1b"
+title = "Identify the OpenCode plan in provider and model settings"
+status = "active"
+requirement = "When a user configures or selects an OpenCode connection, VERA shall show its Console or Go identity."
+verification = "Select each preset and verify the provider and saved-model labels keep the plan identity after renaming the connection."
+affected_paths = ["05_Software/src/libraries/shared/src/provider-presets.ts", "05_Software/src/libraries/core/src/llm/providers.ts", "05_Software/src/apps/desktop/src/renderer/components/providers.tsx", "05_Software/src/apps/desktop/src/renderer/components/model-catalog.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/opencode-presets.test.ts", "05_Software/tests/e2e/providers-layout.spec.ts"]
+created = 2026-11-20
+updated = 2026-11-20

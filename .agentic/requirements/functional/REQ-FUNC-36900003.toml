@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-FUNC-36900003"
+title = "Configure the next child turn"
+status = "active"
+requirement = "When the owning parent configures an idle eligible child with a supported model and reasoning, the session service shall apply both settings atomically for the next turn and return their revision."
+verification = "Configure and send with the returned revision; assert the provider sees the chosen model and supported reasoning."
+affected_paths = ["05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/libraries/core/src/storage/repos/delegations.ts", "05_Software/src/libraries/core/src/tools/delegated-sessions.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/sessions/delegation.test.ts", "05_Software/tests/e2e/session-delegation.spec.ts"]
+created = 2026-11-21
+updated = 2026-11-21
