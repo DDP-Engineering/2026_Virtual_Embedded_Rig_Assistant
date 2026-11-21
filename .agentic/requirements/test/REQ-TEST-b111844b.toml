@@ -14,14 +14,14 @@ title = "Bind smoke and upgrade-proof outcomes to immutable artifacts"
 status = "active"
 
 requirement = """
-The package smoke report shall bind run outcomes to artifact SHA256, version and platform and preserve exact supplementary updater-probe (upgrade-proof) artifact results and manual Windows egress status without claiming absent proof as passing.
+The package smoke report shall bind run outcomes to artifact SHA256, version and platform and preserve exact supplementary updater-probe (upgrade-proof) artifact results and the Windows egress status, automated (an evidence JSON bound to the artifact and capture SHA256, written by an elevated run) or manual, without claiming absent proof as passing, and a non-elevated Windows run without manual evidence shall stay pending with the reason that pktmon needs an elevated shell.
 """
 
-verification = "Inspect artifact/report/log hashes and original upgrade-proof projections; missing manual evidence stays pending; invalid identity or missing artifact bindings rejects manual/upgrade-proof input."
+verification = "Inspect artifact/report/log hashes and original upgrade-proof projections; missing evidence without elevation stays pending with the elevation reason; the automated evidence JSON is accepted by --windows-evidence unchanged; invalid identity or missing artifact bindings rejects manual/upgrade-proof input."
 
 affected_paths = ["05_Software/tests/packaging/smoke/smoke-report.mjs", "05_Software/tests/packaging/smoke/smoke-package.mjs", "02_Tools/release/sandbox/VERA.wsb"]
 
-linked_tests = ["05_Software/tests/packaging/package-smoke.test.ts"]
+linked_tests = ["05_Software/tests/packaging/package-smoke.test.ts", "05_Software/tests/packaging/windows-egress.test.ts"]
 
 
 spec = "specs/REQ-TEST-8928f10f.md"
@@ -30,4 +30,4 @@ priority = "normal"   # low | normal | high
 rationale = ""        # why this behavior exists, if not obvious
 
 created = 2026-10-13
-updated = 2026-11-01
+updated = 2026-11-21

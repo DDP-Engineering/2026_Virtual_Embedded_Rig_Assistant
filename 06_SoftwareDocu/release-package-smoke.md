@@ -25,6 +25,30 @@ Chromium network processes and workers. Offline permits no inet/inet6 destinatio
 scripted permits only AF_INET 127.0.0.1 at the exact server port. Unix sockets are
 ignored, failed connection attempts count, malformed/incomplete traces fail.
 
+On Windows, run the same command from an elevated (administrator) PowerShell and the
+egress proof is automatic. Each of the four launches runs inside its own `pktmon`
+event collection, `pktmon start --trace` with the `Microsoft-Windows-Kernel-Network` and
+`Microsoft-Windows-Kernel-Process` providers: socket and process events only, no packets, and
+the host's packet filters stay as they are. After the launch exits, the harness makes one
+loopback sentinel connection from its own process, stops the collection and converts it with
+`pktmon etl2txt` (kept for people) and `tracerpt -of XML` (parsed). The process tree is the
+launched PID plus every process its Kernel-Process start events show under it. Every
+destination the tree sends to must be the allowed exact loopback address and port (none
+offline, the fake model endpoint scripted); anything else fails the run and names the address,
+port and PID. Connections the tree accepts from loopback clients, such as Playwright's inspector
+and DevTools clients, and datagrams it receives are inbound and not judged, as with `strace`;
+a connection accepted from another host is judged and named. Other
+processes' traffic is ignored. A capture without the launch's start event or the sentinel's
+socket event fails as missing monitor evidence; so does a failed conversion. Two gaps remain
+against `strace`: a TCP connection that never opens may log no event with an address, so a
+refused attempt can go unseen, and name lookups run in the Windows DNS Client service, outside
+the tree, so a lookup without a following connection is not seen. If the smoke is interrupted,
+run `pktmon stop` in an elevated shell before the next run. The run writes `windows-capture.json` (each launch's ETL, text
+and XML identities and result) and `windows-evidence.json` (`method` `pktmon`, `networking`
+`Enabled`), which the report includes and `--windows-evidence` accepts as it is. Without
+elevation `pktmon` is refused, the proof stays pending with that reason and the exit stays 2.
+The parser's tests use a real recorded capture, `tests/fixtures/pktmon/kernel-events.xml`.
+
 The exit is 0 for complete PASS, 1 for failure and 2 for functional PASS with
 pending platform egress proof. `smoke-report.json` retains artifacts, execution
 identities, logs/traces, errors and manual status. Useful raw failed proof stays
@@ -48,6 +72,9 @@ and be rejected by the same strace oracle. The calibration report records expect
 oracle FAIL separately from calibration PASS, and is never release proof.
 
 ## Windows Sandbox and pktmon
+
+The automated capture above runs on the current host, with its network. The manual Sandbox
+procedure below remains for an offline run on a clean machine.
 
 `02_Tools/release/sandbox/VERA.wsb` disables networking and clipboard, maps inputs
 read-only and a new evidence folder writable. Substitute the two host paths before

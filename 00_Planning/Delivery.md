@@ -261,5 +261,7 @@ time. The inventory of suites, fixtures and helpers is in
   downloads and ONNX Runtime telemetry. Exit 0 pass, 1 failure, 2 pass with egress proof pending.
 - Egress check: on Linux every launch runs under `strace`; any `inet`/`inet6` destination outside
   the run's allowed list fails the smoke, failed attempts included (`smoke-calibration.mjs` is the
-  negative control). On Windows the proof is a manual Windows Sandbox run with a `pktmon` capture
-  (`02_Tools/release/sandbox/`), attached with `--windows-evidence`; without it it stays pending.
+  negative control). On Windows an elevated shell captures every launch with `pktmon` (Kernel-Network
+  and Kernel-Process events, no packets, `smoke-windows.mjs`): any destination the launched process
+  tree sends to outside the allowed list fails the smoke, and the run writes `windows-evidence.json`. Without elevation, and
+  without a manual Sandbox `--windows-evidence`, the proof stays pending.

@@ -1,7 +1,7 @@
-// REQ-TEST-8928f10f REQ-TEST-b111844b
+// REQ-TEST-8928f10f REQ-TEST-b111844b REQ-TEST-803bb75d
 import assert from "node:assert/strict";
 import { cp, mkdir, readdir, readFile, writeFile } from "node:fs/promises";
-import { tmpdir } from "node:os";
+import { tmpdir, userInfo } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { exactLoopback } from "./smoke-egress.mjs";
@@ -14,6 +14,7 @@ import {
 } from "./smoke-report.mjs";
 import { copyDemo, extractArtifact, launchObserved, until } from "./smoke-runtime.mjs";
 import { assertSnapshotBudget, startSmokeServer } from "./smoke-server.mjs";
+import { pktmonUnavailable, windowsEvidenceRecord } from "./smoke-windows.mjs";
 
 export async function smokePackage(options) {
   const root = options.resume ?? options.scratch ?? join(tmpdir(), `vera-smoke-${Date.now()}`);
@@ -49,7 +50,7 @@ export async function smokePackage(options) {
     artifact: input,
     driver: await fileIdentity(fileURLToPath(import.meta.url)),
     harnessInputs: await Promise.all(
-      ["package", "runtime", "egress", "report", "server"].map((name) =>
+      ["package", "runtime", "egress", "report", "server", "windows"].map((name) =>
         fileIdentity(join(dirname(fileURLToPath(import.meta.url)), `smoke-${name}.mjs`)),
       ),
     ),
@@ -60,13 +61,50 @@ export async function smokePackage(options) {
     status: "FAIL",
   };
   let current, server;
+  // Windows without manual evidence: an elevated shell captures every launch with pktmon.
+  const pktmonReason =
+    process.platform === "win32" && !options.windowsEvidence ? pktmonUnavailable() : undefined;
+  const windowsCapture = process.platform === "win32" && !options.windowsEvidence && !pktmonReason;
+  /** windows-capture.json lists each launch's capture and result; windows-evidence.json binds it to the artifact. */
+  async function recordWindowsEvidence(complete) {
+    const launches = report.launches.map((launch) => ({
+      label: launch.label,
+      pid: launch.pid ?? null,
+      allowed: launch.allowed,
+      trace: launch.trace ?? null,
+      egress: launch.egress ?? { status: "FAIL", errors: ["No capture result"] },
+    }));
+    const capturePath = join(root, "windows-capture.json");
+    await writeFile(capturePath, JSON.stringify({ schema: 1, launches }, null, 2));
+    const capture = await fileIdentity(capturePath);
+    const passed =
+      complete && launches.length > 0 && launches.every((launch) => launch.egress.status === "PASS");
+    const evidence = windowsEvidenceRecord({
+      artifactSHA256: report.artifact.sha256,
+      status: passed ? "PASS" : "FAIL",
+      operator: userInfo().username,
+      observations: launches.map((launch) => ({
+        label: launch.label,
+        pid: launch.pid,
+        egress: launch.egress.status,
+        socketEvents: launch.egress.calls ?? 0,
+        errors: launch.egress.errors ?? [],
+      })),
+      capture: { path: capture.path, sha256: capture.sha256 },
+    });
+    await writeFile(join(root, "windows-evidence.json"), JSON.stringify(evidence, null, 2));
+    report.manual.windows = {
+      ...windowsEvidence(evidence, report.artifact.sha256),
+      captureObserved: capture,
+    };
+  }
   async function endRun(outcome) {
     await current.finish();
     outcome.egress = current.receipt.egress ?? {
       status: "pending",
       reason: "Windows manual monitor required",
     };
-    if (process.platform === "linux")
+    if (process.platform === "linux" || windowsCapture)
       assert.equal(outcome.egress.status, "PASS", JSON.stringify(outcome.egress.errors));
     assert.equal(current.receipt.exit.code, 0, "App exit failed");
     outcome.status = "PASS";
@@ -80,6 +118,8 @@ export async function smokePackage(options) {
     report.manual.windows = windowsEvidence(
       options.windowsEvidence ? JSON.parse(await readFile(options.windowsEvidence, "utf8")) : null,
       report.artifact.sha256,
+      // Without manual evidence: why the pktmon capture cannot run, or that it has not finished yet.
+      windowsCapture ? "the automated pktmon capture did not finish" : pktmonReason,
     );
     if (options.windowsEvidence) {
       report.manual.windows.captureObserved = await fileIdentity(report.manual.windows.capture.path);
@@ -87,6 +127,7 @@ export async function smokePackage(options) {
     }
     if (previous?.installation) report.installation = previous.installation;
     const context = await extractArtifact(options.artifact, root, report, !!previous);
+    context.windowsCapture = windowsCapture;
     if (previous?.asar) assert.equal(report.asar.sha256, previous.asar.sha256, "Resumed ASAR changed");
     if (previous?.executable)
       assert.equal(report.executable.sha256, previous.executable.sha256, "Resumed executable changed");
@@ -231,6 +272,7 @@ export async function smokePackage(options) {
     assert.equal(server.requests.length, 3, "Restart issued an unexpected provider request");
     await endRun(restarted);
     report.functionalStatus = "PASS";
+    if (windowsCapture) await recordWindowsEvidence(true);
     report.egressStatus = process.platform === "linux" ? "PASS" : report.manual.windows.status;
     report.status = smokeStatus(report.egressStatus, report.installation?.status);
   } catch (error) {
@@ -243,6 +285,11 @@ export async function smokePackage(options) {
     await current?.finish().catch((error) => {
       report.closeError = String(error);
     });
+    // After the last launch's capture has stopped, so every launch has its result.
+    if (report.error && windowsCapture && report.launches.length)
+      await recordWindowsEvidence(false).catch((evidenceError) => {
+        report.evidenceError = String(evidenceError);
+      });
     await server?.close();
     if (server) report.server = { url: server.url, requests: server.requests, errors: server.errors };
     report.artifactAfter = await fileIdentity(options.artifact);

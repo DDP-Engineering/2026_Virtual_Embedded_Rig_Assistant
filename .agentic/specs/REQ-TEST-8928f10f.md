@@ -33,8 +33,9 @@ Report schema1: SHA/bytes/version/platform, binary/ASAR identities, launch
 argv/cwd/time/PID/exit/log hashes, runtime, trace/oracle, per-run outcomes, HTTP
 request transcript. Original WP31 updater-probe reports (`--upgrade-proof`) preserve
 SHA/exact artifacts/checks and supplementary instrumented connected-host
-classification; release upgrade pending. Missing actual Windows capture stays pending; manual evidence binds
-artifact and capture SHA. Exit0 completePASS,1FAIL,2functionalPASS/manual pending.
+classification; release upgrade pending. On an elevated Windows host each launch's pktmon Kernel-Network/Kernel-Process
+events give the outbound destinations of the launched process tree (REQ-TEST-803bb75d) and an automated evidence JSON;
+without elevation or manual evidence the Windows capture stays pending; evidence binds artifact and capture SHA. Exit0 completePASS,1FAIL,2functionalPASS/manual pending.
 
 Optional `--resume <owned failed root>` excludes scratch, verifies exact artifact
 and prior launch exits, retains old report/log/screenshots with relocation hashes,

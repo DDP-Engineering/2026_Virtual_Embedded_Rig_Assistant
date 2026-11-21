@@ -52,16 +52,22 @@ export function upgradeSummary(proof) {
       "Original WP31 instrumented connected-host proof; no release, signing, clean/offline or separate-kernel upgrade claim.",
   };
 }
-export function windowsEvidence(proof, artifactSHA256) {
-  if (!proof)
-    return {
-      status: "pending",
-      reason:
-        "Windows Sandbox networking Disabled and real pktmon capture await manual execution under standing user deferral.",
-    };
+/**
+ * The Windows egress proof: manual Sandbox evidence (networking Disabled) or the automated pktmon capture of an
+ * elevated run (method pktmon, networking Enabled); without either it stays pending with `reason`.
+ */
+export function windowsEvidence(
+  proof,
+  artifactSHA256,
+  reason = "Windows Sandbox networking Disabled and real pktmon capture await manual execution under standing user deferral.",
+) {
+  if (!proof) return { status: "pending", reason };
   assert.equal(proof.artifactSHA256, artifactSHA256, "Manual evidence artifact mismatch");
   assert(["PASS", "FAIL"].includes(proof.status));
-  assert.equal(proof.networking, "Disabled");
+  assert(
+    proof.networking === "Disabled" || (proof.method === "pktmon" && proof.networking === "Enabled"),
+    "Windows evidence needs networking Disabled (Sandbox) or the automated pktmon method",
+  );
   assert(
     proof.observedAt &&
       proof.operator &&
