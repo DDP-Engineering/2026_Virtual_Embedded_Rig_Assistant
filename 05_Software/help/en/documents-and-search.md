@@ -46,6 +46,20 @@ The **Files** tab shows the whole workbench folder as a tree. Files ignored by V
 
 The menu of a file offers **Open**, **Attach as context**, **Open in** (the default app or another app), **Show in Explorer** (Finder or folder on other systems), **Copy** (absolute path, relative path or file name) and **Properties**, which includes the index status.
 
+## Git status in Files
+
+Enable **Show Git status in Files** under **Edit Workbench → Interface** and save. The setting is off by default for each workbench. Files shows the branch and counts changed paths and conflicts inside the workbench. A rename counts both paths when both are inside the workbench. A rename across its boundary appears as an addition or deletion on the side you can see.
+
+Badges show **S** for staged and **U** for unstaged changes. The codes are M (modified), ? (untracked), A (added), R (renamed), D (deleted) and ! (conflict). A file can show both comparisons. A collapsed folder shows its count of changed paths. **Git changes only** filters the tree. Deleted files and absent rename sources stay visible as entries, with no file to open.
+
+The status uses Git's ignore rules even when document indexing uses different rules. It refreshes as watched files change. Use **Refresh Git status** to retry or update folders that can't be watched. This read-only view needs a system installation of Git 2.40 or later and an ordinary local working tree. Linked worktrees, submodule workbench roots, unsupported metadata layouts and repositories with config includes or filters show an unavailable status. Files browsing remains available.
+
+Open a changed file’s context menu (right-click or **Shift+F10**) and choose **Git → View unstaged diff** or **View staged diff**. Unstaged compares the working tree with the index. Staged compares the index with HEAD, or with an empty base on a branch without commits. Each comparison opens in its own tab beside Chat. Use **Ctrl+Page Up/Down** to switch tabs and **Ctrl+W** to close the current comparison. The chat draft and transcript position stay in place.
+
+From a tracked file’s context menu, choose **Git → View file history**. This also works for unchanged files and tracked deletions shown in Files. The central tab lists up to 50 commits reachable from the local HEAD, newest first, with the short hash, author, date and subject. Git follows detected renames within the workbench. Moves across its boundary are omitted. The view uses local data and follows the Display masking setting.
+
+These read-only comparisons are available for deleted paths and for renames within the workbench. You’ll see a notice for a conflict, a binary file, a comparison that exceeds the preview limit, or unavailable content. Open untracked files with the usual file viewer.
+
 ## Citations
 
 In an answer, each citation chip names the source and the place: page, page range, slide, heading or line range. Select a chip to open the document at that place. A chip marked **Citation could not be verified** points to something VERA could not confirm, for example a page that does not exist or a file that changed since; treat that statement with care.
@@ -84,3 +98,9 @@ Choose **Rendered**, **Text** or **Hex** in the file toolbar. Rendered is availa
 PNG, JPEG, GIF, WebP, BMP and SVG files open as **Rendered** without indexing. **Image zoom** starts at **Fit**, shrinking the image to the available space without enlarging small images; Fit follows panel size changes. Choose 25% through 400% to scale the original decoded image, then choose Fit again. SVG stays an image: scripts, links and external resources are inactive. **Text** and **Hex** stay available and your deliberate mode is remembered per extension.
 
 Image bytes follow the current Display masking choice. Masking can make an encoded image undecodable; an unsupported or corrupt image also shows a safe error with **Retry**. Use Hex to inspect the returned bytes. Preview assembles bounded byte windows into a complete browser image resource, so encoded and decoded images still need memory proportional to their size and remain subject to browser decoder resources. No file-size cutoff is imposed.
+
+## Indexing status
+
+The status icon next to the active workbench name shows the current scan, indexing, rebuild or final state. Focus or hover over it for measured counts, then activate it to open Files. Processed files can include skipped files, files that need OCR and failures. Searchable documents have text passages in the index. A scan has no progress total until the selection is known. In a read-only workbench VERA can use the saved index without verifying it again. Files shows exception reasons, count-limit controls and the option to restart a stopped indexer.
+
+Chat marks the turn that used partial document search, keyword fallback or an unavailable index. An empty partial search can miss sources that are still pending or were excluded. You can continue chatting or open a known file while the index updates.

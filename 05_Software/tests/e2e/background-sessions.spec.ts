@@ -79,6 +79,15 @@ async function close({ app, root }: Bench) {
 const heading = (page: Page, bench: WorkbenchSnapshot) =>
   page.locator(`[data-workbench-entry="${bench.config.id}"] > .workbench-group-heading`);
 const name = (page: Page, bench: WorkbenchSnapshot) => heading(page, bench).locator(".workbench-group-name");
+async function switchWorkbench(page: Page, bench: WorkbenchSnapshot) {
+  await name(page, bench).click();
+  await expect(name(page, bench)).toHaveAttribute("aria-current", "page");
+  await expect(heading(page, bench).locator(".workbench-sessions-toggle")).toHaveAttribute(
+    "aria-expanded",
+    "true",
+  );
+}
+
 const activity = (page: Page, bench: WorkbenchSnapshot) =>
   heading(page, bench).locator(".workbench-activity");
 const row = (page: Page, id: string) => page.locator(`[data-session="${id}"]`);
@@ -114,6 +123,7 @@ async function start(page: Page, model: string, text: string, mode?: "ask") {
     },
     { id, model, mode },
   );
+  await expect(page.locator("[data-model-picker]")).toHaveValue(`replay/${model}`);
   const input = page.getByRole("textbox", { name: "Message", exact: true });
   await input.fill(text);
   await input.press("Enter");
@@ -138,8 +148,7 @@ test("A runs in the background while B runs; the sidebar follows both and both r
     await expect(activity(page, a)).toHaveAttribute("data-activity", "running");
     await expect(page.locator("[data-turn-capacity]")).toContainText("1/3");
 
-    await name(page, b).click();
-    await expect(name(page, b)).toHaveAttribute("aria-current", "page");
+    await switchWorkbench(page, b);
     // A keeps running in the background; its collapsed row shows it.
     await expect(heading(page, a).locator(".workbench-sessions-toggle")).toHaveAttribute(
       "aria-expanded",
@@ -163,13 +172,12 @@ test("A runs in the background while B runs; the sidebar follows both and both r
     await expect(page.locator("[data-turn-capacity]")).toHaveCount(0);
 
     // Back to either workbench, each session shows its own completed reply.
-    await name(page, a).click();
-    await expect(name(page, a)).toHaveAttribute("aria-current", "page");
+    await switchWorkbench(page, a);
     await row(page, sessionA).click();
     await expect(page.locator("[data-transcript]")).toContainText("LONG A END");
     await expect(page.locator("[data-transcript]")).not.toContainText("LONG B");
     expect(answer((await read(page, sessionA)).snapshot)?.text).toMatch(/^LONG A START.*LONG A END$/s);
-    await name(page, b).click();
+    await switchWorkbench(page, b);
     await row(page, sessionB).click();
     await expect(page.locator("[data-transcript]")).toContainText("LONG B END");
     await expect(page.locator("[data-transcript]")).not.toContainText("LONG A");
@@ -189,8 +197,7 @@ test("Stop in the sidebar ends one background session, and a background approval
     await expect(page.locator("[data-approval-card]")).toBeVisible({ timeout: 30000 });
     await expect(row(page, approval).locator('[data-session-activity="awaiting_approval"]')).toBeVisible();
     await expect(row(page, stopped).locator('[data-session-activity="running"]')).toBeVisible();
-    await name(page, b).click();
-    await expect(name(page, b)).toHaveAttribute("aria-current", "page");
+    await switchWorkbench(page, b);
     const sessionB = await start(page, "long-c", "Long answer C");
     await expect(row(page, sessionB).locator('[data-session-activity="running"]')).toBeVisible();
     // B's own row collapses too; A (background, collapsed) shows one running and one waiting session.
@@ -240,7 +247,21 @@ test("Stop in the sidebar ends one background session, and a background approval
     expect(await readFile(join(root, "b", "board.txt"), "utf8")).toContain("Board uses 3.3 V.");
     // B now runs in the background and still completes in its own session.
     await expect(activity(page, b)).toHaveAttribute("data-activity", "running");
-    await expect(activity(page, b)).toHaveCount(0, { timeout: 90000 });
+    await expect
+      .poll(
+        () =>
+          page.evaluate(async (id) => {
+            const api = (window as unknown as { vera: VeraBridge }).vera;
+            const activity = await api.invoke("session.activity", {});
+            return activity.some((workbench) => workbench.sessions.some((session) => session.id === id));
+          }, sessionB),
+        { timeout: 90000 },
+      )
+      .toBe(false);
+    await expect(activity(page, b)).toHaveCount(0);
+    await expect(name(page, a)).toHaveAttribute("aria-current", "page");
+    await name(page, b).click();
+    await expect(name(page, b)).toHaveAttribute("aria-current", "page");
     expect(answer((await read(page, sessionB)).snapshot)?.text).toMatch(/LONG C END$/);
     expect(await outboundAttempts(bench.app)).toEqual([]);
   } finally {

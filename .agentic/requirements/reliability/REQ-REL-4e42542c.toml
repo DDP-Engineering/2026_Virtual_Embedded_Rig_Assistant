@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-REL-4e42542c"
+
+title = "Report a failed dictation worker"
+
+status = "active"
+
+requirement = "If the Whisper worker fails or times out, VERA shall return a retryable transcription failure."
+
+verification = "Fail an inference worker and exercise expiry, then assert completion and subsequent admission."
+
+affected_paths = ["05_Software/src/apps/desktop/src/main/dictation/capture-jobs.ts", "05_Software/src/apps/desktop/src/main/dictation/worker-host.ts"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/main/dictation/capture-jobs.test.ts", "05_Software/src/apps/desktop/src/main/dictation/worker-host.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-20
+updated = 2026-11-20

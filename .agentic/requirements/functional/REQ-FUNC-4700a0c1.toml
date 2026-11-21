@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-FUNC-4700a0c1"
+title = "Offer scoped Alibaba and Xiaomi model selection"
+status = "active"
+requirement = "When the user discovers or selects models, VERA shall use the selected binding's documented listing or explicit model entry."
+verification = "Script workspace catalog and MiMo API responses, compare applicable choices and preserve a manually entered model for manual bindings."
+affected_paths = ["05_Software/src/libraries/shared/src/provider-presets.ts", "05_Software/src/libraries/core/src/llm/preset-connection.ts", "05_Software/src/libraries/core/src/llm/providers.ts", "05_Software/src/apps/desktop/src/main/provider-gateway.ts", "05_Software/src/libraries/core/src/llm/preset-catalog-cache.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/regional-provider-presets.test.ts"]
+created = 2026-11-20
+updated = 2026-11-20

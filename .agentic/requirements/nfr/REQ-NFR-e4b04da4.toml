@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-NFR-e4b04da4"
+title = "Bound browser network and grant resources"
+status = "active"
+requirement = "When a grant set, request deadline, parallel request count or byte budget reaches its limit, Desktop shall reject excess browser activity."
+verification = "Use deterministic fixtures to reach each applicable limit and verify excess work is refused and pending transfers are released by their deadline."
+affected_paths = ["05_Software/src/apps/desktop/src/main/browser/policy.ts", "05_Software/src/apps/desktop/src/main/browser/proxy.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/browser/browser-policy.test.ts", "05_Software/tests/e2e/browser-runtime.spec.ts"]
+priority = "normal"
+created = 2026-11-20
+updated = 2026-11-20

@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-de6ba478"
+
+title = "Measure indexing work and current searchable documents"
+
+status = "active"
+
+requirement = """
+When a document selection has been measured, VERA shall distinguish completed processing, published searchable documents and exceptional outcomes using counts derived from that work.
+"""
+
+verification = "Pause a mixed pass after the first committed document and again before drain. Assert total, processed, searchable and exceptional counts for skipped, OCR, failed and zero-passage sources and no progress counter before the scan completes."
+
+affected_paths = ["05_Software/src/libraries/core/src/knowledge/index-status.ts", "05_Software/src/libraries/core/src/knowledge/ingest.ts", "05_Software/src/apps/desktop/src/renderer/components/documents/index-status.tsx"]
+
+linked_tests = ["05_Software/src/libraries/core/src/knowledge/ingest-ports.test.ts", "05_Software/src/libraries/core/src/knowledge/ingest-guard.test.ts", "05_Software/src/libraries/core/src/knowledge/embedding-ingest.test.ts", "05_Software/tests/e2e/index-status.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-21
+updated = 2026-11-21

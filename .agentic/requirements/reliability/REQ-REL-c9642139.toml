@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-REL-c9642139"
+title = "Diagnose credentials rejected by the selected account scope"
+status = "active"
+requirement = "If a documented key class or service authentication check fails, VERA shall report a plan, region or workspace credential error for the current connection."
+verification = "Try wrong-class keys and scripted 401 responses and assert the localized error key and no secondary route."
+affected_paths = ["05_Software/src/libraries/shared/src/provider-presets.ts","05_Software/src/libraries/core/src/llm/preset-connection.ts","05_Software/src/libraries/core/src/llm/providers.ts","05_Software/src/libraries/core/src/llm/errors.ts","05_Software/src/apps/desktop/src/main/provider-settings.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/regional-provider-presets.test.ts"]
+created = 2026-11-20
+updated = 2026-11-20

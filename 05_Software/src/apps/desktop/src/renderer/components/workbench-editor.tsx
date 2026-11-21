@@ -157,7 +157,10 @@ export function WorkbenchEditor({
         tools: { disabled: config.tools.disabled },
         plugins: { enabled: config.plugins.enabled },
         chat: { detail: config.chat.detail },
-        interface: { right_panel_tabs: config.interface.right_panel_tabs },
+        interface: {
+          right_panel_tabs: config.interface.right_panel_tabs,
+          git_status: config.interface.git_status,
+        },
         ...(config.privacy ? { privacy: config.privacy } : {}),
         advanced: advancedEditPatch(workbench.config.advanced, config.advanced, "workbench"),
       });

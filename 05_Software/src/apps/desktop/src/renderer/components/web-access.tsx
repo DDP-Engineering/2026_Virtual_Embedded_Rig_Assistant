@@ -10,6 +10,7 @@ import {
 import { useEffect, useId, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../api/index.js";
+import { BrowserSettings } from "./browser-settings.js";
 import { ConsentDialog } from "./consent-dialog.js";
 import { ErrorMessage } from "./error-message.js";
 import "./web-access.css";
@@ -23,6 +24,7 @@ export function WebAccessPanel() {
       {query.isPending && <p role="status">{t("webAccess.loading")}</p>}
       {query.error && <ErrorMessage error={query.error} />}
       {query.data && <WebAccessForm snapshot={query.data} />}
+      <BrowserSettings />
     </section>
   );
 }

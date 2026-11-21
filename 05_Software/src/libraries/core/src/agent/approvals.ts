@@ -47,23 +47,17 @@ function policyOf(
   request: ChangeRequest,
   mode: PermissionMode,
   prefixes: readonly string[] = [],
+  requireCommandGrant = false,
 ): ProgramPolicy | undefined {
   if (request.tool === "run_command")
     return mode === "read-only"
       ? "refuse"
-      : mode === "bypass" ||
-          (mode === "auto-edit" &&
+      : (mode === "bypass" && !requireCommandGrant) ||
+          ((mode === "auto-edit" || mode === "bypass") &&
             prefixes.some((prefix) => commandPrefixMatches(request.args[0] ?? "", prefix)))
         ? "mode"
         : "user";
   return request.tool === "run_program" ? programPolicy(mode, request.risk, request.trial) : undefined;
-}
-/** Whether the current mode approves the request without asking the user. */
-function byMode(request: ChangeRequest, mode: PermissionMode, prefixes: readonly string[] = []): boolean {
-  if (request.tool === "plugin_install") return false;
-  return request.tool === "run_program" || request.tool === "run_command"
-    ? policyOf(request, mode, prefixes) === "mode"
-    : mode === "bypass" || (mode === "auto-edit" && !request.protected);
 }
 interface Pending {
   request: ChangeRequest;
@@ -79,6 +73,7 @@ export interface ApprovalHost {
   active(sessionId: string, turnId: string): boolean;
   mode(sessionId: string): PermissionMode;
   commandPrefixes?(): readonly string[];
+  requireCommandGrant?(sessionId: string): boolean;
   assertWritable(): void;
   /** Called inside the gate's transaction. Returns publication after commit. */
   record(sessionId: string, event: SessionEvent): () => void;
@@ -147,10 +142,7 @@ export class ApprovalGate {
       signal.addEventListener("abort", abort, { once: true });
       publish();
       if (signal.aborted) abort();
-      else if (
-        byMode(request, this.host.mode(request.sessionId), this.host.commandPrefixes?.()) &&
-        this.pending.has(id)
-      )
+      else if (this.byMode(request, this.host.mode(request.sessionId)) && this.pending.has(id))
         this.finish(id, "approved", "mode");
       return await result;
     } catch (error) {
@@ -178,7 +170,18 @@ export class ApprovalGate {
     return input.commandPrefix as string;
   }
   private policy(request: ChangeRequest, mode: PermissionMode): ProgramPolicy | undefined {
-    return policyOf(request, mode, this.host.commandPrefixes?.());
+    return policyOf(
+      request,
+      mode,
+      this.host.commandPrefixes?.(),
+      request.tool === "run_command" && this.host.requireCommandGrant?.(request.sessionId),
+    );
+  }
+  private byMode(request: ChangeRequest, mode: PermissionMode): boolean {
+    if (request.tool === "plugin_install") return false;
+    return request.tool === "run_program" || request.tool === "run_command"
+      ? this.policy(request, mode) === "mode"
+      : mode === "bypass" || (mode === "auto-edit" && !request.protected);
   }
   private validateDecision(input: ApprovalDecision): Pending {
     const entry = this.pending.get(input.approvalId);
@@ -245,7 +248,7 @@ export class ApprovalGate {
         this.host.mode(sessionId) === "bypass" &&
         entry.request.sessionId === sessionId &&
         !entry.signal.aborted &&
-        byMode(entry.request, "bypass")
+        this.byMode(entry.request, "bypass")
       )
         this.finish(id, "approved", "mode");
   }

@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-SEC-1f3fba00"
+title = "Release browser state from chat"
+status = "active"
+requirement = "When the user revokes access or closes a browser from Chat, Desktop shall release the grants and browser resources of that owner."
+verification = "Revoke a grant-only chat and close an open browser, checking controls and location after refresh."
+affected_paths = ["05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/apps/desktop/src/main/browser/host.ts", "05_Software/src/apps/desktop/src/renderer/components/session/browser-controls.tsx"]
+linked_tests = ["05_Software/tests/e2e/browser-controls.spec.ts", "05_Software/src/apps/desktop/src/main/browser/host.test.ts", "05_Software/src/apps/desktop/src/main/browser/browser-policy.test.ts"]
+created = 2026-11-20
+updated = 2026-11-20

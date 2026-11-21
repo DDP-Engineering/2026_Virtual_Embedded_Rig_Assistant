@@ -78,15 +78,22 @@ function scenarios(dir: string): Scenario[] {
     .sort()
     .map((name) => readScenario(dir, name));
 }
-function replayCapabilities(output?: number, reasoningOptions?: string[]): ModelCapabilities {
+function replayCapabilities(
+  output?: number,
+  reasoningOptions?: string[],
+  contextWindow = 32768,
+): ModelCapabilities {
   if (output !== undefined && (!Number.isSafeInteger(output) || output <= 0)) throw veraError("INVALID");
   const maxOutputTokens = Math.min(output ?? 4096, 4096);
+  const safetyMargin = Math.max(1024, Math.ceil(contextWindow * 0.05));
+  const inputBudget = contextWindow - maxOutputTokens - safetyMargin;
+  if (!Number.isSafeInteger(contextWindow) || inputBudget <= 0) throw veraError("INVALID");
   return {
     input: ["text"],
-    contextWindow: 32768,
+    contextWindow,
     maxOutputTokens,
-    safetyMargin: 1639,
-    inputBudget: 32768 - maxOutputTokens - 1639,
+    safetyMargin,
+    inputBudget,
     supportsTools: true,
     ...(reasoningOptions?.length ? { reasoningOptions } : {}),
   };
@@ -125,6 +132,7 @@ export class ReplayGateway implements LlmGateway {
     private readonly options: {
       dir: string;
       now: () => number;
+      contextWindow?: number;
       delay?: (signal: AbortSignal) => Promise<void>;
     },
   ) {}
@@ -148,7 +156,7 @@ export class ReplayGateway implements LlmGateway {
     const scenario = readdirSync(this.options.dir).includes(file)
       ? readScenario(this.options.dir, file)
       : undefined;
-    return replayCapabilities(output, scenario?.steps[0]?.reasoningOptions);
+    return replayCapabilities(output, scenario?.steps[0]?.reasoningOptions, this.options.contextWindow);
   }
   async models(provider: string, signal?: AbortSignal): Promise<ProviderCatalog> {
     signal?.throwIfAborted();
@@ -159,7 +167,7 @@ export class ReplayGateway implements LlmGateway {
         id: s.name,
         name: s.name,
         reference: `replay/${s.name}`,
-        ...replayCapabilities(undefined, s.steps[0]?.reasoningOptions),
+        ...replayCapabilities(undefined, s.steps[0]?.reasoningOptions, this.options.contextWindow),
       })),
     };
   }
@@ -181,7 +189,7 @@ export class ReplayGateway implements LlmGateway {
         all.find((s) => s.name === model) ??
         (model === "auto" ? all.find((s) => s.match?.test(text)) : undefined);
       if (!scenario) throw veraError("NOT_FOUND");
-      replayCapabilities(request.maxOutputTokens);
+      replayCapabilities(request.maxOutputTokens, undefined, this.options.contextWindow);
       const stepNo = request.messages.slice(at + 1).filter((m) => m.role === "assistant").length;
       const step = scenario.steps[stepNo];
       if (!step) throw veraError("NOT_FOUND");

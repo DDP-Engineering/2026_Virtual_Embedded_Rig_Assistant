@@ -75,6 +75,14 @@ describe("context budget", () => {
       safetyMarginTokens: 2000,
     });
   });
+  it("enforces a provider input limit below the available context window", () => {
+    let tokens = 101;
+    const p = new policy.ContextPolicy(() => ({ tokens, estimated: false }));
+    const limited = { ...caps, maxInputTokens: 100 };
+    expect(p.prepare(input(), limited)).toMatchObject({ fits: false, inputBudgetTokens: 100 });
+    tokens = 100;
+    expect(p.prepare(input(), limited)).toMatchObject({ fits: true, inputBudgetTokens: 100 });
+  });
   it("reduces completed results oldest-first, preserving refs, outcomes and pairs without mutations", () => {
     const messages: Message[] = [
       { role: "user", content: "keep", timestamp: 0 },

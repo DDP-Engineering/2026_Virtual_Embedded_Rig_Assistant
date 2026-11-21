@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-REL-85cb47d5"
+title = "Report hosted rate limits"
+status = "active"
+requirement = "If a hosted inference service responds with HTTP 429, VERA shall report the rate limit with the retry delay when supplied."
+verification = "Script catalog and streaming HTTP 429 with Retry-After for each service and assert the structured diagnostic includes the delay."
+affected_paths = ["05_Software/src/libraries/core/src/llm/preset-connection.ts", "05_Software/src/libraries/core/src/llm/providers.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/hosted-provider-presets.test.ts"]
+created = 2026-11-20
+updated = 2026-11-20

@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-FUNC-06a7076c"
+title = "Explain OpenCode plan and model restrictions"
+status = "active"
+requirement = "If OpenCode denies model or plan access, VERA shall show a diagnostic that points to the configured plan or model."
+verification = "Script wrong-plan model and subscription denial and assert the plan diagnostic and original-route isolation."
+affected_paths = ["05_Software/src/libraries/core/src/llm/providers.ts", "05_Software/src/libraries/core/src/llm/errors.ts", "05_Software/src/apps/desktop/src/renderer/components/error-message.tsx", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json", "05_Software/src/apps/desktop/src/renderer/locales/fr.json"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/opencode-presets.test.ts"]
+created = 2026-11-20
+updated = 2026-11-20

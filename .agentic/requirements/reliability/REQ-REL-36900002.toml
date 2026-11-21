@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-REL-36900002"
+title = "Refuse stale child settings"
+status = "active"
+requirement = "If child configuration races a model or reasoning change, or if a follow-up presents a stale configuration revision, the session service shall return CONFLICT."
+verification = "Change settings while metadata is pending and between configure and send, including an identical retry after later settings changed."
+affected_paths = ["05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/libraries/core/src/storage/repos/delegations.ts", "05_Software/src/libraries/core/src/tools/delegated-sessions.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/sessions/delegation.test.ts"]
+created = 2026-11-21
+updated = 2026-11-21

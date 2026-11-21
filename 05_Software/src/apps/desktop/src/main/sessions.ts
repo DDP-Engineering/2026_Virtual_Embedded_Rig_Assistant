@@ -1,4 +1,5 @@
 import {
+  type AgentBrowserPort,
   buildSystemPrompt,
   type Clock,
   type ConfiguredPartsProvider,
@@ -40,6 +41,7 @@ import {
   veraError,
   veraErrorSchema,
   type WorkbenchConfig,
+  type WorkbenchSnapshot,
 } from "@vera/shared";
 import type { CredentialFile } from "./credentials.js";
 import { authorizedSender, type InvokeSender, type RendererTarget } from "./ipc-router.js";
@@ -98,6 +100,7 @@ export class SessionsHost {
       emit: (event: EventEnvelope) => unknown;
       permissions?: PermissionEngine;
       web?: WebProvider;
+      browser?: (workbench: WorkbenchSnapshot, sessionId: string) => AgentBrowserPort;
       /** Supplier catalog search; offered only with the official parts-search plugin of the workbench. */
       parts?: ConfiguredPartsProvider;
       downloads?: (root: string) => WebDownloads;
@@ -252,6 +255,7 @@ export class SessionsHost {
         };
         const self = this;
         const partsProvider = options.parts;
+        const browser = options.browser;
         const workbenchId = snapshot.config.id;
         const prompt = (mode: PermissionMode, review: boolean) =>
           buildSystemPrompt({
@@ -290,6 +294,7 @@ export class SessionsHost {
             }),
           ...(options.terminals ? { terminals: options.terminals(workbenchId) } : {}),
           readOnly: snapshot.readOnly,
+          documentIndexPhase: () => options.workbench.documentIndexPhase(workbenchId, db),
           additionalFolders: () => {
             assertCurrent();
             return options.workbench.getSnapshot().config.additional_folders;
@@ -306,6 +311,7 @@ export class SessionsHost {
           },
           gateway: options.gateway().api,
           ...(options.web ? { web: options.web } : {}),
+          ...(browser ? { browser: (sessionId: string) => browser(snapshot, sessionId) } : {}),
           ...(partsProvider
             ? {
                 parts: {

@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-FUNC-734a5050"
+title = "Distinguish Token Plan quota exhaustion"
+status = "active"
+requirement = "When QwenCloud Token Plan returns HTTP 429 with insufficient_quota, VERA shall identify exhausted plan credits."
+verification = "Return HTTP 429 with insufficient_quota for both plans and verify that only Token Plan receives the plan-quota diagnostic."
+affected_paths = ["05_Software/src/libraries/core/src/llm/preset-connection.ts","05_Software/src/libraries/core/src/llm/providers.ts","05_Software/src/libraries/core/src/llm/errors.ts","05_Software/src/apps/desktop/src/renderer/components/error-message.tsx", "05_Software/src/apps/desktop/src/renderer/locales/de.json", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/fr.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/qwencloud-presets.test.ts"]
+created = 2026-11-20
+updated = 2026-11-20

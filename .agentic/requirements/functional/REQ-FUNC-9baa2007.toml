@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-FUNC-9baa2007"
+title = "Explain OpenCode authentication failures"
+status = "active"
+requirement = "If an OpenCode key is missing or rejected, VERA shall show an authentication diagnostic for the operation."
+verification = "Submit an invalid key and observe the authentication message in discovery and inference."
+affected_paths = ["05_Software/src/libraries/core/src/llm/preset-connection.ts", "05_Software/src/libraries/core/src/llm/providers.ts", "05_Software/src/libraries/core/src/llm/errors.ts", "05_Software/src/apps/desktop/src/renderer/components/error-message.tsx"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/opencode-presets.test.ts"]
+created = 2026-11-20
+updated = 2026-11-20

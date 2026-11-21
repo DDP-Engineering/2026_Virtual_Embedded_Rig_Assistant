@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-SEC-a0dafabc"
+title = "Revoke browser network access immediately"
+status = "active"
+requirement = "When browser access is disabled, an origin grant is revoked or the browser session ends, Desktop shall cancel affected requests and their resolutions and discard their access before subsequent browser operations."
+verification = "Hold open a response or resolution, revoke access, and observe cancellation plus denial until a new grant is supplied."
+affected_paths = ["05_Software/src/apps/desktop/src/main/browser/network.ts", "05_Software/src/apps/desktop/src/main/browser/policy.ts", "05_Software/src/apps/desktop/src/main/browser/host.ts", "05_Software/src/apps/desktop/src/main/index.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/browser/browser-policy.test.ts", "05_Software/tests/e2e/browser-runtime.spec.ts"]
+priority = "normal"
+created = 2026-11-20
+updated = 2026-11-20

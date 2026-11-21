@@ -41,3 +41,22 @@ test("bookmark commands have valid distinct defaults and editable serialized bin
   expect(commandBindings("previousBookmark", saved.keyboardShortcuts)).toEqual([]);
   expect(commandBindings("nextBookmark", {})).toEqual(["Mod+Alt+N"]);
 });
+
+test("dictation mode and an unassigned or conflict-free shortcut use the existing settings contract", () => {
+  const initial = defaultSettings("1b9dc50c-d87d-484b-88e6-04cb5f7c5a19");
+  const patch = settingsPatchSchema.safeParse({
+    dictationRecordingMode: "toggle",
+    keyboardShortcuts: { dictate: ["Mod+Shift+U"] },
+  });
+  expect(patch.success).toBe(true);
+  if (!patch.success) return;
+  const saved = settingsSchema.parse(JSON.parse(JSON.stringify(mergeSettings(initial, patch.data))));
+  expect(saved).toMatchObject({
+    dictationRecordingMode: "toggle",
+    keyboardShortcuts: { dictate: ["Mod+Shift+U"] },
+  });
+  expect(settingsPatchSchema.safeParse({ dictationRecordingMode: "hold" }).success).toBe(true);
+  expect(settingsPatchSchema.safeParse({ dictationRecordingMode: "unknown" }).success).toBe(false);
+  for (const binding of ["Mod+N", "Mod+C"])
+    expect(settingsPatchSchema.safeParse({ keyboardShortcuts: { dictate: [binding] } }).success).toBe(false);
+});

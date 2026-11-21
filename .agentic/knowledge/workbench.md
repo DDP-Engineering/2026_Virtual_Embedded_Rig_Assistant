@@ -29,6 +29,9 @@ sidebar are described in [workbench editor](workbench-editor.md).
 
 ## Public interface
 
+- The live workbench snapshot includes a process-local `indexLease` for its activation. Status
+  requests validate that identifier with the workbench id before reading the current Ingester.
+
 - statEntry retains confined physical metadata and supplies a compact rendered capability for recognized document formats from a direct indexed-record lookup: current size/mtime, extraction presence (or needs-OCR PDF pages), status and ignore rules. It reads no complete file and the viewer still verifies source content when opening. [File viewing modes](document-viewer-file-modes.md) owns the mode defaults.
 - Optional strict `privacy.mask` accepts display/runs/agent/exports choices default/on/off. Omitted
   areas follow live app defaults through core settings/masking.ts. Unknown privacy keys, areas and
@@ -64,8 +67,9 @@ sidebar are described in [workbench editor](workbench-editor.md).
 
 - WorkbenchService owns one writable background Ingester and reindexDocuments;
   close/replacement stops and drains ingest before lock/storage release. Read-only
-  snapshots run no ingest. [Knowledge ingest](knowledge-ingest.md) owns selection,
-  hashing, metadata/status events and derived invalidation.
+  snapshots run no ingest. `documentIndexPhase(id, db?)` refuses a different
+  workbench ID or supplied database lease. [Knowledge ingest](knowledge-ingest.md)
+  owns selection, hashing, metadata/status events and derived invalidation.
 
 - WorkbenchService.inspect(folder) returns the canonical folder, its final segment as suggested name,
   whether .vera/workbench.yaml exists, existing .vera/WORKBENCH.md text or null and the workbench/user
@@ -94,6 +98,7 @@ sidebar are described in [workbench editor](workbench-editor.md).
   the lock (or falls back to read-only), then openDb checks the schema before any database or recents
   write; an INVALID/CONFLICT database releases the newly taken lock. Failed replacement preparation closes its handle
   and releases the new token while retaining the previous workbench. Close/successful switches dispose handles.
+  Closing an owned workbench rejects redirected runtime directories before draining the ingester.
   Owned release checkpoints under the token guard before unlink; failed unlink retains usable storage.
   Disposal after release or ownership loss preserves source bytes through writer-first/read-only-last close.
 - Host-only readConfig queues one confined current disk read/parse, validates format/schema and unchanged identity, and refreshes snapshot config without recomputing catalog warnings. getConfig shares that refresh and retains ordinary skill/plugin warnings. Invalid data, changed identity, redirected paths and closed state retain INVALID/CONFLICT/DENIED/NOT_FOUND errors and leave the snapshot unchanged. Review uses readConfig before pinned context; metadata uses the snapshot. Tests: service.test.ts and desktop main/plan-review-boundary.test.ts (real service composition); only the file-symlink confinement probe is Linux-only on the documented unprivileged Windows host.

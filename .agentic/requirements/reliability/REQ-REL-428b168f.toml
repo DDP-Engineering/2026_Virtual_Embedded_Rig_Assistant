@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-REL-428b168f"
+title = "Cancel Alibaba and Xiaomi inference"
+status = "active"
+requirement = "When a caller stops an in-flight Alibaba Cloud or Xiaomi request, VERA shall cancel the request for that binding."
+verification = "Hold the scripted request open, abort the caller and observe a terminal cancellation and no retry."
+affected_paths = ["05_Software/src/libraries/core/src/llm/providers.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/regional-provider-presets.test.ts"]
+created = 2026-11-20
+updated = 2026-11-20

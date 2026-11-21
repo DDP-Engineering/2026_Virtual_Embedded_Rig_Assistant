@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-DATA-7b7bacd2"
+title = "Persist installed model selection"
+status = "active"
+requirement = "When the user selects a verified installed dictation model, VERA shall persist its identifier in application settings."
+verification = "Reject selection for missing models, then select each verified model in turn and reload the settings service."
+affected_paths = ["05_Software/src/apps/desktop/src/main/dictation/models.ts", "05_Software/src/libraries/shared/src/settings.ts", "05_Software/src/libraries/shared/src/dictation.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/dictation/models.test.ts", "05_Software/src/apps/desktop/src/preload/bridge.test.ts"]
+created = 2026-11-20
+updated = 2026-11-20

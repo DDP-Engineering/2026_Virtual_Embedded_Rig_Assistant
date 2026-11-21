@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-SEC-28b95ad2"
+title = "Require both browser opt-ins"
+status = "active"
+requirement = "If interactive browsing is disabled in app settings or the active workbench, Desktop shall refuse browser acquisition before runtime verification."
+verification = "Open with each missing opt-in and verify that neither runtime verification nor Chromium launch is called."
+affected_paths = ["05_Software/src/libraries/shared/src/settings.ts", "05_Software/src/libraries/shared/src/workbench.ts", "05_Software/src/apps/desktop/src/main/browser/policy.ts", "05_Software/src/apps/desktop/src/main/browser/host.ts", "05_Software/src/apps/desktop/src/main/index.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/browser/browser-policy.test.ts", "05_Software/tests/e2e/browser-runtime.spec.ts"]
+priority = "normal"
+created = 2026-11-20
+updated = 2026-11-20

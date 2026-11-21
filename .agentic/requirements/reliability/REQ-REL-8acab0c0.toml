@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-REL-8acab0c0"
+title = "Cancel curated provider requests"
+status = "active"
+requirement = "When a curated catalog or inference operation is aborted, VERA shall propagate cancellation to its transport."
+verification = "Abort scripted in-flight discovery and inference and verify the received signal and terminal result."
+affected_paths = ["05_Software/src/libraries/core/src/llm/preset-connection.ts", "05_Software/src/libraries/core/src/llm/providers.ts", "05_Software/src/apps/desktop/src/main/provider-gateway.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/provider-presets.test.ts"]
+created = 2026-11-20
+updated = 2026-11-20

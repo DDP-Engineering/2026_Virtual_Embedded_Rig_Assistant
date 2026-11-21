@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-SEC-7c5a2c03"
+title = "Reject keys outside the selected MiniMax billing scope"
+status = "active"
+requirement = "If an API key lacks the registered prefix for the selected MiniMax API or M Plan binding, VERA shall report an authentication error before storing or sending the key."
+verification = "Try to create and update each MiniMax preset with the other key class, verify settings and credential bytes are unchanged, then inject the mismatched key into the fixture slot and assert an authentication failure before Fetch."
+affected_paths = ["05_Software/src/libraries/shared/src/provider-presets.ts","05_Software/src/apps/desktop/src/main/provider-settings.ts","05_Software/src/libraries/core/src/llm/providers.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/international-plan-presets.test.ts"]
+created = 2026-11-20
+updated = 2026-11-20

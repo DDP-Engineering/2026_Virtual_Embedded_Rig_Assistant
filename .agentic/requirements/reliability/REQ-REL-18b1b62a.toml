@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-REL-18b1b62a"
+title = "Report unavailable models on scoped routes"
+status = "active"
+requirement = "If a saved model is rejected as unavailable, VERA shall return a model availability error for the selected binding."
+verification = "Script supported deployment failure shapes and confirm that inference stops without another plan or model."
+affected_paths = ["05_Software/src/libraries/core/src/llm/providers.ts","05_Software/src/libraries/core/src/llm/errors.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/regional-provider-presets.test.ts"]
+created = 2026-11-20
+updated = 2026-11-20

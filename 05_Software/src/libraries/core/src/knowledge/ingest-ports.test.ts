@@ -3,11 +3,13 @@ import { randomUUID } from "node:crypto";
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import type { EventEnvelope } from "@vera/shared";
+import type { FSWatcher } from "chokidar";
 import { afterEach, expect, it, vi } from "vitest";
 import { SettingsService } from "../settings/service.js";
 import { DocumentsRepository } from "../storage/repos/documents.js";
 import { WorkbenchService } from "../workbench/service.js";
-import type { DocumentProcessor } from "./ingest.js";
+import type { DocumentProcessor, Ingester } from "./ingest.js";
 
 let inspectSource: typeof import("./inspect.js").inspectSource;
 let selectDocuments: typeof import("./selection.js").selectDocuments;
@@ -44,6 +46,7 @@ async function harness(processDocument: DocumentProcessor) {
   });
   await settings.load();
   cleanup.push(() => settings.close());
+  const events: EventEnvelope[] = [];
   const service = new WorkbenchService(
     {
       files,
@@ -53,14 +56,14 @@ async function harness(processDocument: DocumentProcessor) {
       now: () => new Date(),
       token: randomUUID,
       isProcessAlive: (pid) => pid === process.pid,
-      changed: () => {},
+      changed: (event) => events.push(event),
     },
     processDocument,
   );
   cleanup.push(() => service.close());
   await service.create(folder, "Ports");
   const rows = () => new DocumentsRepository(service.getDatabase());
-  return { folder, service, rows };
+  return { folder, service, rows, events };
 }
 const indexed = { status: "indexed" as const, chunks: [] };
 
@@ -249,4 +252,113 @@ it("persists the chunks and vectors a processor port returns", async () => {
   expect(db.prepare("SELECT model_id AS model, dim FROM embeddings").all()).toEqual(
     chunks.map(() => ({ model: "model@1", dim: 384 })),
   );
+});
+
+it("reports measured work, searchable passages and exceptions for the exact active lease", async () => {
+  await load();
+  let extracting = () => {};
+  let resume = () => {};
+  const entered = new Promise<void>((resolve) => {
+    extracting = resolve;
+  });
+  const released = new Promise<void>((resolve) => {
+    resume = resolve;
+  });
+  const process: DocumentProcessor = async ({ path }) => {
+    if (path.endsWith("b.txt")) {
+      extracting();
+      await released;
+      return indexed;
+    }
+    if (path.endsWith("c.txt")) return { status: "needs_ocr" };
+    if (path.endsWith("d.txt")) return { status: "failed" };
+    return { status: "indexed", chunks: [{ text: "one", locator: { type: "lines", start: 1, end: 1 } }] };
+  };
+  const h = await harness(process);
+  try {
+    const { config, indexLease } = h.service.getSnapshot();
+    const status = () => h.service.documentIndexStatus(config.id, indexLease);
+    expect(status()).toMatchObject({ state: "scanning", progress: null });
+    await Promise.all(
+      ["a.txt", "b.txt", "c.txt", "d.txt"].map((name) => writeFile(join(h.folder, "docs", name), "text")),
+    );
+    await h.service.updateConfig({ docs: { maxFileMB: 1 } }, config.id);
+    await writeFile(join(h.folder, "docs/e.txt"), Buffer.alloc(1024 * 1024 + 1, 65));
+    const pass = h.service.reindexDocuments();
+    await entered;
+    expect(status()).toMatchObject({
+      state: "indexing",
+      searchable: 1,
+      progress: { total: 5, processed: 1, exceptions: 0 },
+    });
+    h.service.refreshDocuments();
+    resume();
+    await pass;
+    expect(status()).toMatchObject({ state: "scanning", progress: null, searchable: 1 });
+    expect(
+      h.events.some(({ event }) => event.type === "index.status" && event.status.state === "ready"),
+    ).toBe(false);
+    await vi.waitFor(
+      () =>
+        expect(status()).toMatchObject({
+          state: "exceptions",
+          searchable: 1,
+          progress: { total: 5, processed: 5, exceptions: 3 },
+        }),
+      { timeout: 5000 },
+    );
+    h.service.setDocumentIndexerStopped(true);
+    expect(status()).toMatchObject({ state: "stopped", progress: null, searchable: 1 });
+    h.service.setDocumentIndexerStopped(false);
+    expect(status()).toMatchObject({ state: "scanning", progress: null });
+    await h.service.close();
+    const reopened = await h.service.open(h.folder);
+    expect(reopened.indexLease).not.toBe(indexLease);
+    expect(status).toThrow(expect.objectContaining({ code: "CONFLICT" }));
+    expect(h.service.documentIndexStatus(config.id, reopened.indexLease).state).toBe("scanning");
+  } finally {
+    resume();
+  }
+}, 10000);
+
+it("keeps failed watcher generations blocked even after ready and recovers on Reindex", async () => {
+  await load();
+  const h = await harness(async () => ({
+    status: "indexed",
+    chunks: [{ text: "one", locator: { type: "lines", start: 1, end: 1 } }],
+  }));
+  const { config, indexLease } = h.service.getSnapshot();
+  const status = () => h.service.documentIndexStatus(config.id, indexLease);
+  const ingest = (h.service as unknown as { ingest: Ingester }).ingest;
+  const watcher = () => (ingest as unknown as { watcher: FSWatcher }).watcher;
+  await writeFile(join(h.folder, "docs/source.txt"), "one");
+  await ingest.waitIdle();
+  expect(status()).toMatchObject({ state: "ready", searchable: 1 });
+  const old = watcher();
+  old.emit("error", Error("Lost watcher"));
+  expect(status()).toMatchObject({ state: "blocked", searchable: 1, progress: null });
+
+  const binding = ingest as unknown as {
+    createWatcher(targets: string[]): { watcher: FSWatcher };
+  };
+  const bind = binding.createWatcher.bind(ingest);
+  const replace = vi.spyOn(binding, "createWatcher").mockImplementationOnce((targets) => {
+    const created = bind(targets);
+    queueMicrotask(() => {
+      created.watcher.emit("error", Object.assign(Error("Registration denied"), { code: "EACCES" }));
+      created.watcher.emit("ready");
+      created.watcher.emit("all", "change", join(h.folder, "docs/source.txt"));
+    });
+    return created;
+  });
+  await h.service.reindexDocuments();
+  await ingest.waitIdle();
+  expect(replace).toHaveBeenCalledTimes(1);
+  expect(watcher()).not.toBe(old);
+  expect(status()).toMatchObject({ state: "blocked", searchable: 1, progress: null });
+
+  await h.service.reindexDocuments();
+  await ingest.waitIdle();
+  expect(replace).toHaveBeenCalledTimes(2);
+  expect(status()).toMatchObject({ state: "ready", searchable: 1 });
 });

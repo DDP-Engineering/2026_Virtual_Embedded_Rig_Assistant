@@ -233,7 +233,9 @@ test("native citations open offline PDF snippets, heading/line anchors and sessi
     await expect(docs.locator("[data-document]")).toHaveCount(4);
     await docs.getByRole("button", { name: "Reindex", exact: true }).click();
     await expect(docs.getByRole("button", { name: "Reindex", exact: true })).toBeEnabled();
-    await expect(docs.locator(".docs-index-status")).toHaveCount(0);
+    await expect(docs.locator(".docs-index-status")).toHaveAttribute("data-index-state", "ready", {
+      timeout: 15000,
+    });
     await docs.locator("[data-docs-search]").fill("power");
     await expect(docs.locator(".documents-list li")).not.toHaveCount(0);
     await docs

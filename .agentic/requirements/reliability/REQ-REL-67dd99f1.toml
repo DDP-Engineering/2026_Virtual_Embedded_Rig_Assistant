@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-REL-67dd99f1"
+title = "Cancel provider inference"
+status = "active"
+requirement = "When a caller aborts a pending DeepSeek, Moonshot AI or Kimi For Coding inference request, VERA shall cancel the active request."
+verification = "Hold a scripted response open, cancel via the request signal and assert the abort reaches the transport and a fresh independent request succeeds."
+affected_paths = ["05_Software/src/libraries/core/src/llm/providers.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/direct-provider-presets.test.ts"]
+created = 2026-11-20
+updated = 2026-11-20

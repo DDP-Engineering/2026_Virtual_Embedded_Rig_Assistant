@@ -1,6 +1,11 @@
 // REQ-UX-4bea0001 REQ-REL-4bea0006 REQ-REL-4bea0004 REQ-UX-f20cb322
 
-import { type ChatDetail, type SessionSummary, veraErrorSchema } from "@vera/shared";
+import {
+  type ChatDetail,
+  type DictationRecordingMode,
+  type SessionSummary,
+  veraErrorSchema,
+} from "@vera/shared";
 import { useContext, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../../api/index.js";
@@ -9,7 +14,9 @@ import { useTurnCapacity } from "../../hooks/use-turn-capacity.js";
 import { globalShortcutBlocked, ShortcutContext, shortcutCommand } from "../../lib/shortcuts.js";
 import { CHAT, useDocumentTabs } from "../documents/viewer-context.js";
 import { ErrorMessage } from "../error-message.js";
+import { BrowserControls } from "./browser-controls.js";
 import { Composer, type ComposerState } from "./composer.js";
+import { DelegatedBypassControl } from "./delegated-bypass-control.js";
 import { DelegationLinks } from "./delegation-links.js";
 import { SessionInspector } from "./session-inspector.js";
 import { Transcript } from "./transcript.js";
@@ -18,12 +25,15 @@ import { ContextIndicator } from "./usage-meter.js";
 
 export function SessionWorkspace({
   id,
+  dictationMode,
   workbenchId,
   changed,
   readOnly,
+  browserEnabled = false,
   archived = false,
   detail = "normal",
   delegation,
+  delegatedBypassLaunch,
   delegationParent,
   delegationChildren = [],
   selectLinkedSession,
@@ -33,12 +43,15 @@ export function SessionWorkspace({
   composerFocused,
 }: {
   id?: string | undefined;
+  dictationMode?: DictationRecordingMode | undefined;
   workbenchId: string;
   changed: () => void;
   readOnly: boolean;
+  browserEnabled?: boolean;
   archived?: boolean;
   detail?: ChatDetail;
   delegation?: SessionSummary["delegation"];
+  delegatedBypassLaunch?: boolean | undefined;
   delegationParent?: SessionSummary | undefined;
   delegationChildren?: readonly SessionSummary[] | undefined;
   selectLinkedSession?: (id: string) => void;
@@ -271,7 +284,31 @@ export function SessionWorkspace({
         <h2 ref={heading} tabIndex={-1}>
           {view?.state.title || t("chat.untitled")}
         </h2>
+        {id &&
+          view &&
+          !delegation &&
+          !readOnly &&
+          !archived &&
+          (view.state.mode === "bypass" || delegatedBypassLaunch) && (
+            <DelegatedBypassControl
+              key={id}
+              sessionId={id}
+              workbenchId={workbenchId}
+              authorized={delegatedBypassLaunch === true}
+              changed={changed}
+            />
+          )}
       </header>
+      {view && shown && browserEnabled && !readOnly && !archived && (
+        <BrowserControls
+          key={`browser/${workbenchId}/${id}`}
+          sessionId={id}
+          workbenchId={workbenchId}
+          stop={() => void stop()}
+          stopPending={pending}
+          turnActive={!!view.state.activeTurnId}
+        />
+      )}
       {selectLinkedSession && (
         <DelegationLinks
           parent={delegationParent}
@@ -344,7 +381,10 @@ export function SessionWorkspace({
       {feedbackRestored && <p role="status">{t("plan.feedbackRestored")}</p>}
       {controls && (
         <Composer
+          key={`${workbenchId}/${id}`}
           sessionId={id}
+          dictationMode={dictationMode}
+          chatVisible={shown}
           workbenchId={workbenchId}
           state={controls.state}
           inspectorControls={
@@ -353,14 +393,17 @@ export function SessionWorkspace({
           disabled={readOnly || pending}
           sendDisabled={!view || activeReview}
           archived={archived}
-          permissionLocked={!!delegation}
           send={send}
           stop={() => void stop()}
           setMode={async (mode) => {
             setPending(true);
             setFailure(undefined);
             try {
-              await api.invoke("session.mode.set", { sessionId: id, mode });
+              await api.invoke("session.mode.set", {
+                sessionId: id,
+                mode,
+                ...(mode === "bypass" && { acknowledged: true as const }),
+              });
               changed();
             } finally {
               setPending(false);

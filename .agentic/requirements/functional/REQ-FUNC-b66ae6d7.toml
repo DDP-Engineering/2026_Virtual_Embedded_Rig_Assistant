@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-FUNC-b66ae6d7"
+title = "Continue QwenCloud tool calls with streamed thinking"
+status = "active"
+requirement = "When a profiled QwenCloud model streams a tool call in thinking mode, VERA shall preserve the assistant reasoning and tool-call identity on the same plan when returning the tool result."
+verification = "Stream split reasoning and tool deltas on both plans, return the tool result, verify the continuation payload and receive two text deltas."
+affected_paths = ["05_Software/src/libraries/core/src/llm/providers.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/qwencloud-presets.test.ts"]
+created = 2026-11-20
+updated = 2026-11-20

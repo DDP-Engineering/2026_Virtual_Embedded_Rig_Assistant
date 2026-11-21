@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-FUNC-1ce2090f"
+title = "Route three provider presets to their registered API"
+status = "active"
+requirement = "When a DeepSeek, Moonshot AI or Kimi For Coding connection makes a request, VERA shall send that connection's stored key only to its registered catalog or inference route with the service's documented protocol and authentication."
+verification = "Save all three services and inspect exact routes, methods, headers and redirect policy in the production gateway. Reject a mismatched saved discovery ID and a substituted base."
+affected_paths = ["05_Software/src/libraries/shared/src/provider-presets.ts", "05_Software/src/libraries/core/src/llm/providers.ts", "05_Software/src/libraries/core/src/llm/preset-connection.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/direct-provider-presets.test.ts"]
+spec = "specs/REQ-FUNC-1ce2090f.md"
+created = 2026-11-20
+updated = 2026-11-20

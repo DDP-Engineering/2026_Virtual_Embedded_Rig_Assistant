@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-REL-a7a7dfad"
+title = "Surface rejected provider credentials"
+status = "active"
+requirement = "If an international MiniMax or Z.AI endpoint rejects the key, then VERA shall report a scrubbed authentication error for that connection."
+verification = "Return a 401 containing the selected fixture key for each preset, assert the localized authentication key, and verify the key is absent from the result."
+affected_paths = ["05_Software/src/libraries/core/src/llm/providers.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/international-plan-presets.test.ts"]
+created = 2026-11-20
+updated = 2026-11-20

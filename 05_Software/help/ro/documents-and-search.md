@@ -46,6 +46,20 @@ Fila **Fișiere** afișează întregul folder al workbench-ului ca arbore. Fiși
 
 Meniul unui fișier oferă **Deschide**, **Atașează ca context**, **Deschide în** (aplicația implicită sau altă aplicație), **Arată în Explorer** (Finder sau folderul pe alte sisteme), **Copiază** (calea absolută, calea relativă sau numele fișierului) și **Proprietăți**, care include starea indexării.
 
+## Starea Git în Fișiere
+
+Activează **Arată starea Git în Fișiere** din **Editează workbench → Interfață** și salvează. Opțiunea este dezactivată implicit pentru fiecare workbench. Fila Fișiere afișează ramura și numărul de căi modificate și conflicte din workbench. O redenumire numără ambele căi dacă sunt în workbench. O redenumire care trece de limita sa apare ca adăugare sau ștergere pe partea vizibilă.
+
+Marcajele **I** și **L** indică modificările din index și din arborele de lucru. Codurile sunt M (modificat), ? (neurmărit), A (adăugat), R (redenumit), D (șters) și ! (conflict). Un fișier poate afișa ambele marcaje. Un dosar restrâns afișează numărul de căi modificate. **Doar modificările Git** filtrează arborele. Fișierele șterse și sursele de redenumire absente rămân vizibile ca intrări fără fișier de deschis.
+
+Starea folosește regulile de ignorare Git chiar dacă indexarea documentelor folosește alte reguli. Se actualizează când se schimbă fișierele monitorizate. Folosește **Actualizează starea Git** pentru a reîncerca sau pentru a actualiza dosarele care nu pot fi monitorizate. Vizualizarea este doar pentru citire și necesită Git 2.40 sau mai nou instalat în sistem și un arbore de lucru local obișnuit. Arborii de lucru legați, rădăcinile workbench din submodule, structurile de metadate neacceptate și depozitele cu includeri sau filtre în configurare afișează o stare indisponibilă. Navigarea în Fișiere rămâne disponibilă.
+
+Deschide meniul contextual al fișierului modificat (clic dreapta sau **Shift+F10**) și alege **Git → Vezi diferențele din arborele de lucru** sau **Vezi diferențele din index**. Prima opțiune compară arborele de lucru cu indexul. A doua compară indexul cu HEAD sau cu o bază goală dacă ramura nu are commituri. Fiecare comparație se deschide într-o filă proprie lângă Chat. Folosește **Ctrl+Page Up/Down** ca să schimbi fila și **Ctrl+W** ca să închizi comparația curentă. Ciorna și poziția în conversație se păstrează.
+
+În meniul contextual al unui fișier urmărit, alege **Git → Vezi istoricul fișierului**. Opțiunea este disponibilă și pentru fișierele nemodificate și ștergerile urmărite afișate în Fișiere. Fila centrală afișează până la 50 de commituri accesibile din HEAD local, începând cu cel mai recent, cu identificatorul scurt, autorul, data și subiectul. Git urmărește redenumirile detectate în workbench. Mutările peste limita acestuia sunt omise. Vizualizarea folosește datele locale și respectă setarea de mascare pentru afișare.
+
+Comparațiile sunt doar pentru citire și sunt disponibile pentru căi șterse și redenumiri din workbench. Apare un mesaj când există un conflict, un fișier binar, o comparație prea mare sau conținut indisponibil. Deschide fișierele neurmărite cu vizualizatorul obișnuit.
+
 ## Citări
 
 Într-un răspuns, fiecare etichetă de citare numește sursa și locul: pagina, intervalul de pagini, slide-ul, titlul sau intervalul de linii. Selectează o etichetă pentru a deschide documentul în acel loc. O etichetă marcată **Citarea nu a putut fi verificată** indică ceva ce VERA nu a putut confirma, de exemplu o pagină care nu există sau un fișier care s-a modificat între timp; tratează acea afirmație cu precauție.
@@ -84,3 +98,9 @@ Alege **Randat**, **Text** sau **Hex** în bara fișierului. Randarea este dispo
 Fișierele PNG, JPEG, GIF, WebP, BMP și SVG se deschid ca **Randat** fără indexare. **Zoom imagine** pornește cu **Potrivire**, micșorând imaginea la spațiul disponibil fără a mări imaginile mici; Potrivire urmărește redimensionarea panoului. Alege 25% până la 400% pentru a scala imaginea originală decodată, apoi revino la Potrivire. SVG rămâne imagine: scripturile, legăturile și resursele externe sunt inactive. **Text** și **Hex** rămân disponibile, iar alegerea explicită se păstrează pe extensie.
 
 Octeții imaginii urmează mascarea Afișare curentă. Mascarea poate împiedica decodarea; și imaginile incompatibile sau corupte arată o eroare sigură cu **Reîncearcă**. Folosește Hex pentru a inspecta octeții returnați. Previzualizarea asamblează ferestre limitate într-o resursă de imagine completă în browser; memoria necesară crește cu dimensiunea imaginii codificate și decodate și depinde de resursele decodorului. Nu se impune o limită de dimensiune a fișierului.
+
+## Starea indexării
+
+Pictograma de lângă numele workbench-ului activ arată starea scanării, indexării sau reconstruirii indexului. Mută focalizarea sau cursorul pe ea pentru a vedea numărul de fișiere, apoi activeaz-o pentru a deschide Fișiere. Fișierele procesate le includ și pe cele omise, pe cele care necesită OCR sau pentru care indexarea a eșuat. Documentele disponibile pentru căutare au fragmente în index. În timpul scanării, totalul nu este afișat până când selecția nu este cunoscută. Într-un workbench doar pentru citire, VERA poate folosi indexul salvat fără să-l verifice din nou. Fișiere afișează motivele excepțiilor și oferă comenzi pentru limita de fișiere și repornirea serviciului de indexare.
+
+Chatul marchează răspunsul care a folosit o căutare parțială, cuvinte-cheie în locul căutării semantice sau pentru care căutarea a fost indisponibilă. O căutare parțială fără rezultate poate rata surse în așteptare sau excluse. Poți continua conversația sau deschide un fișier cunoscut în timpul actualizării indexului.

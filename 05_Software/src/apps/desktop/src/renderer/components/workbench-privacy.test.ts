@@ -35,6 +35,7 @@ const settings = (agent = true) => ({
 });
 const wb = (readOnly = false): WorkbenchSnapshot => ({
   folder: "/bench",
+  indexLease: 1,
   readOnly,
   warnings: [],
   config: workbenchSchema.parse({

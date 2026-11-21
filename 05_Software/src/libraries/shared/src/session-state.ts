@@ -1,5 +1,7 @@
 import { z } from "zod";
+import { documentSearchMetadataSchema } from "./documents.js";
 import { downloadApprovalSchema, validDownloadApproval } from "./downloads.js";
+import { providerRetryAfterSchema } from "./errors.js";
 import { type SessionEvent, usageEventSchema } from "./events.js";
 import {
   equalPlanTarget,
@@ -12,6 +14,7 @@ import { reasoningOptionSchema } from "./provider-discovery.js";
 import {
   messageImagesSchema,
   permissionModeSchema,
+  sessionIdSchema,
   sessionStatusSchema,
   stopReasonSchema,
   todoItemsSchema,
@@ -34,6 +37,7 @@ const tool = z.strictObject({
   args: z.unknown(),
   status: z.enum(["running", "ok", "error"]),
   summary: z.string().optional(),
+  documentSearch: documentSearchMetadataSchema.optional(),
   preview: z.string().optional(),
   durationMs: z.number().optional(),
   /** Full UTF-8 sizes of the fields cut for the renderer (PERF-06); `args` then holds a JSON prefix. */
@@ -61,6 +65,7 @@ export const sessionStateSchema = z.strictObject({
         kind: z.literal("user"),
         id: z.string(),
         text: z.string(),
+        parentSessionId: sessionIdSchema.optional(),
         images: messageImagesSchema.optional(),
         pending: z.boolean().optional(),
         reviewId: z.string().optional(),
@@ -85,6 +90,7 @@ export const sessionStateSchema = z.strictObject({
         messageKey: z.string(),
         params: z.record(z.string(), z.union([z.string(), z.number().finite()])).optional(),
         retryable: z.boolean(),
+        retryAfter: providerRetryAfterSchema.optional(),
       }),
     ]),
   ),
@@ -356,6 +362,7 @@ function reduce(d: Draft, event: SessionEvent): void {
           kind: "user",
           id: event.messageId,
           text: event.text,
+          ...(event.parentSessionId && { parentSessionId: event.parentSessionId }),
           ...(review ? { reviewId: review.id } : {}),
           ...(event.images && { images: event.images }),
           ...(event.timestamp !== undefined && { timestamp: event.timestamp }),
@@ -378,6 +385,7 @@ function reduce(d: Draft, event: SessionEvent): void {
           kind: "user",
           id: event.messageId,
           text: event.text,
+          ...(event.parentSessionId && { parentSessionId: event.parentSessionId }),
           ...(event.images && { images: event.images }),
           pending: true,
           timestamp: event.timestamp,
@@ -445,6 +453,7 @@ function reduce(d: Draft, event: SessionEvent): void {
       const tool = d.at("items", index) as Extract<SessionItem, { kind: "tool" }>;
       tool.status = event.ok ? "ok" : "error";
       tool.summary = event.summary;
+      if (event.documentSearch) tool.documentSearch = event.documentSearch;
       tool.durationMs = event.durationMs;
       if (event.preview !== undefined) tool.preview = event.preview;
       if (event.truncated) tool.truncated = { ...tool.truncated, ...event.truncated };

@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-DATA-a4ee70a4"
+title = "Persist spoken language"
+status = "active"
+requirement = "When the user selects a supported spoken language or automatic detection, VERA shall persist the choice independently of the interface language."
+verification = "Save a supported language then automatic detection, with settings reloaded and the interface language unmodified."
+affected_paths = ["05_Software/src/apps/desktop/src/main/dictation/models.ts", "05_Software/src/libraries/shared/src/settings.ts", "05_Software/src/libraries/shared/src/dictation.ts", "05_Software/src/libraries/shared/src/events.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/dictation/models.test.ts", "05_Software/src/apps/desktop/src/preload/bridge.test.ts"]
+created = 2026-11-20
+updated = 2026-11-20

@@ -3,6 +3,7 @@ import {
   type AppInfo,
   acceptsImages,
   appEventSchema,
+  type BrowserRuntimeView,
   type CatalogEntry,
   type CatalogPack,
   type Channel,
@@ -10,7 +11,11 @@ import {
   channels,
   compareVersions,
   configWarnings,
+  type DictationModelId,
+  type DictationSnapshot,
+  type DocumentIndexStatus,
   defaultSettings,
+  dictationDefaults,
   documentPatternFolder,
   type EventEnvelope,
   eventEnvelopeSchema,
@@ -119,6 +124,10 @@ export function createMockApi(
     progress: null,
     errorCode: null,
   };
+  const installedDictationModels = new Set<DictationModelId>();
+  let dictationDownload: { id: DictationModelId; start: number } | undefined;
+  let browserRuntime: BrowserRuntimeView = { phase: "missing" };
+  const browserGrants = new Map<string, string[]>();
   let settings = defaultSettings("1b9dc50c-d87d-484b-88e6-04cb5f7c5a19");
   const folderSelections = new Map<string, string>();
   const benches = new Map<string, { snapshot: WorkbenchSnapshot; pinned: string }>();
@@ -425,6 +434,9 @@ export function createMockApi(
     return `${source === "user" ? "user" : current().snapshot.config.id}:${name}`;
   }
   let sequence = 0;
+  let indexLease = 0;
+  let indexRevision = 0;
+  let reindexingLease: number | undefined;
   const webKeyConfigured: Record<WebProviderId, boolean> = { exa: false, tavily: false, brave: false };
   const mqttCredentialRefs = new Set<string>();
   const wokwiCredentialRefs = new Set<string>();
@@ -446,6 +458,7 @@ export function createMockApi(
     });
     const snapshot: WorkbenchSnapshot = {
       folder: "/mock/demo-board",
+      indexLease: ++indexLease,
       config,
       readOnly: scenario === "read-only",
       warnings:
@@ -500,6 +513,46 @@ export function createMockApi(
       activity: () => emitAppEvent({ type: "session.activity" }),
     },
   );
+  function indexStatus(wb: WorkbenchSnapshot): DocumentIndexStatus {
+    const documents = scenario === "empty" ? [] : mockDocuments;
+    const searchable = documents.filter(({ status }) => status === "indexed").length;
+    const exceptions = documents.filter(
+      ({ status }) => status === "failed" || status === "needs_ocr" || status === "unsupported",
+    ).length;
+    const state = wb.readOnly
+      ? "read-only"
+      : indexerState === "stopped"
+        ? "stopped"
+        : reindexingLease === wb.indexLease
+          ? "indexing"
+          : exceptions
+            ? "exceptions"
+            : searchable
+              ? "ready"
+              : "empty";
+    return {
+      workbenchId: wb.config.id,
+      indexLease: wb.indexLease,
+      revision: ++indexRevision,
+      state,
+      searchable: wb.readOnly ? null : searchable,
+      progress:
+        state === "read-only" || state === "stopped"
+          ? null
+          : {
+              total: documents.length,
+              processed:
+                state === "indexing" ? 0 : documents.filter(({ status }) => status !== "pending").length,
+              exceptions: state === "indexing" ? 0 : exceptions,
+            },
+      volume: { files: documents.length, bytes: documents.reduce((sum, doc) => sum + doc.bytes, 0) },
+      guard: null,
+    };
+  }
+  function emitIndexStatus(wb: WorkbenchSnapshot) {
+    if (active !== wb.folder || current().snapshot.indexLease !== wb.indexLease) return;
+    emit({ topic: "workbench", id: wb.config.id, event: { type: "index.status", status: indexStatus(wb) } });
+  }
   function pinned(content: string) {
     return { content, oversized: new TextEncoder().encode(content).byteLength > 16384 };
   }
@@ -519,6 +572,28 @@ export function createMockApi(
     });
     emitAppEvent({ type: "settings.changed" });
   }
+  function dictationSnapshot(): DictationSnapshot {
+    const download = dictationDownload;
+    const elapsed = download ? Date.now() - download.start : 0;
+    if (download && elapsed >= 1600) {
+      installedDictationModels.add(download.id);
+      dictationDownload = undefined;
+    }
+    return {
+      ...(settings.dictation ?? dictationDefaults),
+      models: (
+        [
+          { id: "whisper-base", bytes: 79_677_901 },
+          { id: "whisper-small", bytes: 251_875_316 },
+        ] as const
+      ).map(({ id, bytes }) =>
+        dictationDownload?.id === id
+          ? { id, bytes, status: "downloading", receivedBytes: Math.floor((bytes * elapsed) / 1600) }
+          : { id, bytes, status: installedDictationModels.has(id) ? "installed" : "missing" },
+      ),
+    };
+  }
+
   async function invoke<C extends Channel>(channel: C, request: Request<C>): Promise<Response<C>> {
     if (!isChannel(channel)) throw veraError("NOT_FOUND");
     const input = channels[channel].request.safeParse(request);
@@ -1085,17 +1160,12 @@ What this plugin does.
         if (current().snapshot.readOnly) throw veraError("DENIED");
         const { workbenchId } = channels["docs.reindex"].request.parse(input.data);
         if (workbenchId && workbenchId !== current().snapshot.config.id) throw veraError("CONFLICT");
-        emit({
-          topic: "workbench",
-          id: current().snapshot.config.id,
-          event: { type: "index.progress", pending: 2, done: 0, failed: 0 },
-        });
+        const wb = current().snapshot;
+        reindexingLease = wb.indexLease;
+        emitIndexStatus(wb);
         await new Promise((resolve) => setTimeout(resolve, 20));
-        emit({
-          topic: "workbench",
-          id: current().snapshot.config.id,
-          event: { type: "index.progress", pending: 0, done: 8, failed: 1 },
-        });
+        if (reindexingLease === wb.indexLease) reindexingLease = undefined;
+        emitIndexStatus(wb);
         value = {};
         break;
       }
@@ -1111,6 +1181,7 @@ What this plugin does.
       case "indexer.restart":
         indexerState = "running";
         emitAppEvent({ type: "indexer.status", state: indexerState });
+        if (active) emitIndexStatus(current().snapshot);
         value = {};
         break;
       case "docs.tree": {
@@ -1259,6 +1330,59 @@ What this plugin does.
         value = {};
         break;
       }
+      case "git.diff": {
+        const request = channels["git.diff"].request.parse(input.data);
+        const wb = current().snapshot;
+        if (request.workbenchId !== wb.config.id || request.indexLease !== wb.indexLease)
+          throw veraError("CONFLICT");
+        if (!wb.config.interface.git_status) throw veraError("DENIED");
+        value = {
+          ...request,
+          displayPath: request.path,
+          result: { state: "unavailable", base: request.comparison === "staged" ? "unknown" : "index" },
+        };
+        break;
+      }
+      case "git.history":
+      case "git.historyEligibility": {
+        const request = channels["git.history"].request.parse(input.data);
+        const wb = current().snapshot;
+        if (request.workbenchId !== wb.config.id || request.indexLease !== wb.indexLease)
+          throw veraError("CONFLICT");
+        if (!wb.config.interface.git_status) throw veraError("DENIED");
+        value =
+          channel === "git.history"
+            ? { ...request, displayPath: request.path, result: { state: "unavailable" } }
+            : { ...request, eligibility: "unavailable" };
+        break;
+      }
+      case "git.status": {
+        const { action, ...owner } = channels["git.status"].request.parse(input.data);
+        const wb = current().snapshot;
+        if (owner.workbenchId !== wb.config.id || owner.indexLease !== wb.indexLease)
+          throw veraError("CONFLICT");
+        if (action !== "close") {
+          if (!wb.config.interface.git_status) throw veraError("DENIED");
+          emit({
+            topic: "workbench",
+            id: owner.workbenchId,
+            event: {
+              type: "git.status",
+              update: { ...owner, status: { state: "no-repository" }, watchLimited: false },
+            },
+          });
+        }
+        value = {};
+        break;
+      }
+      case "docs.status": {
+        const request = channels["docs.status"].request.parse(input.data);
+        const wb = current().snapshot;
+        if (request.workbenchId !== wb.config.id || request.indexLease !== wb.indexLease)
+          throw veraError("CONFLICT");
+        value = indexStatus(wb);
+        break;
+      }
       case "docs.volume": {
         const { workbenchId } = channels["docs.volume"].request.parse(input.data);
         if (workbenchId !== current().snapshot.config.id) throw veraError("CONFLICT");
@@ -1297,6 +1421,8 @@ What this plugin does.
         if (workbenchId !== current().snapshot.config.id) throw veraError("CONFLICT");
         value = {
           workbenchId,
+          coverage: "complete",
+          usage: { mode: "keyword" },
           results: /power|3\.3|reset/i.test(query)
             ? [{ path: "docs/a.md", ref: "docs/a.md#h=power", snippet: "3.3 V supply", score: 1 }]
             : [],
@@ -1330,6 +1456,89 @@ What this plugin does.
       case "app.openExternal":
         value = {};
         break;
+      case "browser.settings.get": {
+        const bench = active ? benches.get(active)?.snapshot : undefined;
+        value = {
+          runtime: browserRuntime,
+          appEnabled: settings.interactiveBrowser === true,
+          workbench: bench
+            ? {
+                id: bench.config.id,
+                enabled: bench.config.interactive_browser === true,
+                readOnly: bench.readOnly,
+              }
+            : null,
+        };
+        break;
+      }
+      case "browser.runtime.install":
+        browserRuntime = { phase: "ready", version: "156.0.8078.4" };
+        value = browserRuntime;
+        break;
+      case "browser.runtime.cancel":
+        browserRuntime = { phase: "cancelled" };
+        value = browserRuntime;
+        break;
+      case "browser.runtime.remove":
+        browserGrants.clear();
+        browserRuntime = { phase: "missing" };
+        value = browserRuntime;
+        break;
+      case "browser.session.get":
+      case "browser.session.grant":
+      case "browser.session.show":
+      case "browser.session.close": {
+        const request =
+          channel === "browser.session.grant"
+            ? channels["browser.session.grant"].request.parse(input.data)
+            : channels["browser.session.get"].request.parse(input.data);
+        const bench = current().snapshot;
+        if (bench.config.id !== request.workbenchId) throw veraError("CONFLICT");
+        const row = (sessions.invoke("session.list", {}) as SessionSummary[]).find(
+          ({ id }) => id === request.sessionId,
+        );
+        if (!row) throw veraError("NOT_FOUND");
+        const enabled = settings.interactiveBrowser === true && bench.config.interactive_browser === true;
+        const canGrant = enabled && !bench.readOnly && !row.archived;
+        const key = JSON.stringify([request.workbenchId, request.sessionId]);
+        if (channel === "browser.session.get") {
+          value = {
+            enabled,
+            canGrant,
+            origins: canGrant ? (browserGrants.get(key) ?? []) : [],
+            busy: false,
+            open: false,
+            currentUrl: null,
+            failure: null,
+          };
+          break;
+        }
+        if (channel === "browser.session.show") throw veraError("NOT_FOUND");
+        if (
+          channel === "browser.session.grant" &&
+          "origin" in request &&
+          typeof request.origin === "string"
+        ) {
+          if (!canGrant) throw veraError("DENIED");
+          const url = URL.parse(request.origin);
+          if (
+            !url ||
+            !["http:", "https:"].includes(url.protocol) ||
+            url.username ||
+            url.password ||
+            url.pathname !== "/" ||
+            url.search ||
+            url.hash
+          ) {
+            throw { code: "DENIED", messageKey: "browser.failure.destination-denied" };
+          }
+          const origins = [...new Set([...(browserGrants.get(key) ?? []), url.origin])];
+          if (origins.length > 32) throw { code: "DENIED", messageKey: "browser.failure.resource-limit" };
+          browserGrants.set(key, origins);
+        } else browserGrants.delete(key);
+        value = {};
+        break;
+      }
       case "web.access.get":
         value = {
           preferences: settings.webAccess,
@@ -1555,6 +1764,9 @@ What this plugin does.
         };
         break;
       }
+      case "providers.presets.discover":
+        value = { status: "failed", error: veraError("NOT_FOUND") };
+        break;
       case "providers.models": {
         const { id } = input.data as Request<"providers.models">;
         if (id === "chatgpt") {
@@ -1673,7 +1885,12 @@ What this plugin does.
             ? providers.custom.findIndex((c) => `custom:${c.slug}` === request.id)
             : -1;
           if (request.id && found < 0) throw veraError("NOT_FOUND");
-          const slug = found >= 0 ? providers.custom[found]?.slug : providerSlug(request.config.name);
+          const slug =
+            found >= 0
+              ? providers.custom[found]?.slug
+              : request.config.preset
+                ? `preset-${crypto.randomUUID()}`
+                : providerSlug(request.config.name);
           if (!slug) throw veraError("INVALID");
           if (
             providers.custom.some(
@@ -1764,11 +1981,52 @@ What this plugin does.
           },
         ];
         break;
+      case "dictation.begin":
+        value = { status: "permission-denied" };
+        break;
+      case "dictation.recording":
+      case "dictation.finish":
+        value = { status: "cancelled" };
+        break;
+      case "dictation.cancel":
+        value = {};
+        break;
+      case "dictation.get":
+        value = dictationSnapshot();
+        break;
+      case "dictation.change": {
+        const choice = channels["dictation.change"].request.parse(input.data);
+        dictationSnapshot();
+        const before = settings;
+        if (choice.action === "language") {
+          settings = mergeSettings(settings, { dictation: { language: choice.language } });
+        } else if (choice.action === "cancel") {
+          if (dictationDownload?.id === choice.id) dictationDownload = undefined;
+        } else {
+          if (dictationDownload) throw veraError("BUSY");
+          if (choice.action === "download" && !installedDictationModels.has(choice.id)) {
+            dictationDownload = { id: choice.id, start: Date.now() };
+          } else if (choice.action === "select") {
+            if (!installedDictationModels.has(choice.id)) throw veraError("NOT_FOUND");
+            settings = mergeSettings(settings, { dictation: { selectedModel: choice.id } });
+          } else if (choice.action === "remove") {
+            installedDictationModels.delete(choice.id);
+            if (settings.dictation?.selectedModel === choice.id) {
+              settings = mergeSettings(settings, { dictation: { selectedModel: null } });
+            }
+          }
+        }
+        if (before !== settings) emitAppEvent(settingsChangedEvent(before, settings));
+        value = dictationSnapshot();
+        break;
+      }
       case "app.settings.get":
         value = { settings };
         break;
       case "app.settings.update": {
-        const next = mergeSettings(settings, settingsPatchSchema.parse(input.data));
+        const patch = settingsPatchSchema.parse(input.data);
+        if (patch.interactiveBrowser === false) browserGrants.clear();
+        const next = mergeSettings(settings, patch);
         if (JSON.stringify(next) !== JSON.stringify(settings)) {
           const event = settingsChangedEvent(settings, next);
           settings = next;
@@ -1797,7 +2055,7 @@ What this plugin does.
           }),
           initial ?? {},
         );
-        const snapshot = { folder, config, readOnly: false, warnings: [] };
+        const snapshot = { folder, config, readOnly: false, warnings: [], indexLease: ++indexLease };
         benches.set(folder, {
           snapshot,
           pinned: folderNotes.get(folder) ?? instructions ?? workbenchTemplate(name),
@@ -1815,6 +2073,7 @@ What this plugin does.
         if (!bench) throw veraError("NOT_FOUND");
         await sessions.close();
         active = folder;
+        bench.snapshot = { ...bench.snapshot, indexLease: ++indexLease };
         remember(bench.snapshot);
         value = bench.snapshot;
         emit({
@@ -1871,12 +2130,7 @@ What this plugin does.
         break;
       }
       case "workbench.config.get":
-        value = {
-          config: current().snapshot.config,
-          warnings: current().snapshot.warnings,
-          readOnly: current().snapshot.readOnly,
-          folder: current().snapshot.folder,
-        };
+        value = current().snapshot;
         break;
       case "workbench.config.update": {
         const {
@@ -1891,6 +2145,7 @@ What this plugin does.
         if (bench.snapshot.readOnly) throw veraError("DENIED");
         if (workbenchId && bench.snapshot.config.id !== workbenchId) throw veraError("CONFLICT");
         const currentModel = bench.snapshot.config.embeddings.model;
+        if (patch.interactive_browser === false) browserGrants.clear();
         const changingModel = patch.embeddings !== undefined && patch.embeddings.model !== currentModel;
         if (changingModel || embeddingSwitch) {
           const indexed =

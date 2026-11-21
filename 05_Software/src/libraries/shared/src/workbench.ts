@@ -108,6 +108,7 @@ const rightPanelTabsSchema = z
   .refine((tabs) => new Set(tabs).size === tabs.length, "Right panel tabs must be unique.");
 const workbenchInterface = z.looseObject({
   right_panel_tabs: rightPanelTabsSchema.default([...defaultRightPanelTabs]),
+  git_status: z.boolean().default(false),
 });
 /** Defaults for the agent's search_docs when it passes no k or mode of its own. */
 export const workbenchRetrievalSchema = z.looseObject({
@@ -125,6 +126,7 @@ const agent = z.looseObject({
     .default(null),
 });
 export const workbenchSchema = z.looseObject({
+  interactive_browser: z.boolean().optional(),
   privacy: workbenchPrivacySchema.optional(),
   format: z.literal(1),
   additional_folders: additionalFoldersSchema.default([]),
@@ -142,7 +144,7 @@ export const workbenchSchema = z.looseObject({
   tools: disabled.default({ disabled: [] }),
   plugins: plugins.default({ enabled: [] }),
   chat: chat.default({ detail: "normal" }),
-  interface: workbenchInterface.default({ right_panel_tabs: [...defaultRightPanelTabs] }),
+  interface: workbenchInterface.default({ right_panel_tabs: [...defaultRightPanelTabs], git_status: false }),
   agent: agent.default({ permission_mode: "ask", model: null, allowed_commands: [] }),
   /** Workbench-scope Advanced values, validated when saved and when resolved (REQ-DATA-33a90ef2). */
   advanced: z.record(z.string(), z.unknown()).optional(),
@@ -153,10 +155,13 @@ export function workbenchTemplate(name: string): string {
   return `# ${name}\n\n## Device under test\nBoard, MCU, revision, key parts.\n\n## Bench setup\nPower, probes, programmers, interfaces and where they connect.\n\n## Conventions\nHow results, logs and notes are named and where they go.\n\n## Known issues\nLab or hardware quirks the agent should check first.\n`;
 }
 export const workbenchPatchSchema = z.strictObject({
+  interactive_browser: workbenchSchema.shape.interactive_browser,
   privacy: workbenchPrivacySchema.optional(),
   additional_folders: additionalFoldersSchema.optional(),
   chat: z.strictObject({ detail: chatDetailSchema.optional() }).optional(),
-  interface: z.strictObject({ right_panel_tabs: rightPanelTabsSchema.optional() }).optional(),
+  interface: z
+    .strictObject({ right_panel_tabs: rightPanelTabsSchema.optional(), git_status: z.boolean().optional() })
+    .optional(),
   embeddings: workbenchEmbeddingsSchema.optional(),
   name: z.string().trim().min(1).max(80).optional(),
   description: z.string().optional(),
@@ -198,9 +203,11 @@ export const configSnapshotSchema = z.strictObject({
   config: workbenchSchema,
   warnings: z.array(workbenchWarningSchema),
 });
+export const indexLeaseSchema = z.number().int().positive();
 export const workbenchSnapshotSchema = configSnapshotSchema.extend({
   folder: z.string().min(1),
   readOnly: z.boolean(),
+  indexLease: indexLeaseSchema,
 });
 export type WorkbenchSnapshot = z.infer<typeof workbenchSnapshotSchema>;
 export const pinnedSchema = z.strictObject({ content: z.string(), oversized: z.boolean() });

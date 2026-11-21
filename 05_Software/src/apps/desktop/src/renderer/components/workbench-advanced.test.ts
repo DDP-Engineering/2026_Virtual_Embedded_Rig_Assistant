@@ -36,6 +36,7 @@ async function mount(showAdvanced: boolean, stored?: Record<string, unknown>) {
     }),
     folder: "/bench",
     readOnly: false,
+    indexLease: 1,
     warnings: [],
   };
   await i18n.changeLanguage("en");

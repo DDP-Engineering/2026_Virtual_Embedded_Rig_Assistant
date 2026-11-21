@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-UX-8c54a766"
+title = "Expose both browser opt-ins"
+status = "active"
+requirement = "When the user opens Web access, Desktop shall expose separate disabled-by-default app and current-workbench Interactive Browser switches."
+verification = "Enable both switches separately and verify disabling either clears live authority."
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/browser-settings.tsx", "05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/apps/desktop/src/renderer/App.tsx"]
+linked_tests = ["05_Software/tests/e2e/browser-controls.spec.ts"]
+created = 2026-11-20
+updated = 2026-11-20

@@ -107,6 +107,11 @@ test("native reasoning persists per session and sends selected or provider-defau
     if (!id) throw Error("Missing session");
     let picker = page.locator("[data-reasoning-picker]");
     await expect(picker).toBeVisible();
+    const choice = page
+      .locator("[data-model-picker] option")
+      .filter({ hasText: "Reasoning fixture / org/reasoner" });
+    await expect(choice).toHaveAttribute("value", reference);
+    await expect(choice).toContainText("131,072 tokens · Text · Tools unverified · Reasoning");
     expect(
       await picker.locator("option").evaluateAll((nodes) => nodes.map((n) => (n as HTMLOptionElement).value)),
     ).toEqual(["", "off", "low", "high"]);

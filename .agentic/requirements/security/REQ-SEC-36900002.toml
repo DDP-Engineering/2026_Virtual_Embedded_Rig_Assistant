@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-SEC-36900002"
+title = "Authorize new Full Access children"
+status = "active"
+requirement = "When the user explicitly authorizes Full Access launches for an eligible Full Access parent session, the host shall persist that session's authorization for future eligible launches."
+verification = "Cancel and confirm authorization on one parent, verify another parent and an ineligible child cannot use it, and verify the confirmed authorization after reopen."
+affected_paths = ["05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/libraries/core/src/storage/repos/delegations.ts", "05_Software/src/libraries/core/src/storage/schema.ts", "05_Software/src/libraries/shared/src/ipc.ts", "05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/apps/desktop/src/renderer/components/session/delegated-bypass-control.tsx"]
+linked_tests = ["05_Software/src/libraries/core/src/sessions/delegation.test.ts", "05_Software/tests/e2e/session-delegation.spec.ts"]
+created = 2026-11-21
+updated = 2026-11-21

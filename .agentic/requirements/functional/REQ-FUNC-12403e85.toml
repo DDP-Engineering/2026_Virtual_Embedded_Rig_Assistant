@@ -12,7 +12,7 @@ While a workbench's embedding model rebuild is incomplete, document search shall
 
 verification = "Hold vector generation during a rebuild and run keyword, hybrid and semantic queries for a known term before releasing the embedder. Verify semantic ranking resumes on completion. Overlap a query with the chunk publication and check the localized keyword notice in English, Romanian, German and French."
 
-affected_paths = ["05_Software/src/libraries/core/src/storage/repos/documents.ts", "05_Software/src/libraries/core/src/workbench/service.ts", "05_Software/src/libraries/core/src/knowledge/search.ts", "05_Software/src/libraries/core/src/knowledge/ingest.ts", "05_Software/src/libraries/core/src/storage/repos/embedding-rebuild.ts", "05_Software/src/apps/desktop/src/renderer/components/session/tool-details.tsx", "05_Software/src/apps/desktop/src/renderer/locales"]
+affected_paths = ["05_Software/src/libraries/core/src/storage/repos/documents.ts", "05_Software/src/libraries/core/src/workbench/service.ts", "05_Software/src/libraries/core/src/knowledge/search.ts", "05_Software/src/libraries/core/src/knowledge/search-ranking.ts", "05_Software/src/libraries/core/src/knowledge/ingest.ts", "05_Software/src/libraries/core/src/storage/repos/embedding-rebuild.ts", "05_Software/src/apps/desktop/src/renderer/components/session/tool-details.tsx", "05_Software/src/apps/desktop/src/renderer/locales"]
 
 linked_tests = ["05_Software/src/libraries/core/src/knowledge/embedding-ingest.test.ts", "05_Software/src/libraries/core/src/knowledge/search.test.ts", "05_Software/src/apps/desktop/src/renderer/components/session/tool-details.test.ts"]
 
@@ -23,4 +23,4 @@ priority = "normal"   # low | normal | high
 rationale = ""        # why this behavior exists, if not obvious
 
 created = 2026-11-19
-updated = 2026-11-19
+updated = 2026-11-21

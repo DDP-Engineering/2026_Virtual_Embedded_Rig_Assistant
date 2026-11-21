@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-SEC-788f3385"
+
+title = "Confine historical rename following"
+
+status = "active"
+
+requirement = """
+When Git identifies a rename in file history, VERA shall follow a confined predecessor and suppress the rename metadata at the workbench boundary.
+"""
+
+verification = "Create in-scope, inbound and outbound renames in a repository above the workbench; assert exact in-scope commits and absence of boundary and outside metadata."
+
+affected_paths = ["05_Software/src/apps/desktop/src/main/git/history.ts", "05_Software/src/apps/desktop/src/main/git/read.ts", "05_Software/src/apps/desktop/src/main/git/index-scope.ts"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/main/git/safe-history.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-21
+updated = 2026-11-21

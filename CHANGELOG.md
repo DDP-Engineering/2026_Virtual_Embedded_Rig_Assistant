@@ -8,9 +8,41 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ### Added
 
+- Send follow-ups to delegated sessions and authorize Full Access launches with independent session modes.
+
+- Open local Git file history from Files in a tab beside Chat.
+- Open staged and unstaged Git diffs from Files in tabs beside Chat.
+- Opt in to read-only Git status, changed-file badges and a changes filter in Files.
+
+- See workbench indexing status in the sidebar and document search limitations on the affected chat turns.
 - Add durable Plan feedback, revision-only review requests, safe retry restoration and live session privacy refresh.
 - Sessions keep running in background workbenches, within Concurrent turns; the sidebar shows, opens and stops them.
 - Verbose chat shows the send date and time beneath user messages, alongside token usage.
+- Connect Hugging Face Inference Providers, NVIDIA NIM and Vercel AI Gateway with full model IDs.
+
+- Connect Fireworks AI, Together AI, Groq and Cerebras with catalog discovery and manual model IDs.
+
+- Connect Alibaba Cloud and Xiaomi MiMo APIs and plans using their region and workspace settings.
+
+- Connect international MiniMax and Z.AI through separate API and subscription presets.
+
+- Connect DeepSeek, international Moonshot AI and Kimi For Coding with separate API keys and model profiles.
+
+- Connect QwenCloud Standard and Token Plan with scoped keys, model setup and connection diagnostics.
+
+- Connect OpenCode Console and OpenCode Go and choose models from each plan.
+
+- Search provider presets and see provider identity, model limits and capabilities when choosing a model.
+
+- Manage Interactive Browser in Web access and grant, show, stop, revoke or close it from Chat.
+- Authorized Desktop agents can read rendered public pages, follow links, and cite the final URL.
+
+- Interactive browsing requires app and workbench opt-in and limits each session to approved public origins.
+- Desktop has an on-demand, verified Chromium runtime and isolated browser sessions for interactive browsing.
+
+- Dictate into the chat draft with the microphone or a configurable shortcut, then review and send.
+- Desktop dictation captures bounded microphone audio and transcribes offline with multilingual Whisper.
+- Dictation Settings downloads and manages local Whisper models and remembers the spoken language.
 - Chat replies and code blocks offer exact copying; explicit Bash and PowerShell blocks run in compatible terminals.
 - Desktop links delegated sessions, shows their outcomes and lets users stop a running child.
 - Agents can launch, monitor, stop and collect results from delegated inspection sessions.
@@ -51,7 +83,7 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 - Changes paginates long session histories and retains the selected diff across pages.
 - Chat shows one working indicator below the composer at every detail level.
 - Long chats use calibrated token estimates and compact in the background; context summaries survive restarts.
-- Close VERA and delete .vera/vera.db, .vera/vera.db-wal and .vera/vera.db-shm from earlier builds.
+- Close VERA and delete each workbench's .vera/vera.db, .vera/vera.db-wal and .vera/vera.db-shm from earlier builds.
 - Switch local embedding models per workbench while keyword search continues during the background rebuild.
 
 - Indexing and semantic search use the workbench model and its token budget. Idle embedding workers stop.
@@ -115,6 +147,9 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ### Fixed
 
+- Chat and Files search published documents while indexing continues and recover from concurrent publication.
+
+- Report redirected workbench runtime folders before closing the workbench.
 - Keep saved Plan feedback live-masked, require stale-fragment recapture and skip discovery during review preparation.
 - Chat Run skips terminals after startup timeout until their verified prompt arrives without intervening input.
 - Chat Run skips ineligible terminals and disables invalid command blocks before creating a terminal.

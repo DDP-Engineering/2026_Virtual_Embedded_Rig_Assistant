@@ -13,6 +13,7 @@
 | **Aktualisierungen** | Wie VERA sich selbst aktualisiert |
 | **Daten & Datenschutz** | Maskierungsstandards für vier Bereiche |
 | **Über** | Version, Laufzeit, Lizenz und Komponenten von Drittanbietern |
+| **Diktat** | Lokale Whisper-Modelle und gesprochene Sprache |
 
 ## Daten & Datenschutz
 
@@ -63,6 +64,14 @@ Nur der Suchtext und die Adressen, die der Agent anfordert, verlassen Ihren Comp
 
 Das Ausschalten des Webzugriffs stoppt auch laufende Suchen und Downloads. Einzelne Workbenches können die Webwerkzeuge unter **Workbench bearbeiten** → **Werkzeuge** deaktivieren.
 
+### Interaktiver Browser
+
+Wählen Sie unter **Einstellungen → Webzugriff** die Aktion **Browser-Laufzeit installieren**, um Chromium herunterzuladen und zu prüfen. Sie können die Installation abbrechen oder die Laufzeit entfernen. Wählen Sie **Interaktiven Browser in VERA aktivieren** und **Interaktiven Browser in dieser Workbench erlauben**. Beide Schalter sind anfangs aus.
+
+Geben Sie im Chat unter **Öffentlicher Ursprung** den genauen Ursprung ein, etwa `https://example.com`, und wählen Sie **Zugriff gewähren**. Geben Sie das Protokoll und gegebenenfalls einen abweichenden Port an. Jeder Chat hat eigene Freigaben und ein eigenes Fenster. Geben Sie weitere Ursprünge für Weiterleitungen oder Ressourcen einzeln frei.
+
+Bitten Sie den Agenten, eine Seite zu lesen oder einem Link zu folgen. Der Chat zeigt die Aktivität und die freigegebene Seite. **Browser anzeigen** bringt den Tab nach vorn. **Surfen stoppen** beendet den laufenden Agentenvorgang und bricht den Browser-Vorgang ab. **Zugriff widerrufen** und **Browser schließen** beenden die temporäre Sitzung und löschen die Freigaben. Das Schließen des Fensters, das Ausschalten eines Schalters oder das Entfernen der Laufzeit widerruft den Zugriff. Verwenden Sie den verwalteten Download für unterstützte Dateien.
+
 ## Über
 
 **Über** zeigt die Anwendungsversion, Plattform, Architektur, ob VERA als portable Version läuft, das Gebietsschema des Systems, die Laufzeitversionen, die Lizenz und die Liste der Drittanbieterkomponenten mit ihren Lizenzen.
@@ -70,3 +79,13 @@ Das Ausschalten des Webzugriffs stoppt auch laufende Suchen und Downloads. Einze
 ## Shell-Befehle
 
 Unter Einstellungen → Befehle Automatisch, PowerShell 7, Windows PowerShell, Cmd, Bash oder Benutzerdefiniert wählen und speichern. Installierte Varianten werden in Suchpfaden und Standardordnern erkannt; fehlende Varianten sind deaktiviert. Benutzerdefiniert akzeptiert einen Programmnamen oder absoluten Pfad. Automatisch bevorzugt unter Windows PowerShell 7, Windows PowerShell und dann Cmd; Linux bevorzugt Bash und dann sh. PowerShell nutzt nicht interaktive UTF-8-Befehle ohne Profil. Bash verwendet `-lc`; Anmeldeprofile können die Umgebung ändern. Unter Windows ist Bash eine native Shell wie Git Bash; der alte WSL-Launcher wird nicht gewählt. Cmd nutzt `/d /s /c` und eine Befehlszeile mit `&` oder `&&`; interne Befehle geben in der Windows-Codepage aus. Für UTF-8-Ausgabe PowerShell oder Bash verwenden. Die Wahl gilt für künftige Agentenbefehle und neue Terminals; vorhandene Terminals behalten ihre Shell. Eine ausdrücklich gewählte, fehlende Shell meldet einen Fehler.
+
+## Diktat
+
+Wählen Sie **Whisper Small** (empfohlen) oder **Whisper Base** (kompakt). Für jedes Modell sehen Sie die Downloadgröße und den Installationsstatus. Klicken Sie auf **Herunterladen** und verfolgen Sie den Fortschritt. **Abbrechen** verwirft den begonnenen Download. Meldet VERA einen fehlgeschlagenen Download oder beschädigte Dateien, wählen Sie **Erneut versuchen**. Geben Sie bei Bedarf Speicherplatz frei.
+
+Wählen Sie nach der Installation **Modell verwenden**. VERA speichert die Auswahl über Neustarts hinweg. **Entfernen** löscht die Dateien des Modells und hebt die Auswahl auf, wenn dieses Modell aktiv war. Falls das Entfernen fehlschlägt, schließen Sie Apps, die die Modelldateien nutzen, und wählen Sie **Erneut versuchen**. Die Modelle liegen in den VERA-Anwendungsdaten und stehen allen Workbenches zur Verfügung.
+
+Unter **Gesprochene Sprache** wählen Sie **Automatische Erkennung** oder die Sprache, die Sie sprechen möchten.
+
+Wählen Sie **Zum Sprechen gedrückt halten** (Standard) und halten Sie beim Sprechen die Mikrofontaste oder deren Tastenkombination gedrückt. Im Modus **Zum Starten oder Stoppen drücken** beenden Sie die Aufnahme durch erneutes Drücken. Über **Tastenkombination hinzufügen** im Tab Diktat weisen Sie eine Kombination für VERA zu. Reservierte und bereits belegte Kombinationen werden abgelehnt. Die Mikrofontaste funktioniert auch ohne Tastenkombination.

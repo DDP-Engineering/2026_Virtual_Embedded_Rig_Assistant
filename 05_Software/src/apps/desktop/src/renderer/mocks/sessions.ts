@@ -211,6 +211,9 @@ export class MockSessions {
     const request = raw as {
       sessionId: string;
       reuseEmpty?: boolean;
+      workbenchId?: string;
+      authorized: boolean;
+      acknowledged?: true;
       text: string;
       images?: string[];
       title: string;
@@ -253,6 +256,7 @@ export class MockSessions {
     }
     if (channel === "session.create") {
       this.writable();
+      if (request.mode === "bypass" && request.acknowledged !== true) throw veraError("DENIED");
       if (request.reuseEmpty) {
         const prefix = this.key("");
         const unused = [...this.sessions.entries()]
@@ -459,11 +463,34 @@ export class MockSessions {
       }
       return {};
     }
+    if (channel === "session.delegation.bypass.set") {
+      this.writable();
+      if (request.workbenchId !== this.current().id) throw veraError("CONFLICT");
+      if (
+        row.summary.delegation ||
+        (request.authorized &&
+          (request.acknowledged !== true || row.summary.archived || row.summary.mode !== "bypass"))
+      )
+        throw veraError("DENIED");
+      if (request.authorized) row.summary.delegatedBypassLaunch = true;
+      else delete row.summary.delegatedBypassLaunch;
+      return { authorized: request.authorized };
+    }
     if (channel === "session.mode.set") {
       this.writable();
+      const previous = row.summary.mode;
+      if (
+        row.summary.archived ||
+        (request.mode === "bypass" && previous !== "bypass" && request.acknowledged !== true)
+      )
+        throw veraError("DENIED");
       row.summary.mode = request.mode;
       this.emit(id, { type: "session.updated", mode: request.mode });
-      if (request.mode === "read-only" && row.approval) this.decide(id, "aborted", "mode");
+      if (
+        (request.mode === "read-only" || (previous === "bypass" && request.mode !== previous)) &&
+        row.approval
+      )
+        this.decide(id, "aborted", "mode");
       const program = row.approval?.program;
       if (
         request.mode === "bypass" &&

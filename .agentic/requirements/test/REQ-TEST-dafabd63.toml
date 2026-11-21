@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-TEST-dafabd63"
+title = "Exercise the browser host with a controlled fixture"
+status = "active"
+requirement = "When the instrumented Desktop build exercises the browser host, it shall load a controlled test document using a test-only policy."
+verification = "Launch instrumented Desktop and assert the fixture renders and stores session state, then check production build omits the fixture hook."
+affected_paths = ["05_Software/src/apps/desktop/src/main/browser/host.ts","05_Software/src/apps/desktop/src/main/browser/fixture.ts","02_Tools/release/package.mjs","05_Software/src/apps/desktop/electron.vite.config.ts"]
+linked_tests = ["05_Software/tests/e2e/browser-runtime.spec.ts"]
+priority = "normal"
+created = 2026-11-20
+updated = 2026-11-20

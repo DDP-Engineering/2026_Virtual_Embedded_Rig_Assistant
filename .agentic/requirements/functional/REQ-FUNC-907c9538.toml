@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-FUNC-907c9538"
+title = "Resolve verified transcription input"
+status = "active"
+requirement = "When the transcription service requests the active dictation configuration, VERA shall return the verified local model directory, ONNX data type and spoken language when a valid selection exists."
+verification = "Resolve the selected model after a restart with transport disabled; assert its local directory, dtype and language, then assert null after removal."
+affected_paths = ["05_Software/src/apps/desktop/src/main/dictation/models.ts", "05_Software/src/apps/desktop/src/main/dictation/integrity.ts", "05_Software/src/libraries/shared/src/dictation.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/dictation/models.test.ts"]
+created = 2026-11-20
+updated = 2026-11-20

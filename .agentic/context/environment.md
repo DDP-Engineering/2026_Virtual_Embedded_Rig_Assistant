@@ -16,6 +16,25 @@ Run the setup script from the repository root: `python 02_Tools/environment/setu
 
 `npm ci` installs the pinned Electron binary through `install-electron`. `allowScripts` in `05_Software/package.json` permits the install scripts of the pinned esbuild and node-pty and denies those of better-sqlite3, onnxruntime-node, protobufjs and electron-winstaller, which use their platform prebuilds.
 
+Desktop browser runtime acceptance uses the official Chrome for Testing archive pinned by
+`main/browser/release.ts`. Provide the absolute archive path as `VERA_TEST_BROWSER_ARCHIVE`
+and run `npm run test:e2e -- browser-runtime.spec.ts` on the host. Use
+`VERA_BROWSER_PACKAGED_APP` to exercise the unpacked executable of an instrumented package
+and `VERA_BROWSER_EVIDENCE` for an optional JSON receipt in owned scratch. On Ubuntu the
+Chromium process requires a graphical session, system libraries and a working OS sandbox.
+The instrumented build uses controlled resolver and upstream responses through the same
+browser proxy and settings gates as production.
+
+Native `browser-agent.spec.ts` exercises the Desktop replay gateway and browser tools using the same
+archive, isolated Chromium and public-only proxy. The browser fixture grants the test origin through
+Desktop main. `VERA_BROWSER_AGENT_EVIDENCE` optionally writes the focused acceptance receipt.
+
+Native `browser-controls.spec.ts` drives the real Web access settings and Chat
+controls with replay. It reuses `VERA_TEST_BROWSER_ARCHIVE`,
+`VERA_BROWSER_PACKAGED_APP` and `VERA_BROWSER_EVIDENCE` from runtime acceptance.
+Provisioning, grants and navigation use the instrumented Desktop network fixture.
+On WSL2, record the platform and use Xvfb with Chromium sandboxing enabled.
+
 Install the pinned Playwright Chromium once with `npx playwright install chromium` from `05_Software` before browser acceptance.
 
 ## Configuration and services
@@ -40,7 +59,9 @@ Offline dependency kits: `npm run vera -- catalog kit --source plugins --platfor
 
 Stored formats: every format is version 1 during development and any other version is invalid data (root AGENTS.md). Current-format fixtures live in `05_Software/tests/fixtures/app-data/`. Project metadata lives under `<workbench>/.vera`; test workbenches are created in the current form.
 
-No external service is required. Tests use loopback fixtures and replay; live providers are reached only by the manual commands marked below.
+Automated tests use loopback fixtures and replay. Starting a model download in Settings > Dictation
+reaches fixed Hugging Face artifact hosts. Focused model tests stream local synthetic files.
+Live provider checks run through the manual commands marked below. The provider catalog epic's no-account ruling substitutes documented configuration and scripted transport for authenticated smokes on its presets.
 
 ## Readiness checks
 
@@ -74,6 +95,8 @@ Clean, offline Windows execution and real VC++ self-containment are required bef
 
 [Verification policy](../../02_Tools/verification-policy.md) rules: a ticket runs the smallest sufficient tests for the changed behavior and its immediate consumers, plus the static checks. Complete suites run once per milestone, on Windows and native Ubuntu. Static checks are not test results. Per-component test files are named in each [knowledge page](../knowledge/) and in the [test inventory](../../05_Software/tests/README.md); this section holds only what is common.
 
+- Desktop Files Git fixtures use Git 2.40+ from the system installation. They create disposable local repos and run without network or credentials. The native Git tab scenario uses bundled replay to check a scrollable Chat transcript alongside TXT/PDF, comparison and history tabs. See [Files Git status](../knowledge/files-git-status.md).
+
 ### Commands
 
 | Command | Use |
@@ -98,7 +121,11 @@ There is no upgrade-safety suite, because every stored format is version 1.
 ### Rules and limits common to all suites
 
 - Vitest installs a non-loopback fetch and socket guard before application modules. E2e blocks non-loopback traffic, keeps Chromium sandboxing and uses temporary `userData`.
-- No live model is needed. Runtime, session and UI acceptance use deterministic replay and loopback transports. Real subscription sign-in, live web providers and live supplier keys are separate manual checks.
+- Runtime, session and UI suites use deterministic replay and loopback transports. Focused dictation
+  acceptance opts in with VERA_DICTATION_MODEL_ROOT to exercise verified Whisper download responses,
+  the local worker, sandboxed capture from fixture audio, draft insertion and cancellation.
+  VERA_DICTATION_PACKAGED_APP selects the unpacked executable from the platform package. Real subscription sign-in, live web providers and live
+  supplier keys are separate manual checks.
 - No test reaches real hardware. Boards, probes, instruments, adapters and meters are simulated by stand-ins; real-device acceptance is pending for every hardware plugin.
 - Linux in WSL2 is Linux execution. It is not native Ubuntu acceptance; say which one a result comes from. linux-arm64 execution is not established.
 - Some cases run on one platform only: SIGTERM stop branches, the `script` PTY cases of the CLI and POSIX file symlinks run on Linux; junction and case-alias cases and LTspice run on Windows.

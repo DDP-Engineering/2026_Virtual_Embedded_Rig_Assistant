@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-UX-91e43163"
+title = "Dispatch the configured local shortcut"
+status = "active"
+requirement = "When a writable chat receives an assigned dictation shortcut, VERA shall dispatch one recording gesture according to the configured mode and terminate a held gesture on release."
+verification = "Assign a chord and exercise both modes, repeated events, plain key-up after modifier changes, and blur before key-up."
+affected_paths = ["05_Software/src/libraries/shared/src/keyboard-shortcuts.ts","05_Software/src/apps/desktop/src/renderer/dictation/use-composer-dictation.ts"]
+linked_tests = ["05_Software/tests/e2e/dictation-composer.spec.ts", "05_Software/tests/e2e/dictation-packaged-composer.spec.ts"]
+priority = "normal"
+created = 2026-11-20
+updated = 2026-11-20

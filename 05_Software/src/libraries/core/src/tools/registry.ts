@@ -14,6 +14,7 @@ import { runCommandTool } from "../plugins/command-tools.js";
 import { programOutputTool, programStopTool, runProgramTool } from "../plugins/program-tools.js";
 import { applyCandidateTool } from "./apply-candidate.js";
 import { artifactSaveTool } from "./artifact-save.js";
+import { browserTools } from "./browser.js";
 import type { ToolContext, ToolDefinition } from "./context.js";
 import { toolLimit, toolSignal } from "./context.js";
 import { decodeRegisterTool } from "./decode-register.js";
@@ -73,7 +74,7 @@ const builtinDefinitions: Record<BuiltinToolName, ToolDefinition> = {
   help: helpTool,
 };
 // Identity also excludes host-provided definitions reusing a built-in name.
-const delegatedInspectionTools: ReadonlySet<ToolDefinition> = new Set([
+const delegatedTools: ReadonlySet<ToolDefinition> = new Set([
   readTool,
   listTool,
   globTool,
@@ -82,6 +83,12 @@ const delegatedInspectionTools: ReadonlySet<ToolDefinition> = new Set([
   decodeRegisterTool,
   searchDocsTool,
   readDocTool,
+  writeTool,
+  editTool,
+  runCommandTool,
+  runProgramTool,
+  programOutputTool,
+  programStopTool,
 ]);
 
 /** Tools offered only when the host composes a program host. */
@@ -175,6 +182,7 @@ export class ToolRegistry {
     definitions: readonly ToolDefinition[] = [
       ...builtinToolNames.map((name) => builtinDefinitions[name]),
       ...delegatedSessionTools,
+      ...browserTools,
     ],
   ) {
     const names = definitions.map((tool) => tool.name);
@@ -186,9 +194,16 @@ export class ToolRegistry {
   }
   private availableFor(ctx: ToolContext, disabled: readonly string[]): ToolDefinition[] {
     return this.available(disabled).filter((tool) => {
-      if (ctx.delegated) return tool.class === "read" && delegatedInspectionTools.has(tool);
+      if (ctx.delegated) {
+        if (!delegatedTools.has(tool)) return false;
+        if (
+          (ctx.permissionMode?.() ?? "read-only") === "read-only" &&
+          (tool.class === "write" || tool === runCommandTool)
+        )
+          return false;
+      }
       if (delegationNames.has(tool.name)) return !!ctx.delegation && delegatedSessionTools.includes(tool);
-      return true;
+      return tool.available?.(ctx) ?? true;
     });
   }
   private capResult(ctx: ToolContext, name: string, value: Record<string, unknown>) {
@@ -218,7 +233,7 @@ export class ToolRegistry {
   ) {
     signal.throwIfAborted();
     const tool = this.availableFor(ctx, disabled).find((definition) => definition.name === name);
-    if (ctx.delegated || !tool?.prepare) throw Error("Prepared tool is unavailable.");
+    if (!tool?.prepare) throw Error("Prepared tool is unavailable.");
     return tool.prepare(ctx, tool.params.parse(raw), toolSignal(ctx, signal));
   }
   async execute(
@@ -301,26 +316,9 @@ export class ToolRegistry {
     return this.availableFor(ctx, blocked).map((tool) => ({
       name: tool.name,
       class: tool.class,
-      description:
-        !ctx.delegated &&
-        ctx.permissionMode?.() === "bypass" &&
-        [
-          "read",
-          "list",
-          "glob",
-          "grep",
-          "write",
-          "edit",
-          "parse_log",
-          "decode_register",
-          "plugin_validate",
-          "plugin_install",
-          "apply_candidate",
-          "run_program",
-        ].includes(tool.name)
-          ? `${tool.description} Bypass is active: agent input paths may be absolute or relative to the workbench, including outside and ignored locations.`
-          : tool.description,
+      description: tool.description,
       params: tool.params,
+      ...(tool.available ? { available: () => tool.available?.(ctx) === true } : {}),
       ...(tool.requiresImages && { requiresImages: true as const }),
       ...(tool.publish
         ? {

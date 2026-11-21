@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-SEC-36900007"
+title = "Revoke active Bypass authority on mode exit"
+status = "active"
+requirement = "When a session leaves Bypass, the host shall cancel that session's affected approval waits and Bypass runs and check later queued execution under the current mode."
+verification = "Switch a running child with a pending mandatory approval, Bypass run and queued instruction to a lower mode and verify revocation and isolated sibling authority."
+affected_paths = ["05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/libraries/core/src/agent/approvals.ts", "05_Software/src/libraries/core/src/tools/context.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/sessions/programs.test.ts", "05_Software/src/libraries/core/src/sessions/delegation.test.ts", "05_Software/tests/e2e/session-delegation.spec.ts"]
+created = 2026-11-21
+updated = 2026-11-21

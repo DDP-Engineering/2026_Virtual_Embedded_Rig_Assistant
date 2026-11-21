@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-FUNC-25e41e3e"
+title = "Explain OpenCode rate limits"
+status = "active"
+requirement = "If OpenCode rate-limits an operation, VERA shall report rate limiting and retain a valid Retry-After hint through the resulting user-facing diagnostic."
+verification = "Script HTTP 429 with Retry-After and assert the generic rate-limit key and retry hint stay available for both plans and display correctly in chat, with a plain rate-limit message when no hint is available."
+affected_paths = ["05_Software/src/libraries/core/src/llm/preset-connection.ts", "05_Software/src/libraries/core/src/llm/errors.ts", "05_Software/src/apps/desktop/src/renderer/components/error-message.tsx", "05_Software/src/libraries/core/src/llm/providers.ts", "05_Software/src/libraries/core/src/agent/runtime.ts", "05_Software/src/libraries/core/src/agent/types.ts", "05_Software/src/libraries/shared/src/errors.ts", "05_Software/src/libraries/shared/src/index.ts", "05_Software/src/libraries/shared/src/events.ts", "05_Software/src/libraries/shared/src/session-state.ts", "05_Software/src/apps/desktop/src/main/events.ts", "05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/apps/desktop/src/renderer/components/session/transcript.tsx", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json", "05_Software/src/apps/desktop/src/renderer/locales/fr.json"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/opencode-presets.test.ts", "05_Software/src/libraries/core/src/agent/runtime-edge.test.ts", "05_Software/src/apps/desktop/src/main/events.test.ts", "05_Software/src/apps/desktop/src/renderer/components/session/transcript-detail.test.ts"]
+created = 2026-11-20
+updated = 2026-11-20

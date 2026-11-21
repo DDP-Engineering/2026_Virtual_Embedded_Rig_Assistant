@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-REL-5b35e39e"
+
+title = "Report an unavailable microphone"
+
+status = "active"
+
+requirement = "If the microphone is missing, disabled or busy, VERA shall return a microphone-unavailable outcome."
+
+verification = "Reject acquisition with missing-device and device-read failures and verify cleanup and retry."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/dictation/capture.ts", "05_Software/src/apps/desktop/src/renderer/dictation/microphone.ts"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/dictation/capture.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-20
+updated = 2026-11-20

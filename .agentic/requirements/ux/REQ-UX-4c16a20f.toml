@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-UX-4c16a20f"
+title = "Manage the installed browser runtime"
+status = "active"
+requirement = "When the user manages Interactive Browser in Web access, Desktop shall expose explicit provisioning, progress, cancellation and removal of the pinned runtime."
+verification = "Drive Install, Cancel and Remove from Web access and assert the resulting runtime phases."
+affected_paths = ["05_Software/src/apps/desktop/src/main/browser/runtime.ts", "05_Software/src/apps/desktop/src/renderer/components/browser-settings.tsx", "05_Software/src/apps/desktop/src/renderer/components/web-access.tsx"]
+linked_tests = ["05_Software/tests/e2e/browser-controls.spec.ts", "05_Software/src/apps/desktop/src/main/browser/runtime.test.ts"]
+created = 2026-11-20
+updated = 2026-11-20

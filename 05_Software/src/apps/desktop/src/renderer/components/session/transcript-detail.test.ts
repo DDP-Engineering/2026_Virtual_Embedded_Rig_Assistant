@@ -3,7 +3,7 @@
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import userEvent from "@testing-library/user-event";
-import { emptySessionState, type SessionState } from "@vera/shared";
+import { emptySessionState, foldSessionEvents, type SessionState } from "@vera/shared";
 import { act, createElement } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, expect, it, vi } from "vitest";
@@ -327,3 +327,67 @@ it("shows a cut tool output as an excerpt and loads the full text on request", a
   expect(container.textContent).toContain(full);
   expect(buttons()).toHaveLength(0);
 });
+
+it("renders rate-limit errors with and without a Retry-After hint", async () => {
+  const error = {
+    type: "error",
+    code: "PROVIDER",
+    messageKey: "provider.rateLimit",
+    retryable: false,
+  } as const;
+  const state = foldSessionEvents([error, { ...error, retryAfter: "12" }]);
+  await render(state, "normal");
+  expect([...container.querySelectorAll('[role="alert"]')].map((node) => node.textContent)).toEqual([
+    "Provider rate limit.",
+    "Provider rate limit. Retry after: 12.",
+  ]);
+});
+
+it.each(["minimal", "normal", "verbose"] as const)(
+  "keeps a single saved document search notice on the affected turn in %s detail",
+  async (detail) => {
+    const state = fixture();
+    state.items.splice(
+      2,
+      0,
+      {
+        ...tool("partial"),
+        name: "search_docs",
+        documentSearch: {
+          coverage: "partial",
+          usage: { mode: "keyword", fallbackReason: "embedding-rebuild" },
+        },
+      },
+      {
+        ...tool("no-matches"),
+        name: "search_docs",
+        documentSearch: {
+          coverage: "partial",
+          usage: { mode: null, reason: "no-candidates" },
+        },
+      },
+      {
+        ...tool("later-complete", "turn2"),
+        name: "search_docs",
+        documentSearch: {
+          coverage: "complete",
+          usage: { mode: null, reason: "no-candidates" },
+        },
+      },
+    );
+    state.items.push({
+      ...tool("unavailable", "turn3"),
+      name: "search_docs",
+      documentSearch: {
+        coverage: "unknown",
+        usage: { mode: null, reason: "revision-conflict" },
+      },
+    });
+    await render(state, detail);
+    const notices = Array.from(container.querySelectorAll("[data-retrieval-notice]"));
+    expect(notices.map((notice) => notice.getAttribute("data-retrieval-notice"))).toEqual(["turn1", "turn3"]);
+    expect(notices[0]?.textContent).toMatch(/pending or excluded sources/i);
+    expect(notices[0]?.textContent).toMatch(/keyword/i);
+    expect(notices[1]?.textContent).toMatch(/unavailable/i);
+  },
+);

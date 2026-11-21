@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-REL-c4f6b8d8"
+
+title = "Report empty dictation"
+
+status = "active"
+
+requirement = "If recorded audio is silent or produces no text, VERA shall return a no-speech outcome."
+
+verification = "Submit silence and empty recognition output, then verify an independent job can start."
+
+affected_paths = ["05_Software/src/apps/desktop/src/main/dictation/capture-jobs.ts"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/main/dictation/capture-jobs.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-20
+updated = 2026-11-20

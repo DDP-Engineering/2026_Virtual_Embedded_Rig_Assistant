@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-FUNC-c0a762cd"
+title = "Test curated connections on their saved model"
+status = "active"
+requirement = "When a user tests a curated connection, VERA shall return ordered reachability, authentication, tools and streaming outcomes for its selected model."
+verification = "Script a catalog and SSE exchanges, assert steps for success and a failed authentication, and verify only a successful tool test establishes support."
+affected_paths = ["05_Software/src/libraries/core/src/llm/connection.ts", "05_Software/src/libraries/core/src/llm/providers.ts", "05_Software/src/apps/desktop/src/main/provider-gateway.ts", "05_Software/src/apps/desktop/src/main/provider-settings.ts", "05_Software/src/apps/desktop/src/renderer/components/custom-provider-editor.tsx"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/provider-presets.test.ts", "05_Software/src/libraries/core/src/llm/gateway.test.ts"]
+created = 2026-11-20
+updated = 2026-11-20

@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-SEC-c372d1ee"
+title = "Deny browser sessions without a network policy"
+status = "active"
+requirement = "If the Desktop host has no authorized browser network policy, it shall reject a browser session before reading the runtime or launching Chromium."
+verification = "Open using the default policy and verify denial with zero calls to runtime verification and the launcher."
+affected_paths = ["05_Software/src/apps/desktop/src/main/browser/host.ts","05_Software/src/apps/desktop/src/main/browser/policy.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/browser/host.test.ts"]
+priority = "normal"
+created = 2026-11-20
+updated = 2026-11-20

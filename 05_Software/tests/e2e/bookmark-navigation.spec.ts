@@ -66,12 +66,12 @@ async function localizedNavigation(page: Page, id: string, indices: number[]) {
     }
     await page.locator('[data-action="leave-settings"]').click();
     await page.locator(`[data-session="${id}"]`).click();
-    await expect(marked(page)).toHaveCount(3);
     await expect(page.locator("[data-nav-bookmarked]").first()).toBeVisible();
     await page.locator("[data-transcript]").evaluate((node) => {
       node.scrollTop = 0;
       node.dispatchEvent(new Event("scroll"));
     });
+    await expect(marked(page)).toHaveCount(3);
     await page.locator(".composer textarea").focus();
     for (const index of indices) await navigate(page, index, "Control+Alt+n");
     for (const index of indices.slice(0, -1).reverse()) await navigate(page, index, "Control+Alt+p");
@@ -86,12 +86,7 @@ test("browser mock restart retains three long-session marks and localized bookma
   const url = `${rendererUrl}/?mock=chat`;
   await host.goto(url);
   // Keep the mock backend alive in its own window while the tested renderer restarts.
-  const moduleUrl = await host.evaluate(() =>
-    [...performance.getEntriesByType("resource")]
-      .map((entry) => entry.name)
-      .find((name) => /mocks\/mockApi\.ts/.test(name)),
-  );
-  if (!moduleUrl) throw Error("Missing mock module");
+  const moduleUrl = new URL("/mocks/mockApi.ts", rendererUrl).href;
   await host.evaluate(async (url) => {
     const module = await import(/* @vite-ignore */ url);
     (window as unknown as { bookmarkBackend: unknown }).bookmarkBackend = module.createMockApi().api;

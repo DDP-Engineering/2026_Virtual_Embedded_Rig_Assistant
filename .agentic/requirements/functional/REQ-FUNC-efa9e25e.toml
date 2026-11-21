@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-FUNC-efa9e25e"
+title = "Return a typed curated model discovery outcome"
+status = "active"
+requirement = "When a user looks up models for a curated connection, VERA shall return discovered models, a manual-entry outcome, or a typed failure."
+verification = "Script listing success with slash IDs, unavailable listing, authentication failure, and invalid catalog data, then save an explicit model ID."
+affected_paths = ["05_Software/src/libraries/shared/src/provider-presets.ts", "05_Software/src/libraries/core/src/llm/preset-connection.ts", "05_Software/src/apps/desktop/src/main/provider-gateway.ts", "05_Software/src/apps/desktop/src/renderer/components/custom-provider-editor.tsx", "05_Software/src/libraries/shared/src/ipc.ts", "05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/libraries/shared/src/index.ts", "05_Software/src/libraries/core/src/index.ts", "05_Software/src/apps/desktop/src/renderer/mocks/mockApi.ts", "05_Software/src/apps/desktop/src/preload/bridge.test.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/provider-presets.test.ts", "05_Software/src/apps/desktop/src/preload/bridge.test.ts"]
+created = 2026-11-20
+updated = 2026-11-20

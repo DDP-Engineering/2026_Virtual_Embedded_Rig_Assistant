@@ -116,6 +116,10 @@ accessibility and the UI rules every screen follows. The renderer is React in
   eight per message, shown as thumbnails); file chips added with Attach as context in Files; Send,
   and Stop while a turn runs. Messages sent during a turn show Pending delivery. Esc during a turn
   asks to stop it.
+- **Dictation.** Settings downloads and selects pinned multilingual Whisper Base or Small.
+  The composer supports hold-to-talk or start/stop with an optional app-local shortcut. It
+  transcribes locally and inserts the text into the originating editable draft. Escape cancels
+  active dictation before it can stop the turn. [Local dictation](../.agentic/knowledge/dictation.md)
 - **Conversation rail.** One marker per user message on the left edge of the conversation, grouped
   when dense. Hover or focus shows a preview card with the first line of the message and the start
   of the reply, plus the bookmark action; a click or Enter jumps to the message.

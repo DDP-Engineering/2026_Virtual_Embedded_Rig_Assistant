@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 import { api } from "./api/index.js";
 import { DocsTab } from "./components/documents/docs-tab.js";
 import { DocumentTabs } from "./components/documents/document-tabs.js";
+import { WorkbenchIndexStatus } from "./components/documents/index-status.js";
 import { DocumentViewerProvider } from "./components/documents/viewer-context.js";
 import { ErrorMessage } from "./components/error-message.js";
 import { HelpContext, HelpView } from "./components/help.js";
@@ -123,6 +124,8 @@ export function App() {
     retry: false,
   });
   const benchId = bench.data?.config.id;
+  const indexLease = bench.data?.indexLease;
+  const [filesRequest, setFilesRequest] = useState<{ indexLease: number; sequence: number }>();
   useRunPresentation(benchId);
   const readOnly = bench.data?.readOnly ?? false;
   const benchFailure = bench.isError && (bench.error as { code?: string }).code !== "NOT_FOUND";
@@ -155,6 +158,15 @@ export function App() {
   const benchChanged = useCallback(
     (active?: WorkbenchSnapshot, configOnly = false) => {
       if (!configOnly) {
+        if (active) {
+          // A copied workbench can reuse the stored id, but its Files data belongs to the old folder.
+          client.removeQueries({
+            predicate: ({ queryKey: [channel, owner] }) =>
+              owner === active.config.id &&
+              typeof channel === "string" &&
+              (channel.startsWith("docs.") || channel === "downloads.list"),
+          });
+        }
         setNewWorkbench(false);
         setPlugins(false);
         setHelp(undefined);
@@ -510,6 +522,17 @@ export function App() {
       <WorkbenchNavigation
         entries={recent.data ?? []}
         activeId={benchId}
+        activeFolder={bench.data?.folder}
+        indexingStatus={
+          benchId &&
+          indexLease !== undefined && (
+            <WorkbenchIndexStatus
+              workbenchId={benchId}
+              indexLease={indexLease}
+              open={() => setFilesRequest((last) => ({ indexLease, sequence: (last?.sequence ?? 0) + 1 }))}
+            />
+          )
+        }
         disabled={sessionPending}
         settingsLoading={!snapshot.data}
         open={async (folder) => {
@@ -546,7 +569,7 @@ export function App() {
                 ? activeWorkbench
                 : await api.invoke("workbench.open", { folder });
             if (value) {
-              if (value.config.id !== benchId) benchChanged(value);
+              if (value.indexLease !== indexLease) benchChanged(value);
               setNewWorkbench(false);
               setPlugins(false);
               setHelp(undefined);
@@ -660,6 +683,7 @@ export function App() {
             scope={`${benchId}/${activeSession ?? ""}`}
             sessionId={activeSession}
             workbenchId={benchId ?? ""}
+            gitLease={bench.data?.config.interface.git_status ? indexLease : undefined}
             reveal={revealChat}
           >
             {/* One session view per window (PERF-05): the chat and its side tabs share one read. */}
@@ -675,6 +699,9 @@ export function App() {
               >
                 <Shell
                   workbenchId={benchId}
+                  showFilesRequest={
+                    filesRequest?.indexLease === indexLease ? filesRequest?.sequence : undefined
+                  }
                   visibleTabs={bench.data?.config.interface.right_panel_tabs}
                   configurePanelTabs={
                     activeWorkbench
@@ -710,10 +737,12 @@ export function App() {
                     ) : undefined
                   }
                   docs={
-                    benchId && !settings ? (
+                    benchId && indexLease !== undefined && !settings ? (
                       <DocsTab
-                        key={benchId}
+                        key={indexLease}
                         workbenchId={benchId}
+                        indexLease={indexLease}
+                        gitEnabled={bench.data?.config.interface.git_status ?? false}
                         readOnly={readOnly}
                         editExclusions={() => {
                           if (!activeWorkbench) return;
@@ -901,12 +930,18 @@ export function App() {
                         <SessionWorkspace
                           key={`${benchId}/${activeSession}`}
                           id={activeSession}
+                          dictationMode={snapshot.data?.settings.dictationRecordingMode}
                           workbenchId={benchId}
                           detail={bench.data?.config.chat.detail ?? "normal"}
                           changed={changed}
                           readOnly={readOnly}
+                          browserEnabled={
+                            snapshot.data?.settings.interactiveBrowser === true &&
+                            bench.data?.config.interactive_browser === true
+                          }
                           archived={selected?.archived ?? true}
                           delegation={selected?.delegation}
+                          delegatedBypassLaunch={selected?.delegatedBypassLaunch}
                           delegationParent={delegationParent}
                           delegationChildren={delegationChildren}
                           selectLinkedSession={selectLinkedSession}

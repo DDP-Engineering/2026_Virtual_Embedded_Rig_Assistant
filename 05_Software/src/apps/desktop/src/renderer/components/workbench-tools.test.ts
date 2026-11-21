@@ -56,7 +56,7 @@ it.each([false, true])("tool checkboxes retain configured state and honor readOn
         QueryClientProvider,
         { client: new QueryClient({ defaultOptions: { queries: { retry: false } } }) },
         createElement(WorkbenchEditor, {
-          workbench: { folder: "/bench", config, readOnly, warnings: [] },
+          workbench: { folder: "/bench", indexLease: 1, config, readOnly, warnings: [] },
           close: vi.fn(),
           saved: vi.fn(),
         }),
@@ -133,7 +133,7 @@ it("a skill switched in its own panel leaves the editor without unsaved changes"
           QueryClientProvider,
           { client },
           createElement(WorkbenchEditor, {
-            workbench: { folder: "/bench", config: value, readOnly: false, warnings: [] },
+            workbench: { folder: "/bench", indexLease: 1, config: value, readOnly: false, warnings: [] },
             close: vi.fn(),
             saved: vi.fn(),
           }),
@@ -186,7 +186,7 @@ it.each([false, true])(
           QueryClientProvider,
           { client: new QueryClient({ defaultOptions: { queries: { retry: false } } }) },
           createElement(WorkbenchEditor, {
-            workbench: { folder: "/bench", config, readOnly: false, warnings: [] },
+            workbench: { folder: "/bench", indexLease: 1, config, readOnly: false, warnings: [] },
             close: vi.fn(),
             saved: vi.fn(),
           }),

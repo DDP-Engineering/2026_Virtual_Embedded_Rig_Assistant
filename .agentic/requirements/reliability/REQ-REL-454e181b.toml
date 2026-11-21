@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-REL-454e181b"
+title = "Recover interrupted model staging"
+status = "active"
+requirement = "When VERA starts after an interrupted model transfer, it shall clear its abandoned staging files and present the model as available to download."
+verification = "Seed an interrupted staging folder before creating the service and assert only committed files are available."
+affected_paths = ["05_Software/src/apps/desktop/src/main/dictation/models.ts", "05_Software/src/apps/desktop/src/main/index.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/dictation/models.test.ts"]
+created = 2026-11-20
+updated = 2026-11-20

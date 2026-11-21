@@ -7,14 +7,14 @@ title = "Show delegated turn stop and interruption"
 status = "active"
 
 requirement = """
-When an initial delegated turn is stopped or interrupted, Desktop shall display the corresponding readable outcome on the linked session views.
+When an latest delegated turn is stopped or interrupted, Desktop shall display the corresponding readable outcome on the linked session views.
 """
 
 verification = "Stop an active child, verify Stopped on the parent and explicitly attributed to the delegated turn on the child view, and check that storage projection distinguishes recovery interruption."
 
-affected_paths = ["05_Software/src/libraries/core/src/sessions/service.ts","05_Software/src/libraries/core/src/storage/repos/delegations.ts","05_Software/src/libraries/core/src/sessions/delegation-monitor.ts","05_Software/src/libraries/shared/src/session.ts","05_Software/src/apps/desktop/src/renderer/components/session/delegation-links.tsx"]
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/session/delegation-links.tsx", "05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/libraries/core/src/storage/repos/delegations.ts"]
 
-linked_tests = ["05_Software/tests/e2e/session-delegation.spec.ts","05_Software/src/libraries/core/src/sessions/delegation.test.ts"]
+linked_tests = ["05_Software/tests/e2e/session-delegation.spec.ts", "05_Software/src/libraries/core/src/sessions/delegation.test.ts"]
 
 
 spec = ""
@@ -23,4 +23,4 @@ priority = "normal"   # low | normal | high
 rationale = ""        # why this behavior exists, if not obvious
 
 created = 2026-11-19
-updated = 2026-11-19
+updated = 2026-11-21

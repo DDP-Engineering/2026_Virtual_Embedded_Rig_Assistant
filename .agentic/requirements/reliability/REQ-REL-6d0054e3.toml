@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-REL-6d0054e3"
+
+title = "Report a disconnected microphone"
+
+status = "active"
+
+requirement = "If the audio track ends during recording, VERA shall release the capture and return a disconnected outcome."
+
+verification = "Emit a track-ended event midway through recording and check track release and the typed callback."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/dictation/capture.ts", "05_Software/src/apps/desktop/src/renderer/dictation/microphone.ts"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/dictation/capture.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-20
+updated = 2026-11-20

@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-FUNC-da954efa"
+title = "Continue hosted model tool calls"
+status = "active"
+requirement = "When a hosted inference model streams a function call, VERA shall carry that call and its matching tool result into the next streamed request."
+verification = "For every preset, assert the decoded call arguments, matching assistant and result call IDs, and multiple text deltas in the continuation."
+affected_paths = ["05_Software/src/libraries/core/src/llm/providers.ts", "05_Software/src/libraries/core/src/llm/curated-adapters.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/hosted-provider-presets.test.ts"]
+created = 2026-11-20
+updated = 2026-11-20

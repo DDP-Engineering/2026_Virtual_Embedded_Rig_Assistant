@@ -20,6 +20,7 @@ remain active, then drains persistence before explicit installation.
 Main composes [ChatGPT authentication](providers.md), confirmed system-browser opening and the
 subscription credential host; shutdown drains OAuth cancellation before closing the credential store.
 Main supplies the [workbench](workbench.md) lifecycle host and native folder picker.
+Workbench replacement and shutdown drain the [browser runtime](browser-runtime.md) host.
 Main composes [file-tool](file-tools.md) worker capacity and drains it during shutdown; grep-worker is a separate production entry.
 The sandboxed preload exposes the typed invoke/subscribe bridge; React displays Welcome/App Settings and application metadata
 through its API. [IPC boundary](ipc-boundary.md) owns shared contracts, dispatch and event behavior.
@@ -52,7 +53,9 @@ coordinates clamp to content bounds. Browser mock acknowledges the native-only o
 - Window creation keeps context isolation, Chromium sandbox and web security enabled,
   Node integration disabled, and a minimum size of 1024 by 640.
 - Session-created protection routes dictionary initialization to local vera://app resources and disables automatic spellchecking synchronously; default-session protection precedes startup awaits and window spellcheck=false prevents renderer use of remote Hunspell dictionaries.
-- Navigation, new windows, webviews and permission requests/checks are denied before content loads.
+- Navigation, new windows and webviews are denied before content loads. Permission checks and
+  requests default to denial. The focused VERA main frame can request audio-only access during one
+  [dictation](dictation.md) capture grant opened by a trusted user input.
 - Production CSP is identical in meta and response headers; protocol assets stay inside the real renderer root. Images allow only self and Blob sources for the workbench preview; scripts/styles/connect/workers/fonts/object/base/frame/form restrictions are preserved. SVG preview remains img-only, with external loads/scripts/navigation inert.
 - Development origin is exactly `http://127.0.0.1:5173`; its inline-script allowances are content hashes.
 - Valid visible normal bounds persist atomically in window-state.json version 1. Corrupt, other-version
@@ -78,7 +81,7 @@ coordinates clamp to content bounds. Browser mock acknowledges the native-only o
 - `REQ-SEC-11244926` — restrictive production CSP blocks injected inline scripts.
 - `REQ-SEC-1aba9c7c` — attempted renderer navigation retains the app.
 - `REQ-SEC-d6fdde98` — window.open is denied.
-- `REQ-SEC-250c645c` — permission requests and checks are denied.
+- REQ-SEC-250c645c and REQ-SEC-dc8304bd govern default permission denial and the dictation grant.
 - `REQ-REL-9e5c0e0e` — a second process reuses the first instance.
 - `REQ-DATA-6c54a48f` — safe normal bounds survive restart.
 - `REQ-TEST-2308561a` — build-time test identity is fixed in emitted code.

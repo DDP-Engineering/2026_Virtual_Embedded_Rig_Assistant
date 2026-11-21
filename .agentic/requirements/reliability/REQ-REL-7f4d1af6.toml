@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-REL-7f4d1af6"
+title = "Drain browser sessions on cancellation and host exit"
+status = "active"
+requirement = "When a browser session is cancelled, its child exits, its workbench closes or Desktop shuts down, Desktop shall drain pending operations and release the session's process and temporary state."
+verification = "Close and cancel while startup is pending, disconnect a browser, and trigger workbench and app shutdown with sessions present."
+affected_paths = ["05_Software/src/apps/desktop/src/main/browser/host.ts","05_Software/src/apps/desktop/src/main/browser/launcher.ts","05_Software/src/apps/desktop/src/main/index.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/browser/host.test.ts","05_Software/tests/e2e/browser-runtime.spec.ts"]
+priority = "normal"
+created = 2026-11-20
+updated = 2026-11-20

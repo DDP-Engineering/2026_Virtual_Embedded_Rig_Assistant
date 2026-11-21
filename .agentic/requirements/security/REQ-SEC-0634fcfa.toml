@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-SEC-0634fcfa"
+title = "Bind and mask Git comparison responses"
+status = "active"
+requirement = "When a Git comparison is requested, Desktop shall reject a retired workbench lease and project every returned label and patch through the active Display policy."
+verification = "Switch between copied workbench IDs while a read is pending, then verify retired requests fail and masked labels and hunks contain no registered secret."
+affected_paths = ["05_Software/src/apps/desktop/src/main/git/diff-service.ts","05_Software/src/apps/desktop/src/main/display-documents.ts","05_Software/src/apps/desktop/src/main/index.ts","05_Software/src/libraries/shared/src/git-diff.ts","05_Software/src/apps/desktop/src/renderer/components/documents/viewer-context.tsx"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/git/diff-service.test.ts", "05_Software/src/apps/desktop/src/main/display-documents.test.ts", "05_Software/tests/e2e/git-diff-tabs.spec.ts", "05_Software/src/libraries/shared/src/git-diff.test.ts"]
+created = 2026-11-21
+updated = 2026-11-21

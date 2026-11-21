@@ -32,7 +32,9 @@ export function DelegationLinks({
           <button type="button" className="markdown-link" onClick={() => open(parent.id)}>
             {t("delegation.parent", { title: parent.title || t("chat.untitled") })}
           </button>
-          <span role="status">{t("delegation.outcome", { status: statusLabels[child.status] })}</span>
+          <span role="status" data-delegated-turn={child.turnId}>
+            {t("delegation.outcome", { status: statusLabels[child.status] })}
+          </span>
         </div>
       )}
       {sessions.length > 0 && (
@@ -40,7 +42,7 @@ export function DelegationLinks({
           <h3>{t("delegation.title")}</h3>
           <ul>
             {rows.map((row) => (
-              <li className="delegation-row" key={row.id}>
+              <li className="delegation-row" key={row.id} data-delegated-turn={row.delegation?.turnId}>
                 <button type="button" className="markdown-link" onClick={() => open(row.id)}>
                   {row.title || t("chat.untitled")}
                 </button>

@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-FUNC-a5c31d08"
+
+title = "Return local Whisper transcripts"
+
+status = "active"
+
+requirement = "When a dictation job stops with speech, VERA shall transcribe through a session-owned worker using only the job's verified local model."
+
+verification = "Run pinned Base and Small CPU recognition with network forbidden and assert known English, Romanian, German and French text."
+
+affected_paths = ["05_Software/src/apps/desktop/src/main/dictation/whisper-worker.ts", "05_Software/src/apps/desktop/src/main/dictation/whisper.ts", "05_Software/src/apps/desktop/src/main/dictation/worker-host.ts", "05_Software/src/apps/desktop/electron.vite.config.ts", "05_Software/src/apps/desktop/src/main/index.ts", "02_Tools/release/package.mjs", "02_Tools/release/package-checks.mjs", "05_Software/src/apps/desktop/src/renderer/main.tsx", "05_Software/tests/fixtures/dictation/en.wav", "05_Software/tests/fixtures/dictation/ro.wav", "05_Software/tests/fixtures/dictation/de.wav", "05_Software/tests/fixtures/dictation/fr.wav"]
+
+linked_tests = ["05_Software/tests/integration/whisper-runtime.test.ts", "05_Software/tests/packaging/packaging.test.ts", "05_Software/tests/tooling/build-mode.test.ts", "05_Software/src/apps/desktop/src/main/dictation/worker-host.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-20
+updated = 2026-11-20

@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-UX-a033771c"
+
+title = "Open Git history beside Chat"
+
+status = "active"
+
+requirement = """
+When a user opens file history, VERA shall reuse the same activation and path's central tab and share keyboard navigation and closing with Chat and document and diff tabs while preserving Chat state.
+"""
+
+verification = "Use the native keyboard Files menu to open history, reopen it, switch among Chat, TXT/PDF and diff tabs, check draft and scroll, and close history."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/documents/viewer-context.tsx", "05_Software/src/apps/desktop/src/renderer/components/documents/document-tabs.tsx", "05_Software/src/apps/desktop/src/renderer/components/documents/git-history-view.tsx"]
+
+linked_tests = ["05_Software/tests/e2e/git-diff-tabs.spec.ts", "05_Software/src/apps/desktop/src/renderer/components/documents/docs-tree.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-21
+updated = 2026-11-21

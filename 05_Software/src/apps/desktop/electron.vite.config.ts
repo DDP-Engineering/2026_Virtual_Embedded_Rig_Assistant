@@ -143,6 +143,7 @@ export default defineConfig(({ command }) => ({
           "sharp",
           "pdfjs-dist/legacy/build/pdf.mjs",
           "electron-updater",
+          "playwright-core",
         ],
         input: {
           index: resolve(root, "src/main/index.ts"),
@@ -152,6 +153,7 @@ export default defineConfig(({ command }) => ({
           "pdf-worker": resolve(root, "src/main/pdf-worker.ts"),
           "document-embedding-worker": resolve(root, "src/main/document-embedding-worker.ts"),
           "indexer-process": resolve(root, "src/main/indexer-process.ts"),
+          "whisper-worker": resolve(root, "src/main/dictation/whisper-worker.ts"),
           ...(testBuild
             ? { "embedding-worker": resolve(root, "src/main/packaging/embedding-worker.ts") }
             : {}),
@@ -172,6 +174,7 @@ export default defineConfig(({ command }) => ({
   },
   renderer: {
     define: {
+      __VERA_TEST__: JSON.stringify(testBuild),
       __VERA_SESSION_PERF__: JSON.stringify(sessionPerformance),
       __VERA_VERSION__: JSON.stringify(
         JSON.parse(readFileSync(resolve(root, "package.json"), "utf8")).version,
