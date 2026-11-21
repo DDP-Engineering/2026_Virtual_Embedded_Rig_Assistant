@@ -269,12 +269,16 @@ export class TerminalService {
     // Input or workbench replacement may have happened while the initial prompt was starting.
     if (generation !== this.generation || this.entry(owner, id) !== entry || !entry.running)
       throw veraError("CONFLICT");
+    const constrained = entry.commandPrompt.constrained;
     entry.commandPrompt.consume();
     // Never clear or submit existing input. This one-shot pristine shell is the only proven clean destination.
     const command =
-      shell === "powershell"
-        ? `. ([scriptblock]::Create([Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('${Buffer.from(text, "utf8").toString("base64")}'))))`
-        : `eval -- $'${text.replaceAll("\\", "\\\\").replaceAll("'", "\\'").replaceAll("\r", "\\r").replaceAll("\n", "\\n").replaceAll("\t", "\\t")}'`;
+      shell !== "powershell"
+        ? `eval -- $'${text.replaceAll("\\", "\\\\").replaceAll("'", "\\'").replaceAll("\r", "\\r").replaceAll("\n", "\\n").replaceAll("\t", "\\t")}'`
+        : constrained
+          ? // Constrained Language refuses [Convert] and [Text.Encoding]; the exact UTF-16 code units need neither.
+            `Invoke-Expression (-join [char[]](${Array.from({ length: text.length }, (_, i) => text.charCodeAt(i)).join(",")}))`
+          : `. ([scriptblock]::Create([Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('${Buffer.from(text, "utf8").toString("base64")}'))))`;
     entry.pty.write(`${command}\r`);
   }
   resize(owner: string, id: string, cols: number, rows: number): void {

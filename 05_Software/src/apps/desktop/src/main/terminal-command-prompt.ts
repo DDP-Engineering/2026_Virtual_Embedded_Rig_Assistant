@@ -12,8 +12,12 @@ const startupReplies: Record<string, string> = {
 
 /** One-shot proof of an empty initial prompt in a profile-free shell; ordinary terminals are unverified. */
 export class TerminalCommandPrompt {
-  readonly marker = `\u001b]633;VERA;${randomUUID()}\u0007`;
+  private readonly nonce = randomUUID();
+  readonly marker = `\u001b]633;VERA;${this.nonce}\u0007`;
+  /** The prompt of a PowerShell outside Full Language, such as Constrained Language under a host policy. */
+  readonly constrainedMarker = `\u001b]633;VERA;${this.nonce};constrained\u0007`;
   private state: "starting" | "timed-out" | "ready" | "used" = "starting";
+  private reportedConstrained = false;
   private carry = "";
   private listeners = new Set<() => void>();
 
@@ -22,13 +26,21 @@ export class TerminalCommandPrompt {
     return this.state === "starting" || this.state === "ready";
   }
 
+  /** The proven prompt came from a PowerShell outside Full Language, which refuses .NET method calls. */
+  get constrained(): boolean {
+    return this.reportedConstrained;
+  }
+
   startup(
     shell: CommandBlockShell,
     env: Record<string, string>,
   ): { args: string[]; env: Record<string, string> } {
     if (shell === "powershell") {
       // The initial read bypasses ConsoleHost/PSReadLine editing and its post-prompt cursor queries.
-      const prompt = `[Console]::Write("PS $($executionContext.SessionState.Path.CurrentLocation)> ${this.marker}"); $veraInitialCommand = [Console]::ReadLine(); if ($null -ne $veraInitialCommand) { . ([scriptblock]::Create($veraInitialCommand)) }; Remove-Variable veraInitialCommand -ErrorAction SilentlyContinue`;
+      const full = `[Console]::Write("PS $($executionContext.SessionState.Path.CurrentLocation)> ${this.marker}"); $veraInitialCommand = [Console]::ReadLine(); if ($null -ne $veraInitialCommand) { . ([scriptblock]::Create($veraInitialCommand)) }; Remove-Variable veraInitialCommand -ErrorAction SilentlyContinue`;
+      // Constrained Language refuses those .NET calls; these cmdlets are allowed and also read one line.
+      const constrained = `Write-Host -NoNewline "PS $($executionContext.SessionState.Path.CurrentLocation)> ${this.constrainedMarker}"; $veraInitialCommand = Read-Host; if ($null -ne $veraInitialCommand) { Invoke-Expression $veraInitialCommand }; Remove-Variable veraInitialCommand -ErrorAction SilentlyContinue`;
+      const prompt = `if ($ExecutionContext.SessionState.LanguageMode -eq 'FullLanguage') { ${full} } else { ${constrained} }`;
       return {
         args: [
           "-NoLogo",
@@ -59,7 +71,7 @@ export class TerminalCommandPrompt {
     let text = this.carry + data;
     let visible = "";
     this.carry = "";
-    const controls = [this.marker, ...Object.keys(startupReplies)];
+    const controls = [this.marker, this.constrainedMarker, ...Object.keys(startupReplies)];
     while (text) {
       const found = controls
         .map((control) => ({ control, offset: text.indexOf(control) }))
@@ -68,15 +80,18 @@ export class TerminalCommandPrompt {
       if (!found) break;
       visible += text.slice(0, found.offset);
       text = text.slice(found.offset + found.control.length);
-      if (found.control === this.marker) {
-        if (this.state === "starting" || this.state === "timed-out") this.state = "ready";
+      if (found.control === this.marker || found.control === this.constrainedMarker) {
+        if (this.state === "starting" || this.state === "timed-out") {
+          this.state = "ready";
+          this.reportedConstrained = found.control === this.constrainedMarker;
+        }
         for (const listener of this.listeners) listener();
       } else if (this.state === "starting" || this.state === "timed-out") {
         // No profile/user code has run in this pristine shell; these replies contain no command input.
         reply(startupReplies[found.control] as string);
       } else visible += found.control;
     }
-    for (let size = Math.min(text.length, this.marker.length - 1); size > 0; size--) {
+    for (let size = Math.min(text.length, this.constrainedMarker.length - 1); size > 0; size--) {
       if (!controls.some((control) => text.endsWith(control.slice(0, size)) && size < control.length))
         continue;
       this.carry = text.slice(-size);
