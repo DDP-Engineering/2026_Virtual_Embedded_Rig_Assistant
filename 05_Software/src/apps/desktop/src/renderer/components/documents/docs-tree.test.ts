@@ -3,6 +3,9 @@
 // REQ-UX-541a5bee REQ-UX-4d1b3324 REQ-UX-ed65cbbc REQ-UX-2504362b REQ-UX-d455531b
 // REQ-UX-25c814e1 REQ-UX-89cdb49d REQ-UX-3a3d67c1 REQ-UX-ef3e2304 REQ-UX-b5edf930
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { getByRole, queryByRole } from "@testing-library/dom";
+import userEvent from "@testing-library/user-event";
+import type { GitStatus, Request, WorkbenchEvent } from "@vera/shared";
 import { act, createElement } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
@@ -33,7 +36,7 @@ const settle = () =>
   });
 let root: Root;
 let container: HTMLDivElement;
-async function mount(workbenchId = id, attachments?: Attachments) {
+async function mount(workbenchId = id, attachments?: Attachments, gitEnabled = false) {
   const { indexLease } = await api.invoke("workbench.config.get", {});
   container = document.createElement("div");
   document.body.append(container);
@@ -53,9 +56,9 @@ async function mount(workbenchId = id, attachments?: Attachments) {
             ? createElement(
                 AttachmentsContext.Provider,
                 { value: attachments },
-                createElement(DocsTab, { workbenchId, indexLease, readOnly: false }),
+                createElement(DocsTab, { workbenchId, indexLease, readOnly: false, gitEnabled }),
               )
-            : createElement(DocsTab, { workbenchId, indexLease, readOnly: false }),
+            : createElement(DocsTab, { workbenchId, indexLease, readOnly: false, gitEnabled }),
           createElement(DocumentTabs, { chat: null }),
         ),
       ),
@@ -107,6 +110,119 @@ const menuItems = () =>
   );
 const submenu = (action: string) =>
   menu()?.querySelector<HTMLElement>(`[role="menu"][data-submenu="${action}"]`);
+
+function mockGit(read: () => GitStatus) {
+  const listeners = new Set<(event: WorkbenchEvent) => void>();
+  const originalSubscription = api.subscribe.bind(api);
+  vi.spyOn(api, "subscribe").mockImplementation(((...args: unknown[]) => {
+    const off = Reflect.apply(originalSubscription, undefined, args);
+    if (args[0] !== "workbench") return off;
+    const listener = args[2] as (event: WorkbenchEvent) => void;
+    listeners.add(listener);
+    return () => {
+      off();
+      listeners.delete(listener);
+    };
+  }) as typeof api.subscribe);
+  const original = api.invoke.bind(api);
+  return vi.spyOn(api, "invoke").mockImplementation((async (channel: string, input: unknown) => {
+    if (channel !== "git.status") return original(channel as never, input as never);
+    const { action, ...owner } = input as Request<"git.status">;
+    if (action !== "close")
+      for (const listener of listeners)
+        listener({ type: "git.status", update: { ...owner, status: read(), watchLimited: false } });
+    return {};
+  }) as typeof api.invoke);
+}
+
+// REQ-UX-d3f4505a REQ-UX-7656913e
+it("voices both comparisons and collapsed counts and makes virtual deletion rows inert by keyboard", async () => {
+  const invoke = mockGit(() => ({
+    state: "ready",
+    branch: { kind: "named", name: "main" },
+    changed: 2,
+    conflicts: 0,
+    entries: [
+      { path: "board.txt", staged: "M", unstaged: "M", conflict: false, virtual: false },
+      { path: "gone/deleted.txt", staged: "D", unstaged: null, conflict: false, virtual: true },
+    ],
+  }));
+  await mount(id, undefined, true);
+  expect(getByRole(container, "treeitem", { name: /board.txt.*Staged: Modified.*Unstaged: Modified/ })).toBe(
+    row("board.txt"),
+  );
+  expect(
+    getByRole(container, "treeitem", { name: /gone.*Changed paths in folder: 1/ }).getAttribute(
+      "aria-expanded",
+    ),
+  ).toBe("false");
+  expect(container.querySelector(".git-info")?.textContent).toContain("Branch main");
+  expect(container.querySelector(".git-info")?.textContent).toContain("Changed paths: 2");
+  expect(row("docs")?.querySelector("[data-git-badge]")).toBeNull();
+  const filter = getByRole(container, "button", { name: "Git changes only" });
+  await act(async () => filter.focus());
+  await act(async () => userEvent.setup().keyboard("{Enter}"));
+  expect(filter.getAttribute("aria-pressed")).toBe("true");
+  expect(visible()).toEqual(["gone", "board.txt"]);
+  await key(row("gone"), "ArrowRight");
+  const deleted = getByRole(container, "treeitem", {
+    name: /deleted.txt.*Staged: Deleted.*Absent from the working tree/,
+  });
+  await act(async () => deleted.focus());
+  await key(deleted, "Enter");
+  await key(deleted, "F10", { shiftKey: true });
+  expect(menu()).toBeNull();
+  expect(container.querySelector("[data-document-tab]")).toBeNull();
+  expect(invoke.mock.calls.some(([channel]) => channel === "docs.open" || channel === "docs.stat")).toBe(
+    false,
+  );
+  await click(getByRole(container, "button", { name: "Refresh Git status" }));
+  expect(invoke.mock.calls).toContainEqual(["git.status", expect.objectContaining({ action: "refresh" })]);
+});
+
+it("keeps Git-visible ignored search matches inert until ordinary Files metadata is known", async () => {
+  const path = "node_modules/pkg/index.js";
+  const invoke = mockGit(() => ({
+    state: "ready",
+    branch: { kind: "named", name: "main" },
+    changed: 1,
+    conflicts: 0,
+    entries: [{ path, staged: null, unstaged: "?", conflict: false, virtual: false }],
+  }));
+  await mount(id, undefined, true);
+  await click(getByRole(container, "button", { name: "Git changes only" }));
+  await type("node_modules/pkg");
+  await settle();
+  const match = getByRole(container, "treeitem", { name: /index.js.*Unstaged: Untracked/ });
+  await key(match, "F10", { shiftKey: true });
+  await key(match, "Enter");
+  expect(menu()).toBeNull();
+  expect(invoke.mock.calls.some(([name]) => name === "docs.stat" || name === "docs.open")).toBe(false);
+  await type("");
+  await settle();
+  await key(row("node_modules"), "ArrowRight");
+  await settle();
+  await key(row("node_modules/pkg"), "ArrowRight");
+  await settle();
+  expect(row(path)?.dataset.ignored).toBe("true");
+  await key(row(path), "F10", { shiftKey: true });
+  expect(menuItems()).toContain("open");
+});
+
+// REQ-REL-3cbc93f2
+it("keeps ordinary Files available when Git is missing and invokes nothing when disabled", async () => {
+  const invoke = mockGit(() => ({ state: "missing-git" }));
+  await mount();
+  expect(queryByRole(container, "button", { name: "Refresh Git status" })).toBeNull();
+  expect(invoke.mock.calls.some(([channel]) => channel === "git.status")).toBe(false);
+  await unmount();
+  await mount(id, undefined, true);
+  expect(container.querySelector(".git-info")?.textContent).toBe("Git 2.40 or later was not found.");
+  expect(row("board.txt")).not.toBeNull();
+  expect((getByRole(container, "button", { name: "Git changes only" }) as HTMLButtonElement).disabled).toBe(
+    true,
+  );
+});
 
 it("distinguishes unavailable, partial and complete empty Files searches", async () => {
   const original = api.invoke.bind(api);

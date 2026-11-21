@@ -74,6 +74,7 @@ Each component has a knowledge page that names its source files, tests, invarian
 | Changes | [changes](../knowledge/changes.md) | Completed change history, diff presentation, confined reveal. |
 | File tools | [file-tools](../knowledge/file-tools.md) | Path confinement, read, list, glob, grep, `decode_register`, `parse_log`, prepared write and edit, fingerprints, line refs, tool registry, worker hosts, `apply_candidate`. |
 | Workbench | [workbench](../knowledge/workbench.md) | Format 1, create, open, close, ownership, recents, Welcome and New Workbench pages, the workbench editor and its sections, additional folders, saved command prefixes. |
+| Files Git status | [Files Git status](../knowledge/files-git-status.md) | Opt-in status overlay, confined unattended local Git reads and workbench-scoped refresh. |
 | Workbench storage | [workbench-storage](../knowledge/workbench-storage.md) | Per-folder SQLite, current-schema validation, session, message and event rows. |
 | Knowledge ingest | [knowledge-ingest](../knowledge/knowledge-ingest.md) | Background document selection, hashing, limits, status events, reindex. |
 | Indexer process | [indexer-process](../knowledge/indexer-process.md) | The VERA Indexer utility process; main keeps every SQLite write. |

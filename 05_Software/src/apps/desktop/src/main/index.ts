@@ -87,6 +87,10 @@ import {
   sanitizeSessionSummary,
 } from "./events.js";
 import { createFileAccess } from "./file-access.js";
+import { GitReader } from "./git/read.js";
+import { readStatus } from "./git/status.js";
+import { GitStatusService } from "./git/status-service.js";
+import { GitWatch } from "./git/watch.js";
 import { systemClock } from "./host-ports.js";
 import { IndexerHost } from "./indexer-host.js";
 import { createInvokeRouter } from "./ipc-router.js";
@@ -321,6 +325,7 @@ const workbench = new WorkbenchService(
     },
     changed: (event) => {
       if (event.event.type === "closed") display.close();
+      if (event.event.type === "closed" || event.event.type === "config.changed") gitStatus.reconcile();
       if (event.event.type === "closed" || event.event.type === "config.changed") {
         browserNoticeSince = performance.now();
         browserAccess.reconcile();
@@ -348,6 +353,26 @@ const display = new DisplayDocuments(
   ),
   () => credentials.knownSecrets(),
 );
+const gitReader = new GitReader(dataLocations.paths.userData);
+const gitStatus = new GitStatusService({
+  scope: () => {
+    try {
+      const { config, indexLease, folder } = workbench.getSnapshot();
+      return { workbenchId: config.id, indexLease, folder, enabled: config.interface.git_status };
+    } catch {
+      return undefined;
+    }
+  },
+  read: (folder, signal) => readStatus(gitReader, folder, signal),
+  project: (id, status) => display.gitStatus(id, status),
+  watch: (folder, changed, fault) => new GitWatch(folder, changed, fault),
+  publish: (update) =>
+    emitAppEvent({
+      topic: "workbench",
+      id: update.workbenchId,
+      event: { type: "git.status", update },
+    }),
+});
 /** Installed plugins live under userData; enablement is per workbench (workbench.yaml). */
 const plugins = new PluginStore({ root: join(dataLocations.paths.userData, "plugins") });
 const processHost = createDesktopProcessHost();
@@ -1126,6 +1151,10 @@ ipcMain.handle(
           (text) => clipboard.writeText(text),
           sep,
         ),
+      "git.status": (request) => {
+        gitStatus.request(request);
+        return {};
+      },
       "docs.status": async ({ workbenchId, indexLease }) => {
         const status = workbench.documentIndexStatus(workbenchId, indexLease);
         return { ...status, guard: publicGuard(status.guard, (text) => display.scrub(workbenchId, text)) };
@@ -1652,7 +1681,9 @@ async function createWindow(state: WindowState): Promise<void> {
       .catch(() => logger.log("error", "window.state.save.failed"))
       .finally(() => created.destroy());
   });
+  window.webContents.on("render-process-gone", () => gitStatus.stop());
   window.on("closed", () => {
+    gitStatus.stop();
     capture.interrupt();
     sessions.clearSubscriptions();
     window = undefined;

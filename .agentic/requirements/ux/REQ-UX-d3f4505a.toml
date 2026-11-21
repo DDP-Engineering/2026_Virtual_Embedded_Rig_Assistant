@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-UX-d3f4505a"
+title = "Describe Git changes in Files"
+status = "active"
+requirement = "While Git status is available in Files, Desktop shall show accessible comparison-specific badges and collapsed-folder change counts."
+verification = "Inspect the accessible name of a combined staged and unstaged row and of its collapsed ancestor; check an unchanged row."
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/documents/docs-tree.tsx", "05_Software/src/apps/desktop/src/renderer/components/documents/git-status.tsx", "05_Software/src/apps/desktop/src/renderer/components/documents/git-tree.ts", "05_Software/src/apps/desktop/src/renderer/styles.css"]
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/documents/docs-tree.test.ts"]
+created = 2026-11-21
+updated = 2026-11-21

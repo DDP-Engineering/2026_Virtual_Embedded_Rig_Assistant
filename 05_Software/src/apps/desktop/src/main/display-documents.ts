@@ -4,6 +4,7 @@ import {
   DOCS_BYTE_WINDOW_LIMIT,
   type DocumentRecord,
   formatRef,
+  type GitStatus,
   MAX_MESSAGE_IMAGE_BYTES,
   parseRef,
   type Response,
@@ -59,6 +60,25 @@ export class DisplayDocuments {
     this.current(id);
     return this.identities.encode(this.owner, path, (value) => this.redact(value) !== value);
   }
+  /** Projects Git labels with the same identities that ordinary Files rows use. */
+  gitStatus(id: string, status: GitStatus): GitStatus {
+    if (status.state !== "ready") return status;
+    const masked = this.maskingFor(this.current(id).config, "display");
+    const identity = (path: string) =>
+      this.identities.encode(this.owner, path, (value) => this.redact(value) !== value);
+    const label = (value: string) => (masked ? this.redact(value) : value);
+    return {
+      ...status,
+      branch: { ...status.branch, name: label(status.branch.name) },
+      entries: status.entries.map(({ path, rename, ...entry }) => ({
+        ...entry,
+        path: identity(path),
+        displayPath: label(path),
+        ...(rename ? { rename: { ...rename, path: identity(rename.path) } } : {}),
+      })),
+    };
+  }
+
   resolve(id: string, path: string): string {
     this.current(id);
     const original = this.identities.decode(this.owner, path);

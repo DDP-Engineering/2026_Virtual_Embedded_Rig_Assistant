@@ -10,16 +10,19 @@ import { DocsTree, useTreeExpansion } from "./docs-tree.js";
 import { DownloadsList } from "./downloads.js";
 import { useDescribeDocument } from "./file-actions.js";
 import { FilesIndexControls } from "./files-index-controls.js";
+import { GitStatusControls, useGitStatus } from "./git-status.js";
 import { useDocumentViewer } from "./viewer-context.js";
 
 export function DocsTab({
   workbenchId,
   indexLease,
+  gitEnabled = false,
   readOnly,
   editExclusions,
 }: {
   workbenchId: string;
   indexLease: number;
+  gitEnabled?: boolean;
   readOnly: boolean;
   /** Opens Edit workbench > Documents & RAG, from the count guard's "Edit exclusions". */
   editExclusions?: () => void;
@@ -32,6 +35,13 @@ export function DocsTab({
     [search, setSearch] = useState("");
   const expansion = useTreeExpansion(workbenchId);
   const hitsTitle = useId();
+  const git = useGitStatus(workbenchId, indexLease, gitEnabled);
+  const gitSnapshot = git.current?.status;
+  useEffect(() => {
+    if (gitSnapshot?.state !== "ready") return;
+    void client.invalidateQueries({ queryKey: ["docs.tree", workbenchId] });
+    void client.invalidateQueries({ queryKey: ["docs.find", workbenchId] });
+  }, [client, workbenchId, gitSnapshot]);
   const list = useQuery({
     queryKey: ["docs.list", workbenchId],
     queryFn: async () => {
@@ -127,6 +137,7 @@ export function DocsTab({
           </button>
         }
       />
+      {gitEnabled && <GitStatusControls {...git} />}
       {list.isError ? (
         <>
           <ErrorMessage error={list.error} />
@@ -145,6 +156,8 @@ export function DocsTab({
             describe={describe}
             query={search}
             expansion={expansion}
+            gitEntries={gitSnapshot?.state === "ready" ? gitSnapshot.entries : undefined}
+            gitChangesOnly={gitSnapshot?.state === "ready" && git.filtered}
           />
           {search && (
             <section className="docs-hits" data-docs-hits aria-labelledby={hitsTitle}>

@@ -104,6 +104,7 @@ const rightPanelTabsSchema = z
   .refine((tabs) => new Set(tabs).size === tabs.length, "Right panel tabs must be unique.");
 const workbenchInterface = z.looseObject({
   right_panel_tabs: rightPanelTabsSchema.default([...defaultRightPanelTabs]),
+  git_status: z.boolean().default(false),
 });
 /** Defaults for the agent's search_docs when it passes no k or mode of its own. */
 export const workbenchRetrievalSchema = z.looseObject({
@@ -139,7 +140,7 @@ export const workbenchSchema = z.looseObject({
   tools: disabled.default({ disabled: [] }),
   plugins: plugins.default({ enabled: [] }),
   chat: chat.default({ detail: "normal" }),
-  interface: workbenchInterface.default({ right_panel_tabs: [...defaultRightPanelTabs] }),
+  interface: workbenchInterface.default({ right_panel_tabs: [...defaultRightPanelTabs], git_status: false }),
   agent: agent.default({ permission_mode: "ask", model: null, allowed_commands: [] }),
 });
 export type WorkbenchConfig = z.infer<typeof workbenchSchema>;
@@ -152,7 +153,9 @@ export const workbenchPatchSchema = z.strictObject({
   privacy: workbenchPrivacySchema.optional(),
   additional_folders: additionalFoldersSchema.optional(),
   chat: z.strictObject({ detail: chatDetailSchema.optional() }).optional(),
-  interface: z.strictObject({ right_panel_tabs: rightPanelTabsSchema.optional() }).optional(),
+  interface: z
+    .strictObject({ right_panel_tabs: rightPanelTabsSchema.optional(), git_status: z.boolean().optional() })
+    .optional(),
   embeddings: workbenchEmbeddingsSchema.optional(),
   name: z.string().trim().min(1).max(80).optional(),
   description: z.string().optional(),

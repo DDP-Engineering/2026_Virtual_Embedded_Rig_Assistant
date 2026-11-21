@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-SEC-b24a8722"
+title = "Limit Git status to active workbench paths"
+status = "active"
+requirement = "When reading Git status, Desktop shall return only paths inside the active workbench and outside nested repositories and submodule contents."
+verification = "Use a scoped fixture with in-scope and out-of-scope changed files and nested repositories."
+affected_paths = ["05_Software/src/apps/desktop/src/main/git/status.ts", "05_Software/src/apps/desktop/src/main/git/repository.ts", "05_Software/src/apps/desktop/src/main/git/index-scope.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/git/safe-status.test.ts","05_Software/src/libraries/shared/src/git-status.test.ts"]
+created = 2026-11-21
+updated = 2026-11-21

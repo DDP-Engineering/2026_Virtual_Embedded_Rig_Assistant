@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-UX-7656913e"
+title = "Filter Files to Git changes"
+status = "active"
+requirement = "When the user selects Git changes only, Files shall present changed paths and their ancestors, including inert virtual rows for absent paths."
+verification = "Use the keyboard to filter, navigate to an absent file and attempt to open it; confirm no file viewer or ordinary menu opens."
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/documents/docs-tree.tsx", "05_Software/src/apps/desktop/src/renderer/components/documents/git-tree.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/documents/docs-tree.test.ts", "05_Software/src/apps/desktop/src/renderer/components/documents/git-tree.test.ts"]
+created = 2026-11-21
+updated = 2026-11-21

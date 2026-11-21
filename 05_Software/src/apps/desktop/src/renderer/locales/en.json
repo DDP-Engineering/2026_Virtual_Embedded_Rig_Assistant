@@ -1,4 +1,42 @@
 {
+  "gitStatus": {
+    "preference": "Show Git status in Files",
+    "changesOnly": "Git changes only",
+    "refresh": "Refresh Git status",
+    "branch": {
+      "named": "Branch {{name}}",
+      "unborn": "Unborn branch {{name}}",
+      "detached": "Detached HEAD ({{name}})"
+    },
+    "changed": "Changed paths: {{count}}",
+    "conflicts": "Conflicts: {{count}}",
+    "watchLimited": "Some folders require manual refresh.",
+    "conflict": "Git conflict",
+    "absent": "Absent from the working tree",
+    "folder": "Changed paths in folder: {{count}}",
+    "comparison": {
+      "staged": "Staged: {{status}}",
+      "unstaged": "Unstaged: {{status}}"
+    },
+    "short": {
+      "staged": "S",
+      "unstaged": "U"
+    },
+    "change": {
+      "M": "Modified",
+      "?": "Untracked",
+      "A": "Added",
+      "R": "Renamed",
+      "D": "Deleted"
+    },
+    "availability": {
+      "loading": "Reading Git status…",
+      "no-repository": "No containing Git repository.",
+      "missing-git": "Git 2.40 or later was not found.",
+      "unsupported": "This Git repository is unsupported.",
+      "failed": "Git status could not be read."
+    }
+  },
   "toolActivity": {
     "keywordFallback": "Keyword results are shown because semantic ranking was unavailable.",
     "embeddingRebuild": "The embedding index is rebuilding. These results match keywords.",

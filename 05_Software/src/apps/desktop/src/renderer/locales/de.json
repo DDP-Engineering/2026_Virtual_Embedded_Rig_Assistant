@@ -1,4 +1,42 @@
 {
+  "gitStatus": {
+    "preference": "Git-Status in Dateien anzeigen",
+    "changesOnly": "Nur Git-Änderungen",
+    "refresh": "Git-Status aktualisieren",
+    "branch": {
+      "named": "Branch {{name}}",
+      "unborn": "Branch {{name}} ohne Commits",
+      "detached": "Losgelöster HEAD ({{name}})"
+    },
+    "changed": "Geänderte Pfade: {{count}}",
+    "conflicts": "Konflikte: {{count}}",
+    "watchLimited": "Einige Ordner müssen manuell aktualisiert werden.",
+    "conflict": "Git-Konflikt",
+    "absent": "Fehlt im Arbeitsbaum",
+    "folder": "Geänderte Pfade im Ordner: {{count}}",
+    "comparison": {
+      "staged": "Im Index: {{status}}",
+      "unstaged": "Im Arbeitsbaum: {{status}}"
+    },
+    "short": {
+      "staged": "I",
+      "unstaged": "A"
+    },
+    "change": {
+      "M": "Geändert",
+      "?": "Nicht verfolgt",
+      "A": "Hinzugefügt",
+      "R": "Umbenannt",
+      "D": "Gelöscht"
+    },
+    "availability": {
+      "loading": "Git-Status wird gelesen…",
+      "no-repository": "Kein übergeordnetes Git-Repository.",
+      "missing-git": "Git 2.40 oder neuer wurde nicht gefunden.",
+      "unsupported": "Dieses Git-Repository wird nicht unterstützt.",
+      "failed": "Git-Status konnte nicht gelesen werden."
+    }
+  },
   "toolActivity": {
     "keywordFallback": "Da die semantische Suche nicht verfügbar war, werden Stichworttreffer angezeigt.",
     "embeddingRebuild": "Der semantische Index wird neu aufgebaut. Diese Treffer beruhen auf Stichwörtern.",

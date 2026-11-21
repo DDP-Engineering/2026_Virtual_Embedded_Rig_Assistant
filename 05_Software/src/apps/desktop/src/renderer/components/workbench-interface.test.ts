@@ -79,6 +79,9 @@ it.each(["en", "ro", "de", "fr"])(
     await click('[data-project-section="interface"]');
     // REQ-UX-effec625: Bookmarks is offered after Plan, unchecked by default.
     expect(checked()).toEqual(defaultRightPanelTabs);
+    const git = container.querySelector<HTMLInputElement>("[data-git-status-toggle]");
+    expect(git?.checked).toBe(false);
+    expect(git?.closest("label")?.textContent).toContain(i18n.t("gitStatus.preference"));
     for (const id of rightPanelTabIds) {
       const input = container.querySelector<HTMLInputElement>(`[data-panel-tab-toggle="${id}"]`);
       expect(input?.closest("label")?.textContent).toContain(i18n.t(`panel.${id}`));
@@ -90,6 +93,7 @@ it.each(["en", "ro", "de", "fr"])(
     expect(checked()).toEqual(defaultRightPanelTabs);
     expect(updates()).toHaveLength(0);
     expect(container.querySelector<HTMLButtonElement>("[data-project-save]")?.disabled).toBe(true);
+    await click("[data-git-status-toggle]");
     await click('[data-panel-tab-toggle="terminal"]');
     await click('[data-panel-tab-toggle="context"]');
     await click('[data-panel-tab-toggle="bookmarks"]');
@@ -102,6 +106,8 @@ it.each(["en", "ro", "de", "fr"])(
       "bookmarks",
       "runs",
     ]);
+    expect(saved.mock.calls[0]?.[0].config.interface.git_status).toBe(true);
+    expect(wb.config.interface.git_status).toBe(false);
     expect(wb.config.interface.right_panel_tabs).toEqual(defaultRightPanelTabs);
   },
 );

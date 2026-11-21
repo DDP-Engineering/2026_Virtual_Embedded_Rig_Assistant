@@ -678,6 +678,7 @@ export function App() {
                         key={indexLease}
                         workbenchId={benchId}
                         indexLease={indexLease}
+                        gitEnabled={bench.data?.config.interface.git_status ?? false}
                         readOnly={readOnly}
                         editExclusions={() => {
                           if (!activeWorkbench) return;

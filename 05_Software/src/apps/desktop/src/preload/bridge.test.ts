@@ -202,6 +202,7 @@ it("infers registry types and returns validated metadata", async () => {
     | "downloads.open"
     | "downloads.reveal"
     | "docs.status"
+    | "git.status"
     | "docs.volume"
     | "docs.approve"
     | "docs.tree"

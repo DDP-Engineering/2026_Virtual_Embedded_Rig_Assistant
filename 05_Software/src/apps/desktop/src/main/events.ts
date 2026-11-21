@@ -172,7 +172,7 @@ export function sanitizeEvent(
     const { disabled: disabledTools, ...toolExtensions } = tools;
     const { enabled: enabledPlugins, ...pluginExtensions } = plugins;
     const { detail, ...chatExtensions } = chat;
-    const { right_panel_tabs, ...interfaceExtensions } = panelInterface;
+    const { right_panel_tabs, git_status, ...interfaceExtensions } = panelInterface;
     const { permission_mode, model, allowed_commands, ...agentExtensions } = agent;
     const scrubbedModel = model === null ? null : scrub(model);
     return {
@@ -197,7 +197,7 @@ export function sanitizeEvent(
       tools: { ...(extra(toolExtensions) as object), disabled: disabledTools.map(scrub) },
       plugins: { ...(extra(pluginExtensions) as object), enabled: enabledPlugins.map(scrub) },
       chat: { ...(extra(chatExtensions) as object), detail },
-      interface: { ...(extra(interfaceExtensions) as object), right_panel_tabs },
+      interface: { ...(extra(interfaceExtensions) as object), right_panel_tabs, git_status },
       agent: {
         ...(extra(agentExtensions) as object),
         permission_mode,
@@ -269,6 +269,7 @@ export function sanitizeEvent(
   const event = envelope.event;
   // Counters only: no paths or user text to scrub.
   if (event.type === "index.progress" || event.type === "index.volume") return envelope;
+  if (event.type === "git.status") return envelope; // The Files presentation already owns its masked identities.
   if (event.type === "index.status")
     return {
       ...envelope,

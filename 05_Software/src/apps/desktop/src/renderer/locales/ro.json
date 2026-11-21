@@ -1,4 +1,42 @@
 {
+  "gitStatus": {
+    "preference": "Arată starea Git în Fișiere",
+    "changesOnly": "Doar modificările Git",
+    "refresh": "Actualizează starea Git",
+    "branch": {
+      "named": "Ramura {{name}}",
+      "unborn": "Ramura {{name}} fără commit-uri",
+      "detached": "HEAD detașat ({{name}})"
+    },
+    "changed": "Căi modificate: {{count}}",
+    "conflicts": "Conflicte: {{count}}",
+    "watchLimited": "Unele dosare necesită actualizare manuală.",
+    "conflict": "Conflict Git",
+    "absent": "Lipsește din arborele de lucru",
+    "folder": "Căi modificate în dosar: {{count}}",
+    "comparison": {
+      "staged": "În index: {{status}}",
+      "unstaged": "În arborele de lucru: {{status}}"
+    },
+    "short": {
+      "staged": "I",
+      "unstaged": "L"
+    },
+    "change": {
+      "M": "Modificat",
+      "?": "Neurmărit",
+      "A": "Adăugat",
+      "R": "Redenumit",
+      "D": "Șters"
+    },
+    "availability": {
+      "loading": "Se citește starea Git…",
+      "no-repository": "Nu există un depozit Git pentru acest dosar.",
+      "missing-git": "Git 2.40 sau o versiune ulterioară nu a fost găsit.",
+      "unsupported": "Acest depozit Git nu este acceptat.",
+      "failed": "Starea Git nu a putut fi citită."
+    }
+  },
   "toolActivity": {
     "keywordFallback": "Sunt afișate rezultate după cuvinte-cheie deoarece căutarea semantică nu a fost disponibilă.",
     "embeddingRebuild": "Indexul semantic se reconstruiește. Aceste rezultate corespund cuvintelor-cheie.",

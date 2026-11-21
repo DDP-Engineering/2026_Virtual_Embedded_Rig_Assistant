@@ -1299,6 +1299,25 @@ What this plugin does.
         value = {};
         break;
       }
+      case "git.status": {
+        const { action, ...owner } = channels["git.status"].request.parse(input.data);
+        const wb = current().snapshot;
+        if (owner.workbenchId !== wb.config.id || owner.indexLease !== wb.indexLease)
+          throw veraError("CONFLICT");
+        if (action !== "close") {
+          if (!wb.config.interface.git_status) throw veraError("DENIED");
+          emit({
+            topic: "workbench",
+            id: owner.workbenchId,
+            event: {
+              type: "git.status",
+              update: { ...owner, status: { state: "no-repository" }, watchLimited: false },
+            },
+          });
+        }
+        value = {};
+        break;
+      }
       case "docs.status": {
         const request = channels["docs.status"].request.parse(input.data);
         const wb = current().snapshot;

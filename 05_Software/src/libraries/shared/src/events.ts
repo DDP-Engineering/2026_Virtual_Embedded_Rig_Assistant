@@ -10,6 +10,7 @@ import {
 } from "./documents.js";
 import { downloadApprovalSchema, validDownloadApproval } from "./downloads.js";
 import { providerRetryAfterSchema } from "./errors.js";
+import { gitStatusUpdateSchema } from "./git-status.js";
 import type { Channel, Request, Response } from "./ipc.js";
 import { programApprovalSchema, validProgramApproval } from "./program-rules.js";
 import { reasoningOptionSchema } from "./provider-discovery.js";
@@ -72,6 +73,7 @@ export function settingsChangedEvent(previous: Settings | undefined, next: Setti
 }
 export const workbenchEventSchema = z.discriminatedUnion("type", [
   z.strictObject({ type: z.literal("index.status"), status: documentIndexStatusSchema }),
+  z.strictObject({ type: z.literal("git.status"), update: gitStatusUpdateSchema }),
   z.strictObject({
     type: z.literal("index.document"),
     path: z.string().min(1),
@@ -269,7 +271,11 @@ export const eventEnvelopeSchema = z.discriminatedUnion("topic", [
   }),
   z
     .strictObject({ topic: z.literal("workbench"), id: workbenchIdSchema, event: workbenchEventSchema })
-    .refine(({ id, event }) => event.type !== "index.status" || id === event.status.workbenchId),
+    .refine(({ id, event }) =>
+      event.type === "index.status"
+        ? id === event.status.workbenchId
+        : event.type !== "git.status" || id === event.update.workbenchId,
+    ),
 ]);
 export type EventEnvelope = z.infer<typeof eventEnvelopeSchema>;
 export const sessionSubscriptionSchema = z.strictObject({

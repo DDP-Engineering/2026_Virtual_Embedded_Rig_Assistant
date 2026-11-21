@@ -46,6 +46,14 @@ The **Files** tab shows the whole workbench folder as a tree. Files ignored by V
 
 The menu of a file offers **Open**, **Attach as context**, **Open in** (the default app or another app), **Show in Explorer** (Finder or folder on other systems), **Copy** (absolute path, relative path or file name) and **Properties**, which includes the index status.
 
+## Git status in Files
+
+Enable **Show Git status in Files** under **Edit Workbench → Interface** and save. The setting is off by default for each workbench. Files shows the branch and counts changed paths and conflicts inside the workbench. A rename counts both paths when both are inside the workbench. A rename across its boundary appears as an addition or deletion on the side you can see.
+
+Badges show **S** for staged and **U** for unstaged changes. The codes are M (modified), ? (untracked), A (added), R (renamed), D (deleted) and ! (conflict). A file can show both comparisons. A collapsed folder shows its count of changed paths. **Git changes only** filters the tree. Deleted files and absent rename sources stay visible as entries, with no file to open.
+
+The status uses Git's ignore rules even when document indexing uses different rules. It refreshes as watched files change. Use **Refresh Git status** to retry or update folders that can't be watched. This read-only view needs a system installation of Git 2.40 or later and an ordinary local working tree. Linked worktrees, submodule workbench roots, unsupported metadata layouts and repositories with config includes or filters show an unavailable status. Files browsing remains available.
+
 ## Citations
 
 In an answer, each citation chip names the source and the place: page, page range, slide, heading or line range. Select a chip to open the document at that place. A chip marked **Citation could not be verified** points to something VERA could not confirm, for example a page that does not exist or a file that changed since; treat that statement with care.

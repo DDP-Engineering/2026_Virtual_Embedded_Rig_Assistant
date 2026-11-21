@@ -17,6 +17,7 @@ export * from "./embedding-models.js";
 export { providerRetryAfterSchema } from "./errors.js";
 export * from "./events.js";
 export { gitExecutionArguments } from "./git-options.js";
+export * from "./git-status.js";
 export * from "./help.js";
 export * from "./hil-plan.js";
 export * from "./industrial-catalog.js";

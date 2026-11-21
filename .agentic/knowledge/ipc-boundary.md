@@ -121,6 +121,7 @@ AppEvents use shared updates.ts; [updates](updates.md) owns their lifecycle/capa
   [Knowledge ingest](knowledge-ingest.md) owns their lifecycle and persistence.
 
 - Shared defineChannel, channels, Channel, Request, Response, VeraError and VeraBridge.
+- `git.status` and its workbench event carry the Files view ID and active lease. Desktop main owns the typed operations and [Display presentation](files-git-status.md).
 - providers.list/save/remove/models/test use strict public projections and key-bearing write requests; [Providers](providers.md) owns main-only values, consent, configuration and bounded hints. Main scrubs known-secret error params and event user text before transport.
 - providers.models returns text and image input modalities as part of each model's capabilities. Custom providers.list/save carry the optional imageModels list of enabled IDs per connection. `providers.image.capability` resolves a validated workbench draft model reference (or the application default) and returns its image capability through the main gateway.
 - providers.chatgpt.login/cancel/status/logout use strict metadata and guarded manualCode/promptId requests. app.openExternal requires confirmed:true and HTTP(S); main further confines OAuth to the pinned auth page. [Providers](providers.md) owns secret isolation and lifecycle.

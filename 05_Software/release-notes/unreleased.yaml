@@ -142,12 +142,12 @@ entries:
       de: Interaktive Terminal-Tabs nutzen; Agentenlesezugriff für jedes Terminal separat erlauben.
       fr: Utilisez des terminaux interactifs ; autorisez la lecture par l’agent pour chacun.
   - category: improved
-    topic: { en: Workbench, ro: Workbench, de: Workbench, fr: Banc de travail }
+    topic: { en: Files, ro: Fișiere, de: Dateien, fr: Fichiers }
     text:
-      en: Indexing honors Git ignore and explains skips over a configurable file size limit.
-      ro: Indexarea respectă Git ignore și explică omiterile peste limita de mărime configurabilă.
-      de: Die Indizierung beachtet Git Ignore und begründet Auslassungen über dem einstellbaren Limit.
-      fr: L’indexation suit Git ignore et explique les exclusions au-delà de la taille configurable.
+      en: Opt in to Git status. Indexing follows Git ignore and explains skips above the size limit.
+      ro: Activează starea Git. Indexarea aplică Git ignore și explică omiterile peste limita de mărime.
+      de: Git-Status einschalten. Die Indizierung beachtet Git-Ignore und erklärt Größe als Ausschluss.
+      fr: Activez l’état Git. L’index suit les exclusions Git et explique les sauts dus à la taille.
   - category: new
     topic: { en: Workbench, ro: Workbench, de: Workbench, fr: Banc de travail }
     text:

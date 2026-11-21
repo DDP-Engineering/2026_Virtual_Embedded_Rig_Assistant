@@ -97,6 +97,40 @@ function fixture() {
   };
 }
 describe("Display boundary", () => {
+  it("projects Git status with the same opaque identities and masked rename labels as Files", async () => {
+    const f = fixture();
+    f.app(true);
+    const [source, destination] = rawPaths as [string, string];
+    const status = f.display.gitStatus(id, {
+      state: "ready",
+      branch: { kind: "named", name: secrets[0] as string },
+      entries: [
+        {
+          path: source,
+          staged: "R",
+          unstaged: null,
+          conflict: false,
+          virtual: true,
+          rename: { path: destination, role: "destination" },
+        },
+      ],
+      changed: 1,
+      conflicts: 0,
+    });
+    const tree = await f.display.tree(id, "docs");
+    expect(status).toMatchObject({
+      branch: { name: "[REDACTED]" },
+      entries: [
+        {
+          path: tree.entries[0]?.path,
+          displayPath: "docs/[REDACTED].txt",
+          rename: { path: tree.entries[1]?.path },
+        },
+      ],
+    });
+    for (const secret of secrets) expect(JSON.stringify(status)).not.toContain(secret);
+  });
+
   it("keeps unknown secret-bearing extensions opaque and stable across files and Display choices", async () => {
     const f = fixture();
     f.app(true);

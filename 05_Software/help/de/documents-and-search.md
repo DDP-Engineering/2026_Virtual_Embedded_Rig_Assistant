@@ -46,6 +46,14 @@ Der Tab **Dateien** zeigt den gesamten Workbench-Ordner als Baum. Von VERA ignor
 
 Das Menü einer Datei bietet **Öffnen**, **Als Kontext anhängen**, **Öffnen in** (die Standard-App oder eine andere App), **Im Explorer anzeigen** (Finder bzw. Ordner auf anderen Systemen), **Kopieren** (absoluter Pfad, relativer Pfad oder Dateiname) und **Eigenschaften**, einschließlich des Indexstatus.
 
+## Git-Status in Dateien
+
+Aktivieren und speichern Sie **Git-Status in Dateien anzeigen** unter **Workbench bearbeiten → Oberfläche**. Die Option ist pro Workbench standardmäßig aus. Dateien zeigt den Branch und zählt geänderte Pfade und Konflikte in der Workbench. Bei einer Umbenennung zählen beide Pfade, wenn sie in der Workbench liegen. Liegt ein Pfad außerhalb, erscheint auf der sichtbaren Seite eine Hinzufügung oder Löschung.
+
+**I** und **A** kennzeichnen Änderungen im Index bzw. im Arbeitsbaum. Die Codes lauten M (geändert), ? (nicht verfolgt), A (hinzugefügt), R (umbenannt), D (gelöscht) und ! (Konflikt). Eine Datei kann beide Markierungen haben. Ein eingeklappter Ordner zeigt die Anzahl geänderter Pfade. **Nur Git-Änderungen** filtert den Baum. Gelöschte Dateien und fehlende Umbenennungsquellen bleiben als Einträge ohne Datei zum Öffnen sichtbar.
+
+Der Status verwendet die Git-Ignore-Regeln auch dann, wenn die Dokumentindizierung anderen Regeln folgt. Änderungen an überwachten Dateien aktualisieren die Anzeige. Verwenden Sie **Git-Status aktualisieren** bei einem Fehler oder für Ordner, die nicht überwacht werden können. Die schreibgeschützte Ansicht benötigt eine Systeminstallation von Git 2.40 oder neuer und einen gewöhnlichen lokalen Arbeitsbaum. Verknüpfte Arbeitsbäume, Submodule als Workbench-Wurzel, nicht unterstützte Metadatenlayouts und Repositorys mit Includes oder Filtern in der Konfiguration melden einen nicht verfügbaren Status. Die Dateiansicht bleibt benutzbar.
+
 ## Quellenverweise
 
 In einer Antwort nennt jeder Quellen-Chip die Quelle und die Stelle: Seite, Seitenbereich, Folie, Überschrift oder Zeilenbereich. Wählen Sie einen Chip, um das Dokument an dieser Stelle zu öffnen. Ein Chip mit der Markierung **Quellenverweis konnte nicht überprüft werden** verweist auf etwas, das VERA nicht bestätigen konnte, zum Beispiel eine Seite, die es nicht gibt, oder eine Datei, die sich inzwischen geändert hat; behandeln Sie diese Aussage mit Vorsicht.

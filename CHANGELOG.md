@@ -8,6 +8,8 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ### Added
 
+- Opt in to read-only Git status, changed-file badges and a changes filter in Files.
+
 - See workbench indexing status in the sidebar and document search limitations on the affected chat turns.
 - Verbose chat shows the send date and time beneath user messages, alongside token usage.
 - Connect Hugging Face Inference Providers, NVIDIA NIM and Vercel AI Gateway with full model IDs.

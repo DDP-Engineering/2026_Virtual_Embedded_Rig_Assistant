@@ -1,4 +1,42 @@
 {
+  "gitStatus": {
+    "preference": "Afficher l’état Git dans Fichiers",
+    "changesOnly": "Modifications Git uniquement",
+    "refresh": "Actualiser l’état Git",
+    "branch": {
+      "named": "Branche {{name}}",
+      "unborn": "Branche {{name}} sans commit",
+      "detached": "HEAD détachée ({{name}})"
+    },
+    "changed": "Chemins modifiés : {{count}}",
+    "conflicts": "Conflits : {{count}}",
+    "watchLimited": "Certains dossiers nécessitent une actualisation manuelle.",
+    "conflict": "Conflit Git",
+    "absent": "Absent de l’arbre de travail",
+    "folder": "Chemins modifiés dans le dossier : {{count}}",
+    "comparison": {
+      "staged": "Dans l’index : {{status}}",
+      "unstaged": "Dans l’arbre de travail : {{status}}"
+    },
+    "short": {
+      "staged": "I",
+      "unstaged": "T"
+    },
+    "change": {
+      "M": "Modifié",
+      "?": "Non suivi",
+      "A": "Ajouté",
+      "R": "Renommé",
+      "D": "Supprimé"
+    },
+    "availability": {
+      "loading": "Lecture de l’état Git…",
+      "no-repository": "Aucun dépôt Git ne contient ce dossier.",
+      "missing-git": "Git 2.40 ou ultérieur est introuvable.",
+      "unsupported": "Ce dépôt Git n’est pas pris en charge.",
+      "failed": "Impossible de lire l’état Git."
+    }
+  },
   "toolActivity": {
     "keywordFallback": "La recherche sémantique était indisponible. Voici les résultats par mots-clés.",
     "embeddingRebuild": "L’index sémantique est en cours de reconstruction. Ces résultats correspondent aux mots-clés.",

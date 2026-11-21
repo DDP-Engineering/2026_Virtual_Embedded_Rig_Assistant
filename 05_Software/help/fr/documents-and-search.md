@@ -46,6 +46,14 @@ L’onglet **Fichiers** affiche tout le dossier du banc de travail sous forme d�
 
 Le menu d’un fichier propose **Ouvrir**, **Joindre comme contexte**, **Ouvrir avec** (l’application par défaut ou une autre application), **Afficher dans l’Explorateur** (le Finder ou le dossier sur les autres systèmes), **Copier** (chemin absolu, chemin relatif ou nom du fichier) et **Propriétés**, qui inclut l’état d’indexation.
 
+## État Git dans Fichiers
+
+Activez **Afficher l’état Git dans Fichiers** dans **Modifier le banc de travail → Interface**, puis enregistrez. L’option est désactivée par défaut pour chaque banc. Fichiers affiche la branche et compte les chemins modifiés et les conflits du banc. Un renommage compte les deux chemins s’ils sont tous les deux dans le banc. S’il traverse la limite du banc, il apparaît comme un ajout ou une suppression du côté visible.
+
+**I** indique une modification dans l’index et **T** une modification dans l’arbre de travail. Les codes sont M (modifié), ? (non suivi), A (ajouté), R (renommé), D (supprimé) et ! (conflit). Un fichier peut avoir les deux marques. Un dossier replié indique le nombre de chemins modifiés. **Modifications Git uniquement** filtre l’arborescence. Les fichiers supprimés et les anciens chemins des renommages restent visibles sans fichier à ouvrir.
+
+L’état applique les règles d’exclusion de Git, même si l’indexation des documents suit d’autres règles. Il s’actualise quand les fichiers surveillés changent. Utilisez **Actualiser l’état Git** après une erreur ou pour les dossiers qui ne peuvent pas être surveillés. Cette vue en lecture seule nécessite une installation système de Git 2.40 ou ultérieur et un arbre de travail local ordinaire. Les arbres de travail liés, les sous-modules utilisés comme racine du banc, les formats de métadonnées non pris en charge et les dépôts dont la configuration contient des inclusions ou des filtres affichent un état indisponible. La navigation dans Fichiers reste disponible.
+
 ## Citations
 
 Dans une réponse, chaque puce de citation indique la source et l’emplacement : page, plage de pages, diapositive, titre ou plage de lignes. Sélectionnez une puce pour ouvrir le document à cet endroit. Une puce marquée **La citation n’a pas pu être vérifiée** désigne un élément que VERA n’a pas pu confirmer, par exemple une page qui n’existe pas ou un fichier modifié depuis ; considérez cette affirmation avec prudence.

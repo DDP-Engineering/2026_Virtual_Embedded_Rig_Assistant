@@ -312,14 +312,18 @@ it("rejects a 101st user command grant with a typed error", async () => {
     await h.service.close();
   }
 });
-it("persists right-panel tabs per workbench across fresh service instances without changing content", async () => {
+it("persists interface preferences per workbench across fresh service instances without changing content", async () => {
   const h = await harness();
   let service = h.service;
   try {
     const first = await service.create(h.folder, "First");
     await service.updatePinned("Keep instructions");
     await writeFile(join(h.folder, "source.txt"), "Keep source");
-    await service.updateConfig({ interface: { right_panel_tabs: ["docs", "plan"] } }, first.config.id);
+    expect(first.config.interface.git_status).toBe(false);
+    await service.updateConfig(
+      { interface: { right_panel_tabs: ["docs", "plan"], git_status: true } },
+      first.config.id,
+    );
     await service.updateConfig({ name: "Renamed" });
     await service.close();
     service = new WorkbenchService(h.host);
@@ -329,10 +333,12 @@ it("persists right-panel tabs per workbench across fresh service instances witho
       config: { interface: { right_panel_tabs: [] } },
     });
     expect(second.config.interface.right_panel_tabs).toEqual([]);
+    expect(second.config.interface.git_status).toBe(false);
     await service.close();
     service = new WorkbenchService(h.host);
     const reopened = await service.open(h.folder);
     expect(reopened.config.interface.right_panel_tabs).toEqual(["docs", "plan"]);
+    expect(reopened.config.interface.git_status).toBe(true);
     expect(reopened.config.agent).toEqual(first.config.agent);
     expect(reopened.config.tools).toEqual(first.config.tools);
     expect((await service.getPinned()).content).toBe("Keep instructions");

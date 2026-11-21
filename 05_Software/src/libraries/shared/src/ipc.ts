@@ -36,6 +36,7 @@ import {
 } from "./documents.js";
 import { downloadIdSchema, webDownloadSchema } from "./downloads.js";
 import { type VeraError, veraErrorSchema } from "./errors.js";
+import { gitStatusRequestSchema } from "./git-status.js";
 import {
   helpListRequestSchema,
   helpPageSchema,
@@ -565,6 +566,7 @@ export const channels = {
     }),
     z.strictObject({}),
   ),
+  "git.status": defineChannel("git.status", gitStatusRequestSchema, z.strictObject({})),
   "docs.status": defineChannel("docs.status", documentIndexScopeSchema, documentIndexStatusSchema),
   "docs.volume": defineChannel(
     "docs.volume",
