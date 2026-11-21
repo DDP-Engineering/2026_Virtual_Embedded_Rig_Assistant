@@ -7,6 +7,7 @@ import {
   emptySessionState,
   foldSessionEvents,
   type SessionEvent,
+  type SessionSummary,
   sessionEventSchema,
   sessionStateSchema,
 } from "@vera/shared";
@@ -1154,4 +1155,57 @@ it("reports active work as unsettled and signals the host once the turn settles"
   expect(observed.at(-1)).toBe(true);
   await service.close();
   expect(service.isSettled()).toBe(true);
+});
+// REQ-FUNC-a6aa5e7c
+it("tells the host when a session's activity changes, never for live text", async () => {
+  const seen: string[] = [];
+  let watched: core.SessionService | undefined;
+  const { service } = await setup({
+    model: () => "replay/edit-approve",
+    onActivity: (id) => {
+      const row = watched?.list().find((s) => s.id === id);
+      seen.push(`${id === session?.id ? "own" : id}:${row?.status}`);
+    },
+  });
+  watched = service;
+  let session: SessionSummary | undefined;
+  session = service.create();
+  // Counted from after creation: a new idle session is stored without being published.
+  const published: SessionEvent[] = [];
+  const off = service.subscribe(session.id, service.revision(session.id).seq, (_seq, event) =>
+    published.push(event),
+  );
+  service.send(session.id, "Edit the board");
+  await expect.poll(() => service.get(session.id).snapshot.approvals.length).toBe(1);
+  expect(seen).toContain("own:running");
+  expect(seen.at(-1)).toBe("own:awaiting_approval");
+  const approval = service.get(session.id).snapshot.approvals[0];
+  if (!approval) throw Error("approval missing");
+  const before = seen.length;
+  service.decideApproval({
+    sessionId: session.id,
+    approvalId: approval.approvalId,
+    requestSha256: approval.requestSha256,
+    decision: "approved",
+  });
+  expect(seen.slice(before)).toEqual(["own:running"]);
+  expect(await service.waitIdle(session.id)).toEqual({ stopReason: "end" });
+  expect(seen.at(-1)).toBe("own:idle");
+  // A title change counts too.
+  const calls = seen.length;
+  service.rename(session.id, "Renamed");
+  expect(seen).toHaveLength(calls + 1);
+  off();
+  // Exactly one call per stored turn, approval, title or status event, and none for the streamed text.
+  const counted = published.filter(
+    (event) =>
+      ["turn.started", "turn.done", "session.interrupted", "approval.requested", "approval.decided"].includes(
+        event.type,
+      ) ||
+      (event.type === "session.updated" && (event.title !== undefined || event.status !== undefined)),
+  );
+  expect(published.some((event) => event.type === "message.delta")).toBe(true);
+  expect(counted.length).toBeGreaterThanOrEqual(6);
+  expect(seen).toHaveLength(counted.length);
+  expect(seen.every((entry) => entry.startsWith("own:"))).toBe(true);
 });

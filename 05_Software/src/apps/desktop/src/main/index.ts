@@ -32,6 +32,7 @@ import {
 } from "@vera/core";
 import type { AdvancedKey } from "@vera/shared";
 import {
+  type EventEnvelope,
   eventEnvelopeSchema,
   type HelpLanguage,
   type HelpPage,
@@ -115,6 +116,7 @@ import { bundledResponse, installSessionPolicy, secureSession, secureWindow } fr
 import { exportSession } from "./session-export.js";
 import { createSessionOrder } from "./session-order.js";
 import { installSessionPerformance } from "./session-performance.js";
+import { SessionRouter } from "./session-router.js";
 import { SessionsHost } from "./sessions.js";
 import { drainShutdown } from "./shutdown.js";
 import { createPtyFactory } from "./terminal-pty.js";
@@ -206,37 +208,55 @@ if (__VERA_TEST__) Object.assign(globalThis, { veraTestIndexerPid: () => indexer
 let closeFileProbe: (() => Promise<void>) | undefined;
 let rendererUrl = "vera://app/index.html";
 let updates: Updates | undefined;
-export const emitAppEvent = createEventEmitter(
-  () => window?.webContents,
-  (text) => credentials.scrub(text),
-  (envelope) => {
-    if (envelope.topic === "workbench" && envelope.event.type === "index.document") {
-      const event = envelope.event;
-      return {
-        ...envelope,
-        event: {
-          ...event,
-          path: display.path(envelope.id, event.path),
-          document: event.document ? display.document(envelope.id, event.document) : null,
-        },
-      };
-    }
-    if (envelope.topic === "workbench" && envelope.event.type === "index.guard")
-      return {
-        ...envelope,
-        event: {
-          ...envelope.event,
-          guard: publicGuard(envelope.event.guard, (text) => display.scrub(envelope.id, text)),
-        },
-      };
-    return sanitizeEvent(
-      envelope,
-      (text) => (envelope.topic === "session" ? sessionContent(text) : credentials.scrub(text)),
-      (text) => credentials.scrub(text),
-      sessionImageIdentity,
-    );
-  },
+/**
+ * Makes an event safe for the renderer. Session events are masked with the agent masking of `owner`, the
+ * workbench holding the session, and carry image identities for it; index events use the shown workbench's
+ * Display identities.
+ */
+function projectEvent(envelope: EventEnvelope, owner: () => WorkbenchSnapshot): EventEnvelope {
+  if (envelope.topic === "workbench" && envelope.event.type === "index.document") {
+    const event = envelope.event;
+    return {
+      ...envelope,
+      event: {
+        ...event,
+        path: display.path(envelope.id, event.path),
+        document: event.document ? display.document(envelope.id, event.document) : null,
+      },
+    };
+  }
+  if (envelope.topic === "workbench" && envelope.event.type === "index.guard")
+    return {
+      ...envelope,
+      event: {
+        ...envelope.event,
+        guard: publicGuard(envelope.event.guard, (text) => display.scrub(envelope.id, text)),
+      },
+    };
+  if (envelope.topic !== "session") return sanitizeEvent(envelope, (text) => credentials.scrub(text));
+  const snapshot = owner();
+  return sanitizeEvent(
+    envelope,
+    sessionContent(snapshot),
+    (text) => credentials.scrub(text),
+    sessionImageIdentity(snapshot),
+  );
+}
+const eventTarget = () => window?.webContents;
+const eventScrub = (text: string) => credentials.scrub(text);
+export const emitAppEvent = createEventEmitter(eventTarget, eventScrub, (envelope) =>
+  projectEvent(envelope, () => workbench().getSnapshot()),
 );
+/** The events of one runtime's sessions, masked for that runtime's workbench whatever the foreground. */
+function runtimeEvents(owner: WorkbenchService) {
+  return createEventEmitter(eventTarget, eventScrub, (envelope) =>
+    projectEvent(envelope, () => owner.getSnapshot()),
+  );
+}
+/** The sidebar re-reads session.activity: a session's turn, approval, title or status, or the open runtimes changed. */
+function announceActivity(): void {
+  emitAppEvent({ topic: "app", id: "app", event: { type: "session.activity" } });
+}
 // The logger exists before the settings service: until they load, its Log retention getter throws and nothing is pruned.
 const logger = createLogger(dataLocations.paths.logs, systemClock, () => appAdvanced("logDays"));
 const credentials = new CredentialFile({
@@ -293,11 +313,13 @@ function sessions(): SessionsHost {
   return runtimes.foreground.sessions;
 }
 const maskingFor = createMaskingResolver(() => settings.get().settings);
-function sessionImageIdentity(path: string): string {
-  return display.sessionImagePath(workbench().getSnapshot().config.id, path);
+/** Message image identities of a session held by `owner`; they resolve while that workbench is shown. */
+function sessionImageIdentity(owner: WorkbenchSnapshot): (path: string) => string {
+  return (path) => display.sessionImagePath(owner, path);
 }
-function sessionContent(text: string): string {
-  return maskingFor(workbench().getSnapshot().config, "agent") ? credentials.scrub(text) : text;
+/** Session text as the renderer receives it: masked per the agent masking of the workbench holding it. */
+function sessionContent(owner: WorkbenchSnapshot): (text: string) => string {
+  return (text) => (maskingFor(owner.config, "agent") ? credentials.scrub(text) : text);
 }
 const display = new DisplayDocuments(
   workbench,
@@ -497,7 +519,10 @@ function interfaceLanguage(): HelpLanguage {
     : (helpLanguages.find((code) => app.getLocale().startsWith(code)) ?? "en");
 }
 /** What every workbench runtime's session host shares; each runtime adds its own WorkbenchService. */
-const sessionOptions: Omit<ConstructorParameters<typeof SessionsHost>[0], "workbench" | "settled"> = {
+const sessionOptions: Omit<
+  ConstructorParameters<typeof SessionsHost>[0],
+  "workbench" | "settled" | "emit" | "activity"
+> = {
   log: (message) => logger.log("error", "agent.turn.failed", { message }),
   terminals: (workbenchId) => terminals.reader(workbenchId),
   help: { app: help, language: interfaceLanguage },
@@ -520,7 +545,6 @@ const sessionOptions: Omit<ConstructorParameters<typeof SessionsHost>[0], "workb
   version: app.getVersion(),
   target: () =>
     window && !window.isDestroyed() ? { webContents: window.webContents, url: rendererUrl } : undefined,
-  emit: emitAppEvent,
   // Instrumented builds may resolve fixture plugins from VERA_TEST_PROGRAMS for e2e; otherwise provisioning does.
   programs: {
     runner: programs,
@@ -549,15 +573,24 @@ const runtimes = new WorkbenchRuntimes({
     const service = new WorkbenchService(workbenchHost, indexer.processor);
     return {
       workbench: service,
-      sessions: new SessionsHost({ ...sessionOptions, workbench: service, settled }),
+      sessions: new SessionsHost({
+        ...sessionOptions,
+        workbench: service,
+        settled,
+        emit: runtimeEvents(service),
+        activity: announceActivity,
+      }),
     };
   },
   stopPrograms: (folder) => programs.stopWorkbench(folder),
   log: (event) => logger.log("error", event),
+  changed: announceActivity,
 });
+/** Session requests reach the runtime holding their session or named workbench, whichever is shown. */
+const router = new SessionRouter(() => runtimes.all());
 ipcMain.handle("vera:subscription", async (event, action, payload) => {
   await credentialsReady;
-  return sessions().subscription(event, action, payload);
+  return router.subscription(event, action, payload);
 });
 /** The folder of the open workbench when `workbenchId` names it; CONFLICT otherwise. */
 function openWorkbenchFolder(workbenchId: string): string {
@@ -1066,12 +1099,12 @@ ipcMain.handle(
       "providers.chatgpt.status": () => chatgpt.status(),
       "providers.chatgpt.logout": () => chatgpt.logout(),
       "artifacts.list": ({ sessionId }) =>
-        sessions().run((s) =>
+        router.inSession(sessionId, (s, owner) =>
           s
             .listArtifacts(sessionId)
             .map((a) =>
               publicArtifact(a, (text) =>
-                maskingFor(workbench().getSnapshot().config, "exports") ? credentials.scrub(text) : text,
+                maskingFor(owner.config, "exports") ? credentials.scrub(text) : text,
               ),
             ),
         ),
@@ -1102,7 +1135,7 @@ ipcMain.handle(
         });
       },
       "changes.list": ({ sessionId }) =>
-        sessions().run((s) =>
+        router.inSession(sessionId, (s) =>
           s.listChanges(sessionId).map((c) => ({ ...c, path: credentials.scrub(c.path) })),
         ),
       "changes.get": ({ changeId }) =>
@@ -1126,41 +1159,43 @@ ipcMain.handle(
             (absolute) => shell.openPath(absolute),
           ),
         ),
+      // Session requests run in the workbench holding the session, or the named one (REQ-FUNC-038c9b9b).
       "session.list": async ({ workbenchId }) => {
-        const current = workbench().getSnapshot(),
-          db = workbench().getDatabase();
-        const rows = await sessions().list(workbenchId);
-        if (
-          workbench().getSnapshot().config.id !== current.config.id ||
-          workbench().getSnapshot().folder !== current.folder ||
-          workbench().getDatabase() !== db
-        )
-          throw veraError("CONFLICT");
+        const route = router.workbench(workbenchId);
+        const rows = await route.runtime.sessions.list(workbenchId, () => {
+          router.verify(route);
+        });
+        const owner = router.verify(route);
         return sessionOrder.list(
-          current.config.id,
-          rows.map((item) => sanitizeSessionSummary(item, sessionContent)),
+          owner.config.id,
+          rows.map((item) => sanitizeSessionSummary(item, sessionContent(owner))),
         );
       },
       "session.move": ({ workbenchId, sessionId, offset }) =>
-        sessions().run(async (s) => {
-          if (workbench().getSnapshot().config.id !== workbenchId) throw veraError("CONFLICT");
+        router.inWorkbench(workbenchId, async (s) => {
           await sessionOrder.move(workbenchId, s.list(), sessionId, offset);
           return {};
         }),
-      "session.sizes": ({ workbenchId }) =>
-        sessions().run((s) => {
-          if (workbench().getSnapshot().config.id !== workbenchId) throw veraError("CONFLICT");
-          return s.sizes();
-        }),
+      "session.sizes": ({ workbenchId }) => router.inWorkbench(workbenchId, (s) => s.sizes()),
       "session.search": ({ query, workbenchId }) =>
-        sessions().run((s) => {
-          if (workbenchId && workbench().getSnapshot().config.id !== workbenchId) throw veraError("CONFLICT");
-          return s.search(query).map((item) => sanitizeSessionSummary(item, sessionContent));
-        }),
+        router.inWorkbench(workbenchId, (s, owner) =>
+          s.search(query).map((item) => sanitizeSessionSummary(item, sessionContent(owner))),
+        ),
+      "session.activity": async () =>
+        (await router.activity()).map(({ snapshot, foreground, sessions }) => ({
+          workbenchId: snapshot.config.id,
+          name: snapshot.config.name,
+          folder: snapshot.folder,
+          foreground,
+          sessions: sessions.map((item) => {
+            const { id, title, status } = sanitizeSessionSummary(item, sessionContent(snapshot));
+            return { id, title, status: status as "running" | "awaiting_approval" };
+          }),
+        })),
       "session.export": async ({ sessionId, format }) => {
-        const owner = workbench().getSnapshot().config.id;
         // An unknown session is refused before the dialog opens.
-        await sessions().run((s) => {
+        const route = router.session(sessionId);
+        await router.run(route, (s) => {
           s.get(sessionId);
         });
         const path = await chooseSavePath({
@@ -1168,107 +1203,140 @@ ipcMain.handle(
           filters: [{ name: format === "md" ? "Markdown" : "JSON", extensions: [format] }],
         });
         if (path === null) return { exported: false };
-        return sessions().run((s) => {
-          if (workbench().getSnapshot().config.id !== owner) throw veraError("CONFLICT");
-          return exportSession(s, sessionId, format, {
-            masking: () => maskingFor(workbench().getSnapshot().config, "exports"),
-            root: workbench().getSnapshot().folder,
+        return router.run(route, (s, owner) =>
+          exportSession(s, sessionId, format, {
+            masking: () => maskingFor(route.runtime.workbench.getSnapshot().config, "exports"),
+            root: owner.folder,
             choose: async () => path,
             write: (target, content) => createFileAccess(systemClock).writeAtomic(target, content),
             scrub: (text) => credentials.scrub(text),
-          });
-        });
+          }),
+        );
       },
       "session.create": ({ modelRef, mode, workbenchId, reuseEmpty }) =>
-        sessions().run((s) => {
-          if (workbenchId && workbench().getSnapshot().config.id !== workbenchId) throw veraError("CONFLICT");
+        router.inWorkbench(workbenchId, (s, owner) => {
           if (credentials.containsSecret(modelRef)) throw { code: "INVALID", messageKey: "errors.INVALID" };
-          return sanitizeSessionSummary(s.create(modelRef, mode, reuseEmpty), (text) => sessionContent(text));
+          return sanitizeSessionSummary(s.create(modelRef, mode, reuseEmpty), sessionContent(owner));
         }),
-      "session.revision": ({ sessionId }) => sessions().run((service) => service.revision(sessionId)),
+      "session.revision": ({ sessionId }) =>
+        router.inSession(sessionId, (service) => service.revision(sessionId)),
       "session.get": ({ sessionId }) =>
-        sessions().run((s) => {
+        router.inSession(sessionId, (s, owner) => {
           const value = s.get(sessionId);
           return {
             ...value,
-            snapshot: rendererSessionSnapshot(value.snapshot, sessionContent, sessionImageIdentity),
+            snapshot: rendererSessionSnapshot(
+              value.snapshot,
+              sessionContent(owner),
+              sessionImageIdentity(owner),
+            ),
           };
         }),
       "session.item.detail": ({ sessionId, itemId, field }) =>
-        sessions().run((s) => ({ text: sessionContent(s.itemDetail(sessionId, itemId, field)) })),
+        router.inSession(sessionId, (s, owner) => ({
+          text: sessionContent(owner)(s.itemDetail(sessionId, itemId, field)),
+        })),
       "session.bookmark": ({ sessionId, messageId, bookmarked }) =>
-        sessions().run((s) => {
-          s.bookmark(sessionId, messageId, bookmarked);
-          return {};
-        }, false),
+        router.inSession(
+          sessionId,
+          (s) => {
+            s.bookmark(sessionId, messageId, bookmarked);
+            return {};
+          },
+          false,
+        ),
       "session.bookmarks.remove": (request) =>
-        sessions().run((s) => {
-          s.removeBookmarks(
-            request.sessionId,
-            "all" in request ? { all: true } : { messageIds: request.messageIds },
-          );
-          return {};
-        }, false),
+        router.inSession(
+          request.sessionId,
+          (s) => {
+            s.removeBookmarks(
+              request.sessionId,
+              "all" in request ? { all: true } : { messageIds: request.messageIds },
+            );
+            return {};
+          },
+          false,
+        ),
       "session.advanced.set": ({ sessionId, key, value }) =>
-        sessions().run((s) => {
-          s.setAdvanced(sessionId, key as AdvancedKey, value);
-          return {};
-        }, false),
+        router.inSession(
+          sessionId,
+          (s) => {
+            s.setAdvanced(sessionId, key as AdvancedKey, value);
+            return {};
+          },
+          false,
+        ),
       "session.compact": async ({ sessionId }) => {
         // Only the admission runs on the host queue: a summary may take minutes and must not hold other calls.
-        const { completion } = await sessions().run((s) => ({ completion: s.compactNow(sessionId) }), false);
+        const { completion } = await router.inSession(
+          sessionId,
+          (s) => ({ completion: s.compactNow(sessionId) }),
+          false,
+        );
         return { status: await completion };
       },
       "session.rename": ({ sessionId, title }) =>
-        sessions().run((s) => {
+        router.inSession(sessionId, (s, owner) => {
           if (credentials.containsSecret(title)) throw { code: "INVALID", messageKey: "errors.INVALID" };
-          return sanitizeSessionSummary(s.rename(sessionId, title), sessionContent);
+          return sanitizeSessionSummary(s.rename(sessionId, title), sessionContent(owner));
         }),
       "session.archive.set": ({ sessionId, archived }) =>
-        sessions().run((s) => sanitizeSessionSummary(s.setArchived(sessionId, archived), sessionContent)),
+        router.inSession(sessionId, (s, owner) =>
+          sanitizeSessionSummary(s.setArchived(sessionId, archived), sessionContent(owner)),
+        ),
       "session.delete": ({ sessionId }) =>
-        sessions().run(async (s) => {
+        router.inSession(sessionId, async (s) => {
           await s.delete(sessionId);
           return {};
         }),
       "session.image.attach": ({ workbenchId, sessionId, source }) =>
-        sessions().run((service) => {
-          openWorkbenchFolder(workbenchId);
-          if (credentials.containsSecret("path" in source ? source.path : source.name))
-            throw veraError("INVALID");
-          if ("path" in source && /__vera_display_[A-Za-z0-9_-]+\.(?:\/|$)/.test(source.path))
-            throw veraError("DENIED");
-          return service.attachImage(sessionId, source);
-        }, false),
-      "session.image.capability": ({ workbenchId, sessionId }) =>
-        sessions().imageCapability(workbenchId, sessionId),
+        router.inSession(
+          sessionId,
+          (service) => {
+            if (credentials.containsSecret("path" in source ? source.path : source.name))
+              throw veraError("INVALID");
+            if ("path" in source && /__vera_display_[A-Za-z0-9_-]+\.(?:\/|$)/.test(source.path))
+              throw veraError("DENIED");
+            return service.attachImage(sessionId, source);
+          },
+          false,
+          workbenchId,
+        ),
+      "session.image.capability": async ({ workbenchId, sessionId }) => {
+        const route = router.session(sessionId, workbenchId);
+        return route.runtime.sessions.imageCapability(workbenchId, sessionId, () => {
+          router.verify(route);
+        });
+      },
       "session.send": ({ sessionId, text, images }) =>
-        sessions().run(async (s) => {
+        router.inSession(sessionId, async (s, owner) => {
           if (credentials.containsSecret(text)) throw { code: "INVALID", messageKey: "errors.INVALID" };
+          // Image identities resolve only while the session's workbench is shown (Display identities).
           const sent = images?.length
             ? await s.sendWithImages(
                 sessionId,
                 text,
-                images.map((path) =>
-                  display.resolveSessionImagePath(workbench().getSnapshot().config.id, path),
-                ),
+                images.map((path) => display.resolveSessionImagePath(owner.config.id, path)),
               )
             : s.send(sessionId, text);
-          embeddingWarmup.request(workbench().getSnapshot().config.id);
+          embeddingWarmup.request(owner.config.id);
           return sent;
         }),
       // Stop and approval decisions must not wait for plugin loading and program probing.
-      "session.stop": ({ sessionId }) => {
-        return sessions().run((s) => ({ stopped: s.stop(sessionId) }), false);
-      },
+      "session.stop": ({ sessionId }) =>
+        router.inSession(sessionId, (s) => ({ stopped: s.stop(sessionId) }), false),
       "session.approval.decide": (request) =>
-        sessions().run(async (s) => {
-          if (request.commandPrefix !== undefined) await s.allowCommandApproval(request);
-          else s.decideApproval(request);
-          return {};
-        }, false),
+        router.inSession(
+          request.sessionId,
+          async (s) => {
+            if (request.commandPrefix !== undefined) await s.allowCommandApproval(request);
+            else s.decideApproval(request);
+            return {};
+          },
+          false,
+        ),
       "session.reasoning.get": ({ sessionId }) =>
-        sessions().run(async (s) => {
+        router.inSession(sessionId, async (s) => {
           const value = await s.reasoningOptions(sessionId);
           return {
             modelRef: credentials.scrub(value.modelRef),
@@ -1277,7 +1345,7 @@ ipcMain.handle(
           };
         }),
       "session.reasoning.set": ({ sessionId, modelRef, reasoning }) =>
-        sessions().run(async (s) => {
+        router.inSession(sessionId, async (s) => {
           if (credentials.containsSecret(modelRef) || credentials.containsSecret(reasoning))
             throw { code: "INVALID", messageKey: "errors.INVALID" };
           const value = await s.setReasoning(sessionId, reasoning, modelRef);
@@ -1288,12 +1356,14 @@ ipcMain.handle(
           };
         }),
       "session.model.set": ({ sessionId, modelRef }) =>
-        sessions().run((s) => {
+        router.inSession(sessionId, (s, owner) => {
           if (credentials.containsSecret(modelRef)) throw { code: "INVALID", messageKey: "errors.INVALID" };
-          return sanitizeSessionSummary(s.setModel(sessionId, modelRef), sessionContent);
+          return sanitizeSessionSummary(s.setModel(sessionId, modelRef), sessionContent(owner));
         }),
       "session.mode.set": ({ sessionId, mode }) =>
-        sessions().run((s) => sanitizeSessionSummary(s.setMode(sessionId, mode), sessionContent)),
+        router.inSession(sessionId, (s, owner) =>
+          sanitizeSessionSummary(s.setMode(sessionId, mode), sessionContent(owner)),
+        ),
       "providers.discover": (request) => modelGateway.discover(request),
       "providers.image.capability": ({ modelRef }) => modelGateway.imageCapability(modelRef),
       "providers.models": ({ id }) => modelGateway.models(id),

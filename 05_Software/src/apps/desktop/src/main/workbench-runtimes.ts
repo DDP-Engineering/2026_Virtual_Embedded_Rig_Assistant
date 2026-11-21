@@ -8,10 +8,7 @@ import type { SessionsHost } from "./sessions.js";
  */
 export interface WorkbenchRuntime {
   readonly workbench: Pick<WorkbenchService, "locate" | "open" | "create" | "close" | "getSnapshot">;
-  readonly sessions: Pick<
-    SessionsHost,
-    "lifecycle" | "close" | "idle" | "busy" | "beginShutdown" | "clearSubscriptions"
-  >;
+  readonly sessions: Pick<SessionsHost, "lifecycle" | "close" | "idle" | "busy" | "beginShutdown">;
 }
 
 /** The canonical folder of the runtime's open workbench; undefined while none is open. */
@@ -50,6 +47,8 @@ export class WorkbenchRuntimes<R extends WorkbenchRuntime> {
       /** Stops the plugin program runs of a workbench folder whose runtime is being released. */
       stopPrograms: (folder: string) => Promise<void>;
       log?: (event: string) => void;
+      /** The set of open runtimes or the foreground may have changed: after each lifecycle change and release. */
+      changed?: () => void;
     },
   ) {
     this.current = this.make();
@@ -127,8 +126,7 @@ export class WorkbenchRuntimes<R extends WorkbenchRuntime> {
     if (target === previous) return;
     for (const [folder, runtime] of this.retained) if (runtime === target) this.retained.delete(folder);
     this.current = target;
-    // The window shows the new workbench only; the previous one keeps its work but not its subscribers.
-    previous.sessions.clearSubscriptions();
+    // The previous workbench keeps its work and its session subscriptions, which belong to their sessions.
     const folder = folderOf(previous);
     if (folder === undefined) return;
     if (!previous.sessions.idle()) this.retained.set(folder, previous);
@@ -143,6 +141,7 @@ export class WorkbenchRuntimes<R extends WorkbenchRuntime> {
       if (!runtime.sessions.idle()) return;
       this.retained.delete(folder);
       await this.retire(runtime, folder);
+      this.announce();
     });
   }
   /** Releases a runtime that left the foreground; a failure keeps it for the exit drain. */
@@ -169,7 +168,15 @@ export class WorkbenchRuntimes<R extends WorkbenchRuntime> {
       return operation();
     }).finally(() => {
       this.pending--;
+      this.announce();
     });
+  }
+  private announce(): void {
+    try {
+      this.options.changed?.();
+    } catch {
+      /* an observer never fails a lifecycle change */
+    }
   }
   private serial<T>(operation: () => Promise<T>): Promise<T> {
     const next = this.queue.then(operation);

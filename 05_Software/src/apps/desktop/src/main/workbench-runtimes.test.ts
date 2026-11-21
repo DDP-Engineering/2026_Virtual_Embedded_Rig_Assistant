@@ -76,6 +76,7 @@ function harness() {
   const gates = new Map<string, Promise<void>>();
   const made: ScriptedRuntime[] = [];
   const logged: string[] = [];
+  const changed = { count: 0 };
   const runtimes = new WorkbenchRuntimes<ScriptedRuntime>({
     create: (settled) => {
       const runtime = new ScriptedRuntime(`r${made.length}`, settled, events, failing, gates);
@@ -86,9 +87,12 @@ function harness() {
       events.push(`stop ${folder}`);
     },
     log: (event) => logged.push(event),
+    changed: () => {
+      changed.count++;
+    },
   });
   const runtimeOf = (folder: string) => runtimes.all().find((runtime) => runtime.folder === folder);
-  return { runtimes, events, failing, gates, made, logged, runtimeOf };
+  return { runtimes, events, failing, gates, made, logged, runtimeOf, changed };
 }
 
 /** Lets queued registry work run. */
@@ -103,11 +107,8 @@ it("keeps a busy workbench in the background and releases it once its work settl
   await runtimes.open("B");
   expect(runtimes.foreground.folder).toBe("B");
   expect(runtimes.all().map((runtime) => runtime.folder)).toEqual(["B", "A"]);
-  // A's subscriptions end with the foreground change; its sessions, programs and lock remain.
-  expect(events.filter((event) => event.startsWith("r0:") || event === "stop A")).toEqual([
-    "r0:open A",
-    "r0:unsubscribe",
-  ]);
+  // A keeps its sessions, subscriptions, programs and lock in the background.
+  expect(events.filter((event) => event.startsWith("r0:") || event === "stop A")).toEqual(["r0:open A"]);
   // A settled signal while work remains keeps the runtime.
   a.settled();
   await settle();
@@ -164,7 +165,7 @@ it("releases an idle workbench as soon as another workbench opens", async () => 
   await runtimes.open("A");
   events.length = 0;
   await runtimes.open("B");
-  expect(events).toEqual(["r1:open B", "r0:unsubscribe", "r0:drain", "stop A", "r0:close"]);
+  expect(events).toEqual(["r1:open B", "r0:drain", "stop A", "r0:close"]);
   expect(runtimes.all().map((runtime) => runtime.folder)).toEqual(["B"]);
 });
 
@@ -314,4 +315,25 @@ it("closes the sessions and then the workbench of every runtime on exit, past a 
   await expect(runtimes.closeWorkbenches()).rejects.toMatchObject({ code: "BUSY" });
   expect(events.sort()).toEqual(["r0:close", "r1:close"]);
   await expect(runtimes.open("C")).rejects.toMatchObject({ code: "BUSY" });
+});
+
+// REQ-FUNC-a6aa5e7c, REQ-FUNC-4f478637
+it("announces each lifecycle change and settled release, and keeps subscriptions across them", async () => {
+  const { runtimes, events, failing, runtimeOf, changed } = harness();
+  await runtimes.open("A");
+  expect(changed.count).toBe(1);
+  const a = runtimeOf("A") as ScriptedRuntime;
+  a.work = true;
+  await runtimes.open("B");
+  expect(changed.count).toBe(2);
+  failing.add("C");
+  await expect(runtimes.open("C")).rejects.toMatchObject({ code: "INVALID" });
+  expect(changed.count).toBe(3);
+  a.work = false;
+  a.settled();
+  await vi.waitFor(() => expect(changed.count).toBe(4));
+  expect(runtimes.all().map((runtime) => runtime.folder)).toEqual(["B"]);
+  await runtimes.close();
+  expect(changed.count).toBe(5);
+  expect(events.filter((event) => event.endsWith("unsubscribe"))).toEqual([]);
 });

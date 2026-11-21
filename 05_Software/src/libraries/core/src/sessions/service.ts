@@ -134,6 +134,11 @@ export interface SessionHost {
   onDelegationsChanged?: () => void;
   /** A turn or a compaction finished; isSettled() tells whether any owned work remains. */
   onWorkSettled?: () => void;
+  /**
+   * A session's activity changed: a turn started, ended or was interrupted, an approval was requested or
+   * decided, or its title or status was updated. Called after the change is stored; errors are contained.
+   */
+  onActivity?: (sessionId: string) => void;
   scrub?: (text: string) => string;
   /** Receives swallowed turn failures, already scrubbed. */
   log?: (message: string) => void;
@@ -173,6 +178,21 @@ interface RecordedChange {
   created_at: string;
   diff: string;
 }
+/** Session events that change what an activity overview shows: a turn, an approval, a title or status. */
+function activityChanged(event: SessionEvent): boolean {
+  switch (event.type) {
+    case "turn.started":
+    case "turn.done":
+    case "session.interrupted":
+    case "approval.requested":
+    case "approval.decided":
+      return true;
+    case "session.updated":
+      return event.title !== undefined || event.status !== undefined;
+    default:
+      return false;
+  }
+}
 export class SessionService {
   private readonly sessions: SessionsRepository;
   private readonly delegations: DelegationsRepository;
@@ -207,7 +227,11 @@ export class SessionService {
       () => host.retrieval,
     );
     this.messages = new MessagesRepository(host.db);
-    this.hub = new SessionHub(host.db, () => this.now());
+    this.hub = new SessionHub(
+      host.db,
+      () => this.now(),
+      host.onActivity ? (id, event) => activityChanged(event) && host.onActivity?.(id) : undefined,
+    );
     this.approvals = new ApprovalGate({
       db: host.db,
       now: () => this.now(),

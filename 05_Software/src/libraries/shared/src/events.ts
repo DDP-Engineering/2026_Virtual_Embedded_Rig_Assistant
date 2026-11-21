@@ -40,6 +40,8 @@ export const appEventSchema = z.discriminatedUnion("type", [
   z.strictObject({ type: z.literal("indexer.status"), state: indexerStateSchema }),
   /** The plugin catalog was read again (an update check); the Plugins page reloads its view. */
   z.strictObject({ type: z.literal("plugins.catalog") }),
+  /** A session's turn, approval, title or status, or the set of open workbenches changed: read session.activity. */
+  z.strictObject({ type: z.literal("session.activity") }),
 ]);
 export type AppEvent = z.infer<typeof appEventSchema>;
 /** Settings with no masking policy and no credential behind them. */

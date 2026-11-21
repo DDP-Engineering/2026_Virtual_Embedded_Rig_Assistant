@@ -118,6 +118,7 @@ const workbenchHandlers = {
   "session.list": unused,
   "session.sizes": unused,
   "session.search": unused,
+  "session.activity": unused,
   "session.export": unused,
   "session.create": unused,
   "session.revision": unused,

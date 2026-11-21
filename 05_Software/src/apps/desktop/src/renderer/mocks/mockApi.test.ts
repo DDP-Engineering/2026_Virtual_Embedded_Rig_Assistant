@@ -27,6 +27,22 @@ it("ordinary workbench create/open preserves user notes without creating an exam
   await api.invoke("workbench.open", { folder });
   expect((await api.invoke("workbench.pinned.get", {})).content).toBe("my project notes");
 });
+// REQ-FUNC-93ec5cc7
+it("mock session activity lists the shown workbench, or nothing while none is open", async () => {
+  const { api } = createMockApi();
+  expect(await api.invoke("session.activity", {})).toEqual([]);
+  const workbench = await api.invoke("workbench.create", { folder: "/mock/activity", name: "Activity" });
+  await api.invoke("session.create", { workbenchId: workbench.config.id });
+  expect(await api.invoke("session.activity", {})).toEqual([
+    {
+      workbenchId: workbench.config.id,
+      name: "Activity",
+      folder: "/mock/activity",
+      foreground: true,
+      sessions: [],
+    },
+  ]);
+});
 it("mock skills create/edit/toggle isolate workbenches and reject stale or read-only mutations", async () => {
   const { api } = createMockApi();
   const wb = await api.invoke("workbench.create", { folder: "C:/mock/skills", name: "Skills" });

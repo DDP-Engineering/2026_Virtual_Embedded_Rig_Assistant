@@ -70,13 +70,18 @@ export class DisplayDocuments {
     if (original.length > 4096) throw veraError("INVALID");
     return original;
   }
-  /** Alias tokens preserve the saved spelling even when it contains dot or empty segments. */
-  sessionImagePath(id: string, path: string): string {
-    if (imageReadPath(path) === path) return this.path(id, path);
-    this.current(id);
+  /**
+   * The identity of a session message's image, for the workbench that holds the session: a background
+   * workbench's identities resolve only once it is shown again. Alias tokens preserve the saved spelling
+   * even when it contains dot or empty segments.
+   */
+  sessionImagePath(owner: { config: { id: string }; folder: string }, path: string): string {
+    const key = `${owner.config.id}\n${owner.folder}`;
+    if (imageReadPath(path) === path)
+      return this.identities.encode(key, path, (value) => this.redact(value) !== value);
     const payload = Buffer.from(path, "utf8").toString("base64url");
     return this.identities
-      .encode(`${this.owner}\nimage-alias`, payload)
+      .encode(`${key}\nimage-alias`, payload)
       .replace(/^__vera_display_/, imageAliasPrefix);
   }
   resolveSessionImagePath(id: string, path: string): string {

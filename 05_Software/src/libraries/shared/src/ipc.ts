@@ -180,6 +180,24 @@ export const appInfoSchema = z.strictObject({
     .strictObject({ electron: z.string(), chrome: z.string(), node: z.string(), v8: z.string() })
     .optional(),
 });
+/**
+ * One open workbench and its top-level sessions that are running or awaiting approval, for an activity
+ * overview across workbenches; `foreground` marks the workbench the window shows.
+ */
+export const sessionActivitySchema = z.strictObject({
+  workbenchId: workbenchIdSchema,
+  name: z.string().trim().min(1).max(80),
+  folder: z.string().min(1),
+  foreground: z.boolean(),
+  sessions: z.array(
+    z.strictObject({
+      id: sessionIdSchema,
+      title: z.string().max(60),
+      status: z.enum(["running", "awaiting_approval"]),
+    }),
+  ),
+});
+export type SessionActivity = z.infer<typeof sessionActivitySchema>;
 export const channels = {
   "app.clipboard.write": defineChannel(
     "app.clipboard.write",
@@ -665,6 +683,8 @@ export const channels = {
     z.strictObject({ query: sessionSearchQuerySchema, workbenchId: workbenchIdSchema.optional() }),
     z.array(sessionSummarySchema),
   ),
+  /** Every open workbench, the shown one first, with its sessions running or awaiting approval. */
+  "session.activity": defineChannel("session.activity", z.strictObject({}), z.array(sessionActivitySchema)),
   "session.export": defineChannel(
     "session.export",
     z.strictObject({ sessionId: sessionIdSchema, format: sessionExportFormatSchema }),

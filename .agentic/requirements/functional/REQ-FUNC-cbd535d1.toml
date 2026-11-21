@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-FUNC-cbd535d1"
+
+title = "Replay the live text of the current turn to a new subscriber"
+
+status = "active"
+
+requirement = "When a subscription to a session opens while that session's turn streams, the session service shall deliver every stored event after the subscription's sequence exactly once, then the live text received so far as one merged event per item holding at most its last 500000 characters: a message's text until its message.done, a tool's output until its tool.done, and a message's reasoning until the turn's turn.done or session.interrupted, after which nothing of that turn is replayed."
+
+verification = "Hub test: publish deltas for message m1 and a tool update, subscribe from a stored sequence and receive the stored events once, then one merged delta per item; after message.done for m1 and tool.done a new subscriber gets m1's final text and m1's reasoning, but no live text of m1 or of the tool; after turn.done or session.interrupted nothing live is replayed; boundary: a 600000-character delta replays its last 500000 characters; a chunk queued behind a re-entrantly recorded message.done is not replayed, and text published while a subscriber joins or replays arrives once. Main replay test and native e2e: a session reopened mid-stream shows its streamed text and the final text exactly once."
+
+affected_paths = ["05_Software/src/libraries/core/src/sessions/hub.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/sessions/hub.test.ts", "05_Software/src/apps/desktop/src/main/session-router.replay.test.ts::keeps a subscription across a foreground change and restores the streamed text to a returning view", "05_Software/tests/e2e/session-routing.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-21
+updated = 2026-11-21

@@ -32,6 +32,7 @@ import {
   type EventEnvelope,
   type HelpLanguage,
   partsSearchDefaults,
+  type SessionSummary,
   sessionSubscriptionSchema,
   sessionUnsubscriptionSchema,
   veraError,
@@ -97,6 +98,8 @@ export class SessionsHost {
       help?: { app: HelpLibrary; language: () => HelpLanguage };
       /** Owned work may have settled: a turn or compaction ended, or the queued operations ran out (see idle()). */
       settled?: () => void;
+      /** A session's turn, approval, title or status changed (SessionHost.onActivity). */
+      activity?: () => void;
     },
   ) {}
   /** One queued operation finished; the last one may leave the host idle. */
@@ -125,10 +128,19 @@ export class SessionsHost {
     );
     return next;
   }
-  run<T>(operation: (service: SessionService) => T | Promise<T>, preparePrograms = true): Promise<T> {
+  /**
+   * Runs `operation` in this host's queue. `guard` runs first in the queued slot and refuses the operation
+   * by throwing, before any preparation: a routed request checks its workbench is still the one it named.
+   */
+  run<T>(
+    operation: (service: SessionService) => T | Promise<T>,
+    preparePrograms = true,
+    guard?: () => void,
+  ): Promise<T> {
     if (this.shutdown) return Promise.reject(veraError("BUSY"));
     this.pending++;
     return this.serial(async () => {
+      guard?.();
       const snapshot = this.options.workbench.getSnapshot();
       const db = this.options.workbench.getDatabase();
       this.config = preparePrograms ? (await this.options.workbench.getConfig()).config : snapshot.config;
@@ -189,6 +201,7 @@ export class SessionsHost {
           db,
           root: snapshot.folder,
           ...(options.settled ? { onWorkSettled: options.settled } : {}),
+          ...(options.activity ? { onActivity: options.activity } : {}),
           onDelegationsChanged: () =>
             options.emit({
               topic: "workbench",
@@ -318,16 +331,24 @@ export class SessionsHost {
     }).finally(() => this.finished());
   }
   /** Resolve the session's model on the host queue. Catalog I/O may outlive this queue slot. */
-  async imageCapability(workbenchId: string, sessionId: string) {
-    const { completion } = await this.run((service) => {
-      if (this.options.workbench.getSnapshot().config.id !== workbenchId) throw veraError("CONFLICT");
-      return { completion: service.imageCapability(sessionId) };
-    }, false);
+  async imageCapability(workbenchId: string, sessionId: string, guard?: () => void) {
+    const { completion } = await this.run(
+      (service) => {
+        if (this.options.workbench.getSnapshot().config.id !== workbenchId) throw veraError("CONFLICT");
+        return { completion: service.imageCapability(sessionId) };
+      },
+      false,
+      guard,
+    );
     return completion;
   }
-  /** Polling only needs recovered current-DB summaries, never prompt/skill/program preparation. */
-  async list(workbenchId?: string) {
+  /**
+   * Polling only needs recovered current-DB summaries, never prompt/skill/program preparation. `guard`
+   * refuses a routed request whose workbench changed, as in run().
+   */
+  async list(workbenchId?: string, guard?: () => void) {
     if (this.shutdown) throw veraError("BUSY");
+    guard?.();
     const snapshot = this.options.workbench.getSnapshot(),
       db = this.options.workbench.getDatabase();
     if (workbenchId && snapshot.config.id !== workbenchId) throw veraError("CONFLICT");
@@ -342,18 +363,45 @@ export class SessionsHost {
         this.options.workbench.getSnapshot().config.id !== snapshot.config.id
       )
         throw veraError("CONFLICT");
+      guard?.();
       rows = service.list(true);
     } else {
-      rows = await this.run((current) => {
-        if (
-          this.options.workbench.getDatabase() !== db ||
-          this.options.workbench.getSnapshot().config.id !== snapshot.config.id
-        )
-          throw veraError("CONFLICT");
-        return current.list(true);
-      }, false);
+      rows = await this.run(
+        (current) => {
+          if (
+            this.options.workbench.getDatabase() !== db ||
+            this.options.workbench.getSnapshot().config.id !== snapshot.config.id
+          )
+            throw veraError("CONFLICT");
+          return current.list(true);
+        },
+        false,
+        guard,
+      );
     }
     return rows.map((row) => ({ ...row, title: this.service?.maskContent("agent", row.title) ?? row.title }));
+  }
+  /**
+   * The top-level sessions running or awaiting approval, from the session service once it is ready; none
+   * before this workbench's session service exists, since nothing can run there yet.
+   */
+  async activity(): Promise<SessionSummary[]> {
+    const service = this.service;
+    const db = this.db;
+    if (!service || !db?.open) return [];
+    await service.waitReady();
+    if (this.service !== service || this.db !== db || !db.open) return [];
+    return service
+      .list(true)
+      .filter((row) => !row.delegation && (row.status === "running" || row.status === "awaiting_approval"));
+  }
+  /** Whether a subscription with this ID is open here. */
+  holdsSubscription(subscriptionId: string): boolean {
+    return this.subscriptions.has(subscriptionId);
+  }
+  /** Whether `event` comes from the window's current main frame. */
+  authorized(event: InvokeSender): boolean {
+    return authorizedSender(event, this.options.target());
   }
   /** Recomputes the program prompt entries on the next session call: a plugin was installed, removed, toggled or provisioned. */
   invalidatePrograms(): void {
@@ -395,7 +443,8 @@ export class SessionsHost {
   async close(): Promise<void> {
     await this.serial(() => this.drain());
   }
-  async subscription(event: InvokeSender, action: unknown, raw: unknown) {
+  /** Subscribe or unsubscribe; `guard` refuses a routed subscribe whose workbench changed, as in run(). */
+  async subscription(event: InvokeSender, action: unknown, raw: unknown, guard?: () => void) {
     if (!authorizedSender(event, this.options.target())) return { ok: false, error: veraError("DENIED") };
     const parsed =
       action === "subscribe"
@@ -412,19 +461,23 @@ export class SessionsHost {
         });
       else {
         const request = sessionSubscriptionSchema.parse(raw);
-        await this.run((service) => {
-          if (!authorizedSender(event, this.options.target())) throw veraError("DENIED");
-          if (this.subscriptions.has(request.subscriptionId)) throw veraError("CONFLICT");
-          if (this.subscriptions.size >= 128) throw veraError("BUSY");
-          const transport = createSessionTransport(request.sessionId, request.subscriptionId, (e) =>
-            this.options.emit(e),
-          );
-          const off = service.subscribe(request.sessionId, request.sinceSeq, transport.on);
-          this.subscriptions.set(request.subscriptionId, () => {
-            off();
-            transport.dispose();
-          });
-        });
+        await this.run(
+          (service) => {
+            if (!authorizedSender(event, this.options.target())) throw veraError("DENIED");
+            if (this.subscriptions.has(request.subscriptionId)) throw veraError("CONFLICT");
+            if (this.subscriptions.size >= 128) throw veraError("BUSY");
+            const transport = createSessionTransport(request.sessionId, request.subscriptionId, (e) =>
+              this.options.emit(e),
+            );
+            const off = service.subscribe(request.sessionId, request.sinceSeq, transport.on);
+            this.subscriptions.set(request.subscriptionId, () => {
+              off();
+              transport.dispose();
+            });
+          },
+          true,
+          guard,
+        );
       }
       return { ok: true, value: {} };
     } catch (error) {
