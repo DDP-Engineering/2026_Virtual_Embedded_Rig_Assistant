@@ -30,6 +30,11 @@ async function writeSetup(workbench, files, substitutions) {
         pathToFileURL(join(software, "tests/support/make-demo-pdfs.mjs")).href
       );
       await renderMarkdownPdf(fill(file.pdf), target, file.path);
+    } else if ("line" in file) {
+      const lines = Array.from({ length: file.times }, (_, index) =>
+        file.line.replaceAll("{n}", String(index + 1)),
+      );
+      await writeFile(target, fill(`${lines.join("\n")}\n${file.then ?? ""}`));
     } else await writeFile(target, fill(file.content));
   }
 }
@@ -71,11 +76,11 @@ function killTree(child) {
 }
 
 /** Runs one CLI command; records when the first event and the first streamed token arrived. */
-export function runCli(cli, args, { timeoutMs, env }) {
+export function runCli(cli, args, { timeoutMs, env, timeline, node = [] }) {
   return new Promise((resolvePromise, reject) => {
     const started = performance.now();
     const timing = { firstEventMs: null, firstTokenMs: null, totalMs: null };
-    const child = spawn(process.execPath, [cli, ...args], {
+    const child = spawn(process.execPath, [...node, cli, ...args], {
       cwd: software,
       env,
       stdio: ["ignore", "pipe", "pipe"],
@@ -94,6 +99,8 @@ export function runCli(cli, args, { timeoutMs, env }) {
       for (const line of lines) {
         if (!line.trim()) continue;
         const now = performance.now() - started;
+        // When each event arrived, for measures between events (performance family).
+        if (timeline) timeline.push({ ms: now, type: /"type":"([^"]+)"/.exec(line)?.[1] ?? "" });
         timing.firstEventMs ??= now;
         if (timing.firstTokenMs === null && /"type":"(message|reasoning)\.delta"/.test(line))
           timing.firstTokenMs = now;
@@ -331,12 +338,49 @@ export async function runAgentFamily(spec, options) {
         const place = join(scratch, "runs", `${item.id}.${repeat}`);
         const workbench = join(place, "workbench");
         await cp(prepared.get(keyOf(item)), workbench, { recursive: true });
+        const data = sharedData ?? join(place, "data");
+        // Earlier turns of the same session, replayed; the measured turn continues that session.
+        let session;
+        for (const [index, turn] of (item.history ?? []).entries()) {
+          const seeded = await runCli(
+            cli,
+            [
+              "run",
+              "--workbench",
+              workbench,
+              "--data",
+              data,
+              "--prompt",
+              turn.prompt,
+              "--format",
+              "jsonl",
+              "--approve",
+              "none",
+              "--provider",
+              "replay",
+              "--script",
+              turn.replayPath,
+              ...(session ? ["--session", session] : []),
+            ],
+            { timeoutMs: 120_000, env },
+          );
+          if (seeded.exitCode !== 0)
+            throw Error(`History turn ${index + 1} of ${item.id} failed: ${seeded.stderr.slice(-1000)}`);
+          session ??= parseEventLines(seeded.stdout).lines[0]?.sessionId;
+          await writeFile(
+            join(folder, `events/${item.id}.${repeat}.history-${index + 1}.jsonl`),
+            seeded.stdout,
+            {
+              flag: "wx",
+            },
+          );
+        }
         const args = [
           "run",
           "--workbench",
           workbench,
           "--data",
-          sharedData ?? join(place, "data"),
+          data,
           "--prompt",
           item.prompt,
           "--format",
@@ -344,6 +388,7 @@ export async function runAgentFamily(spec, options) {
           "--approve",
           options.approve,
           ...providerArgs(options, item, proxy),
+          ...(session ? ["--session", session] : []),
         ];
         const seconds = options.timeoutSeconds ?? item.timeoutSeconds;
         const outcome = await runCli(cli, args, { timeoutMs: seconds * 1000, env });

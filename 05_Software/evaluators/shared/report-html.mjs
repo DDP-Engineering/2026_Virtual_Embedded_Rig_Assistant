@@ -57,11 +57,13 @@ export function compareModels(model, reference) {
           const ref = byKey.get(m.key);
           const delta = m.value - ref.value;
           const better = m.better === "lower" ? delta < 0 : m.better === "higher" ? delta > 0 : null;
+          // A measurement may carry its noise band; a change within it is not a change.
+          const tolerance = Math.max(m.tolerance ?? 0, ref.tolerance ?? 0);
           return {
             ...m,
             reference: ref.value,
             delta,
-            verdict: delta === 0 ? "same" : better ? "better" : "worse",
+            verdict: Math.abs(delta) <= tolerance ? "same" : better ? "better" : "worse",
           };
         })
     : [];

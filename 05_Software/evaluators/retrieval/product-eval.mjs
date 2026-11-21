@@ -12,7 +12,8 @@ import Database from "better-sqlite3";
 import { loadCorpus } from "./corpus.mjs";
 import { summarize, validateFixture } from "./evaluation.mjs";
 
-export async function evaluate(software, scratch) {
+/** `modelId` selects one of the shipped embedding models; the default is the product's default. */
+export async function evaluate(software, scratch, modelId) {
   const workbench = join(software, "tests/fixtures/workbenches/demo-board");
   const corpus = await loadCorpus(workbench, pathToFileURL(join(scratch, "pdf-worker.mjs")));
   const fixture = validateFixture(
@@ -23,7 +24,7 @@ export async function evaluate(software, scratch) {
   const host = new EmbeddingHost(
     pathToFileURL(join(scratch, "embedding-worker.mjs")),
     models,
-    readEmbeddingModel(models),
+    modelId ? readEmbeddingModel(models, modelId) : readEmbeddingModel(models),
   );
   const db = new Database(":memory:");
   try {

@@ -7,6 +7,7 @@ import { build } from "esbuild";
 import { writeReport } from "../shared/family-cli.mjs";
 import { gitState, harnessHash, reportPathFor } from "../shared/identity.mjs";
 import { renderReport } from "../shared/report-html.mjs";
+import { runLayout, toLayoutReportModel } from "./layout.mjs";
 import { toReportModel } from "./report-model.mjs";
 
 const software = fileURLToPath(new URL("../../", import.meta.url));
@@ -14,13 +15,13 @@ const folder = fileURLToPath(new URL(".", import.meta.url));
 const { values, positionals } = parseArgs({
   allowPositionals: true,
   options: Object.fromEntries(
-    ["scratch", "output", "input", "reference"].map((key) => [key, { type: "string" }]),
+    ["scratch", "output", "input", "reference", "model", "cli"].map((key) => [key, { type: "string" }]),
   ),
 });
 const command = positionals[0] ?? "run";
-if (positionals.length > 1 || !["run", "report"].includes(command)) {
+if (positionals.length > 1 || !["run", "report", "layout"].includes(command)) {
   process.stderr.write(
-    "usage: eval:retrieval [run] [--output <run.json>] [--scratch <parent>]\n" +
+    "usage: eval:retrieval [run] [--model <embedding model id>] [--output <run.json>] [--scratch <parent>]\n" +
       "       eval:retrieval report --input <run.json> [--reference <run.json>] [--output <report.html>]\n",
   );
   process.exit(2);
@@ -33,11 +34,13 @@ if (command === "report") {
       reference: values.reference && resolve(values.reference),
       output: values.output,
     },
-    toReportModel,
+    (data, path) =>
+      data.kind === "vera-retrieval-layout" ? toLayoutReportModel(data, path) : toReportModel(data, path),
   );
   process.stdout.write(`${target}\n`);
   process.exit(0);
 }
+if (command === "layout") process.exit(await runLayout(values));
 const startedAt = new Date().toISOString();
 const parent = resolve(values.scratch ?? join(software, "node_modules/.cache/evaluators/retrieval"));
 await mkdir(parent, { recursive: true });
@@ -71,7 +74,7 @@ try {
     },
   });
   const { evaluate } = await import(pathToFileURL(join(scratch, "runtime.mjs")).href);
-  const result = await evaluate(software, scratch);
+  const result = await evaluate(software, scratch, values.model);
   result.fixtureSha256 = createHash("sha256")
     .update(await readFile(join(software, "evaluators/retrieval/cases/demo-board.yaml")))
     .digest("hex");

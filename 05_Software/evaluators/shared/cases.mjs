@@ -37,8 +37,20 @@ export function caseFileSchema(expect) {
         z.union([
           z.strictObject({ path: relativePath, content: z.string().max(1_000_000) }),
           z.strictObject({ path: relativePath, pdf: z.string().max(200_000) }),
+          // `{n}` in the line becomes its 1-based number: a large log without a large case file.
+          z.strictObject({
+            path: relativePath,
+            line: z.string().min(1).max(2000),
+            times: z.number().int().min(1).max(100_000),
+            then: z.string().max(100_000).optional(),
+          }),
         ]),
       )
+      .max(50)
+      .optional(),
+    /** Earlier turns of the same session, played with their replay scripts before the measured prompt. */
+    history: z
+      .array(z.strictObject({ prompt: z.string().min(1).max(32_000), replay: relativePath }))
       .max(50)
       .optional(),
     expect,
@@ -86,6 +98,9 @@ export async function loadCases(path, expect) {
       ...item,
       workbenchPath: resolve(software, item.workbench ?? data.workbench),
       ...(item.replay ? { replayPath: resolve(folder, item.replay) } : {}),
+      ...(item.history
+        ? { history: item.history.map((turn) => ({ ...turn, replayPath: resolve(folder, turn.replay) })) }
+        : {}),
       timeoutSeconds: item.timeoutSeconds ?? data.timeoutSeconds ?? 600,
     })),
   };
