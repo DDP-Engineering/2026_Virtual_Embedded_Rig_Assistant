@@ -7,6 +7,7 @@ import { _electron, expect, type Page } from "@playwright/test";
 import type { SessionState, VeraBridge } from "@vera/shared";
 import { test } from "./fixtures.js";
 import { installNetworkGuard, outboundAttempts } from "./network-guard.js";
+import { saveSettings } from "./settings-navigation.js";
 
 const desktop = join(dirname(fileURLToPath(import.meta.url)), "../../src/apps/desktop");
 async function rig(delay = 0) {
@@ -197,8 +198,10 @@ test("browser Chat detail stays usable in en/ro/de at minimum size and enlarged 
     await page.locator('[data-i18n="nav.settings"]').click();
     await page.locator('[data-section="appearance"]').click();
     await page.locator("#language").selectOption(language);
+    await saveSettings(page);
     await page.locator('[data-section="appearance"]').click();
     await page.locator("#interface-font-size").selectOption("1.5");
+    await saveSettings(page);
     await page.locator('[data-action="leave-settings"]').click();
     await page.locator('[data-action="edit-workbench-overview"]').click();
     await page.locator('[data-project-section="agent"]').click();

@@ -5,16 +5,21 @@ import type { PathGuard } from "../workbench/path-guard.js";
 import { isBinary } from "./binary.js";
 import { assertNotSpecialFile } from "./files.js";
 
-/** Full-file metadata scan stays streaming; only the requested source window is retained. */
+/**
+ * Full-file metadata scan stays streaming; only the requested source window is retained. `maxChars` bounds
+ * the returned text (the read tool's Read output size, REQ-FUNC-f041ba07); the source bytes kept follow it.
+ */
 export async function readWindow(
   guard: PathGuard,
   path: string,
   offset: number,
   limit: number,
   signal: AbortSignal,
-  options: { utf8Log?: boolean } = {},
+  options: { utf8Log?: boolean; maxChars?: number } = {},
 ) {
   signal.throwIfAborted();
+  const maxChars = options.maxChars ?? 30000;
+  const maxSourceBytes = Math.max(256 * 1024, maxChars * 4);
   const target = await guard.resolve(path);
   await assertNotSpecialFile(target.absolute);
   const handle = await open(target.absolute, "r");
@@ -39,7 +44,7 @@ export async function readWindow(
       totalLines++;
       if (!retentionEnded && totalLines >= offset && totalLines < offset + limit) {
         const prefix = `${totalLines}: `;
-        const available = 30000 - outputCharacters - prefix.length - 1;
+        const available = maxChars - outputCharacters - prefix.length - 1;
         if (available >= 0) {
           const text = current.slice(0, available);
           if (text.length < current.length) clipped = true;
@@ -65,7 +70,7 @@ export async function readWindow(
           hasContent = true;
           if (wanted()) {
             const bytes = Buffer.byteLength(char);
-            if (sourceBytes + bytes <= 256 * 1024 && outputCharacters + current.length < 29980) {
+            if (sourceBytes + bytes <= maxSourceBytes && outputCharacters + current.length < maxChars - 20) {
               current += char;
               sourceBytes += bytes;
             } else clipped = true;

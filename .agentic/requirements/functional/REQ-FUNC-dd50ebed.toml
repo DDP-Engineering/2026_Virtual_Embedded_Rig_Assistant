@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-dd50ebed"
+
+title = "Admit background programs up to the resolved count per session"
+
+status = "active"
+
+requirement = """
+If a session starts a background program or a hardware hold while it already has the resolved Background programs per session running, an integer from 1 to 16 with default 4 set for the application, VERA shall refuse it with BUSY naming the limit.
+"""
+
+verification = "With 2, a third background run of one session is refused with BUSY and limit 2 while another session can still start one; with 8 a fifth run starts."
+
+affected_paths = ["05_Software/src/libraries/shared/src/advanced-settings.ts", "05_Software/src/libraries/core/src/plugins/runner.ts", "05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/apps/cli/src/run.ts"]
+
+linked_tests = ["05_Software/src/libraries/shared/src/advanced-settings.test.ts", "05_Software/src/libraries/core/src/plugins/runner.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-21
+updated = 2026-11-21

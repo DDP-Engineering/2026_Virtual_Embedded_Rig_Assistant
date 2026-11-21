@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { advancedPatchSchema, mergeAdvanced } from "./advanced-settings.js";
 import { commandPrefixListSchema, storedCommandPrefixesSchema } from "./command-prefix.js";
 import { defaultEmbeddingModelId, embeddingModelIds } from "./embedding-models.js";
 import { workbenchPrivacySchema } from "./privacy.js";
@@ -45,14 +46,17 @@ export const additionalFoldersSchema = z
 
 export const workbenchIdSchema = z.string().regex(/^wb_[0-7][0-9A-HJKMNP-TV-Z]{25}$/);
 /** A file size in MB (1 MB = 1,048,576 bytes); zod rejects NaN and infinite numbers. */
-const fileMB = z.number().positive();
+const fileMB = z.number().positive().max(500);
 const fileCount = z.number().int().positive();
 const docs = z.looseObject({
   include: z.array(z.string()).default(["docs/**"]),
   exclude: z.array(z.string()).default([]),
   /** The root and nested .gitignore files also exclude paths from indexing and the Files tab. */
   gitignore: z.boolean().default(true),
-  /** Lowers the fixed document size limits (100 MiB PDF and Office, 20 MiB text); never raises them. */
+  /**
+   * The size limit of PDF and Office documents, up to 500 MB; 100 MB when unset (REQ-FUNC-133f57ee). Text
+   * has its own Advanced setting, textFileMB.
+   */
   maxFileMB: fileMB.optional(),
   /** "Maximum indexed files" from Documents & RAG: above it indexing stops until "Index anyway". */
   maxFiles: fileCount.default(10000),
@@ -142,6 +146,8 @@ export const workbenchSchema = z.looseObject({
   chat: chat.default({ detail: "normal" }),
   interface: workbenchInterface.default({ right_panel_tabs: [...defaultRightPanelTabs], git_status: false }),
   agent: agent.default({ permission_mode: "ask", model: null, allowed_commands: [] }),
+  /** Workbench-scope Advanced values, validated when saved and when resolved (REQ-DATA-33a90ef2). */
+  advanced: z.record(z.string(), z.unknown()).optional(),
 });
 export type WorkbenchConfig = z.infer<typeof workbenchSchema>;
 /** The specified English user-editable starting context. */
@@ -185,6 +191,7 @@ export const workbenchPatchSchema = z.strictObject({
       model: agent.shape.model.removeDefault().optional(),
     })
     .optional(),
+  advanced: advancedPatchSchema("workbench").optional(),
 });
 export type WorkbenchPatch = z.infer<typeof workbenchPatchSchema>;
 export const workbenchWarningSchema = z.strictObject({
@@ -288,6 +295,9 @@ export function mergeWorkbench(current: WorkbenchConfig, patch: WorkbenchPatch):
     chat: { ...current.chat, ...clean.chat },
     interface: { ...current.interface, ...clean.interface },
     agent: { ...current.agent, ...clean.agent },
+    ...(current.advanced || clean.advanced
+      ? { advanced: mergeAdvanced(current.advanced, clean.advanced ?? {}) }
+      : {}),
     ...(current.privacy || clean.privacy
       ? {
           privacy: {

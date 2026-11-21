@@ -165,6 +165,7 @@ export class DocumentKnowledge {
     signal: AbortSignal,
     excludedRoots: readonly string[] = [],
     createHitValidator?: () => SearchHitValidator,
+    panelK?: number,
   ): Promise<DocumentSearchResponse> {
     signal.throwIfAborted();
     const parsed = searchDocsSchema.parse(raw);
@@ -174,7 +175,7 @@ export class DocumentKnowledge {
       root: this.root,
       db: this.db,
       query: parsed.query,
-      k: parsed.k ?? configured?.results ?? 8,
+      k: panelK ?? parsed.k ?? configured?.results ?? 8,
       mode: parsed.mode ?? configured?.mode ?? "hybrid",
       pathGlob: parsed.pathGlob,
       acceptPath: parsed.pathGlob ? picomatch(parsed.pathGlob, { dot: true, posix: true }) : undefined,

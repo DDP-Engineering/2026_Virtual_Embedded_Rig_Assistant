@@ -1,0 +1,21 @@
+schema = 1
+
+id = "REQ-FUNC-4af886f8"
+
+title = "Close only the current workbench runtime"
+
+status = "active"
+
+requirement = "When the user closes the current workbench, the desktop app shall close that workbench's sessions, stop its plugin program runs and release its lock and database, while background workbenches keep running."
+verification = "Registry test: with A retained in the background, closing the foreground B drains B's sessions, stops B's programs and closes B, leaves A retained and unreleased, and the empty foreground can open another workbench; A is still released when its work settles. Main test with real runtimes: closing the foreground B while A's held turn runs removes B's lock and stops only B's programs, then A's turn completes and A is released."
+affected_paths = ["05_Software/src/apps/desktop/src/main/workbench-runtimes.ts", "05_Software/src/apps/desktop/src/main/sessions.ts", "05_Software/src/apps/desktop/src/main/index.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/workbench-runtimes.test.ts::closes only the current workbench while background workbenches keep running", "05_Software/src/apps/desktop/src/main/workbench-runtimes.replay.test.ts::closes the foreground workbench while a background turn continues and completes"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-21
+updated = 2026-11-21

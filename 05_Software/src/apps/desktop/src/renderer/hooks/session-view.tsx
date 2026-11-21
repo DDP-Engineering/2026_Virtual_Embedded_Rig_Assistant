@@ -3,9 +3,9 @@ import { createContext, type ReactNode, useContext, useMemo } from "react";
 import { useSessionEvents } from "./use-session-events.js";
 
 type SessionEvents = ReturnType<typeof useSessionEvents>;
-const SessionViewContext = createContext<{ id: string | undefined; value: SessionEvents } | undefined>(
-  undefined,
-);
+const SessionViewContext = createContext<
+  { id: string | undefined; workbenchId: string | undefined; value: SessionEvents } | undefined
+>(undefined);
 function unchanged() {}
 
 /**
@@ -14,15 +14,20 @@ function unchanged() {}
  */
 export function SessionViewProvider({
   id,
+  workbenchId,
   changed,
   children,
 }: {
   id: string | undefined;
+  workbenchId: string | undefined;
   changed: () => void;
-  children: ReactNode;
+  children?: ReactNode;
 }) {
-  const { view, error, retry } = useSessionEvents(id, changed);
-  const shared = useMemo(() => ({ id, value: { view, error, retry } }), [id, view, error, retry]);
+  const { view, error, retry, projection } = useSessionEvents(id, changed, workbenchId);
+  const shared = useMemo(
+    () => ({ id, workbenchId, value: { view, error, retry, projection } }),
+    [id, workbenchId, view, error, retry, projection],
+  );
   return <SessionViewContext.Provider value={shared}>{children}</SessionViewContext.Provider>;
 }
 
@@ -30,9 +35,16 @@ export function SessionViewProvider({
  * The provider's view when it holds this session; otherwise (no provider, as in isolated component
  * tests, or another session) a view of its own, exactly as `useSessionEvents`.
  */
-export function useSessionView(id: string | undefined, changed: () => void = unchanged): SessionEvents {
+export function useSessionView(
+  id: string | undefined,
+  changed: () => void = unchanged,
+  workbenchId?: string,
+): SessionEvents {
   const shared = useContext(SessionViewContext);
-  const reuse = shared !== undefined && shared.id === id;
-  const own = useSessionEvents(reuse ? undefined : id, changed);
+  const reuse =
+    shared !== undefined &&
+    shared.id === id &&
+    (workbenchId === undefined || shared.workbenchId === workbenchId);
+  const own = useSessionEvents(reuse ? undefined : id, changed, workbenchId);
   return reuse ? shared.value : own;
 }

@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-UX-6a8a987d"
+
+title = "Edit an Advanced choice with inherit and its options"
+
+status = "active"
+
+requirement = """
+When the user edits an Advanced choice at a scope, VERA shall offer Inherit and the setting's allowed values, show the inherited value with its source while Inherit is chosen, and save the choice with the page Save.
+"""
+
+verification = "Renderer test: the Rows per page field offers Inherit, 10, 20 and 50, shows the inherited 10 from the default, and Save sends 20 after 20 is chosen. Shared test: the application patch refuses 15 for Rows per page."
+
+affected_paths = ["05_Software/src/libraries/shared/src/advanced-settings.ts", "05_Software/src/apps/desktop/src/renderer/components/advanced-field.tsx", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json", "05_Software/src/apps/desktop/src/renderer/locales/fr.json", "05_Software/src/apps/desktop/src/renderer/components/advanced-settings.test.ts", "05_Software/src/libraries/shared/src/advanced-settings.test.ts"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/advanced-settings.test.ts::offers Inherit and the allowed values for a choice, and saves the picked one with Save", "05_Software/src/libraries/shared/src/advanced-settings.test.ts::offers Rows per page as a choice of 10, 20 or 50 and refuses any other value"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-21
+updated = 2026-11-21

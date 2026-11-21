@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-UX-692b8471"
+
+title = "Offer Compact now in the session Advanced dialog"
+
+status = "active"
+
+requirement = """
+When the session Advanced dialog is open, VERA shall offer Compact now, disable it while the session is busy, and show the result, or a refusal (archived session, read-only workbench) as the localized error, in the dialog.
+"""
+
+verification = "Open the dialog on an idle session and press Compact now: it shows a completed status; during a running turn the button is disabled; a refusal shows the localized error."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/styles.css", "05_Software/src/apps/desktop/src/renderer/components/session/session-advanced.tsx", "05_Software/src/apps/desktop/src/renderer/mocks/sessions.ts", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json", "05_Software/src/apps/desktop/src/renderer/locales/fr.json"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/session/session-advanced.test.ts", "05_Software/tests/e2e/advanced-settings.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-20
+updated = 2026-11-20

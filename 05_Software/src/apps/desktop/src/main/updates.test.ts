@@ -15,6 +15,7 @@ const offer: UpdateOffer = {
 function setup(distribution: "installed" | "portable" | "managed" = "installed") {
   let mode: UpdateMode = "notify";
   let channel: "latest" | "beta" = "latest";
+  let intervalHours: number | undefined;
   let busy = false;
   const events: AppEvent[] = [];
   const check = vi.fn(async () => offer);
@@ -28,7 +29,7 @@ function setup(distribution: "installed" | "portable" | "managed" = "installed")
     distribution,
     configured: true,
     backend: { check, download, install },
-    preferences: () => ({ mode, channel }),
+    preferences: () => ({ mode, channel, ...(intervalHours === undefined ? {} : { intervalHours }) }),
     emit: (e) => events.push(e),
     beginShutdown: () => !busy,
     quit,
@@ -51,6 +52,9 @@ function setup(distribution: "installed" | "portable" | "managed" = "installed")
     },
     busy: (v: boolean) => {
       busy = v;
+    },
+    interval: (hours: number) => {
+      intervalHours = hours;
     },
   };
 }
@@ -157,4 +161,24 @@ it("keeps failed checks/downloads recoverable and never ready after integrity fa
   await h.u.check();
   await h.u.download();
   expect(h.u.get().phase).toBe("ready");
+});
+// REQ-FUNC-a16121c6
+it("checks every resolved interval and restarts the wait without a check when only the interval changes", async () => {
+  vi.useFakeTimers();
+  const hour = 60 * 60 * 1000;
+  const h = setup();
+  h.u.start();
+  await vi.advanceTimersByTimeAsync(0);
+  expect(h.check).toHaveBeenCalledTimes(1);
+  await vi.advanceTimersByTimeAsync(2 * hour);
+  h.interval(1);
+  h.u.settingsChanged();
+  await vi.advanceTimersByTimeAsync(0);
+  expect(h.check).toHaveBeenCalledTimes(1);
+  await vi.advanceTimersByTimeAsync(hour - 1);
+  expect(h.check).toHaveBeenCalledTimes(1);
+  await vi.advanceTimersByTimeAsync(1);
+  expect(h.check).toHaveBeenCalledTimes(2);
+  await vi.advanceTimersByTimeAsync(hour);
+  expect(h.check).toHaveBeenCalledTimes(3);
 });

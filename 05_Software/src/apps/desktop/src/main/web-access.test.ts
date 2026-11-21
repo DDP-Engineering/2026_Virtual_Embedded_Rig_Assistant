@@ -1,3 +1,4 @@
+// REQ-FUNC-5e129df5
 import { existsSync } from "node:fs";
 import { SettingsService } from "@vera/core";
 import { beforeAll, expect, it, vi } from "vitest";
@@ -59,10 +60,10 @@ it("saves preferences/key separately, masks metadata and anonymous never sends t
     keys: { exa: { keyConfigured: true, storage: "encrypted" } },
   });
   await h.service.provider.search({ query: "key mode" }, new AbortController().signal);
-  expect(h.create).toHaveBeenLastCalledWith("exa", key);
+  expect(h.create).toHaveBeenLastCalledWith("exa", key, { timeoutMs: 30_000 });
   await h.service.save(preferences);
   await h.service.provider.search({ query: "anonymous" }, new AbortController().signal);
-  expect(h.create).toHaveBeenLastCalledWith("exa", undefined);
+  expect(h.create).toHaveBeenLastCalledWith("exa", undefined, { timeoutMs: 30_000 });
   expect((await h.service.get()).keys.exa.keyConfigured).toBe(true);
 });
 it("requires weak-storage consent, supports memory choice and rolls back a failed preferences write", async () => {
@@ -158,7 +159,7 @@ it("keeps three provider keys isolated through switching, draft tests and remova
     brave: { keyConfigured: true },
   });
   await h.service.provider.search({ query: "board" }, new AbortController().signal);
-  expect(h.create).toHaveBeenLastCalledWith("brave", "owned-brave-key");
+  expect(h.create).toHaveBeenLastCalledWith("brave", "owned-brave-key", { timeoutMs: 30_000 });
   const before = [...h.disk];
   await h.service.test({
     provider: "tavily",
@@ -166,7 +167,7 @@ it("keeps three provider keys isolated through switching, draft tests and remova
     apiKey: "draft-only-tavily",
     testId: crypto.randomUUID(),
   });
-  expect(h.create).toHaveBeenLastCalledWith("tavily", "draft-only-tavily");
+  expect(h.create).toHaveBeenLastCalledWith("tavily", "draft-only-tavily", { timeoutMs: 30_000 });
   expect([...h.disk]).toEqual(before);
   await h.service.removeKey({ provider: "tavily" });
   expect(h.settings.get().settings.webAccess.provider).toBe("brave");

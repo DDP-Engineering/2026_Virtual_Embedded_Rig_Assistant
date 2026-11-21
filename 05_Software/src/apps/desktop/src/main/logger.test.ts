@@ -124,3 +124,42 @@ it("redaction preserves valid JSON when registered text includes JSON delimiters
     await rm(dir, { recursive: true, force: true });
   }
 });
+// REQ-FUNC-4a030008
+it("retains the resolved number of daily files, from the next entry after a change", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "vera-logs-"));
+  const fallback = await mkdtemp(join(tmpdir(), "vera-logs-"));
+  try {
+    let date = new Date("2026-10-01T23:00:00Z");
+    let keep = 7;
+    const clock = { now: () => date, sleep: async () => {} };
+    const logger = createLogger(dir, clock, () => keep);
+    // Built before the settings it reads, as in the desktop main process: while the getter throws, nothing
+    // is pruned; the first entry after the settings load prunes with the resolved value.
+    let loaded = false;
+    const early = createLogger(fallback, clock, () => {
+      if (!loaded) throw new ReferenceError("settings is not initialized");
+      return 5;
+    });
+    for (let day = 1; day <= 9; day++) {
+      date = new Date(`2026-10-0${day}T23:00:00Z`);
+      logger.log("info", "entry");
+      early.log("info", "entry");
+    }
+    await Promise.all([logger.flush(), early.flush()]);
+    const days = (from: number, to: number) =>
+      Array.from({ length: to - from + 1 }, (_, i) => `vera-2026-10-0${from + i}.log`);
+    expect((await readdir(dir)).sort()).toEqual(days(3, 9));
+    expect((await readdir(fallback)).sort()).toEqual(days(1, 9));
+    loaded = true;
+    early.log("info", "entry");
+    await early.flush();
+    expect((await readdir(fallback)).sort()).toEqual(days(5, 9));
+    keep = 3;
+    logger.log("info", "entry");
+    await logger.flush();
+    expect((await readdir(dir)).sort()).toEqual(days(7, 9));
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+    await rm(fallback, { recursive: true, force: true });
+  }
+});

@@ -12,6 +12,12 @@ import { downloadApprovalSchema, validDownloadApproval } from "./downloads.js";
 import { providerRetryAfterSchema } from "./errors.js";
 import { gitStatusUpdateSchema } from "./git-status.js";
 import type { Channel, Request, Response } from "./ipc.js";
+import {
+  planCommentSchema,
+  planFeedbackIdSchema,
+  planReviewSchema,
+  planRevisionSchema,
+} from "./plan-review.js";
 import { programApprovalSchema, validProgramApproval } from "./program-rules.js";
 import { reasoningOptionSchema } from "./provider-discovery.js";
 import {
@@ -21,6 +27,7 @@ import {
   sessionStatusSchema,
   stopReasonSchema,
   todoItemsSchema,
+  turnCapacitySchema,
 } from "./session.js";
 import type { Settings } from "./settings.js";
 import { updateOfferSchema, updateSnapshotSchema } from "./updates.js";
@@ -46,6 +53,10 @@ export const appEventSchema = z.discriminatedUnion("type", [
   /** The plugin catalog was read again (an update check); the Plugins page reloads its view. */
   z.strictObject({ type: z.literal("plugins.catalog") }),
   z.strictObject({ type: z.literal("dictation.interrupted"), id: dictationJobIdSchema }),
+  /** A session's turn, approval, title or status, or the set of open workbenches changed: read session.activity. */
+  z.strictObject({ type: z.literal("session.activity") }),
+  /** A turn was admitted or ended, or the Concurrent turns limit changed (REQ-FUNC-33cd5f9f). */
+  z.strictObject({ type: z.literal("session.capacity"), ...turnCapacitySchema.shape }),
 ]);
 export type AppEvent = z.infer<typeof appEventSchema>;
 /** Settings with no masking policy and no credential behind them. */
@@ -126,6 +137,8 @@ export const sessionEventSchema = z.discriminatedUnion("type", [
     modelRef: z.string().nullable().optional(),
     mode: permissionModeSchema.optional(),
     reasoning: reasoningOptionSchema.nullable().optional(),
+    /** Session-scope Advanced values; null clears one (REQ-DATA-96ef3dd6). */
+    advanced: z.record(z.string().max(64), z.union([z.number(), z.boolean(), z.null()])).optional(),
   }),
   z.strictObject({ type: z.literal("session.interrupted"), turnId: z.string() }),
   z.strictObject({ type: z.literal("turn.started"), turnId: z.string(), messageId: z.string().optional() }),
@@ -243,6 +256,15 @@ export const sessionEventSchema = z.discriminatedUnion("type", [
     bytes: count,
   }),
   z.strictObject({ type: z.literal("todo.updated"), items: todoItemsSchema }),
+  z.strictObject({ type: z.literal("plan.comments.saved"), comments: z.array(planCommentSchema) }),
+  z.strictObject({ type: z.literal("plan.comment.removed"), commentId: planFeedbackIdSchema }),
+  z.strictObject({ type: z.literal("plan.review.submitted"), review: planReviewSchema }),
+  z.strictObject({
+    type: z.literal("plan.review.restored"),
+    reviewId: planFeedbackIdSchema,
+    expectedFeedbackRevision: planRevisionSchema,
+    comments: z.array(planCommentSchema),
+  }),
   usageEventSchema,
   z.strictObject({
     type: z.literal("error"),

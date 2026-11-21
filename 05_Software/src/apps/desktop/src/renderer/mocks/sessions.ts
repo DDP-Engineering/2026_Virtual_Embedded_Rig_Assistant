@@ -1,15 +1,20 @@
 import {
   type ArtifactContent,
+  advancedPatchSchema,
   type ChangeDetail,
+  channels,
   confirmationMatches,
   foldSessionEvents,
   isLiveSessionEvent,
+  type PlanReview,
   type ProgramApproval,
   programPolicy,
   type SessionEvent,
   type SessionSummary,
+  type TurnCapacity,
   veraError,
 } from "@vera/shared";
+import { isFeedbackChannel, mockPlanFeedback } from "./plan-feedback.js";
 import { sessionFixtures } from "./session-fixtures.js";
 
 /** Mock program commands: a prompt starting with "flash" or "burn" requests one of them. */
@@ -54,6 +59,7 @@ export class MockSessions {
       artifacts: ArtifactContent[];
       live?: SessionEvent[];
       active: boolean;
+      review?: boolean;
       stop: boolean;
       turnId?: string;
       done?: Promise<void>;
@@ -75,7 +81,25 @@ export class MockSessions {
       mode: SessionSummary["mode"];
     },
     private readonly reasoningLevels: (model: string) => string[] = () => [],
+    /**
+     * The Concurrent turns limit across every mock workbench and the capacity announcement, and the session
+     * activity announcement (a turn started or ended, an approval was requested or decided), like main.
+     */
+    private readonly turns: { limit: () => number; changed: () => void; activity?: () => void } = {
+      limit: () => Number.MAX_SAFE_INTEGER,
+      changed: () => {},
+    },
   ) {}
+  /**
+   * Turns started by session.send over every mock workbench and the limit that admits new ones; the seeded
+   * streaming fixture only displays a live answer and holds no slot.
+   */
+  capacity(): TurnCapacity {
+    return {
+      active: [...this.sessions.values()].filter((row) => row.active && !row.live).length,
+      limit: this.turns.limit(),
+    };
+  }
   seedFixtures() {
     if ([...this.sessions.keys()].some((key) => key.startsWith(`${this.current().id}/`))) return;
     for (const fixture of sessionFixtures) {
@@ -117,6 +141,65 @@ export class MockSessions {
       } catch {
         /* observer */
       }
+    if (
+      ["turn.started", "turn.done", "session.interrupted", "approval.requested", "approval.decided"].includes(
+        event.type,
+      ) ||
+      (event.type === "session.updated" && (event.title !== undefined || event.status !== undefined))
+    )
+      this.turns.activity?.();
+  }
+  private startReview(id: string, review: PlanReview) {
+    const row = this.row(id),
+      key = this.key(id);
+    row.active = true;
+    row.review = true;
+    row.stop = false;
+    row.turnId = review.turnId;
+    row.summary.status = "running";
+    this.emit(id, { type: "plan.review.submitted", review }, key);
+    this.emit(
+      id,
+      {
+        type: "message.user",
+        messageId: review.messageId,
+        text: `Revise the plan only; do not execute any steps.\n\n${JSON.stringify({ plan: review.plan, comments: review.comments })}`,
+      },
+      key,
+    );
+    this.emit(id, { type: "turn.started", turnId: review.turnId }, key);
+    row.done = (async () => {
+      await new Promise((done) => setTimeout(done, 100));
+      if (!row.stop) {
+        const items = [...review.plan].reverse(),
+          callId = `todo_${++this.number}`;
+        this.emit(id, { type: "tool.started", callId, name: "todo", args: { items } }, key);
+        this.emit(id, { type: "todo.updated", items }, key);
+        this.emit(
+          id,
+          { type: "tool.done", callId, ok: true, summary: "Mock plan revised.", durationMs: 0 },
+          key,
+        );
+        this.emit(
+          id,
+          {
+            type: "message.done",
+            messageId: `message_${++this.number}`,
+            text: "Revised the plan from the feedback. No steps were executed.",
+            citations: [],
+          },
+          key,
+        );
+      }
+      row.active = false;
+      delete row.review;
+      row.summary.status = "idle";
+      this.emit(
+        id,
+        { type: "turn.done", turnId: review.turnId, stopReason: row.stop ? "aborted" : "end" },
+        key,
+      );
+    })();
   }
   private idle(id: string) {
     this.writable();
@@ -241,8 +324,24 @@ export class MockSessions {
         }
       throw veraError("NOT_FOUND");
     }
+    if (isFeedbackChannel(channel)) {
+      const input = channels[channel].request.safeParse(raw);
+      if (!input.success) throw veraError("INVALID");
+      if (input.data.workbenchId !== this.current().id) throw veraError("CONFLICT");
+    }
     const id = request.sessionId;
     const row = this.row(id);
+    if (isFeedbackChannel(channel))
+      return mockPlanFeedback(channel, raw, {
+        workbenchId: this.current().id,
+        events: row.events,
+        active: row.active,
+        archived: row.summary.archived,
+        writable: () => this.writable(),
+        nextId: () => `feedback_${++this.number}`,
+        emit: (event) => this.emit(id, event),
+        start: (review) => this.startReview(id, review),
+      });
     if (channel === "session.bookmark") {
       this.writable();
       if (row.summary.archived) throw veraError("DENIED");
@@ -258,6 +357,23 @@ export class MockSessions {
         bookmarked: request.bookmarked,
       });
       return {};
+    }
+    if (channel === "session.advanced.set") {
+      this.writable();
+      if (row.summary.archived) throw veraError("DENIED");
+      const { key, value } = request as unknown as { key: string; value: number | boolean | null };
+      const patch = advancedPatchSchema("session").safeParse({ [key]: value });
+      if (!patch.success || !Object.hasOwn(patch.data, key)) throw veraError("INVALID");
+      this.emit(id, { type: "session.updated", advanced: { [key]: value } });
+      return {};
+    }
+    if (channel === "session.compact") {
+      this.writable();
+      if (row.summary.archived) throw veraError("DENIED");
+      if (foldSessionEvents(row.events).activeTurnId) throw veraError("BUSY");
+      // The mock has no model: a session with history counts as summarized.
+      const history = foldSessionEvents(row.events).items.some((item) => item.kind === "assistant");
+      return { status: history ? "completed" : "unavailable" };
     }
     if (channel === "session.bookmarks.remove") {
       this.writable();
@@ -315,6 +431,7 @@ export class MockSessions {
         delete row.live;
         row.summary.status = "idle";
         this.emit(id, { type: "turn.done", turnId: "stream-turn", stopReason: "aborted" });
+        this.turns.changed();
         return { stopped: true };
       }
       return { stopped: row.active };
@@ -385,7 +502,8 @@ export class MockSessions {
     }
     if (channel === "session.send" && row.active) {
       this.writable();
-      if (row.stop || row.approval || !row.turnId) throw veraError("BUSY");
+      if (row.review || row.stop || row.approval || !row.turnId) throw veraError("BUSY");
+      if (!request.text.trim() && !request.images?.length) throw veraError("INVALID");
       const messageId = `message_${++this.number}`;
       this.emit(id, {
         type: "message.queued",
@@ -397,6 +515,11 @@ export class MockSessions {
       return { turnId: row.turnId, messageId };
     }
     this.idle(id);
+    if (channel === "session.send") {
+      // A new turn at the Concurrent turns limit is refused before anything changes, like main.
+      const { active, limit } = this.capacity();
+      if (active >= limit) throw { code: "TURN_LIMIT", messageKey: "errors.TURN_LIMIT", params: { limit } };
+    }
     row.summary.updatedAt = new Date().toISOString();
     if (channel === "session.archive.set") {
       row.summary.archived = request.archived;
@@ -427,6 +550,7 @@ export class MockSessions {
     if (channel === "session.send") {
       const key = this.key(id);
       row.active = true;
+      this.turns.changed();
       row.stop = false;
       const turnId = `turn_${++this.number}`,
         messageId = `message_${++this.number}`;
@@ -672,6 +796,7 @@ export class MockSessions {
           row.active = false;
           row.summary.status = "idle";
           this.emit(id, { type: "turn.done", turnId, stopReason: row.stop ? "aborted" : "end" }, key);
+          this.turns.changed();
         });
       return { turnId, messageId };
     }

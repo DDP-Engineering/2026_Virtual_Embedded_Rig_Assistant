@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-UX-58fdc5c6"
+
+title = "Show an error and keep the view when a sidebar activity action fails"
+
+status = "active"
+
+requirement = """
+If opening or stopping a session from a workbench's activity menu fails, then the sidebar shall show the localized error and keep the shown workbench and session.
+"""
+
+verification = "Renderer test: session.stop rejecting with NOT_FOUND shows the localized error below the workbench list and leaves the shown workbench unchanged; a workbench.open rejecting with NOT_FOUND shows the same localized error and leaves the shown workbench and the selected session unchanged."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/workbench-navigation.tsx", "05_Software/src/apps/desktop/src/renderer/components/workbench-activity.tsx", "05_Software/src/apps/desktop/src/renderer/App.tsx"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/workbench-activity.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-21
+updated = 2026-11-21

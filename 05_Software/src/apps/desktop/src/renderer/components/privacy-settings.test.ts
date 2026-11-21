@@ -42,8 +42,8 @@ it("offers the four masking switches and clean top Save/Cancel actions", async (
       ),
     );
     expect(container.querySelectorAll('[data-mask-area] input[role="switch"]')).toHaveLength(4);
-    expect(container.querySelector<HTMLButtonElement>("[data-privacy-save]")?.disabled).toBe(true);
-    expect(container.querySelector("[data-privacy-save]")?.classList.contains("primary")).toBe(true);
+    expect(container.querySelector<HTMLButtonElement>("[data-settings-save]")?.disabled).toBe(true);
+    expect(container.querySelector("[data-settings-save]")?.classList.contains("primary")).toBe(true);
   } finally {
     await act(async () => root.unmount());
     container.remove();
@@ -78,7 +78,7 @@ it.each(["en", "ro", "de", "fr"])(
         await act(async () => user.click(input(area)));
         expect(document.querySelector("dialog")).toBeNull();
       }
-      await click("[data-privacy-cancel]");
+      await click("[data-settings-cancel]");
       await act(async () => user.click(input("agent")));
       expect(input("agent").checked).toBe(true);
       expect(document.querySelector("dialog")?.textContent).toContain(i18n.t("privacy.warning"));
@@ -98,17 +98,17 @@ it.each(["en", "ro", "de", "fr"])(
       await render({ mask: { display: true, runs: true } });
       expect(input("display").checked).toBe(true);
       expect(input("agent").checked).toBe(false);
-      await click("[data-privacy-save]");
+      await click("[data-settings-save]");
       expect(update).toHaveBeenLastCalledWith({ privacy: { mask: { agent: false } } });
       await render({ mask: { display: true, runs: true } }, true);
       expect(input("display").disabled).toBe(true);
       // A rejected update leaves the confirmed snapshot intact; the draft can be retried.
       await render({ mask: { display: true, runs: true } });
       expect(input("agent").checked).toBe(false);
-      await click("[data-privacy-save]");
+      await click("[data-settings-save]");
       expect(update).toHaveBeenCalledTimes(2);
       await render({ mask: { display: true, runs: true, agent: false } });
-      expect(container.querySelector<HTMLButtonElement>("[data-privacy-save]")?.disabled).toBe(true);
+      expect(container.querySelector<HTMLButtonElement>("[data-settings-save]")?.disabled).toBe(true);
     } finally {
       await act(async () => root.unmount());
       container.remove();

@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-cae0533c"
+
+title = "Skip background compaction when it is off"
+
+status = "active"
+
+requirement = """
+While the resolved Background compaction switch is off for a session's workbench or application, VERA shall not start a summary after a turn ends, and shall compact at the next request when needed.
+"""
+
+verification = "With the switch off and a finished turn above the trigger, no summary request runs after the turn; the next request compacts before it is sent. With the switch on, the summary runs after the turn."
+
+affected_paths = ["05_Software/src/libraries/shared/src/advanced-settings.ts", "05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/apps/desktop/src/renderer/components/workbench-advanced.tsx"]
+
+linked_tests = ["05_Software/src/libraries/shared/src/advanced-settings.test.ts", "05_Software/src/libraries/core/src/sessions/compaction-advanced.test.ts", "05_Software/src/apps/desktop/src/renderer/components/workbench-advanced.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-20
+updated = 2026-11-20

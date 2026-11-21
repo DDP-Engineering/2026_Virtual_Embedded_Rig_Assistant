@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-FUNC-a6aa5e7c"
+
+title = "Announce session activity changes"
+
+status = "active"
+
+requirement = "When a session's turn starts or ends, an approval is requested or decided, a session's title or status changes, or a workbench runtime is opened, kept in the background, brought back or released, the desktop app shall emit the application event session.activity."
+
+verification = "Core test: over a replay turn with an approval and a later rename, the session host's activity observer is called exactly once per published turn.started, turn.done, approval.requested, approval.decided and session.updated with a title or status, and not for the turn's message deltas. Registry test: every lifecycle change, a failed open included, and a settled release call the change observer. Shared schema test accepts the session.activity app event without a payload."
+
+affected_paths = ["05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/libraries/core/src/sessions/hub.ts", "05_Software/src/apps/desktop/src/main/workbench-runtimes.ts", "05_Software/src/apps/desktop/src/main/sessions.ts", "05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/libraries/shared/src/events.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/sessions/service.test.ts::tells the host when a session's activity changes, never for live text", "05_Software/src/apps/desktop/src/main/workbench-runtimes.test.ts::announces each lifecycle change and settled release, and keeps subscriptions across them", "05_Software/src/libraries/shared/src/session-activity-ipc.test.ts::announces activity changes as an application event without a payload"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-21
+updated = 2026-11-21

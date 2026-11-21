@@ -278,6 +278,40 @@ parentPort.on('message', ({rows, query}) => {
   }
 });
 
+// REQ-FUNC-bfbd70b6
+it("retires an idle worker after the host's current Embedding worker idle time", async () => {
+  const temporary = await mkdtemp(join(tmpdir(), "vera-embedding-idle-live-"));
+  const entry = join(temporary, "worker.mjs");
+  const marker = join(temporary, "starts.txt");
+  let idle = 60_000;
+  const host = new EmbeddingHost(pathToFileURL(entry), "unused", manifest, 5000, 5000, () => idle);
+  try {
+    await writeFile(
+      entry,
+      `import {parentPort} from 'node:worker_threads'; import {appendFileSync} from 'node:fs';
+appendFileSync(${JSON.stringify(marker)},'x');
+parentPort.on('message', ({rows}) => parentPort.postMessage({ok:true,result:[{id:rows?.[0]?.id ?? 1,score:1}]}));`,
+    );
+    const signal = new AbortController().signal;
+    const vector = new Float32Array(384);
+    vector[0] = 1;
+    await host.rank("bench", "1", [{ id: 1, vector }], "term", signal);
+    // The first idle period started with 60 s: the worker stays.
+    await new Promise((resolve) => setTimeout(resolve, 150));
+    await host.rank("bench", "1", [{ id: 1, vector }], "term", signal);
+    expect(await readFile(marker, "utf8")).toBe("x");
+    // A shorter value applies from the next idle period, and a later call starts a new worker.
+    idle = 50;
+    await host.rank("bench", "1", [{ id: 1, vector }], "term", signal);
+    await expect.poll(() => host.cached("bench", "1")).toBe(false);
+    await host.rank("bench", "1", [{ id: 1, vector }], "term", signal);
+    expect(await readFile(marker, "utf8")).toBe("xx");
+  } finally {
+    await host.dispose();
+    await rm(temporary, { recursive: true, force: true });
+  }
+});
+
 it("applies the E5 passage and query prefixes before tokenization and inference", async () => {
   const temporary = await mkdtemp(join(tmpdir(), "vera-embedding-prefixes-"));
   const entry = join(temporary, "worker.mjs");

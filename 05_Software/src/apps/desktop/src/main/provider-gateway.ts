@@ -20,6 +20,7 @@ import {
   type ProviderTestResult,
   providerCatalogSchema,
   providerTestResultSchema,
+  resolveAdvanced,
   samePresetBinding,
   veraError,
   veraErrorSchema,
@@ -55,6 +56,9 @@ export class ProviderGateway {
         now: () => clock.now().getTime(),
         presets: providers.presets,
         ...(fetcher ? { fetch: fetcher } : {}),
+        // The application's header wait for hosted providers, read at each request (REQ-FUNC-73ca575e).
+        headerWaitMs: () =>
+          resolveAdvanced("headerWait", { app: settings.get().settings.advanced }).value * 1000,
       });
   }
   modelReference(session?: string | null, workbench?: string | null): string {

@@ -4,6 +4,7 @@ import { useEffect, useId, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../api/index.js";
 import { ErrorMessage } from "./error-message.js";
+import { SettingsPageHeader, useSettingsDraft } from "./settings-page-header.js";
 
 const updateKey = ["update"];
 function useUpdates() {
@@ -95,11 +96,15 @@ export function UpdatesPanel({
   preferences,
   disabled,
   update,
+  dirtyChanged,
 }: {
   preferences: { mode: UpdateMode; channel: UpdateChannel };
   disabled: boolean;
   update: (patch: SettingsPatch) => void;
+  dirtyChanged?: ((dirty: boolean) => void) | undefined;
 }) {
+  // Mode and channel are a draft written by Save; Check, Download and Restart stay actions (REQ-UX-032aab57).
+  const { draft, edits, dirty, set, reset } = useSettingsDraft(preferences, dirtyChanged);
   const { t } = useTranslation(),
     { state, action } = useUpdates();
   const [confirm, setConfirm] = useState(false);
@@ -124,13 +129,20 @@ export function UpdatesPanel({
   const busy = action.isPending || snapshot?.phase === "checking" || snapshot?.phase === "downloading";
   return (
     <section className="surface" id="section-updates" data-settings-section="updates">
-      <h2 tabIndex={-1}>{t("settings.updates")}</h2>
+      <SettingsPageHeader
+        title={t("settings.updates")}
+        i18n="settings.updates"
+        dirty={dirty}
+        saving={disabled}
+        onCancel={reset}
+        onSave={() => update({ updates: edits })}
+      />
       <label htmlFor="update-mode">{t("updates.mode")}</label>
       <select
         id="update-mode"
         disabled={disabled}
-        value={preferences.mode}
-        onChange={(e) => update({ updates: { mode: e.target.value as UpdateMode } })}
+        value={draft.mode}
+        onChange={(e) => set({ mode: e.target.value as UpdateMode })}
       >
         <option value="off">{t("updates.off")}</option>
         <option value="notify">{t("updates.notify")}</option>
@@ -140,8 +152,8 @@ export function UpdatesPanel({
       <select
         id="update-channel"
         disabled={disabled}
-        value={preferences.channel}
-        onChange={(e) => update({ updates: { channel: e.target.value as UpdateChannel } })}
+        value={draft.channel}
+        onChange={(e) => set({ channel: e.target.value as UpdateChannel })}
       >
         <option value="latest">{t("updates.latest")}</option>
         <option value="beta">{t("updates.beta")}</option>

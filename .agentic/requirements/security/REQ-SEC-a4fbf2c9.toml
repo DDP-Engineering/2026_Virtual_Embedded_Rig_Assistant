@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-SEC-a4fbf2c9"
+
+title = "Mask session content with the owning workbench's settings"
+
+status = "active"
+
+requirement = "The desktop app shall mask a session's events, snapshots, summaries and activity titles with the agent masking of the workbench holding that session and encode its message image identities for that workbench's ID and folder, so that an identity of a background workbench resolves only after that workbench is shown again."
+
+verification = "Display test: an image identity encoded for background workbench A does not resolve while B is shown and resolves to the original path once A is shown, and the shown workbench's identities are unchanged. Native e2e with a stored secret in A's notes, A's session title and B's board, A's agent masking on and B's off: while B is shown, A's snapshot, the events of a subscription to A's session, A's title in session.activity and in session.list for A contain no secret, while B's snapshot does."
+
+affected_paths = ["05_Software/src/apps/desktop/src/main/display-documents.ts", "05_Software/src/apps/desktop/src/main/index.ts"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/main/display-documents.test.ts::encodes a background workbench's session image identities that resolve only once it is shown", "05_Software/tests/e2e/session-routing.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-21
+updated = 2026-11-21

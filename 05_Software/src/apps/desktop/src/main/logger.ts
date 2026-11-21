@@ -2,12 +2,28 @@ import { appendFile, mkdir, readdir, rm } from "node:fs/promises";
 import { join } from "node:path";
 import type { Clock, Logger } from "@vera/core";
 
-export function createLogger(directory: string, clock: Clock): Logger {
+/**
+ * `keep` is the resolved Log retention (daily files kept; seven without a getter). The desktop builds the
+ * logger before its settings service, so the getter is read only while an entry is written; while it throws,
+ * nothing is pruned, so an early entry cannot delete files a longer retention keeps.
+ */
+export function createLogger(directory: string, clock: Clock, keep?: () => number): Logger {
   const secrets = new Map<string, number>();
   let queue = Promise.resolve();
   let failure: unknown;
-  // Old files are pruned with the first entry and then when the day changes, not with every entry.
+  // Old files are pruned with the first entry that can read the retention, when the day changes and when the
+  // retention changes, not with every entry (REQ-FUNC-4a030008).
   let prunedDay: string | undefined;
+  let prunedKeep: number | undefined;
+  const retained = (): number | undefined => {
+    if (!keep) return 7;
+    try {
+      const value = keep();
+      return typeof value === "number" && Number.isSafeInteger(value) && value > 0 ? value : undefined;
+    } catch {
+      return undefined;
+    }
+  };
   function redact(serialized: string): string {
     const tokens = [...secrets.keys()].flatMap((secret) => [secret, JSON.stringify(secret).slice(1, -1)]);
     const ordered = [...new Set(tokens)].sort((a, b) => b.length - a.length);
@@ -44,13 +60,15 @@ export function createLogger(directory: string, clock: Clock): Logger {
             mode: 0o600,
           });
           const day = timestamp.slice(0, 10);
-          if (day === prunedDay) return;
+          const count = retained();
+          if (count === undefined || (day === prunedDay && count === prunedKeep)) return;
           const daily = (await readdir(directory))
             .filter((file) => /^vera-\d{4}-\d{2}-\d{2}\.log$/.test(file))
             .sort()
             .reverse();
-          for (const file of daily.slice(7)) await rm(join(directory, file));
+          for (const file of daily.slice(count)) await rm(join(directory, file));
           prunedDay = day;
+          prunedKeep = count;
         })
         .catch((error: unknown) => {
           failure ??= error;

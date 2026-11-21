@@ -1,6 +1,6 @@
 # Einstellungen
 
-**Einstellungen** unten in der Seitenleiste öffnet die Anwendungseinstellungen. Sie gelten für alle Workbenches; die Einstellungen eines einzelnen Workbenchs finden Sie unter **Workbench bearbeiten** (siehe [Workbenches](workbenches.md)). Änderungen werden sofort gespeichert, außer auf Seiten mit einer eigenen Schaltfläche **Speichern**. **Zurück zu Workbenches** führt Sie zurück zu Ihrer Arbeit.
+**Einstellungen** unten in der Seitenleiste öffnet die Anwendungseinstellungen. Sie gelten für alle Workbenches; die Einstellungen eines einzelnen Workbenchs finden Sie unter **Workbench bearbeiten** (siehe [Workbenches](workbenches.md)). Änderungen auf einer Seite bleiben ein Entwurf, bis Sie oben rechts **Speichern** drücken; **Abbrechen** verwirft sie. Änderungen am Erscheinungsbild sehen Sie sofort auf dem Bildschirm, schon vor dem Speichern. Wenn Sie eine Seite mit nicht gespeicherten Änderungen verlassen, fragt VERA, ob Sie sie verwerfen oder bleiben möchten. **Zurück zu Workbenches** führt Sie zurück zu Ihrer Arbeit.
 
 | Seite | Was sie festlegt |
 |---|---|
@@ -43,7 +43,7 @@ Die Seite listet jeden Befehl mit seiner Tastenkombination auf. Sie können Komb
 
 - **Aktualisierungsmodus**: **Aus**, **Benachrichtigen** oder **Automatisch herunterladen**. Mit **Benachrichtigen** informiert VERA Sie über eine neue Version und lädt sie erst herunter, wenn Sie **Aktualisierung herunterladen** wählen.
 - **Kanal**: **Stabil** oder **Beta (einschließlich stabil)**.
-- **Jetzt prüfen** prüft sofort, auch wenn der Modus **Aus** ist. Andernfalls prüft VERA beim Start und alle sechs Stunden.
+- **Jetzt prüfen** prüft sofort, auch wenn der Modus **Aus** ist. Andernfalls prüft VERA beim Start und alle sechs Stunden oder im **Intervall der Updateprüfung** aus den [erweiterten Einstellungen](advanced-settings.md).
 
 Wenn ein Update heruntergeladen wurde, wählen Sie **Zum Aktualisieren neu starten**. VERA wartet, bis alle laufenden Durchläufe und ausstehenden Freigaben abgeschlossen sind. Jedes Update wird vor der Installation überprüft, und VERA installiert nie eine ältere Version.
 

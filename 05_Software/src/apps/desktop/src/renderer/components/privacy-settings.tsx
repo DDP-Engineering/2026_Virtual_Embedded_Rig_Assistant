@@ -1,16 +1,20 @@
+// REQ-UX-032aab57
 import { type MaskingArea, maskingDefaults, type Settings, type SettingsPatch } from "@vera/shared";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { appMaskingValues, PrivacyControls } from "./privacy-controls.js";
+import { SettingsPageHeader } from "./settings-page-header.js";
 
 export function PrivacySettings({
   privacy,
   saving,
   update,
+  dirtyChanged,
 }: {
   privacy: Settings["privacy"];
   saving: boolean;
   update: (patch: SettingsPatch) => void;
+  dirtyChanged?: ((dirty: boolean) => void) | undefined;
 }) {
   const { t } = useTranslation();
   const [edits, setEdits] = useState<Partial<Record<MaskingArea, boolean>>>({});
@@ -26,23 +30,18 @@ export function PrivacySettings({
     );
   }, [privacy]);
   const dirty = Object.keys(edits).length > 0;
+  useEffect(() => dirtyChanged?.(dirty), [dirty, dirtyChanged]);
+  useEffect(() => () => dirtyChanged?.(false), [dirtyChanged]);
   return (
     <section className="surface" data-settings-section="data">
-      <header className="workbench-actions">
-        <h2>{t("settings.data")}</h2>
-        <button type="button" data-privacy-cancel disabled={saving || !dirty} onClick={() => setEdits({})}>
-          {t("workbench.cancel")}
-        </button>
-        <button
-          type="button"
-          className="primary"
-          data-privacy-save
-          disabled={saving || !dirty}
-          onClick={() => update({ privacy: { mask: edits } })}
-        >
-          {t("workbench.save")}
-        </button>
-      </header>
+      <SettingsPageHeader
+        title={t("settings.data")}
+        i18n="settings.data"
+        dirty={dirty}
+        saving={saving}
+        onCancel={() => setEdits({})}
+        onSave={() => update({ privacy: { mask: edits } })}
+      />
       <PrivacyControls
         values={appMaskingValues({ mask: { ...confirmed, ...edits } })}
         disabled={saving}

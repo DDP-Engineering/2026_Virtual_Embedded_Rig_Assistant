@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-UX-504e0d6d"
+
+title = "Document Advanced settings in help"
+
+status = "active"
+
+requirement = """
+VERA shall provide the help page advanced-settings in English, Romanian, German and French that explains the Show advanced settings switch, the scope precedence, the apply-timing icons and each registered Advanced setting with its range and default.
+"""
+
+verification = "Run the help check: the advanced-settings page exists in en, ro, de and fr with valid links and an index entry. Inspection: each page has the same sections and lists every registered setting with the registry's levels, range, default and timing, and the agent and context pages also describe Compact now."
+
+affected_paths = ["05_Software/help/en/advanced-settings.md", "05_Software/help/ro/advanced-settings.md", "05_Software/help/de/advanced-settings.md", "05_Software/help/fr/advanced-settings.md", "05_Software/help/en/index.md"]
+
+linked_tests = []
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-20
+updated = 2026-11-20

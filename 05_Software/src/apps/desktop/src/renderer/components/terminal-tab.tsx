@@ -5,6 +5,7 @@ import { Plus, X } from "lucide-react";
 import { type RefObject, useContext, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../api/index.js";
+import { appAdvancedValue, useAppAdvanced } from "../hooks/app-advanced.js";
 import { terminalDocument } from "../lib/terminal-document.js";
 import { ErrorMessage } from "./error-message.js";
 import { TerminalNavigation } from "./terminal-navigation.js";
@@ -46,7 +47,8 @@ function TerminalSurface({
     const term = new Terminal({
       cursorBlink: true,
       disableStdin: true,
-      scrollback: 3000,
+      // Read as the view opens; an open view keeps its scrollback (REQ-UX-996ae06e).
+      scrollback: appAdvancedValue("terminalScrollback"),
       allowProposedApi: false,
       fontFamily: "Consolas, monospace",
       fontSize: fontSize(),
@@ -138,6 +140,7 @@ function TerminalSurface({
 /** User-owned terminals survive panel navigation; the host closes them with the workbench. */
 export function TerminalTab({ workbenchId }: { workbenchId: string }) {
   const { t } = useTranslation();
+  const maxTerminals = useAppAdvanced("terminals");
   const navigation = useContext(TerminalNavigation);
   const target = navigation?.workbenchId === workbenchId ? navigation.target : undefined;
   const requested = useRef(target);
@@ -262,7 +265,7 @@ export function TerminalTab({ workbenchId }: { workbenchId: string }) {
             }}
             aria-label={t("terminal.new")}
             title={t("terminal.new")}
-            disabled={pending || terminals.length >= 8}
+            disabled={pending || terminals.length >= maxTerminals}
           >
             <Plus aria-hidden="true" />
           </button>

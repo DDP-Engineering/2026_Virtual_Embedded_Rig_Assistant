@@ -25,9 +25,12 @@ import { DictationButton, DictationStatus } from "./dictation-button.js";
 import { ImageAttachmentChip } from "./image-attachment-chip.js";
 import { ReasoningPicker } from "./reasoning-picker.js";
 
+export type ComposerState = Pick<SessionState, "mode" | "modelRef" | "status" | "activeTurnId" | "reasoning">;
+
 export function Composer({
   state,
   disabled,
+  sendDisabled: sendingLocked = false,
   archived = false,
   send,
   stop,
@@ -44,8 +47,9 @@ export function Composer({
   chatVisible?: boolean;
   sessionId?: string;
   workbenchId?: string;
-  state: SessionState;
+  state: ComposerState;
   disabled: boolean;
+  sendDisabled?: boolean;
   archived?: boolean;
   send: (text: string, images?: string[]) => Promise<boolean>;
   stop: () => void;
@@ -101,7 +105,16 @@ export function Composer({
   }, [text]);
   const running = !!state.activeTurnId;
   const submitting = useRef(false);
-  const locked = disabled || state.status === "awaiting_approval";
+  const locked = disabled || sendingLocked || state.status === "awaiting_approval";
+  // The message box is disabled while a send is pending, which drops its focus; once it is enabled again
+  // focus returns there (a refused send keeps the draft to edit or resend, REQ-UX-f20cb322), unless the
+  // user has focused something else meanwhile.
+  const refocus = useRef(false);
+  useEffect(() => {
+    if (locked || !refocus.current) return;
+    refocus.current = false;
+    if (!document.activeElement || document.activeElement === document.body) input.current?.focus();
+  }, [locked]);
   const imageLocked = locked || archived || !sessionId || !workbenchId || !attachments?.addImages;
   const dictationEnabled = chatVisible && !locked && !archived;
   const readDraft = useCallback(
@@ -194,6 +207,7 @@ export function Composer({
     if (sessionId && workbenchId && attachments?.imageDraft?.(workbenchId, sessionId).pending) return;
     submitting.current = true;
     dictation.cancel();
+    refocus.current = document.activeElement === input.current;
     const submitted = draft.current;
     const sent = [...attached];
     const sentImages = images.map(({ path }) => path);
@@ -209,6 +223,8 @@ export function Composer({
       }
     } finally {
       submitting.current = false;
+      // Never disabled meanwhile, so focus was never lost.
+      if (!input.current?.disabled) refocus.current = false;
     }
   }
   return (

@@ -1,6 +1,7 @@
 // REQ-UX-0d64586a, REQ-FUNC-559bba00, REQ-UX-2eb10026
 import { expect } from "@playwright/test";
 import { test } from "./fixtures.js";
+import { saveSettings } from "./settings-navigation.js";
 
 test("plugin rows open their help, Help lists them, and links between app pages work", {
   tag: "@parallel-browser",
@@ -25,6 +26,7 @@ test("plugin rows open their help, Help lists them, and links between app pages 
   await page.locator('[data-i18n="nav.settings"]').click();
   await page.locator('[data-section="appearance"]').click();
   await page.locator("#language").selectOption("fr");
+  await saveSettings(page);
   await page.locator('[data-action="show-help"]').click();
   await page.locator('[data-help-page="plugin/serial-monitor"]').click();
   await expect(page.locator('[data-help-current="plugin/serial-monitor"]')).toHaveAttribute("lang", "fr");
@@ -35,5 +37,6 @@ test("plugin rows open their help, Help lists them, and links between app pages 
   await page.locator('[data-i18n="nav.settings"]').click();
   await page.locator('[data-section="appearance"]').click();
   await page.locator("#language").selectOption("en");
+  await saveSettings(page);
   expect(errors).toEqual([]);
 });

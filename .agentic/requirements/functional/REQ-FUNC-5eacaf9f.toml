@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-5eacaf9f"
+
+title = "End worker tasks at the resolved worker deadline"
+
+status = "active"
+
+requirement = """
+When a grep or parse_log worker task runs longer than the resolved Worker deadline, an integer from 5 to 120 seconds with default 10 set for the application, VERA shall stop the task and report the timeout, a task keeping the deadline it started with.
+"""
+
+verification = "With a pool reading 5 s, a task blocked past 5 s ends with the timeout result; changing the value while a task runs leaves that task's deadline and applies to the next task."
+
+affected_paths = ["05_Software/src/libraries/shared/src/advanced-settings.ts", "05_Software/src/libraries/core/src/workers/node-host.ts", "05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/apps/cli/src/run.ts"]
+
+linked_tests = ["05_Software/src/libraries/shared/src/advanced-settings.test.ts", "05_Software/src/libraries/core/src/workers/node-host.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-21
+updated = 2026-11-21

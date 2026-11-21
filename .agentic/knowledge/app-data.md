@@ -44,7 +44,7 @@ plugins/shell.test.ts and renderer components/command-settings.test.ts.
   state inside the serialized queue. ChatGPT default selection and logout use it to retain
   concurrently selected models from another provider; IPC patches cannot supply predicates.
 - schemaVersion 1 persists a stable installation UUID, language/theme/textScale and current non-secret
-  model/provider/update/recent/limit defaults. Optional sessionOrder (session ids per workbench
+  model/provider/update/recent defaults. Optional sessionOrder (session ids per workbench
   id, TASK-c99ca08c) is main-owned: only the internal service patch writes it, the IPC settings
   patch rejects it. Exact contract: [data spec](../specs/REQ-DATA-4a030001.md).
 - Optional `dictation` stores a selected installed-model id or null and a spoken-language code or
@@ -52,6 +52,17 @@ plugins/shell.test.ts and renderer components/command-settings.test.ts.
   [Dictation](dictation.md) owns model verification and effective selection. The app settings patch
   saves optional `dictationRecordingMode` (`hold` or `toggle`) and the `dictate` shortcut overrides.
 - app.settings.get({}) and app.settings.update(patch) use validated schemas.
+- Advanced settings (ADV-01, `shared/src/advanced-settings.ts`):
+  - **Storage:** `settings.json` holds an optional `advanced` map (application scope) and `showAdvanced` (default false). The stored map is unvalidated, so a hand-edited file always loads.
+  - **Saving:** the patch accepts only registered keys in range, or null to clear (REQ-DATA-96ef3dd6).
+  - **Registry:** it gives key, kind (`int` with a range, `switch`, or `choice` with fixed options such as
+    `pageSize` 10/20/50), default, scopes and apply timing. A choice value outside its options is refused and ignored
+    like an out-of-range one (REQ-DATA-96ef3dd6). The pilot is `toolCallsPerTurn` (10–500, default 50, live).
+  - **Renderer store:** `renderer/hooks/app-advanced.ts` holds the saved application values, set by usePreferences from
+    the settings snapshot; lists, the transcript and the terminal tab read it (defaults before it is set).
+  - **Concurrent turns:** `concurrentTurns` (app scope only, 1-16, default 3) bounds agent turns across every open workbench; main reads it at each admission and announces a saved change through `session.capacity` (see [Sessions](sessions.md)).
+  - **Resolver:** `resolveAdvanced` picks session > workbench > app > default and skips invalid values, reporting each ignored key by name (REQ-DATA-33a90ef2).
+  - **Removed key:** the former `limits.maxToolCallsPerTurn` no longer exists. A settings file that still has `limits` fails the strict schema, which applies the no-migration rule.
   VeraApi exposes getSettings/updateSettings; mockApi uses the same schemas and event behavior.
 - PathProvider supplies userData/settings/logs; Clock supplies now/sleep; FileAccess supplies
   read/writeAtomic; Logger supplies log/registerSecret/flush.
@@ -82,7 +93,10 @@ Renderer preferences consume this snapshot through Query and i18next; [renderer 
   Failed saves preserve memory/events and allow later updates. No-op patches emit nothing.
 - Close denies new updates and drains accepted work; logs drain after window close.
 - Log content keys/values are scrubbed before serialization and at write time, preserving valid JSON.
-  Rotation retains the newest seven daily logs and unrelated files.
+  Rotation retains the newest daily logs up to the resolved Log retention (1-90, default 7) and unrelated files;
+  it prunes with the first entry, on a day change and with the next entry after the value changes. The desktop
+  builds the logger before its settings service; while the retention getter throws nothing is pruned, and the first
+  entry after the settings load prunes with the resolved value (REQ-FUNC-4a030008).
 
 ## Change map
 
@@ -105,7 +119,7 @@ Renderer preferences consume this snapshot through Query and i18next; [renderer 
 - REQ-FUNC-4a030005 — strict serial partial updates and post-save events.
 - REQ-FUNC-4a030006 — validated settings bridge/API/mock.
 - REQ-PLAT-4a030007 — portable data selected before readiness.
-- REQ-FUNC-4a030008 — structured levels and seven UTC daily logs.
+- REQ-FUNC-4a030008 — structured levels and UTC daily logs kept up to the resolved Log retention.
 - REQ-SEC-4a030009 — registered-secret content redaction.
 
 ## Files

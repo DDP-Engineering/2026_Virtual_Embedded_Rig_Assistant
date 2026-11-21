@@ -8,6 +8,7 @@ import {
   type TerminalReader,
 } from "@vera/core";
 import {
+  advancedSettings,
   type CommandBlockShell,
   commandBlockShellSchema,
   commandBlockTextSchema,
@@ -49,19 +50,31 @@ type Entry = {
   output: string;
   /** Characters trimmed from the head of `output` so far. */
   dropped: number;
+  /** Characters of output kept: the Terminal buffer when the terminal opened. */
+  buffer: number;
   listeners: { dispose(): void }[];
 };
-const BUFFER = 262144;
+/** The application's terminal limits, in characters; read when a terminal opens or the agent reads one. */
+export interface TerminalLimits {
+  terminals: number;
+  bufferChars: number;
+  agentChars: number;
+}
+const defaultLimits: TerminalLimits = {
+  terminals: advancedSettings.terminals.default,
+  bufferChars: advancedSettings.terminalBufferK.default * 1024,
+  agentChars: advancedSettings.terminalAgentChars.default,
+};
 const leaseSchema = z.strictObject({ id: terminalIdSchema, grant: z.number().int().nonnegative() });
 const readSchema = z.strictObject({
   truncated: z.literal(true).optional(),
-  leases: z.array(leaseSchema).max(8),
+  leases: z.array(leaseSchema).max(advancedSettings.terminals.max),
   terminals: z
     .array(
       z.strictObject({ id: terminalIdSchema, number: z.number().int().positive(), running: z.boolean() }),
     )
-    .max(8),
-  text: z.string().max(12000).optional(),
+    .max(advancedSettings.terminals.max),
+  text: z.string().max(advancedSettings.terminalAgentChars.max).optional(),
 });
 
 /** Ephemeral workbench-owned user shells. Only reader() crosses the core agent boundary. */
@@ -81,8 +94,24 @@ export class TerminalService {
       maskUserOutput(): boolean;
       maskAgentOutput?(): boolean;
       secrets(): readonly string[];
+      /** The resolved Advanced terminal limits; the registry defaults when absent. */
+      limits?(): TerminalLimits;
     },
   ) {}
+
+  private limits(): TerminalLimits {
+    const limits = this.host.limits?.();
+    const valid = (value: unknown) => typeof value === "number" && Number.isSafeInteger(value) && value > 0;
+    return {
+      terminals: valid(limits?.terminals) ? (limits as TerminalLimits).terminals : defaultLimits.terminals,
+      bufferChars: valid(limits?.bufferChars)
+        ? (limits as TerminalLimits).bufferChars
+        : defaultLimits.bufferChars,
+      agentChars: valid(limits?.agentChars)
+        ? (limits as TerminalLimits).agentChars
+        : defaultLimits.agentChars,
+    };
+  }
 
   private owner(id: string) {
     if (this.suspended) throw veraError("CONFLICT");
@@ -123,7 +152,8 @@ export class TerminalService {
     terminalSizeSchema.parse({ cols, rows });
     const current = this.owner(owner);
     const generation = this.generation;
-    if (this.entries.size + this.creating >= 8) throw veraError("BUSY");
+    // A lowered count closes no open terminal; it only refuses new ones (REQ-FUNC-7509bd1e).
+    if (this.entries.size + this.creating >= this.limits().terminals) throw veraError("BUSY");
     this.creating++;
     try {
       const shell =
@@ -157,6 +187,7 @@ export class TerminalService {
         running: true,
         output: "",
         dropped: 0,
+        buffer: this.limits().bufferChars,
         listeners: [],
       };
       this.entries.set(entry.id, entry);
@@ -166,9 +197,9 @@ export class TerminalService {
           entry.output += entry.commandPrompt
             ? entry.commandPrompt.output(data, (reply) => pty.write(reply))
             : data;
-          if (entry.output.length > BUFFER) {
+          if (entry.output.length > entry.buffer) {
             const length = entry.output.length;
-            const tail = entry.output.slice(-BUFFER);
+            const tail = entry.output.slice(-entry.buffer);
             // Drop a cut line rather than disclose the suffix of a secret at the buffer boundary.
             entry.output = tail.slice(tail.indexOf("\n") < 0 ? tail.length : tail.indexOf("\n") + 1);
             entry.dropped += length - entry.output.length;
@@ -185,7 +216,7 @@ export class TerminalService {
       this.creating--;
     }
   }
-  private publicOutput(entry: Pick<Entry, "output">): string {
+  private publicOutput(entry: Pick<Entry, "output" | "buffer">): string {
     const text = entry.output;
     // A secret split over PTY callbacks must not reveal its leading fragment on an interim poll.
     const trim = (value: string) => {
@@ -207,7 +238,7 @@ export class TerminalService {
     const visible = this.strip(masked);
     return (
       plain.held > raw.held || this.host.scrub(visible) !== visible ? this.host.scrub(plain.text) : masked
-    ).slice(-BUFFER);
+    ).slice(-entry.buffer);
   }
   output(owner: string, id: string): TerminalSnapshot {
     const entry = this.entry(owner, id);
@@ -298,7 +329,7 @@ export class TerminalService {
         };
         return data;
       },
-      publish: (output) => {
+      publish: (output, limit) => {
         this.owner(owner);
         const data = readSchema.parse(JSON.parse(output));
         for (const lease of data.leases) {
@@ -306,20 +337,29 @@ export class TerminalService {
           if (!entry.shared || entry.grant !== lease.grant) throw Error("Terminal read consent was revoked.");
         }
         const entries = data.leases.map((lease) => this.entry(owner, lease.id));
-        return capToolResult({
-          ...(data.truncated ? { truncated: true } : {}),
-          terminals: entries.map((entry) => ({ id: entry.id, number: entry.number, running: entry.running })),
-          ...(data.text === undefined
-            ? {}
-            : { text: this.recent(entries[0] as Entry, this.host.maskAgentOutput?.() !== false) }),
-        }).text;
+        return capToolResult(
+          {
+            ...(data.truncated ? { truncated: true } : {}),
+            terminals: entries.map((entry) => ({
+              id: entry.id,
+              number: entry.number,
+              running: entry.running,
+            })),
+            ...(data.text === undefined
+              ? {}
+              : { text: this.recent(entries[0] as Entry, this.host.maskAgentOutput?.() !== false) }),
+          },
+          [],
+          limit,
+        ).text;
       },
     };
   }
   private recent(entry: Entry, mask: boolean): string {
     const text = this.strip(mask ? this.publicOutput(entry) : entry.output);
-    if (text.length <= 12000) return text;
-    const tail = text.slice(-12000);
+    const size = this.limits().agentChars;
+    if (text.length <= size) return text;
+    const tail = text.slice(-size);
     const first = tail.charCodeAt(0);
     return first >= 0xdc00 && first <= 0xdfff ? tail.slice(1) : tail;
   }

@@ -55,9 +55,22 @@ export function App() {
   const setEditorDirty = useCallback((dirty: boolean) => {
     editorDirty.current = dirty;
   }, []);
-  /** False when the engineer keeps unsaved editor edits instead of navigating away. */
+  const settingsDirty = useRef(false);
+  const setSettingsDirty = useCallback((dirty: boolean) => {
+    settingsDirty.current = dirty;
+  }, []);
+  /**
+   * False when the engineer keeps unsaved workbench editor or Settings page edits instead of navigating away
+   * (REQ-UX-6a1c936e). Confirming discards once the page with the draft unmounts; its unmount reports it
+   * clean, so a navigation that does not happen after all (a cancelled folder picker) keeps the guard.
+   */
   const leaveEditor = useCallback(
-    () => !editorDirty.current || window.confirm(t("projects.discardChanges")),
+    () => (!editorDirty.current && !settingsDirty.current) || window.confirm(t("projects.discardChanges")),
+    [t],
+  );
+  /** Help is a detour that keeps the workbench editor mounted, but it unmounts a Settings page. */
+  const leaveSettings = useCallback(
+    () => !settingsDirty.current || window.confirm(t("projects.discardChanges")),
     [t],
   );
   const openEditor = useCallback((value: WorkbenchSnapshot, section?: ConfigSection) => {
@@ -79,7 +92,17 @@ export function App() {
       origin.focus();
     else document.querySelector<HTMLElement>('[data-action="edit-workbench-overview"]')?.focus();
   }, [editor]);
-  const [section, setSection] = useState("appearance");
+  const [section, setSettingsSection] = useState("appearance");
+  /** Another Settings page asks first while the open one has unsaved changes. */
+  const setSection = useCallback(
+    (next: string) => {
+      if (next === section) return true;
+      if (!leaveEditor()) return false;
+      setSettingsSection(next);
+      return true;
+    },
+    [section, leaveEditor],
+  );
   useEffect(() => {
     const main = document.getElementById("main-content");
     if (settings && section && main) main.scrollTop = 0;
@@ -180,9 +203,12 @@ export function App() {
     const folder = bench.data?.folder ?? recent.data?.find((entry) => entry.id === benchId)?.folder;
     return bench.data && folder ? { ...bench.data, folder, readOnly } : undefined;
   }, [bench.data, benchId, recent.data, readOnly]);
-  /** Shows a session; callers have already confirmed leaving a dirty editor. */
+  /**
+   * Shows a session of the shown workbench, or of `workbenchId` when the caller has just brought that one
+   * forward; callers have already confirmed leaving a dirty editor.
+   */
   const openSession = useCallback(
-    (id: string, linked = false) => {
+    (id: string, linked = false, workbenchId = benchId) => {
       setLinkedTranscript(linked ? id : undefined);
       setComposerFocus(undefined);
       setActiveSession(id);
@@ -192,9 +218,9 @@ export function App() {
       setNewWorkbench(false);
       setSettings(false);
       setEditor(undefined);
-      if (benchId)
+      if (workbenchId)
         try {
-          localStorage.setItem(`vera.session.${benchId}`, id);
+          localStorage.setItem(`vera.session.${workbenchId}`, id);
         } catch {
           /* Disabled storage. */
         }
@@ -219,6 +245,8 @@ export function App() {
   useEffect(() => {
     if (!benchId || !sessions.data) return;
     if (activeSession && sessions.data.some((s) => s.id === activeSession)) return;
+    // A session opened in a workbench just brought forward may be newer than its cached list.
+    if (activeSession && sessions.isFetching) return;
     let remembered: string | null = null;
     try {
       remembered = localStorage.getItem(`vera.session.${benchId}`);
@@ -227,7 +255,7 @@ export function App() {
     }
     const id = sessions.data.find((s) => s.id === remembered)?.id ?? sessions.data[0]?.id;
     setActiveSession(id);
-  }, [benchId, sessions.data, activeSession]);
+  }, [benchId, sessions.data, sessions.isFetching, activeSession]);
   const operation = useCallback(
     async (action: () => Promise<void>) => {
       if (operationBusy.current) return false;
@@ -334,17 +362,19 @@ export function App() {
     !info.isError &&
     !snapshot.isError;
   const sections = useSettingsSections();
+  /** False when the engineer stays; opening Settings while it is shown leaves nothing, so it never asks. */
   const navigate = useCallback(
     (value: boolean) => {
-      if (!leaveEditor()) return;
+      if (!(value && settings) && !leaveEditor()) return false;
       setSettings(value);
       setPlugins(false);
       setHelp(undefined);
       setNewWorkbench(false);
       setEditor(undefined);
       if (!value) setChat(false);
+      return true;
     },
-    [leaveEditor],
+    [leaveEditor, settings],
   );
   const clearComposerFocus = useCallback(() => setComposerFocus(undefined), []);
   // Documents open as tabs of the chat area, so opening one shows it (TASK-79f6ffd3).
@@ -367,12 +397,16 @@ export function App() {
     setChat(false);
   }, [leaveEditor]);
   /** Opens Help as a detour: hidden drafts (New Workbench, the workbench editor) stay mounted. */
-  const showHelp = useCallback((page: string) => {
-    setHelp(page);
-    setSettings(false);
-    setPlugins(false);
-    setChat(false);
-  }, []);
+  const showHelp = useCallback(
+    (page: string) => {
+      if (settings && !leaveSettings()) return;
+      setHelp(page);
+      setSettings(false);
+      setPlugins(false);
+      setChat(false);
+    },
+    [settings, leaveSettings],
+  );
   const helpPage = screenHelpPage({
     help: help !== undefined,
     settings,
@@ -410,8 +444,7 @@ export function App() {
           navigate(true);
           break;
         case "shortcuts":
-          navigate(true);
-          setSection("shortcuts");
+          if (navigate(true)) setSection("shortcuts");
           break;
         case "newSession":
           if (!benchId || readOnly || sessionPending) return;
@@ -431,7 +464,17 @@ export function App() {
     };
     window.addEventListener("keydown", listener);
     return () => window.removeEventListener("keydown", listener);
-  }, [bindings, navigate, create, benchId, readOnly, sessionPending, showNewWorkbench, openWorkbench]);
+  }, [
+    bindings,
+    navigate,
+    create,
+    benchId,
+    readOnly,
+    sessionPending,
+    showNewWorkbench,
+    openWorkbench,
+    setSection,
+  ]);
   const navigation = settings ? (
     <div
       className="settings-tabs"
@@ -454,10 +497,7 @@ export function App() {
         if (next === undefined) return;
         event.preventDefault();
         const id = sections[next]?.id;
-        if (id) {
-          setSection(id);
-          document.getElementById(`settings-tab-${id}`)?.focus();
-        }
+        if (id && setSection(id)) document.getElementById(`settings-tab-${id}`)?.focus();
       }}
     >
       {sections.map(({ id, label, icon: Icon }) => (
@@ -550,6 +590,27 @@ export function App() {
             benchClosed();
           })
         }
+        openSession={async (folder, id) => {
+          if (!leaveEditor()) return false;
+          if (folder === activeWorkbench?.folder) {
+            openSession(id, true);
+            return true;
+          }
+          return operation(async () => {
+            const snapshot = await api.invoke("workbench.open", { folder });
+            benchChanged(snapshot);
+            openSession(id, true, snapshot.config.id);
+            await recent.refetch();
+          });
+        }}
+        stopSession={(id) => {
+          // Stop leaves the sidebar usable and the shown workbench and session as they are.
+          setSessionError(undefined);
+          api.invoke("session.stop", { sessionId: id }).then(() => {
+            changed();
+            void client.invalidateQueries({ queryKey: ["session.activity"] });
+          }, setSessionError);
+        }}
         remove={(folder) =>
           (folder !== activeWorkbench?.folder || leaveEditor()) &&
           void operation(async () => {
@@ -627,6 +688,8 @@ export function App() {
           >
             {/* One session view per window (PERF-05): the chat and its side tabs share one read. */}
             <SessionViewProvider
+              key={`${bench.data?.folder ?? ""}/${benchId ?? ""}`}
+              workbenchId={benchId}
               id={benchId && chat && !settings && !plugins && help === undefined ? activeSession : undefined}
               changed={changed}
             >
@@ -705,7 +768,12 @@ export function App() {
                   }
                   plan={
                     benchId && activeSession && chat && !settings ? (
-                      <PlanTab workbenchId={benchId} sessionId={activeSession} />
+                      <PlanTab
+                        workbenchId={benchId}
+                        sessionId={activeSession}
+                        readOnly={readOnly}
+                        archived={selected?.archived ?? true}
+                      />
                     ) : undefined
                   }
                   bookmarks={
@@ -782,6 +850,7 @@ export function App() {
                         saving={mutation.isPending}
                         error={mutation.error}
                         update={(patch) => mutation.mutate(patch)}
+                        dirtyChanged={setSettingsDirty}
                       />
                     )}
                     {/* Stays mounted while hidden so an unsaved draft survives navigation. */}

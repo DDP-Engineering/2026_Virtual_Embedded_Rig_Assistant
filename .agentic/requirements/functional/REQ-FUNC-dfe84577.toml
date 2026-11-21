@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-dfe84577"
+
+title = "End downloads at the resolved download time limit"
+
+status = "active"
+
+requirement = """
+When a download's transfer takes longer than the resolved Download time limit, an integer from 30 to 1800 seconds with default 120 set for the application, VERA shall end it with the timeout error and save no file, PDF text extraction keeping its own deadline.
+"""
+
+verification = "With a 50 ms budget a stalled transfer ends with an abort and leaves no file; a session with 600 s sends a 600000 ms deadline with the approved size to the transfer; PDF extraction keeps the extractor's own deadline."
+
+affected_paths = ["05_Software/src/libraries/shared/src/advanced-settings.ts", "05_Software/src/libraries/core/src/tools/web-download.ts", "05_Software/src/libraries/core/src/web/downloads.ts", "05_Software/src/libraries/core/src/web/download-transfer.ts", "05_Software/src/apps/desktop/src/main/download-transfer.ts"]
+
+linked_tests = ["05_Software/src/libraries/shared/src/advanced-settings.test.ts", "05_Software/src/libraries/core/src/web/downloads.test.ts", "05_Software/src/libraries/core/src/sessions/downloads.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-21
+updated = 2026-11-21

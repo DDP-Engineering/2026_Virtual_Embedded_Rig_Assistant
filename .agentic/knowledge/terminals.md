@@ -19,9 +19,13 @@ main. Renderer owns the xterm view and controls through strict user IPC. Shells 
 
 - `terminal.list/create/output/input/resize/close/consent` require the current workbench ID; targets
   use UUID terminal IDs. Create fixes cwd to the workbench and selects Settings → Commands' shell.
-- Up to eight live/finished terminal tabs remain until close, workbench replacement or app shutdown.
+- Up to the resolved Terminals per workbench (application Advanced, 1-16, default 8, read at create) live/finished
+  terminal tabs remain until close, workbench replacement or app shutdown; a lowered value closes none
+  (REQ-FUNC-7509bd1e). Replacement means another workbench (another ID or folder, so a clone counts) takes the foreground or the foreground closes; a failed
+  open or create and a reopen of the current workbench keep the terminals (main/index.ts replaceForeground). The renderer disables New at the same count; `terminal.list` and the agent read schema allow 16.
   Bash uses `-il`, sh `-i`, PowerShell `-NoLogo`; agent command flags and closed stdin are separate.
-- Host capture retains at most 262144 raw characters, dropping a cut leading line. User snapshots follow the live Program runs choice, default off. With masking on,
+- Host capture retains at most the Terminal buffer the terminal had when it opened (64-1024 Ki characters,
+  default 256 Ki, REQ-FUNC-240f4e02), dropping a cut leading line; the snapshot schema allows 1024 Ki. User snapshots follow the live Program runs choice, default off. With masking on,
   current known credentials are masked and split secret prefixes are held. The renderer appends
   snapshot deltas and reconstructs a bounded view when truncation or masking changes the prefix.
   Plain projection keeps incomplete VT sequences pending so partial CSI/OSC/DCS cannot bypass
@@ -31,8 +35,10 @@ main. Renderer owns the xterm view and controls through strict user IPC. Shells 
   window before taking the tail when on, preserving split-secret and partial VT prefix holding.
   Off uses the bounded clean OutputDecoder projection; raw authority stays in main. Finished user snapshots also
   resolve the live choice on every poll.
-- `terminal_read {terminalId?}` lists only shared terminals when omitted; an ID returns at most
-  12000 recent plain characters. Consent starts false and applies to one terminal in its workbench.
+- `terminal_read {terminalId?}` lists only shared terminals when omitted; an ID returns at most the resolved
+  Terminal output for the agent (2000-64000, default 12000) recent plain characters, capped by the session's
+  resolved Tool result size passed to `publish(output, limit)` (REQ-FUNC-ef931b1f). The view's xterm scrollback is
+  the resolved Terminal scrollback when it opens (1000-50000 lines, default 3000, REQ-UX-996ae06e). Consent starts false and applies to one terminal in its workbench.
 - Grant epochs and current ownership are checked again by the runtime's synchronous publication hook.
   Revocation/close/switch refuses unpublished captures; already shared results remain in transcript history.
   Serialized JSON truncation retains the registry's `truncated:true` marker alongside lease checks.

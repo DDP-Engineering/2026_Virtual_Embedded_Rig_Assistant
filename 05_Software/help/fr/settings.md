@@ -1,6 +1,6 @@
 # Paramètres
 
-**Paramètres**, en bas de la barre latérale, ouvre les paramètres de l’application. Ils s’appliquent à tous les bancs de travail ; les paramètres d’un seul banc de travail se trouvent dans **Modifier le banc** (consultez [Bancs de travail](workbenches.md)). Les modifications sont enregistrées dès que vous les effectuez, sauf sur les pages qui ont leur propre bouton **Enregistrer**. **Retour aux bancs de travail** vous ramène à votre travail.
+**Paramètres**, en bas de la barre latérale, ouvre les paramètres de l’application. Ils s’appliquent à tous les bancs de travail ; les paramètres d’un seul banc de travail se trouvent dans **Modifier le banc** (consultez [Bancs de travail](workbenches.md)). Les modifications d’une page restent un brouillon jusqu’à ce que vous appuyiez sur **Enregistrer**, en haut à droite ; **Annuler** les abandonne. Les modifications de l’apparence s’affichent tout de suite à l’écran, avant l’enregistrement. Si vous quittez une page avec des modifications non enregistrées, VERA vous demande si vous voulez les abandonner ou rester. **Retour aux bancs de travail** vous ramène à votre travail.
 
 | Page | Ce qu’elle définit |
 |---|---|
@@ -43,7 +43,7 @@ La page liste chaque commande avec sa combinaison de touches. Vous pouvez ajoute
 
 - **Mode de mise à jour** : **Désactivé**, **Notifier** ou **Télécharger automatiquement**. Avec **Notifier**, VERA vous signale une nouvelle version et ne la télécharge que lorsque vous sélectionnez **Télécharger la mise à jour**.
 - **Canal** : **Stable** ou **Bêta (inclut stable)**.
-- **Vérifier maintenant** vérifie immédiatement, même lorsque le mode est **Désactivé**. Sinon, VERA vérifie au démarrage et toutes les six heures.
+- **Vérifier maintenant** vérifie immédiatement, même lorsque le mode est **Désactivé**. Sinon, VERA vérifie au démarrage et toutes les six heures, ou selon l’**Intervalle de vérification des mises à jour** des [paramètres avancés](advanced-settings.md).
 
 Lorsqu’une mise à jour est téléchargée, sélectionnez **Redémarrer pour mettre à jour**. VERA attend que tous les tours en cours et toutes les approbations en attente soient terminés. Chaque mise à jour est vérifiée avant son installation, et VERA n’installe jamais une version plus ancienne.
 

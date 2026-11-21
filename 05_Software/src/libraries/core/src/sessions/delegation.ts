@@ -4,9 +4,6 @@ import { modelReferenceSchema, reasoningOptionSchema, sessionIdSchema } from "@v
 import { z } from "zod";
 import type { LlmGateway } from "../llm/gateway.js";
 
-/** Maximum simultaneously active delegated turns in one workbench. */
-export const MAX_ACTIVE_DELEGATIONS = 3;
-
 const requestId = z.string().regex(/^[A-Za-z0-9_.:-]{1,200}$/);
 const instruction = z
   .string()

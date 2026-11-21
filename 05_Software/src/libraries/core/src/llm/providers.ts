@@ -59,6 +59,8 @@ export interface GatewayHost {
   knownSecrets?: () => readonly string[];
   subscriptionCredentials?: CredentialStore;
   presets?: readonly CuratedProviderPreset[];
+  /** Milliseconds to wait for hosted response headers, read at each request; 30 s when absent (REQ-FUNC-73ca575e). */
+  headerWaitMs?: () => number;
 }
 type Custom = Settings["providers"]["custom"][number];
 type CuratedConnection = ReturnType<typeof resolveCuratedConnection>;
@@ -293,8 +295,9 @@ export function createPiAiGateway(
     return parsed.data;
   };
   // Local servers may load the model and read the whole prompt before they answer, so a custom
-  // connection sets its own wait, 300 s by default; hosted OpenAI endpoints keep 30 s for headers.
+  // connection sets its own wait, 300 s by default; hosted endpoints use the host's header wait.
   const customWaitMs = (custom: Custom) => (custom.responseTimeoutSeconds ?? 300) * 1000;
+  const hostedWaitMs = () => host.headerWaitMs?.() ?? 30000;
   const presetCatalogs = new PresetCatalogCache(host);
   function curatedTarget(
     custom: Custom,
@@ -380,7 +383,7 @@ export function createPiAiGateway(
         endpoint: model.baseUrl,
         supportsTools: undefined,
         slot: provider,
-        headerWaitMs: 30000,
+        headerWaitMs: hostedWaitMs(),
         reasoningOptions: current?.reasoningOptions ?? [],
         curated: undefined,
         profile: undefined,

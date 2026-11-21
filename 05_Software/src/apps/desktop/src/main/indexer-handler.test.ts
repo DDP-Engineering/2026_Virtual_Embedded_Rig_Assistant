@@ -142,3 +142,24 @@ it("passes a failure's error code, such as ENOENT, back to main", async () => {
   await flush();
   expect(sent).toContainEqual({ id: 10, ok: false, error: failure });
 });
+
+// REQ-FUNC-aa35b135 REQ-FUNC-bfbd70b6
+it("hands the document limits of each message to the process before the message runs", async () => {
+  const s = services();
+  const seen: unknown[] = [];
+  const handle = createIndexerHandler(
+    s as never,
+    () => {},
+    (next) => seen.push(next),
+  );
+  handle({
+    id: 1,
+    type: "select",
+    input: { root: "/bench", docs: {} },
+    limits: { extractionMs: 900_000, embeddingIdleMs: 0 },
+  });
+  await flush();
+  // An invalid value is left out, so the process keeps its previous or default value.
+  expect(seen).toEqual([{ extractionMs: 900_000 }]);
+  expect(s.select).toHaveBeenCalledOnce();
+});

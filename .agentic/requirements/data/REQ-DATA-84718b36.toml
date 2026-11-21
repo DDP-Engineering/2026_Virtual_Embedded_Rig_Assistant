@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-DATA-84718b36"
+
+title = "Store the concurrent-turn limit as an application Advanced setting"
+
+status = "active"
+
+requirement = """
+The application settings shall store the Concurrent turns limit as the application-scope Advanced setting concurrentTurns, an integer from 1 to 16 with default 3, in the settings format version 1, and refuse a save with a value outside that range or at workbench or session scope.
+"""
+
+verification = "Shared advanced-settings test: the app patch schema accepts 1 and 16 and refuses 0, 17 and a fraction; the workbench and session patch schemas refuse the key; resolution without a stored value is 3 (default) and a stored 5 resolves to 5 (app)."
+
+affected_paths = ["05_Software/src/libraries/shared/src/advanced-settings.ts", "05_Software/src/apps/desktop/src/renderer/components/advanced-field.tsx", "05_Software/help/en/advanced-settings.md"]
+
+linked_tests = ["05_Software/src/libraries/shared/src/advanced-settings.test.ts", "05_Software/src/apps/desktop/src/main/turn-limit.replay.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-21
+updated = 2026-11-21

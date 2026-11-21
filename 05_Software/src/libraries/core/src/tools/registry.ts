@@ -16,7 +16,7 @@ import { applyCandidateTool } from "./apply-candidate.js";
 import { artifactSaveTool } from "./artifact-save.js";
 import { browserTools } from "./browser.js";
 import type { ToolContext, ToolDefinition } from "./context.js";
-import { toolSignal } from "./context.js";
+import { toolLimit, toolSignal } from "./context.js";
 import { decodeRegisterTool } from "./decode-register.js";
 import { delegatedSessionTools } from "./delegated-sessions.js";
 import { readDocTool, searchDocsTool } from "./documents.js";
@@ -101,6 +101,7 @@ export const programToolNames: readonly string[] = [
 
 const delegationNames = new Set<string>(delegatedSessionToolNames);
 
+/** The default Tool result size; sessions resolve their own (REQ-FUNC-f6f79cd2). */
 export const TOOL_RESULT_CAP = 32000;
 
 // Leave visible credentials whole so a later masking policy can still recognize them.
@@ -117,17 +118,21 @@ function resultPrefix(text: string, limit: number, tokens: readonly string[]): s
   return text.slice(0, cut);
 }
 
-export function capToolResult(value: Record<string, unknown>, protectedStrings: readonly string[] = []) {
+export function capToolResult(
+  value: Record<string, unknown>,
+  protectedStrings: readonly string[] = [],
+  limit = TOOL_RESULT_CAP,
+) {
   const result = JSON.parse(JSON.stringify(value)) as Record<string, unknown>;
   let text = JSON.stringify(result);
   let truncated = result.truncated === true;
-  if (text.length > TOOL_RESULT_CAP) {
+  if (text.length > limit) {
     truncated = true;
     result.truncated = true;
     const tokens = protectedStrings
       .flatMap((token) => [token, JSON.stringify(token).slice(1, -1)])
       .filter((token) => token.length > 1);
-    for (let round = 0; text.length > TOOL_RESULT_CAP && round < 100; round++) {
+    for (let round = 0; text.length > limit && round < 100; round++) {
       let best: { owner: Record<string, unknown>; key: string; size: number } | undefined;
       const visit = (owner: Record<string, unknown>) => {
         for (const [key, item] of Object.entries(owner)) {
@@ -160,8 +165,7 @@ export function capToolResult(value: Record<string, unknown>, protectedStrings: 
       }
       text = JSON.stringify(result);
     }
-    if (text.length > TOOL_RESULT_CAP)
-      text = '{"truncated":true,"isError":true,"error":"Narrow the request."}';
+    if (text.length > limit) text = '{"truncated":true,"isError":true,"error":"Narrow the request."}';
   }
   return { text, truncated };
 }
@@ -203,7 +207,11 @@ export class ToolRegistry {
     });
   }
   private capResult(ctx: ToolContext, name: string, value: Record<string, unknown>) {
-    return capToolResult(value, delegationNames.has(name) ? ctx.delegation?.resultSecrets() : undefined);
+    return capToolResult(
+      value,
+      delegationNames.has(name) ? ctx.delegation?.resultSecrets() : undefined,
+      toolLimit(ctx, "toolResultChars"),
+    );
   }
   specs(disabled: readonly string[] = []) {
     return toolSpecs(

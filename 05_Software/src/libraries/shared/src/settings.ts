@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { advancedPatchSchema, mergeAdvanced } from "./advanced-settings.js";
 import { dictationDefaults, dictationPreferencesSchema } from "./dictation.js";
 import { shortcutOverridesSchema } from "./keyboard-shortcuts.js";
 import { partsSearchSettingsSchema } from "./parts-search.js";
@@ -106,7 +107,10 @@ const mutable = {
   recentWorkbenches: z.array(recentWorkbenchSchema),
   /** Session ids per workbench in the order the user arranged them (TASK-c99ca08c). */
   sessionOrder: z.record(workbenchIdSchema, z.array(sessionIdSchema)).optional(),
-  limits: z.strictObject({ maxToolCallsPerTurn: z.number().int().positive().max(Number.MAX_SAFE_INTEGER) }),
+  /** Application-scope Advanced values, validated when saved and when resolved (REQ-DATA-33a90ef2). */
+  advanced: z.record(z.string(), z.unknown()).optional(),
+  /** Shows the Advanced sections of Settings, Edit workbench and the session menu (REQ-UX-fcd1ad10). */
+  showAdvanced: z.boolean().optional(),
   plugins: pluginSettingsSchema.optional(),
 };
 
@@ -135,9 +139,8 @@ export const settingsPatchSchema = z.strictObject({
       channel: mutable.updates.shape.channel.optional(),
     })
     .optional(),
-  limits: z
-    .strictObject({ maxToolCallsPerTurn: mutable.limits.shape.maxToolCallsPerTurn.optional() })
-    .optional(),
+  advanced: advancedPatchSchema("app").optional(),
+  showAdvanced: mutable.showAdvanced,
   plugins: mutable.plugins,
 });
 export const settingsSnapshotSchema = z.strictObject({ settings: settingsSchema });
@@ -160,9 +163,11 @@ export function mergeSettings(current: Settings, patch: SettingsServicePatch): S
     ...current,
     ...clean,
     updates: { ...current.updates, ...clean.updates },
-    limits: { ...current.limits, ...clean.limits },
     ...(clean.dictation
       ? { dictation: { ...dictationDefaults, ...current.dictation, ...clean.dictation } }
+      : {}),
+    ...(current.advanced || clean.advanced
+      ? { advanced: mergeAdvanced(current.advanced, clean.advanced ?? {}) }
       : {}),
     ...(current.privacy || clean.privacy
       ? {
@@ -191,6 +196,5 @@ export function defaultSettings(installationId: string): Settings {
     providers: { openai: {}, custom: [] },
     updates: { mode: "notify", channel: "latest" },
     recentWorkbenches: [],
-    limits: { maxToolCallsPerTurn: 50 },
   };
 }

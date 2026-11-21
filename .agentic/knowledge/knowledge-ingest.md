@@ -29,7 +29,7 @@ createPdfExtractor accepts optional Node worker resourceLimits; existing ingest 
   workbenches have no live Ingester.
 - WorkbenchService.reindexDocuments serializes an owned rebuild. Strict empty
   docs.reindex IPC invokes it through desktop main; the mock enforces ownership.
-- Ingester.request coalesces changes with trailing1000ms debounce; reindex selects
+- Ingester.request coalesces changes with a trailing debounce of `IngestOptions.pauseMs()` (the application Indexing pause, default 1000 ms, read at each request; REQ-FUNC-2fba7b9c); reindex selects
   first and clears only inside reconcile, after the count guard let the selection through, in
   the same queue (a failed or guarded selection leaves the index intact, TASK-f09609fd,
   REQ-FUNC-9a05625c); close stops/aborts/drains before disposal.
@@ -72,7 +72,7 @@ createPdfExtractor accepts optional Node worker resourceLimits; existing ingest 
 - index.volume {files, bytes} follows every selection and counts only the selected (not
   skipped) documents; Ingester.volume() and
   WorkbenchService.documentVolume() return the last one (null before the first) and
-  docs.volume exposes it with the guard. The Documents section preview warns above the
+  docs.volume exposes it with the guard and the resolved Document volume warning (`documentVolumeLimitFor`, workbench over application). The Documents section preview warns above the
   shared limit and when its bounded scan stops early, as "at least N files" (RULING-004).
   The status snapshot carries the measured volume alongside selection progress and the guard.
 - DocumentsRepository list/get/save/remove/clearDerived/replaceChunks uses the current schema (schema_version 1).
@@ -118,10 +118,12 @@ while .vera content stays permanently excluded from indexed documents.
   rules to directories and files, and a .veraignore or pattern change re-registers
   the watcher. Folders are matched only in their "dir/" form, so an allowlist
   .veraignore ("*", "!*/", "!*.pdf") keeps them; when chokidar has no stats yet a
-  path is skipped only if ignored in both forms. Bounded asynchronous SHA-256 reads cap
-  input at 100MiB for binary kinds (PDF, office) and 20MiB for text; binary kinds
-  skip the text check. Exact limits are allowed. kinds.ts sizeLimit(kind, docs) lowers the
-  limit to floor(docs.maxFileMB x 1 MiB) when set, never raises it (REQ-FUNC-133f57ee);
+  path is skipped only if ignored in both forms. Bounded asynchronous SHA-256 reads, the viewer, read_doc and citation checks cap
+  input at the largest allowed sizes, 500 MiB for binary kinds (PDF, office) and 64 MiB for text
+  (`sourceLimit`, REQ-FUNC-486d6a86); binary kinds skip the text check. Exact limits are allowed. kinds.ts
+  sizeLimit(kind, docs) uses floor(docs.maxFileMB x 1 MiB) for binary kinds (100 MiB when unset, at most 500) and
+  docs.maxTextMB for text, which `selectionDocs(config)` fills from the resolved workbench textFileMB (default 20)
+  for the ingest select and size check; the preview adds the open workbench's saved value (REQ-FUNC-133f57ee);
   selectDocuments returns documents above it in Selection.skipped (reason too-large), the
   Ingester keeps their rows and records them unsupported/SIZE_LIMIT from lstat without
   reading them. Binary text and oversized files

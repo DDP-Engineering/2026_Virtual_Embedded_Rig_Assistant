@@ -1,5 +1,6 @@
 // Shared contracts are the renderer/main boundary and depend only on zod.
 
+export * from "./advanced-settings.js";
 export * from "./artifacts.js";
 export * from "./bounded.js";
 export * from "./browser.js";
@@ -29,6 +30,7 @@ export * from "./lab-resources.js";
 export * from "./lighting-project.js";
 export * from "./ordering.js";
 export * from "./parts-search.js";
+export * from "./plan-review.js";
 export * from "./plugin-catalog.js";
 export * from "./plugin-credentials.js";
 export * from "./plugin-settings.js";

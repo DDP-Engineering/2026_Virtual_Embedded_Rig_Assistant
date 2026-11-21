@@ -6,6 +6,7 @@ import { emptySessionState, type SessionState } from "@vera/shared";
 import { act, createElement } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
+import { setAppAdvanced } from "../../hooks/app-advanced.js";
 import i18n from "../../i18n.js";
 import { Transcript } from "./transcript.js";
 
@@ -192,4 +193,22 @@ it("cancels pending idle work on unmount", async () => {
   await act(async () => root.unmount());
   expect(cancel).toHaveBeenCalled();
   root = createRoot(container);
+});
+// REQ-UX-a4cf0527
+it("mounts the resolved first rows and chunk size, read when the session is shown", async () => {
+  setAppAdvanced({ transcriptRows: 20, transcriptChunkRows: 50 });
+  try {
+    await render(conversation(150));
+    expect(articles()).toHaveLength(20);
+    // A change while the session is shown applies to the next session shown, not to this one.
+    setAppAdvanced({ transcriptRows: 20, transcriptChunkRows: 500 });
+    const first = takeIdle();
+    await act(async () => first?.());
+    expect(articles()).toHaveLength(70);
+    const second = takeIdle();
+    await act(async () => second?.());
+    expect(articles()).toHaveLength(120);
+  } finally {
+    setAppAdvanced(undefined);
+  }
 });

@@ -580,6 +580,65 @@ it("waits for response headers up to the custom connection's timeout, 300 s by d
   }
 });
 
+// REQ-FUNC-73ca575e
+it("waits for hosted response headers as long as the host's header wait, read at each request", async () => {
+  const settings = defaultSettings("00000000-0000-4000-8000-000000000001");
+  settings.providers.custom = [
+    {
+      baseUrl: "http://127.0.0.1:1/v1",
+      model: "m",
+      contextWindow: 32768,
+      maxOutputTokens: 4096,
+      slug: "slow",
+      name: "Slow",
+      responseTimeoutSeconds: 45,
+    },
+  ];
+  let calls = 0;
+  const hang: typeof fetch = (_input, init) => {
+    calls++;
+    return new Promise((_resolve, reject) =>
+      init?.signal?.addEventListener("abort", () => reject(new DOMException("aborted", "AbortError")), {
+        once: true,
+      }),
+    );
+  };
+  let wait = 12_000;
+  const gateway = createPiAiGateway({
+    settings: () => settings,
+    credentials,
+    scrub: (s) => s,
+    now: () => 0,
+    fetch: hang,
+    headerWaitMs: () => wait,
+  });
+  vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+  try {
+    for (const [model, seconds, next] of [
+      ["openai/gpt-4.1", 12, 90_000],
+      ["openai/gpt-4.1", 90, 90_000],
+      // A custom endpoint keeps its own wait.
+      ["custom:slow/m", 45, 90_000],
+    ] as const) {
+      const before = calls;
+      let settled = false;
+      const result = events(gateway, undefined, undefined, model).finally(() => {
+        settled = true;
+      });
+      while (calls === before) await new Promise((resolve) => setImmediate(resolve));
+      await vi.advanceTimersByTimeAsync(seconds * 1000 - 1);
+      expect(settled, model).toBe(false);
+      await vi.advanceTimersByTimeAsync(1);
+      expect((await result).at(-1), model).toMatchObject({
+        error: { messageKey: "provider.timeout", params: { reason: "timeout", seconds } },
+      });
+      wait = next;
+    }
+  } finally {
+    vi.useRealTimers();
+  }
+});
+
 // REQ-REL-25ceaa1d
 it("reports provider activity for every streamed reasoning delta", async () => {
   const chunk = (delta: object, finish: string | null = null) =>

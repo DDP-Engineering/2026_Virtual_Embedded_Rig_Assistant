@@ -6,6 +6,7 @@ import { join, resolve } from "node:path";
 import { _electron, type ElectronApplication, expect, test } from "@playwright/test";
 import type { VeraBridge } from "@vera/shared";
 import { installNetworkGuard, outboundAttempts } from "./network-guard.js";
+import { saveSettings } from "./settings-navigation.js";
 
 test("native Web access controls anonymous/key use, revokes calls, persists and translates without exposing keys", async () => {
   test.setTimeout(90000);
@@ -328,6 +329,7 @@ test("native Web access controls anonymous/key use, revokes calls, persists and 
     ]) {
       await page.locator('[data-section="appearance"]').click();
       await page.locator("#language").selectOption(language!);
+      await saveSettings(page);
       await page.locator('[data-section="web"]').click();
       await expect(page.locator(".web-access h2")).toHaveText(title!);
       await expect(page.locator(".web-access")).not.toContainText("webAccess.");

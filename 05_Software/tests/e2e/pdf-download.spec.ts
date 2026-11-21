@@ -9,6 +9,7 @@ import { join, resolve } from "node:path";
 import { _electron, expect, type Locator, test } from "@playwright/test";
 import type { VeraBridge } from "@vera/shared";
 import { installNetworkGuard, outboundAttempts } from "./network-guard.js";
+import { saveSettings } from "./settings-navigation.js";
 
 /** Scrolls a continuous PDF so the top of page `page` meets the top of the view (TASK-4c04273a). */
 async function scrollToPage(scope: Locator, page: number) {
@@ -192,6 +193,7 @@ test("native approved PDF download opens locally, persists offline and rejects f
       await page.locator('[data-i18n="nav.settings"]').click();
       await page.locator('[data-section="appearance"]').click();
       await page.locator("#language").selectOption(language);
+      await saveSettings(page);
       await page.locator('[data-action="leave-settings"]').click();
       await page.locator(`[data-session="${ids.sessionId}"]`).click();
       await expect(page.getByRole("button", { name: label, exact: true })).toBeVisible();

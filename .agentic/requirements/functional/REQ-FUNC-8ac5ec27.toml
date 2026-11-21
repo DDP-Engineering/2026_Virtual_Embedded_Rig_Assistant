@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-8ac5ec27"
+
+title = "Keep the resolved recent history verbatim"
+
+status = "active"
+
+requirement = """
+When VERA compacts history, it shall keep verbatim the most recent history up to the resolved Recent history kept value, an integer from 0 to 100000 tokens with default 20000 and never more than a fifth of the input budget, set per workbench or application.
+"""
+
+verification = "With the value 0, a compaction may summarize up to the current exchange; with 20000 on a small budget the tail stays at a fifth of the budget; with 5000 the summarized range ends where about 5000 tokens of recent history remain."
+
+affected_paths = ["05_Software/src/libraries/shared/src/advanced-settings.ts", "05_Software/src/libraries/core/src/agent/compaction.ts", "05_Software/src/libraries/core/src/sessions/service.ts"]
+
+linked_tests = ["05_Software/src/libraries/shared/src/advanced-settings.test.ts", "05_Software/src/libraries/core/src/agent/compaction-settings.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-20
+updated = 2026-11-20

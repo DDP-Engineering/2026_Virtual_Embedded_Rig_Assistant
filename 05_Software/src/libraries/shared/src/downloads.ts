@@ -1,9 +1,12 @@
 // REQ-FUNC-b975a8b5, REQ-DATA-fd1933a1
 import { z } from "zod";
+import { advancedSettings } from "./advanced-settings.js";
 import { validArtifactName } from "./refs.js";
 import { sessionIdSchema } from "./session.js";
 
-export const DOWNLOAD_MAX_BYTES = 100 * 1024 * 1024;
+const MiB = 1024 * 1024;
+/** The largest Download size; each approval binds the session's own value (REQ-FUNC-8a1eea8b). */
+export const DOWNLOAD_MAX_BYTES = advancedSettings.downloadMB.max * MiB;
 export const downloadIdSchema = z
   .string()
   .uuid()
@@ -18,7 +21,11 @@ const downloadUrlSchema = z
   .regex(/^https?:\/\/[^\\/?#@]+(?:[/?#]|$)/i);
 export const downloadApprovalSchema = z.strictObject({
   url: downloadUrlSchema,
-  maxBytes: z.literal(DOWNLOAD_MAX_BYTES),
+  maxBytes: z
+    .number()
+    .int()
+    .min(advancedSettings.downloadMB.min * MiB)
+    .max(DOWNLOAD_MAX_BYTES),
 });
 export const webDownloadSchema = z
   .strictObject({

@@ -346,12 +346,12 @@ async function sparse(path: string, bytes: number) {
 }
 
 // REQ-FUNC-133f57ee REQ-DATA-9fd427f1 REQ-FUNC-ad5868a2
-it("skips documents above the lower of the fixed limit and docs.maxFileMB as too large", async () => {
+it("skips documents above docs.maxFileMB (PDF and Office) or the text size as too large", async () => {
   const h = await harness({ "docs/small.md": "small" }, { include: ["docs/**"] });
   await sparse(join(h.folder, "docs/scan.pdf"), 30 * MiB);
   await sparse(join(h.folder, "docs/exact.pdf"), 25 * MiB);
   await sparse(join(h.folder, "docs/huge.pdf"), 100 * MiB + 1);
-  const select = (maxFileMB?: number) =>
+  const select = (maxFileMB?: number, maxTextMB?: number) =>
     selectDocuments({
       root: h.folder,
       docs: {
@@ -360,6 +360,7 @@ it("skips documents above the lower of the fixed limit and docs.maxFileMB as too
         gitignore: true,
         maxFiles: 10000,
         ...(maxFileMB ? { maxFileMB } : {}),
+        ...(maxTextMB ? { maxTextMB } : {}),
       },
       signal: new AbortController().signal,
     });
@@ -374,9 +375,15 @@ it("skips documents above the lower of the fixed limit and docs.maxFileMB as too
     ],
     retry: false,
   });
-  // Without the setting the 30 MB PDF is indexed; a limit above the fixed one does not raise it.
-  for (const limit of [undefined, 500])
-    expect((await select(limit)).skipped.map((entry) => entry.path)).toEqual(["docs/huge.pdf"]);
+  // Without the setting the 30 MB PDF is indexed and the 100 MB default stops the huge one; a larger
+  // setting raises the limit.
+  expect((await select()).skipped.map((entry) => entry.path)).toEqual(["docs/huge.pdf"]);
+  expect((await select(150)).skipped).toEqual([]);
+  // Text has its own limit, which docs.maxFileMB does not change.
+  await sparse(join(h.folder, "docs/export.csv"), 2 * MiB);
+  expect((await select(500, 1)).skipped.map((entry) => entry.path)).toEqual(["docs/export.csv"]);
+  expect((await select(1)).skipped.map((entry) => entry.path)).not.toContain("docs/export.csv");
+  await rm(join(h.folder, "docs/export.csv"));
 
   await h.service.updateConfig({ docs: { maxFileMB: 25 } });
   const yaml = await readFile(join(h.folder, ".vera/workbench.yaml"), "utf8");
@@ -409,4 +416,15 @@ it("skips documents above the lower of the fixed limit and docs.maxFileMB as too
   await h.service.reindexDocuments();
   expect(rows.get("docs/scan.pdf")).toMatchObject({ error: null, bytes: 30 * MiB });
   expect(rows.get("docs/huge.pdf")).toMatchObject({ status: "unsupported", error: "SIZE_LIMIT" });
-}, 20000);
+
+  // REQ-FUNC-486d6a86: a raised limit indexes the document once; its later checks accept it, so the
+  // ingest settles instead of reindexing it again and again.
+  await h.service.updateConfig({ docs: { maxFileMB: 150 } });
+  await h.service.reindexDocuments();
+  expect(rows.get("docs/huge.pdf")).toMatchObject({ error: null, bytes: 100 * MiB + 1 });
+  // The workbench text size reaches the ingest selection.
+  await writeFile(join(h.folder, "docs/notes.txt"), "x".repeat(2 * MiB));
+  await h.service.updateConfig({ advanced: { textFileMB: 1 } });
+  await h.service.reindexDocuments();
+  expect(rows.get("docs/notes.txt")).toMatchObject({ status: "unsupported", error: "SIZE_LIMIT" });
+}, 30000);

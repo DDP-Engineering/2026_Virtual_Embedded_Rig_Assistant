@@ -14,7 +14,7 @@ title = "Background document synchronization"
 status = "active"
 
 requirement = """
-While a workbench has owned writable storage, its ingest service shall synchronize eligible ordinary document files (REQ-FUNC-c1a1c758 document-type set) selected by docs.include minus docs.exclude and shared ignore rules, using a one-second debounce, serial queue and SHA-256 idempotency, with truthful pending/processor-result statuses, stable unsupported size/binary reasons, bounded reads and document/progress events under safe close and ownership checks.
+While a workbench has owned writable storage, its ingest service shall synchronize eligible ordinary document files (REQ-FUNC-c1a1c758 document-type set) selected by docs.include minus docs.exclude and shared ignore rules, using a debounce of the resolved Indexing pause, serial queue and SHA-256 idempotency, with truthful pending/processor-result statuses, stable unsupported size/binary reasons, bounded reads and document/progress events under safe close and ownership checks.
 """
 
 verification = "Real watcher and SQLite integration: add/edit/delete ordinary files and inspect rows/events; rewrite identical bytes and observe unchanged row/events; test exact text/PDF size limits, other file types not recorded, processor statuses/failures, ignores/links, owner loss and shutdown. Strict shared contract tests reject invalid requests/events."
@@ -30,4 +30,4 @@ priority = "normal"   # low | normal | high
 rationale = ""        # why this behavior exists, if not obvious
 
 created = 2026-10-12
-updated = 2026-11-01
+updated = 2026-11-21

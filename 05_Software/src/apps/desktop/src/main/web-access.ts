@@ -1,5 +1,6 @@
 import { ConfiguredWebProvider, type SettingsService, WebAccessBlocked, type WebProvider } from "@vera/core";
 import {
+  resolveAdvanced,
   veraError,
   type WebAccessSave,
   type WebAccessSnapshot,
@@ -28,7 +29,11 @@ export class WebAccessService {
       credentials: CredentialFile;
       changed(): void;
       now?: () => Date;
-      create?: (provider: WebProviderId, key: string | undefined) => WebProvider;
+      create?: (
+        provider: WebProviderId,
+        key: string | undefined,
+        options: { timeoutMs?: number },
+      ) => WebProvider;
     },
   ) {
     this.provider = new ConfiguredWebProvider({
@@ -41,6 +46,9 @@ export class WebAccessService {
         return value?.type === "api_key" ? value.key : undefined;
       },
       ...(host.create ? { create: host.create } : {}),
+      // The application's Web request timeout, read at each request (REQ-FUNC-5e129df5).
+      timeoutMs: () =>
+        resolveAdvanced("webTimeout", { app: host.settings.get().settings.advanced }).value * 1000,
     });
   }
   get(): Promise<WebAccessSnapshot> {

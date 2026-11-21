@@ -7,7 +7,7 @@ REQ-PLAT-f905ba1a and REQ-UX-a809496e. Sources: WP31,07 sections3-5 and ADR0008.
 
 | Trigger/state | Response | Positive oracle | Boundary/failure |
 |---|---|---|---|
-| enabled startup / six hours | generic metadata check | offer or current | Off no scheduled check; offline error |
+| enabled startup / every Update check interval (default six hours) | generic metadata check | offer or current | Off no scheduled check; offline error |
 | Check now / Off | explicit metadata check | available | no automatic artifact request in Off |
 | beta | greatest newer beta or stable | stable selected when greater | no downgrade; latest excludes prerelease |
 | consent / automatic | verified download | progress then ready | checksum/publisher failure not ready |
@@ -52,7 +52,8 @@ Notes are bounded plain text. Update preferences live in settings schemaVersion 
 Checks/downloads serialize; repeated calls reuse pending operations or return BUSY.
 Settings changes affect the next check and scheduling; a downloaded offer stays tied
 to its verified selected backend and is not replaced by another check.
-Unrelated settings notifications preserve the existing six-hour deadline.
+Unrelated settings notifications preserve the existing deadline; a saved interval change restarts the wait
+without an extra check.
 Automatic mode downloads after discovery; Off and Notify require explicit consent.
 Quit/restart requests during live work are deferred without closing windows, aborting
 turns or disposing services. Core activity includes actual active promises and unresolved

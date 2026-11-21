@@ -2,6 +2,7 @@
 import { expect, type Page, test } from "@playwright/test";
 import { resolveConfig } from "electron-vite";
 import { createServer, type ViteDevServer } from "vite";
+import { saveSettings } from "./settings-navigation.js";
 
 let server: ViteDevServer;
 let url: string;
@@ -26,6 +27,7 @@ async function language(page: Page, code: string) {
   await page.locator('[data-i18n="nav.settings"]').click();
   await page.locator('[data-section="appearance"]').click();
   await page.locator("#language").selectOption(code);
+  await saveSettings(page);
 }
 
 test("the ? button opens Help in each interface language beside the right-panel toggle", async ({ page }) => {

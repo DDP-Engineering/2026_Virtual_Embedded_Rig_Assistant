@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-UX-996ae06e"
+
+title = "Keep the resolved scrollback lines in a terminal view"
+
+status = "active"
+
+requirement = """
+When a terminal view opens, VERA shall keep the resolved Terminal scrollback (an integer from 1000 to 50000 lines, default 3000, set for the application) in that view.
+"""
+
+verification = "Renderer test: the xterm terminal is created with scrollback 3000 by default and 10000 when the application value 10000 is set before the view opens."
+
+affected_paths = ["05_Software/src/libraries/shared/src/advanced-settings.ts", "05_Software/src/apps/desktop/src/renderer/components/terminal-tab.tsx", "05_Software/src/apps/desktop/src/renderer/hooks/app-advanced.ts", "05_Software/src/apps/desktop/src/renderer/components/terminal-tab.test.ts", "05_Software/src/libraries/shared/src/advanced-settings.test.ts"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/terminal-tab.test.ts::opens a view with the resolved scrollback and disables New at the resolved count", "05_Software/src/libraries/shared/src/advanced-settings.test.ts::registers the desktop ranges, defaults, scopes and timing"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-21
+updated = 2026-11-21

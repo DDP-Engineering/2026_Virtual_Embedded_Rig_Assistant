@@ -36,7 +36,7 @@ Compiled instrumented packages accept `--packaging-probe=<absolute JSON path>` a
 run [native packaging](native-packaging.md) probes and exit before creating a renderer window.
 Release compilation eliminates this hook and its worker entry.
 Instrumented folder selection accepts VERA_TEST_DIALOG_PATH; release emission eliminates the
-override and uses Electron dialog. Shutdown releases owned workbench locks and terminates file workers before settings/log drain. Instrumented file-tool acceptance exposes a probe for host abort/responsiveness; release compilation eliminates the probe.
+override and uses Electron dialog. Shutdown closes the sessions of every open workbench runtime, then releases each owned workbench lock, and terminates file workers before settings/log drain. Instrumented file-tool acceptance exposes a probe for host abort/responsiveness; release compilation eliminates the probe.
 
 window.menu accepts only file/edit/view/help plus bounded integer window-local popup
 coordinates through the authorized main-frame router. Native menus use fixed role templates;

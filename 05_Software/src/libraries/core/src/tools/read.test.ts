@@ -45,6 +45,35 @@ it("reads numbered offset/limit lines with canonical refs and independent sessio
   await api.readTool.execute(second, { path: "docs/notes.md" }, new AbortController().signal);
   expect(first.lastReads.get(guarded.key)?.sha256).not.toBe(second.lastReads.get(guarded.key)?.sha256);
 });
+// REQ-FUNC-150dcb0b REQ-FUNC-f041ba07
+it("reads up to the session's Read window lines and Read output size", async () => {
+  const limits: Record<string, number> = { readLines: 3000, readChars: 120000 };
+  const ctx = { ...context(), advanced: ((key: string) => limits[key]) as never };
+  await writeFile(join(root, "many.txt"), Array.from({ length: 5000 }, (_, i) => `l${i}`).join("\n"));
+  const lines = async (limit?: number) => {
+    const result = await api.readTool.execute(
+      ctx,
+      { path: "many.txt", ...(limit ? { limit } : {}) },
+      new AbortController().signal,
+    );
+    return String(result.text).split("\n").length;
+  };
+  expect(await lines()).toBe(3000);
+  expect(await lines(4000)).toBe(3000);
+  expect(await lines(100)).toBe(100);
+  expect(
+    (await api.readTool.execute(ctx, { path: "many.txt" }, new AbortController().signal)).truncated,
+  ).toBe(true);
+  expect(api.readTool.params.safeParse({ path: "many.txt", limit: 10000 }).success).toBe(true);
+  limits.readChars = 10000;
+  await writeFile(join(root, "wide.txt"), "y".repeat(20000));
+  const wide = await api.readTool.execute(ctx, { path: "wide.txt" }, new AbortController().signal);
+  expect(String(wide.text).length).toBeLessThanOrEqual(10000);
+  expect(wide.truncated).toBe(true);
+  limits.readChars = 60000;
+  const whole = await api.readTool.execute(ctx, { path: "wide.txt" }, new AbortController().signal);
+  expect(String(whole.text)).toBe(`1: ${"y".repeat(20000)}`);
+});
 it("handles empty files, offset beyond end, line limit and byte ceiling", async () => {
   const ctx = context();
   await writeFile(join(root, "empty.txt"), "");

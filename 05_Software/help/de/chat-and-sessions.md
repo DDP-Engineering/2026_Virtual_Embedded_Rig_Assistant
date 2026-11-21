@@ -1,6 +1,6 @@
 # Chat und Sitzungen
 
-Eine Sitzung ist eine Unterhaltung mit dem Agenten innerhalb eines Workbenchs. VERA speichert jede Sitzung im Workbench, sodass Sie die App schließen und später weitermachen können. Mehrere Sitzungen können gleichzeitig laufen.
+Eine Sitzung ist eine Unterhaltung mit dem Agenten innerhalb eines Workbenchs. VERA speichert jede Sitzung im Workbench, sodass Sie die App schließen und später weitermachen können. Mehrere Sitzungen können gleichzeitig laufen. Höchstens drei Durchläufe laufen gleichzeitig in allen geöffneten Workbenches, oder so viele, wie unter **Gleichzeitige Durchläufe** in [Erweiterte Einstellungen](advanced-settings.md) eingestellt; eine am Limit gesendete Nachricht bleibt ungesendet im Eingabefeld, bis ein Durchlauf endet.
 
 ## Sitzungen starten und verwalten
 
@@ -8,7 +8,11 @@ Eine Sitzung ist eine Unterhaltung mit dem Agenten innerhalb eines Workbenchs. V
 - Die erste Nachricht wird zum Titel. **Umbenennen** legt einen eigenen Titel fest.
 - **Sitzungen suchen** findet Sitzungen nach Titel und Nachrichtentext.
 - Jede Sitzungszeile zeigt den Zeitpunkt der letzten Aktivität und hat ein Menü mit **Markdown exportieren**, **JSON exportieren**, **Umbenennen**, **Nach oben verschieben**, **Nach unten verschieben**, **Archivieren** und **Löschen**.
-- Eine Sitzung zeigt ihren Zustand: **Bereit**, **Läuft**, **Wartet auf Freigabe** oder **Fehler**.
+- Eine Sitzung zeigt ihren Zustand: **Bereit**, **Läuft**, **Wartet auf Freigabe** oder **Fehler**. Eine laufende Sitzung hat neben der Zeit ein drehendes Zeichen, eine auf Freigabe wartende einen Schild.
+
+## Sitzungen in anderen Workbenches
+
+Durchläufe laufen weiter, wenn Sie einen anderen Workbench öffnen. Eine Workbench-Zeile in der Seitenleiste zeigt ein Zeichen mit der Anzahl ihrer laufenden und wartenden Sitzungen, auch wenn die Zeile eingeklappt ist; ein Schild bedeutet, dass eine Sitzung auf Ihre Freigabe wartet. Wählen Sie das Zeichen (oder fokussieren Sie es und drücken Sie Enter), um diese Sitzungen anzuzeigen. Wählen Sie eine Sitzung, um sie in ihrem Workbench zu öffnen und dort die Freigabe zu prüfen, oder **Stoppen**, um nur diesen Durchlauf zu beenden. Solange Durchläufe laufen, zeigt **Workbenches**, wie viele laufen, und das Limit **Gleichzeitige Durchläufe**. Am Limit bleibt eine neue Nachricht im Eingabefeld: Warten Sie, bis ein Durchlauf endet, oder stoppen Sie einen in der Seitenleiste, und senden Sie sie dann erneut.
 
 ## Eine Nachricht schreiben
 
@@ -89,6 +93,18 @@ Gespeicherte Nachrichtenlesezeichen bleiben im JSON-Export erhalten; Markdown ke
 ## Der rechte Bereich
 
 **Rechten Bereich ein- oder ausblenden** zeigt Tabs für die geöffnete Sitzung: **Anweisungen und Skills** (Workbench-Anweisungen und verfügbare Skills), **Dateien**, **Änderungen**, **Artefakte** (Textergebnisse, die der Agent gespeichert hat, mit **Exportieren** und **Im Ordner anzeigen**), **Plan** (die Aufgabenliste des Agenten) und **Läufe** (Programmläufe von Plugins).
+
+## Plan kommentieren und prüfen
+
+Wählen Sie in **Plan** **Kommentar hinzufügen** für einen ganzen Schritt oder markieren Sie vorher Text in genau einem Schritt, um diesen Ausschnitt zu zitieren. Mit der Tastatur markieren Sie im **Schritttext** mit Shift und Pfeiltasten und wählen **Ausgewählten Text verwenden**; **Gesamter Schritt** entfernt den Ausschnitt. Leere Schritte erlauben nur Kommentare zum gesamten Schritt. Schreiben Sie mehrzeiliges Feedback, etwa „Spannung vor dem Flashen prüfen“, und wählen Sie **Entwurf speichern**. Speichern sendet keine Nachricht und startet keinen Agenten. Abbrechen oder Escape verwirft ungespeicherte Änderungen und setzt den Fokus zurück auf Plan.
+
+Die Anzahl der Entwürfe und übermittelten Kommentare öffnet die Kommentare für genau diesen Schritt. **Feedback bearbeiten** ändert nur den Text; **Feedback löschen** entfernt einen Entwurf. Jede Planersetzung macht frühere Verankerungen ungültig, auch bei gleichem Text. **Neue Verankerung erforderlich** hält diese Entwürfe lesbar: Wählen Sie **Neu verankern**, einen nummerierten aktuellen Schritt, ausdrücklich den gesamten Text oder einen Ausschnitt und dann **Verankerung speichern**. Gespeicherte Entwürfe bleiben beim Schließen oder Wechseln von Sitzungen erhalten.
+
+**Plan prüfen** sendet den gesamten aktuellen Plan und alle gültigen Entwürfe als eine Anfrage im selben Chat. Der Agent kann den strukturierten Plan ändern oder Rückfragen stellen, aber dabei keine Schritte ausführen, Projektdateien ändern, Programme oder Befehle starten oder Berechtigungen erteilen. Normale Chatnachrichten sind bis zum Ende gesperrt; **Stoppen** beendet nur die Prüfung, nicht unabhängige Hintergrundprogramme. Der schreibgeschützte Berechtigungsmodus erlaubt Planänderungen; archivierte Sitzungen und schreibgeschützte Workbenches erlauben nur das Anzeigen.
+
+**Frühere Prüfungen** bewahrt übermittelte Kommentare, Zitate und Ergebnisse auch bei leerem Plan auf. Scheitert die Übermittlung, bleiben Entwürfe erhalten. **Prüfung erneut versuchen** bestätigt eine unbekannte Empfangsbestätigung mit der ursprünglichen Anfrage, ohne eine zweite Prüfung anzulegen. Nach einer angenommenen, aber fehlgeschlagenen, gestoppten oder kontextbegrenzten Prüfung stellt **Feedback wiederherstellen** fehlende Entwürfe bereit, ohne bearbeitete Entwürfe oder den Verlauf zu überschreiben. Erneutes Versuchen im Chat macht dasselbe. Verankern Sie veraltete Entwürfe neu und wählen Sie ausdrücklich wieder **Plan prüfen**; Wiederherstellen sendet nie automatisch eine Anfrage. Bestehende Kontextgrenzen der Unterhaltung gelten weiterhin.
+
+Datenschutz- oder Modelländerungen aktualisieren die Anzeige. Der offene Editor behält ungespeichertes Feedback, blendet aber das zuvor erfasste Zitat aus; wählen Sie ausdrücklich ein aktuelles Ziel, bevor Sie einen neuen Kommentar oder eine neue Verankerung speichern.
 
 ## Lesezeichen
 

@@ -25,6 +25,17 @@ budgets and abort. The browser mock seeds six selectable states and an edit appr
   modes. It uses saved `search_docs` coverage and actual ranking metadata. Ordinary chat
   and fully covered retrieval remain quiet. Live Files/sidebar progress updates use separate
   query data and do not reload the transcript (REQ-UX-1c0aac4b, REQ-NFR-3a560b62).
+- Advanced settings UI (ADV-01):
+  - **Settings > Advanced** (`advanced-settings-panel.tsx`) always holds the Show advanced settings switch. When the switch is on, it also shows the application fields, which save at once.
+  - **Edit workbench > Advanced** (`workbench-advanced.tsx`) is a config section shown only when the switch is on. Its draft fields save with the workbench Save, and an out-of-range value keeps Save off. The patch comes from `advancedEditPatch`.
+  - **Session menu > Advanced settings** (`session/session-advanced.tsx`) is a dialog that calls `session.advanced.set`.
+  - **Shared `AdvancedField`:**
+    - an empty value inherits, and the placeholder shows the inherited value and its source;
+    - Reset clears the value;
+    - a Zap icon carries the apply-timing tooltip;
+    - an out-of-range value shows a localized message (`role=alert`).
+  - Texts are in en/ro/de/fr. The help page is `advanced-settings`.
+  - Tests: `advanced-settings.test.ts`, `workbench-advanced.test.ts`, `tests/e2e/advanced-settings.spec.ts`.
 
 - Shell approval cards show exact command/cwd/shell and, for eligible literal syntax, a chosen-prefix selector with Always allow. session.approval.decide carries the prefix only on that explicit user action. The [workbench editor](workbench-editor.md) owns the Agent editor list of saved prefixes. The card has four locales. Tests: tests/e2e/command-prefixes.spec.ts.
 
@@ -44,8 +55,9 @@ budgets and abort. The browser mock seeds six selectable states and an edit appr
 
 - App owns one confirmed workbench snapshot shared with Welcome, Welcome/Settings/session memory routes and per-workbench selected IDs in localStorage. Session chat shows workbench-scoped delegation links with the latest turn ID and state from the session list. A one-time request selects and focuses the linked Chat transcript even when document tabs are restored. Parent instructions are marked in Chat and children use the ordinary Stop, approval and permission controls. An eligible parent has a separate localized confirmation for future Full Access launches and a revoke action. Proof: tests/e2e/session-delegation.spec.ts.
 - SessionList offers workbench-scoped title/message search, localized empty/loading/error results, New/select/rename/confirmed delete/status; Ctrl+N creates when writable.
-- SessionList offers row-scoped native Markdown/JSON export with localized completion/cancel/errors in read-only or writable workbenches. SessionWorkspace composes transcript/composer/meter and Ctrl+F search with localized match count and per-message match text; closing search restores transcript focus. Plain Escape cancels an active dictation first, or confirms Stop in a writable active turn. Global actions yield to modal/handled/composing/repeated keys.
-- useSessionEvents gets snapshot/seq, then subscribes from seq; cancellation detaches obsolete views.
+- A send refused with `TURN_LIMIT` returns false, so the composer keeps its text and attachments and, once the message box is enabled again, its focus; SessionWorkspace shows the localized limit alert (wait for a turn, or stop one in the sidebar) until `useTurnCapacity` (session.capacity query plus app event) reports `active < limit`, then the status `chat.turnSlotFree`. Nothing is sent automatically. Tests: components/session/turn-limit.test.ts, native background-sessions.spec.ts.
+- SessionList offers row-scoped native Markdown/JSON export with localized completion/cancel/errors in read-only or writable workbenches. SessionWorkspace composes transcript/composer/meter and Ctrl+F search with localized match count and per-message match text; closing search restores transcript focus. Plain Escape cancels active dictation first or confirms Stop in a writable active turn. Global actions yield to modal/handled/composing/repeated keys.
+- useSessionEvents gets snapshot/seq, then subscribes from seq; cancellation detaches obsolete views. Masking-relevant settings, workbench configuration and effective session model changes invalidate the projection even at unchanged seq, hide old content and reject old in-flight answers/frames. The shared provider is keyed by workbench folder/ID and exposes a projection epoch for captured selections. Only composer control metadata survives a hidden projection, preserving its mounted unsent input; no disclosed transcript/plan is retained for rendering. Focused proof: hooks/session-privacy.test.ts and session/plan-review-retry.test.ts.
 - App mounts one `SessionViewProvider` (`renderer/hooks/session-view.tsx`) around Shell for the open session while the chat
   shows; SessionWorkspace and the Changes/Artifacts/Plan tabs read it through `useSessionView`, so a window holds one
   snapshot, subscription and revision poll per session. Without a provider, or for another session id, `useSessionView`
@@ -71,7 +83,8 @@ budgets and abort. The browser mock seeds six selectable states and an edit appr
   selected again or the window regains focus. Rows release thumbnail resources when they leave the viewport. See `transcript-images.spec.ts`.
 - ApprovalCard renders tool/path/bytes and coloured +/- patch lines inline beside the tool. Approve, Deny and Approve-and-switch invoke the exact stored digest. Focused A/D has no modifiers/repeat/composition; pending, decided and read-only cards lock actions and errors remain visible.
 - Program approval cards display canonical outside directory arguments under the localized Outside directories label without hashes; file hashes stay in their own list. `components/session/approval-card.test.ts` covers the metadata list.
-- Composer exposes the confirmed session mode during active turns; text/Enter/Send remain available while running, alongside Stop; approval waits lock text/sending and active turns lock model selection. Approval events invalidate sidebar summaries; new sessions inherit workbench defaults.
+- Generic Retry on a review-associated user message stages feedback through session.plan.review.restore and announces that it is ready in Plan; it never ordinary-sends the stored review prose. Same-tick restore, archive/read-only and obsolete completion guards apply. Running reviews and hidden privacy projections lock text/sending while retaining Stop. Ordinary Retry and ordinary running steering remain unchanged.
+- Composer exposes the confirmed session mode during ordinary active turns; text/Enter/Send remain available while running, alongside Stop; approval waits lock text/sending and active turns lock model selection. Approval events invalidate sidebar summaries; new sessions inherit workbench defaults.
 - ContextTab shows .vera/WORKBENCH.md in a collapsed, word-wrapped, scrollable block, the enabled validated [skills](skills.md) metadata and a Skills settings dialog; ChangesTab shows ordered completed files/counts and the selected stored diff with replay/live refresh and confined reveal; ArtifactsTab lists saved sizes/times, opens safe Markdown/plain text and exports/reveals through shared IPC with revision-scoped live/replay queries; PlanTab displays the current ordered todo list through useSessionEvents with localized accessible status icons, empty/loading/retry states and keyed workbench/session isolation; Docs lists live index status/search/Open/Reindex/progress through the [Docs panel](document-viewer-docs-panel.md). [Plan](plan.md), [Artifacts](artifacts.md) and [Changes](changes.md) route these contracts.
 - UsageMeter presents optional localized compaction status and whole request-view token count alongside labeled estimates, budgets and actual provider usage; old usage events remain valid. Complete durable history remains available after historical compaction; the main transcript follows workbench chat.detail. Rate-limit errors show a retry hint when the provider supplied a valid value.
 - `?mock=chat` exposes empty/streaming/tools/invalid/provider-error/context-limit fixtures. Browser-test triggers in mocks/sessions.ts: a message `seed N messages` appends N seeded question/answer pairs; `stream slowly…` streams a 40-line reply over about 6 s.
@@ -97,8 +110,9 @@ budgets and abort. The browser mock seeds six selectable states and an edit appr
   chevrons, translated state-aware tooltip/accessible label and expanded/controls
   semantics; name selection keeps opening the workbench overview.
 - Each sidebar session row displays the localized date/time of updatedAt (last
-  recorded activity). Selecting the row does not write an access time; runtime
-  status remains in screen-reader text and action guards (REQ-UX-9a0489f1).
+  recorded activity). Selecting the row does not write an access time; a running or
+  awaiting-approval row adds a spinner or shield icon before the date, and the status stays in
+  screen-reader text and action guards (REQ-UX-9a0489f1).
 - Each sidebar session row has one ellipsis menu: Markdown/JSON export of that row,
   rename, confirmed delete, archive/restore. Mutations lock for read-only workbenches and active/approval turns.
   Archived sessions remain accessible in a collapsible section and can be restored.
@@ -130,7 +144,9 @@ budgets and abort. The browser mock seeds six selectable states and an edit appr
 - A streaming assistant message renders as blocks (`streamingBlocks`: split at blank lines outside code
   fences), each through memoized `Markdown`, so only the growing last block is parsed again per frame;
   `message.done` renders the whole text once.
-- The transcript mounts the newest 40 rows in its first commit and prepends older rows in chunks of 100,
+- The transcript mounts the newest Transcript rows first shown (application Advanced, default 40) in its first
+  commit and prepends older rows in chunks of Transcript rows per load (default 100), both read when the session
+  is shown (REQ-UX-a4cf0527),
   one per `requestIdleCallback` (250 ms timeout) inside `startTransition`, until all are mounted; the window
   start is pinned once rows exist, so later rows never unmount older ones, and resets on session change.
   A search mounts every row (matches are outlined in all of them). Scrolling within one screen of the oldest
@@ -151,7 +167,7 @@ budgets and abort. The browser mock seeds six selectable states and an edit appr
 | Composer/models/paths | composer | workspace.test.ts |
 | Sent image previews, viewer activation and missing paths | transcript-images; main/display-documents | transcript-images.spec.ts; display-documents.test.ts |
 | Permission picker/approval cards/keys | composer,approval-card,transcript,use-session-events | workspace.test.ts; tests/e2e/approvals.spec.ts; run_program cards (risk badge, command, notes, file hashes, typed word): tests/e2e/program-approvals.spec.ts |
-| Plan task list | plan-tab;mock sessions | plan-tab.test.ts;tests/e2e/plan.spec.ts |
+| Plan task list and feedback | plan-tab/plan-feedback/plan-items;mock sessions | plan-tab.test.ts;plan-feedback.test.ts;tests/e2e/{plan,plan-review}.spec.ts |
 | Usage/Context | usage-meter, context-tab | usage-meter.test.ts; workspace.test.ts |
 | Transcript render cost (lazy disclosures, memoized rows/Markdown) | disclosure, transcript, markdown, transcript-projection | transcript-render.test.ts; `npm run perf:sessions` |
 | Progressive transcript mount (newest first, idle chunks) | transcript | transcript-progressive.test.ts; `npm run perf:sessions` (`firstScreenMs`) |

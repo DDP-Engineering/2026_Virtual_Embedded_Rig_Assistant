@@ -1,6 +1,6 @@
 # Discussion et sessions
 
-Une session est une conversation avec l’agent au sein d’un banc de travail. VERA enregistre chaque session dans le banc de travail : vous pouvez donc fermer l’application et reprendre plus tard. Plusieurs sessions peuvent s’exécuter en même temps.
+Une session est une conversation avec l’agent au sein d’un banc de travail. VERA enregistre chaque session dans le banc de travail : vous pouvez donc fermer l’application et reprendre plus tard. Plusieurs sessions peuvent s’exécuter en même temps. Au plus trois tours s’exécutent en même temps dans tous les bancs de travail ouverts, ou le nombre défini par **Tours simultanés** dans [Paramètres avancés](advanced-settings.md) ; un message envoyé à la limite reste non envoyé dans la zone de saisie jusqu’à la fin d’un tour.
 
 ## Démarrer et gérer des sessions
 
@@ -8,7 +8,11 @@ Une session est une conversation avec l’agent au sein d’un banc de travail. 
 - Le premier message devient le titre. **Renommer** définit votre propre titre.
 - **Rechercher des sessions** trouve des sessions par titre et par texte des messages.
 - Chaque ligne de session indique l’heure de sa dernière activité et possède un menu avec **Exporter en Markdown**, **Exporter en JSON**, **Renommer**, **Monter**, **Descendre**, **Archiver** et **Supprimer**.
-- Une session affiche son état : **Inactive**, **En cours**, **En attente d’approbation** ou **Erreur**.
+- Une session affiche son état : **Inactive**, **En cours**, **En attente d’approbation** ou **Erreur**. Une session en cours porte une marque qui tourne près de l’heure, et une session en attente d’approbation un bouclier.
+
+## Sessions des autres bancs de travail
+
+Les tours continuent lorsque vous ouvrez un autre banc de travail. Dans la barre latérale, la ligne d’un banc de travail affiche une marque avec le nombre de ses sessions en cours et en attente, même lorsque la ligne est repliée ; un bouclier signale une session qui attend votre approbation. Sélectionnez la marque (ou donnez-lui le focus et appuyez sur Entrée) pour lister ces sessions. Choisissez une session pour l’ouvrir dans son banc de travail, où vous pouvez examiner l’approbation, ou **Arrêter** pour ne terminer que ce tour. Pendant les tours, **Bancs de travail** indique combien s’exécutent et la limite **Tours simultanés**. À la limite, un nouveau message reste dans la zone de saisie : attendez la fin d’un tour ou arrêtez-en un dans la barre latérale, puis envoyez-le de nouveau.
 
 ## Écrire un message
 
@@ -89,6 +93,18 @@ Les signets enregistrés restent dans les exports JSON ; Markdown indique les me
 ## Le panneau droit
 
 **Afficher/masquer le panneau droit** affiche des onglets pour la session ouverte : **Instructions et compétences** (instructions du banc de travail et compétences disponibles), **Fichiers**, **Modifications**, **Artefacts** (résultats texte enregistrés par l’agent, avec **Exporter** et **Afficher dans le dossier**), **Plan** (la liste de tâches de l’agent) et **Exécutions** (exécutions de programmes des plugins).
+
+## Commenter et réviser le plan
+
+Dans **Plan**, choisissez **Ajouter un commentaire** pour une étape entière ou sélectionnez d’abord du texte dans une seule étape pour citer ce fragment. Au clavier, sélectionnez avec Shift et les flèches dans **Texte de l’étape**, puis choisissez **Utiliser le texte sélectionné** ; **Étape entière** efface le fragment. Une étape vide accepte uniquement un commentaire sur l’étape entière. Saisissez plusieurs lignes, par exemple « Vérifier la tension avant la programmation », puis **Enregistrer le brouillon**. L’enregistrement n’envoie aucun message et ne démarre pas l’agent. Annuler ou Échap abandonne les modifications non enregistrées et ramène le focus sur Plan.
+
+Le nombre de brouillons et de commentaires envoyés ouvre les commentaires de cette étape précise. **Modifier le commentaire** change seulement le texte ; **Supprimer le commentaire** retire un brouillon. Tout remplacement du plan invalide les associations précédentes, même si le texte reste identique. **À réassocier** conserve ces brouillons lisibles : choisissez **Réassocier**, une étape actuelle numérotée, explicitement son texte entier ou un fragment, puis **Enregistrer l’association**. Les brouillons enregistrés survivent à la fermeture et au changement de session.
+
+**Réviser le plan** envoie tout le plan actuel et tous les brouillons valides en une demande dans la même discussion. L’agent peut modifier le plan structuré ou demander des précisions, mais pas exécuter les étapes, modifier les fichiers du projet, lancer des programmes ou commandes, ni accorder des autorisations pendant cette révision. L’envoi de messages ordinaires est désactivé jusqu’à la fin ; **Arrêter** termine seulement la révision, pas les programmes indépendants en arrière-plan. Le mode d’autorisation en lecture seule permet de réviser le plan ; les sessions archivées et les bancs en lecture seule permettent uniquement la consultation.
+
+**Révisions précédentes** conserve les commentaires envoyés, les citations et les résultats, même après effacement du plan. En cas d’échec d’envoi, les brouillons restent disponibles. **Réessayer la révision** confirme un accusé de réception inconnu avec la demande originale, sans créer une seconde révision. Après une révision acceptée mais échouée, arrêtée ou limitée par le contexte, **Restaurer les commentaires** prépare les brouillons manquants sans écraser les brouillons modifiés ni l’historique. Réessayer depuis la discussion fait de même. Réassociez les brouillons obsolètes et choisissez explicitement **Réviser le plan** ; la restauration n’envoie jamais de demande automatiquement. Les limites de contexte existantes s’appliquent toujours.
+
+Un changement de confidentialité ou de modèle actualise l’affichage. L’éditeur ouvert conserve le commentaire non enregistré, mais masque l’ancienne citation ; sélectionnez explicitement une cible actuelle avant d’enregistrer un nouveau commentaire ou une nouvelle association.
 
 ## Signets
 

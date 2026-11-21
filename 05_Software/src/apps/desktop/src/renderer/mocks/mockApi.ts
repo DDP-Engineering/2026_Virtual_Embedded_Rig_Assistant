@@ -39,6 +39,7 @@ import {
   type Request,
   type Response,
   rasterSignature,
+  resolveAdvanced,
   type SessionSummary,
   settingsChangedEvent,
   settingsPatchSchema,
@@ -506,6 +507,11 @@ export function createMockApi(
         ? (connection.models?.find((m) => m.id === id)?.reasoningOptions ?? [])
         : [];
     },
+    {
+      limit: () => resolveAdvanced("concurrentTurns", { app: settings.advanced }).value,
+      changed: () => emitAppEvent({ type: "session.capacity", ...sessions.capacity() }),
+      activity: () => emitAppEvent({ type: "session.activity" }),
+    },
   );
   function indexStatus(wb: WorkbenchSnapshot): DocumentIndexStatus {
     const documents = scenario === "empty" ? [] : mockDocuments;
@@ -674,6 +680,30 @@ export function createMockApi(
       }
       return channels[channel].response.parse(value) as Response<C>;
     }
+    if (channel === "session.capacity")
+      return channels[channel].response.parse(sessions.capacity()) as Response<C>;
+    if (channel === "session.activity") {
+      // The browser mock keeps one workbench open: the shown one, with its running and waiting sessions.
+      const shown = active ? benches.get(active) : undefined;
+      const rows = shown ? (sessions.invoke("session.list", {}) as SessionSummary[]) : [];
+      value = shown
+        ? [
+            {
+              workbenchId: shown.snapshot.config.id,
+              name: shown.snapshot.config.name,
+              folder: shown.snapshot.folder,
+              foreground: true,
+              sessions: rows
+                .filter(
+                  (row) =>
+                    !row.delegation && (row.status === "running" || row.status === "awaiting_approval"),
+                )
+                .map(({ id, title, status }) => ({ id, title, status })),
+            },
+          ]
+        : [];
+      return channels[channel].response.parse(value) as Response<C>;
+    }
     if (channel.startsWith("session.") || channel.startsWith("changes.") || channel.startsWith("artifacts."))
       return channels[channel].response.parse(sessions.invoke(channel, input.data)) as Response<C>;
     switch (channel) {
@@ -694,7 +724,8 @@ export function createMockApi(
       case "terminal.create": {
         const { workbenchId, shell } = channels["terminal.create"].request.parse(input.data);
         if (workbenchId !== current().snapshot.config.id) throw veraError("CONFLICT");
-        if (terminals.size >= 8) throw veraError("BUSY");
+        if (terminals.size >= resolveAdvanced("terminals", { app: settings.advanced }).value)
+          throw veraError("BUSY");
         const snapshot: TerminalSnapshot = {
           id: crypto.randomUUID(),
           number: terminals.size + 1,

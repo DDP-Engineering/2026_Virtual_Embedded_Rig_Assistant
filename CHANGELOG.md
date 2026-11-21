@@ -15,6 +15,8 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 - Opt in to read-only Git status, changed-file badges and a changes filter in Files.
 
 - See workbench indexing status in the sidebar and document search limitations on the affected chat turns.
+- Add durable Plan feedback, revision-only review requests, safe retry restoration and live session privacy refresh.
+- Sessions keep running in background workbenches, within Concurrent turns; the sidebar shows, opens and stops them.
 - Verbose chat shows the send date and time beneath user messages, alongside token usage.
 - Connect Hugging Face Inference Providers, NVIDIA NIM and Vercel AI Gateway with full model IDs.
 
@@ -148,6 +150,7 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 - Chat and Files search published documents while indexing continues and recover from concurrent publication.
 
 - Report redirected workbench runtime folders before closing the workbench.
+- Keep saved Plan feedback live-masked, require stale-fragment recapture and skip discovery during review preparation.
 - Chat Run skips terminals after startup timeout until their verified prompt arrives without intervening input.
 - Chat Run skips ineligible terminals and disables invalid command blocks before creating a terminal.
 - Chat Run requires a verified empty shell prompt, preserves user input, and restores focus when selection is cancelled.

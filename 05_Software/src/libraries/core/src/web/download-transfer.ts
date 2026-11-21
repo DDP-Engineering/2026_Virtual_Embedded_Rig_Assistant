@@ -3,10 +3,13 @@ import { lookup } from "node:dns/promises";
 import { request as httpRequest } from "node:http";
 import { request as httpsRequest } from "node:https";
 import { BlockList, isIP } from "node:net";
-import { DOWNLOAD_MAX_BYTES } from "@vera/shared";
+import { advancedSettings, DOWNLOAD_MAX_BYTES } from "@vera/shared";
 import { publicWebUrl } from "./provider.js";
 
-export const DOWNLOAD_DEADLINE_MS = 120_000;
+/** The default Download time limit; also the PDF extraction base deadline, which ADV-04 owns. */
+export const DOWNLOAD_DEADLINE_MS = advancedSettings.downloadTimeout.default * 1000;
+const DEFAULT_MAX_BYTES = advancedSettings.downloadMB.default * 1024 * 1024;
+const MAX_DEADLINE_MS = advancedSettings.downloadTimeout.max * 1000;
 const headers = { Accept: "*/*", "Accept-Encoding": "identity", "User-Agent": "VERA" } as const;
 export interface PublicAddress {
   address: string;
@@ -26,7 +29,10 @@ export interface DownloadTransferPorts {
     requestHeaders: typeof headers,
     signal: AbortSignal,
   ): Promise<DownloadHttpResponse>;
-  /** A lower budget is useful for deterministic transport tests; callers cannot raise the product cap. */
+  /**
+   * The approved request's budget (REQ-FUNC-17f34e4b, REQ-FUNC-dfe84577); the defaults are the settings'
+   * defaults and no caller can exceed the settings' largest values.
+   */
   maxBytes?: number;
   deadlineMs?: number;
 }
@@ -80,8 +86,8 @@ export const connectDownload: NonNullable<DownloadTransferPorts["connect"]> = (
 
 /** No provider client, cookie jar, credentials or ambient proxy participates in this transport. */
 export async function transferFile(source: string, caller: AbortSignal, ports: DownloadTransferPorts = {}) {
-  const maxBytes = Math.min(ports.maxBytes ?? DOWNLOAD_MAX_BYTES, DOWNLOAD_MAX_BYTES);
-  const deadlineMs = Math.min(ports.deadlineMs ?? DOWNLOAD_DEADLINE_MS, DOWNLOAD_DEADLINE_MS);
+  const maxBytes = Math.min(ports.maxBytes ?? DEFAULT_MAX_BYTES, DOWNLOAD_MAX_BYTES);
+  const deadlineMs = Math.min(ports.deadlineMs ?? DOWNLOAD_DEADLINE_MS, MAX_DEADLINE_MS);
   if (!Number.isSafeInteger(maxBytes) || maxBytes < 1 || !Number.isFinite(deadlineMs) || deadlineMs < 1)
     throw Error("Invalid Download budget.");
   const signal = AbortSignal.any([caller, AbortSignal.timeout(deadlineMs)]);

@@ -2,7 +2,7 @@
 // REQ-UX-18000003 REQ-REL-18000004 REQ-REL-18000006 REQ-SEC-18000005
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import userEvent from "@testing-library/user-event";
-import type { ChangeDetail, Channel, Request, SessionEvent } from "@vera/shared";
+import type { ChangeDetail, Channel, Request } from "@vera/shared";
 import { act, createElement } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, expect, test, vi } from "vitest";
@@ -81,8 +81,9 @@ test("opening side tabs reuses the chat's session view instead of reading the se
   const invoke = vi.spyOn(api, "invoke");
   const subscribe = vi.spyOn(api, "subscribe");
   await act(async () => container.querySelector<HTMLButtonElement>("[data-toggle=right]")?.click());
-  for (const tab of ["Changes", "Artifacts", "Plan"]) {
-    await act(async () => button(tab).click());
+  // By tab ID: a session title in the sidebar (such as "Plan feedback targets") may contain the tab's name.
+  for (const tab of ["changes", "artifacts", "plan"]) {
+    await act(async () => container.querySelector<HTMLButtonElement>(`#tab-${tab}`)?.click());
     await settle();
   }
   expect(container.querySelector("#panel-plan")).toBeTruthy();
@@ -206,15 +207,10 @@ test("isolates late diff and reveal outcomes on session switches and detaches su
   let rejectReveal: ((value: unknown) => void) | undefined;
   const subscribe = api.subscribe.bind(api);
   let detached = 0;
-  vi.spyOn(api, "subscribe").mockImplementation(((
-    topic: "session",
-    id: string,
-    seq: number,
-    on: (event: SessionEvent) => void,
-  ) => {
-    const off = subscribe(topic, id, seq, on);
+  vi.spyOn(api, "subscribe").mockImplementation(((...args: unknown[]) => {
+    const off = Reflect.apply(subscribe, undefined, args) as () => void;
     return () => {
-      detached++;
+      if (args[0] === "session") detached++;
       off();
     };
   }) as typeof api.subscribe);

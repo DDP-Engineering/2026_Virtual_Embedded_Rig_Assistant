@@ -1,5 +1,11 @@
 import { expect, it } from "vitest";
-import { documentSchema, exceedsDocumentVolume, opensExternally, viewerContentSchema } from "./documents.js";
+import {
+  documentSchema,
+  documentVolumeLimitFor,
+  exceedsDocumentVolume,
+  opensExternally,
+  viewerContentSchema,
+} from "./documents.js";
 import { eventEnvelopeSchema } from "./events.js";
 import { channels } from "./ipc.js";
 
@@ -228,6 +234,12 @@ it("accepts document volumes as non-negative safe integers on docs.volume and in
   expect(exceedsDocumentVolume({ files: 2000, bytes: 2 * 1024 ** 3 })).toBe(false);
   expect(exceedsDocumentVolume({ files: 2001, bytes: 0 })).toBe(true);
   expect(exceedsDocumentVolume({ files: 0, bytes: 2 * 1024 ** 3 + 1 })).toBe(true);
+  // REQ-UX-d64e808a: the resolved Document volume warning, workbench over application.
+  const limit = documentVolumeLimitFor({ workbench: { docVolumeFiles: 5000 }, app: { docVolumeMB: 1024 } });
+  expect(limit).toEqual({ files: 5000, bytes: 1024 * 1024 ** 2 });
+  expect(exceedsDocumentVolume({ files: 3000, bytes: 0 }, limit)).toBe(false);
+  expect(exceedsDocumentVolume({ files: 0, bytes: 1024 * 1024 ** 2 + 1 }, limit)).toBe(true);
+  expect(documentVolumeLimitFor({})).toEqual({ files: 2000, bytes: 2 * 1024 ** 3 });
 });
 
 // REQ-UX-f6c347b8 REQ-REL-08946818

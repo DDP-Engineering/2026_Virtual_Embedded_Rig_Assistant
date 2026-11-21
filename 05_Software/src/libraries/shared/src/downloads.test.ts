@@ -48,7 +48,8 @@ it("requires a matching immutable managed path and bounded PDF metadata", () => 
   for (const patch of [
     { path: "docs/chip.pdf" },
     { name: "../chip.pdf" },
-    { bytes: 100 * 1024 * 1024 + 1 },
+    // Above the largest Download size setting.
+    { bytes: 1000 * 1024 * 1024 + 1 },
     { mime: "text/html" },
     { pages: 0 },
     { sha256: "unknown" },
@@ -73,4 +74,9 @@ it("requires source and budget in PDF approvals and forbids misleading file diff
   expect(sessionEventSchema.safeParse({ ...approval, download, bytes: 999 }).success).toBe(false);
   expect(sessionEventSchema.safeParse({ ...approval, download, tool: "write" }).success).toBe(false);
   expect(downloadApprovalSchema.safeParse({ ...download, url: "file:///outside.pdf" }).success).toBe(false);
+  // REQ-FUNC-8a1eea8b: any bound size within the Download size range validates; outside it does not.
+  for (const mib of [10, 500, 1000])
+    expect(downloadApprovalSchema.safeParse({ ...download, maxBytes: mib * 1024 * 1024 }).success).toBe(true);
+  for (const bytes of [10 * 1024 * 1024 - 1, 1000 * 1024 * 1024 + 1])
+    expect(downloadApprovalSchema.safeParse({ ...download, maxBytes: bytes }).success).toBe(false);
 });

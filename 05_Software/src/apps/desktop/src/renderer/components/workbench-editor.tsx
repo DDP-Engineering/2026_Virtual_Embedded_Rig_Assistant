@@ -1,4 +1,6 @@
 import {
+  advancedDraftValid,
+  advancedEditPatch,
   type CommandPrefixDisplay,
   type EmbeddingSwitchApproval,
   type WorkbenchSnapshot,
@@ -8,6 +10,7 @@ import {
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../api/index.js";
+import { useSettingsSnapshot } from "../hooks/use-preferences.js";
 import { EmbeddingSwitchDialog } from "./embedding-switch-dialog.js";
 import { ErrorMessage } from "./error-message.js";
 import { SkillsPanel } from "./skills.js";
@@ -100,7 +103,12 @@ export function WorkbenchEditor({
     instructions !== original ||
     JSON.stringify(comparable(config)) !== JSON.stringify(comparable(workbench.config));
   // An invalid limit in Documents & RAG keeps Save off until it is corrected.
-  const valid = workbenchDocsSchema.safeParse(config.docs).success;
+  const showAdvanced = useSettingsSnapshot().data?.settings.showAdvanced === true;
+  // An out-of-range Advanced value keeps Save off too (REQ-UX-9ea9184f).
+  // Only edited keys are checked, so an untouched value from the file never blocks Save.
+  const valid =
+    workbenchDocsSchema.safeParse(config.docs).success &&
+    advancedDraftValid(advancedEditPatch(workbench.config.advanced, config.advanced, "workbench"));
   useEffect(() => {
     dirtyChanged?.(dirty);
   }, [dirty, dirtyChanged]);
@@ -154,6 +162,7 @@ export function WorkbenchEditor({
           git_status: config.interface.git_status,
         },
         ...(config.privacy ? { privacy: config.privacy } : {}),
+        advanced: advancedEditPatch(workbench.config.advanced, config.advanced, "workbench"),
       });
       const updated = await api.invoke("workbench.config.update", {
         patch,
@@ -235,6 +244,7 @@ export function WorkbenchEditor({
         removeCommandPrefix={(id) => setRemovedCommandPrefixes((current) => [...new Set([...current, id])])}
         readOnly={workbench.readOnly}
         disabled={pending || !loaded}
+        advanced={showAdvanced}
         notices={
           <>
             {error !== undefined && <ErrorMessage error={error} />}

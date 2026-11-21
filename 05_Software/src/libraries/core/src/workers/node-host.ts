@@ -4,8 +4,10 @@ import type { GrepMatch, WorkerPool, WorkerResult, WorkerTask } from "../ports.j
 
 export interface WorkerHostOptions {
   capacity?: number;
-  deadlineMs?: number;
+  /** A fixed deadline, or the host's current Worker deadline read as each task starts (REQ-FUNC-5eacaf9f). */
+  deadlineMs?: number | (() => number);
 }
+const validDeadline = (value: number) => Number.isFinite(value) && value > 0;
 interface Pending {
   task: WorkerTask;
   signal: AbortSignal;
@@ -25,7 +27,7 @@ interface Pending {
  * others is never reported as timed out without having run. One task per worker.
  */
 export class NodeWorkerPool implements WorkerPool {
-  readonly deadlineMs: number;
+  private readonly deadline: () => number;
   private readonly capacity: number;
   private readonly queue: Pending[] = [];
   private readonly active = new Set<Pending>();
@@ -38,15 +40,26 @@ export class NodeWorkerPool implements WorkerPool {
     private readonly entry: URL,
     options: WorkerHostOptions = {},
   ) {
-    this.deadlineMs = options.deadlineMs ?? 10000;
+    const deadline = options.deadlineMs ?? 10000;
+    this.deadline = typeof deadline === "function" ? deadline : () => deadline;
     this.capacity = options.capacity ?? 2;
+    // A getter is read only when a task starts: the host may build the pool before its settings exist.
     if (
-      !Number.isFinite(this.deadlineMs) ||
-      this.deadlineMs <= 0 ||
+      (typeof deadline === "number" && !validDeadline(deadline)) ||
       !Number.isInteger(this.capacity) ||
       this.capacity < 1
     )
       throw Error("Invalid worker host limits.");
+  }
+  /** The deadline the next task starts with; an invalid host value falls back to 10 s. */
+  get deadlineMs(): number {
+    let value: number;
+    try {
+      value = this.deadline();
+    } catch {
+      return 10000;
+    }
+    return validDeadline(value) ? value : 10000;
   }
   run(task: WorkerTask, signal: AbortSignal, onPartial?: (value: unknown) => void): Promise<WorkerResult> {
     if (signal.aborted || this.closed)
@@ -74,10 +87,12 @@ export class NodeWorkerPool implements WorkerPool {
       const job = this.queue.shift();
       if (!job || job.terminal) continue;
       this.active.add(job);
-      job.deadline = performance.now() + this.deadlineMs;
+      // Read once as the task starts: a running task keeps the deadline it started with.
+      const deadlineMs = this.deadlineMs;
+      job.deadline = performance.now() + deadlineMs;
       job.timer = setTimeout(() => {
         this.finish(job, { truncated: true, reason: "timeout" });
-      }, this.deadlineMs);
+      }, deadlineMs);
       try {
         const worker = new Worker(this.entry);
         job.worker = worker;

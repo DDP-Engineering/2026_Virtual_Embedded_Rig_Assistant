@@ -19,6 +19,7 @@ import { scrub } from "../llm/scrub.js";
 import { PluginStore } from "../plugins/store.js";
 import { SessionService } from "../sessions/service.js";
 import { SettingsService } from "../settings/service.js";
+import { SkillCatalog } from "../skills/catalog.js";
 import { DocumentsRepository } from "../storage/repos/documents.js";
 import { acquireGuard } from "./guard.js";
 import { createIgnoreRules } from "./ignore.js";
@@ -74,6 +75,77 @@ async function harness() {
   return { root, folder, host, events, settings, paths, service: new WorkbenchService(host) };
 }
 
+it("reads fresh validated config without catalog discovery while getConfig retains warnings", async () => {
+  const h = await harness();
+  try {
+    const { config } = await h.service.create(h.folder, "Initial");
+    const fresh = { ...config, name: "Fresh disk name", plugins: { enabled: ["ghost"] } };
+    await writeFile(join(h.folder, ".vera/workbench.yaml"), JSON.stringify(fresh));
+    const names = vi.spyOn(SkillCatalog.prototype, "names"),
+      ids = vi.spyOn(PluginStore.prototype, "ids"),
+      load = vi.spyOn(PluginStore.prototype, "load");
+    try {
+      const read = await h.service.readConfig();
+      expect(read).toEqual(fresh);
+      expect(h.service.getSnapshot().config).toEqual(fresh);
+      expect(names).not.toHaveBeenCalled();
+      expect(ids).not.toHaveBeenCalled();
+      expect(load).not.toHaveBeenCalled();
+      const ordinary = await h.service.getConfig();
+      expect(ordinary.config).toEqual(read);
+      expect(ordinary.warnings).toContainEqual({ code: "UNKNOWN_NAME", path: "plugins.enabled.ghost" });
+      expect(names).toHaveBeenCalledOnce();
+      expect(ids).toHaveBeenCalled();
+      expect(load).toHaveBeenCalled();
+    } finally {
+      for (const spy of [names, ids, load]) spy.mockRestore();
+    }
+  } finally {
+    await h.service.close();
+  }
+});
+
+it("rejects invalid and changed-identity current config without changing the snapshot", async () => {
+  const h = await harness();
+  await expect(h.service.readConfig()).rejects.toMatchObject({ code: "NOT_FOUND" });
+  try {
+    const snapshot = await h.service.create(h.folder, "Valid");
+    const path = join(h.folder, ".vera/workbench.yaml");
+    for (const [config, code] of [
+      [{ ...snapshot.config, format: 2 }, "INVALID"],
+      [{ ...snapshot.config, name: 123 }, "INVALID"],
+      [{ ...snapshot.config, id: "wb_01J00000000000000000000001" }, "CONFLICT"],
+    ] as const) {
+      await writeFile(path, JSON.stringify(config));
+      await expect(h.service.readConfig()).rejects.toMatchObject({ code });
+      expect(h.service.getSnapshot()).toEqual(snapshot);
+    }
+  } finally {
+    await h.service.close();
+  }
+  await expect(h.service.readConfig()).rejects.toMatchObject({ code: "NOT_FOUND" });
+});
+
+// The Windows development host lacks the privilege needed for file symlinks.
+it.skipIf(process.platform === "win32")(
+  "rejects file-symlink current config without changing the snapshot",
+  async () => {
+    const h = await harness();
+    try {
+      const snapshot = await h.service.create(h.folder, "Valid");
+      const path = join(h.folder, ".vera/workbench.yaml");
+      const outside = join(h.root, "outside.yaml");
+      await writeFile(outside, JSON.stringify(snapshot.config));
+      await rm(path);
+      await symlink(outside, path);
+      await expect(h.service.readConfig()).rejects.toMatchObject({ code: "DENIED" });
+      expect(h.service.getSnapshot()).toEqual(snapshot);
+    } finally {
+      await h.service.close();
+    }
+  },
+);
+
 it("validates both registered embedding model IDs in workbench YAML", () => {
   const yaml = "format: 1\nid: wb_01JB8Z6Q4M7N2K5R9T3V8X1Y0C\nname: Board\nembeddings:\n  model: ";
   expect(parseConfig(`${yaml}Xenova/bge-small-en-v1.5`).embeddings.model).toBe("Xenova/bge-small-en-v1.5");
@@ -98,6 +170,18 @@ it("measures storage only for the open workbench", async () => {
   } finally {
     await h.service.close();
   }
+});
+
+// REQ-FUNC-0278c7ba: Desktop matches an open request to a runtime by the folder open would use.
+it("locates the canonical folder open uses without opening it", async () => {
+  const h = await harness();
+  const { folder } = await h.service.create(h.folder, "Locate");
+  await h.service.close();
+  expect(await h.service.locate(join(h.folder, "..", "bench"))).toBe(folder);
+  await expect(h.service.locate("relative/bench")).rejects.toMatchObject({ code: "INVALID" });
+  await expect(h.service.locate(join(h.root, "missing"))).rejects.toMatchObject({ code: "NOT_FOUND" });
+  await expect(h.service.getConfig()).rejects.toMatchObject({ code: "NOT_FOUND" });
+  expect(existsSync(join(h.folder, ".vera/lock"))).toBe(false);
 });
 
 it("keeps viewer byte reads confined in Bypass even with an additional-folder grant", async () => {
@@ -879,6 +963,47 @@ it("retries Files source validation and reports repeated publication as unavaila
   }
 });
 
+// REQ-FUNC-4b36dede
+it("lists up to the resolved Docs panel results", async () => {
+  const h = await harness();
+  try {
+    const opened = await h.service.create(h.folder, "Many hits"),
+      path = "docs/many.md";
+    const text = Array.from({ length: 30 }, (_, i) => `# Part ${i}\nMANY_HITS_TOKEN section ${i}\n`).join("");
+    await mkdir(join(h.folder, "docs"));
+    await writeFile(join(h.folder, path), text);
+    const sha256 = createHash("sha256").update(text).digest("hex");
+    const result = await createDocumentProcessor(async () => {
+      throw Error("No PDF expected");
+    })({
+      root: h.folder,
+      path,
+      kind: "markdown",
+      sha256,
+      signal: new AbortController().signal,
+      assertWritable: () => {},
+    });
+    const rows = new DocumentsRepository(h.service.getDatabase());
+    const doc = rows.save({
+      path,
+      kind: "markdown",
+      sha256,
+      bytes: Buffer.byteLength(text),
+      mtime: new Date().toISOString(),
+      pages: null,
+      status: "indexed",
+      error: null,
+      indexedAt: null,
+    });
+    rows.replaceChunks(doc.id, result.chunks ?? [], result.derived);
+    expect((result.chunks ?? []).length).toBeGreaterThanOrEqual(30);
+    expect((await h.service.searchDocuments(opened.config.id, "MANY_HITS_TOKEN")).results).toHaveLength(20);
+    await h.service.updateConfig({ advanced: { docsResults: 60 } });
+    expect((await h.service.searchDocuments(opened.config.id, "MANY_HITS_TOKEN")).results).toHaveLength(30);
+  } finally {
+    await h.service.close();
+  }
+});
 it("Docs search verifies current source hash/status/kind/locator and rejects edited, replaced or binary text", async () => {
   const h = await harness();
   try {
@@ -1827,6 +1952,32 @@ it("rejects stale selections and a 65th folder with typed errors without changin
       code: "INVALID",
     });
     expect(h.service.getSnapshot().config.additional_folders).toHaveLength(64);
+  } finally {
+    await h.service.close();
+  }
+});
+
+// REQ-DATA-96ef3dd6 REQ-DATA-33a90ef2
+it("saves workbench Advanced values across reopen, clears them with null and refuses invalid ones", async () => {
+  const h = await harness();
+  try {
+    const { config } = await h.service.create(h.folder, "Advanced");
+    await h.service.updateConfig({ advanced: { toolCallsPerTurn: 200 } }, config.id);
+    await h.service.close();
+    expect((await h.service.open(h.folder)).config.advanced).toEqual({ toolCallsPerTurn: 200 });
+    const yaml = join(h.folder, ".vera/workbench.yaml");
+    const before = await readFile(yaml, "utf8");
+    await expect(
+      h.service.updateConfig({ advanced: { toolCallsPerTurn: 9 } }, config.id),
+    ).rejects.toMatchObject({ code: "INVALID" });
+    expect(await readFile(yaml, "utf8")).toBe(before);
+    await h.service.updateConfig({ advanced: { toolCallsPerTurn: null } }, config.id);
+    await h.service.close();
+    // A hand-edited invalid value still opens the workbench.
+    const cleared = (await readFile(yaml, "utf8")).replace(/^advanced:.*\n?/m, "");
+    await writeFile(yaml, `${cleared}\nadvanced:\n  toolCallsPerTurn: 0\n`);
+    const reopened = (await h.service.open(h.folder)).config;
+    expect(reopened.advanced).toEqual({ toolCallsPerTurn: 0 });
   } finally {
     await h.service.close();
   }

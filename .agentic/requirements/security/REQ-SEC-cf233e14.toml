@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-SEC-cf233e14"
+
+title = "Refuse a session request for another workbench"
+
+status = "active"
+
+requirement = "If a session request names a workbench ID that no open runtime has while a workbench is open, or that differs from the ID of the workbench holding the named session, the desktop app shall answer CONFLICT and run nothing."
+
+verification = "Router test with runtimes A and B: a request naming B's ID and A's session answers CONFLICT and runs nothing; a request naming an ID no runtime has answers CONFLICT; boundary: naming A's ID with A's session runs in A, and with no workbench open the request answers NOT_FOUND as before. Native e2e: an image capability request naming B's ID for A's session answers CONFLICT."
+
+affected_paths = ["05_Software/src/apps/desktop/src/main/session-router.ts", "05_Software/src/apps/desktop/src/main/index.ts"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/main/session-router.test.ts::answers CONFLICT when the named workbench is not open or does not hold the session", "05_Software/src/apps/desktop/src/main/session-router.test.ts::runs a workbench-scoped request in the open runtime with that ID, else the foreground", "05_Software/src/apps/desktop/src/main/session-router.replay.test.ts::decides a background workbench's approval in that workbench while another runs its own turn", "05_Software/tests/e2e/session-routing.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-21
+updated = 2026-11-21

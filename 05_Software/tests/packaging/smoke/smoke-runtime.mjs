@@ -247,7 +247,6 @@ export async function seedData(data) {
       providers: { openai: {}, custom: [] },
       updates: { mode: "off", channel: "latest" },
       recentWorkbenches: [],
-      limits: { maxToolCallsPerTurn: 50 },
     }),
   );
 }

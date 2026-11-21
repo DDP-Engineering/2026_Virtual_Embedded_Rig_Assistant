@@ -96,7 +96,7 @@ async function harness(
     db.prepare("SELECT * FROM documents WHERE path='docs/board.md'").get() as
       | { sha256: string; status: string }
       | undefined;
-  return { root, folder, service, db, events, row, files };
+  return { root, folder, service, db, events, row, files, settings };
 }
 
 it.each(["completes", "fails"] as const)(
@@ -247,6 +247,23 @@ it("debounces bursts for one second and skips identical hashes without processin
   expect(calls).toBe(1);
   await expect.poll(() => calls, { timeout: 7000 }).toBe(2);
 }, 25000);
+
+// REQ-FUNC-2fba7b9c
+it("waits the application's Indexing pause before it indexes a change", async () => {
+  const h = await harness(async () => ({ status: "indexed" }));
+  const pauses = () =>
+    spy.mock.calls.map(([, delay]) => delay).filter((delay) => delay === 300 || delay === 1000);
+  const spy = vi.spyOn(globalThis, "setTimeout");
+  try {
+    await h.service.updateConfig({ name: "Ingest one" });
+    expect(pauses().at(-1)).toBe(1000);
+    await h.settings.update({ advanced: { indexingPause: 300 } });
+    await h.service.updateConfig({ name: "Ingest two" });
+    expect(pauses().at(-1)).toBe(300);
+  } finally {
+    spy.mockRestore();
+  }
+});
 
 // REQ-FUNC-ad5868a2
 it("documentation preview counts exactly the documents ingest admits for the same selection", async () => {

@@ -61,8 +61,20 @@ and shared `tools.test.ts`, with existing session permission/dependency regressi
 
 The renderer's `components/session/tool-details.tsx` presents localized tool actions, readable results
 and lazy technical details. Its component tests cover status, command output and preserved raw data.
-Plan updates share the Plan tab's readable task rows. `tests/e2e/i18n-hmr.spec.ts` verifies that live
-catalog updates reach mounted tool rows without reloading or resetting the selected language.
+Plan updates share the Plan tab's readable task rows in `plan-items.tsx`. Live `plan-feedback.tsx`
+adds scoped draft/comment actions, with `plan-comment-editor.tsx` owning the native modal and exact
+keyboard selector, `plan-target.ts` mapping native newline offsets to exact source UTF16 targets, and
+`plan-feedback-history.tsx` presenting paged immutable reviews and explicit restore. Saved feedback
+uses the shared session view and strict `session.plan.*` channels, not another store or polling loop.
+Open Edit/Re-anchor dialogs derive saved text from that live projection while retaining actual user
+edits separately. A fragment invalidated before the dialog opens requires explicit recapture, not
+an implicit whole-step replacement. Review preparation uses host-only `WorkbenchService.readConfig`
+for current validated disk data without skill/plugin warning discovery; `getConfig` retains warnings.
+Browser mocks mirror those events; the **Plan feedback targets** fixture includes duplicate IDs,
+repeated Unicode/multiline descriptions and an empty step. `tests/e2e/plan-review.spec.ts` exercises
+the live browser feedback workflow; `plan-fragments.spec.ts` proves exact source CRLF/CR ranges.
+`tests/e2e/i18n-hmr.spec.ts` verifies that live catalog updates
+reach mounted tool rows without reloading or resetting the selected language.
 
 The bundled official `analysis-skills` plugin supplies captured `firmware-comparator` and sourced
 manual `test-planner` procedures with on-demand templates. Install from its folder or local catalog,

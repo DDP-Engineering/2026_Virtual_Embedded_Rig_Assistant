@@ -1,5 +1,5 @@
 import type { ImageContent } from "@earendil-works/pi-ai";
-import type { PermissionMode } from "@vera/shared";
+import { type AdvancedKey, type AdvancedValueOf, advancedSettings, type PermissionMode } from "@vera/shared";
 import type { z } from "zod";
 import type { ArtifactHost } from "../artifacts/store.js";
 import type { DocumentKnowledge } from "../knowledge/search.js";
@@ -30,6 +30,8 @@ export interface ToolContext {
   root: string;
   hasDeliveredImage?: (path: string) => boolean;
   permissionMode?: () => PermissionMode;
+  /** The session's resolved Advanced value of a key, read at each call so changes apply live. */
+  advanced?: <K extends AdvancedKey>(key: K) => AdvancedValueOf<K>;
   bypassSignal?: () => AbortSignal;
   /** Live host-owned user grants; only ordinary file tools and command cwd use them. */
   additionalFolders?: () => readonly string[];
@@ -74,6 +76,11 @@ export interface ToolDefinition {
 }
 export function createToolContext(root: string, workers?: WorkerPool): ToolContext {
   return { root, ...(workers ? { workers } : {}), lastReads: new Map() };
+}
+
+/** A tool limit from the session's Advanced settings; the registry default where no session resolves one. */
+export function toolLimit<K extends AdvancedKey>(ctx: ToolContext, key: K): AdvancedValueOf<K> {
+  return ctx.advanced ? ctx.advanced(key) : (advancedSettings[key].default as AdvancedValueOf<K>);
 }
 
 /** Scope comes from the host's current session mode, never from model arguments. */

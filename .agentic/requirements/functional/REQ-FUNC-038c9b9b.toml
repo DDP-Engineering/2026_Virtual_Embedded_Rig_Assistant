@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-FUNC-038c9b9b"
+
+title = "Route session requests to the owning workbench"
+
+status = "active"
+
+requirement = "When a renderer request names a session that an open workbench holds, the desktop app shall run it in that workbench's session service, whichever workbench is in the foreground, so that its snapshot, revision, item details, sends, stop, approval decisions, settings, artifacts and changes, and the tool execution, file writes and program runs they cause, stay in the owning workbench."
+
+verification = "Main test with real workbench runtimes and a replay gateway: A's turn awaits a write approval in the background while B is in the foreground and runs its own turn; deciding A's approval and reading A's snapshot through the router run in A, the write lands in A's folder only and B's turn completes; stopping A's next turn aborts it while B's runs on; boundary: the same requests for B's session run in B. Native e2e: an approval requested in background A is shown and decided after returning to A."
+
+affected_paths = ["05_Software/src/apps/desktop/src/main/session-router.ts", "05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/apps/desktop/src/main/sessions.ts"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/main/session-router.test.ts::runs a request in the runtime that holds its session, whichever is in the foreground", "05_Software/src/apps/desktop/src/main/session-router.replay.test.ts::decides a background workbench's approval in that workbench while another runs its own turn", "05_Software/src/apps/desktop/src/main/session-router.replay.test.ts::stops a background session while the foreground workbench's turn runs on", "05_Software/src/apps/desktop/src/main/session-router.replay.test.ts::closes the foreground workbench while a background session's turn completes", "05_Software/tests/e2e/session-routing.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-21
+updated = 2026-11-21

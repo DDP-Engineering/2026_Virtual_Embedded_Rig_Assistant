@@ -833,13 +833,33 @@ it("reports active indexing in Files and warns about large selections before sav
       if (shown) expect(warning()).not.toContain("continues");
       if (include === "huge/**") expect(warning()).toContain("at least 12");
     }
+    // REQ-UX-d64e808a: a raised resolved threshold keeps the 2,001-file preview quiet.
+    await act(async () =>
+      root.render(
+        createElement(
+          QueryClientProvider,
+          { client },
+          createElement(WorkbenchDocuments, {
+            folder: "/mock/demo-board",
+            docs: { include: ["big/**"], exclude: [], gitignore: true, maxFiles: 10000 },
+            setDocs: () => {},
+            volumeLimit: { files: 5000, bytes: 4 * 1024 ** 3 },
+          }),
+        ),
+      ),
+    );
+    await act(async () => new Promise((resolve) => setTimeout(resolve, 400)));
+    await settle();
+    expect(container.querySelector("[data-docs-preview]")).not.toBeNull();
+    expect(warning()).toBeNull();
   } finally {
     invoke.mockRestore();
     spy.mockRestore();
     await act(async () => root.unmount());
     container.remove();
   }
-});
+  // Six previews with their 400 ms debounce each.
+}, 15000);
 
 // REQ-UX-adae0c2f
 it("offers Use .gitignore, changes the draft and sends the switch with the scan and the preview", async () => {
@@ -1000,11 +1020,12 @@ it("edits the maximum file size and indexed files and marks invalid values", asy
     await enter(count, "500");
     expect(latest).toMatchObject({ maxFileMB: 25, maxFiles: 500 });
     expect(alerts()).toEqual([]);
-    for (const text of ["0", "-3", "abc", "1,000"]) {
+    // REQ-DATA-3bae7e69: above 500 MB is refused like zero.
+    for (const text of ["0", "-3", "abc", "1,000", "600"]) {
       await enter(size, text);
       expect(size().value).toBe(text);
       expect(size().getAttribute("aria-invalid")).toBe("true");
-      expect(alerts()).toEqual(["Enter a number above zero, or leave the field empty."]);
+      expect(alerts()).toEqual(["Enter a number above zero and up to 500, or leave the field empty."]);
       expect(workbenchDocsSchema.safeParse(latest).success).toBe(false);
     }
     // "," is a decimal mark as in "2,5"; "1,000" above is refused, never read as 1.

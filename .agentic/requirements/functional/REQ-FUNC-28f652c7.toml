@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-28f652c7"
+
+title = "Bound summary passes by the resolved value"
+
+status = "active"
+
+requirement = """
+When a request still exceeds the trigger after a summary, VERA shall run at most the resolved Summary passes per request, an integer from 1 to 10 with default 5.
+"""
+
+verification = "With 1, a history needing several passes makes exactly one summary request for the request; with 3 it makes at most three."
+
+affected_paths = ["05_Software/src/libraries/shared/src/advanced-settings.ts", "05_Software/src/libraries/core/src/agent/compaction.ts", "05_Software/src/libraries/core/src/sessions/service.ts"]
+
+linked_tests = ["05_Software/src/libraries/shared/src/advanced-settings.test.ts", "05_Software/src/libraries/core/src/agent/compaction-settings.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-20
+updated = 2026-11-20

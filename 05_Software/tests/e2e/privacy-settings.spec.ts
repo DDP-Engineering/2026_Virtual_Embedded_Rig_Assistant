@@ -5,6 +5,7 @@ import type { Channel, Request, Response, VeraBridge } from "@vera/shared";
 import { parse } from "yaml";
 import { test } from "./fixtures.js";
 import { installNetworkGuard, outboundAttempts } from "./network-guard.js";
+import { saveSettings } from "./settings-navigation.js";
 
 const invoke = <C extends Channel>(page: Page, channel: C, request: Request<C>): Promise<Response<C>> =>
   page.evaluate(
@@ -38,12 +39,13 @@ test("browser privacy drafts and localized controls fit the compact layout in al
     await page.locator('[data-i18n="nav.settings"]').click();
     await page.locator('[data-section="appearance"]').click();
     await page.locator("#language").selectOption(language);
+    await saveSettings(page);
     await page.locator('[data-section="data"]').click();
     const agent = page.locator('[data-mask-area="agent"] input');
     if (!(await agent.isChecked())) {
       await agent.click();
-      await page.locator("[data-privacy-save]").click();
-      await expect(page.locator("[data-privacy-save]")).toBeDisabled();
+      await page.locator("[data-settings-save]").click();
+      await expect(page.locator("[data-settings-save]")).toBeDisabled();
     }
     await agent.click();
     await page.locator('[data-action="cancel-mask-off"]').click();
@@ -51,8 +53,8 @@ test("browser privacy drafts and localized controls fit the compact layout in al
     await expect(agent).toBeFocused();
     await agent.click();
     await page.locator('[data-action="confirm-mask-off"]').click();
-    await page.locator("[data-privacy-save]").click();
-    await expect(page.locator("[data-privacy-save]")).toBeDisabled();
+    await page.locator("[data-settings-save]").click();
+    await expect(page.locator("[data-settings-save]")).toBeDisabled();
     await page.locator('[data-action="leave-settings"]').click();
     await page.locator('[data-action="edit-workbench-overview"]').click();
     await page.locator('[data-project-section="privacy"]').click();
@@ -134,7 +136,7 @@ for (const language of ["en", "ro", "de", "fr"] as const) {
       await appInput("agent").click();
       await page.locator('[data-action="confirm-mask-off"]').click();
       expect((await invoke(page, "app.settings.get", {})).settings.privacy?.mask?.agent).toBe(true);
-      await page.locator("[data-privacy-save]").click();
+      await page.locator("[data-settings-save]").click();
       await expect
         .poll(async () => (await invoke(page, "app.settings.get", {})).settings.privacy?.mask)
         .toEqual({
@@ -143,7 +145,7 @@ for (const language of ["en", "ro", "de", "fr"] as const) {
           agent: false,
           exports: false,
         });
-      await expect(page.locator("[data-privacy-save]")).toBeDisabled();
+      await expect(page.locator("[data-settings-save]")).toBeDisabled();
       await page.screenshot({ path: join(evidence, `${language}-app.png`) });
       await page.locator('[data-action="leave-settings"]').click();
       await page.locator('[data-i18n="nav.welcome"]').click();

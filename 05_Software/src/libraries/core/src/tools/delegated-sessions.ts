@@ -25,6 +25,7 @@ const failureText = {
   NOT_FOUND: "The requested model or owned delegated session is unavailable.",
   CONFLICT: "The child settings changed or the delegation request conflicts with an earlier request.",
   BUSY: "The child is not eligible for this action, or turn capacity is busy.",
+  TURN_LIMIT: "The application's concurrent turn limit is reached; try again after a running turn ends.",
   DENIED: "The current session cannot perform this delegation operation.",
   CONTEXT_LIMIT: "The delegated task exceeds the available model context.",
   IMAGE_FORMAT: "The delegated task contains an unsupported image.",

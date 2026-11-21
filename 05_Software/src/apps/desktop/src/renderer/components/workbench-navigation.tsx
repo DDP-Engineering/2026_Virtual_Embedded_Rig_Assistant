@@ -1,9 +1,13 @@
-import type { RecentWorkbenchState } from "@vera/shared";
-import { ChevronDown, ChevronRight } from "lucide-react";
+// REQ-UX-18f96271 REQ-UX-ec37f55b REQ-UX-c2a9fe24 REQ-UX-4bb04608
+import type { RecentWorkbenchState, SessionActivity } from "@vera/shared";
+import { Activity, ChevronDown, ChevronRight } from "lucide-react";
 import type { KeyboardEvent as ReactKeyboardEvent, ReactNode } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useSessionActivity } from "../hooks/use-session-activity.js";
+import { useTurnCapacity } from "../hooks/use-turn-capacity.js";
 import { reorderOffset } from "../lib/shortcuts.js";
+import { WorkbenchActivity } from "./workbench-activity.js";
 
 export function WorkbenchNavigation({
   entries,
@@ -19,6 +23,8 @@ export function WorkbenchNavigation({
   reveal,
   remove,
   close,
+  openSession,
+  stopSession,
   children,
 }: {
   entries: RecentWorkbenchState[];
@@ -35,14 +41,20 @@ export function WorkbenchNavigation({
   reveal: (folder: string) => void;
   remove: (folder: string) => void;
   close?: () => void;
+  /** Shows a running or awaiting session in its workbench, bringing a background one forward. */
+  openSession?: (folder: string, sessionId: string) => Promise<boolean>;
+  /** Stops one session's turn wherever it runs; the shown workbench stays. */
+  stopSession?: (sessionId: string) => void;
   children: ReactNode;
 }) {
   const { t } = useTranslation();
   const navigation = useRef<HTMLElement>(null);
-  const menuSelector = ".workbench-menu,.session-options";
+  const activity = useSessionActivity();
+  const { capacity } = useTurnCapacity();
+  const menuSelector = ".workbench-menu,.session-options,.workbench-activity";
   const closeMenus = useCallback((except: Element | null = null, restoreFocus = false) => {
     for (const menu of navigation.current?.querySelectorAll<HTMLDetailsElement>(
-      ".workbench-menu[open],.session-options[open]",
+      ".workbench-menu[open],.session-options[open],.workbench-activity[open]",
     ) ?? []) {
       if (menu === except) continue;
       menu.open = false;
@@ -57,7 +69,9 @@ export function WorkbenchNavigation({
     const handleEscape = (event: KeyboardEvent) => {
       if (
         event.key !== "Escape" ||
-        !navigation.current?.querySelector(".workbench-menu[open],.session-options[open]")
+        !navigation.current?.querySelector(
+          ".workbench-menu[open],.session-options[open],.workbench-activity[open]",
+        )
       )
         return;
       event.preventDefault();
@@ -84,6 +98,20 @@ export function WorkbenchNavigation({
     }
   });
   const sorted = [...entries].sort((a, b) => Number(!!b.pinned) - Number(!!a.pinned));
+  /**
+   * The open workbench behind an entry: the same folder, else the same ID unless another entry has that
+   * folder (copied folders share an ID).
+   */
+  const activityOf = (entry: RecentWorkbenchState): SessionActivity | undefined =>
+    activity?.find((row) => row.folder === entry.folder) ??
+    activity?.find(
+      (row) => row.workbenchId === entry.id && !entries.some((other) => other.folder === row.folder),
+    );
+  const reached = !!capacity && capacity.active >= capacity.limit;
+  const counts = capacity && { active: capacity.active, limit: capacity.limit };
+  const capacityLabel =
+    counts &&
+    (reached ? t("sessionActivity.capacityReached", counts) : t("sessionActivity.capacity", counts));
   /** True when the entry is already first (offset -1) or last (offset 1) of its pinned group. */
   const atEdge = (entry: RecentWorkbenchState, offset: -1 | 1) => {
     const group = sorted.filter((other) => !!other.pinned === !!entry.pinned);
@@ -134,10 +162,25 @@ export function WorkbenchNavigation({
       }
     >
       <strong>{t("welcome.workbenches")}</strong>
+      {capacity && capacity.active > 0 && (
+        <span
+          className="turn-capacity"
+          data-turn-capacity
+          data-limit-reached={String(reached)}
+          title={capacityLabel}
+        >
+          <Activity aria-hidden="true" />
+          <span aria-hidden="true">
+            {capacity.active}/{capacity.limit}
+          </span>
+          <span className="sr-only">{capacityLabel}</span>
+        </span>
+      )}
       {!entries.length && <p>{t("projects.empty")}</p>}
       {sorted.map((entry) => {
         const active = entry.id === activeId && (!activeFolder || entry.folder === activeFolder);
         const shown = active && (expanded[entry.folder] ?? true);
+        const busy = activityOf(entry);
         return (
           <div
             key={entry.folder}
@@ -186,6 +229,18 @@ export function WorkbenchNavigation({
                 {entry.name}
               </button>
               {active && indexingStatus}
+              {busy && busy.sessions.length > 0 && (
+                <WorkbenchActivity
+                  activity={busy}
+                  disabled={disabled}
+                  open={(sessionId) =>
+                    void openSession?.(entry.folder, sessionId).then((ok) => {
+                      if (ok) expand(entry.folder, true);
+                    })
+                  }
+                  stop={(sessionId) => stopSession?.(sessionId)}
+                />
+              )}
               <details
                 className="workbench-menu"
                 onClickCapture={(event) => {

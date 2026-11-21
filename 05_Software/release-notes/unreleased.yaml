@@ -1,6 +1,13 @@
 version: Unreleased
 date: null
 entries:
+  - category: new
+    topic: { en: Plan, ro: Plan, de: Plan, fr: Plan }
+    text:
+      en: Comment on steps or text, then request a plan-only revision; failed reviews keep feedback.
+      ro: Comentează pași sau fragmente și cere revizuirea fără execuție; feedbackul se păstrează.
+      de: Schritte oder Text kommentieren; nur den Plan prüfen, ohne Ausführung; Feedback bleibt.
+      fr: Commentez étapes ou texte, puis révisez le plan sans l’exécuter ; les commentaires restent.
   - category: fixed
     topic: { en: Workbench, ro: Workbench, de: Workbench, fr: Banc de travail }
     text:
@@ -88,17 +95,10 @@ entries:
   - category: new
     topic: { en: Files, ro: Fișiere, de: Dateien, fr: Fichiers }
     text:
-      en: Rendered, Text or Hex per extension. Zoom to 400%. In Hex, jump, find and copy bytes or text.
-      ro: Randat, Text sau Hex pe extensie. Zoom 400%. În Hex, sari, caută și copiază octeți sau text.
-      de: Gerendert, Text, Hex je Endung. Zoom bis 400 %. In Hex springen, Text und Bytes suchen und kopieren.
-      fr: Rendu, Texte, Hex par extension. Zoom 400 %. En Hex, sauts, recherche et copie de texte ou d’octets.
-  - category: new
-    topic: { en: Files, ro: Fișiere, de: Dateien, fr: Fichiers }
-    text:
-      en: Switch local models per workbench. Both models are included for offline search.
-      ro: Schimbă modelul local pe workbench. Ambele modele sunt incluse pentru căutare offline.
-      de: Wechseln Sie das Modell je Workbench. Beide Modelle sind für die Offline-Suche enthalten.
-      fr: Changez de modèle par banc. Les deux modèles sont inclus pour la recherche hors ligne.
+      en: Rendered, Text and Hex views; zoom to 400%; byte search/copy and extension defaults.
+      ro: Moduri Randat, Text și Hex; zoom la 400%; căutare/copiere octeți și mod pe extensie.
+      de: Gerendert, Text, Hex; Zoom bis 400 %; Bytes suchen/kopieren; Vorgabe je Dateityp.
+      fr: Vues Rendu, Texte et Hex ; zoom à 400 %, recherche/copie d’octets et choix par extension.
   - category: improved
     topic: { en: Files, ro: Fișiere, de: Dateien, fr: Fichiers }
     text:
@@ -116,17 +116,10 @@ entries:
   - category: fixed
     topic: { en: Privacy, ro: Confidențialitate, de: Datenschutz, fr: Confidentialité }
     text:
-      en: Agent and export masking now follow their own app and workbench choices.
-      ro: Mascarea agentului și a exporturilor respectă alegerile aplicației și ale workbench-ului.
-      de: Agenten- und Exportmaskierung folgen nun ihren eigenen App- und Workbench-Einstellungen.
-      fr: Le masquage de l’agent et des exports suit leurs choix propres dans l’application et le banc.
-  - category: fixed
-    topic: { en: Files, ro: Fișiere, de: Dateien, fr: Fichiers }
-    text:
-      en: Display masking keeps secret-named files visible and opens their original contents.
-      ro: Mascarea afișării păstrează fișierele cu nume secrete vizibile și le deschide corect.
-      de: Die Anzeigemaskierung lässt Dateien mit geheimen Namen sichtbar und öffnet sie korrekt.
-      fr: Le masquage garde visibles les fichiers aux noms secrets et ouvre leur contenu correct.
+      en: Masking follows each area's choices; secret-named files stay visible and open correctly.
+      ro: Mascarea respectă alegerile fiecărei zone; fișierele cu nume secrete rămân vizibile și se deschid.
+      de: Maskierung folgt der Wahl je Bereich; Dateien mit geheimen Namen bleiben sichtbar und öffnen sich.
+      fr: Le masquage suit chaque zone ; les fichiers aux noms secrets restent visibles et s’ouvrent bien.
   - category: fixed
     topic: { en: Commands, ro: Comenzi, de: Befehle, fr: Commandes }
     text:
@@ -137,10 +130,10 @@ entries:
   - category: new
     topic: { en: Terminal, ro: Terminal, de: Terminal, fr: Terminal }
     text:
-      en: Use interactive terminal tabs; allow agent reads separately for each terminal.
-      ro: Folosește terminale interactive; permite citirea de către agent separat pentru fiecare.
-      de: Interaktive Terminal-Tabs nutzen; Agentenlesezugriff für jedes Terminal separat erlauben.
-      fr: Utilisez des terminaux interactifs ; autorisez la lecture par l’agent pour chacun.
+      en: Use interactive terminal tabs and choose the shell and agent read access for each tab.
+      ro: Folosește terminale interactive și alege shell-ul și accesul agentului pentru fiecare filă.
+      de: Interaktive Terminal-Tabs nutzen und Shell und Agentenlesezugriff je Tab wählen.
+      fr: Utilisez des terminaux interactifs et choisissez le shell et l’accès de l’agent pour chacun.
   - category: improved
     topic: { en: Files, ro: Fișiere, de: Dateien, fr: Fichiers }
     text:
@@ -151,10 +144,17 @@ entries:
   - category: new
     topic: { en: Workbench, ro: Workbench, de: Workbench, fr: Banc de travail }
     text:
-      en: Indexing in the sidebar, limit approval and largest folders in Files, search limits in chat.
-      ro: Indexare în bara laterală, aprobare și foldere mari în Fișiere, limite de căutare în chat.
-      de: Indexstatus in der Seitenleiste, Freigabe und größte Ordner in Dateien, Suchgrenzen im Chat.
-      fr: Indexation dans la barre latérale, limite et gros dossiers dans Fichiers, recherche dans le chat.
+      en: Indexing status, approval for large selections, and offline search models per workbench.
+      ro: Stare indexare, aprobare pentru selecții mari și modele de căutare offline pe workbench.
+      de: Indexstatus, Freigabe großer Auswahlen und Offline-Suchmodelle je Workbench.
+      fr: État de l’index, validation des grandes sélections et modèles de recherche hors ligne par banc.
+  - category: new
+    topic: { en: Sessions, ro: Sesiuni, de: Sitzungen, fr: Sessions }
+    text:
+      en: Sessions run on in other workbenches, up to a turn limit; see, open or stop them in the sidebar.
+      ro: Sesiunile rulează și în alte workbench-uri, cu limită; vezi, deschide sau oprește din bara laterală.
+      de: Sitzungen laufen in anderen Workbenches weiter, mit Limit; Seitenleiste zeigt, öffnet, stoppt sie.
+      fr: Les sessions continuent dans d’autres bancs, avec limite ; voyez, ouvrez ou arrêtez-les sur le côté.
   - category: improved
     topic: { en: Workbench, ro: Workbench, de: Workbench, fr: Banc de travail }
     text:
@@ -183,13 +183,6 @@ entries:
       ro: "Confirmă Bypass: programe și intrări externe; ieșirea oprește rulările. Datele VERA rămân blocate."
       de: "Bypass bestätigen: externe Tools und Eingaben; Ende stoppt Läufe. VERA-Daten bleiben gesperrt."
       fr: "Confirmez le contournement : accès externe ; quitter arrête les tâches. Données VERA bloquées."
-  - category: new
-    topic: { en: Commands, ro: Comenzi, de: Befehle, fr: Commandes }
-    text:
-      en: Run and monitor commands; choose an installed shell, including Cmd and Git Bash, or a custom path.
-      ro: Rulează și urmărește comenzi; alege un shell instalat, inclusiv Cmd și Git Bash, sau o cale proprie.
-      de: Befehle ausführen und verfolgen; installierte Shell wie Cmd oder Git Bash oder eigenen Pfad wählen.
-      fr: Exécutez et suivez les commandes ; choisissez Cmd, Git Bash, un shell installé ou un chemin.
   - category: improved
     topic: { en: Permissions, ro: Permisiuni, de: Berechtigungen, fr: Autorisations }
     text:

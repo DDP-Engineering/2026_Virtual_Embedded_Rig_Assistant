@@ -99,7 +99,10 @@ export async function ordinaryFile(root: string, guard: PathGuard, path: string)
 
 export interface SelectInput {
   root: string;
-  docs: Pick<WorkbenchConfig["docs"], "include" | "exclude" | "gitignore" | "maxFileMB" | "maxFiles">;
+  /** The workbench docs; `maxTextMB` is the resolved text size the caller adds (`selectionDocs`). */
+  docs: Pick<WorkbenchConfig["docs"], "include" | "exclude" | "gitignore" | "maxFileMB" | "maxFiles"> & {
+    maxTextMB?: number;
+  };
   /** Aborting stops the walk; the selection then holds what was found so far. */
   signal: AbortSignal;
   /**
@@ -138,8 +141,8 @@ export interface Selection {
 /**
  * The documents a workbench selects: include minus exclude, the ignore policy (permanent rules,
  * .veraignore and, when docs.gitignore is on, .gitignore),
- * document types only, ordinary files without links. A document above its size limit (the fixed
- * one, lowered by docs.maxFileMB) is skipped as too large, one the path guard refuses by its name
+ * document types only, ordinary files without links. A document above its size limit (docs.maxFileMB
+ * for PDF and Office, the resolved text size for text) is skipped as too large, one the path guard refuses by its name
  * as an unsupported name. Runs in the desktop indexer process.
  */
 export async function selectDocuments({ root, docs, signal, unindexed }: SelectInput): Promise<Selection> {

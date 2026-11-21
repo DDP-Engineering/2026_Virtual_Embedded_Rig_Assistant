@@ -42,6 +42,7 @@ async function createParent(page: Page, model: string, instruction: string) {
       }),
     { id, model },
   );
+  await expect(page.locator("[data-model-picker]")).toHaveValue(`replay/${model}`);
   const input = page.getByRole("textbox", { name: "Message", exact: true });
   await input.fill(instruction);
   await input.press("Enter");
@@ -109,7 +110,7 @@ test("native Desktop follows live delegated sessions, stops one and reopens dura
   await fixture("child-stop", [{ text: childText("Slow child is working.", 350) }]);
   await fixture("child-error", [
     {
-      text: childText("Child is about to fail.", 55),
+      text: childText("Child is about to fail.", 100),
       toolCalls: [tool("read", { path: "board.txt" })],
     },
   ]);
@@ -219,6 +220,14 @@ test("native Desktop follows live delegated sessions, stops one and reopens dura
     await expect(delegation(page)).toContainText("Stopped");
     await expect(page.locator('[data-action="stop-session"]')).toBeVisible();
     await expect(page.locator("[data-transcript]")).toContainText("Parent outcome: stopped.");
+    await expect
+      .poll(() =>
+        page.evaluate(async (sessionId) => {
+          const api = (window as unknown as { vera: VeraBridge }).vera;
+          return (await api.invoke("session.get", { sessionId })).snapshot.activeTurnId;
+        }, stoppedParent),
+      )
+      .toBeNull();
 
     // Drop relationship notifications; the existing list heartbeat must still recover.
     const delivered = await instance.evaluate(() => {
@@ -228,7 +237,7 @@ test("native Desktop follows live delegated sessions, stops one and reopens dura
     });
     expect(delivered).toBe(4);
     const failedParent = await createParent(page, "parent-error", "Coordinate failing inspection");
-    await expect(delegation(page)).toContainText("Running");
+    await expect(delegation(page)).toContainText("Running", { timeout: 10000 });
     await followChild(page, "Inspect the failing board");
     await expect(delegation(page)).toContainText("Failed", { timeout: 15000 });
     await returnToParent(page, failedParent, "Coordinate failing inspection");

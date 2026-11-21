@@ -32,7 +32,7 @@ import type { Extraction } from "./extraction.js";
 import { documentGuard } from "./guard.js";
 import { IndexStatus, type IndexStatusFields } from "./index-status.js";
 import { type InspectInput, inspectSource, type SourceInspection } from "./inspect.js";
-import { documentKind, documentSelection, missing, sizeLimit } from "./kinds.js";
+import { documentKind, documentSelection, missing, selectionDocs, sizeLimit } from "./kinds.js";
 import {
   ordinaryFile,
   portablePath,
@@ -90,6 +90,8 @@ export interface IngestOptions {
   statusChanged?: () => void;
   indexerStopped?: boolean;
   process?: DocumentProcessor;
+  /** The application's Indexing pause in ms, read at each request (REQ-FUNC-2fba7b9c); 1000 when absent. */
+  pauseMs?: () => number;
 }
 /** Literal include prefixes bound recursive monitoring; policy files stay live independently. */
 function watchTargets(root: string, docs: WorkbenchConfig["docs"]): string[] {
@@ -342,10 +344,14 @@ export class Ingester {
     this.requested = true;
     if (!alreadyRequested) this.status.notify();
     if (this.timer) clearTimeout(this.timer);
-    this.timer = setTimeout(() => {
-      this.timer = undefined;
-      this.schedule();
-    }, 1000);
+    const pause = this.options.pauseMs?.();
+    this.timer = setTimeout(
+      () => {
+        this.timer = undefined;
+        this.schedule();
+      },
+      pause !== undefined && Number.isFinite(pause) && pause >= 0 ? pause : 1000,
+    );
   }
   private schedule(): void {
     if (this.closed || this.active) return;
@@ -520,7 +526,7 @@ export class Ingester {
     const select = this.options.process?.select ?? selectDocuments;
     const selection = await select({
       root: this.options.root,
-      docs: this.options.config().docs,
+      docs: selectionDocs(this.options.config()),
       signal: this.abort.signal,
     });
     if (selection.retry) this.request();
@@ -698,7 +704,7 @@ export class Ingester {
         old.kind === kind &&
         old.bytes === record.bytes &&
         old.mtime === record.mtime;
-      if (before.size > sizeLimit(kind, this.options.config().docs)) {
+      if (before.size > sizeLimit(kind, selectionDocs(this.options.config()))) {
         if (
           old?.status !== "unsupported" ||
           old.error !== "SIZE_LIMIT" ||

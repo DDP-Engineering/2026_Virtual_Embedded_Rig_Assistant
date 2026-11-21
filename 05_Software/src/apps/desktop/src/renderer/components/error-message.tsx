@@ -31,6 +31,7 @@ export function ErrorMessage({ error }: { error: unknown }) {
     "errors.NOT_FOUND": t("errors.NOT_FOUND", options),
     "errors.CONFLICT": t("errors.CONFLICT", options),
     "errors.BUSY": t("errors.BUSY", options),
+    "errors.TURN_LIMIT": t("errors.TURN_LIMIT", { limit: "", ...options }),
     "errors.DENIED": t("errors.DENIED", options),
     "errors.CONTEXT_LIMIT": t("errors.CONTEXT_LIMIT", options),
     "errors.IMAGE_FORMAT": t("errors.IMAGE_FORMAT", options),

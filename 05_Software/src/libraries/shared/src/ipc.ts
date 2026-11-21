@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { advancedSettings } from "./advanced-settings.js";
 import { artifactContentSchema, artifactIdSchema, artifactSummarySchema } from "./artifacts.js";
 import { browserRuntimeViewSchema, browserSessionViewSchema, browserSettingsSchema } from "./browser.js";
 import { changeDetailSchema, changeIdSchema, changeSummarySchema } from "./changes.js";
@@ -59,6 +60,13 @@ import {
   partsAccessTestSchema,
 } from "./parts-search.js";
 import {
+  planCommentChangeSchema,
+  planCommentDeleteSchema,
+  planFeedbackIdSchema,
+  planReviewRequestSchema,
+  planReviewRestoreSchema,
+} from "./plan-review.js";
+import {
   pluginCatalogIdRequestSchema,
   pluginCatalogInstallRequestSchema,
   pluginCatalogRequestSchema,
@@ -113,6 +121,7 @@ import {
   permissionModeSchema,
   sessionIdSchema,
   sessionSummarySchema,
+  turnCapacitySchema,
 } from "./session.js";
 import { sessionExportFormatSchema, sessionSearchQuerySchema } from "./session-export.js";
 import { sessionStateSchema } from "./session-state.js";
@@ -200,13 +209,37 @@ export const appInfoSchema = z.strictObject({
     .strictObject({ electron: z.string(), chrome: z.string(), node: z.string(), v8: z.string() })
     .optional(),
 });
+const planScope = { workbenchId: workbenchIdSchema, sessionId: sessionIdSchema };
+
+/**
+ * One open workbench and its top-level sessions that are running or awaiting approval, for an activity
+ * overview across workbenches; `foreground` marks the workbench the window shows.
+ */
+export const sessionActivitySchema = z.strictObject({
+  workbenchId: workbenchIdSchema,
+  name: z.string().trim().min(1).max(80),
+  folder: z.string().min(1),
+  foreground: z.boolean(),
+  sessions: z.array(
+    z.strictObject({
+      id: sessionIdSchema,
+      title: z.string().max(60),
+      status: z.enum(["running", "awaiting_approval"]),
+    }),
+  ),
+});
+export type SessionActivity = z.infer<typeof sessionActivitySchema>;
 export const channels = {
   "app.clipboard.write": defineChannel(
     "app.clipboard.write",
     z.strictObject({ text: z.string().max(10_000_000) }),
     z.strictObject({}),
   ),
-  "terminal.list": defineChannel("terminal.list", terminalOwnerSchema, z.array(terminalSummarySchema).max(8)),
+  "terminal.list": defineChannel(
+    "terminal.list",
+    terminalOwnerSchema,
+    z.array(terminalSummarySchema).max(advancedSettings.terminals.max),
+  ),
   "terminal.create": defineChannel(
     "terminal.create",
     terminalOwnerSchema.extend({ ...terminalSizeSchema.shape, shell: commandBlockShellSchema.optional() }),
@@ -600,7 +633,7 @@ export const channels = {
     docsScopeSchema.extend({ query: z.string().trim().min(1).max(1000) }),
     docsScopeSchema
       .extend(documentSearchMetadataSchema.shape)
-      .extend({ results: z.array(documentSearchHitSchema).max(20) }),
+      .extend({ results: z.array(documentSearchHitSchema).max(100) }),
   ),
   "docs.open": defineChannel(
     "docs.open",
@@ -732,6 +765,10 @@ export const channels = {
     z.strictObject({ query: sessionSearchQuerySchema, workbenchId: workbenchIdSchema.optional() }),
     z.array(sessionSummarySchema),
   ),
+  /** Every open workbench, the shown one first, with its sessions running or awaiting approval. */
+  "session.activity": defineChannel("session.activity", z.strictObject({}), z.array(sessionActivitySchema)),
+  /** Active turns across every open workbench and the Concurrent turns limit (REQ-FUNC-33cd5f9f). */
+  "session.capacity": defineChannel("session.capacity", z.strictObject({}), turnCapacitySchema),
   "session.export": defineChannel(
     "session.export",
     z.strictObject({ sessionId: sessionIdSchema, format: sessionExportFormatSchema }),
@@ -780,6 +817,34 @@ export const channels = {
     }),
     z.strictObject({}),
   ),
+  "session.plan.comment.save": defineChannel(
+    "session.plan.comment.save",
+    z.discriminatedUnion("action", [
+      planCommentChangeSchema.options[0].extend(planScope),
+      planCommentChangeSchema.options[1].extend(planScope),
+      planCommentChangeSchema.options[2].extend(planScope),
+    ]),
+    z.strictObject({}),
+  ),
+  "session.plan.comment.delete": defineChannel(
+    "session.plan.comment.delete",
+    planCommentDeleteSchema.extend(planScope),
+    z.strictObject({}),
+  ),
+  "session.plan.review": defineChannel(
+    "session.plan.review",
+    planReviewRequestSchema.extend(planScope),
+    z.strictObject({
+      reviewId: planFeedbackIdSchema,
+      turnId: planFeedbackIdSchema,
+      messageId: planFeedbackIdSchema,
+    }),
+  ),
+  "session.plan.review.restore": defineChannel(
+    "session.plan.review.restore",
+    planReviewRestoreSchema.extend(planScope),
+    z.strictObject({}),
+  ),
   /** Removes the named bookmarks, or every bookmark of the session, atomically; messages stay. */
   "session.bookmarks.remove": defineChannel(
     "session.bookmarks.remove",
@@ -791,6 +856,22 @@ export const channels = {
       z.strictObject({ sessionId: sessionIdSchema, all: z.literal(true) }),
     ]),
     z.strictObject({}),
+  ),
+  /** Sets (or clears with null) a session-scope Advanced value (REQ-DATA-96ef3dd6). */
+  "session.advanced.set": defineChannel(
+    "session.advanced.set",
+    z.strictObject({
+      sessionId: sessionIdSchema,
+      key: z.string().min(1).max(64),
+      value: z.union([z.number(), z.boolean()]).nullable(),
+    }),
+    z.strictObject({}),
+  ),
+  /** Summarize an idle session's history now, regardless of the trigger. */
+  "session.compact": defineChannel(
+    "session.compact",
+    z.strictObject({ sessionId: sessionIdSchema }),
+    z.strictObject({ status: z.enum(["none", "completed", "unavailable", "failed"]) }),
   ),
   "session.rename": defineChannel(
     "session.rename",

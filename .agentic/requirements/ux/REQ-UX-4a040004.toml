@@ -3,11 +3,13 @@ id = "REQ-UX-4a040004"
 title = "Apply and persist text size"
 status = "active"
 requirement = """
-When a user selects 75%, 87.5%, 100%, 112.5%, 125% or 150%, VERA shall scale the 14px root font and rem component/code sizes immediately and across restart.
+When a user selects 75%, 87.5%, 100%, 112.5%, 125% or 150%, VERA shall scale the 14px root font and rem component/code sizes immediately as a preview, and persist the size when the user saves the Appearance page and across restart.
 """
-verification = "Select all six values, inspect actual computed root/code/control sizes and restart each; check minimum viewport."
-affected_paths = ["05_Software/src/apps/desktop/src/renderer/hooks/use-preferences.ts","05_Software/src/apps/desktop/src/renderer/styles.css"]
-linked_tests = ["05_Software/tests/e2e/mock.spec.ts","05_Software/tests/e2e/shell.spec.ts"]
+verification = """
+Select each size and inspect the root font size at once; Cancel restores it; Save and restart keep it.
+"""
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/hooks/use-preferences.ts", "05_Software/src/apps/desktop/src/renderer/styles.css", "05_Software/src/apps/desktop/src/renderer/components/appearance-settings.tsx"]
+linked_tests = ["05_Software/tests/e2e/mock.spec.ts", "05_Software/tests/e2e/shell.spec.ts", "05_Software/src/apps/desktop/src/renderer/components/settings-save.test.ts", "05_Software/tests/e2e/typography.spec.ts"]
 spec = "specs/REQ-UX-4a040001.md"
 priority = "normal"
 created = 2026-10-10

@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import { getEventListeners } from "node:events";
 import { existsSync, readdirSync } from "node:fs";
-import { link, mkdir, mkdtemp, readdir, readFile, rm, symlink, writeFile } from "node:fs/promises";
+import { link, mkdir, mkdtemp, open, readdir, readFile, rm, symlink, writeFile } from "node:fs/promises";
 import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -14,7 +14,8 @@ import { openDb } from "../storage/db.js";
 import { DocumentsRepository } from "../storage/repos/documents.js";
 import type { EmbeddingPort } from "./embedding.js";
 import { type DocumentInput, Ingester } from "./ingest.js";
-import { createDocumentProcessor } from "./processor.js";
+import { sourceLimit } from "./kinds.js";
+import { createDocumentProcessor, verifyDocumentSource } from "./processor.js";
 import { createOfficeExtractor, createPdfExtractor, pdfDeadline } from "./worker-host.js";
 
 const software = fileURLToPath(new URL("../../../../../", import.meta.url));
@@ -399,6 +400,13 @@ it("gives a large PDF more time than the base deadline, up to 15 minutes", async
     signal = new AbortController().signal;
   await expect(extract(new Uint8Array(1), signal)).rejects.toThrow(/deadline/);
   expect(await extract(new Uint8Array(MIB), signal)).toEqual({ kind: "pdf", pages: ["late page"] });
+  // REQ-FUNC-aa35b135: the base is read as each extraction starts, and a caller may give its own.
+  let base = 50;
+  const live = createPdfExtractor(pathToFileURL(entry), () => base);
+  await expect(live(new Uint8Array(1), signal)).rejects.toThrow(/deadline/);
+  base = 5000;
+  expect(await live(new Uint8Array(1), signal)).toEqual({ kind: "pdf", pages: ["late page"] });
+  await expect(live(new Uint8Array(1), signal, { baseMs: 50 })).rejects.toThrow(/deadline/);
 });
 it("embeds a long document in batches of 64 chunks, in order, and stops between batches on abort", async () => {
   const root = await fixtureRoot(),
@@ -589,4 +597,32 @@ it("extracts malformed repeats and sparse wide rows in a small worker heap witho
   const sparse = await processor({ ...(await input(root, "docs/sparse.xlsx", xlsx)), kind: "spreadsheet" });
   expect(sparse).toMatchObject({ status: "indexed" });
   expect(sparse.chunks?.map((c) => c.text).join("\n")).toContain("only value");
+}, 30000);
+
+// REQ-FUNC-486d6a86
+it("accepts a source up to the largest allowed size and refuses a larger one", async () => {
+  const MIB = 1024 * 1024;
+  expect(sourceLimit("pdf")).toBe(500 * MIB);
+  expect(sourceLimit("document")).toBe(500 * MIB);
+  expect(sourceLimit("text")).toBe(64 * MIB);
+  const root = await fixtureRoot();
+  // Sparse files: real sizes without writing their bytes.
+  const sized = async (path: string, bytes: number) => {
+    const base = await input(root, path, "");
+    const file = await open(join(root, path), "r+");
+    await file.truncate(bytes);
+    await file.close();
+    return { ...base, sha256: "0".repeat(64) };
+  };
+  // Above every configurable size: refused before it is read.
+  await expect(verifyDocumentSource(await sized("docs/huge.pdf", 500 * MIB + 1))).rejects.toThrow(
+    /exceeds budget/,
+  );
+  await expect(verifyDocumentSource(await sized("docs/huge.txt", 64 * MIB + 1))).rejects.toThrow(
+    /exceeds budget/,
+  );
+  // Within the ceiling the size check passes; the zero hash then fails the content check, not the budget.
+  await expect(verifyDocumentSource(await sized("docs/big.pdf", 100 * MIB + 1))).rejects.not.toThrow(
+    /exceeds budget/,
+  );
 }, 30000);

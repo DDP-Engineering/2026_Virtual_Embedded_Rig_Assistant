@@ -2,7 +2,12 @@ import { type ResourceLimits, Worker } from "node:worker_threads";
 import { type Extraction, extractionSchema } from "./extraction.js";
 import { type OfficeFormat, OfficeLimitError } from "./office-format.js";
 
-export type PdfExtractor = (bytes: Uint8Array, signal: AbortSignal) => Promise<Extraction & { kind: "pdf" }>;
+/** `baseMs` replaces the extractor's base deadline for one call (a download's session value). */
+export type PdfExtractor = (
+  bytes: Uint8Array,
+  signal: AbortSignal,
+  options?: { baseMs?: number },
+) => Promise<Extraction & { kind: "pdf" }>;
 export type OfficeExtractor = (
   format: OfficeFormat,
   bytes: Uint8Array,
@@ -57,8 +62,25 @@ function runWorker<T>(
     if (signal.aborted) abort();
   });
 }
-const checkDeadline = (deadlineMs: number, label: string) => {
-  if (!Number.isFinite(deadlineMs) || deadlineMs <= 0) throw Error(`Invalid ${label} worker deadline.`);
+const validDeadline = (deadlineMs: number) => Number.isFinite(deadlineMs) && deadlineMs > 0;
+/**
+ * A fixed base deadline, or the host's Document extraction time limit read as each extraction starts
+ * (REQ-FUNC-aa35b135); an invalid value from a getter falls back to 120 s.
+ */
+export type ExtractionDeadline = number | (() => number);
+const checkDeadline = (deadlineMs: ExtractionDeadline, label: string) => {
+  if (typeof deadlineMs === "number" && !validDeadline(deadlineMs))
+    throw Error(`Invalid ${label} worker deadline.`);
+};
+const currentDeadline = (deadlineMs: ExtractionDeadline, override?: number) => {
+  if (override !== undefined && validDeadline(override)) return override;
+  let value: number;
+  try {
+    value = typeof deadlineMs === "function" ? deadlineMs() : deadlineMs;
+  } catch {
+    return 120000;
+  }
+  return validDeadline(value) ? value : 120000;
 };
 
 /** A large manual needs more than the base deadline: 30 s per MiB, at most 15 minutes. */
@@ -70,17 +92,17 @@ export const DOCUMENT_WORKER_LIMITS: ResourceLimits = { maxOldGenerationSizeMb: 
 
 export function createPdfExtractor(
   entry: URL,
-  deadlineMs = 120000,
+  deadlineMs: ExtractionDeadline = 120000,
   resourceLimits: ResourceLimits = DOCUMENT_WORKER_LIMITS,
 ): PdfExtractor {
   checkDeadline(deadlineMs, "PDF");
-  return (bytes, signal) =>
+  return (bytes, signal, options) =>
     runWorker(
       entry,
       "PDF",
       bytes,
       signal,
-      pdfDeadline(deadlineMs, bytes.byteLength),
+      pdfDeadline(currentDeadline(deadlineMs, options?.baseMs), bytes.byteLength),
       (value) => {
         const parsed = extractionSchema.safeParse(value);
         if (parsed.success && parsed.data.kind === "pdf") return parsed.data;
@@ -93,7 +115,7 @@ export function createPdfExtractor(
 /** Office files are parsed in the same document worker entry as PDFs, so no build input is added. */
 export function createOfficeExtractor(
   entry: URL,
-  deadlineMs = 120000,
+  deadlineMs: ExtractionDeadline = 120000,
   resourceLimits: ResourceLimits = DOCUMENT_WORKER_LIMITS,
 ): OfficeExtractor {
   checkDeadline(deadlineMs, "Office");
@@ -103,7 +125,7 @@ export function createOfficeExtractor(
       "Office",
       { format, bytes },
       signal,
-      deadlineMs,
+      currentDeadline(deadlineMs),
       (value) => {
         if (value && typeof value === "object" && "error" in value && value.error === "SIZE_LIMIT")
           throw new OfficeLimitError();

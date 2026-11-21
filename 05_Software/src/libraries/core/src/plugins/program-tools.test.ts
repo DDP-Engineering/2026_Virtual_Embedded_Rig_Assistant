@@ -268,6 +268,14 @@ describe("timeout cap (REQ-FUNC-90a95bef)", () => {
     expect(programTimeout({ rule: null, program: 120, background: true })).toBeUndefined();
     expect(programTimeout({ rule: null, program: 120, requested: 5000, background: true })).toBe(120_000);
   });
+  // REQ-FUNC-e1d2f670
+  it("uses the resolved Program timeout ceiling where neither a rule nor the program sets one", () => {
+    expect(programTimeout({ rule: null, requested: 3600, background: false, ceiling: 1800 })).toBe(1_800_000);
+    expect(programTimeout({ rule: null, requested: 100, background: false, ceiling: 1800 })).toBe(100_000);
+    expect(programTimeout({ rule: null, background: false, ceiling: 1800 })).toBe(1_800_000);
+    // A plugin rule still wins.
+    expect(programTimeout({ rule: 30, requested: 3600, background: false, ceiling: 1800 })).toBe(30_000);
+  });
   it("stops a foreground run at its timeout and reports timedOut", async () => {
     const prepared = await prepare({ program: "echo", args: ["slow", "x"], timeout: 1 });
     const result = prepared.apply(signal());
@@ -281,6 +289,16 @@ describe("timeout cap (REQ-FUNC-90a95bef)", () => {
     (await spawned(1)).finish({ code: 0, signal: null });
     await result;
     expect(start.mock.calls[0]?.[0].timeoutMs).toBe(30_000);
+  });
+  // REQ-FUNC-e1d2f670
+  it("caps a run without a rule or program timeout at the session's Program timeout ceiling", async () => {
+    ctx = { ...ctx, advanced: ((key: string) => (key === "programTimeout" ? 1800 : 0)) as never };
+    const start = vi.spyOn(runner, "start");
+    const prepared = await prepare({ program: "echo", args: ["version"], timeout: 3600 });
+    const result = prepared.apply(signal());
+    (await spawned(1)).finish({ code: 0, signal: null });
+    await result;
+    expect(start.mock.calls[0]?.[0].timeoutMs).toBe(1_800_000);
   });
 });
 

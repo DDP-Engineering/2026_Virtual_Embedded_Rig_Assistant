@@ -1,19 +1,20 @@
 import { isAbsolute } from "node:path";
-import { formatLineRef, parseLineRef } from "@vera/shared";
+import { advancedSettings, formatLineRef, parseLineRef } from "@vera/shared";
 import { z } from "zod";
 import type { ToolDefinition } from "./context.js";
-import { toolPathGuard } from "./context.js";
+import { toolLimit, toolPathGuard } from "./context.js";
 import { readWindow } from "./read-window.js";
 
 export const readTool: ToolDefinition = {
   name: "read",
   class: "read",
   description:
-    "Read numbered text lines from a workbench file (up to256KiB of selected text); use read_doc for PDFs.",
+    "Read numbered text lines from a workbench file, within the configured line and text limits; use read_doc for PDFs.",
   params: z.strictObject({
     path: z.string().min(1),
     offset: z.number().int().min(1).optional(),
-    limit: z.number().int().min(1).max(2000).optional(),
+    // Up to the setting's largest value; the session's Read window lines caps it (REQ-FUNC-150dcb0b).
+    limit: z.number().int().min(1).max(advancedSettings.readLines.max).optional(),
   }),
   async execute(ctx, raw, signal) {
     const args = readTool.params.parse(raw) as { path: string; offset?: number; limit?: number };
@@ -21,7 +22,10 @@ export const readTool: ToolDefinition = {
     const target = await guard.resolve(args.path);
     if (/\.pdf$/i.test(target.relative)) throw Error("Use read_doc to read PDF documents.");
     const offset = args.offset ?? 1;
-    const file = await readWindow(guard, args.path, offset, args.limit ?? 2000, signal);
+    const lines = toolLimit(ctx, "readLines");
+    const file = await readWindow(guard, args.path, offset, Math.min(args.limit ?? lines, lines), signal, {
+      maxChars: toolLimit(ctx, "readChars"),
+    });
     const end = file.selected.at(-1)?.line;
     const ref =
       end && (!isAbsolute(file.target.relative) || parseLineRef(`${file.target.relative}#L${offset}-L${end}`))

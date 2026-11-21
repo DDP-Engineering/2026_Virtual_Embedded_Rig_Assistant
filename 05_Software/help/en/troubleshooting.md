@@ -52,7 +52,7 @@ VERA does not start when its `settings.json` is damaged or was edited by hand in
 
 ## Logs
 
-VERA writes one log file per day, `vera-YYYY-MM-DD.log`, in the `logs` folder of its data folder, and keeps the newest seven. Keys and other known secrets are removed from the logs. Program output of plugins is not in these logs but in `.vera/runs/` of the workbench.
+VERA writes one log file per day, `vera-YYYY-MM-DD.log`, in the `logs` folder of its data folder, and keeps the newest seven, or the number set as **Log retention** in [Advanced settings](advanced-settings.md). Keys and other known secrets are removed from the logs. Program output of plugins is not in these logs but in `.vera/runs/` of the workbench.
 
 ## Where VERA keeps its data
 

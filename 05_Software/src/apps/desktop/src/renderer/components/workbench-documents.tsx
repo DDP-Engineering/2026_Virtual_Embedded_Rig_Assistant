@@ -2,6 +2,7 @@ import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import {
   type DocumentGuard,
   type DocumentScanKind,
+  type DocumentVolume,
   documentFolderPattern,
   documentPatternFolder,
   type WorkbenchConfig,
@@ -134,11 +135,14 @@ export function WorkbenchDocuments({
   docs,
   setDocs,
   disabled = false,
+  volumeLimit,
 }: {
   folder: string;
   docs: Docs;
   setDocs: (docs: Docs) => void;
   disabled?: boolean;
+  /** The resolved Document volume warning of the draft; the default when absent (REQ-UX-d64e808a). */
+  volumeLimit?: DocumentVolume;
 }) {
   const { t, i18n } = useTranslation();
   const bytes = useBytes();
@@ -315,7 +319,9 @@ export function WorkbenchDocuments({
         {preview.data?.guard && (
           <PreviewGuard guard={preview.data.guard} atLeast={preview.data.truncated} number={number} />
         )}
-        {preview.data && !preview.data.guard && <VolumeWarning volume={preview.data} />}
+        {preview.data && !preview.data.guard && (
+          <VolumeWarning volume={preview.data} {...(volumeLimit ? { limit: volumeLimit } : {})} />
+        )}
         {preview.isError && <ErrorMessage error={preview.error} />}
         <details className="workbench-documents-advanced" data-docs-advanced>
           <summary>{t("documentsSetup.advanced")}</summary>

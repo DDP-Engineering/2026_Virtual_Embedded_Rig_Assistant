@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-11f00fcd"
+
+title = "Hold a turn slot until the turn ends and release it once"
+
+status = "active"
+
+requirement = """
+VERA shall count an admitted turn as active, including while it waits for an approval, until the turn ends by completion, Stop, failure, its creation failing after admission or the close of its workbench's sessions, and shall then release its slot exactly once.
+"""
+
+verification = "Core tests: a turn awaiting an approval keeps the count at 1; completion, Stop, a provider failure and service close each bring the count back to 0 and never below 0, also when close follows the turn's own end; a turn whose runtime cannot be created after admission leaves the count unchanged."
+
+affected_paths = ["05_Software/src/libraries/core/src/sessions/admission.ts", "05_Software/src/libraries/core/src/sessions/service.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/sessions/admission.test.ts", "05_Software/src/libraries/core/src/sessions/turn-limit.test.ts", "05_Software/src/apps/desktop/src/main/turn-limit.replay.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-21
+updated = 2026-11-21

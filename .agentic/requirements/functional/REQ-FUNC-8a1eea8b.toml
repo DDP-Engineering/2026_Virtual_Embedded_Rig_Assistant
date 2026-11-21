@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-8a1eea8b"
+
+title = "Bind the resolved download size into the download approval"
+
+status = "active"
+
+requirement = """
+When web_download is prepared, VERA shall bind the resolved Download size, an integer from 10 to 1000 MiB with default 100 set for the application, into the approval request and show it, an approved request keeping its bound size after the setting changes.
+"""
+
+verification = "With 500, the approval request carries 500 MiB and the stored approval event validates; changing the value to 50 afterwards leaves that approved request at 500 MiB; with no value it carries 100 MiB."
+
+affected_paths = ["05_Software/src/libraries/shared/src/advanced-settings.ts", "05_Software/src/libraries/shared/src/downloads.ts", "05_Software/src/libraries/core/src/tools/web-download.ts"]
+
+linked_tests = ["05_Software/src/libraries/shared/src/advanced-settings.test.ts", "05_Software/src/libraries/shared/src/downloads.test.ts", "05_Software/src/libraries/core/src/sessions/downloads.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-21
+updated = 2026-11-21

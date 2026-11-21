@@ -1,9 +1,9 @@
 // REQ-SEC-1a37ade3, REQ-FUNC-b975a8b5
-import { DOWNLOAD_MAX_BYTES, downloadFilenameSchema } from "@vera/shared";
+import { downloadFilenameSchema } from "@vera/shared";
 import { z } from "zod";
 import { publicWebUrl } from "../web/provider.js";
 import type { PreparedChange } from "./changes.js";
-import { type ToolContext, type ToolDefinition, toolSignal } from "./context.js";
+import { type ToolContext, type ToolDefinition, toolLimit, toolSignal } from "./context.js";
 
 const params = z.strictObject({
   url: z
@@ -43,7 +43,8 @@ async function prepare(ctx: ToolContext, raw: unknown, signal: AbortSignal): Pro
     diff: "",
     bytes: 0,
     protected: true,
-    download: Object.freeze({ url: target.sourceUrl, maxBytes: DOWNLOAD_MAX_BYTES }),
+    // The session's Download size is bound into the approval and hashed with it (REQ-FUNC-8a1eea8b).
+    download: Object.freeze({ url: target.sourceUrl, maxBytes: toolLimit(ctx, "downloadMB") * 1024 * 1024 }),
   });
   return {
     request,
@@ -58,6 +59,12 @@ async function prepare(ctx: ToolContext, raw: unknown, signal: AbortSignal): Pro
           assertWritable: () => host.assertWritable?.(),
         },
         AbortSignal.any([approvalSignal, toolSignal(ctx, signal)]),
+        // The approved size stays bound; the time limit is the session's current value (REQ-FUNC-dfe84577).
+        {
+          maxBytes: request.download.maxBytes,
+          deadlineMs: toolLimit(ctx, "downloadTimeout") * 1000,
+          extractionMs: toolLimit(ctx, "extractionTimeout") * 1000,
+        },
       ),
     }),
   };

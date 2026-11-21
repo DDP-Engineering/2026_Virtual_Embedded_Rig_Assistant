@@ -5,17 +5,39 @@ import { createDocumentProcessor } from "./processor.js";
 import { createPassageBudget, type PassageBudget } from "./token-budget.js";
 import { createOfficeExtractor, createPdfExtractor } from "./worker-host.js";
 
+/**
+ * The application's document limits, read as each extraction or idle period starts: the Document extraction
+ * time limit (REQ-FUNC-aa35b135) and the Embedding worker idle time (REQ-FUNC-bfbd70b6).
+ */
+export interface DocumentLimits {
+  extractionMs?: number;
+  embeddingIdleMs?: number;
+}
+
 /** Share model-bound processing and embedding workers between native document hosts. */
-export function createModelDocumentServices(models: string, embeddingWorker: URL, extractionWorker: URL) {
+export function createModelDocumentServices(
+  models: string,
+  embeddingWorker: URL,
+  extractionWorker: URL,
+  limits: () => DocumentLimits = () => ({}),
+) {
   const services = new Map<EmbeddingModelId, { embeddings: EmbeddingHost; processor: DocumentProcessor }>();
-  const pdf = createPdfExtractor(extractionWorker);
-  const office = createOfficeExtractor(extractionWorker);
+  const extractionMs = () => limits().extractionMs ?? 120000;
+  const pdf = createPdfExtractor(extractionWorker, extractionMs);
+  const office = createOfficeExtractor(extractionWorker, extractionMs);
 
   function forModel(id: EmbeddingModelId) {
     let service = services.get(id);
     if (!service) {
       const model = readEmbeddingModel(models, id);
-      const embeddings = new EmbeddingHost(embeddingWorker, models, model);
+      const embeddings = new EmbeddingHost(
+        embeddingWorker,
+        models,
+        model,
+        undefined,
+        undefined,
+        () => limits().embeddingIdleMs ?? 60000,
+      );
       let budget: PassageBudget | undefined;
       const processor = createDocumentProcessor(pdf, embeddings, office, (text) => {
         budget ??= createPassageBudget(models, model);

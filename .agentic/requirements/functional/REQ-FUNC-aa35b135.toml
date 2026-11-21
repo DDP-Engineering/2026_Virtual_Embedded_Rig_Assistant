@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-aa35b135"
+
+title = "Extract documents within the resolved Document extraction time limit"
+
+status = "active"
+
+requirement = """
+When a PDF or Office document is extracted for indexing, or a downloaded PDF is parsed, VERA shall give the extraction the resolved Document extraction time limit, an integer from 30 to 1800 seconds with default 120 set for the application, as its base deadline (PDFs still scale with size up to the larger of the base and 15 minutes), each extraction reading the value current when it starts.
+"""
+
+verification = "Core test: an extractor whose base getter reads 50 ms then 5000 ms times out the first slow job and completes the next; the indexer message carries the application value; a download save passes the session's value to the PDF parser."
+
+affected_paths = ["05_Software/src/libraries/shared/src/advanced-settings.ts", "05_Software/src/libraries/core/src/knowledge/worker-host.ts", "05_Software/src/libraries/core/src/knowledge/document-services.ts", "05_Software/src/libraries/core/src/web/downloads.ts", "05_Software/src/libraries/core/src/tools/web-download.ts", "05_Software/src/apps/desktop/src/main/indexer-host.ts", "05_Software/src/apps/desktop/src/main/indexer-handler.ts", "05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/apps/desktop/src/main/indexer-process.ts", "05_Software/src/apps/desktop/src/main/document-processor.ts", "05_Software/src/apps/cli/src/run.ts", "05_Software/src/apps/cli/src/documents.ts", "05_Software/src/apps/cli/src/document-processor.ts"]
+
+linked_tests = ["05_Software/src/libraries/shared/src/advanced-settings.test.ts", "05_Software/src/libraries/core/src/knowledge/processor.test.ts", "05_Software/src/libraries/core/src/web/downloads.test.ts", "05_Software/src/apps/desktop/src/main/indexer-host.test.ts", "05_Software/src/apps/desktop/src/main/indexer-handler.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-21
+updated = 2026-11-21

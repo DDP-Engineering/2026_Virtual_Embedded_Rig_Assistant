@@ -6,6 +6,7 @@ import { _electron, expect, type Page } from "@playwright/test";
 import type { VeraBridge } from "@vera/shared";
 import { test } from "./fixtures.js";
 import { installNetworkGuard, outboundAttempts } from "./network-guard.js";
+import { saveSettings } from "./settings-navigation.js";
 
 const users = (page: Page) => page.locator('[data-message-kind="user"]');
 const marked = (page: Page) =>
@@ -52,6 +53,7 @@ async function localizedNavigation(page: Page, id: string, indices: number[]) {
     await page.locator('[data-i18n="nav.settings"]').click();
     await page.locator('[data-section="appearance"]').click();
     await page.locator("#language").selectOption(language);
+    await saveSettings(page);
     await page.locator('[data-section="shortcuts"]').click();
     for (const [command, name, binding] of [
       ["nextBookmark", next, "Ctrl+Alt+N"],

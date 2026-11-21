@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-UX-ec37f55b"
+
+title = "Keep sidebar activity current from activity events"
+
+status = "active"
+
+requirement = """
+When the session.activity app event arrives, the sidebar shall read the activity of every open workbench and the shown workbench's session list again, so indicators follow turns that start, finish, are stopped or wait for or receive an approval.
+"""
+
+verification = "Renderer test: after a turn starts in the browser mock, the next session.activity event shows the row icon and the heading control without waiting for the list poll; after Stop they disappear. Native e2e: a replay turn's start, completion, stop and approval wait each change the sidebar. Browser mock: session.activity is emitted on turn start and end and on approval request and decision."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/hooks/use-session-activity.ts", "05_Software/src/apps/desktop/src/renderer/components/workbench-navigation.tsx", "05_Software/src/apps/desktop/src/renderer/App.tsx", "05_Software/src/apps/desktop/src/renderer/mocks/mockApi.ts", "05_Software/src/apps/desktop/src/renderer/mocks/sessions.ts"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/workbench-activity.test.ts", "05_Software/src/apps/desktop/src/renderer/mocks/mockApi.test.ts", "05_Software/tests/e2e/background-sessions.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-21
+updated = 2026-11-21

@@ -153,8 +153,13 @@ export interface ProgramRunnerOptions {
   devicePath?: (path: string) => string;
   /** The lease registry; runs that claim resources are DENIED without one. */
   leases?: ResourceLeases | undefined;
+  /**
+   * The host's current Background programs per session, Run logs kept and Run log size, read at each start, hold
+   * and prune (REQ-FUNC-dd50ebed, REQ-FUNC-ddcd96b8, REQ-FUNC-1e7d6449); invalid values keep the previous ones.
+   */
+  limits?: () => Partial<Pick<RunnerSettings, "maxBackground" | "logsKept" | "logBytes">>;
 }
-type RunnerSettings = Required<Omit<ProgramRunnerOptions, "id" | "leases">> &
+type RunnerSettings = Required<Omit<ProgramRunnerOptions, "id" | "leases" | "limits">> &
   Pick<ProgramRunnerOptions, "leases">;
 
 /** Variables copied from the host environment (plugins architecture §3.2), plus every LC_* variable. */
@@ -945,8 +950,10 @@ export class ProgramRunner {
   private readonly active = new Map<string, ActiveRun>();
   private readonly settings: RunnerSettings;
   private readonly nextId: () => string;
+  private readonly limits: ProgramRunnerOptions["limits"];
 
   constructor(options: ProgramRunnerOptions) {
+    this.limits = options.limits;
     this.settings = {
       host: options.host,
       clock: options.clock,
@@ -963,6 +970,15 @@ export class ProgramRunner {
     this.nextId = options.id ?? monotonicFactory();
   }
 
+  /** Runs share the settings object, so a refreshed log size applies to every run's next write. */
+  private refreshLimits(): void {
+    const next = this.limits?.() ?? {};
+    for (const key of ["maxBackground", "logsKept", "logBytes"] as const) {
+      const value = next[key];
+      if (value !== undefined && Number.isSafeInteger(value) && value > 0) this.settings[key] = value;
+    }
+  }
+
   /**
    * Starts a run. Refuses with BUSY `{limit}` a background run beyond the session's limit, with BUSY
    * `{handle, port}` a run naming a serial port that another unfinished run names (foreground or background) or claims through a lease,
@@ -970,6 +986,7 @@ export class ProgramRunner {
    * and with DENIED a working directory outside the workbench; none of these starts a process.
    */
   async start(request: RunRequest): Promise<ProgramRun> {
+    this.refreshLimits();
     const run = new Run(this.nextId(), request, this, this.settings);
     let runs = [...this.active.values()];
     if (request.parent !== undefined) {
@@ -1072,6 +1089,7 @@ export class ProgramRunner {
    * a log and a run record like any run; `finish` ends it and releases the leases. Refusals as for `start`.
    */
   async hold(request: HoldRequest): Promise<RunHold> {
+    this.refreshLimits();
     const hold = new Hold(this.nextId(), request, this, this.settings);
     const runs = [...this.active.values()];
     this.checkBackground(hold.background, request.sessionId, runs);
@@ -1130,6 +1148,7 @@ export class ProgramRunner {
    * unfinished run. Best effort: a file another program holds or that cannot be removed never blocks a run.
    */
   async prune(folder: string): Promise<void> {
+    this.refreshLimits();
     const names = await readdir(folder);
     const ids = [...new Set(names.flatMap((name) => RUN_FILE.exec(name)?.[1] ?? []))].sort();
     for (const id of ids.slice(0, Math.max(0, ids.length - this.settings.logsKept)))

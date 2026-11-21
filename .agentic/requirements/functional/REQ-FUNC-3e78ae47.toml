@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-3e78ae47"
+
+title = "End a silent model stream after the resolved no-output timeout"
+
+status = "active"
+
+requirement = """
+When a model stream sends no output for the resolved Model no-output timeout, an integer from 30 to 3600 seconds with default 300 set per session or application, VERA shall end the request with the timeout error.
+"""
+
+verification = "With the application value 900 and then a session value of 45, the session service arms the stream timer with 900000 and then 45000 ms (sessions/compaction-advanced.test.ts). Inspection: the timer itself ends a stream silent for the armed time with the timeout error, as the timed-gateway tests prove."
+
+affected_paths = ["05_Software/src/libraries/shared/src/advanced-settings.ts", "05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/apps/cli/src/args.ts"]
+
+linked_tests = ["05_Software/src/libraries/shared/src/advanced-settings.test.ts", "05_Software/src/libraries/core/src/sessions/compaction-advanced.test.ts", "05_Software/src/apps/cli/src/run-args.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-20
+updated = 2026-11-20

@@ -1,6 +1,6 @@
 # Chat and sessions
 
-A session is one conversation with the agent inside a workbench. VERA saves every session in the workbench, so you can close the app and continue later. Several sessions can run at the same time.
+A session is one conversation with the agent inside a workbench. VERA saves every session in the workbench, so you can close the app and continue later. Several sessions can run at the same time. At most three turns run at once across all open workbenches, or the **Concurrent turns** set in [Advanced settings](advanced-settings.md); a message sent at the limit stays unsent in the message box until a turn ends.
 
 ## Start and manage sessions
 
@@ -8,7 +8,11 @@ A session is one conversation with the agent inside a workbench. VERA saves ever
 - The first message becomes the title. **Rename** sets your own title.
 - **Search sessions** finds sessions by title and message text.
 - Each session row shows the time of its last activity and has a menu with **Export Markdown**, **Export JSON**, **Rename**, **Move up**, **Move down**, **Archive** and **Delete**.
-- A session shows its state: **Idle**, **Running**, **Awaiting approval** or **Error**.
+- A session shows its state: **Idle**, **Running**, **Awaiting approval** or **Error**. A running session has a turning mark beside its time, and a session awaiting approval a shield.
+
+## Sessions in other workbenches
+
+Turns keep running when you open another workbench. A workbench row in the sidebar shows a mark with the number of its running and waiting sessions, also when the row is collapsed; a shield means a session awaits your approval. Select the mark (or focus it and press Enter) to list those sessions. Choose a session to open it in its workbench, where you can review its approval, or **Stop** to end only that turn. While turns run, **Workbenches** shows how many run and the **Concurrent turns** limit. At the limit, a new message stays in the message box: wait for a turn to finish or stop one in the sidebar, then send it again.
 
 ## Write a message
 
@@ -89,6 +93,18 @@ Saved message bookmarks stay in JSON exports; Markdown marks bookmarked user mes
 ## The right panel
 
 **Toggle right panel** shows tabs for the open session: **Instructions and skills** (workbench instructions and available skills), **Files**, **Changes**, **Artifacts** (text results the agent saved, with **Export** and **Reveal in folder**), **Plan** (the agent's task list) and **Runs** (program runs of plugins).
+
+## Plan feedback and review
+
+In **Plan**, choose **Add comment** for a whole step, or select text in one step before choosing it to quote that fragment. Keyboard users can select with Shift and the arrow keys in **Step text**, then choose **Use selected text**; **Entire step** clears the fragment. Empty steps accept whole-step comments only. Enter multiline feedback, for example “Check voltage before flashing”, and choose **Save draft**. Saving does not send a message or start the agent. Cancel or Escape discards unsaved edits and returns focus to Plan.
+
+Draft and submitted counts open the comments for that exact step. **Edit feedback** changes text only; **Delete feedback** removes a draft. Every plan replacement makes earlier anchors stale, even if some text is unchanged. **Needs re-anchor** keeps those drafts readable: choose **Re-anchor**, select a numbered current step, explicitly choose its whole text or a fragment, then **Save re-anchor**. Saved drafts survive closing or switching sessions.
+
+**Review plan** sends the whole current plan and all current, valid drafts as one request in the same chat. The agent can revise the structured plan or ask for clarification, but cannot execute steps, change project files, run programs or commands, or grant permissions during this review. Sending ordinary chat is disabled until it finishes; **Stop** ends only the review, not independent background programs. Read-only permission mode still permits plan revision; archived sessions and read-only workbenches permit viewing only.
+
+**Previous reviews** retains submitted comments, quoted context and outcomes, even after the plan is cleared. If submission fails, drafts stay available. **Retry review** confirms an unknown acknowledgement using the original request, without creating a second review. After a failed, stopped or context-limited accepted review, **Restore feedback** stages missing retry drafts without overwriting edited drafts or changing history. Chat **Retry** does the same. Re-anchor stale drafts and choose **Review plan** again explicitly; restoration never sends a request automatically. Existing conversation context limits still apply.
+
+Privacy or model changes refresh displayed content. An open editor keeps unsaved feedback but hides its old captured quote; explicitly select a current target again before saving a new comment or re-anchor.
 
 ## Bookmarks
 

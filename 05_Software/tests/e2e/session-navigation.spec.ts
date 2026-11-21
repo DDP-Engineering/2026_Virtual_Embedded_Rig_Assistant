@@ -1,6 +1,7 @@
 // REQ-TEST-ef975c5d REQ-UX-b2f6ffa8 REQ-UX-2bbfd052 REQ-UX-a3be2b11 REQ-UX-7b49305a REQ-UX-958b58c2 REQ-FUNC-1219a1e4 REQ-REL-47308c01 REQ-REL-c8ac2ecc
 import { expect, type Page } from "@playwright/test";
 import { test } from "./fixtures.js";
+import { saveSettings } from "./settings-navigation.js";
 
 type Geometry = {
   starts: number[];
@@ -287,6 +288,7 @@ test("markers map, preview and reach user messages while the rail keeps its cont
     await page.locator('[data-i18n="nav.settings"]').click();
     await page.locator('[data-section="appearance"]').click();
     await page.locator(`[data-theme-option="${theme}"]`).click();
+    await saveSettings(page);
     await page.locator('[data-action="leave-settings"]').click();
     await page.locator(`[data-session="${sessionId}"]`).click();
     await rail.focus();
@@ -546,6 +548,7 @@ test("500 messages stay reachable through groups, scrolling reuses measured anch
   await page.locator('[data-i18n="nav.settings"]').click();
   await page.locator('[data-section="appearance"]').click();
   await page.locator("#interface-font-size").selectOption("1.5");
+  await saveSettings(page);
   await page.locator('[data-action="leave-settings"]').click();
   await page.locator(`[data-session="${sessionId}"]`).click();
   await expect(lane(page)).toBeVisible();

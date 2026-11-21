@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-820e2701"
+
+title = "Skip files above the resolved grep file size"
+
+status = "active"
+
+requirement = """
+When grep meets a file larger than the resolved Grep file size, an integer from 1 to 50 MiB with default 5 set for the application, VERA shall skip that file.
+"""
+
+verification = "With 1, a 2 MiB file containing the pattern gives no match while a 0.5 MiB file with it does; with 3 the 2 MiB file matches."
+
+affected_paths = ["05_Software/src/libraries/shared/src/advanced-settings.ts", "05_Software/src/libraries/core/src/tools/grep.ts", "05_Software/src/libraries/core/src/tools/grep-worker.ts", "05_Software/src/libraries/core/src/ports.ts"]
+
+linked_tests = ["05_Software/src/libraries/shared/src/advanced-settings.test.ts", "05_Software/src/libraries/core/src/tools/grep.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-21
+updated = 2026-11-21

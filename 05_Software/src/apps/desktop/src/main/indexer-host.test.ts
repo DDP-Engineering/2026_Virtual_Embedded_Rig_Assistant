@@ -75,6 +75,35 @@ const input = (signal = new AbortController().signal) => ({
   assertWritable: () => {},
 });
 
+// REQ-FUNC-aa35b135 REQ-FUNC-bfbd70b6
+it("sends the host's current document limits with every indexer message", async () => {
+  let limits = { extractionMs: 900_000, embeddingIdleMs: 30_000 };
+  const endpoints: ReturnType<typeof endpoint>[] = [];
+  const host = new IndexerHost({
+    spawn: () => {
+      const next = endpoint();
+      endpoints.push(next);
+      return next;
+    },
+    modelId: () => "model@1",
+    limits: () => limits,
+  });
+  void host.processor(input()).catch(() => {});
+  await flush();
+  expect(endpoints.at(-1)?.sent.at(-1)).toMatchObject({ type: "process", limits });
+  limits = { extractionMs: 60_000, embeddingIdleMs: 10_000 };
+  void host.processor
+    .select?.({
+      root: "/bench",
+      docs: { include: ["docs/**"], exclude: [], gitignore: true, maxFiles: 10000 },
+      signal: new AbortController().signal,
+    })
+    .catch(() => {});
+  await flush();
+  expect(endpoints.at(-1)?.sent.at(-1)).toMatchObject({ type: "select", limits });
+  await host.close();
+});
+
 it("runs document processing, selection and inspection in the indexer and returns its results", async () => {
   const h = harness();
   expect(h.host.processor.modelId?.(defaultEmbeddingModelId)).toBe("model@1");

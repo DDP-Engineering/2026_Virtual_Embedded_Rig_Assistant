@@ -52,7 +52,7 @@ VERA nu pornește când fișierul său `settings.json` este deteriorat sau a fos
 
 ## Jurnale
 
-VERA scrie câte un fișier jurnal pe zi, `vera-YYYY-MM-DD.log`, în folderul `logs` din folderul său de date și le păstrează pe cele mai noi șapte. Cheile și alte secrete cunoscute sunt eliminate din jurnale. Ieșirea programelor pluginurilor nu se află în aceste jurnale, ci în `.vera/runs/` din workbench.
+VERA scrie câte un fișier jurnal pe zi, `vera-YYYY-MM-DD.log`, în folderul `logs` din folderul său de date și le păstrează pe cele mai noi șapte sau câte sunt setate la **Păstrarea logurilor** în [Setări avansate](advanced-settings.md). Cheile și alte secrete cunoscute sunt eliminate din jurnale. Ieșirea programelor pluginurilor nu se află în aceste jurnale, ci în `.vera/runs/` din workbench.
 
 ## Unde își păstrează VERA datele
 

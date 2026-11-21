@@ -64,6 +64,6 @@ Every command the agent runs goes through your permission mode (see [Permissions
 
 ## Updates and the catalog
 
-**Check for updates** looks for new plugin versions; an update shows **Update to …**. VERA also checks once a day unless updates are turned off in [Settings](settings.md). Under **Catalog settings** you choose the **Channel** (**Stable** or **Pre-release**) and an optional **Catalog URL**, for example your company's mirror. VERA uses a catalog only when its signature matches; otherwise it shows the plugins bundled with VERA.
+**Check for updates** looks for new plugin versions; an update shows **Update to …**. VERA also checks once a day, or at the **Plugin catalog check interval** in [Advanced settings](advanced-settings.md), unless updates are turned off in [Settings](settings.md). Under **Catalog settings** you choose the **Channel** (**Stable** or **Pre-release**) and an optional **Catalog URL**, for example your company's mirror. VERA uses a catalog only when its signature matches; otherwise it shows the plugins bundled with VERA.
 
 **Uninstall** and **Export zip** are under **More actions** on an installed card. Without network, see [Offline installation](offline-install.md).

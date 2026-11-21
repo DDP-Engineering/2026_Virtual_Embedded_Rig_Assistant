@@ -8,6 +8,16 @@ import {
   veraError,
 } from "@vera/shared";
 
+/** The update choices; `intervalHours` is the resolved Update check interval (6 when absent). */
+export interface UpdatePreference {
+  mode: UpdateMode;
+  channel: UpdateChannel;
+  intervalHours?: number;
+}
+const checkInterval = (preference: UpdatePreference | undefined) => {
+  const hours = preference?.intervalHours;
+  return (typeof hours === "number" && Number.isFinite(hours) && hours > 0 ? hours : 6) * 60 * 60 * 1000;
+};
 export interface UpdateBackend {
   check(channel: UpdateChannel): Promise<UpdateOffer | null>;
   download(progress: (percent: number) => void): Promise<void>;
@@ -28,13 +38,13 @@ export class Updates {
   private admitted = false;
   private timer: ReturnType<typeof setInterval> | undefined;
   private deferred: ReturnType<typeof setInterval> | undefined;
-  private preference: { mode: UpdateMode; channel: UpdateChannel } | undefined;
+  private preference: UpdatePreference | undefined;
   constructor(
     private readonly host: {
       distribution: UpdateSnapshot["distribution"];
       configured: boolean;
       backend: UpdateBackend;
-      preferences: () => { mode: UpdateMode; channel: UpdateChannel };
+      preferences: () => UpdatePreference;
       emit: (event: AppEvent) => void;
       beginShutdown: () => boolean;
       quit: () => void;
@@ -64,18 +74,18 @@ export class Updates {
     if (this.closed) return;
     const next = this.host.preferences();
     const previous = this.preference;
-    if (previous?.mode === next.mode && previous.channel === next.channel) return;
+    const sameChoice = previous?.mode === next.mode && previous.channel === next.channel;
+    if (sameChoice && checkInterval(previous) === checkInterval(next)) return;
     this.preference = { ...next };
     if (this.timer) clearInterval(this.timer);
     this.timer = undefined;
     if (next.mode !== "off" && this.host.configured) {
-      this.timer = setInterval(
-        () => {
-          void this.check().catch(() => {});
-        },
-        6 * 60 * 60 * 1000,
-      );
+      this.timer = setInterval(() => {
+        void this.check().catch(() => {});
+      }, checkInterval(next));
       this.timer.unref?.();
+      // Only the interval changed: the new wait starts now, with no extra check (REQ-FUNC-a16121c6).
+      if (sameChoice) return;
       if (!previous || previous.mode === "off" || previous.channel !== next.channel) {
         void this.check().catch(() => {});
       } else if (next.mode === "download" && this.state.phase === "available") {

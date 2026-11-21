@@ -1,14 +1,17 @@
 import {
   type BuiltinToolName,
   type CommandPrefixDisplay,
+  documentVolumeLimitFor,
   type EmbeddingModelId,
   embeddingModelIds,
   type WorkbenchConfig,
 } from "@vera/shared";
 import { type Dispatch, type ReactNode, type SetStateAction, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useSettingsSnapshot } from "../hooks/use-preferences.js";
 import { ModelSelect } from "./model-select.js";
 import { PermissionPicker } from "./permission-picker.js";
+import { WorkbenchAdvanced } from "./workbench-advanced.js";
 import { WorkbenchCommandPrefixes } from "./workbench-command-prefixes.js";
 import { WorkbenchDocuments } from "./workbench-documents.js";
 import { WorkbenchFolders } from "./workbench-folders.js";
@@ -28,6 +31,7 @@ export const configSections = [
   "tools",
   "plugins",
   "privacy",
+  "advanced",
 ] as const;
 export type ConfigSection = (typeof configSections)[number];
 
@@ -59,7 +63,10 @@ export function WorkbenchConfigForm({
   changeFolders,
   removedCommandPrefixes = [],
   removeCommandPrefix,
+  advanced = false,
 }: {
+  /** Shows the Advanced section (Show advanced settings is on; Edit workbench only). */
+  advanced?: boolean;
   label: string;
   config: WorkbenchConfig;
   setConfig: Dispatch<SetStateAction<WorkbenchConfig>>;
@@ -88,6 +95,9 @@ export function WorkbenchConfigForm({
   removeCommandPrefix?: (id: string) => void;
 }) {
   const { t } = useTranslation();
+  // The draft's Document volume warning over the application one (REQ-UX-d64e808a).
+  const appAdvanced = useSettingsSnapshot().data?.settings.advanced;
+  const volumeLimit = documentVolumeLimitFor({ workbench: config.advanced, app: appAdvanced });
   const embeddingModelLabels: Record<EmbeddingModelId, string> = {
     "Xenova/bge-small-en-v1.5": t("projects.embeddingBge"),
     "Xenova/multilingual-e5-small": t("projects.embeddingE5"),
@@ -103,6 +113,7 @@ export function WorkbenchConfigForm({
     embeddings: t("projects.indexing"),
     plugins: t("projects.plugins"),
     privacy: t("settings.data"),
+    advanced: t("settings.advanced"),
   };
   const [section, setSection] = useState<ConfigSection>(request?.section ?? "general");
   const content = useRef<HTMLDivElement>(null);
@@ -128,26 +139,31 @@ export function WorkbenchConfigForm({
   return (
     <div className="workbench-editor-layout">
       <nav aria-label={label}>
-        {configSections.map((key) => (
-          <button
-            key={key}
-            type="button"
-            aria-current={section === key ? "page" : undefined}
-            data-project-section={key}
-            disabled={locked && key !== "general"}
-            onClick={() => {
-              setSection(key);
-              if (content.current) content.current.scrollTop = 0;
-            }}
-          >
-            {labels[key]}
-          </button>
-        ))}
+        {configSections
+          .filter((key) => key !== "advanced" || advanced)
+          .map((key) => (
+            <button
+              key={key}
+              type="button"
+              aria-current={section === key ? "page" : undefined}
+              data-project-section={key}
+              disabled={locked && key !== "general"}
+              onClick={() => {
+                setSection(key);
+                if (content.current) content.current.scrollTop = 0;
+              }}
+            >
+              {labels[key]}
+            </button>
+          ))}
       </nav>
       <div ref={content} className="workbench-editor-content">
         {notices}
         <fieldset disabled={(readOnly && section !== "instructions" && section !== "plugins") || disabled}>
           {section === "interface" && <WorkbenchInterface config={config} setConfig={setConfig} />}
+          {section === "advanced" && advanced && (
+            <WorkbenchAdvanced config={config} setConfig={setConfig} disabled={disabled || readOnly} />
+          )}
           {section === "privacy" && (
             <WorkbenchPrivacy
               key={workbenchId ?? folder}
@@ -196,6 +212,7 @@ export function WorkbenchConfigForm({
               docs={config.docs}
               setDocs={(docs) => setConfig((current) => ({ ...current, docs }))}
               disabled={disabled || readOnly}
+              volumeLimit={volumeLimit}
             />
           )}
           {section === "agent" && (

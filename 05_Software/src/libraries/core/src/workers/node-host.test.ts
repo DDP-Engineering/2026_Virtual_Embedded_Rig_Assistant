@@ -89,6 +89,23 @@ it("isolates one task per worker and a busy worker does not prevent another task
   controller.abort();
   expect(await busy).toMatchObject({ reason: "aborted" });
 });
+// REQ-FUNC-5eacaf9f
+it("reads the Worker deadline as each task starts and keeps it for a running task", async () => {
+  bundle = workerFixture();
+  let deadline = 1000;
+  pool = new api.NodeWorkerPool(bundle.url, { deadlineMs: () => deadline, capacity: 1 });
+  const hostPool = pool;
+  let started = performance.now();
+  const first = hostPool.run(task(), new AbortController().signal);
+  // A change while the task runs applies to the next task only.
+  deadline = 2500;
+  expect(await first).toMatchObject({ reason: "timeout" });
+  expect(performance.now() - started).toBeLessThan(2000);
+  expect(hostPool.deadlineMs).toBe(2500);
+  started = performance.now();
+  expect(await hostPool.run(task(), new AbortController().signal)).toMatchObject({ reason: "timeout" });
+  expect(performance.now() - started).toBeGreaterThanOrEqual(2400);
+}, 15000);
 it("reports invalid regex errors and defaults to the production10 second deadline", async () => {
   const hostPool = host();
   expect(await hostPool.run(task("["), new AbortController().signal)).toMatchObject({

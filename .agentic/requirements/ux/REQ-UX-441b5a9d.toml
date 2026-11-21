@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-UX-441b5a9d"
+
+title = "Start paged lists at the resolved Rows per page"
+
+status = "active"
+
+requirement = """
+When a paged list is shown, VERA shall start it at the resolved Rows per page (10, 20 or 50, default 10, set for the application) unless the list sets its own size, and keep a page size the user picks in that list while the list stays shown.
+"""
+
+verification = "Renderer test: a 60-row list shows 10 rows by default and 20 after the application value 20; a size of 50 picked in the list stays when the application value changes; a list with its own initial size keeps it."
+
+affected_paths = ["05_Software/src/libraries/shared/src/advanced-settings.ts", "05_Software/src/apps/desktop/src/renderer/components/pager.tsx", "05_Software/src/apps/desktop/src/renderer/hooks/app-advanced.ts", "05_Software/src/apps/desktop/src/renderer/hooks/use-preferences.ts", "05_Software/src/apps/desktop/src/renderer/components/workbench-capabilities.tsx", "05_Software/src/apps/desktop/src/renderer/components/pager.test.ts", "05_Software/src/libraries/shared/src/advanced-settings.test.ts"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/pager.test.ts::starts at the resolved Rows per page, keeps a picked size and a list's own size", "05_Software/src/libraries/shared/src/advanced-settings.test.ts::offers Rows per page as a choice of 10, 20 or 50 and refuses any other value"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-21
+updated = 2026-11-21

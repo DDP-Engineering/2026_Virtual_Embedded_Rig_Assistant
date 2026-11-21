@@ -102,7 +102,8 @@ export class EmbeddingHost implements EmbeddingPort {
     private readonly deadlineMs = 120000,
     /** How long release waits for a busy worker before returning to its caller. */
     private readonly releaseWaitMs = 5000,
-    private readonly idleTimeoutMs = 60000,
+    /** A fixed idle time, or the host's Embedding worker idle time read as each idle period starts. */
+    private readonly idleTimeoutMs: number | (() => number) = 60000,
   ) {
     this.model = modelSchema.parse(model);
     if (!Number.isFinite(deadlineMs) || deadlineMs <= 0) throw Error("Invalid embedding deadline.");
@@ -116,6 +117,16 @@ export class EmbeddingHost implements EmbeddingPort {
     // Set the real parent process environment before any inference worker is created.
     process.env.ORT_DISABLE_TELEMETRY = "1";
     this.modelId = embeddingModelId(this.model);
+  }
+  /** The idle time of the period starting now (REQ-FUNC-bfbd70b6); an invalid host value keeps 60 s. */
+  private idleMs(): number {
+    let value: number;
+    try {
+      value = typeof this.idleTimeoutMs === "function" ? this.idleTimeoutMs() : this.idleTimeoutMs;
+    } catch {
+      return 60000;
+    }
+    return Number.isFinite(value) && value > 0 ? value : 60000;
   }
   private call(root: string, args: Record<string, unknown>, signal: AbortSignal): Promise<unknown> {
     signal.throwIfAborted();
@@ -219,7 +230,7 @@ export class EmbeddingHost implements EmbeddingPort {
       owned.idle = setTimeout(() => {
         this.roots.clear();
         this.retireWorker();
-      }, this.idleTimeoutMs).unref();
+      }, this.idleMs()).unref();
     });
     // Queued requests settle at their own deadline; active requests settle when aborted or answered.
     return new Promise((resolve, reject) => {

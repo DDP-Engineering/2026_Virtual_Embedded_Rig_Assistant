@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-52e97b95"
+
+title = "Refuse a new turn at the app-wide concurrent-turn limit"
+
+status = "active"
+
+requirement = """
+When a message would start a new top-level or delegated turn while the active turns across every open workbench equal or exceed the resolved Concurrent turns limit, VERA shall refuse it with the error TURN_LIMIT carrying the limit, before it records a user message or event or sends a provider request.
+"""
+
+verification = "Core test with two services sharing one admission of limit 3: three turns run, a fourth send in either service fails TURN_LIMIT with params.limit 3, its session gains no event or message row and the gateway sees no fourth request; after one turn ends the next send starts a turn."
+
+affected_paths = ["05_Software/src/libraries/core/src/sessions/admission.ts", "05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/libraries/shared/src/errors.ts", "05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/apps/desktop/src/main/sessions.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/sessions/turn-limit.test.ts", "05_Software/src/libraries/core/src/sessions/admission.test.ts", "05_Software/src/libraries/shared/src/turn-capacity-ipc.test.ts", "05_Software/src/apps/desktop/src/main/turn-limit.replay.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-21
+updated = 2026-11-21

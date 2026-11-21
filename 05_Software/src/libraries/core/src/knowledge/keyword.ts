@@ -21,7 +21,9 @@ const quote = (term: string) => `"${term.replaceAll('"', '""')}"`;
 export class KeywordSearch {
   constructor(private readonly db: Database.Database) {}
 
-  search(query: string, acceptsPath?: (path: string) => boolean): KeywordCandidate[] {
+  /** `limit` candidates per index; at least the 50 a ranking needs, more for a larger Docs panel list. */
+  search(query: string, acceptsPath?: (path: string) => boolean, limit = 50): KeywordCandidate[] {
+    const rowsPerTable = Number.isSafeInteger(limit) && limit > 50 ? limit : 50;
     const terms = [...new Set(query.match(/[\p{L}\p{N}_][\p{L}\p{N}\p{M}_]*/gu) ?? [])];
     if (!terms.length) return [];
     // A path filter is resolved to document ids first, so the match query keeps its LIMIT and
@@ -40,7 +42,7 @@ export class KeywordSearch {
               c.text,bm25(${table}) AS bm25 FROM ${table}
               JOIN chunks c ON c.id=${table}.rowid JOIN documents d ON d.id=c.doc_id
               WHERE ${table} MATCH ? ${docs ? "AND c.doc_id IN (SELECT value FROM json_each(?))" : ""}
-              ORDER BY bm25(${table}),c.id LIMIT 50`)
+              ORDER BY bm25(${table}),c.id LIMIT ${rowsPerTable}`)
             .all(tokens.map(quote).join(" OR "), ...(docs ? [docs] : [])) as Row[])
         : [];
     const words = select("chunks_fts", terms);

@@ -11,6 +11,63 @@ beforeAll(async () => {
   ({ createEventEmitter, createDeltaCoalescer } = await import("./events.js"));
 });
 afterEach(() => vi.useRealTimers());
+it("scrubs nested Plan feedback in snapshots and every feedback event without changing identities", () => {
+  const state = emptySessionState();
+  const comment = {
+    id: "on",
+    text: "sensitive",
+    target: {
+      revision: 1,
+      stepIndex: 0,
+      stepText: "sensitive",
+      range: { start: 0, end: 9, quote: "sensitive" },
+    },
+  };
+  const review = {
+    id: "error",
+    expectedPlanRevision: 1,
+    expectedFeedbackRevision: 1,
+    plan: [{ id: "sensitive", text: "sensitive", status: "pending" as const }],
+    comments: [comment],
+    turnId: "on",
+    messageId: "error",
+    submittedAt: "2026-11-19T00:00:00.000Z",
+    stopReason: null,
+  };
+  state.planComments = [{ ...comment, stale: true }];
+  state.planReviews = [review];
+  const redact = (text: string) => scrub(text, ["sensitive", "on", "error", "pending"]);
+  const output = sessionOutput.sanitizeSessionSnapshot(state, redact);
+  expect(output.planComments[0]).toMatchObject({
+    id: "on",
+    text: "[REDACTED]",
+    stale: true,
+    target: { ...comment.target, stepText: "[REDACTED]", range: { start: 0, end: 9, quote: "[REDACTED]" } },
+  });
+  expect(output.planReviews[0]).toMatchObject({
+    id: "error",
+    turnId: "on",
+    messageId: "error",
+    plan: [{ id: "[REDACTED]", text: "[REDACTED]", status: "pending" }],
+  });
+  expect(sessionStateSchema.parse(output)).toEqual(output);
+  for (const event of [
+    { type: "plan.comments.saved", comments: [comment] },
+    { type: "plan.review.submitted", review },
+    { type: "plan.review.restored", reviewId: "error", expectedFeedbackRevision: 2, comments: [comment] },
+  ]) {
+    const envelope = eventEnvelopeSchema.parse({
+      topic: "session",
+      id: "ses_00000000000000000000000001",
+      seq: 3,
+      event,
+    });
+    const sanitized = sessionOutput.sanitizeEvent(envelope, redact);
+    expect(JSON.stringify(sanitized)).not.toContain("sensitive");
+    expect(eventEnvelopeSchema.parse(sanitized)).toEqual(sanitized);
+  }
+  expect(state.planComments[0]?.text).toBe("sensitive");
+});
 it("transports ingest progress and redacts document paths while preserving status/hash/reason", () => {
   const send = vi.fn();
   const emit = createEventEmitter(

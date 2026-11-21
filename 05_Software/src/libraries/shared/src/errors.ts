@@ -9,6 +9,8 @@ export const veraErrorSchema = z.strictObject({
     "NOT_FOUND",
     "CONFLICT",
     "BUSY",
+    /** The Concurrent turns limit is reached; params.limit names it (REQ-FUNC-52e97b95). */
+    "TURN_LIMIT",
     "DENIED",
     "CONTEXT_LIMIT",
     "IMAGE_FORMAT",

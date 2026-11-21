@@ -25,6 +25,7 @@ import {
   pagedDocumentKinds,
   parseRef,
   type RecentWorkbenchState,
+  resolveAdvanced,
   SKILL_BYTES,
   type SkillSource,
   sectionDocumentKinds,
@@ -47,6 +48,7 @@ import type Database from "better-sqlite3";
 import { ulid } from "ulid";
 import { LineCounter, parseDocument, stringify } from "yaml";
 import { type DocumentIndexPhase, type DocumentProcessor, Ingester } from "../knowledge/ingest.js";
+import { selectionDocs } from "../knowledge/kinds.js";
 import { DocumentKnowledge } from "../knowledge/search.js";
 import { readGitignores } from "../knowledge/selection.js";
 import { DocumentViewer } from "../knowledge/viewer.js";
@@ -142,13 +144,15 @@ async function exclusive(path: string, text: string): Promise<void> {
     await handle.close();
   }
 }
+// A foreground switch may replace the WorkbenchService with a different runtime.
+let nextIndexLease = 0;
+
 export class WorkbenchService {
   private readonly folderSelections = new Map<string, string>();
   private state: WorkbenchSnapshot | undefined;
   private owned: { folder: string; token: string } | undefined;
   private database: WorkbenchDatabase | undefined;
   private ingest: Ingester | undefined;
-  private indexLease = 0;
   private indexRevision = 0;
   private documentIndexerStopped = false;
   private queue: Promise<void> = Promise.resolve();
@@ -374,6 +378,8 @@ export class WorkbenchService {
         this.emit(state.config.id, { type: "index.status", status });
       },
       ...(this.processDocument ? { process: this.processDocument } : {}),
+      pauseMs: () =>
+        resolveAdvanced("indexingPause", { app: this.host.settings.get().settings.advanced }).value,
     });
   }
   private async stopIngest(): Promise<void> {
@@ -512,12 +518,16 @@ export class WorkbenchService {
   }
   searchDocuments(id: string, query: string, signal: AbortSignal = new AbortController().signal) {
     return this.readDocuments(id, async (root, db) => {
+      const listed = resolveAdvanced("docsResults", {
+        workbench: this.state?.config.advanced,
+        app: this.host.settings.get().settings.advanced,
+      }).value;
       const viewer = new DocumentViewer(root, db);
       const knowledge = new DocumentKnowledge(root, db, undefined, undefined, () =>
         this.documentIndexPhase(id, db),
       );
       const { coverage, usage, results } = await knowledge.search(
-        { query, mode: "keyword", k: 20 },
+        { query, mode: "keyword" },
         signal,
         [],
         () => {
@@ -539,6 +549,7 @@ export class WorkbenchService {
             );
           };
         },
+        listed,
       );
       return {
         coverage,
@@ -632,8 +643,14 @@ export class WorkbenchService {
   ): Promise<DocumentPreview> {
     const folder = await this.folder(input);
     // Read synchronously, so a workbench closing meanwhile cannot interleave.
-    const approved = this.state?.folder === folder ? (this.ingest?.approved() ?? null) : null;
-    return previewDocuments(folder, docs, { signal: AbortSignal.timeout(PREVIEW_TIME_LIMIT_MS), approved });
+    const open = this.state?.folder === folder ? this.state : undefined;
+    const approved = open ? (this.ingest?.approved() ?? null) : null;
+    // The preview request carries only docs: the open workbench's saved text size applies (RULING-001).
+    const selection = selectionDocs({ docs, ...(open ? { advanced: open.config.advanced } : {}) });
+    return previewDocuments(folder, selection, {
+      signal: AbortSignal.timeout(PREVIEW_TIME_LIMIT_MS),
+      approved,
+    });
   }
   /** A picked folder as a path relative to a workbench folder; ignored folders are refused. */
   async relativeFolder(rootInput: string, input: string): Promise<string> {
@@ -708,6 +725,10 @@ export class WorkbenchService {
   open(input: string): Promise<WorkbenchSnapshot> {
     return this.run(async () => this.openFolder(await this.folder(input), input));
   }
+  /** The canonical folder that open uses for `input` (INVALID relative, NOT_FOUND missing); reads nothing inside it. */
+  locate(input: string): Promise<string> {
+    return this.folder(input);
+  }
   private async openFolder(folder: string, input: string): Promise<WorkbenchSnapshot> {
     await this.writes.drain();
     const config = await this.config(folder);
@@ -720,7 +741,7 @@ export class WorkbenchService {
     // An owned database opens in place and is checked before writes; a read-only one is copied first.
     const acquired = await this.acquire(folder, warnings);
     const newlyOwned = acquired.owned !== undefined && acquired.owned !== this.owned;
-    const next = { folder, config, warnings, readOnly: acquired.readOnly, indexLease: ++this.indexLease };
+    const next = { folder, config, warnings, readOnly: acquired.readOnly, indexLease: ++nextIndexLease };
     let database: WorkbenchDatabase | undefined;
     try {
       database =
@@ -837,12 +858,21 @@ export class WorkbenchService {
     if (lock?.token !== this.owned.token || lock.pid !== this.host.pid) throw veraError("DENIED");
     return state;
   }
+  private async refreshConfig(): Promise<WorkbenchConfig> {
+    const state = this.current();
+    const config = await this.config(state.folder);
+    if (config.id !== state.config.id) throw veraError("CONFLICT");
+    this.state = { ...state, config };
+    return config;
+  }
+  /** Read current validated configuration without skill/plugin warning discovery. Host-only. */
+  readConfig(): Promise<WorkbenchConfig> {
+    return this.run(() => this.refreshConfig());
+  }
   getConfig(): Promise<WorkbenchSnapshot> {
     return this.run(async () => {
+      const config = await this.refreshConfig();
       const state = this.current();
-      const config = await this.config(state.folder);
-      if (config.id !== state.config.id) throw veraError("CONFLICT");
-      this.state = { ...state, config };
       return { ...state, config, warnings: await this.warnings(config, state.folder) };
     });
   }
