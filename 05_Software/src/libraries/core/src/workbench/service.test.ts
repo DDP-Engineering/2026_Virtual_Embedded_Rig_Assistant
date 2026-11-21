@@ -7,11 +7,12 @@ import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import Database from "better-sqlite3";
-import { afterEach, beforeAll, expect, it } from "vitest";
+import { afterEach, beforeAll, expect, it, vi } from "vitest";
 import { electricalModelPlugin, electricalToolOffered } from "../electrical/tools.js";
 import { createDocumentProcessor } from "../knowledge/processor.js";
 import { PluginStore } from "../plugins/store.js";
 import { SettingsService } from "../settings/service.js";
+import { SkillCatalog } from "../skills/catalog.js";
 import { DocumentsRepository } from "../storage/repos/documents.js";
 import { acquireGuard } from "./guard.js";
 import { createIgnoreRules } from "./ignore.js";
@@ -66,6 +67,77 @@ async function harness() {
   };
   return { root, folder, host, events, settings, paths, service: new WorkbenchService(host) };
 }
+
+it("reads fresh validated config without catalog discovery while getConfig retains warnings", async () => {
+  const h = await harness();
+  try {
+    const { config } = await h.service.create(h.folder, "Initial");
+    const fresh = { ...config, name: "Fresh disk name", plugins: { enabled: ["ghost"] } };
+    await writeFile(join(h.folder, ".vera/workbench.yaml"), JSON.stringify(fresh));
+    const names = vi.spyOn(SkillCatalog.prototype, "names"),
+      ids = vi.spyOn(PluginStore.prototype, "ids"),
+      load = vi.spyOn(PluginStore.prototype, "load");
+    try {
+      const read = await h.service.readConfig();
+      expect(read).toEqual(fresh);
+      expect(h.service.getSnapshot().config).toEqual(fresh);
+      expect(names).not.toHaveBeenCalled();
+      expect(ids).not.toHaveBeenCalled();
+      expect(load).not.toHaveBeenCalled();
+      const ordinary = await h.service.getConfig();
+      expect(ordinary.config).toEqual(read);
+      expect(ordinary.warnings).toContainEqual({ code: "UNKNOWN_NAME", path: "plugins.enabled.ghost" });
+      expect(names).toHaveBeenCalledOnce();
+      expect(ids).toHaveBeenCalled();
+      expect(load).toHaveBeenCalled();
+    } finally {
+      for (const spy of [names, ids, load]) spy.mockRestore();
+    }
+  } finally {
+    await h.service.close();
+  }
+});
+
+it("rejects invalid and changed-identity current config without changing the snapshot", async () => {
+  const h = await harness();
+  await expect(h.service.readConfig()).rejects.toMatchObject({ code: "NOT_FOUND" });
+  try {
+    const snapshot = await h.service.create(h.folder, "Valid");
+    const path = join(h.folder, ".vera/workbench.yaml");
+    for (const [config, code] of [
+      [{ ...snapshot.config, format: 2 }, "INVALID"],
+      [{ ...snapshot.config, name: 123 }, "INVALID"],
+      [{ ...snapshot.config, id: "wb_01J00000000000000000000001" }, "CONFLICT"],
+    ] as const) {
+      await writeFile(path, JSON.stringify(config));
+      await expect(h.service.readConfig()).rejects.toMatchObject({ code });
+      expect(h.service.getSnapshot()).toEqual(snapshot);
+    }
+  } finally {
+    await h.service.close();
+  }
+  await expect(h.service.readConfig()).rejects.toMatchObject({ code: "NOT_FOUND" });
+});
+
+// The Windows development host lacks the privilege needed for file symlinks.
+it.skipIf(process.platform === "win32")(
+  "rejects file-symlink current config without changing the snapshot",
+  async () => {
+    const h = await harness();
+    try {
+      const snapshot = await h.service.create(h.folder, "Valid");
+      const path = join(h.folder, ".vera/workbench.yaml");
+      const outside = join(h.root, "outside.yaml");
+      await writeFile(outside, JSON.stringify(snapshot.config));
+      await rm(path);
+      await symlink(outside, path);
+      await expect(h.service.readConfig()).rejects.toMatchObject({ code: "DENIED" });
+      expect(h.service.getSnapshot()).toEqual(snapshot);
+    } finally {
+      await h.service.close();
+    }
+  },
+);
 
 it("validates both registered embedding model IDs in workbench YAML", () => {
   const yaml = "format: 1\nid: wb_01JB8Z6Q4M7N2K5R9T3V8X1Y0C\nname: Board\nembeddings:\n  model: ";

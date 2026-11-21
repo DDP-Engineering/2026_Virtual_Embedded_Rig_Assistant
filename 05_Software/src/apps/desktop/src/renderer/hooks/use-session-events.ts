@@ -5,6 +5,8 @@ import { api } from "../api/index.js";
 
 type View = {
   id: string;
+  workbenchId: string | undefined;
+  projection: number;
   state: SessionState;
   reasoning: Record<string, string>;
   updates: Record<string, string>;
@@ -35,14 +37,18 @@ function applyBatch(old: View, batch: readonly SessionEvent[]): View {
  * and applied once per animation frame (PERF-04): at most one transcript update per frame, whatever
  * the token rate. A durable event (turn.done, error, session.updated, tool and todo changes) applies
  * the queue and itself at once, so status changes are never a frame late and order is kept.
+ * Privacy/model changes invalidate the projection without waiting for a durable cursor change.
+ * `projection` also invalidates captured selections; an old in-flight answer cannot restore them.
  */
-export function useSessionEvents(id: string | undefined, changed: () => void) {
+export function useSessionEvents(id: string | undefined, changed: () => void, workbenchId?: string) {
   const [view, setView] = useState<View>();
   const [error, setError] = useState<unknown>();
   const [attempt, setAttempt] = useState(0);
   useEffect(() => {
     void attempt; // A retry deliberately starts a fresh snapshot and subscription.
     let cancelled = false;
+    let invalidated = false;
+    let modelRef: string | null = null;
     let off: (() => void) | undefined;
     let seq = 0;
     let generation = 0;
@@ -65,10 +71,17 @@ export function useSessionEvents(id: string | undefined, changed: () => void) {
       drop();
       if (batch.length) setView((old) => (old && old.id === id ? applyBatch(old, batch) : old));
     };
+    const invalidate = () => {
+      if (cancelled || invalidated) return;
+      invalidated = true;
+      drop();
+      setView(undefined);
+      setAttempt((n) => n + 1);
+    };
     setView(undefined);
     setError(undefined);
     async function reconcile() {
-      if (!id || cancelled || checking) return;
+      if (!id || cancelled || invalidated || checking) return;
       checking = true;
       const run = ++runs;
       const version = eventVersion;
@@ -81,12 +94,18 @@ export function useSessionEvents(id: string | undefined, changed: () => void) {
         // Checking the durable cursor avoids replaying a long transcript on every heartbeat.
         if (loaded) {
           const revision = await api.invoke("session.revision", { sessionId: id });
-          if (cancelled || eventVersion !== version || (revision.seq === seq && !needsSnapshot)) return;
+          if (
+            cancelled ||
+            invalidated ||
+            eventVersion !== version ||
+            (revision.seq === seq && !needsSnapshot)
+          )
+            return;
         }
         const { snapshot, seq: cursor } = await api.invoke("session.get", { sessionId: id });
         // A live event received during IPC is newer than this snapshot. Try again next heartbeat.
         // A slow call still applies after its timeout, unless a later check answered first.
-        if (cancelled || eventVersion !== version || run < applied) return;
+        if (cancelled || invalidated || eventVersion !== version || run < applied) return;
         applied = run;
         seq = cursor;
         needsSnapshot = false;
@@ -95,9 +114,19 @@ export function useSessionEvents(id: string | undefined, changed: () => void) {
         off?.();
         drop(); // The snapshot is newer than anything still queued from the previous subscription.
         setError(undefined);
-        setView({ id, state: snapshot, reasoning: {}, updates: {} });
+        modelRef = snapshot.modelRef;
+        setView({ id, workbenchId, projection: attempt, state: snapshot, reasoning: {}, updates: {} });
         off = api.subscribe("session", id, seq, (event: SessionEvent) => {
-          if (cancelled || current !== generation) return;
+          if (cancelled || invalidated || current !== generation) return;
+          if (
+            event.type === "session.updated" &&
+            event.modelRef !== undefined &&
+            event.modelRef !== modelRef
+          ) {
+            invalidate();
+            changed();
+            return;
+          }
           eventVersion++;
           // The preload can report a subscription failure as a non-durable error event.
           // Always reconcile errors, even if that extra event happens to balance a missed cursor.
@@ -120,13 +149,24 @@ export function useSessionEvents(id: string | undefined, changed: () => void) {
         changed();
       } catch (failure) {
         // Preserve an existing transcript on a transient IPC failure; the next check retries.
-        if (!cancelled && !loaded) setError(failure);
+        if (!cancelled && !invalidated && !loaded) setError(failure);
       } finally {
         window.clearTimeout(guard);
         // After a timeout the guard may belong to a later check.
         if (run === runs) checking = false;
       }
     }
+    const appOff = id
+      ? api.subscribe("app", (event) => {
+          if (event.type === "settings.changed" && event.masking !== false) invalidate();
+        })
+      : undefined;
+    const benchOff =
+      id && workbenchId
+        ? api.subscribe("workbench", workbenchId, (event) => {
+            if (event.type === "config.changed") invalidate();
+          })
+        : undefined;
     const check = () => void reconcile();
     check();
     const timer = id ? window.setInterval(check, 2000) : undefined;
@@ -137,10 +177,20 @@ export function useSessionEvents(id: string | undefined, changed: () => void) {
       window.clearTimeout(release);
       window.removeEventListener("focus", check);
       off?.();
+      appOff?.();
+      benchOff?.();
       drop();
     };
-  }, [id, changed, attempt]);
+  }, [id, workbenchId, changed, attempt]);
   // Stable, so a shared session view (SessionViewProvider) only changes when the data does.
   const retry = useCallback(() => setAttempt((n) => n + 1), []);
-  return { view: view?.id === id ? view : undefined, error, retry };
+  return {
+    view:
+      view && view.id === id && view.workbenchId === workbenchId && view.projection === attempt
+        ? view
+        : undefined,
+    error,
+    retry,
+    projection: attempt,
+  };
 }

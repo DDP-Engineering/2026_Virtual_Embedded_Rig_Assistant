@@ -7,7 +7,7 @@ import {
   type WorkbenchSnapshot,
 } from "@vera/shared";
 import type { InvokeSender } from "./ipc-router.js";
-import type { SessionsHost } from "./sessions.js";
+import type { RunPreparation, SessionsHost } from "./sessions.js";
 
 type Database = ReturnType<WorkbenchService["getDatabase"]>;
 type SubscriptionResult = Awaited<ReturnType<SessionsHost["subscription"]>>;
@@ -129,12 +129,12 @@ export class SessionRouter<R extends RoutedRuntime> {
   run<T>(
     route: SessionRoute<R>,
     operation: (service: SessionService, owner: WorkbenchSnapshot) => T | Promise<T>,
-    preparePrograms = true,
+    preparation: RunPreparation = {},
   ): Promise<T> {
     let owner = route.snapshot;
     return route.runtime.sessions.run(
       (service) => operation(service, owner),
-      preparePrograms,
+      preparation,
       () => {
         owner = this.verify(route);
       },
@@ -144,18 +144,18 @@ export class SessionRouter<R extends RoutedRuntime> {
   async inSession<T>(
     sessionId: string,
     operation: (service: SessionService, owner: WorkbenchSnapshot) => T | Promise<T>,
-    preparePrograms = true,
+    preparation: RunPreparation = {},
     workbenchId?: string,
   ): Promise<T> {
-    return this.run(this.session(sessionId, workbenchId), operation, preparePrograms);
+    return this.run(this.session(sessionId, workbenchId), operation, preparation);
   }
   /** Routes by workbench, then runs; see workbench() for the refusals. */
   async inWorkbench<T>(
     workbenchId: string | undefined,
     operation: (service: SessionService, owner: WorkbenchSnapshot) => T | Promise<T>,
-    preparePrograms = true,
+    preparation: RunPreparation = {},
   ): Promise<T> {
-    return this.run(this.workbench(workbenchId), operation, preparePrograms);
+    return this.run(this.workbench(workbenchId), operation, preparation);
   }
   /**
    * Session subscription control. A subscription opens in the runtime that holds its session and stays

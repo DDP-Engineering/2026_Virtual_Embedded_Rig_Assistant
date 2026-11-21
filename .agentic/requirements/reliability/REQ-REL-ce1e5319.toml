@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-REL-ce1e5319"
+
+title = "Reject malformed plan comment targets"
+
+status = "active"
+
+requirement = "If a plan comment target has a malformed occurrence or range, crosses a step boundary or quotes text inconsistent with its supplied revision, VERA shall reject the mutation with INVALID without changing persisted feedback or the plan."
+
+verification = "Invoke validated comment mutations with negative/overflow offsets, empty or cross-step ranges, an out-of-range occurrence, forged quotes and a split surrogate pair; compare INVALID plus unchanged rows/events against valid boundary whole-step and Unicode fragment controls."
+
+affected_paths = ["05_Software/src/libraries/shared/src/plan-review.ts", "05_Software/src/libraries/shared/src/ipc.ts", "05_Software/src/libraries/core/src/sessions/plan-review.ts", "05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/apps/desktop/src/main/plan-review.ts"]
+
+linked_tests = ["05_Software/src/libraries/shared/src/plan-review.test.ts", "05_Software/src/libraries/core/src/sessions/plan-review.test.ts", "05_Software/src/apps/desktop/src/main/plan-review.test.ts", "05_Software/src/apps/desktop/src/preload/bridge.test.ts"]
+
+
+spec = "specs/REQ-DATA-fa8543aa.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-19
+updated = 2026-11-19

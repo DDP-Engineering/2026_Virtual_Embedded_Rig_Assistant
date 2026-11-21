@@ -1,6 +1,13 @@
 version: Unreleased
 date: null
 entries:
+  - category: new
+    topic: { en: Plan, ro: Plan, de: Plan, fr: Plan }
+    text:
+      en: Comment on steps or text, then request a plan-only revision; failed reviews keep feedback.
+      ro: Comentează pași sau fragmente și cere revizuirea fără execuție; feedbackul se păstrează.
+      de: Schritte oder Text kommentieren; nur den Plan prüfen, ohne Ausführung; Feedback bleibt.
+      fr: Commentez étapes ou texte, puis révisez le plan sans l’exécuter ; les commentaires restent.
   - category: improved
     topic: { en: Chat, ro: Chat, de: Chat, fr: Chat }
     text:
@@ -81,10 +88,10 @@ entries:
   - category: new
     topic: { en: Files, ro: Fișiere, de: Dateien, fr: Fichiers }
     text:
-      en: Rendered, Text or Hex per extension. Zoom to 400%. In Hex, jump, find and copy bytes or text.
-      ro: Randat, Text sau Hex pe extensie. Zoom 400%. În Hex, sari, caută și copiază octeți sau text.
-      de: Gerendert, Text, Hex je Endung. Zoom bis 400 %. In Hex springen, Text und Bytes suchen und kopieren.
-      fr: Rendu, Texte, Hex par extension. Zoom 400 %. En Hex, sauts, recherche et copie de texte ou d’octets.
+      en: Rendered, Text and Hex views; zoom to 400%; byte search/copy and extension defaults.
+      ro: Moduri Randat, Text și Hex; zoom la 400%; căutare/copiere octeți și mod pe extensie.
+      de: Gerendert, Text, Hex; Zoom bis 400 %; Bytes suchen/kopieren; Vorgabe je Dateityp.
+      fr: Vues Rendu, Texte et Hex ; zoom à 400 %, recherche/copie d’octets et choix par extension.
   - category: new
     topic: { en: Files, ro: Fișiere, de: Dateien, fr: Fichiers }
     text:
@@ -109,17 +116,10 @@ entries:
   - category: fixed
     topic: { en: Privacy, ro: Confidențialitate, de: Datenschutz, fr: Confidentialité }
     text:
-      en: Agent and export masking now follow their own app and workbench choices.
-      ro: Mascarea agentului și a exporturilor respectă alegerile aplicației și ale workbench-ului.
-      de: Agenten- und Exportmaskierung folgen nun ihren eigenen App- und Workbench-Einstellungen.
-      fr: Le masquage de l’agent et des exports suit leurs choix propres dans l’application et le banc.
-  - category: fixed
-    topic: { en: Files, ro: Fișiere, de: Dateien, fr: Fichiers }
-    text:
-      en: Display masking keeps secret-named files visible and opens their original contents.
-      ro: Mascarea afișării păstrează fișierele cu nume secrete vizibile și le deschide corect.
-      de: Die Anzeigemaskierung lässt Dateien mit geheimen Namen sichtbar und öffnet sie korrekt.
-      fr: Le masquage garde visibles les fichiers aux noms secrets et ouvre leur contenu correct.
+      en: Masking follows each area's choices; secret-named files stay visible and open correctly.
+      ro: Mascarea respectă alegerile fiecărei zone; fișierele cu nume secrete rămân vizibile și se deschid.
+      de: Maskierung folgt der Wahl je Bereich; Dateien mit geheimen Namen bleiben sichtbar und öffnen sich.
+      fr: Le masquage suit chaque zone ; les fichiers aux noms secrets restent visibles et s’ouvrent bien.
   - category: fixed
     topic: { en: Commands, ro: Comenzi, de: Befehle, fr: Commandes }
     text:
@@ -130,10 +130,10 @@ entries:
   - category: new
     topic: { en: Terminal, ro: Terminal, de: Terminal, fr: Terminal }
     text:
-      en: Use interactive terminal tabs; allow agent reads separately for each terminal.
-      ro: Folosește terminale interactive; permite citirea de către agent separat pentru fiecare.
-      de: Interaktive Terminal-Tabs nutzen; Agentenlesezugriff für jedes Terminal separat erlauben.
-      fr: Utilisez des terminaux interactifs ; autorisez la lecture par l’agent pour chacun.
+      en: Interactive terminal tabs with per-tab agent reads; run commands in Cmd, Git Bash or any shell.
+      ro: Terminale interactive cu citire de agent per tab; rulează comenzi în Cmd, Git Bash sau orice shell.
+      de: Interaktive Terminal-Tabs mit Agentenlesen je Tab; Befehle in Cmd, Git Bash oder jeder Shell.
+      fr: Terminaux interactifs, lecture agent par onglet ; commandes sous Cmd, Git Bash ou tout shell.
   - category: new
     topic: { en: Workbench, ro: Workbench, de: Workbench, fr: Banc de travail }
     text:
@@ -183,13 +183,6 @@ entries:
       ro: "Confirmă Bypass: programe și intrări externe; ieșirea oprește rulările. Datele VERA rămân blocate."
       de: "Bypass bestätigen: externe Tools und Eingaben; Ende stoppt Läufe. VERA-Daten bleiben gesperrt."
       fr: "Confirmez le contournement : accès externe ; quitter arrête les tâches. Données VERA bloquées."
-  - category: new
-    topic: { en: Commands, ro: Comenzi, de: Befehle, fr: Commandes }
-    text:
-      en: Run and monitor commands; choose an installed shell, including Cmd and Git Bash, or a custom path.
-      ro: Rulează și urmărește comenzi; alege un shell instalat, inclusiv Cmd și Git Bash, sau o cale proprie.
-      de: Befehle ausführen und verfolgen; installierte Shell wie Cmd oder Git Bash oder eigenen Pfad wählen.
-      fr: Exécutez et suivez les commandes ; choisissez Cmd, Git Bash, un shell installé ou un chemin.
   - category: improved
     topic: { en: Permissions, ro: Permisiuni, de: Berechtigungen, fr: Autorisations }
     text:

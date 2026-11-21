@@ -8,6 +8,7 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ### Added
 
+- Add durable Plan feedback, revision-only review requests, safe retry restoration and live session privacy refresh.
 - Sessions keep running in background workbenches, within Concurrent turns; the sidebar shows, opens and stops them.
 - Verbose chat shows the send date and time beneath user messages, alongside token usage.
 - Chat replies and code blocks offer exact copying; explicit Bash and PowerShell blocks run in compatible terminals.
@@ -114,6 +115,7 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ### Fixed
 
+- Keep saved Plan feedback live-masked, require stale-fragment recapture and skip discovery during review preparation.
 - Chat Run skips terminals after startup timeout until their verified prompt arrives without intervening input.
 - Chat Run skips ineligible terminals and disables invalid command blocks before creating a terminal.
 - Chat Run requires a verified empty shell prompt, preserves user input, and restores focus when selection is cancelled.

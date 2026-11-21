@@ -9,7 +9,7 @@ import { useTurnCapacity } from "../../hooks/use-turn-capacity.js";
 import { globalShortcutBlocked, ShortcutContext, shortcutCommand } from "../../lib/shortcuts.js";
 import { CHAT, useDocumentTabs } from "../documents/viewer-context.js";
 import { ErrorMessage } from "../error-message.js";
-import { Composer } from "./composer.js";
+import { Composer, type ComposerState } from "./composer.js";
 import { DelegationLinks } from "./delegation-links.js";
 import { SessionInspector } from "./session-inspector.js";
 import { Transcript } from "./transcript.js";
@@ -50,7 +50,7 @@ export function SessionWorkspace({
 }) {
   const { t } = useTranslation();
   const bindings = useContext(ShortcutContext);
-  const { view, error, retry } = useSessionView(id, changed);
+  const { view, error, retry } = useSessionView(id, changed, workbenchId);
   const [failure, setFailure] = useState<unknown>();
   const turns = useTurnCapacity();
   // A send refused at the turn limit shows the limit until capacity frees, then that a turn can start.
@@ -59,6 +59,21 @@ export function SessionWorkspace({
     !!turns.capacity &&
     turns.capacity.active < turns.capacity.limit;
   const [pending, setPending] = useState(false);
+  const [feedbackRestored, setFeedbackRestored] = useState(false);
+  const restoring = useRef(false);
+  const scopeGeneration = useRef(0);
+  useEffect(() => {
+    void id;
+    void workbenchId; // Also invalidate coincident session IDs in a replacement workbench.
+    scopeGeneration.current++;
+    restoring.current = false;
+    setPending(false);
+    setFailure(undefined);
+    setFeedbackRestored(false);
+    return () => {
+      scopeGeneration.current++;
+    };
+  }, [id, workbenchId]);
   const [search, setSearch] = useState("");
   const [searching, setSearching] = useState(false);
   const [inspector, setInspector] = useState(false);
@@ -66,7 +81,26 @@ export function SessionWorkspace({
   const workspace = useRef<HTMLElement>(null);
   const heading = useRef<HTMLHeadingElement>(null);
   const lastComposerFocus = useRef(0);
-  const composerReady = !!view && !readOnly && !pending;
+  const composerView = useRef<
+    { id: string; workbenchId: string; state: ComposerState; reviewing: boolean } | undefined
+  >(undefined);
+  if (view && id) {
+    const { mode, modelRef, status, activeTurnId, reasoning } = view.state;
+    // Retain control metadata, never disclosed history, while a privacy refresh hides the view.
+    composerView.current = {
+      id,
+      workbenchId,
+      state: { mode, modelRef, status, activeTurnId, reasoning },
+      reviewing: view.state.planReviews.some((review) => review.turnId === activeTurnId),
+    };
+  }
+  const controls =
+    composerView.current?.id === id && composerView.current?.workbenchId === workbenchId
+      ? composerView.current
+      : undefined;
+  const activeReview = controls?.reviewing ?? false;
+  const activeTurnId = controls?.state.activeTurnId;
+  const composerReady = !!view && !readOnly && !pending && !activeReview;
   // Behind a document tab (TASK-79f6ffd3) the conversation is hidden: a composer focus request
   // (Attach as context) shows the Chat tab first; window shortcuts wait until it is shown.
   const tabs = useDocumentTabs();
@@ -114,9 +148,12 @@ export function SessionWorkspace({
   async function send(text: string, images?: string[]) {
     if (
       !id ||
+      !view ||
       (!text.trim() && !images?.length) ||
       pending ||
+      restoring.current ||
       readOnly ||
+      activeReview ||
       view?.state.status === "awaiting_approval"
     )
       return false;
@@ -135,6 +172,41 @@ export function SessionWorkspace({
       return false;
     } finally {
       setPending(false);
+    }
+  }
+  async function retryRequest() {
+    if (!id || !view || pending || restoring.current || readOnly || archived || activeReview) return;
+    const last = view.state.items.findLast((item) => item.kind === "user");
+    if (last?.kind !== "user") return;
+    if (!last.reviewId) {
+      void send(last.text, last.images);
+      return;
+    }
+    const generation = scopeGeneration.current;
+    restoring.current = true;
+    setPending(true);
+    setFailure(undefined);
+    setFeedbackRestored(false);
+    try {
+      await api.invoke("session.plan.review.restore", {
+        workbenchId,
+        sessionId: id,
+        expectedFeedbackRevision: view.state.planFeedbackRevision,
+        reviewId: last.reviewId,
+      });
+      if (generation !== scopeGeneration.current) return;
+      retry();
+      changed();
+      setFeedbackRestored(true);
+    } catch (error) {
+      if (generation !== scopeGeneration.current) return;
+      setFailure(error);
+      if (veraErrorSchema.safeParse(error).data?.code === "CONFLICT") retry();
+    } finally {
+      if (generation === scopeGeneration.current) {
+        restoring.current = false;
+        setPending(false);
+      }
     }
   }
   async function stop() {
@@ -176,7 +248,7 @@ export function SessionWorkspace({
         !event.metaKey &&
         !readOnly &&
         !pending &&
-        view?.state.activeTurnId &&
+        activeTurnId &&
         !stopDialog.current?.open
       ) {
         event.preventDefault();
@@ -187,7 +259,7 @@ export function SessionWorkspace({
     }
     window.addEventListener("keydown", key);
     return () => window.removeEventListener("keydown", key);
-  }, [bindings, view?.state.activeTurnId, readOnly, pending, shown]);
+  }, [bindings, activeTurnId, readOnly, pending, shown]);
   useEffect(() => {
     if (searching) searchInput.current?.focus();
   }, [searching]);
@@ -257,10 +329,7 @@ export function SessionWorkspace({
           state={view.state}
           reasoning={view.reasoning}
           updates={view.updates}
-          retry={() => {
-            const last = [...view.state.items].reverse().find((i) => i.kind === "user");
-            if (last?.kind === "user") void send(last.text, last.images);
-          }}
+          retry={() => void retryRequest()}
           search={search}
           sessionId={id}
           disabled={readOnly || archived}
@@ -272,13 +341,17 @@ export function SessionWorkspace({
           {t("chat.turnSlotFree")}
         </p>
       )}
-      {view && (
+      {feedbackRestored && <p role="status">{t("plan.feedbackRestored")}</p>}
+      {controls && (
         <Composer
           sessionId={id}
           workbenchId={workbenchId}
-          state={view.state}
-          inspectorControls={<ContextIndicator state={view.state} open={() => setInspector(true)} />}
+          state={controls.state}
+          inspectorControls={
+            view ? <ContextIndicator state={view.state} open={() => setInspector(true)} /> : undefined
+          }
           disabled={readOnly || pending}
+          sendDisabled={!view || activeReview}
           archived={archived}
           permissionLocked={!!delegation}
           send={send}

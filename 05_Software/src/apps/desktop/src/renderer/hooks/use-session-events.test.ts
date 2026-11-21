@@ -15,6 +15,8 @@ let renders = 0;
 let on: (event: SessionEvent) => void;
 const changed = vi.fn();
 const off = vi.fn();
+const sessionSubscriptions = () =>
+  vi.mocked(api.subscribe).mock.calls.filter(([topic]) => topic === "session");
 const initial = [
   { type: "turn.started", turnId: "turn" },
   { type: "tool.started", callId: "download", name: "web_download", args: {} },
@@ -46,6 +48,7 @@ beforeEach(() => {
     return snapshot() as never;
   });
   vi.mocked(api.subscribe).mockImplementation((...args: unknown[]) => {
+    if (args[0] !== "session") return () => {};
     on = args[3] as typeof on;
     return off;
   });
@@ -90,7 +93,7 @@ it("keeps live text when the cursor has not changed and avoids full snapshot pol
   await act(async () => on({ type: "message.delta", messageId: "answer", text: "Live text" }));
   await tick();
   expect(latest.view?.state.items.at(-1)).toMatchObject({ text: "Live text", streaming: true });
-  expect(api.subscribe).toHaveBeenCalledTimes(1);
+  expect(sessionSubscriptions()).toHaveLength(1);
   expect(vi.mocked(api.invoke).mock.calls.filter(([channel]) => channel === "session.get")).toHaveLength(1);
 });
 it("does not apply a stale snapshot over newer live events", async () => {
@@ -111,7 +114,7 @@ it("does not apply a stale snapshot over newer live events", async () => {
     resolve(stale);
   });
   expect(latest.view?.state.status).toBe("idle");
-  expect(api.subscribe).toHaveBeenCalledTimes(1);
+  expect(sessionSubscriptions()).toHaveLength(1);
 });
 it("retries transient failures, restores approvals and releases subscriptions on session change", async () => {
   await mount();
@@ -154,7 +157,7 @@ it("reconnects after a transport error even when its synthetic event balances a 
   await tick();
   expect(latest.view?.state.activeTurnId).toBeNull();
   expect(latest.view?.state.status).toBe("idle");
-  expect(api.subscribe).toHaveBeenCalledTimes(2);
+  expect(sessionSubscriptions()).toHaveLength(2);
 });
 it("applies the live events of one frame in a single update, in arrival order", async () => {
   await mount();

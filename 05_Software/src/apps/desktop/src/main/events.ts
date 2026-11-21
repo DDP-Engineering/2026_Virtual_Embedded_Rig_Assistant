@@ -5,11 +5,14 @@ import {
   type DocumentGuard,
   type EventEnvelope,
   eventEnvelopeSchema,
+  mapPlanCommentContent,
+  mapPlanFeedbackEventContent,
+  mapPlanReviewContent,
   modelReferenceSchema,
   type ProgramApproval,
+  projectPlan,
   type SessionState,
   type SessionSummary,
-  type TodoItem,
   type WorkbenchConfig,
   type WorkbenchWarning,
 } from "@vera/shared";
@@ -66,13 +69,6 @@ export function sanitizeSessionSummary(
     modelRef: scrubModel(summary.modelRef, scrub),
   };
 }
-function sanitizeTodos(items: TodoItem[], scrub: (text: string) => string): TodoItem[] {
-  return items.map((item) => ({
-    ...item,
-    text: scrub(item.text).slice(0, 200),
-    ...(item.id === undefined ? {} : { id: scrub(item.id) }),
-  }));
-}
 type SessionItem = SessionState["items"][number];
 function sanitizeItem(
   item: SessionItem,
@@ -117,7 +113,9 @@ export function sanitizeSessionSnapshot(
     })),
     changes: snapshot.changes.map((c) => ({ ...c, path: scrub(c.path) })),
     artifacts: snapshot.artifacts.map((a) => ({ ...a, name: scrub(a.name) })),
-    todos: sanitizeTodos(snapshot.todos, scrub),
+    todos: projectPlan(snapshot.todos, scrub),
+    planComments: snapshot.planComments.map((comment) => mapPlanCommentContent(comment, scrub)),
+    planReviews: snapshot.planReviews.map((review) => mapPlanReviewContent(review, scrub)),
   };
 }
 
@@ -232,8 +230,8 @@ export function sanitizeEvent(
         "citations",
         event.citations.map((c) => ({ ...c, ref: scrub(c.ref) })),
       );
-    if (event.type === "todo.updated") Reflect.set(result, "items", sanitizeTodos(event.items, scrub));
-    return { ...envelope, event: result };
+    if (event.type === "todo.updated") Reflect.set(result, "items", projectPlan(event.items, scrub));
+    return { ...envelope, event: mapPlanFeedbackEventContent(result, scrub) };
   }
   if (envelope.topic === "app") {
     const event = envelope.event;

@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-UX-e86663cb"
+
+title = "Flag stale plan comment targets"
+
+status = "active"
+
+requirement = "If a plan replacement changes a draft comment's target or leaves its original occurrence unprovable, the Plan tab shall flag that draft as stale with its original quoted context and explicit re-anchor or remove actions instead of silently retargeting it."
+
+verification = "Replace a plan by changing/removing commented text and by reordering indistinguishable duplicate rows; assert stale labels and original quotes remain reachable with re-anchor/remove actions, including a replacement with no remaining steps and replay after reopen."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/session/plan-feedback-history.tsx", "05_Software/src/apps/desktop/src/renderer/components/session/plan-target.ts", "05_Software/src/apps/desktop/src/renderer/components/session/plan-feedback.tsx", "05_Software/src/apps/desktop/src/renderer/components/session/plan-tab.tsx", "05_Software/src/apps/desktop/src/renderer/hooks/use-session-events.ts", "05_Software/src/libraries/shared/src/session-state.ts", "05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/libraries/core/src/sessions/plan-review.ts"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/session/plan-feedback.test.ts", "05_Software/tests/e2e/plan-review.spec.ts", "05_Software/src/libraries/shared/src/plan-review.test.ts", "05_Software/src/libraries/core/src/sessions/plan-review.test.ts"]
+
+
+spec = "specs/REQ-DATA-fa8543aa.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-19
+updated = 2026-11-19

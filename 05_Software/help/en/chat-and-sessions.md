@@ -80,6 +80,18 @@ Saved message bookmarks stay in JSON exports; Markdown marks bookmarked user mes
 
 **Toggle right panel** shows tabs for the open session: **Instructions and skills** (workbench instructions and available skills), **Files**, **Changes**, **Artifacts** (text results the agent saved, with **Export** and **Reveal in folder**), **Plan** (the agent's task list) and **Runs** (program runs of plugins).
 
+## Plan feedback and review
+
+In **Plan**, choose **Add comment** for a whole step, or select text in one step before choosing it to quote that fragment. Keyboard users can select with Shift and the arrow keys in **Step text**, then choose **Use selected text**; **Entire step** clears the fragment. Empty steps accept whole-step comments only. Enter multiline feedback, for example “Check voltage before flashing”, and choose **Save draft**. Saving does not send a message or start the agent. Cancel or Escape discards unsaved edits and returns focus to Plan.
+
+Draft and submitted counts open the comments for that exact step. **Edit feedback** changes text only; **Delete feedback** removes a draft. Every plan replacement makes earlier anchors stale, even if some text is unchanged. **Needs re-anchor** keeps those drafts readable: choose **Re-anchor**, select a numbered current step, explicitly choose its whole text or a fragment, then **Save re-anchor**. Saved drafts survive closing or switching sessions.
+
+**Review plan** sends the whole current plan and all current, valid drafts as one request in the same chat. The agent can revise the structured plan or ask for clarification, but cannot execute steps, change project files, run programs or commands, or grant permissions during this review. Sending ordinary chat is disabled until it finishes; **Stop** ends only the review, not independent background programs. Read-only permission mode still permits plan revision; archived sessions and read-only workbenches permit viewing only.
+
+**Previous reviews** retains submitted comments, quoted context and outcomes, even after the plan is cleared. If submission fails, drafts stay available. **Retry review** confirms an unknown acknowledgement using the original request, without creating a second review. After a failed, stopped or context-limited accepted review, **Restore feedback** stages missing retry drafts without overwriting edited drafts or changing history. Chat **Retry** does the same. Re-anchor stale drafts and choose **Review plan** again explicitly; restoration never sends a request automatically. Existing conversation context limits still apply.
+
+Privacy or model changes refresh displayed content. An open editor keeps unsaved feedback but hides its old captured quote; explicitly select a current target again before saving a new comment or re-anchor.
+
 ## Bookmarks
 
 Hover over one of your messages or use Tab to reach its bookmark icon. Select **Bookmark** to mark it; the filled icon uses **Remove bookmark** to clear it. The rail preview shows the first line of your message and the start of the agent reply, with the same bookmark action. Changes appear immediately; a failed save restores the previous state and shows an error. Archived sessions and read-only workbenches allow viewing only.
