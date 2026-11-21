@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-SEC-7cc5c9f3"
+title = "Scope Alibaba and Xiaomi credentials to the saved binding"
+status = "active"
+requirement = "When a user saves or uses an Alibaba Cloud or Xiaomi connection, VERA shall use the credential slot for that connection, plan, region and workspace."
+verification = "Save multiple combinations, inspect test credential slots, and reject saved discovery or edits that change scope."
+affected_paths = ["05_Software/src/libraries/shared/src/provider-presets.ts","05_Software/src/libraries/core/src/llm/preset-connection.ts","05_Software/src/libraries/core/src/llm/providers.ts","05_Software/src/apps/desktop/src/main/provider-settings.ts","05_Software/src/apps/desktop/src/main/provider-gateway.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/regional-provider-presets.test.ts"]
+created = 2026-11-20
+updated = 2026-11-20

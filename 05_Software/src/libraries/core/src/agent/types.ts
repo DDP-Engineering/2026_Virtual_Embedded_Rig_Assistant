@@ -14,6 +14,8 @@ import type { ContextPolicy, ContextView } from "./context.js";
 export type StopReason = "end" | "aborted" | "error" | "limit";
 export type ToolOutput = string | { text: string; image: ImageContent };
 export interface ToolDef {
+  /** Recheck tools whose permissions can change between model requests. */
+  available?(): boolean;
   /** Synchronous final authorization and projection before tool result publication. */
   publish?(args: unknown, output: string): string;
   name: string;
@@ -32,8 +34,16 @@ export interface RuntimeInit {
   contextPolicy: ContextPolicy;
   contextCompactor?: ContextCompactor;
   maxToolCallsPerTurn?: number;
+  /** One-shot identity already accepted durably by the session owner. */
+  requestIdentity?: { turnId: string; messageId: string };
   /** Characters of one tool result the model receives at most; 32000 when absent (REQ-FUNC-f6f79cd2). */
   maxToolResultChars?: number;
+}
+export interface RuntimeInput {
+  text: string;
+  timestamp: number;
+  images?: string[];
+  parentSessionId?: string;
 }
 export interface RuntimeHost {
   gateway: LlmGateway;
@@ -41,14 +51,14 @@ export interface RuntimeHost {
   nextId(): string;
   approve(call: Readonly<ToolCall>, signal: AbortSignal): Promise<"approved" | "denied" | "aborted">;
   /** Durable, undelivered user messages; detached FIFO snapshot, without consuming them. */
-  steering?(): { messageId: string; text: string; images?: string[]; timestamp: number }[];
+  steering?(): (RuntimeInput & { messageId: string })[];
   /** An exception the turn loop reports only as a generic error; the host scrubs secrets before it writes the text. */
   log?(message: string): void;
 }
 export type RuntimeEvent =
   | { type: "turn.started"; turnId: string }
   | { type: "turn.done"; turnId: string; stopReason: StopReason }
-  | { type: "message.user"; messageId: string; text: string; images?: string[]; timestamp?: number }
+  | ({ type: "message.user"; messageId: string } & Partial<RuntimeInput> & { text: string })
   | { type: "message.delivered"; messageIds: string[] }
   | {
       type: "context.compacted";
@@ -86,10 +96,11 @@ export type RuntimeEvent =
       messageKey: string;
       params?: Record<string, string | number>;
       retryable: boolean;
+      retryAfter?: string;
     };
 export interface AgentRuntime {
   start(init: RuntimeInit): void;
-  send(text: string, images?: string[]): Promise<{ stopReason: StopReason }>;
+  send(text: string, images?: string[], parentSessionId?: string): Promise<{ stopReason: StopReason }>;
   abort(): void;
   onEvent(listener: (event: RuntimeEvent) => void): () => void;
   messages(): Message[];

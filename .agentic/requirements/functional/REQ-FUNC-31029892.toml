@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-FUNC-31029892"
+
+title = "Normalize dictation audio"
+
+status = "active"
+
+requirement = "When the microphone supplies samples, the capture controller shall submit bounded mono 16 kHz PCM after it releases the tracks."
+
+verification = "Feed stereo fixture samples and check the real capture path against the sample-rate, duration and track-stop assertions."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/dictation/capture.ts", "05_Software/src/apps/desktop/src/renderer/dictation/pcm-worklet.ts", "05_Software/src/apps/desktop/src/renderer/dictation/microphone.ts"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/dictation/capture.test.ts", "05_Software/tests/e2e/dictation.spec.ts", "05_Software/src/apps/desktop/src/renderer/dictation/pcm-worklet.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-20
+updated = 2026-11-20

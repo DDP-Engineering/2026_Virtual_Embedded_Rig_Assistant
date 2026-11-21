@@ -14,6 +14,7 @@ These are VERA's default keyboard shortcuts. Change, add or remove them in **Set
 | Open terminal | Ctrl+Shift+T | Open and focus the user terminal. |
 | Find in conversation | Ctrl+F | Search the current session transcript. |
 | Focus message input | Unassigned | Move the cursor to the current message input. |
+| Dictate | Unassigned | Hold the shortcut to talk or press it to start and stop dictation in chat. |
 | Focus model selector | Ctrl+Shift+M | Select the model control in the conversation. |
 | Next bookmark | Ctrl+Alt+N | Jump to the next bookmarked message in this conversation. |
 | Previous bookmark | Ctrl+Alt+P | Jump to the previous bookmarked message in this conversation. |

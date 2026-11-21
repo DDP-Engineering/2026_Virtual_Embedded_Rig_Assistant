@@ -2,9 +2,11 @@ import {
   type ArtifactContent,
   advancedPatchSchema,
   type ChangeDetail,
+  channels,
   confirmationMatches,
   foldSessionEvents,
   isLiveSessionEvent,
+  type PlanReview,
   type ProgramApproval,
   programPolicy,
   type SessionEvent,
@@ -12,6 +14,7 @@ import {
   type TurnCapacity,
   veraError,
 } from "@vera/shared";
+import { isFeedbackChannel, mockPlanFeedback } from "./plan-feedback.js";
 import { sessionFixtures } from "./session-fixtures.js";
 
 /** Mock program commands: a prompt starting with "flash" or "burn" requests one of them. */
@@ -56,6 +59,7 @@ export class MockSessions {
       artifacts: ArtifactContent[];
       live?: SessionEvent[];
       active: boolean;
+      review?: boolean;
       stop: boolean;
       turnId?: string;
       done?: Promise<void>;
@@ -145,6 +149,58 @@ export class MockSessions {
     )
       this.turns.activity?.();
   }
+  private startReview(id: string, review: PlanReview) {
+    const row = this.row(id),
+      key = this.key(id);
+    row.active = true;
+    row.review = true;
+    row.stop = false;
+    row.turnId = review.turnId;
+    row.summary.status = "running";
+    this.emit(id, { type: "plan.review.submitted", review }, key);
+    this.emit(
+      id,
+      {
+        type: "message.user",
+        messageId: review.messageId,
+        text: `Revise the plan only; do not execute any steps.\n\n${JSON.stringify({ plan: review.plan, comments: review.comments })}`,
+      },
+      key,
+    );
+    this.emit(id, { type: "turn.started", turnId: review.turnId }, key);
+    row.done = (async () => {
+      await new Promise((done) => setTimeout(done, 100));
+      if (!row.stop) {
+        const items = [...review.plan].reverse(),
+          callId = `todo_${++this.number}`;
+        this.emit(id, { type: "tool.started", callId, name: "todo", args: { items } }, key);
+        this.emit(id, { type: "todo.updated", items }, key);
+        this.emit(
+          id,
+          { type: "tool.done", callId, ok: true, summary: "Mock plan revised.", durationMs: 0 },
+          key,
+        );
+        this.emit(
+          id,
+          {
+            type: "message.done",
+            messageId: `message_${++this.number}`,
+            text: "Revised the plan from the feedback. No steps were executed.",
+            citations: [],
+          },
+          key,
+        );
+      }
+      row.active = false;
+      delete row.review;
+      row.summary.status = "idle";
+      this.emit(
+        id,
+        { type: "turn.done", turnId: review.turnId, stopReason: row.stop ? "aborted" : "end" },
+        key,
+      );
+    })();
+  }
   private idle(id: string) {
     this.writable();
     const row = this.row(id);
@@ -155,6 +211,9 @@ export class MockSessions {
     const request = raw as {
       sessionId: string;
       reuseEmpty?: boolean;
+      workbenchId?: string;
+      authorized: boolean;
+      acknowledged?: true;
       text: string;
       images?: string[];
       title: string;
@@ -197,6 +256,7 @@ export class MockSessions {
     }
     if (channel === "session.create") {
       this.writable();
+      if (request.mode === "bypass" && request.acknowledged !== true) throw veraError("DENIED");
       if (request.reuseEmpty) {
         const prefix = this.key("");
         const unused = [...this.sessions.entries()]
@@ -264,8 +324,24 @@ export class MockSessions {
         }
       throw veraError("NOT_FOUND");
     }
+    if (isFeedbackChannel(channel)) {
+      const input = channels[channel].request.safeParse(raw);
+      if (!input.success) throw veraError("INVALID");
+      if (input.data.workbenchId !== this.current().id) throw veraError("CONFLICT");
+    }
     const id = request.sessionId;
     const row = this.row(id);
+    if (isFeedbackChannel(channel))
+      return mockPlanFeedback(channel, raw, {
+        workbenchId: this.current().id,
+        events: row.events,
+        active: row.active,
+        archived: row.summary.archived,
+        writable: () => this.writable(),
+        nextId: () => `feedback_${++this.number}`,
+        emit: (event) => this.emit(id, event),
+        start: (review) => this.startReview(id, review),
+      });
     if (channel === "session.bookmark") {
       this.writable();
       if (row.summary.archived) throw veraError("DENIED");
@@ -387,11 +463,34 @@ export class MockSessions {
       }
       return {};
     }
+    if (channel === "session.delegation.bypass.set") {
+      this.writable();
+      if (request.workbenchId !== this.current().id) throw veraError("CONFLICT");
+      if (
+        row.summary.delegation ||
+        (request.authorized &&
+          (request.acknowledged !== true || row.summary.archived || row.summary.mode !== "bypass"))
+      )
+        throw veraError("DENIED");
+      if (request.authorized) row.summary.delegatedBypassLaunch = true;
+      else delete row.summary.delegatedBypassLaunch;
+      return { authorized: request.authorized };
+    }
     if (channel === "session.mode.set") {
       this.writable();
+      const previous = row.summary.mode;
+      if (
+        row.summary.archived ||
+        (request.mode === "bypass" && previous !== "bypass" && request.acknowledged !== true)
+      )
+        throw veraError("DENIED");
       row.summary.mode = request.mode;
       this.emit(id, { type: "session.updated", mode: request.mode });
-      if (request.mode === "read-only" && row.approval) this.decide(id, "aborted", "mode");
+      if (
+        (request.mode === "read-only" || (previous === "bypass" && request.mode !== previous)) &&
+        row.approval
+      )
+        this.decide(id, "aborted", "mode");
       const program = row.approval?.program;
       if (
         request.mode === "bypass" &&
@@ -403,7 +502,8 @@ export class MockSessions {
     }
     if (channel === "session.send" && row.active) {
       this.writable();
-      if (row.stop || row.approval || !row.turnId) throw veraError("BUSY");
+      if (row.review || row.stop || row.approval || !row.turnId) throw veraError("BUSY");
+      if (!request.text.trim() && !request.images?.length) throw veraError("INVALID");
       const messageId = `message_${++this.number}`;
       this.emit(id, {
         type: "message.queued",

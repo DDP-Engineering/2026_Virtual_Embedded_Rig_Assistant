@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-UX-da941b4d"
+title = "Localize interactive browser controls"
+status = "active"
+requirement = "Desktop shall provide Interactive Browser controls, status, recovery and help in English, Romanian, German and French."
+verification = "Check the four locale and help sets and assert accessible labels in the UI."
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json", "05_Software/src/apps/desktop/src/renderer/locales/fr.json", "05_Software/help/en/settings.md", "05_Software/help/ro/settings.md", "05_Software/help/de/settings.md", "05_Software/help/fr/settings.md", "05_Software/src/apps/desktop/src/renderer/lib/browser-failure.ts"]
+linked_tests = ["05_Software/tests/e2e/browser-controls.spec.ts"]
+created = 2026-11-20
+updated = 2026-11-20

@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-SEC-ad60d613"
+
+title = "Label rendered content as untrusted"
+
+status = "active"
+
+requirement = "When Desktop returns a browser snapshot, it shall identify webpage text and link labels as untrusted data in the tool contract."
+
+verification = "Check the typed description and snapshot marker for a page supplying instruction-like text."
+
+affected_paths = ["05_Software/src/libraries/core/src/tools/browser.ts", "05_Software/src/apps/desktop/src/main/browser/page-reading.ts"]
+
+linked_tests = ["05_Software/tests/e2e/browser-agent.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-20
+updated = 2026-11-20

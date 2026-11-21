@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { workbenchSchema } from "@vera/shared";
 import Database from "better-sqlite3";
 import { expect, it } from "vitest";
+import { rebuildingEmbeddings } from "../storage/repos/embedding-rebuild.js";
 import { schemaSql } from "../storage/schema.js";
 import { createModelDocumentServices } from "./document-services.js";
 import type { EmbeddingPort } from "./embedding.js";
@@ -350,12 +351,15 @@ it("keeps extraction and keyword results during a model switch, including a fail
     const broken = join(root, "docs/broken.txt");
     await writeFile(broken, "Unrelated source processing failure.");
     ingest = start();
+    expect(ingest.indexStatus()).toMatchObject({ state: "rebuilding", progress: null });
     await ingest.waitIdle();
     expect(ingest.guard()).toMatchObject({ files: 2, limit: 1 });
+    expect(ingest.indexStatus()).toMatchObject({ state: "count-guard", progress: null, searchable: 1 });
+    expect(ingest.phase()).toBe("blocked");
     expect(vectorIds.all()).toEqual([]);
     expect(
-      (await search.search({ query: "coolant", mode: "semantic" }, new AbortController().signal)).ranking,
-    ).toBe("embedding-rebuild");
+      (await search.search({ query: "coolant", mode: "semantic" }, new AbortController().signal)).usage,
+    ).toEqual({ mode: "keyword", fallbackReason: "embedding-rebuild" });
 
     await rm(broken);
     config = { ...config, docs: initialConfig.docs };
@@ -376,6 +380,9 @@ it("keeps extraction and keyword results during a model switch, including a fail
     for (const mode of ["keyword", "hybrid", "semantic"] as const) {
       const found = await search.search({ query: "coolant", mode }, new AbortController().signal);
       expect(found.results[0]?.path).toBe("docs/a.txt");
+      expect(found.usage).toEqual(
+        mode === "keyword" ? { mode: "keyword" } : { mode: "keyword", fallbackReason: "embedding-rebuild" },
+      );
     }
     mode = "fail";
     release();
@@ -388,8 +395,18 @@ it("keeps extraction and keyword results during a model switch, including a fail
     const found = await search.search({ query: "coolant", mode: "keyword" }, new AbortController().signal);
     expect(found.results[0]?.path).toBe("docs/a.txt");
 
-    mode = "crash";
+    mode = "ready";
     ingest.request();
+    await ingest.waitIdle();
+    expect(vectorIds.all()).toEqual([next]);
+    // A queued watcher pass can keep the rebuild marker after vectors are published.
+    await expect.poll(() => rebuildingEmbeddings(db), { timeout: 5000 }).toBe(false);
+    await expect(
+      search.search({ query: "coolant", mode: "semantic" }, new AbortController().signal),
+    ).rejects.toThrow("Keyword fallback must not invoke ranking.");
+
+    mode = "crash";
+    ingest.embeddingModelChanged();
     await ingest.waitIdle();
     await expect.poll(() => crashes, { timeout: 5000 }).toBe(2);
     await ingest.waitIdle();
@@ -408,6 +425,7 @@ it("keeps extraction and keyword results during a model switch, including a fail
     expect(extracts.all()).toEqual(originalText);
     expect(chunks.all().length).toBeGreaterThan(originalChunks.length);
     expect(vectorIds.all()).toEqual([next]);
+    expect(ingest.phase()).toBe("settled-with-exceptions");
     expect(db.prepare("SELECT status FROM documents WHERE path='docs/broken.txt'").pluck().get()).toBe(
       "failed",
     );
@@ -420,4 +438,4 @@ it("keeps extraction and keyword results during a model switch, including a fail
     db.close();
     await rm(root, { recursive: true, force: true });
   }
-});
+}, 15000);

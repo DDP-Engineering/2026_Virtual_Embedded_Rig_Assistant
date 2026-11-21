@@ -32,6 +32,12 @@ Indiquez à l’agent le chemin relatif d’une image du banc de travail pour qu
 
 L’agent peut rouvrir une image envoyée dans cette session en utilisant son chemin enregistré. Il peut examiner jusqu’à huit images par étape et conserve pendant le tour les huit dernières images ouvertes par l’outil.
 
+## Dicter un message
+
+Sélectionnez un modèle dans [Paramètres > Dictée](settings.md). En mode maintien, maintenez le bouton du microphone ou son raccourci. Lorsque le bouton a le focus, maintenez Espace ou Entrée. Relâchez pour transcrire. En mode démarrage et arrêt, appuyez une fois pour enregistrer et une seconde fois pour transcrire. Échap ou Annuler la dictée abandonne l’enregistrement ou la transcription et laisse l’agent poursuivre son travail. La dictée est annulée si vous quittez le chat ou si la fenêtre perd le focus.
+
+Le résultat apparaît à la position initiale du curseur ou après le texte sélectionné. Si vous avez modifié le brouillon pendant la dictée, le résultat s’ajoute à la fin. Le texte et les pièces jointes restent dans le brouillon. Relisez le texte et envoyez-le avec Entrée ou Envoyer.
+
 ## Orienter ou arrêter un tour en cours
 
 Pendant que l’agent travaille, vous pouvez continuer à écrire et envoyer d’autres messages, par exemple « vérifie aussi l’errata ». Ils affichent **En attente d’envoi** jusqu’à ce que l’agent les prenne en compte à son étape suivante. Tant qu’une carte d’approbation attend votre décision, l’envoi est suspendu.
@@ -43,6 +49,14 @@ Pendant que l’agent travaille, vous pouvez continuer à écrire et envoyer d�
 Lorsque VERA délègue une tâche, **Sessions déléguées** dans le chat parent affiche chaque session enfant et son état. Sélectionnez une session enfant pour ouvrir son onglet Chat et suivre la conversation. **Session parente** permet de revenir au chat parent.
 
 Pour arrêter une session enfant en cours, ouvrez-la et choisissez **Arrêter** près de la zone de saisie. La session parente peut continuer son travail. Si une approbation est demandée, utilisez la carte d’approbation de la session concernée. Quand vous rouvrez une session après avoir redémarré VERA, le lien et le résultat du tour délégué restent disponibles.
+
+L’agent parent peut envoyer d’autres instructions dans la même conversation enfant et choisir son modèle et son niveau de raisonnement pour les tours suivants. Le fil identifie ces messages comme **Instruction de l’agent parent**. Si la session enfant travaille déjà, une instruction admissible attend la prochaine requête au modèle. Utilisez la carte d’approbation de la session enfant lorsqu’une décision de l’utilisateur est requise.
+
+Une nouvelle session enfant démarre avec le mode d’autorisation actuel de la session parente. Après le lancement, choisissez séparément le mode de chaque session dans sa zone de saisie. Pour un parent en mode Bypass, choisissez **Autoriser l’accès complet aux nouvelles sessions enfants** puis confirmez les prochains lancements admissibles. Pour retirer cette autorisation, choisissez **Révoquer l’accès complet pour les prochains lancements**. Les sessions enfants existantes gardent leur mode. Réduisez l’accès d’une session enfant dans son propre chat. La publication à distance exige une autorisation distincte.
+
+Dans une copie de travail partagée, attendez qu’une session enfant termine son travail et vérifiez sa livraison avant de lancer la suivante.
+
+Dans une session déléguée en mode Bypass, les commandes shell correspondant à un préfixe enregistré par l’utilisateur dans le banc de travail s’exécutent automatiquement. Les autres commandes shell demandent votre approbation.
 
 ## Niveaux de détail
 
@@ -79,6 +93,18 @@ Les signets enregistrés restent dans les exports JSON ; Markdown indique les me
 ## Le panneau droit
 
 **Afficher/masquer le panneau droit** affiche des onglets pour la session ouverte : **Instructions et compétences** (instructions du banc de travail et compétences disponibles), **Fichiers**, **Modifications**, **Artefacts** (résultats texte enregistrés par l’agent, avec **Exporter** et **Afficher dans le dossier**), **Plan** (la liste de tâches de l’agent) et **Exécutions** (exécutions de programmes des plugins).
+
+## Commenter et réviser le plan
+
+Dans **Plan**, choisissez **Ajouter un commentaire** pour une étape entière ou sélectionnez d’abord du texte dans une seule étape pour citer ce fragment. Au clavier, sélectionnez avec Shift et les flèches dans **Texte de l’étape**, puis choisissez **Utiliser le texte sélectionné** ; **Étape entière** efface le fragment. Une étape vide accepte uniquement un commentaire sur l’étape entière. Saisissez plusieurs lignes, par exemple « Vérifier la tension avant la programmation », puis **Enregistrer le brouillon**. L’enregistrement n’envoie aucun message et ne démarre pas l’agent. Annuler ou Échap abandonne les modifications non enregistrées et ramène le focus sur Plan.
+
+Le nombre de brouillons et de commentaires envoyés ouvre les commentaires de cette étape précise. **Modifier le commentaire** change seulement le texte ; **Supprimer le commentaire** retire un brouillon. Tout remplacement du plan invalide les associations précédentes, même si le texte reste identique. **À réassocier** conserve ces brouillons lisibles : choisissez **Réassocier**, une étape actuelle numérotée, explicitement son texte entier ou un fragment, puis **Enregistrer l’association**. Les brouillons enregistrés survivent à la fermeture et au changement de session.
+
+**Réviser le plan** envoie tout le plan actuel et tous les brouillons valides en une demande dans la même discussion. L’agent peut modifier le plan structuré ou demander des précisions, mais pas exécuter les étapes, modifier les fichiers du projet, lancer des programmes ou commandes, ni accorder des autorisations pendant cette révision. L’envoi de messages ordinaires est désactivé jusqu’à la fin ; **Arrêter** termine seulement la révision, pas les programmes indépendants en arrière-plan. Le mode d’autorisation en lecture seule permet de réviser le plan ; les sessions archivées et les bancs en lecture seule permettent uniquement la consultation.
+
+**Révisions précédentes** conserve les commentaires envoyés, les citations et les résultats, même après effacement du plan. En cas d’échec d’envoi, les brouillons restent disponibles. **Réessayer la révision** confirme un accusé de réception inconnu avec la demande originale, sans créer une seconde révision. Après une révision acceptée mais échouée, arrêtée ou limitée par le contexte, **Restaurer les commentaires** prépare les brouillons manquants sans écraser les brouillons modifiés ni l’historique. Réessayer depuis la discussion fait de même. Réassociez les brouillons obsolètes et choisissez explicitement **Réviser le plan** ; la restauration n’envoie jamais de demande automatiquement. Les limites de contexte existantes s’appliquent toujours.
+
+Un changement de confidentialité ou de modèle actualise l’affichage. L’éditeur ouvert conserve le commentaire non enregistré, mais masque l’ancienne citation ; sélectionnez explicitement une cible actuelle avant d’enregistrer un nouveau commentaire ou une nouvelle association.
 
 ## Signets
 

@@ -302,7 +302,7 @@ it("measures package contributions without a size budget", async () => {
   }
 });
 
-it.each(["instrumented", "release", "missing-pdf-resource"] as const)(
+it.each(["instrumented", "release", "missing-pdf-resource", "missing-whisper-worker"] as const)(
   "inspects real ASAR app code through native file separators (%s)",
   async (scenario) => {
     const { inspectAppArchive, probeMarkers, documentWorkerMarkers } = await import(
@@ -325,6 +325,8 @@ it.each(["instrumented", "release", "missing-pdf-resource"] as const)(
       const markers =
         scenario === "instrumented" ? [...probeMarkers, ...documentWorkerMarkers] : documentWorkerMarkers;
       await writeFile(join(source, "out/main/index.js"), markers.join(";"));
+      if (scenario !== "missing-whisper-worker")
+        await writeFile(join(source, "out/main/whisper-worker.js"), "export {};");
       if (scenario === "missing-pdf-resource")
         await rm(join(source, "out/renderer/pdfjs/standard_fonts/FoxitSerif.pfb"));
       await createPackage(source, archive);
@@ -334,7 +336,11 @@ it.each(["instrumented", "release", "missing-pdf-resource"] as const)(
       } else if (scenario === "release") {
         await expect(inspectAppArchive(archive, false)).resolves.toBeDefined();
         await expect(inspectAppArchive(archive, true)).rejects.toThrow(/Build boundary/);
-      } else await expect(inspectAppArchive(archive, false)).rejects.toThrow(/missing PDF resource/);
+      } else {
+        const message =
+          scenario === "missing-whisper-worker" ? /Whisper worker missing/ : /missing PDF resource/;
+        await expect(inspectAppArchive(archive, false)).rejects.toThrow(message);
+      }
     } finally {
       await rm(dir, { recursive: true, force: true });
     }

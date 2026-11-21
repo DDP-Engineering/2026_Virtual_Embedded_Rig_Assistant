@@ -6,7 +6,15 @@ import type {
   ToolCall,
   ToolResultMessage,
 } from "@earendil-works/pi-ai";
-import { acceptsImages, MAX_MESSAGE_IMAGES, type ModelCapabilities, veraError } from "@vera/shared";
+import {
+  acceptsImages,
+  MAX_MESSAGE_IMAGES,
+  type ModelCapabilities,
+  providerRetryAfterSchema,
+  type VeraError,
+  veraError,
+  veraErrorSchema,
+} from "@vera/shared";
 import { ContextCompactor, type SummarizeHistory } from "./compaction.js";
 import type { UserImageMessage } from "./message-images.js";
 import { toolSpecs } from "./tool.js";
@@ -16,8 +24,25 @@ import type {
   RuntimeEvent,
   RuntimeHost,
   RuntimeInit,
+  RuntimeInput,
   StopReason,
 } from "./types.js";
+
+function providerErrorEvent(error: VeraError, limit = false): Extract<RuntimeEvent, { type: "error" }> {
+  const retryAfter =
+    error.messageKey === "provider.rateLimit"
+      ? providerRetryAfterSchema.safeParse(error.params?.retryAfter).data
+      : undefined;
+  const seconds = error.params?.reason === "timeout" ? error.params.seconds : undefined;
+  return {
+    type: "error",
+    code: limit ? "CONTEXT_LIMIT" : error.code,
+    messageKey: limit ? "context.budget_exceeded" : error.messageKey,
+    retryable: false,
+    ...(retryAfter ? { retryAfter } : {}),
+    ...(typeof seconds === "number" ? { params: { seconds } } : {}),
+  };
+}
 
 export function zeroUsage(): AssistantMessage["usage"] {
   return {
@@ -79,10 +104,12 @@ export function buildContext(stored: Message[], _now: number, currentStart = sto
   }
   return out;
 }
-function userMessage(message: { text: string; images?: string[]; timestamp: number }): UserImageMessage {
+function userMessage(message: RuntimeInput): UserImageMessage {
   return {
     role: "user",
-    content: message.text,
+    content: message.parentSessionId
+      ? `Parent agent instruction (${message.parentSessionId}):\n${message.text}`
+      : message.text,
     ...(message.images?.length && { images: [...message.images] }),
     timestamp: message.timestamp,
   };
@@ -136,22 +163,26 @@ export class ReferenceRuntime implements AgentRuntime {
   abort(): void {
     this.controller?.abort();
   }
-  async send(text: string, images?: string[]): Promise<{ stopReason: StopReason }> {
+  async send(text: string, images?: string[], parentSessionId?: string): Promise<{ stopReason: StopReason }> {
     if (this.controller) throw veraError("BUSY");
     const init = this.init;
     if (!init) throw veraError("INVALID");
     const controller = new AbortController();
     this.controller = controller;
-    const turnId = this.host.nextId();
-    const messageId = this.host.nextId();
+    const identity = init.requestIdentity;
+    delete init.requestIdentity;
+    const turnId = identity?.turnId ?? this.host.nextId();
+    const messageId = identity?.messageId ?? this.host.nextId();
     const currentStart = this.transcript.length;
     const recovered = new Set(this.host.steering?.().map((message) => message.messageId));
-    const prompt = userMessage({ text, ...(images && { images }), timestamp: this.host.now() });
+    const source = parentSessionId ? { parentSessionId } : {};
+    const prompt = userMessage({ text, ...source, ...(images && { images }), timestamp: this.host.now() });
     this.transcript.push(prompt);
     this.emit({
       type: "message.user",
       messageId,
       text,
+      ...source,
       ...(prompt.images && { images: prompt.images }),
       timestamp: prompt.timestamp,
     });
@@ -163,7 +194,12 @@ export class ReferenceRuntime implements AgentRuntime {
       stopReason = controller.signal.aborted ? "aborted" : "error";
       if (stopReason === "error") {
         this.report("Agent turn failed", error);
-        this.emit({ type: "error", code: "INTERNAL", messageKey: "errors.INTERNAL", retryable: false });
+        const providerError = veraErrorSchema.safeParse(error);
+        this.emit(
+          providerError.success && providerError.data.messageKey.startsWith("provider.")
+            ? providerErrorEvent(providerError.data)
+            : { type: "error", code: "INTERNAL", messageKey: "errors.INTERNAL", retryable: false },
+        );
       }
     } finally {
       this.emit({ type: "turn.done", turnId, stopReason });
@@ -299,7 +335,9 @@ export class ReferenceRuntime implements AgentRuntime {
       return image ? { ...message, content: [...message.content, image] } : message;
     };
     const toolsFor = (capabilities: ModelCapabilities) =>
-      init.tools.filter((tool) => !tool.requiresImages || acceptsImages(capabilities));
+      init.tools.filter(
+        (tool) => (tool.available?.() ?? true) && (!tool.requiresImages || acceptsImages(capabilities)),
+      );
     const delivered = new Set<string>();
     const recoveredPositions = new Set<number>();
     const pending = () =>
@@ -344,6 +382,7 @@ export class ReferenceRuntime implements AgentRuntime {
       const currentCapabilities = this.host.gateway.capabilities(init.model);
       const offered = toolsFor(currentCapabilities);
       const tools = toolSpecs(offered);
+      const revocableTools = offered.filter((tool) => tool.available);
       const view = {
         ...init.contextPolicy.prepare(
           {
@@ -431,6 +470,10 @@ export class ReferenceRuntime implements AgentRuntime {
           model: init.model,
           system: init.systemPrompt,
           tools,
+          ...(revocableTools.length > 0 && {
+            toolAvailable: (name: string) =>
+              revocableTools.find((tool) => tool.name === name)?.available?.() !== false,
+          }),
           messages,
           signal,
           maxOutputTokens: view.reservedOutputTokens,
@@ -448,15 +491,7 @@ export class ReferenceRuntime implements AgentRuntime {
             const limit =
               event.error.code === "CONTEXT_LIMIT" ||
               (event.error.code === "PROVIDER" && event.error.params?.reason === "context");
-            // Only a timeout's limit is kept with the stored event; provider text and endpoints stay out.
-            const seconds = event.error.params?.reason === "timeout" ? event.error.params.seconds : undefined;
-            this.emit({
-              type: "error",
-              code: limit ? "CONTEXT_LIMIT" : event.error.code,
-              messageKey: limit ? "context.budget_exceeded" : event.error.messageKey,
-              ...(typeof seconds === "number" ? { params: { seconds } } : {}),
-              retryable: false,
-            });
+            this.emit(providerErrorEvent(event.error, limit));
             return limit ? "limit" : "error";
           }
         }
@@ -510,6 +545,7 @@ export class ReferenceRuntime implements AgentRuntime {
         try {
           const tool = offered.find((t) => t.name === call.name);
           if (!tool) throw Error("Unknown tool");
+          if (tool.available?.() === false) throw Error("Tool is unavailable.");
           if (tool.requiresImages && imagesInStep >= MAX_MESSAGE_IMAGES)
             throw Error(
               `At most ${MAX_MESSAGE_IMAGES} images can be inspected in one step. Try the remaining files in a later step.`,

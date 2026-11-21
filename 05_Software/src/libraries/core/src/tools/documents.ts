@@ -4,11 +4,16 @@ export const searchDocsTool: ToolDefinition = {
   name: "search_docs",
   class: "read",
   description:
-    "Search indexed workbench documents. Returns precise refs, snippets and scores. A multilingual model can match across languages. Omit k and mode to use the workbench's retrieval settings.",
+    "Search indexed workbench documents. Returns precise refs, snippets, scores, index coverage and the actual ranking mode. Partial coverage can miss pending sources. A multilingual model can match across languages. Omit k and mode to use the workbench's retrieval settings.",
   params: searchDocsSchema,
   execute: async (ctx, args, signal) => {
     if (!ctx.knowledge)
-      return { results: [], message: "No documents indexed yet. Use grep to search text files." };
+      return {
+        results: [],
+        coverage: "unknown",
+        usage: { mode: null, reason: "index-not-ready" },
+        message: "No documents indexed yet. Use grep to search text files.",
+      };
     return ctx.knowledge.search(searchDocsSchema.parse(args), signal, toolExcludedRoots(ctx));
   },
 };

@@ -3,6 +3,9 @@
 // REQ-UX-541a5bee REQ-UX-4d1b3324 REQ-UX-ed65cbbc REQ-UX-2504362b REQ-UX-d455531b
 // REQ-UX-25c814e1 REQ-UX-89cdb49d REQ-UX-3a3d67c1 REQ-UX-ef3e2304 REQ-UX-b5edf930
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { getByRole, queryByRole } from "@testing-library/dom";
+import userEvent from "@testing-library/user-event";
+import type { GitDiffResult, GitHistoryResult, GitStatus, Request, WorkbenchEvent } from "@vera/shared";
 import { act, createElement } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
@@ -12,6 +15,7 @@ import { type Attachments, AttachmentsContext } from "../session/attachments.js"
 import { DocsTab } from "./docs-tab.js";
 import { folderSummaries } from "./docs-tree.js";
 import { DocumentTabs } from "./document-tabs.js";
+import { GitDiffView } from "./git-diff-view.js";
 import { DocumentViewerProvider } from "./viewer-context.js";
 import "../../i18n.js";
 
@@ -33,7 +37,8 @@ const settle = () =>
   });
 let root: Root;
 let container: HTMLDivElement;
-async function mount(workbenchId = id, attachments?: Attachments) {
+async function mount(workbenchId = id, attachments?: Attachments, gitEnabled = false) {
+  const { indexLease } = await api.invoke("workbench.config.get", {});
   container = document.createElement("div");
   document.body.append(container);
   root = createRoot(container);
@@ -47,14 +52,14 @@ async function mount(workbenchId = id, attachments?: Attachments) {
         { client },
         createElement(
           DocumentViewerProvider,
-          { workbenchId },
+          { workbenchId, gitLease: gitEnabled ? indexLease : undefined },
           attachments
             ? createElement(
                 AttachmentsContext.Provider,
                 { value: attachments },
-                createElement(DocsTab, { workbenchId, readOnly: false }),
+                createElement(DocsTab, { workbenchId, indexLease, readOnly: false, gitEnabled }),
               )
-            : createElement(DocsTab, { workbenchId, readOnly: false }),
+            : createElement(DocsTab, { workbenchId, indexLease, readOnly: false, gitEnabled }),
           createElement(DocumentTabs, { chat: null }),
         ),
       ),
@@ -106,6 +111,350 @@ const menuItems = () =>
   );
 const submenu = (action: string) =>
   menu()?.querySelector<HTMLElement>(`[role="menu"][data-submenu="${action}"]`);
+
+function mockGit(
+  read: () => GitStatus,
+  diff?: (comparison: Request<"git.diff">["comparison"]) => GitDiffResult,
+  history?: (path: string) => GitHistoryResult | undefined,
+) {
+  const listeners = new Set<(event: WorkbenchEvent) => void>();
+  const originalSubscription = api.subscribe.bind(api);
+  vi.spyOn(api, "subscribe").mockImplementation(((...args: unknown[]) => {
+    const off = Reflect.apply(originalSubscription, undefined, args);
+    if (args[0] !== "workbench") return off;
+    const listener = args[2] as (event: WorkbenchEvent) => void;
+    listeners.add(listener);
+    return () => {
+      off();
+      listeners.delete(listener);
+    };
+  }) as typeof api.subscribe);
+  const original = api.invoke.bind(api);
+  return vi.spyOn(api, "invoke").mockImplementation((async (channel: string, input: unknown) => {
+    if (channel === "git.diff" && diff) {
+      const request = input as Request<"git.diff">;
+      return { ...request, displayPath: request.path, result: diff(request.comparison) };
+    }
+    if (channel === "git.historyEligibility" && history) {
+      const request = input as Request<"git.historyEligibility">;
+      return { ...request, eligibility: history(request.path) ? "tracked" : "untracked" };
+    }
+    if (channel === "git.history" && history) {
+      const request = input as Request<"git.history">;
+      return { ...request, displayPath: request.path, result: history(request.path) };
+    }
+    if (channel !== "git.status") return original(channel as never, input as never);
+    const { action, ...owner } = input as Request<"git.status">;
+    if (action !== "close")
+      for (const listener of listeners)
+        listener({ type: "git.status", update: { ...owner, status: read(), watchLimited: false } });
+    return {};
+  }) as typeof api.invoke);
+}
+
+// REQ-UX-d3f4505a REQ-UX-7656913e
+it("voices comparison and folder counts and gives virtual deletions only Git actions", async () => {
+  const invoke = mockGit(() => ({
+    state: "ready",
+    branch: { kind: "named", name: "main" },
+    changed: 2,
+    conflicts: 0,
+    entries: [
+      { path: "board.txt", staged: "M", unstaged: "M", conflict: false, virtual: false },
+      { path: "gone/deleted.txt", staged: "D", unstaged: null, conflict: false, virtual: true },
+    ],
+  }));
+  await mount(id, undefined, true);
+  expect(getByRole(container, "treeitem", { name: /board.txt.*Staged: Modified.*Unstaged: Modified/ })).toBe(
+    row("board.txt"),
+  );
+  expect(
+    getByRole(container, "treeitem", { name: /gone.*Changed paths in folder: 1/ }).getAttribute(
+      "aria-expanded",
+    ),
+  ).toBe("false");
+  expect(container.querySelector(".git-info")?.textContent).toContain("Branch main");
+  expect(container.querySelector(".git-info")?.textContent).toContain("Changed paths: 2");
+  expect(row("docs")?.querySelector("[data-git-badge]")).toBeNull();
+  const filter = getByRole(container, "button", { name: "Git changes only" });
+  await act(async () => filter.focus());
+  await act(async () => userEvent.setup().keyboard("{Enter}"));
+  expect(filter.getAttribute("aria-pressed")).toBe("true");
+  expect(visible()).toEqual(["gone", "board.txt"]);
+  await key(row("gone"), "ArrowRight");
+  const deleted = getByRole(container, "treeitem", {
+    name: /deleted.txt.*Staged: Deleted.*Absent from the working tree/,
+  });
+  await act(async () => deleted.focus());
+  await key(deleted, "Enter");
+  await key(deleted, "F10", { shiftKey: true });
+  expect(menuItems()).toEqual(["git"]);
+  await key(menuItem("git"), "ArrowRight");
+  expect(subItems("git")).toEqual(["git-diff-staged"]);
+  await key(document.activeElement, "Escape");
+  await key(document.activeElement, "Escape");
+  expect(container.querySelector("[data-document-tab]")).toBeNull();
+  expect(invoke.mock.calls.some(([channel]) => channel === "docs.open" || channel === "docs.stat")).toBe(
+    false,
+  );
+  await click(getByRole(container, "button", { name: "Refresh Git status" }));
+  expect(invoke.mock.calls).toContainEqual(["git.status", expect.objectContaining({ action: "refresh" })]);
+});
+
+it("checks tracking only for the open menu and reuses an inert central history tab", async () => {
+  const invoke = mockGit(
+    () => ({
+      state: "ready",
+      branch: { kind: "named", name: "main" },
+      changed: 1,
+      conflicts: 0,
+      entries: [{ path: "gone.txt", staged: "D", unstaged: null, conflict: false, virtual: true }],
+    }),
+    undefined,
+    (path) =>
+      path === "board.txt"
+        ? {
+            state: "ready",
+            commits: [
+              {
+                hash: "123456789abc",
+                author: "<b>Author</b>",
+                date: "2026-01-01T00:00:00.000Z",
+                subject: "<img src=x onerror=alert(1)>",
+              },
+            ],
+            capped: true,
+            scopeBoundary: false,
+          }
+        : path === "gone.txt"
+          ? { state: "empty", scopeBoundary: true }
+          : undefined,
+  );
+  await mount(id, undefined, true);
+  const lookups = () => invoke.mock.calls.filter(([channel]) => channel === "git.historyEligibility");
+  expect(lookups()).toHaveLength(0);
+  const openMenu = async (path: string) => {
+    await act(async () => row(path)?.focus());
+    await key(row(path), "F10", { shiftKey: true });
+    await settle();
+  };
+  const openHistory = async () => {
+    await key(document.activeElement, "End");
+    expect(document.activeElement).toBe(menuItem("git"));
+    await key(document.activeElement, "ArrowRight");
+    await key(document.activeElement, "End");
+    expect(document.activeElement).toBe(menuItem("git-history"));
+    await key(document.activeElement, "Enter");
+    await settle();
+  };
+  await openMenu("board.txt");
+  expect(menuItems()).toContain("open");
+  expect(menuItems()).toContain("git");
+  expect(lookups()).toHaveLength(1);
+  await openHistory();
+  const panel = container.querySelector("[data-source-current]");
+  expect(panel?.textContent).toContain("<img src=x onerror=alert(1)>");
+  expect(panel?.textContent).toContain("<b>Author</b>");
+  expect(panel?.querySelector("img, b")).toBeNull();
+  expect(panel?.textContent).toContain("50");
+  await openMenu("board.txt");
+  await openHistory();
+  expect(container.querySelectorAll('[data-document-tabs] [role="tab"]')).toHaveLength(2);
+  await openMenu("gone.txt");
+  await key(document.activeElement, "ArrowRight");
+  expect(subItems("git")).toEqual(["git-diff-staged", "git-history"]);
+  await key(document.activeElement, "Escape");
+  await openHistory();
+  expect(container.querySelector("[data-source-current]")?.textContent).toContain("No reachable commits");
+  await key(row("docs"), "ArrowRight");
+  await settle();
+  await openMenu("docs/a.pdf");
+  expect(menuItems()).toContain("open");
+  expect(menuItems()).not.toContain("git");
+  expect(lookups().map(([, request]) => request)).toEqual(
+    ["board.txt", "board.txt", "gone.txt", "docs/a.pdf"].map((path) => expect.objectContaining({ path })),
+  );
+});
+
+it("opens applicable Git comparisons by keyboard as distinct reusable central tabs", async () => {
+  const invoke = mockGit(
+    () => ({
+      state: "ready",
+      branch: { kind: "named", name: "main" },
+      changed: 2,
+      conflicts: 1,
+      entries: [
+        { path: "board.txt", staged: "M", unstaged: "M", conflict: false, virtual: false },
+        { path: "docs/a.pdf", staged: null, unstaged: null, conflict: true, virtual: false },
+      ],
+    }),
+    (comparison) =>
+      comparison === "staged"
+        ? { base: "head", state: "patch", patch: "@@ -1 +1 @@\\n-old\\n+<img src=x onerror=alert(1)>\\n" }
+        : { base: "index", state: "binary" },
+  );
+  await mount(id, undefined, true);
+  const selected = () => container.querySelector('[data-document-tabs] [aria-selected="true"]');
+  async function compare(action: string) {
+    await key(row("board.txt"), "F10", { shiftKey: true });
+    expect(menuItems()).toContain("open");
+    await key(document.activeElement, "End");
+    await key(document.activeElement, "ArrowRight");
+    expect(subItems("git")).toEqual(["git-diff-unstaged", "git-diff-staged"]);
+    expect(document.activeElement).toBe(menuItem("git-diff-unstaged"));
+    if (action === "git-diff-staged") await key(document.activeElement, "ArrowDown");
+    await key(document.activeElement, "Enter");
+    await settle();
+  }
+  await key(row("board.txt"), "Enter");
+  await settle();
+  await compare("git-diff-staged");
+  expect(selected()?.textContent).toContain("Staged");
+  const patch = getByRole(container, "region", { name: "Unified diff" });
+  expect(patch.textContent).toContain("<img src=x onerror=alert(1)>");
+  expect(patch.querySelector("img")).toBeNull();
+  await compare("git-diff-unstaged");
+  expect(selected()?.textContent).toContain("Unstaged");
+  expect(container.textContent).toContain("Binary file");
+  await compare("git-diff-staged");
+  expect(container.querySelectorAll('[data-document-tabs] [role="tab"]')).toHaveLength(4);
+  expect(invoke).toHaveBeenCalledWith(
+    "git.diff",
+    expect.objectContaining({
+      workbenchId: id,
+      path: "board.txt",
+      comparison: "staged",
+      indexLease: expect.any(Number),
+    }),
+  );
+  await key(row("docs"), "ArrowRight");
+  await settle();
+  await key(row("docs/a.pdf"), "F10", { shiftKey: true });
+  await key(document.activeElement, "End");
+  await key(document.activeElement, "ArrowRight");
+  expect(subItems("git")).toEqual(["git-diff-unstaged", "git-diff-staged"]);
+});
+
+it("keeps a Git deletion action when a tracked file is replaced by a folder", async () => {
+  mockGit(() => ({
+    state: "ready",
+    branch: { kind: "named", name: "main" },
+    changed: 1,
+    conflicts: 0,
+    entries: [{ path: "docs", staged: "D", unstaged: null, conflict: false, virtual: true }],
+  }));
+  await mount(id, undefined, true);
+  await key(row("docs"), "F10", { shiftKey: true });
+  expect(menuItems()).toContain("open");
+  expect(menuItems()).toContain("git");
+  await key(document.activeElement, "End");
+  await key(document.activeElement, "ArrowRight");
+  expect(subItems("git")).toEqual(["git-diff-staged"]);
+});
+
+it("displays content-free notices with the selected comparison context", async () => {
+  container = document.createElement("div");
+  document.body.append(container);
+  root = createRoot(container);
+  const notices = [
+    ["empty", "No text changes in this comparison."],
+    ["binary", "Binary file. A text diff is unavailable."],
+    ["too-large", "This change exceeds the preview limit."],
+    ["conflict", "Resolve the merge conflict to view this comparison."],
+    ["unavailable", "This Git comparison could not be read."],
+  ] as const;
+  for (const [state, notice] of notices) {
+    await act(async () =>
+      root.render(
+        createElement(GitDiffView, {
+          identity: "staged:example",
+          response: {
+            workbenchId: id,
+            indexLease: 1,
+            path: "example",
+            comparison: "staged",
+            displayPath: "example",
+            result: { state, base: "empty-tree" },
+          },
+        }),
+      ),
+    );
+    expect(getByRole(container, "status").textContent).toBe(notice);
+    expect(container.textContent).toContain("index vs empty base");
+    expect(container.querySelector("pre")).toBeNull();
+  }
+});
+
+it("keeps Git-visible ignored search matches inert until ordinary Files metadata is known", async () => {
+  const path = "node_modules/pkg/index.js";
+  const invoke = mockGit(() => ({
+    state: "ready",
+    branch: { kind: "named", name: "main" },
+    changed: 1,
+    conflicts: 0,
+    entries: [{ path, staged: null, unstaged: "?", conflict: false, virtual: false }],
+  }));
+  await mount(id, undefined, true);
+  await click(getByRole(container, "button", { name: "Git changes only" }));
+  await type("node_modules/pkg");
+  await settle();
+  const match = getByRole(container, "treeitem", { name: /index.js.*Unstaged: Untracked/ });
+  await key(match, "F10", { shiftKey: true });
+  await key(match, "Enter");
+  expect(menu()).toBeNull();
+  expect(invoke.mock.calls.some(([name]) => name === "docs.stat" || name === "docs.open")).toBe(false);
+  await type("");
+  await settle();
+  await key(row("node_modules"), "ArrowRight");
+  await settle();
+  await key(row("node_modules/pkg"), "ArrowRight");
+  await settle();
+  expect(row(path)?.dataset.ignored).toBe("true");
+  await key(row(path), "F10", { shiftKey: true });
+  expect(menuItems()).toContain("open");
+});
+
+// REQ-REL-3cbc93f2
+it("keeps ordinary Files available when Git is missing and invokes nothing when disabled", async () => {
+  const invoke = mockGit(() => ({ state: "missing-git" }));
+  await mount();
+  expect(queryByRole(container, "button", { name: "Refresh Git status" })).toBeNull();
+  expect(invoke.mock.calls.some(([channel]) => channel === "git.status")).toBe(false);
+  await unmount();
+  await mount(id, undefined, true);
+  expect(container.querySelector(".git-info")?.textContent).toBe("Git 2.40 or later was not found.");
+  expect(row("board.txt")).not.toBeNull();
+  expect((getByRole(container, "button", { name: "Git changes only" }) as HTMLButtonElement).disabled).toBe(
+    true,
+  );
+});
+
+it("distinguishes unavailable, partial and complete empty Files searches", async () => {
+  const original = api.invoke.bind(api);
+  vi.spyOn(api, "invoke").mockImplementation((async (channel: string, input: { query: string }) => {
+    if (channel === "docs.search") {
+      const result = { workbenchId: id, results: [] };
+      if (input.query === "conflict")
+        return { ...result, coverage: "unknown", usage: { mode: null, reason: "revision-conflict" } };
+      if (input.query === "waiting")
+        return { ...result, coverage: "partial", usage: { mode: null, reason: "index-not-ready" } };
+      return { ...result, coverage: input.query, usage: { mode: "keyword" } };
+    }
+    return original(channel as never, input as never);
+  }) as typeof api.invoke);
+  await mount();
+  for (const [query, message] of [
+    ["conflict", "The document index is changing. Try searching again."],
+    ["waiting", "Document search is unavailable until documents are indexed."],
+    ["partial", "No matches in indexed documents."],
+    ["complete", "No matching documents."],
+  ] as const) {
+    await type(query);
+    await settle();
+    await settle();
+    expect(container.querySelector("[data-docs-hits] [role=status]")?.textContent).toBe(message);
+  }
+});
 
 it("opens indexed ordinary text through byte windows without fetching its complete extraction", async () => {
   const original = api.invoke.bind(api);

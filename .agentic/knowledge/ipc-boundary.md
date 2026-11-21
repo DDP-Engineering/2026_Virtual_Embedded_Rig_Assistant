@@ -31,6 +31,24 @@ shortcut. Existing persisted event format remains 1.
 
 ## Public interface
 
+- `git.diff` accepts the active workbench ID and index lease, a Files Display identity, and a staged or unstaged comparison. Main validates ownership and scope before projecting a bounded patch or content-free notice. See [Files Git status](files-git-status.md).
+
+- `docs.status` validates a workbench id and process-local activation lease. Snapshot and
+  `index.status` events carry the same scope, ordered revision and measured counts.
+  Display masking applies to count-guard folder paths on both delivery routes.
+
+- `providers.presets.discover` accepts registry IDs and optional draft or matching saved connection
+  identity. Its strict result carries IDs, a manual-entry reason or a structured provider error.
+  Provider writes enter through the dedicated save and remove channels.
+- `dictation.get` and `dictation.change` return verified installation summaries, progress and
+  effective selection. Requests carry a catalog model id or spoken-language code. The trust
+  boundary and mock operate on schemas in shared/src/dictation.ts. The capture channels admit,
+  acknowledge, submit and cancel a UUID-scoped job. The preload checks the opening gesture and
+  validates packed PCM before dispatch. [Dictation](dictation.md)
+  owns model paths and storage.
+
+- Browser settings and runtime IPC expose typed availability, installation progress, cancellation and removal. Session browser channels take a strict workbench/session pair. Main rechecks the current owner and opt-ins and accepts origin grants only through trusted renderer IPC. Snapshots and errors are structured browser state and codes. [Desktop browser runtime](browser-runtime.md) owns the policy.
+
 - `session.image.attach` accepts a workbench/session pair and either bounded base64 file bytes or an existing workbench path. It returns a durable relative path, a display name and a bounded PNG thumbnail. `session.image.capability` resolves image support for the same effective model as dispatch, with catalog I/O outside the session queue.
 
 Strict `terminal.*` user channels bind UUID terminal IDs to the current workbench, fix creation cwd
@@ -105,6 +123,7 @@ AppEvents use shared updates.ts; [updates](updates.md) owns their lifecycle/capa
   [Knowledge ingest](knowledge-ingest.md) owns their lifecycle and persistence.
 
 - Shared defineChannel, channels, Channel, Request, Response, VeraError and VeraBridge.
+- `git.status` and its workbench event carry the Files view ID and active lease. Desktop main owns the typed operations and [Display presentation](files-git-status.md).
 - providers.list/save/remove/models/test use strict public projections and key-bearing write requests; [Providers](providers.md) owns main-only values, consent, configuration and bounded hints. Main scrubs known-secret error params and event user text before transport.
 - providers.models returns text and image input modalities as part of each model's capabilities. Custom providers.list/save carry the optional imageModels list of enabled IDs per connection. `providers.image.capability` resolves a validated workbench draft model reference (or the application default) and returns its image capability through the main gateway.
 - providers.chatgpt.login/cancel/status/logout use strict metadata and guarded manualCode/promptId requests. app.openExternal requires confirmed:true and HTTP(S); main further confines OAuth to the pinned auth page. [Providers](providers.md) owns secret isolation and lifecycle.
@@ -119,12 +138,12 @@ AppEvents use shared updates.ts; [updates](updates.md) owns their lifecycle/capa
 - app.chooseFolder and workbench.create/open/close/recent/config.get/config.update/pinned.get/
   pinned.update/files have strict requests/responses; configuration objects retain extensions.
   config.get includes optional folder/readOnly metadata for renderer reload. [Workbench](workbench.md) owns lifecycle semantics.
-- emitAppEvent sends validated app/workbench/session envelopes on vera:event to the current live window. Schema-aware sanitization preserves protocol fields, identities and enums while scrubbing known-secret user text and arbitrary extension keys/values.
+- emitAppEvent sends validated app/workbench/session envelopes on vera:event to the current live window. Schema-aware sanitization preserves protocol fields, identities and enums while scrubbing known-secret user text and arbitrary extension keys/values. Provider rate-limit errors in live events and loaded transcripts can carry a bounded HTTP Retry-After value. A value containing a registered secret is omitted.
 - artifacts.list/open/reveal/export use strict shared metadata/content schemas and current SessionsHost lifetime; [Artifacts](artifacts.md) owns verified files, native save cancellation, reveal/export and scrubbing.
 - changes.list/get use strict summary/detail schemas and current SessionsHost recovery/lifetime. Main scrubs path/diff while preserving IDs/dates/counts. app.revealPath accepts a workbench-relative path, validates canonical confinement/ordinary existence and calls native shell; [Changes](changes.md) owns behavior and proof.
 - app.openPath({path}) opens a workbench document with the OS default application: main refuses any extension outside shared `externalDocumentExtensions` (DENIED) before the filesystem is touched, then applies the same PathGuard/ordinary-file/identity checks as reveal (DENIED, NOT_FOUND) and checks the allowlist again on the resolved file, since a link or short name may resolve to a script; an OS failure is INTERNAL (REQ-FUNC-d37a2092, REQ-SEC-33b98d33, REQ-REL-85ae1f66).
 - todo.updated and session snapshot todos use shared bounded list validation; current known secrets redact optional todo IDs and text, with presentation text bounded at200 after redaction; Plan consumes the existing snapshot/subscription channels. [Plan](plan.md) owns whole replacement and icons.
-- Desktop session.list adds optional delegated-child parent identity and initial-turn status to the validated row. The workbench-scoped session.delegations.changed event refreshes the list after commit, with the list heartbeat recovering missed notifications.
+- Desktop `session.list` includes optional child parent ID, latest turn ID and status, and optional parent launch authorization. The workbench-scoped `session.delegations.changed` refreshes after commit and the heartbeat recovers missed notifications. Trusted `session.mode.set` requires acknowledgement on a switch to Bypass. `session.delegation.bypass.set` validates workbench and parent lifecycle, requires acknowledgement for authorization and permits revocation without it. Model tool schemas have no access to either setter.
 - session.list/create/get/rename/delete/send/stop/model.set/mode.set/approval.decide use strict shared contracts. subscribe('session',id,sinceSeq,on) registers its listener before vera:subscription control; control authorizes the same current main frame, validates requests and caps active subscriptions at 128 per workbench runtime. Replay/live envelopes bind subscriptionId; unsubscribe and navigation/window/lifecycle cleanup release core listener and transport timers. [Sessions](sessions.md) owns persistence/recovery.
 - `session.send` accepts an optional `images` path array of up to eight entries and requires text or at least one image. `message.user`, `message.queued` and user snapshot items carry the optional array. The session sanitizer projects paths and text while preserving IDs, pending state and timestamps. The service returns localized `IMAGE_FORMAT` and `IMAGE_TOO_LARGE` errors for invalid types and oversized sources.
 - session.approval.decide validates ses_/apv_ ULIDs, lowercase SHA256, approved/denied and approved-only switchToAutoEdit; main forwards to the live SessionService. session.mode.set stays available during active turns and read-only aborts waits. shared/approval-ipc.test.ts and tests/e2e/approvals.spec.ts cover strict values and real exact decisions.

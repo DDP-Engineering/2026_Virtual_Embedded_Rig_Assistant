@@ -47,7 +47,13 @@ flowchart LR
 ```
 
 The external harness owns machine isolation; the probe owns native runtime assertions. Windows retains upstream ORT DirectML/dxcompiler/dxil companions while the worker selects CPU. Release
-builds omit the probe branch and worker entry while retaining bundled runtime/model resources.
+builds omit the embedding probe and capture test seam while retaining the shipped runtime.
+Both modes include the pinned `playwright-core` Desktop production dependency. The browser
+runtime is provisioned into application data on explicit request. Only the instrumented build
+contains the controlled browser acceptance fixture.
+
+Both modes include the Whisper worker in app.asar and load downloaded dictation models from
+application data. Archive inspection enforces the worker entry and the capture test seam boundary.
 
 ## Public interface
 

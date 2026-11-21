@@ -32,6 +32,12 @@ Ask the agent to inspect a workbench image by giving its relative path. With an 
 
 The agent can reopen a composer image from this session using its saved path after you send it. It can inspect up to eight images in one step and keeps the eight most recent tool images in the current turn.
 
+## Dictate a message
+
+Choose a model in [Settings > Dictation](settings.md). In push-to-talk mode, hold the microphone button or its configured shortcut. With the button focused, hold Space or Enter. Release to transcribe. In start/stop mode, press the button or shortcut once to record and again to transcribe. Escape or Cancel dictation discards the recording or transcription and lets a running agent turn continue. Leaving the chat or losing window focus cancels dictation.
+
+The result appears at the original caret or after the selected text. If you edited the draft while dictating, the result goes at the end. Existing text and attachments stay in the draft. Review the text and send it with Enter or Send.
+
 ## Steer or stop a running turn
 
 While the agent works, you can keep typing and send more messages, for example "also check the errata". They show **Pending delivery** until the agent takes them in at its next step. While an approval card waits for your decision, sending is paused.
@@ -43,6 +49,14 @@ While the agent works, you can keep typing and send more messages, for example "
 When VERA delegates a task, **Delegated sessions** in the parent chat lists each child and its current outcome. Select a child to open its Chat tab and follow its transcript. **Parent session** returns to the parent.
 
 To stop a running child, open it and use **Stop** in its composer. The parent can keep working. If approval is requested, use the approval card in that session. When you reopen either session after restarting VERA, the link and the outcome of the delegated turn are still available.
+
+The parent agent can send follow-up instructions in the same child conversation and choose its model and reasoning for later turns. The transcript labels these messages **Parent agent instruction**. If the child is already working, an eligible follow-up waits for its next model request. Use the child’s approval card when a user decision is required.
+
+A new child starts in the parent’s current permission mode. After launch, choose each session’s mode separately in its composer. For a parent in Bypass, choose **Allow Full Access for new child sessions** and confirm to authorize future eligible launches. To end that authorization, choose **Revoke Full Access for future child launches**. Existing children keep their modes. To reduce a child’s access, change its mode in its own chat. Publishing remotely requires separate permission.
+
+In a shared checkout, let one implementation child finish and verify its handover before starting the next.
+
+In a delegated Bypass session, shell commands run automatically when they match a user-saved workbench command prefix. Other shell commands ask for your approval.
 
 ## Detail levels
 
@@ -79,6 +93,18 @@ Saved message bookmarks stay in JSON exports; Markdown marks bookmarked user mes
 ## The right panel
 
 **Toggle right panel** shows tabs for the open session: **Instructions and skills** (workbench instructions and available skills), **Files**, **Changes**, **Artifacts** (text results the agent saved, with **Export** and **Reveal in folder**), **Plan** (the agent's task list) and **Runs** (program runs of plugins).
+
+## Plan feedback and review
+
+In **Plan**, choose **Add comment** for a whole step, or select text in one step before choosing it to quote that fragment. Keyboard users can select with Shift and the arrow keys in **Step text**, then choose **Use selected text**; **Entire step** clears the fragment. Empty steps accept whole-step comments only. Enter multiline feedback, for example “Check voltage before flashing”, and choose **Save draft**. Saving does not send a message or start the agent. Cancel or Escape discards unsaved edits and returns focus to Plan.
+
+Draft and submitted counts open the comments for that exact step. **Edit feedback** changes text only; **Delete feedback** removes a draft. Every plan replacement makes earlier anchors stale, even if some text is unchanged. **Needs re-anchor** keeps those drafts readable: choose **Re-anchor**, select a numbered current step, explicitly choose its whole text or a fragment, then **Save re-anchor**. Saved drafts survive closing or switching sessions.
+
+**Review plan** sends the whole current plan and all current, valid drafts as one request in the same chat. The agent can revise the structured plan or ask for clarification, but cannot execute steps, change project files, run programs or commands, or grant permissions during this review. Sending ordinary chat is disabled until it finishes; **Stop** ends only the review, not independent background programs. Read-only permission mode still permits plan revision; archived sessions and read-only workbenches permit viewing only.
+
+**Previous reviews** retains submitted comments, quoted context and outcomes, even after the plan is cleared. If submission fails, drafts stay available. **Retry review** confirms an unknown acknowledgement using the original request, without creating a second review. After a failed, stopped or context-limited accepted review, **Restore feedback** stages missing retry drafts without overwriting edited drafts or changing history. Chat **Retry** does the same. Re-anchor stale drafts and choose **Review plan** again explicitly; restoration never sends a request automatically. Existing conversation context limits still apply.
+
+Privacy or model changes refresh displayed content. An open editor keeps unsaved feedback but hides its old captured quote; explicitly select a current target again before saving a new comment or re-anchor.
 
 ## Bookmarks
 

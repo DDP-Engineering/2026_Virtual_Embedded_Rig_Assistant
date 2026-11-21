@@ -66,9 +66,11 @@ function fixture() {
         indexedAt: null,
       })),
     ),
-    searchDocuments: vi.fn(async () =>
-      rawPaths.map((path) => ({ path, ref: `${path}#L1-L1`, snippet: secrets[0], score: 1 })),
-    ),
+    searchDocuments: vi.fn(async () => ({
+      coverage: "partial",
+      usage: { mode: "keyword" },
+      results: rawPaths.map((path) => ({ path, ref: `${path}#L1-L1`, snippet: secrets[0], score: 1 })),
+    })),
     documentGuard: () => null,
   };
   const display = new DisplayDocuments(
@@ -95,6 +97,94 @@ function fixture() {
   };
 }
 describe("Display boundary", () => {
+  it("masks Git history author, subject and path with the current Display policy before bounding text", () => {
+    const f = fixture();
+    const path = rawPaths[0] as string;
+    f.app(true);
+    f.register("first private line\nsecond private line");
+    expect(typeof f.display.gitHistory).toBe("function");
+    const value = {
+      state: "ready",
+      commits: [
+        {
+          hash: "123456789abc",
+          author: secrets[0] as string,
+          date: "2026-11-20T00:00:00.000Z",
+          subject: `${secrets[1]}\nsecond private line`,
+        },
+      ],
+      capped: false,
+      scopeBoundary: false,
+    } as const;
+    const masked = f.display.gitHistory(id, path, { ...value, commits: [...value.commits] });
+    expect(masked).toMatchObject({
+      displayPath: "docs/[REDACTED].txt",
+      result: { commits: [{ author: "[REDACTED]", subject: "[REDACTED] [REDACTED]" }] },
+    });
+    f.choice("off");
+    expect(f.display.gitHistory(id, path, { ...value, commits: [...value.commits] })).toMatchObject({
+      displayPath: path,
+      result: { commits: [{ author: secrets[0] }] },
+    });
+  });
+
+  it("masks Git source and rename labels and secret fragments inside patch lines", () => {
+    const f = fixture();
+    f.app(true);
+    f.register("private key first\nprivate key second");
+    const [from, to] = rawPaths as [string, string];
+    const result = f.display.gitDiff(id, from, {
+      state: "patch",
+      base: "head",
+      rename: { from, to },
+      patch: `@@ -1 +1 @@\n-${secrets[0]}\n+private key second\n`,
+    });
+    expect(result).toEqual({
+      displayPath: "docs/[REDACTED].txt",
+      result: {
+        state: "patch",
+        base: "head",
+        rename: { from: "docs/[REDACTED].txt", to: "docs/[REDACTED].txt" },
+        patch: "@@ -1 +1 @@\n-[REDACTED]\n+[REDACTED]\n",
+      },
+    });
+    f.choice("off");
+    expect(f.display.gitDiff(id, from, { state: "empty", base: "index" }).displayPath).toBe(from);
+  });
+  it("projects Git status with the same opaque identities and masked rename labels as Files", async () => {
+    const f = fixture();
+    f.app(true);
+    const [source, destination] = rawPaths as [string, string];
+    const status = f.display.gitStatus(id, {
+      state: "ready",
+      branch: { kind: "named", name: secrets[0] as string },
+      entries: [
+        {
+          path: source,
+          staged: "R",
+          unstaged: null,
+          conflict: false,
+          virtual: true,
+          rename: { path: destination, role: "destination" },
+        },
+      ],
+      changed: 1,
+      conflicts: 0,
+    });
+    const tree = await f.display.tree(id, "docs");
+    expect(status).toMatchObject({
+      branch: { name: "[REDACTED]" },
+      entries: [
+        {
+          path: tree.entries[0]?.path,
+          displayPath: "docs/[REDACTED].txt",
+          rename: { path: tree.entries[1]?.path },
+        },
+      ],
+    });
+    for (const secret of secrets) expect(JSON.stringify(status)).not.toContain(secret);
+  });
+
   it("keeps unknown secret-bearing extensions opaque and stable across files and Display choices", async () => {
     const f = fixture();
     f.app(true);
@@ -367,7 +457,7 @@ it("bounds ordinary and session original references before host access", async (
   const head = "notes.md#h=";
   const within = head + "x".repeat(8192 - head.length);
   expect(f.display.resolveRef(id, within)).toBe(within);
-  const ref = within + "x";
+  const ref = `${within}x`;
   const read = vi.fn(async () => ({ ...f.content("notes.md"), ref }));
   await expect(f.display.open(id, read, { ref })).rejects.toMatchObject({ code: "INVALID" });
   await expect(

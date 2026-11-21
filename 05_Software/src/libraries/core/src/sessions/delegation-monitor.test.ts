@@ -114,3 +114,31 @@ it("releases abort and deadline resources when subscription throws", async () =>
     vi.useRealTimers();
   }
 });
+
+it("waits through an approval recorded and resolved synchronously by mode", async () => {
+  let current = view(tool);
+  let notify: SessionListener | undefined;
+  const decided = {
+    type: "approval.decided",
+    approvalId: approval.approvalId,
+    decision: "approved",
+    by: "mode",
+  } as const;
+  const waiting = waitForDelegatedTurn(
+    () => current,
+    (_seq, listener) => {
+      notify = listener;
+      return () => {};
+    },
+    identity,
+    30000,
+    new AbortController().signal,
+  );
+  current = view(tool, approval);
+  notify?.(current.seq, approval);
+  current = view(tool, approval, decided);
+  notify?.(current.seq, decided);
+  current = view(tool, approval, decided, done);
+  notify?.(current.seq, done);
+  expect(await waiting).toMatchObject({ status: "completed", turnId: launch.turnId });
+});

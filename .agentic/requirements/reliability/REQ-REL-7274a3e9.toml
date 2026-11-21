@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-REL-7274a3e9"
+
+title = "Report closed browser pages"
+
+status = "active"
+
+requirement = "If the owned browser tab has closed, Desktop shall return a page-closed error for operations on it."
+
+verification = "Close the owned tab or use a retired tab handle and check the stable error."
+
+affected_paths = ["05_Software/src/apps/desktop/src/main/browser/agent-browser.ts", "05_Software/src/apps/desktop/src/main/browser/host.ts"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/main/browser/agent-browser.test.ts", "05_Software/tests/e2e/browser-agent.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-20
+updated = 2026-11-20

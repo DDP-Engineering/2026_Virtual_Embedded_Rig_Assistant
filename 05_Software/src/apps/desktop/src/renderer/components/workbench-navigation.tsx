@@ -12,6 +12,8 @@ import { WorkbenchActivity } from "./workbench-activity.js";
 export function WorkbenchNavigation({
   entries,
   activeId,
+  activeFolder,
+  indexingStatus,
   disabled,
   settingsLoading,
   open,
@@ -27,6 +29,8 @@ export function WorkbenchNavigation({
 }: {
   entries: RecentWorkbenchState[];
   activeId: string | undefined;
+  activeFolder?: string | undefined;
+  indexingStatus?: ReactNode;
   disabled: boolean;
   settingsLoading: boolean;
   open: (folder: string) => Promise<boolean>;
@@ -174,7 +178,7 @@ export function WorkbenchNavigation({
       )}
       {!entries.length && <p>{t("projects.empty")}</p>}
       {sorted.map((entry) => {
-        const active = entry.id === activeId;
+        const active = entry.id === activeId && (!activeFolder || entry.folder === activeFolder);
         const shown = active && (expanded[entry.folder] ?? true);
         const busy = activityOf(entry);
         return (
@@ -224,6 +228,7 @@ export function WorkbenchNavigation({
                 )}
                 {entry.name}
               </button>
+              {active && indexingStatus}
               {busy && busy.sessions.length > 0 && (
                 <WorkbenchActivity
                   activity={busy}

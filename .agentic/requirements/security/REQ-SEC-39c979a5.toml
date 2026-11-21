@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-SEC-39c979a5"
+title = "Grant origins from an owned chat"
+status = "active"
+requirement = "When the user submits a public HTTP or HTTPS origin in an enabled writable chat, Desktop shall grant it only to that current workbench and session through trusted IPC."
+verification = "Grant a public origin in Chat and reject invalid and foreign requests."
+affected_paths = ["05_Software/src/libraries/shared/src/browser.ts", "05_Software/src/libraries/shared/src/ipc.ts", "05_Software/src/libraries/shared/src/index.ts", "05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/apps/desktop/src/renderer/components/session/browser-controls.tsx", "05_Software/src/apps/desktop/src/preload/bridge.ts"]
+linked_tests = ["05_Software/tests/e2e/browser-controls.spec.ts", "05_Software/src/apps/desktop/src/preload/bridge.test.ts", "05_Software/src/apps/desktop/src/main/ipc-router.test.ts"]
+created = 2026-11-20
+updated = 2026-11-20

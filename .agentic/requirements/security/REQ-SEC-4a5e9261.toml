@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-SEC-4a5e9261"
+
+title = "Deny plan feedback mutations in unwritable or archived sessions"
+
+status = "active"
+
+requirement = "If a plan comment mutation or review submission targets an archived session or a read-only or no-longer-owned workbench, VERA shall reject it with DENIED while preserving existing feedback for reading."
+
+verification = "Attempt create/edit/delete/re-anchor/review after archival, in a read-only workbench and after ownership loss; assert DENIED and unchanged data while reads still succeed, with a writable session in read-only permission mode as the distinct allowed control."
+
+affected_paths = ["05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/apps/desktop/src/main/plan-review.ts", "05_Software/src/apps/desktop/src/main/sessions.ts", "05_Software/src/apps/desktop/src/renderer/App.tsx", "05_Software/src/apps/desktop/src/renderer/components/session/plan-tab.tsx", "05_Software/src/apps/desktop/src/renderer/components/session/plan-feedback.tsx"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/session/plan-feedback.test.ts", "05_Software/src/apps/desktop/src/main/plan-review.test.ts", "05_Software/src/libraries/core/src/sessions/plan-review.test.ts", "05_Software/src/libraries/core/src/sessions/review-turn.test.ts", "05_Software/src/libraries/core/src/sessions/review-recovery.test.ts", "05_Software/src/apps/desktop/src/renderer/components/session/plan-review-retry.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-19
+updated = 2026-11-19

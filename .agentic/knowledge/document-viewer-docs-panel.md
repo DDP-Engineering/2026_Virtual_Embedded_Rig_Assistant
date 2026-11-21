@@ -9,6 +9,7 @@ Start under05_Software at renderer/components/documents (docs-tab.tsx, docs-tree
 tree-properties.tsx, file-actions.tsx), core/workbench/tree.ts and main/openers.ts. Focused tests are
 docs-tree.test.ts, documents.test.ts, core workbench/tree.test.ts, openers.test.ts and
 tests/e2e/{documents,docs-tree}.spec.ts.
+[Files Git status](files-git-status.md) owns the opt-in overlay, Git refresh, virtual rows and scoped comparisons and history through a single Git submenu. A selected menu row starts an exact tracked-path lookup, independently of its ordinary file actions.
 [Document viewer](document-viewer.md) owns the tabs and bodies that rows and hits open;
 [file viewing modes](document-viewer-file-modes.md) owns the mode a file row opens in;
 [Document search](document-search.md) owns retrieval/extraction validity; [ingest](knowledge-ingest.md)
@@ -18,27 +19,34 @@ owns the index queue; [Chat UI](chat-ui.md) owns the attached-entry chips.
 
 The Docs tab lists the whole workbench folder as a tree with index status, searches file names and
 indexed documents from one box and offers OS actions on entries. Core workbench/tree.ts owns the
-confined listing, find and properties; main owns program launches and the clipboard; index progress
-travels through existing workbench events.
+confined listing, find and properties; main owns program launches and the clipboard; the active-lease status arrives through
+a current snapshot and coalesced workbench updates.
 
 ## Public interface
 
 - Docs tab layout (documents/docs-tab.tsx): one search box (`data-docs-search`,
   "Search files and documents", 200 characters), then one `.docs-actions` row with Reindex and
   Collapse all (wrapping only when too narrow; Collapse all is disabled while the box has
-  text), progress, warnings and the tree. While the count guard stops indexing
-  (documents/index-guard.tsx, `data-index-guard`, role alert) it replaces progress and the volume
-  warning with the localized count and limit, the top folders (`data-guard-folder`), Index anyway
+  text), status and the tree. While the count guard stops indexing
+  (documents/index-guard.tsx, `data-index-guard`, role alert), Files shows the localized
+  count and limit, the top folders (`data-guard-folder`), Index anyway
   (docs.approve with the shown count, disabled read-only) and Edit exclusions, which App turns
   into openEditor(active, "documents") (REQ-UX-0c1aea14, REQ-UX-597b7c82). One 250 ms
   debounce feeds both the tree's name filter and docs.search; while the box has text the
   keyword hits render under the tree in an "In documents" section (`data-docs-hits`, with its
   own loading, empty and retry states) (REQ-UX-2504362b, REQ-UX-d455531b).
 - docs.list({workbenchId}) returns scoped document statuses/reasons.
-- docs.search({workbenchId,query}) returns at most20 current keyword hits after deduplicated per-source SHA/status/kind/locator verification and index epoch checks.
+- docs.search({workbenchId,query}) returns the scoped document search metadata and up
+  to 20 keyword hits. One bounded revision check covers ranking and deduplicated
+  per-source SHA/status/kind/locator verification. The results area distinguishes
+  complete no-match results, no matches within a limited index, and temporary unavailability.
 - docs.reindex({workbenchId?}) checks identity/ownership before ingest admission.
-- Docs subscribes to index events, displays status/reasons/progress, searches,
-  opens sources/results and disables Reindex on read-only snapshots.
+- FilesIndexControls and the sidebar subscribe to the same workbench id and activation lease.
+  They merge the latest snapshot into status-only query data. On a new activation App drops
+  file query data for that id, also when the workbench was copied to another folder.
+  Files reports actionable exceptions,
+  includes the count guard and Restart controls, and disables Reindex while stopped or read-only.
+  The document tree uses its existing coalesced refresh for document publication.
 - Docs tree (documents/docs-tree.tsx) lists the whole workbench folder.
   docs.tree({workbenchId,path}) lists one folder (folders first, natural order, at most 5,000
   with `truncated`, links left out); a folder's entries load when it is expanded. Entries the

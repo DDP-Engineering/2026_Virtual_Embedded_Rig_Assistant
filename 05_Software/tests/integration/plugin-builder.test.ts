@@ -131,7 +131,11 @@ it("drafts from CLI help, reviews a trial, approves bypass runs and promotes onl
   });
   closes.push(() => runner.stopAll());
   const enabled: string[] = [];
-  const gateway = new ReplayGateway({ dir: join(base, "replay"), now: () => Date.now() });
+  const gateway = new ReplayGateway({
+    dir: join(base, "replay"),
+    now: () => Date.now(),
+    contextWindow: 131072,
+  });
   await gateway.models("replay", new AbortController().signal);
   let model = "build";
   const service = new SessionService({

@@ -1,40 +1,23 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import type { ProviderList, ProviderSave } from "@vera/shared";
+import { curatedProviderPresets, type ProviderList, type ProviderSave } from "@vera/shared";
 import { useEffect, useId, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../api/index.js";
 import { Chatgpt } from "./chatgpt.js";
 import { ConsentDialog } from "./consent-dialog.js";
+import { CustomEditor, customVersion } from "./custom-provider-editor.js";
 import { ErrorMessage } from "./error-message.js";
 import { LmStudioEditor } from "./lmstudio-editor.js";
-import { ProviderImageSwitch } from "./provider-image-switch.js";
+import { ProviderPresetSelector } from "./provider-preset-selector.js";
 import { ProviderTest } from "./provider-test.js";
 
 type Custom = ProviderList["custom"][number];
-function customVersion(provider: Custom) {
-  return JSON.stringify([
-    provider.id,
-    provider.baseUrl,
-    provider.model,
-    provider.contextWindow,
-    provider.maxOutputTokens,
-    provider.hint,
-    provider.storage,
-    provider.configured,
-  ]);
-}
 type Save = (request: ProviderSave, done: () => void) => Promise<void>;
-type Preset = "openai" | "lmstudio" | "ollama" | "other";
-type Editor = { kind: "new"; preset: Preset } | { kind: "openai" } | { kind: "custom"; provider: Custom };
-const presets = {
-  lmstudio: { name: "LM Studio", url: "http://localhost:1234/v1" },
-  ollama: { name: "Ollama", url: "http://localhost:11434/v1" },
-  other: { name: "", url: "" },
-};
+type Editor = { kind: "new"; preset: string } | { kind: "openai" } | { kind: "custom"; provider: Custom };
+
 export function Providers() {
   const { t } = useTranslation();
   const client = useQueryClient();
-  const prefix = useId();
   const list = useQuery({ queryKey: ["providers.list"], queryFn: () => api.invoke("providers.list", {}) });
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<unknown>();
@@ -104,6 +87,10 @@ export function Providers() {
   const openai = list.data?.openai;
   const hasOpenai = !!(openai?.configured || openai?.model);
   const locked = disabled || !!editing;
+  const newPreset =
+    editing?.kind === "new"
+      ? curatedProviderPresets.find((preset) => preset.id === editing.preset)
+      : undefined;
   return (
     <section className="surface" id="section-providers" data-settings-section="providers">
       <h2 tabIndex={-1}>{t("settings.providers")}</h2>
@@ -175,78 +162,77 @@ export function Providers() {
                   )}
                 </li>
               )}
-              {list.data.custom.map((provider) => (
-                <li key={provider.id} data-provider={provider.id}>
-                  {editing?.kind === "custom" && editing.provider.id === provider.id ? (
-                    provider.protocol === "lmstudio" ? (
-                      <LmStudioEditor initial={provider} disabled={disabled} save={save} close={close} />
+              {list.data.custom.map((provider) => {
+                const curated = curatedProviderPresets.find(({ id }) => id === provider.preset?.id);
+                const binding = curated?.bindings.find(({ id }) => id === provider.preset?.binding);
+                return (
+                  <li key={provider.id} data-provider={provider.id}>
+                    {editing?.kind === "custom" && editing.provider.id === provider.id ? (
+                      provider.protocol === "lmstudio" ? (
+                        <LmStudioEditor initial={provider} disabled={disabled} save={save} close={close} />
+                      ) : (
+                        <CustomEditor
+                          key={provider.id}
+                          initial={provider}
+                          preset="other"
+                          curated={curated}
+                          disabled={disabled}
+                          save={save}
+                          close={close}
+                          remove={() => void remove(provider.id as `custom:${string}`)}
+                        />
+                      )
                     ) : (
-                      <CustomEditor
-                        key={provider.id}
-                        initial={provider}
-                        preset="other"
-                        disabled={disabled}
-                        save={save}
-                        close={close}
-                        remove={() => void remove(provider.id as `custom:${string}`)}
-                      />
-                    )
-                  ) : (
-                    <>
-                      <div>
-                        <h4>{provider.name}</h4>
-                        <p>{provider.model}</p>
-                        <CredentialStatus provider={provider} keyOptional />
-                      </div>
-                      <ProviderTest
-                        name={provider.name}
-                        id={provider.id as `custom:${string}`}
-                        version={customVersion(provider)}
-                        disabled={pending || !!editing}
-                        before={
-                          <button
-                            type="button"
-                            disabled={locked}
-                            aria-label={t("providers.editNamed", { name: provider.name })}
-                            onClick={() => setEditing({ kind: "custom", provider })}
-                          >
-                            {t("providers.edit")}
-                          </button>
-                        }
-                        after={
-                          <button
-                            type="button"
-                            disabled={locked}
-                            aria-label={t("providers.removeNamed", { name: provider.name })}
-                            onClick={() => void remove(provider.id as `custom:${string}`)}
-                          >
-                            {t("providers.remove")}
-                          </button>
-                        }
-                      />
-                    </>
-                  )}
-                </li>
-              ))}
+                      <>
+                        <div>
+                          <h4>{provider.name}</h4>
+                          {curated && (curated.label !== provider.name || binding?.label) && (
+                            <p>{[curated.label, binding?.label].filter(Boolean).join(" · ")}</p>
+                          )}
+                          <p>{provider.model}</p>
+                          <CredentialStatus provider={provider} keyOptional={!provider.preset} />
+                        </div>
+                        <ProviderTest
+                          name={provider.name}
+                          id={provider.id as `custom:${string}`}
+                          version={customVersion(provider)}
+                          disabled={pending || !!editing || !provider.configured}
+                          before={
+                            <button
+                              type="button"
+                              disabled={locked}
+                              aria-label={t("providers.editNamed", { name: provider.name })}
+                              onClick={() => setEditing({ kind: "custom", provider })}
+                            >
+                              {t("providers.edit")}
+                            </button>
+                          }
+                          after={
+                            <button
+                              type="button"
+                              disabled={locked}
+                              aria-label={t("providers.removeNamed", { name: provider.name })}
+                              onClick={() => void remove(provider.id as `custom:${string}`)}
+                            >
+                              {t("providers.remove")}
+                            </button>
+                          }
+                        />
+                      </>
+                    )}
+                  </li>
+                );
+              })}
             </ul>
             {editing?.kind === "new" ? (
               <section className="provider-card" data-provider-add>
                 <h4>{t("providers.add")}</h4>
-                <label htmlFor={`${prefix}-preset`}>{t("providers.provider")}</label>
-                <select
-                  id={`${prefix}-preset`}
-                  data-provider-preset
+                <ProviderPresetSelector
                   value={editing.preset}
+                  change={(preset) => setEditing({ kind: "new", preset })}
                   disabled={disabled}
-                  onChange={(event) => setEditing({ kind: "new", preset: event.target.value as Preset })}
-                >
-                  <option value="openai" disabled={hasOpenai}>
-                    {t("providers.openai")}
-                  </option>
-                  <option value="lmstudio">LM Studio</option>
-                  <option value="ollama">Ollama</option>
-                  <option value="other">{t("providers.other")}</option>
-                </select>
+                  hasOpenai={hasOpenai}
+                />
                 {editing.preset === "openai" ? (
                   <OpenAIEditor
                     key="openai"
@@ -262,7 +248,8 @@ export function Providers() {
                 ) : (
                   <CustomEditor
                     key={editing.preset}
-                    preset={editing.preset}
+                    preset={editing.preset === "ollama" ? "ollama" : "other"}
+                    curated={newPreset}
                     initial={null}
                     disabled={disabled}
                     save={save}
@@ -402,205 +389,6 @@ function OpenAIEditor({
           <div className="workbench-actions">
             {submit}
             {cancel}
-          </div>
-        )}
-      </fieldset>
-    </form>
-  );
-}
-function CustomEditor({
-  initial,
-  preset,
-  remove,
-  disabled,
-  save,
-  close,
-}: {
-  initial: Custom | null;
-  preset: Exclude<Preset, "openai">;
-  remove: () => void;
-  disabled: boolean;
-  save: Save;
-  close: () => void;
-}) {
-  const { t } = useTranslation();
-  const prefix = useId();
-  const [name, setName] = useState(initial?.name ?? presets[preset].name);
-  const [url, setUrl] = useState(initial?.baseUrl ?? presets[preset].url);
-  const [model, setModel] = useState(initial?.model ?? "");
-  const [imageModels, setImageModels] = useState(initial?.imageModels ?? []);
-  const [context, setContext] = useState(String(initial?.contextWindow ?? 32768));
-  const [output, setOutput] = useState(String(initial?.maxOutputTokens ?? 4096));
-  const [waitSeconds, setWaitSeconds] = useState(String(initial?.responseTimeoutSeconds ?? 300));
-  const [key, setKey] = useState("");
-  const [clear, setClear] = useState(false);
-  function done() {
-    setKey("");
-    close();
-  }
-  return (
-    <form
-      aria-label={t("providers.custom")}
-      className="workbench-form provider-editor"
-      data-provider-editor="custom"
-      onSubmit={(event) => {
-        event.preventDefault();
-        void save(
-          {
-            provider: "custom",
-            ...(initial ? { id: initial.id as `custom:${string}` } : {}),
-            config: {
-              name,
-              baseUrl: url,
-              model,
-              contextWindow: Number(context),
-              maxOutputTokens: Number(output),
-              responseTimeoutSeconds: Number(waitSeconds),
-              imageModels,
-            },
-            ...(clear ? { apiKey: "" } : key ? { apiKey: key } : {}),
-          },
-          done,
-        );
-      }}
-    >
-      {initial && (
-        <h4>
-          {t("providers.edit")} — {initial.name}
-        </h4>
-      )}
-      <fieldset disabled={disabled} className="provider-fields">
-        <label htmlFor={`${prefix}-name`}>{t("providers.name")}</label>
-        <input
-          id={`${prefix}-name`}
-          value={name}
-          onChange={(event) => setName(event.target.value)}
-          required
-          maxLength={80}
-        />
-        <label htmlFor={`${prefix}-url`}>{t("providers.baseUrl")}</label>
-        <input
-          id={`${prefix}-url`}
-          type="url"
-          value={url}
-          onChange={(event) => setUrl(event.target.value)}
-          required
-          maxLength={2048}
-        />
-        <label htmlFor={`${prefix}-model`}>{t("providers.model")}</label>
-        <input
-          id={`${prefix}-model`}
-          value={model}
-          onChange={(event) => setModel(event.target.value)}
-          required
-          maxLength={200}
-        />
-        <ProviderImageSwitch model={model.trim()} imageModels={imageModels} setImageModels={setImageModels} />
-        <label htmlFor={`${prefix}-context`}>{t("providers.contextWindow")}</label>
-        <input
-          id={`${prefix}-context`}
-          type="number"
-          min={1}
-          step={1}
-          value={context}
-          onChange={(event) => setContext(event.target.value)}
-          required
-        />
-        <label htmlFor={`${prefix}-output`}>{t("providers.maxOutput")}</label>
-        <input
-          id={`${prefix}-output`}
-          type="number"
-          min={1}
-          step={1}
-          value={output}
-          onChange={(event) => setOutput(event.target.value)}
-          required
-        />
-        <label htmlFor={`${prefix}-timeout`}>{t("providers.responseTimeout")}</label>
-        <input
-          id={`${prefix}-timeout`}
-          type="number"
-          min={10}
-          max={3600}
-          step={1}
-          value={waitSeconds}
-          onChange={(event) => setWaitSeconds(event.target.value)}
-          required
-        />
-        <label htmlFor={`${prefix}-key`}>{t("providers.endpointKey")}</label>
-        <input
-          id={`${prefix}-key`}
-          type="password"
-          autoComplete="off"
-          spellCheck={false}
-          value={key}
-          onChange={(event) => {
-            setKey(event.target.value);
-            setClear(false);
-          }}
-          disabled={clear}
-          maxLength={16384}
-        />
-        <p className="muted">{t("providers.optionalKey")}</p>
-        {initial?.storage && (
-          <label className="provider-checkbox">
-            <input
-              type="checkbox"
-              checked={clear}
-              onChange={(event) => {
-                setClear(event.target.checked);
-                setKey("");
-              }}
-            />
-            {t("providers.clearKey")}
-          </label>
-        )}
-        {initial ? (
-          <ProviderTest
-            name={initial.name}
-            id={initial.id as `custom:${string}`}
-            version={customVersion(initial)}
-            disabled={
-              disabled ||
-              name !== initial.name ||
-              url !== initial.baseUrl ||
-              model !== initial.model ||
-              Number(context) !== initial.contextWindow ||
-              Number(output) !== initial.maxOutputTokens ||
-              Number(waitSeconds) !== (initial.responseTimeoutSeconds ?? 300) ||
-              !!key ||
-              clear
-            }
-            before={
-              <button type="submit" data-provider-action="save-custom">
-                {t("providers.save")}
-              </button>
-            }
-            after={
-              <>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setKey("");
-                    remove();
-                  }}
-                >
-                  {t("providers.remove")}
-                </button>
-                <button type="button" onClick={done}>
-                  {t("providers.cancel")}
-                </button>
-              </>
-            }
-          />
-        ) : (
-          <div className="workbench-actions">
-            <button type="submit" data-provider-action="save-custom">
-              {t("providers.save")}
-            </button>
-            <button type="button" onClick={done}>
-              {t("providers.cancel")}
-            </button>
           </div>
         )}
       </fieldset>

@@ -1361,7 +1361,7 @@ legend {
   display: grid;
   gap: 0.75rem;
 }
-.plan-list li {
+.plan-list > li {
   display: flex;
   align-items: flex-start;
   gap: 0.5rem;
@@ -1373,7 +1373,7 @@ legend {
   flex-shrink: 0;
   margin-top: 0.1rem;
 }
-.plan-list li > div {
+.plan-list > li > div {
   min-width: 0;
 }
 .plan-text {
@@ -1384,6 +1384,61 @@ legend {
   display: block;
   font-size: 0.875rem;
   color: var(--muted-foreground);
+}
+.plan-actions,
+.plan-live-actions {
+  display: flex;
+  align-items: start;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-block: 0.5rem;
+}
+.plan-comments {
+  padding-inline-start: 1rem;
+}
+.plan-comments li {
+  margin-block: 1rem;
+}
+.plan-feedback-text,
+.plan-comments blockquote,
+.plan-comment-dialog blockquote {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.plan-comments blockquote,
+.plan-comment-dialog blockquote {
+  margin-inline: 0;
+  border-inline-start: 0.2rem solid var(--muted-foreground);
+  padding-inline-start: 0.5rem;
+}
+.plan-comment-dialog {
+  width: min(40rem, calc(100vw - 2rem));
+  max-height: calc(100dvh - 2rem);
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+.plan-editor-heading {
+  position: sticky;
+  top: 0;
+  background: var(--background);
+  z-index: 1;
+}
+.plan-comment-dialog textarea {
+  width: 100%;
+  min-height: 6rem;
+  max-height: 40dvh;
+  resize: vertical;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.plan-comment-dialog label {
+  display: grid;
+  min-width: 0;
+  gap: 0.4rem;
+  margin-block: 0.75rem;
+}
+.plan-review-history {
+  margin-block: 1rem;
 }
 /* Bookmarks tab: fixed controls above a list that scrolls on its own. */
 .bookmarks-tab {
@@ -1545,6 +1600,46 @@ legend {
 .source-current {
   gap: 0.6rem;
   padding: 0.75rem 1.5rem 1rem;
+}
+.patch-document {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-height: 0;
+  overflow: auto;
+}
+.patch-document header {
+  overflow-wrap: anywhere;
+}
+.patch-document .approval-diff {
+  max-height: none;
+  min-height: 3rem;
+  flex: 1;
+}
+.git-history {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  overflow-wrap: anywhere;
+}
+.git-history header p,
+.git-history li div {
+  color: var(--muted-foreground);
+}
+.git-history ol {
+  list-style: none;
+  padding: 0;
+}
+.git-history li {
+  padding: 0.5rem 0;
+  border-block-end: 1px solid var(--border);
+}
+.git-history li div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.75rem;
+  font-size: 0.9em;
 }
 .overview-storage {
   display: flex;
@@ -1831,6 +1926,49 @@ legend {
   flex: 0 0 2.25rem;
   height: 2.25rem;
   padding: 0.25rem;
+}
+.git-status {
+  display: grid;
+  gap: 0.35rem;
+}
+.git-toolbar,
+.git-info {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.6rem;
+}
+.git-toolbar button {
+  min-height: 2rem;
+  padding: 0.25rem 0.55rem;
+}
+.git-toolbar svg {
+  width: 1rem;
+  height: 1rem;
+}
+.git-filter[aria-pressed="true"] {
+  border-color: var(--primary);
+  box-shadow: inset 0 0 0 1px var(--primary);
+}
+.git-info {
+  color: var(--muted-foreground);
+  font-size: 0.85em;
+}
+.git-branch {
+  overflow-wrap: anywhere;
+}
+.git-badge {
+  flex: none;
+  padding: 0 0.25em;
+  border: 1px solid currentColor;
+  border-radius: 0.25rem;
+  color: inherit;
+  font-size: 0.82em;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.tree-row[data-git-virtual="true"][data-tree-type="file"] .tree-name {
+  font-style: italic;
 }
 .docs-index-status {
   font-size: 0.85em;
@@ -2933,6 +3071,10 @@ legend {
 .composer-tools button svg {
   width: 1.15rem;
   height: 1.15rem;
+}
+.composer-tools button[data-listening] {
+  color: var(--destructive);
+  border-color: var(--destructive);
 }
 .composer-tools .send-control {
   color: var(--background);
@@ -4563,6 +4705,49 @@ legend {
     opacity: 1;
   }
 }
+
+.workbench-group-heading > .workbench-index-status {
+  position: relative;
+  flex: 0 0 auto;
+  padding: 0.25rem;
+  color: var(--muted-foreground);
+}
+.workbench-index-status svg,
+.retrieval-notice svg {
+  width: 1rem;
+  height: 1rem;
+}
+.workbench-index-tooltip {
+  display: none;
+  position: fixed;
+  z-index: 15;
+  width: max-content;
+  max-width: min(15rem, 42vw);
+  padding: 0.4rem 0.55rem;
+  border: 1px solid var(--border);
+  border-radius: 0.4rem;
+  background: var(--popover);
+  color: var(--popover-foreground);
+  white-space: normal;
+  text-align: start;
+}
+.workbench-index-status:is(:hover, :focus-visible) .workbench-index-tooltip {
+  display: block;
+}
+.docs-index-status p {
+  margin: 0 0 0.25rem;
+}
+.retrieval-notice {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  color: var(--muted-foreground);
+}
+.retrieval-notice svg {
+  flex: 0 0 auto;
+  align-self: center;
+}
+
 /* Advanced settings: label, timing icon, value with the inherited placeholder, Reset (ADV-01). */
 .advanced-settings {
   display: grid;

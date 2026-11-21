@@ -1,6 +1,27 @@
 version: Unreleased
 date: null
 entries:
+  - category: new
+    topic: { en: Plan, ro: Plan, de: Plan, fr: Plan }
+    text:
+      en: Comment on steps or text, then request a plan-only revision; failed reviews keep feedback.
+      ro: Comentează pași sau fragmente și cere revizuirea fără execuție; feedbackul se păstrează.
+      de: Schritte oder Text kommentieren; nur den Plan prüfen, ohne Ausführung; Feedback bleibt.
+      fr: Commentez étapes ou texte, puis révisez le plan sans l’exécuter ; les commentaires restent.
+  - category: fixed
+    topic: { en: Workbench, ro: Workbench, de: Workbench, fr: Banc de travail }
+    text:
+      en: Closing a workbench reports when its internal folder has been redirected.
+      ro: La închidere, VERA semnalează dacă folderul intern al workbench-ului a fost redirecționat.
+      de: Beim Schließen meldet VERA, wenn der interne Ordner der Workbench umgeleitet wurde.
+      fr: À la fermeture, VERA signale si le dossier interne du banc de travail a été redirigé.
+  - category: new
+    topic: { en: Dictation, ro: Dictare, de: Diktat, fr: Dictée }
+    text:
+      en: Download a Whisper model and dictate offline into your chat draft with the mic or a shortcut.
+      ro: Descarcă un model Whisper și dictează offline în chat cu microfonul sau o comandă rapidă.
+      de: Whisper-Modell laden und offline per Mikrofon oder Tastenkombination in den Chat diktieren.
+      fr: Téléchargez un modèle Whisper et dictez hors ligne dans le chat avec le micro ou un raccourci.
   - category: improved
     topic: { en: Chat, ro: Chat, de: Chat, fr: Chat }
     text:
@@ -9,12 +30,12 @@ entries:
       de: Antworten und Code kopieren; Ausführen meidet hängende Terminals sowie leere oder zu lange Blöcke.
       fr: Copiez réponses ou code ; Exécuter évite les terminaux bloqués et le code vide ou trop long.
   - category: new
-    topic: { en: Images, ro: Imagini, de: Bilder, fr: Images }
+    topic: { en: Models and images, ro: Modele și imagini, de: Modelle und Bilder, fr: Modèles et images }
     text:
-      en: Attach and reopen chat images. Set image support per model so the agent can inspect them.
-      ro: Atașează și redeschide imagini în chat. Alege modelele cu care agentul le poate examina.
-      de: Chatbilder anhängen und öffnen. Wählen Sie die Modelle, mit denen der Agent Bilder prüfen kann.
-      fr: Joignez et rouvrez des images. Choisissez les modèles avec lesquels l’agent peut les examiner.
+      en: More APIs and plans, including Hugging Face, NVIDIA NIM and Vercel AI Gateway. Images per model.
+      ro: Noi servicii și planuri, cu Hugging Face, NVIDIA NIM și Vercel AI Gateway. Imagini per model.
+      de: Mehr Dienste und Tarife, auch Hugging Face, NVIDIA NIM und Vercel AI Gateway. Bilder je Modell.
+      fr: Plus de services et d’offres, dont Hugging Face, NVIDIA NIM et Vercel AI Gateway. Images par modèle.
   - category: fixed
     topic: { en: Skills, ro: Skills, de: Skills, fr: Compétences }
     text:
@@ -46,17 +67,17 @@ entries:
   - category: fixed
     topic: { en: Terminal, ro: Terminal, de: Terminal, fr: Terminal }
     text:
-      en: Terminal text follows the code/output text size setting immediately and refits the terminal.
-      ro: Textul terminalului urmează imediat dimensiunea pentru cod/ieșire și recalculează rândurile.
-      de: Terminaltext folgt sofort der Schriftgröße für Code/Ausgabe und passt Zeilen und Spalten an.
-      fr: Le terminal suit immédiatement la taille du texte de code/sortie et ajuste lignes et colonnes.
+      en: Terminal refits with text size, shows clean history and closes without spurious errors.
+      ro: Terminalul se adaptează la mărimea textului, arată istoricul curat și se închide fără erori false.
+      de: Terminal passt sich der Textgröße an, zeigt sauberen Verlauf und schließt ohne Fehlalarm.
+      fr: Le terminal suit la taille du texte, affiche un historique propre et se ferme sans fausse erreur.
   - category: fixed
     topic: { en: Files, ro: Fișiere, de: Dateien, fr: Fichiers }
     text:
-      en: Files uses icons beside search, compact indexing progress and expandable failure details.
-      ro: Fișiere are pictograme lângă căutare, progres compact și detalii extensibile pentru erori.
-      de: Dateien bietet Symbole neben der Suche, kompakten Indexfortschritt und aufklappbare Fehlerdetails.
-      fr: Fichiers regroupe les icônes près de la recherche, la progression et les détails des échecs.
+      en: Files has toolbar icons, compact index progress, expandable errors, and limited-search feedback.
+      ro: Fișiere arată pictograme, progres compact, erori extensibile și când căutarea e limitată.
+      de: Dateien zeigt Symbole, kompakten Fortschritt, aufklappbare Fehler und eingeschränkte Suche.
+      fr: Fichiers indique la recherche limitée, avec icônes, progression compacte et échecs dépliables.
   - category: improved
     topic: { en: Interface, ro: Interfață, de: Oberfläche, fr: Interface }
     text:
@@ -64,13 +85,6 @@ entries:
       ro: Panouri compacte, carduri de rulare clare, chat centrat și tabul Instrucțiuni și skill-uri.
       de: Kompakte Panels, klare Laufkarten, zentrierter Chat und der Tab Anweisungen und Skills.
       fr: Panneaux compacts, exécutions lisibles, chat centré et onglet Instructions et compétences.
-  - category: fixed
-    topic: { en: Terminal, ro: Terminal, de: Terminal, fr: Terminal }
-    text:
-      en: Terminal history avoids control characters; closing no longer shows a missing-operation error.
-      ro: Istoricul nu mai introduce caractere de control; închiderea terminalului nu mai afișează erori.
-      de: Keine Steuerzeichen beim Anzeigen des Verlaufs und keine Fehlermeldung beim Schließen.
-      fr: Plus de caractères de contrôle dans l’historique ni d’erreur à la fermeture du terminal.
   - category: fixed
     topic: { en: Commands, ro: Comenzi, de: Befehle, fr: Commandes }
     text:
@@ -81,17 +95,10 @@ entries:
   - category: new
     topic: { en: Files, ro: Fișiere, de: Dateien, fr: Fichiers }
     text:
-      en: Rendered, Text or Hex per extension. Zoom to 400%. In Hex, jump, find and copy bytes or text.
-      ro: Randat, Text sau Hex pe extensie. Zoom 400%. În Hex, sari, caută și copiază octeți sau text.
-      de: Gerendert, Text, Hex je Endung. Zoom bis 400 %. In Hex springen, Text und Bytes suchen und kopieren.
-      fr: Rendu, Texte, Hex par extension. Zoom 400 %. En Hex, sauts, recherche et copie de texte ou d’octets.
-  - category: new
-    topic: { en: Files, ro: Fișiere, de: Dateien, fr: Fichiers }
-    text:
-      en: Switch local models per workbench. Both models are included for offline search.
-      ro: Schimbă modelul local pe workbench. Ambele modele sunt incluse pentru căutare offline.
-      de: Wechseln Sie das Modell je Workbench. Beide Modelle sind für die Offline-Suche enthalten.
-      fr: Changez de modèle par banc. Les deux modèles sont inclus pour la recherche hors ligne.
+      en: Rendered, Text and Hex views; zoom to 400%; byte search/copy and extension defaults.
+      ro: Moduri Randat, Text și Hex; zoom la 400%; căutare/copiere octeți și mod pe extensie.
+      de: Gerendert, Text, Hex; Zoom bis 400 %; Bytes suchen/kopieren; Vorgabe je Dateityp.
+      fr: Vues Rendu, Texte et Hex ; zoom à 400 %, recherche/copie d’octets et choix par extension.
   - category: improved
     topic: { en: Files, ro: Fișiere, de: Dateien, fr: Fichiers }
     text:
@@ -109,17 +116,10 @@ entries:
   - category: fixed
     topic: { en: Privacy, ro: Confidențialitate, de: Datenschutz, fr: Confidentialité }
     text:
-      en: Agent and export masking now follow their own app and workbench choices.
-      ro: Mascarea agentului și a exporturilor respectă alegerile aplicației și ale workbench-ului.
-      de: Agenten- und Exportmaskierung folgen nun ihren eigenen App- und Workbench-Einstellungen.
-      fr: Le masquage de l’agent et des exports suit leurs choix propres dans l’application et le banc.
-  - category: fixed
-    topic: { en: Files, ro: Fișiere, de: Dateien, fr: Fichiers }
-    text:
-      en: Display masking keeps secret-named files visible and opens their original contents.
-      ro: Mascarea afișării păstrează fișierele cu nume secrete vizibile și le deschide corect.
-      de: Die Anzeigemaskierung lässt Dateien mit geheimen Namen sichtbar und öffnet sie korrekt.
-      fr: Le masquage garde visibles les fichiers aux noms secrets et ouvre leur contenu correct.
+      en: Masking follows each area's choices; secret-named files stay visible and open correctly.
+      ro: Mascarea respectă alegerile fiecărei zone; fișierele cu nume secrete rămân vizibile și se deschid.
+      de: Maskierung folgt der Wahl je Bereich; Dateien mit geheimen Namen bleiben sichtbar und öffnen sich.
+      fr: Le masquage suit chaque zone ; les fichiers aux noms secrets restent visibles et s’ouvrent bien.
   - category: fixed
     topic: { en: Commands, ro: Comenzi, de: Befehle, fr: Commandes }
     text:
@@ -130,17 +130,24 @@ entries:
   - category: new
     topic: { en: Terminal, ro: Terminal, de: Terminal, fr: Terminal }
     text:
-      en: Use interactive terminal tabs; allow agent reads separately for each terminal.
-      ro: Folosește terminale interactive; permite citirea de către agent separat pentru fiecare.
-      de: Interaktive Terminal-Tabs nutzen; Agentenlesezugriff für jedes Terminal separat erlauben.
-      fr: Utilisez des terminaux interactifs ; autorisez la lecture par l’agent pour chacun.
+      en: Use interactive terminal tabs and choose the shell and agent read access for each tab.
+      ro: Folosește terminale interactive și alege shell-ul și accesul agentului pentru fiecare filă.
+      de: Interaktive Terminal-Tabs nutzen und Shell und Agentenlesezugriff je Tab wählen.
+      fr: Utilisez des terminaux interactifs et choisissez le shell et l’accès de l’agent pour chacun.
+  - category: improved
+    topic: { en: Files, ro: Fișiere, de: Dateien, fr: Fichiers }
+    text:
+      en: Git status, diff and file history tabs. Indexing follows Git ignore rules and explains limits.
+      ro: Stare Git, file de comparație și istoric. Indexarea aplică excluderile Git și explică limitele.
+      de: Git-Status, Diff- und Verlaufstabs. Die Indizierung beachtet Git-Ignore und erklärt Größenlimits.
+      fr: État Git, onglets de comparaison et d’historique. L’index suit les exclusions Git et ses limites.
   - category: new
     topic: { en: Workbench, ro: Workbench, de: Workbench, fr: Banc de travail }
     text:
-      en: Indexing honors Git ignore, explains size skips and holds large selections until you confirm.
-      ro: Indexarea respectă Git ignore, explică omiterile de mărime și cere confirmare la selecții mari.
-      de: Indizierung beachtet Git Ignore, begründet Größen-Auslassungen und fragt bei großer Auswahl.
-      fr: L’indexation suit Git ignore, explique les exclusions de taille et confirme les grandes sélections.
+      en: Indexing status, approval for large selections, and offline search models per workbench.
+      ro: Stare indexare, aprobare pentru selecții mari și modele de căutare offline pe workbench.
+      de: Indexstatus, Freigabe großer Auswahlen und Offline-Suchmodelle je Workbench.
+      fr: État de l’index, validation des grandes sélections et modèles de recherche hors ligne par banc.
   - category: new
     topic: { en: Sessions, ro: Sesiuni, de: Sitzungen, fr: Sessions }
     text:
@@ -158,24 +165,17 @@ entries:
   - category: new
     topic: { en: Sessions, ro: Sesiuni, de: Sitzungen, fr: Sessions }
     text:
-      en: "Bookmark messages. Agents delegate inspections and use results. Follow or stop them in Desktop."
-      ro: "Marchează mesaje. Agenții deleagă verificări și folosesc rezultate. Urmărește-le sau oprește-le."
-      de: "Lesezeichen setzen. Agenten delegieren Prüfungen und werten sie aus. Läufe verfolgen oder stoppen."
-      fr: "Ajoutez des signets. Les agents délèguent et utilisent les résultats. Suivez ou arrêtez les tâches."
+      en: "Continue delegated chats and authorize Full Access launches. Bookmark and control browsing."
+      ro: "Continuă chaturile delegate și autorizează acces complet. Gestionează marcaje și navigarea."
+      de: "Delegierte Chats fortsetzen und Vollzugriff erlauben. Lesezeichen setzen und Surfen steuern."
+      fr: "Poursuivez les chats délégués, autorisez l’accès complet, gérez les signets et la navigation."
   - category: improved
     topic: { en: Sessions, ro: Sesiuni, de: Sitzungen, fr: Sessions }
     text:
-      en: Bookmark shortcuts and exports; Verbose shows send time. Context summaries survive restarts.
-      ro: Scurtături și export de marcaje; Verbose arată ora trimiterii. Rezumatele rămân după repornire.
-      de: Lesezeichenkürzel und -export; Sendezeit im Detailchat. Zusammenfassungen bleiben nach Neustart.
-      fr: Raccourcis et export de signets ; heure d’envoi en mode détaillé ; résumés gardés au redémarrage.
-  - category: improved
-    topic: { en: Sessions, ro: Sesiuni, de: Sitzungen, fr: Sessions }
-    text:
-      en: "Changes: paged list and resizable diff pane. Chat: one working indicator below the input."
-      ro: "Modificări: listă paginată și diff redimensionabil. Chat: un singur indicator sub câmp."
-      de: "Änderungen: Seiten und skalierbare Diff-Ansicht. Chat: eine Statusanzeige unter der Eingabe."
-      fr: "Modifications : liste paginée, diff ajustable. Chat : un seul indicateur sous la saisie."
+      en: "Bookmark keys/export, send times, saved summaries, paged Changes, split diff and one chat status."
+      ro: "Taste/export marcaje, ora trimiterii, rezumate salvate, Modificări paginate, diff separat, o stare."
+      de: "Lesezeichentasten, Export, Sendezeit, Kurzfassungen, Änderungsseiten, geteilte Diff-Ansicht, Status."
+      fr: "Raccourcis/export signets, heure d’envoi, résumés, modifs paginées, diff séparé, un état de chat."
   - category: improved
     topic: { en: Permissions, ro: Permisiuni, de: Berechtigungen, fr: Autorisations }
     text:
@@ -183,13 +183,6 @@ entries:
       ro: "Confirmă Bypass: programe și intrări externe; ieșirea oprește rulările. Datele VERA rămân blocate."
       de: "Bypass bestätigen: externe Tools und Eingaben; Ende stoppt Läufe. VERA-Daten bleiben gesperrt."
       fr: "Confirmez le contournement : accès externe ; quitter arrête les tâches. Données VERA bloquées."
-  - category: new
-    topic: { en: Commands, ro: Comenzi, de: Befehle, fr: Commandes }
-    text:
-      en: Run and monitor commands; choose an installed shell, including Cmd and Git Bash, or a custom path.
-      ro: Rulează și urmărește comenzi; alege un shell instalat, inclusiv Cmd și Git Bash, sau o cale proprie.
-      de: Befehle ausführen und verfolgen; installierte Shell wie Cmd oder Git Bash oder eigenen Pfad wählen.
-      fr: Exécutez et suivez les commandes ; choisissez Cmd, Git Bash, un shell installé ou un chemin.
   - category: improved
     topic: { en: Permissions, ro: Permisiuni, de: Berechtigungen, fr: Autorisations }
     text:

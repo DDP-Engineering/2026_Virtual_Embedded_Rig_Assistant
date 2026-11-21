@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-SEC-5f675c2f"
+
+title = "Isolate plan review from ordinary queued steering"
+
+status = "active"
+
+requirement = "If an ordinary send attempts to join an active plan review, VERA shall reject it with BUSY instead of admitting steering that could mix revision-only and execution-capable work."
+
+verification = "Hold a review before and after a plan tool call and attempt ordinary sends asking to execute steps; assert BUSY and no queued/delivered message, including sends during historical compaction and review finalization."
+
+affected_paths = ["05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/apps/desktop/src/main/sessions.ts", "05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/apps/desktop/src/renderer/components/session/workspace.tsx", "05_Software/src/apps/desktop/src/renderer/components/session/composer.tsx"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/mocks/plan-feedback.test.ts", "05_Software/src/libraries/core/src/sessions/review-turn.test.ts", "05_Software/src/libraries/core/src/sessions/review-boundary.test.ts", "05_Software/src/apps/desktop/src/main/plan-review.test.ts", "05_Software/src/apps/desktop/src/renderer/components/session/plan-review-retry.test.ts"]
+
+
+spec = "specs/REQ-DATA-fa8543aa.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-19
+updated = 2026-11-19

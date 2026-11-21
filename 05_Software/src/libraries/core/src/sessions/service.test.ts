@@ -66,8 +66,9 @@ it("reads a session without re-validating each stored event and leaves corrupt r
   const update = handle.db.prepare("UPDATE events SET payload_json=? WHERE session_id=? AND seq=?");
   update.run(JSON.stringify({ type: "session.updated", title: 42 }), s.id, rows.at(-1)?.seq);
   expect(sessionStateSchema.safeParse(service.get(s.id).snapshot).success).toBe(false);
-  // A row that is not JSON makes the handler throw, which the router also maps to INTERNAL.
-  update.run("{", s.id, rows.at(-1)?.seq);
+  // A row that is not JSON makes the handler throw, which the router also maps to INTERNAL. SQLite's JSON5
+  // parser accepts this text for the turn-outcome index; JSON.parse does not.
+  update.run("{broken:1}", s.id, rows.at(-1)?.seq);
   expect(() => service.get(s.id)).toThrow(SyntaxError);
 });
 // REQ-FUNC-acaeb296 REQ-SEC-bde59b0b
@@ -389,6 +390,38 @@ async function setup(extra: Partial<core.SessionHost> = {}) {
   });
   return { root, handle, host, service, gateway };
 }
+it("withholds browser tools if access changes before the session gateway sends the request", async () => {
+  let granted = true;
+  let wasOffered = false;
+  const { service, gateway } = await setup({
+    browser: () => ({ available: () => granted, execute: async () => ({ closed: true }) }),
+    runtime: (host) =>
+      new core.ReferenceRuntime({
+        ...host,
+        gateway: {
+          ...host.gateway,
+          stream(request) {
+            wasOffered ||= request.tools.some(({ name }) => name === "browser_open");
+            granted = false;
+            return host.gateway.stream(request);
+          },
+        },
+      }),
+  });
+  const dispatched: string[][] = [];
+  const original = gateway.stream.bind(gateway);
+  gateway.stream = (request) => {
+    dispatched.push(request.tools.map(({ name }) => name));
+    return original(request);
+  };
+  const session = service.create();
+  service.send(session.id, "Read the board");
+  expect(await service.waitIdle(session.id)).toEqual({ stopReason: "end" });
+  expect(wasOffered).toBe(true);
+  expect(dispatched[0]).toContain("web_read");
+  expect(dispatched.flat().filter((name) => name.startsWith("browser_"))).toEqual([]);
+});
+
 // REQ-FUNC-2e1261c2
 it("validates and opens a cited line range inside the read window", async () => {
   const { service } = await setup({ model: () => "replay/read-then-cite-range" });
@@ -848,7 +881,10 @@ it("recovery keeps the other sessions when one has a damaged message or event ro
   expect(messages.list(damaged.id).map((r) => r.content_json)).toEqual(["{"]);
   // A damaged event log: that session stays as stored, the other one still recovers.
   for (const s of [damaged, healthy]) run.run(s.id);
-  handle.db.prepare("UPDATE events SET payload_json='{' WHERE session_id=? AND seq=1").run(damaged.id);
+  // JSON5 that the turn-outcome index accepts and JSON.parse refuses.
+  handle.db
+    .prepare("UPDATE events SET payload_json='{broken:1}' WHERE session_id=? AND seq=1")
+    .run(damaged.id);
   const status = (id: string) => new core.SessionService(host).list().find((s) => s.id === id)?.status;
   expect(status(healthy.id)).toBe("idle");
   expect(status(damaged.id)).toBe("running");

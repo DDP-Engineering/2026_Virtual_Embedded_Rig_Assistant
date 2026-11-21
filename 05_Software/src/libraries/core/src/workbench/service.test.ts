@@ -7,11 +7,19 @@ import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import Database from "better-sqlite3";
-import { afterEach, beforeAll, expect, it } from "vitest";
+import { afterEach, beforeAll, expect, it, vi } from "vitest";
 import { electricalModelPlugin, electricalToolOffered } from "../electrical/tools.js";
+import type { EmbeddingPort } from "../knowledge/embedding.js";
+import type { DocumentProcessor } from "../knowledge/ingest.js";
 import { createDocumentProcessor } from "../knowledge/processor.js";
+import { selectDocuments } from "../knowledge/selection.js";
+import { DocumentViewer } from "../knowledge/viewer.js";
+import { ReplayGateway } from "../llm/replay.js";
+import { scrub } from "../llm/scrub.js";
 import { PluginStore } from "../plugins/store.js";
+import { SessionService } from "../sessions/service.js";
 import { SettingsService } from "../settings/service.js";
+import { SkillCatalog } from "../skills/catalog.js";
 import { DocumentsRepository } from "../storage/repos/documents.js";
 import { acquireGuard } from "./guard.js";
 import { createIgnoreRules } from "./ignore.js";
@@ -66,6 +74,77 @@ async function harness() {
   };
   return { root, folder, host, events, settings, paths, service: new WorkbenchService(host) };
 }
+
+it("reads fresh validated config without catalog discovery while getConfig retains warnings", async () => {
+  const h = await harness();
+  try {
+    const { config } = await h.service.create(h.folder, "Initial");
+    const fresh = { ...config, name: "Fresh disk name", plugins: { enabled: ["ghost"] } };
+    await writeFile(join(h.folder, ".vera/workbench.yaml"), JSON.stringify(fresh));
+    const names = vi.spyOn(SkillCatalog.prototype, "names"),
+      ids = vi.spyOn(PluginStore.prototype, "ids"),
+      load = vi.spyOn(PluginStore.prototype, "load");
+    try {
+      const read = await h.service.readConfig();
+      expect(read).toEqual(fresh);
+      expect(h.service.getSnapshot().config).toEqual(fresh);
+      expect(names).not.toHaveBeenCalled();
+      expect(ids).not.toHaveBeenCalled();
+      expect(load).not.toHaveBeenCalled();
+      const ordinary = await h.service.getConfig();
+      expect(ordinary.config).toEqual(read);
+      expect(ordinary.warnings).toContainEqual({ code: "UNKNOWN_NAME", path: "plugins.enabled.ghost" });
+      expect(names).toHaveBeenCalledOnce();
+      expect(ids).toHaveBeenCalled();
+      expect(load).toHaveBeenCalled();
+    } finally {
+      for (const spy of [names, ids, load]) spy.mockRestore();
+    }
+  } finally {
+    await h.service.close();
+  }
+});
+
+it("rejects invalid and changed-identity current config without changing the snapshot", async () => {
+  const h = await harness();
+  await expect(h.service.readConfig()).rejects.toMatchObject({ code: "NOT_FOUND" });
+  try {
+    const snapshot = await h.service.create(h.folder, "Valid");
+    const path = join(h.folder, ".vera/workbench.yaml");
+    for (const [config, code] of [
+      [{ ...snapshot.config, format: 2 }, "INVALID"],
+      [{ ...snapshot.config, name: 123 }, "INVALID"],
+      [{ ...snapshot.config, id: "wb_01J00000000000000000000001" }, "CONFLICT"],
+    ] as const) {
+      await writeFile(path, JSON.stringify(config));
+      await expect(h.service.readConfig()).rejects.toMatchObject({ code });
+      expect(h.service.getSnapshot()).toEqual(snapshot);
+    }
+  } finally {
+    await h.service.close();
+  }
+  await expect(h.service.readConfig()).rejects.toMatchObject({ code: "NOT_FOUND" });
+});
+
+// The Windows development host lacks the privilege needed for file symlinks.
+it.skipIf(process.platform === "win32")(
+  "rejects file-symlink current config without changing the snapshot",
+  async () => {
+    const h = await harness();
+    try {
+      const snapshot = await h.service.create(h.folder, "Valid");
+      const path = join(h.folder, ".vera/workbench.yaml");
+      const outside = join(h.root, "outside.yaml");
+      await writeFile(outside, JSON.stringify(snapshot.config));
+      await rm(path);
+      await symlink(outside, path);
+      await expect(h.service.readConfig()).rejects.toMatchObject({ code: "DENIED" });
+      expect(h.service.getSnapshot()).toEqual(snapshot);
+    } finally {
+      await h.service.close();
+    }
+  },
+);
 
 it("validates both registered embedding model IDs in workbench YAML", () => {
   const yaml = "format: 1\nid: wb_01JB8Z6Q4M7N2K5R9T3V8X1Y0C\nname: Board\nembeddings:\n  model: ";
@@ -317,14 +396,18 @@ it("rejects a 101st user command grant with a typed error", async () => {
     await h.service.close();
   }
 });
-it("persists right-panel tabs per workbench across fresh service instances without changing content", async () => {
+it("persists interface preferences per workbench across fresh service instances without changing content", async () => {
   const h = await harness();
   let service = h.service;
   try {
     const first = await service.create(h.folder, "First");
     await service.updatePinned("Keep instructions");
     await writeFile(join(h.folder, "source.txt"), "Keep source");
-    await service.updateConfig({ interface: { right_panel_tabs: ["docs", "plan"] } }, first.config.id);
+    expect(first.config.interface.git_status).toBe(false);
+    await service.updateConfig(
+      { interface: { right_panel_tabs: ["docs", "plan"], git_status: true } },
+      first.config.id,
+    );
     await service.updateConfig({ name: "Renamed" });
     await service.close();
     service = new WorkbenchService(h.host);
@@ -334,10 +417,12 @@ it("persists right-panel tabs per workbench across fresh service instances witho
       config: { interface: { right_panel_tabs: [] } },
     });
     expect(second.config.interface.right_panel_tabs).toEqual([]);
+    expect(second.config.interface.git_status).toBe(false);
     await service.close();
     service = new WorkbenchService(h.host);
     const reopened = await service.open(h.folder);
     expect(reopened.config.interface.right_panel_tabs).toEqual(["docs", "plan"]);
+    expect(reopened.config.interface.git_status).toBe(true);
     expect(reopened.config.agent).toEqual(first.config.agent);
     expect(reopened.config.tools).toEqual(first.config.tools);
     expect((await service.getPinned()).content).toBe("Keep instructions");
@@ -635,6 +720,249 @@ it("scopes document reads and reindex to identity/current ownership and serializ
     await h.service.close();
   }
 });
+function deferred() {
+  let resolve = () => {};
+  const promise = new Promise<void>((done) => {
+    resolve = done;
+  });
+  return { promise, resolve };
+}
+
+it("replays a hybrid search and citation while the live workbench publishes more documents", async () => {
+  const h = await harness();
+  const scanning = deferred();
+  const select = deferred();
+  const followup = deferred();
+  let selections = 0;
+  const middleStarted = deferred();
+  const middle = deferred();
+  const lastStarted = deferred();
+  const last = deferred();
+  const rankStarted = deferred();
+  const rankResume = deferred();
+  const embeddings: EmbeddingPort = {
+    modelId: "partial-fixture",
+    embed: async (_root, texts) =>
+      texts.map(() => Float32Array.from({ length: 384 }, (_, index) => Number(index === 0))),
+    rank: async (_root, _key, rows) =>
+      (typeof rows === "function" ? rows() : (rows ?? [])).map(({ id }) => ({ id, score: 1 })),
+    release: async () => {},
+  };
+  const generate = createDocumentProcessor(async () => ({ kind: "pdf", pages: [] }), embeddings);
+  const process: DocumentProcessor = async (input) => {
+    if (input.path === "docs/b.txt") {
+      middleStarted.resolve();
+      await middle.promise;
+    }
+    if (input.path === "docs/c.txt") {
+      lastStarted.resolve();
+      await last.promise;
+    }
+    return generate(input);
+  };
+  process.select = async (input) => {
+    if (++selections === 1) {
+      scanning.resolve();
+      await select.promise;
+    } else {
+      await followup.promise;
+    }
+    return selectDocuments(input);
+  };
+  const workbench = new WorkbenchService(h.host, process);
+  let session: SessionService | undefined;
+  let indexing: Promise<void> | undefined;
+  try {
+    await mkdir(join(h.folder, "docs"));
+    await writeFile(
+      join(h.folder, "docs/a.txt"),
+      "PUBLISHED_TOKEN powers the board. usage partial hybrid fake-search-secret\n",
+    );
+    await writeFile(join(h.folder, "docs/b.txt"), "Concurrent publication.\n");
+    await writeFile(join(h.folder, "docs/c.txt"), "PENDING_TOKEN has not published.\n");
+    const { config } = await workbench.create(h.folder, "Partial docs");
+    const db = workbench.getDatabase();
+    const phase = () => workbench.documentIndexPhase(config.id, db);
+    indexing = workbench.reindexDocuments();
+    await scanning.promise;
+    expect(phase()).toBe("scanning");
+    expect(await workbench.searchDocuments(config.id, "PENDING_TOKEN")).toMatchObject({
+      coverage: "partial",
+      usage: { mode: null, reason: "index-not-ready" },
+      results: [],
+    });
+    select.resolve();
+    await middleStarted.promise;
+    expect(phase()).toBe("indexing");
+    expect(await workbench.searchDocuments(config.id, "PENDING_TOKEN")).toMatchObject({
+      coverage: "partial",
+      usage: { mode: "keyword" },
+      results: [],
+    });
+
+    const scripts = join(h.root, "scripts");
+    await mkdir(scripts);
+    await writeFile(
+      join(scripts, "ingest.jsonl"),
+      [
+        JSON.stringify({ toolCalls: [{ name: "search_docs", args: { query: "PUBLISHED_TOKEN" } }] }),
+        JSON.stringify({ text: "The board is powered [[docs/a.txt#L1-L1]]." }),
+      ].join("\n"),
+    );
+    const rank = embeddings.rank.bind(embeddings);
+    const ranking = vi.spyOn(embeddings, "rank").mockImplementationOnce(async (...args) => {
+      const hits = await rank(...args);
+      rankStarted.resolve();
+      await rankResume.promise;
+      return hits;
+    });
+    session = new SessionService({
+      db,
+      root: h.folder,
+      embeddings,
+      documentIndexPhase: phase,
+      scrub: (text) => scrub(text, ["usage", "partial", "hybrid", "fake-search-secret"]),
+      gateway: new ReplayGateway({ dir: scripts, now: () => Date.now() }),
+      clock: { now: () => new Date(), sleep: async () => {} },
+      model: () => "replay/ingest",
+      prompt: () => "system",
+    });
+    await session.waitReady();
+    const created = session.create();
+    await session.send(created.id, "Find the board power source");
+    await rankStarted.promise;
+    middle.resolve();
+    await lastStarted.promise;
+    rankResume.resolve();
+    expect(await session.waitIdle(created.id)).toEqual({ stopReason: "end" });
+    expect(ranking).toHaveBeenCalledTimes(2);
+    const saved = session.get(created.id).snapshot;
+    const raw = JSON.stringify(saved);
+    expect(raw).toContain('"valid":true');
+    expect(raw).toContain("docs/a.txt#L1-L1");
+    const tool = saved.items.find((item) => item.kind === "tool" && item.name === "search_docs");
+    expect(tool).toMatchObject({
+      kind: "tool",
+      status: "ok",
+      documentSearch: { coverage: "partial", usage: { mode: "hybrid" } },
+    });
+    expect(raw).not.toContain("fake-search-secret");
+    expect(raw).toContain("[REDACTED]");
+    expect(JSON.parse(tool && "summary" in tool ? (tool.summary ?? "") : "")).toMatchObject({
+      coverage: "partial",
+      usage: { mode: "hybrid" },
+      results: [{ ref: "docs/a.txt#L1-L1" }, { ref: "docs/b.txt#L1-L1" }],
+    });
+    expect(new DocumentsRepository(db).get("docs/c.txt")?.status).toBe("pending");
+
+    workbench.refreshDocuments();
+    last.resolve();
+    await indexing;
+    expect(phase()).toBe("scanning");
+    followup.resolve();
+    await expect.poll(phase, { timeout: 5000 }).toBe("settled");
+    expect(await workbench.searchDocuments(config.id, "NO_MATCH_TOKEN")).toMatchObject({
+      coverage: "complete",
+      usage: { mode: "keyword" },
+      results: [],
+    });
+    expect(session.get(created.id).snapshot).toEqual(saved);
+    await session.close();
+    session = undefined;
+    const sibling = join(h.root, "other-bench");
+    await mkdir(sibling);
+    const other = await workbench.create(sibling, "Other docs");
+    expect(phase).toThrow(expect.objectContaining({ code: "CONFLICT" }));
+    await expect(workbench.searchDocuments(config.id, "PUBLISHED_TOKEN")).rejects.toMatchObject({
+      code: "CONFLICT",
+    });
+    expect(await workbench.searchDocuments(other.config.id, "PUBLISHED_TOKEN")).toMatchObject({
+      results: [],
+    });
+  } finally {
+    select.resolve();
+    followup.resolve();
+    middle.resolve();
+    last.resolve();
+    rankResume.resolve();
+    await indexing?.catch(() => {});
+    await session?.close();
+    await workbench.close();
+    await h.settings.close();
+  }
+}, 15_000);
+
+it("retries Files source validation and reports repeated publication as unavailable", async () => {
+  const h = await harness();
+  try {
+    const { config } = await h.service.create(h.folder, "Files conflicts");
+    const db = h.service.getDatabase();
+    const rows = new DocumentsRepository(db);
+    const root = h.folder;
+    const processor = createDocumentProcessor(async () => ({ kind: "pdf", pages: [] }));
+    const signal = new AbortController().signal;
+    await mkdir(join(root, "docs"));
+    const publish = async (path: string, text: string) => {
+      await writeFile(join(root, path), text);
+      const sha256 = createHash("sha256").update(text).digest("hex");
+      const result = await processor({ root, path, sha256, kind: "text", signal, assertWritable: () => {} });
+      db.transaction(() => {
+        const row = rows.save({
+          path,
+          sha256,
+          kind: "text",
+          bytes: Buffer.byteLength(text),
+          mtime: new Date().toISOString(),
+          pages: null,
+          status: "indexed",
+          error: null,
+          indexedAt: null,
+        });
+        rows.replaceChunks(row.id, result.chunks ?? [], result.derived);
+      })();
+    };
+    await publish("docs/a.txt", "MATCH_TOKEN old");
+    const currentBounds = DocumentViewer.prototype.currentBounds;
+    const bounds = vi.spyOn(DocumentViewer.prototype, "currentBounds").mockImplementationOnce(async function (
+      this: DocumentViewer,
+      ...args
+    ) {
+      const current = await currentBounds.apply(this, args);
+      rows.remove("docs/a.txt");
+      await publish("docs/b.txt", "MATCH_TOKEN new");
+      return current;
+    });
+    await expect(h.service.searchDocuments(config.id, "MATCH_TOKEN")).resolves.toMatchObject({
+      results: [{ ref: "docs/b.txt#L1-L1", snippet: "MATCH_TOKEN new" }],
+      usage: { mode: "keyword" },
+    });
+    expect(bounds).toHaveBeenCalledTimes(2);
+    bounds.mockClear().mockImplementation(async function (this: DocumentViewer, ...args) {
+      const current = await currentBounds.apply(this, args);
+      db.prepare("UPDATE meta SET value=CAST(value AS INTEGER)+1 WHERE key='keyword_epoch'").run();
+      return current;
+    });
+    await expect(h.service.searchDocuments(config.id, "MATCH_TOKEN")).resolves.toMatchObject({
+      results: [],
+      coverage: "unknown",
+      usage: { mode: null, reason: "revision-conflict" },
+    });
+    expect(bounds).toHaveBeenCalledTimes(3);
+    const controller = new AbortController();
+    const reason = Error("Files search cancelled");
+    bounds.mockClear().mockImplementationOnce(async function (this: DocumentViewer, ...args) {
+      const current = await currentBounds.apply(this, args);
+      controller.abort(reason);
+      return current;
+    });
+    await expect(h.service.searchDocuments(config.id, "MATCH_TOKEN", controller.signal)).rejects.toBe(reason);
+    expect(bounds).toHaveBeenCalledTimes(1);
+  } finally {
+    vi.restoreAllMocks();
+    await h.service.close();
+  }
+});
+
 // REQ-FUNC-4b36dede
 it("lists up to the resolved Docs panel results", async () => {
   const h = await harness();
@@ -669,9 +997,9 @@ it("lists up to the resolved Docs panel results", async () => {
     });
     rows.replaceChunks(doc.id, result.chunks ?? [], result.derived);
     expect((result.chunks ?? []).length).toBeGreaterThanOrEqual(30);
-    expect(await h.service.searchDocuments(opened.config.id, "MANY_HITS_TOKEN")).toHaveLength(20);
+    expect((await h.service.searchDocuments(opened.config.id, "MANY_HITS_TOKEN")).results).toHaveLength(20);
     await h.service.updateConfig({ advanced: { docsResults: 60 } });
-    expect(await h.service.searchDocuments(opened.config.id, "MANY_HITS_TOKEN")).toHaveLength(30);
+    expect((await h.service.searchDocuments(opened.config.id, "MANY_HITS_TOKEN")).results).toHaveLength(30);
   } finally {
     await h.service.close();
   }
@@ -708,23 +1036,25 @@ it("Docs search verifies current source hash/status/kind/locator and rejects edi
       indexedAt: null,
     });
     rows.replaceChunks(doc.id, result.chunks ?? [], result.derived);
-    expect(await h.service.searchDocuments(opened.config.id, "CURRENT_DOC_TOKEN123")).toHaveLength(2);
+    expect((await h.service.searchDocuments(opened.config.id, "CURRENT_DOC_TOKEN123")).results).toHaveLength(
+      2,
+    );
     await writeFile(join(h.folder, path), "# Supply\nChanged source\n");
-    expect(await h.service.searchDocuments(opened.config.id, "CURRENT_DOC_TOKEN123")).toEqual([]);
+    expect((await h.service.searchDocuments(opened.config.id, "CURRENT_DOC_TOKEN123")).results).toEqual([]);
     await writeFile(join(h.folder, "replacement.md"), "# Replacement\nDifferent bytes\n");
     await rename(join(h.folder, "replacement.md"), join(h.folder, path));
-    expect(await h.service.searchDocuments(opened.config.id, "CURRENT_DOC_TOKEN123")).toEqual([]);
+    expect((await h.service.searchDocuments(opened.config.id, "CURRENT_DOC_TOKEN123")).results).toEqual([]);
     await writeFile(join(h.folder, path), text);
     rows.save({ ...doc, status: "pending" });
-    expect(await h.service.searchDocuments(opened.config.id, "CURRENT_DOC_TOKEN123")).toEqual([]);
+    expect((await h.service.searchDocuments(opened.config.id, "CURRENT_DOC_TOKEN123")).results).toEqual([]);
     const binary = Buffer.from([0, 1, 2, 3]);
     await writeFile(join(h.folder, path), binary);
     rows.save({ ...doc, sha256: createHash("sha256").update(binary).digest("hex"), bytes: binary.length });
-    expect(await h.service.searchDocuments(opened.config.id, "CURRENT_DOC_TOKEN123")).toEqual([]);
+    expect((await h.service.searchDocuments(opened.config.id, "CURRENT_DOC_TOKEN123")).results).toEqual([]);
     await writeFile(join(h.folder, path), text);
     rows.save(doc);
     await writeFile(join(h.folder, ".vera/.veraignore"), `${path}\n`);
-    expect(await h.service.searchDocuments(opened.config.id, "CURRENT_DOC_TOKEN123")).toEqual([]);
+    expect((await h.service.searchDocuments(opened.config.id, "CURRENT_DOC_TOKEN123")).results).toEqual([]);
   } finally {
     await h.service.close();
   }
@@ -764,11 +1094,11 @@ it("Docs search lists hits from a headingless docx with its #h= ref and drops th
       indexedAt: null,
     });
     rows.replaceChunks(doc.id, result.chunks ?? [], result.derived);
-    expect(await h.service.searchDocuments(opened.config.id, "SWD clock")).toMatchObject([
+    expect((await h.service.searchDocuments(opened.config.id, "SWD clock")).results).toMatchObject([
       { ref: "docs/notes.docx#h=", path },
     ]);
     await writeFile(join(h.folder, path), bytes.subarray(0, bytes.length - 1));
-    expect(await h.service.searchDocuments(opened.config.id, "SWD clock")).toEqual([]);
+    expect((await h.service.searchDocuments(opened.config.id, "SWD clock")).results).toEqual([]);
   } finally {
     await h.service.close();
   }
@@ -921,7 +1251,19 @@ it("live owner opens a WAL snapshot readonly and leaves source bytes intact, abs
   const files = ["vera.db", "vera.db-wal", "vera.db-shm", "lock"];
   const before = await Promise.all(files.map((f) => readFile(join(h.folder, ".vera", f))));
   const reader = new WorkbenchService({ ...h.host, pid: process.pid + 1 });
-  expect((await reader.open(h.folder)).readOnly).toBe(true);
+  const snapshot = await reader.open(h.folder);
+  expect(snapshot.readOnly).toBe(true);
+  expect(reader.documentIndexPhase(snapshot.config.id, reader.getDatabase())).toBe("read-only");
+  expect(reader.documentIndexStatus(snapshot.config.id, reader.getSnapshot().indexLease)).toMatchObject({
+    state: "read-only",
+    progress: null,
+  });
+
+  expect(await reader.searchDocuments(snapshot.config.id, "missing")).toEqual({
+    coverage: "unknown",
+    usage: { mode: null, reason: "index-not-ready" },
+    results: [],
+  });
   expect(reader.getDatabase().prepare("SELECT x FROM data").pluck().get()).toBe(123);
   expect(() => reader.getDatabase().exec("INSERT INTO data VALUES (1)")).toThrow();
   await reader.close();

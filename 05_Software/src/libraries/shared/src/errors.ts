@@ -1,4 +1,8 @@
 import { z } from "zod";
+export const providerRetryAfterSchema = z
+  .string()
+  .max(64)
+  .regex(/^(?:\d+|[A-Za-z]{3}, \d{2} [A-Za-z]{3} \d{4} \d{2}:\d{2}:\d{2} GMT)$/);
 export const veraErrorSchema = z.strictObject({
   code: z.enum([
     "INVALID",

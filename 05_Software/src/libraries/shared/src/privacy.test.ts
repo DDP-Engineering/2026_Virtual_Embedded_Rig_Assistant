@@ -25,6 +25,9 @@ it("carries masking preferences through settings and workbench IPC contracts", (
     channels["workbench.config.get"].response.parse({
       config: { ...workbench, ...benchPatch },
       warnings: [],
+      folder: "/repo",
+      readOnly: false,
+      indexLease: 1,
     }),
   ).toHaveProperty("config.privacy", benchPatch.privacy);
   for (const privacy of [{ mask: { typo: true } }, { mask: { agent: "invalid" } }]) {

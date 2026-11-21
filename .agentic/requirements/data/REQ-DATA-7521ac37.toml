@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-DATA-7521ac37"
+title = "Persist opt-in Git status"
+status = "active"
+requirement = "When a workbench saves the Files Git status preference, Desktop shall persist its value in that workbench with a default of off."
+verification = "Save true, reopen the workbench, and open another workbench with the default."
+affected_paths = ["05_Software/src/libraries/shared/src/workbench.ts", "05_Software/src/apps/desktop/src/renderer/components/workbench-interface.tsx", "05_Software/src/apps/desktop/src/renderer/components/workbench-create.tsx", "05_Software/src/apps/desktop/src/renderer/components/workbench-editor.tsx", "05_Software/src/apps/desktop/src/main/events.ts"]
+linked_tests = ["05_Software/src/libraries/shared/src/workbench.test.ts","05_Software/src/apps/desktop/src/renderer/components/workbench-interface.test.ts","05_Software/src/libraries/core/src/workbench/service.test.ts"]
+created = 2026-11-21
+updated = 2026-11-21

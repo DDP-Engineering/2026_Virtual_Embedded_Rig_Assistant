@@ -20,7 +20,7 @@ const wait = () =>
   });
 
 it("reloads the lists once after a burst of index.document events, and never after unmount", async () => {
-  await api.invoke("workbench.open", { folder: "/mock/demo-board" });
+  const { indexLease } = await api.invoke("workbench.open", { folder: "/mock/demo-board" });
   const handlers: ((event: unknown) => void)[] = [];
   const subscribe = api.subscribe.bind(api);
   vi.spyOn(api, "subscribe").mockImplementation(((topic: string, ...rest: unknown[]) => {
@@ -47,7 +47,7 @@ it("reloads the lists once after a burst of index.document events, and never aft
           createElement(
             DocumentViewerProvider,
             { workbenchId: id },
-            createElement(DocsTab, { workbenchId: id, readOnly: false }),
+            createElement(DocsTab, { workbenchId: id, indexLease, readOnly: false }),
           ),
         ),
       ),

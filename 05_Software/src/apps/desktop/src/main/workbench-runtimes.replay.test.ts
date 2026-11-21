@@ -115,7 +115,7 @@ async function startTurn(sessions: SessionsHost): Promise<string> {
 }
 
 async function completion(sessions: SessionsHost, id: string) {
-  const { done } = await sessions.run((service) => ({ done: service.waitIdle(id) }), false);
+  const { done } = await sessions.run((service) => ({ done: service.waitIdle(id) }), { purpose: "metadata" });
   return done;
 }
 
@@ -162,7 +162,7 @@ it("keeps a held turn through failed opens, a return to its workbench and a reop
   const a = runtimes.foreground;
   const sessionA = await startTurn(a.sessions);
   await held.reached;
-  const service = await a.sessions.run((current) => current, false);
+  const service = await a.sessions.run((current) => current, { purpose: "metadata" });
   await expect(runtimes.open(join(root, "nowhere"))).rejects.toMatchObject({ code: "NOT_FOUND" });
   await expect(runtimes.open(folders.plain)).rejects.toMatchObject({ code: "NOT_FOUND" });
   expect(runtimes.foreground).toBe(a);
@@ -175,7 +175,7 @@ it("keeps a held turn through failed opens, a return to its workbench and a reop
   expect(stopped).toEqual([folders.b]);
   await runtimes.open(folders.a);
   expect(runtimes.foreground).toBe(a);
-  expect(await a.sessions.run((current) => current, false)).toBe(service);
+  expect(await a.sessions.run((current) => current, { purpose: "metadata" })).toBe(service);
   const done = completion(a.sessions, sessionA);
   held.release();
   expect(await done).toEqual({ stopReason: "end" });

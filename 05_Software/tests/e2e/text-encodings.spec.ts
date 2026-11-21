@@ -80,6 +80,11 @@ async function acceptance(page: Page, platform: string) {
   const found = await geometry(1375);
   // Width and font changes invalidate heights, keeping the visible source anchor navigable.
   await page.setViewportSize({ width: 1100, height: 780 });
+  // Let the resize reach the viewer's ResizeObserver first: a search in the same frame is settled and then
+  // re-anchored to the top row by the late invalidation, which no user can do.
+  await page.evaluate(
+    () => new Promise<void>((done) => requestAnimationFrame(() => requestAnimationFrame(() => done()))),
+  );
   await panel.locator("[data-document-search]").fill("Source 1400 ");
   await expect
     .poll(async () => {

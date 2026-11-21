@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-REL-e048aed0"
+
+title = "Deduplicate repeated plan review submissions"
+
+status = "active"
+
+requirement = "If the same logical plan review submission is invoked repeatedly or retried after an unknown acknowledgement, VERA shall resolve it to at most one admitted session request without duplicating its feedback or model turn."
+
+verification = "Double-click before rendering a pending state, invoke concurrent copies and lose the first acknowledgement after commit; retry the same submission before and after service/database reopen and count exactly one durable request/turn and one captured comment batch."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/session/plan-feedback.test.ts", "05_Software/src/apps/desktop/src/renderer/components/session/plan-comment-editor.tsx", "05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/libraries/shared/src/plan-review.ts", "05_Software/src/libraries/shared/src/ipc.ts", "05_Software/src/apps/desktop/src/main/plan-review.ts", "05_Software/src/apps/desktop/src/renderer/components/session/plan-feedback.tsx"]
+
+linked_tests = ["05_Software/src/libraries/core/src/sessions/review-turn.test.ts", "05_Software/src/libraries/core/src/sessions/review-boundary.test.ts", "05_Software/src/apps/desktop/src/main/plan-review.test.ts", "05_Software/src/apps/desktop/src/renderer/components/session/plan-feedback.test.ts", "05_Software/tests/e2e/plan-review.spec.ts"]
+
+
+spec = "specs/REQ-DATA-fa8543aa.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-19
+updated = 2026-11-19

@@ -55,27 +55,81 @@ export class DelegationsRepository {
       .all(parentId) as DelegationChildRow[];
   }
 
-  /** Read initial outcomes in one query without replaying child transcripts on every Desktop poll. */
+  bypassParents(): Set<string> {
+    const parents = this.db
+      .prepare("SELECT parent_session_id FROM session_delegation_bypass")
+      .pluck()
+      .all() as string[];
+    return new Set(parents);
+  }
+
+  bypassLaunchAuthorized(parentId: string): boolean {
+    return !!this.db
+      .prepare("SELECT 1 FROM session_delegation_bypass WHERE parent_session_id=?")
+      .get(parentId);
+  }
+
+  setBypassLaunch(parentId: string, authorized: boolean): void {
+    if (authorized)
+      this.db.prepare("INSERT OR IGNORE INTO session_delegation_bypass VALUES (?)").run(parentId);
+    else this.db.prepare("DELETE FROM session_delegation_bypass WHERE parent_session_id=?").run(parentId);
+  }
+
+  mutation(parentId: string, requestId: string) {
+    return this.db
+      .prepare(
+        "SELECT request_hash,result_json FROM session_delegation_requests WHERE parent_session_id=? AND request_id=?",
+      )
+      .get(parentId, requestId) as { request_hash: string; result_json: string } | undefined;
+  }
+
+  recordMutation(parentId: string, requestId: string, hash: string, result: object): void {
+    this.db
+      .prepare("INSERT INTO session_delegation_requests VALUES (?,?,?,?)")
+      .run(parentId, requestId, hash, JSON.stringify(result));
+  }
+
+  /** Resolve model/reasoning changes without scanning unrelated conversation events. */
+  configurationRevision(id: string): number {
+    const row = this.db
+      .prepare(`SELECT seq FROM events WHERE session_id=? AND type='session.updated'
+        AND (json_type(payload_json,'$.modelRef') IS NOT NULL OR json_type(payload_json,'$.reasoning') IS NOT NULL)
+        ORDER BY seq DESC LIMIT 1`)
+      .get(id) as { seq: number } | undefined;
+    return row?.seq ?? 0;
+  }
+
+  start(id: string, turnId: string) {
+    return this.db
+      .prepare(`SELECT json_extract(payload_json,'$.messageId') AS messageId FROM events
+        WHERE session_id=? AND type='turn.started' AND json_extract(payload_json,'$.turnId')=?`)
+      .get(id, turnId) as { messageId: string | null } | undefined;
+  }
+
+  /** Read latest outcomes through the turn indexes without replaying child transcripts. */
   outcomes() {
     const rows = this.db
       .prepare(
-        `SELECT d.child_session_id, d.parent_session_id,
+        `SELECT d.child_session_id, d.parent_session_id, json_extract(s.payload_json,'$.turnId') AS turn_id,
         (SELECT CASE WHEN e.type='session.interrupted' THEN 'interrupted'
           ELSE json_extract(e.payload_json,'$.stopReason') END
          FROM events e WHERE e.session_id=d.child_session_id
           AND e.type IN ('session.interrupted','turn.done')
-          AND json_extract(e.payload_json,'$.turnId')=d.turn_id
+          AND json_extract(e.payload_json,'$.turnId')=json_extract(s.payload_json,'$.turnId')
          ORDER BY e.seq LIMIT 1) AS outcome
-       FROM session_delegations d WHERE d.child_session_id IS NOT NULL`,
+       FROM session_delegations d JOIN events s ON s.session_id=d.child_session_id AND s.seq=(
+         SELECT seq FROM events WHERE session_id=d.child_session_id AND type='turn.started' ORDER BY seq DESC LIMIT 1
+       )`,
       )
-      .all() as { child_session_id: string; parent_session_id: string; outcome: unknown }[];
+      .all() as { child_session_id: string; parent_session_id: string; turn_id: string; outcome: unknown }[];
     return new Map(
       rows.map(
-        ({ child_session_id, parent_session_id, outcome }) =>
+        ({ child_session_id, parent_session_id, turn_id, outcome }) =>
           [
             child_session_id,
             {
               parentSessionId: parent_session_id,
+              turnId: turn_id,
               outcome:
                 outcome === null || outcome === "interrupted" ? outcome : stopReasonSchema.parse(outcome),
             },

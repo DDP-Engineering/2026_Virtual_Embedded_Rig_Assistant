@@ -5,6 +5,7 @@ import { useQueries, useQuery } from "@tanstack/react-query";
 import {
   type DocsTreeEntry,
   type DocumentRecord,
+  type GitStatusEntry,
   rasterExtension,
   veraError,
   WORKBENCH_IMAGE_DRAG,
@@ -15,6 +16,9 @@ import { useTranslation } from "react-i18next";
 import { api } from "../../api/index.js";
 import { ErrorMessage } from "../error-message.js";
 import { useFileActions } from "./file-actions.js";
+import { gitMenu } from "./git-diff-menu.js";
+import { GitBadges } from "./git-status.js";
+import { byTreeName, type FileTreeEntry, gitFolders, gitTree } from "./git-tree.js";
 import { TreeMenu, type TreeMenuItem } from "./tree-menu.js";
 import { TreeProperties } from "./tree-properties.js";
 import { useDocumentViewer } from "./viewer-context.js";
@@ -48,9 +52,6 @@ export function folderSummaries(documents: readonly Pick<DocumentRecord, "path" 
   }
   return summaries;
 }
-const collator = new Intl.Collator("en", { numeric: true, sensitivity: "base" });
-const byName = (a: DocsTreeEntry, b: DocsTreeEntry) =>
-  a.type === b.type ? collator.compare(a.name, b.name) : a.type === "folder" ? -1 : 1;
 /** The entries of each folder from a filter's matching file paths; every folder is open. */
 function filteredFolders(
   paths: readonly string[],
@@ -75,7 +76,7 @@ function filteredFolders(
       if (folder && !folders.has(entryPath)) folders.set(entryPath, new Map());
     }
   }
-  return new Map([...folders].map(([path, entries]) => [path, [...entries.values()].sort(byName)]));
+  return new Map([...folders].map(([path, entries]) => [path, [...entries.values()].sort(byTreeName)]));
 }
 const storageKey = (workbenchId: string) => `vera.docs.tree.${workbenchId}`;
 function loadExpanded(workbenchId: string): Set<string> {
@@ -102,7 +103,8 @@ export function useTreeExpansion(workbenchId: string): TreeExpansion {
   };
   return { expanded, save };
 }
-type Row = DocsTreeEntry & { level: number; parent: string; expanded: boolean };
+type Row = FileTreeEntry & { level: number; parent: string; expanded: boolean };
+const canActOnDisk = (entry: FileTreeEntry) => !entry.gitVirtual && !entry.unverified;
 
 /**
  * The workbench folder as a tree in Docs (TASK-66b7d4aa): folders load their entries when
@@ -117,6 +119,9 @@ export function DocsTree({
   describe,
   query,
   expansion,
+  gitEntries,
+  gitLease,
+  gitChangesOnly = false,
 }: {
   workbenchId: string;
   documents: readonly DocumentRecord[];
@@ -125,14 +130,18 @@ export function DocsTree({
   /** The Docs search box's debounced text; empty shows the browsing tree. */
   query: string;
   expansion: TreeExpansion;
+  gitEntries?: GitStatusEntry[] | undefined;
+  gitLease?: number | undefined;
+  gitChangesOnly?: boolean;
 }) {
   const { t } = useTranslation();
   const open = useDocumentViewer();
   const byPath = useMemo(() => new Map(documents.map((doc) => [doc.path, doc])), [documents]);
   const summaries = useMemo(() => folderSummaries(documents), [documents]);
   const { expanded, save } = expansion;
+  const git = useMemo(() => gitEntries && gitTree(gitEntries), [gitEntries]);
   const [active, setActive] = useState<string>();
-  const [menu, setMenu] = useState<{ row: Row; x: number; y: number }>();
+  const [menu, setMenu] = useState<{ row: Row; x: number; y: number; id: string }>();
   const [properties, setProperties] = useState<Row>();
   const tree = useRef<HTMLDivElement>(null);
   const toggle = (path: string, value: boolean) => {
@@ -156,7 +165,9 @@ export function DocsTree({
     })),
   });
   useEffect(() => {
-    const stale = paths.filter((path, i) => path && listed[i]?.isError && gone(listed[i]?.error));
+    const stale = paths.filter(
+      (path, i) => path && listed[i]?.isError && gone(listed[i]?.error) && !git?.folders.has(path),
+    );
     if (!stale.length) return;
     const next = new Set(expanded);
     for (const path of stale)
@@ -174,7 +185,7 @@ export function DocsTree({
       return result;
     },
   });
-  const folders = useMemo(() => {
+  const listedFolders = useMemo(() => {
     if (query)
       return found.data
         ? filteredFolders(found.data.paths, found.data.labels)
@@ -183,6 +194,7 @@ export function DocsTree({
       listed.flatMap((result) => (result.data ? [[result.data.path, result.data.entries]] : [])),
     );
   }, [query, found.data, listed]);
+  const folders = git ? gitFolders(listedFolders, git, gitChangesOnly, query) : listedFolders;
   const truncated = new Set(listed.flatMap((result) => (result.data?.truncated ? [result.data.path] : [])));
   const rows: Row[] = [];
   const walk = (path: string, level: number) => {
@@ -196,6 +208,7 @@ export function DocsTree({
   const current = rows.some((row) => row.path === active) ? active : rows[0]?.path;
   const activate = (row: Row) => {
     if (row.type === "folder") return toggle(row.path, !row.expanded);
+    if (!canActOnDisk(row) || git?.byPath.get(row.path)?.virtual) return;
     const doc = byPath.get(row.path);
     // Ordinary text goes straight to bytes; rendered documents retain their indexed viewer.
     open?.(
@@ -210,15 +223,48 @@ export function DocsTree({
     if (path === undefined) return;
     tree.current?.querySelector<HTMLElement>(`[data-tree-path="${CSS_ESCAPE(path)}"]`)?.focus();
   };
+  const gitItems = (row: Row, tracked?: string) => {
+    const entry = git?.byPath.get(row.path);
+    return row.type === "file" || entry?.virtual ? gitMenu(entry, gitLease, tracked, open, t) : [];
+  };
+  const canOpenMenu = (row: Row) => canActOnDisk(row) || gitItems(row).length > 0;
   const openMenu = (row: Row, x: number, y: number) => {
     // A keyboard-opened menu may be followed by the browser's own contextmenu event on the row.
-    if (menu?.row.path === row.path) return;
+    if (menu?.row.path === row.path || !canOpenMenu(row)) return;
     setActive(row.path);
-    setMenu({ row, x, y });
+    setMenu({ row, x, y, id: crypto.randomUUID() });
   };
   // Linux registers applications per file type; read them when a file's menu opens (TASK-c49f03d5).
-  const actions = useFileActions(workbenchId, menu?.row.type === "file" ? menu.row.path : undefined);
-  const menuItems = (row: Row): TreeMenuItem[] => [
+  const menuRow = menu && rows.find(({ path }) => path === menu.row.path);
+  const historyPath =
+    gitLease !== undefined &&
+    open &&
+    menuRow &&
+    (menuRow.type === "file" || git?.byPath.get(menuRow.path)?.virtual)
+      ? menuRow.path
+      : undefined;
+  const eligibility = useQuery({
+    queryKey: ["git.historyEligibility", workbenchId, gitLease, historyPath, menu?.id],
+    enabled: historyPath !== undefined,
+    gcTime: 0,
+    retry: false,
+    queryFn: async () => {
+      if (gitLease === undefined || historyPath === undefined) return false;
+      const selection = { workbenchId, indexLease: gitLease, path: historyPath };
+      const answer = await api.invoke("git.historyEligibility", selection);
+      return (
+        answer.workbenchId === selection.workbenchId &&
+        answer.indexLease === selection.indexLease &&
+        answer.path === selection.path &&
+        answer.eligibility === "tracked"
+      );
+    },
+  });
+  const actions = useFileActions(
+    workbenchId,
+    menuRow?.type === "file" && canActOnDisk(menuRow) ? menuRow.path : undefined,
+  );
+  const ordinaryItems = (row: Row): TreeMenuItem[] => [
     {
       action: "open",
       label: t("documents.open"),
@@ -262,7 +308,9 @@ export function DocsTree({
     }
   };
   const failure = query
-    ? found.error
+    ? gitChangesOnly
+      ? undefined
+      : found.error
     : listed.find((result, i) => result.isError && !(paths[i] && gone(result.error)))?.error;
   return (
     <section className="docs-tree" aria-label={t("documents.tree")}>
@@ -273,8 +321,10 @@ export function DocsTree({
           {actions.notice}
         </p>
       )}
-      {query && found.data && !found.data.paths.length && <p role="status">{t("documents.noMatches")}</p>}
-      {query && found.data?.truncated && (
+      {query && (gitChangesOnly || found.data) && !rows.length && (
+        <p role="status">{t("documents.noMatches")}</p>
+      )}
+      {query && !gitChangesOnly && found.data?.truncated && (
         <p role="status" data-tree-more>
           {t("documents.moreMatches")}
         </p>
@@ -286,11 +336,14 @@ export function DocsTree({
       )}
       <div ref={tree} role="tree" aria-label={t("documents.tree")} data-docs-tree>
         {rows.map((row, index) => {
+          const gitEntry = git?.byPath.get(row.path);
+          const gitCount = row.type === "folder" ? git?.counts.get(row.path) : undefined;
           const doc = row.type === "file" ? byPath.get(row.path) : undefined;
           const summary = row.type === "folder" ? summaries.get(row.path) : undefined;
           const status = doc ? describe(doc) : undefined;
           const StatusIcon = doc ? statusIcons[doc.status] : undefined;
-          const draggable = row.type === "file" && !row.ignored && !!rasterExtension(row.path);
+          const draggable =
+            row.type === "file" && canActOnDisk(row) && !row.ignored && !!rasterExtension(row.path);
           return (
             <div
               key={row.path}
@@ -303,6 +356,7 @@ export function DocsTree({
               tabIndex={row.path === current ? 0 : -1}
               data-tree-path={row.path}
               data-tree-type={row.type}
+              data-git-virtual={row.gitVirtual || undefined}
               data-document={doc ? row.path : undefined}
               data-status={doc?.status}
               data-indexed={row.type === "file" ? String(!!doc) : undefined}
@@ -337,6 +391,7 @@ export function DocsTree({
                 <span className="tree-file-mark" aria-hidden="true" />
               )}
               <span className="tree-name">{row.name}</span>
+              {(gitEntry || gitCount !== undefined) && <GitBadges entry={gitEntry} count={gitCount} />}
               {summary && (
                 <span
                   className="tree-count"
@@ -365,7 +420,9 @@ export function DocsTree({
               {row.ignored ? (
                 <span className="sr-only">{t("documents.ignored")}</span>
               ) : (
-                row.type === "file" && !doc && <span className="sr-only">{t("documents.notIndexed")}</span>
+                row.type === "file" &&
+                !row.gitVirtual &&
+                !doc && <span className="sr-only">{t("documents.notIndexed")}</span>
               )}
               {row.type === "folder" && row.expanded && truncated.has(row.path) && (
                 <span className="tree-truncated" data-tree-truncated>
@@ -376,12 +433,16 @@ export function DocsTree({
           );
         })}
       </div>
-      {menu && (
+      {menu && menuRow && canOpenMenu(menuRow) && (
         <TreeMenu
-          label={t("documents.rowActions", { name: menu.row.name })}
+          key={menu.id}
+          label={t("documents.rowActions", { name: menuRow.name })}
           x={menu.x}
           y={menu.y}
-          items={menuItems(menu.row)}
+          items={[
+            ...(canActOnDisk(menuRow) ? ordinaryItems(menuRow) : []),
+            ...gitItems(menuRow, eligibility.data ? historyPath : undefined),
+          ]}
           close={(restore) => {
             setMenu(undefined);
             if (restore) focusRow(menu.row.path);

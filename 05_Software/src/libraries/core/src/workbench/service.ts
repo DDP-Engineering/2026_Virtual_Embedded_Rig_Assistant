@@ -12,6 +12,7 @@ import {
   commandPrefixSchema,
   configWarnings,
   type DocumentGuard,
+  type DocumentIndexStatus,
   type DocumentPreview,
   type DocumentScan,
   type DocumentVolume,
@@ -46,7 +47,7 @@ import {
 import type Database from "better-sqlite3";
 import { ulid } from "ulid";
 import { LineCounter, parseDocument, stringify } from "yaml";
-import { type DocumentProcessor, Ingester } from "../knowledge/ingest.js";
+import { type DocumentIndexPhase, type DocumentProcessor, Ingester } from "../knowledge/ingest.js";
 import { selectionDocs } from "../knowledge/kinds.js";
 import { DocumentKnowledge } from "../knowledge/search.js";
 import { readGitignores } from "../knowledge/selection.js";
@@ -55,7 +56,8 @@ import { type LoadedPlugin, PluginStore } from "../plugins/store.js";
 import type { WorkbenchHost } from "../ports.js";
 import { SkillCatalog } from "../skills/catalog.js";
 import { openDb, type WorkbenchDatabase } from "../storage/db.js";
-import { DocumentsRepository, keywordEpoch } from "../storage/repos/documents.js";
+import { DocumentsRepository } from "../storage/repos/documents.js";
+import { browserToolNames } from "../tools/browser.js";
 import { PREVIEW_TIME_LIMIT_MS, previewDocuments, relativeFolder, scanDocuments } from "./documents-scan.js";
 import { acquireGuard } from "./guard.js";
 import { createIgnoreRules } from "./ignore.js";
@@ -142,12 +144,17 @@ async function exclusive(path: string, text: string): Promise<void> {
     await handle.close();
   }
 }
+// A foreground switch may replace the WorkbenchService with a different runtime.
+let nextIndexLease = 0;
+
 export class WorkbenchService {
   private readonly folderSelections = new Map<string, string>();
   private state: WorkbenchSnapshot | undefined;
   private owned: { folder: string; token: string } | undefined;
   private database: WorkbenchDatabase | undefined;
   private ingest: Ingester | undefined;
+  private indexRevision = 0;
+  private documentIndexerStopped = false;
   private queue: Promise<void> = Promise.resolve();
   private readonly writes = new WriteQueue();
   getWriteQueue(): WriteQueue {
@@ -204,7 +211,11 @@ export class WorkbenchService {
     }).names();
     return configWarnings(config, {
       skills: [...skills, ...(this.host.catalogs?.skills ?? [])],
-      tools: this.host.catalogs?.tools ?? [...builtinToolNames, ...delegatedSessionToolNames],
+      tools: this.host.catalogs?.tools ?? [
+        ...builtinToolNames,
+        ...delegatedSessionToolNames,
+        ...browserToolNames,
+      ],
       plugins: this.host.userData
         ? await new PluginStore({ root: join(this.host.userData, "plugins"), workbench: root }).ids()
         : [],
@@ -351,7 +362,8 @@ export class WorkbenchService {
     private readonly processDocument?: DocumentProcessor,
   ) {}
   private startIngest(): void {
-    if (!this.state || this.state.readOnly || !this.database || this.ingest) return;
+    // A closed database cannot index; a refused close then reports its own error, not this one.
+    if (!this.state || this.state.readOnly || !this.database?.db.open || this.ingest) return;
     const state = this.state;
     this.ingest = new Ingester({
       root: state.folder,
@@ -360,6 +372,12 @@ export class WorkbenchService {
       assertWritable: () => this.assertSessionWritable(),
       now: () => this.host.now(),
       emit: (event) => this.emit(state.config.id, event),
+      indexerStopped: this.documentIndexerStopped,
+      statusChanged: () => {
+        if (this.state?.indexLease !== state.indexLease) return;
+        const status = this.documentIndexStatus(state.config.id, state.indexLease);
+        this.emit(state.config.id, { type: "index.status", status });
+      },
       ...(this.processDocument ? { process: this.processDocument } : {}),
       pauseMs: () =>
         resolveAdvanced("indexingPause", { app: this.host.settings.get().settings.advanced }).value,
@@ -455,6 +473,30 @@ export class WorkbenchService {
   refreshDocuments(): void {
     this.ingest?.request();
   }
+  /** Reflects the host indexer's state in the active lease and resumes reconciliation on restart. */
+  setDocumentIndexerStopped(stopped: boolean): void {
+    this.documentIndexerStopped = stopped;
+    this.ingest?.setIndexerStopped(stopped);
+  }
+
+  /** Current indexing state for one active lease, independent of document search. */
+  documentIndexStatus(workbenchId: string, indexLease: number): DocumentIndexStatus {
+    const state = this.current();
+    if (state.config.id !== workbenchId || state.indexLease !== indexLease) throw veraError("CONFLICT");
+    return {
+      workbenchId,
+      indexLease,
+      revision: ++this.indexRevision,
+      ...(this.ingest?.indexStatus() ?? {
+        state: state.readOnly ? "read-only" : this.documentIndexerStopped ? "stopped" : "scanning",
+        progress: null,
+        searchable: null,
+        volume: null,
+        guard: null,
+      }),
+    };
+  }
+
   /** The active workbench's last document selection volume; null before its first selection. */
   documentVolume(workbenchId?: string): DocumentVolume | null {
     if (workbenchId && this.current().config.id !== workbenchId) throw veraError("CONFLICT");
@@ -468,47 +510,56 @@ export class WorkbenchService {
   listDocuments(id: string) {
     return this.readDocuments(id, async (_root, db) => new DocumentsRepository(db).list());
   }
-  searchDocuments(id: string, query: string) {
+  /** Live retrieval phase for the active workbench and, when supplied, its exact database lease. */
+  documentIndexPhase(id: string, db?: Database.Database): DocumentIndexPhase {
+    const state = this.current();
+    if (state.config.id !== id || (db !== undefined && this.database?.db !== db)) throw veraError("CONFLICT");
+    if (state.readOnly) return "read-only";
+    return this.ingest?.phase() ?? "unknown";
+  }
+  searchDocuments(id: string, query: string, signal: AbortSignal = new AbortController().signal) {
     return this.readDocuments(id, async (root, db) => {
-      try {
-        const epoch = () => keywordEpoch(db);
-        const initialEpoch = epoch();
-        // The Docs panel lists up to its resolved results count (REQ-FUNC-4b36dede).
-        const listed = resolveAdvanced("docsResults", {
-          workbench: this.state?.config.advanced,
-          app: this.host.settings.get().settings.advanced,
-        }).value;
-        const result = await new DocumentKnowledge(root, db).search(
-          { query, mode: "keyword" },
-          new AbortController().signal,
-          [],
-          listed,
-        );
-        const viewer = new DocumentViewer(root, db);
-        const checked = new Map<string, Awaited<ReturnType<DocumentViewer["currentBounds"]>>>();
-        const current = [];
-        for (const hit of result.results) {
-          const ref = parseRef(hit.ref);
-          if (!ref || ref.kind === "artifact" || ref.kind === "help" || ref.path !== hit.path) continue;
-          if (!checked.has(hit.path)) checked.set(hit.path, await viewer.currentBounds(hit.path));
-          const bounds = checked.get(hit.path);
-          if (!bounds) continue;
-          const valid =
-            ref.kind === "lines"
-              ? !isDocumentKindIn(bounds.kind, binaryDocumentKinds) && ref.end <= bounds.lines
-              : ref.kind === "heading"
-                ? isDocumentKindIn(bounds.kind, sectionDocumentKinds) && bounds.slugs.has(ref.slug)
-                : isDocumentKindIn(bounds.kind, pagedDocumentKinds) &&
-                  (ref.kind === "page" ? ref.page : ref.end) <= bounds.pages;
-          if (valid) current.push({ ref: hit.ref, path: hit.path, snippet: hit.snippet, score: hit.score });
-        }
-        if (epoch() !== initialEpoch) throw Error("Document index changed during search.");
-        return current;
-      } catch {
-        throw veraError("NOT_FOUND");
-      }
+      const listed = resolveAdvanced("docsResults", {
+        workbench: this.state?.config.advanced,
+        app: this.host.settings.get().settings.advanced,
+      }).value;
+      const viewer = new DocumentViewer(root, db);
+      const knowledge = new DocumentKnowledge(root, db, undefined, undefined, () =>
+        this.documentIndexPhase(id, db),
+      );
+      const { coverage, usage, results } = await knowledge.search(
+        { query, mode: "keyword" },
+        signal,
+        [],
+        () => {
+          const checked = new Map<string, Awaited<ReturnType<DocumentViewer["currentBounds"]>>>();
+          return async (hit, searchSignal) => {
+            const ref = parseRef(hit.ref);
+            if (!ref || ref.kind === "artifact" || ref.kind === "help" || ref.path !== hit.path) return false;
+            if (!checked.has(hit.path))
+              checked.set(hit.path, await viewer.currentBounds(hit.path, searchSignal));
+            const bounds = checked.get(hit.path);
+            if (!bounds) return false;
+            if (ref.kind === "lines")
+              return !isDocumentKindIn(bounds.kind, binaryDocumentKinds) && ref.end <= bounds.lines;
+            if (ref.kind === "heading")
+              return isDocumentKindIn(bounds.kind, sectionDocumentKinds) && bounds.slugs.has(ref.slug);
+            return (
+              isDocumentKindIn(bounds.kind, pagedDocumentKinds) &&
+              (ref.kind === "page" ? ref.page : ref.end) <= bounds.pages
+            );
+          };
+        },
+        listed,
+      );
+      return {
+        coverage,
+        usage,
+        results: results.map(({ ref, path, snippet, score }) => ({ ref, path, snippet, score })),
+      };
     });
   }
+
   openDocument(id: string, target: string, byPath: boolean) {
     return this.readDocuments(id, (root, db) =>
       byPath ? new DocumentViewer(root, db).openPath(target) : new DocumentViewer(root, db).open(target),
@@ -691,7 +742,7 @@ export class WorkbenchService {
     // An owned database opens in place and is checked before writes; a read-only one is copied first.
     const acquired = await this.acquire(folder, warnings);
     const newlyOwned = acquired.owned !== undefined && acquired.owned !== this.owned;
-    const next = { folder, config, warnings, readOnly: acquired.readOnly };
+    const next = { folder, config, warnings, readOnly: acquired.readOnly, indexLease: ++nextIndexLease };
     let database: WorkbenchDatabase | undefined;
     try {
       database =
@@ -808,13 +859,22 @@ export class WorkbenchService {
     if (lock?.token !== this.owned.token || lock.pid !== this.host.pid) throw veraError("DENIED");
     return state;
   }
-  getConfig(): Promise<{ config: WorkbenchConfig; warnings: WorkbenchWarning[] }> {
+  private async refreshConfig(): Promise<WorkbenchConfig> {
+    const state = this.current();
+    const config = await this.config(state.folder);
+    if (config.id !== state.config.id) throw veraError("CONFLICT");
+    this.state = { ...state, config };
+    return config;
+  }
+  /** Read current validated configuration without skill/plugin warning discovery. Host-only. */
+  readConfig(): Promise<WorkbenchConfig> {
+    return this.run(() => this.refreshConfig());
+  }
+  getConfig(): Promise<WorkbenchSnapshot> {
     return this.run(async () => {
+      const config = await this.refreshConfig();
       const state = this.current();
-      const config = await this.config(state.folder);
-      if (config.id !== state.config.id) throw veraError("CONFLICT");
-      this.state = { ...state, config };
-      return { config, warnings: await this.warnings(config, state.folder) };
+      return { ...state, config, warnings: await this.warnings(config, state.folder) };
     });
   }
   updateConfig(
@@ -1155,6 +1215,8 @@ export class WorkbenchService {
   close(): Promise<void> {
     return this.run(async () => {
       await this.writes.drain();
+      if (this.owned && (await ordinary(this.owned.folder, true)))
+        await ordinary(join(this.owned.folder, ".vera"), true);
       await this.stopIngest();
       try {
         if (this.owned)

@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-FUNC-93eceb65"
+title = "Expose documented QwenCloud model capabilities"
+status = "active"
+requirement = "When the selected QwenCloud model has a documented VERA profile, VERA shall expose that model's input, tools and thinking choices and encode explicit binary thinking settings in Chat Completions."
+verification = "Compare Qwen3.8 Flash with Qwen3.7 Max and an unprofiled model; capture image and thinking fields for documented modes and their absence for manual models."
+affected_paths = ["05_Software/src/libraries/shared/src/provider-presets.ts","05_Software/src/libraries/core/src/llm/providers.ts","05_Software/src/libraries/core/src/llm/connection.ts","05_Software/src/apps/desktop/src/main/provider-gateway.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/qwencloud-presets.test.ts"]
+created = 2026-11-20
+updated = 2026-11-20

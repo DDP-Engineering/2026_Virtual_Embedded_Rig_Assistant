@@ -372,7 +372,13 @@ test("bridge subscriptions clean up and main denies a foreign real renderer", as
     const entry = join(desktop, "out/main/index.js");
     const emit = () =>
       app?.evaluate(async (_electron, path) => {
-        const { emitAppEvent } = process.getBuiltinModule("node:module").createRequire(path)(path);
+        const { pathToFileURL } = process.getBuiltinModule("node:url");
+        const { compileFunction, constants } = process.getBuiltinModule("node:vm");
+        // The inspector evaluator has no import callback of its own.
+        const load = compileFunction("return import(url);", ["url"], {
+          importModuleDynamically: constants.USE_MAIN_CONTEXT_DEFAULT_LOADER,
+        });
+        const { emitAppEvent } = await load(pathToFileURL(path).href);
         return emitAppEvent({ topic: "app", id: "app", event: { type: "settings.changed" } });
       }, entry);
     expect(await emit()).toBe(true);
@@ -435,8 +441,9 @@ test("validated settings update survives an application restart", async () => {
     await page.evaluate(() => {
       const probe = { count: 0 };
       (window as unknown as { settingsProbe: typeof probe }).settingsProbe = probe;
-      (window as unknown as { vera: VeraBridge }).vera.subscribe("app", () => {
-        probe.count++;
+      // Other app events (such as session.capacity after a settings save) may arrive too; count settings ones.
+      (window as unknown as { vera: VeraBridge }).vera.subscribe("app", (event) => {
+        if (event.type === "settings.changed") probe.count++;
       });
     });
     const updated = await page.evaluate(() =>

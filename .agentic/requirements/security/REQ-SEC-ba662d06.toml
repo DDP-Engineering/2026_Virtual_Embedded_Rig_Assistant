@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-SEC-ba662d06"
+title = "Refuse redirected curated provider requests"
+status = "active"
+requirement = "If a curated catalog or inference endpoint redirects, then VERA shall fail the operation without following the redirect."
+verification = "Return redirects from the test transport, assert failed typed outcomes and redirect refusal at both call sites."
+affected_paths = ["05_Software/src/libraries/core/src/llm/preset-connection.ts", "05_Software/src/libraries/core/src/llm/providers.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/provider-presets.test.ts"]
+created = 2026-11-20
+updated = 2026-11-20

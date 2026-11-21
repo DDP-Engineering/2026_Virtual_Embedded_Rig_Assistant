@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-FUNC-179d51e4"
+
+title = "Detect the spoken language offline"
+
+status = "active"
+
+requirement = "When the dictation language is automatic, VERA shall select a Whisper language from the multilingual decoder's first-step language-token scores."
+
+verification = "Recognize non-English fixtures with both models and assert the detected language and expected text."
+
+affected_paths = ["05_Software/src/apps/desktop/src/main/dictation/whisper.ts"]
+
+linked_tests = ["05_Software/tests/integration/whisper-runtime.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-20
+updated = 2026-11-20

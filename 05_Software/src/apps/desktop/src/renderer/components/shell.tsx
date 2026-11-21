@@ -60,10 +60,12 @@ export function Shell({
   workbenchId,
   visibleTabs = defaultRightPanelTabs,
   configurePanelTabs,
+  showFilesRequest,
 }: {
   workbenchId?: string | undefined;
   visibleTabs?: readonly RightPanelTab[] | undefined;
   configurePanelTabs?: (() => void) | undefined;
+  showFilesRequest?: number | undefined;
   children?: ReactNode;
   navigation: ReactNode;
   settings: boolean;
@@ -100,15 +102,37 @@ export function Shell({
       : tabs[0]?.id;
   const [blockedRequest, setBlockedRequest] = useState<{
     workbenchId: string | undefined;
-    target: "terminal" | "panel";
+    target: "terminal" | "panel" | "docs";
   }>();
   const hiddenRequest =
     blockedRequest !== undefined &&
     blockedRequest.workbenchId === workbenchId &&
-    (blockedRequest.target === "terminal" ? !visibleTabs.includes("terminal") : tabs.length === 0);
+    (blockedRequest.target === "panel" ? tabs.length === 0 : !visibleTabs.includes(blockedRequest.target));
   const [terminalTarget, setTerminalTarget] = useState<{ owner: string; id: string }>();
   const panelHadFocus = useRef(false);
   const settingsLink = useRef<HTMLButtonElement>(null);
+  const filesVisible = visibleTabs.includes("docs");
+  const focusFilesRequest = useRef(false);
+  useEffect(() => {
+    focusFilesRequest.current = showFilesRequest !== undefined;
+    if (!focusFilesRequest.current) return;
+    if (!filesVisible) {
+      setBlockedRequest({ workbenchId, target: "docs" });
+    } else {
+      setBlockedRequest(undefined);
+      setLayout((value) => ({ ...value, rightCollapsed: false }));
+      setSelection({ workbenchId, tab: "docs" });
+    }
+  }, [showFilesRequest, filesVisible, workbenchId]);
+  useEffect(() => {
+    if (showFilesRequest === undefined || !focusFilesRequest.current) return;
+    const target = filesVisible
+      ? !layout.rightCollapsed && tab === "docs" && document.getElementById("tab-docs")
+      : hiddenRequest && settingsLink.current;
+    if (!target) return;
+    focusFilesRequest.current = false;
+    target.focus();
+  }, [showFilesRequest, tab, layout.rightCollapsed, hiddenRequest, filesVisible]);
   useEffect(() => {
     setSelection({ workbenchId, tab });
   }, [tab, workbenchId]);

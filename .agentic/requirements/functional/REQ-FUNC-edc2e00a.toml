@@ -1,0 +1,14 @@
+schema = 1
+id = "REQ-FUNC-edc2e00a"
+title = "Cancel document search without returning an interrupted result"
+status = "active"
+requirement = """
+When the caller cancels an in-flight document search, the system shall surface cancellation without returning hits or retrying the cancelled attempt.
+"""
+verification = "Abort during blocked ranking and during hit validation and assert the rejection is the abort reason and no later attempt is admitted."
+affected_paths = ["05_Software/src/libraries/core/src/knowledge/search-ranking.ts", "05_Software/src/libraries/core/src/knowledge/viewer.ts", "05_Software/src/libraries/core/src/workbench/service.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/knowledge/search.test.ts", "05_Software/src/libraries/core/src/workbench/service.test.ts"]
+spec = ""
+priority = "normal"
+created = 2026-11-21
+updated = 2026-11-21

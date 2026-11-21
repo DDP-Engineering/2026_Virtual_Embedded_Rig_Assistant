@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-DATA-cb383f59"
+
+title = "Retain reviewed plan text and submitted feedback"
+
+status = "active"
+
+requirement = "When an accepted review's plan is later replaced, VERA shall retain the submitted plan revision, ordered step text and each submitted comment's original target quote and feedback as readable session history."
+
+verification = "Submit fragment and whole-step comments, replace or clear the plan, close/reopen the database and read review history; compare the original ordered plan, quoted targets and feedback rather than revised text, including a removed commented step."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/session/plan-feedback-history.tsx", "05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/libraries/shared/src/plan-review.ts", "05_Software/src/libraries/shared/src/events.ts", "05_Software/src/libraries/shared/src/session-state.ts", "05_Software/src/apps/desktop/src/main/events.ts", "05_Software/src/apps/desktop/src/renderer/components/session/plan-feedback.tsx"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/session/plan-feedback.test.ts", "05_Software/tests/e2e/plan-review.spec.ts", "05_Software/src/libraries/core/src/sessions/review-turn.test.ts", "05_Software/src/libraries/core/src/sessions/review-recovery.test.ts", "05_Software/src/libraries/shared/src/plan-review.test.ts"]
+
+
+spec = "specs/REQ-DATA-fa8543aa.md"
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-19
+updated = 2026-11-19

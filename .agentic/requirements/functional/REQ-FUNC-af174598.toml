@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-FUNC-af174598"
+
+title = "Honor the chosen spoken language"
+
+status = "active"
+
+requirement = "When the dictation language is explicit, VERA shall pass that language to Whisper transcription."
+
+verification = "Run both models on speech with explicit English, Romanian, German and French and assert expected text and the selected language."
+
+affected_paths = ["05_Software/src/apps/desktop/src/main/dictation/whisper.ts"]
+
+linked_tests = ["05_Software/tests/integration/whisper-runtime.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-20
+updated = 2026-11-20

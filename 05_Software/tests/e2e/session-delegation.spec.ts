@@ -1,6 +1,7 @@
 // REQ-UX-66b40e85 REQ-UX-9335be50 REQ-UX-01f905ce REQ-UX-93738350
 // REQ-UX-b2f2c1dc REQ-UX-15bcd8cc REQ-REL-716213c5 REQ-TEST-1c4ba3f0
-import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { execFileSync } from "node:child_process";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { _electron, type ElectronApplication, expect, type Page, test } from "@playwright/test";
@@ -41,6 +42,7 @@ async function createParent(page: Page, model: string, instruction: string) {
       }),
     { id, model },
   );
+  await expect(page.locator("[data-model-picker]")).toHaveValue(`replay/${model}`);
   const input = page.getByRole("textbox", { name: "Message", exact: true });
   await input.fill(instruction);
   await input.press("Enter");
@@ -49,6 +51,23 @@ async function createParent(page: Page, model: string, instruction: string) {
 
 function delegation(page: Page) {
   return page.locator("[data-session-delegations]");
+}
+
+/**
+ * A parent keeps streaming its reply after the checked prefix. Wait until every turn has ended, so the next
+ * parent and its child fit within the default Concurrent turns limit of 3.
+ */
+async function turnsEnded(page: Page) {
+  await expect
+    .poll(
+      () =>
+        page.evaluate(async () => {
+          const api = (window as unknown as { vera: VeraBridge }).vera;
+          return (await api.invoke("session.capacity", {})).active;
+        }),
+      { timeout: 20000 },
+    )
+    .toBe(0);
 }
 
 async function followChild(page: Page, name: string) {
@@ -108,7 +127,7 @@ test("native Desktop follows live delegated sessions, stops one and reopens dura
   await fixture("child-stop", [{ text: childText("Slow child is working.", 350) }]);
   await fixture("child-error", [
     {
-      text: childText("Child is about to fail.", 55),
+      text: childText("Child is about to fail.", 100),
       toolCalls: [tool("read", { path: "board.txt" })],
     },
   ]);
@@ -208,6 +227,7 @@ test("native Desktop follows live delegated sessions, stops one and reopens dura
       timeout: 15000,
     });
 
+    await turnsEnded(page);
     const stoppedParent = await createParent(page, "parent-stop", "Coordinate slow inspection");
     await expect(delegation(page)).toContainText("Running");
     const stoppedChild = await followChild(page, "Inspect the slow board");
@@ -218,6 +238,14 @@ test("native Desktop follows live delegated sessions, stops one and reopens dura
     await expect(delegation(page)).toContainText("Stopped");
     await expect(page.locator('[data-action="stop-session"]')).toBeVisible();
     await expect(page.locator("[data-transcript]")).toContainText("Parent outcome: stopped.");
+    await expect
+      .poll(() =>
+        page.evaluate(async (sessionId) => {
+          const api = (window as unknown as { vera: VeraBridge }).vera;
+          return (await api.invoke("session.get", { sessionId })).snapshot.activeTurnId;
+        }, stoppedParent),
+      )
+      .toBeNull();
 
     // Drop relationship notifications; the existing list heartbeat must still recover.
     const delivered = await instance.evaluate(() => {
@@ -226,8 +254,9 @@ test("native Desktop follows live delegated sessions, stops one and reopens dura
       return proof.delivered;
     });
     expect(delivered).toBe(4);
+    await turnsEnded(page);
     const failedParent = await createParent(page, "parent-error", "Coordinate failing inspection");
-    await expect(delegation(page)).toContainText("Running");
+    await expect(delegation(page)).toContainText("Running", { timeout: 10000 });
     await followChild(page, "Inspect the failing board");
     await expect(delegation(page)).toContainText("Failed", { timeout: 15000 });
     await returnToParent(page, failedParent, "Coordinate failing inspection");
@@ -263,6 +292,232 @@ test("native Desktop follows live delegated sessions, stops one and reopens dura
     await page.locator('#panel-docs [data-tree-path="board.txt"]').click();
     await expect(page.locator('[data-tab-key="file:board.txt"]')).toHaveAttribute("aria-selected", "true");
     expect(await outboundAttempts(instance)).toEqual([]);
+  } finally {
+    await app?.close();
+    await rm(root, { recursive: true, force: true, maxRetries: 8, retryDelay: 200 });
+  }
+});
+
+test("native desktop authorizes two sequential Full Access children and reuses one across later turns", async () => {
+  test.setTimeout(120000);
+  const root = await mkdtemp(join(tmpdir(), "vera-delegation-modes-"));
+  const folder = join(root, "board");
+  const scripts = join(root, "replay");
+  let app: ElectronApplication | undefined;
+  try {
+    await mkdir(folder);
+    await mkdir(scripts);
+    execFileSync("git", ["init", "-q"], { cwd: folder });
+    const fixture = (name: string, steps: object[]) =>
+      writeFile(join(scripts, `${name}.jsonl`), steps.map((step) => JSON.stringify(step)).join("\n"));
+    for (const ticket of ["first", "second"]) {
+      const path = `${ticket}.txt`;
+      await writeFile(join(folder, path), "before\n");
+      await fixture(ticket, [
+        { toolCalls: [tool("read", { path })] },
+        { toolCalls: [tool("edit", { path, oldString: "before", newString: "checked" })] },
+        { toolCalls: [tool("run_command", { command: `git hash-object -- ${path}` })] },
+        { text: `${ticket} ticket handover ready` },
+      ]);
+    }
+    await fixture("follow-low", [
+      { reasoningOptions: ["low", "high"], expectReasoning: "low", text: "Low follow-up checked" },
+    ]);
+    await fixture("follow-high", [
+      { reasoningOptions: ["low", "high"], expectReasoning: "high", text: "High follow-up checked" },
+    ]);
+    const call = (name: string, args: Record<string, unknown>) => ({ toolCalls: [tool(name, args)] });
+    const child = { sessionId: "{{sessionId}}" };
+    const monitored = { ...child, turnId: "{{turnId}}", waitMs: 20000 };
+    await fixture("coordinate", [
+      call("session_launch", { instruction: "Implement first ticket", modelRef: "replay/first" }),
+      call("session_wait", monitored),
+      call("session_configure", { ...child, modelRef: "replay/follow-low", reasoning: "low" }),
+      call("session_send", { ...child, instruction: "First follow-up" }),
+      call("session_wait", monitored),
+      call("session_configure", { ...child, modelRef: "replay/follow-high", reasoning: "high" }),
+      call("session_send", { ...child, instruction: "Second follow-up" }),
+      call("session_wait", monitored),
+      call("session_send", { ...child, instruction: "Third follow-up" }),
+      call("session_wait", monitored),
+      call("session_launch", { instruction: "Implement second ticket", modelRef: "replay/second" }),
+      call("session_wait", monitored),
+      { text: "Coordinator received {{reply}}." },
+    ]);
+    await fixture("revoked", [
+      call("session_launch", { instruction: "Should not launch", modelRef: "replay/first" }),
+      { text: "Revocation checked." },
+    ]);
+    const env = Object.fromEntries(
+      Object.entries(process.env).filter((entry): entry is [string, string] => typeof entry[1] === "string"),
+    );
+    delete env.ELECTRON_RUN_AS_NODE;
+    delete env.ELECTRON_RENDERER_URL;
+    app = await _electron.launch({
+      executablePath: resolve(
+        "node_modules/electron/dist",
+        process.platform === "win32" ? "electron.exe" : "electron",
+      ),
+      args: [
+        resolve(process.env.VERA_BUILD_ROOT ?? "src/apps/desktop/out", "main/index.js"),
+        `--user-data-dir=${join(root, "profile")}`,
+      ],
+      env: { ...env, VERA_REPLAY_DIR: scripts },
+    });
+    await installNetworkGuard(app);
+    const page = await app.firstWindow();
+    await expect(page.locator('[data-i18n="nav.settings"]')).toBeVisible();
+    await page.evaluate(async (folder) => {
+      await (window as unknown as { vera: VeraBridge }).vera.invoke("workbench.create", {
+        folder,
+        name: "Delegation modes",
+        config: { agent: { allowed_commands: ["git hash-object"] } },
+      });
+    }, folder);
+    await page.reload();
+    await page.locator(".workbench-group-name", { hasText: "Delegation modes" }).click();
+    const ids = await page.evaluate(async () => {
+      const api = (window as unknown as { vera: VeraBridge }).vera;
+      const { config } = await api.invoke("workbench.config.get", {});
+      const { id } = await api.invoke("session.create", {
+        workbenchId: config.id,
+        modelRef: "replay/coordinate",
+      });
+      return { sessionId: id, workbenchId: config.id };
+    });
+    await page.locator(`[data-session="${ids.sessionId}"]`).click();
+    const permission = page.getByRole("combobox", { name: "Permission mode" });
+    await expect(permission).toHaveValue("ask");
+    const unacknowledged = await page.evaluate(async ({ sessionId }) => {
+      const api = (window as unknown as { vera: VeraBridge }).vera;
+      try {
+        await api.invoke("session.mode.set", { sessionId, mode: "bypass" });
+        return "allowed";
+      } catch {
+        return (await api.invoke("session.get", { sessionId })).snapshot.mode;
+      }
+    }, ids);
+    expect(unacknowledged).toBe("ask");
+    await permission.selectOption("bypass");
+    await page.locator('[data-action="cancel-bypass"]').click();
+    await expect(permission).toHaveValue("ask");
+    await permission.selectOption("bypass");
+    await page.locator('[data-action="confirm-bypass"]').click();
+    await expect(permission).toHaveValue("bypass");
+
+    const rejectedGrant = await page.evaluate(async (ids) => {
+      try {
+        await (window as unknown as { vera: VeraBridge }).vera.invoke("session.delegation.bypass.set", {
+          ...ids,
+          authorized: true,
+        });
+        return false;
+      } catch {
+        return true;
+      }
+    }, ids);
+    expect(rejectedGrant).toBe(true);
+    const allow = page.getByRole("button", { name: "Allow Full Access for new child sessions" });
+    const revoke = page.getByRole("button", { name: "Revoke Full Access for future child launches" });
+    await allow.click();
+    await expect(page.getByRole("dialog")).toContainText("Each child keeps its own mode");
+    await page.getByRole("dialog").getByRole("button", { name: "Cancel", exact: true }).click();
+    await expect(revoke).toHaveCount(0);
+    await allow.click();
+    await page.getByRole("button", { name: "Authorize launches", exact: true }).click();
+    await expect(revoke).toBeVisible();
+
+    const input = page.getByRole("textbox", { name: "Message", exact: true });
+    await input.fill("Coordinate local ticket implementation");
+    await input.press("Enter");
+    await expect(page.locator("[data-transcript]")).toContainText("Coordinator received", { timeout: 45000 });
+    const proof = await page.evaluate(async ({ sessionId, workbenchId }) => {
+      const api = (window as unknown as { vera: VeraBridge }).vera;
+      const rows = (await api.invoke("session.list", { workbenchId })).filter(
+        ({ delegation }) => delegation?.parentSessionId === sessionId,
+      );
+      const children = await Promise.all(
+        rows.map(async (row) => {
+          const { snapshot } = await api.invoke("session.get", { sessionId: row.id });
+          return { row, snapshot };
+        }),
+      );
+      const { snapshot: coordinator } = await api.invoke("session.get", { sessionId });
+      return { children, coordinator };
+    }, ids);
+    if (process.env.VERA_DELEGATION_PROOF_DIR)
+      await writeFile(
+        join(process.env.VERA_DELEGATION_PROOF_DIR, "independent-modes.json"),
+        JSON.stringify(proof, null, 2),
+      );
+    await expect(page.locator("[data-transcript]")).toContainText(
+      "Coordinator received second ticket handover ready.",
+    );
+    expect(proof.children).toHaveLength(2);
+    const first = proof.children.find(({ row }) => row.title === "Implement first ticket");
+    const second = proof.children.find(({ row }) => row.title === "Implement second ticket");
+    if (!first || !second) throw Error("Missing local implementation children");
+    expect(first.snapshot.turns).toHaveLength(4);
+    expect(first.snapshot.turns.at(-1)?.turnId).toBe(first.row.delegation?.turnId);
+    expect(first.snapshot.items.filter((item) => item.kind === "user").map(({ id }) => id)).toHaveLength(4);
+    for (const { snapshot, row } of [first, second]) {
+      expect(row.mode).toBe("bypass");
+      expect(snapshot.approvals.map(({ tool, decision, by }) => ({ tool, decision, by }))).toEqual([
+        { tool: "edit", decision: "approved", by: "mode" },
+        { tool: "run_command", decision: "approved", by: "mode" },
+      ]);
+      expect(
+        snapshot.items.filter((item) => item.kind === "tool").map(({ name, status }) => ({ name, status })),
+      ).toEqual([
+        { name: "read", status: "ok" },
+        { name: "edit", status: "ok" },
+        { name: "run_command", status: "ok" },
+      ]);
+    }
+    expect(await readFile(join(folder, "first.txt"), "utf8")).toBe("checked\n");
+    expect(await readFile(join(folder, "second.txt"), "utf8")).toBe("checked\n");
+
+    const opened = await followChild(page, "Implement first ticket");
+    expect(opened).toBe(first.row.id);
+    await expect(page.locator("[data-parent-instruction]")).toHaveCount(4);
+    await expect(page.locator("[data-transcript]").getByText("You", { exact: true })).toHaveCount(0);
+    await expect(page.locator(`[data-delegated-turn="${first.row.delegation?.turnId}"]`)).toBeVisible();
+    await expect(revoke).toHaveCount(0);
+    await permission.selectOption("ask");
+    await expect(permission).toHaveValue("ask");
+    await permission.selectOption("bypass");
+    await page.locator('[data-action="confirm-bypass"]').click();
+    await expect(permission).toHaveValue("bypass");
+    await permission.selectOption("read-only");
+    await expect(permission).toHaveValue("read-only");
+    await returnToParent(page, ids.sessionId, "Coordinate local ticket implementation");
+    await expect(permission).toHaveValue("bypass");
+    await permission.selectOption("auto-edit");
+    await expect(permission).toHaveValue("auto-edit");
+    await revoke.click();
+    await expect(revoke).toHaveCount(0);
+    await followChild(page, "Implement second ticket");
+    await expect(permission).toHaveValue("bypass");
+    await returnToParent(page, ids.sessionId, "Coordinate local ticket implementation");
+    await permission.selectOption("bypass");
+    await page.locator('[data-action="confirm-bypass"]').click();
+    await expect(allow).toBeVisible();
+    const revoked = await page.evaluate(async ({ sessionId }) => {
+      const api = (window as unknown as { vera: VeraBridge }).vera;
+      await api.invoke("session.model.set", { sessionId, modelRef: "replay/revoked" });
+      return api.invoke("session.send", { sessionId, text: "Check future launches" });
+    }, ids);
+    expect(revoked.turnId).toBeTruthy();
+    await expect(page.locator("[data-transcript]")).toContainText("Revocation checked.");
+    await expect(delegation(page).getByRole("button", { name: "Should not launch" })).toHaveCount(0);
+    await allow.click();
+    await page.getByRole("button", { name: "Authorize launches", exact: true }).click();
+    await expect(revoke).toBeVisible();
+    await page.reload();
+    await page.locator(`[data-session="${first.row.id}"]`).click();
+    await expect(permission).toHaveValue("read-only");
+    await expect(page.locator("[data-parent-instruction]")).toHaveCount(4);
+    expect(await outboundAttempts(app)).toEqual([]);
   } finally {
     await app?.close();
     await rm(root, { recursive: true, force: true, maxRetries: 8, retryDelay: 200 });

@@ -76,8 +76,11 @@ it.each(["en", "ro", "de", "fr"])("localizes the embedding rebuild notice in %s"
     tool({
       name: "search_docs",
       args: { query: "coolant" },
+      documentSearch: {
+        coverage: "partial",
+        usage: { mode: "keyword", fallbackReason: "embedding-rebuild" },
+      },
       summary: JSON.stringify({
-        ranking: "embedding-rebuild",
         message: "Embedding vectors are being rebuilt; these are keyword results.",
         results: [{ path: "docs/coolant.txt" }],
       }),

@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-SEC-4f76c27c"
+title = "Reject invalid Model Studio workspace IDs"
+status = "active"
+requirement = "If a selected Model Studio workspace is missing or invalid, VERA shall reject the request before resolving a URL or reading a key."
+verification = "Attempt save and draft discovery with missing IDs, reserved labels, path characters, uppercase input and overlong labels."
+affected_paths = ["05_Software/src/libraries/shared/src/provider-presets.ts", "05_Software/src/libraries/core/src/llm/preset-connection.ts", "05_Software/src/apps/desktop/src/main/provider-gateway.ts", "05_Software/src/libraries/shared/src/providers.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/regional-provider-presets.test.ts"]
+created = 2026-11-20
+updated = 2026-11-20

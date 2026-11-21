@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-DATA-91e43167"
+title = "Insert dictation into its initiating draft"
+status = "active"
+requirement = "When a transcription completes for the same live chat draft, VERA shall insert it as editable text at the recorded selection end for an unchanged draft or at the end of the latest edited draft while preserving text and attachments."
+verification = "Select existing text and dictate, then edit the draft during another dictation, change sessions during another, and verify preserved text, insertion location, caret, attachments and the resulting explicit send."
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/session/composer.tsx","05_Software/src/apps/desktop/src/renderer/dictation/use-composer-dictation.ts","05_Software/src/apps/desktop/src/renderer/dictation/draft-insertion.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/dictation/draft-insertion.test.ts","05_Software/tests/e2e/dictation-composer.spec.ts","05_Software/tests/e2e/dictation-packaged-composer.spec.ts"]
+priority = "normal"
+created = 2026-11-20
+updated = 2026-11-20

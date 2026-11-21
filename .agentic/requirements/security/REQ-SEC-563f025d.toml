@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-SEC-563f025d"
+title = "Pin Whisper artifacts"
+status = "active"
+requirement = "The dictation catalog shall pin each required runtime file to an immutable upstream revision, expected byte length and SHA-256 digest, with the upstream license identified."
+verification = "Check the catalog covers the runtime file set for Base and Small and inspect the exact manifest values against the immutable upstream bytes."
+affected_paths = ["05_Software/src/apps/desktop/src/main/dictation/catalog.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/dictation/models.test.ts"]
+created = 2026-11-20
+updated = 2026-11-20

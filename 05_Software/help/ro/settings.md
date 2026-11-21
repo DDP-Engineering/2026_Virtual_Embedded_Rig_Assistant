@@ -13,6 +13,7 @@
 | **Actualizări** | Cum se actualizează VERA |
 | **Date și confidențialitate** | Valorile implicite de mascare pentru patru zone |
 | **Despre** | Versiunea, runtime-ul, licența și componentele terțe |
+| **Dictare** | Modele Whisper locale și limba vorbită |
 
 ## Date și confidențialitate
 
@@ -69,6 +70,14 @@ Doar textul căutării și adresele cerute de agent părăsesc calculatorul tău
 
 Dezactivarea accesului web oprește și căutările și descărcările în curs. Workbench-urile individuale pot dezactiva instrumentele web la **Editează workbench-ul** → **Instrumente**.
 
+### Browser interactiv
+
+În **Setări → Acces web**, selectează **Instalează browserul** pentru a descărca și verifica Chromium. Poți anula instalarea sau elimina browserul. Bifează **Activează browserul interactiv în VERA** și **Permite browserul interactiv în acest workbench**. Ambele opțiuni sunt inițial dezactivate.
+
+În chat, introdu la **Origine publică** originea exactă, de exemplu `https://example.com`, apoi selectează **Acordă acces**. Include protocolul și portul dacă diferă de cel implicit. Fiecare chat are propriile autorizări și propria fereastră. Autorizează individual originile suplimentare pentru redirecționări sau resurse.
+
+Cere agentului să deschidă și să citească o pagină sau să urmeze un link. Chatul arată activitatea și pagina autorizată. **Arată browserul** aduce fila în prim-plan. **Oprește navigarea** oprește tura și anulează operația în curs. **Revocă accesul** și **Închide browserul** închid sesiunea temporară și șterg autorizările. Închiderea ferestrei, dezactivarea oricărei opțiuni sau eliminarea browserului revocă accesul. Pentru fișierele acceptate, folosește descărcarea gestionată.
+
 ## Despre
 
 **Despre** afișează versiunea aplicației, platforma, arhitectura, dacă VERA rulează ca versiune portabilă, setările regionale ale sistemului, versiunile runtime, licența și lista componentelor terțe cu licențele lor.
@@ -76,3 +85,13 @@ Dezactivarea accesului web oprește și căutările și descărcările în curs.
 ## Comenzi shell
 
 În Setări → Comenzi, alege Automat, PowerShell 7, Windows PowerShell, Cmd, Bash sau Personalizat, apoi Salvare. Variantele instalate sunt detectate în căile de căutare și în directoarele standard; cele indisponibile sunt dezactivate. Personalizat acceptă un nume de executabil sau o cale absolută. Automat preferă PowerShell 7, Windows PowerShell, apoi Cmd pe Windows; Linux preferă Bash, apoi sh. PowerShell rulează neinteractiv, fără profil și cu ieșire UTF-8. Bash folosește `-lc`; profilurile pot modifica mediul. Pe Windows, Bash înseamnă Bash nativ, de exemplu Git Bash; launcherul WSL vechi nu este selectat. Comenzile Cmd folosesc `/d /s /c`, acceptă o singură linie cu `&` sau `&&` între comenzi, iar ieșirea comenzilor interne folosește pagina de cod Windows. Pentru ieșire UTF-8, folosește PowerShell sau Bash. Setarea se aplică următoarelor comenzi ale agentului și terminalelor noi; terminalele existente păstrează shell-ul curent. Un shell ales explicit, dar indisponibil produce o eroare.
+
+## Dictare
+
+Alege **Whisper Small** (recomandat) sau **Whisper Base** (compact). Pagina afișează dimensiunea descărcării și starea instalării pentru fiecare model. Alege **Descarcă** și urmărește progresul. **Anulează** șterge descărcarea parțială. Dacă VERA raportează o descărcare eșuată sau fișiere deteriorate, alege **Reîncearcă**. Eliberează spațiu pe disc dacă este necesar.
+
+După instalare, alege **Folosește modelul**. VERA păstrează selecția la repornire. **Elimină** șterge fișierele modelului și golește selecția dacă modelul era activ. Dacă eliminarea eșuează, închide aplicațiile care folosesc fișierele modelului și alege **Reîncearcă**. Modelele se află în datele aplicației VERA și sunt comune tuturor workbench-urilor.
+
+La **Limba vorbită**, alege **Detectare automată** sau selectează limba în care vei vorbi.
+
+Alege **Ține apăsat pentru a vorbi** (modul implicit) ca să ții apăsat butonul microfonului sau comanda lui cât timp vorbești. Alege **Apasă pentru a porni sau a opri** pentru două apăsări separate. Selectează **Adaugă comandă rapidă** în fila Dictare pentru a atribui o combinație valabilă în VERA. Editorul respinge combinațiile rezervate și pe cele deja folosite. Poți folosi butonul microfonului și fără comandă rapidă.

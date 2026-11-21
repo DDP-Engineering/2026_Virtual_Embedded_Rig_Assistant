@@ -18,6 +18,12 @@ const unused = () => {
 };
 const workbenchHandlers = {
   "commands.shells": unused,
+  "dictation.get": unused,
+  "dictation.change": unused,
+  "dictation.begin": unused,
+  "dictation.recording": unused,
+  "dictation.finish": unused,
+  "dictation.cancel": unused,
   "terminal.list": unused,
   "terminal.create": unused,
   "terminal.output": unused,
@@ -65,6 +71,11 @@ const workbenchHandlers = {
   "downloads.list": unused,
   "downloads.open": unused,
   "downloads.reveal": unused,
+  "docs.status": unused,
+  "git.diff": unused,
+  "git.historyEligibility": unused,
+  "git.history": unused,
+  "git.status": unused,
   "docs.volume": unused,
   "docs.approve": unused,
   "docs.tree": unused,
@@ -87,6 +98,14 @@ const workbenchHandlers = {
   "app.openExternal": unused,
   "providers.chatgpt.login": unused,
   "providers.chatgpt.status": unused,
+  "browser.settings.get": unused,
+  "browser.runtime.install": unused,
+  "browser.runtime.cancel": unused,
+  "browser.runtime.remove": unused,
+  "browser.session.get": unused,
+  "browser.session.grant": unused,
+  "browser.session.show": unused,
+  "browser.session.close": unused,
   "web.access.get": unused,
   "web.access.save": unused,
   "web.access.removeKey": unused,
@@ -126,6 +145,10 @@ const workbenchHandlers = {
   "session.get": unused,
   "session.rename": unused,
   "session.bookmark": unused,
+  "session.plan.comment.save": unused,
+  "session.plan.comment.delete": unused,
+  "session.plan.review": unused,
+  "session.plan.review.restore": unused,
   "session.bookmarks.remove": unused,
   "session.advanced.set": unused,
   "session.compact": unused,
@@ -141,7 +164,9 @@ const workbenchHandlers = {
   "session.item.detail": unused,
   "session.reasoning.set": unused,
   "session.mode.set": unused,
+  "session.delegation.bypass.set": unused,
   "providers.discover": unused,
+  "providers.presets.discover": unused,
   "providers.image.capability": unused,
   "providers.models": unused,
   "providers.test": unused,
@@ -375,6 +400,28 @@ describe("validated invoke router", () => {
     await expect(
       invoke({ sender: detachedContents, senderFrame: detached }, "app.info", {}),
     ).resolves.toMatchObject({ ok: false, error: { code: "DENIED" } });
+    expect(handler).not.toHaveBeenCalled();
+  });
+  it("rechecks a trusted sender after the readiness wait", async () => {
+    let release!: () => void;
+    const ready = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    const invoke = createInvokeRouter({
+      target: () => ({ webContents: contents, url: "vera://app/index.html" }),
+      handlers: {
+        ...workbenchHandlers,
+        "app.info": handler,
+        "app.settings.get": unused,
+        "app.settings.update": unused,
+      },
+      log,
+      ready: () => ready,
+    });
+    const result = invoke(event, "app.info", {});
+    frame.url = "https://different.invalid/";
+    release();
+    await expect(result).resolves.toMatchObject({ ok: false, error: { code: "DENIED" } });
     expect(handler).not.toHaveBeenCalled();
   });
   it("maps an invalid response to logged INTERNAL and remains usable", async () => {

@@ -46,6 +46,20 @@ L’onglet **Fichiers** affiche tout le dossier du banc de travail sous forme d�
 
 Le menu d’un fichier propose **Ouvrir**, **Joindre comme contexte**, **Ouvrir avec** (l’application par défaut ou une autre application), **Afficher dans l’Explorateur** (le Finder ou le dossier sur les autres systèmes), **Copier** (chemin absolu, chemin relatif ou nom du fichier) et **Propriétés**, qui inclut l’état d’indexation.
 
+## État Git dans Fichiers
+
+Activez **Afficher l’état Git dans Fichiers** dans **Modifier le banc de travail → Interface**, puis enregistrez. L’option est désactivée par défaut pour chaque banc. Fichiers affiche la branche et compte les chemins modifiés et les conflits du banc. Un renommage compte les deux chemins s’ils sont tous les deux dans le banc. S’il traverse la limite du banc, il apparaît comme un ajout ou une suppression du côté visible.
+
+**I** indique une modification dans l’index et **T** une modification dans l’arbre de travail. Les codes sont M (modifié), ? (non suivi), A (ajouté), R (renommé), D (supprimé) et ! (conflit). Un fichier peut avoir les deux marques. Un dossier replié indique le nombre de chemins modifiés. **Modifications Git uniquement** filtre l’arborescence. Les fichiers supprimés et les anciens chemins des renommages restent visibles sans fichier à ouvrir.
+
+L’état applique les règles d’exclusion de Git, même si l’indexation des documents suit d’autres règles. Il s’actualise quand les fichiers surveillés changent. Utilisez **Actualiser l’état Git** après une erreur ou pour les dossiers qui ne peuvent pas être surveillés. Cette vue en lecture seule nécessite une installation système de Git 2.40 ou ultérieur et un arbre de travail local ordinaire. Les arbres de travail liés, les sous-modules utilisés comme racine du banc, les formats de métadonnées non pris en charge et les dépôts dont la configuration contient des inclusions ou des filtres affichent un état indisponible. La navigation dans Fichiers reste disponible.
+
+Ouvrez le menu contextuel d’un fichier modifié (clic droit ou **Maj+F10**), puis choisissez **Git → Voir les modifications hors index** ou **Voir les modifications indexées**. La première option compare l’arbre de travail à l’index. La seconde compare l’index à HEAD, ou à une base vide si la branche n’a aucun commit. Chaque comparaison s’ouvre dans son propre onglet à côté du Chat. Changez d’onglet avec **Ctrl+Page précédente/suivante** et fermez la comparaison active avec **Ctrl+W**. Le brouillon et la position dans la conversation sont conservés.
+
+Dans le menu contextuel d’un fichier suivi, choisissez **Git → Voir l’historique du fichier**. L’option est aussi disponible pour les fichiers inchangés et les suppressions suivies visibles dans Fichiers. L’onglet central affiche jusqu’à 50 commits accessibles depuis le HEAD local, du plus récent au plus ancien, avec l’identifiant court, l’auteur, la date et l’objet. Git suit les renommages détectés dans le banc de travail. Les déplacements qui en franchissent la limite sont omis. La vue utilise les données locales et respecte le réglage de masquage de l’affichage.
+
+Ces comparaisons en lecture seule sont disponibles pour les chemins supprimés et les renommages à l’intérieur du banc de travail. Un message signale un conflit, un fichier binaire, une comparaison trop volumineuse ou un contenu indisponible. Ouvrez les fichiers non suivis dans la visionneuse habituelle.
+
 ## Citations
 
 Dans une réponse, chaque puce de citation indique la source et l’emplacement : page, plage de pages, diapositive, titre ou plage de lignes. Sélectionnez une puce pour ouvrir le document à cet endroit. Une puce marquée **La citation n’a pas pu être vérifiée** désigne un élément que VERA n’a pas pu confirmer, par exemple une page qui n’existe pas ou un fichier modifié depuis ; considérez cette affirmation avec prudence.
@@ -84,3 +98,9 @@ Choisissez **Rendu**, **Texte** ou **Hex** dans la barre du fichier. Le rendu es
 Les fichiers PNG, JPEG, GIF, WebP, BMP et SVG ouvrent en **Rendu** sans indexation. **Zoom de l’image** commence par **Ajuster** : les grandes images sont réduites à l’espace disponible, les petites ne sont pas agrandies. Ajuster suit la taille du panneau. Choisissez de 25% à 400% pour redimensionner l’image décodée d’origine, puis revenez à Ajuster. Le SVG reste une image : scripts, liens et ressources externes sont inactifs. **Texte** et **Hex** restent accessibles ; le choix explicite est mémorisé par extension.
 
 Les octets suivent le masquage Affichage actuel. Celui-ci peut empêcher le décodage ; une image incompatible ou corrompue affiche aussi une erreur sûre avec **Réessayer**. Utilisez Hex pour examiner les octets reçus. L’aperçu assemble des fenêtres bornées en une ressource image complète du navigateur. La mémoire requise dépend donc de la taille encodée et décodée et des ressources du décodeur. Aucune limite fixe de taille du fichier n’est imposée.
+
+## État de l’indexation
+
+L’icône à côté du nom du banc de travail actif indique l’état de l’analyse, de l’indexation ou de la reconstruction. Placez-y le focus ou le pointeur pour consulter les compteurs, puis activez-la pour ouvrir Fichiers. Le total des fichiers traités comprend les fichiers ignorés, ceux qui nécessitent une reconnaissance par OCR et les échecs. Les documents interrogeables ont des passages dans l’index. Le total reste inconnu tant que la sélection n’est pas déterminée. Dans un banc de travail en lecture seule, VERA peut utiliser l’index enregistré sans le vérifier à nouveau. Fichiers indique les motifs des exceptions et permet de gérer la limite de fichiers ou de redémarrer le service d’indexation.
+
+Le chat signale les réponses pour lesquelles la recherche a été partielle, s’est rabattue sur les mots-clés ou était indisponible. Une recherche partielle sans résultat peut manquer des sources en attente ou exclues. Vous pouvez poursuivre la conversation ou ouvrir un fichier connu pendant la mise à jour de l’index.

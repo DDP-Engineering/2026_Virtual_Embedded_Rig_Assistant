@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-REL-df91d9fe"
+title = "Report a missing runtime"
+status = "active"
+requirement = "If Chromium is unavailable, then Desktop shall show localized missing-runtime status with a route to install it."
+verification = "Open Settings in a fresh profile and try a replay browser open before installing."
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/browser-settings.tsx", "05_Software/src/apps/desktop/src/main/browser/agent-browser.ts", "05_Software/src/apps/desktop/src/renderer/components/session/browser-controls.tsx", "05_Software/src/apps/desktop/src/main/browser/runtime.ts"]
+linked_tests = ["05_Software/tests/e2e/browser-controls.spec.ts", "05_Software/src/apps/desktop/src/main/browser/runtime.test.ts"]
+created = 2026-11-20
+updated = 2026-11-20

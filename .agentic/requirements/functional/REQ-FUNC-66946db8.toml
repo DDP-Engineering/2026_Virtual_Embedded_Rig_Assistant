@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-FUNC-66946db8"
+title = "Route QwenCloud requests by plan"
+status = "active"
+requirement = "When a QwenCloud Standard or Token Plan connection is used, VERA shall send only its scoped key to that plan's registered international catalog and inference routes."
+verification = "Save both plans, attempt to use the other saved connection's key through discovery, and inspect the URL, method, authorization and redirect mode on both transports."
+affected_paths = ["05_Software/src/libraries/shared/src/provider-presets.ts","05_Software/src/libraries/core/src/llm/preset-connection.ts","05_Software/src/libraries/core/src/llm/providers.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/qwencloud-presets.test.ts"]
+created = 2026-11-20
+updated = 2026-11-20

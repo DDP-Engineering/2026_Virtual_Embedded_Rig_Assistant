@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-FUNC-f53d27f7"
+title = "Use the documented Alibaba and Xiaomi inference endpoints"
+status = "active"
+requirement = "When a configured Alibaba Cloud or Xiaomi model streams, VERA shall send Chat Completions only to the exact HTTPS route for the selected plan, region and workspace."
+verification = "Stream each binding with a scripted transport that verifies its method, full URL, redirect policy and subsequent request."
+affected_paths = ["05_Software/src/libraries/shared/src/provider-presets.ts","05_Software/src/libraries/core/src/llm/preset-connection.ts","05_Software/src/libraries/core/src/llm/providers.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/regional-provider-presets.test.ts"]
+spec = "specs/REQ-FUNC-f53d27f7.md"
+created = 2026-11-20
+updated = 2026-11-20

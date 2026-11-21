@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-REL-3cbc93f2"
+title = "Keep Files usable when Git is unavailable"
+status = "active"
+requirement = "If Git is missing or repository status is unavailable, Desktop shall keep Files browsing available with an explicit Git availability state."
+verification = "Inject missing, unsupported and failed Git reads and verify unavailable states and continued browsing."
+affected_paths = ["05_Software/src/libraries/shared/src/git-status.ts", "05_Software/src/apps/desktop/src/main/git/status-service.ts", "05_Software/src/apps/desktop/src/renderer/components/documents/git-status.tsx"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/git/safe-status.test.ts","05_Software/src/apps/desktop/src/renderer/components/documents/docs-tree.test.ts"]
+created = 2026-11-21
+updated = 2026-11-21

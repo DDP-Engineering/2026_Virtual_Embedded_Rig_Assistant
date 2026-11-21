@@ -47,6 +47,10 @@ plugins/shell.test.ts and renderer components/command-settings.test.ts.
   model/provider/update/recent defaults. Optional sessionOrder (session ids per workbench
   id, TASK-c99ca08c) is main-owned: only the internal service patch writes it, the IPC settings
   patch rejects it. Exact contract: [data spec](../specs/REQ-DATA-4a030001.md).
+- Optional `dictation` stores a selected installed-model id or null and a spoken-language code or
+  `auto`. Writes enter the internal settings patch through dedicated dictation IPC.
+  [Dictation](dictation.md) owns model verification and effective selection. The app settings patch
+  saves optional `dictationRecordingMode` (`hold` or `toggle`) and the `dictate` shortcut overrides.
 - app.settings.get({}) and app.settings.update(patch) use validated schemas.
 - Advanced settings (ADV-01, `shared/src/advanced-settings.ts`):
   - **Storage:** `settings.json` holds an optional `advanced` map (application scope) and `showAdvanced` (default false). The stored map is unvalidated, so a hand-edited file always loads.

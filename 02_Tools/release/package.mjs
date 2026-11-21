@@ -32,7 +32,7 @@ import { publicRepository, updateFilePattern, updatePublish } from "./update-con
 
 const root = software;
 const require = softwareRequire;
-export const probeMarkers = ["packaging-probe", "I2C1_CR1"];
+export const probeMarkers = ["packaging-probe", "I2C1_CR1", "veraTestDictation", "veraTestBrowser"];
 export const documentWorkerMarkers = ["allowRemoteModels", "document-embedding-worker"];
 
 export function distributionConfig(platform, testBuild, env) {
@@ -133,6 +133,8 @@ export async function inspectAppArchive(archive, testBuild) {
     .map((entry) => extractFile(archive, entry.slice(1).replaceAll("/", sep)).toString("utf8"))
     .join("\n");
   verifyAppCode(code, testBuild);
+  if (!entries.includes("/out/main/whisper-worker.js"))
+    throw new Error("Whisper worker missing from app archive");
   await checkPdfResources((path) => extractFile(archive, path.replaceAll("/", sep)));
   const problems = inspectPayloadFiles(
     entries.map((entry) => ({
@@ -280,6 +282,7 @@ export async function stageRuntime(
     "pdfjs-dist",
     "electron-updater",
     "node-pty",
+    "playwright-core",
   ];
   const seen = new Set();
   const packages = [];

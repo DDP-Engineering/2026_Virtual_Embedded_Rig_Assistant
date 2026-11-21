@@ -38,6 +38,7 @@ const snapshot = (enabled: string[] = [], readOnly = false): WorkbenchSnapshot =
     plugins: { enabled },
   }),
   folder: "/bench",
+  indexLease: 1,
   readOnly,
   warnings: [],
 });

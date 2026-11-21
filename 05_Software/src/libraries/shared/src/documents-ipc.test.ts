@@ -76,6 +76,27 @@ it("requires exact workbench identity and typed viewer requests without client s
     expect(channels["docs.open"].request.safeParse(value).success).toBe(false);
   expect(channels["docs.search"].request.safeParse({ workbenchId, query: " " }).success).toBe(false);
 });
+it("requires typed search coverage and ranking usage even when Files has no results", () => {
+  const response = channels["docs.search"].response;
+  const empty = { workbenchId: envelope(null).id, results: [] };
+  for (const coverage of ["complete", "partial"] as const)
+    expect(response.safeParse({ ...empty, coverage, usage: { mode: "keyword" } }).success).toBe(true);
+  expect(
+    response.safeParse({
+      ...empty,
+      coverage: "unknown",
+      usage: { mode: null, reason: "revision-conflict" },
+    }).success,
+  ).toBe(true);
+  for (const usage of [
+    undefined,
+    { mode: null },
+    { mode: "semantic", fallbackReason: "embedding-rebuild" },
+    { mode: "keyword", fallbackReason: "not-found" },
+  ])
+    expect(response.safeParse({ ...empty, coverage: "partial", usage }).success).toBe(false);
+  expect(response.safeParse({ ...empty, usage: { mode: "keyword" } }).success).toBe(false);
+});
 it("validates strict reindex requests/responses and truthful document/progress/removal events", () => {
   expect(channels["docs.reindex"].request.parse({})).toEqual({});
   expect(channels["docs.reindex"].response.parse({})).toEqual({});
@@ -432,4 +453,41 @@ it("bounds physical byte-window requests and replies through strict docs channel
   expect(channel.response.parse({ ...reply, offset: 20, data: "" }).data).toBe("");
   const full = { ...reply, offset: 0, size: 1048576, data: `${"////".repeat(Math.floor(1048576 / 3))}/w==` };
   expect(channel.response.parse(full)).toEqual(full);
+});
+
+it("validates scoped status snapshots, scan bounds and ordered event identity", () => {
+  const workbenchId = envelope(null).id;
+  const scope = { workbenchId, indexLease: 1 };
+  const status = {
+    ...scope,
+    revision: 8,
+    state: "indexing",
+    progress: { total: 5, processed: 3, exceptions: 1 },
+    searchable: 2,
+    volume: { files: 4, bytes: 50 },
+    guard: null,
+  };
+  const channel = channels["docs.status"];
+  expect(channel.request.safeParse(scope).success).toBe(true);
+  expect(channel.request.safeParse({ ...scope, indexLease: 0 }).success).toBe(false);
+  expect(channel.response.safeParse(status).success).toBe(true);
+  expect(channel.response.safeParse({ ...status, state: "scanning" }).success).toBe(false);
+  expect(
+    channel.response.safeParse({
+      ...status,
+      progress: { total: 5, processed: 6, exceptions: 3 },
+    }).success,
+  ).toBe(false);
+  expect(eventEnvelopeSchema.safeParse(envelope({ type: "index.status", status })).success).toBe(true);
+  expect(
+    eventEnvelopeSchema.safeParse(
+      envelope({
+        type: "index.status",
+        status: {
+          ...status,
+          workbenchId: "wb_01JB8Z6Q4M7N2K5R9T3V8X1Y1C",
+        },
+      }),
+    ).success,
+  ).toBe(false);
 });

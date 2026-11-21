@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-FUNC-8db3fff6"
+title = "Report browser runtime provisioning progress"
+status = "active"
+requirement = "While browser provisioning is in progress, Desktop shall report the transfer byte count and its current provisioning phase."
+verification = "Observe status during an interrupted transfer and verify its total and completed byte counts, then observe ready on a complete transfer."
+affected_paths = ["05_Software/src/apps/desktop/src/main/browser/runtime.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/browser/runtime.test.ts"]
+priority = "normal"
+created = 2026-11-20
+updated = 2026-11-20

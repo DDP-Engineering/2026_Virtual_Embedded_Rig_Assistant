@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-UX-59086d40"
+title = "Show the owned browser activity"
+status = "active"
+requirement = "While an enabled chat owns browser activity or a selected authorized page, Desktop shall present that activity and current authorized URL in the owning chat across renderer refresh."
+verification = "Navigate using replay, switch chats and reload, verifying location and grants only for the live owner."
+affected_paths = ["05_Software/src/apps/desktop/src/main/browser/agent-browser.ts", "05_Software/src/apps/desktop/src/renderer/components/session/workspace.tsx", "05_Software/src/apps/desktop/src/renderer/components/session/browser-controls.tsx", "05_Software/src/apps/desktop/src/renderer/components/browser-controls.css", "05_Software/src/apps/desktop/src/renderer/mocks/mockApi.ts", "05_Software/src/libraries/core/src/sessions/service.ts"]
+linked_tests = ["05_Software/tests/e2e/browser-controls.spec.ts"]
+created = 2026-11-20
+updated = 2026-11-20

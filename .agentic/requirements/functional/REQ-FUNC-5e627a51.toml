@@ -10,7 +10,7 @@ requirement = "If semantic ranking for search_docs fails because the indexer is 
 
 verification = "Core search test: with an embedding port whose rank rejects with a retry error, hybrid and semantic searches return the keyword hit and a message saying semantic ranking is unavailable; a rank error without the retry mark still rejects."
 
-affected_paths = ["05_Software/src/libraries/core/src/knowledge/search.ts"]
+affected_paths = ["05_Software/src/libraries/core/src/knowledge/search.ts", "05_Software/src/libraries/core/src/knowledge/search-ranking.ts"]
 
 linked_tests = ["05_Software/src/libraries/core/src/knowledge/search.test.ts::falls back to keyword results when the indexer cannot rank, and still fails other ranking errors"]
 
@@ -21,4 +21,4 @@ priority = "normal"   # low | normal | high
 rationale = ""        # why this behavior exists, if not obvious
 
 created = 2026-11-01
-updated = 2026-11-01
+updated = 2026-11-21

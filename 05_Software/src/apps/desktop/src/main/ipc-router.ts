@@ -81,6 +81,7 @@ export function createInvokeRouter(options: {
     const request = channel.request.safeParse(payload);
     if (!request.success) return { ok: false, error: veraError("INVALID") };
     await options.ready?.();
+    if (!authorized(event)) return { ok: false, error: veraError("DENIED") };
     try {
       const value = await dispatch(name, request.data);
       const response = channel.response.safeParse(value);

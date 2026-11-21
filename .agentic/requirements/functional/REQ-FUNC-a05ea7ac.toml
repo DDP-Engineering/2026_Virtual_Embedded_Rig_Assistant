@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-FUNC-a05ea7ac"
+title = "Continue hosted chat tool calls on the selected binding"
+status = "active"
+requirement = "When a hosted model streams a tool call, VERA shall send the matching assistant call and tool result on the selected model reference."
+verification = "Stream a tool call and an incremental answer on each binding and assert the call/result IDs, reasoning replay where sent and abort propagation."
+affected_paths = ["05_Software/src/libraries/core/src/llm/curated-adapters.ts", "05_Software/src/apps/desktop/src/main/provider-gateway.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/gateway-provider-presets.test.ts"]
+created = 2026-11-20
+updated = 2026-11-20

@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-SEC-1d09f194"
+title = "Reject mismatched provider routes"
+status = "active"
+requirement = "If an Alibaba Cloud or Xiaomi connection supplies a URL or binding from another plan, workspace or region, VERA shall reject it before dispatch."
+verification = "Submit forged endpoint and binding selections, including QwenCloud and Alibaba aliases, and assert no network call."
+affected_paths = ["05_Software/src/libraries/shared/src/provider-presets.ts","05_Software/src/libraries/core/src/llm/preset-connection.ts","05_Software/src/apps/desktop/src/main/provider-settings.ts","05_Software/src/apps/desktop/src/main/provider-gateway.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/regional-provider-presets.test.ts"]
+created = 2026-11-20
+updated = 2026-11-20

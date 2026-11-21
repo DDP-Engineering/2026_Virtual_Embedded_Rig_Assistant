@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-SEC-1b68aa62"
+title = "Isolate unattended Git execution"
+status = "active"
+requirement = "While reading Git status automatically, Desktop shall run only bounded app-selected local commands with repository program execution, Git transport and repository writes disabled."
+verification = "Use a real disposable repository and mock launch boundaries to check controlled Git configuration and environment and unchanged metadata."
+affected_paths = ["05_Software/src/apps/desktop/src/main/git/read.ts", "05_Software/src/apps/desktop/src/main/git/repository.ts", "05_Software/src/apps/desktop/src/main/display-documents.ts", "05_Software/src/libraries/shared/src/ipc.ts", "05_Software/src/libraries/shared/src/events.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/git/safe-status.test.ts","05_Software/src/libraries/shared/src/git-status.test.ts","05_Software/src/apps/desktop/src/main/display-documents.test.ts"]
+created = 2026-11-21
+updated = 2026-11-21

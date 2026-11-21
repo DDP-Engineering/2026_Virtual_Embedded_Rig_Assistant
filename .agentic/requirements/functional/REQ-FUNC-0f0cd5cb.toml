@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-FUNC-0f0cd5cb"
+title = "Allow manual QwenCloud model entry"
+status = "active"
+requirement = "When the QwenCloud catalog is unavailable or empty, VERA shall allow an explicitly configured model and use its Chat Completions requests to verify the connection."
+verification = "Return 401 or 404 for listing and success for a manually saved model; assert the manual discovery result, skipped reachability and successful inference checks."
+affected_paths = ["05_Software/src/libraries/core/src/llm/preset-connection.ts","05_Software/src/libraries/core/src/llm/providers.ts","05_Software/src/apps/desktop/src/renderer/components/custom-provider-editor.tsx"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/qwencloud-presets.test.ts"]
+created = 2026-11-20
+updated = 2026-11-20

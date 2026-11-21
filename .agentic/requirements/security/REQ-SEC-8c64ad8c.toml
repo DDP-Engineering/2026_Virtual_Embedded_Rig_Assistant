@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-SEC-8c64ad8c"
+title = "Isolate API and plan credentials"
+status = "active"
+requirement = "When a MiniMax or Z.AI preset is configured, VERA shall bind the saved credential exclusively to that connection and its original international route."
+verification = "Save all four with distinct fixture keys, inspect their requests and slots, and reject a changed endpoint or binding and mismatched saved discovery before transport."
+affected_paths = ["05_Software/src/libraries/shared/src/provider-presets.ts","05_Software/src/apps/desktop/src/main/provider-settings.ts","05_Software/src/libraries/core/src/llm/preset-connection.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/international-plan-presets.test.ts"]
+created = 2026-11-20
+updated = 2026-11-20

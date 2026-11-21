@@ -14,7 +14,10 @@ The synchronous prompt builder consumes workbench name, decoded pinned text, res
 
 ToolDef optionally supplies synchronous `publish(args, output)`. After awaited execution and abort
 checking, ReferenceRuntime invokes it before tool.done or transcript disclosure; a rejection becomes
-an ordinary failed result. The registry caps structured replacements from delegated tool publication. [User terminals](terminals.md) uses it to recheck revocable read leases.
+an ordinary failed result. ToolDef can also supply a live availability predicate,
+which ReferenceRuntime rechecks before model dispatch and tool execution. The
+Desktop browser uses it for current grants and opt-ins. Model dispatch rechecks
+this predicate after session preparation and after credential resolution. The registry caps structured replacements from delegated tool publication. The runtime marks trusted parent-origin instructions in user and queued events and in model-facing message text. [User terminals](terminals.md) uses it to recheck revocable read leases.
 
 When the host offers commands, `SystemPromptInput.commands` adds instructions for run_command,
 closed stdin/noninteractive flags, background program_output polling with waitMs/until and program_stop.
@@ -29,10 +32,11 @@ cover offered/Read-only commands and retain the existing optional program block 
 
 - A Bypass prompt explicitly names read/list/glob/grep/write/edit plus prepared targets of apply_candidate and the electrical mutation/result tools, with application-data refusal and existing tool/OS boundaries. It names the currently confined program/analysis/plugin-draft tools without granting future capabilities. Ordinary file tool descriptions include that scope before normal runtime budgeting; Bypass does not introduce new tool capabilities or remove size, binary, exact-read or host ownership constraints. The SessionService/ApprovalGate layer supplies live revocable authority.
 
-- Before each model budget calculation, ReferenceRuntime awaits optional gateway.prepareModel(model,signal). This resolves live provider capabilities for cold/expired catalogs without relying on renderer queries; readiness errors settle through the normal turn error path. Timed/session wrappers preserve the hook. Reasoning is snapshotted at dispatch by SessionService, including internal subsequent model calls.
+- Before each model budget calculation, ReferenceRuntime awaits optional gateway.prepareModel(model,signal). This resolves live provider capabilities for cold/expired catalogs without relying on renderer queries; readiness errors settle through the normal turn error path. Structured provider errors preserve the localized diagnostic. Timed/session wrappers preserve the hook. Reasoning is snapshotted at dispatch by SessionService, including internal subsequent model calls.
 
 - start accepts systemPrompt,model string,ToolDef[],Message[],ContextPolicy and optional maxToolCallsPerTurn (default50; SessionService passes the resolved Advanced value toolCallsPerTurn); send runs one turn and returns end/aborted/error/limit; abort propagates the turn signal; onEvent returns unsubscribe; messages returns full detached pi Message[]. Busy start/send return BUSY.
 - RuntimeHost owns gateway,now,nextId,approve(validated cloned call,signal) and optional steering(), a detached durable FIFO queue snapshot. ToolDef owns name,class(read/write/session/program),description,params(zod),execute(args,signal,callId?) and optional publish(args,output). The runtime forwards the tool call ID separately from zod-validated arguments; the session launch tool combines it with the host turn ID for admission retries. Approval host binds decisions to the prepared change.
+- RuntimeInit.requestIdentity optionally supplies the first turnId/messageId after start; ReferenceRuntime consumes it once and later sends generate normal IDs. SessionService uses this for atomic plan-review admission and suppresses only exact precommitted echoes, aborting mismatches. Focused proof: agent/request-identity.test.ts and sessions/review-turn.test.ts.
 - RuntimeInit optionally accepts a session-owned ContextCompactor. Default runtime instances retain it across sends and reset it at start.
 - The ContextCompactor holds three things:
   - the derived summary, with `takeRecord`/`restore` for its durable form;
@@ -44,7 +48,7 @@ cover offered/Read-only commands and retain the existing optional program block 
 
 ## Invariants
 
-- Every dispatch resolves current capabilities and reserves effective output plus max(1024,ceil(context*0.05)). The default fallback counts UTF8 JSON bytes plus explicit framing, and estimates are labeled.
+- Every dispatch resolves current capabilities and reserves effective output plus max(1024,ceil(context*0.05)). The default fallback counts UTF8 JSON bytes plus explicit framing, and estimates are labeled. Preflight also enforces the advertised model input maximum when present.
 - Calibration (REQ-NFR-4721c12f):
   - `ContextPolicy.prepare(..., scale)` scales an estimated count to min(raw, ceil(raw x scale)) for fit, M1 reduction and `contextTokens`, and reports the unscaled `rawTokens`, which the runtime strips from usage events.
   - After each normal response with reported input (input + cacheRead + cacheWrite), the runtime keeps ratio = reported / rawTokens, capped at 1, in the session compactor (a ratio below 0.12, a partial count from a prefix-caching server, is ignored), and emits it as usage `calibration {modelRef, ratio}`.

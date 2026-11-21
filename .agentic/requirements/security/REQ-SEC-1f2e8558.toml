@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-SEC-1f2e8558"
+title = "Keep curated credentials out of public provider output"
+status = "active"
+requirement = "When a curated credential appears in a provider response, VERA shall redact or reject the credential-bearing public output."
+verification = "Echo retained keys in catalog data and errors, and stream a short key across text and tool deltas with agent masking enabled. Assert public output omits keys and an unsafe terminal tool call is rejected."
+affected_paths = ["05_Software/src/libraries/core/src/llm/preset-connection.ts", "05_Software/src/libraries/core/src/llm/providers.ts", "05_Software/src/apps/desktop/src/main/provider-settings.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/provider-presets.test.ts", "05_Software/src/apps/desktop/src/main/credentials.test.ts"]
+created = 2026-11-20
+updated = 2026-11-20

@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-FUNC-36900001"
+title = "Start owned child follow-ups"
+status = "active"
+requirement = "When an owning parent sends an instruction to an idle eligible child, the session service shall acknowledge a started turn with that child's session ID, turn ID and message ID."
+verification = "Send three follow-ups to one idle child and assert separate turns in the existing session and transcript."
+affected_paths = ["05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/libraries/core/src/storage/repos/delegations.ts", "05_Software/src/libraries/core/src/storage/schema.ts", "05_Software/src/libraries/core/src/tools/delegated-sessions.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/sessions/delegation.test.ts", "05_Software/tests/e2e/session-delegation.spec.ts"]
+created = 2026-11-21
+updated = 2026-11-21

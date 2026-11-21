@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-REL-c0d8c2ab"
+title = "Report browser provisioning failures and prerequisites"
+status = "active"
+requirement = "If browser runtime provisioning or launch prerequisites are unavailable, Desktop shall publish a typed failure with a recovery instruction."
+verification = "Simulate interrupted transfer and missing display or libraries and assert the reported reason and action."
+affected_paths = ["05_Software/src/apps/desktop/src/main/browser/runtime.ts","05_Software/src/apps/desktop/src/main/browser/launcher.ts","05_Software/src/apps/desktop/src/main/browser/failure.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/browser/runtime.test.ts","05_Software/src/apps/desktop/src/main/browser/launcher.test.ts"]
+priority = "normal"
+created = 2026-11-20
+updated = 2026-11-20

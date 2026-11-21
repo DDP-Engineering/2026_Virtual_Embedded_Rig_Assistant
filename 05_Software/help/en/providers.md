@@ -2,6 +2,8 @@
 
 A provider gives VERA access to a language model. You need at least one. Set providers up in **Settings** → **Providers**, which has two parts: **Subscriptions** and **API / local connections**.
 
+Under **Add connection**, use **Search providers** to find a provider by name.
+
 ## ChatGPT subscription
 
 1. Under **ChatGPT subscription**, select **Sign in with ChatGPT**. Your system browser opens the sign-in page.
@@ -18,6 +20,80 @@ The token renews automatically. **Sign out** removes it.
 1. Under **API / local connections**, select **Add connection** and choose **OpenAI API** as **Provider**.
 2. Enter the **OpenAI API key** and, optionally, an **OpenAI model**.
 3. Select **Save**.
+
+## OpenCode Console and OpenCode Go
+
+1. In OpenCode Console, create a workspace API key. Give the key permission to read models and run inference.
+2. In VERA, choose **Add connection**, then **OpenCode Console** for pay-as-you-go or **OpenCode Go** for a Go subscription.
+3. Enter the key and select **Discover models**. Choose a model from the plan’s list, or enter its exact ID and limits if you are configuring it manually.
+4. Select **Save**, then **Test**. Choose the model for your session or workbench.
+
+VERA stores each connection’s key separately. You can use the same key in both connections if the workspace has credits and a Go subscription. Free Console models are available only in OpenCode. Check your workspace’s limits and the Go Extra Usage setting to see when OpenCode can bill your workspace balance.
+
+The catalog reports model capabilities. Use **Test** to check tool calling and streaming for your selected model.
+
+See [OpenCode harness setup](https://opencode.ai/docs/console/harnesses) and the [Go plan guide](https://opencode.ai/docs/console/go/).
+
+## QwenCloud Standard and QwenCloud Token Plan
+
+1. Under **Add connection**, select **QwenCloud Standard** for a Singapore pay-as-you-go API key or **QwenCloud Token Plan** for the dedicated Token Plan key (`sk-sp-`). VERA fills the Base URL for the selected plan.
+2. Enter the matching key and select **Discover models**. If the list is unavailable, enter the exact model ID for your region or plan. For example, `qwen3.8-flash` accepts text and images and supports tool calling and a thinking toggle. `qwen3.7-max` supports tool calling and the thinking toggle with text input. Capabilities for other model IDs may be unverified.
+3. Select **Save**, then **Test**. If catalog reachability is skipped, **Authentication and model** checks the key and model using chat inference. Choose the model for your session or workbench.
+
+Use Token Plan for interactive agent sessions under the [Token Plan usage policy](https://docs.qwencloud.com/token-plan/token-plan-permissions-and-usage). If the plan runs out of credits, check its usage and quota. For a request rate limit, wait before retrying.
+
+See [QwenCloud API keys](https://docs.qwencloud.com/developer-guides/administration/api-keys) and [Token Plan models and errors](https://docs.qwencloud.com/token-plan/token-plan-faq).
+
+## DeepSeek, Moonshot AI and Kimi For Coding
+
+1. In **Add connection**, choose **DeepSeek** for a DeepSeek API key, **Moonshot AI** for an international Kimi API Platform key, or **Kimi For Coding** for a key from the Kimi Code Console. VERA fills in the matching base URL.
+2. Enter the service's key. For DeepSeek and Moonshot AI, select **Discover models** or enter the exact model ID. For Kimi For Coding, enter an ID such as `kimi-for-coding` or `k3-256k`, depending on your membership.
+3. Select **Save**, then **Test**. For Kimi For Coding, **Reachability** is skipped and **Authentication and model** checks the key and model through inference.
+
+Use the exact Kimi For Coding model ID. Kimi Code may answer a mistyped ID with a fallback model. A passing probe leaves capabilities for unverified Kimi IDs unknown.
+
+DeepSeek Flash, Moonshot AI's Kimi K3 and the two Kimi Code examples accept text and images in VERA. DeepSeek V4 Pro accepts text. Capabilities for other model IDs may be unverified.
+
+See [DeepSeek model limits](https://api-docs.deepseek.com/api/list-models/), the [Moonshot Kimi K3 guide](https://platform.kimi.ai/docs/guide/kimi-k3-quickstart) and [Kimi Code model configuration](https://www.kimi.com/code/docs/en/kimi-code/models).
+
+## MiniMax and Z.AI
+
+1. In **Add connection**, choose **MiniMax API** for a pay-as-you-go key (`sk-api-`) or **MiniMax M Plan** for a subscription key (`sk-cp-`) from MiniMax. Both use the international Messages service.
+2. Choose **Z.AI API** for a Standard API Key. The **Z.AI GLM Coding Plan** preset uses the dedicated international Coding Plan address. Use a Personal Coding Plan or Team Plan key only if Z.AI has authorized access from VERA. Z.AI limits plan use to supported tools, and VERA is absent from its published list. Check the key type in your account because some keys can use more than one address and billing depends on the key and route.
+3. Pick a suggested model or enter the exact ID enabled for your account. Select **Save**, then **Test**. These presets check the key and model through inference, which can consume quota. Choose the saved model for your session or workbench.
+
+`MiniMax-M3.1-Flash` and `glm-5.3-flash` handle text and images, support tool calls and offer reasoning levels. On MiniMax API, `MiniMax-M3` handles text and images and lets you turn reasoning on or off. `glm-5.3` handles text, supports tool calls and offers reasoning levels. Capabilities for other manually entered IDs remain unverified.
+
+See [MiniMax key setup](https://platform.minimax.io/docs/guides/quickstart-preparation), [Z.AI key management](https://docs.z.ai/devpack/notice/api-key-management) and [Z.AI's supported tools](https://docs.z.ai/devpack/tool/others#supported-tools).
+
+## Alibaba Cloud and Xiaomi MiMo
+
+1. Choose **Alibaba Cloud Model Studio** for pay-as-you-go. Select the region from the Model Studio console, copy its **Workspace ID** (starting with `llm-`) and enter a key for that workspace.
+2. Choose **Alibaba Cloud Coding Plan** for an international Coding Plan key (`sk-sp-`). Use its Singapore connection. QwenCloud Standard and Token Plan have their own presets and account keys.
+3. Choose **Xiaomi MiMo API** for a real-time API key (`sk-`) on the global API endpoint. For **Xiaomi MiMo Token Plan**, use the China, Singapore or Europe region shown on your Token Plan page and its individual (`tp-`) or team (`ttp-`) key.
+4. Select **Discover models** where available, or enter the exact chat model ID from your provider console. Select **Save**, then **Test**. The test uses the selected route and may consume quota. Choose a model in your session or workbench.
+
+Try `qwen3.7-flash` on Model Studio, `qwen3.7-plus` on Coding Plan, or `mimo-v2.6-flash` on MiMo when enabled for your account. A catalog entry alone does not confirm account access. Capabilities for other manually entered IDs may be unverified. To switch regions or workspaces, add a connection with the new scope.
+
+See [Model Studio](https://www.alibabacloud.com/help/en/model-studio/qwen-api-via-openai-chat-completions), [Coding Plan](https://www.alibabacloud.com/help/en/model-studio/coding-plan-faq), [MiMo API](https://mimo.mi.com/docs/en-US/api/chat/openai-api-post), [MiMo Token Plan](https://mimo.mi.com/docs/tokenplan/subscription).
+
+Use Alibaba Coding Plan in supported interactive coding tools under Alibaba’s usage policy. Use MiMo Token Plan for coding workflows under Xiaomi’s usage policy.
+
+## Fireworks AI, Together AI, Groq and Cerebras
+
+1. Under **Add connection**, select the service and enter an API key from its own console. VERA fills in the service address and stores each connection’s key separately.
+2. Select **Discover models**, or enter a full model ID and its limits. Keep the account prefix for Fireworks, such as `accounts/fireworks/models/glm-5p3-flash`. For a dedicated endpoint, copy its exact inference ID from the service.
+3. Save and select **Test** to check your key and chosen model. Tool and image support appear when the catalog or the provider’s model documentation supplies them. Check the provider’s limits and model access for your account.
+
+See the model lists for [Fireworks AI](https://fireworks.ai/models), [Together AI](https://docs.together.ai/docs/serverless/models), [Groq](https://console.groq.com/docs/models) and [Cerebras](https://inference-docs.cerebras.ai/models/overview).
+
+## Hugging Face Inference Providers, NVIDIA NIM and Vercel AI Gateway
+
+1. Under **Add connection**, select the service and enter its key. Hugging Face requires a user access token with Inference Providers permission. NVIDIA NIM uses a key with NVIDIA Public API Endpoints access. Vercel uses an AI Gateway key.
+2. Select **Discover models** and choose a model, or enter its complete ID and limits for a gated or account-specific model. Keep the namespace and slashes. For Hugging Face, keep a route suffix such as `owner/model:novita` if you choose an upstream explicitly.
+3. Save and select **Test** to check the chosen model with your key. A catalog entry does not guarantee account access. If access fails, check the exact ID and grant or plan in the service before changing the connection.
+
+VERA sends prompts to the service named in the model picker. [Hugging Face](https://huggingface.co/docs/inference-providers/index) and [Vercel](https://vercel.com/docs/ai-gateway/models-and-providers) route requests upstream. [NVIDIA NIM](https://docs.api.nvidia.com/nim/reference/llm-apis) runs the selected hosted model. The picker shows documented input and tool capabilities when available.
 
 ## LM Studio
 
@@ -64,6 +140,8 @@ Keys are stored encrypted with your operating system's secure storage. When that
 - For a workbench: **Edit workbench** → **Agent and chat** → **Default model**, written as `provider/model`. Leave it empty to use the application default.
 
 The session choice wins over the workbench default, and the workbench default over the application default.
+
+The model choices show the provider, context limit, input types and available tool or reasoning information. **Tools unverified** means tool calling has not been confirmed for that model.
 
 ## Common errors
 

@@ -25,6 +25,7 @@ import { ExternalSourceScope } from "./external-source-link.js";
 import { Markdown } from "./markdown.js";
 import { CopyAction } from "./message-actions.js";
 import { PromptUsage } from "./prompt-usage.js";
+import { RetrievalNotice } from "./retrieval-notice.js";
 import { useBookmarkJump, useSessionBookmarks } from "./session-bookmarks.js";
 import { ToolDetails } from "./tool-details.js";
 import { TranscriptImages } from "./transcript-images.js";
@@ -248,6 +249,14 @@ export function Transcript({
                 </Disclosure>
               ))}
             {shown.map((row) => {
+              if (row.kind === "retrieval-notice")
+                return (
+                  <RetrievalNotice
+                    key={`retrieval/${row.id}`}
+                    turnId={row.turnId}
+                    limitations={row.limitations}
+                  />
+                );
               if (row.kind === "group")
                 return (
                   <ToolGroupRow
@@ -377,7 +386,9 @@ const MessageRow = memo(function MessageRow({
       {match && <span className="sr-only">{t("chat.searchMatch")}</span>}
       {item.kind === "user" ? (
         <>
-          <strong>{t("chat.you")}</strong>
+          <strong data-parent-instruction={item.parentSessionId ? "" : undefined}>
+            {item.parentSessionId ? t("delegation.instruction") : t("chat.you")}
+          </strong>
           <BookmarkButton
             bookmarked={bookmarked}
             disabled={bookmarkDisabled}
@@ -464,7 +475,7 @@ const ErrorRow = memo(function ErrorRow({
         error={{
           code: item.code,
           messageKey: item.messageKey,
-          ...(item.params ? { params: item.params } : {}),
+          params: { ...item.params, ...(item.retryAfter ? { retryAfter: item.retryAfter } : {}) },
         }}
       />
       {item.code === "CONTEXT_LIMIT" && <p role="alert">{t("chat.contextAdvice")}</p>}

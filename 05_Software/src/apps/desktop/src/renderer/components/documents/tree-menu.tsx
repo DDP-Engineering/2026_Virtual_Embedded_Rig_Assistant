@@ -43,21 +43,24 @@ export function TreeMenu({
   const [open, setOpen] = useState<string>();
   // Set when a submenu opens from the keyboard, so its first item takes focus.
   const focusSubmenu = useRef(false);
+  const childCount = items.find((item) => item.action === open)?.items?.length;
   useLayoutEffect(() => {
     const node = menu.current;
-    if (!node) return;
+    if (!node || !items.length) return;
     const rect = node.getBoundingClientRect();
     node.style.left = `${Math.max(0, Math.min(x, window.innerWidth - rect.width))}px`;
     node.style.top = `${Math.max(0, Math.min(y, window.innerHeight - rect.height))}px`;
-  }, [x, y]);
+  }, [x, y, items.length]);
   useLayoutEffect(() => {
     menu.current?.querySelector<HTMLElement>('[role="menuitem"]')?.focus();
   }, []);
   useLayoutEffect(() => {
-    if (open === undefined) return;
+    if (open === undefined || childCount === undefined) return;
     const submenu = menu.current?.querySelector<HTMLElement>(`[data-submenu="${open}"]`);
     if (!submenu) return;
     // The Docs panel sits at the window's right edge, so a submenu often opens to the left.
+    submenu.style.top = "";
+    delete submenu.dataset.side;
     const rect = submenu.getBoundingClientRect();
     if (rect.right > window.innerWidth) submenu.dataset.side = "left";
     if (rect.bottom > window.innerHeight) submenu.style.top = `${window.innerHeight - rect.bottom}px`;
@@ -65,7 +68,7 @@ export function TreeMenu({
       focusSubmenu.current = false;
       submenu.querySelector<HTMLElement>('[role="menuitem"]')?.focus();
     }
-  }, [open]);
+  }, [open, childCount]);
   useEffect(() => {
     const press = (event: MouseEvent) => {
       if (!(event.target instanceof Node && menu.current?.contains(event.target))) closing.current(false);

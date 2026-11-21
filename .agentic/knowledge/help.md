@@ -67,6 +67,10 @@ the same source tree through `import.meta.glob`. Packaging (`02_Tools/release/pa
 
 ## Public interface
 
+- Localized Settings help covers [Dictation](dictation.md) model choice, acquisition, cancellation,
+  retry, selection, removal, spoken language and recording controls. Chat and shortcut help covers
+  both input modes, cancellation, draft insertion and explicit Send.
+
 - `help.list {language}` → `[{page, title, language}]`: the pages of that language, English pages filling its gaps
   (marked `language: "en"`); order `index`, then the pages `index.md` links as `(name.md)`, then the rest by name.
   Title is the first level-one heading, else the page name.

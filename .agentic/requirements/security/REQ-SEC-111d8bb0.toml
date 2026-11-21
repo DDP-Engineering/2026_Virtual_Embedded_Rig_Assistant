@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-SEC-111d8bb0"
+title = "Reject mismatched model bytes"
+status = "active"
+requirement = "If a downloaded model file differs from its pinned length or digest, VERA shall report an integrity failure and keep that model unavailable until a verified retry completes."
+verification = "Return wrong bytes with the expected length and a separate oversized stream; assert integrity failure and successful retry with correct bytes."
+affected_paths = ["05_Software/src/apps/desktop/src/main/dictation/models.ts", "05_Software/src/apps/desktop/src/main/dictation/integrity.ts", "05_Software/src/apps/desktop/src/main/dictation/transfer.ts", "05_Software/src/apps/desktop/src/main/index.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/dictation/models.test.ts"]
+created = 2026-11-20
+updated = 2026-11-20

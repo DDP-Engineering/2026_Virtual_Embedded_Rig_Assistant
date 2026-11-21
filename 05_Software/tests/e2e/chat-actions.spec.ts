@@ -15,6 +15,9 @@ const invoke = <C extends Channel>(page: Page, channel: C, request: Request<C>):
       (window as unknown as { vera: VeraBridge }).vera.invoke(channel as never, request as never),
     { channel, request },
   ) as Promise<Response<C>>;
+/** The page clipboard text; Chromium on Windows stores text with CRLF line ends, so they are read back as LF. */
+const clipboardText = (page: Page) =>
+  page.evaluate(async () => (await navigator.clipboard.readText()).replaceAll("\r\n", "\n"));
 
 test("chat copy controls are compact, localized and keyboard accessible in four languages", {
   tag: "@parallel-browser",
@@ -73,16 +76,14 @@ test("chat copy controls are compact, localized and keyboard accessible in four 
     await expect(replies.first()).toBeFocused();
     await expect(replies.first()).toHaveCSS("opacity", "1");
     await page.keyboard.press("Enter");
-    await expect.poll(() => page.evaluate(() => navigator.clipboard.readText())).toBe(answer);
+    await expect.poll(() => clipboardText(page)).toBe(answer);
     await replies.nth(1).focus();
     await page.keyboard.press("Space");
-    await expect.poll(() => page.evaluate(() => navigator.clipboard.readText())).toBe("Second response only");
+    await expect.poll(() => clipboardText(page)).toBe("Second response only");
     await expect(page.locator(".chat-code-block")).toHaveCount(3);
     await expect(page.locator("[data-run-block]")).toHaveCount(1);
     await page.locator(".chat-code-block .message-action").first().click();
-    await expect
-      .poll(() => page.evaluate(() => navigator.clipboard.readText()))
-      .toBe("Get-Content README.MD -TotalCount 10");
+    await expect.poll(() => clipboardText(page)).toBe("Get-Content README.MD -TotalCount 10");
     for (const action of await page.locator(".message-action").all()) {
       const box = await action.boundingBox();
       expect(box).not.toBeNull();
@@ -217,14 +218,18 @@ test("native chat runs a multiline block exactly once, creates and selects termi
     await page.locator(`#terminal-${pending.id}`).click();
     await page.locator(`[data-terminal-id="${pending.id}"] textarea`).focus();
     await page.keyboard.press("Enter");
+    // The first Add-Content in a fresh Windows PowerShell loads its module, which can take several seconds.
     await expect
-      .poll(async () => {
-        try {
-          return await readFile(join(folder, "pending.txt"), "utf8");
-        } catch {
-          return "";
-        }
-      })
+      .poll(
+        async () => {
+          try {
+            return await readFile(join(folder, "pending.txt"), "utf8");
+          } catch {
+            return "";
+          }
+        },
+        { timeout: 15_000 },
+      )
       .toContain("pending");
 
     // A foreground stdin reader must receive only the user's later input, never the dispatch wrapper.

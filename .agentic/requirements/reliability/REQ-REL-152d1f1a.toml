@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-REL-152d1f1a"
+
+title = "Reject out-of-range dictation audio"
+
+status = "active"
+
+requirement = "If submitted dictation audio exceeds the recording bound or contains invalid samples, the typed boundary shall reject it."
+
+verification = "Submit an oversized Float32Array and non-finite or out-of-range values and verify rejection before the worker."
+
+affected_paths = ["05_Software/src/libraries/shared/src/dictation.ts", "05_Software/src/libraries/shared/src/ipc.ts", "05_Software/src/apps/desktop/src/preload/bridge.ts"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/main/dictation/capture-jobs.test.ts", "05_Software/src/apps/desktop/src/preload/bridge.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-20
+updated = 2026-11-20

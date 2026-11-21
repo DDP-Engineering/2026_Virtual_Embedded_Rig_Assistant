@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-FUNC-1883b36f"
+title = "Report scoped branch and path status"
+status = "active"
+requirement = "When a supported repository is read successfully, Desktop shall report its branch state and separate staged and working-tree statuses with scoped change and conflict totals."
+verification = "Create mixed staged and unstaged status, deletes, untracked paths, conflicts and renames and check results including detached and unborn branches."
+affected_paths = ["05_Software/src/libraries/shared/src/git-status.ts", "05_Software/src/apps/desktop/src/main/git/status.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/git/safe-status.test.ts"]
+created = 2026-11-21
+updated = 2026-11-21

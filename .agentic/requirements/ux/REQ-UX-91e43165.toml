@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-UX-91e43165"
+title = "Announce dictation progress and outcomes"
+status = "active"
+requirement = "While the composer handles an attempted dictation, it shall expose accessible feedback for opening, recording, transcription, cancellation, completion and capture errors in the selected interface language."
+verification = "Exercise status and errors in English, Romanian, German and French and verify that the active control can be cancelled by keyboard."
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/session/dictation-button.tsx","05_Software/src/apps/desktop/src/renderer/locales/en.json","05_Software/src/apps/desktop/src/renderer/locales/ro.json","05_Software/src/apps/desktop/src/renderer/locales/de.json","05_Software/src/apps/desktop/src/renderer/locales/fr.json", "05_Software/src/apps/desktop/src/renderer/styles.css"]
+linked_tests = ["05_Software/tests/e2e/dictation-composer.spec.ts","05_Software/tests/e2e/dictation-packaged-composer.spec.ts"]
+priority = "normal"
+created = 2026-11-20
+updated = 2026-11-20

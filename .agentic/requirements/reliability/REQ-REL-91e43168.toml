@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-REL-91e43168"
+title = "Discard dictation after leaving a draft"
+status = "active"
+requirement = "When a dictation loses its initiating chat draft, VERA shall discard that capture's outstanding result."
+verification = "Change sessions, cover chat with another active tab, and submit another draft during a pending transcription; assert that its result is absent from the current draft."
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/session/composer.tsx","05_Software/src/apps/desktop/src/renderer/components/session/workspace.tsx","05_Software/src/apps/desktop/src/renderer/dictation/use-composer-dictation.ts"]
+linked_tests = ["05_Software/tests/e2e/dictation-composer.spec.ts"]
+priority = "normal"
+created = 2026-11-20
+updated = 2026-11-20

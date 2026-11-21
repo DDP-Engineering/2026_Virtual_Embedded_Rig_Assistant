@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-UX-67d8cc7b"
+title = "Document dictation model management"
+status = "active"
+requirement = "The Settings help shall explain dictation model acquisition, retry, selection, removal and automatic or explicit language selection in the four interface languages."
+verification = "Inspection: Read Settings help in each language and check its workflow against the implemented actions."
+affected_paths = ["05_Software/help/en/settings.md", "05_Software/help/ro/settings.md", "05_Software/help/de/settings.md", "05_Software/help/fr/settings.md"]
+linked_tests = []
+created = 2026-11-20
+updated = 2026-11-20

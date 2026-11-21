@@ -19,6 +19,12 @@ CREATE TABLE session_delegations(parent_session_id TEXT NOT NULL REFERENCES sess
   request_id TEXT NOT NULL, request_hash TEXT NOT NULL, child_session_id TEXT UNIQUE REFERENCES sessions(id) ON DELETE SET NULL,
   turn_id TEXT NOT NULL, message_id TEXT NOT NULL, PRIMARY KEY(parent_session_id, request_id),
   CHECK(parent_session_id <> child_session_id));
+CREATE TABLE session_delegation_bypass(
+  parent_session_id TEXT PRIMARY KEY REFERENCES sessions(id) ON DELETE CASCADE);
+CREATE TABLE session_delegation_requests(
+  parent_session_id TEXT NOT NULL REFERENCES sessions(id) ON DELETE CASCADE,
+  request_id TEXT NOT NULL, request_hash TEXT NOT NULL, result_json TEXT NOT NULL,
+  PRIMARY KEY(parent_session_id, request_id));
 CREATE TABLE messages(session_id TEXT NOT NULL REFERENCES sessions(id) ON DELETE CASCADE,
   seq INTEGER NOT NULL CHECK(typeof(seq) = 'integer' AND seq BETWEEN 0 AND 9007199254740991), role TEXT, content_json TEXT NOT NULL, created_at TEXT,
   PRIMARY KEY(session_id, seq));
@@ -43,6 +49,11 @@ CREATE TABLE chunks(id INTEGER PRIMARY KEY, doc_id INTEGER REFERENCES documents(
   ordinal INTEGER, locator_json TEXT, text TEXT, chars INTEGER);
 CREATE INDEX idx_messages_session_seq ON messages(session_id, seq);
 CREATE INDEX idx_events_session_seq ON events(session_id, seq);
+CREATE INDEX idx_events_turn_start ON events(session_id, seq) WHERE type='turn.started';
+CREATE INDEX idx_events_turn_outcome ON events(session_id, json_extract(payload_json,'$.turnId'), seq)
+  WHERE type IN ('session.interrupted','turn.done');
+CREATE INDEX idx_events_model_settings ON events(session_id, seq) WHERE type='session.updated'
+  AND (json_type(payload_json,'$.modelRef') IS NOT NULL OR json_type(payload_json,'$.reasoning') IS NOT NULL);
 CREATE INDEX idx_tool_calls_session ON tool_calls(session_id);
 CREATE INDEX idx_approvals_session ON approvals(session_id);
 CREATE INDEX idx_changes_session ON changes(session_id);

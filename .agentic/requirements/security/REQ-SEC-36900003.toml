@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-SEC-36900003"
+title = "Deny unapproved Full Access launch"
+status = "active"
+requirement = "If the parent's effective mode is Bypass and its launch authorization is absent, VERA shall deny new delegated launches."
+verification = "Attempt a launch before confirmation, after revocation and while authorization is revoked during model preparation; assert no new child or slot."
+affected_paths = ["05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/libraries/core/src/storage/repos/delegations.ts", "05_Software/src/libraries/core/src/tools/delegated-sessions.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/sessions/delegation.test.ts", "05_Software/tests/e2e/session-delegation.spec.ts"]
+created = 2026-11-21
+updated = 2026-11-21

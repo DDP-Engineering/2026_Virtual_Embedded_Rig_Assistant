@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-SEC-89fe1282"
+title = "Withhold corrupt installed models"
+status = "active"
+requirement = "If installed model contents fail verification, VERA shall report the corrupt state and withhold those files from the transcription service."
+verification = "Modify installed bytes and assert the model is corrupt, inactive and unavailable to the runtime resolver."
+affected_paths = ["05_Software/src/apps/desktop/src/main/dictation/models.ts", "05_Software/src/apps/desktop/src/main/dictation/integrity.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/dictation/models.test.ts"]
+created = 2026-11-20
+updated = 2026-11-20

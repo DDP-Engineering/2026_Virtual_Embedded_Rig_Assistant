@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-FUNC-0e51413d"
+title = "Explain QwenCloud model eligibility failures"
+status = "active"
+requirement = "When QwenCloud rejects an inference model as unavailable or unauthorized for the connection, VERA shall identify a model eligibility issue for that plan."
+verification = "Script 404 model_not_found, documented 403 model access codes and HTTP 400 model activation or unknown model, then check the localized eligibility diagnostic. An unrelated HTTP 400 retains the generic provider error."
+affected_paths = ["05_Software/src/libraries/core/src/llm/providers.ts","05_Software/src/libraries/core/src/llm/errors.ts","05_Software/src/apps/desktop/src/renderer/components/error-message.tsx", "05_Software/src/apps/desktop/src/renderer/locales/de.json", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/fr.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/qwencloud-presets.test.ts"]
+created = 2026-11-20
+updated = 2026-11-20

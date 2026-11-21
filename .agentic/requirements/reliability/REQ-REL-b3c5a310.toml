@@ -1,0 +1,11 @@
+schema = 1
+id = "REQ-REL-b3c5a310"
+title = "Report unsupported Chromium sandboxing"
+status = "active"
+requirement = "If Chromium refuses to run with its sandbox, Desktop shall return an actionable sandbox failure."
+verification = "Assert Linux refusal is classified with sandbox recovery and launch options always request sandbox enforcement."
+affected_paths = ["05_Software/src/apps/desktop/src/main/browser/launcher.ts","05_Software/src/apps/desktop/src/main/browser/failure.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/browser/launcher.test.ts"]
+priority = "normal"
+created = 2026-11-20
+updated = 2026-11-20

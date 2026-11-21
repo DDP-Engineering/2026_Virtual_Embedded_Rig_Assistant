@@ -1,10 +1,20 @@
 import { z } from "zod";
 import { advancedSettings } from "./advanced-settings.js";
 import { artifactContentSchema, artifactIdSchema, artifactSummarySchema } from "./artifacts.js";
+import { browserRuntimeViewSchema, browserSessionViewSchema, browserSettingsSchema } from "./browser.js";
 import { changeDetailSchema, changeIdSchema, changeSummarySchema } from "./changes.js";
 import { chatgptLoginSchema, chatgptStatusSchema } from "./chatgpt.js";
 import { commandPrefixDisplaySchema, commandPrefixIdsSchema, commandPrefixSchema } from "./command-prefix.js";
 import { composerImageSchema, composerImageSourceSchema, rasterFormatSchema } from "./composer-images.js";
+import {
+  dictationBeginSchema,
+  dictationChangeSchema,
+  dictationJobSchema,
+  dictationOutcomeSchema,
+  dictationRecordingSchema,
+  dictationSnapshotSchema,
+  dictationSubmitSchema,
+} from "./dictation.js";
 import {
   docsByteReadSchema,
   docsByteWindowSchema,
@@ -14,16 +24,26 @@ import {
   docsSystemAppSchema,
   docsTreeEntrySchema,
   documentGuardSchema,
+  documentIndexScopeSchema,
+  documentIndexStatusSchema,
   documentOpenSchema,
   documentPreviewSchema,
   documentSchema,
   documentSearchHitSchema,
+  documentSearchMetadataSchema,
   documentVolumeSchema,
   indexerStateSchema,
   viewerContentSchema,
 } from "./documents.js";
 import { downloadIdSchema, webDownloadSchema } from "./downloads.js";
 import { type VeraError, veraErrorSchema } from "./errors.js";
+import { gitDiffRequestSchema, gitDiffResponseSchema } from "./git-diff.js";
+import {
+  gitHistoryEligibilityResponseSchema,
+  gitHistoryRequestSchema,
+  gitHistoryResponseSchema,
+} from "./git-history.js";
+import { gitStatusRequestSchema } from "./git-status.js";
 import {
   helpListRequestSchema,
   helpPageSchema,
@@ -39,6 +59,13 @@ import {
   partsAccessTestResultSchema,
   partsAccessTestSchema,
 } from "./parts-search.js";
+import {
+  planCommentChangeSchema,
+  planCommentDeleteSchema,
+  planFeedbackIdSchema,
+  planReviewRequestSchema,
+  planReviewRestoreSchema,
+} from "./plan-review.js";
 import {
   pluginCatalogIdRequestSchema,
   pluginCatalogInstallRequestSchema,
@@ -77,6 +104,7 @@ import {
   providerDiscoverySchema,
   reasoningOptionSchema,
 } from "./provider-discovery.js";
+import { curatedDiscoveryRequestSchema, curatedDiscoverySchema } from "./provider-presets.js";
 import {
   modelReferenceSchema,
   providerCatalogSchema,
@@ -181,6 +209,8 @@ export const appInfoSchema = z.strictObject({
     .strictObject({ electron: z.string(), chrome: z.string(), node: z.string(), v8: z.string() })
     .optional(),
 });
+const planScope = { workbenchId: workbenchIdSchema, sessionId: sessionIdSchema };
+
 /**
  * One open workbench and its top-level sessions that are running or awaiting approval, for an activity
  * overview across workbenches; `foreground` marks the workbench the window shows.
@@ -236,6 +266,46 @@ export const channels = {
     "terminal.consent",
     terminalTargetSchema.extend({ shared: z.boolean() }),
     terminalSummarySchema,
+  ),
+  "browser.settings.get": defineChannel("browser.settings.get", z.strictObject({}), browserSettingsSchema),
+  "browser.runtime.install": defineChannel(
+    "browser.runtime.install",
+    z.strictObject({}),
+    browserRuntimeViewSchema,
+  ),
+  "browser.runtime.cancel": defineChannel(
+    "browser.runtime.cancel",
+    z.strictObject({}),
+    browserRuntimeViewSchema,
+  ),
+  "browser.runtime.remove": defineChannel(
+    "browser.runtime.remove",
+    z.strictObject({}),
+    browserRuntimeViewSchema,
+  ),
+  "browser.session.get": defineChannel(
+    "browser.session.get",
+    z.strictObject({ workbenchId: workbenchIdSchema, sessionId: sessionIdSchema }),
+    browserSessionViewSchema,
+  ),
+  "browser.session.grant": defineChannel(
+    "browser.session.grant",
+    z.strictObject({
+      workbenchId: workbenchIdSchema,
+      sessionId: sessionIdSchema,
+      origin: z.string().trim().min(1).max(4096),
+    }),
+    z.strictObject({}),
+  ),
+  "browser.session.show": defineChannel(
+    "browser.session.show",
+    z.strictObject({ workbenchId: workbenchIdSchema, sessionId: sessionIdSchema }),
+    z.strictObject({}),
+  ),
+  "browser.session.close": defineChannel(
+    "browser.session.close",
+    z.strictObject({ workbenchId: workbenchIdSchema, sessionId: sessionIdSchema }),
+    z.strictObject({}),
   ),
   "web.access.get": defineChannel("web.access.get", z.strictObject({}), webAccessSnapshotSchema),
   "web.access.save": defineChannel("web.access.save", webAccessSaveSchema, webAccessSaveResultSchema),
@@ -535,6 +605,15 @@ export const channels = {
     }),
     z.strictObject({}),
   ),
+  "git.diff": defineChannel("git.diff", gitDiffRequestSchema, gitDiffResponseSchema),
+  "git.historyEligibility": defineChannel(
+    "git.historyEligibility",
+    gitHistoryRequestSchema,
+    gitHistoryEligibilityResponseSchema,
+  ),
+  "git.history": defineChannel("git.history", gitHistoryRequestSchema, gitHistoryResponseSchema),
+  "git.status": defineChannel("git.status", gitStatusRequestSchema, z.strictObject({})),
+  "docs.status": defineChannel("docs.status", documentIndexScopeSchema, documentIndexStatusSchema),
   "docs.volume": defineChannel(
     "docs.volume",
     docsScopeSchema,
@@ -552,7 +631,9 @@ export const channels = {
   "docs.search": defineChannel(
     "docs.search",
     docsScopeSchema.extend({ query: z.string().trim().min(1).max(1000) }),
-    docsScopeSchema.extend({ results: z.array(documentSearchHitSchema).max(100) }),
+    docsScopeSchema
+      .extend(documentSearchMetadataSchema.shape)
+      .extend({ results: z.array(documentSearchHitSchema).max(100) }),
   ),
   "docs.open": defineChannel(
     "docs.open",
@@ -700,6 +781,7 @@ export const channels = {
       reuseEmpty: z.boolean().optional(),
       modelRef: modelReferenceSchema.nullable().optional(),
       mode: permissionModeSchema.optional(),
+      acknowledged: z.literal(true).optional(),
     }),
     sessionSummarySchema,
   ),
@@ -733,6 +815,34 @@ export const channels = {
       messageId: z.string().min(1).max(200),
       bookmarked: z.boolean(),
     }),
+    z.strictObject({}),
+  ),
+  "session.plan.comment.save": defineChannel(
+    "session.plan.comment.save",
+    z.discriminatedUnion("action", [
+      planCommentChangeSchema.options[0].extend(planScope),
+      planCommentChangeSchema.options[1].extend(planScope),
+      planCommentChangeSchema.options[2].extend(planScope),
+    ]),
+    z.strictObject({}),
+  ),
+  "session.plan.comment.delete": defineChannel(
+    "session.plan.comment.delete",
+    planCommentDeleteSchema.extend(planScope),
+    z.strictObject({}),
+  ),
+  "session.plan.review": defineChannel(
+    "session.plan.review",
+    planReviewRequestSchema.extend(planScope),
+    z.strictObject({
+      reviewId: planFeedbackIdSchema,
+      turnId: planFeedbackIdSchema,
+      messageId: planFeedbackIdSchema,
+    }),
+  ),
+  "session.plan.review.restore": defineChannel(
+    "session.plan.review.restore",
+    planReviewRestoreSchema.extend(planScope),
     z.strictObject({}),
   ),
   /** Removes the named bookmarks, or every bookmark of the session, atomically; messages stay. */
@@ -846,13 +956,32 @@ export const channels = {
   ),
   "session.mode.set": defineChannel(
     "session.mode.set",
-    z.strictObject({ sessionId: sessionIdSchema, mode: permissionModeSchema }),
+    z.strictObject({
+      sessionId: sessionIdSchema,
+      mode: permissionModeSchema,
+      acknowledged: z.literal(true).optional(),
+    }),
     sessionSummarySchema,
+  ),
+  "session.delegation.bypass.set": defineChannel(
+    "session.delegation.bypass.set",
+    z.strictObject({
+      workbenchId: workbenchIdSchema,
+      sessionId: sessionIdSchema,
+      authorized: z.boolean(),
+      acknowledged: z.literal(true).optional(),
+    }),
+    z.strictObject({ authorized: z.boolean() }),
   ),
   "providers.discover": defineChannel(
     "providers.discover",
     providerDiscoveryRequestSchema,
     providerDiscoverySchema,
+  ),
+  "providers.presets.discover": defineChannel(
+    "providers.presets.discover",
+    curatedDiscoveryRequestSchema,
+    curatedDiscoverySchema,
   ),
   "providers.image.capability": defineChannel(
     "providers.image.capability",
@@ -867,6 +996,12 @@ export const channels = {
   "app.info": defineChannel("app.info", z.strictObject({}), appInfoSchema),
   "help.list": defineChannel("help.list", helpListRequestSchema, z.array(helpPageSummarySchema).max(256)),
   "help.read": defineChannel("help.read", helpReadRequestSchema, helpPageSchema),
+  "dictation.get": defineChannel("dictation.get", z.strictObject({}), dictationSnapshotSchema),
+  "dictation.change": defineChannel("dictation.change", dictationChangeSchema, dictationSnapshotSchema),
+  "dictation.begin": defineChannel("dictation.begin", dictationJobSchema, dictationBeginSchema),
+  "dictation.recording": defineChannel("dictation.recording", dictationJobSchema, dictationRecordingSchema),
+  "dictation.finish": defineChannel("dictation.finish", dictationSubmitSchema, dictationOutcomeSchema),
+  "dictation.cancel": defineChannel("dictation.cancel", dictationJobSchema, z.strictObject({})),
   "app.settings.get": defineChannel("app.settings.get", z.strictObject({}), settingsSnapshotSchema),
   "commands.shells": defineChannel(
     "commands.shells",
@@ -934,11 +1069,7 @@ export const channels = {
     }),
     z.array(recentWorkbenchStateSchema),
   ),
-  "workbench.config.get": defineChannel(
-    "workbench.config.get",
-    z.strictObject({}),
-    configSnapshotSchema.extend({ readOnly: z.boolean().optional(), folder: z.string().min(1).optional() }),
-  ),
+  "workbench.config.get": defineChannel("workbench.config.get", z.strictObject({}), workbenchSnapshotSchema),
   "workbench.config.update": defineChannel(
     "workbench.config.update",
     z

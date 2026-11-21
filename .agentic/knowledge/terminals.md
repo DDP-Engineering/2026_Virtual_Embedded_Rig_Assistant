@@ -4,7 +4,8 @@
 
 Select for right-panel Terminal, xterm/FitAddon, node-pty, interactive user input, terminal_read,
 per-terminal consent, PTY lifecycle and packaged native helpers. Start at
-`05_Software/src/apps/desktop/src/main/terminals.ts`; focused tests are its sibling test,
+`05_Software/src/apps/desktop/src/main/terminals.ts`; chat code-block dispatch adds
+`terminal-command-prompt.ts`; focused tests are its sibling test, `terminal-command-*.test.ts`,
 core `tools/terminal-read.test.ts`, shared `terminal-ipc.test.ts`, renderer `terminal-tab.test.ts`
 and `tests/e2e/terminal.spec.ts`. Agent shell commands belong to [plugin program tools](plugins-program-tools.md);
 general artifact construction belongs to [native packaging](native-packaging.md).
@@ -42,6 +43,15 @@ main. Renderer owns the xterm view and controls through strict user IPC. Shells 
 - Grant epochs and current ownership are checked again by the runtime's synchronous publication hook.
   Revocation/close/switch refuses unpublished captures; already shared results remain in transcript history.
   Serialized JSON truncation retains the registry's `truncated:true` marker alongside lease checks.
+- Chat code-block Run (`terminal.execute`) writes one line only into a pristine shell VERA started with a
+  private random prompt marker, after the marker arrived and ownership was rechecked; input or close leaves it
+  unverified for good, and a timeout (5 s) until the marker arrives (`chatActions.promptNotReady`). Bash gets `eval -- $'...'`. PowerShell's startup
+  script branches on `$ExecutionContext.SessionState.LanguageMode`: Full Language prints the marker with
+  `[Console]::Write`, reads with `[Console]::ReadLine` and the line is a base64 UTF-8 script block; any other
+  mode prints a distinct `;constrained` marker with `Write-Host`, reads with `Read-Host`, and the line is
+  `Invoke-Expression (-join [char[]](<UTF-16 code units>))`, which Constrained Language allows (REQ-PLAT-36fa33bf).
+  A 16384-character block (about 98k characters of codes) runs through ConPTY. Restricted or No Language shows no
+  marker and stays unverified.
 - Ctrl+Shift+T opens/focuses Terminal and is editable in Keyboard shortcuts. Terminal input captures
   keys for the shell. Interface/help/release notes have en/ro/de/fr entries.
 
@@ -83,6 +93,7 @@ main. Renderer owns the xterm view and controls through strict user IPC. Shells 
 - `REQ-SEC-65cfbdc5` — filtered inherited environment and masked disclosure.
 - `REQ-PLAT-72f8f627` — packaged x64 native runtime and helpers.
 - `REQ-UX-269fabc4` — multiple user terminal tabs and configurable keyboard access.
+- `REQ-PLAT-36fa33bf` — chat code blocks run once in a Constrained Language PowerShell terminal.
 
 ## Files
 

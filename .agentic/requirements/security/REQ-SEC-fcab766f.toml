@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-SEC-fcab766f"
+
+title = "Report denied browser destinations"
+
+status = "active"
+
+requirement = "If an agent navigation requests a destination denied by browser policy, Desktop shall return a destination-denied error without loading the denied page."
+
+verification = "Follow a denied-origin link, open a private URL and request an allowed URL redirecting to a denied origin; verify typed errors and absent upstream requests."
+
+affected_paths = ["05_Software/src/apps/desktop/src/main/browser/agent-browser.ts", "05_Software/src/apps/desktop/src/main/browser/page-reading.ts", "05_Software/src/apps/desktop/src/main/browser/proxy.ts", "05_Software/src/apps/desktop/src/main/browser/network.ts"]
+
+linked_tests = ["05_Software/tests/e2e/browser-agent.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-20
+updated = 2026-11-20

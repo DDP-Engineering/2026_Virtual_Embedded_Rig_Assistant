@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-REL-6fecfe63"
+title = "Report provisioning failures"
+status = "active"
+requirement = "If runtime provisioning fails, then Desktop shall show an actionable localized failure and permit retry when the platform is supported."
+verification = "Run an unsuccessful pinned transfer and assert failure and retry controls."
+affected_paths = ["05_Software/src/apps/desktop/src/main/browser/runtime.ts", "05_Software/src/apps/desktop/src/renderer/components/browser-settings.tsx", "05_Software/src/apps/desktop/src/main/browser/fixture.ts"]
+linked_tests = ["05_Software/tests/e2e/browser-controls.spec.ts", "05_Software/src/apps/desktop/src/main/browser/runtime.test.ts"]
+created = 2026-11-20
+updated = 2026-11-20

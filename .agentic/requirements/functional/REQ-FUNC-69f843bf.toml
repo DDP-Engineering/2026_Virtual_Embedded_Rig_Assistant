@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-FUNC-69f843bf"
+title = "Explain QwenCloud key failures"
+status = "active"
+requirement = "When the QwenCloud key is missing, belongs to the other billing plan or is rejected by inference, VERA shall identify the selected plan's API key as the issue."
+verification = "Try mismatched key formats and a scripted 401 from inference, check the QwenCloud auth diagnostic and assert no key echo or alternate request."
+affected_paths = ["05_Software/src/libraries/core/src/llm/preset-connection.ts","05_Software/src/libraries/core/src/llm/providers.ts","05_Software/src/libraries/core/src/llm/errors.ts","05_Software/src/apps/desktop/src/renderer/components/error-message.tsx", "05_Software/src/apps/desktop/src/renderer/locales/de.json", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/fr.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/qwencloud-presets.test.ts"]
+created = 2026-11-20
+updated = 2026-11-20

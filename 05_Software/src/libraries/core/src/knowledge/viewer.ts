@@ -182,9 +182,9 @@ export class DocumentViewer {
     return { doc, bytes, extraction };
   }
   /** Verify each source once; only compact locator bounds survive between search candidates. */
-  async currentBounds(path: string) {
+  async currentBounds(path: string, signal: AbortSignal = new AbortController().signal) {
     try {
-      const { doc, bytes, extraction } = await this.indexedSource(path, new AbortController().signal);
+      const { doc, bytes, extraction } = await this.indexedSource(path, signal);
       if (doc.status !== "indexed") return undefined;
       if (extraction.kind === "pdf" || extraction.kind === "presentation") {
         const pages = extraction.kind === "pdf" ? extraction.pages.length : extraction.slides.length;
@@ -202,6 +202,7 @@ export class DocumentViewer {
         slugs: new Set("sections" in extraction ? extraction.sections.map((s) => s.slug) : []),
       };
     } catch {
+      signal.throwIfAborted();
       return undefined;
     }
   }
