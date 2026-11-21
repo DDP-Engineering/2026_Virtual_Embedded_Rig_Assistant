@@ -39,6 +39,7 @@ import type { AgentRuntime, RuntimeEvent, RuntimeHost, StopReason } from "../age
 import { ArtifactStore } from "../artifacts/store.js";
 import { electricalToolOffered } from "../electrical/tools.js";
 import type { EmbeddingPort } from "../knowledge/embedding.js";
+import type { DocumentIndexPhase } from "../knowledge/ingest.js";
 import { DocumentKnowledge } from "../knowledge/search.js";
 import { DocumentViewer } from "../knowledge/viewer.js";
 import { type LlmGateway, resolveModelReference } from "../llm/gateway.js";
@@ -73,7 +74,14 @@ import {
 } from "./delegation.js";
 import { delegatedTurnStatus } from "./delegation-monitor.js";
 import { SessionHub, type SessionListener } from "./hub.js";
-import { MaskingContextPolicy, maskMessages, maskModelStream, maskValue } from "./masking.js";
+import {
+  documentSearchToolMetadata,
+  MaskingContextPolicy,
+  maskMessages,
+  maskModelStream,
+  maskToolOutput,
+  maskValue,
+} from "./masking.js";
 import { projectMessageImages, SessionImages } from "./session-images.js";
 import { timedGateway } from "./timed-gateway.js";
 
@@ -93,6 +101,7 @@ export interface SessionHost {
   embeddings?: EmbeddingPort | undefined;
   /** Workbench defaults for search_docs; read on every search so saved settings apply at once. */
   retrieval?: WorkbenchRetrieval | undefined;
+  documentIndexPhase?: () => DocumentIndexPhase;
   skills?: SkillCatalog | undefined;
   registry?: ToolRegistry;
   web?: WebProvider;
@@ -184,6 +193,7 @@ export class SessionService {
       host.db,
       () => host.embeddings,
       () => host.retrieval,
+      host.documentIndexPhase,
     );
     this.messages = new MessagesRepository(host.db);
     this.hub = new SessionHub(host.db, () => this.now());
@@ -1145,7 +1155,7 @@ export class SessionService {
         ...tool,
         publish: (args: unknown, output: string) => {
           const authorized = tool.publish?.(args, output) ?? output;
-          return this.maskContent("agent", authorized);
+          return maskToolOutput(tool.name, authorized, (text) => this.maskContent("agent", text));
         },
         execute: async (args: unknown, signal: AbortSignal, callId?: string) => {
           await durable();
@@ -1559,9 +1569,14 @@ export class SessionService {
     } else if (event.type === "tool.started") {
       publicEvent = { ...event, args: maskValue(event.args, (text) => this.maskContent("agent", text)) };
     } else if (event.type === "tool.done") {
+      const documentSearch =
+        event.ok && event.message?.toolName === "search_docs"
+          ? documentSearchToolMetadata(event.summary)
+          : undefined;
       publicEvent = {
         type: "tool.done",
         callId: event.callId,
+        ...(documentSearch && { documentSearch }),
         ok: event.ok,
         summary: event.summary,
         durationMs: event.durationMs,

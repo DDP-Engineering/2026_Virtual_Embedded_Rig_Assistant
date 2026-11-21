@@ -310,9 +310,11 @@ export class DisplayDocuments {
     });
   }
   async search(id: string, query: string) {
-    const results = await this.run(id, () => this.workbench.searchDocuments(id, query));
+    const { coverage, usage, results } = await this.run(id, () => this.workbench.searchDocuments(id, query));
     return {
       workbenchId: id,
+      coverage,
+      usage,
       results: results.map((hit) =>
         publicDocumentHit(
           hit,

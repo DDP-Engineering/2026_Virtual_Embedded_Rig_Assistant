@@ -3,6 +3,7 @@ import { dictationJobIdSchema } from "./dictation.js";
 import {
   documentGuardSchema,
   documentSchema,
+  documentSearchMetadataSchema,
   documentVolumeSchema,
   indexerStateSchema,
 } from "./documents.js";
@@ -179,6 +180,7 @@ export const sessionEventSchema = z.discriminatedUnion("type", [
     summary: z.string(),
     /** Canonical paths of an outside program call, independent of approval policy and output truncation. */
     program: programApprovalSchema.optional(),
+    documentSearch: documentSearchMetadataSchema.optional(),
     preview: z.string().optional(),
     durationMs: count,
     /** Set only on events sent to the renderer (PERF-06): full UTF-8 size of the cut preview. */

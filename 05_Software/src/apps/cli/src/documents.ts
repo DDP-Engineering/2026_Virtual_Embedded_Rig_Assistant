@@ -61,8 +61,13 @@ export async function runDocuments(
       process.stdout.write(`${logger.scrub(JSON.stringify({ documents: rows }))}\n`);
       resultCode = rows.some((r) => r.status === "failed") ? 1 : 0;
     } else {
-      const result = await new DocumentKnowledge(snapshot.folder, workbench.getDatabase(), () =>
-        documents.embeddings(snapshot.config.embeddings.model),
+      const db = workbench.getDatabase();
+      const result = await new DocumentKnowledge(
+        snapshot.folder,
+        db,
+        () => documents.embeddings(snapshot.config.embeddings.model),
+        undefined,
+        () => workbench.documentIndexPhase(snapshot.config.id, db),
       ).search(
         {
           query: options.query ?? "",

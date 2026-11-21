@@ -22,6 +22,11 @@ for extraction, cache and chunks; bare core composition can supply its own proce
 createPdfExtractor accepts optional Node worker resourceLimits; existing ingest callers retain their current defaults. Downloaded PDFs use a separately capped worker and stay in .vera/downloads, outside the ingest/RAG boundary; see [PDF downloads](pdf-downloads.md).
 
 
+- WorkbenchService.documentIndexPhase(id, db?) exposes the scoped live phase for retrieval.
+  Ingester starts in scanning, switches to indexing after accepted selection, and settles
+  after the batch drains. Known document exceptions settle separately. Guarded, failed or
+  unfinished selections can be blocked. A queued pass keeps coverage unsettled. Read-only
+  workbenches have no live Ingester.
 - WorkbenchService.reindexDocuments serializes an owned rebuild. Strict empty
   docs.reindex IPC invokes it through desktop main; the mock enforces ownership.
 - Ingester.request coalesces changes with trailing1000ms debounce; reindex selects

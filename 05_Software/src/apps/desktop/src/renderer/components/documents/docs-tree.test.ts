@@ -107,6 +107,33 @@ const menuItems = () =>
 const submenu = (action: string) =>
   menu()?.querySelector<HTMLElement>(`[role="menu"][data-submenu="${action}"]`);
 
+it("distinguishes unavailable, partial and complete empty Files searches", async () => {
+  const original = api.invoke.bind(api);
+  vi.spyOn(api, "invoke").mockImplementation((async (channel: string, input: { query: string }) => {
+    if (channel === "docs.search") {
+      const result = { workbenchId: id, results: [] };
+      if (input.query === "conflict")
+        return { ...result, coverage: "unknown", usage: { mode: null, reason: "revision-conflict" } };
+      if (input.query === "waiting")
+        return { ...result, coverage: "partial", usage: { mode: null, reason: "index-not-ready" } };
+      return { ...result, coverage: input.query, usage: { mode: "keyword" } };
+    }
+    return original(channel as never, input as never);
+  }) as typeof api.invoke);
+  await mount();
+  for (const [query, message] of [
+    ["conflict", "The document index is changing. Try searching again."],
+    ["waiting", "Document search is unavailable until documents are indexed."],
+    ["partial", "No matches in indexed documents."],
+    ["complete", "No matching documents."],
+  ] as const) {
+    await type(query);
+    await settle();
+    await settle();
+    expect(container.querySelector("[data-docs-hits] [role=status]")?.textContent).toBe(message);
+  }
+});
+
 it("opens indexed ordinary text through byte windows without fetching its complete extraction", async () => {
   const original = api.invoke.bind(api);
   const invoke = vi.spyOn(api, "invoke").mockImplementation((async (

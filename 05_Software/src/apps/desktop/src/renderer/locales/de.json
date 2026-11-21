@@ -1,5 +1,6 @@
 {
   "toolActivity": {
+    "keywordFallback": "Da die semantische Suche nicht verfügbar war, werden Stichworttreffer angezeigt.",
     "embeddingRebuild": "Der semantische Index wird neu aufgebaut. Diese Treffer beruhen auf Stichwörtern.",
     "planSteps": "Planschritte: {{count}}",
     "planCleared": "Plan geleert",
@@ -611,6 +612,9 @@
     "textTooLarge": "Diese Datei ist größer als 5 MB und kann hier nicht angezeigt werden.",
     "readOnly": "Schreibgeschützter Workbench",
     "empty": "Keine Dokumente im Index.",
+    "noPublishedResults": "Keine Treffer in den indexierten Dokumenten.",
+    "searchUnavailable": "Die Suche ist verfügbar, sobald Dokumente indexiert sind.",
+    "searchChanging": "Der Dokumentenindex ändert sich. Suche erneut.",
     "noResults": "Keine passenden Dokumente.",
     "pdfError": "Das PDF konnte nicht angezeigt werden. Zum Wiederholen schließen und erneut öffnen.",
     "find": "Text suchen",

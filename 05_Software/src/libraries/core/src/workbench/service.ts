@@ -45,7 +45,7 @@ import {
 import type Database from "better-sqlite3";
 import { ulid } from "ulid";
 import { LineCounter, parseDocument, stringify } from "yaml";
-import { type DocumentProcessor, Ingester } from "../knowledge/ingest.js";
+import { type DocumentIndexPhase, type DocumentProcessor, Ingester } from "../knowledge/ingest.js";
 import { DocumentKnowledge } from "../knowledge/search.js";
 import { readGitignores } from "../knowledge/selection.js";
 import { DocumentViewer } from "../knowledge/viewer.js";
@@ -53,7 +53,7 @@ import { type LoadedPlugin, PluginStore } from "../plugins/store.js";
 import type { WorkbenchHost } from "../ports.js";
 import { SkillCatalog } from "../skills/catalog.js";
 import { openDb, type WorkbenchDatabase } from "../storage/db.js";
-import { DocumentsRepository, keywordEpoch } from "../storage/repos/documents.js";
+import { DocumentsRepository } from "../storage/repos/documents.js";
 import { browserToolNames } from "../tools/browser.js";
 import { PREVIEW_TIME_LIMIT_MS, previewDocuments, relativeFolder, scanDocuments } from "./documents-scan.js";
 import { acquireGuard } from "./guard.js";
@@ -469,40 +469,51 @@ export class WorkbenchService {
   listDocuments(id: string) {
     return this.readDocuments(id, async (_root, db) => new DocumentsRepository(db).list());
   }
-  searchDocuments(id: string, query: string) {
+  /** Live retrieval phase for the active workbench and, when supplied, its exact database lease. */
+  documentIndexPhase(id: string, db?: Database.Database): DocumentIndexPhase {
+    const state = this.current();
+    if (state.config.id !== id || (db !== undefined && this.database?.db !== db)) throw veraError("CONFLICT");
+    if (state.readOnly) return "read-only";
+    return this.ingest?.phase() ?? "unknown";
+  }
+  searchDocuments(id: string, query: string, signal: AbortSignal = new AbortController().signal) {
     return this.readDocuments(id, async (root, db) => {
-      try {
-        const epoch = () => keywordEpoch(db);
-        const initialEpoch = epoch();
-        const result = await new DocumentKnowledge(root, db).search(
-          { query, mode: "keyword", k: 20 },
-          new AbortController().signal,
-        );
-        const viewer = new DocumentViewer(root, db);
-        const checked = new Map<string, Awaited<ReturnType<DocumentViewer["currentBounds"]>>>();
-        const current = [];
-        for (const hit of result.results) {
-          const ref = parseRef(hit.ref);
-          if (!ref || ref.kind === "artifact" || ref.kind === "help" || ref.path !== hit.path) continue;
-          if (!checked.has(hit.path)) checked.set(hit.path, await viewer.currentBounds(hit.path));
-          const bounds = checked.get(hit.path);
-          if (!bounds) continue;
-          const valid =
-            ref.kind === "lines"
-              ? !isDocumentKindIn(bounds.kind, binaryDocumentKinds) && ref.end <= bounds.lines
-              : ref.kind === "heading"
-                ? isDocumentKindIn(bounds.kind, sectionDocumentKinds) && bounds.slugs.has(ref.slug)
-                : isDocumentKindIn(bounds.kind, pagedDocumentKinds) &&
-                  (ref.kind === "page" ? ref.page : ref.end) <= bounds.pages;
-          if (valid) current.push({ ref: hit.ref, path: hit.path, snippet: hit.snippet, score: hit.score });
-        }
-        if (epoch() !== initialEpoch) throw Error("Document index changed during search.");
-        return current;
-      } catch {
-        throw veraError("NOT_FOUND");
-      }
+      const viewer = new DocumentViewer(root, db);
+      const knowledge = new DocumentKnowledge(root, db, undefined, undefined, () =>
+        this.documentIndexPhase(id, db),
+      );
+      const { coverage, usage, results } = await knowledge.search(
+        { query, mode: "keyword", k: 20 },
+        signal,
+        [],
+        () => {
+          const checked = new Map<string, Awaited<ReturnType<DocumentViewer["currentBounds"]>>>();
+          return async (hit, searchSignal) => {
+            const ref = parseRef(hit.ref);
+            if (!ref || ref.kind === "artifact" || ref.kind === "help" || ref.path !== hit.path) return false;
+            if (!checked.has(hit.path))
+              checked.set(hit.path, await viewer.currentBounds(hit.path, searchSignal));
+            const bounds = checked.get(hit.path);
+            if (!bounds) return false;
+            if (ref.kind === "lines")
+              return !isDocumentKindIn(bounds.kind, binaryDocumentKinds) && ref.end <= bounds.lines;
+            if (ref.kind === "heading")
+              return isDocumentKindIn(bounds.kind, sectionDocumentKinds) && bounds.slugs.has(ref.slug);
+            return (
+              isDocumentKindIn(bounds.kind, pagedDocumentKinds) &&
+              (ref.kind === "page" ? ref.page : ref.end) <= bounds.pages
+            );
+          };
+        },
+      );
+      return {
+        coverage,
+        usage,
+        results: results.map(({ ref, path, snippet, score }) => ({ ref, path, snippet, score })),
+      };
     });
   }
+
   openDocument(id: string, target: string, byPath: boolean) {
     return this.readDocuments(id, (root, db) =>
       byPath ? new DocumentViewer(root, db).openPath(target) : new DocumentViewer(root, db).open(target),

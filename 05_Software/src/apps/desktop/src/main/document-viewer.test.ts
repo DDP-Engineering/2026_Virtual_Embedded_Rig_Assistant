@@ -149,6 +149,8 @@ it("retains a valid complete search response beside sensitive headings and bound
     .filter((hit) => hit !== undefined);
   const response = channels["docs.search"].response.parse({
     workbenchId: "wb_01JB8Z6Q4M7N2K5R9T3V8X1Y0C",
+    coverage: "complete",
+    usage: { mode: "keyword" },
     results: hits,
   });
   expect(response.results).toHaveLength(2);

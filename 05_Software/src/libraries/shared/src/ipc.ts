@@ -27,6 +27,7 @@ import {
   documentPreviewSchema,
   documentSchema,
   documentSearchHitSchema,
+  documentSearchMetadataSchema,
   documentVolumeSchema,
   indexerStateSchema,
   viewerContentSchema,
@@ -579,7 +580,9 @@ export const channels = {
   "docs.search": defineChannel(
     "docs.search",
     docsScopeSchema.extend({ query: z.string().trim().min(1).max(1000) }),
-    docsScopeSchema.extend({ results: z.array(documentSearchHitSchema).max(20) }),
+    docsScopeSchema
+      .extend(documentSearchMetadataSchema.shape)
+      .extend({ results: z.array(documentSearchHitSchema).max(20) }),
   ),
   "docs.open": defineChannel(
     "docs.open",

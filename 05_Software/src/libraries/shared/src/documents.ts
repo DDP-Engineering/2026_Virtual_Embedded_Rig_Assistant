@@ -354,3 +354,22 @@ export const documentSearchHitSchema = z.strictObject({
   snippet: z.string().max(300),
   score: z.number().finite(),
 });
+
+export const documentSearchUsageSchema = z.discriminatedUnion("mode", [
+  z.strictObject({
+    mode: z.literal("keyword"),
+    fallbackReason: z.enum(["embedding-rebuild", "semantic-unavailable", "revision-conflict"]).optional(),
+  }),
+  z.strictObject({ mode: z.enum(["semantic", "hybrid"]) }),
+  z.strictObject({
+    mode: z.null(),
+    reason: z.enum(["no-candidates", "index-not-ready", "revision-conflict"]),
+  }),
+]);
+
+/** Search-time metadata shared by Files, CLI and each search_docs tool result. */
+export const documentSearchMetadataSchema = z.strictObject({
+  coverage: z.enum(["complete", "partial", "unknown"]),
+  usage: documentSearchUsageSchema,
+});
+export type DocumentSearchMetadata = z.infer<typeof documentSearchMetadataSchema>;

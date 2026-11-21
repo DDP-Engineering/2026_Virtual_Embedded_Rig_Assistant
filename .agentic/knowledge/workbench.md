@@ -62,8 +62,9 @@ sidebar are described in [workbench editor](workbench-editor.md).
 
 - WorkbenchService owns one writable background Ingester and reindexDocuments;
   close/replacement stops and drains ingest before lock/storage release. Read-only
-  snapshots run no ingest. [Knowledge ingest](knowledge-ingest.md) owns selection,
-  hashing, metadata/status events and derived invalidation.
+  snapshots run no ingest. `documentIndexPhase(id, db?)` refuses a different
+  workbench ID or supplied database lease. [Knowledge ingest](knowledge-ingest.md)
+  owns selection, hashing, metadata/status events and derived invalidation.
 
 - WorkbenchService.inspect(folder) returns the canonical folder, its final segment as suggested name,
   whether .vera/workbench.yaml exists, existing .vera/WORKBENCH.md text or null and the workbench/user

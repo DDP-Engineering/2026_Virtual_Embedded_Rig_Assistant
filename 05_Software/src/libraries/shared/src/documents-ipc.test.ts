@@ -70,6 +70,27 @@ it("requires exact workbench identity and typed viewer requests without client s
     expect(channels["docs.open"].request.safeParse(value).success).toBe(false);
   expect(channels["docs.search"].request.safeParse({ workbenchId, query: " " }).success).toBe(false);
 });
+it("requires typed search coverage and ranking usage even when Files has no results", () => {
+  const response = channels["docs.search"].response;
+  const empty = { workbenchId: envelope(null).id, results: [] };
+  for (const coverage of ["complete", "partial"] as const)
+    expect(response.safeParse({ ...empty, coverage, usage: { mode: "keyword" } }).success).toBe(true);
+  expect(
+    response.safeParse({
+      ...empty,
+      coverage: "unknown",
+      usage: { mode: null, reason: "revision-conflict" },
+    }).success,
+  ).toBe(true);
+  for (const usage of [
+    undefined,
+    { mode: null },
+    { mode: "semantic", fallbackReason: "embedding-rebuild" },
+    { mode: "keyword", fallbackReason: "not-found" },
+  ])
+    expect(response.safeParse({ ...empty, coverage: "partial", usage }).success).toBe(false);
+  expect(response.safeParse({ ...empty, usage: { mode: "keyword" } }).success).toBe(false);
+});
 it("validates strict reindex requests/responses and truthful document/progress/removal events", () => {
   expect(channels["docs.reindex"].request.parse({})).toEqual({});
   expect(channels["docs.reindex"].response.parse({})).toEqual({});

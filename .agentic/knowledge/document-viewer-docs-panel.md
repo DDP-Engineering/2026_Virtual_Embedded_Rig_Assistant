@@ -35,7 +35,10 @@ travels through existing workbench events.
   keyword hits render under the tree in an "In documents" section (`data-docs-hits`, with its
   own loading, empty and retry states) (REQ-UX-2504362b, REQ-UX-d455531b).
 - docs.list({workbenchId}) returns scoped document statuses/reasons.
-- docs.search({workbenchId,query}) returns at most20 current keyword hits after deduplicated per-source SHA/status/kind/locator verification and index epoch checks.
+- docs.search({workbenchId,query}) returns the scoped document search metadata and up
+  to 20 keyword hits. One bounded revision check covers ranking and deduplicated
+  per-source SHA/status/kind/locator verification. The results area distinguishes
+  complete no-match results, no matches within a limited index, and temporary unavailability.
 - docs.reindex({workbenchId?}) checks identity/ownership before ingest admission.
 - Docs subscribes to index events, displays status/reasons/progress, searches,
   opens sources/results and disables Reindex on read-only snapshots.

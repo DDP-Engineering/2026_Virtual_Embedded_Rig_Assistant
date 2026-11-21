@@ -68,6 +68,16 @@ export type DocumentProcessor = ((input: DocumentInput) => Promise<DocumentResul
   /** Source hashing; the desktop app runs it in its indexer process (TASK-f09609fd). */
   inspect?(input: InspectInput): Promise<SourceInspection>;
 };
+/** Live selection phase, scoped by WorkbenchService to the workbench that owns the ingester. */
+export type DocumentIndexPhase =
+  | "scanning"
+  | "indexing"
+  | "settled"
+  | "settled-with-exceptions"
+  | "blocked"
+  | "read-only"
+  | "unknown";
+
 export interface IngestOptions {
   root: string;
   db: Database.Database;
@@ -131,6 +141,8 @@ export class Ingester {
   private closed = false;
   private active = false;
   private requested = false;
+  private reindexRuns = 0;
+  private passPhase: DocumentIndexPhase = "scanning";
   private closePromise: Promise<void> | undefined;
   private ignored = createIgnoreRules();
   private ignoreText = "";
@@ -316,8 +328,9 @@ export class Ingester {
         // Register it and await that generation before publishing rows from its first scan.
         this.refreshWatcher();
         await this.waitForWatcher();
-        await this.reconcile();
+        await this.runPass(false);
       } catch {
+        this.passPhase = "blocked";
         this.emit({ type: "index.progress", pending: 0, done: 0, failed: 1 });
       } finally {
         this.active = false;
@@ -368,12 +381,34 @@ export class Ingester {
   /** Explicit reindex executes in the same queue as background batches. */
   reindex(): Promise<void> {
     if (this.closed) return Promise.reject(veraError("DENIED"));
+    this.reindexRuns++;
     return this.queue.run(async () => {
-      // Select first: a stopped indexer must not leave an emptied index behind, and neither must
-      // the count guard (reconcile clears only once the selection may be indexed).
-      await this.reconcile(await this.selected(), true);
+      try {
+        await this.runPass(true);
+      } finally {
+        this.reindexRuns--;
+      }
     });
   }
+
+  /** Initial watcher readiness and queued reconciliation are unsettled selection states. */
+  phase(): DocumentIndexPhase {
+    if (this.closed) return "unknown";
+    if (this.passPhase === "indexing") return "indexing";
+    return this.requested || this.reindexRuns > 0 || this.active ? "scanning" : this.passPhase;
+  }
+
+  private async runPass(clear: boolean): Promise<void> {
+    this.passPhase = "scanning";
+    try {
+      // Select before a full reindex so an unavailable indexer or guard leaves the old index intact.
+      await this.reconcile(clear ? await this.selected() : undefined, clear);
+    } catch (error) {
+      this.passPhase = "blocked";
+      throw error;
+    }
+  }
+
   /**
    * "Index anyway": stores the approved selection count in the workbench database, where it
    * survives Reindex, and reconciles again (TASK-4321c06b).
@@ -458,7 +493,11 @@ export class Ingester {
     // selection is never cut to an arbitrary first part (TASK-4321c06b).
     this.selectedGuard = documentGuard(paths, this.options.config().docs.maxFiles, this.approved());
     this.emit({ type: "index.guard", guard: this.selectedGuard });
-    if (this.selectedGuard) return;
+    if (this.selectedGuard) {
+      this.passPhase = "blocked";
+      return;
+    }
+    this.passPhase = "indexing";
     // Skipped documents keep a row, so the Files tab shows them with their reason.
     const selected = new Set([...paths, ...skipped]);
     await this.publications.run(async () => {
@@ -472,13 +511,18 @@ export class Ingester {
     });
     let pending = selected.size,
       done = 0,
-      failed = 0;
+      failed = 0,
+      incomplete = false,
+      exceptions = false;
     const progress = () => this.emit({ type: "index.progress", pending, done, failed });
     progress();
     for (const path of [...selected].sort()) {
       if (this.closed) return;
-      if ((await this.ingest(guard, path)) === "failed") failed++;
+      const status = await this.ingest(guard, path);
+      if (status === "failed") failed++;
       else done++;
+      incomplete ||= status === "pending";
+      exceptions ||= status !== "indexed";
       pending--;
       progress();
     }
@@ -488,6 +532,7 @@ export class Ingester {
     });
     // A quiet moment: every selected document has its row and no further run is queued.
     if (!this.closed && !this.requested) await this.pruneCache();
+    this.passPhase = incomplete ? "blocked" : exceptions ? "settled-with-exceptions" : "settled";
   }
   /** Drops cached extractions that no stored document refers to; a failure only leaves files behind. */
   private async pruneCache(): Promise<void> {

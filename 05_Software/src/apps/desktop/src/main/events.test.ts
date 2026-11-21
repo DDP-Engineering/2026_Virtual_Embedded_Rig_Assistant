@@ -425,6 +425,34 @@ it("sends large session events to the renderer bounded", () => {
   });
 });
 
+it("keeps original document search metadata in live events and restored items after redaction", () => {
+  const state = emptySessionState();
+  const documentSearch = { coverage: "partial", usage: { mode: "keyword" } } as const;
+  const summary = JSON.stringify({ ...documentSearch, results: [{ snippet: "fake-search-secret" }] });
+  const redact = (text: string) => scrub(text, ["usage", "partial", "keyword", "fake-search-secret"]);
+  const send = vi.fn();
+  const emit = createEventEmitter(() => ({ isDestroyed: () => false, send }), redact);
+  emit({
+    topic: "session",
+    id: "ses_00000000000000000000000001",
+    event: { type: "tool.done", callId: "call", ok: true, summary, durationMs: 1, documentSearch },
+  });
+  expect(send.mock.calls[0]?.[1].event.documentSearch).toEqual(documentSearch);
+  expect(send.mock.calls[0]?.[1].event.summary).not.toContain("fake-search-secret");
+  state.items.push({
+    kind: "tool",
+    id: "call",
+    turnId: null,
+    name: "search_docs",
+    args: {},
+    status: "ok",
+    summary,
+    documentSearch,
+  });
+  const snapshot = sessionStateSchema.parse(sessionOutput.rendererSessionSnapshot(state, redact));
+  expect(snapshot.items[0]).toMatchObject({ documentSearch, summary: redact(summary) });
+});
+
 it("keeps validated privacy protocol choices when a stored secret equals an enum spelling", () => {
   const send = vi.fn();
   const emit = createEventEmitter(

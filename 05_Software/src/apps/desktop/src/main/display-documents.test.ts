@@ -66,9 +66,11 @@ function fixture() {
         indexedAt: null,
       })),
     ),
-    searchDocuments: vi.fn(async () =>
-      rawPaths.map((path) => ({ path, ref: `${path}#L1-L1`, snippet: secrets[0], score: 1 })),
-    ),
+    searchDocuments: vi.fn(async () => ({
+      coverage: "partial",
+      usage: { mode: "keyword" },
+      results: rawPaths.map((path) => ({ path, ref: `${path}#L1-L1`, snippet: secrets[0], score: 1 })),
+    })),
     documentGuard: () => null,
   };
   const display = new DisplayDocuments(

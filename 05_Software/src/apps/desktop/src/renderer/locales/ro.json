@@ -1,5 +1,6 @@
 {
   "toolActivity": {
+    "keywordFallback": "Sunt afișate rezultate după cuvinte-cheie deoarece căutarea semantică nu a fost disponibilă.",
     "embeddingRebuild": "Indexul semantic se reconstruiește. Aceste rezultate corespund cuvintelor-cheie.",
     "planSteps": "Pași în plan: {{count}}",
     "planCleared": "Plan golit",
@@ -611,6 +612,9 @@
     "textTooLarge": "Acest fișier depășește 5 MB și nu poate fi afișat aici.",
     "readOnly": "Workbench doar pentru citire",
     "empty": "Nu există documente în index.",
+    "noPublishedResults": "Niciun rezultat în documentele indexate.",
+    "searchUnavailable": "Căutarea devine disponibilă după indexarea documentelor.",
+    "searchChanging": "Indexul documentelor se modifică. Încearcă din nou.",
     "noResults": "Niciun document găsit.",
     "pdfError": "PDF-ul nu a putut fi afișat. Închide și redeschide pentru a reîncerca.",
     "find": "Caută text",

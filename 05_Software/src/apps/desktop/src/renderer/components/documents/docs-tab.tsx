@@ -84,7 +84,7 @@ export function DocsTab({
     queryFn: async () => {
       const result = await api.invoke("docs.search", { workbenchId, query: search });
       if (result.workbenchId !== workbenchId) throw veraError("CONFLICT");
-      return result.results;
+      return result;
     },
   });
   useEffect(() => {
@@ -304,11 +304,19 @@ export function DocsTab({
                 </>
               ) : results.isPending ? (
                 <p role="status">{t("home.loading")}</p>
-              ) : !results.data.length ? (
-                <p role="status">{t("documents.noResults")}</p>
+              ) : !results.data.results.length ? (
+                <p role="status">
+                  {results.data.usage.mode === null && results.data.usage.reason === "revision-conflict"
+                    ? t("documents.searchChanging")
+                    : results.data.usage.mode === null && results.data.usage.reason === "index-not-ready"
+                      ? t("documents.searchUnavailable")
+                      : results.data.coverage === "complete"
+                        ? t("documents.noResults")
+                        : t("documents.noPublishedResults")}
+                </p>
               ) : (
                 <ol className="documents-list">
-                  {results.data.map((hit) => (
+                  {results.data.results.map((hit) => (
                     <li key={hit.ref}>
                       <p>{hit.displayRef ?? hit.ref}</p>
                       <p>{hit.snippet}</p>

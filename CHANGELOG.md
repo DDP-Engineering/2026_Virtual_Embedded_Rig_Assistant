@@ -138,6 +138,8 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ### Fixed
 
+- Chat and Files search published documents while indexing continues and recover from concurrent publication.
+
 - Report redirected workbench runtime folders before closing the workbench.
 - Chat Run skips terminals after startup timeout until their verified prompt arrives without intervening input.
 - Chat Run skips ineligible terminals and disables invalid command blocks before creating a terminal.

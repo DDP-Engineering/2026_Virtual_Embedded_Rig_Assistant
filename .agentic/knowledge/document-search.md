@@ -4,7 +4,7 @@
 
 Select for persisted embeddings, semantic/hybrid ranking, search_docs/read_doc,
 CLI index/search and the production retrieval gate. Start at core knowledge/
-{embedding,embedding-worker,search}.ts and storage/schema.ts.
+{embedding,embedding-worker,search,search-ranking}.ts and storage/schema.ts.
 [Ingest](knowledge-ingest.md) owns source admission/publication and locks;
 [extraction](document-extraction.md) owns locators/cache/chunks;
 [keyword](keyword-search.md) owns lexical candidates;
@@ -39,8 +39,10 @@ use their own persistent host because their payloads, lifetimes and caches diffe
   take the defaults provider (SessionHost.retrieval from workbench.yaml retrieval),
   else 8/hybrid; explicit arguments win (REQ-FUNC-724d3fcc). Strict schemas
   bound k1..20, query1000 and prevent unknown fields. Results carry ref/path/
-  typed locator/snippet<=300/score. Empty index suggests grep; unavailable model
-  vectors suggest reindex or keyword/grep.
+  typed locator/snippet<=300/score. Each result envelope records scope coverage
+  and actual ranking usage. An absent semantic port, missing current-model vectors,
+  indexer interruptions and embedding deadlines use keyword fallback when published
+  chunks exist. Empty unsettled indexes suggest grep.
 - read verifies confined current source SHA256 and reads full persisted extraction.
   PDF defaults page1; text defaults all lines; headings default first section, and
   `heading: ""` names the untitled text before the first heading. A heading section over
@@ -68,6 +70,11 @@ use their own persistent host because their payloads, lifetimes and caches diffe
   preamble is cited by line range (REQ-FUNC-2a51bc39, REQ-FUNC-845e3114). validPdfRef retains the page-only compatibility entrypoint. Shared refs.ts
   owns syntax/format/labels; sessions owns successful-tool provenance and current
   text-line/session-artifact validation; transcript chips own presentation.
+- Desktop and CLI bind search coverage to the owning live workbench through
+  `documentIndexPhase(id, db?)`. Each successful `search_docs` tool item retains
+  original coverage and usage in its typed `documentSearch` field
+  (REQ-FUNC-b5c2fe1e). Agent and Display masking keep this metadata structural
+  while redacting tool content. See the [response contract](../specs/REQ-FUNC-b5c2fe1e.md).
 - CLI index reindexes a writable workbench and returns document statuses; search
   reads current owned/protected snapshots in three modes. Both drain workbench/
   worker/settings/temp resources on all exits. eval:retrieval uses production
@@ -108,9 +115,12 @@ use their own persistent host because their payloads, lifetimes and caches diffe
   has an explicit error.
 - Lexical and cosine lists cap50, ties use numeric ids; hybrid uses one-based
   RRF60 and deduplication. Validated path glob filters before candidate limits.
-  Search checks epoch across async ranking/path guards and rejects concurrent
-  index changes. Main reads only lightweight candidate paths plus selected text;
-  worker retains the vector matrix.
+  Search guards lazy vector loading, async ranking and hit validation with the
+  applicable revision. It discards conflicting attempts, tries the requested
+  ranking twice, then tries keyword when needed. Three conflicting attempts
+  return typed unavailability. Files runs its current-source and locator checks
+  within the same attempt. Main reads lightweight candidate paths plus ranked
+  passages; the worker caches vectors under the epoch, model and filter key.
 - Frozen gate: hybrid24/28 overall,14/14 EN,11/14 RO; keyword/semantic reported
   separately. Locator matches use exact path/page/heading with top5 chunks.
 
@@ -138,7 +148,8 @@ flowchart LR
 | local model registry, descriptor pins and preparation | shared embedding-models.ts, embedding-model-manifest.ts; prepare-model.mjs | workbench.test.ts, packaging.test.ts and actual cache preparation |
 | model selection, prefixes, cache and worker lifetime | document-services.ts, embedding.ts, embedding-worker.ts | embedding.test.ts, embedding-models.spec.ts |
 | atomic lifecycle/schema | storage/schema.ts, DocumentsRepository, processor/ingest | embedding-schema, embedding-ingest, ingest tests |
-| modes/RRF/glob/snippets/read bounds | search.ts, keyword.ts | search.test.ts, keyword.test.ts |
+| modes/RRF/glob/snippets/read bounds | search.ts, search-ranking.ts, keyword.ts | search.test.ts, keyword.test.ts |
+| live scope, retry and Files outcome | search-ranking.ts, workbench/service.ts, shared documents.ts | workbench/service.test.ts, documents-ipc.test.ts, docs-tree.test.ts |
 | registry/replay/citations | tools/documents.ts, SessionService | registry/search replay and document-cli tests |
 | citation page/heading bounds and current source | search.ts validDocumentRef; shared refs.ts | search.test.ts; agent/citations.test.ts; tests/e2e/citations.spec.ts |
 | host/CLI/bundles | document-processor, entrypoints/builds | document-hosts/document-cli, build-mode/packaging and native ingest |
@@ -150,11 +161,13 @@ bounded retrieval; REQ-FUNC-cc209d7e guarded document tools and owned CLI.
 REQ-FUNC-51165496 verifies issued document bounds against current source/extraction.
 REQ-FUNC-7c394cbe and REQ-FUNC-18573c94 bind indexing and semantic search to the configured model.
 REQ-NFR-ef69b1ff and REQ-NFR-d8ac1694 govern model worker startup, reuse and retirement.
+REQ-FUNC-d3cde7ce and REQ-REL-a85542da govern revision recovery.
+REQ-FUNC-b5c2fe1e, REQ-FUNC-9b31930e and REQ-FUNC-edc2e00a cover search metadata and cancellation.
 
 ## Files
 
 Under `05_Software`: shared `embedding-models.ts` and `embedding-model-manifest.ts`, core knowledge/{document-services,embedding,embedding-worker,embedding-ingest,
-search,processor,ingest}; storage/{schema,repos/documents};
+search,search-ranking,processor,ingest}; storage/{schema,repos/documents};
 tools/documents; CLI {args,documents,document-processor,embedding-worker}; desktop
 {document-processor,document-embedding-worker,index,sessions}; evaluators/eval-retrieval-harness/{eval-retrieval,
 product-eval}; 02_Tools/build/build-cli; 02_Tools/release/package; corresponding focused tests and ingest E2E.

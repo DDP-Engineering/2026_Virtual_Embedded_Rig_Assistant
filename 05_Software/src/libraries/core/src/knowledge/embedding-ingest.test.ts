@@ -352,10 +352,11 @@ it("keeps extraction and keyword results during a model switch, including a fail
     ingest = start();
     await ingest.waitIdle();
     expect(ingest.guard()).toMatchObject({ files: 2, limit: 1 });
+    expect(ingest.phase()).toBe("blocked");
     expect(vectorIds.all()).toEqual([]);
     expect(
-      (await search.search({ query: "coolant", mode: "semantic" }, new AbortController().signal)).ranking,
-    ).toBe("embedding-rebuild");
+      (await search.search({ query: "coolant", mode: "semantic" }, new AbortController().signal)).usage,
+    ).toEqual({ mode: "keyword", fallbackReason: "embedding-rebuild" });
 
     await rm(broken);
     config = { ...config, docs: initialConfig.docs };
@@ -376,6 +377,9 @@ it("keeps extraction and keyword results during a model switch, including a fail
     for (const mode of ["keyword", "hybrid", "semantic"] as const) {
       const found = await search.search({ query: "coolant", mode }, new AbortController().signal);
       expect(found.results[0]?.path).toBe("docs/a.txt");
+      expect(found.usage).toEqual(
+        mode === "keyword" ? { mode: "keyword" } : { mode: "keyword", fallbackReason: "embedding-rebuild" },
+      );
     }
     mode = "fail";
     release();
@@ -408,6 +412,7 @@ it("keeps extraction and keyword results during a model switch, including a fail
     expect(extracts.all()).toEqual(originalText);
     expect(chunks.all().length).toBeGreaterThan(originalChunks.length);
     expect(vectorIds.all()).toEqual([next]);
+    expect(ingest.phase()).toBe("settled-with-exceptions");
     expect(db.prepare("SELECT status FROM documents WHERE path='docs/broken.txt'").pluck().get()).toBe(
       "failed",
     );

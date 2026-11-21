@@ -83,6 +83,9 @@ export function embeddingModelId(model: EmbeddingModel): string {
     .update(JSON.stringify({ dtype: model.dtype, embedding: model.embedding, files: model.files }))
     .digest("hex")}`;
 }
+export const embeddingDeadlineCode = "EMBEDDING_DEADLINE";
+const embeddingDeadline = (message: string) => Object.assign(Error(message), { code: embeddingDeadlineCode });
+
 /** Host-selected local resources; serial worker per model with a workbench-scoped cache, including queue deadlines. */
 export class EmbeddingHost implements EmbeddingPort {
   readonly modelId: string;
@@ -132,8 +135,8 @@ export class EmbeddingHost implements EmbeddingPort {
       queuedCleanup();
       if (cancelled) throw Error("Embedding queued request cancelled.");
       signal.throwIfAborted();
-      if (this.roots.get(root) !== owner || performance.now() >= deadline)
-        throw Error("Embedding request expired. Retry.");
+      if (this.roots.get(root) !== owner) throw Error("Embedding workbench lease ended.");
+      if (performance.now() >= deadline) throw embeddingDeadline("Embedding request expired. Retry.");
       const payload = epoch
         ? {
             ...args,
@@ -189,7 +192,7 @@ export class EmbeddingHost implements EmbeddingPort {
         const crash = () => finish(undefined, Error("Embedding worker failed. Retry."));
         const exited = () => finish(undefined, Error("Embedding worker exited. Retry."));
         const timer = setTimeout(
-          () => finish(undefined, Error("Embedding deadline exceeded. Retry.")),
+          () => finish(undefined, embeddingDeadline("Embedding deadline exceeded. Retry.")),
           Math.max(1, deadline - performance.now()),
         );
         signal.addEventListener("abort", abort, { once: true });
@@ -227,7 +230,10 @@ export class EmbeddingHost implements EmbeddingPort {
         reject(error);
       };
       const abort = () => cancel(Error("Embedding aborted."));
-      const timer = setTimeout(() => cancel(Error("Embedding queue deadline exceeded.")), this.deadlineMs);
+      const timer = setTimeout(
+        () => cancel(embeddingDeadline("Embedding queue deadline exceeded.")),
+        this.deadlineMs,
+      );
       queuedCleanup = () => {
         clearTimeout(timer);
         signal.removeEventListener("abort", abort);

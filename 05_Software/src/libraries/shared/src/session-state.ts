@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { documentSearchMetadataSchema } from "./documents.js";
 import { downloadApprovalSchema, validDownloadApproval } from "./downloads.js";
 import { providerRetryAfterSchema } from "./errors.js";
 import { type SessionEvent, usageEventSchema } from "./events.js";
@@ -29,6 +30,7 @@ const tool = z.strictObject({
   args: z.unknown(),
   status: z.enum(["running", "ok", "error"]),
   summary: z.string().optional(),
+  documentSearch: documentSearchMetadataSchema.optional(),
   preview: z.string().optional(),
   durationMs: z.number().optional(),
   /** Full UTF-8 sizes of the fields cut for the renderer (PERF-06); `args` then holds a JSON prefix. */
@@ -416,6 +418,7 @@ function reduce(d: Draft, event: SessionEvent): void {
       const tool = d.at("items", index) as Extract<SessionItem, { kind: "tool" }>;
       tool.status = event.ok ? "ok" : "error";
       tool.summary = event.summary;
+      if (event.documentSearch) tool.documentSearch = event.documentSearch;
       tool.durationMs = event.durationMs;
       if (event.preview !== undefined) tool.preview = event.preview;
       if (event.truncated) tool.truncated = { ...tool.truncated, ...event.truncated };

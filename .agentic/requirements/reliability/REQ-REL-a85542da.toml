@@ -1,0 +1,14 @@
+schema = 1
+id = "REQ-REL-a85542da"
+title = "Report bounded document search conflicts"
+status = "active"
+requirement = """
+If repeated changes consume the bounded search attempts, the system shall report a transient unavailable search with no hits to the agent and Files.
+"""
+verification = "Advance the search revision in every attempt and assert the capped count, structured conflict and empty results through the search and scoped Files responses."
+affected_paths = ["05_Software/src/libraries/core/src/knowledge/search-ranking.ts", "05_Software/src/libraries/shared/src/documents.ts", "05_Software/src/libraries/shared/src/ipc.ts", "05_Software/src/apps/desktop/src/main/display-documents.ts", "05_Software/src/apps/desktop/src/renderer/components/documents/docs-tab.tsx", "05_Software/src/apps/desktop/src/renderer/mocks/mockApi.ts", "05_Software/src/apps/desktop/src/renderer/locales"]
+linked_tests = ["05_Software/src/libraries/core/src/knowledge/search.test.ts", "05_Software/src/libraries/core/src/workbench/service.test.ts", "05_Software/src/libraries/shared/src/documents-ipc.test.ts", "05_Software/src/apps/desktop/src/renderer/components/documents/docs-tree.test.ts"]
+spec = ""
+priority = "normal"
+created = 2026-11-21
+updated = 2026-11-21

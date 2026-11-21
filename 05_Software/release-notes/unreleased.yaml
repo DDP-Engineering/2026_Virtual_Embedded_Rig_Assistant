@@ -67,10 +67,10 @@ entries:
   - category: fixed
     topic: { en: Files, ro: Fișiere, de: Dateien, fr: Fichiers }
     text:
-      en: Files uses icons beside search, compact indexing progress and expandable failure details.
-      ro: Fișiere are pictograme lângă căutare, progres compact și detalii extensibile pentru erori.
-      de: Dateien bietet Symbole neben der Suche, kompakten Indexfortschritt und aufklappbare Fehlerdetails.
-      fr: Fichiers regroupe les icônes près de la recherche, la progression et les détails des échecs.
+      en: Files has toolbar icons, compact index progress, expandable errors, and limited-search feedback.
+      ro: Fișiere arată pictograme, progres compact, erori extensibile și când căutarea e limitată.
+      de: Dateien zeigt Symbole, kompakten Fortschritt, aufklappbare Fehler und eingeschränkte Suche.
+      fr: Fichiers indique la recherche limitée, avec icônes, progression compacte et échecs dépliables.
   - category: improved
     topic: { en: Interface, ro: Interfață, de: Oberfläche, fr: Interface }
     text:

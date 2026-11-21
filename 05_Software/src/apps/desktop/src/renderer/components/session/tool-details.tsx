@@ -181,11 +181,22 @@ export const ToolDetails = memo(function ToolDetails({
             ? t("toolActivity.changedLines", { added: result?.added, removed: result?.removed })
             : undefined;
   const browserFailure = action >= 27 ? browserFailureCodeSchema.safeParse(result?.code).data : undefined;
+  const usage = item.documentSearch?.usage;
+  const fallback = usage?.mode === "keyword" ? usage.fallbackReason : undefined;
   const output = browserFailure
     ? browserFailureText(t, browserFailure)
-    : item.name === "search_docs" && result?.ranking === "embedding-rebuild"
+    : fallback === "embedding-rebuild"
       ? t("toolActivity.embeddingRebuild")
-      : (string(result?.error) ?? string(result?.output) ?? string(result?.text) ?? string(result?.message));
+      : fallback
+        ? t("toolActivity.keywordFallback")
+        : usage?.mode === null && usage.reason !== "no-candidates"
+          ? usage.reason === "revision-conflict"
+            ? t("documents.searchChanging")
+            : t("documents.searchUnavailable")
+          : (string(result?.error) ??
+            string(result?.output) ??
+            string(result?.text) ??
+            string(result?.message));
   const raw = item.preview ?? update ?? item.summary;
   return (
     <Disclosure

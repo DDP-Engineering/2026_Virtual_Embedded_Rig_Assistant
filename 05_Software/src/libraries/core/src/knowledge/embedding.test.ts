@@ -194,7 +194,19 @@ it("terminates deadline, abort, crash and premature exit jobs and replaces worke
       entry,
       "import {parentPort} from 'node:worker_threads'; parentPort.on('message',()=>{});",
     );
-    await expect(host.embed(temporary, ["a"], new AbortController().signal)).rejects.toThrow(/deadline/);
+    const signal = new AbortController().signal;
+    const active = host.embed(temporary, ["a"], signal);
+    const queued = host.rank(temporary, "queued", [], "regulator", signal);
+    await Promise.all([
+      expect(active).rejects.toMatchObject({
+        code: "EMBEDDING_DEADLINE",
+        message: expect.stringMatching(/deadline/i),
+      }),
+      expect(queued).rejects.toMatchObject({
+        code: "EMBEDDING_DEADLINE",
+        message: expect.stringMatching(/queue deadline/i),
+      }),
+    ]);
     const controller = new AbortController(),
       pending = host.embed(temporary, ["a"], controller.signal);
     controller.abort();

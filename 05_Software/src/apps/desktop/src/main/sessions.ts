@@ -179,6 +179,7 @@ export class SessionsHost {
             }),
           ...(options.terminals ? { terminals: options.terminals(workbenchId) } : {}),
           readOnly: snapshot.readOnly,
+          documentIndexPhase: () => options.workbench.documentIndexPhase(workbenchId, db),
           additionalFolders: () => {
             const current = options.workbench.getSnapshot();
             if (current.config.id !== workbenchId) throw veraError("CONFLICT");

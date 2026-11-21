@@ -1,5 +1,6 @@
 {
   "toolActivity": {
+    "keywordFallback": "La recherche sémantique était indisponible. Voici les résultats par mots-clés.",
     "embeddingRebuild": "L’index sémantique est en cours de reconstruction. Ces résultats correspondent aux mots-clés.",
     "planSteps": "Étapes du plan : {{count}}",
     "planCleared": "Plan vidé",
@@ -611,6 +612,9 @@
     "textTooLarge": "Ce fichier dépasse 5 MB et ne peut pas être affiché ici.",
     "readOnly": "Banc de travail en lecture seule",
     "empty": "Aucun document dans l’index.",
+    "noPublishedResults": "Aucun résultat dans les documents indexés.",
+    "searchUnavailable": "La recherche sera disponible après l’indexation des documents.",
+    "searchChanging": "L’index des documents change. Relancez la recherche.",
     "noResults": "Aucun document correspondant.",
     "pdfError": "Le PDF n’a pas pu être affiché. Fermez-le et rouvrez-le pour réessayer.",
     "find": "Rechercher du texte",

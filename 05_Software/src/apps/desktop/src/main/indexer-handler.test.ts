@@ -128,4 +128,17 @@ it("passes a failure's error code, such as ENOENT, back to main", async () => {
   handle({ id: 9, type: "select", input: { root: "/b", docs: { include: ["docs/**"], exclude: [] } } });
   await flush();
   expect(sent).toContainEqual({ id: 9, ok: false, error: { message: "gone", code: "ENOENT" } });
+  const failure = { message: "Embedding queue deadline exceeded.", code: "EMBEDDING_DEADLINE" };
+  s.worker.rank.mockRejectedValueOnce(Object.assign(Error(failure.message), { code: failure.code }));
+  handle({
+    id: 10,
+    type: "rank",
+    model: "Xenova/bge-small-en-v1.5",
+    root: "/b",
+    epoch: "e",
+    query: "q",
+    rows: [],
+  });
+  await flush();
+  expect(sent).toContainEqual({ id: 10, ok: false, error: failure });
 });

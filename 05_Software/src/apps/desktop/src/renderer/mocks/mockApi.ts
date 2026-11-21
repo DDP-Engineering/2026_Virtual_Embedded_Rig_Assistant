@@ -1296,6 +1296,8 @@ What this plugin does.
         if (workbenchId !== current().snapshot.config.id) throw veraError("CONFLICT");
         value = {
           workbenchId,
+          coverage: "complete",
+          usage: { mode: "keyword" },
           results: /power|3\.3|reset/i.test(query)
             ? [{ path: "docs/a.md", ref: "docs/a.md#h=power", snippet: "3.3 V supply", score: 1 }]
             : [],

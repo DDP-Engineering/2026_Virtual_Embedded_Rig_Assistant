@@ -1,5 +1,6 @@
 {
   "toolActivity": {
+    "keywordFallback": "Keyword results are shown because semantic ranking was unavailable.",
     "embeddingRebuild": "The embedding index is rebuilding. These results match keywords.",
     "planSteps": "Plan steps: {{count}}",
     "planCleared": "Plan cleared",
@@ -611,6 +612,9 @@
     "textTooLarge": "This file is larger than 5 MB and cannot be shown here.",
     "readOnly": "Read-only workbench",
     "empty": "No documents in the index.",
+    "noPublishedResults": "No matches in indexed documents.",
+    "searchUnavailable": "Document search is unavailable until documents are indexed.",
+    "searchChanging": "The document index is changing. Try searching again.",
     "noResults": "No matching documents.",
     "pdfError": "The PDF could not be rendered. Close and reopen to retry.",
     "find": "Find text",

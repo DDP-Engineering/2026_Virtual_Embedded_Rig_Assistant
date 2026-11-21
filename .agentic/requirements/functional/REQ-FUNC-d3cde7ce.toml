@@ -1,0 +1,14 @@
+schema = 1
+id = "REQ-FUNC-d3cde7ce"
+title = "Recover coherently from document publication during search"
+status = "active"
+requirement = """
+When source publication changes a document search revision during ranking or hit validation, the search shall discard the affected attempt and use a coherent published snapshot, preserving applicable source and locator checks.
+"""
+verification = "Pause semantic rank and then Files source validation, publish a document, release the pause, and assert that each response only uses a validated revision and rejects stale references."
+affected_paths = ["05_Software/src/libraries/core/src/knowledge/search.ts", "05_Software/src/libraries/core/src/knowledge/search-ranking.ts", "05_Software/src/libraries/core/src/workbench/service.ts", "05_Software/src/libraries/core/src/knowledge/viewer.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/knowledge/search.test.ts", "05_Software/src/libraries/core/src/workbench/service.test.ts"]
+spec = ""
+priority = "normal"
+created = 2026-11-21
+updated = 2026-11-21

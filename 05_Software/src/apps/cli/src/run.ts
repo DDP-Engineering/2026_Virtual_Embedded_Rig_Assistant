@@ -247,6 +247,7 @@ export async function runTurn(
       writeQueue: workbench.getWriteQueue(),
       mode: snapshot.config.agent.permission_mode,
       retrieval: snapshot.config.retrieval,
+      documentIndexPhase: () => workbench.documentIndexPhase(snapshot.config.id, db),
       disabledTools: [
         ...snapshot.config.tools.disabled,
         ...unavailableWebTools(config.webAccess),
