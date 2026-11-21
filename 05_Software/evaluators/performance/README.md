@@ -22,7 +22,10 @@ downloaded. The runner owns a temporary build/profile/workbench and leaves deskt
 ## Commands
 
 Give every run its own folder, `evaluation-outputs/performance/<run-id>/`; the harness creates it.
-`run.json` and the adjacent `run.json.md` summary are exclusive-create and never overwritten.
+`run.json`, the adjacent `run.json.md` summary and, for `run`, `report.html` are exclusive-create and
+never overwritten. `eval:performance report --input <run.json> [--reference <run.json>]` renders a
+saved run as HTML; a reference from another host, fixture, harness or build mode is reported as
+incompatible, as `compare` would refuse it.
 
 ```powershell
 # Five measured samples per selected case; diagnostic without an explicit reference.
@@ -115,10 +118,11 @@ is added. Existing slow cases require measured follow-up; this harness does not 
 
 | File | Role |
 |---|---|
-| [run.mjs](run.mjs) | Entry point: `run`, `calibrate` and `compare`. |
+| [run.mjs](run.mjs) | Entry point: `run`, `calibrate`, `compare` and `report`. |
 | [runner.mjs](runner.mjs) | Builds the instrumented application, prepares profiles and workbenches, drives the measurement. Uses the network guard of the E2E suite, `tests/e2e/network-guard.ts`. |
 | [report.mjs](report.mjs) | Validation, statistics, calibration, comparison and saving of reports. |
 | [fixtures.mjs](fixtures.mjs) | Generates the synthetic saved sessions. |
+| [report-model.mjs](report-model.mjs) | The HTML report model of a measurement: medians per case, all metrics per case. |
 | [baselines/](baselines/) | Retained runs: `2026-11-12-windows-session-loading` (session loading) and `2026-11-19-windows-embedding-models` (a separate CLI measurement of the two embedding models). |
 
 The focused tests are `tests/tooling/session-performance*.test.ts`. Scratch is a temporary folder

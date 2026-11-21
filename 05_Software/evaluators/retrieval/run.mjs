@@ -4,9 +4,41 @@ import { dirname, isAbsolute, join, relative, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { parseArgs } from "node:util";
 import { build } from "esbuild";
+import { writeReport } from "../shared/family-cli.mjs";
+import { gitState, harnessHash, reportPathFor } from "../shared/identity.mjs";
+import { renderReport } from "../shared/report-html.mjs";
+import { toReportModel } from "./report-model.mjs";
 
 const software = fileURLToPath(new URL("../../", import.meta.url));
-const { values } = parseArgs({ options: { scratch: { type: "string" }, output: { type: "string" } } });
+const folder = fileURLToPath(new URL(".", import.meta.url));
+const { values, positionals } = parseArgs({
+  allowPositionals: true,
+  options: Object.fromEntries(
+    ["scratch", "output", "input", "reference"].map((key) => [key, { type: "string" }]),
+  ),
+});
+const command = positionals[0] ?? "run";
+if (positionals.length > 1 || !["run", "report"].includes(command)) {
+  process.stderr.write(
+    "usage: eval:retrieval [run] [--output <run.json>] [--scratch <parent>]\n" +
+      "       eval:retrieval report --input <run.json> [--reference <run.json>] [--output <report.html>]\n",
+  );
+  process.exit(2);
+}
+if (command === "report") {
+  if (!values.input) throw Error("--input is required");
+  const target = await writeReport(
+    {
+      input: resolve(values.input),
+      reference: values.reference && resolve(values.reference),
+      output: values.output,
+    },
+    toReportModel,
+  );
+  process.stdout.write(`${target}\n`);
+  process.exit(0);
+}
+const startedAt = new Date().toISOString();
 const parent = resolve(values.scratch ?? join(software, "node_modules/.cache/evaluators/retrieval"));
 await mkdir(parent, { recursive: true });
 const scratch = await mkdtemp(join(parent, "eval-"));
@@ -43,10 +75,13 @@ try {
   result.fixtureSha256 = createHash("sha256")
     .update(await readFile(join(software, "evaluators/retrieval/cases/demo-board.yaml")))
     .digest("hex");
+  result.identity = { harnessHash: await harnessHash([folder]), ...gitState(), startedAt };
   if (values.output) {
     // A run gets its own folder under evaluation-outputs/retrieval/; the harness creates it.
-    await mkdir(dirname(resolve(values.output)), { recursive: true });
-    await writeFile(resolve(values.output), `${JSON.stringify(result, null, 2)}\n`, { flag: "wx" });
+    const output = resolve(values.output);
+    await mkdir(dirname(output), { recursive: true });
+    await writeFile(output, `${JSON.stringify(result, null, 2)}\n`, { flag: "wx" });
+    await writeFile(reportPathFor(output), renderReport(toReportModel(result, output)), { flag: "wx" });
   }
   process.stdout.write(
     `${JSON.stringify({ pass: result.pass, modelId: result.modelId, metrics: Object.fromEntries(Object.entries(result.metrics).map(([mode, m]) => [mode, { overall: m.overall, en: m.en, ro: m.ro }])) })}\n`,

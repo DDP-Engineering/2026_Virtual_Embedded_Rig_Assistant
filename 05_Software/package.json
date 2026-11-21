@@ -45,7 +45,8 @@
     "make:demo-pdfs": "node tests/support/make-demo-pdfs.mjs",
     "vera": "node ../02_Tools/build/build-cli.mjs && node src/apps/cli/dist/index.js",
     "eval:performance": "node evaluators/performance/run.mjs",
-    "eval:retrieval": "node evaluators/retrieval/run.mjs"
+    "eval:retrieval": "node evaluators/retrieval/run.mjs",
+    "eval:smoke": "node evaluators/smoke/run.mjs"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.15",

@@ -1,10 +1,14 @@
 import { spawnSync } from "node:child_process";
 // REQ-TEST-df5ff0ba REQ-TEST-c0e68f23 REQ-TEST-7cc7bf91
-import { access, readFile } from "node:fs/promises";
+import { access, readFile, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseArgs } from "node:util";
+import { writeReport } from "../shared/family-cli.mjs";
+import { reportPathFor } from "../shared/identity.mjs";
+import { renderReport } from "../shared/report-html.mjs";
 import { calibrate, compare, saveReport } from "./report.mjs";
+import { toReportModel } from "./report-model.mjs";
 
 export async function main(args) {
   const { values, positionals } = parseArgs({
@@ -22,13 +26,30 @@ export async function main(args) {
         "budgets",
         "timeout",
         "inject-stall-ms",
+        "input",
       ].map((key) => [key, { type: "string" }]),
     ),
   });
   const json = async (path) => JSON.parse(await readFile(path, "utf8"));
-  if (positionals.length !== 1 || !["run", "calibrate", "compare"].includes(positionals[0]))
-    throw Error("usage: eval:performance run|calibrate|compare --output <new file> [options]");
+  if (positionals.length !== 1 || !["run", "calibrate", "compare", "report"].includes(positionals[0]))
+    throw Error(
+      "usage: eval:performance run|calibrate|compare --output <new file> [options]\n" +
+        "       eval:performance report --input <run.json> [--reference <run.json>] [--output <report.html>]",
+    );
   const command = positionals[0];
+  if (command === "report") {
+    if (!values.input) throw Error("--input is required");
+    const target = await writeReport(
+      {
+        input: resolve(values.input),
+        reference: values.reference && resolve(values.reference),
+        output: values.output,
+      },
+      toReportModel,
+    );
+    console.log(target);
+    return 0;
+  }
   if (!values.output) throw Error("--output is required");
   for (const path of [values.output, `${values.output}.md`]) {
     try {
@@ -55,6 +76,13 @@ export async function main(args) {
       }
     }
     await saveReport(values.output, report);
+    await writeFile(
+      reportPathFor(resolve(values.output)),
+      renderReport(toReportModel(report, values.output)),
+      {
+        flag: "wx",
+      },
+    );
     console.log(
       `${values.output}: ${report.comparison?.status ?? report.status} (${report.samples.length} samples)`,
     );
