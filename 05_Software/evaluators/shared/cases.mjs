@@ -42,7 +42,7 @@ export function caseFileSchema(expect) {
             path: relativePath,
             line: z.string().min(1).max(2000),
             times: z.number().int().min(1).max(100_000),
-            then: z.string().max(100_000).optional(),
+            after: z.string().max(100_000).optional(),
           }),
         ]),
       )

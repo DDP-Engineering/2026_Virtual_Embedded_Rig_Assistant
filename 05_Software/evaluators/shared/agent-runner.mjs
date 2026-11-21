@@ -34,7 +34,7 @@ async function writeSetup(workbench, files, substitutions) {
       const lines = Array.from({ length: file.times }, (_, index) =>
         file.line.replaceAll("{n}", String(index + 1)),
       );
-      await writeFile(target, fill(`${lines.join("\n")}\n${file.then ?? ""}`));
+      await writeFile(target, fill(`${lines.join("\n")}\n${file.after ?? ""}`));
     } else await writeFile(target, fill(file.content));
   }
 }

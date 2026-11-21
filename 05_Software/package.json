@@ -47,6 +47,7 @@
     "eval:performance": "node evaluators/performance/run.mjs",
     "eval:grounding": "node evaluators/grounding/run.mjs",
     "eval:retrieval": "node evaluators/retrieval/run.mjs",
+    "eval:safety": "node evaluators/safety/run.mjs",
     "eval:smoke": "node evaluators/smoke/run.mjs"
   },
   "devDependencies": {
