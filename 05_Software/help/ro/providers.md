@@ -38,6 +38,10 @@ Pentru LM Studio, cheia API este opțională.
 
 Ia fereastra de context din documentația modelului sau din setările serverului. O valoare prea mare duce la erori de la server; una prea mică face ca VERA să rezume istoricul mai devreme decât este necesar.
 
+## Modele locale lente
+
+Un model local poate avea nevoie de câteva minute ca să se încarce sau să citească un prompt lung. **Timp de așteptare a răspunsului (s)** stabilește cât așteaptă VERA primul răspuns și apoi fiecare parte a răspunsului, între 10 și 3600 de secunde; valoarea inițială este 300. Raționamentul trimis de server contează ca răspuns, așa că un model care încă gândește nu este oprit.
+
 ## Suport pentru imagini
 
 Caseta de mesaj afișează un avertisment când modelul curent primește doar căile imaginilor.
@@ -69,5 +73,6 @@ Alegerea din sesiune are prioritate față de valoarea implicită a workbench-ul
 | **Limita de cereri a furnizorului a fost atinsă.** | Așteaptă timpul afișat, apoi reîncearcă |
 | **Furnizorul a respins dimensiunea contextului.** | Scurtează intrarea sau corectează **Fereastră de context (tokenuri)** |
 | **Nu se poate accesa …** | Pornește serverul local sau verifică rețeaua și **URL de bază** |
+| **Modelul nu a răspuns în … s.** | Mărește **Timp de așteptare a răspunsului (s)** pentru conexiune sau verifică dacă serverul rulează |
 
 Vezi și [Depanare](troubleshooting.md).

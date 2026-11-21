@@ -1,5 +1,6 @@
 import {
   type ArtifactContent,
+  advancedPatchSchema,
   type ChangeDetail,
   channels,
   confirmationMatches,
@@ -10,6 +11,7 @@ import {
   programPolicy,
   type SessionEvent,
   type SessionSummary,
+  type TurnCapacity,
   veraError,
 } from "@vera/shared";
 import { isFeedbackChannel, mockPlanFeedback } from "./plan-feedback.js";
@@ -79,7 +81,25 @@ export class MockSessions {
       mode: SessionSummary["mode"];
     },
     private readonly reasoningLevels: (model: string) => string[] = () => [],
+    /**
+     * The Concurrent turns limit across every mock workbench and the capacity announcement, and the session
+     * activity announcement (a turn started or ended, an approval was requested or decided), like main.
+     */
+    private readonly turns: { limit: () => number; changed: () => void; activity?: () => void } = {
+      limit: () => Number.MAX_SAFE_INTEGER,
+      changed: () => {},
+    },
   ) {}
+  /**
+   * Turns started by session.send over every mock workbench and the limit that admits new ones; the seeded
+   * streaming fixture only displays a live answer and holds no slot.
+   */
+  capacity(): TurnCapacity {
+    return {
+      active: [...this.sessions.values()].filter((row) => row.active && !row.live).length,
+      limit: this.turns.limit(),
+    };
+  }
   seedFixtures() {
     if ([...this.sessions.keys()].some((key) => key.startsWith(`${this.current().id}/`))) return;
     for (const fixture of sessionFixtures) {
@@ -121,6 +141,13 @@ export class MockSessions {
       } catch {
         /* observer */
       }
+    if (
+      ["turn.started", "turn.done", "session.interrupted", "approval.requested", "approval.decided"].includes(
+        event.type,
+      ) ||
+      (event.type === "session.updated" && (event.title !== undefined || event.status !== undefined))
+    )
+      this.turns.activity?.();
   }
   private startReview(id: string, review: PlanReview) {
     const row = this.row(id),
@@ -327,6 +354,37 @@ export class MockSessions {
       });
       return {};
     }
+    if (channel === "session.advanced.set") {
+      this.writable();
+      if (row.summary.archived) throw veraError("DENIED");
+      const { key, value } = request as unknown as { key: string; value: number | boolean | null };
+      const patch = advancedPatchSchema("session").safeParse({ [key]: value });
+      if (!patch.success || !Object.hasOwn(patch.data, key)) throw veraError("INVALID");
+      this.emit(id, { type: "session.updated", advanced: { [key]: value } });
+      return {};
+    }
+    if (channel === "session.compact") {
+      this.writable();
+      if (row.summary.archived) throw veraError("DENIED");
+      if (foldSessionEvents(row.events).activeTurnId) throw veraError("BUSY");
+      // The mock has no model: a session with history counts as summarized.
+      const history = foldSessionEvents(row.events).items.some((item) => item.kind === "assistant");
+      return { status: history ? "completed" : "unavailable" };
+    }
+    if (channel === "session.bookmarks.remove") {
+      this.writable();
+      if (row.summary.archived) throw veraError("DENIED");
+      const state = foldSessionEvents(row.events);
+      const target = request as { all?: true; messageIds?: string[] };
+      const ids = target.all ? [...state.bookmarkedMessageIds] : [...new Set(target.messageIds ?? [])];
+      if (
+        !ids.every((messageId) => state.items.some((item) => item.kind === "user" && item.id === messageId))
+      )
+        throw veraError("INVALID");
+      for (const messageId of ids)
+        this.emit(id, { type: "message.bookmarked", messageId, bookmarked: false });
+      return {};
+    }
     if (channel === "session.reasoning.get" || channel === "session.reasoning.set") {
       const modelRef = row.summary.modelRef ?? this.current().model;
       if (!modelRef) throw veraError("INVALID");
@@ -369,6 +427,7 @@ export class MockSessions {
         delete row.live;
         row.summary.status = "idle";
         this.emit(id, { type: "turn.done", turnId: "stream-turn", stopReason: "aborted" });
+        this.turns.changed();
         return { stopped: true };
       }
       return { stopped: row.active };
@@ -429,6 +488,11 @@ export class MockSessions {
       return { turnId: row.turnId, messageId };
     }
     this.idle(id);
+    if (channel === "session.send") {
+      // A new turn at the Concurrent turns limit is refused before anything changes, like main.
+      const { active, limit } = this.capacity();
+      if (active >= limit) throw { code: "TURN_LIMIT", messageKey: "errors.TURN_LIMIT", params: { limit } };
+    }
     row.summary.updatedAt = new Date().toISOString();
     if (channel === "session.archive.set") {
       row.summary.archived = request.archived;
@@ -459,6 +523,7 @@ export class MockSessions {
     if (channel === "session.send") {
       const key = this.key(id);
       row.active = true;
+      this.turns.changed();
       row.stop = false;
       const turnId = `turn_${++this.number}`,
         messageId = `message_${++this.number}`;
@@ -472,6 +537,7 @@ export class MockSessions {
         messageId,
         text: request.text,
         ...(request.images?.length && { images: request.images }),
+        timestamp: Date.now(),
       });
       row.summary.status = "running";
       this.emit(id, { type: "turn.started", turnId });
@@ -703,6 +769,7 @@ export class MockSessions {
           row.active = false;
           row.summary.status = "idle";
           this.emit(id, { type: "turn.done", turnId, stopReason: row.stop ? "aborted" : "end" }, key);
+          this.turns.changed();
         });
       return { turnId, messageId };
     }

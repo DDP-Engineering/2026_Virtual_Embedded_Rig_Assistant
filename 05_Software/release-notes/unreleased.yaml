@@ -1,13 +1,6 @@
 version: Unreleased
 date: null
 entries:
-  - category: fixed
-    topic: { en: Plan, ro: Plan, de: Plan, fr: Plan }
-    text:
-      en: Saved feedback follows masking; changed selections require explicit recapture.
-      ro: Feedbackul salvat urmează mascarea; selecțiile schimbate cer o nouă confirmare.
-      de: Gespeichertes Feedback folgt der Maskierung; geänderte Auswahlen sind neu zu bestätigen.
-      fr: Les commentaires suivent le masquage ; une sélection périmée doit être reconfirmée.
   - category: new
     topic: { en: Plan, ro: Plan, de: Plan, fr: Plan }
     text:
@@ -137,17 +130,24 @@ entries:
   - category: new
     topic: { en: Terminal, ro: Terminal, de: Terminal, fr: Terminal }
     text:
-      en: Use interactive terminal tabs; allow agent reads separately for each terminal.
-      ro: Folosește terminale interactive; permite citirea de către agent separat pentru fiecare.
-      de: Interaktive Terminal-Tabs nutzen; Agentenlesezugriff für jedes Terminal separat erlauben.
-      fr: Utilisez des terminaux interactifs ; autorisez la lecture par l’agent pour chacun.
+      en: Interactive terminal tabs with per-tab agent reads; run commands in Cmd, Git Bash or any shell.
+      ro: Terminale interactive cu citire de agent per tab; rulează comenzi în Cmd, Git Bash sau orice shell.
+      de: Interaktive Terminal-Tabs mit Agentenlesen je Tab; Befehle in Cmd, Git Bash oder jeder Shell.
+      fr: Terminaux interactifs, lecture agent par onglet ; commandes sous Cmd, Git Bash ou tout shell.
   - category: new
     topic: { en: Workbench, ro: Workbench, de: Workbench, fr: Banc de travail }
     text:
-      en: Indexing honors Git ignore and size limits; large selections show big folders and wait for consent.
-      ro: Indexarea respectă Git ignore și limita de mărime; selecțiile mari arată folderele și cer acord.
-      de: Index beachtet Git Ignore und Größenlimits; große Auswahl zeigt große Ordner und fragt nach.
-      fr: L’index suit Git ignore et la taille limite ; les grandes sélections montrent les gros dossiers.
+      en: Indexing honors Git ignore, explains size skips and holds large selections until you confirm.
+      ro: Indexarea respectă Git ignore, explică omiterile de mărime și cere confirmare la selecții mari.
+      de: Indizierung beachtet Git Ignore, begründet Größen-Auslassungen und fragt bei großer Auswahl.
+      fr: L’indexation suit Git ignore, explique les exclusions de taille et confirme les grandes sélections.
+  - category: new
+    topic: { en: Sessions, ro: Sesiuni, de: Sitzungen, fr: Sessions }
+    text:
+      en: Sessions run on in other workbenches, up to a turn limit; see, open or stop them in the sidebar.
+      ro: Sesiunile rulează și în alte workbench-uri, cu limită; vezi, deschide sau oprește din bara laterală.
+      de: Sitzungen laufen in anderen Workbenches weiter, mit Limit; Seitenleiste zeigt, öffnet, stoppt sie.
+      fr: Les sessions continuent dans d’autres bancs, avec limite ; voyez, ouvrez ou arrêtez-les sur le côté.
   - category: improved
     topic: { en: Workbench, ro: Workbench, de: Workbench, fr: Banc de travail }
     text:
@@ -165,31 +165,24 @@ entries:
   - category: improved
     topic: { en: Sessions, ro: Sesiuni, de: Sitzungen, fr: Sessions }
     text:
-      en: Find bookmarks on the rail, navigate with editable shortcuts and keep them in session exports.
-      ro: Găsește marcaje pe margine, navighează cu taste configurabile și păstrează-le în exporturi.
-      de: Lesezeichen auf der Leiste finden, mit anpassbaren Kürzeln ansteuern und in Exporten behalten.
-      fr: Repérez les signets sur la barre, utilisez des raccourcis modifiables et gardez-les à l’export.
+      en: Bookmark shortcuts and exports; Verbose shows send time. Context summaries survive restarts.
+      ro: Scurtături și export de marcaje; Verbose arată ora trimiterii. Rezumatele rămân după repornire.
+      de: Lesezeichenkürzel und -export; Sendezeit im Detailchat. Zusammenfassungen bleiben nach Neustart.
+      fr: Raccourcis et export de signets ; heure d’envoi en mode détaillé ; résumés gardés au redémarrage.
+  - category: improved
+    topic: { en: Sessions, ro: Sesiuni, de: Sitzungen, fr: Sessions }
+    text:
+      en: "Changes: paged list and resizable diff pane. Chat: one working indicator below the input."
+      ro: "Modificări: listă paginată și diff redimensionabil. Chat: un singur indicator sub câmp."
+      de: "Änderungen: Seiten und skalierbare Diff-Ansicht. Chat: eine Statusanzeige unter der Eingabe."
+      fr: "Modifications : liste paginée, diff ajustable. Chat : un seul indicateur sous la saisie."
   - category: improved
     topic: { en: Permissions, ro: Permisiuni, de: Berechtigungen, fr: Autorisations }
     text:
-      en: Each Bypass change asks for confirmation; agent file tools refuse VERA application data.
-      ro: Fiecare trecere la Bypass cere confirmare; instrumentele de fișiere refuză datele VERA.
-      de: Jeder Bypass-Wechsel fragt nach; Dateiwerkzeuge sperren die VERA-Anwendungsdaten.
-      fr: Chaque passage à Contournement est à confirmer ; les outils de fichiers refusent les données VERA.
-  - category: improved
-    topic: { en: Permissions, ro: Permisiuni, de: Berechtigungen, fr: Autorisations }
-    text:
-      en: Bypass permits outside programs and analysis inputs; leaving it stops running programs.
-      ro: Bypass permite programe și intrări de analiză externe; ieșirea oprește programele active.
-      de: Bypass erlaubt externe Programme und Analyseeingaben; beim Verlassen werden Programme gestoppt.
-      fr: Contournement autorise programmes et analyses externes ; en sortir arrête les programmes.
-  - category: new
-    topic: { en: Commands, ro: Comenzi, de: Befehle, fr: Commandes }
-    text:
-      en: Run and monitor commands; choose an installed shell, including Cmd and Git Bash, or a custom path.
-      ro: Rulează și urmărește comenzi; alege un shell instalat, inclusiv Cmd și Git Bash, sau o cale proprie.
-      de: Befehle ausführen und verfolgen; installierte Shell wie Cmd oder Git Bash oder eigenen Pfad wählen.
-      fr: Exécutez et suivez les commandes ; choisissez Cmd, Git Bash, un shell installé ou un chemin.
+      en: "Confirm Bypass: external tools and inputs; exit stops runs. File tools still block VERA data."
+      ro: "Confirmă Bypass: programe și intrări externe; ieșirea oprește rulările. Datele VERA rămân blocate."
+      de: "Bypass bestätigen: externe Tools und Eingaben; Ende stoppt Läufe. VERA-Daten bleiben gesperrt."
+      fr: "Confirmez le contournement : accès externe ; quitter arrête les tâches. Données VERA bloquées."
   - category: improved
     topic: { en: Permissions, ro: Permisiuni, de: Berechtigungen, fr: Autorisations }
     text:

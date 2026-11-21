@@ -26,15 +26,20 @@ import {
   SettingsService,
   settingStates,
   splitModelReference,
+  TurnLimit,
   WebDownloads,
+  type WorkbenchHost,
   WorkbenchService,
 } from "@vera/core";
+import type { AdvancedKey } from "@vera/shared";
 import {
+  type EventEnvelope,
   eventEnvelopeSchema,
   type HelpLanguage,
   type HelpPage,
   type HelpPageSummary,
   helpLanguages,
+  resolveAdvanced,
   type Settings,
   settingsChangedEvent,
   veraError,
@@ -112,6 +117,7 @@ import { bundledResponse, installSessionPolicy, secureSession, secureWindow } fr
 import { exportSession } from "./session-export.js";
 import { createSessionOrder } from "./session-order.js";
 import { installSessionPerformance } from "./session-performance.js";
+import { SessionRouter } from "./session-router.js";
 import { planReviewHandlers, SessionsHost } from "./sessions.js";
 import { drainShutdown } from "./shutdown.js";
 import { createPtyFactory } from "./terminal-pty.js";
@@ -122,6 +128,7 @@ import { WebAccessService } from "./web-access.js";
 import { popupWindowMenu, restoreWindowBounds, titleBarOverlay, windowBackground } from "./window-chrome.js";
 import { loadWindowState, saveWindowState, type WindowState } from "./window-state.js";
 import { publicWorkbenchFolders } from "./workbench-folders.js";
+import { WorkbenchRuntimes } from "./workbench-runtimes.js";
 import { createDesktopWorkerPool } from "./worker-pool.js";
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -163,7 +170,12 @@ nativeTheme.on("updated", () => {
 // IPC waits for this before dispatch: responses are redacted with every stored secret. It never rejects;
 // a credential file that fails to load leaves credential operations failing, not the window (PERF-11).
 let credentialsReady: Promise<void> = Promise.resolve();
-const fileWorkers = createDesktopWorkerPool();
+/** An application Advanced value for the app-wide services (worker pool, program runner, web provider). */
+function appAdvanced<K extends AdvancedKey>(key: K) {
+  return resolveAdvanced(key, { app: settings.get().settings.advanced }).value;
+}
+// The application's Worker deadline, read as each grep or parse_log task starts (REQ-FUNC-5eacaf9f).
+const fileWorkers = createDesktopWorkerPool({ deadlineMs: () => appAdvanced("workerDeadline") * 1000 });
 const pluginListings = new PluginListingHost(join(dataLocations.paths.userData, "plugins"));
 const downloadTransfer = createDesktopDownloadTransfer();
 const models = app.isPackaged
@@ -185,45 +197,78 @@ const indexer = new IndexerHost({
   modelId: (model) => embeddingModelId(readEmbeddingModel(models, model)),
   status: (state) => {
     emitAppEvent({ topic: "app", id: "app", event: { type: "indexer.status", state } });
-    if (state === "running") workbench.refreshDocuments();
+    if (state === "running") for (const runtime of runtimes.all()) runtime.workbench.refreshDocuments();
   },
+  // The application's extraction time limit and embedding idle time travel with each message.
+  limits: () => ({
+    extractionMs: appAdvanced("extractionTimeout") * 1000,
+    embeddingIdleMs: appAdvanced("embeddingIdle") * 1000,
+  }),
 });
 if (__VERA_TEST__) Object.assign(globalThis, { veraTestIndexerPid: () => indexer.pid() });
 let closeFileProbe: (() => Promise<void>) | undefined;
 let rendererUrl = "vera://app/index.html";
 let updates: Updates | undefined;
-export const emitAppEvent = createEventEmitter(
-  () => window?.webContents,
-  (text) => credentials.scrub(text),
-  (envelope) => {
-    if (envelope.topic === "workbench" && envelope.event.type === "index.document") {
-      const event = envelope.event;
-      return {
-        ...envelope,
-        event: {
-          ...event,
-          path: display.path(envelope.id, event.path),
-          document: event.document ? display.document(envelope.id, event.document) : null,
-        },
-      };
-    }
-    if (envelope.topic === "workbench" && envelope.event.type === "index.guard")
-      return {
-        ...envelope,
-        event: {
-          ...envelope.event,
-          guard: publicGuard(envelope.event.guard, (text) => display.scrub(envelope.id, text)),
-        },
-      };
-    return sanitizeEvent(
-      envelope,
-      (text) => (envelope.topic === "session" ? sessionContent(text) : credentials.scrub(text)),
-      (text) => credentials.scrub(text),
-      sessionImageIdentity,
-    );
-  },
+/**
+ * Makes an event safe for the renderer. Session events are masked with the agent masking of `owner`, the
+ * workbench holding the session, and carry image identities for it; index events use the shown workbench's
+ * Display identities.
+ */
+function projectEvent(envelope: EventEnvelope, owner: () => WorkbenchSnapshot): EventEnvelope {
+  if (envelope.topic === "workbench" && envelope.event.type === "index.document") {
+    const event = envelope.event;
+    return {
+      ...envelope,
+      event: {
+        ...event,
+        path: display.path(envelope.id, event.path),
+        document: event.document ? display.document(envelope.id, event.document) : null,
+      },
+    };
+  }
+  if (envelope.topic === "workbench" && envelope.event.type === "index.guard")
+    return {
+      ...envelope,
+      event: {
+        ...envelope.event,
+        guard: publicGuard(envelope.event.guard, (text) => display.scrub(envelope.id, text)),
+      },
+    };
+  if (envelope.topic !== "session") return sanitizeEvent(envelope, (text) => credentials.scrub(text));
+  const snapshot = owner();
+  return sanitizeEvent(
+    envelope,
+    sessionContent(snapshot),
+    (text) => credentials.scrub(text),
+    sessionImageIdentity(snapshot),
+  );
+}
+const eventTarget = () => window?.webContents;
+const eventScrub = (text: string) => credentials.scrub(text);
+export const emitAppEvent = createEventEmitter(eventTarget, eventScrub, (envelope) =>
+  projectEvent(envelope, () => workbench().getSnapshot()),
 );
-const logger = createLogger(dataLocations.paths.logs, systemClock);
+/** The events of one runtime's sessions, masked for that runtime's workbench whatever the foreground. */
+function runtimeEvents(owner: WorkbenchService) {
+  return createEventEmitter(eventTarget, eventScrub, (envelope) =>
+    projectEvent(envelope, () => owner.getSnapshot()),
+  );
+}
+/** The sidebar re-reads session.activity: a session's turn, approval, title or status, or the open runtimes changed. */
+function announceActivity(): void {
+  emitAppEvent({ topic: "app", id: "app", event: { type: "session.activity" } });
+}
+/**
+ * One count of active turns over every open workbench, bounded by the Concurrent turns setting read at each
+ * admission (REQ-FUNC-52e97b95, REQ-FUNC-56f63014); every change is announced to the renderer (REQ-FUNC-33cd5f9f).
+ */
+const turnLimit = new TurnLimit({
+  limit: () => appAdvanced("concurrentTurns"),
+  changed: (state) =>
+    emitAppEvent({ topic: "app", id: "app", event: { type: "session.capacity", ...state } }),
+});
+// The logger exists before the settings service: until they load, its Log retention getter throws and nothing is pruned.
+const logger = createLogger(dataLocations.paths.logs, systemClock, () => appAdvanced("logDays"));
 const credentials = new CredentialFile({
   file: join(dataLocations.paths.userData, "credentials.json"),
   files: createFileAccess(systemClock),
@@ -241,40 +286,51 @@ const settings = new SettingsService({
     const next = settings.get().settings;
     emitAppEvent({ topic: "app", id: "app", event: settingsChangedEvent(announcedSettings, next) });
     announcedSettings = next;
+    turnLimit.refresh();
     updates?.settingsChanged();
+    // Settings change only after load, inside app.whenReady, when the catalog checks exist.
+    catalogChecks.settingsChanged();
   },
 });
 const sessionOrder = createSessionOrder(settings);
-const workbench = new WorkbenchService(
-  {
-    userData: dataLocations.paths.userData,
-    files: createFileAccess(systemClock),
-    settings,
-    pid: process.pid,
-    appVersion: app.getVersion(),
-    now: () => systemClock.now(),
-    token: randomUUID,
-    isProcessAlive: (pid) => {
-      try {
-        process.kill(pid, 0);
-        return true;
-      } catch (error) {
-        return !(typeof error === "object" && error !== null && "code" in error && error.code === "ESRCH");
-      }
-    },
-    changed: (event) => {
-      if (event.event.type === "closed") display.close();
-      emitAppEvent(eventEnvelopeSchema.parse(event));
-    },
+/** Shared by every workbench runtime; each WorkbenchService owns one workbench's lock, database and indexing. */
+const workbenchHost: WorkbenchHost = {
+  userData: dataLocations.paths.userData,
+  files: createFileAccess(systemClock),
+  settings,
+  pid: process.pid,
+  appVersion: app.getVersion(),
+  now: () => systemClock.now(),
+  token: randomUUID,
+  isProcessAlive: (pid) => {
+    try {
+      process.kill(pid, 0);
+      return true;
+    } catch (error) {
+      return !(typeof error === "object" && error !== null && "code" in error && error.code === "ESRCH");
+    }
   },
-  indexer.processor,
-);
-const maskingFor = createMaskingResolver(() => settings.get().settings);
-function sessionImageIdentity(path: string): string {
-  return display.sessionImagePath(workbench.getSnapshot().config.id, path);
+  changed: (event) => {
+    if (event.event.type === "closed") display.closed(event.id);
+    emitAppEvent(eventEnvelopeSchema.parse(event));
+  },
+};
+/** The workbench service of the foreground runtime: the workbench the window shows. */
+function workbench(): WorkbenchService {
+  return runtimes.foreground.workbench;
 }
-function sessionContent(text: string): string {
-  return maskingFor(workbench.getSnapshot().config, "agent") ? credentials.scrub(text) : text;
+/** The session host of the foreground runtime. */
+function sessions(): SessionsHost {
+  return runtimes.foreground.sessions;
+}
+const maskingFor = createMaskingResolver(() => settings.get().settings);
+/** Message image identities of a session held by `owner`; they resolve while that workbench is shown. */
+function sessionImageIdentity(owner: WorkbenchSnapshot): (path: string) => string {
+  return (path) => display.sessionImagePath(owner, path);
+}
+/** Session text as the renderer receives it: masked per the agent masking of the workbench holding it. */
+function sessionContent(owner: WorkbenchSnapshot): (text: string) => string {
+  return (text) => (maskingFor(owner.config, "agent") ? credentials.scrub(text) : text);
 }
 const display = new DisplayDocuments(
   workbench,
@@ -292,7 +348,7 @@ const plugins = new PluginStore({ root: join(dataLocations.paths.userData, "plug
 const processHost = createDesktopProcessHost();
 const terminals = new TerminalService({
   current: () => {
-    const snapshot = workbench.getSnapshot();
+    const snapshot = workbench().getSnapshot();
     return { id: snapshot.config.id, folder: snapshot.folder };
   },
   shell: createCommandShellHost(
@@ -321,8 +377,14 @@ const terminals = new TerminalService({
   ),
   scrub: (text) => credentials.scrub(text),
   secrets: () => credentials.knownSecrets(),
-  maskUserOutput: () => maskingFor(workbench.getSnapshot().config, "runs"),
-  maskAgentOutput: () => maskingFor(workbench.getSnapshot().config, "agent"),
+  maskUserOutput: () => maskingFor(workbench().getSnapshot().config, "runs"),
+  maskAgentOutput: () => maskingFor(workbench().getSnapshot().config, "agent"),
+  // Read as a terminal opens (count, buffer) and as the agent reads one (output size).
+  limits: () => ({
+    terminals: appAdvanced("terminals"),
+    bufferChars: appAdvanced("terminalBufferK") * 1024,
+    agentChars: appAdvanced("terminalAgentChars"),
+  }),
 });
 /** Plugin program runs; session stop, workbench close and app exit kill their process trees. */
 const programs = new ProgramRunner({
@@ -337,6 +399,12 @@ const programs = new ProgramRunner({
       uid: process.getuid?.(),
     }),
     app: "desktop",
+  }),
+  // The application's run limits, read at each start, hold and prune (REQ-FUNC-dd50ebed).
+  limits: () => ({
+    maxBackground: appAdvanced("backgroundPrograms"),
+    logsKept: appAdvanced("runLogsKept"),
+    logBytes: appAdvanced("runLogMB") * 1024 * 1024,
   }),
 });
 /** The pinned uv of the package, or the one prepare:uv placed in the source tree for development. */
@@ -385,24 +453,34 @@ const catalog = new PluginCatalog({
   ...(bundledPlugins ? { bundled: bundledPlugins } : {}),
   fetch: (url, { signal }) => net.fetch(url, signal ? { signal } : {}),
 });
-/** Update checks at start and every 24 h read the index only, while the update mode is not Off. */
+/** Catalog checks at start and every Plugin catalog check interval read the index only, while updates are not Off. */
 const catalogChecks = new CatalogChecks({
   enabled: () => settings.get().settings.updates.mode !== "off" && Boolean(catalogLocation()),
+  intervalMs: () => appAdvanced("catalogInterval") * 60 * 60 * 1000,
   check: async () => {
     await catalog.view({ refresh: true });
     emitAppEvent({ topic: "app", id: "app", event: { type: "plugins.catalog" } });
   },
 });
-/** Runs of the open workbench stop before it closes or another workbench replaces it. */
-async function stopWorkbenchPrograms(): Promise<void> {
-  await terminals.closeAll();
-  let folder: string;
+/** The workbench a snapshot names: its ID and folder, since clones of one folder share the ID. */
+const workbenchKey = (snapshot: WorkbenchSnapshot) => `${snapshot.config.id}\n${snapshot.folder}`;
+/** The workbench the window shows; undefined while none is open. */
+function foregroundKey(): string | undefined {
   try {
-    folder = workbench.getSnapshot().folder;
+    return workbenchKey(workbench().getSnapshot());
   } catch {
-    return;
+    return undefined;
   }
-  await programs.stopWorkbench(folder);
+}
+/**
+ * Opens or creates a workbench. User terminals belong to the shown workbench: they close only when another
+ * workbench takes its place, so a failed open or a reopen in place keeps them.
+ */
+async function replaceForeground(operation: () => Promise<WorkbenchSnapshot>): Promise<WorkbenchSnapshot> {
+  const before = foregroundKey();
+  const snapshot = await operation();
+  if (workbenchKey(snapshot) !== before) await terminals.closeAll();
+  return snapshot;
 }
 /** Refuse terminal authority while asynchronous workbench replacement still owns the old snapshot. */
 async function terminalTransition<T>(operation: () => Promise<T>): Promise<T> {
@@ -451,8 +529,13 @@ function interfaceLanguage(): HelpLanguage {
     ? language
     : (helpLanguages.find((code) => app.getLocale().startsWith(code)) ?? "en");
 }
-const sessions = new SessionsHost({
+/** What every workbench runtime's session host shares; each runtime adds its own WorkbenchService. */
+const sessionOptions: Omit<
+  ConstructorParameters<typeof SessionsHost>[0],
+  "workbench" | "settled" | "emit" | "activity"
+> = {
   log: (message) => logger.log("error", "agent.turn.failed", { message }),
+  admission: turnLimit,
   terminals: (workbenchId) => terminals.reader(workbenchId),
   help: { app: help, language: interfaceLanguage },
   pluginBuilder: plugins,
@@ -465,7 +548,6 @@ const sessions = new SessionsHost({
       transfer: downloadTransfer,
       pdf: createDownloadPdfExtractor(new URL("./pdf-worker.js", import.meta.url)),
     }),
-  workbench,
   settings,
   gateway: () => modelGateway,
   credentials,
@@ -475,7 +557,6 @@ const sessions = new SessionsHost({
   version: app.getVersion(),
   target: () =>
     window && !window.isDestroyed() ? { webContents: window.webContents, url: rendererUrl } : undefined,
-  emit: emitAppEvent,
   // Instrumented builds may resolve fixture plugins from VERA_TEST_PROGRAMS for e2e; otherwise provisioning does.
   programs: {
     runner: programs,
@@ -494,14 +575,38 @@ const sessions = new SessionsHost({
   ...(__VERA_TEST__ && process.env.VERA_TEST_ALLOW_WRITES === "1"
     ? { permissions: { allow: () => true } }
     : {}),
+};
+/**
+ * The open workbench runtimes: the foreground one the window shows and the previous ones that still
+ * finish their turns in the background. Releasing a runtime stops its program runs (REQ-FUNC-39d5e6d9).
+ */
+const runtimes = new WorkbenchRuntimes({
+  create: (settled) => {
+    const service = new WorkbenchService(workbenchHost, indexer.processor);
+    return {
+      workbench: service,
+      sessions: new SessionsHost({
+        ...sessionOptions,
+        workbench: service,
+        settled,
+        emit: runtimeEvents(service),
+        activity: announceActivity,
+      }),
+    };
+  },
+  stopPrograms: (folder) => programs.stopWorkbench(folder),
+  log: (event) => logger.log("error", event),
+  changed: announceActivity,
 });
+/** Session requests reach the runtime holding their session or named workbench, whichever is shown. */
+const router = new SessionRouter(() => runtimes.all());
 ipcMain.handle("vera:subscription", async (event, action, payload) => {
   await credentialsReady;
-  return sessions.subscription(event, action, payload);
+  return router.subscription(event, action, payload);
 });
 /** The folder of the open workbench when `workbenchId` names it; CONFLICT otherwise. */
 function openWorkbenchFolder(workbenchId: string): string {
-  const snapshot = workbench.getSnapshot();
+  const snapshot = workbench().getSnapshot();
   if (snapshot.config.id !== workbenchId) throw veraError("CONFLICT");
   return snapshot.folder;
 }
@@ -537,13 +642,13 @@ async function pluginHelpPage(
 function activePluginStore(workbenchId?: string): PluginStore {
   if (workbenchId) return plugins.forWorkbench(openWorkbenchFolder(workbenchId));
   try {
-    return plugins.forWorkbench(workbench.getSnapshot().folder);
+    return plugins.forWorkbench(workbench().getSnapshot().folder);
   } catch {
     return plugins;
   }
 }
 const runPresentation = new RunPresentation({
-  current: () => workbench.getSnapshot(),
+  current: () => workbench().getSnapshot(),
   maskingFor,
   scrub: (text) => credentials.scrub(text),
   runner: programs,
@@ -558,7 +663,11 @@ async function chooseSavePath(options: SaveDialogOptions): Promise<string | null
 /** `id` limits the forgotten program resolutions to that plugin; found programs stay stored by file stamp. */
 function pluginsChanged(id?: string): void {
   provisioner.invalidate(id);
-  sessions.invalidatePrograms();
+  invalidatePrograms();
+}
+/** Every open workbench, background ones included, recomputes its program prompt entries on its next session call. */
+function invalidatePrograms(): void {
+  for (const runtime of runtimes.all()) runtime.sessions.invalidatePrograms();
 }
 /** Reads the enabled plugins' program statuses in the background, so later reads and runs find a warm cache. */
 function warmPrograms(snapshot: WorkbenchSnapshot): WorkbenchSnapshot {
@@ -571,8 +680,8 @@ function warmPrograms(snapshot: WorkbenchSnapshot): WorkbenchSnapshot {
 /** The first message of an open workbench loads its embedding model in the indexer (PERF-11). */
 const embeddingWarmup = createEmbeddingWarmup({
   hasVectors: (workbenchId) =>
-    workbench.readDocuments(workbenchId, async (root, db) => {
-      const embeddings = indexer.embeddings(workbench.getSnapshot().config.embeddings.model);
+    workbench().readDocuments(workbenchId, async (root, db) => {
+      const embeddings = indexer.embeddings(workbench().getSnapshot().config.embeddings.model);
       if (db.prepare("SELECT 1 FROM embeddings WHERE model_id=? LIMIT 1").get(embeddings.modelId))
         return { root, embeddings };
     }),
@@ -665,25 +774,26 @@ ipcMain.handle(
         if (!updates) throw { code: "BUSY", messageKey: "errors.BUSY" };
         return updates.openRelease(version);
       },
-      "skills.list": ({ workbenchId }) => workbench.listSkills(workbenchId),
-      "skills.open": ({ workbenchId, source, name }) => workbench.openSkill(workbenchId, source, name),
-      "skills.create": ({ workbenchId, source, name }) => workbench.saveSkill(workbenchId, source, name),
+      "skills.list": ({ workbenchId }) => workbench().listSkills(workbenchId),
+      "skills.open": ({ workbenchId, source, name }) => workbench().openSkill(workbenchId, source, name),
+      "skills.create": ({ workbenchId, source, name }) => workbench().saveSkill(workbenchId, source, name),
       "skills.save": ({ workbenchId, source, name, content, sha256 }) =>
-        workbench.saveSkill(workbenchId, source, name, content, sha256),
-      "skills.toggle": ({ workbenchId, name, enabled }) => workbench.toggleSkill(workbenchId, name, enabled),
+        workbench().saveSkill(workbenchId, source, name, content, sha256),
+      "skills.toggle": ({ workbenchId, name, enabled }) =>
+        workbench().toggleSkill(workbenchId, name, enabled),
       "plugins.list": async ({ workbenchId }) => {
-        const snapshot = workbenchId ? workbench.getSnapshot() : undefined;
+        const snapshot = workbenchId ? workbench().getSnapshot() : undefined;
         if (workbenchId && snapshot?.config.id !== workbenchId) throw veraError("CONFLICT");
-        const database = snapshot ? workbench.getDatabase() : undefined;
+        const database = snapshot ? workbench().getDatabase() : undefined;
         const list = await pluginListings.list(snapshot?.folder);
         if (
           snapshot &&
-          (workbench.getSnapshot().config.id !== snapshot.config.id ||
-            workbench.getSnapshot().folder !== snapshot.folder ||
-            workbench.getDatabase() !== database)
+          (workbench().getSnapshot().config.id !== snapshot.config.id ||
+            workbench().getSnapshot().folder !== snapshot.folder ||
+            workbench().getDatabase() !== database)
         )
           throw veraError("CONFLICT");
-        const enabled = workbenchId ? workbench.enabledPlugins(workbenchId) : [];
+        const enabled = workbenchId ? workbench().enabledPlugins(workbenchId) : [];
         return list.map((plugin) => ({ ...plugin, enabled: enabled.includes(plugin.id) }));
       },
       "plugins.choose": async ({ kind }) => {
@@ -732,7 +842,7 @@ ipcMain.handle(
         return {};
       },
       "plugins.toggle": async ({ workbenchId, id, enabled }) => {
-        const result = await workbench.togglePlugin(workbenchId, id, enabled);
+        const result = await workbench().togglePlugin(workbenchId, id, enabled);
         pluginsChanged(id);
         return result;
       },
@@ -764,19 +874,19 @@ ipcMain.handle(
               : provisioner.check(id),
           workbenchId,
         );
-        sessions.invalidatePrograms();
+        invalidatePrograms();
         return statuses;
       },
       "plugins.installArchive": async ({ id, program, sha256, workbenchId }) => {
-        const before = workbenchId ? workbench.getSnapshot() : undefined;
-        const beforeDb = workbenchId ? workbench.getDatabase() : undefined;
+        const before = workbenchId ? workbench().getSnapshot() : undefined;
+        const beforeDb = workbenchId ? workbench().getDatabase() : undefined;
         const store = workbenchId ? activePluginStore(workbenchId) : plugins;
         const validate = async () => {
           if (
             before &&
-            (workbench.getSnapshot().config.id !== before.config.id ||
-              workbench.getSnapshot().folder !== before.folder ||
-              workbench.getDatabase() !== beforeDb)
+            (workbench().getSnapshot().config.id !== before.config.id ||
+              workbench().getSnapshot().folder !== before.folder ||
+              workbench().getDatabase() !== beforeDb)
           )
             throw veraError("CONFLICT");
           const current = await store.load(id).catch(() => {
@@ -854,7 +964,7 @@ ipcMain.handle(
       // Parameter states from the stores behind the moved Settings pages: references and supplier ids, never a
       // secret (REQ-FUNC-cbdb46ac). Workbench files are checked in the open workbench only.
       "plugins.configuration": async ({ workbenchId, plugins: declared }) => {
-        const snapshot = workbenchId ? workbench.getSnapshot() : undefined;
+        const snapshot = workbenchId ? workbench().getSnapshot() : undefined;
         if (workbenchId && snapshot?.config.id !== workbenchId) throw veraError("CONFLICT");
         const scopes = new Map<string, Promise<readonly string[]>>();
         const secrets = (scope: "mqtt" | "wokwi" | "parts") => {
@@ -901,7 +1011,7 @@ ipcMain.handle(
       "docs.openers": () => ({ apps: [...openers().keys()] }),
       "docs.openWith": ({ workbenchId, path, app }) =>
         openWith(
-          () => workbench.locateEntry(workbenchId, display.resolve(workbenchId, path)),
+          () => workbench().locateEntry(workbenchId, display.resolve(workbenchId, path)),
           app,
           openers(),
           launchDetached,
@@ -909,26 +1019,26 @@ ipcMain.handle(
       "docs.systemApps": async ({ workbenchId, path }) => ({
         apps: (
           await systemApps(
-            () => workbench.locateEntry(workbenchId, display.resolve(workbenchId, path)),
+            () => workbench().locateEntry(workbenchId, display.resolve(workbenchId, path)),
             systemAppDeps(),
           )
         ).map(({ id, name }) => ({ id, name })),
       }),
       "docs.openSystemApp": ({ workbenchId, path, app }) =>
         openSystemApp(
-          () => workbench.locateEntry(workbenchId, display.resolve(workbenchId, path)),
+          () => workbench().locateEntry(workbenchId, display.resolve(workbenchId, path)),
           app,
           systemAppDeps(),
           launchDetached,
         ),
       "docs.reveal": ({ workbenchId, path }) =>
         revealEntry(
-          () => workbench.locateEntry(workbenchId, display.resolve(workbenchId, path)),
+          () => workbench().locateEntry(workbenchId, display.resolve(workbenchId, path)),
           (absolute) => shell.showItemInFolder(absolute),
         ),
       "docs.copyPath": ({ workbenchId, path, form }) =>
         copyEntry(
-          () => workbench.locateEntry(workbenchId, display.resolve(workbenchId, path)),
+          () => workbench().locateEntry(workbenchId, display.resolve(workbenchId, path)),
           display.resolve(workbenchId, path),
           form,
           (text) => clipboard.writeText(text),
@@ -936,11 +1046,11 @@ ipcMain.handle(
         ),
       "docs.volume": async ({ workbenchId }) => ({
         workbenchId,
-        volume: workbench.documentVolume(workbenchId),
+        volume: workbench().documentVolume(workbenchId),
         guard: display.guard(workbenchId),
       }),
       "docs.approve": async ({ workbenchId, files }) => {
-        await workbench.approveDocuments(workbenchId, files);
+        await workbench().approveDocuments(workbenchId, files);
         return {};
       },
       "docs.search": ({ workbenchId, query }) => display.search(workbenchId, query),
@@ -949,12 +1059,12 @@ ipcMain.handle(
           request.workbenchId,
           () =>
             "sessionId" in request
-              ? sessions.run((service) =>
-                  workbench.readDocuments(request.workbenchId, () =>
+              ? sessions().run((service) =>
+                  workbench().readDocuments(request.workbenchId, () =>
                     service.openCitation(request.sessionId, request.messageId, request.ref),
                   ),
                 )
-              : workbench.openDocument(
+              : workbench().openDocument(
                   request.workbenchId,
                   "path" in request
                     ? display.resolve(request.workbenchId, request.path)
@@ -970,12 +1080,12 @@ ipcMain.handle(
         return {};
       },
       "docs.reindex": async ({ workbenchId }) => {
-        await workbench.reindexDocuments(workbenchId);
+        await workbench().reindexDocuments(workbenchId);
         return {};
       },
       "downloads.list": ({ workbenchId }) =>
-        sessions.run((service) =>
-          workbench.readDocuments(workbenchId, async () => ({
+        sessions().run((service) =>
+          workbench().readDocuments(workbenchId, async () => ({
             workbenchId,
             downloads: (await service.listDownloads())
               .map((record) => publicWebDownload(record, (text) => credentials.scrub(text)))
@@ -983,15 +1093,15 @@ ipcMain.handle(
           })),
         ),
       "downloads.open": ({ workbenchId, downloadId }) =>
-        sessions.run((service) =>
-          workbench.readDocuments(workbenchId, async () => ({
+        sessions().run((service) =>
+          workbench().readDocuments(workbenchId, async () => ({
             workbenchId,
             downloadId,
             content: publicViewer(await service.openDownload(downloadId), (text) => credentials.scrub(text)),
           })),
         ),
       "downloads.reveal": ({ downloadId }) =>
-        sessions.run(async (service) => {
+        sessions().run(async (service) => {
           shell.showItemInFolder(await service.locateDownload(downloadId));
           return {};
         }),
@@ -1001,33 +1111,35 @@ ipcMain.handle(
       "providers.chatgpt.status": () => chatgpt.status(),
       "providers.chatgpt.logout": () => chatgpt.logout(),
       "artifacts.list": ({ sessionId }) =>
-        sessions.run((s) =>
+        router.inSession(sessionId, (s, owner) =>
           s
             .listArtifacts(sessionId)
             .map((a) =>
               publicArtifact(a, (text) =>
-                maskingFor(workbench.getSnapshot().config, "exports") ? credentials.scrub(text) : text,
+                maskingFor(owner.config, "exports") ? credentials.scrub(text) : text,
               ),
             ),
         ),
       "artifacts.open": ({ artifactId }) =>
-        sessions.run(async (s) =>
+        sessions().run(async (s) =>
           publicArtifact(await s.openArtifact(artifactId), (text) =>
-            maskingFor(workbench.getSnapshot().config, "exports") ? credentials.scrub(text) : text,
+            maskingFor(workbench().getSnapshot().config, "exports") ? credentials.scrub(text) : text,
           ),
         ),
       "artifacts.reveal": ({ artifactId }) =>
-        sessions.run((s) => revealArtifact(s, artifactId, (path) => shell.showItemInFolder(path))),
+        sessions().run((s) => revealArtifact(s, artifactId, (path) => shell.showItemInFolder(path))),
       "artifacts.export": async ({ artifactId }) => {
-        const owner = workbench.getSnapshot().config.id;
-        const name = await sessions.run((s) => exportName(s, artifactId, (text) => credentials.scrub(text)));
+        const owner = workbench().getSnapshot().config.id;
+        const name = await sessions().run((s) =>
+          exportName(s, artifactId, (text) => credentials.scrub(text)),
+        );
         const path = await chooseSavePath({ defaultPath: name });
         if (path === null) return { exported: false };
-        return sessions.run((s) => {
-          if (workbench.getSnapshot().config.id !== owner) throw veraError("CONFLICT");
+        return sessions().run((s) => {
+          if (workbench().getSnapshot().config.id !== owner) throw veraError("CONFLICT");
           return exportArtifact(s, artifactId, {
-            masking: () => maskingFor(workbench.getSnapshot().config, "exports"),
-            root: workbench.getSnapshot().folder,
+            masking: () => maskingFor(workbench().getSnapshot().config, "exports"),
+            root: workbench().getSnapshot().folder,
             choose: async () => path,
             write: (target, content) => createFileAccess(systemClock).writeAtomic(target, content),
             scrub: (text) => credentials.scrub(text),
@@ -1035,63 +1147,68 @@ ipcMain.handle(
         });
       },
       "changes.list": ({ sessionId }) =>
-        sessions.run((s) => s.listChanges(sessionId).map((c) => ({ ...c, path: credentials.scrub(c.path) }))),
+        router.inSession(sessionId, (s) =>
+          s.listChanges(sessionId).map((c) => ({ ...c, path: credentials.scrub(c.path) })),
+        ),
       "changes.get": ({ changeId }) =>
-        sessions.run((s) => {
+        sessions().run((s) => {
           const c = s.getChange(changeId);
           return { ...c, path: credentials.scrub(c.path), diff: credentials.scrub(c.diff) };
         }),
       "app.revealPath": ({ path }) =>
-        sessions.run(() =>
+        sessions().run(() =>
           revealPath(
-            workbench.getSnapshot().folder,
-            display.resolve(workbench.getSnapshot().config.id, path),
+            workbench().getSnapshot().folder,
+            display.resolve(workbench().getSnapshot().config.id, path),
             (absolute) => shell.showItemInFolder(absolute),
           ),
         ),
       "app.openPath": ({ path }) =>
-        sessions.run(() =>
+        sessions().run(() =>
           openPath(
-            workbench.getSnapshot().folder,
-            display.resolve(workbench.getSnapshot().config.id, path),
+            workbench().getSnapshot().folder,
+            display.resolve(workbench().getSnapshot().config.id, path),
             (absolute) => shell.openPath(absolute),
           ),
         ),
+      // Session requests run in the workbench holding the session, or the named one (REQ-FUNC-038c9b9b).
       "session.list": async ({ workbenchId }) => {
-        const current = workbench.getSnapshot(),
-          db = workbench.getDatabase();
-        const rows = await sessions.list(workbenchId);
-        if (
-          workbench.getSnapshot().config.id !== current.config.id ||
-          workbench.getSnapshot().folder !== current.folder ||
-          workbench.getDatabase() !== db
-        )
-          throw veraError("CONFLICT");
+        const route = router.workbench(workbenchId);
+        const rows = await route.runtime.sessions.list(workbenchId, () => {
+          router.verify(route);
+        });
+        const owner = router.verify(route);
         return sessionOrder.list(
-          current.config.id,
-          rows.map((item) => sanitizeSessionSummary(item, sessionContent)),
+          owner.config.id,
+          rows.map((item) => sanitizeSessionSummary(item, sessionContent(owner))),
         );
       },
       "session.move": ({ workbenchId, sessionId, offset }) =>
-        sessions.run(async (s) => {
-          if (workbench.getSnapshot().config.id !== workbenchId) throw veraError("CONFLICT");
+        router.inWorkbench(workbenchId, async (s) => {
           await sessionOrder.move(workbenchId, s.list(), sessionId, offset);
           return {};
         }),
-      "session.sizes": ({ workbenchId }) =>
-        sessions.run((s) => {
-          if (workbench.getSnapshot().config.id !== workbenchId) throw veraError("CONFLICT");
-          return s.sizes();
-        }),
+      "session.sizes": ({ workbenchId }) => router.inWorkbench(workbenchId, (s) => s.sizes()),
       "session.search": ({ query, workbenchId }) =>
-        sessions.run((s) => {
-          if (workbenchId && workbench.getSnapshot().config.id !== workbenchId) throw veraError("CONFLICT");
-          return s.search(query).map((item) => sanitizeSessionSummary(item, sessionContent));
-        }),
+        router.inWorkbench(workbenchId, (s, owner) =>
+          s.search(query).map((item) => sanitizeSessionSummary(item, sessionContent(owner))),
+        ),
+      "session.capacity": () => turnLimit.state(),
+      "session.activity": async () =>
+        (await router.activity()).map(({ snapshot, foreground, sessions }) => ({
+          workbenchId: snapshot.config.id,
+          name: snapshot.config.name,
+          folder: snapshot.folder,
+          foreground,
+          sessions: sessions.map((item) => {
+            const { id, title, status } = sanitizeSessionSummary(item, sessionContent(snapshot));
+            return { id, title, status: status as "running" | "awaiting_approval" };
+          }),
+        })),
       "session.export": async ({ sessionId, format }) => {
-        const owner = workbench.getSnapshot().config.id;
         // An unknown session is refused before the dialog opens.
-        await sessions.run((s) => {
+        const route = router.session(sessionId);
+        await router.run(route, (s) => {
           s.get(sessionId);
         });
         const path = await chooseSavePath({
@@ -1099,59 +1216,101 @@ ipcMain.handle(
           filters: [{ name: format === "md" ? "Markdown" : "JSON", extensions: [format] }],
         });
         if (path === null) return { exported: false };
-        return sessions.run((s) => {
-          if (workbench.getSnapshot().config.id !== owner) throw veraError("CONFLICT");
-          return exportSession(s, sessionId, format, {
-            masking: () => maskingFor(workbench.getSnapshot().config, "exports"),
-            root: workbench.getSnapshot().folder,
+        return router.run(route, (s, owner) =>
+          exportSession(s, sessionId, format, {
+            masking: () => maskingFor(route.runtime.workbench.getSnapshot().config, "exports"),
+            root: owner.folder,
             choose: async () => path,
             write: (target, content) => createFileAccess(systemClock).writeAtomic(target, content),
             scrub: (text) => credentials.scrub(text),
-          });
-        });
+          }),
+        );
       },
       "session.create": ({ modelRef, mode, workbenchId, reuseEmpty }) =>
-        sessions.run((s) => {
-          if (workbenchId && workbench.getSnapshot().config.id !== workbenchId) throw veraError("CONFLICT");
+        router.inWorkbench(workbenchId, (s, owner) => {
           if (credentials.containsSecret(modelRef)) throw { code: "INVALID", messageKey: "errors.INVALID" };
-          return sanitizeSessionSummary(s.create(modelRef, mode, reuseEmpty), (text) => sessionContent(text));
+          return sanitizeSessionSummary(s.create(modelRef, mode, reuseEmpty), sessionContent(owner));
         }),
-      "session.revision": ({ sessionId }) => sessions.run((service) => service.revision(sessionId)),
+      "session.revision": ({ sessionId }) =>
+        router.inSession(sessionId, (service) => service.revision(sessionId)),
       "session.get": ({ sessionId }) =>
-        sessions.run((s) => {
+        router.inSession(sessionId, (s, owner) => {
           const value = s.get(sessionId);
           return {
             ...value,
-            snapshot: rendererSessionSnapshot(value.snapshot, sessionContent, sessionImageIdentity),
+            snapshot: rendererSessionSnapshot(
+              value.snapshot,
+              sessionContent(owner),
+              sessionImageIdentity(owner),
+            ),
           };
         }),
       "session.item.detail": ({ sessionId, itemId, field }) =>
-        sessions.run((s) => ({ text: sessionContent(s.itemDetail(sessionId, itemId, field)) })),
-      ...planReviewHandlers(sessions, (value) => credentials.containsSecret(value)),
+        router.inSession(sessionId, (s, owner) => ({
+          text: sessionContent(owner)(s.itemDetail(sessionId, itemId, field)),
+        })),
+      // Plan feedback and review reach the runtime holding the session in the named workbench.
+      ...planReviewHandlers(
+        (workbenchId, sessionId) => router.session(sessionId, workbenchId).runtime.sessions,
+        (value) => credentials.containsSecret(value),
+      ),
       "session.bookmark": ({ sessionId, messageId, bookmarked }) =>
-        sessions.run(
+        router.inSession(
+          sessionId,
           (s) => {
             s.bookmark(sessionId, messageId, bookmarked);
             return {};
           },
           { purpose: "metadata" },
         ),
+      "session.bookmarks.remove": (request) =>
+        router.inSession(
+          request.sessionId,
+          (s) => {
+            s.removeBookmarks(
+              request.sessionId,
+              "all" in request ? { all: true } : { messageIds: request.messageIds },
+            );
+            return {};
+          },
+          { purpose: "metadata" },
+        ),
+      "session.advanced.set": ({ sessionId, key, value }) =>
+        router.inSession(
+          sessionId,
+          (s) => {
+            s.setAdvanced(sessionId, key as AdvancedKey, value);
+            return {};
+          },
+          { purpose: "metadata" },
+        ),
+      "session.compact": async ({ sessionId }) => {
+        // Only the admission runs on the host queue: a summary may take minutes and must not hold other calls.
+        const { completion } = await router.inSession(
+          sessionId,
+          (s) => ({ completion: s.compactNow(sessionId) }),
+          { purpose: "metadata" },
+        );
+        return { status: await completion };
+      },
       "session.rename": ({ sessionId, title }) =>
-        sessions.run((s) => {
+        router.inSession(sessionId, (s, owner) => {
           if (credentials.containsSecret(title)) throw { code: "INVALID", messageKey: "errors.INVALID" };
-          return sanitizeSessionSummary(s.rename(sessionId, title), sessionContent);
+          return sanitizeSessionSummary(s.rename(sessionId, title), sessionContent(owner));
         }),
       "session.archive.set": ({ sessionId, archived }) =>
-        sessions.run((s) => sanitizeSessionSummary(s.setArchived(sessionId, archived), sessionContent)),
+        router.inSession(sessionId, (s, owner) =>
+          sanitizeSessionSummary(s.setArchived(sessionId, archived), sessionContent(owner)),
+        ),
       "session.delete": ({ sessionId }) =>
-        sessions.run(async (s) => {
+        router.inSession(sessionId, async (s) => {
           await s.delete(sessionId);
           return {};
         }),
       "session.image.attach": ({ workbenchId, sessionId, source }) =>
-        sessions.run(
+        router.inSession(
+          sessionId,
           (service) => {
-            openWorkbenchFolder(workbenchId);
             if (credentials.containsSecret("path" in source ? source.path : source.name))
               throw veraError("INVALID");
             if ("path" in source && /__vera_display_[A-Za-z0-9_-]+\.(?:\/|$)/.test(source.path))
@@ -1159,33 +1318,38 @@ ipcMain.handle(
             return service.attachImage(sessionId, source);
           },
           { purpose: "metadata" },
+          workbenchId,
         ),
-      "session.image.capability": ({ workbenchId, sessionId }) =>
-        sessions.imageCapability(workbenchId, sessionId),
+      "session.image.capability": async ({ workbenchId, sessionId }) => {
+        const route = router.session(sessionId, workbenchId);
+        return route.runtime.sessions.imageCapability(workbenchId, sessionId, () => {
+          router.verify(route);
+        });
+      },
       "session.send": ({ sessionId, text, images }) =>
-        sessions.run(
-          async (s) => {
+        router.inSession(
+          sessionId,
+          async (s, owner) => {
             if (credentials.containsSecret(text)) throw { code: "INVALID", messageKey: "errors.INVALID" };
+            // Image identities resolve only while the session's workbench is shown (Display identities).
             const sent = images?.length
               ? await s.sendWithImages(
                   sessionId,
                   text,
-                  images.map((path) =>
-                    display.resolveSessionImagePath(workbench.getSnapshot().config.id, path),
-                  ),
+                  images.map((path) => display.resolveSessionImagePath(owner.config.id, path)),
                 )
               : s.send(sessionId, text);
-            embeddingWarmup.request(workbench.getSnapshot().config.id);
+            embeddingWarmup.request(owner.config.id);
             return sent;
           },
           { purpose: "ordinary", ordinarySessionId: sessionId },
         ),
       // Stop and approval decisions must not wait for plugin loading and program probing.
-      "session.stop": ({ sessionId }) => {
-        return sessions.run((s) => ({ stopped: s.stop(sessionId) }), { purpose: "metadata" });
-      },
+      "session.stop": ({ sessionId }) =>
+        router.inSession(sessionId, (s) => ({ stopped: s.stop(sessionId) }), { purpose: "metadata" }),
       "session.approval.decide": (request) =>
-        sessions.run(
+        router.inSession(
+          request.sessionId,
           async (s) => {
             if (request.commandPrefix !== undefined) await s.allowCommandApproval(request);
             else s.decideApproval(request);
@@ -1194,7 +1358,7 @@ ipcMain.handle(
           { purpose: "metadata" },
         ),
       "session.reasoning.get": ({ sessionId }) =>
-        sessions.run(async (s) => {
+        router.inSession(sessionId, async (s) => {
           const value = await s.reasoningOptions(sessionId);
           return {
             modelRef: credentials.scrub(value.modelRef),
@@ -1203,7 +1367,7 @@ ipcMain.handle(
           };
         }),
       "session.reasoning.set": ({ sessionId, modelRef, reasoning }) =>
-        sessions.run(async (s) => {
+        router.inSession(sessionId, async (s) => {
           if (credentials.containsSecret(modelRef) || credentials.containsSecret(reasoning))
             throw { code: "INVALID", messageKey: "errors.INVALID" };
           const value = await s.setReasoning(sessionId, reasoning, modelRef);
@@ -1214,12 +1378,14 @@ ipcMain.handle(
           };
         }),
       "session.model.set": ({ sessionId, modelRef }) =>
-        sessions.run((s) => {
+        router.inSession(sessionId, (s, owner) => {
           if (credentials.containsSecret(modelRef)) throw { code: "INVALID", messageKey: "errors.INVALID" };
-          return sanitizeSessionSummary(s.setModel(sessionId, modelRef), sessionContent);
+          return sanitizeSessionSummary(s.setModel(sessionId, modelRef), sessionContent(owner));
         }),
       "session.mode.set": ({ sessionId, mode }) =>
-        sessions.run((s) => sanitizeSessionSummary(s.setMode(sessionId, mode), sessionContent)),
+        router.inSession(sessionId, (s, owner) =>
+          sanitizeSessionSummary(s.setMode(sessionId, mode), sessionContent(owner)),
+        ),
       "providers.discover": (request) => modelGateway.discover(request),
       "providers.image.capability": ({ modelRef }) => modelGateway.imageCapability(modelRef),
       "providers.models": ({ id }) => modelGateway.models(id),
@@ -1267,53 +1433,49 @@ ipcMain.handle(
         });
         return { folder: result.canceled ? null : (result.filePaths[0] ?? null) };
       },
-      "workbench.inspect": ({ folder }) => workbench.inspect(folder),
-      "workbench.scanDocs": ({ folder, gitignore }) => workbench.scanDocuments(folder, gitignore),
+      "workbench.inspect": ({ folder }) => workbench().inspect(folder),
+      "workbench.scanDocs": ({ folder, gitignore }) => workbench().scanDocuments(folder, gitignore),
       "workbench.previewDocs": async ({ folder, ...docs }) => {
-        const preview = await workbench.previewDocuments(folder, docs);
+        const preview = await workbench().previewDocuments(folder, docs);
         return { ...preview, guard: publicGuard(preview.guard, (text) => credentials.scrub(text)) };
       },
       "workbench.relativeFolder": async ({ root, folder }) => ({
-        path: await workbench.relativeFolder(root, folder),
+        path: await workbench().relativeFolder(root, folder),
       }),
+      // A previous workbench with turns still running stays open in the background (WorkbenchRuntimes).
       "workbench.create": ({ folder, name, config, instructions }) =>
-        sessions.lifecycle(() =>
-          terminalTransition(async () => {
-            embeddingWarmup.cancel();
-            await stopWorkbenchPrograms();
-            return publicWorkbenchFolders(
-              warmPrograms(
-                await workbench.create(folder, name, {
+        terminalTransition(async () => {
+          embeddingWarmup.cancel();
+          return publicWorkbenchFolders(
+            warmPrograms(
+              await replaceForeground(() =>
+                runtimes.create(folder, name, {
                   ...(config ? { config } : {}),
                   ...(instructions !== undefined ? { instructions } : {}),
                 }),
               ),
-              (text) => credentials.scrub(text),
-            );
-          }),
-        ),
+            ),
+            (text) => credentials.scrub(text),
+          );
+        }),
       "workbench.open": ({ folder }) =>
-        sessions.lifecycle(() =>
-          terminalTransition(async () => {
-            embeddingWarmup.cancel();
-            await stopWorkbenchPrograms();
-            return publicWorkbenchFolders(warmPrograms(await workbench.open(folder)), (text) =>
-              credentials.scrub(text),
-            );
-          }),
-        ),
+        terminalTransition(async () => {
+          embeddingWarmup.cancel();
+          return publicWorkbenchFolders(
+            warmPrograms(await replaceForeground(() => runtimes.open(folder))),
+            (text) => credentials.scrub(text),
+          );
+        }),
       "workbench.close": async () => {
-        await sessions.lifecycle(() =>
-          terminalTransition(async () => {
-            embeddingWarmup.cancel();
-            await stopWorkbenchPrograms();
-            await workbench.close();
-          }),
-        );
+        await terminalTransition(async () => {
+          embeddingWarmup.cancel();
+          await terminals.closeAll();
+          await runtimes.close();
+        });
         return {};
       },
       "workbench.recent": async ({ remove, pin, move, reveal }) => {
-        const entries = await workbench.recent(remove, pin, move);
+        const entries = await workbench().recent(remove, pin, move);
         if (reveal !== undefined) {
           const entry = entries.find((item) => item.folder === reveal && !item.missing);
           if (!entry) throw veraError("NOT_FOUND");
@@ -1325,13 +1487,13 @@ ipcMain.handle(
       "workbench.config.get": async () =>
         publicWorkbenchFolders(
           {
-            ...(await workbench.getConfig()),
-            readOnly: workbench.getSnapshot().readOnly,
-            folder: workbench.getSnapshot().folder,
+            ...(await workbench().getConfig()),
+            readOnly: workbench().getSnapshot().readOnly,
+            folder: workbench().getSnapshot().folder,
           },
           (text) => credentials.scrub(text),
         ),
-      "workbench.storage": ({ workbenchId }) => workbench.storageSize(workbenchId),
+      "workbench.storage": ({ workbenchId }) => workbench().storageSize(workbenchId),
       "workbench.config.update": ({
         patch,
         workbenchId,
@@ -1340,7 +1502,7 @@ ipcMain.handle(
         addAdditionalFolders,
         removeAdditionalFolders,
       }) =>
-        workbench
+        workbench()
           .updateConfig(
             workbenchPatchSchema.parse(patch),
             workbenchId,
@@ -1353,7 +1515,7 @@ ipcMain.handle(
           )
           .then((value) => publicWorkbenchFolders(value, (text) => credentials.scrub(text))),
       "workbench.additionalFolders.list": async ({ workbenchId }) =>
-        (await workbench.listAdditionalFolders(workbenchId)).map(({ id, path }) => ({
+        (await workbench().listAdditionalFolders(workbenchId)).map(({ id, path }) => ({
           id,
           label: credentials.scrub(path),
         })),
@@ -1367,17 +1529,17 @@ ipcMain.handle(
           path = result.filePaths[0];
         }
         if (!path) return null;
-        const chosen = await workbench.chooseAdditionalFolder(path, workbenchId);
+        const chosen = await workbench().chooseAdditionalFolder(path, workbenchId);
         return { id: chosen.id, label: credentials.scrub(chosen.path) };
       },
       "workbench.commandPrefixes.list": async ({ workbenchId }) =>
-        (await workbench.listCommandPrefixes(workbenchId)).map(({ id, prefix }) => ({
+        (await workbench().listCommandPrefixes(workbenchId)).map(({ id, prefix }) => ({
           id,
           label: credentials.scrub(prefix),
         })),
-      "workbench.pinned.get": () => workbench.getPinned(),
-      "workbench.pinned.update": ({ content, workbenchId }) => workbench.updatePinned(content, workbenchId),
-      "workbench.files": ({ query }) => workbench.files(query),
+      "workbench.pinned.get": () => workbench().getPinned(),
+      "workbench.pinned.update": ({ content, workbenchId }) => workbench().updatePinned(content, workbenchId),
+      "workbench.files": ({ query }) => workbench().files(query),
     },
     log: (failure) => logger.log("error", "ipc.internal", failure),
     sanitize: (value) => credentials.sanitize(value),
@@ -1385,6 +1547,10 @@ ipcMain.handle(
   }),
 );
 
+/** The window's session subscriptions end with its document, in every workbench runtime. */
+function clearSubscriptions(): void {
+  for (const runtime of runtimes.all()) runtime.sessions.clearSubscriptions();
+}
 const windowStateFile = () => join(app.getPath("userData"), "window-state.json");
 async function createWindow(state: WindowState): Promise<void> {
   Menu.setApplicationMenu(null);
@@ -1415,11 +1581,11 @@ async function createWindow(state: WindowState): Promise<void> {
   restoreWindowBounds(window, state.bounds);
   const created = window;
   created.webContents.on("did-start-navigation", (_event, _url, isInPlace, isMainFrame) => {
-    if (isMainFrame && !isInPlace) sessions.clearSubscriptions();
+    if (isMainFrame && !isInPlace) clearSubscriptions();
   });
   recoverRenderer(created, (reason, reloading) => {
     logger.log("error", "window.renderer.gone", { reason, reloading });
-    sessions.clearSubscriptions();
+    clearSubscriptions();
   });
   let closing = false;
   created.on("close", (event) => {
@@ -1436,7 +1602,7 @@ async function createWindow(state: WindowState): Promise<void> {
       .finally(() => created.destroy());
   });
   window.on("closed", () => {
-    sessions.clearSubscriptions();
+    clearSubscriptions();
     window = undefined;
   });
   window.once("ready-to-show", () => window?.show());
@@ -1481,8 +1647,9 @@ if (!firstInstance) {
         ["terminals", () => terminals.closeAll()],
       ],
       [
-        ["sessions", () => sessions.close()],
-        ["workbench", () => workbench.close()],
+        // Every workbench runtime, the background ones included (REQ-REL-436f00da).
+        ["sessions", () => runtimes.closeSessions()],
+        ["workbench", () => runtimes.closeWorkbenches()],
         ["fileWorkers", () => fileWorkers.dispose()],
         ["indexer", () => indexer.close()],
         ["fileProbe", () => closeFileProbe?.()],
@@ -1563,9 +1730,12 @@ if (!firstInstance) {
               (kind, event) => logger.log(kind, event),
             )
           : { check: async () => null, download: async () => {}, install: () => {} },
-        preferences: () => settings.get().settings.updates,
+        preferences: () => ({
+          ...settings.get().settings.updates,
+          intervalHours: appAdvanced("updateInterval"),
+        }),
         emit: (event) => emitAppEvent({ topic: "app", id: "app", event }),
-        beginShutdown: () => sessions.beginShutdown(),
+        beginShutdown: () => runtimes.beginShutdown(),
         quit: () => app.quit(),
         openExternal: async (url) => {
           await openExternal({ url, confirmed: true }, (link) => shell.openExternal(link));
@@ -1645,6 +1815,7 @@ if (!firstInstance) {
             select(splitModelReference(ref).provider).prepareModel?.(ref, signal) ?? Promise.resolve(),
           selectedModel: (id) => select(id).selectedModel(id),
           capabilities: (ref, output) => select(splitModelReference(ref).provider).capabilities(ref, output),
+          responseTimeoutMs: (ref) => select(splitModelReference(ref).provider).responseTimeoutMs?.(ref),
           models: (id, signal, probe) => select(id).models(id, signal, probe),
           stream: (request) => select(splitModelReference(request.model).provider).stream(request),
         };

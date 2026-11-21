@@ -9,7 +9,7 @@ tests are extraction.test.ts and office.test.ts, real worker/cache/ingest tests
 processor.test.ts. Queue/discovery/ownership and extension-to-kind mapping route
 to [knowledge ingest](knowledge-ingest.md); SQLite to
 [workbench storage](workbench-storage.md). The workbench's registered model
-supplies the tokenizer and passage prefix. ADR-0015 documents the BGE default.
+supplies the tokenizer and passage prefix. `00_Planning/Workbench.md` (Embeddings) states the BGE default and its recall gate.
 
 ## Purpose and boundaries
 

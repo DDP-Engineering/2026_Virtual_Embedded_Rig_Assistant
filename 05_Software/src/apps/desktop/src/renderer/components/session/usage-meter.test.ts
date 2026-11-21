@@ -68,3 +68,23 @@ it("reports request-view occupancy honestly, including unknown and over-budget w
     await act(async () => root.unmount());
   }
 });
+
+it("marks the indicator while the history summary runs and keeps the percentage", async () => {
+  const state = emptySessionState();
+  state.usage = { inputTokens: 0, outputTokens: 0, contextTokens: 455, contextWindow: 500 };
+  const element = document.createElement("div");
+  const root = createRoot(element);
+  const button = () => element.querySelector("button");
+  try {
+    await act(async () => root.render(createElement(ContextIndicator, { state, open: () => {} })));
+    expect(button()?.hasAttribute("data-compacting")).toBe(false);
+    expect(button()?.title).not.toContain(i18n.t("chat.compaction.running"));
+    state.usage = { ...state.usage, compactionStatus: "running" };
+    await act(async () => root.render(createElement(ContextIndicator, { state, open: () => {} })));
+    expect(button()?.hasAttribute("data-compacting")).toBe(true);
+    expect(button()?.title).toContain(i18n.t("chat.compaction.running"));
+    expect(element.textContent).toBe("91%");
+  } finally {
+    await act(async () => root.unmount());
+  }
+});

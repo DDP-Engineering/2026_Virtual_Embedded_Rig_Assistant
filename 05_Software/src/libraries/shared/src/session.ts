@@ -10,6 +10,15 @@ export const messageImagesSchema = z.array(imagePathSchema).max(MAX_MESSAGE_IMAG
 export const sessionIdSchema = z.string().regex(/^ses_[0-9A-HJKMNP-TV-Z]{26}$/);
 export const permissionModeSchema = z.enum(["read-only", "ask", "auto-edit", "bypass"]);
 export const sessionStatusSchema = z.enum(["idle", "running", "awaiting_approval", "error"]);
+/**
+ * Turns running now across every open workbench and the Concurrent turns limit that admits new ones
+ * (REQ-FUNC-33cd5f9f). `active` may exceed `limit` after the limit was lowered.
+ */
+export const turnCapacitySchema = z.strictObject({
+  active: z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER),
+  limit: z.number().int().positive().max(Number.MAX_SAFE_INTEGER),
+});
+export type TurnCapacity = z.infer<typeof turnCapacitySchema>;
 export const stopReasonSchema = z.enum(["end", "aborted", "error", "limit"]);
 export type StopReason = z.infer<typeof stopReasonSchema>;
 export const delegatedTurnStatusSchema = z.enum([

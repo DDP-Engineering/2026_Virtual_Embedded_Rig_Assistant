@@ -1,6 +1,6 @@
 # Settings
 
-**Settings** at the bottom of the sidebar opens the application settings. They apply to all workbenches; settings of one workbench are under **Edit workbench** (see [Workbenches](workbenches.md)). Changes are saved as soon as you make them, except where a page has its own **Save** button. **Back to workbenches** returns to your work.
+**Settings** at the bottom of the sidebar opens the application settings. They apply to all workbenches; settings of one workbench are under **Edit workbench** (see [Workbenches](workbenches.md)). Changes on a page are kept as a draft until you press **Save** at the top right; **Cancel** drops them. Appearance changes show on screen at once, before you save. If you leave a page with unsaved changes, VERA asks whether to discard them or stay. **Back to workbenches** returns to your work.
 
 | Page | What it sets |
 |---|---|
@@ -42,7 +42,7 @@ The page lists every command with its key combination. You can add, change or re
 
 - **Update mode**: **Off**, **Notify** or **Download automatically**. With **Notify**, VERA tells you about a new version and downloads it only when you select **Download update**.
 - **Channel**: **Stable** or **Beta (includes stable)**.
-- **Check now** checks at once, also when the mode is **Off**. Otherwise VERA checks at start and every six hours.
+- **Check now** checks at once, also when the mode is **Off**. Otherwise VERA checks at start and every six hours, or at the **Update check interval** in [Advanced settings](advanced-settings.md).
 
 When an update is downloaded, select **Restart to update**. VERA waits until all running turns and pending approvals have finished. Every update is verified before it is installed, and VERA never installs an older version.
 

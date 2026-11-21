@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-4e63e8d4"
+
+title = "Bound tool results in summary requests by the resolved size"
+
+status = "active"
+
+requirement = """
+When VERA builds a summary request, it shall cut each tool result to the resolved Summary tool-result size, an integer from 500 to 8000 characters with default 2000, and mark the omitted length.
+"""
+
+verification = "With 500, a 3000-character tool result in summarized history reaches the summary request as 500 characters plus the omission marker; a 400-character result is unchanged."
+
+affected_paths = ["05_Software/src/libraries/shared/src/advanced-settings.ts", "05_Software/src/libraries/core/src/agent/compaction.ts", "05_Software/src/libraries/core/src/sessions/service.ts"]
+
+linked_tests = ["05_Software/src/libraries/shared/src/advanced-settings.test.ts", "05_Software/src/libraries/core/src/agent/compaction-settings.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-20
+updated = 2026-11-20

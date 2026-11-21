@@ -20,6 +20,7 @@ import {
   type SettingsService,
   type SkillCatalog,
   type TerminalReader,
+  type TurnAdmission,
   unavailablePartsTools,
   unavailableWebTools,
   type WebDownloads,
@@ -33,6 +34,7 @@ import {
   type HelpLanguage,
   type PermissionMode,
   partsSearchDefaults,
+  type SessionSummary,
   sessionSubscriptionSchema,
   sessionUnsubscriptionSchema,
   veraError,
@@ -49,6 +51,13 @@ export { planReviewHandlers } from "./plan-review.js";
 export interface SessionScope {
   workbenchId: string;
   db: ReturnType<WorkbenchService["getDatabase"]>;
+}
+
+/** What a queued session operation prepares first: metadata only (default), review context, or an ordinary send. */
+export interface RunPreparation {
+  purpose?: "metadata" | "review" | "ordinary";
+  scope?: SessionScope;
+  ordinarySessionId?: string;
 }
 
 export class SessionsHost {
@@ -103,8 +112,32 @@ export class SessionsHost {
       managedRoots?: readonly string[];
       /** VERA's help for the agent's help tool: the app help and the interface language. */
       help?: { app: HelpLibrary; language: () => HelpLanguage };
+      /** Owned work may have settled: a turn or compaction ended, or the queued operations ran out (see idle()). */
+      settled?: () => void;
+      /** A session's turn, approval, title or status changed (SessionHost.onActivity). */
+      activity?: () => void;
+      /** The app-wide Concurrent turns admission, one instance shared by every runtime (REQ-FUNC-52e97b95). */
+      admission?: TurnAdmission;
     },
   ) {}
+  /** One queued operation finished; the last one may leave the host idle. */
+  private finished(): void {
+    this.pending--;
+    if (this.pending) return;
+    try {
+      this.options.settled?.();
+    } catch {
+      /* an observer never fails the operation that finished */
+    }
+  }
+  /** No queued operation, active turn, undecided approval or compaction: the workbench may be released. */
+  idle(): boolean {
+    return !this.pending && (this.service?.isSettled() ?? true);
+  }
+  /** Work a safe update waits for: a queued operation, an active turn or an undecided approval. */
+  busy(): boolean {
+    return this.pending > 0 || !!this.service?.hasActiveWork();
+  }
   private serial<T>(operation: () => Promise<T>): Promise<T> {
     const next = this.queue.then(operation);
     this.queue = next.then(
@@ -130,20 +163,22 @@ export class SessionsHost {
       throw veraError("CONFLICT");
     }
   }
-  /** Metadata is probe-free by default; only ordinary sends opt into execution preparation. */
+  /**
+   * Runs `operation` in this host's queue. Metadata is probe-free by default; only ordinary sends opt into
+   * execution preparation. `guard` runs first in the queued slot and refuses the operation by throwing,
+   * before any preparation: a routed request checks its workbench is still the one it named.
+   */
   run<T>(
     operation: (service: SessionService) => T | Promise<T>,
-    preparation: {
-      purpose?: "metadata" | "review" | "ordinary";
-      scope?: SessionScope;
-      ordinarySessionId?: string;
-    } = {},
+    preparation: RunPreparation = {},
+    guard?: () => void,
   ): Promise<T> {
     if (this.shutdown) return Promise.reject(veraError("BUSY"));
     const { purpose = "metadata", ordinarySessionId } = preparation;
     const requestedScope = preparation.scope ? { ...preparation.scope } : undefined;
     this.pending++;
     return this.serial(async () => {
+      guard?.();
       if (requestedScope) this.assertScope(requestedScope);
       const snapshot = this.options.workbench.getSnapshot();
       const db = this.options.workbench.getDatabase();
@@ -244,6 +279,9 @@ export class SessionsHost {
         this.service = new SessionService({
           db,
           root: snapshot.folder,
+          ...(options.settled ? { onWorkSettled: options.settled } : {}),
+          ...(options.activity ? { onActivity: options.activity } : {}),
+          ...(options.admission ? { admission: options.admission } : {}),
           onDelegationsChanged: () =>
             options.emit({
               topic: "workbench",
@@ -314,8 +352,10 @@ export class SessionsHost {
           writeQueue: options.workbench.getWriteQueue(),
           ...(options.permissions ? { permissions: options.permissions } : {}),
           ...(this.programHost ? { programs: this.programHost } : {}),
-          get maxToolCallsPerTurn() {
-            return options.settings.get().settings.limits.maxToolCallsPerTurn;
+          // Read at each turn, so saved Advanced values apply from the next turn (REQ-FUNC-902313e0).
+          advanced: {
+            app: () => options.settings.get().settings.advanced,
+            workbench: () => options.workbench.getSnapshot().config.advanced,
           },
           get disabledTools() {
             return [
@@ -352,24 +392,27 @@ export class SessionsHost {
       const result = await operation(this.service);
       assertCurrent();
       return result;
-    }).finally(() => {
-      this.pending--;
-    });
+    }).finally(() => this.finished());
   }
   /** Resolve the session's model on the host queue. Catalog I/O may outlive this queue slot. */
-  async imageCapability(workbenchId: string, sessionId: string) {
+  async imageCapability(workbenchId: string, sessionId: string, guard?: () => void) {
     const { completion } = await this.run(
       (service) => {
         if (this.options.workbench.getSnapshot().config.id !== workbenchId) throw veraError("CONFLICT");
         return { completion: service.imageCapability(sessionId) };
       },
       { purpose: "metadata" },
+      guard,
     );
     return completion;
   }
-  /** Polling only needs recovered current-DB summaries, never prompt/skill/program preparation. */
-  async list(workbenchId?: string) {
+  /**
+   * Polling only needs recovered current-DB summaries, never prompt/skill/program preparation. `guard`
+   * refuses a routed request whose workbench changed, as in run().
+   */
+  async list(workbenchId?: string, guard?: () => void) {
     if (this.shutdown) throw veraError("BUSY");
+    guard?.();
     const snapshot = this.options.workbench.getSnapshot(),
       db = this.options.workbench.getDatabase();
     if (workbenchId && snapshot.config.id !== workbenchId) throw veraError("CONFLICT");
@@ -384,6 +427,7 @@ export class SessionsHost {
         this.options.workbench.getSnapshot().config.id !== snapshot.config.id
       )
         throw veraError("CONFLICT");
+      guard?.();
       rows = service.list(true);
     } else {
       rows = await this.run(
@@ -396,27 +440,57 @@ export class SessionsHost {
           return current.list(true);
         },
         { purpose: "metadata" },
+        guard,
       );
     }
     return rows.map((row) => ({ ...row, title: this.service?.maskContent("agent", row.title) ?? row.title }));
+  }
+  /**
+   * The top-level sessions running or awaiting approval, from the session service once it is ready; none
+   * before this workbench's session service exists, since nothing can run there yet.
+   */
+  async activity(): Promise<SessionSummary[]> {
+    const service = this.service;
+    const db = this.db;
+    if (!service || !db?.open) return [];
+    await service.waitReady();
+    if (this.service !== service || this.db !== db || !db.open) return [];
+    return service
+      .list(true)
+      .filter((row) => !row.delegation && (row.status === "running" || row.status === "awaiting_approval"));
+  }
+  /** Whether a subscription with this ID is open here. */
+  holdsSubscription(subscriptionId: string): boolean {
+    return this.subscriptions.has(subscriptionId);
+  }
+  /** Whether `event` comes from the window's current main frame. */
+  authorized(event: InvokeSender): boolean {
+    return authorizedSender(event, this.options.target());
   }
   /** Recomputes entries on the next ordinary preparation after a plugin change. */
   invalidatePrograms(): void {
     this.programGeneration++;
   }
-  async lifecycle<T>(operation: () => Promise<T>): Promise<T> {
+  /**
+   * Runs a workbench lifecycle change between queued session operations. `drain` first closes the
+   * session service, ending its turns; a reopen in place passes false and keeps it, unless the reopen
+   * replaced the database (a read-only snapshot is copied again), whose closed handle the service held.
+   */
+  async lifecycle<T>(operation: () => Promise<T>, drain = true): Promise<T> {
     if (this.shutdown) throw veraError("BUSY");
     this.pending++;
     return this.serial(async () => {
-      await this.drain();
-      return operation();
-    }).finally(() => {
-      this.pending--;
-    });
+      if (drain) await this.drain();
+      try {
+        return await operation();
+      } finally {
+        if (this.db && !this.db.open) await this.drain();
+      }
+    }).finally(() => this.finished());
   }
   /** Synchronous check-and-lock: accepted queued sends cannot race a safe update quit. */
   beginShutdown(): boolean {
-    if (this.pending || this.service?.hasActiveWork()) return false;
+    if (this.busy()) return false;
     this.shutdown = true;
     return true;
   }
@@ -433,7 +507,8 @@ export class SessionsHost {
   async close(): Promise<void> {
     await this.serial(() => this.drain());
   }
-  async subscription(event: InvokeSender, action: unknown, raw: unknown) {
+  /** Subscribe or unsubscribe; `guard` refuses a routed subscribe whose workbench changed, as in run(). */
+  async subscription(event: InvokeSender, action: unknown, raw: unknown, guard?: () => void) {
     if (!authorizedSender(event, this.options.target())) return { ok: false, error: veraError("DENIED") };
     const parsed =
       action === "subscribe"
@@ -450,19 +525,23 @@ export class SessionsHost {
         });
       else {
         const request = sessionSubscriptionSchema.parse(raw);
-        await this.run((service) => {
-          if (!authorizedSender(event, this.options.target())) throw veraError("DENIED");
-          if (this.subscriptions.has(request.subscriptionId)) throw veraError("CONFLICT");
-          if (this.subscriptions.size >= 128) throw veraError("BUSY");
-          const transport = createSessionTransport(request.sessionId, request.subscriptionId, (e) =>
-            this.options.emit(e),
-          );
-          const off = service.subscribe(request.sessionId, request.sinceSeq, transport.on);
-          this.subscriptions.set(request.subscriptionId, () => {
-            off();
-            transport.dispose();
-          });
-        });
+        await this.run(
+          (service) => {
+            if (!authorizedSender(event, this.options.target())) throw veraError("DENIED");
+            if (this.subscriptions.has(request.subscriptionId)) throw veraError("CONFLICT");
+            if (this.subscriptions.size >= 128) throw veraError("BUSY");
+            const transport = createSessionTransport(request.sessionId, request.subscriptionId, (e) =>
+              this.options.emit(e),
+            );
+            const off = service.subscribe(request.sessionId, request.sinceSeq, transport.on);
+            this.subscriptions.set(request.subscriptionId, () => {
+              off();
+              transport.dispose();
+            });
+          },
+          { purpose: "metadata" },
+          guard,
+        );
       }
       return { ok: true, value: {} };
     } catch (error) {

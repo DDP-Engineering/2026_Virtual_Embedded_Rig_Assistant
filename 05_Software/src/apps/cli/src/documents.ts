@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { DocumentKnowledge, DocumentsRepository, SettingsService, WorkbenchService } from "@vera/core";
+import { resolveAdvanced } from "@vera/shared";
 import type { DocumentOptions } from "./args.js";
 import { createDocumentServices } from "./document-processor.js";
 import { type ConsoleLogger, createNodeFiles, createPaths, nodeClock } from "./host-ports.js";
@@ -24,7 +25,12 @@ export async function runDocuments(
       settings = new SettingsService({ files, paths: location.paths, uuid: randomUUID, changed: () => {} });
     cleanup.push(() => settings.close());
     await settings.load();
-    const documents = createDocumentServices();
+    // The application's extraction time limit and embedding idle time (REQ-FUNC-aa35b135, REQ-FUNC-bfbd70b6).
+    const app = () => settings.get().settings.advanced;
+    const documents = createDocumentServices(() => ({
+      extractionMs: resolveAdvanced("extractionTimeout", { app: app() }).value * 1000,
+      embeddingIdleMs: resolveAdvanced("embeddingIdle", { app: app() }).value * 1000,
+    }));
     cleanup.push(() => documents.dispose());
     const workbench = new WorkbenchService(
       {

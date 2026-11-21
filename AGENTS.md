@@ -15,7 +15,7 @@ remotes, labels, configuration, `02_Tools` setup), planning and architecture doc
 Place new files by responsibility; each folder's README holds its inventory. The other numbered
 folders are listed in `README.md`.
 
-- `00_Planning/`: architecture, decisions and work packages. `06_SoftwareDocu/`: explanatory software
+- `00_Planning/`: the product definition (`Overview.md` and the documents it lists) and work packages under `plan/`. `06_SoftwareDocu/`: explanatory software
   documentation and deliberately retained evidence. `07_Delivery/`: selected, validated deliveries.
 - `02_Tools/environment/`, `build/`, `release/`: setup and the pinned toolchain, build and static
   checks, packaging and release-environment launchers. Their JavaScript imports packages through
@@ -47,7 +47,7 @@ configuration and data contracts as authoritative. Unless the user explicitly re
 - Change a stored format in place at version 1, and update code, tests, fixtures and documentation
   together. Any other version value is invalid data, reported like other invalid data. Data written
   by an earlier development build may stop loading; delete or recreate it instead of converting it.
-- Upgrade and migration safety (00_Planning rule L10, WP-32) is deferred until 1.0.0, the first
+- Upgrade and migration safety (`00_Planning/System.md` law L10) is deferred until 1.0.0, the first
   public release. The application's update feature itself (download, SHA-512 check, install) is a
   feature, not compatibility, and stays.
 - CHANGELOG entries and release notes never promise an upgrade path from an earlier pre-release;

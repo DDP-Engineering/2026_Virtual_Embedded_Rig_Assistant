@@ -80,6 +80,8 @@ const configFields = {
   model,
   contextWindow: positive.default(32768),
   maxOutputTokens: positive.default(4096),
+  /** How long VERA waits for the first response and between stream events; 300 s when unset. */
+  responseTimeoutSeconds: z.number().int().min(10).max(3600).optional(),
   supportsTools: z.boolean().optional(),
   protocol: z.literal("lmstudio").optional(),
   models: z.array(modelProfileSchema).max(10000).optional(),

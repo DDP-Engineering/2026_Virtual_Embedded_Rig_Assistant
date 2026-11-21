@@ -1,6 +1,6 @@
 # Discussion et sessions
 
-Une session est une conversation avec l’agent au sein d’un banc de travail. VERA enregistre chaque session dans le banc de travail : vous pouvez donc fermer l’application et reprendre plus tard. Plusieurs sessions peuvent s’exécuter en même temps.
+Une session est une conversation avec l’agent au sein d’un banc de travail. VERA enregistre chaque session dans le banc de travail : vous pouvez donc fermer l’application et reprendre plus tard. Plusieurs sessions peuvent s’exécuter en même temps. Au plus trois tours s’exécutent en même temps dans tous les bancs de travail ouverts, ou le nombre défini par **Tours simultanés** dans [Paramètres avancés](advanced-settings.md) ; un message envoyé à la limite reste non envoyé dans la zone de saisie jusqu’à la fin d’un tour.
 
 ## Démarrer et gérer des sessions
 
@@ -8,7 +8,11 @@ Une session est une conversation avec l’agent au sein d’un banc de travail. 
 - Le premier message devient le titre. **Renommer** définit votre propre titre.
 - **Rechercher des sessions** trouve des sessions par titre et par texte des messages.
 - Chaque ligne de session indique l’heure de sa dernière activité et possède un menu avec **Exporter en Markdown**, **Exporter en JSON**, **Renommer**, **Monter**, **Descendre**, **Archiver** et **Supprimer**.
-- Une session affiche son état : **Inactive**, **En cours**, **En attente d’approbation** ou **Erreur**.
+- Une session affiche son état : **Inactive**, **En cours**, **En attente d’approbation** ou **Erreur**. Une session en cours porte une marque qui tourne près de l’heure, et une session en attente d’approbation un bouclier.
+
+## Sessions des autres bancs de travail
+
+Les tours continuent lorsque vous ouvrez un autre banc de travail. Dans la barre latérale, la ligne d’un banc de travail affiche une marque avec le nombre de ses sessions en cours et en attente, même lorsque la ligne est repliée ; un bouclier signale une session qui attend votre approbation. Sélectionnez la marque (ou donnez-lui le focus et appuyez sur Entrée) pour lister ces sessions. Choisissez une session pour l’ouvrir dans son banc de travail, où vous pouvez examiner l’approbation, ou **Arrêter** pour ne terminer que ce tour. Pendant les tours, **Bancs de travail** indique combien s’exécutent et la limite **Tours simultanés**. À la limite, un nouveau message reste dans la zone de saisie : attendez la fin d’un tour ou arrêtez-en un dans la barre latérale, puis envoyez-le de nouveau.
 
 ## Écrire un message
 
@@ -46,7 +50,7 @@ Pour arrêter une session enfant en cours, ouvrez-la et choisissez **Arrêter** 
 
 | Niveau | Ce que la conversation affiche |
 |---|---|
-| **Détaillé** | Chaque appel d’outil avec ses arguments et sa sortie, le raisonnement du modèle et les statistiques de jetons sous chacun de vos messages |
+| **Détaillé** | Chaque appel d’outil avec ses arguments et sa sortie, le raisonnement du modèle et, sous chacun de vos messages, sa date et son heure d’envoi et ses statistiques de jetons |
 | **Normal** | Les appels d’outils de routine, regroupés dans une ligne dépliable **Opérations** |
 | **Minimal** | Uniquement la conversation ; les appels d’outils de routine sont masqués et un indicateur d’activité s’affiche pendant que l’agent travaille |
 
@@ -60,7 +64,7 @@ Pour les modèles qui le prennent en charge, **Niveau de raisonnement** propose 
 
 ## Sessions longues et contexte
 
-L’indicateur de contexte affiche **Contexte utilisé** en pourcentage de la fenêtre de contexte du modèle ; sélectionnez-le pour voir l’utilisation et les limites. Lorsqu’une session devient trop longue pour le modèle, VERA résume l’historique ancien (**Résumé de l’historique…**). La transcription complète reste enregistrée et visible.
+L’indicateur de contexte affiche **Contexte utilisé** en pourcentage de la fenêtre de contexte du modèle ; sélectionnez-le pour voir l’utilisation et les limites. Lorsqu’une session devient trop longue pour le modèle, VERA résume l’historique ancien (**Résumé de l’historique…**). Pendant ce temps, l’indicateur tourne et garde le dernier pourcentage, mis à jour dès que la requête suivante est prête. La transcription complète reste enregistrée et visible.
 
 **Rechercher dans la conversation** effectue une recherche dans la session en cours. La bande de repères au bord gauche de la conversation comporte un repère par message que vous avez envoyé ; survolez un repère pour avoir un aperçu du message et sélectionnez-le pour y accéder.
 
@@ -93,6 +97,8 @@ Un changement de confidentialité ou de modèle actualise l’affichage. L’éd
 Survolez un de vos messages ou utilisez Tab pour atteindre son icône de signet. **Ajouter un signet** le marque ; l’icône remplie propose **Retirer le signet**. L’aperçu dans la barre affiche la première ligne du message et le début de la réponse de l’agent, avec la même action de signet. La modification apparaît immédiatement ; un échec d’enregistrement rétablit l’état précédent et affiche une erreur. Les sessions archivées et les bancs en lecture seule permettent seulement la consultation.
 
 Les repères avec signet sont pleins, dans la couleur principale et un peu plus longs. Un groupe est marqué dès qu’un de ses messages a un signet. Utilisez **Signet suivant** (**Ctrl+Alt+N**) ou **Signet précédent** (**Ctrl+Alt+P**) pour passer entre les messages marqués ; la navigation s’arrête au premier ou au dernier signet. Modifiez les touches dans **Paramètres → Raccourcis clavier**.
+
+L’onglet **Signets** du panneau droit liste dans l’ordre les signets de cette conversation, chacun avec le début de votre message et de la réponse. Activez-le dans **Modifier le banc > Interface > Onglets du panneau droit**. Saisissez du texte dans **Filtrer les signets** pour chercher dans le message ou la réponse ; le compteur affiche alors les résultats sur le total. Sélectionnez une ligne ou appuyez sur Entrée pour aller au message dans Chat ; les flèches passent d’une ligne à l’autre. Cochez des lignes (ou **Tout sélectionner** pour les lignes filtrées) et choisissez **Retirer la sélection**, ou retirez une ligne avec son icône de corbeille. **Tout effacer** retire, après confirmation, tous les signets de la conversation, quel que soit le filtre. Retirer un signet ne supprime jamais de message ; en cas d’échec, rien ne change et une erreur s’affiche. Les sessions archivées et les bancs en lecture seule permettent seulement de filtrer et de naviguer.
 
 ## Commandes shell
 

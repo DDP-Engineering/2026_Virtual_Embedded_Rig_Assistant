@@ -126,6 +126,57 @@ it("refuses non-user and other-session targets, archived and read-only writes wi
   expect(() => env.service.bookmark(id, "u", true)).toThrow(expect.objectContaining({ code: "CONFLICT" }));
 });
 
+// REQ-FUNC-10d85a47, REQ-FUNC-d65a3585
+it("removes a set of bookmarks or all of them in one transaction and keeps every message", async () => {
+  const env = await setup();
+  const id = env.service.create().id;
+  for (const messageId of ["u1", "u2", "u3"]) {
+    env.hub.emit(id, { type: "message.user", messageId, text: messageId });
+    env.service.bookmark(id, messageId, true);
+  }
+  const messages = env.service.get(id).snapshot.items.filter((i) => i.kind === "user").length;
+  const seen: SessionEvent[] = [];
+  const off = env.service.subscribe(id, env.service.revision(id).seq, (_seq, event) => seen.push(event));
+  env.service.removeBookmarks(id, { messageIds: ["u3", "u1"] });
+  expect(seen).toEqual([
+    { type: "message.bookmarked", messageId: "u3", bookmarked: false },
+    { type: "message.bookmarked", messageId: "u1", bookmarked: false },
+  ]);
+  off();
+  expect(env.service.get(id).snapshot.bookmarkedMessageIds).toEqual(["u2"]);
+  // One unknown target refuses the whole request.
+  env.service.bookmark(id, "u1", true);
+  const before = env.service.revision(id);
+  expect(() => env.service.removeBookmarks(id, { messageIds: ["u1", "unknown"] })).toThrow(
+    expect.objectContaining({ code: "INVALID" }),
+  );
+  expect(env.service.revision(id)).toEqual(before);
+  expect(env.service.get(id).snapshot.bookmarkedMessageIds).toEqual(["u2", "u1"]);
+  env.service.removeBookmarks(id, { all: true });
+  const snapshot = env.service.get(id).snapshot;
+  expect(snapshot.bookmarkedMessageIds).toEqual([]);
+  expect(snapshot.items.filter((i) => i.kind === "user")).toHaveLength(messages);
+});
+
+// REQ-SEC-8c0cc59a
+it("refuses bulk bookmark removal in archived sessions and read-only workbenches", async () => {
+  const env = await setup();
+  const id = env.service.create().id;
+  env.hub.emit(id, { type: "message.user", messageId: "u", text: "Remember" });
+  env.service.bookmark(id, "u", true);
+  env.service.setArchived(id, true);
+  for (const target of [{ messageIds: ["u"] }, { all: true as const }])
+    expect(() => env.service.removeBookmarks(id, target)).toThrow(
+      expect.objectContaining({ code: "DENIED" }),
+    );
+  env.service.setArchived(id, false);
+  await env.restart(true);
+  expect(() => env.service.removeBookmarks(id, { all: true })).toThrow(
+    expect.objectContaining({ code: "DENIED" }),
+  );
+  expect(env.service.get(id).snapshot.bookmarkedMessageIds).toEqual(["u"]);
+});
+
 it("publishes no bookmark when durable event recording fails", async () => {
   const env = await setup();
   const id = env.service.create().id;

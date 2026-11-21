@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-UX-fcd1ad10"
+
+title = "Show Advanced sections only with the Show advanced settings switch"
+
+status = "active"
+
+requirement = """
+While Show advanced settings is off, VERA shall hide the Advanced sections of Settings, Edit workbench and the session menu except the switch itself, and shall keep applying every stored Advanced value.
+"""
+
+verification = "With a stored workbench pilot value of 200, turn the switch off: the Edit workbench Advanced section and the session Advanced menu item are absent, Settings > Advanced shows only the switch, and a turn still allows 200 tool calls; turning the switch on shows the sections with their values; the switch persists across restart."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/advanced-settings-panel.tsx", "05_Software/src/apps/desktop/src/renderer/components/settings.tsx", "05_Software/src/apps/desktop/src/renderer/components/workbench-config-form.tsx", "05_Software/src/apps/desktop/src/renderer/components/workbench-editor.tsx", "05_Software/src/apps/desktop/src/renderer/components/workbench-advanced.tsx", "05_Software/src/apps/desktop/src/renderer/components/session/session-list.tsx", "05_Software/src/apps/desktop/src/renderer/components/session/session-advanced.tsx"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/advanced-settings.test.ts", "05_Software/src/apps/desktop/src/renderer/components/workbench-advanced.test.ts", "05_Software/tests/e2e/advanced-settings.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-20
+updated = 2026-11-20

@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-f6f79cd2"
+
+title = "Cut tool results at the resolved Tool result size"
+
+status = "active"
+
+requirement = """
+When a tool result is longer than the resolved Tool result size, an integer from 8000 to 128000 characters with default 32000 set for the application, VERA shall shrink it to that size before the model receives it, in the tool registry and in the runtime's final cut alike.
+"""
+
+verification = "With 64000, a 50000-character tool result reaches the model whole; with 8000, a 20000-character result reaches it shrunk to at most 8000 characters with the truncation marker; with no value the limit is 32000."
+
+affected_paths = ["05_Software/src/libraries/shared/src/advanced-settings.ts", "05_Software/src/libraries/core/src/tools/context.ts", "05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/libraries/core/src/tools/registry.ts", "05_Software/src/libraries/core/src/agent/runtime.ts", "05_Software/src/libraries/core/src/agent/types.ts"]
+
+linked_tests = ["05_Software/src/libraries/shared/src/advanced-settings.test.ts", "05_Software/src/libraries/core/src/sessions/tool-limits.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-21
+updated = 2026-11-21

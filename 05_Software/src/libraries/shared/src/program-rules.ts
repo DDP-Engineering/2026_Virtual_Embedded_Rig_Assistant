@@ -179,7 +179,7 @@ export function programArgumentRefusal(args: readonly string[]): ProgramRefusal 
   }
   return null;
 }
-/** The mode matrix of ADR-0018, with the trial override of ADR-0016. */
+/** The risk-level by permission-mode matrix of `00_Planning/Plugins.md`, with the trial override. */
 export function programPolicy(mode: PermissionMode, risk: PluginRisk, trial: boolean): ProgramPolicy {
   if (risk === "blocked" || (mode === "read-only" && (trial || risk !== "safe"))) return "refuse";
   if (trial) return risk === "irreversible" ? "confirm" : "user";

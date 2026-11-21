@@ -165,6 +165,18 @@ it("measures storage only for the open workbench", async () => {
   }
 });
 
+// REQ-FUNC-0278c7ba: Desktop matches an open request to a runtime by the folder open would use.
+it("locates the canonical folder open uses without opening it", async () => {
+  const h = await harness();
+  const { folder } = await h.service.create(h.folder, "Locate");
+  await h.service.close();
+  expect(await h.service.locate(join(h.folder, "..", "bench"))).toBe(folder);
+  await expect(h.service.locate("relative/bench")).rejects.toMatchObject({ code: "INVALID" });
+  await expect(h.service.locate(join(h.root, "missing"))).rejects.toMatchObject({ code: "NOT_FOUND" });
+  await expect(h.service.getConfig()).rejects.toMatchObject({ code: "NOT_FOUND" });
+  expect(existsSync(join(h.folder, ".vera/lock"))).toBe(false);
+});
+
 it("keeps viewer byte reads confined in Bypass even with an additional-folder grant", async () => {
   const h = await harness();
   try {
@@ -691,6 +703,47 @@ it("scopes document reads and reindex to identity/current ownership and serializ
     expect(await read).toBe("source");
     await closing;
     await expect(h.service.listDocuments(opened.config.id)).rejects.toMatchObject({ code: "NOT_FOUND" });
+  } finally {
+    await h.service.close();
+  }
+});
+// REQ-FUNC-4b36dede
+it("lists up to the resolved Docs panel results", async () => {
+  const h = await harness();
+  try {
+    const opened = await h.service.create(h.folder, "Many hits"),
+      path = "docs/many.md";
+    const text = Array.from({ length: 30 }, (_, i) => `# Part ${i}\nMANY_HITS_TOKEN section ${i}\n`).join("");
+    await mkdir(join(h.folder, "docs"));
+    await writeFile(join(h.folder, path), text);
+    const sha256 = createHash("sha256").update(text).digest("hex");
+    const result = await createDocumentProcessor(async () => {
+      throw Error("No PDF expected");
+    })({
+      root: h.folder,
+      path,
+      kind: "markdown",
+      sha256,
+      signal: new AbortController().signal,
+      assertWritable: () => {},
+    });
+    const rows = new DocumentsRepository(h.service.getDatabase());
+    const doc = rows.save({
+      path,
+      kind: "markdown",
+      sha256,
+      bytes: Buffer.byteLength(text),
+      mtime: new Date().toISOString(),
+      pages: null,
+      status: "indexed",
+      error: null,
+      indexedAt: null,
+    });
+    rows.replaceChunks(doc.id, result.chunks ?? [], result.derived);
+    expect((result.chunks ?? []).length).toBeGreaterThanOrEqual(30);
+    expect(await h.service.searchDocuments(opened.config.id, "MANY_HITS_TOKEN")).toHaveLength(20);
+    await h.service.updateConfig({ advanced: { docsResults: 60 } });
+    expect(await h.service.searchDocuments(opened.config.id, "MANY_HITS_TOKEN")).toHaveLength(30);
   } finally {
     await h.service.close();
   }
@@ -1629,6 +1682,32 @@ it("rejects stale selections and a 65th folder with typed errors without changin
       code: "INVALID",
     });
     expect(h.service.getSnapshot().config.additional_folders).toHaveLength(64);
+  } finally {
+    await h.service.close();
+  }
+});
+
+// REQ-DATA-96ef3dd6 REQ-DATA-33a90ef2
+it("saves workbench Advanced values across reopen, clears them with null and refuses invalid ones", async () => {
+  const h = await harness();
+  try {
+    const { config } = await h.service.create(h.folder, "Advanced");
+    await h.service.updateConfig({ advanced: { toolCallsPerTurn: 200 } }, config.id);
+    await h.service.close();
+    expect((await h.service.open(h.folder)).config.advanced).toEqual({ toolCallsPerTurn: 200 });
+    const yaml = join(h.folder, ".vera/workbench.yaml");
+    const before = await readFile(yaml, "utf8");
+    await expect(
+      h.service.updateConfig({ advanced: { toolCallsPerTurn: 9 } }, config.id),
+    ).rejects.toMatchObject({ code: "INVALID" });
+    expect(await readFile(yaml, "utf8")).toBe(before);
+    await h.service.updateConfig({ advanced: { toolCallsPerTurn: null } }, config.id);
+    await h.service.close();
+    // A hand-edited invalid value still opens the workbench.
+    const cleared = (await readFile(yaml, "utf8")).replace(/^advanced:.*\n?/m, "");
+    await writeFile(yaml, `${cleared}\nadvanced:\n  toolCallsPerTurn: 0\n`);
+    const reopened = (await h.service.open(h.folder)).config;
+    expect(reopened.advanced).toEqual({ toolCallsPerTurn: 0 });
   } finally {
     await h.service.close();
   }

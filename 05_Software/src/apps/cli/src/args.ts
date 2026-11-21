@@ -1,12 +1,20 @@
 import { resolve } from "node:path";
 import { parseArgs } from "node:util";
 import { DEPENDENCY_KIT_PLATFORMS, type DependencyKitPlatform } from "@vera/core";
-import { customConfigSchema, modelReferenceSchema, pluginIdSchema, sessionIdSchema } from "@vera/shared";
+import {
+  type AdvancedValue,
+  customConfigSchema,
+  modelReferenceSchema,
+  parseAdvancedFlag,
+  pluginIdSchema,
+  sessionIdSchema,
+} from "@vera/shared";
 
 export const USAGE = `Usage: vera run --workbench <dir> --prompt <text>
   [--session <id>] [--data <dir>] [--key-file <file> | --key-env <NAME>]
   [--format jsonl|pretty]
   [--approve all|none] (otherwise prompt on TTY; non-TTY denies)
+  [--advanced <key>=<value>]... (session Advanced settings, e.g. toolCallsPerTurn=100, autoCompaction=off)
   --provider replay --script <file>
   --provider openai --model <id>
   --provider custom --base-url <url> --model <id>
@@ -43,6 +51,8 @@ export interface RunOptions {
   keyEnv?: string;
   script?: string;
   baseUrl?: string;
+  /** Session-scope Advanced values for this run (REQ-FUNC-181db660). */
+  advanced?: Record<string, AdvancedValue>;
   approve?: "all" | "none";
 }
 export type DocumentOptions = {
@@ -315,12 +325,14 @@ export function parseCommand(
           "base-url",
           "format",
           "approve",
-        ].map((key) => [key, { type: "string" as const }]),
+        ]
+          .map((key): [string, { type: "string"; multiple?: boolean }] => [key, { type: "string" }])
+          .concat([["advanced", { type: "string", multiple: true }]]),
       ),
     });
     const seen = new Set<string>();
     for (const token of tokens) {
-      if (token.kind !== "option") continue;
+      if (token.kind !== "option" || token.name === "advanced") continue;
       if (seen.has(token.name)) throw new UsageError(`Repeated option --${token.name}.`);
       seen.add(token.name);
     }
@@ -351,6 +363,12 @@ export function parseCommand(
     if (approve !== undefined && approve !== "all" && approve !== "none")
       throw new UsageError("Invalid --approve.");
     if (session && !sessionIdSchema.safeParse(session).success) throw new UsageError("Invalid --session.");
+    const advanced: Record<string, AdvancedValue> = {};
+    for (const flag of (values.advanced as string[] | undefined) ?? []) {
+      const parsed = parseAdvancedFlag(flag);
+      if (!parsed) throw new UsageError(`Invalid --advanced ${flag}.`);
+      advanced[parsed.key] = parsed.value;
+    }
     if (
       provider === "replay"
         ? !script || !!model || !!baseUrl
@@ -377,6 +395,7 @@ export function parseCommand(
       ...(keyFile ? { keyFile: resolve(keyFile) } : {}),
       ...(keyEnv ? { keyEnv } : {}),
       ...(approve ? { approve } : {}),
+      ...(Object.keys(advanced).length ? { advanced } : {}),
     };
   } catch (error) {
     if (error instanceof UsageError) throw error;

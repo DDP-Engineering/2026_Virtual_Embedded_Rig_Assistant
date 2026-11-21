@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-FUNC-4f478637"
+
+title = "Keep session subscriptions with the owning workbench"
+
+status = "active"
+
+requirement = "While a renderer subscription to a session is open, the desktop app shall keep delivering that session's events in order from the session's own workbench when another workbench comes to the foreground or the owner returns to it, until the subscription ends, the window reloads or the owner workbench is released."
+
+verification = "Main replay test: subscribe to A's session through the router, open B while A's turn streams, release the turn; every stored event arrives once in sequence order and the final message arrives; boundary: after A's runtime is released, a rename of A's session in the reopened A reaches neither subscription. Registry test: bringing another runtime to the foreground clears no subscription."
+
+affected_paths = ["05_Software/src/apps/desktop/src/main/workbench-runtimes.ts", "05_Software/src/apps/desktop/src/main/session-router.ts", "05_Software/src/apps/desktop/src/main/sessions.ts", "05_Software/src/apps/desktop/src/main/index.ts"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/main/session-router.test.ts::opens a subscription in the session's owner and ends it wherever it is", "05_Software/src/apps/desktop/src/main/session-router.replay.test.ts::keeps a subscription across a foreground change and restores the streamed text to a returning view", "05_Software/src/apps/desktop/src/main/workbench-runtimes.test.ts::announces each lifecycle change and settled release, and keeps subscriptions across them", "05_Software/tests/e2e/session-routing.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-21
+updated = 2026-11-21

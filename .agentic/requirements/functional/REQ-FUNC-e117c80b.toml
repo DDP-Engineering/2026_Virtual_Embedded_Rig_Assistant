@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-e117c80b"
+
+title = "Stop one session from the sidebar activity menu"
+
+status = "active"
+
+requirement = """
+When the user chooses Stop for a session in a workbench's activity menu, the Desktop app shall stop only that session's turn and keep the shown workbench, the shown session and every other session's turn unchanged.
+"""
+
+verification = "Renderer test: Stop on one listed session invokes session.stop with that session id only and no workbench.open. Native e2e: with slow replay turns in A (background) and B (shown), Stop on A's session ends A's turn as stopped while B stays shown, B's turn keeps streaming and then completes."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/workbench-navigation.tsx", "05_Software/src/apps/desktop/src/renderer/components/workbench-activity.tsx", "05_Software/src/apps/desktop/src/renderer/App.tsx"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/workbench-activity.test.ts", "05_Software/tests/e2e/background-sessions.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-21
+updated = 2026-11-21

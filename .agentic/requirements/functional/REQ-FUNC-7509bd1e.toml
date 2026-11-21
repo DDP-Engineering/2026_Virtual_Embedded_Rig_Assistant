@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-7509bd1e"
+
+title = "Refuse a terminal above the resolved Terminals per workbench"
+
+status = "active"
+
+requirement = """
+When the user or a chat command block opens a terminal while the open workbench already has the resolved Terminals per workbench number of terminals (an integer from 1 to 16, default 8, set for the application), VERA shall refuse the new terminal with BUSY and disable the Terminal tab's New terminal button, keeping every terminal already open.
+"""
+
+verification = "Desktop main test: with the default the ninth create is refused with BUSY; with the application value 2 the third is refused; lowering it to 1 with two open leaves both open and refuses a new one; with 12 a ninth opens. Renderer test: New terminal is disabled at the resolved count. Inspection: the terminal.list IPC response and the agent read schema allow 16 terminals."
+
+affected_paths = ["05_Software/src/libraries/shared/src/advanced-settings.ts", "05_Software/src/libraries/shared/src/ipc.ts", "05_Software/src/apps/desktop/src/main/terminals.ts", "05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/apps/desktop/src/renderer/components/terminal-tab.tsx", "05_Software/src/apps/desktop/src/renderer/mocks/mockApi.ts", "05_Software/src/apps/desktop/src/renderer/hooks/app-advanced.ts", "05_Software/src/libraries/shared/src/terminals.ts", "05_Software/src/apps/desktop/src/main/terminals.test.ts", "05_Software/src/apps/desktop/src/renderer/components/terminal-tab.test.ts", "05_Software/src/libraries/shared/src/advanced-settings.test.ts"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/main/terminals.test.ts::refuses a terminal above the resolved count and keeps open ones when it is lowered", "05_Software/src/apps/desktop/src/renderer/components/terminal-tab.test.ts::opens a view with the resolved scrollback and disables New at the resolved count", "05_Software/src/libraries/shared/src/advanced-settings.test.ts::registers the desktop ranges, defaults, scopes and timing"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-21
+updated = 2026-11-21

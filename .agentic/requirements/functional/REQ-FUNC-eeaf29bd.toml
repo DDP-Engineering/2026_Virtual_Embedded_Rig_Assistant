@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-eeaf29bd"
+
+title = "Compact a session on demand"
+
+status = "active"
+
+requirement = """
+When the user chooses Compact now for an idle session, VERA shall summarize its history up to the recent tail at once regardless of the trigger, record the summary durably and report the compaction status.
+"""
+
+verification = "In an idle session with several exchanges below the trigger, Compact now makes one summary request and records a context.compacted event; the next request uses the summary."
+
+affected_paths = ["05_Software/src/libraries/core/src/agent/compaction.ts", "05_Software/src/libraries/core/src/agent/runtime.ts", "05_Software/src/libraries/core/src/agent/types.ts", "05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/libraries/shared/src/ipc.ts", "05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/apps/desktop/src/renderer/mocks/sessions.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/agent/compaction-settings.test.ts", "05_Software/src/libraries/core/src/sessions/compaction-advanced.test.ts", "05_Software/tests/e2e/advanced-settings.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-20
+updated = 2026-11-20

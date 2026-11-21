@@ -137,7 +137,9 @@ export interface PreviewOptions {
  */
 export async function previewDocuments(
   root: string,
-  docs: Pick<WorkbenchConfig["docs"], "include" | "exclude" | "gitignore" | "maxFileMB" | "maxFiles">,
+  docs: Pick<WorkbenchConfig["docs"], "include" | "exclude" | "gitignore" | "maxFileMB" | "maxFiles"> & {
+    maxTextMB?: number;
+  },
   { signal = new AbortController().signal, approved = null }: PreviewOptions = {},
 ): Promise<DocumentPreview> {
   let patterns: ReturnType<typeof documentSelection>;

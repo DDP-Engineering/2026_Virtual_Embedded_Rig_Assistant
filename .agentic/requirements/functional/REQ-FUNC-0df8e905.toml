@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-0df8e905"
+
+title = "Return up to the resolved grep results"
+
+status = "active"
+
+requirement = """
+When the grep tool runs, VERA shall return at most the resolved Grep results, an integer from 50 to 2000 with default 500 set for the application, using that count when the call gives no maxResults and as the ceiling for a larger requested count.
+"""
+
+verification = "With 50, a pattern with 80 matches returns 50 marked as limited, and maxResults 60 also returns 50; maxResults 10 returns 10; the grep schema accepts maxResults up to 2000."
+
+affected_paths = ["05_Software/src/libraries/shared/src/advanced-settings.ts", "05_Software/src/libraries/core/src/tools/grep.ts", "05_Software/src/libraries/core/src/tools/grep-worker.ts"]
+
+linked_tests = ["05_Software/src/libraries/shared/src/advanced-settings.test.ts", "05_Software/src/libraries/core/src/tools/grep.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-21
+updated = 2026-11-21

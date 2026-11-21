@@ -35,7 +35,7 @@ it("gates both web methods globally and anonymous mode ignores saved keys", asyn
   const signal = new AbortController().signal;
   await h.provider.search({ query: "topic" }, signal);
   expect(h.getKey).not.toHaveBeenCalled();
-  expect(h.create).toHaveBeenCalledExactlyOnceWith("exa", undefined);
+  expect(h.create).toHaveBeenCalledExactlyOnceWith("exa", undefined, {});
   h.set({ enabled: false });
   await expect(h.provider.search({ query: "blocked" }, signal)).rejects.toThrow(/disabled/i);
   await expect(h.provider.read({ url: "https://example.com" }, signal)).rejects.toThrow(/disabled/i);
@@ -47,11 +47,11 @@ it("uses selected stored or draft keys and never silently falls back to anonymou
     signal = new AbortController().signal;
   h.set({ authentication: "api-key" });
   await h.provider.search({ query: "topic" }, signal);
-  expect(h.create).toHaveBeenLastCalledWith("exa", "private-fixture-key");
+  expect(h.create).toHaveBeenLastCalledWith("exa", "private-fixture-key", {});
   await h.provider.test({ provider: "exa", authentication: "api-key", apiKey: "temporary-key" }, signal);
-  expect(h.create).toHaveBeenLastCalledWith("exa", "temporary-key");
+  expect(h.create).toHaveBeenLastCalledWith("exa", "temporary-key", {});
   await h.provider.test({ provider: "exa", authentication: "anonymous" }, signal);
-  expect(h.create).toHaveBeenLastCalledWith("exa", undefined);
+  expect(h.create).toHaveBeenLastCalledWith("exa", undefined, {});
   h.clearKey();
   await expect(h.provider.search({ query: "missing" }, signal)).rejects.toThrow(/key.*required/i);
 });
@@ -95,12 +95,12 @@ it("routes only the selected provider and omits or blocks unsupported Brave read
   const h = harness();
   h.set({ provider: "tavily" });
   await h.provider.search({ query: "board" }, new AbortController().signal);
-  expect(h.create).toHaveBeenLastCalledWith("tavily", undefined);
+  expect(h.create).toHaveBeenLastCalledWith("tavily", undefined, {});
   expect(h.getKey).not.toHaveBeenCalled();
   h.set({ provider: "brave", authentication: "api-key" });
   await h.provider.search({ query: "board" }, new AbortController().signal);
   expect(h.getKey).toHaveBeenLastCalledWith("brave", expect.any(AbortSignal));
-  expect(h.create).toHaveBeenLastCalledWith("brave", "private-fixture-key");
+  expect(h.create).toHaveBeenLastCalledWith("brave", "private-fixture-key", {});
   expect(api.unavailableWebTools({ enabled: true, provider: "brave", authentication: "api-key" })).toEqual([
     "web_read",
   ]);

@@ -31,7 +31,7 @@ async function setup(mode: PermissionMode = "ask", disabledTools: string[] = [])
   const settings = { enabled: true, provider: "brave" as const, authentication: "api-key" as const };
   const access = new core.ConfiguredWebProvider({ config: () => settings, getKey: async () => undefined });
   closes.push(() => access.close());
-  const transfer = vi.fn(async (_source: string, _signal: AbortSignal) => ({
+  const transfer = vi.fn(async (_source: string, _signal: AbortSignal, _budget?: unknown) => ({
     data: Buffer.from("%PDF-1.7\nfixture"),
     finalUrl: url,
     mime: "application/pdf",
@@ -76,6 +76,25 @@ async function waiting(service: core.SessionService, id: string) {
   if (!approval) throw Error("Missing PDF approval");
   return approval;
 }
+// REQ-FUNC-8a1eea8b REQ-FUNC-dfe84577
+it("binds the application's Download size into the approval and transfers within it and the time limit", async () => {
+  const h = await setup();
+  const app: Record<string, number> = { downloadMB: 500, downloadTimeout: 600 };
+  h.host.advanced = { app: () => app, workbench: () => ({}) };
+  h.service.send(h.session.id, "Download this datasheet");
+  const approval = await waiting(h.service, h.session.id);
+  expect(approval.download).toMatchObject({ maxBytes: 500 * 1024 * 1024 });
+  // A later change leaves the approved request at its bound size.
+  app.downloadMB = 50;
+  h.service.decideApproval({
+    sessionId: h.session.id,
+    approvalId: approval.approvalId,
+    requestSha256: approval.requestSha256,
+    decision: "approved",
+  });
+  expect(await h.service.waitIdle(h.session.id)).toEqual({ stopReason: "end" });
+  expect(h.transfer.mock.calls[0]?.[2]).toEqual({ maxBytes: 500 * 1024 * 1024, deadlineMs: 600_000 });
+});
 it.each(["approved", "denied"] as const)(
   "Ask %s binds the source/destination and sends no request before approval",
   async (decision) => {

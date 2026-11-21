@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-FUNC-93ec5cc7"
+
+title = "Report session activity across open workbenches"
+
+status = "active"
+
+requirement = "When the renderer requests session.activity, the desktop app shall return every open workbench runtime with its workbench ID, name, folder and whether it is in the foreground, each with its top-level sessions that are running or awaiting approval, by session ID, masked title and status."
+
+verification = "Router test with scripted runtimes and main replay test with real runtimes: A in the background with a turn awaiting approval and B in the foreground; session.activity lists B first as foreground with no sessions and A as background with its session awaiting_approval; boundary: once A settles and is released only B is listed. Shared schema test rejects an unknown status. Native e2e lists both workbenches with A's masked title."
+
+affected_paths = ["05_Software/src/libraries/shared/src/ipc.ts", "05_Software/src/apps/desktop/src/main/session-router.ts", "05_Software/src/apps/desktop/src/main/sessions.ts", "05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/apps/desktop/src/renderer/mocks/mockApi.ts"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/main/session-router.test.ts::lists every open runtime, foreground first, with its running and awaiting sessions", "05_Software/src/apps/desktop/src/main/session-router.replay.test.ts::decides a background workbench's approval in that workbench while another runs its own turn", "05_Software/src/libraries/shared/src/session-activity-ipc.test.ts::describes every open workbench with its running and awaiting-approval sessions", "05_Software/src/apps/desktop/src/renderer/mocks/mockApi.test.ts::mock session activity lists the shown workbench, or nothing while none is open", "05_Software/tests/e2e/session-routing.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-21
+updated = 2026-11-21

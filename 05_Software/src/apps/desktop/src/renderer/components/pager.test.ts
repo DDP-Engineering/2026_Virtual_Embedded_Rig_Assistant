@@ -2,6 +2,7 @@
 import { act, createElement } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, expect, it, vi } from "vitest";
+import { setAppAdvanced } from "../hooks/app-advanced.js";
 import "../i18n.js";
 import { Pager, usePaged } from "./pager.js";
 
@@ -13,8 +14,11 @@ afterEach(async () => {
   container?.remove();
 });
 
-function List({ count }: { count: number }) {
-  const { rows, pager } = usePaged(Array.from({ length: count }, (_, index) => `row ${index + 1}`));
+function List({ count, size }: { count: number; size?: 10 | 20 | 50 }) {
+  const { rows, pager } = usePaged(
+    Array.from({ length: count }, (_, index) => `row ${index + 1}`),
+    size,
+  );
   return createElement(
     "div",
     null,
@@ -22,11 +26,11 @@ function List({ count }: { count: number }) {
     createElement(Pager, pager),
   );
 }
-async function mount(count: number) {
+async function mount(count: number, size?: 10 | 20 | 50) {
   container = document.createElement("div");
   document.body.append(container);
   root = createRoot(container);
-  await act(async () => root?.render(createElement(List, { count })));
+  await act(async () => root?.render(createElement(List, { count, ...(size ? { size } : {}) })));
 }
 const rows = () => [...container.querySelectorAll("li")].map((li) => li.textContent);
 
@@ -53,4 +57,32 @@ it("pages through rows and returns to page one when the page size changes", asyn
   });
   expect(rows()).toHaveLength(25);
   expect(container.querySelector<HTMLButtonElement>("[data-pager-previous]")?.disabled).toBe(true);
+});
+// REQ-UX-441b5a9d
+it("starts at the resolved Rows per page, keeps a picked size and a list's own size", async () => {
+  try {
+    await mount(60);
+    expect(rows()).toHaveLength(10);
+    await act(async () => container.querySelector<HTMLButtonElement>("[data-pager-next]")?.click());
+    expect(rows()[0]).toBe("row 11");
+    await act(async () => setAppAdvanced({ pageSize: 20 }));
+    expect(rows()).toHaveLength(20);
+    expect(rows()[0]).toBe("row 1");
+    const size = container.querySelector<HTMLSelectElement>("[data-pager-size]");
+    await act(async () => {
+      if (!size) return;
+      size.value = "50";
+      size.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+    expect(rows()).toHaveLength(50);
+    await act(async () => setAppAdvanced({ pageSize: 10 }));
+    expect(rows()).toHaveLength(50);
+    await act(async () => root?.unmount());
+    container.remove();
+    await act(async () => setAppAdvanced({ pageSize: 20 }));
+    await mount(60, 50);
+    expect(rows()).toHaveLength(50);
+  } finally {
+    setAppAdvanced(undefined);
+  }
 });

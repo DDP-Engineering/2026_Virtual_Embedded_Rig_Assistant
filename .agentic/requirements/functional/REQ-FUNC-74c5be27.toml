@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-74c5be27"
+
+title = "Refuse a delegated launch at the turn limit promptly"
+
+status = "active"
+
+requirement = """
+When a parent agent launches a delegated session while the Concurrent turns limit is reached, the launch shall fail with TURN_LIMIT before the delegated model is prepared or a child session is created, and the per-workbench Delegated sessions at once limit shall still apply below it.
+"""
+
+verification = "Core delegation test at limit 1 with the parent turn running: the launch tool result is an error with code TURN_LIMIT, the gateway's prepareModel is not called and no child session exists; when the last slot is taken while the child's model is prepared, the launch fails TURN_LIMIT and leaves no child session or held slot; with limit 8 and Delegated sessions at once 1, a second concurrent delegation fails BUSY."
+
+affected_paths = ["05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/libraries/core/src/tools/delegated-sessions.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/sessions/turn-limit.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-21
+updated = 2026-11-21

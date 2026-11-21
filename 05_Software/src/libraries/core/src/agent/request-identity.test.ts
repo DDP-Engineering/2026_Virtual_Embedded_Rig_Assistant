@@ -32,7 +32,8 @@ it("uses a precommitted initial request identity once and generates ordinary ide
   runtime.onEvent((event) => events.push(event));
   runtime.start({
     systemPrompt: "Test",
-    model: "replay/test",
+    // "auto" needs no scenario file in prepareModel; the stream above is the whole scenario.
+    model: "replay/auto",
     tools: [],
     messages: [],
     contextPolicy: new ContextPolicy(),
@@ -40,7 +41,7 @@ it("uses a precommitted initial request identity once and generates ordinary ide
   });
   expect(await runtime.send("Review")).toEqual({ stopReason: "end" });
   expect(events.filter((event) => event.type === "message.user" || event.type === "turn.started")).toEqual([
-    { type: "message.user", messageId: "accepted_message", text: "Review" },
+    { type: "message.user", messageId: "accepted_message", text: "Review", timestamp: 1 },
     { type: "turn.started", turnId: "accepted_turn" },
   ]);
   expect(events).toContainEqual({ type: "turn.done", turnId: "accepted_turn", stopReason: "end" });

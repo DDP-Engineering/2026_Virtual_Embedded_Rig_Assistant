@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-UX-9ea9184f"
+
+title = "Edit an Advanced setting with inherit, reset and apply timing"
+
+status = "active"
+
+requirement = """
+When the user edits an Advanced setting at a scope, VERA shall show the inherited value when the field is empty, offer Reset to clear the scope's value, show when the change applies with an icon whose tooltip names the timing, and refuse an out-of-range entry with a localized message before saving.
+"""
+
+verification = "In en and ro, open the pilot at each scope: an empty field shows the inherited value and its source, Reset clears a set value, the Live icon tooltip reads as localized, typing 0 or 501 shows the range message and disables Save, and keyboard-only use reaches every control."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/advanced-field.tsx", "05_Software/src/apps/desktop/src/renderer/styles.css", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json", "05_Software/src/apps/desktop/src/renderer/locales/fr.json"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/advanced-settings.test.ts", "05_Software/src/apps/desktop/src/renderer/components/workbench-advanced.test.ts", "05_Software/tests/e2e/advanced-settings.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-20
+updated = 2026-11-21

@@ -5,6 +5,7 @@ import { _electron, expect } from "@playwright/test";
 import type { VeraBridge } from "@vera/shared";
 import { test } from "./fixtures.js";
 import { installNetworkGuard, outboundAttempts } from "./network-guard.js";
+import { saveSettings } from "./settings-navigation.js";
 
 test("shortcut UI edits aliases, rejects conflicts, removes and resets, with isolated key capture", {
   tag: "@parallel-browser",
@@ -28,6 +29,7 @@ test("shortcut UI edits aliases, rejects conflicts, removes and resets, with iso
   await expect(recorder.getByRole("button", { name: "Cancel", exact: true })).toBeFocused();
   await recorder.getByRole("button", { name: "Save", exact: true }).click();
   await expect(settings.locator("kbd")).toHaveText("Ctrl+Shift+P");
+  await saveSettings(page);
   await page.locator('[data-action="leave-settings"]').click();
   await page.keyboard.press("Control+,");
   await expect(section).not.toBeVisible();
@@ -58,6 +60,7 @@ test("shortcut UI edits aliases, rejects conflicts, removes and resets, with iso
   await expect(recorder.getByRole("textbox")).toHaveValue("Ctrl+Shift+1");
   await recorder.getByRole("button", { name: "Save", exact: true }).click();
   await expect(create.locator("kbd")).toHaveText("Ctrl+Shift+1");
+  await saveSettings(page);
   await page.evaluate(() =>
     window.dispatchEvent(
       new KeyboardEvent("keydown", {
@@ -82,6 +85,7 @@ test("shortcut UI edits aliases, rejects conflicts, removes and resets, with iso
   await section.getByRole("button", { name: "Restore all defaults", exact: true }).click();
   await expect(settings.locator("kbd")).toHaveText("Ctrl+,");
   await expect(newSession.locator("kbd")).toHaveCount(2);
+  await saveSettings(page);
   // The workbench editor is a page, not a modal dialog: app navigation shortcuts still route,
   // and without unsaved edits they leave it without asking.
   await page.locator('[data-action="leave-settings"]').click();
@@ -139,6 +143,7 @@ test("native shortcut overrides survive restart and deleted bindings remain disa
     await section.getByRole("button", { name: "Remove New session: Ctrl+N", exact: true }).click();
     await section.getByRole("button", { name: "Remove New session: Ctrl+Shift+O", exact: true }).click();
     await expect(section.locator('[data-shortcut="newSession"]')).toContainText("Unassigned");
+    await saveSettings(page);
     await app.close();
     app = await launch();
     page = await app.firstWindow();

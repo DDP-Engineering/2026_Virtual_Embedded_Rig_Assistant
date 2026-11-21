@@ -25,7 +25,14 @@ import {
   WorkbenchService,
 } from "@vera/core";
 import { ReplayGateway } from "@vera/core/replay";
-import { customSettingsSchema, partsSearchDefaults, veraError, veraErrorSchema } from "@vera/shared";
+import {
+  type AdvancedKey,
+  customSettingsSchema,
+  partsSearchDefaults,
+  resolveAdvanced,
+  veraError,
+  veraErrorSchema,
+} from "@vera/shared";
 import { flagDecision, promptApproval } from "./approval-prompt.js";
 import type { RunOptions } from "./args.js";
 import { createDocumentServices } from "./document-processor.js";
@@ -94,6 +101,7 @@ export async function runTurn(
         const value = await store.read(`web:${provider}`, { signal });
         return value?.type === "api_key" ? value.key : undefined;
       },
+      timeoutMs: () => resolveAdvanced("webTimeout", { app: config.advanced }).value * 1000,
     });
     resources.push(() => web.close());
     // Supplier credentials come only from the environment and stay in memory for this run.
@@ -144,14 +152,20 @@ export async function runTurn(
         scrub: (text) => logger.scrub(text),
         knownSecrets: () => logger.knownSecrets(),
         now: () => nodeClock.now().getTime(),
+        headerWaitMs: () => resolveAdvanced("headerWait", { app: config.advanced }).value * 1000,
       });
       model = `${provider}/${options.model}`;
     }
     gateway.capabilities(model);
     signal.throwIfAborted();
-    const workers = createCliWorkerPool();
+    const workers = createCliWorkerPool({
+      deadlineMs: () => resolveAdvanced("workerDeadline", { app: config.advanced }).value * 1000,
+    });
     resources.push(() => workers.dispose());
-    const documents = createDocumentServices();
+    const documents = createDocumentServices(() => ({
+      extractionMs: resolveAdvanced("extractionTimeout", { app: config.advanced }).value * 1000,
+      embeddingIdleMs: resolveAdvanced("embeddingIdle", { app: config.advanced }).value * 1000,
+    }));
     resources.push(() => documents.dispose());
     const workbench = new WorkbenchService(
       {
@@ -187,7 +201,17 @@ export async function runTurn(
       app: "cli",
     });
     const processHost = createCliProcessHost();
-    const programs = new ProgramRunner({ host: processHost, clock: nodeClock, leases });
+    const app = <K extends AdvancedKey>(key: K) => resolveAdvanced(key, { app: config.advanced }).value;
+    const programs = new ProgramRunner({
+      host: processHost,
+      clock: nodeClock,
+      leases,
+      limits: () => ({
+        maxBackground: app("backgroundPrograms"),
+        logsKept: app("runLogsKept"),
+        logBytes: app("runLogMB") * 1024 * 1024,
+      }),
+    });
     resources.push(() => programs.stopAll());
     const snapshot = await workbench.open(options.workbench);
     signal.throwIfAborted();
@@ -252,7 +276,12 @@ export async function runTurn(
         ...unavailableWebTools(config.webAccess),
         ...unavailablePartsTools(config.webAccess.enabled, partsSettings, partsPlugin),
       ],
-      maxToolCallsPerTurn: config.limits.maxToolCallsPerTurn,
+      // --advanced values apply to this run only and are not recorded in the session (REQ-FUNC-181db660).
+      advanced: {
+        app: () => config.advanced,
+        workbench: () => workbench.getSnapshot().config.advanced,
+        run: () => options.advanced,
+      },
       model: () => model,
       assertWritable: () => workbench.assertSessionWritable(),
       scrub: (text) => logger.scrub(text),

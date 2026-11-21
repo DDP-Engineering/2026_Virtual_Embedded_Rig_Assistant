@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-10d85a47"
+
+title = "Remove a set of bookmarks atomically"
+
+status = "active"
+
+requirement = """
+When the engineer removes one bookmark or a selected set, including Select all over the filtered rows, the session engine shall remove exactly those bookmarks in one transaction, refusing the whole request when any message is not a user message of the session, and never delete a message.
+"""
+
+verification = "Core test: removing two of three bookmarks leaves the third and every message; a request naming an unknown message leaves all three bookmarks and fails INVALID. Renderer test: Select all with an active filter selects only matching rows, and Remove selected sends exactly their ids."
+
+affected_paths = ["05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/libraries/shared/src/ipc.ts", "05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/apps/desktop/src/renderer/components/session/bookmarks-tab.tsx", "05_Software/src/apps/desktop/src/renderer/components/session/use-bookmarks.ts", "05_Software/src/apps/desktop/src/renderer/mocks/sessions.ts", "05_Software/src/apps/desktop/src/main/ipc-router.test.ts", "05_Software/src/apps/desktop/src/preload/bridge.test.ts", "05_Software/src/libraries/core/src/sessions/bookmarks.test.ts", "05_Software/src/apps/desktop/src/renderer/components/session/bookmarks-tab.test.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/sessions/bookmarks.test.ts", "05_Software/src/apps/desktop/src/renderer/components/session/bookmarks-tab.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-20
+updated = 2026-11-20

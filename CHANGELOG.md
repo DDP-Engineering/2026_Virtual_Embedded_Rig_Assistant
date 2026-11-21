@@ -9,6 +9,8 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 ### Added
 
 - Add durable Plan feedback, revision-only review requests, safe retry restoration and live session privacy refresh.
+- Sessions keep running in background workbenches, within Concurrent turns; the sidebar shows, opens and stops them.
+- Verbose chat shows the send date and time beneath user messages, alongside token usage.
 - Chat replies and code blocks offer exact copying; explicit Bash and PowerShell blocks run in compatible terminals.
 - Desktop links delegated sessions, shows their outcomes and lets users stop a running child.
 - Agents can launch, monitor, stop and collect results from delegated inspection sessions.
@@ -45,6 +47,10 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ### Changed
 
+- Changes separates the file history and diff into independently scrolling, resizable panes.
+- Changes paginates long session histories and retains the selected diff across pages.
+- Chat shows one working indicator below the composer at every detail level.
+- Long chats use calibrated token estimates and compact in the background; context summaries survive restarts.
 - Close VERA and delete .vera/vera.db, .vera/vera.db-wal and .vera/vera.db-shm from earlier builds.
 - Switch local embedding models per workbench while keyword search continues during the background rebuild.
 

@@ -11,6 +11,8 @@ tests/e2e/workbench.spec.ts and mock.spec.ts. [Application data](app-data.md) ow
 owns the shell, appearance, language and layout; [workbench editor](workbench-editor.md) owns the
 creation page, the editor page and sidebar navigation.
 Tool path confinement, read/list/glob/grep and worker deadlines route to [File tools](file-tools.md).
+Desktop runtime retention (the foreground workbench, busy previous workbenches kept open in the background,
+idle release, reopen in place) starts in src/apps/desktop/src/main/workbench-runtimes.ts.
 The current database schema, initialization and row repositories route to [Workbench storage](workbench-storage.md).
 
 [Verification fixtures](demo-onboarding.md) routes the fictional board corpus and PDF sources under tests/fixtures, used by isolated tests and evaluation/smoke harnesses.
@@ -78,13 +80,15 @@ sidebar are described in [workbench editor](workbench-editor.md).
   anyway approval). Modern office files count as documents and only matched legacy .doc/.ppt/.xls and RTF files count
   as not indexed (officePending, via selectDocuments' `unindexed` hook); `~$` Office owner files are neither.
   relativeFolder returns a forward-slash path inside the root (an alias above the root is accepted) and DENIED for the root, outside, ignored or linked folders, including links looping back to the root. Generated include patterns use documentFolderPattern() (bracket-escaped, leading '!' as @(!)); documentPatternFolder() reads literal ones back.
+- WorkbenchService.locate(folder) returns the canonical folder open uses (INVALID relative, NOT_FOUND missing)
+  without opening it; Desktop matches open requests to workbench runtimes by it.
 - WorkbenchService.create(existingAbsoluteFolder,name,{config?,instructions?}), open(folder), close().
   create merges the optional patch (name excluded) over defaults and validates it before any write
   (INVALID leaves no workbench.yaml); WORKBENCH.md gets the given instructions or the template, and an
   existing WORKBENCH.md is kept. The CLI calls the two-argument form. Snapshots contain
   canonical folder/config/readOnly/warnings; invalid YAML reports line/column, invalid configuration
   reports path/line, and any format other than 1 reports CONFIG_INVALID at path format before runtime writes.
-- Core-only getSnapshot supplies a detached current snapshot and assertSessionWritable immediately checks ordinary lock paths plus the owned pid/token before session database changes. Main session lifecycle drains active turns before switches/close.
+- Core-only getSnapshot supplies a detached current snapshot and assertSessionWritable immediately checks ordinary lock paths plus the owned pid/token before session database changes. Desktop main keeps one WorkbenchService instance per open workbench runtime (main/workbench-runtimes.ts): the foreground runtime is the workbench the window shows; a previous foreground with owned session work (queued operations, turns, undecided approvals, compaction) stays open in the background with its own lock, database, write queue, ingest and grants, and is released (sessions drained, program runs of its folder stopped, workbench closed) when that work settles, or at once when it is idle. Opening the current folder reopens it in place without draining its sessions, and opening a background folder brings its runtime back; a failed open or create changes no runtime; Close releases only the foreground; app exit closes the sessions of every runtime, then every workbench. A failed release is logged and the runtime stays retained for the exit drain. Session requests and subscriptions reach the runtime that holds their session whatever the foreground ([Sessions](sessions.md)); a foreground change clears no subscription, and the registry's `changed` option fires after each lifecycle change and settled release.
 - Core-only getWriteQueue supplies the shared queue for application config/pinned saves and every session write. File saves validate ownership/current state inside their queue callback; close and replacement drain admitted writes before storage disposal.
 - Core-only getDatabase supplies owned writable SQLite or a live-owner read-only snapshot. Open acquires
   the lock (or falls back to read-only), then openDb checks the schema before any database or recents
@@ -104,7 +108,7 @@ sidebar are described in [workbench editor](workbench-editor.md).
   (REQ-FUNC-2336bfd2). Shared docs.gitignore (default true, format 1) switches the .gitignore part for indexing, the documentation
   scan/preview (workbench.scanDocs/previewDocs carry `gitignore`) and the Files tab; the agent PathGuard, files(query) and
   relativeFolder keep .veraignore only (REQ-FUNC-eade110e, REQ-UX-adae0c2f).
-- Shared docs.maxFileMB (optional positive MB, 1 MB = 1 MiB) and docs.maxFiles (positive integer,
+- Shared docs.maxFileMB (optional positive MB of at most 500, 1 MB = 1 MiB; the PDF/Office size limit, 100 MiB when unset) and docs.maxFiles (positive integer,
   default 10000) stay at format 1; a patch maxFileMB null removes it, and invalid values fail
   workbenchSchema/workbenchPatchSchema (REQ-DATA-9fd427f1, REQ-DATA-3bae7e69). maxFiles is stored
   and validated only; nothing enforces it yet. Documents & RAG shows "Maximum file size (MB)" and
@@ -145,6 +149,7 @@ sidebar are described in [workbench editor](workbench-editor.md).
 | Format/extensions/validation | shared workbench.ts, core parseConfig | shared/core workbench tests |
 | Warning-free review config versus ordinary warnings | WorkbenchService.readConfig/getConfig; desktop SessionsHost.run | service.test.ts; main/plan-review{,-boundary}.test.ts |
 | Lifecycle/ownership/failure | core WorkbenchService | service.test.ts, native live lock acceptance |
+| Desktop runtime retention/release | main/workbench-runtimes.ts, main/sessions.ts | workbench-runtimes.test.ts, workbench-runtimes.replay.test.ts, tests/e2e/workbench-runtimes.spec.ts |
 | Recents/order | WorkbenchService, SettingsService, shared ordering.ts, workbench-navigation.tsx | service/settings/ordering tests, workspace.test.ts, deleted-recent and sidebar-order E2E |
 | Ignore/completion | createIgnoreRules, WorkbenchService.files | confined completion tests |
 | Dialog instrumentation | main/index.ts | actual build-mode.test.ts, instrumented native picker |
@@ -161,6 +166,9 @@ sidebar are described in [workbench editor](workbench-editor.md).
 - REQ-FUNC-3815bacc / REQ-FUNC-38107da8 — create with initial configuration; invalid draft rejected before writes.
 - REQ-FUNC-4ee03ca8 / REQ-FUNC-ad5868a2 / REQ-FUNC-817bbf83 / REQ-FUNC-03b73d56 — bounded documentation scan, selection preview with its count guard and in-workbench relative folders.
 - REQ-TEST-6a6c266d — compiled instrumented picker and release exclusion.
+- REQ-FUNC-db6bacf7 / REQ-FUNC-4747d310 — a busy previous workbench finishes its turns in the background while the shown one runs its own.
+- REQ-FUNC-0dfa01fd / REQ-FUNC-0278c7ba / REQ-REL-b10ee7aa — idle and settled release, reopen in place, failed open changes nothing.
+- REQ-FUNC-4af886f8 / REQ-REL-436f00da — Close releases only the foreground; exit closes every runtime.
 
 ## Files
 
@@ -173,6 +181,9 @@ All paths below are relative to05_Software.
 - src/libraries/core/src/{ports,index}.ts — WorkbenchHost and public exports.
 - src/libraries/core/package.json and package-lock.json — exact yaml/ulid/ignore pins.
 - src/apps/desktop/src/main/index.ts — service wiring, native picker, handlers and shutdown.
+- src/apps/desktop/src/main/workbench-runtimes.ts with workbench-runtimes.test.ts (scripted runtimes) and
+  workbench-runtimes.replay.test.ts (real services, held replay turn) — foreground and background runtimes.
+- tests/e2e/workbench-runtimes.spec.ts — native A/B replay turns across navigation.
 - src/apps/desktop/src/preload/bridge.ts and bridge.test.ts — scoped subscriptions.
 - src/apps/desktop/src/renderer/api/{ipc,subscriptions}.ts — validated API subscriptions.
 - src/apps/desktop/src/renderer/mocks/mockApi.ts and mockApi.test.ts — contract fixtures.

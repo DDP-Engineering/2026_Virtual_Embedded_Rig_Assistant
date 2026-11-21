@@ -5,6 +5,16 @@ export interface ProviderFailure {
   retryAfter?: string | undefined;
   offline?: boolean;
   context?: boolean;
+  /** Seconds the request waited for response headers before its own timer gave up. */
+  timeout?: number;
+}
+/** A model request that ran out of time; the message names the limit so the user knows what to raise. */
+export function timeoutError(milliseconds: number): VeraError {
+  return {
+    code: "PROVIDER",
+    messageKey: "provider.timeout",
+    params: { reason: "timeout", seconds: Math.max(1, Math.round(milliseconds / 1000)) },
+  };
 }
 export function mapProviderError(
   error: unknown,
@@ -30,6 +40,7 @@ export function mapProviderError(
         : {}),
     };
   }
+  if (failure.timeout !== undefined) return timeoutError(failure.timeout * 1000);
   const raw = error instanceof Error ? error.message : typeof error === "string" ? error : "";
   const message = scrub(raw);
   if (

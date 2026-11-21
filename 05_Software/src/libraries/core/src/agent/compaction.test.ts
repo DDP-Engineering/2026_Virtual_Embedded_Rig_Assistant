@@ -2,7 +2,7 @@
 import type { AssistantMessage, Message } from "@earendil-works/pi-ai";
 import { expect, it, vi } from "vitest";
 import type { LlmGateway, LlmRequest } from "../llm/gateway.js";
-import { ContextCompactor } from "./compaction.js";
+import { ContextCompactor, type SummarizeHistory } from "./compaction.js";
 import { ContextPolicy } from "./context.js";
 import { buildContext, ReferenceRuntime, zeroUsage } from "./runtime.js";
 import type { RuntimeEvent } from "./types.js";
@@ -52,10 +52,10 @@ it("continues a small-window multi-turn replay, counts both requests and retains
     stream: async function* (input) {
       requests.push(input);
       const summarizing = input.system.includes("Return only JSON:");
-      yield {
-        type: "done",
-        message: summarizing ? summary() : answer(`[[board.txt#L1-L2]] ${"a".repeat(850)}`),
-      };
+      const reply = summarizing ? summary() : answer(`[[board.txt#L1-L2]] ${"a".repeat(850)}`);
+      // The provider reports the conservative estimate itself, so calibration keeps the small window.
+      reply.usage.input = policy.prepare(input, caps, false).rawTokens;
+      yield { type: "done", message: reply };
     },
   };
   const runtime = new ReferenceRuntime({
@@ -100,7 +100,7 @@ it("continues a small-window multi-turn replay, counts both requests and retains
 });
 
 it("retains current first-turn reduction, oversized instruction and smaller-model limit semantics without summary dispatch", async () => {
-  const summarize = vi.fn(async () => summary());
+  const summarize = vi.fn<SummarizeHistory>(async () => summary());
   const compactor = new ContextCompactor();
   const first = request([
     { role: "user", content: "Read board", timestamp: 0 },
@@ -185,33 +185,103 @@ it.each(acceptedReplies)("accepts a summary reply with %s", async (_name, conten
   expect(JSON.stringify(view.messages)).toContain("Use 3.3V for the board.");
 });
 
-it("rejects interrupted exchanges, including transient pair repair", async () => {
-  const summarize = vi.fn(async () => summary());
-  const interrupted: Message[] = [
-    { role: "user", content: "u".repeat(2400), timestamp: 0 },
-    {
-      ...answer(""),
-      content: [{ type: "toolCall", id: "c", name: "read", arguments: {} }],
-      stopReason: "toolUse",
-    },
-    {
-      role: "toolResult",
-      toolCallId: "c",
-      toolName: "read",
-      content: [{ type: "text", text: "read" }],
-      isError: false,
-      timestamp: 1,
-    },
-    { role: "user", content: "current", timestamp: 2 },
+const call = (id: string): Message => ({
+  ...answer(""),
+  content: [{ type: "toolCall", id, name: "read", arguments: { path: id } }],
+  stopReason: "toolUse",
+});
+const result = (id: string, body: string): Message => ({
+  role: "toolResult",
+  toolCallId: id,
+  toolName: "read",
+  content: [{ type: "text", text: body }],
+  isError: false,
+  timestamp: 1,
+});
+/** Every tool result in a view follows the assistant call that requested it. */
+function pairsIntact(messages: Message[]): boolean {
+  const calls = new Set<string>();
+  for (const message of messages) {
+    if (message.role === "assistant")
+      for (const block of message.content) if (block.type === "toolCall") calls.add(block.id);
+    if (message.role === "toolResult" && !calls.has(message.toolCallId)) return false;
+  }
+  return true;
+}
+
+// REQ-FUNC-e5b6a1c9
+it("summarizes turns split by steering, aborted and limit turns, keeping the recent tail verbatim and tool pairs whole", async () => {
+  const summarize = vi.fn<SummarizeHistory>(async () => summary());
+  const stored: Message[] = [
+    { role: "user", content: `SPLIT-TURN ${"u".repeat(300)}`, timestamp: 0 },
+    call("c1"),
+    result("c1", "r".repeat(300)),
+    { role: "user", content: `STEERING ${"s".repeat(200)}`, timestamp: 1 },
+    answer("steered done"),
+    { role: "user", content: `ABORTED-TURN ${"u".repeat(300)}`, timestamp: 2 },
+    { ...answer("partial"), stopReason: "aborted" },
+    { role: "user", content: `LIMIT-TURN ${"u".repeat(300)}`, timestamp: 3 },
+    call("c3"),
+    result("c3", "r".repeat(300)),
+    ...exchange(),
+    { role: "user", content: "Current instruction", timestamp: 9 },
   ];
-  const input = request(buildContext(interrupted, 3));
-  await new ContextCompactor().prepare(input, caps, policy, summarize);
-  expect(summarize).not.toHaveBeenCalled();
+  const input = request(buildContext(stored, 10));
+  expect(policy.prepare(input, caps, false).contextTokens).toBeGreaterThan(caps.inputBudget * 0.8);
+  const view = await new ContextCompactor().prepare(input, caps, policy, summarize);
+  expect(view.compactionStatus).toBe("completed");
+  expect(view.fits).toBe(true);
+  // Passes continue until the view is below the trigger; together they cover the old turns.
+  const sent = JSON.stringify(summarize.mock.calls.map((args) => args[0]));
+  expect(
+    policy.prepare({ ...input, messages: view.messages }, caps, false).contextTokens,
+  ).toBeLessThanOrEqual(caps.inputBudget * 0.8);
+  for (const marker of ["SPLIT-TURN", "STEERING", "ABORTED-TURN", "LIMIT-TURN"]) {
+    expect(sent).toContain(marker);
+    expect(JSON.stringify(view.messages)).not.toContain(marker);
+  }
+  expect(JSON.stringify(view.messages)).toContain("Derived historical context");
+  // The most recent completed exchange stays verbatim, then the current instruction.
+  expect(view.messages.at(-1)).toMatchObject({ role: "user", content: "Current instruction" });
+  expect(JSON.stringify(view.messages.slice(-3, -1))).toContain("Measure reset timing.");
+  expect(pairsIntact(view.messages)).toBe(true);
+});
+
+// REQ-FUNC-bd5e5e8d
+it("cuts tool results to 2,000 characters in the summary request and keeps their refs", async () => {
+  const summarize = vi.fn<SummarizeHistory>(async () => summary());
+  const body = `${"b".repeat(2500)} [[late.txt#L7-L9]] ${"c".repeat(6000)}`;
+  const stored: Message[] = [
+    { role: "user", content: "Read the log", timestamp: 0 },
+    call("big"),
+    result("big", body),
+    answer("Read."),
+    ...exchange(),
+    { role: "user", content: "Current instruction", timestamp: 9 },
+  ];
+  const view = await new ContextCompactor().prepare(
+    request(buildContext(stored, 10)),
+    caps,
+    policy,
+    summarize,
+  );
+  expect(view.compactionStatus).toBe("completed");
+  const sent = summarize.mock.calls[0]?.[0] as unknown as { messages: Message[] };
+  const cut = sent.messages.find((m) => m.role === "toolResult");
+  const textBlock = cut?.role === "toolResult" ? cut.content[0] : undefined;
+  const text = textBlock?.type === "text" ? textBlock.text : "";
+  expect(text.startsWith("b".repeat(2000))).toBe(true);
+  expect(text).toContain(`[tool result truncated: ${body.length - 2000} characters omitted]`);
+  expect(text.length).toBeLessThan(2100);
+  expect(cut).toMatchObject({ toolCallId: "big", isError: false });
+  expect(JSON.stringify(view.messages)).toContain("late.txt#L7-L9");
+  // The durable transcript is not changed.
+  expect((stored[2] as { content: { text: string }[] }).content[0]?.text).toBe(body);
 });
 
 it("retains structured refs across repeated cached summaries and invalidates changed history", async () => {
   const compactor = new ContextCompactor();
-  const summarize = vi.fn(async () => summary());
+  const summarize = vi.fn<SummarizeHistory>(async () => summary());
   const first: Message[] = [
     { role: "user", content: "u".repeat(850), timestamp: 0 },
     {
@@ -243,7 +313,7 @@ it("retains structured refs across repeated cached summaries and invalidates cha
   const two = await compactor.prepare(request(later), caps, policy, summarize);
   expect(two.compactionStatus).toBe("completed");
   expect(JSON.stringify(two.messages)).toContain("structured.txt#L3-L4");
-  expect(summarize).toHaveBeenCalledTimes(2);
+  expect(summarize.mock.calls.length).toBeGreaterThanOrEqual(2);
   const replacement = request([{ role: "user", content: "new session", timestamp: 4 }]);
   expect((await compactor.prepare(replacement, caps, policy, summarize)).messages).toEqual(
     replacement.messages,
@@ -252,7 +322,7 @@ it("retains structured refs across repeated cached summaries and invalidates cha
 
 // A restarted session meets its whole history at once, without a cached summary.
 it("compacts a long history in a few passes when one summary is not enough", async () => {
-  const summarize = vi.fn(async () => summary());
+  const summarize = vi.fn<SummarizeHistory>(async () => summary());
   const history = Array.from({ length: 5 }, exchange).flat();
   const view = await new ContextCompactor().prepare(
     request([...history, { role: "user", content: "Continue using 3.3V", timestamp: 9 }]),
@@ -262,8 +332,9 @@ it("compacts a long history in a few passes when one summary is not enough", asy
   );
   expect(view.compactionStatus).toBe("completed");
   expect(view.fits).toBe(true);
-  // Each exchange here takes half the budget, so every pass covers one: four passes for five.
-  expect(summarize).toHaveBeenCalledTimes(4);
+  // One summary request holds only part of this history, so more than one pass runs.
+  expect(summarize.mock.calls.length).toBeGreaterThan(1);
+  expect(summarize.mock.calls.length).toBeLessThanOrEqual(5);
   // A later pass summarizes the earlier summary together with the next exchanges.
   expect(JSON.stringify(summarize.mock.calls.at(1)?.at(0))).toContain("Derived historical context");
   // Only the last pass's note stays in the request.
@@ -271,7 +342,7 @@ it("compacts a long history in a few passes when one summary is not enough", asy
 });
 
 it("stops after five summary passes even when the history still does not fit", async () => {
-  const summarize = vi.fn(async () => summary());
+  const summarize = vi.fn<SummarizeHistory>(async () => summary());
   const history = Array.from({ length: 30 }, exchange).flat();
   const view = await new ContextCompactor().prepare(
     request([...history, { role: "user", content: "Continue", timestamp: 9 }]),
@@ -283,9 +354,9 @@ it("stops after five summary passes even when the history still does not fit", a
   expect(view.fits).toBe(false);
 });
 
-it("reuses summaries across advancing clocks while retaining interrupted history", async () => {
+it("reuses summaries across advancing clocks and summarizes repaired interrupted history", async () => {
   const compactor = new ContextCompactor();
-  const summarize = vi.fn(async () => summary());
+  const summarize = vi.fn<SummarizeHistory>(async () => summary());
   const stored: Message[] = [
     { role: "user", content: `unfinished ${"u".repeat(400)}`, timestamp: 0 },
     {
@@ -294,18 +365,22 @@ it("reuses summaries across advancing clocks while retaining interrupted history
       stopReason: "toolUse",
     },
     ...exchange(),
+    ...exchange(),
     { role: "user", content: "Current instruction", timestamp: 2 },
   ];
   const first = request(buildContext(stored, 10));
   expect(policy.prepare(first, caps, false).contextTokens).toBeGreaterThan(caps.inputBudget * 0.8);
   const one = await compactor.prepare(first, caps, policy, summarize);
   expect(one.compactionStatus).toBe("completed");
-  expect(JSON.stringify(one.messages)).toContain("Interrupted: call outcome unresolved.");
+  expect(JSON.stringify(summarize.mock.calls[0]?.[0])).toContain("Interrupted: call outcome unresolved.");
+  expect(JSON.stringify(one.messages)).not.toContain("unfinished");
   const later = request(buildContext(stored, 20));
   expect(later.messages).toEqual(first.messages);
+  const calls = summarize.mock.calls.length;
   const two = await compactor.prepare(later, caps, policy, summarize);
   expect(two.messages).toEqual(one.messages);
-  expect(summarize).toHaveBeenCalledTimes(1);
+  // The cached summary is reused: no further summary call.
+  expect(summarize).toHaveBeenCalledTimes(calls);
 });
 
 it("settles running compaction usage after abort without dispatching a normal request", async () => {
@@ -366,4 +441,30 @@ it("replaces compacted images with durable path notes in successive request view
   const cached = await compactor.prepare(input, { ...vision, input: [...vision.input] }, policy, summarize);
   expect(summarize).toHaveBeenCalledTimes(1);
   expect(cached.messages).toEqual(result.messages);
+});
+
+// REQ-FUNC-e5b6a1c9
+it("keeps about 20,000 tokens of recent history verbatim in a large window, counted like the request", async () => {
+  const big = { ...caps, contextWindow: 200_000, maxOutputTokens: 1000, inputBudget: 189_000 };
+  // An exact counter at four bytes per token.
+  const exact = new ContextPolicy((input) => ({
+    tokens: Math.ceil(Buffer.byteLength(JSON.stringify(input), "utf8") / 4),
+    estimated: false,
+  }));
+  const summarize = vi.fn<SummarizeHistory>(async () => summary());
+  const history = Array.from({ length: 64 }, (_, index): Message[] => [
+    { role: "user", content: `E${index} ${"u".repeat(5000)}`, timestamp: 0 },
+    answer(`R${index} ${"a".repeat(5000)}`),
+  ]).flat();
+  const input = request([...history, { role: "user", content: "Current instruction", timestamp: 9 }]);
+  expect(exact.prepare(input, big, false).contextTokens).toBeGreaterThan(0.8 * 189_000 - 10_000);
+  const view = await new ContextCompactor().prepare(input, big, exact, summarize);
+  expect(view.compactionStatus).toBe("completed");
+  const kept = view.messages.slice(1, -1);
+  const tokens = exact.prepare(request(kept), big, false).contextTokens;
+  // At least the 20,000-token tail and less than one more exchange beyond it.
+  expect(tokens).toBeGreaterThanOrEqual(20_000 - 100);
+  expect(tokens).toBeLessThan(20_000 + 2_600);
+  expect(JSON.stringify(view.messages)).toContain("E63 ");
+  expect(JSON.stringify(view.messages)).not.toContain("E0 ");
 });

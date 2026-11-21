@@ -1,6 +1,6 @@
 # Chat and sessions
 
-A session is one conversation with the agent inside a workbench. VERA saves every session in the workbench, so you can close the app and continue later. Several sessions can run at the same time.
+A session is one conversation with the agent inside a workbench. VERA saves every session in the workbench, so you can close the app and continue later. Several sessions can run at the same time. At most three turns run at once across all open workbenches, or the **Concurrent turns** set in [Advanced settings](advanced-settings.md); a message sent at the limit stays unsent in the message box until a turn ends.
 
 ## Start and manage sessions
 
@@ -8,7 +8,11 @@ A session is one conversation with the agent inside a workbench. VERA saves ever
 - The first message becomes the title. **Rename** sets your own title.
 - **Search sessions** finds sessions by title and message text.
 - Each session row shows the time of its last activity and has a menu with **Export Markdown**, **Export JSON**, **Rename**, **Move up**, **Move down**, **Archive** and **Delete**.
-- A session shows its state: **Idle**, **Running**, **Awaiting approval** or **Error**.
+- A session shows its state: **Idle**, **Running**, **Awaiting approval** or **Error**. A running session has a turning mark beside its time, and a session awaiting approval a shield.
+
+## Sessions in other workbenches
+
+Turns keep running when you open another workbench. A workbench row in the sidebar shows a mark with the number of its running and waiting sessions, also when the row is collapsed; a shield means a session awaits your approval. Select the mark (or focus it and press Enter) to list those sessions. Choose a session to open it in its workbench, where you can review its approval, or **Stop** to end only that turn. While turns run, **Workbenches** shows how many run and the **Concurrent turns** limit. At the limit, a new message stays in the message box: wait for a turn to finish or stop one in the sidebar, then send it again.
 
 ## Write a message
 
@@ -46,7 +50,7 @@ To stop a running child, open it and use **Stop** in its composer. The parent ca
 
 | Level | What the conversation shows |
 |---|---|
-| **Verbose** | Every tool call with its arguments and output, the model's reasoning, and token statistics under each of your messages |
+| **Verbose** | Every tool call with its arguments and output, the model's reasoning, and, under each of your messages, the date and time you sent it and its token statistics |
 | **Normal** | Routine tool calls grouped into an expandable **Operations** line |
 | **Minimal** | Only the conversation; routine tool calls are hidden and a working indicator shows while the agent works |
 
@@ -60,7 +64,7 @@ For models that support it, **Reasoning level** offers **Default** and the level
 
 ## Long sessions and context
 
-The context indicator shows **Context used** as a percentage of the model's context window; select it for usage and limits. When a session grows too long for the model, VERA summarizes older history (**Summarizing history…**). The full transcript stays saved and visible.
+The context indicator shows **Context used** as a percentage of the model's context window; select it for usage and limits. When a session grows too long for the model, VERA summarizes older history (**Summarizing history…**). Meanwhile the indicator spins and keeps the last percentage, which updates when the next request is ready. The full transcript stays saved and visible.
 
 **Find in conversation** searches the current session. The marker lane at the left edge of the conversation has one marker per message of yours; point at a marker to preview the message and select it to jump there.
 
@@ -93,6 +97,8 @@ Privacy or model changes refresh displayed content. An open editor keeps unsaved
 Hover over one of your messages or use Tab to reach its bookmark icon. Select **Bookmark** to mark it; the filled icon uses **Remove bookmark** to clear it. The rail preview shows the first line of your message and the start of the agent reply, with the same bookmark action. Changes appear immediately; a failed save restores the previous state and shows an error. Archived sessions and read-only workbenches allow viewing only.
 
 Bookmarked rail markers are filled in the primary color and slightly longer. A grouped marker is marked when any message in it has a bookmark. Use **Next bookmark** (**Ctrl+Alt+N**) or **Previous bookmark** (**Ctrl+Alt+P**) to jump between marked messages; navigation stops at the first or last bookmark. Change these keys in **Settings → Keyboard shortcuts**.
+
+The **Bookmarks** tab of the right panel lists this conversation's bookmarks in order, each with the start of your message and of the reply. Turn it on in **Edit workbench > Interface > Right panel tabs**. Type in **Filter bookmarks** to match message or reply text; the count then shows matches out of the total. Select a row or press Enter to jump to that message in Chat; the arrow keys move between rows. Select rows (or **Select all** for the filtered rows) and choose **Remove selected**, or remove one row with its trash icon. **Clear all** removes every bookmark of the conversation after you confirm, whatever the filter shows. Removing a bookmark never deletes a message; if removal fails, nothing changes and an error appears. Archived sessions and read-only workbenches allow filtering and jumping only.
 
 ## Shell commands
 

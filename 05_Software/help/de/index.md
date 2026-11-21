@@ -31,6 +31,7 @@ Jedes installierte Plugin hat eine eigene Hilfeseite: was das Plugin tut, was es
 | [Anbieter und Modelle](providers.md) | OpenAI, ChatGPT-Abonnement, LM Studio, Ollama und andere Endpunkte |
 | [Plugins](plugins.md) | Katalog, Installation, Prüfung und Vertrauen, Abhängigkeiten, Konfiguration, Pakete |
 | [Einstellungen](settings.md) | Darstellung, Sprache, Aktualisierungen, Webzugriff, Tastenkombinationen |
+| [Erweiterte Einstellungen](advanced-settings.md) | Grenzen pro Anwendung, Workbench oder Sitzung |
 | [Tastenkombinationen](shortcuts.md) | Alle Tastenkombinationen von VERA |
 | [Offline-Installation](offline-install.md) | VERA und Plugins auf einem Computer ohne Netzwerk installieren |
 | [Fehlerbehebung](troubleshooting.md) | Häufige Probleme, Protokolle und wo VERA seine Daten ablegt |

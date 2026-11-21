@@ -85,3 +85,19 @@ it.each([true, false])(
     });
   },
 );
+
+// REQ-DATA-d9ca38e5
+it("projects the derived context note of a compaction record with the content policy", () => {
+  const event = sessionEventSchema.parse({
+    type: "context.compacted",
+    covered: 4,
+    fingerprint: "abc",
+    note: "[Derived historical context] secret",
+    refs: [],
+    images: [],
+  });
+  const scrub = (text: string) => text.replaceAll("secret", "[REDACTED]");
+  expect(sessionOutput(event, scrub, scrub)).toMatchObject({
+    note: "[Derived historical context] [REDACTED]",
+  });
+});

@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-b1a2db33"
+
+title = "Return up to the resolved web search results"
+
+status = "active"
+
+requirement = """
+When web_search runs, VERA shall request at most the resolved Web search results, an integer from 1 to 8 with default 5 set for the application, using that count when the call gives no limit and as the ceiling for a larger requested limit.
+"""
+
+verification = "With 3, web_search without a limit and with limit 8 both send limit 3 to the provider; limit 2 sends 2."
+
+affected_paths = ["05_Software/src/libraries/shared/src/advanced-settings.ts", "05_Software/src/libraries/core/src/tools/web.ts"]
+
+linked_tests = ["05_Software/src/libraries/shared/src/advanced-settings.test.ts", "05_Software/src/libraries/core/src/tools/web-limits.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-21
+updated = 2026-11-21

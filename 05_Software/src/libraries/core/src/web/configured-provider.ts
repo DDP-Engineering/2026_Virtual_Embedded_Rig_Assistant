@@ -26,7 +26,13 @@ export class ConfiguredWebProvider implements WebProvider {
     private readonly host: {
       config(): WebAccessSettings;
       getKey(provider: WebProviderId, signal: AbortSignal): Promise<string | undefined>;
-      create?: (provider: WebProviderId, key: string | undefined) => WebProvider;
+      create?: (
+        provider: WebProviderId,
+        key: string | undefined,
+        options: { timeoutMs?: number },
+      ) => WebProvider;
+      /** The application's Web request timeout, read at each request (REQ-FUNC-5e129df5); 30 s when absent. */
+      timeoutMs?: () => number;
     },
   ) {}
   search(args: WebSearchRequest, signal: AbortSignal) {
@@ -139,14 +145,16 @@ export class ConfiguredWebProvider implements WebProvider {
       if (revision !== this.generation || !this.host.config().enabled)
         throw new WebAccessBlocked("cancelled");
       if (mode === "api-key" && !key) throw new WebAccessBlocked("key-required");
+      const timeoutMs = this.host.timeoutMs?.();
+      const timing = timeoutMs === undefined ? {} : { timeoutMs };
       const provider =
-        this.host.create?.(providerId, key) ??
+        this.host.create?.(providerId, key, timing) ??
         (providerId === "exa"
-          ? new ExaWebProvider(key ? { apiKey: key } : {})
+          ? new ExaWebProvider({ ...(key ? { apiKey: key } : {}), ...timing })
           : providerId === "tavily"
-            ? new TavilyWebProvider(key ? { apiKey: key } : {})
+            ? new TavilyWebProvider({ ...(key ? { apiKey: key } : {}), ...timing })
             : // Brave has no anonymous mode, so the checks above leave a key here.
-              new BraveWebProvider({ apiKey: key ?? "" }));
+              new BraveWebProvider({ apiKey: key ?? "", ...timing }));
       const result =
         kind === "search"
           ? await provider.search(args as WebSearchRequest, signal)

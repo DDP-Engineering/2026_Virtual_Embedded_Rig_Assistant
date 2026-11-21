@@ -34,6 +34,9 @@ strict public projections. Renderer holds a password draft until save/cancel and
 - Settings > Providers stores the Accepts images switch by exact model ID within each custom
   connection. The enabled IDs are saved and returned as imageModels. An absent or empty list leaves
   every model off. LM Studio rediscovery preserves the saved choices by ID.
+- Custom and LM Studio editors offer a required Response timeout (s) field, prefilled with the saved value or
+  300, and save it as integer responseTimeoutSeconds 10-3600; the schema refuses other values. A configuration
+  without the field (CLI, older files) means 300 s in core (REQ-FUNC-f19cac5e, REQ-UX-2ccfac13).
 - OpenAI model omission retains it, empty string clears it; credential omission retains, empty clears.
   OpenAI remove clears the key while keeping model configuration; custom remove clears configuration/key.
 - Exact formats, defaults, limits and recovery: [credentials spec](../specs/REQ-SEC-fe4d5c4c.md).
@@ -90,26 +93,6 @@ strict public projections. Renderer holds a password draft until save/cancel and
 - REQ-FUNC-6c666347 — validated provider IPC boundary.
 - REQ-UX-fb4b9424 — masked localized and accessible provider editor.
 - REQ-UX-1eb152b7 and REQ-FUNC-8446181d — localized per-model image opt-in, settings persistence and invalid ID rejection.
-
-## Architecture
-
-```mermaid
-flowchart LR
- UI[Providers form + Chatgpt] --> API[typed invoke + metadata Query]
- API --> IPC[shared strict schemas + authorized router]
- IPC --> Auth[ChatgptAuth]
- Auth --> Subscription[core subscription Models]
- Subscription --> View[subscription-store / chatgpt slot]
- View --> Store
- Auth --> External[validated app.openExternal / system browser]
- IPC --> Main[ProviderSettings]
- Main --> Settings[core SettingsService schemaVersion 1]
- Main --> Store[main CredentialFile mutex]
- Store --> Crypto[safeStorage]
- Store --> Files[atomic credentials.json]
- Store --> Registry[known-secret set and logger hook]
- Registry --> Scrub[core scrub / error and event sanitization]
-```
 
 ## Files
 

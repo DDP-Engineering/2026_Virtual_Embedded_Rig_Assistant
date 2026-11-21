@@ -4,7 +4,7 @@ The workbench owns one chokidar watcher and one serialized ingest queue while it
 has writable storage. A root watcher sees new included directories and root
 .vera/.veraignore changes; permanent ignored segments and links are excluded. Each
 batch reconciles docs.include minus docs.exclude through confined discovery after
-a trailing 1000 ms debounce. Config saves request reconciliation. Reopen also
+a trailing debounce of the resolved Indexing pause (application setting, default 1000 ms, REQ-FUNC-2fba7b9c). Config saves request reconciliation. Reopen also
 reconciles stale persisted paths. Empty include means an empty selection.
 File-event admission matches the same picomatch engine as tinyglobby, so writes
 outside selection cannot reset document debounce. Policy edits refresh admission.
@@ -17,8 +17,9 @@ outside that queue, allowing close/switch to abort its processor.
 Eligible ordinary files are hashed with SHA-256 using bounded asynchronous reads.
 An unchanged successful/pending/unsupported record is skipped. Failed records
 retry. Changed content invalidates derived rows before becoming pending. PDF
-and office limit is 100 * 1024 * 1024 bytes and the Markdown, HTML and text limit
-is 20 * 1024 * 1024 bytes, inclusive. Larger files become unsupported with stable reason
+and office limit is docs.maxFileMB (100 MiB when unset, at most 500) and the Markdown, HTML and text limit
+is the resolved Maximum text file size (20 MiB by default, at most 64), inclusive (REQ-FUNC-133f57ee); later checks accept
+up to those largest values (REQ-FUNC-486d6a86). Larger files become unsupported with stable reason
 codes. Files outside the document type set (.pdf .docx .odt .pptx .odp .xlsx .ods .md
 .markdown .html .htm .txt .csv .tsv) are not selected, read or recorded, and stored rows of such
 paths are removed on reconciliation (TASK-e5310cdb). Errors become failed with a scrubbed code, never raw

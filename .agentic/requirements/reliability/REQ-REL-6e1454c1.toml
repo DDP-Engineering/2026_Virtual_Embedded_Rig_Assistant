@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-REL-6e1454c1"
+
+title = "Refuse a routed session request whose workbench changed"
+
+status = "active"
+
+requirement = "If the workbench runtime a session request was routed to no longer has the same workbench open (ID, folder and database) when the request's turn on its session host comes, the desktop app shall answer CONFLICT without running the request."
+
+verification = "Router test: route a request to a runtime, then replace that runtime's open workbench before its queued slot runs; the request answers CONFLICT and its operation never runs; boundary: an unchanged runtime runs it."
+
+affected_paths = ["05_Software/src/apps/desktop/src/main/session-router.ts", "05_Software/src/apps/desktop/src/main/sessions.ts"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/main/session-router.test.ts::answers CONFLICT when the routed runtime changed its workbench before the request ran", "05_Software/src/apps/desktop/src/main/session-router.replay.test.ts::refuses a routed request whose runtime closed its workbench before the request ran"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-21
+updated = 2026-11-21

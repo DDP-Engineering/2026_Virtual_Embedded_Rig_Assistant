@@ -75,7 +75,7 @@ function pinnedContext(pinned: string): string {
   return `${pinned.slice(0, end)}\n[.vera/WORKBENCH.md truncated at 16 KiB (UTF-8).]`;
 }
 
-/** Canonical engineering context (architecture03 §3); host ports supply all environment data. */
+/** Canonical engineering context (system prompt, `00_Planning/Agent.md`); host ports supply all environment data. */
 export function buildSystemPrompt({
   workbench,
   pinned,

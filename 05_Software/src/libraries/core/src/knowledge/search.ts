@@ -204,16 +204,24 @@ export class DocumentKnowledge {
     if (typeof epoch !== "string") throw Error("Missing current embedding epoch.");
     return epoch;
   }
+  /**
+   * `panelK` is the Docs panel's own result count (its Docs panel results setting, 1-100,
+   * REQ-FUNC-4b36dede); the agent's k stays within the tool schema's 1-20.
+   */
   async search(
     raw: SearchArgs,
     signal: AbortSignal,
     excludedRoots: readonly string[] = [],
+    panelK?: number,
   ): Promise<{ results: SearchResult[]; message?: string; ranking?: "embedding-rebuild" }> {
     const parsed = searchDocsSchema.parse(raw);
     const configured = this.defaults();
     const args = {
       ...parsed,
-      k: parsed.k ?? configured?.results ?? 8,
+      k:
+        panelK !== undefined && Number.isSafeInteger(panelK) && panelK >= 1 && panelK <= 100
+          ? panelK
+          : (parsed.k ?? configured?.results ?? 8),
       mode: parsed.mode ?? configured?.mode ?? "hybrid",
     };
     signal.throwIfAborted();
@@ -242,7 +250,7 @@ export class DocumentKnowledge {
     const lexical =
       args.mode === "semantic"
         ? []
-        : new KeywordSearch(this.db).search(args.query, args.pathGlob ? accept : undefined);
+        : new KeywordSearch(this.db).search(args.query, args.pathGlob ? accept : undefined, args.k);
     let semantic: { id: number; score: number }[] = [];
     let fallback = rebuilding;
     if (args.mode !== "keyword" && !rebuilding) {
@@ -277,7 +285,7 @@ export class DocumentKnowledge {
     }
     const keyword =
       fallback && args.mode === "semantic"
-        ? new KeywordSearch(this.db).search(args.query, args.pathGlob ? accept : undefined)
+        ? new KeywordSearch(this.db).search(args.query, args.pathGlob ? accept : undefined, args.k)
         : lexical;
     signal.throwIfAborted();
     if (currentEpoch() !== epoch) throw Error("Document index changed during search. Retry.");

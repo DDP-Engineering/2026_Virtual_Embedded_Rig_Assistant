@@ -12,7 +12,10 @@ export type TokenCounter = (input: ContextInput) => { tokens: number; estimated:
 export interface ContextView {
   messages: Message[];
   fits: boolean;
+  /** The counted size; an estimate is scaled by the session calibration (REQ-NFR-4721c12f). */
   contextTokens: number;
+  /** The counter's own value before calibration, from which the next calibration ratio is taken. */
+  rawTokens: number;
   contextWindow: number;
   inputBudgetTokens: number;
   reservedOutputTokens: number;
@@ -97,6 +100,7 @@ export class ContextPolicy {
     capabilities: ModelCapabilities,
     reduce = true,
     scrubAttachmentText?: (text: string) => string,
+    scale?: number,
   ): ContextView {
     const vision = acceptsImages(capabilities);
     const messages = structuredClone(input.messages).map((message) =>
@@ -121,7 +125,12 @@ export class ContextPolicy {
       const value = this.count({ ...input, messages: projected });
       if (!Number.isSafeInteger(value.tokens) || value.tokens < 0)
         throw new Error("Invalid token counter result");
-      return value;
+      // A calibrated estimate never exceeds the conservative one; exact counts are not scaled.
+      const tokens =
+        value.estimated && scale !== undefined && scale > 0
+          ? Math.min(value.tokens, Math.ceil(value.tokens * scale))
+          : value.tokens;
+      return { tokens, raw: value.tokens, estimated: value.estimated };
     };
     let measured = measure();
     const calls = new Set<string>();
@@ -140,6 +149,7 @@ export class ContextPolicy {
       messages,
       fits: inputBudgetTokens >= 0 && measured.tokens <= inputBudgetTokens,
       contextTokens: measured.tokens,
+      rawTokens: measured.raw,
       contextWindow: capabilities.contextWindow,
       inputBudgetTokens,
       reservedOutputTokens: capabilities.maxOutputTokens,

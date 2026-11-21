@@ -64,6 +64,6 @@ Chaque commande que l’agent exécute passe par votre mode d’autorisation (co
 
 ## Mises à jour et catalogue
 
-**Rechercher des mises à jour** recherche de nouvelles versions des plugins ; une mise à jour affiche **Mettre à jour vers …**. VERA vérifie aussi une fois par jour, sauf si les mises à jour sont désactivées dans les [Paramètres](settings.md). Sous **Paramètres du catalogue**, vous choisissez le **Canal** (**Stable** ou **Préversion**) et, si vous le souhaitez, une **URL du catalogue**, par exemple le miroir de votre entreprise. VERA n’utilise un catalogue que si sa signature correspond ; sinon, il affiche les plugins fournis avec VERA.
+**Rechercher des mises à jour** recherche de nouvelles versions des plugins ; une mise à jour affiche **Mettre à jour vers …**. VERA vérifie aussi une fois par jour, ou selon l’**Intervalle de vérification du catalogue de plugins** des [paramètres avancés](advanced-settings.md), sauf si les mises à jour sont désactivées dans les [Paramètres](settings.md). Sous **Paramètres du catalogue**, vous choisissez le **Canal** (**Stable** ou **Préversion**) et, si vous le souhaitez, une **URL du catalogue**, par exemple le miroir de votre entreprise. VERA n’utilise un catalogue que si sa signature correspond ; sinon, il affiche les plugins fournis avec VERA.
 
 **Désinstaller** et **Exporter le zip** se trouvent sous **Plus d’actions** sur la carte d’un plugin installé. Sans réseau, consultez [Installation hors ligne](offline-install.md).

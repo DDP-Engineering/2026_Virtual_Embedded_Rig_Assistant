@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-1e7d6449"
+
+title = "Cap a run log at the resolved log size"
+
+status = "active"
+
+requirement = """
+When a run's output reaches the resolved Run log size, an integer from 8 to 1024 MiB with default 64 set for the application, VERA shall stop growing that run's log at that size.
+"""
+
+verification = "With a runner reading 8 MiB, a run printing 10 MiB keeps a log of at most 8 MiB; with 16 the same output is kept whole."
+
+affected_paths = ["05_Software/src/libraries/shared/src/advanced-settings.ts", "05_Software/src/libraries/core/src/plugins/runner.ts", "05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/apps/cli/src/run.ts"]
+
+linked_tests = ["05_Software/src/libraries/shared/src/advanced-settings.test.ts", "05_Software/src/libraries/core/src/plugins/runner.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-21
+updated = 2026-11-21

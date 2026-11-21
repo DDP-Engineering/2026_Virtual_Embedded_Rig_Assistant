@@ -62,7 +62,8 @@ it("attributes normal request budgets and cached input consumption to the admitt
     systemPrompt: "Rules",
     model: "replay/usage",
     messages: [],
-    contextPolicy: new ContextPolicy(() => ({ tokens: 120 + calls * 100, estimated: true })),
+    // An exact count: this test is about attribution, so calibration of estimates stays out of it.
+    contextPolicy: new ContextPolicy(() => ({ tokens: 120 + calls * 100, estimated: false })),
     tools: [
       {
         name: "read",

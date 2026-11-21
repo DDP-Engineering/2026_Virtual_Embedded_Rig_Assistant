@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-FUNC-eb591891"
+
+title = "Route workbench-scoped session requests to the named workbench"
+
+status = "active"
+
+requirement = "When a session list, sizes, search, move, create, image attach or image capability request names a workbench ID, the desktop app shall run it in the open workbench runtime with that ID, using the foreground runtime first, whichever workbench is in the foreground."
+
+verification = "Router test with two runtimes: a request naming background A's ID runs in A and one naming foreground B's ID runs in B; boundary: a request without a workbench ID runs in the foreground runtime."
+
+affected_paths = ["05_Software/src/apps/desktop/src/main/session-router.ts", "05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/apps/desktop/src/main/sessions.ts"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/main/session-router.test.ts::runs a workbench-scoped request in the open runtime with that ID, else the foreground"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-21
+updated = 2026-11-21

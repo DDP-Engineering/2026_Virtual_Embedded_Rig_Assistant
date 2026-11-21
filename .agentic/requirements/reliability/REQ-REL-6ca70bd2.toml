@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-REL-6ca70bd2"
+
+title = "Refuse a session that no open workbench holds"
+
+status = "active"
+
+requirement = "If a request names a session that no open workbench runtime holds, the desktop app shall answer NOT_FOUND and run nothing in any workbench."
+
+verification = "Router test: a session ID absent from every runtime's database answers NOT_FOUND and no runtime's session host runs; boundary: after A's runtime is released, a request for A's session answers NOT_FOUND instead of reaching foreground B."
+
+affected_paths = ["05_Software/src/apps/desktop/src/main/session-router.ts", "05_Software/src/apps/desktop/src/main/index.ts"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/main/session-router.test.ts::answers NOT_FOUND for a session no open workbench holds, also after its workbench closed", "05_Software/src/apps/desktop/src/main/session-router.replay.test.ts::decides a background workbench's approval in that workbench while another runs its own turn"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-21
+updated = 2026-11-21

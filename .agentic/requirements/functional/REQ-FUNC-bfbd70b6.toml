@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-bfbd70b6"
+
+title = "Retire embedding workers after the resolved Embedding worker idle time"
+
+status = "active"
+
+requirement = """
+When an embedding worker has been idle for the resolved Embedding worker idle time, an integer from 10 to 600 seconds with default 60 set for the application, VERA shall retire it, each idle period reading the value current when it starts.
+"""
+
+verification = "Core embedding test: with an idle getter reading 50 ms the worker is retired after an idle 50 ms and a later call starts a new worker; the indexer message carries the application value."
+
+affected_paths = ["05_Software/src/libraries/shared/src/advanced-settings.ts", "05_Software/src/libraries/core/src/knowledge/embedding.ts", "05_Software/src/libraries/core/src/knowledge/document-services.ts", "05_Software/src/apps/desktop/src/main/indexer-host.ts", "05_Software/src/apps/desktop/src/main/indexer-handler.ts", "05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/apps/desktop/src/main/indexer-process.ts", "05_Software/src/apps/cli/src/run.ts", "05_Software/src/apps/cli/src/documents.ts"]
+
+linked_tests = ["05_Software/src/libraries/shared/src/advanced-settings.test.ts", "05_Software/src/libraries/core/src/knowledge/embedding.test.ts", "05_Software/src/apps/desktop/src/main/indexer-host.test.ts", "05_Software/src/apps/desktop/src/main/indexer-handler.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-21
+updated = 2026-11-21

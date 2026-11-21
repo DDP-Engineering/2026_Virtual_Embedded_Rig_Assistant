@@ -93,6 +93,84 @@ it("projects compaction status and request view size while retaining actual prov
   });
 });
 
+// The history summary is its own request: its size must not show as the chat context (91% -> 39% -> 70%).
+it("keeps the last chat request's context figures while the history summary runs", () => {
+  const contextWindow = 500_000;
+  const chat = (tokens: number, compactionStatus: "none" | "completed") =>
+    ({
+      type: "usage.updated",
+      inputTokens: 0,
+      outputTokens: 0,
+      contextTokens: tokens,
+      requestViewTokens: tokens,
+      contextWindow,
+      compactionStatus,
+      estimated: true,
+    }) as const;
+  let state = (
+    [
+      { type: "turn.started", turnId: "t1" },
+      chat(455_000, "none"),
+      { type: "usage.updated", inputTokens: 95_907, outputTokens: 900 },
+      { type: "turn.done", turnId: "t1", stopReason: "end" },
+      { type: "turn.started", turnId: "t2" },
+    ] satisfies shared.SessionEvent[]
+  ).reduce(shared.applySessionEvent, shared.emptySessionState());
+  // A new turn restarts counters, owners and status, but the meter still shows the last request.
+  expect(state.usage).toEqual({
+    inputTokens: 0,
+    outputTokens: 0,
+    contextTokens: 455_000,
+    requestViewTokens: 455_000,
+    contextWindow,
+    estimated: true,
+  });
+  state = shared.applySessionEvent(state, {
+    type: "usage.updated",
+    inputTokens: 0,
+    outputTokens: 0,
+    contextTokens: 195_000,
+    requestViewTokens: 195_000,
+    contextWindow,
+    compactionStatus: "running",
+    estimated: true,
+  });
+  expect(state.usage).toMatchObject({
+    compactionStatus: "running",
+    contextTokens: 455_000,
+    requestViewTokens: 455_000,
+  });
+  state = shared.applySessionEvent(state, {
+    ...chat(350_000, "completed"),
+    inputTokens: 40_000,
+    outputTokens: 2_000,
+  });
+  expect(state.usage).toMatchObject({
+    compactionStatus: "completed",
+    requestViewTokens: 350_000,
+    inputTokens: 40_000,
+    outputTokens: 2_000,
+  });
+});
+
+it("leaves no running summary status behind when the turn stops during it", () => {
+  const state = (
+    [
+      { type: "turn.started", turnId: "t" },
+      {
+        type: "usage.updated",
+        inputTokens: 0,
+        outputTokens: 0,
+        contextTokens: 900,
+        compactionStatus: "running",
+      },
+      { type: "turn.done", turnId: "t", stopReason: "aborted" },
+    ] satisfies shared.SessionEvent[]
+  ).reduce(shared.applySessionEvent, shared.emptySessionState());
+  expect(state.usage.compactionStatus).toBeUndefined();
+  expect(state.status).toBe("idle");
+});
+
 it("folds terminal events identically with or without live deltas", () => {
   expect(typeof shared.applySessionEvent).toBe("function");
   const events: shared.SessionEvent[] = [
@@ -211,15 +289,19 @@ function oracleApply(state: shared.SessionState, input: shared.SessionEvent): sh
     case "session.interrupted":
       s.interrupted.push(event.turnId);
       break;
-    case "turn.started":
+    case "turn.started": {
+      // Context figures of the latest request carry over; counters, owners and status restart.
+      const { inputTokens: _i, outputTokens: _o, promptIds: _p, compactionStatus: _c, ...context } = s.usage;
       s.activeTurnId = event.turnId;
-      s.usage = { inputTokens: 0, outputTokens: 0 };
+      s.usage = { inputTokens: 0, outputTokens: 0, ...context };
       s.status = "running";
       s.turns.push({ turnId: event.turnId, steps: 0, stopReason: null });
       break;
+    }
     case "turn.done":
       s.activeTurnId = null;
       s.status = event.stopReason === "error" ? "error" : "idle";
+      if (s.usage.compactionStatus === "running") delete s.usage.compactionStatus;
       for (const t of s.turns) if (t.turnId === event.turnId) t.stopReason = event.stopReason;
       s.items = s.items.filter((item) => item.kind !== "assistant" || !item.streaming);
       for (const i of s.items) {
@@ -375,7 +457,16 @@ function oracleApply(state: shared.SessionState, input: shared.SessionEvent): sh
         item.usage = usage;
       }
       const { type: _, ...u } = event;
-      s.usage = { ...s.usage, ...u };
+      // A running historical summary updates consumption and status only, never the chat context.
+      s.usage =
+        event.compactionStatus === "running"
+          ? {
+              ...s.usage,
+              inputTokens: u.inputTokens,
+              outputTokens: u.outputTokens,
+              compactionStatus: "running",
+            }
+          : { ...s.usage, ...u };
       break;
     }
     case "error": {
@@ -398,6 +489,14 @@ const mixed: shared.SessionEvent[] = [
     reasoning: "high",
   },
   { type: "message.bookmarked", messageId: "unknown", bookmarked: true },
+  {
+    type: "context.compacted",
+    covered: 2,
+    fingerprint: "abc",
+    note: "[Derived historical context]",
+    refs: [],
+    images: [],
+  },
   { type: "message.user", messageId: "u1", text: "Read the board" },
   { type: "message.user", messageId: "u1", text: "duplicate" },
   { type: "turn.started", turnId: "t1" },
@@ -517,6 +616,7 @@ describe("PERF-02 reducer without full-state copies (REQ-FUNC-5e2438d5)", () => 
       "turn.done": true,
       "message.user": true,
       "message.bookmarked": true,
+      "context.compacted": true,
       "message.queued": true,
       "message.delivered": true,
       "message.delta": true,
@@ -720,4 +820,26 @@ it("keeps admitted reply ownership after an interrupted streaming row is removed
   for (const event of events) live = shared.applySessionEvent(live, event);
   expect(replay).toEqual(live);
   expect(replay.items.at(-1)).toMatchObject({ replyToMessageIds: ["q"] });
+});
+
+// REQ-DATA-22f13161
+it("carries the send time of a user prompt and keeps the queue time of a delivered queued prompt", () => {
+  const sent = shared.sessionEventSchema.parse({
+    type: "message.user",
+    messageId: "u",
+    text: "Read the board",
+    timestamp: 1_763_657_640_000,
+  });
+  const state = shared.foldSessionEvents([
+    sent,
+    { type: "message.queued", messageId: "q", text: "Next", timestamp: 5 },
+    { type: "message.delivered", messageIds: ["q"] },
+    { type: "message.user", messageId: "q", text: "Next", timestamp: 9 },
+    { type: "message.user", messageId: "old", text: "Recorded before send times" },
+  ]);
+  expect(shared.sessionStateSchema.parse(state).items).toEqual([
+    { kind: "user", id: "u", text: "Read the board", timestamp: 1_763_657_640_000 },
+    { kind: "user", id: "q", text: "Next", timestamp: 5 },
+    { kind: "user", id: "old", text: "Recorded before send times" },
+  ]);
 });

@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-73ca575e"
+
+title = "Wait for hosted response headers up to the resolved time"
+
+status = "active"
+
+requirement = """
+When VERA sends a request to a hosted provider, it shall wait for the response headers up to the resolved Hosted header wait, an integer from 10 to 300 seconds with default 30, while a custom endpoint keeps its own configured wait.
+"""
+
+verification = "With 10, a hosted provider whose headers arrive after 12 seconds fails with the timeout error naming 10 seconds; a custom endpoint with its own wait is unaffected."
+
+affected_paths = ["05_Software/src/libraries/shared/src/advanced-settings.ts", "05_Software/src/libraries/core/src/llm/providers.ts", "05_Software/src/apps/desktop/src/main/provider-gateway.ts", "05_Software/src/apps/cli/src/run.ts"]
+
+linked_tests = ["05_Software/src/libraries/shared/src/advanced-settings.test.ts", "05_Software/src/libraries/core/src/llm/gateway.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-20
+updated = 2026-11-20

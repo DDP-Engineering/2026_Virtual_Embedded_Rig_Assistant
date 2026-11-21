@@ -72,7 +72,7 @@ function fixture() {
     documentGuard: () => null,
   };
   const display = new DisplayDocuments(
-    host as unknown as WorkbenchService,
+    () => host as unknown as WorkbenchService,
     createMaskingResolver(() => settings),
     (text) => secrets.reduce((s, secret) => s.replaceAll(secret, "[REDACTED]"), text),
     new DisplayIdentities(Buffer.alloc(32, 1)),
@@ -308,6 +308,49 @@ it("refuses forged, foreign, mismatched and stale byte identities", async () => 
   }
 });
 
+// REQ-FUNC-0dfa01fd: releasing a background workbench leaves the shown workbench's identities valid.
+it("ends identities only when their own workbench closes", async () => {
+  const f = fixture();
+  const token = f.display.path(id, rawPaths[0] as string);
+  f.display.closed(otherId);
+  expect(f.display.resolve(id, token)).toBe(rawPaths[0]);
+  let finish!: () => void;
+  const gate = new Promise<void>((resolve) => {
+    finish = resolve;
+  });
+  f.host.readBytes.mockImplementationOnce(async (_id, path, offset) => {
+    await gate;
+    return { path, offset, start: 0, size: 0, bytes: Buffer.alloc(0) };
+  });
+  const result = f.display.readBytes(id, token, 0, 1);
+  f.display.closed(id);
+  finish();
+  await expect(result).rejects.toMatchObject({ code: "CONFLICT" });
+});
+
+// REQ-SEC-a4fbf2c9
+it("encodes a background workbench's session image identities that resolve only once it is shown", async () => {
+  const f = fixture();
+  const owner = { config: { id: otherId }, folder: "/owned" };
+  const plain = `docs/${secrets[0]}.png`;
+  const alias = `./docs//../${secrets[0]}.png`;
+  const tokens = [plain, alias].map((path) => f.display.sessionImagePath(owner, path));
+  for (const token of tokens) expect(token).not.toContain(secrets[0]);
+  // The shown workbench (id) can resolve neither: the identities belong to the other workbench.
+  for (const token of tokens) {
+    expect(() => f.display.resolveSessionImagePath(otherId, token)).toThrow(
+      expect.objectContaining({ code: "CONFLICT" }),
+    );
+    expect(() => f.display.resolveSessionImagePath(id, token)).toThrow();
+  }
+  // The foreground's own identities are the ones it issued before.
+  const shown = f.display.sessionImagePath({ config: { id }, folder: "/owned" }, plain);
+  expect(shown).toBe(f.display.path(id, plain));
+  // Once the other workbench is shown, its identities resolve to the saved spelling.
+  f.switch();
+  expect(tokens.map((token) => f.display.resolveSessionImagePath(otherId, token))).toEqual([plain, alias]);
+});
+
 it("keeps raw core-issued session citation paths and heading slugs exact", async () => {
   const f = fixture();
   for (const ref of ["__vera_display_notes/child.txt#L1-L1", "notes.md#h=__vera_display_heading"]) {
@@ -426,7 +469,7 @@ describe("transcript image thumbnails", () => {
   it("authenticates an alias while keeping its persisted spelling as the unavailable label", async () => {
     const f = fixture();
     const original = `./docs//../${secrets[0]}.png`;
-    const path = f.display.sessionImagePath(id, original);
+    const path = f.display.sessionImagePath({ config: { id }, folder: "/owned" }, original);
     expect(path).not.toContain(secrets[0]);
     expect(f.display.resolveSessionImagePath(id, path)).toBe(original);
     expect(() => f.display.resolveSessionImagePath(otherId, path)).toThrow();

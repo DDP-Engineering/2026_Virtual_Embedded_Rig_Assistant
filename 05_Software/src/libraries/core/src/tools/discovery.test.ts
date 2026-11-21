@@ -54,6 +54,19 @@ it("globs newest first with relative base and caps at500", async () => {
   expect(JSON.stringify(all)).not.toMatch(/node_modules|\.vera\/|\.git\/|hidden\/|escape\//);
   await expect(api.globTool.execute(ctx, { pattern: "../**/*" }, signal())).rejects.toThrow();
 });
+// REQ-FUNC-da830c44
+it("globs up to the session's Glob results, newest first", async () => {
+  const limits: Record<string, number> = { globResults: 100 };
+  const ctx = { ...api.createToolContext(root), advanced: ((key: string) => limits[key]) as never };
+  await mkdir(join(root, "set"));
+  for (let i = 0; i < 150; i++) await writeFile(join(root, "set", `${i}.md`), "data");
+  const capped = await api.globTool.execute(ctx, { pattern: "set/*.md" }, signal());
+  expect(capped.paths).toHaveLength(100);
+  expect(capped.truncated).toBe(true);
+  const under = await api.globTool.execute(ctx, { pattern: "set/1*.md" }, signal());
+  expect((under.paths as string[]).length).toBeLessThan(100);
+  expect(under.truncated).toBe(false);
+});
 it("stops collecting at a hard entry count and marks the result truncated", async () => {
   const guard = await PathGuard.create(root);
   expect(await discoverFiles(guard, "docs", "**/*.md", signal(), 1)).toHaveLength(1);
@@ -68,6 +81,11 @@ it("stops collecting at a hard entry count and marks the result truncated", asyn
   expect(listed.truncated).toBe(true);
   expect((await api.listTool.execute(ctx, { path: "docs" }, signal())).truncated).toBeUndefined();
   expect(await api.globTool.execute(ctx, { pattern: "big/*.md" }, signal())).toMatchObject({
+    truncated: true,
+  });
+  // REQ-FUNC-da830c44: at the largest Glob results value, more files than examined still mark the result.
+  const widest = { ...ctx, advanced: ((key: string) => (key === "globResults" ? 5000 : 0)) as never };
+  expect(await api.globTool.execute(widest, { pattern: "big/*.md" }, signal())).toMatchObject({
     truncated: true,
   });
 }, 60_000);

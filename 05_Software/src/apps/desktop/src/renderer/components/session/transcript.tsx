@@ -13,6 +13,7 @@ import {
   useState,
 } from "react";
 import { useTranslation } from "react-i18next";
+import { appAdvancedValue } from "../../hooks/app-advanced.js";
 import { DownloadCard } from "../documents/downloads.js";
 import { useDocumentViewer } from "../documents/viewer-context.js";
 import { ErrorMessage } from "../error-message.js";
@@ -24,17 +25,22 @@ import { ExternalSourceScope } from "./external-source-link.js";
 import { Markdown } from "./markdown.js";
 import { CopyAction } from "./message-actions.js";
 import { PromptUsage } from "./prompt-usage.js";
+import { useBookmarkJump, useSessionBookmarks } from "./session-bookmarks.js";
 import { ToolDetails } from "./tool-details.js";
 import { TranscriptImages } from "./transcript-images.js";
 import { contentOffset, scrollTarget } from "./transcript-navigation.js";
 import { type NavigatorMessage, TranscriptNavigator } from "./transcript-navigator.js";
 import { searchMatch, streamingBlocks, type ToolItem, transcriptRows } from "./transcript-projection.js";
 import { TranscriptScroll } from "./transcript-scroll.js";
-import { useBookmarks } from "./use-bookmarks.js";
 
-/** PERF-07: rows of the first commit, newest first; older rows are prepended in idle chunks. */
-const INITIAL_ROWS = 40;
-const CHUNK_ROWS = 100;
+/**
+ * PERF-07: rows of the first commit, newest first; older rows are prepended in idle chunks. Both counts are
+ * the resolved Advanced values when the session is shown (REQ-UX-a4cf0527).
+ */
+const windowRows = () => ({
+  first: appAdvancedValue("transcriptRows"),
+  chunk: appAdvancedValue("transcriptChunkRows"),
+});
 const IDLE_TIMEOUT_MS = 250;
 /** Runs `callback` when the renderer is idle; returns the cancel function. */
 function whenIdle(callback: () => void): () => void {
@@ -68,7 +74,8 @@ export function Transcript({
   disabled?: boolean;
 }) {
   const { t } = useTranslation();
-  const bookmarks = useBookmarks(sessionId, state.bookmarkedMessageIds, disabled || !sessionId);
+  const bookmarks = useSessionBookmarks(sessionId, state.bookmarkedMessageIds, disabled || !sessionId);
+  const { jump } = useBookmarkJump(sessionId);
   const scroll = useRef<HTMLDivElement>(null);
   const content = useRef<HTMLDivElement>(null);
   const transcriptId = useId();
@@ -79,6 +86,9 @@ export function Transcript({
   const [highlight, setHighlight] = useState<{ sessionId: string | undefined; id: string } | null>(null);
   const highlightTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const shownSession = useRef(sessionId);
+  // Lazy: the counts are resolved once per shown session, not on every streaming render.
+  const [shownCounts] = useState(windowRows);
+  const rowCounts = useRef(shownCounts);
   /** Scroll range at the last commit or scroll event. */
   const settledMax = useRef(0);
   /** Index of the oldest mounted row; null until the first rows arrive. */
@@ -89,6 +99,7 @@ export function Transcript({
   useLayoutEffect(() => {
     if (shownSession.current === sessionId) return;
     shownSession.current = sessionId;
+    rowCounts.current = windowRows();
     clearTimeout(highlightTimer.current);
     suspended.current = null;
     setHighlight(null);
@@ -99,7 +110,7 @@ export function Transcript({
   // still show the newest ones.
   const first = search
     ? 0
-    : Math.min(start ?? Number.POSITIVE_INFINITY, Math.max(0, rows.length - INITIAL_ROWS));
+    : Math.min(start ?? Number.POSITIVE_INFINITY, Math.max(0, rows.length - rowCounts.current.first));
   const shown = useMemo(() => (first ? rows.slice(first) : rows), [rows, first]);
   const hasRows = rows.length > 0;
   useEffect(() => {
@@ -110,7 +121,8 @@ export function Transcript({
     }
     if (!start) return;
     // A transition keeps input and streaming responsive while a chunk renders.
-    return whenIdle(() => startTransition(() => setStart(Math.max(0, first - CHUNK_ROWS))));
+    const chunk = rowCounts.current.chunk;
+    return whenIdle(() => startTransition(() => setStart(Math.max(0, first - chunk))));
   }, [search, start, first, hasRows]);
   const shownFirst = useRef(first);
   // Runs only for commits that change the content (live events arrive at most once per frame), not
@@ -200,6 +212,7 @@ export function Transcript({
           bookmarked={bookmarks.has}
           bookmarkDisabled={(id) => disabled || !sessionId || bookmarks.busy(id)}
           onBookmark={bookmarks.toggle}
+          jump={jump}
         />
         <div
           className="transcript"
@@ -288,11 +301,6 @@ export function Transcript({
             {stopped && (
               <p className="muted" data-chat-stopped role="status">
                 {t("chatDetail.stopped")}
-              </p>
-            )}
-            {detail === "minimal" && state.activeTurnId && state.status === "running" && (
-              <p className="muted" data-chat-working role="status">
-                {t("chat.working")}
               </p>
             )}
           </div>
@@ -385,7 +393,9 @@ const MessageRow = memo(function MessageRow({
             <TranscriptImages key={workbenchId} workbenchId={workbenchId} paths={item.images} />
           )}
           {/* Per-question statistics only at the Verbose detail level. */}
-          {detail === "verbose" && item.usage && <PromptUsage usage={item.usage} />}
+          {detail === "verbose" && (item.usage || item.timestamp !== undefined) && (
+            <PromptUsage usage={item.usage} timestamp={item.timestamp} />
+          )}
         </>
       ) : (
         <ExternalSourceScope>
@@ -450,7 +460,13 @@ const ErrorRow = memo(function ErrorRow({
   const { t } = useTranslation();
   return (
     <article data-message-kind="error" className="transcript-item error">
-      <ErrorMessage error={{ code: item.code, messageKey: item.messageKey }} />
+      <ErrorMessage
+        error={{
+          code: item.code,
+          messageKey: item.messageKey,
+          ...(item.params ? { params: item.params } : {}),
+        }}
+      />
       {item.code === "CONTEXT_LIMIT" && <p role="alert">{t("chat.contextAdvice")}</p>}
       {canRetry && (
         <button type="button" onClick={retry}>

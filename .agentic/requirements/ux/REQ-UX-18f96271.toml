@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-UX-18f96271"
+
+title = "Show session activity in each workbench heading"
+
+status = "active"
+
+requirement = """
+While an open workbench has top-level sessions that are running or awaiting approval, its sidebar heading shall show an activity control with their count, marked as awaiting approval when any of them waits for an approval, whether the workbench is shown or in the background and whether its row is collapsed or expanded.
+"""
+
+verification = "Renderer test with session.activity reporting a shown workbench with one running session and a background workbench with one awaiting-approval session: each heading shows the control with count 1 and an accessible name naming its running and awaiting counts, the background one marked awaiting; collapsing the shown row keeps its control; a workbench with no listed sessions, or one not open, shows none. Native e2e: the control appears and disappears with real replay turns."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/workbench-navigation.tsx", "05_Software/src/apps/desktop/src/renderer/components/workbench-activity.tsx", "05_Software/src/apps/desktop/src/renderer/hooks/use-session-activity.ts", "05_Software/src/apps/desktop/src/renderer/styles.css", "05_Software/src/apps/desktop/src/renderer/locales/"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/workbench-activity.test.ts", "05_Software/tests/e2e/background-sessions.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-21
+updated = 2026-11-21

@@ -1,15 +1,28 @@
+// REQ-UX-052f5851 REQ-UX-441b5a9d
+import { advancedSettings } from "@vera/shared";
 import { useEffect, useId, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useAppAdvanced } from "../hooks/app-advanced.js";
 
-const SIZES = [10, 20, 50] as const;
+/** The sizes the pager offers: the Rows per page choices. */
+const SIZES = advancedSettings.pageSize.options;
 
 /**
  * One page of a list, with the state the shared Pager drives: rows per page and the current page.
+ * A list starts at its own `initialSize`, else the resolved Rows per page; a size picked in the list stays.
  * The page falls back into range when the list shrinks (a filter, a removed row).
  */
-export function usePaged<T>(items: readonly T[], initialSize: (typeof SIZES)[number] = 10) {
-  const [pageSize, setPageSize] = useState<number>(initialSize);
+export function usePaged<T>(items: readonly T[], initialSize?: (typeof SIZES)[number]) {
+  const resolved = useAppAdvanced("pageSize");
+  const [picked, setPicked] = useState<number>();
+  const pageSize = picked ?? initialSize ?? resolved;
   const [page, setPage] = useState(1);
+  // Any page size change, a saved Rows per page included, returns to page one (REQ-UX-052f5851).
+  const [shownSize, setShownSize] = useState(pageSize);
+  if (shownSize !== pageSize) {
+    setShownSize(pageSize);
+    setPage(1);
+  }
   const pages = Math.max(1, Math.ceil(items.length / pageSize));
   useEffect(() => {
     if (page > pages) setPage(pages);
@@ -23,7 +36,7 @@ export function usePaged<T>(items: readonly T[], initialSize: (typeof SIZES)[num
       pageSize,
       setPage,
       setPageSize: (size: number) => {
-        setPageSize(size);
+        setPicked(size);
         setPage(1);
       },
     },

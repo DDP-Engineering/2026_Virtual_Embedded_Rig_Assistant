@@ -1,0 +1,15 @@
+schema = 1
+id = "REQ-FUNC-25254fe8"
+title = "Report timed-out model requests as timeouts"
+status = "active"
+requirement = """
+If a model request reaches its response-header wait or its no-model-output timeout, then the session engine shall end the request with a PROVIDER error of reason timeout whose localized message names the limit in seconds.
+"""
+verification = "Gateway test with a fetch that never answers: custom connections with a 45 second and a default header wait and an OpenAI model yield PROVIDER reason timeout with seconds 45, 300 and 30, not OFFLINE; a caller abort during the header wait yields aborted and no timeout. Timed gateway test: a stalled stream yields PROVIDER reason timeout with the limit's seconds. The en, ro, de and fr catalogs contain provider.timeout with the seconds placeholder."
+affected_paths = ["05_Software/src/libraries/core/src/llm/errors.ts", "05_Software/src/libraries/core/src/llm/providers.ts", "05_Software/src/libraries/core/src/sessions/timed-gateway.ts", "05_Software/src/libraries/core/src/agent/runtime.ts", "05_Software/src/libraries/shared/src/events.ts", "05_Software/src/libraries/shared/src/session-state.ts", "05_Software/src/apps/desktop/src/renderer/components/session/transcript.tsx", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/libraries/core/src/llm/gateway.test.ts", "05_Software/src/libraries/core/src/sessions/timed-gateway.test.ts", "05_Software/src/libraries/core/src/agent/types.ts", "05_Software/src/apps/desktop/src/renderer/components/error-message.tsx", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json", "05_Software/src/apps/desktop/src/renderer/locales/fr.json", "05_Software/src/libraries/core/src/sessions/service.test.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/llm/gateway.test.ts", "05_Software/src/libraries/core/src/sessions/timed-gateway.test.ts", "05_Software/src/libraries/core/src/sessions/service.test.ts"]
+spec = ""
+priority = "normal"
+rationale = "Local models can load and process a long prompt for minutes before they respond."
+created = 2026-11-20
+updated = 2026-11-20

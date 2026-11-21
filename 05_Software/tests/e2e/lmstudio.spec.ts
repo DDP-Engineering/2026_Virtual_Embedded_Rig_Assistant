@@ -126,6 +126,10 @@ test("LM Studio discovers models, persists per-model settings and sends optional
     }
     await page.locator("[data-model-reasoning]").selectOption("off");
     await page.locator("[data-model-temperature]").fill("0");
+    // REQ-UX-2ccfac13: the connection's response timeout starts at 300 s and is saved with it.
+    const timeout = page.getByLabel("Response timeout (s)", { exact: true });
+    await expect(timeout).toHaveValue("300");
+    await timeout.fill("900");
     await page.locator('[data-provider-action="save-lmstudio"]').click();
     const row = page.locator('[data-provider="custom:lm-studio"]');
     await expect(row).toBeVisible();
@@ -152,6 +156,7 @@ test("LM Studio discovers models, persists per-model settings and sends optional
     await expect(page.locator("[data-discovered-model]")).toHaveValue(selected);
     await expect(page.locator("[data-model-reasoning]")).toHaveValue("off");
     await expect(page.locator("[data-model-temperature]")).toHaveValue("0");
+    await expect(page.getByLabel("Response timeout (s)", { exact: true })).toHaveValue("900");
     expect(errors).toEqual([]);
   } finally {
     await app.close();

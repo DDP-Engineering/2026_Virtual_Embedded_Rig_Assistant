@@ -56,12 +56,19 @@ export class MaskingContextPolicy extends ContextPolicy {
   ) {
     super();
   }
-  override prepare(input: ContextInput, capabilities: ModelCapabilities, reduce = true) {
+  override prepare(
+    input: ContextInput,
+    capabilities: ModelCapabilities,
+    reduce = true,
+    _scrubAttachmentText?: (text: string) => string,
+    scale?: number,
+  ) {
     return this.policy.prepare(
       { ...input, messages: maskMessages(input.messages, this.scrub) },
       capabilities,
       reduce,
       this.scrub,
+      scale,
     );
   }
 }

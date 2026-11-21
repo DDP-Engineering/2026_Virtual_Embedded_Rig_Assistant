@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-UX-91d7a481"
+
+title = "Edit an Advanced switch with inherit, on and off"
+
+status = "active"
+
+requirement = """
+When the user edits an Advanced switch at a scope, VERA shall offer Inherit, On and Off, show the inherited state with its source while Inherit is chosen, and save the choice with the page Save.
+"""
+
+verification = "In Edit workbench > Advanced, Background compaction shows Inherit with 'On (default)'; choosing Off and Save stores false; choosing Inherit and Save removes the value."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/styles.css", "05_Software/src/apps/desktop/src/renderer/components/advanced-field.tsx", "05_Software/src/apps/desktop/src/renderer/components/advanced-settings-panel.tsx", "05_Software/src/apps/desktop/src/renderer/components/workbench-advanced.tsx", "05_Software/src/apps/desktop/src/renderer/components/session/session-advanced.tsx", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json", "05_Software/src/apps/desktop/src/renderer/locales/fr.json"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/session/session-advanced.test.ts", "05_Software/src/apps/desktop/src/renderer/components/workbench-advanced.test.ts", "05_Software/tests/e2e/advanced-settings.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-20
+updated = 2026-11-20

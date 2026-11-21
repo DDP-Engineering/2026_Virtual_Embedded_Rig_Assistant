@@ -106,13 +106,81 @@ it("validates issued confined line refs and rejects fabricated, absent, binary a
         timestamp: 0,
       },
     ];
+    // REQ-FUNC-2e1261c2: board.txt#L2-L2 was not issued itself but lies inside the issued board.txt#L1-L2.
     expect(await validateCitations(root, refs.map((ref) => `[[${ref}]]`).join(" "), messages)).toEqual(
-      refs.map((ref, i) => ({ ref, valid: i === 0 })),
+      refs.map((ref, i) => ({ ref, valid: i === 0 || i === 5 })),
     );
     const result = messages[0];
     if (result?.role === "toolResult") result.isError = true;
     expect(await validateCitations(root, "[[board.txt#L1-L2]]", messages)).toEqual([
       { ref: refs[0], valid: false },
+    ]);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+// REQ-FUNC-2e1261c2
+it("accepts a line ref inside an issued window of the same file and nothing beyond it", async () => {
+  const root = await mkdtemp(join(tmpdir(), "vera-citations-"));
+  try {
+    const text = Array.from({ length: 12 }, (_, i) => `line ${i + 1}`).join("\n");
+    await writeFile(join(root, "a.txt"), `${text}\n`);
+    await writeFile(join(root, "b.txt"), `${text}\n`);
+    const messages: Message[] = [
+      {
+        role: "toolResult",
+        toolName: "read",
+        toolCallId: "c",
+        content: [{ type: "text", text: JSON.stringify({ text: "...", ref: "a.txt#L3-L10" }) }],
+        isError: false,
+        timestamp: 0,
+      },
+    ];
+    const cited = {
+      "a.txt#L3-L10": true,
+      "a.txt#L5-L6": true,
+      "a.txt#L10-L10": true,
+      "a.txt#L2-L4": false,
+      "a.txt#L9-L11": false,
+      "b.txt#L5-L6": false,
+    };
+    expect(
+      await validateCitations(
+        root,
+        Object.keys(cited)
+          .map((ref) => `[[${ref}]]`)
+          .join(" "),
+        messages,
+      ),
+    ).toEqual(Object.entries(cited).map(([ref, valid]) => ({ ref, valid })));
+    const failed = { ...messages[0], isError: true } as Message;
+    expect(await validateCitations(root, "[[a.txt#L5-L6]]", [failed])).toEqual([
+      { ref: "a.txt#L5-L6", valid: false },
+    ]);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+// REQ-FUNC-2e1261c2
+it("keeps parse_log provenance for a line inside an issued log window", async () => {
+  const root = await mkdtemp(join(tmpdir(), "vera-log-citations-"));
+  try {
+    await writeFile(join(root, "log.txt"), "INFO ready\n\u0000\nINFO done\n");
+    const message: Message = {
+      role: "toolResult",
+      toolName: "parse_log",
+      toolCallId: "log",
+      content: [{ type: "text", text: JSON.stringify({ events: [{ ref: "log.txt#L1-L3" }] }) }],
+      isError: false,
+      timestamp: 0,
+    };
+    expect(await validateCitations(root, "[[log.txt#L2-L2]]", [message])).toEqual([
+      { ref: "log.txt#L2-L2", valid: true },
+    ]);
+    expect(await validateCitations(root, "[[log.txt#L2-L2]]", [{ ...message, toolName: "read" }])).toEqual([
+      { ref: "log.txt#L2-L2", valid: false },
     ]);
   } finally {
     await rm(root, { recursive: true, force: true });

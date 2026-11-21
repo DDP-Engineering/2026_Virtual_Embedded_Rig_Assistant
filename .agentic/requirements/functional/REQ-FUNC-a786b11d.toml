@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-a786b11d"
+
+title = "Count with the conservative estimate when provider token counts are off"
+
+status = "active"
+
+requirement = """
+While the resolved Use provider token counts switch is off, VERA shall count every request and compaction with the uncalibrated conservative estimate, keeping the recorded calibration for when the switch is on again.
+"""
+
+verification = "With a calibration recorded and the switch off, the request view is counted unscaled; switching it on again uses the recorded calibration without a new report."
+
+affected_paths = ["05_Software/src/libraries/shared/src/advanced-settings.ts", "05_Software/src/libraries/core/src/agent/compaction.ts", "05_Software/src/libraries/core/src/sessions/service.ts"]
+
+linked_tests = ["05_Software/src/libraries/shared/src/advanced-settings.test.ts", "05_Software/src/libraries/core/src/agent/compaction-settings.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-20
+updated = 2026-11-20

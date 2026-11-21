@@ -15,7 +15,7 @@ export function sessionOutput(
           ? Object.fromEntries(Object.entries(value).map(([key, item]) => [scrub(key), extra(item, scrub)]))
           : value;
   const result = { ...event };
-  for (const key of ["text", "title", "summary", "preview", "diff", "path", "name"])
+  for (const key of ["text", "title", "summary", "preview", "diff", "path", "name", "note"])
     if (typeof Reflect.get(result, key) === "string")
       Reflect.set(result, key, content(Reflect.get(result, key)));
   if (event.type === "error")
@@ -39,6 +39,18 @@ export function sessionOutput(
       "citations",
       event.citations.map((c) => ({ ...c, ref: content(c.ref) })),
     );
+  if (event.type === "context.compacted") {
+    Reflect.set(
+      result,
+      "refs",
+      event.refs.map((ref) => content(ref)),
+    );
+    Reflect.set(
+      result,
+      "images",
+      event.images.map((path) => content(path)),
+    );
+  }
   if (event.type === "todo.updated")
     Reflect.set(
       result,

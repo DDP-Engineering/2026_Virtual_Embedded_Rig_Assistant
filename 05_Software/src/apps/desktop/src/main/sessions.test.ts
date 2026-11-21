@@ -44,7 +44,7 @@ it("binds a lightweight first session list to the newly opened workbench program
       },
       assertSessionWritable: () => {},
     },
-    settings: { get: () => ({ settings: { limits: { maxToolCallsPerTurn: 50 } } }) },
+    settings: { get: () => ({ settings: {} }) },
     gateway: () => ({ api: gateway }),
     clock: { now: () => new Date(), sleep: async () => {} },
     credentials: { scrub: (s: string) => s },
@@ -113,7 +113,7 @@ it("lists recovered current-workbench sessions without awaiting pending program 
       getWriteQueue: () => new WriteQueue(),
       assertSessionWritable: () => {},
     },
-    settings: { get: () => ({ settings: { limits: { maxToolCallsPerTurn: 50 } } }) },
+    settings: { get: () => ({ settings: {} }) },
     gateway: () => ({ api: gateway }),
     clock,
     credentials: { scrub: (s: string) => s.replace("secret", "redacted") },
@@ -169,7 +169,7 @@ it("keeps session commands responsive while the image capability catalog is pend
       skillCatalog: () => new SkillCatalog({ root, disabled: () => [] }),
       assertSessionWritable: () => {},
     },
-    settings: { get: () => ({ settings: { limits: { maxToolCallsPerTurn: 50 } } }) },
+    settings: { get: () => ({ settings: {} }) },
     gateway: () => ({ api: gateway, modelReference: () => "chatgpt/text-fixture" }),
     clock: { now: () => new Date(), sleep: async () => {} },
     credentials: { scrub: (value: string) => value },
@@ -254,7 +254,7 @@ it("awaits pending-change recovery before returning a session snapshot from a re
       getWriteQueue: () => new WriteQueue(),
       assertSessionWritable: () => {},
     },
-    settings: { get: () => ({ settings: { limits: { maxToolCallsPerTurn: 50 } } }) },
+    settings: { get: () => ({ settings: {} }) },
     gateway: () => ({ api: gateway }),
     clock,
     credentials: { scrub: (s: string) => s },
@@ -326,7 +326,7 @@ it("computes the program prompt entries once until plugins or plugin skills chan
       getWriteQueue: () => new WriteQueue(),
       assertSessionWritable: () => {},
     },
-    settings: { get: () => ({ settings: { limits: { maxToolCallsPerTurn: 50 }, webAccess: {} } }) },
+    settings: { get: () => ({ settings: { webAccess: {} } }) },
     gateway: () => ({ api: gateway }),
     clock: { now: () => new Date(), sleep: async () => {} },
     credentials: { scrub: (s: string) => s },
@@ -385,7 +385,7 @@ it("offers apply_candidate only while the official kicad-layout plugin is enable
       getWriteQueue: () => new WriteQueue(),
       assertSessionWritable: () => {},
     },
-    settings: { get: () => ({ settings: { limits: { maxToolCallsPerTurn: 50 }, webAccess: {} } }) },
+    settings: { get: () => ({ settings: { webAccess: {} } }) },
     gateway: () => ({ api: gateway }),
     clock: { now: () => new Date(), sleep: async () => {} },
     credentials: { scrub: (s: string) => s },
@@ -438,7 +438,7 @@ it("enables the electrical model tools only while an electrical or automation pl
       getWriteQueue: () => new WriteQueue(),
       assertSessionWritable: () => {},
     },
-    settings: { get: () => ({ settings: { limits: { maxToolCallsPerTurn: 50 }, webAccess: {} } }) },
+    settings: { get: () => ({ settings: { webAccess: {} } }) },
     gateway: () => ({ api: gateway }),
     clock: { now: () => new Date(), sleep: async () => {} },
     credentials: { scrub: (s: string) => s },
@@ -493,7 +493,7 @@ it("gives sessions the help host with the enabled plugins and names it in the pr
         getWriteQueue: () => new WriteQueue(),
         assertSessionWritable: () => {},
       },
-      settings: { get: () => ({ settings: { limits: { maxToolCallsPerTurn: 50 }, webAccess: {} } }) },
+      settings: { get: () => ({ settings: { webAccess: {} } }) },
       gateway: () => ({ api: gateway }),
       clock: { now: () => new Date(), sleep: async () => {} },
       credentials: { scrub: (s: string) => s },
@@ -520,6 +520,83 @@ it("gives sessions the help host with the enabled plugins and names it in the pr
   } finally {
     await host.close();
     await without.close();
+    storage.close();
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+// REQ-FUNC-0278c7ba: a reopen in place keeps the session service unless the reopen replaced the database.
+it("keeps the session service through a reopen in place and rebinds it when the database was replaced", async () => {
+  const root = await mkdtemp(join(tmpdir(), "vera-reopen-"));
+  await mkdir(join(root, ".vera"));
+  const config = workbenchSchema.parse({ format: 1, id: "wb_01J00000000000000000000000", name: "Board" });
+  const first = await openDb(join(root, ".vera/vera.db"), { workbenchId: config.id, appVersion: "0" });
+  const copy = await openDb(join(root, "copy.db"), { workbenchId: config.id, appVersion: "0" });
+  let db = first.db;
+  const gateway = { capabilities: () => ({}), stream: async function* () {}, models: async () => ({}) };
+  const host = new SessionsHost({
+    workbench: {
+      getSnapshot: () => ({ folder: root, config, readOnly: false }),
+      getDatabase: () => db,
+      getWriteQueue: () => new WriteQueue(),
+      assertSessionWritable: () => {},
+    },
+    settings: { get: () => ({ settings: {} }) },
+    gateway: () => ({ api: gateway }),
+    clock: { now: () => new Date(), sleep: async () => {} },
+    credentials: { scrub: (s: string) => s },
+  } as never);
+  try {
+    const before = await host.run((service) => service, { purpose: "metadata" });
+    await host.lifecycle(async () => {}, false);
+    expect(await host.run((service) => service, { purpose: "metadata" })).toBe(before);
+    // A read-only snapshot is copied again on reopen and the previous handle closes with it.
+    await host.lifecycle(async () => {
+      db = copy.db;
+      first.close();
+    }, false);
+    expect(host.idle()).toBe(true);
+    expect(host.busy()).toBe(false);
+    expect(await host.run((service) => service, { purpose: "metadata" })).not.toBe(before);
+  } finally {
+    await host.close();
+    copy.close();
+    if (first.db.open) first.close();
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+// REQ-FUNC-0dfa01fd: the settled observer cannot fail the operation that let the host go idle.
+it("resolves host operations when the settled observer throws", async () => {
+  const root = await mkdtemp(join(tmpdir(), "vera-settled-"));
+  await mkdir(join(root, ".vera"));
+  const config = workbenchSchema.parse({ format: 1, id: "wb_01J00000000000000000000000", name: "Board" });
+  const storage = await openDb(join(root, ".vera/vera.db"), { workbenchId: config.id, appVersion: "0" });
+  const gateway = { capabilities: () => ({}), stream: async function* () {}, models: async () => ({}) };
+  let signals = 0;
+  const host = new SessionsHost({
+    workbench: {
+      getSnapshot: () => ({ folder: root, config, readOnly: false }),
+      getDatabase: () => storage.db,
+      getWriteQueue: () => new WriteQueue(),
+      assertSessionWritable: () => {},
+    },
+    settings: { get: () => ({ settings: {} }) },
+    gateway: () => ({ api: gateway }),
+    clock: { now: () => new Date(), sleep: async () => {} },
+    credentials: { scrub: (s: string) => s },
+    settled: () => {
+      signals++;
+      throw new Error("observer failed");
+    },
+  } as never);
+  try {
+    expect(await host.run(() => "listed", { purpose: "metadata" })).toBe("listed");
+    expect(await host.lifecycle(async () => "reopened", false)).toBe("reopened");
+    expect(signals).toBe(2);
+    expect(host.idle()).toBe(true);
+  } finally {
+    await host.close();
     storage.close();
     await rm(root, { recursive: true, force: true });
   }

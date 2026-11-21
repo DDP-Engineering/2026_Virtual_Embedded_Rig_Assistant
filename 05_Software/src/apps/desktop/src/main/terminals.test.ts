@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import { TerminalService, type UserPty } from "./terminals.js";
 
 function fixture() {
+  const limits = { terminals: 8, bufferChars: 262144, agentChars: 12000 };
   let masking = true;
   let agent = true;
   let current = { id: "bench-a", folder: "/workbench" };
@@ -52,9 +53,11 @@ function fixture() {
     pty: { spawn, stop },
     scrub: (text) => text.replaceAll("private-token-123", "[REDACTED]"),
     secrets: () => ["private-token-123"],
+    limits: () => limits,
   });
   return {
     service,
+    limits,
     agent: (value: boolean) => {
       agent = value;
     },
@@ -299,6 +302,51 @@ describe("user terminal host", () => {
     await expect(f.service.create("bench-a", 80, 24)).rejects.toMatchObject({ code: "CONFLICT" });
     f.service.resume();
     expect(await f.service.create("bench-a", 80, 24)).toMatchObject({ shared: false });
+  });
+  // REQ-FUNC-7509bd1e
+  it("refuses a terminal above the resolved count and keeps open ones when it is lowered", async () => {
+    const f = fixture();
+    f.limits.terminals = 2;
+    await f.service.create("bench-a", 80, 24);
+    await f.service.create("bench-a", 80, 24);
+    await expect(f.service.create("bench-a", 80, 24)).rejects.toMatchObject({ code: "BUSY" });
+    f.limits.terminals = 1;
+    expect(f.service.list("bench-a")).toHaveLength(2);
+    await expect(f.service.create("bench-a", 80, 24)).rejects.toMatchObject({ code: "BUSY" });
+    f.limits.terminals = 12;
+    await Promise.all(Array.from({ length: 7 }, () => f.service.create("bench-a", 80, 24)));
+    expect(f.service.list("bench-a")).toHaveLength(9);
+  });
+  // REQ-FUNC-240f4e02
+  it("keeps the buffer each terminal had when it opened, trimmed at a line", async () => {
+    const f = fixture();
+    f.masking(false);
+    f.limits.bufferChars = 64 * 1024;
+    const a = await f.service.create("bench-a", 80, 24);
+    f.limits.bufferChars = 256 * 1024;
+    const b = await f.service.create("bench-a", 80, 24);
+    f.processes[0]?.print("0123456789\n".repeat(10000));
+    f.processes[1]?.print("0123456789\n".repeat(10000));
+    const small = f.service.output("bench-a", a.id);
+    expect(small.output.length).toBeLessThanOrEqual(64 * 1024);
+    expect(small.output.startsWith("0123456789\n")).toBe(true);
+    expect(small.start + small.output.length).toBe(110000);
+    expect(f.service.output("bench-a", b.id).output).toHaveLength(110000);
+  });
+  // REQ-FUNC-ef931b1f
+  it("gives the agent the resolved output size within the given tool result size", async () => {
+    const f = fixture();
+    const a = await f.service.create("bench-a", 80, 24);
+    f.service.consent("bench-a", a.id, true);
+    f.processes[0]?.print("0123456789\n".repeat(5000));
+    const reader = f.service.reader("bench-a");
+    const read = () => JSON.parse(reader.publish(JSON.stringify(reader.read(a.id)), 64000)).text as string;
+    expect(read()).toHaveLength(12000);
+    f.limits.agentChars = 3000;
+    expect(read()).toHaveLength(3000);
+    f.limits.agentChars = 40000;
+    expect(read()).toHaveLength(40000);
+    expect(JSON.parse(reader.publish(JSON.stringify(reader.read(a.id)))).truncated).toBe(true);
   });
   it("refuses malformed dimensions/input and limits simultaneous terminals", async () => {
     const f = fixture();

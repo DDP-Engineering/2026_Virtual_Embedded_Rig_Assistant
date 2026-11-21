@@ -16,7 +16,53 @@ const fingerprint = (messages: Message[]) =>
 /** Local models often wrap the JSON reply in one Markdown code fence. */
 const withoutFence = (text: string) => /^```(?:json)?\s*([\s\S]*?)\s*```$/i.exec(text.trim())?.[1] ?? text;
 
-function summarizeMessage(message: Message): Message {
+/**
+ * The tunable compaction values, from the resolved Advanced settings (REQ-FUNC-1cec8616, REQ-FUNC-8ac5ec27,
+ * REQ-FUNC-4e63e8d4, REQ-FUNC-28f652c7, REQ-FUNC-e816fc22, REQ-FUNC-a786b11d, REQ-FUNC-5983a9e0).
+ */
+export interface CompactionSettings {
+  /** Fraction of the input budget above which history is compacted. */
+  trigger: number;
+  /** Tokens of the most recent history kept verbatim, capped at a fifth of the input budget. */
+  tailTokens: number;
+  /** Characters of each tool result a summary request carries (REQ-FUNC-bd5e5e8d). */
+  toolResultChars: number;
+  /**
+   * Summary passes for one request. A running session compacts a little each turn; a restarted one meets its
+   * whole history at once, and one summary request holds only about a budget of history.
+   */
+  maxPasses: number;
+  /** Factor over the calibrated count for content the provider has not counted yet (REQ-NFR-4721c12f). */
+  margin: number;
+  /** Use the provider-calibrated ratio; off counts with the conservative estimate. */
+  calibrated: boolean;
+  /** Make new summaries; off keeps an adopted one and sends full history otherwise. */
+  automatic: boolean;
+}
+export const defaultCompactionSettings: Readonly<CompactionSettings> = {
+  trigger: 0.8,
+  tailTokens: 20_000,
+  toolResultChars: 2000,
+  maxPasses: 5,
+  margin: 1.1,
+  calibrated: true,
+  automatic: true,
+};
+const RECENT_TAIL_SHARE = 0.2;
+
+function summarizeMessage(message: Message, chars: number): Message {
+  if (message.role === "toolResult")
+    return {
+      ...message,
+      content: message.content.map((block) =>
+        block.type === "text" && block.text.length > chars
+          ? {
+              ...block,
+              text: `${block.text.slice(0, chars)}\n[tool result truncated: ${block.text.length - chars} characters omitted]`,
+            }
+          : block,
+      ),
+    };
   const paths = imagePaths(message);
   if (message.role !== "user" || !paths.length) return message;
   const { images: _, ...user }: UserImageMessage = message;
@@ -28,45 +74,39 @@ function summarizeMessage(message: Message): Message {
   return { ...user, content };
 }
 
-/** Only whole successful exchanges before the current user instruction are eligible. */
-function completedExchanges(messages: Message[], current: number): { start: number; end: number }[] {
-  const exchanges: { start: number; end: number }[] = [];
-  let start = messages.findIndex((m) => m.role === "user");
-  if (start < 0) return exchanges;
-  while (start < current) {
-    if (messages[start]?.role !== "user") break;
-    const next = messages.findIndex((m, i) => i > start && m.role === "user");
-    if (next < 0 || next > current) break;
-    const pending = new Set<string>();
-    let valid = true;
-    for (const message of messages.slice(start + 1, next)) {
-      if (message.role === "assistant") {
-        if (pending.size || (message.stopReason !== "stop" && message.stopReason !== "toolUse"))
-          valid = false;
-        for (const block of message.content)
-          if (block.type === "toolCall") {
-            if (pending.has(block.id)) valid = false;
-            pending.add(block.id);
-          }
-      } else if (message.role === "toolResult") {
-        if (!pending.delete(message.toolCallId)) valid = false;
-      } else valid = false;
-    }
-    const final = messages[next - 1];
-    if (!valid || pending.size || final?.role !== "assistant" || final.stopReason !== "stop") valid = false;
-    if (
-      final?.role === "assistant" &&
-      final.content.some(
-        (block) =>
-          block.type === "toolCall" ||
-          (block.type === "text" && block.text === "(Previous turn interrupted before reply.)"),
-      )
-    )
-      valid = false;
-    if (valid) exchanges.push({ start, end: next });
-    start = next;
+/**
+ * Indices where history may be cut: every earlier tool call has its result earlier, and the message at
+ * the index is not a tool result. Turns split by steering, aborted and limit turns qualify like any other.
+ */
+function validCuts(messages: Message[], end: number): number[] {
+  const cuts: number[] = [];
+  const pending = new Set<string>();
+  for (let index = 0; index <= end; index++) {
+    const message = messages[index];
+    if (!pending.size && message?.role !== "toolResult") cuts.push(index);
+    if (message?.role === "assistant")
+      for (const block of message.content) if (block.type === "toolCall") pending.add(block.id);
+    if (message?.role === "toolResult") pending.delete(message.toolCallId);
   }
-  return exchanges;
+  return cuts;
+}
+
+/** The first index of the most recent history that reaches the tail size, counted like the request. */
+function tailStart(
+  messages: Message[],
+  end: number,
+  budget: number,
+  tailTokens: number,
+  measure: (message: Message) => number,
+): number {
+  const limit = Math.min(tailTokens, Math.floor(budget * RECENT_TAIL_SHARE));
+  if (limit <= 0) return end;
+  let size = 0;
+  for (let index = end - 1; index >= 0; index--) {
+    size += measure(messages[index] as Message);
+    if (size >= limit) return index;
+  }
+  return 0;
 }
 
 export type SummarizeHistory = (
@@ -77,16 +117,87 @@ type CompactionView = ContextView & {
   compactionStatus: NonNullable<ContextView["compactionStatus"]>;
   requestViewTokens: number;
 };
-
 /**
- * Summary passes for one request. A running session compacts a little each turn; a restarted one
- * meets its whole history at once (the summary is not durable), and one summary request holds only
- * about a budget of history. Five passes cover a history of roughly five budgets; the bound keeps a
- * very long session from sending a summary request per exchange.
+ * The lowest plausible ratio: about 8 bytes per token. Below it a report counts only part of the
+ * prompt (prefix caching servers report newly evaluated tokens), so it is not used.
  */
-const MAX_PASSES = 5;
+const MIN_CALIBRATION_RATIO = 0.12;
+
+/** The durable form of an adopted summary (REQ-DATA-d9ca38e5). */
+export interface CompactionRecord {
+  covered: number;
+  fingerprint: string;
+  note: string;
+  refs: string[];
+  images: string[];
+}
 
 export class ContextCompactor {
+  /** The values the owner resolved for the next compaction; read at each pass, so changes apply live. */
+  settings: CompactionSettings = { ...defaultCompactionSettings };
+  /** An adopted summary not yet handed to the owner for durable recording. */
+  private unsaved: CompactionRecord | undefined;
+  /** A background compaction in flight; every other caller waits for it. */
+  private running: { promise: Promise<unknown>; abort: () => void } | undefined;
+  /** Take the latest adopted summary once, for recording. */
+  takeRecord(): CompactionRecord | undefined {
+    const record = this.unsaved;
+    this.unsaved = undefined;
+    return record;
+  }
+  /** Reuse a recorded summary; `prepare` still checks its fingerprint against the history. */
+  restore(record: CompactionRecord): void {
+    this.cached = {
+      covered: record.covered,
+      fingerprint: record.fingerprint,
+      note: { role: "user", content: record.note, timestamp: 0 },
+      refs: [...record.refs],
+      images: [...record.images],
+    };
+  }
+  /** Run a background compaction; later `prepare` calls wait for it. */
+  background(task: (signal: AbortSignal) => Promise<unknown>): Promise<void> {
+    const controller = new AbortController();
+    const promise = task(controller.signal).then(
+      () => undefined,
+      () => undefined,
+    );
+    const running = { promise, abort: () => controller.abort() };
+    this.running = running;
+    return promise.finally(() => {
+      if (this.running === running) this.running = undefined;
+    });
+  }
+  /** Abort a background compaction in flight. */
+  abort(): void {
+    this.running?.abort();
+  }
+  /** Settles when no background compaction is in flight. */
+  async settled(): Promise<void> {
+    while (this.running) await this.running.promise;
+  }
+  /** Reported input tokens per estimated token of the latest answered normal request. */
+  calibration: { modelRef: string; ratio: number } | undefined;
+  /** The count scale for a model, when its calibration is known. */
+  scale(modelRef: string): number | undefined {
+    return this.settings.calibrated && this.calibration?.modelRef === modelRef
+      ? this.calibration.ratio * this.settings.margin
+      : undefined;
+  }
+  /** Keep the ratio of a reported input count to the estimate it answered; returns what was kept. */
+  calibrate(
+    modelRef: string,
+    reported: number,
+    estimated: number,
+  ): { modelRef: string; ratio: number } | undefined {
+    if (!(reported > 0) || !(estimated > 0)) return undefined;
+    const ratio = Math.min(1, reported / estimated);
+    if (ratio < MIN_CALIBRATION_RATIO) return undefined;
+    this.calibration = { modelRef, ratio };
+    return this.calibration;
+  }
+  /** Whether the latest pass left a raw view above the trigger. */
+  private above = false;
   private cached:
     | {
         covered: number;
@@ -94,13 +205,13 @@ export class ContextCompactor {
         note: Message;
         refs: string[];
         images: string[];
-        retained: Message[];
       }
     | undefined;
 
   /**
-   * The request view, compacted when needed: each pass summarizes the previous summary with the
-   * next completed exchanges that fit, until the view fits or five passes have run.
+   * The request view, compacted when needed: each pass summarizes the previous summary with the next
+   * completed exchanges that fit, until the view fits or the configured passes have run. `force` makes one
+   * pass regardless of the trigger and of automatic compaction (Compact now, REQ-FUNC-eeaf29bd).
    */
   async prepare(
     input: ContextInput,
@@ -108,10 +219,21 @@ export class ContextCompactor {
     policy: ContextPolicy,
     summarize: SummarizeHistory,
     currentStart = input.messages.findLastIndex((message) => message.role === "user"),
+    scale?: number,
+    background = false,
+    force = false,
   ): Promise<CompactionView> {
-    let view = await this.pass(input, capabilities, policy, summarize, currentStart);
-    for (let pass = 1; pass < MAX_PASSES && view.compactionStatus === "completed" && !view.fits; pass++)
-      view = await this.pass(input, capabilities, policy, summarize, currentStart);
+    if (!background) await this.settled();
+    let view = await this.pass(input, capabilities, policy, summarize, currentStart, scale, force);
+    if (force) return view;
+    // Continue while the view does not fit, or still sits above the trigger and more history can be
+    // summarized: a view left above the trigger would compact again at the very next request.
+    const passes = this.settings.maxPasses;
+    for (let pass = 1; pass < passes && view.compactionStatus === "completed" && this.above; pass++) {
+      const next = await this.pass(input, capabilities, policy, summarize, currentStart, scale);
+      if (!view.fits || next.compactionStatus === "completed") view = next;
+      else break;
+    }
     return view;
   }
 
@@ -121,7 +243,12 @@ export class ContextCompactor {
     policy: ContextPolicy,
     summarize: SummarizeHistory,
     currentStart: number,
+    scale: number | undefined,
+    force = false,
   ): Promise<CompactionView> {
+    const settings = this.settings;
+    const count = (request: ContextInput, reduce = true) =>
+      policy.prepare(request, capabilities, reduce, undefined, scale);
     let cached = this.cached;
     if (cached && fingerprint(input.messages.slice(0, cached.covered)) !== cached.fingerprint) {
       this.cached = undefined;
@@ -129,42 +256,45 @@ export class ContextCompactor {
     }
     const covered = cached?.covered ?? 0;
     const previous = cached ? [cached.note] : [];
-    const retained = cached?.retained ?? [];
-    const base = { ...input, messages: [...previous, ...retained, ...input.messages.slice(covered)] };
-    const raw = policy.prepare(base, capabilities, false);
+    const base = { ...input, messages: [...previous, ...input.messages.slice(covered)] };
+    const raw = count(base, false);
+    // Automatic compaction off keeps an adopted summary and makes no new one (REQ-FUNC-5983a9e0).
+    this.above =
+      force || (settings.automatic && raw.contextTokens > raw.inputBudgetTokens * settings.trigger);
     const finish = (request: ContextInput, status: CompactionView["compactionStatus"]): CompactionView => {
-      const view = policy.prepare(request, capabilities);
+      const view = count(request);
       return { ...view, compactionStatus: status, requestViewTokens: view.contextTokens };
     };
-    if (raw.contextTokens <= raw.inputBudgetTokens * 0.8) return finish(base, cached ? "completed" : "none");
+    if (!this.above) return finish(base, cached ? "completed" : "none");
     const current = currentStart;
-    if (
-      !policy.prepare({ ...input, messages: input.messages.slice(Math.max(0, current)) }, capabilities).fits
-    )
+    if (!count({ ...input, messages: input.messages.slice(Math.max(0, current)) }).fits)
       return finish(base, "unavailable");
 
-    let candidate:
-      | { end: number; input: ContextInput; view: ContextView; history: Message[]; retained: Message[] }
-      | undefined;
-    const history: Message[] = [];
-    const keep: Message[] = [...retained];
-    let cursor = covered;
-    for (const { start, end } of completedExchanges(input.messages, current)) {
-      if (start < covered) continue;
-      keep.push(...input.messages.slice(cursor, start));
-      history.push(...input.messages.slice(start, end));
-      cursor = end;
+    let candidate: { end: number; input: ContextInput; view: ContextView; history: Message[] } | undefined;
+    // The recent tail is kept verbatim only while the view fits; a view over budget may summarize into it.
+    const last = raw.fits
+      ? tailStart(
+          input.messages,
+          Math.max(0, current),
+          raw.inputBudgetTokens,
+          settings.tailTokens,
+          (message) => count({ system: "", tools: [], messages: [message] }, false).contextTokens,
+        )
+      : Math.max(0, current);
+    for (const cut of validCuts(input.messages, Math.max(0, current))) {
+      if (cut <= covered || cut > last) continue;
+      const history = input.messages.slice(covered, cut);
       const request: ContextInput = {
         system: `${input.system}\n\n${instruction}`,
         tools: [],
         messages: [
           ...previous,
-          ...history.map(summarizeMessage),
-          { role: "user", content: instruction, timestamp: input.messages[end]?.timestamp ?? 0 },
+          ...history.map((message) => summarizeMessage(message, settings.toolResultChars)),
+          { role: "user", content: instruction, timestamp: input.messages[cut]?.timestamp ?? 0 },
         ],
       };
-      const view = policy.prepare(request, capabilities);
-      if (view.fits) candidate = { end, input: request, view, history: [...history], retained: [...keep] };
+      const view = count(request);
+      if (view.fits) candidate = { end: cut, input: request, view, history };
     }
     if (!candidate) return finish(base, "unavailable");
     let response: AssistantMessage | undefined;
@@ -216,21 +346,26 @@ export class ContextCompactor {
         outstandingWork: summary.outstandingWork,
         sourceRefs: [...refs].sort(),
       })}${images.length ? `\n${images.map(compactedImageNote).join("\n")}` : ""}`,
-      timestamp: input.messages[0]?.timestamp ?? 0,
+      // A fixed timestamp: the note must be identical when restored from its durable record.
+      timestamp: 0,
     };
-    const compacted = {
-      ...input,
-      messages: [note, ...candidate.retained, ...input.messages.slice(candidate.end)],
-    };
-    if (policy.prepare(compacted, capabilities, false).contextTokens >= raw.contextTokens)
-      return finish(base, "failed");
+    const compacted = { ...input, messages: [note, ...input.messages.slice(candidate.end)] };
+    const after = count(compacted, false).contextTokens;
+    if (after >= raw.contextTokens) return finish(base, "failed");
+    this.above = settings.automatic && after > raw.inputBudgetTokens * settings.trigger;
     this.cached = {
       covered: candidate.end,
       fingerprint: fingerprint(input.messages.slice(0, candidate.end)),
       note,
       refs: [...refs],
       images,
-      retained: structuredClone(candidate.retained),
+    };
+    this.unsaved = {
+      covered: this.cached.covered,
+      fingerprint: this.cached.fingerprint,
+      note: typeof note.content === "string" ? note.content : "",
+      refs: [...refs].sort(),
+      images: [...images],
     };
     return finish(compacted, "completed");
   }

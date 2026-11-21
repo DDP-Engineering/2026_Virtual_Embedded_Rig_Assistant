@@ -6,13 +6,13 @@ title = "Warn about a large selection while choosing documentation folders"
 
 status = "active"
 
-requirement = "While the Documents section preview counts more than 2,000 files or more than 2 GiB, or its bounded scan stopped early, the desktop app shall show a volume warning next to the preview statement on the New Workbench page and in the workbench editor, stating the counted files (as a minimum when the scan stopped early) and size without claiming that indexing is running."
+requirement = "While the Documents section preview counts more files or more bytes than the resolved Document volume warning (an integer from 500 to 100000 files, default 2000, and from 512 to 51200 MiB, default 2048, set per workbench or application), or its bounded scan stopped early, the desktop app shall show a volume warning next to the preview statement on the New Workbench page and in the workbench editor, stating the counted files (as a minimum when the scan stopped early) and size without claiming that indexing is running."
 
-verification = "Renderer test with the mock API: a preview of 2,001 files or 2 GiB + 1 byte shows the warning beside the statement, a truncated preview of 12 files shows it with 'at least 12', a preview of exactly 2,000 files and 2 GiB shows none, the preview text does not say indexing continues, and the warning disappears after the selection shrinks below the threshold."
+verification = "Shared test: documentVolumeLimitFor resolves the workbench docVolumeFiles 5000 over the application docVolumeMB 1024, and exceedsDocumentVolume applies that limit. Renderer test with the mock API: a preview of 2,001 files or 2 GiB + 1 byte shows the warning beside the statement, a truncated preview of 12 files shows it with 'at least 12', a preview of exactly 2,000 files and 2 GiB shows none, a volume limit of 5,000 files keeps the 2,001-file preview quiet, and the preview text does not say indexing continues."
 
-affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/workbench-documents.tsx", "05_Software/src/apps/desktop/src/renderer/components/documents/volume-warning.tsx", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json", "05_Software/src/apps/desktop/src/renderer/locales/fr.json"]
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/workbench-documents.tsx", "05_Software/src/apps/desktop/src/renderer/components/documents/volume-warning.tsx", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json", "05_Software/src/apps/desktop/src/renderer/locales/fr.json", "05_Software/src/libraries/shared/src/documents.ts", "05_Software/src/apps/desktop/src/renderer/components/workbench-config-form.tsx"]
 
-linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/documents/documents.test.ts::warns about a large selection in Docs and in the Documents section, never at the limits"]
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/documents/documents.test.ts::reports active indexing in Files and warns about large selections before saving", "05_Software/src/libraries/shared/src/documents-ipc.test.ts", "05_Software/src/apps/desktop/src/renderer/components/documents/documents.test.ts"]
 
 
 spec = ""
@@ -21,4 +21,4 @@ priority = "normal"   # low | normal | high
 rationale = ""        # why this behavior exists, if not obvious
 
 created = 2026-11-01
-updated = 2026-11-01
+updated = 2026-11-21

@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-ddcd96b8"
+
+title = "Keep the resolved number of run logs"
+
+status = "active"
+
+requirement = """
+When run logs are pruned, VERA shall keep the newest resolved Run logs kept, an integer from 20 to 2000 with default 200 set for the application, run folders of the workbench and remove the older ones.
+"""
+
+verification = "With 20, after 25 finished runs 20 run folders remain, the 5 oldest removed; with no value 200 are kept."
+
+affected_paths = ["05_Software/src/libraries/shared/src/advanced-settings.ts", "05_Software/src/libraries/core/src/plugins/runner.ts", "05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/apps/cli/src/run.ts"]
+
+linked_tests = ["05_Software/src/libraries/shared/src/advanced-settings.test.ts", "05_Software/src/libraries/core/src/plugins/runner.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-21
+updated = 2026-11-21

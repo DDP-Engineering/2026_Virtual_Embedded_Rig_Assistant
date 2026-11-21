@@ -7,6 +7,7 @@ import { join, resolve } from "node:path";
 import { _electron, expect, test } from "@playwright/test";
 import type { VeraBridge } from "@vera/shared";
 import { installNetworkGuard, outboundAttempts } from "./network-guard.js";
+import { saveSettings } from "./settings-navigation.js";
 
 test("native agent searches and reads via Exa adapter, presents sources/tool calls and saves web tool exclusions", async () => {
   test.setTimeout(60000);
@@ -154,6 +155,7 @@ test("native agent searches and reads via Exa adapter, presents sources/tool cal
       await page.locator('[data-i18n="nav.settings"]').click();
       await page.locator('[data-section="appearance"]').click();
       await page.locator("#language").selectOption(language!);
+      await saveSettings(page);
       await page.locator('[data-action="leave-settings"]').click();
       await page.locator(`[data-session="${ids.session}"]`).click();
       await source.click();

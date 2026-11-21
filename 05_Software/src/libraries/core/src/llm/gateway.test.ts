@@ -2,7 +2,7 @@ import { once } from "node:events";
 import { existsSync } from "node:fs";
 import { createServer, type RequestListener, type Server } from "node:http";
 import { defaultSettings } from "@vera/shared";
-import { afterEach, beforeAll, describe, expect, it } from "vitest";
+import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import type { CredentialStore } from "../ports.js";
 import type { LlmEvent, LlmGateway } from "./gateway.js";
 import { scrub } from "./scrub.js";
@@ -429,6 +429,184 @@ describe("model gateway", () => {
     expect(() => gateway.capabilities("chatgpt/model")).toThrow();
     expect(() => gateway.capabilities("openai/invented-model")).toThrow();
   });
+});
+
+// REQ-NFR-543124b7, REQ-FUNC-25254fe8
+it("waits for response headers up to the custom connection's timeout, 300 s by default and 30 s for OpenAI", async () => {
+  const settings = defaultSettings("00000000-0000-4000-8000-000000000001");
+  const custom = {
+    baseUrl: "http://127.0.0.1:1/v1",
+    model: "m",
+    contextWindow: 32768,
+    maxOutputTokens: 4096,
+  };
+  settings.providers.custom = [
+    { ...custom, slug: "slow", name: "Slow", responseTimeoutSeconds: 45 },
+    { ...custom, slug: "plain", name: "Plain" },
+  ];
+  let calls = 0;
+  // A server that never answers: the request ends only when the SDK's own timer aborts it.
+  const hang: typeof fetch = (_input, init) => {
+    calls++;
+    return new Promise((_resolve, reject) =>
+      init?.signal?.addEventListener("abort", () => reject(new DOMException("aborted", "AbortError")), {
+        once: true,
+      }),
+    );
+  };
+  const gateway = createPiAiGateway({
+    settings: () => settings,
+    credentials,
+    scrub: (s) => s,
+    now: () => 0,
+    fetch: hang,
+  });
+  expect(gateway.responseTimeoutMs?.("custom:slow/m")).toBe(45000);
+  expect(gateway.responseTimeoutMs?.("custom:plain/m")).toBe(300000);
+  expect(gateway.responseTimeoutMs?.("openai/gpt-4.1")).toBeUndefined();
+  vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+  try {
+    for (const [model, seconds] of [
+      ["custom:slow/m", 45],
+      ["custom:plain/m", 300],
+      ["openai/gpt-4.1", 30],
+    ] as const) {
+      const before = calls;
+      let settled = false;
+      const result = events(gateway, undefined, undefined, model).finally(() => {
+        settled = true;
+      });
+      while (calls === before) await new Promise((resolve) => setImmediate(resolve));
+      await vi.advanceTimersByTimeAsync(seconds * 1000 - 1);
+      expect(settled, model).toBe(false);
+      await vi.advanceTimersByTimeAsync(1);
+      expect((await result).at(-1), model).toMatchObject({
+        type: "error",
+        aborted: false,
+        error: { code: "PROVIDER", messageKey: "provider.timeout", params: { reason: "timeout", seconds } },
+      });
+    }
+    // A caller abort during the header wait stays an abort, not a timeout.
+    const before = calls;
+    const caller = new AbortController();
+    const seen: LlmEvent[] = [];
+    const run = (async () => {
+      for await (const event of gateway.stream({
+        model: "custom:slow/m",
+        system: "system",
+        messages: [{ role: "user", content: "hi", timestamp: 0 }],
+        tools: [],
+        signal: caller.signal,
+      }))
+        seen.push(event);
+    })();
+    while (calls === before) await new Promise((resolve) => setImmediate(resolve));
+    caller.abort();
+    await run;
+    expect(seen.at(-1)).toMatchObject({ type: "error", aborted: true });
+    expect(
+      seen.some((event) => event.type === "error" && event.error.messageKey === "provider.timeout"),
+    ).toBe(false);
+  } finally {
+    vi.useRealTimers();
+  }
+});
+
+// REQ-FUNC-73ca575e
+it("waits for hosted response headers as long as the host's header wait, read at each request", async () => {
+  const settings = defaultSettings("00000000-0000-4000-8000-000000000001");
+  settings.providers.custom = [
+    {
+      baseUrl: "http://127.0.0.1:1/v1",
+      model: "m",
+      contextWindow: 32768,
+      maxOutputTokens: 4096,
+      slug: "slow",
+      name: "Slow",
+      responseTimeoutSeconds: 45,
+    },
+  ];
+  let calls = 0;
+  const hang: typeof fetch = (_input, init) => {
+    calls++;
+    return new Promise((_resolve, reject) =>
+      init?.signal?.addEventListener("abort", () => reject(new DOMException("aborted", "AbortError")), {
+        once: true,
+      }),
+    );
+  };
+  let wait = 12_000;
+  const gateway = createPiAiGateway({
+    settings: () => settings,
+    credentials,
+    scrub: (s) => s,
+    now: () => 0,
+    fetch: hang,
+    headerWaitMs: () => wait,
+  });
+  vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+  try {
+    for (const [model, seconds, next] of [
+      ["openai/gpt-4.1", 12, 90_000],
+      ["openai/gpt-4.1", 90, 90_000],
+      // A custom endpoint keeps its own wait.
+      ["custom:slow/m", 45, 90_000],
+    ] as const) {
+      const before = calls;
+      let settled = false;
+      const result = events(gateway, undefined, undefined, model).finally(() => {
+        settled = true;
+      });
+      while (calls === before) await new Promise((resolve) => setImmediate(resolve));
+      await vi.advanceTimersByTimeAsync(seconds * 1000 - 1);
+      expect(settled, model).toBe(false);
+      await vi.advanceTimersByTimeAsync(1);
+      expect((await result).at(-1), model).toMatchObject({
+        error: { messageKey: "provider.timeout", params: { reason: "timeout", seconds } },
+      });
+      wait = next;
+    }
+  } finally {
+    vi.useRealTimers();
+  }
+});
+
+// REQ-REL-25ceaa1d
+it("reports provider activity for every streamed reasoning delta", async () => {
+  const chunk = (delta: object, finish: string | null = null) =>
+    `data: ${JSON.stringify({ id: "test", model: "org/model", choices: [{ index: 0, delta, finish_reason: finish }] })}
+
+`;
+  const answer = `${chunk({ content: "OK" }, "stop")}data: [DONE]
+
+`;
+  const count = async (body: string) => {
+    const { url } = await endpoint((_req, res) => {
+      res.writeHead(200, { "content-type": "text/event-stream" });
+      res.end(body);
+    });
+    let activity = 0;
+    const seen: LlmEvent[] = [];
+    for await (const event of setup(url).gateway.stream({
+      model: "custom:local/org/model",
+      system: "system",
+      messages: [{ role: "user", content: "hi", timestamp: 0 }],
+      tools: [],
+      signal: new AbortController().signal,
+      onActivity: () => {
+        activity++;
+      },
+    }))
+      seen.push(event);
+    expect(seen.at(-1)?.type).toBe("done");
+    return activity;
+  };
+  const plain = await count(answer);
+  const reasoning = await count(
+    `${chunk({ reasoning_content: "a" })}${chunk({ reasoning_content: "b" })}${chunk({ reasoning_content: "c" })}${answer}`,
+  );
+  // The three reasoning deltas each add at least one activity report beyond the same answer without them.
+  expect(reasoning - plain).toBeGreaterThanOrEqual(3);
 });
 
 it("uses per-model discovered context and optional LM Studio generation parameters", async () => {

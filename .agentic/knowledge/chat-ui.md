@@ -21,13 +21,25 @@ budgets and abort. The browser mock seeds six selectable states and an edit appr
 
 ## Public interface
 
+- Advanced settings UI (ADV-01):
+  - **Settings > Advanced** (`advanced-settings-panel.tsx`) always holds the Show advanced settings switch. When the switch is on, it also shows the application fields, which save at once.
+  - **Edit workbench > Advanced** (`workbench-advanced.tsx`) is a config section shown only when the switch is on. Its draft fields save with the workbench Save, and an out-of-range value keeps Save off. The patch comes from `advancedEditPatch`.
+  - **Session menu > Advanced settings** (`session/session-advanced.tsx`) is a dialog that calls `session.advanced.set`.
+  - **Shared `AdvancedField`:**
+    - an empty value inherits, and the placeholder shows the inherited value and its source;
+    - Reset clears the value;
+    - a Zap icon carries the apply-timing tooltip;
+    - an out-of-range value shows a localized message (`role=alert`).
+  - Texts are in en/ro/de/fr. The help page is `advanced-settings`.
+  - Tests: `advanced-settings.test.ts`, `workbench-advanced.test.ts`, `tests/e2e/advanced-settings.spec.ts`.
+
 - Shell approval cards show exact command/cwd/shell and, for eligible literal syntax, a chosen-prefix selector with Always allow. session.approval.decide carries the prefix only on that explicit user action. The [workbench editor](workbench-editor.md) owns the Agent editor list of saved prefixes. The card has four locales. Tests: tests/e2e/command-prefixes.spec.ts.
 
 - Markdown HTTP(S) source buttons use translated confirmation before system-browser IPC; cancel/Escape restore focus. A body portal preserves valid Markdown nesting; stable source components survive transcript refresh. [Web search](web-search.md) owns source handling.
 
 - WorkbenchNavigation coordinates session/workbench action details through one sidebar scope. Opening a trigger closes others; outside pointer/focus dismisses and Escape restores trigger focus. Archived expansion is independent. New session/shortcut opts into server-side unused-session reuse, retains the synchronous operationBusy guard, deduplicates the cache and focuses the selected composer through a consumed session-scoped request; same-session unsent drafts remain intact. Tests: workspace.test.ts, native navigation-actions.spec.ts.
 
-- Each user message shows, only at the Verbose chat detail level, a muted, wrapping statistics line (`PromptUsage`, session/prompt-usage.tsx) per user prompt: reported input/output, frozen initial normal-request context (estimated when applicable), unavailable dashes and explicitly shared batch consumption. Locale-aware formatters are memoized per language. Source is the shared user-item usage projection, not the changing global meter; strings are en/ro/de. Tests: activity-usage.test.ts, native prompt-usage.spec.ts.
+- Each user message shows, only at the Verbose chat detail level, a muted, wrapping statistics line (`PromptUsage`, session/prompt-usage.tsx) per user prompt: the send date and time to the minute (`Intl.DateTimeFormat` short date and time, a `<time>` element, omitted when the item has no valid timestamp; the line also shows for a timed prompt before usage arrives), reported input/output, frozen initial normal-request context (estimated when applicable), unavailable dashes and explicitly shared batch consumption. Locale-aware formatters are memoized per language. Source is the shared user-item usage and timestamp projection, not the changing global meter; strings are en/ro/de/fr. Tests: activity-usage.test.ts, transcript-detail.test.ts, native prompt-usage.spec.ts.
 
 - PermissionPicker offers read-only, Ask, Auto-edit and marked Bypass. Each Bypass change first opens one localized confirmation naming read/change/run in any OS-accessible folder. Confirm saves the mode; Cancel/Escape keeps the prior mode and restores focus. Save errors retain the dialog for retry/cancel and pending saves prevent duplicates. Bypass remains red/bold, and its enabled ordinary file tools can use outside paths; application data is excluded. Other mode changes remain available during active turns, with core revocation on downgrade.
 
@@ -37,6 +49,7 @@ budgets and abort. The browser mock seeds six selectable states and an edit appr
 
 - App owns one confirmed workbench snapshot shared with Welcome, Welcome/Settings/session memory routes and per-workbench selected IDs in localStorage. Session chat shows workbench-scoped delegation links with the initial turn state from the session list. A one-time request selects and focuses the linked Chat transcript even when document tabs are restored. The child labels its own delegated turn status separately from the parent link. The child uses the ordinary Stop and approval actions and displays the locked read-only tool mode. Proof: tests/e2e/session-delegation.spec.ts.
 - SessionList offers workbench-scoped title/message search, localized empty/loading/error results, New/select/rename/confirmed delete/status; Ctrl+N creates when writable.
+- A send refused with `TURN_LIMIT` returns false, so the composer keeps its text and attachments and, once the message box is enabled again, its focus; SessionWorkspace shows the localized limit alert (wait for a turn, or stop one in the sidebar) until `useTurnCapacity` (session.capacity query plus app event) reports `active < limit`, then the status `chat.turnSlotFree`. Nothing is sent automatically. Tests: components/session/turn-limit.test.ts, native background-sessions.spec.ts.
 - SessionList offers row-scoped native Markdown/JSON export with localized completion/cancel/errors in read-only or writable workbenches. SessionWorkspace composes transcript/composer/meter and Ctrl+F search with localized match count and per-message match text; closing search restores transcript focus. Plain Escape confirms Stop in a writable active turn; global actions yield to modal/handled/composing/repeated keys.
 - useSessionEvents gets snapshot/seq, then subscribes from seq; cancellation detaches obsolete views. Masking-relevant settings, workbench configuration and effective session model changes invalidate the projection even at unchanged seq, hide old content and reject old in-flight answers/frames. The shared provider is keyed by workbench folder/ID and exposes a projection epoch for captured selections. Only composer control metadata survives a hidden projection, preserving its mounted unsent input; no disclosed transcript/plan is retained for rendering. Focused proof: hooks/session-privacy.test.ts and session/plan-review-retry.test.ts.
 - App mounts one `SessionViewProvider` (`renderer/hooks/session-view.tsx`) around Shell for the open session while the chat
@@ -90,8 +103,9 @@ budgets and abort. The browser mock seeds six selectable states and an edit appr
   chevrons, translated state-aware tooltip/accessible label and expanded/controls
   semantics; name selection keeps opening the workbench overview.
 - Each sidebar session row displays the localized date/time of updatedAt (last
-  recorded activity). Selecting the row does not write an access time; runtime
-  status remains in screen-reader text and action guards (REQ-UX-9a0489f1).
+  recorded activity). Selecting the row does not write an access time; a running or
+  awaiting-approval row adds a spinner or shield icon before the date, and the status stays in
+  screen-reader text and action guards (REQ-UX-9a0489f1).
 - Each sidebar session row has one ellipsis menu: Markdown/JSON export of that row,
   rename, confirmed delete, archive/restore. Mutations lock for read-only workbenches and active/approval turns.
   Archived sessions remain accessible in a collapsible section and can be restored.
@@ -107,6 +121,8 @@ budgets and abort. The browser mock seeds six selectable states and an edit appr
   active Stop uses the real session.stop channel and leaves a usable composer at completion.
 - Markdown skips HTML and renders links/images inert; verified message citations alone enable chips.
 - Tool disclosures expose full arguments and preview/update/summary; errors and estimates are labelled.
+- `ErrorRow` passes the stored error item's optional `params` to `ErrorMessage`, so `provider.timeout`
+  names the limit ("The model did not respond within N s.") in en/ro/de/fr (REQ-FUNC-25254fe8).
 - `Disclosure` mounts its content only while open (transcript, groups and reasoning); its empty
   hidden container keeps `aria-controls` resolvable. Collapsed content is not in the DOM, so find-in-page
   and copy-all skip it.
@@ -121,7 +137,9 @@ budgets and abort. The browser mock seeds six selectable states and an edit appr
 - A streaming assistant message renders as blocks (`streamingBlocks`: split at blank lines outside code
   fences), each through memoized `Markdown`, so only the growing last block is parsed again per frame;
   `message.done` renders the whole text once.
-- The transcript mounts the newest 40 rows in its first commit and prepends older rows in chunks of 100,
+- The transcript mounts the newest Transcript rows first shown (application Advanced, default 40) in its first
+  commit and prepends older rows in chunks of Transcript rows per load (default 100), both read when the session
+  is shown (REQ-UX-a4cf0527),
   one per `requestIdleCallback` (250 ms timeout) inside `startTransition`, until all are mounted; the window
   start is pinned once rows exist, so later rows never unmount older ones, and resets on session change.
   A search mounts every row (matches are outlined in all of them). Scrolling within one screen of the oldest

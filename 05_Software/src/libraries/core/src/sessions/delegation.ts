@@ -4,9 +4,6 @@ import { modelReferenceSchema, reasoningOptionSchema } from "@vera/shared";
 import { z } from "zod";
 import type { LlmGateway } from "../llm/gateway.js";
 
-/** Maximum simultaneously active delegated turns in one workbench. */
-export const MAX_ACTIVE_DELEGATIONS = 3;
-
 export const delegatedLaunchRequestSchema = z.strictObject({
   requestId: z.string().regex(/^[A-Za-z0-9_.:-]{1,200}$/),
   instruction: z

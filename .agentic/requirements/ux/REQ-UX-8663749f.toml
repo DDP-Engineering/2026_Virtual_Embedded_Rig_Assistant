@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-UX-8663749f"
+
+title = "Apply session Advanced values on Save"
+
+status = "active"
+
+requirement = """
+When the user edits values in the session Advanced dialog, VERA shall record them only when the user chooses Save and shall close the dialog without changes when the user chooses Cancel or Escape.
+"""
+
+verification = "Open the dialog, type 300 and Cancel: no session.advanced.set call; type 300 and Save: one call with 300; Reset then Save sends null; an out-of-range value keeps Save disabled."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/session/session-advanced.tsx", "05_Software/src/apps/desktop/src/renderer/components/advanced-field.tsx"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/session/session-advanced.test.ts", "05_Software/src/apps/desktop/src/renderer/components/advanced-settings.test.ts", "05_Software/tests/e2e/advanced-settings.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-20
+updated = 2026-11-20

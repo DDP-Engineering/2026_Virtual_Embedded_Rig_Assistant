@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-150dcb0b"
+
+title = "Read up to the resolved read window lines"
+
+status = "active"
+
+requirement = """
+When the read tool runs, VERA shall return at most the resolved Read window lines, an integer from 500 to 10000 with default 2000 set for the application, using that count when the call gives no limit and as the ceiling for a larger requested limit.
+"""
+
+verification = "With 3000, read without a limit on a 5000-line file returns 3000 lines marked truncated, a limit of 4000 returns 3000 lines and a limit of 100 returns 100; the read schema accepts a limit up to 10000."
+
+affected_paths = ["05_Software/src/libraries/shared/src/advanced-settings.ts", "05_Software/src/libraries/core/src/tools/context.ts", "05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/libraries/core/src/tools/read.ts"]
+
+linked_tests = ["05_Software/src/libraries/shared/src/advanced-settings.test.ts", "05_Software/src/libraries/core/src/tools/read.test.ts", "05_Software/src/libraries/core/src/tools/registry.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-21
+updated = 2026-11-21

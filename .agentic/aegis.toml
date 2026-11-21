@@ -13,7 +13,7 @@ lint = "python ../02_Tools/environment/npmw.py npm run lint"
 typecheck = "python ../02_Tools/environment/npmw.py npm run typecheck"
 i18n = "python ../02_Tools/environment/npmw.py npm run check:i18n"
 help = "python ../02_Tools/environment/npmw.py npm run check:help"
-workdir = "05_Software"                   # npm workspaces root (01-system.md §5)
+workdir = "05_Software"                   # npm workspaces root (00_Planning/System.md, Source layout)
 # timeout = 0                           # seconds allowed per command; 0 or
 #                                       # absent means no limit at all
 #

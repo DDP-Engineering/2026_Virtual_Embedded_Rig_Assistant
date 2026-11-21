@@ -7,6 +7,7 @@ import {
   type ProviderTestResult,
   providerCatalogSchema,
   providerTestResultSchema,
+  resolveAdvanced,
   veraError,
 } from "@vera/shared";
 import type { CredentialFile } from "./credentials.js";
@@ -36,6 +37,9 @@ export class ProviderGateway {
         scrub: (text) => credentials.scrub(text),
         knownSecrets: () => credentials.knownSecrets(),
         now: () => clock.now().getTime(),
+        // The application's header wait for hosted providers, read at each request (REQ-FUNC-73ca575e).
+        headerWaitMs: () =>
+          resolveAdvanced("headerWait", { app: settings.get().settings.advanced }).value * 1000,
       });
   }
   modelReference(session?: string | null, workbench?: string | null): string {

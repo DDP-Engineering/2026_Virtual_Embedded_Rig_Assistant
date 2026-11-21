@@ -1,0 +1,21 @@
+schema = 1
+
+id = "REQ-REL-b10ee7aa"
+
+title = "Keep open workbenches unchanged when a target open fails"
+
+status = "active"
+
+requirement = "If opening or creating a target workbench fails, then the desktop app shall keep the current workbench, its user terminals included, and every background workbench open and unchanged and discard the runtime prepared for the target."
+verification = "Registry test: a scripted open of B that rejects with INVALID leaves the foreground runtime and its sessions untouched (no drain, no release, no program stop) and keeps the retained set; a later open of B creates a fresh runtime. Main test with real runtimes: opening a folder without a workbench returns NOT_FOUND while A's held turn continues and completes. Native e2e: after that failed open, A's terminal is still listed."
+affected_paths = ["05_Software/src/apps/desktop/src/main/workbench-runtimes.ts", "05_Software/src/apps/desktop/src/main/sessions.ts", "05_Software/src/apps/desktop/src/main/index.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/workbench-runtimes.test.ts::keeps every open workbench unchanged when the target fails to open", "05_Software/src/apps/desktop/src/main/workbench-runtimes.replay.test.ts::keeps a held turn through failed opens, a return to its workbench and a reopen in place", "05_Software/tests/e2e/workbench-runtimes.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-21
+updated = 2026-11-21

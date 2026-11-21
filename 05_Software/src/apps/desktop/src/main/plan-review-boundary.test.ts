@@ -68,7 +68,10 @@ it("prepares review through real current configuration without warning-driven di
       type: "todo.updated",
       items: [{ text: "Review only", status: "pending" }],
     });
-    const handlers = mainSessions.planReviewHandlers(host, () => false);
+    const handlers = mainSessions.planReviewHandlers(
+      () => host,
+      () => false,
+    );
     const scope = { workbenchId: config.id, sessionId: id };
     await handlers["session.plan.comment.save"]({
       ...scope,
@@ -124,7 +127,7 @@ it("prepares review through real current configuration without warning-driven di
 it("revalidates plan and feedback counters changed during awaited review preparation", async () => {
   for (const change of ["plan", "feedback"] as const) {
     const env = await fixture(),
-      handlers = mainSessions.planReviewHandlers(env.host, env.containsSecret);
+      handlers = mainSessions.planReviewHandlers(() => env.host, env.containsSecret);
     await handlers["session.plan.comment.save"]({
       ...env.scope,
       action: "create",
@@ -158,7 +161,7 @@ it("revalidates plan and feedback counters changed during awaited review prepara
 
 it("keeps late review callbacks bound to the captured database and refuses effects after replacement", async () => {
   const env = await fixture(true),
-    handlers = mainSessions.planReviewHandlers(env.host, env.containsSecret);
+    handlers = mainSessions.planReviewHandlers(() => env.host, env.containsSecret);
   await handlers["session.plan.comment.save"]({
     ...env.scope,
     action: "create",

@@ -22,6 +22,7 @@ import {
   sessionStatusSchema,
   stopReasonSchema,
   todoItemsSchema,
+  turnCapacitySchema,
 } from "./session.js";
 import type { Settings } from "./settings.js";
 import { updateOfferSchema, updateSnapshotSchema } from "./updates.js";
@@ -46,6 +47,10 @@ export const appEventSchema = z.discriminatedUnion("type", [
   z.strictObject({ type: z.literal("indexer.status"), state: indexerStateSchema }),
   /** The plugin catalog was read again (an update check); the Plugins page reloads its view. */
   z.strictObject({ type: z.literal("plugins.catalog") }),
+  /** A session's turn, approval, title or status, or the set of open workbenches changed: read session.activity. */
+  z.strictObject({ type: z.literal("session.activity") }),
+  /** A turn was admitted or ended, or the Concurrent turns limit changed (REQ-FUNC-33cd5f9f). */
+  z.strictObject({ type: z.literal("session.capacity"), ...turnCapacitySchema.shape }),
 ]);
 export type AppEvent = z.infer<typeof appEventSchema>;
 /** Settings with no masking policy and no credential behind them. */
@@ -110,6 +115,10 @@ export const usageEventSchema = z.strictObject({
   estimated: z.boolean().optional(),
   compactionStatus: z.enum(["none", "running", "completed", "unavailable", "failed"]).optional(),
   requestViewTokens: count.optional(),
+  /** Reported input tokens per conservatively estimated token of the request just answered. */
+  calibration: z
+    .strictObject({ modelRef: z.string().min(1), ratio: z.number().positive().max(1) })
+    .optional(),
 });
 export const sessionEventSchema = z.discriminatedUnion("type", [
   z.strictObject({
@@ -119,6 +128,8 @@ export const sessionEventSchema = z.discriminatedUnion("type", [
     modelRef: z.string().nullable().optional(),
     mode: permissionModeSchema.optional(),
     reasoning: reasoningOptionSchema.nullable().optional(),
+    /** Session-scope Advanced values; null clears one (REQ-DATA-96ef3dd6). */
+    advanced: z.record(z.string().max(64), z.union([z.number(), z.boolean(), z.null()])).optional(),
   }),
   z.strictObject({ type: z.literal("session.interrupted"), turnId: z.string() }),
   z.strictObject({ type: z.literal("turn.started"), turnId: z.string() }),
@@ -128,6 +139,17 @@ export const sessionEventSchema = z.discriminatedUnion("type", [
     messageId: z.string(),
     text: z.string(),
     images: messageImagesSchema.optional(),
+    /** Send time in epoch milliseconds; absent on events recorded before send times existed. */
+    timestamp: count.optional(),
+  }),
+  /** A derived history summary the agent request uses instead of the covered messages; not chat content. */
+  z.strictObject({
+    type: z.literal("context.compacted"),
+    covered: count,
+    fingerprint: z.string().min(1),
+    note: z.string(),
+    refs: z.array(z.string()),
+    images: z.array(z.string()),
   }),
   z.strictObject({
     type: z.literal("message.bookmarked"),
@@ -236,6 +258,7 @@ export const sessionEventSchema = z.discriminatedUnion("type", [
     type: z.literal("error"),
     code: z.string(),
     messageKey: z.string(),
+    params: z.record(z.string(), z.union([z.string(), z.number().finite()])).optional(),
     retryable: z.boolean(),
   }),
 ]);

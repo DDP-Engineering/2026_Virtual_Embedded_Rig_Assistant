@@ -244,6 +244,37 @@ test("custom model image capability survives restart and can be cleared", async 
   }
 });
 
+// REQ-UX-2ccfac13
+test("custom connections offer a 300 s response timeout and save the entered value", async () => {
+  test.slow();
+  const data = await mkdtemp(join(tmpdir(), "vera-response-timeout-"));
+  let app: ElectronApplication | undefined;
+  try {
+    app = await launch(data);
+    const page = await app.firstWindow();
+    await page.getByRole("button", { name: "Settings", exact: true }).click();
+    await page.locator('[data-section="providers"]').click();
+    const section = page.locator('[data-settings-section="providers"]');
+    await section.getByRole("button", { name: "Add connection" }).click();
+    await section.locator("[data-provider-preset]").selectOption("ollama");
+    await section.getByLabel("Model", { exact: true }).fill("org/slow");
+    const timeout = section.getByLabel("Response timeout (s)", { exact: true });
+    await expect(timeout).toHaveValue("300");
+    await timeout.fill("600");
+    await section.locator('[data-provider-action="save-custom"]').click();
+    await expect(section.locator("[data-provider-editor]")).toHaveCount(0);
+    expect(
+      JSON.parse(readFileSync(join(data, "settings.json"), "utf8")).providers.custom[0]
+        .responseTimeoutSeconds,
+    ).toBe(600);
+    await section.getByRole("button", { name: "Edit Ollama", exact: true }).click();
+    await expect(timeout).toHaveValue("600");
+  } finally {
+    await app?.close();
+    await rm(data, { recursive: true, force: true });
+  }
+});
+
 test("custom provider add edit remove and explicit weak storage choices", async () => {
   const data = await mkdtemp(join(tmpdir(), "vera-custom-"));
   let app: ElectronApplication | undefined;

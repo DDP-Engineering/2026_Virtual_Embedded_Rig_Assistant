@@ -6,7 +6,7 @@ separate test-renderer calibration, original updater-probe (`--upgrade-proof`) r
 
 The npm workspaces of VERA — `src/libraries/shared`, `src/libraries/core`, `src/apps/desktop`, `src/apps/cli` — with
 end-to-end tests and development scripts. Layout and module boundaries:
-[01-system.md §4–§5](../00_Planning/architecture/01-system.md). The desktop shell provides Welcome and App Settings, responsive panels and persisted appearance/language through the validated typed IPC bridge.
+[System.md](../00_Planning/System.md) (module boundaries and source layout). The desktop shell provides Welcome and App Settings, responsive panels and persisted appearance/language through the validated typed IPC bridge.
 
 The catalog checker also accepts `npm run check:i18n -- --fixture tests/fixtures/i18n/missing-key.json`
 for its negative CLI regression; this fixture deliberately exits1.
@@ -160,12 +160,12 @@ Playwright uses an isolated system temporary directory and removes it after each
 including failed tests. No `test-results/` directory is retained in the repository.
 
 Without Node on the PATH, prefix any command with `python ../02_Tools/environment/npmw.py`, for example
-`python ../02_Tools/environment/npmw.py npm run verify`. Full command list: [08-quality.md §1](../00_Planning/architecture/08-quality.md).
+`python ../02_Tools/environment/npmw.py npm run verify`. Quality commands: [Delivery.md](../00_Planning/Delivery.md).
 
 | File | Purpose |
 |---|---|
 | `package.json`, `package-lock.json`, `.npmrc` | workspaces, scripts, exact pins |
-| `biome.json` | lint and format rules; the import boundaries of 01 §4 |
+| `biome.json` | lint and format rules; the import boundaries of System.md (Module boundaries) |
 | `tsconfig.base.json`, `tsconfig.json`, `tsconfig.tools.json` | compiler options, `tsc -b` solution, tooling project |
 | `vitest.config.ts` | test projects |
 | `tests/tooling/` | tests of configuration, build and verification infrastructure |
@@ -231,7 +231,7 @@ Generated artifacts and `package-report.json` reside in `release_tmp/{test,relea
 selected validated deliverables belong in `../07_Delivery/`.
 The schema2 report includes each artifact's SHA256/bytes, source/config hashes, per-target ASAR and
 executable hashes, prepack outcomes, unpacked/native/model contributions and largest files.
-Installer and ZIP sizes are measured and reported; there is no size budget (ADR-0017). ZIP alone ships `vera.portable`. Native libraries are unpacked; models are real
+Installer and ZIP sizes are measured and reported; there is no size budget. ZIP alone ships `vera.portable`. Native libraries are unpacked; models are real
 `extraResources` files. Local pdfjs CMaps/standard fonts/WASM ship with the renderer.
 
 Windows also ships five app-local Microsoft VC++14.51.36247.0 DLLs pinned by
@@ -371,7 +371,7 @@ left in place.
 
 Welcome creates a workbench in an existing chosen folder without .vera/workbench.yaml, preserves existing user content and opens existing folders. Recent entries persist in settings. Missing folders display a disabled Open action and can be removed from the list. Active workbenches expose explicit Close and the .vera/WORKBENCH.md editor; context above16KB warns and saves full content.
 
-Workbench format1 retains unknown keys and warns; any other format gives CONFIG_INVALID at path format. A live process lock opens read-only; a dead process lock is taken over. Ambiguous lock coordination opens read-only with a warning. Network shares warn as unsupported; use local disk folders. File completion exposes up to50 relative paths under common ignore rules. Runtime content stays in .vera with its own ignore file. See [workbench architecture](../00_Planning/architecture/02-workbench.md).
+Workbench format1 retains unknown keys and warns; any other format gives CONFIG_INVALID at path format. A live process lock opens read-only; a dead process lock is taken over. Ambiguous lock coordination opens read-only with a warning. Network shares warn as unsupported; use local disk folders. File completion exposes up to50 relative paths under common ignore rules. Runtime content stays in .vera with its own ignore file. See [Workbench.md](../00_Planning/Workbench.md).
 
 For native folder-dialog acceptance, npm run test:e2e compiles instrumented code; it sets VERA_TEST=1 itself. VERA_TEST_DIALOG_PATH chooses the temporary folder only in emitted instrumented builds; release emission omits this environment hook. Test fixtures are copied from tests/fixtures/workbenches/demo-board; runtime never modifies the source fixture. Mock API exposes empty, missing, read-only and warnings scenarios through createMockApi for browser/component tests.
 

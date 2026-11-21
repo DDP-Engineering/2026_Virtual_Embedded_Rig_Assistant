@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-1388cbcf"
+
+title = "Open an active session from the sidebar in its own workbench"
+
+status = "active"
+
+requirement = """
+When the user chooses a session in a workbench's activity menu, the Desktop app shall show that session's chat in its own workbench, first bringing a background workbench to the foreground, with focus on the session's title.
+"""
+
+verification = "Renderer test: choosing a background workbench's awaiting session calls the open callback with that workbench's folder and the session id. Native e2e: with workbench B shown and A's session awaiting an edit approval, choosing it from A's collapsed row shows A as the current workbench, that session selected, its approval card in the transcript and focus on its heading; approving it edits A's file only. Choosing a session of the shown workbench selects it without reopening the workbench."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/workbench-navigation.tsx", "05_Software/src/apps/desktop/src/renderer/components/workbench-activity.tsx", "05_Software/src/apps/desktop/src/renderer/App.tsx"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/workbench-activity.test.ts", "05_Software/tests/e2e/background-sessions.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-21
+updated = 2026-11-21

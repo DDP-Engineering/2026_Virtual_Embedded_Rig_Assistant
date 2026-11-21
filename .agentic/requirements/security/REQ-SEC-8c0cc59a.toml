@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-SEC-8c0cc59a"
+
+title = "Refuse bookmark removal in archived sessions and read-only workbenches"
+
+status = "active"
+
+requirement = """
+If a bookmark removal targets an archived session or a read-only workbench, then the session engine shall refuse it without change, and the Bookmarks tab shall offer browsing, filtering and jumping but no removal controls.
+"""
+
+verification = "Core test: removing and clearing bookmarks of an archived session or in a read-only workbench fail DENIED and leave the bookmarks. Renderer tests: with archived or read-only set, selection, Remove and Clear all are absent while the rows still filter, and activating a row still posts the jump request through the shared provider."
+
+affected_paths = ["05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/apps/desktop/src/renderer/components/session/bookmarks-tab.tsx", "05_Software/src/libraries/core/src/sessions/bookmarks.test.ts", "05_Software/src/apps/desktop/src/renderer/components/session/bookmarks-tab.test.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/sessions/bookmarks.test.ts", "05_Software/src/apps/desktop/src/renderer/components/session/bookmarks-tab.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-20
+updated = 2026-11-20

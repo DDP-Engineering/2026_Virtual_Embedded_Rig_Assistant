@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-UX-8ec4dc82"
+
+title = "Show the localized send date and time on Verbose prompt statistics"
+
+status = "active"
+
+requirement = """
+While the chat detail level is Verbose, VERA shall show on the statistics line under each user message whose send time is recorded that date and time to the minute, formatted for the app language, and shall show no date or time for a user message without a recorded send time.
+"""
+
+verification = "Render user messages with a recorded time, including one without token usage yet, at Verbose in English and Romanian: the statistics line shows the localized date and hour:minute without seconds; a message with no recorded time shows its line without a date; Normal and Minimal show no line."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/session/prompt-usage.tsx", "05_Software/src/apps/desktop/src/renderer/components/session/transcript.tsx", "05_Software/src/apps/desktop/src/renderer/styles.css"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/session/transcript-detail.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-20
+updated = 2026-11-20

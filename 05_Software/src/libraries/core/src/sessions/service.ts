@@ -1,7 +1,11 @@
 import { isAbsolute } from "node:path";
 import type { Message, ToolCall, ToolResultMessage } from "@earendil-works/pi-ai";
 import {
+  type AdvancedKey,
+  type AdvancedValue,
+  type AdvancedValueOf,
   acceptsImages,
+  advancedPatchSchema,
   type ChangeDetail,
   type ChangeSummary,
   type ComposerImageSource,
@@ -21,6 +25,7 @@ import {
   planCommentDeleteSchema,
   planReviewRequestSchema,
   planReviewRestoreSchema,
+  resolveAdvanced,
   type SessionEvent,
   type SessionItemDetailField,
   type SessionSummary,
@@ -28,6 +33,7 @@ import {
   sessionExportSchema,
   sessionIdSchema,
   sessionSearchQuerySchema,
+  usageEventSchema,
   type ViewerContent,
   veraError,
   veraErrorSchema,
@@ -37,13 +43,19 @@ import type Database from "better-sqlite3";
 import { parsePatch } from "diff";
 import { ulid } from "ulid";
 import { type ApprovalDecision, ApprovalGate, requestSha256 } from "../agent/approvals.js";
-import { issuedLogRefs, validateCitations } from "../agent/citations.js";
-import { ContextCompactor } from "../agent/compaction.js";
+import { issuedLogRefs, validateCitations, withinIssued } from "../agent/citations.js";
+import { type CompactionSettings, ContextCompactor } from "../agent/compaction.js";
 import { ContextPolicy } from "../agent/context.js";
 import { imagePaths } from "../agent/message-images.js";
 import type { PermissionEngine } from "../agent/permissions.js";
 import { ReferenceRuntime, toolResult } from "../agent/runtime.js";
-import type { AgentRuntime, RuntimeEvent, RuntimeHost, StopReason } from "../agent/types.js";
+import type {
+  AgentRuntime,
+  CompactionOutcome,
+  RuntimeEvent,
+  RuntimeHost,
+  StopReason,
+} from "../agent/types.js";
 import { ArtifactStore } from "../artifacts/store.js";
 import { electricalToolOffered } from "../electrical/tools.js";
 import type { EmbeddingPort } from "../knowledge/embedding.js";
@@ -70,13 +82,13 @@ import { todoTool } from "../tools/todo.js";
 import type { WebDownloads } from "../web/downloads.js";
 import type { WebProvider } from "../web/provider.js";
 import { WriteQueue } from "../workbench/write-queue.js";
+import { type TurnAdmission, type TurnSlot, turnLimitError } from "./admission.js";
 import { attachComposerImage } from "./composer-images.js";
 import {
   type DelegatedLaunch,
   type DelegatedLaunchRequest,
   delegatedLaunchRequestSchema,
   delegatedRequestHash,
-  MAX_ACTIVE_DELEGATIONS,
   prepareDelegatedModel,
 } from "./delegation.js";
 import { delegatedTurnStatus } from "./delegation-monitor.js";
@@ -104,7 +116,18 @@ export interface SessionHost {
   reviewPrompt?(mode: PermissionMode): string;
   readOnly?: boolean;
   mode?: PermissionMode;
+  /**
+   * A fixed tool-call cap that replaces the Advanced resolution, for embedding hosts and tests that need
+   * a cap below the setting's range.
+   */
   maxToolCallsPerTurn?: number;
+  /** Application and workbench Advanced values, resolved under the session's own (REQ-FUNC-902313e0). */
+  advanced?: {
+    app(): Readonly<Record<string, unknown>> | undefined;
+    workbench(): Readonly<Record<string, unknown>> | undefined;
+    /** Values for this host's runs only (CLI --advanced): they win over stored session values, unrecorded. */
+    run?(): Readonly<Record<string, unknown>> | undefined;
+  };
   noOutputTimeoutMs?: number;
   workers?: WorkerPool;
   embeddings?: EmbeddingPort | undefined;
@@ -129,6 +152,18 @@ export interface SessionHost {
   assertWritable?: () => void;
   /** A committed change affects the linked sessions shown by the user host. */
   onDelegationsChanged?: () => void;
+  /**
+   * The host's bound on concurrent turns, shared with its other workbenches' services; each new top-level
+   * or delegated turn holds one slot until it ends (REQ-FUNC-52e97b95). Absent, turns are not bounded here.
+   */
+  admission?: TurnAdmission;
+  /** A turn or a compaction finished; isSettled() tells whether any owned work remains. */
+  onWorkSettled?: () => void;
+  /**
+   * A session's activity changed: a turn started, ended or was interrupted, an approval was requested or
+   * decided, or its title or status was updated. Called after the change is stored; errors are contained.
+   */
+  onActivity?: (sessionId: string) => void;
   scrub?: (text: string) => string;
   /** Receives swallowed turn failures, already scrubbed. */
   log?: (message: string) => void;
@@ -155,6 +190,8 @@ interface ActiveTurn {
   failed?: boolean;
   accepting: boolean;
   approvalWait?: string;
+  /** Its place under the host's concurrent-turn limit, released when the turn leaves `active`. */
+  slot?: TurnSlot | undefined;
 }
 interface StagedTurn {
   reasoning: string | null;
@@ -169,6 +206,21 @@ interface RecordedChange {
   created_at: string;
   diff: string;
 }
+/** Session events that change what an activity overview shows: a turn, an approval, a title or status. */
+function activityChanged(event: SessionEvent): boolean {
+  switch (event.type) {
+    case "turn.started":
+    case "turn.done":
+    case "session.interrupted":
+    case "approval.requested":
+    case "approval.decided":
+      return true;
+    case "session.updated":
+      return event.title !== undefined || event.status !== undefined;
+    default:
+      return false;
+  }
+}
 export class SessionService {
   private readonly sessions: SessionsRepository;
   private readonly delegations: DelegationsRepository;
@@ -182,6 +234,8 @@ export class SessionService {
   private readonly bypassScopes = new Map<string, AbortController>();
   private readonly reasonings = new Map<string, string | null>();
   private readonly compactors = new Map<string, ContextCompactor>();
+  /** Background compactions started after a turn (REQ-FUNC-99acfc19). */
+  private readonly compacting = new Map<string, Promise<void>>();
   private readonly deleting = new Set<string>();
   private closed = false;
   private closing = false;
@@ -201,7 +255,11 @@ export class SessionService {
       () => host.retrieval,
     );
     this.messages = new MessagesRepository(host.db);
-    this.hub = new SessionHub(host.db, () => this.now());
+    this.hub = new SessionHub(
+      host.db,
+      () => this.now(),
+      host.onActivity ? (id, event) => activityChanged(event) && host.onActivity?.(id) : undefined,
+    );
     this.approvals = new ApprovalGate({
       db: host.db,
       now: () => this.now(),
@@ -438,6 +496,10 @@ export class SessionService {
     if (retry) return retry;
     if (parent.archived) throw veraError("DENIED");
     if (this.deleting.has(parentId)) throw veraError("BUSY");
+    // At the Concurrent turns limit the launch returns at once, before its model is prepared; the slot
+    // itself is taken when the child's turn starts (REQ-FUNC-74c5be27).
+    const capacity = this.host.admission?.state();
+    if (capacity && capacity.active >= capacity.limit) throw turnLimitError(capacity.limit);
 
     const model = resolveModelReference(request.modelRef ?? this.host.model(parent.model_ref));
     await this.ready;
@@ -678,7 +740,7 @@ export class SessionService {
       ref,
       snippet,
       false,
-      issuedLogRefs(messages).has(ref),
+      withinIssued(ref, issuedLogRefs(messages)),
     );
     this.row(id);
     return content;
@@ -752,6 +814,85 @@ export class SessionService {
       return this.hub.record(id, input.data);
     })();
     this.hub.publish(id, value);
+  }
+  /**
+   * Sets or clears (null) a session-scope Advanced value as a durable session event (REQ-DATA-96ef3dd6).
+   * The value is checked against the shared registry; archived sessions and read-only workbenches refuse it.
+   */
+  setAdvanced(id: string, key: AdvancedKey, value: AdvancedValue | null): void {
+    const row = this.row(id);
+    this.writable();
+    if (row.archived) throw veraError("DENIED");
+    if (this.deleting.has(id)) throw veraError("BUSY");
+    const patch = advancedPatchSchema("session").safeParse({ [key]: value });
+    if (!patch.success || !Object.hasOwn(patch.data, key)) throw veraError("INVALID");
+    const event = sessionEventSchema.parse({ type: "session.updated", advanced: { [key]: value } });
+    const recorded = this.host.db.transaction(() => this.hub.record(id, event))();
+    this.hub.publish(id, recorded);
+  }
+  /** The Advanced value that applies to a session: session, workbench, application, then the default. */
+  private resolveAdvanced<K extends AdvancedKey>(id: string, key: K): AdvancedValueOf<K> {
+    return resolveAdvanced(
+      key,
+      {
+        session: { ...this.hub.get(id).snapshot.advanced, ...this.host.advanced?.run?.() },
+        workbench: this.host.advanced?.workbench(),
+        app: this.host.advanced?.app(),
+      },
+      (scope, ignored) => {
+        // Each ignored key is logged once per scope while the service runs, not at every turn.
+        const note = `${scope}:${ignored}`;
+        if (this.ignoredAdvanced.has(note)) return;
+        this.ignoredAdvanced.add(note);
+        this.host.log?.(`Ignored invalid ${scope} Advanced setting: ${ignored}`);
+      },
+    ).value;
+  }
+  private readonly ignoredAdvanced = new Set<string>();
+  /** How long a model stream may stay silent; a host's fixed value wins (REQ-FUNC-3e78ae47). */
+  private noOutputTimeoutMs(id: string): number {
+    return this.host.noOutputTimeoutMs ?? this.resolveAdvanced(id, "noOutputTimeout") * 1000;
+  }
+  /** The compaction values that apply to a session now, from its resolved Advanced settings. */
+  private compactionSettings(id: string): CompactionSettings {
+    return {
+      trigger: this.resolveAdvanced(id, "compactionTrigger") / 100,
+      tailTokens: this.resolveAdvanced(id, "recentTailTokens"),
+      toolResultChars: this.resolveAdvanced(id, "summaryToolResultChars"),
+      maxPasses: this.resolveAdvanced(id, "summaryPasses"),
+      margin: this.resolveAdvanced(id, "calibrationMargin") / 100,
+      calibrated: this.resolveAdvanced(id, "providerTokenCounts"),
+      automatic: this.resolveAdvanced(id, "autoCompaction"),
+    };
+  }
+  /**
+   * Removes the named bookmarks, or all of the session's, in one transaction: an unknown target refuses the
+   * whole request. Messages stay; only the user-only preference changes.
+   */
+  removeBookmarks(id: string, target: { messageIds: readonly string[] } | { all: true }): void {
+    const row = this.row(id);
+    this.writable();
+    if (row.archived) throw veraError("DENIED");
+    if (this.deleting.has(id)) throw veraError("BUSY");
+    const ids =
+      "all" in target ? [...this.hub.get(id).snapshot.bookmarkedMessageIds] : [...new Set(target.messageIds)];
+    const events = ids.map((messageId) => {
+      const input = sessionEventSchema.safeParse({
+        type: "message.bookmarked",
+        messageId,
+        bookmarked: false,
+      });
+      if (!input.success) throw veraError("INVALID");
+      return input.data;
+    });
+    const values = this.host.db.transaction(() => {
+      const user = this.host.db.prepare(
+        "SELECT 1 FROM events WHERE session_id=? AND type IN ('message.user','message.queued') AND json_extract(payload_json,'$.messageId')=? LIMIT 1",
+      );
+      for (const messageId of ids) if (!user.get(id, messageId)) throw veraError("INVALID");
+      return events.map((event) => this.hub.record(id, event));
+    })();
+    this.hub.publishBatch(id, values);
   }
   rename(id: string, title: string): SessionSummary {
     this.idle(id);
@@ -897,6 +1038,9 @@ export class SessionService {
     if (this.delegations.hasChildren(id)) throw veraError("CONFLICT");
     this.deleting.add(id);
     try {
+      // A background summary still sending this history to the provider ends before the rows do.
+      this.compactors.get(id)?.abort();
+      await this.compacting.get(id);
       // Background runs of a deleted session would hold ports no session can stop any more.
       await this.host.programs?.runner.stopSession(id);
       await this.writeQueue.run(async () => {
@@ -913,6 +1057,7 @@ export class SessionService {
       this.programSessions.delete(id);
       this.bypassScopes.get(id)?.abort();
       this.bypassScopes.delete(id);
+      this.compactors.get(id)?.abort();
       this.compactors.delete(id);
       this.reasonings.delete(id);
       this.last.delete(id);
@@ -1109,6 +1254,35 @@ export class SessionService {
     return this.startTurn(row, text, !review && !!this.delegations.child(id), undefined, images, review);
   }
 
+  /**
+   * The session's compactor. A new one (first turn after open or restart) takes the latest saved
+   * calibration and summary record, one indexed query each; nothing is read while a session merely opens.
+   */
+  private compactor(id: string): ContextCompactor {
+    const existing = this.compactors.get(id);
+    if (existing) return existing;
+    const compactor = new ContextCompactor();
+    const row = this.host.db
+      .prepare(
+        "SELECT payload_json FROM events WHERE session_id=? AND type='usage.updated' AND json_type(payload_json,'$.calibration')='object' ORDER BY seq DESC LIMIT 1",
+      )
+      .get(id) as { payload_json: string } | undefined;
+    if (row) {
+      const parsed = usageEventSchema.safeParse(JSON.parse(row.payload_json));
+      if (parsed.success && parsed.data.calibration) compactor.calibration = { ...parsed.data.calibration };
+    }
+    const saved = this.host.db
+      .prepare(
+        "SELECT payload_json FROM events WHERE session_id=? AND type='context.compacted' ORDER BY seq DESC LIMIT 1",
+      )
+      .get(id) as { payload_json: string } | undefined;
+    if (saved) {
+      const parsed = sessionEventSchema.safeParse(JSON.parse(saved.payload_json));
+      if (parsed.success && parsed.data.type === "context.compacted") compactor.restore(parsed.data);
+    }
+    this.compactors.set(id, compactor);
+    return compactor;
+  }
   private startTurn(
     row: SessionRow,
     text: string,
@@ -1118,11 +1292,35 @@ export class SessionService {
     review?: PlanReview,
   ) {
     const id = row.id;
+    // Delegated sessions that may run at once in this workbench (REQ-FUNC-261cdc27).
     if (
       delegated &&
-      [...this.active.values()].filter((turn) => turn.delegated).length >= MAX_ACTIVE_DELEGATIONS
+      [...this.active.values()].filter((turn) => turn.delegated).length >=
+        this.resolveAdvanced(id, "delegations")
     )
       throw veraError("BUSY");
+    // One slot under the host's Concurrent turns limit, taken before anything of the turn exists
+    // (REQ-FUNC-52e97b95); a turn that cannot be created gives it back (REQ-REL-11f00fcd).
+    const admission = this.host.admission;
+    const slot = admission?.acquire();
+    if (admission && !slot) throw turnLimitError(admission.state().limit);
+    try {
+      return this.runTurn(row, text, delegated, slot, staged, images, review);
+    } catch (error) {
+      slot?.release();
+      throw error;
+    }
+  }
+  private runTurn(
+    row: SessionRow,
+    text: string,
+    delegated: boolean,
+    slot: TurnSlot | undefined,
+    staged?: StagedTurn,
+    images?: string[],
+    review?: PlanReview,
+  ) {
+    const id = row.id;
     let processing = Promise.resolve();
     let failed = false;
     const durable = async () => {
@@ -1138,6 +1336,8 @@ export class SessionService {
       ? createToolContext(this.host.root)
       : (this.contexts.get(id) ?? createToolContext(this.host.root, this.host.workers));
     const mode = () => (delegated ? "read-only" : this.row(id).permission_mode);
+    // Tool limits resolve at each call, so a saved change applies to the next call (ADV-03).
+    ctx.advanced = (key) => this.resolveAdvanced(id, key);
     if (!review) {
       this.contexts.set(id, ctx);
       if (delegated) ctx.delegated = true;
@@ -1266,7 +1466,11 @@ export class SessionService {
             try {
               // The run consumes its approval itself, with the request prepared again right before it starts.
               if (run.request.tool === "plugin_install") this.approvals.consume(run.request);
-              const { text } = capToolResult(await run.apply(signal));
+              const { text } = capToolResult(
+                await run.apply(signal),
+                [],
+                this.resolveAdvanced(id, "toolResultChars"),
+              );
               return text;
             } catch (error) {
               throw Error(
@@ -1318,7 +1522,9 @@ export class SessionService {
     const contextPolicy = new MaskingContextPolicy(this.host.contextPolicy ?? new ContextPolicy(), (text) =>
       this.maskContent("agent", text),
     );
-    const gateway = timedGateway(this.host.gateway, this.host.noOutputTimeoutMs ?? 300000);
+    const contextCompactor = this.compactor(id);
+    contextCompactor.settings = this.compactionSettings(id);
+    const gateway = timedGateway(this.host.gateway, this.noOutputTimeoutMs(id));
     let initialReasoning = staged?.reasoning;
     const self = this;
     const runtimeHost: RuntimeHost = {
@@ -1385,7 +1591,13 @@ export class SessionService {
               (acceptsImages(capabilities) && !self.host.disabledTools?.includes(tool.name))
             );
           });
-          const view = contextPolicy.prepare({ system: request.system, tools, messages }, capabilities);
+          const view = contextPolicy.prepare(
+            { system: request.system, tools, messages },
+            capabilities,
+            true,
+            undefined,
+            contextCompactor.scale(request.model),
+          );
           if (!view.fits) {
             yield { type: "error", error: veraError("CONTEXT_LIMIT"), aborted: false };
             return;
@@ -1510,8 +1722,6 @@ export class SessionService {
       },
     };
     const runtime = this.host.runtime?.(runtimeHost) ?? new ReferenceRuntime(runtimeHost);
-    const contextCompactor = this.compactors.get(id) ?? new ContextCompactor();
-    this.compactors.set(id, contextCompactor);
     runtime.start({
       systemPrompt: review
         ? `${this.host.reviewPrompt?.(mode()) ?? this.host.prompt(mode())}\n\n${planReviewInstruction}`
@@ -1521,7 +1731,8 @@ export class SessionService {
       messages: this.transcript(id),
       contextPolicy,
       contextCompactor,
-      maxToolCallsPerTurn: this.host.maxToolCallsPerTurn ?? 50,
+      maxToolCallsPerTurn: this.host.maxToolCallsPerTurn ?? this.resolveAdvanced(id, "toolCallsPerTurn"),
+      maxToolResultChars: this.resolveAdvanced(id, "toolResultChars"),
       ...(review ? { requestIdentity: { turnId: review.turnId, messageId: review.messageId } } : {}),
     });
     const seed = review
@@ -1548,6 +1759,7 @@ export class SessionService {
       turnId: review?.turnId ?? "",
       messageId: review?.messageId ?? "",
       accepting: true,
+      slot,
     };
     this.active.set(id, turn);
     const echoes = new Set(["message.user", "turn.started"]);
@@ -1611,6 +1823,7 @@ export class SessionService {
       failed = true;
       turn.failed = true;
       this.active.delete(id);
+      turn.slot?.release();
       off();
       runtime.abort();
     };
@@ -1660,8 +1873,32 @@ export class SessionService {
         })
         .finally(() => {
           if (discarded) return;
-          off();
           this.active.delete(id);
+          // The turn has ended; a background compaction after it takes no slot (RULING-005 of TASK-d3a3049f).
+          turn.slot?.release();
+          const result = this.last.get(id);
+          // Background compaction off leaves the summary to the next request (REQ-FUNC-cae0533c).
+          const compacts =
+            !failed &&
+            !this.closing &&
+            (result?.stopReason === "end" || result?.stopReason === "limit") &&
+            this.resolveAdvanced(id, "backgroundCompaction");
+          if (compacts) contextCompactor.settings = this.compactionSettings(id);
+          const compact = compacts ? runtime.compact?.(this.transcript(id)) : undefined;
+          if (!compact) {
+            off();
+            this.workSettled();
+            return;
+          }
+          const background = compact
+            .then(() => processing)
+            .catch(() => {})
+            .finally(() => {
+              off();
+              if (this.compacting.get(id) === background) this.compacting.delete(id);
+              this.workSettled();
+            });
+          this.compacting.set(id, background);
         });
       void turn.done.catch(() => {});
       if (admissionError) throw admissionError.cause;
@@ -1692,6 +1929,24 @@ export class SessionService {
     if (turn.failed && event.type === "turn.done") {
       event = { ...event, stopReason: "error" };
       this.hub.emit(id, { type: "error", code: "INTERNAL", messageKey: "errors.INTERNAL", retryable: false });
+    }
+    if (event.type === "context.compacted") {
+      try {
+        // Masked like the stored transcript it was derived from.
+        const mask = (text: string) => this.maskContent("agent", text);
+        const record: SessionEvent = {
+          ...event,
+          note: mask(event.note),
+          refs: event.refs.map(mask),
+          images: event.images.map(mask),
+        };
+        this.hub.publishBatch(id, this.host.db.transaction(() => [this.hub.record(id, record)])());
+      } catch (error) {
+        this.host.log?.(
+          `Compaction record not saved: ${error instanceof Error ? error.message : String(error)}`,
+        );
+      }
+      return;
     }
     let publicEvent: SessionEvent;
     if (event.type === "message.done") {
@@ -1804,9 +2059,107 @@ export class SessionService {
     const turn = this.active.get(id);
     if (turn) turn.accepting = false;
     turn?.runtime.abort();
+    this.compactors.get(id)?.abort();
     // Background program runs of the session end with it; the foreground run ends with the turn's abort.
     if (turn?.kind !== "plan-review") void this.host.programs?.runner.stopSession(id);
     return !!turn;
+  }
+  /** Settles when the session's background compaction, if any, has finished. */
+  async waitCompaction(id: string): Promise<void> {
+    this.row(id);
+    await this.compacting.get(id);
+  }
+  /**
+   * Summarize an idle session's history once, regardless of the trigger and of automatic compaction, and
+   * record the summary (REQ-FUNC-eeaf29bd). Refused on archived or read-only sessions and while a turn,
+   * compaction, delete or shutdown runs (REQ-FUNC-13068fbb).
+   */
+  async compactNow(id: string): Promise<CompactionOutcome> {
+    const row = this.row(id);
+    this.writable();
+    if (row.archived) throw veraError("DENIED");
+    if (this.active.has(id) || this.deleting.has(id) || this.compacting.has(id) || this.closing)
+      throw veraError("BUSY");
+    const model = this.host.model(row.model_ref);
+    const gateway = timedGateway(this.host.gateway, this.noOutputTimeoutMs(id));
+    const self = this;
+    const runtimeHost: RuntimeHost = {
+      log: (message) => this.host.log?.(this.host.scrub?.(message) ?? message),
+      gateway: {
+        ...gateway,
+        // The summary request leaves like a turn's: images as notes, the session's reasoning, output masked.
+        stream: async function* (request) {
+          request.signal.throwIfAborted();
+          const messages = request.messages.some((message) => imagePaths(message).length)
+            ? await projectMessageImages(request.messages, request.signal)
+            : request.messages;
+          yield* maskModelStream(
+            gateway.stream({
+              ...request,
+              sessionId: id,
+              maskOutput: () => self.host.masking?.("agent") !== false,
+              messages,
+              reasoning: self.requestReasoning(id, request.model) ?? null,
+            }),
+            () => self.host.masking?.("agent") !== false,
+            self.host.knownSecrets ?? (() => []),
+            (text) => self.host.scrub?.(text) ?? text,
+          );
+        },
+      },
+      now: () => this.host.clock.now().getTime(),
+      nextId: () => ulid(),
+      approve: async () => "denied",
+    };
+    const runtime = this.host.runtime?.(runtimeHost) ?? new ReferenceRuntime(runtimeHost);
+    if (!runtime.compact) return "unavailable";
+    const contextCompactor = this.compactor(id);
+    contextCompactor.settings = this.compactionSettings(id);
+    runtime.start({
+      systemPrompt: this.host.prompt(row.permission_mode),
+      model,
+      tools: [],
+      messages: this.transcript(id),
+      contextPolicy: new MaskingContextPolicy(this.host.contextPolicy ?? new ContextPolicy(), (text) =>
+        this.maskContent("agent", text),
+      ),
+      contextCompactor,
+    });
+    // Usage and the summary record are kept like a background compaction's; no turn is recorded.
+    const standIn: ActiveTurn = {
+      kind: "ordinary",
+      runtime,
+      delegated: false,
+      done: Promise.resolve({ stopReason: "end" }),
+      turnId: "",
+      messageId: "",
+      accepting: false,
+    };
+    let processing = Promise.resolve();
+    const off = runtime.onEvent((event) => {
+      const transcript = runtime.messages();
+      processing = processing
+        .then(() => this.process(id, event, transcript, standIn))
+        .catch((error) =>
+          this.host.log?.(
+            `Compaction event not saved: ${error instanceof Error ? error.message : String(error)}`,
+          ),
+        );
+    });
+    const compaction = runtime.compact(this.transcript(id), true).then(async (outcome) => {
+      await processing;
+      return outcome;
+    });
+    const settled = compaction
+      .then(() => undefined)
+      .catch(() => undefined)
+      .finally(() => {
+        off();
+        if (this.compacting.get(id) === settled) this.compacting.delete(id);
+        this.workSettled();
+      });
+    this.compacting.set(id, settled);
+    return compaction;
   }
   async waitIdle(id: string): Promise<{ stopReason: StopReason } | null> {
     this.row(id);
@@ -1819,6 +2172,17 @@ export class SessionService {
       !!this.host.db.prepare("SELECT 1 FROM approvals WHERE decision IS NULL LIMIT 1").get()
     );
   }
+  /** No turn, undecided approval or compaction remains; a host may then release the workbench. */
+  isSettled(): boolean {
+    return this.closed || (!this.hasActiveWork() && this.compacting.size === 0);
+  }
+  private workSettled(): void {
+    try {
+      this.host.onWorkSettled?.();
+    } catch {
+      /* a host observer never fails the turn */
+    }
+  }
   async close(): Promise<void> {
     if (this.closed) return;
     this.closing = true;
@@ -1826,8 +2190,13 @@ export class SessionService {
     for (const turn of this.active.values()) turn.accepting = false;
     for (const turn of this.active.values()) turn.runtime.abort();
     for (const scope of this.bypassScopes.values()) scope.abort();
+    for (const compactor of this.compactors.values()) compactor.abort();
     const downloadsClosed = this.host.downloads?.close();
-    await Promise.allSettled([...this.active.values()].map((turn) => turn.done));
+    const turns = [...this.active.values()];
+    await Promise.allSettled(turns.map((turn) => turn.done));
+    // Each turn released its slot as it ended; this only covers one that left no end behind (REQ-REL-11f00fcd).
+    for (const turn of turns) turn.slot?.release();
+    await Promise.allSettled([...this.compacting.values()]);
     await downloadsClosed;
     await this.ready;
     await this.writeQueue.drain();

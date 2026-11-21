@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 import { _electron, expect } from "@playwright/test";
 import type { VeraBridge } from "@vera/shared";
 import { test } from "./fixtures.js";
+import { saveSettings } from "./settings-navigation.js";
 
 test("Appearance keeps interface, conversation and code sizes independent and restores defaults", {
   tag: "@parallel-browser",
@@ -58,6 +59,7 @@ test("Appearance keeps interface, conversation and code sizes independent and re
   }
   await page.locator('[data-section="appearance"]').click();
   await page.locator("#language").selectOption("ro");
+  await saveSettings(page);
   await page.locator('[data-section="appearance"]').click();
   for (const id of ["interface-font-size", "chat-font-size", "code-font-size"]) {
     expect((await page.locator(`#${id} option`).allTextContents()).map((label) => label.trim())).toEqual([
@@ -128,6 +130,7 @@ test("terminal follows live code text sizes without replacing its surface or sen
   await page.locator('[data-i18n="nav.settings"]').click();
   await page.locator('[data-section="appearance"]').click();
   await page.locator('[data-action="reset-typography"]').click();
+  await saveSettings(page);
   await page.locator('[data-action="leave-settings"]').click();
   await expect.poll(font).toBe("14px");
   await expect.poll(grid).toEqual(initial);
@@ -183,6 +186,7 @@ test("native desktop accepts every size through preload and main, and retains it
       await page.locator("#chat-font-size").selectOption(String(size));
       await expect(page.locator("#code-font-size")).toBeEnabled();
       await page.locator("#code-font-size").selectOption(String(size));
+      await saveSettings(page);
       await expect
         .poll(() =>
           page.evaluate(async () => {
@@ -204,7 +208,7 @@ test("native desktop accepts every size through preload and main, and retains it
     await page.locator("#chat-font-size").selectOption("10");
     await expect(page.locator("#code-font-size")).toBeEnabled();
     await page.locator("#code-font-size").selectOption("10");
-    await expect(page.locator("#code-font-size")).toBeEnabled();
+    await saveSettings(page);
     await app.close();
     app = await launch();
     page = await app.firstWindow();
@@ -217,6 +221,7 @@ test("native desktop accepts every size through preload and main, and retains it
     await expect(page.locator("#interface-font-size")).toHaveValue("1");
     await expect(page.locator("#chat-font-size")).toHaveValue("14");
     await expect(page.locator("#code-font-size")).toHaveValue("14");
+    await saveSettings(page);
   } finally {
     await app.close();
     await rm(userData, { recursive: true, force: true });

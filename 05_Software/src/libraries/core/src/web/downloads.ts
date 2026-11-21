@@ -4,6 +4,7 @@ import { realpathSync } from "node:fs";
 import { lstat, mkdir, open, readdir, realpath, rename, rmdir, unlink } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import {
+  advancedSettings,
   DOWNLOAD_MAX_BYTES,
   downloadFilenameSchema,
   downloadIdSchema,
@@ -33,6 +34,19 @@ const key = (path: string) => (process.platform === "win32" ? resolve(path).toLo
 const hash = (bytes: Buffer) => createHash("sha256").update(bytes).digest("hex");
 const missing = (error: unknown) => (error as NodeJS.ErrnoException).code === "ENOENT";
 const manifestName = ".vera-download.json";
+/**
+ * The size bound into a download's approval and its time limit, plus the session's Document extraction time
+ * limit for a PDF (REQ-FUNC-aa35b135; the extractor's own base when absent).
+ */
+export interface DownloadBudget {
+  readonly maxBytes: number;
+  readonly deadlineMs: number;
+  readonly extractionMs?: number;
+}
+const defaultBudget: DownloadBudget = {
+  maxBytes: advancedSettings.downloadMB.default * 1024 * 1024,
+  deadlineMs: DOWNLOAD_DEADLINE_MS,
+};
 /** Public document parsing has a disposable worker, a deadline and a bounded JS heap. */
 export function createDownloadPdfExtractor(entry: URL): PdfExtractor {
   return createPdfExtractor(entry, DOWNLOAD_DEADLINE_MS, { maxOldGenerationSizeMb: 256 });
@@ -68,6 +82,11 @@ export class WebDownloads {
     return Object.freeze({ downloadId, name, sourceUrl, path: `.vera/downloads/${downloadId}/${name}` });
   }
 
+  /**
+   * Fetch and store one approved download. `budget` is the size bound in its approval and the session's
+   * Download time limit, which bounds the transfer (REQ-FUNC-17f34e4b, REQ-FUNC-dfe84577); PDF text
+   * extraction keeps its own deadline.
+   */
   save(
     target: DownloadTarget,
     context: {
@@ -78,26 +97,34 @@ export class WebDownloads {
       assertWritable(): void;
     },
     caller: AbortSignal,
+    budget: DownloadBudget = defaultBudget,
   ): Promise<WebDownload> {
     return this.track(
       async (lifetime) =>
         this.host.access.withAccess(async (access, assertCurrent) => {
-          const signal = AbortSignal.any([lifetime, access, AbortSignal.timeout(DOWNLOAD_DEADLINE_MS)]);
+          const signal = AbortSignal.any([lifetime, access]);
           signal.throwIfAborted();
           assertCurrent();
           context.assertWritable();
           const { data, finalUrl, mime } = await (this.host.transfer ?? transferFile)(
             target.sourceUrl,
-            signal,
+            AbortSignal.any([signal, AbortSignal.timeout(budget.deadlineMs)]),
+            { maxBytes: budget.maxBytes, deadlineMs: budget.deadlineMs },
           );
           signal.throwIfAborted();
           assertCurrent();
           context.assertWritable();
-          if (data.length > DOWNLOAD_MAX_BYTES) throw Error("Download exceeds the size limit.");
+          if (data.length > budget.maxBytes) throw Error("Download exceeds the size limit.");
           const pdfSignature = data.subarray(0, 1024).includes(Buffer.from("%PDF-"));
           const isPdf = mime === "application/pdf" || /\.pdf$/i.test(target.name) || pdfSignature;
           if (isPdf && !pdfSignature) throw Error("The response is not a supported PDF document.");
-          const parsed = isPdf ? await this.host.pdf(data, signal) : undefined;
+          const parsed = isPdf
+            ? await this.host.pdf(
+                data,
+                signal,
+                budget.extractionMs === undefined ? undefined : { baseMs: budget.extractionMs },
+              )
+            : undefined;
           signal.throwIfAborted();
           if (parsed && !parsed.pages.length) throw Error("The PDF contains no pages.");
           const record = webDownloadSchema.parse({

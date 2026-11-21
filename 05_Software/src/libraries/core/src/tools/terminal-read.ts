@@ -1,11 +1,12 @@
 import { terminalIdSchema } from "@vera/shared";
 import { z } from "zod";
-import type { ToolDefinition } from "./context.js";
+import { type ToolDefinition, toolLimit } from "./context.js";
 
 /** Read-only desktop capability; the agent receives no terminal lifecycle or input methods. */
 export interface TerminalReader {
   read(id?: string): Record<string, unknown>;
-  publish(output: string): string;
+  /** `limit` is the session's resolved Tool result size; the fixed cap applies without it. */
+  publish(output: string, limit?: number): string;
 }
 
 export const terminalReadTool: ToolDefinition = {
@@ -21,6 +22,6 @@ export const terminalReadTool: ToolDefinition = {
   },
   publish(ctx, _args, output) {
     if (!ctx.terminals) throw Error("User terminals are unavailable.");
-    return ctx.terminals.publish(output);
+    return ctx.terminals.publish(output, toolLimit(ctx, "toolResultChars"));
   },
 };

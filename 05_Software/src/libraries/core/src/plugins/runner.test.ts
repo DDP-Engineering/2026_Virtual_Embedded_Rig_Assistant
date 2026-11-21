@@ -593,6 +593,45 @@ describe("run records, list, log and stop (spec REQ-DATA-f563074f)", () => {
     expect(names).toContain(`${ids[2]}.json`);
   });
 
+  // REQ-FUNC-dd50ebed REQ-FUNC-ddcd96b8 REQ-FUNC-1e7d6449
+  it("reads the host's background, log count and log size limits at each start", async () => {
+    const limits = { backgroundPrograms: 2, runLogsKept: 2, runLogBytes: 10 };
+    runner = make({
+      host,
+      clock: { sleep: async () => {} },
+      limits: () => ({
+        maxBackground: limits.backgroundPrograms,
+        logsKept: limits.runLogsKept,
+        logBytes: limits.runLogBytes,
+      }),
+    });
+    for (let index = 0; index < 2; index++) await runner.start(request({ background: true }));
+    await expect(runner.start(request({ background: true }))).rejects.toMatchObject({
+      code: "BUSY",
+      params: { limit: 2 },
+    });
+    limits.backgroundPrograms = 3;
+    await runner.start(request({ background: true }));
+    // The log stops at the size read when the run started.
+    const logged = await runner.start(request({ label }));
+    // Whole chunks are written until the one that crosses the size, then the marker.
+    for (let chunk = 0; chunk < 4; chunk++) host.programs.at(-1)?.print("x".repeat(8));
+    host.programs.at(-1)?.finish({ code: 0, signal: null });
+    const result = await logged.done;
+    expect(await readFile(join(root, result.log), "utf8")).toMatch(/^x{16}\n\[VERA\] log truncated/);
+    // Two run folders are kept once more runs end.
+    const ids: string[] = [result.runId];
+    for (let i = 0; i < 2; i++) {
+      const run = await runner.start(request({ label }));
+      host.programs.at(-1)?.finish({ code: 0, signal: null });
+      await run.done;
+      ids.push(run.id);
+    }
+    await runner.start(request({ label }));
+    const names = await readdir(join(root, ".vera", "runs"));
+    expect(names.filter((name) => name.startsWith(ids[0] as string))).toEqual([]);
+  });
+
   // REQ-FUNC-39617f81
   it("lists one workbench's runs newest first, running, ended or interrupted, at most 50", async () => {
     const other = await realpath(await mkdtemp(join(tmpdir(), "vera-runner-other-")));

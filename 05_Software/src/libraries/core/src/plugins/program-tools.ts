@@ -16,7 +16,13 @@ import { z } from "zod";
 import type { ProgramPromptEntry } from "../agent/prompt.js";
 import type { Clock } from "../ports.js";
 import type { PreparedChange } from "../tools/changes.js";
-import { type ToolContext, type ToolDefinition, toolExcludedRoots, toolPathGuard } from "../tools/context.js";
+import {
+  type ToolContext,
+  type ToolDefinition,
+  toolExcludedRoots,
+  toolLimit,
+  toolPathGuard,
+} from "../tools/context.js";
 import type { PathGuard } from "../workbench/path-guard.js";
 import { prepareHilCall } from "./hil/run.js";
 import { type LauncherMode, programInvocation } from "./launcher.js";
@@ -120,16 +126,18 @@ export class ProgramSession {
 
 /**
  * Milliseconds after which a run is killed: the agent's value clamped to the cap, where the cap is the
- * largest matching rule timeout, else the program's, else DEFAULT_PROGRAM_TIMEOUT. A background run
- * without an agent value has none.
+ * largest matching rule timeout, else the program's, else `ceiling` (the session's Program or Shell command
+ * timeout ceiling, REQ-FUNC-e1d2f670, REQ-FUNC-ae2806b9; DEFAULT_PROGRAM_TIMEOUT when absent). A background
+ * run without an agent value has none.
  */
 export function programTimeout(input: {
   rule: number | null;
   program?: number | undefined;
   requested?: number | undefined;
   background: boolean;
+  ceiling?: number;
 }): number | undefined {
-  const cap = input.rule ?? input.program ?? DEFAULT_PROGRAM_TIMEOUT;
+  const cap = input.rule ?? input.program ?? input.ceiling ?? DEFAULT_PROGRAM_TIMEOUT;
   if (input.requested === undefined) return input.background ? undefined : cap * 1000;
   return Math.min(input.requested, cap) * 1000;
 }
@@ -466,15 +474,18 @@ export function startCall(
     ...(options.parent === undefined ? {} : { parent: options.parent }),
   });
 }
-/** The timeout cap of a prepared call in seconds: its largest matching rule timeout, else the program's, else 600. */
-export function timeoutCap(current: PreparedCall): number {
+/**
+ * The timeout cap of a prepared call in seconds: its largest matching rule timeout, else the program's, else
+ * the session's Program timeout ceiling (REQ-FUNC-e1d2f670).
+ */
+export function timeoutCap(current: PreparedCall, ceiling = DEFAULT_PROGRAM_TIMEOUT): number {
   const rule = classifyCommand(
     current.plugin.manifest.rules,
     current.prepared.program,
     current.prepared.args,
     current.declared.optionSyntax,
   ).timeout;
-  return rule ?? current.declared.timeout ?? DEFAULT_PROGRAM_TIMEOUT;
+  return rule ?? current.declared.timeout ?? ceiling;
 }
 
 async function prepare(ctx: ToolContext, raw: unknown, signal: AbortSignal): Promise<PreparedChange> {
@@ -504,7 +515,7 @@ async function prepare(ctx: ToolContext, raw: unknown, signal: AbortSignal): Pro
       prepareCall: async (ctx, programs, args, signal, registryLookup) =>
         prepareCall(ctx, programs, args, signal, first.pathGuard, registryLookup),
       startCall,
-      timeoutCap,
+      timeoutCap: (current) => timeoutCap(current, toolLimit(ctx, "programTimeout")),
       programError,
     });
   if (programPolicy(mode, first.prepared.risk, first.prepared.trial) === "refuse")
@@ -550,6 +561,7 @@ async function prepare(ctx: ToolContext, raw: unknown, signal: AbortSignal): Pro
         program: current.declared.timeout,
         requested: args.timeout,
         background,
+        ceiling: toolLimit(ctx, "programTimeout"),
       });
       let run: ProgramRun;
       try {

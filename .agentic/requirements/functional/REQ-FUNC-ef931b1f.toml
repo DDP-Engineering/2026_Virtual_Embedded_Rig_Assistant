@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-ef931b1f"
+
+title = "Give the agent the resolved terminal output size"
+
+status = "active"
+
+requirement = """
+When the agent reads a terminal it is allowed to read, VERA shall return at most the last resolved Terminal output for the agent characters (an integer from 2000 to 64000, default 12000, set for the application), within the session's resolved Tool result size.
+"""
+
+verification = "Desktop main test: a consented terminal with 20000 characters of output returns its last 12000 by default and its last 3000 with the value 3000; with the value 40000 and a Tool result size of 64000 the published text carries 40000 characters. Core test: terminal_read publish passes the resolved Tool result size."
+
+affected_paths = ["05_Software/src/libraries/shared/src/advanced-settings.ts", "05_Software/src/apps/desktop/src/main/terminals.ts", "05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/libraries/core/src/tools/terminal-read.ts", "05_Software/src/apps/desktop/src/main/terminals.test.ts", "05_Software/src/libraries/core/src/tools/terminal-read.test.ts", "05_Software/src/libraries/shared/src/advanced-settings.test.ts"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/main/terminals.test.ts::gives the agent the resolved output size within the given tool result size", "05_Software/src/libraries/core/src/tools/terminal-read.test.ts::publishes with the session's resolved Tool result size", "05_Software/src/libraries/shared/src/advanced-settings.test.ts::registers the desktop ranges, defaults, scopes and timing"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-21
+updated = 2026-11-21

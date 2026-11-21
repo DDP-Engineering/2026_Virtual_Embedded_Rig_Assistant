@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-9455436f"
+
+title = "Read web pages up to the resolved web read size"
+
+status = "active"
+
+requirement = """
+When web_read runs, VERA shall request at most the resolved Web read size, an integer from 1000 to 16000 characters with default 12000 set for the application, using that size when the call gives no maxCharacters and as the ceiling for a larger requested size.
+"""
+
+verification = "With 4000, web_read without maxCharacters and with 16000 both send 4000 to the provider; 2000 sends 2000."
+
+affected_paths = ["05_Software/src/libraries/shared/src/advanced-settings.ts", "05_Software/src/libraries/core/src/tools/web.ts"]
+
+linked_tests = ["05_Software/src/libraries/shared/src/advanced-settings.test.ts", "05_Software/src/libraries/core/src/tools/web-limits.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-21
+updated = 2026-11-21

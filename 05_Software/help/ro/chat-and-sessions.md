@@ -1,6 +1,6 @@
 # Chat și sesiuni
 
-O sesiune este o conversație cu agentul în cadrul unui workbench. VERA salvează fiecare sesiune în workbench, așa că poți închide aplicația și continua mai târziu. Mai multe sesiuni pot rula în același timp.
+O sesiune este o conversație cu agentul în cadrul unui workbench. VERA salvează fiecare sesiune în workbench, așa că poți închide aplicația și continua mai târziu. Mai multe sesiuni pot rula în același timp. Cel mult trei ture rulează simultan în toate workbench-urile deschise, sau câte sunt setate la **Ture simultane** în [Setări avansate](advanced-settings.md); un mesaj trimis la limită rămâne netrimis în caseta de mesaj până se termină o tură.
 
 ## Pornește și gestionează sesiuni
 
@@ -8,7 +8,11 @@ O sesiune este o conversație cu agentul în cadrul unui workbench. VERA salveaz
 - Primul mesaj devine titlul. **Redenumește** setează un titlu ales de tine.
 - **Caută sesiuni** găsește sesiuni după titlu și după textul mesajelor.
 - Fiecare rând de sesiune afișează ora ultimei activități și are un meniu cu **Exportă Markdown**, **Exportă JSON**, **Redenumește**, **Mută mai sus**, **Mută mai jos**, **Arhivează** și **Șterge**.
-- O sesiune își afișează starea: **Inactiv**, **În lucru**, **Așteaptă aprobare** sau **Eroare**.
+- O sesiune își afișează starea: **Inactiv**, **În lucru**, **Așteaptă aprobare** sau **Eroare**. O sesiune în lucru are un semn care se rotește lângă oră, iar una care așteaptă aprobare un scut.
+
+## Sesiuni din alte workbench-uri
+
+Turele continuă să ruleze când deschizi alt workbench. Rândul unui workbench din bara laterală afișează un semn cu numărul sesiunilor în lucru și al celor care așteaptă, chiar și când rândul este restrâns; un scut înseamnă că o sesiune așteaptă aprobarea ta. Selectează semnul (sau focalizează-l și apasă Enter) pentru a vedea aceste sesiuni. Alege o sesiune pentru a o deschide în workbench-ul ei, unde poți verifica aprobarea, sau **Oprește** pentru a încheia doar acea tură. Cât timp rulează ture, **Workbench-uri** arată câte rulează și limita **Ture simultane**. La limită, un mesaj nou rămâne în caseta de mesaj: așteaptă să se termine o tură sau oprește una din bara laterală, apoi trimite-l din nou.
 
 ## Scrie un mesaj
 
@@ -46,7 +50,7 @@ Pentru a opri o sesiune copil în curs, deschide-o și folosește **Oprește** l
 
 | Nivel | Ce afișează conversația |
 |---|---|
-| **Verbose** | Fiecare apel de instrument cu argumentele și rezultatul său, raționamentul modelului și statistici de tokenuri sub fiecare mesaj al tău |
+| **Verbose** | Fiecare apel de instrument cu argumentele și rezultatul său, raționamentul modelului și, sub fiecare mesaj al tău, data și ora trimiterii și statisticile de tokenuri |
 | **Normal** | Apelurile de rutină ale instrumentelor, grupate într-o linie extensibilă **Operații** |
 | **Minimal** | Doar conversația; apelurile de rutină ale instrumentelor sunt ascunse, iar un indicator de lucru este afișat cât timp agentul lucrează |
 
@@ -60,7 +64,7 @@ Pentru modelele care îl acceptă, **Nivel de reasoning** oferă **Implicit** ș
 
 ## Sesiuni lungi și context
 
-Indicatorul de context afișează **Context utilizat** ca procent din fereastra de context a modelului; selectează-l pentru utilizare și limite. Când o sesiune devine prea lungă pentru model, VERA rezumă istoricul mai vechi (**Se rezumă istoricul…**). Transcriptul complet rămâne salvat și vizibil.
+Indicatorul de context afișează **Context utilizat** ca procent din fereastra de context a modelului; selectează-l pentru utilizare și limite. Când o sesiune devine prea lungă pentru model, VERA rezumă istoricul mai vechi (**Se rezumă istoricul…**). Între timp indicatorul se rotește și păstrează ultimul procent, care se actualizează când următoarea cerere este pregătită. Transcriptul complet rămâne salvat și vizibil.
 
 **Caută în conversație** caută în sesiunea curentă. Banda de marcaje de la marginea stângă a conversației are câte un marcaj pentru fiecare mesaj al tău; indică un marcaj pentru a previzualiza mesajul și selectează-l pentru a sări la el.
 
@@ -93,6 +97,8 @@ Schimbările de confidențialitate sau model actualizează afișarea. Editorul d
 Treci cu indicatorul peste un mesaj propriu sau folosește Tab pentru a ajunge la pictograma de marcaj. Alege **Marchează**; pictograma plină oferă **Elimină marcajul**. Previzualizarea de pe margine arată primul rând al mesajului și începutul răspunsului agentului, cu aceeași acțiune de marcaj. Modificarea apare imediat; dacă salvarea eșuează, starea anterioară revine și apare o eroare. În sesiunile arhivate și workbench-urile doar pentru citire poți doar consulta marcajele.
 
 Marcajele de pe margine sunt pline, în culoarea principală și puțin mai lungi. Un grup este marcat dacă oricare mesaj din el are un marcaj. Folosește **Marcajul următor** (**Ctrl+Alt+N**) sau **Marcajul anterior** (**Ctrl+Alt+P**) pentru a sări între mesaje; navigarea se oprește la primul sau ultimul marcaj. Modifică tastele în **Setări → Comenzi rapide**.
+
+Fila **Marcaje** din panoul din dreapta listează în ordine marcajele acestei conversații, fiecare cu începutul mesajului tău și al răspunsului. Activeaz-o din **Editează workbench-ul > Interfață > Filele panoului din dreapta**. Scrie în **Filtrează marcajele** ca să cauți în textul mesajului sau al răspunsului; numărul arată atunci potrivirile din total. Alege un rând sau apasă Enter ca să sari la mesaj în Chat; săgețile mută între rânduri. Bifează rânduri (sau **Selectează tot** pentru rândurile filtrate) și alege **Elimină selecția**, ori elimină un singur rând cu iconița de coș. **Șterge toate** elimină, după confirmare, toate marcajele conversației, indiferent de filtru. Eliminarea unui marcaj nu șterge niciodată mesajul; dacă eliminarea eșuează, nu se schimbă nimic și apare o eroare. Sesiunile arhivate și workbench-urile doar-citire permit doar filtrarea și saltul.
 
 ## Comenzi shell
 

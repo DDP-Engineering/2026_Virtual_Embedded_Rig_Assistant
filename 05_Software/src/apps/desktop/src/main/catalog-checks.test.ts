@@ -47,3 +47,28 @@ it("skips the start check while disabled and survives a failed check", async () 
   expect(check).toHaveBeenCalledTimes(2);
   checks.close();
 });
+// REQ-FUNC-ce542246
+it("follows a changed interval without an extra check and keeps the wait when it is unchanged", async () => {
+  vi.useFakeTimers();
+  const hour = 60 * 60 * 1000;
+  let hours = 24;
+  const check = vi.fn(async () => {});
+  const checks = new CatalogChecks({ check, enabled: () => true, intervalMs: () => hours * hour });
+  checks.settingsChanged();
+  await vi.advanceTimersByTimeAsync(0);
+  expect(check).not.toHaveBeenCalled();
+  checks.start();
+  await vi.advanceTimersByTimeAsync(0);
+  expect(check).toHaveBeenCalledTimes(1);
+  hours = 2;
+  checks.settingsChanged();
+  await vi.advanceTimersByTimeAsync(0);
+  expect(check).toHaveBeenCalledTimes(1);
+  await vi.advanceTimersByTimeAsync(2 * hour);
+  expect(check).toHaveBeenCalledTimes(2);
+  await vi.advanceTimersByTimeAsync(hour);
+  checks.settingsChanged();
+  await vi.advanceTimersByTimeAsync(hour);
+  expect(check).toHaveBeenCalledTimes(3);
+  checks.close();
+});

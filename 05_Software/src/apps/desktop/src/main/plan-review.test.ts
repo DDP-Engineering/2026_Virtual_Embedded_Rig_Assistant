@@ -11,7 +11,7 @@ const event = { sender, senderFrame: frame };
 function router(host: mainSessions.SessionsHost, containsSecret: (value: unknown) => boolean) {
   return createInvokeRouter({
     target: () => ({ webContents: sender, url: frame.url }),
-    handlers: mainSessions.planReviewHandlers(host, containsSecret) as ChannelHandlers,
+    handlers: mainSessions.planReviewHandlers(() => host, containsSecret) as ChannelHandlers,
     log: () => {},
   });
 }
@@ -233,7 +233,7 @@ it("does not blanket-refuse projected quoted plan context while refusing credent
 for (const sameWorkbenchId of [false, true])
   it(`captures the originating DB before a queued lifecycle switch (same workbench identity: ${sameWorkbenchId})`, async () => {
     const env = await fixture(sameWorkbenchId);
-    const handlers = mainSessions.planReviewHandlers(env.host, env.containsSecret);
+    const handlers = mainSessions.planReviewHandlers(() => env.host, env.containsSecret);
     let release = () => {},
       entered = () => {};
     const held = new Promise<void>((resolve) => {
@@ -269,7 +269,7 @@ it.each(["config", "pinned"] as const)(
   "rechecks captured DB after awaited review %s and leaves feedback pending in its owner",
   async (held) => {
     const env = await fixture(true),
-      handlers = mainSessions.planReviewHandlers(env.host, env.containsSecret);
+      handlers = mainSessions.planReviewHandlers(() => env.host, env.containsSecret);
     await handlers["session.plan.comment.save"]({
       ...env.scope,
       action: "create",
@@ -294,7 +294,7 @@ it.each(["config", "pinned"] as const)(
 
 it("rejects ordinary preparation before it can probe programs while a review is active", async () => {
   const env = await fixture(),
-    handlers = mainSessions.planReviewHandlers(env.host, env.containsSecret);
+    handlers = mainSessions.planReviewHandlers(() => env.host, env.containsSecret);
   await handlers["session.plan.comment.save"]({
     ...env.scope,
     action: "create",

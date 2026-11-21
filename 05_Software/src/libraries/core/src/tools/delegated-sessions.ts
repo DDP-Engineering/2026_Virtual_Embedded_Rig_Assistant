@@ -18,6 +18,7 @@ const failureText = {
   NOT_FOUND: "The requested model or owned delegated session is unavailable.",
   CONFLICT: "The request conflicts with the delegated session lifecycle or an earlier launch.",
   BUSY: "The workbench or delegation capacity is busy.",
+  TURN_LIMIT: "The application's concurrent turn limit is reached; launch again after a running turn ends.",
   DENIED: "The current session cannot perform this delegation operation.",
   CONTEXT_LIMIT: "The delegated task exceeds the available model context.",
   IMAGE_FORMAT: "The delegated task contains an unsupported image.",

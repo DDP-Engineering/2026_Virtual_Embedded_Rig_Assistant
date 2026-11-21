@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-1cec8616"
+
+title = "Compact at the resolved compaction trigger"
+
+status = "active"
+
+requirement = """
+When a request is prepared, VERA shall compact the history only while its counted context exceeds the resolved Compaction trigger, an integer percent of the input budget from 50 to 95 with default 80, set per workbench or application.
+"""
+
+verification = "Set the workbench trigger to 60 and prepare a request at 70 % of the budget: a summary request is made; at 55 % none is made; with no value set, 75 % makes none and 85 % makes one."
+
+affected_paths = ["05_Software/src/libraries/shared/src/advanced-settings.ts", "05_Software/src/libraries/core/src/agent/compaction.ts", "05_Software/src/libraries/core/src/sessions/service.ts"]
+
+linked_tests = ["05_Software/src/libraries/shared/src/advanced-settings.test.ts", "05_Software/src/libraries/core/src/agent/compaction-settings.test.ts", "05_Software/src/libraries/core/src/sessions/compaction-advanced.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-20
+updated = 2026-11-20

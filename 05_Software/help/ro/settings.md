@@ -1,6 +1,6 @@
 # Setări
 
-**Setări** din partea de jos a barei laterale deschide setările aplicației. Acestea se aplică tuturor workbench-urilor; setările unui singur workbench se află la **Editează workbench-ul** (vezi [Workbench-uri](workbenches.md)). Modificările sunt salvate imediat ce le faci, cu excepția paginilor care au propriul buton **Salvează**. **Înapoi la workbench-uri** te readuce la lucru.
+**Setări** din partea de jos a barei laterale deschide setările aplicației. Acestea se aplică tuturor workbench-urilor; setările unui singur workbench se află la **Editează workbench-ul** (vezi [Workbench-uri](workbenches.md)). Modificările de pe o pagină rămân o ciornă până apeși **Salvează**, în dreapta sus; **Anulează** renunță la ele. Modificările de aspect se văd imediat pe ecran, înainte de salvare. Dacă părăsești o pagină cu modificări nesalvate, VERA te întreabă dacă renunți la ele sau rămâi. **Înapoi la workbench-uri** te readuce la lucru.
 
 | Pagină | Ce setează |
 |---|---|
@@ -42,7 +42,7 @@ Pagina listează fiecare comandă cu combinația sa de taste. Poți adăuga, sch
 
 - **Mod de actualizare**: **Oprit**, **Notifică** sau **Descarcă automat**. Cu **Notifică**, VERA te anunță când există o versiune nouă și o descarcă doar când selectezi **Descarcă actualizarea**.
 - **Canal**: **Stabil** sau **Beta (include stabil)**.
-- **Verifică acum** verifică imediat, inclusiv când modul este **Oprit**. Altfel, VERA verifică la pornire și la fiecare șase ore.
+- **Verifică acum** verifică imediat, inclusiv când modul este **Oprit**. Altfel, VERA verifică la pornire și la fiecare șase ore sau la **Intervalul verificării actualizărilor** din [Setări avansate](advanced-settings.md).
 
 Când o actualizare este descărcată, selectează **Repornește pentru actualizare**. VERA așteaptă până când toate execuțiile în curs și aprobările în așteptare s-au încheiat. Fiecare actualizare este verificată înainte de instalare, iar VERA nu instalează niciodată o versiune mai veche.
 

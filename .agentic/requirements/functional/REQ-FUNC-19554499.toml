@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-19554499"
+
+title = "Describe tools without numbers that settings change"
+
+status = "active"
+
+requirement = """
+VERA shall describe read, grep, glob, parse_log and run_command to the model without stating a limit that an Advanced setting changes.
+"""
+
+verification = "The descriptions of read, grep, glob, parse_log and run_command contain no 500, 600 or 2000, no 10 second deadline and no 256 KiB window."
+
+affected_paths = ["05_Software/src/libraries/core/src/tools/read.ts", "05_Software/src/libraries/core/src/tools/grep.ts", "05_Software/src/libraries/core/src/tools/glob.ts", "05_Software/src/libraries/core/src/tools/parse-log.ts", "05_Software/src/libraries/core/src/plugins/command-tools.ts"]
+
+linked_tests = ["05_Software/src/libraries/core/src/tools/registry.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-21
+updated = 2026-11-21
