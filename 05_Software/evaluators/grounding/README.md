@@ -53,6 +53,13 @@ demo documents: `0xCCCC` as the watchdog start key, `0x50` as an EEPROM address,
 I2C1_OAR1 offset, 300 ns and 400 pF for SCL rise time. Of 42 invalid citations, 37 used the
 `[[ref|label]]` form, which VERA does not accept; one wrote the template `[[ref]]` literally.
 
+Second run, 2026-11-21, `meta/muse-glimmer` Q4_K_M, 32 K context, reasoning `low`, 3 repeats: fact
+accuracy 100 %, abstention 86.1 %, fabrication 2.8 % (one answer named pins from the pin list while
+saying it found no buzzer), but only 10.7 % of the answerable questions with a valid citation: it
+wrote the template `[[ref]]` literally 72 times. It searched in Romanian for Romanian questions
+(4.2 % English queries) and answered in the question's language in 98.3 % of the answers; a turn
+took 52 s on average.
+
 ## Commands
 
 ```powershell

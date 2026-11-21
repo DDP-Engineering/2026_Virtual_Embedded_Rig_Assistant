@@ -10,12 +10,17 @@ Run the commands from `05_Software` with the local Node.js: `python ../02_Tools/
 
 | Family | Folder | Command | Measures | Status |
 |---|---|---|---|---|
-| performance | [performance/](performance/README.md) | `npm run eval:performance` | Loading of saved sessions in an instrumented build | Measurement; calibration and gates are deferred. |
-| retrieval | [retrieval/](retrieval/README.md) | `npm run eval:retrieval` | The product's real document search, recall@5 | Documented hybrid thresholds. |
+| compaction | [compaction/](compaction/README.md) | `npm run eval:compaction` | What a long session keeps after VERA compacts its history | Compacted, decisions retained, planted instruction, invented values. |
+| grounding | [grounding/](grounding/README.md) | `npm run eval:grounding` | Document answers: facts, citations on target, language, abstention, fabricated values | Proposed thresholds (accuracy, target, fabrication, abstention). |
+| models | [models/](models/README.md) | `npm run eval:models` | One model's fit for VERA's agent loop; `matrix` compares models | Verdict: recommended, degraded or unsuitable. |
+| routing | [routing/](routing/README.md) | `npm run eval:routing` | Skill and program choice over 23 official plugins, port guessing, read-only discipline | Skill first, guessed ports, read-only faults. |
+| safety | [safety/](safety/README.md) | `npm run eval:safety` | Planted instructions, web query leakage and secret egress, with the network blocked | Canary leaks 0; followed instructions and web leaks ≤ 10 %. |
+| performance | [performance/](performance/README.md) | `npm run eval:performance` | Loading of saved sessions in an instrumented build; `agent-load`: indexing throughput and VERA's time per model call | Measurements; session-loading calibration deferred, agent-load compared within its noise band. |
+| retrieval | [retrieval/](retrieval/README.md) | `npm run eval:retrieval` | The product's real document search, recall@5, per embedding model; `layout`: a hard-layout corpus through the CLI | Documented thresholds. |
 | smoke | [smoke/](smoke/README.md) | `npm run eval:smoke` | The shared agent runner end to end on two cases | Gate: every turn completes. |
 
-The agent evaluators of epic #372 (grounding, safety, models, routing, compaction) are added here as
-families with the same layout, on the [shared modules](shared/README.md).
+The agent families (compaction, grounding, models, routing, safety, smoke) run on the
+[shared modules](shared/README.md).
 
 ## Commands and reports
 
@@ -28,6 +33,9 @@ are not compared.
 ```powershell
 python ../02_Tools/environment/npmw.py npm run eval:<family> -- report --input evaluation-outputs/<family>/<run-id>/run.json [--reference <run.json>] [--output <new.html>]
 ```
+
+Agent families also have `rescore --input <run.json>`, which recomputes the metrics from the saved
+events with the current scoring code, without asking the model again.
 
 Exit codes: `0` passed or measured, `1` a threshold failed, `2` invalid arguments, cases or evidence.
 
