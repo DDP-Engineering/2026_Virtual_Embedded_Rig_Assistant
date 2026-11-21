@@ -8,6 +8,8 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ### Added
 
+- Send follow-ups to delegated sessions and authorize Full Access launches with independent session modes.
+
 - Open local Git file history from Files in a tab beside Chat.
 - Open staged and unstaged Git diffs from Files in tabs beside Chat.
 - Opt in to read-only Git status, changed-file badges and a changes filter in Files.
@@ -79,7 +81,7 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 - Changes paginates long session histories and retains the selected diff across pages.
 - Chat shows one working indicator below the composer at every detail level.
 - Long chats use calibrated token estimates and compact in the background; context summaries survive restarts.
-- Close VERA and delete .vera/vera.db, .vera/vera.db-wal and .vera/vera.db-shm from earlier builds.
+- Close VERA and delete each workbench's .vera/vera.db, .vera/vera.db-wal and .vera/vera.db-shm from earlier builds.
 - Switch local embedding models per workbench while keyword search continues during the background rebuild.
 
 - Indexing and semantic search use the workbench model and its token budget. Idle embedding workers stop.

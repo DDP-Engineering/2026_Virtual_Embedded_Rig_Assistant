@@ -17,7 +17,7 @@ checking, ReferenceRuntime invokes it before tool.done or transcript disclosure;
 an ordinary failed result. ToolDef can also supply a live availability predicate,
 which ReferenceRuntime rechecks before model dispatch and tool execution. The
 Desktop browser uses it for current grants and opt-ins. Model dispatch rechecks
-this predicate after session preparation and after credential resolution. The registry caps structured replacements from delegated tool publication. [User terminals](terminals.md) uses it to recheck revocable read leases.
+this predicate after session preparation and after credential resolution. The registry caps structured replacements from delegated tool publication. The runtime marks trusted parent-origin instructions in user and queued events and in model-facing message text. [User terminals](terminals.md) uses it to recheck revocable read leases.
 
 When the host offers commands, `SystemPromptInput.commands` adds instructions for run_command,
 closed stdin/noninteractive flags, background program_output polling with waitMs/until and program_stop.

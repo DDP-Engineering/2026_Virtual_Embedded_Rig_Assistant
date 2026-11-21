@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-REL-36900001"
+title = "Retry child control mutations safely"
+status = "active"
+requirement = "When an owning parent repeats a recorded follow-up or configuration request, the session service shall replay its original acknowledgement for identical input and reject reuse with different input."
+verification = "Race equivalent mutations and conflicting keys, then repeat both after reopening the database."
+affected_paths = ["05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/libraries/core/src/storage/repos/delegations.ts", "05_Software/src/libraries/core/src/storage/schema.ts", "05_Software/src/libraries/core/src/tools/delegated-sessions.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/sessions/delegation.test.ts"]
+created = 2026-11-21
+updated = 2026-11-21

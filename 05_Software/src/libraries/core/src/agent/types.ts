@@ -35,20 +35,26 @@ export interface RuntimeInit {
   contextCompactor?: ContextCompactor;
   maxToolCallsPerTurn?: number;
 }
+export interface RuntimeInput {
+  text: string;
+  timestamp: number;
+  images?: string[];
+  parentSessionId?: string;
+}
 export interface RuntimeHost {
   gateway: LlmGateway;
   now(): number;
   nextId(): string;
   approve(call: Readonly<ToolCall>, signal: AbortSignal): Promise<"approved" | "denied" | "aborted">;
   /** Durable, undelivered user messages; detached FIFO snapshot, without consuming them. */
-  steering?(): { messageId: string; text: string; images?: string[]; timestamp: number }[];
+  steering?(): (RuntimeInput & { messageId: string })[];
   /** An exception the turn loop reports only as a generic error; the host scrubs secrets before it writes the text. */
   log?(message: string): void;
 }
 export type RuntimeEvent =
   | { type: "turn.started"; turnId: string }
   | { type: "turn.done"; turnId: string; stopReason: StopReason }
-  | { type: "message.user"; messageId: string; text: string; images?: string[]; timestamp?: number }
+  | ({ type: "message.user"; messageId: string } & Partial<RuntimeInput> & { text: string })
   | { type: "message.delivered"; messageIds: string[] }
   | {
       type: "context.compacted";
@@ -90,7 +96,7 @@ export type RuntimeEvent =
     };
 export interface AgentRuntime {
   start(init: RuntimeInit): void;
-  send(text: string, images?: string[]): Promise<{ stopReason: StopReason }>;
+  send(text: string, images?: string[], parentSessionId?: string): Promise<{ stopReason: StopReason }>;
   abort(): void;
   onEvent(listener: (event: RuntimeEvent) => void): () => void;
   messages(): Message[];

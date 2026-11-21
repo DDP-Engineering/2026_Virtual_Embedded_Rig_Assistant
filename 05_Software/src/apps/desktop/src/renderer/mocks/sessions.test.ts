@@ -175,7 +175,7 @@ it("asks for program approvals with the shared policy and checks the typed word"
     ["approved", "user"],
     ["approved", "user"],
   ]);
-  sessions.invoke("session.mode.set", { sessionId: s.id, mode: "bypass" });
+  sessions.invoke("session.mode.set", { sessionId: s.id, mode: "bypass", acknowledged: true });
   mode = "bypass";
   sessions.invoke("session.send", { sessionId: s.id, text: "burn the key" });
   await expect.poll(() => snapshot().status).toBe("idle");

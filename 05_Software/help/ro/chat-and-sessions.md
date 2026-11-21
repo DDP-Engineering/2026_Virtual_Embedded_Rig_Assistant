@@ -46,6 +46,14 @@ Când VERA deleagă o sarcină, **Sesiuni delegate** din chatul părinte afișea
 
 Pentru a opri o sesiune copil în curs, deschide-o și folosește **Oprește** lângă câmpul pentru mesaje. Sesiunea părinte poate continua. Dacă se cere aprobare, folosește cardul de aprobare din sesiunea respectivă. Când redeschizi oricare dintre sesiuni după repornirea VERA, legătura și rezultatul execuției delegate rămân disponibile.
 
+Agentul părinte poate trimite instrucțiuni noi în aceeași conversație copil și îi poate alege modelul și nivelul de raționament pentru rundele următoare. Mesajele sunt etichetate **Instrucțiune de la agentul părinte**. Dacă sesiunea copil este activă, o instrucțiune eligibilă așteaptă următoarea cerere către model. Folosește cardul de aprobare din sesiunea copil când este necesară o decizie a utilizatorului.
+
+O sesiune copil nouă pornește în modul de permisiuni curent al sesiunii părinte. După lansare, alege separat modul fiecărei sesiuni în câmpul ei de compunere. Pentru un părinte în Bypass, alege **Permite acces complet pentru noile sesiuni copil** și confirmă lansările eligibile viitoare. Pentru a retrage autorizarea, alege **Revocă accesul complet la lansările viitoare**. Sesiunile copil existente își păstrează modul. Pentru a limita accesul unei sesiuni copil, schimbă modul în chatul ei. Publicarea la distanță necesită permisiune separată.
+
+Într-o copie de lucru partajată, lasă o sesiune copil să termine implementarea și verifică predarea înainte de a porni următoarea.
+
+Într-o sesiune delegată în Bypass, comenzile shell rulează automat dacă se potrivesc unui prefix salvat de utilizator în workbench. Pentru celelalte comenzi, ți se cere aprobarea.
+
 ## Niveluri de detaliu
 
 **Nivel de detaliu** se setează pentru fiecare workbench în **Editează workbench-ul** → **Agent și chat**:

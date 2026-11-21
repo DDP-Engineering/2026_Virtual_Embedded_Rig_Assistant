@@ -131,7 +131,7 @@ test("authors from help, reviews trial in bypass and promotes with the user butt
     const sessionId = (await page
       .locator('[data-session][aria-current="page"]')
       .getAttribute("data-session")) as string;
-    await invoke(page, "session.mode.set", { sessionId, mode: "bypass" });
+    await invoke(page, "session.mode.set", { sessionId, mode: "bypass", acknowledged: true });
     const send = async (model: string) => {
       await expect
         .poll(

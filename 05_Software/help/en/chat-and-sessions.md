@@ -46,6 +46,14 @@ When VERA delegates a task, **Delegated sessions** in the parent chat lists each
 
 To stop a running child, open it and use **Stop** in its composer. The parent can keep working. If approval is requested, use the approval card in that session. When you reopen either session after restarting VERA, the link and the outcome of the delegated turn are still available.
 
+The parent agent can send follow-up instructions in the same child conversation and choose its model and reasoning for later turns. The transcript labels these messages **Parent agent instruction**. If the child is already working, an eligible follow-up waits for its next model request. Use the child’s approval card when a user decision is required.
+
+A new child starts in the parent’s current permission mode. After launch, choose each session’s mode separately in its composer. For a parent in Bypass, choose **Allow Full Access for new child sessions** and confirm to authorize future eligible launches. To end that authorization, choose **Revoke Full Access for future child launches**. Existing children keep their modes. To reduce a child’s access, change its mode in its own chat. Publishing remotely requires separate permission.
+
+In a shared checkout, let one implementation child finish and verify its handover before starting the next.
+
+In a delegated Bypass session, shell commands run automatically when they match a user-saved workbench command prefix. Other shell commands ask for your approval.
+
 ## Detail levels
 
 **Detail level** is set per workbench in **Edit workbench** → **Agent and chat**:

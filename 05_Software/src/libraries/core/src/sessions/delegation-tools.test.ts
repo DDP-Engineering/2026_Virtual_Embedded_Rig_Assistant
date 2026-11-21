@@ -158,7 +158,9 @@ it("replays launch, independent parent work, progress and use of the child reply
   expect(childDispatch).toMatchObject({
     model: "replay/child",
     reasoning: "high",
-    messages: [{ role: "user", content: childRequest.instruction }],
+    messages: [
+      { role: "user", content: `Parent agent instruction (${parent.id}):\n${childRequest.instruction}` },
+    ],
   });
   expect(childDispatch?.tools.map((tool) => tool.name)).not.toContain("session_launch");
   releaseChild();
@@ -276,7 +278,7 @@ it("replays a terminal event committed before subscription and rejects a deleted
   const stopAfterFinish = vi.fn();
   const off = h.service.subscribeDelegated(parent.id, child.sessionId, stale.seq, (_seq, event) => {
     if (event.type === "turn.done")
-      stopAfterFinish(h.service.stopDelegated(parent.id, child.sessionId, "initial-turn"));
+      stopAfterFinish(h.service.stopDelegated(parent.id, child.sessionId, child.turnId));
   });
   releaseChild();
   await h.service.waitIdle(child.sessionId);

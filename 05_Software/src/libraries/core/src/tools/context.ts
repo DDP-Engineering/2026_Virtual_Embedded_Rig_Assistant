@@ -78,7 +78,7 @@ export function createToolContext(root: string, workers?: WorkerPool): ToolConte
 
 /** Scope comes from the host's current session mode, never from model arguments. */
 export function toolSignal(ctx: ToolContext, signal: AbortSignal): AbortSignal {
-  return !ctx.delegated && ctx.permissionMode?.() === "bypass" && ctx.bypassSignal
+  return ctx.permissionMode?.() === "bypass" && ctx.bypassSignal
     ? AbortSignal.any([signal, ctx.bypassSignal()])
     : signal;
 }
@@ -87,7 +87,7 @@ export function toolExcludedRoots(ctx: ToolContext): readonly string[] {
   return [...(ctx.managedRoots ?? []), ...(ctx.pluginBuilder ? [ctx.pluginBuilder.root] : [])];
 }
 export async function toolPathGuard(ctx: ToolContext, additional = false): Promise<PathGuard> {
-  const bypass = !ctx.delegated && ctx.permissionMode?.() === "bypass";
+  const bypass = ctx.permissionMode?.() === "bypass" && (!ctx.delegated || !!ctx.bypassSignal);
   const grantedFolders = additional && !ctx.delegated;
   const excluded = toolExcludedRoots(ctx);
   if (!bypass) {

@@ -156,6 +156,7 @@ const workbenchHandlers = {
   "session.item.detail": unused,
   "session.reasoning.set": unused,
   "session.mode.set": unused,
+  "session.delegation.bypass.set": unused,
   "providers.discover": unused,
   "providers.presets.discover": unused,
   "providers.image.capability": unused,

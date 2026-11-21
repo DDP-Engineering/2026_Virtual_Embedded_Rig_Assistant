@@ -33,9 +33,17 @@ shared schemas `shared/src/session.ts`, `events.ts`, `tools.ts`, `providers.ts`.
   citations, applied changes) or JSON (the complete event record).
 - **Detail level** per workbench (`chat.detail`): `verbose` (every tool call, reasoning, send time,
   token statistics), `normal` (routine calls grouped), `minimal` (conversation only). Display only.
-- **Delegated sessions:** `session_launch` starts an inspection-only child session in the same
-  workbench (task at most 32 000 characters, at most 3 at once). A child has only `read`, `list`,
-  `glob`, `grep`, `parse_log`, `decode_register`, `search_docs` and `read_doc`.
+- **Delegated sessions:** `session_launch` starts a child in the same workbench (instruction at most
+  32 000 characters, at most 3 active child turns). An owning parent can configure the child's model
+  and reasoning for later turns, then start or queue instructions in the same child transcript.
+  Monitoring and stop address a child turn by ID. Parent messages carry instruction provenance.
+  At launch the child copies the parent's current mode. A Bypass parent needs explicit user
+  authorization for Bypass launches. The user can revoke future launches and change each session's
+  permission mode independently. Children use canonical local inspection, file-change and program
+  tools under the current host policy. Nested delegation is refused. In a shared checkout, verify
+  an implementation child's handover before starting the next. Remote publication needs separate
+  user authorization. Delegated shell commands use user-saved literal command prefixes for
+  automatic approval in Bypass; other commands ask the user.
 
 ## Agent runtime
 
@@ -85,7 +93,7 @@ Bypass a paragraph on full file access. Tool descriptions travel in the tool sch
 
 ## Tools
 
-The catalog is `builtinToolNames` (`shared/src/tools.ts`) plus four delegation tools. The registry
+The catalog is `builtinToolNames` (`shared/src/tools.ts`) plus six delegation tools. The registry
 (`core/src/tools/registry.ts`) validates strict arguments and returns JSON. Not offered: tools in the
 workbench's `tools.disabled`; the web tools when Web access is off (`web_read` also with Brave
 Search); `write`-class tools and `run_command` in Read-only; plugin-provided tools while their plugin
@@ -120,7 +128,7 @@ is not loaded ([Plugins.md](Plugins.md)).
 | `electrical_model`, `electrical_model_change` | read, write | Read or change the electrical model | electrical or automation plugin |
 | `industrial_catalog` | read | Reads `electrical-automation-catalogs/<id>.json` | its plugin |
 | `electrical_network`, `protection_coordination`, `motor_drives`, `power_quality`, `lighting_design` | write | Calculation storing one new result | each with its own plugin |
-| `session_launch`, `_status`, `_wait`, `_stop` | session | Delegated child sessions | wait ≤ 30 s |
+| `session_launch`, `_send`, `_configure`, `_status`, `_wait`, `_stop` | session | Delegated child sessions | wait ≤ 30 s |
 
 Background runs outlive the tool call and stop with the session, the app or the Bypass mode that
 started them. Commands inherit the user's environment without provider keys or stored credentials.
@@ -144,7 +152,7 @@ releases the corresponding browser resources. [Desktop browser runtime](../.agen
 | Read-only | not offered, refused | not offered | Safe, non-trial only |
 | Ask (default) | every change asks | every command asks | Device read and write ask; Irreversible asks with a typed word |
 | Auto-edit | applied, except protected requests (paths under `.vera/`, every download), which ask | saved prefixes run, others ask | Device read runs; Device write asks; Irreversible typed word |
-| Bypass | applied, in any folder the OS account can reach | runs | all but Blocked run |
+| Bypass | applied in any folder the OS account can reach | runs in direct sessions, or with a saved prefix in delegated sessions | all but Blocked run, subject to trial rules |
 
 - Trial plugins always ask; Blocked never runs; risk levels: [Plugins.md](Plugins.md).
 - **Approval card:** file and unified diff; download URL and size limit; or the program's risk level,

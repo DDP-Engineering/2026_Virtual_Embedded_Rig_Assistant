@@ -165,10 +165,10 @@ entries:
   - category: new
     topic: { en: Sessions, ro: Sesiuni, de: Sitzungen, fr: Sessions }
     text:
-      en: "Bookmark and delegate. Grant or stop visible browsing. Agents cite authorized public pages."
-      ro: "Marchează și deleagă. Permite sau oprește navigarea vizibilă. Agenții citează pagini autorizate."
-      de: "Lesezeichen setzen, delegieren, sichtbares Surfen erlauben oder stoppen. Agenten zitieren Seiten."
-      fr: "Ajoutez des signets, déléguez, autorisez ou arrêtez la navigation. Les agents citent les pages."
+      en: "Continue delegated chats and authorize Full Access launches. Bookmark and control browsing."
+      ro: "Continuă chaturile delegate și autorizează acces complet. Gestionează marcaje și navigarea."
+      de: "Delegierte Chats fortsetzen und Vollzugriff erlauben. Lesezeichen setzen und Surfen steuern."
+      fr: "Poursuivez les chats délégués, autorisez l’accès complet, gérez les signets et la navigation."
   - category: improved
     topic: { en: Sessions, ro: Sesiuni, de: Sitzungen, fr: Sessions }
     text:

@@ -128,12 +128,13 @@ export const sessionEventSchema = z.discriminatedUnion("type", [
     reasoning: reasoningOptionSchema.nullable().optional(),
   }),
   z.strictObject({ type: z.literal("session.interrupted"), turnId: z.string() }),
-  z.strictObject({ type: z.literal("turn.started"), turnId: z.string() }),
+  z.strictObject({ type: z.literal("turn.started"), turnId: z.string(), messageId: z.string().optional() }),
   z.strictObject({ type: z.literal("turn.done"), turnId: z.string(), stopReason: stopReasonSchema }),
   z.strictObject({
     type: z.literal("message.user"),
     messageId: z.string(),
     text: z.string(),
+    parentSessionId: sessionIdSchema.optional(),
     images: messageImagesSchema.optional(),
     /** Send time in epoch milliseconds; absent on events recorded before send times existed. */
     timestamp: count.optional(),
@@ -156,6 +157,7 @@ export const sessionEventSchema = z.discriminatedUnion("type", [
     type: z.literal("message.queued"),
     messageId: z.string(),
     text: z.string(),
+    parentSessionId: sessionIdSchema.optional(),
     images: messageImagesSchema.optional(),
     timestamp: count,
   }),

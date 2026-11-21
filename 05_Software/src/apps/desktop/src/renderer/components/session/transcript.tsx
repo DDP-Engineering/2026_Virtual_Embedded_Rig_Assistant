@@ -375,7 +375,9 @@ const MessageRow = memo(function MessageRow({
       {match && <span className="sr-only">{t("chat.searchMatch")}</span>}
       {item.kind === "user" ? (
         <>
-          <strong>{t("chat.you")}</strong>
+          <strong data-parent-instruction={item.parentSessionId ? "" : undefined}>
+            {item.parentSessionId ? t("delegation.instruction") : t("chat.you")}
+          </strong>
           <BookmarkButton
             bookmarked={bookmarked}
             disabled={bookmarkDisabled}

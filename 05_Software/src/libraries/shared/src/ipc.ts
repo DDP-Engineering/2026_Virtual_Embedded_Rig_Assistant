@@ -744,6 +744,7 @@ export const channels = {
       reuseEmpty: z.boolean().optional(),
       modelRef: modelReferenceSchema.nullable().optional(),
       mode: permissionModeSchema.optional(),
+      acknowledged: z.literal(true).optional(),
     }),
     sessionSummarySchema,
   ),
@@ -874,8 +875,22 @@ export const channels = {
   ),
   "session.mode.set": defineChannel(
     "session.mode.set",
-    z.strictObject({ sessionId: sessionIdSchema, mode: permissionModeSchema }),
+    z.strictObject({
+      sessionId: sessionIdSchema,
+      mode: permissionModeSchema,
+      acknowledged: z.literal(true).optional(),
+    }),
     sessionSummarySchema,
+  ),
+  "session.delegation.bypass.set": defineChannel(
+    "session.delegation.bypass.set",
+    z.strictObject({
+      workbenchId: workbenchIdSchema,
+      sessionId: sessionIdSchema,
+      authorized: z.boolean(),
+      acknowledged: z.literal(true).optional(),
+    }),
+    z.strictObject({ authorized: z.boolean() }),
   ),
   "providers.discover": defineChannel(
     "providers.discover",

@@ -8,6 +8,7 @@ import { reasoningOptionSchema } from "./provider-discovery.js";
 import {
   messageImagesSchema,
   permissionModeSchema,
+  sessionIdSchema,
   sessionStatusSchema,
   stopReasonSchema,
   todoItemsSchema,
@@ -56,6 +57,7 @@ export const sessionStateSchema = z.strictObject({
         kind: z.literal("user"),
         id: z.string(),
         text: z.string(),
+        parentSessionId: sessionIdSchema.optional(),
         images: messageImagesSchema.optional(),
         pending: z.boolean().optional(),
         timestamp: z.number().int().nonnegative().optional(),
@@ -331,6 +333,7 @@ function reduce(d: Draft, event: SessionEvent): void {
           kind: "user",
           id: event.messageId,
           text: event.text,
+          ...(event.parentSessionId && { parentSessionId: event.parentSessionId }),
           ...(event.images && { images: event.images }),
           ...(event.timestamp !== undefined && { timestamp: event.timestamp }),
         });
@@ -351,6 +354,7 @@ function reduce(d: Draft, event: SessionEvent): void {
           kind: "user",
           id: event.messageId,
           text: event.text,
+          ...(event.parentSessionId && { parentSessionId: event.parentSessionId }),
           ...(event.images && { images: event.images }),
           pending: true,
           timestamp: event.timestamp,

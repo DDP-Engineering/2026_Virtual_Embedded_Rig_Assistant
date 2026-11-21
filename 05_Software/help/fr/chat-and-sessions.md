@@ -46,6 +46,14 @@ Lorsque VERA délègue une tâche, **Sessions déléguées** dans le chat parent
 
 Pour arrêter une session enfant en cours, ouvrez-la et choisissez **Arrêter** près de la zone de saisie. La session parente peut continuer son travail. Si une approbation est demandée, utilisez la carte d’approbation de la session concernée. Quand vous rouvrez une session après avoir redémarré VERA, le lien et le résultat du tour délégué restent disponibles.
 
+L’agent parent peut envoyer d’autres instructions dans la même conversation enfant et choisir son modèle et son niveau de raisonnement pour les tours suivants. Le fil identifie ces messages comme **Instruction de l’agent parent**. Si la session enfant travaille déjà, une instruction admissible attend la prochaine requête au modèle. Utilisez la carte d’approbation de la session enfant lorsqu’une décision de l’utilisateur est requise.
+
+Une nouvelle session enfant démarre avec le mode d’autorisation actuel de la session parente. Après le lancement, choisissez séparément le mode de chaque session dans sa zone de saisie. Pour un parent en mode Bypass, choisissez **Autoriser l’accès complet aux nouvelles sessions enfants** puis confirmez les prochains lancements admissibles. Pour retirer cette autorisation, choisissez **Révoquer l’accès complet pour les prochains lancements**. Les sessions enfants existantes gardent leur mode. Réduisez l’accès d’une session enfant dans son propre chat. La publication à distance exige une autorisation distincte.
+
+Dans une copie de travail partagée, attendez qu’une session enfant termine son travail et vérifiez sa livraison avant de lancer la suivante.
+
+Dans une session déléguée en mode Bypass, les commandes shell correspondant à un préfixe enregistré par l’utilisateur dans le banc de travail s’exécutent automatiquement. Les autres commandes shell demandent votre approbation.
+
 ## Niveaux de détail
 
 **Niveau de détail** se règle par banc de travail dans **Modifier le banc** → **Agent et conversation** :

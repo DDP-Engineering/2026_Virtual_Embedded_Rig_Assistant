@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-FUNC-36900004"
+title = "Refuse ineligible child mutations"
+status = "active"
+requirement = "If a child mutation targets an archived, busy or approval-blocked session or invalid model settings, the session service shall return the corresponding lifecycle or validation error without recording the mutation."
+verification = "Hold an approval or model turn, archive an idle child, and try unsupported reasoning; assert no additional message or settings were persisted."
+affected_paths = ["05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/libraries/core/src/tools/delegated-sessions.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/sessions/delegation.test.ts"]
+created = 2026-11-21
+updated = 2026-11-21

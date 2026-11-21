@@ -1378,10 +1378,11 @@ ipcMain.handle(
           });
         });
       },
-      "session.create": ({ modelRef, mode, workbenchId, reuseEmpty }) =>
+      "session.create": ({ modelRef, mode, workbenchId, reuseEmpty, acknowledged }) =>
         sessions.run((s) => {
           if (workbenchId && workbench.getSnapshot().config.id !== workbenchId) throw veraError("CONFLICT");
           if (credentials.containsSecret(modelRef)) throw { code: "INVALID", messageKey: "errors.INVALID" };
+          if (mode === "bypass" && acknowledged !== true) throw veraError("DENIED");
           return sanitizeSessionSummary(s.create(modelRef, mode, reuseEmpty), (text) => sessionContent(text));
         }),
       "session.revision": ({ sessionId }) => sessions.run((service) => service.revision(sessionId)),
@@ -1493,8 +1494,13 @@ ipcMain.handle(
           if (credentials.containsSecret(modelRef)) throw { code: "INVALID", messageKey: "errors.INVALID" };
           return sanitizeSessionSummary(s.setModel(sessionId, modelRef), sessionContent);
         }),
-      "session.mode.set": ({ sessionId, mode }) =>
-        sessions.run((s) => sanitizeSessionSummary(s.setMode(sessionId, mode), sessionContent)),
+      "session.mode.set": ({ sessionId, mode, acknowledged }) =>
+        sessions.run((s) => sanitizeSessionSummary(s.setMode(sessionId, mode, acknowledged), sessionContent)),
+      "session.delegation.bypass.set": ({ workbenchId, sessionId, authorized, acknowledged }) =>
+        sessions.run((s) => {
+          if (workbench.getSnapshot().config.id !== workbenchId) throw veraError("CONFLICT");
+          return s.setDelegatedBypassLaunch(sessionId, authorized, acknowledged);
+        }, false),
       "providers.discover": (request) => modelGateway.discover(request),
       "providers.presets.discover": (request) => modelGateway.discoverPreset(request),
       "providers.image.capability": ({ modelRef }) => modelGateway.imageCapability(modelRef),

@@ -872,6 +872,7 @@ export function App() {
                           }
                           archived={selected?.archived ?? true}
                           delegation={selected?.delegation}
+                          delegatedBypassLaunch={selected?.delegatedBypassLaunch}
                           delegationParent={delegationParent}
                           delegationChildren={delegationChildren}
                           selectLinkedSession={selectLinkedSession}

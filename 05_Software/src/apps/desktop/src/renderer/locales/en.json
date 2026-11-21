@@ -397,6 +397,11 @@
     "operations": "Operations: {{count}}"
   },
   "delegation": {
+    "instruction": "Parent agent instruction",
+    "allowBypass": "Allow Full Access for new child sessions",
+    "revokeBypass": "Revoke Full Access for future child launches",
+    "confirmBypass": "Authorize launches",
+    "bypassWarning": "While this session is in Bypass, new eligible children start with Full Access. They can edit files and run commands with your account's permissions. Each child keeps its own mode when you change this session's mode or revoke launch authorization. Remote publication requires separate permission. In a delegated Bypass session, shell commands run automatically when they match a user-saved workbench command prefix. Other shell commands ask for your approval.",
     "title": "Delegated sessions",
     "outcome": "Delegated turn: {{status}}",
     "parent": "Parent session: {{title}}",

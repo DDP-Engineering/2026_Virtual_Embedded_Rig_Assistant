@@ -37,9 +37,11 @@ export const sessionSummarySchema = z.strictObject({
   mode: permissionModeSchema,
   status: sessionStatusSchema,
   archived: z.boolean(),
+  delegatedBypassLaunch: z.literal(true).optional(),
   delegation: z
     .strictObject({
       parentSessionId: sessionIdSchema,
+      turnId: z.string().min(1),
       status: delegatedTurnStatusSchema,
     })
     .optional(),

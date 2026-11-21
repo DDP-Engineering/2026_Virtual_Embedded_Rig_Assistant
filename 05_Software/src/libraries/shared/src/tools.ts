@@ -45,6 +45,8 @@ export const delegatedSessionToolNames = [
   "session_status",
   "session_wait",
   "session_stop",
+  "session_send",
+  "session_configure",
 ] as const;
 
 /** Shared configuration dependencies; runtime hosts still enforce loading, trust and permissions. */

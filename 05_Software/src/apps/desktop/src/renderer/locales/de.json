@@ -397,6 +397,11 @@
     "operations": "Vorgänge: {{count}}"
   },
   "delegation": {
+    "instruction": "Anweisung des übergeordneten Agenten",
+    "allowBypass": "Vollzugriff für neue untergeordnete Sitzungen erlauben",
+    "revokeBypass": "Vollzugriff für künftige Starts widerrufen",
+    "confirmBypass": "Starts autorisieren",
+    "bypassWarning": "Solange diese Sitzung Bypass nutzt, starten neue berechtigte untergeordnete Sitzungen mit Vollzugriff. Sie können Dateien bearbeiten und Befehle mit den Rechten deines Kontos ausführen. Jede untergeordnete Sitzung behält ihren eigenen Modus, wenn du den Modus dieser Sitzung änderst oder die Starterlaubnis widerrufst. Eine Veröffentlichung auf einem entfernten System erfordert eine separate Erlaubnis. In einer delegierten Bypass-Sitzung laufen Shell-Befehle automatisch, wenn sie mit einem von dir gespeicherten Workbench-Befehlspräfix übereinstimmen. Andere Shell-Befehle benötigen deine Genehmigung.",
     "title": "Delegierte Sitzungen",
     "outcome": "Status der delegierten Aufgabe: {{status}}",
     "parent": "Übergeordnete Sitzung: {{title}}",

@@ -176,7 +176,7 @@ it("switching an approval wait into Bypass grants the pending exact change witho
   const session = service.create();
   service.send(session.id, "edit");
   await waiting(service, session.id);
-  service.setMode(session.id, "bypass");
+  service.setMode(session.id, "bypass", true);
   expect(await service.waitIdle(session.id)).toEqual({ stopReason: "end" });
   expect(await readFile(join(root, path), "utf8")).toBe("new\n");
   expect(handle.db.prepare("SELECT decision,decided_by,consumed_at FROM approvals").get()).toMatchObject({

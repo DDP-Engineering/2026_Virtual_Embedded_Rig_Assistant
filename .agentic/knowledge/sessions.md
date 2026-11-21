@@ -12,8 +12,8 @@ Core SessionService owns one workbench's durable sessions over injected AgentRun
 
 ## Public interface
 
-- `launchDelegated` admits up to three active child turns per workbench, with atomic initial history and durable request IDs. Parent-scoped `listDelegated`, `inspectDelegated`, `subscribeDelegated` and `stopDelegated` use the regular session lifecycle. `delegationParent` gives the trusted host the link. See [Workbenches](workbench-storage.md) for link retention and [File tools](file-tools.md) for child authority. Proof: sessions/delegation.test.ts.
-- Agent tools and the [Desktop links](chat-ui.md) track the initial delegated turn. See [File tools](file-tools.md).
+- Owned children support atomic launch, follow-up admission and idle model/reasoning configuration with durable retry receipts. Queued acknowledgements identify the admission turn; undelivered instructions retain parent provenance through normal recovery and steering. Configure returns a settings revision that a later send can require.
+- Changes to child reasoning wait until the turn is idle. Agent status, wait and stop address the exact child turn. Wait suppresses approval states resolved synchronously by mode. Desktop links track the latest child turn. The workbench cap is three active child turns. A child's independent mode is copied at its own launch, and Full Access requires an explicit persisted parent grant. See [storage](workbench-storage.md), [Chat UI](chat-ui.md) and [file tools](file-tools.md). Proof: sessions/delegation.test.ts, delegation-monitor.test.ts and programs.test.ts.
 
 SessionHost.masking(area) resolves live validated app/workbench choices. Tool publication invokes its authority hook before applying agent masking; MaskingContextPolicy projects before compaction and counting; each provider dispatch rechecks the projected budget after async durable publication, returning CONTEXT_LIMIT without dispatch when mandatory content cannot fit. sessions/masking.ts also protects fake/replay streams and errors. Artifact content uses exports in the write queue. Tests: sessions/masking.test.ts, native agent-masking.spec.ts.
 

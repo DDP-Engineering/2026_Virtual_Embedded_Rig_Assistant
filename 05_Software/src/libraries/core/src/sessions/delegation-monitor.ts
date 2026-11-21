@@ -9,7 +9,7 @@ interface DelegatedTurnView {
   seq: number;
 }
 
-/** Keep the Desktop link and agent monitoring labels tied to the same initial-turn outcome. */
+/** Keep the Desktop link and agent monitoring labels tied to the same turn outcome. */
 export function delegatedTurnStatus(
   outcome: StopReason | "interrupted" | null,
   awaitingApproval: boolean,
@@ -28,7 +28,7 @@ interface DelegatedTurnResult {
   timedOut?: true;
 }
 
-/** Project the initial turn and disclose only the final assistant text of a completed turn. */
+/** Project the addressed turn and disclose only the final assistant text of a completed turn. */
 export function projectDelegatedTurn(
   { launch: { sessionId, turnId }, snapshot }: DelegatedTurnView,
   mask: (text: string) => string,
@@ -101,11 +101,9 @@ export async function waitForDelegatedTurn(
       timer = setTimeout(() => refresh(true), waitMs);
       unsubscribe = subscribe(first.seq, (seq, event) => {
         if (seq === undefined) return;
-        if (
-          event.type === "approval.requested" ||
-          (event.type === "turn.done" && event.turnId === initial.turnId)
-        )
-          refresh(false);
+        // Mode decisions can settle in the same stack that first publishes the request.
+        if (event.type === "approval.requested") queueMicrotask(() => refresh(false));
+        if (event.type === "turn.done" && event.turnId === initial.turnId) refresh(false);
       });
     });
     signal.throwIfAborted();

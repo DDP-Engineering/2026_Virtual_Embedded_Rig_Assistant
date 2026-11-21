@@ -209,7 +209,11 @@ test("native approved PDF download opens locally, persists offline and rejects f
     const run = async (model: string) =>
       page.evaluate(async (model) => {
         const api = (window as unknown as { vera: VeraBridge }).vera;
-        const session = await api.invoke("session.create", { modelRef: model, mode: "bypass" });
+        const session = await api.invoke("session.create", {
+          modelRef: model,
+          mode: "bypass",
+          acknowledged: true,
+        });
         await api.invoke("session.send", { sessionId: session.id, text: "Download PDF" });
         return session.id;
       }, model);

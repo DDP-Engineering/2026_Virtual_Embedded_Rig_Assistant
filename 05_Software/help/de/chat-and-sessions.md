@@ -46,6 +46,14 @@ Wenn VERA eine Aufgabe delegiert, zeigt **Delegierte Sitzungen** im übergeordne
 
 Öffne eine laufende untergeordnete Sitzung und wähle **Stoppen** bei der Nachrichteneingabe, um sie anzuhalten. Die übergeordnete Sitzung kann weiterarbeiten. Wenn eine Genehmigung erforderlich ist, verwende die Genehmigungskarte in der jeweiligen Sitzung. Beim erneuten Öffnen nach einem Neustart von VERA bleiben der Link und das Ergebnis des delegierten Durchlaufs verfügbar.
 
+Der übergeordnete Agent kann weitere Anweisungen im selben untergeordneten Chat senden und Modell sowie Denkstufe für spätere Durchläufe wählen. Der Verlauf kennzeichnet diese Nachrichten als **Anweisung des übergeordneten Agenten**. Während die untergeordnete Sitzung arbeitet, wartet eine zulässige Nachricht auf die nächste Modellanfrage. Ist eine Entscheidung erforderlich, nutze die Genehmigungskarte der untergeordneten Sitzung.
+
+Eine neue untergeordnete Sitzung startet im aktuellen Berechtigungsmodus der übergeordneten Sitzung. Danach wählst du den Modus in jeder Nachrichteneingabe separat. Wähle im Bypass-Modus **Vollzugriff für neue untergeordnete Sitzungen erlauben** und bestätige die Erlaubnis für künftige berechtigte Starts. Mit **Vollzugriff für künftige Starts widerrufen** hebst du sie auf. Bestehende Sitzungen behalten ihren Modus. Verringere den Zugriff einer untergeordneten Sitzung in ihrem eigenen Chat. Eine Veröffentlichung auf einem entfernten System erfordert eine separate Erlaubnis.
+
+Lass in einer gemeinsam genutzten Arbeitskopie jeweils eine untergeordnete Sitzung fertig werden und überprüfe ihre Übergabe vor dem nächsten Start.
+
+In einer delegierten Bypass-Sitzung laufen Shell-Befehle automatisch, wenn sie mit einem von dir gespeicherten Workbench-Befehlspräfix übereinstimmen. Andere Shell-Befehle benötigen deine Genehmigung.
+
 ## Detailgrade
 
 **Detailgrad** wird pro Workbench unter **Workbench bearbeiten** → **Agent und Chat** festgelegt:

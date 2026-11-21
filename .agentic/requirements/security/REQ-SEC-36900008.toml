@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-SEC-36900008"
+title = "Authorize delegated shell commands separately"
+status = "active"
+requirement = "When a delegated shell command lacks a saved user grant in Bypass, the approval gate shall require a user decision for the exact command."
+verification = "Launch a child with Full Access, run a fixture check covered by a narrow saved prefix, then request a simulated publication outside that prefix and verify no second process starts while approval waits."
+affected_paths = ["05_Software/src/libraries/core/src/agent/approvals.ts", "05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/libraries/core/src/plugins/command-tools.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/sessions/programs.test.ts", "05_Software/tests/e2e/session-delegation.spec.ts"]
+created = 2026-11-21
+updated = 2026-11-21

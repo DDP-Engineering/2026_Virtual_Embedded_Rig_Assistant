@@ -18,7 +18,14 @@ import {
 import { ContextCompactor, type SummarizeHistory } from "./compaction.js";
 import type { UserImageMessage } from "./message-images.js";
 import { toolSpecs } from "./tool.js";
-import type { AgentRuntime, RuntimeEvent, RuntimeHost, RuntimeInit, StopReason } from "./types.js";
+import type {
+  AgentRuntime,
+  RuntimeEvent,
+  RuntimeHost,
+  RuntimeInit,
+  RuntimeInput,
+  StopReason,
+} from "./types.js";
 
 function providerErrorEvent(error: VeraError, limit = false): Extract<RuntimeEvent, { type: "error" }> {
   const retryAfter =
@@ -96,10 +103,12 @@ export function buildContext(stored: Message[], _now: number, currentStart = sto
   }
   return out;
 }
-function userMessage(message: { text: string; images?: string[]; timestamp: number }): UserImageMessage {
+function userMessage(message: RuntimeInput): UserImageMessage {
   return {
     role: "user",
-    content: message.text,
+    content: message.parentSessionId
+      ? `Parent agent instruction (${message.parentSessionId}):\n${message.text}`
+      : message.text,
     ...(message.images?.length && { images: [...message.images] }),
     timestamp: message.timestamp,
   };
@@ -153,7 +162,7 @@ export class ReferenceRuntime implements AgentRuntime {
   abort(): void {
     this.controller?.abort();
   }
-  async send(text: string, images?: string[]): Promise<{ stopReason: StopReason }> {
+  async send(text: string, images?: string[], parentSessionId?: string): Promise<{ stopReason: StopReason }> {
     if (this.controller) throw veraError("BUSY");
     const init = this.init;
     if (!init) throw veraError("INVALID");
@@ -163,12 +172,14 @@ export class ReferenceRuntime implements AgentRuntime {
     const messageId = this.host.nextId();
     const currentStart = this.transcript.length;
     const recovered = new Set(this.host.steering?.().map((message) => message.messageId));
-    const prompt = userMessage({ text, ...(images && { images }), timestamp: this.host.now() });
+    const source = parentSessionId ? { parentSessionId } : {};
+    const prompt = userMessage({ text, ...source, ...(images && { images }), timestamp: this.host.now() });
     this.transcript.push(prompt);
     this.emit({
       type: "message.user",
       messageId,
       text,
+      ...source,
       ...(prompt.images && { images: prompt.images }),
       timestamp: prompt.timestamp,
     });
