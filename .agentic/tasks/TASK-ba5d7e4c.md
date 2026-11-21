@@ -84,6 +84,7 @@ Proposed behaviors: (not accepted) attribute events by the VERA process tree fro
 - 2026-11-21 validate: DEVIATION validate: no elevated end-to-end smoke run - needs a package built from this branch and an administrator shell; the oracle is proven on a real recorded capture (planted outside connection named with its PID) and the non-elevated pending reason was observed live
 - 2026-11-21 validate: DEVIATION validate: typecheck of the strict proof cannot pass in this worktree - covered by tsc filtered to the changed files (0 errors)
 - 2026-11-21 validate: completed; next done
+- 2026-11-21 done: observed: non-elevated smoke:package on this branch's VERA-0.2.0-win-x64.zip (built with 68500628) - all four runs PASS, egress pending with the elevation reason, exit 2
 
 ## Rulings
 

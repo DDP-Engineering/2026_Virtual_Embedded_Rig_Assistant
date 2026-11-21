@@ -163,25 +163,34 @@ export async function smokePackage(options) {
     const offlineSession = await current.invoke("session.create", { modelRef: null });
     await current.page.reload();
     await current.page.locator(`[data-session="${offlineSession.id}"]`).click();
-    const docsTab = current.page.getByRole("tab", { name: "Docs", exact: true });
-    if (!(await docsTab.isVisible())) await current.page.locator('[data-toggle="right"]').click();
-    await docsTab.click();
-    await current.page
-      .locator("[data-document]")
-      .filter({ has: current.page.getByText(pdf.path, { exact: true }) })
-      .getByRole("button", { name: "Open", exact: true })
-      .click();
+    // The Files tab shows the workbench as a tree: open each folder of the path, then click the PDF's row.
+    const filesTab = current.page.getByRole("tab", { name: "Files", exact: true });
+    if (!(await filesTab.isVisible())) await current.page.locator('[data-toggle="right"]').click();
+    await filesTab.click();
+    const files = current.page.locator("#panel-docs");
+    const parts = pdf.path.split("/");
+    for (let depth = 1; depth < parts.length; depth++) {
+      const folder = files.locator(
+        `[role="treeitem"][data-tree-path=${JSON.stringify(parts.slice(0, depth).join("/"))}]`,
+      );
+      if ((await folder.getAttribute("aria-expanded")) !== "true") await folder.click();
+    }
+    await files.locator(`[role="treeitem"][data-document=${JSON.stringify(pdf.path)}]`).click();
     await current.page.waitForFunction(
       () => document.querySelector(".pdf-viewer")?.getAttribute("data-ready") === "true",
     );
-    offline.canvas = await current.page.locator(".pdf-viewer canvas").evaluate((canvas) => ({
-      width: canvas.width,
-      height: canvas.height,
-      painted: canvas
-        .getContext("2d")
-        .getImageData(0, 0, canvas.width, canvas.height)
-        .data.some((value, index) => index % 4 !== 3 && value !== 255),
-    }));
+    // The viewer renders every page; the first one must be painted.
+    offline.canvas = await current.page
+      .locator(".pdf-viewer canvas")
+      .first()
+      .evaluate((canvas) => ({
+        width: canvas.width,
+        height: canvas.height,
+        painted: canvas
+          .getContext("2d")
+          .getImageData(0, 0, canvas.width, canvas.height)
+          .data.some((value, index) => index % 4 !== 3 && value !== 255),
+      }));
     assert(offline.canvas.width > 0 && offline.canvas.height > 0 && offline.canvas.painted);
     await current.page.screenshot({ path: join(root, "offline-pdf.png") });
     offline.sessionId = offlineSession.id;
