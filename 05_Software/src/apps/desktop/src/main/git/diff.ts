@@ -1,21 +1,18 @@
 // REQ-FUNC-da6632e8 REQ-SEC-aacbd514 REQ-REL-c097dfac
-import { realpath } from "node:fs/promises";
-import { join } from "node:path";
 import {
   GIT_DIFF_LINE_LIMIT,
   GIT_DIFF_PATCH_LIMIT,
   type GitComparison,
   type GitDiffResult,
 } from "@vera/shared";
-import { scoped } from "./index-scope.js";
-import type { GitReadMode } from "./read.js";
-import { boundedFile, GitReadError, type GitRepository, gitEntry } from "./repository.js";
+import { checkedPath, exactFilePathspec, scoped } from "./index-scope.js";
+import type { GitCommand } from "./read.js";
+import { boundedFile, GitReadError, type GitRepository } from "./repository.js";
 
 const sourceLimit = 512 * 1024;
 const rawLimit = 4 * 1024 * 1024;
 const zeroOid = "0".repeat(40);
 const decode = (bytes: Buffer) => new TextDecoder("utf-8", { fatal: true, ignoreBOM: true }).decode(bytes);
-type Command = (args: readonly string[], limit: number, mode?: GitReadMode) => Promise<Buffer>;
 type Index = { gitlinks: ReadonlySet<string>; unmerged: ReadonlySet<string> };
 type Change = {
   raw: string;
@@ -26,12 +23,6 @@ type Change = {
   from: string;
   to: string;
 };
-
-function exactFilePathspec(path: string): string {
-  // An escaped first character forces wildcard matching of the entire file name.
-  // Escape each wildcard token so a valid Git file name is matched literally.
-  return `:(top,glob)${path.replace(/^.|[\\?*[\]]/gsu, (literal) => `\\${literal}`)}`;
-}
 
 function records(output: string[]) {
   const changes: Change[] = [];
@@ -48,28 +39,6 @@ function records(output: string[]) {
     changes.push({ raw, oldMode, newMode, oldOid, newOid, from, to });
   }
   return { changes, next: i };
-}
-
-async function checkedPath(repo: GitRepository, path: string, index: Index, signal: AbortSignal) {
-  if (!path || scoped(path, "") !== path || (await realpath(repo.scope)) !== repo.scope)
-    throw new GitReadError("unsupported");
-  let relative = "";
-  let location = repo.scope;
-  const parts = path.split("/");
-  let exists = true;
-  for (const [i, part] of parts.entries()) {
-    signal.throwIfAborted();
-    relative += relative ? `/${part}` : part;
-    if (index.gitlinks.has(relative)) throw new GitReadError("unsupported");
-    location = join(location, part);
-    if (!exists) continue;
-    const entry = await gitEntry(location);
-    if (entry?.isSymbolicLink() || (entry?.isDirectory() && (await gitEntry(join(location, ".git")))))
-      throw new GitReadError("unsupported");
-    if (i === parts.length - 1) return { location, stat: entry };
-    exists = !!entry?.isDirectory();
-  }
-  return { location, stat: undefined };
 }
 
 const isText = (bytes: Buffer) => {
@@ -134,7 +103,7 @@ export async function readPathDiff(
   path: string,
   comparison: GitComparison,
   index: Index,
-  run: Command,
+  run: GitCommand,
   signal: AbortSignal,
 ): Promise<GitDiffResult> {
   const selected = await checkedPath(repo, path, index, signal);

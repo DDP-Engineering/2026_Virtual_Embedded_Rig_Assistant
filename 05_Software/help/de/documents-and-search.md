@@ -56,6 +56,8 @@ Der Status verwendet die Git-Ignore-Regeln auch dann, wenn die Dokumentindizieru
 
 Öffnen Sie das Kontextmenü einer geänderten Datei (Rechtsklick oder **Umschalt+F10**) und wählen Sie **Git → Arbeitsbaumänderungen anzeigen** oder **Indexänderungen anzeigen**. Die erste Option vergleicht den Arbeitsbaum mit dem Index. Die zweite vergleicht den Index mit HEAD oder bei einem Branch ohne Commit mit einer leeren Basis. Jeder Vergleich öffnet sich in einem eigenen Tab neben Chat. Wechseln Sie Tabs mit **Strg+Bild auf/ab** und schließen Sie den aktuellen Vergleich mit **Strg+W**. Chatentwurf und Scrollposition bleiben erhalten.
 
+Wählen Sie im Kontextmenü einer verfolgten Datei **Git → Dateiverlauf anzeigen**. Das gilt auch für unveränderte Dateien und verfolgte Löschungen, die unter Dateien erscheinen. Der zentrale Tab zeigt bis zu 50 vom lokalen HEAD erreichbare Commits, beginnend mit dem neuesten, mit Kurz-Hash, Autor, Datum und Betreff. Git verfolgt erkannte Umbenennungen innerhalb der Workbench. Verschiebungen über ihre Grenze hinweg werden ausgelassen. Die Ansicht verwendet lokale Daten und berücksichtigt die Maskierung für die Anzeige.
+
 Die schreibgeschützten Vergleiche sind auch für gelöschte Pfade und Umbenennungen innerhalb der Workbench verfügbar. Ein Hinweis erscheint bei einem Konflikt, einer Binärdatei, einem zu großen Vergleich oder nicht verfügbaren Inhalten. Öffnen Sie nicht verfolgte Dateien in der normalen Dateiansicht.
 
 ## Quellenverweise

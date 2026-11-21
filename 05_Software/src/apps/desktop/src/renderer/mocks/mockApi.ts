@@ -1312,6 +1312,19 @@ What this plugin does.
         };
         break;
       }
+      case "git.history":
+      case "git.historyEligibility": {
+        const request = channels["git.history"].request.parse(input.data);
+        const wb = current().snapshot;
+        if (request.workbenchId !== wb.config.id || request.indexLease !== wb.indexLease)
+          throw veraError("CONFLICT");
+        if (!wb.config.interface.git_status) throw veraError("DENIED");
+        value =
+          channel === "git.history"
+            ? { ...request, displayPath: request.path, result: { state: "unavailable" } }
+            : { ...request, eligibility: "unavailable" };
+        break;
+      }
       case "git.status": {
         const { action, ...owner } = channels["git.status"].request.parse(input.data);
         const wb = current().snapshot;

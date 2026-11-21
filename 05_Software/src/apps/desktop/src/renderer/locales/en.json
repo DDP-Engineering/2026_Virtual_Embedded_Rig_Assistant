@@ -1,4 +1,18 @@
 {
+  "gitHistory": {
+    "view": "View file history",
+    "tab": "History: {{path}}",
+    "localHead": "Local Git history · HEAD",
+    "unborn": "This branch has no commits yet.",
+    "empty": "No reachable commits for this file.",
+    "unavailable": "This file’s Git history could not be read.",
+    "malformed": "Git returned malformed history data.",
+    "readLimit": "The history exceeds the safe read limit.",
+    "capped": "History is limited to one page of up to {{limit}} commits.",
+    "scopeBoundary": "History is limited to the workbench. Renames across its boundary are omitted.",
+    "noSubject": "(No subject)",
+    "noAuthor": "(Unknown author)"
+  },
   "gitDiff": {
     "menu": "Git",
     "viewUnstaged": "View unstaged diff",

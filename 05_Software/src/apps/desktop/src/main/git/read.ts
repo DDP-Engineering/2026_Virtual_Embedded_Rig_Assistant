@@ -2,8 +2,9 @@
 import { spawn } from "node:child_process";
 import { lstat, mkdtemp, realpath, rm } from "node:fs/promises";
 import { isAbsolute, join } from "node:path";
-import type { GitComparison, GitDiffResult } from "@vera/shared";
+import type { GitComparison, GitDiffResult, GitHistoryEligibility, GitHistoryResult } from "@vera/shared";
 import { readPathDiff } from "./diff.js";
+import { historyEligibility, historyReadFailure, readPathHistory } from "./history.js";
 import { checkIndexScope } from "./index-scope.js";
 import { containsPath, GitReadError, type GitRepository, prepareRepository } from "./repository.js";
 
@@ -139,7 +140,13 @@ const fixedSettings = [
   "diff.renames=true",
 ];
 
-export type GitReadMode = "allow-unborn-head" | "exact-file-paths";
+type GitReadMode = "allow-unborn-head" | "exact-file-paths";
+export type GitCommand = (
+  args: readonly string[],
+  limit: number,
+  mode?: GitReadMode,
+  input?: Buffer,
+) => Promise<Buffer>;
 
 /** Runs fixed local Git reads against an app-owned Git directory. */
 export class GitReader {
@@ -154,7 +161,9 @@ export class GitReader {
     repo: GitRepository,
     signal: AbortSignal,
   ): Promise<{ status: Buffer; head: string; tracked: ReadonlySet<string>; gitlinks: ReadonlySet<string> }> {
-    return this.withRepository(repo, signal, async (run, scope, { tracked, gitlinks }, head) => {
+    return this.withRepository(repo, signal, async (run, head) => {
+      const scope = ["--", ...(repo.prefix ? [repo.prefix] : [])];
+      const { tracked, gitlinks } = await this.readIndex(repo, signal, run, scope);
       const status = await run(
         [
           "status",
@@ -180,20 +189,51 @@ export class GitReader {
     comparison: GitComparison,
     signal: AbortSignal,
   ): Promise<GitDiffResult> {
-    return this.withRepository(repo, signal, (run, _scope, index) =>
-      readPathDiff(repo, path, comparison, index, run, signal),
+    return this.withRepository(repo, signal, async (run) =>
+      readPathDiff(repo, path, comparison, await this.readIndex(repo, signal, run), run, signal),
     );
+  }
+
+  async historyEligibility(
+    repo: GitRepository,
+    path: string,
+    signal: AbortSignal,
+  ): Promise<GitHistoryEligibility> {
+    try {
+      return await this.withRepository(repo, signal, (run, head) =>
+        historyEligibility(repo, path, run, head, signal),
+      );
+    } catch {
+      signal.throwIfAborted();
+      return "unavailable";
+    }
+  }
+
+  async history(repo: GitRepository, path: string, signal: AbortSignal): Promise<GitHistoryResult> {
+    try {
+      return await this.withRepository(repo, signal, (run, head) =>
+        readPathHistory(repo, path, run, head, signal),
+      );
+    } catch (error) {
+      signal.throwIfAborted();
+      return historyReadFailure(error);
+    }
+  }
+
+  private async readIndex(
+    repo: GitRepository,
+    signal: AbortSignal,
+    run: GitCommand,
+    scope = ["--", ...(repo.prefix ? [repo.prefix] : [])],
+  ) {
+    const output = await run(["ls-files", "--cached", "--stage", "-z", ...scope], 8 * 1024 * 1024);
+    return checkIndexScope(repo, output, signal);
   }
 
   private async withRepository<T>(
     repo: GitRepository,
     signal: AbortSignal,
-    use: (
-      run: (command: readonly string[], limit: number, mode?: GitReadMode) => Promise<Buffer>,
-      scope: string[],
-      index: Awaited<ReturnType<typeof checkIndexScope>>,
-      head: string,
-    ) => Promise<T>,
+    use: (run: GitCommand, head: string) => Promise<T>,
   ): Promise<T> {
     const parent = await realpath(this.appData);
     if (!localAbsolute(parent) || containsPath(repo.root, parent)) throw new GitReadError("unsupported");
@@ -218,8 +258,7 @@ export class GitReader {
         "-c",
         `core.hooksPath=${join(scratch, "disabled-hooks")}`,
       ];
-      const scope = ["--", ...(repo.prefix ? [repo.prefix] : [])];
-      const run = (command: readonly string[], limit: number, mode?: GitReadMode) => {
+      const run: GitCommand = (command, limit, mode, input) => {
         const pathspecs = mode === "exact-file-paths" ? "--glob-pathspecs" : "--literal-pathspecs";
         return this.run(
           executable,
@@ -227,13 +266,11 @@ export class GitReader {
           scratch,
           signal,
           limit,
-          undefined,
+          input,
           mode === "allow-unborn-head" ? true : undefined,
         );
       };
-      const index = await run(["ls-files", "--cached", "--stage", "-z", ...scope], 8 * 1024 * 1024);
-      const paths = await checkIndexScope(repo, index, signal);
-      return await use(run, scope, paths, head);
+      return await use(run, head);
     } finally {
       await rm(scratch, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 });
     }

@@ -37,6 +37,11 @@ import {
 import { downloadIdSchema, webDownloadSchema } from "./downloads.js";
 import { type VeraError, veraErrorSchema } from "./errors.js";
 import { gitDiffRequestSchema, gitDiffResponseSchema } from "./git-diff.js";
+import {
+  gitHistoryEligibilityResponseSchema,
+  gitHistoryRequestSchema,
+  gitHistoryResponseSchema,
+} from "./git-history.js";
 import { gitStatusRequestSchema } from "./git-status.js";
 import {
   helpListRequestSchema,
@@ -568,6 +573,12 @@ export const channels = {
     z.strictObject({}),
   ),
   "git.diff": defineChannel("git.diff", gitDiffRequestSchema, gitDiffResponseSchema),
+  "git.historyEligibility": defineChannel(
+    "git.historyEligibility",
+    gitHistoryRequestSchema,
+    gitHistoryEligibilityResponseSchema,
+  ),
+  "git.history": defineChannel("git.history", gitHistoryRequestSchema, gitHistoryResponseSchema),
   "git.status": defineChannel("git.status", gitStatusRequestSchema, z.strictObject({})),
   "docs.status": defineChannel("docs.status", documentIndexScopeSchema, documentIndexStatusSchema),
   "docs.volume": defineChannel(

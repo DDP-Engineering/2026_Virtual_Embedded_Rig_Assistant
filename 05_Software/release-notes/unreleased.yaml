@@ -144,10 +144,10 @@ entries:
   - category: improved
     topic: { en: Files, ro: Fișiere, de: Dateien, fr: Fichiers }
     text:
-      en: Git status and diff tabs. Indexing follows Git ignore rules and explains size limits.
-      ro: Stare Git și file de comparație. Indexarea aplică Git ignore și explică limitele de mărime.
-      de: Git-Status und Diff-Tabs. Die Indizierung beachtet Git-Ignore und erklärt Größenlimits.
-      fr: État Git et onglets de comparaison. L’index suit les exclusions Git et explique les limites.
+      en: Git status, diff and file history tabs. Indexing follows Git ignore rules and explains limits.
+      ro: Stare Git, file de comparație și istoric. Indexarea aplică excluderile Git și explică limitele.
+      de: Git-Status, Diff- und Verlaufstabs. Die Indizierung beachtet Git-Ignore und erklärt Größenlimits.
+      fr: État Git, onglets de comparaison et d’historique. L’index suit les exclusions Git et ses limites.
   - category: new
     topic: { en: Workbench, ro: Workbench, de: Workbench, fr: Banc de travail }
     text:

@@ -1,4 +1,6 @@
-import { join } from "node:path";
+import type { Stats } from "node:fs";
+import { realpath } from "node:fs/promises";
+import { join, relative, sep } from "node:path";
 import { GitReadError, type GitRepository, gitEntry } from "./repository.js";
 
 export function scoped(path: string, prefix: string) {
@@ -68,4 +70,54 @@ export async function checkIndexScope(repo: GitRepository, output: Buffer, signa
     );
   }
   return { tracked, gitlinks, unmerged };
+}
+
+/** Match a whole file path, including characters with pathspec meaning. */
+export function exactFilePathspec(path: string): string {
+  // An escaped first character forces wildcard matching of the entire file name.
+  // Escape each wildcard token so a valid Git file name is matched literally.
+  return `:(top,glob)${path.replace(/^.|[\\?*[\]]/gsu, (literal) => `\\${literal}`)}`;
+}
+
+export async function checkedPath(
+  repo: GitRepository,
+  path: string,
+  index: { gitlinks: ReadonlySet<string> },
+  signal: AbortSignal,
+) {
+  if (!path || scoped(path, "") !== path || (await realpath(repo.scope)) !== repo.scope)
+    throw new GitReadError("unsupported");
+  let relative = "";
+  let location = repo.scope;
+  const parts = path.split("/");
+  let exists = true;
+  for (const [i, part] of parts.entries()) {
+    signal.throwIfAborted();
+    relative += relative ? `/${part}` : part;
+    if (index.gitlinks.has(relative)) throw new GitReadError("unsupported");
+    location = join(location, part);
+    if (!exists) continue;
+    const entry = await gitEntry(location);
+    if (entry?.isSymbolicLink() || (entry?.isDirectory() && (await gitEntry(join(location, ".git")))))
+      throw new GitReadError("unsupported");
+    if (i === parts.length - 1) return { location, stat: entry };
+    exists = !!entry?.isDirectory();
+  }
+  return { location, stat: undefined };
+}
+
+/** On Windows a case-insensitive lookup can return the other spelling of a staged rename. */
+export async function exactWorktreeFile(
+  repo: GitRepository,
+  path: string,
+  location: string,
+  stat: Stats | undefined,
+) {
+  return (
+    !!stat?.isFile() &&
+    (process.platform !== "win32" ||
+      relative(repo.scope, await realpath(location))
+        .split(sep)
+        .join("/") === path)
+  );
 }

@@ -18,6 +18,7 @@ import { api } from "../../api/index.js";
 import { ErrorMessage } from "../error-message.js";
 import { useDescribeDocument, useFileActions } from "./file-actions.js";
 import { GitDiffView } from "./git-diff-view.js";
+import { GitHistoryView } from "./git-history-view.js";
 import type { ZoomRequest } from "./pdf-viewer.js";
 import { TreeMenu, type TreeMenuItem } from "./tree-menu.js";
 import { TreeProperties } from "./tree-properties.js";
@@ -131,6 +132,12 @@ export function DocumentTabs({ chat }: { chat: ReactNode }) {
   const entries = [
     { key: CHAT, label: t("documents.chatTab"), title: t("documents.chatTab") },
     ...tabs.map((tab) => {
+      if ("gitHistory" in tab.target)
+        return {
+          ...tab,
+          label: t("gitHistory.tab", { path: tab.label }),
+          title: t("gitHistory.tab", { path: tab.title }),
+        };
       if (!("gitDiff" in tab.target)) return tab;
       const { comparison } = tab.target.gitDiff;
       const describe = (path: string) =>
@@ -547,6 +554,8 @@ function DocumentPanel({ tab, index, leave }: { tab: DocumentTab; index: number;
               {t("settings.retry")}
             </button>
           </>
+        ) : tab.gitHistory ? (
+          <GitHistoryView response={tab.gitHistory} />
         ) : tab.gitDiff ? (
           <GitDiffView response={tab.gitDiff} identity={tab.key} />
         ) : content ? (

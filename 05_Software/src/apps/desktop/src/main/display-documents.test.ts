@@ -97,6 +97,37 @@ function fixture() {
   };
 }
 describe("Display boundary", () => {
+  it("masks Git history author, subject and path with the current Display policy before bounding text", () => {
+    const f = fixture();
+    const path = rawPaths[0] as string;
+    f.app(true);
+    f.register("first private line\nsecond private line");
+    expect(typeof f.display.gitHistory).toBe("function");
+    const value = {
+      state: "ready",
+      commits: [
+        {
+          hash: "123456789abc",
+          author: secrets[0] as string,
+          date: "2026-11-20T00:00:00.000Z",
+          subject: `${secrets[1]}\nsecond private line`,
+        },
+      ],
+      capped: false,
+      scopeBoundary: false,
+    } as const;
+    const masked = f.display.gitHistory(id, path, { ...value, commits: [...value.commits] });
+    expect(masked).toMatchObject({
+      displayPath: "docs/[REDACTED].txt",
+      result: { commits: [{ author: "[REDACTED]", subject: "[REDACTED] [REDACTED]" }] },
+    });
+    f.choice("off");
+    expect(f.display.gitHistory(id, path, { ...value, commits: [...value.commits] })).toMatchObject({
+      displayPath: path,
+      result: { commits: [{ author: secrets[0] }] },
+    });
+  });
+
   it("masks Git source and rename labels and secret fragments inside patch lines", () => {
     const f = fixture();
     f.app(true);

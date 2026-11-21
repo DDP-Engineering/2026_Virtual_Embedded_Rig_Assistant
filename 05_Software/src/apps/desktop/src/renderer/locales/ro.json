@@ -1,4 +1,18 @@
 {
+  "gitHistory": {
+    "view": "Vezi istoricul fișierului",
+    "tab": "Istoric: {{path}}",
+    "localHead": "Istoric Git local · HEAD",
+    "unborn": "Această ramură nu are încă niciun commit.",
+    "empty": "Nu există commituri accesibile pentru acest fișier.",
+    "unavailable": "Istoricul Git al acestui fișier nu a putut fi citit.",
+    "malformed": "Git a returnat date de istoric incorecte.",
+    "readLimit": "Istoricul depășește limita de citire în siguranță.",
+    "capped": "Istoricul este limitat la o pagină de cel mult {{limit}} de commituri.",
+    "scopeBoundary": "Istoricul este limitat la workbench. Redenumirile care îi depășesc limitele sunt omise.",
+    "noSubject": "(Fără subiect)",
+    "noAuthor": "(Autor necunoscut)"
+  },
   "gitDiff": {
     "menu": "Git",
     "viewUnstaged": "Vezi diferențele din arborele de lucru",

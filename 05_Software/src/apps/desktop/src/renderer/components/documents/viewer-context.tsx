@@ -2,6 +2,7 @@
 import {
   type GitComparison,
   type GitDiffResponse,
+  type GitHistoryResponse,
   parseRef,
   type RasterFormat,
   referenceLabel,
@@ -38,6 +39,7 @@ import { TextViewer } from "./text-viewer.js";
 const PdfViewer = lazy(() => import("./pdf-viewer.js"));
 // Retain exact portable target variants without workbench identity supplied by callers.
 export type ViewerTarget =
+  | { gitHistory: { path: string; indexLease: number } }
   | { gitDiff: { path: string; indexLease: number; comparison: GitComparison } }
   | { runId: string }
   | { path: string }
@@ -66,6 +68,7 @@ export interface DocumentTab {
   title: string;
   content?: ViewerContent | undefined;
   gitDiff?: GitDiffResponse | undefined;
+  gitHistory?: GitHistoryResponse | undefined;
   /** Display-masked small-file bytes, transient and invalidated with the content attempt. */
   textBytes?: Uint8Array | undefined;
   largeText?: LargeTextFile | undefined;
@@ -88,6 +91,7 @@ interface TabSet {
 const EMPTY: TabSet = { tabs: [], active: CHAT };
 
 function retiredGitTarget(target: ViewerTarget, lease: number | undefined) {
+  if ("gitHistory" in target) return target.gitHistory.indexLease !== lease;
   return "gitDiff" in target && target.gitDiff.indexLease !== lease;
 }
 
@@ -103,6 +107,7 @@ const sourcePath = (path: string) => path.replace(/\/__vera_reference_[A-Za-z0-9
 const fileName = (path: string) => path.split("/").at(-1) || path;
 /** One tab per document: the workbench path, the artifact or the download (REQ-FUNC-89161a95). */
 export function documentKey(target: ViewerTarget): string {
+  if ("gitHistory" in target) return `git-history:${target.gitHistory.path}`;
   if ("gitDiff" in target) return `git-diff:${target.gitDiff.comparison}:${target.gitDiff.path}`;
   if ("runId" in target) return `run:${target.runId}`;
   if ("downloadId" in target) return `download:${target.downloadId}`;
@@ -113,8 +118,8 @@ export function documentKey(target: ViewerTarget): string {
   return parsed.kind === "artifact" ? `artifact:${parsed.name}` : `file:${sourcePath(parsed.path)}`;
 }
 function describe(target: ViewerTarget, download: string): { label: string; title: string } {
-  if ("gitDiff" in target) {
-    const path = displayName(target.gitDiff.path);
+  if ("gitDiff" in target || "gitHistory" in target) {
+    const path = displayName("gitDiff" in target ? target.gitDiff.path : target.gitHistory.path);
     return { label: fileName(path), title: path };
   }
   if ("runId" in target) return { label: `${target.runId}.log`, title: `.vera/runs/${target.runId}.log` };
@@ -241,6 +246,7 @@ export function DocumentViewerProvider({
                     title: "downloadId" in target ? tab.title : title,
                     content: undefined,
                     gitDiff: undefined,
+                    gitHistory: undefined,
                     textBytes: undefined,
                     largeText: undefined,
                     hexFile: undefined,
@@ -326,6 +332,7 @@ export function DocumentViewerProvider({
                 ...tab,
                 content: undefined,
                 gitDiff: undefined,
+                gitHistory: undefined,
                 textBytes: undefined,
                 largeText: undefined,
                 hexFile: undefined,
@@ -370,6 +377,7 @@ export function DocumentViewerProvider({
                   ? {
                       content: undefined,
                       gitDiff: undefined,
+                      gitHistory: undefined,
                       textBytes: undefined,
                       largeText: undefined,
                       hexFile: undefined,
@@ -399,7 +407,7 @@ export function DocumentViewerProvider({
       if (!owner) continue;
       const set = latestSets.current.get(owned) ?? EMPTY;
       const persistable = set.tabs.flatMap((tab) => {
-        if ("gitDiff" in tab.target) return [];
+        if ("gitDiff" in tab.target || "gitHistory" in tab.target) return [];
         const place = places.current.get(`${owned}\n${tab.key}`);
         return [{ key: tab.key, target: tab.target, ...(place ? { place } : {}) }];
       });
@@ -519,14 +527,29 @@ export function DocumentViewerProvider({
     for (const tab of current.tabs) {
       if (tab.key !== current.active) continue;
       const request = `${scope}\n${tab.key}\n${tab.attempt}`;
-      if (tab.content || tab.gitDiff || tab.error !== undefined || loading.current.has(request)) continue;
+      if (
+        tab.content ||
+        tab.gitDiff ||
+        tab.gitHistory ||
+        tab.error !== undefined ||
+        loading.current.has(request)
+      )
+        continue;
       loading.current.add(request);
       const { target, key, attempt } = tab;
       const requestId = `display:${attempt}`;
       const settle = (
         result: Pick<
           DocumentTab,
-          "content" | "gitDiff" | "textBytes" | "largeText" | "hexFile" | "imageFile" | "modeInfo" | "error"
+          | "content"
+          | "gitDiff"
+          | "gitHistory"
+          | "textBytes"
+          | "largeText"
+          | "hexFile"
+          | "imageFile"
+          | "modeInfo"
+          | "error"
         >,
       ) =>
         setSets((map) => {
@@ -535,6 +558,7 @@ export function DocumentViewerProvider({
           // A closed, reopened or retried tab ignores this late answer.
           if (!set || !found || found.attempt !== attempt) return map;
           const title =
+            result.gitHistory?.displayPath ??
             result.gitDiff?.displayPath ??
             (result.content && !("runId" in target)
               ? (result.content.displayPath ?? displayName(result.content.path))
@@ -553,6 +577,23 @@ export function DocumentViewerProvider({
             ),
           });
         });
+      if ("gitHistory" in target) {
+        const query = { workbenchId, ...target.gitHistory };
+        void api
+          .invoke("git.history", query)
+          .then((result) => {
+            if (
+              result.workbenchId !== workbenchId ||
+              result.indexLease !== query.indexLease ||
+              result.path !== query.path
+            )
+              throw veraError("CONFLICT");
+            settle({ gitHistory: result });
+          })
+          .catch((failure: unknown) => settle({ error: failure ?? veraError("INTERNAL") }))
+          .finally(() => loading.current.delete(request));
+        continue;
+      }
       if ("gitDiff" in target) {
         const query = { workbenchId, ...target.gitDiff };
         void api
@@ -689,6 +730,7 @@ export function DocumentViewerProvider({
                           title: "runId" in tab.target ? tab.title : "[REDACTED]",
                           content: undefined,
                           gitDiff: undefined,
+                          gitHistory: undefined,
                           textBytes: undefined,
                           largeText: undefined,
                           hexFile: undefined,

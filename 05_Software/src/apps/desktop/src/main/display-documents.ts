@@ -5,7 +5,10 @@ import {
   type DocumentRecord,
   formatRef,
   GIT_DIFF_PATCH_LIMIT,
+  GIT_HISTORY_AUTHOR_LIMIT,
+  GIT_HISTORY_SUBJECT_LIMIT,
   type GitDiffResult,
+  type GitHistoryResult,
   type GitStatus,
   MAX_MESSAGE_IMAGE_BYTES,
   parseRef,
@@ -106,6 +109,43 @@ export class DisplayDocuments {
           : { ...value, patch, ...(rename ? { rename } : {}) };
     }
     return { displayPath: label(path), result };
+  }
+
+  /** Applies the live Display policy before shortening Git commit metadata. */
+  gitHistory(
+    id: string,
+    path: string,
+    result: GitHistoryResult,
+  ): Pick<Response<"git.history">, "displayPath" | "result"> {
+    const masked = this.maskingFor(this.current(id).config, "display");
+    const fragments = masked
+      ? this.secrets()
+          .filter((secret) => secret.includes("\n"))
+          .flatMap((secret) => secret.split(/\r?\n/))
+      : [];
+    const redact = (value: string) => (masked ? scrub(this.redact(value), fragments) : value);
+    const label = redact(path);
+    const shorten = (value: string, limit: number) => {
+      const text = redact(value)
+        .replace(/\p{Cc}/gu, " ")
+        .trim();
+      if (text.length <= limit) return text;
+      return text.slice(0, limit - 1).replace(/[\uD800-\uDBFF]$/, "") + "…";
+    };
+    return {
+      displayPath: label.length > 8192 ? "[REDACTED]" : label,
+      result:
+        result.state === "ready"
+          ? {
+              ...result,
+              commits: result.commits.map((commit) => ({
+                ...commit,
+                author: shorten(commit.author, GIT_HISTORY_AUTHOR_LIMIT),
+                subject: shorten(commit.subject, GIT_HISTORY_SUBJECT_LIMIT),
+              })),
+            }
+          : result,
+    };
   }
 
   resolve(id: string, path: string): string {

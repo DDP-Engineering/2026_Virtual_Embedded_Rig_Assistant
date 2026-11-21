@@ -5,7 +5,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { getByRole, queryByRole } from "@testing-library/dom";
 import userEvent from "@testing-library/user-event";
-import type { GitDiffResult, GitStatus, Request, WorkbenchEvent } from "@vera/shared";
+import type { GitDiffResult, GitHistoryResult, GitStatus, Request, WorkbenchEvent } from "@vera/shared";
 import { act, createElement } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
@@ -115,6 +115,7 @@ const submenu = (action: string) =>
 function mockGit(
   read: () => GitStatus,
   diff?: (comparison: Request<"git.diff">["comparison"]) => GitDiffResult,
+  history?: (path: string) => GitHistoryResult | undefined,
 ) {
   const listeners = new Set<(event: WorkbenchEvent) => void>();
   const originalSubscription = api.subscribe.bind(api);
@@ -133,6 +134,14 @@ function mockGit(
     if (channel === "git.diff" && diff) {
       const request = input as Request<"git.diff">;
       return { ...request, displayPath: request.path, result: diff(request.comparison) };
+    }
+    if (channel === "git.historyEligibility" && history) {
+      const request = input as Request<"git.historyEligibility">;
+      return { ...request, eligibility: history(request.path) ? "tracked" : "untracked" };
+    }
+    if (channel === "git.history" && history) {
+      const request = input as Request<"git.history">;
+      return { ...request, displayPath: request.path, result: history(request.path) };
     }
     if (channel !== "git.status") return original(channel as never, input as never);
     const { action, ...owner } = input as Request<"git.status">;
@@ -190,6 +199,81 @@ it("voices comparison and folder counts and gives virtual deletions only Git act
   );
   await click(getByRole(container, "button", { name: "Refresh Git status" }));
   expect(invoke.mock.calls).toContainEqual(["git.status", expect.objectContaining({ action: "refresh" })]);
+});
+
+it("checks tracking only for the open menu and reuses an inert central history tab", async () => {
+  const invoke = mockGit(
+    () => ({
+      state: "ready",
+      branch: { kind: "named", name: "main" },
+      changed: 1,
+      conflicts: 0,
+      entries: [{ path: "gone.txt", staged: "D", unstaged: null, conflict: false, virtual: true }],
+    }),
+    undefined,
+    (path) =>
+      path === "board.txt"
+        ? {
+            state: "ready",
+            commits: [
+              {
+                hash: "123456789abc",
+                author: "<b>Author</b>",
+                date: "2026-01-01T00:00:00.000Z",
+                subject: "<img src=x onerror=alert(1)>",
+              },
+            ],
+            capped: true,
+            scopeBoundary: false,
+          }
+        : path === "gone.txt"
+          ? { state: "empty", scopeBoundary: true }
+          : undefined,
+  );
+  await mount(id, undefined, true);
+  const lookups = () => invoke.mock.calls.filter(([channel]) => channel === "git.historyEligibility");
+  expect(lookups()).toHaveLength(0);
+  const openMenu = async (path: string) => {
+    await act(async () => row(path)?.focus());
+    await key(row(path), "F10", { shiftKey: true });
+    await settle();
+  };
+  const openHistory = async () => {
+    await key(document.activeElement, "End");
+    expect(document.activeElement).toBe(menuItem("git"));
+    await key(document.activeElement, "ArrowRight");
+    await key(document.activeElement, "End");
+    expect(document.activeElement).toBe(menuItem("git-history"));
+    await key(document.activeElement, "Enter");
+    await settle();
+  };
+  await openMenu("board.txt");
+  expect(menuItems()).toContain("open");
+  expect(menuItems()).toContain("git");
+  expect(lookups()).toHaveLength(1);
+  await openHistory();
+  const panel = container.querySelector("[data-source-current]");
+  expect(panel?.textContent).toContain("<img src=x onerror=alert(1)>");
+  expect(panel?.textContent).toContain("<b>Author</b>");
+  expect(panel?.querySelector("img, b")).toBeNull();
+  expect(panel?.textContent).toContain("50");
+  await openMenu("board.txt");
+  await openHistory();
+  expect(container.querySelectorAll('[data-document-tabs] [role="tab"]')).toHaveLength(2);
+  await openMenu("gone.txt");
+  await key(document.activeElement, "ArrowRight");
+  expect(subItems("git")).toEqual(["git-diff-staged", "git-history"]);
+  await key(document.activeElement, "Escape");
+  await openHistory();
+  expect(container.querySelector("[data-source-current]")?.textContent).toContain("No reachable commits");
+  await key(row("docs"), "ArrowRight");
+  await settle();
+  await openMenu("docs/a.pdf");
+  expect(menuItems()).toContain("open");
+  expect(menuItems()).not.toContain("git");
+  expect(lookups().map(([, request]) => request)).toEqual(
+    ["board.txt", "board.txt", "gone.txt", "docs/a.pdf"].map((path) => expect.objectContaining({ path })),
+  );
 });
 
 it("opens applicable Git comparisons by keyboard as distinct reusable central tabs", async () => {

@@ -16,7 +16,7 @@ import { useTranslation } from "react-i18next";
 import { api } from "../../api/index.js";
 import { ErrorMessage } from "../error-message.js";
 import { useFileActions } from "./file-actions.js";
-import { gitDiffMenu } from "./git-diff-menu.js";
+import { gitMenu } from "./git-diff-menu.js";
 import { GitBadges } from "./git-status.js";
 import { byTreeName, type FileTreeEntry, gitFolders, gitTree } from "./git-tree.js";
 import { TreeMenu, type TreeMenuItem } from "./tree-menu.js";
@@ -141,7 +141,7 @@ export function DocsTree({
   const { expanded, save } = expansion;
   const git = useMemo(() => gitEntries && gitTree(gitEntries), [gitEntries]);
   const [active, setActive] = useState<string>();
-  const [menu, setMenu] = useState<{ row: Row; x: number; y: number }>();
+  const [menu, setMenu] = useState<{ row: Row; x: number; y: number; id: string }>();
   const [properties, setProperties] = useState<Row>();
   const tree = useRef<HTMLDivElement>(null);
   const toggle = (path: string, value: boolean) => {
@@ -223,19 +223,43 @@ export function DocsTree({
     if (path === undefined) return;
     tree.current?.querySelector<HTMLElement>(`[data-tree-path="${CSS_ESCAPE(path)}"]`)?.focus();
   };
-  const gitItems = (row: Row) => {
+  const gitItems = (row: Row, tracked?: string) => {
     const entry = git?.byPath.get(row.path);
-    return row.type === "file" || entry?.virtual ? gitDiffMenu(entry, gitLease, open, t) : [];
+    return row.type === "file" || entry?.virtual ? gitMenu(entry, gitLease, tracked, open, t) : [];
   };
   const canOpenMenu = (row: Row) => canActOnDisk(row) || gitItems(row).length > 0;
   const openMenu = (row: Row, x: number, y: number) => {
     // A keyboard-opened menu may be followed by the browser's own contextmenu event on the row.
     if (menu?.row.path === row.path || !canOpenMenu(row)) return;
     setActive(row.path);
-    setMenu({ row, x, y });
+    setMenu({ row, x, y, id: crypto.randomUUID() });
   };
   // Linux registers applications per file type; read them when a file's menu opens (TASK-c49f03d5).
   const menuRow = menu && rows.find(({ path }) => path === menu.row.path);
+  const historyPath =
+    gitLease !== undefined &&
+    open &&
+    menuRow &&
+    (menuRow.type === "file" || git?.byPath.get(menuRow.path)?.virtual)
+      ? menuRow.path
+      : undefined;
+  const eligibility = useQuery({
+    queryKey: ["git.historyEligibility", workbenchId, gitLease, historyPath, menu?.id],
+    enabled: historyPath !== undefined,
+    gcTime: 0,
+    retry: false,
+    queryFn: async () => {
+      if (gitLease === undefined || historyPath === undefined) return false;
+      const selection = { workbenchId, indexLease: gitLease, path: historyPath };
+      const answer = await api.invoke("git.historyEligibility", selection);
+      return (
+        answer.workbenchId === selection.workbenchId &&
+        answer.indexLease === selection.indexLease &&
+        answer.path === selection.path &&
+        answer.eligibility === "tracked"
+      );
+    },
+  });
   const actions = useFileActions(
     workbenchId,
     menuRow?.type === "file" && canActOnDisk(menuRow) ? menuRow.path : undefined,
@@ -411,10 +435,14 @@ export function DocsTree({
       </div>
       {menu && menuRow && canOpenMenu(menuRow) && (
         <TreeMenu
+          key={menu.id}
           label={t("documents.rowActions", { name: menuRow.name })}
           x={menu.x}
           y={menu.y}
-          items={[...(canActOnDisk(menuRow) ? ordinaryItems(menuRow) : []), ...gitItems(menuRow)]}
+          items={[
+            ...(canActOnDisk(menuRow) ? ordinaryItems(menuRow) : []),
+            ...gitItems(menuRow, eligibility.data ? historyPath : undefined),
+          ]}
           close={(restore) => {
             setMenu(undefined);
             if (restore) focusRow(menu.row.path);

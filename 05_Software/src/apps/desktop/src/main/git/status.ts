@@ -1,8 +1,7 @@
 // REQ-SEC-b24a8722 REQ-FUNC-1883b36f
-import { realpath } from "node:fs/promises";
-import { join, relative, sep } from "node:path";
+import { join } from "node:path";
 import type { GitStatus, GitStatusEntry } from "@vera/shared";
-import { parentOf, scoped } from "./index-scope.js";
+import { exactWorktreeFile, parentOf, scoped } from "./index-scope.js";
 import type { GitReader } from "./read.js";
 import { containingRepository, GitReadError, type GitRepository, gitEntry } from "./repository.js";
 
@@ -150,13 +149,7 @@ async function visibleEntries(repo: GitRepository, entries: Map<string, Entry>, 
         const stat = parent === "present" ? await gitEntry(absolute) : undefined;
         if (stat?.isSymbolicLink() || (stat?.isDirectory() && (await gitEntry(join(absolute, ".git")))))
           return;
-        // A case-insensitive lookup can return the other spelling of a staged rename.
-        const exact =
-          stat?.isFile() &&
-          (process.platform !== "win32" ||
-            relative(repo.scope, await realpath(absolute))
-              .split(sep)
-              .join("/") === path);
+        const exact = await exactWorktreeFile(repo, path, absolute, stat);
         result.set(path, { ...entry, virtual: !exact });
       }),
     );

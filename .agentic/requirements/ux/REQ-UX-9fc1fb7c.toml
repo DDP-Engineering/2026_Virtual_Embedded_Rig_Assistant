@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-UX-9fc1fb7c"
+
+title = "Offer Git history for tracked Files rows"
+
+status = "active"
+
+requirement = """
+When a Files context menu opens on an enabled workbench file row, VERA shall offer file history for an exact tracked file or applicable tracked deletion alongside the existing actions.
+"""
+
+verification = "Open menus on clean, deleted, case-only rename sources, and untracked rows and count eligibility requests; check the same Git submenu keeps its comparison actions."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/documents/docs-tree.tsx", "05_Software/src/apps/desktop/src/renderer/components/documents/git-diff-menu.ts", "05_Software/src/apps/desktop/src/main/git/history.ts"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/documents/docs-tree.test.ts", "05_Software/src/apps/desktop/src/main/git/safe-history.test.ts", "05_Software/tests/e2e/git-diff-tabs.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-21
+updated = 2026-11-21

@@ -56,6 +56,8 @@ Starea folosește regulile de ignorare Git chiar dacă indexarea documentelor fo
 
 Deschide meniul contextual al fișierului modificat (clic dreapta sau **Shift+F10**) și alege **Git → Vezi diferențele din arborele de lucru** sau **Vezi diferențele din index**. Prima opțiune compară arborele de lucru cu indexul. A doua compară indexul cu HEAD sau cu o bază goală dacă ramura nu are commituri. Fiecare comparație se deschide într-o filă proprie lângă Chat. Folosește **Ctrl+Page Up/Down** ca să schimbi fila și **Ctrl+W** ca să închizi comparația curentă. Ciorna și poziția în conversație se păstrează.
 
+În meniul contextual al unui fișier urmărit, alege **Git → Vezi istoricul fișierului**. Opțiunea este disponibilă și pentru fișierele nemodificate și ștergerile urmărite afișate în Fișiere. Fila centrală afișează până la 50 de commituri accesibile din HEAD local, începând cu cel mai recent, cu identificatorul scurt, autorul, data și subiectul. Git urmărește redenumirile detectate în workbench. Mutările peste limita acestuia sunt omise. Vizualizarea folosește datele locale și respectă setarea de mascare pentru afișare.
+
 Comparațiile sunt doar pentru citire și sunt disponibile pentru căi șterse și redenumiri din workbench. Apare un mesaj când există un conflict, un fișier binar, o comparație prea mare sau conținut indisponibil. Deschide fișierele neurmărite cu vizualizatorul obișnuit.
 
 ## Citări

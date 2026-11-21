@@ -88,6 +88,7 @@ import {
 } from "./events.js";
 import { createFileAccess } from "./file-access.js";
 import { GitDiffService } from "./git/diff-service.js";
+import { GitHistoryService } from "./git/history-service.js";
 import { GitReader } from "./git/read.js";
 import { containingRepository } from "./git/repository.js";
 import { readStatus } from "./git/status.js";
@@ -334,6 +335,7 @@ const workbench = new WorkbenchService(
       ) {
         gitStatus.reconcile();
         gitDiff.reconcile();
+        gitHistory.reconcile();
       }
       if (event.event.type === "closed" || event.event.type === "config.changed") {
         browserNoticeSince = performance.now();
@@ -381,6 +383,23 @@ const gitDiff = new GitDiffService({
       : { state: "unavailable", base: comparison === "staged" ? "unknown" : "index" };
   },
   project: (id, path, result) => display.gitDiff(id, path, result),
+});
+const gitHistory = new GitHistoryService({
+  scope: gitScope,
+  resolve: (id, path) => display.resolve(id, path),
+  eligible: async (folder, path, signal) => {
+    const repository = await containingRepository(folder, signal);
+    return repository?.scope === folder
+      ? gitReader.historyEligibility(repository, path, signal)
+      : "unavailable";
+  },
+  read: async (folder, path, signal) => {
+    const repository = await containingRepository(folder, signal);
+    return repository?.scope === folder
+      ? gitReader.history(repository, path, signal)
+      : { state: "unavailable" };
+  },
+  project: (id, path, result) => display.gitHistory(id, path, result),
 });
 const gitStatus = new GitStatusService({
   scope: gitScope,
@@ -1173,6 +1192,8 @@ ipcMain.handle(
           sep,
         ),
       "git.diff": (request) => gitDiff.request(request),
+      "git.historyEligibility": (request) => gitHistory.eligibility(request),
+      "git.history": (request) => gitHistory.history(request),
       "git.status": (request) => {
         gitStatus.request(request);
         return {};
@@ -1706,10 +1727,12 @@ async function createWindow(state: WindowState): Promise<void> {
   window.webContents.on("render-process-gone", () => {
     gitStatus.stop();
     gitDiff.stop();
+    gitHistory.stop();
   });
   window.on("closed", () => {
     gitStatus.stop();
     gitDiff.stop();
+    gitHistory.stop();
     capture.interrupt();
     sessions.clearSubscriptions();
     window = undefined;

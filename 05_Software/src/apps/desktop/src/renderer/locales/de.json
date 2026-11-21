@@ -1,4 +1,18 @@
 {
+  "gitHistory": {
+    "view": "Dateiverlauf anzeigen",
+    "tab": "Verlauf: {{path}}",
+    "localHead": "Lokaler Git-Verlauf · HEAD",
+    "unborn": "Dieser Branch enthält noch keine Commits.",
+    "empty": "Für diese Datei sind keine Commits erreichbar.",
+    "unavailable": "Der Git-Verlauf dieser Datei konnte nicht gelesen werden.",
+    "malformed": "Git hat ungültige Verlaufsdaten geliefert.",
+    "readLimit": "Der Verlauf überschreitet die sichere Lesegrenze.",
+    "capped": "Der Verlauf ist auf eine Seite mit bis zu {{limit}} Commits begrenzt.",
+    "scopeBoundary": "Der Verlauf ist auf die Workbench beschränkt. Umbenennungen über ihre Grenze hinweg fehlen.",
+    "noSubject": "(Kein Betreff)",
+    "noAuthor": "(Autor unbekannt)"
+  },
   "gitDiff": {
     "menu": "Git",
     "viewUnstaged": "Arbeitsbaumänderungen anzeigen",

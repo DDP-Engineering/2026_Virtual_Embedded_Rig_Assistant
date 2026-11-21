@@ -5,7 +5,7 @@
 Select for citation opening, the document tabs of the chat area (open, select, close, kept places,
 per-session sets saved per session), continuous PDF scrolling with zoom/find/snippet, Markdown/HTML/office
 anchors, presentation slides, numbered lines of verified refs, run-log and download tabs, and
-Git comparison tabs, and conditional Display masking of document names, refs and content.
+Git comparison and history tabs, and conditional Display masking of document names, refs and content.
 Start under05_Software at main/display-documents.ts and display-identities.ts for conditional
 Display masking, shared/documents.ts, core/knowledge/viewer.ts and
 renderer/components/documents (viewer-context, document-tabs, pdf-viewer). Focused tests are viewer.test.ts, search.test.ts,
@@ -75,7 +75,7 @@ progress travels through existing workbench events.
   in that tab only (REQ-REL-6fc27952). `useDocumentTabs()` exposes select/close/retry, the kept
   place (`{page}`, `{line, scroll?}` or `{scroll}`, held in a ref so scrolling never re-renders), the opener
   and a one-shot focus request.
-- Git comparison targets use a distinct key per path and comparison. They share tab operations and keep Chat mounted. The provider holds results for the enabled workbench activation, verifies the response owner, lease, path and comparison, and clears the content on Display refresh. A retired activation drops Git tabs, their results and their opener references. The provider stores ordinary targets in the existing version-1 record and keeps Git comparisons transient. PatchDocument presents masked source context and hunks through DiffViewer.
+- Git comparison targets use a distinct key per path and comparison. History uses a separate target keyed by path. They share tab operations and keep Chat mounted. The provider holds results for the enabled workbench activation, verifies workbench, lease, path and applicable comparison, and clears content on Display refresh. A retired activation drops Git tabs, their results and opener references. The provider stores ordinary targets in the existing version-1 record and keeps Git targets transient. PatchDocument presents masked source context and hunks through DiffViewer. GitHistoryView presents inert commit text and localized dates and bounded status notices.
 - `DocumentTabs({chat})` (documents/document-tabs.tsx) renders the tablist: Chat first without a
   close button, document tabs labelled by file (artifact) name and titled by path (REQ-UX-388cf31a);
   close button, Delete on a focused tab or middle click removes a tab and selects its right, else

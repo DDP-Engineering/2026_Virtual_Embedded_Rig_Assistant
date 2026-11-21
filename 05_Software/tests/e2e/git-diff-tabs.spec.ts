@@ -1,4 +1,4 @@
-// REQ-UX-c4e574c0 REQ-SEC-0634fcfa
+// REQ-UX-c4e574c0 REQ-SEC-0634fcfa REQ-UX-a033771c REQ-SEC-5ac0eca4
 import { execFileSync } from "node:child_process";
 import { copyFile, mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -54,8 +54,11 @@ test("native Git tabs share Chat and document navigation and reject a stale copi
       copyFile(join(desktop, "../../../tests/fixtures/documents/pages.pdf"), join(folder, "paper.pdf")),
     ]);
     git("init", "-b", "main");
-    git("add", "bench", "copy");
-    git("commit", "-m", "Fixture");
+    git("add", "copy");
+    git("commit", "-m", "Copy-only history");
+    git("add", "bench");
+    git("commit", "-m", "Workbench history");
+    await writeFile(join(folder, "untracked.txt"), "ordinary file");
     await writeFile(changed, "staged version\n");
     git("--literal-pathspecs", "add", "--", `bench/${name}`);
     await writeFile(changed, "working version\n");
@@ -138,6 +141,27 @@ test("native Git tabs share Chat and document navigation and reject a stale copi
       await expect(menu.locator(`[data-menu-action="git-diff-${comparison}"]`)).toBeFocused();
       await page.keyboard.press("Enter");
     }
+    async function openGitMenu(path: string) {
+      await row(path).focus();
+      await page.keyboard.press("Shift+F10");
+      const submenu = menu.getByRole("menuitem", { name: "Git", exact: true });
+      await expect(submenu).toBeVisible();
+      await page.keyboard.press("End");
+      await expect(submenu).toBeFocused();
+      await page.keyboard.press("ArrowRight");
+    }
+    async function openHistory(path: string) {
+      await openGitMenu(path);
+      const item = menu.getByRole("menuitem", { name: "View file history" });
+      await expect(item).toBeVisible();
+      await page.keyboard.press("End");
+      await expect(item).toBeFocused();
+      await page.keyboard.press("Enter");
+      await expect(selected).toHaveText("History: " + path);
+      await expect(center.getByRole("region", { name: "View file history" })).toContainText(
+        "Workbench history",
+      );
+    }
     await expect(row(name).locator("[data-git-badge]")).toHaveCount(2);
     await row(name).press("Enter");
     await expect(center).toContainText("working version");
@@ -170,6 +194,42 @@ test("native Git tabs share Chat and document navigation and reject a stale copi
     await expect(strip.getByRole("tab")).toHaveCount(4);
     await openDiff(name, "staged");
     await expect(center.locator("pre")).toContainText("+staged version");
+    await openHistory(name);
+    await expect(strip.getByRole("tab")).toHaveText([
+      "Chat",
+      name,
+      "paper.pdf",
+      "Unstaged: " + name,
+      "Staged: " + name,
+      "History: " + name,
+    ]);
+    await page.keyboard.press("Control+PageDown");
+    await expect(selected).toHaveText("Chat");
+    await expect(composer).toHaveValue(draft);
+    expect(await transcript.evaluate((node) => node.scrollTop)).toBe(scroll);
+    await page.keyboard.press("Control+PageDown");
+    await expect(selected).toHaveText(name);
+    await page.keyboard.press("Control+PageDown");
+    await expect(selected).toHaveText("paper.pdf");
+    await openHistory(name);
+    await expect(strip.getByRole("tab")).toHaveCount(6);
+    await page.keyboard.press("Control+w");
+    await expect(strip.getByRole("tab")).toHaveCount(5);
+    await openHistory("paper.pdf");
+    await page.keyboard.press("Control+w");
+    await row("untracked.txt").focus();
+    await page.keyboard.press("Shift+F10");
+    await expect(menu.getByRole("menuitem", { name: "Open", exact: true })).toBeFocused();
+    const untracked = await invoke(page, "git.historyEligibility", {
+      workbenchId: original.config.id,
+      indexLease: original.indexLease,
+      path: "untracked.txt",
+    });
+    expect(untracked.eligibility).toBe("untracked");
+    await expect(menu.getByRole("menuitem", { name: "Git", exact: true })).toHaveCount(0);
+    await page.keyboard.press("Escape");
+    await openHistory("gone.txt");
+    await page.keyboard.press("Control+w");
     await openDiff("gone.txt", "unstaged");
     await expect(center.locator("pre")).toContainText("-deleted line");
     await openDiff("replacement", "staged");
@@ -180,12 +240,14 @@ test("native Git tabs share Chat and document navigation and reject a stale copi
     await expect(composer).toHaveValue(draft);
     expect(await transcript.evaluate((node) => node.scrollTop)).toBe(scroll);
 
+    await openHistory(name);
     await invoke(page, "workbench.close", {});
     const next = await invoke(page, "workbench.open", { folder: copy });
     expect(next.config.id).toBe(original.config.id);
     expect(next.indexLease).not.toBe(original.indexLease);
     const gitTabs = page.locator('[data-document-tabs] [data-tab-key^="git-diff:"]');
     await expect(gitTabs).toHaveCount(0);
+    await expect(page.locator('[data-document-tabs] [data-tab-key^="git-history:"]')).toHaveCount(0);
     const old = {
       workbenchId: original.config.id,
       indexLease: original.indexLease,
@@ -208,6 +270,19 @@ test("native Git tabs share Chat and document navigation and reject a stale copi
       patch: expect.stringContaining("+copied worktree only"),
     });
     expect(JSON.stringify(result)).not.toContain("working version");
+    const historyRequest = { workbenchId: old.workbenchId, indexLease: old.indexLease, path: old.path };
+    const historyCode = await page.evaluate(async (request) => {
+      const api = (window as unknown as { vera: VeraBridge }).vera;
+      try {
+        await api.invoke("git.history", request);
+        return "accepted";
+      } catch (error) {
+        return (error as { code?: string }).code;
+      }
+    }, historyRequest);
+    expect(historyCode).toBe("CONFLICT");
+    const history = await invoke(page, "git.history", { ...historyRequest, indexLease: next.indexLease });
+    expect(history.result).toMatchObject({ state: "ready", commits: [{ subject: "Copy-only history" }] });
     expect(await outboundAttempts(app)).toEqual([]);
   } finally {
     await app?.close();

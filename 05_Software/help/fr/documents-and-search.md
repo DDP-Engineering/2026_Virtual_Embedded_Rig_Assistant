@@ -56,6 +56,8 @@ L’état applique les règles d’exclusion de Git, même si l’indexation des
 
 Ouvrez le menu contextuel d’un fichier modifié (clic droit ou **Maj+F10**), puis choisissez **Git → Voir les modifications hors index** ou **Voir les modifications indexées**. La première option compare l’arbre de travail à l’index. La seconde compare l’index à HEAD, ou à une base vide si la branche n’a aucun commit. Chaque comparaison s’ouvre dans son propre onglet à côté du Chat. Changez d’onglet avec **Ctrl+Page précédente/suivante** et fermez la comparaison active avec **Ctrl+W**. Le brouillon et la position dans la conversation sont conservés.
 
+Dans le menu contextuel d’un fichier suivi, choisissez **Git → Voir l’historique du fichier**. L’option est aussi disponible pour les fichiers inchangés et les suppressions suivies visibles dans Fichiers. L’onglet central affiche jusqu’à 50 commits accessibles depuis le HEAD local, du plus récent au plus ancien, avec l’identifiant court, l’auteur, la date et l’objet. Git suit les renommages détectés dans le banc de travail. Les déplacements qui en franchissent la limite sont omis. La vue utilise les données locales et respecte le réglage de masquage de l’affichage.
+
 Ces comparaisons en lecture seule sont disponibles pour les chemins supprimés et les renommages à l’intérieur du banc de travail. Un message signale un conflit, un fichier binaire, une comparaison trop volumineuse ou un contenu indisponible. Ouvrez les fichiers non suivis dans la visionneuse habituelle.
 
 ## Citations

@@ -1562,6 +1562,30 @@ legend {
   min-height: 3rem;
   flex: 1;
 }
+.git-history {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  overflow-wrap: anywhere;
+}
+.git-history header p,
+.git-history li div {
+  color: var(--muted-foreground);
+}
+.git-history ol {
+  list-style: none;
+  padding: 0;
+}
+.git-history li {
+  padding: 0.5rem 0;
+  border-block-end: 1px solid var(--border);
+}
+.git-history li div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.75rem;
+  font-size: 0.9em;
+}
 .overview-storage {
   display: flex;
   align-items: center;

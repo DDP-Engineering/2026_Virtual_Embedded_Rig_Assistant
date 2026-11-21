@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-REL-6b7f009b"
+
+title = "Report bounded file history outcomes"
+
+status = "active"
+
+requirement = """
+While showing file history, VERA shall distinguish loading, unborn HEAD, empty reachable history, unavailable or malformed data, and a capped first page.
+"""
+
+verification = "Use born and unborn repos, a staged new path, malformed and failed reads, and more commits than the first-page limit; check each notice and the bounded list."
+
+affected_paths = ["05_Software/src/apps/desktop/src/main/git/history.ts", "05_Software/src/apps/desktop/src/renderer/components/documents/git-history-view.tsx", "05_Software/src/libraries/shared/src/git-history.ts"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/main/git/safe-history.test.ts", "05_Software/src/apps/desktop/src/renderer/components/documents/docs-tree.test.ts", "05_Software/src/libraries/shared/src/git-history.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-21
+updated = 2026-11-21

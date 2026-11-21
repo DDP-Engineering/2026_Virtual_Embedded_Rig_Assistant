@@ -1,4 +1,18 @@
 {
+  "gitHistory": {
+    "view": "Voir l’historique du fichier",
+    "tab": "Historique : {{path}}",
+    "localHead": "Historique Git local · HEAD",
+    "unborn": "Cette branche ne contient encore aucun commit.",
+    "empty": "Aucun commit accessible pour ce fichier.",
+    "unavailable": "Impossible de lire l’historique Git de ce fichier.",
+    "malformed": "Git a renvoyé des données d’historique mal formées.",
+    "readLimit": "L’historique dépasse la limite de lecture autorisée.",
+    "capped": "L’historique est limité à une page de {{limit}} commits au maximum.",
+    "scopeBoundary": "L’historique couvre le banc de travail. Les renommages qui en franchissent la limite sont omis.",
+    "noSubject": "(Sans objet)",
+    "noAuthor": "(Auteur inconnu)"
+  },
   "gitDiff": {
     "menu": "Git",
     "viewUnstaged": "Voir les modifications hors index",

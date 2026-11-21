@@ -56,6 +56,8 @@ The status uses Git's ignore rules even when document indexing uses different ru
 
 Open a changed file’s context menu (right-click or **Shift+F10**) and choose **Git → View unstaged diff** or **View staged diff**. Unstaged compares the working tree with the index. Staged compares the index with HEAD, or with an empty base on a branch without commits. Each comparison opens in its own tab beside Chat. Use **Ctrl+Page Up/Down** to switch tabs and **Ctrl+W** to close the current comparison. The chat draft and transcript position stay in place.
 
+From a tracked file’s context menu, choose **Git → View file history**. This also works for unchanged files and tracked deletions shown in Files. The central tab lists up to 50 commits reachable from the local HEAD, newest first, with the short hash, author, date and subject. Git follows detected renames within the workbench. Moves across its boundary are omitted. The view uses local data and follows the Display masking setting.
+
 These read-only comparisons are available for deleted paths and for renames within the workbench. You’ll see a notice for a conflict, a binary file, a comparison that exceeds the preview limit, or unavailable content. Open untracked files with the usual file viewer.
 
 ## Citations
