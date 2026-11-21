@@ -197,7 +197,11 @@ async function rig(mode: PermissionMode, steps: object[]) {
   const handle = await core.openDb(join(root, ".vera/vera.db"), { workbenchId: "wb_test", appVersion: "0" });
   const scripts = join(dir, "replay");
   await mkdir(scripts);
-  await writeFile(join(scripts, "idf.jsonl"), steps.map((s) => JSON.stringify(s)).join("\n"));
+  // The replay window holds the plugin prompt; this test checks tools, not context budgets.
+  await writeFile(
+    join(scripts, "idf.jsonl"),
+    steps.map((s, i) => JSON.stringify(i ? s : { ...s, contextWindow: 65536 })).join("\n"),
+  );
   const gateway = new ReplayGateway({ dir: scripts, now: Date.now });
   await gateway.models("replay", new AbortController().signal);
   const service = new core.SessionService({

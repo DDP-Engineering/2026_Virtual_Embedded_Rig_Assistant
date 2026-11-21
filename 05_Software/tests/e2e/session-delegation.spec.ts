@@ -51,6 +51,23 @@ function delegation(page: Page) {
   return page.locator("[data-session-delegations]");
 }
 
+/**
+ * A parent keeps streaming its reply after the checked prefix. Wait until every turn has ended, so the next
+ * parent and its child fit within the default Concurrent turns limit of 3.
+ */
+async function turnsEnded(page: Page) {
+  await expect
+    .poll(
+      () =>
+        page.evaluate(async () => {
+          const api = (window as unknown as { vera: VeraBridge }).vera;
+          return (await api.invoke("session.capacity", {})).active;
+        }),
+      { timeout: 20000 },
+    )
+    .toBe(0);
+}
+
 async function followChild(page: Page, name: string) {
   await delegation(page).getByRole("button", { name, exact: true }).click();
   await expect(page.getByRole("heading", { name, exact: true })).toBeFocused();
@@ -208,6 +225,7 @@ test("native Desktop follows live delegated sessions, stops one and reopens dura
       timeout: 15000,
     });
 
+    await turnsEnded(page);
     const stoppedParent = await createParent(page, "parent-stop", "Coordinate slow inspection");
     await expect(delegation(page)).toContainText("Running");
     const stoppedChild = await followChild(page, "Inspect the slow board");
@@ -226,6 +244,7 @@ test("native Desktop follows live delegated sessions, stops one and reopens dura
       return proof.delivered;
     });
     expect(delivered).toBe(4);
+    await turnsEnded(page);
     const failedParent = await createParent(page, "parent-error", "Coordinate failing inspection");
     await expect(delegation(page)).toContainText("Running");
     await followChild(page, "Inspect the failing board");

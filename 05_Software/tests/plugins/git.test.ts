@@ -272,11 +272,18 @@ it("runs real Git history without approval, suppresses marker helpers, and commi
         text: `Since v1, ${releaseHash} (Fixture release change) adds the second line to file.txt. The reviewed change is committed.`,
       },
     ];
-    await writeFile(join(root, "scripts/git.jsonl"), steps.map((step) => JSON.stringify(step)).join("\n"));
+    // The replay window holds the plugin prompt; this test checks tools, not context budgets.
+    await writeFile(
+      join(root, "scripts/git.jsonl"),
+      steps.map((step, i) => JSON.stringify(i ? step : { ...step, contextWindow: 65536 })).join("\n"),
+    );
     await writeFile(
       join(root, "scripts/blocked.jsonl"),
       [
-        { toolCalls: [{ name: "run_program", args: { program: "git", args: ["fixture-alias"] } }] },
+        {
+          toolCalls: [{ name: "run_program", args: { program: "git", args: ["fixture-alias"] } }],
+          contextWindow: 65536,
+        },
         {
           toolCalls: [
             {

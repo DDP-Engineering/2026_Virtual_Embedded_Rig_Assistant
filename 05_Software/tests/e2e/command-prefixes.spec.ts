@@ -1,6 +1,8 @@
+import { execFileSync } from "node:child_process";
+import { existsSync } from "node:fs";
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join, resolve } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import { _electron, expect, type Page } from "@playwright/test";
 import type { Channel, Request, Response, VeraBridge } from "@vera/shared";
 import { parse } from "yaml";
@@ -12,6 +14,26 @@ const invoke = <C extends Channel>(page: Page, channel: C, request: Request<C>):
       (window as unknown as { vera: VeraBridge }).vera.invoke(channel as never, request as never),
     { channel, request },
   ) as Promise<Response<C>>;
+
+/**
+ * Windows PowerShell in Constrained Language Mode cannot run npm.ps1, which it prefers to npm.cmd. On such a
+ * host the app gets a first PATH folder holding only an npm.cmd that calls the real one, so `npm test` runs.
+ */
+async function constrainedNpm(scratch: string, env: Record<string, string>) {
+  if (process.platform !== "win32") return;
+  const mode = execFileSync(
+    "powershell.exe",
+    ["-NoProfile", "-Command", "$ExecutionContext.SessionState.LanguageMode"],
+    { encoding: "utf8" },
+  ).trim();
+  const real = join(dirname(process.execPath), "npm.cmd");
+  if (mode !== "ConstrainedLanguage" || !existsSync(real)) return;
+  const shim = join(scratch, "npm-cmd");
+  await mkdir(shim);
+  await writeFile(join(shim, "npm.cmd"), `@call "${real}" %*\r\n`);
+  const key = Object.keys(env).find((name) => name.toUpperCase() === "PATH") ?? "PATH";
+  env[key] = `${shim};${env[key] ?? ""}`;
+}
 
 async function agent(page: Page) {
   if (!(await page.locator('[data-action="edit-workbench-overview"]').isVisible()))
@@ -36,7 +58,11 @@ test("native command prefix approval persists across restart and removal restore
   ]) {
     await writeFile(
       join(scripts, `${name}.jsonl`),
-      [{ toolCalls: [{ name: "run_command", args: { command } }] }, { text: `Finished ${name}` }]
+      // The replay window holds the session's prompt and history; this test checks approvals, not budgets.
+      [
+        { toolCalls: [{ name: "run_command", args: { command } }], contextWindow: 65536 },
+        { text: `Finished ${name}` },
+      ]
         .map((row) => JSON.stringify(row))
         .join("\n"),
     );
@@ -47,6 +73,7 @@ test("native command prefix approval persists across restart and removal restore
   delete env.ELECTRON_RUN_AS_NODE;
   env.VERA_REPLAY_DIR = scripts;
   env.VERA_TEST_DIALOG_PATH = folder;
+  await constrainedNpm(scratch, env);
   const launch = () =>
     _electron.launch({
       executablePath: resolve(

@@ -1117,7 +1117,14 @@ it("budgets a long first turn before each real gateway request and refuses an ir
   expect(good.code).toBe(0);
   expect(requests).toHaveLength(3);
   const usages = events(good.stdout)
-    .filter((row) => row.event.type === "usage.updated" && row.event.contextTokens !== undefined)
+    // One budgeted view per gateway request. A background summary announced after the turn ("running") is
+    // stopped when the run exits; it sends no request.
+    .filter(
+      (row) =>
+        row.event.type === "usage.updated" &&
+        row.event.contextTokens !== undefined &&
+        row.event.compactionStatus !== "running",
+    )
     .map((row) => row.event);
   expect(usages).toHaveLength(3);
   expect(usages.every((usage) => usage.contextTokens <= usage.inputBudgetTokens)).toBe(true);
@@ -1242,7 +1249,8 @@ it("scoped CLI local Git clone and pulled helper require explicit machine hash r
   await writeFile(
     script,
     [
-      { toolCalls: [{ name: "load_skill", args: { name: "echo-guide" } }] },
+      // The test checks plugin trust, not context budgets: a window that holds the whole prompt.
+      { toolCalls: [{ name: "load_skill", args: { name: "echo-guide" } }], contextWindow: 65536 },
       { toolCalls: [{ name: "run_program", args: { program: "echo", args: ["version"] } }] },
       { text: "Done" },
     ]

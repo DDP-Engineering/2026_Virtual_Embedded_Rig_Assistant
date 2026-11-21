@@ -82,6 +82,36 @@ it("validates replay reasoning options and requires the declared request effort"
   await writeFile(join(dir, "echo.jsonl"), JSON.stringify({ reasoningOptions: ["BAD"] }));
   await expect(gateway.models("replay")).rejects.toMatchObject({ code: "INVALID" });
 });
+it("uses a context window declared on the first step and refuses one elsewhere or below the default", async () => {
+  const dir = await fixture(JSON.stringify({ text: "Default" }));
+  const gateway = new ReplayGateway({ dir, now: () => 0 });
+  expect(gateway.capabilities("replay/echo")).toMatchObject({
+    contextWindow: 32768,
+    safetyMargin: 1639,
+    inputBudget: 27033,
+  });
+  await writeFile(join(dir, "echo.jsonl"), JSON.stringify({ contextWindow: 65536, text: "Wide" }));
+  expect(gateway.capabilities("replay/echo")).toMatchObject({
+    contextWindow: 65536,
+    safetyMargin: 3277,
+    inputBudget: 65536 - 4096 - 3277,
+  });
+  expect((await gateway.models("replay")).models[0]?.contextWindow).toBe(65536);
+  for (const steps of [
+    [{ contextWindow: 16384, text: "Small" }],
+    [{ contextWindow: 65536.5, text: "Fraction" }],
+    [{ text: "First" }, { contextWindow: 65536, text: "Second" }],
+  ]) {
+    await writeFile(join(dir, "echo.jsonl"), steps.map((step) => JSON.stringify(step)).join("\n"));
+    let refused: unknown;
+    try {
+      gateway.capabilities("replay/echo");
+    } catch (error) {
+      refused = error;
+    }
+    expect(refused).toMatchObject({ code: "INVALID" });
+  }
+});
 
 it("passes every connection step for scripted tools and fails tools for text-only model", async () => {
   const dir = await fixture(

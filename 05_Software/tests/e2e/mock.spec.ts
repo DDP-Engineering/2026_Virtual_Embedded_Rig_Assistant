@@ -76,6 +76,9 @@ test("browser mock displays the same metadata screen through dev:renderer", asyn
     expect(errors).toEqual([]);
     expect(outbound).toEqual([]);
     await page.locator('[data-i18n="nav.settings"]').click({ timeout: 2000 });
+    // Settings reopens on About, chosen above; select Appearance so each changeSetting below returns there and
+    // its typography previews stay mounted.
+    await page.locator('[data-section="appearance"]').click();
     const appearance = {
       ro: "Aspect și limbă",
       de: "Darstellung und Sprache",

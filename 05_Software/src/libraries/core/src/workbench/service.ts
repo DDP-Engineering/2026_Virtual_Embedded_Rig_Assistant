@@ -351,7 +351,8 @@ export class WorkbenchService {
     private readonly processDocument?: DocumentProcessor,
   ) {}
   private startIngest(): void {
-    if (!this.state || this.state.readOnly || !this.database || this.ingest) return;
+    // A closed database cannot index; a refused close then reports its own error, not this one.
+    if (!this.state || this.state.readOnly || !this.database?.db.open || this.ingest) return;
     const state = this.state;
     this.ingest = new Ingester({
       root: state.folder,

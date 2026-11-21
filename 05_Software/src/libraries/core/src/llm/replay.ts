@@ -8,6 +8,8 @@ import { type LlmEvent, type LlmGateway, type LlmRequest, splitModelReference } 
 interface ReplayStep {
   usage?: { input: number; output: number };
   reasoningOptions?: string[];
+  /** Context window of the scenario's model, on the first step only; 32768 when absent. */
+  contextWindow?: number;
   expectReasoning?: string;
   match?: string;
   prompt?: string;
@@ -19,6 +21,8 @@ const declaredUsage = z.strictObject({
   output: z.number().int().nonnegative(),
 });
 const replayReasoningOptions = z.array(reasoningOptionSchema).max(16);
+/** The default replay model window; a scenario may declare a larger one on its first step. */
+const REPLAY_CONTEXT_WINDOW = 32768;
 interface Scenario {
   name: string;
   match: RegExp | null;
@@ -48,6 +52,11 @@ function readScenario(dir: string, name: string): Scenario {
           (index !== 0 ||
             !replayReasoningOptions.safeParse(step.reasoningOptions).success ||
             new Set(step.reasoningOptions).size !== step.reasoningOptions.length)) ||
+        (step.contextWindow !== undefined &&
+          (index !== 0 ||
+            !Number.isSafeInteger(step.contextWindow) ||
+            step.contextWindow < REPLAY_CONTEXT_WINDOW ||
+            step.contextWindow > 2_000_000)) ||
         (step.expectReasoning !== undefined &&
           !reasoningOptionSchema.safeParse(step.expectReasoning).success) ||
         (step.text !== undefined && typeof step.text !== "string") ||
@@ -78,15 +87,21 @@ function scenarios(dir: string): Scenario[] {
     .sort()
     .map((name) => readScenario(dir, name));
 }
-function replayCapabilities(output?: number, reasoningOptions?: string[]): ModelCapabilities {
+function replayCapabilities(
+  output?: number,
+  reasoningOptions?: string[],
+  contextWindow = REPLAY_CONTEXT_WINDOW,
+): ModelCapabilities {
   if (output !== undefined && (!Number.isSafeInteger(output) || output <= 0)) throw veraError("INVALID");
   const maxOutputTokens = Math.min(output ?? 4096, 4096);
+  // A 5% safety margin: 1639 tokens for the default window.
+  const safetyMargin = Math.ceil(contextWindow / 20);
   return {
     input: ["text"],
-    contextWindow: 32768,
+    contextWindow,
     maxOutputTokens,
-    safetyMargin: 1639,
-    inputBudget: 32768 - maxOutputTokens - 1639,
+    safetyMargin,
+    inputBudget: contextWindow - maxOutputTokens - safetyMargin,
     supportsTools: true,
     ...(reasoningOptions?.length ? { reasoningOptions } : {}),
   };
@@ -148,7 +163,11 @@ export class ReplayGateway implements LlmGateway {
     const scenario = readdirSync(this.options.dir).includes(file)
       ? readScenario(this.options.dir, file)
       : undefined;
-    return replayCapabilities(output, scenario?.steps[0]?.reasoningOptions);
+    return replayCapabilities(
+      output,
+      scenario?.steps[0]?.reasoningOptions,
+      scenario?.steps[0]?.contextWindow,
+    );
   }
   async models(provider: string, signal?: AbortSignal): Promise<ProviderCatalog> {
     signal?.throwIfAborted();
@@ -159,7 +178,7 @@ export class ReplayGateway implements LlmGateway {
         id: s.name,
         name: s.name,
         reference: `replay/${s.name}`,
-        ...replayCapabilities(undefined, s.steps[0]?.reasoningOptions),
+        ...replayCapabilities(undefined, s.steps[0]?.reasoningOptions, s.steps[0]?.contextWindow),
       })),
     };
   }
