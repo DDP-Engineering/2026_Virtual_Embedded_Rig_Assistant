@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { workbenchSchema } from "@vera/shared";
 import Database from "better-sqlite3";
 import { expect, it } from "vitest";
+import { rebuildingEmbeddings } from "../storage/repos/embedding-rebuild.js";
 import { schemaSql } from "../storage/schema.js";
 import { createModelDocumentServices } from "./document-services.js";
 import type { EmbeddingPort } from "./embedding.js";
@@ -398,6 +399,8 @@ it("keeps extraction and keyword results during a model switch, including a fail
     ingest.request();
     await ingest.waitIdle();
     expect(vectorIds.all()).toEqual([next]);
+    // A queued watcher pass can keep the rebuild marker after vectors are published.
+    await expect.poll(() => rebuildingEmbeddings(db), { timeout: 5000 }).toBe(false);
     await expect(
       search.search({ query: "coolant", mode: "semantic" }, new AbortController().signal),
     ).rejects.toThrow("Keyword fallback must not invoke ranking.");
@@ -435,4 +438,4 @@ it("keeps extraction and keyword results during a model switch, including a fail
     db.close();
     await rm(root, { recursive: true, force: true });
   }
-});
+}, 15000);

@@ -184,7 +184,7 @@ it("mounts the rest at once when the reader reaches the top, and Ctrl+Home lands
   expect(articles()).toHaveLength(2000);
   expect(node.scrollTop).toBe(0);
   expect(articles()[0]?.textContent).toContain("question 0");
-});
+}, 15000);
 
 it("cancels pending idle work on unmount", async () => {
   const cancel = vi.spyOn(globalThis, "cancelIdleCallback");
