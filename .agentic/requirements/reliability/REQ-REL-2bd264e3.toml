@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-REL-2bd264e3"
+
+title = "Refuse a component download that differs from its pin"
+
+status = "active"
+
+requirement = "If a component file that the delivery tool fetches cannot be read or differs from its pinned length or SHA-256, the tool shall fail with that file named and leave any existing `components` part unchanged."
+
+verification = "Serve one fixture file with a changed byte, and in a second run a truncated file, then a failed request. Assert a nonzero result naming the file, no staging folder left behind and an earlier `components` part still byte-identical."
+
+affected_paths = ["02_Tools/delivery/components.mjs", "02_Tools/delivery/build-components.mjs"]
+
+linked_tests = ["05_Software/tests/tooling/components.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-21
+updated = 2026-11-21

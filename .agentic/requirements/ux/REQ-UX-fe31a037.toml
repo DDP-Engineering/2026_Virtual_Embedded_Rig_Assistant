@@ -1,0 +1,36 @@
+schema = 1
+
+id = "REQ-UX-fe31a037"
+
+title = "Show connected providers as cards with model ticks"
+
+status = "active"
+
+requirement = """
+Settings > Providers shall show each connected provider (the ChatGPT subscription when signed in, OpenAI and each API or local connection) as a card with its name, its actions and its models as checkboxes, keep the ticks as a page draft saved or discarded with the page header Save and Cancel, and add or edit a connection in a dialog that offers the providers in one dropdown with the provider's fields, Test, Cancel and Save.
+"""
+
+verification = "Open Providers with two connections: two cards list their catalogs as checkboxes; ticking enables the header Save, Cancel restores the saved ticks; Add provider opens a dialog with one provider dropdown and no search field; a card with more than ten models filters them and pages them; all texts exist in en, ro, de and fr."
+
+affected_paths = [
+  "05_Software/src/apps/desktop/src/renderer/components/providers.tsx",
+  "05_Software/src/apps/desktop/src/renderer/components/provider-models.tsx",
+  "05_Software/src/apps/desktop/src/renderer/components/provider-preset-selector.tsx",
+  "05_Software/src/apps/desktop/src/renderer/components/providers.css",
+  "05_Software/src/apps/desktop/src/renderer/components/settings.tsx",
+]
+
+linked_tests = [
+  "05_Software/src/apps/desktop/src/renderer/components/providers.test.ts",
+  "05_Software/tests/e2e/providers-layout.spec.ts",
+  "05_Software/tests/e2e/providers.spec.ts",
+]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-21
+updated = 2026-11-21

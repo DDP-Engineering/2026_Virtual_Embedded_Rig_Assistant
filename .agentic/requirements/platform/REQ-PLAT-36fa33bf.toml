@@ -1,0 +1,35 @@
+schema = 1
+
+id = "REQ-PLAT-36fa33bf"
+
+title = "Run chat code blocks in a Constrained Language PowerShell terminal"
+
+status = "active"
+
+requirement = """
+When the user runs a PowerShell chat code block in a pristine PowerShell terminal whose language mode is
+Constrained Language (as under a host application control policy), the desktop shall show the initial prompt
+and run the block's exact text once at that prompt, as it does in a Full Language terminal.
+"""
+
+verification = "Native e2e on a Windows host whose PowerShell runs in Constrained Language: Run a three-line block that writes 'Știință 🧪' and 'second line' to result.txt; the Terminal tab opens, result.txt holds the two lines once and the terminal is no longer eligible; a second Run into another pristine terminal appends them once more. Unit: the startup script keeps the Full Language branch and prompts outside Full Language with allowed cmdlets behind a distinct private marker; for a terminal that reported that marker the dispatched line decodes back to the exact text, including surrogate pairs and quotes, while a Full Language terminal still receives the base64 line."
+
+affected_paths = [
+  "05_Software/src/apps/desktop/src/main/terminal-command-prompt.ts",
+  "05_Software/src/apps/desktop/src/main/terminals.ts",
+]
+
+linked_tests = [
+  "05_Software/src/apps/desktop/src/main/terminal-command-prompt.test.ts",
+  "05_Software/src/apps/desktop/src/main/terminal-command-dispatch.test.ts",
+  "05_Software/tests/e2e/chat-actions.spec.ts",
+]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = "Windows hosts under an application control policy run PowerShell in Constrained Language, which refuses the .NET calls of the Full Language prompt and dispatch."
+
+created = 2026-11-21
+updated = 2026-11-21

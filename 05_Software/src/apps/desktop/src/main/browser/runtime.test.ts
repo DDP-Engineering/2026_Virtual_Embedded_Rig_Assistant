@@ -158,3 +158,50 @@ it("surfaces failed staging cleanup during shutdown even if download was cancell
   vi.mocked(rm).mockRejectedValueOnce(Object.assign(new Error("Access refused"), { code: "EPERM" }));
   await expect(runtime.shutdown()).rejects.toMatchObject({ code: "cleanup" });
 });
+
+// REQ-FUNC-75aa4017
+it("installs from a picked archive without any network request and keeps a verified runtime", async () => {
+  const transfer = vi.fn<typeof fetch>(async () => {
+    throw new Error("network used");
+  });
+  const { runtime, root } = await setup(transfer);
+  const file = `${root}-chrome.zip`;
+  scratch.push(file);
+  await writeFile(file, archive);
+  const phases: string[] = [];
+  const installation = runtime.provision({ file });
+  phases.push(runtime.status().phase);
+  await expect(installation).resolves.toEqual({ phase: "ready", version: spec.version });
+  expect(phases).toEqual(["verifying"]);
+  expect(await readFile(await runtime.executable(), "utf8")).toBe("executable");
+  expect(await readdir(root)).toEqual([spec.version]);
+  await rm(file);
+  await expect(runtime.provision({ file })).resolves.toEqual({ phase: "ready", version: spec.version });
+  expect(transfer).not.toHaveBeenCalled();
+});
+
+// REQ-SEC-92a60a12
+it("refuses a picked archive that differs from the pin and reports an unreadable one", async () => {
+  const transfer = vi.fn<typeof fetch>(async () => {
+    throw new Error("network used");
+  });
+  const { runtime, root } = await setup(transfer);
+  const file = `${root}-chrome.zip`;
+  scratch.push(file);
+  const changed = archive.slice();
+  changed[changed.length - 1] = (changed.at(-1) ?? 0) ^ 1;
+  await writeFile(file, changed);
+  await expect(runtime.provision({ file })).resolves.toMatchObject({
+    phase: "failed",
+    failure: { code: "integrity" },
+  });
+  await writeFile(file, archive.slice(0, archive.length - 1));
+  await expect(runtime.provision({ file })).resolves.toMatchObject({ failure: { code: "integrity" } });
+  await writeFile(file, new Uint8Array([...archive, 0]));
+  await expect(runtime.provision({ file })).resolves.toMatchObject({ failure: { code: "integrity" } });
+  await rm(file);
+  await expect(runtime.provision({ file })).resolves.toMatchObject({ failure: { code: "storage" } });
+  expect(await readdir(root)).toEqual([]);
+  await expect(runtime.executable()).rejects.toMatchObject({ code: "runtime-missing" });
+  expect(transfer).not.toHaveBeenCalled();
+});

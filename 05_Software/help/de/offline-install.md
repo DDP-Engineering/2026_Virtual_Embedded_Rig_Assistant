@@ -1,6 +1,6 @@
 # Offline-Installation
 
-VERA lässt sich auf einem Laborrechner ohne Netzwerk installieren und verwenden. Das Installationsprogramm enthält alles, was die Anwendung benötigt: das lokale Indizierungsmodell, den Python-Werkzeuginstaller und den offiziellen Plugin-Katalog. Die Programme, die Plugins ausführen, werden separat in einem Offline-Abhängigkeits-Kit geliefert. KI-Modelle benötigen weiterhin einen Anbieter: Verwenden Sie auf einem Computer ohne Netzwerk einen lokalen Server wie LM Studio oder Ollama (siehe [Anbieter und Modelle](providers.md)).
+VERA lässt sich auf einem Laborrechner ohne Netzwerk installieren und verwenden. Das Installationsprogramm enthält alles, was die Anwendung benötigt: das lokale Indizierungsmodell, den Python-Werkzeuginstaller und den offiziellen Plugin-Katalog. Die Programme, die Plugins ausführen, werden separat in einem Offline-Abhängigkeits-Kit geliefert. Die Laufzeit des interaktiven Browsers und die Diktatmodelle werden ebenfalls separat geliefert, im Ordner `components/`. KI-Modelle benötigen weiterhin einen Anbieter: Verwenden Sie auf einem Computer ohne Netzwerk einen lokalen Server wie LM Studio oder Ollama (siehe [Anbieter und Modelle](providers.md)).
 
 ## Der Lieferordner
 
@@ -12,9 +12,10 @@ Eine VERA-Lieferung ist ein Ordner pro Version, `vera-<version>/`:
 | `vera-linux-x64/` | `VERA-<v>-linux-*.AppImage`, `VERA-<v>-linux-*.deb`, `SHA256SUMS` |
 | `plugins/` | Ein `<id>-<version>.zip` pro Plugin, die Katalogindizes, `vera-plugins-<version>.zip` mit dem gesamten Katalog, `SHA256SUMS` |
 | `plugin-deps/` | `vera-plugin-deps-<version>-windows-x64.zip` und `…-linux-x64.zip`, `SHA256SUMS` |
+| `components/` | `chrome-win64.zip` und `chrome-linux64.zip` (Browser-Laufzeit), `whisper-base.zip` und `whisper-small.zip` (Diktatmodelle), `THIRD-PARTY-NOTICES.md`, `SHA256SUMS` |
 | `delivery.json` | Was gebaut wurde: Versionen, Dateien, Größen und SHA-256 |
 
-Kopieren Sie den Ordner Ihrer Plattform und `plugin-deps/`, wenn Sie Plugin-Programme verwenden möchten. `plugins/` wird nur für Plugins benötigt, die neuer sind als Ihr VERA-Installationsprogramm. Das Abhängigkeits-Kit ist etwa 1 GB pro Plattform groß.
+Kopieren Sie den Ordner Ihrer Plattform und `plugin-deps/`, wenn Sie Plugin-Programme verwenden möchten. `plugins/` wird nur für Plugins benötigt, die neuer sind als Ihr VERA-Installationsprogramm. Das Abhängigkeits-Kit ist etwa 1 GB pro Plattform groß. Kopieren Sie auch `components/`, wenn Sie den interaktiven Browser oder das Diktat verwenden möchten. Der Ordner umfasst für beide Plattformen und beide Modelle etwa 700 MB.
 
 ## 1. Die Dateien prüfen
 
@@ -52,6 +53,13 @@ Die Seite **Plugins** listet die offiziellen Plugins Ihrer VERA-Version aus dem 
 VERA prüft jede Datei aus dem Kit anhand des SHA-256 im Manifest des Plugins und weist eine veränderte Datei zurück. Um wieder aus dem Netzwerk zu installieren, entfernen Sie `plugins.kit`.
 
 Um ein einzelnes Programm aus einem selbst kopierten Archiv zu installieren, verwenden Sie stattdessen **Aus Abhängigkeitsarchiv installieren…** auf der Karte des Plugins.
+
+## 5. Browser-Laufzeit und Diktatmodelle offline installieren
+
+1. Öffnen Sie **Einstellungen → Webzugriff** und wählen Sie **Aus Datei installieren…**. Wählen Sie unter Windows `components/chrome-win64.zip` oder unter Linux `components/chrome-linux64.zip`.
+2. Öffnen Sie **Einstellungen → Diktat** und wählen Sie beim gewünschten Modell **Aus Datei installieren…**. Wählen Sie `components/whisper-base.zip` oder `components/whisper-small.zip`.
+
+VERA prüft jede Datei anhand des SHA-256, den seine Version festlegt, weist eine veränderte oder andere Datei zurück und stellt keine Netzwerkanfrage. `THIRD-PARTY-NOTICES.md` nennt Quelle und Lizenz jeder Komponente.
 
 ## Herstellerprogramme
 

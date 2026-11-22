@@ -66,8 +66,9 @@ it("reads a session without re-validating each stored event and leaves corrupt r
   const update = handle.db.prepare("UPDATE events SET payload_json=? WHERE session_id=? AND seq=?");
   update.run(JSON.stringify({ type: "session.updated", title: 42 }), s.id, rows.at(-1)?.seq);
   expect(sessionStateSchema.safeParse(service.get(s.id).snapshot).success).toBe(false);
-  // A row that is not JSON makes the handler throw, which the router also maps to INTERNAL.
-  update.run("{", s.id, rows.at(-1)?.seq);
+  // A row that is not JSON makes the handler throw, which the router also maps to INTERNAL. SQLite's JSON5
+  // parser accepts this text for the turn-outcome index; JSON.parse does not.
+  update.run("{broken:1}", s.id, rows.at(-1)?.seq);
   expect(() => service.get(s.id)).toThrow(SyntaxError);
 });
 // REQ-FUNC-acaeb296 REQ-SEC-bde59b0b
@@ -880,7 +881,10 @@ it("recovery keeps the other sessions when one has a damaged message or event ro
   expect(messages.list(damaged.id).map((r) => r.content_json)).toEqual(["{"]);
   // A damaged event log: that session stays as stored, the other one still recovers.
   for (const s of [damaged, healthy]) run.run(s.id);
-  handle.db.prepare("UPDATE events SET payload_json='{' WHERE session_id=? AND seq=1").run(damaged.id);
+  // JSON5 that the turn-outcome index accepts and JSON.parse refuses.
+  handle.db
+    .prepare("UPDATE events SET payload_json='{broken:1}' WHERE session_id=? AND seq=1")
+    .run(damaged.id);
   const status = (id: string) => new core.SessionService(host).list().find((s) => s.id === id)?.status;
   expect(status(healthy.id)).toBe("idle");
   expect(status(damaged.id)).toBe("running");

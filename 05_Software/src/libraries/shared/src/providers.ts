@@ -87,6 +87,11 @@ export function providerSlug(text: string): string {
     .replace(/^-|-$/g, "");
 }
 export const providerTokenDefaults = { contextWindow: 32768, maxOutputTokens: 4096 } as const;
+/** Exact model IDs of one provider: unique, without whitespace, at most 10000. */
+const modelIdList = z
+  .array(z.string().min(1).max(200).regex(/^\S+$/))
+  .max(10000)
+  .refine((ids) => new Set(ids).size === ids.length);
 const configFields = {
   name,
   baseUrl: z.union([baseUrl, curatedInferenceSchema]),
@@ -99,11 +104,9 @@ const configFields = {
   supportsTools: z.boolean().optional(),
   protocol: z.literal("lmstudio").optional(),
   models: z.array(modelProfileSchema).max(10000).optional(),
-  imageModels: z
-    .array(z.string().min(1).max(200).regex(/^\S+$/))
-    .max(10000)
-    .refine((ids) => new Set(ids).size === ids.length)
-    .optional(),
+  imageModels: modelIdList.optional(),
+  /** The models this connection offers in VERA's model choices; absent offers its whole catalog. */
+  enabledModels: modelIdList.optional(),
 };
 function budget(value: {
   contextWindow: number;
@@ -145,7 +148,11 @@ function noSecretFields(value: unknown): boolean {
     );
   return true;
 }
-export const openaiSettingsSchema = z.strictObject({ model: model.optional() }).refine(noSecretFields);
+export const openaiSettingsSchema = z
+  .strictObject({ model: model.optional(), enabledModels: modelIdList.optional() })
+  .refine(noSecretFields);
+/** The ChatGPT subscription signs in elsewhere; settings keep only the models it offers. */
+export const chatgptSettingsSchema = z.strictObject({ enabledModels: modelIdList.optional() });
 export const customSettingsSchema = z
   .strictObject({
     ...configFields,
@@ -162,7 +169,11 @@ export const customSettingsSchema = z
   .refine((value) => curatedSlug.test(value.slug) === !!value.preset)
   .refine(noSecretFields);
 export const providerSettingsSchema = z
-  .strictObject({ openai: openaiSettingsSchema, custom: z.array(customSettingsSchema).max(100) })
+  .strictObject({
+    openai: openaiSettingsSchema,
+    chatgpt: chatgptSettingsSchema.optional(),
+    custom: z.array(customSettingsSchema).max(100),
+  })
   .refine(noSecretFields)
   .refine(
     (value) =>
@@ -193,7 +204,13 @@ const metadata = {
   storage: z.enum(["encrypted", "unprotected", "memory"]).nullable(),
 };
 export const providerListSchema = z.strictObject({
-  openai: z.strictObject({ id: z.literal("openai"), model: model.optional(), ...metadata }),
+  openai: z.strictObject({
+    id: z.literal("openai"),
+    model: model.optional(),
+    enabledModels: modelIdList.optional(),
+    ...metadata,
+  }),
+  chatgpt: z.strictObject({ id: z.literal("chatgpt"), enabledModels: modelIdList.optional() }),
   custom: z.array(
     z.strictObject({ ...configFields, slug: z.string(), id: customProviderIdSchema, ...metadata }),
   ),
@@ -201,6 +218,19 @@ export const providerListSchema = z.strictObject({
 });
 export const providerSaveResultSchema = z.strictObject({ status: z.enum(["saved", "consent-required"]) });
 export const providerRemoveSchema = z.strictObject({ id: providerIdSchema });
+/** One write of the model ticks of several providers; `null` removes a list, so the whole catalog is offered. */
+export const providerModelsEnableSchema = z.strictObject({
+  providers: z
+    .array(
+      z.strictObject({
+        id: z.union([z.literal("chatgpt"), providerIdSchema]),
+        models: modelIdList.nullable(),
+      }),
+    )
+    .min(1)
+    .max(102),
+});
+export type ProviderModelsEnable = z.infer<typeof providerModelsEnableSchema>;
 export type ProviderList = z.infer<typeof providerListSchema>;
 export type ProviderSave = z.input<typeof providerSaveSchema>;
 export type ProviderRemove = z.infer<typeof providerRemoveSchema>;

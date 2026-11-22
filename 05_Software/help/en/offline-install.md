@@ -1,6 +1,6 @@
 # Offline installation
 
-VERA can be installed and used on a bench computer without network. The installer contains everything the application needs: the local indexing model, the Python tool installer and the official plugin catalog. The programs that plugins run are delivered separately, in an offline dependency kit. AI models still need a provider: on a computer without network, use a local server such as LM Studio or Ollama (see [Providers and models](providers.md)).
+VERA can be installed and used on a bench computer without network. The installer contains everything the application needs: the local indexing model, the Python tool installer and the official plugin catalog. The programs that plugins run are delivered separately, in an offline dependency kit. The Interactive Browser runtime and the dictation models are delivered separately too, in the `components/` folder. AI models still need a provider: on a computer without network, use a local server such as LM Studio or Ollama (see [Providers and models](providers.md)).
 
 ## The delivery folder
 
@@ -12,9 +12,10 @@ A VERA delivery is one folder per version, `vera-<version>/`:
 | `vera-linux-x64/` | `VERA-<v>-linux-*.AppImage`, `VERA-<v>-linux-*.deb`, `SHA256SUMS` |
 | `plugins/` | One `<id>-<version>.zip` per plugin, the catalog indexes, `vera-plugins-<version>.zip` with the whole catalog, `SHA256SUMS` |
 | `plugin-deps/` | `vera-plugin-deps-<version>-windows-x64.zip` and `…-linux-x64.zip`, `SHA256SUMS` |
+| `components/` | `chrome-win64.zip` and `chrome-linux64.zip` (browser runtime), `whisper-base.zip` and `whisper-small.zip` (dictation models), `THIRD-PARTY-NOTICES.md`, `SHA256SUMS` |
 | `delivery.json` | What was built: versions, files, sizes and SHA-256 |
 
-Copy the folder of your platform, and `plugin-deps/` if you want to use plugin programs. `plugins/` is needed only for plugins newer than your VERA installer. The dependency kit is about 1 GB per platform.
+Copy the folder of your platform, and `plugin-deps/` if you want to use plugin programs. `plugins/` is needed only for plugins newer than your VERA installer. The dependency kit is about 1 GB per platform. Copy `components/` too if you want the Interactive Browser or dictation; it holds about 700 MB for both platforms and both models.
 
 ## 1. Check the files
 
@@ -52,6 +53,13 @@ The **Plugins** page lists the official plugins of your VERA version from the ca
 VERA checks every file from the kit against the SHA-256 in the plugin's manifest and refuses a changed file. To install from the network again, remove `plugins.kit`.
 
 To install a single program from an archive you copied yourself, use **Install from dependency archive…** on the plugin's card instead.
+
+## 5. Install the browser runtime and dictation models offline
+
+1. Open **Settings → Web access** and select **Install from file…**. Pick `components/chrome-win64.zip` on Windows or `components/chrome-linux64.zip` on Linux.
+2. Open **Settings → Dictation** and select **Install from file…** on the model you want. Pick `components/whisper-base.zip` or `components/whisper-small.zip`.
+
+VERA checks each file against the SHA-256 that its version pins, refuses a changed or different file and makes no network request. `THIRD-PARTY-NOTICES.md` lists the source and licence of each component.
 
 ## Vendor programs
 

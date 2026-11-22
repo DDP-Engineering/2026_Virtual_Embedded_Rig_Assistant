@@ -143,10 +143,17 @@ it.each(["en", "ro", "de"])(
 );
 it("saves explicit API-key mode and clears the password draft without echoing a stored key", async () => {
   const user = await mount();
+  const save = () => container!.querySelector<HTMLButtonElement>("[data-settings-save]")!;
+  // Save sits in the page header and stays disabled until the page has a change; Cancel drops the draft.
+  expect(save().disabled).toBe(true);
+  await act(async () => user.click(container!.querySelector("#web-enabled")!));
+  expect(save().disabled).toBe(false);
+  await act(async () => user.click(container!.querySelector("[data-settings-cancel]")!));
+  expect(save().disabled).toBe(true);
   await act(async () => user.selectOptions(container!.querySelector("#web-authentication")!, "api-key"));
   const key = "private-draft-exa-key-012345";
   await act(async () => user.type(container!.querySelector("#web-api-key")!, key));
-  await act(async () => user.click(container!.querySelector("[data-web-save]")!));
+  await act(async () => user.click(save()));
   expect(api.invoke).toHaveBeenCalledWith(
     "web.access.save",
     expect.objectContaining({ authentication: "api-key", apiKey: key }),

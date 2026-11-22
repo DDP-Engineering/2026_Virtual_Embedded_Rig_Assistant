@@ -40,6 +40,64 @@ it("requires the whole initial prompt, strips split markers and grants execution
   await expect(prompt.wait()).rejects.toMatchObject({ messageKey: "chatActions.promptNotReady" });
 });
 
+it("prompts a PowerShell outside Full Language with allowed commands behind a distinct marker", () => {
+  const prompt = new TerminalCommandPrompt();
+  const script = Buffer.from(prompt.startup("powershell", {}).args.at(-1)!, "base64").toString("utf16le");
+  expect(script.startsWith("if ($ExecutionContext.SessionState.LanguageMode -eq 'FullLanguage') {")).toBe(
+    true,
+  );
+  const [full, other] = script.split("} else {");
+  // The Full Language branch is the earlier prompt, exactly.
+  expect(full).toBe(
+    `if ($ExecutionContext.SessionState.LanguageMode -eq 'FullLanguage') { [Console]::Write("PS $($executionContext.SessionState.Path.CurrentLocation)> ${prompt.marker}"); $veraInitialCommand = [Console]::ReadLine(); if ($null -ne $veraInitialCommand) { . ([scriptblock]::Create($veraInitialCommand)) }; Remove-Variable veraInitialCommand -ErrorAction SilentlyContinue `,
+  );
+  expect(other).toContain(
+    'Write-Host -NoNewline "PS $($executionContext.SessionState.Path.CurrentLocation)> ',
+  );
+  expect(other).toContain("$veraInitialCommand = Read-Host;");
+  expect(other).toContain("Invoke-Expression $veraInitialCommand");
+  expect(other).toContain(prompt.constrainedMarker);
+  // Constrained Language refuses method calls on these types.
+  expect(other).not.toMatch(/\[(Console|scriptblock|Convert|Text\.Encoding)\]/);
+});
+
+it("marks a terminal constrained only by the constrained marker, stripped when split in either part", async () => {
+  // A cut inside the shared prefix, and one inside ";constrained", past the Full marker's length.
+  for (const cut of [20, new TerminalCommandPrompt().marker.length + 3]) {
+    const prompt = new TerminalCommandPrompt();
+    expect(prompt.constrained).toBe(false);
+    const marker = prompt.constrainedMarker;
+    expect(prompt.output(`PS C:\\bench> ${marker.slice(0, cut)}`, vi.fn())).toBe("PS C:\\bench> ");
+    expect(prompt.output(`${marker.slice(cut)}next`, vi.fn())).toBe("next");
+    await prompt.wait();
+    expect(prompt.constrained).toBe(true);
+  }
+  const full = new TerminalCommandPrompt();
+  full.output(`PS C:\\bench> ${full.marker}`, vi.fn());
+  await full.wait();
+  expect(full.constrained).toBe(false);
+});
+
+it("takes the mode from the marker that proves the prompt, also after a timeout", async () => {
+  const full = new TerminalCommandPrompt();
+  full.output(full.marker, vi.fn());
+  await full.wait();
+  // A later constrained marker proves nothing more and does not change the mode.
+  expect(full.output(full.constrainedMarker, vi.fn())).toBe("");
+  expect(full.constrained).toBe(false);
+  vi.useFakeTimers();
+  const late = new TerminalCommandPrompt();
+  const pending = late.wait();
+  const refused = expect(pending).rejects.toMatchObject({ messageKey: "chatActions.promptNotReady" });
+  await vi.advanceTimersByTimeAsync(5000);
+  await refused;
+  expect(late.dispatchEligible).toBe(false);
+  late.output(late.constrainedMarker, vi.fn());
+  expect(late.dispatchEligible).toBe(true);
+  await late.wait();
+  expect(late.constrained).toBe(true);
+});
+
 it("does not revive a proof after input or closure, including while waiting for the first prompt", async () => {
   const prompt = new TerminalCommandPrompt();
   const pending = prompt.wait();

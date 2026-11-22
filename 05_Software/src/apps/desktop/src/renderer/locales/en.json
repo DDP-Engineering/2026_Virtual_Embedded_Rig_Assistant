@@ -180,12 +180,13 @@
     "automatic": "Automatic detection",
     "loading": "Loading dictation models…",
     "noSelection": "No model selected",
-    "selected": "Selected model: {{model}}",
     "missing": "Not installed",
     "installed": "Installed",
     "corrupt": "Installed files are damaged",
     "downloading": "Downloading…",
+    "installingFile": "Installing from file…",
     "download": "Download",
+    "installFile": "Install from file…",
     "cancel": "Cancel",
     "retry": "Retry",
     "select": "Use model",
@@ -196,7 +197,28 @@
     "storage": "The model could not be saved. Check access to application data.",
     "removalFailed": "The model could not be removed. Close apps using its files and retry.",
     "modelAction": "{{action}}: {{model}}",
-    "progress": "Download progress for {{model}}"
+    "progress": "Download progress for {{model}}",
+    "inUse": "Model in use",
+    "inUseBadge": "In use",
+    "columns": {
+      "model": "Model",
+      "languages": "Languages",
+      "speed": "Speed",
+      "accuracy": "Accuracy",
+      "size": "Size",
+      "status": "Status",
+      "actions": "Actions"
+    },
+    "speeds": {
+      "fast": "Fast",
+      "moderate": "Moderate",
+      "slow": "Slow"
+    },
+    "accuracies": {
+      "basic": "Basic",
+      "good": "Good",
+      "high": "High"
+    }
   },
   "settings": {
     "dictation": "Dictation",
@@ -289,8 +311,6 @@
     "lockGuard": "Lock coordination is busy. This workbench is read-only."
   },
   "providers": {
-    "search": "Search providers",
-    "noMatches": "No matching providers",
     "serviceEndpoint": "Service endpoint",
     "region": "Region",
     "workspaceId": "Workspace ID",
@@ -339,7 +359,7 @@
     "save": "Save",
     "remove": "Remove",
     "edit": "Edit",
-    "add": "Add connection",
+    "add": "Add provider",
     "cancel": "Cancel",
     "saving": "Saving provider…",
     "consentTitle": "Secure credential storage unavailable",
@@ -364,12 +384,12 @@
     "editNamed": "Edit {{name}}",
     "removeNamed": "Remove {{name}}",
     "testNamed": "Test {{name}}",
-    "subscriptions": "Subscriptions",
-    "connections": "API / local connections",
-    "emptyConnections": "No API or local connections added yet.",
     "provider": "Provider",
     "other": "Other compatible provider",
-    "noKey": "Without API key"
+    "noKey": "Without API key",
+    "models": "Models",
+    "filterModels": "Filter models",
+    "noModels": "No models listed."
   },
   "provider": {
     "auth": "Authentication failed. Check the saved credential in Providers settings.",
@@ -921,6 +941,7 @@
   "browser": {
     "title": "Interactive Browser",
     "install": "Install browser runtime",
+    "installFile": "Install from file…",
     "cancelInstall": "Cancel installation",
     "remove": "Remove browser runtime",
     "enableApp": "Enable Interactive Browser in VERA",
@@ -997,11 +1018,8 @@
     "keepKey": "Leave blank to keep the saved key",
     "storedKey": "Saved key available · {{storage}}",
     "keyRequired": "An API key is required in this access mode.",
-    "save": "Save",
     "test": "Test connection",
     "removeKey": "Remove saved key",
-    "saving": "Saving…",
-    "saved": "Web access settings saved.",
     "testTitle": "Web connection test",
     "testing": "Connecting to {{provider}}…",
     "close": "Close",

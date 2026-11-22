@@ -36,7 +36,7 @@ The desktop shell occupies a fixed viewport without document scrolling; long pag
 
 The architecture laws in [System.md](../../00_Planning/System.md) govern process boundaries, local assets, credentials and test isolation. Versions are pinned exactly. Core remains independent of Electron; renderer access to main uses shared contracts.
 
-Plugin management uses compact package rows and explicit dependency checks; selection remains per workbench and defaults to none. Verified local dependency archives support offline provisioning without publishing a release. Desktop listing performs integrity work off main; session-list polling avoids program initialization while retaining recovery and current-workbench ownership.
+Plugin management uses compact package rows and explicit dependency checks; selection remains per workbench and defaults to none. Verified local dependency archives support offline provisioning without publishing a release. A delivery's `components/` part (the Chrome for Testing ZIP per platform and both Whisper model ZIPs) installs the browser runtime and dictation models offline through Install from file… in Settings, verified against the Desktop pins. Desktop listing performs integrity work off main; session-list polling avoids program initialization while retaining recovery and current-workbench ownership.
 
 ## Implementation orientation
 

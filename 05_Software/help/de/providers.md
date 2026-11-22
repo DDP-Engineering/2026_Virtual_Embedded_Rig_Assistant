@@ -1,12 +1,12 @@
 # Anbieter und Modelle
 
-Ein Anbieter gibt VERA Zugang zu einem Sprachmodell. Sie benötigen mindestens einen. Anbieter richten Sie unter **Einstellungen** → **Anbieter** ein; die Seite hat zwei Teile: **Abonnements** und **API- / lokale Verbindungen**.
+Ein Anbieter gibt VERA Zugang zu einem Sprachmodell. Sie benötigen mindestens einen. Anbieter richten Sie unter **Einstellungen** → **Anbieter** ein. Wählen Sie **Anbieter hinzufügen** und dann den Anbieter in der Liste **Anbieter**. Die Liste enthält das **ChatGPT-Abonnement**.
 
-Wählen Sie **Verbindung hinzufügen** und nutzen Sie **Anbieter suchen**, um einen Anbieter nach Namen zu finden.
+Jeder verbundene Anbieter erscheint als Karte mit **Bearbeiten**, **Testen** und **Entfernen**. Die Karte des ChatGPT-Abonnements hat stattdessen **Abmelden**. Die Karte zeigt ihre **Modelle** als Kontrollkästchen. Bei mehr als zehn Modellen nutzen Sie **Modelle filtern** und die Seiten. VERA bietet nur die angehakten Modelle in der Modellauswahl im Chat und in der Liste der Standardmodelle des Workbenchs an. Ein neuer Anbieter bietet nur das Modell an, das Sie beim Verbinden gewählt haben; haken Sie auf seiner Karte weitere an. Ein früher eingerichteter Anbieter bietet alle seine Modelle an, bis Sie die Haken ändern. Wählen Sie oben rechts **Speichern**, um die Haken zu behalten. **Abbrechen** verwirft sie.
 
 ## ChatGPT-Abonnement
 
-1. Wählen Sie unter **ChatGPT-Abonnement** die Option **Mit ChatGPT anmelden**. Ihr Systembrowser öffnet die Anmeldeseite.
+1. Wählen Sie **Anbieter hinzufügen**, als **Anbieter** das **ChatGPT-Abonnement** und dann **Mit ChatGPT anmelden**. Ihr Systembrowser öffnet die Anmeldeseite.
 2. Melden Sie sich dort an. VERA zeigt **Mit ChatGPT angemeldet**, wenn der Vorgang abgeschlossen ist.
 
 Das Token wird automatisch erneuert. **Abmelden** entfernt es.
@@ -17,14 +17,14 @@ Das Token wird automatisch erneuert. **Abmelden** entfernt es.
 
 ## OpenAI-API
 
-1. Wählen Sie unter **API- / lokale Verbindungen** die Option **Verbindung hinzufügen** und als **Anbieter** die Option **OpenAI-API**.
+1. Wählen Sie **Anbieter hinzufügen** und als **Anbieter** die Option **OpenAI-API**.
 2. Geben Sie den **OpenAI-API-Schlüssel** und optional ein **OpenAI-Modell** ein.
 3. Wählen Sie **Speichern**.
 
 ## OpenCode Console und OpenCode Go
 
 1. Erstelle in OpenCode Console einen API-Schlüssel für den Workspace. Erteile ihm Leserechte für Modelle und die Berechtigung zur Inferenz.
-2. Wähle in VERA **Verbindung hinzufügen** und dann **OpenCode Console** für die nutzungsabhängige Abrechnung oder **OpenCode Go** für das Go-Abo.
+2. Wähle in VERA **Anbieter hinzufügen** und dann **OpenCode Console** für die nutzungsabhängige Abrechnung oder **OpenCode Go** für das Go-Abo.
 3. Gib den Schlüssel ein und suche nach Modellen. Wähle ein Modell aus der Liste des Tarifs oder gib für eine manuelle Einrichtung die genaue ID und die Limits ein.
 4. Speichere und teste die Verbindung. Wähle das Modell für deine Sitzung oder Workbench.
 
@@ -36,7 +36,7 @@ Siehe [OpenCode-Einrichtung](https://opencode.ai/docs/console/harnesses) und [An
 
 ## QwenCloud Standard und QwenCloud Token Plan
 
-1. Wähle unter **Verbindung hinzufügen** **QwenCloud Standard** für einen nutzungsabhängig abgerechneten API-Schlüssel aus Singapur oder **QwenCloud Token Plan** für den zugehörigen Aboschlüssel (`sk-sp-`). VERA trägt die Basis-URL des gewählten Tarifs ein.
+1. Wähle **Anbieter hinzufügen** und dann **QwenCloud Standard** für einen nutzungsabhängig abgerechneten API-Schlüssel aus Singapur oder **QwenCloud Token Plan** für den zugehörigen Aboschlüssel (`sk-sp-`). VERA trägt die Basis-URL des gewählten Tarifs ein.
 2. Gib den passenden Schlüssel ein und wähle **Modelle suchen**. Ist die Liste nicht verfügbar, gib die genaue Modell-ID für deine Region oder deinen Tarif ein. `qwen3.8-flash` akzeptiert beispielsweise Text und Bilder, kann Werkzeuge aufrufen und bietet einen ein- und ausschaltbaren Denkmodus. `qwen3.7-max` bietet Werkzeugaufrufe und denselben Denkmodus mit Texteingabe. Bei anderen Modell-IDs können die Fähigkeiten ungeprüft sein.
 3. Wähle **Speichern** und dann **Testen**. Wird die Katalogerreichbarkeit übersprungen, prüft der Schritt für Authentifizierung und Modell den Schlüssel und das Modell mit einer Chat-Anfrage. Wähle das Modell für deine Sitzung oder Workbench.
 
@@ -46,7 +46,7 @@ Siehe [QwenCloud-API-Schlüssel](https://docs.qwencloud.com/developer-guides/adm
 
 ## DeepSeek, Moonshot AI und Kimi For Coding
 
-1. Wähle unter **Verbindung hinzufügen** den Eintrag **DeepSeek** für einen DeepSeek-API-Schlüssel, **Moonshot AI** für einen Schlüssel der internationalen Kimi-API-Plattform oder **Kimi For Coding** für einen Schlüssel aus der Kimi-Code-Konsole. VERA trägt die Basis-URL des Dienstes ein.
+1. Wähle **Anbieter hinzufügen** und dann den Eintrag **DeepSeek** für einen DeepSeek-API-Schlüssel, **Moonshot AI** für einen Schlüssel der internationalen Kimi-API-Plattform oder **Kimi For Coding** für einen Schlüssel aus der Kimi-Code-Konsole. VERA trägt die Basis-URL des Dienstes ein.
 2. Gib den Schlüssel des Dienstes ein. Wähle bei DeepSeek und Moonshot AI **Modelle suchen** oder gib die genaue Modell-ID ein. Gib bei Kimi For Coding je nach Tarif eine ID wie `kimi-for-coding` oder `k3-256k` ein.
 3. Wähle **Speichern** und dann **Testen**. Bei Kimi For Coding wird die Erreichbarkeitsprüfung übersprungen. Die Prüfung von Authentifizierung und Modell sendet eine Anfrage an das Modell.
 
@@ -58,7 +58,7 @@ Siehe [DeepSeek-Modellgrenzen](https://api-docs.deepseek.com/api/list-models/), 
 
 ## MiniMax und Z.AI
 
-1. Wähle unter **Verbindung hinzufügen** den Eintrag **MiniMax API** für einen verbrauchsabhängig abgerechneten Schlüssel (`sk-api-`) oder **MiniMax M Plan** für einen MiniMax-Abonnementschlüssel (`sk-cp-`). Beide verwenden den internationalen Messages-Dienst.
+1. Wähle **Anbieter hinzufügen** und dann den Eintrag **MiniMax API** für einen verbrauchsabhängig abgerechneten Schlüssel (`sk-api-`) oder **MiniMax M Plan** für einen MiniMax-Abonnementschlüssel (`sk-cp-`). Beide verwenden den internationalen Messages-Dienst.
 2. Wähle **Z.AI API** für einen Standard-API-Schlüssel. **Z.AI GLM Coding Plan** verwendet die eigene internationale Adresse des Coding-Tarifs. Verwende einen Personal-Coding-Plan- oder Team-Plan-Schlüssel nur, wenn Z.AI den Zugriff aus VERA genehmigt hat. Z.AI beschränkt den Tarif auf unterstützte Werkzeuge. VERA steht nicht auf der veröffentlichten Liste. Prüfe den Schlüsseltyp in deinem Konto, da manche Schlüssel an mehreren Adressen funktionieren und die Abrechnung von Schlüssel und Adresse abhängt.
 3. Wähle ein vorgeschlagenes Modell oder gib die für dein Konto freigeschaltete Modell-ID ein. Wähle **Speichern** und dann **Testen**. Der Test sendet Modellanfragen, die das Kontingent belasten können. Wähle das gespeicherte Modell für deine Sitzung oder Workbench.
 
@@ -81,7 +81,7 @@ Verwende Alibaba Coding Plan gemäß Alibabas Nutzungsrichtlinie in unterstützt
 
 ## Fireworks AI, Together AI, Groq und Cerebras
 
-1. Wähle unter **Verbindung hinzufügen** den Dienst aus und gib einen API-Schlüssel aus dessen Konsole ein. VERA trägt die Dienstadresse ein und speichert den Schlüssel für jede Verbindung separat.
+1. Wähle **Anbieter hinzufügen** und dann den Dienst aus und gib einen API-Schlüssel aus dessen Konsole ein. VERA trägt die Dienstadresse ein und speichert den Schlüssel für jede Verbindung separat.
 2. Wähle **Modelle suchen** oder gib die vollständige Modell-ID und die Modellgrenzen ein. Gib bei Fireworks das Kontopräfix mit an, etwa `accounts/fireworks/models/glm-5p3-flash`. Kopiere für einen dedizierten Endpunkt die genaue Inferenz-ID aus der Dienstkonsole.
 3. Speichere und wähle **Testen**, um den Schlüssel und das Modell zu prüfen. Die Unterstützung für Werkzeuge und Bilder wird angezeigt, wenn sie im Katalog oder in der Modelldokumentation angegeben ist. Prüfe die Limits und den Modellzugriff für dein Konto.
 
@@ -89,7 +89,7 @@ Siehe die Modelllisten für [Fireworks AI](https://fireworks.ai/models), [Togeth
 
 ## Hugging Face Inference Providers, NVIDIA NIM und Vercel AI Gateway
 
-1. Wähle unter **Verbindung hinzufügen** den Dienst aus und gib seinen Schlüssel ein. Hugging Face benötigt ein Zugriffstoken mit der Berechtigung für Inference Providers. NVIDIA NIM benötigt einen Schlüssel mit Zugriff auf die NVIDIA Public API Endpoints. Vercel benötigt einen AI-Gateway-Schlüssel.
+1. Wähle **Anbieter hinzufügen** und dann den Dienst aus und gib seinen Schlüssel ein. Hugging Face benötigt ein Zugriffstoken mit der Berechtigung für Inference Providers. NVIDIA NIM benötigt einen Schlüssel mit Zugriff auf die NVIDIA Public API Endpoints. Vercel benötigt einen AI-Gateway-Schlüssel.
 2. Wähle **Modelle suchen** und dann ein Modell aus. Bei Modellen mit eingeschränktem oder kontospezifischem Zugriff kannst du die vollständige Modell-ID und die Modellgrenzen eingeben. Behalte das Präfix und die Schrägstriche bei. Wenn du bei Hugging Face einen nachgelagerten Anbieter ausdrücklich auswählst, behalte auch den Suffix wie in `owner/model:novita` bei.
 3. Speichere die Verbindung und wähle **Testen**, um das Modell mit deinem Schlüssel zu prüfen. Ein Katalogeintrag garantiert keinen Zugriff. Prüfe bei einem Zugriffsfehler die genaue Modell-ID und deine Berechtigung oder deinen Tarif beim Dienst, bevor du die Verbindung änderst.
 
@@ -98,7 +98,7 @@ VERA sendet Anfragen an den in der Modellauswahl genannten Dienst. [Hugging Face
 ## LM Studio
 
 1. Starten Sie den LM-Studio-Server und laden Sie ein Modell.
-2. **Verbindung hinzufügen**, **Anbieter** LM Studio. Die Adresse `http://localhost:1234` ist vorausgefüllt.
+2. **Anbieter hinzufügen**, **Anbieter** LM Studio. Die Adresse `http://localhost:1234` ist vorausgefüllt.
 3. Wählen Sie **Verbindung testen**. VERA liest die Konversationsmodelle des Servers; Embedding-Modelle werden ausgelassen.
 4. Prüfen Sie für jedes Modell das Kontextlimit, das VERA anzeigt. Meldet der Server keines, legen Sie es selbst fest. Die optionalen Werte **Reasoning** und **Temperatur** bleiben auf **Anbieterstandard**, sofern Sie sie nicht festlegen.
 5. Wählen Sie **Speichern**.
@@ -107,7 +107,7 @@ Für LM Studio ist ein API-Schlüssel optional.
 
 ## Ollama und andere kompatible Endpunkte
 
-1. **Verbindung hinzufügen**, **Anbieter** Ollama oder **Anderer kompatibler Anbieter**. Für Ollama ist die **Basis-URL** `http://localhost:11434/v1` vorausgefüllt.
+1. **Anbieter hinzufügen**, **Anbieter** Ollama oder **Anderer kompatibler Anbieter**. Für Ollama ist die **Basis-URL** `http://localhost:11434/v1` vorausgefüllt.
 2. Füllen Sie **Name des Endpunkts**, **Basis-URL** (eine `http`- oder `https`-Adresse, die auf `/v1` endet), **Modell** (der Modellname, wie ihn der Server kennt), **Kontextfenster (Tokens)** und **Maximale Ausgabe (Tokens)** aus.
 3. Geben Sie unter **API-Schlüssel des Endpunkts** einen Schlüssel ein, wenn der Server einen benötigt, oder lassen Sie das Feld leer.
 4. Wählen Sie **Speichern**.

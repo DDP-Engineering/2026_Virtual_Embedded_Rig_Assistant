@@ -66,7 +66,7 @@ La désactivation de l’accès web arrête aussi les recherches et télécharge
 
 ### Navigateur interactif
 
-Dans **Paramètres → Accès web**, sélectionnez **Installer le navigateur** pour télécharger et vérifier Chromium. Vous pouvez annuler l’installation ou supprimer le navigateur. Cochez **Activer le navigateur interactif dans VERA** et **Autoriser le navigateur interactif dans ce banc de travail**. Les deux réglages sont désactivés par défaut.
+Dans **Paramètres → Accès web**, sélectionnez **Installer le navigateur** pour télécharger et vérifier Chromium. Vous pouvez annuler l’installation ou supprimer le navigateur. Cochez **Activer le navigateur interactif dans VERA** et **Autoriser le navigateur interactif dans ce banc de travail**. Les deux réglages sont désactivés par défaut. Sans réseau, sélectionnez **Installer depuis un fichier…** et choisissez l’archive du navigateur dans une livraison VERA (voir [Installation hors ligne](offline-install.md)).
 
 Dans le chat, saisissez l’origine exacte, par exemple `https://example.com`, sous **Origine publique**, puis sélectionnez **Accorder l’accès**. Indiquez le protocole et tout port non standard. Chaque chat a ses autorisations et sa fenêtre. Autorisez séparément les origines supplémentaires utilisées pour les redirections ou les ressources.
 
@@ -82,7 +82,7 @@ Dans Paramètres → Commandes, choisissez Automatique, PowerShell 7, Windows Po
 
 ## Dictée
 
-Choisissez **Whisper Small** (recommandé) ou **Whisper Base** (compact). La page indique la taille du téléchargement et l’état d’installation de chaque modèle. Cliquez sur **Télécharger** et suivez la progression. **Annuler** efface le téléchargement partiel. Si VERA signale un échec ou des fichiers endommagés, cliquez sur **Réessayer**. Libérez de l’espace sur le disque si nécessaire.
+Choisissez **Whisper Small** (recommandé) ou **Whisper Base** (compact). La page indique la taille du téléchargement et l’état d’installation de chaque modèle. Cliquez sur **Télécharger** et suivez la progression. **Annuler** efface le téléchargement partiel. Si VERA signale un échec ou des fichiers endommagés, cliquez sur **Réessayer**. Libérez de l’espace sur le disque si nécessaire. Sans réseau, sélectionnez **Installer depuis un fichier…** sur le modèle et choisissez son archive dans une livraison VERA.
 
 Après l’installation, cliquez sur **Utiliser le modèle**. VERA mémorise votre choix après redémarrage. **Supprimer** efface les fichiers du modèle et annule sa sélection s’il était actif. Si la suppression échoue, fermez les applications qui utilisent les fichiers du modèle, puis cliquez sur **Réessayer**. Les modèles sont stockés dans les données de l’application VERA et partagés entre les bancs de travail.
 

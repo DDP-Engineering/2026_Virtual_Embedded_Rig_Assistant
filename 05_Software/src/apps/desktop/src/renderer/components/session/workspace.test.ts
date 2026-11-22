@@ -519,6 +519,11 @@ test("New Workbench creates only and submits the configured draft with prefilled
     "privacy",
   ]);
   await act(async () => page.querySelector<HTMLButtonElement>('[data-project-section="tools"]')?.click());
+  // The Tools list shows ten rows per page by default: page forward to the tool.
+  for (let step = 0; step < 10 && !page.querySelector('[data-tool-toggle="web_search"]'); step++)
+    await act(async () =>
+      page.querySelector<HTMLButtonElement>(".workbench-tools [data-pager-next]")?.click(),
+    );
   await act(async () => page.querySelector<HTMLInputElement>('[data-tool-toggle="web_search"]')?.click());
   await act(async () =>
     page.querySelector<HTMLButtonElement>('[data-project-section="instructions"]')?.click(),
@@ -1298,6 +1303,39 @@ test("context-limit retains full history and accepts another instruction; Contex
   expect(container.querySelector(".context-tab")?.textContent).toContain("create-plugin");
   const code = container.querySelector("code.language-c .hljs-type");
   expect(code?.textContent).toBe("int");
+});
+// REQ-FUNC-701b5178
+test("model picker offers only the ticked models of a provider", async () => {
+  await api.invoke("workbench.open", { folder: "/mock/demo-board" });
+  const profile = (id: string) => ({
+    id,
+    name: id,
+    contextWindow: 32768,
+    maxOutputTokens: 4096,
+    reasoningOptions: [],
+  });
+  await api.invoke("providers.save", {
+    provider: "custom",
+    config: {
+      name: "Ticked bench",
+      baseUrl: "http://127.0.0.1:8001/v1",
+      model: "first-model",
+      contextWindow: 32768,
+      maxOutputTokens: 4096,
+      protocol: "lmstudio",
+      models: [profile("first-model"), profile("second-model")],
+    },
+  });
+  await mount();
+  await act(async () => button("New session").click());
+  await settle();
+  const values = [
+    ...(container.querySelector<HTMLSelectElement>('select[aria-label="Model"]') as HTMLSelectElement)
+      .options,
+  ].map((option) => option.value);
+  // A new connection ticks only its chosen model; the provider's other model stays out of the picker.
+  expect(values).toContain("custom:ticked-bench/first-model");
+  expect(values).not.toContain("custom:ticked-bench/second-model");
 });
 test("model picker uses configured catalogs and confirms the session model", async () => {
   await api.invoke("workbench.open", { folder: "/mock/demo-board" });

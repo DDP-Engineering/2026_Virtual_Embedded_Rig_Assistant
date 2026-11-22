@@ -66,7 +66,7 @@ Das Ausschalten des Webzugriffs stoppt auch laufende Suchen und Downloads. Einze
 
 ### Interaktiver Browser
 
-Wählen Sie unter **Einstellungen → Webzugriff** die Aktion **Browser-Laufzeit installieren**, um Chromium herunterzuladen und zu prüfen. Sie können die Installation abbrechen oder die Laufzeit entfernen. Wählen Sie **Interaktiven Browser in VERA aktivieren** und **Interaktiven Browser in dieser Workbench erlauben**. Beide Schalter sind anfangs aus.
+Wählen Sie unter **Einstellungen → Webzugriff** die Aktion **Browser-Laufzeit installieren**, um Chromium herunterzuladen und zu prüfen. Sie können die Installation abbrechen oder die Laufzeit entfernen. Wählen Sie **Interaktiven Browser in VERA aktivieren** und **Interaktiven Browser in dieser Workbench erlauben**. Beide Schalter sind anfangs aus. Ohne Netzwerk wählen Sie **Aus Datei installieren…** und das Archiv der Browser-Laufzeit aus einer VERA-Lieferung (siehe [Offline-Installation](offline-install.md)).
 
 Geben Sie im Chat unter **Öffentlicher Ursprung** den genauen Ursprung ein, etwa `https://example.com`, und wählen Sie **Zugriff gewähren**. Geben Sie das Protokoll und gegebenenfalls einen abweichenden Port an. Jeder Chat hat eigene Freigaben und ein eigenes Fenster. Geben Sie weitere Ursprünge für Weiterleitungen oder Ressourcen einzeln frei.
 
@@ -82,7 +82,7 @@ Unter Einstellungen → Befehle Automatisch, PowerShell 7, Windows PowerShell, C
 
 ## Diktat
 
-Wählen Sie **Whisper Small** (empfohlen) oder **Whisper Base** (kompakt). Für jedes Modell sehen Sie die Downloadgröße und den Installationsstatus. Klicken Sie auf **Herunterladen** und verfolgen Sie den Fortschritt. **Abbrechen** verwirft den begonnenen Download. Meldet VERA einen fehlgeschlagenen Download oder beschädigte Dateien, wählen Sie **Erneut versuchen**. Geben Sie bei Bedarf Speicherplatz frei.
+Wählen Sie **Whisper Small** (empfohlen) oder **Whisper Base** (kompakt). Für jedes Modell sehen Sie die Downloadgröße und den Installationsstatus. Klicken Sie auf **Herunterladen** und verfolgen Sie den Fortschritt. **Abbrechen** verwirft den begonnenen Download. Meldet VERA einen fehlgeschlagenen Download oder beschädigte Dateien, wählen Sie **Erneut versuchen**. Geben Sie bei Bedarf Speicherplatz frei. Ohne Netzwerk wählen Sie beim Modell **Aus Datei installieren…** und dessen Archiv aus einer VERA-Lieferung.
 
 Wählen Sie nach der Installation **Modell verwenden**. VERA speichert die Auswahl über Neustarts hinweg. **Entfernen** löscht die Dateien des Modells und hebt die Auswahl auf, wenn dieses Modell aktiv war. Falls das Entfernen fehlschlägt, schließen Sie Apps, die die Modelldateien nutzen, und wählen Sie **Erneut versuchen**. Die Modelle liegen in den VERA-Anwendungsdaten und stehen allen Workbenches zur Verfügung.
 

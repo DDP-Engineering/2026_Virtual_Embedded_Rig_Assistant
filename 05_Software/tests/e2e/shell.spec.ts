@@ -441,8 +441,9 @@ test("validated settings update survives an application restart", async () => {
     await page.evaluate(() => {
       const probe = { count: 0 };
       (window as unknown as { settingsProbe: typeof probe }).settingsProbe = probe;
-      (window as unknown as { vera: VeraBridge }).vera.subscribe("app", () => {
-        probe.count++;
+      // Other app events (such as session.capacity after a settings save) may arrive too; count settings ones.
+      (window as unknown as { vera: VeraBridge }).vera.subscribe("app", (event) => {
+        if (event.type === "settings.changed") probe.count++;
       });
     });
     const updated = await page.evaluate(() =>

@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-FUNC-17812cd0"
+
+title = "Install a dictation model from a picked archive"
+
+status = "active"
+
+requirement = "When the user picks a ZIP with Install from file on a dictation model, VERA shall extract it into that model's staging folder, verify the exact pinned file inventory and publish the model atomically under its application data directory, without any network request."
+
+verification = "Install a fixture model from a ZIP of its catalog files with a transfer that fails when called. Assert the model becomes installed and selectable, nothing is published under the model name before verification completes, and the transfer was never called; a second request while it runs is refused as busy."
+
+affected_paths = ["05_Software/src/apps/desktop/src/main/dictation/models.ts", "05_Software/src/apps/desktop/src/main/dictation/archive.ts", "05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/libraries/shared/src/dictation.ts", "05_Software/src/libraries/shared/src/ipc.ts"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/main/dictation/models.test.ts", "05_Software/tests/integration/offline-components.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-21
+updated = 2026-11-21

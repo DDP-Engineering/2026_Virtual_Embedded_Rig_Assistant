@@ -108,29 +108,31 @@ test("LM Studio discovers models, persists per-model settings and sends optional
     page.on("pageerror", (error) => errors.push(error.message));
     await page.locator('[data-i18n="nav.settings"]').click();
     await page.locator('[data-section="providers"]').click();
+    const dialog = page.locator("[data-provider-dialog]");
     await page.locator('[data-action="add-provider"]').click();
-    await page.locator("[data-provider-preset]").selectOption("lmstudio");
-    await page.locator("[data-discovery-endpoint]").fill(live ?? `http://127.0.0.1:${address.port}`);
-    await page.locator('[data-action="discover-models"]').click();
-    await expect(page.locator("[data-discovered-model]")).toBeVisible();
+    await dialog.locator("[data-provider-preset]").selectOption("lmstudio");
+    await dialog.locator("[data-discovery-endpoint]").fill(live ?? `http://127.0.0.1:${address.port}`);
+    await dialog.locator('[data-action="discover-models"]').click();
+    await expect(dialog.locator("[data-discovered-model]")).toBeVisible();
     const configuredContext = Number(
-      await page.getByLabel("Context window (tokens)", { exact: true }).inputValue(),
+      await dialog.getByLabel("Context window (tokens)", { exact: true }).inputValue(),
     );
-    const selected = await page.locator("[data-discovered-model]").inputValue();
+    const selected = await dialog.locator("[data-discovered-model]").inputValue();
     expect(selected).toBeTruthy();
-    const number = await page.locator("[data-discovered-model] option").count();
+    const number = await dialog.locator("[data-discovered-model] option").count();
     expect(number).toBeGreaterThan(0);
     if (!live) {
       expect(number).toBe(2);
-      await expect(page.locator("[data-model-loaded]")).toContainText("65536");
+      await expect(dialog.locator("[data-model-loaded]")).toContainText("65536");
     }
-    await page.locator("[data-model-reasoning]").selectOption("off");
-    await page.locator("[data-model-temperature]").fill("0");
+    await dialog.locator("[data-model-reasoning]").selectOption("off");
+    await dialog.locator("[data-model-temperature]").fill("0");
     // REQ-UX-2ccfac13: the connection's response timeout starts at 300 s and is saved with it.
-    const timeout = page.getByLabel("Response timeout (s)", { exact: true });
+    const timeout = dialog.getByLabel("Response timeout (s)", { exact: true });
     await expect(timeout).toHaveValue("300");
     await timeout.fill("900");
-    await page.locator('[data-provider-action="save-lmstudio"]').click();
+    await dialog.locator('[data-provider-action="save-lmstudio"]').click();
+    await expect(dialog).toHaveCount(0);
     const row = page.locator('[data-provider="custom:lm-studio"]');
     await expect(row).toBeVisible();
     const list = await page.evaluate(() =>
@@ -153,10 +155,11 @@ test("LM Studio discovers models, persists per-model settings and sends optional
       .locator('[data-provider="custom:lm-studio"]')
       .getByRole("button", { name: "Edit LM Studio", exact: true })
       .click();
-    await expect(page.locator("[data-discovered-model]")).toHaveValue(selected);
-    await expect(page.locator("[data-model-reasoning]")).toHaveValue("off");
-    await expect(page.locator("[data-model-temperature]")).toHaveValue("0");
-    await expect(page.getByLabel("Response timeout (s)", { exact: true })).toHaveValue("900");
+    const editor = page.locator("[data-provider-dialog]");
+    await expect(editor.locator("[data-discovered-model]")).toHaveValue(selected);
+    await expect(editor.locator("[data-model-reasoning]")).toHaveValue("off");
+    await expect(editor.locator("[data-model-temperature]")).toHaveValue("0");
+    await expect(editor.getByLabel("Response timeout (s)", { exact: true })).toHaveValue("900");
     expect(errors).toEqual([]);
   } finally {
     await app.close();

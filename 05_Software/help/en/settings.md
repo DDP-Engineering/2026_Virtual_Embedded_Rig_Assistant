@@ -66,7 +66,7 @@ Turning web access off also stops searches and downloads in progress. Individual
 
 ### Interactive Browser
 
-In **Settings → Web access**, select **Install browser runtime** to download and verify Chromium. You can cancel during installation or remove the installed runtime. Enable **Interactive Browser in VERA** and **Allow Interactive Browser in this workbench**. Both switches start off.
+In **Settings → Web access**, select **Install browser runtime** to download and verify Chromium. You can cancel during installation or remove the installed runtime. Enable **Interactive Browser in VERA** and **Allow Interactive Browser in this workbench**. Both switches start off. Without network, select **Install from file…** and pick the browser runtime archive of a VERA delivery (see [Offline installation](offline-install.md)).
 
 In Chat, enter the exact public origin, such as `https://example.com`, under **Public origin** and select **Grant access**. Include the scheme and any non-default port. Each chat owns its grants and browser window. Grant extra origins for redirects or resources individually.
 
@@ -82,7 +82,7 @@ In Settings → Commands, choose Automatic, PowerShell 7, Windows PowerShell, Cm
 
 ## Dictation
 
-Choose **Whisper Small** (recommended) or **Whisper Base** (compact). The page shows the download size and installation status for each model. Choose **Download** and follow the progress. **Cancel** discards the partial download. If VERA reports a failed download or damaged files, choose **Retry**. Free disk space if the download needs more room.
+Choose **Whisper Small** (recommended) or **Whisper Base** (compact). The page shows the download size and installation status for each model. Choose **Download** and follow the progress. **Cancel** discards the partial download. If VERA reports a failed download or damaged files, choose **Retry**. Free disk space if the download needs more room. Without network, select **Install from file…** on the model and pick its archive from a VERA delivery.
 
 Choose **Use model** after installation. VERA remembers your selection across restarts. **Remove** deletes that model’s files and clears the selection if it was active. If removal fails, close apps using the model files and choose **Retry**. Models are stored in VERA’s application data and shared across workbenches.
 

@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import type { BrowserRuntimeView, Response } from "@vera/shared";
 import type { TFunction } from "i18next";
 import { useTranslation } from "react-i18next";
@@ -6,49 +6,43 @@ import { api } from "../api/index.js";
 import { browserFailureText } from "../lib/browser-failure.js";
 import { ErrorMessage } from "./error-message.js";
 
-type RuntimeAction = "browser.runtime.install" | "browser.runtime.remove";
+type RuntimeAction = "browser.runtime.install" | "browser.runtime.installFile" | "browser.runtime.remove";
 
-export function BrowserSettings() {
+/**
+ * Interactive Browser on the Web access page. Runtime install, cancel and remove are immediate actions; the
+ * application and workbench switches belong to the page draft and are saved with the page header Save.
+ */
+export function BrowserSettings({
+  settings,
+  error: loadError,
+  refetch,
+  appEnabled,
+  workbenchEnabled,
+  setApp,
+  setWorkbench,
+  disabled,
+}: {
+  settings: Response<"browser.settings.get"> | undefined;
+  error: unknown;
+  refetch: () => unknown;
+  appEnabled: boolean;
+  workbenchEnabled: boolean;
+  setApp: (enabled: boolean) => void;
+  setWorkbench: (enabled: boolean) => void;
+  disabled: boolean;
+}) {
   const { t } = useTranslation();
-  const client = useQueryClient();
-  const key = ["browser.settings.get"];
-  const query = useQuery({
-    queryKey: key,
-    queryFn: () => api.invoke("browser.settings.get", {}),
-    refetchInterval: 500,
-    networkMode: "always",
-  });
   const runtime = useMutation({
     networkMode: "always",
     mutationFn: (action: RuntimeAction) => api.invoke(action, {}),
-    onSettled: () => query.refetch(),
+    onSettled: () => refetch(),
   });
   const cancel = useMutation({
     networkMode: "always",
     mutationFn: () => api.invoke("browser.runtime.cancel", {}),
-    onSettled: () => query.refetch(),
+    onSettled: () => refetch(),
   });
-  const optIn = useMutation({
-    networkMode: "always",
-    mutationFn: async ({ enabled, workbenchId }: { enabled: boolean; workbenchId?: string }) => {
-      if (workbenchId) {
-        const changed = await api.invoke("workbench.config.update", {
-          workbenchId,
-          patch: { interactive_browser: enabled },
-        });
-        await client.cancelQueries({ queryKey: ["workbench.active"] });
-        client.setQueryData<Response<"workbench.config.get"> | null>(["workbench.active"], (current) =>
-          current?.config.id === workbenchId ? { ...current, ...changed } : current,
-        );
-      } else {
-        const changed = await api.updateSettings({ interactiveBrowser: enabled });
-        await client.cancelQueries({ queryKey: ["app.settings"] });
-        client.setQueryData(["app.settings"], changed);
-      }
-    },
-    onSettled: () => query.refetch(),
-  });
-  const status = query.data?.runtime;
+  const status = settings?.runtime;
   const phase = status?.phase ?? "unknown";
   const provisioning = phase === "verifying" || phase === "downloading" || phase === "installing";
   const canInstall =
@@ -58,8 +52,8 @@ export function BrowserSettings() {
   const canRemove =
     phase === "ready" ||
     (status?.phase === "failed" && (status.failure === "cleanup" || status.failure === "integrity"));
-  const error = query.error ?? runtime.error ?? cancel.error ?? optIn.error;
-  const bench = query.data?.workbench;
+  const error = loadError ?? runtime.error ?? cancel.error;
+  const bench = settings?.workbench;
 
   return (
     <fieldset className="browser-settings">
@@ -67,16 +61,26 @@ export function BrowserSettings() {
       <p role="status" data-browser-runtime={phase}>
         <RuntimeMessage status={status} />
       </p>
-      {error && <ErrorMessage error={error} />}
+      {Boolean(error) && <ErrorMessage error={error} />}
       <div className="workbench-actions">
         {canInstall && (
-          <button
-            type="button"
-            disabled={runtime.isPending}
-            onClick={() => runtime.mutate("browser.runtime.install")}
-          >
-            {t("browser.install")}
-          </button>
+          <>
+            <button
+              type="button"
+              disabled={runtime.isPending}
+              onClick={() => runtime.mutate("browser.runtime.install")}
+            >
+              {t("browser.install")}
+            </button>
+            <button
+              type="button"
+              data-action="browser-install-file"
+              disabled={runtime.isPending}
+              onClick={() => runtime.mutate("browser.runtime.installFile")}
+            >
+              {t("browser.installFile")}
+            </button>
+          </>
         )}
         {provisioning && (
           <button type="button" disabled={cancel.isPending} onClick={() => cancel.mutate()}>
@@ -96,20 +100,20 @@ export function BrowserSettings() {
       <label className="web-access-toggle">
         <input
           type="checkbox"
-          checked={query.data?.appEnabled ?? false}
-          disabled={!query.data || optIn.isPending}
-          onChange={(event) => optIn.mutate({ enabled: event.target.checked })}
+          data-browser-app
+          checked={appEnabled}
+          disabled={!settings || disabled}
+          onChange={(event) => setApp(event.target.checked)}
         />
         {t("browser.enableApp")}
       </label>
       <label className="web-access-toggle">
         <input
           type="checkbox"
-          checked={bench?.enabled ?? false}
-          disabled={!bench || bench.readOnly || optIn.isPending}
-          onChange={(event) => {
-            if (bench) optIn.mutate({ enabled: event.target.checked, workbenchId: bench.id });
-          }}
+          data-browser-workbench
+          checked={workbenchEnabled}
+          disabled={!bench || bench.readOnly || disabled}
+          onChange={(event) => setWorkbench(event.target.checked)}
         />
         {t("browser.enableWorkbench")}
       </label>

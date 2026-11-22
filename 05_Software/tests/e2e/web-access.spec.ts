@@ -179,7 +179,7 @@ test("native Web access controls anonymous/key use, revokes calls, persists and 
     await expect(page.locator("dialog[open]")).not.toContainText("invalid-owned-key");
     await page.locator("[data-web-close]").click();
     await page.locator("#web-api-key").fill(key);
-    await page.locator("[data-web-save]").click();
+    await page.locator("[data-settings-save]").click();
     if (!draft.secureStorage) await page.locator("dialog[open] button").nth(1).click();
     await expect(page.locator("#web-api-key")).toHaveValue("");
     const stored = await page.evaluate(() =>
@@ -215,7 +215,7 @@ test("native Web access controls anonymous/key use, revokes calls, persists and 
     await page.locator("[data-web-close]").click();
     if (process.env.VERA_WEB_ACCESS_SCREENSHOT)
       await page.screenshot({ path: process.env.VERA_WEB_ACCESS_SCREENSHOT.replace(".png", "-brave.png") });
-    await page.locator("[data-web-save]").click();
+    await page.locator("[data-settings-save]").click();
     if (!stored.secureStorage) await page.locator("dialog[open] button").nth(1).click();
     await expect(page.locator("#web-api-key")).toHaveValue("");
     await page.locator("[data-web-test]").click();
@@ -225,7 +225,7 @@ test("native Web access controls anonymous/key use, revokes calls, persists and 
     await page.locator("#web-provider").selectOption("tavily");
     await page.locator("#web-authentication").selectOption("api-key");
     await page.locator("#web-api-key").fill(tavilyKey);
-    await page.locator("[data-web-save]").click();
+    await page.locator("[data-settings-save]").click();
     if (!stored.secureStorage) await page.locator("dialog[open] button").nth(1).click();
     await expect(page.locator("#web-api-key")).toHaveValue("");
     const allKeys = await page.evaluate(() =>
@@ -236,8 +236,9 @@ test("native Web access controls anonymous/key use, revokes calls, persists and 
     expect(JSON.stringify(allKeys)).not.toContain(braveKey);
     await page.locator("#web-provider").selectOption("exa");
     await page.locator("#web-authentication").selectOption("api-key");
-    await page.locator("[data-web-save]").click();
-    await expect(page.locator('.web-access form > [role="status"]')).toContainText("saved");
+    await page.locator("[data-settings-save]").click();
+    await expect(page.locator("[data-settings-header]")).toHaveAttribute("aria-busy", "false");
+    await expect(page.locator("[data-settings-save]")).toBeDisabled();
 
     expect(await readFile(join(profile, "settings.json"), "utf8")).not.toContain(key);
     expect(await readFile(join(profile, "credentials.json"), "utf8")).not.toContain(key);
@@ -246,8 +247,9 @@ test("native Web access controls anonymous/key use, revokes calls, persists and 
     expect(calls.at(-1)?.key).toBe(key);
     await page.locator("[data-web-close]").click();
     await page.locator("#web-authentication").selectOption("anonymous");
-    await page.locator("[data-web-save]").click();
-    await expect(page.locator('.web-access form > [role="status"]')).toContainText("saved");
+    await page.locator("[data-settings-save]").click();
+    await expect(page.locator("[data-settings-header]")).toHaveAttribute("aria-busy", "false");
+    await expect(page.locator("[data-settings-save]")).toBeDisabled();
     hold = true;
     let count = calls.length;
     await page.locator("[data-web-test]").click();
@@ -266,7 +268,7 @@ test("native Web access controls anonymous/key use, revokes calls, persists and 
     }, ids.session);
     await expect.poll(() => calls.length).toBe(count + 1);
     await page.locator("#web-enabled").uncheck();
-    await page.locator("[data-web-save]").click();
+    await page.locator("[data-settings-save]").click();
     await expect.poll(() => cancelled).toBe(2);
     const disabled = await page.evaluate(() =>
       (window as unknown as { vera: VeraBridge }).vera.invoke("web.access.get", {}),
@@ -334,7 +336,8 @@ test("native Web access controls anonymous/key use, revokes calls, persists and 
       await expect(page.locator(".web-access h2")).toHaveText(title!);
       await expect(page.locator(".web-access")).not.toContainText("webAccess.");
       await page.locator("#web-enabled").check();
-      await page.locator("[data-web-save]").click();
+      // Already enabled after the first language: the page is clean and Save stays disabled.
+      await saveSettings(page);
       await expect(page.locator("[data-web-test]")).toBeEnabled();
       if (language === "ro" && process.env.VERA_WEB_ACCESS_SCREENSHOT)
         await page.screenshot({ path: process.env.VERA_WEB_ACCESS_SCREENSHOT });

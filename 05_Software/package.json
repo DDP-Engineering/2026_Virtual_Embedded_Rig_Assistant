@@ -38,6 +38,7 @@
     "delivery:vera": "node ../02_Tools/delivery/build-vera-installers.mjs",
     "delivery:plugins": "node ../02_Tools/delivery/build-plugin-packages.mjs",
     "delivery:plugin-deps": "node ../02_Tools/delivery/build-plugin-deps-kit.mjs",
+    "delivery:components": "node ../02_Tools/delivery/build-components.mjs",
     "delivery:verify": "node ../02_Tools/delivery/verify-delivery.mjs",
     "smoke:live": "node ../02_Tools/release/smoke-live.mjs",
     "smoke:package": "node tests/packaging/smoke/smoke-package.mjs",

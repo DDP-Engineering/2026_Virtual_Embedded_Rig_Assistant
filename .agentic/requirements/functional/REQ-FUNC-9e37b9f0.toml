@@ -1,0 +1,30 @@
+schema = 1
+
+id = "REQ-FUNC-9e37b9f0"
+
+title = "Offer only the chosen model from a newly connected provider"
+
+status = "active"
+
+requirement = """
+When the user saves a new provider connection, the desktop shall tick only the model chosen in the connection editor, so that only this model of the new provider is offered.
+"""
+
+verification = "Create an LM Studio or preset connection that discovers several models with one chosen; its stored list is exactly the chosen model and the picker offers only it; editing a connection later keeps its ticks."
+
+affected_paths = [
+  "05_Software/src/apps/desktop/src/main/provider-settings.ts",
+]
+
+linked_tests = [
+  "05_Software/src/apps/desktop/src/main/provider-settings.test.ts",
+]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-21
+updated = 2026-11-21

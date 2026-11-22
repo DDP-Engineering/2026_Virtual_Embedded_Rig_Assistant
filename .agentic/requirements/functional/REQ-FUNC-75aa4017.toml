@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-FUNC-75aa4017"
+
+title = "Install the browser runtime from a picked archive"
+
+status = "active"
+
+requirement = "When the user picks a file with Install from file in Web access, Desktop shall copy it into the browser runtime staging folder, verify it against the platform pin and install the runtime through the same extraction, tree verification and atomic publication as a download, without any network request."
+
+verification = "Run the runtime against a fixture archive and release with a transfer that fails when called. Assert the phases reach ready with the verified executable and that the transfer was never called; an already verified runtime stays ready without copying."
+
+affected_paths = ["05_Software/src/apps/desktop/src/main/browser/runtime.ts", "05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/libraries/shared/src/ipc.ts"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/main/browser/runtime.test.ts", "05_Software/tests/integration/offline-components.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-21
+updated = 2026-11-21

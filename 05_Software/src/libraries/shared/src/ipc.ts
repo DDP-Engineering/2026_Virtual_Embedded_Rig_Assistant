@@ -10,6 +10,7 @@ import {
   dictationBeginSchema,
   dictationChangeSchema,
   dictationJobSchema,
+  dictationModelIdSchema,
   dictationOutcomeSchema,
   dictationRecordingSchema,
   dictationSnapshotSchema,
@@ -109,6 +110,7 @@ import {
   modelReferenceSchema,
   providerCatalogSchema,
   providerListSchema,
+  providerModelsEnableSchema,
   providerModelsRequestSchema,
   providerRemoveSchema,
   providerSaveResultSchema,
@@ -270,6 +272,12 @@ export const channels = {
   "browser.settings.get": defineChannel("browser.settings.get", z.strictObject({}), browserSettingsSchema),
   "browser.runtime.install": defineChannel(
     "browser.runtime.install",
+    z.strictObject({}),
+    browserRuntimeViewSchema,
+  ),
+  /** Install the pinned runtime from an archive the user picks in Desktop main's file dialog. */
+  "browser.runtime.installFile": defineChannel(
+    "browser.runtime.installFile",
     z.strictObject({}),
     browserRuntimeViewSchema,
   ),
@@ -993,11 +1001,22 @@ export const channels = {
   "providers.list": defineChannel("providers.list", z.strictObject({}), providerListSchema),
   "providers.save": defineChannel("providers.save", providerSaveSchema, providerSaveResultSchema),
   "providers.remove": defineChannel("providers.remove", providerRemoveSchema, z.strictObject({})),
+  "providers.models.enable": defineChannel(
+    "providers.models.enable",
+    providerModelsEnableSchema,
+    z.strictObject({}),
+  ),
   "app.info": defineChannel("app.info", z.strictObject({}), appInfoSchema),
   "help.list": defineChannel("help.list", helpListRequestSchema, z.array(helpPageSummarySchema).max(256)),
   "help.read": defineChannel("help.read", helpReadRequestSchema, helpPageSchema),
   "dictation.get": defineChannel("dictation.get", z.strictObject({}), dictationSnapshotSchema),
   "dictation.change": defineChannel("dictation.change", dictationChangeSchema, dictationSnapshotSchema),
+  /** Install one model from an archive the user picks in Desktop main's file dialog. */
+  "dictation.installFile": defineChannel(
+    "dictation.installFile",
+    z.strictObject({ id: dictationModelIdSchema }),
+    dictationSnapshotSchema,
+  ),
   "dictation.begin": defineChannel("dictation.begin", dictationJobSchema, dictationBeginSchema),
   "dictation.recording": defineChannel("dictation.recording", dictationJobSchema, dictationRecordingSchema),
   "dictation.finish": defineChannel("dictation.finish", dictationSubmitSchema, dictationOutcomeSchema),

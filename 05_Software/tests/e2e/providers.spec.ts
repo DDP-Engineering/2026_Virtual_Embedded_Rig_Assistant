@@ -120,11 +120,13 @@ test("provider UI saves masked keys and exposes only bounded hints in every IPC 
     await page.getByRole("button", { name: "Settings", exact: true }).click();
     await page.locator('[data-section="providers"]').click();
     const section = page.locator('[data-settings-section="providers"]');
+    const dialog = section.locator("[data-provider-dialog]");
     await section.locator('[data-action="add-provider"]').click();
-    const input = section.getByLabel("OpenAI API key", { exact: true });
+    await dialog.locator("[data-provider-preset]").selectOption("openai");
+    const input = dialog.getByLabel("OpenAI API key", { exact: true });
     await expect(input).toHaveAttribute("type", "password");
     await input.fill(key);
-    await section
+    await dialog
       .locator('[data-provider-editor="openai"]')
       .getByRole("button", { name: "Save", exact: true })
       .click();
@@ -134,6 +136,7 @@ test("provider UI saves masked keys and exposes only bounded hints in every IPC 
     if (!status.secureStorage)
       await section.getByRole("button", { name: "Use only for this run", exact: true }).click();
     await expect(input).toHaveCount(0);
+    await expect(dialog).toHaveCount(0);
     await expect(section.locator('[data-provider="openai"] [data-provider-hint]')).toHaveText("fak…9Zx4");
     await audit(app);
     await page.reload();
@@ -183,9 +186,9 @@ test("provider UI saves masked keys and exposes only bounded hints in every IPC 
       .locator('[data-provider="openai"]')
       .getByRole("button", { name: "Edit OpenAI API", exact: true })
       .click();
-    await expect(restart.getByLabel("OpenAI model (optional)", { exact: true })).toHaveValue(
-      "event-regression",
-    );
+    await expect(
+      restart.locator("[data-provider-dialog]").getByLabel("OpenAI model (optional)", { exact: true }),
+    ).toHaveValue("event-regression");
     await expect(restart.locator('[data-provider="openai"] [data-provider-hint]')).toHaveCount(0);
     await audit(app);
   } finally {
@@ -206,14 +209,15 @@ test("custom model image capability survives restart and can be cleared", async 
   try {
     app = await launch(data);
     const section = await openProviders(app);
-    await section.getByRole("button", { name: "Add connection" }).click();
-    await section.locator("[data-provider-preset]").selectOption("ollama");
-    await section.getByLabel("Model", { exact: true }).fill("org/vision");
-    const acceptsImages = section.getByRole("switch", { name: "Accepts images", exact: true });
+    const dialog = section.locator("[data-provider-dialog]");
+    await section.getByRole("button", { name: "Add provider", exact: true }).click();
+    await dialog.locator("[data-provider-preset]").selectOption("ollama");
+    await dialog.getByLabel("Model", { exact: true }).fill("org/vision");
+    const acceptsImages = dialog.getByRole("switch", { name: "Accepts images", exact: true });
     await expect(acceptsImages).toBeVisible();
     await expect(acceptsImages).not.toBeChecked();
     await acceptsImages.check();
-    await section.locator('[data-provider-action="save-custom"]').click();
+    await dialog.locator('[data-provider-action="save-custom"]').click();
     await expect(section.locator("[data-provider-editor]")).toHaveCount(0);
     expect(
       JSON.parse(readFileSync(join(data, "settings.json"), "utf8")).providers.custom[0].imageModels,
@@ -221,9 +225,10 @@ test("custom model image capability survives restart and can be cleared", async 
     await app.close();
     app = await launch(data);
     const reopened = await openProviders(app);
+    const reopenedDialog = reopened.locator("[data-provider-dialog]");
     const edit = reopened.getByRole("button", { name: "Edit Ollama", exact: true });
-    const savedSwitch = reopened.getByRole("switch", { name: "Accepts images", exact: true });
-    const model = reopened.getByLabel("Model", { exact: true });
+    const savedSwitch = reopenedDialog.getByRole("switch", { name: "Accepts images", exact: true });
+    const model = reopenedDialog.getByLabel("Model", { exact: true });
     await edit.click();
     await expect(savedSwitch).toBeChecked();
     await model.fill("org/text");
@@ -231,7 +236,7 @@ test("custom model image capability survives restart and can be cleared", async 
     await model.fill("org/vision");
     await expect(savedSwitch).toBeChecked();
     await savedSwitch.uncheck();
-    await reopened.locator('[data-provider-action="save-custom"]').click();
+    await reopenedDialog.locator('[data-provider-action="save-custom"]').click();
     await expect(reopened.locator("[data-provider-editor]")).toHaveCount(0);
     await edit.click();
     await expect(savedSwitch).not.toBeChecked();
@@ -255,13 +260,14 @@ test("custom connections offer a 300 s response timeout and save the entered val
     await page.getByRole("button", { name: "Settings", exact: true }).click();
     await page.locator('[data-section="providers"]').click();
     const section = page.locator('[data-settings-section="providers"]');
-    await section.getByRole("button", { name: "Add connection" }).click();
-    await section.locator("[data-provider-preset]").selectOption("ollama");
-    await section.getByLabel("Model", { exact: true }).fill("org/slow");
-    const timeout = section.getByLabel("Response timeout (s)", { exact: true });
+    const dialog = section.locator("[data-provider-dialog]");
+    await section.getByRole("button", { name: "Add provider", exact: true }).click();
+    await dialog.locator("[data-provider-preset]").selectOption("ollama");
+    await dialog.getByLabel("Model", { exact: true }).fill("org/slow");
+    const timeout = dialog.getByLabel("Response timeout (s)", { exact: true });
     await expect(timeout).toHaveValue("300");
     await timeout.fill("600");
-    await section.locator('[data-provider-action="save-custom"]').click();
+    await dialog.locator('[data-provider-action="save-custom"]').click();
     await expect(section.locator("[data-provider-editor]")).toHaveCount(0);
     expect(
       JSON.parse(readFileSync(join(data, "settings.json"), "utf8")).providers.custom[0]
@@ -284,21 +290,22 @@ test("custom provider add edit remove and explicit weak storage choices", async 
     await page.getByRole("button", { name: "Settings", exact: true }).click();
     await page.locator('[data-section="providers"]').click();
     const section = page.locator('[data-settings-section="providers"]');
-    await section.getByRole("button", { name: "Add connection" }).click();
-    await section.locator("[data-provider-preset]").selectOption("ollama");
-    await section.getByLabel("Endpoint name", { exact: true }).fill("Local fixture");
-    await section.getByLabel("Base URL", { exact: true }).fill("http://localhost:11434/v1");
-    await section.getByLabel("Model", { exact: true }).fill("fake-model");
-    await section
+    const dialog = section.locator("[data-provider-dialog]");
+    await section.getByRole("button", { name: "Add provider", exact: true }).click();
+    await dialog.locator("[data-provider-preset]").selectOption("ollama");
+    await dialog.getByLabel("Endpoint name", { exact: true }).fill("Local fixture");
+    await dialog.getByLabel("Base URL", { exact: true }).fill("http://localhost:11434/v1");
+    await dialog.getByLabel("Model", { exact: true }).fill("fake-model");
+    await dialog
       .locator('[data-provider-editor="custom"]')
       .getByRole("button", { name: "Save", exact: true })
       .click();
     const row = section.locator('[data-provider="custom:local-fixture"]');
     await expect(row).toBeVisible();
     await row.getByRole("button", { name: "Edit Local fixture", exact: true }).click();
-    await section.getByLabel("Model", { exact: true }).fill("edited-fake-model");
-    await section.getByLabel("Endpoint API key", { exact: true }).fill(key);
-    await section
+    await dialog.getByLabel("Model", { exact: true }).fill("edited-fake-model");
+    await dialog.getByLabel("Endpoint API key", { exact: true }).fill(key);
+    await dialog
       .locator('[data-provider-editor="custom"]')
       .getByRole("button", { name: "Save", exact: true })
       .click();
@@ -308,7 +315,12 @@ test("custom provider add edit remove and explicit weak storage choices", async 
     if (!list.secureStorage)
       await section.getByRole("button", { name: "Store without secure encryption", exact: true }).click();
     await expect(section.locator('[data-provider-editor="custom"]')).toHaveCount(0);
-    await expect(row).toContainText("edited-fake-model");
+    // The card lists the provider's catalog, not the configured model; the editor shows the saved edit.
+    await row.getByRole("button", { name: "Edit Local fixture", exact: true }).click();
+    await expect(dialog.getByLabel("Model", { exact: true })).toHaveValue("edited-fake-model");
+    await expect(dialog.getByLabel("Endpoint API key", { exact: true })).toHaveValue("");
+    await dialog.getByRole("button", { name: "Cancel", exact: true }).click();
+    await expect(dialog).toHaveCount(0);
     await audit(app);
     await row.getByRole("button", { name: "Remove Local fixture", exact: true }).click();
     await expect(row).toHaveCount(0);

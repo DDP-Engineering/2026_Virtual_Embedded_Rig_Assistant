@@ -18,8 +18,8 @@ Pour changer d’abord la langue de l’interface, ouvrez **Paramètres** → **
 
 1. Ouvrez **Paramètres** → **Fournisseurs**.
 2. Choisissez l’une de ces options :
-   - Abonnement ChatGPT : sous **Abonnements**, sélectionnez **Se connecter avec ChatGPT** et terminez la connexion dans votre navigateur.
-   - Clé API ou serveur local : sous **Connexions API / locales**, sélectionnez **Ajouter une connexion**, choisissez le **Fournisseur** (**API OpenAI**, LM Studio, Ollama ou **Autre fournisseur compatible**), remplissez les champs et sélectionnez **Enregistrer**.
+   - Abonnement ChatGPT : sélectionnez **Ajouter un fournisseur**, choisissez **Abonnement ChatGPT** comme **Fournisseur**, sélectionnez **Se connecter avec ChatGPT** et terminez la connexion dans votre navigateur.
+   - Clé API ou serveur local : sélectionnez **Ajouter un fournisseur**, choisissez le **Fournisseur** (**API OpenAI**, LM Studio, Ollama ou **Autre fournisseur compatible**), remplissez les champs et sélectionnez **Enregistrer**.
 3. Sélectionnez **Tester** à côté de la connexion. Les quatre étapes (**Accessibilité**, **Authentification et modèle**, **Appel d’outils**, **Streaming**) doivent afficher **Réussi**.
 
 Les détails figurent dans [Fournisseurs et modèles](providers.md).

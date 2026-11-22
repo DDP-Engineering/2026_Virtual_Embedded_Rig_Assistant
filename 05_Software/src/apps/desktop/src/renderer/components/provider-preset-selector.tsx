@@ -1,62 +1,51 @@
 import { curatedProviderPresets, providerChoices } from "@vera/shared";
-import { useId, useState } from "react";
+import { useId } from "react";
 import { useTranslation } from "react-i18next";
 
+/** One dropdown of every provider VERA can connect; already connected single-instance ones are disabled. */
 export function ProviderPresetSelector({
   value,
   change,
   disabled,
   hasOpenai,
+  hasChatgpt,
 }: {
   value: string;
   change: (id: string) => void;
   disabled: boolean;
   hasOpenai: boolean;
+  hasChatgpt: boolean;
 }) {
   const { t } = useTranslation();
-  const prefix = useId();
-  const [search, setSearch] = useState("");
+  const id = useId();
   const choices = [
+    { id: "chatgpt", label: t("chatgpt.title") },
     { id: "openai", label: t("providers.openai") },
     { id: "lmstudio", label: providerChoices.lmstudio.label },
     { id: "ollama", label: providerChoices.ollama.label },
     { id: "other", label: t("providers.other") },
     ...curatedProviderPresets,
   ];
-  const term = search.trim().toLocaleLowerCase();
-  const matches = choices.filter(({ id, label }) =>
-    [id, label].some((text) => text.toLocaleLowerCase().includes(term)),
-  );
   return (
     <>
-      <label htmlFor={`${prefix}-search`}>{t("providers.search")}</label>
-      <input
-        id={`${prefix}-search`}
-        type="search"
-        value={search}
-        disabled={disabled}
-        onChange={(event) => setSearch(event.target.value)}
-      />
-      <label htmlFor={`${prefix}-preset`}>{t("providers.provider")}</label>
+      <label htmlFor={id}>{t("providers.provider")}</label>
       <select
-        id={`${prefix}-preset`}
+        id={id}
         data-provider-preset
         value={value}
-        disabled={disabled || !matches.length}
+        disabled={disabled}
         onChange={(event) => change(event.target.value)}
       >
-        {!matches.some((choice) => choice.id === value) && (
-          <option hidden value={value}>
-            {choices.find((choice) => choice.id === value)?.label}
-          </option>
-        )}
-        {matches.map(({ id, label }) => (
-          <option key={id} value={id} disabled={id === "openai" && hasOpenai}>
-            {label}
+        {choices.map((choice) => (
+          <option
+            key={choice.id}
+            value={choice.id}
+            disabled={(choice.id === "openai" && hasOpenai) || (choice.id === "chatgpt" && hasChatgpt)}
+          >
+            {choice.label}
           </option>
         ))}
       </select>
-      {!matches.length && <p role="status">{t("providers.noMatches")}</p>}
     </>
   );
 }

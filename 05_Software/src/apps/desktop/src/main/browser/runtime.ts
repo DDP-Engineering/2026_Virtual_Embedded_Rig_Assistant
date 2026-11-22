@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { createWriteStream } from "node:fs";
+import { createReadStream, createWriteStream } from "node:fs";
 import { chmod, mkdir, rename, rm } from "node:fs/promises";
 import { join } from "node:path";
 import { Readable, Transform } from "node:stream";
@@ -16,10 +16,15 @@ export type BrowserRuntimeStatus =
   | { phase: "ready"; version: string }
   | { phase: "failed"; failure: BrowserFailure };
 
+/** Where an installation takes the pinned archive from: the release host, or a local copy the user picked. */
+export interface BrowserRuntimeSource {
+  file: string;
+}
+
 const installTimeoutMs = 15 * 60_000;
 const remove = (path: string) => rm(path, { force: true, recursive: true, maxRetries: 5, retryDelay: 100 });
 
-/** Desktop-owned Chromium installation. Only provision() performs a network transfer. */
+/** Desktop-owned Chromium installation. Only provision() without a local file performs a network transfer. */
 export class BrowserRuntime {
   private readonly release: BrowserRelease | undefined;
   private readonly transfer: typeof fetch;
@@ -60,13 +65,14 @@ export class BrowserRuntime {
     return this.current;
   }
 
-  provision(): Promise<BrowserRuntimeStatus> {
+  /** Install the pinned runtime from the release host, or from `source.file` with no network request. */
+  provision(source?: BrowserRuntimeSource): Promise<BrowserRuntimeStatus> {
     if (this.closed) return Promise.resolve({ phase: "cancelled" });
     if (this.removal) return Promise.resolve(this.current);
     if (this.job) return this.job.done;
     const controller = new AbortController();
     this.current = { phase: "verifying" };
-    const done = this.install(controller.signal).then((status) => {
+    const done = this.install(controller.signal, source).then((status) => {
       this.job = undefined;
       this.current = status;
       return status;
@@ -161,7 +167,10 @@ export class BrowserRuntime {
     }
   }
 
-  private async install(cancellation: AbortSignal): Promise<BrowserRuntimeStatus> {
+  private async install(
+    cancellation: AbortSignal,
+    source: BrowserRuntimeSource | undefined,
+  ): Promise<BrowserRuntimeStatus> {
     const signal = AbortSignal.any([cancellation, AbortSignal.timeout(installTimeoutMs)]);
     const staging = join(this.root, ".installing");
     try {
@@ -181,7 +190,9 @@ export class BrowserRuntime {
         signal.throwIfAborted();
         await mkdir(staging, { recursive: true, mode: 0o700 });
         const archive = join(staging, "chrome.zip");
-        await this.download(release, archive, signal);
+        // The verified copy in staging, not the picked file, is what gets extracted.
+        if (source) await this.writeVerified(createReadStream(source.file), release, archive, signal);
+        else await this.download(release, archive, signal);
         this.current = { phase: "installing" };
         const tree = join(staging, "runtime");
         await mkdir(tree);
@@ -199,7 +210,10 @@ export class BrowserRuntime {
     } catch (error) {
       if (error instanceof BrowserError && error.code === "cleanup") return this.failed(error);
       if (cancellation.aborted) return { phase: "cancelled" };
-      return this.failed(signal.aborted ? new BrowserError("download", { cause: error }) : error);
+      // A timeout is a slow release host for a download and a slow local or shared disk for a picked file.
+      if (signal.aborted)
+        return this.failed(new BrowserError(source ? "storage" : "download", { cause: error }));
+      return this.failed(error);
     }
   }
 
@@ -231,29 +245,43 @@ export class BrowserRuntime {
       throw new BrowserError("download");
     }
 
-    const hash = createHash("sha256");
-    const verify = new Transform({
-      transform: (chunk: Buffer, _encoding, callback) => {
-        received += chunk.length;
-        if (received > total) return callback(new BrowserError("integrity"));
-        hash.update(chunk);
-        this.current = { phase: "downloading", received, total };
-        callback(null, chunk);
-      },
-    });
     const source = Readable.fromWeb(response.body as import("node:stream/web").ReadableStream<Uint8Array>);
     let interrupted = false;
     source.on("error", (error) => {
       interrupted = error instanceof TypeError;
     });
     try {
-      await pipeline(source, verify, createWriteStream(destination, { flags: "wx", mode: 0o600 }), {
-        signal,
+      await this.writeVerified(source, release, destination, signal, (bytes) => {
+        received = bytes;
+        this.current = { phase: "downloading", received, total };
       });
     } catch (error) {
       if (interrupted) throw new BrowserError("download", { cause: error });
       throw error;
     }
+  }
+
+  /** Stream the archive into staging, refusing it as soon as it exceeds, or at the end differs from, the pin. */
+  private async writeVerified(
+    source: Readable,
+    release: BrowserRelease,
+    destination: string,
+    signal: AbortSignal,
+    progress: (received: number) => void = () => {},
+  ): Promise<void> {
+    const total = release.archiveBytes;
+    const hash = createHash("sha256");
+    let received = 0;
+    const verify = new Transform({
+      transform: (chunk: Buffer, _encoding, callback) => {
+        received += chunk.length;
+        if (received > total) return callback(new BrowserError("integrity"));
+        hash.update(chunk);
+        progress(received);
+        callback(null, chunk);
+      },
+    });
+    await pipeline(source, verify, createWriteStream(destination, { flags: "wx", mode: 0o600 }), { signal });
     if (received !== total || hash.digest("hex") !== release.archiveSha256)
       throw new BrowserError("integrity");
   }

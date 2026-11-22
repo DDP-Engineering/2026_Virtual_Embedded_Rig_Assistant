@@ -24,8 +24,9 @@ import {
 import { verifyEmbeddingArchive } from "./verify-embedding-archive.mjs";
 
 // Checks a delivery folder (default: the one this checkout builds) without changing or publishing anything:
-// every SHA256SUMS and delivery.json entry, pinned desktop model members, the expected files per part
-// and the plugin zips against the catalog indexes. Exit 1 on any mismatch.
+// every SHA256SUMS and delivery.json entry, pinned desktop model members, the expected files per part,
+// the plugin zips against the catalog indexes and the offline components against the Desktop pins.
+// Exit 1 on any mismatch.
 const { positionals, values } = parseArgs({
   allowPositionals: true,
   options: { "7zip": { type: "string", default: process.platform === "win32" ? "7z" : "7zz" } },
@@ -168,6 +169,15 @@ for (const platform of platforms) {
 for (const name of depsFiles ?? [])
   if (!platforms.some((platform) => name === `vera-plugin-deps-${version}-${platform}.zip`))
     problem("plugin-deps", `${name}: unexpected file`);
+
+// Loaded only for a delivery with components: it reads the pins from the Desktop TypeScript sources.
+const componentFiles = await partFiles("components");
+present.components = Boolean(componentFiles);
+if (componentFiles) {
+  const { verifyComponents } = await import("./components.mjs");
+  for (const text of await verifyComponents(join(folder, "components"), { hash }))
+    problem("components", text);
+}
 
 for (const [key, part] of Object.entries(manifest?.parts ?? {})) {
   if (part.version !== version) problem(manifestName, `${key}: version ${part.version}, expected ${version}`);

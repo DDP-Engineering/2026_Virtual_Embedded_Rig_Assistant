@@ -75,7 +75,12 @@ test("native pinned OAuth starts the actual callback flow and cancels without br
     const page = await app.firstWindow();
     await page.locator('[data-i18n="nav.settings"]').click();
     await page.locator('[data-section="providers"]').click();
-    const card = page.locator('[data-provider="chatgpt"]');
+    // Not signed in: no subscription card; sign-in lives in the Add provider dialog.
+    await expect(page.locator('article[data-provider="chatgpt"]')).toHaveCount(0);
+    await page.locator('[data-action="add-provider"]').click();
+    const dialog = page.locator("[data-provider-dialog]");
+    await expect(dialog.locator("[data-provider-preset]")).toHaveValue("chatgpt");
+    const card = dialog.locator('[data-provider="chatgpt"]');
     const secure = (
       await page.evaluate(() => (window as unknown as { vera: VeraBridge }).vera.invoke("providers.list", {}))
     ).secureStorage;
@@ -107,19 +112,28 @@ test("native subscription fake login persists across restart and signs out throu
     let page = await app.firstWindow();
     await page.locator('[data-i18n="nav.settings"]').click();
     await page.locator('[data-section="providers"]').click();
-    const card = page.locator('[data-provider="chatgpt"]');
+    const dialog = page.locator("[data-provider-dialog]");
+    await page.locator('[data-action="add-provider"]').click();
+    await expect(dialog.locator("[data-provider-preset]")).toHaveValue("chatgpt");
+    const signIn = dialog.locator('[data-provider="chatgpt"]');
+    const card = page.locator('article[data-provider="chatgpt"]');
+    const subscription = card.locator('div[data-provider="chatgpt"]');
     const secure = (
       await page.evaluate(() => (window as unknown as { vera: VeraBridge }).vera.invoke("providers.list", {}))
     ).secureStorage;
-    await card.getByRole("button", { name: "Sign in with ChatGPT", exact: true }).click();
+    await signIn.getByRole("button", { name: "Sign in with ChatGPT", exact: true }).click();
     if (!secure)
       await page.getByRole("button", { name: "Store without secure encryption", exact: true }).click();
-    await expect(card.getByLabel("Paste the final redirect URL if sign-in does not complete")).toBeVisible();
-    await card
+    await expect(
+      signIn.getByLabel("Paste the final redirect URL if sign-in does not complete"),
+    ).toBeVisible();
+    await signIn
       .getByLabel("Paste the final redirect URL if sign-in does not complete")
       .fill("http://127.0.0.1:1455/auth/callback?code=scripted");
-    await card.getByRole("button", { name: "Complete sign-in", exact: true }).click();
-    await expect(card.getByRole("status")).toHaveText("Signed in with ChatGPT");
+    await signIn.getByRole("button", { name: "Complete sign-in", exact: true }).click();
+    // The dialog closes once connected; the subscription then shows as a provider card.
+    await expect(dialog).toHaveCount(0);
+    await expect(subscription.getByRole("status")).toHaveText("Signed in with ChatGPT");
     await expect(card).toContainText("Token expires at");
     const catalog = await page.evaluate(() =>
       (window as unknown as { vera: VeraBridge }).vera.invoke("providers.models", { id: "chatgpt" }),
@@ -139,14 +153,17 @@ test("native subscription fake login persists across restart and signs out throu
     page = await app.firstWindow();
     await page.locator('[data-i18n="nav.settings"]').click();
     await page.locator('[data-section="providers"]').click();
-    await expect(page.locator('[data-provider="chatgpt"]').getByRole("status")).toHaveText(
+    const restored = page.locator('article[data-provider="chatgpt"]');
+    await expect(restored.locator('div[data-provider="chatgpt"]').getByRole("status")).toHaveText(
       "Signed in with ChatGPT",
     );
-    await page
-      .locator('[data-provider="chatgpt"]')
-      .getByRole("button", { name: "Sign out", exact: true })
-      .click();
-    await expect(page.locator('[data-provider="chatgpt"]').getByRole("status")).toHaveText("Not signed in");
+    await restored.getByRole("button", { name: "Sign out", exact: true }).click();
+    // Signing out removes the card; the Add provider dialog offers the sign-in again.
+    await expect(restored).toHaveCount(0);
+    await page.locator('[data-action="add-provider"]').click();
+    await expect(
+      page.locator("[data-provider-dialog]").locator('[data-provider="chatgpt"]').getByRole("status"),
+    ).toHaveText("Not signed in");
     expect(
       (
         await page.evaluate(() =>
@@ -212,7 +229,9 @@ test("browser subscription controls support manual/cancel/signout and en/ro/de a
     await page.goto(rendererUrlFromOutput(output));
     await page.locator('[data-i18n="nav.settings"]').click();
     await page.locator('[data-section="providers"]').click();
-    const card = page.locator('[data-provider="chatgpt"]');
+    const dialog = page.locator("[data-provider-dialog]");
+    const card = dialog.locator('[data-provider="chatgpt"]');
+    const connected = page.locator('article[data-provider="chatgpt"]');
     for (const [lang, title, signIn, signOut, submit, cancel] of [
       ["en", "ChatGPT subscription", "Sign in with ChatGPT", "Sign out", "Complete sign-in", "Cancel"],
       [
@@ -226,6 +245,7 @@ test("browser subscription controls support manual/cancel/signout and en/ro/de a
       ["de", "ChatGPT-Abonnement", "Mit ChatGPT anmelden", "Abmelden", "Anmeldung abschließen", "Abbrechen"],
     ] as const) {
       await changeSetting(page, "appearance", () => page.locator("#language").selectOption(lang ?? "en"));
+      await page.locator('[data-action="add-provider"]').click();
       await expect(card.getByRole("heading")).toHaveText(title ?? "");
       await card.getByRole("button", { name: signIn, exact: true }).click();
       await card.getByRole("button", { name: cancel, exact: true }).click();
@@ -233,9 +253,10 @@ test("browser subscription controls support manual/cancel/signout and en/ro/de a
       await card.getByRole("button", { name: signIn, exact: true }).click();
       await card.locator("input").fill("http://127.0.0.1:1455/auth/callback?code=mock");
       await card.getByRole("button", { name: submit, exact: true }).click();
-      await expect(card.getByRole("button", { name: signOut, exact: true })).toBeVisible();
-      await card.getByRole("button", { name: signOut, exact: true }).click();
-      await expect(card.getByRole("button", { name: signOut, exact: true })).toHaveCount(0);
+      await expect(dialog).toHaveCount(0);
+      await expect(connected.getByRole("button", { name: signOut, exact: true })).toBeVisible();
+      await connected.getByRole("button", { name: signOut, exact: true }).click();
+      await expect(connected.getByRole("button", { name: signOut, exact: true })).toHaveCount(0);
     }
     expect(errors).toEqual([]);
     expect(outbound).toEqual([]);

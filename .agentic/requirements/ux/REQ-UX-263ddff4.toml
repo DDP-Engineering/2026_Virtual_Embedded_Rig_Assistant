@@ -1,11 +1,11 @@
 schema = 1
 id = "REQ-UX-263ddff4"
-title = "Group providers by category with presets and aligned actions"
+title = "Show providers as cards with presets and aligned actions"
 status = "active"
-requirement = "When Settings > Providers opens, VERA shall group connections into subscriptions and API providers, allow several connections at once, offer OpenAI, LM Studio, Ollama and Other presets that prefill the editor, and keep each row's actions aligned with connection tests in a centred dialog."
-verification = "Browser E2E: sign in to the subscription, add OpenAI, LM Studio and Ollama connections from presets, check three rows, aligned edit actions, passing tests and the centred dialog bounds."
+requirement = "When Settings > Providers opens, VERA shall show each connected provider as its own card, allow several connections at once, offer OpenAI, LM Studio, Ollama and Other presets that prefill the editor in the Add provider dialog, and keep the editor's actions aligned with connection tests in a centred dialog."
+verification = "Browser E2E: sign in to the subscription, add OpenAI, LM Studio and Ollama connections from the Provider dropdown, check four provider cards, aligned editor actions, passing tests and the centred dialog bounds."
 affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/providers.tsx", "05_Software/src/apps/desktop/src/renderer/components/lmstudio-editor.tsx"]
 linked_tests = ["05_Software/tests/e2e/providers-layout.spec.ts"]
 priority = "normal"
 created = 2026-11-15
-updated = 2026-11-15
+updated = 2026-11-21

@@ -5,6 +5,7 @@ import en from "../../src/apps/desktop/src/renderer/locales/en.json" with { type
 import fr from "../../src/apps/desktop/src/renderer/locales/fr.json" with { type: "json" };
 import ro from "../../src/apps/desktop/src/renderer/locales/ro.json" with { type: "json" };
 import { expect, test } from "./fixtures.js";
+import { saveSettings } from "./settings-navigation.js";
 
 const status = (page: Page) => page.locator("[data-dictation-status]");
 const microphone = (page: Page) => page.locator("[data-action=dictate]");
@@ -339,6 +340,8 @@ for (const [language, catalog] of Object.entries({ en, ro, de, fr })) {
     await page.keyboard.press("Control+,");
     const locale = page.locator("#language");
     await locale.selectOption(language);
+    // Appearance keeps a page draft: save the language before leaving the page.
+    await saveSettings(page);
     const tab = page.locator('[data-section="dictation"]');
     await expect(tab).toHaveText(catalog.settings.dictation);
     await tab.click();

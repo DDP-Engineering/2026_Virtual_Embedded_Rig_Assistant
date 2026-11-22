@@ -36,11 +36,11 @@ function fixture(kind: CommandBlockShell = "bash") {
     service,
     pty,
     finish: () => exited({ exitCode: 0 }),
-    ready: () => {
+    ready: (constrained = false) => {
       const [, args, options] = spawn.mock.calls[0]!;
       const startup = options.env.PS1 ?? Buffer.from(args.at(-1)!, "base64").toString("utf16le");
       const nonce = startup.match(/VERA;([a-f0-9-]+)/)![1];
-      output(`\u001b]633;VERA;${nonce}\u0007`);
+      output(`\u001b]633;VERA;${nonce}${constrained ? ";constrained" : ""}\u0007`);
     },
     switch: () => {
       owner = "bench-b";
@@ -74,6 +74,23 @@ it.each(["powershell", "bash"] as const)(
     await f.service.closeAll();
   },
 );
+
+it("dispatches a Constrained Language PowerShell block once as its exact UTF-16 code units", async () => {
+  const f = fixture("powershell");
+  const terminal = await f.service.create("bench-a", 80, 24, "powershell");
+  const text = "Get-Content README.MD -TotalCount 10\r\n'Știință 🧪' \"quoted\" `tick $HOME\n\n\\tail\tend";
+  const execution = f.service.execute("bench-a", terminal.id, "powershell", text);
+  f.ready(true);
+  await execution;
+  expect(f.service.list("bench-a")[0]?.dispatchEligible).toBe(false);
+  expect(f.pty.write).toHaveBeenCalledTimes(1);
+  const data = f.pty.write.mock.calls[0]![0] as string;
+  // One ASCII line that needs no .NET call: Constrained Language refuses [Convert] and [Text.Encoding].
+  expect(data).toMatch(/^[\x20-\x7e]+\r$/);
+  const codes = data.match(/^Invoke-Expression \(-join \[char\[\]\]\(([0-9,]+)\)\)\r$/)![1]!;
+  expect(String.fromCharCode(...codes.split(",").map(Number))).toBe(text);
+  await f.service.closeAll();
+});
 
 it("refuses ordinary terminals without touching their input", async () => {
   const f = fixture();
