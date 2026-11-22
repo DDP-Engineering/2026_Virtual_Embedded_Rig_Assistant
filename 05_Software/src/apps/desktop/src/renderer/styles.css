@@ -2293,8 +2293,7 @@ legend {
 }
 .workbench-editor > header,
 .workbench-create > header,
-[data-settings-section="commands"] > header,
-[data-settings-section="data"] > header {
+.settings-page-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -2307,8 +2306,8 @@ legend {
   margin: 0;
   overflow-wrap: anywhere;
 }
-[data-settings-section="data"] > header h2,
-[data-settings-section="commands"] > header h2 {
+/* Every editable Settings page: title on the left, Cancel and Save at the top right. */
+.settings-page-header h2 {
   margin: 0 auto 0 0;
 }
 [data-settings-section="data"] [data-privacy-controls] {

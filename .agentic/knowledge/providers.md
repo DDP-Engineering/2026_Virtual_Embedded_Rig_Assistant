@@ -17,7 +17,7 @@ strict public projections. Renderer holds a password draft until save/cancel and
 
 ## Public interface
 
-- Shared provider-presets.ts supplies the searchable picker choices and curated service and endpoint
+- Shared provider-presets.ts supplies the Provider dropdown choices and curated service and endpoint
   definitions. A saved curated connection keeps its preset and binding, reserves a fresh model-reference
   slug, and gives the key a separate route-scoped slot. OpenCode Console and OpenCode Go are
   separate presets. A Console workspace key can be saved in both if the workspace has both
@@ -55,9 +55,21 @@ strict public projections. Renderer holds a password draft until save/cancel and
   an available non-basic_text backend. Main starts load() at app ready beside the settings load; a failed load
   stays memoized, so read/list/modify reject with INVALID and the file is never rewritten; close() still resolves so shutdown
   goes on to settings and logs. Explicit storageConsent controls weak writes. Main-only checkpoint returns an undo operation that restores the exact encoded entry, value and location without crypto or new consent.
-- ProviderSettings list/save/remove/recordToolSupport/close serializes provider edits and supplies configured/hint metadata.
-- providers.list({}) returns OpenAI/custom configurations and secureStorage. Public schemas
+- ProviderSettings list/save/remove/enableModels/recordToolSupport/close serializes provider edits and supplies configured/hint metadata.
+- providers.list({}) returns OpenAI, ChatGPT-subscription ticks and custom configurations and secureStorage. Public schemas
   select known non-secret fields. providers.save returns saved or consent-required; remove returns{}.
+- Settings > Providers shows each connected provider as a card (the ChatGPT subscription when signed in, OpenAI
+  when configured, each custom connection) with Edit, Test, Remove and its `providers.models` catalog as
+  checkboxes (filter and pager above ten). The ticks are a page draft: the header Save sends them in one
+  `providers.models.enable {providers:[{id, models|null}]}` write (ids `chatgpt`, `openai`, `custom:<slug>`;
+  `null` removes a list). They are stored as `enabledModels` on `providers.openai`, `providers.chatgpt` and each
+  custom entry (unique, whitespace-free, at most 10000); a provider without a list offers its whole catalog. Saving a
+  new custom connection or a first OpenAI model stores `[model]`; an edit keeps the list, appends a changed active
+  model to an existing list and leaves an absent list absent (REQ-DATA-ccf2e8cb, REQ-FUNC-9e37b9f0).
+  `providers.models.enable` refuses a list holding a stored key (INVALID) and maps a failed write to INTERNAL. Add provider opens a modal dialog with one Provider dropdown
+  (ChatGPT subscription, OpenAI, LM Studio, Ollama, Other, curated presets) and the provider's editor; the page is
+  rendered only while selected (REQ-UX-fe31a037). `useModelCatalog` offers only ticked models in the composer
+  picker and the workbench default list (REQ-FUNC-701b5178).
 - Settings > Providers stores the Accepts images switch by exact model ID within each custom
   connection. The enabled IDs are saved and returned as imageModels. An absent or empty list leaves
   every model off. LM Studio rediscovery preserves the saved choices by ID.
@@ -121,6 +133,9 @@ strict public projections. Renderer holds a password draft until save/cancel and
 - REQ-FUNC-6c666347 — validated provider IPC boundary.
 - REQ-UX-fb4b9424 — masked localized and accessible provider editor.
 - REQ-UX-1eb152b7 and REQ-FUNC-8446181d — localized per-model image opt-in, settings persistence and invalid ID rejection.
+- REQ-UX-fe31a037 — provider cards with model ticks, header Save/Cancel and the add/edit dialog.
+- REQ-DATA-ccf2e8cb and REQ-FUNC-9e37b9f0 — stored ticks per provider; a new connection ticks its chosen model.
+- REQ-FUNC-701b5178 — model choices offer only ticked models.
 
 ## Files
 
@@ -133,7 +148,8 @@ Paths relative to `05_Software`.
 - src/apps/desktop/src/main/{credentials,provider-settings}.ts — crypto persistence and coordinated operations.
 - src/apps/desktop/src/renderer/components/provider-image-switch.tsx — model-specific switch shared by both custom editors.
 - src/apps/desktop/src/main/{index,ipc-router,events}.ts — startup/drain, handlers, known-secret response guards.
-- src/apps/desktop/src/renderer/components/{providers,settings}.tsx — masked forms and consent modal.
+- src/apps/desktop/src/renderer/components/{providers,settings}.tsx, provider-models.tsx, provider-preset-selector.tsx, providers.css and providers.test.ts — cards, model ticks, add/edit dialog, masked forms and consent modal.
+- src/apps/desktop/src/renderer/components/model-catalog.ts and model-catalog.test.ts — picker catalogs filtered by ticks.
 - src/apps/desktop/src/renderer/mocks/mockApi.ts — metadata-only provider fixtures.
 - src/apps/desktop/src/renderer/locales/{en,ro,de,fr}.json and styles.css — translations and rem/layout.
 - Main credentials/provider-settings tests, core scrub/settings tests, bridge/router/mock regressions,

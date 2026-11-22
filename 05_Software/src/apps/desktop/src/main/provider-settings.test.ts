@@ -16,6 +16,99 @@ beforeAll(async () => {
 const key = "fake-private-WP08-do-not-echo-8Zx4";
 const custom = { name: "Local model", baseUrl: "http://localhost:11434/v1", model: "fake-model" };
 describe("safe provider settings", () => {
+  // REQ-FUNC-9e37b9f0
+  it("ticks only the chosen model of a new connection and keeps its ticks across edits", async () => {
+    const h = harness();
+    await h.settings.load();
+    await h.service.save({ provider: "custom", config: custom });
+    const id = "custom:local-model";
+    expect((await h.service.list()).custom[0]?.enabledModels).toEqual(["fake-model"]);
+    await h.service.enableModels({ providers: [{ id, models: ["fake-model", "other-model"] }] });
+    await h.service.save({ provider: "custom", id, config: { ...custom, model: "third-model" } });
+    expect((await h.service.list()).custom[0]?.enabledModels).toEqual([
+      "fake-model",
+      "other-model",
+      "third-model",
+    ]);
+    await h.service.save({ provider: "openai", apiKey: key, model: "chosen-model" });
+    expect((await h.service.list()).openai.enabledModels).toEqual(["chosen-model"]);
+  });
+  // REQ-FUNC-9e37b9f0, RULING-001 of TASK-ec18086f
+  it("keeps a connection without ticks offering everything and keeps an untick across same-model edits", async () => {
+    const h = harness();
+    await h.settings.load();
+    await h.service.save({ provider: "custom", config: custom });
+    const id = "custom:local-model";
+    // A connection saved before ticks existed has no list: an edit, even of its model, keeps it absent.
+    await h.service.enableModels({ providers: [{ id, models: null }] });
+    await h.service.save({ provider: "custom", id, config: { ...custom, model: "renamed-model" } });
+    expect((await h.service.list()).custom[0]?.enabledModels).toBeUndefined();
+    await h.service.enableModels({ providers: [{ id, models: ["renamed-model", "other-model"] }] });
+    await h.service.enableModels({ providers: [{ id, models: ["other-model"] }] });
+    await h.service.save({ provider: "custom", id, config: { ...custom, model: "renamed-model" } });
+    expect((await h.service.list()).custom[0]?.enabledModels).toEqual(["other-model"]);
+    // OpenAI: the first model is ticked; a later save of the same model keeps the user's ticks.
+    await h.service.save({ provider: "openai", apiKey: key, model: "first-model" });
+    await h.service.enableModels({ providers: [{ id: "openai", models: ["first-model", "second-model"] }] });
+    await h.service.save({ provider: "openai", model: "first-model" });
+    expect((await h.service.list()).openai.enabledModels).toEqual(["first-model", "second-model"]);
+  });
+  // REQ-DATA-ccf2e8cb
+  it("keeps ticks after a restart and refuses a list over 10000 IDs", async () => {
+    const h = harness();
+    await h.settings.load();
+    await h.service.save({ provider: "custom", config: custom });
+    const id = "custom:local-model";
+    await h.service.enableModels({
+      providers: [
+        { id: "chatgpt", models: ["gpt-b"] },
+        { id, models: ["fake-model"] },
+      ],
+    });
+    const reload = new SettingsService({
+      files: h.files,
+      paths: { userData: "/data", settings: "/data/settings.json", logs: "/data/logs" },
+      uuid: () => h.settings.get().settings.installationId,
+      changed: h.changed,
+    });
+    await reload.load();
+    const restarted = await new ProviderSettings(reload, h.credentials).list();
+    expect(restarted.chatgpt.enabledModels).toEqual(["gpt-b"]);
+    expect(restarted.custom[0]?.enabledModels).toEqual(["fake-model"]);
+    const tooMany = Array.from({ length: 10001 }, (_, index) => `model-${index}`);
+    await expect(h.service.enableModels({ providers: [{ id, models: tooMany }] })).rejects.toMatchObject({
+      code: "INVALID",
+    });
+  });
+  // REQ-DATA-ccf2e8cb
+  it("stores ticked models per provider, clears a list with null and refuses invalid lists", async () => {
+    const h = harness();
+    await h.settings.load();
+    await h.service.save({ provider: "custom", config: custom });
+    const id = "custom:local-model";
+    await h.service.enableModels({
+      providers: [
+        { id: "openai", models: ["gpt-a"] },
+        { id: "chatgpt", models: ["gpt-b", "gpt-c"] },
+        { id, models: [] },
+      ],
+    });
+    const list = await h.service.list();
+    expect(list.openai.enabledModels).toEqual(["gpt-a"]);
+    expect(list.chatgpt.enabledModels).toEqual(["gpt-b", "gpt-c"]);
+    expect(list.custom[0]?.enabledModels).toEqual([]);
+    const before = h.disk.get("/data/settings.json");
+    for (const models of [["bad id"], ["dup", "dup"]])
+      await expect(h.service.enableModels({ providers: [{ id, models }] })).rejects.toMatchObject({
+        code: "INVALID",
+      });
+    await expect(
+      h.service.enableModels({ providers: [{ id: "custom:missing", models: [] }] }),
+    ).rejects.toMatchObject({ code: "NOT_FOUND" });
+    expect(h.disk.get("/data/settings.json")).toBe(before);
+    await h.service.enableModels({ providers: [{ id: "chatgpt", models: null }] });
+    expect((await h.service.list()).chatgpt.enabledModels).toBeUndefined();
+  });
   it("rejects invalid image model IDs without changing saved capability", async () => {
     const h = harness();
     await h.settings.load();

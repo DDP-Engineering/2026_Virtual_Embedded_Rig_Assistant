@@ -49,6 +49,8 @@ test("workbench tree, pinning, project editor and plugin section", { tag: "@para
   await expect(dialog).toBeVisible();
   await dialog.locator("[data-project-name]").fill("ESP32 revised");
   await dialog.locator('[data-project-section="tools"]').click();
+  // Ten rows per page by default; show every tool on one page to check them all.
+  await dialog.locator(".workbench-tools [data-pager-size]").selectOption("50");
   const tools = dialog.locator("[data-tool-toggle]");
   await expect(tools).toHaveCount(coreToolNames.length - 1);
   await expect(dialog.locator("[data-tool-description]")).toHaveCount(coreToolNames.length - 1);

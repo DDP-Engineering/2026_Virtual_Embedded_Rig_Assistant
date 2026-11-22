@@ -9,9 +9,11 @@ import {
   type CuratedProviderPreset,
   curatedProviderPresets,
   type ProviderList,
+  type ProviderModelsEnable,
   type ProviderRemove,
   type ProviderSave,
   providerListSchema,
+  providerModelsEnableSchema,
   providerRemoveSchema,
   providerSaveSchema,
   providerSlug,
@@ -62,7 +64,16 @@ export class ProviderSettings {
     const openai = {
       id: "openai" as const,
       ...(settings.providers.openai.model ? { model: settings.providers.openai.model } : {}),
+      ...(settings.providers.openai.enabledModels
+        ? { enabledModels: settings.providers.openai.enabledModels }
+        : {}),
       ...(await metadata("openai")),
+    };
+    const chatgpt = {
+      id: "chatgpt" as const,
+      ...(settings.providers.chatgpt?.enabledModels
+        ? { enabledModels: settings.providers.chatgpt.enabledModels }
+        : {}),
     };
     const custom = await Promise.all(
       settings.providers.custom.map(async (config) => {
@@ -73,6 +84,7 @@ export class ProviderSettings {
     );
     return providerListSchema.parse({
       openai,
+      chatgpt,
       custom,
       secureStorage: this.credentials.secureStorage,
     });
@@ -90,7 +102,18 @@ export class ProviderSettings {
       let id = "openai";
       if (input.provider === "openai") {
         if (input.model === "") delete providers.openai.model;
-        else if (input.model !== undefined) providers.openai = { ...providers.openai, model: input.model };
+        else if (input.model !== undefined) {
+          const first = providers.openai.model === undefined;
+          const changed = providers.openai.model !== input.model;
+          providers.openai = { ...providers.openai, model: input.model };
+          // A first model is the only one offered; a later new model joins the ticks; a list stays absent.
+          providers.openai.enabledModels = tickChosen(
+            providers.openai.enabledModels,
+            input.model,
+            first,
+            changed,
+          );
+        }
       } else {
         const found = input.id ? providers.custom.findIndex((c) => `custom:${c.slug}` === input.id) : -1;
         if (input.id && found < 0) throw veraError("NOT_FOUND");
@@ -111,6 +134,16 @@ export class ProviderSettings {
         id = `custom:${slug}`;
         const changes = JSON.parse(JSON.stringify(input.config)) as typeof input.config;
         const config = { ...previous, ...changes, slug };
+        // A new connection offers only its chosen model; an edit keeps its ticks (or their absence) and adds a
+        // changed active model to an existing list (RULING-001 of TASK-ec18086f).
+        const ticks = tickChosen(
+          changes.enabledModels ?? previous?.enabledModels,
+          config.model,
+          !previous && !changes.enabledModels,
+          !!previous && previous.model !== config.model,
+        );
+        if (ticks) config.enabledModels = ticks;
+        else delete config.enabledModels;
         if (config.preset) {
           const connection = resolveCuratedConnection(config, this.presets);
           id = connection.slot;
@@ -182,6 +215,41 @@ export class ProviderSettings {
       return {};
     });
   }
+  /** Writes the model ticks of several providers in one settings update; `null` offers a whole catalog. */
+  enableModels(request: ProviderModelsEnable): Promise<Record<string, never>> {
+    const parsed = providerModelsEnableSchema.safeParse(request);
+    if (!parsed.success) return Promise.reject(veraError("INVALID"));
+    return this.enqueue(async () => {
+      await this.credentials.load();
+      const providers = structuredClone(this.settings.get().settings.providers);
+      const apply = <T extends { enabledModels?: string[] | undefined }>(
+        target: T,
+        models: string[] | null,
+      ) => {
+        if (models === null) delete target.enabledModels;
+        else target.enabledModels = models;
+      };
+      for (const { id, models } of parsed.data.providers) {
+        if (id === "openai") apply(providers.openai, models);
+        else if (id === "chatgpt") {
+          providers.chatgpt = { ...providers.chatgpt };
+          apply(providers.chatgpt, models);
+        } else {
+          const config = providers.custom.find((c) => `custom:${c.slug}` === id);
+          if (!config) throw veraError("NOT_FOUND");
+          apply(config, models);
+        }
+      }
+      // A model ID equal to a stored key would make every later list() refuse the settings.
+      if (this.credentials.containsSecret(providers)) throw veraError("INVALID");
+      try {
+        await this.settings.update({ providers });
+      } catch {
+        throw veraError("INTERNAL");
+      }
+      return {};
+    });
+  }
   async close(): Promise<void> {
     this.closed = true;
     await this.queue;
@@ -208,4 +276,20 @@ export class ProviderSettings {
       await this.settings.update({ providers: { ...state.settings.providers, custom } });
     });
   }
+}
+
+/**
+ * The ticks after a save: `[model]` for a new connection or a first OpenAI model, the list plus a changed active
+ * model, and otherwise the list as it was (an absent list stays absent, so the whole catalog stays offered).
+ */
+function tickChosen(
+  list: string[] | undefined,
+  model: string,
+  first: boolean,
+  changed: boolean,
+): string[] | undefined {
+  // A model ID with whitespace cannot form a model reference, so it is never offered.
+  if (/\s/.test(model)) return list;
+  if (!list) return first ? [model] : undefined;
+  return changed && !list.includes(model) ? [...list, model] : list;
 }

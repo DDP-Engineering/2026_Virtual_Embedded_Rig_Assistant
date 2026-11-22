@@ -11,6 +11,7 @@ import {
   dictationDefaults,
   veraError,
 } from "@vera/shared";
+import { extractModelArchive } from "./archive.js";
 import { type DictationModelSpec, dictationCatalog } from "./catalog.js";
 import { modelFingerprint, modelHashesMatch, modelStat } from "./integrity.js";
 import { downloadModelFile, hasFileError, ModelDownloadError } from "./transfer.js";
@@ -20,6 +21,8 @@ interface Download {
   bytes: number;
   receivedBytes: number;
   controller: AbortController;
+  /** A picked local archive; without it the files come from the pinned model source. */
+  file?: string;
   publishing: boolean;
   done: Promise<void>;
 }
@@ -134,7 +137,13 @@ export class DictationModels {
       this.catalog.map(async (spec): Promise<DictationModelState> => {
         const job = this.job;
         if (job?.spec.id === spec.id) {
-          return { id: spec.id, bytes: job.bytes, status: "downloading", receivedBytes: job.receivedBytes };
+          return {
+            id: spec.id,
+            bytes: job.bytes,
+            status: "downloading",
+            receivedBytes: job.receivedBytes,
+            ...(job.file ? { fromFile: true as const } : {}),
+          };
         }
         const bytes = spec.files.reduce((sum, file) => sum + file.bytes, 0);
         const status = await this.availability(spec);
@@ -184,13 +193,22 @@ export class DictationModels {
             await this.settings.update({ dictation: { selectedModel: spec.id } });
           } else if (change.action === "remove") {
             await this.remove(spec.id);
-          } else if ((await this.availability(spec)) !== "installed") {
-            if (await modelStat(this.temporary(spec.id, "removed"))) throw veraError("BUSY");
-            await this.clearSelection(spec.id);
-            this.start(spec);
+          } else {
+            await this.begin(spec);
           }
         }
       }
+      return this.snapshot();
+    });
+  }
+
+  /** Install a model from a local archive the user picked, with the same checks as a download and no network. */
+  installArchive(id: DictationModelId, file: string): Promise<DictationSnapshot> {
+    return this.run(async () => {
+      const spec = this.catalog.find((item) => item.id === id);
+      if (!spec) throw veraError("INVALID");
+      if (this.job) throw veraError("BUSY");
+      await this.begin(spec, file);
       return this.snapshot();
     });
   }
@@ -205,12 +223,21 @@ export class DictationModels {
     });
   }
 
-  private start(spec: DictationModelSpec) {
+  /** Start an installation of a model that is not installed; an installed model stays as it is. */
+  private async begin(spec: DictationModelSpec, file?: string) {
+    if ((await this.availability(spec)) === "installed") return;
+    if (await modelStat(this.temporary(spec.id, "removed"))) throw veraError("BUSY");
+    await this.clearSelection(spec.id);
+    this.start(spec, file);
+  }
+
+  private start(spec: DictationModelSpec, file?: string) {
     const job: Download = {
       spec,
-      bytes: spec.files.reduce((sum, file) => sum + file.bytes, 0),
+      bytes: spec.files.reduce((sum, item) => sum + item.bytes, 0),
       receivedBytes: 0,
       controller: new AbortController(),
+      ...(file ? { file } : {}),
       publishing: false,
       done: Promise.resolve(),
     };
@@ -230,12 +257,15 @@ export class DictationModels {
       signal.throwIfAborted();
       await rm(staging, { recursive: true, force: true });
       await mkdir(staging);
-      await mkdir(join(staging, "onnx"));
-      for (const file of spec.files) {
-        signal.throwIfAborted();
-        await downloadModelFile(spec, file, join(staging, file.path), signal, this.transfer, (bytes) => {
-          job.receivedBytes += bytes;
-        });
+      if (job.file) await extractModelArchive(job.file, spec, staging, signal);
+      else {
+        await mkdir(join(staging, "onnx"));
+        for (const file of spec.files) {
+          signal.throwIfAborted();
+          await downloadModelFile(spec, file, join(staging, file.path), signal, this.transfer, (bytes) => {
+            job.receivedBytes += bytes;
+          });
+        }
       }
       const fingerprint = await modelFingerprint(staging, spec);
       if (

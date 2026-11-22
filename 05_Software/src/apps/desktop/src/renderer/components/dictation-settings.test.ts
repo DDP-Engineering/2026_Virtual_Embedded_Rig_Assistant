@@ -45,9 +45,15 @@ it.each(["en", "ro", "de", "fr"])(
         "dictation.compact",
         "dictation.recommended",
         "dictation.missing",
-        "dictation.selected",
+        "dictation.inUse",
+        "dictation.inUseBadge",
         "dictation.installed",
         "dictation.automatic",
+        "dictation.columns.languages",
+        "dictation.speeds.fast",
+        "dictation.speeds.moderate",
+        "dictation.accuracies.basic",
+        "dictation.accuracies.good",
       ]) {
         const label = i18n.t(key, { model: i18n.t("dictation.small") });
         expect(label).not.toBe(key);
@@ -58,6 +64,13 @@ it.each(["en", "ro", "de", "fr"])(
           new Intl.NumberFormat(language, { maximumFractionDigits: 1 }).format(bytes / 1e6),
         );
       }
+      // The model in use is named prominently and its row is marked.
+      expect(container.querySelector("[data-dictation-current] strong")?.textContent).toBe(
+        i18n.t("dictation.small"),
+      );
+      expect(container.querySelector('[aria-current="true"]')?.textContent).toContain(
+        i18n.t("dictation.small"),
+      );
       const select = container.querySelector<HTMLSelectElement>("#dictation-language");
       expect(select?.value).toBe("auto");
       expect(select?.querySelector('option[value="ro"]')?.textContent).toBe(

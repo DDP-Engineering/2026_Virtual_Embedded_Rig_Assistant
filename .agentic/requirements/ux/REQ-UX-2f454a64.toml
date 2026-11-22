@@ -1,10 +1,10 @@
 schema = 1
 id = "REQ-UX-2f454a64"
 title = "Search the provider preset selector"
-status = "active"
-requirement = "When a user enters a search in Add Provider, VERA shall offer matching preset service labels and IDs."
+status = "retired"
+requirement = "When a user enters a search in Add Provider, VERA shall offer matching preset service labels and IDs. Retired 2026-11-21: the Add provider dialog offers every provider in one Provider dropdown without a search field, at the user's request (TASK-ec18086f)."
 verification = "Filter the Add preset selector by an existing service and by a nonmatching string, and confirm matching and empty results."
 affected_paths = ["05_Software/src/libraries/shared/src/provider-presets.ts", "05_Software/src/apps/desktop/src/renderer/components/provider-preset-selector.tsx", "05_Software/src/apps/desktop/src/renderer/components/providers.tsx"]
 linked_tests = ["05_Software/tests/e2e/providers-layout.spec.ts"]
 created = 2026-11-20
-updated = 2026-11-20
+updated = 2026-11-21

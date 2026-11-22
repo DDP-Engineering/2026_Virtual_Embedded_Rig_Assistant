@@ -1,12 +1,12 @@
 # Furnizori și modele
 
-Un furnizor îi oferă lui VERA acces la un model de limbaj. Ai nevoie de cel puțin unul. Configurezi furnizorii în **Setări** → **Furnizori**, care are două părți: **Abonamente** și **Conexiuni API / locale**.
+Un furnizor îi oferă lui VERA acces la un model de limbaj. Ai nevoie de cel puțin unul. Configurezi furnizorii în **Setări** → **Furnizori**. Selectează **Adaugă furnizor** și alege furnizorul din lista **Furnizor**. Lista include **Abonament ChatGPT**.
 
-Sub **Adaugă conexiune**, folosește **Caută furnizori** pentru a găsi un furnizor după nume.
+Fiecare furnizor conectat apare ca un card cu **Editează**, **Testează** și **Elimină**. Cardul abonamentului ChatGPT are în schimb **Deconectare**. Cardul listează **Modele** ca bife. La mai mult de zece modele, folosește **Filtrează modelele** și paginile. VERA oferă doar modelele bifate în selectorul de modele din chat și în lista modelelor implicite din workbench. Un furnizor nou oferă doar modelul ales la conectare; bifează mai multe pe cardul lui. Un furnizor configurat mai demult oferă toate modelele sale până când schimbi bifele. Selectează **Salvează** în dreapta sus ca să păstrezi bifele. **Anulează** renunță la ele.
 
 ## Abonament ChatGPT
 
-1. La **Abonament ChatGPT**, selectează **Autentificare cu ChatGPT**. Browserul sistemului deschide pagina de autentificare.
+1. Selectează **Adaugă furnizor**, alege **Abonament ChatGPT** ca **Furnizor** și selectează **Autentificare cu ChatGPT**. Browserul sistemului deschide pagina de autentificare.
 2. Autentifică-te acolo. VERA afișează **Autentificat cu ChatGPT** când procesul s-a încheiat.
 
 Tokenul se reînnoiește automat. **Deconectare** îl elimină.
@@ -17,14 +17,14 @@ Tokenul se reînnoiește automat. **Deconectare** îl elimină.
 
 ## API OpenAI
 
-1. La **Conexiuni API / locale**, selectează **Adaugă o conexiune** și alege **API OpenAI** ca **Furnizor**.
+1. Selectează **Adaugă furnizor** și alege **API OpenAI** ca **Furnizor**.
 2. Introdu **Cheie API OpenAI** și, opțional, **Model OpenAI**.
 3. Selectează **Salvează**.
 
 ## OpenCode Console și OpenCode Go
 
 1. Creează o cheie API pentru spațiul de lucru în OpenCode Console. Acordă-i permisiuni de citire a modelelor și de inferență.
-2. În VERA, selectează **Adaugă conexiune**, apoi **OpenCode Console** pentru plata în funcție de consum sau **OpenCode Go** pentru abonamentul Go.
+2. În VERA, selectează **Adaugă furnizor**, apoi alege **OpenCode Console** pentru plata în funcție de consum sau **OpenCode Go** pentru abonamentul Go.
 3. Introdu cheia și selectează **Descoperă modele**. Alege un model din lista planului sau introdu ID-ul exact și limitele pentru configurare manuală.
 4. Salvează și testează conexiunea. Alege modelul pentru sesiune sau pentru workbench.
 
@@ -36,7 +36,7 @@ Consultă [configurarea OpenCode](https://opencode.ai/docs/console/harnesses) ș
 
 ## QwenCloud Standard și QwenCloud Token Plan
 
-1. În **Adaugă conexiune**, selectează **QwenCloud Standard** pentru o cheie API din Singapore cu plată în funcție de consum sau **QwenCloud Token Plan** pentru cheia dedicată planului (`sk-sp-`). VERA completează URL-ul de bază al planului selectat.
+1. Selectează **Adaugă furnizor** și alege **QwenCloud Standard** pentru o cheie API din Singapore cu plată în funcție de consum sau **QwenCloud Token Plan** pentru cheia dedicată planului (`sk-sp-`). VERA completează URL-ul de bază al planului selectat.
 2. Introdu cheia corespunzătoare și selectează **Descoperă modele**. Dacă lista nu este disponibilă, introdu ID-ul exact al modelului pentru regiunea sau planul tău. De exemplu, `qwen3.8-flash` acceptă text și imagini, apeluri de instrumente și activarea sau dezactivarea raționamentului. `qwen3.7-max` acceptă text, apeluri de instrumente și aceeași opțiune de raționament. Capabilitățile altor modele pot fi neverificate.
 3. Selectează **Salvează**, apoi **Testează**. Dacă verificarea disponibilității catalogului este omisă, pasul de autentificare și model verifică cheia și modelul printr-un apel de chat. Alege modelul pentru sesiune sau workbench.
 
@@ -46,7 +46,7 @@ Consultă [cheile API QwenCloud](https://docs.qwencloud.com/developer-guides/adm
 
 ## DeepSeek, Moonshot AI și Kimi For Coding
 
-1. În **Adaugă conexiune**, alege **DeepSeek** pentru o cheie API DeepSeek, **Moonshot AI** pentru o cheie de pe platforma internațională Kimi API sau **Kimi For Coding** pentru o cheie din consola Kimi Code. VERA completează adresa de bază a serviciului.
+1. Selectează **Adaugă furnizor** și alege **DeepSeek** pentru o cheie API DeepSeek, **Moonshot AI** pentru o cheie de pe platforma internațională Kimi API sau **Kimi For Coding** pentru o cheie din consola Kimi Code. VERA completează adresa de bază a serviciului.
 2. Introdu cheia serviciului. Pentru DeepSeek și Moonshot AI, alege **Descoperă modele** sau introdu ID-ul exact al modelului. Pentru Kimi For Coding, introdu un ID precum `kimi-for-coding` sau `k3-256k`, în funcție de abonament.
 3. Alege **Salvează**, apoi **Testează**. Pentru Kimi For Coding, verificarea accesibilității este omisă, iar verificarea autentificării și a modelului trimite o cerere către model.
 
@@ -58,7 +58,7 @@ Vezi [limitele modelelor DeepSeek](https://api-docs.deepseek.com/api/list-models
 
 ## MiniMax și Z.AI
 
-1. În **Adaugă conexiune**, alege **MiniMax API** pentru o cheie cu plată în funcție de consum (`sk-api-`) sau **MiniMax M Plan** pentru o cheie de abonament MiniMax (`sk-cp-`). Ambele folosesc serviciul internațional Messages.
+1. Selectează **Adaugă furnizor** și alege **MiniMax API** pentru o cheie cu plată în funcție de consum (`sk-api-`) sau **MiniMax M Plan** pentru o cheie de abonament MiniMax (`sk-cp-`). Ambele folosesc serviciul internațional Messages.
 2. Alege **Z.AI API** pentru o cheie API standard. **Z.AI GLM Coding Plan** folosește adresa internațională dedicată planului. Folosește o cheie Personal Coding Plan sau Team Plan numai dacă Z.AI a autorizat accesul din VERA. Z.AI limitează utilizarea planului la instrumentele acceptate, iar VERA nu apare în lista publicată. Verifică tipul cheii în cont, deoarece unele chei funcționează la mai multe adrese, iar facturarea depinde de cheie și de adresă.
 3. Alege un model sugerat sau introdu ID-ul exact activat pentru contul tău. Selectează **Salvează**, apoi **Testează**. Verificarea cheii și a modelului trimite cereri de inferență, care pot consuma din cotă. Alege modelul salvat pentru sesiune sau workbench.
 
@@ -73,7 +73,7 @@ Consultă [configurarea cheilor MiniMax](https://platform.minimax.io/docs/guides
 3. Alege **Xiaomi MiMo API** pentru o cheie API de inferență în timp real (`sk-`) pe adresa globală. Pentru **Xiaomi MiMo Token Plan**, selectează regiunea din pagina Token Plan (China, Singapore sau Europa) și folosește cheia individuală (`tp-`) sau de echipă (`ttp-`).
 4. Selectează **Descoperă modele** dacă este disponibil sau introdu ID-ul exact al modelului de chat din consola furnizorului. Alege **Salvează**, apoi **Testează**. Testul folosește adresa selectată și poate consuma cotă. Alege un model în sesiune sau în workbench.
 
-Încearcă `qwen3.7-flash` în Model Studio, `qwen3.7-plus` în Coding Plan sau `mimo-v2.6-flash` în MiMo, dacă ai acces în cont. Prezența unui model în catalog nu confirmă accesul. Capabilitățile altor ID-uri introduse manual pot rămâne neverificate. Pentru altă regiune sau alt spațiu de lucru, adaugă o conexiune.
+Încearcă `qwen3.7-flash` în Model Studio, `qwen3.7-plus` în Coding Plan sau `mimo-v2.6-flash` în MiMo, dacă ai acces în cont. Prezența unui model în catalog nu confirmă accesul. Capabilitățile altor ID-uri introduse manual pot rămâne neverificate. Pentru altă regiune sau alt spațiu de lucru, adaugă un furnizor nou.
 
 Consultă [Model Studio](https://www.alibabacloud.com/help/en/model-studio/qwen-api-via-openai-chat-completions), [Coding Plan](https://www.alibabacloud.com/help/en/model-studio/coding-plan-faq), [MiMo API](https://mimo.mi.com/docs/en-US/api/chat/openai-api-post), [MiMo Token Plan](https://mimo.mi.com/docs/tokenplan/subscription).
 
@@ -81,7 +81,7 @@ Folosește Alibaba Coding Plan în instrumente interactive de programare accepta
 
 ## Fireworks AI, Together AI, Groq și Cerebras
 
-1. În **Adaugă conexiune**, selectează serviciul și introdu o cheie API din consola acestuia. VERA completează adresa serviciului și stochează separat cheia fiecărei conexiuni.
+1. Selectează **Adaugă furnizor** și alege serviciul și introdu o cheie API din consola acestuia. VERA completează adresa serviciului și stochează separat cheia fiecărei conexiuni.
 2. Alege **Descoperă modele** sau introdu ID-ul complet al modelului și limitele sale. Păstrează prefixul contului pentru Fireworks, de exemplu `accounts/fireworks/models/glm-5p3-flash`. Pentru un punct de acces dedicat, copiază ID-ul exact de inferență din serviciu.
 3. Salvează și alege **Testează** pentru a verifica cheia și modelul ales. Suportul pentru instrumente și imagini apare când este specificat în catalog sau în documentația modelului. Verifică limitele serviciului și accesul la modele pentru contul tău.
 
@@ -89,7 +89,7 @@ Consultă listele de modele pentru [Fireworks AI](https://fireworks.ai/models), 
 
 ## Hugging Face Inference Providers, NVIDIA NIM și Vercel AI Gateway
 
-1. În **Adaugă conexiune**, alege serviciul și introdu cheia lui. Pentru Hugging Face, folosește un token de acces cu permisiunea Inference Providers. Pentru NVIDIA NIM, folosește o cheie cu acces la NVIDIA Public API Endpoints. Pentru Vercel, folosește o cheie AI Gateway.
+1. Selectează **Adaugă furnizor** și alege serviciul și introdu cheia lui. Pentru Hugging Face, folosește un token de acces cu permisiunea Inference Providers. Pentru NVIDIA NIM, folosește o cheie cu acces la NVIDIA Public API Endpoints. Pentru Vercel, folosește o cheie AI Gateway.
 2. Alege **Descoperă modele** și selectează un model sau introdu ID-ul complet și limitele unui model cu acces restricționat sau specific contului. Păstrează prefixul și barele oblice. În Hugging Face, păstrează un sufix precum `owner/model:novita` dacă alegi explicit furnizorul din spatele serviciului.
 3. Salvează și alege **Testează** pentru a verifica modelul ales cu cheia ta. Prezența în catalog nu garantează accesul contului. Dacă accesul eșuează, verifică în serviciu ID-ul exact și permisiunile sau planul înainte de a schimba conexiunea.
 
@@ -98,7 +98,7 @@ VERA trimite solicitările către serviciul indicat în selectorul de modele. [H
 ## LM Studio
 
 1. Pornește serverul LM Studio și încarcă un model.
-2. **Adaugă o conexiune**, **Furnizor** LM Studio. Adresa `http://localhost:1234` este completată automat.
+2. **Adaugă furnizor**, **Furnizor** LM Studio. Adresa `http://localhost:1234` este completată automat.
 3. Selectează **Testează conexiunea**. VERA citește modelele de conversație ale serverului; modelele de embedding sunt omise.
 4. Pentru fiecare model, verifică limita de context afișată de VERA. Dacă serverul nu raportează niciuna, seteaz-o tu. Valorile opționale **Raționament** și **Temperatură** rămân pe **Implicit la furnizor** dacă nu le setezi.
 5. Selectează **Salvează**.
@@ -107,7 +107,7 @@ Pentru LM Studio, cheia API este opțională.
 
 ## Ollama și alte endpointuri compatibile
 
-1. **Adaugă o conexiune**, **Furnizor** Ollama sau **Alt furnizor compatibil**. Pentru Ollama, **URL de bază** `http://localhost:11434/v1` este completat automat.
+1. **Adaugă furnizor**, **Furnizor** Ollama sau **Alt furnizor compatibil**. Pentru Ollama, **URL de bază** `http://localhost:11434/v1` este completat automat.
 2. Introdu **Numele endpoint-ului**, **URL de bază** (o adresă `http` sau `https` care se termină în `/v1`), numele de la **Model** așa cum îl cunoaște serverul, **Fereastră de context (tokenuri)** și **Ieșire maximă (tokenuri)**.
 3. Introdu **Cheia API a endpoint-ului** dacă serverul are nevoie de una sau lasă câmpul gol.
 4. Selectează **Salvează**.

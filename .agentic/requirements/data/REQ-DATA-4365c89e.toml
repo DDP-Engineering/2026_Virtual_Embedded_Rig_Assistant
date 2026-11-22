@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-DATA-4365c89e"
+
+title = "Ship third-party notices with the components part"
+
+status = "active"
+
+requirement = "The `components` part shall include `THIRD-PARTY-NOTICES.md`, which names each shipped component with its version or revision, its official source URL and its licence, and contains the full Apache License 2.0 text."
+
+verification = "Build the fixture part and read the notices file: it names Chrome for Testing with the pinned version and source, and each Whisper model with its repository, revision and licence, and it contains the Apache License 2.0 text."
+
+affected_paths = ["02_Tools/delivery/components.mjs", "02_Tools/delivery/licenses/Apache-2.0.txt"]
+
+linked_tests = ["05_Software/tests/tooling/components.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = "Redistributed third-party files travel with their notices."        # why this behavior exists, if not obvious
+
+created = 2026-11-21
+updated = 2026-11-21

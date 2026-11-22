@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-SEC-a255c261"
+
+title = "Reject a picked dictation archive that differs from its pins"
+
+status = "active"
+
+requirement = "If a picked dictation model archive is not a readable ZIP or does not hold exactly that model's pinned files with their pinned lengths and SHA-256 digests, VERA shall report an integrity failure for that model and publish nothing."
+
+verification = "Install from a ZIP with an extra member, a ZIP of the other model, a ZIP with one changed byte, a ZIP with a path outside the model folder and a file that is not a ZIP. Each ends with that model failed with integrity, no installed directory and no staging folder left."
+
+affected_paths = ["05_Software/src/apps/desktop/src/main/dictation/models.ts", "05_Software/src/apps/desktop/src/main/dictation/archive.ts"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/main/dictation/models.test.ts", "05_Software/tests/e2e/install-from-file.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-21
+updated = 2026-11-21

@@ -92,6 +92,8 @@ test("provider Test displays per-step native results and test-build replay is re
     const provider = page.locator('[data-provider="custom:scripted"]');
     const button = provider.locator('[data-i18n="providers.test"]');
     await expect(button).toBeVisible();
+    // The card settles once its model list has loaded the provider's catalog.
+    await expect(provider.locator('[data-provider-model="scripted"]')).toBeChecked();
     const bounds = await provider.boundingBox();
     await button.focus();
     await page.keyboard.press("Enter");

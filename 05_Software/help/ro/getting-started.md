@@ -18,8 +18,8 @@ Pentru a schimba mai întâi limba interfeței, deschide **Setări** → **Aspec
 
 1. Deschide **Setări** → **Furnizori**.
 2. Alege una dintre variante:
-   - Abonament ChatGPT: la **Abonamente**, selectează **Autentificare cu ChatGPT** și finalizează autentificarea în browser.
-   - Cheie API sau server local: la **Conexiuni API / locale**, selectează **Adaugă o conexiune**, alege **Furnizor** (**API OpenAI**, LM Studio, Ollama sau **Alt furnizor compatibil**), completează câmpurile și selectează **Salvează**.
+   - Abonament ChatGPT: selectează **Adaugă furnizor**, alege **Abonament ChatGPT** ca **Furnizor**, selectează **Autentificare cu ChatGPT** și finalizează autentificarea în browser.
+   - Cheie API sau server local: selectează **Adaugă furnizor**, alege **Furnizor** (**API OpenAI**, LM Studio, Ollama sau **Alt furnizor compatibil**), completează câmpurile și selectează **Salvează**.
 3. Selectează **Testează** lângă conexiune. Toți cei patru pași (**Conectivitate**, **Autentificare și model**, **Apelare instrumente**, **Streaming**) ar trebui să afișeze **Reușit**.
 
 Detaliile sunt în [Furnizori și modele](providers.md).

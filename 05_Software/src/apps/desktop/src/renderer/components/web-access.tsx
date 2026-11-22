@@ -1,5 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  type Response,
   type WebAccessSave,
   type WebAccessSnapshot,
   type WebAccessTestResult,
@@ -13,23 +14,33 @@ import { api } from "../api/index.js";
 import { BrowserSettings } from "./browser-settings.js";
 import { ConsentDialog } from "./consent-dialog.js";
 import { ErrorMessage } from "./error-message.js";
+import { SettingsPageHeader } from "./settings-page-header.js";
 import "./web-access.css";
 
-export function WebAccessPanel() {
+export function WebAccessPanel({ dirtyChanged }: { dirtyChanged?: ((dirty: boolean) => void) | undefined }) {
   const { t } = useTranslation();
   const query = useQuery({ queryKey: ["web.access.get"], queryFn: () => api.invoke("web.access.get", {}) });
+  if (query.data) return <WebAccessForm snapshot={query.data} dirtyChanged={dirtyChanged} />;
   return (
     <section className="surface web-access" data-settings-section="web">
       <h2>{t("settings.webAccess")}</h2>
       {query.isPending && <p role="status">{t("webAccess.loading")}</p>}
       {query.error && <ErrorMessage error={query.error} />}
-      {query.data && <WebAccessForm snapshot={query.data} />}
-      <BrowserSettings />
     </section>
   );
 }
 
-function WebAccessForm({ snapshot }: { snapshot: WebAccessSnapshot }) {
+/**
+ * Web search and Interactive Browser share one page draft: the page header Save writes the search settings and
+ * the two browser switches; Test connection, Remove key and the browser runtime buttons act at once.
+ */
+function WebAccessForm({
+  snapshot,
+  dirtyChanged,
+}: {
+  snapshot: WebAccessSnapshot;
+  dirtyChanged?: ((dirty: boolean) => void) | undefined;
+}) {
   const { t } = useTranslation();
   const storageDescriptions = {
     encrypted: t("webAccess.storage.encrypted"),
@@ -43,8 +54,16 @@ function WebAccessForm({ snapshot }: { snapshot: WebAccessSnapshot }) {
   const [enabled, setEnabled] = useState(snapshot.preferences.enabled);
   const [authentication, setAuthentication] = useState(snapshot.preferences.authentication);
   const [key, setKey] = useState("");
-  const [saving, setSaving] = useState(false),
-    [saved, setSaved] = useState(false);
+  const browser = useQuery({
+    queryKey: ["browser.settings.get"],
+    queryFn: () => api.invoke("browser.settings.get", {}),
+    refetchInterval: 500,
+    networkMode: "always",
+  });
+  // Browser switch edits; undefined keeps the saved value.
+  const [appBrowser, setAppBrowser] = useState<boolean>();
+  const [benchBrowser, setBenchBrowser] = useState<boolean>();
+  const [saving, setSaving] = useState(false);
   const [error, setError] = useState<unknown>();
   const [consent, setConsent] = useState(false);
   const savingNow = useRef(false);
@@ -71,34 +90,76 @@ function WebAccessForm({ snapshot }: { snapshot: WebAccessSnapshot }) {
       if (attempt.current) void api.invoke("web.access.cancel", { testId: attempt.current }).catch(() => {});
     };
   }, []);
+  const bench = browser.data?.workbench;
+  const savedApp = browser.data?.appEnabled ?? false;
+  const appValue = appBrowser ?? savedApp;
+  const benchValue = benchBrowser ?? bench?.enabled ?? false;
+  const appDirty = appBrowser !== undefined && appBrowser !== savedApp;
+  const benchDirty = Boolean(bench) && benchBrowser !== undefined && benchBrowser !== bench?.enabled;
+  const webDirty =
+    enabled !== snapshot.preferences.enabled ||
+    provider !== snapshot.preferences.provider ||
+    authentication !== snapshot.preferences.authentication ||
+    key.trim() !== "";
+  const dirty = webDirty || appDirty || benchDirty;
+  useEffect(() => dirtyChanged?.(dirty), [dirty, dirtyChanged]);
+  useEffect(() => () => dirtyChanged?.(false), [dirtyChanged]);
+  const missingKey = authentication === "api-key" && !key.trim() && !keyMetadata.keyConfigured;
   const refresh = async () => {
     const current = await api.invoke("web.access.get", {});
     client.setQueryData(["web.access.get"], current);
     return current;
   };
+  const reset = () => {
+    setEnabled(snapshot.preferences.enabled);
+    setProvider(snapshot.preferences.provider);
+    setAuthentication(snapshot.preferences.authentication);
+    setKey("");
+    setAppBrowser(undefined);
+    setBenchBrowser(undefined);
+    setError(undefined);
+  };
   const save = async (storageConsent?: boolean) => {
     if (savingNow.current) return;
     savingNow.current = true;
     setSaving(true);
-    setSaved(false);
     setError(undefined);
-    const request: WebAccessSave = {
-      enabled,
-      provider,
-      authentication,
-      ...(authentication === "api-key" && key.trim() ? { apiKey: key.trim() } : {}),
-      ...(storageConsent === undefined ? {} : { storageConsent }),
-    };
     try {
-      const response = await api.invoke("web.access.save", request);
-      if (response.status === "consent-required") {
-        setConsent(true);
-        return;
+      if (webDirty) {
+        const request: WebAccessSave = {
+          enabled,
+          provider,
+          authentication,
+          ...(authentication === "api-key" && key.trim() ? { apiKey: key.trim() } : {}),
+          ...(storageConsent === undefined ? {} : { storageConsent }),
+        };
+        const response = await api.invoke("web.access.save", request);
+        if (response.status === "consent-required") {
+          setConsent(true);
+          return;
+        }
+        setConsent(false);
+        setKey("");
+        await refresh();
       }
-      setConsent(false);
-      setKey("");
-      await refresh();
-      setSaved(true);
+      if (appDirty) {
+        const changed = await api.updateSettings({ interactiveBrowser: appValue });
+        await client.cancelQueries({ queryKey: ["app.settings"] });
+        client.setQueryData(["app.settings"], changed);
+      }
+      if (benchDirty && bench) {
+        const changed = await api.invoke("workbench.config.update", {
+          workbenchId: bench.id,
+          patch: { interactive_browser: benchValue },
+        });
+        await client.cancelQueries({ queryKey: ["workbench.active"] });
+        client.setQueryData<Response<"workbench.config.get"> | null>(["workbench.active"], (current) =>
+          current?.config.id === bench.id ? { ...current, ...changed } : current,
+        );
+      }
+      if (appDirty || benchDirty) await browser.refetch();
+      setAppBrowser(undefined);
+      setBenchBrowser(undefined);
     } catch (failure) {
       setError(failure);
     } finally {
@@ -110,7 +171,6 @@ function WebAccessForm({ snapshot }: { snapshot: WebAccessSnapshot }) {
     if (savingNow.current) return;
     savingNow.current = true;
     setSaving(true);
-    setSaved(false);
     setError(undefined);
     try {
       await api.invoke("web.access.removeKey", { provider });
@@ -118,7 +178,6 @@ function WebAccessForm({ snapshot }: { snapshot: WebAccessSnapshot }) {
       setKey("");
       const current = await refresh();
       setEnabled(current.preferences.enabled);
-      setSaved(true);
     } catch (failure) {
       setError(failure);
     } finally {
@@ -159,119 +218,124 @@ function WebAccessForm({ snapshot }: { snapshot: WebAccessSnapshot }) {
     if (attempt.current) void api.invoke("web.access.cancel", { testId: attempt.current }).catch(() => {});
   };
   const disabled = saving || testing;
-  const missingKey = authentication === "api-key" && !key.trim() && !keyMetadata.keyConfigured;
+  const valid = !(enabled && missingKey);
   return (
-    <>
-      <form
-        onSubmit={(event) => {
-          event.preventDefault();
-          void save();
-        }}
-      >
-        <fieldset disabled={disabled}>
-          <label className="web-access-toggle">
-            <input
-              id="web-enabled"
-              type="checkbox"
-              checked={enabled}
-              onChange={(event) => {
-                setEnabled(event.target.checked);
-                setSaved(false);
-              }}
-            />
-            {t("webAccess.enabled")}
-          </label>
-          <label className="web-access-field" htmlFor="web-provider">
-            {t("webAccess.provider")}
-            <select
-              id="web-provider"
-              value={provider}
-              onChange={(event) => {
-                const next = event.target.value as WebProviderId;
-                setProvider(next);
-                setKey("");
-                setSaved(false);
-                setError(undefined);
-                setAuthentication(
-                  next === snapshot.preferences.provider
-                    ? snapshot.preferences.authentication
-                    : webProviders[next].anonymous
-                      ? "anonymous"
-                      : "api-key",
-                );
-              }}
-            >
-              {webProviderIds.map((id) => (
-                <option key={id} value={id}>
-                  {webProviders[id].name}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="web-access-field" htmlFor="web-authentication">
-            {t("webAccess.authentication")}
-            <select
-              id="web-authentication"
-              value={authentication}
-              onChange={(event) => {
-                setAuthentication(event.target.value as typeof authentication);
-                setSaved(false);
-              }}
-            >
-              {webProviders[provider].anonymous && (
-                <option value="anonymous">{t("webAccess.anonymous")}</option>
-              )}
-              <option value="api-key">{t("webAccess.apiKeyMode")}</option>
-            </select>
-          </label>
-          {authentication === "api-key" && (
-            <label className="web-access-field" htmlFor="web-api-key">
-              {t("webAccess.apiKey", { provider: providerName })}
+    <section className="surface web-access" data-settings-section="web">
+      <SettingsPageHeader
+        title={t("settings.webAccess")}
+        i18n="settings.webAccess"
+        dirty={dirty}
+        valid={valid}
+        saving={saving}
+        onCancel={reset}
+        onSave={() => void save()}
+      />
+      <div className="web-access-columns">
+        <form
+          onSubmit={(event) => {
+            event.preventDefault();
+            if (dirty && valid) void save();
+          }}
+        >
+          <fieldset disabled={disabled}>
+            <label className="web-access-toggle">
               <input
-                id="web-api-key"
-                type="password"
-                autoComplete="off"
-                spellCheck={false}
-                value={key}
-                placeholder={keyMetadata.keyConfigured ? t("webAccess.keepKey") : ""}
-                onChange={(event) => {
-                  setKey(event.target.value);
-                  setSaved(false);
-                }}
+                id="web-enabled"
+                type="checkbox"
+                checked={enabled}
+                onChange={(event) => setEnabled(event.target.checked)}
               />
+              {t("webAccess.enabled")}
             </label>
-          )}
-          {keyMetadata.keyConfigured && (
-            <p data-web-key-status>
-              {t("webAccess.storedKey", { storage: storageDescriptions[keyMetadata.storage ?? "memory"] })}
-            </p>
-          )}
-          {missingKey && <p className="muted">{t("webAccess.keyRequired")}</p>}
-          <div className="workbench-actions">
-            <button type="submit" data-web-save disabled={enabled && missingKey}>
-              {t("webAccess.save")}
-            </button>
-            <button
-              type="button"
-              data-web-test
-              ref={testTrigger}
-              disabled={testing || !enabled || !snapshot.preferences.enabled || missingKey}
-              onClick={() => void runTest()}
-            >
-              {t("webAccess.test")}
-            </button>
-            {keyMetadata.keyConfigured && (
-              <button type="button" data-web-remove onClick={() => void remove()}>
-                {t("webAccess.removeKey")}
-              </button>
+            <label className="web-access-field" htmlFor="web-provider">
+              {t("webAccess.provider")}
+              <select
+                id="web-provider"
+                value={provider}
+                onChange={(event) => {
+                  const next = event.target.value as WebProviderId;
+                  setProvider(next);
+                  setKey("");
+                  setError(undefined);
+                  setAuthentication(
+                    next === snapshot.preferences.provider
+                      ? snapshot.preferences.authentication
+                      : webProviders[next].anonymous
+                        ? "anonymous"
+                        : "api-key",
+                  );
+                }}
+              >
+                {webProviderIds.map((id) => (
+                  <option key={id} value={id}>
+                    {webProviders[id].name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="web-access-field" htmlFor="web-authentication">
+              {t("webAccess.authentication")}
+              <select
+                id="web-authentication"
+                value={authentication}
+                onChange={(event) => setAuthentication(event.target.value as typeof authentication)}
+              >
+                {webProviders[provider].anonymous && (
+                  <option value="anonymous">{t("webAccess.anonymous")}</option>
+                )}
+                <option value="api-key">{t("webAccess.apiKeyMode")}</option>
+              </select>
+            </label>
+            {authentication === "api-key" && (
+              <label className="web-access-field" htmlFor="web-api-key">
+                {t("webAccess.apiKey", { provider: providerName })}
+                <input
+                  id="web-api-key"
+                  type="password"
+                  autoComplete="off"
+                  spellCheck={false}
+                  value={key}
+                  placeholder={keyMetadata.keyConfigured ? t("webAccess.keepKey") : ""}
+                  onChange={(event) => setKey(event.target.value)}
+                />
+              </label>
             )}
-          </div>
-        </fieldset>
-        <p role="status" className="muted">
-          {saving ? t("webAccess.saving") : saved ? t("webAccess.saved") : ""}
-        </p>
-        {Boolean(error) && <ErrorMessage error={error} />}
-      </form>
+            {keyMetadata.keyConfigured && (
+              <p data-web-key-status>
+                {t("webAccess.storedKey", { storage: storageDescriptions[keyMetadata.storage ?? "memory"] })}
+              </p>
+            )}
+            {missingKey && <p className="muted">{t("webAccess.keyRequired")}</p>}
+            <div className="workbench-actions">
+              <button
+                type="button"
+                data-web-test
+                ref={testTrigger}
+                disabled={testing || !enabled || !snapshot.preferences.enabled || missingKey}
+                onClick={() => void runTest()}
+              >
+                {t("webAccess.test")}
+              </button>
+              {keyMetadata.keyConfigured && (
+                <button type="button" data-web-remove onClick={() => void remove()}>
+                  {t("webAccess.removeKey")}
+                </button>
+              )}
+            </div>
+          </fieldset>
+          {Boolean(error) && <ErrorMessage error={error} />}
+        </form>
+        <BrowserSettings
+          settings={browser.data}
+          error={browser.error}
+          refetch={() => browser.refetch()}
+          appEnabled={appValue}
+          workbenchEnabled={benchValue}
+          setApp={setAppBrowser}
+          setWorkbench={setBenchBrowser}
+          disabled={saving}
+        />
+      </div>
       {consent && <ConsentDialog pending={saving} choice={save} cancel={() => setConsent(false)} />}
       {visible && (
         <WebTestDialog
@@ -282,7 +346,7 @@ function WebAccessForm({ snapshot }: { snapshot: WebAccessSnapshot }) {
           close={closeTest}
         />
       )}
-    </>
+    </section>
   );
 }
 

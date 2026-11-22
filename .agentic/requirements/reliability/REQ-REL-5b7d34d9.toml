@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-REL-5b7d34d9"
+
+title = "Keep the state when the component file picker is closed"
+
+status = "active"
+
+requirement = "If the user closes the Install from file picker without choosing a file, VERA shall start no installation and keep the component's current state."
+
+verification = "Drive Install from file in Web access and in Dictation Settings with the instrumented picker returning no file. Assert the runtime and the model keep their previous state and no installation starts."
+
+affected_paths = ["05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/apps/desktop/src/renderer/components/browser-settings.tsx", "05_Software/src/apps/desktop/src/renderer/components/dictation-settings.tsx"]
+
+linked_tests = ["05_Software/tests/e2e/install-from-file.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-21
+updated = 2026-11-21

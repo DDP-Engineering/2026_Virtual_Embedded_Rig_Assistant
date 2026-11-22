@@ -1,12 +1,12 @@
 # Fournisseurs et modèles
 
-Un fournisseur donne à VERA l’accès à un modèle de langage. Il vous en faut au moins un. Configurez les fournisseurs dans **Paramètres** → **Fournisseurs**, qui comporte deux parties : **Abonnements** et **Connexions API / locales**.
+Un fournisseur donne à VERA l’accès à un modèle de langage. Il vous en faut au moins un. Configurez les fournisseurs dans **Paramètres** → **Fournisseurs**. Sélectionnez **Ajouter un fournisseur** et choisissez le fournisseur dans la liste **Fournisseur**. La liste comprend l’**Abonnement ChatGPT**.
 
-Sous **Ajouter une connexion**, utilisez **Rechercher des fournisseurs** pour trouver un fournisseur par son nom.
+Chaque fournisseur connecté apparaît sous forme de carte avec **Modifier**, **Tester** et **Supprimer**. La carte de l’abonnement ChatGPT propose à la place **Se déconnecter**. La carte liste ses **Modèles** avec des cases à cocher. Au-delà de dix modèles, utilisez **Filtrer les modèles** et les pages. VERA propose uniquement les modèles cochés dans le sélecteur de modèle du chat et dans la liste des modèles par défaut du banc de travail. Un nouveau fournisseur propose seulement le modèle choisi lors de la connexion ; cochez-en d’autres sur sa carte. Un fournisseur configuré auparavant propose tous ses modèles jusqu’à ce que vous changiez les coches. Sélectionnez **Enregistrer** en haut à droite pour conserver les coches. **Annuler** les abandonne.
 
 ## Abonnement ChatGPT
 
-1. Sous **Abonnement ChatGPT**, sélectionnez **Se connecter avec ChatGPT**. Le navigateur de votre système ouvre la page de connexion.
+1. Sélectionnez **Ajouter un fournisseur**, choisissez **Abonnement ChatGPT** comme **Fournisseur**, puis sélectionnez **Se connecter avec ChatGPT**. Le navigateur de votre système ouvre la page de connexion.
 2. Connectez-vous sur cette page. VERA affiche **Connecté avec ChatGPT** une fois l’opération terminée.
 
 Le jeton est renouvelé automatiquement. **Se déconnecter** le supprime.
@@ -17,14 +17,14 @@ Le jeton est renouvelé automatiquement. **Se déconnecter** le supprime.
 
 ## API OpenAI
 
-1. Sous **Connexions API / locales**, sélectionnez **Ajouter une connexion** et choisissez **API OpenAI** comme **Fournisseur**.
+1. Sélectionnez **Ajouter un fournisseur** et choisissez **API OpenAI** comme **Fournisseur**.
 2. Saisissez la **Clé API OpenAI** et, si vous le souhaitez, un **Modèle OpenAI**.
 3. Sélectionnez **Enregistrer**.
 
 ## OpenCode Console et OpenCode Go
 
 1. Dans OpenCode Console, créez une clé API pour l’espace de travail. Donnez-lui les droits de lecture des modèles et d’inférence.
-2. Dans VERA, choisissez **Ajouter une connexion**, puis **OpenCode Console** pour le paiement à l’usage ou **OpenCode Go** pour l’abonnement Go.
+2. Dans VERA, sélectionnez **Ajouter un fournisseur**, puis choisissez **OpenCode Console** pour le paiement à l’usage ou **OpenCode Go** pour l’abonnement Go.
 3. Saisissez la clé et lancez la recherche de modèles. Choisissez un modèle dans la liste de l’offre ou saisissez son identifiant exact et ses limites pour une configuration manuelle.
 4. Enregistrez et testez la connexion. Choisissez le modèle pour votre session ou votre banc de travail.
 
@@ -36,7 +36,7 @@ Consultez la [configuration d’OpenCode](https://opencode.ai/docs/console/harne
 
 ## QwenCloud Standard et QwenCloud Token Plan
 
-1. Sous **Ajouter une connexion**, sélectionnez **QwenCloud Standard** pour une clé API de Singapour avec paiement à l’usage, ou **QwenCloud Token Plan** pour la clé dédiée à cette offre (`sk-sp-`). VERA renseigne l’URL de base de l’offre sélectionnée.
+1. Sélectionnez **Ajouter un fournisseur**, puis choisissez **QwenCloud Standard** pour une clé API de Singapour avec paiement à l’usage, ou **QwenCloud Token Plan** pour la clé dédiée à cette offre (`sk-sp-`). VERA renseigne l’URL de base de l’offre sélectionnée.
 2. Saisissez la clé correspondante et sélectionnez **Rechercher des modèles**. Si la liste est indisponible, saisissez l’identifiant exact du modèle proposé par votre région ou votre offre. Par exemple, `qwen3.8-flash` accepte le texte et les images, peut appeler des outils et propose un mode de raisonnement désactivable. `qwen3.7-max` propose les appels d’outils et le même mode avec une entrée texte. Les capacités des autres modèles peuvent être non vérifiées.
 3. Sélectionnez **Enregistrer**, puis **Tester**. Si l’étape de disponibilité du catalogue est ignorée, l’étape d’authentification et de modèle vérifie la clé et le modèle par une requête de chat. Choisissez le modèle pour votre session ou votre banc de travail.
 
@@ -46,7 +46,7 @@ Consultez [les clés API QwenCloud](https://docs.qwencloud.com/developer-guides/
 
 ## DeepSeek, Moonshot AI et Kimi For Coding
 
-1. Dans **Ajouter une connexion**, choisissez **DeepSeek** pour une clé API DeepSeek, **Moonshot AI** pour une clé de la plateforme internationale Kimi API ou **Kimi For Coding** pour une clé de la console Kimi Code. VERA renseigne l’URL de base du service.
+1. Sélectionnez **Ajouter un fournisseur**, puis choisissez **DeepSeek** pour une clé API DeepSeek, **Moonshot AI** pour une clé de la plateforme internationale Kimi API ou **Kimi For Coding** pour une clé de la console Kimi Code. VERA renseigne l’URL de base du service.
 2. Saisissez la clé du service. Pour DeepSeek et Moonshot AI, choisissez **Rechercher des modèles** ou saisissez l’identifiant exact du modèle. Pour Kimi For Coding, saisissez un identifiant comme `kimi-for-coding` ou `k3-256k`, selon votre abonnement.
 3. Sélectionnez **Enregistrer**, puis **Tester**. Pour Kimi For Coding, le contrôle d’accessibilité est ignoré. Le contrôle d’authentification et du modèle envoie une requête au modèle.
 
@@ -58,7 +58,7 @@ Consultez les [limites des modèles DeepSeek](https://api-docs.deepseek.com/api/
 
 ## MiniMax et Z.AI
 
-1. Dans **Ajouter une connexion**, choisissez **MiniMax API** pour une clé de paiement à l’usage (`sk-api-`) ou **MiniMax M Plan** pour une clé d’abonnement MiniMax (`sk-cp-`). Les deux utilisent le service international Messages.
+1. Sélectionnez **Ajouter un fournisseur**, puis choisissez **MiniMax API** pour une clé de paiement à l’usage (`sk-api-`) ou **MiniMax M Plan** pour une clé d’abonnement MiniMax (`sk-cp-`). Les deux utilisent le service international Messages.
 2. Choisissez **Z.AI API** pour une clé API standard. **Z.AI GLM Coding Plan** utilise l’adresse internationale dédiée à l’abonnement. Utilisez une clé Personal Coding Plan ou Team Plan uniquement si Z.AI a autorisé l’accès depuis VERA. Z.AI limite l’abonnement aux outils pris en charge et sa liste publiée ne mentionne pas VERA. Vérifiez le type de clé dans votre compte, car certaines clés fonctionnent à plusieurs adresses et la facturation dépend de la clé et de l’adresse.
 3. Choisissez un modèle suggéré ou saisissez l’identifiant exact activé pour votre compte. Sélectionnez **Enregistrer**, puis **Tester**. Le test envoie des requêtes au modèle qui peuvent consommer du quota. Choisissez le modèle enregistré pour votre session ou votre banc de travail.
 
@@ -81,7 +81,7 @@ Utilisez Alibaba Coding Plan dans les outils de programmation interactifs pris e
 
 ## Fireworks AI, Together AI, Groq et Cerebras
 
-1. Sous **Ajouter une connexion**, sélectionnez le service et saisissez une clé API issue de sa console. VERA renseigne l’adresse du service et stocke séparément la clé de chaque connexion.
+1. Sélectionnez **Ajouter un fournisseur**, puis choisissez le service et saisissez une clé API issue de sa console. VERA renseigne l’adresse du service et stocke séparément la clé de chaque connexion.
 2. Sélectionnez **Rechercher des modèles** ou saisissez l’identifiant complet du modèle et ses limites. Conservez le préfixe du compte pour Fireworks, par exemple `accounts/fireworks/models/glm-5p3-flash`. Pour un point d’accès dédié, copiez son identifiant d’inférence exact depuis le service.
 3. Enregistrez, puis sélectionnez **Tester** pour vérifier la clé et le modèle choisi. La prise en charge des outils et des images s’affiche lorsqu’elle figure dans le catalogue ou la documentation du modèle. Vérifiez les limites et l’accès aux modèles de votre compte.
 
@@ -89,7 +89,7 @@ Consultez les listes de modèles de [Fireworks AI](https://fireworks.ai/models),
 
 ## Hugging Face Inference Providers, NVIDIA NIM et Vercel AI Gateway
 
-1. Dans **Ajouter une connexion**, choisissez le service et saisissez sa clé. Hugging Face demande un jeton d’accès avec l’autorisation Inference Providers. NVIDIA NIM demande une clé donnant accès à NVIDIA Public API Endpoints. Vercel demande une clé AI Gateway.
+1. Sélectionnez **Ajouter un fournisseur**, puis choisissez le service et saisissez sa clé. Hugging Face demande un jeton d’accès avec l’autorisation Inference Providers. NVIDIA NIM demande une clé donnant accès à NVIDIA Public API Endpoints. Vercel demande une clé AI Gateway.
 2. Sélectionnez **Rechercher des modèles** et choisissez un modèle, ou saisissez l’identifiant complet et les limites d’un modèle à accès restreint ou propre à votre compte. Conservez le préfixe et les barres obliques. Pour Hugging Face, conservez un suffixe tel que `owner/model:novita` si vous choisissez explicitement un fournisseur en amont.
 3. Enregistrez la connexion et sélectionnez **Tester** pour vérifier le modèle choisi avec votre clé. La présence dans le catalogue ne garantit pas l’accès. En cas de refus, vérifiez l’identifiant exact, vos autorisations ou votre forfait dans le service avant de modifier la connexion.
 
@@ -98,7 +98,7 @@ VERA envoie les requêtes au service indiqué dans le sélecteur de modèles. [H
 ## LM Studio
 
 1. Démarrez le serveur LM Studio et chargez un modèle.
-2. **Ajouter une connexion**, **Fournisseur** LM Studio. L’adresse `http://localhost:1234` est préremplie.
+2. **Ajouter un fournisseur**, **Fournisseur** LM Studio. L’adresse `http://localhost:1234` est préremplie.
 3. Sélectionnez **Tester la connexion**. VERA lit les modèles de conversation du serveur ; les modèles d’embedding sont ignorés.
 4. Pour chaque modèle, vérifiez la limite de contexte affichée par VERA. Si le serveur n’en indique aucune, définissez-la vous-même. Les valeurs facultatives **Raisonnement** et **Température** restent sur **Valeur par défaut du fournisseur** si vous ne les définissez pas.
 5. Sélectionnez **Enregistrer**.
@@ -107,7 +107,7 @@ Pour LM Studio, une clé API est facultative.
 
 ## Ollama et autres points de terminaison compatibles
 
-1. **Ajouter une connexion**, **Fournisseur** Ollama ou **Autre fournisseur compatible**. Pour Ollama, l’**URL de base** `http://localhost:11434/v1` est préremplie.
+1. **Ajouter un fournisseur**, **Fournisseur** Ollama ou **Autre fournisseur compatible**. Pour Ollama, l’**URL de base** `http://localhost:11434/v1` est préremplie.
 2. Renseignez **Nom du point de terminaison**, **URL de base** (une adresse `http` ou `https` se terminant par `/v1`), **Modèle** (le nom du modèle tel que le serveur le connaît), **Fenêtre de contexte (jetons)** et **Sortie maximale (jetons)**.
 3. Saisissez une **Clé API du point de terminaison** si le serveur en exige une, ou laissez le champ vide.
 4. Sélectionnez **Enregistrer**.

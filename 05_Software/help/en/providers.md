@@ -1,12 +1,12 @@
 # Providers and models
 
-A provider gives VERA access to a language model. You need at least one. Set providers up in **Settings** → **Providers**, which has two parts: **Subscriptions** and **API / local connections**.
+A provider gives VERA access to a language model. You need at least one. Set providers up in **Settings** → **Providers**. Select **Add provider** and choose the provider in the **Provider** list. The list includes the **ChatGPT subscription**.
 
-Under **Add connection**, use **Search providers** to find a provider by name.
+Each connected provider appears as a card with **Edit**, **Test** and **Remove**. The ChatGPT subscription card has **Sign out** instead. The card lists its **Models** as checkboxes. With more than ten models, use **Filter models** and the pages. VERA offers only the ticked models in the chat model picker and in the workbench default model list. A new provider offers only the model you chose while connecting; tick more on its card. A provider you set up earlier offers all its models until you change its ticks. Select **Save** at the top right to keep the ticks. **Cancel** discards them.
 
 ## ChatGPT subscription
 
-1. Under **ChatGPT subscription**, select **Sign in with ChatGPT**. Your system browser opens the sign-in page.
+1. Select **Add provider**, choose **ChatGPT subscription** as **Provider** and select **Sign in with ChatGPT**. Your system browser opens the sign-in page.
 2. Sign in there. VERA shows **Signed in with ChatGPT** when it is done.
 
 The token renews automatically. **Sign out** removes it.
@@ -17,14 +17,14 @@ The token renews automatically. **Sign out** removes it.
 
 ## OpenAI API
 
-1. Under **API / local connections**, select **Add connection** and choose **OpenAI API** as **Provider**.
+1. Select **Add provider** and choose **OpenAI API** as **Provider**.
 2. Enter the **OpenAI API key** and, optionally, an **OpenAI model**.
 3. Select **Save**.
 
 ## OpenCode Console and OpenCode Go
 
 1. In OpenCode Console, create a workspace API key. Give the key permission to read models and run inference.
-2. In VERA, choose **Add connection**, then **OpenCode Console** for pay-as-you-go or **OpenCode Go** for a Go subscription.
+2. In VERA, select **Add provider**, then choose **OpenCode Console** for pay-as-you-go or **OpenCode Go** for a Go subscription.
 3. Enter the key and select **Discover models**. Choose a model from the plan’s list, or enter its exact ID and limits if you are configuring it manually.
 4. Select **Save**, then **Test**. Choose the model for your session or workbench.
 
@@ -36,7 +36,7 @@ See [OpenCode harness setup](https://opencode.ai/docs/console/harnesses) and the
 
 ## QwenCloud Standard and QwenCloud Token Plan
 
-1. Under **Add connection**, select **QwenCloud Standard** for a Singapore pay-as-you-go API key or **QwenCloud Token Plan** for the dedicated Token Plan key (`sk-sp-`). VERA fills the Base URL for the selected plan.
+1. Select **Add provider** and choose **QwenCloud Standard** for a Singapore pay-as-you-go API key or **QwenCloud Token Plan** for the dedicated Token Plan key (`sk-sp-`). VERA fills the Base URL for the selected plan.
 2. Enter the matching key and select **Discover models**. If the list is unavailable, enter the exact model ID for your region or plan. For example, `qwen3.8-flash` accepts text and images and supports tool calling and a thinking toggle. `qwen3.7-max` supports tool calling and the thinking toggle with text input. Capabilities for other model IDs may be unverified.
 3. Select **Save**, then **Test**. If catalog reachability is skipped, **Authentication and model** checks the key and model using chat inference. Choose the model for your session or workbench.
 
@@ -46,7 +46,7 @@ See [QwenCloud API keys](https://docs.qwencloud.com/developer-guides/administrat
 
 ## DeepSeek, Moonshot AI and Kimi For Coding
 
-1. In **Add connection**, choose **DeepSeek** for a DeepSeek API key, **Moonshot AI** for an international Kimi API Platform key, or **Kimi For Coding** for a key from the Kimi Code Console. VERA fills in the matching base URL.
+1. Select **Add provider** and choose **DeepSeek** for a DeepSeek API key, **Moonshot AI** for an international Kimi API Platform key, or **Kimi For Coding** for a key from the Kimi Code Console. VERA fills in the matching base URL.
 2. Enter the service's key. For DeepSeek and Moonshot AI, select **Discover models** or enter the exact model ID. For Kimi For Coding, enter an ID such as `kimi-for-coding` or `k3-256k`, depending on your membership.
 3. Select **Save**, then **Test**. For Kimi For Coding, **Reachability** is skipped and **Authentication and model** checks the key and model through inference.
 
@@ -58,7 +58,7 @@ See [DeepSeek model limits](https://api-docs.deepseek.com/api/list-models/), the
 
 ## MiniMax and Z.AI
 
-1. In **Add connection**, choose **MiniMax API** for a pay-as-you-go key (`sk-api-`) or **MiniMax M Plan** for a subscription key (`sk-cp-`) from MiniMax. Both use the international Messages service.
+1. Select **Add provider** and choose **MiniMax API** for a pay-as-you-go key (`sk-api-`) or **MiniMax M Plan** for a subscription key (`sk-cp-`) from MiniMax. Both use the international Messages service.
 2. Choose **Z.AI API** for a Standard API Key. The **Z.AI GLM Coding Plan** preset uses the dedicated international Coding Plan address. Use a Personal Coding Plan or Team Plan key only if Z.AI has authorized access from VERA. Z.AI limits plan use to supported tools, and VERA is absent from its published list. Check the key type in your account because some keys can use more than one address and billing depends on the key and route.
 3. Pick a suggested model or enter the exact ID enabled for your account. Select **Save**, then **Test**. These presets check the key and model through inference, which can consume quota. Choose the saved model for your session or workbench.
 
@@ -73,7 +73,7 @@ See [MiniMax key setup](https://platform.minimax.io/docs/guides/quickstart-prepa
 3. Choose **Xiaomi MiMo API** for a real-time API key (`sk-`) on the global API endpoint. For **Xiaomi MiMo Token Plan**, use the China, Singapore or Europe region shown on your Token Plan page and its individual (`tp-`) or team (`ttp-`) key.
 4. Select **Discover models** where available, or enter the exact chat model ID from your provider console. Select **Save**, then **Test**. The test uses the selected route and may consume quota. Choose a model in your session or workbench.
 
-Try `qwen3.7-flash` on Model Studio, `qwen3.7-plus` on Coding Plan, or `mimo-v2.6-flash` on MiMo when enabled for your account. A catalog entry alone does not confirm account access. Capabilities for other manually entered IDs may be unverified. To switch regions or workspaces, add a connection with the new scope.
+Try `qwen3.7-flash` on Model Studio, `qwen3.7-plus` on Coding Plan, or `mimo-v2.6-flash` on MiMo when enabled for your account. A catalog entry alone does not confirm account access. Capabilities for other manually entered IDs may be unverified. To switch regions or workspaces, add a provider with the new scope.
 
 See [Model Studio](https://www.alibabacloud.com/help/en/model-studio/qwen-api-via-openai-chat-completions), [Coding Plan](https://www.alibabacloud.com/help/en/model-studio/coding-plan-faq), [MiMo API](https://mimo.mi.com/docs/en-US/api/chat/openai-api-post), [MiMo Token Plan](https://mimo.mi.com/docs/tokenplan/subscription).
 
@@ -81,7 +81,7 @@ Use Alibaba Coding Plan in supported interactive coding tools under Alibaba’s 
 
 ## Fireworks AI, Together AI, Groq and Cerebras
 
-1. Under **Add connection**, select the service and enter an API key from its own console. VERA fills in the service address and stores each connection’s key separately.
+1. Select **Add provider** and choose the service and enter an API key from its own console. VERA fills in the service address and stores each connection’s key separately.
 2. Select **Discover models**, or enter a full model ID and its limits. Keep the account prefix for Fireworks, such as `accounts/fireworks/models/glm-5p3-flash`. For a dedicated endpoint, copy its exact inference ID from the service.
 3. Save and select **Test** to check your key and chosen model. Tool and image support appear when the catalog or the provider’s model documentation supplies them. Check the provider’s limits and model access for your account.
 
@@ -89,7 +89,7 @@ See the model lists for [Fireworks AI](https://fireworks.ai/models), [Together A
 
 ## Hugging Face Inference Providers, NVIDIA NIM and Vercel AI Gateway
 
-1. Under **Add connection**, select the service and enter its key. Hugging Face requires a user access token with Inference Providers permission. NVIDIA NIM uses a key with NVIDIA Public API Endpoints access. Vercel uses an AI Gateway key.
+1. Select **Add provider** and choose the service and enter its key. Hugging Face requires a user access token with Inference Providers permission. NVIDIA NIM uses a key with NVIDIA Public API Endpoints access. Vercel uses an AI Gateway key.
 2. Select **Discover models** and choose a model, or enter its complete ID and limits for a gated or account-specific model. Keep the namespace and slashes. For Hugging Face, keep a route suffix such as `owner/model:novita` if you choose an upstream explicitly.
 3. Save and select **Test** to check the chosen model with your key. A catalog entry does not guarantee account access. If access fails, check the exact ID and grant or plan in the service before changing the connection.
 
@@ -98,7 +98,7 @@ VERA sends prompts to the service named in the model picker. [Hugging Face](http
 ## LM Studio
 
 1. Start the LM Studio server and load a model.
-2. **Add connection**, **Provider** LM Studio. The address `http://localhost:1234` is filled in.
+2. **Add provider**, **Provider** LM Studio. The address `http://localhost:1234` is filled in.
 3. Select **Test connection**. VERA reads the server's conversation models; embedding models are left out.
 4. For each model, check the context limit VERA shows. If the server reports none, set it yourself. Optional **Reasoning** and **Temperature** stay at **Provider default** unless you set them.
 5. Select **Save**.
@@ -107,7 +107,7 @@ An API key is optional for LM Studio.
 
 ## Ollama and other compatible endpoints
 
-1. **Add connection**, **Provider** Ollama or **Other compatible provider**. For Ollama the **Base URL** `http://localhost:11434/v1` is filled in.
+1. **Add provider**, **Provider** Ollama or **Other compatible provider**. For Ollama the **Base URL** `http://localhost:11434/v1` is filled in.
 2. Enter an **Endpoint name**, the **Base URL** (an `http` or `https` address ending in `/v1`), the **Model** name as the server knows it, the **Context window (tokens)** and the **Maximum output (tokens)**.
 3. Enter an **Endpoint API key** if the server needs one, or leave it empty.
 4. Select **Save**.

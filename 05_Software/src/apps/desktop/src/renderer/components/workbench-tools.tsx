@@ -75,7 +75,8 @@ export function WorkbenchTools({
     power_quality: t("workbenchTools.power_quality"),
     lighting_design: t("workbenchTools.lighting_design"),
   };
-  const { rows, pager } = usePaged(names, 50);
+  // Rows per page follow Advanced > Rows per page (10 by default), like every other list.
+  const { rows, pager } = usePaged(names);
   return (
     <div className="workbench-tools">
       <ul>

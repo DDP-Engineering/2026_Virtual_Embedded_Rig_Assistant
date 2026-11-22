@@ -1,9 +1,22 @@
+/* Web search on the left, Interactive Browser beside it; one column when the page is narrow. */
+.web-access-columns {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 24rem), 1fr));
+  gap: 1.5rem 3rem;
+  align-items: start;
+}
 .web-access fieldset {
   display: grid;
   gap: 0.85rem;
   border: 0;
   padding: 0;
-  margin: 1.5rem 0 0;
+  margin: 0;
+  min-width: 0;
+}
+.web-access .browser-settings legend {
+  padding: 0;
+  margin-bottom: 0.85rem;
+  font-weight: 600;
 }
 .web-access-toggle {
   display: flex;
