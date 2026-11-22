@@ -1,0 +1,31 @@
+schema = 1
+
+id = "REQ-FUNC-701b5178"
+
+title = "Offer only ticked provider models in model choices"
+
+status = "active"
+
+requirement = """
+When the composer model picker or the workbench default model list is built, the desktop shall offer from each provider only the models it has ticked, and it shall keep showing the session's current model even when that model is not ticked.
+"""
+
+verification = "With a custom connection whose catalog has three models and two ticked, the picker lists the two; a session already set to the third still shows it as its current choice; a provider with no list offers its whole catalog."
+
+affected_paths = [
+  "05_Software/src/apps/desktop/src/renderer/components/model-catalog.ts",
+]
+
+linked_tests = [
+  "05_Software/src/apps/desktop/src/renderer/components/model-catalog.test.ts",
+  "05_Software/tests/e2e/session-reasoning.spec.ts",
+]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-21
+updated = 2026-11-21

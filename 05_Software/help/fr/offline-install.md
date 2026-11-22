@@ -1,6 +1,6 @@
 # Installation hors ligne
 
-VERA peut être installé et utilisé sur un ordinateur de laboratoire sans réseau. Le programme d’installation contient tout ce dont l’application a besoin : le modèle d’indexation local, l’installateur d’outils Python et le catalogue officiel de plugins. Les programmes exécutés par les plugins sont fournis séparément, dans un kit de dépendances hors ligne. Les modèles d’IA ont toujours besoin d’un fournisseur : sur un ordinateur sans réseau, utilisez un serveur local comme LM Studio ou Ollama (consultez [Fournisseurs et modèles](providers.md)).
+VERA peut être installé et utilisé sur un ordinateur de laboratoire sans réseau. Le programme d’installation contient tout ce dont l’application a besoin : le modèle d’indexation local, l’installateur d’outils Python et le catalogue officiel de plugins. Les programmes exécutés par les plugins sont fournis séparément, dans un kit de dépendances hors ligne. Le navigateur interactif et les modèles de dictée sont eux aussi livrés à part, dans le dossier `components/`. Les modèles d’IA ont toujours besoin d’un fournisseur : sur un ordinateur sans réseau, utilisez un serveur local comme LM Studio ou Ollama (consultez [Fournisseurs et modèles](providers.md)).
 
 ## Le dossier de livraison
 
@@ -12,9 +12,10 @@ Une livraison de VERA est un dossier par version, `vera-<version>/` :
 | `vera-linux-x64/` | `VERA-<v>-linux-*.AppImage`, `VERA-<v>-linux-*.deb`, `SHA256SUMS` |
 | `plugins/` | Un `<id>-<version>.zip` par plugin, les index du catalogue, `vera-plugins-<version>.zip` avec tout le catalogue, `SHA256SUMS` |
 | `plugin-deps/` | `vera-plugin-deps-<version>-windows-x64.zip` et `…-linux-x64.zip`, `SHA256SUMS` |
+| `components/` | `chrome-win64.zip` et `chrome-linux64.zip` (navigateur), `whisper-base.zip` et `whisper-small.zip` (modèles de dictée), `THIRD-PARTY-NOTICES.md`, `SHA256SUMS` |
 | `delivery.json` | Ce qui a été construit : versions, fichiers, tailles et SHA-256 |
 
-Copiez le dossier de votre plateforme, ainsi que `plugin-deps/` si vous voulez utiliser les programmes des plugins. `plugins/` n’est nécessaire que pour les plugins plus récents que votre programme d’installation de VERA. Le kit de dépendances pèse environ 1 Go par plateforme.
+Copiez le dossier de votre plateforme, ainsi que `plugin-deps/` si vous voulez utiliser les programmes des plugins. `plugins/` n’est nécessaire que pour les plugins plus récents que votre programme d’installation de VERA. Le kit de dépendances pèse environ 1 Go par plateforme. Copiez aussi `components/` si vous voulez le navigateur interactif ou la dictée. Ce dossier fait environ 700 Mo pour les deux plateformes et les deux modèles.
 
 ## 1. Vérifier les fichiers
 
@@ -53,6 +54,13 @@ La page **Plugins** liste les plugins officiels de votre version de VERA à part
 VERA vérifie chaque fichier du kit par rapport au SHA-256 du manifeste du plugin et refuse tout fichier modifié. Pour installer à nouveau depuis le réseau, supprimez `plugins.kit`.
 
 Pour installer un seul programme à partir d’une archive que vous avez copiée vous-même, utilisez plutôt **Installer depuis une archive de dépendances…** sur la carte du plugin.
+
+## 5. Installer le navigateur et les modèles de dictée hors ligne
+
+1. Ouvrez **Paramètres → Accès web** et sélectionnez **Installer depuis un fichier…**. Choisissez `components/chrome-win64.zip` sous Windows ou `components/chrome-linux64.zip` sous Linux.
+2. Ouvrez **Paramètres → Dictée** et sélectionnez **Installer depuis un fichier…** sur le modèle souhaité. Choisissez `components/whisper-base.zip` ou `components/whisper-small.zip`.
+
+VERA vérifie chaque fichier avec le SHA-256 fixé par sa version, refuse un fichier modifié ou différent et n’envoie aucune requête réseau. `THIRD-PARTY-NOTICES.md` indique la source et la licence de chaque composant.
 
 ## Programmes des fabricants
 

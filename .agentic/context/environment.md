@@ -88,7 +88,7 @@ Run every command from `05_Software`. When Node is not on PATH, prefix it with t
 | `npm run prepare:plugins` | Builds the official plugins into the bundled catalog release in `07_Delivery/plugins/` (git-ignored). |
 | `npm run prepare:windows-runtime` | Windows only. Copies the pinned Microsoft VC++ DLLs, checking hashes and the Microsoft signature. |
 | `npm run package` / `npm run package:test` | Host x64 release or instrumented build: NSIS and portable ZIP on Windows, AppImage and deb on Linux. Needs a native host of that platform. See [native packaging](../knowledge/native-packaging.md). |
-| `npm run delivery:vera`, `delivery:plugins`, `delivery:plugin-deps`, `delivery:verify`, `delivery:release` | Collect, verify and publish checksummed deliveries in `07_Delivery/vera-<version>/`; the apt repository check needs `gpgv` (Git for Windows ships one). See the Delivery section of [02_Tools/README.md](../../02_Tools/README.md). |
+| `npm run delivery:vera`, `delivery:plugins`, `delivery:plugin-deps`, `delivery:components`, `delivery:verify`, `delivery:release` | Collect, verify and publish checksummed deliveries in `07_Delivery/vera-<version>/`; the apt repository check needs `gpgv` (Git for Windows ships one). See the Delivery section of [02_Tools/README.md](../../02_Tools/README.md). |
 
 Clean, offline Windows execution and real VC++ self-containment are required before a final release and are not established on the development host. The offline Windows probe needs network isolation and a machine that permits unsigned executables; a Smart App Control refusal is a failed environment probe. The Linux offline probe runs in an isolated VM.
 

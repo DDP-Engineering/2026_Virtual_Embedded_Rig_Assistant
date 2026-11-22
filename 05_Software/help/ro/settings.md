@@ -72,7 +72,7 @@ Dezactivarea accesului web oprește și căutările și descărcările în curs.
 
 ### Browser interactiv
 
-În **Setări → Acces web**, selectează **Instalează browserul** pentru a descărca și verifica Chromium. Poți anula instalarea sau elimina browserul. Bifează **Activează browserul interactiv în VERA** și **Permite browserul interactiv în acest workbench**. Ambele opțiuni sunt inițial dezactivate.
+În **Setări → Acces web**, selectează **Instalează browserul** pentru a descărca și verifica Chromium. Poți anula instalarea sau elimina browserul. Bifează **Activează browserul interactiv în VERA** și **Permite browserul interactiv în acest workbench**. Ambele opțiuni sunt inițial dezactivate. Fără rețea, selectează **Instalează din fișier…** și alege arhiva browserului dintr-o livrare VERA (vezi [Instalare offline](offline-install.md)).
 
 În chat, introdu la **Origine publică** originea exactă, de exemplu `https://example.com`, apoi selectează **Acordă acces**. Include protocolul și portul dacă diferă de cel implicit. Fiecare chat are propriile autorizări și propria fereastră. Autorizează individual originile suplimentare pentru redirecționări sau resurse.
 
@@ -88,7 +88,7 @@ Cere agentului să deschidă și să citească o pagină sau să urmeze un link.
 
 ## Dictare
 
-Alege **Whisper Small** (recomandat) sau **Whisper Base** (compact). Pagina afișează dimensiunea descărcării și starea instalării pentru fiecare model. Alege **Descarcă** și urmărește progresul. **Anulează** șterge descărcarea parțială. Dacă VERA raportează o descărcare eșuată sau fișiere deteriorate, alege **Reîncearcă**. Eliberează spațiu pe disc dacă este necesar.
+Alege **Whisper Small** (recomandat) sau **Whisper Base** (compact). Pagina afișează dimensiunea descărcării și starea instalării pentru fiecare model. Alege **Descarcă** și urmărește progresul. **Anulează** șterge descărcarea parțială. Dacă VERA raportează o descărcare eșuată sau fișiere deteriorate, alege **Reîncearcă**. Eliberează spațiu pe disc dacă este necesar. Fără rețea, selectează **Instalează din fișier…** la model și alege arhiva lui dintr-o livrare VERA.
 
 După instalare, alege **Folosește modelul**. VERA păstrează selecția la repornire. **Elimină** șterge fișierele modelului și golește selecția dacă modelul era activ. Dacă eliminarea eșuează, închide aplicațiile care folosesc fișierele modelului și alege **Reîncearcă**. Modelele se află în datele aplicației VERA și sunt comune tuturor workbench-urilor.
 

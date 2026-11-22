@@ -92,9 +92,8 @@ export function Settings({
         </p>
       )}
       {Boolean(error) && <ErrorMessage error={error} />}
-      <div hidden={section !== "providers"}>
-        <Providers />
-      </div>
+      {/* Rendered only while selected, like every editable page; its dialog is modal, so no editor is left open. */}
+      {section === "providers" && <Providers dirtyChanged={dirtyChanged} />}
       {section === "dictation" && (
         <DictationSettings
           mode={snapshot.settings.dictationRecordingMode}
@@ -103,7 +102,7 @@ export function Settings({
           update={update}
         />
       )}
-      {section === "web" && <WebAccessPanel />}
+      {section === "web" && <WebAccessPanel dirtyChanged={dirtyChanged} />}
       {section === "commands" && (
         <CommandSettings
           shell={snapshot.settings.shell}

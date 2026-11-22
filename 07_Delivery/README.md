@@ -16,6 +16,8 @@ dependency kits. A plugin fix never needs a new installer. Everything here excep
     plugins/                 <id>-<version>.zip, index.json, index-stable.json, index-pre-release.json,
                              (*.sig when signed), vera-plugins-<version>.zip, LICENSE.txt, SHA256SUMS
     plugin-deps/             vera-plugin-deps-<version>-windows-x64.zip, …-linux-x64.zip, SHA256SUMS
+    components/              chrome-win64.zip, chrome-linux64.zip, whisper-base.zip, whisper-small.zip,
+                             THIRD-PARTY-NOTICES.md, SHA256SUMS
     delivery.json            version, commit, host, update feed and apt key per part, files with SHA-256 and size
 ```
 
@@ -31,12 +33,14 @@ From `05_Software`, each with `python ../02_Tools/environment/npmw.py npm run �
 | `vera-windows-x64/` | `npm run delivery:vera -- --platform windows-x64` | Windows x64 |
 | `vera-linux-x64/` | `npm run delivery:vera -- --platform linux-x64` | Linux x64 |
 | `plugin-deps/` | `npm run delivery:plugin-deps -- --platform windows-x64` or `linux-x64` (~1 GB download) | that platform |
+| `components/` | `npm run delivery:components` (~730 MB download: the browser runtime of both platforms and both dictation models) | any |
 | check | `npm run delivery:verify [-- <folder>]` | any |
 | GitHub release | `npm run delivery:release [-- <folder>]`, then `npm run delivery:release -- --publish` | any, with `gh` signed in |
 
 A part that exists is refused; `--replace` rebuilds only that part. `delivery:verify` checks the checksums,
 `delivery.json`, the version, the expected files, the plugin zips against the indexes and the index
-signatures, lists the missing parts, and exits 1 on a mismatch. It publishes nothing. The scripts are
+signatures, the components against the pins in the Desktop source, lists the missing parts, and exits 1 on a
+mismatch. It publishes nothing. The scripts are
 described in [02_Tools/README.md](../02_Tools/README.md#delivery); signing and publishing the catalog in
 [catalog-release.md](../02_Tools/release/catalog-release.md).
 
@@ -83,8 +87,9 @@ without it `delivery:verify` warns that deb installs only get the download link.
 
 ## INSTALL on a bench without network
 
-Copy the parts you need: `vera-<platform>/`, and for plugin programs `plugin-deps/` (the zip of your
-platform). `plugins/` is needed only for plugins newer than the installer.
+Copy the parts you need: `vera-<platform>/`, for plugin programs `plugin-deps/` (the zip of your
+platform), and for the Interactive Browser and dictation `components/`. `plugins/` is needed only for plugins
+newer than the installer.
 
 1. **Check the files.** Linux: `sha256sum -c SHA256SUMS` in each folder. Windows (PowerShell):
    `Get-FileHash <file> -Algorithm SHA256` and compare with the line in `SHA256SUMS`.
@@ -105,3 +110,9 @@ platform). `plugins/` is needed only for plugins newer than the installer.
 
 Every file from the kit is checked against the SHA-256 in the installed plugin's manifest; a changed file is
 refused. Remove `plugins.kit` to install from the network again.
+
+6. **Browser runtime and dictation models.** In VERA, open Settings > Web access and choose
+   **Install from file…**, then pick `components/chrome-win64.zip` (Windows) or `chrome-linux64.zip` (Linux).
+   In Settings > Dictation choose **Install from file…** on a model and pick `whisper-base.zip` or
+   `whisper-small.zip`. VERA checks each file against the SHA-256 it pins and refuses a changed or other file;
+   it makes no network request. `THIRD-PARTY-NOTICES.md` lists their sources and licences.

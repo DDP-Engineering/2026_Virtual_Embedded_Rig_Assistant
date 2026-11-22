@@ -1,6 +1,6 @@
 import { spawn } from "node:child_process";
 import { existsSync, readFileSync, renameSync } from "node:fs";
-import { expect, test } from "@playwright/test";
+import { expect, type Locator, test } from "@playwright/test";
 import { defaultSettings } from "@vera/shared";
 import { rendererUrlFromOutput } from "./fixtures.js";
 import { changeSetting } from "./settings-navigation.js";
@@ -216,29 +216,31 @@ test("browser mock displays the same metadata screen through dev:renderer", asyn
     // Provider editors participate in the localized minimum-size and keyboard contracts.
     await page.locator('[data-section="providers"]').click();
     const providerSection = page.locator('[data-settings-section="providers"]');
+    const providerDialog = providerSection.locator("[data-provider-dialog]");
     const fakeKey = "fak-browser-only-private-middle-8Zx4";
     await providerSection.locator('[data-action="add-provider"]').click();
-    await providerSection.getByLabel("OpenAI API key", { exact: true }).fill(fakeKey);
-    await providerSection
+    await providerDialog.locator("[data-provider-preset]").selectOption("openai");
+    await providerDialog.getByLabel("OpenAI API key", { exact: true }).fill(fakeKey);
+    await providerDialog
       .locator('[data-provider-editor="openai"]')
       .getByRole("button", { name: "Save", exact: true })
       .click();
     await expect(providerSection.getByLabel("OpenAI API key", { exact: true })).toHaveCount(0);
     await expect(providerSection.locator("[data-provider-hint]")).toHaveText("fak…8Zx4");
     expect(await page.locator("body").innerText()).not.toContain("browser-only-private-middle");
-    await providerSection.getByRole("button", { name: "Add connection", exact: true }).click();
-    await providerSection.getByLabel("Endpoint name", { exact: true }).fill("Browser fixture");
-    await providerSection.getByLabel("Model", { exact: true }).fill("fake-browser-model");
+    // The editor is a modal dialog, so Settings changes happen with it closed and it is reopened per state.
     const localizedNames = { en: "Endpoint name", ro: "Numele endpoint-ului", de: "Name des Endpunkts" };
     for (const language of ["en", "ro", "de"] as const) {
       await changeSetting(page, "appearance", () => page.locator("#language").selectOption(language));
-      await expect(providerSection.getByLabel(localizedNames[language], { exact: true })).toHaveValue(
-        "Browser fixture",
-      );
       for (const scale of [0.875, 1, 1.125, 1.25, 1.5]) {
         await changeSetting(page, "appearance", () =>
           page.locator("#interface-font-size").selectOption(String(scale)),
         );
+        await providerSection.locator('[data-action="add-provider"]').click();
+        await providerDialog.locator("[data-provider-preset]").selectOption("ollama");
+        const name = providerDialog.getByLabel(localizedNames[language], { exact: true });
+        await name.fill("Browser fixture");
+        await expect(name).toHaveValue("Browser fixture");
         expect(
           await page.evaluate(() =>
             [...document.querySelectorAll("section,fieldset,input,button")]
@@ -246,46 +248,59 @@ test("browser mock displays the same metadata screen through dev:renderer", asyn
               .map((e) => e.outerHTML.slice(0, 100)),
           ),
         ).toEqual([]);
+        await page.keyboard.press("Escape");
+        await expect(providerDialog).toHaveCount(0);
       }
     }
     await changeSetting(page, "appearance", () => page.locator("#language").selectOption("en"));
-    // Real keyboard traversal of every enabled control, including off-screen controls scrolled by focus.
-    const controls = await page
-      .locator(
-        "button:enabled:visible:not([tabindex='-1']), select:enabled:visible, input:enabled:visible, textarea:enabled:visible, [data-resize]:visible",
-      )
-      .count();
-    await page.evaluate(() => {
-      document.body.tabIndex = -1;
-      document.body.focus();
-      document.body.removeAttribute("tabindex");
-    });
-    const visited = new Set<string>();
-    for (let step = 0; step < controls; step++) {
-      await page.keyboard.press("Tab");
-      const focus = await page.evaluate(() => {
-        const element = document.activeElement as HTMLElement;
-        const style = getComputedStyle(element);
-        return {
-          id: element.outerHTML,
-          ring: style.outlineStyle,
-          width: Number.parseFloat(style.outlineWidth),
-          color: style.outlineColor,
-          matches: element.matches(":focus-visible"),
-          transition: style.transitionDuration,
-        };
+    // Real keyboard traversal of every enabled control, including off-screen controls scrolled by focus:
+    // first the page, then the open provider dialog, which keeps focus inside it.
+    async function traverse(scope: Locator) {
+      const controls = await scope
+        .locator(
+          "button:enabled:visible:not([tabindex='-1']), select:enabled:visible, input:enabled:visible, textarea:enabled:visible, [data-resize]:visible",
+        )
+        .count();
+      expect(controls).toBeGreaterThan(0);
+      await scope.evaluate((element: HTMLElement) => {
+        element.tabIndex = -1;
+        element.focus();
+        element.removeAttribute("tabindex");
       });
-      expect(focus.matches).toBe(true);
-      expect(focus.ring).toBe("solid");
-      expect(focus.width).toBeGreaterThanOrEqual(2);
-      expect(focus.transition).toBe("0s");
-      visited.add(focus.id);
+      const visited = new Set<string>();
+      for (let step = 0; step < controls; step++) {
+        await page.keyboard.press("Tab");
+        const focus = await page.evaluate(() => {
+          const element = document.activeElement as HTMLElement;
+          const style = getComputedStyle(element);
+          return {
+            id: element.outerHTML,
+            ring: style.outlineStyle,
+            width: Number.parseFloat(style.outlineWidth),
+            color: style.outlineColor,
+            matches: element.matches(":focus-visible"),
+            transition: style.transitionDuration,
+          };
+        });
+        expect(focus.matches).toBe(true);
+        expect(focus.ring).toBe("solid");
+        expect(focus.width).toBeGreaterThanOrEqual(2);
+        expect(focus.transition).toBe("0s");
+        visited.add(focus.id);
+      }
+      expect(visited.size).toBe(controls);
     }
-    expect(visited.size).toBe(controls);
-    await providerSection
+    await traverse(page.locator("body"));
+    await providerSection.locator('[data-action="add-provider"]').click();
+    await providerDialog.locator("[data-provider-preset]").selectOption("ollama");
+    await providerDialog.getByLabel("Endpoint name", { exact: true }).fill("Browser fixture");
+    await providerDialog.getByLabel("Model", { exact: true }).fill("fake-browser-model");
+    await traverse(providerDialog);
+    await providerDialog
       .locator('[data-provider-editor="custom"]')
       .getByRole("button", { name: "Save", exact: true })
       .click();
+    await expect(providerDialog).toHaveCount(0);
     await expect(providerSection.locator('[data-provider="custom:browser-fixture"]')).toContainText(
       "fake-browser-model",
     );

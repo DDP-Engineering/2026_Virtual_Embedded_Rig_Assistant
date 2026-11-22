@@ -71,6 +71,8 @@ test("native reasoning persists per session and sends selected or provider-defau
             contextWindow: 131072,
             maxOutputTokens: 1024,
             protocol: "lmstudio",
+            // A new connection offers only its chosen model; the test also switches to org/plain.
+            enabledModels: ["org/reasoner", "org/plain"],
             models: [
               {
                 id: "org/reasoner",

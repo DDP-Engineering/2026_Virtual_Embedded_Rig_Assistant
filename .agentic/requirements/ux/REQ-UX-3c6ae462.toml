@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-UX-3c6ae462"
+
+title = "Offer Install from file for dictation models"
+
+status = "active"
+
+requirement = "Where Dictation Settings offers Download for a model, it shall offer Install from file beside it."
+
+verification = "Render Dictation Settings with one missing and one installed model: the missing row shows Download and Install from file, the installed row shows neither, and a row being installed shows only Cancel."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/dictation-settings.tsx", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json", "05_Software/src/apps/desktop/src/renderer/locales/fr.json"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/install-from-file.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-21
+updated = 2026-11-21

@@ -1,0 +1,33 @@
+schema = 1
+
+id = "REQ-DATA-ccf2e8cb"
+
+title = "Store the models offered from each provider"
+
+status = "active"
+
+requirement = """
+When the user saves model ticks on Settings > Providers, the desktop shall store the ticked model IDs per provider (the OpenAI connection, the ChatGPT subscription and each API or local connection) in the application settings, and a provider with no stored list shall offer all of its models.
+"""
+
+verification = "Save ticks for OpenAI, the subscription and one custom connection; providers.list and settings.json return exactly those unique IDs per provider after a restart; a provider never ticked has no list and its catalog is offered whole; an invalid list (duplicates, whitespace, over 10000) is refused."
+
+affected_paths = [
+  "05_Software/src/libraries/shared/src/providers.ts",
+  "05_Software/src/libraries/shared/src/ipc.ts",
+  "05_Software/src/apps/desktop/src/main/provider-settings.ts",
+  "05_Software/src/apps/desktop/src/main/index.ts",
+]
+
+linked_tests = [
+  "05_Software/src/apps/desktop/src/main/provider-settings.test.ts",
+]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-21
+updated = 2026-11-21

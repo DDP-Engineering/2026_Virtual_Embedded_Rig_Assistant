@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-UX-f17b5648"
+
+title = "Offer Install from file for the browser runtime"
+
+status = "active"
+
+requirement = "While the browser runtime is not installed and no installation or removal runs, Web access shall offer Install from file beside Install."
+
+verification = "Open Web access in a fresh profile and find both actions; start an installation and check that Install from file is no longer offered; after the runtime is ready neither action is offered."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/browser-settings.tsx", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json", "05_Software/src/apps/desktop/src/renderer/locales/fr.json"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/install-from-file.test.ts", "05_Software/tests/e2e/install-from-file.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-21
+updated = 2026-11-21

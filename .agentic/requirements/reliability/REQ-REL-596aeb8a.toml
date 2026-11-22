@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-REL-596aeb8a"
+
+title = "Refuse a components part that differs from the Desktop pins"
+
+status = "active"
+
+requirement = "When `delivery:verify` checks a `components` part, it shall fail the delivery, naming the file or ZIP member, if a Chrome for Testing ZIP differs from its platform pin, a dictation model ZIP does not hold exactly its model's pinned files, or an expected file is missing or an unexpected file is present."
+
+verification = "Run `verifyComponents`, which `delivery:verify` calls for a components part, on a valid fixture part, then on copies with a changed Chrome ZIP byte, a model ZIP with one changed member, a model ZIP with an extra member, a model ZIP missing a member, a missing notices file and an unexpected file. Each altered copy yields a problem naming the file or member; the real built part verifies with no components problem."
+
+affected_paths = ["02_Tools/delivery/verify-delivery.mjs", "02_Tools/delivery/components.mjs"]
+
+linked_tests = ["05_Software/tests/tooling/components.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = "The outer checksums only prove the copy; the Desktop pins prove the content."        # why this behavior exists, if not obvious
+
+created = 2026-11-21
+updated = 2026-11-21

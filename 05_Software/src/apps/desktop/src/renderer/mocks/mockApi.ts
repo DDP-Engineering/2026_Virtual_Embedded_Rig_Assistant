@@ -1472,6 +1472,7 @@ What this plugin does.
         break;
       }
       case "browser.runtime.install":
+      case "browser.runtime.installFile":
         browserRuntime = { phase: "ready", version: "156.0.8078.4" };
         value = browserRuntime;
         break;
@@ -1863,6 +1864,7 @@ What this plugin does.
         });
         value = {
           openai: { id: "openai", ...settings.providers.openai, ...meta("openai") },
+          chatgpt: { id: "chatgpt", ...settings.providers.chatgpt },
           custom: settings.providers.custom.map((c) => ({
             ...c,
             id: `custom:${c.slug}`,
@@ -1879,7 +1881,16 @@ What this plugin does.
         if (request.provider === "openai") {
           if (request.model === "") delete providers.openai.model;
           else if (request.model !== undefined)
-            providers.openai = { ...providers.openai, model: request.model };
+            providers.openai = {
+              ...providers.openai,
+              model: request.model,
+              enabledModels: mockTickChosen(
+                providers.openai.enabledModels,
+                request.model,
+                providers.openai.model === undefined,
+                providers.openai.model !== request.model,
+              ),
+            };
         } else {
           const found = request.id
             ? providers.custom.findIndex((c) => `custom:${c.slug}` === request.id)
@@ -1901,7 +1912,14 @@ What this plugin does.
           )
             throw veraError("CONFLICT");
           id = `custom:${slug}`;
-          const config = { ...(found >= 0 ? providers.custom[found] : {}), ...request.config, slug };
+          const previous = found >= 0 ? providers.custom[found] : undefined;
+          const config = { ...previous, ...request.config, slug };
+          config.enabledModels = mockTickChosen(
+            request.config.enabledModels ?? previous?.enabledModels,
+            request.config.model,
+            !previous && !request.config.enabledModels,
+            !!previous && previous.model !== request.config.model,
+          );
           if (found >= 0) providers.custom[found] = config;
           else providers.custom.push(config);
         }
@@ -1918,6 +1936,25 @@ What this plugin does.
         }
         emitAppEvent({ type: "settings.changed" });
         value = { status: "saved" };
+        break;
+      }
+      case "providers.models.enable": {
+        const request = channels["providers.models.enable"].request.parse(input.data);
+        const providers = structuredClone(settings.providers);
+        for (const { id, models } of request.providers) {
+          if (id === "chatgpt" && !providers.chatgpt) providers.chatgpt = {};
+          const target =
+            id === "openai"
+              ? providers.openai
+              : id === "chatgpt"
+                ? providers.chatgpt
+                : providers.custom.find((c) => `custom:${c.slug}` === id);
+          if (!target) throw veraError("NOT_FOUND");
+          if (models === null) delete target.enabledModels;
+          else target.enabledModels = models;
+        }
+        settings = mergeSettings(settings, { providers });
+        value = {};
         break;
       }
       case "providers.remove": {
@@ -1994,6 +2031,13 @@ What this plugin does.
       case "dictation.get":
         value = dictationSnapshot();
         break;
+      case "dictation.installFile": {
+        const { id } = channels["dictation.installFile"].request.parse(input.data);
+        if (dictationDownload) throw veraError("BUSY");
+        installedDictationModels.add(id);
+        value = dictationSnapshot();
+        break;
+      }
       case "dictation.change": {
         const choice = channels["dictation.change"].request.parse(input.data);
         dictationSnapshot();
@@ -2296,3 +2340,15 @@ export const mockApi = createMockApi(
     ? "chat"
     : "empty",
 ).api;
+
+/** Like the desktop: a new connection ticks its chosen model; edits keep ticks and add a changed model. */
+function mockTickChosen(
+  list: string[] | undefined,
+  model: string,
+  first: boolean,
+  changed: boolean,
+): string[] | undefined {
+  if (/\s/.test(model)) return list;
+  if (!list) return first ? [model] : undefined;
+  return changed && !list.includes(model) ? [...list, model] : list;
+}

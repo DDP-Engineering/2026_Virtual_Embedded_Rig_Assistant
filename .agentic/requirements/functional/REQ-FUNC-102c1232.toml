@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-FUNC-102c1232"
+
+title = "Build the offline components delivery part"
+
+status = "active"
+
+requirement = "When `npm run delivery:components` runs, the delivery tool shall write a `components` part with the Chrome for Testing ZIP of each supported platform and one ZIP per dictation model holding exactly that model's catalog files, each checked against the pins in the Desktop source, plus `THIRD-PARTY-NOTICES.md` and `SHA256SUMS`, and record every file's path, size and SHA-256 in `delivery.json`."
+
+verification = "Build the part into a temporary delivery from a local source that serves the pinned fixture bytes. Check the file list, each `SHA256SUMS` line and the `components` entry of `delivery.json`, and that each model ZIP lists only its catalog paths. A second build without `--replace` is refused and leaves the part unchanged."
+
+affected_paths = ["02_Tools/delivery/build-components.mjs", "02_Tools/delivery/components.mjs", "02_Tools/delivery/delivery-common.mjs", "05_Software/package.json"]
+
+linked_tests = ["05_Software/tests/tooling/components.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = "Restricted networks need the browser runtime and Whisper models as files that can be copied to the bench computer."        # why this behavior exists, if not obvious
+
+created = 2026-11-21
+updated = 2026-11-21

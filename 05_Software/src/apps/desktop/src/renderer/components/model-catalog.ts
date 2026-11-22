@@ -5,6 +5,11 @@ import { api } from "../api/index.js";
 
 export type CatalogModel = ProviderCatalog["models"][number];
 
+/** A provider's ticked models, in catalog order; a provider with no list offers its whole catalog. */
+export function offeredModels(models: readonly CatalogModel[], enabled: readonly string[] | undefined) {
+  return enabled ? models.filter((model) => enabled.includes(model.id)) : [...models];
+}
+
 /** Both model selectors use one catalog and refresh when connection settings change. */
 export function useModelCatalog() {
   const providers = useQuery({
@@ -23,21 +28,32 @@ export function useModelCatalog() {
     enabled: subscription.data?.connected === true,
     queryFn: () => api.invoke("providers.models", { id: "chatgpt" }),
   });
+  const sources = [
+    ...(providers.data?.openai.configured ? [providers.data.openai] : []),
+    ...(providers.data?.custom.filter((p) => p.configured) ?? []),
+  ];
+  // Ticks are not part of the key: saving them filters the cached catalogs instead of fetching them again.
+  const catalogKey = sources.map(({ enabledModels: _ticks, ...source }) => source);
   const catalog = useQuery({
-    queryKey: ["chat.models", providers.data],
+    queryKey: ["chat.models", catalogKey],
     enabled: !!providers.data,
     queryFn: async () => {
-      const ids = [
-        ...(providers.data?.openai.configured ? ["openai"] : []),
-        ...(providers.data?.custom.filter((p) => p.configured).map((p) => p.id) ?? []),
-      ];
-      const results = await Promise.allSettled(ids.map((id) => api.invoke("providers.models", { id })));
-      return results.flatMap((c) => (c.status === "fulfilled" ? c.value.models : []));
+      const results = await Promise.allSettled(
+        sources.map(({ id }) => api.invoke("providers.models", { id })),
+      );
+      return results.flatMap((c, index) =>
+        c.status === "fulfilled" ? [{ id: sources[index]?.id, models: c.value.models }] : [],
+      );
     },
   });
+  const ticks = new Map(sources.map(({ id, enabledModels }) => [id, enabledModels]));
   const models = [
-    ...(catalog.data ?? []),
-    ...(subscription.data?.connected ? (subscriptionModels.data?.models ?? []) : []),
+    ...(catalog.data ?? []).flatMap(({ id, models }) =>
+      offeredModels(models, id ? ticks.get(id) : undefined),
+    ),
+    ...(subscription.data?.connected
+      ? offeredModels(subscriptionModels.data?.models ?? [], providers.data?.chatgpt.enabledModels)
+      : []),
   ];
   const connections = providers.data?.custom ?? [];
   return { providers, subscription, subscriptionModels, catalog, models, connections };

@@ -20,6 +20,13 @@ The package stages BGE Small EN and Multilingual E5 Small q8. Each manifest, its
 MIT licence notice share `resources/models/<model-id>/`. The descriptor supplies dimensions, token limit,
 pooling, normalization and query/passage prefixes. Staging and builder output are checked against the source
 pins. `delivery:verify` uses full 7-Zip to check the same pins inside each desktop archive.
+`delivery:components` (`02_Tools/delivery/components.mjs`) writes the delivery's `components/` part on any
+networked host: the unchanged Chrome for Testing ZIP of both platforms and one stored ZIP per Whisper model,
+each checked against `browserRelease()` and `dictationCatalog` from the Desktop source, plus
+`THIRD-PARTY-NOTICES.md` with the Apache License 2.0 text and `SHA256SUMS`. A fetch failure or pin mismatch
+names the file and keeps the earlier part. `delivery:verify` checks the exact file set, each Chrome ZIP and
+every model ZIP member against the same pins (`components.test.ts`; REQ-FUNC-102c1232, REQ-REL-2bd264e3,
+REQ-REL-596aeb8a, REQ-DATA-4365c89e).
 
 
 ```mermaid

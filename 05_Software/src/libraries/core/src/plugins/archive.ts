@@ -33,7 +33,11 @@ export async function extractZip(
   let bytes = 0;
   let pending: Promise<void> = Promise.resolve();
   const fail = (error: unknown) => {
-    failure ??= error instanceof ArchiveError ? error : new ArchiveError("The zip archive cannot be read.");
+    // The cause keeps a filesystem error, such as a full disk, visible to callers.
+    failure ??=
+      error instanceof ArchiveError
+        ? error
+        : new ArchiveError("The zip archive cannot be read.", { cause: error });
   };
   const chain = (task: () => Promise<void>) => {
     pending = pending.then(() => (failure ? undefined : task())).catch(fail);

@@ -41,7 +41,8 @@ shortcut. Existing persisted event format remains 1.
   identity. Its strict result carries IDs, a manual-entry reason or a structured provider error.
   Provider writes enter through the dedicated save and remove channels.
 - `dictation.get` and `dictation.change` return verified installation summaries, progress and
-  effective selection. Requests carry a catalog model id or spoken-language code. The trust
+  effective selection. `dictation.installFile` and `browser.runtime.installFile` carry no path: Desktop
+  main opens the file picker, and instrumented builds read `VERA_TEST_COMPONENT_FILE` instead. Requests carry a catalog model id or spoken-language code. The trust
   boundary and mock operate on schemas in shared/src/dictation.ts. The capture channels admit,
   acknowledge, submit and cancel a UUID-scoped job. The preload checks the opening gesture and
   validates packed PCM before dispatch. [Dictation](dictation.md)

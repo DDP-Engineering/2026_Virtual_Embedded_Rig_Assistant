@@ -18,8 +18,8 @@ Um zuerst die Sprache der Oberfläche zu ändern, öffnen Sie **Einstellungen** 
 
 1. Öffnen Sie **Einstellungen** → **Anbieter**.
 2. Wählen Sie eine dieser Möglichkeiten:
-   - ChatGPT-Abonnement: Wählen Sie unter **Abonnements** die Option **Mit ChatGPT anmelden** und schließen Sie die Anmeldung in Ihrem Browser ab.
-   - API-Schlüssel oder lokaler Server: Wählen Sie unter **API- / lokale Verbindungen** die Option **Verbindung hinzufügen**, wählen Sie den **Anbieter** (**OpenAI-API**, LM Studio, Ollama oder **Anderer kompatibler Anbieter**), füllen Sie die Felder aus und wählen Sie **Speichern**.
+   - ChatGPT-Abonnement: Wählen Sie **Anbieter hinzufügen**, als **Anbieter** das **ChatGPT-Abonnement** und dann **Mit ChatGPT anmelden** und schließen Sie die Anmeldung in Ihrem Browser ab.
+   - API-Schlüssel oder lokaler Server: Wählen Sie **Anbieter hinzufügen**, wählen Sie den **Anbieter** (**OpenAI-API**, LM Studio, Ollama oder **Anderer kompatibler Anbieter**), füllen Sie die Felder aus und wählen Sie **Speichern**.
 3. Wählen Sie **Testen** neben der Verbindung. Alle vier Schritte (**Erreichbarkeit**, **Authentifizierung und Modell**, **Werkzeugaufrufe**, **Streaming**) sollten **Bestanden** anzeigen.
 
 Details finden Sie unter [Anbieter und Modelle](providers.md).

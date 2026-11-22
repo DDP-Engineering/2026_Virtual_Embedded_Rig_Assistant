@@ -180,12 +180,13 @@
     "automatic": "Detectare automată",
     "loading": "Se încarcă modelele de dictare…",
     "noSelection": "Niciun model selectat",
-    "selected": "Model selectat: {{model}}",
     "missing": "Neinstalat",
     "installed": "Instalat",
     "corrupt": "Fișierele instalate sunt deteriorate",
     "downloading": "Se descarcă…",
+    "installingFile": "Se instalează din fișier…",
     "download": "Descarcă",
+    "installFile": "Instalează din fișier…",
     "cancel": "Anulează",
     "retry": "Reîncearcă",
     "select": "Folosește modelul",
@@ -196,7 +197,28 @@
     "storage": "Modelul nu a putut fi salvat. Verifică accesul la datele aplicației.",
     "removalFailed": "Modelul nu a putut fi eliminat. Închide aplicațiile care îi folosesc fișierele și reîncearcă.",
     "modelAction": "{{action}}: {{model}}",
-    "progress": "Progresul descărcării pentru {{model}}"
+    "progress": "Progresul descărcării pentru {{model}}",
+    "inUse": "Model folosit",
+    "inUseBadge": "Folosit",
+    "columns": {
+      "model": "Model",
+      "languages": "Limbi",
+      "speed": "Viteză",
+      "accuracy": "Precizie",
+      "size": "Dimensiune",
+      "status": "Stare",
+      "actions": "Acțiuni"
+    },
+    "speeds": {
+      "fast": "Rapidă",
+      "moderate": "Medie",
+      "slow": "Lentă"
+    },
+    "accuracies": {
+      "basic": "De bază",
+      "good": "Bună",
+      "high": "Ridicată"
+    }
   },
   "settings": {
     "dictation": "Dictare",
@@ -289,8 +311,6 @@
     "lockGuard": "Coordonarea blocării este ocupată. Acest workbench este deschis doar pentru citire."
   },
   "providers": {
-    "search": "Caută furnizori",
-    "noMatches": "Niciun furnizor găsit",
     "serviceEndpoint": "Endpointul serviciului",
     "region": "Regiune",
     "workspaceId": "ID spațiu de lucru",
@@ -339,7 +359,7 @@
     "save": "Salvează",
     "remove": "Elimină",
     "edit": "Editează",
-    "add": "Adaugă o conexiune",
+    "add": "Adaugă furnizor",
     "cancel": "Anulează",
     "saving": "Se salvează furnizorul…",
     "consentTitle": "Stocarea sigură a credențialelor nu este disponibilă",
@@ -364,12 +384,12 @@
     "editNamed": "Editează {{name}}",
     "removeNamed": "Elimină {{name}}",
     "testNamed": "Testează {{name}}",
-    "subscriptions": "Abonamente",
-    "connections": "Conexiuni API / locale",
-    "emptyConnections": "Nu ai adăugat încă o conexiune API sau locală.",
     "provider": "Furnizor",
     "other": "Alt furnizor compatibil",
-    "noKey": "Fără cheie API"
+    "noKey": "Fără cheie API",
+    "models": "Modele",
+    "filterModels": "Filtrează modelele",
+    "noModels": "Niciun model listat."
   },
   "provider": {
     "auth": "Autentificare eșuată. Verifică datele salvate în setările furnizorilor.",
@@ -921,6 +941,7 @@
   "browser": {
     "title": "Browser interactiv",
     "install": "Instalează browserul",
+    "installFile": "Instalează din fișier…",
     "cancelInstall": "Anulează instalarea",
     "remove": "Elimină browserul",
     "enableApp": "Activează browserul interactiv în VERA",
@@ -997,11 +1018,8 @@
     "keepKey": "Lasă gol pentru a păstra cheia salvată",
     "storedKey": "Cheie salvată disponibilă · {{storage}}",
     "keyRequired": "Acest mod de acces necesită o cheie API.",
-    "save": "Salvează",
     "test": "Testează conexiunea",
     "removeKey": "Șterge cheia salvată",
-    "saving": "Se salvează…",
-    "saved": "Setările de acces web au fost salvate.",
     "testTitle": "Test conexiune web",
     "testing": "Se conectează la {{provider}}…",
     "close": "Închide",

@@ -181,6 +181,22 @@ protocol.registerSchemesAsPrivileged([
 ]);
 
 let window: BrowserWindow | undefined;
+
+/**
+ * The offline component archive (browser runtime or dictation model) the user picks; undefined when the picker
+ * closes without a file. Instrumented builds take `VERA_TEST_COMPONENT_FILE`, where an empty value is a closed
+ * picker. The renderer never supplies the path.
+ */
+async function pickComponentArchive(): Promise<string | undefined> {
+  if (__VERA_TEST__ && process.env.VERA_TEST_COMPONENT_FILE !== undefined)
+    return process.env.VERA_TEST_COMPONENT_FILE || undefined;
+  if (!window || window.isDestroyed()) return undefined;
+  const result = await dialog.showOpenDialog(window, {
+    properties: ["openFile"],
+    filters: [{ name: "ZIP archive", extensions: ["zip"] }],
+  });
+  return result.canceled ? undefined : result.filePaths[0];
+}
 nativeTheme.on("updated", () => {
   if (!window || window.isDestroyed()) return;
   window.setTitleBarOverlay(titleBarOverlay(nativeTheme.shouldUseDarkColors));
@@ -956,6 +972,17 @@ ipcMain.handle(
         await browserRuntime.provision();
         return browserRuntime.view();
       },
+      "browser.runtime.installFile": async () => {
+        if (
+          ["verifying", "downloading", "installing", "removing", "ready"].includes(
+            browserRuntime.status().phase,
+          )
+        )
+          return browserRuntime.view();
+        const file = await pickComponentArchive();
+        if (file) await browserRuntime.provision({ file });
+        return browserRuntime.view();
+      },
       "browser.runtime.cancel": async () => {
         try {
           await browserRuntime.cancel();
@@ -1710,6 +1737,7 @@ ipcMain.handle(
         return result;
       },
       "providers.remove": (request) => providers.remove(request),
+      "providers.models.enable": (request) => providers.enableModels(request),
       "app.info": () => getAppInfo(dataLocations.portable),
       "help.list": async ({ language }) => [
         ...(await help.list(language)),
@@ -1725,6 +1753,12 @@ ipcMain.handle(
       "dictation.change": (change) => {
         if (change.action === "remove" && capture.busy) throw veraError("BUSY");
         return dictation.change(change);
+      },
+      "dictation.installFile": async ({ id }) => {
+        const current = await dictation.get();
+        if (current.models.some((model) => model.status === "downloading")) return current;
+        const file = await pickComponentArchive();
+        return file ? dictation.installArchive(id, file) : dictation.get();
       },
       "dictation.begin": ({ id }) =>
         focusedRenderer() ? capture.begin(id) : { status: "permission-denied" },

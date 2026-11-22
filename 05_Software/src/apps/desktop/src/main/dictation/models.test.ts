@@ -1,10 +1,11 @@
 import { createHash, randomUUID } from "node:crypto";
 import { existsSync } from "node:fs";
-import { mkdir, mkdtemp, readFile, rename, rm, symlink, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, open, readFile, rename, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { SettingsService } from "@vera/core";
 import type { DictationModelId } from "@vera/shared";
+import { strToU8, unzipSync, zipSync } from "fflate";
 import { afterEach, expect, it, vi } from "vitest";
 import { createFileAccess } from "../file-access.js";
 import { systemClock } from "../host-ports.js";
@@ -13,7 +14,7 @@ import { DictationModels } from "./models.js";
 
 vi.mock("node:fs/promises", async (importOriginal) => {
   const fs = await importOriginal<typeof import("node:fs/promises")>();
-  return { ...fs, rm: vi.fn(fs.rm) };
+  return { ...fs, rm: vi.fn(fs.rm), open: vi.fn(fs.open) };
 });
 
 const payload = "test";
@@ -297,4 +298,111 @@ it("keeps a locked removal retryable without restoring the selected model", asyn
   const reopened = h.makeSettings();
   await reopened.load();
   expect(reopened.get().settings.dictation?.selectedModel).toBeNull();
+});
+
+const fileSpecs: DictationModelSpec[] = (["whisper-base", "whisper-small"] as const).map((id) => {
+  const text = id === "whisper-base" ? "base" : "smal";
+  return {
+    ...specs[0]!,
+    id,
+    repository: `Xenova/${id}`,
+    files: ["config.json", "onnx/model.onnx"].map((path) => ({
+      path,
+      bytes: text.length,
+      sha256: createHash("sha256").update(text).digest("hex"),
+    })),
+  };
+});
+const modelZip = (id: DictationModelId) => {
+  const text = strToU8(id === "whisper-base" ? "base" : "smal");
+  return zipSync({ "config.json": text, "onnx/model.onnx": text });
+};
+
+async function fileHarness() {
+  const h = await harness();
+  h.transfer.mockImplementation(async () => {
+    throw new Error("network used");
+  });
+  const models = new DictationModels(h.dir, h.settings, {
+    catalog: fileSpecs,
+    transfer: h.transfer,
+    availableBytes: h.availableBytes,
+  });
+  const archive = async (bytes: Uint8Array) => {
+    const path = join(h.dir, `picked-${randomUUID()}.zip`);
+    await writeFile(path, bytes);
+    return path;
+  };
+  const settled = async (id: DictationModelId) => {
+    await vi.waitFor(async () =>
+      expect((await models.get()).models.find((model) => model.id === id)?.status).not.toBe("downloading"),
+    );
+    return (await models.get()).models.find((model) => model.id === id);
+  };
+  return { ...h, models, archive, settled };
+}
+
+// REQ-FUNC-17812cd0
+it("installs a model from a picked archive without any network request", async () => {
+  const h = await fileHarness();
+  let space = (_bytes: number) => {};
+  h.availableBytes.mockImplementationOnce(
+    () =>
+      new Promise<number>((resolve) => {
+        space = resolve;
+      }),
+  );
+  const file = await h.archive(modelZip(base));
+  const started = await h.models.installArchive(base, file);
+  expect(started.models[0]).toMatchObject({ status: "downloading", fromFile: true });
+  await expect(h.models.installArchive(small, await h.archive(modelZip(small)))).rejects.toMatchObject({
+    code: "BUSY",
+  });
+  expect(existsSync(join(h.root, base))).toBe(false);
+  space(1024);
+  expect(await h.settled(base)).toMatchObject({ status: "installed" });
+  expect(await readFile(join(h.root, base, "onnx", "model.onnx"), "utf8")).toBe("base");
+  expect((await h.models.change({ action: "select", id: base })).selectedModel).toBe(base);
+  expect(existsSync(join(h.root, `.${base}.stage`))).toBe(false);
+  expect(h.transfer).not.toHaveBeenCalled();
+});
+
+// REQ-SEC-a255c261
+it.each([
+  ["an extra member", () => zipSync({ ...unzipSync(modelZip(base)), "LICENSE.txt": strToU8("extra") })],
+  ["the other model", () => modelZip(small)],
+  ["a changed byte", () => zipSync({ "config.json": strToU8("base"), "onnx/model.onnx": strToU8("basf") })],
+  [
+    "a path outside the model",
+    () => zipSync({ ...unzipSync(modelZip(base)), "../escape.txt": strToU8("x") }),
+  ],
+  ["a file that is not a zip", () => strToU8("not a zip archive")],
+] as const)("refuses a picked archive with %s and publishes nothing", async (_case, bytes) => {
+  const h = await fileHarness();
+  await h.models.installArchive(base, await h.archive(bytes()));
+  expect(await h.settled(base)).toMatchObject({ status: "failed", failure: "integrity" });
+  expect(existsSync(join(h.root, base))).toBe(false);
+  expect(existsSync(join(h.root, `.${base}.stage`))).toBe(false);
+  expect(existsSync(join(h.root, "escape.txt"))).toBe(false);
+  await h.models.installArchive(base, await h.archive(modelZip(base)));
+  expect(await h.settled(base)).toMatchObject({ status: "installed" });
+  expect(h.transfer).not.toHaveBeenCalled();
+});
+
+// REQ-FUNC-17812cd0
+it("reports insufficient space when extracting a picked archive fills the disk", async () => {
+  const h = await fileHarness();
+  const real = vi.mocked(open).getMockImplementation() as typeof open;
+  // Only writes into the model's staging folder fail, as on a full disk; settings writes still succeed.
+  vi.mocked(open).mockImplementation(((path: Parameters<typeof open>[0], ...rest: unknown[]) =>
+    String(path).includes(`.${base}.stage`)
+      ? Promise.reject(Object.assign(new Error("disk full"), { code: "ENOSPC" }))
+      : Reflect.apply(real, undefined, [path, ...rest])) as typeof open);
+  try {
+    await h.models.installArchive(base, await h.archive(modelZip(base)));
+    expect(await h.settled(base)).toMatchObject({ status: "failed", failure: "space" });
+  } finally {
+    vi.mocked(open).mockImplementation(real);
+  }
+  expect(existsSync(join(h.root, `.${base}.stage`))).toBe(false);
 });

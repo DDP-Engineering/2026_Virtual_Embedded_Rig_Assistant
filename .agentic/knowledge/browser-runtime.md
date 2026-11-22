@@ -23,7 +23,10 @@ separate lifetimes and policies.
 ## Public interface
 
 `BrowserRuntime` provides provisioning, a status snapshot, inspection,
-cancellation, removal, and the verified executable. `BrowserHost` owns sessions by
+cancellation, removal, and the verified executable. `provision({ file })` takes
+the archive from a picked local copy instead of the release host, with no network
+request. Trusted IPC `browser.runtime.installFile` opens Desktop main's ZIP
+picker and returns the current view when it closes without a file. `BrowserHost` owns sessions by
 workbench and session identity and exposes main-process tab ownership.
 `BrowserAccessPolicy` owns in-memory, exact-origin grants by workbench and
 session. Trusted Desktop main calls `grant`, `origins` and `release`. The
@@ -42,6 +45,8 @@ both release the grant and window. Chat Stop uses the existing turn abort.
 
 ## Invariants
 
+- The archive comes from the pinned release URL or a picked local copy; both are
+  streamed into staging through the same length and SHA-256 check before extraction.
 - The release table pins archive length, SHA-256, the installed file digest, and
   the executable path for each supported x64 platform. Activation follows
   verified extraction and atomic publication in VERA application data.
@@ -91,6 +96,7 @@ both release the grant and window. Chat Stop uses the existing turn abort.
 | Change requested | Start with | Focused verification |
 | --- | --- | --- |
 | Pin, integrity or provisioning | `release.ts`, `runtime.ts`, `integrity.ts` | `runtime.test.ts` |
+| Installation from a picked archive | `runtime.ts` (`provision({ file })`), `browser.runtime.installFile` in Desktop main, `browser-settings.tsx` | `runtime.test.ts`, `install-from-file.test.ts`, `install-from-file.spec.ts`, `offline-components.test.ts` (set `VERA_COMPONENTS_DIR`) |
 | Sandbox and runtime errors | `launcher.ts`, `failure.ts` | `launcher.test.ts`, `browser-runtime.spec.ts` |
 | Ownership, gates and grants | `host.ts`, `policy.ts`, Desktop main | `host.test.ts`, `browser-policy.test.ts` |
 | Public destinations, request limits and alternate paths | `network.ts`, `proxy.ts`, `restrictions.ts` | `browser-policy.test.ts`, `network.test.ts`, `browser-runtime.spec.ts` |
@@ -118,6 +124,8 @@ both release the grant and window. Chat Stop uses the existing turn abort.
 - `REQ-REL-48dddd59`, `REQ-REL-7274a3e9`, `REQ-REL-d97264a7`, `REQ-NFR-2661da07`, `REQ-REL-fff52da3`, `REQ-REL-c8d7898f` — supported documents, closed pages, deadlines, bounded results, cancellation and close.
 
 - `REQ-UX-4c16a20f`, `REQ-UX-8c54a766`, `REQ-SEC-39c979a5` — runtime settings, opt-ins and trusted chat grants.
+- `REQ-FUNC-75aa4017`, `REQ-UX-f17b5648`, `REQ-REL-5b7d34d9` — offline installation from a picked
+  delivery archive, Install from file beside Install, and a closed picker that starts nothing.
 - `REQ-UX-59086d40`, `REQ-UX-74f740e9`, `REQ-FUNC-ae3000ef`, `REQ-SEC-1f3fba00` — current owned state, Show, Stop, Revoke and Close.
 - `REQ-REL-df91d9fe`, `REQ-REL-6fecfe63`, `REQ-REL-646a1376`, `REQ-REL-3dc8d834`, `REQ-UX-da941b4d` — localized missing runtime, transfer failure, denied destination and window closure.
 

@@ -180,12 +180,13 @@
     "automatic": "Automatische Erkennung",
     "loading": "Diktatmodelle werden geladen…",
     "noSelection": "Kein Modell ausgewählt",
-    "selected": "Ausgewähltes Modell: {{model}}",
     "missing": "Nicht installiert",
     "installed": "Installiert",
     "corrupt": "Installierte Dateien sind beschädigt",
     "downloading": "Download läuft…",
+    "installingFile": "Wird aus Datei installiert…",
     "download": "Herunterladen",
+    "installFile": "Aus Datei installieren…",
     "cancel": "Abbrechen",
     "retry": "Erneut versuchen",
     "select": "Modell verwenden",
@@ -196,7 +197,28 @@
     "storage": "Das Modell konnte nicht gespeichert werden. Prüfen Sie den Zugriff auf die Anwendungsdaten.",
     "removalFailed": "Das Modell konnte nicht entfernt werden. Schließen Sie Apps, die seine Dateien nutzen, und versuchen Sie es erneut.",
     "modelAction": "{{action}}: {{model}}",
-    "progress": "Downloadfortschritt für {{model}}"
+    "progress": "Downloadfortschritt für {{model}}",
+    "inUse": "Verwendetes Modell",
+    "inUseBadge": "In Verwendung",
+    "columns": {
+      "model": "Modell",
+      "languages": "Sprachen",
+      "speed": "Geschwindigkeit",
+      "accuracy": "Genauigkeit",
+      "size": "Größe",
+      "status": "Status",
+      "actions": "Aktionen"
+    },
+    "speeds": {
+      "fast": "Schnell",
+      "moderate": "Mittel",
+      "slow": "Langsam"
+    },
+    "accuracies": {
+      "basic": "Grundlegend",
+      "good": "Gut",
+      "high": "Hoch"
+    }
   },
   "settings": {
     "dictation": "Diktat",
@@ -289,8 +311,6 @@
     "lockGuard": "Die Sperrkoordination ist belegt. Dieser Workbench ist schreibgeschützt."
   },
   "providers": {
-    "search": "Anbieter suchen",
-    "noMatches": "Keine passenden Anbieter",
     "serviceEndpoint": "Dienstendpunkt",
     "region": "Region",
     "workspaceId": "Arbeitsbereichs-ID",
@@ -339,7 +359,7 @@
     "save": "Speichern",
     "remove": "Entfernen",
     "edit": "Bearbeiten",
-    "add": "Verbindung hinzufügen",
+    "add": "Anbieter hinzufügen",
     "cancel": "Abbrechen",
     "saving": "Anbieter wird gespeichert…",
     "consentTitle": "Sichere Speicherung der Zugangsdaten nicht verfügbar",
@@ -364,12 +384,12 @@
     "editNamed": "{{name}} bearbeiten",
     "removeNamed": "{{name}} entfernen",
     "testNamed": "{{name}} testen",
-    "subscriptions": "Abonnements",
-    "connections": "API- / lokale Verbindungen",
-    "emptyConnections": "Noch keine API- oder lokale Verbindung hinzugefügt.",
     "provider": "Anbieter",
     "other": "Anderer kompatibler Anbieter",
-    "noKey": "Ohne API-Schlüssel"
+    "noKey": "Ohne API-Schlüssel",
+    "models": "Modelle",
+    "filterModels": "Modelle filtern",
+    "noModels": "Keine Modelle aufgeführt."
   },
   "provider": {
     "auth": "Authentifizierung fehlgeschlagen. Gespeicherte Zugangsdaten in den Anbietereinstellungen prüfen.",
@@ -921,6 +941,7 @@
   "browser": {
     "title": "Interaktiver Browser",
     "install": "Browser-Laufzeit installieren",
+    "installFile": "Aus Datei installieren…",
     "cancelInstall": "Installation abbrechen",
     "remove": "Browser-Laufzeit entfernen",
     "enableApp": "Interaktiven Browser in VERA aktivieren",
@@ -997,11 +1018,8 @@
     "keepKey": "Leer lassen, um den gespeicherten Schlüssel beizubehalten",
     "storedKey": "Gespeicherter Schlüssel verfügbar · {{storage}}",
     "keyRequired": "Dieser Zugriffsmodus erfordert einen API-Schlüssel.",
-    "save": "Speichern",
     "test": "Verbindung testen",
     "removeKey": "Gespeicherten Schlüssel entfernen",
-    "saving": "Wird gespeichert…",
-    "saved": "Webzugriffseinstellungen gespeichert.",
     "testTitle": "Web-Verbindungstest",
     "testing": "Verbindung zu {{provider}} wird hergestellt…",
     "close": "Schließen",

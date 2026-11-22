@@ -121,7 +121,12 @@ const downloadFailure = z.enum(["integrity", "network", "space", "storage"]);
 export type DictationDownloadFailure = z.infer<typeof downloadFailure>;
 const modelState = z.discriminatedUnion("status", [
   modelSummary.extend({ status: z.enum(["missing", "installed", "corrupt", "removal-failed"]) }),
-  modelSummary.extend({ status: z.literal("downloading"), receivedBytes: z.int().nonnegative() }),
+  modelSummary.extend({
+    status: z.literal("downloading"),
+    receivedBytes: z.int().nonnegative(),
+    /** The model is being installed from a picked archive, so there is no byte progress to show. */
+    fromFile: z.literal(true).optional(),
+  }),
   modelSummary.extend({ status: z.literal("failed"), failure: downloadFailure, canRemove: z.boolean() }),
 ]);
 export type DictationModelState = z.infer<typeof modelState>;

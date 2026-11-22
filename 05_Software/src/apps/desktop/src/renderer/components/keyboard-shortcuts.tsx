@@ -190,7 +190,8 @@ export function KeyboardShortcuts({
                 <h3 ref={only ? heading : undefined} tabIndex={only ? -1 : undefined}>
                   {labels[command][0]}
                 </h3>
-                <p className="muted">{labels[command][1]}</p>
+                {/* A page that shows one shortcut next to its own settings keeps only the name. */}
+                {!only && <p className="muted">{labels[command][1]}</p>}
               </div>
               <div className="shortcut-bindings">
                 {commandBindings(command, bindings).length === 0 && (

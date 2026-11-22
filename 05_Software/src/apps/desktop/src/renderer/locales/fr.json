@@ -180,12 +180,13 @@
     "automatic": "Détection automatique",
     "loading": "Chargement des modèles de dictée…",
     "noSelection": "Aucun modèle sélectionné",
-    "selected": "Modèle sélectionné : {{model}}",
     "missing": "Non installé",
     "installed": "Installé",
     "corrupt": "Les fichiers installés sont endommagés",
     "downloading": "Téléchargement en cours…",
+    "installingFile": "Installation depuis un fichier…",
     "download": "Télécharger",
+    "installFile": "Installer depuis un fichier…",
     "cancel": "Annuler",
     "retry": "Réessayer",
     "select": "Utiliser le modèle",
@@ -196,7 +197,28 @@
     "storage": "Impossible d’enregistrer le modèle. Vérifiez l’accès aux données de l’application.",
     "removalFailed": "Le modèle n’a pas pu être supprimé. Fermez les applications qui utilisent ses fichiers, puis réessayez.",
     "modelAction": "{{action}} : {{model}}",
-    "progress": "Progression du téléchargement de {{model}}"
+    "progress": "Progression du téléchargement de {{model}}",
+    "inUse": "Modèle utilisé",
+    "inUseBadge": "Utilisé",
+    "columns": {
+      "model": "Modèle",
+      "languages": "Langues",
+      "speed": "Vitesse",
+      "accuracy": "Précision",
+      "size": "Taille",
+      "status": "État",
+      "actions": "Actions"
+    },
+    "speeds": {
+      "fast": "Rapide",
+      "moderate": "Moyenne",
+      "slow": "Lente"
+    },
+    "accuracies": {
+      "basic": "De base",
+      "good": "Bonne",
+      "high": "Élevée"
+    }
   },
   "settings": {
     "dictation": "Dictée",
@@ -289,8 +311,6 @@
     "lockGuard": "La coordination des verrous est occupée. Ce banc de travail est en lecture seule."
   },
   "providers": {
-    "search": "Rechercher des fournisseurs",
-    "noMatches": "Aucun fournisseur correspondant",
     "serviceEndpoint": "Point de terminaison du service",
     "region": "Région",
     "workspaceId": "ID de l’espace de travail",
@@ -339,7 +359,7 @@
     "save": "Enregistrer",
     "remove": "Supprimer",
     "edit": "Modifier",
-    "add": "Ajouter une connexion",
+    "add": "Ajouter un fournisseur",
     "cancel": "Annuler",
     "saving": "Enregistrement du fournisseur…",
     "consentTitle": "Stockage sécurisé des identifiants indisponible",
@@ -364,12 +384,12 @@
     "editNamed": "Modifier {{name}}",
     "removeNamed": "Supprimer {{name}}",
     "testNamed": "Tester {{name}}",
-    "subscriptions": "Abonnements",
-    "connections": "Connexions API / locales",
-    "emptyConnections": "Aucune connexion API ou locale ajoutée pour l’instant.",
     "provider": "Fournisseur",
     "other": "Autre fournisseur compatible",
-    "noKey": "Sans clé API"
+    "noKey": "Sans clé API",
+    "models": "Modèles",
+    "filterModels": "Filtrer les modèles",
+    "noModels": "Aucun modèle listé."
   },
   "provider": {
     "auth": "Échec de l’authentification. Vérifiez l’identifiant enregistré dans les paramètres Fournisseurs.",
@@ -921,6 +941,7 @@
   "browser": {
     "title": "Navigateur interactif",
     "install": "Installer le navigateur",
+    "installFile": "Installer depuis un fichier…",
     "cancelInstall": "Annuler l’installation",
     "remove": "Supprimer le navigateur",
     "enableApp": "Activer le navigateur interactif dans VERA",
@@ -997,11 +1018,8 @@
     "keepKey": "Laissez vide pour conserver la clé enregistrée",
     "storedKey": "Clé enregistrée disponible · {{storage}}",
     "keyRequired": "Une clé API est requise dans ce mode d’accès.",
-    "save": "Enregistrer",
     "test": "Tester la connexion",
     "removeKey": "Supprimer la clé enregistrée",
-    "saving": "Enregistrement…",
-    "saved": "Paramètres d’accès web enregistrés.",
     "testTitle": "Test de connexion web",
     "testing": "Connexion à {{provider}}…",
     "close": "Fermer",

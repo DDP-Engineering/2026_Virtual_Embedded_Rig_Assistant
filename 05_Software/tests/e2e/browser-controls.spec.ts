@@ -147,8 +147,13 @@ test("Interactive Browser Settings and owned Chat controls work through Desktop"
     });
     const install = settings.getByRole("button", { name: "Install browser runtime" });
     const cancel = settings.getByRole("button", { name: "Cancel installation" });
+    // The switches belong to the Web access page draft: each change is saved with the page header Save.
     async function toggle(checkbox: Locator, enabled: boolean) {
       await checkbox.click();
+      await expect(checkbox).toBeChecked({ checked: enabled });
+      await page.locator("[data-settings-save]").click();
+      await expect(page.locator("[data-settings-header]")).toHaveAttribute("aria-busy", "false");
+      await expect(page.locator("[data-settings-save]")).toBeDisabled();
       await expect(checkbox).toBeChecked({ checked: enabled });
       await expect(checkbox).toBeEnabled();
     }

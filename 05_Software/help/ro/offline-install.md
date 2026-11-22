@@ -1,6 +1,6 @@
 # Instalare offline
 
-VERA poate fi instalat și folosit pe un calculator de laborator fără rețea. Programul de instalare conține tot ce are nevoie aplicația: modelul local de indexare, instalatorul de instrumente Python și catalogul oficial de pluginuri. Programele rulate de pluginuri sunt livrate separat, într-un kit de dependențe offline. Modelele AI au în continuare nevoie de un furnizor: pe un calculator fără rețea, folosește un server local precum LM Studio sau Ollama (vezi [Furnizori și modele](providers.md)).
+VERA poate fi instalat și folosit pe un calculator de laborator fără rețea. Programul de instalare conține tot ce are nevoie aplicația: modelul local de indexare, instalatorul de instrumente Python și catalogul oficial de pluginuri. Programele rulate de pluginuri sunt livrate separat, într-un kit de dependențe offline. Browserul interactiv și modelele de dictare sunt livrate și ele separat, în folderul `components/`. Modelele AI au în continuare nevoie de un furnizor: pe un calculator fără rețea, folosește un server local precum LM Studio sau Ollama (vezi [Furnizori și modele](providers.md)).
 
 ## Folderul de livrare
 
@@ -12,9 +12,10 @@ O livrare VERA este un folder pentru fiecare versiune, `vera-<version>/`:
 | `vera-linux-x64/` | `VERA-<v>-linux-*.AppImage`, `VERA-<v>-linux-*.deb`, `SHA256SUMS` |
 | `plugins/` | Câte un `<id>-<version>.zip` pentru fiecare plugin, indexurile catalogului, `vera-plugins-<version>.zip` cu întregul catalog, `SHA256SUMS` |
 | `plugin-deps/` | `vera-plugin-deps-<version>-windows-x64.zip` și `…-linux-x64.zip`, `SHA256SUMS` |
+| `components/` | `chrome-win64.zip` și `chrome-linux64.zip` (browserul), `whisper-base.zip` și `whisper-small.zip` (modelele de dictare), `THIRD-PARTY-NOTICES.md`, `SHA256SUMS` |
 | `delivery.json` | Ce s-a construit: versiuni, fișiere, dimensiuni și SHA-256 |
 
-Copiază folderul platformei tale și `plugin-deps/` dacă vrei să folosești programele pluginurilor. `plugins/` este necesar doar pentru pluginurile mai noi decât programul tău de instalare VERA. Kitul de dependențe are aproximativ 1 GB pentru fiecare platformă.
+Copiază folderul platformei tale și `plugin-deps/` dacă vrei să folosești programele pluginurilor. `plugins/` este necesar doar pentru pluginurile mai noi decât programul tău de instalare VERA. Kitul de dependențe are aproximativ 1 GB pentru fiecare platformă. Copiază și `components/` dacă vrei browserul interactiv sau dictarea; are aproximativ 700 MB pentru ambele platforme și ambele modele.
 
 ## 1. Verifică fișierele
 
@@ -53,6 +54,13 @@ Pagina **Pluginuri** listează pluginurile oficiale ale versiunii tale de VERA d
 VERA verifică fiecare fișier din kit după SHA-256 din manifestul pluginului și refuză un fișier modificat. Pentru a instala din nou din rețea, elimină `plugins.kit`.
 
 Pentru a instala un singur program dintr-o arhivă pe care ai copiat-o tu, folosește în schimb **Instalează din arhiva dependenței…** pe cardul pluginului.
+
+## 5. Instalează offline browserul și modelele de dictare
+
+1. Deschide **Setări → Acces web** și selectează **Instalează din fișier…**. Alege `components/chrome-win64.zip` pe Windows sau `components/chrome-linux64.zip` pe Linux.
+2. Deschide **Setări → Dictare** și selectează **Instalează din fișier…** la modelul dorit. Alege `components/whisper-base.zip` sau `components/whisper-small.zip`.
+
+VERA verifică fiecare fișier după SHA-256 fixat pentru versiunea sa, refuză un fișier modificat sau diferit și nu face nicio cerere în rețea. `THIRD-PARTY-NOTICES.md` listează sursa și licența fiecărei componente.
 
 ## Programele producătorilor
 

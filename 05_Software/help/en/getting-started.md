@@ -18,8 +18,8 @@ To change the interface language first, open **Settings** → **Appearance and l
 
 1. Open **Settings** → **Providers**.
 2. Choose one of these:
-   - ChatGPT subscription: under **Subscriptions**, select **Sign in with ChatGPT** and finish the sign-in in your browser.
-   - API key or local server: under **API / local connections**, select **Add connection**, choose the **Provider** (**OpenAI API**, LM Studio, Ollama or **Other compatible provider**), fill in the fields and select **Save**.
+   - ChatGPT subscription: select **Add provider**, choose **ChatGPT subscription** as **Provider**, select **Sign in with ChatGPT** and finish the sign-in in your browser.
+   - API key or local server: select **Add provider**, choose the **Provider** (**OpenAI API**, LM Studio, Ollama or **Other compatible provider**), fill in the fields and select **Save**.
 3. Select **Test** next to the connection. All four steps (**Reachability**, **Authentication and model**, **Tool calling**, **Streaming**) should show **Pass**.
 
 Details are in [Providers and models](providers.md).
