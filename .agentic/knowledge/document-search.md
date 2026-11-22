@@ -92,7 +92,8 @@ use their own persistent host because their payloads, lifetimes and caches diffe
 
 ## Invariants
 
-- EmbeddingHost disables native ONNX telemetry in the real parent before Worker
+- EmbeddingHost disables native ONNX telemetry (`disableOnnxRuntimeTelemetry`: ORT_DISABLE_TELEMETRY, and
+  ORT_RUNNING_UNIT_TESTS on Windows) in the real parent before Worker
   initialization (the CLI's only ONNX host); the desktop main process also sets it in its first
   module, `main/inference-telemetry.ts`, so Whisper dictation and lazy embeddings inherit it.
 - Manifest identity includes model/revision/dtype/descriptor/assets. Local assets

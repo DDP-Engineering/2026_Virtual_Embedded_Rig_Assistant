@@ -14,7 +14,12 @@ import {
 } from "./smoke-report.mjs";
 import { copyDemo, extractArtifact, launchObserved, until } from "./smoke-runtime.mjs";
 import { assertSnapshotBudget, startSmokeServer } from "./smoke-server.mjs";
-import { pktmonUnavailable, windowsEvidenceRecord } from "./smoke-windows.mjs";
+import {
+  inferenceTelemetryWatch,
+  pktmonUnavailable,
+  sampleInBackground,
+  windowsEvidenceRecord,
+} from "./smoke-windows.mjs";
 
 export async function smokePackage(options) {
   const root = options.resume ?? options.scratch ?? join(tmpdir(), `vera-smoke-${Date.now()}`);
@@ -60,7 +65,7 @@ export async function smokePackage(options) {
     manual: { windows: { status: "pending" } },
     status: "FAIL",
   };
-  let current, server;
+  let current, server, inferenceWatch;
   // Windows without manual evidence: an elevated shell captures every launch with pktmon.
   const pktmonReason =
     process.platform === "win32" && !options.windowsEvidence ? pktmonUnavailable() : undefined;
@@ -139,6 +144,19 @@ export async function smokePackage(options) {
     const wb = await current.invoke("workbench.open", { folder: bench });
     assert.equal(wb.readOnly, false);
     const workbenchId = wb.config.id;
+    // REQ-SEC-b4170ade on Windows: indexing embeds the documents with ONNX Runtime in the Indexer's worker; the
+    // app's Node utility processes are sampled from now on.
+    const telemetry = process.platform === "win32" ? inferenceTelemetryWatch() : undefined;
+    const sampling =
+      telemetry &&
+      sampleInBackground(async () =>
+        telemetry.sample(
+          await current.app.evaluate(({ app }) =>
+            app.getAppMetrics().map(({ pid, type, name, serviceName }) => ({ pid, type, name, serviceName })),
+          ),
+        ),
+      );
+    if (telemetry) inferenceWatch = { telemetry, sampling, run: offline };
     await current.invoke("docs.reindex", { workbenchId });
     const docs = await until(async () => {
       const { documents } = await current.invoke("docs.list", { workbenchId });
@@ -151,6 +169,22 @@ export async function smokePackage(options) {
     const search = await current.invoke("docs.search", { workbenchId, query: "SDA I2C power board" });
     assert(search.results.length > 0, "Real local embedding search returned no result");
     offline.search = search;
+    if (telemetry) {
+      // The search above is keyword-only: ORT ran for the index's embeddings. Wait until samples saw it loaded,
+      // or the sampling failed.
+      await until(
+        () => telemetry.seenOnnxRuntime() || sampling.failed(),
+        "ONNX Runtime loaded for the embeddings",
+        60_000,
+      ).catch(() => {});
+      await sampling.stop();
+      offline.inferenceTelemetry = telemetry.result();
+      assert.equal(
+        offline.inferenceTelemetry.status,
+        "PASS",
+        JSON.stringify(offline.inferenceTelemetry.errors),
+      );
+    }
     const opened = await current.invoke("docs.open", { workbenchId, path: pdf.path });
     assert.equal(opened.content.kind, "pdf");
     assert(opened.content.data && opened.content.pages.length > 0);
@@ -291,6 +325,11 @@ export async function smokePackage(options) {
       await current.page.screenshot({ path: join(root, "failure.png") }).catch(() => {});
     }
   } finally {
+    // REQ-SEC-b4170ade: an offline run that failed earlier still reports what its sampling saw.
+    if (inferenceWatch) {
+      await inferenceWatch.sampling.stop().catch(() => {});
+      inferenceWatch.run.inferenceTelemetry ??= inferenceWatch.telemetry.result();
+    }
     await current?.finish().catch((error) => {
       report.closeError = String(error);
     });

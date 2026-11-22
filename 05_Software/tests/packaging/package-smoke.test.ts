@@ -1,10 +1,26 @@
-// REQ-TEST-8928f10f REQ-TEST-f84d343e REQ-TEST-b111844b
+// REQ-TEST-8928f10f REQ-TEST-f84d343e REQ-TEST-b111844b REQ-SEC-b4170ade
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { expect, it } from "vitest";
 // @ts-expect-error Native ESM tooling helper.
-import { nsisPayload, veraInstallNamePattern } from "./smoke/smoke-runtime.mjs";
+import { isolatedEnvironment, nsisPayload, veraInstallNamePattern } from "./smoke/smoke-runtime.mjs";
+
+it("starts the app without the operator's ONNX Runtime opt-outs, so only the app can supply them", async () => {
+  const root = await mkdtemp(join(tmpdir(), "vera-smoke-env-"));
+  const prior = { ...process.env };
+  try {
+    Object.assign(process.env, { ORT_DISABLE_TELEMETRY: "1", ORT_RUNNING_UNIT_TESTS: "1", VERA_TEST: "1" });
+    const env = await isolatedEnvironment(root);
+    expect(Object.keys(env).filter((key) => /^(ORT_|VERA_)/i.test(key))).toEqual([]);
+    expect(env.HOME).toBe(join(root, "profile/home"));
+  } finally {
+    for (const key of ["ORT_DISABLE_TELEMETRY", "ORT_RUNNING_UNIT_TESTS", "VERA_TEST"])
+      if (prior[key] === undefined) delete process.env[key];
+      else process.env[key] = prior[key];
+    await rm(root, { recursive: true, force: true });
+  }
+});
 
 it("accepts flattened and wrapped NSIS payloads while rejecting absent payloads", async () => {
   const root = await mkdtemp(join(tmpdir(), "vera-nsis-layout-"));

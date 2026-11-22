@@ -229,8 +229,9 @@ export async function isolatedEnvironment(root) {
     LANG: "C.UTF-8",
     LC_ALL: "C.UTF-8",
   };
+  // The app must disable ONNX Runtime telemetry itself (REQ-SEC-b4170ade): no operator ORT_* reaches it.
   for (const key of Object.keys(env))
-    if (key.startsWith("VERA_") || key === "ELECTRON_RUN_AS_NODE") delete env[key];
+    if (key.startsWith("VERA_") || /^ORT_/i.test(key) || key === "ELECTRON_RUN_AS_NODE") delete env[key];
   return env;
 }
 export async function seedData(data) {
@@ -411,7 +412,9 @@ export async function launchObserved(context, label, report, allowed = [], testB
         cwd: process.cwd(),
         sandbox: BrowserWindow.getAllWindows()[0].webContents.getLastWebPreferences().sandbox,
         spellcheck: BrowserWindow.getAllWindows()[0].webContents.session.isSpellCheckerEnabled(),
-        ortTelemetryDisabled: process.env.ORT_DISABLE_TELEMETRY === "1",
+        ortTelemetryDisabled:
+          process.env.ORT_DISABLE_TELEMETRY === "1" &&
+          (process.platform !== "win32" || process.env.ORT_RUNNING_UNIT_TESTS === "1"),
       }));
       receipt.runtime = runtime;
       assert.equal(

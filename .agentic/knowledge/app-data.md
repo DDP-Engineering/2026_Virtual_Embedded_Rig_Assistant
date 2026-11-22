@@ -30,6 +30,8 @@ Desktop and CLI resolve the setting for each command preparation, so a change wh
 invalidates its resolved-shell binding. Windows supports pwsh/PowerShell with no profile,
 noninteractive UTF-8 execution; Linux uses bash -lc, else sh -c. The shell host inherits user variables
 except VERA/Electron state, credential-bearing names and any value changed by the credential scrubber.
+VERA's ONNX Runtime opt-out (ORT_DISABLE_TELEMETRY, and on Windows ORT_RUNNING_UNIT_TESTS) is inherited too
+(REQ-SEC-b4170ade, accepted in TASK-8460f2c9 RULING-003).
 Login profiles may modify the child's environment. Tests: core settings/service.test.ts,
 plugins/shell.test.ts and renderer components/command-settings.test.ts.
 

@@ -34,7 +34,12 @@ Electron and expects oracleFAIL. See [manual procedure](../../06_SoftwareDocu/re
 
 - Production session-created policy sets a local dictionary URL and disables spellchecking;
   observed production configuration disables remote dictionary downloads and
-  native ONNX telemetry before inference; the harness supplies no opt-out.
+  native ONNX telemetry before inference; the harness supplies no opt-out and strips `ORT_*` from the app's
+  environment. On Windows the offline run samples the ETW providers of the Node utility processes, where the
+  Indexer embeds (`logman query providers -pid`, no elevation, retried on 0x80071068; main runs ORT only
+  for dictation and takes about 30 s per query, renderers can't load ORT) from opening
+  the workbench until ONNX Runtime has been seen: indexing embeds with it, while `docs.search` is
+  keyword-only. ORT's logging provider must appear and its Microsoft-telemetry provider never (REQ-SEC-b4170ade).
 - Immutable artifact; release identity/Electron44.11.4/sandbox/vera://app and actual
   owned userData asserted before app mutations and every restart.
 - Off updates and copied demo provide real SQLite/local CPU embedding/PDF canvas.
@@ -59,11 +64,13 @@ Electron and expects oracleFAIL. See [manual procedure](../../06_SoftwareDocu/re
 
 REQ-TEST-8928f10f exact release scenarios; REQ-TEST-f84d343e external destination
 oracle/calibration; REQ-TEST-803bb75d Windows pktmon oracle; REQ-TEST-b111844b
-artifact/manual/automated Windows/upgrade-proof bindings.
+artifact/manual/automated Windows/upgrade-proof bindings; REQ-SEC-b4170ade Windows ONNX
+Runtime telemetry provider check.
 
 ## Files
 
 `tests/packaging/smoke/smoke-{package,runtime,egress,server,report,calibration,windows}.mjs` own scenarios,
 native execution, the strace oracle, SSE fixture, proof projection, separate calibration and the Windows
-pktmon capture/oracle. `tests/fixtures/pktmon/kernel-events.xml` is a recorded, anonymized tracerpt dump.
+pktmon capture/oracle and the ETW provider check. `tests/fixtures/pktmon/kernel-events.xml` is a recorded,
+anonymized tracerpt dump; `tests/fixtures/logman/providers-onnxruntime.txt` a recorded logman provider list.
 `02_Tools/release/sandbox/VERA.wsb`, manual procedure and package-smoke tests route acceptance.

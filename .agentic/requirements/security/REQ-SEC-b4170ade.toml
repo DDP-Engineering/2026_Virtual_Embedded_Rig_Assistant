@@ -17,11 +17,11 @@ requirement = """
 When creating a local inference host, VERA shall disable ONNX Runtime native telemetry in the real parent process environment before any inference worker can initialize the native runtime.
 """
 
-verification = "Focused parent/worker startup regression and actual release process-tree traces with local CPU inference; ambient enabled telemetry cannot retain an uploader."
+verification = "Focused parent/worker startup regression and actual release process-tree traces with local CPU inference; ambient enabled telemetry cannot retain an uploader. On Windows, while the release smoke indexes with local embeddings, logman shows ONNX Runtime's logging ETW provider in at least one of the app's Node utility processes (where the Indexer embeds) and its Microsoft-telemetry provider in none; the harness gives the app no ORT_* variable. The bundled ONNX Runtime libraries still carry the switch each platform reads."
 
-affected_paths = ["05_Software/src/libraries/core/src/knowledge/embedding.ts", "05_Software/src/libraries/core/src/knowledge/embedding.test.ts", "05_Software/src/apps/desktop/src/main/inference-telemetry.ts", "05_Software/src/apps/desktop/src/main/index.ts"]
+affected_paths = ["05_Software/src/libraries/core/src/knowledge/embedding.ts", "05_Software/src/libraries/core/src/knowledge/embedding.test.ts", "05_Software/tests/packaging/package-smoke.test.ts", "05_Software/tests/packaging/windows-egress.test.ts", "05_Software/src/apps/desktop/src/main/inference-telemetry.ts", "05_Software/src/apps/desktop/src/main/inference-telemetry.test.ts", "05_Software/src/apps/desktop/src/main/index.ts", "05_Software/tests/fixtures/logman/providers-onnxruntime.txt", "05_Software/tests/packaging/smoke/smoke-windows.mjs", "05_Software/tests/packaging/smoke/smoke-package.mjs", "05_Software/tests/packaging/smoke/smoke-runtime.mjs"]
 
-linked_tests = ["05_Software/src/libraries/core/src/knowledge/embedding.test.ts", "05_Software/src/apps/desktop/src/main/inference-telemetry.test.ts", "05_Software/tests/packaging/package-smoke.test.ts"]
+linked_tests = ["05_Software/src/libraries/core/src/knowledge/embedding.test.ts", "05_Software/src/apps/desktop/src/main/inference-telemetry.test.ts", "05_Software/tests/packaging/package-smoke.test.ts", "05_Software/tests/packaging/windows-egress.test.ts"]
 
 
 spec = ""
@@ -30,4 +30,4 @@ priority = "normal"   # low | normal | high
 rationale = ""        # why this behavior exists, if not obvious
 
 created = 2026-10-13
-updated = 2026-11-21
+updated = 2026-11-22

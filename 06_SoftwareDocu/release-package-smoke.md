@@ -13,7 +13,14 @@ It never builds. No app test switch or internal audit is used.
 The product routes eager dictionary initialization to the local vera://app scheme,
 disables native ONNX telemetry before worker initialization and
 Electron session dictionary downloads before opening a window. The harness
-observes these states and supplies no telemetry/dictionary opt-out.
+observes these states and supplies no telemetry/dictionary opt-out: it removes every `ORT_*`
+variable from the app's environment. On Windows, from opening the workbench until ONNX Runtime has
+been seen (indexing embeds the documents with it; the document search itself is keyword-only), it
+samples the ETW providers of the app's Node utility processes, where the Indexer embeds, with
+`logman query providers -pid` (no elevation needed). The main process is left out: it runs ONNX
+Runtime only for dictation, which the smoke does not use, and one query of it takes about 30 s.
+ONNX Runtime's logging provider must appear in one of them, and its
+Microsoft-telemetry provider (`Microsoft.ML.ONNXRuntime`) in none.
 
 Windows ZIP uses portable adjacent data; NSIS checks existing VERA registry
 identity before installation. If an installation exists, the harness extracts

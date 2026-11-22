@@ -2,8 +2,13 @@
 // pktmon logs the Microsoft-Windows-Kernel-Network socket events (PID, saddr, sport, daddr, dport) and the
 // Kernel-Process start events (ProcessID, ParentProcessID) next to the packets; tracerpt writes them as XML
 // whose field names do not depend on the Windows display language. The etl2txt text is kept for people.
-import { spawnSync } from "node:child_process";
+// REQ-SEC-b4170ade: logman's ETW provider list of each app process shows whether ONNX Runtime registered its
+// Microsoft-telemetry provider.
+import { execFile, spawnSync } from "node:child_process";
 import { connect, createServer } from "node:net";
+import { promisify } from "node:util";
+
+const execFileAsync = promisify(execFile);
 
 const network = "Microsoft-Windows-Kernel-Network";
 const kernelProcess = "Microsoft-Windows-Kernel-Process";
@@ -237,5 +242,136 @@ export function windowsEvidenceRecord({ artifactSHA256, status, operator, observ
     observedAt: new Date().toISOString(),
     observations,
     capture,
+  };
+}
+
+/**
+ * ONNX Runtime's ETW providers, as its DLL defines them. The telemetry provider (Microsoft.ML.ONNXRuntime) is in
+ * Microsoft's telemetry group, which Windows' diagnostic data service collects; the logging provider has no group.
+ * ORT registers both when it initializes in a process and drops them when its last user (a worker) ends.
+ */
+export const onnxRuntimeProviders = {
+  telemetry: "{3A26B1FF-7484-7484-7484-15261F42614D}",
+  logging: "{929DD115-1ECB-4CB5-B060-EBD4983C421D}",
+};
+
+/** The ETW provider GUIDs, upper case, in a `logman query providers` listing. */
+export function etwProviderGuids(listing) {
+  return new Set(
+    (String(listing).match(/\{[0-9A-F]{8}(?:-[0-9A-F]{4}){3}-[0-9A-F]{12}\}/gi) ?? []).map((guid) =>
+      guid.toUpperCase(),
+    ),
+  );
+}
+
+/** The ETW providers a running process has registered. This logman query needs no elevation. */
+export async function etwProviders(pid, run = execFileAsync) {
+  const args = ["query", "providers", "-pid", String(pid)];
+  for (let attempt = 1; ; attempt++) {
+    try {
+      return etwProviderGuids((await run("logman", args, { encoding: "utf8", timeout: 30_000 })).stdout);
+    } catch (error) {
+      // 0x80071068 (ERROR_WMI_GUID_NOT_FOUND): a provider went away while logman read the process's list.
+      if (error.code === 0x80071068 && attempt < 3) continue;
+      const output = `${error.stdout ?? ""}${error.stderr ?? ""}`.trim() || error.message;
+      throw new Error(`logman ${args.join(" ")} failed (${error.code}): ${output.slice(-1000)}`);
+    }
+  }
+}
+
+/** Whether a process still exists; EPERM means it does but belongs to someone else. */
+export function processAlive(pid) {
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch (error) {
+    return error.code === "EPERM";
+  }
+}
+
+/**
+ * The app processes where the smoke's local inference runs: Node utility processes such as the Indexer.
+ * Renderers and the GPU process cannot load onnxruntime-node. Main loads it only for dictation, which the
+ * smoke does not run, and logman needs about 30 s per query of its many providers, racing with them.
+ */
+export const nodeProcesses = (metrics) =>
+  metrics.filter(({ type, serviceName }) => type === "Utility" && serviceName === "node.mojom.NodeService");
+
+/**
+ * REQ-SEC-b4170ade on Windows: samples ORT's ETW providers in the app's Node utility processes while local inference
+ * runs. `sample(metrics)` takes Electron's `app.getAppMetrics()` entries. The result passes only when ORT's
+ * logging provider was seen (ORT was loaded, so a missing telemetry provider means something), the telemetry
+ * provider never was, and every query of a live process answered; each of these, once seen, stays. A process
+ * that exited before its query is recorded, not failed. `seenOnnxRuntime()` needs two listings of one process
+ * with ORT loaded, so a provider registered a little after the logging provider is not missed.
+ */
+export function inferenceTelemetryWatch({ query = etwProviders, alive = processAlive } = {}) {
+  const seen = new Map();
+  return {
+    async sample(metrics) {
+      for (const { pid, type, name } of nodeProcesses(metrics)) {
+        const entry = seen.get(pid) ?? {
+          pid,
+          type,
+          name,
+          samples: 0,
+          onnxRuntimeSamples: 0,
+          onnxRuntime: false,
+          telemetry: false,
+        };
+        seen.set(pid, entry);
+        try {
+          const providers = await query(pid);
+          entry.samples += 1;
+          if (providers.has(onnxRuntimeProviders.logging)) entry.onnxRuntimeSamples += 1;
+          entry.onnxRuntime ||= providers.has(onnxRuntimeProviders.logging);
+          entry.telemetry ||= providers.has(onnxRuntimeProviders.telemetry);
+        } catch (error) {
+          if (alive(pid)) entry.error ??= error.message;
+          else entry.exited = true;
+        }
+      }
+    },
+    seenOnnxRuntime: () => [...seen.values()].some((entry) => entry.onnxRuntimeSamples >= 2),
+    result() {
+      const processes = [...seen.values()];
+      const errors = [];
+      for (const entry of processes) {
+        const label = `pid=${entry.pid} ${entry.type} ${entry.name ?? ""}`.trim();
+        if (entry.telemetry) errors.push(`ONNX Runtime telemetry provider registered: ${label}`);
+        if (entry.error) errors.push(entry.error);
+      }
+      if (!processes.some((entry) => entry.onnxRuntime))
+        errors.push("ONNX Runtime was not loaded in any Node process while the app ran local inference");
+      return { status: errors.length ? "FAIL" : "PASS", processes, errors };
+    },
+  };
+}
+
+/**
+ * Runs `sampleOnce` repeatedly until `stop()`, which rethrows the first error that ended the loop; `failed()`
+ * says whether one already did.
+ */
+export function sampleInBackground(sampleOnce, intervalMs = 250) {
+  let stopped = false;
+  let failure;
+  const loop = (async () => {
+    while (!stopped) {
+      try {
+        await sampleOnce();
+      } catch (error) {
+        failure = error;
+        return;
+      }
+      await new Promise((resolve) => setTimeout(resolve, intervalMs));
+    }
+  })();
+  return {
+    failed: () => failure !== undefined,
+    async stop() {
+      stopped = true;
+      await loop;
+      if (failure) throw failure;
+    },
   };
 }

@@ -1,4 +1,4 @@
-// REQ-TEST-803bb75d REQ-TEST-b111844b
+// REQ-TEST-803bb75d REQ-TEST-b111844b REQ-SEC-b4170ade
 import { readFile } from "node:fs/promises";
 import { expect, it } from "vitest";
 // @ts-expect-error Native ESM tooling helper.
@@ -11,9 +11,14 @@ import * as windows from "./smoke/smoke-windows.mjs";
 const {
   captureCommands,
   checkWindowsEgress,
+  etwProviderGuids,
+  etwProviders,
+  inferenceTelemetryWatch,
+  onnxRuntimeProviders,
   parseKernelEvents,
   pktmonUnavailable,
   processTree,
+  sampleInBackground,
   stopCapture,
   windowsEvidenceRecord,
 } = windows;
@@ -158,4 +163,188 @@ it("writes evidence that the report accepts unchanged, and keeps a missing proof
   expect(() => windowsEvidence(evidence, "c".repeat(64))).toThrow();
   const pending = windowsEvidence(null, artifact, "pktmon needs an elevated shell");
   expect(pending).toEqual({ status: "pending", reason: "pktmon needs an elevated shell" });
+});
+
+// Recorded with `logman query providers -pid` on Electron 44 running an ONNX Runtime 1.30 session without the
+// Windows switch: both of ORT's providers are registered.
+const listing = await readFile(
+  new URL("../fixtures/logman/providers-onnxruntime.txt", import.meta.url),
+  "utf8",
+);
+const lines = listing.split("\n");
+const withoutTelemetry = lines.filter((line) => !line.includes(onnxRuntimeProviders.telemetry)).join("\r\n");
+const unloaded = lines
+  .filter(
+    (line) => !line.includes(onnxRuntimeProviders.telemetry) && !line.includes(onnxRuntimeProviders.logging),
+  )
+  .join("\r\n");
+const guids = (text: string) => etwProviderGuids(text);
+// The app's processes as Electron's getAppMetrics() names them. The smoke's local inference runs in Node
+// utility processes (the Indexer); a second one stands for any other Node utility.
+const metrics = [
+  { pid: 1, type: "Browser", name: undefined, serviceName: undefined },
+  { pid: 3, type: "GPU", name: "GPU", serviceName: undefined },
+  { pid: 4, type: "Tab", name: undefined, serviceName: undefined },
+  { pid: 5, type: "Utility", name: "Network Service", serviceName: "network.mojom.NetworkService" },
+  { pid: 2, type: "Utility", name: "VERA Indexer", serviceName: "node.mojom.NodeService" },
+  { pid: 6, type: "Utility", name: "Helper", serviceName: "node.mojom.NodeService" },
+];
+
+it("reads a process's registered ETW providers from logman, with a timeout", async () => {
+  const providers = etwProviderGuids(listing);
+  expect(providers.has(onnxRuntimeProviders.telemetry)).toBe(true);
+  expect(providers.has(onnxRuntimeProviders.logging)).toBe(true);
+  expect(providers.has("{57277741-3638-4A4B-BDBA-0AC6E45DA56C}")).toBe(true);
+  const calls: unknown[][] = [];
+  const run = async (...call: unknown[]) => {
+    calls.push(call);
+    if (Array.isArray(call[1]) && call[1].at(-1) === "7") return { stdout: listing };
+    // A process logman cannot find: exit 0x80070490, as logman reports it.
+    throw Object.assign(new Error("Command failed"), {
+      code: 2147943568,
+      stdout: "\r\nError:\r\nElement not found.\r\n",
+      stderr: "",
+    });
+  };
+  expect((await etwProviders(7, run)).has(onnxRuntimeProviders.logging)).toBe(true);
+  await expect(etwProviders(8, run)).rejects.toThrow(
+    /^logman query providers -pid 8 failed \(2147943568\): Error:\r\nElement not found\.$/,
+  );
+  expect(calls[0]).toEqual([
+    "logman",
+    ["query", "providers", "-pid", "7"],
+    { encoding: "utf8", timeout: 30_000 },
+  ]);
+  expect(calls).toHaveLength(2);
+  // 0x80071068: a provider of the process went away while logman read the list; logman is asked again.
+  let attempts = 0;
+  const racing = (failures: number) => async () => {
+    attempts += 1;
+    if (attempts > failures) return { stdout: listing };
+    throw Object.assign(new Error("Command failed"), {
+      code: 2147946600,
+      stdout: "\r\nError:\r\nThe GUID passed was not recognized as valid by a WMI data provider.\r\n",
+      stderr: "",
+    });
+  };
+  expect((await etwProviders(9, racing(2))).has(onnxRuntimeProviders.logging)).toBe(true);
+  expect(attempts).toBe(3);
+  attempts = 0;
+  await expect(etwProviders(9, racing(3))).rejects.toThrow(
+    /^logman query providers -pid 9 failed \(2147946600\)/,
+  );
+  expect(attempts).toBe(3);
+});
+
+it("passes once ORT ran in a Node process that never registered its telemetry provider", async () => {
+  const queried: number[] = [];
+  let sample = 0;
+  const watch = inferenceTelemetryWatch({
+    query: async (pid: number) => {
+      queried.push(pid);
+      // The Indexer loads ORT for its embeddings from the second sample on; the other utility never does.
+      return guids(pid === 2 && sample > 1 ? withoutTelemetry : unloaded);
+    },
+    alive: () => true,
+  });
+  sample = 1;
+  await watch.sample(metrics);
+  expect(watch.seenOnnxRuntime()).toBe(false);
+  // One listing with ORT loaded is not enough: a provider registered a little later would be missed.
+  sample = 2;
+  await watch.sample(metrics);
+  expect(watch.seenOnnxRuntime()).toBe(false);
+  sample = 3;
+  await watch.sample(metrics);
+  expect(watch.seenOnnxRuntime()).toBe(true);
+  // Main (about 30 s per logman query), renderers, the GPU process and the network service are not queried.
+  expect(queried).toEqual([2, 6, 2, 6, 2, 6]);
+  expect(watch.result()).toEqual({
+    status: "PASS",
+    processes: [
+      {
+        pid: 2,
+        type: "Utility",
+        name: "VERA Indexer",
+        samples: 3,
+        onnxRuntimeSamples: 2,
+        onnxRuntime: true,
+        telemetry: false,
+      },
+      {
+        pid: 6,
+        type: "Utility",
+        name: "Helper",
+        samples: 3,
+        onnxRuntimeSamples: 0,
+        onnxRuntime: false,
+        telemetry: false,
+      },
+    ],
+    errors: [],
+  });
+});
+
+it("fails on a registered telemetry provider, on ORT never seen and on a live process that cannot be queried", async () => {
+  // A provider seen once stays a failure, even when later samples no longer list it.
+  let round = 0;
+  const registered = inferenceTelemetryWatch({
+    query: async (pid: number) => guids(pid !== 2 ? unloaded : round === 1 ? listing : withoutTelemetry),
+    alive: () => true,
+  });
+  for (round = 1; round <= 2; round++) await registered.sample(metrics);
+  expect(registered.result()).toMatchObject({
+    status: "FAIL",
+    errors: ["ONNX Runtime telemetry provider registered: pid=2 Utility VERA Indexer"],
+  });
+  // Without ORT loaded while sampling, the missing provider proves nothing.
+  const never = inferenceTelemetryWatch({ query: async () => guids(unloaded), alive: () => true });
+  await never.sample(metrics);
+  expect(never.result()).toMatchObject({
+    status: "FAIL",
+    errors: ["ONNX Runtime was not loaded in any Node process while the app ran local inference"],
+  });
+  // A process that exited before its query is recorded; a live one that does not answer fails the check.
+  const failing = async (pid: number) => {
+    if (pid === 2) return guids(withoutTelemetry);
+    throw new Error(`logman query providers -pid ${pid} failed (2147943568): Element not found.`);
+  };
+  const exited = inferenceTelemetryWatch({ query: failing, alive: () => false });
+  await exited.sample(metrics);
+  expect(exited.result()).toMatchObject({
+    status: "PASS",
+    processes: [{ pid: 2 }, { pid: 6, samples: 0, exited: true }],
+  });
+  // A live process that did not answer once stays a failure, even when it answers later.
+  let answered = false;
+  const live = inferenceTelemetryWatch({
+    query: async (pid: number) => (answered ? guids(withoutTelemetry) : failing(pid)),
+    alive: () => true,
+  });
+  await live.sample(metrics);
+  answered = true;
+  await live.sample(metrics);
+  expect(live.result()).toMatchObject({
+    status: "FAIL",
+    errors: ["logman query providers -pid 6 failed (2147943568): Element not found."],
+  });
+});
+
+it("samples in the background until stopped, and reports the error that ended the sampling", async () => {
+  let count = 0;
+  const sampling = sampleInBackground(async () => {
+    count += 1;
+  }, 1);
+  while (count < 3) await new Promise((resolve) => setTimeout(resolve, 1));
+  await sampling.stop();
+  const stoppedAt = count;
+  await new Promise((resolve) => setTimeout(resolve, 10));
+  expect(count).toBe(stoppedAt);
+  expect(sampling.failed()).toBe(false);
+  const failing = sampleInBackground(async () => {
+    throw new Error("Target page, context or browser has been closed");
+  }, 1);
+  // The smoke's wait for ORT ends as soon as the sampling has failed.
+  while (!failing.failed()) await new Promise((resolve) => setTimeout(resolve, 1));
+  await expect(failing.stop()).rejects.toThrow("has been closed");
 });
