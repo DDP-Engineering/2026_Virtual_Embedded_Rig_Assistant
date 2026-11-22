@@ -1,0 +1,20 @@
+# Frozen before model inference. Two short cases that exercise the shared agent runner end to end:
+# a workbench file and an indexed datasheet, each with a citation that VERA must verify.
+schema: 1
+workbench: tests/fixtures/workbenches/demo-board
+timeoutSeconds: 300
+cases:
+  - id: board-voltage
+    language: en
+    prompt: "Which supply voltage does board.txt state? Read the file, answer in one sentence and cite it."
+    replay: replay/board-voltage.jsonl
+    expect:
+      tools: [read]
+      answer: '3[.,]3\s*V'
+  - id: sensor-address
+    language: en
+    prompt: "Which seven-bit I2C address does the external sensor use? Search the documents and cite the page."
+    replay: replay/sensor-address.jsonl
+    expect:
+      tools: [search_docs]
+      answer: "0x48"

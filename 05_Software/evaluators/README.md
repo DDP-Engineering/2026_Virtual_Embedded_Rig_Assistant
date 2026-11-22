@@ -4,65 +4,92 @@ Independent harnesses that produce measurements, scores and reports about the pr
 also apply documented thresholds, but it is not a unit or E2E suite: it does not run with `npm test`
 or with `npm run test:e2e`. Functional tests are in [`../tests/`](../tests/README.md); the
 environment, build and release tools are in [`../../02_Tools/`](../../02_Tools/README.md).
+Run the commands from `05_Software` with the local Node.js: `python ../02_Tools/environment/npmw.py …`.
 
-Each harness owns its entry point, its implementation and any data or modules of its own. Shared
-test data, for example the fictional demo and the retrieval questions, stays in `tests/fixtures/`.
-Run the commands from `05_Software` with the local Node.js:
-`python ../02_Tools/environment/npmw.py …`.
+## Families
 
-| Folder | Family | Entry point | Status |
-|---|---|---|---|
-| [eval-performance-harness/](#performance) | Loading of saved sessions | `npm run perf:sessions` | Current measurement (PERF-01); calibration and gates are deferred. |
-| [eval-retrieval-harness/](#retrieval) | The product's real search | `npm run eval:retrieval` | Documented hybrid thresholds. |
-| [retrieval-support/](retrieval-support/README.md) | Modules of the retrieval evaluation | — | Imported by the retrieval harness. |
+| Family | Folder | Command | Measures | Status |
+|---|---|---|---|---|
+| compaction | [compaction/](compaction/README.md) | `npm run eval:compaction` | What a long session keeps after VERA compacts its history | Compacted, decisions retained, planted instruction, invented values. |
+| grounding | [grounding/](grounding/README.md) | `npm run eval:grounding` | Document answers: facts, citations on target, language, abstention, fabricated values | Proposed thresholds (accuracy, target, fabrication, abstention). |
+| models | [models/](models/README.md) | `npm run eval:models` | One model's fit for VERA's agent loop; `matrix` compares models | Verdict: recommended, degraded or unsuitable. |
+| routing | [routing/](routing/README.md) | `npm run eval:routing` | Skill and program choice over 23 official plugins, port guessing, read-only discipline | Skill first, guessed ports, read-only faults. |
+| safety | [safety/](safety/README.md) | `npm run eval:safety` | Planted instructions, web query leakage and secret egress, with the network blocked | Canary leaks 0; followed instructions and web leaks ≤ 10 %. |
+| performance | [performance/](performance/README.md) | `npm run eval:performance` | Loading of saved sessions in an instrumented build; `agent-load`: indexing throughput and VERA's time per model call | Measurements; session-loading calibration deferred, agent-load compared within its noise band. |
+| retrieval | [retrieval/](retrieval/README.md) | `npm run eval:retrieval` | The product's real document search, recall@5, per embedding model; `layout`: a hard-layout corpus through the CLI | Documented thresholds. |
+| smoke | [smoke/](smoke/README.md) | `npm run eval:smoke` | The shared agent runner end to end on two cases | Gate: every turn completes. |
 
-## Scratch and outputs
+The agent families (compaction, grounding, models, routing, safety, smoke) run on the
+[shared modules](shared/README.md).
 
-- **Scratch** (profiles, databases, intermediate builds) belongs to each harness: either a temporary
-  folder of its own, deleted at the end, or the ignored area
-  `node_modules/.cache/evaluators/<family>/`. Evaluators do not use `02_Tools/cache/`, which serves
-  the environment, the build and the release.
-- Saved **outputs** go to [`../evaluation-outputs/<family>/`](../evaluation-outputs/README.md), with
-  a unique name for each run. Create the family folder before the first run, because the evaluators
-  do not create parent folders. The folder is ignored by Git; evidence to keep is selected
-  explicitly.
-- The area `node_modules/.cache/evaluators/` can be deleted whenever no evaluator is running.
-- Historical reports that were already accepted stay in `06_SoftwareDocu/` with their original
-  hashes and provenance; they were not moved. Moving the performance harness did change its identity
-  (`harnessHash`), and `compare` and `calibrate` need identical identities: new runs cannot use the
-  retained run of 2026-11-12 as a compatible reference.
+## Commands and reports
 
-| Family | Scratch | Output |
-|---|---|---|
-| performance | temporary folder `vera-session-performance-*`, deleted at the end | `--output <new file>`, required |
-| retrieval | `node_modules/.cache/evaluators/retrieval/` or `--scratch <parent>`; the run's folder is deleted in `finally` | `--output <new file>`, optional |
-
-## Performance
-
-`perf:sessions run|calibrate|compare --output <new file> [options]` measures the loading of saved
-sessions in an instrumented build, compares a run with a reference and calibrates references. The
-harness files are [perf-sessions.mjs](eval-performance-harness/perf-sessions.mjs) (the entry point),
-[runner.mjs](eval-performance-harness/runner.mjs), [report.mjs](eval-performance-harness/report.mjs)
-and [fixtures.mjs](eval-performance-harness/fixtures.mjs), which generates the synthetic sessions.
-The runner uses the network guard of the E2E suite, `tests/e2e/network-guard.ts`. The method, the
-results and the limits are in
-[06_SoftwareDocu/session-performance.md](../../06_SoftwareDocu/session-performance.md).
-Their focused tests are `tests/tooling/session-performance*.test.ts`.
-
-## Retrieval
-
-[eval-retrieval.mjs](eval-retrieval-harness/eval-retrieval.mjs) bundles
-[product-eval.mjs](eval-retrieval-harness/product-eval.mjs) and exercises the real search service,
-with isolated databases and workers, on the demo and the 28 fixed questions, in the `keyword`,
-`semantic` and `hybrid` modes. It needs the local model already prepared (`npm run prepare:model`)
-and does not download it. The hybrid thresholds are a recall@5 of at least `0.85` overall, `0.95`
-for English and `0.75` for Romanian.
+Every family has `run` and `report`. A run writes `run.json` and a self-contained `report.html`
+(inline CSS and SVG, no script, no network) into its own run folder; `report` renders a saved run
+again, and with `--reference <run.json>` compares it with another run. Incompatible runs (another
+harness, case file or environment, depending on the family) are reported as such and their metrics
+are not compared.
 
 ```powershell
-python ../02_Tools/environment/npmw.py npm run eval:retrieval
-mkdir evaluation-outputs/retrieval -Force
-python ../02_Tools/environment/npmw.py npm run eval:retrieval -- --output evaluation-outputs/retrieval/<run>.json
+python ../02_Tools/environment/npmw.py npm run eval:<family> -- report --input evaluation-outputs/<family>/<run-id>/run.json [--reference <run.json>] [--output <new.html>]
 ```
 
-`--scratch <parent>` chooses the parent of the temporary folder; `--output <new file>` saves the
-complete report and refuses an existing file.
+Agent families also have `rescore --input <run.json>`, which recomputes the metrics from the saved
+events with the current scoring code, without asking the model again.
+
+Exit codes: `0` passed or measured, `1` a threshold failed, `2` invalid arguments, cases or evidence.
+
+## Agent families and models
+
+Agent families drive the headless CLI, `vera run --format jsonl`, with `--approve none` by default:
+every write, download or program run that the model proposes is recorded and refused, so nothing
+touches the workbench copy beyond reads, and no hardware. The model is one of:
+
+- `--provider replay`: the scripts in the family's `cases/replay/`, deterministic and free; for tests.
+- `--provider custom --base-url <url> --model <id>`: any OpenAI-compatible endpoint, through a
+  loopback proxy that forwards only to that origin. `--reasoning off|low|medium|high|xhigh` sets the
+  reasoning level the way VERA does for a custom endpoint; without it the server default applies.
+- `--provider openai --model <id>`: the OpenAI API, key from `OPENAI_API_KEY` or `--key-env`.
+
+`VERA_EVAL_BASE_URL`, `VERA_EVAL_MODEL`, `VERA_EVAL_REASONING`, `VERA_EVAL_PROVIDER` and
+`VERA_EVAL_KEY_ENV` set the defaults for a series of runs. Repeats default to 3.
+
+**Default local model (2026-11-21):** LM Studio on `127.0.0.1:1234` (also `192.168.1.13`),
+`qwen/qwen3.8-27b` Q4_K_M with a 32 768-token context, fully on the GPU (an RTX 5090 Laptop with
+24 GiB: about 22 GiB at 32 K, 26 GiB at 64 K, which would spill into RAM), and reasoning `low`. 32 K
+matches VERA's default context window for a custom endpoint; `low` keeps the reasoning inside VERA's
+4 096-token output limit, which the server default (`xhigh`) can exhaust. Load it with
+`lms load qwen/qwen3.8-27b --context-length 32768 --gpu max --ttl 3600`.
+
+## Where everything lives
+
+| What | Where | In Git |
+|---|---|---|
+| Harness code of a family | `evaluators/<family>/*.mjs`, entry point `run.mjs` | yes |
+| Method, metrics, thresholds and limits | `evaluators/<family>/README.md` | yes |
+| Frozen cases used only by the family | `evaluators/<family>/cases/` | yes |
+| Accepted reference runs | `evaluators/<family>/baselines/<YYYY-MM-DD>-<platform>-<label>/` | yes, chosen deliberately |
+| Code shared by several families | [`evaluators/shared/`](shared/README.md) | yes |
+| Generated runs | [`../evaluation-outputs/<family>/<run-id>/`](../evaluation-outputs/README.md) | no |
+| Scratch: profiles, databases, intermediate builds | a temporary folder of the harness, or `node_modules/.cache/evaluators/<family>/` | no |
+| Tests of the harness code | `../tests/tooling/` and `../tests/integration/` | yes |
+
+Rules:
+
+- **One name per family everywhere:** the folder `evaluators/<family>/`, the npm script
+  `eval:<family>` and the output folder `evaluation-outputs/<family>/`.
+- **One folder per run:** `evaluation-outputs/<family>/<YYYYMMDD-HHMMSS>-<label>/`, holding `run.json`
+  and the reports made from it. The harness creates missing parent folders and refuses an existing
+  output file.
+- **Baselines** hold `run.json` (the evidence the harness compares against), `NOTES.md` (host, why it
+  was accepted, limits) and, when one exists, the report. A baseline is promoted from a run by
+  copying it in a reviewed change; a run never promotes itself.
+- **Harness identity** (`harnessHash`) covers only the harness code (`*.mjs` of the family folder),
+  so adding a README change or a baseline does not make earlier runs incompatible.
+- **Cases** belong to their family, also when a test of the harness reads them. Data shared with the
+  functional tests, such as the demo workbench `tests/fixtures/workbenches/demo-board/`, stays in
+  `tests/fixtures/`.
+- Evaluators do not use `02_Tools/cache/`, which serves the environment, the build and the release.
+  The area `node_modules/.cache/evaluators/` can be deleted whenever no evaluator is running.
+- Evidence of functional tests and work packages (screenshots, receipts, logs per ticket) is not
+  evaluator output: it goes to [`../test-outputs/<ticket>/`](../test-outputs/README.md).

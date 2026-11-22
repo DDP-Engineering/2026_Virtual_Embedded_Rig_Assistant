@@ -37,7 +37,7 @@ also starts Windows Sandbox. That is the flow for the **instrumented** ZIP, diff
 manual template here.
 
 Validation of a release package through the application's ordinary flows is described in
-[release-package-smoke.md](../../../06_SoftwareDocu/release-package-smoke.md), including the Windows
+[release-package-smoke.md](../../../05_Software/tests/packaging/smoke/README.md), including the Windows
 steps for capturing traffic. The instrumented probes and the release checks have separate results
 and purposes.
 

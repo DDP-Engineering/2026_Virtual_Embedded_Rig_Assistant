@@ -1,0 +1,2 @@
+{"toolCalls":[{"name":"read","args":{"path":"board.txt"}}]}
+{"text":"board.txt states a 3.3 V supply [[{{ref}}]]."}

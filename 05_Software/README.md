@@ -1,7 +1,7 @@
 # VERA software
 
 For already-built release acceptance, use `npm run smoke:package -- --artifact <path>`;
-see [release smoke](../06_SoftwareDocu/release-package-smoke.md) for external egress,
+see [release smoke](tests/packaging/smoke/README.md) for external egress,
 separate test-renderer calibration, original updater-probe (`--upgrade-proof`) report bindings and pending manual Windows capture.
 
 The npm workspaces of VERA — `src/libraries/shared`, `src/libraries/core`, `src/apps/desktop`, `src/apps/cli` — with
@@ -28,8 +28,9 @@ tests/
   packaging/          Distribution, package smoke, update probe and update tests
   fixtures/           Test-only documents, replay scripts and scenarios
   support/            Test runners, reporters, network guard and fixture generators
-evaluators/           Measurement and scoring harnesses, one folder per evaluator family
-evaluation-outputs/   Generated evaluator runs, ignored by Git
+evaluators/           Measurement and scoring harnesses, one folder per family: code, method, cases, baselines
+evaluation-outputs/   Generated evaluator runs, one folder per family and run, ignored by Git
+test-outputs/         Evidence of functional tests and work packages, ignored by Git
 release_tmp/          Ignored packaging workspace
 node_modules/         Ignored installed dependencies
 ```
@@ -128,7 +129,7 @@ to the installed application resource layout (`models/` and app-local native DLL
 
 The [tooling catalog](../02_Tools/README.md) describes the environment, build and release
 commands. [Tests](tests/README.md) and [evaluators](evaluators/README.md) describe their runners
-and harnesses, with separate guides for [retrieval](evaluators/retrieval-support/README.md) and
+and harnesses, with separate guides for [performance](evaluators/performance/README.md), [retrieval](evaluators/retrieval/README.md) and
 [Windows Sandbox](../02_Tools/release/sandbox/README.md).
 
 ## Set-up and commands
@@ -484,7 +485,7 @@ Renderer session controls include `bookmark-button.tsx` and `use-bookmarks.ts` b
 
 BYP input-policy proof lives beside core tools in `tools/input-bypass.test.ts`, plugin authoring/HIL tests,
 `tools/apply-candidate.test.ts` and electrical tool tests; targeted `tests/integration/cli.test.ts` exercises
-built sibling analysis. Owned generated proof is under ignored `evaluation-outputs/byp02/`.
+built sibling analysis. Owned generated proof is under ignored `test-outputs/byp02/`.
 
 ## Shell command implementation
 
@@ -505,7 +506,7 @@ timeouts and process-tree ownership. `command-settings.tsx` provides Settings �
 `tests/integration/commands.test.ts` uses `tests/support/command-platform-probe.ts` for actual
 foreground, UTF-8, stdin EOF, environment, background readiness/tree stop and lifecycle proof.
 The same probe bundles for the pinned Linux Node under WSL2. Original TERM-01 receipts and logs
-are retained under ignored `evaluation-outputs/term01/platform/`; WSL2 is not native Ubuntu proof.
+are retained under ignored `test-outputs/term01/platform/`; WSL2 is not native Ubuntu proof.
 
 Command prefix policy lives in shared/src/command-prefix.ts with hostile-boundary tests. ApprovalGate consumes exact live grants; WorkbenchService persists user-selected agent.allowed_commands in format1. The approval card saves chosen prefixes and workbench-command-prefixes.tsx lists masked labels with stable removal identities in the Agent editor.
 
@@ -534,7 +535,7 @@ Large ordinary text uses documents/large-text-{source,index,find,window,rows,vie
 64 KiB LRU, transient256 KiB scans, bounded sparse line checkpoints and measured window rows. The byte
 scrollbar reaches distant offsets while indexing settles line numbers. large-text.test.ts covers
 boundary decoding, sparse navigation, consistency and cancellation; tests/e2e/large-text.spec.ts
-uses support/large-text-fixture.ts and original evidence under evaluation-outputs/view03.
+uses support/large-text-fixture.ts and original evidence under test-outputs/view03.
 
 Verified large text uses core/knowledge/viewer.ts with tools/read-window.ts and workbench/file-revision.ts
 for compact snapshot metadata. main/display-documents.ts seals revisions, verifies current byte reads

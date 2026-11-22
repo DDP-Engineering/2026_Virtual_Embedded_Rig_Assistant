@@ -20,7 +20,7 @@ test("real PTY and xterm replay history without injecting replies, while fresh V
   rendererUrl,
 }) => {
   test.setTimeout(90000);
-  const evidence = resolve("evaluation-outputs/terminal-input-fix");
+  const evidence = resolve("test-outputs/terminal-input-fix");
   await mkdir(evidence, { recursive: true });
   const root = await mkdtemp(join(evidence, "pty-"));
   const bundle = join(root, "backend.mjs");

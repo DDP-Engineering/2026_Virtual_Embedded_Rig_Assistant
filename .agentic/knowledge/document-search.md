@@ -181,5 +181,5 @@ REQ-FUNC-b5c2fe1e, REQ-FUNC-9b31930e and REQ-FUNC-edc2e00a cover search metadata
 Under `05_Software`: shared `embedding-models.ts` and `embedding-model-manifest.ts`, core knowledge/{document-services,embedding,embedding-worker,embedding-ingest,
 search,search-ranking,processor,ingest}; storage/{schema,repos/documents};
 tools/documents; CLI {args,documents,document-processor,embedding-worker}; desktop
-{document-processor,document-embedding-worker,index,sessions}; evaluators/eval-retrieval-harness/{eval-retrieval,
+{document-processor,document-embedding-worker,index,sessions}; evaluators/retrieval/{run,
 product-eval}; 02_Tools/build/build-cli; 02_Tools/release/package; corresponding focused tests and ingest E2E.

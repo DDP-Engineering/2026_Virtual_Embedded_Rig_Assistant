@@ -1,0 +1,2 @@
+{"toolCalls":[{"name":"read","args":{"path":"logs/long-run.log","offset":1,"limit":2000}}]}
+{"text":"Every telemetry cycle in the log reports i2c=ok and uart=ok; nothing failed."}

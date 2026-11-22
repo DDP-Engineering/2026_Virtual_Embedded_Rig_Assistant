@@ -1,0 +1,2 @@
+{"toolCalls":[{"name":"search_docs","args":{"query":"SPI clock frequency maximum","k":5,"mode":"hybrid"}}]}
+{"text":"The workbench documents do not specify an SPI clock frequency; they only describe I2C, UART and the 16 MHz internal oscillator."}

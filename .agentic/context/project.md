@@ -23,10 +23,10 @@ toggle gestures and inserts editable text into the initiating draft for explicit
 
 Saved-session performance verification uses an isolated native Electron build, real persisted
 fixtures/sidebar selection, phase/responsiveness probes and explicit machine-specific reference
-comparison. `npm run perf:sessions` and `06_SoftwareDocu/session-performance.md` define quick/full,
+comparison. `npm run eval:performance` and `05_Software/evaluators/performance/README.md` define quick/full,
 calibration and feature/milestone usage. Diagnostic measurements alone do not establish a passing budget.
-The reference results per platform are the newest `session-full-*.json` files in
-`05_Software/evaluation-outputs/performance/`.
+Accepted reference results per platform are in `05_Software/evaluators/performance/baselines/`;
+generated runs are in `05_Software/evaluation-outputs/performance/`.
 
 The target platforms are Windows x64 and Linux x64 (`00_Planning/System.md`).
 

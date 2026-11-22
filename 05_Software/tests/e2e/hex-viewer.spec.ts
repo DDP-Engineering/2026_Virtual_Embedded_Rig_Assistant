@@ -4,7 +4,7 @@ import { _electron, expect, type Page, test } from "@playwright/test";
 import type { Channel, Request, Response, VeraBridge } from "@vera/shared";
 import { installNetworkGuard, outboundAttempts } from "./network-guard.js";
 
-const evidence = resolve("evaluation-outputs/view04");
+const evidence = resolve("test-outputs/view04");
 const invoke = <C extends Channel>(page: Page, channel: C, request: Request<C>): Promise<Response<C>> =>
   page.evaluate(
     async ({ channel, request }) =>

@@ -1,0 +1,33 @@
+# Frozen before model inference. Questions and extraction checks for the generated hard-layout
+# corpus (hard-corpus.mjs): paired English and Romanian questions with their expected page, text
+# that each page's chunks must contain, table rows whose cells must stay in one chunk, and the files
+# the indexer must report as needing OCR.
+schema: 1
+questions:
+  - { id: tim2-psc-en, language: en, query: 'At which offset is the TIM2 prescaler register?', expected: { path: docs/register-map.pdf, page: 1 } }
+  - { id: tim2-psc-ro, language: ro, query: 'La ce offset se află registrul de prescalare TIM2?', expected: { path: docs/register-map.pdf, page: 1 } }
+  - { id: dac-settling-en, language: en, query: 'How long does the DAC take to settle?', expected: { path: docs/two-column.pdf, page: 1 } }
+  - { id: dac-settling-ro, language: ro, query: 'În cât timp se stabilizează ieșirea convertorului digital-analogic?', expected: { path: docs/two-column.pdf, page: 1 } }
+  - { id: adc-sampling-en, language: en, query: 'How many cycles does each ADC channel sample at the 14 MHz clock?', expected: { path: docs/two-column.pdf, page: 1 } }
+  - { id: pa4-alternate-en, language: en, query: 'Which alternate functions does PA4 have?', expected: { path: docs/rotated-pinout.pdf, page: 1 } }
+  - { id: pa4-alternate-ro, language: ro, query: 'Ce funcții alternative are pinul PA4?', expected: { path: docs/rotated-pinout.pdf, page: 1 } }
+  - { id: total-current-en, language: en, query: 'What is the total current limit for all I/O pins together?', expected: { path: docs/footnotes.pdf, page: 1 } }
+  - { id: total-current-ro, language: ro, query: 'Care este limita totală de curent pentru toți pinii I/O împreună?', expected: { path: docs/footnotes.pdf, page: 1 } }
+  - { id: heater-pin-en, language: en, query: 'Which port C pin enables the heater?', expected: { path: docs/split-table.pdf, page: 2 } }
+  - { id: heater-pin-ro, language: ro, query: 'Ce pin din portul C activează încălzitorul?', expected: { path: docs/split-table.pdf, page: 2 } }
+  - { id: buzzer-drive-en, language: en, query: 'What drive strength does the buzzer pin have?', expected: { path: docs/split-table.pdf, page: 1 } }
+strings:
+  - { path: docs/register-map.pdf, page: 1, text: 'TIM2_PSC' }
+  - { path: docs/register-map.pdf, page: 1, text: '0x28' }
+  - { path: docs/two-column.pdf, page: 1, text: 'settling time of 3 us' }
+  - { path: docs/two-column.pdf, page: 1, text: '12.5 cycles at the 14 MHz ADC clock' }
+  - { path: docs/rotated-pinout.pdf, page: 1, text: 'DAC_OUT1' }
+  - { path: docs/footnotes.pdf, page: 1, text: 'must stay below 120 mA' }
+  - { path: docs/split-table.pdf, page: 2, text: 'HEATER_EN' }
+rows:
+  - { path: docs/register-map.pdf, cells: [TIM2_PSC, '0x28', '0x0000'] }
+  - { path: docs/register-map.pdf, cells: [TIM2_DIER, '0x0C', UIE] }
+  - { path: docs/rotated-pinout.pdf, cells: [PA4, DAC_OUT1] }
+  - { path: docs/split-table.pdf, cells: [PC2, BUZZER, 20 mA] }
+  - { path: docs/split-table.pdf, cells: [PC5, HEATER_EN, 20 mA] }
+needsOcr: [docs/scanned.pdf]

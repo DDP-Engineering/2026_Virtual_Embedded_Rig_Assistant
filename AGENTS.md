@@ -16,7 +16,7 @@ Place new files by responsibility; each folder's README holds its inventory. The
 folders are listed in `README.md`.
 
 - `00_Planning/`: the product definition (`Overview.md` and the documents it lists) and work packages under `plan/`. `06_SoftwareDocu/`: explanatory software
-  documentation and deliberately retained evidence. `07_Delivery/`: selected, validated deliveries.
+  documentation. `07_Delivery/`: selected, validated deliveries.
 - `02_Tools/environment/`, `build/`, `release/`: setup and the pinned toolchain, build and static
   checks, packaging and release-environment launchers. Their JavaScript imports packages through
   `environment/software.mjs` from `05_Software/node_modules`; never install a second dependency tree.
@@ -24,9 +24,10 @@ folders are listed in `README.md`.
 - `05_Software/src/`: product code, with its unit and component tests beside it.
 - `05_Software/tests/`: functional suites in `tooling/`, `integration/`, `packaging/` and `e2e/`.
   `fixtures/` holds input data only; `support/` holds runners, reporters and fixture generators.
-- `05_Software/evaluators/eval-<family>-harness/`: harnesses that produce measurements and scores, each
-  with its own entrypoint and helpers. Saved runs go to `05_Software/evaluation-outputs/<family>/`,
-  which Git ignores.
+- `05_Software/evaluators/<family>/`: harnesses that produce measurements and scores. Each family folder
+  holds its code with the entry point `run.mjs`, its method in `README.md`, its frozen `cases/` and
+  its accepted `baselines/`. Generated runs go to `05_Software/evaluation-outputs/<family>/<run-id>/`,
+  evidence of functional tests and work packages to `05_Software/test-outputs/<ticket>/`; Git ignores both.
 - Product code never imports tests or evaluators. Run npm and node from `05_Software` through
   `python ../02_Tools/environment/npmw.py`.
 

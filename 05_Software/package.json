@@ -28,7 +28,6 @@
     "dev:renderer": "node ../02_Tools/environment/dev-renderer.mjs",
     "build": "electron-vite build src/apps/desktop",
     "test:e2e": "node tests/support/test-e2e.mjs",
-    "perf:sessions": "node evaluators/eval-performance-harness/perf-sessions.mjs",
     "postinstall": "install-electron",
     "package": "node ../02_Tools/release/package.mjs",
     "package:test": "node ../02_Tools/release/package.mjs --test",
@@ -47,7 +46,14 @@
     "build:cli": "node ../02_Tools/build/build-cli.mjs",
     "make:demo-pdfs": "node tests/support/make-demo-pdfs.mjs",
     "vera": "node ../02_Tools/build/build-cli.mjs && node src/apps/cli/dist/index.js",
-    "eval:retrieval": "node evaluators/eval-retrieval-harness/eval-retrieval.mjs"
+    "eval:models": "node evaluators/models/run.mjs",
+    "eval:performance": "node evaluators/performance/run.mjs",
+    "eval:compaction": "node evaluators/compaction/run.mjs",
+    "eval:grounding": "node evaluators/grounding/run.mjs",
+    "eval:retrieval": "node evaluators/retrieval/run.mjs",
+    "eval:safety": "node evaluators/safety/run.mjs",
+    "eval:routing": "node evaluators/routing/run.mjs",
+    "eval:smoke": "node evaluators/smoke/run.mjs"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.15",

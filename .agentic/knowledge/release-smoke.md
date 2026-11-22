@@ -28,7 +28,7 @@ and `windows-capture.json`; a non-elevated shell keeps the proof pending with th
 exact matching failed owned extraction after exits, preserving original logs.
 Exit0 completePASS,1FAIL,2functionalPASS/manual pending. Separate Linux
 `smoke-calibration.mjs <built test app dir> <new root>` uses pinned development
-Electron and expects oracleFAIL. See [manual procedure](../../06_SoftwareDocu/release-package-smoke.md).
+Electron and expects oracleFAIL. See [manual procedure](../../05_Software/tests/packaging/smoke/README.md).
 
 ## Invariants
 

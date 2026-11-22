@@ -1,20 +1,21 @@
 # Evaluation outputs
 
-Generated runs of the [evaluators](../evaluators/README.md), one folder per family, and the proof
-of work packages, one folder per ticket:
+Generated runs of the [evaluators](../evaluators/README.md), and nothing else: one folder per family,
+one folder per run.
 
 ```
 evaluation-outputs/
-  performance/
-  retrieval/
-  <ticket>/        # for example term05/, view06/, mask05/
+  <family>/                       # performance, retrieval, ...
+    <YYYYMMDD-HHMMSS>-<label>/    # one run
+      run.json                    # the complete run, the input of every report and comparison
+      run.json.md, report.html    # reports made from run.json
 ```
 
-Everything here except this README is ignored by Git, and the family folders are not tracked:
-create `evaluation-outputs/<family>/` before the first run, because the evaluators do not create
-parent folders. Give each run a unique name; the evaluators refuse an existing output. Evidence that must be kept is
-selected deliberately and added with `git add -f`, or retained with its explanation in
-`06_SoftwareDocu/`. Delete a run when it is no longer needed; nothing else reads it.
+Everything here except this README is ignored by Git. The harnesses create the folders and refuse
+an existing output file. A run worth keeping is promoted to
+`evaluators/<family>/baselines/<YYYY-MM-DD>-<platform>-<label>/` in a reviewed change. Delete a run
+when it is no longer needed; nothing else reads it.
 
-Scratch data is not an output: profiles, databases and intermediate builds stay in each evaluator's
-own temporary or ignored work area.
+Not here: scratch data (profiles, databases, intermediate builds) stays in each evaluator's own
+temporary or ignored work area, and evidence of functional tests and work packages goes to
+[`../test-outputs/`](../test-outputs/README.md).

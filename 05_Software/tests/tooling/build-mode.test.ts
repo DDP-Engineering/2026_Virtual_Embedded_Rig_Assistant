@@ -128,7 +128,7 @@ it.each([
         "fictional-native-model",
         "Unexpected scripted catalog request",
         "replay_",
-        // Session performance probes and the stream injector exist only in the perf:sessions build.
+        // Session performance probes and the stream injector exist only in the eval:performance build.
         "veraSessionPerformance",
       ]) {
         expect(code).not.toContain(marker);

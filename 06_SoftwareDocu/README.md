@@ -1,9 +1,11 @@
 # Software Documentation
 
-Explanatory software documentation and deliberately retained evidence:
+Explanatory software documentation:
 
 - `CHANGELOG-archive.md`: releases older than the latest one, moved here by
   `02_Tools/release/set-version.mjs`.
-- `release-package-smoke.md`: how to smoke-test a packaged release artifact.
-- `session-performance.md`: the previous-session loading measurements and how to repeat them.
-- `eval-performance-outputs/`: retained Windows session-loading and local embedding-model measurements.
+
+Evaluation methods, results and retained baselines live with their harnesses in
+[`05_Software/evaluators/`](../05_Software/evaluators/README.md). The release artifact smoke is
+described beside its code in
+[`05_Software/tests/packaging/smoke/`](../05_Software/tests/packaging/smoke/README.md).

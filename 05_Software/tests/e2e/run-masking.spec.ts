@@ -15,7 +15,7 @@ const quote = (value: string) =>
 
 test("Program runs follows live app/workbench masking for actual MQTT-secret output, statuses and full viewer", async () => {
   test.setTimeout(180000);
-  const evidence = resolve("evaluation-outputs/mask03/native");
+  const evidence = resolve("test-outputs/mask03/native");
   await mkdir(evidence, { recursive: true });
   const scratch = await realpath(await mkdtemp(join(evidence, "owned-")));
   const secret = "mask03-mqtt-credential";

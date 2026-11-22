@@ -8,7 +8,7 @@ it("loads the staged Windows JS closure and retains its shared and worker module
   const { ptyRuntimeFile, checkPtyJavaScript } = await import(
     pathToFileURL(resolve("../02_Tools/release/package-checks.mjs")).href
   );
-  const base = resolve("evaluation-outputs/term05");
+  const base = resolve("test-outputs/term05");
   await mkdir(base, { recursive: true });
   const stage = await mkdtemp(join(base, "owned-pty-closure-"));
   const source = resolve("node_modules/node-pty");

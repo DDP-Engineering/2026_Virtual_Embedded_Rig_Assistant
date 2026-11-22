@@ -5,11 +5,11 @@ import { join, resolve } from "node:path";
 import { applySessionEvent, boundSessionState, emptySessionState, sessionEventSchema } from "@vera/shared";
 import { expect, it } from "vitest";
 // @ts-expect-error Node ESM fixture generator.
-import { fixtures } from "../../evaluators/eval-performance-harness/fixtures.mjs";
+import { fixtures } from "../../evaluators/performance/fixtures.mjs";
 // @ts-expect-error Node ESM benchmark modules are checked by focused behavior tests.
-import * as performanceReport from "../../evaluators/eval-performance-harness/report.mjs";
+import * as performanceReport from "../../evaluators/performance/report.mjs";
 // @ts-expect-error Node ESM native runner.
-import { deadline } from "../../evaluators/eval-performance-harness/runner.mjs";
+import { deadline } from "../../evaluators/performance/runner.mjs";
 
 const { calibrate, compare, contentHash, hash, metricsFor, saveReport, stats, validateReport } =
   performanceReport;
@@ -153,7 +153,7 @@ it("freezes deterministic mixed current-format fixture counts and bounded payloa
 
 it("exposes the repeatable session performance command", async () => {
   const pkg = JSON.parse(await readFile(resolve("package.json"), "utf8"));
-  expect(pkg.scripts["perf:sessions"]).toBe("node evaluators/eval-performance-harness/perf-sessions.mjs");
+  expect(pkg.scripts["eval:performance"]).toBe("node evaluators/performance/run.mjs");
 });
 
 it("detects a quick maximum regression even when its median and absolute budget pass", () => {

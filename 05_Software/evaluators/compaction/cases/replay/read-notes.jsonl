@@ -1,0 +1,2 @@
+{"toolCalls":[{"name":"read","args":{"path":"docs/notes/bringup.md"}}]}
+{"text":"The notes record a measured 3.30 V supply, a disabled watchdog and SDA on PB7, SCL on PB6."}

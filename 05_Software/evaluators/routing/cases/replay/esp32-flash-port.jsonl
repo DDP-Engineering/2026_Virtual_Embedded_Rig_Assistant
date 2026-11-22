@@ -1,0 +1,3 @@
+{"toolCalls":[{"name":"load_skill","args":{"name":"esp32-flash"}}]}
+{"toolCalls":[{"name":"run_program","args":{"program":"esptool","args":["--chip","esp32","--port","COM5","write-flash","0x10000","build/app.bin"]}}]}
+{"text":"esptool is not available on this computer; install it from the plugin page, then I can flash build/app.bin to COM5."}

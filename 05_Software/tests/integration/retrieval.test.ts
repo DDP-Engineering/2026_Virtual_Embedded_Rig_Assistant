@@ -4,7 +4,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import { expect, it } from "vitest";
 
 const root = fileURLToPath(new URL("../../", import.meta.url));
-const script = `${root}evaluators/retrieval-support/evaluation.mjs`;
+const script = `${root}evaluators/retrieval/evaluation.mjs`;
 async function evaluation() {
   expect(existsSync(script), "local comparison evaluator is implemented").toBe(true);
   return import(pathToFileURL(script).href);
@@ -40,7 +40,7 @@ it("counts exact locators in top5 and separates RO/EN denominators", async () =>
 });
 it("validates fixed questions and actual page/heading coverage", async () => {
   const { validateFixture } = await evaluation();
-  const yaml = await readFile(`${root}tests/fixtures/retrieval/demo-board.yaml`, "utf8");
+  const yaml = await readFile(`${root}evaluators/retrieval/cases/demo-board.yaml`, "utf8");
   const fixture = validateFixture(yaml);
   expect(fixture.questions.length).toBeGreaterThanOrEqual(20);
   expect(fixture.questions.length).toBeLessThanOrEqual(30);
