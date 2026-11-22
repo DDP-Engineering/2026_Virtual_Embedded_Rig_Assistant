@@ -148,6 +148,7 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ### Fixed
 
+- GitHub release downloads include the Chromium and Whisper archives and licence notices for offline installation.
 - Chat and Files search published documents while indexing continues and recover from concurrent publication.
 
 - Report redirected workbench runtime folders before closing the workbench.

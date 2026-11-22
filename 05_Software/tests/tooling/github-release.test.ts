@@ -95,6 +95,26 @@ test("the release carries the desktop and plugin files and the license, but not 
   );
 });
 
+test("the release includes the offline component archives and their licence notices", async () => {
+  const components = join(folder, "components");
+  for (const part of [...release.desktopParts, "components"]) await mkdir(join(folder, part));
+  const names = [
+    "THIRD-PARTY-NOTICES.md",
+    "chrome-linux64.zip",
+    "chrome-win64.zip",
+    "whisper-base.zip",
+    "whisper-small.zip",
+  ];
+  for (const name of [...names, "SHA256SUMS"]) await writeFile(join(components, name), name);
+  const license = join(folder, "LICENSE.txt");
+  await writeFile(license, "VERA licence");
+
+  expect(await release.releaseAssets(folder, "1.2.0", license)).toEqual([
+    { name: "LICENSE.txt", path: license },
+    ...names.map((name) => ({ name, path: join(components, name) })),
+  ]);
+});
+
 test("the release text keeps the notes' sections and describes every download", () => {
   const notes = release.notesSections(
     "# VERA 0.3.0 release notes\r\n\r\n2026-11-21\r\n\r\n## New\r\n\r\n- **Chat:** Images.\r\n\r\n" +
@@ -112,13 +132,18 @@ test("the release text keeps the notes' sections and describes every download", 
       "Release",
       "Release.gpg",
       "SHA256SUMS",
+      "THIRD-PARTY-NOTICES.md",
       "VERA-0.3.0-linux-amd64.deb",
       "VERA-0.3.0-win-x64.exe",
       "VERA-0.3.0-win-x64.exe.blockmap",
+      "chrome-linux64.zip",
+      "chrome-win64.zip",
       "latest-linux.yml",
       "latest.yml",
       "vera-archive-keyring.gpg",
       "vera-plugins-0.3.0.zip",
+      "whisper-base.zip",
+      "whisper-small.zip",
     ],
     plugins: 43,
     commit: "abc1234",
@@ -129,6 +154,11 @@ test("the release text keeps the notes' sections and describes every download", 
   expect(body).toContain("## New\n\n- **Chat:** Images.\n\n## Downloads");
   expect(body).toContain("| `VERA-0.3.0-win-x64.exe` | Windows x64 installer (per user, no admin rights) |");
   expect(body).toContain("| `vera-plugins-0.3.0.zip` | the 43 official plugins as a catalog release");
+  expect(body).toContain("| `chrome-linux64.zip`, `chrome-win64.zip` | Chromium for offline installation");
+  expect(body).toContain(
+    "| `whisper-base.zip`, `whisper-small.zip` | Whisper models for offline installation",
+  );
+  expect(body).toContain("| `THIRD-PARTY-NOTICES.md` | sources and licences for the offline components |");
   expect(body).toContain(
     "| `VERA-0.3.0-win-x64.exe.blockmap`, `latest-linux.yml`, `latest.yml` | the update feed:",
   );

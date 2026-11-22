@@ -58,10 +58,13 @@ The installers check for updates in the public GitHub repository: their feed is
 redirects to the files of the newest published release that is not marked pre-release. Publishing a release
 therefore offers it to every installed VERA.
 
-1. Give the desktop package its version, commit, and build both desktop parts from that commit (plus `plugins/`
-   and `plugin-deps/` when they belong to the release).
+1. Give the desktop package its version, commit, and build both desktop parts from that commit. Build
+   `plugins/` and `plugin-deps/` when they belong to the release. Use `npm run delivery:components` to include
+   the offline Chromium and Whisper downloads.
 2. `npm run delivery:release` checks the delivery, refuses a dirty tree, mixed commits or installers built for
-   another feed, and uploads everything into a **draft** `v<version>`. A draft is invisible to the update feed.
+   another feed, and uploads the assets into a **draft** `v<version>`. When `components/` is present, the
+   draft includes both Chromium ZIPs, both Whisper ZIPs and their licence notices. Their checksums appear in
+   the combined `SHA256SUMS`. A draft is invisible to the update feed.
 3. Review the draft on GitHub and edit its text if needed.
 4. `npm run delivery:release -- --publish` publishes the draft as the latest release and waits until the feed
    serves the new `latest.yml` and `latest-linux.yml`.

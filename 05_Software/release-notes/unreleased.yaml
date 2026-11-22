@@ -1,6 +1,13 @@
 version: Unreleased
 date: null
 entries:
+  - category: fixed
+    topic: { en: Offline installation, ro: Instalare offline, de: Offline-Installation, fr: Installation hors ligne }
+    text:
+      en: Download Chromium and Whisper archives from the release page for offline installation.
+      ro: Descarcă arhivele Chromium și Whisper de pe pagina versiunii pentru instalare offline.
+      de: Chromium und Whisper zur Offline-Installation von der Release-Seite herunterladen.
+      fr: Téléchargez Chromium et Whisper depuis la page de version pour les installer hors ligne.
   - category: new
     topic: { en: Plan, ro: Plan, de: Plan, fr: Plan }
     text:

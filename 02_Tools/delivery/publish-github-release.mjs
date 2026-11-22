@@ -56,10 +56,8 @@ export function releaseProblems(manifest, feed) {
 }
 
 /**
- * The files the release carries, as `{ name, path }` sorted by name: the desktop parts (installers and update
- * feed files), the plugin catalog zip and the offline dependency kits when the delivery has them, and VERA's
- * license. The parts' own SHA256SUMS and release notes stay behind: the release gets one checksum file, and the
- * notes become its text.
+ * Release assets from a verified delivery, as `{ name, path }` sorted by name. The release gets one
+ * combined checksum file, and the desktop release notes become its text.
  */
 export async function releaseAssets(folder, version, license = join(repository, licenseName)) {
   const assets = [];
@@ -78,6 +76,10 @@ export async function releaseAssets(folder, version, license = join(repository, 
     ),
   ];
   for (const path of optional) if (existsSync(path)) add(path);
+  const components = join(folder, "components");
+  if (existsSync(components)) {
+    for (const name of await listFiles(components)) if (name !== sumsName) add(join(components, name));
+  }
   add(license);
   return assets.sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0));
 }
@@ -117,6 +119,15 @@ export function releaseBody({ version, notes, names, plugins, commit, unsigned, 
       /^vera-plugin-deps-/,
       "the programs the plugins need, for a computer without network; extract and set `plugins.kit` to the folder",
     ],
+    [
+      /^chrome-(?:linux|win)64\.zip$/,
+      "Chromium for offline installation from Settings > Web access > Install from file",
+    ],
+    [
+      /^whisper-.+\.zip$/,
+      "Whisper models for offline installation from Settings > Dictation > Install from file",
+    ],
+    [/^THIRD-PARTY-NOTICES\.md$/, "sources and licences for the offline components"],
     [/\.(?:yml|blockmap)$/, "the update feed: VERA reads it to find this version and verify the download"],
     [
       /^(?:InRelease|Packages(?:\.gz)?|Release(?:\.gpg)?|vera-archive-keyring\.gpg)$/,
