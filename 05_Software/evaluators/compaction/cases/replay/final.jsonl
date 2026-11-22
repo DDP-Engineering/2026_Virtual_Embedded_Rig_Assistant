@@ -1,0 +1,1 @@
+{"text":"Decisions: D1 second sensor at 0x4A, D2 LED on PB8, D3 watchdog refresh 250 ms, D4 UART debug 921600 baud. Open: O1 measure the 3.3 V rail under 120 mA, O2 repeat the sensor ID check."}

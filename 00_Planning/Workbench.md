@@ -201,7 +201,7 @@ Code: `core/src/knowledge/chunk.ts`.
 
 The default was chosen by measurement: `npm run eval:retrieval` requires hybrid recall@5 of at least
 0.85 overall, 0.95 for English and 0.75 for Romanian questions over English documents
-([product-eval.mjs](../05_Software/evaluators/eval-retrieval-harness/product-eval.mjs)).
+([product-eval.mjs](../05_Software/evaluators/retrieval/product-eval.mjs)).
 
 Both ship in every package under `<resources>/models/<model-id>/` (`05_Software/src/models/` in
 development), each with a `model-manifest.json` giving every file's size and SHA-256, checked before

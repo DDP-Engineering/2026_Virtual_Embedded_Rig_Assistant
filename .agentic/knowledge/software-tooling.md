@@ -7,8 +7,8 @@ verification commands and Electron test launchers, the Node fetch/socket network
 and `tsconfig.json`; configuration/build tests are `tests/tooling/`, cross-component tests are `tests/integration/`, and distribution tests are `tests/packaging/`. Desktop runtime behavior belongs
 to [desktop-shell](desktop-shell.md); toolchain installation is owned by `02_Tools/`.
 
-Previous-session performance verification routes to `evaluators/eval-performance-harness/perf-sessions.mjs`, `evaluators/eval-performance-harness/`,
-`tests/tooling/session-performance.test.ts` and [the command guide](../../06_SoftwareDocu/session-performance.md).
+Previous-session performance verification routes to `evaluators/performance/run.mjs`, `evaluators/performance/`,
+`tests/tooling/session-performance.test.ts` and [the command guide](../../05_Software/evaluators/performance/README.md).
 
 ## Purpose and boundaries
 
@@ -21,7 +21,7 @@ publishes host ports, settings and workbench services; [Headless CLI](headless-c
 From `05_Software`, use `npm run verify`, `check:i18n`, `lint`, `format`, `typecheck`, `build`, `dev`, `dev:renderer`
 and `test:e2e`. VERA_BUILD_ROOT is an optional build-time absolute output directory with main/preload/renderer children; omitted builds use desktop/out. The repository-local `python ../02_Tools/environment/npmw.py` wrapper selects pinned Node.
 
-`perf:sessions -- run|calibrate|compare` builds an isolated compiled native application and measures
+`eval:performance -- run|calibrate|compare` builds an isolated compiled native application and measures
 real sidebar selection of persisted fictional sessions. Quick/full use5/30 samples per selected
 case; explicit references require two compatible full runs and absolute budgets. JSON/Markdown outputs
 are exclusive-create; diagnostic measurement success is separate from a passing comparison. Reports
@@ -60,7 +60,7 @@ which owns verified assets, native staging and artifact measurements.
 | Layer boundaries | `biome.json` | `boundaries.test.ts` |
 | Test-build constant | desktop Vite config and `build-mode.ts` | `build-mode.test.ts` |
 | Acceptance execution/isolation | `tests/support/`, `tests/e2e/network-guard.ts` | Electron acceptance and guard self-test |
-| Saved-session latency/stalls | `evaluators/eval-performance-harness/`, main/API `session-performance.ts` | tooling report/fixture/watchdog tests and native quick/full runs |
+| Saved-session latency/stalls | `evaluators/performance/`, main/API `session-performance.ts` | tooling report/fixture/watchdog tests and native quick/full runs |
 
 Catalog audit scans renderer TypeScript AST for literal and finite registered translation keys, excluding tests; English defines required catalog keys.
 

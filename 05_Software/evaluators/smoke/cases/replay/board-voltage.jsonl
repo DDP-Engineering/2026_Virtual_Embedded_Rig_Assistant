@@ -1,0 +1,2 @@
+{"match":"(?i)board","toolCalls":[{"name":"read","args":{"path":"board.txt"}}]}
+{"text":"board.txt states a supply of 3.3 V [[{{ref}}]]."}

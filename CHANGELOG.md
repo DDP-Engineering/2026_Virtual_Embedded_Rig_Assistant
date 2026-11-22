@@ -79,6 +79,7 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ### Changed
 
+- Evaluators: one folder per family with code, method, cases and baselines; perf:sessions is now eval:performance.
 - Changes separates the file history and diff into independently scrolling, resizable panes.
 - Changes paginates long session histories and retains the selected diff across pages.
 - Chat shows one working indicator below the composer at every detail level.
@@ -161,7 +162,7 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 - Agent runtime errors carry the standard keys errors.INTERNAL and errors.PROVIDER.
 - About lists the libraries of the core and shared packages too; installers carry THIRD-PARTY-NOTICES.txt.
 - Help: the shortcuts page uses one term per language and describes F10 as it works.
-- perf:sessions prints the stack trace when a run fails.
+- eval:performance prints the stack trace when a run fails.
 - stm32-cubeprog 0.2.1: writing readout protection level 2 (RDP=0xCC) asks for its own typed word; it is permanent.
 - wireshark-tshark 0.3.1: commands that write a file (-w, --export-objects, key or log files) ask for approval.
 - ngspice 0.3.1: a run whose log and series outgrow 4 GiB is stopped with a message naming the limit.

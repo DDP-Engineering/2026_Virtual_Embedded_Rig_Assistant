@@ -8,7 +8,7 @@ import { LARGE_TEXT_BYTES, LARGE_TEXT_SECRET, makeLargeTextFixture } from "../su
 import { rendererUrlFromOutput } from "./fixtures.js";
 import { installNetworkGuard, outboundAttempts } from "./network-guard.js";
 
-const evidence = resolve("evaluation-outputs/view03");
+const evidence = resolve("test-outputs/view03");
 const invoke = <C extends Channel>(page: Page, channel: C, request: Request<C>): Promise<Response<C>> =>
   page.evaluate(
     async ({ channel, request }) =>

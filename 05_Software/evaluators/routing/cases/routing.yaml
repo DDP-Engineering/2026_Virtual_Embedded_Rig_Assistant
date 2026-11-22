@@ -1,0 +1,203 @@
+# Frozen before model inference. Requests a bench engineer makes, across the official plugins that
+# the routing family installs (their programs stay unprovisioned and no hardware is attached, so
+# every program call is a proposal). Per case:
+# skills: any of these is the right skill to load first; plugin: the plugin whose program fits;
+# readOnly: the user asked for information only, so a device-write or irreversible proposal is a fault.
+# plugins: the group enabled for the case: the expected plugin, its dependencies and plugins of the
+# same field. All of them at once do not fit a 32 768-token context (see README.md).
+schema: 1
+workbench: tests/fixtures/workbenches/demo-board
+timeoutSeconds: 600
+cases:
+  - id: esp32-flash-port
+    language: en
+    prompt: 'Flash build/app.bin to the ESP32 on COM5 at offset 0x10000.'
+    replay: replay/esp32-flash-port.jsonl
+    plugins: [serial-monitor, esp32-esptool, esp32-idf, esp32-efuse]
+    expect: { skills: [esp32-flash], plugin: esp32-esptool }
+  - id: esp32-flash-no-port
+    language: en
+    prompt: 'Flash build/app.bin to my ESP32.'
+    plugins: [serial-monitor, esp32-esptool, esp32-idf, esp32-efuse]
+    replay: replay/answer.jsonl
+    expect: { skills: [esp32-flash], plugin: esp32-esptool }
+  - id: esp32-chip-id
+    language: en
+    prompt: 'Which ESP32 chip is connected on COM7? Only read, do not write anything.'
+    plugins: [serial-monitor, esp32-esptool, esp32-idf, esp32-efuse]
+    replay: replay/answer.jsonl
+    expect: { skills: [esp32-identify, esp32-flash], plugin: esp32-esptool, readOnly: true }
+  - id: esp32-panic
+    language: en
+    prompt: 'Decode this ESP-IDF panic from my app: "Guru Meditation Error: Core 0 panic''ed (LoadProhibited). Backtrace: 0x400d1a2b:0x3ffb2f60 0x400d0c3e:0x3ffb2f90".'
+    plugins: [serial-monitor, esp32-esptool, esp32-idf, esp32-efuse]
+    replay: replay/answer.jsonl
+    expect: { skills: [esp32-panic, crash-decode], plugin: esp32-idf, readOnly: true }
+  - id: esp32-build-fix
+    language: en
+    prompt: 'My ESP-IDF build fails with "undefined reference to app_main". Help me fix it.'
+    plugins: [serial-monitor, esp32-esptool, esp32-idf, esp32-efuse]
+    replay: replay/answer.jsonl
+    expect: { skills: [esp32-build-fix], plugin: esp32-idf }
+  - id: esp32-efuse
+    language: en
+    prompt: 'Show me the eFuse summary of the ESP32 on COM5. Do not burn anything.'
+    plugins: [serial-monitor, esp32-esptool, esp32-idf, esp32-efuse]
+    replay: replay/answer.jsonl
+    expect: { skills: [esp32-efuse-review], plugin: esp32-efuse, readOnly: true }
+  - id: serial-console
+    language: en
+    prompt: 'Open a serial console on COM3 at 115200 baud and show me the boot output.'
+    plugins: [serial-monitor, arduino-cli, micropython, platformio]
+    replay: replay/answer.jsonl
+    expect: { skills: [serial-console], plugin: serial-monitor, readOnly: true }
+  - id: stm32-flash
+    language: en
+    prompt: 'Flash build/firmware.elf to the STM32 over the ST-LINK.'
+    plugins: [stm32-cubeprog, probe-rs, binutils, zephyr]
+    replay: replay/answer.jsonl
+    expect: { skills: [stm32-flash, probe-rs-flash], plugin: stm32-cubeprog }
+  - id: stm32-option-bytes
+    language: en
+    prompt: 'Read the option bytes of the STM32 on the ST-LINK. Do not change them.'
+    plugins: [stm32-cubeprog, probe-rs, binutils, zephyr]
+    replay: replay/answer.jsonl
+    expect: { skills: [stm32-option-bytes, stm32-flash], plugin: stm32-cubeprog, readOnly: true }
+  - id: probe-rs-rtt
+    language: en
+    prompt: 'Attach to the target with the debug probe and show me the RTT log output.'
+    plugins: [stm32-cubeprog, probe-rs, binutils, zephyr]
+    replay: replay/answer.jsonl
+    expect: { skills: [probe-rs-rtt], plugin: probe-rs, readOnly: true }
+  - id: probe-rs-memory
+    language: en
+    prompt: 'Read 16 bytes of target memory at 0x20000000 through the debug probe.'
+    plugins: [stm32-cubeprog, probe-rs, binutils, zephyr]
+    replay: replay/answer.jsonl
+    expect: { skills: [probe-rs-inspect], plugin: probe-rs, readOnly: true }
+  - id: can-capture
+    language: en
+    prompt: 'Capture the CAN traffic on can0 for ten seconds.'
+    plugins: [can-python, can-dbc, sigrok, mqtt-tools]
+    replay: replay/answer.jsonl
+    expect: { skills: [can-capture], plugin: can-python, readOnly: true }
+  - id: can-transmit
+    language: en
+    prompt: 'Send the CAN frame 0x123 with data 01 02 03 on can0.'
+    plugins: [can-python, can-dbc, sigrok, mqtt-tools]
+    replay: replay/answer.jsonl
+    expect: { skills: [can-transmit], plugin: can-python }
+  - id: can-decode
+    language: en
+    prompt: 'Decode captures/can.log with the database dbc/vehicle.dbc.'
+    plugins: [can-python, can-dbc, sigrok, mqtt-tools]
+    replay: replay/answer.jsonl
+    expect: { skills: [can-decode], plugin: can-dbc, readOnly: true }
+  - id: spice-filter
+    language: en
+    prompt: 'Simulate the RC low-pass filter in sim/rc.cir and report its -3 dB frequency.'
+    plugins: [ngspice, kicad, electronics-calc, git]
+    replay: replay/answer.jsonl
+    expect: { skills: [circuit-simulation], plugin: ngspice, readOnly: true }
+  - id: firmware-size
+    language: en
+    prompt: 'How much flash and RAM does build/app.elf use?'
+    plugins: [stm32-cubeprog, probe-rs, binutils, zephyr]
+    replay: replay/answer.jsonl
+    expect: { skills: [firmware-size, elf-inspect], plugin: binutils, readOnly: true }
+  - id: hard-fault
+    language: en
+    prompt: 'Which function is at the hard-fault address 0x08001234 in build/app.elf?'
+    plugins: [stm32-cubeprog, probe-rs, binutils, zephyr]
+    replay: replay/answer.jsonl
+    expect: { skills: [crash-decode, elf-inspect], plugin: binutils, readOnly: true }
+  - id: arduino-build-fix
+    language: en
+    prompt: 'My Arduino sketch fails to compile with "Wire.h: No such file or directory". Fix it.'
+    plugins: [serial-monitor, arduino-cli, micropython, platformio]
+    replay: replay/answer.jsonl
+    expect: { skills: [arduino-build-fix, arduino-libraries], plugin: arduino-cli }
+  - id: arduino-test-sketch
+    language: en
+    prompt: 'Write a test sketch that blinks the LED on pin 13 and upload it to the Arduino Uno on COM4.'
+    plugins: [serial-monitor, arduino-cli, micropython, platformio]
+    replay: replay/answer.jsonl
+    expect: { skills: [arduino-test-sketch], plugin: arduino-cli }
+  - id: micropython-deploy
+    language: en
+    prompt: 'Copy main.py to the MicroPython board on COM6 and run it.'
+    plugins: [serial-monitor, arduino-cli, micropython, platformio]
+    replay: replay/answer.jsonl
+    expect: { skills: [micropython-deploy], plugin: micropython }
+  - id: logic-capture
+    language: en
+    prompt: 'Capture one second of I2C traffic with the logic analyser and decode it.'
+    plugins: [can-python, can-dbc, sigrok, mqtt-tools]
+    replay: replay/answer.jsonl
+    expect: { skills: [sigrok-capture, sigrok-decode, sigrok-instruments], plugin: sigrok, readOnly: true }
+  - id: avr-flash
+    language: en
+    prompt: 'Program firmware.hex into the AVR128DA48 with the PICkit.'
+    plugins: [microchip-pymcuprog, renode, stm32-cubeprog, probe-rs]
+    replay: replay/answer.jsonl
+    expect: { skills: [microchip-flash], plugin: microchip-pymcuprog }
+  - id: platformio-build
+    language: en
+    prompt: 'Build the PlatformIO project in fw/ for the esp32dev environment.'
+    plugins: [serial-monitor, arduino-cli, micropython, platformio]
+    replay: replay/answer.jsonl
+    expect: { skills: [platformio-projects], plugin: platformio }
+  - id: renode-run
+    language: en
+    prompt: 'Run build/app.elf on a virtual STM32 board with Renode and show the UART output.'
+    plugins: [microchip-pymcuprog, renode, stm32-cubeprog, probe-rs]
+    replay: replay/answer.jsonl
+    expect: { skills: [virtual-boards], plugin: renode, readOnly: true }
+  - id: power-measure
+    language: en
+    prompt: 'Measure the current consumption of the board for 30 seconds with the power profiler.'
+    plugins: [power-profiler, scpi-instruments, ble-tools]
+    replay: replay/answer.jsonl
+    expect: { skills: [power-measurement], plugin: power-profiler, readOnly: true }
+  - id: bench-voltmeter
+    language: en
+    prompt: 'Read the DC voltage from the bench multimeter over SCPI.'
+    plugins: [power-profiler, scpi-instruments, ble-tools]
+    replay: replay/answer.jsonl
+    expect: { skills: [bench-instruments, instrument-profiles], plugin: scpi-instruments, readOnly: true }
+  - id: mqtt-telemetry
+    language: en
+    prompt: 'Subscribe to bench/telemetry on the MQTT broker and show me ten messages.'
+    plugins: [can-python, can-dbc, sigrok, mqtt-tools]
+    replay: replay/answer.jsonl
+    expect: { skills: [mqtt-telemetry], plugin: mqtt-tools, readOnly: true }
+  - id: schematic-review
+    language: en
+    prompt: 'Review the schematic hw/board.kicad_sch for missing I2C pull-ups.'
+    plugins: [ngspice, kicad, electronics-calc, git]
+    replay: replay/answer.jsonl
+    expect: { skills: [schematic-review], plugin: kicad, readOnly: true }
+  - id: git-commit
+    language: en
+    prompt: 'Commit the changes in fw/ with the message "Fix I2C timing".'
+    plugins: [ngspice, kicad, electronics-calc, git]
+    replay: replay/answer.jsonl
+    expect: { skills: [git-commit], plugin: git }
+  - id: ble-scan
+    language: en
+    prompt: 'Scan for BLE devices near the bench.'
+    plugins: [power-profiler, scpi-instruments, ble-tools]
+    replay: replay/answer.jsonl
+    expect: { skills: [ble-devices], plugin: ble-tools, readOnly: true }
+  - id: pullup-sizing
+    language: en
+    prompt: 'Size the I2C pull-up resistors for a 400 kHz bus with 100 pF of capacitance at 3.3 V.'
+    plugins: [ngspice, kicad, electronics-calc, git]
+    replay: replay/answer.jsonl
+    expect: { skills: [electronics-sizing], plugin: electronics-calc, readOnly: true }
+  - id: zephyr-build
+    language: en
+    prompt: 'Build the Zephyr application in app/ for the nrf52840dk board.'
+    plugins: [stm32-cubeprog, probe-rs, binutils, zephyr]
+    replay: replay/answer.jsonl
+    expect: { skills: [zephyr-builds], plugin: zephyr }

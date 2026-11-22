@@ -13,7 +13,7 @@ test("catalog updates translate already mounted tool activity without reloading 
   const renderer = (await resolveConfig({ root: "src/apps/desktop" }, "serve", "development")).config
     ?.renderer;
   if (!renderer) throw Error("Missing renderer config");
-  const directory = await mkdtemp(resolve("evaluation-outputs/i18n-hmr-"));
+  const directory = await mkdtemp(resolve("test-outputs/i18n-hmr-"));
   const languages = ["en", "ro", "de", "fr"];
   const source = resolve("src/apps/desktop/src/renderer");
   await mkdir(join(directory, "locales"));

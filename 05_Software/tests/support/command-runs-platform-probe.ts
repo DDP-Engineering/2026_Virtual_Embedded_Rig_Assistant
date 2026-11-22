@@ -9,7 +9,7 @@ import { ProgramRunner } from "../../src/libraries/core/src/plugins/runner.js";
 import { createCommandShellHost } from "../../src/libraries/core/src/plugins/shell.js";
 import type { ToolContext } from "../../src/libraries/core/src/tools/context.js";
 
-const root = resolve(process.argv[2] ?? "evaluation-outputs/term04/platform");
+const root = resolve(process.argv[2] ?? "test-outputs/term04/platform");
 await mkdir(root, { recursive: true });
 const bench = join(root, "bench"),
   sibling = join(root, "sibling");

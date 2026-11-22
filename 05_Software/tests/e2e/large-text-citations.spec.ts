@@ -15,7 +15,7 @@ const invoke = <C extends Channel>(page: Page, channel: C, request: Request<C>):
 
 test("native indexed and issued large-text citations cross IPC compactly and keep their verified range", async () => {
   test.setTimeout(120000);
-  const evidence = resolve("evaluation-outputs/view03");
+  const evidence = resolve("test-outputs/view03");
   await mkdir(evidence, { recursive: true });
   const scratch = await mkdtemp(join(evidence, "citation-owned-"));
   const folder = join(scratch, "bench"),

@@ -1,0 +1,3 @@
+{"toolCalls":[{"name":"search_docs","args":{"query":"external sensor seven-bit address ID value","k":5,"mode":"hybrid"}}]}
+{"toolCalls":[{"name":"read_doc","args":{"path":"docs/vera-demo-01-datasheet.pdf","page":2}}]}
+{"text":"The external sensor uses the seven-bit address 0x48, and its ID register returns 0xA1 [[{{ref}}]]."}

@@ -1,0 +1,78 @@
+# Frozen before model inference. A short fixed suite that exercises what VERA's agent loop needs from
+# a model: plain and parallel tool calls, a strict-argument tool, verified citations, a Romanian
+# answer, an edit proposal, a long answer and a log tool, all on the demo workbench.
+# tools: each must run successfully; anyTools: at least one must; minCalls: successful calls per tool;
+# answer: patterns the normalized answer must all match; cite: needs a valid citation;
+# proposal: an approval must be requested for one of these tools (refused by --approve none).
+schema: 1
+workbench: tests/fixtures/workbenches/demo-board
+timeoutSeconds: 600
+cases:
+  - id: read-file
+    language: en
+    prompt: 'Read board.txt and tell me which supply voltage it states. Cite the file.'
+    replay: replay/read-file.jsonl
+    expect:
+      tools: [read]
+      answer: ['3[.]3\s*v']
+      cite: true
+  - id: parallel-reads
+    language: en
+    prompt: 'Read docs/pinout.csv and docs/notes/bringup.md. Do they agree on the I2C SDA and SCL pins? Cite both.'
+    expect:
+      minCalls: { read: 2 }
+      answer: ['pb7', 'pb6']
+      cite: true
+  - id: decode-register
+    language: en
+    prompt: 'Decode the value 0x0081 of register I2C1_CR1 with definitions/registers/vera-demo-01.json and name the fields that are set.'
+    expect:
+      tools: [decode_register]
+      answer: ['\bpe\b', 'errie']
+  - id: search-cite
+    language: en
+    prompt: 'What is the I2C1 base address? Search the documents and cite the page.'
+    expect:
+      tools: [search_docs]
+      answer: ['0x40005400']
+      cite: true
+  - id: romanian
+    language: ro
+    prompt: 'Ce viteză folosește portul serial de depanare? Răspunde în română și citează sursa.'
+    expect:
+      anyTools: [search_docs, read_doc, read]
+      answer: ['115[ .]?200']
+      cite: true
+      language: ro
+  - id: edit-proposal
+    language: en
+    prompt: 'Add the line "Checked by VERA." at the end of docs/notes/bringup.md.'
+    replay: replay/edit-proposal.jsonl
+    expect:
+      proposal: [edit, write]
+  - id: long-answer
+    language: en
+    prompt: 'Write a detailed first power-up checklist for the board from the application note, with at least 25 numbered steps and the reason for each step.'
+    expect:
+      anyTools: [search_docs, read_doc, read]
+      answer: ['150\s*ma']
+      minOutputTokens: 500
+  - id: parse-log
+    language: en
+    prompt: 'Summarise the warnings and errors in logs/boot-0412.log.'
+    expect:
+      anyTools: [parse_log, read]
+      answer: ['20\s*ms']
+  - id: list-files
+    language: en
+    prompt: 'Which files are in the docs folder? List them.'
+    expect:
+      anyTools: [list, glob]
+      answer: ['pinout\.csv', 'datasheet']
+  - id: multi-step
+    language: en
+    prompt: 'Which I2C1_TIMINGR value selects 400 kHz, and which I2C1_CR1 bit must be cleared before changing it? Cite the page.'
+    expect:
+      tools: [search_docs]
+      answer: ['0x0010061a', '\bpe\b']
+      cite: true

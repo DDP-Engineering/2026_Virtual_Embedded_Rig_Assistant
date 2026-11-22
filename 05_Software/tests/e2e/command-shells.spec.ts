@@ -77,7 +77,7 @@ test("native detected shell choices start compatible terminals and preserve exis
   await access(
     resolve(dirname(entry), "../../../../../src/models/Xenova/bge-small-en-v1.5/model-manifest.json"),
   );
-  const evidence = resolve("evaluation-outputs/shell-selector");
+  const evidence = resolve("test-outputs/shell-selector");
   await mkdir(evidence, { recursive: true });
   const root = await mkdtemp(join(evidence, "native-"));
   const folder = join(root, "bench");

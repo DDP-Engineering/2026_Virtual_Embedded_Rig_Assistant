@@ -164,7 +164,7 @@ Everything below `07_Delivery/` except `README.md` is git-ignored. Installing fr
 - Packaging: `05_Software/release_tmp/`, staging and output separated by mode.
 - Deliveries: `07_Delivery/vera-<version>/`.
 - Environment, build and release caches: `02_Tools/cache/`. Evaluator scratch never goes here; see
-  [evaluators](../05_Software/evaluators/README.md#scratch-and-outputs).
+  [evaluators](../05_Software/evaluators/README.md#where-everything-lives).
 
 This README describes the existing commands; a tool being present does not mean its probe was run or
 that a release was validated.

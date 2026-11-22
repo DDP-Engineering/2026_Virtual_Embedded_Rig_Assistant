@@ -15,7 +15,7 @@ const quote = (value: string) =>
 
 test("agent sibling server is live in Runs, UI Stop kills its tree and full masked log opens in viewer", async () => {
   test.setTimeout(120000);
-  const evidence = resolve(process.env.VERA_TERM04_EVIDENCE_DIR ?? "evaluation-outputs/term04/native");
+  const evidence = resolve(process.env.VERA_TERM04_EVIDENCE_DIR ?? "test-outputs/term04/native");
   await mkdir(evidence, { recursive: true });
   const scratch = await realpath(await mkdtemp(join(evidence, "owned-")));
   const secret = "term04-synthetic-secret";

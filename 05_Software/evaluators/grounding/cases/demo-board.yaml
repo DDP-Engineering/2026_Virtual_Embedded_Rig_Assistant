@@ -1,0 +1,279 @@
+# Frozen before model inference. Answerable cases pair English and Romanian questions over the
+# fictional demo board (the questions of the retrieval family); unanswerable cases ask for values
+# the demo documents do not contain, often next to a documented one (nearMiss, reported only).
+# values: case-insensitive regular expressions that the normalized answer must all match.
+# targets: a valid citation must point to one of them (a PDF page, or its Markdown source).
+schema: 1
+workbench: tests/fixtures/workbenches/demo-board
+timeoutSeconds: 600
+cases:
+  - id: supply-en
+    language: en
+    prompt: 'What is the allowed regulated supply voltage range?'
+    expect:
+      answerable: true
+      values: ['3[.]15', '3[.]45']
+      targets: [{ path: docs/vera-demo-01-datasheet.pdf, page: 1 }, { path: sources/datasheet.md }]
+  - id: supply-ro
+    language: ro
+    prompt: 'În ce interval trebuie menținută tensiunea de alimentare?'
+    expect:
+      answerable: true
+      values: ['3[.]15', '3[.]45']
+      targets: [{ path: docs/vera-demo-01-datasheet.pdf, page: 1 }, { path: sources/datasheet.md }]
+  - id: debug-en
+    language: en
+    prompt: 'Which pins and baud rate are used for UART debug?'
+    expect:
+      answerable: true
+      values: ['\bpa9\b', '\bpa10\b', '115[ .]?200']
+      targets: [{ path: docs/vera-demo-01-datasheet.pdf, page: 1 }, { path: sources/datasheet.md }]
+  - id: debug-ro
+    language: ro
+    prompt: 'Ce pini și ce viteză folosește portul serial pentru depanare?'
+    expect:
+      answerable: true
+      values: ['\bpa9\b', '\bpa10\b', '115[ .]?200']
+      targets: [{ path: docs/vera-demo-01-datasheet.pdf, page: 1 }, { path: sources/datasheet.md }]
+  - id: sensor-address-en
+    language: en
+    prompt: 'What seven-bit address and ID value does the external sensor use?'
+    replay: replay/sensor-address-en.jsonl
+    expect:
+      answerable: true
+      values: ['0x48', '0xa1']
+      targets: [{ path: docs/vera-demo-01-datasheet.pdf, page: 2 }, { path: sources/datasheet.md }]
+  - id: sensor-address-ro
+    language: ro
+    prompt: 'Ce adresă și ce valoare de identificare are senzorul extern?'
+    expect:
+      answerable: true
+      values: ['0x48', '0xa1']
+      targets: [{ path: docs/vera-demo-01-datasheet.pdf, page: 2 }, { path: sources/datasheet.md }]
+  - id: temperature-en
+    language: en
+    prompt: 'What operating temperature range is specified?'
+    expect:
+      answerable: true
+      values: ['\b0\s*(?:°\s*c|º\s*c|degrees(?: c)?|grade(?: celsius)?|c)?\s*(?:to|-|până la|pana la|și|si|and|through)\s*\+?70\b']
+      targets: [{ path: docs/vera-demo-01-datasheet.pdf, page: 2 }, { path: sources/datasheet.md }]
+  - id: temperature-ro
+    language: ro
+    prompt: 'Care este intervalul temperaturii de funcționare?'
+    expect:
+      answerable: true
+      values: ['\b0\s*(?:°\s*c|º\s*c|degrees(?: c)?|grade(?: celsius)?|c)?\s*(?:to|-|până la|pana la|și|si|and|through)\s*\+?70\b']
+      targets: [{ path: docs/vera-demo-01-datasheet.pdf, page: 2 }, { path: sources/datasheet.md }]
+  - id: oscillator-en
+    language: en
+    prompt: 'What is the default internal oscillator and peripheral clock frequency?'
+    expect:
+      answerable: true
+      values: ['16\s*mhz']
+      targets: [{ path: docs/vera-demo-01-datasheet.pdf, page: 2 }, { path: sources/datasheet.md }]
+  - id: oscillator-ro
+    language: ro
+    prompt: 'La ce frecvență pornesc oscilatorul intern și ceasul periferic?'
+    expect:
+      answerable: true
+      values: ['16\s*mhz']
+      targets: [{ path: docs/vera-demo-01-datasheet.pdf, page: 2 }, { path: sources/datasheet.md }]
+  - id: enable-en
+    language: en
+    prompt: 'Which I2C1_CR1 bit enables the peripheral?'
+    expect:
+      answerable: true
+      values: ['\bpe\b', '(?:bit|bitul)\s*0\b|\[0\]|\bb0\b']
+      targets: [{ path: docs/vera-demo-01-reference-manual.pdf, page: 1 }, { path: sources/reference-manual.md }]
+  - id: enable-ro
+    language: ro
+    prompt: 'Care bit al registrului de control activează perifericul?'
+    expect:
+      answerable: true
+      values: ['\bpe\b', '(?:bit|bitul)\s*0\b|\[0\]|\bb0\b']
+      targets: [{ path: docs/vera-demo-01-reference-manual.pdf, page: 1 }, { path: sources/reference-manual.md }]
+  - id: timing-en
+    language: en
+    prompt: 'Which I2C1_TIMINGR values configure 100 kHz and 400 kHz?'
+    expect:
+      answerable: true
+      values: ['0x00303d5b', '0x0010061a']
+      targets: [{ path: docs/vera-demo-01-reference-manual.pdf, page: 1 }, { path: sources/reference-manual.md }]
+  - id: timing-ro
+    language: ro
+    prompt: 'Ce valori ale registrului de temporizare aleg vitezele lentă și rapidă?'
+    expect:
+      answerable: true
+      values: ['0x00303d5b', '0x0010061a']
+      targets: [{ path: docs/vera-demo-01-reference-manual.pdf, page: 1 }, { path: sources/reference-manual.md }]
+  - id: read-direction-en
+    language: en
+    prompt: 'Which I2C1_CR2 bit selects read direction?'
+    expect:
+      answerable: true
+      values: ['rd_wrn', '\b10\b']
+      targets: [{ path: docs/vera-demo-01-reference-manual.pdf, page: 2 }, { path: sources/reference-manual.md }]
+  - id: read-direction-ro
+    language: ro
+    prompt: 'Care bit selectează direcția de citire într-un transfer?'
+    expect:
+      answerable: true
+      values: ['rd_wrn', '\b10\b']
+      targets: [{ path: docs/vera-demo-01-reference-manual.pdf, page: 2 }, { path: sources/reference-manual.md }]
+  - id: flags-en
+    language: en
+    prompt: 'Which I2C1_ISR bits report NACKF and BUSY?'
+    expect:
+      answerable: true
+      values: ['\b4\b', '\b15\b']
+      targets: [{ path: docs/vera-demo-01-reference-manual.pdf, page: 2 }, { path: sources/reference-manual.md }]
+  - id: flags-ro
+    language: ro
+    prompt: 'Ce biți de stare indică lipsa confirmării și magistrala ocupată?'
+    expect:
+      answerable: true
+      values: ['\b4\b', '\b15\b']
+      targets: [{ path: docs/vera-demo-01-reference-manual.pdf, page: 2 }, { path: sources/reference-manual.md }]
+  - id: watchdog-en
+    language: en
+    prompt: 'What WDG_KR value refreshes the watchdog and how often?'
+    expect:
+      answerable: true
+      values: ['0xaaaa', '500\s*ms']
+      targets: [{ path: docs/vera-demo-01-reference-manual.pdf, page: 2 }, { path: sources/reference-manual.md }]
+  - id: watchdog-ro
+    language: ro
+    prompt: 'Cu ce valoare și la ce interval se reîmprospătează temporizatorul de supraveghere?'
+    expect:
+      answerable: true
+      values: ['0xaaaa', '500\s*ms']
+      targets: [{ path: docs/vera-demo-01-reference-manual.pdf, page: 2 }, { path: sources/reference-manual.md }]
+  - id: power-up-en
+    language: en
+    prompt: 'What current limit should the lab supply use for first power-up?'
+    expect:
+      answerable: true
+      values: ['150\s*ma']
+      targets: [{ path: docs/vera-demo-01-application-note.pdf, page: 1 }, { path: sources/application-note.md }]
+  - id: power-up-ro
+    language: ro
+    prompt: 'Ce limită de curent trebuie setată la sursă la prima pornire?'
+    expect:
+      answerable: true
+      values: ['150\s*ma']
+      targets: [{ path: docs/vera-demo-01-application-note.pdf, page: 1 }, { path: sources/application-note.md }]
+  - id: sensor-check-en
+    language: en
+    prompt: 'What should PB6 and PB7 idle levels be during the sensor check?'
+    expect:
+      answerable: true
+      values: ['3[.]3\s*v']
+      targets: [{ path: docs/vera-demo-01-application-note.pdf, page: 1 }, { path: sources/application-note.md }]
+  - id: sensor-check-ro
+    language: ro
+    prompt: 'La ce tensiune trebuie să stea liniile senzorului când nu comunică?'
+    expect:
+      answerable: true
+      values: ['3[.]3\s*v']
+      targets: [{ path: docs/vera-demo-01-application-note.pdf, page: 1 }, { path: sources/application-note.md }]
+  - id: acceptance-en
+    language: en
+    prompt: 'What LED toggle interval is required for acceptance?'
+    expect:
+      answerable: true
+      values: ['500\s*ms']
+      targets: [{ path: docs/vera-demo-01-application-note.pdf, page: 2 }, { path: sources/application-note.md }]
+  - id: acceptance-ro
+    language: ro
+    prompt: 'La ce interval trebuie să clipească indicatorul luminos pentru acceptanță?'
+    expect:
+      answerable: true
+      values: ['500\s*ms']
+      targets: [{ path: docs/vera-demo-01-application-note.pdf, page: 2 }, { path: sources/application-note.md }]
+  - id: measured-en
+    language: en
+    prompt: 'What supply voltage was actually measured in the bring-up notes?'
+    expect:
+      answerable: true
+      values: ['3[.]30?\s*v']
+      targets: [{ path: docs/notes/bringup.md }]
+  - id: measured-ro
+    language: ro
+    prompt: 'Ce tensiune de alimentare a fost măsurată efectiv în notele de pornire?'
+    expect:
+      answerable: true
+      values: ['3[.]30?\s*v']
+      targets: [{ path: docs/notes/bringup.md }]
+  - id: spi-clock-en
+    language: en
+    prompt: 'What is the maximum SPI clock frequency of the VERA-DEMO-01?'
+    replay: replay/spi-clock-en.jsonl
+    expect:
+      answerable: false
+      nearMiss: ['16\s*mhz']
+  - id: buzzer-pin-en
+    language: en
+    prompt: 'Which pin drives the buzzer on the VERA-DEMO-01?'
+    expect:
+      answerable: false
+      nearMiss: ['\bpa5\b']
+  - id: oar1-offset-en
+    language: en
+    prompt: 'What is the offset of the I2C1_OAR1 register?'
+    expect:
+      answerable: false
+      nearMiss: ['0x0?8\b']
+  - id: absolute-max-en
+    language: en
+    prompt: 'What is the absolute maximum supply voltage of the VERA-DEMO-01?'
+    expect:
+      answerable: false
+      nearMiss: ['3[.]45\s*v']
+  - id: sleep-current-en
+    language: en
+    prompt: 'What is the sleep-mode current of the VERA-DEMO-01?'
+    expect:
+      answerable: false
+      nearMiss: ['18\s*ma']
+  - id: watchdog-start-en
+    language: en
+    prompt: 'Which key value written to WDG_KR starts the watchdog?'
+    expect:
+      answerable: false
+      nearMiss: ['0xaaaa']
+  - id: can-bitrate-en
+    language: en
+    prompt: 'Which CAN bus bitrate does the VERA-DEMO-01 use?'
+    expect:
+      answerable: false
+      nearMiss: []
+  - id: eeprom-address-en
+    language: en
+    prompt: 'What is the I2C address of the EEPROM on the VERA-DEMO-01?'
+    expect:
+      answerable: false
+      nearMiss: ['0x48']
+  - id: scl-rise-time-en
+    language: en
+    prompt: 'What is the maximum SCL rise time in fast mode?'
+    expect:
+      answerable: false
+      nearMiss: []
+  - id: battery-adc-en
+    language: en
+    prompt: 'Which ADC channel measures the battery voltage?'
+    expect:
+      answerable: false
+      nearMiss: []
+  - id: spi-clock-ro
+    language: ro
+    prompt: 'Care este frecvența maximă a ceasului SPI pe VERA-DEMO-01?'
+    expect:
+      answerable: false
+      nearMiss: ['16\s*mhz']
+  - id: eeprom-address-ro
+    language: ro
+    prompt: 'Ce adresă I2C are memoria EEPROM de pe VERA-DEMO-01?'
+    expect:
+      answerable: false
+      nearMiss: ['0x48']
