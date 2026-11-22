@@ -31,6 +31,7 @@ N’installez pas un fichier dont le hachage diffère ; copiez-le à nouveau.
 - Programme d’installation Windows : exécutez `VERA-<v>-win-x64.exe`. Il installe VERA pour votre utilisateur et ne nécessite pas de droits d’administrateur.
 - Version portable Windows : extrayez `VERA-<v>-win-x64.zip` et démarrez `vera.exe`. Ses paramètres et ses données restent dans le dossier `data` situé à côté.
 - Linux : `sudo apt install ./VERA-<v>-linux-amd64.deb`, ou rendez l’AppImage exécutable avec `chmod +x` et lancez-la.
+- Avec un réseau, ajoutez le dépôt apt VERA pour que `sudo apt upgrade` mette aussi à jour une installation `.deb` : voir [Paramètres](settings.md), **Mises à jour**.
 
 ## 3. Installer les plugins
 

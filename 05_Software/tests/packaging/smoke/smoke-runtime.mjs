@@ -1,4 +1,4 @@
-// REQ-TEST-8928f10f REQ-TEST-f84d343e
+// REQ-TEST-8928f10f REQ-TEST-f84d343e REQ-TEST-803bb75d
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
 import { randomUUID } from "node:crypto";
@@ -20,6 +20,7 @@ import { fileURLToPath } from "node:url";
 import { releaseHooks } from "../../../../02_Tools/release/package-checks.mjs";
 import { checkEgress } from "./smoke-egress.mjs";
 import { fileIdentity, startupFailureFacts } from "./smoke-report.mjs";
+import { checkWindowsEgress, sentinelConnection, startCapture, stopCapture } from "./smoke-windows.mjs";
 
 export const software = resolve(dirname(fileURLToPath(import.meta.url)), "../../..");
 export const veraInstallNamePattern = "^VERA(?:\\s|$)";
@@ -228,8 +229,9 @@ export async function isolatedEnvironment(root) {
     LANG: "C.UTF-8",
     LC_ALL: "C.UTF-8",
   };
+  // The app must disable ONNX Runtime telemetry itself (REQ-SEC-b4170ade): no operator ORT_* reaches it.
   for (const key of Object.keys(env))
-    if (key.startsWith("VERA_") || key === "ELECTRON_RUN_AS_NODE") delete env[key];
+    if (key.startsWith("VERA_") || /^ORT_/i.test(key) || key === "ELECTRON_RUN_AS_NODE") delete env[key];
   return env;
 }
 export async function seedData(data) {
@@ -271,6 +273,42 @@ export async function launchObserved(context, label, report, allowed = [], testB
     allowed,
   };
   report.launches.push(receipt);
+  // Windows (elevated): one pktmon capture per launch; the harness's sentinel connection proves it logged.
+  const capture = context.windowsCapture
+    ? Object.fromEntries(
+        ["etl", "text", "xml"].map((kind) => [
+          kind,
+          join(root, `${label}.pktmon.${kind === "text" ? "txt" : kind}`),
+        ]),
+      )
+    : undefined;
+  let capturing = false;
+  const endCapture = async (pid) => {
+    if (!capturing) return;
+    capturing = false;
+    try {
+      let sentinel;
+      try {
+        sentinel = await sentinelConnection();
+      } finally {
+        stopCapture(capture);
+      }
+      receipt.trace = await Promise.all([capture.etl, capture.text, capture.xml].map(fileIdentity));
+      receipt.egress =
+        pid === undefined
+          ? { status: "FAIL", errors: ["Launch failed before its PID was known"] }
+          : checkWindowsEgress(await readFile(capture.xml, "utf8"), pid, allowed, sentinel);
+    } catch (error) {
+      receipt.egress = {
+        status: "FAIL",
+        errors: [`pktmon capture failed; monitor evidence absent: ${error.message}`],
+      };
+    }
+  };
+  if (capture) {
+    startCapture(capture);
+    capturing = true;
+  }
   let app;
   // Playwright races two startup-line promises; an early child exit can reject
   // one before the other is awaited. Keep that dependency error as evidence
@@ -291,6 +329,8 @@ export async function launchObserved(context, label, report, allowed = [], testB
       timeout: 60000,
     });
   } catch (error) {
+    // Stop a host-wide pktmon capture before anything here can throw.
+    await endCapture(undefined);
     const path = join(root, `${label}.launch-error.log`);
     await writeFile(path, error.stack ?? String(error));
     Object.assign(receipt, startupFailureFacts(error.message), {
@@ -327,14 +367,18 @@ export async function launchObserved(context, label, report, allowed = [], testB
   const finish = async () => {
     if (closed) return;
     closed = true;
-    await app.close();
-    receipt.exit = await exit;
-    receipt.finished = new Date().toISOString();
-    await writeFile(join(root, `${label}.stdout.log`), Buffer.concat(stdout));
-    await writeFile(join(root, `${label}.stderr.log`), Buffer.concat(stderr));
-    receipt.logs = await Promise.all(
-      ["stdout", "stderr"].map((s) => fileIdentity(join(root, `${label}.${s}.log`))),
-    );
+    try {
+      await app.close();
+      receipt.exit = await exit;
+      receipt.finished = new Date().toISOString();
+      await writeFile(join(root, `${label}.stdout.log`), Buffer.concat(stdout));
+      await writeFile(join(root, `${label}.stderr.log`), Buffer.concat(stderr));
+      receipt.logs = await Promise.all(
+        ["stdout", "stderr"].map((s) => fileIdentity(join(root, `${label}.${s}.log`))),
+      );
+    } finally {
+      await endCapture(receipt.pid);
+    }
     if (process.platform === "linux") {
       receipt.trace = await fileIdentity(tracePath);
       receipt.egress = checkEgress(await readFile(tracePath, "utf8"), allowed);
@@ -368,7 +412,9 @@ export async function launchObserved(context, label, report, allowed = [], testB
         cwd: process.cwd(),
         sandbox: BrowserWindow.getAllWindows()[0].webContents.getLastWebPreferences().sandbox,
         spellcheck: BrowserWindow.getAllWindows()[0].webContents.session.isSpellCheckerEnabled(),
-        ortTelemetryDisabled: process.env.ORT_DISABLE_TELEMETRY === "1",
+        ortTelemetryDisabled:
+          process.env.ORT_DISABLE_TELEMETRY === "1" &&
+          (process.platform !== "win32" || process.env.ORT_RUNNING_UNIT_TESTS === "1"),
       }));
       receipt.runtime = runtime;
       assert.equal(

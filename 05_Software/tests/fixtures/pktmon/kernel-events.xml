@@ -1,0 +1,1599 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Recorded 2026-11-21 with pktmon (Kernel-Network, Kernel-Process) and tracerpt -of XML on Windows 11 26300 (Gitea #371): node PID 40512 served and requested 127.0.0.1:62897, its child PID 44384 connected to example.com 104.20.23.154:443. Kept: those processes' events and a few other processes' events, with LAN and other remote addresses replaced by documentation addresses. -->
+<Events>
+<Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+	<System>
+		<Provider Name="Microsoft-Windows-Kernel-Process" Guid="{22fb2cd6-0e7b-422b-a0c7-2fad1fd0e716}" />
+		<EventID>1</EventID>
+		<Version>4</Version>
+		<Level>4</Level>
+		<Task>1</Task>
+		<Opcode>1</Opcode>
+		<Keywords>0x8000000000000010</Keywords>
+		<TimeCreated SystemTime="2026-11-21T20:51:15.612198200+01:59" />
+		<Correlation ActivityID="{00000000-0000-0000-0000-000000000000}" />
+		<Execution ProcessID="41904" ThreadID="38124" ProcessorID="11" KernelTime="0" UserTime="15" />
+		<Channel>Microsoft-Windows-Kernel-Process/Analytic</Channel>
+		<Computer />
+	</System>
+	<EventData>
+		<Data Name="ProcessID">   10528</Data>
+		<Data Name="ProcessSequenceNumber">213305</Data>
+		<Data Name="CreateTime">2026-11-21T18:51:15.611061600Z</Data>
+		<Data Name="ParentProcessID">   41904</Data>
+		<Data Name="ParentProcessSequenceNumber">213304</Data>
+		<Data Name="SessionID">       1</Data>
+		<Data Name="Flags">       0</Data>
+		<Data Name="ProcessTokenElevationType">       3</Data>
+		<Data Name="ProcessTokenIsElevated">       0</Data>
+		<Data Name="MandatoryLabel">S-1-16-8192</Data>
+		<Data Name="ImageName">\Device\HarddiskVolume3\Users\user\AppData\Local\Programs\Python\Python312\python.exe</Data>
+		<Data Name="ImageChecksum">0x1EC86</Data>
+		<Data Name="TimeDateStamp">0x67F515A7</Data>
+		<Data Name="PackageFullName"></Data>
+		<Data Name="PackageRelativeAppId"></Data>
+		<Data Name="SecurityMitigations">       0</Data>
+	</EventData>
+	<RenderingInfo Culture="en-US">
+		<Level>Information </Level>
+		<Opcode>Start </Opcode>
+		<Keywords>
+			<Keyword>WINEVENT_KEYWORD_PROCESS</Keyword>
+		</Keywords>
+		<Task>ProcessStart</Task>
+		<Message>Process 10528 started at time &#8206;2026&#8206;-&#8206;11&#8206;-&#8206;21T18:51:15.611061600Z by parent 41904 running in session 1 with name \Device\HarddiskVolume3\Users\user\AppData\Local\Programs\Python\Python312\python.exe.
+Enabled security mitigations: 0. </Message>
+		<Channel>Microsoft-Windows-Kernel-Process/Analytic</Channel>
+		<Provider>Microsoft-Windows-Kernel-Process </Provider>
+	</RenderingInfo>
+</Event>
+<Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+	<System>
+		<Provider Name="Microsoft-Windows-Kernel-Process" Guid="{22fb2cd6-0e7b-422b-a0c7-2fad1fd0e716}" />
+		<EventID>1</EventID>
+		<Version>4</Version>
+		<Level>4</Level>
+		<Task>1</Task>
+		<Opcode>1</Opcode>
+		<Keywords>0x8000000000000010</Keywords>
+		<TimeCreated SystemTime="2026-11-21T20:51:15.622986600+01:59" />
+		<Correlation ActivityID="{00000000-0000-0000-0000-000000000000}" />
+		<Execution ProcessID="11164" ThreadID="35552" ProcessorID="1" KernelTime="150" UserTime="210" />
+		<Channel>Microsoft-Windows-Kernel-Process/Analytic</Channel>
+		<Computer />
+	</System>
+	<EventData>
+		<Data Name="ProcessID">   40512</Data>
+		<Data Name="ProcessSequenceNumber">213306</Data>
+		<Data Name="CreateTime">2026-11-21T18:51:15.622967300Z</Data>
+		<Data Name="ParentProcessID">   11164</Data>
+		<Data Name="ParentProcessSequenceNumber">213276</Data>
+		<Data Name="SessionID">       1</Data>
+		<Data Name="Flags">       0</Data>
+		<Data Name="ProcessTokenElevationType">       2</Data>
+		<Data Name="ProcessTokenIsElevated">       1</Data>
+		<Data Name="MandatoryLabel">S-1-16-12288</Data>
+		<Data Name="ImageName">\Device\HarddiskVolume5\2026_Virtual_Embedded_Rig_Assistant\02_Tools\runtime\node-v24.21.0-win-x64\node.exe</Data>
+		<Data Name="ImageChecksum">0x594B290</Data>
+		<Data Name="TimeDateStamp">0x6A9F510B</Data>
+		<Data Name="PackageFullName"></Data>
+		<Data Name="PackageRelativeAppId"></Data>
+		<Data Name="SecurityMitigations">       0</Data>
+	</EventData>
+	<RenderingInfo Culture="en-US">
+		<Level>Information </Level>
+		<Opcode>Start </Opcode>
+		<Keywords>
+			<Keyword>WINEVENT_KEYWORD_PROCESS</Keyword>
+		</Keywords>
+		<Task>ProcessStart</Task>
+		<Message>Process 40512 started at time &#8206;2026&#8206;-&#8206;11&#8206;-&#8206;21T18:51:15.622967300Z by parent 11164 running in session 1 with name \Device\HarddiskVolume5\2026_Virtual_Embedded_Rig_Assistant\02_Tools\runtime\node-v24.21.0-win-x64\node.exe.
+Enabled security mitigations: 0. </Message>
+		<Channel>Microsoft-Windows-Kernel-Process/Analytic</Channel>
+		<Provider>Microsoft-Windows-Kernel-Process </Provider>
+	</RenderingInfo>
+</Event>
+<Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+	<System>
+		<Provider Name="Microsoft-Windows-Kernel-Network" Guid="{7dd42a49-5329-4832-8dfd-43d979153a88}" />
+		<EventID>10</EventID>
+		<Version>0</Version>
+		<Level>4</Level>
+		<Task>10</Task>
+		<Opcode>10</Opcode>
+		<Keywords>0x8000000000000010</Keywords>
+		<TimeCreated SystemTime="2026-11-21T20:51:15.623806400+01:59" />
+		<Correlation ActivityID="{00000000-0000-0000-0000-000000000000}" />
+		<Execution ProcessID="4" ThreadID="1916" ProcessorID="11" KernelTime="187575" UserTime="0" />
+		<Channel>Microsoft-Windows-Kernel-Network/Analytic</Channel>
+		<Computer />
+	</System>
+	<EventData>
+		<Data Name="PID">       4</Data>
+		<Data Name="size">   60607</Data>
+		<Data Name="daddr">198.51.100.7</Data>
+		<Data Name="saddr">192.0.2.13</Data>
+		<Data Name="dport">443</Data>
+		<Data Name="sport">49702</Data>
+		<Data Name="startime"> 8761296</Data>
+		<Data Name="endtime"> 8761315</Data>
+		<Data Name="seqnum">       0</Data>
+		<Data Name="connid">       0</Data>
+	</EventData>
+	<RenderingInfo Culture="en-US">
+		<Level>Information </Level>
+		<Opcode>Data sent. </Opcode>
+		<Keywords>
+			<Keyword>KERNEL_NETWORK_KEYWORD_IPV4</Keyword>
+		</Keywords>
+		<Task>KERNEL_NETWORK_TASK_TCPIP</Task>
+		<Message>TCPv4: 60607 bytes transmitted from 192.0.2.13:49702 to 198.51.100.7:443. </Message>
+		<Channel>Microsoft-Windows-Kernel-Network/Analytic</Channel>
+		<Provider>Microsoft-Windows-Kernel-Network </Provider>
+	</RenderingInfo>
+</Event>
+<Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+	<System>
+		<Provider Name="Microsoft-Windows-Kernel-Network" Guid="{7dd42a49-5329-4832-8dfd-43d979153a88}" />
+		<EventID>18</EventID>
+		<Version>0</Version>
+		<Level>4</Level>
+		<Task>10</Task>
+		<Opcode>18</Opcode>
+		<Keywords>0x8000000000000010</Keywords>
+		<TimeCreated SystemTime="2026-11-21T20:51:15.625297200+01:59" />
+		<Correlation ActivityID="{00000000-0000-0000-0000-000000000000}" />
+		<Execution ProcessID="4" ThreadID="1916" ProcessorID="22" KernelTime="187575" UserTime="0" />
+		<Channel>Microsoft-Windows-Kernel-Network/Analytic</Channel>
+		<Computer />
+	</System>
+	<EventData>
+		<Data Name="PID">       4</Data>
+		<Data Name="size">      45</Data>
+		<Data Name="daddr">198.51.100.7</Data>
+		<Data Name="saddr">192.0.2.13</Data>
+		<Data Name="dport">443</Data>
+		<Data Name="sport">49702</Data>
+		<Data Name="seqnum">       0</Data>
+		<Data Name="connid">       0</Data>
+	</EventData>
+	<RenderingInfo Culture="en-US">
+		<Level>Information </Level>
+		<Opcode>Protocol copied data on behalf of user. </Opcode>
+		<Keywords>
+			<Keyword>KERNEL_NETWORK_KEYWORD_IPV4</Keyword>
+		</Keywords>
+		<Task>KERNEL_NETWORK_TASK_TCPIP</Task>
+		<Message>TCPv4: 45 bytes copied in protocol on behalf of user for connection between 192.0.2.13:49702 and 198.51.100.7:443. </Message>
+		<Channel>Microsoft-Windows-Kernel-Network/Analytic</Channel>
+		<Provider>Microsoft-Windows-Kernel-Network </Provider>
+	</RenderingInfo>
+</Event>
+<Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+	<System>
+		<Provider Name="Microsoft-Windows-Kernel-Network" Guid="{7dd42a49-5329-4832-8dfd-43d979153a88}" />
+		<EventID>12</EventID>
+		<Version>0</Version>
+		<Level>4</Level>
+		<Task>10</Task>
+		<Opcode>12</Opcode>
+		<Keywords>0x8000000000000010</Keywords>
+		<TimeCreated SystemTime="2026-11-21T20:51:15.697008400+01:59" />
+		<Correlation ActivityID="{00000000-0000-0000-0000-000000000000}" />
+		<Execution ProcessID="40512" ThreadID="38344" ProcessorID="22" KernelTime="60" UserTime="15" />
+		<Channel>Microsoft-Windows-Kernel-Network/Analytic</Channel>
+		<Computer />
+	</System>
+	<EventData>
+		<Data Name="PID">   40512</Data>
+		<Data Name="size">       0</Data>
+		<Data Name="daddr">127.0.0.1</Data>
+		<Data Name="saddr">127.0.0.1</Data>
+		<Data Name="dport">62897</Data>
+		<Data Name="sport">62898</Data>
+		<Data Name="mss">65495</Data>
+		<Data Name="sackopt">1</Data>
+		<Data Name="tsopt">0</Data>
+		<Data Name="wsopt">1</Data>
+		<Data Name="rcvwin">   65535</Data>
+		<Data Name="rcvwinscale">8</Data>
+		<Data Name="sndwinscale">8</Data>
+		<Data Name="seqnum">       0</Data>
+		<Data Name="connid">       0</Data>
+	</EventData>
+	<RenderingInfo Culture="en-US">
+		<Level>Information </Level>
+		<Opcode>Connection attempted. </Opcode>
+		<Keywords>
+			<Keyword>KERNEL_NETWORK_KEYWORD_IPV4</Keyword>
+		</Keywords>
+		<Task>KERNEL_NETWORK_TASK_TCPIP</Task>
+		<Message>TCPv4: Connection attempted between 127.0.0.1:62898 and 127.0.0.1:62897. </Message>
+		<Channel>Microsoft-Windows-Kernel-Network/Analytic</Channel>
+		<Provider>Microsoft-Windows-Kernel-Network </Provider>
+	</RenderingInfo>
+</Event>
+<Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+	<System>
+		<Provider Name="Microsoft-Windows-Kernel-Network" Guid="{7dd42a49-5329-4832-8dfd-43d979153a88}" />
+		<EventID>15</EventID>
+		<Version>0</Version>
+		<Level>4</Level>
+		<Task>10</Task>
+		<Opcode>15</Opcode>
+		<Keywords>0x8000000000000010</Keywords>
+		<TimeCreated SystemTime="2026-11-21T20:51:15.697024400+01:59" />
+		<Correlation ActivityID="{00000000-0000-0000-0000-000000000000}" />
+		<Execution ProcessID="40512" ThreadID="38344" ProcessorID="22" KernelTime="60" UserTime="15" />
+		<Channel>Microsoft-Windows-Kernel-Network/Analytic</Channel>
+		<Computer />
+	</System>
+	<EventData>
+		<Data Name="PID">   40512</Data>
+		<Data Name="size">       0</Data>
+		<Data Name="daddr">127.0.0.1</Data>
+		<Data Name="saddr">127.0.0.1</Data>
+		<Data Name="dport">62898</Data>
+		<Data Name="sport">62897</Data>
+		<Data Name="mss">65495</Data>
+		<Data Name="sackopt">1</Data>
+		<Data Name="tsopt">0</Data>
+		<Data Name="wsopt">1</Data>
+		<Data Name="rcvwin">   65535</Data>
+		<Data Name="rcvwinscale">8</Data>
+		<Data Name="sndwinscale">8</Data>
+		<Data Name="seqnum">       0</Data>
+		<Data Name="connid">       0</Data>
+	</EventData>
+	<RenderingInfo Culture="en-US">
+		<Level>Information </Level>
+		<Opcode>Connection accepted. </Opcode>
+		<Keywords>
+			<Keyword>KERNEL_NETWORK_KEYWORD_IPV4</Keyword>
+		</Keywords>
+		<Task>KERNEL_NETWORK_TASK_TCPIP</Task>
+		<Message>TCPv4: Connection established between 127.0.0.1:62897 and 127.0.0.1:62898. </Message>
+		<Channel>Microsoft-Windows-Kernel-Network/Analytic</Channel>
+		<Provider>Microsoft-Windows-Kernel-Network </Provider>
+	</RenderingInfo>
+</Event>
+<Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+	<System>
+		<Provider Name="Microsoft-Windows-Kernel-Network" Guid="{7dd42a49-5329-4832-8dfd-43d979153a88}" />
+		<EventID>18</EventID>
+		<Version>0</Version>
+		<Level>4</Level>
+		<Task>10</Task>
+		<Opcode>18</Opcode>
+		<Keywords>0x8000000000000010</Keywords>
+		<TimeCreated SystemTime="2026-11-21T20:51:15.699525400+01:59" />
+		<Correlation ActivityID="{00000000-0000-0000-0000-000000000000}" />
+		<Execution ProcessID="40512" ThreadID="38344" ProcessorID="23" KernelTime="60" UserTime="15" />
+		<Channel>Microsoft-Windows-Kernel-Network/Analytic</Channel>
+		<Computer />
+	</System>
+	<EventData>
+		<Data Name="PID">   40512</Data>
+		<Data Name="size">      65</Data>
+		<Data Name="daddr">127.0.0.1</Data>
+		<Data Name="saddr">127.0.0.1</Data>
+		<Data Name="dport">62898</Data>
+		<Data Name="sport">62897</Data>
+		<Data Name="seqnum">       0</Data>
+		<Data Name="connid">       0</Data>
+	</EventData>
+	<RenderingInfo Culture="en-US">
+		<Level>Information </Level>
+		<Opcode>Protocol copied data on behalf of user. </Opcode>
+		<Keywords>
+			<Keyword>KERNEL_NETWORK_KEYWORD_IPV4</Keyword>
+		</Keywords>
+		<Task>KERNEL_NETWORK_TASK_TCPIP</Task>
+		<Message>TCPv4: 65 bytes copied in protocol on behalf of user for connection between 127.0.0.1:62897 and 127.0.0.1:62898. </Message>
+		<Channel>Microsoft-Windows-Kernel-Network/Analytic</Channel>
+		<Provider>Microsoft-Windows-Kernel-Network </Provider>
+	</RenderingInfo>
+</Event>
+<Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+	<System>
+		<Provider Name="Microsoft-Windows-Kernel-Network" Guid="{7dd42a49-5329-4832-8dfd-43d979153a88}" />
+		<EventID>11</EventID>
+		<Version>0</Version>
+		<Level>4</Level>
+		<Task>10</Task>
+		<Opcode>11</Opcode>
+		<Keywords>0x8000000000000010</Keywords>
+		<TimeCreated SystemTime="2026-11-21T20:51:15.699537700+01:59" />
+		<Correlation ActivityID="{00000000-0000-0000-0000-000000000000}" />
+		<Execution ProcessID="40512" ThreadID="38344" ProcessorID="23" KernelTime="60" UserTime="15" />
+		<Channel>Microsoft-Windows-Kernel-Network/Analytic</Channel>
+		<Computer />
+	</System>
+	<EventData>
+		<Data Name="PID">   40512</Data>
+		<Data Name="size">      65</Data>
+		<Data Name="daddr">127.0.0.1</Data>
+		<Data Name="saddr">127.0.0.1</Data>
+		<Data Name="dport">62898</Data>
+		<Data Name="sport">62897</Data>
+		<Data Name="seqnum">       0</Data>
+		<Data Name="connid">       0</Data>
+	</EventData>
+	<RenderingInfo Culture="en-US">
+		<Level>Information </Level>
+		<Opcode>Data received. </Opcode>
+		<Keywords>
+			<Keyword>KERNEL_NETWORK_KEYWORD_IPV4</Keyword>
+		</Keywords>
+		<Task>KERNEL_NETWORK_TASK_TCPIP</Task>
+		<Message>TCPv4: 65 bytes received from 127.0.0.1:62897 to 127.0.0.1:62898. </Message>
+		<Channel>Microsoft-Windows-Kernel-Network/Analytic</Channel>
+		<Provider>Microsoft-Windows-Kernel-Network </Provider>
+	</RenderingInfo>
+</Event>
+<Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+	<System>
+		<Provider Name="Microsoft-Windows-Kernel-Network" Guid="{7dd42a49-5329-4832-8dfd-43d979153a88}" />
+		<EventID>10</EventID>
+		<Version>0</Version>
+		<Level>4</Level>
+		<Task>10</Task>
+		<Opcode>10</Opcode>
+		<Keywords>0x8000000000000010</Keywords>
+		<TimeCreated SystemTime="2026-11-21T20:51:15.699546300+01:59" />
+		<Correlation ActivityID="{00000000-0000-0000-0000-000000000000}" />
+		<Execution ProcessID="40512" ThreadID="38344" ProcessorID="23" KernelTime="60" UserTime="15" />
+		<Channel>Microsoft-Windows-Kernel-Network/Analytic</Channel>
+		<Computer />
+	</System>
+	<EventData>
+		<Data Name="PID">   40512</Data>
+		<Data Name="size">      65</Data>
+		<Data Name="daddr">127.0.0.1</Data>
+		<Data Name="saddr">127.0.0.1</Data>
+		<Data Name="dport">62897</Data>
+		<Data Name="sport">62898</Data>
+		<Data Name="startime"> 8761322</Data>
+		<Data Name="endtime"> 8761322</Data>
+		<Data Name="seqnum">       0</Data>
+		<Data Name="connid">       0</Data>
+	</EventData>
+	<RenderingInfo Culture="en-US">
+		<Level>Information </Level>
+		<Opcode>Data sent. </Opcode>
+		<Keywords>
+			<Keyword>KERNEL_NETWORK_KEYWORD_IPV4</Keyword>
+		</Keywords>
+		<Task>KERNEL_NETWORK_TASK_TCPIP</Task>
+		<Message>TCPv4: 65 bytes transmitted from 127.0.0.1:62898 to 127.0.0.1:62897. </Message>
+		<Channel>Microsoft-Windows-Kernel-Network/Analytic</Channel>
+		<Provider>Microsoft-Windows-Kernel-Network </Provider>
+	</RenderingInfo>
+</Event>
+<Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+	<System>
+		<Provider Name="Microsoft-Windows-Kernel-Network" Guid="{7dd42a49-5329-4832-8dfd-43d979153a88}" />
+		<EventID>18</EventID>
+		<Version>0</Version>
+		<Level>4</Level>
+		<Task>10</Task>
+		<Opcode>18</Opcode>
+		<Keywords>0x8000000000000010</Keywords>
+		<TimeCreated SystemTime="2026-11-21T20:51:15.701776300+01:59" />
+		<Correlation ActivityID="{00000000-0000-0000-0000-000000000000}" />
+		<Execution ProcessID="40512" ThreadID="38344" ProcessorID="22" KernelTime="60" UserTime="15" />
+		<Channel>Microsoft-Windows-Kernel-Network/Analytic</Channel>
+		<Computer />
+	</System>
+	<EventData>
+		<Data Name="PID">   40512</Data>
+		<Data Name="size">     124</Data>
+		<Data Name="daddr">127.0.0.1</Data>
+		<Data Name="saddr">127.0.0.1</Data>
+		<Data Name="dport">62897</Data>
+		<Data Name="sport">62898</Data>
+		<Data Name="seqnum">       0</Data>
+		<Data Name="connid">       0</Data>
+	</EventData>
+	<RenderingInfo Culture="en-US">
+		<Level>Information </Level>
+		<Opcode>Protocol copied data on behalf of user. </Opcode>
+		<Keywords>
+			<Keyword>KERNEL_NETWORK_KEYWORD_IPV4</Keyword>
+		</Keywords>
+		<Task>KERNEL_NETWORK_TASK_TCPIP</Task>
+		<Message>TCPv4: 124 bytes copied in protocol on behalf of user for connection between 127.0.0.1:62898 and 127.0.0.1:62897. </Message>
+		<Channel>Microsoft-Windows-Kernel-Network/Analytic</Channel>
+		<Provider>Microsoft-Windows-Kernel-Network </Provider>
+	</RenderingInfo>
+</Event>
+<Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+	<System>
+		<Provider Name="Microsoft-Windows-Kernel-Network" Guid="{7dd42a49-5329-4832-8dfd-43d979153a88}" />
+		<EventID>11</EventID>
+		<Version>0</Version>
+		<Level>4</Level>
+		<Task>10</Task>
+		<Opcode>11</Opcode>
+		<Keywords>0x8000000000000010</Keywords>
+		<TimeCreated SystemTime="2026-11-21T20:51:15.701790500+01:59" />
+		<Correlation ActivityID="{00000000-0000-0000-0000-000000000000}" />
+		<Execution ProcessID="40512" ThreadID="38344" ProcessorID="22" KernelTime="60" UserTime="15" />
+		<Channel>Microsoft-Windows-Kernel-Network/Analytic</Channel>
+		<Computer />
+	</System>
+	<EventData>
+		<Data Name="PID">   40512</Data>
+		<Data Name="size">     124</Data>
+		<Data Name="daddr">127.0.0.1</Data>
+		<Data Name="saddr">127.0.0.1</Data>
+		<Data Name="dport">62897</Data>
+		<Data Name="sport">62898</Data>
+		<Data Name="seqnum">       0</Data>
+		<Data Name="connid">       0</Data>
+	</EventData>
+	<RenderingInfo Culture="en-US">
+		<Level>Information </Level>
+		<Opcode>Data received. </Opcode>
+		<Keywords>
+			<Keyword>KERNEL_NETWORK_KEYWORD_IPV4</Keyword>
+		</Keywords>
+		<Task>KERNEL_NETWORK_TASK_TCPIP</Task>
+		<Message>TCPv4: 124 bytes received from 127.0.0.1:62898 to 127.0.0.1:62897. </Message>
+		<Channel>Microsoft-Windows-Kernel-Network/Analytic</Channel>
+		<Provider>Microsoft-Windows-Kernel-Network </Provider>
+	</RenderingInfo>
+</Event>
+<Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+	<System>
+		<Provider Name="Microsoft-Windows-Kernel-Network" Guid="{7dd42a49-5329-4832-8dfd-43d979153a88}" />
+		<EventID>10</EventID>
+		<Version>0</Version>
+		<Level>4</Level>
+		<Task>10</Task>
+		<Opcode>10</Opcode>
+		<Keywords>0x8000000000000010</Keywords>
+		<TimeCreated SystemTime="2026-11-21T20:51:15.701796100+01:59" />
+		<Correlation ActivityID="{00000000-0000-0000-0000-000000000000}" />
+		<Execution ProcessID="40512" ThreadID="38344" ProcessorID="22" KernelTime="60" UserTime="15" />
+		<Channel>Microsoft-Windows-Kernel-Network/Analytic</Channel>
+		<Computer />
+	</System>
+	<EventData>
+		<Data Name="PID">   40512</Data>
+		<Data Name="size">     124</Data>
+		<Data Name="daddr">127.0.0.1</Data>
+		<Data Name="saddr">127.0.0.1</Data>
+		<Data Name="dport">62898</Data>
+		<Data Name="sport">62897</Data>
+		<Data Name="startime"> 8761322</Data>
+		<Data Name="endtime"> 8761322</Data>
+		<Data Name="seqnum">       0</Data>
+		<Data Name="connid">       0</Data>
+	</EventData>
+	<RenderingInfo Culture="en-US">
+		<Level>Information </Level>
+		<Opcode>Data sent. </Opcode>
+		<Keywords>
+			<Keyword>KERNEL_NETWORK_KEYWORD_IPV4</Keyword>
+		</Keywords>
+		<Task>KERNEL_NETWORK_TASK_TCPIP</Task>
+		<Message>TCPv4: 124 bytes transmitted from 127.0.0.1:62897 to 127.0.0.1:62898. </Message>
+		<Channel>Microsoft-Windows-Kernel-Network/Analytic</Channel>
+		<Provider>Microsoft-Windows-Kernel-Network </Provider>
+	</RenderingInfo>
+</Event>
+<Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+	<System>
+		<Provider Name="Microsoft-Windows-Kernel-Process" Guid="{22fb2cd6-0e7b-422b-a0c7-2fad1fd0e716}" />
+		<EventID>1</EventID>
+		<Version>4</Version>
+		<Level>4</Level>
+		<Task>1</Task>
+		<Opcode>1</Opcode>
+		<Keywords>0x8000000000000010</Keywords>
+		<TimeCreated SystemTime="2026-11-21T20:51:15.704737300+01:59" />
+		<Correlation ActivityID="{00000000-0000-0000-0000-000000000000}" />
+		<Execution ProcessID="40512" ThreadID="38344" ProcessorID="0" KernelTime="60" UserTime="15" />
+		<Channel>Microsoft-Windows-Kernel-Process/Analytic</Channel>
+		<Computer />
+	</System>
+	<EventData>
+		<Data Name="ProcessID">   44384</Data>
+		<Data Name="ProcessSequenceNumber">213308</Data>
+		<Data Name="CreateTime">2026-11-21T18:51:15.704714300Z</Data>
+		<Data Name="ParentProcessID">   40512</Data>
+		<Data Name="ParentProcessSequenceNumber">213306</Data>
+		<Data Name="SessionID">       1</Data>
+		<Data Name="Flags">       0</Data>
+		<Data Name="ProcessTokenElevationType">       2</Data>
+		<Data Name="ProcessTokenIsElevated">       1</Data>
+		<Data Name="MandatoryLabel">S-1-16-12288</Data>
+		<Data Name="ImageName">\Device\HarddiskVolume5\2026_Virtual_Embedded_Rig_Assistant\02_Tools\runtime\node-v24.21.0-win-x64\node.exe</Data>
+		<Data Name="ImageChecksum">0x594B290</Data>
+		<Data Name="TimeDateStamp">0x6A9F510B</Data>
+		<Data Name="PackageFullName"></Data>
+		<Data Name="PackageRelativeAppId"></Data>
+		<Data Name="SecurityMitigations">       0</Data>
+	</EventData>
+	<RenderingInfo Culture="en-US">
+		<Level>Information </Level>
+		<Opcode>Start </Opcode>
+		<Keywords>
+			<Keyword>WINEVENT_KEYWORD_PROCESS</Keyword>
+		</Keywords>
+		<Task>ProcessStart</Task>
+		<Message>Process 44384 started at time &#8206;2026&#8206;-&#8206;11&#8206;-&#8206;21T18:51:15.704714300Z by parent 40512 running in session 1 with name \Device\HarddiskVolume5\2026_Virtual_Embedded_Rig_Assistant\02_Tools\runtime\node-v24.21.0-win-x64\node.exe.
+Enabled security mitigations: 0. </Message>
+		<Channel>Microsoft-Windows-Kernel-Process/Analytic</Channel>
+		<Provider>Microsoft-Windows-Kernel-Process </Provider>
+	</RenderingInfo>
+</Event>
+<Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+	<System>
+		<Provider Name="Microsoft-Windows-Kernel-Network" Guid="{7dd42a49-5329-4832-8dfd-43d979153a88}" />
+		<EventID>10</EventID>
+		<Version>0</Version>
+		<Level>4</Level>
+		<Task>10</Task>
+		<Opcode>10</Opcode>
+		<Keywords>0x8000000000000010</Keywords>
+		<TimeCreated SystemTime="2026-11-21T20:51:15.740030300+01:59" />
+		<Correlation ActivityID="{00000000-0000-0000-0000-000000000000}" />
+		<Execution ProcessID="4" ThreadID="1916" ProcessorID="0" KernelTime="187575" UserTime="0" />
+		<Channel>Microsoft-Windows-Kernel-Network/Analytic</Channel>
+		<Computer />
+	</System>
+	<EventData>
+		<Data Name="PID">   44932</Data>
+		<Data Name="size">   25944</Data>
+		<Data Name="daddr">34.149.66.165</Data>
+		<Data Name="saddr">192.0.2.13</Data>
+		<Data Name="dport">443</Data>
+		<Data Name="sport">62861</Data>
+		<Data Name="startime"> 8761322</Data>
+		<Data Name="endtime"> 8761326</Data>
+		<Data Name="seqnum">       0</Data>
+		<Data Name="connid">       0</Data>
+	</EventData>
+	<RenderingInfo Culture="en-US">
+		<Level>Information </Level>
+		<Opcode>Data sent. </Opcode>
+		<Keywords>
+			<Keyword>KERNEL_NETWORK_KEYWORD_IPV4</Keyword>
+		</Keywords>
+		<Task>KERNEL_NETWORK_TASK_TCPIP</Task>
+		<Message>TCPv4: 25944 bytes transmitted from 192.0.2.13:62861 to 34.149.66.165:443. </Message>
+		<Channel>Microsoft-Windows-Kernel-Network/Analytic</Channel>
+		<Provider>Microsoft-Windows-Kernel-Network </Provider>
+	</RenderingInfo>
+</Event>
+<Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+	<System>
+		<Provider Name="Microsoft-Windows-Kernel-Network" Guid="{7dd42a49-5329-4832-8dfd-43d979153a88}" />
+		<EventID>42</EventID>
+		<Version>0</Version>
+		<Level>4</Level>
+		<Task>11</Task>
+		<Opcode>42</Opcode>
+		<Keywords>0x8000000000000010</Keywords>
+		<TimeCreated SystemTime="2026-11-21T20:51:15.779806800+01:59" />
+		<Correlation ActivityID="{00000000-0000-0000-0000-000000000000}" />
+		<Execution ProcessID="3224" ThreadID="42984" ProcessorID="1" KernelTime="540" UserTime="60" />
+		<Channel>Microsoft-Windows-Kernel-Network/Analytic</Channel>
+		<Computer />
+	</System>
+	<EventData>
+		<Data Name="PID">    3224</Data>
+		<Data Name="size">      29</Data>
+		<Data Name="daddr">192.0.2.1</Data>
+		<Data Name="saddr">192.0.2.13</Data>
+		<Data Name="dport">53</Data>
+		<Data Name="sport">59617</Data>
+		<Data Name="seqnum">       0</Data>
+		<Data Name="connid">       0</Data>
+	</EventData>
+	<RenderingInfo Culture="en-US">
+		<Level>Information </Level>
+		<Opcode>Data sent over UDP protocol. </Opcode>
+		<Keywords>
+			<Keyword>KERNEL_NETWORK_KEYWORD_IPV4</Keyword>
+		</Keywords>
+		<Task>KERNEL_NETWORK_TASK_UDPIP</Task>
+		<Message>UDPv4: 29 bytes transmitted from 192.0.2.13:59617 to 192.0.2.1:53. </Message>
+		<Channel>Microsoft-Windows-Kernel-Network/Analytic</Channel>
+		<Provider>Microsoft-Windows-Kernel-Network </Provider>
+	</RenderingInfo>
+</Event>
+<Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+	<System>
+		<Provider Name="Microsoft-Windows-Kernel-Network" Guid="{7dd42a49-5329-4832-8dfd-43d979153a88}" />
+		<EventID>43</EventID>
+		<Version>0</Version>
+		<Level>4</Level>
+		<Task>11</Task>
+		<Opcode>43</Opcode>
+		<Keywords>0x8000000000000010</Keywords>
+		<TimeCreated SystemTime="2026-11-21T20:51:15.791213200+01:59" />
+		<Correlation ActivityID="{00000000-0000-0000-0000-000000000000}" />
+		<Execution ProcessID="4" ThreadID="1916" ProcessorID="11" KernelTime="187575" UserTime="0" />
+		<Channel>Microsoft-Windows-Kernel-Network/Analytic</Channel>
+		<Computer />
+	</System>
+	<EventData>
+		<Data Name="PID">    3224</Data>
+		<Data Name="size">      61</Data>
+		<Data Name="daddr">192.0.2.13</Data>
+		<Data Name="saddr">192.0.2.1</Data>
+		<Data Name="dport">59617</Data>
+		<Data Name="sport">53</Data>
+		<Data Name="seqnum">       0</Data>
+		<Data Name="connid">       0</Data>
+	</EventData>
+	<RenderingInfo Culture="en-US">
+		<Level>Information </Level>
+		<Opcode>Data received over UDP protocol. </Opcode>
+		<Keywords>
+			<Keyword>KERNEL_NETWORK_KEYWORD_IPV4</Keyword>
+		</Keywords>
+		<Task>KERNEL_NETWORK_TASK_UDPIP</Task>
+		<Message>UDPv4: 61 bytes received from 192.0.2.1:53 to 192.0.2.13:59617. </Message>
+		<Channel>Microsoft-Windows-Kernel-Network/Analytic</Channel>
+		<Provider>Microsoft-Windows-Kernel-Network </Provider>
+	</RenderingInfo>
+</Event>
+<Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+	<System>
+		<Provider Name="Microsoft-Windows-Kernel-Network" Guid="{7dd42a49-5329-4832-8dfd-43d979153a88}" />
+		<EventID>10</EventID>
+		<Version>0</Version>
+		<Level>4</Level>
+		<Task>10</Task>
+		<Opcode>10</Opcode>
+		<Keywords>0x8000000000000010</Keywords>
+		<TimeCreated SystemTime="2026-11-21T20:51:15.798878700+01:59" />
+		<Correlation ActivityID="{00000000-0000-0000-0000-000000000000}" />
+		<Execution ProcessID="4" ThreadID="1916" ProcessorID="10" KernelTime="187575" UserTime="0" />
+		<Channel>Microsoft-Windows-Kernel-Network/Analytic</Channel>
+		<Computer />
+	</System>
+	<EventData>
+		<Data Name="PID">   32908</Data>
+		<Data Name="size">      32</Data>
+		<Data Name="daddr">160.79.104.10</Data>
+		<Data Name="saddr">192.0.2.13</Data>
+		<Data Name="dport">443</Data>
+		<Data Name="sport">53581</Data>
+		<Data Name="startime"> 8761328</Data>
+		<Data Name="endtime"> 8761332</Data>
+		<Data Name="seqnum">       0</Data>
+		<Data Name="connid">       0</Data>
+	</EventData>
+	<RenderingInfo Culture="en-US">
+		<Level>Information </Level>
+		<Opcode>Data sent. </Opcode>
+		<Keywords>
+			<Keyword>KERNEL_NETWORK_KEYWORD_IPV4</Keyword>
+		</Keywords>
+		<Task>KERNEL_NETWORK_TASK_TCPIP</Task>
+		<Message>TCPv4: 32 bytes transmitted from 192.0.2.13:53581 to 160.79.104.10:443. </Message>
+		<Channel>Microsoft-Windows-Kernel-Network/Analytic</Channel>
+		<Provider>Microsoft-Windows-Kernel-Network </Provider>
+	</RenderingInfo>
+</Event>
+<Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+	<System>
+		<Provider Name="Microsoft-Windows-Kernel-Network" Guid="{7dd42a49-5329-4832-8dfd-43d979153a88}" />
+		<EventID>18</EventID>
+		<Version>0</Version>
+		<Level>4</Level>
+		<Task>10</Task>
+		<Opcode>18</Opcode>
+		<Keywords>0x8000000000000010</Keywords>
+		<TimeCreated SystemTime="2026-11-21T20:51:15.798880800+01:59" />
+		<Correlation ActivityID="{00000000-0000-0000-0000-000000000000}" />
+		<Execution ProcessID="4" ThreadID="1916" ProcessorID="10" KernelTime="187575" UserTime="0" />
+		<Channel>Microsoft-Windows-Kernel-Network/Analytic</Channel>
+		<Computer />
+	</System>
+	<EventData>
+		<Data Name="PID">   32908</Data>
+		<Data Name="size">      28</Data>
+		<Data Name="daddr">160.79.104.10</Data>
+		<Data Name="saddr">192.0.2.13</Data>
+		<Data Name="dport">443</Data>
+		<Data Name="sport">53581</Data>
+		<Data Name="seqnum">       0</Data>
+		<Data Name="connid">       0</Data>
+	</EventData>
+	<RenderingInfo Culture="en-US">
+		<Level>Information </Level>
+		<Opcode>Protocol copied data on behalf of user. </Opcode>
+		<Keywords>
+			<Keyword>KERNEL_NETWORK_KEYWORD_IPV4</Keyword>
+		</Keywords>
+		<Task>KERNEL_NETWORK_TASK_TCPIP</Task>
+		<Message>TCPv4: 28 bytes copied in protocol on behalf of user for connection between 192.0.2.13:53581 and 160.79.104.10:443. </Message>
+		<Channel>Microsoft-Windows-Kernel-Network/Analytic</Channel>
+		<Provider>Microsoft-Windows-Kernel-Network </Provider>
+	</RenderingInfo>
+</Event>
+<Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+	<System>
+		<Provider Name="Microsoft-Windows-Kernel-Network" Guid="{7dd42a49-5329-4832-8dfd-43d979153a88}" />
+		<EventID>12</EventID>
+		<Version>0</Version>
+		<Level>4</Level>
+		<Task>10</Task>
+		<Opcode>12</Opcode>
+		<Keywords>0x8000000000000010</Keywords>
+		<TimeCreated SystemTime="2026-11-21T20:51:15.802989400+01:59" />
+		<Correlation ActivityID="{00000000-0000-0000-0000-000000000000}" />
+		<Execution ProcessID="4" ThreadID="1916" ProcessorID="22" KernelTime="187575" UserTime="0" />
+		<Channel>Microsoft-Windows-Kernel-Network/Analytic</Channel>
+		<Computer />
+	</System>
+	<EventData>
+		<Data Name="PID">   44384</Data>
+		<Data Name="size">       0</Data>
+		<Data Name="daddr">104.20.23.154</Data>
+		<Data Name="saddr">192.0.2.13</Data>
+		<Data Name="dport">443</Data>
+		<Data Name="sport">62899</Data>
+		<Data Name="mss">1400</Data>
+		<Data Name="sackopt">1</Data>
+		<Data Name="tsopt">0</Data>
+		<Data Name="wsopt">1</Data>
+		<Data Name="rcvwin">   65535</Data>
+		<Data Name="rcvwinscale">8</Data>
+		<Data Name="sndwinscale">13</Data>
+		<Data Name="seqnum">       0</Data>
+		<Data Name="connid">       0</Data>
+	</EventData>
+	<RenderingInfo Culture="en-US">
+		<Level>Information </Level>
+		<Opcode>Connection attempted. </Opcode>
+		<Keywords>
+			<Keyword>KERNEL_NETWORK_KEYWORD_IPV4</Keyword>
+		</Keywords>
+		<Task>KERNEL_NETWORK_TASK_TCPIP</Task>
+		<Message>TCPv4: Connection attempted between 192.0.2.13:62899 and 104.20.23.154:443. </Message>
+		<Channel>Microsoft-Windows-Kernel-Network/Analytic</Channel>
+		<Provider>Microsoft-Windows-Kernel-Network </Provider>
+	</RenderingInfo>
+</Event>
+<Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+	<System>
+		<Provider Name="Microsoft-Windows-Kernel-Network" Guid="{7dd42a49-5329-4832-8dfd-43d979153a88}" />
+		<EventID>10</EventID>
+		<Version>0</Version>
+		<Level>4</Level>
+		<Task>10</Task>
+		<Opcode>10</Opcode>
+		<Keywords>0x8000000000000010</Keywords>
+		<TimeCreated SystemTime="2026-11-21T20:51:15.816068900+01:59" />
+		<Correlation ActivityID="{00000000-0000-0000-0000-000000000000}" />
+		<Execution ProcessID="4" ThreadID="1916" ProcessorID="10" KernelTime="187575" UserTime="0" />
+		<Channel>Microsoft-Windows-Kernel-Network/Analytic</Channel>
+		<Computer />
+	</System>
+	<EventData>
+		<Data Name="PID">   44384</Data>
+		<Data Name="size">    1588</Data>
+		<Data Name="daddr">104.20.23.154</Data>
+		<Data Name="saddr">192.0.2.13</Data>
+		<Data Name="dport">443</Data>
+		<Data Name="sport">62899</Data>
+		<Data Name="startime"> 8761333</Data>
+		<Data Name="endtime"> 8761334</Data>
+		<Data Name="seqnum">       0</Data>
+		<Data Name="connid">       0</Data>
+	</EventData>
+	<RenderingInfo Culture="en-US">
+		<Level>Information </Level>
+		<Opcode>Data sent. </Opcode>
+		<Keywords>
+			<Keyword>KERNEL_NETWORK_KEYWORD_IPV4</Keyword>
+		</Keywords>
+		<Task>KERNEL_NETWORK_TASK_TCPIP</Task>
+		<Message>TCPv4: 1588 bytes transmitted from 192.0.2.13:62899 to 104.20.23.154:443. </Message>
+		<Channel>Microsoft-Windows-Kernel-Network/Analytic</Channel>
+		<Provider>Microsoft-Windows-Kernel-Network </Provider>
+	</RenderingInfo>
+</Event>
+<Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+	<System>
+		<Provider Name="Microsoft-Windows-Kernel-Network" Guid="{7dd42a49-5329-4832-8dfd-43d979153a88}" />
+		<EventID>18</EventID>
+		<Version>0</Version>
+		<Level>4</Level>
+		<Task>10</Task>
+		<Opcode>18</Opcode>
+		<Keywords>0x8000000000000010</Keywords>
+		<TimeCreated SystemTime="2026-11-21T20:51:15.816080000+01:59" />
+		<Correlation ActivityID="{00000000-0000-0000-0000-000000000000}" />
+		<Execution ProcessID="4" ThreadID="1916" ProcessorID="10" KernelTime="187575" UserTime="0" />
+		<Channel>Microsoft-Windows-Kernel-Network/Analytic</Channel>
+		<Computer />
+	</System>
+	<EventData>
+		<Data Name="PID">   44384</Data>
+		<Data Name="size">    1412</Data>
+		<Data Name="daddr">104.20.23.154</Data>
+		<Data Name="saddr">192.0.2.13</Data>
+		<Data Name="dport">443</Data>
+		<Data Name="sport">62899</Data>
+		<Data Name="seqnum">       0</Data>
+		<Data Name="connid">       0</Data>
+	</EventData>
+	<RenderingInfo Culture="en-US">
+		<Level>Information </Level>
+		<Opcode>Protocol copied data on behalf of user. </Opcode>
+		<Keywords>
+			<Keyword>KERNEL_NETWORK_KEYWORD_IPV4</Keyword>
+		</Keywords>
+		<Task>KERNEL_NETWORK_TASK_TCPIP</Task>
+		<Message>TCPv4: 1412 bytes copied in protocol on behalf of user for connection between 192.0.2.13:62899 and 104.20.23.154:443. </Message>
+		<Channel>Microsoft-Windows-Kernel-Network/Analytic</Channel>
+		<Provider>Microsoft-Windows-Kernel-Network </Provider>
+	</RenderingInfo>
+</Event>
+<Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+	<System>
+		<Provider Name="Microsoft-Windows-Kernel-Network" Guid="{7dd42a49-5329-4832-8dfd-43d979153a88}" />
+		<EventID>11</EventID>
+		<Version>0</Version>
+		<Level>4</Level>
+		<Task>10</Task>
+		<Opcode>11</Opcode>
+		<Keywords>0x8000000000000010</Keywords>
+		<TimeCreated SystemTime="2026-11-21T20:51:15.816120000+01:59" />
+		<Correlation ActivityID="{00000000-0000-0000-0000-000000000000}" />
+		<Execution ProcessID="4" ThreadID="1916" ProcessorID="10" KernelTime="187575" UserTime="0" />
+		<Channel>Microsoft-Windows-Kernel-Network/Analytic</Channel>
+		<Computer />
+	</System>
+	<EventData>
+		<Data Name="PID">   44384</Data>
+		<Data Name="size">    1412</Data>
+		<Data Name="daddr">104.20.23.154</Data>
+		<Data Name="saddr">192.0.2.13</Data>
+		<Data Name="dport">443</Data>
+		<Data Name="sport">62899</Data>
+		<Data Name="seqnum">       0</Data>
+		<Data Name="connid">       0</Data>
+	</EventData>
+	<RenderingInfo Culture="en-US">
+		<Level>Information </Level>
+		<Opcode>Data received. </Opcode>
+		<Keywords>
+			<Keyword>KERNEL_NETWORK_KEYWORD_IPV4</Keyword>
+		</Keywords>
+		<Task>KERNEL_NETWORK_TASK_TCPIP</Task>
+		<Message>TCPv4: 1412 bytes received from 192.0.2.13:62899 to 104.20.23.154:443. </Message>
+		<Channel>Microsoft-Windows-Kernel-Network/Analytic</Channel>
+		<Provider>Microsoft-Windows-Kernel-Network </Provider>
+	</RenderingInfo>
+</Event>
+<Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+	<System>
+		<Provider Name="Microsoft-Windows-Kernel-Network" Guid="{7dd42a49-5329-4832-8dfd-43d979153a88}" />
+		<EventID>18</EventID>
+		<Version>0</Version>
+		<Level>4</Level>
+		<Task>10</Task>
+		<Opcode>18</Opcode>
+		<Keywords>0x8000000000000010</Keywords>
+		<TimeCreated SystemTime="2026-11-21T20:51:15.816125600+01:59" />
+		<Correlation ActivityID="{00000000-0000-0000-0000-000000000000}" />
+		<Execution ProcessID="4" ThreadID="1916" ProcessorID="10" KernelTime="187575" UserTime="0" />
+		<Channel>Microsoft-Windows-Kernel-Network/Analytic</Channel>
+		<Computer />
+	</System>
+	<EventData>
+		<Data Name="PID">   44384</Data>
+		<Data Name="size">    1412</Data>
+		<Data Name="daddr">104.20.23.154</Data>
+		<Data Name="saddr">192.0.2.13</Data>
+		<Data Name="dport">443</Data>
+		<Data Name="sport">62899</Data>
+		<Data Name="seqnum">       0</Data>
+		<Data Name="connid">       0</Data>
+	</EventData>
+	<RenderingInfo Culture="en-US">
+		<Level>Information </Level>
+		<Opcode>Protocol copied data on behalf of user. </Opcode>
+		<Keywords>
+			<Keyword>KERNEL_NETWORK_KEYWORD_IPV4</Keyword>
+		</Keywords>
+		<Task>KERNEL_NETWORK_TASK_TCPIP</Task>
+		<Message>TCPv4: 1412 bytes copied in protocol on behalf of user for connection between 192.0.2.13:62899 and 104.20.23.154:443. </Message>
+		<Channel>Microsoft-Windows-Kernel-Network/Analytic</Channel>
+		<Provider>Microsoft-Windows-Kernel-Network </Provider>
+	</RenderingInfo>
+</Event>
+<Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+	<System>
+		<Provider Name="Microsoft-Windows-Kernel-Network" Guid="{7dd42a49-5329-4832-8dfd-43d979153a88}" />
+		<EventID>11</EventID>
+		<Version>0</Version>
+		<Level>4</Level>
+		<Task>10</Task>
+		<Opcode>11</Opcode>
+		<Keywords>0x8000000000000010</Keywords>
+		<TimeCreated SystemTime="2026-11-21T20:51:15.816127600+01:59" />
+		<Correlation ActivityID="{00000000-0000-0000-0000-000000000000}" />
+		<Execution ProcessID="4" ThreadID="1916" ProcessorID="10" KernelTime="187575" UserTime="0" />
+		<Channel>Microsoft-Windows-Kernel-Network/Analytic</Channel>
+		<Computer />
+	</System>
+	<EventData>
+		<Data Name="PID">   44384</Data>
+		<Data Name="size">    1412</Data>
+		<Data Name="daddr">104.20.23.154</Data>
+		<Data Name="saddr">192.0.2.13</Data>
+		<Data Name="dport">443</Data>
+		<Data Name="sport">62899</Data>
+		<Data Name="seqnum">       0</Data>
+		<Data Name="connid">       0</Data>
+	</EventData>
+	<RenderingInfo Culture="en-US">
+		<Level>Information </Level>
+		<Opcode>Data received. </Opcode>
+		<Keywords>
+			<Keyword>KERNEL_NETWORK_KEYWORD_IPV4</Keyword>
+		</Keywords>
+		<Task>KERNEL_NETWORK_TASK_TCPIP</Task>
+		<Message>TCPv4: 1412 bytes received from 192.0.2.13:62899 to 104.20.23.154:443. </Message>
+		<Channel>Microsoft-Windows-Kernel-Network/Analytic</Channel>
+		<Provider>Microsoft-Windows-Kernel-Network </Provider>
+	</RenderingInfo>
+</Event>
+<Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+	<System>
+		<Provider Name="Microsoft-Windows-Kernel-Network" Guid="{7dd42a49-5329-4832-8dfd-43d979153a88}" />
+		<EventID>18</EventID>
+		<Version>0</Version>
+		<Level>4</Level>
+		<Task>10</Task>
+		<Opcode>18</Opcode>
+		<Keywords>0x8000000000000010</Keywords>
+		<TimeCreated SystemTime="2026-11-21T20:51:15.816142400+01:59" />
+		<Correlation ActivityID="{00000000-0000-0000-0000-000000000000}" />
+		<Execution ProcessID="4" ThreadID="1916" ProcessorID="10" KernelTime="187575" UserTime="0" />
+		<Channel>Microsoft-Windows-Kernel-Network/Analytic</Channel>
+		<Computer />
+	</System>
+	<EventData>
+		<Data Name="PID">   44384</Data>
+		<Data Name="size">    1412</Data>
+		<Data Name="daddr">104.20.23.154</Data>
+		<Data Name="saddr">192.0.2.13</Data>
+		<Data Name="dport">443</Data>
+		<Data Name="sport">62899</Data>
+		<Data Name="seqnum">       0</Data>
+		<Data Name="connid">       0</Data>
+	</EventData>
+	<RenderingInfo Culture="en-US">
+		<Level>Information </Level>
+		<Opcode>Protocol copied data on behalf of user. </Opcode>
+		<Keywords>
+			<Keyword>KERNEL_NETWORK_KEYWORD_IPV4</Keyword>
+		</Keywords>
+		<Task>KERNEL_NETWORK_TASK_TCPIP</Task>
+		<Message>TCPv4: 1412 bytes copied in protocol on behalf of user for connection between 192.0.2.13:62899 and 104.20.23.154:443. </Message>
+		<Channel>Microsoft-Windows-Kernel-Network/Analytic</Channel>
+		<Provider>Microsoft-Windows-Kernel-Network </Provider>
+	</RenderingInfo>
+</Event>
+<Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+	<System>
+		<Provider Name="Microsoft-Windows-Kernel-Network" Guid="{7dd42a49-5329-4832-8dfd-43d979153a88}" />
+		<EventID>11</EventID>
+		<Version>0</Version>
+		<Level>4</Level>
+		<Task>10</Task>
+		<Opcode>11</Opcode>
+		<Keywords>0x8000000000000010</Keywords>
+		<TimeCreated SystemTime="2026-11-21T20:51:15.816144100+01:59" />
+		<Correlation ActivityID="{00000000-0000-0000-0000-000000000000}" />
+		<Execution ProcessID="4" ThreadID="1916" ProcessorID="10" KernelTime="187575" UserTime="0" />
+		<Channel>Microsoft-Windows-Kernel-Network/Analytic</Channel>
+		<Computer />
+	</System>
+	<EventData>
+		<Data Name="PID">   44384</Data>
+		<Data Name="size">    1412</Data>
+		<Data Name="daddr">104.20.23.154</Data>
+		<Data Name="saddr">192.0.2.13</Data>
+		<Data Name="dport">443</Data>
+		<Data Name="sport">62899</Data>
+		<Data Name="seqnum">       0</Data>
+		<Data Name="connid">       0</Data>
+	</EventData>
+	<RenderingInfo Culture="en-US">
+		<Level>Information </Level>
+		<Opcode>Data received. </Opcode>
+		<Keywords>
+			<Keyword>KERNEL_NETWORK_KEYWORD_IPV4</Keyword>
+		</Keywords>
+		<Task>KERNEL_NETWORK_TASK_TCPIP</Task>
+		<Message>TCPv4: 1412 bytes received from 192.0.2.13:62899 to 104.20.23.154:443. </Message>
+		<Channel>Microsoft-Windows-Kernel-Network/Analytic</Channel>
+		<Provider>Microsoft-Windows-Kernel-Network </Provider>
+	</RenderingInfo>
+</Event>
+<Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+	<System>
+		<Provider Name="Microsoft-Windows-Kernel-Network" Guid="{7dd42a49-5329-4832-8dfd-43d979153a88}" />
+		<EventID>18</EventID>
+		<Version>0</Version>
+		<Level>4</Level>
+		<Task>10</Task>
+		<Opcode>18</Opcode>
+		<Keywords>0x8000000000000010</Keywords>
+		<TimeCreated SystemTime="2026-11-21T20:51:15.816147900+01:59" />
+		<Correlation ActivityID="{00000000-0000-0000-0000-000000000000}" />
+		<Execution ProcessID="4" ThreadID="1916" ProcessorID="10" KernelTime="187575" UserTime="0" />
+		<Channel>Microsoft-Windows-Kernel-Network/Analytic</Channel>
+		<Computer />
+	</System>
+	<EventData>
+		<Data Name="PID">   44384</Data>
+		<Data Name="size">     834</Data>
+		<Data Name="daddr">104.20.23.154</Data>
+		<Data Name="saddr">192.0.2.13</Data>
+		<Data Name="dport">443</Data>
+		<Data Name="sport">62899</Data>
+		<Data Name="seqnum">       0</Data>
+		<Data Name="connid">       0</Data>
+	</EventData>
+	<RenderingInfo Culture="en-US">
+		<Level>Information </Level>
+		<Opcode>Protocol copied data on behalf of user. </Opcode>
+		<Keywords>
+			<Keyword>KERNEL_NETWORK_KEYWORD_IPV4</Keyword>
+		</Keywords>
+		<Task>KERNEL_NETWORK_TASK_TCPIP</Task>
+		<Message>TCPv4: 834 bytes copied in protocol on behalf of user for connection between 192.0.2.13:62899 and 104.20.23.154:443. </Message>
+		<Channel>Microsoft-Windows-Kernel-Network/Analytic</Channel>
+		<Provider>Microsoft-Windows-Kernel-Network </Provider>
+	</RenderingInfo>
+</Event>
+<Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+	<System>
+		<Provider Name="Microsoft-Windows-Kernel-Network" Guid="{7dd42a49-5329-4832-8dfd-43d979153a88}" />
+		<EventID>11</EventID>
+		<Version>0</Version>
+		<Level>4</Level>
+		<Task>10</Task>
+		<Opcode>11</Opcode>
+		<Keywords>0x8000000000000010</Keywords>
+		<TimeCreated SystemTime="2026-11-21T20:51:15.816149400+01:59" />
+		<Correlation ActivityID="{00000000-0000-0000-0000-000000000000}" />
+		<Execution ProcessID="4" ThreadID="1916" ProcessorID="10" KernelTime="187575" UserTime="0" />
+		<Channel>Microsoft-Windows-Kernel-Network/Analytic</Channel>
+		<Computer />
+	</System>
+	<EventData>
+		<Data Name="PID">   44384</Data>
+		<Data Name="size">     834</Data>
+		<Data Name="daddr">104.20.23.154</Data>
+		<Data Name="saddr">192.0.2.13</Data>
+		<Data Name="dport">443</Data>
+		<Data Name="sport">62899</Data>
+		<Data Name="seqnum">       0</Data>
+		<Data Name="connid">       0</Data>
+	</EventData>
+	<RenderingInfo Culture="en-US">
+		<Level>Information </Level>
+		<Opcode>Data received. </Opcode>
+		<Keywords>
+			<Keyword>KERNEL_NETWORK_KEYWORD_IPV4</Keyword>
+		</Keywords>
+		<Task>KERNEL_NETWORK_TASK_TCPIP</Task>
+		<Message>TCPv4: 834 bytes received from 192.0.2.13:62899 to 104.20.23.154:443. </Message>
+		<Channel>Microsoft-Windows-Kernel-Network/Analytic</Channel>
+		<Provider>Microsoft-Windows-Kernel-Network </Provider>
+	</RenderingInfo>
+</Event>
+<Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+	<System>
+		<Provider Name="Microsoft-Windows-Kernel-Network" Guid="{7dd42a49-5329-4832-8dfd-43d979153a88}" />
+		<EventID>10</EventID>
+		<Version>0</Version>
+		<Level>4</Level>
+		<Task>10</Task>
+		<Opcode>10</Opcode>
+		<Keywords>0x8000000000000010</Keywords>
+		<TimeCreated SystemTime="2026-11-21T20:51:15.832979100+01:59" />
+		<Correlation ActivityID="{00000000-0000-0000-0000-000000000000}" />
+		<Execution ProcessID="4" ThreadID="1916" ProcessorID="1" KernelTime="187575" UserTime="0" />
+		<Channel>Microsoft-Windows-Kernel-Network/Analytic</Channel>
+		<Computer />
+	</System>
+	<EventData>
+		<Data Name="PID">   44384</Data>
+		<Data Name="size">     163</Data>
+		<Data Name="daddr">104.20.23.154</Data>
+		<Data Name="saddr">192.0.2.13</Data>
+		<Data Name="dport">443</Data>
+		<Data Name="sport">62899</Data>
+		<Data Name="startime"> 8761334</Data>
+		<Data Name="endtime"> 8761336</Data>
+		<Data Name="seqnum">       0</Data>
+		<Data Name="connid">       0</Data>
+	</EventData>
+	<RenderingInfo Culture="en-US">
+		<Level>Information </Level>
+		<Opcode>Data sent. </Opcode>
+		<Keywords>
+			<Keyword>KERNEL_NETWORK_KEYWORD_IPV4</Keyword>
+		</Keywords>
+		<Task>KERNEL_NETWORK_TASK_TCPIP</Task>
+		<Message>TCPv4: 163 bytes transmitted from 192.0.2.13:62899 to 104.20.23.154:443. </Message>
+		<Channel>Microsoft-Windows-Kernel-Network/Analytic</Channel>
+		<Provider>Microsoft-Windows-Kernel-Network </Provider>
+	</RenderingInfo>
+</Event>
+<Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+	<System>
+		<Provider Name="Microsoft-Windows-Kernel-Network" Guid="{7dd42a49-5329-4832-8dfd-43d979153a88}" />
+		<EventID>18</EventID>
+		<Version>0</Version>
+		<Level>4</Level>
+		<Task>10</Task>
+		<Opcode>18</Opcode>
+		<Keywords>0x8000000000000010</Keywords>
+		<TimeCreated SystemTime="2026-11-21T20:51:15.832981000+01:59" />
+		<Correlation ActivityID="{00000000-0000-0000-0000-000000000000}" />
+		<Execution ProcessID="4" ThreadID="1916" ProcessorID="1" KernelTime="187575" UserTime="0" />
+		<Channel>Microsoft-Windows-Kernel-Network/Analytic</Channel>
+		<Computer />
+	</System>
+	<EventData>
+		<Data Name="PID">   44384</Data>
+		<Data Name="size">    1404</Data>
+		<Data Name="daddr">104.20.23.154</Data>
+		<Data Name="saddr">192.0.2.13</Data>
+		<Data Name="dport">443</Data>
+		<Data Name="sport">62899</Data>
+		<Data Name="seqnum">       0</Data>
+		<Data Name="connid">       0</Data>
+	</EventData>
+	<RenderingInfo Culture="en-US">
+		<Level>Information </Level>
+		<Opcode>Protocol copied data on behalf of user. </Opcode>
+		<Keywords>
+			<Keyword>KERNEL_NETWORK_KEYWORD_IPV4</Keyword>
+		</Keywords>
+		<Task>KERNEL_NETWORK_TASK_TCPIP</Task>
+		<Message>TCPv4: 1404 bytes copied in protocol on behalf of user for connection between 192.0.2.13:62899 and 104.20.23.154:443. </Message>
+		<Channel>Microsoft-Windows-Kernel-Network/Analytic</Channel>
+		<Provider>Microsoft-Windows-Kernel-Network </Provider>
+	</RenderingInfo>
+</Event>
+<Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+	<System>
+		<Provider Name="Microsoft-Windows-Kernel-Network" Guid="{7dd42a49-5329-4832-8dfd-43d979153a88}" />
+		<EventID>11</EventID>
+		<Version>0</Version>
+		<Level>4</Level>
+		<Task>10</Task>
+		<Opcode>11</Opcode>
+		<Keywords>0x8000000000000010</Keywords>
+		<TimeCreated SystemTime="2026-11-21T20:51:15.832996100+01:59" />
+		<Correlation ActivityID="{00000000-0000-0000-0000-000000000000}" />
+		<Execution ProcessID="4" ThreadID="1916" ProcessorID="1" KernelTime="187575" UserTime="0" />
+		<Channel>Microsoft-Windows-Kernel-Network/Analytic</Channel>
+		<Computer />
+	</System>
+	<EventData>
+		<Data Name="PID">   44384</Data>
+		<Data Name="size">    1404</Data>
+		<Data Name="daddr">104.20.23.154</Data>
+		<Data Name="saddr">192.0.2.13</Data>
+		<Data Name="dport">443</Data>
+		<Data Name="sport">62899</Data>
+		<Data Name="seqnum">       0</Data>
+		<Data Name="connid">       0</Data>
+	</EventData>
+	<RenderingInfo Culture="en-US">
+		<Level>Information </Level>
+		<Opcode>Data received. </Opcode>
+		<Keywords>
+			<Keyword>KERNEL_NETWORK_KEYWORD_IPV4</Keyword>
+		</Keywords>
+		<Task>KERNEL_NETWORK_TASK_TCPIP</Task>
+		<Message>TCPv4: 1404 bytes received from 192.0.2.13:62899 to 104.20.23.154:443. </Message>
+		<Channel>Microsoft-Windows-Kernel-Network/Analytic</Channel>
+		<Provider>Microsoft-Windows-Kernel-Network </Provider>
+	</RenderingInfo>
+</Event>
+<Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+	<System>
+		<Provider Name="Microsoft-Windows-Kernel-Network" Guid="{7dd42a49-5329-4832-8dfd-43d979153a88}" />
+		<EventID>18</EventID>
+		<Version>0</Version>
+		<Level>4</Level>
+		<Task>10</Task>
+		<Opcode>18</Opcode>
+		<Keywords>0x8000000000000010</Keywords>
+		<TimeCreated SystemTime="2026-11-21T20:51:15.833110900+01:59" />
+		<Correlation ActivityID="{00000000-0000-0000-0000-000000000000}" />
+		<Execution ProcessID="4" ThreadID="1916" ProcessorID="1" KernelTime="187575" UserTime="0" />
+		<Channel>Microsoft-Windows-Kernel-Network/Analytic</Channel>
+		<Computer />
+	</System>
+	<EventData>
+		<Data Name="PID">   44384</Data>
+		<Data Name="size">      27</Data>
+		<Data Name="daddr">104.20.23.154</Data>
+		<Data Name="saddr">192.0.2.13</Data>
+		<Data Name="dport">443</Data>
+		<Data Name="sport">62899</Data>
+		<Data Name="seqnum">       0</Data>
+		<Data Name="connid">       0</Data>
+	</EventData>
+	<RenderingInfo Culture="en-US">
+		<Level>Information </Level>
+		<Opcode>Protocol copied data on behalf of user. </Opcode>
+		<Keywords>
+			<Keyword>KERNEL_NETWORK_KEYWORD_IPV4</Keyword>
+		</Keywords>
+		<Task>KERNEL_NETWORK_TASK_TCPIP</Task>
+		<Message>TCPv4: 27 bytes copied in protocol on behalf of user for connection between 192.0.2.13:62899 and 104.20.23.154:443. </Message>
+		<Channel>Microsoft-Windows-Kernel-Network/Analytic</Channel>
+		<Provider>Microsoft-Windows-Kernel-Network </Provider>
+	</RenderingInfo>
+</Event>
+<Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+	<System>
+		<Provider Name="Microsoft-Windows-Kernel-Network" Guid="{7dd42a49-5329-4832-8dfd-43d979153a88}" />
+		<EventID>11</EventID>
+		<Version>0</Version>
+		<Level>4</Level>
+		<Task>10</Task>
+		<Opcode>11</Opcode>
+		<Keywords>0x8000000000000010</Keywords>
+		<TimeCreated SystemTime="2026-11-21T20:51:15.833113800+01:59" />
+		<Correlation ActivityID="{00000000-0000-0000-0000-000000000000}" />
+		<Execution ProcessID="4" ThreadID="1916" ProcessorID="1" KernelTime="187575" UserTime="0" />
+		<Channel>Microsoft-Windows-Kernel-Network/Analytic</Channel>
+		<Computer />
+	</System>
+	<EventData>
+		<Data Name="PID">   44384</Data>
+		<Data Name="size">      27</Data>
+		<Data Name="daddr">104.20.23.154</Data>
+		<Data Name="saddr">192.0.2.13</Data>
+		<Data Name="dport">443</Data>
+		<Data Name="sport">62899</Data>
+		<Data Name="seqnum">       0</Data>
+		<Data Name="connid">       0</Data>
+	</EventData>
+	<RenderingInfo Culture="en-US">
+		<Level>Information </Level>
+		<Opcode>Data received. </Opcode>
+		<Keywords>
+			<Keyword>KERNEL_NETWORK_KEYWORD_IPV4</Keyword>
+		</Keywords>
+		<Task>KERNEL_NETWORK_TASK_TCPIP</Task>
+		<Message>TCPv4: 27 bytes received from 192.0.2.13:62899 to 104.20.23.154:443. </Message>
+		<Channel>Microsoft-Windows-Kernel-Network/Analytic</Channel>
+		<Provider>Microsoft-Windows-Kernel-Network </Provider>
+	</RenderingInfo>
+</Event>
+<Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+	<System>
+		<Provider Name="Microsoft-Windows-Kernel-Process" Guid="{22fb2cd6-0e7b-422b-a0c7-2fad1fd0e716}" />
+		<EventID>2</EventID>
+		<Version>2</Version>
+		<Level>4</Level>
+		<Task>2</Task>
+		<Opcode>2</Opcode>
+		<Keywords>0x8000000000000010</Keywords>
+		<TimeCreated SystemTime="2026-11-21T20:51:15.836429100+01:59" />
+		<Correlation ActivityID="{00000000-0000-0000-0000-000000000000}" />
+		<Execution ProcessID="44384" ThreadID="43724" ProcessorID="12" KernelTime="60" UserTime="0" />
+		<Channel>Microsoft-Windows-Kernel-Process/Analytic</Channel>
+		<Computer />
+	</System>
+	<EventData>
+		<Data Name="ProcessID">   44384</Data>
+		<Data Name="ProcessSequenceNumber">213308</Data>
+		<Data Name="CreateTime">2026-11-21T18:51:15.704714300Z</Data>
+		<Data Name="ExitTime">2026-11-21T18:51:15.836173000Z</Data>
+		<Data Name="ExitCode">       0</Data>
+		<Data Name="TokenElevationType">       2</Data>
+		<Data Name="HandleCount">     104</Data>
+		<Data Name="CommitCharge">23199744</Data>
+		<Data Name="CommitPeak">57966592</Data>
+		<Data Name="CPUCycleCount">264590438</Data>
+		<Data Name="ReadOperationCount">       0</Data>
+		<Data Name="WriteOperationCount">       0</Data>
+		<Data Name="ReadTransferKiloBytes">       0</Data>
+		<Data Name="WriteTransferKiloBytes">       0</Data>
+		<Data Name="HardFaultCount">     230</Data>
+		<Data Name="ImageName">node.exe</Data>
+	</EventData>
+	<RenderingInfo Culture="en-US">
+		<Level>Information </Level>
+		<Opcode>Stop </Opcode>
+		<Keywords>
+			<Keyword>WINEVENT_KEYWORD_PROCESS</Keyword>
+		</Keywords>
+		<Task>ProcessStop</Task>
+		<Message>Process 44384 (which started at time &#8206;2026&#8206;-&#8206;11&#8206;-&#8206;21T18:51:15.704714300Z) stopped at time &#8206;2026&#8206;-&#8206;11&#8206;-&#8206;21T18:51:15.836173000Z with exit code 0. </Message>
+		<Channel>Microsoft-Windows-Kernel-Process/Analytic</Channel>
+		<Provider>Microsoft-Windows-Kernel-Process </Provider>
+	</RenderingInfo>
+</Event>
+<Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+	<System>
+		<Provider Name="Microsoft-Windows-Kernel-Network" Guid="{7dd42a49-5329-4832-8dfd-43d979153a88}" />
+		<EventID>13</EventID>
+		<Version>0</Version>
+		<Level>4</Level>
+		<Task>10</Task>
+		<Opcode>13</Opcode>
+		<Keywords>0x8000000000000010</Keywords>
+		<TimeCreated SystemTime="2026-11-21T20:51:15.837300900+01:59" />
+		<Correlation ActivityID="{00000000-0000-0000-0000-000000000000}" />
+		<Execution ProcessID="44384" ThreadID="43724" ProcessorID="10" KernelTime="60" UserTime="0" />
+		<Channel>Microsoft-Windows-Kernel-Network/Analytic</Channel>
+		<Computer />
+	</System>
+	<EventData>
+		<Data Name="PID">   44384</Data>
+		<Data Name="size">       0</Data>
+		<Data Name="daddr">104.20.23.154</Data>
+		<Data Name="saddr">192.0.2.13</Data>
+		<Data Name="dport">443</Data>
+		<Data Name="sport">62899</Data>
+		<Data Name="seqnum">       0</Data>
+		<Data Name="connid">       0</Data>
+	</EventData>
+	<RenderingInfo Culture="en-US">
+		<Level>Information </Level>
+		<Opcode>Disconnect issued. </Opcode>
+		<Keywords>
+			<Keyword>KERNEL_NETWORK_KEYWORD_IPV4</Keyword>
+		</Keywords>
+		<Task>KERNEL_NETWORK_TASK_TCPIP</Task>
+		<Message>TCPv4: Connection closed between 192.0.2.13:62899 and 104.20.23.154:443. </Message>
+		<Channel>Microsoft-Windows-Kernel-Network/Analytic</Channel>
+		<Provider>Microsoft-Windows-Kernel-Network </Provider>
+	</RenderingInfo>
+</Event>
+<Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+	<System>
+		<Provider Name="Microsoft-Windows-Kernel-Network" Guid="{7dd42a49-5329-4832-8dfd-43d979153a88}" />
+		<EventID>13</EventID>
+		<Version>0</Version>
+		<Level>4</Level>
+		<Task>10</Task>
+		<Opcode>13</Opcode>
+		<Keywords>0x8000000000000010</Keywords>
+		<TimeCreated SystemTime="2026-11-21T20:51:15.851917300+01:59" />
+		<Correlation ActivityID="{00000000-0000-0000-0000-000000000000}" />
+		<Execution ProcessID="40512" ThreadID="38344" ProcessorID="12" KernelTime="75" UserTime="15" />
+		<Channel>Microsoft-Windows-Kernel-Network/Analytic</Channel>
+		<Computer />
+	</System>
+	<EventData>
+		<Data Name="PID">   40512</Data>
+		<Data Name="size">       0</Data>
+		<Data Name="daddr">127.0.0.1</Data>
+		<Data Name="saddr">127.0.0.1</Data>
+		<Data Name="dport">62898</Data>
+		<Data Name="sport">62897</Data>
+		<Data Name="seqnum">       0</Data>
+		<Data Name="connid">       0</Data>
+	</EventData>
+	<RenderingInfo Culture="en-US">
+		<Level>Information </Level>
+		<Opcode>Disconnect issued. </Opcode>
+		<Keywords>
+			<Keyword>KERNEL_NETWORK_KEYWORD_IPV4</Keyword>
+		</Keywords>
+		<Task>KERNEL_NETWORK_TASK_TCPIP</Task>
+		<Message>TCPv4: Connection closed between 127.0.0.1:62897 and 127.0.0.1:62898. </Message>
+		<Channel>Microsoft-Windows-Kernel-Network/Analytic</Channel>
+		<Provider>Microsoft-Windows-Kernel-Network </Provider>
+	</RenderingInfo>
+</Event>
+<Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+	<System>
+		<Provider Name="Microsoft-Windows-Kernel-Network" Guid="{7dd42a49-5329-4832-8dfd-43d979153a88}" />
+		<EventID>13</EventID>
+		<Version>0</Version>
+		<Level>4</Level>
+		<Task>10</Task>
+		<Opcode>13</Opcode>
+		<Keywords>0x8000000000000010</Keywords>
+		<TimeCreated SystemTime="2026-11-21T20:51:15.851943900+01:59" />
+		<Correlation ActivityID="{00000000-0000-0000-0000-000000000000}" />
+		<Execution ProcessID="40512" ThreadID="38344" ProcessorID="12" KernelTime="75" UserTime="15" />
+		<Channel>Microsoft-Windows-Kernel-Network/Analytic</Channel>
+		<Computer />
+	</System>
+	<EventData>
+		<Data Name="PID">   40512</Data>
+		<Data Name="size">       0</Data>
+		<Data Name="daddr">127.0.0.1</Data>
+		<Data Name="saddr">127.0.0.1</Data>
+		<Data Name="dport">62897</Data>
+		<Data Name="sport">62898</Data>
+		<Data Name="seqnum">       0</Data>
+		<Data Name="connid">       0</Data>
+	</EventData>
+	<RenderingInfo Culture="en-US">
+		<Level>Information </Level>
+		<Opcode>Disconnect issued. </Opcode>
+		<Keywords>
+			<Keyword>KERNEL_NETWORK_KEYWORD_IPV4</Keyword>
+		</Keywords>
+		<Task>KERNEL_NETWORK_TASK_TCPIP</Task>
+		<Message>TCPv4: Connection closed between 127.0.0.1:62898 and 127.0.0.1:62897. </Message>
+		<Channel>Microsoft-Windows-Kernel-Network/Analytic</Channel>
+		<Provider>Microsoft-Windows-Kernel-Network </Provider>
+	</RenderingInfo>
+</Event>
+<Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+	<System>
+		<Provider Name="Microsoft-Windows-Kernel-Network" Guid="{7dd42a49-5329-4832-8dfd-43d979153a88}" />
+		<EventID>18</EventID>
+		<Version>0</Version>
+		<Level>4</Level>
+		<Task>10</Task>
+		<Opcode>18</Opcode>
+		<Keywords>0x8000000000000010</Keywords>
+		<TimeCreated SystemTime="2026-11-21T20:51:16.001982900+01:59" />
+		<Correlation ActivityID="{00000000-0000-0000-0000-000000000000}" />
+		<Execution ProcessID="4" ThreadID="1916" ProcessorID="22" KernelTime="187575" UserTime="0" />
+		<Channel>Microsoft-Windows-Kernel-Network/Analytic</Channel>
+		<Computer />
+	</System>
+	<EventData>
+		<Data Name="PID">   44932</Data>
+		<Data Name="size">     366</Data>
+		<Data Name="daddr">34.149.66.165</Data>
+		<Data Name="saddr">192.0.2.13</Data>
+		<Data Name="dport">443</Data>
+		<Data Name="sport">62861</Data>
+		<Data Name="seqnum">       0</Data>
+		<Data Name="connid">       0</Data>
+	</EventData>
+	<RenderingInfo Culture="en-US">
+		<Level>Information </Level>
+		<Opcode>Protocol copied data on behalf of user. </Opcode>
+		<Keywords>
+			<Keyword>KERNEL_NETWORK_KEYWORD_IPV4</Keyword>
+		</Keywords>
+		<Task>KERNEL_NETWORK_TASK_TCPIP</Task>
+		<Message>TCPv4: 366 bytes copied in protocol on behalf of user for connection between 192.0.2.13:62861 and 34.149.66.165:443. </Message>
+		<Channel>Microsoft-Windows-Kernel-Network/Analytic</Channel>
+		<Provider>Microsoft-Windows-Kernel-Network </Provider>
+	</RenderingInfo>
+</Event>
+<Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+	<System>
+		<Provider Name="Microsoft-Windows-Kernel-Process" Guid="{22fb2cd6-0e7b-422b-a0c7-2fad1fd0e716}" />
+		<EventID>2</EventID>
+		<Version>2</Version>
+		<Level>4</Level>
+		<Task>2</Task>
+		<Opcode>2</Opcode>
+		<Keywords>0x8000000000000010</Keywords>
+		<TimeCreated SystemTime="2026-11-21T20:51:16.356561400+01:59" />
+		<Correlation ActivityID="{00000000-0000-0000-0000-000000000000}" />
+		<Execution ProcessID="40512" ThreadID="38344" ProcessorID="1" KernelTime="75" UserTime="15" />
+		<Channel>Microsoft-Windows-Kernel-Process/Analytic</Channel>
+		<Computer />
+	</System>
+	<EventData>
+		<Data Name="ProcessID">   40512</Data>
+		<Data Name="ProcessSequenceNumber">213306</Data>
+		<Data Name="CreateTime">2026-11-21T18:51:15.622967300Z</Data>
+		<Data Name="ExitTime">2026-11-21T18:51:16.356021700Z</Data>
+		<Data Name="ExitCode">       0</Data>
+		<Data Name="TokenElevationType">       2</Data>
+		<Data Name="HandleCount">     110</Data>
+		<Data Name="CommitCharge">21168128</Data>
+		<Data Name="CommitPeak">22306816</Data>
+		<Data Name="CPUCycleCount">280130764</Data>
+		<Data Name="ReadOperationCount">       3</Data>
+		<Data Name="WriteOperationCount">       1</Data>
+		<Data Name="ReadTransferKiloBytes">      60</Data>
+		<Data Name="WriteTransferKiloBytes">       0</Data>
+		<Data Name="HardFaultCount">       0</Data>
+		<Data Name="ImageName">node.exe</Data>
+	</EventData>
+	<RenderingInfo Culture="en-US">
+		<Level>Information </Level>
+		<Opcode>Stop </Opcode>
+		<Keywords>
+			<Keyword>WINEVENT_KEYWORD_PROCESS</Keyword>
+		</Keywords>
+		<Task>ProcessStop</Task>
+		<Message>Process 40512 (which started at time &#8206;2026&#8206;-&#8206;11&#8206;-&#8206;21T18:51:15.622967300Z) stopped at time &#8206;2026&#8206;-&#8206;11&#8206;-&#8206;21T18:51:16.356021700Z with exit code 0. </Message>
+		<Channel>Microsoft-Windows-Kernel-Process/Analytic</Channel>
+		<Provider>Microsoft-Windows-Kernel-Process </Provider>
+	</RenderingInfo>
+</Event>
+<Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+	<System>
+		<Provider Name="Microsoft-Windows-Kernel-Network" Guid="{7dd42a49-5329-4832-8dfd-43d979153a88}" />
+		<EventID>18</EventID>
+		<Version>0</Version>
+		<Level>4</Level>
+		<Task>10</Task>
+		<Opcode>18</Opcode>
+		<Keywords>0x8000000000000010</Keywords>
+		<TimeCreated SystemTime="2026-11-21T20:51:16.487119300+01:59" />
+		<Correlation ActivityID="{00000000-0000-0000-0000-000000000000}" />
+		<Execution ProcessID="4" ThreadID="1916" ProcessorID="22" KernelTime="187575" UserTime="0" />
+		<Channel>Microsoft-Windows-Kernel-Network/Analytic</Channel>
+		<Computer />
+	</System>
+	<EventData>
+		<Data Name="PID">    9884</Data>
+		<Data Name="size">      38</Data>
+		<Data Name="daddr">160.79.104.10</Data>
+		<Data Name="saddr">192.0.2.13</Data>
+		<Data Name="dport">443</Data>
+		<Data Name="sport">62803</Data>
+		<Data Name="seqnum">       0</Data>
+		<Data Name="connid">       0</Data>
+	</EventData>
+	<RenderingInfo Culture="en-US">
+		<Level>Information </Level>
+		<Opcode>Protocol copied data on behalf of user. </Opcode>
+		<Keywords>
+			<Keyword>KERNEL_NETWORK_KEYWORD_IPV4</Keyword>
+		</Keywords>
+		<Task>KERNEL_NETWORK_TASK_TCPIP</Task>
+		<Message>TCPv4: 38 bytes copied in protocol on behalf of user for connection between 192.0.2.13:62803 and 160.79.104.10:443. </Message>
+		<Channel>Microsoft-Windows-Kernel-Network/Analytic</Channel>
+		<Provider>Microsoft-Windows-Kernel-Network </Provider>
+	</RenderingInfo>
+</Event>
+<Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+	<System>
+		<Provider Name="Microsoft-Windows-Kernel-Network" Guid="{7dd42a49-5329-4832-8dfd-43d979153a88}" />
+		<EventID>11</EventID>
+		<Version>0</Version>
+		<Level>4</Level>
+		<Task>10</Task>
+		<Opcode>11</Opcode>
+		<Keywords>0x8000000000000010</Keywords>
+		<TimeCreated SystemTime="2026-11-21T20:51:16.487151400+01:59" />
+		<Correlation ActivityID="{00000000-0000-0000-0000-000000000000}" />
+		<Execution ProcessID="4" ThreadID="1916" ProcessorID="22" KernelTime="187575" UserTime="0" />
+		<Channel>Microsoft-Windows-Kernel-Network/Analytic</Channel>
+		<Computer />
+	</System>
+	<EventData>
+		<Data Name="PID">    9884</Data>
+		<Data Name="size">      38</Data>
+		<Data Name="daddr">160.79.104.10</Data>
+		<Data Name="saddr">192.0.2.13</Data>
+		<Data Name="dport">443</Data>
+		<Data Name="sport">62803</Data>
+		<Data Name="seqnum">       0</Data>
+		<Data Name="connid">       0</Data>
+	</EventData>
+	<RenderingInfo Culture="en-US">
+		<Level>Information </Level>
+		<Opcode>Data received. </Opcode>
+		<Keywords>
+			<Keyword>KERNEL_NETWORK_KEYWORD_IPV4</Keyword>
+		</Keywords>
+		<Task>KERNEL_NETWORK_TASK_TCPIP</Task>
+		<Message>TCPv4: 38 bytes received from 192.0.2.13:62803 to 160.79.104.10:443. </Message>
+		<Channel>Microsoft-Windows-Kernel-Network/Analytic</Channel>
+		<Provider>Microsoft-Windows-Kernel-Network </Provider>
+	</RenderingInfo>
+</Event>
+</Events>

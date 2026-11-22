@@ -44,6 +44,11 @@ coordinates clamp to content bounds. Browser mock acknowledges the native-only o
 
 ## Invariants
 
+- `main/index.ts` imports `main/inference-telemetry.ts` first; through core's `disableOnnxRuntimeTelemetry`
+  it sets ORT_DISABLE_TELEMETRY=1, and on Windows ORT_RUNNING_UNIT_TESTS=1 (the only switch Windows'
+  onnxruntime.dll reads; without it ORT registers its Microsoft-telemetry ETW provider), while the main
+  module loads (after the hoisted chunk imports and @vera/core's modules, none of which starts a worker), before any
+  inference host or worker exists, so embedding and Whisper workers never start ONNX Runtime telemetry (REQ-SEC-b4170ade).
 - Identity and userData precede the instance lock; the losing process exits before creating a window.
 - Portable/explicit override directories are created before Electron setPath, readiness and the
   instance lock; real creation failures propagate. At ready, the credential load starts and settings and the

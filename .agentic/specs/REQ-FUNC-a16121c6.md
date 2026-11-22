@@ -12,7 +12,7 @@ REQ-PLAT-f905ba1a and REQ-UX-a809496e. Sources: WP31,07 sections3-5 and ADR0008.
 | beta | greatest newer beta or stable | stable selected when greater | no downgrade; latest excludes prerelease |
 | consent / automatic | verified download | progress then ready | checksum/publisher failure not ready |
 | restart / next quit | safety gate then persisted shutdown/install | newer installed executable | active turns/approval preserved |
-| portable / deb | announce | notes and confirmed link / manager guidance | no download/install |
+| portable / deb | announce | notes and confirmed link to the installer / the .deb, deb text names apt upgrade | no download/install |
 | settings/events | strict snapshot and localized controls | live banner/release notes | unsafe feed text treated as text |
 
 ## Feed and distribution
@@ -32,14 +32,15 @@ Every candidate file requires a canonical SHA512 digest; SHA256-only metadata is
 before an offer/download. Managed Linux uses DebUpdater for metadata with artifact actions
 gated off; it can check without APPIMAGE.
 Windows portable uses the same metadata path with artifact actions prohibited.
-Linux APPIMAGE selects AppImage; other Linux distributions are manager-owned.
+Linux APPIMAGE selects AppImage; other Linux distributions are manager-owned. The offer link is the
+feed file of the running distribution: `.exe` on Windows, `.AppImage` for AppImage, `.deb` for deb.
 
 ## IPC/state
 
 update.get({}), update.check({}), update.download({confirmed:true}),
 update.restart({}), update.openRelease({confirmed:true,version}) return strict snapshots.
 Download requires an available installable offer. OpenRelease requires the current
-portable offer/version; the main-derived link stays on the fixed feed origin.
+portable or deb offer/version; the main-derived link stays on the fixed feed origin.
 Invalid states produce standard VeraError, never raw updater errors/paths/URLs.
 
 Snapshot: distribution, configured, phase(idle/checking/current/available/downloading/

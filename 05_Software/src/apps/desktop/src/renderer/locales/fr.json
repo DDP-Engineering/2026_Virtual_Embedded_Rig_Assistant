@@ -892,7 +892,7 @@
     "unconfigured": "Aucun flux de mises à jour n’est configuré pour cette version.",
     "installFailed": "La mise à jour n’a pas pu être installée.",
     "portable": "Les versions portables signalent uniquement les mises à jour. Téléchargez la nouvelle version dans votre navigateur et remplacez le dossier de l’application.",
-    "managed": "Installez les mises à jour via votre gestionnaire de paquets.",
+    "managed": "Le paquet deb se met à jour avec apt. Si vous avez ajouté le dépôt VERA, exécutez sudo apt update && sudo apt upgrade. Sinon, ouvrez le lien de téléchargement et installez le fichier .deb téléchargé avec votre gestionnaire de paquets.",
     "notes": "Notes de version",
     "noNotes": "Aucune note de version fournie.",
     "download": "Télécharger la mise à jour",

@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-PLAT-be9e76a2"
+
+title = "Verify the apt repository signature and hashes"
+
+status = "active"
+
+requirement = """
+When delivery:verify checks a Linux part that carries apt repository files, it shall report a failure unless the complete file set is present, InRelease and Release.gpg verify with the part's keyring, the Release hashes and sizes match Packages and Packages.gz, and the Packages entry matches the part's deb name, size and SHA256, and for a Linux part without them it shall warn that deb installs only get the download link.
+"""
+
+verification = "Tooling tests over a generated repository: a valid part passes; a changed deb byte, a changed Packages byte, a missing InRelease, a Packages entry for another file and a signature by another key and a signature by an expired key (VALIDSIG without GOODSIG) each report a failure, with gpgv's reason; a part without repository files reports the warning."
+
+affected_paths = ["02_Tools/delivery/apt-repository.mjs", "02_Tools/delivery/delivery-common.mjs", "02_Tools/delivery/verify-delivery.mjs", "05_Software/tests/tooling/apt-repository.test.ts", "05_Software/tests/tooling/delivery.test.ts"]
+
+linked_tests = ["05_Software/tests/tooling/apt-repository.test.ts", "05_Software/tests/tooling/delivery.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = "Gitea #370: delivery:verify checks the repository signature and the package hash before release."
+
+created = 2026-11-21
+updated = 2026-11-21

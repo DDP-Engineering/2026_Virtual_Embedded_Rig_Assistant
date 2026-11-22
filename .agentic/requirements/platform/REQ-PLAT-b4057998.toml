@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-PLAT-b4057998"
+
+title = "Build a signed flat apt repository next to the deb"
+
+status = "active"
+
+requirement = """
+When the Linux release delivery is built with VERA_APT_KEY naming a signing key, the delivery tooling shall write a flat apt repository next to the deb (Packages, Packages.gz, Release, InRelease, Release.gpg and the public key vera-archive-keyring.gpg) whose Packages entry names the deb by its file name and whose Release is signed with that key, and without VERA_APT_KEY it shall write none.
+"""
+
+verification = "Build the repository for a small test deb with a throwaway key: Packages carries the deb control fields, Filename, Size and SHA256; Release lists both index files with their sizes and hashes; InRelease and Release.gpg verify with the exported keyring (gpgv). Unprivileged apt with a simulated older installed version accepts the repository, shows the new candidate and simulates the upgrade. aptKeyFor gives no key without VERA_APT_KEY or for the Windows part, and build-vera-installers builds the repository only with a key (Inspection of its `if (aptKey)` guard); a key that cannot sign (expired) fails signingKey before packaging, and the exported keyring stays binary when gpg.conf sets armor."
+
+affected_paths = ["02_Tools/delivery/apt-repository.mjs", "02_Tools/delivery/build-vera-installers.mjs", "02_Tools/delivery/publish-github-release.mjs", "05_Software/tests/tooling/apt-repository.test.ts", "05_Software/tests/tooling/github-release.test.ts", "05_Software/help/en/settings.md", "05_Software/help/ro/settings.md", "05_Software/help/de/settings.md", "05_Software/help/fr/settings.md"]
+
+linked_tests = ["05_Software/tests/tooling/apt-repository.test.ts", "05_Software/tests/tooling/github-release.test.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = "Gitea #370: deb installs are updated by apt from a repository on the update feed host."
+
+created = 2026-11-21
+updated = 2026-11-21

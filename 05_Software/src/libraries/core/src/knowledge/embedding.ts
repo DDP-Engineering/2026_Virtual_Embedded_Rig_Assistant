@@ -83,6 +83,19 @@ export function embeddingModelId(model: EmbeddingModel): string {
     .update(JSON.stringify({ dtype: model.dtype, embedding: model.embedding, files: model.files }))
     .digest("hex")}`;
 }
+/**
+ * REQ-SEC-b4170ade: turns ONNX Runtime's telemetry off in `env`, over inherited values. macOS and Linux read the
+ * documented ORT_DISABLE_TELEMETRY. Windows' DLL does not: it registers an ETW provider in Microsoft's telemetry
+ * group unless ORT_RUNNING_UNIT_TESTS is set, an internal ORT switch, used on Windows only. The desktop main
+ * process applies it in its first module, `main/inference-telemetry.ts`; command environments drop the switch.
+ */
+export function disableOnnxRuntimeTelemetry(
+  env: NodeJS.ProcessEnv = process.env,
+  platform = process.platform,
+) {
+  env.ORT_DISABLE_TELEMETRY = "1";
+  if (platform === "win32") env.ORT_RUNNING_UNIT_TESTS = "1";
+}
 export const embeddingDeadlineCode = "EMBEDDING_DEADLINE";
 const embeddingDeadline = (message: string) => Object.assign(Error(message), { code: embeddingDeadlineCode });
 
@@ -113,9 +126,9 @@ export class EmbeddingHost implements EmbeddingPort {
       )
     )
       throw Error("Invalid local model path.");
-    // ORT 1.30's native uploader starts at initialization, before its API can opt out.
+    // ORT 1.30's native telemetry starts at initialization, before its API can opt out.
     // Set the real parent process environment before any inference worker is created.
-    process.env.ORT_DISABLE_TELEMETRY = "1";
+    disableOnnxRuntimeTelemetry();
     this.modelId = embeddingModelId(this.model);
   }
   /** The idle time of the period starting now (REQ-FUNC-bfbd70b6); an invalid host value keeps 60 s. */

@@ -106,7 +106,7 @@ it("downloads only with consent or automatic mode and pins ready payload", async
   await auto.u.check();
   expect(auto.download).toHaveBeenCalledTimes(1);
 });
-it("never downloads or installs portable/deb; current portable link requires version confirmation", async () => {
+it("never downloads or installs portable/deb; their current release link requires version confirmation", async () => {
   for (const distribution of ["portable", "managed"] as const) {
     const h = setup(distribution);
     h.mode("download");
@@ -118,11 +118,13 @@ it("never downloads or installs portable/deb; current portable link requires ver
     h.u.requestQuit();
     expect(h.install).not.toHaveBeenCalled();
     await expect(h.u.openRelease("wrong")).rejects.toMatchObject({ code: "DENIED" });
-    if (distribution === "portable") {
-      await h.u.openRelease(offer.version);
-      expect(h.openExternal).toHaveBeenCalledWith(offer.link);
-    } else await expect(h.u.openRelease(offer.version)).rejects.toMatchObject({ code: "DENIED" });
+    expect(h.openExternal).not.toHaveBeenCalled();
+    await h.u.openRelease(offer.version);
+    expect(h.openExternal).toHaveBeenCalledWith(offer.link);
   }
+  const installed = setup("installed");
+  await installed.u.check();
+  await expect(installed.u.openRelease(offer.version)).rejects.toMatchObject({ code: "DENIED" });
 });
 it.each([true, false])(
   "defers restart=%s without abort until host atomically admits shutdown",

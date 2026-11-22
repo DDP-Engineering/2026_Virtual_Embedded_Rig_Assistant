@@ -78,8 +78,27 @@ The update feed is a build input, `VERA_UPDATE_URL`, compiled into the main proc
 accept loopback HTTP. A build without a feed checks nothing, and "Check now" reports "This build has
 no update feed configured."
 
+- Release builds (`delivery:vera`) use the public GitHub releases as the feed:
+  `https://github.com/DDP-Engineering/2026_Virtual_Embedded_Rig_Assistant/releases/latest/download/`
+  (`update-config.mjs` `releaseFeed`). GitHub redirects every file below it to that file of the newest
+  published release not marked pre-release, also with electron-updater's `?noCache=` query. A plain
+  `npm run package` or `npm run dev` build has no feed unless `VERA_UPDATE_URL` is set.
 - The feed is an electron-updater 6.8.10 generic feed folder: `latest.yml`, `beta.yml`,
-  `latest-linux.yml`, `beta-linux.yml`, the installers and their `.blockmap` files.
+  `latest-linux.yml`, `beta-linux.yml`, the installers and their `.blockmap` files. `latest-linux.yml`
+  lists both the AppImage and the deb. electron-builder also writes `alpha*.yml`, which VERA never reads.
+- Publishing: `delivery:release` uploads a verified delivery into a draft release `v<version>` (invisible
+  to the feed); `delivery:release -- --publish` makes it the latest release, which offers it to every
+  installed VERA. A semver pre-release version (`1.3.0-beta.1`) becomes a GitHub pre-release, which this
+  feed does not serve: the Beta channel receives nothing until beta releases get a feed of their own.
+- deb: electron-updater only reads the metadata, so a deb install offers the `.deb` link of
+  `latest-linux.yml` after confirmation. The feed folder is also a flat apt repository (suite `/`):
+  `apt-repository.mjs` writes Packages, Packages.gz, Release, InRelease, Release.gpg and
+  `vera-archive-keyring.gpg` next to the deb when `VERA_APT_KEY` names the signing key on the Linux build
+  host, and `delivery:verify` checks the signature and hashes. A release published while apt reads the
+  folder can give one hash mismatch, which the next `apt update` resolves.
+- Differential download: electron-updater takes the running version's blockmap from its update cache,
+  which an earlier update left there. After an install by hand there is none; the feed folder names only the
+  newest release, so the old blockmap is not found there either, and that first update downloads in full.
 - Settings: mode Off, Notify (default) or Download automatically; channel Stable (`latest`) or
   Beta (includes stable). Stable reads only `latest` and ignores pre-release versions. Beta reads
   `latest` and `beta` and offers the highest version. Only versions newer than the running one are
@@ -120,8 +139,9 @@ no update feed configured."
   the delivery's `SHA256SUMS`.
 - `package-report.json` and `delivery.json` record `requested`, `unsigned` or `not-applicable`. The
   `app.info` IPC reports `signed`, `unsigned` or `not-applicable`; About shows no signing label.
-- `delivery:verify` warns "the installers are not code-signed" for an unsigned part and "the catalog
-  is not signed" when the channel indexes have no `.sig` files, and also for parts built from
+- `delivery:verify` warns "the installers are not code-signed" for an unsigned part, "the catalog
+  is not signed" when the channel indexes have no `.sig` files, "no apt repository" for a Linux part
+  built without `VERA_APT_KEY`, and also for parts built from
   different commits or an uncommitted tree. Warnings do not fail the check; they mark the delivery
   as not ready to release.
 - Remote plugin catalog indexes are signed with Ed25519; the build pins the public key
@@ -152,10 +172,11 @@ The npm scripts run the scripts in `02_Tools/delivery/`:
 
 | npm script | Does |
 |---|---|
-| `delivery:vera -- --platform windows-x64\|linux-x64` | `npm run package` (release mode only), then copies the artifacts of `package-report.json` |
+| `delivery:vera -- --platform windows-x64\|linux-x64` | `npm run package` (release mode only) with the public update feed, then copies the installers and update feed files of `package-report.json` |
 | `delivery:plugins [-- --signing-key <pem>]` | `prepare:plugins`, signs the channel indexes when a key is given, zips the catalog |
 | `delivery:plugin-deps -- --platform …` | `vera catalog kit` (default `--skip sigrok`), zipped; needs network |
-| `delivery:verify [-- <folder>]` | checks a delivery without changing or publishing anything |
+| `delivery:verify [-- <folder>]` | checks a delivery without changing or publishing anything, the apt repository included |
+| `delivery:release [-- <folder>] [--publish]` | creates or completes the GitHub draft release of a verified delivery; `--publish` publishes it as the latest release |
 
 - A platform part is built only on its own host. An existing part is refused; `--replace` rebuilds
   only that part. A part is built in a staging folder and moved into place at the end.
@@ -240,5 +261,7 @@ time. The inventory of suites, fixtures and helpers is in
   downloads and ONNX Runtime telemetry. Exit 0 pass, 1 failure, 2 pass with egress proof pending.
 - Egress check: on Linux every launch runs under `strace`; any `inet`/`inet6` destination outside
   the run's allowed list fails the smoke, failed attempts included (`smoke-calibration.mjs` is the
-  negative control). On Windows the proof is a manual Windows Sandbox run with a `pktmon` capture
-  (`02_Tools/release/sandbox/`), attached with `--windows-evidence`; without it it stays pending.
+  negative control). On Windows an elevated shell captures every launch with `pktmon` (Kernel-Network
+  and Kernel-Process events, no packets, `smoke-windows.mjs`): any destination the launched process
+  tree sends to outside the allowed list fails the smoke, and the run writes `windows-evidence.json`. Without elevation, and
+  without a manual Sandbox `--windows-evidence`, the proof stays pending.

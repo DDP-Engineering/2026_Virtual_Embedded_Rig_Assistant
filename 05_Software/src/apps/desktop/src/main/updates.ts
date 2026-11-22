@@ -185,7 +185,8 @@ export class Updates {
   }
   async openRelease(version: string): Promise<UpdateSnapshot> {
     const offer = this.state.offer;
-    if (this.host.distribution !== "portable" || !offer?.link || offer.version !== version)
+    // Portable and deb builds never install an update themselves; the user downloads the package.
+    if (this.host.distribution === "installed" || !offer?.link || offer.version !== version)
       throw veraError("DENIED");
     await this.host.openExternal(offer.link);
     return this.get();

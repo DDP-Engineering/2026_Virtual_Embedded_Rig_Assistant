@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-TEST-803bb75d"
+
+title = "Reject unexpected Windows network destinations with pktmon"
+
+status = "active"
+
+requirement = """
+When the release smoke runs on Windows in an elevated shell without manual evidence, it shall collect Microsoft-Windows-Kernel-Network and Kernel-Process events of every launch with pktmon and reject every IPv4 or IPv6 destination the launched VERA process tree sends to outside the run's allowed exact loopback address and port (none offline), not judging connections the tree accepts from loopback clients or datagrams it receives, naming each forbidden address, port and PID, and a run whose capture holds no events of that tree, or whose conversion fails, shall fail as missing monitor evidence.
+"""
+
+verification = "Parser and oracle tests over a real recorded pktmon/tracerpt sample: the loopback request of the root process passes with its port allowed, the child process's connection to an outside address fails and is named with its PID, other processes' traffic is ignored, connections the tree accepted from a loopback client (an inspector-like port) are not judged while one accepted from another host is named, an empty or unparsable capture fails, a failed tracerpt conversion names its command. An elevated smoke run of a Windows release artifact passes with only the fake model endpoint."
+
+affected_paths = ["05_Software/tests/packaging/smoke/smoke-windows.mjs", "05_Software/tests/packaging/smoke/smoke-runtime.mjs", "05_Software/tests/packaging/smoke/smoke-package.mjs", "05_Software/tests/packaging/smoke/smoke-report.mjs", "05_Software/tests/packaging/windows-egress.test.ts", "05_Software/tests/fixtures/pktmon/kernel-events.xml", "06_SoftwareDocu/release-package-smoke.md"]
+
+linked_tests = ["05_Software/tests/packaging/windows-egress.test.ts"]
+
+
+spec = "specs/REQ-TEST-8928f10f.md"
+
+priority = "normal"   # low | normal | high
+rationale = "Gitea #371: the Windows egress proof of the release smoke was manual."
+
+created = 2026-11-21
+updated = 2026-11-21

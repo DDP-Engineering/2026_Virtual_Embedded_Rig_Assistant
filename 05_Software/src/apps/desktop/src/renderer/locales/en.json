@@ -892,7 +892,7 @@
     "unconfigured": "This build has no update feed configured.",
     "installFailed": "The update could not be installed.",
     "portable": "Portable builds announce updates only. Download the new version in your browser and replace the app folder.",
-    "managed": "Install updates through your package manager.",
+    "managed": "This deb package is updated with apt. If you added the VERA repository, run sudo apt update && sudo apt upgrade. Otherwise open the download link and install the downloaded .deb with your package manager.",
     "notes": "Release notes",
     "noNotes": "No release notes supplied.",
     "download": "Download update",

@@ -49,6 +49,7 @@ Build-time settings, read by the desktop Vite configuration:
 | `VERA_SESSION_PERF=1` | With `VERA_TEST=1`, compiles in the session performance probes. |
 | `VERA_BUILD_ROOT` | Optional absolute output folder; the default is `src/apps/desktop/out`. |
 | `VERA_UPDATE_URL` | Fixed update feed of the build. Release requires HTTPS. |
+| `VERA_APT_KEY` | Linux `delivery:vera` only: the GnuPG secret key that signs the apt repository next to the deb. Unset, there is none. |
 | `VERA_PLUGIN_CATALOG_URL` | Default remote plugin catalog folder; empty by default. |
 | `VERA_PLUGIN_CATALOG_KEY` | PEM path that replaces the pinned public key `02_Tools/release/catalog-signing-key.pub.pem`. |
 | `VERA_VC_REDIST_DIR` | Source folder of the Microsoft runtime DLLs for `prepare:windows-runtime`; the default is System32. |
@@ -87,7 +88,7 @@ Run every command from `05_Software`. When Node is not on PATH, prefix it with t
 | `npm run prepare:plugins` | Builds the official plugins into the bundled catalog release in `07_Delivery/plugins/` (git-ignored). |
 | `npm run prepare:windows-runtime` | Windows only. Copies the pinned Microsoft VC++ DLLs, checking hashes and the Microsoft signature. |
 | `npm run package` / `npm run package:test` | Host x64 release or instrumented build: NSIS and portable ZIP on Windows, AppImage and deb on Linux. Needs a native host of that platform. See [native packaging](../knowledge/native-packaging.md). |
-| `npm run delivery:vera`, `delivery:plugins`, `delivery:plugin-deps`, `delivery:components`, `delivery:verify` | Collect and verify checksummed deliveries in `07_Delivery/vera-<version>/`. See the Delivery section of [02_Tools/README.md](../../02_Tools/README.md). |
+| `npm run delivery:vera`, `delivery:plugins`, `delivery:plugin-deps`, `delivery:components`, `delivery:verify`, `delivery:release` | Collect, verify and publish checksummed deliveries in `07_Delivery/vera-<version>/`; the apt repository check needs `gpgv` (Git for Windows ships one). See the Delivery section of [02_Tools/README.md](../../02_Tools/README.md). |
 
 Clean, offline Windows execution and real VC++ self-containment are required before a final release and are not established on the development host. The offline Windows probe needs network isolation and a machine that permits unsigned executables; a Smart App Control refusal is a failed environment probe. The Linux offline probe runs in an isolated VM.
 

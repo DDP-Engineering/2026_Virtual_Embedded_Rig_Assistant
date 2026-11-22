@@ -102,14 +102,19 @@ test("delivery.json keeps the other parts and refuses another version", async ()
   );
 });
 
-test("a delivery warns about unsigned installers, mixed commits and a dirty tree without failing", () => {
+test("a delivery warns about unsigned or feedless installers, a deb without apt repository, mixed commits and a dirty tree", () => {
+  const feed = "https://github.com/o/r/releases/latest/download/";
   const part = (commit: string, extra = {}) => ({ version: "1.0.0", commit, dirty: false, ...extra });
   expect(
     common.deliveryWarnings({
       parts: {
         plugins: part("abc1234", { signed: true }),
-        "vera-linux-x64": part("abc1234", { signing: "not-applicable" }),
-        "vera-windows-x64": part("abc1234", { signing: "requested" }),
+        "vera-linux-x64": part("abc1234", {
+          signing: "not-applicable",
+          updateFeed: feed,
+          aptKey: "A".repeat(40),
+        }),
+        "vera-windows-x64": part("abc1234", { signing: "requested", updateFeed: feed }),
       },
     }),
   ).toEqual([]);
@@ -117,12 +122,15 @@ test("a delivery warns about unsigned installers, mixed commits and a dirty tree
     common.deliveryWarnings({
       parts: {
         plugins: part("abc1234", { dirty: true }),
+        "vera-linux-x64": part("abc1234", { signing: "not-applicable", updateFeed: feed }),
         "vera-windows-x64": part("def5678", { signing: "unsigned" }),
       },
     }),
   ).toEqual([
+    "vera-linux-x64: no apt repository (VERA_APT_KEY was not set), so deb installs only get the download link",
     "vera-windows-x64: the installers are not code-signed",
-    "the parts were built from different commits: plugins abc1234, vera-windows-x64 def5678",
+    "vera-windows-x64: the installers have no update feed and never find a newer version",
+    "the parts were built from different commits: plugins abc1234, vera-linux-x64 abc1234, vera-windows-x64 def5678",
     "built from a tree with uncommitted changes: plugins",
   ]);
   expect(common.deliveryWarnings(undefined)).toEqual([]);
@@ -187,4 +195,40 @@ test("release notes Markdown lists entries by category in English and says when 
   expect(common.formatReleaseNotes({ date: null, entries: [] }, "0.1.1")).toContain(
     "No user-visible changes.",
   );
+});
+
+test("update files must name this version, list only installers of the part and belong to them", async () => {
+  const installer = "VERA-1.2.0-win-x64.exe";
+  await writeFile(join(folder, installer), "installer bytes");
+  await writeFile(join(folder, `${installer}.blockmap`), "map");
+  const sha512 = createHash("sha512").update("installer bytes").digest("base64");
+  const channel = (version: string, url: string, hash = sha512, size = 15) =>
+    `version: ${version}
+files:
+  - url: ${url}
+    sha512: ${hash}
+    size: ${size}
+`;
+  const check = (files: string[], platform = "windows-x64") =>
+    common.checkUpdateFiles(folder, files, "1.2.0", platform);
+  expect(common.isUpdateFile("latest.yml")).toBe(true);
+  expect(common.isUpdateFile("beta-linux.yml")).toBe(true);
+  expect(common.isUpdateFile(`${installer}.blockmap`)).toBe(true);
+  expect(common.isUpdateFile("builder-debug.yml")).toBe(false);
+  expect(common.isUpdateFile(installer)).toBe(false);
+
+  await writeFile(join(folder, "latest.yml"), channel("1.2.0", installer));
+  const files = [installer, `${installer}.blockmap`, "latest.yml"];
+  expect(await check(files)).toEqual([]);
+  expect(await check(files, "linux-x64")).toEqual(["latest.yml: channel file of another platform"]);
+
+  await writeFile(join(folder, "latest.yml"), channel("1.1.0", installer));
+  expect(await check(files)).toEqual(["latest.yml: version 1.1.0, expected 1.2.0"]);
+  await writeFile(join(folder, "latest.yml"), channel("1.2.0", installer, sha512, 99));
+  expect(await check(files)).toEqual([`latest.yml: ${installer} size differs`]);
+  await writeFile(join(folder, "latest.yml"), channel("1.2.0", installer, `${"x".repeat(86)}==`));
+  expect(await check(files)).toEqual([`latest.yml: ${installer} SHA-512 differs`]);
+  await writeFile(join(folder, "latest.yml"), channel("1.2.0", "../elsewhere.exe"));
+  expect(await check(files)).toEqual(["latest.yml: ../elsewhere.exe is not an installer of this part"]);
+  expect(await check(["orphan.exe.blockmap"])).toEqual(["orphan.exe.blockmap: belongs to no installer here"]);
 });

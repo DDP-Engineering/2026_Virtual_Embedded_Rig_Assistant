@@ -80,7 +80,7 @@ of workbench and chat-provider settings.
 | Change model actions, progress or translation | `renderer/components/dictation-settings.tsx` | `dictation-settings.test.ts`, i18n and help checks |
 | Change input gestures or draft handling | `renderer/dictation/use-composer-dictation.ts`, `renderer/components/session/composer.tsx` | `dictation-composer.spec.ts`, `dictation-packaged-composer.spec.ts` |
 | Change capture, grant or session lifecycle | renderer/dictation/capture.ts, main/dictation/capture-jobs.ts, main/security.ts | capture.test.ts, capture-jobs.test.ts, security-policy.test.ts, dictation.spec.ts |
-| Change local inference or worker lifecycle | main/dictation/whisper.ts, whisper-worker.ts, worker-host.ts | worker-host.test.ts, whisper-runtime.test.ts, packaging.test.ts |
+| Change local inference or worker lifecycle | main/dictation/whisper.ts, whisper-worker.ts, worker-host.ts; the worker inherits the main process env (ORT_DISABLE_TELEMETRY, and ORT_RUNNING_UNIT_TESTS on Windows, from `main/inference-telemetry.ts`), so never pass it an `env` without that opt-out | worker-host.test.ts, whisper-runtime.test.ts, packaging.test.ts, main/inference-telemetry.test.ts |
 
 ## Key behaviors
 

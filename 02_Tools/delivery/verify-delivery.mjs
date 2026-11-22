@@ -5,13 +5,16 @@ import { basename, join, resolve } from "node:path";
 import { parseArgs } from "node:util";
 import { importSoftware } from "../environment/software.mjs";
 import { embeddingPayload } from "../release/embedding-payload.mjs";
+import { checkAptRepository, findGpgv, isAptFile } from "./apt-repository.mjs";
 import {
   catalogPublicKey,
   checkSums,
+  checkUpdateFiles,
   currentDelivery,
   deliveryFolderName,
   deliveryWarnings,
   formatBytes,
+  isUpdateFile,
   licenseName,
   listFiles,
   manifestName,
@@ -25,11 +28,15 @@ import { verifyEmbeddingArchive } from "./verify-embedding-archive.mjs";
 
 // Checks a delivery folder (default: the one this checkout builds) without changing or publishing anything:
 // every SHA256SUMS and delivery.json entry, pinned desktop model members, the expected files per part,
-// the plugin zips against the catalog indexes and the offline components against the Desktop pins.
-// Exit 1 on any mismatch.
+// the apt repository of the deb (signature with gpgv, hashes), the plugin zips against the catalog indexes
+// and the offline components against the Desktop pins. Exit 1 on any mismatch. --gpgv names gpgv when it is
+// neither on PATH nor in Git for Windows.
 const { positionals, values } = parseArgs({
   allowPositionals: true,
-  options: { "7zip": { type: "string", default: process.platform === "win32" ? "7z" : "7zz" } },
+  options: {
+    "7zip": { type: "string", default: process.platform === "win32" ? "7z" : "7zz" },
+    gpgv: { type: "string" },
+  },
 });
 const folder = positionals[0] ? resolve(positionals[0]) : (await currentDelivery()).folder;
 if (!existsSync(folder)) {
@@ -77,8 +84,25 @@ for (const platform of platforms) {
   expectOne(part, files, first, `${first.source} installer`);
   expectOne(part, files, second, `${second.source} package`);
   if (!files.includes(releaseNotesName)) problem(part, `${releaseNotesName}: missing`);
+  const updateFiles = files.filter(isUpdateFile);
+  for (const text of await checkUpdateFiles(join(folder, part), updateFiles, desktop, platform))
+    problem(part, text);
+  const feed = manifest?.parts?.[part]?.updateFeed ?? "";
+  const channels = updateFiles.filter((name) => name.endsWith(".yml"));
+  if (feed && !channels.length) problem(part, `built for update feed ${feed} but has no channel file`);
+  if (!feed && channels.length) problem(part, "has channel files but no update feed in delivery.json");
+  const apt = platform === "linux-x64" ? files.filter(isAptFile) : [];
+  const aptKey = manifest?.parts?.[part]?.aptKey ?? "";
+  if (aptKey && !apt.length) problem(part, `built with apt key ${aptKey} but has no apt repository`);
+  if (!aptKey && apt.length) problem(part, "has apt repository files but no aptKey in delivery.json");
+  if (apt.length)
+    for (const text of await checkAptRepository(join(folder, part), files, {
+      fingerprint: aptKey,
+      gpgv: findGpgv(values.gpgv),
+    }))
+      problem(part, text);
   for (const name of files) {
-    if (name === releaseNotesName) continue;
+    if (name === releaseNotesName || isUpdateFile(name) || apt.includes(name)) continue;
     if (!first.test(name) && !second.test(name)) problem(part, `${name}: unexpected file`);
     else if (!name.startsWith(`VERA-${desktop}-`)) problem(part, `${name}: not desktop version ${desktop}`);
     else {

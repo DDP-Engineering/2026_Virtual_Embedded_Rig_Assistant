@@ -892,7 +892,7 @@
     "unconfigured": "Für diese Version ist kein Update-Feed konfiguriert.",
     "installFailed": "Die Aktualisierung konnte nicht installiert werden.",
     "portable": "Portable Versionen melden Aktualisierungen nur. Die neue Version im Browser herunterladen und den App-Ordner ersetzen.",
-    "managed": "Aktualisierungen über die Paketverwaltung installieren.",
+    "managed": "Das deb-Paket wird mit apt aktualisiert. Wenn das VERA-Repository hinzugefügt ist, sudo apt update && sudo apt upgrade ausführen. Andernfalls den Download-Link öffnen und die heruntergeladene .deb-Datei mit der Paketverwaltung installieren.",
     "notes": "Versionshinweise",
     "noNotes": "Keine Versionshinweise vorhanden.",
     "download": "Aktualisierung herunterladen",

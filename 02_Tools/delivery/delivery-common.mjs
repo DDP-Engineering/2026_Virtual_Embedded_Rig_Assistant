@@ -4,6 +4,7 @@ import { closeSync, createReadStream, existsSync, openSync, writeSync } from "no
 import { mkdir, readdir, readFile, rename, rm, stat, writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { importSoftware, software } from "../environment/software.mjs";
+import { updateFilePattern } from "../release/update-config.mjs";
 
 /** The repository root and its delivery folder. */
 export const repository = resolve(software, "..");
@@ -86,6 +87,56 @@ export async function sha256File(path) {
   const hash = createHash("sha256");
   for await (const chunk of createReadStream(path)) hash.update(chunk);
   return hash.digest("hex");
+}
+
+/** Base64 SHA-512, as electron-builder writes it into the update channel files. */
+export async function sha512File(path) {
+  const hash = createHash("sha512");
+  for await (const chunk of createReadStream(path)) hash.update(chunk);
+  return hash.digest("base64");
+}
+
+/** True for the update feed files of a desktop part: channel metadata (`latest.yml`, …) and blockmaps. */
+export const isUpdateFile = (name) => updateFilePattern.test(name);
+
+/**
+ * Problems of a desktop part's update files. Every channel file must be of this platform, name this version and
+ * list only files of the part with their size and SHA-512; every blockmap must belong to an installer of the part.
+ */
+export async function checkUpdateFiles(folder, files, desktopVersion, platform, hash512 = sha512File) {
+  const { parse } = await importSoftware("yaml");
+  const present = new Set(files);
+  const problems = [];
+  for (const name of files.filter((file) => file.endsWith(".blockmap")))
+    if (!present.has(name.slice(0, -".blockmap".length)))
+      problems.push(`${name}: belongs to no installer here`);
+  for (const name of files.filter((file) => file.endsWith(".yml"))) {
+    if (name.endsWith("-linux.yml") !== (platform === "linux-x64")) {
+      problems.push(`${name}: channel file of another platform`);
+      continue;
+    }
+    let info;
+    try {
+      info = parse(await readFile(join(folder, name), "utf8"));
+    } catch {
+      problems.push(`${name}: not YAML`);
+      continue;
+    }
+    if (info?.version !== desktopVersion)
+      problems.push(`${name}: version ${info?.version}, expected ${desktopVersion}`);
+    const entries = Array.isArray(info?.files) ? info.files : [];
+    if (!entries.length) problems.push(`${name}: lists no files`);
+    for (const entry of entries) {
+      const url = String(entry?.url ?? "");
+      if (!present.has(url) || isUpdateFile(url))
+        problems.push(`${name}: ${url} is not an installer of this part`);
+      else if ((await stat(join(folder, url))).size !== entry.size)
+        problems.push(`${name}: ${url} size differs`);
+      else if ((await hash512(join(folder, url))) !== entry.sha512)
+        problems.push(`${name}: ${url} SHA-512 differs`);
+    }
+  }
+  return problems;
 }
 
 /** Name, size and SHA-256 of one file in a folder. */
@@ -217,14 +268,21 @@ export async function recordPart(delivery, key, record) {
 
 /**
  * What `delivery.json` records that makes a delivery unfit for release without making it invalid: unsigned
- * Windows installers, parts built from different commits and parts built from a tree with local changes.
- * Developer deliveries have all three, so these are warnings, not failures.
+ * Windows installers, installers without an update feed, a deb without apt repository, parts built from different
+ * commits and parts built from a tree with local changes. Developer deliveries have these, so they are warnings.
  */
 export function deliveryWarnings(manifest) {
   const parts = Object.entries(manifest?.parts ?? {});
   const warnings = [];
-  for (const [key, part] of parts)
+  for (const [key, part] of parts) {
+    if (key === "vera-linux-x64" && !part.aptKey)
+      warnings.push(
+        `${key}: no apt repository (VERA_APT_KEY was not set), so deb installs only get the download link`,
+      );
     if (part.signing === "unsigned") warnings.push(`${key}: the installers are not code-signed`);
+    if (key.startsWith("vera-") && !part.updateFeed)
+      warnings.push(`${key}: the installers have no update feed and never find a newer version`);
+  }
   const commits = [...new Set(parts.map(([, part]) => part.commit))];
   if (commits.length > 1)
     warnings.push(

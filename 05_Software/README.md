@@ -433,7 +433,8 @@ An unconfigured build reports that state without network requests. Latest is sta
 beta receives newer beta and stable releases. Off, Notify (default), and Download
 automatically are persisted in Updates. Check now works in Off. Downloaded updates
 install on restart/next quit after active turns and approvals finish.
-Portable announces notes and offers a confirmed browser link; deb uses its package manager.
+Portable and deb announce notes and offer a confirmed browser link to their package; deb installs also
+update with apt from the release feed's signed flat repository (`02_Tools/delivery/apt-repository.mjs`).
 
 The local acceptance command is `node tests/packaging/probe-upgrade.mjs <absolute-owned-scratch>`.
 It builds distinct instrumented0.31.0/0.31.1 artifacts with a compile-time loopback feed

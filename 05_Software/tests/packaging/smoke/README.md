@@ -13,7 +13,14 @@ It never builds. No app test switch or internal audit is used.
 The product routes eager dictionary initialization to the local vera://app scheme,
 disables native ONNX telemetry before worker initialization and
 Electron session dictionary downloads before opening a window. The harness
-observes these states and supplies no telemetry/dictionary opt-out.
+observes these states and supplies no telemetry/dictionary opt-out: it removes every `ORT_*`
+variable from the app's environment. On Windows, from opening the workbench until ONNX Runtime has
+been seen (indexing embeds the documents with it; the document search itself is keyword-only), it
+samples the ETW providers of the app's Node utility processes, where the Indexer embeds, with
+`logman query providers -pid` (no elevation needed). The main process is left out: it runs ONNX
+Runtime only for dictation, which the smoke does not use, and one query of it takes about 30 s.
+ONNX Runtime's logging provider must appear in one of them, and its
+Microsoft-telemetry provider (`Microsoft.ML.ONNXRuntime`) in none.
 
 Windows ZIP uses portable adjacent data; NSIS checks existing VERA registry
 identity before installation. If an installation exists, the harness extracts
@@ -24,6 +31,30 @@ all four launches under `strace -f -e trace=connect,sendto,sendmsg`, including r
 Chromium network processes and workers. Offline permits no inet/inet6 destination;
 scripted permits only AF_INET 127.0.0.1 at the exact server port. Unix sockets are
 ignored, failed connection attempts count, malformed/incomplete traces fail.
+
+On Windows, run the same command from an elevated (administrator) PowerShell and the
+egress proof is automatic. Each of the four launches runs inside its own `pktmon`
+event collection, `pktmon start --trace` with the `Microsoft-Windows-Kernel-Network` and
+`Microsoft-Windows-Kernel-Process` providers: socket and process events only, no packets, and
+the host's packet filters stay as they are. After the launch exits, the harness makes one
+loopback sentinel connection from its own process, stops the collection and converts it with
+`pktmon etl2txt` (kept for people) and `tracerpt -of XML` (parsed). The process tree is the
+launched PID plus every process its Kernel-Process start events show under it. Every
+destination the tree sends to must be the allowed exact loopback address and port (none
+offline, the fake model endpoint scripted); anything else fails the run and names the address,
+port and PID. Connections the tree accepts from loopback clients, such as Playwright's inspector
+and DevTools clients, and datagrams it receives are inbound and not judged, as with `strace`;
+a connection accepted from another host is judged and named. Other
+processes' traffic is ignored. A capture without the launch's start event or the sentinel's
+socket event fails as missing monitor evidence; so does a failed conversion. Two gaps remain
+against `strace`: a TCP connection that never opens may log no event with an address, so a
+refused attempt can go unseen, and name lookups run in the Windows DNS Client service, outside
+the tree, so a lookup without a following connection is not seen. If the smoke is interrupted,
+run `pktmon stop` in an elevated shell before the next run. The run writes `windows-capture.json` (each launch's ETL, text
+and XML identities and result) and `windows-evidence.json` (`method` `pktmon`, `networking`
+`Enabled`), which the report includes and `--windows-evidence` accepts as it is. Without
+elevation `pktmon` is refused, the proof stays pending with that reason and the exit stays 2.
+The parser's tests use a real recorded capture, `tests/fixtures/pktmon/kernel-events.xml`.
 
 The exit is 0 for complete PASS, 1 for failure and 2 for functional PASS with
 pending platform egress proof. `smoke-report.json` retains artifacts, execution
@@ -48,6 +79,9 @@ and be rejected by the same strace oracle. The calibration report records expect
 oracle FAIL separately from calibration PASS, and is never release proof.
 
 ## Windows Sandbox and pktmon
+
+The automated capture above runs on the current host, with its network. The manual Sandbox
+procedure below remains for an offline run on a clean machine.
 
 `02_Tools/release/sandbox/VERA.wsb` disables networking and clipboard, maps inputs
 read-only and a new evidence folder writable. Substitute the two host paths before
