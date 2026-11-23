@@ -174,3 +174,27 @@ test("installs through the review screen, enables the plugin and stops a run, wi
   await expect(serial.locator('[data-action="plugin-provision"]')).toBeDisabled();
   expect(errors).toEqual([]);
 });
+
+test("empty workbench opens the unfiltered catalog and returns to its editor", {
+  tag: "@parallel-browser",
+}, async ({ page, rendererUrl }) => {
+  await page.goto(rendererUrl);
+  await page.locator('[data-action="plugins-nav"]').click();
+  const installed = page.locator('[data-library-status="installed"]');
+  await installed.click();
+  await page.locator('[data-i18n="nav.welcome"]').click();
+  await page.locator("#workbench-name").fill("Plugin catalog bench");
+  await page.locator('[data-action="choose-create"]').click();
+  await page.locator('[data-action="create-workbench"]').click();
+  await page.locator('[data-action="edit-workbench-overview"]').click();
+  await page.locator('[data-project-section="plugins"]').click();
+  const workbenchPlugins = page.locator("[data-workbench-plugins]");
+  await expect(workbenchPlugins).toContainText("No plugins are installed.");
+  await expect(workbenchPlugins.locator("[data-library-search], [data-tool-toggle]")).toHaveCount(0);
+  await workbenchPlugins.getByRole("button", { name: "Browse available plugins" }).click();
+  await expect(page.locator('[data-library-status="all"]')).toHaveAttribute("aria-pressed", "true");
+  await expect(page.locator("[data-catalog-plugin]").first()).toBeVisible();
+  await page.locator(".workbench-group-name", { hasText: "Plugin catalog bench" }).click();
+  await expect(page.locator('[data-project-section="plugins"]')).toHaveAttribute("aria-current", "page");
+  await expect(workbenchPlugins).toContainText("No plugins are installed.");
+});

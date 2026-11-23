@@ -53,6 +53,7 @@ export function WorkbenchConfigForm({
   notices,
   instructionsNotice,
   skills,
+  browsePlugins,
   workbenchId,
   shown = true,
   general,
@@ -80,6 +81,7 @@ export function WorkbenchConfigForm({
   notices?: ReactNode;
   instructionsNotice?: ReactNode;
   skills: ReactNode;
+  browsePlugins?: (() => void) | undefined;
   workbenchId?: string | undefined;
   shown?: boolean;
   /** Fields shown first in General (New workbench: folder and name). */
@@ -386,6 +388,7 @@ export function WorkbenchConfigForm({
           )}
           {section === "plugins" && shown && (
             <WorkbenchPlugins
+              browsePlugins={browsePlugins}
               workbenchId={workbenchId}
               readOnly={readOnly}
               disabled={disabled}

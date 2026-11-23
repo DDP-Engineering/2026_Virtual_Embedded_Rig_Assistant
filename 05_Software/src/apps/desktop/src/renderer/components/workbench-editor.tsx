@@ -18,6 +18,7 @@ import { type ConfigSection, WorkbenchConfigForm } from "./workbench-config-form
 
 export function WorkbenchEditor({
   workbench,
+  browsePlugins,
   close,
   saved,
   dirtyChanged,
@@ -25,6 +26,7 @@ export function WorkbenchEditor({
   request,
 }: {
   workbench: WorkbenchSnapshot;
+  browsePlugins?: (() => void) | undefined;
   close: () => void;
   saved: (value: WorkbenchSnapshot) => void;
   /** Reports whether the draft differs from the loaded configuration and instructions. */
@@ -225,6 +227,7 @@ export function WorkbenchEditor({
         </div>
       </header>
       <WorkbenchConfigForm
+        browsePlugins={browsePlugins}
         shown={shown}
         request={request}
         label={t("projects.edit")}

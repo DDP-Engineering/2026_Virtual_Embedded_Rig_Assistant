@@ -36,6 +36,7 @@ export function WorkbenchPlugins(
     toggle: (id: string, selected: boolean) => void;
     readOnly?: boolean | undefined;
     disabled?: boolean | undefined;
+    browsePlugins?: (() => void) | undefined;
   },
 ) {
   return <WorkbenchPluginLibrary key={props.workbenchId ?? "new"} {...props} />;
@@ -46,6 +47,7 @@ function WorkbenchPluginLibrary({
   toggle,
   readOnly = false,
   disabled = false,
+  browsePlugins,
   disabledTools,
   toggleTool,
 }: Omit<CapabilityControls, "locked"> & {
@@ -54,6 +56,7 @@ function WorkbenchPluginLibrary({
   toggle: (id: string, selected: boolean) => void;
   readOnly?: boolean | undefined;
   disabled?: boolean | undefined;
+  browsePlugins?: (() => void) | undefined;
 }) {
   const { t, i18n } = useTranslation();
   const client = useQueryClient();
@@ -81,11 +84,13 @@ function WorkbenchPluginLibrary({
     queryFn: () => api.invoke("plugins.catalog", { refresh: false }),
     staleTime: 0,
   });
+  const installed = query.data ?? [];
+  const installedIds = new Set(installed.map(({ id }) => id));
   const entries: PluginSummary[] = query.data
     ? [
-        ...query.data,
+        ...installed,
         ...enabled
-          .filter((id) => !query.data.some((plugin) => plugin.id === id))
+          .filter((id) => !installedIds.has(id))
           .map((id) => ({ id, issues: [{ code: "unavailable" as const }], enabled: true })),
       ]
     : [];
@@ -127,6 +132,19 @@ function WorkbenchPluginLibrary({
     local: t("plugins.tier.local"),
     trial: t("plugins.tier.trial"),
   };
+  const emptyState = query.isSuccess && installed.length === 0 && (
+    <div className="plugin-library-empty">
+      <p>{t("plugins.none")}</p>
+      {browsePlugins && (
+        <button type="button" onClick={browsePlugins}>
+          {t("plugins.library.browse")}
+        </button>
+      )}
+    </div>
+  );
+  if (emptyState && entries.length === 0) {
+    return <div data-workbench-plugins>{emptyState}</div>;
+  }
   return (
     <div className="workbench-tools library-split" data-workbench-plugins>
       <div className="library-side">
@@ -158,7 +176,7 @@ function WorkbenchPluginLibrary({
         />
       </div>
       <div className="library-main">
-        {query.data && entries.length === 0 && <p>{t("plugins.none")}</p>}
+        {emptyState}
         {query.data && entries.length > 0 && !results.length && <p>{t("plugins.library.noMatches")}</p>}
         <ul className="plugin-library-list">
           {results.slice((page - 1) * state.pageSize, page * state.pageSize).map((item) => {
@@ -192,13 +210,15 @@ function WorkbenchPluginLibrary({
                     <p>{plugin.description}</p>
                   </details>
                 )}
-                <WorkbenchPluginCapabilities
-                  plugin={plugin}
-                  selected={selected}
-                  disabledTools={disabledTools}
-                  toggleTool={toggleTool}
-                  locked={readOnly || disabled}
-                />
+                {installedIds.has(plugin.id) && (
+                  <WorkbenchPluginCapabilities
+                    plugin={plugin}
+                    selected={selected}
+                    disabledTools={disabledTools}
+                    toggleTool={toggleTool}
+                    locked={readOnly || disabled}
+                  />
+                )}
                 {plugin.issues.length ? (
                   <Issues issues={plugin.issues} />
                 ) : (
@@ -214,7 +234,7 @@ function WorkbenchPluginLibrary({
         </ul>
         {query.data && (
           <WorkbenchSharedCapabilities
-            plugins={entries}
+            plugins={installed}
             enabled={enabled}
             disabledTools={disabledTools}
             toggleTool={toggleTool}

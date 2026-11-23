@@ -165,10 +165,10 @@ entries:
   - category: improved
     topic: { en: Workbench, ro: Workbench, de: Workbench, fr: Banc de travail }
     text:
-      en: Plugin tools are grouped by provider, separate from core tools; saved restrictions stay effective.
-      ro: Instrumentele plugin-urilor sunt separate de cele de bază; restricțiile salvate rămân active.
-      de: Spezialisierte Werkzeuge stehen bei ihren Plugins, getrennt vom Kern; Einschränkungen bleiben.
-      fr: Outils spécialisés avec leurs plugins, séparés des outils de base ; restrictions conservées.
+      en: Workbench tools follow installed plugins. The empty list links to the catalog. Allowances stay.
+      ro: Instrumente pe lângă pluginurile instalate, acces la catalog și permisiuni păstrate.
+      de: Werkzeuge bei installierten Plugins, Katalog bei leerer Liste, Freigaben bleiben erhalten.
+      fr: Outils des plugins installés, accès au catalogue et autorisations conservées.
   - category: new
     topic: { en: Sessions, ro: Sesiuni, de: Sitzungen, fr: Sessions }
     text:

@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import userEvent from "@testing-library/user-event";
-import { type PluginSummary, pluginManifestSchema, pluginToolNames } from "@vera/shared";
+import { type PluginSummary, pluginManifestSchema } from "@vera/shared";
 import { act, createElement } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, expect, it, vi } from "vitest";
@@ -63,7 +63,7 @@ it.each(["en", "ro", "de", "fr"])(
   },
 );
 
-it("offers the shared ecosystem switches once and explains absent providers", async () => {
+it("offers shared controls once a compatible package is installed and explains activation", async () => {
   await i18n.changeLanguage("en");
   const plugins = [
     plugin(),
@@ -78,8 +78,10 @@ it("offers the shared ecosystem switches once and explains absent providers", as
       toggleTool: vi.fn(),
       locked: false,
     });
-  await mount(render(["kicad"]));
   const status = () => container.querySelector("[data-shared-dependency]")?.textContent;
+  await mount(render(["kicad"], [plugin({ id: "kicad", ecosystem: "electronics" })]));
+  expect(status()).toBeUndefined();
+  await act(async () => root.render(render(["kicad"])));
   expect(status()).toContain(i18n.t("pluginCapabilities.noProvider"));
   await act(async () => root.render(render(["electrical-network", "plc-engineering"])));
   expect(status()).toContain("electrical-network, plc-engineering");
@@ -87,10 +89,6 @@ it("offers the shared ecosystem switches once and explains absent providers", as
   expect(
     container.querySelector<HTMLInputElement>('[data-tool-toggle="electrical_model_change"]')?.checked,
   ).toBe(false);
-  const missing = container.querySelector("[data-missing-capabilities]")!;
-  expect(missing.querySelectorAll("[data-tool-toggle]")).toHaveLength(pluginToolNames.length - 1);
-  expect(missing.textContent).toContain("parts-search");
-  expect(missing.textContent).toContain(i18n.t("pluginCapabilities.partsRequirements"));
   await act(async () =>
     root.render(render(["electrical-network"], [plugin({ issues: [{ code: "unavailable" }] })])),
   );

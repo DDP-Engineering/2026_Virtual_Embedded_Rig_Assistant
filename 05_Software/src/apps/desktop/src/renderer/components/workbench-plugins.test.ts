@@ -145,24 +145,37 @@ it.each(["en", "ro", "de"])(
   },
 );
 
-it("deselects configured and missing plugins without saving on Cancel", async () => {
+it("keeps missing selections removable and restores tool preferences when the package reappears", async () => {
   await i18n.changeLanguage("en");
-  const wb = snapshot(["echo-tools", "removed-tools"]);
+  const wb = snapshot(["echo-tools", "electrical-network"]);
+  wb.config.tools.disabled = ["electrical_network", "electrical_model_change"];
   stub(wb);
   const close = vi.fn();
   await mount(createElement(WorkbenchEditor, { workbench: wb, saved: vi.fn(), close }));
   await click('[data-project-section="plugins"]');
-  await vi.waitFor(() => expect(toggle("removed-tools")).not.toBeNull());
+  await vi.waitFor(() => expect(toggle("electrical-network")?.checked).toBe(true));
+  expect(container.querySelector("[data-tool-toggle]")).toBeNull();
+  await click('[data-workbench-plugin="electrical-network"] input');
+  expect(toggle("electrical-network")).toBeNull();
+  stub(wb, [echo, { id: "electrical-network", ecosystem: "electrical", issues: [], enabled: false }]);
+  await act(async () => client.invalidateQueries({ queryKey: ["plugins", wb.config.id] }));
+  await vi.waitFor(() => expect(toggle("electrical-network")?.checked).toBe(false));
+  const network = container.querySelector<HTMLInputElement>('[data-tool-toggle="electrical_network"]');
+  expect(network?.checked).toBe(false);
+  expect(network?.closest("[data-workbench-plugin]")?.textContent).toContain("Available after activation");
+  expect(
+    container.querySelector<HTMLInputElement>('[data-tool-toggle="electrical_model_change"]')?.checked,
+  ).toBe(false);
   expect(toggle()?.checked).toBe(true);
   await click('[data-workbench-plugin="echo-tools"] input');
-  await click('[data-workbench-plugin="removed-tools"] input');
   expect(toggle()?.checked).toBe(false);
   await act(async () =>
     userEvent.setup().click(container.querySelector("[data-project-cancel]") as HTMLElement),
   );
   expect(close).toHaveBeenCalledOnce();
   expect(calls("workbench.config.update")).toHaveLength(0);
-  expect(wb.config.plugins.enabled).toEqual(["echo-tools", "removed-tools"]);
+  expect(wb.config.plugins.enabled).toEqual(["echo-tools", "electrical-network"]);
+  expect(wb.config.tools.disabled).toEqual(["electrical_network", "electrical_model_change"]);
 });
 
 it("places owner actions before the list and restores clean state after toggling the first enabled id twice", async () => {

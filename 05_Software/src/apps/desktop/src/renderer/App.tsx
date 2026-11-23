@@ -10,6 +10,12 @@ import { WorkbenchIndexStatus } from "./components/documents/index-status.js";
 import { DocumentViewerProvider } from "./components/documents/viewer-context.js";
 import { ErrorMessage } from "./components/error-message.js";
 import { HelpContext, HelpView } from "./components/help.js";
+import {
+  clearedLibraryFilters,
+  initialLibraryState,
+  type LibraryState,
+  libraryStateKey,
+} from "./components/plugin-library.js";
 import { Plugins } from "./components/plugins.js";
 import { RunsTab } from "./components/runs-tab.js";
 import { ArtifactsTab } from "./components/session/artifacts-tab.js";
@@ -396,6 +402,21 @@ export function App() {
     setHelp(undefined);
     setChat(false);
   }, [leaveEditor]);
+  const showPlugins = () => {
+    // Installing a package is a reversible detour; the editor remains its draft owner.
+    setPlugins(true);
+    setHelp(undefined);
+    setSettings(false);
+    setChat(false);
+  };
+  const browsePlugins = () => {
+    client.setQueryData<LibraryState>(libraryStateKey, (current) => ({
+      ...(current ?? initialLibraryState),
+      ...clearedLibraryFilters,
+      page: 1,
+    }));
+    showPlugins();
+  };
   /** Opens Help as a detour: hidden drafts (New Workbench, the workbench editor) stay mounted. */
   const showHelp = useCallback(
     (page: string) => {
@@ -721,13 +742,7 @@ export function App() {
                   pluginsSelected={plugins}
                   newWorkbench={showNewWorkbench}
                   openWorkbench={openWorkbench}
-                  showPlugins={() => {
-                    // Installing a package is a reversible detour; the editor remains its draft owner.
-                    setPlugins(true);
-                    setHelp(undefined);
-                    setSettings(false);
-                    setChat(false);
-                  }}
+                  showPlugins={showPlugins}
                   navigate={navigate}
                   showHelp={() => showHelp("index")}
                   navigation={navigation}
@@ -868,6 +883,7 @@ export function App() {
                     {editor && (
                       <WorkbenchEditor
                         key={editor.config.id}
+                        browsePlugins={browsePlugins}
                         shown={!settings && !plugins && help === undefined && !newWorkbench}
                         workbench={editor}
                         request={editorRequest}

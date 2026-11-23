@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-UX-e8ceb590"
+title = "Show tool allowances with installed providers"
+status = "active"
+requirement = "When workbench plugin settings show tool allowances, VERA shall show plugin-specific tools on installed provider cards, show shared tools only with an installed electrical or automation provider, describe activation for an eligible inactive package, and preserve stored allowances independently of installation."
+verification = "Check confirmed empty and configured missing, unrelated, installed inactive and installed active provider cases; inspect one shared section and verify allowance retention across absence and reappearance."
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/workbench-plugins.tsx", "05_Software/src/apps/desktop/src/renderer/components/workbench-capabilities.tsx", "05_Software/src/apps/desktop/src/renderer/locales", "05_Software/help"]
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/workbench-capabilities.test.ts", "05_Software/src/apps/desktop/src/renderer/components/workbench-plugins.test.ts", "05_Software/tests/e2e/plugins-mock.spec.ts"]
+spec = ""
+priority = "normal"
+created = 2026-11-23
+updated = 2026-11-23

@@ -90,48 +90,28 @@ export function WorkbenchSharedCapabilities({
   const { t } = useTranslation();
   const providers = plugins.filter((plugin) => electricalModelEcosystems.includes(plugin.ecosystem ?? ""));
   const active = providers.filter((plugin) => enabled.includes(plugin.id) && !plugin.issues.length);
-  const missing = [...new Set(Object.values(pluginToolProviders))].filter(
-    (id) => !plugins.some((plugin) => plugin.id === id),
-  );
+  if (!providers.length) return null;
   return (
-    <>
-      <fieldset
-        className="workbench-capabilities"
-        data-shared-capabilities
-        title={t("pluginCapabilities.allowanceHelp")}
-      >
-        <legend>{t("pluginCapabilities.shared")}</legend>
-        <p>{t("pluginCapabilities.ecosystemDependency")}</p>
-        <p data-shared-dependency>
-          {active.length
-            ? t("pluginCapabilities.activeProviders", {
-                providers: active.map((plugin) => plugin.name ?? plugin.id).join(", "),
-              })
-            : t("pluginCapabilities.noProvider")}
-        </p>
-        <WorkbenchTools
-          names={electricalModelToolNames}
-          disabled={controls.disabledTools}
-          toggle={controls.toggleTool}
-          locked={controls.locked}
-        />
-      </fieldset>
-      {missing.length > 0 && (
-        <details data-missing-capabilities>
-          <summary>{t("pluginCapabilities.notInstalled")}</summary>
-          <ul className="plugin-library-list">
-            {missing.map((id) => (
-              <li className="plugin-card" key={id}>
-                <WorkbenchPluginCapabilities
-                  plugin={{ id, issues: [{ code: "unavailable" }], enabled: false }}
-                  selected={false}
-                  {...controls}
-                />
-              </li>
-            ))}
-          </ul>
-        </details>
-      )}
-    </>
+    <fieldset
+      className="workbench-capabilities"
+      data-shared-capabilities
+      title={t("pluginCapabilities.allowanceHelp")}
+    >
+      <legend>{t("pluginCapabilities.shared")}</legend>
+      <p>{t("pluginCapabilities.ecosystemDependency")}</p>
+      <p data-shared-dependency>
+        {active.length
+          ? t("pluginCapabilities.activeProviders", {
+              providers: active.map((plugin) => plugin.name ?? plugin.id).join(", "),
+            })
+          : t("pluginCapabilities.noProvider")}
+      </p>
+      <WorkbenchTools
+        names={electricalModelToolNames}
+        disabled={controls.disabledTools}
+        toggle={controls.toggleTool}
+        locked={controls.locked}
+      />
+    </fieldset>
   );
 }

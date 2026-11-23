@@ -6,13 +6,13 @@ title = "Select plugins in the workbench configuration"
 
 status = "active"
 
-requirement = "When the user opens the Plugins section of New Workbench or the workbench editor, VERA shall display installed plugins as a workbench-local draft selection, initially empty for a new workbench, retaining existing choices and permitting removal of unavailable selections while preventing new activation of untrusted or invalid packages."
+requirement = "When the user opens the Plugins section of New Workbench or the workbench editor, VERA shall display installed plugins as a workbench-local draft selection, initially empty for a new workbench, retaining existing choices and permitting removal of unavailable selections while preventing new activation of untrusted or invalid packages. A confirmed empty inventory shows a catalog shortcut in the editor and hides list controls when the selection is empty."
 
-verification = "Renderer and native tests select and deselect packages in create/edit, verify unchecked new defaults, selected invalid/missing removal, read-only/loading/error handling, Save persistence and Cancel without writes, and isolation between two workbenches."
+verification = "Renderer and native tests select and deselect packages in create/edit, verify unchecked new defaults, selected invalid/missing removal, read-only/loading/error handling, Save persistence and Cancel without writes, isolation between two workbenches and the catalog shortcut from a confirmed empty editor."
 
-affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/workbench-plugins.tsx", "05_Software/src/apps/desktop/src/renderer/components/workbench-config-form.tsx", "05_Software/src/apps/desktop/src/renderer/components/workbench-editor.tsx", "05_Software/src/apps/desktop/src/renderer/components/workbench-create.tsx", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json", "05_Software/src/apps/desktop/src/renderer/locales/fr.json"]
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/App.tsx", "05_Software/src/apps/desktop/src/renderer/components/workbench-plugins.tsx", "05_Software/src/apps/desktop/src/renderer/components/workbench-config-form.tsx", "05_Software/src/apps/desktop/src/renderer/components/workbench-editor.tsx", "05_Software/src/apps/desktop/src/renderer/components/workbench-create.tsx", "05_Software/src/apps/desktop/src/renderer/locales/en.json", "05_Software/src/apps/desktop/src/renderer/locales/ro.json", "05_Software/src/apps/desktop/src/renderer/locales/de.json", "05_Software/src/apps/desktop/src/renderer/locales/fr.json"]
 
-linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/workbench-plugins.test.ts", "05_Software/tests/e2e/plugins-ui.spec.ts"]
+linked_tests = ["05_Software/tests/e2e/plugins-mock.spec.ts", "05_Software/src/apps/desktop/src/renderer/components/workbench-plugins.test.ts", "05_Software/tests/e2e/plugins-ui.spec.ts"]
 
 
 spec = ""
@@ -21,4 +21,4 @@ priority = "low"   # low | normal | high
 rationale = ""        # why this behavior exists, if not obvious
 
 created = 2026-11-03
-updated = 2026-11-04
+updated = 2026-11-23
