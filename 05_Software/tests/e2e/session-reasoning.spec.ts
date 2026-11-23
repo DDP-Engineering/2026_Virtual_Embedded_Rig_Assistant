@@ -110,10 +110,9 @@ test("native reasoning persists per session and sends selected or provider-defau
     let picker = page.locator("[data-reasoning-picker]");
     await expect(picker).toBeVisible();
     const choice = page
-      .locator("[data-model-picker] option")
-      .filter({ hasText: "Reasoning fixture / org/reasoner" });
+      .locator('[data-model-picker] optgroup[label="Reasoning fixture"] option')
+      .filter({ hasText: /^Reasoning model$/ });
     await expect(choice).toHaveAttribute("value", reference);
-    await expect(choice).toContainText("131,072 tokens · Text · Tools unverified · Reasoning");
     expect(
       await picker.locator("option").evaluateAll((nodes) => nodes.map((n) => (n as HTMLOptionElement).value)),
     ).toEqual(["", "off", "low", "high"]);
@@ -180,7 +179,7 @@ test("native reasoning persists per session and sends selected or provider-defau
   }
 });
 
-test("browser reasoning controls remain usable at 760px", async ({ page }) => {
+test("browser reasoning controls remain usable at 760px", { tag: "@parallel-browser" }, async ({ page }) => {
   const config = (await resolveConfig({ root: "src/apps/desktop" }, "serve", "development")).config?.renderer;
   if (!config) throw Error("Renderer configuration missing");
   const server = await createViteServer({
@@ -194,7 +193,7 @@ test("browser reasoning controls remain usable at 760px", async ({ page }) => {
     if (!address || typeof address === "string") throw Error("Missing renderer port");
     await page.setViewportSize({ width: 760, height: 850 });
     await page.goto(`http://127.0.0.1:${address.port}/?mock=chat`);
-    await page.evaluate(async () => {
+    const reference = await page.evaluate(async () => {
       const path = "/api/index.ts";
       const { api } = await import(path);
       await api.invoke("workbench.create", { folder: "/mock/reasoning-layout", name: "Reasoning workbench" });
@@ -207,6 +206,7 @@ test("browser reasoning controls remain usable at 760px", async ({ page }) => {
           contextWindow: 16384,
           maxOutputTokens: 1024,
           protocol: "lmstudio",
+          enabledModels: ["org/reasoner"],
           models: [
             {
               id: "org/reasoner",
@@ -215,6 +215,13 @@ test("browser reasoning controls remain usable at 760px", async ({ page }) => {
               maxOutputTokens: 1024,
               reasoningOptions: ["low", "high"],
             },
+            {
+              id: "org/unticked",
+              name: "Unticked model",
+              contextWindow: 16384,
+              maxOutputTokens: 1024,
+              reasoningOptions: [],
+            },
           ],
         },
       });
@@ -222,22 +229,52 @@ test("browser reasoning controls remain usable at 760px", async ({ page }) => {
         (p: { name: string }) => p.name === "Reasoning fixture",
       );
       if (!provider) throw Error("Missing provider");
-      await api.invoke("app.settings.update", { defaultModel: `${provider.id}/org/reasoner` });
+      const reference = `${provider.id}/org/reasoner`;
+      await api.invoke("app.settings.update", { defaultModel: reference });
+      return reference;
     });
     await page.locator('[data-action="new-session"]').click();
     const picker = page.locator("[data-reasoning-picker]");
     await expect(picker).toBeVisible();
+    const modelPicker = page.locator("[data-model-picker]");
+    const model = modelPicker.locator('optgroup[label="Reasoning fixture"] option');
+    await expect.soft(model).toHaveText("Reasoning model");
+    await expect.soft(model).toHaveAttribute("value", reference);
     await picker.selectOption("high");
     await expect(picker).toHaveValue("high");
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
     for (const selector of [
       "[data-model-picker]",
       "[data-reasoning-picker]",
+      "[data-permission-picker]",
       '[data-action="send-message"]',
     ]) {
       const bounds = await page.locator(selector).boundingBox();
       expect(bounds && bounds.x + bounds.width).toBeLessThanOrEqual(760);
     }
+    for (const selector of ["[data-model-picker]", "[data-reasoning-picker]", "[data-permission-picker]"])
+      await expect.soft(page.locator(selector)).not.toHaveCSS("border-top-color", "rgba(0, 0, 0, 0)");
+    await modelPicker.selectOption(reference);
+    await expect(modelPicker).toHaveValue(reference);
+    const activeSession = await page
+      .locator('[data-session][aria-current="page"]')
+      .getAttribute("data-session");
+    await page.locator('[data-i18n="nav.settings"]').click();
+    await page.locator('[data-section="providers"]').click();
+    await expect(page.getByRole("button", { name: "Add provider" })).toBeVisible();
+    await page.evaluate(async (reference) => {
+      const path = "/api/index.ts";
+      const { api } = await import(path);
+      await api.invoke("providers.models.enable", {
+        providers: [{ id: reference.split("/", 1)[0], models: [] }],
+      });
+    }, reference);
+    await page.locator('[data-action="leave-settings"]').click();
+    await page.locator(`[data-session="${activeSession}"]`).click();
+    await expect(model).toHaveCount(0);
+    await expect(modelPicker).toHaveValue(reference);
+    await expect(modelPicker.locator(`option[value="${reference}"]`)).toHaveCount(1);
+    await expect(modelPicker.locator('option[value$="/org/unticked"]')).toHaveCount(0);
     if (process.env.VERA_REASONING_SCREENSHOT)
       await page.screenshot({ path: process.env.VERA_REASONING_SCREENSHOT.replace(".png", "-760.png") });
   } finally {

@@ -59,20 +59,60 @@ export function useModelCatalog() {
   return { providers, subscription, subscriptionModels, catalog, models, connections };
 }
 
+function modelProviderName(
+  model: CatalogModel,
+  connections: readonly { id: string; name: string }[],
+  t: TFunction,
+): string {
+  const provider = model.reference.split("/", 1)[0] ?? model.reference;
+  return (
+    model.providerName ??
+    (provider === "openai"
+      ? t("providers.openai")
+      : provider === "chatgpt"
+        ? t("chatgpt.title")
+        : (connections.find(({ id }) => id === provider)?.name ?? provider))
+  );
+}
+
+/** Keep chat choices short while retaining names and references when a provider has duplicate names. */
+export function chatModelGroups(
+  models: readonly CatalogModel[],
+  connections: readonly { id: string; name: string }[],
+  t: TFunction,
+) {
+  const groups = new Map<string, [CatalogModel, ...CatalogModel[]]>();
+  for (const model of models) {
+    const provider = model.reference.split("/", 1)[0] ?? model.reference;
+    const group = groups.get(provider);
+    if (group) group.push(model);
+    else groups.set(provider, [model]);
+  }
+  return Array.from(groups, ([id, group]) => {
+    const names = new Set<string>();
+    const duplicates = new Set<string>();
+    for (const { name } of group) {
+      if (names.has(name)) duplicates.add(name);
+      names.add(name);
+    }
+    return {
+      id,
+      label: modelProviderName(group[0], connections, t),
+      options: group.map(({ reference, id, name }) => ({
+        reference,
+        label: duplicates.has(name) ? `${name} (${id})` : name,
+      })),
+    };
+  });
+}
+
 export function modelOptionLabel(
   model: CatalogModel,
   connections: readonly { id: string; name: string }[],
   t: TFunction,
   locale: string,
 ): string {
-  const provider = model.reference.split("/", 1)[0];
-  const service =
-    model.providerName ??
-    (provider === "openai"
-      ? t("providers.openai")
-      : provider === "chatgpt"
-        ? t("chatgpt.title")
-        : (connections.find(({ id }) => id === provider)?.name ?? provider));
+  const service = modelProviderName(model, connections, t);
   const tokens = model.contextWindow.toLocaleString(locale);
   const context =
     model.contextVerified === false

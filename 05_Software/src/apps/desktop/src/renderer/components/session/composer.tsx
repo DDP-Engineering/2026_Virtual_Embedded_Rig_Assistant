@@ -18,7 +18,7 @@ import { useComposerDictation } from "../../dictation/use-composer-dictation.js"
 import { useImageModelWarning } from "../../hooks/image-model-warning.js";
 import { withMentions } from "../../lib/attachments.js";
 import { ErrorMessage } from "../error-message.js";
-import { modelOptionLabel, useModelCatalog } from "../model-catalog.js";
+import { chatModelGroups, useModelCatalog } from "../model-catalog.js";
 import { PermissionPicker } from "../permission-picker.js";
 import { useAttachments } from "./attachments.js";
 import { DictationButton, DictationStatus } from "./dictation-button.js";
@@ -56,7 +56,7 @@ export function Composer({
   setModel: (reference: string | null) => Promise<void>;
   setMode: (mode: SessionState["mode"]) => Promise<void>;
 }) {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const [text, setText] = useState("");
   const draft = useRef({ text: "", revision: 0 });
   const updateDraft = useCallback((value: string) => {
@@ -379,10 +379,14 @@ export function Composer({
               {state.modelRef && !models.some((m) => m.reference === state.modelRef) && (
                 <option value={state.modelRef}>{state.modelRef}</option>
               )}
-              {models.map((model) => (
-                <option key={model.reference} value={model.reference}>
-                  {modelOptionLabel(model, connections, t, i18n.language)}
-                </option>
+              {chatModelGroups(models, connections, t).map(({ id, label, options }) => (
+                <optgroup key={id} label={label}>
+                  {options.map(({ reference, label }) => (
+                    <option key={reference} value={reference}>
+                      {label}
+                    </option>
+                  ))}
+                </optgroup>
               ))}
             </select>
           </label>

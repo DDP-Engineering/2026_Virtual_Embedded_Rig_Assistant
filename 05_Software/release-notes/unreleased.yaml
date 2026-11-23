@@ -60,10 +60,10 @@ entries:
   - category: fixed
     topic: { en: Chat, ro: Chat, de: Chat, fr: Chat }
     text:
-      en: Tool calls have translated labels, readable plans, optional details and no empty output blocks.
-      ro: Apelurile de instrumente au texte traduse, planuri lizibile și detalii fără blocuri goale.
-      de: Werkzeugaufrufe zeigen übersetzte Texte, lesbare Pläne und Details ohne leere Ausgabefelder.
-      fr: Les outils gardent libellés traduits, plans lisibles et détails, sans bloc de résultat vide.
+      en: Grouped model choices, translated tool labels, readable plans and details without empty blocks.
+      ro: Modele grupate, etichete de instrumente traduse, planuri lizibile și detalii fără blocuri goale.
+      de: Gruppierte Modelle, übersetzte Werkzeugtexte, lesbare Pläne und Details ohne leere Ausgaben.
+      fr: Modèles groupés, outils traduits, plans lisibles et détails sans blocs de sortie vides.
   - category: fixed
     topic: { en: Settings, ro: Setări, de: Einstellungen, fr: Paramètres }
     text:

@@ -50,6 +50,9 @@ budgets and abort. The browser mock seeds six selectable states and an edit appr
 - PermissionPicker offers read-only, Ask, Auto-edit and marked Bypass. Each Bypass change first opens one localized confirmation naming read/change/run in any OS-accessible folder. Confirm saves the mode; Cancel/Escape keeps the prior mode and restores focus. Save errors retain the dialog for retry/cancel and pending saves prevent duplicates. Bypass remains red/bold, and its enabled ordinary file tools can use outside paths; application data is excluded. Other mode changes remain available during active turns, with core revocation on downgrade.
 
 - The composer places a localized reasoning picker immediately after Model. It offers Default plus the model-declared native levels and hides for models without declared support. Its session-keyed metadata follows effective session/workbench/app model configuration; saves use an expected-model guard and confirmed responses. Read-only/pending saves disable editing; running or awaiting-approval turns can select the next request level. No polling or full-history replay is needed for reasoning metadata.
+- The composer lists compact model names under provider groups and disambiguates duplicate names with model IDs.
+  Model, reasoning and permission selectors use visible input borders and wrap in narrow chat layouts.
+  The workbench model selector shows capability metadata (REQ-UX-bfbeca0c, REQ-UX-161c4053).
 
 - Image inspection activity shows a localized label and the path. The transcript and exports receive the text tool result.
 

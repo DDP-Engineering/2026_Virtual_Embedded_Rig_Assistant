@@ -1,0 +1,24 @@
+schema = 1
+
+id = "REQ-UX-161c4053"
+
+title = "Make chat composer selectors visibly distinct"
+
+status = "active"
+
+requirement = "When model, reasoning and permission controls appear in the chat composer, VERA shall present them as distinct bordered fields that can wrap within the available width."
+
+verification = "At a narrow viewport, inspect visible borders on all three fields and check the controls and Send stay within the viewport and are usable."
+
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/styles.css"]
+
+linked_tests = ["05_Software/tests/e2e/session-reasoning.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-23
+updated = 2026-11-23

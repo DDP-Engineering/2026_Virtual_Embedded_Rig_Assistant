@@ -116,8 +116,8 @@ Facts that span components:
   and M Plan, and Z.AI API and GLM Coding Plan, provide separate international connection presets
   with documented model profiles. OpenCode Console and Go have separate presets
   and authenticated catalogs. International QwenCloud Standard and Token Plan also have separate bindings
-  and credentials, with explicit model entry when catalog discovery is unavailable. Session and workbench
-  model pickers share plan and capability labels. Fireworks AI, Together AI, Groq and Cerebras offer
+  and credentials, with explicit model entry when catalog discovery is unavailable. Chat groups compact model
+  names by provider, and the workbench picker shows detailed capabilities. Fireworks AI, Together AI, Groq and Cerebras offer
   separate key scopes, service catalogs and manual model entry. Hosted capabilities use documented
   catalog fields or exact published model profiles. Hugging Face Inference Providers and Vercel
   AI Gateway route requests upstream. NVIDIA NIM runs hosted models. The three services have
