@@ -21,9 +21,9 @@
 
 L’option **Demandes d’approbation en arrière-plan** est activée par défaut. Consultez les demandes et répondez dans VERA. Les demandes en attente apparaissent dans la barre latérale et le fil de discussion.
 
-Cliquez sur une alerte pour ouvrir sa session. VERA vous demande confirmation avant d’abandonner les modifications non enregistrées.
+Cliquez sur la bannière d’une alerte pendant que VERA fonctionne pour ouvrir sa session. VERA vous demande confirmation avant d’abandonner les modifications non enregistrées.
 
-Les alertes du bureau s’appliquent tant que VERA est en cours d’exécution. Le système d’exploitation décide de les afficher. Si elles n’apparaissent pas, vérifiez les paramètres de notification système pour VERA et le mode Ne pas déranger. Si votre environnement ne peut pas afficher les alertes du bureau, utilisez les indicateurs de session dans VERA.
+Sous Windows, les alertes du bureau nécessitent une version installée de VERA. La version ZIP portable utilise les indicateurs de session et les cartes d’approbation dans VERA. Sous Linux, les alertes du bureau nécessitent un service de notifications du bureau. Dans les environnements compatibles, le système décide si les alertes s’affichent pendant que VERA fonctionne. Si elles n’apparaissent pas, vérifiez les notifications système pour VERA et le mode Ne pas déranger. Les indicateurs de session et les cartes d’approbation restent disponibles dans VERA.
 
 ## Données et confidentialité
 

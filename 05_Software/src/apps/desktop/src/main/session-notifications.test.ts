@@ -17,7 +17,7 @@ class Notice extends EventEmitter {
   close = vi.fn();
 }
 
-function harness(platform = "linux") {
+function harness(platform = "linux", portable = false) {
   const prefs: Settings["notifications"] = { turnCompletion: "background", approvalRequests: true };
   const window = { visible: true, focused: false, minimized: false };
   const native: Notice[] = [];
@@ -31,6 +31,7 @@ function harness(platform = "linux") {
   const failed = vi.fn();
   const notices = new SessionNotifications({
     platform,
+    portable,
     preferences: () => prefs,
     language: () => "en",
     window: () => window,
@@ -43,6 +44,21 @@ function harness(platform = "linux") {
     notices.observe(workbench, sessionId, event);
   return { notices, publish, window, prefs, native, supported, create, activate, failed };
 }
+
+it.each([
+  ["win32", true, false],
+  ["win32", false, true],
+  ["linux", true, true],
+  ["linux", false, true],
+] as const)("checks session alert availability on %s in portable=%s", async (platform, portable, native) => {
+  const h = harness(platform, portable);
+  h.window.minimized = true;
+  h.publish(turn);
+  h.publish({ type: "approval.requested", approvalId: "pending", pending: () => true });
+  await flush();
+  expect(h.supported).toHaveBeenCalledTimes(native ? 2 : 0);
+  expect(h.create).toHaveBeenCalledTimes(native ? 2 : 0);
+});
 
 it("applies completion preference to the actual visible, minimized and focused state", async () => {
   for (const policy of ["never", "background", "always"] as const) {

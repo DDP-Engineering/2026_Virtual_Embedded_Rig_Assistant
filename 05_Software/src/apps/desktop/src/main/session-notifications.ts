@@ -28,6 +28,7 @@ export class SessionNotifications {
   constructor(
     private readonly host: {
       platform: string;
+      portable: boolean;
       preferences: () => Settings["notifications"];
       language: () => HelpLanguage;
       window: () => { minimized: boolean; visible: boolean; focused: boolean } | undefined;
@@ -39,6 +40,8 @@ export class SessionNotifications {
   ) {}
 
   observe(workbench: Workbench, sessionId: string, event: LiveSessionActivity): void {
+    // Even Electron's capability query can register a persistent Windows toast activator.
+    if (this.host.platform === "win32" && this.host.portable) return;
     const workbenchId = workbench.config.id;
     if (!workbenchIdSchema.safeParse(workbenchId).success || !sessionIdSchema.safeParse(sessionId).success)
       return;

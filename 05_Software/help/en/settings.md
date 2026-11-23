@@ -21,9 +21,9 @@
 
 **Approval requests in background** is on by default. Review and answer requests in VERA. Pending requests appear in the sidebar and chat transcript.
 
-Click an alert to open its session. VERA asks before discarding unsaved edits.
+Click a notification banner while VERA is running to open its session. VERA asks before discarding unsaved edits.
 
-Desktop alerts apply while VERA is running. The operating system controls whether it shows them. If alerts are missing, check system notification settings for VERA and whether Do Not Disturb is on. If your environment cannot show desktop alerts, use the session indicators in VERA.
+On Windows, desktop alerts require an installed copy of VERA. The portable ZIP uses the session indicators and approval cards in VERA. On Linux, desktop alerts require a desktop notification service. Where desktop alerts are supported, the operating system controls whether they appear while VERA is running. If alerts are missing, check VERA’s system notification settings and Do Not Disturb. The in-app session indicators and approval cards remain available.
 
 ## Data & privacy
 

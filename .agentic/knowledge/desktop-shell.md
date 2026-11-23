@@ -31,7 +31,10 @@ Desktop main requests silent delivery of generic localized notifications for eli
 human approvals. It reads saved preferences and the native window state at dispatch. Only an alert click
 restores and focuses the window. Packaged Windows uses the NSIS production or test AppUserModelID and
 an opaque toast launch tag for Electron's current-process click callback. OS delivery and dismissal are
-best effort. The Linux notification daemon controls sound under Electron's libnotify backend. Approval review and decisions stay in the chat. Closing the last window still quits.
+best effort. Windows portable mode uses in-app session indicators and approval cards. It bypasses the
+Electron presenter and its Start Menu and COM registration (REQ-PLAT-99eec2f1). The Linux desktop needs
+a notification service, which controls sound under Electron's libnotify backend. Approval review and
+decisions stay in the chat. Closing the last window still quits.
 
 `npm run dev` starts the loopback development renderer and Electron. `npm run build`
 emits main ESM, preload CommonJS and renderer assets under `src/apps/desktop/out/`.

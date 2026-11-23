@@ -53,7 +53,7 @@ win:
       arch: [x64]
     - target: zip
       arch: [x64]
-  signAndEditExecutable: false
+  signExecutable: false
 nsis:
   perMachine: false
   oneClick: true

@@ -21,9 +21,9 @@ La **Finalizarea unei ture** poți alege **Niciodată**, **În fundal** (implici
 
 Opțiunea **Cereri de aprobare în fundal** este activată implicit. Verifică cererile și răspunde în VERA. Cererile în așteptare apar în bara laterală și în conversație.
 
-Apasă pe o alertă pentru a deschide sesiunea. VERA îți cere confirmarea înainte de a renunța la modificările nesalvate.
+Apasă pe bannerul unei alerte cât timp rulează VERA pentru a deschide sesiunea. VERA îți cere confirmarea înainte de a renunța la modificările nesalvate.
 
-Alertele desktop se aplică atunci când VERA rulează. Sistemul de operare decide dacă le afișează. Dacă nu apar, verifică setările de notificări ale sistemului pentru VERA și dacă modul Nu deranja este activ. Dacă mediul nu poate afișa alerte desktop, folosește indicatorii sesiunilor din VERA.
+Pe Windows, alertele desktop necesită instalarea VERA. Versiunea ZIP portabilă folosește indicatorii sesiunilor și cardurile de aprobare din VERA. Pe Linux, alertele desktop necesită un serviciu de notificări desktop. În mediile compatibile, sistemul de operare decide dacă afișează alertele cât timp rulează VERA. Dacă alertele lipsesc, verifică setările de notificări ale sistemului pentru VERA și modul Nu deranja. Indicatorii sesiunilor și cardurile de aprobare rămân disponibile în aplicație.
 
 ## Date și confidențialitate
 

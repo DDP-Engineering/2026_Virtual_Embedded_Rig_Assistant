@@ -60,10 +60,12 @@ it("configures native target pairs, distinct test identity and conditional manda
   const win = distributionConfig("win32", false, {});
   expect(win.win.target.map((t: { target: string }) => t.target)).toEqual(["nsis", "zip"]);
   expect(win.nsis).toMatchObject({ perMachine: false, oneClick: true, allowElevation: false });
-  expect(win.win.signAndEditExecutable).toBe(false);
+  expect(win.win.signAndEditExecutable).toBe(true);
+  expect(win.win.signExecutable).toBe(false);
   const signed = distributionConfig("win32", false, { WIN_CSC_LINK: "fixture-certificate" });
   expect(signed.forceCodeSigning).toBe(true);
   expect(signed.win.signAndEditExecutable).toBe(true);
+  expect(signed.win.signExecutable).toBe(true);
   for (const selectors of [
     { VERA_CERTIFICATE_SHA1: "fixture-thumbprint" },
     { VERA_CERTIFICATE_SUBJECT: "fixture-subject" },
@@ -71,6 +73,7 @@ it("configures native target pairs, distinct test identity and conditional manda
   ]) {
     const selected = distributionConfig("win32", false, selectors);
     expect(selected.forceCodeSigning).toBe(true);
+    expect(selected.win.signExecutable).toBe(true);
     expect(selected.win.signtoolOptions).toEqual({
       ...(selectors.VERA_CERTIFICATE_SHA1 ? { certificateSha1: selectors.VERA_CERTIFICATE_SHA1 } : {}),
       ...(selectors.VERA_CERTIFICATE_SUBJECT
@@ -83,6 +86,8 @@ it("configures native target pairs, distinct test identity and conditional manda
   ).toEqual(["AppImage", "deb"]);
   const test = distributionConfig("win32", true, {});
   expect(test.productName).toBe("VERA Test");
+  expect(test.win.signAndEditExecutable).toBe(true);
+  expect(test.win.signExecutable).toBe(false);
   expect(test.appId).not.toBe(win.appId);
   expect(test.artifactName).toContain("-test-");
 });

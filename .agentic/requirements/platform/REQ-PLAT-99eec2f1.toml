@@ -1,0 +1,12 @@
+schema = 1
+id = "REQ-PLAT-99eec2f1"
+title = "Keep Windows portable session alerts in VERA"
+status = "active"
+requirement = "When a Windows build is running in portable mode, Desktop shall bypass native notification presenter initialization for all session activity."
+verification = "Publish eligible background completion and approval events in Windows portable mode and assert the capability probe and notice constructor are untouched. Compare eligible events under Windows installed and Linux modes."
+affected_paths = ["05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/apps/desktop/src/main/session-notifications.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/session-notifications.test.ts"]
+priority = "normal"
+rationale = "The pinned Electron Windows presenter can persist a Start Menu shortcut and COM activation registration when queried."
+created = 2026-11-23
+updated = 2026-11-23

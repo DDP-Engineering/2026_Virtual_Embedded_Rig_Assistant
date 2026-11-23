@@ -696,6 +696,7 @@ function interfaceLanguage(): HelpLanguage {
 }
 const sessionNotifications = new SessionNotifications({
   platform: process.platform,
+  portable: dataLocations.portable,
   preferences: () => settings.get().settings.notifications,
   language: interfaceLanguage,
   window: () =>
