@@ -44,8 +44,9 @@ core validates and persists ([workbench](workbench.md)).
 
 ## Invariants
 
-- A desktop notification click uses the same unsaved Workbench and Settings editor guard before
-  opening the verified workbench and chat. A click waits for the current navigation operation to finish.
+- Native notification, Activity and sidebar attention navigation use the same unsaved Workbench
+  and Settings editor guard before opening the verified workbench and chat. Native clicks wait for
+  navigation to finish and Activity to close. Editors stay inert during the verified open itself.
   A dismissed prompt or stale destination keeps the draft.
 
 - Leaving through other navigation (sidebar open/edit/close/remove of the active workbench, New session, Settings, New, Plugins, Open) with unsaved edits asks for confirmation exactly once; edits remain unsaved until a save completes, and a save already sent when the engineer confirms leaving may still complete on disk while its result is ignored by the closed editor (REQ-UX-efb3e4fb).

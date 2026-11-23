@@ -588,6 +588,15 @@
     "timeoutEnabled": "Folosește răspunsurile recomandate după un interval",
     "timeoutMinutes": "Timp de așteptare pentru întrebări (minute)"
   },
+  "activity": {
+    "title": "Activitate",
+    "running": "În curs",
+    "approval": "Necesită aprobare",
+    "question": "Necesită răspuns",
+    "completions": "Răspunsuri necitite",
+    "readAll": "Marchează toate ca citite",
+    "empty": "Nicio activitate în sesiuni."
+  },
   "sessionActivity": {
     "summaryWithQuestions": "Sesiuni active în {{name}}: în curs {{running}}, așteaptă aprobare {{awaiting}}, așteaptă răspuns {{questions}}",
     "summary": "Sesiuni active în {{name}}: în lucru {{running}}, așteaptă aprobare {{awaiting}}",

@@ -588,6 +588,15 @@
     "timeoutEnabled": "Empfohlene Antworten nach einer Wartezeit übernehmen",
     "timeoutMinutes": "Wartezeit für Fragen (Minuten)"
   },
+  "activity": {
+    "title": "Aktivität",
+    "running": "Läuft",
+    "approval": "Freigabe erforderlich",
+    "question": "Antwort erforderlich",
+    "completions": "Ungelesene Antworten",
+    "readAll": "Alle als gelesen markieren",
+    "empty": "Keine Sitzungsaktivität."
+  },
   "sessionActivity": {
     "summaryWithQuestions": "Aktive Sitzungen in {{name}}: {{running}} laufen, {{awaiting}} warten auf Genehmigung, {{questions}} auf Antwort",
     "summary": "Aktive Sitzungen in {{name}}: laufend {{running}}, wartet auf Freigabe {{awaiting}}",

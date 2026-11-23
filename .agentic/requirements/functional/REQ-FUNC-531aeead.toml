@@ -1,0 +1,32 @@
+schema = 1
+
+id = "REQ-FUNC-531aeead"
+
+title = "Acknowledge completions independently of turn state"
+
+status = "active"
+
+requirement = "When a completion entry opens successfully or the user chooses Mark all as read, Activity shall clear the selected completion or all unread completions respectively while leaving operational states unchanged."
+
+verification = "Decline a dirty editor prompt and confirm the entry remains, open the entry and confirm only its marker clears, then clear all and verify running and waiting rows remain."
+
+affected_paths = [
+  "05_Software/src/apps/desktop/src/main/unread-completions.ts",
+  "05_Software/src/apps/desktop/src/main/index.ts",
+  "05_Software/src/apps/desktop/src/renderer/components/activity-view.tsx",
+  "05_Software/src/libraries/shared/src/ipc.ts",
+]
+
+linked_tests = [
+  "05_Software/src/apps/desktop/src/main/unread-completions.test.ts",
+  "05_Software/tests/e2e/background-sessions.spec.ts",
+]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-24
+updated = 2026-11-24

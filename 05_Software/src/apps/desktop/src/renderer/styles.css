@@ -1218,6 +1218,38 @@ legend {
 .pinned-dialog::backdrop {
   background: rgb(0 0 0 / 50%);
 }
+.activity-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.activity-header :is(h2, h3) {
+  margin-block: 0.3rem;
+}
+.activity-dialog section {
+  margin-block-start: 1rem;
+}
+.activity-rows {
+  list-style: none;
+  padding: 0;
+  margin: 0.5rem 0;
+  display: grid;
+  gap: 0.25rem;
+}
+.activity-rows button {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.25rem 1rem;
+  width: 100%;
+  text-align: start;
+  overflow-wrap: anywhere;
+}
+.activity-rows small {
+  color: var(--muted-foreground);
+}
 .provider-card {
   margin-block: 1rem;
   padding: 1rem;

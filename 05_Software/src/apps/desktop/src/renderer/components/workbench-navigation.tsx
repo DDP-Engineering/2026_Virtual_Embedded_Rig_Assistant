@@ -1,10 +1,9 @@
 // REQ-UX-18f96271 REQ-UX-ec37f55b REQ-UX-c2a9fe24 REQ-UX-4bb04608
-import type { RecentWorkbenchState, SessionActivity } from "@vera/shared";
+import type { ActivitySessionTarget, RecentWorkbenchState, SessionActivity } from "@vera/shared";
 import { Activity, ChevronDown, ChevronRight } from "lucide-react";
 import type { KeyboardEvent as ReactKeyboardEvent, ReactNode } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useSessionActivity } from "../hooks/use-session-activity.js";
 import { useTurnCapacity } from "../hooks/use-turn-capacity.js";
 import { reorderOffset } from "../lib/shortcuts.js";
 import { WorkbenchActivity } from "./workbench-activity.js";
@@ -24,6 +23,7 @@ export function WorkbenchNavigation({
   remove,
   close,
   openSession,
+  activity,
   stopSession,
   children,
 }: {
@@ -42,14 +42,14 @@ export function WorkbenchNavigation({
   remove: (folder: string) => void;
   close?: () => void;
   /** Shows a running or awaiting session in its workbench, bringing a background one forward. */
-  openSession?: (folder: string, sessionId: string, questionId?: string) => Promise<boolean>;
+  openSession?: (target: ActivitySessionTarget, questionId?: string) => Promise<boolean>;
+  activity?: SessionActivity[] | undefined;
   /** Stops one session's turn wherever it runs; the shown workbench stays. */
   stopSession?: (sessionId: string) => void;
   children: ReactNode;
 }) {
   const { t } = useTranslation();
   const navigation = useRef<HTMLElement>(null);
-  const activity = useSessionActivity();
   const { capacity } = useTurnCapacity();
   const menuSelector = ".workbench-menu,.session-options,.workbench-activity";
   const closeMenus = useCallback((except: Element | null = null, restoreFocus = false) => {
@@ -180,7 +180,7 @@ export function WorkbenchNavigation({
       {sorted.map((entry) => {
         const active = entry.id === activeId && (!activeFolder || entry.folder === activeFolder);
         const shown = active && (expanded[entry.folder] ?? true);
-        const busy = activityOf(entry);
+        const busy = entry.missing ? undefined : activityOf(entry);
         return (
           <div
             key={entry.folder}
@@ -234,7 +234,10 @@ export function WorkbenchNavigation({
                   activity={busy}
                   disabled={disabled}
                   open={(sessionId, questionId) =>
-                    void openSession?.(entry.folder, sessionId, questionId).then((ok) => {
+                    void openSession?.(
+                      { folder: busy.folder, workbenchId: busy.workbenchId, sessionId },
+                      questionId,
+                    ).then((ok) => {
                       if (ok) expand(entry.folder, true);
                     })
                   }

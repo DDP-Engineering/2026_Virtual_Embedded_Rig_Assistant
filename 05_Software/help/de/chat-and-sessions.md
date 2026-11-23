@@ -14,6 +14,12 @@ Eine Sitzung ist eine Unterhaltung mit dem Agenten innerhalb eines Workbenchs. V
 
 Durchläufe laufen weiter, wenn Sie einen anderen Workbench öffnen. Eine Workbench-Zeile in der Seitenleiste zeigt ein Zeichen mit der Anzahl ihrer laufenden und wartenden Sitzungen, auch wenn die Zeile eingeklappt ist; ein Schild bedeutet, dass eine Sitzung auf Ihre Freigabe wartet. Wählen Sie das Zeichen (oder fokussieren Sie es und drücken Sie Enter), um diese Sitzungen anzuzeigen. Wählen Sie eine Sitzung, um sie in ihrem Workbench zu öffnen und dort die Freigabe zu prüfen, oder **Stoppen**, um nur diesen Durchlauf zu beenden. Solange Durchläufe laufen, zeigt **Workbenches**, wie viele laufen, und das Limit **Gleichzeitige Durchläufe**. Am Limit bleibt eine neue Nachricht im Eingabefeld: Warten Sie, bis ein Durchlauf endet, oder stoppen Sie einen in der Seitenleiste, und senden Sie sie dann erneut.
 
+## Aktivität
+
+Öffne **Aktivität** in der Titelleiste. Dort siehst du laufende Sitzungen, ausstehende Freigaben und Fragen sowie ungelesene Antworten aus allen Workbenches. Mit Tab wechselst du zwischen den Bedienelementen, mit Enter öffnest du einen Eintrag und mit Esc schließt du die Ansicht. VERA fragt nach, bevor ungespeicherte Änderungen verworfen werden. Bei einer offenen Frage springt VERA zur Fragekarte.
+
+Ungelesene Antworten sind auch bei deaktivierten Desktop-Hinweisen verfügbar. VERA behält bis zu 100 erfolgreiche Antworten seit dem Start der Anwendung. Beim Öffnen einer ungelesenen Antwort wird sie als gelesen markiert. **Alle als gelesen markieren** leert die Liste der ungelesenen Antworten. Laufende Sitzungen und ausstehende Anfragen bleiben sichtbar.
+
 ## Eine Nachricht schreiben
 
 Schreiben Sie in das Nachrichtenfeld (**Fragen Sie VERA zu Ihrem Projekt…**). Enter sendet, Shift+Enter fügt eine Zeile ein, und @ vervollständigt Pfade von Workbench-Dateien. Um dem Agenten eine Datei zu geben, wählen Sie im Tab **Dateien** an der Datei **Als Kontext anhängen**; sie erscheint als Chip über dem Nachrichtenfeld.

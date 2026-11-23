@@ -356,7 +356,11 @@ export class SessionService {
     const observe = this.host.onLiveActivity;
     if (!observe) return;
     if (successfulOrdinaryTurn(event, this.active.get(id))) {
-      observe(id, { type: "turn.completed", turnId: event.turnId });
+      observe(id, {
+        type: "turn.completed",
+        turnId: event.turnId,
+        title: this.sessions.get(id)?.title ?? "",
+      });
     } else if (event.type === "approval.requested") {
       const { approvalId } = event;
       observe(id, {

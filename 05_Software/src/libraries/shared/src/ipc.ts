@@ -215,7 +215,7 @@ export const appInfoSchema = z.strictObject({
 const planScope = { workbenchId: workbenchIdSchema, sessionId: sessionIdSchema };
 
 /**
- * One open workbench and its top-level sessions that are running or awaiting approval, for an activity
+ * One open workbench and its running top-level sessions and pending requests, for an activity
  * overview across workbenches; `foreground` marks the workbench the window shows.
  */
 export const sessionActivitySchema = z.strictObject({
@@ -233,6 +233,23 @@ export const sessionActivitySchema = z.strictObject({
   ),
 });
 export type SessionActivity = z.infer<typeof sessionActivitySchema>;
+
+const activitySessionTargetSchema = z.strictObject({
+  folder: z.string().min(1),
+  workbenchId: workbenchIdSchema,
+  sessionId: sessionIdSchema,
+});
+export type ActivitySessionTarget = z.infer<typeof activitySessionTargetSchema>;
+const unreadCompletionSchema = activitySessionTargetSchema.extend({
+  completionId: z.uuid(),
+  workbenchName: z.string().min(1).max(80),
+  title: z.string().max(60),
+});
+export type UnreadCompletion = z.infer<typeof unreadCompletionSchema>;
+export const unreadCompletionLimit = 100;
+const openedActivitySessionSchema = z
+  .strictObject({ workbench: workbenchSnapshotSchema, sessionId: sessionIdSchema })
+  .nullable();
 export const channels = {
   "app.clipboard.write": defineChannel(
     "app.clipboard.write",
@@ -775,12 +792,27 @@ export const channels = {
     z.strictObject({ query: sessionSearchQuerySchema, workbenchId: workbenchIdSchema.optional() }),
     z.array(sessionSummarySchema),
   ),
-  /** Every open workbench, the shown one first, with its sessions running or awaiting approval. */
+  /** Every open workbench, the shown one first, with its running turns and pending requests. */
   "session.activity": defineChannel("session.activity", z.strictObject({}), z.array(sessionActivitySchema)),
+  "session.activity.unread": defineChannel(
+    "session.activity.unread",
+    z.strictObject({}),
+    z.array(unreadCompletionSchema).max(unreadCompletionLimit),
+  ),
+  "session.activity.open": defineChannel(
+    "session.activity.open",
+    activitySessionTargetSchema.extend({ completionId: z.uuid().optional() }),
+    openedActivitySessionSchema,
+  ),
+  "session.activity.readAll": defineChannel(
+    "session.activity.readAll",
+    z.strictObject({}),
+    z.strictObject({}),
+  ),
   "session.notification.open": defineChannel(
     "session.notification.open",
     z.strictObject({ token: z.uuid() }),
-    z.strictObject({ workbench: workbenchSnapshotSchema, sessionId: sessionIdSchema }).nullable(),
+    openedActivitySessionSchema,
   ),
   /** Active turns across every open workbench and the Concurrent turns limit (REQ-FUNC-33cd5f9f). */
   "session.capacity": defineChannel("session.capacity", z.strictObject({}), turnCapacitySchema),

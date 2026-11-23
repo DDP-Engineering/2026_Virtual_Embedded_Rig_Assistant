@@ -28,7 +28,7 @@ export interface SessionRoute<R extends RoutedRuntime> {
   readonly db: Database;
 }
 
-/** One open workbench runtime and its sessions that are running or awaiting approval. */
+/** One open workbench runtime with its running top-level sessions and pending requests. */
 export interface RuntimeActivity {
   readonly snapshot: WorkbenchSnapshot;
   readonly foreground: boolean;
@@ -186,7 +186,7 @@ export class SessionRouter<R extends RoutedRuntime> {
       return failure(error);
     }
   }
-  /** Every open runtime, foreground first, with its top-level sessions running or awaiting approval. */
+  /** Every open runtime, foreground first, with its running top-level sessions and pending requests. */
   async activity(): Promise<RuntimeActivity[]> {
     const foreground = this.runtimes()[0];
     return Promise.all(

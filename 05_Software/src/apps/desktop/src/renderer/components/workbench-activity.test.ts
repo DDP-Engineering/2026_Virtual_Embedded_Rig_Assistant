@@ -3,7 +3,7 @@
 // REQ-UX-c2a9fe24 REQ-UX-4bb04608
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import userEvent from "@testing-library/user-event";
-import type { SessionActivity, SessionSummary, WorkbenchSnapshot } from "@vera/shared";
+import type { AppEvent, Response, SessionActivity, SessionSummary, WorkbenchSnapshot } from "@vera/shared";
 import { act, createElement } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, expect, test, vi } from "vitest";
@@ -55,6 +55,13 @@ async function mount() {
     ),
   );
   await settle();
+}
+function deferred<T>() {
+  let resolve!: (value: T) => void;
+  const promise = new Promise<T>((done) => {
+    resolve = done;
+  });
+  return { promise, resolve };
 }
 const heading = (bench: WorkbenchSnapshot) =>
   container.querySelector<HTMLElement>(
@@ -219,7 +226,7 @@ test("Open shows a background session in its own workbench; a failed open keeps 
   await vi.waitFor(() => expect(control(alpha)).toBeTruthy());
   await act(async () => (container.querySelector(`[data-session="${quiet.id}"]`) as HTMLElement).click());
   await settle();
-  failures["workbench.open"] = { code: "NOT_FOUND", messageKey: "errors.NOT_FOUND" };
+  failures["session.activity.open"] = { code: "NOT_FOUND", messageKey: "errors.NOT_FOUND" };
   await act(async () => user.click(summary(alpha)));
   await act(async () => user.click(item(alpha, "open-active-session", waiting.id)));
   await settle();
@@ -232,7 +239,10 @@ test("Open shows a background session in its own workbench; a failed open keeps 
   await act(async () => user.click(summary(alpha)));
   await act(async () => user.click(item(alpha, "open-active-session", waiting.id)));
   await settle(100);
-  expect(calls).toContainEqual(["workbench.open", { folder: alpha.folder }]);
+  expect(calls).toContainEqual([
+    "session.activity.open",
+    { folder: alpha.folder, workbenchId: alpha.config.id, sessionId: waiting.id },
+  ]);
   await vi.waitFor(() => expect(shown(alpha)).toBe(true));
   await vi.waitFor(() =>
     expect(container.querySelector(`[data-session="${waiting.id}"]`)?.getAttribute("aria-current")).toBe(
@@ -304,6 +314,100 @@ test("session rows mark running and awaiting-approval sessions only, with the st
   expect(icon("error")).toBeNull();
   const awaiting = container.querySelector<HTMLElement>(`[data-session="${rows[2]?.id}"]`);
   expect(awaiting?.querySelector(".sr-only")?.textContent).toBe("Awaiting approval");
+});
+
+test("an activity event supersedes both initial reads that are still in flight", async () => {
+  const bench = await api.invoke("workbench.create", { folder: "/mock/activity-first-read", name: "Rig" });
+  const session = await api.invoke("session.create", { workbenchId: bench.config.id });
+  const pendingActivity = deferred<Response<"session.activity">>();
+  const pendingUnread = deferred<Response<"session.activity.unread">>();
+  const counts = { activity: 0, unread: 0 };
+  const completion = {
+    folder: bench.folder,
+    workbenchId: bench.config.id,
+    sessionId: session.id,
+    completionId: "188cc057-0c82-4079-8775-05efced31572",
+    workbenchName: "Rig",
+    title: "A reply just finished",
+  };
+  const invoke = api.invoke.bind(api);
+  vi.spyOn(api, "invoke").mockImplementation((async (channel: string, payload: never) => {
+    if (channel === "session.activity" && ++counts.activity === 1) return pendingActivity.promise;
+    if (channel === "session.activity.unread")
+      return ++counts.unread === 1 ? pendingUnread.promise : [completion];
+    return invoke(channel as never, payload);
+  }) as typeof api.invoke);
+  await mount();
+  await act(async () => {
+    container.querySelector<HTMLButtonElement>('[data-action="show-activity"]')?.click();
+  });
+  await vi.waitFor(() => expect(counts).toEqual({ activity: 1, unread: 1 }));
+  await act(async () => {
+    await api.invoke("session.send", { sessionId: session.id, text: "stream slowly please" });
+  });
+  await vi.waitFor(() => {
+    expect(document.querySelector('dialog [data-activity-kind="running"]')).toBeTruthy();
+    expect(document.querySelector('dialog [data-activity-kind="completion"]')?.textContent).toContain(
+      completion.title,
+    );
+  });
+  await act(async () => {
+    pendingActivity.resolve([]);
+    pendingUnread.resolve([]);
+  });
+  expect(document.querySelector('dialog [data-activity-kind="running"]')).toBeTruthy();
+  expect(document.querySelector('dialog [data-activity-kind="completion"]')).toBeTruthy();
+});
+
+test("a pending sidebar open freezes editors and preserves a newer native activation", async () => {
+  const bench = await api.invoke("workbench.create", { folder: "/mock/activity-navigation", name: "Rig" });
+  const running = await api.invoke("session.create", { workbenchId: bench.config.id });
+  await api.invoke("session.send", { sessionId: running.id, text: "stream slowly please" });
+  const native = await api.invoke("session.create", { workbenchId: bench.config.id });
+  const open = deferred<Response<"session.activity.open">>();
+  const invoke = api.invoke.bind(api);
+  const nativeOpen = vi.fn((_request: unknown) => ({ workbench: bench, sessionId: native.id }));
+  vi.spyOn(api, "invoke").mockImplementation((async (channel: string, payload: never) => {
+    if (channel === "session.activity.open") return open.promise;
+    if (channel === "session.notification.open") return nativeOpen(payload);
+    return invoke(channel as never, payload);
+  }) as typeof api.invoke);
+  const subscribe = api.subscribe.bind(api);
+  const listeners = new Set<(event: AppEvent) => void>();
+  vi.spyOn(api, "subscribe").mockImplementation(((...args: unknown[]) => {
+    const unsubscribe = Reflect.apply(subscribe, api, args) as () => void;
+    if (args[0] !== "app") return unsubscribe;
+    const listener = args[1] as (event: AppEvent) => void;
+    listeners.add(listener);
+    return () => {
+      listeners.delete(listener);
+      unsubscribe();
+    };
+  }) as typeof api.subscribe);
+  await mount();
+  await vi.waitFor(() => expect(control(bench)).toBeTruthy());
+  await act(async () => {
+    container.querySelector<HTMLButtonElement>('[data-action="edit-workbench-overview"]')?.click();
+  });
+  const editor = container.querySelector(".workbench-editor");
+  expect(editor).toBeTruthy();
+  expect(editor?.closest("[inert]")).toBeNull();
+  await act(async () => {
+    item(bench, "open-active-session", running.id).click();
+  });
+  const token = "188cc057-0c82-4079-8775-05efced31572";
+  await act(async () => {
+    for (const listener of listeners) listener({ type: "session.notification.clicked", token });
+  });
+  expect(editor?.closest("[inert]")).toBeTruthy();
+  expect(nativeOpen).not.toHaveBeenCalled();
+  await act(async () => open.resolve({ workbench: bench, sessionId: running.id }));
+  await vi.waitFor(() => expect(nativeOpen).toHaveBeenCalledExactlyOnceWith({ token }));
+  await vi.waitFor(() =>
+    expect(container.querySelector(`[data-session="${native.id}"]`)?.getAttribute("aria-current")).toBe(
+      "page",
+    ),
+  );
 });
 
 test("activity events refresh the heading and the rows at once; the limit shows as reached", async () => {

@@ -6,7 +6,7 @@ import type { Channel, Request, Response, VeraBridge } from "@vera/shared";
 import { test } from "./fixtures.js";
 import { installNetworkGuard, outboundAttempts } from "./network-guard.js";
 
-test("a background question survives renderer reload and its activity entry focuses the originating card", async () => {
+test("a background question survives reload and Activity focuses only its pending card", async () => {
   test.setTimeout(120_000);
   const root = await mkdtemp(join(tmpdir(), "vera-session-question-"));
   const a = join(root, "a");
@@ -55,7 +55,10 @@ test("a background question survives renderer reload and its activity entry focu
         },
         [channel, payload] as const,
       ) as Promise<Response<C>>;
-    await call("app.settings.update", { language: "en" });
+    await call("app.settings.update", {
+      language: "en",
+      notifications: { turnCompletion: "never", approvalRequests: false },
+    });
     const benchA = await call("workbench.create", { folder: a, name: "Question bench" });
     expect(benchA.config.agent.question_timeout_minutes ?? null).toBeNull();
     await call("workbench.config.update", {
@@ -94,8 +97,13 @@ test("a background question survives renderer reload and its activity entry focu
     const activity = page.locator(`[data-workbench-entry="${benchA.config.id}"] .workbench-activity`);
     await expect(activity).toHaveAttribute("data-activity", "awaiting_question");
     await expect.poll(async () => (await get()).snapshot.questions[0]).toEqual(question);
-    await activity.locator("summary").click();
-    await activity.getByRole("button", { name: /Awaiting an answer/ }).click();
+    const trigger = page.getByRole("button", { name: "Activity", exact: true });
+    const view = page.getByRole("dialog", { name: "Activity" });
+    const entry = view.locator('[data-activity-kind="question"]');
+    await trigger.press("Enter");
+    await expect(view.getByRole("heading", { name: "Needs answer" })).toBeVisible();
+    await expect(entry).toContainText("Question bench");
+    await entry.press("Enter");
     const card = page.getByRole("region", { name: "Which profile?" });
     await expect(card).toBeFocused();
     await expect(card.getByText(/Recommended answer applies at/)).toBeVisible();
@@ -105,6 +113,10 @@ test("a background question survives renderer reload and its activity entry focu
     await expect(card.getByText("User answer: Fast")).toBeVisible();
     await expect(page.getByText("Received user: Fast")).toBeVisible();
     await expect.poll(async () => (await get()).snapshot.activeTurnId).toBeNull();
+    await trigger.press("Enter");
+    await expect(entry).toHaveCount(0);
+    await expect(view.getByRole("heading", { name: "Unread completions" })).toBeVisible();
+    await page.keyboard.press("Escape");
     await call("workbench.close", {});
     expect((await call("workbench.open", { folder: a })).config.agent.question_timeout_minutes).toBe(15);
     expect(

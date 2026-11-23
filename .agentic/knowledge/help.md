@@ -81,7 +81,9 @@ the same source tree through `import.meta.glob`. Packaging (`02_Tools/release/pa
   with `language: "en"`; NOT_FOUND when neither exists.
 - Shared helpers `helpTitle`, `helpLinks`, `orderHelpPages`; constants `helpLanguages`, `HELP_PAGE_BYTES` (256 KiB).
 
-- The chat-and-sessions page explains structured choices, cancellation, workbench activity, the automatic-answer timeout and the separate approval flow in all four languages.
+- The chat-and-sessions page explains structured choices, cancellation, workbench activity, the
+  automatic-answer timeout and the separate approval flow in all four languages. It also describes
+  Activity keyboard navigation, the run-local unread limit and how to mark replies as read.
 
 ## Invariants
 

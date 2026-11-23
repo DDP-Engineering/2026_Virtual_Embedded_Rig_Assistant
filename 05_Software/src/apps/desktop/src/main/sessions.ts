@@ -462,8 +462,8 @@ export class SessionsHost {
     return rows.map((row) => ({ ...row, title: this.service?.maskContent("agent", row.title) ?? row.title }));
   }
   /**
-   * The top-level sessions running or awaiting approval, from the session service once it is ready; none
-   * before this workbench's session service exists, since nothing can run there yet.
+   * The running top-level sessions and the sessions owning pending requests. Before the service
+   * exists, there can be no live turns or pending requests here.
    */
   async activity(): Promise<SessionSummary[]> {
     const service = this.service;
@@ -473,7 +473,12 @@ export class SessionsHost {
     if (this.service !== service || this.db !== db || !db.open) return [];
     return service
       .list(true)
-      .filter((row) => !row.delegation && (row.status === "running" || row.status === "awaiting_approval"));
+      .filter(
+        (row) =>
+          row.status === "awaiting_approval" ||
+          row.pendingQuestionId ||
+          (!row.delegation && row.status === "running"),
+      );
   }
   /** A live question already has a service. Accept its reply without waiting for queued turn preparation. */
   answerQuestion(scope: SessionScope, sessionId: string, questionId: string, reply: QuestionReply): void {

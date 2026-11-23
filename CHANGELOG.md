@@ -8,6 +8,7 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ### Added
 
+- Catch up on unread replies and pending session activity across workbenches from the title bar.
 - Ask structured chat questions and optionally apply the recommended answer after a workbench timeout.
 - Receive desktop alerts for completed replies and pending approvals, and click to open their sessions.
 - Configure desktop alerts for completed turns and background approval requests in Settings > Notifications.

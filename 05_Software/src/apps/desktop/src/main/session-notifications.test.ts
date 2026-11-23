@@ -8,7 +8,7 @@ import { SessionNotifications } from "./session-notifications.js";
 const first = { folder: "/private/one", config: { id: "wb_00000000000000000000000001" } };
 const second = { folder: "/private/two", config: { id: "wb_00000000000000000000000002" } };
 const sessionId = "ses_00000000000000000000000003";
-const turn = { type: "turn.completed", turnId: "123" } as const;
+const turn = { type: "turn.completed", turnId: "123", title: "Session title" } as const;
 const resolved = { type: "approval.decided", approvalId: "approval-id" } as const;
 const flush = async () => Promise.resolve();
 

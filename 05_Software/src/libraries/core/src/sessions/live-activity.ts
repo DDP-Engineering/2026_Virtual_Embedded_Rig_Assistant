@@ -22,7 +22,7 @@ export function successfulOrdinaryTurn(
 
 /** Committed session activity for host integrations. The approval query reflects current state. */
 export type LiveSessionActivity =
-  | { type: "turn.completed"; turnId: string }
+  | { type: "turn.completed"; turnId: string; title: string }
   | { type: "approval.requested"; approvalId: string; pending: () => boolean }
   | { type: "approval.decided"; approvalId: string }
   | { type: "question.requested"; questionId: string; turnId: string; pending: () => boolean }

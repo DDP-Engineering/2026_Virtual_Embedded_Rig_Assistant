@@ -31,10 +31,14 @@ Desktop main requests silent delivery of generic localized notifications for eli
 human approvals. It reads saved preferences and the native window state at dispatch. Only an alert click
 restores and focuses the window. Packaged Windows uses the NSIS production or test AppUserModelID and
 an opaque toast launch tag for Electron's current-process click callback. OS delivery and dismissal are
-best effort. Windows portable mode uses in-app session indicators and approval cards. It bypasses the
+best effort. Windows portable mode uses in-app Activity, session indicators and approval cards. It bypasses the
 Electron presenter and its Start Menu and COM registration (REQ-PLAT-99eec2f1). The Linux desktop needs
 a notification service, which controls sound under Electron's libnotify backend. Approval review and
 decisions stay in the chat. Closing the last window still quits.
+
+The title-bar Activity dialog shows running sessions, pending approvals and questions, and up to 100
+unread successful replies across workbenches. The main process captures completion markers before
+native delivery, keeps them across renderer reloads, and starts empty on application restart.
 
 `npm run dev` starts the loopback development renderer and Electron. `npm run build`
 emits main ESM, preload CommonJS and renderer assets under `src/apps/desktop/out/`.
@@ -82,6 +86,7 @@ coordinates clamp to content bounds. Browser mock acknowledges the native-only o
 | Launch/instance behavior | `src/main/index.ts` | built shell acceptance |
 | Asset/security policy | `src/main/security.ts`, `content-policy.ts` | content-policy.test.ts; built image-preview.spec.ts security assertions |
 | Native session notifications | `src/main/session-notifications.ts`, `session-notification-copy.ts` | session-notifications.test.ts and focused background-sessions.spec.ts |
+| In-app Activity | `src/main/unread-completions.ts`, `renderer/components/activity-view.tsx` | unread-completions.test.ts, background-sessions.spec.ts and session-question.spec.ts |
 | Geometry/storage format | `src/main/window-state.ts` | `window-state.test.ts`, geometry acceptance |
 | Metadata/API/events | [ipc-boundary](ipc-boundary.md) | shell and browser mock acceptance |
 | Renderer styles | `src/renderer/styles.css` | shell screenshot and development acceptance |

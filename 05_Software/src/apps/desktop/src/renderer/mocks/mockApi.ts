@@ -684,6 +684,16 @@ export function createMockApi(
     }
     if (channel === "session.capacity")
       return channels[channel].response.parse(sessions.capacity()) as Response<C>;
+    if (channel === "session.activity.unread") return channels[channel].response.parse([]) as Response<C>;
+    if (channel === "session.activity.readAll") return channels[channel].response.parse({}) as Response<C>;
+    if (channel === "session.activity.open") {
+      const { folder, workbenchId, sessionId } = channels["session.activity.open"].request.parse(input.data);
+      const owner = benches.get(folder);
+      if (!owner || owner.snapshot.config.id !== workbenchId || !sessions.holds(workbenchId, sessionId))
+        return channels[channel].response.parse(null) as Response<C>;
+      const workbench = active === folder ? owner.snapshot : await invoke("workbench.open", { folder });
+      return channels[channel].response.parse({ workbench, sessionId }) as Response<C>;
+    }
     if (channel === "session.activity") {
       // The browser mock keeps one workbench open: the shown one, with its running and waiting sessions.
       const shown = active ? benches.get(active) : undefined;
@@ -698,9 +708,16 @@ export function createMockApi(
               sessions: rows
                 .filter(
                   (row) =>
-                    !row.delegation && (row.status === "running" || row.status === "awaiting_approval"),
+                    row.status === "awaiting_approval" ||
+                    row.pendingQuestionId ||
+                    (!row.delegation && row.status === "running"),
                 )
-                .map(({ id, title, status }) => ({ id, title, status })),
+                .map(({ id, title, status, pendingQuestionId }) => ({
+                  id,
+                  title,
+                  status,
+                  pendingQuestionId,
+                })),
             },
           ]
         : [];

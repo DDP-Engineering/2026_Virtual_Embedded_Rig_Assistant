@@ -116,6 +116,9 @@ SessionHost may own a WebDownloads instance, exposed as listDownloads/openDownlo
 
 - Pending queue lives in durable message.queued events with user timestamp/text/ID. Optional user pending/timestamp fields replay through shared state; a directly sent prompt's message.user event carries its send time (runtime clock, epoch ms) as optional `timestamp`, a delivered queued item keeps its queue time, and events recorded without one fold to a user item without a time; message.delivered atomically persists the admitted transcript batch and clears its markers before gateway dispatch. Stop/limits/recovery retain unapplied pending messages for the next request. Closing refuses new sends while draining accepted work.
 
+- The live activity query projects top-level running turns and the actual owners of pending approvals
+  and questions, including delegated waits. A successful live ordinary non-delegated reply supplies a
+  completion marker for Activity independently of the native delivery preference.
 - Question cards and Activity focus share the event-derived question ID and check the requested workbench, session, active turn and pending outcome. Activity focus brings the exact pending card into the initial transcript window for long conversations. The main-owned wait survives a renderer reload or background workbench. It reads the optional timeout from its own workbench once at request time.
 
 ## Change map

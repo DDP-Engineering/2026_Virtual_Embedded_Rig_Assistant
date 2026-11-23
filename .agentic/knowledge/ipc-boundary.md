@@ -148,6 +148,11 @@ AppEvents use shared updates.ts; [updates](updates.md) owns their lifecycle/capa
 - `session.notification.clicked` sends an opaque UUID to the current trusted renderer.
   `session.notification.open` redeems that UUID once in the same process and returns a verified
   workbench and session, or null when stale. The request accepts only the UUID.
+- `session.activity` projects live operational groups used by the sidebar and Activity. `session.activity.unread`
+  supplies up to 100 main-process markers. `session.activity.open` verifies canonical folder, workbench
+  ID and session membership before promoting the owner, returns null for an unavailable target, and
+  acknowledges the selected marker after a successful open. `session.activity.readAll` clears the
+  marker store. The app activity event refreshes both queries.
 - session.list/create/get/rename/delete/send/stop/model.set/mode.set/approval.decide use strict shared contracts. subscribe('session',id,sinceSeq,on) registers its listener before vera:subscription control; control authorizes the same current main frame, validates requests and caps active subscriptions at 128 per workbench runtime. Replay/live envelopes bind subscriptionId; unsubscribe and navigation/window/lifecycle cleanup release core listener and transport timers. [Sessions](sessions.md) owns persistence/recovery.
 - `session.send` accepts an optional `images` path array of up to eight entries and requires text or at least one image. `message.user`, `message.queued` and user snapshot items carry the optional array. The session sanitizer projects paths and text while preserving IDs, pending state and timestamps. The service returns localized `IMAGE_FORMAT` and `IMAGE_TOO_LARGE` errors for invalid types and oversized sources.
 - session.approval.decide validates ses_/apv_ ULIDs, lowercase SHA256, approved/denied and approved-only switchToAutoEdit; main forwards to the live SessionService. session.mode.set stays available during active turns and read-only aborts waits. shared/approval-ipc.test.ts and tests/e2e/approvals.spec.ts cover strict values and real exact decisions.

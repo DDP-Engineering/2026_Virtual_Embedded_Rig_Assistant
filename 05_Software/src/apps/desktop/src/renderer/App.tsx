@@ -1,9 +1,10 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import type { SessionSummary, WorkbenchSnapshot } from "@vera/shared";
+import type { ActivitySessionTarget, SessionSummary, WorkbenchSnapshot } from "@vera/shared";
 import { Activity } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "./api/index.js";
+import { ActivityView } from "./components/activity-view.js";
 import { DocsTab } from "./components/documents/docs-tab.js";
 import { DocumentTabs } from "./components/documents/document-tabs.js";
 import { WorkbenchIndexStatus } from "./components/documents/index-status.js";
@@ -40,6 +41,7 @@ import { useImageDrafts } from "./hooks/image-drafts.js";
 import { SessionViewProvider } from "./hooks/session-view.js";
 import { usePreferences } from "./hooks/use-preferences.js";
 import { useRunPresentation } from "./hooks/use-run-presentation.js";
+import { useSessionActivity } from "./hooks/use-session-activity.js";
 import { ATTACHMENT_LIMIT, addAttachment } from "./lib/attachments.js";
 import { removeTabs } from "./lib/document-tabs-store.js";
 import { screenHelpPage } from "./lib/help-pages.js";
@@ -56,6 +58,7 @@ export function App() {
   const [editorRequest, setEditorRequest] = useState<{ section: ConfigSection }>();
   const [createdCount, setCreatedCount] = useState(0);
   const editorDirty = useRef(false);
+  const attentionNavigation = useRef(false);
   const editorOrigin = useRef<HTMLElement | null>(null);
   const restoreEditorFocus = useRef(false);
   const setEditorDirty = useCallback((dirty: boolean) => {
@@ -71,7 +74,9 @@ export function App() {
    * clean, so a navigation that does not happen after all (a cancelled folder picker) keeps the guard.
    */
   const leaveEditor = useCallback(
-    () => (!editorDirty.current && !settingsDirty.current) || window.confirm(t("projects.discardChanges")),
+    () =>
+      !attentionNavigation.current &&
+      ((!editorDirty.current && !settingsDirty.current) || window.confirm(t("projects.discardChanges"))),
     [t],
   );
   /** Help is a detour that keeps the workbench editor mounted, but it unmounts a Settings page. */
@@ -119,6 +124,8 @@ export function App() {
   const operationBusy = useRef(false);
   const [sessionPending, setSessionPending] = useState(false);
   const [notificationToken, setNotificationToken] = useState<string>();
+  const [activityOpen, setActivityOpen] = useState(false);
+  const sessionActivity = useSessionActivity();
   const [linkedTranscript, setLinkedTranscript] = useState<{
     sessionId: string;
     workbenchId: string | undefined;
@@ -291,27 +298,49 @@ export function App() {
     },
     [changed],
   );
-  useEffect(() => {
-    if (!notificationToken || sessionPending || operationBusy.current) return;
-    setNotificationToken(undefined);
-    if (!leaveEditor()) return;
-    void operation(async () => {
-      const target = await api.invoke("session.notification.open", { token: notificationToken });
-      if (!target) return;
+  const showVerifiedSession = useCallback(
+    (target: { workbench: WorkbenchSnapshot; sessionId: string }, questionId?: string) => {
       if (target.workbench.folder !== bench.data?.folder || target.workbench.config.id !== benchId)
         benchChanged(target.workbench);
-      openSession(target.sessionId, true, target.workbench.config.id);
+      openSession(target.sessionId, true, target.workbench.config.id, questionId);
+    },
+    [bench.data?.folder, benchId, benchChanged, openSession],
+  );
+  const navigateToAttention = useCallback(
+    async (action: () => Promise<void>) => {
+      if (operationBusy.current || !leaveEditor()) return;
+      attentionNavigation.current = true;
+      try {
+        await operation(action);
+      } finally {
+        attentionNavigation.current = false;
+      }
+    },
+    [leaveEditor, operation],
+  );
+  const openActivitySession = useCallback(
+    async (target: ActivitySessionTarget & { completionId?: string }, questionId?: string) => {
+      let opened = false;
+      await navigateToAttention(async () => {
+        const result = await api.invoke("session.activity.open", target);
+        if (!result) return;
+        setActivityOpen(false);
+        showVerifiedSession(result, questionId);
+        opened = true;
+        void recent.refetch();
+      });
+      return opened;
+    },
+    [navigateToAttention, recent.refetch, showVerifiedSession],
+  );
+  useEffect(() => {
+    if (!notificationToken || activityOpen || sessionPending || operationBusy.current) return;
+    setNotificationToken(undefined);
+    void navigateToAttention(async () => {
+      const target = await api.invoke("session.notification.open", { token: notificationToken });
+      if (target) showVerifiedSession(target);
     });
-  }, [
-    notificationToken,
-    sessionPending,
-    bench.data?.folder,
-    benchId,
-    benchChanged,
-    leaveEditor,
-    openSession,
-    operation,
-  ]);
+  }, [notificationToken, activityOpen, sessionPending, navigateToAttention, showVerifiedSession]);
   /** Creates (or reuses an empty) session and opens it; `then` receives its id. */
   const createWith = useCallback(
     (then?: (id: string) => void) => {
@@ -433,6 +462,7 @@ export function App() {
     setChat(false);
   }, [leaveEditor]);
   const showPlugins = () => {
+    if (attentionNavigation.current) return;
     // Installing a package is a reversible detour; the editor remains its draft owner.
     setPlugins(true);
     setHelp(undefined);
@@ -450,7 +480,7 @@ export function App() {
   /** Opens Help as a detour: hidden drafts (New Workbench, the workbench editor) stay mounted. */
   const showHelp = useCallback(
     (page: string) => {
-      if (settings && !leaveSettings()) return;
+      if (attentionNavigation.current || (settings && !leaveSettings())) return;
       setHelp(page);
       setSettings(false);
       setPlugins(false);
@@ -641,19 +671,8 @@ export function App() {
             benchClosed();
           })
         }
-        openSession={async (folder, id, questionId) => {
-          if (!leaveEditor()) return false;
-          if (folder === activeWorkbench?.folder) {
-            openSession(id, true, activeWorkbench.config.id, questionId);
-            return true;
-          }
-          return operation(async () => {
-            const snapshot = await api.invoke("workbench.open", { folder });
-            benchChanged(snapshot);
-            openSession(id, true, snapshot.config.id, questionId);
-            await recent.refetch();
-          });
-        }}
+        openSession={openActivitySession}
+        activity={sessionActivity.data}
         stopSession={(id) => {
           // Stop leaves the sidebar usable and the shown workbench and session as they are.
           setSessionError(undefined);
@@ -775,6 +794,17 @@ export function App() {
                   showPlugins={showPlugins}
                   navigate={navigate}
                   showHelp={() => showHelp("index")}
+                  activity={
+                    <ActivityView
+                      open={activityOpen}
+                      setOpen={setActivityOpen}
+                      activity={sessionActivity.data}
+                      activityError={sessionError ?? sessionActivity.error}
+                      workbenches={recent.data}
+                      pending={sessionPending}
+                      openSession={openActivitySession}
+                    />
+                  }
                   navigation={navigation}
                   context={
                     benchId && chat && !settings ? (
@@ -848,6 +878,7 @@ export function App() {
                   <div
                     className={`page-content${settings ? " settings-content" : ""}`}
                     hidden={(chat && !settings) || emptyCanvas}
+                    inert={sessionPending && attentionNavigation.current}
                   >
                     <h2
                       hidden={

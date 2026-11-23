@@ -158,10 +158,10 @@ entries:
   - category: new
     topic: { en: Sessions, ro: Sesiuni, de: Sitzungen, fr: Sessions }
     text:
-      en: Background chats, questions and answer timeouts. Windows alerts require installed VERA.
-      ro: Chaturi în fundal, întrebări și răspunsuri la termen. Pe Windows, alertele cer VERA instalată.
-      de: Hintergrundchats, Fragen und Antwortfristen. Windows-Hinweise erfordern installiertes VERA.
-      fr: Chats en arrière-plan, questions et délais. Sous Windows, les alertes exigent VERA installée.
+      en: Activity shows unread replies, timed questions and approvals. Windows alerts need installed VERA.
+      ro: Activitate arată răspunsuri, aprobări și întrebări cu termen. Alertele Windows cer VERA instalată.
+      de: Aktivität zeigt Antworten, Freigaben und Fragen mit Frist. Windows-Hinweise nur mit Installation.
+      fr: Activité regroupe réponses, approbations et questions à délai. Alertes Windows avec VERA installée.
   - category: improved
     topic: { en: Workbench, ro: Workbench, de: Workbench, fr: Banc de travail }
     text:

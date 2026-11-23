@@ -1,0 +1,35 @@
+schema = 1
+
+id = "REQ-FUNC-4f07bacd"
+
+title = "Retain unread successful replies in this app run"
+
+status = "active"
+
+requirement = "When a live ordinary non-delegated turn ends successfully, VERA shall keep its completion among the newest 100 unread completions of the current application run regardless of native notification settings or delivery."
+
+verification = "Complete a background replay turn with native alerts off and find it in Activity after the renderer reloads; exercise the oldest-entry eviction and a fresh process store."
+
+affected_paths = [
+  "05_Software/src/apps/desktop/src/main/unread-completions.ts",
+  "05_Software/src/apps/desktop/src/main/unread-completions.test.ts",
+  "05_Software/src/apps/desktop/src/main/session-notifications.test.ts",
+  "05_Software/src/apps/desktop/src/main/index.ts",
+  "05_Software/src/libraries/core/src/sessions/live-activity.ts",
+  "05_Software/src/libraries/core/src/sessions/service.ts",
+]
+
+linked_tests = [
+  "05_Software/src/apps/desktop/src/main/unread-completions.test.ts",
+  "05_Software/src/libraries/core/src/sessions/live-activity.test.ts",
+  "05_Software/tests/e2e/background-sessions.spec.ts",
+]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-24
+updated = 2026-11-24

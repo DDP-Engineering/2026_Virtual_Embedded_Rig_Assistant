@@ -588,6 +588,15 @@
     "timeoutEnabled": "Use recommended answers after a timeout",
     "timeoutMinutes": "Question timeout (minutes)"
   },
+  "activity": {
+    "title": "Activity",
+    "running": "Running",
+    "approval": "Needs approval",
+    "question": "Needs answer",
+    "completions": "Unread completions",
+    "readAll": "Mark all as read",
+    "empty": "No session activity."
+  },
   "sessionActivity": {
     "summaryWithQuestions": "Active sessions in {{name}}: running {{running}}, awaiting approval {{awaiting}}, awaiting an answer {{questions}}",
     "summary": "Active sessions in {{name}}: running {{running}}, awaiting approval {{awaiting}}",

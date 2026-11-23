@@ -44,6 +44,9 @@ cwd and executable shell, with Approve/Deny; prefix grants are a separate work p
 component coverage is command-settings.test.ts and session/approval-card.test.ts in all four languages.
 
 
+- The title bar opens a localized Activity dialog with modal Tab navigation, Escape dismissal and
+  focus restoration. It shares the sidebar's operational query and uses the shared pager for unread
+  replies. Activating a session uses the dirty editor guard and linked transcript focus.
 - App switches Welcome, Settings and session memory routes; Ctrl+, opens Settings while the exact renderer URL stays intact. Global actions yield to modal/handled/repeated/composing keys; the skip-content control focuses main without URL changes.
 - Welcome remains mounted in Settings, retaining the active workbench. Create/open, recents,
   read-only/warnings and the keyboard pinned dialog are owned by [workbench](workbench.md).
@@ -88,6 +91,7 @@ Agent and model effective on→off selections open a portaled native disclosure 
 |---|---|---|
 | Routes and settings sections | App.tsx, components/settings.tsx | browser acceptance |
 | Notification preferences | components/notification-settings.tsx, shared settings contract | notification-settings.spec.ts and native settings restart |
+| In-app Activity | components/activity-view.tsx, hooks/use-session-activity.ts, App.tsx | background-sessions.spec.ts and session-question.spec.ts |
 | Panels/geometry | components/shell.tsx, lib/layout.ts | preferences.test.ts and native foundation acceptance |
 | Viewport containment and regional scrolling | styles.css, App.tsx | tests/e2e/session-scroll.spec.ts |
 | Appearance/theme/scale | hooks/use-preferences.ts, styles/ | native restart plus browser minimum-size matrix |

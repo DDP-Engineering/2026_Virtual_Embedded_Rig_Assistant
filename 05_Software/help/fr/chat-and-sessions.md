@@ -14,6 +14,12 @@ Une session est une conversation avec l’agent au sein d’un banc de travail. 
 
 Les tours continuent lorsque vous ouvrez un autre banc de travail. Dans la barre latérale, la ligne d’un banc de travail affiche une marque avec le nombre de ses sessions en cours et en attente, même lorsque la ligne est repliée ; un bouclier signale une session qui attend votre approbation. Sélectionnez la marque (ou donnez-lui le focus et appuyez sur Entrée) pour lister ces sessions. Choisissez une session pour l’ouvrir dans son banc de travail, où vous pouvez examiner l’approbation, ou **Arrêter** pour ne terminer que ce tour. Pendant les tours, **Bancs de travail** indique combien s’exécutent et la limite **Tours simultanés**. À la limite, un nouveau message reste dans la zone de saisie : attendez la fin d’un tour ou arrêtez-en un dans la barre latérale, puis envoyez-le de nouveau.
 
+## Activité
+
+Ouvrez **Activité** dans la barre de titre pour voir les sessions en cours, les approbations et questions en attente et les réponses non lues de tous les bancs de travail. Utilisez Tab pour vous déplacer dans la vue, Entrée pour ouvrir un élément et Échap pour fermer la vue. VERA demande confirmation avant d’abandonner les modifications non enregistrées. Une question encore en attente s’ouvre sur sa carte.
+
+Les réponses non lues restent accessibles lorsque les alertes du bureau sont désactivées. VERA conserve jusqu’à 100 réponses terminées avec succès depuis le lancement de l’application. L’ouverture d’une réponse non lue la marque comme lue. **Tout marquer comme lu** vide cette liste et laisse visibles les sessions en cours et les demandes en attente.
+
 ## Écrire un message
 
 Saisissez votre texte dans la zone de message (**Interrogez VERA sur votre projet…**). Enter envoie, Shift+Enter ajoute une ligne, et @ complète les chemins des fichiers du banc de travail. Pour donner un fichier à l’agent, choisissez **Joindre comme contexte** sur ce fichier dans l’onglet **Fichiers** ; il apparaît sous forme de puce au-dessus de la zone de message.

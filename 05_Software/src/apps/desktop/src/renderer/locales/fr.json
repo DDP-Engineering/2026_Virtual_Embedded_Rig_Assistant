@@ -588,6 +588,15 @@
     "timeoutEnabled": "Utiliser les réponses recommandées après un délai",
     "timeoutMinutes": "Délai de réponse aux questions (minutes)"
   },
+  "activity": {
+    "title": "Activité",
+    "running": "En cours",
+    "approval": "Approbation requise",
+    "question": "Réponse requise",
+    "completions": "Réponses non lues",
+    "readAll": "Tout marquer comme lu",
+    "empty": "Aucune activité de session."
+  },
   "sessionActivity": {
     "summaryWithQuestions": "Sessions actives dans {{name}} : {{running}} en cours, {{awaiting}} en attente d’approbation, {{questions}} en attente d’une réponse",
     "summary": "Sessions actives dans {{name}} : en cours {{running}}, en attente d’approbation {{awaiting}}",

@@ -1,0 +1,39 @@
+schema = 1
+
+id = "REQ-REL-aa1b0ba0"
+
+title = "Guard activity navigation against stale and wrong owners"
+
+status = "active"
+
+requirement = "If an Activity target is unavailable or its workbench does not own the session, VERA shall preserve the current navigation and discard the stale target from Activity."
+
+verification = "Use a deleted session and a wrong workbench identity to exercise guarded open; verify the active workbench stays unchanged and the stale entry disappears."
+
+affected_paths = [
+  "05_Software/src/apps/desktop/src/main/index.ts",
+  "05_Software/src/apps/desktop/src/main/session-router.ts",
+  "05_Software/src/apps/desktop/src/renderer/App.tsx",
+  "05_Software/src/apps/desktop/src/renderer/components/workbench-navigation.tsx",
+  "05_Software/src/apps/desktop/src/renderer/mocks/mockApi.ts",
+  "05_Software/src/apps/desktop/src/renderer/mocks/sessions.ts",
+  "05_Software/src/libraries/shared/src/ipc.ts",
+  "05_Software/src/libraries/shared/src/session-activity-ipc.test.ts",
+  "05_Software/src/apps/desktop/src/main/ipc-router.test.ts",
+  "05_Software/src/apps/desktop/src/preload/bridge.test.ts",
+]
+
+linked_tests = [
+  "05_Software/src/libraries/shared/src/session-activity-ipc.test.ts",  "05_Software/src/apps/desktop/src/main/unread-completions.test.ts",
+  "05_Software/src/apps/desktop/src/renderer/components/workbench-activity.test.ts",
+  "05_Software/tests/e2e/background-sessions.spec.ts",
+]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-24
+updated = 2026-11-24

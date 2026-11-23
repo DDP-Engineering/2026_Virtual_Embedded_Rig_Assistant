@@ -14,6 +14,12 @@ A session is one conversation with the agent inside a workbench. VERA saves ever
 
 Turns keep running when you open another workbench. A workbench row in the sidebar shows a mark with the number of its running and waiting sessions, also when the row is collapsed; a shield means a session awaits your approval. Select the mark (or focus it and press Enter) to list those sessions. Choose a session to open it in its workbench, where you can review its approval, or **Stop** to end only that turn. While turns run, **Workbenches** shows how many run and the **Concurrent turns** limit. At the limit, a new message stays in the message box: wait for a turn to finish or stop one in the sidebar, then send it again.
 
+## Activity
+
+Open **Activity** in the title bar to see running sessions, pending approvals and questions, and unread replies across workbenches. Use Tab to move through the view, Enter to open an entry, and Escape to close it. VERA asks before discarding unsaved edits. A waiting question opens at its card while it is still pending.
+
+Unread replies are available with desktop alerts disabled. VERA keeps up to 100 successful replies from the current app run. Opening an unread reply marks it as read. **Mark all as read** clears unread replies and leaves running sessions and pending requests visible.
+
 ## Write a message
 
 Type in the message box (**Ask VERA about your project…**). Enter sends, Shift+Enter adds a line, and @ completes paths of workbench files. To give the agent a file, choose **Attach as context** on it in the **Files** tab; it appears as a chip above the message box.
