@@ -8,6 +8,8 @@ import { createRoot, type Root } from "react-dom/client";
 import { afterEach, expect, test, vi } from "vitest";
 import { App } from "../../App.js";
 import { api } from "../../api/index.js";
+import { DocumentTabs } from "../documents/document-tabs.js";
+import { DocumentViewerProvider } from "../documents/viewer-context.js";
 import { ChangesTab } from "./changes-tab.js";
 import "../../i18n.js";
 
@@ -102,7 +104,16 @@ async function mountTab(sessionId: string) {
         createElement(
           QueryClientProvider,
           { client },
-          createElement(ChangesTab, { workbenchId: "wb-test", sessionId: id }),
+          createElement(
+            DocumentViewerProvider,
+            { workbenchId: "wb-test", sessionId: id, scope: `wb-test/${id}` },
+            createElement(
+              "aside",
+              { id: "panel-changes" },
+              createElement(ChangesTab, { workbenchId: "wb-test", sessionId: id }),
+            ),
+            createElement(DocumentTabs, { chat: "Chat panel" }),
+          ),
         ),
       ),
     );
@@ -139,9 +150,13 @@ function reads(rows: ChangeDetail[]) {
     return original(channel, raw);
   }) as typeof api.invoke);
 }
-test("presents multiple ordered counts, selects diff and reveals the selected relative path", async () => {
+const changeRow = (id: number) =>
+  container.querySelector<HTMLButtonElement>(`[data-change="${id}"]`) as HTMLButtonElement;
+const openChange = (id: number) => act(async () => changeRow(id).click());
+const centralPatch = () => container.querySelector("[data-session-change-diff] pre")?.textContent;
+test("opens distinct central diffs for multiple edits of one file and reveals the recorded path", async () => {
   const s = await session();
-  const rows = [row(1, s.id, "first ă.txt"), row(2, s.id, "second.txt")];
+  const rows = [row(1, s.id, "same ă.txt"), row(2, s.id, "same ă.txt")];
   const spy = reads(rows);
   await mountTab(s.id);
   await settle();
@@ -155,14 +170,23 @@ test("presents multiple ordered counts, selects diff and reveals the selected re
   expect(container.querySelector("[data-change='2'] .changes-meta .changes-counts")?.textContent).toBe(
     "+2 −1",
   );
-  expect(container.querySelector("pre")?.textContent).toContain("+new1");
-  await act(async () => container.querySelector<HTMLButtonElement>("[data-change='2']")?.click());
+  expect(spy.mock.calls.filter(([channel]) => channel === "changes.get")).toEqual([]);
+  await openChange(1);
   await settle();
-  expect(container.querySelector("pre")?.textContent).toContain("+new2");
-  expect(container.querySelector(".approval-diff .diff-removed")?.textContent).toContain("-old");
+  expect(centralPatch()).toContain("+new1");
+  changeRow(2).focus();
+  await act(async () => userEvent.setup().keyboard("{Enter}"));
+  await settle();
+  expect(centralPatch()).toContain("+new2");
+  expect(container.querySelectorAll('[data-tab-key^="session-change:"]')).toHaveLength(2);
+  expect(container.querySelector("#panel-changes pre")).toBeNull();
   await act(async () => button("Reveal in folder").click());
   await settle();
-  expect(spy).toHaveBeenCalledWith("app.revealPath", { path: "second.txt" });
+  expect(spy).toHaveBeenCalledWith("app.revealPath", { path: "same ă.txt" });
+  await openChange(1);
+  await settle();
+  expect(centralPatch()).toContain("+new1");
+  expect(container.querySelectorAll('[data-tab-key^="session-change:"]')).toHaveLength(2);
 });
 test("updates live during pending initial list and preserves the selected diff on a later change", async () => {
   const s = await session();
@@ -188,7 +212,10 @@ test("updates live during pending initial list and preserves the selected diff o
   await act(async () => finish?.([]));
   await settle();
   expect(container.querySelectorAll("[data-change]")).toHaveLength(1);
-  expect(container.querySelector("pre")?.textContent).toContain("+new");
+  const firstChange = container.querySelector("[data-change]")?.getAttribute("data-change");
+  await openChange(Number(firstChange));
+  await settle();
+  expect(centralPatch()).toContain("+new");
   const chosen = container.querySelector("[aria-pressed=true]")?.getAttribute("data-change");
   await act(async () => {
     await original("session.send", { sessionId: s.id, text: "Edit again" });
@@ -233,8 +260,11 @@ test("isolates late diff and reveal outcomes on session switches and detaches su
     return original(channel, raw);
   }) as typeof api.invoke);
   const render = await mountTab(a.id);
+  await openChange(1);
+  await settle();
   expect(finish).toBeDefined();
   await render(b.id);
+  await openChange(2);
   await act(async () => finish?.(rows[0] as ChangeDetail));
   await settle();
   expect(container.querySelector("pre")?.textContent).toContain("current.txt");
@@ -293,6 +323,8 @@ test("shows list, detail and reveal failures with actionable retries", async () 
   listFail = false;
   await act(async () => button("Retry").click());
   await settle();
+  await openChange(1);
+  await settle();
   expect(container.querySelector("[role=alert]")).toBeTruthy();
   expect(container.querySelector("pre")).toBeNull();
   detailFail = false;
@@ -304,7 +336,7 @@ test("shows list, detail and reveal failures with actionable retries", async () 
   expect(container.querySelector("[role=alert]")).toBeTruthy();
 });
 
-test("pages a long change list and keeps the selected diff below it", async () => {
+test("pages a long change list while keeping the central diff selected", async () => {
   const s = await session();
   const rows = Array.from({ length: 12 }, (_, index) => row(index + 1, s.id, `file${index + 1}.txt`));
   reads(rows);
@@ -314,33 +346,13 @@ test("pages a long change list and keeps the selected diff below it", async () =
     [...container.querySelectorAll("[data-change]")].map((b) => b.getAttribute("data-change"));
   expect(shown()).toEqual(["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"]);
   expect(container.querySelector("[data-pager]")).not.toBeNull();
+  await openChange(1);
+  await settle();
   await act(async () => container.querySelector<HTMLButtonElement>("[data-pager-next]")?.click());
   await settle();
   expect(shown()).toEqual(["11", "12"]);
-  // The first change stays selected; its diff is shown under the list.
-  expect(container.querySelector("pre")?.textContent).toContain("+new1");
-  await act(async () => container.querySelector<HTMLButtonElement>("[data-change='12']")?.click());
+  expect(centralPatch()).toContain("+new1");
+  await openChange(12);
   await settle();
-  expect(container.querySelector("pre")?.textContent).toContain("+new12");
-});
-
-test("resizes the file list and the diff from the keyboard within a quarter on each side", async () => {
-  const s = await session();
-  reads([row(1, s.id, "first.txt"), row(2, s.id, "second.txt")]);
-  await mountTab(s.id);
-  await settle();
-  const splitter = container.querySelector<HTMLElement>("[data-changes-splitter]") as HTMLElement;
-  const files = () => container.querySelector<HTMLElement>(".changes-files")?.style.flexBasis;
-  expect(splitter.getAttribute("aria-label")).toBe("Resize the file list and the diff");
-  splitter.focus();
-  await act(async () => userEvent.setup().keyboard("{Home}"));
-  expect(splitter.getAttribute("aria-valuenow")).toBe("25");
-  expect(files()).toBe("25%");
-  await act(async () => userEvent.setup().keyboard("{ArrowUp}"));
-  expect(splitter.getAttribute("aria-valuenow")).toBe("25");
-  await act(async () => userEvent.setup().keyboard("{ArrowDown}"));
-  expect(files()).toBe("30%");
-  await act(async () => userEvent.setup().keyboard("{End}{ArrowDown}"));
-  expect(splitter.getAttribute("aria-valuenow")).toBe("75");
-  expect(files()).toBe("75%");
+  expect(centralPatch()).toContain("+new12");
 });

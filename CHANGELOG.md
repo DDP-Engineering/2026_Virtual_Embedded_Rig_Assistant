@@ -81,7 +81,7 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 ### Changed
 
 - Evaluators: one folder per family with code, method, cases and baselines; perf:sessions is now eval:performance.
-- Changes separates the file history and diff into independently scrolling, resizable panes.
+- Open recorded session edits beside Chat from the Changes list.
 - Changes paginates long session histories and retains the selected diff across pages.
 - Chat shows one working indicator below the composer at every detail level.
 - Group compact Chat model choices by provider and make all composer selectors visibly bordered.

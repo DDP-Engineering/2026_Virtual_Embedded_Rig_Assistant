@@ -179,10 +179,10 @@ entries:
   - category: improved
     topic: { en: Sessions, ro: Sesiuni, de: Sitzungen, fr: Sessions }
     text:
-      en: "Bookmark keys/export, send times, saved summaries, paged Changes, split diff and one chat status."
-      ro: "Taste/export marcaje, ora trimiterii, rezumate salvate, Modificări paginate, diff separat, o stare."
-      de: "Lesezeichentasten, Export, Sendezeit, Kurzfassungen, Änderungsseiten, geteilte Diff-Ansicht, Status."
-      fr: "Raccourcis/export signets, heure d’envoi, résumés, modifs paginées, diff séparé, un état de chat."
+      en: "Bookmark keys/export, send times, saved summaries, paged Changes, edit tabs and one chat status."
+      ro: "Taste/export marcaje, ora trimiterii, rezumate salvate, Modificări paginate, taburi diff, o stare."
+      de: "Lesezeichentasten, Export, Sendezeit, Kurzfassungen, Änderungsseiten, Diff-Tabs, Status."
+      fr: "Raccourcis/export signets, heure d’envoi, résumés, modifs paginées, onglets diff, un état de chat."
   - category: improved
     topic: { en: Permissions, ro: Permisiuni, de: Berechtigungen, fr: Autorisations }
     text:

@@ -94,6 +94,8 @@ Les signets enregistrés restent dans les exports JSON ; Markdown indique les me
 
 **Afficher/masquer le panneau droit** affiche des onglets pour la session ouverte : **Instructions et compétences** (instructions du banc de travail et compétences disponibles), **Fichiers**, **Modifications**, **Artefacts** (résultats texte enregistrés par l’agent, avec **Exporter** et **Afficher dans le dossier**), **Plan** (la liste de tâches de l’agent) et **Exécutions** (exécutions de programmes des plugins).
 
+Sélectionnez une modification dans **Modifications** pour ouvrir son diff dans un onglet à côté du Chat.
+
 ## Commenter et réviser le plan
 
 Dans **Plan**, choisissez **Ajouter un commentaire** pour une étape entière ou sélectionnez d’abord du texte dans une seule étape pour citer ce fragment. Au clavier, sélectionnez avec Shift et les flèches dans **Texte de l’étape**, puis choisissez **Utiliser le texte sélectionné** ; **Étape entière** efface le fragment. Une étape vide accepte uniquement un commentaire sur l’étape entière. Saisissez plusieurs lignes, par exemple « Vérifier la tension avant la programmation », puis **Enregistrer le brouillon**. L’enregistrement n’envoie aucun message et ne démarre pas l’agent. Annuler ou Échap abandonne les modifications non enregistrées et ramène le focus sur Plan.

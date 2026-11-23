@@ -617,7 +617,8 @@
     "empty": "Keine Änderungen in dieser Sitzung.",
     "history": "Änderungsverlauf",
     "reveal": "Im Ordner anzeigen",
-    "resize": "Dateiliste und Diff in der Größe ändern"
+    "diffTab": "Änderung: {{path}}",
+    "recordedAt": "Aufgezeichnet am {{time}}"
   },
   "artifacts": {
     "empty": "Keine Artefakte in dieser Sitzung.",

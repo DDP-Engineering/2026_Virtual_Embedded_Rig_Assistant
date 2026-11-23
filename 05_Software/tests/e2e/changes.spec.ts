@@ -186,8 +186,10 @@ test("approved edit appears live with exact counts and recorded diff surviving n
     await expect(panel.locator("[data-change]")).toHaveCount(1);
     await expect(panel.locator("[data-change]")).toContainText("board.txt");
     await expect(panel.locator(".changes-counts")).toHaveText("+1 −1");
-    await expect(panel.locator(".approval-diff .diff-added")).toContainText("+Board uses 5 V.");
-    await expect(panel.locator(".approval-diff .diff-removed")).toContainText("-Board uses 3.3 V.");
+    await panel.locator("[data-change]").click();
+    const central = page.locator("#main-content [data-session-change-diff]");
+    await expect(central.locator(".approval-diff .diff-added")).toContainText("+Board uses 5 V.");
+    await expect(central.locator(".approval-diff .diff-removed")).toContainText("-Board uses 3.3 V.");
     const stored = await page.evaluate(async (id) => {
       const api = (window as unknown as { vera: VeraBridge }).vera;
       const list = await api.invoke("changes.list", { sessionId: id });
@@ -220,7 +222,10 @@ test("approved edit appears live with exact counts and recorded diff surviving n
     const restored = page.locator("#panel-changes");
     await expect(restored.locator("[data-change]")).toHaveCount(1);
     await expect(restored.locator(".changes-counts")).toHaveText("+1 −1");
-    await expect(restored.locator(".approval-diff")).toHaveText(`${stored.detail.diff}\n`);
+    await restored.locator("[data-change]").click();
+    await expect(page.locator("#main-content [data-session-change-diff] .approval-diff")).toHaveText(
+      `${stored.detail.diff}\n`,
+    );
     const reread = await page.evaluate(
       async (id) =>
         (window as unknown as { vera: VeraBridge }).vera.invoke("changes.list", { sessionId: id }),
@@ -240,10 +245,9 @@ test("approved edit appears live with exact counts and recorded diff surviving n
 
 test.describe("browser changes", () => {
   test.use({ viewport: { width: 1024, height: 640 } });
-  test("empty, live multiple edits, keyboard selection and reveal at minimum size", async ({
-    page,
-    context,
-  }) => {
+  test("empty, live multiple edits, central keyboard selection and reveal at minimum size", {
+    tag: "@parallel-browser",
+  }, async ({ page, context }) => {
     const server = spawn(process.execPath, ["../02_Tools/environment/dev-renderer.mjs"], {
       env: { ...process.env, VITE_API: "mock" },
       stdio: ["ignore", "pipe", "pipe"],
@@ -310,49 +314,32 @@ test.describe("browser changes", () => {
       await panel.locator("[data-change]").last().focus();
       await page.keyboard.press("Enter");
       await expect(panel.locator("[data-change]").last()).toHaveAttribute("aria-pressed", "true");
-      await expect(panel.locator(".approval-diff .diff-added")).toHaveText("+new\n");
-      await panel.getByRole("button", { name: "Reveal in folder", exact: true }).click();
-      await expect(panel.locator("[role=alert]")).toHaveCount(0);
+      const diff = page.locator("#main-content [data-session-change-diff]");
+      await expect(diff.locator(".approval-diff .diff-added")).toHaveText("+new\n");
+      await expect(page.getByRole("tab", { name: /^Edit:/ })).toHaveAttribute("aria-selected", "true");
+      await expect(panel.locator("[data-change]")).toHaveCount(2);
+      await page.locator('[data-toggle="right"]').click();
+      await diff.getByRole("button", { name: "Reveal in folder", exact: true }).click();
+      await expect(diff.locator("[role=alert]")).toHaveCount(0);
+      await page.locator('[data-toggle="right"]').click();
       expect(attempts).toEqual([]);
       expect(errors).toEqual([]);
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-      // The file list and the diff scroll on their own; the panel itself does not scroll.
+      // The list scrolls inside the right panel while the central tab owns the patch.
       const layout = await page.evaluate(() => {
-        const box = (selector: string) => document.querySelector(selector)?.getBoundingClientRect();
         const right = document.querySelector<HTMLElement>(".right-panel");
         const list = document.querySelector<HTMLElement>(".changes-list");
         return {
           panelScrolls: !!right && right.scrollHeight > right.clientHeight + 1,
           listOverflow: list ? getComputedStyle(list).overflowY : "",
-          detailBottom: box(".changes-detail")?.bottom ?? Number.POSITIVE_INFINITY,
-          panelBottom: box(".right-panel")?.bottom ?? 0,
         };
       });
       expect(layout.panelScrolls).toBe(false);
       expect(layout.listOverflow).toBe("auto");
-      expect(layout.detailBottom).toBeLessThanOrEqual(layout.panelBottom + 1);
       // Counts and time sit on one line.
       const counts = await panel.locator("[data-change] .changes-counts").first().boundingBox();
       const time = await panel.locator("[data-change] time").first().boundingBox();
       expect(Math.abs((counts?.y ?? 0) - (time?.y ?? 100))).toBeLessThan(8);
-      // Dragging the splitter resizes the file pane, never below a quarter of the tab.
-      const splitter = panel.locator("[data-changes-splitter]");
-      const tabBox = await panel.locator(".changes-tab").boundingBox();
-      const handle = await splitter.boundingBox();
-      if (!tabBox || !handle) throw Error("Changes layout missing");
-      const middle = handle.x + handle.width / 2;
-      await page.mouse.move(middle, handle.y + handle.height / 2);
-      await page.mouse.down();
-      await page.mouse.move(middle, tabBox.y + tabBox.height * 0.7, { steps: 5 });
-      await page.mouse.up();
-      await expect(splitter).toHaveAttribute("aria-valuenow", "70");
-      await page.mouse.move(middle, (await splitter.boundingBox())?.y ?? 0);
-      await page.mouse.down();
-      await page.mouse.move(middle, tabBox.y + 2, { steps: 5 });
-      await page.mouse.up();
-      await expect(splitter).toHaveAttribute("aria-valuenow", "25");
-      const files = await panel.locator(".changes-files").boundingBox();
-      expect(Math.abs((files?.height ?? 0) - tabBox.height * 0.25)).toBeLessThan(12);
       await page.screenshot({ path: test.info().outputPath("changes-browser-minimum.png") });
     } finally {
       if (server.exitCode === null) {

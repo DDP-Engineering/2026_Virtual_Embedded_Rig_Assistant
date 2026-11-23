@@ -20,6 +20,7 @@ import { useDescribeDocument, useFileActions } from "./file-actions.js";
 import { GitDiffView } from "./git-diff-view.js";
 import { GitHistoryView } from "./git-history-view.js";
 import type { ZoomRequest } from "./pdf-viewer.js";
+import { SessionChangeDiff } from "./session-change-diff.js";
 import { TreeMenu, type TreeMenuItem } from "./tree-menu.js";
 import { TreeProperties } from "./tree-properties.js";
 import { CHAT, DocumentBody, type DocumentTab, useDocumentTabs } from "./viewer-context.js";
@@ -132,6 +133,12 @@ export function DocumentTabs({ chat }: { chat: ReactNode }) {
   const entries = [
     { key: CHAT, label: t("documents.chatTab"), title: t("documents.chatTab") },
     ...tabs.map((tab) => {
+      if ("sessionChange" in tab.target)
+        return {
+          ...tab,
+          label: t("changes.diffTab", { path: tab.label }),
+          title: t("changes.diffTab", { path: tab.title }),
+        };
       if ("gitHistory" in tab.target)
         return {
           ...tab,
@@ -484,6 +491,9 @@ function DocumentPanel({ tab, index, leave }: { tab: DocumentTab; index: number;
       <section
         ref={node}
         data-source-current
+        data-session-change-diff={
+          "sessionChange" in tab.target ? tab.target.sessionChange.changeId : undefined
+        }
         className="document-tab-panel source-current"
         role="tabpanel"
         id={panelId(index)}
@@ -554,6 +564,8 @@ function DocumentPanel({ tab, index, leave }: { tab: DocumentTab; index: number;
               {t("settings.retry")}
             </button>
           </>
+        ) : tab.changeDetail ? (
+          <SessionChangeDiff change={tab.changeDetail} identity={tab.key} />
         ) : tab.gitHistory ? (
           <GitHistoryView response={tab.gitHistory} />
         ) : tab.gitDiff ? (

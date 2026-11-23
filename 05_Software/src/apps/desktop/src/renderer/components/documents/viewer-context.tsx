@@ -1,5 +1,6 @@
 // REQ-UX-28ad0002
 import {
+  type ChangeDetail,
   type GitComparison,
   type GitDiffResponse,
   type GitHistoryResponse,
@@ -39,6 +40,7 @@ import { TextViewer } from "./text-viewer.js";
 const PdfViewer = lazy(() => import("./pdf-viewer.js"));
 // Retain exact portable target variants without workbench identity supplied by callers.
 export type ViewerTarget =
+  | { sessionChange: { sessionId: string; changeId: number; path: string } }
   | { gitHistory: { path: string; indexLease: number } }
   | { gitDiff: { path: string; indexLease: number; comparison: GitComparison } }
   | { runId: string }
@@ -67,6 +69,7 @@ export interface DocumentTab {
   label: string;
   title: string;
   content?: ViewerContent | undefined;
+  changeDetail?: ChangeDetail | undefined;
   gitDiff?: GitDiffResponse | undefined;
   gitHistory?: GitHistoryResponse | undefined;
   /** Display-masked small-file bytes, transient and invalidated with the content attempt. */
@@ -107,6 +110,7 @@ const sourcePath = (path: string) => path.replace(/\/__vera_reference_[A-Za-z0-9
 const fileName = (path: string) => path.split("/").at(-1) || path;
 /** One tab per document: the workbench path, the artifact or the download (REQ-FUNC-89161a95). */
 export function documentKey(target: ViewerTarget): string {
+  if ("sessionChange" in target) return `session-change:${target.sessionChange.changeId}`;
   if ("gitHistory" in target) return `git-history:${target.gitHistory.path}`;
   if ("gitDiff" in target) return `git-diff:${target.gitDiff.comparison}:${target.gitDiff.path}`;
   if ("runId" in target) return `run:${target.runId}`;
@@ -118,6 +122,10 @@ export function documentKey(target: ViewerTarget): string {
   return parsed.kind === "artifact" ? `artifact:${parsed.name}` : `file:${sourcePath(parsed.path)}`;
 }
 function describe(target: ViewerTarget, download: string): { label: string; title: string } {
+  if ("sessionChange" in target) {
+    const path = displayName(target.sessionChange.path);
+    return { label: fileName(path), title: path };
+  }
   if ("gitDiff" in target || "gitHistory" in target) {
     const path = displayName("gitDiff" in target ? target.gitDiff.path : target.gitHistory.path);
     return { label: fileName(path), title: path };
@@ -225,6 +233,7 @@ export function DocumentViewerProvider({
   const open = useCallback(
     (target: ViewerTarget, imageFormat?: RasterFormat) => {
       if (retiredGitTarget(target, gitLease)) return;
+      if ("sessionChange" in target && target.sessionChange.sessionId !== sessionId) return;
       const key = documentKey(target);
       const modeChoice: FileMode | undefined = imageFormat && "path" in target ? "rendered" : undefined;
       // Reopening from inside a document keeps the control that first opened it.
@@ -245,6 +254,7 @@ export function DocumentViewerProvider({
                     label: "downloadId" in target ? tab.label : label,
                     title: "downloadId" in target ? tab.title : title,
                     content: undefined,
+                    changeDetail: undefined,
                     gitDiff: undefined,
                     gitHistory: undefined,
                     textBytes: undefined,
@@ -277,7 +287,7 @@ export function DocumentViewerProvider({
       });
       reveal?.();
     },
-    [scope, change, download, reveal, gitLease],
+    [scope, change, download, reveal, gitLease, sessionId],
   );
   const select = useCallback((key: string) => change((set) => ({ ...set, active: key })), [change]);
   const close = useCallback(
@@ -331,6 +341,7 @@ export function DocumentViewerProvider({
             ? {
                 ...tab,
                 content: undefined,
+                changeDetail: undefined,
                 gitDiff: undefined,
                 gitHistory: undefined,
                 textBytes: undefined,
@@ -407,7 +418,7 @@ export function DocumentViewerProvider({
       if (!owner) continue;
       const set = latestSets.current.get(owned) ?? EMPTY;
       const persistable = set.tabs.flatMap((tab) => {
-        if ("gitDiff" in tab.target || "gitHistory" in tab.target) return [];
+        if ("gitDiff" in tab.target || "gitHistory" in tab.target || "sessionChange" in tab.target) return [];
         const place = places.current.get(`${owned}\n${tab.key}`);
         return [{ key: tab.key, target: tab.target, ...(place ? { place } : {}) }];
       });
@@ -529,6 +540,7 @@ export function DocumentViewerProvider({
       const request = `${scope}\n${tab.key}\n${tab.attempt}`;
       if (
         tab.content ||
+        tab.changeDetail ||
         tab.gitDiff ||
         tab.gitHistory ||
         tab.error !== undefined ||
@@ -542,6 +554,7 @@ export function DocumentViewerProvider({
         result: Pick<
           DocumentTab,
           | "content"
+          | "changeDetail"
           | "gitDiff"
           | "gitHistory"
           | "textBytes"
@@ -558,6 +571,7 @@ export function DocumentViewerProvider({
           // A closed, reopened or retried tab ignores this late answer.
           if (!set || !found || found.attempt !== attempt) return map;
           const title =
+            result.changeDetail?.path ??
             result.gitHistory?.displayPath ??
             result.gitDiff?.displayPath ??
             (result.content && !("runId" in target)
@@ -577,6 +591,19 @@ export function DocumentViewerProvider({
             ),
           });
         });
+      if ("sessionChange" in target) {
+        const edit = target.sessionChange;
+        void api
+          .invoke("changes.get", { changeId: edit.changeId })
+          .then((result) => {
+            if (result.sessionId !== edit.sessionId || result.changeId !== edit.changeId)
+              throw veraError("NOT_FOUND");
+            settle({ changeDetail: result });
+          })
+          .catch((failure: unknown) => settle({ error: failure ?? veraError("INTERNAL") }))
+          .finally(() => loading.current.delete(request));
+        continue;
+      }
       if ("gitHistory" in target) {
         const query = { workbenchId, ...target.gitHistory };
         void api

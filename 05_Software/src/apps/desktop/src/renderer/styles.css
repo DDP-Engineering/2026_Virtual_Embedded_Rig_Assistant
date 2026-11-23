@@ -1234,22 +1234,12 @@ legend {
 .provider-test-results li {
   margin-block: 0.5rem;
 }
-/* The file list and the selected diff scroll separately; the list takes at most half the panel. */
 .changes-tab {
   display: flex;
   flex: 1;
   flex-direction: column;
   gap: 0.5rem;
   min-width: 0;
-  min-height: 0;
-}
-/* The splitter sets the file pane's share (25-75%); each pane scrolls on its own. */
-.changes-files {
-  display: flex;
-  flex-direction: column;
-  flex-grow: 0;
-  flex-shrink: 0;
-  gap: 0.5rem;
   min-height: 0;
 }
 .changes-list {
@@ -1263,28 +1253,6 @@ legend {
 .changes-tab .pager {
   flex-shrink: 0;
   margin-top: 0;
-}
-.changes-splitter {
-  flex-shrink: 0;
-  height: 0.45rem;
-  margin: 0;
-  border: 0;
-  border-radius: 0.2rem;
-  background: var(--border);
-  cursor: row-resize;
-  touch-action: none;
-}
-.changes-splitter:hover,
-.changes-splitter:focus-visible {
-  background: var(--primary);
-}
-.changes-detail {
-  flex: 1 1 0;
-  min-height: 0;
-  overflow: auto;
-}
-.changes-detail .approval-diff {
-  max-height: none;
 }
 .changes-list button {
   display: grid;
@@ -1307,9 +1275,6 @@ legend {
 .changes-list time {
   font-size: 0.85rem;
   color: var(--muted-foreground);
-}
-.changes-tab h3 {
-  overflow-wrap: anywhere;
 }
 
 .artifacts-tab {

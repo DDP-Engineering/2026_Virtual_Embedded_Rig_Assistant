@@ -617,7 +617,8 @@
     "empty": "Aucune modification dans cette session.",
     "history": "Historique des modifications",
     "reveal": "Afficher dans le dossier",
-    "resize": "Redimensionner la liste des fichiers et le diff"
+    "diffTab": "Modification : {{path}}",
+    "recordedAt": "Enregistrée le {{time}}"
   },
   "artifacts": {
     "empty": "Aucun artefact dans cette session.",

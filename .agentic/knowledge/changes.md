@@ -3,7 +3,7 @@
 ## Routing
 
 Select for Changes tab, changes.list/get, recorded patch/counts/time ordering and Reveal in folder.
-Start at core sessions/service.ts and renderer components/session/changes-tab.tsx under05_Software.
+Start at core sessions/service.ts and renderer components/session/changes-tab.tsx under 05_Software.
 [File tools](file-tools.md) owns preparation/application/recovery; [sessions](sessions.md) owns
 approval/runtime/event projection; [IPC](ipc-boundary.md) owns authorization/transport;
 [Chat UI](chat-ui.md) owns session navigation and the shared approval patch viewer.
@@ -25,12 +25,16 @@ session history through the shared API; application/edit approval persistence re
   file verification and fresh canonical/ignore revalidation with the same target identity immediately
   before native shell.showItemInFolder. Missing files return NOT_FOUND; escaping,
   ignored and redirected exterior paths return DENIED. Read-only workbenches support these read actions.
-- ChangesTab is keyed by workbench/session. It gets snapshot/sequence, subscribes from that sequence
-  before listing, and keys list revisions by projected change identities. The first row is initially
-  selected; live additions retain valid selection. Detail keys include workbench/session/change.
-- DiffViewer supplies immutable coloured patch lines shared with ApprovalCard. Translated
-  empty/loading/errors/retry/history/reveal controls use en/ro/de catalogs. MockSessions records
-  completed details after approved mock edits, publishes change.recorded and scopes reads/reveal by workbench.
+- ChangesTab uses a session snapshot and replay subscription to keep the paged edit list current.
+  Activating a row opens the recorded edit in a tab beside Chat, keyed by change ID in its session.
+  Different edits to one path have separate tabs. New events refresh the list without opening a tab
+  or replacing the active patch. Rows expose their pressed state when their central tab is active.
+- The document viewer loads the detail on activation, checks the returned session and change ID,
+  and owns loading, error and retry state per attempt. SessionChangeDiff renders the recorded time,
+  a shared PatchDocument and the confined Reveal in folder action. These tabs stay in memory for
+  their session scope. The change history remains available after restart.
+- MockSessions records completed details after approved mock edits, publishes change.recorded and
+  scopes reads/reveal by workbench.
 
 ## Invariants
 
@@ -50,7 +54,7 @@ session history through the shared API; application/edit approval persistence re
 | Stored list/detail/order/counts | SessionService.listChanges/getChange | core sessions/changes.test.ts |
 | Strict read channels | shared changes.ts/ipc.ts | shared changes-ipc.test.ts,preload/bridge.test.ts |
 | Reveal confinement | main reveal-path.ts/index.ts | reveal-path.test.ts,path-guard.test.ts |
-| Empty/history/diff/live/isolation | ChangesTab,useSessionView,DiffViewer | changes-tab.test.ts,workspace.test.ts |
+| Empty/history/diff/live/isolation | ChangesTab, DocumentViewerProvider, SessionChangeDiff | changes-tab.test.ts,workspace.test.ts |
 | Mock lifecycle/projections | mocks/sessions.ts,mockApi.ts | sessions.test.ts,mockApi.test.ts |
 | Native persistence | tests/e2e/changes.spec.ts | ask approval -> live counts/diff -> restart |
 
@@ -61,33 +65,11 @@ REQ-UX-18000003 selectable presentation; REQ-REL-18000004 replay/live refresh;
 REQ-SEC-18000005 confined reveal; REQ-REL-18000006 obsolete-view isolation;
 REQ-FUNC-18000007 strict IPC.
 
-## Architecture
-
-```mermaid
-flowchart LR
- App --> Shell
- Shell --> ChangesTab
- ChangesTab --> useSessionView --> useSessionEvents
- useSessionEvents --> API
- ChangesTab --> API
- ChangesTab --> DiffViewer
- ApprovalCard --> DiffViewer
- API --> MainRouter
- MainRouter --> SessionsHost
- SessionsHost --> SessionService
- SessionService --> SQLiteChanges[(applied changes)]
- MainRouter --> RevealPath
- RevealPath --> PathGuard
- RevealPath --> NativeShell
-```
-
-Reads project the existing workbench-owned records; file tools own every write transition.
-
 ## Files
 
-Under05_Software: src/libraries/shared/src/{changes,ipc,index}.ts and changes-ipc.test.ts;
+Under 05_Software: src/libraries/shared/src/{changes,ipc,index}.ts and changes-ipc.test.ts;
 src/libraries/core/src/sessions/{service,changes.test}.ts; src/apps/desktop/src/main/{index,reveal-path,reveal-path.test}.ts;
 renderer App.tsx,components/shell.tsx,components/session/{changes-tab,diff-viewer,approval-card}.tsx,
-changes-tab.test.ts,styles.css,locales/{en,ro,de}.json and mocks/{mockApi,sessions,sessions.test}.ts;
+components/documents/{viewer-context,document-tabs,session-change-diff,patch-document}.tsx, changes-tab.test.ts, styles.css, locales/{en,ro,de,fr}.json and mocks/{mockApi,sessions,sessions.test}.ts;
 tests/e2e/changes.spec.ts provides actual executable/main/preload-bound native approval/restart evidence
 and minimum-size standalone browser acceptance.

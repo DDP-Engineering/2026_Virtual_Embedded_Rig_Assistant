@@ -94,6 +94,8 @@ Marcajele salvate ale mesajelor rămân în exporturile JSON; Markdown indică m
 
 **Arată sau ascunde panoul din dreapta** afișează file pentru sesiunea deschisă: **Instrucțiuni și skill-uri** (instrucțiunile workbench-ului și skill-urile disponibile), **Fișiere**, **Modificări**, **Artefacte** (rezultatele text salvate de agent, cu **Exportă** și **Arată în folder**), **Plan** (lista de sarcini a agentului) și **Rulări** (rulările de programe ale pluginurilor).
 
+Selectează o editare din **Modificări** pentru a-i deschide diferențele într-un tab lângă Chat.
+
 ## Feedback și revizuirea planului
 
 În **Plan**, alege **Adaugă comentariu** pentru un pas întreg sau selectează mai întâi text dintr-un singur pas pentru a cita fragmentul. Cu tastatura, selectează cu Shift și săgețile în **Textul pasului**, apoi alege **Folosește textul selectat**; **Întregul pas** elimină fragmentul. Pașii goi acceptă doar comentarii pentru întregul pas. Scrie feedback pe mai multe rânduri, de exemplu „Verifică tensiunea înainte de programare”, și alege **Salvează schița**. Salvarea nu trimite mesaje și nu pornește agentul. Anulare sau Escape renunță la editările nesalvate și readuce focalizarea în Plan.

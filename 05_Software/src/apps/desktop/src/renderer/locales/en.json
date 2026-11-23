@@ -617,7 +617,8 @@
     "empty": "No changes in this session.",
     "history": "Change history",
     "reveal": "Reveal in folder",
-    "resize": "Resize the file list and the diff"
+    "diffTab": "Edit: {{path}}",
+    "recordedAt": "Recorded {{time}}"
   },
   "artifacts": {
     "empty": "No artifacts in this session.",
