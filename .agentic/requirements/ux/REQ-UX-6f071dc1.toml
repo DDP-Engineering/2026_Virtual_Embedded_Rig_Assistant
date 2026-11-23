@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-UX-6f071dc1"
+title = "Open a clicked notification's session"
+status = "active"
+requirement = "When the user clicks a current-process notification for a valid target, Desktop shall focus the window and open its exact workbench and session after honoring the unsaved-editor guard."
+verification = "Click a completion from another workbench, cancel the guard and retain edits, then accept an eligible click and see the target session."
+affected_paths = ["05_Software/src/libraries/shared/src/events.ts", "05_Software/src/libraries/shared/src/ipc.ts", "05_Software/src/apps/desktop/src/renderer/App.tsx", "05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/apps/desktop/src/main/workbench-runtimes.ts", "05_Software/src/apps/desktop/src/main/session-notifications.ts", "05_Software/src/apps/desktop/src/renderer/mocks/mockApi.ts", "05_Software/help/en/settings.md", "05_Software/help/ro/settings.md", "05_Software/help/de/settings.md", "05_Software/help/fr/settings.md"]
+linked_tests = ["05_Software/tests/e2e/background-sessions.spec.ts", "05_Software/src/libraries/shared/src/events.test.ts", "05_Software/src/apps/desktop/src/main/workbench-runtimes.test.ts", "05_Software/src/apps/desktop/src/preload/bridge.test.ts"]
+created = 2026-11-23
+updated = 2026-11-23

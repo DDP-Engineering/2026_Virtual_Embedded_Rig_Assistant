@@ -45,7 +45,7 @@ documents and their viewer belong to [Document viewer](document-viewer.md); inte
 
 ## Content and checks
 
-Settings Help explains the localized notification preferences, in-app approvals, running-app
+Settings Help explains the localized notification preferences, guarded session navigation, in-app approvals, running-app
 scope, operating system controls and fallback session cues (REQ-UX-ee964ea7).
 
 Chat and sessions, Permissions and generated Keyboard shortcuts describe [user terminals](terminals.md),

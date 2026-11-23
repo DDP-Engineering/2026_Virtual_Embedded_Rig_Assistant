@@ -104,6 +104,7 @@ import {
 } from "./delegation.js";
 import { delegatedTurnStatus } from "./delegation-monitor.js";
 import { SessionHub, type SessionListener } from "./hub.js";
+import { type LiveSessionActivity, successfulOrdinaryTurn } from "./live-activity.js";
 import {
   documentSearchToolMetadata,
   MaskingContextPolicy,
@@ -184,6 +185,8 @@ export interface SessionHost {
    * decided, or its title or status was updated. Called after the change is stored; errors are contained.
    */
   onActivity?: (sessionId: string) => void;
+  /** Optional live-only observation of committed completion and approval activity. */
+  onLiveActivity?: (sessionId: string, activity: LiveSessionActivity) => void;
   scrub?: (text: string) => string;
   /** Receives swallowed turn failures, already scrubbed. */
   log?: (message: string) => void;
@@ -280,7 +283,15 @@ export class SessionService {
     this.hub = new SessionHub(
       host.db,
       () => this.now(),
-      host.onActivity ? (id, event) => activityChanged(event) && host.onActivity?.(id) : undefined,
+      host.onActivity || host.onLiveActivity
+        ? (id, event) => {
+            try {
+              this.observeLiveActivity(id, event);
+            } finally {
+              if (activityChanged(event)) host.onActivity?.(id);
+            }
+          }
+        : undefined,
     );
     this.approvals = new ApprovalGate({
       db: host.db,
@@ -329,6 +340,22 @@ export class SessionService {
     if (!host.readOnly) {
       this.writable();
       this.recover();
+    }
+  }
+  private observeLiveActivity(id: string, event: SessionEvent): void {
+    const observe = this.host.onLiveActivity;
+    if (!observe) return;
+    if (successfulOrdinaryTurn(event, this.active.get(id))) {
+      observe(id, { type: "turn.completed", turnId: event.turnId });
+    } else if (event.type === "approval.requested") {
+      const { approvalId } = event;
+      observe(id, {
+        type: "approval.requested",
+        approvalId,
+        pending: () => !this.closing && this.approvals.isPending(id, approvalId),
+      });
+    } else if (event.type === "approval.decided") {
+      observe(id, { type: "approval.decided", approvalId: event.approvalId });
     }
   }
   /** Content policy only; authorization continues to use the unconditional host scrubber. */

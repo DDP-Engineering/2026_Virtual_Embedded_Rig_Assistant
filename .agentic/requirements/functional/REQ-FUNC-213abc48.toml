@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-FUNC-213abc48"
+title = "Dismiss settled approval alerts"
+status = "active"
+requirement = "When a visible native approval alert's request resolves, Desktop shall dismiss the alert where the platform supports dismissal."
+verification = "Resolve before and after native display and check the presented alert is closed, including a Windows banner timeout."
+affected_paths = ["05_Software/src/apps/desktop/src/main/session-notifications.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/session-notifications.test.ts"]
+created = 2026-11-23
+updated = 2026-11-23

@@ -275,6 +275,7 @@ it("infers registry types and returns validated metadata", async () => {
     | "session.sizes"
     | "session.search"
     | "session.activity"
+    | "session.notification.open"
     | "session.capacity"
     | "session.export"
     | "session.create"

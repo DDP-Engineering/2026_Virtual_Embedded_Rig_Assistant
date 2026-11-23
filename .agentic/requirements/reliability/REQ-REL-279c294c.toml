@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-REL-279c294c"
+title = "Ignore stale notification destinations"
+status = "active"
+requirement = "If a notification destination no longer exists or its approval has already settled, then Desktop shall leave the shown session unchanged."
+verification = "Reopen a missing or mismatched target and attempt a settled or old-process approval click, observing that no session switch occurs."
+affected_paths = ["05_Software/src/apps/desktop/src/main/index.ts", "05_Software/src/apps/desktop/src/main/session-notifications.ts", "05_Software/src/apps/desktop/src/main/workbench-runtimes.ts", "05_Software/src/apps/desktop/src/main/session-router.ts", "05_Software/src/libraries/core/src/workbench/service.ts", "05_Software/src/libraries/core/src/storage/db.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/session-notifications.test.ts", "05_Software/src/libraries/core/src/workbench/service.test.ts", "05_Software/src/apps/desktop/src/main/workbench-runtimes.test.ts", "05_Software/src/apps/desktop/src/main/ipc-router.test.ts", "05_Software/src/libraries/core/src/storage/db.test.ts"]
+created = 2026-11-23
+updated = 2026-11-23

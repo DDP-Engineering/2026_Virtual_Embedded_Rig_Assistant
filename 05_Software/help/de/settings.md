@@ -21,6 +21,8 @@ Unter **Abschluss eines Durchlaufs** stehen **Nie**, **Im Hintergrund** (Standar
 
 Die Option **Freigabeanfragen im Hintergrund** ist standardmäßig aktiviert. Prüfe und beantworte Anfragen in VERA. Offene Anfragen erscheinen in der Seitenleiste und im Chatverlauf.
 
+Klicke auf einen Hinweis, um die zugehörige Sitzung zu öffnen. VERA fragt nach, bevor ungespeicherte Änderungen verworfen werden.
+
 Desktop-Hinweise gelten, solange VERA läuft. Das Betriebssystem steuert, ob es sie anzeigt. Wenn Hinweise ausbleiben, prüfe die Systembenachrichtigungen für VERA und ob „Nicht stören“ eingeschaltet ist. Falls deine Umgebung keine Desktop-Hinweise anzeigt, nutze die Sitzungsanzeigen in VERA.
 
 ## Daten & Datenschutz

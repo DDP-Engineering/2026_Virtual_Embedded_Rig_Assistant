@@ -26,6 +26,10 @@ in format-1 settings. The four-locale panel uses the same confirmed Save and Can
 
 ## Supported operation
 
+Desktop notifications surface eligible live ordinary replies and pending approvals with generic localized
+copy. In-process click activation preserves unsaved edits and opens the verified session across
+workbenches. Session execution, web permission policy and app close behavior retain their contracts.
+
 Saved-session performance verification uses an isolated native Electron build, real persisted
 fixtures/sidebar selection, phase/responsiveness probes and explicit machine-specific reference
 comparison. `npm run eval:performance` and `05_Software/evaluators/performance/README.md` define quick/full,

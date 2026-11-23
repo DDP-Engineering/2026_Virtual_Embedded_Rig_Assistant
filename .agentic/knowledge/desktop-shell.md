@@ -27,6 +27,12 @@ through its API. [IPC boundary](ipc-boundary.md) owns shared contracts, dispatch
 
 ## Public interface
 
+Desktop main requests silent delivery of generic localized notifications for eligible ordinary turn completions and
+human approvals. It reads saved preferences and the native window state at dispatch. Only an alert click
+restores and focuses the window. Packaged Windows uses the NSIS production or test AppUserModelID and
+an opaque toast launch tag for Electron's current-process click callback. OS delivery and dismissal are
+best effort. The Linux notification daemon controls sound under Electron's libnotify backend. Approval review and decisions stay in the chat. Closing the last window still quits.
+
 `npm run dev` starts the loopback development renderer and Electron. `npm run build`
 emits main ESM, preload CommonJS and renderer assets under `src/apps/desktop/out/`.
 `--user-data-dir=<path>` selects the isolated Electron userData directory.
@@ -72,6 +78,7 @@ coordinates clamp to content bounds. Browser mock acknowledges the native-only o
 |---|---|---|
 | Launch/instance behavior | `src/main/index.ts` | built shell acceptance |
 | Asset/security policy | `src/main/security.ts`, `content-policy.ts` | content-policy.test.ts; built image-preview.spec.ts security assertions |
+| Native session notifications | `src/main/session-notifications.ts`, `session-notification-copy.ts` | session-notifications.test.ts and focused background-sessions.spec.ts |
 | Geometry/storage format | `src/main/window-state.ts` | `window-state.test.ts`, geometry acceptance |
 | Metadata/API/events | [ipc-boundary](ipc-boundary.md) | shell and browser mock acceptance |
 | Renderer styles | `src/renderer/styles.css` | shell screenshot and development acceptance |

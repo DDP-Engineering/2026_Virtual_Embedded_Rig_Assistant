@@ -7,6 +7,7 @@ import {
   type EmbeddingPort,
   electricalModelPlugin,
   type HelpLibrary,
+  type LiveSessionActivity,
   officialLayoutPlugin,
   officialPartsPlugin,
   type PermissionEngine,
@@ -119,6 +120,7 @@ export class SessionsHost {
       settled?: () => void;
       /** A session's turn, approval, title or status changed (SessionHost.onActivity). */
       activity?: () => void;
+      liveActivity?: (owner: WorkbenchSnapshot, sessionId: string, event: LiveSessionActivity) => void;
       /** The app-wide Concurrent turns admission, one instance shared by every runtime (REQ-FUNC-52e97b95). */
       admission?: TurnAdmission;
     },
@@ -285,6 +287,9 @@ export class SessionsHost {
           root: snapshot.folder,
           ...(options.settled ? { onWorkSettled: options.settled } : {}),
           ...(options.activity ? { onActivity: options.activity } : {}),
+          ...(options.liveActivity && {
+            onLiveActivity: (id, event) => options.liveActivity?.(snapshot, id, event),
+          }),
           ...(options.admission ? { admission: options.admission } : {}),
           onDelegationsChanged: () =>
             options.emit({

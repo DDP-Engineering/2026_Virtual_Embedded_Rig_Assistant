@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-REL-0d7ecd44"
+title = "Deduplicate live session alerts"
+status = "active"
+requirement = "When a notification candidate is published live more than once or its history is replayed, Desktop shall deliver at most one alert per workbench, session and turn or approval."
+verification = "Publish duplicate and replayed events and burst events from different workbenches, then verify each eligible identity is delivered once."
+affected_paths = ["05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/apps/desktop/src/main/sessions.ts", "05_Software/src/apps/desktop/src/main/session-notifications.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/session-notifications.test.ts", "05_Software/src/libraries/core/src/sessions/approvals.test.ts"]
+created = 2026-11-23
+updated = 2026-11-23

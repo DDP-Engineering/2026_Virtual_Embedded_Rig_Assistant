@@ -118,6 +118,7 @@ export function App() {
   const [activeSession, setActiveSession] = useState<string>();
   const operationBusy = useRef(false);
   const [sessionPending, setSessionPending] = useState(false);
+  const [notificationToken, setNotificationToken] = useState<string>();
   const [linkedTranscript, setLinkedTranscript] = useState<string>();
   const [composerFocus, setComposerFocus] = useState<{ id: string; request: number }>();
   const composerFocusSequence = useRef(0);
@@ -201,7 +202,8 @@ export function App() {
   useEffect(
     () =>
       api.subscribe("app", (event) => {
-        if (event.type !== "provider.test.step")
+        if (event.type === "session.notification.clicked") setNotificationToken(event.token);
+        else if (event.type !== "provider.test.step")
           void client.invalidateQueries({ queryKey: ["workbench.recent"] });
       }),
     [client],
@@ -283,6 +285,27 @@ export function App() {
     },
     [changed],
   );
+  useEffect(() => {
+    if (!notificationToken || sessionPending || operationBusy.current) return;
+    setNotificationToken(undefined);
+    if (!leaveEditor()) return;
+    void operation(async () => {
+      const target = await api.invoke("session.notification.open", { token: notificationToken });
+      if (!target) return;
+      if (target.workbench.folder !== bench.data?.folder || target.workbench.config.id !== benchId)
+        benchChanged(target.workbench);
+      openSession(target.sessionId, true, target.workbench.config.id);
+    });
+  }, [
+    notificationToken,
+    sessionPending,
+    bench.data?.folder,
+    benchId,
+    benchChanged,
+    leaveEditor,
+    openSession,
+    operation,
+  ]);
   /** Creates (or reuses an empty) session and opens it; `then` receives its id. */
   const createWith = useCallback(
     (then?: (id: string) => void) => {

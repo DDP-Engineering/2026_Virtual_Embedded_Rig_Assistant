@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import { existsSync } from "node:fs";
-import { mkdir, mkdtemp, readdir, readFile, rm, symlink, utimes } from "node:fs/promises";
+import { mkdir, mkdtemp, readdir, readFile, rm, symlink, utimes, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { basename, dirname, join } from "node:path";
 import Database from "better-sqlite3";
@@ -79,6 +79,17 @@ async function content(file: string) {
   const { [`${basename(file)}-shm`]: _shm, ...rest } = await bytes(file);
   return rest;
 }
+it("can require an existing initialized database without creating or initializing storage", async () => {
+  const file = await path();
+  const existing = { ...options, existingOnly: true };
+  await expect(openDb(file, existing)).rejects.toMatchObject({ code: "NOT_FOUND" });
+  expect(existsSync(file)).toBe(false);
+  await writeFile(file, "");
+  await expect(openDb(file, existing)).rejects.toMatchObject({ code: "NOT_FOUND" });
+  expect(await readFile(file)).toHaveLength(0);
+  expect(await readdir(dirname(file))).toEqual(["vera.db"]);
+});
+
 it("creates the complete current schema directly, with SQLite pragmas", async () => {
   const file = await path();
   const { db } = await opened(file);

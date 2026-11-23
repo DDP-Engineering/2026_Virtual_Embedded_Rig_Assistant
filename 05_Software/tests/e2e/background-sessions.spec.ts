@@ -33,6 +33,7 @@ async function launch(prefix: string): Promise<Bench> {
   await script("long-b", [{ text: long("LONG B", 10) }]);
   await script("long-stop", [{ text: long("LONG STOP", 60) }]);
   await script("long-c", [{ text: long("LONG C", 60) }]);
+  await script("notice", [{ text: long("NOTIFICATION", 5) }]);
   await copyFile(
     resolve("tests/fixtures/llm-scripts/edit-approve.jsonl"),
     join(scripts, "edit-approve.jsonl"),
@@ -129,6 +130,83 @@ async function start(page: Page, model: string, text: string, mode?: "ask") {
   await input.press("Enter");
   return id;
 }
+test("a completion notification restores the window and honors the editor guard across workbenches", async () => {
+  test.setTimeout(120000);
+  const bench = await launch("vera-session-notice-");
+  const { app, page, a, b } = bench;
+  try {
+    await app.evaluate(({ dialog, Notification }) => {
+      const native = { notices: [] as Electron.Notification[] };
+      Object.assign(globalThis, { veraTestNativeNotices: native.notices });
+      Notification.isSupported = () => true;
+      Notification.prototype.show = function () {
+        native.notices.push(this);
+        this.emit("show");
+      };
+      dialog.showOpenDialog = () =>
+        new Promise((resolve) => {
+          Object.assign(globalThis, {
+            veraTestCancelNoticePicker: () => resolve({ canceled: true, filePaths: [] }),
+          });
+        });
+    });
+    await page.evaluate(() =>
+      (window as unknown as { vera: VeraBridge }).vera.invoke("app.settings.update", {
+        notifications: { turnCompletion: "always" },
+      }),
+    );
+    const notices = () =>
+      app.evaluate(() =>
+        (
+          globalThis as unknown as { veraTestNativeNotices: Electron.Notification[] }
+        ).veraTestNativeNotices.map(({ title, body, silent }) => ({ title, body, silent })),
+      );
+    const payload = { title: "VERA", body: "A reply is ready.", silent: true };
+    const first = await start(page, "notice", "First completion notification");
+    await expect.poll(notices, { timeout: 25000 }).toEqual([payload]);
+    const second = await start(page, "notice", "Second completion notification");
+    await switchWorkbench(page, b);
+    await page.locator('[data-action="edit-workbench-overview"]').click();
+    const draft = page.locator(".workbench-editor [data-project-name]");
+    await draft.fill("Unsaved Bench B");
+    await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]?.minimize());
+    await expect.poll(notices, { timeout: 25000 }).toEqual([payload, payload]);
+    await expect
+      .poll(() => app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]?.isMinimized()))
+      .toBe(true);
+    const click = (index: number) =>
+      app.evaluate((_electron, index) => {
+        (globalThis as unknown as { veraTestNativeNotices: Electron.Notification[] }).veraTestNativeNotices[
+          index
+        ]?.emit("click");
+      }, index);
+    page.once("dialog", (dialog) => dialog.dismiss());
+    await click(0);
+    await expect
+      .poll(() => app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]?.isMinimized()))
+      .toBe(false);
+    await expect(draft).toHaveValue("Unsaved Bench B");
+    await expect(name(page, b)).toHaveAttribute("aria-current", "page");
+
+    page.once("dialog", (dialog) => dialog.accept());
+    await page.locator('[data-action="open-workbench-nav"]').click();
+    await expect.poll(() => app.evaluate(() => "veraTestCancelNoticePicker" in globalThis)).toBe(true);
+    await click(1);
+    await expect(draft).toHaveValue("Unsaved Bench B");
+    page.once("dialog", (dialog) => dialog.accept());
+    await app.evaluate(() => {
+      (globalThis as unknown as { veraTestCancelNoticePicker: () => void }).veraTestCancelNoticePicker();
+    });
+    await expect(name(page, a)).toHaveAttribute("aria-current", "page");
+    await expect(row(page, second)).toHaveAttribute("aria-current", "page");
+    await expect(row(page, first)).not.toHaveAttribute("aria-current", "page");
+    await expect(page.getByText("NOTIFICATION END", { exact: false })).toBeVisible();
+    expect(await outboundAttempts(app)).toEqual([]);
+  } finally {
+    await close(bench);
+  }
+});
+
 /** Presses `key` until the focused element matches `selector`. */
 async function keyTo(page: Page, selector: string, key = "Tab", max = 80) {
   for (let i = 0; i < max; i++) {

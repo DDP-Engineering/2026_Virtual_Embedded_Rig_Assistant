@@ -1,0 +1,10 @@
+schema = 1
+id = "REQ-FUNC-3f22e281"
+title = "Deliver alerts for successful ordinary turns"
+status = "active"
+requirement = "When a live ordinary top-level turn commits a successful end, Desktop shall deliver an alert according to the saved completion preference and the current window state."
+verification = "Publish ordinary and excluded finishes under all policies with focused, minimized, hidden and unfocused windows, and compare delivery counts."
+affected_paths = ["05_Software/src/libraries/core/src/sessions/live-activity.ts", "05_Software/src/libraries/core/src/sessions/service.ts", "05_Software/src/apps/desktop/src/main/session-notifications.ts", "05_Software/src/apps/desktop/src/main/sessions.ts", "05_Software/src/libraries/core/src/index.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/main/session-notifications.test.ts", "05_Software/src/libraries/core/src/sessions/live-activity.test.ts", "05_Software/src/libraries/core/src/sessions/approvals.test.ts"]
+created = 2026-11-23
+updated = 2026-11-23

@@ -29,6 +29,11 @@ sidebar are described in [workbench editor](workbench-editor.md).
 
 ## Public interface
 
+- A native notification target uses the captured canonical folder and workbench ID. Guarded opens
+  require existing initialized storage and validate session membership against the staged database before
+  updating recents or publishing the open.
+  Already-open targets are checked against the existing database before foreground promotion.
+
 - The live workbench snapshot includes a process-local `indexLease` for its activation. Status
   requests validate that identifier with the workbench id before reading the current Ingester.
 

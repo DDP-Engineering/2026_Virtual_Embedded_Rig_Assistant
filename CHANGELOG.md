@@ -8,6 +8,7 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ### Added
 
+- Receive desktop alerts for completed replies and pending approvals, and click to open their sessions.
 - Configure desktop alerts for completed turns and background approval requests in Settings > Notifications.
 - Organize Advanced settings and configure browser navigation, dictation and model discovery deadlines.
 - Send follow-ups to delegated sessions and authorize Full Access launches with independent session modes.

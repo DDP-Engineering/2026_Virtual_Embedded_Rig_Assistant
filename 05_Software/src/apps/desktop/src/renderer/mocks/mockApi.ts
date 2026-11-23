@@ -610,6 +610,8 @@ export function createMockApi(
     )
       throw veraError("CONFLICT");
     if (channel === "session.list" && scenario === "chat") sessions.seedFixtures();
+    if (channel === "session.notification.open")
+      return channels["session.notification.open"].response.parse(null) as Response<C>;
     if (channel === "session.move") {
       const { workbenchId, sessionId, offset } = channels["session.move"].request.parse(input.data);
       if (current().snapshot.config.id !== workbenchId) throw veraError("CONFLICT");

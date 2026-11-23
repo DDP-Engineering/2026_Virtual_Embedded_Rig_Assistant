@@ -1,4 +1,4 @@
-import { constants, lstatSync, rmSync } from "node:fs";
+import { constants, existsSync, lstatSync, rmSync } from "node:fs";
 import { copyFile, type FileHandle, lstat, mkdtemp, open, readdir, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
@@ -117,7 +117,10 @@ async function snapshot(path: string): Promise<WorkbenchDatabase> {
  * holds: the database is VERA's own and opens in place, with no copy. The current schema is checked
  * with query_only=ON before any pragma or write, so a refused database is not written.
  */
-export async function openDb(path: string, options: StorageOptions): Promise<WorkbenchDatabase> {
+export async function openDb(
+  path: string,
+  options: StorageOptions & { existingOnly?: boolean },
+): Promise<WorkbenchDatabase> {
   safePaths(path);
   if (options.readOnly) {
     const handle = await snapshot(path);
@@ -129,11 +132,18 @@ export async function openDb(path: string, options: StorageOptions): Promise<Wor
       throw error;
     }
   }
-  const db = new Database(path, { timeout: 5000 });
+  let db: Database.Database;
+  try {
+    db = new Database(path, { timeout: 5000, fileMustExist: options.existingOnly ?? false });
+  } catch (error) {
+    if (options.existingOnly && !existsSync(path)) throw veraError("NOT_FOUND");
+    throw error;
+  }
   let keeper: Database.Database | undefined;
   try {
     db.pragma("query_only=ON");
     const initialized = checkDatabase(db, options);
+    if (!initialized && options.existingOnly) throw veraError("NOT_FOUND");
     db.pragma("query_only=OFF");
     db.pragma("journal_mode=WAL");
     db.pragma("foreign_keys=ON");

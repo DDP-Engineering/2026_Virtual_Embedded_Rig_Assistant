@@ -35,9 +35,10 @@ export interface RuntimeActivity {
   readonly sessions: SessionSummary[];
 }
 
-/** The prepared membership query of each open database. */
 const membership = new WeakMap<Database, { get(id: string): unknown }>();
-function holds(db: Database, sessionId: string): boolean {
+/** Membership in one exact workbench database. */
+export function holdsSession(db: Database, sessionId: string): boolean {
+  if (!db.open) return false;
   let statement = membership.get(db);
   if (!statement) {
     statement = db.prepare("SELECT 1 FROM sessions WHERE id=?");
@@ -84,7 +85,7 @@ export class SessionRouter<R extends RoutedRuntime> {
    */
   session(sessionId: string, workbenchId?: string): SessionRoute<R> {
     const open = this.open();
-    const holders = open.filter((route) => holds(route.db, sessionId));
+    const holders = open.filter((route) => holdsSession(route.db, sessionId));
     if (workbenchId === undefined) {
       const owner = holders[0];
       if (!owner) throw veraError("NOT_FOUND");

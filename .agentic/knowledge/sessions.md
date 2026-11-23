@@ -12,6 +12,11 @@ Core SessionService owns one workbench's durable sessions over injected AgentRun
 
 ## Public interface
 
+- The live SessionHub observer feeds the Desktop host committed successful ordinary top-level turns and
+  approval requests and decisions independently of replay. `successfulOrdinaryTurn` classifies the
+  matching active turn without a Desktop dependency. The approval query checks the exact live gate
+  waiter and reflects synchronous automatic decisions after request publication.
+
 - Advanced settings (ADV-01):
   - `setAdvanced(id, key, value | null)` validates the value against the shared registry. It records `session.updated { advanced }` in one transaction, so the value survives a restart. It refuses archived sessions and read-only workbenches with DENIED, and an invalid key or value with INVALID.
   - The reducer merges `advanced` into the session state and null clears a key.

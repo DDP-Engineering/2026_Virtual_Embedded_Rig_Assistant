@@ -61,6 +61,7 @@ export const appEventSchema = z.discriminatedUnion("type", [
   z.strictObject({ type: z.literal("dictation.interrupted"), id: dictationJobIdSchema }),
   /** A session's turn, approval, title or status, or the set of open workbenches changed: read session.activity. */
   z.strictObject({ type: z.literal("session.activity") }),
+  z.strictObject({ type: z.literal("session.notification.clicked"), token: z.uuid() }),
   /** A turn was admitted or ended, or the Concurrent turns limit changed (REQ-FUNC-33cd5f9f). */
   z.strictObject({ type: z.literal("session.capacity"), ...turnCapacitySchema.shape }),
 ]);

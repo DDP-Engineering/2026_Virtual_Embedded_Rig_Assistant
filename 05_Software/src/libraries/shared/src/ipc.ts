@@ -775,6 +775,11 @@ export const channels = {
   ),
   /** Every open workbench, the shown one first, with its sessions running or awaiting approval. */
   "session.activity": defineChannel("session.activity", z.strictObject({}), z.array(sessionActivitySchema)),
+  "session.notification.open": defineChannel(
+    "session.notification.open",
+    z.strictObject({ token: z.uuid() }),
+    z.strictObject({ workbench: workbenchSnapshotSchema, sessionId: sessionIdSchema }).nullable(),
+  ),
   /** Active turns across every open workbench and the Concurrent turns limit (REQ-FUNC-33cd5f9f). */
   "session.capacity": defineChannel("session.capacity", z.strictObject({}), turnCapacitySchema),
   "session.export": defineChannel(
