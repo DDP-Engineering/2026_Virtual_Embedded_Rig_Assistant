@@ -51,20 +51,31 @@ export function AppearanceSettings({
         onCancel={reset}
         onSave={() => update(edits as SettingsPatch)}
       />
-      <div className="language-field">
-        <label htmlFor="language">{t("language.label")}</label>
-        <select
-          id="language"
+      <div className="appearance-language-row">
+        <div className="language-field">
+          <label htmlFor="language">{t("language.label")}</label>
+          <select
+            id="language"
+            disabled={disabled}
+            value={draft.language}
+            onChange={(event) => set({ language: event.target.value as Settings["language"] })}
+          >
+            <option value="system">{t("language.system")}</option>
+            <option value="en">{t("language.en")}</option>
+            <option value="ro">{t("language.ro")}</option>
+            <option value="de">{t("language.de")}</option>
+            <option value="fr">{t("language.fr")}</option>
+          </select>
+        </div>
+        <button
+          type="button"
           disabled={disabled}
-          value={draft.language}
-          onChange={(event) => set({ language: event.target.value as Settings["language"] })}
+          data-action="reset-typography"
+          className="typography-reset"
+          onClick={() => set({ textScale: 1, ...typographyDefaults })}
         >
-          <option value="system">{t("language.system")}</option>
-          <option value="en">{t("language.en")}</option>
-          <option value="ro">{t("language.ro")}</option>
-          <option value="de">{t("language.de")}</option>
-          <option value="fr">{t("language.fr")}</option>
-        </select>
+          {t("appearance.resetSizes")}
+        </button>
       </div>
       <fieldset disabled={disabled}>
         <legend>{t("appearance.theme")}</legend>
@@ -148,15 +159,6 @@ export function AppearanceSettings({
           </pre>
         </fieldset>
       </div>
-      <button
-        type="button"
-        disabled={disabled}
-        data-action="reset-typography"
-        className="typography-reset"
-        onClick={() => set({ textScale: 1, ...typographyDefaults })}
-      >
-        {t("appearance.resetSizes")}
-      </button>
     </section>
   );
 }

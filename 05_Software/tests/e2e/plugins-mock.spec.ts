@@ -20,6 +20,29 @@ const overflow = (page: Page) =>
       .map((element) => element.outerHTML.slice(0, 160)),
   }));
 
+test("empty Plugins actions share a row and keep their filter behavior", {
+  tag: "@parallel-browser",
+}, async ({ page, rendererUrl }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto(`${rendererUrl}/`);
+  await page.locator('[data-action="plugins-nav"]').click();
+  const installed = page.locator('[data-library-status="installed"]');
+  const search = page.locator("[data-library-search]");
+  await installed.click();
+  await search.fill("esp32");
+  const empty = page.locator(".plugin-library-empty");
+  const browse = empty.getByRole("button", { name: "Browse available plugins" });
+  const clear = empty.locator('[data-action="library-clear"]');
+  await expect(browse).toBeVisible();
+  expect((await clear.boundingBox())?.y).toBe((await browse.boundingBox())?.y);
+  await browse.click();
+  await expect(search).toHaveValue("esp32");
+  await expect(page.locator('[data-library-status="all"]')).toHaveAttribute("aria-pressed", "true");
+  await installed.click();
+  await clear.click();
+  await expect(search).toHaveValue("");
+});
+
 test("installs through the review screen, enables the plugin and stops a run, without overflow in any language, theme or size", {
   tag: "@parallel-browser",
 }, async ({ page, rendererUrl }) => {

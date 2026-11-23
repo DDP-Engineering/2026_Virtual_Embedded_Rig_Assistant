@@ -133,7 +133,7 @@ test("native subscription fake login persists across restart and signs out throu
     await signIn.getByRole("button", { name: "Complete sign-in", exact: true }).click();
     // The dialog closes once connected; the subscription then shows as a provider card.
     await expect(dialog).toHaveCount(0);
-    await expect(subscription.getByRole("status")).toHaveText("Signed in with ChatGPT");
+    await expect(subscription.locator('p[role="status"]')).toHaveText("Signed in with ChatGPT");
     await expect(card).toContainText("Token expires at");
     const catalog = await page.evaluate(() =>
       (window as unknown as { vera: VeraBridge }).vera.invoke("providers.models", { id: "chatgpt" }),
@@ -154,7 +154,7 @@ test("native subscription fake login persists across restart and signs out throu
     await page.locator('[data-i18n="nav.settings"]').click();
     await page.locator('[data-section="providers"]').click();
     const restored = page.locator('article[data-provider="chatgpt"]');
-    await expect(restored.locator('div[data-provider="chatgpt"]').getByRole("status")).toHaveText(
+    await expect(restored.locator('div[data-provider="chatgpt"] p[role="status"]')).toHaveText(
       "Signed in with ChatGPT",
     );
     await restored.getByRole("button", { name: "Sign out", exact: true }).click();

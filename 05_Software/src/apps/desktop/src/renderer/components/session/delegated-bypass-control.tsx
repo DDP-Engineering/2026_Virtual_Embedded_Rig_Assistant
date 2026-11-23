@@ -5,11 +5,13 @@ import { ErrorMessage } from "../error-message.js";
 
 export function DelegatedBypassControl({
   sessionId,
+  parentTitle,
   workbenchId,
   authorized,
   changed,
 }: {
   sessionId: string;
+  parentTitle: string;
   workbenchId: string;
   authorized: boolean;
   changed: () => void;
@@ -21,6 +23,7 @@ export function DelegatedBypassControl({
   const trigger = useRef<HTMLButtonElement>(null);
   const dialog = useRef<HTMLDialogElement>(null);
   const title = useId();
+  const parentLabel = useId();
   const warning = useId();
   useEffect(() => {
     if (!confirming) return;
@@ -54,7 +57,8 @@ export function DelegatedBypassControl({
   }
 
   return (
-    <>
+    <div className="workbench-actions" data-session-launch={sessionId}>
+      <span>{t("delegation.parent", { title: parentTitle })}</span>
       <button
         ref={trigger}
         type="button"
@@ -73,13 +77,14 @@ export function DelegatedBypassControl({
           ref={dialog}
           className="pinned-dialog"
           aria-labelledby={title}
-          aria-describedby={warning}
+          aria-describedby={`${parentLabel} ${warning}`}
           onCancel={(event) => {
             event.preventDefault();
             if (!pending) setConfirming(false);
           }}
         >
           <h3 id={title}>{t("delegation.allowBypass")}</h3>
+          <p id={parentLabel}>{t("delegation.parent", { title: parentTitle })}</p>
           <p id={warning}>{t("delegation.bypassWarning")}</p>
           {error !== undefined && <ErrorMessage error={error} />}
           <footer className="workbench-actions">
@@ -92,6 +97,6 @@ export function DelegatedBypassControl({
           </footer>
         </dialog>
       )}
-    </>
+    </div>
   );
 }

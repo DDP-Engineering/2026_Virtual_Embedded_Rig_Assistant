@@ -19,6 +19,7 @@ import {
   type ProviderCatalog,
   type ProviderDiscoveryRequest,
   type ProviderTestResult,
+  type ProviderTestStep,
   providerCatalogSchema,
   providerTestResultSchema,
   resolveAdvanced,
@@ -145,7 +146,7 @@ export class ProviderGateway {
       providerCatalogSchema.parse(await this.api.models(id, this.lifetime.signal)),
     );
   }
-  test(id: string, model?: string): Promise<ProviderTestResult> {
+  test(id: string, model?: string, onStep?: (step: ProviderTestStep) => void): Promise<ProviderTestResult> {
     return this.track(async () => {
       const settings = this.settings.get().settings;
       const before = settings.providers.custom.find((c) => `custom:${c.slug}` === id);
@@ -163,15 +164,18 @@ export class ProviderGateway {
           this.lifetime.signal,
           () => this.clock.now().getTime(),
           (text) => this.credentials.scrub(text),
-          profile?.reasoningOptions?.includes("off")
-            ? { reasoning: "off" }
-            : profile?.reasoningOptions?.includes("low")
-              ? { reasoning: "low", maxOutputTokens: 4096 }
-              : profile?.reasoningOptions?.includes("on")
-                ? { reasoning: "on", maxOutputTokens: 4096 }
-                : hosted && (testOutputBudget || profile?.reasoning)
-                  ? { maxOutputTokens: testOutputBudget ?? 4096 }
-                  : {},
+          {
+            onStep,
+            ...(profile?.reasoningOptions?.includes("off")
+              ? { reasoning: "off" }
+              : profile?.reasoningOptions?.includes("low")
+                ? { reasoning: "low", maxOutputTokens: 4096 }
+                : profile?.reasoningOptions?.includes("on")
+                  ? { reasoning: "on", maxOutputTokens: 4096 }
+                  : hosted && (testOutputBudget || profile?.reasoning)
+                    ? { maxOutputTokens: testOutputBudget ?? 4096 }
+                    : {}),
+          },
         ),
       );
       const tools = result.steps.find((s) => s.step === "tools");

@@ -125,6 +125,25 @@ describe("safe provider settings", () => {
     expect((await h.service.list()).custom[0]?.imageModels).toEqual(["org/vision"]);
   });
 
+  it("saves the default with model ticks and clears it when its model is disabled or removed", async () => {
+    const h = harness();
+    await h.settings.load();
+    await h.service.save({ provider: "custom", config: custom });
+    const id = "custom:local-model";
+    const defaultModel = `${id}/org/other-model`;
+    await expect(h.service.enableModels({ providers: [], defaultModel })).rejects.toMatchObject({
+      code: "INVALID",
+    });
+    await h.service.enableModels({ providers: [{ id, models: ["org/other-model"] }], defaultModel });
+    expect(h.settings.get().settings.defaultModel).toBe(defaultModel);
+    await h.service.enableModels({ providers: [{ id, models: [] }] });
+    expect(h.settings.get().settings.defaultModel).toBeNull();
+    await h.service.enableModels({ providers: [{ id, models: ["org/other-model"] }] });
+    await h.service.enableModels({ providers: [], defaultModel });
+    await h.service.remove({ id });
+    expect(h.settings.get().settings.defaultModel).toBeNull();
+  });
+
   it("clears an optional OpenAI model independently and removes the key while retaining the model", async () => {
     const h = harness();
     await h.settings.load();

@@ -2,7 +2,9 @@
 
 Un furnizor îi oferă lui VERA acces la un model de limbaj. Ai nevoie de cel puțin unul. Configurezi furnizorii în **Setări** → **Furnizori**. Selectează **Adaugă furnizor** și alege furnizorul din lista **Furnizor**. Lista include **Abonament ChatGPT**.
 
-Fiecare furnizor conectat apare ca un card cu **Editează**, **Testează** și **Elimină**. Cardul abonamentului ChatGPT are în schimb **Deconectare**. Cardul listează **Modele** ca bife. La mai mult de zece modele, folosește **Filtrează modelele** și paginile. VERA oferă doar modelele bifate în selectorul de modele din chat și în lista modelelor implicite din workbench. Un furnizor nou oferă doar modelul ales la conectare; bifează mai multe pe cardul lui. Un furnizor configurat mai demult oferă toate modelele sale până când schimbi bifele. Selectează **Salvează** în dreapta sus ca să păstrezi bifele. **Anulează** renunță la ele.
+Selectează un furnizor conectat din lista din stânga pentru a vedea comenzile și modelele sale. Folosește **Editează**, **Testează** sau **Elimină** pentru conexiunile locale și API, iar pentru abonamentul ChatGPT folosește **Deconectare**. Progresul apare lângă **Testează**. Deschide **Detalii de test** pentru rezultatul fiecărei etape.
+
+Bifează modelele pe care le vrei în selectoarele din chat și workbench. Folosește **Implicit** pentru a alege modelul implicit al aplicației. **Salvează** în dreapta sus păstrează bifele și modelul implicit. **Anulează** renunță la modificări. În listele lungi poți folosi **Filtrează modelele** și paginarea.
 
 ## Abonament ChatGPT
 
@@ -100,8 +102,8 @@ VERA trimite solicitările către serviciul indicat în selectorul de modele. [H
 1. Pornește serverul LM Studio și încarcă un model.
 2. **Adaugă furnizor**, **Furnizor** LM Studio. Adresa `http://localhost:1234` este completată automat.
 3. Selectează **Testează conexiunea**. VERA citește modelele de conversație ale serverului; modelele de embedding sunt omise.
-4. Pentru fiecare model, verifică limita de context afișată de VERA. Dacă serverul nu raportează niciuna, seteaz-o tu. Valorile opționale **Raționament** și **Temperatură** rămân pe **Implicit la furnizor** dacă nu le setezi.
-5. Selectează **Salvează**.
+4. Alege modelul conexiunii și selectează **Salvează**.
+5. În lista de modele a furnizorului, deschide **Setări model** pentru modelul dorit. Acolo alegi fereastra de context, limita de ieșire, raționamentul, temperatura și suportul pentru imagini. Un parametru opțional lăsat gol folosește valoarea implicită a furnizorului.
 
 Pentru LM Studio, cheia API este opțională.
 

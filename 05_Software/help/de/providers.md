@@ -2,7 +2,9 @@
 
 Ein Anbieter gibt VERA Zugang zu einem Sprachmodell. Sie benötigen mindestens einen. Anbieter richten Sie unter **Einstellungen** → **Anbieter** ein. Wählen Sie **Anbieter hinzufügen** und dann den Anbieter in der Liste **Anbieter**. Die Liste enthält das **ChatGPT-Abonnement**.
 
-Jeder verbundene Anbieter erscheint als Karte mit **Bearbeiten**, **Testen** und **Entfernen**. Die Karte des ChatGPT-Abonnements hat stattdessen **Abmelden**. Die Karte zeigt ihre **Modelle** als Kontrollkästchen. Bei mehr als zehn Modellen nutzen Sie **Modelle filtern** und die Seiten. VERA bietet nur die angehakten Modelle in der Modellauswahl im Chat und in der Liste der Standardmodelle des Workbenchs an. Ein neuer Anbieter bietet nur das Modell an, das Sie beim Verbinden gewählt haben; haken Sie auf seiner Karte weitere an. Ein früher eingerichteter Anbieter bietet alle seine Modelle an, bis Sie die Haken ändern. Wählen Sie oben rechts **Speichern**, um die Haken zu behalten. **Abbrechen** verwirft sie.
+Wählen Sie links einen verbundenen Anbieter, um seine Aktionen und Modelle zu sehen. Für API- und lokale Verbindungen stehen **Bearbeiten**, **Testen** und **Entfernen** zur Verfügung. Beim ChatGPT-Abonnement können Sie sich mit **Abmelden** abmelden. Der Fortschritt steht neben **Testen**. Unter **Testdetails** sehen Sie das Ergebnis jedes Schritts.
+
+Haken Sie die Modelle für die Auswahllisten im Chat und im Workbench an. Unter **Standard** wählen Sie das Standardmodell der Anwendung. **Speichern** oben rechts übernimmt die Haken und die Standardauswahl. **Abbrechen** verwirft die Änderungen. Bei langen Listen helfen **Modelle filtern** und die Seitenauswahl.
 
 ## ChatGPT-Abonnement
 
@@ -100,8 +102,8 @@ VERA sendet Anfragen an den in der Modellauswahl genannten Dienst. [Hugging Face
 1. Starten Sie den LM-Studio-Server und laden Sie ein Modell.
 2. **Anbieter hinzufügen**, **Anbieter** LM Studio. Die Adresse `http://localhost:1234` ist vorausgefüllt.
 3. Wählen Sie **Verbindung testen**. VERA liest die Konversationsmodelle des Servers; Embedding-Modelle werden ausgelassen.
-4. Prüfen Sie für jedes Modell das Kontextlimit, das VERA anzeigt. Meldet der Server keines, legen Sie es selbst fest. Die optionalen Werte **Reasoning** und **Temperatur** bleiben auf **Anbieterstandard**, sofern Sie sie nicht festlegen.
-5. Wählen Sie **Speichern**.
+4. Wählen Sie das Modell der Verbindung und anschließend **Speichern**.
+5. Öffnen Sie in der Modellliste des Anbieters die **Modelleinstellungen** für ein Modell. Dort legen Sie Kontextfenster, Ausgabelimit, Reasoning, Temperatur und Bildunterstützung fest. Ein leeres optionales Feld verwendet den Standard des Anbieters.
 
 Für LM Studio ist ein API-Schlüssel optional.
 

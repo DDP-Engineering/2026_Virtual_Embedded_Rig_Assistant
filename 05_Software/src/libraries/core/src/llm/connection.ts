@@ -25,21 +25,31 @@ export async function testConnection(
   signal: AbortSignal = new AbortController().signal,
   now: () => number = Date.now,
   scrub: (text: string) => string = (text) => text,
-  options: { reasoning?: "off" | "low" | "on"; maxOutputTokens?: number } = {},
+  options: {
+    reasoning?: "off" | "low" | "on";
+    maxOutputTokens?: number;
+    onStep?: ((step: ProviderTestStep) => void) | undefined;
+  } = {},
 ): Promise<ProviderTestResult> {
   const steps: ProviderTestStep[] = [];
+  const report = (...completed: ProviderTestStep[]) => {
+    for (const step of completed) {
+      steps.push(step);
+      options.onStep?.(step);
+    }
+  };
   try {
     const catalog = await gateway.models(provider, signal, true);
-    steps.push({ step: "reachability", status: catalog.reachability });
+    report({ step: "reachability", status: catalog.reachability });
   } catch (error) {
-    steps.push({ step: "reachability", status: "fail", error: mapProviderError(error, scrub, "") });
+    report({ step: "reachability", status: "fail", error: mapProviderError(error, scrub, "") });
   }
   let reference: string;
   try {
     reference = `${provider}/${model ?? gateway.selectedModel(provider)}`;
     gateway.capabilities(reference);
   } catch (error) {
-    steps.push(
+    report(
       { step: "authentication", status: "fail", error: mapProviderError(error, scrub, "") },
       { step: "tools", status: "skipped" },
       { step: "streaming", status: "skipped" },
@@ -51,7 +61,7 @@ export async function testConnection(
       signal.aborted ||
       (step !== "authentication" && steps.find((s) => s.step === "authentication")?.status !== "pass")
     ) {
-      steps.push({ step, status: "skipped" });
+      report({ step, status: "skipped" });
       continue;
     }
     let deltas = 0;
@@ -106,7 +116,7 @@ export async function testConnection(
     } catch (failure) {
       error = mapProviderError(failure, scrub, "");
     }
-    steps.push({
+    report({
       step,
       status: passed && !error ? "pass" : "fail",
       ...(!passed || error ? { error: error ?? veraError("PROVIDER") } : {}),

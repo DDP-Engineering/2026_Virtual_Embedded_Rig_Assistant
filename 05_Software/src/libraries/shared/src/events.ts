@@ -20,6 +20,7 @@ import {
 } from "./plan-review.js";
 import { programApprovalSchema, validProgramApproval } from "./program-rules.js";
 import { reasoningOptionSchema } from "./provider-discovery.js";
+import { providerTestStepSchema } from "./providers.js";
 import {
   messageImagesSchema,
   permissionModeSchema,
@@ -39,6 +40,11 @@ import {
 } from "./workbench.js";
 
 export const appEventSchema = z.discriminatedUnion("type", [
+  z.strictObject({
+    type: z.literal("provider.test.step"),
+    testId: z.uuid(),
+    ...providerTestStepSchema.pick({ step: true, status: true }).shape,
+  }),
   z.strictObject({
     type: z.literal("settings.changed"),
     /** False when the change cannot alter masked content; absent, shown documents are loaded again. */

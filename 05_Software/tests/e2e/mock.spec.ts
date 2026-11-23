@@ -17,7 +17,7 @@ test("browser mock displays the same metadata screen through dev:renderer", asyn
   const hadCompiledShared = existsSync(compiledShared);
   if (hadCompiledShared) renameSync(compiledShared, savedShared);
   const server = spawn(process.execPath, ["../02_Tools/environment/dev-renderer.mjs"], {
-    env: { ...process.env, VITE_API: "mock" },
+    env: { ...process.env, VERA_TEST: "1", VITE_API: "mock" },
     stdio: ["ignore", "pipe", "pipe"],
   });
   let output = "";
@@ -305,21 +305,25 @@ test("browser mock displays the same metadata screen through dev:renderer", asyn
       "fake-browser-model",
     );
     const testedProvider = providerSection.locator('[data-provider="custom:browser-fixture"]');
+    const selectTestedProvider = providerSection.locator('[data-provider-option="custom:browser-fixture"]');
     for (const language of ["en", "ro", "de"] as const) {
       await changeSetting(page, "appearance", () => page.locator("#language").selectOption(language));
+      await selectTestedProvider.click();
       const control = testedProvider.locator('[data-provider-test="custom:browser-fixture"]');
       await expect(control).toHaveText(
         language === "ro" ? "Testează" : language === "de" ? "Testen" : "Test",
       );
       await control.focus();
       await page.keyboard.press("Enter");
-      await expect(testedProvider.locator('[data-i18n="providers.testComplete"]')).toBeVisible();
+      await expect(testedProvider.locator(".provider-test-status")).toHaveText(
+        language === "ro" ? "Test trecut" : language === "de" ? "Test bestanden" : "Test passed",
+      );
       await expect(testedProvider.locator("[data-test-step]")).toHaveCount(4);
       await expect(testedProvider.locator('[data-test-status="pass"]')).toHaveCount(4);
-      await page.keyboard.press("Escape");
       expect(await page.locator("body").innerText()).not.toContain("browser-only-private-middle");
     }
     await changeSetting(page, "appearance", () => page.locator("#language").selectOption("en"));
+    await selectTestedProvider.click();
     await providerSection
       .locator('[data-provider="custom:browser-fixture"]')
       .getByRole("button", { name: "Remove Browser fixture", exact: true })

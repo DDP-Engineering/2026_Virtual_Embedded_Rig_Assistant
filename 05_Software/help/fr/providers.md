@@ -2,7 +2,9 @@
 
 Un fournisseur donne à VERA l’accès à un modèle de langage. Il vous en faut au moins un. Configurez les fournisseurs dans **Paramètres** → **Fournisseurs**. Sélectionnez **Ajouter un fournisseur** et choisissez le fournisseur dans la liste **Fournisseur**. La liste comprend l’**Abonnement ChatGPT**.
 
-Chaque fournisseur connecté apparaît sous forme de carte avec **Modifier**, **Tester** et **Supprimer**. La carte de l’abonnement ChatGPT propose à la place **Se déconnecter**. La carte liste ses **Modèles** avec des cases à cocher. Au-delà de dix modèles, utilisez **Filtrer les modèles** et les pages. VERA propose uniquement les modèles cochés dans le sélecteur de modèle du chat et dans la liste des modèles par défaut du banc de travail. Un nouveau fournisseur propose seulement le modèle choisi lors de la connexion ; cochez-en d’autres sur sa carte. Un fournisseur configuré auparavant propose tous ses modèles jusqu’à ce que vous changiez les coches. Sélectionnez **Enregistrer** en haut à droite pour conserver les coches. **Annuler** les abandonne.
+Sélectionnez un fournisseur connecté à gauche pour afficher ses actions et ses modèles. Utilisez **Modifier**, **Tester** ou **Supprimer** pour les connexions locales et API, et **Se déconnecter** pour l’abonnement ChatGPT. La progression apparaît à côté de **Tester**. Ouvrez **Détails du test** pour voir le résultat de chaque étape.
+
+Cochez les modèles à proposer dans les sélecteurs du chat et du banc de travail. Utilisez **Par défaut** pour définir le modèle de l’application. **Enregistrer** en haut à droite applique les coches et le modèle par défaut. **Annuler** écarte les modifications. Dans une longue liste, utilisez **Filtrer les modèles** et la pagination.
 
 ## Abonnement ChatGPT
 
@@ -100,8 +102,8 @@ VERA envoie les requêtes au service indiqué dans le sélecteur de modèles. [H
 1. Démarrez le serveur LM Studio et chargez un modèle.
 2. **Ajouter un fournisseur**, **Fournisseur** LM Studio. L’adresse `http://localhost:1234` est préremplie.
 3. Sélectionnez **Tester la connexion**. VERA lit les modèles de conversation du serveur ; les modèles d’embedding sont ignorés.
-4. Pour chaque modèle, vérifiez la limite de contexte affichée par VERA. Si le serveur n’en indique aucune, définissez-la vous-même. Les valeurs facultatives **Raisonnement** et **Température** restent sur **Valeur par défaut du fournisseur** si vous ne les définissez pas.
-5. Sélectionnez **Enregistrer**.
+4. Choisissez le modèle de la connexion et sélectionnez **Enregistrer**.
+5. Dans la liste des modèles du fournisseur, ouvrez les **Paramètres du modèle**. Réglez la fenêtre de contexte, la limite de sortie, le raisonnement, la température et la prise en charge des images. Un paramètre facultatif vide utilise la valeur par défaut du fournisseur.
 
 Pour LM Studio, une clé API est facultative.
 

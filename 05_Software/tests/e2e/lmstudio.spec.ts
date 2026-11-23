@@ -98,7 +98,10 @@ test("LM Studio discovers models, persists per-model settings and sends optional
         process.platform === "win32" ? "electron.exe" : "electron",
       ),
       chromiumSandbox: true,
-      args: ["src/apps/desktop", `--user-data-dir=${data}`],
+      args: [
+        process.env.VERA_BUILD_ROOT ? join(process.env.VERA_BUILD_ROOT, "main/index.js") : "src/apps/desktop",
+        `--user-data-dir=${data}`,
+      ],
       env,
     });
   let app = await launch();
@@ -114,6 +117,7 @@ test("LM Studio discovers models, persists per-model settings and sends optional
     await dialog.locator("[data-discovery-endpoint]").fill(live ?? `http://127.0.0.1:${address.port}`);
     await dialog.locator('[data-action="discover-models"]').click();
     await expect(dialog.locator("[data-discovered-model]")).toBeVisible();
+    await dialog.getByText("Model settings", { exact: true }).click();
     const configuredContext = Number(
       await dialog.getByLabel("Context window (tokens)", { exact: true }).inputValue(),
     );
@@ -142,6 +146,7 @@ test("LM Studio discovers models, persists per-model settings and sends optional
     expect(list.models.find((m) => m.id === selected)?.contextWindow).toBe(configuredContext);
     if (!live) {
       await row.locator("[data-provider-test]").click();
+      await expect(row.locator(".provider-test-status")).toHaveText("Test passed");
       await expect(row.locator('[data-test-status="pass"]')).toHaveCount(4);
       expect(payloads.length).toBeGreaterThan(0);
       for (const body of payloads) expect(body).toMatchObject({ reasoning_effort: "none", temperature: 0 });
@@ -157,9 +162,14 @@ test("LM Studio discovers models, persists per-model settings and sends optional
       .click();
     const editor = page.locator("[data-provider-dialog]");
     await expect(editor.locator("[data-discovered-model]")).toHaveValue(selected);
+    await expect(editor.getByLabel("Response timeout (s)", { exact: true })).toHaveValue("900");
+    await editor.getByRole("button", { name: "Cancel", exact: true }).click();
+    const modelRow = page.locator(".provider-model-items > li").filter({
+      has: page.locator(`[data-provider-model=${JSON.stringify(selected)}]`),
+    });
+    await modelRow.getByRole("button", { name: /Model settings for/ }).click();
     await expect(editor.locator("[data-model-reasoning]")).toHaveValue("off");
     await expect(editor.locator("[data-model-temperature]")).toHaveValue("0");
-    await expect(editor.getByLabel("Response timeout (s)", { exact: true })).toHaveValue("900");
     expect(errors).toEqual([]);
   } finally {
     await app.close();

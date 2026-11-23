@@ -80,8 +80,15 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ### Changed
 
+- Manage Full Access launches for the selected parent from Edit workbench > Agent and chat.
+- Align Agent and chat fields in compact label-and-control rows.
+- Align the empty Plugins list actions on one row when space allows.
 - Move indexing details to the single-column Workbench overview and keep Files compact.
 - Show workbench tools with installed providers and add a catalog shortcut when no plugins are installed.
+- Show command shells as individual choices with the detected executable paths.
+- Put Restore default text sizes beside the interface language selector.
+- Keep provider actions on one row and remove redundant labels in Settings.
+- Choose a provider, set model defaults, edit LM Studio models and follow connection-test progress in Settings.
 - Evaluators: one folder per family with code, method, cases and baselines; perf:sessions is now eval:performance.
 - Open recorded session edits beside Chat from the Changes list.
 - Changes paginates long session histories and retains the selected diff across pages.

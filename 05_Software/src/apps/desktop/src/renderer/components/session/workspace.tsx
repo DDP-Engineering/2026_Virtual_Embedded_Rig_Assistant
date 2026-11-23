@@ -16,7 +16,6 @@ import { CHAT, useDocumentTabs } from "../documents/viewer-context.js";
 import { ErrorMessage } from "../error-message.js";
 import { BrowserControls } from "./browser-controls.js";
 import { Composer, type ComposerState } from "./composer.js";
-import { DelegatedBypassControl } from "./delegated-bypass-control.js";
 import { DelegationLinks } from "./delegation-links.js";
 import { SessionInspector } from "./session-inspector.js";
 import { Transcript } from "./transcript.js";
@@ -33,7 +32,6 @@ export function SessionWorkspace({
   archived = false,
   detail = "normal",
   delegation,
-  delegatedBypassLaunch,
   delegationParent,
   delegationChildren = [],
   selectLinkedSession,
@@ -51,7 +49,6 @@ export function SessionWorkspace({
   archived?: boolean;
   detail?: ChatDetail;
   delegation?: SessionSummary["delegation"];
-  delegatedBypassLaunch?: boolean | undefined;
   delegationParent?: SessionSummary | undefined;
   delegationChildren?: readonly SessionSummary[] | undefined;
   selectLinkedSession?: (id: string) => void;
@@ -284,20 +281,6 @@ export function SessionWorkspace({
         <h2 ref={heading} tabIndex={-1}>
           {view?.state.title || t("chat.untitled")}
         </h2>
-        {id &&
-          view &&
-          !delegation &&
-          !readOnly &&
-          !archived &&
-          (view.state.mode === "bypass" || delegatedBypassLaunch) && (
-            <DelegatedBypassControl
-              key={id}
-              sessionId={id}
-              workbenchId={workbenchId}
-              authorized={delegatedBypassLaunch === true}
-              changed={changed}
-            />
-          )}
       </header>
       {view && shown && browserEnabled && !readOnly && !archived && (
         <BrowserControls

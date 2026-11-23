@@ -2,7 +2,9 @@
 
 A provider gives VERA access to a language model. You need at least one. Set providers up in **Settings** → **Providers**. Select **Add provider** and choose the provider in the **Provider** list. The list includes the **ChatGPT subscription**.
 
-Each connected provider appears as a card with **Edit**, **Test** and **Remove**. The ChatGPT subscription card has **Sign out** instead. The card lists its **Models** as checkboxes. With more than ten models, use **Filter models** and the pages. VERA offers only the ticked models in the chat model picker and in the workbench default model list. A new provider offers only the model you chose while connecting; tick more on its card. A provider you set up earlier offers all its models until you change its ticks. Select **Save** at the top right to keep the ticks. **Cancel** discards them.
+Select a connected provider on the left to see its actions and models. Use **Edit**, **Test** or **Remove** for API and local connections, and **Sign out** for the ChatGPT subscription. The test shows progress beside **Test**. Open **Test details** for the result of each step.
+
+Tick the models to offer them in the chat and workbench pickers. Use **Default** to set the application-wide model. **Save** at the top right applies the ticks and default together. **Cancel** discards the changes. To find a model in a long list, use **Filter models** and the pager.
 
 ## ChatGPT subscription
 
@@ -100,8 +102,8 @@ VERA sends prompts to the service named in the model picker. [Hugging Face](http
 1. Start the LM Studio server and load a model.
 2. **Add provider**, **Provider** LM Studio. The address `http://localhost:1234` is filled in.
 3. Select **Test connection**. VERA reads the server's conversation models; embedding models are left out.
-4. For each model, check the context limit VERA shows. If the server reports none, set it yourself. Optional **Reasoning** and **Temperature** stay at **Provider default** unless you set them.
-5. Select **Save**.
+4. Choose the connection’s model and select **Save**.
+5. On the provider’s model list, open **Model settings** for a model. Use it to set the context window, output limit, reasoning, temperature and image support. Leaving an optional parameter empty uses the provider default.
 
 An API key is optional for LM Studio.
 

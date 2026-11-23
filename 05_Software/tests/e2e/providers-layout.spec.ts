@@ -1,6 +1,6 @@
 import { expect } from "@playwright/test";
 import { test } from "./fixtures.js";
-import { changeSetting } from "./settings-navigation.js";
+import { changeSetting, saveSettings } from "./settings-navigation.js";
 
 test("provider categories support concurrent connections, presets and aligned actions", {
   tag: "@parallel-browser",
@@ -24,12 +24,12 @@ test("provider categories support concurrent connections, presets and aligned ac
   await page.locator('[data-i18n="nav.settings"]').click();
   await page.locator('[data-section="providers"]').click();
   const section = page.locator('[data-settings-section="providers"]');
-  const cards = section.locator(".provider-cards > article.provider-card");
+  const providers = section.locator("[data-provider-option]");
   const dialog = section.locator("[data-provider-dialog]");
   const preset = dialog.locator("[data-provider-preset]");
   const subscription = section.locator('article[data-provider="chatgpt"]');
   await expect(section.locator("[data-settings-header]")).toContainText("Providers");
-  await expect(cards).toHaveCount(0);
+  await expect(providers).toHaveCount(0);
   await expect(section.locator("[data-provider-editor]")).toHaveCount(0);
   await section.locator('[data-action="add-provider"]').click();
   await expect(dialog.getByRole("heading", { name: "Add provider", exact: true })).toBeVisible();
@@ -43,6 +43,14 @@ test("provider categories support concurrent connections, presets and aligned ac
   // The dialog closes by itself once the subscription is connected.
   await expect(dialog).toHaveCount(0);
   await expect(subscription.getByRole("button", { name: "Sign out", exact: true })).toBeVisible();
+  const subscriptionActions = subscription.locator(".provider-actions button");
+  await expect(subscriptionActions).toHaveText(["Sign out", "Test"]);
+  const actionRows = await subscriptionActions.evaluateAll((buttons) =>
+    buttons.map((button) => button.getBoundingClientRect().y),
+  );
+  expect(Math.max(...actionRows) - Math.min(...actionRows)).toBeLessThan(1);
+  await subscription.getByRole("button", { name: "Test ChatGPT subscription" }).click();
+  await expect(subscription.locator(".provider-test-status")).toHaveText("Test passed");
   await expect(subscription.getByRole("button", { name: "Sign in with ChatGPT", exact: true })).toHaveCount(
     0,
   );
@@ -129,6 +137,23 @@ test("provider categories support concurrent connections, presets and aligned ac
   await expect(dialog.getByLabel("Base URL", { exact: true })).toHaveValue("http://localhost:1234");
   await dialog.locator('[data-action="discover-models"]').click();
   await expect(dialog.locator("[data-discovered-model]")).toHaveValue("mock-local");
+  await dialog.getByText("Model settings", { exact: true }).click();
+  const rows = await dialog.locator(".provider-parameter-grid > label").evaluateAll((labels) =>
+    labels.map((label) => {
+      const caption = label.querySelector("span")!.getBoundingClientRect();
+      const field = label.querySelector("input, select")!.getBoundingClientRect();
+      return {
+        left: caption.x,
+        right: field.x,
+        y: field.y,
+        aligned: caption.top < field.bottom && field.top < caption.bottom,
+      };
+    }),
+  );
+  expect(rows).toHaveLength(5);
+  expect(rows.every(({ left, right, aligned }) => left < right && aligned)).toBe(true);
+  expect(new Set(rows.map(({ right }) => right)).size).toBe(1);
+  expect(new Set(rows.map(({ y }) => y)).size).toBe(rows.length);
   const acceptsImages = dialog.getByRole("switch", { name: "Accepts images", exact: true });
   await expect(acceptsImages).toBeVisible();
   await expect(acceptsImages).not.toBeChecked();
@@ -145,16 +170,40 @@ test("provider categories support concurrent connections, presets and aligned ac
   await expect(dialog.locator("[data-model-temperature]")).toHaveValue("0");
   await dialog.locator('[data-provider-action="save-lmstudio"]').click();
   await expect(section.locator('[data-provider="custom:lm-studio"]')).toBeVisible();
-  await section.getByRole("button", { name: "Edit LM Studio", exact: true }).click();
-  await expect(dialog.getByRole("heading", { name: "Edit LM Studio", exact: true })).toBeVisible();
+  const lmstudio = section.locator('[data-provider="custom:lm-studio"]');
+  const catalogRow = (id: string) =>
+    lmstudio
+      .locator(".provider-model-items > li")
+      .filter({ has: page.locator(`[data-provider-model="${id}"]`) });
+  await lmstudio.getByRole("button", { name: "Test LM Studio", exact: true }).click();
+  await expect(lmstudio.locator(".provider-test-status")).toHaveText("Test passed");
+  await catalogRow("mock-local")
+    .getByRole("button", { name: /Model settings for/ })
+    .click();
   await expect(acceptsImages).toBeChecked();
-  await dialog.locator('[data-action="discover-models"]').click();
-  await expect(acceptsImages).toBeChecked();
+  await expect(dialog.locator("[data-model-reasoning]")).toHaveValue("off");
+  await expect(dialog.locator("[data-model-temperature]")).toHaveValue("0");
   await acceptsImages.uncheck();
-  await dialog.locator('[data-provider-action="save-lmstudio"]').click();
-  await expect(section.locator("[data-provider-editor]")).toHaveCount(0);
+  await dialog.locator("[data-model-temperature]").fill("0.4");
+  await dialog.getByRole("button", { name: "Save", exact: true }).click();
+  await expect(dialog).toHaveCount(0);
+  await expect(lmstudio.locator(".provider-test-status")).toBeEmpty();
+  await catalogRow("mock-small")
+    .getByRole("button", { name: /Model settings for/ })
+    .click();
+  await expect(dialog.locator("[data-model-temperature]")).toHaveValue("0.7");
+  await dialog.getByRole("button", { name: "Cancel", exact: true }).click();
+  const smallDefault = catalogRow("mock-small").getByRole("radio");
+  await expect(smallDefault).toBeDisabled();
+  await catalogRow("mock-small").getByRole("checkbox").check();
+  await smallDefault.check();
+  await section.locator('[data-provider-option="openai"]').click();
+  await section.locator('[data-provider-option="custom:lm-studio"]').click();
+  await expect(smallDefault).toBeChecked();
+  await saveSettings(page);
   await section.getByRole("button", { name: "Edit LM Studio", exact: true }).click();
-  await expect(acceptsImages).not.toBeChecked();
+  await dialog.locator('[data-action="discover-models"]').click();
+  await expect(dialog.locator("[data-discovered-model]")).toHaveValue("mock-local");
   await dialog.getByRole("button", { name: "Cancel", exact: true }).click();
   await expect(dialog).toHaveCount(0);
   await section.locator('[data-action="add-provider"]').click();
@@ -164,8 +213,10 @@ test("provider categories support concurrent connections, presets and aligned ac
   await dialog.locator('[data-provider-action="save-custom"]').click();
   await expect(dialog).toHaveCount(0);
   // The ChatGPT subscription and three concurrent API/local connections.
-  await expect(cards).toHaveCount(4);
+  await expect(providers).toHaveCount(4);
   const row = section.locator('[data-provider="openai"]');
+  const openAi = section.locator('[data-provider-option="openai"]');
+  await openAi.click();
   await row.getByRole("button", { name: "Edit OpenAI API", exact: true }).click();
   await expect(dialog.locator('[data-provider-editor="openai"]')).toBeVisible();
   const editingButtons = dialog.locator('[data-provider-editor="openai"] .provider-actions button');
@@ -176,54 +227,50 @@ test("provider categories support concurrent connections, presets and aligned ac
   expect(Math.max(...editYs) - Math.min(...editYs)).toBeLessThan(2);
   await dialog.getByRole("button", { name: "Cancel", exact: true }).click();
   await expect(dialog).toHaveCount(0);
-  await row.locator("[data-provider-test]").click();
+  const runTest = row.locator("[data-provider-test]");
+  const status = row.locator(".provider-test-status");
+  await runTest.click();
+  await expect(status).toHaveText("Test passed");
+  await row.getByText("Test details", { exact: true }).click();
+  await expect(row.locator('[data-test-status="pass"]').first()).toBeVisible();
   await expect(row.locator('[data-test-status="pass"]')).toHaveCount(4);
-  const results = row.getByRole("dialog");
   for (const viewport of [
     { width: 1495, height: 997 },
     { width: 1024, height: 640 },
     { width: 640, height: 480 },
   ]) {
     await page.setViewportSize(viewport);
-    const bounds = await results.boundingBox();
-    expect(bounds).not.toBeNull();
-    if (!bounds) throw Error("Missing test results dialog");
-    expect(Math.abs(bounds.x + bounds.width / 2 - viewport.width / 2)).toBeLessThan(2);
-    expect(Math.abs(bounds.y + bounds.height / 2 - viewport.height / 2)).toBeLessThan(2);
-    expect(bounds.x).toBeGreaterThanOrEqual(0);
-    expect(bounds.y).toBeGreaterThanOrEqual(0);
+    await expect(section.locator("[data-settings-header]")).toBeInViewport();
+    await expect(section.locator("[data-settings-save]")).toBeInViewport();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   }
-  await page.keyboard.press("Escape");
-  for (const language of ["en", "ro", "de"]) {
+  for (const language of ["en", "ro", "de", "fr"]) {
     await changeSetting(page, "appearance", () => page.locator("#language").selectOption(language));
-    await row.locator("[data-provider-test]").click();
-    await expect(results.getByRole("heading")).toHaveText(
+    await openAi.click();
+    await runTest.click();
+    await expect(status).toHaveText(
       language === "ro"
-        ? "Testarea conexiunii: API OpenAI"
+        ? "Test trecut"
         : language === "de"
-          ? "Verbindungstest: OpenAI-API"
-          : "Connection test: OpenAI API",
+          ? "Test bestanden"
+          : language === "fr"
+            ? "Test réussi"
+            : "Test passed",
     );
-    const close = results.locator("[data-provider-test-close]");
-    await expect(close).toHaveText(language === "ro" ? "Închide" : language === "de" ? "Schließen" : "Close");
-    await expect(close).toBeInViewport();
-    await close.click();
-    await expect(results).not.toBeVisible();
     for (const scale of ["0.75", "1", "1.5"]) {
       await changeSetting(page, "appearance", () => page.locator("#interface-font-size").selectOption(scale));
+      await openAi.click();
       await page.setViewportSize({ width: 1024, height: 640 });
-      const ys = await row
-        .locator(".provider-actions button")
-        .evaluateAll((buttons) => buttons.map((button) => button.getBoundingClientRect().y));
-      expect(Math.max(...ys) - Math.min(...ys)).toBeLessThan(2);
+      await expect(section.locator("[data-settings-save]")).toBeInViewport();
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     }
   }
   await changeSetting(page, "appearance", () => page.locator("#language").selectOption("en"));
+  await section.locator('[data-provider-option="chatgpt"]').click();
   await subscription.getByRole("button", { name: "Sign out", exact: true }).click();
   // Signing out removes the subscription card; the API/local connections stay.
   await expect(subscription).toHaveCount(0);
-  await expect(cards).toHaveCount(3);
+  await expect(providers).toHaveCount(3);
   await section.locator('[data-action="add-provider"]').click();
   await expect(preset).toHaveValue("chatgpt");
   await expect(signIn.getByRole("button", { name: "Sign in with ChatGPT", exact: true })).toBeVisible();
@@ -261,7 +308,8 @@ test("a saved Moonshot connection can Test with its VERA output budget", {
   await expect(testConnection).toBeDisabled();
   await editor.getByLabel("Model", { exact: true }).fill("kimi-k3");
   await testConnection.click();
-  await expect(editor.getByRole("dialog").locator('[data-test-status="pass"]')).toHaveCount(4);
+  await expect(editor.locator(".provider-test-status")).toHaveText("Test passed");
+  await expect(editor.locator('[data-test-status="pass"]')).toHaveCount(4);
 });
 
 test("international MiniMax and Z.AI plans use fixed routes and independent key drafts", {

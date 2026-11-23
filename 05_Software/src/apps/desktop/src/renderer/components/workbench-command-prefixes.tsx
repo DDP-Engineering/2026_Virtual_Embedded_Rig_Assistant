@@ -38,6 +38,7 @@ export function WorkbenchCommandPrefixes({
     };
   }, [workbenchId]);
   const { rows, pager } = usePaged(prefixes.filter(({ id }) => !removed.includes(id)));
+  if (!rows.length && error === undefined) return null;
   return (
     <section data-command-prefixes aria-label={t("approval.allowedCommands")}>
       <h4>{t("approval.allowedCommands")}</h4>

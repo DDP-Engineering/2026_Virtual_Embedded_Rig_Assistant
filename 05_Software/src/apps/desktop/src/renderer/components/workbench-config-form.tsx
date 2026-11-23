@@ -53,6 +53,7 @@ export function WorkbenchConfigForm({
   notices,
   instructionsNotice,
   skills,
+  agentActions,
   browsePlugins,
   workbenchId,
   shown = true,
@@ -81,6 +82,7 @@ export function WorkbenchConfigForm({
   notices?: ReactNode;
   instructionsNotice?: ReactNode;
   skills: ReactNode;
+  agentActions?: ReactNode;
   browsePlugins?: (() => void) | undefined;
   workbenchId?: string | undefined;
   shown?: boolean;
@@ -218,9 +220,9 @@ export function WorkbenchConfigForm({
             />
           )}
           {section === "agent" && (
-            <div className="settings-columns">
+            <div className="workbench-agent-settings">
               <label htmlFor="project-model">
-                {t("projects.model")}
+                <span>{t("projects.model")}</span>
                 <ModelSelect
                   id="project-model"
                   value={config.agent.model}
@@ -238,7 +240,7 @@ export function WorkbenchConfigForm({
                 }
               />
               <label>
-                {t("chatDetail.label")}
+                <span>{t("chatDetail.label")}</span>
                 <select
                   data-chat-detail
                   value={config.chat.detail}
@@ -254,6 +256,7 @@ export function WorkbenchConfigForm({
                   <option value="minimal">{t("chatDetail.minimal")}</option>
                 </select>
               </label>
+              {agentActions}
               {workbenchId && removeCommandPrefix && (
                 <WorkbenchCommandPrefixes
                   workbenchId={workbenchId}

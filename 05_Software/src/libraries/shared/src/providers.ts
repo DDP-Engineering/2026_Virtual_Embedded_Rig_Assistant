@@ -42,6 +42,7 @@ export const providerModelsRequestSchema = z.strictObject({ id: gatewayProviderI
 export const providerTestRequestSchema = z.strictObject({
   id: gatewayProviderIdSchema,
   model: z.string().trim().min(1).max(200).optional(),
+  testId: z.uuid().optional(),
 });
 export const providerCatalogSchema = z.strictObject({
   reachability: z.enum(["pass", "skipped"]),
@@ -218,18 +219,20 @@ export const providerListSchema = z.strictObject({
 });
 export const providerSaveResultSchema = z.strictObject({ status: z.enum(["saved", "consent-required"]) });
 export const providerRemoveSchema = z.strictObject({ id: providerIdSchema });
-/** One write of the model ticks of several providers; `null` removes a list, so the whole catalog is offered. */
-export const providerModelsEnableSchema = z.strictObject({
-  providers: z
-    .array(
-      z.strictObject({
-        id: z.union([z.literal("chatgpt"), providerIdSchema]),
-        models: modelIdList.nullable(),
-      }),
-    )
-    .min(1)
-    .max(102),
-});
+/** Updates the model ticks and application default together. A null list offers the whole catalog. */
+export const providerModelsEnableSchema = z
+  .strictObject({
+    providers: z
+      .array(
+        z.strictObject({
+          id: z.union([z.literal("chatgpt"), providerIdSchema]),
+          models: modelIdList.nullable(),
+        }),
+      )
+      .max(102),
+    defaultModel: modelReferenceSchema.nullable().optional(),
+  })
+  .refine(({ providers, defaultModel }) => providers.length > 0 || defaultModel !== undefined);
 export type ProviderModelsEnable = z.infer<typeof providerModelsEnableSchema>;
 export type ProviderList = z.infer<typeof providerListSchema>;
 export type ProviderSave = z.input<typeof providerSaveSchema>;

@@ -1739,7 +1739,19 @@ ipcMain.handle(
       "providers.presets.discover": (request) => modelGateway.discoverPreset(request),
       "providers.image.capability": ({ modelRef }) => modelGateway.imageCapability(modelRef),
       "providers.models": ({ id }) => modelGateway.models(id),
-      "providers.test": ({ id, model }) => modelGateway.test(id, model),
+      "providers.test": ({ id, model, testId }) =>
+        modelGateway.test(
+          id,
+          model,
+          testId
+            ? ({ step, status }) =>
+                emitAppEvent({
+                  topic: "app",
+                  id: "app",
+                  event: { type: "provider.test.step", testId, step, status },
+                })
+            : undefined,
+        ),
       "providers.list": () => providers.list(),
       "providers.save": async (request) => {
         const result = await providers.save(request);

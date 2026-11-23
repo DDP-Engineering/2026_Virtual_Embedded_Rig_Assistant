@@ -4,6 +4,7 @@ import {
   providerKeyMatches,
   resolveCuratedConnection,
   type SettingsService,
+  splitModelReference,
 } from "@vera/core";
 import {
   type CuratedProviderPreset,
@@ -207,7 +208,10 @@ export class ProviderSettings {
       const restore = await this.credentials.checkpoint(slot);
       await this.credentials.delete(slot);
       try {
-        await this.settings.update({ providers });
+        await this.settings.update({
+          providers,
+          ...(state.settings.defaultModel?.startsWith(`${id}/`) ? { defaultModel: null } : {}),
+        });
       } catch {
         await restore();
         throw veraError("INTERNAL");
@@ -215,13 +219,14 @@ export class ProviderSettings {
       return {};
     });
   }
-  /** Writes the model ticks of several providers in one settings update; `null` offers a whole catalog. */
+  /** Saves the enabled models and the default in the same settings update. */
   enableModels(request: ProviderModelsEnable): Promise<Record<string, never>> {
     const parsed = providerModelsEnableSchema.safeParse(request);
     if (!parsed.success) return Promise.reject(veraError("INVALID"));
     return this.enqueue(async () => {
       await this.credentials.load();
-      const providers = structuredClone(this.settings.get().settings.providers);
+      const current = this.settings.get().settings;
+      const providers = structuredClone(current.providers);
       const apply = <T extends { enabledModels?: string[] | undefined }>(
         target: T,
         models: string[] | null,
@@ -240,10 +245,26 @@ export class ProviderSettings {
           apply(config, models);
         }
       }
-      // A model ID equal to a stored key would make every later list() refuse the settings.
-      if (this.credentials.containsSecret(providers)) throw veraError("INVALID");
+      let { defaultModel } = parsed.data;
+      if (defaultModel) {
+        const { provider, model } = splitModelReference(defaultModel);
+        const target =
+          provider === "openai"
+            ? providers.openai
+            : provider === "chatgpt"
+              ? (providers.chatgpt ?? {})
+              : providers.custom.find(({ slug }) => `custom:${slug}` === provider);
+        if (!target || (target.enabledModels && !target.enabledModels.includes(model)))
+          throw veraError("INVALID");
+      } else if (defaultModel === undefined && current.defaultModel) {
+        const { provider, model } = splitModelReference(current.defaultModel);
+        const changed = parsed.data.providers.find(({ id }) => id === provider);
+        if (changed?.models && !changed.models.includes(model)) defaultModel = null;
+      }
+      if (this.credentials.containsSecret(providers) || this.credentials.containsSecret(defaultModel))
+        throw veraError("INVALID");
       try {
-        await this.settings.update({ providers });
+        await this.settings.update({ providers, ...(defaultModel === undefined ? {} : { defaultModel }) });
       } catch {
         throw veraError("INTERNAL");
       }

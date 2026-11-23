@@ -1,7 +1,7 @@
 // REQ-UX-032aab57
 import { useQuery } from "@tanstack/react-query";
 import { type SettingsPatch, settingsPatchSchema } from "@vera/shared";
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../api/index.js";
 import { ErrorMessage } from "./error-message.js";
@@ -19,6 +19,7 @@ export function CommandSettings({
   dirtyChanged?: ((dirty: boolean) => void) | undefined;
 }) {
   const { t } = useTranslation();
+  const shellGroup = useId();
   const [value, setValue] = useState(shell ?? "");
   const [custom, setCustom] = useState(false);
   useEffect(() => {
@@ -45,6 +46,11 @@ export function CommandSettings({
       option.id === value.replace(/\.exe$/i, "").toLowerCase(),
   );
   const selected = custom ? "custom" : !value ? "" : (match?.id ?? "custom");
+  const choices = [
+    { id: "", label: t("settings.automaticShell"), executable: undefined },
+    ...(installed.data ?? []).map(({ id, executable }) => ({ id, label: labels[id], executable })),
+    { id: "custom", label: t("settings.shellCustom"), executable: undefined },
+  ];
   const dirty = value.trim() !== (shell ?? "");
   useEffect(() => dirtyChanged?.(dirty || custom), [dirty, custom, dirtyChanged]);
   useEffect(() => () => dirtyChanged?.(false), [dirtyChanged]);
@@ -67,34 +73,43 @@ export function CommandSettings({
         onCancel={reset}
         onSave={() => update({ shell: value.trim() })}
       />
-      <label htmlFor="command-shell">{t("settings.commandShell")}</label>
-      <select
-        id="command-shell"
-        value={selected}
-        disabled={saving || installed.isPending}
-        onChange={(event) => {
-          const choice = event.target.value;
-          setCustom(choice === "custom");
-          if (choice !== "custom")
-            setValue(installed.data?.find((option) => option.id === choice)?.executable ?? "");
-        }}
-      >
-        <option value="">{t("settings.automaticShell")}</option>
-        {(installed.data ?? []).map((option) => (
-          <option
-            key={option.id}
-            value={option.id}
-            disabled={!option.executable}
-            title={option.executable ?? undefined}
-          >
-            {labels[option.id]}
-            {!option.executable && ` (${t("settings.shellNotInstalled")})`}
-          </option>
-        ))}
-        <option value="custom">{t("settings.shellCustom")}</option>
-      </select>
+      <fieldset id="command-shell" className="command-shell-options" disabled={saving || installed.isPending}>
+        <legend>{t("settings.commandShell")}</legend>
+        {choices.map(({ id, label, executable }) => {
+          const labelId = `${shellGroup}-${id}-label`;
+          const detailId = `${shellGroup}-${id}-detail`;
+          return (
+            <label className="command-shell-option" key={id}>
+              <input
+                type="radio"
+                name={shellGroup}
+                value={id}
+                aria-labelledby={labelId}
+                aria-describedby={executable === undefined ? undefined : detailId}
+                checked={selected === id}
+                disabled={executable === null}
+                onChange={() => {
+                  setCustom(id === "custom");
+                  if (id !== "custom") setValue(executable ?? "");
+                }}
+              />
+              <span id={labelId}>{label}</span>
+              {executable === null && (
+                <span className="command-shell-detail" id={detailId}>
+                  {t("settings.shellNotInstalled")}
+                </span>
+              )}
+              {executable && (
+                <code className="command-shell-detail" id={detailId} title={executable}>
+                  {executable}
+                </code>
+              )}
+            </label>
+          );
+        })}
+      </fieldset>
       {selected === "custom" && (
-        <label htmlFor="command-shell-path">
+        <label className="command-shell-path" htmlFor="command-shell-path">
           {t("settings.shellPath")}
           <input
             id="command-shell-path"

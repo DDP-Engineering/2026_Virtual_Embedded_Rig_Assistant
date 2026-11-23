@@ -17,7 +17,7 @@ import { ProviderImageSwitch } from "./provider-image-switch.js";
 import { ProviderTest } from "./provider-test.js";
 
 type Custom = ProviderList["custom"][number];
-export function customVersion(provider: Custom) {
+export function customVersion(provider: Custom, model = provider.model) {
   return JSON.stringify([
     provider.id,
     provider.baseUrl,
@@ -28,6 +28,7 @@ export function customVersion(provider: Custom) {
     provider.hint,
     provider.storage,
     provider.configured,
+    provider.models?.find((profile) => profile.id === model),
   ]);
 }
 type Save = (request: ProviderSave, done: () => void) => Promise<void>;

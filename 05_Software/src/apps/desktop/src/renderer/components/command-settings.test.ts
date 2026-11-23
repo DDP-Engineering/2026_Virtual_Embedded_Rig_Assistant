@@ -42,11 +42,17 @@ it.each(["en", "ro", "de", "fr"])(
       await act(async () => {
         await new Promise((resolve) => setTimeout(resolve, 20));
       });
-      const select = container.querySelector("#command-shell") as HTMLSelectElement;
+      const options = [...container.querySelectorAll<HTMLInputElement>('#command-shell input[type="radio"]')];
+      const choice = (id: string) => {
+        const option = options.find((item) => item.value === id);
+        if (!option) throw Error(`Missing shell choice ${id}`);
+        return option;
+      };
       const [cancel, save] = [...container.querySelectorAll("button")];
       if (!cancel || !save) throw Error("Missing buttons");
-      expect(select.disabled).toBe(false);
-      expect([...select.options].map((option) => option.value)).toEqual([
+      expect(choice("").checked).toBe(true);
+      expect(choice("pwsh").disabled).toBe(false);
+      expect(options.map((option) => option.value)).toEqual([
         "",
         "pwsh",
         "powershell",
@@ -54,30 +60,33 @@ it.each(["en", "ro", "de", "fr"])(
         "bash",
         "custom",
       ]);
-      expect(select.options[2]?.disabled).toBe(true);
-      expect(select.options[2]?.textContent).toContain(i18n.t("settings.shellNotInstalled"));
+      expect(choice("powershell").disabled).toBe(true);
+      expect(choice("powershell").closest("label")?.textContent).toContain(
+        i18n.t("settings.shellNotInstalled"),
+      );
+      expect(choice("pwsh").closest("label")?.textContent).toContain(installed[0]?.executable);
       expect(save.disabled).toBe(true);
-      await act(async () => user.selectOptions(select, "pwsh"));
+      await act(async () => user.click(choice("pwsh")));
       await act(async () => user.click(cancel));
-      expect(select.value).toBe("");
-      await act(async () => user.selectOptions(select, "cmd"));
+      expect(choice("").checked).toBe(true);
+      await act(async () => user.click(choice("cmd")));
       await act(async () => user.click(save));
       expect(update).toHaveBeenLastCalledWith({ shell: "C:/Windows/System32/cmd.exe" });
-      await act(async () => user.selectOptions(select, "custom"));
-      const input = container.querySelector("input") as HTMLInputElement;
+      await act(async () => user.click(choice("custom")));
+      const input = container.querySelector("#command-shell-path") as HTMLInputElement;
       await act(async () => user.clear(input));
       expect(save.disabled).toBe(true);
       await act(async () => user.type(input, "/custom/bash"));
       await act(async () => user.click(save));
       expect(update).toHaveBeenLastCalledWith({ shell: "/custom/bash" });
       await render("/custom/bash");
-      expect(select.value).toBe("custom");
+      expect(choice("custom").checked).toBe(true);
       expect(input.value).toBe("/custom/bash");
-      await act(async () => user.selectOptions(select, ""));
+      await act(async () => user.click(choice("")));
       await act(async () => user.click(save));
       expect(update).toHaveBeenLastCalledWith({ shell: "" });
       await render("bash");
-      expect(select.value).toBe("bash");
+      expect(choice("bash").checked).toBe(true);
       expect(save.disabled).toBe(true);
     } finally {
       await act(async () => root.unmount());

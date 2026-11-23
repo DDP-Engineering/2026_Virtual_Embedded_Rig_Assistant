@@ -1819,18 +1819,28 @@ What this plugin does.
         break;
       }
       case "providers.test": {
-        const { id, model } = input.data as Request<"providers.test">;
+        const { id, model, testId } = channels["providers.test"].request.parse(input.data);
         const custom = settings.providers.custom.find((c) => `custom:${c.slug}` === id);
-        if (id !== "openai" && !custom) throw veraError("NOT_FOUND");
-        const selected = model ?? (id === "openai" ? settings.providers.openai.model : custom?.model);
+        if (id !== "openai" && id !== "chatgpt" && !custom) throw veraError("NOT_FOUND");
+        const selected =
+          model ??
+          (id === "openai"
+            ? settings.providers.openai.model
+            : id === "chatgpt"
+              ? "mock-subscription"
+              : custom?.model);
         const valid = modelReferenceSchema.safeParse(`${id}/${selected ?? ""}`).success;
         const supported = id !== "openai" || selected === openAiFixture.id;
-        const hasAuth = id !== "openai" || providerHints.has(id);
+        const hasAuth = id === "openai" ? providerHints.has(id) : id !== "chatgpt" || chatgpt.connected;
         const authenticated = valid && supported && hasAuth;
-        const authError = { code: "PROVIDER", messageKey: "provider.auth", params: { reason: "auth" } };
+        const authError = {
+          ...veraError("PROVIDER"),
+          messageKey: "provider.auth",
+          params: { reason: "auth" },
+        };
         const error = !valid ? veraError("INVALID") : !supported ? veraError("NOT_FOUND") : authError;
         const tools = custom?.supportsTools !== false;
-        value = {
+        const result: Response<"providers.test"> = {
           steps: [
             {
               step: "reachability",
@@ -1850,6 +1860,13 @@ What this plugin does.
             { step: "streaming", status: authenticated ? "pass" : "skipped" },
           ],
         };
+        if (testId) {
+          for (const { step, status } of result.steps) {
+            await new Promise((resolve) => setTimeout(resolve, 80));
+            emitAppEvent({ type: "provider.test.step", testId, step, status });
+          }
+        }
+        value = result;
         if (custom && authenticated && (!model || model === custom.model)) {
           custom.supportsTools = tools;
           emitAppEvent({ type: "settings.changed" });
@@ -1953,7 +1970,21 @@ What this plugin does.
           if (models === null) delete target.enabledModels;
           else target.enabledModels = models;
         }
-        settings = mergeSettings(settings, { providers });
+        const currentDefault = settings.defaultModel;
+        const disabledDefault = request.providers.some(
+          ({ id, models }) =>
+            currentDefault?.startsWith(`${id}/`) &&
+            models &&
+            !models.includes(currentDefault.slice(id.length + 1)),
+        );
+        const defaultModel =
+          request.defaultModel === undefined ? (disabledDefault ? null : undefined) : request.defaultModel;
+        const previous = settings;
+        settings = mergeSettings(settings, {
+          providers,
+          ...(defaultModel === undefined ? {} : { defaultModel }),
+        });
+        emitAppEvent(settingsChangedEvent(previous, settings));
         value = {};
         break;
       }
@@ -1964,7 +1995,10 @@ What this plugin does.
           if (!providers.custom.some((c) => `custom:${c.slug}` === id)) throw veraError("NOT_FOUND");
           providers.custom = providers.custom.filter((c) => `custom:${c.slug}` !== id);
         }
-        settings = mergeSettings(settings, { providers });
+        settings = mergeSettings(settings, {
+          providers,
+          ...(settings.defaultModel?.startsWith(`${id}/`) ? { defaultModel: null } : {}),
+        });
         providerHints.delete(id);
         emitAppEvent({ type: "settings.changed" });
         value = {};

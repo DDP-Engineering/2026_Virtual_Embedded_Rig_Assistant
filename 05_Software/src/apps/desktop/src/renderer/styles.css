@@ -689,6 +689,20 @@ main {
   min-width: 0;
   scroll-margin: 1rem;
 }
+.settings-content {
+  overflow: hidden;
+}
+.settings-content .settings-page {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+.settings-page > .surface:not(.providers-page) > .settings-page-header {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--card);
+}
 .settings-page {
   display: flex;
   flex-direction: column;
@@ -1218,21 +1232,6 @@ legend {
 }
 .provider-checkbox input {
   width: auto;
-}
-.provider-test {
-  min-width: 0;
-  max-width: 100%;
-  margin: 0;
-  padding: 0;
-  border: 0;
-  overflow-wrap: anywhere;
-}
-.provider-test-results {
-  padding: 0;
-  list-style: none;
-}
-.provider-test-results li {
-  margin-block: 0.5rem;
 }
 .changes-tab {
   display: flex;
@@ -2145,57 +2144,6 @@ legend {
 }
 [data-provider-add] > select {
   margin-block: 0.5rem 1rem;
-}
-
-.provider-test-dialog {
-  position: fixed;
-  inset: 0;
-  margin: auto;
-  width: min(36rem, calc(100vw - 3rem));
-  height: min(26rem, calc(100dvh - 3rem));
-}
-.provider-test-dialog[open] {
-  display: flex;
-  flex-direction: column;
-}
-.provider-test-header {
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-}
-.provider-test-header h3 {
-  margin: 0;
-}
-.provider-test-header button {
-  flex-shrink: 0;
-}
-.provider-test-body {
-  flex: 1;
-  line-height: 1.5;
-  min-height: 0;
-  overflow: auto;
-  margin-block-start: 1rem;
-}
-
-.provider-test-step {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 1rem;
-  padding-block: 0.5rem;
-  border-bottom: 1px solid var(--border);
-}
-.provider-test-outcome {
-  flex-shrink: 0;
-}
-.provider-test-footer {
-  display: flex;
-  flex-shrink: 0;
-  justify-content: flex-end;
-  padding-block-start: 1rem;
-  border-top: 1px solid var(--border);
 }
 
 .workbench-navigation {
@@ -3729,9 +3677,14 @@ legend {
   width: auto;
 }
 .plugin-library-empty {
-  display: grid;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
   gap: 0.5rem;
-  justify-items: start;
+}
+.plugin-library-empty > p {
+  flex-basis: 100%;
+  margin: 0;
 }
 .plugin-row-description {
   color: var(--muted-foreground);
@@ -3922,6 +3875,12 @@ legend {
   padding: 0;
   margin-bottom: 0.5rem;
 }
+.appearance-language-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.5rem 1rem;
+}
 #section-appearance .language-field {
   flex-direction: column;
   align-items: flex-start;
@@ -3955,7 +3914,44 @@ legend {
   margin: 0;
 }
 .typography-reset {
-  align-self: flex-start;
+  margin-inline-start: auto;
+  max-width: 100%;
+}
+
+.command-shell-options {
+  display: grid;
+  gap: 0.35rem;
+}
+.command-shell-options > legend {
+  margin-block-end: 0.5rem;
+}
+.command-shell-option {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) minmax(0, 1.3fr);
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+.command-shell-option:has(:checked) {
+  border-color: var(--primary);
+  background: var(--accent);
+}
+.command-shell-option input {
+  margin: 0;
+}
+.command-shell-detail {
+  justify-self: end;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--muted-foreground);
+}
+.command-shell-path {
+  display: grid;
+  gap: 0.35rem;
 }
 
 /* About page: brand header, then application, runtime and third-party blocks. */
@@ -4274,9 +4270,33 @@ legend {
   gap: 1rem 1.5rem;
   align-items: start;
 }
-.settings-columns > :has(.bypass-warning),
-.settings-columns > [data-permission-picker] {
+.workbench-agent-settings {
+  display: grid;
+  gap: 0.65rem;
+}
+.workbench-agent-settings > label,
+.workbench-agent-settings > [data-session-launch] {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+  gap: 0.35rem 1rem;
+  align-items: center;
+}
+.workbench-agent-settings > [data-session-launch] > span {
+  overflow-wrap: anywhere;
+}
+.workbench-agent-settings > [data-session-launch] > button {
+  justify-self: start;
+  max-inline-size: 100%;
+  white-space: normal;
+}
+.workbench-agent-settings > [data-session-launch] > [role="alert"] {
   grid-column: 1 / -1;
+}
+@container (inline-size < 27rem) {
+  .workbench-agent-settings > label,
+  .workbench-agent-settings > [data-session-launch] {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 .index-card h4 {
   font-size: 0.85rem;

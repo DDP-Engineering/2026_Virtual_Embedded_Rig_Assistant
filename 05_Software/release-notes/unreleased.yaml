@@ -2,6 +2,13 @@ version: Unreleased
 date: null
 entries:
   - category: fixed
+    topic: { en: Providers, ro: Furnizori, de: Anbieter, fr: Fournisseurs }
+    text:
+      en: Compact provider actions, a default model, LM Studio model settings and live test results.
+      ro: Acțiuni compacte, model implicit, setări pentru modele LM Studio și rezultate de test live.
+      de: Kompakte Anbieteraktionen, Standardmodell, LM-Studio-Modelleinstellungen und Live-Testergebnisse.
+      fr: Actions compactes, modèle par défaut, réglages LM Studio et suivi des tests en direct.
+  - category: fixed
     topic: { en: Offline installation, ro: Instalare offline, de: Offline-Installation, fr: Installation hors ligne }
     text:
       en: Download Chromium and Whisper archives from the release page for offline installation.
@@ -67,10 +74,10 @@ entries:
   - category: fixed
     topic: { en: Settings, ro: Setări, de: Einstellungen, fr: Paramètres }
     text:
-      en: Commands aligns Cancel/Save at the top right; About starts with What's new collapsed.
-      ro: În Comenzi, Anulare/Salvare sunt sus în dreapta; secțiunea Noutăți este restrânsă inițial.
-      de: Befehle zeigt Abbrechen/Speichern oben rechts; Neuigkeiten unter Über ist anfangs eingeklappt.
-      fr: Commandes aligne Annuler/Enregistrer en haut à droite ; À propos replie les nouveautés.
+      en: Commands aligns actions and lists shells. Text reset by Language. What's new starts collapsed.
+      ro: Comenzi aliniază acțiunile și listează shell-urile. Resetare lângă Limbă. Noutăți pliate.
+      de: Befehle richtet Aktionen aus und listet Shells. Textgrößen-Reset bei Sprache. Neuigkeiten zu.
+      fr: Shells visibles, boutons alignés, réinitialisation près de Langue et Nouveautés repliées.
   - category: fixed
     topic: { en: Terminal, ro: Terminal, de: Terminal, fr: Terminal }
     text:
@@ -88,17 +95,17 @@ entries:
   - category: improved
     topic: { en: Interface, ro: Interfață, de: Oberfläche, fr: Interface }
     text:
-      en: Compact panels, clearer runs, centered chat, Skills tab, grouped Advanced with filter and timeouts.
-      ro: Panouri compacte, rulări clare, chat centrat, filă Skills și setări avansate grupate cu filtru.
-      de: Kompakte Panels, klare Läufe, Chat mittig, Skills-Tab, erweiterte Gruppen mit Filter und Fristen.
-      fr: Panneaux compacts, exécutions claires, chat centré, onglet Compétences et réglages avancés filtrés.
+      en: Compact panels and Plugins actions, clearer runs, centered chat, Skills and grouped Advanced.
+      ro: Panouri și acțiuni Plugins compacte, rulări clare, chat centrat, Skills și setări avansate grupate.
+      de: Kompakte Panels und Plugin-Aktionen, klare Läufe, mittiger Chat, Skills und erweiterte Gruppen.
+      fr: Panneaux et actions Plugins compacts, exécutions claires, chat centré, compétences et réglages.
   - category: fixed
     topic: { en: Commands, ro: Comenzi, de: Befehle, fr: Commandes }
     text:
-      en: Stopping a command on Windows also cleans up child processes started during termination.
-      ro: Oprirea unei comenzi pe Windows elimină și procesele copil pornite în timpul opririi.
-      de: Beim Stoppen eines Windows-Befehls werden auch währenddessen gestartete Kindprozesse beendet.
-      fr: L’arrêt d’une commande Windows nettoie aussi les processus enfants lancés pendant l’arrêt.
+      en: Windows stops late child processes. PowerShell and saved Git prefixes are restricted.
+      ro: Windows oprește și procesele copil pornite la oprire. PowerShell și prefixele Git au restricții.
+      de: Windows stoppt späte Kindprozesse. PowerShell und gespeicherte Git-Präfixe sind eingeschränkt.
+      fr: Windows arrête les processus enfants tardifs. PowerShell et les préfixes Git sont limités.
   - category: new
     topic: { en: Files, ro: Fișiere, de: Dateien, fr: Fichiers }
     text:
@@ -127,13 +134,6 @@ entries:
       ro: Mascarea respectă alegerile fiecărei zone; fișierele cu nume secrete rămân vizibile și se deschid.
       de: Maskierung folgt der Wahl je Bereich; Dateien mit geheimen Namen bleiben sichtbar und öffnen sich.
       fr: Le masquage suit chaque zone ; les fichiers aux noms secrets restent visibles et s’ouvrent bien.
-  - category: fixed
-    topic: { en: Commands, ro: Comenzi, de: Befehle, fr: Commandes }
-    text:
-      en: Commands run under PowerShell Constrained Language Mode; saved prefixes exclude risky git forms.
-      ro: Comenzile rulează sub PowerShell Constrained Language Mode; prefixele salvate exclud git riscant.
-      de: Befehle laufen im PowerShell Constrained Language Mode; Präfixe decken riskantes git nicht ab.
-      fr: Commandes compatibles avec le Constrained Language Mode ; préfixes sans formes git risquées.
   - category: new
     topic: { en: Terminal, ro: Terminal, de: Terminal, fr: Terminal }
     text:
@@ -172,10 +172,10 @@ entries:
   - category: new
     topic: { en: Sessions, ro: Sesiuni, de: Sitzungen, fr: Sessions }
     text:
-      en: "Continue delegated chats and authorize Full Access launches. Bookmark and control browsing."
-      ro: "Continuă chaturile delegate și autorizează acces complet. Gestionează marcaje și navigarea."
-      de: "Delegierte Chats fortsetzen und Vollzugriff erlauben. Lesezeichen setzen und Surfen steuern."
-      fr: "Poursuivez les chats délégués, autorisez l’accès complet, gérez les signets et la navigation."
+      en: "Delegated chats and Full Access in compact Agent and chat settings. Bookmarks and browser."
+      ro: "Sesiuni delegate și acces complet în Agent și chat. Marcaje și comenzi pentru browser."
+      de: "Delegierte Chats und Vollzugriff in kompakten Agent-Einstellungen. Lesezeichen und Browser."
+      fr: "Chats délégués et accès complet dans les réglages compacts. Signets et navigation."
   - category: improved
     topic: { en: Sessions, ro: Sesiuni, de: Sitzungen, fr: Sessions }
     text:

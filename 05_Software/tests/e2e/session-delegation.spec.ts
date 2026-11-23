@@ -419,6 +419,18 @@ test("native desktop authorizes two sequential Full Access children and reuses o
     expect(rejectedGrant).toBe(true);
     const allow = page.getByRole("button", { name: "Allow Full Access for new child sessions" });
     const revoke = page.getByRole("button", { name: "Revoke Full Access for future child launches" });
+    const openLaunchSettings = async () => {
+      await page.locator(".workbench-group-name", { hasText: "Delegation modes" }).click();
+      await page.locator('[data-action="edit-workbench-overview"]').click();
+      await page.locator('[data-project-section="agent"]').click();
+    };
+    const returnToChat = async (sessionId: string) => {
+      await page.locator(".workbench-editor").getByRole("button", { name: "Cancel", exact: true }).click();
+      await page.locator(`[data-session="${sessionId}"]`).click();
+    };
+    await expect(allow).toHaveCount(0);
+    await openLaunchSettings();
+    await expect(page.locator(`[data-session-launch="${ids.sessionId}"]`)).toBeVisible();
     await allow.click();
     await expect(page.getByRole("dialog")).toContainText("Each child keeps its own mode");
     await page.getByRole("dialog").getByRole("button", { name: "Cancel", exact: true }).click();
@@ -427,6 +439,7 @@ test("native desktop authorizes two sequential Full Access children and reuses o
     await page.getByRole("button", { name: "Authorize launches", exact: true }).click();
     await expect(revoke).toBeVisible();
 
+    await returnToChat(ids.sessionId);
     const input = page.getByRole("textbox", { name: "Message", exact: true });
     await input.fill("Coordinate local ticket implementation");
     await input.press("Enter");
@@ -494,14 +507,16 @@ test("native desktop authorizes two sequential Full Access children and reuses o
     await expect(permission).toHaveValue("bypass");
     await permission.selectOption("auto-edit");
     await expect(permission).toHaveValue("auto-edit");
+    await openLaunchSettings();
     await revoke.click();
     await expect(revoke).toHaveCount(0);
+    await returnToChat(ids.sessionId);
     await followChild(page, "Implement second ticket");
     await expect(permission).toHaveValue("bypass");
     await returnToParent(page, ids.sessionId, "Coordinate local ticket implementation");
     await permission.selectOption("bypass");
     await page.locator('[data-action="confirm-bypass"]').click();
-    await expect(allow).toBeVisible();
+    await expect(allow).toHaveCount(0);
     const revoked = await page.evaluate(async ({ sessionId }) => {
       const api = (window as unknown as { vera: VeraBridge }).vera;
       await api.invoke("session.model.set", { sessionId, modelRef: "replay/revoked" });
@@ -510,6 +525,7 @@ test("native desktop authorizes two sequential Full Access children and reuses o
     expect(revoked.turnId).toBeTruthy();
     await expect(page.locator("[data-transcript]")).toContainText("Revocation checked.");
     await expect(delegation(page).getByRole("button", { name: "Should not launch" })).toHaveCount(0);
+    await openLaunchSettings();
     await allow.click();
     await page.getByRole("button", { name: "Authorize launches", exact: true }).click();
     await expect(revoke).toBeVisible();

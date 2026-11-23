@@ -73,8 +73,16 @@ test("Appearance keeps interface, conversation and code sizes independent and re
   }
   await expect(page.locator("#chat-font-size")).toHaveValue("12");
   await expect(page.locator("#code-font-size")).toHaveValue("24");
-  await expect(page.locator('[data-action="reset-typography"]')).toBeEnabled();
-  await page.locator('[data-action="reset-typography"]').click();
+  const restore = page.locator('[data-action="reset-typography"]');
+  await expect(restore).toBeEnabled();
+  const row = await page.locator(".appearance-language-row").boundingBox();
+  const language = await page.locator("#language").boundingBox();
+  const button = await restore.boundingBox();
+  if (!row || !language || !button) throw Error("Missing language row controls");
+  expect(button.x).toBeGreaterThan(language.x + language.width);
+  expect(Math.abs(button.x + button.width - row.x - row.width)).toBeLessThan(1);
+  expect(Math.abs(button.y + button.height - language.y - language.height)).toBeLessThan(1);
+  await restore.click();
   await expect(page.locator("#chat-font-size")).toHaveValue("14");
   await expect(page.locator("#code-font-size")).toHaveValue("14");
   await expect(page.locator("#interface-font-size")).toHaveValue("1");

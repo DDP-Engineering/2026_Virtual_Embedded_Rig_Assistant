@@ -12,6 +12,7 @@ import { saveSettings } from "./settings-navigation.js";
 test("marked Bypass selectors confirm each change and cancellation retains the previous mode", {
   tag: "@parallel-browser",
 }, async ({ page, rendererUrl }) => {
+  test.setTimeout(60000);
   await page.goto(`${rendererUrl}/?mock=chat`);
   await page.locator('[data-i18n="nav.welcome"]').click();
   await page.locator("#workbench-name").fill("Bypass bench");
@@ -70,6 +71,37 @@ test("marked Bypass selectors confirm each change and cancellation retains the p
     await expect(picker).toHaveClass(/bypass-selected/);
     await expect(picker).toBeFocused();
   }
+
+  await page.setViewportSize({ width: 1536, height: 900 });
+  await page.locator('[data-i18n="nav.settings"]').click();
+  await page.locator('[data-section="appearance"]').click();
+  await page.locator("#interface-font-size").selectOption("1");
+  await saveSettings(page);
+  await page.locator('[data-action="leave-settings"]').click();
+  await page.locator(".workbench-group-name", { hasText: "Bypass bench" }).click();
+  const files = page.locator("#tab-docs");
+  if (!(await files.isVisible())) await page.locator('[data-toggle="right"]').click();
+  await files.click();
+  await page.locator('[data-action="edit-workbench-overview"]').click();
+  await page.locator('[data-project-section="agent"]').click();
+  await expect(page.locator("#panel-docs")).toBeVisible();
+  const form = page.locator(".workbench-agent-settings");
+  await expect(form.locator("[data-session-launch] > button")).toBeVisible();
+  const rows = await form.locator(":scope > label, :scope > [data-session-launch]").evaluateAll((elements) =>
+    elements.map((element) => {
+      const label = element.querySelector("span")?.getBoundingClientRect();
+      const control = element.querySelector("input, select, button")?.getBoundingClientRect();
+      if (!label || !control) throw Error("Missing settings label or control");
+      return { labelRight: label.right, controlLeft: control.left, top: control.top };
+    }),
+  );
+  expect(rows).toHaveLength(4);
+  expect(
+    rows.every(({ labelRight, controlLeft }) => labelRight < controlLeft),
+    JSON.stringify(rows),
+  ).toBe(true);
+  expect(rows.map(({ controlLeft }) => controlLeft)).toEqual(Array(4).fill(rows[0]?.controlLeft));
+  expect(rows.every(({ top }, index) => index === 0 || top > (rows[index - 1]?.top ?? 0))).toBe(true);
 });
 
 test("native Bypass refuses application-data reads and writes and confirms each mode change across restart", async () => {

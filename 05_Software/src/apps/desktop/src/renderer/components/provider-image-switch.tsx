@@ -25,7 +25,7 @@ export function ProviderImageSwitch({
           )
         }
       />
-      {t("providers.acceptsImages")}
+      <span>{t("providers.acceptsImages")}</span>
     </label>
   );
 }

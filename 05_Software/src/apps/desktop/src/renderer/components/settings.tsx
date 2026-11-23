@@ -93,7 +93,9 @@ export function Settings({
       )}
       {Boolean(error) && <ErrorMessage error={error} />}
       {/* Rendered only while selected, like every editable page; its dialog is modal, so no editor is left open. */}
-      {section === "providers" && <Providers dirtyChanged={dirtyChanged} />}
+      {section === "providers" && (
+        <Providers defaultModel={snapshot.settings.defaultModel} dirtyChanged={dirtyChanged} />
+      )}
       {section === "dictation" && (
         <DictationSettings
           mode={snapshot.settings.dictationRecordingMode}

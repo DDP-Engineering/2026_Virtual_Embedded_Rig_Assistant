@@ -44,27 +44,29 @@ test("shell selector localizes installed variants, Custom and Automatic", {
       };
     }, language);
     const panel = page.locator('[data-settings-section="commands"]');
-    const select = panel.locator("#command-shell");
-    await expect(select).toBeEnabled();
-    await expect(select.locator("option")).toHaveCount(6);
-    await expect(select.locator('[value="powershell"]')).toBeDisabled();
-    await expect(select.locator('[value="powershell"]')).toContainText(labels.missing);
-    await select.selectOption("cmd");
+    const shells = panel.locator("#command-shell");
+    const choice = (id: string) => shells.locator(`input[value="${id}"]`);
+    await expect(shells.getByRole("radio")).toHaveCount(6);
+    await expect(choice("")).toBeEnabled();
+    await expect(choice("powershell")).toBeDisabled();
+    await expect(choice("powershell")).toHaveAccessibleDescription(labels.missing);
+    await expect(shells.getByText("C:/Windows/System32/cmd.exe", { exact: true })).toBeVisible();
+    await choice("cmd").check();
     await panel.getByRole("button", { name: labels.save, exact: true }).click();
     await expect(panel.getByRole("button", { name: labels.save, exact: true })).toBeDisabled();
-    await select.selectOption("custom");
+    await choice("custom").check();
     await panel.locator("#command-shell-path").fill("C:/Portable/bash.exe");
     await panel.getByRole("button", { name: labels.cancel, exact: true }).click();
-    await expect(select).toHaveValue("cmd");
-    await select.selectOption("custom");
+    await expect(choice("cmd")).toBeChecked();
+    await choice("custom").check();
     await panel.locator("#command-shell-path").fill("C:/Portable/bash.exe");
     await panel.getByRole("button", { name: labels.save, exact: true }).click();
     await expect(panel.getByRole("button", { name: labels.save, exact: true })).toBeDisabled();
-    await expect(select).toHaveValue("custom");
-    await select.selectOption("");
+    await expect(choice("custom")).toBeChecked();
+    await choice("").check();
     await panel.getByRole("button", { name: labels.save, exact: true }).click();
     await expect(panel.getByRole("button", { name: labels.save, exact: true })).toBeDisabled();
-    await expect(select).toHaveValue("");
+    await expect(choice("")).toBeChecked();
   }
 });
 
@@ -117,10 +119,9 @@ test("native detected shell choices start compatible terminals and preserve exis
         await page.locator('[data-toggle="right"]').click();
       await page.locator('[data-i18n="nav.settings"]').click();
       await page.locator('[data-section="commands"]').click();
-      const select = page.locator("#command-shell");
-      await expect(select).toBeEnabled();
-      await expect(select.locator(`[value="${choice.id}"]`)).toBeEnabled();
-      await select.selectOption(choice.id);
+      const option = page.locator(`#command-shell input[value="${choice.id}"]`);
+      await expect(option).toBeEnabled();
+      await option.check();
       const save = page
         .locator('[data-settings-section="commands"]')
         .getByRole("button", { name: "Save", exact: true });

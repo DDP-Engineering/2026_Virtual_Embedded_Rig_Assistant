@@ -200,8 +200,9 @@ export function App() {
   });
   useEffect(
     () =>
-      api.subscribe("app", () => {
-        void client.invalidateQueries({ queryKey: ["workbench.recent"] });
+      api.subscribe("app", (event) => {
+        if (event.type !== "provider.test.step")
+          void client.invalidateQueries({ queryKey: ["workbench.recent"] });
       }),
     [client],
   );
@@ -815,7 +816,10 @@ export function App() {
                   }
                 >
                   <UpdateBanner />
-                  <div className="page-content" hidden={(chat && !settings) || emptyCanvas}>
+                  <div
+                    className={`page-content${settings ? " settings-content" : ""}`}
+                    hidden={(chat && !settings) || emptyCanvas}
+                  >
                     <h2
                       hidden={
                         !settings && !plugins && help === undefined && !newWorkbench && !activeWorkbench
@@ -886,6 +890,11 @@ export function App() {
                         browsePlugins={browsePlugins}
                         shown={!settings && !plugins && help === undefined && !newWorkbench}
                         workbench={editor}
+                        sessionLaunch={
+                          selected && editor.indexLease === indexLease
+                            ? { session: selected, changed }
+                            : undefined
+                        }
                         request={editorRequest}
                         close={closeEditor}
                         dirtyChanged={setEditorDirty}
@@ -960,7 +969,6 @@ export function App() {
                           }
                           archived={selected?.archived ?? true}
                           delegation={selected?.delegation}
-                          delegatedBypassLaunch={selected?.delegatedBypassLaunch}
                           delegationParent={delegationParent}
                           delegationChildren={delegationChildren}
                           selectLinkedSession={selectLinkedSession}

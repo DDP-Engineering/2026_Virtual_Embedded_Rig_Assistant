@@ -1,69 +1,70 @@
-import type { ProviderTestResult } from "@vera/shared";
+import type { ProviderTestResult, ProviderTestStep } from "@vera/shared";
 import { type ReactNode, useEffect, useId, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../api/index.js";
 import { ErrorMessage } from "./error-message.js";
+import type { ProviderId } from "./provider-models.js";
+
+const steps = ["reachability", "authentication", "tools", "streaming"] as const;
 
 export function ProviderTest({
   id,
+  model,
   version,
   disabled,
   name,
   before,
   after,
 }: {
-  id: "openai" | `custom:${string}`;
+  id: ProviderId;
+  model?: string | undefined;
   version: string;
   disabled: boolean;
-  name?: string;
+  name: string;
   before?: ReactNode;
   after?: ReactNode;
 }) {
   const { t } = useTranslation();
-  const label = useId();
-  const title = useId();
-  const dialog = useRef<HTMLDialogElement>(null);
-  const [visible, setVisible] = useState(false);
-  useEffect(() => {
-    if (!visible) return;
-    const origin = document.activeElement as HTMLElement | null;
-    const node = dialog.current;
-    node?.showModal();
-    return () => {
-      node?.close();
-      if (origin?.isConnected) origin.focus();
-    };
-  }, [visible]);
-  const generation = useRef(0);
-  const currentVersion = useRef(version);
+  const statusId = useId();
+  const active = useRef<string | undefined>(undefined);
   const [pending, setPending] = useState(false);
+  const [progress, setProgress] = useState<
+    Partial<Record<ProviderTestStep["step"], ProviderTestStep["status"]>>
+  >({});
   const [result, setResult] = useState<ProviderTestResult>();
   const [error, setError] = useState<unknown>();
+  // biome-ignore lint/correctness/useExhaustiveDependencies: A different connection or model invalidates the running test.
   useEffect(() => {
-    currentVersion.current = version;
-    generation.current++;
+    setPending(false);
+    setProgress({});
     setResult(undefined);
     setError(undefined);
-    setPending(false);
-    setVisible(false);
+    const off = api.subscribe("app", (event) => {
+      if (event.type === "provider.test.step" && event.testId === active.current)
+        setProgress((current) => ({ ...current, [event.step]: event.status }));
+    });
     return () => {
-      generation.current++;
+      active.current = undefined;
+      off();
     };
-  }, [version]);
+  }, [version, model]);
   async function run() {
-    const current = ++generation.current;
-    const isCurrent = () => current === generation.current && currentVersion.current === version;
+    const testId = crypto.randomUUID();
+    active.current = testId;
     setPending(true);
-    setVisible(true);
     setError(undefined);
+    setProgress({});
     setResult(undefined);
     try {
-      const response = await api.invoke("providers.test", { id });
-      if (isCurrent()) setResult(response);
+      const response = await api.invoke("providers.test", { id, ...(model ? { model } : {}), testId });
+      if (active.current === testId) setResult(response);
     } catch (failure) {
-      if (isCurrent()) setError(failure);
+      if (active.current === testId) setError(failure);
     } finally {
-      if (isCurrent()) setPending(false);
+      if (active.current === testId) {
+        active.current = undefined;
+        setPending(false);
+      }
     }
   }
   const labels = {
@@ -77,15 +78,29 @@ export function ProviderTest({
     fail: t("providers.results.fail"),
     skipped: t("providers.results.skipped"),
   };
+  const completed = steps.filter((step) => progress[step]);
+  const next = steps.find((step) => !progress[step]);
+  const last = completed.at(-1);
+  const lastStatus = last && progress[last];
+  const pendingText = next ? t("providers.testStage", { step: labels[next] }) : t("providers.testing");
+  const status = pending
+    ? last && lastStatus
+      ? `${labels[last]}: ${states[lastStatus]} · ${pendingText}`
+      : pendingText
+    : error !== undefined || result?.steps.some((step) => step.status === "fail")
+      ? t("providers.testFailed")
+      : result
+        ? t("providers.testPassed")
+        : "";
   return (
-    <fieldset className="provider-test" aria-labelledby={label} aria-busy={pending}>
+    <div className="provider-test">
       <div className="workbench-actions provider-actions">
         {before}
         <button
           type="button"
-          id={label}
           data-provider-test={id}
-          aria-label={t("providers.testNamed", { name: name ?? id })}
+          aria-label={t("providers.testNamed", { name })}
+          aria-describedby={statusId}
           data-i18n="providers.test"
           disabled={disabled || pending}
           onClick={() => void run()}
@@ -93,58 +108,28 @@ export function ProviderTest({
           {t("providers.test")}
         </button>
         {after}
+        <span className="provider-test-status" id={statusId} role="status" title={status}>
+          {status}
+        </span>
       </div>
-      <dialog
-        ref={dialog}
-        className="pinned-dialog provider-test-dialog"
-        aria-labelledby={title}
-        onCancel={(event) => {
-          event.preventDefault();
-          setVisible(false);
-        }}
-      >
-        <header className="provider-test-header">
-          <h3 id={title}>{t("providers.testTitle", { name: name ?? id })}</h3>
-          <button type="button" aria-label={t("panel.close")} onClick={() => setVisible(false)}>
-            ×
-          </button>
-        </header>
-        <div className="provider-test-body" aria-busy={pending}>
-          {(pending || result) && (
-            <p
-              role="status"
-              aria-live="polite"
-              data-i18n={pending ? "providers.testing" : result ? "providers.testComplete" : undefined}
-            >
-              {pending ? t("providers.testing") : result ? t("providers.testComplete") : ""}
-            </p>
-          )}
+      {(error !== undefined || result) && (
+        <details className="provider-test-details">
+          <summary>{t("providers.testDetails")}</summary>
           {error !== undefined && <ErrorMessage error={error} />}
           {result && (
             <ol className="provider-test-results">
               {result.steps.map((step) => (
                 <li key={step.step} data-test-step={step.step} data-test-status={step.status}>
-                  <div className="provider-test-step">
-                    <span>{labels[step.step]}</span>
-                    <strong className="provider-test-outcome">{states[step.status]}</strong>
-                  </div>
+                  <span>
+                    {labels[step.step]} · {states[step.status]}
+                  </span>
                   {step.error && <ErrorMessage error={step.error} />}
                 </li>
               ))}
             </ol>
           )}
-        </div>
-        <footer className="provider-test-footer">
-          <button
-            type="button"
-            data-provider-test-close
-            data-i18n="panel.close"
-            onClick={() => setVisible(false)}
-          >
-            {t("panel.close")}
-          </button>
-        </footer>
-      </dialog>
-    </fieldset>
+        </details>
+      )}
+    </div>
   );
 }

@@ -4,8 +4,9 @@ import { useTranslation } from "react-i18next";
 import { api } from "../api/index.js";
 import { ConsentDialog } from "./consent-dialog.js";
 import { ErrorMessage } from "./error-message.js";
+import { ProviderTest } from "./provider-test.js";
 
-export function Chatgpt({ disabled }: { disabled: boolean }) {
+export function Chatgpt({ disabled, test }: { disabled: boolean; test?: { model: string | undefined } }) {
   const { t, i18n } = useTranslation();
   const client = useQueryClient();
   const status = useQuery({
@@ -53,6 +54,23 @@ export function Chatgpt({ disabled }: { disabled: boolean }) {
   }
   const busy = disabled || pending;
   const waiting = state?.state === "pending" || state?.state === "manual";
+  const signOut = state?.connected && !waiting && (
+    <button
+      type="button"
+      disabled={busy}
+      onClick={() => {
+        setCode("");
+        void run(() => api.invoke("providers.chatgpt.logout", {}));
+      }}
+    >
+      {t("chatgpt.signOut")}
+    </button>
+  );
+  const retry = status.isError && (
+    <button type="button" onClick={() => void status.refetch()}>
+      {t("settings.retry")}
+    </button>
+  );
   return (
     <div data-provider="chatgpt" className="provider-card">
       <h4>{t("chatgpt.title")}</h4>
@@ -79,46 +97,43 @@ export function Chatgpt({ disabled }: { disabled: boolean }) {
             : t("chatgpt.renewalDue")}
         </p>
       )}
-      <div className="workbench-actions">
-        {state && !state.connected && !waiting && state.state !== "consent-required" && (
-          <button
-            type="button"
-            disabled={busy || status.isError}
-            onClick={() => void run(() => api.invoke("providers.chatgpt.login", {}))}
-          >
-            {t("chatgpt.signIn")}
-          </button>
-        )}
-        {waiting && (
-          <button
-            type="button"
-            disabled={pending}
-            onClick={() => {
-              setCode("");
-              void run(() => api.invoke("providers.chatgpt.cancel", {}));
-            }}
-          >
-            {t("providers.cancel")}
-          </button>
-        )}
-        {state?.connected && !waiting && (
-          <button
-            type="button"
-            disabled={busy}
-            onClick={() => {
-              setCode("");
-              void run(() => api.invoke("providers.chatgpt.logout", {}));
-            }}
-          >
-            {t("chatgpt.signOut")}
-          </button>
-        )}
-        {status.isError && (
-          <button type="button" onClick={() => void status.refetch()}>
-            {t("settings.retry")}
-          </button>
-        )}
-      </div>
+      {test && signOut ? (
+        <ProviderTest
+          id="chatgpt"
+          name={t("chatgpt.title")}
+          model={test.model}
+          version="chatgpt"
+          disabled={busy}
+          before={signOut}
+          after={retry}
+        />
+      ) : (
+        <div className="workbench-actions">
+          {state && !state.connected && !waiting && state.state !== "consent-required" && (
+            <button
+              type="button"
+              disabled={busy || status.isError}
+              onClick={() => void run(() => api.invoke("providers.chatgpt.login", {}))}
+            >
+              {t("chatgpt.signIn")}
+            </button>
+          )}
+          {waiting && (
+            <button
+              type="button"
+              disabled={pending}
+              onClick={() => {
+                setCode("");
+                void run(() => api.invoke("providers.chatgpt.cancel", {}));
+              }}
+            >
+              {t("providers.cancel")}
+            </button>
+          )}
+          {signOut}
+          {retry}
+        </div>
+      )}
       {state?.state === "manual" && (
         <form
           className="workbench-form"

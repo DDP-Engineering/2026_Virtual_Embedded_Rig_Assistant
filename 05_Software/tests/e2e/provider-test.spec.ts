@@ -7,7 +7,7 @@ import { _electron, expect, test } from "@playwright/test";
 import type { VeraBridge } from "@vera/shared";
 import { installNetworkGuard, outboundAttempts } from "./network-guard.js";
 
-test("provider Test displays per-step native results and test-build replay is registered", async () => {
+test("provider Test displays native progress and results inline", async () => {
   const data = await mkdtemp(join(tmpdir(), "vera-wp09-"));
   const scripts = join(data, "scripts");
   await mkdir(scripts);
@@ -17,7 +17,9 @@ test("provider Test displays per-step native results and test-build replay is re
   );
   let holdModels = false;
   let rejectModels = false;
+  let holdReply = false;
   let releaseModels: (() => void) | undefined;
+  let releaseReply: (() => void) | undefined;
   const server = createServer((req, res) => {
     if (req.url?.endsWith("/models")) {
       const respond = () =>
@@ -32,29 +34,35 @@ test("provider Test displays per-step native results and test-build replay is re
     req.on("data", (chunk) => (raw += chunk));
     req.on("end", () => {
       const body = JSON.parse(raw);
-      res.writeHead(200, { "content-type": "text/event-stream" });
-      const send = (delta: unknown, finish: unknown = null) =>
-        res.write(
-          `data: ${JSON.stringify({ id: "scripted", object: "chat.completion.chunk", created: 0, model: "scripted", choices: [{ index: 0, delta, finish_reason: finish }] })}\n\n`,
-        );
-      if (body.tools) {
-        send({
-          tool_calls: [
-            {
-              index: 0,
-              id: "echo",
-              type: "function",
-              function: { name: "echo", arguments: '{"text":"OK"}' },
-            },
-          ],
-        });
-        send({}, "tool_calls");
-      } else {
-        send({ content: "O" });
-        send({ content: "K" });
-        send({}, "stop");
-      }
-      res.end("data: [DONE]\n\n");
+      const respond = () => {
+        res.writeHead(200, { "content-type": "text/event-stream" });
+        const send = (delta: unknown, finish: unknown = null) =>
+          res.write(
+            `data: ${JSON.stringify({ id: "scripted", object: "chat.completion.chunk", created: 0, model: "scripted", choices: [{ index: 0, delta, finish_reason: finish }] })}\n\n`,
+          );
+        if (body.tools) {
+          send({
+            tool_calls: [
+              {
+                index: 0,
+                id: "echo",
+                type: "function",
+                function: { name: "echo", arguments: '{"text":"OK"}' },
+              },
+            ],
+          });
+          send({}, "tool_calls");
+        } else {
+          send({ content: "O" });
+          send({ content: "K" });
+          send({}, "stop");
+        }
+        res.end("data: [DONE]\n\n");
+      };
+      if (holdReply) {
+        holdReply = false;
+        releaseReply = respond;
+      } else respond();
     });
   });
   server.listen(0, "127.0.0.1");
@@ -68,7 +76,10 @@ test("provider Test displays per-step native results and test-build replay is re
       "node_modules/electron/dist",
       process.platform === "win32" ? "electron.exe" : "electron",
     ),
-    args: ["src/apps/desktop", `--user-data-dir=${data}`],
+    args: [
+      process.env.VERA_BUILD_ROOT ? join(process.env.VERA_BUILD_ROOT, "main/index.js") : "src/apps/desktop",
+      `--user-data-dir=${data}`,
+    ],
     chromiumSandbox: true,
     env: env as Record<string, string>,
   });
@@ -94,41 +105,30 @@ test("provider Test displays per-step native results and test-build replay is re
     await expect(button).toBeVisible();
     // The card settles once its model list has loaded the provider's catalog.
     await expect(provider.locator('[data-provider-model="scripted"]')).toBeChecked();
-    const bounds = await provider.boundingBox();
+    const status = provider.locator(".provider-test-status");
+    holdModels = true;
+    holdReply = true;
     await button.focus();
     await page.keyboard.press("Enter");
-    await expect(provider.locator('[data-test-status="pass"]')).toHaveCount(4);
-    await expect(provider.locator('[data-i18n="providers.testComplete"]')).toBeVisible();
-    const dialog = provider.getByRole("dialog");
-    await expect(dialog).toBeVisible();
-    expect(await provider.boundingBox()).toEqual(bounds);
-    await dialog.locator("[data-provider-test-close]").click();
-    await expect(dialog).not.toBeVisible();
-    await expect(button).toBeFocused();
-    expect(await provider.boundingBox()).toEqual(bounds);
-    await button.click();
-    await expect(dialog.locator('[data-test-status="pass"]')).toHaveCount(4);
-    await page.keyboard.press("Escape");
-    await expect(dialog).not.toBeVisible();
-    holdModels = true;
-    await button.click();
-    await expect(dialog.locator('[data-i18n="providers.testing"]')).toBeVisible();
-    const pendingBounds = await dialog.boundingBox();
-    expect(await provider.boundingBox()).toEqual(bounds);
+    await expect(status).toHaveText("Checking Reachability…");
+    await expect(button).toBeDisabled();
     await expect.poll(() => !!releaseModels).toBe(true);
-    await dialog.locator("[data-provider-test-close]").click();
-    await expect(dialog).not.toBeVisible();
     holdModels = false;
     releaseModels?.();
+    await expect.poll(() => !!releaseReply).toBe(true);
+    await expect(status).toHaveText("Reachability: Pass · Checking Authentication and model…");
+    releaseReply?.();
+    await expect(status).toHaveText("Test passed");
     await expect(button).toBeEnabled();
-    await expect(dialog).not.toBeVisible();
+    const details = provider.getByText("Test details", { exact: true });
+    await details.click();
+    await expect(provider.locator('[data-test-status="pass"]')).toHaveCount(4);
+    await expect(provider.locator('[data-test-status="pass"]').first()).toBeVisible();
     rejectModels = true;
     await button.click();
-    await expect(dialog.locator('[data-test-status="fail"]')).toHaveCount(1);
-    expect(await dialog.boundingBox()).toEqual(pendingBounds);
-    expect(await provider.boundingBox()).toEqual(bounds);
-    await page.keyboard.press("Escape");
-    await expect(dialog).not.toBeVisible();
+    await expect(status).toHaveText("Test found a problem");
+    await details.click();
+    await expect(provider.locator('[data-test-status="fail"]')).toHaveCount(1);
     const metadata = await page.evaluate(() =>
       (window as unknown as { vera: VeraBridge }).vera.invoke("providers.list", {}),
     );
