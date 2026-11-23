@@ -8,7 +8,7 @@ import { fileURLToPath } from "node:url";
 import { _electron, type ElectronApplication, expect, test } from "@playwright/test";
 import type { VeraBridge } from "@vera/shared";
 import { installNetworkGuard, outboundAttempts } from "./network-guard.js";
-import { changeSetting } from "./settings-navigation.js";
+import { changeSetting, saveSettings } from "./settings-navigation.js";
 
 const desktop = join(dirname(fileURLToPath(import.meta.url)), "../../src/apps/desktop");
 const executable = join(
@@ -438,6 +438,9 @@ test("validated settings update survives an application restart", async () => {
       (window as unknown as { vera: VeraBridge }).vera.invoke("app.settings.get", {}),
     );
     expect(first.settings.schemaVersion).toBe(1);
+    expect(first.settings).toMatchObject({
+      notifications: { turnCompletion: "background", approvalRequests: true },
+    });
     await page.evaluate(() => {
       const probe = { count: 0 };
       (window as unknown as { settingsProbe: typeof probe }).settingsProbe = probe;
@@ -455,6 +458,17 @@ test("validated settings update survives an application restart", async () => {
         page.evaluate(() => (window as unknown as { settingsProbe: { count: number } }).settingsProbe.count),
       )
       .toBe(1);
+    await page.locator('[data-i18n="nav.settings"]').click();
+    await page.locator('[data-section="notifications"]').click();
+    await page.locator("#notification-turn-completion").selectOption("always");
+    await page.locator("#notification-approval-requests").uncheck();
+    await saveSettings(page);
+    const saved = await page.evaluate(() =>
+      (window as unknown as { vera: VeraBridge }).vera.invoke("app.settings.get", {}),
+    );
+    expect(saved.settings).toMatchObject({
+      notifications: { turnCompletion: "always", approvalRequests: false },
+    });
     expect(await outboundAttempts(app)).toEqual([]);
     await app.close();
     app = await launch(userData);
@@ -463,9 +477,13 @@ test("validated settings update survives an application restart", async () => {
     const stored = await restarted.evaluate(() =>
       (window as unknown as { vera: VeraBridge }).vera.invoke("app.settings.get", {}),
     );
-    expect(stored).toEqual(updated);
+    expect(stored).toEqual(saved);
     expect(stored.settings.installationId).toBe(first.settings.installationId);
-    expect(JSON.parse(readFileSync(join(userData, "settings.json"), "utf8"))).toEqual(updated.settings);
+    expect(JSON.parse(readFileSync(join(userData, "settings.json"), "utf8"))).toEqual(saved.settings);
+    await restarted.locator('[data-i18n="nav.settings"]').click();
+    await restarted.locator('[data-section="notifications"]').click();
+    await expect(restarted.locator("#notification-turn-completion")).toHaveValue("always");
+    await expect(restarted.locator("#notification-approval-requests")).not.toBeChecked();
     expect(await outboundAttempts(app)).toEqual([]);
   } finally {
     await app?.close();

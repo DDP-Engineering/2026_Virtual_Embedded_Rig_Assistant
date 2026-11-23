@@ -8,12 +8,20 @@
 | **Acces web** | Căutarea și citirea pe web pentru agent |
 | **Aspect și limbă** | Limba, tema și dimensiunile textului |
 | **Comenzi** | Shell-ul pentru comenzile agentului și terminalele noi |
-| **Notificări** | Nu este încă disponibilă |
+| **Notificări** | Alerte desktop pentru finalizarea turelor și cereri de aprobare |
 | **Comenzi rapide** | Propriile tale combinații de taste |
 | **Actualizări** | Cum se actualizează VERA |
 | **Date și confidențialitate** | Valorile implicite de mascare pentru patru zone |
 | **Despre** | Versiunea, runtime-ul, licența și componentele terțe |
 | **Dictare** | Modele Whisper locale și limba vorbită |
+
+## Notificări
+
+La **Finalizarea unei ture** poți alege **Niciodată**, **În fundal** (implicit) sau **Întotdeauna**. VERA este în fundal când fereastra este minimizată, ascunsă sau nu este activă.
+
+Opțiunea **Cereri de aprobare în fundal** este activată implicit. Verifică cererile și răspunde în VERA. Cererile în așteptare apar în bara laterală și în conversație.
+
+Alertele desktop se aplică atunci când VERA rulează. Sistemul de operare decide dacă le afișează. Dacă nu apar, verifică setările de notificări ale sistemului pentru VERA și dacă modul Nu deranja este activ. Dacă mediul nu poate afișa alerte desktop, folosește indicatorii sesiunilor din VERA.
 
 ## Date și confidențialitate
 

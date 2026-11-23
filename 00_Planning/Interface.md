@@ -76,10 +76,22 @@ accessibility and the UI rules every screen follows. The renderer is React in
 | Workbench overview | The active workbench: model, permission mode, indexed and excluded sources, additional folders, storage, a paged sessions table, Edit; read-only and lock warnings |
 | Workbench editor | In the main area, left section list and content: General, Interface, Instructions, Documents & RAG, Indexing, Agent and chat, Skills, Tools, Plugins, Data & privacy. Cancel and Save at the top right; Esc closes; leaving with unsaved edits asks first; a Plugins detour keeps the draft |
 | Session workspace | Chat and document tabs in the centre, right panel beside it (see Session UI) |
-| App settings | One page at a time from a vertical tab list, opening on Appearance and language: Providers, Web access, Appearance and language, Commands, Notifications, Keyboard shortcuts, Updates, Data & privacy, About. Commands and Data & privacy keep a draft with Cancel and Save; Providers and Web access save through their own forms; Appearance and language, Updates and Keyboard shortcuts apply each change at once. Notifications shows only a placeholder |
+| App settings | One page at a time from a vertical tab list, opening on Appearance and language. Appearance and language, Commands, Notifications, Keyboard shortcuts, Updates, Data & privacy and Advanced keep a draft with Cancel and Save. Appearance previews its draft. Providers and Web access save through their own forms. Update actions run immediately. Dictation manages models and recording preferences. About shows app information |
 | Plugins | Management toolbar (install from folder or ZIP, packs, Check all dependencies, Refresh) and catalog settings; then filters on the left (search, state, ecosystem, activity, provenance, maturity, sort) and the plugin list on the right, 6, 12 or 24 per page. Browsing never enables a plugin; activation is in Edit workbench > Plugins (see [Plugins.md](Plugins.md)) |
 | Help | The selected page on the left, the page list and the paged list of plugin help pages on the right |
 | About | Settings > About: version, platform, architecture, portable or not, system locale, runtime versions, release notes, license and third-party components. The version appears only here |
+
+### Notifications
+
+**Turn completion** offers **Never**, **In background** (default) and **Always**. **Approval requests
+in background** is enabled by default. A background window is minimized, hidden or unfocused.
+Save commits edited preferences and Cancel restores the confirmed values. A failed save displays the
+error and retains the draft. Both controls have keyboard-accessible labels in en, ro, de and fr.
+
+Desktop session alerts use the saved choices at delivery time while VERA is running. System
+notification settings govern delivery, and Electron's support flag indicates capability only.
+Users review approvals inside VERA through the pending requests in the sidebar and transcript.
+Settings Help explains these limits and where to check system settings. Update notices use Updates.
 
 ## Session UI
 

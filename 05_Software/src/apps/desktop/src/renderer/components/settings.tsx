@@ -19,23 +19,11 @@ import { CommandSettings } from "./command-settings.js";
 import { DictationSettings } from "./dictation-settings.js";
 import { ErrorMessage } from "./error-message.js";
 import { ShortcutsSettings } from "./keyboard-shortcuts.js";
+import { NotificationSettings } from "./notification-settings.js";
 import { PrivacySettings } from "./privacy-settings.js";
 import { Providers } from "./providers.js";
 import { UpdatesPanel } from "./updates.js";
 import { WebAccessPanel } from "./web-access.js";
-
-/** Settings pages with their own panel; every other page shows the generic section below. */
-const OWN_PANELS = new Set([
-  "providers",
-  "web",
-  "appearance",
-  "updates",
-  "shortcuts",
-  "commands",
-  "data",
-  "dictation",
-  "advanced",
-]);
 
 export function useSettingsSections() {
   const { t } = useTranslation();
@@ -73,7 +61,6 @@ export function Settings({
   dirtyChanged?: (dirty: boolean) => void;
 }) {
   const { t } = useTranslation();
-  const sections = useSettingsSections();
   const disabled = saving;
   // Each editable page keeps its own draft and is rendered only while selected, so a discarded draft
   // leaves with its page (REQ-UX-032aab57).
@@ -129,6 +116,14 @@ export function Settings({
           dirtyChanged={dirtyChanged}
         />
       )}
+      {section === "notifications" && (
+        <NotificationSettings
+          preferences={snapshot.settings.notifications}
+          saving={saving}
+          update={update}
+          dirtyChanged={dirtyChanged}
+        />
+      )}
       {section === "updates" && (
         <UpdatesPanel
           preferences={snapshot.settings.updates}
@@ -153,21 +148,15 @@ export function Settings({
           dirtyChanged={dirtyChanged}
         />
       )}
-      {sections
-        .filter(({ id }) => !OWN_PANELS.has(id))
-        .map(({ id, label }) => (
-          <section
-            hidden={section !== id}
-            className="surface"
-            key={id}
-            id={`section-${id}`}
-            data-settings-section={id}
-          >
-            <h2 tabIndex={-1}>{label}</h2>
-            {id !== "about" && <p className="muted">{t("settings.placeholder")}</p>}
-            {id === "about" && info && <About info={info} />}
-          </section>
-        ))}
+      <section
+        hidden={section !== "about"}
+        className="surface"
+        id="section-about"
+        data-settings-section="about"
+      >
+        <h2 tabIndex={-1}>{t("settings.about")}</h2>
+        {info && <About info={info} />}
+      </section>
     </div>
   );
 }

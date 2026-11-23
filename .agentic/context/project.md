@@ -21,6 +21,8 @@ The chat composer uses configurable hold or
 toggle gestures and inserts editable text into the initiating draft for explicit Send.
 Application Advanced groups controls by purpose and can show saved overrides and pending edits.
 Its desktop time limits cover Interactive Browser navigation, dictation and explicit model discovery.
+Application Notifications stores independent turn-completion and background approval preferences
+in format-1 settings. The four-locale panel uses the same confirmed Save and Cancel flow as Updates.
 
 ## Supported operation
 

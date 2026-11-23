@@ -74,6 +74,7 @@ const presentationSettings = [
   "codeFontSize",
   "keyboardShortcuts",
   "dictation",
+  "notifications",
   "recentWorkbenches",
   "sessionOrder",
 ];

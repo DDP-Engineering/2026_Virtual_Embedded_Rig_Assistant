@@ -248,6 +248,7 @@ export async function seedData(data) {
       defaultModel: null,
       providers: { openai: {}, custom: [] },
       updates: { mode: "off", channel: "latest" },
+      notifications: { turnCompletion: "background", approvalRequests: true },
       recentWorkbenches: [],
     }),
   );

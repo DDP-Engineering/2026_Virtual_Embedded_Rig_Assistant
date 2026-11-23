@@ -42,6 +42,10 @@ plugins/shell.test.ts and renderer components/command-settings.test.ts.
   never read-only.
 - Update preferences accept off/notify/download and latest/beta; notify/latest
   are defaults. [Updates](updates.md) owns their scheduling and artifact behavior.
+- Format-1 `notifications` requires `turnCompletion` (never/background/always) and
+  `approvalRequests` (boolean). It defaults to background and true. Typed patches merge each
+  field against the confirmed sibling, and notification-only changes skip masking refresh
+  (REQ-DATA-1ec20f7a, REQ-DATA-fadf40d6).
 - Main-owned conditional updates may supply an internal predicate evaluated against the latest
   state inside the serialized queue. ChatGPT default selection and logout use it to retain
   concurrently selected models from another provider; IPC patches cannot supply predicates.
@@ -117,6 +121,7 @@ Renderer preferences consume this snapshot through Query and i18next; [renderer 
 
 ## Key behaviors
 
+- REQ-DATA-1ec20f7a / REQ-DATA-fadf40d6 — notification defaults, partial writes and strict validation.
 - REQ-DATA-13eeeac5 / REQ-DATA-9b9ac01e — partial privacy persistence and invalid privacy rejection.
 - REQ-FUNC-dd574280 — effective area choice with live app defaults.
 

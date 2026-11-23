@@ -45,6 +45,9 @@ documents and their viewer belong to [Document viewer](document-viewer.md); inte
 
 ## Content and checks
 
+Settings Help explains the localized notification preferences, in-app approvals, running-app
+scope, operating system controls and fallback session cues (REQ-UX-ee964ea7).
+
 Chat and sessions, Permissions and generated Keyboard shortcuts describe [user terminals](terminals.md),
 per-terminal read consent, revocation/history semantics and Ctrl+Shift+T in all four app languages.
 

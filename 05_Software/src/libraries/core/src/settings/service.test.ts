@@ -30,6 +30,28 @@ function harness(stored?: string) {
 }
 
 describe("application settings persistence", () => {
+  it("persists independent notification patches against the latest settings across reload", async () => {
+    const h = harness();
+    await h.service.load();
+    expect(h.service.get().settings).toMatchObject({
+      notifications: { turnCompletion: "background", approvalRequests: true },
+    });
+    await Promise.all([
+      h.service.update({ notifications: { approvalRequests: false } }),
+      h.service.update({ notifications: { turnCompletion: "always" } }),
+    ]);
+    const stored = h.files.get("/data/settings.json");
+    const reload = harness(stored);
+    await reload.service.load();
+    expect(reload.service.get().settings).toMatchObject({
+      schemaVersion: 1,
+      notifications: { turnCompletion: "always", approvalRequests: false },
+    });
+    await expect(
+      h.service.update({ notifications: { approvalRequests: "false" } } as never),
+    ).rejects.toMatchObject({ code: "INVALID" });
+    expect(h.files.get("/data/settings.json")).toBe(stored);
+  });
   it.each([undefined, {}, { mask: {} }, { mask: { display: true } }])(
     "keeps omitted and empty privacy shapes unchanged for no-op patches: %j",
     async (privacy) => {
@@ -128,6 +150,7 @@ describe("application settings persistence", () => {
       defaultModel: null,
       providers: { openai: {}, custom: [] },
       updates: { mode: "notify", channel: "latest" },
+      notifications: { turnCompletion: "background", approvalRequests: true },
       recentWorkbenches: [],
     });
     expect(first.settings.installationId).not.toBe(b.service.get().settings.installationId);

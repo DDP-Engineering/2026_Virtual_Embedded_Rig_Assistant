@@ -7,14 +7,14 @@ title = "Save Settings pages only with the header Save"
 status = "active"
 
 requirement = """
-On the Appearance, Command shell, Keyboard shortcuts, Updates, Data and privacy and Advanced Settings pages, VERA shall show Cancel and Save at the top right of the page, keep every change in a page draft until Save writes the whole draft at once, restore the saved values on Cancel, disable both buttons while the page has no changes and Save while a value is invalid, and keep the draft with the error shown when saving fails, while actions such as Check for updates, Download and Restart to update run at once.
+On the Appearance, Command shell, Notifications, Keyboard shortcuts, Updates, Data and privacy and Advanced Settings pages, VERA shall show Cancel and Save at the top right of the page, keep every change in a page draft until Save writes the whole draft at once, restore the saved values on Cancel, disable both buttons while the page has no changes and Save while a value is invalid, and keep the draft with the error shown when saving fails, while actions such as Check for updates, Download and Restart to update run at once.
 """
 
 verification = "On each listed page: change a value, assert nothing is written and Save/Cancel are enabled; Cancel restores the saved value; change again and Save writes one settings update; with no change both buttons are disabled; an invalid value keeps Save disabled; a failing save keeps the draft and shows the error; Check for updates runs without Save."
 
-affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/settings-page-header.tsx", "05_Software/src/apps/desktop/src/renderer/components/appearance-settings.tsx", "05_Software/src/apps/desktop/src/renderer/components/command-settings.tsx", "05_Software/src/apps/desktop/src/renderer/components/keyboard-shortcuts.tsx", "05_Software/src/apps/desktop/src/renderer/components/updates.tsx", "05_Software/src/apps/desktop/src/renderer/components/privacy-settings.tsx", "05_Software/src/apps/desktop/src/renderer/components/advanced-settings-panel.tsx", "05_Software/src/apps/desktop/src/renderer/components/advanced-field.tsx", "05_Software/src/apps/desktop/src/renderer/components/settings.tsx"]
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/settings-page-header.tsx", "05_Software/src/apps/desktop/src/renderer/components/appearance-settings.tsx", "05_Software/src/apps/desktop/src/renderer/components/command-settings.tsx", "05_Software/src/apps/desktop/src/renderer/components/notification-settings.tsx", "05_Software/src/apps/desktop/src/renderer/components/keyboard-shortcuts.tsx", "05_Software/src/apps/desktop/src/renderer/components/updates.tsx", "05_Software/src/apps/desktop/src/renderer/components/privacy-settings.tsx", "05_Software/src/apps/desktop/src/renderer/components/advanced-settings-panel.tsx", "05_Software/src/apps/desktop/src/renderer/components/advanced-field.tsx", "05_Software/src/apps/desktop/src/renderer/components/settings.tsx"]
 
-linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/settings-save.test.ts", "05_Software/src/apps/desktop/src/renderer/components/privacy-settings.test.ts", "05_Software/src/apps/desktop/src/renderer/components/updates.test.ts", "05_Software/src/apps/desktop/src/renderer/components/advanced-settings.test.ts", "05_Software/tests/e2e/command-shells.spec.ts", "05_Software/tests/e2e/keyboard-shortcuts.spec.ts", "05_Software/tests/e2e/privacy-settings.spec.ts", "05_Software/tests/e2e/updates.spec.ts"]
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/settings-save.test.ts", "05_Software/src/apps/desktop/src/renderer/components/privacy-settings.test.ts", "05_Software/src/apps/desktop/src/renderer/components/updates.test.ts", "05_Software/src/apps/desktop/src/renderer/components/advanced-settings.test.ts", "05_Software/tests/e2e/command-shells.spec.ts", "05_Software/tests/e2e/notification-settings.spec.ts", "05_Software/tests/e2e/keyboard-shortcuts.spec.ts", "05_Software/tests/e2e/privacy-settings.spec.ts", "05_Software/tests/e2e/updates.spec.ts"]
 
 
 spec = ""
@@ -23,4 +23,4 @@ priority = "normal"   # low | normal | high
 rationale = ""        # why this behavior exists, if not obvious
 
 created = 2026-11-20
-updated = 2026-11-20
+updated = 2026-11-23

@@ -158,10 +158,10 @@ entries:
   - category: new
     topic: { en: Sessions, ro: Sesiuni, de: Sitzungen, fr: Sessions }
     text:
-      en: Sessions run on in other workbenches, up to a turn limit; see, open or stop them in the sidebar.
-      ro: Sesiunile rulează și în alte workbench-uri, cu limită; vezi, deschide sau oprește din bara laterală.
-      de: Sitzungen laufen in anderen Workbenches weiter, mit Limit; Seitenleiste zeigt, öffnet, stoppt sie.
-      fr: Les sessions continuent dans d’autres bancs, avec limite ; voyez, ouvrez ou arrêtez-les sur le côté.
+      en: Open or stop background sessions in the sidebar. Set desktop alerts for turn endings and approvals.
+      ro: Gestionează sesiuni în fundal din bară. Setează alerte la final de tură și la aprobări.
+      de: Hintergrundsitzungen in der Seitenleiste öffnen/stoppen. Hinweise zu Durchläufen und Freigaben.
+      fr: Ouvrez ou arrêtez les sessions en arrière-plan. Réglez les alertes de fin de tour et d’approbation.
   - category: improved
     topic: { en: Workbench, ro: Workbench, de: Workbench, fr: Banc de travail }
     text:

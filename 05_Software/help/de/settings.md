@@ -8,12 +8,20 @@
 | **Webzugriff** | Websuche und Lesen von Webseiten für den Agenten |
 | **Darstellung und Sprache** | Sprache, Design und Textgrößen |
 | **Befehle** | Die Shell für Agentenbefehle und neue Terminals |
-| **Benachrichtigungen** | Noch nicht verfügbar |
+| **Benachrichtigungen** | Desktop-Hinweise bei abgeschlossenen Durchläufen und Freigabeanfragen |
 | **Tastenkombinationen** | Ihre eigenen Tastenkombinationen |
 | **Aktualisierungen** | Wie VERA sich selbst aktualisiert |
 | **Daten & Datenschutz** | Maskierungsstandards für vier Bereiche |
 | **Über** | Version, Laufzeit, Lizenz und Komponenten von Drittanbietern |
 | **Diktat** | Lokale Whisper-Modelle und gesprochene Sprache |
+
+## Benachrichtigungen
+
+Unter **Abschluss eines Durchlaufs** stehen **Nie**, **Im Hintergrund** (Standard) und **Immer** zur Wahl. VERA ist im Hintergrund, wenn sein Fenster minimiert, ausgeblendet oder nicht fokussiert ist.
+
+Die Option **Freigabeanfragen im Hintergrund** ist standardmäßig aktiviert. Prüfe und beantworte Anfragen in VERA. Offene Anfragen erscheinen in der Seitenleiste und im Chatverlauf.
+
+Desktop-Hinweise gelten, solange VERA läuft. Das Betriebssystem steuert, ob es sie anzeigt. Wenn Hinweise ausbleiben, prüfe die Systembenachrichtigungen für VERA und ob „Nicht stören“ eingeschaltet ist. Falls deine Umgebung keine Desktop-Hinweise anzeigt, nutze die Sitzungsanzeigen in VERA.
 
 ## Daten & Datenschutz
 

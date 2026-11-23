@@ -73,6 +73,12 @@ export const dictationRecordingModeSchema = z.enum(["hold", "toggle"]);
 export type DictationRecordingMode = z.infer<typeof dictationRecordingModeSchema>;
 export const defaultDictationRecordingMode: DictationRecordingMode = "hold";
 
+const notificationPreferencesSchema = z.strictObject({
+  turnCompletion: z.enum(["never", "background", "always"]),
+  approvalRequests: z.boolean(),
+});
+export type NotificationPreferences = z.infer<typeof notificationPreferencesSchema>;
+
 const mutable = {
   dictation: dictationPreferencesSchema.optional(),
   dictationRecordingMode: dictationRecordingModeSchema.optional(),
@@ -104,6 +110,7 @@ const mutable = {
   defaultModel: modelReferenceSchema.nullable(),
   providers: providerSettingsSchema,
   updates: z.strictObject({ mode: updateModeSchema, channel: updateChannelSchema }),
+  notifications: notificationPreferencesSchema,
   recentWorkbenches: z.array(recentWorkbenchSchema),
   /** Session ids per workbench in the order the user arranged them (TASK-c99ca08c). */
   sessionOrder: z.record(workbenchIdSchema, z.array(sessionIdSchema)).optional(),
@@ -139,6 +146,7 @@ export const settingsPatchSchema = z.strictObject({
       channel: mutable.updates.shape.channel.optional(),
     })
     .optional(),
+  notifications: notificationPreferencesSchema.partial().optional(),
   advanced: advancedPatchSchema("app").optional(),
   showAdvanced: mutable.showAdvanced,
   plugins: mutable.plugins,
@@ -163,6 +171,7 @@ export function mergeSettings(current: Settings, patch: SettingsServicePatch): S
     ...current,
     ...clean,
     updates: { ...current.updates, ...clean.updates },
+    notifications: { ...current.notifications, ...clean.notifications },
     ...(clean.dictation
       ? { dictation: { ...dictationDefaults, ...current.dictation, ...clean.dictation } }
       : {}),
@@ -195,6 +204,7 @@ export function defaultSettings(installationId: string): Settings {
     defaultModel: null,
     providers: { openai: {}, custom: [] },
     updates: { mode: "notify", channel: "latest" },
+    notifications: { turnCompletion: "background", approvalRequests: true },
     recentWorkbenches: [],
   };
 }

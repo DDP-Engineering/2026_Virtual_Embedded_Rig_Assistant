@@ -8,12 +8,20 @@
 | **Accès web** | Recherche et lecture sur le web pour l’agent |
 | **Apparence et langue** | Langue, thème et tailles de texte |
 | **Commandes** | Le shell des commandes de l’agent et des nouveaux terminaux |
-| **Notifications** | Pas encore disponible |
+| **Notifications** | Alertes du bureau à la fin d’un tour et pour les demandes d’approbation |
 | **Raccourcis clavier** | Vos propres combinaisons de touches |
 | **Mises à jour** | La façon dont VERA se met à jour |
 | **Données et confidentialité** | Valeurs de masquage par défaut pour quatre domaines |
 | **À propos** | Version, environnement d’exécution, licence et composants tiers |
 | **Dictée** | Modèles Whisper locaux et langue parlée |
+
+## Notifications
+
+**Fin d’un tour** propose **Jamais**, **En arrière-plan** (par défaut) et **Toujours**. VERA est en arrière-plan lorsque sa fenêtre est réduite, masquée ou inactive.
+
+L’option **Demandes d’approbation en arrière-plan** est activée par défaut. Consultez les demandes et répondez dans VERA. Les demandes en attente apparaissent dans la barre latérale et le fil de discussion.
+
+Les alertes du bureau s’appliquent tant que VERA est en cours d’exécution. Le système d’exploitation décide de les afficher. Si elles n’apparaissent pas, vérifiez les paramètres de notification système pour VERA et le mode Ne pas déranger. Si votre environnement ne peut pas afficher les alertes du bureau, utilisez les indicateurs de session dans VERA.
 
 ## Données et confidentialité
 

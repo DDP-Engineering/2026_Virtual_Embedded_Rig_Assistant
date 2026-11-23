@@ -8,12 +8,20 @@
 | **Web access** | Web search and reading for the agent |
 | **Appearance and language** | Language, theme and text sizes |
 | **Commands** | The shell for agent commands and new terminals |
-| **Notifications** | Not available yet |
+| **Notifications** | Desktop alerts for turn completion and approval requests |
 | **Keyboard shortcuts** | Your own key combinations |
 | **Updates** | How VERA updates itself |
 | **Data & privacy** | Masking defaults for four areas |
 | **About** | Version, runtime, license and third-party components |
 | **Dictation** | Local Whisper models and spoken language |
+
+## Notifications
+
+**Turn completion** offers **Never**, **In background** (the default) and **Always**. VERA is in the background when its window is minimized, hidden or unfocused.
+
+**Approval requests in background** is on by default. Review and answer requests in VERA. Pending requests appear in the sidebar and chat transcript.
+
+Desktop alerts apply while VERA is running. The operating system controls whether it shows them. If alerts are missing, check system notification settings for VERA and whether Do Not Disturb is on. If your environment cannot show desktop alerts, use the session indicators in VERA.
 
 ## Data & privacy
 

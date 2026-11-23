@@ -2238,7 +2238,7 @@ legend {
   justify-content: space-between;
   gap: 1rem;
 }
-[data-privacy-controls] input[role="switch"] {
+:is([data-privacy-controls], [data-settings-section="notifications"]) input[role="switch"] {
   appearance: none;
   flex-shrink: 0;
   width: 2.6rem;
@@ -2249,7 +2249,7 @@ legend {
   border-radius: 1rem;
   background: var(--muted);
 }
-[data-privacy-controls] input[role="switch"]::before {
+:is([data-privacy-controls], [data-settings-section="notifications"]) input[role="switch"]::before {
   content: "";
   display: block;
   width: 1.05rem;
@@ -2257,10 +2257,10 @@ legend {
   border-radius: 50%;
   background: var(--foreground);
 }
-[data-privacy-controls] input[role="switch"]:checked {
+:is([data-privacy-controls], [data-settings-section="notifications"]) input[role="switch"]:checked {
   background: var(--primary);
 }
-[data-privacy-controls] input[role="switch"]:checked::before {
+:is([data-privacy-controls], [data-settings-section="notifications"]) input[role="switch"]:checked::before {
   transform: translateX(1.1rem);
   background: var(--primary-foreground);
 }
