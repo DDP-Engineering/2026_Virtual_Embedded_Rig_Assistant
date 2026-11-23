@@ -439,7 +439,7 @@ test("validated settings update survives an application restart", async () => {
     );
     expect(first.settings.schemaVersion).toBe(1);
     expect(first.settings).toMatchObject({
-      notifications: { turnCompletion: "background", approvalRequests: true },
+      notifications: { turnCompletion: "background", approvalRequests: true, questionRequests: true },
     });
     await page.evaluate(() => {
       const probe = { count: 0 };
@@ -462,12 +462,13 @@ test("validated settings update survives an application restart", async () => {
     await page.locator('[data-section="notifications"]').click();
     await page.locator("#notification-turn-completion").selectOption("always");
     await page.locator("#notification-approval-requests").uncheck();
+    await page.locator("#notification-question-requests").uncheck();
     await saveSettings(page);
     const saved = await page.evaluate(() =>
       (window as unknown as { vera: VeraBridge }).vera.invoke("app.settings.get", {}),
     );
     expect(saved.settings).toMatchObject({
-      notifications: { turnCompletion: "always", approvalRequests: false },
+      notifications: { turnCompletion: "always", approvalRequests: false, questionRequests: false },
     });
     expect(await outboundAttempts(app)).toEqual([]);
     await app.close();
@@ -484,6 +485,7 @@ test("validated settings update survives an application restart", async () => {
     await restarted.locator('[data-section="notifications"]').click();
     await expect(restarted.locator("#notification-turn-completion")).toHaveValue("always");
     await expect(restarted.locator("#notification-approval-requests")).not.toBeChecked();
+    await expect(restarted.locator("#notification-question-requests")).not.toBeChecked();
     expect(await outboundAttempts(app)).toEqual([]);
   } finally {
     await app?.close();

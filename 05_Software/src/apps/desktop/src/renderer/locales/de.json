@@ -242,6 +242,7 @@
     "notifications": "Benachrichtigungen",
     "notificationTurnCompletion": "Abschluss eines Durchlaufs",
     "notificationApprovalRequests": "Freigabeanfragen im Hintergrund",
+    "notificationQuestionRequests": "Benachrichtigungen zu Fragen",
     "notificationNever": "Nie",
     "notificationBackground": "Im Hintergrund",
     "notificationAlways": "Immer",

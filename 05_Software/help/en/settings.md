@@ -8,7 +8,7 @@
 | **Web access** | Web search and reading for the agent |
 | **Appearance and language** | Language, theme and text sizes |
 | **Commands** | The shell for agent commands and new terminals |
-| **Notifications** | Desktop alerts for turn completion and approval requests |
+| **Notifications** | Desktop alerts for turn completion, approvals and questions |
 | **Keyboard shortcuts** | Your own key combinations |
 | **Updates** | How VERA updates itself |
 | **Data & privacy** | Masking defaults for four areas |
@@ -21,9 +21,11 @@
 
 **Approval requests in background** is on by default. Review and answer requests in VERA. Pending requests appear in the sidebar and chat transcript.
 
+**Question notifications** is on by default. It alerts you when a session needs an answer while VERA is in the background. The workbench’s recommended-answer timeout is independent. Clicking a current alert opens the session and focuses the pending question. You can also answer from Activity or the chat.
+
 Click a notification banner while VERA is running to open its session. VERA asks before discarding unsaved edits.
 
-On Windows, desktop alerts require an installed copy of VERA. The portable ZIP uses the session indicators and approval cards in VERA. On Linux, desktop alerts require a desktop notification service. Where desktop alerts are supported, the operating system controls whether they appear while VERA is running. If alerts are missing, check VERA’s system notification settings and Do Not Disturb. The in-app session indicators and approval cards remain available.
+On Windows, desktop alerts require an installed copy of VERA. The portable ZIP uses the session indicators, approval cards and question cards in VERA. On Linux, desktop alerts require a desktop notification service. Where desktop alerts are supported, the operating system controls whether they appear while VERA is running. If alerts are missing, check VERA’s system notification settings and Do Not Disturb. The in-app session indicators, approval cards and question cards remain available.
 
 ## Data & privacy
 

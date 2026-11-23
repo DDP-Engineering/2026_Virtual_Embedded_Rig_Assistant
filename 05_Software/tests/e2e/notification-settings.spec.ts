@@ -14,6 +14,7 @@ test("opens notification preferences by keyboard and keeps the draft through a f
   const panel = page.getByRole("tabpanel", { name: "Notifications" });
   const completion = panel.getByRole("combobox", { name: "Turn completion" });
   const approvals = panel.getByRole("switch", { name: "Approval requests in background" });
+  const questions = panel.getByRole("switch", { name: "Question notifications" });
   const save = panel.getByRole("button", { name: "Save", exact: true });
   const cancel = panel.getByRole("button", { name: "Cancel", exact: true });
   for (let step = 0; step < 10; step++) {
@@ -25,6 +26,7 @@ test("opens notification preferences by keyboard and keeps the draft through a f
   await expect(completion).toBeFocused();
   await expect(completion).toHaveValue("background");
   await expect(approvals).toBeChecked();
+  await expect(questions).toBeChecked();
   await expect(save).toBeDisabled();
   await expect(cancel).toBeDisabled();
 
@@ -34,9 +36,14 @@ test("opens notification preferences by keyboard and keeps the draft through a f
   await approvals.press("Space");
   await expect(approvals).not.toBeChecked();
   await expect(completion).toHaveValue("always");
+  await page.keyboard.press("Tab");
+  await expect(questions).toBeFocused();
+  await questions.press("Space");
+  await expect(questions).not.toBeChecked();
   await cancel.click();
   await expect(completion).toHaveValue("background");
   await expect(approvals).toBeChecked();
+  await expect(questions).toBeChecked();
 
   await page.evaluate(async () => {
     const modulePath = "/api/index.ts";
@@ -49,17 +56,19 @@ test("opens notification preferences by keyboard and keeps the draft through a f
   });
   await completion.selectOption("never");
   await approvals.uncheck();
+  await questions.uncheck();
   await save.click();
   await expect(panel.getByRole("alert")).toBeVisible();
   await expect(completion).toHaveValue("never");
   await expect(approvals).not.toBeChecked();
+  await expect(questions).not.toBeChecked();
   expect(
     await page.evaluate(async () => {
       const modulePath = "/api/index.ts";
       const { api } = await import(modulePath);
       return (await api.getSettings()).settings.notifications;
     }),
-  ).toEqual({ turnCompletion: "background", approvalRequests: true });
+  ).toEqual({ turnCompletion: "background", approvalRequests: true, questionRequests: true });
   await expect(save).toBeEnabled();
   await saveSettings(page);
   await expect(panel.getByRole("alert")).toHaveCount(0);
@@ -67,6 +76,7 @@ test("opens notification preferences by keyboard and keeps the draft through a f
   await tab.click();
   await expect(completion).toHaveValue("never");
   await expect(approvals).not.toBeChecked();
+  await expect(questions).not.toBeChecked();
 
   await completion.selectOption("always");
   const updates = page.locator('[data-section="updates"]');
@@ -91,6 +101,7 @@ test("localizes the notification controls and choices in all four interface lang
       "Notifications",
       "Turn completion",
       "Approval requests in background",
+      "Question notifications",
       "Never",
       "In background",
       "Always",
@@ -100,6 +111,7 @@ test("localizes the notification controls and choices in all four interface lang
       "Notificări",
       "Finalizarea unei ture",
       "Cereri de aprobare în fundal",
+      "Notificări pentru întrebări",
       "Niciodată",
       "În fundal",
       "Întotdeauna",
@@ -109,6 +121,7 @@ test("localizes the notification controls and choices in all four interface lang
       "Benachrichtigungen",
       "Abschluss eines Durchlaufs",
       "Freigabeanfragen im Hintergrund",
+      "Benachrichtigungen zu Fragen",
       "Nie",
       "Im Hintergrund",
       "Immer",
@@ -118,12 +131,13 @@ test("localizes the notification controls and choices in all four interface lang
       "Notifications",
       "Fin d’un tour",
       "Demandes d’approbation en arrière-plan",
+      "Notifications de questions",
       "Jamais",
       "En arrière-plan",
       "Toujours",
     ],
   ] as const;
-  for (const [language, title, completion, approvals, never, background, always] of labels) {
+  for (const [language, title, completion, approvals, questions, never, background, always] of labels) {
     await page.locator('[data-section="appearance"]').click();
     await page.locator("#language").selectOption(language);
     await saveSettings(page);
@@ -135,5 +149,6 @@ test("localizes the notification controls and choices in all four interface lang
       always,
     ]);
     await expect(panel.getByRole("switch", { name: approvals })).toBeChecked();
+    await expect(panel.getByRole("switch", { name: questions })).toBeChecked();
   }
 });

@@ -2,11 +2,27 @@ import type { HelpLanguage } from "@vera/shared";
 import type { NotificationConstructorOptions } from "electron";
 
 const copy = {
-  en: { completion: "A reply is ready.", approval: "An approval request needs your attention." },
-  ro: { completion: "Un răspuns este gata.", approval: "O cerere de aprobare necesită atenția ta." },
-  de: { completion: "Eine Antwort ist verfügbar.", approval: "Eine Anfrage wartet auf Ihre Freigabe." },
-  fr: { completion: "Une réponse est prête.", approval: "Une demande d’approbation attend votre décision." },
-} satisfies Record<HelpLanguage, Record<"completion" | "approval", string>>;
+  en: {
+    completion: "A reply is ready.",
+    approval: "An approval request needs your attention.",
+    question: "A question is waiting for your answer.",
+  },
+  ro: {
+    completion: "Un răspuns este gata.",
+    approval: "O cerere de aprobare necesită atenția ta.",
+    question: "O întrebare așteaptă răspunsul tău.",
+  },
+  de: {
+    completion: "Eine Antwort ist verfügbar.",
+    approval: "Eine Anfrage wartet auf Ihre Freigabe.",
+    question: "Eine Frage wartet auf Ihre Antwort.",
+  },
+  fr: {
+    completion: "Une réponse est prête.",
+    approval: "Une demande d’approbation attend votre décision.",
+    question: "Une question attend votre réponse.",
+  },
+} satisfies Record<HelpLanguage, Record<"completion" | "approval" | "question", string>>;
 
 export const windowsNotificationAppId = (testBuild: boolean) =>
   testBuild ? "engineering.ddp.vera.test" : "engineering.ddp.vera";

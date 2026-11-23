@@ -158,10 +158,10 @@ entries:
   - category: new
     topic: { en: Sessions, ro: Sesiuni, de: Sitzungen, fr: Sessions }
     text:
-      en: Activity shows unread replies, timed questions and approvals. Windows alerts need installed VERA.
-      ro: Activitate arată răspunsuri, aprobări și întrebări cu termen. Alertele Windows cer VERA instalată.
-      de: Aktivität zeigt Antworten, Freigaben und Fragen mit Frist. Windows-Hinweise nur mit Installation.
-      fr: Activité regroupe réponses, approbations et questions à délai. Alertes Windows avec VERA installée.
+      en: "Activity lists replies and requests. Toggle question alerts. Windows alerts need installed VERA."
+      ro: "Activitate arată răspunsuri și cereri. Alerte opționale pentru întrebări. Windows: instalează VERA."
+      de: "Aktivität zeigt Antworten und Anfragen. Fragehinweise sind optional. Windows: VERA installieren."
+      fr: "Activité liste réponses et demandes. Alertes de questions au choix. Sous Windows, installez VERA."
   - category: improved
     topic: { en: Workbench, ro: Workbench, de: Workbench, fr: Banc de travail }
     text:

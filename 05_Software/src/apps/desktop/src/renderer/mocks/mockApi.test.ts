@@ -279,16 +279,18 @@ it("mock settings use the same validated shape, immutable id and post-update eve
 it("mock settings keep the sibling notification preference across independent writes", async () => {
   const { api } = createMockApi();
   expect((await api.getSettings()).settings).toMatchObject({
-    notifications: { turnCompletion: "background", approvalRequests: true },
+    notifications: { turnCompletion: "background", approvalRequests: true, questionRequests: true },
   });
   const on = vi.fn();
   const stop = api.subscribe("app", on);
   await api.updateSettings({ notifications: { approvalRequests: false } });
+  await api.updateSettings({ notifications: { questionRequests: false } });
   await api.updateSettings({ notifications: { turnCompletion: "never" } });
   expect((await api.getSettings()).settings).toMatchObject({
-    notifications: { turnCompletion: "never", approvalRequests: false },
+    notifications: { turnCompletion: "never", approvalRequests: false, questionRequests: false },
   });
   expect(on.mock.calls).toEqual([
+    [{ type: "settings.changed", masking: false }],
     [{ type: "settings.changed", masking: false }],
     [{ type: "settings.changed", masking: false }],
   ]);

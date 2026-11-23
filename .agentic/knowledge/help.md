@@ -45,8 +45,9 @@ documents and their viewer belong to [Document viewer](document-viewer.md); inte
 
 ## Content and checks
 
-Settings Help explains the localized notification preferences, guarded session navigation, in-app approvals, running-app
-scope, operating system controls and fallback session cues (REQ-UX-ee964ea7).
+Settings Help explains localized notification preferences, guarded session navigation, running-app
+scope, platform controls and in-app approvals and questions. The default-on question alert setting
+is independent of the workbench’s recommended-answer timeout (REQ-UX-ee964ea7, REQ-DATA-d46e6974).
 
 Chat and sessions, Permissions and generated Keyboard shortcuts describe [user terminals](terminals.md),
 per-terminal read consent, revocation/history semantics and Ctrl+Shift+T in all four app languages.

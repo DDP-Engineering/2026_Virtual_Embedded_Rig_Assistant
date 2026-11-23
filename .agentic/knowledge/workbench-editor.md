@@ -47,7 +47,8 @@ core validates and persists ([workbench](workbench.md)).
 - Native notification, Activity and sidebar attention navigation use the same unsaved Workbench
   and Settings editor guard before opening the verified workbench and chat. Native clicks wait for
   navigation to finish and Activity to close. Editors stay inert during the verified open itself.
-  A dismissed prompt or stale destination keeps the draft.
+  A dismissed prompt or stale destination keeps the draft. Native question clicks, Activity and the
+  sidebar confirm the exact live question before focusing its still-pending card.
 
 - Leaving through other navigation (sidebar open/edit/close/remove of the active workbench, New session, Settings, New, Plugins, Open) with unsaved edits asks for confirmation exactly once; edits remain unsaved until a save completes, and a save already sent when the engineer confirms leaving may still complete on disk while its result is ignored by the closed editor (REQ-UX-efb3e4fb).
 - The editor is keyed by workbench id, so editing another workbench remounts it with that workbench's values.

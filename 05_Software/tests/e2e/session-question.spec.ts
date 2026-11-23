@@ -6,7 +6,7 @@ import type { Channel, Request, Response, VeraBridge } from "@vera/shared";
 import { test } from "./fixtures.js";
 import { installNetworkGuard, outboundAttempts } from "./network-guard.js";
 
-test("a background question survives reload and Activity focuses only its pending card", async () => {
+test("a background question survives unavailable native delivery and reload, and Activity focuses its card", async () => {
   test.setTimeout(120_000);
   const root = await mkdtemp(join(tmpdir(), "vera-session-question-"));
   const a = join(root, "a");
@@ -44,6 +44,13 @@ test("a background question survives reload and Activity focuses only its pendin
   });
   try {
     await installNetworkGuard(app);
+    await app.evaluate(({ Notification }) => {
+      Object.assign(globalThis, { questionNativeProbes: 0 });
+      Notification.isSupported = () => {
+        (globalThis as unknown as { questionNativeProbes: number }).questionNativeProbes++;
+        return false;
+      };
+    });
     const page = await app.firstWindow();
     const call = <C extends Channel>(channel: C, payload: Request<C>) =>
       page.evaluate(
@@ -70,14 +77,25 @@ test("a background question survives reload and Activity focuses only its pendin
       modelRef: "replay/question",
     });
     const get = () => call("session.get", { sessionId: session.id });
+    await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]?.minimize());
+    await expect
+      .poll(() => app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]?.isMinimized()))
+      .toBe(true);
     await call("session.send", { sessionId: session.id, text: "Ask about a profile" });
     await expect.poll(async () => (await get()).snapshot.questions[0]?.outcome).toBeNull();
+    const probes = () =>
+      app.evaluate(() => (globalThis as unknown as { questionNativeProbes: number }).questionNativeProbes);
+    await expect.poll(probes).toBe(1);
+    await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]?.restore());
     const question = (await get()).snapshot.questions[0];
     if (!question) throw new Error("Question missing");
     expect(question.deadline).not.toBeNull();
+    await call("app.settings.update", { notifications: { questionRequests: false } });
+    expect((await get()).snapshot.questions[0]).toEqual(question);
     const benchB = await call("workbench.create", { folder: b, name: "Other bench" });
     expect(benchB.config.agent.question_timeout_minutes ?? null).toBeNull();
     await page.reload();
+    expect(await probes()).toBe(1);
     const wrongOwner = await page.evaluate(
       async (request) => {
         try {
@@ -122,6 +140,7 @@ test("a background question survives reload and Activity focuses only its pendin
     expect(
       (await call("workbench.open", { folder: b })).config.agent.question_timeout_minutes ?? null,
     ).toBeNull();
+    expect(await probes()).toBe(1);
     expect(await outboundAttempts(app)).toEqual([]);
   } finally {
     try {

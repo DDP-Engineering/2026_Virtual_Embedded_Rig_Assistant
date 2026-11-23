@@ -11,17 +11,20 @@ type NativeNotice = {
   close(): void;
 };
 
+type NotificationKind = Parameters<typeof notificationOptions>[0];
+
 export interface NotificationTarget {
   folder: string;
   workbenchId: string;
   sessionId: string;
-  approvalPending?: () => boolean;
+  pending?: () => boolean;
+  questionId?: string;
 }
 
 /** Delivers live session alerts and hands out a target only after a click on the OS notification. */
 export class SessionNotifications {
   private readonly seen = new Set<string>();
-  private readonly approvals = new Map<string, () => void>();
+  private readonly requests = new Map<string, (() => void) | undefined>();
   // Electron can keep Windows notifications in Action Center after the banner has timed out.
   private readonly live = new Set<NativeNotice>();
   private activation?: { token: string; key: string; target: NotificationTarget } | undefined;
@@ -40,24 +43,22 @@ export class SessionNotifications {
   ) {}
 
   observe(workbench: Workbench, sessionId: string, event: LiveSessionActivity): void {
-    if (event.type === "question.requested" || event.type === "question.settled") return;
     // Even Electron's capability query can register a persistent Windows toast activator.
     if (this.host.platform === "win32" && this.host.portable) return;
     const workbenchId = workbench.config.id;
     if (!workbenchIdSchema.safeParse(workbenchId).success || !sessionIdSchema.safeParse(sessionId).success)
       return;
-    const kind = event.type === "turn.completed" ? "completion" : "approval";
-    const key = JSON.stringify([
-      workbench.folder,
-      workbenchId,
-      sessionId,
-      kind,
-      event.type === "turn.completed" ? event.turnId : event.approvalId,
-    ]);
-    if (event.type === "approval.decided") {
+    const kind =
+      event.type === "turn.completed" ? "completion" : "questionId" in event ? "question" : "approval";
+    const id =
+      "questionId" in event ? event.questionId : "approvalId" in event ? event.approvalId : event.turnId;
+    const key = JSON.stringify([workbench.folder, workbenchId, sessionId, kind, id]);
+    if (event.type === "approval.decided" || event.type === "question.settled") {
       this.seen.add(key);
       if (this.activation?.key === key) this.activation = undefined;
-      this.approvals.get(key)?.();
+      const settle = this.requests.get(key);
+      this.requests.delete(key);
+      settle?.();
       return;
     }
     if (this.seen.has(key)) return;
@@ -66,20 +67,25 @@ export class SessionNotifications {
       folder: workbench.folder,
       workbenchId,
       sessionId,
-      ...(event.type === "approval.requested" && { approvalPending: event.pending }),
+      ...("pending" in event && { pending: event.pending }),
+      ...(event.type === "question.requested" && { questionId: event.questionId }),
     };
-    // ApprovalGate may decide synchronously after publishing the request. Native code is also outside
-    // the session's publication stack, even for completions.
+    if (target.pending) this.requests.set(key, undefined);
+    // A request may settle synchronously when published. Keep the native presenter outside that stack.
     queueMicrotask(() => {
+      if (target.pending && !this.requests.delete(key)) return;
       try {
         const window = this.host.window();
         if (!window) return;
         const foreground = window.visible && !window.minimized && window.focused;
         const preferences = this.host.preferences();
-        const eligible = target.approvalPending
-          ? preferences.approvalRequests && !foreground && target.approvalPending()
-          : preferences.turnCompletion === "always" ||
-            (preferences.turnCompletion === "background" && !foreground);
+        const eligible =
+          kind === "completion"
+            ? preferences.turnCompletion === "always" ||
+              (preferences.turnCompletion === "background" && !foreground)
+            : !foreground &&
+              (kind === "question" ? preferences.questionRequests : preferences.approvalRequests) &&
+              target.pending?.();
         if (eligible && this.host.supported()) this.show(kind, key, target);
       } catch {
         this.reportFailure();
@@ -89,12 +95,12 @@ export class SessionNotifications {
 
   takeActivation(token: string): NotificationTarget | undefined {
     const activation = this.activation;
-    if (activation?.token !== token) return undefined;
+    if (!activation || activation.token !== token) return undefined;
     this.activation = undefined;
-    return activation.target.approvalPending?.() === false ? undefined : activation.target;
+    return activation.target.pending?.() === false ? undefined : activation.target;
   }
 
-  private show(kind: "completion" | "approval", key: string, target: NotificationTarget): void {
+  private show(kind: NotificationKind, key: string, target: NotificationTarget): void {
     const token = randomUUID();
     const notice = this.host.create(
       notificationOptions(kind, this.host.language(), token.replaceAll("-", ""), this.host.platform),
@@ -104,7 +110,7 @@ export class SessionNotifications {
     let clicked = false;
     const release = () => {
       this.live.delete(notice);
-      this.approvals.delete(key);
+      this.requests.delete(key);
     };
     const dismiss = () => {
       release();
@@ -114,10 +120,9 @@ export class SessionNotifications {
         this.reportFailure();
       }
     };
-    if (kind === "approval") {
-      this.approvals.set(key, () => {
+    if (target.pending) {
+      this.requests.set(key, () => {
         resolved = true;
-        this.approvals.delete(key);
         // Windows creates the WinRT toast asynchronously. It is safe to close after 'show'.
         if (shown) queueMicrotask(dismiss);
       });
@@ -141,7 +146,7 @@ export class SessionNotifications {
         clicked = true;
         if (kind === "completion") release();
         try {
-          if (!this.host.window() || target.approvalPending?.() === false) return;
+          if (!this.host.window() || target.pending?.() === false) return;
           this.activation = { token, key, target };
           this.host.activate(token);
         } catch {

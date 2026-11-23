@@ -8,6 +8,7 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ### Added
 
+- Receive desktop alerts for pending chat questions and manage them in Settings > Notifications.
 - Catch up on unread replies and pending session activity across workbenches from the title bar.
 - Ask structured chat questions and optionally apply the recommended answer after a workbench timeout.
 - Receive desktop alerts for completed replies and pending approvals, and click to open their sessions.
@@ -159,7 +160,7 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 - Bypass extends to analysis, plugin drafts, HIL plans, bench resources and electrical inputs.
 - Bypass runs declared programs in outside folders, binds outside files and stops its runs when Bypass ends.
 - Bypass confirms each mode change; agent file access refuses VERA application data in every mode.
-- Delete settings.json from earlier pre-releases after changes to Bypass warnings and desktop notifications.
+- Delete settings.json from earlier pre-releases after changes to Bypass and desktop notification preferences.
 
 ### Fixed
 

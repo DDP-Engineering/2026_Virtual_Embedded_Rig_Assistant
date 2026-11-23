@@ -8,7 +8,7 @@
 | **Acces web** | Căutarea și citirea pe web pentru agent |
 | **Aspect și limbă** | Limba, tema și dimensiunile textului |
 | **Comenzi** | Shell-ul pentru comenzile agentului și terminalele noi |
-| **Notificări** | Alerte desktop pentru finalizarea turelor și cereri de aprobare |
+| **Notificări** | Alerte desktop pentru finalizarea turelor, aprobări și întrebări |
 | **Comenzi rapide** | Propriile tale combinații de taste |
 | **Actualizări** | Cum se actualizează VERA |
 | **Date și confidențialitate** | Valorile implicite de mascare pentru patru zone |
@@ -21,9 +21,11 @@ La **Finalizarea unei ture** poți alege **Niciodată**, **În fundal** (implici
 
 Opțiunea **Cereri de aprobare în fundal** este activată implicit. Verifică cererile și răspunde în VERA. Cererile în așteptare apar în bara laterală și în conversație.
 
+Opțiunea **Notificări pentru întrebări** este activată implicit. Primești o alertă când o sesiune așteaptă un răspuns și VERA este în fundal. Timpul de așteptare pentru răspunsul recomandat se configurează separat în workbench. Apasă pe o alertă activă pentru a deschide sesiunea și a muta focalizarea pe întrebare. Poți răspunde și din Activitate sau din conversație.
+
 Apasă pe bannerul unei alerte cât timp rulează VERA pentru a deschide sesiunea. VERA îți cere confirmarea înainte de a renunța la modificările nesalvate.
 
-Pe Windows, alertele desktop necesită instalarea VERA. Versiunea ZIP portabilă folosește indicatorii sesiunilor și cardurile de aprobare din VERA. Pe Linux, alertele desktop necesită un serviciu de notificări desktop. În mediile compatibile, sistemul de operare decide dacă afișează alertele cât timp rulează VERA. Dacă alertele lipsesc, verifică setările de notificări ale sistemului pentru VERA și modul Nu deranja. Indicatorii sesiunilor și cardurile de aprobare rămân disponibile în aplicație.
+Pe Windows, alertele desktop necesită instalarea VERA. Versiunea ZIP portabilă folosește indicatorii sesiunilor și cardurile de aprobare și de întrebări din VERA. Pe Linux, alertele desktop necesită un serviciu de notificări desktop. În mediile compatibile, sistemul de operare decide dacă afișează alertele cât timp rulează VERA. Dacă alertele lipsesc, verifică setările de notificări ale sistemului pentru VERA și modul Nu deranja. Indicatorii sesiunilor și cardurile de aprobare și de întrebări rămân disponibile în aplicație.
 
 ## Date și confidențialitate
 

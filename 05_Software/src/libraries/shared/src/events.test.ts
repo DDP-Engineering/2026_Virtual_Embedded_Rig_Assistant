@@ -11,6 +11,9 @@ it("limits the notification activation request and event to an opaque token", ()
   expect(appEventSchema.safeParse({ type, token, folder: "elsewhere" }).success).toBe(false);
   expect(activation.request.parse({ token })).toEqual({ token });
   expect(activation.request.safeParse({ token, sessionId: "elsewhere" }).success).toBe(false);
+  expect(activation.request.safeParse({ token, questionId: "q_01JB8Z6Q4M7N2K5R9T3V8X1Y0C" }).success).toBe(
+    false,
+  );
   expect(activation.request.safeParse({ token: "malformed" }).success).toBe(false);
 });
 

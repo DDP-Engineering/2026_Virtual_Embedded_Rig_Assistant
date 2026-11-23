@@ -147,7 +147,8 @@ AppEvents use shared updates.ts; [updates](updates.md) owns their lifecycle/capa
 - Desktop `session.list` includes optional child parent ID, latest turn ID and status, and optional parent launch authorization. The workbench-scoped `session.delegations.changed` refreshes after commit and the heartbeat recovers missed notifications. Trusted `session.mode.set` requires acknowledgement on a switch to Bypass. `session.delegation.bypass.set` validates workbench and parent lifecycle, requires acknowledgement for authorization and permits revocation without it. Model tool schemas have no access to either setter.
 - `session.notification.clicked` sends an opaque UUID to the current trusted renderer.
   `session.notification.open` redeems that UUID once in the same process and returns a verified
-  workbench and session, or null when stale. The request accepts only the UUID.
+  workbench and session, with the exact question ID when it still needs an answer. A stale token
+  returns null. The request accepts only the UUID.
 - `session.activity` projects live operational groups used by the sidebar and Activity. `session.activity.unread`
   supplies up to 100 main-process markers. `session.activity.open` verifies canonical folder, workbench
   ID and session membership before promoting the owner, returns null for an unavailable target, and

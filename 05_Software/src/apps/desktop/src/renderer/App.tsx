@@ -338,7 +338,7 @@ export function App() {
     setNotificationToken(undefined);
     void navigateToAttention(async () => {
       const target = await api.invoke("session.notification.open", { token: notificationToken });
-      if (target) showVerifiedSession(target);
+      if (target) showVerifiedSession(target, target.questionId);
     });
   }, [notificationToken, activityOpen, sessionPending, navigateToAttention, showVerifiedSession]);
   /** Creates (or reuses an empty) session and opens it; `then` receives its id. */

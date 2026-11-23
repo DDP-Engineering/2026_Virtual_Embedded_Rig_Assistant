@@ -27,14 +27,15 @@ through its API. [IPC boundary](ipc-boundary.md) owns shared contracts, dispatch
 
 ## Public interface
 
-Desktop main requests silent delivery of generic localized notifications for eligible ordinary turn completions and
-human approvals. It reads saved preferences and the native window state at dispatch. Only an alert click
+Desktop main requests silent generic localized notifications for eligible ordinary completions, pending
+approvals and pending questions. Dispatch reads saved preferences and the native window state.
+Questions notify once per live request while VERA is in the background. Settlement cancels queued
+delivery, invalidates a matching click token and dismisses the native alert when supported. Only an alert click
 restores and focuses the window. Packaged Windows uses the NSIS production or test AppUserModelID and
 an opaque toast launch tag for Electron's current-process click callback. OS delivery and dismissal are
-best effort. Windows portable mode uses in-app Activity, session indicators and approval cards. It bypasses the
+best effort. Windows portable mode uses in-app Activity, session indicators and request cards. It bypasses the
 Electron presenter and its Start Menu and COM registration (REQ-PLAT-99eec2f1). The Linux desktop needs
-a notification service, which controls sound under Electron's libnotify backend. Approval review and
-decisions stay in the chat. Closing the last window still quits.
+a notification service, which controls sound under Electron's libnotify backend. Approval and question responses stay in the chat. Closing the last window still quits.
 
 The title-bar Activity dialog shows running sessions, pending approvals and questions, and up to 100
 unread successful replies across workbenches. The main process captures completion markers before
@@ -85,7 +86,7 @@ coordinates clamp to content bounds. Browser mock acknowledges the native-only o
 |---|---|---|
 | Launch/instance behavior | `src/main/index.ts` | built shell acceptance |
 | Asset/security policy | `src/main/security.ts`, `content-policy.ts` | content-policy.test.ts; built image-preview.spec.ts security assertions |
-| Native session notifications | `src/main/session-notifications.ts`, `session-notification-copy.ts` | session-notifications.test.ts and focused background-sessions.spec.ts |
+| Native session notifications | `src/main/session-notifications.ts`, `session-notification-copy.ts` | session-notifications.test.ts, background-sessions.spec.ts and session-question.spec.ts |
 | In-app Activity | `src/main/unread-completions.ts`, `renderer/components/activity-view.tsx` | unread-completions.test.ts, background-sessions.spec.ts and session-question.spec.ts |
 | Geometry/storage format | `src/main/window-state.ts` | `window-state.test.ts`, geometry acceptance |
 | Metadata/API/events | [ipc-boundary](ipc-boundary.md) | shell and browser mock acceptance |

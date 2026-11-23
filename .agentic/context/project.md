@@ -21,17 +21,17 @@ The chat composer uses configurable hold or
 toggle gestures and inserts editable text into the initiating draft for explicit Send.
 Application Advanced groups controls by purpose and can show saved overrides and pending edits.
 Its desktop time limits cover Interactive Browser navigation, dictation and explicit model discovery.
-Application Notifications stores independent turn-completion and background approval preferences
+Application Notifications stores independent turn-completion, approval and question preferences
 in format-1 settings. The four-locale panel uses the same confirmed Save and Cancel flow as Updates.
 
 ## Supported operation
 
-Desktop notifications surface eligible live ordinary replies and pending approvals with generic localized
-copy. Windows portable mode uses the existing in-app activity and approval UI without initializing
-the Windows notification presenter. In-process click activation preserves unsaved edits and opens the verified session across
-workbenches. Title-bar Activity uses the same verified navigation for running sessions, pending approvals,
-pending questions, and up to 100 unread successful replies from this app run. Pending question activation
-focuses the exact live card. Unread markers are available independently of native delivery.
+Desktop notifications surface eligible live ordinary replies, pending approvals and pending questions
+with generic localized copy. Windows portable mode uses in-app Activity without initializing the
+Windows presenter. Click activation applies the unsaved-editor guard and opens the verified workbench and
+session. Question settlement invalidates native activation and dismisses the notice where supported.
+Native and in-app focus requires the exact question to remain pending. Title-bar Activity shows running
+sessions, pending approvals and questions, and up to 100 unread replies independently of native delivery.
 
 Saved-session performance verification uses an isolated native Electron build, real persisted
 fixtures/sidebar selection, phase/responsiveness probes and explicit machine-specific reference

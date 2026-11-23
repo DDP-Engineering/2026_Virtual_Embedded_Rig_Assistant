@@ -242,6 +242,7 @@
     "notifications": "Notifications",
     "notificationTurnCompletion": "Fin d’un tour",
     "notificationApprovalRequests": "Demandes d’approbation en arrière-plan",
+    "notificationQuestionRequests": "Notifications de questions",
     "notificationNever": "Jamais",
     "notificationBackground": "En arrière-plan",
     "notificationAlways": "Toujours",

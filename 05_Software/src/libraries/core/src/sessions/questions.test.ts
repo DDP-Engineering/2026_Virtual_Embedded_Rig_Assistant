@@ -109,7 +109,9 @@ it("keeps the deadline after renderer unsubscribe and reload and rejects an answ
   const { seq } = service.get(id);
   const reloaded = vi.fn();
   const off = service.subscribe(id, seq, reloaded);
-  const event = live.mock.calls.find(([, event]) => event.type === "question.requested")?.[1];
+  const requests = live.mock.calls.filter(([, event]) => event.type === "question.requested");
+  expect(requests).toHaveLength(1);
+  const event = requests[0]?.[1];
   expect(event).toMatchObject({ type: "question.requested", questionId: question.questionId });
   if (event?.type !== "question.requested") throw Error("Missing live question event");
   expect(event.pending()).toBe(true);

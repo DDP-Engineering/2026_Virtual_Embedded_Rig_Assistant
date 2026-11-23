@@ -34,9 +34,10 @@ describe("application settings persistence", () => {
     const h = harness();
     await h.service.load();
     expect(h.service.get().settings).toMatchObject({
-      notifications: { turnCompletion: "background", approvalRequests: true },
+      notifications: { turnCompletion: "background", approvalRequests: true, questionRequests: true },
     });
     await Promise.all([
+      h.service.update({ notifications: { questionRequests: false } }),
       h.service.update({ notifications: { approvalRequests: false } }),
       h.service.update({ notifications: { turnCompletion: "always" } }),
     ]);
@@ -45,10 +46,10 @@ describe("application settings persistence", () => {
     await reload.service.load();
     expect(reload.service.get().settings).toMatchObject({
       schemaVersion: 1,
-      notifications: { turnCompletion: "always", approvalRequests: false },
+      notifications: { turnCompletion: "always", approvalRequests: false, questionRequests: false },
     });
     await expect(
-      h.service.update({ notifications: { approvalRequests: "false" } } as never),
+      h.service.update({ notifications: { questionRequests: "false" } } as never),
     ).rejects.toMatchObject({ code: "INVALID" });
     expect(h.files.get("/data/settings.json")).toBe(stored);
   });
@@ -150,7 +151,7 @@ describe("application settings persistence", () => {
       defaultModel: null,
       providers: { openai: {}, custom: [] },
       updates: { mode: "notify", channel: "latest" },
-      notifications: { turnCompletion: "background", approvalRequests: true },
+      notifications: { turnCompletion: "background", approvalRequests: true, questionRequests: true },
       recentWorkbenches: [],
     });
     expect(first.settings.installationId).not.toBe(b.service.get().settings.installationId);

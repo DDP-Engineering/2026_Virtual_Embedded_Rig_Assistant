@@ -17,7 +17,7 @@ import { ErrorMessage } from "../error-message.js";
 import { BrowserControls } from "./browser-controls.js";
 import { Composer, type ComposerState } from "./composer.js";
 import { DelegationLinks } from "./delegation-links.js";
-import { pendingQuestionFocus } from "./question-focus.js";
+import { confirmPendingQuestionFocus, pendingQuestionFocus } from "./question-focus.js";
 import { SessionInspector } from "./session-inspector.js";
 import { Transcript } from "./transcript.js";
 import { searchMatch } from "./transcript-projection.js";
@@ -120,31 +120,45 @@ export function SessionWorkspace({
   const shown = !tabs || tabs.active === CHAT;
   const selectTab = tabs?.select;
   const pendingTranscriptFocus = useRef<
-    { sessionId: string; workbenchId: string; questionId: string | undefined } | undefined
+    { sessionId: string; workbenchId: string; questionId: string | undefined; checking: boolean } | undefined
   >(undefined);
   useEffect(() => {
     if (!id || !focusTranscript) return;
-    pendingTranscriptFocus.current = { sessionId: id, workbenchId, questionId: questionFocusId };
+    pendingTranscriptFocus.current = {
+      sessionId: id,
+      workbenchId,
+      questionId: questionFocusId,
+      checking: false,
+    };
     selectTab?.(CHAT);
     transcriptOpened?.(id);
   }, [id, workbenchId, focusTranscript, questionFocusId, selectTab, transcriptOpened]);
   useEffect(() => {
     void focusTranscript; // A new request can arrive in an already loaded conversation.
     const target = pendingTranscriptFocus.current;
-    if (!target || !id || !view || !shown) return;
-    pendingTranscriptFocus.current = undefined;
-    if (target.sessionId !== id || target.workbenchId !== workbenchId) return;
-    const card =
-      target.questionId === undefined || readOnly
-        ? undefined
-        : pendingQuestionFocus(
-            { ...target, questionId: target.questionId },
-            workbenchId,
-            id,
-            view.state,
-            workspace.current,
-          );
-    (card ?? heading.current)?.focus();
+    if (!target || !id || !view || !shown || target.checking) return;
+    if (target.sessionId !== id || target.workbenchId !== workbenchId) {
+      pendingTranscriptFocus.current = undefined;
+      return;
+    }
+    const question =
+      target.questionId && !readOnly ? { ...target, questionId: target.questionId } : undefined;
+    const node = workspace.current;
+    const card = question && pendingQuestionFocus(question, workbenchId, id, view.state, node);
+    if (!question || !node || !card) {
+      pendingTranscriptFocus.current = undefined;
+      heading.current?.focus();
+      return;
+    }
+    target.checking = true;
+    const generation = scopeGeneration.current;
+    const focused = document.activeElement;
+    void confirmPendingQuestionFocus(question, card, node, (pendingCard) => {
+      if (target !== pendingTranscriptFocus.current) return;
+      pendingTranscriptFocus.current = undefined;
+      if (generation !== scopeGeneration.current || document.activeElement !== focused) return;
+      (pendingCard ?? heading.current)?.focus();
+    });
   }, [id, workbenchId, view, shown, focusTranscript, readOnly]);
   const waitingFocus = pendingTranscriptFocus.current;
   const revealQuestionId = focusTranscript

@@ -242,6 +242,7 @@
     "notifications": "Notifications",
     "notificationTurnCompletion": "Turn completion",
     "notificationApprovalRequests": "Approval requests in background",
+    "notificationQuestionRequests": "Question notifications",
     "notificationNever": "Never",
     "notificationBackground": "In background",
     "notificationAlways": "Always",

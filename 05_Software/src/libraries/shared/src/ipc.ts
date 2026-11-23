@@ -247,9 +247,10 @@ const unreadCompletionSchema = activitySessionTargetSchema.extend({
 });
 export type UnreadCompletion = z.infer<typeof unreadCompletionSchema>;
 export const unreadCompletionLimit = 100;
-const openedActivitySessionSchema = z
-  .strictObject({ workbench: workbenchSnapshotSchema, sessionId: sessionIdSchema })
-  .nullable();
+const openedActivitySessionSchema = z.strictObject({
+  workbench: workbenchSnapshotSchema,
+  sessionId: sessionIdSchema,
+});
 export const channels = {
   "app.clipboard.write": defineChannel(
     "app.clipboard.write",
@@ -802,7 +803,7 @@ export const channels = {
   "session.activity.open": defineChannel(
     "session.activity.open",
     activitySessionTargetSchema.extend({ completionId: z.uuid().optional() }),
-    openedActivitySessionSchema,
+    openedActivitySessionSchema.nullable(),
   ),
   "session.activity.readAll": defineChannel(
     "session.activity.readAll",
@@ -812,7 +813,7 @@ export const channels = {
   "session.notification.open": defineChannel(
     "session.notification.open",
     z.strictObject({ token: z.uuid() }),
-    openedActivitySessionSchema,
+    openedActivitySessionSchema.extend({ questionId: questionIdSchema.optional() }).nullable(),
   ),
   /** Active turns across every open workbench and the Concurrent turns limit (REQ-FUNC-33cd5f9f). */
   "session.capacity": defineChannel("session.capacity", z.strictObject({}), turnCapacitySchema),

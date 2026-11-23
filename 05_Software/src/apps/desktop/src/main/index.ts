@@ -717,7 +717,7 @@ const sessionNotifications = new SessionNotifications({
   failed: () => logger.log("warn", "session.notification.failed"),
 });
 /** Brings forward only the exact workbench and session, including an idle workbench that retired. */
-async function openActivitySession(target: ActivitySessionTarget & { approvalPending?: () => boolean }) {
+async function openActivitySession(target: ActivitySessionTarget & { pending?: () => boolean }) {
   if (quitting) return null;
   return workbenchTransition(async () => {
     try {
@@ -726,7 +726,7 @@ async function openActivitySession(target: ActivitySessionTarget & { approvalPen
           if (
             owner.folder !== target.folder ||
             owner.config.id !== target.workbenchId ||
-            target.approvalPending?.() === false ||
+            target.pending?.() === false ||
             !db ||
             !holdsSession(db, target.sessionId)
           )
@@ -1594,9 +1594,15 @@ ipcMain.handle(
           s.search(query).map((item) => sanitizeSessionSummary(item, sessionContent(owner))),
         ),
       "session.capacity": () => turnLimit.state(),
-      "session.notification.open": ({ token }) => {
+      "session.notification.open": async ({ token }) => {
         const target = sessionNotifications.takeActivation(token);
-        return target ? openActivitySession(target) : null;
+        if (!target) return null;
+        const opened = await openActivitySession(target);
+        if (!opened) return null;
+        // If settlement raced workbench promotion, keep the session route without a card focus request.
+        return target.questionId && target.pending?.()
+          ? { ...opened, questionId: target.questionId }
+          : opened;
       },
       "session.activity.unread": () => unreadCompletions.list(),
       "session.activity.open": async ({ completionId, ...target }) => {

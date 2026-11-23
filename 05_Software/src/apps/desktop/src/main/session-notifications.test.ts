@@ -10,6 +10,9 @@ const second = { folder: "/private/two", config: { id: "wb_000000000000000000000
 const sessionId = "ses_00000000000000000000000003";
 const turn = { type: "turn.completed", turnId: "123", title: "Session title" } as const;
 const resolved = { type: "approval.decided", approvalId: "approval-id" } as const;
+const questionId = "q_01JB8Z6Q4M7N2K5R9T3V8X1Y0C";
+const question = { type: "question.requested", questionId, turnId: "turn", pending: () => true } as const;
+const settled = { type: "question.settled", questionId, turnId: question.turnId } as const;
 const flush = async () => Promise.resolve();
 
 class Notice extends EventEmitter {
@@ -18,7 +21,11 @@ class Notice extends EventEmitter {
 }
 
 function harness(platform = "linux", portable = false) {
-  const prefs: Settings["notifications"] = { turnCompletion: "background", approvalRequests: true };
+  const prefs: Settings["notifications"] = {
+    turnCompletion: "background",
+    approvalRequests: true,
+    questionRequests: true,
+  };
   const window = { visible: true, focused: false, minimized: false };
   const native: Notice[] = [];
   const supported = vi.fn(() => true);
@@ -55,9 +62,10 @@ it.each([
   h.window.minimized = true;
   h.publish(turn);
   h.publish({ type: "approval.requested", approvalId: "pending", pending: () => true });
+  h.publish(question);
   await flush();
-  expect(h.supported).toHaveBeenCalledTimes(native ? 2 : 0);
-  expect(h.create).toHaveBeenCalledTimes(native ? 2 : 0);
+  expect(h.supported).toHaveBeenCalledTimes(native ? 3 : 0);
+  expect(h.create).toHaveBeenCalledTimes(native ? 3 : 0);
 });
 
 it("applies completion preference to the actual visible, minimized and focused state", async () => {
@@ -151,7 +159,7 @@ it("alerts once for an outstanding delegated approval and invalidates a click af
     workbenchId: second.config.id,
     folder: second.folder,
     sessionId,
-    approvalPending: pending,
+    pending,
   });
 });
 
@@ -236,7 +244,7 @@ it("still drops a resolved target when native dismissal fails", async () => {
 it("uses only generic localized text and an opaque Windows tag in native notifications", () => {
   const id = "a4d20c3c7b284d24b7783c62d7d6d4f2";
   const languages = ["en", "ro", "de", "fr"] as const satisfies readonly HelpLanguage[];
-  for (const kind of ["completion", "approval"] as const) {
+  for (const kind of ["completion", "approval", "question"] as const) {
     const bodies = new Set<string>();
     for (const language of languages) {
       const payload = notificationOptions(kind, language, id, "linux");
@@ -252,4 +260,98 @@ it("uses only generic localized text and an opaque Windows tag in native notific
   }
   expect(windowsNotificationAppId(false)).toBe("engineering.ddp.vera");
   expect(windowsNotificationAppId(true)).toBe("engineering.ddp.vera.test");
+});
+
+it("dispatches once per live pending question across workbenches using only its own preference", async () => {
+  const h = harness();
+  h.prefs.turnCompletion = "never";
+  h.prefs.approvalRequests = false;
+  for (const workbench of [first, second, first, second]) h.publish(question, workbench);
+  await flush();
+  expect(h.native).toHaveLength(2);
+  h.native[1]?.emit("click");
+  const token = h.activate.mock.calls[0]?.[0];
+  expect(h.notices.takeActivation(token)).toMatchObject({
+    folder: second.folder,
+    workbenchId: second.config.id,
+    sessionId,
+    questionId,
+  });
+  expect(h.notices.takeActivation(token)).toBeUndefined();
+
+  const disabled = harness();
+  disabled.prefs.questionRequests = false;
+  disabled.publish(question);
+  disabled.publish(turn);
+  disabled.publish({ type: "approval.requested", approvalId: "pending", pending: () => true });
+  await flush();
+  expect(disabled.native).toHaveLength(2);
+});
+
+it("suppresses foreground and already settled questions, including out-of-order and dispatch races", async () => {
+  const h = harness();
+  h.window.focused = true;
+  h.publish(question);
+  await flush();
+  expect(h.supported).not.toHaveBeenCalled();
+  h.window.focused = false;
+  h.publish(question);
+  h.publish({ ...question, pending: () => false }, second);
+  h.publish({ ...settled, questionId: "settled-first" });
+  h.publish({ ...question, questionId: "settled-first" });
+  h.publish({ ...question, questionId: "settled-in-dispatch" });
+  h.publish({ ...settled, questionId: "settled-in-dispatch" });
+  await flush();
+  expect(h.supported).not.toHaveBeenCalled();
+});
+
+it.each(["before show", "after show", "after click"])(
+  "invalidates question activation when settlement arrives %s, even if Windows retains its banner",
+  async (when) => {
+    const h = harness("win32");
+    const pending = vi.fn(() => true);
+    h.publish({ ...question, pending }, second);
+    await flush();
+    const notice = h.native[0]!;
+    if (when !== "before show") {
+      notice.emit("show");
+      notice.emit("close", { reason: "timedOut" });
+    }
+    if (when === "after click") notice.emit("click");
+    pending.mockReturnValue(false);
+    h.publish(settled, second);
+    if (when === "before show") notice.emit("show");
+    await flush();
+    expect(notice.close).toHaveBeenCalledOnce();
+    notice.emit("click");
+    expect(h.activate).toHaveBeenCalledTimes(when === "after click" ? 1 : 0);
+    expect(h.notices.takeActivation(h.activate.mock.calls[0]?.[0])).toBeUndefined();
+  },
+);
+
+it("checks an exact question's pending state even before a settlement reaches the presenter", async () => {
+  const h = harness();
+  const pending = vi.fn(() => true);
+  h.publish({ ...question, pending });
+  h.publish({ ...question, pending }, second);
+  await flush();
+  h.native[0]?.emit("click");
+  pending.mockReturnValue(false);
+  h.native[1]?.emit("click");
+  expect(h.activate).toHaveBeenCalledOnce();
+  expect(h.notices.takeActivation(h.activate.mock.calls[0]?.[0])).toBeUndefined();
+});
+
+it("keeps native capability and creation failures outside question publication", async () => {
+  const h = harness();
+  h.supported.mockReturnValueOnce(false).mockReturnValueOnce(true);
+  h.create.mockImplementationOnce(() => {
+    throw Error("native unavailable");
+  });
+  h.publish(question);
+  h.publish(question, second);
+  await flush();
+  expect(h.supported).toHaveBeenCalledTimes(2);
+  expect(h.failed).toHaveBeenCalledOnce();
+  expect(h.activate).not.toHaveBeenCalled();
 });

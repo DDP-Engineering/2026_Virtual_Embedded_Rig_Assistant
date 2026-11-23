@@ -76,6 +76,7 @@ export const defaultDictationRecordingMode: DictationRecordingMode = "hold";
 const notificationPreferencesSchema = z.strictObject({
   turnCompletion: z.enum(["never", "background", "always"]),
   approvalRequests: z.boolean(),
+  questionRequests: z.boolean(),
 });
 export type NotificationPreferences = z.infer<typeof notificationPreferencesSchema>;
 
@@ -204,7 +205,7 @@ export function defaultSettings(installationId: string): Settings {
     defaultModel: null,
     providers: { openai: {}, custom: [] },
     updates: { mode: "notify", channel: "latest" },
-    notifications: { turnCompletion: "background", approvalRequests: true },
+    notifications: { turnCompletion: "background", approvalRequests: true, questionRequests: true },
     recentWorkbenches: [],
   };
 }

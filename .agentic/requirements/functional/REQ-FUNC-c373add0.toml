@@ -1,0 +1,26 @@
+schema = 1
+
+id = "REQ-FUNC-c373add0"
+
+title = "Deliver eligible live question alerts once"
+
+status = "active"
+
+requirement = """
+When a live structured question awaits an answer with VERA in the background and question notifications enabled, Desktop shall request native delivery once per question across open workbenches where supported.
+"""
+
+verification = "Publish pending live questions from two workbenches and a duplicate, then contrast with foreground, disabled, replay and settled-before-dispatch cases."
+
+affected_paths = ["05_Software/src/apps/desktop/src/main/session-notifications.ts", "05_Software/src/apps/desktop/src/main/session-notification-copy.ts"]
+
+linked_tests = ["05_Software/src/apps/desktop/src/main/session-notifications.test.ts", "05_Software/src/libraries/core/src/sessions/questions.test.ts", "05_Software/tests/e2e/background-sessions.spec.ts"]
+
+
+spec = ""
+
+priority = "normal"   # low | normal | high
+rationale = ""        # why this behavior exists, if not obvious
+
+created = 2026-11-24
+updated = 2026-11-24

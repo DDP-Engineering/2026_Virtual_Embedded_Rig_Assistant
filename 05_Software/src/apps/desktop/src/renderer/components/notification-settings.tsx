@@ -50,6 +50,18 @@ export function NotificationSettings({
         />
         {t("settings.notificationApprovalRequests")}
       </label>
+      <label className="flex items-center gap-2">
+        <input
+          id="notification-question-requests"
+          type="checkbox"
+          role="switch"
+          checked={draft.questionRequests}
+          aria-checked={draft.questionRequests}
+          disabled={saving}
+          onChange={(event) => set({ questionRequests: event.currentTarget.checked })}
+        />
+        {t("settings.notificationQuestionRequests")}
+      </label>
     </section>
   );
 }
