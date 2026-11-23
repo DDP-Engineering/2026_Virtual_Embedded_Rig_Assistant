@@ -4,6 +4,7 @@ import { RefreshCw } from "lucide-react";
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../api/index.js";
+import { WorkbenchIndexDetails } from "./documents/workbench-index-details.js";
 import { ErrorMessage } from "./error-message.js";
 import { Pager, usePaged } from "./pager.js";
 import { WorkbenchFolders } from "./workbench-folders.js";
@@ -30,6 +31,7 @@ export function Workbench({
   changed,
   closed,
   sessionPending = false,
+  showIndexDetails = true,
   sessions,
   edit,
   selectSession,
@@ -41,6 +43,7 @@ export function Workbench({
   /** The workbench closed, from here or elsewhere; a page the user opened meanwhile stays. */
   closed: () => void;
   sessionPending?: boolean;
+  showIndexDetails?: boolean;
   sessions?: SessionSummary[] | undefined;
   edit?: () => void;
   selectSession?: (id: string) => void;
@@ -130,7 +133,6 @@ export function Workbench({
           )}
           <div className="overview-groups" data-workbench-overview>
             <div className="overview-card">
-              <h4>{t("overview.agentGroup")}</h4>
               <dl>
                 <div className="overview-row">
                   <dt>{t("overview.model")}</dt>
@@ -149,7 +151,17 @@ export function Workbench({
               </dl>
             </div>
             <div className="overview-card">
-              <h4>{t("overview.indexGroup")}</h4>
+              <div className="overview-index-heading">
+                <h4>{t("overview.indexGroup")}</h4>
+                {showIndexDetails && (
+                  <WorkbenchIndexDetails
+                    key={active.indexLease}
+                    workbenchId={active.config.id}
+                    indexLease={active.indexLease}
+                    readOnly={active.readOnly}
+                  />
+                )}
+              </div>
               <dl>
                 <div className="overview-row">
                   <dt>{t("overview.include")}</dt>

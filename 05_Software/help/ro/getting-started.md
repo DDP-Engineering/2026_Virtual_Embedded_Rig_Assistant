@@ -31,7 +31,7 @@ Detaliile sunt în [Furnizori și modele](providers.md).
 3. La **Documente și RAG**, verifică folderele de documentație găsite de VERA sau folosește **Adaugă folder…**.
 4. Selectează **Creează un workbench**.
 
-VERA începe indexarea în fundal. Poți folosi deja chatul; fila **Fișiere** din panoul din dreapta arată progresul indexării. Vezi [Workbench-uri](workbenches.md) și [Documente și căutare](documents-and-search.md).
+VERA începe indexarea în fundal. Poți folosi deja chatul; bara din **Fișiere** indică activitatea, iar prezentarea generală a workbench-ului arată progresul detaliat. Vezi [Workbench-uri](workbenches.md) și [Documente și căutare](documents-and-search.md).
 
 ## Pasul 3: pune o primă întrebare
 

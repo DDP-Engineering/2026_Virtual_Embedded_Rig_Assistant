@@ -7,6 +7,7 @@ import { useTranslation } from "react-i18next";
 import { api } from "../../api/index.js";
 import { ErrorMessage } from "../error-message.js";
 import { DocsTree, useTreeExpansion } from "./docs-tree.js";
+import { useIndexedDocuments } from "./document-index-queries.js";
 import { DownloadsList } from "./downloads.js";
 import { useDescribeDocument } from "./file-actions.js";
 import { FilesIndexControls } from "./files-index-controls.js";
@@ -42,14 +43,7 @@ export function DocsTab({
     void client.invalidateQueries({ queryKey: ["docs.tree", workbenchId] });
     void client.invalidateQueries({ queryKey: ["docs.find", workbenchId] });
   }, [client, workbenchId, gitSnapshot]);
-  const list = useQuery({
-    queryKey: ["docs.list", workbenchId],
-    queryFn: async () => {
-      const result = await api.invoke("docs.list", { workbenchId });
-      if (result.workbenchId !== workbenchId) throw veraError("CONFLICT");
-      return result.documents;
-    },
-  });
+  const list = useIndexedDocuments(workbenchId);
   const results = useQuery({
     queryKey: ["docs.search", workbenchId, search],
     enabled: !!search,
@@ -61,7 +55,6 @@ export function DocsTab({
   });
   useEffect(() => {
     const refresh = () => {
-      void client.invalidateQueries({ queryKey: ["docs.list", workbenchId] });
       void client.invalidateQueries({ queryKey: ["docs.search", workbenchId] });
       // Folder entries follow the disk; an index change is a good moment to read them again.
       void client.invalidateQueries({ queryKey: ["docs.tree", workbenchId] });
@@ -76,7 +69,7 @@ export function DocsTab({
       }, 300);
     };
     const resetDisplay = (owner?: string) => {
-      for (const channel of ["docs.list", "docs.search", "docs.tree", "docs.find", "docs.stat"])
+      for (const channel of ["docs.search", "docs.tree", "docs.find", "docs.stat"])
         void client.resetQueries({ queryKey: owner === undefined ? [channel] : [channel, owner] });
     };
     const off = api.subscribe("workbench", workbenchId, (event) => {
@@ -106,11 +99,6 @@ export function DocsTab({
         indexLease={indexLease}
         readOnly={readOnly}
         editExclusions={editExclusions}
-        documents={list.data}
-        refreshed={() => {
-          void list.refetch();
-          if (search) void results.refetch();
-        }}
         search={
           <input
             type="search"

@@ -31,7 +31,7 @@ Les détails figurent dans [Fournisseurs et modèles](providers.md).
 3. Sous **Documents et RAG**, vérifiez les dossiers de documentation trouvés par VERA, ou utilisez **Ajouter un dossier…**.
 4. Sélectionnez **Créer un banc de travail**.
 
-VERA lance l’indexation en arrière-plan. Vous pouvez déjà discuter ; l’onglet **Fichiers** du panneau droit montre la progression de l’indexation. Consultez [Bancs de travail](workbenches.md) et [Documents et recherche](documents-and-search.md).
+VERA lance l’indexation en arrière-plan. Vous pouvez déjà discuter ; la barre d’outils de **Fichiers** indique l’activité et la vue d’ensemble du banc affiche la progression détaillée. Consultez [Bancs de travail](workbenches.md) et [Documents et recherche](documents-and-search.md).
 
 ## Étape 3 : poser une première question
 

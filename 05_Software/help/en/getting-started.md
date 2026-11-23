@@ -31,7 +31,7 @@ Details are in [Providers and models](providers.md).
 3. Under **Documents & RAG**, check the documentation folders VERA found, or use **Add folder…**.
 4. Select **Create a workbench**.
 
-VERA starts indexing in the background. You can already chat; the **Files** tab of the right panel shows the indexing progress. See [Workbenches](workbenches.md) and [Documents and search](documents-and-search.md).
+VERA starts indexing in the background. You can already chat; the **Files** toolbar shows indexing activity and **Workbench overview** shows detailed progress. See [Workbenches](workbenches.md) and [Documents and search](documents-and-search.md).
 
 ## Step 3: ask a first question
 

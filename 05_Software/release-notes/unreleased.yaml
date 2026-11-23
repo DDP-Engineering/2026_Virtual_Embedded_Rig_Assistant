@@ -151,10 +151,10 @@ entries:
   - category: new
     topic: { en: Workbench, ro: Workbench, de: Workbench, fr: Banc de travail }
     text:
-      en: Indexing status, approval for large selections, and offline search models per workbench.
-      ro: Stare indexare, aprobare pentru selecții mari și modele de căutare offline pe workbench.
-      de: Indexstatus, Freigabe großer Auswahlen und Offline-Suchmodelle je Workbench.
-      fr: État de l’index, validation des grandes sélections et modèles de recherche hors ligne par banc.
+      en: Index overview and compact Files status, large-selection approval, offline search models.
+      ro: Indexare în prezentarea generală, indicator în Fișiere, aprobare și modele offline.
+      de: Indexdetails in der Übersicht, Status in Dateien, Freigabe und Offline-Suchmodelle.
+      fr: Index dans la vue d’ensemble, état dans Fichiers, validation et modèles hors ligne.
   - category: new
     topic: { en: Sessions, ro: Sesiuni, de: Sitzungen, fr: Sessions }
     text:

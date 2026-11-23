@@ -12,4 +12,4 @@ A positive process-local lease identifies one workbench activation. The current-
 
 ## Delivery
 
-Files and the active sidebar indicator share the same status source. Status goes to the two status consumers, outside transcript, session list and retrieval. Count updates may be coalesced. New queries read current measured state. Updates contain no per-document details. The persisted retrieval metadata continues to describe what the tool used at search time.
+Files, Workbench overview and the active sidebar indicator share the same lease-scoped status source outside transcript, session list and retrieval. Files places active indexing status in the toolbar and retains guard and restart actions. Workbench overview presents measured progress, searchable counts and paginated exceptional records. Count updates may be coalesced. New queries read current measured state. Updates contain no per-document details. The persisted retrieval metadata continues to describe what the tool used at search time.

@@ -1226,7 +1226,6 @@
   "overview": {
     "storageSize": "Espace utilisé (.vera)",
     "refreshStorage": "Actualiser la taille du dossier .vera",
-    "agentGroup": "Agent",
     "indexGroup": "Documents et index",
     "title": "Vue d’ensemble du banc de travail",
     "model": "Modèle de conversation",

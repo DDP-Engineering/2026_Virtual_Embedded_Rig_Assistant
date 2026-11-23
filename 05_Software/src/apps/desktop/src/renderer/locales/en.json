@@ -1226,7 +1226,6 @@
   "overview": {
     "storageSize": "Storage used (.vera)",
     "refreshStorage": "Refresh .vera folder size",
-    "agentGroup": "Agent",
     "indexGroup": "Documents and index",
     "title": "Workbench overview",
     "model": "Conversation model",

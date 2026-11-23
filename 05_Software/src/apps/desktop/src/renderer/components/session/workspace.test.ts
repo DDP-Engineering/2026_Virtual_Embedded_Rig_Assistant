@@ -1833,7 +1833,7 @@ test("each session keeps its own document tabs while the user moves between sess
   ).toBe("board.txt");
 });
 
-test("index updates and late snapshots stay inside the live Files and sidebar status consumers", async () => {
+test("index updates and late snapshots stay inside the sidebar, Files and overview status consumers", async () => {
   const { config, indexLease } = await api.invoke("workbench.create", {
     folder: "/mock/status-lease",
     name: "Status lease",
@@ -1899,9 +1899,32 @@ test("index updates and late snapshots stay inside the live Files and sidebar st
   expect(invoke.mock.calls.filter(([key]) => key === "session.get")).toHaveLength(reads);
   await act(async () => badge()?.click());
   await settle();
-  expect(container.querySelector(".docs-index-status")?.textContent).toContain("120 of 250 processed");
+  expect(container.querySelector('#panel-docs [data-action="reindex"]')?.getAttribute("aria-busy")).toBe(
+    "true",
+  );
   expect(container.querySelector("[data-transcript]")).toBe(transcript);
   expect(invoke.mock.calls.filter(([key]) => key === "session.get")).toHaveLength(reads);
+  expect(container.querySelector(".workbench-overview .docs-index-status")).toBeNull();
+  await act(async () =>
+    container.querySelector<HTMLButtonElement>('.workbench-group-name[aria-current="page"]')?.click(),
+  );
+  await settle();
+  const details = container.querySelector(".workbench-overview .docs-index-status");
+  expect(details?.textContent).toContain("120 of 250 processed");
+  expect(details?.textContent).toContain("120 searchable documents");
+  await act(async () => {
+    const updated = indexing(121, 117);
+    if (!updated.progress) throw new Error("Expected index progress");
+    for (const on of delegates)
+      on({
+        type: "index.status",
+        status: { ...updated, progress: { ...updated.progress, processed: 121, exceptions: 4 } },
+      });
+  });
+  await settle();
+  expect(container.querySelector(".workbench-overview .docs-index-failures")?.textContent).toContain(
+    "File details are unavailable.",
+  );
 });
 
 test("index status leads to panel settings when the workbench has hidden Files", async () => {

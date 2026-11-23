@@ -31,7 +31,7 @@ Details finden Sie unter [Anbieter und Modelle](providers.md).
 3. Prüfen Sie unter **Dokumente & RAG** die Dokumentationsordner, die VERA gefunden hat, oder verwenden Sie **Ordner hinzufügen…**.
 4. Wählen Sie **Workbench erstellen**.
 
-VERA beginnt im Hintergrund mit der Indizierung. Sie können bereits chatten; der Tab **Dateien** im rechten Bereich zeigt den Fortschritt der Indizierung. Siehe [Workbenches](workbenches.md) und [Dokumente und Suche](documents-and-search.md).
+VERA beginnt im Hintergrund mit der Indizierung. Sie können bereits chatten; die Symbolleiste in **Dateien** zeigt die Aktivität und die Workbench-Übersicht den detaillierten Fortschritt. Siehe [Workbenches](workbenches.md) und [Dokumente und Suche](documents-and-search.md).
 
 ## Schritt 3: eine erste Frage stellen
 

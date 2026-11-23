@@ -1226,7 +1226,6 @@
   "overview": {
     "storageSize": "Speicherbelegung (.vera)",
     "refreshStorage": "Größe des .vera-Ordners aktualisieren",
-    "agentGroup": "Agent",
     "indexGroup": "Dokumente und Index",
     "title": "Workbench-Übersicht",
     "model": "Gesprächsmodell",

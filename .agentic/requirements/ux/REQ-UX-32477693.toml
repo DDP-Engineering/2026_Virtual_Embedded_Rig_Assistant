@@ -1,0 +1,14 @@
+schema = 1
+id = "REQ-UX-32477693"
+title = "Show indexing details in Workbench overview"
+status = "active"
+requirement = """
+While Workbench overview is visible, VERA shall show the active workbench's indexing state, measured progress and searchable count when known, plus a paginated disclosure of skipped, OCR and failed file records when present.
+"""
+verification = "Open Workbench overview after publishing an index status and exceptional file records. Verify the live processed and searchable counts and the matching localized records inside the disclosure, including unavailable detail when only a count is known. At window widths with space verify the status lies to the right of the heading and that long indexed paths wrap independently of the label."
+affected_paths = ["05_Software/src/apps/desktop/src/renderer/components/documents/workbench-index-details.tsx", "05_Software/src/apps/desktop/src/renderer/components/documents/document-index-queries.ts", "05_Software/src/apps/desktop/src/renderer/components/workbench.tsx", "05_Software/src/apps/desktop/src/renderer/App.tsx", "05_Software/src/apps/desktop/src/renderer/styles.css"]
+linked_tests = ["05_Software/src/apps/desktop/src/renderer/components/documents/documents.test.ts", "05_Software/src/apps/desktop/src/renderer/components/session/workspace.test.ts", "05_Software/tests/e2e/documents.spec.ts"]
+spec = ""
+priority = "normal"
+created = 2026-11-23
+updated = 2026-11-23

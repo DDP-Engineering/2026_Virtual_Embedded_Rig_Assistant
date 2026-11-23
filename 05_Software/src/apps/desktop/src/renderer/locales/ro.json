@@ -1226,7 +1226,6 @@
   "overview": {
     "storageSize": "Spațiu ocupat (.vera)",
     "refreshStorage": "Actualizează dimensiunea folderului .vera",
-    "agentGroup": "Agent",
     "indexGroup": "Documente și index",
     "title": "Prezentare workbench",
     "model": "Model conversație",

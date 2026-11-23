@@ -27,7 +27,19 @@ it("reloads the lists once after a burst of index.document events, and never aft
     if (topic === "workbench") handlers.push(rest.at(-1) as (event: unknown) => void);
     return (subscribe as (...args: unknown[]) => () => void)(topic, ...rest);
   }) as typeof api.subscribe);
-  const invoke = vi.spyOn(api, "invoke");
+  const original = api.invoke.bind(api);
+  let holdList = false;
+  let releaseStale: () => void = () => {};
+  const stale = new Promise((resolve) => {
+    releaseStale = () => resolve({ workbenchId: id, documents: [] });
+  });
+  const invoke = vi.spyOn(api, "invoke").mockImplementation((async (channel: string, request: unknown) => {
+    if (channel === "docs.list" && holdList) {
+      holdList = false;
+      return stale;
+    }
+    return original(channel as never, request as never);
+  }) as typeof api.invoke);
   const listed = () => invoke.mock.calls.filter(([channel]) => channel === "docs.list").length;
   const indexed = (path: string) =>
     act(async () => {
@@ -58,11 +70,25 @@ it("reloads the lists once after a burst of index.document events, and never aft
     expect(listed()).toBe(before);
     await wait();
     expect(listed()).toBe(before + 1);
+    // Delay a refresh after it has read the old snapshot. A later publication must win.
+    holdList = true;
+    await act(async () => {
+      void client.invalidateQueries({ queryKey: ["docs.list", id] });
+    });
+    expect(listed()).toBe(before + 2);
+    await indexed("docs/new.md");
+    await wait();
+    expect(listed()).toBe(before + 3);
+    await act(async () => releaseStale());
+    await wait();
+    const records = client.getQueryData<unknown[]>(["docs.list", id]);
+    expect(records?.length).toBeGreaterThan(0);
+
     await indexed("docs/late.md");
     await act(async () => root.unmount());
     mounted = false;
     await wait();
-    expect(listed()).toBe(before + 1);
+    expect(listed()).toBe(before + 3);
   } finally {
     if (mounted) await act(async () => root.unmount());
     container.remove();

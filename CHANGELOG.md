@@ -80,6 +80,7 @@ Older releases: `06_SoftwareDocu/CHANGELOG-archive.md`.
 
 ### Changed
 
+- Move indexing details to the single-column Workbench overview and keep Files compact.
 - Evaluators: one folder per family with code, method, cases and baselines; perf:sessions is now eval:performance.
 - Open recorded session edits beside Chat from the Changes list.
 - Changes paginates long session histories and retains the selected diff across pages.

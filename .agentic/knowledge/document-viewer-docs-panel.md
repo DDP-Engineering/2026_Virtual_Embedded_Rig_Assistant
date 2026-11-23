@@ -25,9 +25,9 @@ a current snapshot and coalesced workbench updates.
 ## Public interface
 
 - Docs tab layout (documents/docs-tab.tsx): one search box (`data-docs-search`,
-  "Search files and documents", 200 characters), then one `.docs-actions` row with Reindex and
+  "Search files and documents", 200 characters), then one `.docs-toolbar` row with Reindex and
   Collapse all (wrapping only when too narrow; Collapse all is disabled while the box has
-  text), status and the tree. While the count guard stops indexing
+  text), Git controls when enabled and the tree. While the count guard stops indexing
   (documents/index-guard.tsx, `data-index-guard`, role alert), Files shows the localized
   count and limit, the top folders (`data-guard-folder`), Index anyway
   (docs.approve with the shown count, disabled read-only) and Edit exclusions, which App turns
@@ -41,12 +41,14 @@ a current snapshot and coalesced workbench updates.
   per-source SHA/status/kind/locator verification. The results area distinguishes
   complete no-match results, no matches within a limited index, and temporary unavailability.
 - docs.reindex({workbenchId?}) checks identity/ownership before ingest admission.
-- FilesIndexControls and the sidebar subscribe to the same workbench id and activation lease.
-  They merge the latest snapshot into status-only query data. On a new activation App drops
-  file query data for that id, also when the workbench was copied to another folder.
-  Files reports actionable exceptions,
-  includes the count guard and Restart controls, and disables Reindex while stopped or read-only.
-  The document tree uses its existing coalesced refresh for document publication.
+- Files, Workbench overview and the active sidebar badge share the activation-scoped status cache.
+  It accepts strictly newer matching responses and events. App drops file query data on a new
+  activation, including a copied workbench ID. Files shows a labelled busy icon in the Reindex
+  slot while scanning, indexing or rebuilding and includes the count guard and Restart controls.
+  Overview shows processed and searchable counts and paginated exceptional records with localized
+  reasons. Its index section only subscribes while visible. Files and Overview share cached
+  docs.list records and coalesced document refreshes and disable Reindex while stopped, pending
+  or read-only.
 - Docs tree (documents/docs-tree.tsx) lists the whole workbench folder.
   docs.tree({workbenchId,path}) lists one folder (folders first, natural order, at most 5,000
   with `truncated`, links left out); a folder's entries load when it is expanded. Entries the
@@ -148,13 +150,15 @@ a current snapshot and coalesced workbench updates.
 |---|---|---|
 | tree listing/find/text/stat bounds | core workbench/tree.ts; WorkbenchService; shared docs.tree/find/read/stat | tree.test.ts; documents-ipc.test.ts |
 | tree UI, ignored rows, memory, keys | documents/docs-tree.tsx; mockApi docs.tree/find/read | docs-tree.test.ts; documents.spec.ts; docs-tree.spec.ts |
-| search box, In documents, actions row | documents/docs-tab.tsx (`useTreeExpansion`); styles `.docs-actions` | docs-tree.test.ts; documents.test.ts; documents.spec.ts |
+| index status and exception details | documents/{index-status,workbench-index-details,files-index-controls}; document-index-queries | documents.test.ts; workspace.test.ts; documents.spec.ts |
+| search box, In documents, actions row | documents/docs-tab.tsx (`useTreeExpansion`); styles `.docs-toolbar` | docs-tree.test.ts; documents.test.ts; documents.spec.ts |
 | row context menu / Properties | documents/tree-menu.tsx; tree-properties.tsx; mockApi docs.stat | docs-tree.test.ts; documents.test.ts; docs-tree.spec.ts |
 | Open in / Show in Explorer / Copy | main/openers.ts; index.ts docs.openers/openWith/reveal/copyPath/systemApps/openSystemApp; core locateEntry; file-actions.tsx useFileActions | openers.test.ts; tree.test.ts; documents-ipc.test.ts; docs-tree.test.ts; docs-tree.spec.ts |
 
 ## Key behaviors
 
-- REQ-UX-28ad0003 — live Docs index, search/open/reindex and progress.
+- REQ-UX-28ad0003 — live Docs index, search, open, reindex and compact activity.
+- REQ-UX-32477693 — measured indexing and exceptional file details in Workbench overview.
 - REQ-FUNC-889beffd, REQ-FUNC-2e3fad2d, REQ-FUNC-70dc2e8f, REQ-FUNC-98e9d760 — confined tree
   listing, name find, text read and entry properties.
 - REQ-UX-c28dde55, REQ-UX-795a7f61, REQ-UX-775eb693, REQ-UX-9f16abf2, REQ-UX-2d9cdf43,
@@ -167,5 +171,5 @@ a current snapshot and coalesced workbench updates.
 
 Under05_Software: shared/{documents,ipc}.ts; core workbench/{service,tree}.ts/test;
 desktop/main/{index,openers}.ts and openers.test.ts; renderer/components/documents/{docs-tab,
-docs-tree,tree-menu,tree-properties,open-externally,file-actions,index-guard}.tsx with documents.test.ts and
+docs-tree,tree-menu,tree-properties,open-externally,file-actions,index-guard,index-status,files-index-controls,workbench-index-details}.tsx and document-index-queries.ts with documents.test.ts and
 docs-tree.test.ts; mock documents+mockApi; tests/e2e/{documents,docs-tree}.spec.ts.

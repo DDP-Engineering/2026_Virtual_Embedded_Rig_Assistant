@@ -892,6 +892,9 @@ export function App() {
                       {info.data && snapshot.data && (
                         <Workbench
                           active={activeWorkbench}
+                          showIndexDetails={
+                            !chat && !settings && !plugins && help === undefined && !newWorkbench && !editor
+                          }
                           changed={benchChanged}
                           closed={benchClosed}
                           sessionPending={sessionPending}

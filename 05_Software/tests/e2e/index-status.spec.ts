@@ -167,7 +167,7 @@ test("native sidebar, late Files and replay track live indexing and saved retrie
     const first = await create(folder, "Indexed bench");
     await page.reload();
     const badge = page.locator(".workbench-index-status");
-    const files = page.locator('[role="tabpanel"] .docs-index-status');
+    const files = page.locator('#panel-docs [data-action="reindex"]');
     await expect.poll(() => blocked("select")).toBe(1);
     await expect(badge).toHaveAttribute("data-index-state", "scanning");
     await expect(badge).toHaveAccessibleName(/Scanning documents.*Open Files/);
@@ -189,8 +189,8 @@ test("native sidebar, late Files and replay track live indexing and saved retrie
     await expect(badge.locator(".workbench-index-tooltip")).toBeVisible();
     await page.keyboard.press("Enter");
     await expect(page.getByRole("tab", { name: "Files" })).toBeFocused();
-    await expect(files).toContainText("1 of 24 processed");
-    await expect(files).toContainText("1 searchable");
+    await expect(files).toHaveAttribute("aria-busy", "true");
+    await expect(files).toHaveAccessibleDescription("Indexing documents");
     expect(
       await page.locator(".docs-indexing").evaluate((icon) => getComputedStyle(icon).animationName),
     ).toBe("none");

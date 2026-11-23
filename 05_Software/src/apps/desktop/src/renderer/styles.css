@@ -1936,6 +1936,10 @@ legend {
   font-style: italic;
 }
 .docs-index-status {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.25rem 0.75rem;
   font-size: 0.85em;
 }
 .docs-index-failures summary {
@@ -1954,6 +1958,7 @@ legend {
   overflow-wrap: anywhere;
 }
 .docs-indexing {
+  color: var(--primary);
   animation: activity-spin 1.2s linear infinite;
 }
 @keyframes activity-spin {
@@ -4081,7 +4086,7 @@ legend {
 :root[data-theme="dark"] .maker-logo-dark {
   display: block;
 }
-/* Workbench overview: header, two cards of label/value rows, and a sessions card. */
+/* Workbench overview: full-width groups of label/value rows and sessions. */
 .workbench-overview .overview-header {
   display: flex;
   align-items: flex-start;
@@ -4100,7 +4105,6 @@ legend {
 }
 .overview-groups {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(20rem, 100%), 1fr));
   gap: 1rem;
 }
 .overview-card {
@@ -4113,12 +4117,42 @@ legend {
   letter-spacing: 0.04em;
   color: var(--muted-foreground);
 }
+.overview-index-heading,
+.overview-index-details {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.25rem 0.75rem;
+}
+.overview-index-heading {
+  margin-block-end: 0.35rem;
+}
+.overview-index-heading h4 {
+  margin: 0;
+}
+.overview-index-details {
+  flex: 1 1 20rem;
+  min-width: 0;
+  justify-content: flex-end;
+}
+.overview-index-details .docs-index-failures {
+  min-width: 0;
+  font-size: 0.85em;
+}
+.overview-index-details .docs-index-failures[open] {
+  flex-basis: 100%;
+}
+.overview-index-details .docs-index-failures[open] summary {
+  inline-size: fit-content;
+  margin-inline-start: auto;
+}
 .overview-card dl {
   margin: 0;
 }
 .overview-row {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: minmax(min(42%, 13rem), 0.35fr) minmax(0, 1fr);
+  align-items: start;
   gap: 1rem;
   padding: 0.35rem 0;
 }
@@ -4126,6 +4160,7 @@ legend {
   border-top: 1px solid var(--border);
 }
 .overview-row dt {
+  overflow-wrap: normal;
   color: var(--muted-foreground);
 }
 .overview-row dd {
@@ -4697,7 +4732,7 @@ legend {
   display: block;
 }
 .docs-index-status p {
-  margin: 0 0 0.25rem;
+  margin: 0;
 }
 .retrieval-notice {
   display: flex;

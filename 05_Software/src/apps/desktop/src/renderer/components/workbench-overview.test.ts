@@ -50,7 +50,9 @@ it("shows session sizes and refreshes local workbench storage in the overview", 
         ? []
         : channel === "workbench.storage"
           ? { workbenchId: config.id, bytes: storageBytes }
-          : { ses_a: 3 * 1024 * 1024 }) as never,
+          : channel === "docs.list"
+            ? { workbenchId: config.id, documents: [] }
+            : { ses_a: 3 * 1024 * 1024 }) as never,
   );
   container = document.createElement("div");
   document.body.append(container);

@@ -8,6 +8,7 @@ import { createRoot } from "react-dom/client";
 import { expect, it, vi } from "vitest";
 import { api } from "../../api/index.js";
 import i18n from "../../i18n.js";
+import { Workbench } from "../workbench.js";
 import { WorkbenchDocuments } from "../workbench-documents.js";
 import { DocsTab } from "./docs-tab.js";
 import { DocumentTabs } from "./document-tabs.js";
@@ -50,8 +51,8 @@ const settle = () =>
     await new Promise((done) => setTimeout(done, 250));
   });
 
-it("opens live Docs heading/search refs, renders statuses and progress, restores focus and prevents read-only reindex", async () => {
-  const { indexLease } = await api.invoke("workbench.open", { folder: "/mock/demo-board" });
+it("moves index details to the overview while preserving Files search, focus and read-only behavior", async () => {
+  const workbench = await api.invoke("workbench.open", { folder: "/mock/demo-board" });
   const container = document.createElement("div");
   document.body.append(container);
   const root = createRoot(container);
@@ -65,7 +66,12 @@ it("opens live Docs heading/search refs, renders statuses and progress, restores
           createElement(
             DocumentViewerProvider,
             { workbenchId: id },
-            createElement(DocsTab, { workbenchId: id, indexLease, readOnly }),
+            createElement(DocsTab, { workbenchId: id, indexLease: workbench.indexLease, readOnly }),
+            createElement(Workbench, {
+              active: { ...workbench, readOnly },
+              changed: vi.fn(),
+              closed: vi.fn(),
+            }),
             createElement(DocumentTabs, { chat: null }),
           ),
         ),
@@ -74,11 +80,16 @@ it("opens live Docs heading/search refs, renders statuses and progress, restores
   try {
     await render(false);
     await settle();
-    const failures = container.querySelector<HTMLDetailsElement>(".docs-index-failures");
+    const overview = container.querySelector(".workbench-overview");
+    const files = container.querySelector(".docs-tab");
+    expect(files?.querySelector(".docs-index-status, .docs-index-failures")).toBeNull();
+    const failures = overview?.querySelector<HTMLDetailsElement>(".docs-index-failures");
     expect(failures?.open).toBe(false);
     expect(failures?.querySelector("summary")?.textContent).toContain("View skipped, OCR and failed files");
     expect(failures?.textContent).toContain("docs/failed.pdf");
     expect(failures?.textContent).toContain("Processing failed");
+    expect(overview?.querySelector(".docs-index-status")?.textContent).toContain("9 of 10 processed");
+    expect(overview?.querySelector(".docs-index-status")?.textContent).toContain("6 searchable documents");
     await expandDocs(container);
     expect(container.querySelectorAll("[data-document]")).toHaveLength(10);
     expect(container.textContent).toContain("Needs OCR");
@@ -94,10 +105,10 @@ it("opens live Docs heading/search refs, renders statuses and progress, restores
     const reindex = container.querySelector<HTMLButtonElement>('[data-action="reindex"]');
     await act(async () => reindex?.click());
     await settle();
-    expect(container.querySelector(".docs-index-failures summary")?.textContent).toContain(
+    expect(overview?.querySelector(".docs-index-failures summary")?.textContent).toContain(
       "View skipped, OCR and failed files",
     );
-    expect(container.querySelector(".docs-index-status")?.textContent).toContain("with exceptions");
+    expect(overview?.querySelector(".docs-index-status")?.textContent).toContain("with exceptions");
     const retry = container.querySelector<HTMLButtonElement>(".docs-index-failures button");
     const invoke = vi.spyOn(api, "invoke");
     try {
@@ -791,16 +802,22 @@ it("reports active indexing in Files and warns about large selections before sav
       );
     await publish("indexing", 1, 0, 100);
     await settle();
-    expect(container.querySelector(".docs-index-status")?.textContent).toContain("1 of 5 processed");
+    expect(container.querySelector('[data-action="reindex"]')?.getAttribute("aria-description")).toBe(
+      "Indexing documents",
+    );
     expect(container.querySelector('[data-action="reindex"]')?.getAttribute("aria-busy")).toBe("true");
     await publish("ready", 5, 0, 102);
     // A late indexing update cannot roll back the ready status.
     await publish("indexing", 2, 0, 101);
     await settle();
-    expect(container.querySelector(".docs-index-status")?.textContent).toContain("Document index ready");
+    expect(container.querySelector('[data-action="reindex"]')?.getAttribute("data-index-state")).toBe(
+      "ready",
+    );
     await publish("exceptions", 5, 1, 103);
     await settle();
-    expect(container.querySelector(".docs-index-status")?.textContent).toContain("1 with exceptions");
+    expect(container.querySelector('[data-action="reindex"]')?.getAttribute("data-index-state")).toBe(
+      "exceptions",
+    );
     expect(container.querySelector('[data-action="reindex"]')?.getAttribute("aria-busy")).toBe("false");
     // The Documents section warns beside its preview statement while the preview is too large.
     const section = (include: string) =>

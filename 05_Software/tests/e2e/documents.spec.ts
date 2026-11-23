@@ -56,6 +56,47 @@ for (const lang of ["en", "ro", "de"])
         // Settings replaces the primary navigation; leave it to reach the workbenches.
         await page.locator('[data-action="leave-settings"]').click();
         await page.locator("[data-workbench-entry] .workbench-group-name").click();
+        const overview = page.locator(".workbench-overview");
+        await expect(overview.getByRole("heading", { name: "Agent", exact: true })).toHaveCount(0);
+        const indexHeading = overview.locator(".overview-index-heading");
+        await expect(indexHeading.locator(".docs-index-status")).toHaveAttribute(
+          "data-index-state",
+          "exceptions",
+        );
+        const inlineStatus = await indexHeading.evaluate((element) => {
+          const title = element.querySelector("h4")?.getBoundingClientRect();
+          const status = element.querySelector(".docs-index-status")?.getBoundingClientRect();
+          return !!title && !!status && title.right < status.left && status.top < title.bottom;
+        });
+        expect(inlineStatus).toBe(true);
+        const exceptions = indexHeading.locator(".docs-index-failures");
+        const summary = exceptions.locator("summary");
+        await summary.click();
+        await expect(exceptions.locator("ul")).toContainText("docs/failed.pdf");
+        await summary.click();
+        const groups = overview.locator(".overview-groups");
+        const layout = await groups.evaluate((element) => {
+          const [agent, index] = Array.from(element.children, (card) => card.getBoundingClientRect());
+          return agent && index && agent.bottom <= index.top && agent.width === index.width;
+        });
+        expect(layout).toBe(true);
+        const indexedSources = overview
+          .locator(".overview-row")
+          .filter({ has: page.locator("dd.path-text") })
+          .first();
+        const labelLines = await indexedSources.evaluate((row) => {
+          const label = row.querySelector("dt");
+          const paths = row.querySelector("dd");
+          if (!label || !paths) throw new Error("Expected indexed-source label and value");
+          const saved = paths.textContent;
+          paths.textContent = "nested/very-long-indexed-source/**, ".repeat(10);
+          const range = document.createRange();
+          range.selectNodeContents(label);
+          const lines = range.getClientRects().length;
+          paths.textContent = saved;
+          return lines;
+        });
+        expect(labelLines).toBe(1);
         await page.locator('[data-toggle="right"]').click();
         await page.locator("#tab-docs").click();
         const docs = page.locator("#panel-docs"),
@@ -179,7 +220,7 @@ for (const lang of ["en", "ro", "de"])
         const reindex = docs.locator('[data-action="reindex"]');
         await reindex.click();
         await expect(reindex).toBeEnabled();
-        await expect(docs.locator(".docs-index-status")).toHaveAttribute("data-index-state", "exceptions");
+        await expect(reindex).toHaveAttribute("data-index-state", "exceptions");
         await page.screenshot({ path: test.info().outputPath(`documents-${lang}.png`) });
         await page.locator('[data-toggle="right"]').click();
         expect(errors).toEqual([]);

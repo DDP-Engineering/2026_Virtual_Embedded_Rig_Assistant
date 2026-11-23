@@ -49,7 +49,7 @@ export function useDocumentIndexStatus(workbenchId: string, indexLease: number) 
   return data;
 }
 
-function useIndexSummary(state: Status["state"] | undefined) {
+export function useIndexSummary(state: Status["state"] | undefined) {
   const { t } = useTranslation();
   switch (state) {
     case "scanning":
